@@ -1,0 +1,3 @@
+#sample message property to be translated in language specific versions of this property file
+#this message takes a single argument, which will replace the {0}
+welcome: Welcome.  The current time is {0}.

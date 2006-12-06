@@ -1,0 +1,17 @@
+<!--                                                                        -->
+<!-- Copyright 2006 Google Inc. All Rights Reserved.                        -->
+<!--                                                                        -->
+<!-- Combines all user facilities into a single module for convenience.     -->
+<!-- Most new code should inherit this module.                              -->
+<!--                                                                        -->
+<module>
+   <inherits name="com.google.gwt.core.Core"/>
+   <inherits name="com.google.gwt.user.RemoteService"/>
+   <inherits name="com.google.gwt.user.DOM"/>
+   <inherits name="com.google.gwt.user.HTTPRequest"/>
+   <inherits name="com.google.gwt.user.History"/>
+   <inherits name="com.google.gwt.user.Popup"/>
+   <inherits name="com.google.gwt.user.Form"/>
+   <inherits name="com.google.gwt.user.TextBox"/>
+   <inherits name="com.google.gwt.user.Focus"/>
+</module>

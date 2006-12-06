@@ -1,0 +1,39 @@
+<project name="servlet" default="all" basedir=".">
+	<property name="gwt.root" location=".." />
+	<property name="project.tail" value="servlet" />
+	<import file="${gwt.root}/common.ant.xml" />
+
+	<property.ensure name="gwt.user.root" location="${gwt.root}/user" />
+	<property.ensure name="gwt.user.build" location="${gwt.build.out}/user" />
+	<property.ensure name="gwt.user.bin" location="${gwt.user.build}/bin" />
+
+	<target name="package" description="Packages this project into a jar">
+		<mkdir dir="${gwt.build.lib}" />
+		<gwt.jar>
+			<fileset dir="${gwt.user.bin}">
+				<exclude name="com/google/gwt/i18n/rebind/**" />
+				<exclude name="com/google/gwt/i18n/tools/**" />
+				<exclude name="com/google/gwt/json/**" />
+				<exclude name="com/google/gwt/junit/*" />
+				<exclude name="com/google/gwt/junit/client/GWTTestCase.*" />
+				<exclude name="com/google/gwt/junit/rebind/**" />
+				<exclude name="com/google/gwt/junit/remote/**" />
+				<exclude name="com/google/gwt/junit/server/**" />
+				<exclude name="com/google/gwt/junit/tools/**" />
+				<exclude name="com/google/gwt/user/rebind/**" />
+				<exclude name="com/google/gwt/user/tools/**" />
+			</fileset>
+		</gwt.jar>
+	</target>
+
+	<target name="verify" description="Static analysis of source">
+		<!-- nothing to do -->
+	</target>
+
+	<target name="clean" description="Cleans this project's intermediate and output files">
+		<delete file="${project.lib}" />
+	</target>
+
+	<target name="all" depends="package" description="Build and packages this project" />
+
+</project>

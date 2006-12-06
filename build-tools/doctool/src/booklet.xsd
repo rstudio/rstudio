@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2005 rel. 3 U (http://www.altova.com) by Bruce Johnson (private) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:element name="booklet">
+		<xs:annotation>
+			<xs:documentation>The documentation for the entire API</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:group ref="sectionHead"/>
+				<xs:element ref="package" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="package">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:group ref="sectionHead"/>
+				<xs:choice minOccurs="0" maxOccurs="unbounded">
+					<xs:element ref="class"/>
+					<xs:element ref="interface"/>
+				</xs:choice>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="class">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:group ref="sectionHead"/>
+				<xs:group ref="access" minOccurs="0"/>
+				<xs:sequence>
+					<xs:element name="isAbstract" minOccurs="0"/>
+					<xs:element name="isStatic" minOccurs="0"/>
+					<xs:element name="isFinal" minOccurs="0"/>
+				</xs:sequence>
+				<xs:sequence>
+					<xs:element name="superclass" minOccurs="0">
+						<xs:complexType>
+							<xs:simpleContent>
+								<xs:extension base="xs:string">
+									<xs:attribute name="ref">
+										<xs:annotation>
+											<xs:documentation>The id of the type of the superclass</xs:documentation>
+										</xs:annotation>
+									</xs:attribute>
+								</xs:extension>
+							</xs:simpleContent>
+						</xs:complexType>
+					</xs:element>
+					<xs:element ref="superinterface" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
+				<xs:choice minOccurs="0" maxOccurs="unbounded">
+					<xs:element ref="field"/>
+					<xs:element ref="method"/>
+					<xs:element ref="class"/>
+					<xs:element ref="interface"/>
+					<xs:element ref="constructor"/>
+				</xs:choice>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="interface">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:group ref="sectionHead"/>
+				<xs:group ref="access" minOccurs="0"/>
+				<xs:sequence>
+					<xs:element name="isAbstract" minOccurs="0">
+						<xs:annotation>
+							<xs:documentation>Implied but harmless</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="isStatic" minOccurs="0">
+						<xs:annotation>
+							<xs:documentation>Implied but harmless on a nested interface</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:sequence>
+				<xs:element ref="superinterface" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:choice minOccurs="0" maxOccurs="unbounded">
+					<xs:element ref="field"/>
+					<xs:element ref="method"/>
+					<xs:element ref="class"/>
+					<xs:element ref="interface"/>
+				</xs:choice>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="method">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:group ref="sectionHead"/>
+				<xs:group ref="access" minOccurs="0"/>
+				<xs:choice minOccurs="0">
+					<xs:element name="isAbstract"/>
+					<xs:element name="isStatic">
+						<xs:annotation>
+							<xs:documentation>N/A when the method appears in an interface</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="isFinal">
+						<xs:annotation>
+							<xs:documentation>N/A when the method appears in an interface</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+				</xs:choice>
+				<xs:element ref="flatSignature"/>
+				<xs:element name="isSynchronized" minOccurs="0"/>
+				<xs:element name="type">
+					<xs:annotation>
+						<xs:documentation>The method return type</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element ref="params"/>
+				<xs:element ref="throws" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="field">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:group ref="sectionHead"/>
+				<xs:group ref="access" minOccurs="0"/>
+				<xs:sequence>
+					<xs:element name="isStatic" minOccurs="0"/>
+					<xs:element name="isFinal" minOccurs="0"/>
+				</xs:sequence>
+				<xs:element name="type">
+					<xs:annotation>
+						<xs:documentation>The field type</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="link">
+		<xs:annotation>
+			<xs:documentation>An explicit link to an id in this same document format (relies on special treatment from XSLT)</xs:documentation>
+		</xs:annotation>
+		<xs:complexType mixed="true">
+			<xs:attribute name="ref">
+				<xs:annotation>
+					<xs:documentation>The link target id</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="superinterface">
+		<xs:complexType>
+			<xs:simpleContent>
+				<xs:extension base="xs:string">
+					<xs:attribute name="ref">
+						<xs:annotation>
+							<xs:documentation>The id of the interface type</xs:documentation>
+						</xs:annotation>
+					</xs:attribute>
+				</xs:extension>
+			</xs:simpleContent>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="params">
+		<xs:annotation>
+			<xs:documentation>Method/constructor parameters in left-to-right order</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="param" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="type">
+								<xs:annotation>
+									<xs:documentation>The param type, as it should appear to the reader</xs:documentation>
+								</xs:annotation>
+								<xs:complexType>
+									<xs:simpleContent>
+										<xs:extension base="xs:string">
+											<xs:attribute name="ref">
+												<xs:annotation>
+													<xs:documentation>A reference to the type id of the param type</xs:documentation>
+												</xs:annotation>
+											</xs:attribute>
+										</xs:extension>
+									</xs:simpleContent>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="name" type="xs:string">
+								<xs:annotation>
+									<xs:documentation>The name of the param</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="flatSignature">
+		<xs:annotation>
+			<xs:documentation>A simple param signature enclosed in parentheses that would differentitate overloads in a table of mehod links, such as "(int, Widget)"</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:group name="sectionHead">
+		<xs:sequence>
+			<xs:element name="id">
+				<xs:annotation>
+					<xs:documentation>The id of this section, which can be the target of a link and which should be unique across all documents which might want to link to this section </xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="name">
+				<xs:annotation>
+					<xs:documentation>The name/title of this section; if a @title tag is found, it should be used rather than the programmatic name</xs:documentation>
+				</xs:annotation>
+			</xs:element>
+			<xs:element name="location" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>TODO - replace me with better XSLT - A sequence of links that indicate structure back to the logical parent of this component within the doc hierarchy</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence minOccurs="0" maxOccurs="unbounded">
+						<xs:element ref="link"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="lead">
+				<xs:annotation>
+					<xs:documentation>Simple HTML intro text (a single phrase or sentence) that might appear in an overview table</xs:documentation>
+				</xs:annotation>
+				<xs:complexType mixed="true">
+					<xs:sequence minOccurs="0" maxOccurs="unbounded">
+						<xs:any namespace="##any" processContents="skip"/>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="description">
+				<xs:annotation>
+					<xs:documentation>Detailed narrative related to the topic</xs:documentation>
+				</xs:annotation>
+				<xs:complexType mixed="true">
+					<xs:sequence minOccurs="0" maxOccurs="unbounded">
+						<xs:any namespace="##any" processContents="skip">
+							<xs:annotation>
+								<xs:documentation>HTML description; "link" elements inteded to be parsed and fixed up</xs:documentation>
+							</xs:annotation>
+						</xs:any>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="tags" minOccurs="0">
+				<xs:annotation>
+					<xs:documentation>Arbitrary tags for which a particular XSLT might handle specially such as "param", "returns", "throws"; some well-known ones are included for reference</xs:documentation>
+				</xs:annotation>
+				<xs:complexType>
+					<xs:sequence minOccurs="0" maxOccurs="unbounded">
+						<xs:any namespace="##any" processContents="skip">
+							<xs:annotation>
+								<xs:documentation>@link or any out-of-band tag, such as those found in JavaDoc, go here for potential XSLT special treatment</xs:documentation>
+							</xs:annotation>
+						</xs:any>
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:group>
+	<xs:group name="access">
+		<xs:choice>
+			<xs:element name="isPublic"/>
+			<xs:element name="isProtected"/>
+			<xs:element name="isPackagePrivate"/>
+			<xs:element name="isPrivate"/>
+		</xs:choice>
+	</xs:group>
+	<xs:element name="constructor">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:group ref="sectionHead"/>
+				<xs:group ref="access" minOccurs="0"/>
+				<xs:element ref="flatSignature"/>
+				<xs:element ref="params"/>
+				<xs:element ref="throws" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="throws">
+		<xs:annotation>
+			<xs:documentation>A list of exception that might be thrown</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence minOccurs="0" maxOccurs="unbounded">
+				<xs:element name="throw">
+					<xs:annotation>
+						<xs:documentation>Indicates a method/ctor might throw this type</xs:documentation>
+					</xs:annotation>
+					<xs:complexType mixed="true">
+						<xs:attribute name="ref">
+							<xs:annotation>
+								<xs:documentation>A reference to the id of the class that can be thrown</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

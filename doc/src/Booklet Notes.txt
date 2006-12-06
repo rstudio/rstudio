@@ -1,0 +1,82 @@
+Two kinds of documentation:
+    Reference (Normal JavaDoc)
+    Expository (DocNodes)
+
+Possible layout:
+Dynamic Client System (Booklet)
+    Introduction
+        What is DCS?
+        Quick Start
+        Ideal DCS Projects
+    Concepts
+        Translation
+    How To
+        Writing client-side applications
+        Writing server-side support code
+        Configuration
+    Reference
+        Configuration
+        Client Framework
+        Translatable Java Libraries
+        Server-support
+
+<booklet>
+    <title>...</title>
+    
+    <!-- Each topic must specify a simple text-only title -->
+    <topic id='[string]'>
+
+        <title>...</title>
+
+        <!-- HTML fragment content -->
+        <content>
+            [html]
+        </content>
+
+        <!-- Nested topics -->
+        <topic ...>
+            [topic]
+        </topic>
+        
+        <topic ...>
+            [topic]
+        </topic>
+        ...
+
+    </topic>
+</booklet>
+
+topic/@id                   (string) A unique id for the topic
+topic/@title                (string) A simple string the user will see as the title of the topic
+topic/content
+topic/content/text()        Text or HTML chunks
+topic/content/link          A link
+topic/content/link/@idref   Which topic to link to
+topic/topic                 A nested topic
+
+How APIs map are output:
+
+<package name="com.innuvo.dcs.doc">
+    <class name="TestOuter">
+        <comment>
+        </comment>
+
+        <class name="TestOuter.TestInner1">
+            <commment>
+            </comment>
+            <method name="method" type="void">
+                <comment/>
+                <param name="param1" type="int">
+                    <comment/>
+                </param>
+            </method>
+        </class>
+            
+        <class name="TestOuter.TestInner2">
+            <commment>
+            </comment>
+            <field name="field" type="int">
+            </field>
+        </class>
+    </class>
+</package>

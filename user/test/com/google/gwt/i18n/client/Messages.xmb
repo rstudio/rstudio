@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE messagebundle SYSTEM
+  "/home/build/nonconf/google3/i18n/messagebundle.dtd">
+
+<!-- Copyright 2005 Google Inc. All Rights Reserved. -->
+
+<!-- I generate a class named Messages -->
+<messagebundle class="com.google.i18n.example.holamundo.Messages"> 
+
+
+  <!-- A message named WorldMessage (mangled to WORLD_MESSAGE in Java),
+       with hint to translators "Greetings to the world"
+       and content "Hello, world!" 
+    -->
+  <msg name="WorldMessage" desc="Greetings to the world">
+    Hello, world!
+  </msg>
+
+</messagebundle>

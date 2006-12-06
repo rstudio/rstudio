@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="UserDoc" default="all" basedir=".">
+
+    <!-- set global properties for this build -->
+    <property name="out" location="target"/>
+
+    <property name="USER_PKGS" value="com.google.gwt.core.client;com.google.gwt.core.ext;com.google.gwt.core.ext.typeinfo;com.google.gwt.i18n.client;com.google.gwt.json.client;com.google.gwt.junit.client;com.google.gwt.user.client;com.google.gwt.user.client.rpc;com.google.gwt.user.client.ui;com.google.gwt.user.server.rpc;com.google.gwt.xml.client;com.google.gwt.http.client"/>
+    <property name="LANG_PKGS" value="java.lang;java.util"/>
+    <property name="DOC_PKGS" value="com.google.gwt.doc"/>
+
+
+    <property name="java.home" value="../third_party/j2sdk1.4.2_09-linux/jre"/>
+
+    <path id="USER_SOURCE_PATH">
+        <pathelement location="../gwt-user/src"/>
+        <pathelement location="../gwt-user/javadoc"/>
+        <pathelement location="../gwt-user/supersrc"/>
+        <pathelement location="../gwt-dev/src"/>
+    </path>
+
+    <path id="USER_CLASS_PATH">
+        <pathelement location="../gwt-user/target/gwt-user.jar"/>
+        <pathelement location="../gwt-dev/gwt-dev-linux/target/gwt-dev-linux.jar"/>
+        <pathelement location="../repository/junit/junit/3.8.1/junit-3.8.1.jar"/>
+    </path>
+
+    <path id="DOC_SOURCE_PATH">
+        <pathelement location="./src"/>
+        <!-- scottb: is this next line really necessary? -->
+        <pathelement location="../gwt-user/javadoc"/>
+        <path refid="USER_SOURCE_PATH"/>
+    </path>
+
+    <path id="DOC_PATH">
+        <pathelement location="./src"/>
+        <pathelement location="../repository/jdk/linux/lib/tools/1.4.2_09/tools-1.4.2_09.jar"/>
+        <pathelement location="../gwt-tools/doctool/target/doctool.jar"/>
+        <path refid="USER_SOURCE_PATH"/>
+    </path>
+
+    <target name="doc">
+        <java classpathref="DOC_PATH" classname="com.google.doctool.DocTool" fork="yes" failonerror="true">
+            <arg value="doc"/>
+            <arg value="gwt-doc"/>
+            <arg value="-out"/>
+            <arg value="${out}"/>
+            <arg value="-classpath"/>
+            <arg pathref="USER_CLASS_PATH"/>
+            <arg value="-sourcepath"/>
+            <arg pathref="DOC_SOURCE_PATH"/>
+            <arg value="-packages"/>
+            <arg value="${DOC_PKGS}"/>
+        </java>
+    </target>
+	
+    <target name="user">
+        <move file="../gwt-user/supersrc/com/google/gwt/junit/translatable/com/google/gwt/junit/client/GWTTestCase.java"
+            tofile="../gwt-user/supersrc/com/google/gwt/junit/translatable/com/google/gwt/junit/client/GWTTestCase.java_" failonerror="false"/>
+        <java classpathref="DOC_PATH" classname="com.google.doctool.DocTool" fork="yes" failonerror="true">
+            <arg value="java"/>
+            <arg value="gwt-user"/>
+            <arg value="-out"/>
+            <arg value="${out}"/>
+            <arg value="-overview"/>
+            <arg value="./src/gwt-user.html"/>
+            <arg value="-classpath"/>
+            <arg pathref="USER_CLASS_PATH"/>
+            <arg value="-sourcepath"/>
+            <arg pathref="USER_SOURCE_PATH"/>
+            <arg value="-packages"/>
+            <arg value="${USER_PKGS}"/>
+        </java>
+        <move file="../gwt-user/supersrc/com/google/gwt/junit/translatable/com/google/gwt/junit/client/GWTTestCase.java_"
+            tofile="../gwt-user/supersrc/com/google/gwt/junit/translatable/com/google/gwt/junit/client/GWTTestCase.java" failonerror="false"/>
+    </target>
+
+    <target name="lang">
+        <java classpathref="DOC_PATH" classname="com.google.doctool.DocTool" fork="yes" failonerror="true">			
+            <arg value="java"/>
+            <arg value="gwt-lang"/>
+            <arg value="-out"/>
+            <arg value="${out}"/>
+            <arg value="-overview"/>
+            <arg value="./src/gwt-lang.html"/>
+            <arg value="-classpath"/>
+            <arg pathref="USER_CLASS_PATH"/>
+            <arg value="-sourcepath"/>
+            <arg path="../gwt-user/supersrc/com/google/gwt/emul"/>
+            <arg value="-packages"/>
+            <arg value="${LANG_PKGS}"/>
+        </java>
+    </target>
+
+    <target name="html" depends="doc,user,lang">
+        <java classpathref="DOC_PATH" classname="com.google.doctool.DocTool" fork="yes" failonerror="true">			
+            <arg value="-html"/>
+            <arg value="Google Web Toolkit (Beta)"/>
+            <arg value="gwt-doc"/>
+            <arg value="gwt-user"/>
+            <arg value="gwt-lang"/>
+            <arg value="-out"/>
+            <arg value="${out}"/>
+            <arg value="-imagepath"/>
+            <arg path="./src"/>
+        </java>
+        <delete file="${out}/html/topics.htmls"/>
+        <mkdir dir="${out}/css"/>
+        <copy todir="${out}/css">
+            <fileset dir="src" includes="*.css"/>
+        </copy>
+    </target>
+	
+    <target name="javadoc">
+        <java classpathref="DOC_PATH" classname="com.google.doctool.custom.GWTJavaDoclet" fork="yes" failonerror="true">
+            <arg value="-quiet"/>
+            <arg value="-source"/>
+            <arg value="1.4"/>
+            <arg value="-d"/>
+            <arg value="${out}/javadoc"/>
+            <arg value="-classpath"/>
+            <arg pathref="USER_CLASS_PATH"/>
+            <arg value="-sourcepath"/>
+            <arg pathref="USER_SOURCE_PATH"/>
+            <arg value="-examplepackages"/>
+            <arg value="com.google.gwt.examples;com.google.gwt.examples.i18n;com.google.gwt.examples.http.client"/>
+            <arg value="-packages"/>
+            <arg value="${USER_PKGS}"/>
+        </java>
+    </target>
+
+    <target name="clean">
+        <delete dir="${out}"/>
+    </target>
+    
+    <target name="all" depends="clean, html, javadoc"/>
+</project>

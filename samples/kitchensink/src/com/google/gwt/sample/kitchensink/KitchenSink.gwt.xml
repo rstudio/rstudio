@@ -1,0 +1,5 @@
+<module>
+	<inherits name='com.google.gwt.user.User'/>
+	<entry-point class='com.google.gwt.sample.kitchensink.client.KitchenSink'/>
+	<stylesheet src='KitchenSink.css'/>
+</module>

@@ -1,0 +1,75 @@
+<project name="dev-core" default="all" basedir=".">
+	<property name="gwt.root" location="../.." />
+	<property name="project.tail" value="dev/core" />
+	<import file="${gwt.root}/common.ant.xml" />
+
+	<target name="unjar.deps" description="Unzips all dependency jars into the output folder">
+		<gwt.unjar toollib="apache/tapestry-util-text-4.0.2.jar" />
+		<gwt.unjar toollib="eclipse/jdt-3.1.1.jar" />
+		<gwt.unjar toollib="junit/junit-3.8.1.jar" />
+		<gwt.unjar toollib="apache/ant-1.6.1.jar" />
+		<gwt.unjar toollib="tomcat/ant-launcher-1.6.5.jar" />
+		<gwt.unjar toollib="tomcat/catalina-1.0.jar" />
+		<gwt.unjar toollib="tomcat/catalina-optional-1.0.jar" />
+		<gwt.unjar toollib="tomcat/commons-beanutils-1.6.jar" />
+		<gwt.unjar toollib="tomcat/commons-collections-3.1.jar" />
+		<gwt.unjar toollib="tomcat/commons-digester-1.5.jar" />
+		<gwt.unjar toollib="tomcat/commons-el-1.0.jar" />
+		<gwt.unjar toollib="tomcat/commons-logging-1.0.jar" />
+		<gwt.unjar toollib="tomcat/commons-modeler-1.1.jar" />
+		<gwt.unjar toollib="tomcat/jakarta-regexp-1.3.jar" />
+		<gwt.unjar toollib="tomcat/jasper-compiler-1.0.jar" />
+		<gwt.unjar toollib="tomcat/jasper-runtime-1.0.jar" />
+		<gwt.unjar toollib="tomcat/jsp-api-2.0.jar" />
+		<gwt.unjar toollib="tomcat/mx4j-jmx-1.1.jar" />
+		<gwt.unjar toollib="tomcat/naming-common-1.0.jar" />
+		<gwt.unjar toollib="tomcat/naming-factory-1.0.jar" />
+		<gwt.unjar toollib="tomcat/naming-java-1.0.jar" />
+		<gwt.unjar toollib="tomcat/naming-resources-1.0.jar" />
+		<gwt.unjar toollib="tomcat/servlet-api-2.4.jar" />
+		<gwt.unjar toollib="tomcat/servlets-common-1.0.jar" />
+		<gwt.unjar toollib="tomcat/servlets-default-1.0.jar" />
+		<gwt.unjar toollib="tomcat/servlets-invoker-1.0.jar" />
+		<gwt.unjar toollib="tomcat/tomcat-coyote-1.0.jar" />
+		<gwt.unjar toollib="tomcat/tomcat-http11-1.0.jar" />
+		<gwt.unjar toollib="tomcat/tomcat-jk2-2.1.jar" />
+		<gwt.unjar toollib="tomcat/tomcat-util-5.1.jar" />
+		<gwt.unjar toollib="xerces/xerces-2.0.2.jar" />
+		<gwt.unjar toollib="xerces/xml-apis-2.0.2.jar" />
+	</target>
+
+	<target name="build" depends="unjar.deps" description="Compiles this project">
+		<!--
+		There are classes missing from dev/core that are necessary
+		to compile the rest of dev/core (e.g. BootStrapPlatform); these are
+		provided by each platform implementation, but in order to compile the
+		core standalone, we need a dummy version of the class to build against.
+		-->
+		<property name="javac.out-dummy" location="${project.build}/bin-dummy" />
+		<mkdir dir="${javac.out-dummy}" />
+		<gwt.javac srcdir="src-dummy" destdir="${javac.out-dummy}" />
+		<mkdir dir="${javac.out}" />
+		<gwt.javac>
+			<classpath>
+				<pathelement location="${javac.out-dummy}" />
+				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+				<!-- Must build against a version of SWT; just pick one -->
+				<pathelement location="${gwt.tools.lib}/eclipse/org.eclipse.swt.gtk-linux-3.2.1.jar" />
+			</classpath>
+		</gwt.javac>
+	</target>
+
+	<target name="verify" description="Static analysis of source">
+		<gwt.checkstyle>
+			<fileset dir="super/com/google/gwt/dev/jjs/intrinsic"/>
+		</gwt.checkstyle>
+	</target>
+
+	<target name="clean" description="Cleans this project's intermediate and output files">
+		<delete dir="${project.build}" />
+		<delete file="${project.lib}" />
+	</target>
+
+	<target name="all" depends="build" description="Builds this project" />
+
+</project>

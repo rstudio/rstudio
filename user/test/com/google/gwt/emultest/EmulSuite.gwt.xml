@@ -1,0 +1,5 @@
+<module>
+	<inherits name='com.google.gwt.junit.JUnit'/>
+	<inherits name='org.apache.commons.Collections'/>
+	<source path='java'/>
+</module>

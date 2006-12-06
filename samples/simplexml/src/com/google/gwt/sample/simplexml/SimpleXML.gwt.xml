@@ -1,0 +1,5 @@
+<module>
+	<inherits name="com.google.gwt.user.User"/>
+	<inherits name ="com.google.gwt.xml.XML"/>
+	<entry-point class="com.google.gwt.sample.simplexml.client.SimpleXML"/>
+</module>

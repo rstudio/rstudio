@@ -1,0 +1,4 @@
+<module>
+	<inherits name='com.google.gwt.junit.JUnit'/>
+ 	<source path='collections'/>
+</module>

@@ -1,0 +1,21 @@
+<module>
+  <inherits name='com.google.gwt.user.User' />
+
+  <define-property name='rpc.enforceTypeVersioning' values="true, false" />
+  <set-property name='rpc.enforceTypeVersioning' value='true' />
+
+  <servlet path='/echo' class='com.google.gwt.user.server.rpc.EchoServiceImpl' />
+  <servlet path='/collections'
+    class='com.google.gwt.user.server.rpc.CollectionsTestServiceImpl' />
+  <servlet path='/customfieldserializers'
+    class='com.google.gwt.user.server.rpc.CustomFieldSerializerTestServiceImpl' />
+  <servlet path='/inheritance'
+    class='com.google.gwt.user.server.rpc.InheritanceTestServiceImpl' />
+  <servlet path='/objectgraphs'
+    class='com.google.gwt.user.server.rpc.ObjectGraphTestServiceImpl' />
+  <servlet path='/valuetypes'
+    class='com.google.gwt.user.server.rpc.ValueTypesTestServiceImpl' />
+  <servlet path='/servlettest'
+    class='com.google.gwt.user.server.rpc.RemoteServiceServletTestServiceImpl' />
+
+</module>

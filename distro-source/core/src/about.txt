@@ -1,0 +1,22 @@
+Google Web Toolkit ${project.version}
+(c) Copyright Google, Inc. 2006.  All rights reserved.
+Visit Google Code (http://code.google.com/webtoolkit/).
+
+This product includes software developed by:
+ - The Apache Software Foundation (http://www.apache.org/).
+   - Tomcat (http://tomcat.apache.org/) with modifications
+   - Xerces (http://xerces.apache.org/)
+   - Tapestry (http://tapestry.apache.org/)
+ - The Eclipse Foundation (http://www.eclipse.org/).
+   - Java Development Tools (http://www.eclipse.org/jdt/)
+   - Standard Widget Toolkit (http://www.eclipse.org/swt/) with modifications
+ - The Mozilla Foundation (http://www.mozilla.org/).
+   - Mozilla 1.7.12 (http://www.mozilla.org/releases/mozilla1.7.12/)
+   - Rhino (http://www.mozilla.org/rhino/) with modifications
+ - The WebKit Open Source Project (http://www.webkit.org)
+ - The W3C consortium (http://www.w3.org/)
+ - The SAX project (http://www.saxproject.org/)
+
+Source files and licenses for the modifications mentioned above are part of this
+distribution and can be found with their class files inside the included jars.
+See the chart at http://code.google.com/webtoolkit/terms-${project.version}.html#licenses

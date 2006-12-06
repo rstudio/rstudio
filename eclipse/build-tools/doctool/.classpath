@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="core/src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry sourcepath="/GWT_TOOLS/lib/jdk/tools-1.4.2_09-src.zip" kind="var" path="GWT_TOOLS/lib/jdk/tools-1.4.2_09.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

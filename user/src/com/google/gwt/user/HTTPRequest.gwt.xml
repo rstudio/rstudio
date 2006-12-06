@@ -1,0 +1,21 @@
+<!--                                                                        -->
+<!-- Copyright 2006 Google Inc. All Rights Reserved.                        -->
+<!-- Deferred binding rules for HTTP/server call support selection.         -->
+<!--                                                                        -->
+<!-- This module is typically inherited via com.google.gwt.user.User        -->
+<!--                                                                        -->
+<module>
+	<inherits name="com.google.gwt.core.Core"/>
+	<inherits name="com.google.gwt.user.UserAgent"/>
+
+	<!-- Fall through to this rule is the browser isn't IE -->
+	<replace-with class="com.google.gwt.user.client.impl.HTTPRequestImpl">
+		<when-type-is class="com.google.gwt.user.client.impl.HTTPRequestImpl"/>
+	</replace-with>
+
+	<!-- IE differs slightly in how XmlHttpRequest gets instantiated -->
+	<replace-with class="com.google.gwt.user.client.impl.HTTPRequestImplIE6">
+		<when-type-is class="com.google.gwt.user.client.impl.HTTPRequestImpl"/>
+		<when-property-is name="user.agent" value="ie6"/>
+	</replace-with>
+</module>

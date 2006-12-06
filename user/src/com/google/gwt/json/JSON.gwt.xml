@@ -1,0 +1,7 @@
+<!--                                                                        -->
+<!-- Copyright 2006 Google Inc. All Rights Reserved.                        -->
+<!-- JSON parsing support.                                                  -->
+<!--                                                                        -->
+<module>
+	<inherits name="com.google.gwt.core.Core"/>
+</module>

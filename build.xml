@@ -1,0 +1,30 @@
+<project name="GWT" default="all" basedir=".">
+	<property name="gwt.root" location="." />
+	<property name="project.tail" value="" />
+	<import file="${gwt.root}/common.ant.xml" />
+
+	<target name="dev" description="Builds dev">
+		<ant dir="dev" inheritall="false"/>
+	</target>
+
+	<target name="user" depends="dev" description="Builds user">
+		<ant dir="user" inheritall="false"/>
+	</target>
+	
+	<target name="servlet" depends="user" description="Builds servlet">
+		<ant dir="servlet" inheritall="false"/>
+	</target>
+
+	<target name="jni" description="Builds jni">
+		<ant dir="jni" inheritall="false"/>
+	</target>
+
+	<target name="clean" description="Cleans all GWT build outputs">
+		<delete dir="${gwt.build}" failonerror="false" />
+	</target>
+
+	<target name="build" depends="dev, user, servlet, jni" description="Builds GWT" />
+
+	<target name="all" depends="build" description="Builds GWT" />
+
+</project>

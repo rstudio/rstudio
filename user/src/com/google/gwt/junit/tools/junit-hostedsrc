@@ -1,0 +1,3 @@
+#!/bin/sh
+APPDIR=`dirname $0`;
+java @vmargs -Dgwt.args="-out www-test" -cp "$APPDIR/src:$APPDIR/test:$APPDIR/bin:@junitPath:@gwtUserPath:@gwtDevPath" junit.textui.TestRunner @clientPackage.@className "$@";

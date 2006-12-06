@@ -1,0 +1,21 @@
+<!--                                                                        -->
+<!-- Copyright 2006 Google Inc. All Rights Reserved.                        -->
+<!-- Deferred binding rules for browser selection.                          -->
+<!--                                                                        -->
+<!-- This module is typically inherited via com.google.gwt.user.User        -->
+<!--                                                                        -->
+<module>
+	<inherits name="com.google.gwt.core.Core"/>
+	<inherits name="com.google.gwt.user.UserAgent"/>
+
+	<!-- Fall through to this rule is the browser isn't IE -->
+	<replace-with class="com.google.gwt.user.client.ui.impl.TextBoxImpl">
+		<when-type-is class="com.google.gwt.user.client.ui.impl.TextBoxImpl"/>
+	</replace-with>
+
+	<!-- IE has a completely different TextBox implementation -->
+	<replace-with class="com.google.gwt.user.client.ui.impl.TextBoxImplIE6">
+		<when-type-is class="com.google.gwt.user.client.ui.impl.TextBoxImpl"/>
+		<when-property-is name="user.agent" value="ie6"/>
+	</replace-with>
+</module>

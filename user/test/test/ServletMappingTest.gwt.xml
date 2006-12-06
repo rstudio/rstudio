@@ -1,0 +1,8 @@
+<module>
+  <inherits name="com.google.gwt.user.User"/>
+  <source path=""/>
+  <servlet class="test.ServletMappingTestServiceImpl1" path="/test"/>
+  <servlet class="test.ServletMappingTestServiceImpl2" path="/test/longer"/>
+  <servlet class="test.ServletMappingTestServiceImpl3" path="/test/long"/>
+  <servlet class="test.ServletMappingTestServiceImpl3" path="/totally/different/but/valid"/>
+</module>

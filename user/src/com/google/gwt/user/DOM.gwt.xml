@@ -1,0 +1,33 @@
+<!--                                                                        -->
+<!-- Copyright 2006 Google Inc. All Rights Reserved.                        -->
+<!-- Deferred binding rules for browser selection.                          -->
+<!--                                                                        -->
+<!-- This module is typically inherited via com.google.gwt.user.User        -->
+<!--                                                                        -->
+<module>
+	<inherits name="com.google.gwt.core.Core"/>
+	<inherits name="com.google.gwt.user.UserAgent"/>
+
+	<replace-with class="com.google.gwt.user.client.impl.DOMImplOpera">
+		<when-type-is class="com.google.gwt.user.client.impl.DOMImpl"/>
+		<when-property-is name="user.agent" value="opera"/>
+	</replace-with>
+
+	<replace-with class="com.google.gwt.user.client.impl.DOMImplSafari">
+		<when-type-is class="com.google.gwt.user.client.impl.DOMImpl"/>
+		<when-property-is name="user.agent" value="safari"/>
+	</replace-with>
+
+	<replace-with class="com.google.gwt.user.client.impl.DOMImplIE6">
+		<when-type-is class="com.google.gwt.user.client.impl.DOMImpl"/>
+		<when-property-is name="user.agent" value="ie6"/>
+	</replace-with>
+
+	<replace-with class="com.google.gwt.user.client.impl.DOMImplMozilla">
+		<when-type-is class="com.google.gwt.user.client.impl.DOMImpl"/>
+		<any>
+			<when-property-is name="user.agent" value="gecko1_8"/>
+			<when-property-is name="user.agent" value="gecko"/>
+		</any>
+	</replace-with>
+</module>

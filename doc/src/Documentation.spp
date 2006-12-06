@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+	<Folder FolderName="XML Files" ExtStr="xml;cml;math;mtx;rdf;smil;svg;wml"/>
+	<Folder FolderName="XSL Files" ExtStr="xsl;xslt">
+		<File FilePath=".\api-topics.xslt" HomeFolder="Yes"/>
+		<File FilePath=".\doc-topics.xslt" HomeFolder="Yes"/>
+		<File FilePath=".\topics-hhc.xslt" HomeFolder="Yes"/>
+		<File FilePath=".\topics-hhk.xslt" HomeFolder="Yes"/>
+		<File FilePath=".\topics-hhp.xslt" HomeFolder="Yes"/>
+		<File FilePath=".\topics-htmls.xslt" HomeFolder="Yes"/>
+		<File FilePath=".\topics-singlehtml.xslt" HomeFolder="Yes"/>
+		<File FilePath=".\topics-toc.xslt" HomeFolder="Yes"/>
+	</Folder>
+	<Folder FolderName="XQuery Files" ExtStr="xq;xql;xquery"/>
+	<Folder FolderName="HTML Files" ExtStr="html;htm;xhtml;asp"/>
+	<Folder FolderName="DTD/Schemas" ExtStr="dtd;dcd;xdr;biz;xsd">
+		<File FilePath=".\api.xsd" HomeFolder="Yes"/>
+		<File FilePath=".\topic.xsd" HomeFolder="Yes"/>
+	</Folder>
+	<Folder FolderName="Entities" ExtStr="ent"/>
+	<ExtMountFolder FolderName="C:\src-gwt-2.0\Documentation" ExtStr="xml"/>
+</Project>

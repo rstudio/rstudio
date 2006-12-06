@@ -1,0 +1,20 @@
+<!--                                                                        -->
+<!-- Copyright 2006 Google Inc. All Rights Reserved.                        -->
+<!-- Deferred binding rules for browser selection.                          -->
+<!--                                                                        -->
+<!-- This module is typically inherited via com.google.gwt.user.User        -->
+<!--                                                                        -->
+<module>
+	<inherits name="com.google.gwt.core.Core"/>
+	<inherits name="com.google.gwt.user.UserAgent"/>
+
+	<!-- Safari and old mozillae need a different implementation -->
+	<replace-with class="com.google.gwt.user.client.ui.impl.FocusImplOld">
+		<when-type-is class="com.google.gwt.user.client.ui.impl.FocusImpl"/>
+		<any>
+		    <when-property-is name="user.agent" value="safari"/>
+		    <when-property-is name="user.agent" value="gecko"/>		      
+			<when-property-is name="user.agent" value="opera"/>
+ 	    </any>
+	</replace-with>
+</module>

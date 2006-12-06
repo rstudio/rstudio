@@ -1,0 +1,42 @@
+<html>
+  <head>
+    <meta name='gwt:module' content='com.google.gwt.sample.i18n.I18N'>
+    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+    <script language=javaScript>
+      // Create dictionaries using the following style:
+      var userInfo = {
+        name: "Amelie Crutcher",
+        timeZone: "EST",
+        userID: "123",
+        lastLogOn: "2/2/2006"
+      };
+    </script>
+
+		<!-- Supplies the locale that should be used if the locale is not present in the URL query string.-->
+		<!-- <meta name='gwt:property' content='locale=fr'>-->
+		<link rel="stylesheet" type="text/css" href="I18N.css" />
+		<title>Internationalization sample</title>
+	</head>
+	<body bgcolor="white">
+    <script language="javascript" src="gwt.js"></script>
+
+    <h1>
+      &#206;&#241;&#355;&#233;&#114;&#241;&#229;&#355;&#238;&#246;&#241;&#229;&#316;&#238;&#382;&#229;&#355;&#238;&#246;&#241;
+      Sample
+    </h1>
+    <p>
+      Sample that shows the use of i18n text processing classes.
+    <p>
+      In a real internationalized application, all strings (including this one),
+      would be internationalized.
+    <p>
+      Add <a href="I18N.html?locale=fr"> locale=fr </a> to the query string to
+      change the language display.
+      For example, 
+      <code>http://localhost:8888/com.google.gwt.sample.i18n.I18N/I18N.html?locale=fr</code>
+      changes the locale to French.
+    </p>
+
+    <div id="root" />
+  </body>
+</html>

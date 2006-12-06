@@ -1,0 +1,100 @@
+<project name="common">
+	<property name="test.ant.file" location="${gwt.root}/${project.tail}/build.xml" />
+	<condition property="project.valid">
+		<equals arg1="${ant.file}" arg2="${test.ant.file}" />
+	</condition>
+	<fail unless="project.valid" message="This build file is in an inconsistent state." />
+
+	<!-- Global Properties -->
+	<property environment="env" />
+	<property name="gwt.version" value="${env.GWT_VERSION}" />
+	<property name="gwt.tools" location="${env.GWT_TOOLS}" />
+	<property name="gwt.tools.lib" location="${gwt.tools}/lib" />
+	<property name="gwt.tools.antlib" location="${gwt.tools}/antlib" />
+	<property name="gwt.tools.redist" location="${gwt.tools}/redist" />
+	<property name="gwt.build" location="${gwt.root}/build" />
+	<property name="gwt.build.out" location="${gwt.build}/out" />
+	<property name="gwt.build.lib" location="${gwt.build}/lib" />
+	<property name="gwt.build.jni" location="${gwt.build}/jni" />
+	<property name="gwt.build.staging" location="${gwt.build}/staging" />
+	<property name="gwt.build.dist" location="${gwt.build}/dist" />
+	<property name="project.build" location="${gwt.build.out}/${project.tail}" />
+	<property name="project.lib" location="${gwt.build.lib}/gwt-${ant.project.name}.jar" />
+	<property name="project.jni" location="${gwt.build}/${project.tail}" />
+	<property name="unjar.out" location="${project.build}/unjar" />
+	<property name="javac.out" location="${project.build}/bin" />
+	<property name="javac.debug" value="true" />
+	<property name="javac.debuglevel" value="lines,vars,source" />
+	<property name="javac.source" value="1.4" />
+	<property name="javac.nowarn" value="true" />
+
+	<!-- Plug-in Tasks -->
+	<taskdef resource="checkstyletask.properties" classpath="${gwt.tools.antlib}/checkstyle-all-4.2.jar" />
+
+	<!-- Global Custom Tasks -->
+	<presetdef name="gwt.javac">
+		<javac srcdir="src" destdir="${javac.out}" classpath="${unjar.out}" debug="${javac.debug}" debuglevel="${javac.debuglevel}" source="${javac.source}" nowarn="${javac.nowarn}" />
+	</presetdef>
+
+	<presetdef name="gwt.jar">
+		<jar destfile="${project.lib}" update="true" duplicate="preserve" index="true" />
+	</presetdef>
+
+	<macrodef name="gwt.untar">
+		<attribute name="src" />
+		<attribute name="dest" />
+		<sequential>
+			<!-- GNU tar handles permissions and symlinks correctly -->
+			<exec executable="tar" failonerror="true">
+				<arg value="-xpzf" />
+				<arg file="@{src}" />
+				<arg value="-C" />
+				<arg file="@{dest}" />
+			</exec>
+		</sequential>
+	</macrodef>
+
+    <target name="antcall.unjar.maybe" unless="unjar.upToDate">
+		<mkdir dir="${unjar.out}" />
+		<unjar src="${unjar.path}" dest="${unjar.out}" overwrite="true" />
+		<touch file="${unjar.flagFile}" />
+	</target>
+
+	<target name="antcall.unjar">
+		<basename property="unjar.name" file="${unjar.path}" />
+		<property name="unjar.flagFile" value="${project.build}/${unjar.name}.unjar" />
+		<uptodate property="unjar.upToDate" srcfile="${unjar.path}" targetfile="${unjar.flagFile}" />
+		<antcall target="antcall.unjar.maybe" />
+	</target>
+
+	<macrodef name="gwt.unjar">
+		<attribute name="toollib" default="" />
+		<attribute name="path" default="${gwt.tools.lib}/@{toollib}" />
+		<sequential>
+			<antcall target="antcall.unjar">
+				<param name="unjar.path" value="@{path}" />
+			</antcall>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="property.ensure">
+		<attribute name="name" />
+		<attribute name="location" />
+		<sequential>
+			<property name="@{name}" location="@{location}" />
+			<available file="${@{name}}" property="@{name}.exists" />
+			<fail unless="@{name}.exists" message="Cannot find dependency ${@{name}}" />
+		</sequential>
+	</macrodef>
+
+	<presetdef name="gwt.checkstyle">
+		<checkstyle config="${gwt.root}/eclipse/settings/code-style/gwtCheckStyle.xml" maxWarnings="0">
+			<fileset dir="src" />
+
+			<!-- Location of cache-file if we decide to try turning it on -->
+			<!--
+			<property key="checkstyle.cache.file" file="target/cachefile" />
+			-->
+		</checkstyle>
+	</presetdef>
+</project>

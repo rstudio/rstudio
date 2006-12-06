@@ -1,0 +1,1 @@
+@java -Dgwt.args="-out www-test" -cp "%~dp0\src;%~dp0\test;%~dp0\bin;@junitPath;@gwtUserPath;@gwtDevPath" junit.textui.TestRunner @clientPackage.@className %*

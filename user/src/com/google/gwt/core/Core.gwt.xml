@@ -1,0 +1,11 @@
+<!--                                                                        -->
+<!-- Copyright 2006 Google Inc. All Rights Reserved.                        -->
+<!-- Types and resources required to support primitive system operation.    -->
+<!--                                                                        -->
+<!-- Types from this module are visible to and imported into user code.     -->
+<!-- Every module should directly or indirectly inherit this module.        -->
+<!--                                                                        -->
+<module>
+   <inherits name="com.google.gwt.dev.jjs.intrinsic.Intrinsic"/>
+   <inherits name="com.google.gwt.emul.Emulation"/>
+</module>

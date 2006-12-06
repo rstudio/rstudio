@@ -1,0 +1,24 @@
+<project name="jni" default="all" basedir=".">
+	<property name="gwt.root" location=".." />
+	<property name="project.tail" value="jni" />
+	<import file="${gwt.root}/common.ant.xml" />
+
+	<target name="linux" description="Builds jni/linux">
+		<ant dir="linux" inheritall="false"/>
+	</target>
+	
+	<target name="windows" description="Builds jni/linux">
+		<ant dir="windows" inheritall="false"/>
+	</target>
+
+	<target name="mac" description="Builds jni/linux">
+		<ant dir="mac" inheritall="false"/>
+	</target>
+
+	<target name="clean" description="Cleans this project's intermediate and output files">
+		<delete dir="${project.build}" failonerror="false" />
+	</target>
+
+	<target name="all" depends="linux,windows,mac" description="Builds all platforms" />
+
+</project>

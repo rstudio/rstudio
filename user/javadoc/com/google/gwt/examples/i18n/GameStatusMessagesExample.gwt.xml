@@ -1,0 +1,8 @@
+<module>
+    <!-- Note that you don't have to inherit User for simple examples -->
+    <inherits name="com.google.gwt.core.Core"/>
+    <inherits name="com.google.gwt.i18n.I18N"/>
+    <source path=""/>
+    <entry-point class="com.google.gwt.examples.i18n.GameStatusMessagesExample"/>
+    <extend-property name="locale" values="en"/>
+</module>

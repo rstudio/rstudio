@@ -1,0 +1,28 @@
+<module>
+	<inherits name="com.google.gwt.core.Core"/>
+
+	<entry-point class="com.google.gwt.dev.cfg.client.Dummy"/>
+
+	<public path="testCaseInsensitive" includes="*.HTML" casesensitive="false"/>
+
+	<public path="testCaseSensitive" includes="*.html"/>
+
+	<public path="testDefaultExcludes"/>
+
+	<public path="testNoDefaultExcludes" defaultexcludes="no"/>
+
+	<public path="testExcludes" excludes="bad1.html bad2.html">
+		<exclude name="bad3.html"/>
+	</public>
+
+	<public path="testIncludeExclude" includes="*.html" excludes="bad1.html bad2.html">
+		<exclude name="bad3.html"/>
+	</public>
+
+	<public path="testIncludes" includes="good9.html good10.html">
+		<include name="good11.html"/>
+	</public>
+
+	<public path="testRecursive" includes="**/GOOD/*"/>
+
+</module>

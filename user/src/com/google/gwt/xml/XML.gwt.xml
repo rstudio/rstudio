@@ -1,0 +1,29 @@
+<!--                                                                        -->
+<!-- Copyright 2006 Google Inc. All Rights Reserved.                        -->
+<!-- XML parsing support.                                                   -->
+<!--                                                                        -->
+<module>
+	<inherits name="com.google.gwt.core.Core"/>
+	<inherits name="com.google.gwt.user.UserAgent"/>
+
+	<!-- Fall through to this rule for all other browsers -->
+	<replace-with class="com.google.gwt.xml.client.impl.XMLParserImplStandard">
+		<when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
+	</replace-with>
+
+	<replace-with class="com.google.gwt.xml.client.impl.XMLParserImplOpera">
+		<when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
+		<when-property-is name="user.agent" value="opera"/>
+	</replace-with>
+
+	<replace-with class="com.google.gwt.xml.client.impl.XMLParserImplIE6">
+		<when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
+		<when-property-is name="user.agent" value="ie6"/>
+	</replace-with>
+
+	<replace-with class="com.google.gwt.xml.client.impl.XMLParserImplSafari">
+		<when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
+		<when-property-is name="user.agent" value="safari"/>
+	</replace-with>
+	
+</module>

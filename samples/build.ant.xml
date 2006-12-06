@@ -1,0 +1,53 @@
+<!--
+	NOTE:
+	
+	This file is a major hack to work around the problems that I have experienced
+	with maven.  Basically, I use this file to do some basic work and then
+	I have it create a jar that replaces that jar that maven created.  I'm
+	sure that I will be bitten by this.
+-->
+<project name="build" default="all" basedir=".">
+  <target name="generate-sources">
+    <copy todir="./target/generated-sources/src/">
+      <fileset dir="../src">
+        <exclude name="**/.sbas/**"/>
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="generate-resources">
+    <copy todir="./target/generated-sources/src">
+      <fileset dir="../src">
+        <exclude name="**/.sbas/**"/>
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="compile">
+    <java classname="com.google.gwt.user.tools.ApplicationCreator" fork="yes"
+      failonerror="true">
+      <classpath>
+        <path refid="maven.runtime.classpath"/>
+        <pathelement location="./target/generated-sources/src"/>
+      </classpath>
+
+      <jvmarg value="-Dgwt.devjar=${gwt.devjar}"/>
+      <arg value="-ignore"/>
+      <arg value="-out"/>
+      <arg file="./target/generated-sources"/>
+      <arg value="${sample.classname}"/>
+    </java>
+
+    <java classname="com.google.gwt.dev.GWTCompiler" fork="yes"
+      failonerror="true">
+      <classpath>
+        <path refid="maven.runtime.classpath"/>
+        <pathelement location="./target/generated-sources/src"/>
+      </classpath>
+
+      <arg value="-out"/>
+      <arg file="./target/generated-sources/www"/>
+      <arg value="${sample.module}"/>
+    </java>
+  </target>
+</project>

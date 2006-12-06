@@ -1,0 +1,22 @@
+<!--                                                                        -->
+<!-- Copyright 2006 Google Inc. All Rights Reserved.                        -->
+<!-- Remote Procedure Call support.                                         -->
+<!--                                                                        -->
+<!-- This module is typically inherited via com.google.gwt.user.User        -->
+<!--                                                                        -->
+<module>
+	<inherits name="com.google.gwt.user.HTTPRequest"/>
+	
+	<!-- 
+		Declare a property to determine whether or not RPC type versioning 
+		should be enforced. 
+	-->
+	<define-property name="gwt.enforceRPCTypeVersioning" values="true,false" />
+	
+	<!-- Default RPC versioning to be on -->
+	<set-property name="gwt.enforceRPCTypeVersioning" value="true"/>
+	
+	<generate-with class="com.google.gwt.user.rebind.rpc.ServiceInterfaceProxyGenerator">
+		<when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
+	</generate-with>
+</module>

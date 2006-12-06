@@ -1,0 +1,140 @@
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package java.lang;
+
+/**
+ * Wraps a primitive <code>double</code> as an object.
+ */
+public final class Double extends Number implements Comparable {
+  public static final double MAX_VALUE = 1.7976931348623157e+308;
+  public static final double MIN_VALUE = 4.9e-324;
+  public static final double NaN = 0d / 0d;
+  public static final double NEGATIVE_INFINITY = -1d / 0d;
+  public static final double POSITIVE_INFINITY = 1d / 0d;
+
+  private final double fValue;
+
+  public Double(double value) {
+    fValue = value;
+  }
+
+  public Double(String s) {
+    fValue = parseDouble(s);
+  }
+
+  public int compareTo(Object o) {
+    return compareTo((Double) o);
+  }
+
+  /**
+   * Performance caution: using Double objects as map keys is not recommended.
+   * Using double values as keys is generally a bad idea due to difficulty
+   * determining exact equality. In addition, there is no efficient JavaScript
+   * equivalent of <code>doubleToIntBits</code>. As a result, this method
+   * computes a hash code by truncating the whole number portion of the double,
+   * which may lead to poor performance for certain value sets if Doubles are
+   * used as keys in a {@link java.util.HashMap}.
+   */
+  public int hashCode() {
+    return (int) fValue;
+  }
+
+  public int compareTo(Double b) {
+    if (fValue < b.fValue) {
+      return -1;
+    } else if (fValue > b.fValue) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+
+  public boolean equals(Object o) {
+    return (o instanceof Double) && (((Double) o).fValue == fValue);
+  }
+
+  public static String toString(double b) {
+    return String.valueOf(b);
+  }
+
+  public String toString() {
+    return toString(fValue);
+  }
+
+  public static Double valueOf(String s) throws NumberFormatException {
+    return new Double(Double.parseDouble(s));
+  }
+
+  public byte byteValue() {
+    return (byte) fValue;
+  }
+
+  public float floatValue() {
+    return (float) fValue;
+  }
+
+  public double doubleValue() {
+    return fValue;
+  }
+
+  public int intValue() {
+    return (int) fValue;
+  }
+
+  public long longValue() {
+    return (long) fValue;
+  }
+
+  public short shortValue() {
+    return (short) fValue;
+  }
+
+  public static int compare(double x, double y) {
+    if (x < y) {
+      return -1;
+    } else if (x > y) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+
+  public static double parseDouble(String s) throws NumberFormatException {
+    double x = __parseDouble(s);
+    if (isNaN(x)) {
+      throw new NumberFormatException(s);
+    } else {
+      return x;
+    }
+  }
+
+  public boolean isNaN() {
+    return isNaN(fValue);
+  }
+
+  public static native boolean isNaN(double x) /*-{
+    return isNaN(x);
+  }-*/;
+
+  public boolean isInfinite() {
+    return isInfinite(fValue);
+  }
+
+  public static native boolean isInfinite(double x) /*-{
+    return !isFinite(x);
+  }-*/;
+
+}

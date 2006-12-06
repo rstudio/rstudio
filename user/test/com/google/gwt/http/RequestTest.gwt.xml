@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module>
+  <inherits name='com.google.gwt.user.User' />
+
+  <servlet path='/testRequest'
+    class='com.google.gwt.http.server.RequestTestServlet' />
+</module>

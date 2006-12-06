@@ -1,0 +1,7 @@
+<module>
+	<inherits name="com.google.gwt.i18n.I18N"/>
+
+	<!-- Browser-sensitive code should use the 'user.agent' property -->
+	<set-property name="locale" value="b_C_d" />
+	<extend-property name = "locale" values ="piglatin,piglatin_UK, piglatin_UK_win,a,b,b_C,b_C_d"/>
+ </module>

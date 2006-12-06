@@ -1,0 +1,13 @@
+.noprint {
+  display: none;
+}
+
+#header, #side, #gaia {
+  display: none;
+}
+
+#body {
+  margin: 0;
+  border: 0;
+  padding: 0;
+}

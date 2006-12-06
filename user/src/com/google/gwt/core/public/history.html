@@ -1,0 +1,20 @@
+<html>
+<head>
+<script>
+function hst() {
+  var search = location.search;
+  var historyToken = '';
+  if (location.search.length > 0)
+    historyToken = decodeURIComponent(location.search.substring(1));
+
+  document.getElementById('__historyToken').value = historyToken;
+  if (parent.__onHistoryChanged)
+    parent.__onHistoryChanged(historyToken);
+}
+</script></head>
+<body onload='hst()'>
+
+<input type='text' id='__historyToken'>
+
+</body>
+</html>

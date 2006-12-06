@@ -1,0 +1,244 @@
+// Copyright 2006 Google Inc. All Rights Reserved.
+
+package com.google.gwt.user.server.rpc;
+
+import com.google.gwt.user.client.rpc.CollectionsTestService;
+import com.google.gwt.user.client.rpc.TestSetFactory;
+import com.google.gwt.user.client.rpc.TestSetValidator;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Vector;
+
+public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
+    CollectionsTestService {
+
+  private static String toString(Object[] values) {
+    return Arrays.asList(values).toString();
+  }
+
+  public ArrayList echo(ArrayList list) throws CollectionsTestServiceException {
+    if (!TestSetValidator.isValid(list)) {
+      throw new CollectionsTestServiceException();
+    }
+
+    return list;
+  }
+
+  public boolean[] echo(boolean[] actual)
+      throws CollectionsTestServiceException {
+    boolean[] expected = TestSetFactory.createPrimitiveBooleanArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public Boolean[] echo(Boolean[] actual)
+      throws CollectionsTestServiceException {
+    Boolean[] expected = TestSetFactory.createBooleanArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public byte[] echo(byte[] actual) throws CollectionsTestServiceException {
+    byte[] expected = TestSetFactory.createPrimitiveByteArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public Byte[] echo(Byte[] actual) throws CollectionsTestServiceException {
+    Byte[] expected = TestSetFactory.createByteArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public char[] echo(char[] actual) throws CollectionsTestServiceException {
+    char[] expected = TestSetFactory.createPrimitiveCharArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public Character[] echo(Character[] actual)
+      throws CollectionsTestServiceException {
+    Character[] expected = TestSetFactory.createCharArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public Date[] echo(Date[] actual) throws CollectionsTestServiceException {
+    Date[] expected = TestSetFactory.createDateArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + toString(expected) + " actual:" + toString(actual));
+    }
+
+    return actual;
+  }
+
+  public double[] echo(double[] actual) throws CollectionsTestServiceException {
+    double[] expected = TestSetFactory.createPrimitiveDoubleArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public Double[] echo(Double[] actual) throws CollectionsTestServiceException {
+    Double[] expected = TestSetFactory.createDoubleArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public float[] echo(float[] actual) throws CollectionsTestServiceException {
+    float[] expected = TestSetFactory.createPrimitiveFloatArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public Float[] echo(Float[] actual) throws CollectionsTestServiceException {
+    Float[] expected = TestSetFactory.createFloatArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public HashMap echo(HashMap actual) throws CollectionsTestServiceException {
+    HashMap expected = TestSetFactory.createHashMap();
+    if (!TestSetValidator.isValid(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public HashSet echo(HashSet actual) throws CollectionsTestServiceException {
+    HashSet expected = TestSetFactory.createHashSet();
+    if (!TestSetValidator.isValid(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public int[] echo(int[] actual) throws CollectionsTestServiceException {
+    int[] expected = TestSetFactory.createPrimitiveIntegerArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public Integer[] echo(Integer[] actual)
+      throws CollectionsTestServiceException {
+    Integer[] expected = TestSetFactory.createIntegerArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public long[] echo(long[] actual) throws CollectionsTestServiceException {
+    long[] expected = TestSetFactory.createPrimitiveLongArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public Long[] echo(Long[] actual) throws CollectionsTestServiceException {
+    Long[] expected = TestSetFactory.createLongArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + toString(expected) + " actual:" + toString(actual));
+    }
+
+    return actual;
+  }
+
+  public short[] echo(short[] actual) throws CollectionsTestServiceException {
+    short[] expected = TestSetFactory.createPrimitiveShortArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public Short[] echo(Short[] actual) throws CollectionsTestServiceException {
+    Short[] expected = TestSetFactory.createShortArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public String[] echo(String[] actual) throws CollectionsTestServiceException {
+    String[] expected = TestSetFactory.createStringArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+
+  public Vector echo(Vector actual) throws CollectionsTestServiceException {
+    Vector expected = TestSetFactory.createVector();
+    if (!TestSetValidator.isValid(expected, actual)) {
+      throw new CollectionsTestServiceException("expected:"
+        + expected.toString() + " actual:" + actual.toString());
+    }
+
+    return actual;
+  }
+}

@@ -1,0 +1,10 @@
+<!--                                                                        -->
+<!-- Copyright 2006 Google Inc. All Rights Reserved.                        -->
+<!-- Fundamental types required by code generation and other basics.        -->
+<!-- Do not inherit this module directly; inherit com.google.gwt.core.Core. -->
+<!--                                                                        -->
+<!-- Types from this module are not visible to nor imported into user code. -->
+<!--                                                                        -->
+<module>
+   <super-source/>
+</module>

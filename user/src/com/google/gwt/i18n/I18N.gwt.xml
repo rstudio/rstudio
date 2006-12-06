@@ -1,0 +1,59 @@
+<!--                                                                        -->
+<!-- Copyright 2006 Google Inc. All Rights Reserved.                        -->
+<!-- Internationalization support.                                          -->
+<!--                                                                        -->
+<module>
+
+	<!-- Browser-sensitive code should use the 'locale' client property. -->
+	<!-- 'default' is always defined.                                    -->
+	<define-property name="locale" values="default" />
+
+	<property-provider name="locale">
+		<![CDATA[
+		try {
+          var locale;
+          
+          //Look for the locale as a url argument
+          if(locale==null) {
+            var args = parent.location.search;
+            var startLang = args.indexOf("locale");
+            if(startLang>=0){
+                var language = args.substring(startLang);
+                var begin = language.indexOf("=") + 1;
+                var end = language.indexOf("&");
+                if (end == -1) {
+                    end = language.length;
+                }
+                locale = language.substring(begin, end);
+            }
+          }      
+          if(locale == null){  
+           //Look for the locale on the web page
+            locale = parent.__gwt_getMetaProperty("locale")   
+          }
+           
+          if(locale == null){
+            return "default";
+          }
+           
+          while(!parent.__gwt_isKnownPropertyValue(window, "locale",  locale)){
+            var lastIndex = locale.lastIndexOf("_");
+            if(lastIndex == -1){
+          	  locale = "default";
+              break;
+            } else{
+              locale = locale.substring(0,lastIndex);
+            }
+          }
+          return locale;
+        } catch(e){
+          $wnd.alert("Unexpected exception in locale creator, using default: " + e);
+          return "default";
+        }
+		]]>
+	</property-provider>
+
+	<generate-with class="com.google.gwt.i18n.rebind.LocalizableGenerator">
+		<when-type-assignable class="com.google.gwt.i18n.client.Localizable" />
+	</generate-with>
+</module>

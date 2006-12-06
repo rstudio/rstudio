@@ -1,0 +1,7 @@
+<!--                                                                        -->
+<!-- Copyright 2006 Google Inc. All Rights Reserved.                        -->
+<!-- A JavaScript-based emulation of the Java Runtime library.              -->
+<!-- Do not inherit this module directly; inherit com.google.gwt.core.Core. -->
+<module>
+   <super-source/>
+</module>

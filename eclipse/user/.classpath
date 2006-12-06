@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="core/src"/>
+	<classpathentry kind="src" path="core/javadoc"/>
+	<classpathentry kind="src" path="core/test"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry exported="true" sourcepath="/GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2-src.zip" kind="var" path="GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2.jar"/>
+	<classpathentry exported="true" sourcepath="/GWT_TOOLS/lib/junit/junit-3.8.1-src.zip" kind="var" path="GWT_TOOLS/lib/junit/junit-3.8.1.jar"/>
+	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/tomcat/servlet-api-2.4.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev-linux"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

@@ -1,0 +1,24 @@
+package @clientPackage;
+
+import com.google.gwt.junit.client.GWTTestCase;
+
+/**
+ * GWT JUnit tests must extend GWTTestCase.
+ */
+public class @className extends GWTTestCase {
+
+  /**
+   * Must refer to a valid module that sources this class.
+   */
+  public String getModuleName() {
+    return "@moduleName";
+  }
+
+  /**
+   * Add as many tests as you like.
+   */
+  public void testSimple() {
+    assertTrue(true);
+  }
+
+}

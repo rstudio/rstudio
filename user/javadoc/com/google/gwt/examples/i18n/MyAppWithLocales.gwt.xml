@@ -1,0 +1,16 @@
+<module>
+  <inherits name="com.google.gwt.user.User"/>
+  <inherits name="com.google.gwt.i18n.I18N"/>
+  
+  <!-- French language, independent of country -->
+  <extend-property name="locale" values="fr"/>
+
+  <!-- French in France -->
+  <extend-property name="locale" values="fr_FR"/>
+
+  <!-- French in Canada -->
+  <extend-property name="locale" values="fr_CA"/>
+  
+  <!-- English language, independent of country -->
+  <extend-property name="locale" values="en"/>
+</module>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--                                                                        -->
+<!-- Copyright 2006 Google Inc. All Rights Reserved.                        -->
+<!-- Types and resources required to support HTTP requests.                 -->
+<!--                                                                        -->
+<!-- Any user application that wishes to use the types declared in the http -->
+<!-- package must inherit this module.                                      -->
+<!--                                                                        -->
+<module>
+  <inherits name="com.google.gwt.core.Core"/>
+</module>

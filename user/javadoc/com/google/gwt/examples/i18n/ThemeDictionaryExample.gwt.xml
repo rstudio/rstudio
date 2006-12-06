@@ -1,0 +1,7 @@
+<module>
+    <inherits name="com.google.gwt.user.User"/>
+    <inherits name="com.google.gwt.i18n.I18N"/>
+    <source path=""/>
+    <public path=""/>
+    <entry-point class="com.google.gwt.examples.i18n.ThemeDictionaryExample"/>
+</module>

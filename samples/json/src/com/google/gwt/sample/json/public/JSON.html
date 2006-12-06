@@ -1,0 +1,41 @@
+<html>
+	<head>
+		<meta name='gwt:module' content='com.google.gwt.sample.json.JSON'>
+		<link rel='stylesheet' href='JSON.css'>
+		<title>JSON Interoperability Example</title>
+	</head>
+	<body>
+		<script language='javascript' src='gwt.js'></script>
+		
+		<h1>JSON Interop Using JSNI</h1>
+		
+		<div class="intro">
+			This example application demonstrates a simple approach to 
+			interoperating with services that return their output in JSON format.
+			It uses GWT's JavaScript Native Interface (JSNI) to analyze a JSON 
+			response and create Java-accessible objects.  The JSON classes in this sample 
+			are general-purpose and can be reused in other projects if you find 
+			them useful.
+			
+			<p>
+			When you click the "Search" button below, you can browse the cached 
+			results of a Yahoo JSON image search for "potato."  The response is 
+			parsed into Java objects which are used to populate a tree view below.
+			<ul>
+				<li>For more details on how the JSON response is parsed into a set 
+				    of Java objects, see the JSONParser class.
+				<li>The search URL used in this example was 
+					<a href='http://api.search.yahoo.com/ImageSearchService/V1/imageSearch?appid=YahooDemo&query=potato&results=2&output=json'>http://api.search.yahoo.com/ImageSearchService/V1/imageSearch?appid=YahooDemo&query=potato&results=2&output=json</a>.
+			</ul>
+			</p>
+			
+			<p id="search">
+			</p>
+		</div>
+
+		<table align="center" width="80%" style="margin-top: 1em">
+			<tr><th style="text-align: center; margin: 1em">JSON Response Tree View</th></tr>
+			<tr><td id="tree"></td></tr>
+		</table>
+	</body>
+</html>

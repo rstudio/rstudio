@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="dev/super/com/google/gwt/dev/jjs/intrinsic"/>
+	<classpathentry kind="src" path="user/super/com/google/gwt/emul"/>
+	<classpathentry kind="src" path="user/super/com/google/gwt/junit/translatable"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/gwt-user"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

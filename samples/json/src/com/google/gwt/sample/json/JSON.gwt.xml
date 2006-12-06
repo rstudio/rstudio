@@ -1,0 +1,5 @@
+<module>
+	<inherits name='com.google.gwt.user.User'/>
+	<inherits name='com.google.gwt.json.JSON'/>
+	<entry-point class='com.google.gwt.sample.json.client.JSON'/>
+</module>

@@ -1,0 +1,3 @@
+#!/bin/sh
+APPDIR=`dirname $0`;
+java @vmargs -cp "$APPDIR/src:$APPDIR/bin:@gwtUserPath:@gwtDevPath" @shellClass -out "$APPDIR/www" "$@" @startupUrl;

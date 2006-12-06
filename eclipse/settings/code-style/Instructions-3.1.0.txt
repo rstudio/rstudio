@@ -1,0 +1,11 @@
+Eclipse 3.1.0 instructions
+
+Code style/formatting:
+Window->Preferences->Java->Code Style->Formatter->Import...->gwtformat.xml
+
+Import organization:
+Window->Preferences->Java->Code Style->Organize Imports->Import...->gwt.importorder
+
+Member sort order:
+Window->Preferences->Java->Appearance->Members Sort Order
+There is no import here, make your settings match sort-order.PNG

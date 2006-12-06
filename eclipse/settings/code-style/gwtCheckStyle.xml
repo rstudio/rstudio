@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	This configuration file was written by the eclipse-cs plugin configuration editor
+-->
+<!--
+Checkstyle-Configuration: gwt
+Description:
+
+-->
+<!DOCTYPE module PUBLIC "-//Puppy Crawl//DTD Check Configuration 1.2//EN" "http://www.puppycrawl.com/dtds/configuration_1_2.dtd">
+<module name="Checker">
+    <property name="severity" value="warning"/>
+    <module name="TreeWalker">
+        <module name="FileContentsHolder"/>
+        <module name="InterfaceIsType"/>
+        <module name="RedundantImport"/>
+        <module name="UnusedImports"/>
+        <module name="JavadocType">
+            <property name="scope" value="protected"/>
+        </module>
+        <module name="PackageName">
+            <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]{1,})*$"/>
+        </module>
+        <module name="ParameterName"/>
+        <module name="LocalFinalVariableName"/>
+        <module name="LocalVariableName"/>
+        <module name="LeftCurly"/>
+        <module name="RightCurly"/>
+        <module name="CovariantEquals"/>
+        <module name="HiddenField">
+            <property name="tokens" value="VARIABLE_DEF"/>
+            <property name="ignoreConstructorParameter" value="true"/>
+            <property name="ignoreSetter" value="true"/>
+        </module>
+        <module name="IllegalInstantiation">
+            <property name="classes" value="java.lang.Boolean"/>
+        </module>
+        <module name="UpperEll">
+            <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="checking for 4l rather than 4L"/>
+        </module>
+        <module name="JavadocStyle">
+            <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Well formed java docs"/>
+        </module>
+        <module name="NeedBraces">
+            <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="make sure if has braces"/>
+        </module>
+        <module name="JavadocMethod">
+            <metadata name="com.atlassw.tools.eclipse.checkstyle.lastEnabledSeverity" value="info"/>
+            <property name="severity" value="info"/>
+            <property name="scope" value="protected"/>
+            <property name="allowUndeclaredRTE" value="true"/>
+            <property name="allowMissingParamTags" value="true"/>
+            <property name="allowMissingThrowsTags" value="true"/>
+            <property name="allowMissingReturnTag" value="true"/>
+            <property name="allowMissingJavadoc" value="true"/>
+            <property name="allowMissingPropertyJavadoc" value="true"/>
+            <property name="logLoadErrors" value="true"/>
+            <property name="tokens" value="METHOD_DEF"/>
+        </module>
+        <module name="Header">
+            <property name="headerFile" value="C:\src-gwt\eclipse\settings\code-style\google.header"/>
+        </module>
+        <module name="ImportOrder">
+            <property name="groups" value="com.google, com,  junit, net,org, java,javax"/>
+            <property name="ordered" value="false"/>
+            <property name="separated" value="true"/>
+        </module>
+        <module name="TabCharacter">
+            <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="no tabs"/>
+        </module>
+        <module name="DefaultComesLast"/>
+        <module name="MultipleStringLiterals">
+            <property name="severity" value="info"/>
+            <property name="ignoreStringsRegexp" value=".{0,3}"/>
+        </module>
+        <module name="FallThrough"/>
+        <module name="IllegalInstantiation">
+            <property name="classes" value="Boolean"/>
+        </module>
+        <module name="Regexp">
+            <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="check that a space is left after a colon with an assembled error message"/>
+            <property name="severity" value="info"/>
+            <property name="format" value="[^:^&quot;]:&quot; .*+"/>
+            <property name="message" value="check that a space is left after a colon on an assembled error message"/>
+            <property name="illegalPattern" value="true"/>
+        </module>
+        <module name="Regexp">
+            <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="more than one blank line"/>
+            <property name="format" value="[\r]?[\n][ \t]*[\r]?[\n][ \t]*[\r]?[\n][ \t]*"/>
+            <property name="message" value="more than one blank line"/>
+            <property name="illegalPattern" value="true"/>
+        </module>
+        <module name="WhitespaceAround">
+            <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Must have spaces"/>
+            <property name="tokens" value="COLON,NOT_EQUAL,QUESTION,DIV,DIV_ASSIGN,BXOR,BXOR_ASSIGN,MINUS,LCURLY,STAR,STAR_ASSIGN,TYPE_EXTENSION_AND,BAND,LAND,BAND_ASSIGN,MOD,MOD_ASSIGN,PLUS,PLUS_ASSIGN,LT,SL,SL_ASSIGN,LE,ASSIGN,MINUS_ASSIGN,EQUAL,GT,GE,SR,SR_ASSIGN,BSR,BSR_ASSIGN,BOR,BOR_ASSIGN,LOR,LITERAL_ASSERT,LITERAL_ASSERT,LITERAL_CATCH,LITERAL_DO,LITERAL_ELSE,LITERAL_FINALLY,LITERAL_FOR,LITERAL_IF,LITERAL_RETURN,SLIST,LITERAL_SYNCHRONIZED,LITERAL_TRY,WILDCARD_TYPE,LITERAL_WHILE"/>
+        </module>
+        <module name="Regexp">
+            <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="newline before }"/>
+            <property name="format" value="[\r]?[\n][ \t]*[\r]?[\n][ \t]+[}][ ]*[\n]"/>
+            <property name="message" value="newline before }"/>
+            <property name="illegalPattern" value="true"/>
+        </module>
+        <module name="ModifierOrder"/>
+        <module name="AvoidStarImport"/>
+        <module name="com.google.gwt.checkstyle.OrderCheck"/>
+        <module name="com.google.gwt.checkstyle.FieldCheck"/>
+        <module name="GenericIllegalRegexp">
+            <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="bad // comment"/>
+            <property name="format" value="  [/][/][A-z]"/>
+            <property name="message" value="// comments must be followed by a space and be on their own line"/>
+        </module>
+        <module name="DoubleCheckedLocking"/>
+        <module name="EmptyStatement"/>
+        <module name="MethodName"/>
+        <module name="MemberName">
+            <property name="format" value="[a-z]|[a-z][a-z_0-9][A-Za-z0-9_]*|[a-z](?&lt;!f)[A-Z0-9]*"/>
+        </module>
+        <module name="GenericIllegalRegexp">
+            <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Author tags not allowed"/>
+            <property name="severity" value="error"/>
+            <property name="format" value="author"/>
+            <property name="message" value="Author tags not allowed"/>
+        </module>
+    </module>
+    <module name="PackageHtml">
+        <property name="severity" value="ignore"/>
+    </module>
+    <module name="StrictDuplicateCode">
+        <property name="severity" value="ignore"/>
+    </module>
+    <module name="SuppressionCommentFilter">
+        <property name="offCommentFormat" value="CHECKSTYLE_OFF"/>
+        <property name="onCommentFormat" value="CHECKSTYLE_ON"/>
+    </module>
+</module>

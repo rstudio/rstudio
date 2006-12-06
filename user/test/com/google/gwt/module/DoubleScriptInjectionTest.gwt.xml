@@ -1,0 +1,11 @@
+<module>
+  <!-- We inherit another script here, and we must wait on both -->
+  <inherits name="com.google.gwt.module.SingleScriptInjectionTest"/>
+  
+	<script src="script2/ScriptInjectionTest2.js"><![CDATA[
+	  // It's ready when the following function is defined.
+		return $wnd.isScriptTwoReady;
+	]]></script>
+	
+	<entry-point class="com.google.gwt.module.client.DoubleScriptInjectionApp"/>
+</module>

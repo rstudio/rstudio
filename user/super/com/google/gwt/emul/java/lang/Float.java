@@ -1,0 +1,140 @@
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package java.lang;
+
+/**
+ * Wraps a primitve <code>float</code> as an object.
+ */
+public final class Float extends Number implements Comparable {
+  public static final float MAX_VALUE = 3.4028235e+38f;
+  public static final float MIN_VALUE = 1.4e-45f;
+  public static final float NaN = 0f / 0f;
+  public static final float NEGATIVE_INFINITY = -1f / 0f;
+  public static final float POSITIVE_INFINITY = 1f / 0f;
+
+  private final float fValue;
+
+  public Float(float value) {
+    fValue = value;
+  }
+
+  public Float(String s) {
+    fValue = parseFloat(s);
+  }
+
+  public int compareTo(Object o) {
+    return compareTo((Float) o);
+  }
+
+  /**
+   * Performance caution: using Float objects as map keys is not recommended.
+   * Using floating point values as keys is generally a bad idea due to
+   * difficulty determining exact equality. In addition, there is no efficient
+   * JavaScript equivalent of <code>floatToIntBits</code>. As a result, this
+   * method computes a hash code by truncating the whole number portion of the
+   * float, which may lead to poor performance for certain value sets if Floats
+   * are used as keys in a {@link java.util.HashMap}.
+   */
+  public int hashCode() {
+    return (int) fValue;
+  }
+
+  public int compareTo(Float b) {
+    if (fValue < b.fValue) {
+      return -1;
+    } else if (fValue > b.fValue) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+
+  public boolean equals(Object o) {
+    return (o instanceof Float) && (((Float) o).fValue == fValue);
+  }
+
+  public static String toString(float b) {
+    return String.valueOf(b);
+  }
+
+  public String toString() {
+    return toString(fValue);
+  }
+
+  public static Float valueOf(String s) throws NumberFormatException {
+    return new Float(Float.parseFloat(s));
+  }
+
+  public byte byteValue() {
+    return (byte) fValue;
+  }
+
+  public double doubleValue() {
+    return fValue;
+  }
+
+  public float floatValue() {
+    return fValue;
+  }
+
+  public int intValue() {
+    return (int) fValue;
+  }
+
+  public long longValue() {
+    return (long) fValue;
+  }
+
+  public short shortValue() {
+    return (short) fValue;
+  }
+
+  public static int compare(float x, float y) {
+    if (x < y) {
+      return -1;
+    } else if (x > y) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+
+  public static float parseFloat(String s) throws NumberFormatException {
+    float x = __parseFloat(s);
+    if (isNaN(x)) {
+      throw new NumberFormatException(s);
+    } else {
+      return x;
+    }
+  }
+
+  public boolean isNaN() {
+    return isNaN(fValue);
+  }
+
+  public static native boolean isNaN(float x) /*-{
+    return isNaN(x);
+  }-*/;
+
+  public boolean isInfinite() {
+    return isInfinite(fValue);
+  }
+
+  public static native boolean isInfinite(float x) /*-{
+    return !isFinite(x);
+  }-*/;
+
+}

@@ -1,0 +1,1 @@
+@java -cp "%~dp0\src;%~dp0\bin;@gwtUserPath;@gwtDevPath" @compileClass -out "%~dp0\www" %* @moduleName

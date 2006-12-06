@@ -1,0 +1,183 @@
+body { 
+	background-color: white;
+	color: black;
+	font-family: Arial, sans-serif;
+	font-size: small;
+	margin: 8px;
+	margin-top: 3px;
+}
+
+a {	
+	color: darkblue;
+}
+
+a:visited {	
+	color: darkblue; 
+}
+
+.gwt-DialogBox {
+	border: 2px solid #AAAAAA;
+	background-color: white;
+}
+
+.gwt-DialogBox .Caption {
+	background-image: url(gray_gradient.gif);
+	background-repeat: repeat-x;
+	padding: 4px;
+	padding-bottom: 8px;
+	font-weight: bold;
+	cursor: default;
+}
+
+.gwt-MenuBar {
+	background-color: #C3D9FF;
+	cursor: default;
+}
+
+.gwt-MenuItem {
+	font-size: 80%;
+	margin: 1px;
+	cursor: default;
+}
+
+.gwt-MenuItem-selected {
+	background-color: #E8EEF7;
+}
+
+.gwt-Tree {
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+
+.gwt-Tree .gwt-TreeItem {
+	font-size: 80%;
+	cursor: default;
+}
+
+.gwt-Tree .gwt-TreeItem-selected {
+	background-color: #C3D9FF;
+}
+
+.gwt-StackPanel {
+	background-color: white;
+	border: 1px solid #AAAAAA;
+	width: 15em;
+}
+
+.gwt-StackPanel .gwt-StackPanelItem {
+	background-image: url(gray_gradient.gif);
+	background-repeat: repeat-x;
+	background-color: #EEEEEE;
+	cursor: pointer;
+	cursor: hand;
+}
+
+.gwt-StackPanel .gwt-StackPanelItem-selected {
+}
+
+/*----------------------------------------------------------------------------*/
+.mail-TopPanel {
+	font-size: 80%;
+}
+
+.mail-TopPanelLinks {
+	font-size: 80%;
+}
+
+.mail-AboutText {
+	width: 24em;
+	font-size: 80%;
+}
+
+.mail-Contacts {
+	margin: 0.5em;
+	font-size: 80%;
+}
+
+.mail-Tasks {
+	margin: 0.5em;
+	font-size: 80%;
+}
+
+.mail-List {
+	border: 1px solid #AAAAAA;
+	background-color: white;
+	font-size: 80%;
+	cursor: pointer;
+	cursor: hand;
+}
+
+.mail-ListHeader {
+	background-image: url(gray_gradient.gif);
+	background-repeat: repeat-x;
+	font-weight: bold;
+}
+
+.mail-ListNavBar {
+	font-size: 80%;
+}
+
+.mail-SelectedRow {
+	background-image: url(blue_gradient.gif);
+	background-repeat: repeat-x;
+}
+
+.mail-Toolbar {
+}
+
+.mail-ToolButton {
+	font-size: 80%;
+	width: 10em;
+}
+
+.mail-Detail {
+	border: 1px solid #AAAAAA;
+	margin-top: 4px;
+}
+
+.mail-DetailHeader {
+	background-image: url(gray_gradient.gif);
+	background-repeat: repeat-x;
+	border-bottom: 1px solid #AAAAAA;
+	padding: 4px;
+}
+
+.mail-DetailInner {
+	background-color: white;
+	font-size: 80%;
+}
+
+.mail-DetailSubject {
+	font-size: 80%;
+}
+
+.mail-DetailSender {
+	font-weight: bold;
+	font-size: 80%;
+}
+
+.mail-DetailRecipient {
+	font-style: italic;
+	font-size: 80%;
+}
+
+.mail-DetailBody {
+	padding: 4px;
+}
+
+.mail-ContactPopup {
+	background-image: url(gray_gradient.gif);
+	background-repeat: repeat-x;
+	border: 1px solid #AAAAAA;
+	padding: 4px;
+}
+
+.mail-ContactPopupName {
+	font-size: 80%;
+	font-weight: bold;
+}
+
+.mail-ContactPopupEmail {
+	font-size: 80%;
+	font-style: italic;
+}

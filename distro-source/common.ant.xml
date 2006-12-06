@@ -1,0 +1,38 @@
+<project name="dist-common">
+	<property name="gwt.root" location="../.." />
+	<property name="project.tail" value="distro-source/${dist.platform}" />
+	<import file="${gwt.root}/common.ant.xml" />
+
+	<property name="project.distname" value="gwt-${dist.platform}-${gwt.version}" />
+	<property name="project.staging" location="${gwt.build.staging}/${project.distname}" />
+
+	<target name="build" description="Copies items into the staging area">
+		<mkdir dir="${project.staging}" />
+
+		<copy todir="${project.staging}">
+			<fileset file="${gwt.build.lib}/gwt-dev-${dist.platform}.jar" />
+			<fileset file="${gwt.build.lib}/gwt-user.jar" />
+			<fileset file="${gwt.build.lib}/gwt-servlet.jar" />
+			<fileset dir="${gwt.build.jni}/${dist.platform}" />
+			<!-- TODO: samples, doc -->
+			<fileset dir="../core/src" />
+			<fileset dir="src" />
+		</copy>
+        <antcall target="build.platform" />
+		<chmod perm="a+r">
+			<dirset dir="${project.staging}" />
+			<fileset dir="${project.staging}" />
+		</chmod>
+		<chmod perm="a+x">
+			<dirset dir="${project.staging}" />
+			<fileset dir="${project.staging}">
+				<include name="*Creator*" />
+			</fileset>
+		</chmod>
+	</target>
+
+	<target name="clean" description="Cleans this project's intermediate and output files">
+		<delete dir="${project.staging}" failonerror="false" />
+		<delete file="${project.dist}" failonerror="false" />
+	</target>
+</project>

@@ -1,0 +1,47 @@
+<project name="dev-common">
+    <property name="gwt.root" location="../.."/>
+    <import file="${gwt.root}/common.ant.xml"/>
+    
+    <property.ensure name="gwt.core.root" location="../core"/>
+    <property.ensure name="gwt.core.build" location="${project.build}/../core"/>
+    
+    <target name="unjar.deps"
+        description="Unzips all dependency jars into the output folder">
+        <gwt.unjar toollib="eclipse/${gwt.dev.swt.jar}"/>
+    </target>
+    
+    <target name="build" depends="unjar.deps"
+        description="Compiles all class files">
+        <mkdir dir="${javac.out}"/>
+        <gwt.javac>
+            <classpath>
+                <pathelement location="${gwt.core.build}/bin"/>
+                <pathelement location="${gwt.core.build}/unjar"/>
+            </classpath>
+        </gwt.javac>
+    </target>
+    
+    <target name="package" depends="build" description="Packages this project into a jar">
+        <mkdir dir="${gwt.build.lib}"/>
+        <gwt.jar>
+            <fileset dir="src"/>
+            <fileset dir="${gwt.core.root}/src"/>
+            <fileset dir="${gwt.core.root}/super"/>
+            <fileset dir="${javac.out}"/>
+            <fileset dir="${gwt.core.build}/bin"/>
+            <fileset dir="${unjar.out}"/>
+            <fileset dir="${gwt.core.build}/unjar"/>
+            <manifest>
+                <attribute name="Main-Class" value="com.google.gwt.dev.GWTMain"/>
+            </manifest>
+        </gwt.jar>
+    </target>
+    
+    <target name="clean" description="Cleans this project's intermediate and output files">
+        <delete dir="${project.build}" failonerror="false"/>
+        <delete file="${project.lib}" failonerror="false"/>
+    </target>
+    
+    <target name="all" depends="package" description="Builds and packages this project"/>
+    
+</project>

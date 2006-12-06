@@ -1,0 +1,30 @@
+<!--                                                                        -->
+<!-- Copyright 2006 Google Inc. All Rights Reserved.                        -->
+<!-- Deferred binding rules for browser selection.                          -->
+<!--                                                                        -->
+<!-- This module is typically inherited via com.google.gwt.user.User.        -->
+<!--                                                                        -->
+<module>
+	<inherits name="com.google.gwt.core.Core"/>
+	<inherits name="com.google.gwt.user.UserAgent"/>
+
+	<!-- Fall through to this rule is the browser isn't IE or Opera -->
+	<replace-with class="com.google.gwt.user.client.ui.impl.FormPanelImpl">
+		<when-type-is class="com.google.gwt.user.client.ui.impl.FormPanelImpl"/>
+	</replace-with>
+
+	<replace-with class="com.google.gwt.user.client.ui.impl.FormPanelImplIE6">
+		<when-type-is class="com.google.gwt.user.client.ui.impl.FormPanelImpl"/>
+		<when-property-is name="user.agent" value="ie6"/>
+	</replace-with>
+
+	<replace-with class="com.google.gwt.user.client.ui.impl.FormPanelImplOpera">
+		<when-type-is class="com.google.gwt.user.client.ui.impl.FormPanelImpl"/>
+		<when-property-is name="user.agent" value="opera"/>
+	</replace-with>
+
+	<replace-with class="com.google.gwt.user.client.ui.impl.FormPanelImplSafari">
+		<when-type-is class="com.google.gwt.user.client.ui.impl.FormPanelImpl"/>
+		<when-property-is name="user.agent" value="safari"/>
+	</replace-with>
+</module>

@@ -1,0 +1,6 @@
+<module>
+	<inherits name='com.google.gwt.user.User'/>
+	<entry-point class='com.google.gwt.sample.dynatable.client.DynaTable'/>
+	<servlet path='/calendar' class='com.google.gwt.sample.dynatable.server.SchoolCalendarServiceImpl'/>
+</module>
+

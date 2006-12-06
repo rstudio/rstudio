@@ -1,0 +1,6 @@
+LIBRARY wininet.dll
+EXPORTS
+InternetOpenA@20        @264
+InternetOpenUrlA@24     @265
+InternetReadFile@16     @272
+InternetCloseHandle@4   @223

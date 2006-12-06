@@ -1,0 +1,4 @@
+<module>
+  <inherits name="test.ServletMappingTest"/>
+  <entry-point class="test.ServletMappingTestApp"/>
+</module>

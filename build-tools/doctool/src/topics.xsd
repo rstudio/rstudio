@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2005 rel. 3 U (http://www.altova.com) by Bruce Johnson (private) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:element name="topics">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="topic" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="topic">
+		<xs:annotation>
+			<xs:documentation>Topic element; can be freely nested</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:sequence minOccurs="0">
+					<xs:element name="id" type="xs:string">
+						<xs:annotation>
+							<xs:documentation>The id for this topic, which should be unique for the entire library</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="order" type="xs:int" minOccurs="0">
+						<xs:annotation>
+							<xs:documentation>An arbitrary number used to indicate sorting order</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="title" type="xs:string">
+						<xs:annotation>
+							<xs:documentation>A simple title for the topic</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="index" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+						<xs:annotation>
+							<xs:documentation>A word or phrase to include in the documentation index that points to this topic</xs:documentation>
+						</xs:annotation>
+					</xs:element>
+					<xs:element name="synopsis" minOccurs="0">
+						<xs:annotation>
+							<xs:documentation>A short (one phrase or sentence) that summaries the point of the topic</xs:documentation>
+						</xs:annotation>
+						<xs:complexType mixed="true">
+							<xs:sequence>
+								<xs:any namespace="##any" processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+							</xs:sequence>
+						</xs:complexType>
+					</xs:element>
+					<xs:element name="header">
+						<xs:annotation>
+							<xs:documentation>HTML header that may get special treatment in the published documentation</xs:documentation>
+						</xs:annotation>
+						<xs:complexType mixed="true">
+							<xs:sequence>
+								<xs:any namespace="##any" processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+							</xs:sequence>
+						</xs:complexType>
+					</xs:element>
+					<xs:element name="body">
+						<xs:annotation>
+							<xs:documentation>HTML body that constitutes the primary content of the topic</xs:documentation>
+						</xs:annotation>
+						<xs:complexType mixed="true">
+							<xs:sequence>
+								<xs:any namespace="##any" processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+							</xs:sequence>
+						</xs:complexType>
+					</xs:element>
+					<xs:element name="seeAlso" minOccurs="0" maxOccurs="unbounded">
+						<xs:annotation>
+							<xs:documentation>A list of related cross-ref links</xs:documentation>
+						</xs:annotation>
+						<xs:complexType>
+							<xs:sequence>
+								<xs:element name="link" minOccurs="0" maxOccurs="unbounded">
+									<xs:annotation>
+										<xs:documentation>Links to topics that are not necessarily child topics</xs:documentation>
+									</xs:annotation>
+									<xs:complexType mixed="true">
+										<xs:sequence minOccurs="0" maxOccurs="unbounded">
+											<xs:any namespace="##any" processContents="skip">
+												<xs:annotation>
+													<xs:documentation>HTML representing the link caption</xs:documentation>
+												</xs:annotation>
+											</xs:any>
+										</xs:sequence>
+										<xs:attribute name="ref">
+											<xs:annotation>
+												<xs:documentation>The target id of a topic anywhere in the library; if absent, it a link that could not be resolved</xs:documentation>
+											</xs:annotation>
+										</xs:attribute>
+									</xs:complexType>
+								</xs:element>
+							</xs:sequence>
+						</xs:complexType>
+					</xs:element>
+				</xs:sequence>
+				<xs:sequence>
+					<xs:element name="childIntro" minOccurs="0"/>
+					<xs:element ref="topic" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

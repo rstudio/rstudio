@@ -1,0 +1,20 @@
+<!--                                                                        -->
+<!-- Copyright 2006 Google Inc. All Rights Reserved.                        -->
+<!-- Deferred binding rules for browser selection.                          -->
+<!--                                                                        -->
+<!-- Do not inherit this module directly.  Running GWTTestCase under JUnit  -->
+<!-- will inherit this module automatically.                                -->
+<module>
+  <inherits name="com.google.gwt.user.User"/>
+
+  <super-source path="translatable"/>
+
+  <source path="client"/>
+
+  <generate-with class="com.google.gwt.junit.rebind.JUnitTestCaseStubGenerator">
+    <when-type-assignable class="com.google.gwt.junit.client.GWTTestCase"/>
+  </generate-with>
+
+  <servlet path='/junithost' class='com.google.gwt.junit.server.JUnitHostImpl'/>
+
+</module>
