@@ -1,3 +1,18 @@
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.doctool;
 
 import org.w3c.dom.Document;
@@ -21,9 +36,9 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 /**
- * Takes an input stream and splits it into multiple files.
- * A new file begins when a line in the input stream begins with a specific <emph>prefix</emph> 
- * followed by whitespace then an absolute or relative file name to create.
+ * Takes an input stream and splits it into multiple files. A new file begins
+ * when a line in the input stream begins with a specific prefix followed by
+ * whitespace then an absolute or relative file name to create.
  */
 public class SplitterJoiner {
 
@@ -36,8 +51,9 @@ public class SplitterJoiner {
 
       // Close the current reader, if any.
       //
-      if (reader != null)
+      if (reader != null) {
         reader.close();
+      }
 
       // Open the next reader.
       //                
@@ -45,7 +61,7 @@ public class SplitterJoiner {
       inputFile = new File(file);
       if (!inputFile.exists()) {
         System.err.println("Error: Cannot find input file "
-          + inputFile.getPath());
+            + inputFile.getPath());
         return;
       }
       reader = new BufferedReader(new FileReader(inputFile));
@@ -68,8 +84,9 @@ public class SplitterJoiner {
         } else if (line.startsWith(prefix)) {
           // Close the current writer.
           //
-          if (writer != null)
+          if (writer != null) {
             writer.close();
+          }
 
           // Create the next writer.
           //
@@ -78,16 +95,15 @@ public class SplitterJoiner {
           if (!outFile.isAbsolute() && inputFile != null) {
             // Make the created file relative to the input file.
             //
-            File absoluteParentDir = inputFile.getCanonicalFile()
-              .getParentFile();
+            File absoluteParentDir = inputFile.getCanonicalFile().getParentFile();
             outFile = new File(absoluteParentDir, outPath);
             outFile.getParentFile().mkdirs();
           }
 
           writer = new PrintWriter(new FileWriter(outFile), true);
-          
+
           writer.println("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">");
-          
+
         } else if (writer != null) {
           // Write this line to the current file.
           //
@@ -100,8 +116,9 @@ public class SplitterJoiner {
         line = reader.readLine();
       }
 
-      if (writer != null)
+      if (writer != null) {
         writer.close();
+      }
     }
   }
 
@@ -110,10 +127,11 @@ public class SplitterJoiner {
     StreamResult result = new StreamResult(out);
     TransformerFactory transformerFactory = TransformerFactory.newInstance();
     Transformer transformer = transformerFactory.newTransformer();
-    transformer.setOutputProperty(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
+    transformer.setOutputProperty(
+        javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
     transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
     transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount",
-      "4");
+        "4");
 
     Node child = doc.getDocumentElement().getFirstChild();
     while (child != null) {
@@ -127,13 +145,12 @@ public class SplitterJoiner {
       throws IOException, ParserConfigurationException, SAXException,
       TransformerException {
     if (!inputFile.exists()) {
-      System.err
-        .println("Error: Cannot find input file " + inputFile.getPath());
+      System.err.println("Error: Cannot find input file " + inputFile.getPath());
       return;
     }
 
     if (inputFile.getCanonicalFile().equals(outputFile)) {
-      // skip 
+      // skip
       return;
     }
 
@@ -188,8 +205,9 @@ public class SplitterJoiner {
           if (children != null) {
             for (int j = 0; j < children.length; ++j) {
               if (children[j].isFile()
-                && children[j].getPath().endsWith(".xml"))
+                  && children[j].getPath().endsWith(".xml")) {
                 emitFile(out, outputFile, children[j]);
+              }
             }
           }
         }
@@ -211,8 +229,9 @@ public class SplitterJoiner {
   }
 
   private static boolean isNewerThan(File file, long lastModified) {
-    if (file.isFile())
+    if (file.isFile()) {
       return file.lastModified() > lastModified;
+    }
 
     File[] children = file.listFiles();
     if (children != null) {
@@ -230,19 +249,13 @@ public class SplitterJoiner {
   private static void help() {
     System.out.println("Usage: SplitterJoiner split infile+");
     System.out.println("Usage: SplitterJoiner join tag outfile (infile|dir)+");
-    System.out
-      .println("\tsplit         indicates that inputs file should be split into multiple output files");
-    System.out
-      .println("\tjoin          indicates xml files (or directories) should be merged into one big xml file (on stdout)");
-    System.out
-      .println("\ttag           when joining, the outermost xml tag name");
-    System.out
-      .println("\toutfile       when joining, the file to write the joined output into");
+    System.out.println("\tsplit         indicates that inputs file should be split into multiple output files");
+    System.out.println("\tjoin          indicates xml files (or directories) should be merged into one big xml file (on stdout)");
+    System.out.println("\ttag           when joining, the outermost xml tag name");
+    System.out.println("\toutfile       when joining, the file to write the joined output into");
     System.out.println("\tinfile        if splitting, an input file to split");
-    System.out
-      .println("\t              if joining, a file whose contents should be merged in");
-    System.out
-      .println("\tdir           when joining, a directory whose xml files' contents should be merged in");
+    System.out.println("\t              if joining, a file whose contents should be merged in");
+    System.out.println("\tdir           when joining, a directory whose xml files' contents should be merged in");
   }
 
   public static void main(String[] args) throws IOException {
@@ -262,12 +275,12 @@ public class SplitterJoiner {
       System.arraycopy(args, 3, files, 0, args.length - 3);
       merge(args[1], args[2], files);
     } else {
-      if (!args[0].equals("-h") && !args[0].equals("-?"))
+      if (!args[0].equals("-h") && !args[0].equals("-?")) {
         System.err.println("Error: don't know '" + args[0] + "'");
+      }
       help();
       return;
     }
-
   }
 
 }

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.doctool;
 
 import org.xml.sax.Attributes;
@@ -37,12 +52,11 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
+/**
+ * Orchestrates the behavior of {@link Booklet}, {@link SplitterJoiner} and
+ * other tools to create user documentation and API documentation.
+ */
 public class DocTool {
-
-  public static final class GenType {
-    private GenType() {
-    }
-  }
 
   private class ImageCopier extends DefaultHandler {
 
@@ -74,7 +88,7 @@ public class DocTool {
                 File outFileDir = outFile.getParentFile();
                 if (!outFileDir.exists() && !outFileDir.mkdirs()) {
                   fErr.println("Unable to create image output dir "
-                    + outFileDir);
+                      + outFileDir);
                   break;
                 }
               }
@@ -94,7 +108,7 @@ public class DocTool {
   }
 
   private static final Pattern IN_XML_FILENAME = Pattern.compile(
-    "(.+)\\.([^\\.]+)\\.xml", Pattern.CASE_INSENSITIVE);
+      "(.+)\\.([^\\.]+)\\.xml", Pattern.CASE_INSENSITIVE);
 
   public static void main(String[] args) {
     DocToolFactory factory = new DocToolFactory();
@@ -144,16 +158,18 @@ public class DocTool {
           factory.addToImagePath(entries[entryIndex]);
         }
       } else {
-        if (factory.getFileType() == null)
+        if (factory.getFileType() == null) {
           factory.setFileType(args[i]);
-        else
+        } else {
           factory.setFileBase(args[i]);
+        }
       }
     }
 
     DocTool docTool = factory.create(System.out, System.err);
-    if (docTool != null)
+    if (docTool != null) {
       docTool.process();
+    }
   }
 
   public static boolean recursiveDelete(File file) {
@@ -161,8 +177,9 @@ public class DocTool {
       File[] children = file.listFiles();
       if (children != null) {
         for (int i = 0; i < children.length; i++) {
-          if (!recursiveDelete(children[i]))
+          if (!recursiveDelete(children[i])) {
             return false;
+          }
         }
       }
     }
@@ -211,12 +228,12 @@ public class DocTool {
           String arg = args[i + 1];
           if (arg.startsWith("-")) {
             System.out.println("Warning: arg to " + name
-              + " looks more like a flag: " + arg);
+                + " looks more like a flag: " + arg);
           }
           return arg;
         } else {
           throw new IllegalArgumentException("Expecting an argument after "
-            + name);
+              + name);
         }
       }
     }
@@ -228,8 +245,9 @@ public class DocTool {
    */
   private static boolean tryParseFlag(String[] args, int i, String name) {
     if (i < args.length) {
-      if (args[i].equals(name))
+      if (args[i].equals(name)) {
         return true;
+      }
     }
     return false;
   }
@@ -307,16 +325,18 @@ public class DocTool {
     } catch (SAXException e) {
       caught = e;
       Exception inner = e.getException();
-      if (inner != null)
+      if (inner != null) {
         caught = inner;
+      }
     } catch (ParserConfigurationException e) {
       caught = e;
     } catch (IOException e) {
       caught = e;
     } finally {
       try {
-        if (fileReader != null)
+        if (fileReader != null) {
           fileReader.close();
+        }
       } catch (IOException e) {
         e.printStackTrace(fErr);
       }
@@ -340,7 +360,7 @@ public class DocTool {
       for (int i = 0, n = children.length; i < n; ++i) {
         File child = children[i];
         String childName = parentPackage
-          + (parentPackage.length() > 0 ? "." : "") + child.getName();
+            + (parentPackage.length() > 0 ? "." : "") + child.getName();
         if (child.isDirectory()) {
           // Recurse
           findSourcePackages(results, child, childName);
@@ -357,16 +377,18 @@ public class DocTool {
     String path = "";
     for (int i = 0, n = entries.length; i < n; ++i) {
       File entry = entries[i];
-      if (i > 0)
+      if (i > 0) {
         path += pathSep;
+      }
       path += entry.getAbsolutePath();
     }
     return path;
   }
 
   private void freshenIf(File file) {
-    if (!file.isFile())
+    if (!file.isFile()) {
       return;
+    }
 
     String name = file.getName();
     Matcher matcher = IN_XML_FILENAME.matcher(name);
@@ -390,15 +412,16 @@ public class DocTool {
     File htmlDir = new File(fOutDir, "html");
     if (!htmlDir.exists() && !htmlDir.mkdirs()) {
       fErr.println("Cannot create html output directory "
-        + htmlDir.getAbsolutePath());
+          + htmlDir.getAbsolutePath());
       return false;
     }
 
     // Merge all *.topics.xml into one topics.xml file.
     //
     File mergedTopicsFile = new File(fOutDir, "topics.xml");
-    if (!mergeTopics(mergedTopicsFile))
+    if (!mergeTopics(mergedTopicsFile)) {
       return false;
+    }
 
     // Parse it all to find the images and copy them over.
     //
@@ -419,8 +442,9 @@ public class DocTool {
 
       // Split the merged htmls into many html files.
       //
-      if (!splitHtmls(mergedHtmlsFile))
+      if (!splitHtmls(mergedHtmlsFile)) {
         return false;
+      }
 
       // Create a table of contents.
       //
@@ -439,8 +463,7 @@ public class DocTool {
         e.printStackTrace(fErr);
       }
     } else {
-      fOut
-        .println("Skipping html creation since nothing seems to have changed since "
+      fOut.println("Skipping html creation since nothing seems to have changed since "
           + mergedHtmlsFile.getAbsolutePath());
     }
 
@@ -463,8 +486,9 @@ public class DocTool {
         }
         return sw.toString();
       } finally {
-        if (in != null)
+        if (in != null) {
           in.close();
+        }
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -516,9 +540,9 @@ public class DocTool {
       // Produce XML from JavaDoc.
       //
       String fileName = fFileBase + "." + fFileType + ".xml";
-      if (!runBooklet(new File(fOutDir, fileName)))
+      if (!runBooklet(new File(fOutDir, fileName))) {
         return false;
-
+      }
     }
 
     // Process existing files to get them into topics format.
@@ -528,8 +552,9 @@ public class DocTool {
 
     if (fGenerateHtml) {
       // Merge into HTML.
-      if (!genHtml())
+      if (!genHtml()) {
         return false;
+      }
     }
 
     return true;
@@ -585,7 +610,7 @@ public class DocTool {
     }
 
     args.add("-breakiterator");
-    
+
     // Specify the set of input packages (needed by JavaDoc)
     args.addAll(srcPackages);
 
@@ -628,11 +653,11 @@ public class DocTool {
       StreamSource xsltSource = new StreamSource(new StringReader(xslt));
       Transformer transformer = transformerFactory.newTransformer(xsltSource);
       transformer.setOutputProperty(
-        javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
+          javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
       transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT,
-        "yes");
+          "yes");
       transformer.setOutputProperty(
-        "{http://xml.apache.org/xslt}indent-amount", "4");
+          "{http://xml.apache.org/xslt}indent-amount", "4");
 
       if (params != null) {
         for (Iterator iter = params.entrySet().iterator(); iter.hasNext();) {

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.doctool;
 
 import com.sun.javadoc.ClassDoc;
@@ -9,8 +24,14 @@ import com.sun.javadoc.Parameter;
 import com.sun.javadoc.SourcePosition;
 import com.sun.javadoc.Tag;
 
+/**
+ * Methods related to resolving cross-references in source.
+ */
 public class LinkResolver {
 
+  /**
+   * Abstracts out mechanisms for finding different bits of doc.
+   */
   public interface ExtraClassResolver {
     ClassDoc findClass(String className);
   }
@@ -56,7 +77,7 @@ public class LinkResolver {
       }
       if (targetClass == null) {
         System.err.println(tag.position().toString()
-          + ": unable to resolve class " + className + " for " + tag);
+            + ": unable to resolve class " + className + " for " + tag);
         System.exit(1);
       }
     }
@@ -66,7 +87,7 @@ public class LinkResolver {
     }
 
     String paramSig = methodSig.substring(methodSig.indexOf('(') + 1,
-      methodSig.lastIndexOf(')'));
+        methodSig.lastIndexOf(')'));
     String[] resolvedParamTypes;
     if (paramSig.length() > 0) {
       String[] unresolvedParamTypes = paramSig.split("\\s*,\\s*");
@@ -78,8 +99,8 @@ public class LinkResolver {
         }
         if (paramType == null) {
           System.err.println(tag.position().toString()
-            + ": unable to resolve class " + unresolvedParamTypes[i] + " for "
-            + tag);
+              + ": unable to resolve class " + unresolvedParamTypes[i]
+              + " for " + tag);
           System.exit(1);
         }
         resolvedParamTypes[i] = paramType.qualifiedTypeName();
@@ -102,7 +123,7 @@ public class LinkResolver {
         }
         for (int j = 0; j < tryParams.length; ++j) {
           if (!tryParams[j].type().qualifiedTypeName().equals(
-            resolvedParamTypes[j])) {
+              resolvedParamTypes[j])) {
             // param type mismatch
             continue outer;
           }
@@ -112,9 +133,9 @@ public class LinkResolver {
     }
 
     System.err.println(tag.position().toString()
-      + ": unable to resolve method for " + tag);
+        + ": unable to resolve method for " + tag);
     if (possibleOverloads.length() > 0) {
-      System.err.println("Possible overloads:" + possibleOverloads);
+      System.err.println("Possible overloads: " + possibleOverloads);
     }
     System.exit(1);
     return null;

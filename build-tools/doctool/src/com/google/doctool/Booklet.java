@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.doctool;
 
 import com.google.doctool.LinkResolver.ExtraClassResolver;
@@ -31,6 +45,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Stack;
 
+/**
+ * Generates XML from Javadoc source, with particular idioms to make it possible
+ * to translate into either expository doc or API doc.
+ */
 public class Booklet {
 
   private static final String OPT_BKCODE = "-bkcode";
@@ -46,12 +64,13 @@ public class Booklet {
   }
 
   public static int optionLength(String option) {
-    if (option.equals(OPT_BKOUT))
+    if (option.equals(OPT_BKOUT)) {
       return 2;
-    else if (option.equals(OPT_BKDOCPKG))
+    } else if (option.equals(OPT_BKDOCPKG)) {
       return 2;
-    else if (option.equals(OPT_BKCODE))
+    } else if (option.equals(OPT_BKCODE)) {
       return 1;
+    }
     return 0;
   }
 
@@ -60,8 +79,9 @@ public class Booklet {
     try {
       fr = new FileReader(position.file());
       BufferedReader br = new BufferedReader(fr);
-      for (int i = 0, n = position.line() - 1; i < n; ++i)
+      for (int i = 0, n = position.line() - 1; i < n; ++i) {
         br.readLine();
+      }
 
       StringBuffer lines = new StringBuffer();
       String line = br.readLine();
@@ -70,11 +90,14 @@ public class Booklet {
       boolean seenSemiColonOrBrace = false;
       while (line != null) {
         if (indent == -1) {
-          for (indent = 0; Character.isWhitespace(line.charAt(indent)); ++indent);
+          for (indent = 0; Character.isWhitespace(line.charAt(indent)); ++indent) {
+            // just accumulate
+          }
         }
 
-        if (line.length() >= indent)
+        if (line.length() >= indent) {
           line = line.substring(indent);
+        }
 
         lines.append(line + "\n");
         for (int i = 0, n = line.length(); i < n; ++i) {
@@ -102,8 +125,9 @@ public class Booklet {
       e.printStackTrace();
     } finally {
       try {
-        if (fr != null)
+        if (fr != null) {
           fr.close();
+        }
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -122,8 +146,9 @@ public class Booklet {
   }
 
   private static Booklet getBooklet() {
-    if (sBooklet == null)
+    if (sBooklet == null) {
       sBooklet = new Booklet();
+    }
     return sBooklet;
   }
 
@@ -154,7 +179,7 @@ public class Booklet {
 
     if (fOutputPath == null) {
       reporter.printError("You must specify an output directory with "
-        + OPT_BKOUT);
+          + OPT_BKOUT);
       return false;
     }
 
@@ -301,7 +326,7 @@ public class Booklet {
       myTitle = fRootDoc.name();
     } else {
       throw new IllegalStateException(
-        "Expected only a member, type, or package");
+          "Expected only a member, type, or package");
     }
 
     Doc parent = getParentDoc(doc);
@@ -326,29 +351,34 @@ public class Booklet {
   }
 
   private void emitModifiers(ProgramElementDoc doc) {
-    if (doc.isPrivate())
+    if (doc.isPrivate()) {
       beginEndln("isPrivate");
-    else if (doc.isProtected())
+    } else if (doc.isProtected()) {
       beginEndln("isProtected");
-    else if (doc.isPublic())
+    } else if (doc.isPublic()) {
       beginEndln("isPublic");
-    else if (doc.isPackagePrivate())
+    } else if (doc.isPackagePrivate()) {
       beginEndln("isPackagePrivate");
+    }
 
-    if (doc.isStatic())
+    if (doc.isStatic()) {
       beginEndln("isStatic");
+    }
 
-    if (doc.isFinal())
+    if (doc.isFinal()) {
       beginEndln("isFinal");
+    }
 
     if (doc instanceof MethodDoc) {
       MethodDoc methodDoc = (MethodDoc) doc;
 
-      if (methodDoc.isAbstract())
+      if (methodDoc.isAbstract()) {
         beginEndln("isAbstract");
+      }
 
-      if (methodDoc.isSynchronized())
+      if (methodDoc.isSynchronized()) {
         beginEndln("isSynchronized");
+      }
     }
   }
 
@@ -361,10 +391,11 @@ public class Booklet {
   private void emitType(Type type) {
     ClassDoc typeAsClass = type.asClassDoc();
 
-    if (typeAsClass != null)
+    if (typeAsClass != null) {
       begin("type", "ref", getId(typeAsClass));
-    else
+    } else {
       begin("type");
+    }
 
     String typeName = type.typeName();
     String dims = type.dimension();
@@ -411,9 +442,10 @@ public class Booklet {
         // Try the superinterfaces of this interface.
         //
         MethodDoc foundMethodDoc = findMatchingInterfaceMethodDoc(
-          currentIntfDoc.interfaces(), methodDoc);
-        if (foundMethodDoc != null)
+            currentIntfDoc.interfaces(), methodDoc);
+        if (foundMethodDoc != null) {
           return foundMethodDoc;
+        }
       }
     }
 
@@ -442,14 +474,15 @@ public class Booklet {
   }
 
   private String getId(MemberDoc memberDoc) {
-    if (memberDoc.isMethod())
+    if (memberDoc.isMethod()) {
       return getId((MethodDoc) memberDoc);
-    else if (memberDoc.isConstructor())
+    } else if (memberDoc.isConstructor()) {
       return getId((ConstructorDoc) memberDoc);
-    else if (memberDoc.isField())
+    } else if (memberDoc.isField()) {
       return getId((FieldDoc) memberDoc);
-    else
+    } else {
       throw new RuntimeException("Unknown member type");
+    }
   }
 
   private String getId(PackageDoc packageDoc) {
@@ -474,7 +507,7 @@ public class Booklet {
       return null;
     } else {
       throw new IllegalStateException(
-        "Expected only a member, type, or package");
+          "Expected only a member, type, or package");
     }
   }
 
@@ -485,10 +518,11 @@ public class Booklet {
     SourcePosition classPos = memberDoc.containingClass().position();
     int classLine = classPos.line();
 
-    if (memberLine == classLine)
+    if (memberLine == classLine) {
       return true;
-    else
+    } else {
       return false;
+    }
   }
 
   private void process(ClassDoc enclosing, ClassDoc classDoc) {
@@ -500,15 +534,16 @@ public class Booklet {
       return;
     }
 
-    if (classDoc.isInterface())
+    if (classDoc.isInterface()) {
       beginln("interface");
-    else
+    } else {
       beginln("class");
+    }
 
     emitIdentity(getId(classDoc), classDoc.name());
     emitLocation(classDoc);
     emitDescription(enclosing, classDoc, classDoc.firstSentenceTags(),
-      classDoc.inlineTags());
+        classDoc.inlineTags());
     emitOutOfLineTags(classDoc.tags());
     emitModifiers(classDoc);
 
@@ -533,16 +568,19 @@ public class Booklet {
     }
 
     FieldDoc[] fda = classDoc.fields();
-    for (int i = 0; i < fda.length; i++)
+    for (int i = 0; i < fda.length; i++) {
       process(classDoc, fda[i]);
+    }
 
     ConstructorDoc[] ctorDocs = classDoc.constructors();
-    for (int i = 0; i < ctorDocs.length; i++)
+    for (int i = 0; i < ctorDocs.length; i++) {
       process(classDoc, ctorDocs[i]);
+    }
 
     MethodDoc[] methods = classDoc.methods();
-    for (int i = 0; i < methods.length; i++)
+    for (int i = 0; i < methods.length; i++) {
       process(classDoc, methods[i]);
+    }
 
     endln();
   }
@@ -585,10 +623,11 @@ public class Booklet {
             // If so, borrow its description.
             //
             superMethodDoc = findMatchingInterfaceMethodDoc(
-              classDocToTry.interfaces(), methodDoc);
+                classDocToTry.interfaces(), methodDoc);
 
-            if (superMethodDoc != null)
+            if (superMethodDoc != null) {
               break;
+            }
 
             classDocToTry = classDocToTry.superclass();
           }
@@ -609,7 +648,7 @@ public class Booklet {
     }
 
     emitDescription(enclosing, memberDoc, memberDoc.firstSentenceTags(),
-      memberDoc.inlineTags());
+        memberDoc.inlineTags());
     emitOutOfLineTags(memberDoc.tags());
     emitModifiers(memberDoc);
 
@@ -619,8 +658,9 @@ public class Booklet {
 
     // Return type if it's a method
     //
-    if (memberDoc instanceof MethodDoc)
+    if (memberDoc instanceof MethodDoc) {
       emitType(((MethodDoc) memberDoc).returnType());
+    }
 
     // Parameters
     //
@@ -682,14 +722,15 @@ public class Booklet {
 
     String commentText = fieldDoc.commentText();
     if (fieldDoc.isPrivate()
-      && (commentText == null || commentText.length() == 0))
+        && (commentText == null || commentText.length() == 0)) {
       return;
+    }
 
     beginln("field");
     emitIdentity(fieldDoc.qualifiedName(), fieldDoc.name());
     emitLocation(fieldDoc);
     emitDescription(enclosing, fieldDoc, fieldDoc.firstSentenceTags(),
-      fieldDoc.inlineTags());
+        fieldDoc.inlineTags());
     emitOutOfLineTags(fieldDoc.tags());
     emitModifiers(fieldDoc);
     emitType(fieldDoc.type());
@@ -702,7 +743,7 @@ public class Booklet {
     emitIdentity(packageDoc.name(), packageDoc.name());
     emitLocation(packageDoc);
     emitDescription(null, packageDoc, packageDoc.firstSentenceTags(),
-      packageDoc.inlineTags());
+        packageDoc.inlineTags());
     emitOutOfLineTags(packageDoc.tags());
 
     // Top-level classes
@@ -761,7 +802,7 @@ public class Booklet {
       emitIdentity(fRootDocId, title);
       emitLocation(rootDoc);
       emitDescription(null, rootDoc, rootDoc.firstSentenceTags(),
-        rootDoc.inlineTags());
+          rootDoc.inlineTags());
       emitOutOfLineTags(rootDoc.tags());
 
       // Create a list of the packages to iterate over.
@@ -786,7 +827,7 @@ public class Booklet {
         // included.
         //
         if (fPackagesToGenerate == null
-          || fPackagesToGenerate.contains(packageName)) {
+            || fPackagesToGenerate.contains(packageName)) {
           PackageDoc pd = fRootDoc.packageNamed(packageName);
           process(pd);
         }
@@ -817,8 +858,9 @@ public class Booklet {
       Tag[] titleTag = cd.tags("@title");
       if (titleTag.length > 0) {
         title = titleTag[0].text().trim();
-        if (title.length() == 0)
+        if (title.length() == 0) {
           title = null;
+        }
       }
     } else if (null != (pd = seeTag.referencedPackage())) {
       ref = getId(pd);
@@ -836,8 +878,9 @@ public class Booklet {
       } else {
         label = seeTag.text();
 
-        if (label.endsWith("."))
+        if (label.endsWith(".")) {
           label = label.substring(0, label.length() - 1);
+        }
 
         // Rip off all but the last interesting part to prevent fully-qualified
         // names everywhere.
@@ -849,8 +892,9 @@ public class Booklet {
           // Use the class name plus the member name.
           //
           label = label.substring(last1 + 1).replace('#', '.');
-        } else if (last1 != -1)
+        } else if (last1 != -1) {
           label = label.substring(last1 + 1);
+        }
 
         if (label.charAt(0) == '.') {
           // Started with "#" so remove the dot.
@@ -866,7 +910,7 @@ public class Booklet {
       end();
     } else {
       fRootDoc.printWarning(seeTag.position(),
-        "Unverifiable cross-reference to '" + seeTag.text() + "'");
+          "Unverifiable cross-reference to '" + seeTag.text() + "'");
       // The link probably won't work, but emit it anyway.
       begin("link");
       text(label != null ? label.trim() : "");
@@ -918,14 +962,15 @@ public class Booklet {
   }
 
   private ExtraClassResolver getExtraClassResolver(Tag tag) {
-    
+
     if (tag.holder() instanceof PackageDoc) {
       return new ExtraClassResolver() {
         public ClassDoc findClass(String className) {
           return fRootDoc.classNamed(className);
-        }};
+        }
+      };
     }
-    
+
     return null;
   }
 
