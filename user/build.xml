@@ -1,4 +1,4 @@
-<project name="user" default="all" basedir=".">
+<project name="user" default="build" basedir=".">
 	<property name="gwt.root" location=".." />
 	<property name="project.tail" value="user" />
 	<import file="${gwt.root}/common.ant.xml" />
@@ -28,7 +28,7 @@
 		</gwt.jar>
 	</target>
 
-	<target name="verify" description="Static analysis of source">
+	<target name="checkstyle" description="Static analysis of source">
 		<gwt.checkstyle>
 			<fileset dir="super/com/google/gwt/emul"/>
 			<fileset dir="super/com/google/gwt/junit/translatable"/>
@@ -39,7 +39,5 @@
 		<delete dir="${project.build}" />
 		<delete file="${project.lib}" />
 	</target>
-
-	<target name="all" depends="package" description="Build and packages this project" />
 
 </project>

@@ -94,6 +94,7 @@
 	<presetdef name="gwt.checkstyle">
 		<checkstyle config="${gwt.root}/eclipse/settings/code-style/gwtCheckStyle.xml" maxWarnings="0">
 			<fileset dir="src" />
+			<property key="checkstyle.header.file" file="${gwt.root}/eclipse/settings/code-style/google.header" />
 
 			<!-- Location of cache-file if we decide to try turning it on -->
 			<!--
@@ -101,4 +102,17 @@
 			-->
 		</checkstyle>
 	</presetdef>
+
+	<!-- Default implementations of the required targets; projects should
+	override the ones that matter -->
+	<target name="all" depends="verify" />
+	<target name="verify" depends="checkstyle, test" description="Verify this project" />
+	<target name="checkstyle" description="Static analysis of source" />
+	<target name="test" depends="build" description="Test this project" />
+	<target name="build" description="Build and (maybe) package this project" />
+
+	<target name="clean" description="Cleans this project's intermediate and output files">
+		<delete dir="${project.build}" />
+	</target>
+
 </project>

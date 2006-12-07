@@ -1,4 +1,4 @@
-<project name="jni-mac" default="all" basedir=".">
+<project name="jni-mac" default="build" basedir=".">
 	<property name="gwt.root" location="../.." />
 	<property name="project.tail" value="jni/mac" />
 	<import file="${gwt.root}/common.ant.xml" />
@@ -15,6 +15,4 @@
 		<delete dir="${project.build}" failonerror="false" />
 		<delete dir="${project.jni}" failonerror="false" />
 	</target>
-
-	<target name="all" depends="build" description="Builds and packages this project" />
 </project>

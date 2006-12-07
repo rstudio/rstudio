@@ -1,4 +1,4 @@
-<project name="dev-mac" default="all" basedir=".">
+<project name="dev-mac" default="build" basedir=".">
 	<property name="project.tail" value="dev/mac" />
 	<property name="gwt.dev.swt.jar" value="org.eclipse.swt.carbon-macosx-3.2.1.jar"/>
 	<import file="../common.ant.xml" />

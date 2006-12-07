@@ -1,9 +1,9 @@
-<project name="dist-linux" default="all" basedir=".">
+<project name="dist-linux" default="build" basedir=".">
 	<property name="dist.platform" value="linux" />
 	<import file="../common.ant.xml" />
 	<property name="project.dist" location="${gwt.build.dist}/${project.distname}.tar.gz" />
 
-	<target name="build.platform" description="Copies platform-specific items into the staging area">
+	<target name="stage.platform" description="Copies platform-specific items into the staging area">
 		<gwt.untar src="${gwt.tools.redist}/mozilla/mozilla-1.7.12.tar.gz" dest="${project.staging}" />
 		<copy todir="${project.staging}">
 			<fileset dir="${gwt.tools.lib}/eclipse">
@@ -12,7 +12,7 @@
 		</copy>
 	</target>
 
-	<target name="package" depends="build" description="Packages the distro staging area">
+	<target name="build" depends="stage" description="Packages the distro staging area">
 		<mkdir dir="${gwt.build.dist}" />
 		<!-- GNU tar handles permissions and symlinks correctly -->
 		<exec executable="tar" failonerror="true">
@@ -23,6 +23,4 @@
 			<arg value="${project.distname}" />
 		</exec>
 	</target>
-
-	<target name="all" depends="package" description="Builds and packages this project" />
 </project>

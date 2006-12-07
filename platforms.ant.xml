@@ -1,0 +1,44 @@
+<project name="platforms">
+	<import file="${gwt.root}/common.ant.xml" />
+
+	<!-- "build" is the default when subprojects are directly targetted -->
+	<property name="target" value="build" />
+
+	<available file="core/build.xml" type="file" property="core.exists" />
+	<target name="core" description="Run core" if="core.exists">
+		<ant dir="core" inheritall="false" target="${target}" />
+	</target>
+
+	<target name="linux" depends="core" description="Run linux">
+		<ant dir="linux" inheritall="false" target="${target}" />
+	</target>
+
+	<target name="windows" depends="core" description="Run windows">
+		<ant dir="windows" inheritall="false" target="${target}" />
+	</target>
+
+	<target name="mac" depends="core" description="Run mac">
+		<ant dir="mac" inheritall="false" target="${target}" />
+	</target>
+
+	<target name="-do" depends="linux, windows, mac" description="Run all platforms" />
+
+	<target name="build" description="Build each platforms">
+		<antcall target="-do">
+			<param name="target" value="build" />
+		</antcall>
+	</target>
+
+	<target name="checkstyle" description="Static analysis of source for each platform">
+		<antcall target="-do">
+			<param name="target" value="checkstyle" />
+		</antcall>
+	</target>
+
+	<target name="test" depends="build" description="Test each platform">
+		<antcall target="-do">
+			<param name="target" value="test" />
+		</antcall>
+	</target>
+
+</project>

@@ -1,4 +1,4 @@
-<project name="dev-core" default="all" basedir=".">
+<project name="dev-core" default="build" basedir=".">
 	<property name="gwt.root" location="../.." />
 	<property name="project.tail" value="dev/core" />
 	<import file="${gwt.root}/common.ant.xml" />
@@ -59,7 +59,7 @@
 		</gwt.javac>
 	</target>
 
-	<target name="verify" description="Static analysis of source">
+	<target name="checkstyle" description="Static analysis of source">
 		<gwt.checkstyle>
 			<fileset dir="super/com/google/gwt/dev/jjs/intrinsic"/>
 		</gwt.checkstyle>
@@ -69,7 +69,4 @@
 		<delete dir="${project.build}" />
 		<delete file="${project.lib}" />
 	</target>
-
-	<target name="all" depends="build" description="Builds this project" />
-
 </project>

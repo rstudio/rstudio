@@ -58,7 +58,7 @@ Description:
             <property name="tokens" value="METHOD_DEF"/>
         </module>
         <module name="Header">
-            <property name="headerFile" value="C:\src-gwt\eclipse\settings\code-style\google.header"/>
+            <property name="headerFile" value="${checkstyle.header.file}"/>
         </module>
         <module name="ImportOrder">
             <property name="groups" value="com.google, com,  junit, net,org, java,javax"/>

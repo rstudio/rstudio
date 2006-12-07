@@ -1,30 +1,48 @@
-<project name="GWT" default="all" basedir=".">
+<project name="GWT" default="build" basedir=".">
 	<property name="gwt.root" location="." />
 	<property name="project.tail" value="" />
 	<import file="${gwt.root}/common.ant.xml" />
 
-	<target name="dev" description="Builds dev">
-		<ant dir="dev" inheritall="false"/>
+	<!-- "build" is the default when subprojects are directly targetted -->
+	<property name="target" value="build" />
+
+	<target name="dist" depends="dev, user, servlet, jni" description="Run the distributions">
+		<ant dir="distro-source" inheritall="false" target="${target}" />
 	</target>
 
-	<target name="user" depends="dev" description="Builds user">
-		<ant dir="user" inheritall="false"/>
+	<target name="dev" description="Run dev">
+		<ant dir="dev" inheritall="false" target="${target}" />
 	</target>
+
+	<target name="user" depends="dev" description="Run user">
+		<ant dir="user" inheritall="false" target="${target}" />
+	</target>
+
+	<target name="servlet" depends="user" description="Run servlet">
+		<ant dir="servlet" inheritall="false" target="${target}" />
+	</target>
+
+	<target name="jni" description="Run jni">
+		<ant dir="jni" inheritall="false" target="${target}" />
+	</target>
+
+	<target name="-do" depends="dist" description="Run all subprojects"/>
 	
-	<target name="servlet" depends="user" description="Builds servlet">
-		<ant dir="servlet" inheritall="false"/>
+	<target name="build" description="Builds GWT">
+		<antcall target="-do">
+			<param name="target" value="build" />
+		</antcall>
 	</target>
 
-	<target name="jni" description="Builds jni">
-		<ant dir="jni" inheritall="false"/>
+	<target name="checkstyle" description="Static analysis of GWT source">
+		<antcall target="-do">
+			<param name="target" value="checkstyle" />
+		</antcall>
 	</target>
 
-	<target name="clean" description="Cleans all GWT build outputs">
-		<delete dir="${gwt.build}" failonerror="false" />
+	<target name="test" depends="build" description="Test GWT">
+		<antcall target="-do">
+			<param name="target" value="test" />
+		</antcall>
 	</target>
-
-	<target name="build" depends="dev, user, servlet, jni" description="Builds GWT" />
-
-	<target name="all" depends="build" description="Builds GWT" />
-
 </project>

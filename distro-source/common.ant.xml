@@ -6,7 +6,7 @@
 	<property name="project.distname" value="gwt-${dist.platform}-${gwt.version}" />
 	<property name="project.staging" location="${gwt.build.staging}/${project.distname}" />
 
-	<target name="build" description="Copies items into the staging area">
+	<target name="stage" description="Copies items into the staging area">
 		<mkdir dir="${project.staging}" />
 
 		<copy todir="${project.staging}">
@@ -18,7 +18,7 @@
 			<fileset dir="../core/src" />
 			<fileset dir="src" />
 		</copy>
-        <antcall target="build.platform" />
+        <antcall target="stage.platform" />
 		<chmod perm="a+r">
 			<dirset dir="${project.staging}" />
 			<fileset dir="${project.staging}" />

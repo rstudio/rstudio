@@ -1,23 +1,7 @@
-<project name="dev" default="all" basedir=".">
+<project name="dev" default="build" basedir=".">
 	<property name="gwt.root" location=".." />
 	<property name="project.tail" value="dev" />
-	<import file="${gwt.root}/common.ant.xml" />
-
-	<target name="core" description="Builds dev/core">
-		<ant dir="core" inheritall="false"/>
-	</target>
-
-	<target name="linux" depends="core" description="Builds dev/linux">
-		<ant dir="linux" inheritall="false"/>
-	</target>
-	
-	<target name="windows" depends="core" description="Builds dev/linux">
-		<ant dir="windows" inheritall="false"/>
-	</target>
-
-	<target name="mac" depends="core" description="Builds dev/linux">
-		<ant dir="mac" inheritall="false"/>
-	</target>
+	<import file="${gwt.root}/platforms.ant.xml" />
 
 	<target name="clean" description="Cleans this project's intermediate and output files">
 		<delete dir="${project.build}" failonerror="false" />
@@ -25,7 +9,4 @@
 			<fileset dir="${gwt.build.lib}"  includes="gwt-dev-*.jar"/>
 		</delete>
 	</target>
-
-	<target name="all" depends="linux,windows,mac" description="Builds all platforms" />
-
 </project>
