@@ -21,6 +21,12 @@ package com.google.gwt.dev.js;
 public class JsParserException extends Exception {
 
   public static class SourceDetail {
+    private final int line;
+
+    private final int lineOffset;
+
+    private final String lineSource;
+
     public SourceDetail(int line, String lineSource, int lineOffset) {
       this.line = line;
       this.lineSource = lineSource;
@@ -38,11 +44,9 @@ public class JsParserException extends Exception {
     public String getLineSource() {
       return lineSource;
     }
-
-    private final int line;
-    private final int lineOffset;
-    private final String lineSource;
   }
+
+  private final SourceDetail sourceDetail;
 
   public JsParserException(String msg) {
     super(msg);
@@ -63,16 +67,6 @@ public class JsParserException extends Exception {
   public JsParserException(String msg, Throwable cause) {
     super(msg, cause);
     sourceDetail = null;
-  }
-
-  /**
-   * Provides additional source detail in some cases.
-   * 
-   * @return additional detail regarding the error, or <code>null</code> if no
-   *         additional detail is available
-   */
-  public SourceDetail getSourceDetail() {
-    return sourceDetail;
   }
 
   public String getDescription() {
@@ -98,5 +92,13 @@ public class JsParserException extends Exception {
     return sb.toString();
   }
 
-  private final SourceDetail sourceDetail;
+  /**
+   * Provides additional source detail in some cases.
+   * 
+   * @return additional detail regarding the error, or <code>null</code> if no
+   *         additional detail is available
+   */
+  public SourceDetail getSourceDetail() {
+    return sourceDetail;
+  }
 }

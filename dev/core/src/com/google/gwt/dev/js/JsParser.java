@@ -75,20 +75,22 @@ import java.util.Stack;
 
 public class JsParser {
 
+  private final Stack scopeStack = new Stack();
+
   public JsParser() {
     // Create a custom error handler so that we can throw our own exceptions.
     //
     Context.enter().setErrorReporter(new ErrorReporter() {
       public void error(String msg, String loc, int ln, String src, int col) {
         throw new UncheckedJsParserException(new JsParserException(msg, ln,
-          src, col));
+            src, col));
       }
 
       public EvaluatorException runtimeError(String msg, String loc, int ln,
           String src, int col) {
         // Never called, but just in case.
         throw new UncheckedJsParserException(new JsParserException(msg, ln,
-          src, col));
+            src, col));
       }
 
       public void warning(String msg, String loc, int ln, String src, int col) {
@@ -304,7 +306,7 @@ public class JsParser {
       default:
         int tokenType = node.getType();
         throw new JsParserException("Unexpected top-level token type: "
-          + tokenType);
+            + tokenType);
     }
   }
 
@@ -378,7 +380,7 @@ public class JsParser {
 
       default:
         throw new JsParserException("Unknown assignment operator variant: "
-          + asgNode.getIntDatum());
+            + asgNode.getIntDatum());
     }
   }
 
@@ -470,7 +472,8 @@ public class JsParser {
       toDelete.setExpr((JsArrayAccess) to);
     } else {
       throw createParserException(
-        "'delete' can only operate on property names and array elements", from);
+          "'delete' can only operate on property names and array elements",
+          from);
     }
     return toDelete;
   }
@@ -535,7 +538,7 @@ public class JsParser {
 
       default:
         throw new JsParserException("Unknown equality operator variant: "
-          + eqNode.getIntDatum());
+            + eqNode.getIntDatum());
     }
   }
 
@@ -650,7 +653,7 @@ public class JsParser {
       String fromParamName = fromParamNode.getString();
       // should this be unique? I think not since you can have dup args.
       JsName paramName = toFn.getScope().getOrCreateObfuscatableName(
-        fromParamName);
+          fromParamName);
       toFn.getParameters().add(new JsParameter(paramName));
       fromParamNode = fromParamNode.getNext();
     }
@@ -690,8 +693,7 @@ public class JsParser {
       //
       Object obj = getPropNode.getProp(Node.SPECIAL_PROP_PROP);
       assert (obj instanceof String);
-      toNameRef = getScope().getOrCreateUnobfuscatableName((String) obj)
-        .makeRef();
+      toNameRef = getScope().getOrCreateUnobfuscatableName((String) obj).makeRef();
     }
     toNameRef.setQualifier(toQualifier);
 
@@ -737,7 +739,7 @@ public class JsParser {
         return mapPostfixOperation(op, node);
       default:
         throw new JsParserException("Unknown prefix/postfix variant: "
-          + node.getIntDatum());
+            + node.getIntDatum());
     }
   }
 
@@ -812,12 +814,12 @@ public class JsParser {
       Node fromValueExpr = fromPropInit;
       if (fromValueExpr == null) {
         throw createParserException("Expected an init expression for: "
-          + toLabelExpr, objLitNode);
+            + toLabelExpr, objLitNode);
       }
       JsExpression toValueExpr = mapExpression(fromValueExpr);
 
       JsPropertyInitializer toPropInit = new JsPropertyInitializer(toLabelExpr,
-        toValueExpr);
+          toValueExpr);
       toLit.getPropertyInitializers().add(toPropInit);
 
       // Begin the next property initializer, if there is one.
@@ -911,7 +913,7 @@ public class JsParser {
 
       default:
         throw new JsParserException("Unknown relational operator variant: "
-          + relNode.getIntDatum());
+            + relNode.getIntDatum());
     }
   }
 
@@ -965,7 +967,7 @@ public class JsParser {
 
       default:
         throw new JsParserException("Unknown equality operator variant: "
-          + shiftNode.getIntDatum());
+            + shiftNode.getIntDatum());
     }
   }
 
@@ -1083,7 +1085,7 @@ public class JsParser {
       //
       Node fromCatchVarName = fromCatchNode.getFirstChild();
       JsName name = getScope().getOrCreateObfuscatableName(
-        fromCatchVarName.getString());
+          fromCatchVarName.getString());
       JsCatch catchBlock = new JsCatch(name);
 
       // Pre-advance to the next catch block, if any.
@@ -1149,7 +1151,7 @@ public class JsParser {
 
       default:
         throw new JsParserException("Unknown unary operator variant: "
-          + unOp.getIntDatum());
+            + unOp.getIntDatum());
     }
   }
 
@@ -1186,7 +1188,7 @@ public class JsParser {
     // called.
     //
     throw createParserException("Internal error: unexpected token 'with'",
-      withNode);
+        withNode);
   }
 
   private void popScope() {
@@ -1196,6 +1198,4 @@ public class JsParser {
   private void pushScope(JsScope scope) {
     scopeStack.push(scope);
   }
-
-  private final Stack scopeStack = new Stack();
 }

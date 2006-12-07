@@ -25,39 +25,46 @@ import java.util.TreeSet;
 public class JsKeywords {
 
   private static TreeSet sJavaScriptKeywords = new TreeSet(
-    CharArrayComparator.INSTANCE);
+      CharArrayComparator.INSTANCE);
 
   static {
     initJavaScriptKeywords();
   }
 
-  private JsKeywords() {
+  public static boolean isKeyword(char[] s) {
+    return sJavaScriptKeywords.contains(s);
   }
 
   private static synchronized void initJavaScriptKeywords() {
-    String[] keywords = new String[]{
-      // These are current keywords
-      //
-      "break", "delete", "function", "return", "typeof", "case", "do", "if",
-      "switch", "var", "catch", "else", "in", "this", "void", "continue",
-      "false", "instanceof", "throw", "while", "debugger", "finally", "new",
-      "true", "with", "default", "for", "null", "try",
+    String[] keywords = new String[] {
+        // These are current keywords
+        //
+        "break", "delete", "function", "return", "typeof", "case", "do", "if",
+        "switch", "var", "catch", "else", "in", "this", "void", "continue",
+        "false", "instanceof", "throw", "while", "debugger",
+        "finally",
+        "new",
+        "true",
+        "with",
+        "default",
+        "for",
+        "null",
+        "try",
 
-      // These are future keywords
-      //
-      "abstract", "double", "goto", "native", "static", "boolean", "enum",
-      "implements", "package", "super", "byte", "export", "import", "private",
-      "synchronized", "char", "extends", "int", "protected", "throws", "class",
-      "final", "interface", "public", "transient", "const", "float", "long",
-      "short", "volatile"};
+        // These are future keywords
+        //
+        "abstract", "double", "goto", "native", "static", "boolean", "enum",
+        "implements", "package", "super", "byte", "export", "import",
+        "private", "synchronized", "char", "extends", "int", "protected",
+        "throws", "class", "final", "interface", "public", "transient",
+        "const", "float", "long", "short", "volatile"};
 
     for (int i = 0; i < keywords.length; i++) {
       sJavaScriptKeywords.add(keywords[i].toCharArray());
     }
   }
 
-  public static boolean isKeyword(char[] s) {
-    return sJavaScriptKeywords.contains(s);
+  private JsKeywords() {
   }
 
 }

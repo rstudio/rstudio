@@ -28,6 +28,12 @@ public abstract class NamingStrategy {
 
   private class RootScopeHandler {
 
+    private final JsScope rootScope;
+
+    private final Map/* <JsObfuscatableName, String> */resultByName = new IdentityHashMap();
+
+    private final Map/* <JsScope, Map<String, JsName>> */nameByResultByScope = new IdentityHashMap();
+
     public RootScopeHandler(JsScope rootScope) {
       this.rootScope = rootScope;
     }
@@ -45,8 +51,7 @@ public abstract class NamingStrategy {
           // check for conflicts!
           if (!conflicts(result, scope)) {
             resultByName.put(name, result);
-            Map/* <String, JsName> */nameByResult = (Map) nameByResultByScope
-              .get(scope);
+            Map/* <String, JsName> */nameByResult = (Map) nameByResultByScope.get(scope);
             if (nameByResult == null) {
               nameByResult = new HashMap();
               nameByResultByScope.put(scope, nameByResult);
@@ -60,6 +65,19 @@ public abstract class NamingStrategy {
         } while (true);
       }
       return result;
+    }
+
+    private boolean childConflicts(String result, JsScope scope) {
+      for (int i = 0; i < scope.getChildren().size(); i++) {
+        JsScope child = (JsScope) scope.getChildren().get(i);
+        if (scopeConflicts(result, child)) {
+          return true;
+        }
+        if (childConflicts(result, child)) {
+          return true;
+        }
+      }
+      return false;
     }
 
     private boolean conflicts(String result, JsScope scope) {
@@ -78,28 +96,6 @@ public abstract class NamingStrategy {
       return childConflicts(result, scope);
     }
 
-    private boolean scopeConflicts(String result, JsScope scope) {
-      Map/* <String, JsName> */nameByResult = (Map) nameByResultByScope
-        .get(scope);
-      if (nameByResult != null) {
-        return nameByResult.containsKey(result);
-      }
-      return false;
-    }
-
-    private boolean childConflicts(String result, JsScope scope) {
-      for (int i = 0; i < scope.getChildren().size(); i++) {
-        JsScope child = (JsScope) scope.getChildren().get(i);
-        if (scopeConflicts(result, child)) {
-          return true;
-        }
-        if (childConflicts(result, child)) {
-          return true;
-        }
-      }
-      return false;
-    }
-
     private boolean parentConflicts(String result, JsScope scope) {
       JsScope parent = scope.getParent();
       if (parent == null) {
@@ -111,10 +107,16 @@ public abstract class NamingStrategy {
       return parentConflicts(result, parent);
     }
 
-    private final JsScope rootScope;
-    private final Map/* <JsObfuscatableName, String> */resultByName = new IdentityHashMap();
-    private final Map/* <JsScope, Map<String, JsName>> */nameByResultByScope = new IdentityHashMap();
+    private boolean scopeConflicts(String result, JsScope scope) {
+      Map/* <String, JsName> */nameByResult = (Map) nameByResultByScope.get(scope);
+      if (nameByResult != null) {
+        return nameByResult.containsKey(result);
+      }
+      return false;
+    }
   }
+
+  private final Map/* <JsScope, RootScopeHandler> */handlersByScope = new IdentityHashMap();
 
   public final String getIdent(JsName name) {
     if (name instanceof JsUnobfuscatableName) {
@@ -142,6 +144,4 @@ public abstract class NamingStrategy {
     }
     return handler;
   }
-
-  private final Map/* <JsScope, RootScopeHandler> */handlersByScope = new IdentityHashMap();
 }

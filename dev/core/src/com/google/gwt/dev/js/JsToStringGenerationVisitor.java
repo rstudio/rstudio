@@ -94,6 +94,16 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
   private static final char[] CHARS_VAR = "var".toCharArray();
   private static final char[] CHARS_WHILE = "while".toCharArray();
 
+  private static final char[] HEX_DIGITS = {
+      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
+      'E', 'F'};
+
+  protected boolean needSemi = true;
+
+  private final NamingStrategy namer;
+
+  private final TextOutput p;
+
   public JsToStringGenerationVisitor(TextOutput out, NamingStrategy namer) {
     this.p = out;
     this.namer = namer;
@@ -160,7 +170,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
          * (sic).
          */
         if (stmt instanceof JsExprStmt
-          && ((JsExprStmt) stmt).getExpression() instanceof JsFunction) {
+            && ((JsExprStmt) stmt).getExpression() instanceof JsFunction) {
           _newline();
         } else {
           _semi();
@@ -654,101 +664,6 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return false;
   }
 
-  private static final char[] HEX_DIGITS = {
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-    'F'};
-
-  /**
-   * Adapted from
-   * {@link com.google.javascript.jscomp.rhino.ScriptRuntime#escapeString(String)}.
-   * The difference is that we quote with either &quot; or &apos; depending on
-   * which one is used less inside the string.
-   */
-  private void printStringLiteral(String value) {
-    char[] chars = value.toCharArray();
-    final int n = chars.length;
-    int quoteCount = 0;
-    int aposCount = 0;
-    for (int i = 0; i < n; ++i) {
-      switch (chars[i]) {
-        case '"':
-          ++quoteCount;
-          break;
-        case '\'':
-          ++aposCount;
-          break;
-      }
-    }
-
-    char quoteChar = (quoteCount < aposCount) ? '"' : '\'';
-    p.print(quoteChar);
-    for (int i = 0; i < n; ++i) {
-      char c = chars[i];
-
-      if (' ' <= c && c <= '~' && c != quoteChar && c != '\\') {
-        // an ordinary print character (like C isprint())
-        p.print(c);
-        continue;
-      }
-
-      int escape = -1;
-      switch (c) {
-        case 0:
-          escape = '0';
-          break;
-        case '\b':
-          escape = 'b';
-          break;
-        case '\f':
-          escape = 'f';
-          break;
-        case '\n':
-          escape = 'n';
-          break;
-        case '\r':
-          escape = 'r';
-          break;
-        case '\t':
-          escape = 't';
-          break;
-        case 0xb:
-          escape = 'v';
-          break; // Java lacks \v.
-        case '"':
-          escape = '"';
-          break; // only reach here if == quoteChar
-        case '\'':
-          escape = '\'';
-          break; // only reach here if == quoteChar
-        case '\\':
-          escape = '\\';
-          break;
-      }
-      if (escape >= 0) {
-        // an \escaped sort of character
-        p.print('\\');
-        p.print((char) escape);
-      } else {
-        int hexSize;
-        if (c < 256) {
-          // 2-digit hex
-          p.print("\\x");
-          hexSize = 2;
-        } else {
-          // Unicode.
-          p.print("\\u");
-          hexSize = 4;
-        }
-        // append hexadecimal form of ch left-padded with 0
-        for (int shift = (hexSize - 1) * 4; shift >= 0; shift -= 4) {
-          int digit = 0xf & (c >> shift);
-          p.print(HEX_DIGITS[digit]);
-        }
-      }
-    }
-    p.print(quoteChar);
-  }
-
   public boolean visit(JsSwitch x) {
     _switch();
     _spaceOpt();
@@ -823,6 +738,14 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     x.getBody().traverse(this);
     _nestedPop(x.getBody());
     return false;
+  }
+
+  protected void _newline() {
+    p.newline();
+  }
+
+  protected void _newlineOpt() {
+    p.newlineOpt();
   }
 
   private void _assignment() {
@@ -953,14 +876,6 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     p.print(CHARS_NEW);
   }
 
-  protected void _newlineOpt() {
-    p.newlineOpt();
-  }
-
-  protected void _newline() {
-    p.newline();
-  }
-
   private void _null() {
     p.print(CHARS_NULL);
   }
@@ -983,7 +898,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
 
   private boolean _parenPopIfCommaExpr(JsExpression x) {
     boolean doPop = x instanceof JsBinaryOperation
-      && ((JsBinaryOperation) x).getOperator() == JsBinaryOperator.COMMA;
+        && ((JsBinaryOperation) x).getOperator() == JsBinaryOperator.COMMA;
     if (doPop) {
       _rparen();
     }
@@ -1023,7 +938,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
 
   private boolean _parenPushIfCommaExpr(JsExpression x) {
     boolean doPush = x instanceof JsBinaryOperation
-      && ((JsBinaryOperation) x).getOperator() == JsBinaryOperator.COMMA;
+        && ((JsBinaryOperation) x).getOperator() == JsBinaryOperator.COMMA;
     if (doPush) {
       _lparen();
     }
@@ -1130,7 +1045,94 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     p.indentOut();
   }
 
-  private final NamingStrategy namer;
-  private final TextOutput p;
-  protected boolean needSemi = true;
+  /**
+   * Adapted from
+   * {@link com.google.javascript.jscomp.rhino.ScriptRuntime#escapeString(String)}.
+   * The difference is that we quote with either &quot; or &apos; depending on
+   * which one is used less inside the string.
+   */
+  private void printStringLiteral(String value) {
+    char[] chars = value.toCharArray();
+    final int n = chars.length;
+    int quoteCount = 0;
+    int aposCount = 0;
+    for (int i = 0; i < n; ++i) {
+      switch (chars[i]) {
+        case '"':
+          ++quoteCount;
+          break;
+        case '\'':
+          ++aposCount;
+          break;
+      }
+    }
+
+    char quoteChar = (quoteCount < aposCount) ? '"' : '\'';
+    p.print(quoteChar);
+    for (int i = 0; i < n; ++i) {
+      char c = chars[i];
+
+      if (' ' <= c && c <= '~' && c != quoteChar && c != '\\') {
+        // an ordinary print character (like C isprint())
+        p.print(c);
+        continue;
+      }
+
+      int escape = -1;
+      switch (c) {
+        case 0:
+          escape = '0';
+          break;
+        case '\b':
+          escape = 'b';
+          break;
+        case '\f':
+          escape = 'f';
+          break;
+        case '\n':
+          escape = 'n';
+          break;
+        case '\r':
+          escape = 'r';
+          break;
+        case '\t':
+          escape = 't';
+          break;
+        case 0xb:
+          escape = 'v';
+          break; // Java lacks \v.
+        case '"':
+          escape = '"';
+          break; // only reach here if == quoteChar
+        case '\'':
+          escape = '\'';
+          break; // only reach here if == quoteChar
+        case '\\':
+          escape = '\\';
+          break;
+      }
+      if (escape >= 0) {
+        // an \escaped sort of character
+        p.print('\\');
+        p.print((char) escape);
+      } else {
+        int hexSize;
+        if (c < 256) {
+          // 2-digit hex
+          p.print("\\x");
+          hexSize = 2;
+        } else {
+          // Unicode.
+          p.print("\\u");
+          hexSize = 4;
+        }
+        // append hexadecimal form of ch left-padded with 0
+        for (int shift = (hexSize - 1) * 4; shift >= 0; shift -= 4) {
+          int digit = 0xf & (c >> shift);
+          p.print(HEX_DIGITS[digit]);
+        }
+      }
+    }
+    p.print(quoteChar);
+  }
 }
