@@ -20,6 +20,12 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsIf extends JsStatement {
 
+  private JsExpression ifExpr;
+
+  private JsStatement thenStmt;
+
+  private JsStatement elseStmt;
+
   public JsIf() {
   }
 
@@ -27,20 +33,20 @@ public final class JsIf extends JsStatement {
     return elseStmt;
   }
 
-  public void setElseStmt(JsStatement elseStmt) {
-    this.elseStmt = elseStmt;
-  }
-
   public JsExpression getIfExpr() {
     return ifExpr;
   }
 
-  public void setIfExpr(JsExpression ifExpr) {
-    this.ifExpr = ifExpr;
-  }
-
   public JsStatement getThenStmt() {
     return thenStmt;
+  }
+
+  public void setElseStmt(JsStatement elseStmt) {
+    this.elseStmt = elseStmt;
+  }
+
+  public void setIfExpr(JsExpression ifExpr) {
+    this.ifExpr = ifExpr;
   }
 
   public void setThenStmt(JsStatement thenStmt) {
@@ -57,8 +63,4 @@ public final class JsIf extends JsStatement {
     }
     v.endVisit(this);
   }
-
-  private JsExpression ifExpr;
-  private JsStatement thenStmt;
-  private JsStatement elseStmt;
 }

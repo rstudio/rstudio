@@ -20,6 +20,8 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsBreak extends JsStatement {
 
+  private final JsNameRef label;
+
   public JsBreak() {
     this(null);
   }
@@ -36,6 +38,4 @@ public final class JsBreak extends JsStatement {
     v.visit(this);
     v.endVisit(this);
   }
-
-  private final JsNameRef label;
 }

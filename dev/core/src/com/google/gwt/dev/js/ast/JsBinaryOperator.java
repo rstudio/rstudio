@@ -81,13 +81,12 @@ public final class JsBinaryOperator extends JsOperator {
   public static final JsBinaryOperator ASG_BIT_XOR = create("^=", 2, INFIX);
 
   public static final JsBinaryOperator COMMA = create(",", 1, LEFT_INFIX);
-
-  private JsBinaryOperator(String symbol, int precedence, int mask) {
-    super(symbol, precedence, mask);
-  }
-
+  
   private static JsBinaryOperator create(String symbol, int precedence, int mask) {
     JsBinaryOperator op = new JsBinaryOperator(symbol, precedence, mask);
     return op;
+  }
+  private JsBinaryOperator(String symbol, int precedence, int mask) {
+    super(symbol, precedence, mask);
   }
 }

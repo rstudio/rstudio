@@ -20,6 +20,10 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsNameRef extends JsExpression implements HasName {
 
+  private JsName name;
+
+  private JsExpression qualifier;
+
   public JsNameRef(JsName name) {
     this.name = name;
   }
@@ -28,8 +32,8 @@ public final class JsNameRef extends JsExpression implements HasName {
     return name;
   }
 
-  public void setName(JsName name) {
-    this.name = name;
+  public JsExpression getQualifier() {
+    return qualifier;
   }
 
   public boolean isLeaf() {
@@ -40,8 +44,8 @@ public final class JsNameRef extends JsExpression implements HasName {
     }
   }
 
-  public JsExpression getQualifier() {
-    return qualifier;
+  public void setName(JsName name) {
+    this.name = name;
   }
 
   public void setQualifier(JsExpression qualifier) {
@@ -56,7 +60,4 @@ public final class JsNameRef extends JsExpression implements HasName {
     }
     v.endVisit(this);
   }
-
-  private JsName name;
-  private JsExpression qualifier;
 }

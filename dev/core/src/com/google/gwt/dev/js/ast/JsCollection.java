@@ -24,26 +24,28 @@ import java.util.List;
  */
 public class JsCollection extends JsNode {
 
-  public void addNode(JsNode o) {
-    assert (o != null);
-    list.add(o);
-  }
+  private final List/* <JsNode> */list = new ArrayList/* <JsNode> */();
 
   public void addNode(int index, JsNode o) {
     assert (o != null);
     list.add(index, o);
   }
 
+  public void addNode(JsNode o) {
+    assert (o != null);
+    list.add(o);
+  }
+
   public JsNode getNode(int index) {
     return (JsNode) list.get(index);
   }
 
-  public void setNode(int index, JsNode o) {
-    list.set(index, o);
-  }
-
   public Iterator iterator() {
     return list.iterator();
+  }
+
+  public void setNode(int index, JsNode o) {
+    list.set(index, o);
   }
 
   public int size() {
@@ -56,6 +58,4 @@ public class JsCollection extends JsNode {
       node.traverse(v);
     }
   }
-
-  private final List/* <JsNode> */list = new ArrayList/* <JsNode> */();
 }

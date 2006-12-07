@@ -20,7 +20,13 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsArrayLiteral extends JsExpression {
 
+  private final JsExpressions exprs = new JsExpressions();
+
   public JsArrayLiteral() {
+  }
+
+  public JsExpressions getExpressions() {
+    return exprs;
   }
 
   public void traverse(JsVisitor v) {
@@ -29,10 +35,4 @@ public final class JsArrayLiteral extends JsExpression {
     }
     v.endVisit(this);
   }
-
-  public JsExpressions getExpressions() {
-    return exprs;
-  }
-
-  private final JsExpressions exprs = new JsExpressions();
 }

@@ -20,6 +20,8 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsDecimalLiteral extends JsExpression {
 
+  private final String value;
+
   // Should be interned by JsProgram
   JsDecimalLiteral(String value) {
     this.value = value;
@@ -37,6 +39,4 @@ public final class JsDecimalLiteral extends JsExpression {
     v.visit(this);
     v.endVisit(this);
   }
-
-  private final String value;
 }

@@ -24,6 +24,26 @@ import java.util.Map;
  */
 public final class JsProgram extends JsNode implements HasScope {
 
+  private final Map decimalLiteralMap = new HashMap();
+
+  private final JsEmpty emptyStmt = new JsEmpty();
+
+  private final JsBooleanLiteral falseLiteral = new JsBooleanLiteral(false);
+
+  private final JsGlobalBlock globalBlock;
+
+  private final Map integralLiteralMap = new HashMap();
+
+  private final JsNullLiteral nullLiteral = new JsNullLiteral();
+
+  private final JsRootScope rootScope;
+
+  private final Map stringLiteralMap = new HashMap();
+
+  private final JsBooleanLiteral trueLiteral = new JsBooleanLiteral(true);
+
+  private JsStatement debuggerStmt;
+
   /**
    * Constructs a JavaScript program object.
    */
@@ -43,16 +63,6 @@ public final class JsProgram extends JsNode implements HasScope {
    */
   public JsStatement getDebuggerStmt() {
     return debuggerStmt;
-  }
-
-  /**
-   * Specifies a {@link JsStatement} to use whenever parsed source includes a
-   * <code>debugger</code> statement.
-   * 
-   * @see #getDebuggerStmt()
-   */
-  public void setDebuggerStmt(JsStatement debuggerStmt) {
-    this.debuggerStmt = debuggerStmt;
   }
 
   public JsDecimalLiteral getDecimalLiteral(String value) {
@@ -112,21 +122,20 @@ public final class JsProgram extends JsNode implements HasScope {
     return trueLiteral;
   }
 
+  /**
+   * Specifies a {@link JsStatement} to use whenever parsed source includes a
+   * <code>debugger</code> statement.
+   * 
+   * @see #getDebuggerStmt()
+   */
+  public void setDebuggerStmt(JsStatement debuggerStmt) {
+    this.debuggerStmt = debuggerStmt;
+  }
+
   public void traverse(JsVisitor v) {
     if (v.visit(this)) {
       globalBlock.traverse(v);
     }
     v.endVisit(this);
   }
-
-  private final Map decimalLiteralMap = new HashMap();
-  private final JsEmpty emptyStmt = new JsEmpty();
-  private final JsBooleanLiteral falseLiteral = new JsBooleanLiteral(false);
-  private final JsGlobalBlock globalBlock;
-  private final Map integralLiteralMap = new HashMap();
-  private final JsNullLiteral nullLiteral = new JsNullLiteral();
-  private final JsRootScope rootScope;
-  private final Map stringLiteralMap = new HashMap();
-  private final JsBooleanLiteral trueLiteral = new JsBooleanLiteral(true);
-  private JsStatement debuggerStmt;
 }

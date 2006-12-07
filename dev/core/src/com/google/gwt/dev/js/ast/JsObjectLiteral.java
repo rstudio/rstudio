@@ -20,7 +20,13 @@ package com.google.gwt.dev.js.ast;
  */
 public class JsObjectLiteral extends JsExpression {
 
+  private final JsPropertyInitializers props = new JsPropertyInitializers();
+
   public JsObjectLiteral() {
+  }
+
+  public JsPropertyInitializers getPropertyInitializers() {
+    return props;
   }
 
   public void traverse(JsVisitor v) {
@@ -29,10 +35,4 @@ public class JsObjectLiteral extends JsExpression {
     }
     v.endVisit(this);
   }
-
-  public JsPropertyInitializers getPropertyInitializers() {
-    return props;
-  }
-
-  private final JsPropertyInitializers props = new JsPropertyInitializers();
 }

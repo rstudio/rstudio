@@ -20,10 +20,10 @@ package com.google.gwt.dev.js.ast;
  */
 public abstract class JsSwitchMember extends JsNode {
 
+  protected final JsStatements stmts = new JsStatements();
+
   public JsStatements getStmts() {
     return stmts;
   }
-
-  protected final JsStatements stmts = new JsStatements();
 
 }

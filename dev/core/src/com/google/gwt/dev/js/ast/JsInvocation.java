@@ -20,6 +20,10 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsInvocation extends JsExpression implements HasArguments {
 
+  private final JsExpressions args = new JsExpressions();
+
+  private JsExpression qualifier;
+
   public JsInvocation() {
   }
 
@@ -42,7 +46,4 @@ public final class JsInvocation extends JsExpression implements HasArguments {
     }
     v.endVisit(this);
   }
-
-  private final JsExpressions args = new JsExpressions();
-  private JsExpression qualifier;
 }

@@ -20,27 +20,33 @@ package com.google.gwt.dev.js.ast;
  */
 public class JsTry extends JsStatement {
 
+  private final JsCatches catches = new JsCatches();
+
+  private JsBlock finallyBlock;
+
+  private JsBlock tryBlock;
+
   public JsTry() {
-  }
-
-  public JsBlock getTryBlock() {
-    return tryBlock;
-  }
-
-  public void setTryBlock(JsBlock block) {
-    tryBlock = block;
   }
 
   public JsCatches getCatches() {
     return catches;
   }
 
+  public JsBlock getFinallyBlock() {
+    return finallyBlock;
+  }
+
+  public JsBlock getTryBlock() {
+    return tryBlock;
+  }
+
   public void setFinallyBlock(JsBlock block) {
     this.finallyBlock = block;
   }
 
-  public JsBlock getFinallyBlock() {
-    return finallyBlock;
+  public void setTryBlock(JsBlock block) {
+    tryBlock = block;
   }
 
   public void traverse(JsVisitor v) {
@@ -53,8 +59,4 @@ public class JsTry extends JsStatement {
     }
     v.endVisit(this);
   }
-
-  private final JsCatches catches = new JsCatches();
-  private JsBlock finallyBlock;
-  private JsBlock tryBlock;
 }

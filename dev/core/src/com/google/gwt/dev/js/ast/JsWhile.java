@@ -20,6 +20,10 @@ package com.google.gwt.dev.js.ast;
  */
 public class JsWhile extends JsStatement {
 
+  private JsStatement body;
+
+  private JsExpression condition;
+
   public JsWhile() {
   }
 
@@ -51,7 +55,4 @@ public class JsWhile extends JsStatement {
     }
     v.endVisit(this);
   }
-
-  private JsStatement body;
-  private JsExpression condition;
 }

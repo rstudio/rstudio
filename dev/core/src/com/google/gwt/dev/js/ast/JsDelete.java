@@ -20,19 +20,21 @@ package com.google.gwt.dev.js.ast;
  */
 public class JsDelete extends JsExpression {
 
+  private JsExpression toDelete;
+
   public JsDelete() {
   }
 
-  public void setExpr(JsNameRef nameRef) {
-    this.toDelete = nameRef;
+  public JsExpression getExpr() {
+    return toDelete;
   }
 
   public void setExpr(JsArrayAccess arrayElem) {
     this.toDelete = arrayElem;
   }
 
-  public JsExpression getExpr() {
-    return toDelete;
+  public void setExpr(JsNameRef nameRef) {
+    this.toDelete = nameRef;
   }
 
   public void traverse(JsVisitor v) {
@@ -41,6 +43,4 @@ public class JsDelete extends JsExpression {
     }
     v.endVisit(this);
   }
-
-  private JsExpression toDelete;
 }

@@ -20,6 +20,10 @@ package com.google.gwt.dev.js.ast;
  */
 public class JsRegExp extends JsExpression {
 
+  private String flags;
+
+  private String pattern;
+
   public JsRegExp() {
   }
 
@@ -43,7 +47,4 @@ public class JsRegExp extends JsExpression {
     v.visit(this);
     v.endVisit(this);
   }
-
-  private String flags;
-  private String pattern;
 }

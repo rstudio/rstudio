@@ -20,6 +20,10 @@ package com.google.gwt.dev.js.ast;
  */
 public class JsDoWhile extends JsStatement {
 
+  private JsStatement body;
+
+  private JsExpression condition;
+
   public JsDoWhile() {
   }
 
@@ -51,7 +55,4 @@ public class JsDoWhile extends JsStatement {
     }
     v.endVisit(this);
   }
-
-  private JsStatement body;
-  private JsExpression condition;
 }

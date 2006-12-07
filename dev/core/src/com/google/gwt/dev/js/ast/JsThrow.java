@@ -20,6 +20,8 @@ package com.google.gwt.dev.js.ast;
  */
 public class JsThrow extends JsStatement {
 
+  private JsExpression expr;
+
   public JsThrow() {
   }
 
@@ -41,6 +43,4 @@ public class JsThrow extends JsStatement {
     }
     v.endVisit(this);
   }
-
-  private JsExpression expr;
 }

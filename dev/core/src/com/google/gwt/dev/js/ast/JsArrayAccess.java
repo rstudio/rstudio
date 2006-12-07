@@ -20,6 +20,10 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsArrayAccess extends JsExpression {
 
+  private JsExpression arrayExpr;
+
+  private JsExpression indexExpr;
+
   public JsArrayAccess() {
   }
 
@@ -51,7 +55,4 @@ public final class JsArrayAccess extends JsExpression {
     }
     v.endVisit(this);
   }
-
-  private JsExpression arrayExpr;
-  private JsExpression indexExpr;
 }

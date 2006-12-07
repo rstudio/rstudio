@@ -22,15 +22,17 @@ import java.util.Iterator;
  */
 public class JsBlock extends JsStatement {
 
+  private final JsStatements stmts = new JsStatements();
+
   public JsBlock() {
+  }
+
+  public JsStatements getStatements() {
+    return stmts;
   }
 
   public boolean isGlobalBlock() {
     return false;
-  }
-  
-  public JsStatements getStatements() {
-    return stmts;
   }
 
   public void traverse(JsVisitor v) {
@@ -42,6 +44,4 @@ public class JsBlock extends JsStatement {
     }
     v.endVisit(this);
   }
-
-  private final JsStatements stmts = new JsStatements();
 }

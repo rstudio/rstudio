@@ -20,13 +20,24 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsConditional extends JsExpression {
 
+  private JsExpression testExpr;
+
+  private JsExpression thenExpr;
+
+  private JsExpression elseExpr;
+
   public JsConditional() {
   }
 
-  public JsConditional(JsExpression testExpr, JsExpression thenExpr, JsExpression elseExpr) {
+  public JsConditional(JsExpression testExpr, JsExpression thenExpr,
+      JsExpression elseExpr) {
     this.testExpr = testExpr;
     this.thenExpr = thenExpr;
     this.elseExpr = elseExpr;
+  }
+
+  public JsExpression getElseExpression() {
+    return elseExpr;
   }
 
   public JsExpression getTestExpression() {
@@ -37,20 +48,16 @@ public final class JsConditional extends JsExpression {
     return thenExpr;
   }
 
-  public JsExpression getElseExpression() {
-    return elseExpr;
-  }
-
   public void setElseExpression(JsExpression elseExpr) {
     this.elseExpr = elseExpr;
   }
 
-  public void setThenExpression(JsExpression thenExpr) {
-    this.thenExpr = thenExpr;
-  }
-
   public void setTestExpression(JsExpression testExpr) {
     this.testExpr = testExpr;
+  }
+
+  public void setThenExpression(JsExpression thenExpr) {
+    this.thenExpr = thenExpr;
   }
 
   public void traverse(JsVisitor v) {
@@ -61,8 +68,4 @@ public final class JsConditional extends JsExpression {
     }
     v.endVisit(this);
   }
-
-  private JsExpression testExpr;
-  private JsExpression thenExpr;
-  private JsExpression elseExpr;
 }

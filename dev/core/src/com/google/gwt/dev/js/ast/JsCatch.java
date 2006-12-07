@@ -20,6 +20,12 @@ package com.google.gwt.dev.js.ast;
  */
 public class JsCatch extends JsNode implements HasCondition, HasName {
 
+  private JsBlock body;
+
+  private JsExpression condition;
+
+  private final JsName name;
+
   public JsCatch(JsName name) {
     this.name = name;
   }
@@ -28,16 +34,16 @@ public class JsCatch extends JsNode implements HasCondition, HasName {
     return body;
   }
 
-  public void setBody(JsBlock body) {
-    this.body = body;
-  }
-
   public JsExpression getCondition() {
     return condition;
   }
 
   public JsName getName() {
     return name;
+  }
+
+  public void setBody(JsBlock body) {
+    this.body = body;
   }
 
   public void setCondition(JsExpression condition) {
@@ -53,8 +59,4 @@ public class JsCatch extends JsNode implements HasCondition, HasName {
     }
     v.endVisit(this);
   }
-
-  private JsBlock body;
-  private JsExpression condition;
-  private final JsName name;
 }

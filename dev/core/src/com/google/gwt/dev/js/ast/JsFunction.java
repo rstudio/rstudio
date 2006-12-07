@@ -20,6 +20,14 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsFunction extends JsExpression implements HasName, HasScope {
 
+  private JsBlock body;
+
+  private JsName name;
+
+  private final JsParameters params = new JsParameters();
+
+  private final JsScope scope;
+
   /**
    * Creates an anonymous function.
    */
@@ -76,9 +84,4 @@ public final class JsFunction extends JsExpression implements HasName, HasScope 
     }
     v.endVisit(this);
   }
-
-  private JsBlock body;
-  private JsName name;
-  private final JsParameters params = new JsParameters();
-  private final JsScope scope;
 }

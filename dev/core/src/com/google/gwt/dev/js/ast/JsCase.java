@@ -20,6 +20,8 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsCase extends JsSwitchMember {
 
+  private JsExpression caseExpr;
+
   public JsCase() {
   }
 
@@ -38,6 +40,4 @@ public final class JsCase extends JsSwitchMember {
     }
     v.endVisit(this);
   }
-
-  private JsExpression caseExpr;
 }

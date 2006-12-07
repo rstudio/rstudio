@@ -29,6 +29,10 @@ public class JsVars extends JsStatement {
    */
   public static class JsVar implements HasName {
 
+    private JsExpression initExpr;
+
+    private final JsName name;
+
     public JsVar(JsName name) {
       this.name = name;
     }
@@ -44,10 +48,9 @@ public class JsVars extends JsStatement {
     public void setInitExpr(JsExpression initExpr) {
       this.initExpr = initExpr;
     }
-
-    private JsExpression initExpr;
-    private final JsName name;
   }
+
+  private final List vars = new ArrayList();
 
   public JsVars() {
   }
@@ -73,6 +76,4 @@ public class JsVars extends JsStatement {
     }
     v.endVisit(this);
   }
-
-  private final List vars = new ArrayList();
 }

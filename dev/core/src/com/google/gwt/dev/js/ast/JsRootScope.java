@@ -26,6 +26,10 @@ import java.util.Map;
  */
 public final class JsRootScope extends JsScope {
 
+  private final JsProgram program;
+
+  private final Map/* <String, JsUnobfuscatableName> */unobfuscatableNames = new HashMap();
+
   public JsRootScope(JsProgram program) {
     this.program = program;
     ctorAddKnownGlobalSymbols();
@@ -44,10 +48,9 @@ public final class JsRootScope extends JsScope {
   public JsUnobfuscatableName getOrCreateUnobfuscatableName(String ident) {
     if (JsKeywords.isKeyword(ident.toCharArray())) {
       throw new IllegalArgumentException("Cannot create identifier " + ident
-        + "; that name is a reserved word.");
+          + "; that name is a reserved word.");
     }
-    JsUnobfuscatableName name = (JsUnobfuscatableName) unobfuscatableNames
-      .get(ident);
+    JsUnobfuscatableName name = (JsUnobfuscatableName) unobfuscatableNames.get(ident);
     if (name == null) {
       name = new JsUnobfuscatableName(this, ident);
       unobfuscatableNames.put(ident, name);
@@ -72,8 +75,7 @@ public final class JsRootScope extends JsScope {
 
   JsName createSpecialUnobfuscatableName(String ident) {
     // this is for the debugger statement; ignore keyword restriction
-    JsUnobfuscatableName name = (JsUnobfuscatableName) unobfuscatableNames
-      .get(ident);
+    JsUnobfuscatableName name = (JsUnobfuscatableName) unobfuscatableNames.get(ident);
     if (name == null) {
       name = new JsUnobfuscatableName(this, ident);
       unobfuscatableNames.put(ident, name);
@@ -82,19 +84,16 @@ public final class JsRootScope extends JsScope {
   }
 
   private void ctorAddKnownGlobalSymbols() {
-    String[] commonBuiltins = new String[]{
-      "ActiveXObject", "Array", "Boolean", "Date", "Debug", "Enumerator",
-      "Error", "Function", "Global", "Image", "Math", "Number", "Object",
-      "RegExp", "String", "VBArray", "window", "document", "event",
-      "arguments", "call", "toString", "$wnd", "$doc", "$moduleName" };
+    String[] commonBuiltins = new String[] {
+        "ActiveXObject", "Array", "Boolean", "Date", "Debug", "Enumerator",
+        "Error", "Function", "Global", "Image", "Math", "Number", "Object",
+        "RegExp", "String", "VBArray", "window", "document", "event",
+        "arguments", "call", "toString", "$wnd", "$doc", "$moduleName"};
 
     for (int i = 0; i < commonBuiltins.length; i++) {
       String ident = commonBuiltins[i];
       this.getOrCreateUnobfuscatableName(ident);
     }
   }
-
-  private final JsProgram program;
-  private final Map/* <String, JsUnobfuscatableName> */unobfuscatableNames = new HashMap();
 
 }

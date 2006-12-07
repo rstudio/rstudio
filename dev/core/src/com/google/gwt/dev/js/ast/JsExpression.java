@@ -19,10 +19,6 @@ package com.google.gwt.dev.js.ast;
  * An abstract base class for all JavaScript expressions.
  */
 public abstract class JsExpression extends JsNode {
-  public JsExprStmt makeStmt() {
-    return new JsExprStmt(this);
-  }
-
   /**
    * Determines whether or not this expression is a leaf, such as a
    * {@link JsNameRef}, {@link JsBooleanLiteral}, and so on. Leaf expressions
@@ -33,5 +29,9 @@ public abstract class JsExpression extends JsNode {
     // Individual subclasses can speak for themselves if they are a leaf.
     //
     return false;
+  }
+
+  public JsExprStmt makeStmt() {
+    return new JsExprStmt(this);
   }
 }

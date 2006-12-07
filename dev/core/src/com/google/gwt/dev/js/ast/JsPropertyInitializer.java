@@ -20,6 +20,10 @@ package com.google.gwt.dev.js.ast;
  */
 public class JsPropertyInitializer extends JsNode {
 
+  private JsExpression labelExpr;
+
+  private JsExpression valueExpr;
+
   public JsPropertyInitializer() {
   }
 
@@ -51,7 +55,4 @@ public class JsPropertyInitializer extends JsNode {
     }
     v.endVisit(this);
   }
-
-  private JsExpression labelExpr;
-  private JsExpression valueExpr;
 }

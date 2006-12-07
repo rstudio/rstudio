@@ -20,6 +20,10 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsNew extends JsExpression implements HasArguments {
 
+  private final JsExpressions args = new JsExpressions();
+
+  private JsExpression ctorExpr;
+
   public JsNew() {
   }
 
@@ -42,7 +46,4 @@ public final class JsNew extends JsExpression implements HasArguments {
     }
     v.endVisit(this);
   }
-
-  private final JsExpressions args = new JsExpressions();
-  private JsExpression ctorExpr;
 }

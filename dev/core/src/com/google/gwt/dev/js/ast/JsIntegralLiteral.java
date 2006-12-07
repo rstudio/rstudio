@@ -22,11 +22,17 @@ import java.math.BigInteger;
  */
 public class JsIntegralLiteral extends JsExpression {
 
+  private final BigInteger value;
+
   // Should be interned in JsProgram
   JsIntegralLiteral(BigInteger value) {
     this.value = value;
   }
-  
+
+  public BigInteger getValue() {
+    return value;
+  }
+
   public boolean isLeaf() {
     return true;
   }
@@ -35,10 +41,4 @@ public class JsIntegralLiteral extends JsExpression {
     v.visit(this);
     v.endVisit(this);
   }
-
-  public BigInteger getValue() {
-    return value;
-  }
-
-  private final BigInteger value;
 }

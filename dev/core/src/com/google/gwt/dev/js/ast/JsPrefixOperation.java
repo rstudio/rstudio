@@ -20,6 +20,10 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsPrefixOperation extends JsExpression {
 
+  private JsExpression arg;
+
+  private final JsUnaryOperator op;
+
   public JsPrefixOperation(JsUnaryOperator op) {
     this(op, null);
   }
@@ -27,13 +31,6 @@ public final class JsPrefixOperation extends JsExpression {
   public JsPrefixOperation(JsUnaryOperator op, JsExpression arg) {
     this.op = op;
     this.arg = arg;
-  }
-  
-  public void traverse(JsVisitor v) {
-    if (v.visit(this)) {
-      arg.traverse(v);
-    }
-    v.endVisit(this);
   }
 
   public JsExpression getArg() {
@@ -48,6 +45,10 @@ public final class JsPrefixOperation extends JsExpression {
     this.arg = arg;
   }
 
-  private JsExpression arg;
-  private final JsUnaryOperator op;
+  public void traverse(JsVisitor v) {
+    if (v.visit(this)) {
+      arg.traverse(v);
+    }
+    v.endVisit(this);
+  }
 }

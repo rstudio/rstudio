@@ -20,6 +20,15 @@ package com.google.gwt.dev.js.ast;
  */
 public class JsForIn extends JsStatement {
 
+  private JsStatement body;
+
+  private JsExpression iterExpr;
+
+  // Optional: the name of a new iterator variable to introduce
+  private final JsName iterVarName;
+
+  private JsExpression objExpr;
+
   public JsForIn() {
     this(null);
   }
@@ -66,10 +75,4 @@ public class JsForIn extends JsStatement {
     }
     v.endVisit(this);
   }
-
-  private JsStatement body;
-  private JsExpression iterExpr;
-  // Optional: the name of a new iterator variable to introduce
-  private final JsName iterVarName;
-  private JsExpression objExpr;
 }

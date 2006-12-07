@@ -28,6 +28,16 @@ package com.google.gwt.dev.js.ast;
  */
 public class JsFor extends JsStatement {
 
+  private JsStatement body;
+
+  private JsExpression condition;
+
+  private JsExpression incrExpr;
+
+  private JsExpression initExpr;
+
+  private JsVars initVars;
+
   public JsFor() {
   }
 
@@ -45,6 +55,10 @@ public class JsFor extends JsStatement {
 
   public JsExpression getInitExpr() {
     return initExpr;
+  }
+
+  public JsVars getInitVars() {
+    return initVars;
   }
 
   public void setBody(JsStatement body) {
@@ -65,10 +79,6 @@ public class JsFor extends JsStatement {
 
   public void setInitVars(JsVars initVars) {
     this.initVars = initVars;
-  }
-
-  public JsVars getInitVars() {
-    return initVars;
   }
 
   public void traverse(JsVisitor v) {
@@ -92,10 +102,4 @@ public class JsFor extends JsStatement {
     }
     v.endVisit(this);
   }
-
-  private JsStatement body;
-  private JsExpression condition;
-  private JsExpression incrExpr;
-  private JsExpression initExpr;
-  private JsVars initVars;
 }

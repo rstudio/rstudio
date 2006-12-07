@@ -25,6 +25,12 @@ public class JsOperator {
   protected static final int POSTFIX = 0x04;
   protected static final int PREFIX = 0x08;
 
+  private final int mask;
+
+  private final int precedence;
+
+  private final String symbol;
+
   protected JsOperator(String symbol, int precedence, int mask) {
     this.symbol = symbol;
     this.precedence = precedence;
@@ -39,12 +45,16 @@ public class JsOperator {
     return symbol;
   }
 
+  public boolean isLeftAssociative() {
+    return (mask & LEFT) != 0;
+  }
+
   public boolean isPrecedenceLessThan(JsOperator other) {
     return precedence < other.precedence;
   }
 
-  public boolean isLeftAssociative() {
-    return (mask & LEFT) != 0;
+  public boolean isValidInfix() {
+    return (mask & INFIX) != 0;
   }
 
   public boolean isValidPostfix() {
@@ -55,15 +65,7 @@ public class JsOperator {
     return (mask & PREFIX) != 0;
   }
 
-  public boolean isValidInfix() {
-    return (mask & INFIX) != 0;
-  }
-
   public String toString() {
     return symbol;
   }
-  
-  private final int mask;
-  private final int precedence;
-  private final String symbol;
 }

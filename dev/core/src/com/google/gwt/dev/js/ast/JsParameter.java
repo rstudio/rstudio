@@ -20,18 +20,18 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsParameter extends JsNode implements HasName {
 
+  private final JsName name;
+
   public JsParameter(JsName name) {
     this.name = name;
-  }
-
-  public void traverse(JsVisitor v) {
-    v.visit(this);
-    v.endVisit(this);
   }
 
   public JsName getName() {
     return name;
   }
 
-  private final JsName name;
+  public void traverse(JsVisitor v) {
+    v.visit(this);
+    v.endVisit(this);
+  }
 }

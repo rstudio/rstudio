@@ -20,6 +20,8 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsBooleanLiteral extends JsExpression {
 
+  private final boolean value;
+
   // Should be interned by JsProgram
   JsBooleanLiteral(boolean value) {
     this.value = value;
@@ -29,14 +31,12 @@ public final class JsBooleanLiteral extends JsExpression {
     return value;
   }
 
-  public void traverse(JsVisitor v) {
-    v.visit(this);
-    v.endVisit(this);
-  }
-  
   public boolean isLeaf() {
     return true;
   }
 
-  private final boolean value;
+  public void traverse(JsVisitor v) {
+    v.visit(this);
+    v.endVisit(this);
+  }
 }

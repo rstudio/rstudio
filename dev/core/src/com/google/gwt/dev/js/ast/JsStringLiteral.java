@@ -20,23 +20,23 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsStringLiteral extends JsExpression {
 
+  private final String value;
+
   // These only get created by JsProgram so that they can be interned.
   JsStringLiteral(String value) {
     this.value = value;
-  }
-  
-  public boolean isLeaf() {
-    return true;
   }
 
   public String getValue() {
     return value;
   }
 
+  public boolean isLeaf() {
+    return true;
+  }
+
   public void traverse(JsVisitor v) {
     v.visit(this);
     v.endVisit(this);
   }
-
-  private final String value;
 }

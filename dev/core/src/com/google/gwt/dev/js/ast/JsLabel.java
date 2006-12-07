@@ -20,6 +20,10 @@ package com.google.gwt.dev.js.ast;
  */
 public class JsLabel extends JsStatement implements HasName {
 
+  private final JsName label;
+
+  private JsStatement stmt;
+
   public JsLabel(JsName label) {
     this.label = label;
   }
@@ -28,21 +32,17 @@ public class JsLabel extends JsStatement implements HasName {
     return label;
   }
 
+  public JsStatement getStmt() {
+    return stmt;
+  }
+
+  public void setStmt(JsStatement stmt) {
+    this.stmt = stmt;
+  }
   public void traverse(JsVisitor v) {
     if (v.visit(this)) {
       stmt.traverse(v);
     }
     v.endVisit(this);
   }
-
-  public void setStmt(JsStatement stmt) {
-    this.stmt = stmt;
-  }
-
-  public JsStatement getStmt() {
-    return stmt;
-  }
-
-  private final JsName label;
-  private JsStatement stmt;
 }

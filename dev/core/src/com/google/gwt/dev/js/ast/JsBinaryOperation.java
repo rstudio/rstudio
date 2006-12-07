@@ -20,22 +20,21 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsBinaryOperation extends JsExpression {
 
+  private JsExpression arg1;
+
+  private JsExpression arg2;
+
+  private final JsBinaryOperator op;
+
   public JsBinaryOperation(JsBinaryOperator op) {
     this(op, null, null);
   }
 
-  public JsBinaryOperation(JsBinaryOperator op, JsExpression arg1, JsExpression arg2) {
+  public JsBinaryOperation(JsBinaryOperator op, JsExpression arg1,
+      JsExpression arg2) {
     this.op = op;
     this.arg1 = arg1;
     this.arg2 = arg2;
-  }
-  
-  public void traverse(JsVisitor v) {
-    if (v.visit(this)) {
-      arg1.traverse(v);
-      arg2.traverse(v);
-    }
-    v.endVisit(this);
   }
 
   public JsExpression getArg1() {
@@ -58,7 +57,11 @@ public final class JsBinaryOperation extends JsExpression {
     this.arg2 = arg2;
   }
 
-  private JsExpression arg1;
-  private JsExpression arg2;
-  private final JsBinaryOperator op;
+  public void traverse(JsVisitor v) {
+    if (v.visit(this)) {
+      arg1.traverse(v);
+      arg2.traverse(v);
+    }
+    v.endVisit(this);
+  }
 }

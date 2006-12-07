@@ -22,17 +22,17 @@ import java.util.Map;
 
 /**
  * A scope is a factory for creating and allocating
- * {@link com.google.gwt.compiler.jjs.jsc.JsName}s. A JavaScript AST is built in
- * terms of abstract name objects without worrying about obfuscation,
+ * {@link com.google.gwt.compiler.jjs.jsc.JsName}s. A JavaScript AST is built
+ * in terms of abstract name objects without worrying about obfuscation,
  * keyword/identifier blacklisting, and so on.
  * 
  * <p>
  * 
- * Scopes are associated with {@link com.google.gwt.dev.js.ast.JsFunction}s, but
- * the two are not equivalent. Functions <i>have</i> scopes, but a scope does
- * not necessarily have an associated Function. Examples of this include the
- * {@link com.google.gwt.dev.js.ast.JsRootScope} and synthetic scopes that might
- * be created by a client.
+ * Scopes are associated with {@link com.google.gwt.dev.js.ast.JsFunction}s,
+ * but the two are not equivalent. Functions <i>have</i> scopes, but a scope
+ * does not necessarily have an associated Function. Examples of this include
+ * the {@link com.google.gwt.dev.js.ast.JsRootScope} and synthetic scopes that
+ * might be created by a client.
  * 
  * <p>
  * 
@@ -46,6 +46,14 @@ import java.util.Map;
  * heirarchy.
  */
 public class JsScope {
+
+  private final List/* <JsScope> */children = new ArrayList();
+
+  private String description;
+
+  private final Map/* <String, JsObfuscatableName> */obfuscatableNames = new HashMap();
+
+  private final JsScope parent;
 
   /**
    * Create a scope with parent.
@@ -149,8 +157,8 @@ public class JsScope {
     } else {
       if (!name.getShortIdent().equals(shortIdent)) {
         throw new IllegalArgumentException("Requested short name " + shortIdent
-          + " conflicts with preexisting short name " + name.getShortIdent()
-          + " for identifier " + ident);
+            + " conflicts with preexisting short name " + name.getShortIdent()
+            + " for identifier " + ident);
       }
     }
     return name;
@@ -194,10 +202,5 @@ public class JsScope {
   protected String getDescription() {
     return description;
   }
-
-  private final List/* <JsScope> */children = new ArrayList();
-  private String description;
-  private final Map/* <String, JsObfuscatableName> */obfuscatableNames = new HashMap();
-  private final JsScope parent;
 
 }

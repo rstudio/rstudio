@@ -20,6 +20,8 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsReturn extends JsStatement {
 
+  private JsExpression expr;
+
   public JsReturn() {
   }
 
@@ -43,6 +45,4 @@ public final class JsReturn extends JsStatement {
     }
     v.endVisit(this);
   }
-
-  private JsExpression expr;
 }

@@ -20,15 +20,19 @@ package com.google.gwt.dev.js.ast;
  */
 public class JsSwitch extends JsStatement {
 
-  public JsSwitch() {
-  }
+  private final JsSwitchMembers cases = new JsSwitchMembers();
 
-  public JsExpression getExpr() {
-    return expr;
+  private JsExpression expr;
+
+  public JsSwitch() {
   }
 
   public JsSwitchMembers getCases() {
     return cases;
+  }
+
+  public JsExpression getExpr() {
+    return expr;
   }
 
   public void setExpr(JsExpression expr) {
@@ -42,7 +46,4 @@ public class JsSwitch extends JsStatement {
     }
     v.endVisit(this);
   }
-
-  private final JsSwitchMembers cases = new JsSwitchMembers();
-  private JsExpression expr;
 }

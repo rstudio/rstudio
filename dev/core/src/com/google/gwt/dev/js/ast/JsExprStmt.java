@@ -20,8 +20,14 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsExprStmt extends JsStatement {
 
+  private final JsExpression expr;
+
   public JsExprStmt(JsExpression expr) {
     this.expr = expr;
+  }
+
+  public JsExpression getExpression() {
+    return expr;
   }
 
   public void traverse(JsVisitor v) {
@@ -30,10 +36,4 @@ public final class JsExprStmt extends JsStatement {
     }
     v.endVisit(this);
   }
-
-  public JsExpression getExpression() {
-    return expr;
-  }
-
-  private final JsExpression expr;
 }

@@ -20,6 +20,10 @@ package com.google.gwt.dev.js.ast;
  */
 public abstract class JsName {
 
+  private final String ident;
+
+  private final JsScope scope;
+
   /**
    * @param scope the scope in which this name is defined
    * @param ident the unmangled ident to use for this name
@@ -37,6 +41,8 @@ public abstract class JsName {
     return scope;
   }
 
+  public abstract boolean isObfuscatable();
+
   public JsNameRef makeRef() {
     return new JsNameRef(this);
   }
@@ -44,9 +50,4 @@ public abstract class JsName {
   public String toString() {
     return ident;
   }
-
-  public abstract boolean isObfuscatable();
-
-  private final String ident;
-  private final JsScope scope;
 }
