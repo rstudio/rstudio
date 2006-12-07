@@ -23,42 +23,41 @@ public abstract class DialogBase extends Dialog implements DisposeListener {
 /** 
  * Pops up a confirm/cancel dialog. 
  */
-	public static boolean confirmAction(Shell shell, String msg, String msgTitle) {
-		MessageBox msgBox = new MessageBox(shell, SWT.ICON_WARNING
-				| SWT.YES | SWT.NO);
-		msgBox.setText(msgTitle);
-		msgBox.setMessage(msg);
-		return msgBox.open()==SWT.YES;
-	}
-	
+  public static boolean confirmAction(Shell shell, String msg, String msgTitle) {
+    MessageBox msgBox = new MessageBox(shell, SWT.ICON_WARNING
+        | SWT.YES | SWT.NO);
+    msgBox.setText(msgTitle);
+    msgBox.setMessage(msg);
+    return msgBox.open() == SWT.YES;
+  }
 
 private class Buttons extends GridPanel {
     public Buttons(Composite parent) {
-      super(parent, SWT.NONE, fHasCancel ? 2 : 1, true);
+      super(parent, SWT.NONE, hasCancel ? 2 : 1, true);
 
-      if (fHasOk) {
-        fOKButton = new Button(this, SWT.PUSH);
-        setGridData(fOKButton, 1, 1, FILL, FILL, false, false);
-        fOKButton.setText("    OK    ");
-        fOKButton.addSelectionListener(new SelectionAdapter() {
+      if (hasOk) {
+        okButton = new Button(this, SWT.PUSH);
+        setGridData(okButton, 1, 1, FILL, FILL, false, false);
+        okButton.setText("    OK    ");
+        okButton.addSelectionListener(new SelectionAdapter() {
           public void widgetSelected(SelectionEvent e) {
             clickOkButton();
           }
         });
       }
 
-      if (fHasCancel) {
-        fCancelButton = new Button(this, SWT.PUSH);
-        setGridData(fCancelButton, 1, 1, FILL, FILL, false, false);
-        fCancelButton.setText("Cancel");
-        fCancelButton.addSelectionListener(new SelectionAdapter() {
+      if (hasCancel) {
+        cancelButton = new Button(this, SWT.PUSH);
+        setGridData(cancelButton, 1, 1, FILL, FILL, false, false);
+        cancelButton.setText("Cancel");
+        cancelButton.addSelectionListener(new SelectionAdapter() {
           public void widgetSelected(SelectionEvent e) {
             clickCancelButton();
           }
         });
       }
 
-      fShell.setDefaultButton(fOKButton);
+      shell.setDefaultButton(okButton);
     }
   }
 
@@ -70,7 +69,7 @@ private class Buttons extends GridPanel {
       Control contents = createContents(this);
       setGridData(contents, 1, 1, FILL, FILL, true, true);
 
-      if (fHasOk || fHasCancel) {
+      if (hasOk || hasCancel) {
         Buttons buttons = new Buttons(this);
         setGridData(buttons, 1, 1, RIGHT, BOTTOM, false, false);
       }
@@ -84,14 +83,14 @@ private class Buttons extends GridPanel {
   public DialogBase(Shell parent, int minWidth, int minHeight,
       boolean hasOkButton, boolean hasCancelButton) {
     super(parent, SWT.NONE);
-    fMinWidth = minWidth;
-    fMinHeight = minHeight;
-    fHasOk = hasOkButton;
-    fHasCancel = hasCancelButton;
+    this.minWidth = minWidth;
+    this.minHeight = minHeight;
+    hasOk = hasOkButton;
+    hasCancel = hasCancelButton;
   }
 
   public Shell getShell() {
-    return fShell;
+    return shell;
   }
 
   public boolean open() {
@@ -100,13 +99,13 @@ private class Buttons extends GridPanel {
 
   public boolean open(boolean autoSize) {
     Shell parent = getParent();
-    fShell = new Shell(parent, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL
+    shell = new Shell(parent, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL
       | SWT.RESIZE);
-    fShell.setImages(GWTShell.getIcons());
-    fShell.setText(getText());
-    fShell.setLayout(new FillLayout());
+    shell.setImages(GWTShell.getIcons());
+    shell.setText(getText());
+    shell.setLayout(new FillLayout());
 
-    new Contents(fShell);
+    new Contents(shell);
 
     onOpen();
 
@@ -116,15 +115,15 @@ private class Buttons extends GridPanel {
       // Try to make the dialog big enough to hold the packed layout or
       // the requested size, whichever is bigger.
       //
-      fShell.pack();
+      shell.pack();
 
-      Rectangle shellBounds = fShell.getBounds();
+      Rectangle shellBounds = shell.getBounds();
 
-      myWidth = Math.max(shellBounds.width, fMinWidth);
-      myHeight = Math.max(shellBounds.height, fMinHeight);
+      myWidth = Math.max(shellBounds.width, minWidth);
+      myHeight = Math.max(shellBounds.height, minHeight);
     } else {
-      myWidth = fMinWidth;
-      myHeight = fMinHeight;
+      myWidth = minWidth;
+      myHeight = minHeight;
     }
 
     // Try to center within parent shell.
@@ -133,37 +132,38 @@ private class Buttons extends GridPanel {
     int myLeft = parentBounds.x + (parentBounds.width / 2 - myWidth / 2);
     int myTop = parentBounds.y + (parentBounds.height / 4);
 
-    fShell.setBounds(myLeft, myTop, myWidth, myHeight);
+    shell.setBounds(myLeft, myTop, myWidth, myHeight);
 
-    fShell.open();
+    shell.open();
 
     Display display = parent.getDisplay();
-    while (!fShell.isDisposed()) {
-      if (!display.readAndDispatch())
+    while (!shell.isDisposed()) {
+      if (!display.readAndDispatch()) {
         display.sleep();
+      }
     }
 
-    return !fCancelled;
+    return !cancelled;
   }
 
   public void setText(String string) {
     super.setText(string);
-    fShell.setText(string);
+    shell.setText(string);
   }
 
   public void widgetDisposed(DisposeEvent e) {
   }
 
   protected void clickCancelButton() {
-    fCancelled = true;
+    cancelled = true;
     onCancel();
-    fShell.dispose();
+    shell.dispose();
   }
 
   protected void clickOkButton() {
-    fCancelled = false;
+    cancelled = false;
     onOk();
-    fShell.dispose();
+    shell.dispose();
   }
 
   protected abstract Control createContents(Composite parent);
@@ -178,15 +178,15 @@ private class Buttons extends GridPanel {
   }
 
   protected void setOkEnabled(boolean enabled) {
-    fOKButton.setEnabled(enabled);
+    okButton.setEnabled(enabled);
   }
 
-  private Button fCancelButton;
-  private boolean fCancelled = true;
-  private boolean fHasCancel;
-  private boolean fHasOk;
-  private int fMinHeight;
-  private int fMinWidth;
-  private Button fOKButton;
-  private Shell fShell;
+  private Button cancelButton;
+  private boolean cancelled = true;
+  private boolean hasCancel;
+  private boolean hasOk;
+  private int minHeight;
+  private int minWidth;
+  private Button okButton;
+  private Shell shell;
 }

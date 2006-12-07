@@ -16,7 +16,7 @@ import java.lang.reflect.Field;
 public class LowLevel {
 
   /**
-   * Not instantiable
+   * This class is not instantiable.
    */
   private LowLevel() {
   }
@@ -100,10 +100,11 @@ public class LowLevel {
    */
   public static void clobberFieldObjectValue(Object victim, String fieldName,
       Object value) {
-    if (victim != null)
+    if (victim != null) {
       clobberFieldObjectValue(victim.getClass(), victim, fieldName, value);
-    else
+    } else {
       throw new NullPointerException("victim must not be null");
+    }
   }
 
   /**
@@ -163,10 +164,11 @@ public class LowLevel {
    * Snatches a field from an object to which we do not have access.
    */
   public static Object snatchFieldObjectValue(Object victim, String fieldName) {
-    if (victim != null)
+    if (victim != null) {
       return snatchFieldObjectValue(victim.getClass(), victim, fieldName);
-    else
+    } else {
       throw new NullPointerException("victim must not be null");
+    }
   }
 
   private static native void _deleteGlobalRefInt(int globalRef);

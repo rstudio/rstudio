@@ -123,12 +123,11 @@ public class StandardRebindOracle implements RebindOracle {
     this.propOracle = propOracle;
     this.rules = rules;
     this.genDir = genDir;
-    if(cacheManager!= null) {
+    if (cacheManager != null) {
       this.cacheManager = cacheManager;
     } else {
       this.cacheManager = new CacheManager(typeOracle);
     }
-    
   }
 
   public StandardRebindOracle(TypeOracle typeOracle, StaticPropertyOracle propOracle, Rules rules, File genDir) {

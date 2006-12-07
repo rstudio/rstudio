@@ -26,8 +26,9 @@ public abstract class Handle {
   private static Handle sImpl;
   
   protected Handle() {
-    if (sImpl != null)
+    if (sImpl != null) {
       throw new RuntimeException("More than one Handle class!");
+    }
     sImpl = this;
   }
 
@@ -63,11 +64,13 @@ public abstract class Handle {
       checkThread();
 
       Class handleClass = handle.getClass();
-      while (handleClass != null && !handleClass.getName().equals(HANDLE_CLASS))
+      while (handleClass != null && !handleClass.getName().equals(HANDLE_CLASS)) {
         handleClass = handleClass.getSuperclass();
+      }
       
-      if (handleClass == null)
+      if (handleClass == null) {
         throw new RuntimeException("Error reading handle");
+      }
 
       Field opaqueField = handleClass.getDeclaredField("opaque");
       opaqueField.setAccessible(true);
@@ -116,10 +119,10 @@ public abstract class Handle {
    * Ensures that the current thread is actually the UI thread.
    */
   private static synchronized void checkThread() {
-    if (theOnlyThreadAllowed == null)
+    if (theOnlyThreadAllowed == null) {
       theOnlyThreadAllowed = Thread.currentThread();
-    else if (theOnlyThreadAllowed != Thread.currentThread())
+    } else if (theOnlyThreadAllowed != Thread.currentThread()) {
       throw new RuntimeException("This object has permanent thread affinity.");
+    }
   }
-  
 }

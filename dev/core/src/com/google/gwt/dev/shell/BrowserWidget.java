@@ -53,56 +53,55 @@ public abstract class BrowserWidget extends Composite {
     public Toolbar(Composite parent) {
       super(parent);
 
-      fBackButton = newItem("back.gif", "   &Back   ", "Go back one state");
-      fBackButton.addSelectionListener(this);
+      backButton = newItem("back.gif", "   &Back   ", "Go back one state");
+      backButton.addSelectionListener(this);
 
-      fForwardButton = newItem("forward.gif", "&Forward",
+      forwardButton = newItem("forward.gif", "&Forward",
         "Go forward one state");
-      fForwardButton.addSelectionListener(this);
+      forwardButton.addSelectionListener(this);
 
-      fRefreshButton = newItem("refresh.gif", " &Refresh ", "Reload the page");
-      fRefreshButton.addSelectionListener(this);
+      refreshButton = newItem("refresh.gif", " &Refresh ", "Reload the page");
+      refreshButton.addSelectionListener(this);
 
-      fStopButton = newItem("stop.gif", "    &Stop    ",
+      stopButton = newItem("stop.gif", "    &Stop    ",
         "Stop loading the page");
-      fStopButton.addSelectionListener(this);
+      stopButton.addSelectionListener(this);
 
       newSeparator();
 
-      fOpenWebModeButton = newItem("new-web-mode-window.gif",
+      openWebModeButton = newItem("new-web-mode-window.gif",
         "&Compile/Browse",
         "Compiles and opens the current URL in the system browser");
-      fOpenWebModeButton.addSelectionListener(this);
-      fOpenWebModeButton.setEnabled(false);
+      openWebModeButton.addSelectionListener(this);
+      openWebModeButton.setEnabled(false);
     }
 
     public void widgetDefaultSelected(SelectionEvent e) {
     }
 
     public void widgetSelected(SelectionEvent evt) {
-      if (evt.widget == fBackButton) {
-        fBrowser.back();
-      } else if (evt.widget == fForwardButton) {
-        fBrowser.forward();
-      } else if (evt.widget == fRefreshButton) {
+      if (evt.widget == backButton) {
+        browser.back();
+      } else if (evt.widget == forwardButton) {
+        browser.forward();
+      } else if (evt.widget == refreshButton) {
         // we have to clean up old module spaces here b/c we don't get a
         // location changed event
 
         // lastHostPageLocation = null;
-        fBrowser.refresh();
-      } else if (evt.widget == fStopButton) {
-        fBrowser.stop();
-      } else if (evt.widget == fOpenWebModeButton) {
+        browser.refresh();
+      } else if (evt.widget == stopButton) {
+        browser.stop();
+      } else if (evt.widget == openWebModeButton) {
         // first, compile
         Set keySet = moduleSpacesByName.keySet();
         String[] moduleNames = Util.toStringArray(keySet);
         if (moduleNames.length == 0) {
           // A latent problem with a module.
           //
-          fOpenWebModeButton.setEnabled(false);
+          openWebModeButton.setEnabled(false);
           return;
         }
-        TreeLogger logger = fLogger;
         try {
           Cursor waitCursor = getDisplay().getSystemCursor(SWT.CURSOR_WAIT);
           getShell().setCursor(waitCursor);
@@ -123,20 +122,20 @@ public abstract class BrowserWidget extends Composite {
           getShell().setCursor(normalCursor);
         }
 
-        String location = fLocation.getText();
+        String locationText = location.getText();
 
-        launchExternalBrowser(logger, location);
+        launchExternalBrowser(logger, locationText);
       }
     }
 
-    private final ToolItem fBackButton;
-    private final ToolItem fForwardButton;
+    private final ToolItem backButton;
+    private final ToolItem forwardButton;
 
-    private final ToolItem fOpenWebModeButton;
+    private final ToolItem openWebModeButton;
 
-    private final ToolItem fRefreshButton;
+    private final ToolItem refreshButton;
 
-    private final ToolItem fStopButton;
+    private final ToolItem stopButton;
   }
 
   static void launchExternalBrowser(TreeLogger logger, String location) {
@@ -198,24 +197,24 @@ public abstract class BrowserWidget extends Composite {
   public BrowserWidget(Composite parent, BrowserWidgetHost host) {
     super(parent, SWT.NONE);
 
-    fHost = host;
-    fLogger = fHost.getLogger();
+    this.host = host;
+    logger = this.host.getLogger();
 
-    fBgColor = new Color(null, 239, 237, 216);
+    bgColor = new Color(null, 239, 237, 216);
 
-    fToolbar = new Toolbar(this);
+    toolbar = new Toolbar(this);
     Composite secondBar = buildLocationBar(this);
 
-    fBrowser = new Browser(this, SWT.NONE);
+    browser = new Browser(this, SWT.NONE);
 
     {
-      fStatusBar = new Label(this, SWT.BORDER | SWT.SHADOW_IN);
-      fStatusBar.setBackground(fBgColor);
+      statusBar = new Label(this, SWT.BORDER | SWT.SHADOW_IN);
+      statusBar.setBackground(bgColor);
       GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
       gridData.verticalAlignment = GridData.CENTER;
       gridData.verticalIndent = 0;
       gridData.horizontalIndent = 0;
-      fStatusBar.setLayoutData(gridData);
+      statusBar.setLayoutData(gridData);
     }
 
     GridLayout layout = new GridLayout();
@@ -225,13 +224,13 @@ public abstract class BrowserWidget extends Composite {
     layout.marginHeight = 0;
     setLayout(layout);
 
-    fToolbar.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+    toolbar.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
     secondBar.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
     GridData data = new GridData(GridData.FILL_BOTH);
     data.grabExcessVerticalSpace = true;
     data.grabExcessHorizontalSpace = true;
-    fBrowser.setLayoutData(data);
+    browser.setLayoutData(data);
 
     // Hook up all appropriate event listeners.
     //
@@ -242,11 +241,11 @@ public abstract class BrowserWidget extends Composite {
    * Gets the browser object wrapped by this window.
    */
   public Browser getBrowser() {
-    return fBrowser;
+    return browser;
   }
 
   public BrowserWidgetHost getHost() {
-    return fHost;
+    return host;
   }
 
   /**
@@ -254,19 +253,19 @@ public abstract class BrowserWidget extends Composite {
    * project's public directory.
    */
   public void go(String target) {
-    String url = fHost.normalizeURL(target);
-    fBrowser.setUrl(url);
+    String url = host.normalizeURL(target);
+    browser.setUrl(url);
   }
 
   public void onFirstShown() {
-    String baseUrl = fHost.normalizeURL("/");
+    String baseUrl = host.normalizeURL("/");
     setLocationText(baseUrl);
-    fLocation.setFocus();
-    fLocation.setSelection(baseUrl.length());
-    fLocation.addFocusListener(new FocusListener() {
+    location.setFocus();
+    location.setSelection(baseUrl.length());
+    location.addFocusListener(new FocusListener() {
       public void focusGained(FocusEvent e) {
-        int length = fLocation.getText().length();
-        fLocation.setSelection(length, length);
+        int length = location.getText().length();
+        location.setSelection(length, length);
       }
 
       public void focusLost(FocusEvent e) {
@@ -283,7 +282,7 @@ public abstract class BrowserWidget extends Composite {
 
     // Let the space do its thing.
     //
-    space.onLoad(fLogger);
+    space.onLoad(logger);
 
     // Remember this new module space so that we can dispose of it later.
     //
@@ -291,7 +290,7 @@ public abstract class BrowserWidget extends Composite {
 
     // Enable the compile button since we successfully loaded.
     //
-    fToolbar.fOpenWebModeButton.setEnabled(true);
+    toolbar.openWebModeButton.setEnabled(true);
   }
 
   /**
@@ -306,15 +305,15 @@ public abstract class BrowserWidget extends Composite {
       ModuleSpace space = (ModuleSpace) entry.getValue();
 
       space.dispose();
-      fLogger.log(TreeLogger.SPAM, "Cleaning up resources for module "
+      logger.log(TreeLogger.SPAM, "Cleaning up resources for module "
         + moduleName, null);
     }
     moduleSpacesByName.clear();
 
-    if (!fToolbar.fOpenWebModeButton.isDisposed()) {
+    if (!toolbar.openWebModeButton.isDisposed()) {
       // Disable the compile buton.
       //
-      fToolbar.fOpenWebModeButton.setEnabled(false);
+      toolbar.openWebModeButton.setEnabled(false);
     }
   }
 
@@ -324,12 +323,12 @@ public abstract class BrowserWidget extends Composite {
     Composite bar = new Composite(parent, SWT.BORDER);
     bar.setBackground(white);
 
-    fLocation = new Text(bar, SWT.FLAT);
+    location = new Text(bar, SWT.FLAT);
 
-    fGoButton = new Button(bar, SWT.NONE);
-    fGoButton.setBackground(fBgColor);
-    fGoButton.setText("Go");
-    fGoButton.setImage(LowLevel.loadImage("go.gif"));
+    goButton = new Button(bar, SWT.NONE);
+    goButton.setBackground(bgColor);
+    goButton.setText("Go");
+    goButton.setImage(LowLevel.loadImage("go.gif"));
 
     GridLayout layout = new GridLayout();
     layout.numColumns = 2;
@@ -341,7 +340,7 @@ public abstract class BrowserWidget extends Composite {
     GridData data = new GridData(GridData.FILL_HORIZONTAL);
     data.grabExcessHorizontalSpace = true;
     data.verticalAlignment = GridData.CENTER;
-    fLocation.setLayoutData(data);
+    location.setLayoutData(data);
 
     return bar;
   }
@@ -353,22 +352,22 @@ public abstract class BrowserWidget extends Composite {
 
     this.addDisposeListener(new DisposeListener() {
       public void widgetDisposed(DisposeEvent e) {
-        fBgColor.dispose();
+        bgColor.dispose();
       }
     });
 
-    fGoButton.addSelectionListener(new SelectionAdapter() {
+    goButton.addSelectionListener(new SelectionAdapter() {
       public void widgetSelected(SelectionEvent e) {
-        go(fLocation.getText());
+        go(location.getText());
       }
     });
 
     // Hook up the return key in the location bar.
     //
-    fLocation.addKeyListener(new KeyListener() {
+    location.addKeyListener(new KeyListener() {
       public void keyPressed(KeyEvent e) {
         if (e.character == '\r') {
-          go(fLocation.getText());
+          go(location.getText());
         }
       }
 
@@ -378,22 +377,22 @@ public abstract class BrowserWidget extends Composite {
 
     // Tie the status label to the browser's status.
     //
-    fBrowser.addStatusTextListener(new StatusTextListener() {
+    browser.addStatusTextListener(new StatusTextListener() {
       public void changed(StatusTextEvent evt) {
         // Add a little space so it doesn't look so crowded.
-        fStatusBar.setText(" " + evt.text);
+        statusBar.setText(" " + evt.text);
       }
     });
 
-    fBrowser.addTitleListener(new TitleListener() {
+    browser.addTitleListener(new TitleListener() {
       public void changed(TitleEvent evt) {
-        fBrowser.getShell().setText(evt.title);
+        browser.getShell().setText(evt.title);
       }
     });
 
     // Tie the location text box to the browser's location.
     //
-    fBrowser.addLocationListener(new LocationListener() {
+    browser.addLocationListener(new LocationListener() {
 
       public void changed(LocationEvent evt) {
         if (evt.top) {
@@ -472,7 +471,7 @@ public abstract class BrowserWidget extends Composite {
               } else {
                 String msg = "Cannot find file '" + file.getAbsolutePath()
                   + "'";
-                TreeLogger branch = fLogger.branch(TreeLogger.ERROR, msg, null);
+                TreeLogger branch = logger.branch(TreeLogger.ERROR, msg, null);
                 if ("gwt-hosted.html".equalsIgnoreCase(file.getName())) {
                   branch.log(
                     TreeLogger.ERROR,
@@ -494,11 +493,11 @@ public abstract class BrowserWidget extends Composite {
           TreeLogger header;
           TreeLogger.Type msgType = TreeLogger.ERROR;
           if (!evt.doit) {
-            header = fLogger.branch(msgType, "Unable to visit " + typeStr
+            header = logger.branch(msgType, "Unable to visit " + typeStr
               + " URL: '" + url, null);
           } else {
             msgType = TreeLogger.WARN;
-            header = fLogger.branch(
+            header = logger.branch(
               TreeLogger.WARN,
               "Confirmation was required to visit " + typeStr + " URL: '" + url,
               null);
@@ -509,7 +508,7 @@ public abstract class BrowserWidget extends Composite {
             BrowserWidgetHostChecker.notifyBlacklistedHost(blacklistRuleFound,
               url, header, msgType);
           }
-          setLocationText(fBrowser.getUrl());
+          setLocationText(browser.getUrl());
         }
       }
 
@@ -517,31 +516,31 @@ public abstract class BrowserWidget extends Composite {
 
     // Handle new window requests.
     //
-    fBrowser.addOpenWindowListener(new OpenWindowListener() {
+    browser.addOpenWindowListener(new OpenWindowListener() {
       public void open(WindowEvent event) {
         try {
-          event.browser = fHost.openNewBrowserWindow().getBrowser();
+          event.browser = host.openNewBrowserWindow().getBrowser();
           event.browser.getShell().open();
         } catch (UnableToCompleteException e) {
-          fLogger.log(TreeLogger.ERROR, "Unable to open new browser window", e);
+          logger.log(TreeLogger.ERROR, "Unable to open new browser window", e);
         }
       }
     });
   }
 
   private void setLocationText(String text) {
-    fLocation.setText(text);
+    location.setText(text);
     int length = text.length();
-    fLocation.setSelection(length, length);
+    location.setSelection(length, length);
   }
 
-  protected Browser fBrowser;
-  private Color fBgColor = new Color(null, 239, 237, 216);
-  private Button fGoButton;
-  private final BrowserWidgetHost fHost;
-  private Text fLocation;
-  private final TreeLogger fLogger;
-  private Label fStatusBar;
-  private Toolbar fToolbar;
+  protected Browser browser;
+  private Color bgColor = new Color(null, 239, 237, 216);
+  private Button goButton;
+  private final BrowserWidgetHost host;
+  private Text location;
+  private final TreeLogger logger;
+  private Label statusBar;
+  private Toolbar toolbar;
   private Map moduleSpacesByName = new HashMap();
 }

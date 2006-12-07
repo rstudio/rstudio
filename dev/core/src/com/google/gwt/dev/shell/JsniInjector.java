@@ -290,8 +290,10 @@ public class JsniInjector {
     StringBuffer sb = new StringBuffer();
     sb.append("new String[] {");
     for (int i = 0, n = params.length; i < n; ++i) {
-      if (i > 0)
+      if (i > 0) {
         sb.append(", ");
+      }
+      
       JParameter param = params[i];
       sb.append('\"');
       sb.append(param.getName());

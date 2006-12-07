@@ -22,9 +22,9 @@ public class BrowserDialog extends DialogBase {
 
   public BrowserDialog(Shell parent, TreeLogger logger, String html) {
     super(parent, 550, 520, true, false);
-    fLogger = logger;
-    fHtml = html;
-    fUrl = null;
+    this.logger = logger;
+    this.html = html;
+    this.url = null;
   }
 
   protected Control createContents(Composite parent) {
@@ -36,10 +36,10 @@ public class BrowserDialog extends DialogBase {
         setText(event.title);
       }});
 
-    if (fHtml != null) {
-      browser.setText(fHtml);
-    } else if (fUrl != null) {
-      browser.setUrl(fUrl.toString());
+    if (html != null) {
+      browser.setText(html);
+    } else if (url != null) {
+      browser.setUrl(url.toString());
     }
     
     browser.addLocationListener(new LocationListener() {
@@ -47,14 +47,14 @@ public class BrowserDialog extends DialogBase {
       }
       public void changing(LocationEvent event) {
         event.doit = false;
-        BrowserWidget.launchExternalBrowser(fLogger, event.location);
+        BrowserWidget.launchExternalBrowser(logger, event.location);
       }
     });
 
     return browser;
   }
 
-  private final String fHtml;
-  private final URL fUrl;
-  private final TreeLogger fLogger;
+  private final String html;
+  private final URL url;
+  private final TreeLogger logger;
 }

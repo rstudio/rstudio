@@ -46,10 +46,14 @@ public class GridPanel extends Composite {
         gridData.verticalAlignment = vAlign;
         gridData.grabExcessHorizontalSpace = hGrab;
         gridData.grabExcessVerticalSpace = vGrab;
-        if (heightHint != SWT.DEFAULT)
+        if (heightHint != SWT.DEFAULT) {
             gridData.heightHint = heightHint;
-        if (widthHint != SWT.DEFAULT)
+        }
+        
+        if (widthHint != SWT.DEFAULT) {
             gridData.widthHint = widthHint;
+        }
+        
         control.setLayoutData(gridData);
         return gridData; 
     }

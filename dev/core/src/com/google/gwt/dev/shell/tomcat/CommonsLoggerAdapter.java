@@ -9,7 +9,7 @@ public class CommonsLoggerAdapter implements org.apache.commons.logging.Log {
     // NOTE: this is ugly, but I don't know of any other way to get a 
     // non-static log to which we can delegate.
     //
-    fLog = EmbeddedTomcatServer.sTomcat.getLogger();
+    log = EmbeddedTomcatServer.sTomcat.getLogger();
   }
 
   public void debug(Object message) {
@@ -47,29 +47,29 @@ public class CommonsLoggerAdapter implements org.apache.commons.logging.Log {
   }
 
   public boolean isDebugEnabled() {
-    return fLog.isLoggable(TreeLogger.SPAM);
+    return log.isLoggable(TreeLogger.SPAM);
   }
 
   public boolean isErrorEnabled() {
-    return fLog.isLoggable(TreeLogger.WARN);
+    return log.isLoggable(TreeLogger.WARN);
   }
 
   public boolean isFatalEnabled() {
-    return fLog.isLoggable(TreeLogger.WARN);
+    return log.isLoggable(TreeLogger.WARN);
   }
 
   public boolean isInfoEnabled() {
     // Intentionally low-level to us.
-    return fLog.isLoggable(TreeLogger.TRACE);
+    return log.isLoggable(TreeLogger.TRACE);
   }
 
   public boolean isTraceEnabled() {
     // Intentionally low-level to us.
-    return fLog.isLoggable(TreeLogger.SPAM);
+    return log.isLoggable(TreeLogger.SPAM);
   }
 
   public boolean isWarnEnabled() {
-    return fLog.isLoggable(TreeLogger.WARN);
+    return log.isLoggable(TreeLogger.WARN);
   }
 
   public void trace(Object message) {
@@ -92,8 +92,8 @@ public class CommonsLoggerAdapter implements org.apache.commons.logging.Log {
 
   private void doLog(TreeLogger.Type type, Object message, Throwable t) {
     String msg = message.toString();
-    fLog.log(type, msg, t);
+    log.log(type, msg, t);
   }
 
-  private TreeLogger fLog;
+  private TreeLogger log;
 }

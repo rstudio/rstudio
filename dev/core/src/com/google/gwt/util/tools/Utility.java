@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A smattering of useful file functions
+ * A smattering of useful file functions.
  */
 public final class Utility {
 
@@ -46,8 +46,9 @@ public final class Utility {
    */
   public static void close(InputStream is) {
     try {
-      if (is != null)
+      if (is != null) {
         is.close();
+      }
     } catch (IOException e) {
     }
   }
@@ -58,8 +59,10 @@ public final class Utility {
    */
   public static void close(OutputStream os) {
     try {
-      if (os != null)
+      if (os != null) {
         os.close();
+      }
+      
     } catch (IOException e) {
     }
   }
@@ -83,8 +86,9 @@ public final class Utility {
    */
   public static void close(Reader reader) {
     try {
-      if (reader != null)
+      if (reader != null) {
         reader.close();
+      }
     } catch (IOException e) {
     }
   }
@@ -95,8 +99,9 @@ public final class Utility {
    */
   public static void close(Writer writer) {
     try {
-      if (writer != null)
+      if (writer != null) {
         writer.close();
+      }
     } catch (IOException e) {
     }
   }
@@ -117,19 +122,21 @@ public final class Utility {
       return file;
     }
 
-    if (!file.exists() || file.isDirectory())
+    if (!file.exists() || file.isDirectory()) {
       throw new IOException(file.getPath() + " : could not create normal file.");
-
+    }
+    
     if (ignore) {
       System.out.println(file + " already exists; skipping");
       return null;
     }
 
-    if (!overwrite)
+    if (!overwrite) {
       throw new IOException(
         file.getPath()
           + " : already exists; please remove it or use the -overwrite or -ignore option.");
-
+    }
+    
     System.out.println("Overwriting existing file " + file);
     return file;
   }
@@ -158,15 +165,17 @@ public final class Utility {
     }
 
     if (!dir.exists() || !dir.isDirectory()) {
-      if (create)
+      if (create) {
         throw new IOException(dir.getPath() + " : could not create directory.");
-      else
+      } else {
         throw new IOException(dir.getPath() + " : could not find directory.");
+      }
     }
 
-    if (create && !alreadyExisted)
+    if (create && !alreadyExisted) {
       System.out.println("Created directory " + dir);
-
+    }
+    
     return dir;
   }
 
@@ -276,18 +285,21 @@ public final class Utility {
           String jarPath = path.substring(path.indexOf("file:"),
             path.lastIndexOf('!'));
           File devJarFile = new File(URI.create(jarPath));
-          if (!devJarFile.isFile())
+          if (!devJarFile.isFile()) {
             throw new IOException("Could not find jar file; "
               + devJarFile.getCanonicalPath()
               + " does not appear to be a valid file");
+          }
           sDevJarName = devJarFile.getName();
 
           String dirPath = jarPath.substring(0, jarPath.lastIndexOf('/') + 1);
           File installDirFile = new File(URI.create(dirPath));
-          if (!installDirFile.isDirectory())
+          if (!installDirFile.isDirectory()) {
             throw new IOException("Could not find installation directory; "
               + installDirFile.getCanonicalPath()
               + " does not appear to be a valid directory");
+          }
+          
           sInstallPath = installDirFile.getCanonicalPath().replace(
             File.separatorChar, '/');
         } else {
@@ -304,7 +316,6 @@ public final class Utility {
           sInstallPath = override.substring(0, pos);
           sDevJarName = override.substring(pos + 1);
         }
-
       }
     } catch (IOException e) {
       throw new RuntimeException(

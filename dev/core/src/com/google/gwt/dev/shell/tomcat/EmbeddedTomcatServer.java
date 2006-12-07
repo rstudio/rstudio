@@ -24,11 +24,14 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.URL;
 
+/**
+ * Wraps an instance of the Tomcat web server used in hosted mode.
+ */
 public class EmbeddedTomcatServer {
 
   static EmbeddedTomcatServer sTomcat;
 
-  public synchronized static String start(TreeLogger topLogger, int port,
+  public static synchronized String start(TreeLogger topLogger, int port,
       File outDir) {
     if (sTomcat != null) {
       throw new IllegalStateException("Embedded Tomcat is already running");
@@ -36,7 +39,7 @@ public class EmbeddedTomcatServer {
 
     try {
       new EmbeddedTomcatServer(topLogger, port, outDir);
-      sTomcat.fCatEmbedded.start();
+      sTomcat.catEmbedded.start();
       return null;
     } catch (LifecycleException e) {
       String msg = e.getMessage();
@@ -53,10 +56,10 @@ public class EmbeddedTomcatServer {
 
   // Stop the embedded Tomcat server.
   //
-  public synchronized static void stop() {
+  public static synchronized void stop() {
     if (sTomcat != null) {
       try {
-        sTomcat.fCatEmbedded.stop();
+        sTomcat.catEmbedded.stop();
       } catch (LifecycleException e) {
         // There's nothing we can really do about this and the logger is
         // gone in many scenarios, so we just ignore it.
@@ -76,7 +79,7 @@ public class EmbeddedTomcatServer {
     final TreeLogger logger = topLogger.branch(TreeLogger.INFO,
       "Starting HTTP on port " + listeningPort, null);
 
-    fStartupBranchLogger = logger;
+    startupBranchLogger = logger;
 
     // Make myself the one static instance.
     // NOTE: there is only one small implementation reason that this has
@@ -91,7 +94,7 @@ public class EmbeddedTomcatServer {
 
     // Set the port, which is used in the creation of catalina.home.
     //
-    fPort = listeningPort;
+    port = listeningPort;
 
     // Assume the working directory is simply the user's current directory.
     //
@@ -120,31 +123,31 @@ public class EmbeddedTomcatServer {
 
     // Create an embedded server.
     //
-    fCatEmbedded = new Embedded();
-    fCatEmbedded.setDebug(0);
-    fCatEmbedded.setLogger(catalinaLogger);
+    catEmbedded = new Embedded();
+    catEmbedded.setDebug(0);
+    catEmbedded.setLogger(catalinaLogger);
 
     // The embedded engine is called "gwt".
     //
-    fCatEngine = fCatEmbedded.createEngine();
-    fCatEngine.setName("gwt");
-    fCatEngine.setDefaultHost("localhost");
+    catEngine = catEmbedded.createEngine();
+    catEngine.setName("gwt");
+    catEngine.setDefaultHost("localhost");
 
     // It answers localhost requests.
     //
     // String appBase = fCatalinaBaseDir.getAbsolutePath();
     String appBase = catBase + "/webapps";
-    fCatHost = (StandardHost) fCatEmbedded.createHost("localhost", appBase);
+    catHost = (StandardHost) catEmbedded.createHost("localhost", appBase);
 
     // Hook up a host config to search for and pull in webapps.
     //
     HostConfig hostConfig = new HostConfig();
-    fCatHost.addLifecycleListener(hostConfig);
+    catHost.addLifecycleListener(hostConfig);
 
     // Hook pre-install events so that we can add attributes to allow loaded
     // instances to find their development instance host.
     //
-    fCatHost.addContainerListener(new ContainerListener() {
+    catHost.addContainerListener(new ContainerListener() {
       public void containerEvent(ContainerEvent event) {
         if (StandardHost.PRE_INSTALL_EVENT.equals(event.getType())) {
           StandardContext webapp = (StandardContext) event.getData();
@@ -156,15 +159,15 @@ public class EmbeddedTomcatServer {
 
     // Tell the engine about the host.
     //
-    fCatEngine.addChild(fCatHost);
-    fCatEngine.setDefaultHost(fCatHost.getName());
+    catEngine.addChild(catHost);
+    catEngine.setDefaultHost(catHost.getName());
 
     // Tell the embedded manager about the engine.
     //
-    fCatEmbedded.addEngine(fCatEngine);
+    catEmbedded.addEngine(catEngine);
     InetAddress nullAddr = null;
-    Connector connector = fCatEmbedded.createConnector(nullAddr, fPort, false);
-    fCatEmbedded.addConnector(connector);
+    Connector connector = catEmbedded.createConnector(nullAddr, port, false);
+    catEmbedded.addConnector(connector);
   }
 
   /**
@@ -278,8 +281,8 @@ public class EmbeddedTomcatServer {
    */
   private void publishShellLoggerAttribute(TreeLogger logger,
       TreeLogger loggerToPublish, StandardContext webapp) {
-    final String ATTR = "com.google.gwt.dev.shell.logger";
-    publishAttributeToWebApp(logger, webapp, ATTR, loggerToPublish);
+    final String attr = "com.google.gwt.dev.shell.logger";
+    publishAttributeToWebApp(logger, webapp, attr, loggerToPublish);
   }
 
   /**
@@ -288,17 +291,17 @@ public class EmbeddedTomcatServer {
    */
   private void publishShellOutDirAttribute(TreeLogger logger,
       File outDirToPublish, StandardContext webapp) {
-    final String ATTR = "com.google.gwt.dev.shell.outdir";
-    publishAttributeToWebApp(logger, webapp, ATTR, outDirToPublish);
+    final String attr = "com.google.gwt.dev.shell.outdir";
+    publishAttributeToWebApp(logger, webapp, attr, outDirToPublish);
   }
 
   public TreeLogger getLogger() {
-    return fStartupBranchLogger;
+    return startupBranchLogger;
   }
 
-  private Embedded fCatEmbedded;
-  private Engine fCatEngine;
-  private StandardHost fCatHost = null;
-  private final int fPort;
-  private final TreeLogger fStartupBranchLogger;
+  private Embedded catEmbedded;
+  private Engine catEngine;
+  private StandardHost catHost = null;
+  private final int port;
+  private final TreeLogger startupBranchLogger;
 }

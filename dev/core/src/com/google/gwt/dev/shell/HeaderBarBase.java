@@ -1,8 +1,6 @@
 // Copyright 2006 Google Inc. All Rights Reserved.
 package com.google.gwt.dev.shell;
 
-
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
@@ -16,10 +14,13 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 
+/**
+ * Base class for <code>Composites</code> that contain <code>ToolItem</code> entities.
+ */
 public class HeaderBarBase extends Composite implements DisposeListener {
   
-  private final Color fBgColor;
-  private final ToolBar fToolBar;
+  private final Color bgColor;
+  private final ToolBar toolBar;
   
   public HeaderBarBase(Composite parent) {
     super(parent, SWT.NONE);
@@ -30,7 +31,7 @@ public class HeaderBarBase extends Composite implements DisposeListener {
     fillLayout.marginWidth = 1;
     setLayout(fillLayout);
 
-    fBgColor = new Color(null, 239, 237, 216);
+    bgColor = new Color(null, 239, 237, 216);
     addDisposeListener(this);
 
     GridLayout gridLayout = new GridLayout(2, false);
@@ -41,22 +42,22 @@ public class HeaderBarBase extends Composite implements DisposeListener {
     gridLayout.marginWidth = 0;
     gridLayout.marginHeight = 0;
     outer.setLayout(gridLayout);
-    outer.setBackground(fBgColor);
+    outer.setBackground(bgColor);
 
-    fToolBar = new ToolBar(outer, SWT.FLAT);
-    fToolBar.setBackground(new Color(null, 255, 0, 0));
+    toolBar = new ToolBar(outer, SWT.FLAT);
+    toolBar.setBackground(new Color(null, 255, 0, 0));
     GridData data = new GridData();
     data.grabExcessHorizontalSpace = true;
     data.verticalAlignment = SWT.CENTER;
     data.horizontalAlignment = SWT.FILL;
-    fToolBar.setLayoutData(data);
-    fToolBar.setBackground(fBgColor);
+    toolBar.setLayoutData(data);
+    toolBar.setBackground(bgColor);
 
     RowLayout rowLayout = new RowLayout();
     rowLayout.fill = true;
     rowLayout.pack = false;
     rowLayout.wrap = false;
-    fToolBar.setLayout(rowLayout);
+    toolBar.setLayout(rowLayout);
 
     Label logoLabel = new Label(outer, SWT.BORDER | SWT.SHADOW_IN);
     logoLabel.setImage(LowLevel.loadImage("logo.gif"));
@@ -64,15 +65,15 @@ public class HeaderBarBase extends Composite implements DisposeListener {
   }
 
   public void widgetDisposed(DisposeEvent e) {
-    fBgColor.dispose();
+    bgColor.dispose();
   }
   
   public ToolBar getToolBar() {
-    return fToolBar;
+    return toolBar;
   }
   
   public ToolItem newItem(String imageName, String label, String tooltip) {
-    ToolItem item = new ToolItem(fToolBar, SWT.PUSH);
+    ToolItem item = new ToolItem(toolBar, SWT.PUSH);
     item.setImage(LowLevel.loadImage(imageName));
     item.setText(label);
     item.setSelection(false);
@@ -82,6 +83,6 @@ public class HeaderBarBase extends Composite implements DisposeListener {
   }
   
   public void newSeparator() {
-    new ToolItem(fToolBar, SWT.SEPARATOR);
+    new ToolItem(toolBar, SWT.SEPARATOR);
   }
 }

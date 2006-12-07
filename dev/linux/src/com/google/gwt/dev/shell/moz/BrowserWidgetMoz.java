@@ -72,7 +72,7 @@ public class BrowserWidgetMoz extends BrowserWidget {
 
       public boolean matchesDOMWindow(int domWindow) {
         nsIWebBrowser webBrowser = (nsIWebBrowser) LowLevel
-          .snatchFieldObjectValue(fBrowser.getClass(), fBrowser, "webBrowser");
+          .snatchFieldObjectValue(browser.getClass(), browser, "webBrowser");
         int[] aContentDOMWindow = new int[1];
         webBrowser.GetContentDOMWindow(aContentDOMWindow);
         if (aContentDOMWindow[0] == domWindow) {

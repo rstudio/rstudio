@@ -86,30 +86,36 @@ public abstract class CheckForUpdates {
    */
   protected static boolean isServerVersionNewer(String clientVersion,
       String serverVersion) {
-    if (clientVersion == null || serverVersion == null)
+    if (clientVersion == null || serverVersion == null) {
       return false;
-
+    }
+    
     // must match expected format
     if (!clientVersion.matches(VERSION_REGEXP)
-        || !serverVersion.matches(VERSION_REGEXP))
+        || !serverVersion.matches(VERSION_REGEXP)) {
       return false;
-
+    }
+    
     // extract the relevant parts
     String[] clientParts = clientVersion.split("\\.");
     String[] serverParts = serverVersion.split("\\.");
     if (clientParts.length != VERSION_PARTS
-        || serverParts.length != VERSION_PARTS)
+        || serverParts.length != VERSION_PARTS) {
       return false;
+    }
 
     // examine piece by piece from most significant to least significant
     for (int i = 0; i < VERSION_PARTS; ++i) {
       try {
         int clientPart = Integer.parseInt(clientParts[i]);
         int serverPart = Integer.parseInt(serverParts[i]);
-        if (serverPart < clientPart)
+        if (serverPart < clientPart) {
           return false;
-        if (serverPart > clientPart)
+        }
+        
+        if (serverPart > clientPart) {
           return true;
+        }
       } catch (NumberFormatException e) {
         return false;
       }
@@ -475,15 +481,16 @@ public abstract class CheckForUpdates {
   static {
     // Do this in a static initializer so we can ignore all exceptions.
     //
-    boolean debug_version_check = false;
+    boolean debugVersionCheck = false;
     try {
-      if (System.getProperty("gwt.debugVersionCheck") != null)
-        debug_version_check = true;
+      if (System.getProperty("gwt.debugVersionCheck") != null) {
+        debugVersionCheck = true;
+      }
     } catch (Throwable e) {
       // Always silently ignore any errors.
       //
     } finally {
-      DEBUG_VERSION_CHECK = debug_version_check;
+      DEBUG_VERSION_CHECK = debugVersionCheck;
     }
   }
 }

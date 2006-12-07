@@ -149,9 +149,9 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
 
     for (Iterator iter = block.getStatements().iterator(); iter.hasNext();) {
       JsStatement stmt = (JsStatement) iter.next();
-      fNeedSemi = true;
+      needSemi = true;
       stmt.traverse(this);
-      if (fNeedSemi) {
+      if (needSemi) {
         /*
          * Special treatment of function decls: function decls always set
          * fNeedSemi back to true. But if they are the only item in a statement
@@ -174,7 +174,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
       //
       _blockClose();
     }
-    fNeedSemi = false;
+    needSemi = false;
     return false;
   }
 
@@ -209,15 +209,15 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     indent();
     for (Iterator iter = x.getStmts().iterator(); iter.hasNext();) {
       JsStatement stmt = (JsStatement) iter.next();
-      fNeedSemi = true;
+      needSemi = true;
       stmt.traverse(this);
-      if (fNeedSemi) {
+      if (needSemi) {
         _semi();
       }
       _newlineOpt();
     }
     outdent();
-    fNeedSemi = false;
+    needSemi = false;
     return false;
   }
 
@@ -302,15 +302,15 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     indent();
     for (Iterator iter = x.getStmts().iterator(); iter.hasNext();) {
       JsStatement stmt = (JsStatement) iter.next();
-      fNeedSemi = true;
+      needSemi = true;
       stmt.traverse(this);
-      if (fNeedSemi) {
+      if (needSemi) {
         _semi();
       }
       _newlineOpt();
     }
     outdent();
-    fNeedSemi = false;
+    needSemi = false;
     return false;
   }
 
@@ -328,12 +328,12 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     _nestedPush(x.getBody(), true);
     x.getBody().traverse(this);
     _nestedPop(x.getBody());
-    if (fNeedSemi) {
+    if (needSemi) {
       _semi();
       _newlineOpt();
     } else {
       _spaceOpt();
-      fNeedSemi = true;
+      needSemi = true;
     }
     _while();
     _spaceOpt();
@@ -458,12 +458,12 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     _nestedPop(thenStmt);
     JsStatement elseStmt = x.getElseStmt();
     if (elseStmt != null) {
-      if (fNeedSemi) {
+      if (needSemi) {
         _semi();
         _newlineOpt();
       } else {
         _spaceOpt();
-        fNeedSemi = true;
+        needSemi = true;
       }
       _else();
       boolean elseIf = elseStmt instanceof JsIf;
@@ -1132,5 +1132,5 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
 
   private final NamingStrategy namer;
   private final TextOutput p;
-  protected boolean fNeedSemi = true;
+  protected boolean needSemi = true;
 }

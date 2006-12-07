@@ -32,7 +32,7 @@ public class JsSourceGenerationVisitor extends JsToStringGenerationVisitor {
   public boolean visit(JsFunction x) {
     super.visit(x);
     x.getBody().traverse(this);
-    fNeedSemi = true;
+    needSemi = true;
     return false;
   }
 

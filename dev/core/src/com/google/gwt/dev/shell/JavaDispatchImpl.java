@@ -78,7 +78,10 @@ public class JavaDispatchImpl implements JavaDispatch {
    * @return true if the dispId represents a field
    */
   public boolean isField(int dispId) {
-    if (dispId < 0) return false;
+    if (dispId < 0) {
+      return false;
+    }
+    
     return getMember(dispId) instanceof Field;
   }
 
@@ -87,7 +90,10 @@ public class JavaDispatchImpl implements JavaDispatch {
    * @return true if the dispId represents a method
    */
   public boolean isMethod(int dispId) {
-    if (dispId < 0) return false;
+    if (dispId < 0) {
+      return false;
+    }
+    
     return getMember(dispId) instanceof Method;
   }
 

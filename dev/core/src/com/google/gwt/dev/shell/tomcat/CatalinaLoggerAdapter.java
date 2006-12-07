@@ -7,32 +7,32 @@ import org.apache.catalina.logger.LoggerBase;
 
 class CatalinaLoggerAdapter extends LoggerBase {
 
-  private final TreeLogger fLogger;
+  private final TreeLogger logger;
 
   public CatalinaLoggerAdapter(TreeLogger logger) {
-    fLogger = logger;
+    this.logger = logger;
   }
 
   public void log(Exception exception, String msg) {
-    fLogger.log(TreeLogger.WARN, msg, exception);
+    logger.log(TreeLogger.WARN, msg, exception);
   }
 
   public void log(String msg) {
-    fLogger.log(TreeLogger.INFO, msg, null);
+    logger.log(TreeLogger.INFO, msg, null);
   }
 
   public void log(String message, int verbosity) {
     TreeLogger.Type type = mapVerbosityToLogType(verbosity);
-    fLogger.log(type, message, null);
+    logger.log(type, message, null);
   }
 
   public void log(String msg, Throwable throwable) {
-    fLogger.log(TreeLogger.WARN, msg, throwable);
+    logger.log(TreeLogger.WARN, msg, throwable);
   }
 
   public void log(String message, Throwable throwable, int verbosity) {
     TreeLogger.Type type = mapVerbosityToLogType(verbosity);
-    fLogger.log(type, message, throwable);
+    logger.log(type, message, throwable);
   }
 
   private TreeLogger.Type mapVerbosityToLogType(int verbosity) {

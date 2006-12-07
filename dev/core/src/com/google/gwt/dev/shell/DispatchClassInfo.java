@@ -14,37 +14,39 @@ import java.util.HashMap;
 public class DispatchClassInfo {
 
   public DispatchClassInfo(Class cls, int classId) {
-    fClass = cls;
-    fClassId = classId;
+    this.cls = cls;
+    clsId = classId;
   }
 
   public int getClassId() {
-    return fClassId;
+    return clsId;
   }
 
   public Member getMember(int id) {
     lazyInitTargetMembers();
     id &= 0xffff;
-    return (Member) fMemberById.get(id);
+    return (Member) memberById.get(id);
   }
 
   public int getMemberId(String mangledMemberName) {
     lazyInitTargetMembers();
 
-    Integer id = (Integer) fMemberIdByName.get(mangledMemberName);
-    if (id == null) return -1;
+    Integer id = (Integer) memberIdByName.get(mangledMemberName);
+    if (id == null) {
+      return -1;
+    }
 
     return id.intValue();
   }
 
   public Class getWrappedClass() {
-    return fClass;
+    return cls;
   }
 
   private void addMember(Member member, String sig) {
-    fMemberById.add(member);
-    int index = fMemberById.size() - 1;
-    fMemberIdByName.put(sig, new Integer(index));
+    memberById.add(member);
+    int index = memberById.size() - 1;
+    memberIdByName.put(sig, new Integer(index));
   }
 
   /**
@@ -75,25 +77,26 @@ public class DispatchClassInfo {
     }
 
     if (type.isPrimitive()) {
-      if (type.equals(int.class))
+      if (type.equals(int.class)) {
         return "I";
-      else if (type.equals(boolean.class))
+      } else if (type.equals(boolean.class)) {
         return "Z";
-      else if (type.equals(char.class))
+      } else if (type.equals(char.class)) {
         return "C";
-      else if (type.equals(long.class))
+      } else if (type.equals(long.class)) {
         return "J";
-      else if (type.equals(short.class))
+      } else if (type.equals(short.class)) {
         return "S";
-      else if (type.equals(float.class))
+      } else if (type.equals(float.class)) {
         return "F";
-      else if (type.equals(double.class))
+      } else if (type.equals(double.class)) {
         return "D";
-      else if (type.equals(byte.class))
+      } else if (type.equals(byte.class)) {
         return "B";
-      else
+      } else { 
         throw new RuntimeException("Unexpected primitive type: "
             + type.getName());
+      }
     } else {
       StringBuffer sb = new StringBuffer();
       sb.append("L");
@@ -104,11 +107,11 @@ public class DispatchClassInfo {
   }
 
   private void lazyInitTargetMembers() {
-    if (fMemberById == null) {
-      fMemberById = new ArrayList();
+    if (memberById == null) {
+      memberById = new ArrayList();
       try {
         // MAGIC: 0 is the default property
-        fMemberById.add(fClass.getMethod("toString", null));
+        memberById.add(cls.getMethod("toString", null));
       } catch (SecurityException e) {
         e.printStackTrace();
       } catch (NoSuchMethodException e) {
@@ -127,9 +130,9 @@ public class DispatchClassInfo {
          * 
          *   x.@java.lang.Object::equals(Ljava/lang/Object;)(y)
          */
-        if (fClass.isInterface()) {
+        if (cls.isInterface()) {
           try {
-            fMemberById.add(Object.class.getMethod("toString", null));
+            memberById.add(Object.class.getMethod("toString", null));
           } catch (Exception e1) {
             e1.printStackTrace();
           }
@@ -138,17 +141,18 @@ public class DispatchClassInfo {
         }
       }
       
-      fMemberIdByName = new HashMap();
-      lazyInitTargetMembersUsingReflectionHelper(fClass);
+      memberIdByName = new HashMap();
+      lazyInitTargetMembersUsingReflectionHelper(cls);
     }
   }
 
   private void lazyInitTargetMembersUsingReflectionHelper(Class targetClass) {
     // Start by analyzing the superclass recursively.
     Class superclass = targetClass.getSuperclass();
-    if (superclass != null)
+    if (superclass != null) {
       lazyInitTargetMembersUsingReflectionHelper(superclass);
-
+    }
+    
     // Get the methods on this class/interface.
     //
     Method[] methods = targetClass.getDeclaredMethods();
@@ -166,11 +170,11 @@ public class DispatchClassInfo {
     }
   }
 
-  private Class fClass;
+  private Class cls;
 
-  private final int fClassId;
+  private final int clsId;
 
-  private ArrayList fMemberById;
+  private ArrayList memberById;
 
-  private HashMap fMemberIdByName;
+  private HashMap memberIdByName;
 }

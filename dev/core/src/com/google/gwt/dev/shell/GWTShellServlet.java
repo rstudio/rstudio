@@ -336,7 +336,6 @@ public class GWTShellServlet extends HttpServlet {
           logger.log(TreeLogger.WARN, msg, null);
           throw new UnableToCompleteException();
         }
-
       }
     } catch (UnableToCompleteException e) {
       sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND,
@@ -423,8 +422,8 @@ public class GWTShellServlet extends HttpServlet {
   private synchronized TreeLogger getLogger() {
     if (topLogger == null) {
       ServletContext servletContext = getServletContext();
-      final String ATTR = "com.google.gwt.dev.shell.logger";
-      topLogger = (TreeLogger) servletContext.getAttribute(ATTR);
+      final String attr = "com.google.gwt.dev.shell.logger";
+      topLogger = (TreeLogger) servletContext.getAttribute(attr);
       if (topLogger == null) {
         // No shell available, so wrap the regular servlet context logger.
         //
@@ -470,8 +469,8 @@ public class GWTShellServlet extends HttpServlet {
   private synchronized File getOutputDir() {
     if (outDir == null) {
       ServletContext servletContext = getServletContext();
-      final String ATTR = "com.google.gwt.dev.shell.outdir";
-      outDir = (File) servletContext.getAttribute(ATTR);
+      final String attr = "com.google.gwt.dev.shell.outdir";
+      outDir = (File) servletContext.getAttribute(attr);
       assert (outDir != null);
     }
     return outDir;
@@ -656,8 +655,9 @@ public class GWTShellServlet extends HttpServlet {
       // (IE does add this).
       //
       int lastSemi = ifModifiedSince.lastIndexOf(';');
-      if (lastSemi != -1)
+      if (lastSemi != -1) {
         ifModifiedSince = ifModifiedSince.substring(0, lastSemi);
+      }
       ageOfClientCopy = HttpHeaders.fromInternetDateFormat(ifModifiedSince);
     }
 

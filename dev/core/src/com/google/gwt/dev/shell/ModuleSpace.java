@@ -158,8 +158,10 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     String newScript = "window[\"" + jsniSignature + "\"] = function(";
 
     for (int i = 0; i < paramNames.length; ++i) {
-      if (i > 0)
+      if (i > 0) {
         newScript += ", ";
+      }
+      
       newScript += paramNames[i];
     }
 

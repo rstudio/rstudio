@@ -23,6 +23,9 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolItem;
 
+/**
+ * Implements the GWTShell's main window control.  
+ */
 public class ShellMainWindow extends Composite implements DisposeListener,
     ShellListener {
 
@@ -31,13 +34,13 @@ public class ShellMainWindow extends Composite implements DisposeListener,
     public Toolbar(Composite parent) {
       super(parent);
 
-      fNewWindow = newItem("new-window.gif", "&Hosted Browser",
+      newWindow = newItem("new-window.gif", "&Hosted Browser",
         "Opens a new hosted mode browser window for debugging");
-      fNewWindow.addSelectionListener(new SelectionAdapter() {
+      newWindow.addSelectionListener(new SelectionAdapter() {
         public void widgetSelected(SelectionEvent event) {
-          String startupUrl = fServerWindow.normalizeURL("/");
+          String startupUrl = serverWindow.normalizeURL("/");
           try {
-            BrowserWidget bw = fServerWindow.openNewBrowserWindow();
+            BrowserWidget bw = serverWindow.openNewBrowserWindow();
             bw.go(startupUrl);
           } catch (UnableToCompleteException e) {
             getLogger().log(TreeLogger.ERROR,
@@ -48,34 +51,34 @@ public class ShellMainWindow extends Composite implements DisposeListener,
 
       newSeparator();
 
-      fCollapseAll = newItem("collapse.gif", "&Collapse All",
+      collapseAll = newItem("collapse.gif", "&Collapse All",
         "Collapses all log entries");
-      fCollapseAll.addSelectionListener(new SelectionAdapter() {
+      collapseAll.addSelectionListener(new SelectionAdapter() {
         public void widgetSelected(SelectionEvent e) {
-          fLogPane.collapseAll();
+          logPane.collapseAll();
         }
       });
 
-      fExpandAll = newItem("expand.gif", "&Expand All",
+      expandAll = newItem("expand.gif", "&Expand All",
         "Expands all log entries");
-      fExpandAll.addSelectionListener(new SelectionAdapter() {
+      expandAll.addSelectionListener(new SelectionAdapter() {
         public void widgetSelected(SelectionEvent e) {
-          fLogPane.expandAll();
+          logPane.expandAll();
         }
       });
 
-      fClearLog = newItem("clear-log.gif", "Clear &Log",
+      clearLog = newItem("clear-log.gif", "Clear &Log",
         "Removes all log entries");
-      fClearLog.addSelectionListener(new SelectionAdapter() {
+      clearLog.addSelectionListener(new SelectionAdapter() {
         public void widgetSelected(SelectionEvent e) {
-          fLogPane.removeAll();
+          logPane.removeAll();
         }
       });
 
       newSeparator();
 
-      fAbout = newItem("about.gif", "    &About    ", "About...");
-      fAbout.addSelectionListener(new SelectionAdapter() {
+      about = newItem("about.gif", "    &About    ", "About...");
+      about.addSelectionListener(new SelectionAdapter() {
         public void widgetSelected(SelectionEvent e) {
           String aboutHtml = Util.getFileFromInstallPath("about.html");
           if (aboutHtml != null) {
@@ -83,8 +86,9 @@ public class ShellMainWindow extends Composite implements DisposeListener,
             StringBuffer sb = new StringBuffer();
             sb
               .append("<div style='overflow:hidden;width:100%;white-space:nowrap;font-size:1px'><br/><br/><br/><br/><font style='background-color:gray;color:lightgrey'>");
-            for (int i = 0; i < 100; ++i)
+            for (int i = 0; i < 100; ++i) {
               sb.append(serial);
+            }
             sb.append("</font></div>");
             serial = sb.toString();
             int pos;
@@ -107,20 +111,20 @@ public class ShellMainWindow extends Composite implements DisposeListener,
       });
     }
 
-    private ToolItem fAbout;
-    private ToolItem fClearLog;
-    private ToolItem fCollapseAll;
-    private ToolItem fExpandAll;
-    private ToolItem fNewWindow;
+    private ToolItem about;
+    private ToolItem clearLog;
+    private ToolItem collapseAll;
+    private ToolItem expandAll;
+    private ToolItem newWindow;
   }
 
   public ShellMainWindow(GWTShell serverWindow, final Shell parent,
       int serverPort, boolean checkForUpdates) {
     super(parent, SWT.NONE);
 
-    fServerWindow = serverWindow;
+    this.serverWindow = serverWindow;
 
-    fColorWhite = new Color(null, 255, 255, 255);
+    colorWhite = new Color(null, 255, 255, 255);
 
     addDisposeListener(this);
     parent.addShellListener(this);
@@ -142,23 +146,23 @@ public class ShellMainWindow extends Composite implements DisposeListener,
     // Create the toolbar.
     //
     {
-      fToolbar = new Toolbar(this);
+      toolbar = new Toolbar(this);
       GridData data = new GridData();
       data.grabExcessHorizontalSpace = true;
       data.horizontalAlignment = GridData.FILL;
-      fToolbar.setLayoutData(data);
+      toolbar.setLayoutData(data);
     }
 
     // Create the log pane.
     //
     {
-      fLogPane = new TreeLoggerWidget(this);
+      logPane = new TreeLoggerWidget(this);
       GridData data = new GridData();
       data.grabExcessHorizontalSpace = true;
       data.grabExcessVerticalSpace = true;
       data.horizontalAlignment = GridData.FILL;
       data.verticalAlignment = GridData.FILL;
-      fLogPane.setLayoutData(data);
+      logPane.setLayoutData(data);
     }
 
     // check for updates
@@ -198,27 +202,28 @@ public class ShellMainWindow extends Composite implements DisposeListener,
   }
 
   public AbstractTreeLogger getLogger() {
-    return fLogPane.getLogger();
+    return logPane.getLogger();
   }
 
   public void shellActivated(ShellEvent e) {
   }
 
   public void shellClosed(ShellEvent e) {
-	  if (fServerWindow.hasBrowserWindowsOpen()) {
-		  boolean closeWindows=true;
-		  if(System.getProperty("gwt.shell.endquick")==null) {
-			  closeWindows = DialogBase.confirmAction((Shell) e.widget,
-						  "Closing the development shell will close " +
-						  "all hosted mode browsers.  Continue?", "Confirm close");
-		  } 
-		if (closeWindows) {
-			  fServerWindow.closeAllBrowserWindows();
-			  e.doit = true;
-		  } else {
-			  e.doit = false;
-		  }
-	  }
+    if (serverWindow.hasBrowserWindowsOpen()) {
+      boolean closeWindows = true;
+      if (System.getProperty("gwt.shell.endquick") == null) {
+        closeWindows = DialogBase.confirmAction((Shell) e.widget,
+            "Closing the development shell will close " +
+            "all hosted mode browsers.  Continue?", "Confirm close");
+      } 
+      
+      if (closeWindows) {
+        serverWindow.closeAllBrowserWindows();
+        e.doit = true;
+      } else {
+        e.doit = false;
+      }
+    }
   }
 
   public void shellDeactivated(ShellEvent e) {
@@ -231,28 +236,30 @@ public class ShellMainWindow extends Composite implements DisposeListener,
   }
 
   public void widgetDisposed(DisposeEvent e) {
-    fColorWhite.dispose();
+    colorWhite.dispose();
   }
 
   private static String verify(String hash) {
     char[] in = hash.toCharArray();
     char[] ou = new char[in.length];
     for (int i = 0, c = 0; i < in.length; ++i) {
-      if (in[i] < 'a')
+      if (in[i] < 'a') {
         c += in[i] - 'A';
-      else
+      } else {
         c += in[i] - 'a' - 26;
-
-      if (c == 0)
+      }
+      
+      if (c == 0) {
         ou[i] = ' ';
-      else
+      } else {
         ou[i] = (char) ('@' + c);
+      }
     }
     return String.valueOf(ou);
   }
 
-  private Color fColorWhite;
-  private TreeLoggerWidget fLogPane;
-  private GWTShell fServerWindow;
-  private Toolbar fToolbar;
+  private Color colorWhite;
+  private TreeLoggerWidget logPane;
+  private GWTShell serverWindow;
+  private Toolbar toolbar;
 }

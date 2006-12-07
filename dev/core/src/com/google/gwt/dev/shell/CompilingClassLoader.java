@@ -26,7 +26,7 @@ public final class CompilingClassLoader extends ClassLoader {
 
   /**
    * Oracle that can answer questions about
-   * {@link DispatchClassInfo DispatchClassInfos}
+   * {@link DispatchClassInfo DispatchClassInfos}.
    */
   private final class DispatchClassInfoOracle {
 
@@ -217,12 +217,12 @@ public final class CompilingClassLoader extends ClassLoader {
     }
 
     /**
-     * Class identifier to DispatchClassInfo mapping
+     * Class identifier to DispatchClassInfo mapping.
      */
     private final ArrayList classIdToClassInfo = new ArrayList();
 
     /**
-     * Binary or source class name to DispatchClassInfo map
+     * Binary or source class name to DispatchClassInfo map.
      */
     private final Map classNameToClassInfo = new HashMap();
 
@@ -350,8 +350,9 @@ public final class CompilingClassLoader extends ClassLoader {
     try {
       byte classBytes[] = new byte[is.available()];
       int read = 0;
-      while (read < classBytes.length)
+      while (read < classBytes.length) {
         read += is.read(classBytes, read, classBytes.length - read);
+      }
       return classBytes;
     } finally {
       Utility.close(is);
