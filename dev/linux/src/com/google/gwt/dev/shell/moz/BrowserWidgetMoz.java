@@ -64,10 +64,10 @@ public class BrowserWidgetMoz extends BrowserWidget {
     final ExternalFactory externalFactory = new ExternalFactory() {
 
       public ExternalObject createExternalObject() {
-        if (fExternalObject == null) {
-          fExternalObject = new ExternalObjectImpl();
+        if (externalObject == null) {
+          externalObject = new ExternalObjectImpl();
         }
-        return fExternalObject;
+        return externalObject;
       }
 
       public boolean matchesDOMWindow(int domWindow) {
@@ -81,7 +81,7 @@ public class BrowserWidgetMoz extends BrowserWidget {
         return false;
       }
 
-      private ExternalObject fExternalObject = null;
+      private ExternalObject externalObject = null;
 
     };
 

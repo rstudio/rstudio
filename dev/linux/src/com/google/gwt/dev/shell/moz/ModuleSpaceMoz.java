@@ -19,8 +19,8 @@ public class ModuleSpaceMoz extends ModuleSpace {
 
     // Hang on to the parent window.
     //
-    fWindow = scriptGlobalObject;
-    SwtGeckoGlue.addRefInt(fWindow);
+    window = scriptGlobalObject;
+    SwtGeckoGlue.addRefInt(window);
   }
 
   public void createNative(String file, int line, String jsniSignature,
@@ -29,11 +29,11 @@ public class ModuleSpaceMoz extends ModuleSpace {
     // a new top-level function.
     //
     String newScript = createNativeMethodInjector(jsniSignature, paramNames, js);
-    LowLevelMoz.executeScriptWithInfo(fWindow, newScript, file, line);
+    LowLevelMoz.executeScriptWithInfo(window, newScript, file, line);
   }
 
   public void dispose() {
-    SwtGeckoGlue.releaseInt(fWindow);
+    SwtGeckoGlue.releaseInt(window);
     super.dispose();
   }
 
@@ -60,7 +60,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
     if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
       return false;
     }
-    return LowLevelMoz.coerceToBoolean(fWindow, jsval);
+    return LowLevelMoz.coerceToBoolean(window, jsval);
   }
 
   public byte invokeNativeByte(String name, Object jthis, Class[] types,
@@ -69,7 +69,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
     if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
       return 0;
     }
-    return LowLevelMoz.coerceToByte(fWindow, jsval);
+    return LowLevelMoz.coerceToByte(window, jsval);
   }
 
   public char invokeNativeChar(String name, Object jthis, Class[] types,
@@ -78,7 +78,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
     if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
       return 0;
     }
-    return LowLevelMoz.coerceToChar(fWindow, jsval);
+    return LowLevelMoz.coerceToChar(window, jsval);
   }
 
   public double invokeNativeDouble(String name, Object jthis, Class[] types,
@@ -87,7 +87,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
     if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
       return 0;
     }
-    return LowLevelMoz.coerceToDouble(fWindow, jsval);
+    return LowLevelMoz.coerceToDouble(window, jsval);
   }
 
   public float invokeNativeFloat(String name, Object jthis, Class[] types,
@@ -96,7 +96,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
     if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
       return 0;
     }
-    return LowLevelMoz.coerceToFloat(fWindow, jsval);
+    return LowLevelMoz.coerceToFloat(window, jsval);
   }
 
   public Object invokeNativeHandle(String name, Object jthis, Class returnType,
@@ -105,7 +105,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
     if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
       return null;
     }
-    return SwtGeckoGlue.convertJSValToObject(fWindow, returnType, jsval);
+    return SwtGeckoGlue.convertJSValToObject(window, returnType, jsval);
   }
 
   public int invokeNativeInt(String name, Object jthis, Class[] types,
@@ -114,7 +114,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
     if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
       return 0;
     }
-    return LowLevelMoz.coerceToInt(fWindow, jsval);
+    return LowLevelMoz.coerceToInt(window, jsval);
   }
 
   public long invokeNativeLong(String name, Object jthis, Class[] types,
@@ -123,7 +123,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
     if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
       return 0;
     }
-    return LowLevelMoz.coerceToLong(fWindow, jsval);
+    return LowLevelMoz.coerceToLong(window, jsval);
   }
 
   public Object invokeNativeObject(String name, Object jthis, Class[] types,
@@ -132,7 +132,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
     if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
       return null;
     }
-    return SwtGeckoGlue.convertJSValToObject(fWindow, Object.class, jsval);
+    return SwtGeckoGlue.convertJSValToObject(window, Object.class, jsval);
   }
 
   public short invokeNativeShort(String name, Object jthis, Class[] types,
@@ -141,7 +141,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
     if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
       return 0;
     }
-    return LowLevelMoz.coerceToShort(fWindow, jsval);
+    return LowLevelMoz.coerceToShort(window, jsval);
   }
 
   public String invokeNativeString(String name, Object jthis, Class[] types,
@@ -150,7 +150,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
     if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
       return null;
     }
-    return LowLevelMoz.coerceToString(fWindow, jsval);
+    return LowLevelMoz.coerceToString(window, jsval);
   }
 
   public void invokeNativeVoid(String name, Object jthis, Class[] types,
@@ -159,19 +159,19 @@ public class ModuleSpaceMoz extends ModuleSpace {
   }
 
   protected void initializeStaticDispatcher() {
-    fStaticDispatch = new GeckoDispatchAdapter(getIsolatedClassLoader(),
-      fWindow);
+    staticDispatch = new GeckoDispatchAdapter(getIsolatedClassLoader(),
+      window);
 
     // Define the static dispatcher for use by JavaScript.
     //
     createNative("initializeStaticDispatcher", 0, "__defineStatic",
       new String[]{"__arg0"}, "window.__static = __arg0;");
     invokeNativeVoid("__defineStatic", null, new Class[]{Object.class},
-      new Object[]{fStaticDispatch});
+      new Object[]{staticDispatch});
   }
 
   int wrapObjectAsJSObject(Object o) {
-    return SwtGeckoGlue.wrapObjectAsJSObject(getIsolatedClassLoader(), fWindow,
+    return SwtGeckoGlue.wrapObjectAsJSObject(getIsolatedClassLoader(), window,
       o);
   }
 
@@ -195,11 +195,11 @@ public class ModuleSpaceMoz extends ModuleSpace {
     int argc = args.length;
     int argv[] = new int[argc];
     for (int i = 0; i < argc; ++i) {
-      argv[i] = SwtGeckoGlue.convertObjectToJSVal(fWindow,
+      argv[i] = SwtGeckoGlue.convertObjectToJSVal(window,
         getIsolatedClassLoader(), types[i], args[i]);
     }
 
-    int result = LowLevelMoz.invoke(fWindow, name, jsthis, argv);
+    int result = LowLevelMoz.invoke(window, name, jsthis, argv);
     if (!isExceptionActive()) {
       return result;
     }
@@ -214,8 +214,8 @@ public class ModuleSpaceMoz extends ModuleSpace {
     throw thrown;
   }
 
-  private DispatchObject fStaticDispatch;
+  private DispatchObject staticDispatch;
 
-  private final int fWindow;
+  private final int window;
 
 }
