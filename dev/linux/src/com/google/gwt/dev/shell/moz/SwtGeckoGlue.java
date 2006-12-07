@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell.moz;
 
 import com.google.gwt.dev.shell.CompilingClassLoader;
@@ -39,93 +53,6 @@ class SwtGeckoGlue {
       rethrow = e;
     }
     throw new RuntimeException(ERRMSG_CANNOT_INVOKE, rethrow);
-  }
-
-  /**
-   * Wrapper for XPCOM's nsISupports::Release().
-   */
-  public static int releaseInt(int nsISupports) {
-    ensureMethodsInitialized();
-    Throwable rethrow = null;
-    try {
-      Object retVal = XPCOMVtblCall.invoke(null, new Object[] {
-          new Integer(2), new Integer(nsISupports)});
-      return ((Integer) retVal).intValue();
-    } catch (IllegalArgumentException e) {
-      rethrow = e;
-    } catch (IllegalAccessException e) {
-      rethrow = e;
-    } catch (InvocationTargetException e) {
-      rethrow = e;
-    }
-    throw new RuntimeException(ERRMSG_CANNOT_INVOKE, rethrow);
-  }
-
-  /**
-   * Converts a java object to its equivalent variant. A ClassLoader is passed
-   * here so that Handles can be manipulated properly.
-   */
-  public static int convertObjectToJSVal(int scriptObject,
-      CompilingClassLoader cl, Class type, Object o) {
-    if (o == null) {
-      return LowLevelMoz.JSVAL_NULL;
-    }
-
-    if (type.equals(String.class)) {
-      return LowLevelMoz.convertString(scriptObject, (String) o);
-    } else if (type.equals(boolean.class)) {
-      return LowLevelMoz.convertBoolean(scriptObject,
-          ((Boolean) o).booleanValue());
-    } else if (type.equals(byte.class)) {
-      return LowLevelMoz.convertByte(scriptObject, ((Byte) o).byteValue());
-    } else if (type.equals(short.class)) {
-      return LowLevelMoz.convertShort(scriptObject, ((Short) o).shortValue());
-    } else if (type.equals(char.class)) {
-      return LowLevelMoz.convertChar(scriptObject, ((Character) o).charValue());
-    } else if (type.equals(int.class)) {
-      return LowLevelMoz.convertInt(scriptObject, ((Integer) o).intValue());
-    } else if (type.equals(long.class)) {
-      return LowLevelMoz.convertLong(scriptObject, ((Long) o).longValue());
-    } else if (type.equals(float.class)) {
-      return LowLevelMoz.convertFloat(scriptObject, ((Float) o).floatValue());
-    } else if (type.equals(double.class)) {
-      return LowLevelMoz.convertDouble(scriptObject, ((Double) o).doubleValue());
-    }
-
-    // Handle
-    try {
-      Class jso = Class.forName(HandleMoz.HANDLE_CLASS, true, cl);
-      if (jso.isAssignableFrom(type) && jso.isAssignableFrom(o.getClass())) {
-        // Variant never AddRef's its contents.
-        //
-        return HandleMoz.getJSObjectFromHandle(o);
-      }
-    } catch (ClassNotFoundException e) {
-      // Ignore the exception, if we can't find the class then obviously we
-      // don't have to worry about o being one
-    }
-
-    // Fallthrough case: Object.
-    //
-    return wrapObjectAsJSObject(cl, scriptObject, o);
-  }
-
-  /**
-   * Wraps a Java object as a JSObject.
-   */
-  public static int wrapObjectAsJSObject(CompilingClassLoader cl,
-      int scriptObject, Object jthis) {
-    if (jthis == null) {
-      return LowLevelMoz.JSVAL_NULL;
-    }
-
-    DispatchObject dispObj;
-    if (jthis instanceof DispatchObject) {
-      dispObj = (DispatchObject) jthis;
-    } else {
-      dispObj = new GeckoDispatchAdapter(cl, scriptObject, jthis);
-    }
-    return LowLevelMoz.wrapDispatch(scriptObject, dispObj);
   }
 
   /**
@@ -198,28 +125,90 @@ class SwtGeckoGlue {
   }
 
   /**
-   * Decides what to do with an incoming JSObject arg. Two possibilities here:
-   * (1) We received a true javascript object (e.g. DOM object), in which case
-   * we wrap it in a Handle. (2) We received a Java object that was passed
-   * through the outside world and back, in which case we use black magic to get
-   * it back.
+   * Converts a java object to its equivalent variant. A ClassLoader is passed
+   * here so that Handles can be manipulated properly.
    */
-  private static Object translateJSObject(int scriptObject, Class type,
-      int jsval) {
-    if (LowLevelMoz.isWrappedDispatch(scriptObject, jsval)) {
-      DispatchObject dispObj = LowLevelMoz.unwrapDispatch(scriptObject, jsval);
-      return dispObj.getTarget();
+  public static int convertObjectToJSVal(int scriptObject,
+      CompilingClassLoader cl, Class type, Object o) {
+    if (o == null) {
+      return LowLevelMoz.JSVAL_NULL;
     }
-    int wrapper = 0;
+
+    if (type.equals(String.class)) {
+      return LowLevelMoz.convertString(scriptObject, (String) o);
+    } else if (type.equals(boolean.class)) {
+      return LowLevelMoz.convertBoolean(scriptObject,
+          ((Boolean) o).booleanValue());
+    } else if (type.equals(byte.class)) {
+      return LowLevelMoz.convertByte(scriptObject, ((Byte) o).byteValue());
+    } else if (type.equals(short.class)) {
+      return LowLevelMoz.convertShort(scriptObject, ((Short) o).shortValue());
+    } else if (type.equals(char.class)) {
+      return LowLevelMoz.convertChar(scriptObject, ((Character) o).charValue());
+    } else if (type.equals(int.class)) {
+      return LowLevelMoz.convertInt(scriptObject, ((Integer) o).intValue());
+    } else if (type.equals(long.class)) {
+      return LowLevelMoz.convertLong(scriptObject, ((Long) o).longValue());
+    } else if (type.equals(float.class)) {
+      return LowLevelMoz.convertFloat(scriptObject, ((Float) o).floatValue());
+    } else if (type.equals(double.class)) {
+      return LowLevelMoz.convertDouble(scriptObject, ((Double) o).doubleValue());
+    }
+
+    // Handle
     try {
-      wrapper = LowLevelMoz.wrapJSObject(scriptObject, jsval);
-      return HandleMoz.createHandle(type, wrapper);
-    } finally {
-      // Handle should AddRef
-      if (wrapper != 0) {
-        releaseInt(wrapper);
+      Class jso = Class.forName(HandleMoz.HANDLE_CLASS, true, cl);
+      if (jso.isAssignableFrom(type) && jso.isAssignableFrom(o.getClass())) {
+        // Variant never AddRef's its contents.
+        //
+        return HandleMoz.getJSObjectFromHandle(o);
       }
+    } catch (ClassNotFoundException e) {
+      // Ignore the exception, if we can't find the class then obviously we
+      // don't have to worry about o being one
     }
+
+    // Fallthrough case: Object.
+    //
+    return wrapObjectAsJSObject(cl, scriptObject, o);
+  }
+
+  /**
+   * Wrapper for XPCOM's nsISupports::Release().
+   */
+  public static int releaseInt(int nsISupports) {
+    ensureMethodsInitialized();
+    Throwable rethrow = null;
+    try {
+      Object retVal = XPCOMVtblCall.invoke(null, new Object[] {
+          new Integer(2), new Integer(nsISupports)});
+      return ((Integer) retVal).intValue();
+    } catch (IllegalArgumentException e) {
+      rethrow = e;
+    } catch (IllegalAccessException e) {
+      rethrow = e;
+    } catch (InvocationTargetException e) {
+      rethrow = e;
+    }
+    throw new RuntimeException(ERRMSG_CANNOT_INVOKE, rethrow);
+  }
+
+  /**
+   * Wraps a Java object as a JSObject.
+   */
+  public static int wrapObjectAsJSObject(CompilingClassLoader cl,
+      int scriptObject, Object jthis) {
+    if (jthis == null) {
+      return LowLevelMoz.JSVAL_NULL;
+    }
+
+    DispatchObject dispObj;
+    if (jthis instanceof DispatchObject) {
+      dispObj = (DispatchObject) jthis;
+    } else {
+      dispObj = new GeckoDispatchAdapter(cl, scriptObject, jthis);
+    }
+    return LowLevelMoz.wrapDispatch(scriptObject, dispObj);
   }
 
   private static void ensureMethodsInitialized() {
@@ -240,6 +229,31 @@ class SwtGeckoGlue {
 
       if (rethrow != null) {
         throw new RuntimeException(ERRMSG_CANNOT_ACCESS, rethrow);
+      }
+    }
+  }
+
+  /**
+   * Decides what to do with an incoming JSObject arg. Two possibilities here:
+   * (1) We received a true javascript object (e.g. DOM object), in which case
+   * we wrap it in a Handle. (2) We received a Java object that was passed
+   * through the outside world and back, in which case we use black magic to get
+   * it back.
+   */
+  private static Object translateJSObject(int scriptObject, Class type,
+      int jsval) {
+    if (LowLevelMoz.isWrappedDispatch(scriptObject, jsval)) {
+      DispatchObject dispObj = LowLevelMoz.unwrapDispatch(scriptObject, jsval);
+      return dispObj.getTarget();
+    }
+    int wrapper = 0;
+    try {
+      wrapper = LowLevelMoz.wrapJSObject(scriptObject, jsval);
+      return HandleMoz.createHandle(type, wrapper);
+    } finally {
+      // Handle should AddRef
+      if (wrapper != 0) {
+        releaseInt(wrapper);
       }
     }
   }

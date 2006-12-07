@@ -32,6 +32,10 @@ import java.lang.reflect.Method;
  */
 class MethodDispatch extends IDispatchImpl {
 
+  private final CompilingClassLoader classLoader;
+
+  private final Method method;
+
   public MethodDispatch(CompilingClassLoader classLoader, Method method) {
     this.classLoader = classLoader;
     this.method = method;
@@ -86,7 +90,7 @@ class MethodDispatch extends IDispatchImpl {
            * methods). If method is static, it can be null.
            */
           Object jthis = SwtOleGlue.convertVariantToObject(
-            method.getDeclaringClass(), params[0], "this");
+              method.getDeclaringClass(), params[0], "this");
           Variant[] otherParams = new Variant[params.length - 1];
           System.arraycopy(params, 1, otherParams, 0, otherParams.length);
           return callMethod(classLoader, jthis, otherParams, method);
@@ -98,7 +102,4 @@ class MethodDispatch extends IDispatchImpl {
     }
     throw new HResultException(COM.E_NOTSUPPORTED);
   }
-
-  private final CompilingClassLoader classLoader;
-  private final Method method;
 }

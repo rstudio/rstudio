@@ -400,7 +400,8 @@ public class LowLevelMoz {
 
   /**
    * @param scriptObject An opaque handle to the script frame window
-   * @param dispObj the DispatchMethod to wrap
+   * @param name the name of the function to be wrapped
+   * @param dispMeth the DispatchMethod to wrap
    * @return the wrapped method as a jsval JSObject
    */
   public static int wrapFunction(int scriptObject, String name,

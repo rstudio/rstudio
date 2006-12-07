@@ -23,17 +23,6 @@ import com.google.gwt.dev.shell.LowLevel;
 class LowLevelIE6 {
 
   /**
-   * Not instantiable.
-   */
-  private LowLevelIE6() {
-  }
-
-  public static synchronized void init() {
-    // Force LowLevel initialization to load gwt-ll
-    LowLevel.init();
-  }
-
-  /**
    * Does an HTTP GET that works with Windows proxy settings. Set the system
    * property <code>gwt.debugLowLevelHttpGet</code> to print failure status
    * codes to stderr.
@@ -57,8 +46,20 @@ class LowLevelIE6 {
     }
   }
 
+  public static synchronized void init() {
+    // Force LowLevel initialization to load gwt-ll
+    LowLevel.init();
+  }
+
   // CHECKSTYLE_OFF
   // out must be an array of size 1 to receive the array answer
   private static native int _httpGet(String userAgent, String url, byte[][] out);
+
   // CHECKSTYLE_ON
+
+  /**
+   * Not instantiable.
+   */
+  private LowLevelIE6() {
+  }
 }

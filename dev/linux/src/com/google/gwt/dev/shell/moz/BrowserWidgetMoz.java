@@ -22,10 +22,6 @@ public class BrowserWidgetMoz extends BrowserWidget {
 
   private class ExternalObjectImpl implements ExternalObject {
 
-    public int resolveReference(String ident) {
-      return LowLevelMoz.JSVAL_VOID;
-    }
-
     public boolean gwtOnLoad(int scriptObject, String moduleName) {
       try {
         if (moduleName == null) {
@@ -38,7 +34,7 @@ public class BrowserWidgetMoz extends BrowserWidget {
         // Attach a new ModuleSpace to make it programmable.
         //
         ModuleSpaceHost msh = getHost().createModuleSpaceHost(
-          BrowserWidgetMoz.this, moduleName);
+            BrowserWidgetMoz.this, moduleName);
         ModuleSpace moduleSpace = new ModuleSpaceMoz(msh, scriptObject);
         attachModuleSpace(moduleName, moduleSpace);
         return true;
@@ -48,9 +44,13 @@ public class BrowserWidgetMoz extends BrowserWidget {
         // things like NoClassDefFoundError.
         // 
         getHost().getLogger().log(TreeLogger.ERROR,
-          "Failure to load module '" + moduleName + "'", e);
+            "Failure to load module '" + moduleName + "'", e);
         return false;
       }
+    }
+
+    public int resolveReference(String ident) {
+      return LowLevelMoz.JSVAL_VOID;
     }
   }
 
@@ -58,10 +58,13 @@ public class BrowserWidgetMoz extends BrowserWidget {
     super(shell, host);
 
     // Expose a 'window.external' object factory. The created object's
-    // gwtOnLoad() method will be called when a hosted mode application's wrapper
+    // gwtOnLoad() method will be called when a hosted mode application's
+    // wrapper
     // HTML is done loading.
     //
     final ExternalFactory externalFactory = new ExternalFactory() {
+
+      private ExternalObject externalObject = null;
 
       public ExternalObject createExternalObject() {
         if (externalObject == null) {
@@ -71,8 +74,8 @@ public class BrowserWidgetMoz extends BrowserWidget {
       }
 
       public boolean matchesDOMWindow(int domWindow) {
-        nsIWebBrowser webBrowser = (nsIWebBrowser) LowLevel
-          .snatchFieldObjectValue(browser.getClass(), browser, "webBrowser");
+        nsIWebBrowser webBrowser = (nsIWebBrowser) LowLevel.snatchFieldObjectValue(
+            browser.getClass(), browser, "webBrowser");
         int[] aContentDOMWindow = new int[1];
         webBrowser.GetContentDOMWindow(aContentDOMWindow);
         if (aContentDOMWindow[0] == domWindow) {
@@ -80,8 +83,6 @@ public class BrowserWidgetMoz extends BrowserWidget {
         }
         return false;
       }
-
-      private ExternalObject externalObject = null;
 
     };
 

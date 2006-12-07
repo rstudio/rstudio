@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell.moz;
 
 import com.google.gwt.dev.shell.ModuleSpace;
@@ -10,6 +24,10 @@ import com.google.gwt.dev.shell.moz.LowLevelMoz.DispatchObject;
  * Mozilla.
  */
 public class ModuleSpaceMoz extends ModuleSpace {
+
+  private DispatchObject staticDispatch;
+
+  private final int window;
 
   /**
    * Constructs a browser interface for use with a Mozilla global window object.
@@ -38,8 +56,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
   }
 
   public void exceptionCaught(int number, String name, String message) {
-    RuntimeException thrown = (RuntimeException) sThrownJavaExceptionObject
-      .get();
+    RuntimeException thrown = (RuntimeException) sThrownJavaExceptionObject.get();
 
     // See if the caught exception is null (thus thrown by us)
     if (thrown != null) {
@@ -51,7 +68,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
     }
 
     sCaughtJavaExceptionObject.set(createJavaScriptException(
-      getIsolatedClassLoader(), name, message));
+        getIsolatedClassLoader(), name, message));
   }
 
   public boolean invokeNativeBoolean(String name, Object jthis, Class[] types,
@@ -159,20 +176,19 @@ public class ModuleSpaceMoz extends ModuleSpace {
   }
 
   protected void initializeStaticDispatcher() {
-    staticDispatch = new GeckoDispatchAdapter(getIsolatedClassLoader(),
-      window);
+    staticDispatch = new GeckoDispatchAdapter(getIsolatedClassLoader(), window);
 
     // Define the static dispatcher for use by JavaScript.
     //
     createNative("initializeStaticDispatcher", 0, "__defineStatic",
-      new String[]{"__arg0"}, "window.__static = __arg0;");
-    invokeNativeVoid("__defineStatic", null, new Class[]{Object.class},
-      new Object[]{staticDispatch});
+        new String[] {"__arg0"}, "window.__static = __arg0;");
+    invokeNativeVoid("__defineStatic", null, new Class[] {Object.class},
+        new Object[] {staticDispatch});
   }
 
   int wrapObjectAsJSObject(Object o) {
     return SwtGeckoGlue.wrapObjectAsJSObject(getIsolatedClassLoader(), window,
-      o);
+        o);
   }
 
   /**
@@ -196,7 +212,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
     int argv[] = new int[argc];
     for (int i = 0; i < argc; ++i) {
       argv[i] = SwtGeckoGlue.convertObjectToJSVal(window,
-        getIsolatedClassLoader(), types[i], args[i]);
+          getIsolatedClassLoader(), types[i], args[i]);
     }
 
     int result = LowLevelMoz.invoke(window, name, jsthis, argv);
@@ -213,9 +229,5 @@ public class ModuleSpaceMoz extends ModuleSpace {
     thrown.fillInStackTrace();
     throw thrown;
   }
-
-  private DispatchObject staticDispatch;
-
-  private final int window;
 
 }

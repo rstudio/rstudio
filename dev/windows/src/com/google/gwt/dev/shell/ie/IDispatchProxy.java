@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell.ie;
 
 import com.google.gwt.dev.shell.CompilingClassLoader;
@@ -43,6 +57,14 @@ class IDispatchProxy extends IDispatchImpl {
 
   // A magic dispid for getting a global ref to this object.
   public static final int DISPID_MAGIC_GETGLOBALREF = 0xC131FB56;
+
+  private final CompilingClassLoader classLoader;
+
+  private boolean isDisposed = false;
+
+  private final JavaDispatch javaDispatch;
+
+  private final int myGlobalRef;
 
   /**
    * This constructor initializes as the static dispatcher, which handles only
@@ -116,7 +138,7 @@ class IDispatchProxy extends IDispatchImpl {
           if ((flags & COM.DISPATCH_METHOD) != 0) {
             // This is a method call.
             return callMethod(classLoader, javaDispatch.getTarget(), params,
-              method);
+                method);
           } else if (flags == COM.DISPATCH_PROPERTYGET) {
             // The function is being accessed as a property.
             IDispatchImpl funcObj = new MethodDispatch(classLoader, method);
@@ -128,11 +150,11 @@ class IDispatchProxy extends IDispatchImpl {
           Field field = javaDispatch.getField(dispId);
           if (flags == COM.DISPATCH_PROPERTYGET) {
             return SwtOleGlue.convertObjectToVariant(classLoader,
-              field.getType(), javaDispatch.getFieldValue(dispId));
+                field.getType(), javaDispatch.getFieldValue(dispId));
           } else if ((flags & (COM.DISPATCH_PROPERTYPUT | COM.DISPATCH_PROPERTYPUTREF)) != 0) {
             javaDispatch.setFieldValue(dispId,
-              SwtOleGlue.convertVariantToObject(field.getType(), params[0],
-                "Setting field '" + field.getName() + "'"));
+                SwtOleGlue.convertVariantToObject(field.getType(), params[0],
+                    "Setting field '" + field.getName() + "'"));
             return new Variant();
           }
         }
@@ -147,12 +169,7 @@ class IDispatchProxy extends IDispatchImpl {
     }
 
     System.err.println("IDispatchProxy cannot be invoked with flags: "
-      + Integer.toHexString(flags));
+        + Integer.toHexString(flags));
     throw new HResultException(COM.E_NOTSUPPORTED);
   }
-
-  private final CompilingClassLoader classLoader;
-  private boolean isDisposed = false;
-  private final JavaDispatch javaDispatch;
-  private final int myGlobalRef;
 }

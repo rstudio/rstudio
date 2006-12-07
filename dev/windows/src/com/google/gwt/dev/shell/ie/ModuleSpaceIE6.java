@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell.ie;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -19,11 +33,11 @@ import org.eclipse.swt.widgets.Display;
  */
 public class ModuleSpaceIE6 extends ModuleSpace {
 
-//CHECKSTYLE_OFF
+  // CHECKSTYLE_OFF
   private static int CODE(int hresult) {
     return hresult & 0xFFFF;
   }
-//CHECKSTYLE_ON
+  // CHECKSTYLE_ON
 
   private Variant fStaticDispatch;
 
@@ -55,8 +69,8 @@ public class ModuleSpaceIE6 extends ModuleSpace {
       }
     } catch (RuntimeException e) {
       throw new RuntimeException(file + "(" + line
-        + "): Failed to create JSNI method with signature '" + jsniSignature
-        + "'", e);
+          + "): Failed to create JSNI method with signature '" + jsniSignature
+          + "'", e);
     }
   }
 
@@ -93,14 +107,13 @@ public class ModuleSpaceIE6 extends ModuleSpace {
   }
 
   public void exceptionCaught(int number, String name, String message) {
-    RuntimeException thrown = (RuntimeException) sThrownJavaExceptionObject
-      .get();
+    RuntimeException thrown = (RuntimeException) sThrownJavaExceptionObject.get();
 
     // See if the caught exception matches the thrown exception
     if (thrown != null) {
       HResultException hre = new HResultException(thrown);
       if (CODE(hre.getHResult()) == CODE(number)
-        && hre.getMessage().equals(message)) {
+          && hre.getMessage().equals(message)) {
         sCaughtJavaExceptionObject.set(thrown);
         sThrownJavaExceptionObject.set(null);
         return;
@@ -108,7 +121,7 @@ public class ModuleSpaceIE6 extends ModuleSpace {
     }
 
     sCaughtJavaExceptionObject.set(createJavaScriptException(
-      getIsolatedClassLoader(), name, message));
+        getIsolatedClassLoader(), name, message));
   }
 
   public boolean invokeNativeBoolean(String name, Object jthis, Class[] types,
@@ -205,8 +218,8 @@ public class ModuleSpaceIE6 extends ModuleSpace {
         return null;
       }
 
-      return HandleIE6.createHandle(returnType, result.getDispatch()
-        .getAddress());
+      return HandleIE6.createHandle(returnType,
+          result.getDispatch().getAddress());
     } finally {
       if (result != null) {
         result.dispose();
@@ -255,7 +268,7 @@ public class ModuleSpaceIE6 extends ModuleSpace {
         return null;
       } else {
         return SwtOleGlue.convertVariantToObject(Object.class, result,
-          "Returning from method '" + name + "'");
+            "Returning from method '" + name + "'");
       }
     } finally {
       if (result != null) {
@@ -321,13 +334,13 @@ public class ModuleSpaceIE6 extends ModuleSpace {
     // Define the static dispatcher for use by JavaScript.
     //
     createNative("initializeStaticDispatcher", 0, "__defineStatic",
-      new String[]{"__arg0"}, "window.__static = __arg0;");
-    invokeNativeVoid("__defineStatic", null, new Class[]{Variant.class},
-      new Object[]{fStaticDispatch});
+        new String[] {"__arg0"}, "window.__static = __arg0;");
+    invokeNativeVoid("__defineStatic", null, new Class[] {Variant.class},
+        new Object[] {fStaticDispatch});
   }
 
   private Variant execute(OleAutomation window, String code) {
-    int[] dispIds = window.getIDsOfNames(new String[]{"execScript", "code"});
+    int[] dispIds = window.getIDsOfNames(new String[] {"execScript", "code"});
     Variant[] vArgs = new Variant[1];
     vArgs[0] = new Variant(code);
     int[] namedArgs = new int[1];
@@ -337,7 +350,7 @@ public class ModuleSpaceIE6 extends ModuleSpace {
     if (result == null) {
       String lastError = window.getLastError();
       throw new RuntimeException("Error (" + lastError
-        + ") executing JavaScript:\n" + code);
+          + ") executing JavaScript:\n" + code);
     }
     return result;
   }
@@ -365,25 +378,24 @@ public class ModuleSpaceIE6 extends ModuleSpace {
       //
       int len = args.length;
       vArgs = new Variant[len + 1];
-      vArgs[0] = SwtOleGlue
-        .wrapObjectAsVariant(getIsolatedClassLoader(), jthis);
+      vArgs[0] = SwtOleGlue.wrapObjectAsVariant(getIsolatedClassLoader(), jthis);
 
       for (int i = 0; i < len; ++i) {
         vArgs[i + 1] = SwtOleGlue.convertObjectToVariant(
-          getIsolatedClassLoader(), types[i], args[i]);
+            getIsolatedClassLoader(), types[i], args[i]);
       }
 
       // Get the function object and its 'call' method.
       //
-      int[] ids = fWindow.getIDsOfNames(new String[]{name});
+      int[] ids = fWindow.getIDsOfNames(new String[] {name});
       if (ids == null) {
         throw new RuntimeException(
-          "Could not find a native method with the signature '" + name + "'");
+            "Could not find a native method with the signature '" + name + "'");
       }
       int functionId = ids[0];
       funcObjVar = fWindow.getProperty(functionId);
       funcObj = funcObjVar.getAutomation();
-      int callDispId = funcObj.getIDsOfNames(new String[]{"call"})[0];
+      int callDispId = funcObj.getIDsOfNames(new String[] {"call"})[0];
 
       // Invoke it and return the result.
       //
@@ -393,19 +405,21 @@ public class ModuleSpaceIE6 extends ModuleSpace {
           if (result.getType() == OLE.VT_EMPTY) {
             // Function was required to return something.
             //
-            throw new RuntimeException("JavaScript method '" + name
-              + "' returned 'undefined'. This can happen either because of a "
-              + "missing return statement, or explicitly returning a value "
-              + "of 'undefined' (e.g. 'return element[nonexistent property]')");
+            throw new RuntimeException(
+                "JavaScript method '"
+                    + name
+                    + "' returned 'undefined'. This can happen either because of a "
+                    + "missing return statement, or explicitly returning a value "
+                    + "of 'undefined' (e.g. 'return element[nonexistent property]')");
           }
         } else {
           if (result.getType() != OLE.VT_EMPTY) {
             // Function is not allowed to return something.
             //
             getLogger().log(
-              TreeLogger.WARN,
-              "JavaScript method '" + name
-                + "' is not supposed to return a value", null);
+                TreeLogger.WARN,
+                "JavaScript method '" + name
+                    + "' is not supposed to return a value", null);
           }
         }
         return result;

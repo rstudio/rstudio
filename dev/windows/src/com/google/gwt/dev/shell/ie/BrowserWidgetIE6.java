@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell.ie;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -42,7 +56,7 @@ public class BrowserWidgetIE6 extends BrowserWidget {
         // Attach a new ModuleSpace to make it programmable.
         //
         ModuleSpaceHost msh = getHost().createModuleSpaceHost(
-          BrowserWidgetIE6.this, moduleName);
+            BrowserWidgetIE6.this, moduleName);
         ModuleSpaceIE6 moduleSpace = new ModuleSpaceIE6(msh, frameWnd);
         attachModuleSpace(moduleName, moduleSpace);
         return true;
@@ -52,7 +66,7 @@ public class BrowserWidgetIE6 extends BrowserWidget {
         // things like NoClassDefFoundError.
         // 
         getHost().getLogger().log(TreeLogger.ERROR,
-          "Failure to load module '" + moduleName + "'", e);
+            "Failure to load module '" + moduleName + "'", e);
         return false;
       }
     }
@@ -83,9 +97,9 @@ public class BrowserWidgetIE6 extends BrowserWidget {
         if ((flags & COM.DISPATCH_METHOD) != 0) {
           // Invoke
           Object[] javaParams = SwtOleGlue.convertVariantsToObjects(
-            new Class[]{
-              IDispatch.class, String.class, String.class, String.class},
-            params, "Calling method 'gwtOnLoad'");
+              new Class[] {
+                  IDispatch.class, String.class, String.class, String.class},
+              params, "Calling method 'gwtOnLoad'");
 
           IDispatch frameWnd = (IDispatch) javaParams[0];
           String moduleName = (String) javaParams[1];
@@ -97,7 +111,7 @@ public class BrowserWidgetIE6 extends BrowserWidget {
           // property get on the method itself
           try {
             Method gwtOnLoadMethod = getClass().getMethod("gwtOnLoad",
-              new Class[]{IDispatch.class, String.class});
+                new Class[] {IDispatch.class, String.class});
             IDispatchImpl funcObj = new MethodDispatch(null, gwtOnLoadMethod);
             IDispatch disp = new IDispatch(funcObj.getAddress());
             disp.AddRef();

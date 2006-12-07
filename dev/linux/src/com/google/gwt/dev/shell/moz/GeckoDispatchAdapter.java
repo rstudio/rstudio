@@ -19,18 +19,11 @@ import java.lang.reflect.Method;
  */
 class GeckoDispatchAdapter implements DispatchObject {
 
-  /**
-   * This constructor initializes a dispatcher, around a particular instance.
-   * 
-   * @param cl this class's classLoader
-   * @param aScriptObject the execution iframe's window
-   * @param target the object being wrapped as an IDispatch
-   */
-  GeckoDispatchAdapter(CompilingClassLoader cl, int aScriptObject, Object target) {
-    javaDispatch = new JavaDispatchImpl(cl, target);
-    classLoader = cl;
-    scriptObject = aScriptObject;
-  }
+  private final CompilingClassLoader classLoader;
+
+  private final JavaDispatch javaDispatch;
+
+  private final int scriptObject;
 
   /**
    * This constructor initializes as the static dispatcher, which handles only
@@ -41,6 +34,19 @@ class GeckoDispatchAdapter implements DispatchObject {
    */
   GeckoDispatchAdapter(CompilingClassLoader cl, int aScriptObject) {
     javaDispatch = new JavaDispatchImpl(cl);
+    classLoader = cl;
+    scriptObject = aScriptObject;
+  }
+
+  /**
+   * This constructor initializes a dispatcher, around a particular instance.
+   * 
+   * @param cl this class's classLoader
+   * @param aScriptObject the execution iframe's window
+   * @param target the object being wrapped as an IDispatch
+   */
+  GeckoDispatchAdapter(CompilingClassLoader cl, int aScriptObject, Object target) {
+    javaDispatch = new JavaDispatchImpl(cl, target);
     classLoader = cl;
     scriptObject = aScriptObject;
   }
@@ -85,8 +91,4 @@ class GeckoDispatchAdapter implements DispatchObject {
         field.getType(), value);
     javaDispatch.setFieldValue(dispId, val);
   }
-
-  private final CompilingClassLoader classLoader;
-  private final JavaDispatch javaDispatch;
-  private final int scriptObject;
 }
