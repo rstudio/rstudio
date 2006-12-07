@@ -18,6 +18,10 @@ package com.google.gwt.sample.dynatable.client;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.user.client.ui.RootPanel;
 
+/**
+ * The entry point class which performs the initial loading of the DynaTable
+ * application.
+ */
 public class DynaTable implements EntryPoint {
 
   public void onModuleLoad() {

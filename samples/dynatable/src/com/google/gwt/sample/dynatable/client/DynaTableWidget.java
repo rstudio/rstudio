@@ -26,6 +26,10 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
+/**
+ * A composite Widget that implements the main interface for the dynamic table,
+ * including the data table, status indicators, and paging buttons.
+ */
 public class DynaTableWidget extends Composite {
 
   private class NavBar extends Composite implements ClickListener {
@@ -149,7 +153,7 @@ public class DynaTableWidget extends Composite {
   private void initTable(String[] columns, String[] columnStyles, int rowCount) {
     // Set up the header row.  It's one greater than the number of visible rows.
     //
-    grid.resize(rowCount+1, columns.length);
+    grid.resize(rowCount + 1, columns.length);
     for (int i = 0, n = columns.length; i < n; i++) {
       grid.setText(0, i, columns[i]);
       if (columnStyles != null) {

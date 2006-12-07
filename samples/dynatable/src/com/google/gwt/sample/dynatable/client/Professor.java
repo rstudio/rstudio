@@ -15,6 +15,10 @@
  */
 package com.google.gwt.sample.dynatable.client;
 
+/**
+ * Holds relevant data for a Professor type Person. This class is intended
+ * to be serialized in RPC calls.
+ */
 public class Professor extends Person {
 
   public Professor() {

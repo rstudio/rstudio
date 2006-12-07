@@ -21,6 +21,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Hold the relevant data for a Schedule. This class is meant to be serialized
+ * in RPC calls.
+ */
 public class Schedule implements IsSerializable {
 
   public Schedule() {

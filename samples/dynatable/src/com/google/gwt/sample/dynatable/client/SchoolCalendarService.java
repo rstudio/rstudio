@@ -17,6 +17,10 @@ package com.google.gwt.sample.dynatable.client;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
+/**
+ * The interface for the RPC server endpoint to get school calendar
+ * information.
+ */
 public interface SchoolCalendarService extends RemoteService {
   
   Person[] getPeople(int startIndex, int maxCount);

@@ -17,9 +17,13 @@ package com.google.gwt.sample.dynatable.client;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
+/**
+ * Hold relevant data for a time slot. This class is intended to be
+ * serialized as part of RPC calls.
+ */
 public class TimeSlot implements IsSerializable, Comparable {
 
-  private final static transient String[] DAYS = new String[]{
+  private static final transient String[] DAYS = new String[]{
     "Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat"};
 
   public TimeSlot() {

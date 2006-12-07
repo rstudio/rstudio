@@ -24,6 +24,10 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+/**
+ * A UI Widget that allows a user to filter the days being displayed in 
+ * the dynamic table.
+ */
 public class DayFilterWidget extends Composite {
 
   private class DayCheckBox extends CheckBox {

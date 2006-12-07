@@ -22,8 +22,16 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.ui.Composite;
 
+/**
+ * A Composite widget that abstracts a DynaTableWidget and a data provider
+ * tied to the <@link SchoolCalendarService> RPC endpoint.
+ */
 public class SchoolCalendarWidget extends Composite {
 
+  /**
+   * A data provider that bridges the provides row level updates from the
+   * data available through a <@link SchoolCalendarService>.
+   */
   public class CalendarProvider implements DynaTableDataProvider {
 
     public CalendarProvider() {
@@ -88,7 +96,6 @@ public class SchoolCalendarWidget extends Composite {
         }
 
       });
-
     }
 
     private void pushResults(RowDataAcceptor acceptor, int startRow,
@@ -110,7 +117,7 @@ public class SchoolCalendarWidget extends Composite {
     private int lastStartRow = -1;
   }
 
-  private final static boolean USE_STATIC_RPC_ANSWERS = true;
+  private static final boolean USE_STATIC_RPC_ANSWERS = true;
 
   public SchoolCalendarWidget(int visibleRows) {
     String[] columns = new String[]{"Name", "Description", "Schedule"};

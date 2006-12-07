@@ -17,6 +17,10 @@ package com.google.gwt.sample.dynatable.client;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+/**
+ * The interface for the RPC server endpoint that provides school calendar
+ * information for clients that will be calling aysychronously. 
+ */
 public interface SchoolCalendarServiceAsync {
 
   void getPeople(int startIndex, int maxCount, AsyncCallback callback);
