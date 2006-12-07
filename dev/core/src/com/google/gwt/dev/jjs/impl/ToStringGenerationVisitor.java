@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.CanBeAbstract;
@@ -124,6 +138,10 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   protected static final char[] CHARS_TRY = "try ".toCharArray();
   protected static final char[] CHARS_WHILE = "while ".toCharArray();
 
+  private boolean needSemi = true;
+
+  private boolean suppressType = false;
+
   public ToStringGenerationVisitor(TextOutput textOutput) {
     super(textOutput);
   }
@@ -191,15 +209,15 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     openBlock();
     for (int i = 0; i < x.statements.size(); ++i) {
       JStatement statement = (JStatement) x.statements.get(i);
-      fNeedSemi = true;
+      needSemi = true;
       statement.traverse(this);
-      if (fNeedSemi) {
+      if (needSemi) {
         semi();
       }
       newline();
     }
     closeBlock();
-    fNeedSemi = false;
+    needSemi = false;
     return false;
   }
 
@@ -229,7 +247,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     }
     print(':');
     space();
-    fNeedSemi = false;
+    needSemi = false;
     return false;
   }
 
@@ -330,12 +348,12 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
       x.body.traverse(this);
       nestedStatementPop(x.body);
     }
-    if (fNeedSemi) {
+    if (needSemi) {
       semi();
       newline();
     } else {
       space();
-      fNeedSemi = true;
+      needSemi = true;
     }
     print(CHARS_WHILE);
     lparen();
@@ -357,11 +375,6 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   // @Override
-  public boolean visit(JsniFieldRef x) {
-    return visit(x.getField());
-  }
-
-  // @Override
   public boolean visit(JField x) {
     // Due to our wacky construction model, only constant fields may be final
     // when generating source
@@ -370,7 +383,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     } else {
       printMemberFinalFlag(x);
     }
-    
+
     printStaticFlag(x);
     printType(x);
     space();
@@ -409,20 +422,20 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
       JStatement stmt = (JStatement) iter.next();
       stmt.traverse(this);
     }
-    fSuppressType = true;
+    suppressType = true;
     while (iter.hasNext()) {
       print(CHARS_COMMA);
       JStatement stmt = (JStatement) iter.next();
       stmt.traverse(this);
     }
-    fSuppressType = false;
+    suppressType = false;
 
     semi();
     space();
     if (x.getTestExpr() != null) {
       x.getTestExpr().traverse(this);
     }
-    
+
     semi();
     space();
     visitCollectionWithCommas(x.getIncrements().iterator());
@@ -450,12 +463,12 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     }
 
     if (x.elseStmt != null) {
-      if (fNeedSemi) {
+      if (needSemi) {
         semi();
         newline();
       } else {
         space();
-        fNeedSemi = true;
+        needSemi = true;
       }
       print(CHARS_ELSE);
       boolean elseIf = x.elseStmt instanceof JIfStatement;
@@ -535,7 +548,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
 
   // @Override
   public boolean visit(JLocalDeclarationStatement x) {
-    if (!fSuppressType) {
+    if (!suppressType) {
       x.getLocalRef().getTarget().traverse(this);
     } else {
       x.getLocalRef().traverse(this);
@@ -594,16 +607,6 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     visitCollectionWithCommas(x.exprs.iterator());
     rparen();
     return false;
-  }
-
-  // @Override
-  public boolean visit(JsniMethod x) {
-    return printMethodHeader(x);
-  }
-
-  // @Override
-  public boolean visit(JsniMethodRef x) {
-    return printMethodHeader(x.getTarget());
   }
 
   // @Override
@@ -702,6 +705,21 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
       x.getExpression().traverse(this);
     }
     return false;
+  }
+
+  // @Override
+  public boolean visit(JsniFieldRef x) {
+    return visit(x.getField());
+  }
+
+  // @Override
+  public boolean visit(JsniMethod x) {
+    return printMethodHeader(x);
+  }
+
+  // @Override
+  public boolean visit(JsniMethodRef x) {
+    return printMethodHeader(x.getTarget());
   }
 
   // @Override
@@ -902,11 +920,11 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
           if (c < 0x1000) {
             print('0');
           }
-          
+
           if (c < 0x100) {
             print('0');
           }
-          
+
           if (c < 0x10) {
             print('0');
           }
@@ -933,6 +951,16 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     }
   }
 
+  protected void printFloatLiteral(float value) {
+    print(Float.toString(value));
+    print('f');
+  }
+
+  protected void printLongLiteral(long value) {
+    print(Long.toString(value));
+    print('L');
+  }
+
   protected void printMemberFinalFlag(CanBeFinal x) {
     if (x.isFinal()) {
       print(CHARS_FINAL);
@@ -957,7 +985,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     } else {
       printName(x);
     }
-    
+
     // Parameters
     printParameterList(x);
 
@@ -973,16 +1001,6 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
       }
     }
     return false;
-  }
-
-  protected void printFloatLiteral(float value) {
-    print(Float.toString(value));
-    print('f');
-  }
-
-  protected void printLongLiteral(long value) {
-    print(Long.toString(value));
-    print('L');
   }
 
   protected void printName(HasName x) {
@@ -1020,6 +1038,14 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     printTypeName(hasType.getType());
   }
 
+  protected void printTypeName(JType type) {
+    if (type instanceof JReferenceType) {
+      print(((JReferenceType) type).getShortName());
+    } else {
+      print(type.getName());
+    }
+  }
+
   protected void rparen() {
     print(')');
   }
@@ -1044,20 +1070,8 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     }
   }
 
-  protected void printTypeName(JType type) {
-    if (type instanceof JReferenceType) {
-      print(((JReferenceType) type).getShortName());
-    } else {
-      print(type.getName());
-    }
-  }
-
   private void printUniqueName(HasName x) {
     print(x.getName());
   }
-
-  private boolean fNeedSemi = true;
-
-  private boolean fSuppressType = false;
 
 }

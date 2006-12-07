@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
@@ -52,14 +66,90 @@ import java.util.Set;
  */
 public class Pruner {
 
-  private final JProgram program;
-  private final boolean noSpecialTypes;
+  /**
+   * Remove any unreferenced classes and interfaces from JProgram. Remove any
+   * unreferenced methods and fields from their containing classes.
+   */
+  private class PruneVisitor extends JVisitor {
 
-  private final Set/* <JReferenceType> */referencedTypes = new HashSet/* <JReferenceType> */();
-  private final Set/* <JNode> */referencedNonTypes = new HashSet/* <JNode> */();
+    private final ChangeList changeList = new ChangeList(
+        "Prune unreferenced methods, fields, and types.");
 
-  private JMethod fStringValueOfChar = null;
+    public ChangeList getChangeList() {
+      return changeList;
+    }
 
+    // @Override
+    public boolean visit(JClassType type) {
+
+      assert (referencedTypes.contains(type));
+      boolean isInstantiated = program.typeOracle.isInstantiatedType(type);
+
+      for (int i = 0; i < type.fields.size(); ++i) {
+        JField it = (JField) type.fields.get(i);
+        if (!referencedNonTypes.contains(it)
+            || pruneViaNoninstantiability(isInstantiated, it)) {
+          changeList.removeField(it);
+        }
+      }
+      for (int i = 0; i < type.methods.size(); ++i) {
+        JMethod it = (JMethod) type.methods.get(i);
+        if (!referencedNonTypes.contains(it)
+            || pruneViaNoninstantiability(isInstantiated, it)) {
+          changeList.removeMethod(it);
+        }
+      }
+
+      return false;
+    }
+
+    // @Override
+    public boolean visit(JInterfaceType type) {
+      boolean isReferenced = referencedTypes.contains(type);
+      boolean isInstantiated = program.typeOracle.isInstantiatedType(type);
+
+      for (int i = 0; i < type.fields.size(); ++i) {
+        JField it = (JField) type.fields.get(i);
+        // all interface fields are static and final
+        if (!isReferenced || !referencedNonTypes.contains(it)) {
+          changeList.removeField(it);
+        }
+      }
+      // start at index 1; never prune clinit directly out of the interface
+      for (int i = 1; i < type.methods.size(); ++i) {
+        JMethod it = (JMethod) type.methods.get(i);
+        // all other interface methods are instance and abstract
+        if (!isInstantiated || !referencedNonTypes.contains(it)) {
+          changeList.removeMethod(it);
+        }
+      }
+
+      return false;
+    }
+
+    // @Override
+    public boolean visit(JProgram program) {
+      for (int i = 0; i < program.getDeclaredTypes().size(); ++i) {
+        JReferenceType type = (JReferenceType) program.getDeclaredTypes().get(i);
+        if (referencedTypes.contains(type)
+            || program.typeOracle.isInstantiatedType(type)) {
+          type.traverse(this);
+        } else {
+          changeList.removeType(type);
+        }
+      }
+      return false;
+    }
+
+    private boolean pruneViaNoninstantiability(boolean isInstantiated, JField it) {
+      return (!isInstantiated && !it.isStatic());
+    }
+
+    private boolean pruneViaNoninstantiability(boolean isInstantiated,
+        JMethod it) {
+      return (!isInstantiated && (!it.isStatic() || program.isStaticImpl(it)));
+    }
+  }
   /**
    * Marks as "referenced" any types, methods, and fields that are reachable.
    * Also marks as "instantiable" any the classes and interfaces that can
@@ -71,118 +161,6 @@ public class Pruner {
 
     public void commitInstantiatedTypes() {
       program.typeOracle.setInstantiatedTypes(instantiatedTypes);
-    }
-
-    /**
-     * Subclasses of JavaScriptObject are never instantiated directly. They are
-     * created "magically" when a JSNI method passes a reference to an existing
-     * JS object into Java code. The point at which a subclass of JSO is passed
-     * into Java code constitutes "instantiation". We must identify these points
-     * and trigger a rescue and instantiation of that particular JSO subclass.
-     * 
-     * @param type The type of the value passing from Java to JavaScript.
-     * @see com.google.gwt.core.client.JavaScriptObject
-     */
-    private void maybeRescueJavaScriptObjectPassingIntoJava(JType type) {
-      if (type instanceof JReferenceType) {
-        JReferenceType refType = (JReferenceType) type;
-        if (program.typeOracle.canTriviallyCast(refType,
-            program.getSpecialJavaScriptObject())) {
-          rescue(refType, true, true);
-        }
-      }
-    }
-
-    private boolean rescue(JReferenceType type, boolean isReferenced,
-        boolean isInstantiated) {
-      if (type == null) {
-        return false;
-      }
-
-      boolean doVisit = false;
-      if (isInstantiated && !instantiatedTypes.contains(type)) {
-        instantiatedTypes.add(type);
-        doVisit = true;
-      }
-      
-      if (isReferenced && !referencedTypes.contains(type)) {
-        referencedTypes.add(type);
-        doVisit = true;
-      }
-      
-      if (doVisit) {
-        type.traverse(this);
-      }
-
-      return doVisit;
-    }
-
-    private boolean rescue(JMethod method) {
-      if (method == null) {
-        return false;
-      }
-
-      if (!referencedNonTypes.contains(method)) {
-        referencedNonTypes.add(method);
-        method.traverse(this);
-        if (method instanceof JsniMethod) {
-          /*
-           * SPECIAL: returning from this method passes a value from JavaScript
-           * into Java.
-           */
-          maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
-        }
-        return true;
-      }
-      return false;
-    }
-
-    private boolean rescue(JField field) {
-      if (field == null) {
-        return false;
-      }
-      
-      if (!referencedNonTypes.contains(field)) {
-        referencedNonTypes.add(field);
-        return true;
-      }
-      return true;
-    }
-
-    /**
-     * Handle special rescues needed implicitly to support concat.
-     */
-    private void rescueByConcat(JType type) {
-      JClassType stringType = program.getTypeJavaLangString();
-      JPrimitiveType charType = program.getTypePrimitiveChar();
-      if (type instanceof JReferenceType && type != stringType) {
-        /*
-         * Any reference types (except String, which works by default) that take
-         * part in a concat must rescue java.lang.Object.toString().
-         */
-        JMethod toStringMethod = program.getSpecialMethod("Object.toString");
-        rescue(toStringMethod);
-      } else if (type == charType) {
-        /*
-         * Characters must rescue String.valueOf(char)
-         */
-        if (fStringValueOfChar == null) {
-          for (int i = 0; i < stringType.methods.size(); ++i) {
-            JMethod meth = (JMethod) stringType.methods.get(i);
-            if (meth.getName().equals("valueOf")) {
-              List params = meth.getOriginalParamTypes();
-              if (params.size() == 1) {
-                if (params.get(0) == charType) {
-                  fStringValueOfChar = meth;
-                  break;
-                }
-              }
-            }
-          }
-          assert (fStringValueOfChar != null);
-        }
-        rescue(fStringValueOfChar);
-      }
     }
 
     // @Override
@@ -348,13 +326,6 @@ public class Pruner {
     }
 
     // @Override
-    public boolean visit(JStringLiteral literal, Mutator mutator) {
-      // rescue and instantiate java.lang.String
-      rescue(program.getTypeJavaLangString(), true, true);
-      return true;
-    }
-
-    // @Override
     public boolean visit(JsniFieldRef x) {
       /*
        * SPECIAL: this could be an assignment that passes a value from
@@ -382,6 +353,125 @@ public class Pruner {
       // JsniMethodRef rescues as JMethodCall
       return visit(/* (JMethodCall) */x, null);
     }
+
+    // @Override
+    public boolean visit(JStringLiteral literal, Mutator mutator) {
+      // rescue and instantiate java.lang.String
+      rescue(program.getTypeJavaLangString(), true, true);
+      return true;
+    }
+
+    /**
+     * Subclasses of JavaScriptObject are never instantiated directly. They are
+     * created "magically" when a JSNI method passes a reference to an existing
+     * JS object into Java code. The point at which a subclass of JSO is passed
+     * into Java code constitutes "instantiation". We must identify these points
+     * and trigger a rescue and instantiation of that particular JSO subclass.
+     * 
+     * @param type The type of the value passing from Java to JavaScript.
+     * @see com.google.gwt.core.client.JavaScriptObject
+     */
+    private void maybeRescueJavaScriptObjectPassingIntoJava(JType type) {
+      if (type instanceof JReferenceType) {
+        JReferenceType refType = (JReferenceType) type;
+        if (program.typeOracle.canTriviallyCast(refType,
+            program.getSpecialJavaScriptObject())) {
+          rescue(refType, true, true);
+        }
+      }
+    }
+
+    private boolean rescue(JField field) {
+      if (field == null) {
+        return false;
+      }
+
+      if (!referencedNonTypes.contains(field)) {
+        referencedNonTypes.add(field);
+        return true;
+      }
+      return true;
+    }
+
+    private boolean rescue(JMethod method) {
+      if (method == null) {
+        return false;
+      }
+
+      if (!referencedNonTypes.contains(method)) {
+        referencedNonTypes.add(method);
+        method.traverse(this);
+        if (method instanceof JsniMethod) {
+          /*
+           * SPECIAL: returning from this method passes a value from JavaScript
+           * into Java.
+           */
+          maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
+        }
+        return true;
+      }
+      return false;
+    }
+
+    private boolean rescue(JReferenceType type, boolean isReferenced,
+        boolean isInstantiated) {
+      if (type == null) {
+        return false;
+      }
+
+      boolean doVisit = false;
+      if (isInstantiated && !instantiatedTypes.contains(type)) {
+        instantiatedTypes.add(type);
+        doVisit = true;
+      }
+
+      if (isReferenced && !referencedTypes.contains(type)) {
+        referencedTypes.add(type);
+        doVisit = true;
+      }
+
+      if (doVisit) {
+        type.traverse(this);
+      }
+
+      return doVisit;
+    }
+
+    /**
+     * Handle special rescues needed implicitly to support concat.
+     */
+    private void rescueByConcat(JType type) {
+      JClassType stringType = program.getTypeJavaLangString();
+      JPrimitiveType charType = program.getTypePrimitiveChar();
+      if (type instanceof JReferenceType && type != stringType) {
+        /*
+         * Any reference types (except String, which works by default) that take
+         * part in a concat must rescue java.lang.Object.toString().
+         */
+        JMethod toStringMethod = program.getSpecialMethod("Object.toString");
+        rescue(toStringMethod);
+      } else if (type == charType) {
+        /*
+         * Characters must rescue String.valueOf(char)
+         */
+        if (stringValueOfChar == null) {
+          for (int i = 0; i < stringType.methods.size(); ++i) {
+            JMethod meth = (JMethod) stringType.methods.get(i);
+            if (meth.getName().equals("valueOf")) {
+              List params = meth.getOriginalParamTypes();
+              if (params.size() == 1) {
+                if (params.get(0) == charType) {
+                  stringValueOfChar = meth;
+                  break;
+                }
+              }
+            }
+          }
+          assert (stringValueOfChar != null);
+        }
+        rescue(stringValueOfChar);
+      }
+    }
   }
 
   /**
@@ -406,7 +496,7 @@ public class Pruner {
       if (referencedNonTypes.contains(x)) {
         return false;
       }
-      
+
       for (int i = 0; i < x.overrides.size(); ++i) {
         JMethod ref = (JMethod) x.overrides.get(i);
         if (referencedNonTypes.contains(ref)) {
@@ -424,100 +514,34 @@ public class Pruner {
     }
 
     // @Override
-    public boolean visit(JsniMethod x) {
-      return visit((JMethod) x);
-    }
-
-    // @Override
     public boolean visit(JProgram x) {
       didRescue = false;
       return true;
     }
+
+    // @Override
+    public boolean visit(JsniMethod x) {
+      return visit((JMethod) x);
+    }
   }
 
-  /**
-   * Remove any unreferenced classes and interfaces from JProgram. Remove any
-   * unreferenced methods and fields from their containing classes.
-   */
-  private class PruneVisitor extends JVisitor {
+  public static boolean exec(JProgram program, boolean noSpecialTypes) {
+    return new Pruner(program, noSpecialTypes).execImpl();
+  }
 
-    private final ChangeList changeList = new ChangeList(
-        "Prune unreferenced methods, fields, and types.");
+  private final JProgram program;
 
-    public ChangeList getChangeList() {
-      return changeList;
-    }
+  private final boolean noSpecialTypes;
 
-    // @Override
-    public boolean visit(JClassType type) {
+  private final Set/* <JReferenceType> */referencedTypes = new HashSet/* <JReferenceType> */();
 
-      assert (referencedTypes.contains(type));
-      boolean isInstantiated = program.typeOracle.isInstantiatedType(type);
+  private final Set/* <JNode> */referencedNonTypes = new HashSet/* <JNode> */();
 
-      for (int i = 0; i < type.fields.size(); ++i) {
-        JField it = (JField) type.fields.get(i);
-        if (!referencedNonTypes.contains(it) 
-            || pruneViaNoninstantiability(isInstantiated, it)) {
-          changeList.removeField(it);
-        }
-      }
-      for (int i = 0; i < type.methods.size(); ++i) {
-        JMethod it = (JMethod) type.methods.get(i);
-        if (!referencedNonTypes.contains(it)
-            || pruneViaNoninstantiability(isInstantiated, it)) {
-          changeList.removeMethod(it);
-        }
-      }
+  private JMethod stringValueOfChar = null;
 
-      return false;
-    }
-
-    private boolean pruneViaNoninstantiability(boolean isInstantiated,
-        JMethod it) {
-      return (!isInstantiated && (!it.isStatic() || program.isStaticImpl(it)));
-    }
-
-    private boolean pruneViaNoninstantiability(boolean isInstantiated, JField it) {
-      return (!isInstantiated && !it.isStatic());
-    }
-
-    // @Override
-    public boolean visit(JInterfaceType type) {
-      boolean isReferenced = referencedTypes.contains(type);
-      boolean isInstantiated = program.typeOracle.isInstantiatedType(type);
-
-      for (int i = 0; i < type.fields.size(); ++i) {
-        JField it = (JField) type.fields.get(i);
-        // all interface fields are static and final
-        if (!isReferenced || !referencedNonTypes.contains(it)) {
-          changeList.removeField(it);
-        }
-      }
-      // start at index 1; never prune clinit directly out of the interface
-      for (int i = 1; i < type.methods.size(); ++i) {
-        JMethod it = (JMethod) type.methods.get(i);
-        // all other interface methods are instance and abstract
-        if (!isInstantiated || !referencedNonTypes.contains(it)) {
-          changeList.removeMethod(it);
-        }
-      }
-
-      return false;
-    }
-
-    // @Override
-    public boolean visit(JProgram program) {
-      for (int i = 0; i < program.getDeclaredTypes().size(); ++i) {
-        JReferenceType type = (JReferenceType) program.getDeclaredTypes().get(i);
-        if (referencedTypes.contains(type)
-            || program.typeOracle.isInstantiatedType(type)) {
-          type.traverse(this);
-        } else {
-          changeList.removeType(type);
-        }
-      }
-      return false;
-    }
+  private Pruner(JProgram program, boolean noSpecialTypes) {
+    this.program = program;
+    this.noSpecialTypes = noSpecialTypes;
   }
 
   private boolean execImpl() {
@@ -555,15 +579,6 @@ public class Pruner {
       madeChanges = true;
     }
     return madeChanges;
-  }
-
-  private Pruner(JProgram program, boolean noSpecialTypes) {
-    this.program = program;
-    this.noSpecialTypes = noSpecialTypes;
-  }
-
-  public static boolean exec(JProgram program, boolean noSpecialTypes) {
-    return new Pruner(program, noSpecialTypes).execImpl();
   }
 
 }

@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.JArrayRef;
@@ -72,391 +86,12 @@ import java.util.Set;
  */
 public class TypeTightener {
 
-  private final JProgram program;
-  private final JNullType typeNull;
-
-  private final Map/* <JReferenceType, Set<JClassType>> */implementors = new IdentityHashMap();
-  private final Map/* <JMethod, Set<JExpression>> */returns = new IdentityHashMap();
-  private final Map/* <JMethod, Set<JMethod>> */overriders = new IdentityHashMap();
-  private final Map/* <JVariable, Set<JExpression>> */assignments = new IdentityHashMap();
-  private final Map/* <JParameter, Set<JParameter>> */paramUpRefs = new IdentityHashMap();
-
-  private static/* <T, V> */void add(Object target, Object value,
-      Map/* <T, Set<V>> */map) {
-    Set/* <V> */set = (Set) map.get(target);
-    if (set == null) {
-      set = new HashSet/* <V> */();
-      map.put(target, set);
-    }
-    set.add(value);
-  }
-
-  /**
-   * Record "type flow" information. Variables receive type flow via assignment.
-   * As a special case, Parameters also receive type flow based on the types of
-   * arguments used when calling the containing method (think of this as a kind
-   * of assignment). Method return types receive type flow from their contained
-   * return statements, plus the return type of any methods that
-   * override/implement them.
-   * 
-   * Note that we only have to run this pass ONCE to record the relationships,
-   * because type tightening never changes any relationships, only the types of
-   * the things related. In my original implementation, I had naively mapped
-   * nodes onto sets of JReferenceType directly, which meant I had to rerun this
-   * visitor each time.
-   */
-  public class RecordVisitor extends JVisitor {
-
-    private JMethod fCurrentMethod;
-
-    private void addAssignment(JVariable target, JExpression rhs) {
-      add(target, rhs, assignments);
-    }
-
-    private void addImplementor(JReferenceType target, JClassType implementor) {
-      add(target, implementor, implementors);
-    }
-
-    private void addOverrider(JMethod target, JMethod overrider) {
-      add(target, overrider, overriders);
-    }
-
-    private void addReturn(JMethod target, JExpression expr) {
-      add(target, expr, returns);
-    }
-
-    // @Override
-    public void endVisit(JBinaryOperation x, Mutator m) {
-      if (x.isAssignment() && (x.getType() instanceof JReferenceType)) {
-        JExpression lhs = x.getLhs();
-        if (lhs instanceof JVariableRef) {
-          addAssignment(((JVariableRef) lhs).getTarget(), x.getRhs());
-        }
-      }
-    }
-
-    // @Override
-    public void endVisit(JClassType x) {
-      for (JClassType cur = x; cur != null; cur = cur.extnds) {
-        addImplementor(cur, x);
-        for (Iterator it = cur.implments.iterator(); it.hasNext();) {
-          JInterfaceType implment = (JInterfaceType) it.next();
-          addImplementor(implment, x);
-        }
-      }
-    }
-
-    // @Override
-    public void endVisit(JField x) {
-      if (x.constInitializer != null) {
-        addAssignment(x, x.constInitializer);
-      }
-      fCurrentMethod = null;
-    }
-
-    // @Override
-    public void endVisit(JLocalDeclarationStatement x) {
-      JExpression initializer = x.getInitializer();
-      if (initializer != null) {
-        addAssignment(x.getLocalRef().getTarget(), initializer);
-      }
-    }
-
-    // @Override
-    public void endVisit(JMethod x) {
-      for (int i = 0; i < x.overrides.size(); ++i) {
-        JMethod method = (JMethod) x.overrides.get(i);
-        addOverrider(method, x);
-      }
-      JMethod[] allVirtualOverrides = program.typeOracle.getAllVirtualOverrides(x);
-      for (int i = 0; i < allVirtualOverrides.length; ++i) {
-        JMethod method = allVirtualOverrides[i];
-        addOverrider(method, x);
-      }
-      fCurrentMethod = null;
-    }
-
-    // @Override
-    public void endVisit(JMethodCall x, Mutator m) {
-      // All of the params in the target method are considered to be assigned by
-      // the arguments from the caller
-      Iterator/* <JExpression> */argIt = x.args.iterator();
-      ArrayList params = x.getTarget().params;
-      for (int i = 0; i < params.size(); ++i) {
-        JParameter param = (JParameter) params.get(i);
-        JExpression arg = (JExpression) argIt.next();
-        if (param.getType() instanceof JReferenceType) {
-          addAssignment(param, arg);
-        }
-      }
-    }
-
-    // @Override
-    public void endVisit(JsniMethod x) {
-      endVisit((JMethod) x);
-    }
-
-    // @Override
-    public void endVisit(JReturnStatement x) {
-      if (fCurrentMethod.getType() instanceof JReferenceType) {
-        addReturn(fCurrentMethod, x.getExpression());
-      }
-    }
-
-    // @Override
-    public void endVisit(JsniFieldRef x) {
-      // If this happens in JSNI, we can't make any type-tightening assumptions
-      // Fake an assignment-to-self to prevent tightening
-      addAssignment(x.getTarget(), x);
-    }
-
-    // @Override
-    public void endVisit(JsniMethodRef x) {
-      // If this happens in JSNI, we can't make any type-tightening assumptions
-      // Fake an assignment-to-self on all args to prevent tightening
-
-      JMethod method = x.getTarget();
-
-      for (int i = 0; i < method.params.size(); ++i) {
-        JParameter param = (JParameter) method.params.get(i);
-        addAssignment(param, new JParameterRef(program, param));
-      }
-    }
-
-    // @Override
-    public void endVisit(JTryStatement x) {
-      // Never tighten args to catch blocks
-      // Fake an assignment-to-self to prevent tightening
-      for (int i = 0; i < x.catchArgs.size(); ++i) {
-        JLocalRef arg = (JLocalRef) x.catchArgs.get(i);
-        addAssignment(arg.getTarget(), arg);
-      }
-    }
-
-    /**
-     * Merge param call args across overriders/implementors. We can't tighten a
-     * param type in an overriding method if the declaring method is looser.
-     */
-    // @Override
-    public boolean visit(JMethod x) {
-      fCurrentMethod = x;
-
-      List/* <JMethod> */overrides = x.overrides;
-      JMethod[] virtualOverrides = program.typeOracle.getAllVirtualOverrides(x);
-
-      if (overrides.isEmpty() && virtualOverrides.length == 0) {
-        return true;
-      }
-
-      for (int j = 0, c = x.params.size(); j < c; ++j) {
-        JParameter param = (JParameter) x.params.get(j);
-        Set/* <JParameter> */set = (Set) paramUpRefs.get(param);
-        if (set == null) {
-          set = new HashSet/* <JParameter> */();
-          paramUpRefs.put(param, set);
-        }
-        for (int i = 0; i < overrides.size(); ++i) {
-          JMethod baseMethod = (JMethod) overrides.get(i);
-          JParameter baseParam = (JParameter) baseMethod.params.get(j);
-          set.add(baseParam);
-        }
-        for (int i = 0; i < virtualOverrides.length; ++i) {
-          JMethod baseMethod = virtualOverrides[i];
-          JParameter baseParam = (JParameter) baseMethod.params.get(j);
-          set.add(baseParam);
-        }
-      }
-
-      return true;
-    }
-  }
-
-  /**
-   * Wherever possible, use the type flow information recorded by RecordVisitor
-   * to change the declared type of a field, local, parameter, or method to a
-   * more specific type.
-   * 
-   * We must iterate mutiple times because each way point we tighten creates
-   * more opportunities to do additional tightening for the things that depend
-   * on it.
-   */
-  public class TightenTypesVisitor extends JVisitor {
-    private final ChangeList changeList = new ChangeList(
-      "Tighten types on fields, locals, params, methods.");
-
-    public ChangeList getChangeList() {
-      return changeList;
-    }
-
-    /**
-     * Tighten based on assignment, and for parameters, callArgs as well.
-     */
-    private void tighten(JVariable x) {
-      if (!(x.getType() instanceof JReferenceType)) {
-        return;
-      }
-      JReferenceType refType = (JReferenceType) x.getType();
-
-      if (refType == typeNull) {
-        return;
-      }
-
-      // tighten based on non-instantiability
-      if (!program.typeOracle.isInstantiatedType(refType)) {
-        changeList.changeType(x, typeNull);
-        return;
-      }
-
-      // tighten based on assignment
-      List/* <JReferenceType> */typeList = new ArrayList/* <JReferenceType> */();
-
-      /*
-       * Always assume at least one null assignment; if there really aren't any
-       * other assignments, then this variable will get the null type. If there
-       * are, it won't hurt anything because null type will always lose.
-       */
-      typeList.add(typeNull);
-
-      Set/* <JExpression> */myAssignments = (Set) assignments.get(x);
-      if (myAssignments != null) {
-        for (Iterator iter = myAssignments.iterator(); iter.hasNext();) {
-          JExpression expr = (JExpression) iter.next();
-          JType type = expr.getType();
-          if (!(type instanceof JReferenceType)) {
-            return; // something fishy is going on, just abort
-          }
-          typeList.add(type);
-        }
-      }
-
-      if (x instanceof JParameter) {
-        Set/* <JParameter> */myParams = (Set) paramUpRefs.get(x);
-        if (myParams != null) {
-          for (Iterator iter = myParams.iterator(); iter.hasNext();) {
-            JParameter param = (JParameter) iter.next();
-            typeList.add(param.getType());
-          }
-        }
-      }
-
-      JReferenceType resultType = program.generalizeTypes(typeList);
-      resultType = program.strongerType(refType, resultType);
-      if (refType != resultType) {
-        changeList.changeType(x, resultType);
-      }
-    }
-
-    // @Override
-    public void endVisit(JField x) {
-      tighten(x);
-    }
-
-    // @Override
-    public void endVisit(JLocal x) {
-      tighten(x);
-    }
-
-    // @Override
-    public void endVisit(JNewArray x, Mutator m) {
-      // tighten leaf type based on non-instantiability
-      JArrayType arrayType = x.getArrayType();
-      JType leafType = arrayType.getLeafType();
-      if (leafType instanceof JReferenceType) {
-        if (!program.typeOracle.isInstantiatedType((JReferenceType) leafType)) {
-          arrayType = program.getTypeArray(typeNull, arrayType.getDims());
-          changeList.changeType(x, arrayType);
-        }
-      }
-    }
-
-    // @Override
-    public void endVisit(JParameter x) {
-      tighten(x);
-    }
-
-    // @Override
-    public boolean visit(JClassType x) {
-      // don't mess with classes used in code gen
-      if (program.specialTypes.contains(x)) {
-        return false;
-      }
-      return true;
-    }
-
-    /**
-     * Tighten based on return types and overrides.
-     */
-    // @Override
-    public void endVisit(JMethod x) {
-
-      if (!(x.getType() instanceof JReferenceType)) {
-        return;
-      }
-      JReferenceType refType = (JReferenceType) x.getType();
-
-      if (refType == typeNull) {
-        return;
-      }
-
-      // tighten based on non-instantiability
-      if (!program.typeOracle.isInstantiatedType(refType)) {
-        changeList.changeType(x, typeNull);
-        return;
-      }
-
-      // tighten based on both returned types and possible overrides
-      List/* <JReferenceType> */typeList = new ArrayList/* <JReferenceType> */();
-
-      /*
-       * Always assume at least one null assignment; if there really aren't any
-       * other assignments, then this variable will get the null type. If there
-       * are, it won't hurt anything because null type will always lose.
-       */
-      typeList.add(typeNull);
-
-      Set/* <JExpression> */myReturns = (Set) returns.get(x);
-      if (myReturns != null) {
-        for (Iterator iter = myReturns.iterator(); iter.hasNext();) {
-          JExpression expr = (JExpression) iter.next();
-          typeList.add(expr.getType());
-        }
-      }
-      Set/* <JMethod> */myOverriders = (Set) overriders.get(x);
-      if (myOverriders != null) {
-        for (Iterator iter = myOverriders.iterator(); iter.hasNext();) {
-          JMethod method = (JMethod) iter.next();
-          typeList.add(method.getType());
-        }
-      }
-
-      JReferenceType resultType = program.generalizeTypes(typeList);
-      resultType = program.strongerType(refType, resultType);
-      if (refType != resultType) {
-        changeList.changeType(x, resultType);
-      }
-    }
-
-    public boolean visit(JsniMethod x) {
-      /*
-       * Explicitly NOT visiting native methods since we can't infer type
-       * information.
-       * 
-       * TODO(later): can we figure out simple pass-through info?
-       */
-      return false;
-    }
-  }
-
   /**
    * Replaces dangling null references with dummy calls.
    */
   public class FixDanglingRefsVisitor extends JVisitor {
     private final ChangeList changeList = new ChangeList(
-      "Replace dangling null references with dummy calls.");
-
-    public ChangeList getChangeList() {
-      return changeList;
-    }
+        "Replace dangling null references with dummy calls.");
 
     // @Override
     public void endVisit(JArrayRef x, Mutator m) {
@@ -521,7 +156,393 @@ public class TypeTightener {
         changeList.replaceExpression(m, call);
       }
     }
+
+    public ChangeList getChangeList() {
+      return changeList;
+    }
   }
+  /**
+   * Record "type flow" information. Variables receive type flow via assignment.
+   * As a special case, Parameters also receive type flow based on the types of
+   * arguments used when calling the containing method (think of this as a kind
+   * of assignment). Method return types receive type flow from their contained
+   * return statements, plus the return type of any methods that
+   * override/implement them.
+   * 
+   * Note that we only have to run this pass ONCE to record the relationships,
+   * because type tightening never changes any relationships, only the types of
+   * the things related. In my original implementation, I had naively mapped
+   * nodes onto sets of JReferenceType directly, which meant I had to rerun this
+   * visitor each time.
+   */
+  public class RecordVisitor extends JVisitor {
+
+    private JMethod currentMethod;
+
+    // @Override
+    public void endVisit(JBinaryOperation x, Mutator m) {
+      if (x.isAssignment() && (x.getType() instanceof JReferenceType)) {
+        JExpression lhs = x.getLhs();
+        if (lhs instanceof JVariableRef) {
+          addAssignment(((JVariableRef) lhs).getTarget(), x.getRhs());
+        }
+      }
+    }
+
+    // @Override
+    public void endVisit(JClassType x) {
+      for (JClassType cur = x; cur != null; cur = cur.extnds) {
+        addImplementor(cur, x);
+        for (Iterator it = cur.implments.iterator(); it.hasNext();) {
+          JInterfaceType implment = (JInterfaceType) it.next();
+          addImplementor(implment, x);
+        }
+      }
+    }
+
+    // @Override
+    public void endVisit(JField x) {
+      if (x.constInitializer != null) {
+        addAssignment(x, x.constInitializer);
+      }
+      currentMethod = null;
+    }
+
+    // @Override
+    public void endVisit(JLocalDeclarationStatement x) {
+      JExpression initializer = x.getInitializer();
+      if (initializer != null) {
+        addAssignment(x.getLocalRef().getTarget(), initializer);
+      }
+    }
+
+    // @Override
+    public void endVisit(JMethod x) {
+      for (int i = 0; i < x.overrides.size(); ++i) {
+        JMethod method = (JMethod) x.overrides.get(i);
+        addOverrider(method, x);
+      }
+      JMethod[] allVirtualOverrides = program.typeOracle.getAllVirtualOverrides(x);
+      for (int i = 0; i < allVirtualOverrides.length; ++i) {
+        JMethod method = allVirtualOverrides[i];
+        addOverrider(method, x);
+      }
+      currentMethod = null;
+    }
+
+    // @Override
+    public void endVisit(JMethodCall x, Mutator m) {
+      // All of the params in the target method are considered to be assigned by
+      // the arguments from the caller
+      Iterator/* <JExpression> */argIt = x.args.iterator();
+      ArrayList params = x.getTarget().params;
+      for (int i = 0; i < params.size(); ++i) {
+        JParameter param = (JParameter) params.get(i);
+        JExpression arg = (JExpression) argIt.next();
+        if (param.getType() instanceof JReferenceType) {
+          addAssignment(param, arg);
+        }
+      }
+    }
+
+    // @Override
+    public void endVisit(JReturnStatement x) {
+      if (currentMethod.getType() instanceof JReferenceType) {
+        addReturn(currentMethod, x.getExpression());
+      }
+    }
+
+    // @Override
+    public void endVisit(JsniFieldRef x) {
+      // If this happens in JSNI, we can't make any type-tightening assumptions
+      // Fake an assignment-to-self to prevent tightening
+      addAssignment(x.getTarget(), x);
+    }
+
+    // @Override
+    public void endVisit(JsniMethod x) {
+      endVisit((JMethod) x);
+    }
+
+    // @Override
+    public void endVisit(JsniMethodRef x) {
+      // If this happens in JSNI, we can't make any type-tightening assumptions
+      // Fake an assignment-to-self on all args to prevent tightening
+
+      JMethod method = x.getTarget();
+
+      for (int i = 0; i < method.params.size(); ++i) {
+        JParameter param = (JParameter) method.params.get(i);
+        addAssignment(param, new JParameterRef(program, param));
+      }
+    }
+
+    // @Override
+    public void endVisit(JTryStatement x) {
+      // Never tighten args to catch blocks
+      // Fake an assignment-to-self to prevent tightening
+      for (int i = 0; i < x.catchArgs.size(); ++i) {
+        JLocalRef arg = (JLocalRef) x.catchArgs.get(i);
+        addAssignment(arg.getTarget(), arg);
+      }
+    }
+
+    /**
+     * Merge param call args across overriders/implementors. We can't tighten a
+     * param type in an overriding method if the declaring method is looser.
+     */
+    // @Override
+    public boolean visit(JMethod x) {
+      currentMethod = x;
+
+      List/* <JMethod> */overrides = x.overrides;
+      JMethod[] virtualOverrides = program.typeOracle.getAllVirtualOverrides(x);
+
+      if (overrides.isEmpty() && virtualOverrides.length == 0) {
+        return true;
+      }
+
+      for (int j = 0, c = x.params.size(); j < c; ++j) {
+        JParameter param = (JParameter) x.params.get(j);
+        Set/* <JParameter> */set = (Set) paramUpRefs.get(param);
+        if (set == null) {
+          set = new HashSet/* <JParameter> */();
+          paramUpRefs.put(param, set);
+        }
+        for (int i = 0; i < overrides.size(); ++i) {
+          JMethod baseMethod = (JMethod) overrides.get(i);
+          JParameter baseParam = (JParameter) baseMethod.params.get(j);
+          set.add(baseParam);
+        }
+        for (int i = 0; i < virtualOverrides.length; ++i) {
+          JMethod baseMethod = virtualOverrides[i];
+          JParameter baseParam = (JParameter) baseMethod.params.get(j);
+          set.add(baseParam);
+        }
+      }
+
+      return true;
+    }
+
+    private void addAssignment(JVariable target, JExpression rhs) {
+      add(target, rhs, assignments);
+    }
+
+    private void addImplementor(JReferenceType target, JClassType implementor) {
+      add(target, implementor, implementors);
+    }
+
+    private void addOverrider(JMethod target, JMethod overrider) {
+      add(target, overrider, overriders);
+    }
+
+    private void addReturn(JMethod target, JExpression expr) {
+      add(target, expr, returns);
+    }
+  }
+
+  /**
+   * Wherever possible, use the type flow information recorded by RecordVisitor
+   * to change the declared type of a field, local, parameter, or method to a
+   * more specific type.
+   * 
+   * We must iterate mutiple times because each way point we tighten creates
+   * more opportunities to do additional tightening for the things that depend
+   * on it.
+   */
+  public class TightenTypesVisitor extends JVisitor {
+    private final ChangeList changeList = new ChangeList(
+        "Tighten types on fields, locals, params, methods.");
+
+    // @Override
+    public void endVisit(JField x) {
+      tighten(x);
+    }
+
+    // @Override
+    public void endVisit(JLocal x) {
+      tighten(x);
+    }
+
+    /**
+     * Tighten based on return types and overrides.
+     */
+    // @Override
+    public void endVisit(JMethod x) {
+
+      if (!(x.getType() instanceof JReferenceType)) {
+        return;
+      }
+      JReferenceType refType = (JReferenceType) x.getType();
+
+      if (refType == typeNull) {
+        return;
+      }
+
+      // tighten based on non-instantiability
+      if (!program.typeOracle.isInstantiatedType(refType)) {
+        changeList.changeType(x, typeNull);
+        return;
+      }
+
+      // tighten based on both returned types and possible overrides
+      List/* <JReferenceType> */typeList = new ArrayList/* <JReferenceType> */();
+
+      /*
+       * Always assume at least one null assignment; if there really aren't any
+       * other assignments, then this variable will get the null type. If there
+       * are, it won't hurt anything because null type will always lose.
+       */
+      typeList.add(typeNull);
+
+      Set/* <JExpression> */myReturns = (Set) returns.get(x);
+      if (myReturns != null) {
+        for (Iterator iter = myReturns.iterator(); iter.hasNext();) {
+          JExpression expr = (JExpression) iter.next();
+          typeList.add(expr.getType());
+        }
+      }
+      Set/* <JMethod> */myOverriders = (Set) overriders.get(x);
+      if (myOverriders != null) {
+        for (Iterator iter = myOverriders.iterator(); iter.hasNext();) {
+          JMethod method = (JMethod) iter.next();
+          typeList.add(method.getType());
+        }
+      }
+
+      JReferenceType resultType = program.generalizeTypes(typeList);
+      resultType = program.strongerType(refType, resultType);
+      if (refType != resultType) {
+        changeList.changeType(x, resultType);
+      }
+    }
+
+    // @Override
+    public void endVisit(JNewArray x, Mutator m) {
+      // tighten leaf type based on non-instantiability
+      JArrayType arrayType = x.getArrayType();
+      JType leafType = arrayType.getLeafType();
+      if (leafType instanceof JReferenceType) {
+        if (!program.typeOracle.isInstantiatedType((JReferenceType) leafType)) {
+          arrayType = program.getTypeArray(typeNull, arrayType.getDims());
+          changeList.changeType(x, arrayType);
+        }
+      }
+    }
+
+    // @Override
+    public void endVisit(JParameter x) {
+      tighten(x);
+    }
+
+    public ChangeList getChangeList() {
+      return changeList;
+    }
+
+    // @Override
+    public boolean visit(JClassType x) {
+      // don't mess with classes used in code gen
+      if (program.specialTypes.contains(x)) {
+        return false;
+      }
+      return true;
+    }
+
+    public boolean visit(JsniMethod x) {
+      /*
+       * Explicitly NOT visiting native methods since we can't infer type
+       * information.
+       * 
+       * TODO(later): can we figure out simple pass-through info?
+       */
+      return false;
+    }
+
+    /**
+     * Tighten based on assignment, and for parameters, callArgs as well.
+     */
+    private void tighten(JVariable x) {
+      if (!(x.getType() instanceof JReferenceType)) {
+        return;
+      }
+      JReferenceType refType = (JReferenceType) x.getType();
+
+      if (refType == typeNull) {
+        return;
+      }
+
+      // tighten based on non-instantiability
+      if (!program.typeOracle.isInstantiatedType(refType)) {
+        changeList.changeType(x, typeNull);
+        return;
+      }
+
+      // tighten based on assignment
+      List/* <JReferenceType> */typeList = new ArrayList/* <JReferenceType> */();
+
+      /*
+       * Always assume at least one null assignment; if there really aren't any
+       * other assignments, then this variable will get the null type. If there
+       * are, it won't hurt anything because null type will always lose.
+       */
+      typeList.add(typeNull);
+
+      Set/* <JExpression> */myAssignments = (Set) assignments.get(x);
+      if (myAssignments != null) {
+        for (Iterator iter = myAssignments.iterator(); iter.hasNext();) {
+          JExpression expr = (JExpression) iter.next();
+          JType type = expr.getType();
+          if (!(type instanceof JReferenceType)) {
+            return; // something fishy is going on, just abort
+          }
+          typeList.add(type);
+        }
+      }
+
+      if (x instanceof JParameter) {
+        Set/* <JParameter> */myParams = (Set) paramUpRefs.get(x);
+        if (myParams != null) {
+          for (Iterator iter = myParams.iterator(); iter.hasNext();) {
+            JParameter param = (JParameter) iter.next();
+            typeList.add(param.getType());
+          }
+        }
+      }
+
+      JReferenceType resultType = program.generalizeTypes(typeList);
+      resultType = program.strongerType(refType, resultType);
+      if (refType != resultType) {
+        changeList.changeType(x, resultType);
+      }
+    }
+  }
+
+  public static boolean exec(JProgram program) {
+    return new TypeTightener(program).execImpl();
+  }
+
+  private static/* <T, V> */void add(Object target, Object value,
+      Map/* <T, Set<V>> */map) {
+    Set/* <V> */set = (Set) map.get(target);
+    if (set == null) {
+      set = new HashSet/* <V> */();
+      map.put(target, set);
+    }
+    set.add(value);
+  }
+
+  private final JProgram program;
+  private final JNullType typeNull;
+
+  private final Map/* <JReferenceType, Set<JClassType>> */implementors = new IdentityHashMap();
+
+  private final Map/* <JMethod, Set<JExpression>> */returns = new IdentityHashMap();
+
+  private final Map/* <JMethod, Set<JMethod>> */overriders = new IdentityHashMap();
+
+  private final Map/* <JVariable, Set<JExpression>> */assignments = new IdentityHashMap();
+
+  private final Map/* <JParameter, Set<JParameter>> */paramUpRefs = new IdentityHashMap();
 
   private TypeTightener(JProgram program) {
     this.program = program;
@@ -549,10 +570,6 @@ public class TypeTightener {
         changes.apply();
       }
     }
-  }
-
-  public static boolean exec(JProgram program) {
-    return new TypeTightener(program).execImpl();
   }
 
 }

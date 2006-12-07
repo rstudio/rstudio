@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
@@ -25,35 +39,9 @@ public class JavaScriptObjectCaster {
   private class AssignmentVisitor extends JVisitor {
 
     private final ChangeList changeList = new ChangeList(
-      "Synthesize casts from JavaScriptObjects to trigger wrapping.");
+        "Synthesize casts from JavaScriptObjects to trigger wrapping.");
 
-    public ChangeList getChangeList() {
-      return changeList;
-    }
-
-    private void checkAndReplaceJso(Mutator arg, JType targetType) {
-      JType argType = arg.get().getType();
-      if (argType == targetType) {
-        return;
-      }
-      
-      if (!(targetType instanceof JReferenceType)) {
-        return;
-      }
-      
-      if (!program.isJavaScriptObject(argType)) {
-        return;
-      }
-      JCastOperation cast = new JCastOperation(program, targetType, program
-        .getLiteralNull());
-      ChangeList myChangeList = new ChangeList("Synthesize a cast from '"
-        + argType + "' to '" + targetType + "'.");
-      myChangeList.replaceExpression(cast.expr, arg);
-      myChangeList.replaceExpression(arg, cast);
-      changeList.add(myChangeList);
-    }
-
-    private JMethod fCurrentMethod;
+    private JMethod currentMethod;
 
     // @Override
     public void endVisit(JBinaryOperation x, Mutator m) {
@@ -78,7 +66,7 @@ public class JavaScriptObjectCaster {
 
     // @Override
     public void endVisit(JMethod x) {
-      fCurrentMethod = null;
+      currentMethod = null;
     }
 
     // @Override
@@ -96,15 +84,51 @@ public class JavaScriptObjectCaster {
     // @Override
     public void endVisit(JReturnStatement x) {
       if (x.getExpression() != null) {
-        checkAndReplaceJso(x.expr, fCurrentMethod.getType());
+        checkAndReplaceJso(x.expr, currentMethod.getType());
       }
+    }
+
+    public ChangeList getChangeList() {
+      return changeList;
     }
 
     // @Override
     public boolean visit(JMethod x) {
-      fCurrentMethod = x;
+      currentMethod = x;
       return true;
     }
+
+    private void checkAndReplaceJso(Mutator arg, JType targetType) {
+      JType argType = arg.get().getType();
+      if (argType == targetType) {
+        return;
+      }
+
+      if (!(targetType instanceof JReferenceType)) {
+        return;
+      }
+
+      if (!program.isJavaScriptObject(argType)) {
+        return;
+      }
+      JCastOperation cast = new JCastOperation(program, targetType,
+          program.getLiteralNull());
+      ChangeList myChangeList = new ChangeList("Synthesize a cast from '"
+          + argType + "' to '" + targetType + "'.");
+      myChangeList.replaceExpression(cast.expr, arg);
+      myChangeList.replaceExpression(arg, cast);
+      changeList.add(myChangeList);
+    }
+  }
+
+  public static void exec(JProgram program) {
+    new JavaScriptObjectCaster(program).execImpl();
+  }
+
+  private final JProgram program;
+
+  private JavaScriptObjectCaster(JProgram program) {
+    this.program = program;
   }
 
   private void execImpl() {
@@ -116,16 +140,6 @@ public class JavaScriptObjectCaster {
         changes.apply();
       }
     }
-  }
-
-  private final JProgram program;
-
-  private JavaScriptObjectCaster(JProgram program) {
-    this.program = program;
-  }
-
-  public static void exec(JProgram program) {
-    new JavaScriptObjectCaster(program).execImpl();
   }
 
 }

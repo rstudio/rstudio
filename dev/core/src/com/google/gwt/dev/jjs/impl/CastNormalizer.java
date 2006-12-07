@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.JArrayRef;
@@ -43,91 +57,17 @@ import java.util.Set;
  */
 public class CastNormalizer {
 
-  private Map/* <JReferenceType, Integer> */queryIds = new IdentityHashMap();
-
-  /**
-   * Explicitly convert any char-typed expressions within a concat operation
-   * into strings.
-   */
-  private class ConcatVisitor extends JVisitor {
-
-    private final ChangeList changeList = new ChangeList(
-      "Convert chars to Strings inside of concat operations.");
-
-    private JMethod fStringValueOfChar = null;
-
-    public ChangeList getChangeList() {
-      return changeList;
-    }
-
-    // @Override
-    public void endVisit(JBinaryOperation x, Mutator m) {
-      if (x.getType() != program.getTypeJavaLangString()) {
-        return;
-      }
-
-      if (x.op == JBinaryOperator.ADD) {
-        convertCharString(x.lhs);
-        convertCharString(x.rhs);
-      } else if (x.op == JBinaryOperator.ASG_ADD) {
-        convertCharString(x.rhs);
-      }
-    }
-
-    private void convertCharString(Mutator m) {
-      JPrimitiveType charType = program.getTypePrimitiveChar();
-      JExpression expr = m.get();
-      if (expr.getType() == charType) {
-        if (fStringValueOfChar == null) {
-          fStringValueOfChar = program.getSpecialMethod("Cast.charToString");
-          assert (fStringValueOfChar != null);
-        }
-        JMethodCall call = new JMethodCall(program, null, fStringValueOfChar);
-        ChangeList myChangeList = new ChangeList("Replace '" + expr
-          + "' with a call to Cast.charToString()");
-        myChangeList.addExpression(m, call.args);
-        myChangeList.replaceExpression(m, call);
-        changeList.add(myChangeList);
-      }
-    }
-  }
-
-  /**
-   * Explicitly cast all integral divide operations to trigger replacements with
-   * narrowing calls in the next pass.
-   */
-  private class DivVisitor extends JVisitor {
-
-    private final ChangeList changeList = new ChangeList(
-      "Explicitly cast all integral division operations.");
-
-    public ChangeList getChangeList() {
-      return changeList;
-    }
-
-    // @Override
-    public void endVisit(JBinaryOperation x, Mutator m) {
-      JType type = x.getType();
-      if (x.op == JBinaryOperator.DIV
-        && type != program.getTypePrimitiveFloat()
-        && type != program.getTypePrimitiveDouble()) {
-        JCastOperation cast = new JCastOperation(program, type,
-          program.getLiteralNull());
-        ChangeList myChangeList = new ChangeList("Cast '" + x + "' to type '"
-          + type + "'");
-        myChangeList.changeType(x, program.getTypePrimitiveDouble());
-        myChangeList.replaceExpression(cast.expr, m);
-        myChangeList.replaceExpression(m, cast);
-        changeList.add(myChangeList);
-      }
-    }
-  }
-
   private class AssignTypeIdsVisitor extends JVisitor {
 
+    Set/* <JClassType> */alreadyRan = new HashSet/* <JClassType> */();
     private Map/* <JReferenceType, Set<JReferenceType>> */queriedTypes = new IdentityHashMap();
     private int nextQueryId = 1; // 0 is reserved
+
     private final List/* <JArrayType> */instantiatedArrayTypes = new ArrayList/* <JArrayType> */();
+
+    private List/* <JClassType> */classes = new ArrayList/* <JClassType> */();
+
+    private List/* <JsonObject> */jsonObjects = new ArrayList/* <JsonObject> */();
 
     {
       JTypeOracle typeOracle = program.typeOracle;
@@ -137,6 +77,34 @@ public class CastNormalizer {
           instantiatedArrayTypes.add(arrayType);
         }
       }
+    }
+
+    public void computeTypeIds() {
+
+      // the 0th entry is the "always false" entry
+      classes.add(null);
+      jsonObjects.add(new JsonObject(program));
+
+      /*
+       * Compute the list of classes than can successfully satisfy cast
+       * requests, along with the set of types they can be successfully cast to.
+       * Do it in super type order.
+       */
+      for (Iterator it = program.getDeclaredTypes().iterator(); it.hasNext();) {
+        JReferenceType type = (JReferenceType) it.next();
+        if (type instanceof JClassType) {
+          computeSourceClass((JClassType) type);
+        }
+      }
+
+      for (Iterator it = program.getAllArrayTypes().iterator(); it.hasNext();) {
+        JArrayType type = (JArrayType) it.next();
+        computeSourceClass(type);
+      }
+
+      // pass our info to JProgram
+      program.initTypeInfo(classes, jsonObjects);
+      program.recordQueryIds(queryIds);
     }
 
     /*
@@ -196,66 +164,6 @@ public class CastNormalizer {
     // @Override
     public void endVisit(JInstanceOf x, Mutator m) {
       recordCast(x.testType, x.getExpression());
-    }
-
-    private void recordCast(JType targetType, JExpression rhs) {
-      if (targetType instanceof JReferenceType) {
-        // unconditional cast b/c it would've been a semantic error earlier
-        JReferenceType rhsType = (JReferenceType) rhs.getType();
-        // don't record a type for trivial casts that won't generate code
-        if (rhsType instanceof JClassType) {
-          if (program.typeOracle.canTriviallyCast(rhsType,
-            (JReferenceType) targetType)) {
-            return;
-          }
-        }
-
-        recordCastInternal((JReferenceType) targetType, rhsType);
-      }
-    }
-
-    private void recordCastInternal(JReferenceType targetType,
-        JReferenceType rhsType) {
-      JReferenceType toType = targetType;
-      Set/* <JReferenceType> */querySet = (Set) queriedTypes.get(toType);
-      if (querySet == null) {
-        queryIds.put(toType, new Integer(nextQueryId++));
-        querySet = new HashSet/* <JReferenceType> */();
-        queriedTypes.put(toType, querySet);
-      }
-      querySet.add(rhsType);
-    }
-
-    Set/* <JClassType> */alreadyRan = new HashSet/* <JClassType> */();
-    private List/* <JClassType> */classes = new ArrayList/* <JClassType> */();
-    private List/* <JsonObject> */jsonObjects = new ArrayList/* <JsonObject> */();
-
-    public void computeTypeIds() {
-
-      // the 0th entry is the "always false" entry
-      classes.add(null);
-      jsonObjects.add(new JsonObject(program));
-
-      /*
-       * Compute the list of classes than can successfully satisfy cast
-       * requests, along with the set of types they can be successfully cast to.
-       * Do it in super type order.
-       */
-      for (Iterator it = program.getDeclaredTypes().iterator(); it.hasNext();) {
-        JReferenceType type = (JReferenceType) it.next();
-        if (type instanceof JClassType) {
-          computeSourceClass((JClassType) type);
-        }
-      }
-
-      for (Iterator it = program.getAllArrayTypes().iterator(); it.hasNext();) {
-        JArrayType type = (JArrayType) it.next();
-        computeSourceClass(type);
-      }
-
-      // pass our info to JProgram
-      program.initTypeInfo(classes, jsonObjects);
-      program.recordQueryIds(queryIds);
     }
 
     /**
@@ -325,7 +233,7 @@ public class CastNormalizer {
           JIntLiteral labelExpr = program.getLiteralInt(i);
           JIntLiteral valueExpr = program.getLiteralInt(1);
           jsonObject.propInits.add(new JsonPropInit(program, labelExpr,
-            valueExpr));
+              valueExpr));
         }
       }
 
@@ -333,16 +241,118 @@ public class CastNormalizer {
       classes.add(type);
       jsonObjects.add(jsonObject);
     }
+
+    private void recordCast(JType targetType, JExpression rhs) {
+      if (targetType instanceof JReferenceType) {
+        // unconditional cast b/c it would've been a semantic error earlier
+        JReferenceType rhsType = (JReferenceType) rhs.getType();
+        // don't record a type for trivial casts that won't generate code
+        if (rhsType instanceof JClassType) {
+          if (program.typeOracle.canTriviallyCast(rhsType,
+              (JReferenceType) targetType)) {
+            return;
+          }
+        }
+
+        recordCastInternal((JReferenceType) targetType, rhsType);
+      }
+    }
+
+    private void recordCastInternal(JReferenceType targetType,
+        JReferenceType rhsType) {
+      JReferenceType toType = targetType;
+      Set/* <JReferenceType> */querySet = (Set) queriedTypes.get(toType);
+      if (querySet == null) {
+        queryIds.put(toType, new Integer(nextQueryId++));
+        querySet = new HashSet/* <JReferenceType> */();
+        queriedTypes.put(toType, querySet);
+      }
+      querySet.add(rhsType);
+    }
+  }
+
+  /**
+   * Explicitly convert any char-typed expressions within a concat operation
+   * into strings.
+   */
+  private class ConcatVisitor extends JVisitor {
+
+    private final ChangeList changeList = new ChangeList(
+        "Convert chars to Strings inside of concat operations.");
+
+    private JMethod stringValueOfChar = null;
+
+    // @Override
+    public void endVisit(JBinaryOperation x, Mutator m) {
+      if (x.getType() != program.getTypeJavaLangString()) {
+        return;
+      }
+
+      if (x.op == JBinaryOperator.ADD) {
+        convertCharString(x.lhs);
+        convertCharString(x.rhs);
+      } else if (x.op == JBinaryOperator.ASG_ADD) {
+        convertCharString(x.rhs);
+      }
+    }
+
+    public ChangeList getChangeList() {
+      return changeList;
+    }
+
+    private void convertCharString(Mutator m) {
+      JPrimitiveType charType = program.getTypePrimitiveChar();
+      JExpression expr = m.get();
+      if (expr.getType() == charType) {
+        if (stringValueOfChar == null) {
+          stringValueOfChar = program.getSpecialMethod("Cast.charToString");
+          assert (stringValueOfChar != null);
+        }
+        JMethodCall call = new JMethodCall(program, null, stringValueOfChar);
+        ChangeList myChangeList = new ChangeList("Replace '" + expr
+            + "' with a call to Cast.charToString()");
+        myChangeList.addExpression(m, call.args);
+        myChangeList.replaceExpression(m, call);
+        changeList.add(myChangeList);
+      }
+    }
+  }
+
+  /**
+   * Explicitly cast all integral divide operations to trigger replacements with
+   * narrowing calls in the next pass.
+   */
+  private class DivVisitor extends JVisitor {
+
+    private final ChangeList changeList = new ChangeList(
+        "Explicitly cast all integral division operations.");
+
+    // @Override
+    public void endVisit(JBinaryOperation x, Mutator m) {
+      JType type = x.getType();
+      if (x.op == JBinaryOperator.DIV
+          && type != program.getTypePrimitiveFloat()
+          && type != program.getTypePrimitiveDouble()) {
+        JCastOperation cast = new JCastOperation(program, type,
+            program.getLiteralNull());
+        ChangeList myChangeList = new ChangeList("Cast '" + x + "' to type '"
+            + type + "'");
+        myChangeList.changeType(x, program.getTypePrimitiveDouble());
+        myChangeList.replaceExpression(cast.expr, m);
+        myChangeList.replaceExpression(m, cast);
+        changeList.add(myChangeList);
+      }
+    }
+
+    public ChangeList getChangeList() {
+      return changeList;
+    }
   }
 
   private class ReplaceTypeChecksVisitor extends JVisitor {
 
     private final ChangeList changeList = new ChangeList(
-      "Replace all casts and instanceof operations.");
-
-    public ChangeList getChangeList() {
-      return changeList;
-    }
+        "Replace all casts and instanceof operations.");
 
     // @Override
     public void endVisit(JCastOperation x, Mutator m) {
@@ -369,7 +379,8 @@ public class CastNormalizer {
           changeList.add(myChangeList);
         }
         if (argType instanceof JClassType
-          && program.typeOracle.canTriviallyCast((JClassType) argType, refType)) {
+            && program.typeOracle.canTriviallyCast((JClassType) argType,
+                refType)) {
           // just remove the cast
           changeList.replaceExpression(m, x.expr);
         } else {
@@ -411,12 +422,12 @@ public class CastNormalizer {
           }
         } else if (tLong == fromType) {
           if (tByte == toType || tShort == toType || tChar == toType
-            || tInt == toType) {
+              || tInt == toType) {
             narrow = true;
           }
         } else if (tFloat == fromType || tDouble == fromType) {
           if (tByte == toType || tShort == toType || tChar == toType
-            || tInt == toType || tLong == toType) {
+              || tInt == toType || tLong == toType) {
             round = true;
           }
         }
@@ -424,9 +435,9 @@ public class CastNormalizer {
         ChangeList myChangeList;
         if (narrow || round) {
           String methodName = "Cast." + (narrow ? "narrow_" : "round_")
-            + toType.getName();
+              + toType.getName();
           myChangeList = new ChangeList("Replace '" + x + "' with a call to "
-            + methodName);
+              + methodName);
           JMethod castMethod = program.getSpecialMethod(methodName);
           JMethodCall call = new JMethodCall(program, null, castMethod);
           myChangeList.addExpression(x.expr, call.args);
@@ -443,14 +454,15 @@ public class CastNormalizer {
     public void endVisit(JInstanceOf x, Mutator m) {
       JType argType = x.getExpression().getType();
       if (argType instanceof JClassType
-        && program.typeOracle.canTriviallyCast((JClassType) argType, x.testType)) {
+          && program.typeOracle.canTriviallyCast((JClassType) argType,
+              x.testType)) {
         // trivially true if non-null
         JNullLiteral nullLit = program.getLiteralNull();
         JBinaryOperation eq = new JBinaryOperation(program,
-          program.getTypePrimitiveBoolean(), JBinaryOperator.NEQ, nullLit,
-          nullLit);
+            program.getTypePrimitiveBoolean(), JBinaryOperator.NEQ, nullLit,
+            nullLit);
         ChangeList myChangeList = new ChangeList("Replace '" + x
-          + "' with a simple null test.");
+            + "' with a simple null test.");
         myChangeList.replaceExpression(eq.lhs, x.expr);
         myChangeList.replaceExpression(m, eq);
         changeList.add(myChangeList);
@@ -461,17 +473,33 @@ public class CastNormalizer {
       }
     }
 
+    public ChangeList getChangeList() {
+      return changeList;
+    }
+
     private void replaceCast(JMethodCall call, JReferenceType type,
         Mutator dest, Mutator arg) {
       Integer boxedInt = (Integer) queryIds.get(type);
       JIntLiteral qId = program.getLiteralInt(boxedInt.intValue());
       ChangeList myChangeList = new ChangeList("Replace '" + dest.get()
-        + " with a call to " + call.getTarget().getName());
+          + " with a call to " + call.getTarget().getName());
       myChangeList.addExpression(arg, call.args);
       myChangeList.addExpression(qId, call.args);
       myChangeList.replaceExpression(dest, call);
       changeList.add(myChangeList);
     }
+  }
+
+  public static void exec(JProgram program) {
+    new CastNormalizer(program).execImpl();
+  }
+
+  private Map/* <JReferenceType, Integer> */queryIds = new IdentityHashMap();
+
+  private final JProgram program;
+
+  private CastNormalizer(JProgram program) {
+    this.program = program;
   }
 
   private void execImpl() {
@@ -504,16 +532,6 @@ public class CastNormalizer {
         changes.apply();
       }
     }
-  }
-
-  private final JProgram program;
-
-  private CastNormalizer(JProgram program) {
-    this.program = program;
-  }
-
-  public static void exec(JProgram program) {
-    new CastNormalizer(program).execImpl();
   }
 
 }

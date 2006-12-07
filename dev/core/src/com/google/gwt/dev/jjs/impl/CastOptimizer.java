@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
@@ -17,7 +31,7 @@ import com.google.gwt.dev.jjs.ast.Mutator;
 import com.google.gwt.dev.jjs.ast.change.ChangeList;
 
 /**
- * Optimizer that will remove all trivially computable casts and instanceof 
+ * Optimizer that will remove all trivially computable casts and instanceof
  * operations.
  */
 public class CastOptimizer {
@@ -25,17 +39,13 @@ public class CastOptimizer {
   private class ReplaceTrivialCastsVisitor extends JVisitor {
 
     private final ChangeList changeList = new ChangeList(
-      "Replace all trivially computable casts and instanceof operations.");
-
-    public ChangeList getChangeList() {
-      return changeList;
-    }
+        "Replace all trivially computable casts and instanceof operations.");
 
     // @Override
     public void endVisit(JCastOperation x, Mutator m) {
       JType argType = x.getExpression().getType();
       if (!(x.castType instanceof JReferenceType)
-        || !(argType instanceof JReferenceType)) {
+          || !(argType instanceof JReferenceType)) {
         return;
       }
 
@@ -66,9 +76,9 @@ public class CastOptimizer {
          * call completes normally it will return null.
          */
         JMethodCall call = new JMethodCall(program, null, method,
-          program.getTypeNull());
+            program.getTypeNull());
         ChangeList myChangeList = new ChangeList("Replace '" + x
-          + "' with a call to throwClassCastExceptionUnlessNull().");
+            + "' with a call to throwClassCastExceptionUnlessNull().");
         myChangeList.addExpression(x.expr, call.args);
         myChangeList.replaceExpression(m, call);
         changeList.add(myChangeList);
@@ -105,10 +115,10 @@ public class CastOptimizer {
           // replace with a simple null test
           JNullLiteral nullLit = program.getLiteralNull();
           JBinaryOperation eq = new JBinaryOperation(program,
-            program.getTypePrimitiveBoolean(), JBinaryOperator.NEQ, nullLit,
-            nullLit);
+              program.getTypePrimitiveBoolean(), JBinaryOperator.NEQ, nullLit,
+              nullLit);
           ChangeList myChangeList = new ChangeList("Replace '" + x
-            + "' with a simple null test.");
+              + "' with a simple null test.");
           myChangeList.replaceExpression(eq.lhs, x.expr);
           myChangeList.replaceExpression(m, eq);
           changeList.add(myChangeList);
@@ -118,6 +128,20 @@ public class CastOptimizer {
         changeList.replaceExpression(m, program.getLiteralBoolean(false));
       }
     }
+
+    public ChangeList getChangeList() {
+      return changeList;
+    }
+  }
+
+  public static boolean exec(JProgram program) {
+    return new CastOptimizer(program).execImpl();
+  }
+
+  private final JProgram program;
+
+  private CastOptimizer(JProgram program) {
+    this.program = program;
   }
 
   private boolean execImpl() {
@@ -129,15 +153,5 @@ public class CastOptimizer {
     }
     changes.apply();
     return true;
-  }
-
-  private final JProgram program;
-
-  private CastOptimizer(JProgram program) {
-    this.program = program;
-  }
-
-  public static boolean exec(JProgram program) {
-    return new CastOptimizer(program).execImpl();
   }
 }

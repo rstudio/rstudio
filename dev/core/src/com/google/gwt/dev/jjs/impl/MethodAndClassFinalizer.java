@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.JClassType;
@@ -20,60 +34,6 @@ import java.util.Set;
  */
 public class MethodAndClassFinalizer {
 
-  private final Set/* <JClassType> */isSubclassed = new HashSet/* <JClassType> */();
-  private final Set/* <JMethod> */isOverriden = new HashSet/* <JMethod> */();
-
-  /**
-   * Find all methods and classes that ARE overriden/subclassed.
-   */
-  private class MarkVisitor extends JVisitor {
-
-    // @Override
-    public boolean visit(JClassType x) {
-      if (x.extnds != null) {
-        isSubclassed.add(x.extnds);
-      }
-      
-      for (int i = 0; i < x.methods.size(); ++i) {
-        JMethod method = (JMethod) x.methods.get(i);
-        method.traverse(this);
-      }
-      return false;
-    }
-
-    // @Override
-    public boolean visit(JInterfaceType x) {
-      for (int i = 0; i < x.methods.size(); ++i) {
-        JMethod method = (JMethod) x.methods.get(i);
-        method.traverse(this);
-      }
-      return false;
-    }
-
-    // @Override
-    public boolean visit(JMethod x) {
-      for (int i = 0; i < x.overrides.size(); ++i) {
-        JMethod it = (JMethod) x.overrides.get(i);
-        isOverriden.add(it);
-      }
-      return false;
-    }
-
-    // @Override
-    public boolean visit(JsniMethod x) {
-      return visit((JMethod) x);
-    }
-
-    // @Override
-    public boolean visit(JProgram x) {
-      for (int i = 0; i < x.getDeclaredTypes().size(); ++i) {
-        JReferenceType type = (JReferenceType) x.getDeclaredTypes().get(i);
-        type.traverse(this);
-      }
-      return false;
-    }
-  }
-
   /**
    * Any method and classes that weren't marked during MarkVisitor can be set
    * final.
@@ -87,7 +47,7 @@ public class MethodAndClassFinalizer {
   private class FinalizeVisitor extends JVisitor {
 
     private final ChangeList changeList = new ChangeList(
-      "Finalize effectively final methods and types.");
+        "Finalize effectively final methods and types.");
 
     public ChangeList getChangeList() {
       return changeList;
@@ -127,6 +87,67 @@ public class MethodAndClassFinalizer {
       return visit((JMethod) x);
     }
   }
+  /**
+   * Find all methods and classes that ARE overriden/subclassed.
+   */
+  private class MarkVisitor extends JVisitor {
+
+    // @Override
+    public boolean visit(JClassType x) {
+      if (x.extnds != null) {
+        isSubclassed.add(x.extnds);
+      }
+
+      for (int i = 0; i < x.methods.size(); ++i) {
+        JMethod method = (JMethod) x.methods.get(i);
+        method.traverse(this);
+      }
+      return false;
+    }
+
+    // @Override
+    public boolean visit(JInterfaceType x) {
+      for (int i = 0; i < x.methods.size(); ++i) {
+        JMethod method = (JMethod) x.methods.get(i);
+        method.traverse(this);
+      }
+      return false;
+    }
+
+    // @Override
+    public boolean visit(JMethod x) {
+      for (int i = 0; i < x.overrides.size(); ++i) {
+        JMethod it = (JMethod) x.overrides.get(i);
+        isOverriden.add(it);
+      }
+      return false;
+    }
+
+    // @Override
+    public boolean visit(JProgram x) {
+      for (int i = 0; i < x.getDeclaredTypes().size(); ++i) {
+        JReferenceType type = (JReferenceType) x.getDeclaredTypes().get(i);
+        type.traverse(this);
+      }
+      return false;
+    }
+
+    // @Override
+    public boolean visit(JsniMethod x) {
+      return visit((JMethod) x);
+    }
+  }
+
+  public static boolean exec(JProgram program) {
+    return new MethodAndClassFinalizer().execImpl(program);
+  }
+
+  private final Set/* <JClassType> */isSubclassed = new HashSet/* <JClassType> */();
+
+  private final Set/* <JMethod> */isOverriden = new HashSet/* <JMethod> */();
+
+  private MethodAndClassFinalizer() {
+  }
 
   private boolean execImpl(JProgram program) {
     MarkVisitor marker = new MarkVisitor();
@@ -139,13 +160,6 @@ public class MethodAndClassFinalizer {
     }
     changes.apply();
     return true;
-  }
-
-  private MethodAndClassFinalizer() {
-  }
-
-  public static boolean exec(JProgram program) {
-    return new MethodAndClassFinalizer().execImpl(program);
   }
 
 }

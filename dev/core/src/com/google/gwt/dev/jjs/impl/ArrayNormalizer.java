@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
@@ -26,14 +40,22 @@ import com.google.gwt.dev.jjs.ast.js.JsonArray;
  */
 public class ArrayNormalizer {
 
-  private final JMethod setCheckMethod;
-  private final JMethod initDims;
-  private final JMethod initValues;
-
   private class ArrayVisitor extends JVisitor {
 
     private final ChangeList changeList = new ChangeList(
-      "Transform array accesses to check bounds.");
+        "Transform array accesses to check bounds.");
+
+    // @Override
+    public void endVisit(JNewArray x, Mutator m) {
+      JArrayType type = x.getArrayType();
+      JLiteral litTypeName = program.getLiteralString(calcClassName(type));
+
+      if (x.initializers != null) {
+        processInitializers(x, m, type, litTypeName);
+      } else {
+        processDims(x, m, type, litTypeName);
+      }
+    }
 
     public ChangeList getChangeList() {
       return changeList;
@@ -53,7 +75,7 @@ public class ArrayNormalizer {
         // see if we need to do a checked store
         // primitives and (effectively) final are statically correct
         if (elementType instanceof JReferenceType
-          && !((JReferenceType) elementType).isFinal()) {
+            && !((JReferenceType) elementType).isFinal()) {
           // replace this assignment with a call to setCheck()
 
           // DON'T VISIT ARRAYREF, but do visit its children
@@ -63,7 +85,7 @@ public class ArrayNormalizer {
 
           JMethodCall call = new JMethodCall(program, null, setCheckMethod);
           ChangeList myChanges = new ChangeList("Replace " + x
-            + " with a call to Array.setCheck()");
+              + " with a call to Array.setCheck()");
           myChanges.replaceExpression(m, call);
           myChanges.addExpression(arrayRef.instance, call.args);
           myChanges.addExpression(arrayRef.indexExpr, call.args);
@@ -75,22 +97,24 @@ public class ArrayNormalizer {
       return true;
     }
 
-    // @Override
-    public void endVisit(JNewArray x, Mutator m) {
-      JArrayType type = x.getArrayType();
-      JLiteral litTypeName = program.getLiteralString(calcClassName(type));
-
-      if (x.initializers != null) {
-        processInitializers(x, m, type, litTypeName);
-      } else {
-        processDims(x, m, type, litTypeName);
+    private char[] calcClassName(JArrayType type) {
+      String leafName = type.getLeafType().getJsniSignatureName();
+      leafName = leafName.replace('/', '.');
+      int leafLength = leafName.length();
+      int nDims = type.getDims();
+      char[] className = new char[leafLength + nDims];
+      for (int i = 0; i < nDims; ++i) {
+        className[i] = '[';
       }
+
+      leafName.getChars(0, leafLength, className, nDims);
+      return className;
     }
 
     private void processDims(JNewArray x, Mutator m, JArrayType arrayType,
         JLiteral litTypeName) {
       ChangeList myChanges = new ChangeList("Replace " + x
-        + " with a call to Array.initDims()");
+          + " with a call to Array.initDims()");
       // override the type of the called method with the array's type
       JMethodCall call = new JMethodCall(program, null, initDims, arrayType);
       JsonArray typeIdList = new JsonArray(program);
@@ -103,7 +127,7 @@ public class ArrayNormalizer {
         if (dim.get() instanceof JAbsentArrayDimension) {
           break;
         }
-        
+
         /*
          * For each non-empty dimension, reduce the number of dims on the end
          * type.
@@ -126,7 +150,7 @@ public class ArrayNormalizer {
       if (outstandingDims > 0) {
         targetType = program.getTypeArray(targetType, outstandingDims);
       }
-      
+
       myChanges.addExpression(litTypeName, call.args);
       myChanges.addExpression(typeIdList, call.args);
       myChanges.addExpression(queryIdList, call.args);
@@ -144,7 +168,7 @@ public class ArrayNormalizer {
       JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(arrayType));
       JsonArray initList = new JsonArray(program);
       ChangeList myChanges = new ChangeList("Replace " + x
-        + " with a call to Array.initValues()");
+          + " with a call to Array.initValues()");
       for (int i = 0; i < x.initializers.size(); ++i) {
         Mutator initializer = x.initializers.getMutator(i);
         myChanges.addExpression(initializer, initList.exprs);
@@ -165,30 +189,17 @@ public class ArrayNormalizer {
       }
       return leafTypeId;
     }
-
-    private char[] calcClassName(JArrayType type) {
-      String leafName = type.getLeafType().getJsniSignatureName();
-      leafName = leafName.replace('/', '.');
-      int leafLength = leafName.length();
-      int nDims = type.getDims();
-      char[] className = new char[leafLength + nDims];
-      for (int i = 0; i < nDims; ++i) {
-        className[i] = '[';
-      }
-      
-      leafName.getChars(0, leafLength, className, nDims);
-      return className;
-    }
   }
 
-  private void execImpl() {
-    ArrayVisitor visitor = new ArrayVisitor();
-    program.traverse(visitor);
-    ChangeList changes = visitor.getChangeList();
-    if (!changes.empty()) {
-      changes.apply();
-    }
+  public static void exec(JProgram program) {
+    new ArrayNormalizer(program).execImpl();
   }
+
+  private final JMethod setCheckMethod;
+
+  private final JMethod initDims;
+
+  private final JMethod initValues;
 
   private final JProgram program;
 
@@ -199,8 +210,13 @@ public class ArrayNormalizer {
     initValues = program.getSpecialMethod("Array.initValues");
   }
 
-  public static void exec(JProgram program) {
-    new ArrayNormalizer(program).execImpl();
+  private void execImpl() {
+    ArrayVisitor visitor = new ArrayVisitor();
+    program.traverse(visitor);
+    ChangeList changes = visitor.getChangeList();
+    if (!changes.empty()) {
+      changes.apply();
+    }
   }
 
 }

@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.JBlock;
@@ -27,35 +41,15 @@ import java.util.List;
  */
 public class CatchBlockNormalizer {
 
-  private JMethod fCurrentMethod;
-  private final List/*<JLocal>*/ fTempLocals = new ArrayList/*<JLocal>*/();
-  private int fLocalIndex;
-
-  private void clearLocals() {
-    fTempLocals.clear();
-    fLocalIndex = 0;
-  }
-
-  private void pushTempLocal() {
-    if (fLocalIndex == fTempLocals.size()) {
-      JLocal newTemp = program.createLocal(("$e" + fLocalIndex).toCharArray(),
-        program.getTypeJavaLangObject(), false, fCurrentMethod);
-      fTempLocals.add(newTemp);
-    }
-    ++fLocalIndex;
-  }
-
-  private JLocal popTempLocal() {
-    return (JLocal) fTempLocals.get(--fLocalIndex);
-  }
-
   private class CollapseCatchBlocks extends JVisitor {
 
     private final ChangeList changeList = new ChangeList(
-      "Collapse all multi-catch blocks into a single catch block.");
+        "Collapse all multi-catch blocks into a single catch block.");
 
-    public ChangeList getChangeList() {
-      return changeList;
+    // @Override
+    public void endVisit(JMethod x) {
+      clearLocals();
+      currentMethod = null;
     }
 
     // @Override
@@ -65,7 +59,7 @@ public class CatchBlockNormalizer {
       }
 
       ChangeList myChangeList = new ChangeList("Merge " + x.catchBlocks.size()
-        + " catch blocks.");
+          + " catch blocks.");
       JLocal exObj = popTempLocal();
       JLocalRef exRef = new JLocalRef(program, exObj);
       JBlock newCatchBlock = new JBlock(program);
@@ -104,6 +98,17 @@ public class CatchBlockNormalizer {
       changeList.add(myChangeList);
     }
 
+    public ChangeList getChangeList() {
+      return changeList;
+    }
+
+    // @Override
+    public boolean visit(JMethod x) {
+      currentMethod = x;
+      clearLocals();
+      return true;
+    }
+
     // @Override
     public boolean visit(JTryStatement x) {
       if (!x.catchBlocks.isEmpty()) {
@@ -111,19 +116,27 @@ public class CatchBlockNormalizer {
       }
       return true;
     }
+  }
 
-    // @Override
-    public void endVisit(JMethod x) {
-      clearLocals();
-      fCurrentMethod = null;
-    }
+  public static void exec(JProgram program) {
+    new CatchBlockNormalizer(program).execImpl();
+  }
 
-    // @Override
-    public boolean visit(JMethod x) {
-      fCurrentMethod = x;
-      clearLocals();
-      return true;
-    }
+  private JMethod currentMethod;
+
+  private final List/* <JLocal> */tempLocals = new ArrayList/* <JLocal> */();
+
+  private int localIndex;
+
+  private final JProgram program;
+
+  private CatchBlockNormalizer(JProgram program) {
+    this.program = program;
+  }
+
+  private void clearLocals() {
+    tempLocals.clear();
+    localIndex = 0;
   }
 
   private void execImpl() {
@@ -137,14 +150,17 @@ public class CatchBlockNormalizer {
     }
   }
 
-  private final JProgram program;
-
-  private CatchBlockNormalizer(JProgram program) {
-    this.program = program;
+  private JLocal popTempLocal() {
+    return (JLocal) tempLocals.get(--localIndex);
   }
 
-  public static void exec(JProgram program) {
-    new CatchBlockNormalizer(program).execImpl();
+  private void pushTempLocal() {
+    if (localIndex == tempLocals.size()) {
+      JLocal newTemp = program.createLocal(("$e" + localIndex).toCharArray(),
+          program.getTypeJavaLangObject(), false, currentMethod);
+      tempLocals.add(newTemp);
+    }
+    ++localIndex;
   }
 
 }

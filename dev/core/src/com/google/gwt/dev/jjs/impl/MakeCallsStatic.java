@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.JClassType;
@@ -37,8 +51,6 @@ import java.util.Map;
  */
 public class MakeCallsStatic {
 
-  private final JProgram program;
-
   /**
    * For any instance methods that are called in a non-polymorphic manner, move
    * the contents of the method to a static method, and have the instance method
@@ -48,11 +60,7 @@ public class MakeCallsStatic {
   private class CreateStaticMethodVisitor extends JVisitor {
 
     private final ChangeList changeList = new ChangeList(
-      "Create static impls for instance methods");
-
-    public ChangeList getChangeList() {
-      return changeList;
-    }
+        "Create static impls for instance methods");
 
     // @Override
     public void endVisit(JMethodCall x, Mutator m) {
@@ -92,36 +100,37 @@ public class MakeCallsStatic {
        * its enclosing class, which will break iteration.
        */
       JMethod newMethod = new JMethod(program, newName, enclosingType,
-        oldReturnType, false, true, true, oldMethod.isPrivate());
+          oldReturnType, false, true, true, oldMethod.isPrivate());
 
       // Setup all params and locals; map from the old method to the new method
-      JParameter thisParam = program.createParameter("this$static"
-        .toCharArray(), enclosingType, true, newMethod);
+      JParameter thisParam = program.createParameter(
+          "this$static".toCharArray(), enclosingType, true, newMethod);
       Map/* <JVariable, JVariable> */varMap = new IdentityHashMap();
       for (int i = 0; i < oldMethod.params.size(); ++i) {
         JParameter oldVar = (JParameter) oldMethod.params.get(i);
-        JParameter newVar = program.createParameter(oldVar.getName()
-          .toCharArray(), oldVar.getType(), oldVar.isFinal(), newMethod);
+        JParameter newVar = program.createParameter(
+            oldVar.getName().toCharArray(), oldVar.getType(), oldVar.isFinal(),
+            newMethod);
         varMap.put(oldVar, newVar);
       }
-      
+
       newMethod.freezeParamTypes();
       for (int i = 0; i < oldMethod.locals.size(); ++i) {
         JLocal oldVar = (JLocal) oldMethod.locals.get(i);
         JLocal newVar = program.createLocal(oldVar.getName().toCharArray(),
-          oldVar.getType(), oldVar.isFinal(), newMethod);
+            oldVar.getType(), oldVar.isFinal(), newMethod);
         varMap.put(oldVar, newVar);
       }
       ChangeList myChangeList = new ChangeList("Create a new static method '"
-        + newMethod + "' for instance method '" + oldMethod + "'");
+          + newMethod + "' for instance method '" + oldMethod + "'");
       myChangeList.addMethod(newMethod);
       program.putStaticImpl(oldMethod, newMethod);
 
       // rewrite the method body to update all thisRefs to instance refs
       ChangeList subChangeList = new ChangeList(
-        "Update thisrefs as paramrefs; update paramrefs and localrefs to target this method.");
+          "Update thisrefs as paramrefs; update paramrefs and localrefs to target this method.");
       RewriteMethodBody rewriter = new RewriteMethodBody(thisParam, varMap,
-        subChangeList);
+          subChangeList);
       oldMethod.traverse(rewriter);
       myChangeList.add(subChangeList);
 
@@ -144,6 +153,56 @@ public class MakeCallsStatic {
       }
       myChangeList.addStatement(statement, oldMethod.body);
       changeList.add(myChangeList);
+    }
+
+    public ChangeList getChangeList() {
+      return changeList;
+    }
+  }
+
+  /**
+   * For any method calls to methods we updated during
+   * CreateStaticMethodVisitor, go and rewrite the call sites to call the static
+   * method instead.
+   */
+  private class RewriteCallSites extends JVisitor {
+
+    private final ChangeList changeList = new ChangeList(
+        "Rewrite calls to final instance methods as calls to static impl methods.");
+
+    /*
+     * In cases where callers are directly referencing (effectively) final
+     * instance methods, rewrite the call site to reference the newly-generated
+     * static method instead.
+     */
+    // @Override
+    public void endVisit(JMethodCall x, Mutator m) {
+      JMethod oldMethod = x.getTarget();
+      JMethod newMethod = program.getStaticImpl(oldMethod);
+      if (newMethod == null || x.canBePolymorphic()) {
+        return;
+      }
+
+      ChangeList changes = new ChangeList("Replace '" + x
+          + "' with a static call");
+
+      // Update the call site
+      JMethodCall newCall = new JMethodCall(program, null, newMethod);
+      changes.replaceExpression(m, newCall);
+
+      // The qualifier becomes the first arg
+      changes.addExpression(x.instance, newCall.args);
+      // Copy the rest of the args
+      for (int i = 0; i < x.args.size(); ++i) {
+        Mutator arg = x.args.getMutator(i);
+        changes.addExpression(arg, newCall.args);
+      }
+
+      changeList.add(changes);
+    }
+
+    public ChangeList getChangeList() {
+      return changeList;
     }
   }
 
@@ -185,50 +244,14 @@ public class MakeCallsStatic {
     }
   }
 
-  /**
-   * For any method calls to methods we updated during
-   * CreateStaticMethodVisitor, go and rewrite the call sites to call the static
-   * method instead.
-   */
-  private class RewriteCallSites extends JVisitor {
+  public static boolean exec(JProgram program) {
+    return new MakeCallsStatic(program).execImpl();
+  }
 
-    private final ChangeList changeList = new ChangeList(
-      "Rewrite calls to final instance methods as calls to static impl methods.");
+  private final JProgram program;
 
-    public ChangeList getChangeList() {
-      return changeList;
-    }
-
-    /*
-     * In cases where callers are directly referencing (effectively) final
-     * instance methods, rewrite the call site to reference the newly-generated
-     * static method instead.
-     */
-    // @Override
-    public void endVisit(JMethodCall x, Mutator m) {
-      JMethod oldMethod = x.getTarget();
-      JMethod newMethod = program.getStaticImpl(oldMethod);
-      if (newMethod == null || x.canBePolymorphic()) {
-        return;
-      }
-
-      ChangeList changes = new ChangeList("Replace '" + x
-        + "' with a static call");
-
-      // Update the call site
-      JMethodCall newCall = new JMethodCall(program, null, newMethod);
-      changes.replaceExpression(m, newCall);
-
-      // The qualifier becomes the first arg
-      changes.addExpression(x.instance, newCall.args);
-      // Copy the rest of the args
-      for (int i = 0; i < x.args.size(); ++i) {
-        Mutator arg = x.args.getMutator(i);
-        changes.addExpression(arg, newCall.args);
-      }
-
-      changeList.add(changes);
-    }
+  private MakeCallsStatic(JProgram program) {
+    this.program = program;
   }
 
   private boolean execImpl() {
@@ -251,14 +274,6 @@ public class MakeCallsStatic {
     }
 
     return true;
-  }
-
-  private MakeCallsStatic(JProgram program) {
-    this.program = program;
-  }
-
-  public static boolean exec(JProgram program) {
-    return new MakeCallsStatic(program).execImpl();
   }
 
 }

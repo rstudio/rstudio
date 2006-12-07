@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.JArrayType;
@@ -25,19 +39,13 @@ import com.google.gwt.dev.jjs.ast.change.ChangeList;
  */
 public class MethodCallTightener {
 
-  private final JProgram program;
-
   /**
-   * Updates polymorphic method calls to tighter bindings based on the type of 
+   * Updates polymorphic method calls to tighter bindings based on the type of
    * the qualifier.
    */
   public class MethodCallTighteningVisitor extends JVisitor {
     private final ChangeList changeList = new ChangeList(
-      "Update polymorphic method calls to tighter bindings based on the type of the qualifier.");
-
-    public ChangeList getChangeList() {
-      return changeList;
-    }
+        "Update polymorphic method calls to tighter bindings based on the type of the qualifier.");
 
     // @Override
     public void endVisit(JMethodCall x, Mutator m) {
@@ -53,7 +61,7 @@ public class MethodCallTightener {
       JReferenceType enclosingType = method.getEnclosingType();
 
       if (instanceType == enclosingType
-        || instanceType instanceof JInterfaceType) {
+          || instanceType instanceof JInterfaceType) {
         // This method call is as tight as it can be for the type of the
         // qualifier
         return;
@@ -78,7 +86,7 @@ public class MethodCallTightener {
       JMethod foundMethod = null;
       JClassType type;
       outer : for (type = (JClassType) instanceType; type != null
-        && type != enclosingType; type = type.extnds) {
+          && type != enclosingType; type = type.extnds) {
         for (int i = 0; i < type.methods.size(); ++i) {
           JMethod methodIt = (JMethod) type.methods.get(i);
           if (JProgram.methodsDoMatch(method, methodIt)) {
@@ -93,8 +101,8 @@ public class MethodCallTightener {
       }
 
       ChangeList changes = new ChangeList("Replace call '" + x + "' to type '"
-        + enclosingType + "' with a call to type '"
-        + foundMethod.getEnclosingType() + "'");
+          + enclosingType + "' with a call to type '"
+          + foundMethod.getEnclosingType() + "'");
 
       // Update the call site
       JMethodCall call = new JMethodCall(program, null, foundMethod);
@@ -114,7 +122,17 @@ public class MethodCallTightener {
 
       return;
     }
+
+    public ChangeList getChangeList() {
+      return changeList;
+    }
   }
+
+  public static boolean exec(JProgram program) {
+    return new MethodCallTightener(program).execImpl();
+  }
+
+  private final JProgram program;
 
   private MethodCallTightener(JProgram program) {
     this.program = program;
@@ -127,13 +145,9 @@ public class MethodCallTightener {
     if (changes.empty()) {
       return false;
     }
-    
+
     changes.apply();
     return true;
-  }
-
-  public static boolean exec(JProgram program) {
-    return new MethodCallTightener(program).execImpl();
   }
 
 }

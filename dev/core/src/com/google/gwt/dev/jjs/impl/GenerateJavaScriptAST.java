@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
@@ -126,11 +140,13 @@ import java.util.Set;
 import java.util.Stack;
 
 /**
- * Creates a JavaScript AST  from a <code>JProgram</code> node.
+ * Creates a JavaScript AST from a <code>JProgram</code> node.
  */
 public class GenerateJavaScriptAST {
 
   private class CreateNamesAndScopesVisitor extends JVisitor {
+
+    private final Stack/* <JsScope> */scopeStack = new Stack();
 
     // @Override
     public void endVisit(JClassType x) {
@@ -142,7 +158,7 @@ public class GenerateJavaScriptAST {
       String name = x.getName();
       String mangleName = mangleName(x);
       if (x.isStatic()) {
-        names.put(x, fRootScope.createUniqueObfuscatableName(mangleName, name));
+        names.put(x, rootScope.createUniqueObfuscatableName(mangleName, name));
       } else {
         names.put(x, peek().createUniqueObfuscatableName(mangleName, name));
       }
@@ -183,16 +199,16 @@ public class GenerateJavaScriptAST {
     public void endVisit(JProgram x) {
       // visit special things that may have been culled
       JField field = x.getSpecialField("Object.typeId");
-      names.put(field, fObjectScope.getOrCreateObfuscatableName(
-        mangleName(field), field.getName()));
+      names.put(field, objectScope.getOrCreateObfuscatableName(
+          mangleName(field), field.getName()));
 
       field = x.getSpecialField("Object.typeName");
       names.put(field,
-        fObjectScope.getOrCreateObfuscatableName(mangleName(field)));
+          objectScope.getOrCreateObfuscatableName(mangleName(field)));
 
       field = x.getSpecialField("Cast.typeIdArray");
-      names.put(field, fRootScope.getOrCreateObfuscatableName(
-        mangleName(field), field.getName()));
+      names.put(field, rootScope.getOrCreateObfuscatableName(mangleName(field),
+          field.getName()));
 
       /*
        * put the null method and field into fObjectScope since they can be
@@ -200,17 +216,17 @@ public class GenerateJavaScriptAST {
        */
       JMethod nullMethod = x.getNullMethod();
       polymorphicNames.put(nullMethod,
-        fObjectScope.createUniqueObfuscatableName(nullMethod.getName()));
+          objectScope.createUniqueObfuscatableName(nullMethod.getName()));
       JField nullField = x.getNullField();
-      JsName nullFieldName = fObjectScope.createUniqueObfuscatableName(nullField.getName());
+      JsName nullFieldName = objectScope.createUniqueObfuscatableName(nullField.getName());
       polymorphicNames.put(nullField, nullFieldName);
       names.put(nullField, nullFieldName);
 
       /*
        * put nullMethod in the global scope, too; it's the replacer for clinits
        */
-      fNullMethodName = fRootScope.createUniqueObfuscatableName(nullMethod.getName());
-      names.put(nullMethod, fNullMethodName);
+      nullMethodName = rootScope.createUniqueObfuscatableName(nullMethod.getName());
+      names.put(nullMethod, nullMethodName);
     }
 
     // @Override
@@ -228,12 +244,12 @@ public class GenerateJavaScriptAST {
       }
 
       // My seed function name
-      names.put(x, fRootScope.createUniqueObfuscatableName(getNameString(x),
-        x.getShortName()));
+      names.put(x, rootScope.createUniqueObfuscatableName(getNameString(x),
+          x.getShortName()));
 
       // My class scope
       if (x.extnds == null) {
-        myScope = fObjectScope;
+        myScope = objectScope;
       } else {
         JsScope parentScope = (JsScope) classScopes.get(x.extnds);
         // Run my superclass first!
@@ -247,8 +263,8 @@ public class GenerateJavaScriptAST {
          * of its subclasses; this ensures that interface method names trump all
          * (except Object methods names)
          */
-        if (parentScope == fObjectScope) {
-          parentScope = fInterfaceScope;
+        if (parentScope == objectScope) {
+          parentScope = interfaceScope;
         }
         myScope = new JsScope(parentScope);
         myScope.setDescription("class " + x.getShortName());
@@ -262,7 +278,7 @@ public class GenerateJavaScriptAST {
     // @Override
     public boolean visit(JInterfaceType x) {
       // interfaces have no name at run time
-      push(fInterfaceScope);
+      push(interfaceScope);
       return true;
     }
 
@@ -274,8 +290,8 @@ public class GenerateJavaScriptAST {
       if (!x.isStatic()) {
         if (getPolyName(x) == null) {
           String mangleName = mangleNameForPoly(x);
-          JsName polyName = fInterfaceScope.getOrCreateObfuscatableName(
-            mangleName, name);
+          JsName polyName = interfaceScope.getOrCreateObfuscatableName(
+              mangleName, name);
           polymorphicNames.put(x, polyName);
         }
       }
@@ -289,15 +305,15 @@ public class GenerateJavaScriptAST {
       // my global name
       JsName globalName;
       if (x.getEnclosingType() == null) {
-        globalName = fRootScope.createUniqueObfuscatableName(name);
+        globalName = rootScope.createUniqueObfuscatableName(name);
       } else {
         String mangleName = mangleNameForGlobal(x);
-        globalName = fRootScope.createUniqueObfuscatableName(mangleName, name);
+        globalName = rootScope.createUniqueObfuscatableName(mangleName, name);
       }
       names.put(x, globalName);
 
       // create my peer JsFunction
-      JsFunction jsFunction = new JsFunction(fRootScope, globalName);
+      JsFunction jsFunction = new JsFunction(rootScope, globalName);
       methodMap.put(x, jsFunction);
 
       push(jsFunction.getScope());
@@ -311,15 +327,15 @@ public class GenerateJavaScriptAST {
       if (!x.isStatic()) {
         if (getPolyName(x) == null) {
           String mangleName = mangleNameForPoly(x);
-          JsName polyName = fInterfaceScope.getOrCreateObfuscatableName(
-            mangleName, name);
+          JsName polyName = interfaceScope.getOrCreateObfuscatableName(
+              mangleName, name);
           polymorphicNames.put(x, polyName);
         }
       }
 
       // set my global name now that we have a name allocator
       String fnName = mangleNameForGlobal(x);
-      JsName globalName = fRootScope.createUniqueObfuscatableName(fnName, name);
+      JsName globalName = rootScope.createUniqueObfuscatableName(fnName, name);
       x.getFunc().setName(globalName);
       names.put(x, globalName);
 
@@ -337,11 +353,21 @@ public class GenerateJavaScriptAST {
     private void push(JsScope scope) {
       scopeStack.push(scope);
     }
-
-    private final Stack/* <JsScope> */scopeStack = new Stack();
   }
-  
+
   private class GenerateJavaScriptVisitor extends JVisitor {
+
+    private final Set/* <JClassType> */alreadyRan = new HashSet/* <JClassType> */();
+
+    private JMethod currentMethod = null;
+
+    private final JsName globalTemp = rootScope.getOrCreateUnobfuscatableName("_");
+
+    private final JsName prototype = objectScope.getOrCreateUnobfuscatableName("prototype");
+
+    private final JsName window = rootScope.getOrCreateUnobfuscatableName("window");
+
+    private final Stack/* <JsNode> */nodeStack = new Stack/* <JsNode> */();
 
     // @Override
     public void endVisit(JAbsentArrayDimension x, Mutator m) {
@@ -377,12 +403,12 @@ public class GenerateJavaScriptAST {
        * when Object.toString() == 'some string'.
        */
       if (myOp == JsBinaryOperator.EQ
-        && x.getLhs().getType() instanceof JReferenceType
-        && x.getRhs().getType() instanceof JReferenceType) {
+          && x.getLhs().getType() instanceof JReferenceType
+          && x.getRhs().getType() instanceof JReferenceType) {
         myOp = JsBinaryOperator.REF_EQ;
       } else if (myOp == JsBinaryOperator.NEQ
-        && x.getLhs().getType() instanceof JReferenceType
-        && x.getRhs().getType() instanceof JReferenceType) {
+          && x.getLhs().getType() instanceof JReferenceType
+          && x.getRhs().getType() instanceof JReferenceType) {
         myOp = JsBinaryOperator.REF_NEQ;
       }
       JsBinaryOperation binOp = new JsBinaryOperation(myOp, lhs, rhs);
@@ -444,7 +470,7 @@ public class GenerateJavaScriptAST {
     public void endVisit(JClassLiteral x, Mutator m) {
       // My seed function name
       String nameString = x.refType.getJavahSignatureName() + "_classlit";
-      JsName classLit = fRootScope.getOrCreateObfuscatableName(nameString);
+      JsName classLit = rootScope.getOrCreateObfuscatableName(nameString);
       classLits.put(x.refType, classLit);
       push(classLit.makeRef());
     }
@@ -456,11 +482,11 @@ public class GenerateJavaScriptAST {
 
     // @Override
     public void endVisit(JClassType x) {
-      if (fAlreadyRan.contains(x)) {
+      if (alreadyRan.contains(x)) {
         return;
       }
 
-      fAlreadyRan.add(x);
+      alreadyRan.add(x);
 
       List/* <JsFunction> */jsFuncs = popList(x.methods.size()); // methods
       List/* <JsStatement> */jsFields = popList(x.fields.size()); // fields
@@ -486,13 +512,13 @@ public class GenerateJavaScriptAST {
           JsName seedFuncName = getName(x);
 
           // seed function
-          JsFunction seedFunc = new JsFunction(fRootScope, seedFuncName);
+          JsFunction seedFunc = new JsFunction(rootScope, seedFuncName);
           JsBlock body = new JsBlock();
           seedFunc.setBody(body);
           globalStmts.add(seedFunc.makeStmt());
 
           // prototype
-          JsNameRef lhs = fPrototype.makeRef();
+          JsNameRef lhs = prototype.makeRef();
           lhs.setQualifier(seedFuncName.makeRef());
           JsExpression rhs;
           if (x.extnds != null) {
@@ -503,17 +529,16 @@ public class GenerateJavaScriptAST {
             rhs = new JsObjectLiteral();
           }
           JsExpression protoAsg = createAssignment(lhs, rhs);
-          JsExpression tmpAsg = createAssignment(fGlobalTemp.makeRef(),
-            protoAsg);
+          JsExpression tmpAsg = createAssignment(globalTemp.makeRef(), protoAsg);
           globalStmts.add(tmpAsg.makeStmt());
         } else {
           /*
            * MAGIC: java.lang.String is implemented as a JavaScript String
            * primitive with a modified prototype.
            */
-          JsNameRef rhs = fPrototype.makeRef();
-          rhs.setQualifier(fRootScope.getOrCreateUnobfuscatableName("String").makeRef());
-          JsExpression tmpAsg = createAssignment(fGlobalTemp.makeRef(), rhs);
+          JsNameRef rhs = prototype.makeRef();
+          rhs.setQualifier(rootScope.getOrCreateUnobfuscatableName("String").makeRef());
+          JsExpression tmpAsg = createAssignment(globalTemp.makeRef(), rhs);
           globalStmts.add(tmpAsg.makeStmt());
         }
 
@@ -522,7 +547,7 @@ public class GenerateJavaScriptAST {
           JMethod method = (JMethod) x.methods.get(i);
           if (!method.isStatic() && !method.isAbstract()) {
             JsNameRef lhs = getPolyName(method).makeRef();
-            lhs.setQualifier(fGlobalTemp.makeRef());
+            lhs.setQualifier(globalTemp.makeRef());
             JsNameRef rhs = getName(method).makeRef();
             JsExpression asg = createAssignment(lhs, rhs);
             globalStmts.add(new JsExprStmt(asg));
@@ -536,9 +561,9 @@ public class GenerateJavaScriptAST {
             // _.toString = function(){return this.java_lang_Object_toString();}
 
             // lhs
-            JsName lhsName = fRootScope.getOrCreateUnobfuscatableName("toString");
+            JsName lhsName = rootScope.getOrCreateUnobfuscatableName("toString");
             JsNameRef lhs = lhsName.makeRef();
-            lhs.setQualifier(fGlobalTemp.makeRef());
+            lhs.setQualifier(globalTemp.makeRef());
 
             // rhs
             JsInvocation call = new JsInvocation();
@@ -546,7 +571,7 @@ public class GenerateJavaScriptAST {
             toStringRef.setQualifier(new JsThisRef());
             call.setQualifier(toStringRef);
             JsReturn jsReturn = new JsReturn(call);
-            JsFunction rhs = new JsFunction(fRootScope);
+            JsFunction rhs = new JsFunction(rootScope);
             JsBlock body = new JsBlock();
             body.getStatements().add(jsReturn);
             rhs.setBody(body);
@@ -561,7 +586,7 @@ public class GenerateJavaScriptAST {
         {
           JField typeIdField = program.getSpecialField("Object.typeName");
           JsNameRef lhs = getName(typeIdField).makeRef();
-          lhs.setQualifier(fGlobalTemp.makeRef());
+          lhs.setQualifier(globalTemp.makeRef());
           JsStringLiteral rhs = jsProgram.getStringLiteral(x.getName());
           JsExpression asg = createAssignment(lhs, rhs);
           globalStmts.add(new JsExprStmt(asg));
@@ -572,7 +597,7 @@ public class GenerateJavaScriptAST {
         if (typeId >= 0) {
           JField typeIdField = program.getSpecialField("Object.typeId");
           JsNameRef fieldRef = getName(typeIdField).makeRef();
-          fieldRef.setQualifier(fGlobalTemp.makeRef());
+          fieldRef.setQualifier(globalTemp.makeRef());
           JsIntegralLiteral typeIdLit = jsProgram.getIntegralLiteral(BigInteger.valueOf(typeId));
           JsExpression asg = createAssignment(fieldRef, typeIdLit);
           globalStmts.add(new JsExprStmt(asg));
@@ -645,10 +670,10 @@ public class GenerateJavaScriptAST {
       } else {
         x.getType().getDefaultValue().traverse(this);
       }
-      
+
       JsNameRef fieldRef = getName(x).makeRef();
       if (!x.isStatic()) {
-        fieldRef.setQualifier(fGlobalTemp.makeRef());
+        fieldRef.setQualifier(globalTemp.makeRef());
       }
       JsExpression asg = createAssignment(fieldRef, (JsExpression) pop());
       push(new JsExprStmt(asg));
@@ -663,13 +688,13 @@ public class GenerateJavaScriptAST {
       if (x.getInstance() != null) {
         qualifier = (JsExpression) pop();
       }
-      
+
       JField field = x.getField();
       JsInvocation jsInvocation = maybeCreateClinitCall(field);
       if (jsInvocation != null) {
         qualifier = createCommaExpression(qualifier, jsInvocation);
       }
-      
+
       nameRef.setQualifier(qualifier); // instance
       push(nameRef);
     }
@@ -705,7 +730,7 @@ public class GenerateJavaScriptAST {
       if (x.getTestExpr() != null) {
         jsFor.setCondition((JsExpression) pop());
       }
-      
+
       // initializers
       JsExpression initExpr = null;
       List/* <JsExprStmt> */initStmts = popList(x.getInitializers().size());
@@ -803,7 +828,7 @@ public class GenerateJavaScriptAST {
       JsNameRef localRef = (JsNameRef) pop(); // localRef
 
       JsBinaryOperation binOp = new JsBinaryOperation(JsBinaryOperator.ASG,
-        localRef, initializer);
+          localRef, initializer);
 
       push(binOp.makeStmt());
     }
@@ -855,7 +880,7 @@ public class GenerateJavaScriptAST {
       }
 
       push(jsFunc);
-      fCurrentMethod = null;
+      currentMethod = null;
     }
 
     // @Override
@@ -922,13 +947,13 @@ public class GenerateJavaScriptAST {
     // @Override
     public void endVisit(JPostfixOperation x, Mutator m) {
       push(new JsPostfixOperation(JavaToJsOperatorMap.get(x.op),
-        (JsExpression) pop())); // arg
+          (JsExpression) pop())); // arg
     }
 
     // @Override
     public void endVisit(JPrefixOperation x, Mutator m) {
       push(new JsPrefixOperation(JavaToJsOperatorMap.get(x.op),
-        (JsExpression) pop())); // arg
+          (JsExpression) pop())); // arg
     }
 
     // @Override
@@ -960,9 +985,9 @@ public class GenerateJavaScriptAST {
        * }
        * </pre>
        */
-      JsFunction gwtOnLoad = new JsFunction(fRootScope);
+      JsFunction gwtOnLoad = new JsFunction(rootScope);
       globalStmts.add(gwtOnLoad.makeStmt());
-      gwtOnLoad.setName(fRootScope.getOrCreateUnobfuscatableName("gwtOnLoad"));
+      gwtOnLoad.setName(rootScope.getOrCreateUnobfuscatableName("gwtOnLoad"));
       JsBlock body = new JsBlock();
       gwtOnLoad.setBody(body);
       JsScope fnScope = gwtOnLoad.getScope();
@@ -1071,7 +1096,7 @@ public class GenerateJavaScriptAST {
                 if (jsName == null) {
                   // this can occur when JSNI references an instance method on a
                   // type that was never actually instantiated.
-                  jsName = fNullMethodName;
+                  jsName = nullMethodName;
                 }
                 x.setName(jsName);
               }
@@ -1086,7 +1111,7 @@ public class GenerateJavaScriptAST {
       }
 
       push(jsFunc);
-      fCurrentMethod = null;
+      currentMethod = null;
     }
 
     // @Override
@@ -1162,13 +1187,13 @@ public class GenerateJavaScriptAST {
 
     // @Override
     public boolean visit(JClassType x) {
-      if (fAlreadyRan.contains(x)) {
+      if (alreadyRan.contains(x)) {
         return false;
       }
 
       // force supertype to generate code first, this is required for prototype
       // chaining to work properly
-      if (x.extnds != null && !fAlreadyRan.contains(x)) {
+      if (x.extnds != null && !alreadyRan.contains(x)) {
         x.extnds.traverse(this);
       }
 
@@ -1177,7 +1202,7 @@ public class GenerateJavaScriptAST {
 
     // @Override
     public boolean visit(JMethod x) {
-      fCurrentMethod = x;
+      currentMethod = x;
       return true;
     }
 
@@ -1185,10 +1210,10 @@ public class GenerateJavaScriptAST {
     public boolean visit(JProgram x) {
       // handle null method
       // return 'window' so that fields can be referenced
-      JsReturn jsReturn = new JsReturn(fWindow.makeRef());
+      JsReturn jsReturn = new JsReturn(window.makeRef());
       JsBlock body = new JsBlock();
       body.getStatements().add(jsReturn);
-      JsFunction nullFunc = new JsFunction(fRootScope, fNullMethodName);
+      JsFunction nullFunc = new JsFunction(rootScope, nullMethodName);
       nullFunc.setBody(body);
       jsProgram.getGlobalBlock().getStatements().add(nullFunc.makeStmt());
       return true;
@@ -1196,7 +1221,7 @@ public class GenerateJavaScriptAST {
 
     // @Override
     public boolean visit(JsniMethod x) {
-      fCurrentMethod = x;
+      currentMethod = x;
       return false;
     }
 
@@ -1253,11 +1278,11 @@ public class GenerateJavaScriptAST {
     private void handleClinit(JsFunction clinitFunc) {
       // self-assign to the null func immediately (to prevent reentrancy)
       JsExpression asg = createAssignment(clinitFunc.getName().makeRef(),
-        fNullMethodName.makeRef());
+          nullMethodName.makeRef());
       clinitFunc.getBody().getStatements().add(0, asg.makeStmt());
 
       // return 'window' so that fields can be referenced
-      JsReturn jsReturn = new JsReturn(fWindow.makeRef());
+      JsReturn jsReturn = new JsReturn(window.makeRef());
       clinitFunc.getBody().getStatements().add(jsReturn);
     }
 
@@ -1265,13 +1290,13 @@ public class GenerateJavaScriptAST {
       if (!x.isStatic()) {
         return null;
       }
-      
+
       JReferenceType enclosingType = x.getEnclosingType();
       if (!typeOracle.hasClinit(enclosingType)) {
         return null;
       }
       // don't need to clinit on my own static fields
-      if (enclosingType == fCurrentMethod.getEnclosingType()) {
+      if (enclosingType == currentMethod.getEnclosingType()) {
         return null;
       }
       JMethod clinitMethod = (JMethod) enclosingType.methods.get(0);
@@ -1284,17 +1309,17 @@ public class GenerateJavaScriptAST {
       if (!x.isStatic()) {
         return null;
       }
-      
+
       JReferenceType enclosingType = x.getEnclosingType();
       if (!typeOracle.hasClinit(enclosingType)) {
         return null;
       }
-      
+
       // avoid recursion sickness
       if (x == enclosingType.methods.get(0)) {
         return null;
       }
-      
+
       if (program.isStaticImpl(x)) {
         return null;
       }
@@ -1314,7 +1339,7 @@ public class GenerateJavaScriptAST {
       while (count > 0) {
         array[--count] = pop();
       }
-      
+
       List/* <T> */list = new ArrayList/* <T> */();
       for (int i = 0; i < array.length; i++) {
         JsNode item = array[i];
@@ -1330,7 +1355,7 @@ public class GenerateJavaScriptAST {
       while (count > 0) {
         array[--count] = pop();
       }
-      
+
       for (int i = 0; i < array.length; i++) {
         JsNode item = array[i];
         if (item != null) {
@@ -1342,31 +1367,11 @@ public class GenerateJavaScriptAST {
     private void push(JsNode node) {
       nodeStack.push(node);
     }
-
-    private final Set/* <JClassType> */fAlreadyRan = new HashSet/* <JClassType> */();
-
-    private JMethod fCurrentMethod = null;
-
-    private final JsName fGlobalTemp = fRootScope.getOrCreateUnobfuscatableName("_");
-
-    private final JsName fPrototype = fObjectScope.getOrCreateUnobfuscatableName("prototype");
-
-    private final JsName fWindow = fRootScope.getOrCreateUnobfuscatableName("window");
-
-    private final Stack/* <JsNode> */nodeStack = new Stack/* <JsNode> */();
   }
-  
+
   private static class JavaToJsOperatorMap {
     private static final Map/* <JBinaryOperator, JsBinaryOperator> */bOpMap = new IdentityHashMap();
     private static final Map/* <JUnaryOperator, JsUnaryOperator> */uOpMap = new IdentityHashMap();
-
-    public static JsBinaryOperator get(JBinaryOperator op) {
-      return (JsBinaryOperator) bOpMap.get(op);
-    }
-
-    public static JsUnaryOperator get(JUnaryOperator op) {
-      return (JsUnaryOperator) uOpMap.get(op);
-    }
 
     static {
       bOpMap.put(JBinaryOperator.MUL, JsBinaryOperator.MUL);
@@ -1407,23 +1412,52 @@ public class GenerateJavaScriptAST {
       uOpMap.put(JUnaryOperator.NOT, JsUnaryOperator.NOT);
       uOpMap.put(JUnaryOperator.BIT_NOT, JsUnaryOperator.BIT_NOT);
     }
+
+    public static JsBinaryOperator get(JBinaryOperator op) {
+      return (JsBinaryOperator) bOpMap.get(op);
+    }
+
+    public static JsUnaryOperator get(JUnaryOperator op) {
+      return (JsUnaryOperator) uOpMap.get(op);
+    }
   }
 
   public static void exec(JProgram program, JsProgram jsProgram) {
     GenerateJavaScriptAST generateJavaScriptAST = new GenerateJavaScriptAST(
-      program, jsProgram);
+        program, jsProgram);
     generateJavaScriptAST.execImpl();
   }
+
+  private final Map/* <JType, JsName> */classLits = new IdentityHashMap();
+
+  private final Map/* <JClassType, JsScope> */classScopes = new IdentityHashMap();
+
+  private final JsScope interfaceScope;
+
+  private JsName nullMethodName;
+
+  private final JsScope objectScope;
+
+  private final JsScope rootScope;
+
+  private final JsProgram jsProgram;
+
+  private final Map/* <JMethod, JsFunction> */methodMap = new IdentityHashMap();
+
+  private final Map/* <HasName, JsName> */names = new IdentityHashMap();
+  private final Map/* <JMethod, JsName> */polymorphicNames = new IdentityHashMap();
+  private final JProgram program;
+  private final JTypeOracle typeOracle;
 
   private GenerateJavaScriptAST(JProgram program, JsProgram jsProgram) {
     this.program = program;
     typeOracle = program.typeOracle;
     this.jsProgram = jsProgram;
-    fRootScope = jsProgram.getScope();
-    fObjectScope = new JsScope(fRootScope);
-    fObjectScope.setDescription("Object scope");
-    fInterfaceScope = new JsScope(fObjectScope);
-    fInterfaceScope.setDescription("Interfaces");
+    rootScope = jsProgram.getScope();
+    objectScope = new JsScope(rootScope);
+    objectScope.setDescription("Object scope");
+    interfaceScope = new JsScope(objectScope);
+    interfaceScope.setDescription("Interfaces");
   }
 
   String getNameString(HasName hasName) {
@@ -1438,7 +1472,7 @@ public class GenerateJavaScriptAST {
 
   String mangleNameForGlobal(JMethod x) {
     String s = getNameString(x.getEnclosingType()) + '_' + getNameString(x)
-      + "__";
+        + "__";
     for (int i = 0; i < x.getOriginalParamTypes().size(); ++i) {
       JType type = (JType) x.getOriginalParamTypes().get(i);
       s += type.getJavahSignatureName();
@@ -1469,18 +1503,5 @@ public class GenerateJavaScriptAST {
   private JsName getPolyName(HasName x) {
     return (JsName) polymorphicNames.get(x);
   }
-
-  private final Map/* <JType, JsName> */classLits = new IdentityHashMap();
-  private final Map/* <JClassType, JsScope> */classScopes = new IdentityHashMap();
-  private final JsScope fInterfaceScope;
-  private JsName fNullMethodName;
-  private final JsScope fObjectScope;
-  private final JsScope fRootScope;
-  private final JsProgram jsProgram;
-  private final Map/* <JMethod, JsFunction> */methodMap = new IdentityHashMap();
-  private final Map/* <HasName, JsName> */names = new IdentityHashMap();
-  private final Map/* <JMethod, JsName> */polymorphicNames = new IdentityHashMap();
-  private final JProgram program;
-  private final JTypeOracle typeOracle;
 
 }

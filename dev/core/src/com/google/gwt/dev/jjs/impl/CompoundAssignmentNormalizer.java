@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Holder;
@@ -28,37 +42,89 @@ import java.util.List;
  */
 public class CompoundAssignmentNormalizer {
 
-  private JMethod fCurrentMethod;
-  private final List/*<JLocal>*/ fTempLocals = new ArrayList/*<JLocal>*/();
-  private int fLocalIndex;
-
-  private void clearLocals() {
-    fTempLocals.clear();
-    fLocalIndex = 0;
-  }
-
-  private JLocal getTempLocal() {
-    if (fLocalIndex < fTempLocals.size()) {
-      return (JLocal) fTempLocals.get(fLocalIndex++);
-    }
-    JLocal newTemp = program.createLocal(("$t" + fLocalIndex++).toCharArray(),
-      program.getTypeVoid(), false, fCurrentMethod);
-    fTempLocals.add(newTemp);
-    return newTemp;
-  }
-
-  private class ReplaceSideEffectsInLvalue extends JVisitor {
+  private class BreakupAssignOpsVisitor extends JVisitor {
     private final ChangeList changeList = new ChangeList(
-      "Replace side effects in lvalue.");
+        "Break apart certain complex assignments.");
+
+    // @Override
+    public void endVisit(JBinaryOperation x, Mutator m) {
+      /*
+       * Convert to a normal divide operation so we can cast the result. Since
+       * the left hand size must be computed twice, we have to replace any
+       * left-hand side expressions that could have side effects with
+       * temporaries, so that they are only run once.
+       */
+      if (x.op == JBinaryOperator.ASG_DIV
+          && x.getType() != program.getTypePrimitiveFloat()
+          && x.getType() != program.getTypePrimitiveDouble()) {
+
+        /*
+         * Convert to a normal divide operation so we can cast the result. Since
+         * the left hand size must be computed twice, we have to replace any
+         * left-hand side expressions that could have side effects with
+         * temporaries, so that they are only run once.
+         */
+        final int pushUsedLocals = localIndex;
+        JMultiExpression multi = new JMultiExpression(program);
+        ReplaceSideEffectsInLvalue replacer = new ReplaceSideEffectsInLvalue(
+            multi);
+        x.lhs.traverse(replacer);
+        localIndex = pushUsedLocals;
+
+        JNullLiteral litNull = program.getLiteralNull();
+        JBinaryOperation operation = new JBinaryOperation(program,
+            x.getLhs().getType(), JBinaryOperator.DIV, litNull, litNull);
+        JBinaryOperation asg = new JBinaryOperation(program,
+            x.getLhs().getType(), JBinaryOperator.ASG, litNull, operation);
+
+        ChangeList myChangeList = new ChangeList("Break '" + x
+            + "' into two operations.");
+
+        myChangeList.replaceExpression(operation.lhs, x.lhs);
+        myChangeList.replaceExpression(operation.rhs, x.rhs);
+        myChangeList.replaceExpression(asg.lhs, x.lhs);
+
+        if (replacer.getChangeList().empty()) {
+          myChangeList.replaceExpression(m, asg);
+        } else {
+          myChangeList.add(replacer.getChangeList());
+          myChangeList.addExpression(asg, multi.exprs);
+          myChangeList.replaceExpression(m, multi);
+        }
+
+        changeList.add(myChangeList);
+      }
+    }
+
+    // @Override
+    public void endVisit(JMethod x) {
+      clearLocals();
+      currentMethod = null;
+    }
 
     public ChangeList getChangeList() {
       return changeList;
     }
 
+    // @Override
+    public boolean visit(JMethod x) {
+      currentMethod = x;
+      clearLocals();
+      return true;
+    }
+  }
+  private class ReplaceSideEffectsInLvalue extends JVisitor {
+    private final ChangeList changeList = new ChangeList(
+        "Replace side effects in lvalue.");
+
     private final JMultiExpression multi;
 
     ReplaceSideEffectsInLvalue(JMultiExpression multi) {
       this.multi = multi;
+    }
+
+    public ChangeList getChangeList() {
+      return changeList;
     }
 
     // @Override
@@ -102,7 +168,7 @@ public class CompoundAssignmentNormalizer {
       // Create an assignment for this temp and add it to multi.
       JLocalRef tempRef = new JLocalRef(program, tempLocal);
       JBinaryOperation asg = new JBinaryOperation(program, x.get().getType(),
-        JBinaryOperator.ASG, tempRef, program.getLiteralNull());
+          JBinaryOperator.ASG, tempRef, program.getLiteralNull());
       changeList.replaceExpression(asg.rhs, x);
       changeList.addExpression(asg, multi.exprs);
       // Update me with the temp
@@ -110,76 +176,25 @@ public class CompoundAssignmentNormalizer {
     }
   }
 
-  private class BreakupAssignOpsVisitor extends JVisitor {
-    private final ChangeList changeList = new ChangeList(
-      "Break apart certain complex assignments.");
+  public static void exec(JProgram program) {
+    new CompoundAssignmentNormalizer(program).execImpl();
+  }
 
-    public ChangeList getChangeList() {
-      return changeList;
-    }
+  private JMethod currentMethod;
 
-    // @Override
-    public void endVisit(JBinaryOperation x, Mutator m) {
-      /*
-       * Convert to a normal divide operation so we can cast the result. Since
-       * the left hand size must be computed twice, we have to replace any
-       * left-hand side expressions that could have side effects with
-       * temporaries, so that they are only run once.
-       */
-      if (x.op == JBinaryOperator.ASG_DIV
-        && x.getType() != program.getTypePrimitiveFloat()
-        && x.getType() != program.getTypePrimitiveDouble()) {
+  private final List/* <JLocal> */tempLocals = new ArrayList/* <JLocal> */();
 
-        /*
-         * Convert to a normal divide operation so we can cast the result. Since
-         * the left hand size must be computed twice, we have to replace any
-         * left-hand side expressions that could have side effects with
-         * temporaries, so that they are only run once.
-         */
-        final int pushUsedLocals = fLocalIndex;
-        JMultiExpression multi = new JMultiExpression(program);
-        ReplaceSideEffectsInLvalue replacer = new ReplaceSideEffectsInLvalue(
-          multi);
-        x.lhs.traverse(replacer);
-        fLocalIndex = pushUsedLocals;
+  private int localIndex;
 
-        JNullLiteral litNull = program.getLiteralNull();
-        JBinaryOperation operation = new JBinaryOperation(program, x.getLhs()
-          .getType(), JBinaryOperator.DIV, litNull, litNull);
-        JBinaryOperation asg = new JBinaryOperation(program, x.getLhs()
-          .getType(), JBinaryOperator.ASG, litNull, operation);
+  private final JProgram program;
 
-        ChangeList myChangeList = new ChangeList("Break '" + x
-          + "' into two operations.");
+  private CompoundAssignmentNormalizer(JProgram program) {
+    this.program = program;
+  }
 
-        myChangeList.replaceExpression(operation.lhs, x.lhs);
-        myChangeList.replaceExpression(operation.rhs, x.rhs);
-        myChangeList.replaceExpression(asg.lhs, x.lhs);
-
-        if (replacer.getChangeList().empty()) {
-          myChangeList.replaceExpression(m, asg);
-        } else {
-          myChangeList.add(replacer.getChangeList());
-          myChangeList.addExpression(asg, multi.exprs);
-          myChangeList.replaceExpression(m, multi);
-        }
-
-        changeList.add(myChangeList);
-      }
-    }
-
-    // @Override
-    public void endVisit(JMethod x) {
-      clearLocals();
-      fCurrentMethod = null;
-    }
-
-    // @Override
-    public boolean visit(JMethod x) {
-      fCurrentMethod = x;
-      clearLocals();
-      return true;
-    }
+  private void clearLocals() {
+    tempLocals.clear();
+    localIndex = 0;
   }
 
   private void execImpl() {
@@ -191,14 +206,14 @@ public class CompoundAssignmentNormalizer {
     }
   }
 
-  private final JProgram program;
-
-  private CompoundAssignmentNormalizer(JProgram program) {
-    this.program = program;
-  }
-
-  public static void exec(JProgram program) {
-    new CompoundAssignmentNormalizer(program).execImpl();
+  private JLocal getTempLocal() {
+    if (localIndex < tempLocals.size()) {
+      return (JLocal) tempLocals.get(localIndex++);
+    }
+    JLocal newTemp = program.createLocal(("$t" + localIndex++).toCharArray(),
+        program.getTypeVoid(), false, currentMethod);
+    tempLocals.add(newTemp);
+    return newTemp;
   }
 
 }

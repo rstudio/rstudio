@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.JClassType;
@@ -58,117 +72,6 @@ import java.util.Set;
  */
 public class BuildTypeMap {
 
-  public static TypeDeclaration[] exec(TypeMap typeMap,
-      CompilationUnitDeclaration[] unitDecls, JsProgram jsProgram) {
-    createPeersForTypes(unitDecls, typeMap);
-    return createPeersForNonTypeDecls(unitDecls, typeMap, jsProgram);
-  }
-
-  private static void createPeersForTypes(
-      CompilationUnitDeclaration[] unitDecls, TypeMap typeMap) {
-    // Traverse once to create our JNode peers for each type
-    BuildTypeMapVisitor v1 = new BuildTypeMapVisitor(typeMap);
-    for (int i = 0; i < unitDecls.length; ++i) {
-      unitDecls[i].traverse(v1, unitDecls[i].scope);
-    }
-  }
-
-  private static TypeDeclaration[] createPeersForNonTypeDecls(
-      CompilationUnitDeclaration[] unitDecls, TypeMap typeMap,
-      JsProgram jsProgram) {
-    // Traverse again to create our JNode peers for each method, field,
-    // parameter, and local
-    BuildDeclMapVisitor v2 = new BuildDeclMapVisitor(typeMap, jsProgram);
-    for (int i = 0; i < unitDecls.length; ++i) {
-      unitDecls[i].traverse(v2, unitDecls[i].scope);
-    }
-    return v2.getTypeDeclarataions();
-  }
-
-  /**
-   * Creates JNodes for every type and memorizes the mapping from the JDT
-   * Binding to the corresponding JNode for each created type. Note that since
-   * there could be forward references, it is not possible to set up supertypes;
-   * it must be done is a subsequent pass.
-   */
-  private static class BuildTypeMapVisitor extends ASTVisitor {
-
-    private final TypeMap fTypeMap;
-    private final JProgram fProgram;
-
-    public BuildTypeMapVisitor(TypeMap typeMap) {
-      fTypeMap = typeMap;
-      fProgram = fTypeMap.getProgram();
-    }
-
-    private boolean process(TypeDeclaration typeDeclaration) {
-      char[][] name = typeDeclaration.binding.compoundName;
-      SourceTypeBinding binding = typeDeclaration.binding;
-      if (binding instanceof LocalTypeBinding) {
-        char[] localName = binding.constantPoolName();
-        if (localName == null) {
-          /*
-           * Weird case: if JDT determines that this local class is totally
-           * uninstantiable, it won't bother allocating a local name.
-           */
-          return false;
-        }
-
-        for (int i = 0, c = localName.length; i < c; ++i) {
-          if (localName[i] == '/') {
-            localName[i] = '.';
-          }
-        }
-        name = new char[1][0];
-        name[0] = localName;
-      }
-
-      JReferenceType newType;
-      if (binding.isClass()) {
-        newType = fProgram.createClass(name, binding.isAbstract(),
-          binding.isFinal());
-      } else if (binding.isInterface()) {
-        newType = fProgram.createInterface(name);
-      } else {
-        assert (false);
-        return false;
-      }
-
-      /**
-       * We emulate static initializers and intance initializers as methods. As
-       * in other cases, this gives us: simpler AST, easier to optimize, more
-       * like output JavaScript. Clinit is always in slot 0, init (if it exists)
-       * is always in slot 1.
-       */
-      JMethod clinit = fProgram.createMethod("$clinit".toCharArray(), newType,
-        fProgram.getTypeVoid(), false, true, true, true, false);
-      clinit.freezeParamTypes();
-
-      if (newType instanceof JClassType) {
-        JMethod init = fProgram.createMethod("$init".toCharArray(), newType,
-          fProgram.getTypeVoid(), false, false, true, true, false);
-        init.freezeParamTypes();
-      }
-
-      fTypeMap.put(binding, newType);
-      return true;
-    }
-
-    public boolean visit(TypeDeclaration localTypeDeclaration, BlockScope scope) {
-      assert (localTypeDeclaration.kind() != IGenericType.INTERFACE_DECL);
-      return process(localTypeDeclaration);
-    }
-
-    public boolean visit(TypeDeclaration memberTypeDeclaration, ClassScope scope) {
-      return process(memberTypeDeclaration);
-    }
-
-    public boolean visit(TypeDeclaration typeDeclaration,
-        CompilationUnitScope scope) {
-      return process(typeDeclaration);
-    }
-  }
-
   /**
    * Creates JNodes for every method, field, initializer, parameter, and local
    * and memorizes the mapping from the JDT Binding to the corresponding JNode
@@ -186,55 +89,33 @@ public class BuildTypeMap {
    */
   private static class BuildDeclMapVisitor extends ASTVisitor {
 
-    private ArrayList/* <TypeDeclaration> */fTypeDecls = new ArrayList/* <TypeDeclaration> */();
-    private final TypeMap fTypeMap;
-    private JProgram fProgram;
+    private ArrayList/* <TypeDeclaration> */typeDecls = new ArrayList/* <TypeDeclaration> */();
+    private final TypeMap typeMap;
+    private JProgram program;
     private final JsProgram jsProgram;
     private final JsParser jsParser = new JsParser();
 
     public BuildDeclMapVisitor(TypeMap typeMap, JsProgram jsProgram) {
-      fTypeMap = typeMap;
-      fProgram = fTypeMap.getProgram();
+      this.typeMap = typeMap;
+      program = this.typeMap.getProgram();
       this.jsProgram = jsProgram;
     }
 
     public TypeDeclaration[] getTypeDeclarataions() {
-      return (TypeDeclaration[]) fTypeDecls.toArray(new TypeDeclaration[fTypeDecls.size()]);
-    }
-
-    private void mapParameters(JMethod method, AbstractMethodDeclaration x) {
-      MethodBinding b = x.binding;
-      int paramCount = (b.parameters != null ? b.parameters.length : 0);
-      if (paramCount > 0) {
-        for (int i = 0, n = x.arguments.length; i < n; ++i) {
-          createParameter(x.arguments[i].binding, method);
-        }
-      }
-      method.freezeParamTypes();
-    }
-
-    private void mapThrownExceptions(JMethod method, AbstractMethodDeclaration x) {
-      MethodBinding b = x.binding;
-      if (b.thrownExceptions != null) {
-        for (int i = 0; i < b.thrownExceptions.length; ++i) {
-          ReferenceBinding refBinding = b.thrownExceptions[i];
-          JClassType thrownException = (JClassType) fTypeMap.get(refBinding);
-          method.thrownExceptions.add(thrownException);
-        }
-      }
+      return (TypeDeclaration[]) typeDecls.toArray(new TypeDeclaration[typeDecls.size()]);
     }
 
     public boolean visit(Argument argument, BlockScope scope) {
       if (scope == scope.methodScope()) {
         return true;
       }
-      
+
       LocalVariableBinding b = argument.binding;
-      JType localType = (JType) fTypeMap.get(b.type);
+      JType localType = (JType) typeMap.get(b.type);
       JMethod enclosingMethod = findEnclosingMethod(scope);
-      JLocal newLocal = fProgram.createLocal(argument.name, localType,
-        b.isFinal(), enclosingMethod);
-      fTypeMap.put(b, newLocal);
+      JLocal newLocal = program.createLocal(argument.name, localType,
+          b.isFinal(), enclosingMethod);
+      typeMap.put(b, newLocal);
       return true;
     }
 
@@ -247,10 +128,11 @@ public class BuildTypeMap {
      */
     public boolean visit(ConstructorDeclaration ctorDecl, ClassScope scope) {
       MethodBinding b = ctorDecl.binding;
-      JClassType enclosingType = (JClassType) fTypeMap.get(scope.enclosingSourceType());
+      JClassType enclosingType = (JClassType) typeMap.get(scope.enclosingSourceType());
       String name = enclosingType.getShortName();
-      JMethod newMethod = fProgram.createMethod(name.toCharArray(),
-        enclosingType, enclosingType, false, false, true, b.isPrivate(), false);
+      JMethod newMethod = program.createMethod(name.toCharArray(),
+          enclosingType, enclosingType, false, false, true, b.isPrivate(),
+          false);
       mapThrownExceptions(newMethod, ctorDecl);
 
       int syntheticParamCount = 0;
@@ -271,7 +153,7 @@ public class BuildTypeMap {
             alreadyNamedVariables.add(argName);
           }
         }
-        
+
         if (nestedBinding.outerLocalVariables != null) {
           for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
             SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
@@ -294,48 +176,65 @@ public class BuildTypeMap {
         newMethod.getOriginalParamTypes().remove(0);
       }
 
-      fTypeMap.put(b, newMethod);
+      typeMap.put(b, newMethod);
+      return true;
+    }
+
+    public boolean visit(FieldDeclaration fieldDeclaration, MethodScope scope) {
+      FieldBinding b = fieldDeclaration.binding;
+      JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.enclosingSourceType());
+      createField(b, enclosingType, fieldDeclaration.initialization != null);
+      return true;
+    }
+
+    public boolean visit(LocalDeclaration localDeclaration, BlockScope scope) {
+      LocalVariableBinding b = localDeclaration.binding;
+      JType localType = (JType) typeMap.get(localDeclaration.type.resolvedType);
+      JMethod enclosingMethod = findEnclosingMethod(scope);
+      JLocal newLocal = program.createLocal(localDeclaration.name, localType,
+          b.isFinal(), enclosingMethod);
+      typeMap.put(b, newLocal);
       return true;
     }
 
     public boolean visit(MethodDeclaration methodDeclaration, ClassScope scope) {
       MethodBinding b = methodDeclaration.binding;
-      JType returnType = (JType) fTypeMap.get(methodDeclaration.returnType.resolvedType);
-      JReferenceType enclosingType = (JReferenceType) fTypeMap.get(scope.enclosingSourceType());
-      JMethod newMethod = fProgram.createMethod(methodDeclaration.selector,
-        enclosingType, returnType, b.isAbstract(), b.isStatic(), b.isFinal(),
-        b.isPrivate(), b.isNative());
+      JType returnType = (JType) typeMap.get(methodDeclaration.returnType.resolvedType);
+      JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.enclosingSourceType());
+      JMethod newMethod = program.createMethod(methodDeclaration.selector,
+          enclosingType, returnType, b.isAbstract(), b.isStatic(), b.isFinal(),
+          b.isPrivate(), b.isNative());
 
       mapThrownExceptions(newMethod, methodDeclaration);
       mapParameters(newMethod, methodDeclaration);
-      fTypeMap.put(b, newMethod);
+      typeMap.put(b, newMethod);
 
       if (newMethod.isNative()) {
         // Handle JSNI block
         char[] source = methodDeclaration.compilationResult().getCompilationUnit().getContents();
         String jsniCode = String.valueOf(source, methodDeclaration.bodyStart,
-          methodDeclaration.bodyEnd - methodDeclaration.bodyStart + 1);
+            methodDeclaration.bodyEnd - methodDeclaration.bodyStart + 1);
         int startPos = jsniCode.indexOf("/*-{");
         int endPos = jsniCode.lastIndexOf("}-*/");
         if (startPos < 0 && endPos < 0) {
           GenerateJavaAST.reportJsniError(
-            methodDeclaration,
-            "Native methods require a JavaScript implementation enclosed with /*-{ and }-*/",
-            0);
+              methodDeclaration,
+              "Native methods require a JavaScript implementation enclosed with /*-{ and }-*/",
+              0);
           return true;
         }
         if (startPos < 0) {
           GenerateJavaAST.reportJsniError(
-            methodDeclaration,
-            "Unable to find start of native block; begin your JavaScript block with: /*-{",
-            0);
+              methodDeclaration,
+              "Unable to find start of native block; begin your JavaScript block with: /*-{",
+              0);
           return true;
         }
         if (endPos < 0) {
           GenerateJavaAST.reportJsniError(
-            methodDeclaration,
-            "Unable to find end of native block; terminate your JavaScript block with: }-*/",
-            0);
+              methodDeclaration,
+              "Unable to find end of native block; terminate your JavaScript block with: }-*/",
+              0);
           return true;
         }
 
@@ -368,8 +267,8 @@ public class BuildTypeMap {
           ((JsniMethod) newMethod).setFunc(jsFunction);
         } catch (IOException e) {
           throw new InternalCompilerException(
-            "Internal error parsing JSNI in method '" + newMethod
-              + "' in type '" + enclosingType.getName() + "'", e);
+              "Internal error parsing JSNI in method '" + newMethod
+                  + "' in type '" + enclosingType.getName() + "'", e);
         } catch (JsParserException e) {
 
           /*
@@ -387,10 +286,10 @@ public class BuildTypeMap {
                 if (i + 1 < n && chars[i + 1] == '\n') {
                   ++i;
                 }
-              // intentional fall-through
+                // intentional fall-through
               case '\n':
                 --line;
-              // intentional fall-through
+                // intentional fall-through
               default:
                 ++i;
             }
@@ -406,21 +305,95 @@ public class BuildTypeMap {
       return true;
     }
 
-    public boolean visit(FieldDeclaration fieldDeclaration, MethodScope scope) {
-      FieldBinding b = fieldDeclaration.binding;
-      JReferenceType enclosingType = (JReferenceType) fTypeMap.get(scope.enclosingSourceType());
-      createField(b, enclosingType, fieldDeclaration.initialization != null);
-      return true;
+    public boolean visit(TypeDeclaration localTypeDeclaration, BlockScope scope) {
+      return process(localTypeDeclaration);
     }
 
-    public boolean visit(LocalDeclaration localDeclaration, BlockScope scope) {
-      LocalVariableBinding b = localDeclaration.binding;
-      JType localType = (JType) fTypeMap.get(localDeclaration.type.resolvedType);
-      JMethod enclosingMethod = findEnclosingMethod(scope);
-      JLocal newLocal = fProgram.createLocal(localDeclaration.name, localType,
-        b.isFinal(), enclosingMethod);
-      fTypeMap.put(b, newLocal);
-      return true;
+    public boolean visit(TypeDeclaration memberTypeDeclaration, ClassScope scope) {
+      return process(memberTypeDeclaration);
+    }
+
+    public boolean visit(TypeDeclaration typeDeclaration,
+        CompilationUnitScope scope) {
+      return process(typeDeclaration);
+    }
+
+    private JField createField(FieldBinding binding,
+        JReferenceType enclosingType, boolean hasInitializer) {
+      JType type = (JType) typeMap.get(binding.type);
+      JField field = program.createField(binding.name, enclosingType, type,
+          binding.isStatic(), binding.isFinal(), hasInitializer);
+      typeMap.put(binding, field);
+      return field;
+    }
+
+    private JField createField(SyntheticArgumentBinding binding,
+        JReferenceType enclosingType) {
+      JType type = (JType) typeMap.get(binding.type);
+      JField field = program.createField(binding.name, enclosingType, type,
+          false, true, true);
+      if (binding.matchingField != null) {
+        typeMap.put(binding.matchingField, field);
+      }
+      typeMap.put(binding, field);
+      return field;
+    }
+
+    private JParameter createParameter(LocalVariableBinding binding,
+        JMethod enclosingMethod) {
+      JType type = (JType) typeMap.get(binding.type);
+      JParameter param = program.createParameter(binding.name, type,
+          binding.isFinal(), enclosingMethod);
+      typeMap.put(binding, param);
+      return param;
+    }
+
+    private JParameter createParameter(SyntheticArgumentBinding arg,
+        String argName, JMethod enclosingMethod) {
+      JType type = (JType) typeMap.get(arg.type);
+      JParameter param = program.createParameter(argName.toCharArray(), type,
+          true, enclosingMethod);
+      return param;
+    }
+
+    private JMethod findEnclosingMethod(BlockScope scope) {
+      MethodScope methodScope = scope.methodScope();
+      if (methodScope.isInsideInitializer()) {
+        JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.classScope().referenceContext.binding);
+        if (methodScope.isStatic) {
+          // clinit
+          return (JMethod) enclosingType.methods.get(0);
+        } else {
+          // init
+          assert (enclosingType instanceof JClassType);
+          return (JMethod) enclosingType.methods.get(1);
+        }
+      }
+
+      AbstractMethodDeclaration referenceMethod = methodScope.referenceMethod();
+      return (JMethod) typeMap.get(referenceMethod.binding);
+    }
+
+    private void mapParameters(JMethod method, AbstractMethodDeclaration x) {
+      MethodBinding b = x.binding;
+      int paramCount = (b.parameters != null ? b.parameters.length : 0);
+      if (paramCount > 0) {
+        for (int i = 0, n = x.arguments.length; i < n; ++i) {
+          createParameter(x.arguments[i].binding, method);
+        }
+      }
+      method.freezeParamTypes();
+    }
+
+    private void mapThrownExceptions(JMethod method, AbstractMethodDeclaration x) {
+      MethodBinding b = x.binding;
+      if (b.thrownExceptions != null) {
+        for (int i = 0; i < b.thrownExceptions.length; ++i) {
+          ReferenceBinding refBinding = b.thrownExceptions[i];
+          JClassType thrownException = (JClassType) typeMap.get(refBinding);
+          method.thrownExceptions.add(thrownException);
+        }
+      }
     }
 
     /**
@@ -442,7 +415,7 @@ public class BuildTypeMap {
          */
         return false;
       }
-      JReferenceType type = (JReferenceType) fTypeMap.get(binding);
+      JReferenceType type = (JReferenceType) typeMap.get(binding);
 
       if (binding.isNestedType() && !binding.isStatic()) {
         // add synthentic fields for outer this and locals
@@ -456,7 +429,7 @@ public class BuildTypeMap {
             }
           }
         }
-        
+
         if (nestedBinding.outerLocalVariables != null) {
           for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
             SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
@@ -468,7 +441,7 @@ public class BuildTypeMap {
       ReferenceBinding superClassBinding = binding.superclass();
       if (superClassBinding != null) {
         assert (binding.superclass().isClass());
-        JClassType superClass = (JClassType) fTypeMap.get(superClassBinding);
+        JClassType superClass = (JClassType) typeMap.get(superClassBinding);
         type.extnds = superClass;
       }
 
@@ -476,80 +449,122 @@ public class BuildTypeMap {
       for (int i = 0; i < superInterfaces.length; ++i) {
         ReferenceBinding superInterfaceBinding = superInterfaces[i];
         assert (superInterfaceBinding.isInterface());
-        JInterfaceType superInterface = (JInterfaceType) fTypeMap.get(superInterfaceBinding);
+        JInterfaceType superInterface = (JInterfaceType) typeMap.get(superInterfaceBinding);
         type.implments.add(superInterface);
       }
-      fTypeDecls.add(typeDeclaration);
+      typeDecls.add(typeDeclaration);
       return true;
     }
+  }
 
-    private JField createField(FieldBinding binding,
-        JReferenceType enclosingType, boolean hasInitializer) {
-      JType type = (JType) fTypeMap.get(binding.type);
-      JField field = fProgram.createField(binding.name, enclosingType, type,
-        binding.isStatic(), binding.isFinal(), hasInitializer);
-      fTypeMap.put(binding, field);
-      return field;
+  /**
+   * Creates JNodes for every type and memorizes the mapping from the JDT
+   * Binding to the corresponding JNode for each created type. Note that since
+   * there could be forward references, it is not possible to set up supertypes;
+   * it must be done is a subsequent pass.
+   */
+  private static class BuildTypeMapVisitor extends ASTVisitor {
+
+    private final TypeMap typeMap;
+    private final JProgram program;
+
+    public BuildTypeMapVisitor(TypeMap typeMap) {
+      this.typeMap = typeMap;
+      program = this.typeMap.getProgram();
     }
 
-    private JField createField(SyntheticArgumentBinding binding,
-        JReferenceType enclosingType) {
-      JType type = (JType) fTypeMap.get(binding.type);
-      JField field = fProgram.createField(binding.name, enclosingType, type,
-        false, true, true);
-      if (binding.matchingField != null) {
-        fTypeMap.put(binding.matchingField, field);
-      }
-      fTypeMap.put(binding, field);
-      return field;
-    }
-
-    private JParameter createParameter(LocalVariableBinding binding,
-        JMethod enclosingMethod) {
-      JType type = (JType) fTypeMap.get(binding.type);
-      JParameter param = fProgram.createParameter(binding.name, type,
-        binding.isFinal(), enclosingMethod);
-      fTypeMap.put(binding, param);
-      return param;
-    }
-
-    private JParameter createParameter(SyntheticArgumentBinding arg,
-        String argName, JMethod enclosingMethod) {
-      JType type = (JType) fTypeMap.get(arg.type);
-      JParameter param = fProgram.createParameter(argName.toCharArray(), type,
-        true, enclosingMethod);
-      return param;
-    }
-
-    private JMethod findEnclosingMethod(BlockScope scope) {
-      MethodScope methodScope = scope.methodScope();
-      if (methodScope.isInsideInitializer()) {
-        JReferenceType enclosingType = (JReferenceType) fTypeMap.get(scope.classScope().referenceContext.binding);
-        if (methodScope.isStatic) {
-          // clinit
-          return (JMethod) enclosingType.methods.get(0);
-        } else {
-          // init
-          assert (enclosingType instanceof JClassType);
-          return (JMethod) enclosingType.methods.get(1);
-        }
-      }
-
-      AbstractMethodDeclaration referenceMethod = methodScope.referenceMethod();
-      return (JMethod) fTypeMap.get(referenceMethod.binding);
+    public boolean visit(TypeDeclaration localTypeDeclaration, BlockScope scope) {
+      assert (localTypeDeclaration.kind() != IGenericType.INTERFACE_DECL);
+      return process(localTypeDeclaration);
     }
 
     public boolean visit(TypeDeclaration memberTypeDeclaration, ClassScope scope) {
       return process(memberTypeDeclaration);
     }
 
-    public boolean visit(TypeDeclaration localTypeDeclaration, BlockScope scope) {
-      return process(localTypeDeclaration);
-    }
-
     public boolean visit(TypeDeclaration typeDeclaration,
         CompilationUnitScope scope) {
       return process(typeDeclaration);
+    }
+
+    private boolean process(TypeDeclaration typeDeclaration) {
+      char[][] name = typeDeclaration.binding.compoundName;
+      SourceTypeBinding binding = typeDeclaration.binding;
+      if (binding instanceof LocalTypeBinding) {
+        char[] localName = binding.constantPoolName();
+        if (localName == null) {
+          /*
+           * Weird case: if JDT determines that this local class is totally
+           * uninstantiable, it won't bother allocating a local name.
+           */
+          return false;
+        }
+
+        for (int i = 0, c = localName.length; i < c; ++i) {
+          if (localName[i] == '/') {
+            localName[i] = '.';
+          }
+        }
+        name = new char[1][0];
+        name[0] = localName;
+      }
+
+      JReferenceType newType;
+      if (binding.isClass()) {
+        newType = program.createClass(name, binding.isAbstract(),
+            binding.isFinal());
+      } else if (binding.isInterface()) {
+        newType = program.createInterface(name);
+      } else {
+        assert (false);
+        return false;
+      }
+
+      /**
+       * We emulate static initializers and intance initializers as methods. As
+       * in other cases, this gives us: simpler AST, easier to optimize, more
+       * like output JavaScript. Clinit is always in slot 0, init (if it exists)
+       * is always in slot 1.
+       */
+      JMethod clinit = program.createMethod("$clinit".toCharArray(), newType,
+          program.getTypeVoid(), false, true, true, true, false);
+      clinit.freezeParamTypes();
+
+      if (newType instanceof JClassType) {
+        JMethod init = program.createMethod("$init".toCharArray(), newType,
+            program.getTypeVoid(), false, false, true, true, false);
+        init.freezeParamTypes();
+      }
+
+      typeMap.put(binding, newType);
+      return true;
+    }
+  }
+
+  public static TypeDeclaration[] exec(TypeMap typeMap,
+      CompilationUnitDeclaration[] unitDecls, JsProgram jsProgram) {
+    createPeersForTypes(unitDecls, typeMap);
+    return createPeersForNonTypeDecls(unitDecls, typeMap, jsProgram);
+  }
+
+  private static TypeDeclaration[] createPeersForNonTypeDecls(
+      CompilationUnitDeclaration[] unitDecls, TypeMap typeMap,
+      JsProgram jsProgram) {
+    // Traverse again to create our JNode peers for each method, field,
+    // parameter, and local
+    BuildDeclMapVisitor v2 = new BuildDeclMapVisitor(typeMap, jsProgram);
+    for (int i = 0; i < unitDecls.length; ++i) {
+      unitDecls[i].traverse(v2, unitDecls[i].scope);
+    }
+    return v2.getTypeDeclarataions();
+  }
+
+  private static void createPeersForTypes(
+      CompilationUnitDeclaration[] unitDecls, TypeMap typeMap) {
+    // Traverse once to create our JNode peers for each type
+    BuildTypeMapVisitor v1 = new BuildTypeMapVisitor(typeMap);
+    for (int i = 0; i < unitDecls.length; ++i) {
+      unitDecls[i].traverse(v1, unitDecls[i].scope);
     }
   }
 }

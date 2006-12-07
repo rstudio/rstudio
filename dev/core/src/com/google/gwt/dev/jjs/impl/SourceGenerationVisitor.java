@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.CanBeFinal;
@@ -121,6 +135,23 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
   }
 
   // @Override
+  public boolean visit(JProgram x) {
+    for (int i = 0; i < x.entryMethods.size(); ++i) {
+      JMethod method = (JMethod) x.entryMethods.get(i);
+      method.traverse(this);
+      newline();
+      newline();
+    }
+    for (int i = 0; i < x.getDeclaredTypes().size(); ++i) {
+      JReferenceType type = (JReferenceType) x.getDeclaredTypes().get(i);
+      type.traverse(this);
+      newline();
+      newline();
+    }
+    return false;
+  }
+
+  // @Override
   public boolean visit(JsniMethod x) {
     super.visit(x);
     space();
@@ -140,20 +171,8 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
   }
 
   // @Override
-  public boolean visit(JProgram x) {
-    for (int i = 0; i < x.entryMethods.size(); ++i) {
-      JMethod method = (JMethod) x.entryMethods.get(i);
-      method.traverse(this);
-      newline();
-      newline();
-    }
-    for (int i = 0; i < x.getDeclaredTypes().size(); ++i) {
-      JReferenceType type = (JReferenceType) x.getDeclaredTypes().get(i);
-      type.traverse(this);
-      newline();
-      newline();
-    }
-    return false;
+  protected void printMemberFinalFlag(CanBeFinal x) {
+    // suppress final flags
   }
 
   // @Override
@@ -165,17 +184,12 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
     }
   }
 
-  // @Override
-  protected void printMemberFinalFlag(CanBeFinal x) {
-    // suppress final flags
+  private boolean isEmptyInitializer(JMethod x) {
+    return isInitializer(x) && (x.body.statements.size() == 0);
   }
 
   private boolean isInitializer(JMethod x) {
     return x.getName().equals("$clinit") || x.getName().equals("$init");
-  }
-
-  private boolean isEmptyInitializer(JMethod x) {
-    return isInitializer(x) && (x.body.statements.size() == 0);
   }
 
 }

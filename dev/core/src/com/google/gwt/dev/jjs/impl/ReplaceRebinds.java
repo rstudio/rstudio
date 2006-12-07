@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Holder;
@@ -14,17 +28,15 @@ import com.google.gwt.dev.jjs.ast.Mutator;
 import com.google.gwt.dev.jjs.ast.change.ChangeList;
 
 /**
- * Replaces any "GWT.create()" calls with a new expression for the actual
- * result of the deferred binding decision.
+ * Replaces any "GWT.create()" calls with a new expression for the actual result
+ * of the deferred binding decision.
  */
 public class ReplaceRebinds {
-
-  private final JProgram program;
 
   private class RebindVisitor extends JVisitor {
 
     private final ChangeList changeList = new ChangeList(
-      "Replace GWT.create() with new expressions.");
+        "Replace GWT.create() with new expressions.");
 
     // @Override
     public void endVisit(JMethodCall x, Mutator mutator) {
@@ -63,6 +75,16 @@ public class ReplaceRebinds {
     }
   }
 
+  public static boolean exec(JProgram program) {
+    return new ReplaceRebinds(program).execImpl();
+  }
+
+  private final JProgram program;
+
+  private ReplaceRebinds(JProgram program) {
+    this.program = program;
+  }
+
   private boolean execImpl() {
     RebindVisitor rebinder = new RebindVisitor();
     program.traverse(rebinder);
@@ -72,14 +94,6 @@ public class ReplaceRebinds {
     }
     changes.apply();
     return true;
-  }
-
-  private ReplaceRebinds(JProgram program) {
-    this.program = program;
-  }
-
-  public static boolean exec(JProgram program) {
-    return new ReplaceRebinds(program).execImpl();
   }
 
 }

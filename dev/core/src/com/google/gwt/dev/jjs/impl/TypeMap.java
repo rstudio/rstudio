@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.JArrayType;
@@ -18,8 +32,18 @@ import java.util.Map;
  */
 public class TypeMap {
 
+  /**
+   * Maps Eclipse AST nodes to our JNodes.
+   */
+  private final Map/* <Binding, JNode> */crossRefMap = new IdentityHashMap();
+
+  /**
+   * Centralizes creation and singleton management.
+   */
+  private final JProgram program;
+
   public TypeMap(JProgram program) {
-    fProgram = program;
+    this.program = program;
   }
 
   public JNode get(Binding binding) {
@@ -31,15 +55,15 @@ public class TypeMap {
   }
 
   public JProgram getProgram() {
-    return fProgram;
+    return program;
   }
 
   public void put(Binding binding, JNode to) {
     if (binding == null) {
       throw new InternalCompilerException("Trying to put null into typeMap.");
     }
-    
-    Object old = fCrossRefMap.put(binding, to);
+
+    Object old = crossRefMap.put(binding, to);
     assert (old == null);
   }
 
@@ -48,7 +72,7 @@ public class TypeMap {
   }
 
   private JNode internalGet(Binding binding) {
-    JNode cached = (JNode) fCrossRefMap.get(binding);
+    JNode cached = (JNode) crossRefMap.get(binding);
     if (cached != null) {
       // Already seen this one.
       return cached;
@@ -56,23 +80,23 @@ public class TypeMap {
       BaseTypeBinding baseTypeBinding = (BaseTypeBinding) binding;
       switch (baseTypeBinding.id) {
         case BaseTypeBinding.T_void:
-          return fProgram.getTypeVoid();
+          return program.getTypeVoid();
         case BaseTypeBinding.T_boolean:
-          return fProgram.getTypePrimitiveBoolean();
+          return program.getTypePrimitiveBoolean();
         case BaseTypeBinding.T_char:
-          return fProgram.getTypePrimitiveChar();
+          return program.getTypePrimitiveChar();
         case BaseTypeBinding.T_byte:
-          return fProgram.getTypePrimitiveByte();
+          return program.getTypePrimitiveByte();
         case BaseTypeBinding.T_short:
-          return fProgram.getTypePrimitiveShort();
+          return program.getTypePrimitiveShort();
         case BaseTypeBinding.T_int:
-          return fProgram.getTypePrimitiveInt();
+          return program.getTypePrimitiveInt();
         case BaseTypeBinding.T_long:
-          return fProgram.getTypePrimitiveLong();
+          return program.getTypePrimitiveLong();
         case BaseTypeBinding.T_float:
-          return fProgram.getTypePrimitiveFloat();
+          return program.getTypePrimitiveFloat();
         case BaseTypeBinding.T_double:
-          return fProgram.getTypePrimitiveDouble();
+          return program.getTypePrimitiveDouble();
       }
     } else if (binding instanceof ArrayBinding) {
       ArrayBinding arrayBinding = (ArrayBinding) binding;
@@ -82,22 +106,12 @@ public class TypeMap {
 
       // Don't create a new JArrayType; use TypeMap to get the singleton
       // instance
-      JArrayType arrayType = fProgram.getTypeArray(leafType,
-        arrayBinding.dimensions);
+      JArrayType arrayType = program.getTypeArray(leafType,
+          arrayBinding.dimensions);
 
       return arrayType;
     }
     return null;
   }
-
-  /**
-   * Maps Eclipse AST nodes to our JNodes.
-   */
-  private final Map/* <Binding, JNode> */fCrossRefMap = new IdentityHashMap();
-
-  /**
-   * Centralizes creation and singleton management.
-   */
-  private final JProgram fProgram;
 
 }
