@@ -17,6 +17,10 @@ package com.google.gwt.core.ext.typeinfo;
 
 public class JMethod extends JAbstractMethod {
 
+  private final JClassType enclosingType;
+
+  private JType returnType;
+
   public JMethod(JClassType enclosingType, String name, int declStart,
       int declEnd, int bodyStart, int bodyEnd) {
     super(name, declStart, declEnd, bodyStart, bodyEnd);
@@ -81,6 +85,10 @@ public class JMethod extends JAbstractMethod {
     return 0 != (getModifierBits() & TypeOracle.MOD_STATIC);
   }
 
+  public void setReturnType(JType type) {
+    returnType = type;
+  }
+
   public String toString() {
     return getReadableDeclaration();
   }
@@ -100,11 +108,4 @@ public class JMethod extends JAbstractMethod {
 
     return sb.toString();
   }
-
-  public void setReturnType(JType type) {
-    returnType = type;
-  }
-
-  private final JClassType enclosingType;
-  private JType returnType;
 }

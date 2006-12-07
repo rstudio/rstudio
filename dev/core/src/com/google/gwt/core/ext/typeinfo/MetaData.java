@@ -25,6 +25,19 @@ import java.util.Set;
 
 class MetaData implements HasMetaData {
 
+  private final Map tagNameToStringArrayList = new HashMap();
+
+  public void addMetaData(String tagName, String[] values) {
+    List list = (List) tagNameToStringArrayList.get(tagName);
+    if (list == null) {
+      list = new ArrayList();
+      tagNameToStringArrayList.put(tagName, list);
+    }
+    // Yes, we're adding the string array as an object into the list.
+    //
+    list.add(values);
+  }
+
   public String[][] getMetaData(String tagName) {
     List list = (List) tagNameToStringArrayList.get(tagName);
     if (list != null) {
@@ -37,17 +50,6 @@ class MetaData implements HasMetaData {
   public String[] getMetaDataTags() {
     return (String[]) tagNameToStringArrayList.keySet().toArray(
       TypeOracle.NO_STRINGS);
-  }
-
-  public void addMetaData(String tagName, String[] values) {
-    List list = (List) tagNameToStringArrayList.get(tagName);
-    if (list == null) {
-      list = new ArrayList();
-      tagNameToStringArrayList.put(tagName, list);
-    }
-    // Yes, we're adding the string array as an object into the list.
-    //
-    list.add(values);
   }
 
   public String toString() {
@@ -83,6 +85,4 @@ class MetaData implements HasMetaData {
     }
     return sb.toString();
   }
-
-  private final Map tagNameToStringArrayList = new HashMap();
 }

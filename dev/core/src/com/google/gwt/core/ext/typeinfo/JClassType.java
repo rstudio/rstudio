@@ -33,9 +33,9 @@ import java.util.Set;
  * Type representing a java class type.
  */
 public class JClassType extends JType implements HasMetaData {
-  private static final char[] HEX_CHARS = new char[]{
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-    'F'};
+  private static final char[] HEX_CHARS = new char[] {
+      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
+      'E', 'F'};
 
   /**
    * Computes the MD5 hash for the specified byte array.
@@ -64,6 +64,52 @@ public class JClassType extends JType implements HasMetaData {
     }
     return new String(name);
   }
+
+  private final Set allSubtypes = new HashSet();
+
+  private final int bodyEnd;
+
+  private final int bodyStart;
+
+  private final List constructors = new ArrayList();
+
+  private final CompilationUnitProvider cup;
+
+  private final JPackage declaringPackage;
+
+  private final int declEnd;
+
+  private final int declStart;
+
+  private final JClassType enclosingType;
+
+  private final Map fields = new HashMap();
+
+  private final List interfaces = new ArrayList();
+
+  private final boolean isInterface;
+
+  private final boolean isLocalType;
+
+  private String lazyHash;
+
+  private String lazyQualifiedName;
+
+  private final HasMetaData metaData = new MetaData();
+
+  private final Map methods = new HashMap();
+
+  private int modifierBits;
+
+  private final String name;
+
+  private final String nestedName;
+
+  private final Map nestedTypes = new HashMap();
+
+  private final TypeOracle oracle;
+
+  private JClassType superclass;
 
   public JClassType(TypeOracle oracle, CompilationUnitProvider cup,
       JPackage declaringPackage, JClassType enclosingType, boolean isLocalType,
@@ -426,32 +472,6 @@ public class JClassType extends JType implements HasMetaData {
     }
   }
 
-  private void acceptSubtype(JClassType me) {
-    allSubtypes.add(me);
-    notifySuperTypesOf(me);
-  }
-
-  private String makeCompoundName(JClassType type) {
-    if (type.enclosingType == null) {
-      return type.name;
-    } else {
-      return makeCompoundName(type.enclosingType) + "." + type.name;
-    }
-  }
-
-  /**
-   * Tells this type's superclasses and superinterfaces about it.
-   */
-  private void notifySuperTypesOf(JClassType me) {
-    if (superclass != null) {
-      superclass.acceptSubtype(me);
-    }
-    for (int i = 0, n = interfaces.size(); i < n; ++i) {
-      JClassType intf = (JClassType) interfaces.get(i);
-      intf.acceptSubtype(me);
-    }
-  }
-
   protected int getModifierBits() {
     return modifierBits;
   }
@@ -496,27 +516,29 @@ public class JClassType extends JType implements HasMetaData {
     notifySuperTypesOf(this);
   }
 
-  private final Set allSubtypes = new HashSet();
-  private final int bodyEnd;
-  private final int bodyStart;
-  private final List constructors = new ArrayList();
-  private final CompilationUnitProvider cup;
-  private final JPackage declaringPackage;
-  private final int declEnd;
-  private final int declStart;
-  private final JClassType enclosingType;
-  private final Map fields = new HashMap();
-  private final List interfaces = new ArrayList();
-  private final boolean isInterface;
-  private final boolean isLocalType;
-  private String lazyHash;
-  private String lazyQualifiedName;
-  private final HasMetaData metaData = new MetaData();
-  private final Map methods = new HashMap();
-  private int modifierBits;
-  private final String name;
-  private final String nestedName;
-  private final Map nestedTypes = new HashMap();
-  private final TypeOracle oracle;
-  private JClassType superclass;
+  private void acceptSubtype(JClassType me) {
+    allSubtypes.add(me);
+    notifySuperTypesOf(me);
+  }
+
+  private String makeCompoundName(JClassType type) {
+    if (type.enclosingType == null) {
+      return type.name;
+    } else {
+      return makeCompoundName(type.enclosingType) + "." + type.name;
+    }
+  }
+
+  /**
+   * Tells this type's superclasses and superinterfaces about it.
+   */
+  private void notifySuperTypesOf(JClassType me) {
+    if (superclass != null) {
+      superclass.acceptSubtype(me);
+    }
+    for (int i = 0, n = interfaces.size(); i < n; ++i) {
+      JClassType intf = (JClassType) interfaces.get(i);
+      intf.acceptSubtype(me);
+    }
+  }
 }

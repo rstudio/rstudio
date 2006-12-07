@@ -24,16 +24,6 @@ import java.util.Comparator;
  */
 public interface CompilationUnitProvider {
 
-  long getLastModified() throws UnableToCompleteException;
-
-  boolean isTransient();
-  
-  String getLocation();
-
-  String getPackageName();
-
-  char[] getSource() throws UnableToCompleteException;
-
   Comparator LOCATION_COMPARATOR = new Comparator() {
     public int compare(Object o1, Object o2) {
       String loc1 = ((CompilationUnitProvider) o1).getLocation();
@@ -41,4 +31,14 @@ public interface CompilationUnitProvider {
       return loc1.compareTo(loc2);
     }
   };
+
+  long getLastModified() throws UnableToCompleteException;
+  
+  String getLocation();
+
+  String getPackageName();
+
+  char[] getSource() throws UnableToCompleteException;
+
+  boolean isTransient();
 }

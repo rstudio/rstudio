@@ -25,6 +25,27 @@ import java.io.PrintWriter;
 public interface GeneratorContext {
 
   /**
+   * Commits source generation begun with
+   * {@link #tryCreate(TreeLogger, String, String)}.
+   */
+  void commit(TreeLogger logger, PrintWriter pw);
+
+  /**
+   * Gets the property oracle for the current generator context. Generators can
+   * use the property oracle to query deferred binding properties.
+   */
+  PropertyOracle getPropertyOracle();
+
+  /**
+   * Gets the type oracle for the current generator context. Generators can use
+   * the type oracle to ask questions about the entire translatable code base.
+   * 
+   * @return a TypeOracle over all the relevant translatable compilation units
+   *         in the source path
+   */
+  TypeOracle getTypeOracle();
+
+  /**
    * Attempts to get a <code>PrintWriter</code> so that the caller can
    * generate the source code for the named type. If the named types already
    * exists, <code>null</code> is returned to indicate that no work needs to
@@ -39,25 +60,4 @@ public interface GeneratorContext {
    *         <code>PrintWriter</code> is returned.
    */
   PrintWriter tryCreate(TreeLogger logger, String packageName, String simpleName);
-
-  /**
-   * Commits source generation begun with
-   * {@link #tryCreate(TreeLogger, String, String)}.
-   */
-  void commit(TreeLogger logger, PrintWriter pw);
-
-  /**
-   * Gets the type oracle for the current generator context. Generators can use
-   * the type oracle to ask questions about the entire translatable code base.
-   * 
-   * @return a TypeOracle over all the relevant translatable compilation units
-   *         in the source path
-   */
-  TypeOracle getTypeOracle();
-
-  /**
-   * Gets the property oracle for the current generator context. Generators can
-   * use the property oracle to query deferred binding properties.
-   */
-  PropertyOracle getPropertyOracle();
 }

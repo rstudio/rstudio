@@ -16,6 +16,8 @@
 package com.google.gwt.core.ext.typeinfo;
 
 public class JConstructor extends JAbstractMethod {
+  private final JClassType enclosingType;
+
   public JConstructor(JClassType enclosingType, String name, int declStart,
       int declEnd, int bodyStart, int bodyEnd) {
     super(name, declStart, declEnd, bodyStart, bodyEnd);
@@ -50,6 +52,4 @@ public class JConstructor extends JAbstractMethod {
   public String toString() {
     return getReadableDeclaration();
   }
-
-  private final JClassType enclosingType;
 }

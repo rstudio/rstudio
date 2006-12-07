@@ -16,13 +16,19 @@
 package com.google.gwt.core.ext.typeinfo;
 
 public abstract class JType {
+  public abstract String getJNISignature();
+
+  public JType getLeafType() {
+    return this;
+  }
+
+  public String getParameterizedQualifiedSourceName() {
+    return getQualifiedSourceName();
+  }
+
   public abstract String getQualifiedSourceName();
 
   public abstract String getSimpleSourceName();
-  
-  public String getParameterizedQualifiedSourceName() {
-    return  getQualifiedSourceName();
-  }
 
   public abstract JArrayType isArray();
 
@@ -41,10 +47,4 @@ public abstract class JType {
   public abstract JParameterizedType isParameterized();
 
   public abstract JPrimitiveType isPrimitive();
-  
-  public abstract String getJNISignature();
-  
-  public JType getLeafType() {
-    return this;
-  }
 }

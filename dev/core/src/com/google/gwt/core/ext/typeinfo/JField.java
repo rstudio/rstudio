@@ -17,6 +17,16 @@ package com.google.gwt.core.ext.typeinfo;
 
 public class JField implements HasMetaData {
 
+  private final JClassType enclosingType;
+
+  private final HasMetaData metaData = new MetaData();
+
+  private int modifierBits;
+
+  private final String name;
+
+  private JType type;
+
   public JField(JClassType enclosingType, String name) {
     this.enclosingType = enclosingType;
     this.name = name;
@@ -27,6 +37,10 @@ public class JField implements HasMetaData {
 
   public void addMetaData(String tagName, String[] values) {
     metaData.addMetaData(tagName, values);
+  }
+
+  public void addModifierBits(int modifierBits) {
+    this.modifierBits |= modifierBits;
   }
 
   public JClassType getEnclosingType() {
@@ -83,10 +97,6 @@ public class JField implements HasMetaData {
     return 0 != (modifierBits & TypeOracle.MOD_VOLATILE);
   }
 
-  public void addModifierBits(int modifierBits) {
-    this.modifierBits |= modifierBits;
-  }
-
   public void setType(JType type) {
     this.type = type;
   }
@@ -108,10 +118,4 @@ public class JField implements HasMetaData {
     sb.append(getName());
     return sb.toString();
   }
-
-  private final JClassType enclosingType;
-  private final HasMetaData metaData = new MetaData();
-  private int modifierBits;
-  private final String name;
-  private JType type;
 }

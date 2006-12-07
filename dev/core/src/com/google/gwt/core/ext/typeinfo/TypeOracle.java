@@ -131,6 +131,18 @@ public class TypeOracle {
     return (String[]) strings.toArray(NO_STRINGS);
   }
 
+  private final Map arrayTypes = new IdentityHashMap();
+
+  private JClassType javaLangObject;
+
+  private final Map packages = new HashMap();
+
+  private final Map parameterizedTypes = new HashMap();
+
+  private int reloadCount = 0;
+
+  private final Map typesByCup = new IdentityHashMap();
+
   public TypeOracle() {
     // Always create the default package.
     //
@@ -194,7 +206,7 @@ public class TypeOracle {
     }
     return null;
   }
-
+  
   /**
    * Gets the type object that represents an array of the specified type. The
    * returned type always has a stable identity so as to guarantee that all
@@ -294,7 +306,7 @@ public class TypeOracle {
     }
     return existing;
   }
-  
+
   public long getReloadCount() {
     return reloadCount;
   }
@@ -362,25 +374,6 @@ public class TypeOracle {
     }
   }
 
-  void incrementReloadCount() {
-    reloadCount++;
-  }
-
-  Set invalidateTypesInCompilationUnit(CompilationUnitProvider cup) {
-    Set invalidTypes = new HashSet();
-    JClassType[] types = (JClassType[]) typesByCup.get(cup);
-    if (types == null) {
-      return invalidTypes;
-    }
-    for (int i = 0; i < types.length; i++) {
-      JPackage jp = types[i].getPackage();
-      invalidTypes.add(types[i].getQualifiedSourceName());
-      jp.remove(types[i]);
-    }
-    typesByCup.remove(cup);
-    return invalidTypes;
-  }
-
   /**
    * Parses the string form of a type to produce the corresponding type object.
    * The types that can be parsed include primitives, class and interface names,
@@ -411,25 +404,6 @@ public class TypeOracle {
     // Recursively parse.
     //
     return parseImpl(type);
-  }
-
-  /**
-   * Updates relationships within this type oracle. Should be called after any
-   * changes are made.
-   * 
-   * @throws TypeOracleException thrown if fundamental baseline correctness
-   *           criteria are violated, most notably the absence of
-   *           "java.lang.Object"
-   */
-    void refresh(TreeLogger logger) throws NotFoundException {
-    if (javaLangObject == null) {
-      javaLangObject = findType("java.lang.Object");
-      if (javaLangObject == null) {
-        throw new NotFoundException("java.lang.Object");
-      }
-    }
-    computeHierarchyRelationships();
-    consumeTypeArgMetaData(logger);
   }
 
   /**
@@ -495,6 +469,25 @@ public class TypeOracle {
     });
   }
 
+  void incrementReloadCount() {
+    reloadCount++;
+  }
+
+  Set invalidateTypesInCompilationUnit(CompilationUnitProvider cup) {
+    Set invalidTypes = new HashSet();
+    JClassType[] types = (JClassType[]) typesByCup.get(cup);
+    if (types == null) {
+      return invalidTypes;
+    }
+    for (int i = 0; i < types.length; i++) {
+      JPackage jp = types[i].getPackage();
+      invalidTypes.add(types[i].getQualifiedSourceName());
+      jp.remove(types[i]);
+    }
+    typesByCup.remove(cup);
+    return invalidTypes;
+  }
+
   void recordTypeInCompilationUnit(CompilationUnitProvider cup, JClassType type) {
     JClassType[] types = (JClassType[]) typesByCup.get(cup);
     if (types == null) {
@@ -506,6 +499,25 @@ public class TypeOracle {
       types = temp;
     }
     typesByCup.put(cup, types);
+  }
+
+  /**
+   * Updates relationships within this type oracle. Should be called after any
+   * changes are made.
+   * 
+   * @throws TypeOracleException thrown if fundamental baseline correctness
+   *           criteria are violated, most notably the absence of
+   *           "java.lang.Object"
+   */
+    void refresh(TreeLogger logger) throws NotFoundException {
+    if (javaLangObject == null) {
+      javaLangObject = findType("java.lang.Object");
+      if (javaLangObject == null) {
+        throw new NotFoundException("java.lang.Object");
+      }
+    }
+    computeHierarchyRelationships();
+    consumeTypeArgMetaData(logger);
   }
 
   private void buildAllTypesImpl(Set allTypes, JClassType type) {
@@ -549,7 +561,6 @@ public class TypeOracle {
       consumeTypeArgMetaData(branch, type.getFields());
     }
   }
-
   private void consumeTypeArgMetaData(TreeLogger logger, JField[] fields) {
     TreeLogger branch;
     for (int i = 0; i < fields.length; i++) {
@@ -587,7 +598,6 @@ public class TypeOracle {
       }
     }
   }
-
   private void consumeTypeArgMetaData(TreeLogger logger, JMethod[] methods) {
     TreeLogger branch;
     for (int i = 0; i < methods.length; i++) {
@@ -661,7 +671,6 @@ public class TypeOracle {
       }
     }
   }
-
   /*
    * Given a declared type and some number of type arguments determine what the
    * actual type should be. 
@@ -685,7 +694,6 @@ public class TypeOracle {
 
     return resultingType;
   }
-
   private JType parseImpl(String type) throws NotFoundException,
       ParseException, BadTypeArgsException {
     if (type.endsWith("[]")) {
@@ -754,7 +762,6 @@ public class TypeOracle {
 
     throw new NotFoundException(type);
   }
-
   private JType parseTypeArgTokens(TreeLogger logger, String maybeRawType,
       String[] tokens, int startIndex) throws UnableToCompleteException {
     String munged = combine(tokens, startIndex).trim();
@@ -771,11 +778,4 @@ public class TypeOracle {
     }
     return parameterizedType;
   }
-
-  private final Map arrayTypes = new IdentityHashMap();
-  private JClassType javaLangObject;
-  private final Map packages = new HashMap();
-  private final Map parameterizedTypes = new HashMap();
-  private int reloadCount = 0;
-  private final Map typesByCup = new IdentityHashMap();
 }

@@ -20,6 +20,10 @@ import java.util.Map;
 
 public class JPackage {
 
+  private final String name;
+
+  private final Map types = new HashMap();
+
   JPackage(String name) {
     this.name = name;
   }
@@ -76,7 +80,4 @@ public class JPackage {
     Object removed = types.remove(type.getSimpleSourceName());
     // JDT will occasionally remove non-existent items, such as packages.
   }
-
-  private final String name;
-  private final Map types = new HashMap();
 }

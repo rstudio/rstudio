@@ -24,6 +24,24 @@ import java.util.List;
  */
 public abstract class JAbstractMethod implements HasMetaData {
 
+  private int bodyEnd;
+
+  private int bodyStart;
+
+  private final int declEnd;
+
+  private final int declStart;
+
+  private final HasMetaData metaData = new MetaData();
+
+  private int modifierBits;
+
+  private final String name;
+
+  private final List params = new ArrayList();
+
+  private final List thrownTypes = new ArrayList();
+
   // Only the builder can construct
   JAbstractMethod(String name, int declStart, int declEnd, int bodyStart,
       int bodyEnd) {
@@ -36,6 +54,14 @@ public abstract class JAbstractMethod implements HasMetaData {
 
   public void addMetaData(String tagName, String[] values) {
     metaData.addMetaData(tagName, values);
+  }
+
+  public void addModifierBits(int bits) {
+    modifierBits |= bits;
+  }
+
+  public void addThrows(JType type) {
+    thrownTypes.add(type);
   }
 
   public JParameter findParameter(String name) {
@@ -96,25 +122,19 @@ public abstract class JAbstractMethod implements HasMetaData {
   public boolean isDefaultAccess() {
     return 0 == (modifierBits & (TypeOracle.MOD_PUBLIC | TypeOracle.MOD_PRIVATE | TypeOracle.MOD_PROTECTED));
   }
-
   public abstract JMethod isMethod();
-
   public boolean isPrivate() {
     return 0 != (modifierBits & TypeOracle.MOD_PRIVATE);
   }
-
   public boolean isProtected() {
     return 0 != (modifierBits & TypeOracle.MOD_PROTECTED);
   }
-
   public boolean isPublic() {
     return 0 != (modifierBits & TypeOracle.MOD_PUBLIC);
   }
-
   protected int getModifierBits() {
     return modifierBits;
   }
-
   protected void toStringParamsAndThrows(StringBuffer sb) {
     sb.append("(");
     boolean needComma = false;
@@ -145,19 +165,9 @@ public abstract class JAbstractMethod implements HasMetaData {
       }
     }
   }
-
-  public void addModifierBits(int bits) {
-    modifierBits |= bits;
-  }
-
   void addParameter(JParameter param) {
     params.add(param);
   }
-
-  public void addThrows(JType type) {
-    thrownTypes.add(type);
-  }
-
   boolean hasParamTypes(JType[] paramTypes) {
     if (params.size() != paramTypes.length) {
       return false;
@@ -173,14 +183,4 @@ public abstract class JAbstractMethod implements HasMetaData {
     }
     return true;
   }
-
-  private int bodyEnd;
-  private int bodyStart;
-  private final int declEnd;
-  private final int declStart;
-  private final HasMetaData metaData = new MetaData();
-  private int modifierBits;
-  private final String name;
-  private final List params = new ArrayList();
-  private final List thrownTypes = new ArrayList();
 }

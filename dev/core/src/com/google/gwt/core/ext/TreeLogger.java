@@ -62,6 +62,12 @@ public interface TreeLogger {
       return (Type) instances.get(label.toUpperCase());
     }
 
+    private final String label;
+
+    private final Type parent;
+
+    private final boolean needsAttention;
+
     /**
      * Constructs a log type with an optional parent.
      */
@@ -85,10 +91,6 @@ public interface TreeLogger {
       return label;
     }
 
-    public String toString() {
-      return label;
-    }
-
     /**
      * Gets the parent of this severity type.
      * 
@@ -97,7 +99,6 @@ public interface TreeLogger {
     public Type getParent() {
       return parent;
     }
-
     /**
      * Indicates whether this severity type represents a high severity that
      * should be highlighted for the user.
@@ -108,64 +109,10 @@ public interface TreeLogger {
     public boolean needsAttention() {
       return needsAttention;
     }
-
-    private final String label;
-    private final Type parent;
-    private final boolean needsAttention;
+    public String toString() {
+      return label;
+    }
   }
-
-  /**
-   * Produces a branched logger, which can be used to write messages that are
-   * logically grouped together underneath the current logger. The details of
-   * how/if the resulting messages are displayed is implementation-dependent.
-   * 
-   * <p>
-   * The log message supplied when branching serves two purposes. First, the
-   * message should be considered a heading for all the child messages below it.
-   * Second, the <code>type</code> of the message provides a hint as to the
-   * importance of the children below it. As an optimization, an implementation
-   * could return a "no-op" logger if messages of the specified type weren't
-   * being logged, which the implication being that all nested log messages were
-   * no more important than the level of their branch parent.
-   * </p>
-   * 
-   * <p>
-   * As an example of how hierarchical logging can be used, a branched logger in
-   * a GUI could write log message as child items of a parent node in a tree
-   * control. If logging to streams, such as a text console, the branched logger
-   * could prefix each entry with a unique string and indent its text so that it
-   * could be sorted later to reconstruct a proper hierarchy.
-   * </p>
-   * 
-   * @param type
-   * @param msg An optional message to log, which can be <code>null</code> if
-   *          only an exception is being logged
-   * @param caught An optional exception to log, which can be <code>null</code>
-   *          if only a message is being logged
-   * @return an instance of {@link TreeLogger} representing the new branch of
-   *         the log. May be the same instance on which this method is called
-   */
-  TreeLogger branch(TreeLogger.Type type, String msg, Throwable caught);
-
-  /**
-   * Determines whether or not a log entry of the specified type would actually
-   * be logged. Caller use this method to avoid constructing log messages that
-   * would be thrown away.
-   */
-  boolean isLoggable(TreeLogger.Type type);
-
-  /**
-   * Logs a message and/or an exception. It is also legal to call this method
-   * using <code>null</code> arguments for <i>both</i> <code>msg</code> and
-   * <code>caught</code>, in which case the log event can be ignored.
-   * 
-   * @param type
-   * @param msg An optional message to log, which can be <code>null</code> if
-   *          only an exception is being logged
-   * @param caught An optional exception to log, which can be <code>null</code>
-   *          if only a message is being logged
-   */
-  void log(TreeLogger.Type type, String msg, Throwable caught);
 
   /**
    * Logs an error.
@@ -220,4 +167,57 @@ public interface TreeLogger {
       // nothing
     }
   };
+
+  /**
+   * Produces a branched logger, which can be used to write messages that are
+   * logically grouped together underneath the current logger. The details of
+   * how/if the resulting messages are displayed is implementation-dependent.
+   * 
+   * <p>
+   * The log message supplied when branching serves two purposes. First, the
+   * message should be considered a heading for all the child messages below it.
+   * Second, the <code>type</code> of the message provides a hint as to the
+   * importance of the children below it. As an optimization, an implementation
+   * could return a "no-op" logger if messages of the specified type weren't
+   * being logged, which the implication being that all nested log messages were
+   * no more important than the level of their branch parent.
+   * </p>
+   * 
+   * <p>
+   * As an example of how hierarchical logging can be used, a branched logger in
+   * a GUI could write log message as child items of a parent node in a tree
+   * control. If logging to streams, such as a text console, the branched logger
+   * could prefix each entry with a unique string and indent its text so that it
+   * could be sorted later to reconstruct a proper hierarchy.
+   * </p>
+   * 
+   * @param type
+   * @param msg An optional message to log, which can be <code>null</code> if
+   *          only an exception is being logged
+   * @param caught An optional exception to log, which can be <code>null</code>
+   *          if only a message is being logged
+   * @return an instance of {@link TreeLogger} representing the new branch of
+   *         the log. May be the same instance on which this method is called
+   */
+  TreeLogger branch(TreeLogger.Type type, String msg, Throwable caught);
+
+  /**
+   * Determines whether or not a log entry of the specified type would actually
+   * be logged. Caller use this method to avoid constructing log messages that
+   * would be thrown away.
+   */
+  boolean isLoggable(TreeLogger.Type type);
+
+  /**
+   * Logs a message and/or an exception. It is also legal to call this method
+   * using <code>null</code> arguments for <i>both</i> <code>msg</code> and
+   * <code>caught</code>, in which case the log event can be ignored.
+   * 
+   * @param type
+   * @param msg An optional message to log, which can be <code>null</code> if
+   *          only an exception is being logged
+   * @param caught An optional exception to log, which can be <code>null</code>
+   *          if only a message is being logged
+   */
+  void log(TreeLogger.Type type, String msg, Throwable caught);
 }

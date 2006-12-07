@@ -21,6 +21,10 @@ import java.util.List;
 
 public class JParameterizedType extends JType {
 
+  private final JClassType parameterized;
+
+  private final List typeArgs = new ArrayList();
+
   JParameterizedType(JClassType parameterized) {
     this.parameterized = parameterized;
   }
@@ -30,6 +34,17 @@ public class JParameterizedType extends JType {
    */
   public String getJNISignature() {
     return getRawType().getJNISignature();
+  }
+
+  public JType getLeafType() {
+    return parameterized;
+  }
+
+  /*
+   * Get the name of this type without all of the parameterized information
+   */
+  public String getNonParameterizedQualifiedSourceName() {
+    return parameterized.getQualifiedSourceName();
   }
 
   public String getParameterizedQualifiedSourceName() {
@@ -49,7 +64,7 @@ public class JParameterizedType extends JType {
     sb.append('>');
     return sb.toString();
   }
-  
+
   /**
    * Everything is fully qualified and includes the &lt; and &gt; in the
    * signature.
@@ -58,13 +73,6 @@ public class JParameterizedType extends JType {
     return parameterized.getQualifiedSourceName();
   }
 
-  /*
-   * Get the name of this type without all of the parameterized information 
-   */
-  public String getNonParameterizedQualifiedSourceName() {
-    return parameterized.getQualifiedSourceName();
-  }
-  
   public JClassType getRawType() {
     return parameterized;
   }
@@ -104,11 +112,4 @@ public class JParameterizedType extends JType {
     assert (type.isPrimitive() == null);
     typeArgs.add(type);
   }
-
-  public JType getLeafType() {
-    return parameterized;
-  }
-  
-  private final JClassType parameterized;
-  private final List typeArgs = new ArrayList();
 }

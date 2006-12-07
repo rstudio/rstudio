@@ -20,6 +20,12 @@ package com.google.gwt.core.ext.typeinfo;
  */
 public class JArrayType extends JType {
 
+  private JType componentType;
+
+  private String lazyQualifiedName;
+
+  private String lazySimpleName;
+
   JArrayType(JType componentType) {
     this.componentType = componentType;
   }
@@ -32,50 +38,15 @@ public class JArrayType extends JType {
     return "[" + componentType.getJNISignature();
   }
 
+  public JType getLeafType() {
+    return componentType.getLeafType();
+  }
+
   public String getQualifiedSourceName() {
     if (lazyQualifiedName == null) {
       lazyQualifiedName = getComponentType().getQualifiedSourceName() + "[]";
     }
     return lazyQualifiedName;
-  }
-
-  public String getSimpleSourceName() {
-    if (lazySimpleName == null) {
-      lazySimpleName = getComponentType().getSimpleSourceName() + "[]";
-    }
-    return lazySimpleName;
-  }
-
-  public JArrayType isArray() {
-    return this;
-  }
-
-  public JClassType isClass() {
-    // intentional null
-    return null;
-  }
-
-  public JClassType isInterface() {
-    // intentional null
-    return null;
-  }
-
-  public JParameterizedType isParameterized() {
-    // intentional null
-    return null;
-  }
-
-  public JPrimitiveType isPrimitive() {
-    // intentional null
-    return null;
-  }
- 
-  public String toString() {
-    return getQualifiedSourceName();
-  }
-  
-  public JType getLeafType() {
-    return componentType.getLeafType();
   }
 
   public int getRank() {
@@ -86,7 +57,37 @@ public class JArrayType extends JType {
     
     return 1;
   }
+
+  public String getSimpleSourceName() {
+    if (lazySimpleName == null) {
+      lazySimpleName = getComponentType().getSimpleSourceName() + "[]";
+    }
+    return lazySimpleName;
+  }
+ 
+  public JArrayType isArray() {
+    return this;
+  }
   
+  public JClassType isClass() {
+    // intentional null
+    return null;
+  }
+
+  public JClassType isInterface() {
+    // intentional null
+    return null;
+  }
+  
+  public JParameterizedType isParameterized() {
+    // intentional null
+    return null;
+  }
+  
+  public JPrimitiveType isPrimitive() {
+    // intentional null
+    return null;
+  }
   public void setLeafType(JType type) {
     JArrayType componentTypeIsArray = componentType.isArray();
     if (componentTypeIsArray != null) {
@@ -95,8 +96,7 @@ public class JArrayType extends JType {
       componentType = type;
     }
   }
-  
-  private JType componentType;
-  private String lazyQualifiedName;
-  private String lazySimpleName;
+  public String toString() {
+    return getQualifiedSourceName();
+  }
 }

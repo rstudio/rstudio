@@ -20,6 +20,17 @@ package com.google.gwt.core.ext;
  */
 public class BadPropertyValueException extends Exception {
 
+  private final String badValue;
+
+  private final String propName;
+  
+  public BadPropertyValueException(String propName) {
+    super("Missing property '" + propName + "' was not specified");
+
+    this.propName = propName;
+    this.badValue = "<null>";
+  }
+
   public BadPropertyValueException(String propName, String badValue) {
     super("Property '" + propName + "' cannot be set to unexpected value '"
       + badValue + "'");
@@ -28,21 +39,10 @@ public class BadPropertyValueException extends Exception {
     this.badValue = badValue;
   }
 
-  public BadPropertyValueException(String propName) {
-    super("Missing property '" + propName + "' was not specified");
-
-    this.propName = propName;
-    this.badValue = "<null>";
-  }
-  
   String getBadValue() {
     return badValue;
   }
-
   String getPropName() {
     return propName;
   }
-
-  private final String badValue;
-  private final String propName;
 }

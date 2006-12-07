@@ -22,18 +22,6 @@ package com.google.gwt.core.ext;
 public abstract class Generator {
 
   /**
-   * Generate a default constructible subclass of the requested type.
-   * 
-   * @return the name of a subclass to substitute for the requested class, or
-   *         return <code>null</code> to cause the requested type itself to be
-   *         used
-   * @throws UnableToCompleteException if for any reason the generator cannot
-   *           provide a substitute class
-   */
-  public abstract String generate(TreeLogger logger, GeneratorContext context,
-      String typeName) throws UnableToCompleteException;
-
-  /**
    * Escapes string content to be a valid string literal.
    * @return an escaped version of <code>unescaped</code>, suitable for being 
    * enclosed in double quotes in Java source
@@ -82,4 +70,16 @@ public abstract class Generator {
 
     return String.valueOf(newChars);
   }
+
+  /**
+   * Generate a default constructible subclass of the requested type.
+   * 
+   * @return the name of a subclass to substitute for the requested class, or
+   *         return <code>null</code> to cause the requested type itself to be
+   *         used
+   * @throws UnableToCompleteException if for any reason the generator cannot
+   *           provide a substitute class
+   */
+  public abstract String generate(TreeLogger logger, GeneratorContext context,
+      String typeName) throws UnableToCompleteException;
 }

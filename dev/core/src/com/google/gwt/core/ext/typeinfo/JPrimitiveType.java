@@ -50,6 +50,10 @@ public class JPrimitiveType extends JType {
     return map;
   }
 
+  private final String jni;
+
+  private final String name;
+
   private JPrimitiveType(String name, String jni) {
     this.name = name;
     this.jni = jni;
@@ -90,7 +94,4 @@ public class JPrimitiveType extends JType {
   public JPrimitiveType isPrimitive() {
     return this;
   }
-  
-  private final String jni;
-  private final String name;
 }

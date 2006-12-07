@@ -17,6 +17,14 @@ package com.google.gwt.core.ext.typeinfo;
 
 public class JParameter implements HasMetaData {
 
+  private final HasMetaData metaData = new MetaData();
+
+  private final String name;
+
+  private JType type;
+
+  private final JAbstractMethod enclosingMethod;
+
   public JParameter(JAbstractMethod enclosingMethod, JType type, String name) {
     this.enclosingMethod = enclosingMethod;
     this.type = type;
@@ -27,6 +35,10 @@ public class JParameter implements HasMetaData {
 
   public void addMetaData(String tagName, String[] values) {
     metaData.addMetaData(tagName, values);
+  }
+
+  public JAbstractMethod getEnclosingMethod() {
+    return enclosingMethod;
   }
 
   public String[][] getMetaData(String tagName) {
@@ -45,15 +57,6 @@ public class JParameter implements HasMetaData {
     return type;
   }
 
-  public JAbstractMethod getEnclosingMethod() {
-    return enclosingMethod;
-  }
-
-  // Called when parameter types are found to be parameterized
-  void setType(JType type) {
-    this.type = type;
-  }
-
   public String toString() {
     StringBuffer sb = new StringBuffer();
     sb.append(type.getQualifiedSourceName());
@@ -62,8 +65,8 @@ public class JParameter implements HasMetaData {
     return sb.toString();
   }
 
-  private final HasMetaData metaData = new MetaData();
-  private final String name;
-  private JType type;
-  private final JAbstractMethod enclosingMethod;
+  // Called when parameter types are found to be parameterized
+  void setType(JType type) {
+    this.type = type;
+  }
 }
