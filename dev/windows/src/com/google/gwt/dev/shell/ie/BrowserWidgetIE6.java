@@ -121,7 +121,7 @@ public class BrowserWidgetIE6 extends BrowserWidget {
     // Expose a 'window.external' object. This object's onLoad() method will
     // be called when a hosted mode application's wrapper HTML is done loading.
     //
-    SwtOleGlue.injectBrowserScriptExternalObject(fBrowser, new External());
+    SwtOleGlue.injectBrowserScriptExternalObject(browser, new External());
 
     // Make sure that the LowLevelIE6 magic is properly initialized.
     //

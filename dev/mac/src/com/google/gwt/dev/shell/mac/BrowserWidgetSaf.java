@@ -118,8 +118,8 @@ public class BrowserWidgetSaf extends BrowserWidget {
     super(shell, host);
 
     Browser.setWebInspectorEnabled(true);
-    fBrowser.setUserAgentApplicationName("Safari 419.3");
-    fBrowser.addWindowScriptObjectListener(new Browser.WindowScriptObjectListener() {
+    browser.setUserAgentApplicationName("Safari 419.3");
+    browser.addWindowScriptObjectListener(new Browser.WindowScriptObjectListener() {
 
       public void windowScriptObjectAvailable(int windowScriptObject) {
         int sel = WebKit.sel_registerName("_imp");
@@ -146,12 +146,12 @@ public class BrowserWidgetSaf extends BrowserWidget {
      */
     getDisplay().timerExec(REDRAW_PERIOD, new Runnable() {
       public void run() {
-        if (fBrowser.isDisposed() || isDisposed()) {
+        if (browser.isDisposed() || isDisposed()) {
           // stop running if we're disposed
           return;
         }
         // Force the browser to refresh
-        fBrowser.setNeedsDisplay(true);
+        browser.setNeedsDisplay(true);
         // Reschedule this object to run again
         getDisplay().timerExec(REDRAW_PERIOD, this);
       }
