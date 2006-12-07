@@ -53,6 +53,41 @@ class Shared {
   static final String[][] NO_STRING_ARR_ARR = new String[0][];
   static final String[] NO_STRINGS = new String[0];
 
+  public static int bindingToModifierBits(FieldBinding binding) {
+    int bits = 0;
+    bits |= (binding.isPublic() ? MOD_PUBLIC : 0);
+    bits |= (binding.isPrivate() ? MOD_PRIVATE : 0);
+    bits |= (binding.isProtected() ? MOD_PROTECTED : 0);
+    bits |= (binding.isStatic() ? MOD_STATIC : 0);
+    bits |= (binding.isTransient() ? MOD_TRANSIENT : 0);
+    bits |= (binding.isFinal() ? MOD_FINAL : 0);
+    bits |= (binding.isVolatile() ? MOD_VOLATILE : 0);
+    return bits;
+  }
+
+  public static int bindingToModifierBits(MethodBinding binding) {
+    int bits = 0;
+    bits |= (binding.isPublic() ? MOD_PUBLIC : 0);
+    bits |= (binding.isPrivate() ? MOD_PRIVATE : 0);
+    bits |= (binding.isProtected() ? MOD_PROTECTED : 0);
+    bits |= (binding.isStatic() ? MOD_STATIC : 0);
+    bits |= (binding.isFinal() ? MOD_FINAL : 0);
+    bits |= (binding.isNative() ? MOD_NATIVE : 0);
+    bits |= (binding.isAbstract() ? MOD_ABSTRACT : 0);
+    return bits;
+  }
+
+  public static int bindingToModifierBits(ReferenceBinding binding) {
+    int bits = 0;
+    bits |= (binding.isPublic() ? MOD_PUBLIC : 0);
+    bits |= (binding.isPrivate() ? MOD_PRIVATE : 0);
+    bits |= (binding.isProtected() ? MOD_PROTECTED : 0);
+    bits |= (binding.isStatic() ? MOD_STATIC : 0);
+    bits |= (binding.isFinal() ? MOD_FINAL : 0);
+    bits |= (binding.isAbstract() ? MOD_ABSTRACT : 0);
+    return bits;
+  }
+
   static String[] modifierBitsToNames(int bits) {
     List strings = new ArrayList();
 
@@ -85,7 +120,7 @@ class Shared {
     if (0 != (bits & MOD_NATIVE)) {
       strings.add("native");
     }
-    
+
     if (0 != (bits & MOD_TRANSIENT)) {
       strings.add("transient");
     }
@@ -95,41 +130,6 @@ class Shared {
     }
 
     return (String[]) strings.toArray(NO_STRINGS);
-  }
-
-  public static int bindingToModifierBits(ReferenceBinding binding) {
-    int bits = 0; 
-    bits |= (binding.isPublic() ? MOD_PUBLIC : 0);
-    bits |= (binding.isPrivate() ? MOD_PRIVATE : 0);
-    bits |= (binding.isProtected() ? MOD_PROTECTED : 0);
-    bits |= (binding.isStatic() ? MOD_STATIC : 0);
-    bits |= (binding.isFinal() ? MOD_FINAL : 0);
-    bits |= (binding.isAbstract() ? MOD_ABSTRACT : 0);
-    return bits;
-  }
-
-  public static int bindingToModifierBits(FieldBinding binding) {
-    int bits = 0;
-    bits |= (binding.isPublic() ? MOD_PUBLIC : 0);
-    bits |= (binding.isPrivate() ? MOD_PRIVATE : 0);
-    bits |= (binding.isProtected() ? MOD_PROTECTED : 0);
-    bits |= (binding.isStatic() ? MOD_STATIC : 0);
-    bits |= (binding.isTransient() ? MOD_TRANSIENT : 0);
-    bits |= (binding.isFinal() ? MOD_FINAL : 0);
-    bits |= (binding.isVolatile() ? MOD_VOLATILE : 0);
-    return bits;
-  }
-
-  public static int bindingToModifierBits(MethodBinding binding) {
-    int bits = 0;
-    bits |= (binding.isPublic() ? MOD_PUBLIC : 0);
-    bits |= (binding.isPrivate() ? MOD_PRIVATE : 0);
-    bits |= (binding.isProtected() ? MOD_PROTECTED : 0);
-    bits |= (binding.isStatic() ? MOD_STATIC : 0);
-    bits |= (binding.isFinal() ? MOD_FINAL : 0);
-    bits |= (binding.isNative() ? MOD_NATIVE : 0);
-    bits |= (binding.isAbstract() ? MOD_ABSTRACT : 0);
-    return bits;
   }
 
 }

@@ -30,20 +30,33 @@ public class URLCompilationUnitProvider implements CompilationUnitProvider {
     String s = url.toExternalForm();
     File f = null;
     if (s.startsWith("file:")) {
-      // Strip the file: off, and use the result.  If the result
-      // does not start with file, we cannot simplify.  Using URI
+      // Strip the file: off, and use the result. If the result
+      // does not start with file, we cannot simplify. Using URI
       // to do the simplification fails for paths with spaces.
       // Any number of slashes at the beginning cause no problem for Java, so
       // if c:/windows exists so will ///////c:/windows.
-        f = new File(s.substring(5));
-        if (!f.exists()) {
-          f = null;
-        }
+      f = new File(s.substring(5));
+      if (!f.exists()) {
+        f = null;
+      }
     } else {
       f = null;
     }
     return f;
   }
+
+  private final File file;
+
+  private final String location;
+
+  private final String packageName;
+
+  private char[] source;
+
+  private long sourceCurrentTime = Long.MIN_VALUE;
+
+  private final URL url;
+
   public URLCompilationUnitProvider(URL url, String packageName) {
     assert (url != null);
     assert (packageName != null);
@@ -110,11 +123,4 @@ public class URLCompilationUnitProvider implements CompilationUnitProvider {
   public String toString() {
     return location;
   }
-
-  private final File file;
-  private final String location;
-  private final String packageName;
-  private char[] source;
-  private long sourceCurrentTime = Long.MIN_VALUE;
-  private final URL url;
 }

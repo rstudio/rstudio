@@ -29,6 +29,8 @@ import java.util.Set;
 
 public class WebModeCompilerFrontEnd extends AstCompiler {
 
+  private final RebindPermutationOracle rebindPermOracle;
+
   public WebModeCompilerFrontEnd(SourceOracle sourceOracle,
       RebindPermutationOracle rebindPermOracle) {
     super(sourceOracle);
@@ -75,25 +77,23 @@ public class WebModeCompilerFrontEnd extends AstCompiler {
   protected String[] doFindAdditionalTypesUsingRebinds(TreeLogger logger,
       CompilationUnitDeclaration cud) throws UnableToCompleteException {
     Set dependentTypeNames = new HashSet();
-    
+
     // Find all the deferred binding request types.
     //
     Set requestedTypes = new HashSet();
     FindDeferredBindingSitesVisitor v = new FindDeferredBindingSitesVisitor(
-      requestedTypes);
+        requestedTypes);
     cud.traverse(v, cud.scope);
-    
+
     // For each, ask the host for every possible deferred binding answer.
     //
     for (Iterator iter = requestedTypes.iterator(); iter.hasNext();) {
       String reqType = (String) iter.next();
       String[] resultTypes = rebindPermOracle.getAllPossibleRebindAnswers(
-        getLogger(), reqType);
-      
+          getLogger(), reqType);
+
       Util.addAll(dependentTypeNames, resultTypes);
     }
     return (String[]) dependentTypeNames.toArray(Empty.STRINGS);
   }
-
-  private final RebindPermutationOracle rebindPermOracle;
 }

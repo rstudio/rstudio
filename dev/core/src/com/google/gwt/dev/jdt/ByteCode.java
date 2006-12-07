@@ -21,11 +21,11 @@ import java.io.Serializable;
 
 public class ByteCode implements Serializable {
 
-  private static final String systemString =
-      System.getProperty("java.class.path", ".");
+  private static final String systemString = System.getProperty(
+      "java.class.path", ".");
 
-  private static final String systemStringAsIdentifier =
-      About.GWT_VERSION + "_" + systemString.hashCode();
+  private static final String systemStringAsIdentifier = About.GWT_VERSION
+      + "_" + systemString.hashCode();
 
   /**
    * This method returns the current system identifier, used to detect changes
@@ -38,10 +38,21 @@ public class ByteCode implements Serializable {
     return systemStringAsIdentifier;
   }
 
+  private final String binaryTypeName;
+
+  private final byte[] bytes;
+
+  private final String location;
+
+  private final String version;
+
+  private final boolean isTransient;
+
   /**
    * Specifies the bytecode for a given type.
    */
-  public ByteCode(String binaryTypeName, byte[] bytes, String location, boolean isTransient) {
+  public ByteCode(String binaryTypeName, byte[] bytes, String location,
+      boolean isTransient) {
     this.binaryTypeName = binaryTypeName;
     this.bytes = bytes;
     this.location = location;
@@ -64,13 +75,6 @@ public class ByteCode implements Serializable {
   public String getSystemIdentifier() {
     return version;
   }
-
-  private final String binaryTypeName;
-  private final byte[] bytes;
-  private final String location;
-  private final String version;
-
-  private final boolean isTransient;
 
   public boolean isTransient() {
     return isTransient;

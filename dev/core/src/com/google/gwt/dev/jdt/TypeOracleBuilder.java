@@ -106,23 +106,20 @@ public class TypeOracleBuilder {
         // is referenced must also be removed.
         //
         String referencedFn = String.valueOf(referencedType.getFileName());
-        CompilationUnitDeclaration referencedCud =
-            (CompilationUnitDeclaration) cudsByFileName.get(referencedFn);
+        CompilationUnitDeclaration referencedCud = (CompilationUnitDeclaration) cudsByFileName.get(referencedFn);
         if (referencedCud == null) {
           // This is a referenced to a bad or non-existent unit.
           // So, remove the referrer's unit if it hasn't been already.
           //
           String referrerFn = String.valueOf(unitOfReferrer.getFileName());
           if (cudsByFileName.containsKey(referrerFn)
-            && !pendingRemovals.contains(referrerFn)) {
-            TreeLogger branch =
-                logger.branch(TreeLogger.TRACE,
-                  "Cascaded removal of compilation unit '" + referrerFn + "'",
-                  null);
-            final String badTypeName =
-                CharOperation.toString(referencedType.compoundName);
+              && !pendingRemovals.contains(referrerFn)) {
+            TreeLogger branch = logger.branch(TreeLogger.TRACE,
+                "Cascaded removal of compilation unit '" + referrerFn + "'",
+                null);
+            final String badTypeName = CharOperation.toString(referencedType.compoundName);
             branch.branch(TreeLogger.TRACE,
-              "Due to reference to unavailable type: " + badTypeName, null);
+                "Due to reference to unavailable type: " + badTypeName, null);
             pendingRemovals.add(referrerFn);
           }
         }
@@ -145,8 +142,7 @@ public class TypeOracleBuilder {
       // Find references to type in units that aren't valid.
       //
       for (Iterator iter = cudsByFileName.values().iterator(); iter.hasNext();) {
-        CompilationUnitDeclaration cud =
-            (CompilationUnitDeclaration) iter.next();
+        CompilationUnitDeclaration cud = (CompilationUnitDeclaration) iter.next();
         cud.traverse(trv, cud.scope);
       }
     } while (!pendingRemovals.isEmpty());
@@ -169,7 +165,7 @@ public class TypeOracleBuilder {
         char[] source = cud.compilationResult.compilationUnit.getContents();
         Util.maybeDumpSource(logger, fileName, source, null);
         logger.log(TreeLogger.TRACE, "Removing problematic compilation unit '"
-          + fileName + "'", null);
+            + fileName + "'", null);
       }
     }
 
@@ -179,6 +175,8 @@ public class TypeOracleBuilder {
       removeInfectedUnits(logger, cudsByFileName);
     }
   }
+
+  private final CacheManager cacheManager;
 
   /**
    * Constructs a default instance, with a default cacheManager. This is not to
@@ -230,19 +228,17 @@ public class TypeOracleBuilder {
         location = Util.findFileName(location);
         if (!(new File(location).exists() || cup.isTransient())) {
           iter.remove();
-          logger
-            .log(
+          logger.log(
               TreeLogger.TRACE,
               "The file "
-                + location
-                + " was removed by the user.  All types therein are now unavailable.",
+                  + location
+                  + " was removed by the user.  All types therein are now unavailable.",
               null);
         }
       }
     }
-    CompilationUnitProvider[] cups =
-        (CompilationUnitProvider[]) Util.toArray(CompilationUnitProvider.class,
-          addedCups);
+    CompilationUnitProvider[] cups = (CompilationUnitProvider[]) Util.toArray(
+        CompilationUnitProvider.class, addedCups);
     Arrays.sort(cups, CompilationUnitProvider.LOCATION_COMPARATOR);
 
     // Make sure we can find the java.lang.Object compilation unit.
@@ -265,9 +261,8 @@ public class TypeOracleBuilder {
       throw new UnableToCompleteException();
     }
     cacheManager.invalidateOnRefresh(oracle);
-    CompilationUnitDeclaration[] cuds =
-        cacheManager.getAstCompiler().getCompilationUnitDeclarations(logger,
-          units);
+    CompilationUnitDeclaration[] cuds = cacheManager.getAstCompiler().getCompilationUnitDeclarations(
+        logger, units);
 
     // Build a list that makes it easy to remove problems.
     //
@@ -309,17 +304,13 @@ public class TypeOracleBuilder {
 
       cud.traverse(new ASTVisitor() {
         public boolean visit(TypeDeclaration typeDecl, BlockScope scope) {
-          JClassType enclosingType =
-              identityMapper.get((SourceTypeBinding) typeDecl.binding
-                .enclosingType());
+          JClassType enclosingType = identityMapper.get((SourceTypeBinding) typeDecl.binding.enclosingType());
           processType(typeDecl, enclosingType, true);
           return true;
         }
 
         public boolean visit(TypeDeclaration typeDecl, ClassScope scope) {
-          JClassType enclosingType =
-              identityMapper.get((SourceTypeBinding) typeDecl.binding
-                .enclosingType());
+          JClassType enclosingType = identityMapper.get((SourceTypeBinding) typeDecl.binding.enclosingType());
           processType(typeDecl, enclosingType, false);
           return true;
         }
@@ -338,8 +329,8 @@ public class TypeOracleBuilder {
       CompilationUnitDeclaration cud = (CompilationUnitDeclaration) iter.next();
       String loc = String.valueOf(cud.getFileName());
       String processing = "Processing types in compilation unit: " + loc;
-      final TreeLogger cudLogger =
-          logger.branch(TreeLogger.SPAM, processing, null);
+      final TreeLogger cudLogger = logger.branch(TreeLogger.SPAM, processing,
+          null);
       final char[] source = cud.compilationResult.compilationUnit.getContents();
 
       cud.traverse(new ASTVisitor() {
@@ -373,7 +364,7 @@ public class TypeOracleBuilder {
       }, cud.scope);
     }
     Util.invokeInaccessableMethod(TypeOracle.class, "refresh",
-      new Class[]{TreeLogger.class}, oracle, new Object[]{logger});
+        new Class[] {TreeLogger.class}, oracle, new Object[] {logger});
     return oracle;
   }
 
@@ -393,8 +384,7 @@ public class TypeOracleBuilder {
   }
 
   private String getPackage(TypeDeclaration typeDecl) {
-    final char[][] pkgParts =
-        typeDecl.compilationResult.compilationUnit.getPackageName();
+    final char[][] pkgParts = typeDecl.compilationResult.compilationUnit.getPackageName();
     return String.valueOf(CharOperation.concatWith(pkgParts, '.'));
   }
 
@@ -542,9 +532,9 @@ public class TypeOracleBuilder {
     int bodyStart = typeDecl.bodyStart;
     int bodyEnd = typeDecl.bodyEnd;
 
-    JClassType type =
-        new JClassType(oracle, cup, pkg, enclosingType, isLocalType,
-          jclassName, declStart, declEnd, bodyStart, bodyEnd, jclassIsIntf);
+    JClassType type = new JClassType(oracle, cup, pkg, enclosingType,
+        isLocalType, jclassName, declStart, declEnd, bodyStart, bodyEnd,
+        jclassIsIntf);
 
     cacheManager.setTypeForBinding(binding, type);
   }
@@ -619,19 +609,16 @@ public class TypeOracleBuilder {
 
     if (jmethod.isConstructor()) {
       name = String.valueOf(enclosingType.getSimpleSourceName());
-      method =
-          new JConstructor(enclosingType, name, declStart, declEnd, bodyStart,
-            bodyEnd);
+      method = new JConstructor(enclosingType, name, declStart, declEnd,
+          bodyStart, bodyEnd);
     } else {
       name = String.valueOf(jmethod.binding.selector);
-      method =
-          new JMethod(enclosingType, name, declStart, declEnd, bodyStart,
-            bodyEnd);
+      method = new JMethod(enclosingType, name, declStart, declEnd, bodyStart,
+          bodyEnd);
 
       // Set the return type.
       //
-      TypeBinding jreturnType =
-          ((MethodDeclaration) jmethod).returnType.resolvedType;
+      TypeBinding jreturnType = ((MethodDeclaration) jmethod).returnType.resolvedType;
       JType returnType = resolveType(logger, jreturnType);
       if (returnType == null) {
         // Unresolved type.
@@ -823,7 +810,7 @@ public class TypeOracleBuilder {
     //
     if (binding instanceof BinaryTypeBinding) {
       logger.log(TreeLogger.WARN,
-        "Source not available for this type, so it cannot be resolved", null);
+          "Source not available for this type, so it cannot be resolved", null);
     }
 
     String name = String.valueOf(binding.readableName());
@@ -907,7 +894,5 @@ public class TypeOracleBuilder {
 
     return true;
   }
-
-  private final CacheManager cacheManager;
 
 }

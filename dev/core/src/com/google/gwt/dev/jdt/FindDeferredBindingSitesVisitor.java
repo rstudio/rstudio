@@ -36,6 +36,8 @@ public class FindDeferredBindingSitesVisitor extends ASTVisitor {
   public static final String REBIND_MAGIC_CLASS = "com.google.gwt.core.client.GWT";
   public static final String REBIND_MAGIC_METHOD = "create";
 
+  private final Set results;
+
   public FindDeferredBindingSitesVisitor(Set results) {
     this.results = results;
   }
@@ -66,15 +68,15 @@ public class FindDeferredBindingSitesVisitor extends ASTVisitor {
     Expression[] args = messageSend.arguments;
     if (args.length != 1) {
       problemReporter.abortDueToInternalError(
-        "GWT.create() should take exactly one argument", messageSend);
+          "GWT.create() should take exactly one argument", messageSend);
       return;
     }
 
     Expression arg = args[0];
     if (!(arg instanceof ClassLiteralAccess)) {
       problemReporter.abortDueToInternalError(
-        "Only class literals may be used as arguments to GWT.create()",
-        messageSend);
+          "Only class literals may be used as arguments to GWT.create()",
+          messageSend);
       return;
     }
 
@@ -82,6 +84,4 @@ public class FindDeferredBindingSitesVisitor extends ASTVisitor {
     String typeName = String.valueOf(cla.targetType.readableName());
     results.add(typeName);
   }
-
-  private final Set results;
 }

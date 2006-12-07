@@ -20,6 +20,10 @@ import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 
 public class CompilationUnitProviderWithAlternateSource implements
     CompilationUnitProvider {
+  private final CompilationUnitProvider cup;
+
+  private final char[] source;
+
   public CompilationUnitProviderWithAlternateSource(
       CompilationUnitProvider cup, char[] source) {
     this.cup = cup;
@@ -45,7 +49,4 @@ public class CompilationUnitProviderWithAlternateSource implements
   public boolean isTransient() {
     return cup.isTransient();
   }
-
-  private final CompilationUnitProvider cup;
-  private final char[] source;
 }

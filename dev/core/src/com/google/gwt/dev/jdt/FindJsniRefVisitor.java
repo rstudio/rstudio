@@ -34,11 +34,11 @@ import java.util.Set;
 
 public class FindJsniRefVisitor extends ASTVisitor {
 
-  private final Set/*<String>*/ jsniClasses;
+  private final Set/* <String> */jsniClasses;
   private final JsParser jsParser = new JsParser();
   private final JsProgram jsProgram = new JsProgram();
 
-  public FindJsniRefVisitor(Set/*<String>*/ jsniClasses) {
+  public FindJsniRefVisitor(Set/* <String> */jsniClasses) {
     this.jsniClasses = jsniClasses;
   }
 
@@ -48,10 +48,9 @@ public class FindJsniRefVisitor extends ASTVisitor {
     }
 
     // Handle JSNI block
-    char[] source = methodDeclaration.compilationResult().getCompilationUnit()
-      .getContents();
+    char[] source = methodDeclaration.compilationResult().getCompilationUnit().getContents();
     String jsniCode = String.valueOf(source, methodDeclaration.bodyStart,
-      methodDeclaration.bodyEnd - methodDeclaration.bodyStart + 1);
+        methodDeclaration.bodyEnd - methodDeclaration.bodyStart + 1);
     int startPos = jsniCode.indexOf("/*-{");
     int endPos = jsniCode.lastIndexOf("}-*/");
     if (startPos < 0 || endPos < 0) {
@@ -92,7 +91,7 @@ public class FindJsniRefVisitor extends ASTVisitor {
       });
     } catch (IOException e) {
       throw new InternalCompilerException(
-        "Internal error searching for JSNI references", e);
+          "Internal error searching for JSNI references", e);
     } catch (JsParserException e) {
       // ignore, we only care about finding valid references
     }

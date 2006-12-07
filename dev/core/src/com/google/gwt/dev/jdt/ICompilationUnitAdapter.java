@@ -23,6 +23,8 @@ import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 
 public class ICompilationUnitAdapter implements ICompilationUnit {
 
+  private final CompilationUnitProvider cup;
+
   public ICompilationUnitAdapter(CompilationUnitProvider cup) {
     assert (cup != null);
     this.cup = cup;
@@ -54,6 +56,4 @@ public class ICompilationUnitAdapter implements ICompilationUnit {
     final char[][] pkgParts = CharOperation.splitOn('.', pkg);
     return pkgParts;
   }
-
-  private final CompilationUnitProvider cup;
 }

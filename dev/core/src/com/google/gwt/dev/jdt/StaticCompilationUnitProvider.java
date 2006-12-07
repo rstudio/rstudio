@@ -19,6 +19,12 @@ import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 
 public class StaticCompilationUnitProvider implements CompilationUnitProvider {
 
+  private final String packageName;
+
+  private final String simpleTypeName;
+
+  private final char[] source;
+
   /**
    * @param source if <code>null</code>, override this class and return
    *          source from {@link #getSource()}
@@ -63,8 +69,4 @@ public class StaticCompilationUnitProvider implements CompilationUnitProvider {
   public String toString() {
     return getLocation();
   }
-
-  private final String packageName;
-  private final String simpleTypeName;
-  private final char[] source;
 }

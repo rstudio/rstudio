@@ -44,6 +44,10 @@ public class AstCompiler extends AbstractCompiler {
    */
   private class CompilationUnitDeclarationCache {
 
+    private final Map lastModified = new HashMap();
+
+    private final Map map = new HashMap();
+
     public void remove(String newLoc) {
       map.remove(newLoc);
     }
@@ -73,12 +77,10 @@ public class AstCompiler extends AbstractCompiler {
         List element = (List) iter.next();
         outSet.addAll(element);
       }
-      CompilationUnitDeclaration[] out =
-          new CompilationUnitDeclaration[outSet.size()];
+      CompilationUnitDeclaration[] out = new CompilationUnitDeclaration[outSet.size()];
       int i = 0;
       for (Iterator iter = outSet.iterator(); iter.hasNext();) {
-        CompilationUnitDeclaration element =
-            (CompilationUnitDeclaration) iter.next();
+        CompilationUnitDeclaration element = (CompilationUnitDeclaration) iter.next();
         out[i] = element;
         i++;
       }
@@ -88,10 +90,9 @@ public class AstCompiler extends AbstractCompiler {
     private void removeAll(Collection c) {
       map.keySet().removeAll(c);
     }
-
-    private final Map lastModified = new HashMap();
-    private final Map map = new HashMap();
   }
+
+  private final CompilationUnitDeclarationCache cachedResults = new CompilationUnitDeclarationCache();
 
   public AstCompiler(SourceOracle sourceOracle) {
     super(sourceOracle, false);
@@ -101,7 +102,7 @@ public class AstCompiler extends AbstractCompiler {
       TreeLogger logger, ICompilationUnit[] units) {
     List allUnits = Arrays.asList(units);
     List newUnits = new ArrayList();
- 
+
     // Check for newer units that need to be processed.
     for (Iterator iter = allUnits.iterator(); iter.hasNext();) {
       ICompilationUnitAdapter adapter = (ICompilationUnitAdapter) iter.next();
@@ -114,7 +115,7 @@ public class AstCompiler extends AbstractCompiler {
     ICompilationUnit[] toBeProcessed = new ICompilationUnit[newUnits.size()];
     newUnits.toArray(toBeProcessed);
     CompilationUnitDeclaration[] newCuds = compile(logger, toBeProcessed);
-    
+
     // Put new cuds into cache.
     for (int i = 0; i < newCuds.length; i++) {
       String newLoc = String.valueOf(newCuds[i].getFileName());
@@ -128,7 +129,4 @@ public class AstCompiler extends AbstractCompiler {
     cachedResults.removeAll(changedFiles);
     invalidateUnitsInFiles(changedFiles, typeNames);
   }
-
-  private final CompilationUnitDeclarationCache cachedResults =
-      new CompilationUnitDeclarationCache();
 }

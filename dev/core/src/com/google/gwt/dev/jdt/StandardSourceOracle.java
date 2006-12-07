@@ -37,6 +37,12 @@ import java.util.Set;
  */
 public class StandardSourceOracle implements SourceOracle {
 
+  private final Map cupsByTypeName = new HashMap();
+
+  private final Set knownPackages = new HashSet();
+
+  private final TypeOracle typeOracle;
+
   /**
    * @param typeOracle answers questions about compilation unit locations
    * @param genDir for compilation units whose location does not correspond to a
@@ -59,8 +65,7 @@ public class StandardSourceOracle implements SourceOracle {
 
     // Check the cache first.
     //
-    CompilationUnitProvider cup =
-        (CompilationUnitProvider) cupsByTypeName.get(typeName);
+    CompilationUnitProvider cup = (CompilationUnitProvider) cupsByTypeName.get(typeName);
 
     if (cup != null) {
       // Found in cache.
@@ -83,8 +88,8 @@ public class StandardSourceOracle implements SourceOracle {
     //
     if (cup != null) {
       try {
-        CompilationUnitProvider specialCup =
-            doFilterCompilationUnit(logger, typeName, cup);
+        CompilationUnitProvider specialCup = doFilterCompilationUnit(logger,
+            typeName, cup);
 
         if (specialCup != null) {
           // Use the cup that the subclass returned instead. Note that even
@@ -117,10 +122,6 @@ public class StandardSourceOracle implements SourceOracle {
 
   public TypeOracle getTypeOracle() {
     return typeOracle;
-  }
-
-   void invalidateCups(Set typeNames) {
-   cupsByTypeName.keySet().removeAll(typeNames);
   }
 
   /**
@@ -180,6 +181,10 @@ public class StandardSourceOracle implements SourceOracle {
     return null;
   }
 
+  void invalidateCups(Set typeNames) {
+    cupsByTypeName.keySet().removeAll(typeNames);
+  }
+
   /**
    * Remember that this package was added. Used for generated packages.
    */
@@ -192,8 +197,4 @@ public class StandardSourceOracle implements SourceOracle {
     }
     knownPackages.add(packageName);
   }
-
-  private final Map cupsByTypeName = new HashMap();
-  private final Set knownPackages = new HashSet();
-  private final TypeOracle typeOracle;
 }

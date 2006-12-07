@@ -90,17 +90,8 @@ public abstract class TypeRefVisitor extends ASTVisitor {
     maybeDispatch(scope, x.resolvedType);
   }
 
-  private void maybeDispatch(Scope referencedFrom, TypeBinding binding) {
-    if (binding instanceof SourceTypeBinding) {
-      SourceTypeBinding type = (SourceTypeBinding) binding;
-      CompilationUnitScope from = findUnitScope(referencedFrom);
-      onTypeRef(type, from.referenceContext);
-    } else if (binding instanceof ArrayBinding) {
-      maybeDispatch(referencedFrom, ((ArrayBinding) binding).leafComponentType);
-    } else {
-      // We don't care about other cases.
-    }
-  }
+  protected abstract void onTypeRef(SourceTypeBinding referencedType,
+      CompilationUnitDeclaration unitOfReferrer);
 
   private CompilationUnitScope findUnitScope(Scope referencedFrom) {
     assert (referencedFrom != null);
@@ -112,6 +103,15 @@ public abstract class TypeRefVisitor extends ASTVisitor {
     return (CompilationUnitScope) scope;
   }
 
-  protected abstract void onTypeRef(SourceTypeBinding referencedType,
-      CompilationUnitDeclaration unitOfReferrer);
+  private void maybeDispatch(Scope referencedFrom, TypeBinding binding) {
+    if (binding instanceof SourceTypeBinding) {
+      SourceTypeBinding type = (SourceTypeBinding) binding;
+      CompilationUnitScope from = findUnitScope(referencedFrom);
+      onTypeRef(type, from.referenceContext);
+    } else if (binding instanceof ArrayBinding) {
+      maybeDispatch(referencedFrom, ((ArrayBinding) binding).leafComponentType);
+    } else {
+      // We don't care about other cases.
+    }
+  }
 }

@@ -22,6 +22,8 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 
 public class SourceOracleOnTypeOracle implements SourceOracle {
 
+  private final TypeOracle typeOracle;
+
   public SourceOracleOnTypeOracle(TypeOracle typeOracle) {
     this.typeOracle = typeOracle;
   }
@@ -42,6 +44,4 @@ public class SourceOracleOnTypeOracle implements SourceOracle {
       return false;
     }
   }
-
-  private final TypeOracle typeOracle;
 }

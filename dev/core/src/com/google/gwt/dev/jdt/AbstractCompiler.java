@@ -62,6 +62,10 @@ public abstract class AbstractCompiler {
    */
   private class CompilerImpl extends Compiler {
 
+    public HashSet resolved = new HashSet();
+
+    private Set cuds;
+
     public CompilerImpl(INameEnvironment environment,
         IErrorHandlingPolicy policy, Map settings,
         ICompilerRequestor requestor, IProblemFactory problemFactory) {
@@ -82,7 +86,7 @@ public abstract class AbstractCompiler {
         if (cud.scope != null) {
           cud.scope.faultInTypes();
         }
-        
+
         // verify inherited methods
         if (cud.scope != null) {
           cud.scope.verifyMethods(lookupEnvironment.methodVerifier());
@@ -110,9 +114,8 @@ public abstract class AbstractCompiler {
 
       ICompilationUnit cu = cud.compilationResult.compilationUnit;
       String loc = String.valueOf(cu.getFileName());
-      TreeLogger logger =
-          threadLogger.branch(TreeLogger.SPAM,
-            "Scanning for additional dependencies: " + loc, null);
+      TreeLogger logger = threadLogger.branch(TreeLogger.SPAM,
+          "Scanning for additional dependencies: " + loc, null);
 
       // Examine the cud for magic types.
       //
@@ -121,7 +124,7 @@ public abstract class AbstractCompiler {
         typeNames = doFindAdditionalTypesUsingJsni(logger, cud);
       } catch (UnableToCompleteException e) {
         problemReporter.abortDueToInternalError(
-          "Unable to resolve required JSNI dependencies", cud);
+            "Unable to resolve required JSNI dependencies", cud);
         return;
       }
 
@@ -144,7 +147,7 @@ public abstract class AbstractCompiler {
         typeNames = doFindAdditionalTypesUsingRebinds(logger, cud);
       } catch (UnableToCompleteException e) {
         problemReporter.abortDueToInternalError(
-          "Unable to resolve required rebind dependencies", cud);
+            "Unable to resolve required rebind dependencies", cud);
         return;
       }
 
@@ -164,37 +167,36 @@ public abstract class AbstractCompiler {
         // sanity check rebind results
         if (type == null) {
           problemReporter.abortDueToInternalError("Rebind result '" + typeName
-            + "' could not be found");
+              + "' could not be found");
           return;
         }
         if (!type.isClass()) {
           problemReporter.abortDueToInternalError("Rebind result '" + typeName
-            + "' must be a class");
+              + "' must be a class");
           return;
         }
         if (type.isAbstract()) {
           problemReporter.abortDueToInternalError("Rebind result '" + typeName
-            + "' cannot be abstract");
+              + "' cannot be abstract");
           return;
         }
         if (type.isNestedType() && !type.isStatic()) {
           problemReporter.abortDueToInternalError("Rebind result '" + typeName
-            + "' cannot be a non-static nested class");
+              + "' cannot be a non-static nested class");
           return;
         }
         if (type.isLocalType()) {
           problemReporter.abortDueToInternalError("Rebind result '" + typeName
-            + "' cannot be a local class");
+              + "' cannot be a local class");
           return;
         }
         // look for a noArg ctor
-        MethodBinding noArgCtor =
-            type.getExactMethod("<init>".toCharArray(),
-              TypeBinding.NoParameters, cud.scope);
+        MethodBinding noArgCtor = type.getExactMethod("<init>".toCharArray(),
+            TypeBinding.NoParameters, cud.scope);
 
         if (noArgCtor == null) {
           problemReporter.abortDueToInternalError("Rebind result '" + typeName
-            + "' has no default (zero argument) constructors.");
+              + "' has no default (zero argument) constructors.");
           return;
         }
       }
@@ -249,10 +251,6 @@ public abstract class AbstractCompiler {
 
       return null;
     }
-
-    public HashSet resolved = new HashSet();
-
-    private Set cuds;
   }
 
   private class ICompilerRequestorImpl implements ICompilerRequestor {
@@ -281,10 +279,9 @@ public abstract class AbstractCompiler {
           msg = msg.substring(msg.indexOf(' '));
 
           if (error.getID() >= IProblem.InvalidUsageOfTypeParameters
-            && error.getID() <= IProblem.InvalidUsageOfAnnotationDeclarations) {
+              && error.getID() <= IProblem.InvalidUsageOfAnnotationDeclarations) {
             // this error involves 5.0 compliance, use a custom message
-            msg =
-                "GWT does not yet support the Java 5.0 language enhancements; only 1.4 compatible source may be used";
+            msg = "GWT does not yet support the Java 5.0 language enhancements; only 1.4 compatible source may be used";
           }
 
           // Append 'Line #: msg' to the error message.
@@ -326,12 +323,10 @@ public abstract class AbstractCompiler {
       // CompilationUnitDeclarations than needed.
       String qname = CharOperation.toString(compoundTypeName);
       if (nameEnvironmentAnswerForTypeName.containsKey(qname)) {
-        return (NameEnvironmentAnswer) (nameEnvironmentAnswerForTypeName
-          .get(qname));
+        return (NameEnvironmentAnswer) (nameEnvironmentAnswerForTypeName.get(qname));
       }
-      TreeLogger logger =
-          threadLogger.branch(TreeLogger.SPAM, "Compiler is asking about '"
-            + qname + "'", null);
+      TreeLogger logger = threadLogger.branch(TreeLogger.SPAM,
+          "Compiler is asking about '" + qname + "'", null);
 
       if (sourceOracle.isPackage(qname)) {
         logger.log(TreeLogger.SPAM, "Found to be a package", null);
@@ -373,7 +368,7 @@ public abstract class AbstractCompiler {
         cup = sourceOracle.findCompilationUnit(logger, qname);
         if (cup != null) {
           logger.log(TreeLogger.SPAM, "Found type in compilation unit: "
-            + cup.getLocation(), null);
+              + cup.getLocation(), null);
           ICompilationUnitAdapter unit = new ICompilationUnitAdapter(cup);
           NameEnvironmentAnswer out = new NameEnvironmentAnswer(unit, null);
           nameEnvironmentAnswerForTypeName.put(qname, out);
@@ -411,39 +406,52 @@ public abstract class AbstractCompiler {
     }
   }
 
+  private final CompilerImpl compiler;
+
+  private final boolean doGenerateBytes;
+
+  private final Set knownPackages = new HashSet();
+
+  private final Map nameEnvironmentAnswerForTypeName = new HashMap();
+
+  private final SourceOracle sourceOracle;
+
+  private final ThreadLocalTreeLoggerProxy threadLogger = new ThreadLocalTreeLoggerProxy();
+
+  private final Map unitsByTypeName = new HashMap();
+
   protected AbstractCompiler(SourceOracle sourceOracle, boolean doGenerateBytes) {
     this.sourceOracle = sourceOracle;
     this.doGenerateBytes = doGenerateBytes;
     rememberPackage("");
 
     INameEnvironment env = new INameEnvironmentImpl();
-    IErrorHandlingPolicy pol =
-        DefaultErrorHandlingPolicies.proceedWithAllProblems();
+    IErrorHandlingPolicy pol = DefaultErrorHandlingPolicies.proceedWithAllProblems();
     IProblemFactory probFact = new DefaultProblemFactory(Locale.getDefault());
     ICompilerRequestor req = new ICompilerRequestorImpl();
     Map settings = new HashMap();
     settings.put(CompilerOptions.OPTION_LineNumberAttribute,
-      CompilerOptions.GENERATE);
+        CompilerOptions.GENERATE);
     settings.put(CompilerOptions.OPTION_SourceFileAttribute,
-      CompilerOptions.GENERATE);
+        CompilerOptions.GENERATE);
     /*
      * Tricks like "boolean stopHere = true;" depend on this setting to work in
      * hosted mode. In web mode, our compiler should optimize them out once we
      * do real data flow.
      */
     settings.put(CompilerOptions.OPTION_PreserveUnusedLocal,
-      CompilerOptions.PRESERVE);
+        CompilerOptions.PRESERVE);
     settings.put(CompilerOptions.OPTION_ReportDeprecation,
-      CompilerOptions.IGNORE);
+        CompilerOptions.IGNORE);
     settings.put(CompilerOptions.OPTION_LocalVariableAttribute,
-      CompilerOptions.GENERATE);
+        CompilerOptions.GENERATE);
     settings.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_1_4);
     settings.put(CompilerOptions.OPTION_TargetPlatform,
-      CompilerOptions.VERSION_1_4);
+        CompilerOptions.VERSION_1_4);
 
     // This is needed by TypeOracleBuilder to parse metadata.
     settings.put(CompilerOptions.OPTION_DocCommentSupport,
-      CompilerOptions.ENABLED);
+        CompilerOptions.ENABLED);
 
     compiler = new CompilerImpl(env, pol, settings, req, probFact);
   }
@@ -472,8 +480,7 @@ public abstract class AbstractCompiler {
     Set cuds = new HashSet();
     compiler.compile(units, cuds);
     int size = cuds.size();
-    CompilationUnitDeclaration[] cudArray =
-        new CompilationUnitDeclaration[size];
+    CompilationUnitDeclaration[] cudArray = new CompilationUnitDeclaration[size];
     return (CompilationUnitDeclaration[]) cuds.toArray(cudArray);
   }
 
@@ -583,13 +590,4 @@ public abstract class AbstractCompiler {
       return binaryTypeName;
     }
   }
-
-  private final CompilerImpl compiler;
-  private final boolean doGenerateBytes;
-  private final Set knownPackages = new HashSet();
-  private final Map nameEnvironmentAnswerForTypeName = new HashMap();
-  private final SourceOracle sourceOracle;
-  private final ThreadLocalTreeLoggerProxy threadLogger =
-      new ThreadLocalTreeLoggerProxy();
-  private final Map unitsByTypeName = new HashMap();
 }

@@ -29,6 +29,8 @@ import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
  */
 public class ByteCodeCompiler extends AbstractCompiler {
 
+  private final CacheManager cacheManager;
+
   /**
    * Creates a bytecode compiler for use not in hosted mode. All bytecode will
    * be thrown away after reload.
@@ -85,7 +87,7 @@ public class ByteCodeCompiler extends AbstractCompiler {
     // a policy of always trying to recompile if we don't have it cached.
     //
     ICompilationUnit start = getCompilationUnitForType(logger, binaryTypeName);
-    compile(logger, new ICompilationUnit[]{start});
+    compile(logger, new ICompilationUnit[] {start});
 
     // Check the cache again. If it's there now, we succeeded.
     // If it isn't there now, we've already logged the error.
@@ -148,14 +150,13 @@ public class ByteCodeCompiler extends AbstractCompiler {
       String loc = String.valueOf(result.compilationUnit.getFileName());
       boolean isTransient = true;
       if (result.compilationUnit instanceof ICompilationUnitAdapter) {
-        ICompilationUnitAdapter unit =
-            (ICompilationUnitAdapter) result.compilationUnit;
+        ICompilationUnitAdapter unit = (ICompilationUnitAdapter) result.compilationUnit;
         isTransient = unit.getCompilationUnitProvider().isTransient();
       }
       ByteCode byteCode = new ByteCode(className, bytes, loc, isTransient);
       if (cacheManager.acceptIntoCache(logger, className, byteCode)) {
         logger.log(TreeLogger.SPAM, "Successfully compiled and cached '"
-          + className + "'", null);
+            + className + "'", null);
       }
     }
   }
@@ -169,6 +170,4 @@ public class ByteCodeCompiler extends AbstractCompiler {
       String binaryTypeName) {
     return cacheManager.getByteCode(logger, binaryTypeName);
   }
-
-  private final CacheManager cacheManager;
 }

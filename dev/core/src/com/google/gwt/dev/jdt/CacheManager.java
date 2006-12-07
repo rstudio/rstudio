@@ -55,6 +55,8 @@ public class CacheManager {
    * Maps SourceTypeBindings to their associated types.
    */
   static class Mapper {
+    private final Map map = new IdentityHashMap();
+
     public JClassType get(SourceTypeBinding binding) {
       JClassType type = (JClassType) map.get(binding);
       return type;
@@ -68,14 +70,14 @@ public class CacheManager {
     public void reset() {
       map.clear();
     }
-
-    private final Map map = new IdentityHashMap();
   }
 
   /**
    * This class is a very simple multi-valued map.
    */
   private static class Dependencies {
+    private Map map = new HashMap();
+
     /**
      * This method adds <code>item</code> to the list stored under
      * <code>key</code>.
@@ -128,33 +130,6 @@ public class CacheManager {
         }
       }
     }
-
-    private Map map = new HashMap();
-  }
-
-  // This method must be outside of DiskCache because of the restruction against
-  // defining static methods in inner classes.
-  private static String possiblyAddTmpExtension(Object className) {
-    String fileName = className.toString();
-    if (fileName.indexOf("-") == -1) {
-      int hashCode = fileName.hashCode();
-      String hashCodeStr = Integer.toHexString(hashCode);
-      while (hashCodeStr.length() < 8) {
-        hashCodeStr = '0' + hashCodeStr;
-      }
-      fileName = fileName + "-" + hashCodeStr + ".tmp";
-    }
-    return fileName;
-  }
-
-  // This method must be outside of DiskCache because of the restruction against
-  // defining static methods in inner classes.
-  private static String possiblyRemoveTmpExtension(Object fileName) {
-    String className = fileName.toString();
-    if (className.indexOf("-") != -1) {
-      className = className.split("-")[0];
-    }
-    return className;
   }
 
   /**
@@ -164,6 +139,8 @@ public class CacheManager {
   private static class DiskCache extends AbstractMap {
 
     private class FileEntry implements Map.Entry {
+
+      private File file;
 
       private FileEntry(File file) {
         this.file = file;
@@ -225,9 +202,13 @@ public class CacheManager {
       private long lastModified() {
         return file.lastModified();
       }
-
-      private File file;
     }
+
+    private final Map cache = new HashMap();
+
+    // May be set to null after the fact if the cache directory becomes
+    // unusable.
+    private File directory;
 
     public DiskCache(File dirName) {
       if (dirName != null) {
@@ -236,27 +217,6 @@ public class CacheManager {
       } else {
         directory = null;
       }
-    }
-
-    /**
-     * This is used to ensure that if something wicked happens to the cache
-     * directory while we are running, we do not crash.
-     */
-    private void possiblyCreateCacheDirectory() {
-      directory.mkdirs();
-      if (!(directory.exists() && directory.canWrite())) {
-        markCacheDirectoryUnusable();
-      }
-    }
-
-    /**
-     * This method marks the cache directory as being invalid, so we do not 
-     * try to use it.
-     */
-    private void markCacheDirectoryUnusable() {
-      System.err.println("The directory " + directory.getAbsolutePath()
-        + " is not usable as a cache directory");
-      directory = null;
     }
 
     public void clear() {
@@ -271,8 +231,7 @@ public class CacheManager {
     public Set entrySet() {
       Set out = new HashSet() {
         public boolean remove(Object o) {
-          boolean removed =
-              (DiskCache.this.remove(((Entry) o).getKey())) != null;
+          boolean removed = (DiskCache.this.remove(((Entry) o).getKey())) != null;
           super.remove(o);
           return removed;
         }
@@ -350,6 +309,27 @@ public class CacheManager {
       return new FileEntry(key).lastModified();
     }
 
+    /**
+     * This method marks the cache directory as being invalid, so we do not try
+     * to use it.
+     */
+    private void markCacheDirectoryUnusable() {
+      System.err.println("The directory " + directory.getAbsolutePath()
+          + " is not usable as a cache directory");
+      directory = null;
+    }
+
+    /**
+     * This is used to ensure that if something wicked happens to the cache
+     * directory while we are running, we do not crash.
+     */
+    private void possiblyCreateCacheDirectory() {
+      directory.mkdirs();
+      if (!(directory.exists() && directory.canWrite())) {
+        markCacheDirectoryUnusable();
+      }
+    }
+
     private Object put(Object key, Object value, boolean persist) {
       Object out = get(key);
 
@@ -364,26 +344,82 @@ public class CacheManager {
       cache.put(key, value);
       return out;
     }
-
-    private final Map cache = new HashMap();
-    // May be set to null after the fact if the cache directory becomes
-    // unusable.
-    private File directory;
   }
 
   /**
    * The set of all classes whose bytecode needs to exist as bootstrap bytecode
    * to be taken as given by the bytecode compiler.
    */
-  public static final Class[] BOOTSTRAP_CLASSES =
-      new Class[]{
-        JavaScriptHost.class, ShellJavaScriptHost.class, ShellGWT.class};
+  public static final Class[] BOOTSTRAP_CLASSES = new Class[] {
+      JavaScriptHost.class, ShellJavaScriptHost.class, ShellGWT.class};
 
   /**
    * The set of bootstrap classes, which are marked transient, but are
    * nevertheless not recompiled each time, as they are bootstrap classes.
    */
   private static final Set TRANSIENT_CLASS_NAMES;
+
+  static {
+    TRANSIENT_CLASS_NAMES = new HashSet(BOOTSTRAP_CLASSES.length + 3);
+    for (int i = 0; i < BOOTSTRAP_CLASSES.length; i++) {
+      TRANSIENT_CLASS_NAMES.add(BOOTSTRAP_CLASSES[i].getName());
+    }
+  }
+
+  // This method must be outside of DiskCache because of the restruction against
+  // defining static methods in inner classes.
+  private static String possiblyAddTmpExtension(Object className) {
+    String fileName = className.toString();
+    if (fileName.indexOf("-") == -1) {
+      int hashCode = fileName.hashCode();
+      String hashCodeStr = Integer.toHexString(hashCode);
+      while (hashCodeStr.length() < 8) {
+        hashCodeStr = '0' + hashCodeStr;
+      }
+      fileName = fileName + "-" + hashCodeStr + ".tmp";
+    }
+    return fileName;
+  }
+
+  // This method must be outside of DiskCache because of the restruction against
+  // defining static methods in inner classes.
+  private static String possiblyRemoveTmpExtension(Object fileName) {
+    String className = fileName.toString();
+    if (className.indexOf("-") != -1) {
+      className = className.split("-")[0];
+    }
+    return className;
+  }
+
+  private final Set addedCups = new HashSet();
+
+  private final AstCompiler astCompiler;
+
+  private final DiskCache byteCodeCache;
+
+  private final File cacheDir;
+
+  private final Set changedFiles;
+
+  private final Map cudsByFileName;
+
+  private final Map cupsByLocation = new HashMap();
+
+  private boolean firstTime = true;
+
+  private final Mapper identityMapper = new Mapper();
+
+  private final Set invalidatedTypes = new HashSet();
+
+  private final TypeOracle oracle;
+
+  private final Map timesByLocation = new HashMap();
+
+  private boolean typeOracleBuilderFirstTime = true;
+
+  private final Map unitsByCup = new HashMap();
+
+  private final Set volatileFiles = new HashSet();
 
   /**
    * Creates a new <code>CacheManager</code>, creating a new
@@ -481,11 +517,11 @@ public class CacheManager {
       if (getByteCode(logger, binaryTypeName) == null) {
         byteCodeCache.put(binaryTypeName, byteCode, (!byteCode.isTransient()));
         logger.log(TreeLogger.SPAM, "Cached bytecode for " + binaryTypeName,
-          null);
+            null);
         return true;
       } else {
         logger.log(TreeLogger.SPAM, "Bytecode not re-cached for "
-          + binaryTypeName, null);
+            + binaryTypeName, null);
         return false;
       }
     }
@@ -531,8 +567,7 @@ public class CacheManager {
         // is referenced must also be treated as changed.
         //
         String referencedFn = String.valueOf(referencedType.getFileName());
-        CompilationUnitDeclaration referencedCup =
-            (CompilationUnitDeclaration) cudsByFileName.get(referencedFn);
+        CompilationUnitDeclaration referencedCup = (CompilationUnitDeclaration) cudsByFileName.get(referencedFn);
         String fileName = String.valueOf(unitOfReferrer.getFileName());
         dependencies.add(fileName, referencedFn);
       };
@@ -579,9 +614,8 @@ public class CacheManager {
       // we do not want bytecode created with a different classpath or os or
       // version of GWT.
       if ((byteCode != null)
-        && byteCode.getSystemIdentifier() != null
-        && (!(byteCode.getSystemIdentifier().equals(ByteCode
-          .getCurrentSystemIdentifier())))) {
+          && byteCode.getSystemIdentifier() != null
+          && (!(byteCode.getSystemIdentifier().equals(ByteCode.getCurrentSystemIdentifier())))) {
         byteCodeCache.remove(binaryTypeName);
         byteCode = null;
       }
@@ -647,13 +681,13 @@ public class CacheManager {
       addDependentsToChangedFiles();
       for (Iterator iter = changedFiles.iterator(); iter.hasNext();) {
         String location = (String) iter.next();
-        CompilationUnitProvider cup =
-            (CompilationUnitProvider) getCupsByLocation().get(location);
+        CompilationUnitProvider cup = (CompilationUnitProvider) getCupsByLocation().get(
+            location);
         unitsByCup.remove(location);
         Util.invokeInaccessableMethod(TypeOracle.class,
-          "invalidateTypesInCompilationUnit",
-          new Class[]{CompilationUnitProvider.class}, typeOracle,
-          new Object[]{cup});
+            "invalidateTypesInCompilationUnit",
+            new Class[] {CompilationUnitProvider.class}, typeOracle,
+            new Object[] {cup});
       }
       astCompiler.invalidateChangedFiles(changedFiles, invalidatedTypes);
     } else {
@@ -669,7 +703,7 @@ public class CacheManager {
     Long oldTime = (Long) getCupLastUpdateTime(cup);
     if (oldTime != null) {
       if (oldTime.longValue() >= lastModified.longValue()
-        && (!cup.isTransient())) {
+          && (!cup.isTransient())) {
         return true;
       }
     }
@@ -690,12 +724,12 @@ public class CacheManager {
     synchronized (byteCodeCache) {
       if (getByteCode(logger, binaryTypeName) == null) {
         logger.log(TreeLogger.SPAM, "Bytecode for " + binaryTypeName
-          + " was not cached, so not removing", null);
+            + " was not cached, so not removing", null);
         return false;
       } else {
         byteCodeCache.remove(binaryTypeName);
         logger.log(TreeLogger.SPAM, "Bytecode not re-cached for "
-          + binaryTypeName, null);
+            + binaryTypeName, null);
         return false;
       }
     }
@@ -735,8 +769,7 @@ public class CacheManager {
             continue;
           }
           String fileName = Util.findFileName(location);
-          CompilationUnitDeclaration compilationUnitDeclaration =
-              ((CompilationUnitDeclaration) cudsByFileName.get(location));
+          CompilationUnitDeclaration compilationUnitDeclaration = ((CompilationUnitDeclaration) cudsByFileName.get(location));
           if (compilationUnitDeclaration == null) {
             changedFiles.add(location);
             continue;
@@ -783,9 +816,8 @@ public class CacheManager {
       AbstractCompiler compiler) {
     Set invalidTypes = new HashSet();
     if (logger.isLoggable(TreeLogger.TRACE)) {
-      TreeLogger branch =
-          logger.branch(TreeLogger.TRACE,
-            "The following compilation units have changed since "
+      TreeLogger branch = logger.branch(TreeLogger.TRACE,
+          "The following compilation units have changed since "
               + "the last compilation to bytecode", null);
       for (Iterator iter = changedFiles.iterator(); iter.hasNext();) {
         String filename = (String) iter.next();
@@ -823,27 +855,4 @@ public class CacheManager {
       return false;
     }
   }
-
-  static {
-    TRANSIENT_CLASS_NAMES = new HashSet(BOOTSTRAP_CLASSES.length + 3);
-    for (int i = 0; i < BOOTSTRAP_CLASSES.length; i++) {
-      TRANSIENT_CLASS_NAMES.add(BOOTSTRAP_CLASSES[i].getName());
-    }
-  }
-
-  private final Set addedCups = new HashSet();
-  private final AstCompiler astCompiler;
-  private final DiskCache byteCodeCache;
-  private final File cacheDir;
-  private final Set changedFiles;
-  private final Map cudsByFileName;
-  private final Map cupsByLocation = new HashMap();
-  private boolean firstTime = true;
-  private final Mapper identityMapper = new Mapper();
-  private final Set invalidatedTypes = new HashSet();
-  private final TypeOracle oracle;
-  private final Map timesByLocation = new HashMap();
-  private boolean typeOracleBuilderFirstTime = true;
-  private final Map unitsByCup = new HashMap();
-  private final Set volatileFiles = new HashSet();
 }
