@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -53,8 +67,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Compiles the Java <code>JProgram</code> representation into its corresponding
- * JavaScript source. 
+ * Compiles the Java <code>JProgram</code> representation into its
+ * corresponding JavaScript source.
  */
 public class JavaToJavaScriptCompiler {
 
@@ -62,7 +76,7 @@ public class JavaToJavaScriptCompiler {
       String[] mainClassNames, JProgram program)
       throws UnableToCompleteException {
     JMethod bootStrapMethod = program.createMethod("init".toCharArray(), null,
-      program.getTypeVoid(), false, true, true, false, false);
+        program.getTypeVoid(), false, true, true, false, false);
     bootStrapMethod.freezeParamTypes();
 
     for (int i = 0; i < mainClassNames.length; ++i) {
@@ -71,14 +85,14 @@ public class JavaToJavaScriptCompiler {
 
       if (referenceType == null) {
         logger.log(TreeLogger.ERROR,
-          "Could not find module entry point class '" + mainClassName + "'",
-          null);
+            "Could not find module entry point class '" + mainClassName + "'",
+            null);
         throw new UnableToCompleteException();
       }
 
       if (!(referenceType instanceof JClassType)) {
         logger.log(TreeLogger.ERROR, "Module entry point class '"
-          + mainClassName + "' must be a class", null);
+            + mainClassName + "' must be a class", null);
         throw new UnableToCompleteException();
       }
 
@@ -97,22 +111,22 @@ public class JavaToJavaScriptCompiler {
 
       if (mainMethod == null) {
         logger.log(TreeLogger.ERROR,
-          "Could not find entry method 'onModuleLoad' method in entry-point class "
-            + mainClassName, null);
+            "Could not find entry method 'onModuleLoad' method in entry-point class "
+                + mainClassName, null);
         throw new UnableToCompleteException();
       }
 
       if (mainMethod.params.size() > 0) {
         logger.log(TreeLogger.ERROR,
-          "Entry method 'onModuleLoad' in entry-point class " + mainClassName
-            + "must take zero arguments", null);
+            "Entry method 'onModuleLoad' in entry-point class " + mainClassName
+                + "must take zero arguments", null);
         throw new UnableToCompleteException();
       }
 
       if (mainMethod.isAbstract()) {
         logger.log(TreeLogger.ERROR,
-          "Entry method 'onModuleLoad' in entry-point class " + mainClassName
-            + "must not be abstract", null);
+            "Entry method 'onModuleLoad' in entry-point class " + mainClassName
+                + "must not be abstract", null);
         throw new UnableToCompleteException();
       }
 
@@ -129,11 +143,12 @@ public class JavaToJavaScriptCompiler {
           }
         }
         if (noArgCtor == null) {
-          logger.log(TreeLogger.ERROR,
-            "No default (zero argument) constructor could be found in entry-point class "
-              + mainClassName
-              + " to qualify a call to non-static entry method 'onModuleLoad'",
-            null);
+          logger.log(
+              TreeLogger.ERROR,
+              "No default (zero argument) constructor could be found in entry-point class "
+                  + mainClassName
+                  + " to qualify a call to non-static entry method 'onModuleLoad'",
+              null);
           throw new UnableToCompleteException();
         }
 
@@ -143,13 +158,25 @@ public class JavaToJavaScriptCompiler {
       }
 
       JMethodCall onModuleLoadCall = new JMethodCall(program, qualifier,
-        mainMethod);
+          mainMethod);
       onModuleLoadCall.setCanBePolymorphic(true);
       bootStrapMethod.body.statements.add(new JExpressionStatement(program,
-        onModuleLoadCall));
+          onModuleLoadCall));
     }
     program.addEntryMethod(bootStrapMethod);
   }
+
+  private final Set/* <IProblem> */problemSet = new HashSet/* <IProblem> */();
+
+  private final String[] declEntryPoints;
+
+  private final CompilationUnitDeclaration[] goldenCuds;
+
+  private long lastModified;
+
+  private final boolean obfuscate;
+
+  private final boolean prettyNames;
 
   public JavaToJavaScriptCompiler(final TreeLogger logger,
       final WebModeCompilerFrontEnd compiler, final String[] declEntryPts)
@@ -201,7 +228,7 @@ public class JavaToJavaScriptCompiler {
     //
     if (goldenCuds.length == 0) {
       logger.log(TreeLogger.ERROR, "Cannot proceed due to previous errors",
-        null);
+          null);
       throw new UnableToCompleteException();
     }
 
@@ -232,10 +259,6 @@ public class JavaToJavaScriptCompiler {
     }
   }
 
-  public long getLastModifiedTimeOfNewestCompilationUnit() {
-    return lastModified;
-  }
-
   /**
    * Creates finished JavaScript source code from the specified Java compilation
    * units.
@@ -255,7 +278,7 @@ public class JavaToJavaScriptCompiler {
       TypeMap typeMap = new TypeMap(jprogram);
       JsProgram jsProgram = new JsProgram();
       TypeDeclaration[] allTypeDeclarations = BuildTypeMap.exec(typeMap,
-        goldenCuds, jsProgram);
+          goldenCuds, jsProgram);
 
       // BuildTypeMap can uncover syntactic JSNI errors; report & abort
       // 
@@ -365,6 +388,10 @@ public class JavaToJavaScriptCompiler {
     }
   }
 
+  public long getLastModifiedTimeOfNewestCompilationUnit() {
+    return lastModified;
+  }
+
   private boolean checkForErrors(final TreeLogger logger) {
     boolean compilationFailed = false;
     for (int iCud = 0; iCud < goldenCuds.length; iCud++) {
@@ -373,7 +400,7 @@ public class JavaToJavaScriptCompiler {
       if (result.hasErrors()) {
         compilationFailed = true;
         TreeLogger branch = logger.branch(TreeLogger.TRACE, "Errors in "
-          + String.valueOf(result.getFileName()), null);
+            + String.valueOf(result.getFileName()), null);
         IProblem[] errors = result.getErrors();
         for (int i = 0; i < errors.length; i++) {
           IProblem problem = errors[i];
@@ -392,7 +419,8 @@ public class JavaToJavaScriptCompiler {
           //
           int line = problem.getSourceLineNumber();
           // int sourceStart = problem.getSourceStart();
-          // int lineStart = (line > 1) ? result.lineSeparatorPositions[line - 2] : 0;
+          // int lineStart = (line > 1) ? result.lineSeparatorPositions[line -
+          // 2] : 0;
           // int charPos = sourceStart - lineStart;
           StringBuffer msgBuf = new StringBuffer();
           msgBuf.append("Line ");
@@ -402,17 +430,10 @@ public class JavaToJavaScriptCompiler {
           msgBuf.append(": ");
           msgBuf.append(msg);
           branch.log(problem.isError() ? TreeLogger.ERROR : TreeLogger.TRACE,
-            msgBuf.toString(), null);
+              msgBuf.toString(), null);
         }
       }
     }
     return compilationFailed;
   }
-
-  private final Set/* <IProblem> */problemSet = new HashSet/* <IProblem> */();
-  private final String[] declEntryPoints;
-  private final CompilationUnitDeclaration[] goldenCuds;
-  private long lastModified;
-  private final boolean obfuscate;
-  private final boolean prettyNames;
 }
