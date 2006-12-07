@@ -71,6 +71,10 @@ public class FileOracleFactory {
    */
   private static final class FileOracleImpl extends FileOracle {
 
+    private final String[] logicalNames;
+
+    private final Map logicalToPhysical;
+
     /**
      * Creates a new FileOracle.
      * 
@@ -108,9 +112,6 @@ public class FileOracleFactory {
     public boolean isEmpty() {
       return logicalNames.length == 0;
     }
-
-    private final String[] logicalNames;
-    private final Map logicalToPhysical;
   }
 
   /**
@@ -154,7 +155,7 @@ public class FileOracleFactory {
         }
       } catch (IOException e) {
         logger.log(TreeLogger.WARN, "Unexpected error searching classpath for "
-          + curPkg, e);
+            + curPkg, e);
       }
     }
 
@@ -209,7 +210,7 @@ public class FileOracleFactory {
       if (f.exists()) {
         if (f.isDirectory()) {
           indexFolder(logger, filter, stripBaseLen, f, logicalNames,
-            logicalToPhysical);
+              logicalToPhysical);
         } else if (f.isFile()) {
           try {
             String logicalName = f.getAbsolutePath().substring(stripBaseLen);
@@ -217,7 +218,7 @@ public class FileOracleFactory {
             if (logicalToPhysical.containsKey(logicalName)) {
               // this logical name is shadowed
               logger.log(TreeLogger.DEBUG, "Ignoring already-resolved "
-                + logicalName, null);
+                  + logicalName, null);
               continue;
             }
             if (filter != null && !filter.accept(logicalName)) {
@@ -264,7 +265,7 @@ public class FileOracleFactory {
         if (logicalToPhysical.containsKey(logicalName)) {
           // this logical name is shadowed
           logger.log(TreeLogger.DEBUG, "Ignoring already-resolved "
-            + logicalName, null);
+              + logicalName, null);
           continue;
         }
         if (filter != null && !filter.accept(logicalName)) {
@@ -279,7 +280,7 @@ public class FileOracleFactory {
           logger.log(TreeLogger.TRACE, "Found " + logicalName, null);
         } catch (MalformedURLException e) {
           logger.log(TreeLogger.WARN, "Unexpected error resolving "
-            + physicalUrlString, e);
+              + physicalUrlString, e);
         }
       }
     }
@@ -308,15 +309,15 @@ public class FileOracleFactory {
       File f = new File(uri);
       if (f.isDirectory()) {
         int prefixCharsToStrip = f.getAbsolutePath().length() + 1
-          - pkgBase.length();
+            - pkgBase.length();
         indexFolder(logger, filter, prefixCharsToStrip, f, logicalNames,
-          logicalToPhysical);
+            logicalToPhysical);
       } else {
         // We can't handle files here, only directories. If this is a jar
         // reference, the url must come in as a "jar:file:<stuff>!/[stuff/]".
         // Fall through.
         logger.log(TreeLogger.WARN, "Unexpected error, " + f
-          + " is neither a file nor a jar", null);
+            + " is neither a file nor a jar", null);
       }
     } else if (url.getProtocol().equals("jar")) {
       String path = url.getPath();
@@ -333,10 +334,10 @@ public class FileOracleFactory {
           // determining the logical name (sans the pkgBase name we want!)
           //
           indexJar(logger, filter, "jar:" + jarPath, jarFile, dirPath, pkgBase,
-            logicalNames, logicalToPhysical);
+              logicalNames, logicalToPhysical);
         } else {
           logger.log(TreeLogger.WARN, "Unexpected error, jar at " + jarURL
-            + " must be a file: type URL", null);
+              + " must be a file: type URL", null);
         }
       } else {
         throw new URISyntaxException(path, "Cannot locate '!' separator");
@@ -345,6 +346,23 @@ public class FileOracleFactory {
       logger.log(TreeLogger.WARN, "Unknown URL type for " + urlString, null);
     }
   }
+
+  /**
+   * The underlying classloader.
+   */
+  private final URLClassLoader classLoader;
+
+  /**
+   * A map of packages indexed from the root of the class path onto their
+   * corresponding FileFilters.
+   */
+  private final Map packages = new HashMap();
+
+  /**
+   * A map of packages that become their own roots (that is their children are
+   * indexed relative to them) onto their corresponding FileFilters.
+   */
+  private final Map rootPackages = new HashMap();
 
   /**
    * Creates a FileOracleFactory with the default URLClassLoader.
@@ -421,10 +439,10 @@ public class FileOracleFactory {
 
     // don't record package names for root packages, they are rebased
     addPackagesInSortedOrder(logger, classLoader, rootPackages, classPathUrls,
-      urls, pkgNames, filters, false);
+        urls, pkgNames, filters, false);
     // record package names for non-root packages
     addPackagesInSortedOrder(logger, classLoader, packages, classPathUrls,
-      urls, pkgNames, filters, true);
+        urls, pkgNames, filters, true);
 
     // We have a complete sorted list of mapped URLs with package prefixes
 
@@ -438,14 +456,14 @@ public class FileOracleFactory {
         String pkgName = (String) pkgNames.get(i);
         FileFilter filter = (FileFilter) filters.get(i);
         TreeLogger branch = logger.branch(TreeLogger.TRACE, url.toString(),
-          null);
+            null);
         indexURL(branch, filter, url, pkgName, logicalNames, logicalToPhysical);
       } catch (URISyntaxException e) {
         logger.log(TreeLogger.WARN,
-          "Unexpected error searching " + urls.get(i), e);
+            "Unexpected error searching " + urls.get(i), e);
       } catch (IOException e) {
         logger.log(TreeLogger.WARN,
-          "Unexpected error searching " + urls.get(i), e);
+            "Unexpected error searching " + urls.get(i), e);
       }
     }
 
@@ -465,21 +483,4 @@ public class FileOracleFactory {
       return packageAsPath + "/";
     }
   }
-
-  /**
-   * The underlying classloader.
-   */
-  private final URLClassLoader classLoader;
-
-  /**
-   * A map of packages indexed from the root of the class path onto their
-   * corresponding FileFilters.
-   */
-  private final Map packages = new HashMap();
-
-  /**
-   * A map of packages that become their own roots (that is their children are
-   * indexed relative to them) onto their corresponding FileFilters.
-   */
-  private final Map rootPackages = new HashMap();
 }

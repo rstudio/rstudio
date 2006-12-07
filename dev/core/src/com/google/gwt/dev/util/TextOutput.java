@@ -26,13 +26,13 @@ public interface TextOutput {
 
   void print(char c);
 
+  void print(char[] s);
+
   void print(String s);
 
   void printOpt(char c);
 
-  void printOpt(String s);
-
   void printOpt(char[] s);
 
-  void print(char[] s);
+  void printOpt(String s);
 }

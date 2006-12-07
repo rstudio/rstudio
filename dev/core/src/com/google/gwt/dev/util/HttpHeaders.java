@@ -46,7 +46,7 @@ public final class HttpHeaders {
   public static final String CACHE_CONTROL_PRIVATE = "private";
   public static final String CACHE_CONTROL_MUST_REVALIDATE = "must-revalidate";
   public static final String CACHE_FOREVER = "max-age="
-    + String.valueOf(90 * MS_DAY);
+      + String.valueOf(90 * MS_DAY);
   public static final String CACHE_MINUTE = "max-age=" + String.valueOf(MS_MIN);
 
   public static final String LAST_MODIFIED = "Last-Modified";
@@ -63,32 +63,22 @@ public final class HttpHeaders {
    * The Internet date format for HTTP.
    */
   private static DateFormat sHttpDateFormat = new SimpleDateFormat(
-    "EEE, d MMM yyyy HH:mm:ss", Locale.US);
+      "EEE, d MMM yyyy HH:mm:ss", Locale.US);
 
   /**
-   * Converts a local date to GMT.
-   * 
-   * @param date the date in the local time zone
-   * @return the GMT version
+   * Converts an HTTP date string into a file-style date/time.
    */
-  private static Date dateToGMT(Date date) {
-    Calendar cal = Calendar.getInstance();
-    long tzMillis = cal.get(Calendar.ZONE_OFFSET)
-      + cal.get(Calendar.DST_OFFSET);
-    return new Date(date.getTime() - tzMillis);
-  }
-
-  /**
-   * Converts a GMT into a local date.
-   * 
-   * @param date the date in GMT
-   * @return the the local time zone version
-   */
-  private static Date gmtToDate(Date date) {
-    Calendar cal = Calendar.getInstance();
-    long tzMillis = cal.get(Calendar.ZONE_OFFSET)
-      + cal.get(Calendar.DST_OFFSET);
-    return new Date(date.getTime() + tzMillis);
+  public static long fromInternetDateFormat(String timeStr) {
+    Date dateGmt;
+    try {
+      synchronized (sHttpDateFormat) {
+        dateGmt = sHttpDateFormat.parse(timeStr);
+      }
+    } catch (ParseException e) {
+      return 0;
+    }
+    dateGmt = gmtToDate(dateGmt);
+    return dateGmt.getTime();
   }
 
   /**
@@ -105,18 +95,28 @@ public final class HttpHeaders {
   }
 
   /**
-   * Converts an HTTP date string into a file-style date/time.
+   * Converts a local date to GMT.
+   * 
+   * @param date the date in the local time zone
+   * @return the GMT version
    */
-  public static long fromInternetDateFormat(String timeStr) {
-    Date dateGmt;
-    try {
-      synchronized (sHttpDateFormat) {
-        dateGmt = sHttpDateFormat.parse(timeStr);
-      }
-    } catch (ParseException e) {
-      return 0;
-    }
-    dateGmt = gmtToDate(dateGmt);
-    return dateGmt.getTime();
+  private static Date dateToGMT(Date date) {
+    Calendar cal = Calendar.getInstance();
+    long tzMillis = cal.get(Calendar.ZONE_OFFSET)
+        + cal.get(Calendar.DST_OFFSET);
+    return new Date(date.getTime() - tzMillis);
+  }
+
+  /**
+   * Converts a GMT into a local date.
+   * 
+   * @param date the date in GMT
+   * @return the the local time zone version
+   */
+  private static Date gmtToDate(Date date) {
+    Calendar cal = Calendar.getInstance();
+    long tzMillis = cal.get(Calendar.ZONE_OFFSET)
+        + cal.get(Calendar.DST_OFFSET);
+    return new Date(date.getTime() + tzMillis);
   }
 }

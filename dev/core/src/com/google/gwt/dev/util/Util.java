@@ -75,42 +75,13 @@ public final class Util {
 
   public static final String[] EMPTY_ARRAY_STRING = new String[0];
 
-  public static char[] HEX_CHARS = new char[]{
+  public static char[] HEX_CHARS = new char[] {
       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
       'E', 'F'};
 
   public static void addAll(Collection c, Object[] a) {
     for (int i = 0; i < a.length; i++) {
       c.add(a[i]);
-    }
-  }
-
-  /**
-   * This method invokes an inaccessable method in another class.
-   * 
-   * @param targetClass the class owning the method
-   * @param methodName the name of the method
-   * @param argumentTypes the types of the parameters to the method call
-   * @param target the receiver of the method call
-   * @param arguments the parameters to the method call
-   */
-  public static void invokeInaccessableMethod(Class targetClass,
-      String methodName, Class[] argumentTypes, TypeOracle target,
-      Object[] arguments) {
-    String failedReflectErrMsg = "The definition of " + targetClass.getName()
-        + "." + methodName + " has changed in an " + "incompatible way.";
-    try {
-      Method m = targetClass.getDeclaredMethod(methodName, argumentTypes);
-      m.setAccessible(true);
-      m.invoke(target, arguments);
-    } catch (NoSuchMethodException e) {
-      throw new RuntimeException(failedReflectErrMsg, e);
-    } catch (IllegalArgumentException e) {
-      throw new RuntimeException(failedReflectErrMsg, e);
-    } catch (IllegalAccessException e) {
-      throw new RuntimeException(failedReflectErrMsg, e);
-    } catch (InvocationTargetException e) {
-      throw new RuntimeException(failedReflectErrMsg, e);
     }
   }
 
@@ -375,6 +346,35 @@ public final class Util {
     sb.append(HEX_CHARS[c & 0x000F]);
   }
 
+  /**
+   * This method invokes an inaccessable method in another class.
+   * 
+   * @param targetClass the class owning the method
+   * @param methodName the name of the method
+   * @param argumentTypes the types of the parameters to the method call
+   * @param target the receiver of the method call
+   * @param arguments the parameters to the method call
+   */
+  public static void invokeInaccessableMethod(Class targetClass,
+      String methodName, Class[] argumentTypes, TypeOracle target,
+      Object[] arguments) {
+    String failedReflectErrMsg = "The definition of " + targetClass.getName()
+        + "." + methodName + " has changed in an " + "incompatible way.";
+    try {
+      Method m = targetClass.getDeclaredMethod(methodName, argumentTypes);
+      m.setAccessible(true);
+      m.invoke(target, arguments);
+    } catch (NoSuchMethodException e) {
+      throw new RuntimeException(failedReflectErrMsg, e);
+    } catch (IllegalArgumentException e) {
+      throw new RuntimeException(failedReflectErrMsg, e);
+    } catch (IllegalAccessException e) {
+      throw new RuntimeException(failedReflectErrMsg, e);
+    } catch (InvocationTargetException e) {
+      throw new RuntimeException(failedReflectErrMsg, e);
+    }
+  }
+
   public static boolean isCompilationUnitOnDisk(String loc) {
     try {
       if (new File(loc).exists()) {
@@ -477,8 +477,8 @@ public final class Util {
     // is a prefix of the 'to' path.
     //
     String toPath = tryMakeCanonical(to).getAbsolutePath();
-    File currentFrom = tryMakeCanonical(from.isDirectory() ? from : from
-        .getParentFile());
+    File currentFrom = tryMakeCanonical(from.isDirectory() ? from
+        : from.getParentFile());
 
     int numberOfBackups = 0;
     while (currentFrom != null) {
@@ -501,8 +501,7 @@ public final class Util {
 
     // Find everything to the right of the common prefix.
     //
-    String trailingToPath = toPath.substring(currentFrom.getAbsolutePath()
-        .length());
+    String trailingToPath = toPath.substring(currentFrom.getAbsolutePath().length());
     if (currentFrom.getParentFile() != null && trailingToPath.length() > 0) {
       trailingToPath = trailingToPath.substring(1);
     }
@@ -887,7 +886,7 @@ public final class Util {
 
   public static void writeBytesToFile(TreeLogger logger, File where, byte[] what)
       throws UnableToCompleteException {
-    writeBytesToFile(logger, where, new byte[][]{what});
+    writeBytesToFile(logger, where, new byte[][] {what});
   }
 
   /**

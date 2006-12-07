@@ -43,6 +43,38 @@ import java.util.Map.Entry;
 public class SelectionScriptGenerator {
 
   /**
+   * Maps compilation strong name onto a <code>Set</code> of
+   * <code>String[]</code>. We use a <code>TreeMap</code> to produce the
+   * same generated code for the same set of compilations.
+   */
+  private final Map propertyValuesSetByStrongName = new TreeMap();
+
+  private final Property[] orderedProps;
+
+  private final Properties moduleProps;
+
+  private final String moduleName;
+
+  private final Scripts scripts;
+
+  private final Styles styles;
+
+  /**
+   * A constructor for creating a selection script that will work only in hosted
+   * mode.
+   * 
+   * @param moduleDef the module for which the selection script will be
+   *          generated
+   */
+  public SelectionScriptGenerator(ModuleDef moduleDef) {
+    this.moduleName = moduleDef.getName();
+    this.scripts = moduleDef.getScripts();
+    this.styles = moduleDef.getStyles();
+    this.moduleProps = moduleDef.getProperties();
+    this.orderedProps = null;
+  }
+
+  /**
    * A constructor for creating a selection script that will work in either
    * hosted or web mode.
    * 
@@ -58,21 +90,6 @@ public class SelectionScriptGenerator {
     this.styles = moduleDef.getStyles();
     this.moduleProps = moduleDef.getProperties();
     this.orderedProps = (Property[]) props.clone();
-  }
-
-  /**
-   * A constructor for creating a selection script that will work only in hosted
-   * mode.
-   * 
-   * @param moduleDef the module for which the selection script will be
-   *          generated
-   */
-  public SelectionScriptGenerator(ModuleDef moduleDef) {
-    this.moduleName = moduleDef.getName();
-    this.scripts = moduleDef.getScripts();
-    this.styles = moduleDef.getStyles();
-    this.moduleProps = moduleDef.getProperties();
-    this.orderedProps = null;
   }
 
   /**
@@ -112,89 +129,6 @@ public class SelectionScriptGenerator {
     pw.close();
     String html = src.toString();
     return html;
-  }
-
-  /**
-   * Emits all the script required to set up the module and, in web mode, select
-   * a compilation.
-   * 
-   * @param pw
-   * @return an expression that should be called as the body's onload handler
-   */
-  private String genScript(PrintWriter pw) {
-    // Emit $wnd and $doc for dynamic property providers.
-    pw.println("var $wnd = parent;");
-    pw.println("var $doc = $wnd.document;");
-    pw.println("var $moduleName = null;");
-
-    // Emit property providers; these are used in both modes.
-    genPropProviders(pw);
-
-    // If the ordered props are specified, then we're generating for both modes.
-    if (orderedProps != null) {
-      // Web mode or hosted mode.
-      if (orderedProps.length > 0) {
-        pw.println();
-        genAnswerFunction(pw);
-        pw.println();
-        genSrcSetFunction(pw, null);
-      } else {
-        // Rare case of no properties; happens if you inherit from Core alone.
-        assert (orderedProps.length == 0);
-        Set entrySet = propertyValuesSetByStrongName.entrySet();
-        assert (entrySet.size() == 1);
-        Map.Entry entry = (Entry) entrySet.iterator().next();
-        String strongName = (String) entry.getKey();
-        genSrcSetFunction(pw, strongName);
-      }
-    } else {
-      // Hosted mode only, so there is no strong name selection (i.e. because
-      // there is no compiled JavaScript); do nothing
-    }
-
-    // Emit dynamic file injection logic; same logic is used in both modes.
-    if (hasExternalFiles()) {
-      genInjectExternalFiles(pw);
-    }
-
-    genOnLoad(pw);
-
-    return "onLoad()";
-  }
-
-  private boolean hasExternalFiles() {
-    return !scripts.isEmpty() || !styles.isEmpty();
-  }
-
-  private void genOnLoad(PrintWriter pw) {
-    // Emit the onload() function.
-    pw.println();
-    pw.println("function onLoad() {");
-
-    // Early out (or fall through below) if the page is loaded out of context.
-    pw.println("  if (!$wnd.__gwt_isHosted) return;");
-
-    // Maybe inject scripts.
-    if (hasExternalFiles()) {
-      pw.println("  injectExternalFiles();");
-    }
-
-    // If we're in web mode, run the compilation selector logic.
-    // The compilation will call mcb.compilationLoaded() itself.
-    pw.println("  if (!$wnd.__gwt_isHosted()) {");
-    pw.println("    selectScript();");
-    pw.println("  }");
-
-    // If we're in hosted mode, notify $wnd that we're ready to go.
-    // Requires that we get the module control block.
-    pw.println("  else {");
-    pw.println("    var mcb = $wnd.__gwt_tryGetModuleControlBlock(location.search);");
-    pw.println("    if (mcb) {");
-    pw.println("      $moduleName = mcb.getName();");
-    pw.println("      mcb.compilationLoaded(window);");
-    pw.println("    }");
-    pw.println("  }");
-    pw.println("}");
   }
 
   /**
@@ -255,6 +189,104 @@ public class SelectionScriptGenerator {
         pw.println(");");
       }
     }
+  }
+
+  /**
+   * Generates a function that injects calls to a shared file-injection
+   * functions.
+   * 
+   * @param pw generate source onto this writer
+   */
+  private void genInjectExternalFiles(PrintWriter pw) {
+    pw.println();
+    pw.println("function injectExternalFiles() {");
+    pw.println("  var mcb = $wnd.__gwt_tryGetModuleControlBlock(location.search);");
+    pw.println("  if (!mcb) return;");
+    pw.println("  var base = mcb.getBaseURL();");
+
+    // Styles come first to give them a little more time to load.
+    pw.println("  mcb.addStyles([");
+    boolean needComma = false;
+    for (Iterator iter = styles.iterator(); iter.hasNext();) {
+      String src = (String) iter.next();
+      if (needComma) {
+        pw.println(",");
+      }
+      needComma = true;
+
+      pw.print("    ");
+      if (isRelativeURL(src)) {
+        pw.print("base+");
+      }
+      pw.print("'");
+      pw.print(src);
+      pw.print("'");
+    }
+    pw.println();
+    pw.println("    ]);");
+
+    // Scripts
+    pw.println("  mcb.addScripts([");
+    needComma = false;
+    for (Iterator iter = scripts.iterator(); iter.hasNext();) {
+      Script script = (Script) iter.next();
+      if (needComma) {
+        pw.println(",");
+      }
+      needComma = true;
+
+      // Emit the src followed by the module-ready function.
+      // Note that the module-ready function is a string because it gets
+      // eval'ed in the context of the host html window. This is absolutely
+      // required because otherwise in web mode (IE) you get an
+      // "cannot execute code from a freed script" error.
+      String src = script.getSrc();
+      pw.print("    ");
+      if (isRelativeURL(src)) {
+        pw.print("base+");
+      }
+      pw.print("'");
+      pw.print(src);
+      pw.print("', \"");
+      String readyFnJs = Jsni.generateEscapedJavaScript(script.getJsReadyFunction());
+      pw.print(readyFnJs);
+      pw.print("\"");
+    }
+    pw.println();
+    pw.println("    ]);");
+
+    pw.println("}");
+  }
+
+  private void genOnLoad(PrintWriter pw) {
+    // Emit the onload() function.
+    pw.println();
+    pw.println("function onLoad() {");
+
+    // Early out (or fall through below) if the page is loaded out of context.
+    pw.println("  if (!$wnd.__gwt_isHosted) return;");
+
+    // Maybe inject scripts.
+    if (hasExternalFiles()) {
+      pw.println("  injectExternalFiles();");
+    }
+
+    // If we're in web mode, run the compilation selector logic.
+    // The compilation will call mcb.compilationLoaded() itself.
+    pw.println("  if (!$wnd.__gwt_isHosted()) {");
+    pw.println("    selectScript();");
+    pw.println("  }");
+
+    // If we're in hosted mode, notify $wnd that we're ready to go.
+    // Requires that we get the module control block.
+    pw.println("  else {");
+    pw.println("    var mcb = $wnd.__gwt_tryGetModuleControlBlock(location.search);");
+    pw.println("    if (mcb) {");
+    pw.println("      $moduleName = mcb.getName();");
+    pw.println("      mcb.compilationLoaded(window);");
+    pw.println("    }");
+    pw.println("  }");
+    pw.println("}");
   }
 
   private void genPropProviders(PrintWriter pw) {
@@ -344,95 +376,51 @@ public class SelectionScriptGenerator {
   }
 
   /**
-   * Generates a function that injects calls to a shared file-injection
-   * functions.
+   * Emits all the script required to set up the module and, in web mode, select
+   * a compilation.
    * 
-   * @param pw generate source onto this writer
+   * @param pw
+   * @return an expression that should be called as the body's onload handler
    */
-  private void genInjectExternalFiles(PrintWriter pw) {
-    pw.println();
-    pw.println("function injectExternalFiles() {");
-    pw.println("  var mcb = $wnd.__gwt_tryGetModuleControlBlock(location.search);");
-    pw.println("  if (!mcb) return;");
-    pw.println("  var base = mcb.getBaseURL();");  
+  private String genScript(PrintWriter pw) {
+    // Emit $wnd and $doc for dynamic property providers.
+    pw.println("var $wnd = parent;");
+    pw.println("var $doc = $wnd.document;");
+    pw.println("var $moduleName = null;");
 
-    // Styles come first to give them a little more time to load.
-    pw.println("  mcb.addStyles([");
-    boolean needComma = false;
-    for (Iterator iter = styles.iterator(); iter.hasNext();) {
-      String src = (String) iter.next();
-      if (needComma) {
-        pw.println(",");
+    // Emit property providers; these are used in both modes.
+    genPropProviders(pw);
+
+    // If the ordered props are specified, then we're generating for both modes.
+    if (orderedProps != null) {
+      // Web mode or hosted mode.
+      if (orderedProps.length > 0) {
+        pw.println();
+        genAnswerFunction(pw);
+        pw.println();
+        genSrcSetFunction(pw, null);
+      } else {
+        // Rare case of no properties; happens if you inherit from Core alone.
+        assert (orderedProps.length == 0);
+        Set entrySet = propertyValuesSetByStrongName.entrySet();
+        assert (entrySet.size() == 1);
+        Map.Entry entry = (Entry) entrySet.iterator().next();
+        String strongName = (String) entry.getKey();
+        genSrcSetFunction(pw, strongName);
       }
-      needComma = true;
-      
-      pw.print("    ");
-      if (isRelativeURL(src)) {
-        pw.print("base+"); 
-      }
-      pw.print("'");
-      pw.print(src);
-      pw.print("'");
+    } else {
+      // Hosted mode only, so there is no strong name selection (i.e. because
+      // there is no compiled JavaScript); do nothing
     }
-    pw.println();
-    pw.println("    ]);");
 
-    // Scripts
-    pw.println("  mcb.addScripts([");
-    needComma = false;
-    for (Iterator iter = scripts.iterator(); iter.hasNext();) {
-      Script script = (Script) iter.next();
-      if (needComma) {
-        pw.println(",");
-      }
-      needComma = true;
-
-      // Emit the src followed by the module-ready function.
-      // Note that the module-ready function is a string because it gets
-      // eval'ed in the context of the host html window. This is absolutely
-      // required because otherwise in web mode (IE) you get an
-      // "cannot execute code from a freed script" error.
-      String src = script.getSrc();
-      pw.print("    ");
-      if (isRelativeURL(src)) {
-        pw.print("base+");
-      }
-      pw.print("'");
-      pw.print(src);
-      pw.print("', \"");
-      String readyFnJs = Jsni.generateEscapedJavaScript(script.getJsReadyFunction());
-      pw.print(readyFnJs);
-      pw.print("\"");
+    // Emit dynamic file injection logic; same logic is used in both modes.
+    if (hasExternalFiles()) {
+      genInjectExternalFiles(pw);
     }
-    pw.println();
-    pw.println("    ]);");
 
-    pw.println("}");
-  }
+    genOnLoad(pw);
 
-  /**
-   * Determines whether or not the URL is relative. 
-   * @param src the test url
-   * @return <code>true</code> if the URL is relative, <code>false</code> if not
-   */
-  private boolean isRelativeURL(String src) {
-    // A straight absolute url for the same domain, server, and protocol.
-    if (src.startsWith("/")) {
-      return false;
-    } 
-
-    // If it can be parsed as a URL, then it's probably absolute.
-    try {
-      URL testUrl = new URL(src);
-      
-      // Let's guess that it is absolute (thus, not relative).
-      return false;
-    } catch (MalformedURLException e) {
-      // Do nothing, since it was a speculative parse.
-    }
-    
-    // Since none of the above matched, let's guess that it's relative.
-    return true;
+    return "onLoad()";
   }
 
   /**
@@ -471,19 +459,38 @@ public class SelectionScriptGenerator {
     pw.println("}");
   }
 
-  private String literal(String lit) {
-    return "\"" + lit + "\"";
+  private boolean hasExternalFiles() {
+    return !scripts.isEmpty() || !styles.isEmpty();
   }
 
   /**
-   * Maps compilation strong name onto a <code>Set</code> of
-   * <code>String[]</code>. We use a <code>TreeMap</code> to produce the
-   * same generated code for the same set of compilations.
+   * Determines whether or not the URL is relative.
+   * 
+   * @param src the test url
+   * @return <code>true</code> if the URL is relative, <code>false</code> if
+   *         not
    */
-  private final Map propertyValuesSetByStrongName = new TreeMap();
-  private final Property[] orderedProps;
-  private final Properties moduleProps;
-  private final String moduleName;
-  private final Scripts scripts;
-  private final Styles styles;
+  private boolean isRelativeURL(String src) {
+    // A straight absolute url for the same domain, server, and protocol.
+    if (src.startsWith("/")) {
+      return false;
+    }
+
+    // If it can be parsed as a URL, then it's probably absolute.
+    try {
+      URL testUrl = new URL(src);
+
+      // Let's guess that it is absolute (thus, not relative).
+      return false;
+    } catch (MalformedURLException e) {
+      // Do nothing, since it was a speculative parse.
+    }
+
+    // Since none of the above matched, let's guess that it's relative.
+    return true;
+  }
+
+  private String literal(String lit) {
+    return "\"" + lit + "\"";
+  }
 }

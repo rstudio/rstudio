@@ -47,16 +47,19 @@ public class Jsni {
 
   public static class Interval {
 
+    public final int end;
+
+    public final int start;
+
     public Interval(int start, int end) {
       this.start = start;
       this.end = end;
     }
-
-    public final int end;
-    public final int start;
   }
 
   private static class VisitorImpl extends JsSourceGenerationVisitor {
+    private final TextOutput out;
+
     public VisitorImpl(TextOutput out, NamingStrategy namer) {
       super(out, namer);
       this.out = out;
@@ -100,11 +103,9 @@ public class Jsni {
         return super.visit(x);
       }
     }
-
-    private final TextOutput out;
   }
-  public static final String JAVASCRIPTHOST_NAME = JavaScriptHost.class
-    .getName();
+
+  public static final String JAVASCRIPTHOST_NAME = JavaScriptHost.class.getName();
 
   public static final String JSNI_BLOCK_END = "}-*/";
 
@@ -207,6 +208,16 @@ public class Jsni {
 
   public static int countNewlines(String src, int start, int end) {
     return countNewlines(src.toCharArray(), start, end);
+  }
+
+  /**
+   * Replaces double-quotes and backslashes in native JS code with their
+   * appropriate escaped form (so they can be encoded in a java string).
+   */
+  public static String escapeQuotesAndSlashes(String str) {
+    StringBuffer buf = new StringBuffer(str);
+    escapeQuotesAndSlashes(buf);
+    return buf.toString();
   }
 
   public static Interval findJsniSource(JMethod method)
@@ -318,16 +329,6 @@ public class Jsni {
         throw new UnableToCompleteException();
       }
     }
-  }
-
-  /**
-   * Replaces double-quotes and backslashes in native JS code with their
-   * appropriate escaped form (so they can be encoded in a java string).
-   */
-  public static String escapeQuotesAndSlashes(String str) {
-    StringBuffer buf = new StringBuffer(str);
-    escapeQuotesAndSlashes(buf);
-    return buf.toString();
   }
 
   /**

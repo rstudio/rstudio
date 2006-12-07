@@ -23,7 +23,7 @@ public final class TextOutputOnPrintWriter implements TextOutput {
   private final boolean compact;
   private int identLevel = 0;
   private int indentGranularity;
-  private char[][] indents = new char[][]{new char[0]};
+  private char[][] indents = new char[][] {new char[0]};
   private boolean justNewlined;
   private final PrintWriter p;
 
@@ -54,13 +54,6 @@ public final class TextOutputOnPrintWriter implements TextOutput {
 
   public void indentOut() {
     --identLevel;
-  }
-
-  private void maybeIndent() {
-    if (justNewlined && !compact) {
-      p.print(indents[identLevel]);
-      justNewlined = false;
-    }
   }
 
   public void newline() {
@@ -117,6 +110,13 @@ public final class TextOutputOnPrintWriter implements TextOutput {
       maybeIndent();
       p.print(s);
       p.flush();
+    }
+  }
+
+  private void maybeIndent() {
+    if (justNewlined && !compact) {
+      p.print(indents[identLevel]);
+      justNewlined = false;
     }
   }
 }
