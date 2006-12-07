@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.ast;
 
 import java.util.ArrayList;
@@ -11,9 +25,35 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Oracle that can answer questions regarding the types in a program. 
+ * Oracle that can answer questions regarding the types in a program.
  */
 public class JTypeOracle {
+
+  private final Map/* <JInterfaceType, Set<JClassType>> */couldBeImplementedMap = new IdentityHashMap();
+
+  private final Map/* <JClassType, Set<JInterfaceType>> */couldImplementMap = new IdentityHashMap();
+
+  private JClassType javaLangObject = null;
+
+  private final Set/* <JReferenceType> */hasClinitSet = new HashSet();
+
+  private final Map/* <JClassType, Set<JInterfaceType>> */implementsMap = new IdentityHashMap();
+
+  private final Set/* <JReferenceType> */instantiatedTypes = new HashSet();
+
+  private final Map/* <JInterfaceType, Set<JClassType>> */isImplementedMap = new IdentityHashMap();
+
+  private final JProgram program;
+
+  private final Map/* <JClassType, Set<JClassType>> */subClassMap = new IdentityHashMap();
+
+  private final Map/* <JInterfaceType, Set<JInterfaceType>> */subInterfaceMap = new IdentityHashMap();
+
+  private final Map/* <JClassType, Set<JClassType>> */superClassMap = new IdentityHashMap();
+
+  private final Map/* <JInterfaceType, Set<JInterfaceType>> */superInterfaceMap = new IdentityHashMap();
+
+  private final Map/* <JMethod, Map<JClassType, Set<JMethod>>> */virtualUpRefMap = new IdentityHashMap();
 
   public JTypeOracle(JProgram program) {
     this.program = program;
@@ -41,15 +81,15 @@ public class JTypeOracle {
 
         // null[] or Object[] -> int[][] might work, other combos won't
         if (dims < qDims && leafType != program.getTypeJavaLangObject()
-          && !(leafType instanceof JNullType)) {
+            && !(leafType instanceof JNullType)) {
           return false;
         }
 
         if (dims == qDims) {
           if (leafType instanceof JReferenceType
-            && qLeafType instanceof JReferenceType) {
+              && qLeafType instanceof JReferenceType) {
             return canTheoreticallyCast((JReferenceType) leafType,
-              (JReferenceType) qLeafType);
+                (JReferenceType) qLeafType);
           }
         }
       }
@@ -79,7 +119,7 @@ public class JTypeOracle {
     if (type == qType || qType == jlo) {
       return true;
     }
-    
+
     if (type instanceof JArrayType) {
 
       JArrayType aType = (JArrayType) type;
@@ -92,15 +132,15 @@ public class JTypeOracle {
 
         // int[][] -> Object[] or null[] trivially true
         if (dims > qDims
-          && (qLeafType == jlo || qLeafType instanceof JNullType)) {
+            && (qLeafType == jlo || qLeafType instanceof JNullType)) {
           return true;
         }
-        
+
         if (dims == qDims) {
           if (leafType instanceof JReferenceType
-            && qLeafType instanceof JReferenceType) {
+              && qLeafType instanceof JReferenceType) {
             return canTriviallyCast((JReferenceType) leafType,
-              (JReferenceType) qLeafType);
+                (JReferenceType) qLeafType);
           }
         }
       }
@@ -135,7 +175,7 @@ public class JTypeOracle {
   }
 
   public void computeBeforeAST() {
-    fJavaLangObject = program.getTypeJavaLangObject();
+    javaLangObject = program.getTypeJavaLangObject();
     superClassMap.clear();
     subClassMap.clear();
     superInterfaceMap.clear();
@@ -176,7 +216,7 @@ public class JTypeOracle {
   public JMethod[] getAllVirtualOverrides(JMethod method) {
     Set/* <JMethod> */results = new HashSet/* <JMethod> */();
     Map/* <JClassType, Set<JMethod>> */overrideMap = getOrCreateMap(
-      virtualUpRefMap, method);
+        virtualUpRefMap, method);
     for (Iterator it = overrideMap.keySet().iterator(); it.hasNext();) {
       JClassType classType = (JClassType) it.next();
       if (instantiatedTypes.contains(classType)) {
@@ -199,7 +239,7 @@ public class JTypeOracle {
     if (type instanceof JNullType) {
       return true;
     }
-    
+
     if (type instanceof JArrayType) {
       JArrayType arrayType = (JArrayType) type;
       if (arrayType.getLeafType() instanceof JNullType) {
@@ -225,7 +265,7 @@ public class JTypeOracle {
    */
   private void computeCouldImplement(JClassType type) {
     Set/* <JInterfaceType> */couldImplementSet = getOrCreate(
-      couldImplementMap, type);
+        couldImplementMap, type);
     // all of my direct implements are trivially true
     couldImplementSet.addAll(getOrCreate(implementsMap, type));
     List/* <JClassType> */subclasses = new ArrayList/* <JClassType> */();
@@ -287,10 +327,10 @@ public class JTypeOracle {
    * pruned.
    */
   private void computeVirtualUpRefs(JClassType type) {
-    if (type.extnds == null || type.extnds == fJavaLangObject) {
+    if (type.extnds == null || type.extnds == javaLangObject) {
       return;
     }
-    
+
     /*
      * For each interface I directly implement, check all methods and make sure
      * I define implementations for them. If I don't, then check all my super
@@ -300,7 +340,7 @@ public class JTypeOracle {
       JInterfaceType intf = (JInterfaceType) itIntf.next();
       computeVirtualUpRefs(type, intf);
       Set/* <JInterfaceType> */superIntfs = getOrCreate(superInterfaceMap,
-        intf);
+          intf);
       for (Iterator itSuper = superIntfs.iterator(); itSuper.hasNext();) {
         JInterfaceType superIntf = (JInterfaceType) itSuper.next();
         computeVirtualUpRefs(type, superIntf);
@@ -326,7 +366,7 @@ public class JTypeOracle {
 
       // this class does not directly implement the interface method
       // if any super classes do, create a virtual up ref
-      for (JClassType superType = type.extnds; superType != fJavaLangObject; superType = superType.extnds) {
+      for (JClassType superType = type.extnds; superType != javaLangObject; superType = superType.extnds) {
         for (Iterator itSuper = superType.methods.iterator(); itSuper.hasNext();) {
           JMethod superMethod = (JMethod) itSuper.next();
           if (JProgram.methodsDoMatch(intfMethod, superMethod)) {
@@ -338,7 +378,7 @@ public class JTypeOracle {
             // + intfMethod.getName() + " via " + type.getName());
 
             Map/* <JClassType, Set<JMethod>> */classToMethodMap = getOrCreateMap(
-              virtualUpRefMap, superMethod);
+                virtualUpRefMap, superMethod);
             Set/* <JMethod> */methodSet = getOrCreate(classToMethodMap, type);
             methodSet.add(intfMethod);
 
@@ -382,7 +422,8 @@ public class JTypeOracle {
   }
 
   /**
-   * Record the all of my superinterfaces (and myself as a subinterface of them).
+   * Record the all of my superinterfaces (and myself as a subinterface of
+   * them).
    */
   private void recordSuperSubInfo(JInterfaceType type) {
     Set/* <JInterfaceType> */superSet = getOrCreate(superInterfaceMap, type);
@@ -401,31 +442,5 @@ public class JTypeOracle {
       recordSuperSubInfo(base, superSet, intf);
     }
   }
-
-  private final Map/* <JInterfaceType, Set<JClassType>> */couldBeImplementedMap = new IdentityHashMap();
-
-  private final Map/* <JClassType, Set<JInterfaceType>> */couldImplementMap = new IdentityHashMap();
-
-  private JClassType fJavaLangObject = null;
-
-  private final Set/* <JReferenceType> */hasClinitSet = new HashSet();
-
-  private final Map/* <JClassType, Set<JInterfaceType>> */implementsMap = new IdentityHashMap();
-
-  private final Set/* <JReferenceType> */instantiatedTypes = new HashSet();
-
-  private final Map/* <JInterfaceType, Set<JClassType>> */isImplementedMap = new IdentityHashMap();
-
-  private final JProgram program;
-
-  private final Map/* <JClassType, Set<JClassType>> */subClassMap = new IdentityHashMap();
-
-  private final Map/* <JInterfaceType, Set<JInterfaceType>> */subInterfaceMap = new IdentityHashMap();
-
-  private final Map/* <JClassType, Set<JClassType>> */superClassMap = new IdentityHashMap();
-
-  private final Map/* <JInterfaceType, Set<JInterfaceType>> */superInterfaceMap = new IdentityHashMap();
-
-  private final Map/* <JMethod, Map<JClassType, Set<JMethod>>> */virtualUpRefMap = new IdentityHashMap();
 
 }

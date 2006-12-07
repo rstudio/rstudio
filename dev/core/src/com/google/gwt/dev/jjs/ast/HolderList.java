@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.ast;
 
 import java.util.ArrayList;
@@ -7,14 +21,20 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-public class HolderList/*<T extends JNode>*/ implements List/*<T>*/, JVisitable {
+public class HolderList/* <T extends JNode> */implements List/* <T> */,
+    JVisitable {
 
-  private final class ListIt implements ListIterator/*<T>*/ {
+  private final class ListIt implements ListIterator/* <T> */ {
 
-    private ListIt(ListIterator/*<Mutator<T>>*/ itImpl, ListIterator/*<T>*/ itPeer) {
+    private final ListIterator/* <Mutator<T>> */itImpl;
+    private final ListIterator/* <T> */itPeer;
+
+    private ListIt(ListIterator/* <Mutator<T>> */itImpl,
+        ListIterator/* <T> */itPeer) {
       this.itImpl = itImpl;
       this.itPeer = itPeer;
     }
+
     public void add(Object o) {
       itImpl.add(new MutatorImpl());
       itPeer.add(o);
@@ -54,10 +74,6 @@ public class HolderList/*<T extends JNode>*/ implements List/*<T>*/, JVisitable 
     public void set(Object o) {
       itPeer.set(o);
     }
-
-    private final ListIterator/*<Mutator<T>>*/ itImpl;
-
-    private final ListIterator/*<T>*/ itPeer;
   }
 
   private class MutatorImpl extends Mutator {
@@ -103,18 +119,22 @@ public class HolderList/*<T extends JNode>*/ implements List/*<T>*/, JVisitable 
     }
   }
 
+  private final ArrayList/* <Mutator<T>> */impl = new ArrayList/* <Mutator<T>> */();
+  private final ArrayList/* <T> */peer = new ArrayList/* <T> */();
+
   public void add(int index, Object element) {
     impl.add(index, new MutatorImpl());
     peer.add(index, element);
   }
+
   public boolean add(Object o) {
     impl.add(new MutatorImpl());
     return peer.add(o);
   }
-  
-  public boolean addAll(Collection/*<? extends T>*/ c) {
+
+  public boolean addAll(Collection/* <? extends T> */c) {
     boolean result = false;
-    for (Iterator it = c.iterator(); it.hasNext(); ) {
+    for (Iterator it = c.iterator(); it.hasNext();) {
       JNode item = (JNode) it.next();
       this.add(item);
       result = true;
@@ -122,9 +142,9 @@ public class HolderList/*<T extends JNode>*/ implements List/*<T>*/, JVisitable 
     return result;
   }
 
-  public boolean addAll(int index, Collection/*<? extends T>*/ c) {
+  public boolean addAll(int index, Collection/* <? extends T> */c) {
     boolean result = false;
-    for (Iterator it = c.iterator(); it.hasNext(); ) {
+    for (Iterator it = c.iterator(); it.hasNext();) {
       JNode item = (JNode) it.next();
       this.add(index++, item);
       result = true;
@@ -141,7 +161,7 @@ public class HolderList/*<T extends JNode>*/ implements List/*<T>*/, JVisitable 
     return peer.contains(o);
   }
 
-  public boolean containsAll(Collection/*<?>*/ c) {
+  public boolean containsAll(Collection/* <?> */c) {
     throw new UnsupportedOperationException();
   }
 
@@ -157,7 +177,7 @@ public class HolderList/*<T extends JNode>*/ implements List/*<T>*/, JVisitable 
     return (Mutator) impl.get(index);
   }
 
-  public List/*<Mutator<T>>*/ getMutators() {
+  public List/* <Mutator<T>> */getMutators() {
     return impl;
   }
 
@@ -169,7 +189,7 @@ public class HolderList/*<T extends JNode>*/ implements List/*<T>*/, JVisitable 
     return peer.isEmpty();
   }
 
-  public Iterator/*<T>*/ iterator() {
+  public Iterator/* <T> */iterator() {
     return new ListIt(impl.listIterator(), peer.listIterator());
   }
 
@@ -177,11 +197,11 @@ public class HolderList/*<T extends JNode>*/ implements List/*<T>*/, JVisitable 
     return peer.lastIndexOf(o);
   }
 
-  public ListIterator/*<T>*/ listIterator() {
+  public ListIterator/* <T> */listIterator() {
     return new ListIt(impl.listIterator(), peer.listIterator());
   }
 
-  public ListIterator/*<T>*/ listIterator(int index) {
+  public ListIterator/* <T> */listIterator(int index) {
     return new ListIt(impl.listIterator(index), peer.listIterator(index));
   }
 
@@ -200,11 +220,11 @@ public class HolderList/*<T extends JNode>*/ implements List/*<T>*/, JVisitable 
     return true;
   }
 
-  public boolean removeAll(Collection/*<?>*/ c) {
+  public boolean removeAll(Collection/* <?> */c) {
     throw new UnsupportedOperationException();
   }
 
-  public boolean retainAll(Collection/*<?>*/ c) {
+  public boolean retainAll(Collection/* <?> */c) {
     throw new UnsupportedOperationException();
   }
 
@@ -216,7 +236,7 @@ public class HolderList/*<T extends JNode>*/ implements List/*<T>*/, JVisitable 
     return peer.size();
   }
 
-  public List/*<T>*/ subList(int fromIndex, int toIndex) {
+  public List/* <T> */subList(int fromIndex, int toIndex) {
     throw new UnsupportedOperationException();
   }
 
@@ -224,19 +244,15 @@ public class HolderList/*<T extends JNode>*/ implements List/*<T>*/, JVisitable 
     return peer.toArray();
   }
 
-  public /*<T>*/ Object[] toArray(Object[] a) {
+  public/* <T> */Object[] toArray(Object[] a) {
     return peer.toArray(a);
   }
 
   public void traverse(JVisitor visitor) {
     for (int i = 0, c = impl.size(); i < c; ++i) {
       JExpression value = (JExpression) peer.get(i);
-        value.traverse(visitor, (Mutator) impl.get(i));
+      value.traverse(visitor, (Mutator) impl.get(i));
     }
   }
-
-  private final ArrayList/*<Mutator<T>>*/ impl = new ArrayList/*<Mutator<T>>*/();
-
-  private final ArrayList/*<T>*/ peer = new ArrayList/*<T>*/();
 
 }

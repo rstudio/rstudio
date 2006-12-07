@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.ast;
 
 /**
@@ -15,25 +29,25 @@ public class JArrayRef extends JExpression {
     this.indexExpr.set(indexExpr);
   }
 
-  public JExpression getInstance() {
-    return instance.get();
-  }
-
   public JExpression getIndexExpr() {
     return indexExpr.get();
   }
 
-  public boolean hasSideEffects() {
-    return instance.get().hasSideEffects() || indexExpr.get().hasSideEffects();
+  public JExpression getInstance() {
+    return instance.get();
   }
 
   public JType getType() {
     JType type = instance.get().getType();
-    if (type == fProgram.getTypeNull()) {
+    if (type == program.getTypeNull()) {
       return type;
     }
     JArrayType arrayType = (JArrayType) type;
     return arrayType.getElementType();
+  }
+
+  public boolean hasSideEffects() {
+    return instance.get().hasSideEffects() || indexExpr.get().hasSideEffects();
   }
 
   public void traverse(JVisitor visitor) {

@@ -42,7 +42,7 @@ public class JsonObject extends JExpression {
   }
 
   public JType getType() {
-    return fProgram.getTypeVoid();
+    return program.getTypeVoid();
   }
 
   public boolean hasSideEffects() {

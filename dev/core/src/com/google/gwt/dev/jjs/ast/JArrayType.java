@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.ast;
 
 /**
@@ -6,7 +20,16 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JArrayType extends JClassType {
 
+  private static String calcName(JType leafType, int dims) {
+    String name = leafType.getName();
+    for (int i = 0; i < dims; ++i) {
+      name = name + "[]";
+    }
+    return name;
+  }
+
   public JType leafType;
+
   public int dims;
 
   /**
@@ -18,14 +41,6 @@ public class JArrayType extends JClassType {
     this.dims = dims;
   }
 
-  private static String calcName(JType leafType, int dims) {
-    String name = leafType.getName();
-    for (int i = 0; i < dims; ++i) {
-      name = name + "[]";
-    }
-    return name;
-  }
-
   public int getDims() {
     return dims;
   }
@@ -34,11 +49,7 @@ public class JArrayType extends JClassType {
     if (dims == 1) {
       return leafType;
     }
-    return fProgram.getTypeArray(leafType, dims - 1);
-  }
-
-  public JType getLeafType() {
-    return leafType;
+    return program.getTypeArray(leafType, dims - 1);
   }
 
   public String getJavahSignatureName() {
@@ -55,6 +66,10 @@ public class JArrayType extends JClassType {
       s = "[" + s;
     }
     return s;
+  }
+
+  public JType getLeafType() {
+    return leafType;
   }
 
   public boolean isAbstract() {

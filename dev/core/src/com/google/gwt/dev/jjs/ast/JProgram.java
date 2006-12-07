@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -32,12 +46,12 @@ public class JProgram extends JNode {
     if (method1.isStatic() || method2.isStatic()) {
       return false;
     }
-    
+
     // names must be identical
     if (!method1.getName().equals(method2.getName())) {
       return false;
     }
-    
+
     // original parameter types must be identical
     List/* <JType> */params1 = method1.getOriginalParamTypes();
     List/* <JType> */params2 = method2.getOriginalParamTypes();
@@ -45,7 +59,7 @@ public class JProgram extends JNode {
     if (params1size != params2.size()) {
       return false;
     }
-    
+
     for (int i = 0; i < params1size; ++i) {
       if (params1.get(i) != params2.get(i)) {
         return false;
@@ -60,11 +74,133 @@ public class JProgram extends JNode {
       if (i > 0) {
         result.append('.');
       }
-      
+
       result.append(name[i]);
     }
     return result.toString();
   }
+
+  public final List/* <JMethod> */entryMethods = new ArrayList/* <JMethod> */();
+
+  public final Map/* <String, HasEnclosingType> */jsniMap = new HashMap/*
+                                                                         * <String,
+                                                                         * HasEnclosingType>
+                                                                         */();
+
+  public final List/* <JClassType> */specialTypes = new ArrayList/* <JClassType> */();
+
+  public final JTypeOracle typeOracle = new JTypeOracle(this);
+
+  private final List/* <JArrayType> */allArrayTypes = new ArrayList/* <JArrayType> */();
+
+  private final List/* <JReferenceType> */allTypes = new ArrayList/* <JReferenceType> */();
+
+  /**
+   * Each entry is a HashMap(JType => JArrayType), arranged such that the number
+   * of dimensions is that index (plus one) at which the JArrayTypes having that
+   * number of dimensions resides.
+   */
+  private final ArrayList/* <HashMap<JType, JArrayType>> */dimensions = new ArrayList/*
+                                                                                       * <HashMap<JType,
+                                                                                       * JArrayType>>
+                                                                                       */();
+
+  private final JAbsentArrayDimension literalAbsentArrayDim = new JAbsentArrayDimension(
+      this);
+
+  private final JBooleanLiteral literalFalse = new JBooleanLiteral(this, false);
+
+  private final JIntLiteral literalIntNegOne = new JIntLiteral(this, -1);
+
+  private final JIntLiteral literalIntOne = new JIntLiteral(this, 1);
+
+  private final JIntLiteral literalIntZero = new JIntLiteral(this, 0);
+
+  private final JNullLiteral literalNull = new JNullLiteral(this);
+
+  private final JBooleanLiteral literalTrue = new JBooleanLiteral(this, true);
+
+  private JField nullField;
+
+  private JMethod nullMethod;
+
+  private JMethod rebindCreateMethod;
+
+  private final JPrimitiveType typeBoolean = new JPrimitiveType(this,
+      "boolean", "Z", literalFalse);
+
+  private final JPrimitiveType typeByte = new JPrimitiveType(this, "byte", "B",
+      literalIntZero);
+
+  private final JPrimitiveType typeChar = new JPrimitiveType(this, "char", "C",
+      getLiteralChar((char) 0));
+
+  private JClassType typeClass;
+
+  private final JPrimitiveType typeDouble = new JPrimitiveType(this, "double",
+      "D", getLiteralDouble(0));
+
+  private final JPrimitiveType typeFloat = new JPrimitiveType(this, "float",
+      "F", getLiteralFloat(0));
+
+  private Map/* <JClassType, Integer> */typeIdMap = new HashMap/*
+                                                                 * <JClassType,
+                                                                 * Integer>
+                                                                 */();
+
+  private final JPrimitiveType typeInt = new JPrimitiveType(this, "int", "I",
+      literalIntZero);
+
+  private JClassType typeJavaLangObject;
+
+  private final JPrimitiveType typeLong = new JPrimitiveType(this, "long", "J",
+      getLiteralLong(0));
+
+  private final Map/* <String, JReferenceType> */typeNameMap = new HashMap/*
+                                                                           * <String,
+                                                                           * JReferenceType>
+                                                                           */();
+
+  private final JNullType typeNull = new JNullType(this);
+
+  private final JPrimitiveType typeShort = new JPrimitiveType(this, "short",
+      "S", literalIntZero);
+
+  private JClassType typeSpecialArray;
+
+  private JClassType typeSpecialCast;
+
+  private JClassType typeSpecialExceptions;
+
+  private JClassType typeSpecialJavaScriptObject;
+
+  private JClassType typeString;
+
+  private final JPrimitiveType typeVoid = new JPrimitiveType(this, "void", "V",
+      null);
+
+  private final Map/* <JMethod, JMethod> */instanceToStaticMap = new IdentityHashMap/*
+                                                                                     * <JMethod,
+                                                                                     * JMethod>
+                                                                                     */();
+
+  private List/* <JsonObject> */jsonTypeTable;
+
+  private final TreeLogger logger;
+
+  private Map/* <JReferenceType, Integer> */queryIds;
+
+  private final RebindOracle rebindOracle;
+
+  private final Map/* <String, JField> */specialFields = new HashMap/*
+                                                                     * <String,
+                                                                     * JField>
+                                                                     */();
+
+  private final Map/* <String, JMethod> */specialMethods = new HashMap/*
+                                                                       * <String,
+                                                                       * JMethod>
+                                                                       */();
 
   public JProgram(TreeLogger logger, RebindOracle rebindOracle) {
     super(null);
@@ -84,7 +220,7 @@ public class JProgram extends JNode {
   public JExpressionStatement createAssignmentStmt(JExpression lhs,
       JExpression rhs) {
     JBinaryOperation assign = new JBinaryOperation(this, lhs.getType(),
-      JBinaryOperator.ASG, lhs, rhs);
+        JBinaryOperator.ASG, lhs, rhs);
     return new JExpressionStatement(this, assign);
   }
 
@@ -97,22 +233,22 @@ public class JProgram extends JNode {
     putIntoTypeMap(sname, x);
 
     if (sname.equals("java.lang.Object")) {
-      fTypeJavaLangObject = x;
+      typeJavaLangObject = x;
       specialTypes.add(x);
     } else if (sname.equals("java.lang.String")) {
-      fTypeString = x;
+      typeString = x;
     } else if (sname.equals("java.lang.Class")) {
-      fTypeClass = x;
+      typeClass = x;
     } else if (sname.equals("com.google.gwt.core.client.JavaScriptObject")) {
-      fTypeSpecialJavaScriptObject = x;
+      typeSpecialJavaScriptObject = x;
     } else if (sname.equals("com.google.gwt.lang.Array")) {
-      fTypeSpecialArray = x;
+      typeSpecialArray = x;
       specialTypes.add(x);
     } else if (sname.equals("com.google.gwt.lang.Cast")) {
-      fTypeSpecialCast = x;
+      typeSpecialCast = x;
       specialTypes.add(x);
     } else if (sname.equals("com.google.gwt.lang.Exceptions")) {
-      fTypeSpecialExceptions = x;
+      typeSpecialExceptions = x;
       specialTypes.add(x);
     }
 
@@ -134,15 +270,15 @@ public class JProgram extends JNode {
     if (isSpecialField) {
       hasInitializer = true;
     }
-    
+
     String sname = String.valueOf(name);
     JField x = new JField(this, sname, enclosingType, type, isStatic, isFinal,
-      hasInitializer);
+        hasInitializer);
 
     if (isSpecialField) {
       specialFields.put(enclosingType.getShortName() + '.' + sname, x);
     }
-    
+
     enclosingType.fields.add(x);
 
     return x;
@@ -165,7 +301,7 @@ public class JProgram extends JNode {
     assert (enclosingMethod != null);
 
     JLocal x = new JLocal(this, String.valueOf(name), type, isFinal,
-      enclosingMethod);
+        enclosingMethod);
 
     enclosingMethod.locals.add(x);
 
@@ -183,16 +319,16 @@ public class JProgram extends JNode {
     String sname = String.valueOf(name);
     if (isNative) {
       x = new JsniMethod(this, sname, enclosingType, returnType, isStatic,
-        isFinal, isPrivate);
+          isFinal, isPrivate);
     } else {
       x = new JMethod(this, sname, enclosingType, returnType, isAbstract,
-        isStatic, isFinal, isPrivate);
+          isStatic, isFinal, isPrivate);
     }
 
     if (sname.equals(FindDeferredBindingSitesVisitor.REBIND_MAGIC_METHOD)
-      && enclosingType.getName().equals(
-        FindDeferredBindingSitesVisitor.REBIND_MAGIC_CLASS)) {
-      fRebindCreateMethod = x;
+        && enclosingType.getName().equals(
+            FindDeferredBindingSitesVisitor.REBIND_MAGIC_CLASS)) {
+      rebindCreateMethod = x;
     } else if (!isPrivate && specialTypes.contains(enclosingType)) {
       specialMethods.put(enclosingType.getShortName() + '.' + sname, x);
     }
@@ -200,7 +336,7 @@ public class JProgram extends JNode {
     if (enclosingType != null) {
       enclosingType.methods.add(x);
     }
-    
+
     return x;
   }
 
@@ -211,7 +347,7 @@ public class JProgram extends JNode {
     assert (enclosingMethod != null);
 
     JParameter x = new JParameter(this, String.valueOf(name), type, isFinal,
-      enclosingMethod);
+        enclosingMethod);
 
     enclosingMethod.params.add(x);
 
@@ -243,7 +379,7 @@ public class JProgram extends JNode {
 
   public JReferenceType getFromTypeMap(String qualifiedBinaryOrSourceName) {
     String srcTypeName = qualifiedBinaryOrSourceName.replace('$', '.');
-    return (JReferenceType) fTypeNameMap.get(srcTypeName);
+    return (JReferenceType) typeNameMap.get(srcTypeName);
   }
 
   public List/* <JsonObject> */getJsonTypeTable() {
@@ -251,11 +387,11 @@ public class JProgram extends JNode {
   }
 
   public JAbsentArrayDimension getLiteralAbsentArrayDimension() {
-    return fLiteralAbsentArrayDim;
+    return literalAbsentArrayDim;
   }
 
   public JBooleanLiteral getLiteralBoolean(boolean z) {
-    return z ? fLiteralTrue : fLiteralFalse;
+    return z ? literalTrue : literalFalse;
   }
 
   public JCharLiteral getLiteralChar(char c) {
@@ -286,11 +422,11 @@ public class JProgram extends JNode {
   public JIntLiteral getLiteralInt(int i) {
     switch (i) {
       case -1:
-        return fLiteralIntNegOne;
+        return literalIntNegOne;
       case 0:
-        return fLiteralIntZero;
+        return literalIntZero;
       case 1:
-        return fLiteralIntOne;
+        return literalIntOne;
       default:
         // could be interned
         return new JIntLiteral(this, i);
@@ -302,7 +438,7 @@ public class JProgram extends JNode {
   }
 
   public JNullLiteral getLiteralNull() {
-    return fLiteralNull;
+    return literalNull;
   }
 
   public JStringLiteral getLiteralString(char[] s) {
@@ -311,18 +447,19 @@ public class JProgram extends JNode {
   }
 
   public JField getNullField() {
-    if (fNullField == null) {
-      fNullField = new JField(this, "nullField", null, fTypeNull, false, true, true);
+    if (nullField == null) {
+      nullField = new JField(this, "nullField", null, typeNull, false, true,
+          true);
     }
-    return fNullField;
+    return nullField;
   }
 
   public JMethod getNullMethod() {
-    if (fNullMethod == null) {
-      fNullMethod = new JsniMethod(this, "nullMethod", null, fTypeNull, false,
-        true, true);
+    if (nullMethod == null) {
+      nullMethod = new JsniMethod(this, "nullMethod", null, typeNull, false,
+          true, true);
     }
-    return fNullMethod;
+    return nullMethod;
   }
 
   public int getQueryId(JReferenceType elementType) {
@@ -330,24 +467,24 @@ public class JProgram extends JNode {
     if (integer == null) {
       return 0;
     }
-    
+
     return integer.intValue();
   }
 
   public JMethod getRebindCreateMethod() {
-    return fRebindCreateMethod;
+    return rebindCreateMethod;
   }
 
   public JClassType getSpecialArray() {
-    return fTypeSpecialArray;
+    return typeSpecialArray;
   }
 
   public JClassType getSpecialCast() {
-    return fTypeSpecialCast;
+    return typeSpecialCast;
   }
 
   public JClassType getSpecialExceptions() {
-    return fTypeSpecialExceptions;
+    return typeSpecialExceptions;
   }
 
   public JField getSpecialField(String string) {
@@ -355,7 +492,7 @@ public class JProgram extends JNode {
   }
 
   public JClassType getSpecialJavaScriptObject() {
-    return fTypeSpecialJavaScriptObject;
+    return typeSpecialJavaScriptObject;
   }
 
   public JMethod getSpecialMethod(String string) {
@@ -371,20 +508,20 @@ public class JProgram extends JNode {
 
     // Create typeToArrayType maps for index slots that don't exist yet.
     //
-    for (int i = fDimensions.size(); i < dimensions; ++i) {
+    for (int i = this.dimensions.size(); i < dimensions; ++i) {
       typeToArrayType = new HashMap();
-      fDimensions.add(typeToArrayType);
+      this.dimensions.add(typeToArrayType);
     }
 
     // Get the map for array having this number of dimensions (biased by one
     // since we don't store non-arrays in there -- thus index 0 => 1 dim).
     //
-    typeToArrayType = (HashMap) fDimensions.get(dimensions - 1);
+    typeToArrayType = (HashMap) this.dimensions.get(dimensions - 1);
 
     JArrayType arrayType = (JArrayType) typeToArrayType.get(leafType);
     if (arrayType == null) {
       arrayType = new JArrayType(this, leafType, dimensions);
-      arrayType.extnds = fTypeJavaLangObject;
+      arrayType.extnds = typeJavaLangObject;
       allArrayTypes.add(arrayType);
 
       /*
@@ -400,70 +537,70 @@ public class JProgram extends JNode {
   }
 
   public int getTypeId(JClassType classType) {
-    Integer integer = (Integer) fTypeIdMap.get(classType);
+    Integer integer = (Integer) typeIdMap.get(classType);
     if (integer == null) {
       return 0;
     }
-    
+
     return integer.intValue();
   }
 
   public JClassType getTypeJavaLangClass() {
-    return fTypeClass;
+    return typeClass;
   }
 
   public JClassType getTypeJavaLangObject() {
-    return fTypeJavaLangObject;
+    return typeJavaLangObject;
   }
 
   public JClassType getTypeJavaLangString() {
-    return fTypeString;
+    return typeString;
   }
 
   public JNullType getTypeNull() {
-    return fTypeNull;
+    return typeNull;
   }
 
   public JPrimitiveType getTypePrimitiveBoolean() {
-    return fTypeBoolean;
+    return typeBoolean;
   }
 
   public JPrimitiveType getTypePrimitiveByte() {
-    return fTypeByte;
+    return typeByte;
   }
 
   public JPrimitiveType getTypePrimitiveChar() {
-    return fTypeChar;
+    return typeChar;
   }
 
   public JPrimitiveType getTypePrimitiveDouble() {
-    return fTypeDouble;
+    return typeDouble;
   }
 
   public JPrimitiveType getTypePrimitiveFloat() {
-    return fTypeFloat;
+    return typeFloat;
   }
 
   public JPrimitiveType getTypePrimitiveInt() {
-    return fTypeInt;
+    return typeInt;
   }
 
   public JPrimitiveType getTypePrimitiveLong() {
-    return fTypeLong;
+    return typeLong;
   }
 
   public JPrimitiveType getTypePrimitiveShort() {
-    return fTypeShort;
+    return typeShort;
   }
 
   public JType getTypeVoid() {
-    return fTypeVoid;
+    return typeVoid;
   }
 
   public void initTypeInfo(List/* <JClassType> */classes,
       List/* <JsonObject> */jsonObjects) {
     for (int i = 0, c = classes.size(); i < c; ++i) {
-      fTypeIdMap.put(classes.get(i), new Integer(i));
+      typeIdMap.put(classes.get(i), new Integer(i));
     }
     this.jsonTypeTable = jsonObjects;
   }
@@ -471,7 +608,7 @@ public class JProgram extends JNode {
   public boolean isJavaScriptObject(JType type) {
     if (type instanceof JClassType) {
       return typeOracle.canTriviallyCast((JClassType) type,
-        fTypeSpecialJavaScriptObject);
+          typeSpecialJavaScriptObject);
     }
     return false;
   }
@@ -484,7 +621,7 @@ public class JProgram extends JNode {
     // Make it into a source type name.
     //
     String srcTypeName = qualifiedBinaryName.replace('$', '.');
-    fTypeNameMap.put(srcTypeName, type);
+    typeNameMap.put(srcTypeName, type);
   }
 
   public void putStaticImpl(JMethod method, JMethod staticImpl) {
@@ -503,7 +640,7 @@ public class JProgram extends JNode {
       // compiling should prevent this case from ever happening in real life.
       //
       throw new IllegalStateException("Unexpected failure to rebind '"
-        + reqType + "'");
+          + reqType + "'");
     }
     if (reboundClassName != null) {
       result = getFromTypeMap(reboundClassName);
@@ -521,7 +658,7 @@ public class JProgram extends JNode {
     if (type1 == type2) {
       return type1;
     }
-    
+
     if (typeOracle.canTriviallyCast(type1, type2)) {
       return type1;
     }
@@ -553,7 +690,7 @@ public class JProgram extends JNode {
     if (type1 == type2) {
       return type1;
     }
-    
+
     int classify1 = classifyType(type1);
     int classify2 = classifyType(type2);
 
@@ -573,13 +710,13 @@ public class JProgram extends JNode {
         if (typeOracle.canTriviallyCast(type1, type2)) {
           return type2;
         }
-        
+
         if (typeOracle.canTriviallyCast(type2, type1)) {
           return type1;
         }
-        
+
         // unrelated
-        return fTypeJavaLangObject;
+        return typeJavaLangObject;
 
       } else if (classify1 == IS_ARRAY) {
 
@@ -597,11 +734,11 @@ public class JProgram extends JNode {
          */
         JReferenceType minimalGeneralType;
         if (minDims > 1) {
-          minimalGeneralType = getTypeArray(fTypeJavaLangObject, minDims - 1);
+          minimalGeneralType = getTypeArray(typeJavaLangObject, minDims - 1);
         } else {
-          minimalGeneralType = fTypeJavaLangObject;
+          minimalGeneralType = typeJavaLangObject;
         }
-        
+
         if (dims1 == dims2) {
 
           // Try to generalize by leaf types
@@ -609,7 +746,7 @@ public class JProgram extends JNode {
           JType leafType2 = aType2.getLeafType();
 
           if (!(leafType1 instanceof JReferenceType)
-            || !(leafType2 instanceof JReferenceType)) {
+              || !(leafType2 instanceof JReferenceType)) {
             return minimalGeneralType;
           }
 
@@ -622,7 +759,7 @@ public class JProgram extends JNode {
           JReferenceType leafRefType1 = (JReferenceType) leafType1;
           JReferenceType leafRefType2 = (JReferenceType) leafType2;
           JReferenceType leafGeneralization = generalizeTypes(leafRefType1,
-            leafRefType2);
+              leafRefType2);
           return getTypeArray(leafGeneralization, dims1);
 
         } else {
@@ -631,7 +768,7 @@ public class JProgram extends JNode {
 
           // int[][] and Object[] generalize to Object[]
           JArrayType lesser = dims1 < dims2 ? aType1 : aType2;
-          if (lesser.getLeafType() == fTypeJavaLangObject) {
+          if (lesser.getLeafType() == typeJavaLangObject) {
             return lesser;
           }
 
@@ -653,11 +790,11 @@ public class JProgram extends JNode {
         for (; distance1 > distance2; --distance1) {
           type1 = type1.extnds;
         }
-        
+
         for (; distance1 < distance2; --distance2) {
           type2 = type2.extnds;
         }
-        
+
         while (type1 != type2) {
           type1 = type1.extnds;
           type2 = type2.extnds;
@@ -682,13 +819,13 @@ public class JProgram extends JNode {
         }
 
         // unrelated
-        return fTypeJavaLangObject;
+        return typeJavaLangObject;
 
       } else {
 
         // unrelated: the best commonality between an interface and array, or
         // between an array and a class is Object
-        return fTypeJavaLangObject;
+        return typeJavaLangObject;
       }
     }
   }
@@ -723,125 +860,5 @@ public class JProgram extends JNode {
     }
     return count;
   }
-
-  public final List/* <JMethod> */entryMethods = new ArrayList/* <JMethod> */();
-
-  public final Map/* <String, HasEnclosingType> */jsniMap = new HashMap/*
-                                                                         * <String,
-                                                                         * HasEnclosingType>
-                                                                         */();
-
-  public final List/* <JClassType> */specialTypes = new ArrayList/* <JClassType> */();
-
-  public final JTypeOracle typeOracle = new JTypeOracle(this);
-
-  private final List/* <JArrayType> */allArrayTypes = new ArrayList/* <JArrayType> */();
-
-  private final List/* <JReferenceType> */allTypes = new ArrayList/* <JReferenceType> */();
-
-  /**
-   * Each entry is a HashMap(JType => JArrayType), arranged such that the number
-   * of dimensions is that index (plus one) at which the JArrayTypes having that
-   * number of dimensions resides.
-   */
-  private final ArrayList/* <HashMap<JType, JArrayType>> */fDimensions = new ArrayList/*
-                                                                                       * <HashMap<JType,
-                                                                                       * JArrayType>>
-                                                                                       */();
-
-  private final JAbsentArrayDimension fLiteralAbsentArrayDim = new JAbsentArrayDimension(
-    this);
-
-  private final JBooleanLiteral fLiteralFalse = new JBooleanLiteral(this, false);
-
-  private final JIntLiteral fLiteralIntNegOne = new JIntLiteral(this, -1);
-
-  private final JIntLiteral fLiteralIntOne = new JIntLiteral(this, 1);
-
-  private final JIntLiteral fLiteralIntZero = new JIntLiteral(this, 0);
-
-  private final JNullLiteral fLiteralNull = new JNullLiteral(this);
-
-  private final JBooleanLiteral fLiteralTrue = new JBooleanLiteral(this, true);
-
-  private JField fNullField;
-
-  private JMethod fNullMethod;
-
-  private JMethod fRebindCreateMethod;
-
-  private final JPrimitiveType fTypeBoolean = new JPrimitiveType(this,
-    "boolean", "Z", fLiteralFalse);
-
-  private final JPrimitiveType fTypeByte = new JPrimitiveType(this, "byte",
-    "B", fLiteralIntZero);
-
-  private final JPrimitiveType fTypeChar = new JPrimitiveType(this, "char",
-    "C", getLiteralChar((char) 0));
-
-  private JClassType fTypeClass;
-  private final JPrimitiveType fTypeDouble = new JPrimitiveType(this, "double",
-    "D", getLiteralDouble(0));
-  private final JPrimitiveType fTypeFloat = new JPrimitiveType(this, "float",
-    "F", getLiteralFloat(0));
-
-  private Map/* <JClassType, Integer> */fTypeIdMap = new HashMap/*
-                                                                 * <JClassType,
-                                                                 * Integer>
-                                                                 */();
-
-  private final JPrimitiveType fTypeInt = new JPrimitiveType(this, "int", "I",
-    fLiteralIntZero);
-
-  private JClassType fTypeJavaLangObject;
-
-  private final JPrimitiveType fTypeLong = new JPrimitiveType(this, "long",
-    "J", getLiteralLong(0));
-
-  private final Map/* <String, JReferenceType> */fTypeNameMap = new HashMap/*
-                                                                             * <String,
-                                                                             * JReferenceType>
-                                                                             */();
-
-  private final JNullType fTypeNull = new JNullType(this);
-
-  private final JPrimitiveType fTypeShort = new JPrimitiveType(this, "short",
-    "S", fLiteralIntZero);
-
-  private JClassType fTypeSpecialArray;
-
-  private JClassType fTypeSpecialCast;
-
-  private JClassType fTypeSpecialExceptions;
-
-  private JClassType fTypeSpecialJavaScriptObject;
-
-  private JClassType fTypeString;
-
-  private final JPrimitiveType fTypeVoid = new JPrimitiveType(this, "void",
-    "V", null);
-
-  private final Map/* <JMethod, JMethod> */instanceToStaticMap = new IdentityHashMap/*
-                                                                                     * <JMethod,
-                                                                                     * JMethod>
-                                                                                     */();
-
-  private List/* <JsonObject> */jsonTypeTable;
-
-  private final TreeLogger logger;
-
-  private Map/* <JReferenceType, Integer> */queryIds;
-
-  private final RebindOracle rebindOracle;
-
-  private final Map/* <String, JField> */specialFields = new HashMap/*
-                                                                     * <String,
-                                                                     * JField>
-                                                                     */();
-
-  private final Map/* <String, JMethod> */specialMethods = new HashMap/*
-                                                                       * <String,
-                                                                       * JMethod>
-                                                                       */();
 
 }

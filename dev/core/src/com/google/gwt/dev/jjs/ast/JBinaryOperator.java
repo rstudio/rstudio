@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.ast;
 
 /**
@@ -46,24 +60,26 @@ public class JBinaryOperator {
   public static final JBinaryOperator ASG_SHL = new JBinaryOperator("<<=", 14);
   public static final JBinaryOperator ASG_SHR = new JBinaryOperator(">>=", 14);
   public static final JBinaryOperator ASG_SHRU = new JBinaryOperator(">>>=", 14);
-  public static final JBinaryOperator ASG_BIT_AND = new JBinaryOperator("&=", 14);
+  public static final JBinaryOperator ASG_BIT_AND = new JBinaryOperator("&=",
+      14);
   public static final JBinaryOperator ASG_BIT_OR = new JBinaryOperator("|=", 14);
-  public static final JBinaryOperator ASG_BIT_XOR = new JBinaryOperator("^=", 14);
+  public static final JBinaryOperator ASG_BIT_XOR = new JBinaryOperator("^=",
+      14);
 
-  private final char[] fSymbol;
-  private final int fPrecedence;
+  private final char[] symbol;
+  private final int precedence;
 
   private JBinaryOperator(String symbol, int precedence) {
-    fSymbol = symbol.toCharArray();
-    fPrecedence = precedence;
-  }
-
-  public char[] getSymbol() {
-    return fSymbol;
+    this.symbol = symbol.toCharArray();
+    this.precedence = precedence;
   }
 
   public int getPrecedence() {
-    return fPrecedence;
+    return precedence;
+  }
+
+  public char[] getSymbol() {
+    return symbol;
   }
 
   public boolean isAssignment() {
@@ -71,7 +87,7 @@ public class JBinaryOperator {
      * Beware, flaky! Maybe I should have added Yet Another Field to
      * BinaryOperator?
      */
-    return (fPrecedence == ASG.getPrecedence());
+    return (precedence == ASG.getPrecedence());
   }
 
   public String toString() {

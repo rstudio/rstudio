@@ -19,7 +19,7 @@ public class JMultiExpression extends JExpression {
   public JType getType() {
     int c = exprs.size();
     if (c == 0) {
-      return fProgram.getTypeVoid();
+      return program.getTypeVoid();
     } else {
       return exprs.getExpr(c - 1).getType();
     }

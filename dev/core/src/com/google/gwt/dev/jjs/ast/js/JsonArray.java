@@ -17,7 +17,7 @@ public class JsonArray extends JExpression {
   }
 
   public JType getType() {
-    return fProgram.getTypeVoid();
+    return program.getTypeVoid();
   }
 
   public boolean hasSideEffects() {

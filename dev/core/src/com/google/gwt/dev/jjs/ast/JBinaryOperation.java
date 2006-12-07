@@ -1,15 +1,29 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Binary operator expression. 
+ * Binary operator expression.
  */
 public class JBinaryOperation extends JExpression implements HasSettableType {
 
   public JBinaryOperator op;
-  private JType type;
   public final Holder lhs = new Holder();
   public final Holder rhs = new Holder();
+  private JType type;
 
   public JBinaryOperation(JProgram program, JType type, JBinaryOperator op,
       JExpression lhs, JExpression rhs) {
@@ -18,10 +32,6 @@ public class JBinaryOperation extends JExpression implements HasSettableType {
     this.type = type;
     this.lhs.set(lhs);
     this.rhs.set(rhs);
-  }
-
-  public boolean isAssignment() {
-    return op.isAssignment();
   }
 
   public JExpression getLhs() {
@@ -45,13 +55,17 @@ public class JBinaryOperation extends JExpression implements HasSettableType {
     }
   }
 
-  public void setType(JType newType) {
-    type = newType;
-  }
-
   public boolean hasSideEffects() {
     return op.isAssignment() || getLhs().hasSideEffects()
-      || getRhs().hasSideEffects();
+        || getRhs().hasSideEffects();
+  }
+
+  public boolean isAssignment() {
+    return op.isAssignment();
+  }
+
+  public void setType(JType newType) {
+    type = newType;
   }
 
   public void traverse(JVisitor visitor) {

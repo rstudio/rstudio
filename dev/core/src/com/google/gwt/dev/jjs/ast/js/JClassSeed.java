@@ -25,7 +25,7 @@ public class JClassSeed extends JLiteral {
   }
 
   public JType getType() {
-    return fProgram.getTypeJavaLangObject();
+    return program.getTypeJavaLangObject();
   }
 
   public void traverse(JVisitor visitor) {

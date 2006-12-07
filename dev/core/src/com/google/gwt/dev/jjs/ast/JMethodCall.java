@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.ast;
 
 /**
@@ -6,11 +20,11 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JMethodCall extends JExpression {
 
+  public final Holder instance = new Holder();
+  public HolderList args = new HolderList();
   private final JMethod method;
   private final JType overrideReturnType;
   private boolean canBePolymorphic;
-  public final Holder instance = new Holder();
-  public HolderList args = new HolderList();
 
   public JMethodCall(JProgram program, JExpression instance, JMethod method) {
     super(program);
@@ -41,6 +55,10 @@ public class JMethodCall extends JExpression {
     this.overrideReturnType = overrideReturnType;
   }
 
+  public boolean canBePolymorphic() {
+    return canBePolymorphic && !method.isFinal() && !method.isStatic();
+  }
+
   public JExpression getInstance() {
     return instance.get();
   }
@@ -60,10 +78,6 @@ public class JMethodCall extends JExpression {
   public boolean hasSideEffects() {
     // TODO(later): optimize? Be sure to check for clinit when we do.
     return true;
-  }
-
-  public boolean canBePolymorphic() {
-    return canBePolymorphic && !method.isFinal() && !method.isStatic();
   }
 
   public void setCanBePolymorphic(boolean canBePolymorphic) {
