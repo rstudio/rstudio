@@ -93,16 +93,16 @@ public class Trees extends Sink implements TreeListener {
     };
   }
 
-  private Tree fTree = new Tree();
+  private Tree tree = new Tree();
 
   public Trees() {
     for (int i = 0; i < fProto.length; ++i) {
       createItem(fProto[i]);
-      fTree.addItem(fProto[i].item);
+      tree.addItem(fProto[i].item);
     }
 
-    fTree.addTreeListener(this);
-    initWidget(fTree);
+    tree.addTreeListener(this);
+    initWidget(tree);
   }
 
   public void onShow() {
@@ -127,7 +127,8 @@ public class Trees extends Sink implements TreeListener {
   private void createItem(Proto proto) {
     proto.item = new TreeItem(proto.text);
     proto.item.setUserObject(proto);
-    if (proto.children != null)
+    if (proto.children != null) {
       proto.item.addItem(new PendingItem());
+    }
   }
 }

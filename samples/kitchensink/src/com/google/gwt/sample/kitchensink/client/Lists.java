@@ -53,8 +53,9 @@ public class Lists extends Sink implements ChangeListener {
     list.setVisibleItemCount(10);
     list.setMultipleSelect(true);
 
-    for (int i = 0; i < sStrings.length; ++i)
+    for (int i = 0; i < sStrings.length; ++i) {
       combo.addItem("List " + i);
+    }
     combo.setSelectedIndex(0);
     fillList(0);
 
@@ -76,10 +77,11 @@ public class Lists extends Sink implements ChangeListener {
   }
 
   public void onChange(Widget sender) {
-    if (sender == combo)
+    if (sender == combo) {
       fillList(combo.getSelectedIndex());
-    else if (sender == list)
+    } else if (sender == list) {
       echoSelection();
+    }
   }
 
   public void onShow() {
@@ -89,8 +91,9 @@ public class Lists extends Sink implements ChangeListener {
     // Set the contents of the list box to reflect the combo selection.
     list.clear();
     String[] strings = sStrings[idx];
-    for (int i = 0; i < strings.length; ++i)
+    for (int i = 0; i < strings.length; ++i) {
       list.addItem(strings[i]);
+    }
 
     echoSelection();
   }
@@ -99,8 +102,9 @@ public class Lists extends Sink implements ChangeListener {
     // Determine which items are selected, and display them.
     String msg = "Selected items: ";
     for (int i = 0; i < list.getItemCount(); ++i) {
-      if (list.isItemSelected(i))
+      if (list.isItemSelected(i)) {
         msg += list.getItemText(i) + " ";
+      }
     }
     echo.setText(msg);
   }

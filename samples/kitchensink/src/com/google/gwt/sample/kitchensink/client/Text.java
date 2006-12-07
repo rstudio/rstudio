@@ -47,19 +47,19 @@ public class Text extends Sink {
     };
   }
 
-  private PasswordTextBox fPasswordText = new PasswordTextBox();
-  private TextArea fTextArea = new TextArea();
-  private TextBox fTextBox = new TextBox();
+  private PasswordTextBox passwordText = new PasswordTextBox();
+  private TextArea textArea = new TextArea();
+  private TextBox textBox = new TextBox();
 
   public Text() {
     VerticalPanel panel = new VerticalPanel();
     panel.setSpacing(8);
     panel.add(new HTML("Normal text box:"));
-    panel.add(createTextThing(fTextBox));
+    panel.add(createTextThing(textBox));
     panel.add(new HTML("Password text box:"));
-    panel.add(createTextThing(fPasswordText));
+    panel.add(createTextThing(passwordText));
     panel.add(new HTML("Text area:"));
-    panel.add(createTextThing(fTextArea));
+    panel.add(createTextThing(textArea));
     initWidget(panel);
   }
 

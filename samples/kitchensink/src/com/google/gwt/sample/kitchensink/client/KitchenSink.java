@@ -76,10 +76,11 @@ public class KitchenSink implements EntryPoint, HistoryListener {
 
     // Show the initial screen.
     String initToken = History.getToken();
-    if (initToken.length() > 0)
+    if (initToken.length() > 0) {
       onHistoryChanged(initToken);
-    else
+    } else {
       showInfo();
+    }
   }
 
   public void show(SinkInfo info, boolean affectHistory) {
@@ -87,8 +88,9 @@ public class KitchenSink implements EntryPoint, HistoryListener {
     // in practice, because when the history context is set, our
     // onHistoryChanged() handler will attempt to show the currently-visible
     // sink.
-    if (info == curInfo)
+    if (info == curInfo) {
       return;
+    }
     curInfo = info;
 
     // Remove the old sink from the display area.
@@ -107,9 +109,10 @@ public class KitchenSink implements EntryPoint, HistoryListener {
     // will ultimately result in onHistoryChanged() being called. It will call
     // show() again, but nothing will happen because it will request the exact
     // same sink we're already showing.
-    if (affectHistory)
+    if (affectHistory) {
       History.newItem(info.getName());
-
+    }
+    
     // Display the new sink.
     sinkContainer.add(curSink, DockPanel.CENTER);
     sinkContainer.setCellWidth(curSink, "100%");

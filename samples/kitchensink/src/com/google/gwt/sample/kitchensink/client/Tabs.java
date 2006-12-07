@@ -36,18 +36,18 @@ public class Tabs extends Sink {
     };
   }
 
-  private TabPanel fTabs = new TabPanel();
+  private TabPanel tabs = new TabPanel();
 
   public Tabs() {
-    fTabs.add(createImage("rembrandt/JohannesElison.jpg"), "1634");
-    fTabs.add(createImage("rembrandt/SelfPortrait1640.jpg"), "1640");
-    fTabs.add(createImage("rembrandt/LaMarcheNocturne.jpg"), "1642");
-    fTabs.add(createImage("rembrandt/TheReturnOfTheProdigalSon.jpg"), "1662");
-    fTabs.selectTab(0);
+    tabs.add(createImage("rembrandt/JohannesElison.jpg"), "1634");
+    tabs.add(createImage("rembrandt/SelfPortrait1640.jpg"), "1640");
+    tabs.add(createImage("rembrandt/LaMarcheNocturne.jpg"), "1642");
+    tabs.add(createImage("rembrandt/TheReturnOfTheProdigalSon.jpg"), "1662");
+    tabs.selectTab(0);
 
-    fTabs.setWidth("100%");
-    fTabs.setHeight("100%");
-    initWidget(fTabs);
+    tabs.setWidth("100%");
+    tabs.setHeight("100%");
+    initWidget(tabs);
   }
 
   public void onShow() {

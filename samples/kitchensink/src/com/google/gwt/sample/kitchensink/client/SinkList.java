@@ -49,17 +49,19 @@ public class SinkList extends Composite {
   public SinkInfo find(String sinkName) {
     for (int i = 0; i < sinks.size(); ++i) {
       SinkInfo info = (SinkInfo) sinks.get(i);
-      if (info.getName().equals(sinkName))
+      if (info.getName().equals(sinkName)) {
         return info;
+      }
     }
 
     return null;
   }
 
   public void setSinkSelection(String name) {
-    if (selectedSink != -1)
+    if (selectedSink != -1) {
       list.getWidget(selectedSink).removeStyleName("ks-SinkItem-selected");
-
+    }
+    
     for (int i = 0; i < sinks.size(); ++i) {
       SinkInfo info = (SinkInfo) sinks.get(i);
       if (info.getName().equals(name)) {

@@ -44,8 +44,9 @@ public abstract class Sink extends Composite {
     }
 
     public final Sink getInstance() {
-      if (instance != null)
+      if (instance != null) {
         return instance;
+      }
       return (instance = createInstance());
     }
 

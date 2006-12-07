@@ -80,9 +80,10 @@ public class Layouts extends Sink {
     dock.add(scroller, DockPanel.CENTER);
 
     FlowPanel flow = new FlowPanel();
-    for (int i = 0; i < 8; ++i)
+    for (int i = 0; i < 8; ++i) {
       flow.add(new CheckBox("Flow " + i));
-
+    }
+    
     HorizontalPanel horz = new HorizontalPanel();
     horz.setVerticalAlignment(VerticalPanel.ALIGN_MIDDLE);
     horz.add(new Button("Button"));

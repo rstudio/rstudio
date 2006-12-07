@@ -79,10 +79,11 @@ public class Images extends Sink implements ClickListener, LoadListener {
   }
 
   public void onClick(Widget sender) {
-    if (sender == prevButton)
+    if (sender == prevButton) {
       loadImage(curImage - 1);
-    else if (sender == nextButton)
+    } else if (sender == nextButton) {
       loadImage(curImage + 1);
+    }
   }
 
   public void onError(Widget sender) {
@@ -96,10 +97,11 @@ public class Images extends Sink implements ClickListener, LoadListener {
   }
 
   private void loadImage(int index) {
-    if (index < 0)
+    if (index < 0) {
       index = sImages.length - 1;
-    else if (index > sImages.length - 1)
+    } else if (index > sImages.length - 1) {
       index = 0;
+    }
 
     curImage = index;
     loadingImage.setUrl("images/searching.gif");

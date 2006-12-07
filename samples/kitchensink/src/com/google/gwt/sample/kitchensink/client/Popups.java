@@ -102,18 +102,19 @@ public class Popups extends Sink implements ClickListener {
     };
   }
 
-  private Button fDialogButton = new Button("Show Dialog", this);
-  private Button fPopupButton = new Button("Show Popup", this);
+  private Button dialogButton = new Button("Show Dialog", this);
+  private Button popupButton = new Button("Show Popup", this);
 
   public Popups() {
     VerticalPanel panel = new VerticalPanel();
-    panel.add(fPopupButton);
-    panel.add(fDialogButton);
+    panel.add(popupButton);
+    panel.add(dialogButton);
 
     ListBox list = new ListBox();
     list.setVisibleItemCount(5);
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < 10; ++i) {
       list.addItem("list item " + i);
+    }
     panel.add(list);
 
     panel.setSpacing(8);
@@ -121,16 +122,16 @@ public class Popups extends Sink implements ClickListener {
   }
 
   public void onClick(Widget sender) {
-    if (sender == fPopupButton) {
+    if (sender == popupButton) {
       MyPopup p = new MyPopup();
       int left = sender.getAbsoluteLeft() + 10;
       int top = sender.getAbsoluteTop() + 10;
       p.setPopupPosition(left, top);
       p.show();
-    } else if (sender == fDialogButton) {
+    } else if (sender == dialogButton) {
       DialogBox dlg = new MyDialog();
-      int left = fDialogButton.getAbsoluteLeft() + 10;
-      int top = fDialogButton.getAbsoluteTop() + 10;
+      int left = dialogButton.getAbsoluteLeft() + 10;
+      int top = dialogButton.getAbsoluteTop() + 10;
       dlg.setPopupPosition(left, top);
       dlg.show();
     }
