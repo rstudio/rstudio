@@ -89,7 +89,7 @@ public class GWTCompiler extends ToolBase {
     }
 
     public String[] getTagArgs() {
-      return new String[]{"module"};
+      return new String[] {"module"};
     }
 
     public boolean isRequired() {
@@ -103,6 +103,10 @@ public class GWTCompiler extends ToolBase {
    * into a {@link Compilation}.
    */
   private class CompilationRebindOracle extends StandardRebindOracle {
+
+    private final Map cache = new HashMap();
+
+    private Compilation compilation;
 
     public CompilationRebindOracle() {
       super(typeOracle, propOracle, rules, genDir, cacheManager);
@@ -146,21 +150,30 @@ public class GWTCompiler extends ToolBase {
     public void recordInto(Compilation compilation) {
       this.compilation = compilation;
     }
-
-    private final Map cache = new HashMap();
-    private Compilation compilation;
   }
- 
-  private final CacheManager cacheManager;
 
   private class DistillerRebindPermutationOracle implements
       RebindPermutationOracle {
+
+    private final StandardRebindOracle rebindOracle = new StandardRebindOracle(
+        typeOracle, propOracle, rules, genDir, cacheManager) {
+
+      /**
+       * Record generated types.
+       */
+      protected void onGeneratedTypes(String result, JClassType[] genTypes) {
+        List list = new ArrayList();
+        Util.addAll(list, genTypes);
+        Object existing = generatedTypesByResultTypeName.put(result, list);
+        assert (existing == null) : "Internal error: redundant notification of generated types";
+      }
+    };
 
     public String[] getAllPossibleRebindAnswers(TreeLogger logger,
         String requestTypeName) throws UnableToCompleteException {
 
       String msg = "Computing all possible rebind results for '"
-        + requestTypeName + "'";
+          + requestTypeName + "'";
       logger = logger.branch(TreeLogger.DEBUG, msg, null);
 
       Set answers = new HashSet();
@@ -185,20 +198,6 @@ public class GWTCompiler extends ToolBase {
       }
       return (String[]) Util.toArray(String.class, answers);
     }
-
-    private final StandardRebindOracle rebindOracle = new StandardRebindOracle(
-      typeOracle, propOracle, rules, genDir, cacheManager) {
-
-      /**
-       * Record generated types.
-       */
-      protected void onGeneratedTypes(String result, JClassType[] genTypes) {
-        List list = new ArrayList();
-        Util.addAll(list, genTypes);
-        Object existing = generatedTypesByResultTypeName.put(result, list);
-        assert (existing == null) : "Internal error: redundant notification of generated types";
-      }
-    };
   }
 
   private static final String EXT_CACHE_XML = ".cache.xml";
@@ -218,6 +217,50 @@ public class GWTCompiler extends ToolBase {
       // This thread returns and the process ends with the gui logger window
       // is closed. Calling System.exit() doesn't give you a chance to view it.
     }
+  }
+
+  private final CacheManager cacheManager;
+
+  private Compilations compilations = new Compilations();
+
+  private String[] declEntryPts;
+
+  private File genDir;
+
+  private Map generatedTypesByResultTypeName = new HashMap();
+
+  private JavaToJavaScriptCompiler jjs;
+
+  private Type logLevel;
+
+  private ModuleDef module;
+
+  private String moduleName;
+
+  private boolean obfuscate;
+
+  private File outDir;
+
+  private PropertyPermutations perms;
+
+  private boolean prettyNames;
+
+  private Properties properties;
+
+  private StaticPropertyOracle propOracle = new StaticPropertyOracle();
+
+  private RebindPermutationOracle rebindPermOracle;
+
+  private Rules rules;
+
+  private StandardSourceOracle sourceOracle;
+
+  private TypeOracle typeOracle;
+
+  private boolean useGuiLogger;
+
+  public GWTCompiler() {
+    this(null);
   }
 
   public GWTCompiler(CacheManager cacheManager) {
@@ -249,6 +292,10 @@ public class GWTCompiler extends ToolBase {
     registerHandler(new ArgHandlerModuleName());
 
     registerHandler(new ArgHandlerScriptStyle() {
+      public void setStyleDetailed() {
+        GWTCompiler.this.setStyleDetailed();
+      }
+
       public void setStyleObfuscated() {
         GWTCompiler.this.setStyleObfuscated();
       }
@@ -256,30 +303,8 @@ public class GWTCompiler extends ToolBase {
       public void setStylePretty() {
         GWTCompiler.this.setStylePretty();
       }
-
-      public void setStyleDetailed() {
-        GWTCompiler.this.setStyleDetailed();
-      }
     });
     this.cacheManager = cacheManager;
-  }
-
-  public GWTCompiler() {
-    this(null);
-  }
-
-  public void setStyleObfuscated() {
-    obfuscate = true;
-  }
-
-  public void setStylePretty() {
-    obfuscate = false;
-    prettyNames = true;
-  }
-
-  public void setStyleDetailed() {
-    obfuscate = false;
-    prettyNames = false;
   }
 
   public void distill(TreeLogger logger, ModuleDef moduleDef)
@@ -302,9 +327,9 @@ public class GWTCompiler extends ToolBase {
     properties = module.getProperties();
     perms = new PropertyPermutations(properties);
     WebModeCompilerFrontEnd frontEnd = new WebModeCompilerFrontEnd(
-      sourceOracle, rebindPermOracle);
+        sourceOracle, rebindPermOracle);
     jjs = new JavaToJavaScriptCompiler(logger, frontEnd, declEntryPts,
-      obfuscate, prettyNames);
+        obfuscate, prettyNames);
     initCompilations(logger);
 
     // Compile for every permutation of properties.
@@ -334,6 +359,10 @@ public class GWTCompiler extends ToolBase {
     return moduleName;
   }
 
+  public boolean getUseGuiLogger() {
+    return useGuiLogger;
+  }
+
   public void setGenDir(File dir) {
     genDir = dir;
   }
@@ -350,18 +379,39 @@ public class GWTCompiler extends ToolBase {
     this.outDir = outDir;
   }
 
+  public void setStyleDetailed() {
+    obfuscate = false;
+    prettyNames = false;
+  }
+
+  public void setStyleObfuscated() {
+    obfuscate = true;
+  }
+
+  public void setStylePretty() {
+    obfuscate = false;
+    prettyNames = true;
+  }
+
+  private void checkModule(TreeLogger logger) throws UnableToCompleteException {
+    if (module.getEntryPointTypeNames().length == 0) {
+      logger.log(TreeLogger.ERROR, "Module has no entry points defined", null);
+      throw new UnableToCompleteException();
+    }
+  }
+
   private SelectionScriptGenerator compilePermutations(TreeLogger logger)
       throws UnableToCompleteException {
     logger = logger.branch(TreeLogger.INFO, "Output will be written into "
-      + outDir, null);
+        + outDir, null);
     Property[] orderedProps = perms.getOrderedProperties();
     SelectionScriptGenerator selGen = new SelectionScriptGenerator(module,
-      orderedProps);
+        orderedProps);
     int permNumber = 1;
     for (Iterator iter = perms.iterator(); iter.hasNext(); ++permNumber) {
       String[] orderedPropValues = (String[]) iter.next();
       String strongName = realizePermutation(logger, orderedProps,
-        orderedPropValues, permNumber);
+          orderedPropValues, permNumber);
       selGen.recordSelection(orderedPropValues, strongName);
     }
     return selGen;
@@ -379,7 +429,7 @@ public class GWTCompiler extends ToolBase {
       if (copied) {
         if (!anyCopied) {
           branch = logger.branch(TreeLogger.INFO,
-            "Copying all files found on public path", null);
+              "Copying all files found on public path", null);
           if (!logger.isLoggable(TreeLogger.TRACE)) {
             branch = null;
           }
@@ -470,7 +520,7 @@ public class GWTCompiler extends ToolBase {
         // It is out of date; no need to even parse the XML.
         //
         String msg = "Compilation '" + fn
-          + "' is out of date and will be removed";
+            + "' is out of date and will be removed";
         logger.log(TreeLogger.TRACE, msg, null);
         Util.deleteFilesStartingWith(outDir, strongName);
         continue;
@@ -481,7 +531,7 @@ public class GWTCompiler extends ToolBase {
       // changed.
       //
       TreeLogger branch = logger.branch(TreeLogger.DEBUG,
-        "Loading cached compilation: " + cacheXml, null);
+          "Loading cached compilation: " + cacheXml, null);
       Compilation c = new Compilation();
       c.setStrongName(strongName);
       CompilationSchema schema = new CompilationSchema(c);
@@ -518,8 +568,8 @@ public class GWTCompiler extends ToolBase {
           // Remove it.
           //
           String msg = "Compilation '" + fn + "' refers to generated type '"
-            + genTypeName
-            + "' which no longers exists; cache entry will be removed";
+              + genTypeName
+              + "' which no longers exists; cache entry will be removed";
           branch.log(TreeLogger.TRACE, msg, null);
           Util.deleteFilesStartingWith(outDir, strongName);
           isBadCompilation = true;
@@ -530,9 +580,9 @@ public class GWTCompiler extends ToolBase {
 
         if (!cachedHash.equals(currentHash)) {
           String msg = "Compilation '"
-            + fn
-            + "' was compiled with a different version of generated source for '"
-            + genTypeName + "'; cache entry will be removed";
+              + fn
+              + "' was compiled with a different version of generated source for '"
+              + genTypeName + "'; cache entry will be removed";
           branch.log(TreeLogger.TRACE, msg, null);
           Util.deleteFilesStartingWith(outDir, strongName);
           isBadCompilation = true;
@@ -544,13 +594,6 @@ public class GWTCompiler extends ToolBase {
         // Okay -- this compilation should be a cache candidate.
         compilations.add(c);
       }
-    }
-  }
-
-  private void checkModule(TreeLogger logger) throws UnableToCompleteException {
-    if (module.getEntryPointTypeNames().length == 0) {
-      logger.log(TreeLogger.ERROR, "Module has no entry points defined", null);
-      throw new UnableToCompleteException();
     }
   }
 
@@ -633,7 +676,7 @@ public class GWTCompiler extends ToolBase {
     AbstractTreeLogger logger;
     if (useGuiLogger) {
       logger = TreeLoggerWidget.getAsDetachedWindow("Build Output for "
-        + moduleName, 800, 600, true);
+          + moduleName, 800, 600, true);
     } else {
       logger = new PrintWriterTreeLogger();
     }
@@ -642,7 +685,7 @@ public class GWTCompiler extends ToolBase {
       logger.setMaxDetail(logLevel);
 
       ModuleDef moduleDef = ModuleDefLoader.loadFromClassPath(logger,
-        moduleName);
+          moduleName);
       distill(logger, moduleDef);
       return true;
     } catch (UnableToCompleteException e) {
@@ -705,7 +748,7 @@ public class GWTCompiler extends ToolBase {
     Util.writeBytesToFile(logger, cacheFile, bytes);
 
     String msg = "Compilation metadata written to "
-      + cacheFile.getAbsolutePath();
+        + cacheFile.getAbsolutePath();
     logger.log(TreeLogger.TRACE, msg, null);
   }
 
@@ -724,8 +767,8 @@ public class GWTCompiler extends ToolBase {
       byte[] suffix = getHtmlSuffix().getBytes("UTF-8");
       String strongName = Util.computeStrongName(scriptBytes);
       File outFile = new File(outDir, strongName + ".cache.html");
-      Util.writeBytesToFile(logger, outFile, new byte[][]{
-        prefix, scriptBytes, suffix});
+      Util.writeBytesToFile(logger, outFile, new byte[][] {
+          prefix, scriptBytes, suffix});
 
       String msg = "Compilation written to " + outFile.getAbsolutePath();
       logger.log(TreeLogger.TRACE, msg, null);
@@ -733,7 +776,7 @@ public class GWTCompiler extends ToolBase {
       return strongName;
     } catch (UnsupportedEncodingException e) {
       logger.log(TreeLogger.ERROR, "Unable to encode compiled script as UTF-8",
-        e);
+          e);
       throw new UnableToCompleteException();
     }
   }
@@ -745,31 +788,7 @@ public class GWTCompiler extends ToolBase {
     File selectionFile = new File(outDir, fn);
     Util.writeStringAsFile(selectionFile, html);
     String msg = "Compilation selection script written to "
-      + selectionFile.getAbsolutePath();
+        + selectionFile.getAbsolutePath();
     logger.log(TreeLogger.TRACE, msg, null);
   }
-
-  public boolean getUseGuiLogger() {
-    return useGuiLogger;
-  }
-
-  private Compilations compilations = new Compilations();
-  private String[] declEntryPts;
-  private File genDir;
-  private Map generatedTypesByResultTypeName = new HashMap();
-  private JavaToJavaScriptCompiler jjs;
-  private Type logLevel;
-  private ModuleDef module;
-  private String moduleName;
-  private boolean obfuscate;
-  private File outDir;
-  private PropertyPermutations perms;
-  private boolean prettyNames;
-  private Properties properties;
-  private StaticPropertyOracle propOracle = new StaticPropertyOracle();
-  private RebindPermutationOracle rebindPermOracle;
-  private Rules rules;
-  private StandardSourceOracle sourceOracle;
-  private TypeOracle typeOracle;
-  private boolean useGuiLogger;
 }

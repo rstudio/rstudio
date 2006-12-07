@@ -102,7 +102,7 @@ public class GWTShell extends ToolBase {
     }
 
     public boolean setFlag() {
-      fRunTomcat = false;
+      runTomcat = false;
       return true;
     }
   }
@@ -198,7 +198,7 @@ public class GWTShell extends ToolBase {
       //
       Shell widgetShell = widget.getShell();
       try {
-        Cursor waitCursor = fDisplay.getSystemCursor(SWT.CURSOR_WAIT);
+        Cursor waitCursor = display.getSystemCursor(SWT.CURSOR_WAIT);
         widgetShell.setCursor(waitCursor);
 
         // Try to find an existing loaded version of the module def.
@@ -213,7 +213,7 @@ public class GWTShell extends ToolBase {
             typeOracle, moduleDef, genDir);
         return host;
       } finally {
-        Cursor normalCursor = fDisplay.getSystemCursor(SWT.CURSOR_ARROW);
+        Cursor normalCursor = display.getSystemCursor(SWT.CURSOR_ARROW);
         widgetShell.setCursor(normalCursor);
       }
     }
@@ -246,6 +246,11 @@ public class GWTShell extends ToolBase {
   }
 
   private static Image[] icons;
+
+  static {
+    // Correct menu on Mac OS X
+    Display.setAppName("GWT");
+  }
 
   public static String checkHost(String hostUnderConsideration, Set hosts) {
     hostUnderConsideration = hostUnderConsideration.toLowerCase();
@@ -284,9 +289,9 @@ public class GWTShell extends ToolBase {
     //
     if (icons == null) {
       icons = new Image[] {
-        LowLevel.loadImage("icon16.png"), LowLevel.loadImage("icon24.png"),
-        LowLevel.loadImage("icon32.png"), LowLevel.loadImage("icon48.png"),
-        LowLevel.loadImage("icon128.png")};
+          LowLevel.loadImage("icon16.png"), LowLevel.loadImage("icon24.png"),
+          LowLevel.loadImage("icon32.png"), LowLevel.loadImage("icon48.png"),
+          LowLevel.loadImage("icon128.png")};
     }
     return icons;
   }
@@ -298,6 +303,38 @@ public class GWTShell extends ToolBase {
       shellMain.run();
     }
   }
+
+  /**
+   * Use the default display; constructing a new one would make instantiating
+   * multiple GWTShells fail with a mysterious exception.
+   */
+  protected final Display display = Display.getDefault();
+
+  protected File outDir;
+
+  private BrowserWidgetHostImpl browserHost = new BrowserWidgetHostImpl();
+
+  private ShellMainWindow mainWnd;
+
+  private boolean runTomcat = true;
+
+  private final List browserShells = new ArrayList();
+
+  private final List startupUrls = new ArrayList();
+
+  private File genDir;
+
+  private boolean headlessMode = false;
+
+  private TreeLogger.Type logLevel;
+
+  private boolean obfuscate;
+
+  private int port;
+
+  private boolean prettyNames;
+
+  private boolean started;
 
   public GWTShell() {
     this(false, false);
@@ -357,12 +394,12 @@ public class GWTShell extends ToolBase {
   }
 
   public void addStartupURL(String url) {
-    fStartupUrls.add(url);
+    startupUrls.add(url);
   }
 
   public void closeAllBrowserWindows() {
-    while (!fBrowserShells.isEmpty()) {
-      ((Shell) fBrowserShells.get(0)).dispose();
+    while (!browserShells.isEmpty()) {
+      ((Shell) browserShells.get(0)).dispose();
     }
   }
 
@@ -383,11 +420,11 @@ public class GWTShell extends ToolBase {
   }
 
   public TreeLogger getTopLogger() {
-    return fMainWnd.getLogger();
+    return mainWnd.getLogger();
   }
 
   public boolean hasBrowserWindowsOpen() {
-    if (fBrowserShells.isEmpty()) {
+    if (browserShells.isEmpty()) {
       return false;
     } else {
       return true;
@@ -398,12 +435,12 @@ public class GWTShell extends ToolBase {
    * Launch the arguments as Urls in separate windows.
    */
   public void launchStartupUrls(final TreeLogger logger) {
-    if (fStartupUrls != null) {
+    if (startupUrls != null) {
       // Launch a browser window for each startup url.
       //
       String startupURL = "";
       try {
-        for (Iterator iter = fStartupUrls.iterator(); iter.hasNext();) {
+        for (Iterator iter = startupUrls.iterator(); iter.hasNext();) {
           startupURL = normalizeURL((String) iter.next());
           logger.log(TreeLogger.TRACE, "Starting URL: " + startupURL, null);
           BrowserWidget bw = openNewBrowserWindow();
@@ -446,9 +483,9 @@ public class GWTShell extends ToolBase {
       BrowserWidget bw = PlatformSpecific.createBrowserWidget(getTopLogger(),
           s, browserHost);
 
-      if (fMainWnd != null) {
-        Rectangle r = fMainWnd.getShell().getBounds();
-        int n = fBrowserShells.size() + 1;
+      if (mainWnd != null) {
+        Rectangle r = mainWnd.getShell().getBounds();
+        int n = browserShells.size() + 1;
         s.setBounds(r.x + n * 50, r.y + n * 50, 800, 600);
       } else {
         s.setSize(800, 600);
@@ -511,7 +548,7 @@ public class GWTShell extends ToolBase {
   }
 
   public void setRunTomcat(boolean run) {
-    fRunTomcat = run;
+    runTomcat = run;
   }
 
   /**
@@ -582,7 +619,7 @@ public class GWTShell extends ToolBase {
   }
 
   protected void initializeLogger() {
-    final AbstractTreeLogger logger = fMainWnd.getLogger();
+    final AbstractTreeLogger logger = mainWnd.getLogger();
     logger.setMaxDetail(logLevel);
   }
 
@@ -596,10 +633,10 @@ public class GWTShell extends ToolBase {
   }
 
   protected boolean notDone() {
-    if (!fMainWnd.isDisposed()) {
+    if (!mainWnd.isDisposed()) {
       return true;
     }
-    if (!fBrowserShells.isEmpty()) {
+    if (!browserShells.isEmpty()) {
       return true;
     }
     return false;
@@ -615,8 +652,8 @@ public class GWTShell extends ToolBase {
     //
     while (notDone()) {
       try {
-        if (!fDisplay.readAndDispatch()) {
-          fDisplay.sleep();
+        if (!display.readAndDispatch()) {
+          display.sleep();
         }
       } catch (Throwable e) {
         String msg = e.getMessage();
@@ -634,7 +671,7 @@ public class GWTShell extends ToolBase {
    * 
    */
   protected void shutDown() {
-    if (!fRunTomcat) {
+    if (!runTomcat) {
       return;
     }
 
@@ -661,7 +698,7 @@ public class GWTShell extends ToolBase {
     //
     initializeLogger();
 
-    if (fRunTomcat) {
+    if (runTomcat) {
       // Start the HTTP server.
       // Use a new thread so that logging that occurs during startup is
       // displayed immediately.
@@ -680,16 +717,16 @@ public class GWTShell extends ToolBase {
   }
 
   private Shell createTrackedBrowserShell() {
-    final Shell shell = new Shell(fDisplay);
+    final Shell shell = new Shell(display);
     FillLayout fillLayout = new FillLayout();
     fillLayout.marginWidth = 0;
     fillLayout.marginHeight = 0;
     shell.setLayout(fillLayout);
-    fBrowserShells.add(shell);
+    browserShells.add(shell);
     shell.addDisposeListener(new DisposeListener() {
       public void widgetDisposed(DisposeEvent e) {
         if (e.widget == shell) {
-          fBrowserShells.remove(shell);
+          browserShells.remove(shell);
         }
       }
     });
@@ -714,7 +751,7 @@ public class GWTShell extends ToolBase {
   }
 
   private void openAppWindow() {
-    final Shell shell = new Shell(fDisplay);
+    final Shell shell = new Shell(display);
 
     FillLayout fillLayout = new FillLayout();
     fillLayout.marginWidth = 0;
@@ -725,36 +762,12 @@ public class GWTShell extends ToolBase {
 
     boolean checkForUpdates = doShouldCheckForUpdates();
 
-    fMainWnd = new ShellMainWindow(this, shell, fRunTomcat ? getPort() : 0,
-      checkForUpdates);
+    mainWnd = new ShellMainWindow(this, shell, runTomcat ? getPort() : 0,
+        checkForUpdates);
 
     shell.setSize(700, 600);
     if (!isHeadless()) {
       shell.open();
     }
   }
-
-  static {
-    // Correct menu on Mac OS X
-    Display.setAppName("GWT");
-  }
-
-  /**
-   * Use the default display; constructing a new one would make instantiating
-   * multiple GWTShells fail with a mysterious exception.
-   */
-  protected final Display fDisplay = Display.getDefault();
-  protected File outDir;
-  private BrowserWidgetHostImpl browserHost = new BrowserWidgetHostImpl();
-  private ShellMainWindow fMainWnd;
-  private boolean fRunTomcat = true;
-  private final List fBrowserShells = new ArrayList();
-  private final List fStartupUrls = new ArrayList();
-  private File genDir;
-  private boolean headlessMode = false;
-  private TreeLogger.Type logLevel;
-  private boolean obfuscate;
-  private int port;
-  private boolean prettyNames;
-  private boolean started;
 }
