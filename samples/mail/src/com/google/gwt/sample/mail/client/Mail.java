@@ -104,8 +104,9 @@ public class Mail implements EntryPoint, WindowResizeListener {
     // Adjust the shortcut panel and detail area to take up the available room
     // in the window.
     int shortcutHeight = height - shortcuts.getAbsoluteTop() - 8;
-    if (shortcutHeight < 1)
+    if (shortcutHeight < 1) {
       shortcutHeight = 1;
+    }
     shortcuts.setHeight("" + shortcutHeight);
 
     // Give the mail detail widget a chance to resize itself as well.

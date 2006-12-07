@@ -74,12 +74,14 @@ public class MailDetail extends Composite {
    */
   public void adjustSize(int windowWidth, int windowHeight) {
     int scrollWidth = windowWidth - scroller.getAbsoluteLeft() - 9;
-    if (scrollWidth < 1)
+    if (scrollWidth < 1) {
       scrollWidth = 1;
+    }
 
     int scrollHeight = windowHeight - scroller.getAbsoluteTop() - 9;
-    if (scrollHeight < 1)
+    if (scrollHeight < 1) {
       scrollHeight = 1;
+    }
 
     scroller.setSize("" + scrollWidth, "" + scrollHeight);
   }

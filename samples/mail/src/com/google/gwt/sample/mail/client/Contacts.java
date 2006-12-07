@@ -86,8 +86,9 @@ public class Contacts extends Composite {
 
   public Contacts() {
     // Add all the contacts to the list.
-    for (int i = 0; i < contacts.length; ++i)
+    for (int i = 0; i < contacts.length; ++i) {
       addContact(contacts[i]);
+    }
 
     initWidget(panel);
     setStyleName("mail-Contacts");

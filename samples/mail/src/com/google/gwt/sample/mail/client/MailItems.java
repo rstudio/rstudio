@@ -216,8 +216,9 @@ public class MailItems {
   private static Vector items = new Vector();
 
   static {
-    for (int i = 0; i < NUM_ITEMS; ++i)
+    for (int i = 0; i < NUM_ITEMS; ++i) {
       items.add(createFakeMail());
+    }
   }
 
   public static int getMailItemCount() {
@@ -225,29 +226,34 @@ public class MailItems {
   }
 
   public static MailItem getMailItem(int index) {
-    if (index >= items.size())
+    if (index >= items.size()) {
       return null;
+    }
     return (MailItem) items.get(index);
   }
 
   private static MailItem createFakeMail() {
     String sender = senders[senderIdx++];
-    if (senderIdx == senders.length)
+    if (senderIdx == senders.length) {
       senderIdx = 0;
+    }
 
     String email = emails[emailIdx++];
-    if (emailIdx == emails.length)
+    if (emailIdx == emails.length) {
       emailIdx = 0;
+    }
 
     String subject = subjects[subjectIdx++];
-    if (subjectIdx == subjects.length)
+    if (subjectIdx == subjects.length) {
       subjectIdx = 0;
-
+    }
+    
     String body = "";
     for (int i = 0; i < FRAGMENTS_PER_EMAIL; ++i) {
       body += fragments[fragmentIdx++];
-      if (fragmentIdx == fragments.length)
+      if (fragmentIdx == fragments.length) {
         fragmentIdx = 0;
+      }
     }
 
     return new MailItem(sender, email, subject, body);

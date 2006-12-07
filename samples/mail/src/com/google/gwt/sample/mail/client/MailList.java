@@ -72,17 +72,18 @@ public class MailList extends Composite implements TableListener, ClickListener 
 
   public void onCellClicked(SourcesTableEvents sender, int row, int cell) {
     // Select the row that was clicked (-1 to account for header row).
-    if (row > 0)
+    if (row > 0) {
       selectRow(row - 1);
+    }
   }
 
   public void onClick(Widget sender) {
     if (sender == olderButton) {
       // Move forward a page.
       startIndex += VISIBLE_EMAIL_COUNT;
-      if (startIndex >= MailItems.getMailItemCount())
+      if (startIndex >= MailItems.getMailItemCount()) {
         startIndex -= VISIBLE_EMAIL_COUNT;
-      else {
+      } else {
         styleRow(selectedRow, false);
         selectedRow = -1;
         update();
@@ -90,9 +91,9 @@ public class MailList extends Composite implements TableListener, ClickListener 
     } else if (sender == newerButton) {
       // Move back a page.
       startIndex -= VISIBLE_EMAIL_COUNT;
-      if (startIndex < 0)
+      if (startIndex < 0) {
         startIndex = 0;
-      else {
+      } else {
         styleRow(selectedRow, false);
         selectedRow = -1;
         update();
@@ -133,9 +134,10 @@ public class MailList extends Composite implements TableListener, ClickListener 
     // When a row (other than the first one, which is used as a header) is
     // selected, display its associated MailItem.
     MailItem item = MailItems.getMailItem(startIndex + row);
-    if (item == null)
+    if (item == null) {
       return;
-
+    }
+    
     styleRow(selectedRow, false);
     styleRow(row, true);
 
@@ -146,10 +148,11 @@ public class MailList extends Composite implements TableListener, ClickListener 
 
   private void styleRow(int row, boolean selected) {
     if (row != -1) {
-      if (selected)
+      if (selected) {
         table.getRowFormatter().addStyleName(row + 1, "mail-SelectedRow");
-      else
+      } else {
         table.getRowFormatter().removeStyleName(row + 1, "mail-SelectedRow");
+      }
     }
   }
 
@@ -157,8 +160,9 @@ public class MailList extends Composite implements TableListener, ClickListener 
     // Update the older/newer buttons & label.
     int count = MailItems.getMailItemCount();
     int max = startIndex + VISIBLE_EMAIL_COUNT;
-    if (max > count)
+    if (max > count) {
       max = count;
+    }
 
     newerButton.setVisible(startIndex != 0);
     olderButton.setVisible(startIndex + VISIBLE_EMAIL_COUNT < count);
@@ -168,8 +172,9 @@ public class MailList extends Composite implements TableListener, ClickListener 
     int i = 0;
     for (; i < VISIBLE_EMAIL_COUNT; ++i) {
       // Don't read past the end.
-      if (startIndex + i >= MailItems.getMailItemCount())
+      if (startIndex + i >= MailItems.getMailItemCount()) {
         break;
+      }
 
       MailItem item = MailItems.getMailItem(startIndex + i);
 
@@ -188,7 +193,8 @@ public class MailList extends Composite implements TableListener, ClickListener 
     }
 
     // Select the first row if none is selected.
-    if (selectedRow == -1)
+    if (selectedRow == -1) {
       selectRow(0);
+    }
   }
 }

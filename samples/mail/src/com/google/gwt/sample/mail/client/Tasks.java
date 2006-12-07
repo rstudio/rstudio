@@ -20,7 +20,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
- * TODO(jgw)
+ * Composite that represents a collection of <code>Task</code> items.
  */
 public class Tasks extends Composite {
 
