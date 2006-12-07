@@ -30,7 +30,7 @@ public class Mailboxes extends Composite {
     TreeItem root = new TreeItem(imageItemHTML("home.gif", "foo@example.com"));
     tree.addItem(root);
 
-    TreeItem inboxItem = addImageItem(root, "Inbox");
+    addImageItem(root, "Inbox");
     addImageItem(root, "Drafts");
     addImageItem(root, "Templates");
     addImageItem(root, "Sent");
@@ -62,6 +62,6 @@ public class Mailboxes extends Composite {
    */
   private String imageItemHTML(String imageUrl, String title) {
     return "<span><img style='margin-right:4px' src='" + imageUrl.toLowerCase()
-      + "'>" + title + "</span>";
+        + "'>" + title + "</span>";
   }
 }

@@ -19,9 +19,25 @@ package com.google.gwt.sample.i18n.client;
 import com.google.gwt.i18n.client.ConstantsWithLookup;
 
 /**
-  * Translated colors.
-  */
+ * Translated colors.
+ */
 public interface Colors extends ConstantsWithLookup {
+
+  /**
+   * Translated "Black".
+   * 
+   * @return translated "Black"
+   * @gwt.key black
+   */
+  String black();
+
+  /**
+   * Translated "Blue".
+   * 
+   * @return translated "Blue"
+   * @gwt.key blue
+   */
+  String blue();
 
   /**
    * Translated "Green".
@@ -30,6 +46,22 @@ public interface Colors extends ConstantsWithLookup {
    * @gwt.key green
    */
   String green();
+
+  /**
+   * Translated "Grey".
+   * 
+   * @return translated "Grey"
+   * @gwt.key grey
+   */
+  String grey();
+
+  /**
+   * Translated "Light Grey".
+   * 
+   * @return translated "Light Grey"
+   * @gwt.key lightGrey
+   */
+  String lightGrey();
 
   /**
    * Translated "Red".
@@ -48,22 +80,6 @@ public interface Colors extends ConstantsWithLookup {
   String white();
 
   /**
-   * Translated "Grey".
-   * 
-   * @return translated "Grey"
-   * @gwt.key grey
-   */
-  String grey();
-
-  /**
-   * Translated "Blue".
-   * 
-   * @return translated "Blue"
-   * @gwt.key blue
-   */
-  String blue();
-
-  /**
    * Translated "Yellow".
    * 
    * @return translated "Yellow"
@@ -71,20 +87,4 @@ public interface Colors extends ConstantsWithLookup {
    */
   String yellow();
 
-  /**
-   * Translated "Black".
-   * 
-   * @return translated "Black"
-   * @gwt.key black
-   */
-  String black();
-  
-  /**
-   * Translated "Light Grey".
-   * 
-   * @return translated "Light Grey"
-   * @gwt.key lightGrey
-   */
-  String lightGrey();
-  
 }

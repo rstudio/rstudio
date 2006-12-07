@@ -27,16 +27,16 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class Lists extends Sink implements ChangeListener {
 
-  private static final String[][] sStrings = new String[][]{
-    new String[]{"foo0", "bar0", "baz0", "toto0", "tintin0"},
-    new String[]{"foo1", "bar1", "baz1", "toto1", "tintin1"},
-    new String[]{"foo2", "bar2", "baz2", "toto2", "tintin2"},
-    new String[]{"foo3", "bar3", "baz3", "toto3", "tintin3"},
-    new String[]{"foo4", "bar4", "baz4", "toto4", "tintin4"},};
+  private static final String[][] sStrings = new String[][] {
+      new String[] {"foo0", "bar0", "baz0", "toto0", "tintin0"},
+      new String[] {"foo1", "bar1", "baz1", "toto1", "tintin1"},
+      new String[] {"foo2", "bar2", "baz2", "toto2", "tintin2"},
+      new String[] {"foo3", "bar3", "baz3", "toto3", "tintin3"},
+      new String[] {"foo4", "bar4", "baz4", "toto4", "tintin4"},};
 
   public static SinkInfo init() {
     return new SinkInfo("Lists",
-      "Here is the ListBox widget in its two major forms.") {
+        "Here is the ListBox widget in its two major forms.") {
       public Sink createInstance() {
         return new Lists();
       }
@@ -87,17 +87,6 @@ public class Lists extends Sink implements ChangeListener {
   public void onShow() {
   }
 
-  private void fillList(int idx) {
-    // Set the contents of the list box to reflect the combo selection.
-    list.clear();
-    String[] strings = sStrings[idx];
-    for (int i = 0; i < strings.length; ++i) {
-      list.addItem(strings[i]);
-    }
-
-    echoSelection();
-  }
-
   private void echoSelection() {
     // Determine which items are selected, and display them.
     String msg = "Selected items: ";
@@ -107,5 +96,16 @@ public class Lists extends Sink implements ChangeListener {
       }
     }
     echo.setText(msg);
+  }
+
+  private void fillList(int idx) {
+    // Set the contents of the list box to reflect the combo selection.
+    list.clear();
+    String[] strings = sStrings[idx];
+    for (int i = 0; i < strings.length; ++i) {
+      list.addItem(strings[i]);
+    }
+
+    echoSelection();
   }
 }

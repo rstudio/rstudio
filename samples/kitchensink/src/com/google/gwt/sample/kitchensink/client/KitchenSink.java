@@ -30,10 +30,10 @@ import com.google.gwt.user.client.ui.VerticalPanel;
  */
 public class KitchenSink implements EntryPoint, HistoryListener {
 
+  protected SinkList list = new SinkList();
   private SinkInfo curInfo;
   private Sink curSink;
   private HTML description = new HTML();
-  protected SinkList list = new SinkList();
   private DockPanel panel = new DockPanel();
   private DockPanel sinkContainer;
 
@@ -112,7 +112,7 @@ public class KitchenSink implements EntryPoint, HistoryListener {
     if (affectHistory) {
       History.newItem(info.getName());
     }
-    
+
     // Display the new sink.
     sinkContainer.add(curSink, DockPanel.CENTER);
     sinkContainer.setCellWidth(curSink, "100%");

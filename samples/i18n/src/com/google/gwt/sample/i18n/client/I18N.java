@@ -128,6 +128,20 @@ public class I18N implements EntryPoint {
     addItems(box, elements);
   }
 
+  private TextBox addTextBox(String label, String defaultValue, HTMLTable t,
+      int row, int column) {
+    HorizontalPanel panel = new HorizontalPanel();
+    final TextBox box = new TextBox();
+    box.setText(defaultValue);
+    panel.add(box);
+    Label l2 = new Label(label);
+    l2.setStyleName(MESSAGES_ARGUMENT_TYPE_STYLE);
+    panel.add(l2);
+    panel.setCellWidth(l2, "250");
+    t.setWidget(row, column, panel);
+    return box;
+  }
+
   /**
    * Creates tab to show off <code>Constants</code>.
    * 
@@ -159,7 +173,6 @@ public class I18N implements EntryPoint {
     t.setWidget(2, 1, gender);
 
     panel.add(t);
-
   }
 
   /**
@@ -185,9 +198,9 @@ public class I18N implements EntryPoint {
     String perm = messages.permission("{0}", "{1}");
     table.setText(1, 0, perm);
     final TextBox perm1 = addTextBox(constants.enterString(),
-      constants.defaultResource(), table, 1, 1);
+        constants.defaultResource(), table, 1, 1);
     final TextBox perm2 = addTextBox(constants.enterString(),
-      constants.defaultSecurity(), table, 1, 2);
+        constants.defaultSecurity(), table, 1, 2);
 
     Button b = new Button(constants.showMessage());
     b.addClickListener(new ClickListener() {
@@ -222,30 +235,15 @@ public class I18N implements EntryPoint {
     String required = messages.requiredField("{0}");
     table.setText(3, 0, required);
     final TextBox required1 = addTextBox(constants.enterString(),
-      constants.defaultRequired(), table, 3, 1);
+        constants.defaultRequired(), table, 3, 1);
     Button b3 = new Button(constants.showMessage());
     b3.addClickListener(new ClickListener() {
       public void onClick(Widget sender) {
         Window.alert(messages.requiredField(required1.getText()));
-
       }
     });
+
     table.setWidget(3, 3, b3);
-
-  }
-
-  private TextBox addTextBox(String label, String defaultValue, HTMLTable t,
-      int row, int column) {
-    HorizontalPanel panel = new HorizontalPanel();
-    final TextBox box = new TextBox();
-    box.setText(defaultValue);
-    panel.add(box);
-    Label l2 = new Label(label);
-    l2.setStyleName(MESSAGES_ARGUMENT_TYPE_STYLE);
-    panel.add(l2);
-    panel.setCellWidth(l2, "250");
-    t.setWidget(row, column, panel);
-    return box;
   }
 
   /**
@@ -291,9 +289,7 @@ public class I18N implements EntryPoint {
           t.setHTML(1, 1, constants.noResult());
         }
       }
-
     });
-
   }
 
   /**
@@ -306,7 +302,6 @@ public class I18N implements EntryPoint {
     String details = constants.dictionaryExample() + constants.dictionaryHTML();
 
     addDetailedMessage(details, panel);
-    
 
     Dictionary userInfo = Dictionary.getDictionary("userInfo");
     FlexTable t = new FlexTable();
@@ -321,7 +316,5 @@ public class I18N implements EntryPoint {
       t.setText(0, i, key);
       t.setText(1, i, userInfo.get(key));
     }
-
   }
-
 }

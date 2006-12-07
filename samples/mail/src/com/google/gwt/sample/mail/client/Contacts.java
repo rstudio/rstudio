@@ -60,27 +60,27 @@ public class Contacts extends Composite {
       inner.add(nameLabel);
       inner.add(emailLabel);
 
-      HorizontalPanel panel = new HorizontalPanel();
-      panel.setSpacing(4);
-      panel.add(new Image(contact.photo));
-      panel.add(inner);
+      HorizontalPanel hp = new HorizontalPanel();
+      hp.setSpacing(4);
+      hp.add(new Image(contact.photo));
+      hp.add(inner);
 
-      add(panel);
+      add(hp);
       setStyleName("mail-ContactPopup");
       nameLabel.setStyleName("mail-ContactPopupName");
       emailLabel.setStyleName("mail-ContactPopupEmail");
     }
   }
 
-  private Contact[] contacts = new Contact[]{
-    new Contact("Benoit Mandelbrot", "benoit@example.com"),
-    new Contact("Albert Einstein", "albert@example.com"),
-    new Contact("Rene Descartes", "rene@example.com"),
-    new Contact("Bob Saget", "bob@example.com"),
-    new Contact("Ludwig von Beethoven", "ludwig@example.com"),
-    new Contact("Richard Feynman", "richard@example.com"),
-    new Contact("Alan Turing", "alan@example.com"),
-    new Contact("John von Neumann", "john@example.com")};
+  private Contact[] contacts = new Contact[] {
+      new Contact("Benoit Mandelbrot", "benoit@example.com"),
+      new Contact("Albert Einstein", "albert@example.com"),
+      new Contact("Rene Descartes", "rene@example.com"),
+      new Contact("Bob Saget", "bob@example.com"),
+      new Contact("Ludwig von Beethoven", "ludwig@example.com"),
+      new Contact("Richard Feynman", "richard@example.com"),
+      new Contact("Alan Turing", "alan@example.com"),
+      new Contact("John von Neumann", "john@example.com")};
 
   private VerticalPanel panel = new VerticalPanel();
 
@@ -95,7 +95,8 @@ public class Contacts extends Composite {
   }
 
   private void addContact(final Contact contact) {
-    final HTML link = new HTML("<a href='javascript:;'>" + contact.name + "</a>");
+    final HTML link = new HTML("<a href='javascript:;'>" + contact.name
+        + "</a>");
     panel.add(link);
 
     // Add a click listener that displays a ContactPopup when it is clicked.

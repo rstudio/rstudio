@@ -39,15 +39,6 @@ public interface MyMessages extends com.google.gwt.i18n.client.Messages {
   String intParseError(String text);
 
   /**
-   * Translated "''{0}'' is a required field.".
-   * 
-   * @param text text
-   * @return translated "''{0}'' is a required field."
-   * @gwt.key requiredField
-   */
-  String requiredField(String text);
-
-  /**
    * Translated "You only have security clearance {1}, so you cannot access
    * ''{0}''. ".
    * 
@@ -58,4 +49,13 @@ public interface MyMessages extends com.google.gwt.i18n.client.Messages {
    * @gwt.key permission
    */
   String permission(String resource, String security);
+
+  /**
+   * Translated "''{0}'' is a required field.".
+   * 
+   * @param text text
+   * @return translated "''{0}'' is a required field."
+   * @gwt.key requiredField
+   */
+  String requiredField(String text);
 }

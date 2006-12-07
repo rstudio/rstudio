@@ -48,6 +48,15 @@ public class Mail implements EntryPoint, WindowResizeListener {
   private Shortcuts shortcuts = new Shortcuts();
 
   /**
+   * Displays the specified item.
+   * 
+   * @param item
+   */
+  public void displayItem(MailItem item) {
+    mailDetail.setItem(item);
+  }
+
+  /**
    * This method constructs the application user interface by instantiating
    * controls and hooking up event listeners.
    */
@@ -111,14 +120,5 @@ public class Mail implements EntryPoint, WindowResizeListener {
 
     // Give the mail detail widget a chance to resize itself as well.
     mailDetail.adjustSize(width, height);
-  }
-
-  /**
-   * Displays the specified item.
-   * 
-   * @param item
-   */
-  public void displayItem(MailItem item) {
-    mailDetail.setItem(item);
   }
 }

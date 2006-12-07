@@ -22,6 +22,9 @@ import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+/**
+ * HelloWorld application.
+ */
 public class Hello implements EntryPoint {
 
   public void onModuleLoad() {
@@ -33,5 +36,4 @@ public class Hello implements EntryPoint {
 
     RootPanel.get().add(b);
   }
-
 }

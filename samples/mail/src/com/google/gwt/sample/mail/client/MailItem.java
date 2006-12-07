@@ -20,13 +20,6 @@ package com.google.gwt.sample.mail.client;
  */
 public final class MailItem {
 
-  public MailItem(String sender, String email, String subject, String body) {
-    this.sender = sender;
-    this.email = email;
-    this.subject = subject;
-    this.body = body;
-  }
-
   /**
    * The sender's name.
    */
@@ -51,4 +44,11 @@ public final class MailItem {
    * Read flag.
    */
   public boolean read;
+
+  public MailItem(String sender, String email, String subject, String body) {
+    this.sender = sender;
+    this.email = email;
+    this.subject = subject;
+    this.body = body;
+  }
 }

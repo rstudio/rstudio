@@ -91,6 +91,10 @@ public class JSON {
    */
   private static final String SEARCH_BUTTON_WAITING_TEXT = "Waiting for JSON Response...";
 
+  private Tree jsonTree = new Tree();
+
+  private Button searchButton = new Button();
+
   /**
    * Entry point for this simple application. Currently, we build the
    * application's form and wait for events.
@@ -111,7 +115,7 @@ public class JSON {
     if ((jsonArray = jsonValue.isArray()) != null) {
       for (int i = 0; i < jsonArray.size(); ++i) {
         TreeItem child = treeItem.addItem(getChildText("["
-          + Integer.toString(i) + "]"));
+            + Integer.toString(i) + "]"));
         addChildren(child, jsonArray.get(i));
       }
     } else if ((jsonObject = jsonValue.isObject()) != null) {
@@ -199,7 +203,4 @@ public class JSON {
     searchButtonSlot.add(searchButton);
     treeViewSlot.add(jsonTree);
   }
-
-  private Tree jsonTree = new Tree();
-  private Button searchButton = new Button();
 }

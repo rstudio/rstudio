@@ -61,13 +61,6 @@ public class MailDetail extends Composite {
     body.setStyleName("mail-DetailBody");
   }
 
-  public void setItem(MailItem item) {
-    subject.setHTML(item.subject);
-    sender.setHTML("<b>From:</b>&nbsp;" + item.sender);
-    recipient.setHTML("<b>To:</b>&nbsp;foo@example.com");
-    body.setHTML(item.body);
-  }
-
   /**
    * Adjusts the widget's size such that it fits within the window's client
    * area.
@@ -84,5 +77,12 @@ public class MailDetail extends Composite {
     }
 
     scroller.setSize("" + scrollWidth, "" + scrollHeight);
+  }
+
+  public void setItem(MailItem item) {
+    subject.setHTML(item.subject);
+    sender.setHTML("<b>From:</b>&nbsp;" + item.sender);
+    recipient.setHTML("<b>To:</b>&nbsp;foo@example.com");
+    body.setHTML(item.body);
   }
 }
