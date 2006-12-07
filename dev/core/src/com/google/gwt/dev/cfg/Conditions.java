@@ -21,6 +21,8 @@ import java.util.List;
 
 public class Conditions {
 
+  private final List list = new ArrayList();
+
   /**
    * Appends a condition.
    */
@@ -31,6 +33,4 @@ public class Conditions {
   public Iterator iterator() {
     return list.iterator();
   }
-
-  private final List list = new ArrayList();
 }

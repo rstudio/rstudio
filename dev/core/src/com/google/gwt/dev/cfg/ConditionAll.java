@@ -37,15 +37,15 @@ public class ConditionAll extends CompoundCondition {
     return true;
   }
 
-  protected String getEvalBeforeMessage(String testType) {
-    return "Checking if all subconditions are true (<all>)";
-  }
-
   protected String getEvalAfterMessage(String testType, boolean result) {
     if (result) {
       return "Yes: All subconditions were true";
     } else {
       return "No: One or more subconditions was false";
     }
+  }
+
+  protected String getEvalBeforeMessage(String testType) {
+    return "Checking if all subconditions are true (<all>)";
   }
 }

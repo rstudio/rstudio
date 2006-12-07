@@ -21,6 +21,10 @@ import com.google.gwt.core.ext.TreeLogger;
 
 public class StaticPropertyOracle implements PropertyOracle {
 
+  private Property[] currentProps;
+
+  private String[] currentValues;
+
   public StaticPropertyOracle() {
   }
 
@@ -52,7 +56,4 @@ public class StaticPropertyOracle implements PropertyOracle {
     currentProps = props;
     currentValues = values;
   }
-
-  private Property[] currentProps;
-  private String[] currentValues;
 }

@@ -21,6 +21,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 
 public class RuleReplaceWith extends Rule {
 
+  private final String replacementTypeName;
+
   public RuleReplaceWith(String typeName) {
     this.replacementTypeName = typeName;
   }
@@ -37,6 +39,4 @@ public class RuleReplaceWith extends Rule {
   public String toString() {
     return "<replace-with class='" + replacementTypeName + "'/>";
   }
-  
-  private final String replacementTypeName;
 }

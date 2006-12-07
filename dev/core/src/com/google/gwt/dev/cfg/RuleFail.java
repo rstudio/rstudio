@@ -24,7 +24,7 @@ public class RuleFail extends Rule {
   public String realize(TreeLogger logger, GeneratorContext context,
       String typeName) throws UnableToCompleteException {
     logger.log(TreeLogger.ERROR, "Deferred binding request failed for type '"
-      + typeName + "'", null);
+        + typeName + "'", null);
     throw new UnableToCompleteException();
   }
 

@@ -23,6 +23,10 @@ import java.util.Map;
 
 public class Properties {
 
+  private final Map map = new HashMap();
+
+  private Property[] propertiesLazyArray;
+
   /**
    * Creates the specified property, or returns an existing one by the specified
    * name if present.
@@ -61,7 +65,4 @@ public class Properties {
     }
     return propertiesLazyArray;
   }
-
-  private final Map map = new HashMap();
-  private Property[] propertiesLazyArray;
 }

@@ -21,6 +21,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 
 public abstract class Rule {
 
+  private final ConditionAll rootCondition = new ConditionAll();
+
   public ConditionAll getRootCondition() {
     return rootCondition;
   }
@@ -32,6 +34,4 @@ public abstract class Rule {
 
   public abstract String realize(TreeLogger logger, GeneratorContext context,
       String typeName) throws UnableToCompleteException;
-
-  private final ConditionAll rootCondition = new ConditionAll();
 }

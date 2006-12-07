@@ -21,6 +21,16 @@ import java.util.Set;
 
 public class Property implements Comparable {
 
+  private String activeValue;
+
+  private Set knownValues = new HashSet();
+
+  private String[] knownValuesLazyArray;
+
+  private final String name;
+
+  private PropertyProvider provider;
+
   public Property(String name) {
     this.name = name;
   }
@@ -80,10 +90,4 @@ public class Property implements Comparable {
   public String toString() {
     return name;
   }
-
-  private String activeValue;
-  private Set knownValues = new HashSet();
-  private String[] knownValuesLazyArray;
-  private final String name;
-  private PropertyProvider provider;
 }

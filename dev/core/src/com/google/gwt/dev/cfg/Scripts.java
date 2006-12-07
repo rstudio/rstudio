@@ -23,13 +23,19 @@ import java.util.LinkedList;
  */
 public class Scripts {
 
+  private final LinkedList list = new LinkedList();
+
   /**
    * Append a {@link com.google.gwt.dev.cfg.Script} object.
    * 
-   * @param script the script to append 
+   * @param script the script to append
    */
   public void append(Script script) {
     list.addLast(script);
+  }
+
+  public boolean isEmpty() {
+    return list.isEmpty();
   }
 
   /**
@@ -38,10 +44,4 @@ public class Scripts {
   public Iterator iterator() {
     return list.iterator();
   }
-
-  public boolean isEmpty() {
-    return list.isEmpty();
-  }
-
-  private final LinkedList list = new LinkedList();
 }

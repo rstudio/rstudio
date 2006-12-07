@@ -76,6 +76,43 @@ public class ModuleDef {
     return true;
   }
 
+  private final ArrayList allCups = new ArrayList();
+
+  private final Set alreadySeenFiles = new HashSet();
+
+  private final CacheManager cacheManager = new CacheManager(".gwt-cache",
+      new TypeOracle());
+
+  private CompilationUnitProvider[] cups = new CompilationUnitProvider[0];
+
+  private final List entryPointTypeNames = new ArrayList();
+
+  private final Set gwtXmlFiles = new HashSet();
+
+  private FileOracle lazyPublicOracle;
+
+  private FileOracle lazySourceOracle;
+
+  private TypeOracle lazyTypeOracle;
+
+  private final long moduleDefCreationTime = System.currentTimeMillis();
+
+  private final String name;
+
+  private final Properties properties = new Properties();
+
+  private final FileOracleFactory publicPathEntries = new FileOracleFactory();
+
+  private final Rules rules = new Rules();
+
+  private final Scripts scripts = new Scripts();
+
+  private final Map servletClassNamesByPath = new HashMap();
+
+  private final FileOracleFactory sourcePathEntries = new FileOracleFactory();
+
+  private final Styles styles = new Styles();
+
   public ModuleDef(String name) {
     this.name = name;
   }
@@ -160,7 +197,7 @@ public class ModuleDef {
        * Ensure that URLs that match the servlet mapping, including those that
        * have additional path_info, get routed to the correct servlet.
        * 
-       * See "Inside Servlets", Second Edition, pg. 208 
+       * See "Inside Servlets", Second Edition, pg. 208
        */
       if (actual.equals(mapping) || actual.startsWith(mapping + "/")) {
         return (String) entries[i].getValue();
@@ -238,9 +275,8 @@ public class ModuleDef {
 
         TreeLogger subBranch = null;
         if (branch.isLoggable(TreeLogger.DEBUG)) {
-          subBranch =
-              branch.branch(TreeLogger.DEBUG, "Adding compilation units...",
-                null);
+          subBranch = branch.branch(TreeLogger.DEBUG,
+              "Adding compilation units...", null);
         }
 
         for (int i = 0; i < currentCups.length; i++) {
@@ -253,7 +289,7 @@ public class ModuleDef {
         lazyTypeOracle = builder.build(branch);
         long after = System.currentTimeMillis();
         branch.log(TreeLogger.TRACE, "Finished in " + (after - before) + " ms",
-          null);
+            null);
       } catch (UnableToCompleteException e) {
         logger.log(TreeLogger.ERROR, "Failed to complete analysis", null);
         throw new UnableToCompleteException();
@@ -266,9 +302,8 @@ public class ModuleDef {
         Util.logMissingTypeErrorWithHints(logger, "java.lang.Object");
         seedTypesMissing = true;
       } else {
-        TreeLogger branch =
-            logger
-              .branch(TreeLogger.TRACE, "Finding entry point classes", null);
+        TreeLogger branch = logger.branch(TreeLogger.TRACE,
+            "Finding entry point classes", null);
         String[] typeNames = getEntryPointTypeNames();
         for (int i = 0; i < typeNames.length; i++) {
           String typeName = typeNames[i];
@@ -291,7 +326,7 @@ public class ModuleDef {
     for (Iterator iter = gwtXmlFiles.iterator(); iter.hasNext();) {
       File xmlFile = (File) iter.next();
       if ((!xmlFile.exists())
-        || (xmlFile.lastModified() > moduleDefCreationTime)) {
+          || (xmlFile.lastModified() > moduleDefCreationTime)) {
         return true;
       }
     }
@@ -318,7 +353,7 @@ public class ModuleDef {
     normalize(logger);
     getTypeOracle(logger);
     Util.invokeInaccessableMethod(TypeOracle.class, "incrementReloadCount",
-      new Class[]{}, lazyTypeOracle, new Object[]{});
+        new Class[] {}, lazyTypeOracle, new Object[] {});
   }
 
   /**
@@ -358,7 +393,7 @@ public class ModuleDef {
 
     if (lazySourceOracle.isEmpty()) {
       branch.log(TreeLogger.WARN,
-        "No source path entries; expect subsequent failures", null);
+          "No source path entries; expect subsequent failures", null);
     } else {
       // Create the CUPs
       String[] allFiles = lazySourceOracle.getAllFiles();
@@ -387,25 +422,5 @@ public class ModuleDef {
     branch = Messages.PUBLIC_PATH_LOCATIONS.branch(logger, null);
     lazyPublicOracle = publicPathEntries.create(branch);
   }
-
-  private final ArrayList allCups = new ArrayList();
-  private final Set alreadySeenFiles = new HashSet();
-  private final CacheManager cacheManager =
-      new CacheManager(".gwt-cache", new TypeOracle());
-  private CompilationUnitProvider[] cups = new CompilationUnitProvider[0];
-  private final List entryPointTypeNames = new ArrayList();
-  private final Set gwtXmlFiles = new HashSet();
-  private FileOracle lazyPublicOracle;
-  private FileOracle lazySourceOracle;
-  private TypeOracle lazyTypeOracle;
-  private final long moduleDefCreationTime = System.currentTimeMillis();
-  private final String name;
-  private final Properties properties = new Properties();
-  private final FileOracleFactory publicPathEntries = new FileOracleFactory();
-  private final Rules rules = new Rules();
-  private final Scripts scripts = new Scripts();
-  private final Map servletClassNamesByPath = new HashMap();
-  private final FileOracleFactory sourcePathEntries = new FileOracleFactory();
-  private final Styles styles = new Styles();
 
 }

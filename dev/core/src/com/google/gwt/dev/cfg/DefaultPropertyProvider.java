@@ -52,6 +52,6 @@ public class DefaultPropertyProvider extends PropertyProvider {
       caught = e;
     }
     throw new RuntimeException(
-      "Internal error parsing source for default property provider", caught);
+        "Internal error parsing source for default property provider", caught);
   }
 }

@@ -24,12 +24,18 @@ import com.google.gwt.dev.util.Util;
 
 public class ConditionWhenTypeAssignableTo extends Condition {
 
+  private final String assignableToTypeName;
+
   public ConditionWhenTypeAssignableTo(String assignableToTypeName) {
     this.assignableToTypeName = assignableToTypeName;
   }
 
   public String getAssignableToTypeName() {
     return assignableToTypeName;
+  }
+
+  public String toString() {
+    return "<when-assignable class='" + assignableToTypeName + "'/>";
   }
 
   protected boolean doEval(TreeLogger logger, GeneratorContext context,
@@ -49,7 +55,7 @@ public class ConditionWhenTypeAssignableTo extends Condition {
       // types that have been deleted.
       //
       logger.log(TreeLogger.WARN, "Unknown type '" + assignableToTypeName
-        + "' specified in deferred binding rule", null);
+          + "' specified in deferred binding rule", null);
       return false;
     }
 
@@ -71,11 +77,5 @@ public class ConditionWhenTypeAssignableTo extends Condition {
   protected String getEvalBeforeMessage(String testType) {
     return toString();
   }
-
-  public String toString() {
-    return "<when-assignable class='" + assignableToTypeName + "'/>";
-  }
-
-  private final String assignableToTypeName;
 
 }

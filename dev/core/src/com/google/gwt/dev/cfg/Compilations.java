@@ -25,6 +25,8 @@ import java.util.List;
 
 public class Compilations {
 
+  private final List list = new ArrayList();
+
   public void add(Compilation compilation) {
     list.add(compilation);
   }
@@ -86,6 +88,10 @@ public class Compilations {
     }
   }
 
+  public Iterator iterator() {
+    return list.iterator();
+  }
+
   private void removeMismatches(List candidates, String in, String out) {
     for (Iterator iter = candidates.iterator(); iter.hasNext();) {
       Compilation c = (Compilation) iter.next();
@@ -95,10 +101,4 @@ public class Compilations {
       }
     }
   }
-
-  public Iterator iterator() {
-    return list.iterator();
-  }
-
-  private final List list = new ArrayList();
 }

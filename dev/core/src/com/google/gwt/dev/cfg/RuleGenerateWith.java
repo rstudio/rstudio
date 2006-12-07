@@ -22,6 +22,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 
 public class RuleGenerateWith extends Rule {
 
+  private final Generator generator;
+
   public RuleGenerateWith(Generator generator) {
     this.generator = generator;
   }
@@ -51,6 +53,4 @@ public class RuleGenerateWith extends Rule {
   public String toString() {
     return "<generate-with class='" + generator.getClass().getName() + "'/>";
   }
-
-  private final Generator generator;
 }

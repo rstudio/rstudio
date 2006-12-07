@@ -18,23 +18,24 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.dev.js.ast.JsFunction;
 
 /**
- * Represents configuration for a dynamically-injected script.  
+ * Represents configuration for a dynamically-injected script.
  */
 public class Script {
+
+  private final String src;
+
+  private final JsFunction jsReadyFn;
 
   public Script(String src, JsFunction jsReadyFn) {
     this.src = src;
     this.jsReadyFn = jsReadyFn;
   }
 
-  public String getSrc() {
-    return src;
-  }
-
   public JsFunction getJsReadyFunction() {
     return jsReadyFn;
   }
 
-  private final String src;
-  private final JsFunction jsReadyFn;
+  public String getSrc() {
+    return src;
+  }
 }

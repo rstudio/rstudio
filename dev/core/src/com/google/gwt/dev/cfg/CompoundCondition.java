@@ -17,9 +17,9 @@ package com.google.gwt.dev.cfg;
 
 public abstract class CompoundCondition extends Condition {
 
+  private final Conditions conditions = new Conditions();
+
   public Conditions getConditions() {
     return conditions;
   }
-
-  private final Conditions conditions = new Conditions();
 }

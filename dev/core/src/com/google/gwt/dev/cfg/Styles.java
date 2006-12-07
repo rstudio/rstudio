@@ -23,12 +23,19 @@ import java.util.LinkedList;
  */
 public class Styles {
 
+  private final LinkedList list = new LinkedList();
+
   /**
    * Append a script.
+   * 
    * @param src a partial or full url to a script to inject
    */
   public void append(String src) {
     list.addLast(src);
+  }
+
+  public boolean isEmpty() {
+    return list.isEmpty();
   }
 
   /**
@@ -37,10 +44,4 @@ public class Styles {
   public Iterator iterator() {
     return list.iterator();
   }
-
-  public boolean isEmpty() {
-    return list.isEmpty();
-  }
-
-  private final LinkedList list = new LinkedList();
 }

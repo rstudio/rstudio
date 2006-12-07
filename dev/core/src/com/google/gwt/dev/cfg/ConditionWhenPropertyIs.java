@@ -23,9 +23,17 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 
 public class ConditionWhenPropertyIs extends Condition {
 
+  private final String propName;
+
+  private final String value;
+
   public ConditionWhenPropertyIs(String propName, String value) {
     this.propName = propName;
     this.value = value;
+  }
+
+  public String toString() {
+    return "<when-property-is name='" + propName + "' value='" + value + "'/>";
   }
 
   protected boolean doEval(TreeLogger logger, GeneratorContext context,
@@ -35,7 +43,7 @@ public class ConditionWhenPropertyIs extends Condition {
       PropertyOracle propertyOracle = context.getPropertyOracle();
       testValue = propertyOracle.getPropertyValue(logger, propName);
       logger.log(TreeLogger.DEBUG, "Property value is '" + testValue + "'",
-        null);
+          null);
       if (testValue.equals(value)) {
         return true;
       } else {
@@ -59,11 +67,4 @@ public class ConditionWhenPropertyIs extends Condition {
   protected String getEvalBeforeMessage(String testType) {
     return toString();
   }
-
-  public String toString() {
-    return "<when-property-is name='" + propName + "' value='" + value + "'/>";
-  }
-
-  private final String propName;
-  private final String value;
 }

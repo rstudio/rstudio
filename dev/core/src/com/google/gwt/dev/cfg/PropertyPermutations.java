@@ -23,6 +23,14 @@ import java.util.NoSuchElementException;
  */
 public class PropertyPermutations {
 
+  private int currPermIndex;
+
+  private final int lastProp;
+
+  private final Property[] properties;
+
+  private final String[][] values;
+
   public PropertyPermutations(Properties properties) {
     this.properties = properties.toArray();
     lastProp = this.properties.length - 1;
@@ -48,6 +56,8 @@ public class PropertyPermutations {
   public Iterator iterator() {
     return new Iterator() {
 
+      private int iterPermIndex;
+
       public boolean hasNext() {
         return iterPermIndex < values.length;
       }
@@ -62,8 +72,6 @@ public class PropertyPermutations {
       public void remove() {
         throw new UnsupportedOperationException("remove");
       }
-
-      private int iterPermIndex;
     };
   }
 
@@ -83,7 +91,7 @@ public class PropertyPermutations {
     if (activeValue != null) {
       // This property is fixed.
       //
-      return new String[]{activeValue};
+      return new String[] {activeValue};
     } else {
       // This property is determined on the client.
       //
@@ -114,9 +122,4 @@ public class PropertyPermutations {
       }
     }
   }
-
-  private int currPermIndex;
-  private final int lastProp;
-  private final Property[] properties;
-  private final String[][] values;
 }

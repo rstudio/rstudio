@@ -45,6 +45,52 @@ public class ModuleDefSchema extends Schema {
 
   private final class BodySchema extends Schema {
 
+    protected final String __define_property_1_name = null;
+
+    protected final String __define_property_2_values = null;
+
+    protected final String __extend_property_1_name = null;
+
+    protected final String __extend_property_2_values = null;
+
+    protected final String __entry_point_1_class = null;
+
+    protected final String __generate_with_1_class = null;
+
+    protected final String __inherits_1_name = null;
+
+    protected final String __property_provider_1_name = null;
+
+    protected final String __public_1_path = null;
+
+    protected final String __public_2_includes = "";
+
+    protected final String __public_3_excludes = "";
+
+    protected final String __public_4_defaultexcludes = "yes";
+
+    protected final String __public_5_casesensitive = "true";
+
+    protected final String __replace_with_1_class = null;
+
+    protected final String __script_1_src = null;
+
+    protected final String __servlet_1_path = null;
+
+    protected final String __servlet_2_class = null;
+
+    protected final String __set_property_1_name = null;
+
+    protected final String __set_property_2_value = null;
+
+    protected final String __source_1_path = "";
+
+    protected final String __stylesheet_1_src = null;
+
+    protected final String __super_source_1_path = "";
+
+    private Schema fChild;
+
     protected Schema __define_property_begin(PropertyName name,
         PropertyValue[] values) throws UnableToCompleteException {
       if (moduleDef.getProperties().find(name.token) != null) {
@@ -63,6 +109,11 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
+    protected Schema __entry_point_begin(String className) {
+      moduleDef.addEntryPointTypeName(className);
+      return null;
+    }
+
     protected Schema __extend_property_begin(Property property,
         PropertyValue[] values) {
       for (int i = 0; i < values.length; i++) {
@@ -70,11 +121,6 @@ public class ModuleDefSchema extends Schema {
       }
 
       // No children.
-      return null;
-    }
-
-    protected Schema __entry_point_begin(String className) {
-      moduleDef.addEntryPointTypeName(className);
       return null;
     }
 
@@ -93,7 +139,7 @@ public class ModuleDefSchema extends Schema {
     protected Schema __inherits_begin(String name)
         throws UnableToCompleteException {
       TreeLogger branch = logger.branch(TreeLogger.TRACE,
-        "Loading inherited module '" + name + "'", null);
+          "Loading inherited module '" + name + "'", null);
       loader.nestedLoad(branch, name, moduleDef);
       return null;
     }
@@ -111,7 +157,7 @@ public class ModuleDefSchema extends Schema {
         // This is a problem.
         //
         logger.log(TreeLogger.ERROR,
-          "Property providers must specify a JavaScript body", null);
+            "Property providers must specify a JavaScript body", null);
         throw new UnableToCompleteException();
       }
 
@@ -140,12 +186,12 @@ public class ModuleDefSchema extends Schema {
       String[] excludeList = (String[]) excludeSet.toArray(new String[excludeSet.size()]);
 
       boolean doDefaultExcludes = "yes".equalsIgnoreCase(defaultExcludes)
-        || "true".equalsIgnoreCase(defaultExcludes);
+          || "true".equalsIgnoreCase(defaultExcludes);
       boolean doCaseSensitive = "yes".equalsIgnoreCase(caseSensitive)
-        || "true".equalsIgnoreCase(caseSensitive);
+          || "true".equalsIgnoreCase(caseSensitive);
 
       addPublicPackage(modulePackageAsPath, path, includeList, excludeList,
-        doDefaultExcludes, doCaseSensitive);
+          doDefaultExcludes, doCaseSensitive);
     }
 
     protected Schema __replace_with_begin(String className) {
@@ -169,9 +215,9 @@ public class ModuleDefSchema extends Schema {
         // This is a problem.
         //
         logger.log(
-          TreeLogger.ERROR,
-          "Injected scripts require an associated JavaScript block that indicates when the corresponding script is fully loaded and ready for use",
-          null);
+            TreeLogger.ERROR,
+            "Injected scripts require an associated JavaScript block that indicates when the corresponding script is fully loaded and ready for use",
+            null);
         throw new UnableToCompleteException();
       }
 
@@ -193,7 +239,7 @@ public class ModuleDefSchema extends Schema {
       // Only absolute paths, although it is okay to have multiple slashes.
       if (!path.startsWith("/")) {
         logger.log(TreeLogger.ERROR, "Servlet path '" + path
-          + "' must begin with forward slash (e.g. '/foo')", null);
+            + "' must begin with forward slash (e.g. '/foo')", null);
         throw new UnableToCompleteException();
       }
 
@@ -263,22 +309,22 @@ public class ModuleDefSchema extends Schema {
       String normChildDir = normalizePathEntry(relDir);
       if (normChildDir.startsWith("/")) {
         logger.log(TreeLogger.WARN, "Non-relative public package: "
-          + normChildDir, null);
+            + normChildDir, null);
         return;
       }
       if (normChildDir.startsWith("./") || normChildDir.indexOf("/./") >= 0) {
         logger.log(TreeLogger.WARN, "Non-canonical public package: "
-          + normChildDir, null);
+            + normChildDir, null);
         return;
       }
       if (normChildDir.startsWith("../") || normChildDir.indexOf("/../") >= 0) {
         logger.log(TreeLogger.WARN, "Non-canonical public package: "
-          + normChildDir, null);
+            + normChildDir, null);
         return;
       }
       String fullDir = parentDir + normChildDir;
       moduleDef.addPublicPackage(fullDir, includeList, excludeList,
-        defaultExcludes, caseSensitive);
+          defaultExcludes, caseSensitive);
     }
 
     private void addSourcePackage(String parentDir, String relDir,
@@ -286,17 +332,17 @@ public class ModuleDefSchema extends Schema {
       String normChildDir = normalizePathEntry(relDir);
       if (normChildDir.startsWith("/")) {
         logger.log(TreeLogger.WARN, "Non-relative source package: "
-          + normChildDir, null);
+            + normChildDir, null);
         return;
       }
       if (normChildDir.startsWith("./") || normChildDir.indexOf("/./") >= 0) {
         logger.log(TreeLogger.WARN, "Non-canonical source package: "
-          + normChildDir, null);
+            + normChildDir, null);
         return;
       }
       if (normChildDir.startsWith("../") || normChildDir.indexOf("/../") >= 0) {
         logger.log(TreeLogger.WARN, "Non-canonical source package: "
-          + normChildDir, null);
+            + normChildDir, null);
         return;
       }
 
@@ -327,33 +373,19 @@ public class ModuleDefSchema extends Schema {
 
       return path;
     }
-
-    protected final String __define_property_1_name = null;
-    protected final String __define_property_2_values = null;
-    protected final String __extend_property_1_name = null;
-    protected final String __extend_property_2_values = null;
-    protected final String __entry_point_1_class = null;
-    protected final String __generate_with_1_class = null;
-    protected final String __inherits_1_name = null;
-    protected final String __property_provider_1_name = null;
-    protected final String __public_1_path = null;
-    protected final String __public_2_includes = "";
-    protected final String __public_3_excludes = "";
-    protected final String __public_4_defaultexcludes = "yes";
-    protected final String __public_5_casesensitive = "true";
-    protected final String __replace_with_1_class = null;
-    protected final String __script_1_src = null;
-    protected final String __servlet_1_path = null;
-    protected final String __servlet_2_class = null;
-    protected final String __set_property_1_name = null;
-    protected final String __set_property_2_value = null;
-    protected final String __source_1_path = "";
-    protected final String __stylesheet_1_src = null;
-    protected final String __super_source_1_path = "";
-    private Schema fChild;
   }
 
   private final class ConditionSchema extends Schema {
+
+    protected final String __when_property_is_1_name = null;
+
+    protected final String __when_property_is_2_value = null;
+
+    protected final String __when_type_assignable_1_class = null;
+
+    protected final String __when_type_is_1_class = null;
+
+    private final CompoundCondition parentCondition;
 
     public ConditionSchema(CompoundCondition parentCondition) {
       this.parentCondition = parentCondition;
@@ -404,15 +436,17 @@ public class ModuleDefSchema extends Schema {
       // No children allowed.
       return null;
     }
-
-    protected final String __when_property_is_1_name = null;
-    protected final String __when_property_is_2_value = null;
-    protected final String __when_type_assignable_1_class = null;
-    protected final String __when_type_is_1_class = null;
-    private final CompoundCondition parentCondition;
   }
 
   private final class IncludeExcludeSchema extends Schema {
+
+    protected final String __exclude_1_name = null;
+
+    protected final String __include_1_name = null;
+
+    private final Set excludes = new HashSet();
+
+    private final Set includes = new HashSet();
 
     public Set getExcludes() {
       return excludes;
@@ -431,11 +465,6 @@ public class ModuleDefSchema extends Schema {
       includes.add(name);
       return null;
     }
-
-    protected final String __exclude_1_name = null;
-    protected final String __include_1_name = null;
-    private final Set excludes = new HashSet();
-    private final Set includes = new HashSet();
   }
 
   /**
@@ -443,6 +472,8 @@ public class ModuleDefSchema extends Schema {
    * class name.
    */
   private final class ObjAttrCvt extends AttributeConverter {
+
+    private final Class fReqdSuperclass;
 
     public ObjAttrCvt(Class reqdSuperclass) {
       fReqdSuperclass = reqdSuperclass;
@@ -468,7 +499,7 @@ public class ModuleDefSchema extends Schema {
         //
         if (!fReqdSuperclass.isAssignableFrom(clazz)) {
           Messages.INVALID_CLASS_DERIVATION.log(logger, clazz, fReqdSuperclass,
-            null);
+              null);
           throw new UnableToCompleteException();
         }
 
@@ -486,8 +517,6 @@ public class ModuleDefSchema extends Schema {
         throw new UnableToCompleteException();
       }
     }
-
-    private final Class fReqdSuperclass;
   }
 
   /**
@@ -514,11 +543,11 @@ public class ModuleDefSchema extends Schema {
   }
 
   private static class PropertyName {
+    public final String token;
+
     public PropertyName(String token) {
       this.token = token;
     }
-
-    public final String token;
   }
 
   /**
@@ -547,6 +576,10 @@ public class ModuleDefSchema extends Schema {
 
   private class PropertyProviderBodySchema extends Schema {
 
+    private StringBuffer script;
+
+    private int startLineNumber = -1;
+
     public PropertyProviderBodySchema() {
     }
 
@@ -565,17 +598,14 @@ public class ModuleDefSchema extends Schema {
     public int getStartLineNumber() {
       return startLineNumber;
     }
-
-    private StringBuffer script;
-    private int startLineNumber = -1;
   }
 
   private static class PropertyValue {
+    public final String token;
+
     public PropertyValue(String token) {
       this.token = token;
     }
-
-    public final String token;
   }
 
   /**
@@ -591,7 +621,7 @@ public class ModuleDefSchema extends Schema {
       //
       for (int i = 0; i < tokens.length; i++) {
         values[i] = (PropertyValue) propValueAttrCvt.convertToArg(schema, line,
-          elem, attr, tokens[i]);
+            elem, attr, tokens[i]);
       }
 
       return values;
@@ -617,6 +647,10 @@ public class ModuleDefSchema extends Schema {
 
   private class ScriptReadyBodySchema extends Schema {
 
+    private StringBuffer script;
+
+    private int startLineNumber = -1;
+
     public ScriptReadyBodySchema() {
     }
 
@@ -635,12 +669,29 @@ public class ModuleDefSchema extends Schema {
     public int getStartLineNumber() {
       return startLineNumber;
     }
-
-    private StringBuffer script;
-    private int startLineNumber = -1;
   }
 
   private static final Map singletonsByName = new HashMap();
+
+  private final BodySchema bodySchema;
+
+  private boolean foundAnyPublic;
+
+  private boolean foundExplicitSourceOrSuperSource;
+
+  private final ObjAttrCvt genAttrCvt = new ObjAttrCvt(Generator.class);
+
+  private final JsParser jsParser = new JsParser();
+  private final JsProgram jsPgm = new JsProgram();
+  private final ModuleDefLoader loader;
+  private final TreeLogger logger;
+  private final ModuleDef moduleDef;
+  private final String modulePackageAsPath;
+  private final URL moduleURL;
+  private final PropertyAttrCvt propAttrCvt = new PropertyAttrCvt();
+  private final PropertyNameAttrCvt propNameAttrCvt = new PropertyNameAttrCvt();
+  private final PropertyValueArrayAttrCvt propValueArrayAttrCvt = new PropertyValueArrayAttrCvt();
+  private final PropertyValueAttrCvt propValueAttrCvt = new PropertyValueAttrCvt();
 
   public ModuleDefSchema(TreeLogger logger, ModuleDefLoader loader,
       URL moduleURL, String modulePackageAsPath, ModuleDef toConfigure) {
@@ -672,7 +723,7 @@ public class ModuleDefSchema extends Schema {
 
     if (!foundAnyPublic) {
       bodySchema.addPublicPackage(modulePackageAsPath, "public", Empty.STRINGS,
-        Empty.STRINGS, true, true);
+          Empty.STRINGS, true, true);
     }
   }
 
@@ -720,21 +771,5 @@ public class ModuleDefSchema extends Schema {
     JsFunction fn = (JsFunction) ((JsExprStmt) stmts.get(0)).getExpression();
     return fn;
   }
-
-  private final BodySchema bodySchema;
-  private boolean foundAnyPublic;
-  private boolean foundExplicitSourceOrSuperSource;
-  private final ObjAttrCvt genAttrCvt = new ObjAttrCvt(Generator.class);
-  private final JsParser jsParser = new JsParser();
-  private final JsProgram jsPgm = new JsProgram();
-  private final ModuleDefLoader loader;
-  private final TreeLogger logger;
-  private final ModuleDef moduleDef;
-  private final String modulePackageAsPath;
-  private final URL moduleURL;
-  private final PropertyAttrCvt propAttrCvt = new PropertyAttrCvt();
-  private final PropertyNameAttrCvt propNameAttrCvt = new PropertyNameAttrCvt();
-  private final PropertyValueArrayAttrCvt propValueArrayAttrCvt = new PropertyValueArrayAttrCvt();
-  private final PropertyValueAttrCvt propValueAttrCvt = new PropertyValueAttrCvt();
 
 }

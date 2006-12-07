@@ -19,8 +19,16 @@ import com.google.gwt.dev.js.ast.JsBlock;
 
 public class PropertyProvider {
 
+  private JsBlock body;
+
+  private final Property property;
+
   public PropertyProvider(Property property) {
     this.property = property;
+  }
+
+  public JsBlock getBody() {
+    return body;
   }
 
   public Property getProperty() {
@@ -30,11 +38,4 @@ public class PropertyProvider {
   public void setBody(JsBlock body) {
     this.body = body;
   }
-
-  public JsBlock getBody() {
-    return body;
-  }
-
-  private JsBlock body;
-  private final Property property;
 }

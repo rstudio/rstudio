@@ -23,7 +23,21 @@ import java.util.Map;
 
 public class Compilation {
 
+  private Map rebindDecisions = new HashMap();
+
+  private Map sourceHashByGeneratedTypeName = new HashMap();
+
+  private String strongName;
+
   public Compilation() {
+  }
+
+  public String[] getGeneratedTypeNames() {
+    return Util.toStringArray(sourceHashByGeneratedTypeName.keySet());
+  }
+
+  public String[] getRebindInputs() {
+    return Util.toStringArray(rebindDecisions.keySet());
   }
 
   /**
@@ -35,16 +49,18 @@ public class Compilation {
     return out;
   }
 
-  public String[] getGeneratedTypeNames() {
-    return Util.toStringArray(sourceHashByGeneratedTypeName.keySet());
-  }
-
-  public String[] getRebindInputs() {
-    return Util.toStringArray(rebindDecisions.keySet());
-  }
-
   public String getStrongName() {
     return strongName;
+  }
+
+  public String getTypeHash(String generatedTypeName)
+      throws UnableToCompleteException {
+    String hash = (String) sourceHashByGeneratedTypeName.get(generatedTypeName);
+    if (hash != null) {
+      return hash;
+    } else {
+      throw new UnableToCompleteException();
+    }
   }
 
   public boolean recordDecision(String inputTypeName, String outputTypeName) {
@@ -64,27 +80,11 @@ public class Compilation {
     // this was a new entry
     return true;
   }
-
   public void recordGeneratedTypeHash(String generatedTypeName,
       String sourceHash) {
     sourceHashByGeneratedTypeName.put(generatedTypeName, sourceHash);
   }
-
-  public String getTypeHash(String generatedTypeName)
-      throws UnableToCompleteException {
-    String hash = (String) sourceHashByGeneratedTypeName.get(generatedTypeName);
-    if (hash != null) {
-      return hash;
-    } else {
-      throw new UnableToCompleteException();
-    }
-  }
-
   public void setStrongName(String strongName) {
     this.strongName = strongName;
   }
-
-  private Map rebindDecisions = new HashMap();
-  private Map sourceHashByGeneratedTypeName = new HashMap();
-  private String strongName;
 }

@@ -20,20 +20,20 @@ import java.util.LinkedList;
 
 public class Rules {
 
-  /**
-   * Prepends a rule, giving it the highest priority.
-   */
-  public void prepend(Rule rule) {
-    list.addFirst(rule);
+  private final LinkedList list = new LinkedList();
+
+  public boolean isEmpty() {
+    return list.isEmpty();
   }
 
   public Iterator iterator() {
     return list.iterator();
   }
 
-  public boolean isEmpty() {
-    return list.isEmpty();
+  /**
+   * Prepends a rule, giving it the highest priority.
+   */
+  public void prepend(Rule rule) {
+    list.addFirst(rule);
   }
-
-  private final LinkedList list = new LinkedList();
 }

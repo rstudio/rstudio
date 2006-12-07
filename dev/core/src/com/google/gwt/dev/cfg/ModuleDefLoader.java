@@ -97,6 +97,10 @@ public class ModuleDefLoader {
     ModuleDefLoader.enableCachingModules = enableCachingModules;
   }
 
+  private final Set alreadyLoadedModules = new HashSet();
+
+  private final ClassLoader classLoader;
+
   private ModuleDefLoader() {
     this.classLoader = Thread.currentThread().getContextClassLoader();
   }
@@ -114,7 +118,7 @@ public class ModuleDefLoader {
 
     if (alreadyLoadedModules.contains(moduleName)) {
       logger.log(TreeLogger.TRACE, "Module '" + moduleName
-        + "' has already been loaded and will be skipped", null);
+          + "' has already been loaded and will be skipped", null);
       return;
     } else {
       alreadyLoadedModules.add(moduleName);
@@ -131,9 +135,9 @@ public class ModuleDefLoader {
       logger.log(TreeLogger.TRACE, "Module location: " + externalForm, null);
       try {
         if ((!(externalForm.startsWith("jar:file")))
-          && (!(externalForm.startsWith("zip:file")))
-          && (!(externalForm.startsWith("http://")))
-          && (!(externalForm.startsWith("ftp://")))) {
+            && (!(externalForm.startsWith("zip:file")))
+            && (!(externalForm.startsWith("http://")))
+            && (!(externalForm.startsWith("ftp://")))) {
           File gwtXmlFile = new File(new URI(externalForm));
           moduleDef.addGwtXmlFile(gwtXmlFile);
         }
@@ -143,10 +147,9 @@ public class ModuleDefLoader {
       }
     }
     if (moduleURL == null) {
-      String msg =
-          "Unable to find '"
-            + resName
-            + "' on your classpath; could be a typo, or maybe you forgot to include a classpath entry for source?";
+      String msg = "Unable to find '"
+          + resName
+          + "' on your classpath; could be a typo, or maybe you forgot to include a classpath entry for source?";
       logger.log(TreeLogger.ERROR, msg, null);
       throw new UnableToCompleteException();
     }
@@ -164,8 +167,8 @@ public class ModuleDefLoader {
     Reader r = null;
     try {
       r = Util.createReader(logger, moduleURL);
-      ModuleDefSchema schema =
-          new ModuleDefSchema(logger, this, moduleURL, moduleDir, moduleDef);
+      ModuleDefSchema schema = new ModuleDefSchema(logger, this, moduleURL,
+          moduleDir, moduleDef);
       ReflectiveParser.parse(logger, schema, r);
     } finally {
       Utility.close(r);
@@ -175,6 +178,7 @@ public class ModuleDefLoader {
   /**
    * 
    * This method loads a module.
+   * 
    * @param logger used to log the loading process
    * @param moduleName the name of the module
    * @return the module returned -- cannot be null
@@ -182,22 +186,20 @@ public class ModuleDefLoader {
    */
   private ModuleDef load(TreeLogger logger, String moduleName)
       throws UnableToCompleteException {
-    logger =
-        logger.branch(TreeLogger.TRACE, "Loading module '" + moduleName + "'",
-          null);
+    logger = logger.branch(TreeLogger.TRACE, "Loading module '" + moduleName
+        + "'", null);
 
     if (!ModuleDef.isValidModuleName(moduleName)) {
       logger.log(TreeLogger.ERROR, "Invalid module name: '" + moduleName + "'",
-        null);
+          null);
       throw new UnableToCompleteException();
     }
 
     ModuleDef moduleDef = new ModuleDef(moduleName);
     for (Iterator it = forceInherits.iterator(); it.hasNext();) {
       String forceInherit = (String) it.next();
-      TreeLogger branch =
-          logger.branch(TreeLogger.TRACE,
-            "Loading forceably inherited module '" + forceInherit + "'", null);
+      TreeLogger branch = logger.branch(TreeLogger.TRACE,
+          "Loading forceably inherited module '" + forceInherit + "'", null);
       nestedLoad(branch, forceInherit, moduleDef);
     }
     nestedLoad(logger, moduleName, moduleDef);
@@ -208,7 +210,4 @@ public class ModuleDefLoader {
 
     return moduleDef;
   }
-
-  private final Set alreadyLoadedModules = new HashSet();
-  private final ClassLoader classLoader;
 }

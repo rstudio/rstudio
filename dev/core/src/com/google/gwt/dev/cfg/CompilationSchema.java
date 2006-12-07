@@ -20,6 +20,13 @@ import com.google.gwt.dev.util.xml.Schema;
 public class CompilationSchema extends Schema {
 
   private final class BodySchema extends Schema {
+    protected final String __generated_type_hash_1_class = null;
+
+    protected final String __generated_type_hash_2_hash = null;
+
+    protected final String __rebind_decision_1_in = null;
+    protected final String __rebind_decision_2_out = null;
+
     protected Schema __generated_type_hash_begin(String type, String hash) {
       compilation.recordGeneratedTypeHash(type, hash);
       return null;
@@ -29,12 +36,9 @@ public class CompilationSchema extends Schema {
       compilation.recordDecision(in, out);
       return null;
     }
-
-    protected final String __generated_type_hash_1_class = null;
-    protected final String __generated_type_hash_2_hash = null;
-    protected final String __rebind_decision_1_in = null;
-    protected final String __rebind_decision_2_out = null;
   }
+
+  private final Compilation compilation;
 
   public CompilationSchema(Compilation compilation) {
     this.compilation = compilation;
@@ -43,6 +47,4 @@ public class CompilationSchema extends Schema {
   protected Schema __cache_entry_begin() {
     return new BodySchema();
   }
-
-  private final Compilation compilation;
 }

@@ -20,8 +20,14 @@ import com.google.gwt.core.ext.TreeLogger;
 
 public class ConditionWhenTypeIs extends Condition {
 
+  private final String exactTypeName;
+
   public ConditionWhenTypeIs(String exactTypeName) {
     this.exactTypeName = exactTypeName;
+  }
+
+  public String toString() {
+    return "<when-type-is class='" + exactTypeName + "'/>";
   }
 
   protected boolean doEval(TreeLogger logger, GeneratorContext context,
@@ -40,10 +46,4 @@ public class ConditionWhenTypeIs extends Condition {
   protected String getEvalBeforeMessage(String testType) {
     return toString();
   }
-
-  public String toString() {
-    return "<when-type-is class='" + exactTypeName + "'/>";
-  }
-
-  private final String exactTypeName;
 }
