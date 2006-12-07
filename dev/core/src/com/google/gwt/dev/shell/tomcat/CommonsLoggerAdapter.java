@@ -1,12 +1,28 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell.tomcat;
 
 import com.google.gwt.core.ext.TreeLogger;
 
 public class CommonsLoggerAdapter implements org.apache.commons.logging.Log {
 
+  private TreeLogger log;
+
   public CommonsLoggerAdapter(String name) {
-    // NOTE: this is ugly, but I don't know of any other way to get a 
+    // NOTE: this is ugly, but I don't know of any other way to get a
     // non-static log to which we can delegate.
     //
     log = EmbeddedTomcatServer.sTomcat.getLogger();
@@ -94,6 +110,4 @@ public class CommonsLoggerAdapter implements org.apache.commons.logging.Log {
     String msg = message.toString();
     log.log(type, msg, t);
   }
-
-  private TreeLogger log;
 }

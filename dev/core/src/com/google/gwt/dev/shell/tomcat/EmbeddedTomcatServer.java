@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell.tomcat;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -45,8 +59,8 @@ public class EmbeddedTomcatServer {
       String msg = e.getMessage();
       if (msg != null && msg.indexOf("already in use") != -1) {
         msg = "Port "
-          + port
-          + " is already is use; you probably still have another session active";
+            + port
+            + " is already is use; you probably still have another session active";
       } else {
         msg = "Unable to start the embedded Tomcat server; double-check that your configuration is valid";
       }
@@ -70,6 +84,16 @@ public class EmbeddedTomcatServer {
     }
   }
 
+  private Embedded catEmbedded;
+
+  private Engine catEngine;
+
+  private StandardHost catHost = null;
+
+  private final int port;
+
+  private final TreeLogger startupBranchLogger;
+
   private EmbeddedTomcatServer(final TreeLogger topLogger, int listeningPort,
       final File outDir) {
     if (topLogger == null) {
@@ -77,7 +101,7 @@ public class EmbeddedTomcatServer {
     }
 
     final TreeLogger logger = topLogger.branch(TreeLogger.INFO,
-      "Starting HTTP on port " + listeningPort, null);
+        "Starting HTTP on port " + listeningPort, null);
 
     startupBranchLogger = logger;
 
@@ -170,37 +194,8 @@ public class EmbeddedTomcatServer {
     catEmbedded.addConnector(connector);
   }
 
-  /**
-   * Extracts a valid catalina base instance from the classpath. Does not
-   * overwrite any existing files.
-   */
-  private String generateDefaultCatalinaBase(TreeLogger logger, File workDir) {
-    logger = logger
-      .branch(
-        TreeLogger.TRACE,
-        "Property 'catalina.base' not specified; checking for a standard catalina base image instead",
-        null);
-
-    // Recursively copies out files and directories under
-    // com.google.gwt.dev.etc.tomcat.
-    //
-    FileOracleFactory fof = new FileOracleFactory();
-    final String TOMCAT_ETC_DIR = "com/google/gwt/dev/etc/tomcat/";
-    fof.addRootPackage(TOMCAT_ETC_DIR, null);
-    FileOracle fo = fof.create(logger);
-    if (fo.isEmpty()) {
-      logger.log(TreeLogger.WARN, "Could not find " + TOMCAT_ETC_DIR, null);
-      return null;
-    }
-
-    File catBase = new File(workDir, "tomcat");
-    String[] allChildren = fo.getAllFiles();
-    for (int i = 0; i < allChildren.length; i++) {
-      String src = allChildren[i];
-      copyFileNoOverwrite(logger, fo, src, catBase);
-    }
-
-    return catBase.getAbsolutePath();
+  public TreeLogger getLogger() {
+    return startupBranchLogger;
   }
 
   /*
@@ -228,7 +223,7 @@ public class EmbeddedTomcatServer {
         // Don't copy over it.
         //
         logger.log(TreeLogger.TRACE, "Source is older than existing: "
-          + dest.getAbsolutePath(), null);
+            + dest.getAbsolutePath(), null);
         return;
       } else if (srcLastModified == dstLastModified) {
         // Exact same time; quietly don't overwrite.
@@ -261,17 +256,49 @@ public class EmbeddedTomcatServer {
       logger.log(TreeLogger.TRACE, "Wrote: " + dest.getAbsolutePath(), null);
     } catch (IOException e) {
       logger.log(TreeLogger.WARN, "Failed to write: " + dest.getAbsolutePath(),
-        e);
+          e);
     } finally {
       Utility.close(is);
       Utility.close(os);
     }
   }
 
+  /**
+   * Extracts a valid catalina base instance from the classpath. Does not
+   * overwrite any existing files.
+   */
+  private String generateDefaultCatalinaBase(TreeLogger logger, File workDir) {
+    logger = logger.branch(
+        TreeLogger.TRACE,
+        "Property 'catalina.base' not specified; checking for a standard catalina base image instead",
+        null);
+
+    // Recursively copies out files and directories under
+    // com.google.gwt.dev.etc.tomcat.
+    //
+    FileOracleFactory fof = new FileOracleFactory();
+    final String tomcatEtcDir = "com/google/gwt/dev/etc/tomcat/";
+    fof.addRootPackage(tomcatEtcDir, null);
+    FileOracle fo = fof.create(logger);
+    if (fo.isEmpty()) {
+      logger.log(TreeLogger.WARN, "Could not find " + tomcatEtcDir, null);
+      return null;
+    }
+
+    File catBase = new File(workDir, "tomcat");
+    String[] allChildren = fo.getAllFiles();
+    for (int i = 0; i < allChildren.length; i++) {
+      String src = allChildren[i];
+      copyFileNoOverwrite(logger, fo, src, catBase);
+    }
+
+    return catBase.getAbsolutePath();
+  }
+
   private void publishAttributeToWebApp(TreeLogger logger,
       StandardContext webapp, String attrName, Object attrValue) {
     logger.log(TreeLogger.TRACE, "Adding attribute  '" + attrName
-      + "' to web app '" + webapp.getName() + "'", null);
+        + "' to web app '" + webapp.getName() + "'", null);
     webapp.getServletContext().setAttribute(attrName, attrValue);
   }
 
@@ -294,14 +321,4 @@ public class EmbeddedTomcatServer {
     final String attr = "com.google.gwt.dev.shell.outdir";
     publishAttributeToWebApp(logger, webapp, attr, outDirToPublish);
   }
-
-  public TreeLogger getLogger() {
-    return startupBranchLogger;
-  }
-
-  private Embedded catEmbedded;
-  private Engine catEngine;
-  private StandardHost catHost = null;
-  private final int port;
-  private final TreeLogger startupBranchLogger;
 }
