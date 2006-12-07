@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.util.xml;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -146,34 +160,35 @@ public final class HandlerMethod {
 
   private HandlerMethod(Method method, int type, boolean arbitraryChildren,
       HandlerParam[] hpa) {
-    fMethod = method;
-    fMethodType = type;
-    fArbitraryChildren = arbitraryChildren;
-    fHandlerParams = (HandlerParam[]) hpa.clone();
+    this.method = method;
+    this.methodType = type;
+    this.arbitraryChildren = arbitraryChildren;
+    this.handlerParams = (HandlerParam[]) hpa.clone();
 
-    fMethod.setAccessible(true);
+    this.method.setAccessible(true);
   }
 
   public HandlerArgs createArgs(Schema schema, int lineNumber, String elemName) {
-    return new HandlerArgs(schema, lineNumber, elemName, fHandlerParams);
+    return new HandlerArgs(schema, lineNumber, elemName, handlerParams);
   }
 
   public String getNormalizedName() {
-    String name = fMethod.getName();
-    if (isStartMethod())
+    String name = method.getName();
+    if (isStartMethod()) {
       return name.substring(2, name.length() - "_begin".length());
-    else if (isEndMethod())
+    } else if (isEndMethod()) {
       return name.substring(2, name.length() - "_end".length());
-    else
+    } else {
       throw new IllegalStateException("Unexpected method name");
+    }
   }
 
   public HandlerParam getParam(int i) {
-    return fHandlerParams[i];
+    return handlerParams[i];
   }
 
   public int getParamCount() {
-    return fHandlerParams.length;
+    return handlerParams.length;
   }
 
   public void invokeText(int lineNumber, String text, Schema target)
@@ -181,7 +196,7 @@ public final class HandlerMethod {
     Throwable caught = null;
     try {
       target.setLineNumber(lineNumber);
-      fMethod.invoke(target, new Object[]{text});
+      method.invoke(target, new Object[]{text});
       return;
     } catch (IllegalArgumentException e) {
       caught = e;
@@ -190,7 +205,7 @@ public final class HandlerMethod {
     } catch (InvocationTargetException e) {
       caught = e.getTargetException();
     }
-    target.onHandlerException(lineNumber, "#text", fMethod, caught);
+    target.onHandlerException(lineNumber, "#text", method, caught);
   }
 
   public Schema invokeBegin(int lineNumber, String elemLocalName,
@@ -208,7 +223,7 @@ public final class HandlerMethod {
     Throwable caught = null;
     try {
       target.setLineNumber(lineNumber);
-      nextSchemaLevel = (Schema) fMethod.invoke(target, outInvokeArgs);
+      nextSchemaLevel = (Schema) method.invoke(target, outInvokeArgs);
     } catch (IllegalArgumentException e) {
       caught = e;
     } catch (IllegalAccessException e) {
@@ -217,8 +232,9 @@ public final class HandlerMethod {
       caught = e.getTargetException();
     }
 
-    if (caught != null)
-      target.onHandlerException(lineNumber, elemLocalName, fMethod, caught);
+    if (caught != null) {
+      target.onHandlerException(lineNumber, elemLocalName, method, caught);
+    }
 
     // Prepare a resulting schema level that allows the reflective parser
     // to simply perform its normal logic, even while there are some
@@ -235,12 +251,13 @@ public final class HandlerMethod {
     // (4) the method failed or could not be called, which is treated the same
     // as case (3)
     //
-    if (nextSchemaLevel != null)
+    if (nextSchemaLevel != null) {
       return nextSchemaLevel;
-    else if (fArbitraryChildren)
+    } else if (arbitraryChildren) {
       return sArbitraryChildHandler;
-    else
+    } else {
       return null;
+    }
   }
 
   public void invokeEnd(int lineNumber, String elem, Schema target,
@@ -248,7 +265,7 @@ public final class HandlerMethod {
     Throwable caught = null;
     try {
       target.setLineNumber(lineNumber);
-      fMethod.invoke(target, args);
+      method.invoke(target, args);
       return;
     } catch (IllegalArgumentException e) {
       caught = e;
@@ -257,23 +274,23 @@ public final class HandlerMethod {
     } catch (InvocationTargetException e) {
       caught = e.getTargetException();
     }
-    target.onHandlerException(lineNumber, elem, fMethod, caught);
+    target.onHandlerException(lineNumber, elem, method, caught);
   }
 
   public boolean isEndMethod() {
-    return fMethodType == TYPE_END;
+    return methodType == TYPE_END;
   }
 
   public boolean isStartMethod() {
-    return fMethodType == TYPE_BEGIN;
+    return methodType == TYPE_BEGIN;
   }
 
   static {
     ReflectiveParser.registerSchemaLevel(sArbitraryChildHandler.getClass());
   }
 
-  private final boolean fArbitraryChildren;
-  private final HandlerParam[] fHandlerParams;
-  private final Method fMethod;
-  private final int fMethodType;
+  private final boolean arbitraryChildren;
+  private final HandlerParam[] handlerParams;
+  private final Method method;
+  private final int methodType;
 }

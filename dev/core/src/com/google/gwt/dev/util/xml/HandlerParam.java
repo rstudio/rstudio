@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.util.xml;
 
 import java.lang.reflect.Field;
@@ -62,9 +76,9 @@ public final class HandlerParam {
 
   private HandlerParam(Class paramType, Field metaField,
       String normalizedAttrName) {
-    fParamType = paramType;
-    fMetaField = metaField;
-    fNormalizedAttrName = normalizedAttrName;
+    this.paramType = paramType;
+    this.metaField = metaField;
+    this.normalizedAttrName = normalizedAttrName;
   }
 
   /**
@@ -73,7 +87,7 @@ public final class HandlerParam {
   public String getDefaultValue(Schema schema) {
     Throwable caught = null;
     try {
-      return (String) fMetaField.get(schema);
+      return (String) metaField.get(schema);
     } catch (IllegalArgumentException e) {
       caught = e;
     } catch (IllegalAccessException e) {
@@ -86,18 +100,18 @@ public final class HandlerParam {
     //
     throw (IllegalStateException)new IllegalStateException(
       "Unable to get attribute default value from meta field '"
-        + fMetaField.getName() + "'").initCause(caught);
+        + metaField.getName() + "'").initCause(caught);
   }
 
   public String getNormalizedName() {
-    return fNormalizedAttrName;
+    return normalizedAttrName;
   }
 
   public Class getParamType() {
-    return fParamType;
+    return paramType;
   }
 
-  private final Class fParamType;
-  private final Field fMetaField;
-  private final String fNormalizedAttrName;
+  private final Class paramType;
+  private final Field metaField;
+  private final String normalizedAttrName;
 }

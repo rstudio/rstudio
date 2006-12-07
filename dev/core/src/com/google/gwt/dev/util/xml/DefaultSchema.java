@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.util.xml;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -9,7 +23,7 @@ import java.lang.reflect.Method;
 public class DefaultSchema extends Schema {
 
   public DefaultSchema(TreeLogger logger) {
-    fLogger = logger;
+    this.logger = logger;
 
     // Registers converters for the typical primitive types.
     //
@@ -25,41 +39,41 @@ public class DefaultSchema extends Schema {
 
   public void onBadAttributeValue(int line, String elem, String attr,
       String value, Class paramType) throws UnableToCompleteException {
-    Messages.XML_ATTRIBUTE_CONVERSION_ERROR.log(fLogger, line, attr, paramType,
+    Messages.XML_ATTRIBUTE_CONVERSION_ERROR.log(logger, line, attr, paramType,
       null);
     throw new UnableToCompleteException();
   }
 
   public void onHandlerException(int line, String elem, Method method,
       Throwable e) throws UnableToCompleteException {
-    Messages.XML_ELEMENT_HANDLER_EXCEPTION.log(fLogger, line, elem, e);
+    Messages.XML_ELEMENT_HANDLER_EXCEPTION.log(logger, line, elem, e);
     throw new UnableToCompleteException();
   }
 
   public void onMissingAttribute(int line, String elem, String attr)
       throws UnableToCompleteException {
     Messages.XML_REQUIRED_ATTRIBUTE_MISSING
-      .log(fLogger, elem, line, attr, null);
+      .log(logger, elem, line, attr, null);
     throw new UnableToCompleteException();
   }
 
   public void onUnexpectedAttribute(int line, String elem, String attr,
       String value) throws UnableToCompleteException {
-    Messages.XML_ATTRIBUTE_UNEXPECTED.log(fLogger, elem, line, attr, null);
+    Messages.XML_ATTRIBUTE_UNEXPECTED.log(logger, elem, line, attr, null);
     throw new UnableToCompleteException();
   }
 
   public void onUnexpectedChild(int line, String childElem)
       throws UnableToCompleteException {
-    Messages.XML_CHILDREN_NOT_ALLOWED.log(fLogger, childElem, line, null);
+    Messages.XML_CHILDREN_NOT_ALLOWED.log(logger, childElem, line, null);
     throw new UnableToCompleteException();
   }
 
   public void onUnexpectedElement(int line, String elem)
       throws UnableToCompleteException {
-    Messages.XML_ELEMENT_UNEXPECTED.log(fLogger, line, elem, null);
+    Messages.XML_ELEMENT_UNEXPECTED.log(logger, line, elem, null);
     throw new UnableToCompleteException();
   }
 
-  private final TreeLogger fLogger;
+  private final TreeLogger logger;
 }

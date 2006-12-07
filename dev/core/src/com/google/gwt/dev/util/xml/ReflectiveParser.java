@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.util.xml;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -35,7 +49,7 @@ public final class ReflectiveParser {
 
     public void characters(char[] ch, int start, int length)
         throws SAXException {
-      int lineNumber = fLocator.getLineNumber();
+      int lineNumber = locator.getLineNumber();
 
       // Get the active schema level.
       //
@@ -65,7 +79,7 @@ public final class ReflectiveParser {
 
     public void endElement(String namespaceURI, String localName, String elem)
         throws SAXException {
-      int lineNumber = fLocator.getLineNumber();
+      int lineNumber = locator.getLineNumber();
 
       // Get the active schema level.
       //
@@ -103,12 +117,12 @@ public final class ReflectiveParser {
     }
 
     public void setDocumentLocator(Locator locator) {
-      fLocator = locator;
+      this.locator = locator;
     }
 
     public void startElement(String namespaceURI, String localName,
         String elemName, Attributes atts) throws SAXException {
-      int lineNumber = fLocator.getLineNumber();
+      int lineNumber = locator.getLineNumber();
 
       // Get the active schema level.
       //
@@ -229,15 +243,15 @@ public final class ReflectiveParser {
     }
 
     private Schema getNextToTopSchemaLevel() {
-      return (Schema) fSchemaLevels.get(fSchemaLevels.size() - 2);
+      return (Schema) schemaLevels.get(schemaLevels.size() - 2);
     }
 
     private Schema getTopSchemaLevel() {
-      return (Schema) fSchemaLevels.peek();
+      return (Schema) schemaLevels.peek();
     }
 
     private Object[] getCurrentArgs() {
-      return (Object[]) fArgStack.peek();
+      return (Object[]) argStack.peek();
     }
 
     private void parse(TreeLogger logger, Schema topSchema, Reader reader)
@@ -245,17 +259,17 @@ public final class ReflectiveParser {
       // Set up the parentmost schema which is used to find default converters
       // and handlers (but isn't actually on the schema stack.)
       //
-      fDefaultSchema = new DefaultSchema(logger);
+      defaultSchema = new DefaultSchema(logger);
 
       // Tell this schema level about the default schema, which is initialized
       // with
       // converters for basic types.
       //
-      topSchema.setParent(fDefaultSchema);
+      topSchema.setParent(defaultSchema);
 
       // Make a slot for the document element's args.
       //
-      fArgStack.push(null);
+      argStack.push(null);
 
       // Push the first schema.
       //
@@ -263,9 +277,9 @@ public final class ReflectiveParser {
 
       Throwable caught = null;
       try {
-        fReader = reader;
+        this.reader = reader;
         SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-        InputSource inputSource = new InputSource(fReader);
+        InputSource inputSource = new InputSource(this.reader);
         XMLReader xmlReader = parser.getXMLReader();
         xmlReader.setContentHandler(this);
         xmlReader.parse(inputSource);
@@ -276,10 +290,11 @@ public final class ReflectiveParser {
         caught = e;
 
         Exception inner = e.getException();
-        if (inner instanceof RuntimeException)
+        if (inner instanceof RuntimeException) {
           throw (RuntimeException) inner;
-        else if (inner != null)
+        } else if (inner != null) {
           caught = inner;
+        }
 
       } catch (ParserConfigurationException e) {
         caught = e;
@@ -296,39 +311,42 @@ public final class ReflectiveParser {
     }
 
     private Schema popLevel() {
-      fArgStack.pop();
-      fSchemaLevels.pop();
+      argStack.pop();
+      schemaLevels.pop();
       return getTopSchemaLevel();
     }
 
     private void setArgsAndPushLevel(Object[] handlerArgs, Schema schemaLevel) {
       // Set the args on the current schema level.
-      fArgStack.set(fArgStack.size() - 1, handlerArgs);
+      argStack.set(argStack.size() - 1, handlerArgs);
       // A slot for the args at the childrens' depth.
-      fArgStack.push(null);
-      if (!fSchemaLevels.isEmpty()) {
+      argStack.push(null);
+      if (!schemaLevels.isEmpty()) {
         // Tell this schema level about its parent.
         //
         Schema maybeParent = null;
-        for (int i = fSchemaLevels.size() - 1; i >= 0; --i) {
-          maybeParent = (Schema) fSchemaLevels.get(i);
-          if (maybeParent != null)
+        for (int i = schemaLevels.size() - 1; i >= 0; --i) {
+          maybeParent = (Schema) schemaLevels.get(i);
+          if (maybeParent != null) {
             break;
+          }
         }
-        if (maybeParent == null)
+        if (maybeParent == null) {
           throw new IllegalStateException("Cannot find any parent schema");
-        if (schemaLevel != null)
+        }
+        if (schemaLevel != null) {
           schemaLevel.setParent(maybeParent);
+        }
       }
       // The schema for children.
-      fSchemaLevels.push(schemaLevel);
+      schemaLevels.push(schemaLevel);
     }
 
-    private Locator fLocator;
-    private Reader fReader;
-    private Stack fSchemaLevels = new Stack();
-    private Stack fArgStack = new Stack();
-    private Schema fDefaultSchema;
+    private Locator locator;
+    private Reader reader;
+    private Stack schemaLevels = new Stack();
+    private Stack argStack = new Stack();
+    private Schema defaultSchema;
   }
 
   public static void parse(TreeLogger logger, Schema schema, Reader reader)
@@ -355,8 +373,9 @@ public final class ReflectiveParser {
     Class[] nested = schemaLevelClass.getDeclaredClasses();
     for (int i = 0, n = nested.length; i < n; ++i) {
       Class nestedClass = nested[i];
-      if (Schema.class.isAssignableFrom(nestedClass))
+      if (Schema.class.isAssignableFrom(nestedClass)) {
         registerSchemaLevel(nestedClass);
+      }
     }
   }
 }

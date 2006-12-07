@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.util.xml;
 
 import java.lang.reflect.Method;
@@ -10,8 +24,9 @@ public class HandlerClassInfo {
   private static Map sClassInfoMap = new HashMap();
 
   public static synchronized void registerClass(Class c) {
-    if (sClassInfoMap.containsKey(c))
+    if (sClassInfoMap.containsKey(c)) {
       return;
+    }
 
     // Put a guard null in so that recursive registration of the same
     // class won't die.
@@ -22,11 +37,12 @@ public class HandlerClassInfo {
   }
 
   public static synchronized HandlerClassInfo getClassInfo(Class c) {
-    if (sClassInfoMap.containsKey(c))
+    if (sClassInfoMap.containsKey(c)) {
       return (HandlerClassInfo) sClassInfoMap.get(c);
-    else
+    } else {
       throw new RuntimeException("The schema class '" + c.getName()
         + "' should have been registered prior to parsing");
+    }
   }
 
   private static HandlerClassInfo createClassInfo(Class c) {
@@ -57,41 +73,43 @@ public class HandlerClassInfo {
         // (Allows inheritance where most-derived class wins).
         //
         String name = method.getName();
-        if (!namedHandlerMethods.containsKey(name))
+        if (!namedHandlerMethods.containsKey(name)) {
           namedHandlerMethods.put(name, handlerMethod);
+        }
       }
     }
 
     // Recurse into superclass.
     //
     Class superclass = c.getSuperclass();
-    if (superclass != null)
+    if (superclass != null) {
       loadClassInfoRecursive(namedHandlerMethods, superclass);
+    }
   }
 
   // Nobody else can create one.
   private HandlerClassInfo(Map namedHandlerMethods) {
-    fNamedHandlerMethods = namedHandlerMethods;
+    this.namedHandlerMethods = namedHandlerMethods;
   }
 
   public HandlerMethod getStartMethod(String localName) {
     String methodName = "__" + localName.replace('-', '_');
-    return (HandlerMethod) fNamedHandlerMethods.get(methodName + "_begin");
+    return (HandlerMethod) namedHandlerMethods.get(methodName + "_begin");
   }
 
   public HandlerMethod getEndMethod(String localName) {
     String methodName = "__" + localName.replace('-', '_');
-    return (HandlerMethod) fNamedHandlerMethods.get(methodName + "_end");
+    return (HandlerMethod) namedHandlerMethods.get(methodName + "_end");
   }
 
-  private final Map fNamedHandlerMethods;
+  private final Map namedHandlerMethods;
 
   public HandlerMethod[] getHandlerMethods() {
-    return (HandlerMethod[]) fNamedHandlerMethods.values().toArray(
+    return (HandlerMethod[]) namedHandlerMethods.values().toArray(
       EMPTY_ARRAY_HANDLERMETHOD);
   }
 
   public HandlerMethod getTextMethod() {
-    return (HandlerMethod) fNamedHandlerMethods.get("__text");
+    return (HandlerMethod) namedHandlerMethods.get("__text");
   }
 }

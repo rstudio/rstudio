@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.util.xml;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -11,17 +25,17 @@ public class HandlerArgs {
 
   public HandlerArgs(Schema schema, int lineNumber, String elemName,
       HandlerParam[] handlerParams) {
-    fSchema = schema;
-    fLineNumber = lineNumber;
-    fElemName = elemName;
-    fHandlerParams = handlerParams;
-    fAttrNames = new String[handlerParams.length];
-    fArgValues = new String[handlerParams.length];
+    this.schema = schema;
+    this.lineNumber = lineNumber;
+    this.elemName = elemName;
+    this.handlerParams = handlerParams;
+    attrNames = new String[handlerParams.length];
+    argValues = new String[handlerParams.length];
 
     // Set default values.
     //
     for (int i = 0, n = handlerParams.length; i < n; ++i) {
-      fArgValues[i] = fHandlerParams[i].getDefaultValue(schema);
+      argValues[i] = this.handlerParams[i].getDefaultValue(schema);
     }
   }
 
@@ -33,27 +47,27 @@ public class HandlerArgs {
    *    if the argument could not be converted
    */
   public Object convertToArg(int i) throws UnableToCompleteException {
-    String value = fArgValues[i];
+    String value = argValues[i];
     if (value != null) {
-      AttributeConverter converter = fSchema
-        .getAttributeConverter(fHandlerParams[i].getParamType());
-      return converter.convertToArg(fSchema, fLineNumber, fElemName,
-        fAttrNames[i], value);
+      AttributeConverter converter = schema
+        .getAttributeConverter(handlerParams[i].getParamType());
+      return converter.convertToArg(schema, lineNumber, elemName,
+        attrNames[i], value);
     } else {
       return new NullPointerException("Argument " + i + " was null");
     }
   }
 
   public int getArgCount() {
-    return fHandlerParams.length;
+    return handlerParams.length;
   }
 
   public String getArgName(int i) {
-    return fHandlerParams[i].getNormalizedName();
+    return handlerParams[i].getNormalizedName();
   }
 
   public boolean isArgSet(int i) {
-    if (fArgValues[i] != null) {
+    if (argValues[i] != null) {
       return true;
     } else {
       return false;
@@ -67,12 +81,12 @@ public class HandlerArgs {
    */
   public boolean setArg(String attrName, String attrValue) {
     String normalizedAttrName = normalizeAttrName(attrName);
-    for (int i = 0, n = fHandlerParams.length; i < n; ++i) {
-      Object testParamName = fHandlerParams[i].getNormalizedName();
+    for (int i = 0, n = handlerParams.length; i < n; ++i) {
+      Object testParamName = handlerParams[i].getNormalizedName();
       if (testParamName.equals(normalizedAttrName)) {
         // Set it, but don't convert it yet.
-        fAttrNames[i] = attrName;
-        fArgValues[i] = attrValue;
+        attrNames[i] = attrName;
+        argValues[i] = attrValue;
         return true;
       }
     }
@@ -85,15 +99,15 @@ public class HandlerArgs {
   }
 
   // The real (non-normalized) names of the attributes, used to report errors.
-  private final String[] fAttrNames;
+  private final String[] attrNames;
 
-  private final String[] fArgValues;
+  private final String[] argValues;
 
-  private final HandlerParam[] fHandlerParams;
+  private final HandlerParam[] handlerParams;
 
-  private final int fLineNumber;
+  private final int lineNumber;
 
-  private final Schema fSchema;
+  private final Schema schema;
 
-  private final String fElemName;
+  private final String elemName;
 }
