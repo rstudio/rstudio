@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.util.msg;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -34,20 +48,20 @@ public abstract class Message {
     assert (type != null);
     assert (fmt != null);
     assert (args >= 0);
-    fType = type;
+    this.type = type;
 
-    fFmtParts = new char[args + 1][];
-    fArgIndices = new int[args];
+    fmtParts = new char[args + 1][];
+    argIndices = new int[args];
     int from = 0;
     for (int i = 0; i < args; ++i) {
       int to = fmt.indexOf('$', from);
       if (to != -1) {
         if (to < fmt.length() - 1) {
-          char charDigit = fmt.charAt(to+1); 
+          char charDigit = fmt.charAt(to + 1); 
           if (Character.isDigit(charDigit)) { 
             int digit = Character.digit(charDigit, 10);
-            fFmtParts[i] = fmt.substring(from, to).toCharArray();
-            fArgIndices[i] = digit;
+            fmtParts[i] = fmt.substring(from, to).toCharArray();
+            argIndices[i] = digit;
             from = to + 2;
             continue;
           }
@@ -55,12 +69,13 @@ public abstract class Message {
       }
       throw new IllegalArgumentException("Expected arg $" + i);
     }
-    fFmtParts[args] = fmt.substring(from).toCharArray();
+    fmtParts[args] = fmt.substring(from).toCharArray();
 
     int minChars = 0;
-    for (int i = 0, n = fFmtParts.length; i < n; ++i)
-      minChars += fFmtParts[i].length;
-    fMinChars = minChars;
+    for (int i = 0, n = fmtParts.length; i < n; ++i) {
+      minChars += fmtParts[i].length;
+    }
+    this.minChars = minChars;
   }
 
   protected final Formatter getFormatter(Class c) {
@@ -99,8 +114,8 @@ public abstract class Message {
     return FMT_STRING_ARRAY;
   }
 
-  protected final TreeLogger.Type fType;
-  protected final char[][] fFmtParts;
-  protected final int[] fArgIndices;
-  protected final int fMinChars;
+  protected final TreeLogger.Type type;
+  protected final char[][] fmtParts;
+  protected final int[] argIndices;
+  protected final int minChars;
 }

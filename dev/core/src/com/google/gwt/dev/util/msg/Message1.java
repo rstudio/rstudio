@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.util.msg;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -12,7 +26,7 @@ public abstract class Message1 extends Message {
 
   protected TreeLogger branch1(TreeLogger logger, Object arg1, Formatter fmt1,
       Throwable caught) {
-    return logger.branch(fType, compose1(arg1, fmt1), caught);
+    return logger.branch(type, compose1(arg1, fmt1), caught);
   }
 
   protected String compose1(Object arg1, Formatter fmt1) {
@@ -30,30 +44,31 @@ public abstract class Message1 extends Message {
 
     // Cache the length of each part.
     //
-    int lenPart0 = fFmtParts[0].length;
-    int lenPart1 = fFmtParts[1].length;
+    int lenPart0 = fmtParts[0].length;
+    int lenPart1 = fmtParts[1].length;
     
     // Prep for copying.
     //
     int dest = 0;
-    char[] chars = new char[fMinChars + lenInsert1];
+    char[] chars = new char[minChars + lenInsert1];
 
     // literal + insert, part 0
-    System.arraycopy(fFmtParts[0], 0, chars, dest, lenPart0);
+    System.arraycopy(fmtParts[0], 0, chars, dest, lenPart0);
     dest += lenPart0;
     
     insert1.getChars(0, lenInsert1, chars, dest);   
     dest += lenInsert1;
 
     // final literal
-    System.arraycopy(fFmtParts[1], 0, chars, dest, lenPart1);
+    System.arraycopy(fmtParts[1], 0, chars, dest, lenPart1);
     
     return new String(chars);
   }
 
   protected void log1(TreeLogger logger, Object arg1, Formatter fmt1,
       Throwable caught) {
-    if (logger.isLoggable(fType))
-      logger.log(fType, compose1(arg1, fmt1), caught);
+    if (logger.isLoggable(type)) {
+      logger.log(type, compose1(arg1, fmt1), caught);
+    }
   }
 }
