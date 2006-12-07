@@ -22,7 +22,7 @@
 
 	<target name="gwtc" description="Compile to JavaScript">
 		<mkdir dir="${project.build}/www" />
-		<java classname="com.google.gwt.dev.GWTCompiler" classpath="src:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
+		<java dir="${project.build}" classname="com.google.gwt.dev.GWTCompiler" classpath="src:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
 			<classpath>
 				<pathelement location="${src}" />
 				<pathelement location="${gwt.user.jar}" />
