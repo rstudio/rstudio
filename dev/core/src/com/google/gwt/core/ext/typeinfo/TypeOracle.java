@@ -92,32 +92,41 @@ public class TypeOracle {
 
     // The order is based on the order in which we want them to appear.
     //
-    if (0 != (bits & MOD_PUBLIC))
+    if (0 != (bits & MOD_PUBLIC)) {
       strings.add("public");
+    }
 
-    if (0 != (bits & MOD_PRIVATE))
+    if (0 != (bits & MOD_PRIVATE)) {
       strings.add("private");
+    }
 
-    if (0 != (bits & MOD_PROTECTED))
+    if (0 != (bits & MOD_PROTECTED)) {
       strings.add("protected");
+    }
 
-    if (0 != (bits & MOD_STATIC))
+    if (0 != (bits & MOD_STATIC)) {
       strings.add("static");
+    }
 
-    if (0 != (bits & MOD_ABSTRACT))
+    if (0 != (bits & MOD_ABSTRACT)) {
       strings.add("abstract");
+    }
 
-    if (0 != (bits & MOD_FINAL))
+    if (0 != (bits & MOD_FINAL)) {
       strings.add("final");
+    }
 
-    if (0 != (bits & MOD_NATIVE))
+    if (0 != (bits & MOD_NATIVE)) {
       strings.add("native");
+    }
 
-    if (0 != (bits & MOD_TRANSIENT))
+    if (0 != (bits & MOD_TRANSIENT)) {
       strings.add("transient");
-
-    if (0 != (bits & MOD_VOLATILE))
+    }
+    
+    if (0 != (bits & MOD_VOLATILE)) {
       strings.add("volatile");
+    }
 
     return (String[]) strings.toArray(NO_STRINGS);
   }
@@ -241,8 +250,9 @@ public class TypeOracle {
    */
   public JPackage getPackage(String pkgName) throws NotFoundException {
     JPackage result = findPackage(pkgName);
-    if (result == null)
+    if (result == null) {
       throw new NotFoundException(pkgName);
+    }
     return result;
   }
 
@@ -391,10 +401,7 @@ public class TypeOracle {
    * 
    * @param type a type signature to be parsed
    * @return the type object corresponding to the parse type
-   * @throws ParseException thrown when a syntax error is encountered
-   * @throws BadTypeArgsException thrown when a semantic error is encountered
-   * @throws NotFoundException thrown when a referenced type could not be found
-   *           in the type oracle
+   * @throws TypeOracleException
    */
   public JType parse(String type) throws TypeOracleException {
     // Remove all internal and external whitespace.
@@ -423,7 +430,6 @@ public class TypeOracle {
     }
     computeHierarchyRelationships();
     consumeTypeArgMetaData(logger);
-    
   }
 
   /**

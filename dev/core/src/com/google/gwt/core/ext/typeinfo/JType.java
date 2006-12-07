@@ -30,8 +30,9 @@ public abstract class JType {
 
   public JClassType isClassOrInterface() {
     JClassType type = isClass();
-    if (type != null)
+    if (type != null) {
       return type;
+    }
     return isInterface();
   }
 

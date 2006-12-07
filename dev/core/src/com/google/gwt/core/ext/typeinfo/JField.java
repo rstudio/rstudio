@@ -100,8 +100,9 @@ public class JField implements HasMetaData {
       }
       sb.append(names[i]);
     }
-    if (names.length > 0)
+    if (names.length > 0) {
       sb.append(" ");
+    }
     sb.append(type.getQualifiedSourceName());
     sb.append(" ");
     sb.append(getName());

@@ -41,8 +41,9 @@ public abstract class JAbstractMethod implements HasMetaData {
   public JParameter findParameter(String name) {
     for (Iterator iter = params.iterator(); iter.hasNext();) {
       JParameter param = (JParameter) iter.next();
-      if (param.getName().equals(name))
+      if (param.getName().equals(name)) {
         return param;
+      }
     }
     return null;
   }
@@ -158,8 +159,9 @@ public abstract class JAbstractMethod implements HasMetaData {
   }
 
   boolean hasParamTypes(JType[] paramTypes) {
-    if (params.size() != paramTypes.length)
+    if (params.size() != paramTypes.length) {
       return false;
+    }
 
     for (int i = 0; i < paramTypes.length; i++) {
       JParameter candidate = (JParameter) params.get(i);

@@ -39,8 +39,9 @@ public class JPackage {
 
   public JClassType getType(String typeName) throws NotFoundException {
     JClassType result = findType(typeName);
-    if (result == null)
+    if (result == null) {
       throw new NotFoundException();
+    }
     return result;
   }
 
@@ -62,12 +63,13 @@ public class JPackage {
 
   JClassType findTypeImpl(String[] typeName, int index) {
     JClassType found = (JClassType) types.get(typeName[index]);
-    if (found == null)
+    if (found == null) {
       return null;
-    else if (index < typeName.length - 1)
+    } else if (index < typeName.length - 1) {
       return found.findNestedTypeImpl(typeName, index + 1);
-    else
+    } else {
       return found;
+    }
   }
 
   void remove(JClassType type) {
