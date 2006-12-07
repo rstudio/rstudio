@@ -3,23 +3,20 @@
 	<property name="project.tail" value="user" />
 	<import file="${gwt.root}/common.ant.xml" />
 
-	<property.ensure name="gwt.core.root" location="${gwt.root}/dev/core" />
-	<property.ensure name="gwt.core.build" location="${gwt.build.out}/dev/core" />
+	<!-- Platform shouldn't matter here, just picking one -->
+	<property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
 
-	<target name="build" description="Compiles this project">
+	<target name="compile" description="Compile all class files">
 		<mkdir dir="${javac.out}" />
 		<gwt.javac>
 			<classpath>
 				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-				<pathelement location="${gwt.core.build}/bin" />
-				<pathelement location="${gwt.core.build}/unjar" />
-				<!-- Must build against a version of SWT; just pick one -->
-				<pathelement location="${gwt.tools.lib}/eclipse/org.eclipse.swt.gtk-linux-3.2.1.jar" />
+				<pathelement location="${gwt.dev.jar}" />
 			</classpath>
 		</gwt.javac>
 	</target>
 
-	<target name="package" depends="build" description="Packages this project into a jar">
+	<target name="build" depends="compile" description="Build and package this project">
 		<mkdir dir="${gwt.build.lib}" />
 		<gwt.jar>
 			<fileset dir="src" />
@@ -30,11 +27,11 @@
 
 	<target name="checkstyle" description="Static analysis of source">
 		<gwt.checkstyle>
-			<fileset dir="super/com/google/gwt/emul"/>
-			<fileset dir="super/com/google/gwt/junit/translatable"/>
+			<fileset dir="super/com/google/gwt/emul" />
+			<fileset dir="super/com/google/gwt/junit/translatable" />
 		</gwt.checkstyle>
 	</target>
-	
+
 	<target name="clean" description="Cleans this project's intermediate and output files">
 		<delete dir="${project.build}" />
 		<delete file="${project.lib}" />
