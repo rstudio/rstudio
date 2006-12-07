@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * A typed collection of {@link Condition} objects.
+ */
 public class Conditions {
 
   private final List list = new ArrayList();

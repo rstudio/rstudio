@@ -18,6 +18,9 @@ package com.google.gwt.dev.cfg;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+/**
+ * A typed collection of {@link Rule} objects.
+ */
 public class Rules {
 
   private final LinkedList list = new LinkedList();

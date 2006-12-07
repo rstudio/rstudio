@@ -21,6 +21,11 @@ import com.google.gwt.dev.util.Util;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents a single completed compilation.
+ * 
+ * @see Compilations
+ */
 public class Compilation {
 
   private Map rebindDecisions = new HashMap();
@@ -70,7 +75,7 @@ public class Compilation {
       // Error to try to change the existing mapping
       if (!recodedOutputName.equals(outputTypeName)) {
         String msg = "Decision '" + recodedOutputName
-          + "' already recorded for '" + inputTypeName + "'";
+            + "' already recorded for '" + inputTypeName + "'";
         throw new IllegalStateException(msg);
       }
       // already recorded this one
@@ -80,10 +85,12 @@ public class Compilation {
     // this was a new entry
     return true;
   }
+
   public void recordGeneratedTypeHash(String generatedTypeName,
       String sourceHash) {
     sourceHashByGeneratedTypeName.put(generatedTypeName, sourceHash);
   }
+
   public void setStrongName(String strongName) {
     this.strongName = strongName;
   }

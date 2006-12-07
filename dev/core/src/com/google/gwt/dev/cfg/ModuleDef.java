@@ -44,7 +44,8 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 /**
- * Represents a module specification.
+ * Represents a module specification. In principle, this could be built without
+ * XML for unit tests.
  */
 public class ModuleDef {
 

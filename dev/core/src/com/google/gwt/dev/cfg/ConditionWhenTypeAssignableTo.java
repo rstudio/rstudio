@@ -22,6 +22,10 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.Util;
 
+/**
+ * A deferred binding condition to determine whether the type being rebound is
+ * assignment-compatible with a particular type.
+ */
 public class ConditionWhenTypeAssignableTo extends Condition {
 
   private final String assignableToTypeName;

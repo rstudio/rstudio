@@ -19,6 +19,10 @@ import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 
+/**
+ * An implementation of {@link PropertyOracle} that maintains explicit property
+ * values, rather than computing them.
+ */
 public class StaticPropertyOracle implements PropertyOracle {
 
   private Property[] currentProps;

@@ -32,6 +32,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * The top-level API for loading module XML.
+ */
 public class ModuleDefLoader {
 
   // Should always be true. If it is false complete type oracle analysis and

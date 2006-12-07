@@ -19,6 +19,9 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
+/**
+ * A rule to explicitly fail during a deferred binding requrest.
+ */
 public class RuleFail extends Rule {
 
   public String realize(TreeLogger logger, GeneratorContext context,

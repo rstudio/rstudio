@@ -18,6 +18,10 @@ package com.google.gwt.dev.cfg;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 
+/**
+ * A deferred binding condition to determine whether the type being rebound is
+ * exactly a particular type.
+ */
 public class ConditionWhenTypeIs extends Condition {
 
   private final String exactTypeName;

@@ -23,6 +23,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Manages a set of {@link Compilation} objects keyed by deferred binding
+ * decisions. This class encapsulaes the idea of caching a set of compilations,
+ * some of which may be reusable between permutations to avoid redundant
+ * recompilation.
+ */
 public class Compilations {
 
   private final List list = new ArrayList();

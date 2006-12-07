@@ -21,6 +21,10 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 
 import java.util.Iterator;
 
+/**
+ * A compound condition that is only satisfied if all of its children are
+ * unsatisfied.
+ */
 public class ConditionNone extends CompoundCondition {
 
   public ConditionNone() {

@@ -19,6 +19,9 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
+/**
+ * Abstract base class for various kinds of deferred binding conditions.
+ */
 public abstract class Condition {
   public final boolean isTrue(TreeLogger logger, GeneratorContext context,
       String testType) throws UnableToCompleteException {

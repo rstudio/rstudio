@@ -20,29 +20,32 @@ import com.google.gwt.dev.util.msg.Message0;
 import com.google.gwt.dev.util.msg.Message1String;
 import com.google.gwt.dev.util.msg.Message2ClassClass;
 
+/**
+ * User messages related to configuration.
+ */
 class Messages {
 
   public static final Message2ClassClass INVALID_CLASS_DERIVATION = new Message2ClassClass(
-    TreeLogger.ERROR, "Class '$0' must derive from '$1'");
+      TreeLogger.ERROR, "Class '$0' must derive from '$1'");
 
   public static final Message1String PROPERTY_NAME_INVALID = new Message1String(
-    TreeLogger.ERROR, "Invalid property name '$0'");
+      TreeLogger.ERROR, "Invalid property name '$0'");
 
   public static final Message1String PROPERTY_NOT_FOUND = new Message1String(
-    TreeLogger.ERROR, "Property '$0' not found");
+      TreeLogger.ERROR, "Property '$0' not found");
 
   public static final Message1String PROPERTY_VALUE_INVALID = new Message1String(
-    TreeLogger.ERROR, "Invalid property value '$0'");
+      TreeLogger.ERROR, "Invalid property value '$0'");
 
   public static final Message0 PUBLIC_PATH_LOCATIONS = new Message0(
-    TreeLogger.TRACE, "Public resources found in...");
+      TreeLogger.TRACE, "Public resources found in...");
 
   public static final Message0 SOURCE_PATH_LOCATIONS = new Message0(
-    TreeLogger.TRACE, "Translatable source found in...");
+      TreeLogger.TRACE, "Translatable source found in...");
 
   public static final Message1String UNABLE_TO_CREATE_OBJECT = new Message1String(
-    TreeLogger.ERROR, "Unable to create an instance of '$0'");
+      TreeLogger.ERROR, "Unable to create an instance of '$0'");
 
   public static final Message1String UNABLE_TO_LOAD_CLASS = new Message1String(
-    TreeLogger.ERROR, "Unable to load class '$0'");
+      TreeLogger.ERROR, "Unable to load class '$0'");
 }

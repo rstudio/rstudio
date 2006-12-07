@@ -19,6 +19,9 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
+/**
+ * Abstract base class for various kinds of deferred binding rules.
+ */
 public abstract class Rule {
 
   private final ConditionAll rootCondition = new ConditionAll();

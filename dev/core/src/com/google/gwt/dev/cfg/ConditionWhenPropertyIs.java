@@ -21,6 +21,10 @@ import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
+/**
+ * A deferred binding condition to determine whether a named property has a
+ * particular value.
+ */
 public class ConditionWhenPropertyIs extends Condition {
 
   private final String propName;

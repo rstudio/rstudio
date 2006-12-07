@@ -20,6 +20,11 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
+/**
+ * A rule to replace the type being rebound with a class whose name is
+ * determined by a generator class. Generators usually generate new classes
+ * during the deferred binding process, but it is not required.
+ */
 public class RuleGenerateWith extends Rule {
 
   private final Generator generator;

@@ -19,6 +19,10 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Represents a single named deferred binding property that can answer with its
+ * value.
+ */
 public class Property implements Comparable {
 
   private String activeValue;

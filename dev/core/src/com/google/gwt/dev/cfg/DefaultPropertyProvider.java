@@ -26,8 +26,17 @@ import com.google.gwt.dev.js.ast.JsStatements;
 import java.io.IOException;
 import java.io.StringReader;
 
+/**
+ * A property provider that reports property values specified literally in a
+ * host HTML page.
+ */
 public class DefaultPropertyProvider extends PropertyProvider {
 
+  /*
+   * TODO: this references 'parent' literally, which could be a problem if you
+   * were to include the selector script in the host page itself rather than in
+   * an iframe.
+   */
   public DefaultPropertyProvider(Property property) {
     super(property);
     String src = "function () {";

@@ -19,6 +19,9 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
+/**
+ * A rule to replace the type being rebound with an explicitly named class.
+ */
 public class RuleReplaceWith extends Rule {
 
   private final String replacementTypeName;

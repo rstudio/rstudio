@@ -17,6 +17,9 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.dev.util.xml.Schema;
 
+/**
+ * The XML schema class to parse XML for deferred binding conditions.
+ */
 public class CompilationSchema extends Schema {
 
   private final class BodySchema extends Schema {

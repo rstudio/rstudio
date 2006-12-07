@@ -17,6 +17,9 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.dev.js.ast.JsBlock;
 
+/**
+ * Produces a deferred binding property value by executing JavaScript code.
+ */
 public class PropertyProvider {
 
   private JsBlock body;

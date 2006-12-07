@@ -21,6 +21,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+/**
+ * A typed map of deferred binding properties.
+ */
 public class Properties {
 
   private final Map map = new HashMap();

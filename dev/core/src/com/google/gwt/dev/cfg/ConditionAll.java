@@ -21,6 +21,10 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 
 import java.util.Iterator;
 
+/**
+ * A compound condition that is only satisfied if all of its children are
+ * satisfied.
+ */
 public class ConditionAll extends CompoundCondition {
 
   public ConditionAll() {

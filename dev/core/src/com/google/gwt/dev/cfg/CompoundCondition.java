@@ -15,6 +15,10 @@
  */
 package com.google.gwt.dev.cfg;
 
+/**
+ * Abstract base class for various kinds of compound deferred binding
+ * conditions.
+ */
 public abstract class CompoundCondition extends Condition {
 
   private final Conditions conditions = new Conditions();
