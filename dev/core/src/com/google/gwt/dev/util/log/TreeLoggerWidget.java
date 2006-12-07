@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.util.log;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -38,7 +52,7 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
    * Useful for debugging, this method creates a standalone window in a background thread and
    * returns a logger you can use to write to it.
    */
-  public synchronized static AbstractTreeLogger getAsDetachedWindow(final String caption,
+  public static synchronized AbstractTreeLogger getAsDetachedWindow(final String caption,
       final int width, final int height, final boolean autoScroll) {
 
     if (singletonWindowLogger != null) {
@@ -118,27 +132,27 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
 
     // The tree.
     //
-    fTree = new Tree(sash, SWT.BORDER | SWT.SHADOW_IN);
-    fTree.setLinesVisible(false);
-    fTree.addSelectionListener(this);
-    fTree.setFocus();
-    fTree.addKeyListener(new KeyAdapter() {
+    tree = new Tree(sash, SWT.BORDER | SWT.SHADOW_IN);
+    tree.setLinesVisible(false);
+    tree.addSelectionListener(this);
+    tree.setFocus();
+    tree.addKeyListener(new KeyAdapter() {
       public void keyPressed(KeyEvent e) {
         if (e.keyCode == 'c' && e.stateMask == SWT.CTRL) {
           // Copy subtree to clipboard.
           //
-          copyTreeSelectionToClipboard(fTree);
+          copyTreeSelectionToClipboard(tree);
         }
       }
     });
 
-    fLogger = new TreeItemLogger();
+    logger = new TreeItemLogger();
 
     // The detail
-    fDetails = new Text(sash, SWT.MULTI | SWT.WRAP | SWT.READ_ONLY | SWT.BORDER | SWT.V_SCROLL);
+    details = new Text(sash, SWT.MULTI | SWT.WRAP | SWT.READ_ONLY | SWT.BORDER | SWT.V_SCROLL);
     final Color detailsBgColor = new Color(null, 255, 255, 255);
-    fDetails.setBackground(detailsBgColor);
-    fDetails.addDisposeListener(new DisposeListener() {
+    details.setBackground(detailsBgColor);
+    details.addDisposeListener(new DisposeListener() {
       public void widgetDisposed(DisposeEvent arg0) {
         detailsBgColor.dispose();
       }
@@ -150,13 +164,14 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
   }
 
   public void collapseAll() {
-    TreeItem[] items = fTree.getItems();
+    TreeItem[] items = tree.getItems();
     for (int i = 0, n = items.length; i < n; ++i) {
       TreeItem item = items[i];
       collapseAll(item);
     }
-    if (items.length > 0)
-      fTree.setSelection(new TreeItem[]{items[0]});
+    if (items.length > 0) {
+      tree.setSelection(new TreeItem[]{items[0]});
+    }
   }
 
   public void collapseAll(TreeItem from) {
@@ -169,13 +184,14 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
   }
 
   public void expandAll() {
-    TreeItem[] items = fTree.getItems();
+    TreeItem[] items = tree.getItems();
     for (int i = 0, n = items.length; i < n; ++i) {
       TreeItem item = items[i];
       expandAll(item);
     }
-    if (items.length > 0)
-      fTree.setSelection(new TreeItem[]{items[0]});
+    if (items.length > 0) {
+      tree.setSelection(new TreeItem[]{items[0]});
+    }
   }
 
   public void expandAll(TreeItem from) {
@@ -188,12 +204,12 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
   }
 
   public AbstractTreeLogger getLogger() {
-    return fLogger;
+    return logger;
   }
 
   public void removeAll() {
-    fTree.removeAll();
-    fDetails.setText("");
+    tree.removeAll();
+    details.setText("");
   }
 
   public synchronized void treeCollapsed(TreeEvent treeEvent) {
@@ -214,8 +230,9 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
     //
     TreeItemLogger.LogEvent logEvent = null;
     Object testLogEvent = item.getData();
-    if (testLogEvent instanceof TreeItemLogger.LogEvent)
+    if (testLogEvent instanceof TreeItemLogger.LogEvent) {
       logEvent = (LogEvent) testLogEvent;
+    }
 
     // Build a detail string.
     //
@@ -243,7 +260,7 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
       }
     }
 
-    fDetails.setText(sb.toString());
+    details.setText(sb.toString());
   }
 
   protected void appendTreeItemText(PrintWriter result, TreeItem[] items, int depth) {
@@ -280,17 +297,18 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
 
     display.timerExec(flushDelay, new Runnable() {
       public void run() {
-        if (fTree.isDisposed())
+        if (tree.isDisposed()) {
           return;
+        }
 
-        if (fLogger.uiFlush(fTree)) {
+        if (logger.uiFlush(tree)) {
           // Sync to the end of the tree.
           //
           if (autoScroll) {
-            TreeItem lastItem = findLastVisibleItem(fTree);
+            TreeItem lastItem = findLastVisibleItem(tree);
             if (lastItem != null) {
-              fTree.setSelection(new TreeItem[]{lastItem});
-              fTree.showItem(lastItem);
+              tree.setSelection(new TreeItem[]{lastItem});
+              tree.showItem(lastItem);
               expandAllChildren(lastItem);
               syncDetailsPane(lastItem);
             }
@@ -343,7 +361,7 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
   }
 
   private boolean autoScroll;
-  private final Text fDetails;
-  private final TreeItemLogger fLogger;
-  private final Tree fTree;
+  private final Text details;
+  private final TreeItemLogger logger;
+  private final Tree tree;
 }

@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.util.log;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -14,14 +28,14 @@ public abstract class AbstractTreeLogger implements TreeLogger {
   private static class UncommittedBranchData {
 
     public UncommittedBranchData(Type type, String message, Throwable exception) {
-      fCaught = exception;
-      fMessage = message;
-      fType = type;
+      caught = exception;
+      this.message = message;
+      this.type = type;
     }
 
-    public final Throwable fCaught;
-    public final String fMessage;
-    public final TreeLogger.Type fType;
+    public final Throwable caught;
+    public final String message;
+    public final TreeLogger.Type type;
   }
 
   public static String getStackTraceAsString(Throwable e) {
@@ -104,21 +118,21 @@ public abstract class AbstractTreeLogger implements TreeLogger {
     AbstractTreeLogger childLogger = doBranch();
 
     // Set up the child logger.
-    childLogger.fLogLevel = fLogLevel;
+    childLogger.logLevel = logLevel;
 
     // Take a snapshot of the index that the branched child should have.
     //
-    childLogger.fIndexWithinMyParent = childIndex;
+    childLogger.indexWithinMyParent = childIndex;
 
     // Have the child hang onto this (its parent logger).
     //
-    childLogger.fParent = this;
+    childLogger.parent = this;
 
     // We can avoid committing this branch entry until and unless a some
     // child (or grandchild) tries to log something that is loggable,
     // in which case there will be cascading commits of the parent branches.
     //
-    childLogger.fUncommitted = new UncommittedBranchData(type, msg, caught);
+    childLogger.uncommitted = new UncommittedBranchData(type, msg, caught);
 
     // Decide whether we want to log the branch message eagerly or lazily.
     //
@@ -139,30 +153,30 @@ public abstract class AbstractTreeLogger implements TreeLogger {
   private synchronized void commitMyBranchEntryInMyParentLogger() {
     // (Only the root logger doesn't have a parent.)
     //
-    if (fParent != null) {
-      if (fUncommitted != null) {
+    if (parent != null) {
+      if (uncommitted != null) {
         // Commit the parent first.
         //
-        fParent.commitMyBranchEntryInMyParentLogger();
+        parent.commitMyBranchEntryInMyParentLogger();
 
         // Let the subclass do its thing to commit this branch.
         //
-        fParent.doCommitBranch(this, fUncommitted.fType, fUncommitted.fMessage,
-          fUncommitted.fCaught);
+        parent.doCommitBranch(this, uncommitted.type, uncommitted.message,
+          uncommitted.caught);
 
         // Release the uncommitted state.
         //
-        fUncommitted = null;
+        uncommitted = null;
       }
     }
   }
 
   public final AbstractTreeLogger getParentLogger() {
-    return fParent;
+    return parent;
   }
 
   public final synchronized boolean isLoggable(TreeLogger.Type type) {
-    TreeLogger.Type maxLevel = fLogLevel;
+    TreeLogger.Type maxLevel = logLevel;
     while (maxLevel != null && maxLevel != type) {
       maxLevel = maxLevel.getParent();
     }
@@ -197,7 +211,7 @@ public abstract class AbstractTreeLogger implements TreeLogger {
     if (type == null) {
       type = TreeLogger.INFO;
     }
-    fLogLevel = type;
+    logLevel = type;
   }
 
   public String toString() {
@@ -226,13 +240,13 @@ public abstract class AbstractTreeLogger implements TreeLogger {
       TreeLogger.Type type, String msg, Throwable caught);
 
   private String getLoggerId() {
-    if (fParent != null) {
-      if (fParent.fParent == null) {
+    if (parent != null) {
+      if (parent.parent == null) {
         // Top-level
-        return fParent.getLoggerId() + getBranchedIndex();
+        return parent.getLoggerId() + getBranchedIndex();
       } else {
         // Nested
-        return fParent.getLoggerId() + "." + getBranchedIndex();
+        return parent.getLoggerId() + "." + getBranchedIndex();
       }
     } else {
       // The root
@@ -241,20 +255,20 @@ public abstract class AbstractTreeLogger implements TreeLogger {
   }
 
   private int allocateNextChildIndex() {
-    synchronized (fNextChildIndexLock) {
+    synchronized (nextChildIndexLock) {
       // postincrement because we want indices to start at 0
-      return fNextChildIndex++;
+      return nextChildIndex++;
     }
   }
 
   public final int getBranchedIndex() {
-    return fIndexWithinMyParent;
+    return indexWithinMyParent;
   }
 
-  private UncommittedBranchData fUncommitted;
-  private TreeLogger.Type fLogLevel = TreeLogger.ALL;
-  public int fIndexWithinMyParent;
-  private int fNextChildIndex;
-  private final Object fNextChildIndexLock = new Object();
-  private AbstractTreeLogger fParent;
+  private UncommittedBranchData uncommitted;
+  private TreeLogger.Type logLevel = TreeLogger.ALL;
+  public int indexWithinMyParent;
+  private int nextChildIndex;
+  private final Object nextChildIndexLock = new Object();
+  private AbstractTreeLogger parent;
 }

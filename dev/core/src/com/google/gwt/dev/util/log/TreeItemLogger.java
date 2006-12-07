@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.util.log;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -76,16 +90,16 @@ public final class TreeItemLogger extends AbstractTreeLogger {
         // the Tree.
         //
         TreeItemLogger parentLogger = (TreeItemLogger) logger.getParentLogger();
-        if (parentLogger.fLazyTreeItem == null) {
+        if (parentLogger.lazyTreeItem == null) {
           // Is top level.
           //
           treeItem = new TreeItem(tree, SWT.NONE);
-          logger.fLazyTreeItem = treeItem;
-        } else if (!parentLogger.fLazyTreeItem.isDisposed()) {
+          logger.lazyTreeItem = treeItem;
+        } else if (!parentLogger.lazyTreeItem.isDisposed()) {
           // Is not top level, but still valid to write to.
           //
-          treeItem = new TreeItem(parentLogger.fLazyTreeItem, SWT.NONE);
-          logger.fLazyTreeItem = treeItem;
+          treeItem = new TreeItem(parentLogger.lazyTreeItem, SWT.NONE);
+          logger.lazyTreeItem = treeItem;
         } else {
           // The tree item associated with this logger's parent has been
           // disposed, so we simply ignore all pending updates related to it.
@@ -101,14 +115,14 @@ public final class TreeItemLogger extends AbstractTreeLogger {
         // case we create TreeItems underneath the branched logger's TreeItem
         // (which cannot be null because of the careful ordering of log events).
         //
-        if (logger.fLazyTreeItem == null) {
+        if (logger.lazyTreeItem == null) {
           // Is top level.
           //
           treeItem = new TreeItem(tree, SWT.NONE);
-        } else if (!logger.fLazyTreeItem.isDisposed()) {
+        } else if (!logger.lazyTreeItem.isDisposed()) {
           // Is not top level, but still valid to write to.
           //
-          treeItem = new TreeItem(logger.fLazyTreeItem, SWT.NONE);
+          treeItem = new TreeItem(logger.lazyTreeItem, SWT.NONE);
         } else {
           // The tree item associated with this logger's parent has been
           // disposed, so we simply ignore all pending updates related to it.
@@ -126,8 +140,9 @@ public final class TreeItemLogger extends AbstractTreeLogger {
         if (caught != null) {
           label = caught.getMessage();
 
-          if (label == null || label.trim().length() == 0)
+          if (label == null || label.trim().length() == 0) {
             label = caught.toString();
+          }
         }
       }
       treeItem.setText(label);
@@ -248,12 +263,12 @@ public final class TreeItemLogger extends AbstractTreeLogger {
   // These don't get disposed, but they do last for the entire process, so
   // not a big deal.
   //
-  private final static Image imageDebug = tryLoadImage("log-item-debug.gif");
-  private final static Image imageError = tryLoadImage("log-item-error.gif");
-  private final static Image imageInfo = tryLoadImage("log-item-info.gif");
-  private final static Image imageSpam = tryLoadImage("log-item-spam.gif");
-  private final static Image imageTrace = tryLoadImage("log-item-trace.gif");
-  private final static Image imageWarning = tryLoadImage("log-item-warning.gif");
+  private static final Image imageDebug = tryLoadImage("log-item-debug.gif");
+  private static final Image imageError = tryLoadImage("log-item-error.gif");
+  private static final Image imageInfo = tryLoadImage("log-item-info.gif");
+  private static final Image imageSpam = tryLoadImage("log-item-spam.gif");
+  private static final Image imageTrace = tryLoadImage("log-item-trace.gif");
+  private static final Image imageWarning = tryLoadImage("log-item-warning.gif");
 
   private static Image tryLoadImage(String simpleName) {
     InputStream is = TreeItemLogger.class.getResourceAsStream(simpleName);
@@ -278,7 +293,7 @@ public final class TreeItemLogger extends AbstractTreeLogger {
    * Constructs the top-level TreeItemLogger.
    */
   public TreeItemLogger() {
-    fSharedPendingUpdates = new PendingUpdates();
+    sharedPendingUpdates = new PendingUpdates();
   }
 
   /**
@@ -286,14 +301,14 @@ public final class TreeItemLogger extends AbstractTreeLogger {
    */
   private TreeItemLogger(PendingUpdates sharedPendingUpdates) {
     // Inherit the one and only update list from my parent.
-    fSharedPendingUpdates = sharedPendingUpdates;
+    this.sharedPendingUpdates = sharedPendingUpdates;
   }
 
   public void markLoggerDead() {
     // Cannot kill the root logger, even if attempted.
     //
     if (getParentLogger() != null) {
-      fDead = true;
+      dead = true;
     }
   }
 
@@ -303,11 +318,11 @@ public final class TreeItemLogger extends AbstractTreeLogger {
    * @return <code>true</code> if any new entries were written
    */
   public boolean uiFlush(Tree tree) {
-    return fSharedPendingUpdates.uiFlush(tree);
+    return sharedPendingUpdates.uiFlush(tree);
   }
 
   protected AbstractTreeLogger doBranch() {
-    return new TreeItemLogger(fSharedPendingUpdates);
+    return new TreeItemLogger(sharedPendingUpdates);
   }
 
   protected void doCommitBranch(AbstractTreeLogger childBeingCommitted,
@@ -317,16 +332,17 @@ public final class TreeItemLogger extends AbstractTreeLogger {
     }
 
     TreeItemLogger commitChild = (TreeItemLogger) childBeingCommitted;
-    fSharedPendingUpdates.add(new LogEvent(commitChild, true, commitChild
+    sharedPendingUpdates.add(new LogEvent(commitChild, true, commitChild
       .getBranchedIndex(), type, msg, caught));
   }
 
   protected void doLog(int index, TreeLogger.Type type, String msg,
       Throwable caught) {
-    if (isLoggerDead())
+    if (isLoggerDead()) {
       return;
+    }
 
-    fSharedPendingUpdates.add(new LogEvent(this, false, index, type, msg,
+    sharedPendingUpdates.add(new LogEvent(this, false, index, type, msg,
       caught));
   }
 
@@ -337,8 +353,9 @@ public final class TreeItemLogger extends AbstractTreeLogger {
   private boolean isLoggerDead() {
     // Deadness was cached.
     //
-    if (fDead)
+    if (dead) {
       return true;
+    }
 
     // Check upward in the parent chain for any dead parent.
     //
@@ -363,7 +380,7 @@ public final class TreeItemLogger extends AbstractTreeLogger {
     return false;
   }
 
-  private boolean fDead;
-  private TreeItem fLazyTreeItem;
-  private final PendingUpdates fSharedPendingUpdates;
+  private boolean dead;
+  private TreeItem lazyTreeItem;
+  private final PendingUpdates sharedPendingUpdates;
 }
