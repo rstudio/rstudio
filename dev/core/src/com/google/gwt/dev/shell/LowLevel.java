@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.util.tools.Utility;
@@ -15,16 +29,61 @@ import java.lang.reflect.Field;
  */
 public class LowLevel {
 
-  /**
-   * This class is not instantiable.
-   */
-  private LowLevel() {
-  }
-
-  public static final String PACKAGE_PATH = LowLevel.class.getPackage()
-    .getName().replace('.', '/').concat("/");
+  public static final String PACKAGE_PATH = LowLevel.class.getPackage().getName().replace(
+      '.', '/').concat("/");
 
   private static boolean sInitialized = false;
+
+  /**
+   * Clobbers a field on an object to which we do not have access.
+   */
+  public static void clobberFieldObjectValue(Class victimClass,
+      Object victimObject, String fieldName, Object value) {
+    Throwable rethrow = null;
+    try {
+      Field victimField = victimClass.getDeclaredField(fieldName);
+      victimField.setAccessible(true);
+      victimField.set(victimObject, value);
+      return;
+    } catch (IllegalArgumentException e) {
+      rethrow = e;
+    } catch (SecurityException e) {
+      rethrow = e;
+    } catch (IllegalAccessException e) {
+      rethrow = e;
+    } catch (NoSuchFieldException e) {
+      rethrow = e;
+    }
+    throw new RuntimeException("Unable to clobber field '" + fieldName
+        + "' from class " + victimClass.getName(), rethrow);
+  }
+
+  /**
+   * Clobbers a field on an object to which we do not have access.
+   */
+  public static void clobberFieldObjectValue(Object victim, String fieldName,
+      Object value) {
+    if (victim != null) {
+      clobberFieldObjectValue(victim.getClass(), victim, fieldName, value);
+    } else {
+      throw new NullPointerException("victim must not be null");
+    }
+  }
+
+  /**
+   * Deletes a global ref on the specified object, invalidating its handle.
+   */
+  public static void deleteGlobalRefInt(int globalRef) {
+    _deleteGlobalRefInt(globalRef);
+  }
+
+  /**
+   * Gets an environment variable. This is to replace the deprecated
+   * {@link System#getenv(java.lang.String)}.
+   */
+  public static String getEnv(String key) {
+    return _getEnv(key);
+  }
 
   public static synchronized void init() {
     if (!sInitialized) {
@@ -72,57 +131,6 @@ public class LowLevel {
   }
 
   /**
-   * Clobbers a field on an object to which we do not have access.
-   */
-  public static void clobberFieldObjectValue(Class victimClass,
-      Object victimObject, String fieldName, Object value) {
-    Throwable rethrow = null;
-    try {
-      Field victimField = victimClass.getDeclaredField(fieldName);
-      victimField.setAccessible(true);
-      victimField.set(victimObject, value);
-      return;
-    } catch (IllegalArgumentException e) {
-      rethrow = e;
-    } catch (SecurityException e) {
-      rethrow = e;
-    } catch (IllegalAccessException e) {
-      rethrow = e;
-    } catch (NoSuchFieldException e) {
-      rethrow = e;
-    }
-    throw new RuntimeException("Unable to clobber field '" + fieldName
-      + "' from class " + victimClass.getName(), rethrow);
-  }
-
-  /**
-   * Clobbers a field on an object to which we do not have access.
-   */
-  public static void clobberFieldObjectValue(Object victim, String fieldName,
-      Object value) {
-    if (victim != null) {
-      clobberFieldObjectValue(victim.getClass(), victim, fieldName, value);
-    } else {
-      throw new NullPointerException("victim must not be null");
-    }
-  }
-
-  /**
-   * Deletes a global ref on the specified object, invalidating its handle.
-   */
-  public static void deleteGlobalRefInt(int globalRef) {
-    _deleteGlobalRefInt(globalRef);
-  }
-
-  /**
-   * Gets an environment variable. This is to replace the deprecated
-   * {@link System#getenv(java.lang.String)}.
-   */
-  public static String getEnv(String key) {
-    return _getEnv(key);
-  }
-
-  /**
    * Creates a global ref on the specified object, returning its int handle.
    */
   public static int newGlobalRefInt(Object o) {
@@ -157,7 +165,7 @@ public class LowLevel {
       rethrow = e;
     }
     throw new RuntimeException("Unable to snatch field '" + fieldName
-      + "' from class " + victimClass.getName(), rethrow);
+        + "' from class " + victimClass.getName(), rethrow);
   }
 
   /**
@@ -178,5 +186,11 @@ public class LowLevel {
   private static native int _newGlobalRefInt(Object o);
 
   private static native Object _objFromGlobalRefInt(int globalRef);
+
+  /**
+   * This class is not instantiable.
+   */
+  private LowLevel() {
+  }
 
 }

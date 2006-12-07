@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -17,10 +31,10 @@ import java.util.Map;
 
 /**
  * 
- * TODO : we should refactor this class to move the getClassInfoByDispId, 
+ * TODO : we should refactor this class to move the getClassInfoByDispId,
  * getDispId, getMethodDispatch and putMethodDispatch into a separate entity
- * since they really do not interact with the CompilingClassLoader 
- * functionality. 
+ * since they really do not interact with the CompilingClassLoader
+ * functionality.
  */
 public final class CompilingClassLoader extends ClassLoader {
 
@@ -29,6 +43,23 @@ public final class CompilingClassLoader extends ClassLoader {
    * {@link DispatchClassInfo DispatchClassInfos}.
    */
   private final class DispatchClassInfoOracle {
+
+    /**
+     * Class identifier to DispatchClassInfo mapping.
+     */
+    private final ArrayList classIdToClassInfo = new ArrayList();
+
+    /**
+     * Binary or source class name to DispatchClassInfo map.
+     */
+    private final Map classNameToClassInfo = new HashMap();
+
+    /**
+     * Class to ClassInfo map - this is only necessary to make sure that we have
+     * only only {@link DispatchClassInfo} for all of the different permutations
+     * of binary and source name combinations.
+     */
+    private final Map classToClassInfo = new HashMap();
 
     /**
      * Clears out the contents of this oracle.
@@ -165,11 +196,9 @@ public final class CompilingClassLoader extends ClassLoader {
      * @return {@link DispatchClassInfo} associated with the binary or source
      *         class name; null if there is none
      */
-    private DispatchClassInfo getClassInfoFromClassName(
-        String className) {
+    private DispatchClassInfo getClassInfoFromClassName(String className) {
 
-      DispatchClassInfo dispClassInfo = (DispatchClassInfo) classNameToClassInfo
-          .get(className);
+      DispatchClassInfo dispClassInfo = (DispatchClassInfo) classNameToClassInfo.get(className);
       if (dispClassInfo != null) {
         // return the cached value
         return dispClassInfo;
@@ -215,24 +244,15 @@ public final class CompilingClassLoader extends ClassLoader {
     private int synthesizeDispId(int classId, int memberId) {
       return (classId << 16) | memberId;
     }
-
-    /**
-     * Class identifier to DispatchClassInfo mapping.
-     */
-    private final ArrayList classIdToClassInfo = new ArrayList();
-
-    /**
-     * Binary or source class name to DispatchClassInfo map.
-     */
-    private final Map classNameToClassInfo = new HashMap();
-
-    /**
-     * Class to ClassInfo map - this is only necessary to make sure that we have
-     * only only {@link DispatchClassInfo} for all of the different permutations
-     * of binary and source name combinations.
-     */
-    private final Map classToClassInfo = new HashMap();
   }
+
+  private final ByteCodeCompiler compiler;
+
+  private final DispatchClassInfoOracle dispClassInfoOracle = new DispatchClassInfoOracle();
+
+  private final TreeLogger logger;
+
+  private final Map methodToDispatch = new HashMap();
 
   public CompilingClassLoader(TreeLogger logger, ByteCodeCompiler compiler)
       throws UnableToCompleteException {
@@ -370,9 +390,4 @@ public final class CompilingClassLoader extends ClassLoader {
 
     return false;
   }
-
-  private final ByteCodeCompiler compiler;
-  private final DispatchClassInfoOracle dispClassInfoOracle = new DispatchClassInfoOracle();
-  private final TreeLogger logger;
-  private final Map methodToDispatch = new HashMap();
 }

@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell;
 
 import java.lang.reflect.Constructor;
@@ -24,24 +38,14 @@ public abstract class Handle {
   private static Object toBeReleasedLock = new Object();
 
   private static Handle sImpl;
-  
-  protected Handle() {
-    if (sImpl != null) {
-      throw new RuntimeException("More than one Handle class!");
-    }
-    sImpl = this;
-  }
 
-  protected abstract void lockPtr(int ptr);
-  protected abstract void unlockPtr(int ptr);
-  
   public static Object createHandle(Class type, int ptr) {
     try {
       checkThread();
-      Constructor ctor = type.getDeclaredConstructor(new Class[]{Integer.TYPE});
+      Constructor ctor = type.getDeclaredConstructor(new Class[] {Integer.TYPE});
       ctor.setAccessible(true);
 
-      Object handle = ctor.newInstance(new Object[]{new Integer(ptr)});
+      Object handle = ctor.newInstance(new Object[] {new Integer(ptr)});
       sImpl.lockPtr(ptr);
       return handle;
     } catch (InstantiationException e) {
@@ -59,6 +63,18 @@ public abstract class Handle {
     }
   }
 
+  /**
+   * Moves this ptr into a queue of COM objects that are ready to be released.
+   */
+  public static void enqueuePtr(int opaque) {
+    // Add to the queue to be released by the main thread later.
+    //
+    Integer intOpaque = new Integer(opaque);
+    synchronized (toBeReleasedLock) {
+      toBeReleased.add(intOpaque);
+    }
+  }
+
   public static int getPtrFromHandle(Object handle) {
     try {
       checkThread();
@@ -67,7 +83,7 @@ public abstract class Handle {
       while (handleClass != null && !handleClass.getName().equals(HANDLE_CLASS)) {
         handleClass = handleClass.getSuperclass();
       }
-      
+
       if (handleClass == null) {
         throw new RuntimeException("Error reading handle");
       }
@@ -104,18 +120,6 @@ public abstract class Handle {
   }
 
   /**
-   * Moves this ptr into a queue of COM objects that are ready to be released.
-   */
-  public static void enqueuePtr(int opaque) {
-    // Add to the queue to be released by the main thread later.
-    //
-    Integer intOpaque = new Integer(opaque);
-    synchronized (toBeReleasedLock) {
-      toBeReleased.add(intOpaque);
-    }
-  }
-
-  /**
    * Ensures that the current thread is actually the UI thread.
    */
   private static synchronized void checkThread() {
@@ -125,4 +129,15 @@ public abstract class Handle {
       throw new RuntimeException("This object has permanent thread affinity.");
     }
   }
+
+  protected Handle() {
+    if (sImpl != null) {
+      throw new RuntimeException("More than one Handle class!");
+    }
+    sImpl = this;
+  }
+
+  protected abstract void lockPtr(int ptr);
+
+  protected abstract void unlockPtr(int ptr);
 }

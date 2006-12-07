@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.GeneratorContext;
@@ -47,6 +61,12 @@ public class StandardGeneratorContext implements GeneratorContext {
   public static class GeneratedCompilationUnitProvider extends
       StaticCompilationUnitProvider {
 
+    public CharArrayWriter caw;
+
+    public PrintWriter pw;
+
+    public char[] source;
+
     public GeneratedCompilationUnitProvider(String packageName,
         String simpleTypeName) {
       super(packageName, simpleTypeName, null);
@@ -71,10 +91,6 @@ public class StandardGeneratorContext implements GeneratorContext {
       }
       return source;
     }
-
-    public CharArrayWriter caw;
-    public PrintWriter pw;
-    public char[] source;
   }
 
   private static final class GeneratedCUP extends URLCompilationUnitProvider {
@@ -88,6 +104,20 @@ public class StandardGeneratorContext implements GeneratorContext {
       return 0L;
     }
   }
+
+  private final CacheManager cacheManager;
+
+  private final Set committedGeneratedCups = new HashSet();
+
+  private final File genDir;
+
+  private final Set generatedTypeNames = new HashSet();
+
+  private final PropertyOracle propOracle;
+
+  private final TypeOracle typeOracle;
+
+  private final Map uncommittedGeneratedCupsByPrintWriter = new IdentityHashMap();
 
   /**
    * Normally, the compiler host would be aware of the same types that are
@@ -105,16 +135,14 @@ public class StandardGeneratorContext implements GeneratorContext {
    * Commits a pending generated type.
    */
   public final void commit(TreeLogger logger, PrintWriter pw) {
-    GeneratedCompilationUnitProvider gcup =
-        (GeneratedCompilationUnitProvider) uncommittedGeneratedCupsByPrintWriter
-          .get(pw);
+    GeneratedCompilationUnitProvider gcup = (GeneratedCompilationUnitProvider) uncommittedGeneratedCupsByPrintWriter.get(pw);
     if (gcup != null) {
       gcup.commit();
       uncommittedGeneratedCupsByPrintWriter.remove(pw);
       committedGeneratedCups.add(gcup);
     } else {
       logger.log(TreeLogger.WARN,
-        "Generator attempted to commit an unknown stream", null);
+          "Generator attempted to commit an unknown stream", null);
     }
   }
 
@@ -140,16 +168,14 @@ public class StandardGeneratorContext implements GeneratorContext {
 
         TreeLogger subBranch = null;
         if (branch.isLoggable(TreeLogger.DEBUG)) {
-          subBranch =
-              branch
-                .branch(TreeLogger.DEBUG, "Generated source files...", null);
+          subBranch = branch.branch(TreeLogger.DEBUG,
+              "Generated source files...", null);
         }
 
         assert (cacheManager.getTypeOracle() == typeOracle);
         TypeOracleBuilder builder = new TypeOracleBuilder(cacheManager);
         for (Iterator iter = committedGeneratedCups.iterator(); iter.hasNext();) {
-          GeneratedCompilationUnitProvider gcup =
-              (GeneratedCompilationUnitProvider) iter.next();
+          GeneratedCompilationUnitProvider gcup = (GeneratedCompilationUnitProvider) iter.next();
           String typeName = gcup.getTypeName();
           String genTypeName = gcup.getPackageName() + "." + typeName;
           genTypeNames.add(genTypeName);
@@ -184,15 +210,11 @@ public class StandardGeneratorContext implements GeneratorContext {
       // Remind the user if there uncommitted cups.
       //
       if (!uncommittedGeneratedCupsByPrintWriter.isEmpty()) {
-        String msg =
-            "For the following type(s), generated source was never committed (did you forget to call commit()?)";
+        String msg = "For the following type(s), generated source was never committed (did you forget to call commit()?)";
         logger = logger.branch(TreeLogger.WARN, msg, null);
 
-        for (Iterator iter =
-            uncommittedGeneratedCupsByPrintWriter.values().iterator(); iter
-          .hasNext();) {
-          StaticCompilationUnitProvider cup =
-              (StaticCompilationUnitProvider) iter.next();
+        for (Iterator iter = uncommittedGeneratedCupsByPrintWriter.values().iterator(); iter.hasNext();) {
+          StaticCompilationUnitProvider cup = (StaticCompilationUnitProvider) iter.next();
           String typeName = cup.getPackageName() + "." + cup.getTypeName();
           logger.log(TreeLogger.WARN, typeName, null);
         }
@@ -221,17 +243,16 @@ public class StandardGeneratorContext implements GeneratorContext {
     JClassType existingType = typeOracle.findType(packageName, simpleTypeName);
     if (existingType != null) {
       logger.log(TreeLogger.DEBUG, "Type '" + typeName
-        + "' already exists and will not be re-created ", null);
+          + "' already exists and will not be re-created ", null);
       return null;
     }
 
     // Has anybody tried to create this type during this iteraion?
     //
     if (generatedTypeNames.contains(typeName)) {
-      final String msg =
-          "A request to create type '"
-            + typeName
-            + "' was received while the type itself was being created; this might be a generator or configuration bug";
+      final String msg = "A request to create type '"
+          + typeName
+          + "' was received while the type itself was being created; this might be a generator or configuration bug";
       logger.log(TreeLogger.WARN, msg, null);
       return null;
     }
@@ -239,8 +260,8 @@ public class StandardGeneratorContext implements GeneratorContext {
     // The type isn't there, so we can let the caller create it. Remember that
     // it is pending so another attempt to create the same type will fail.
     //
-    GeneratedCompilationUnitProvider gcup =
-        new GeneratedCompilationUnitProvider(packageName, simpleTypeName);
+    GeneratedCompilationUnitProvider gcup = new GeneratedCompilationUnitProvider(
+        packageName, simpleTypeName);
     uncommittedGeneratedCupsByPrintWriter.put(gcup.pw, gcup);
     generatedTypeNames.add(typeName);
 
@@ -281,24 +302,15 @@ public class StandardGeneratorContext implements GeneratorContext {
     Throwable caught = null;
     try {
       URL fileURL = srcFile.toURL();
-      URLCompilationUnitProvider fileBaseCup =
-          new GeneratedCUP(fileURL, cup.getPackageName());
+      URLCompilationUnitProvider fileBaseCup = new GeneratedCUP(fileURL,
+          cup.getPackageName());
       return fileBaseCup;
     } catch (MalformedURLException e) {
       caught = e;
     }
     logger.log(TreeLogger.ERROR,
-      "Internal error: cannot build URL from synthesized file name '"
-        + srcFile.getAbsolutePath() + "'", caught);
+        "Internal error: cannot build URL from synthesized file name '"
+            + srcFile.getAbsolutePath() + "'", caught);
     throw new UnableToCompleteException();
   }
-
-  private final CacheManager cacheManager;
-  private final Set committedGeneratedCups = new HashSet();
-  private final File genDir;
-  private final Set generatedTypeNames = new HashSet();
-  private final PropertyOracle propOracle;
-  private final TypeOracle typeOracle;
-  private final Map uncommittedGeneratedCupsByPrintWriter =
-      new IdentityHashMap();
 }

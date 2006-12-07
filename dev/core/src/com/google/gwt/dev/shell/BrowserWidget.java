@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -50,28 +64,34 @@ import java.util.Set;
 public abstract class BrowserWidget extends Composite {
 
   private class Toolbar extends HeaderBarBase implements SelectionListener {
+    private final ToolItem backButton;
+
+    private final ToolItem forwardButton;
+
+    private final ToolItem openWebModeButton;
+
+    private final ToolItem refreshButton;
+    private final ToolItem stopButton;
+
     public Toolbar(Composite parent) {
       super(parent);
 
       backButton = newItem("back.gif", "   &Back   ", "Go back one state");
       backButton.addSelectionListener(this);
 
-      forwardButton = newItem("forward.gif", "&Forward",
-        "Go forward one state");
+      forwardButton = newItem("forward.gif", "&Forward", "Go forward one state");
       forwardButton.addSelectionListener(this);
 
       refreshButton = newItem("refresh.gif", " &Refresh ", "Reload the page");
       refreshButton.addSelectionListener(this);
 
-      stopButton = newItem("stop.gif", "    &Stop    ",
-        "Stop loading the page");
+      stopButton = newItem("stop.gif", "    &Stop    ", "Stop loading the page");
       stopButton.addSelectionListener(this);
 
       newSeparator();
 
-      openWebModeButton = newItem("new-web-mode-window.gif",
-        "&Compile/Browse",
-        "Compiles and opens the current URL in the system browser");
+      openWebModeButton = newItem("new-web-mode-window.gif", "&Compile/Browse",
+          "Compiles and opens the current URL in the system browser");
       openWebModeButton.addSelectionListener(this);
       openWebModeButton.setEnabled(false);
     }
@@ -110,7 +130,7 @@ public abstract class BrowserWidget extends Composite {
           // Already logged by callee.
           //
           MessageBox msgBox = new MessageBox(getShell(), SWT.OK
-            | SWT.ICON_ERROR);
+              | SWT.ICON_ERROR);
           msgBox.setText("Compilation Failed");
           msgBox.setMessage("Compilation failed. Please see the log in the development shell for details.");
           msgBox.open();
@@ -127,15 +147,6 @@ public abstract class BrowserWidget extends Composite {
         launchExternalBrowser(logger, locationText);
       }
     }
-
-    private final ToolItem backButton;
-    private final ToolItem forwardButton;
-
-    private final ToolItem openWebModeButton;
-
-    private final ToolItem refreshButton;
-
-    private final ToolItem stopButton;
   }
 
   static void launchExternalBrowser(TreeLogger logger, String location) {
@@ -150,8 +161,8 @@ public abstract class BrowserWidget extends Composite {
         return;
       } catch (IOException e) {
         logger.log(TreeLogger.ERROR,
-          "Error launching GWT_EXTERNAL_BROWSER executable '" + browserCmd
-            + "'", e);
+            "Error launching GWT_EXTERNAL_BROWSER executable '" + browserCmd
+                + "'", e);
         return;
       }
     }
@@ -164,10 +175,9 @@ public abstract class BrowserWidget extends Composite {
         Runtime.getRuntime().exec(browserCmd);
         return;
       } catch (IOException e) {
-        logger.log(
-          TreeLogger.ERROR,
-          "Error launching gwt.browser.default executable '" + browserCmd + "'",
-          e);
+        logger.log(TreeLogger.ERROR,
+            "Error launching gwt.browser.default executable '" + browserCmd
+                + "'", e);
         return;
       }
     }
@@ -179,20 +189,38 @@ public abstract class BrowserWidget extends Composite {
         return;
       } else {
         logger.log(TreeLogger.ERROR, "Error launching external HTML program '"
-          + browserProgram.getName() + "'", null);
+            + browserProgram.getName() + "'", null);
         return;
       }
     }
 
     // We're out of options, so fail.
     logger.log(TreeLogger.ERROR,
-      "Unable to find a default external web browser", null);
+        "Unable to find a default external web browser", null);
 
     logger.log(
-      TreeLogger.WARN,
-      "Try setting the environment varable GWT_EXTERNAL_BROWSER to your web browser executable before launching the GWT shell",
-      null);
+        TreeLogger.WARN,
+        "Try setting the environment varable GWT_EXTERNAL_BROWSER to your web browser executable before launching the GWT shell",
+        null);
   }
+
+  protected Browser browser;
+
+  private Color bgColor = new Color(null, 239, 237, 216);
+
+  private Button goButton;
+
+  private final BrowserWidgetHost host;
+
+  private Text location;
+
+  private final TreeLogger logger;
+
+  private Label statusBar;
+
+  private Toolbar toolbar;
+
+  private Map moduleSpacesByName = new HashMap();
 
   public BrowserWidget(Composite parent, BrowserWidgetHost host) {
     super(parent, SWT.NONE);
@@ -306,7 +334,7 @@ public abstract class BrowserWidget extends Composite {
 
       space.dispose();
       logger.log(TreeLogger.SPAM, "Cleaning up resources for module "
-        + moduleName, null);
+          + moduleName, null);
     }
     moduleSpacesByName.clear();
 
@@ -429,13 +457,13 @@ public abstract class BrowserWidget extends Composite {
         // no opinion either way
         if (whitelistRuleFound == null && blacklistRuleFound == null) {
           if (DialogBase.confirmAction(
-            (Shell) getParent(),
-            "Browsing to remote sites is a security risk!  A malicious site could\r\n"
-              + "execute Java code though this browser window.  Only click \"Yes\" if you\r\n"
-              + "are sure you trust the remote site.  See the log for details and\r\n"
-              + "configuration instructions.\r\n" + "\r\n" + "\r\n"
-              + "Allow access to '" + url
-              + "' for the rest of this session?\r\n", "Security Warning")) {
+              (Shell) getParent(),
+              "Browsing to remote sites is a security risk!  A malicious site could\r\n"
+                  + "execute Java code though this browser window.  Only click \"Yes\" if you\r\n"
+                  + "are sure you trust the remote site.  See the log for details and\r\n"
+                  + "configuration instructions.\r\n" + "\r\n" + "\r\n"
+                  + "Allow access to '" + url
+                  + "' for the rest of this session?\r\n", "Security Warning")) {
             evt.doit = true;
             BrowserWidgetHostChecker.whitelistURL(url);
           } else {
@@ -470,13 +498,13 @@ public abstract class BrowserWidget extends Composite {
                 break;
               } else {
                 String msg = "Cannot find file '" + file.getAbsolutePath()
-                  + "'";
+                    + "'";
                 TreeLogger branch = logger.branch(TreeLogger.ERROR, msg, null);
                 if ("gwt-hosted.html".equalsIgnoreCase(file.getName())) {
                   branch.log(
-                    TreeLogger.ERROR,
-                    "If you want to open compiled output within this hosted browser, add '?gwt.hybrid' to the end of the URL",
-                    null);
+                      TreeLogger.ERROR,
+                      "If you want to open compiled output within this hosted browser, add '?gwt.hybrid' to the end of the URL",
+                      null);
                 }
               }
               file = file.getParentFile();
@@ -494,19 +522,18 @@ public abstract class BrowserWidget extends Composite {
           TreeLogger.Type msgType = TreeLogger.ERROR;
           if (!evt.doit) {
             header = logger.branch(msgType, "Unable to visit " + typeStr
-              + " URL: '" + url, null);
+                + " URL: '" + url, null);
           } else {
             msgType = TreeLogger.WARN;
-            header = logger.branch(
-              TreeLogger.WARN,
-              "Confirmation was required to visit " + typeStr + " URL: '" + url,
-              null);
+            header = logger.branch(TreeLogger.WARN,
+                "Confirmation was required to visit " + typeStr + " URL: '"
+                    + url, null);
           }
           if (blacklistRuleFound == null) {
             BrowserWidgetHostChecker.notifyUntrustedHost(url, header, msgType);
           } else {
             BrowserWidgetHostChecker.notifyBlacklistedHost(blacklistRuleFound,
-              url, header, msgType);
+                url, header, msgType);
           }
           setLocationText(browser.getUrl());
         }
@@ -533,14 +560,4 @@ public abstract class BrowserWidget extends Composite {
     int length = text.length();
     location.setSelection(length, length);
   }
-
-  protected Browser browser;
-  private Color bgColor = new Color(null, 239, 237, 216);
-  private Button goButton;
-  private final BrowserWidgetHost host;
-  private Text location;
-  private final TreeLogger logger;
-  private Label statusBar;
-  private Toolbar toolbar;
-  private Map moduleSpacesByName = new HashMap();
 }

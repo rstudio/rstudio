@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell;
 
 import java.lang.reflect.Field;
@@ -12,6 +26,14 @@ import java.util.HashMap;
  * various Java classes and assigns DISPID's to them.
  */
 public class DispatchClassInfo {
+
+  private Class cls;
+
+  private final int clsId;
+
+  private ArrayList memberById;
+
+  private HashMap memberIdByName;
 
   public DispatchClassInfo(Class cls, int classId) {
     this.cls = cls;
@@ -93,7 +115,7 @@ public class DispatchClassInfo {
         return "D";
       } else if (type.equals(byte.class)) {
         return "B";
-      } else { 
+      } else {
         throw new RuntimeException("Unexpected primitive type: "
             + type.getName());
       }
@@ -116,19 +138,19 @@ public class DispatchClassInfo {
         e.printStackTrace();
       } catch (NoSuchMethodException e) {
         /*
-         * Interfaces do not automatically inherit toString() implicitly.  If they
-         * have not defined a toString() method then we will pick the one from
-         * java.lang.Object::toString() method and use that at slot zero.
+         * Interfaces do not automatically inherit toString() implicitly. If
+         * they have not defined a toString() method then we will pick the one
+         * from java.lang.Object::toString() method and use that at slot zero.
          * 
          * TODO(mmendez): How should we handle the case where a user writes JSNI
-         * code to interact with an instance that is typed as a particular 
-         * interface?  Should a user write JSNI code as follows:
-         *  
-         *   x.@com.google.gwt.HasFocus::equals(Ljava/lang/Object;)(y) 
-         *   
+         * code to interact with an instance that is typed as a particular
+         * interface? Should a user write JSNI code as follows:
+         * 
+         * x.@com.google.gwt.HasFocus::equals(Ljava/lang/Object;)(y)
+         * 
          * or
          * 
-         *   x.@java.lang.Object::equals(Ljava/lang/Object;)(y)
+         * x.@java.lang.Object::equals(Ljava/lang/Object;)(y)
          */
         if (cls.isInterface()) {
           try {
@@ -137,10 +159,10 @@ public class DispatchClassInfo {
             e1.printStackTrace();
           }
         } else {
-          e.printStackTrace();  
+          e.printStackTrace();
         }
       }
-      
+
       memberIdByName = new HashMap();
       lazyInitTargetMembersUsingReflectionHelper(cls);
     }
@@ -152,7 +174,7 @@ public class DispatchClassInfo {
     if (superclass != null) {
       lazyInitTargetMembersUsingReflectionHelper(superclass);
     }
-    
+
     // Get the methods on this class/interface.
     //
     Method[] methods = targetClass.getDeclaredMethods();
@@ -169,12 +191,4 @@ public class DispatchClassInfo {
       addMember(fields[i], fields[i].getName());
     }
   }
-
-  private Class cls;
-
-  private final int clsId;
-
-  private ArrayList memberById;
-
-  private HashMap memberIdByName;
 }

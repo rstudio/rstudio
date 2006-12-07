@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -34,14 +48,11 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class GWTShellServlet extends HttpServlet {
 
-  /**
-   * When the GWT bootstrap JavaScript starts in hosted mode, it appends this
-   * query param to the url for the nocache file so that this servlet can
-   * generate one on-the-fly.
-   */
-  private static final String HOSTED_MODE_QUERY_PARAM = "h";
-
   private static class RequestParts {
+    public final String moduleName;
+
+    public final String partialPath;
+
     public RequestParts(HttpServletRequest request)
         throws UnableToCompleteException {
       String pathInfo = request.getPathInfo();
@@ -59,10 +70,30 @@ public class GWTShellServlet extends HttpServlet {
       }
       throw new UnableToCompleteException();
     }
-
-    public final String moduleName;
-    public final String partialPath;
   }
+
+  /**
+   * When the GWT bootstrap JavaScript starts in hosted mode, it appends this
+   * query param to the url for the nocache file so that this servlet can
+   * generate one on-the-fly.
+   */
+  private static final String HOSTED_MODE_QUERY_PARAM = "h";
+
+  private final Map loadedModulesByName = new HashMap();
+
+  private final Map loadedServletsByClassName = new HashMap();
+
+  private final Map modulesByServletPath = new HashMap();
+
+  private final Map mimeTypes = new HashMap();
+
+  private int nextRequestId;
+
+  private File outDir;
+
+  private final Object requestIdLock = new Object();
+
+  private TreeLogger topLogger;
 
   public GWTShellServlet() {
     initMimeTypes();
@@ -100,7 +131,7 @@ public class GWTShellServlet extends HttpServlet {
       parts = new RequestParts(request);
     } catch (UnableToCompleteException e) {
       sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND,
-        "Don't know what to do with this URL: '" + pathInfo + "'");
+          "Don't know what to do with this URL: '" + pathInfo + "'");
       return;
     }
 
@@ -135,7 +166,7 @@ public class GWTShellServlet extends HttpServlet {
 
       // Branch the logger in case we decide to log more below.
       logger = logger.branch(TreeLogger.TRACE, "Request " + id + ": " + url,
-        null);
+          null);
     }
 
     String servletClassName = null;
@@ -179,19 +210,19 @@ public class GWTShellServlet extends HttpServlet {
 
         if (servletClassName != null) {
           TreeLogger branch = logger.branch(TreeLogger.WARN,
-            "Use of deprecated hosted mode servlet path mapping", null);
+              "Use of deprecated hosted mode servlet path mapping", null);
           branch.log(
-            TreeLogger.WARN,
-            "The client code is invoking the servlet with a URL that is not module-relative: "
-              + path, null);
+              TreeLogger.WARN,
+              "The client code is invoking the servlet with a URL that is not module-relative: "
+                  + path, null);
           branch.log(
-            TreeLogger.WARN,
-            "Prepend GWT.getModuleBaseURL() to the URL in client code to create a module-relative URL: /"
-              + moduleDef.getName() + path, null);
+              TreeLogger.WARN,
+              "Prepend GWT.getModuleBaseURL() to the URL in client code to create a module-relative URL: /"
+                  + moduleDef.getName() + path, null);
           branch.log(
-            TreeLogger.WARN,
-            "Using module-relative URLs ensures correct URL-independent behavior in external servlet containers",
-            null);
+              TreeLogger.WARN,
+              "Using module-relative URLs ensures correct URL-independent behavior in external servlet containers",
+              null);
         }
 
         // Fall-through below, where we check servletClassName.
@@ -207,8 +238,9 @@ public class GWTShellServlet extends HttpServlet {
       if (delegatee == null) {
         logger.log(TreeLogger.ERROR, "Unable to dispatch request", null);
         sendErrorResponse(response,
-          HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-          "Unable to find/load mapped servlet class '" + servletClassName + "'");
+            HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+            "Unable to find/load mapped servlet class '" + servletClassName
+                + "'");
         return;
       }
 
@@ -233,14 +265,14 @@ public class GWTShellServlet extends HttpServlet {
 
     if ("favicon.ico".equalsIgnoreCase(parts.moduleName)) {
       sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND,
-        "Icon not available");
+          "Icon not available");
       return;
     }
 
     // Generate a generic empty host page.
     //
     String msg = "The development shell servlet received a request to generate a host page for module '"
-      + parts.moduleName + "' ";
+        + parts.moduleName + "' ";
 
     logger = logger.branch(TreeLogger.TRACE, msg, null);
 
@@ -249,8 +281,8 @@ public class GWTShellServlet extends HttpServlet {
       getModuleDef(logger, parts.moduleName);
     } catch (UnableToCompleteException e) {
       sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND,
-        "Unable to find/load module '" + parts.moduleName
-          + "' (see server log for details)");
+          "Unable to find/load module '" + parts.moduleName
+              + "' (see server log for details)");
       return;
     }
 
@@ -290,7 +322,7 @@ public class GWTShellServlet extends HttpServlet {
 
     // Create a logger branch for this request.
     String msg = "The development shell servlet received a request for '"
-      + partialPath + "' in module '" + moduleName + "' ";
+        + partialPath + "' in module '" + moduleName + "' ";
     logger = logger.branch(TreeLogger.TRACE, msg, null);
 
     // If the request is of the form ".../moduleName.nocache.html[?...]", then
@@ -339,8 +371,8 @@ public class GWTShellServlet extends HttpServlet {
       }
     } catch (UnableToCompleteException e) {
       sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND,
-        "Cannot find resource '" + partialPath
-          + "' in the public path of module '" + moduleName + "'");
+          "Cannot find resource '" + partialPath
+              + "' in the public path of module '" + moduleName + "'");
       return;
     }
 
@@ -378,12 +410,12 @@ public class GWTShellServlet extends HttpServlet {
       response.setStatus(HttpServletResponse.SC_OK);
       long now = new Date().getTime();
       response.setHeader(HttpHeaders.DATE,
-        HttpHeaders.toInternetDateFormat(now));
+          HttpHeaders.toInternetDateFormat(now));
       response.setContentType(mimeType);
       String lastModifiedStr = HttpHeaders.toInternetDateFormat(lastModified);
       response.setHeader(HttpHeaders.LAST_MODIFIED, lastModifiedStr);
-      final long JAN_2_1980 = 315637200000L;
-      String inThePastStr = HttpHeaders.toInternetDateFormat(JAN_2_1980);
+      final long jan2nd1980 = 315637200000L;
+      String inThePastStr = HttpHeaders.toInternetDateFormat(jan2nd1980);
       response.setHeader(HttpHeaders.EXPIRES, inThePastStr);
 
       // Send the bytes. To keep it simple, we don't compute the length.
@@ -453,11 +485,11 @@ public class GWTShellServlet extends HttpServlet {
         String[] servletPaths = moduleDef.getServletPaths();
         for (int i = 0; i < servletPaths.length; i++) {
           ModuleDef oldDef = (ModuleDef) modulesByServletPath.put(
-            servletPaths[i], moduleDef);
+              servletPaths[i], moduleDef);
           if (oldDef != null) {
             logger.log(TreeLogger.WARN, "Undefined behavior: Servlet path "
-              + servletPaths[i] + " conflicts in modules "
-              + moduleDef.getName() + " and " + oldDef.getName(), null);
+                + servletPaths[i] + " conflicts in modules "
+                + moduleDef.getName() + " and " + oldDef.getName(), null);
           }
         }
         // END BACKWARD COMPATIBILITY
@@ -713,9 +745,9 @@ public class GWTShellServlet extends HttpServlet {
         Class servletClass = Class.forName(className);
         Object newInstance = servletClass.newInstance();
         if (!(newInstance instanceof HttpServlet)) {
-          logger.log(TreeLogger.ERROR, "Not compatible with HttpServlet: "
-            + className + " (does your service extend RemoteServiceServlet?)",
-            null);
+          logger.log(TreeLogger.ERROR,
+              "Not compatible with HttpServlet: " + className
+                  + " (does your service extend RemoteServiceServlet?)", null);
           return null;
         }
 
@@ -741,13 +773,4 @@ public class GWTShellServlet extends HttpServlet {
       return null;
     }
   }
-
-  private final Map loadedModulesByName = new HashMap();
-  private final Map loadedServletsByClassName = new HashMap();
-  private final Map modulesByServletPath = new HashMap();
-  private final Map mimeTypes = new HashMap();
-  private int nextRequestId;
-  private File outDir;
-  private final Object requestIdLock = new Object();
-  private TreeLogger topLogger;
 }

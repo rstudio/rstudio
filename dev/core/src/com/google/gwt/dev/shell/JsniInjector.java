@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -38,6 +52,10 @@ public class JsniInjector {
     static final String PKG_STRING = "java.lang";
     static final String CLS_STRING = "String";
 
+    public final JClassType javaLangString;
+
+    public final JClassType javaScriptObject;
+
     public CoreTypes(TreeLogger logger) throws UnableToCompleteException {
       javaScriptObject = getCoreType(logger, PKG_JSOBJECT, CLS_JSOBJECT);
       javaLangString = getCoreType(logger, PKG_STRING, CLS_STRING);
@@ -53,15 +71,18 @@ public class JsniInjector {
         throw new UnableToCompleteException();
       }
     }
-
-    public final JClassType javaLangString;
-    public final JClassType javaScriptObject;
   }
 
   /**
    * A chunk of replacement text and where to put it.
    */
   private static class Replacement implements Comparable {
+    public final int end;
+
+    public final int start;
+
+    public final char[] text;
+
     public Replacement(int start, int end, char[] text) {
       this.start = start;
       this.end = end;
@@ -80,11 +101,13 @@ public class JsniInjector {
         return 0;
       }
     }
-
-    public final int end;
-    public final int start;
-    public final char[] text;
   }
+
+  private final TypeOracle oracle;
+
+  private CoreTypes coreTypes;
+
+  private final Map parsedJsByMethod = new IdentityHashMap();
 
   public JsniInjector(TypeOracle oracle) {
     this.oracle = oracle;
@@ -94,7 +117,7 @@ public class JsniInjector {
       CompilationUnitProvider cup) throws UnableToCompleteException {
 
     logger = logger.branch(TreeLogger.SPAM,
-      "Checking for JavaScript native methods", null);
+        "Checking for JavaScript native methods", null);
 
     // Make sure the core types exist.
     //
@@ -127,7 +150,7 @@ public class JsniInjector {
       // No changes were made, so we return the original.
       //
       logger.log(TreeLogger.SPAM, "No JavaScript native methods were found",
-        null);
+          null);
       return cup;
     }
   }
@@ -157,21 +180,21 @@ public class JsniInjector {
       JParameter[] params = method.getParameters();
       String paramNamesArray = getParamNamesArrayExpr(params);
 
-      final String TRY = "try ";
-      final String CATCH = " catch (e) {\\n"
-        + "  __static[\\\"@"
-        + Jsni.JAVASCRIPTHOST_NAME
-        + "::exceptionCaught"
-        + "(ILjava/lang/String;Ljava/lang/String;)\\\"]"
-        + "((e && e.number) ? e.number : 0, e ? e.name : null , e ? e.message : null);\\n"
-        + "}\\n";
+      final String jsTry = "try ";
+      final String jsCatch = " catch (e) {\\n"
+          + "  __static[\\\"@"
+          + Jsni.JAVASCRIPTHOST_NAME
+          + "::exceptionCaught"
+          + "(ILjava/lang/String;Ljava/lang/String;)\\\"]"
+          + "((e && e.number) ? e.number : 0, e ? e.name : null , e ? e.message : null);\\n"
+          + "}\\n";
 
       // Surround the original JS body statements with a try/catch so that
       // we can map JavaScript exceptions back into Java.
       // Note that the method body itself will print curly braces, so we don't
       // need them around the try/catch.
       //
-      String js = TRY + Jsni.generateEscapedJavaScript(jsniBody) + CATCH;
+      String js = jsTry + Jsni.generateEscapedJavaScript(jsniBody) + jsCatch;
       String jsniSig = Jsni.getJsniSignature(method);
 
       // figure out starting line number
@@ -179,8 +202,8 @@ public class JsniInjector {
       int line = Jsni.countNewlines(source, 0, bodyStart) + 1;
 
       sb.append("  " + Jsni.JAVASCRIPTHOST_NAME + ".createNative(\""
-        + escapedFile + "\", " + line + ", " + "\"@" + jsniSig + "\", "
-        + paramNamesArray + ", \"" + js + "\");");
+          + escapedFile + "\", " + line + ", " + "\"@" + jsniSig + "\", "
+          + paramNamesArray + ", \"" + js + "\");");
     }
     sb.append("}");
     return sb.toString().toCharArray();
@@ -203,7 +226,7 @@ public class JsniInjector {
     }
 
     String methodDecl = method.getReadableDeclaration(false, true, false,
-      false, false);
+        false, false);
 
     sb.append(methodDecl + " {");
 
@@ -218,7 +241,7 @@ public class JsniInjector {
       //
       String returnTypeName = returnType.getQualifiedSourceName();
       sb.append("return (" + returnTypeName + ")" + Jsni.JAVASCRIPTHOST_NAME
-        + ".invokeNativeHandle");
+          + ".invokeNativeHandle");
     } else if (null != (primType = returnType.isPrimitive())) {
       // Primitives have special overloads.
       //
@@ -293,7 +316,7 @@ public class JsniInjector {
       if (i > 0) {
         sb.append(", ");
       }
-      
+
       JParameter param = params[i];
       sb.append('\"');
       sb.append(param.getName());
@@ -349,7 +372,7 @@ public class JsniInjector {
           // Parse it.
           //
           String js = new String(source, interval.start, interval.end
-            - interval.start);
+              - interval.start);
           int startLine = Jsni.countNewlines(source, 0, interval.start) + 1;
           JsBlock body = Jsni.parseAsFunctionBody(logger, js, loc, startLine);
 
@@ -362,11 +385,11 @@ public class JsniInjector {
           final int declEnd = method.getDeclEnd();
 
           int expectedHeaderLines = Jsni.countNewlines(source, declStart,
-            interval.start);
+              interval.start);
           int expectedBodyLines = Jsni.countNewlines(source, interval.start,
-            interval.end);
+              interval.end);
           String newDecl = genNonNativeVersionOfJsniMethod(method,
-            expectedHeaderLines, expectedBodyLines);
+              expectedHeaderLines, expectedBodyLines);
 
           final char[] newSource = newDecl.toCharArray();
           changes.add(new Replacement(declStart, declEnd, newSource));
@@ -374,7 +397,7 @@ public class JsniInjector {
         } else {
           // report error
           String msg = "No JavaScript body found for native method '" + method
-            + "' in type '" + type + "'";
+              + "' in type '" + type + "'";
           logger.log(TreeLogger.ERROR, msg, null);
           throw new UnableToCompleteException();
         }
@@ -386,7 +409,7 @@ public class JsniInjector {
       patched = (JMethod[]) patchedMethods.toArray(patched);
 
       TreeLogger branch = logger.branch(TreeLogger.SPAM, "Patched methods in '"
-        + type.getQualifiedSourceName() + "'", null);
+          + type.getQualifiedSourceName() + "'", null);
 
       for (int i = 0; i < patched.length; i++) {
         branch.log(TreeLogger.SPAM, patched[i].getReadableDeclaration(), null);
@@ -407,8 +430,4 @@ public class JsniInjector {
       changes.add(new Replacement(bodyStart, bodyStart, block));
     }
   }
-
-  private final TypeOracle oracle;
-  private CoreTypes coreTypes;
-  private final Map parsedJsByMethod = new IdentityHashMap();
 }

@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
@@ -12,6 +26,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ModuleSpacePropertyOracle implements PropertyOracle {
+
+  private final Properties props;
+
+  private final ModuleSpace space;
+
+  private final Map prevAnswers = new HashMap();
 
   public ModuleSpacePropertyOracle(Properties props, ModuleSpace space) {
     this.space = space;
@@ -32,7 +52,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
       // Don't know this property; that's not good.
       //
       throw new IllegalArgumentException("unknown property name: "
-        + propertyName);
+          + propertyName);
     }
 
     String value;
@@ -81,12 +101,12 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
         // Invoke the property provider function in JavaScript.
         //
         value = space.invokeNativeString(scriptFnName, null, Empty.CLASSES,
-          Empty.OBJECTS);
+            Empty.OBJECTS);
       } catch (RuntimeException e) {
         // Treat as an unknown value.
         //
         String msg = "Error while executing the JavaScript provider for property '"
-          + propertyName + "'";
+            + propertyName + "'";
         logger.log(TreeLogger.ERROR, msg, e);
         throw new BadPropertyValueException(propertyName, "<failed to compute>");
       }
@@ -103,8 +123,4 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
   private String makeScriptFnName(Property prop) {
     return "prop$" + prop.getName();
   }
-
-  private final Properties props;
-  private final ModuleSpace space;
-  private final Map prevAnswers = new HashMap();
 }

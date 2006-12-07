@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -14,8 +28,8 @@ import com.google.gwt.dev.jdt.StaticCompilationUnitProvider;
  */
 public class HostedModeSourceOracle extends StandardSourceOracle {
 
-  private final CompilationUnitProvider CU_Meta = new StaticCompilationUnitProvider(
-    "com.google.gwt.core.client", "GWT", null) {
+  private final CompilationUnitProvider cuMeta = new StaticCompilationUnitProvider(
+      "com.google.gwt.core.client", "GWT", null) {
     public char[] getSource() {
       StringBuffer sb = new StringBuffer();
       sb.append("package com.google.gwt.core.client;\n");
@@ -35,20 +49,20 @@ public class HostedModeSourceOracle extends StandardSourceOracle {
       sb.append("        log(\"Uncaught exception escaped\", e);\n");
       sb.append("      }\n");
       sb.append("    };\n");
-      
+
       // Implement getUncaughtExceptionHandler()
       //
-      sb.append("  public static UncaughtExceptionHandler getUncaughtExceptionHandler() {\n"); 
-      sb.append("    return sUncaughtExceptionHandler;\n"); 
+      sb.append("  public static UncaughtExceptionHandler getUncaughtExceptionHandler() {\n");
+      sb.append("    return sUncaughtExceptionHandler;\n");
       sb.append("  }\n");
 
       // Implement setUncaughtExceptionHandler()
       //
-      sb.append("  public static void setUncaughtExceptionHandler(\n"); 
-      sb.append("      UncaughtExceptionHandler handler) {\n"); 
-      sb.append("    sUncaughtExceptionHandler = handler;\n"); 
+      sb.append("  public static void setUncaughtExceptionHandler(\n");
+      sb.append("      UncaughtExceptionHandler handler) {\n");
+      sb.append("    sUncaughtExceptionHandler = handler;\n");
       sb.append("  }\n");
-      
+
       // Proxy create().
       //
       sb.append("  public static Object create(Class classLiteral) {\n");
@@ -79,7 +93,7 @@ public class HostedModeSourceOracle extends StandardSourceOracle {
       sb.append(moduleName);
       sb.append("\";\n");
       sb.append("  }\n");
-      
+
       // Proxy getModuleBaseURL() to the Impl class.
       //
       sb.append("  public static String getModuleBaseURL() {\n");
@@ -92,11 +106,15 @@ public class HostedModeSourceOracle extends StandardSourceOracle {
       sb.append(ShellGWT.class.getName());
       sb.append(".log(message, e);\n");
       sb.append("  }\n");
-      
+
       sb.append("}\n");
       return sb.toString().toCharArray();
     }
   };
+
+  private final JsniInjector injector;
+
+  private final String moduleName;
 
   public HostedModeSourceOracle(TypeOracle typeOracle, String moduleName) {
     super(typeOracle);
@@ -119,7 +137,7 @@ public class HostedModeSourceOracle extends StandardSourceOracle {
     // the web mode version, so here we substitute the hosted mode version.
     //
     if (typeName.equals("com.google.gwt.core.client.GWT")) {
-      return CU_Meta;
+      return cuMeta;
     }
 
     // Otherwise, it's a regular translatable type, but we want to make sure
@@ -129,7 +147,4 @@ public class HostedModeSourceOracle extends StandardSourceOracle {
 
     return jsnified;
   }
-
-  private final JsniInjector injector;
-  private final String moduleName;
 }

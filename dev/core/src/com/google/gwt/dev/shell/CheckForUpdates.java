@@ -75,6 +75,22 @@ public abstract class CheckForUpdates {
   private static final int VERSION_PARTS = 3;
   private static final String VERSION_REGEXP = "\\d+\\.\\d+\\.\\d+";
 
+  static {
+    // Do this in a static initializer so we can ignore all exceptions.
+    //
+    boolean debugVersionCheck = false;
+    try {
+      if (System.getProperty("gwt.debugVersionCheck") != null) {
+        debugVersionCheck = true;
+      }
+    } catch (Throwable e) {
+      // Always silently ignore any errors.
+      //
+    } finally {
+      DEBUG_VERSION_CHECK = debugVersionCheck;
+    }
+  }
+
   /**
    * Determines whether the server version is definitively newer than the client
    * version. If any errors occur in the comparison, this method returns false
@@ -89,13 +105,13 @@ public abstract class CheckForUpdates {
     if (clientVersion == null || serverVersion == null) {
       return false;
     }
-    
+
     // must match expected format
     if (!clientVersion.matches(VERSION_REGEXP)
         || !serverVersion.matches(VERSION_REGEXP)) {
       return false;
     }
-    
+
     // extract the relevant parts
     String[] clientParts = clientVersion.split("\\.");
     String[] serverParts = serverVersion.split("\\.");
@@ -112,7 +128,7 @@ public abstract class CheckForUpdates {
         if (serverPart < clientPart) {
           return false;
         }
-        
+
         if (serverPart > clientPart) {
           return true;
         }
@@ -476,21 +492,5 @@ public abstract class CheckForUpdates {
     }
 
     return ua;
-  }
-
-  static {
-    // Do this in a static initializer so we can ignore all exceptions.
-    //
-    boolean debugVersionCheck = false;
-    try {
-      if (System.getProperty("gwt.debugVersionCheck") != null) {
-        debugVersionCheck = true;
-      }
-    } catch (Throwable e) {
-      // Always silently ignore any errors.
-      //
-    } finally {
-      DEBUG_VERSION_CHECK = debugVersionCheck;
-    }
   }
 }

@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.dev.GWTShell;
@@ -20,18 +34,7 @@ import org.eclipse.swt.widgets.Shell;
 
 public abstract class DialogBase extends Dialog implements DisposeListener {
 
-/** 
- * Pops up a confirm/cancel dialog. 
- */
-  public static boolean confirmAction(Shell shell, String msg, String msgTitle) {
-    MessageBox msgBox = new MessageBox(shell, SWT.ICON_WARNING
-        | SWT.YES | SWT.NO);
-    msgBox.setText(msgTitle);
-    msgBox.setMessage(msg);
-    return msgBox.open() == SWT.YES;
-  }
-
-private class Buttons extends GridPanel {
+  private class Buttons extends GridPanel {
     public Buttons(Composite parent) {
       super(parent, SWT.NONE, hasCancel ? 2 : 1, true);
 
@@ -76,6 +79,33 @@ private class Buttons extends GridPanel {
     }
   }
 
+  /**
+   * Pops up a confirm/cancel dialog.
+   */
+  public static boolean confirmAction(Shell shell, String msg, String msgTitle) {
+    MessageBox msgBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.YES
+        | SWT.NO);
+    msgBox.setText(msgTitle);
+    msgBox.setMessage(msg);
+    return msgBox.open() == SWT.YES;
+  }
+
+  private Button cancelButton;
+
+  private boolean cancelled = true;
+
+  private boolean hasCancel;
+
+  private boolean hasOk;
+
+  private int minHeight;
+
+  private int minWidth;
+
+  private Button okButton;
+
+  private Shell shell;
+
   public DialogBase(Shell parent, int minWidth, int minHeight) {
     this(parent, minWidth, minHeight, true, true);
   }
@@ -100,7 +130,7 @@ private class Buttons extends GridPanel {
   public boolean open(boolean autoSize) {
     Shell parent = getParent();
     shell = new Shell(parent, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL
-      | SWT.RESIZE);
+        | SWT.RESIZE);
     shell.setImages(GWTShell.getIcons());
     shell.setText(getText());
     shell.setLayout(new FillLayout());
@@ -180,13 +210,4 @@ private class Buttons extends GridPanel {
   protected void setOkEnabled(boolean enabled) {
     okButton.setEnabled(enabled);
   }
-
-  private Button cancelButton;
-  private boolean cancelled = true;
-  private boolean hasCancel;
-  private boolean hasOk;
-  private int minHeight;
-  private int minWidth;
-  private Button okButton;
-  private Shell shell;
 }

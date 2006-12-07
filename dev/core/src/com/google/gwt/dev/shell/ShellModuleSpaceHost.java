@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -22,6 +36,20 @@ import java.util.Map;
 public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
   private static Map byteCodeCompilersByModule = new HashMap();
+
+  protected final File genDir;
+
+  protected final TypeOracle typeOracle;
+
+  private CompilingClassLoader classLoader;
+
+  private final TreeLogger logger;
+
+  private final ModuleDef module;
+
+  private RebindOracle rebindOracle;
+
+  private ModuleSpace space;
 
   /**
    * @param module the module associated with the hosted module space
@@ -48,14 +76,15 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     return logger;
   }
 
-  public void onModuleReady(ModuleSpace readySpace) throws UnableToCompleteException {
+  public void onModuleReady(ModuleSpace readySpace)
+      throws UnableToCompleteException {
     this.space = readySpace;
 
     // Create a host for the hosted mode compiler.
     // We add compilation units to it as deferred binding generators write them.
     //
-    SourceOracle srcOracle =
-        new HostedModeSourceOracle(typeOracle, module.getName());
+    SourceOracle srcOracle = new HostedModeSourceOracle(typeOracle,
+        module.getName());
 
     // Create or find the compiler to be used by the compiling class loader.
     //
@@ -63,16 +92,15 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
     // Establish an environment for JavaScript property providers to run.
     //
-    ModuleSpacePropertyOracle propOracle =
-        new ModuleSpacePropertyOracle(module.getProperties(), readySpace);
+    ModuleSpacePropertyOracle propOracle = new ModuleSpacePropertyOracle(
+        module.getProperties(), readySpace);
 
     // Set up the rebind oracle for the module.
     // It has to wait until now because we need to inject javascript.
     //
     Rules rules = module.getRules();
-    rebindOracle =
-        new StandardRebindOracle(typeOracle, propOracle, rules, genDir, 
-          module.getCacheManager());
+    rebindOracle = new StandardRebindOracle(typeOracle, propOracle, rules,
+        genDir, module.getCacheManager());
 
     // Create a completely isolated class loader which owns all classes
     // associated with a particular module. This effectively builds a
@@ -113,12 +141,4 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
       throw new IllegalStateException("Module initialization error");
     }
   }
-
-  protected final File genDir;
-  protected final TypeOracle typeOracle;
-  private CompilingClassLoader classLoader;
-  private final TreeLogger logger;
-  private final ModuleDef module;
-  private RebindOracle rebindOracle;
-  private ModuleSpace space;
 }

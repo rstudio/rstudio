@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -24,18 +38,25 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolItem;
 
 /**
- * Implements the GWTShell's main window control.  
+ * Implements the GWTShell's main window control.
  */
 public class ShellMainWindow extends Composite implements DisposeListener,
     ShellListener {
 
   private class Toolbar extends HeaderBarBase {
 
+    private ToolItem about;
+
+    private ToolItem clearLog;
+    private ToolItem collapseAll;
+    private ToolItem expandAll;
+    private ToolItem newWindow;
+
     public Toolbar(Composite parent) {
       super(parent);
 
       newWindow = newItem("new-window.gif", "&Hosted Browser",
-        "Opens a new hosted mode browser window for debugging");
+          "Opens a new hosted mode browser window for debugging");
       newWindow.addSelectionListener(new SelectionAdapter() {
         public void widgetSelected(SelectionEvent event) {
           String startupUrl = serverWindow.normalizeURL("/");
@@ -44,7 +65,7 @@ public class ShellMainWindow extends Composite implements DisposeListener,
             bw.go(startupUrl);
           } catch (UnableToCompleteException e) {
             getLogger().log(TreeLogger.ERROR,
-              "Unable to open a new hosted browser window", e);
+                "Unable to open a new hosted browser window", e);
           }
         }
       });
@@ -52,7 +73,7 @@ public class ShellMainWindow extends Composite implements DisposeListener,
       newSeparator();
 
       collapseAll = newItem("collapse.gif", "&Collapse All",
-        "Collapses all log entries");
+          "Collapses all log entries");
       collapseAll.addSelectionListener(new SelectionAdapter() {
         public void widgetSelected(SelectionEvent e) {
           logPane.collapseAll();
@@ -60,7 +81,7 @@ public class ShellMainWindow extends Composite implements DisposeListener,
       });
 
       expandAll = newItem("expand.gif", "&Expand All",
-        "Expands all log entries");
+          "Expands all log entries");
       expandAll.addSelectionListener(new SelectionAdapter() {
         public void widgetSelected(SelectionEvent e) {
           logPane.expandAll();
@@ -68,7 +89,7 @@ public class ShellMainWindow extends Composite implements DisposeListener,
       });
 
       clearLog = newItem("clear-log.gif", "Clear &Log",
-        "Removes all log entries");
+          "Removes all log entries");
       clearLog.addSelectionListener(new SelectionAdapter() {
         public void widgetSelected(SelectionEvent e) {
           logPane.removeAll();
@@ -84,8 +105,7 @@ public class ShellMainWindow extends Composite implements DisposeListener,
           if (aboutHtml != null) {
             String serial = verify("TwysxNpVumPBvFyBoxzLy");
             StringBuffer sb = new StringBuffer();
-            sb
-              .append("<div style='overflow:hidden;width:100%;white-space:nowrap;font-size:1px'><br/><br/><br/><br/><font style='background-color:gray;color:lightgrey'>");
+            sb.append("<div style='overflow:hidden;width:100%;white-space:nowrap;font-size:1px'><br/><br/><br/><br/><font style='background-color:gray;color:lightgrey'>");
             for (int i = 0; i < 100; ++i) {
               sb.append(serial);
             }
@@ -94,29 +114,50 @@ public class ShellMainWindow extends Composite implements DisposeListener,
             int pos;
             while ((pos = aboutHtml.indexOf("<hr/>")) >= 0) {
               aboutHtml = aboutHtml.substring(0, pos) + serial
-                + aboutHtml.substring(pos + 5);
+                  + aboutHtml.substring(pos + 5);
             }
             while ((pos = aboutHtml.indexOf("<body>")) >= 0) {
               aboutHtml = aboutHtml.substring(0, pos)
-                + "<body oncontextmenu='return false'>"
-                + aboutHtml.substring(pos + 6);
+                  + "<body oncontextmenu='return false'>"
+                  + aboutHtml.substring(pos + 6);
             }
           } else {
             aboutHtml = "Could not locate 'about.html' in installation directory.";
           }
           BrowserDialog browserDialog = new BrowserDialog(getShell(),
-            getLogger(), aboutHtml);
+              getLogger(), aboutHtml);
           browserDialog.open(true);
         }
       });
     }
-
-    private ToolItem about;
-    private ToolItem clearLog;
-    private ToolItem collapseAll;
-    private ToolItem expandAll;
-    private ToolItem newWindow;
   }
+
+  private static String verify(String hash) {
+    char[] in = hash.toCharArray();
+    char[] ou = new char[in.length];
+    for (int i = 0, c = 0; i < in.length; ++i) {
+      if (in[i] < 'a') {
+        c += in[i] - 'A';
+      } else {
+        c += in[i] - 'a' - 26;
+      }
+
+      if (c == 0) {
+        ou[i] = ' ';
+      } else {
+        ou[i] = (char) ('@' + c);
+      }
+    }
+    return String.valueOf(ou);
+  }
+
+  private Color colorWhite;
+
+  private TreeLoggerWidget logPane;
+
+  private GWTShell serverWindow;
+
+  private Toolbar toolbar;
 
   public ShellMainWindow(GWTShell serverWindow, final Shell parent,
       int serverPort, boolean checkForUpdates) {
@@ -131,7 +172,8 @@ public class ShellMainWindow extends Composite implements DisposeListener,
 
     setLayout(new FillLayout());
     if (serverPort > 0) {
-      parent.setText("Google Web Toolkit Development Shell / Port " + serverPort);
+      parent.setText("Google Web Toolkit Development Shell / Port "
+          + serverPort);
     } else {
       parent.setText("Google Web Toolkit Development Shell");
     }
@@ -168,8 +210,7 @@ public class ShellMainWindow extends Composite implements DisposeListener,
     // check for updates
     if (checkForUpdates) {
       try {
-        final CheckForUpdates updateChecker = PlatformSpecific
-          .createUpdateChecker();
+        final CheckForUpdates updateChecker = PlatformSpecific.createUpdateChecker();
         if (updateChecker != null) {
           final CheckForUpdates.UpdateAvailableCallback callback = new CheckForUpdates.UpdateAvailableCallback() {
             public void onUpdateAvailable(final String html) {
@@ -213,10 +254,10 @@ public class ShellMainWindow extends Composite implements DisposeListener,
       boolean closeWindows = true;
       if (System.getProperty("gwt.shell.endquick") == null) {
         closeWindows = DialogBase.confirmAction((Shell) e.widget,
-            "Closing the development shell will close " +
-            "all hosted mode browsers.  Continue?", "Confirm close");
-      } 
-      
+            "Closing the development shell will close "
+                + "all hosted mode browsers.  Continue?", "Confirm close");
+      }
+
       if (closeWindows) {
         serverWindow.closeAllBrowserWindows();
         e.doit = true;
@@ -238,28 +279,4 @@ public class ShellMainWindow extends Composite implements DisposeListener,
   public void widgetDisposed(DisposeEvent e) {
     colorWhite.dispose();
   }
-
-  private static String verify(String hash) {
-    char[] in = hash.toCharArray();
-    char[] ou = new char[in.length];
-    for (int i = 0, c = 0; i < in.length; ++i) {
-      if (in[i] < 'a') {
-        c += in[i] - 'A';
-      } else {
-        c += in[i] - 'a' - 26;
-      }
-      
-      if (c == 0) {
-        ou[i] = ' ';
-      } else {
-        ou[i] = (char) ('@' + c);
-      }
-    }
-    return String.valueOf(ou);
-  }
-
-  private Color colorWhite;
-  private TreeLoggerWidget logPane;
-  private GWTShell serverWindow;
-  private Toolbar toolbar;
 }

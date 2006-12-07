@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.PropertyOracle;
@@ -31,9 +45,15 @@ public class StandardRebindOracle implements RebindOracle {
    */
   private final class Rebinder {
 
+    private final StandardGeneratorContext genCtx;
+
+    private final Set usedRules = new HashSet();
+
+    private final List usedTypeNames = new ArrayList();
+
     public Rebinder(TypeOracle typeOracle, PropertyOracle propOracle) {
       genCtx = new StandardGeneratorContext(typeOracle, propOracle, genDir,
-        cacheManager);
+          cacheManager);
     }
 
     public String rebind(TreeLogger logger, String typeName)
@@ -59,10 +79,8 @@ public class StandardRebindOracle implements RebindOracle {
       if (usedTypeNames.contains(typeName)) {
         // Found a cycle.
         //
-        String[] cycle = (String[]) Util
-          .toArray(String.class, usedTypeNames);
-        Messages.UNABLE_TO_REBIND_DUE_TO_CYCLE_IN_RULES
-          .log(logger, cycle, null);
+        String[] cycle = (String[]) Util.toArray(String.class, usedTypeNames);
+        Messages.UNABLE_TO_REBIND_DUE_TO_CYCLE_IN_RULES.log(logger, cycle, null);
         throw new UnableToCompleteException();
       }
 
@@ -74,7 +92,7 @@ public class StandardRebindOracle implements RebindOracle {
       //
       if (rules.isEmpty()) {
         logger.log(TreeLogger.DEBUG,
-          "No rules are defined, so no substitution can occur", null);
+            "No rules are defined, so no substitution can occur", null);
         return null;
       }
 
@@ -84,7 +102,7 @@ public class StandardRebindOracle implements RebindOracle {
         // Branch the logger.
         //
         TreeLogger branch = Messages.TRACE_CHECKING_RULE.branch(logger, rule,
-          null);
+            null);
 
         if (rule.isApplicable(branch, genCtx, typeName)) {
           // See if this rule has already been used. This is needed to prevent
@@ -112,11 +130,18 @@ public class StandardRebindOracle implements RebindOracle {
       //
       return null;
     }
-
-    private final StandardGeneratorContext genCtx;
-    private final Set usedRules = new HashSet();
-    private final List usedTypeNames = new ArrayList();
   }
+
+  private final CacheManager cacheManager;
+
+  private final File genDir;
+
+  private final PropertyOracle propOracle;
+
+  private final Rules rules;
+
+  private final TypeOracle typeOracle;
+
   public StandardRebindOracle(TypeOracle typeOracle, PropertyOracle propOracle,
       Rules rules, File genDir, CacheManager cacheManager) {
     this.typeOracle = typeOracle;
@@ -130,7 +155,8 @@ public class StandardRebindOracle implements RebindOracle {
     }
   }
 
-  public StandardRebindOracle(TypeOracle typeOracle, StaticPropertyOracle propOracle, Rules rules, File genDir) {
+  public StandardRebindOracle(TypeOracle typeOracle,
+      StaticPropertyOracle propOracle, Rules rules, File genDir) {
     // This is a path used for non-hosted mode execution; therefore no caching.
     this(typeOracle, propOracle, rules, genDir, null);
   }
@@ -165,11 +191,5 @@ public class StandardRebindOracle implements RebindOracle {
     }
     return false;
   }
-
-  private final CacheManager cacheManager;
-  private final File genDir;
-  private final PropertyOracle propOracle;
-  private final Rules rules;
-  private final TypeOracle typeOracle;
 
 }

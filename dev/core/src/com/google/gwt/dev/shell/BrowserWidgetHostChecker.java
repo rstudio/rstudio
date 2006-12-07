@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -32,6 +46,22 @@ public class BrowserWidgetHostChecker {
    * The set of whitelisted URLs.
    */
   private static final Set validHttpHosts = new HashSet();
+
+  static {
+    alwaysValidHttpHosts.add("^https?://localhost");
+    alwaysValidHttpHosts.add("^file:");
+    alwaysValidHttpHosts.add("^about:");
+    alwaysValidHttpHosts.add("^res:");
+    alwaysValidHttpHosts.add("^javascript:");
+    alwaysValidHttpHosts.add("^([a-zA-Z][:])[/\\\\]");
+    // matches c:\ and c:/
+    alwaysValidHttpHosts.add("^https?://localhost/");
+    alwaysValidHttpHosts.add("^https?://localhost[.]localdomain/");
+    alwaysValidHttpHosts.add("^https?://127[.]0[.]0[.]1/");
+    alwaysValidHttpHosts.add("^https?://localhost$");
+    alwaysValidHttpHosts.add("^https?://localhost[.]localdomain$");
+    alwaysValidHttpHosts.add("^https?://127[.]0[.]0[.]1$");
+  }
 
   /**
    * This method blacklists the supplied regexes, separated by comma or space.
@@ -82,29 +112,6 @@ public class BrowserWidgetHostChecker {
     String raw = url.split("(?<![:/])/")[0];
     // escape the dots and put a begin line specifier on the result
     return "^" + escapeString(raw);
-  }
-
-  private static String escapeString(String raw) {
-    StringBuffer out = new StringBuffer();
-    for (int i = 0; i < raw.length(); i++) {
-      char c = raw.charAt(i);
-      if (Character.isLetterOrDigit(c) || c == '-' || c == '_') {
-        out.append(c);
-      } else if (c == '\\') {
-        out.append("[\\\\]");
-      } else if (c == ']') {
-        out.append("[\\]]");
-      } else if (c == '^') {
-        out.append("[\\^]");
-      } else if (c == '[') {
-        out.append("[\\[]");
-      } else {
-        out.append("[");
-        out.append(c);
-        out.append("]");
-      }
-    }
-    return out.toString();
   }
 
   /**
@@ -188,9 +195,9 @@ public class BrowserWidgetHostChecker {
   public static void notifyBlacklistedHost(String blacklistRuleFound,
       String url, TreeLogger header, TreeLogger.Type msgType) {
     TreeLogger reason = header.branch(msgType, "reason: " + url
-      + " is blacklisted", null);
+        + " is blacklisted", null);
     reason.log(msgType, "To fix: remove \"" + blacklistRuleFound
-      + "\" from system property gwt.hosts.blacklist", null);
+        + "\" from system property gwt.hosts.blacklist", null);
   }
 
   /**
@@ -207,18 +214,18 @@ public class BrowserWidgetHostChecker {
     String blackListStr = oldBlackList;
     String hostRegex = computeHostRegex(url);
     TreeLogger reason = header.branch(msgType, "reason: " + url
-      + " is not in the whitelist", null);
+        + " is not in the whitelist", null);
     reason.log(msgType, "whitelist: " + whiteListStr, null);
     reason.log(msgType, "blacklist: " + blackListStr, null);
     TreeLogger fix = header.branch(msgType, "To fix: add regex matching "
-      + "URL to -whitelist command line argument", null);
+        + "URL to -whitelist command line argument", null);
     fix.log(msgType, "Example: -whitelist=\"" + whiteListStr + " " + hostRegex
-      + "\"", null);
+        + "\"", null);
     TreeLogger reject = header.branch(msgType,
-      "To reject automatically: add regex matching "
-        + "URL to -blacklist command line argument", null);
+        "To reject automatically: add regex matching "
+            + "URL to -blacklist command line argument", null);
     reject.log(msgType, "Example: -blacklist=\"" + blackListStr + " "
-      + hostRegex + "\"", null);
+        + hostRegex + "\"", null);
   }
 
   /**
@@ -271,20 +278,27 @@ public class BrowserWidgetHostChecker {
     return true;
   }
 
-  static {
-    alwaysValidHttpHosts.add("^https?://localhost");
-    alwaysValidHttpHosts.add("^file:");
-    alwaysValidHttpHosts.add("^about:");
-    alwaysValidHttpHosts.add("^res:");
-    alwaysValidHttpHosts.add("^javascript:");
-    alwaysValidHttpHosts.add("^([a-zA-Z][:])[/\\\\]"); 
-    // matches c:\ and c:/
-    alwaysValidHttpHosts.add("^https?://localhost/");
-    alwaysValidHttpHosts.add("^https?://localhost[.]localdomain/");
-    alwaysValidHttpHosts.add("^https?://127[.]0[.]0[.]1/");
-    alwaysValidHttpHosts.add("^https?://localhost$");
-    alwaysValidHttpHosts.add("^https?://localhost[.]localdomain$");
-    alwaysValidHttpHosts.add("^https?://127[.]0[.]0[.]1$");
+  private static String escapeString(String raw) {
+    StringBuffer out = new StringBuffer();
+    for (int i = 0; i < raw.length(); i++) {
+      char c = raw.charAt(i);
+      if (Character.isLetterOrDigit(c) || c == '-' || c == '_') {
+        out.append(c);
+      } else if (c == '\\') {
+        out.append("[\\\\]");
+      } else if (c == ']') {
+        out.append("[\\]]");
+      } else if (c == '^') {
+        out.append("[\\^]");
+      } else if (c == '[') {
+        out.append("[\\[]");
+      } else {
+        out.append("[");
+        out.append(c);
+        out.append("]");
+      }
+    }
+    return out.toString();
   }
 
 }
