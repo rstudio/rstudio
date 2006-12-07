@@ -17,7 +17,12 @@ package com.google.gwt.dev.util.log;
 
 import javax.servlet.ServletContext;
 
+/**
+ * Tree logger that logs servlet context information.
+ */
 public class ServletContextTreeLogger extends AbstractTreeLogger {
+
+  private final ServletContext ctx;
 
   public ServletContextTreeLogger(ServletContext ctx) {
     this.ctx = ctx;
@@ -40,6 +45,4 @@ public class ServletContextTreeLogger extends AbstractTreeLogger {
       ctx.log(msg);
     }
   }
-
-  private final ServletContext ctx;
 }

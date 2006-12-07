@@ -44,16 +44,21 @@ import org.eclipse.swt.widgets.TreeItem;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-public class TreeLoggerWidget extends Composite implements TreeListener, SelectionListener {
+/**
+ * SWT widget containing a tree logger.
+ */
+public class TreeLoggerWidget extends Composite implements TreeListener,
+    SelectionListener {
 
   private static AbstractTreeLogger singletonWindowLogger;
 
   /**
-   * Useful for debugging, this method creates a standalone window in a background thread and
-   * returns a logger you can use to write to it.
+   * Useful for debugging, this method creates a standalone window in a
+   * background thread and returns a logger you can use to write to it.
    */
-  public static synchronized AbstractTreeLogger getAsDetachedWindow(final String caption,
-      final int width, final int height, final boolean autoScroll) {
+  public static synchronized AbstractTreeLogger getAsDetachedWindow(
+      final String caption, final int width, final int height,
+      final boolean autoScroll) {
 
     if (singletonWindowLogger != null) {
       // Already set.
@@ -121,6 +126,14 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
     return singletonWindowLogger;
   }
 
+  private boolean autoScroll;
+
+  private final Text details;
+
+  private final TreeItemLogger logger;
+
+  private final Tree tree;
+
   public TreeLoggerWidget(Composite parent) {
     super(parent, SWT.NONE);
 
@@ -149,7 +162,8 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
     logger = new TreeItemLogger();
 
     // The detail
-    details = new Text(sash, SWT.MULTI | SWT.WRAP | SWT.READ_ONLY | SWT.BORDER | SWT.V_SCROLL);
+    details = new Text(sash, SWT.MULTI | SWT.WRAP | SWT.READ_ONLY | SWT.BORDER
+        | SWT.V_SCROLL);
     final Color detailsBgColor = new Color(null, 255, 255, 255);
     details.setBackground(detailsBgColor);
     details.addDisposeListener(new DisposeListener() {
@@ -158,7 +172,7 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
       }
     });
 
-    sash.setWeights(new int[]{80, 20});
+    sash.setWeights(new int[] {80, 20});
 
     initLogFlushTimer(parent.getDisplay());
   }
@@ -170,7 +184,7 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
       collapseAll(item);
     }
     if (items.length > 0) {
-      tree.setSelection(new TreeItem[]{items[0]});
+      tree.setSelection(new TreeItem[] {items[0]});
     }
   }
 
@@ -190,7 +204,7 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
       expandAll(item);
     }
     if (items.length > 0) {
-      tree.setSelection(new TreeItem[]{items[0]});
+      tree.setSelection(new TreeItem[] {items[0]});
     }
   }
 
@@ -203,6 +217,10 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
     }
   }
 
+  public boolean getAutoScroll() {
+    return autoScroll;
+  }
+
   public AbstractTreeLogger getLogger() {
     return logger;
   }
@@ -210,6 +228,10 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
   public void removeAll() {
     tree.removeAll();
     details.setText("");
+  }
+
+  public void setAutoScroll(boolean autoScroll) {
+    this.autoScroll = autoScroll;
   }
 
   public synchronized void treeCollapsed(TreeEvent treeEvent) {
@@ -225,45 +247,8 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
     syncDetailsPane((TreeItem) event.item);
   }
 
-  private void syncDetailsPane(TreeItem item) {
-    // Try to get a LogEvent from the item's custom data.
-    //
-    TreeItemLogger.LogEvent logEvent = null;
-    Object testLogEvent = item.getData();
-    if (testLogEvent instanceof TreeItemLogger.LogEvent) {
-      logEvent = (LogEvent) testLogEvent;
-    }
-
-    // Build a detail string.
-    //
-    StringBuffer sb = new StringBuffer();
-
-    // Show the message type.
-    //
-    if (logEvent != null && logEvent.type != null) {
-      sb.append("[");
-      sb.append(logEvent.type.getLabel());
-      sb.append("] ");
-    }
-
-    // Show the item text.
-    //
-    sb.append(item.getText());
-    sb.append("\n");
-
-    // Show the exception info for anything other than "UnableToComplete".
-    //
-    if (logEvent != null && logEvent.caught != null) {
-      if (!(logEvent.caught instanceof UnableToCompleteException)) {
-        String stackTrace = AbstractTreeLogger.getStackTraceAsString(logEvent.caught);
-        sb.append(stackTrace);
-      }
-    }
-
-    details.setText(sb.toString());
-  }
-
-  protected void appendTreeItemText(PrintWriter result, TreeItem[] items, int depth) {
+  protected void appendTreeItemText(PrintWriter result, TreeItem[] items,
+      int depth) {
     for (int i = 0; i < items.length; i++) {
       TreeItem item = items[i];
       for (int j = 0; j < depth; j++) {
@@ -287,8 +272,8 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
     pw.close();
     Clipboard cb = new Clipboard(tree.getDisplay());
 
-    final Object[] cbText = new Object[]{sw.toString()};
-    final Transfer[] cbFormat = new Transfer[]{TextTransfer.getInstance()};
+    final Object[] cbText = new Object[] {sw.toString()};
+    final Transfer[] cbFormat = new Transfer[] {TextTransfer.getInstance()};
     cb.setContents(cbText, cbFormat);
   }
 
@@ -307,7 +292,7 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
           if (autoScroll) {
             TreeItem lastItem = findLastVisibleItem(tree);
             if (lastItem != null) {
-              tree.setSelection(new TreeItem[]{lastItem});
+              tree.setSelection(new TreeItem[] {lastItem});
               tree.showItem(lastItem);
               expandAllChildren(lastItem);
               syncDetailsPane(lastItem);
@@ -352,16 +337,41 @@ public class TreeLoggerWidget extends Composite implements TreeListener, Selecti
     });
   }
 
-  public void setAutoScroll(boolean autoScroll) {
-    this.autoScroll = autoScroll;
-  }
+  private void syncDetailsPane(TreeItem item) {
+    // Try to get a LogEvent from the item's custom data.
+    //
+    TreeItemLogger.LogEvent logEvent = null;
+    Object testLogEvent = item.getData();
+    if (testLogEvent instanceof TreeItemLogger.LogEvent) {
+      logEvent = (LogEvent) testLogEvent;
+    }
 
-  public boolean getAutoScroll() {
-    return autoScroll;
-  }
+    // Build a detail string.
+    //
+    StringBuffer sb = new StringBuffer();
 
-  private boolean autoScroll;
-  private final Text details;
-  private final TreeItemLogger logger;
-  private final Tree tree;
+    // Show the message type.
+    //
+    if (logEvent != null && logEvent.type != null) {
+      sb.append("[");
+      sb.append(logEvent.type.getLabel());
+      sb.append("] ");
+    }
+
+    // Show the item text.
+    //
+    sb.append(item.getText());
+    sb.append("\n");
+
+    // Show the exception info for anything other than "UnableToComplete".
+    //
+    if (logEvent != null && logEvent.caught != null) {
+      if (!(logEvent.caught instanceof UnableToCompleteException)) {
+        String stackTrace = AbstractTreeLogger.getStackTraceAsString(logEvent.caught);
+        sb.append(stackTrace);
+      }
+    }
+
+    details.setText(sb.toString());
+  }
 }

@@ -17,6 +17,9 @@ package com.google.gwt.dev.util.msg;
 
 import java.io.File;
 
+/**
+ * File message formatter.
+ */
 public final class FormatterForFile extends Formatter {
 
   public String format(Object toFormat) {

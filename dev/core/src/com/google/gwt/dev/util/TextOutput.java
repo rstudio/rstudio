@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.util;
 
+/**
+ * Interface used for printing text output.
+ */
 public interface TextOutput {
   void indentIn();
 

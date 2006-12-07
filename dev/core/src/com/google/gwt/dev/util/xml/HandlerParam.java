@@ -41,7 +41,7 @@ public final class HandlerParam {
 
     if (matchingField == null) {
       throw new IllegalArgumentException("Expecting a meta field with prefix '"
-        + fieldNamePrefix + "'");
+          + fieldNamePrefix + "'");
     }
 
     int under = fieldName.indexOf("_", fieldNamePrefix.length());
@@ -49,8 +49,8 @@ public final class HandlerParam {
       // Not a valid signature.
       //
       throw new IllegalArgumentException(
-        "Expecting a normalized attribute name suffix (e.g. \"_attr_name\") on field '"
-          + fieldName + "'");
+          "Expecting a normalized attribute name suffix (e.g. \"_attr_name\") on field '"
+              + fieldName + "'");
     }
 
     // Infer the associated attribute name.
@@ -63,16 +63,22 @@ public final class HandlerParam {
       // Type mismatch.
       //
       throw new IllegalArgumentException("GWT field '" + fieldName
-        + "' must be of type String");
+          + "' must be of type String");
     }
 
     // Instantiate one.
     //
     matchingField.setAccessible(true);
     HandlerParam handlerParam = new HandlerParam(paramType, matchingField,
-      normalizedAttrName);
+        normalizedAttrName);
     return handlerParam;
   }
+
+  private final Class paramType;
+
+  private final Field metaField;
+
+  private final String normalizedAttrName;
 
   private HandlerParam(Class paramType, Field metaField,
       String normalizedAttrName) {
@@ -82,7 +88,7 @@ public final class HandlerParam {
   }
 
   /**
-   * Called while parsing to get the default value for an attribute. 
+   * Called while parsing to get the default value for an attribute.
    */
   public String getDefaultValue(Schema schema) {
     Throwable caught = null;
@@ -98,9 +104,9 @@ public final class HandlerParam {
     // which forces us to use this incantation. See the top of
     // {@link java.lang.Throwable} for details.
     //
-    throw (IllegalStateException)new IllegalStateException(
-      "Unable to get attribute default value from meta field '"
-        + metaField.getName() + "'").initCause(caught);
+    throw (IllegalStateException) new IllegalStateException(
+        "Unable to get attribute default value from meta field '"
+            + metaField.getName() + "'").initCause(caught);
   }
 
   public String getNormalizedName() {
@@ -110,8 +116,4 @@ public final class HandlerParam {
   public Class getParamType() {
     return paramType;
   }
-
-  private final Class paramType;
-  private final Field metaField;
-  private final String normalizedAttrName;
 }

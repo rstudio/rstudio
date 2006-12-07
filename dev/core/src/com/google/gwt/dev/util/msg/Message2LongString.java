@@ -18,6 +18,9 @@ package com.google.gwt.dev.util.msg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 
+/**
+ * Long & String message.
+ */
 public final class Message2LongString extends Message2 {
 
   public Message2LongString(Type type, String fmt) {

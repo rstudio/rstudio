@@ -18,16 +18,13 @@ package com.google.gwt.dev.util.msg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 
+/**
+ * 0-arg message.
+ */
 public final class Message0 extends Message {
 
   public Message0(Type type, String fmt) {
     super(type, fmt, 0);
-  }
-
-  public void log(TreeLogger logger, Throwable caught) {
-    if (logger.isLoggable(type)) {
-      logger.log(type, new String(fmtParts[0]), caught);
-    }
   }
 
   public TreeLogger branch(TreeLogger logger, Throwable caught) {
@@ -35,5 +32,11 @@ public final class Message0 extends Message {
     // See TreeLogger.branch() for details as to why.
     //
     return logger.branch(type, new String(fmtParts[0]), caught);
+  }
+
+  public void log(TreeLogger logger, Throwable caught) {
+    if (logger.isLoggable(type)) {
+      logger.log(type, new String(fmtParts[0]), caught);
+    }
   }
 }

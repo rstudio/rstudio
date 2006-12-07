@@ -20,6 +20,8 @@ package com.google.gwt.util.tools;
  */
 public abstract class ArgHandlerExtra extends ArgHandler {
 
+  public abstract boolean addExtraArg(String arg);
+
   public String[] getDefaultArgs() {
     return null;
   }
@@ -39,7 +41,5 @@ public abstract class ArgHandlerExtra extends ArgHandler {
   public boolean isRequired() {
     return false;
   }
-
-  public abstract boolean addExtraArg(String arg);
 
 }

@@ -18,6 +18,9 @@ package com.google.gwt.dev.util.msg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 
+/**
+ * 2-arg message.
+ */
 public abstract class Message2 extends Message {
 
   public Message2(Type type, String fmt) {
@@ -36,7 +39,7 @@ public abstract class Message2 extends Message {
     //
     String stringArg1 = (arg1 != null ? fmt1.format(arg1) : "null");
     String stringArg2 = (arg2 != null ? fmt2.format(arg2) : "null");
-    
+
     // Decide how to order the inserts.
     // Tests are biased toward $1..$2 order.
     //
@@ -53,7 +56,7 @@ public abstract class Message2 extends Message {
     int lenPart0 = fmtParts[0].length;
     int lenPart1 = fmtParts[1].length;
     int lenPart2 = fmtParts[2].length;
-    
+
     // Prep for copying.
     //
     int dest = 0;
@@ -62,20 +65,20 @@ public abstract class Message2 extends Message {
     // literal + insert, part 0
     System.arraycopy(fmtParts[0], 0, chars, dest, lenPart0);
     dest += lenPart0;
-    
-    insert1.getChars(0, lenInsert1, chars, dest);   
+
+    insert1.getChars(0, lenInsert1, chars, dest);
     dest += lenInsert1;
 
     // literal + insert, part 1
     System.arraycopy(fmtParts[1], 0, chars, dest, lenPart1);
     dest += lenPart1;
-    
-    insert2.getChars(0, lenInsert2, chars, dest);   
+
+    insert2.getChars(0, lenInsert2, chars, dest);
     dest += lenInsert2;
-    
+
     // final literal
     System.arraycopy(fmtParts[2], 0, chars, dest, lenPart2);
-    
+
     return new String(chars);
   }
 

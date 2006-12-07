@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.util.msg;
 
+/**
+ * Class message formatter.
+ */
 public final class FormatterForClass extends Formatter {
 
   private String getNiceTypeName(Class targetType) {

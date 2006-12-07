@@ -20,6 +20,9 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 
 import java.net.URL;
 
+/**
+ * String & URL message.
+ */
 public final class Message2StringURL extends Message2 {
 
   public Message2StringURL(Type type, String fmt) {

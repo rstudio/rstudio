@@ -15,7 +15,11 @@
  */
 package com.google.gwt.dev.util.msg;
 
+/**
+ * Abstract formatter used by {@link Message}.
+ */
 public abstract class Formatter {
+
   /**
    * Transforms the specified object into a string format.
    * 

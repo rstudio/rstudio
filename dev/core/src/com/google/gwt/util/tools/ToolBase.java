@@ -51,6 +51,25 @@ import java.util.TreeMap;
  */
 public abstract class ToolBase {
 
+  static {
+    String installPath = Utility.getInstallPath();
+    try {
+      // try to make absolute
+      installPath = new File(installPath).getCanonicalPath();
+    } catch (IOException e) {
+      // ignore problems, failures will occur when the libs try to load
+    }
+    System.setProperty("swt.library.path", installPath + '/');
+  }
+
+  // Use a tree map to sort the order.
+  //
+  private final Map argHandlers = new TreeMap();
+
+  // Use a list to preserve the declared order for help printing.
+  //
+  private final List orderedArgHandlers = new ArrayList();
+
   protected void printHelp() {
     System.err.println(About.GWT_VERSION);
 
@@ -271,23 +290,4 @@ public abstract class ToolBase {
     orderedArgHandlers.add(handler);
     argHandlers.put(tag != null ? tag : "", handler);
   }
-
-  static {
-    String installPath = Utility.getInstallPath();
-    try {
-      // try to make absolute
-      installPath = new File(installPath).getCanonicalPath();
-    } catch (IOException e) {
-      // ignore problems, failures will occur when the libs try to load
-    }
-    System.setProperty("swt.library.path", installPath + '/');
-  }
-
-  // Use a tree map to sort the order.
-  //
-  private final Map argHandlers = new TreeMap();
-
-  // Use a list to preserve the declared order for help printing.
-  //
-  private final List orderedArgHandlers = new ArrayList();
 }

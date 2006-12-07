@@ -17,6 +17,9 @@ package com.google.gwt.dev.util.msg;
 
 import java.net.URL;
 
+/**
+ * URL message formatter.
+ */
 public class FormatterForURL extends Formatter {
 
   public String format(Object toFormat) {

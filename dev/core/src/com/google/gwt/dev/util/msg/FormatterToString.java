@@ -15,10 +15,12 @@
  */
 package com.google.gwt.dev.util.msg;
 
+/**
+ * String message formatter.
+ */
 public final class FormatterToString extends Formatter {
 
   public String format(Object toFormat) {
     return toFormat.toString();
   }
-
 }

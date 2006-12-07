@@ -19,6 +19,9 @@ import java.io.CharArrayWriter;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 
+/**
+ * Utility class for directly modifying a character array.
+ */
 public class StringCopier {
   private final CharArrayWriter out = new CharArrayWriter();
   private final char[] in;

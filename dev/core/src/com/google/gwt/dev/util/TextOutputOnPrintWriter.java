@@ -18,6 +18,9 @@ package com.google.gwt.dev.util;
 import java.io.PrintWriter;
 import java.util.Arrays;
 
+/**
+ * Adapts {@link TextOutput} to a print writer.
+ */
 public final class TextOutputOnPrintWriter implements TextOutput {
 
   private final boolean compact;

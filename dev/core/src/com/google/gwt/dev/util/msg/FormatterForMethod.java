@@ -17,6 +17,9 @@ package com.google.gwt.dev.util.msg;
 
 import java.lang.reflect.Method;
 
+/**
+ * Method message formatter.
+ */
 public final class FormatterForMethod extends Formatter {
 
   public String format(Object toFormat) {

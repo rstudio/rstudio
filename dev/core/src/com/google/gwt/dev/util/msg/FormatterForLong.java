@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.util.msg;
 
+/**
+ * Long message formatter.
+ */
 public final class FormatterForLong extends Formatter {
 
   public String format(Object toFormat) {

@@ -22,12 +22,10 @@ import java.lang.reflect.Method;
 import java.net.URL;
 
 /**
- * Fast way to produce messages for the logger.
- * Use $N to specify the replacement argument.
- * Caveats:
- * - N must be a single digit (you shouldn't need more than 10 args, right?)
- * - '$' cannot be escaped
- * - each arg can only appear once
+ * Fast way to produce messages for the logger. Use $N to specify the
+ * replacement argument. Caveats: - N must be a single digit (you shouldn't need
+ * more than 10 args, right?) - '$' cannot be escaped - each arg can only appear
+ * once
  */
 public abstract class Message {
 
@@ -40,6 +38,14 @@ public abstract class Message {
   private static final Formatter FMT_METHOD = new FormatterForMethod();
   private static final Formatter FMT_STRING = new FormatterForString();
   private static final Formatter FMT_STRING_ARRAY = new FormatterForStringArray();
+
+  protected final TreeLogger.Type type;
+
+  protected final char[][] fmtParts;
+
+  protected final int[] argIndices;
+
+  protected final int minChars;
 
   /**
    * Creates a lazily-formatted message.
@@ -57,8 +63,8 @@ public abstract class Message {
       int to = fmt.indexOf('$', from);
       if (to != -1) {
         if (to < fmt.length() - 1) {
-          char charDigit = fmt.charAt(to + 1); 
-          if (Character.isDigit(charDigit)) { 
+          char charDigit = fmt.charAt(to + 1);
+          if (Character.isDigit(charDigit)) {
             int digit = Character.digit(charDigit, 10);
             fmtParts[i] = fmt.substring(from, to).toCharArray();
             argIndices[i] = digit;
@@ -86,10 +92,6 @@ public abstract class Message {
     return FMT_FILE;
   }
 
-  protected final Formatter getFormatter(URL u) {
-    return FMT_URL;
-  }
-
   protected final Formatter getFormatter(Integer i) {
     return FMT_INTEGER;
   }
@@ -106,16 +108,15 @@ public abstract class Message {
     return FMT_STRING;
   }
 
-  protected final Formatter getToStringFormatter() {
-    return FMT_TOSTRING;
-  }
-
   protected final Formatter getFormatter(String[] sa) {
     return FMT_STRING_ARRAY;
   }
 
-  protected final TreeLogger.Type type;
-  protected final char[][] fmtParts;
-  protected final int[] argIndices;
-  protected final int minChars;
+  protected final Formatter getFormatter(URL u) {
+    return FMT_URL;
+  }
+
+  protected final Formatter getToStringFormatter() {
+    return FMT_TOSTRING;
+  }
 }

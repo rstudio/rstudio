@@ -30,9 +30,24 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Tree logger built on an SWT tree item.
+ */
 public final class TreeItemLogger extends AbstractTreeLogger {
 
   public static class LogEvent {
+    public final Throwable caught;
+
+    public final int index;
+
+    public final boolean isBranchCommit;
+
+    public final TreeItemLogger logger;
+
+    public final String message;
+
+    public final TreeLogger.Type type;
+
     public LogEvent(TreeItemLogger logger, boolean isBranchCommit, int index,
         Type type, String message, Throwable caught) {
       this.logger = logger;
@@ -202,13 +217,6 @@ public final class TreeItemLogger extends AbstractTreeLogger {
         }
       }
     }
-
-    public final Throwable caught;
-    public final int index;
-    public final boolean isBranchCommit;
-    public final TreeItemLogger logger;
-    public final String message;
-    public final TreeLogger.Type type;
   }
   /**
    * One object that is shared across all logger instances in the same tree.
@@ -217,6 +225,10 @@ public final class TreeItemLogger extends AbstractTreeLogger {
    * provides tree-wide shared objects such as log item images.
    */
   private static class PendingUpdates {
+    private List updates = new LinkedList();
+
+    private final Object updatesLock = new Object();
+
     public void add(LogEvent update) {
       synchronized (updatesLock) {
         updates.add(update);
@@ -255,9 +267,6 @@ public final class TreeItemLogger extends AbstractTreeLogger {
 
       return true;
     }
-
-    private List updates = new LinkedList();
-    private final Object updatesLock = new Object();
   }
 
   // These don't get disposed, but they do last for the entire process, so
@@ -288,6 +297,12 @@ public final class TreeItemLogger extends AbstractTreeLogger {
       return null;
     }
   }
+
+  private boolean dead;
+
+  private TreeItem lazyTreeItem;
+
+  private final PendingUpdates sharedPendingUpdates;
 
   /**
    * Constructs the top-level TreeItemLogger.
@@ -332,8 +347,8 @@ public final class TreeItemLogger extends AbstractTreeLogger {
     }
 
     TreeItemLogger commitChild = (TreeItemLogger) childBeingCommitted;
-    sharedPendingUpdates.add(new LogEvent(commitChild, true, commitChild
-      .getBranchedIndex(), type, msg, caught));
+    sharedPendingUpdates.add(new LogEvent(commitChild, true,
+        commitChild.getBranchedIndex(), type, msg, caught));
   }
 
   protected void doLog(int index, TreeLogger.Type type, String msg,
@@ -342,8 +357,7 @@ public final class TreeItemLogger extends AbstractTreeLogger {
       return;
     }
 
-    sharedPendingUpdates.add(new LogEvent(this, false, index, type, msg,
-      caught));
+    sharedPendingUpdates.add(new LogEvent(this, false, index, type, msg, caught));
   }
 
   /**
@@ -379,8 +393,4 @@ public final class TreeItemLogger extends AbstractTreeLogger {
     //
     return false;
   }
-
-  private boolean dead;
-  private TreeItem lazyTreeItem;
-  private final PendingUpdates sharedPendingUpdates;
 }

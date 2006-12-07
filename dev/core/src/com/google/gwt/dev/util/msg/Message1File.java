@@ -20,6 +20,9 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 
 import java.io.File;
 
+/**
+ * File message.
+ */
 public final class Message1File extends Message1 {
 
   public Message1File(Type type, String fmt) {

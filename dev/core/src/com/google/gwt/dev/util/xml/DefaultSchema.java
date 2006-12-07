@@ -22,6 +22,8 @@ import java.lang.reflect.Method;
 
 public class DefaultSchema extends Schema {
 
+  private final TreeLogger logger;
+
   public DefaultSchema(TreeLogger logger) {
     this.logger = logger;
 
@@ -29,18 +31,18 @@ public class DefaultSchema extends Schema {
     //
     registerAttributeConverter(int.class, new AttributeConverterForInteger());
     registerAttributeConverter(Integer.class,
-      new AttributeConverterForInteger());
+        new AttributeConverterForInteger());
     registerAttributeConverter(String.class, new AttributeConverterForString());
     registerAttributeConverter(boolean.class,
-      new AttributeConverterForBoolean());
+        new AttributeConverterForBoolean());
     registerAttributeConverter(Boolean.class,
-      new AttributeConverterForBoolean());
+        new AttributeConverterForBoolean());
   }
 
   public void onBadAttributeValue(int line, String elem, String attr,
       String value, Class paramType) throws UnableToCompleteException {
     Messages.XML_ATTRIBUTE_CONVERSION_ERROR.log(logger, line, attr, paramType,
-      null);
+        null);
     throw new UnableToCompleteException();
   }
 
@@ -52,8 +54,7 @@ public class DefaultSchema extends Schema {
 
   public void onMissingAttribute(int line, String elem, String attr)
       throws UnableToCompleteException {
-    Messages.XML_REQUIRED_ATTRIBUTE_MISSING
-      .log(logger, elem, line, attr, null);
+    Messages.XML_REQUIRED_ATTRIBUTE_MISSING.log(logger, elem, line, attr, null);
     throw new UnableToCompleteException();
   }
 
@@ -74,6 +75,4 @@ public class DefaultSchema extends Schema {
     Messages.XML_ELEMENT_UNEXPECTED.log(logger, line, elem, null);
     throw new UnableToCompleteException();
   }
-
-  private final TreeLogger logger;
 }

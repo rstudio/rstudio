@@ -17,7 +17,14 @@ package com.google.gwt.dev.util.log;
 
 import java.io.PrintWriter;
 
+/**
+ * Tree logger that logs to a print writer.
+ */
 public final class PrintWriterTreeLogger extends AbstractTreeLogger {
+
+  private final PrintWriter out;
+
+  private final String indent;
 
   public PrintWriterTreeLogger() {
     this(new PrintWriter(System.out, true));
@@ -55,7 +62,4 @@ public final class PrintWriterTreeLogger extends AbstractTreeLogger {
       caught.printStackTrace(out);
     }
   }
-
-  private final PrintWriter out;
-  private final String indent;
 }

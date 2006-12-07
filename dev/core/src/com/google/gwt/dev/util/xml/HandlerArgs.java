@@ -23,6 +23,19 @@ import com.google.gwt.core.ext.UnableToCompleteException;
  */
 public class HandlerArgs {
 
+  // The real (non-normalized) names of the attributes, used to report errors.
+  private final String[] attrNames;
+
+  private final String[] argValues;
+
+  private final HandlerParam[] handlerParams;
+
+  private final int lineNumber;
+
+  private final Schema schema;
+
+  private final String elemName;
+
   public HandlerArgs(Schema schema, int lineNumber, String elemName,
       HandlerParam[] handlerParams) {
     this.schema = schema;
@@ -40,19 +53,17 @@ public class HandlerArgs {
   }
 
   /**
-   * @return
-   *    the argument converted to a form that is expected to compatible with
-   *    the associated parameter and will work for a reflection "invoke()" call
-   * @throws UnableToCompleteException
-   *    if the argument could not be converted
+   * @return the argument converted to a form that is expected to compatible
+   *         with the associated parameter and will work for a reflection
+   *         "invoke()" call
+   * @throws UnableToCompleteException if the argument could not be converted
    */
   public Object convertToArg(int i) throws UnableToCompleteException {
     String value = argValues[i];
     if (value != null) {
-      AttributeConverter converter = schema
-        .getAttributeConverter(handlerParams[i].getParamType());
-      return converter.convertToArg(schema, lineNumber, elemName,
-        attrNames[i], value);
+      AttributeConverter converter = schema.getAttributeConverter(handlerParams[i].getParamType());
+      return converter.convertToArg(schema, lineNumber, elemName, attrNames[i],
+          value);
     } else {
       return new NullPointerException("Argument " + i + " was null");
     }
@@ -75,9 +86,8 @@ public class HandlerArgs {
   }
 
   /**
-   * @return 
-   *    <code>true</code> if the param for the specified attribute was set; 
-   *    <code>false</code> if no matching param was found
+   * @return <code>true</code> if the param for the specified attribute was
+   *         set; <code>false</code> if no matching param was found
    */
   public boolean setArg(String attrName, String attrValue) {
     String normalizedAttrName = normalizeAttrName(attrName);
@@ -97,17 +107,4 @@ public class HandlerArgs {
     // NOTE: this is where other characters would be folded to '_'.
     return attrName.replace('-', '_');
   }
-
-  // The real (non-normalized) names of the attributes, used to report errors.
-  private final String[] attrNames;
-
-  private final String[] argValues;
-
-  private final HandlerParam[] handlerParams;
-
-  private final int lineNumber;
-
-  private final Schema schema;
-
-  private final String elemName;
 }

@@ -47,6 +47,16 @@ public final class ReflectiveParser {
 
   private static final class Impl extends DefaultHandler {
 
+    private Locator locator;
+
+    private Reader reader;
+
+    private Stack schemaLevels = new Stack();
+
+    private Stack argStack = new Stack();
+
+    private Schema defaultSchema;
+
     public void characters(char[] ch, int start, int length)
         throws SAXException {
       int lineNumber = locator.getLineNumber();
@@ -184,7 +194,7 @@ public final class ReflectiveParser {
           //
           try {
             schemaLevel.onUnexpectedAttribute(lineNumber, elemName, attrName,
-              attrValue);
+                attrValue);
           } catch (UnableToCompleteException e) {
             throw new SAXException(e);
           }
@@ -200,8 +210,8 @@ public final class ReflectiveParser {
           // It might throw, but it also might not.
           //
           try {
-            schemaLevel.onMissingAttribute(lineNumber, elemName, args
-              .getArgName(i));
+            schemaLevel.onMissingAttribute(lineNumber, elemName,
+                args.getArgName(i));
           } catch (UnableToCompleteException e) {
             throw new SAXException(e);
           }
@@ -230,7 +240,7 @@ public final class ReflectiveParser {
       Schema childSchemaLevel;
       try {
         childSchemaLevel = method.invokeBegin(lineNumber, elemName,
-          schemaLevel, args, invokeArgs);
+            schemaLevel, args, invokeArgs);
       } catch (UnableToCompleteException e) {
         throw new SAXException(e);
       }
@@ -242,16 +252,16 @@ public final class ReflectiveParser {
       setArgsAndPushLevel(invokeArgs, childSchemaLevel);
     }
 
+    private Object[] getCurrentArgs() {
+      return (Object[]) argStack.peek();
+    }
+
     private Schema getNextToTopSchemaLevel() {
       return (Schema) schemaLevels.get(schemaLevels.size() - 2);
     }
 
     private Schema getTopSchemaLevel() {
       return (Schema) schemaLevels.peek();
-    }
-
-    private Object[] getCurrentArgs() {
-      return (Object[]) argStack.peek();
     }
 
     private void parse(TreeLogger logger, Schema topSchema, Reader reader)
@@ -341,12 +351,6 @@ public final class ReflectiveParser {
       // The schema for children.
       schemaLevels.push(schemaLevel);
     }
-
-    private Locator locator;
-    private Reader reader;
-    private Stack schemaLevels = new Stack();
-    private Stack argStack = new Stack();
-    private Schema defaultSchema;
   }
 
   public static void parse(TreeLogger logger, Schema schema, Reader reader)

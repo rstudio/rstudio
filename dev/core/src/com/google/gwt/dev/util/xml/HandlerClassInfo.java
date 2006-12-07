@@ -23,6 +23,15 @@ public class HandlerClassInfo {
   private static final HandlerMethod[] EMPTY_ARRAY_HANDLERMETHOD = new HandlerMethod[0];
   private static Map sClassInfoMap = new HashMap();
 
+  public static synchronized HandlerClassInfo getClassInfo(Class c) {
+    if (sClassInfoMap.containsKey(c)) {
+      return (HandlerClassInfo) sClassInfoMap.get(c);
+    } else {
+      throw new RuntimeException("The schema class '" + c.getName()
+          + "' should have been registered prior to parsing");
+    }
+  }
+
   public static synchronized void registerClass(Class c) {
     if (sClassInfoMap.containsKey(c)) {
       return;
@@ -36,22 +45,13 @@ public class HandlerClassInfo {
     sClassInfoMap.put(c, classInfo);
   }
 
-  public static synchronized HandlerClassInfo getClassInfo(Class c) {
-    if (sClassInfoMap.containsKey(c)) {
-      return (HandlerClassInfo) sClassInfoMap.get(c);
-    } else {
-      throw new RuntimeException("The schema class '" + c.getName()
-        + "' should have been registered prior to parsing");
-    }
-  }
-
   private static HandlerClassInfo createClassInfo(Class c) {
     Map namedHandlerMethods = new HashMap();
     try {
       loadClassInfoRecursive(namedHandlerMethods, c);
     } catch (Exception e) {
       throw new RuntimeException("Unable to use class '" + c.getName()
-        + "' as a handler", e);
+          + "' as a handler", e);
     }
     HandlerClassInfo classInfo = new HandlerClassInfo(namedHandlerMethods);
     return classInfo;
@@ -87,14 +87,11 @@ public class HandlerClassInfo {
     }
   }
 
+  private final Map namedHandlerMethods;
+
   // Nobody else can create one.
   private HandlerClassInfo(Map namedHandlerMethods) {
     this.namedHandlerMethods = namedHandlerMethods;
-  }
-
-  public HandlerMethod getStartMethod(String localName) {
-    String methodName = "__" + localName.replace('-', '_');
-    return (HandlerMethod) namedHandlerMethods.get(methodName + "_begin");
   }
 
   public HandlerMethod getEndMethod(String localName) {
@@ -102,11 +99,14 @@ public class HandlerClassInfo {
     return (HandlerMethod) namedHandlerMethods.get(methodName + "_end");
   }
 
-  private final Map namedHandlerMethods;
-
   public HandlerMethod[] getHandlerMethods() {
     return (HandlerMethod[]) namedHandlerMethods.values().toArray(
-      EMPTY_ARRAY_HANDLERMETHOD);
+        EMPTY_ARRAY_HANDLERMETHOD);
+  }
+
+  public HandlerMethod getStartMethod(String localName) {
+    String methodName = "__" + localName.replace('-', '_');
+    return (HandlerMethod) namedHandlerMethods.get(methodName + "_begin");
   }
 
   public HandlerMethod getTextMethod() {

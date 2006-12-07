@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.util.msg;
 
+/**
+ * Integer message formatter.
+ */
 public final class FormatterForInteger extends Formatter {
 
   public String format(Object toFormat) {

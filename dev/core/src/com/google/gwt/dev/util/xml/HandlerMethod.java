@@ -63,6 +63,10 @@ public final class HandlerMethod {
   private static final int TYPE_END = 2;
   private static final int TYPE_TEXT = 3;
 
+  static {
+    ReflectiveParser.registerSchemaLevel(sArbitraryChildHandler.getClass());
+  }
+
   /**
    * Attempts to create a handler method from any method. You can pass in any
    * method at all, but an exception will be thrown if the method is clearly a
@@ -79,11 +83,11 @@ public final class HandlerMethod {
         if (methodName.endsWith("_begin")) {
           type = TYPE_BEGIN;
           normalizedTagName = methodName.substring(0, methodName.length()
-            - "_begin".length());
+              - "_begin".length());
         } else if (methodName.endsWith("_end")) {
           type = TYPE_END;
           normalizedTagName = methodName.substring(0, methodName.length()
-            - "_end".length());
+              - "_end".length());
         } else if (methodName.equals("__text")) {
           type = TYPE_TEXT;
         }
@@ -114,11 +118,11 @@ public final class HandlerMethod {
           arbitraryChildren = true;
         } else {
           throw new IllegalArgumentException(
-            "The return type of begin handlers must be 'void' or assignable to 'SchemaLevel'");
+              "The return type of begin handlers must be 'void' or assignable to 'SchemaLevel'");
         }
       } else if (!Void.TYPE.equals(returnType)) {
         throw new IllegalArgumentException(
-          "Only 'void' may be specified as a return type for 'end' and 'text' handlers");
+            "Only 'void' may be specified as a return type for 'end' and 'text' handlers");
       }
 
       // Create handler args.
@@ -127,7 +131,7 @@ public final class HandlerMethod {
         Class[] paramTypes = method.getParameterTypes();
         if (paramTypes.length != 1 || !String.class.equals(paramTypes[0])) {
           throw new IllegalArgumentException(
-            "__text handlers must have exactly one String parameter");
+              "__text handlers must have exactly one String parameter");
         }
 
         // We pretend it doesn't have any param since they're always
@@ -139,24 +143,31 @@ public final class HandlerMethod {
         List handlerParams = new ArrayList();
         for (int i = 0, n = paramTypes.length; i < n; ++i) {
           HandlerParam handlerParam = HandlerParam.create(method,
-            normalizedTagName, i);
+              normalizedTagName, i);
           if (handlerParam != null) {
             handlerParams.add(handlerParam);
           } else {
             throw new IllegalArgumentException("In method '" + method.getName()
-              + "', parameter " + (i + 1) + " is an unsupported type");
+                + "', parameter " + (i + 1) + " is an unsupported type");
           }
         }
 
-        HandlerParam[] hpa = (HandlerParam[]) handlerParams
-          .toArray(EMPTY_HANDLERPARAMS);
+        HandlerParam[] hpa = (HandlerParam[]) handlerParams.toArray(EMPTY_HANDLERPARAMS);
         return new HandlerMethod(method, type, arbitraryChildren, hpa);
       }
     } catch (Exception e) {
       throw new RuntimeException("Unable to use method '" + methodName
-        + "' as a handler", e);
+          + "' as a handler", e);
     }
   }
+
+  private final boolean arbitraryChildren;
+
+  private final HandlerParam[] handlerParams;
+
+  private final Method method;
+
+  private final int methodType;
 
   private HandlerMethod(Method method, int type, boolean arbitraryChildren,
       HandlerParam[] hpa) {
@@ -189,23 +200,6 @@ public final class HandlerMethod {
 
   public int getParamCount() {
     return handlerParams.length;
-  }
-
-  public void invokeText(int lineNumber, String text, Schema target)
-      throws UnableToCompleteException {
-    Throwable caught = null;
-    try {
-      target.setLineNumber(lineNumber);
-      method.invoke(target, new Object[]{text});
-      return;
-    } catch (IllegalArgumentException e) {
-      caught = e;
-    } catch (IllegalAccessException e) {
-      caught = e;
-    } catch (InvocationTargetException e) {
-      caught = e.getTargetException();
-    }
-    target.onHandlerException(lineNumber, "#text", method, caught);
   }
 
   public Schema invokeBegin(int lineNumber, String elemLocalName,
@@ -277,6 +271,23 @@ public final class HandlerMethod {
     target.onHandlerException(lineNumber, elem, method, caught);
   }
 
+  public void invokeText(int lineNumber, String text, Schema target)
+      throws UnableToCompleteException {
+    Throwable caught = null;
+    try {
+      target.setLineNumber(lineNumber);
+      method.invoke(target, new Object[] {text});
+      return;
+    } catch (IllegalArgumentException e) {
+      caught = e;
+    } catch (IllegalAccessException e) {
+      caught = e;
+    } catch (InvocationTargetException e) {
+      caught = e.getTargetException();
+    }
+    target.onHandlerException(lineNumber, "#text", method, caught);
+  }
+
   public boolean isEndMethod() {
     return methodType == TYPE_END;
   }
@@ -284,13 +295,4 @@ public final class HandlerMethod {
   public boolean isStartMethod() {
     return methodType == TYPE_BEGIN;
   }
-
-  static {
-    ReflectiveParser.registerSchemaLevel(sArbitraryChildHandler.getClass());
-  }
-
-  private final boolean arbitraryChildren;
-  private final HandlerParam[] handlerParams;
-  private final Method method;
-  private final int methodType;
 }

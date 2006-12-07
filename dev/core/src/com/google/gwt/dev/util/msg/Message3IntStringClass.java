@@ -18,6 +18,9 @@ package com.google.gwt.dev.util.msg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 
+/**
+ * Integer, String & Class message.
+ */
 public final class Message3IntStringClass extends Message3 {
 
   public Message3IntStringClass(Type type, String fmt) {
@@ -28,12 +31,12 @@ public final class Message3IntStringClass extends Message3 {
       Throwable caught) {
     Integer xi = new Integer(x);
     return branch3(logger, xi, s, c, getFormatter(xi), getFormatter(s),
-      getFormatter(c), caught);
+        getFormatter(c), caught);
   }
 
   public void log(TreeLogger logger, int x, String s, Class c, Throwable caught) {
     Integer xi = new Integer(x);
     log3(logger, xi, s, c, getFormatter(xi), getFormatter(s), getFormatter(c),
-      caught);
+        caught);
   }
 }

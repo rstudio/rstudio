@@ -37,10 +37,15 @@ public final class ThreadLocalTreeLoggerProxy implements TreeLogger {
   }
 
   /**
-   * Sets the logger to which calls are redirected for the current thread.
+   * Delegates the branch to the thread-local logger if one is present.
+   * Otherwise, the log entry is discarded and <code>this</code> is returned.
    */
-  public void set(TreeLogger logger) {
-    perThreadLogger.set(logger);
+  public TreeLogger branch(Type type, String msg, Throwable caught) {
+    TreeLogger logger = (TreeLogger) perThreadLogger.get();
+    if (logger != null)
+      return logger.branch(type, msg, caught);
+    else
+      return this;
   }
 
   /**
@@ -68,14 +73,9 @@ public final class ThreadLocalTreeLoggerProxy implements TreeLogger {
   }
 
   /**
-   * Delegates the branch to the thread-local logger if one is present.
-   * Otherwise, the log entry is discarded and <code>this</code> is returned.
+   * Sets the logger to which calls are redirected for the current thread.
    */
-  public TreeLogger branch(Type type, String msg, Throwable caught) {
-    TreeLogger logger = (TreeLogger) perThreadLogger.get();
-    if (logger != null)
-      return logger.branch(type, msg, caught);
-    else
-      return this;
+  public void set(TreeLogger logger) {
+    perThreadLogger.set(logger);
   }
 }

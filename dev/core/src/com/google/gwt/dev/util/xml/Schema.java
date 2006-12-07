@@ -21,15 +21,23 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Abstract base class for reflection-based push-parsing of XML.
+ */
 public abstract class Schema {
+
+  private final Map convertersByType = new HashMap();
+
+  private Schema parent;
+
+  private int lineNumber;
 
   /**
    * Finds the most recent converter in the schema chain that can convert the
    * specified type.
    */
   public AttributeConverter getAttributeConverter(Class type) {
-    AttributeConverter converter = (AttributeConverter) convertersByType
-      .get(type);
+    AttributeConverter converter = (AttributeConverter) convertersByType.get(type);
     if (converter != null) {
       return converter;
     } else if (parent != null) {
@@ -37,7 +45,7 @@ public abstract class Schema {
     }
 
     throw new IllegalStateException(
-      "Unable to find an attribute converter for type " + type.getName());
+        "Unable to find an attribute converter for type " + type.getName());
   }
 
   public int getLineNumber() {
@@ -98,8 +106,4 @@ public abstract class Schema {
   public void setParent(Schema parent) {
     this.parent = parent;
   }
-
-  private final Map convertersByType = new HashMap();
-  private Schema parent;
-  private int lineNumber;
 }

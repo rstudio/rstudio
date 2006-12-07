@@ -18,6 +18,9 @@ package com.google.gwt.dev.util.msg;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 
+/**
+ * String message.
+ */
 public final class Message1ToString extends Message1 {
 
   public Message1ToString(Type type, String fmt) {

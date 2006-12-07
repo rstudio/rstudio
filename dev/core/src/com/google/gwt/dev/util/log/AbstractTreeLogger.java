@@ -21,21 +21,22 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 /**
- * Abstract base class for TreeLoggers. 
+ * Abstract base class for TreeLoggers.
  */
 public abstract class AbstractTreeLogger implements TreeLogger {
 
   private static class UncommittedBranchData {
+
+    public final Throwable caught;
+
+    public final String message;
+    public final TreeLogger.Type type;
 
     public UncommittedBranchData(Type type, String message, Throwable exception) {
       caught = exception;
       this.message = message;
       this.type = type;
     }
-
-    public final Throwable caught;
-    public final String message;
-    public final TreeLogger.Type type;
   }
 
   public static String getStackTraceAsString(Throwable e) {
@@ -76,7 +77,7 @@ public abstract class AbstractTreeLogger implements TreeLogger {
       if (elem.getLineNumber() > 0) {
         goodElems.add(elem);
         if (goodElems.size() < 10
-          || prevElem.getClassName().equals(elem.getClassName())) {
+            || prevElem.getClassName().equals(elem.getClassName())) {
           // Keep going.
           prevElem = elem;
         } else {
@@ -86,12 +87,23 @@ public abstract class AbstractTreeLogger implements TreeLogger {
       }
     }
     if (goodElems.size() > 0) {
-      return (StackTraceElement[]) goodElems
-        .toArray(new StackTraceElement[goodElems.size()]);
+      return (StackTraceElement[]) goodElems.toArray(new StackTraceElement[goodElems.size()]);
     } else {
       return null;
     }
   }
+
+  public int indexWithinMyParent;
+
+  private UncommittedBranchData uncommitted;
+
+  private TreeLogger.Type logLevel = TreeLogger.ALL;
+
+  private int nextChildIndex;
+
+  private final Object nextChildIndexLock = new Object();
+
+  private AbstractTreeLogger parent;
 
   /**
    * The constructor used when creating a top-level logger.
@@ -109,7 +121,7 @@ public abstract class AbstractTreeLogger implements TreeLogger {
     if (msg == null) {
       msg = "(Null branch message)";
     }
-    
+
     // Compute at which index the new child will be placed.
     //
     int childIndex = allocateNextChildIndex();
@@ -146,29 +158,8 @@ public abstract class AbstractTreeLogger implements TreeLogger {
     return childLogger;
   }
 
-  /**
-   * Commits the branch after ensuring that the parent logger (if there is one)
-   * has been committed first.
-   */
-  private synchronized void commitMyBranchEntryInMyParentLogger() {
-    // (Only the root logger doesn't have a parent.)
-    //
-    if (parent != null) {
-      if (uncommitted != null) {
-        // Commit the parent first.
-        //
-        parent.commitMyBranchEntryInMyParentLogger();
-
-        // Let the subclass do its thing to commit this branch.
-        //
-        parent.doCommitBranch(this, uncommitted.type, uncommitted.message,
-          uncommitted.caught);
-
-        // Release the uncommitted state.
-        //
-        uncommitted = null;
-      }
-    }
+  public final int getBranchedIndex() {
+    return indexWithinMyParent;
   }
 
   public final AbstractTreeLogger getParentLogger() {
@@ -194,7 +185,7 @@ public abstract class AbstractTreeLogger implements TreeLogger {
     if (msg == null) {
       msg = "(Null log message)";
     }
-    
+
     int childIndex = allocateNextChildIndex();
     if (isLoggable(type)) {
       commitMyBranchEntryInMyParentLogger();
@@ -239,6 +230,38 @@ public abstract class AbstractTreeLogger implements TreeLogger {
   protected abstract void doLog(int indexOfLogEntryWithinParentLogger,
       TreeLogger.Type type, String msg, Throwable caught);
 
+  private int allocateNextChildIndex() {
+    synchronized (nextChildIndexLock) {
+      // postincrement because we want indices to start at 0
+      return nextChildIndex++;
+    }
+  }
+
+  /**
+   * Commits the branch after ensuring that the parent logger (if there is one)
+   * has been committed first.
+   */
+  private synchronized void commitMyBranchEntryInMyParentLogger() {
+    // (Only the root logger doesn't have a parent.)
+    //
+    if (parent != null) {
+      if (uncommitted != null) {
+        // Commit the parent first.
+        //
+        parent.commitMyBranchEntryInMyParentLogger();
+
+        // Let the subclass do its thing to commit this branch.
+        //
+        parent.doCommitBranch(this, uncommitted.type, uncommitted.message,
+            uncommitted.caught);
+
+        // Release the uncommitted state.
+        //
+        uncommitted = null;
+      }
+    }
+  }
+
   private String getLoggerId() {
     if (parent != null) {
       if (parent.parent == null) {
@@ -253,22 +276,4 @@ public abstract class AbstractTreeLogger implements TreeLogger {
       return "#";
     }
   }
-
-  private int allocateNextChildIndex() {
-    synchronized (nextChildIndexLock) {
-      // postincrement because we want indices to start at 0
-      return nextChildIndex++;
-    }
-  }
-
-  public final int getBranchedIndex() {
-    return indexWithinMyParent;
-  }
-
-  private UncommittedBranchData uncommitted;
-  private TreeLogger.Type logLevel = TreeLogger.ALL;
-  public int indexWithinMyParent;
-  private int nextChildIndex;
-  private final Object nextChildIndexLock = new Object();
-  private AbstractTreeLogger parent;
 }
