@@ -152,32 +152,48 @@ public class Booklet {
     return sBooklet;
   }
 
+  private String outputPath;
+
+  private HashSet packagesToGenerate;
+
+  private RootDoc initialRootDoc;
+
+  private String rootDocId;
+
+  private boolean showCode;
+
+  private HashSet standardTagKinds = new HashSet();
+
+  private Stack tagStack = new Stack();
+
+  private PrintWriter pw;
+
   public Booklet() {
     // Set up standard tags (to ignore during tag processing)
     //
-    fStandardTagKinds.add("@see");
-    fStandardTagKinds.add("@serial");
-    fStandardTagKinds.add("@throws");
-    fStandardTagKinds.add("@param");
-    fStandardTagKinds.add("@id");
+    standardTagKinds.add("@see");
+    standardTagKinds.add("@serial");
+    standardTagKinds.add("@throws");
+    standardTagKinds.add("@param");
+    standardTagKinds.add("@id");
   }
 
   private boolean analyzeOptions(String[][] options, DocErrorReporter reporter) {
     for (int i = 0, n = options.length; i < n; ++i) {
       if (options[i][0].equals(OPT_BKOUT)) {
-        fOutputPath = options[i][1];
+        outputPath = options[i][1];
       } else if (options[i][0].equals(OPT_BKDOCPKG)) {
         String[] packages = options[i][1].split(";");
-        fPackagesToGenerate = new HashSet();
+        packagesToGenerate = new HashSet();
         for (int packageIndex = 0; packageIndex < packages.length; ++packageIndex) {
-          fPackagesToGenerate.add(packages[packageIndex]);
+          packagesToGenerate.add(packages[packageIndex]);
         }
       } else if (options[i][0].equals(OPT_BKCODE)) {
-        fShowCode = true;
+        showCode = true;
       }
     }
 
-    if (fOutputPath == null) {
+    if (outputPath == null) {
       reporter.printError("You must specify an output directory with "
           + OPT_BKOUT);
       return false;
@@ -188,12 +204,12 @@ public class Booklet {
 
   private void begin(String tag) {
     pw.print("<" + tag + ">");
-    fTagStack.push(tag);
+    tagStack.push(tag);
   }
 
   private void begin(String tag, String attr, String value) {
     pw.print("<" + tag + " " + attr + "='" + value + "'>");
-    fTagStack.push(tag);
+    tagStack.push(tag);
   }
 
   private void beginCDATA() {
@@ -322,8 +338,8 @@ public class Booklet {
       myId = getId(pkgDoc);
       myTitle = pkgDoc.name();
     } else if (doc instanceof RootDoc) {
-      myId = fRootDocId;
-      myTitle = fRootDoc.name();
+      myId = rootDocId;
+      myTitle = initialRootDoc.name();
     } else {
       throw new IllegalStateException(
           "Expected only a member, type, or package");
@@ -406,7 +422,7 @@ public class Booklet {
   }
 
   private void end() {
-    pw.print("</" + fTagStack.pop() + ">");
+    pw.print("</" + tagStack.pop() + ">");
   }
 
   private void endCDATA() {
@@ -452,6 +468,19 @@ public class Booklet {
     // Just didn't find it anywhere. Must not be based on an implemented
     // interface.
     //
+    return null;
+  }
+
+  private ExtraClassResolver getExtraClassResolver(Tag tag) {
+
+    if (tag.holder() instanceof PackageDoc) {
+      return new ExtraClassResolver() {
+        public ClassDoc findClass(String className) {
+          return initialRootDoc.classNamed(className);
+        }
+      };
+    }
+
     return null;
   }
 
@@ -502,7 +531,7 @@ public class Booklet {
         return classDoc.containingPackage();
       }
     } else if (doc instanceof PackageDoc) {
-      return fRootDoc;
+      return initialRootDoc;
     } else if (doc instanceof RootDoc) {
       return null;
     } else {
@@ -694,7 +723,7 @@ public class Booklet {
 
     // Maybe show code
     //
-    if (fShowCode) {
+    if (showCode) {
       SourcePosition pos = memberDoc.position();
       if (pos != null) {
         beginln("code");
@@ -775,31 +804,31 @@ public class Booklet {
 
   private void process(RootDoc rootDoc) {
     try {
-      fRootDoc = rootDoc;
-      File outputFile = new File(fOutputPath);
+      initialRootDoc = rootDoc;
+      File outputFile = new File(outputPath);
       outputFile.getParentFile().mkdirs();
       FileWriter fw = new FileWriter(outputFile);
       pw = new PrintWriter(fw, true);
 
       beginln("booklet");
 
-      fRootDocId = "";
+      rootDocId = "";
       String title = "";
       Tag[] idTags = rootDoc.tags("@id");
       if (idTags.length > 0) {
-        fRootDocId = idTags[0].text();
+        rootDocId = idTags[0].text();
       } else {
-        fRootDoc.printWarning("Expecting @id in an overview html doc; see -overview");
+        initialRootDoc.printWarning("Expecting @id in an overview html doc; see -overview");
       }
 
       Tag[] titleTags = rootDoc.tags("@title");
       if (titleTags.length > 0) {
         title = titleTags[0].text();
       } else {
-        fRootDoc.printWarning("Expecting @title in an overview html doc; see -overview");
+        initialRootDoc.printWarning("Expecting @title in an overview html doc; see -overview");
       }
 
-      emitIdentity(fRootDocId, title);
+      emitIdentity(rootDocId, title);
       emitLocation(rootDoc);
       emitDescription(null, rootDoc, rootDoc.firstSentenceTags(),
           rootDoc.inlineTags());
@@ -808,7 +837,7 @@ public class Booklet {
       // Create a list of the packages to iterate over.
       //
       HashSet packageNames = new HashSet();
-      ClassDoc[] cda = fRootDoc.classes();
+      ClassDoc[] cda = initialRootDoc.classes();
       for (int i = 0; i < cda.length; i++) {
         ClassDoc cd = cda[i];
         // Only top-level classes matter.
@@ -826,9 +855,9 @@ public class Booklet {
         // Only process this package if either no "docpkg" is set, or it is
         // included.
         //
-        if (fPackagesToGenerate == null
-            || fPackagesToGenerate.contains(packageName)) {
-          PackageDoc pd = fRootDoc.packageNamed(packageName);
+        if (packagesToGenerate == null
+            || packagesToGenerate.contains(packageName)) {
+          PackageDoc pd = initialRootDoc.packageNamed(packageName);
           process(pd);
         }
       }
@@ -836,7 +865,7 @@ public class Booklet {
       endln();
     } catch (Exception e) {
       e.printStackTrace();
-      fRootDoc.printError("Caught exception: " + e.toString());
+      initialRootDoc.printError("Caught exception: " + e.toString());
     }
   }
 
@@ -909,7 +938,7 @@ public class Booklet {
       text(label != null ? label.trim() : "");
       end();
     } else {
-      fRootDoc.printWarning(seeTag.position(),
+      initialRootDoc.printWarning(seeTag.position(),
           "Unverifiable cross-reference to '" + seeTag.text() + "'");
       // The link probably won't work, but emit it anyway.
       begin("link");
@@ -950,7 +979,7 @@ public class Booklet {
         begin("pre", "class", "code");
         text(contents);
         endln();
-      } else if (!fStandardTagKinds.contains(tag.name())) {
+      } else if (!standardTagKinds.contains(tag.name())) {
         // Custom tag; pass it along other tag.
         //
         String tagName = tag.name().substring(1);
@@ -961,29 +990,7 @@ public class Booklet {
     }
   }
 
-  private ExtraClassResolver getExtraClassResolver(Tag tag) {
-
-    if (tag.holder() instanceof PackageDoc) {
-      return new ExtraClassResolver() {
-        public ClassDoc findClass(String className) {
-          return fRootDoc.classNamed(className);
-        }
-      };
-    }
-
-    return null;
-  }
-
   private void text(String s) {
     pw.print(s);
   }
-
-  private String fOutputPath;
-  private HashSet fPackagesToGenerate;
-  private RootDoc fRootDoc;
-  private String fRootDocId;
-  private boolean fShowCode;
-  private HashSet fStandardTagKinds = new HashSet();
-  private Stack fTagStack = new Stack();
-  private PrintWriter pw;
 }

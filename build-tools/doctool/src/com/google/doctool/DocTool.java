@@ -60,8 +60,10 @@ public class DocTool {
 
   private class ImageCopier extends DefaultHandler {
 
+    private final File htmlDir;
+
     private ImageCopier(File htmlDir) {
-      fHtmlDir = htmlDir;
+      this.htmlDir = htmlDir;
     }
 
     public void startElement(String uri, String localName, String qName,
@@ -70,14 +72,14 @@ public class DocTool {
         String imgSrc = attributes.getValue("src");
         if (imgSrc != null) {
           boolean found = false;
-          for (int i = 0, n = fImagePath.length; i < n; ++i) {
-            File dir = fImagePath[i];
+          for (int i = 0, n = imagePath.length; i < n; ++i) {
+            File dir = imagePath[i];
             File inFile = new File(dir, imgSrc);
             if (inFile.exists()) {
               // Copy it over.
               //
               found = true;
-              File outFile = new File(fHtmlDir, imgSrc);
+              File outFile = new File(htmlDir, imgSrc);
 
               if (outFile.exists()) {
                 if (outFile.lastModified() > inFile.lastModified()) {
@@ -87,24 +89,21 @@ public class DocTool {
               } else {
                 File outFileDir = outFile.getParentFile();
                 if (!outFileDir.exists() && !outFileDir.mkdirs()) {
-                  fErr.println("Unable to create image output dir "
-                      + outFileDir);
+                  err.println("Unable to create image output dir " + outFileDir);
                   break;
                 }
               }
               if (!copyFile(inFile, outFile)) {
-                fErr.println("Unable to copy image file " + outFile);
+                err.println("Unable to copy image file " + outFile);
               }
             }
           }
           if (!found) {
-            fErr.println("Unable to find image " + imgSrc);
+            err.println("Unable to find image " + imgSrc);
           }
         }
       }
     }
-
-    private final File fHtmlDir;
   }
 
   private static final Pattern IN_XML_FILENAME = Pattern.compile(
@@ -252,23 +251,49 @@ public class DocTool {
     return false;
   }
 
+  private final File[] classPath;
+
+  private final String[] packages;
+
+  private final PrintStream err;
+
+  private final String base;
+
+  private final String fileType;
+
+  private final boolean generateHtml;
+
+  private final String[] htmlFileBases;
+
+  private final File[] imagePath;
+
+  private final PrintStream out;
+
+  private final File outDir;
+
+  private final File overviewFile;
+
+  private final File[] sourcePath;
+
+  private final String title;
+
   DocTool(PrintStream out, PrintStream err, File outDir, boolean generateHtml,
       String title, String[] htmlFileBases, String fileType, String fileBase,
       File overviewFile, File[] sourcePath, File[] classPath,
       String[] packages, File[] imagePath) {
-    fOut = out;
-    fErr = err;
-    fOutDir = outDir;
-    fGenerateHtml = generateHtml;
-    fFileBase = fileBase;
-    fFileType = fileType;
-    fOverviewFile = overviewFile;
-    fSourcePath = sourcePath;
-    fClassPath = classPath;
-    fPackages = packages;
-    fImagePath = imagePath;
-    fTitle = title;
-    fHtmlFileBases = (String[]) htmlFileBases.clone();
+    this.out = out;
+    this.err = err;
+    this.outDir = outDir;
+    this.generateHtml = generateHtml;
+    this.base = fileBase;
+    this.fileType = fileType;
+    this.overviewFile = overviewFile;
+    this.sourcePath = sourcePath;
+    this.classPath = classPath;
+    this.packages = packages;
+    this.imagePath = imagePath;
+    this.title = title;
+    this.htmlFileBases = (String[]) htmlFileBases.clone();
   }
 
   public boolean copyFile(File in, File out) {
@@ -296,7 +321,7 @@ public class DocTool {
       try {
         is.close();
       } catch (IOException e) {
-        e.printStackTrace(fErr);
+        e.printStackTrace(err);
       }
     }
   }
@@ -306,7 +331,7 @@ public class DocTool {
       try {
         os.close();
       } catch (IOException e) {
-        e.printStackTrace(fErr);
+        e.printStackTrace(err);
       }
     }
   }
@@ -338,17 +363,17 @@ public class DocTool {
           fileReader.close();
         }
       } catch (IOException e) {
-        e.printStackTrace(fErr);
+        e.printStackTrace(err);
       }
     }
-    caught.printStackTrace(fErr);
+    caught.printStackTrace(err);
     return false;
   }
 
   private Set findSourcePackages() {
     Set results = new HashSet();
-    for (int i = 0, n = fSourcePath.length; i < n; ++i) {
-      File srcDir = fSourcePath[i];
+    for (int i = 0, n = sourcePath.length; i < n; ++i) {
+      File srcDir = sourcePath[i];
       findSourcePackages(results, srcDir, "");
     }
     return results;
@@ -399,7 +424,7 @@ public class DocTool {
         if (file.lastModified() > topicFile.lastModified()) {
           String xsltFileName = matcher.group(2) + "-" + "topics.xslt";
           String xslt = getFileFromClassPath(xsltFileName); // yucky slow
-          fOut.println(file + " -> " + topicFile);
+          out.println(file + " -> " + topicFile);
           transform(xslt, file, topicFile, null);
         }
       }
@@ -409,16 +434,16 @@ public class DocTool {
   private boolean genHtml() {
     // Make sure the html directory exists.
     //
-    File htmlDir = new File(fOutDir, "html");
+    File htmlDir = new File(outDir, "html");
     if (!htmlDir.exists() && !htmlDir.mkdirs()) {
-      fErr.println("Cannot create html output directory "
+      err.println("Cannot create html output directory "
           + htmlDir.getAbsolutePath());
       return false;
     }
 
     // Merge all *.topics.xml into one topics.xml file.
     //
-    File mergedTopicsFile = new File(fOutDir, "topics.xml");
+    File mergedTopicsFile = new File(outDir, "topics.xml");
     if (!mergeTopics(mergedTopicsFile)) {
       return false;
     }
@@ -436,7 +461,7 @@ public class DocTool {
       String xsltHtmls = getFileFromClassPath("topics-htmls.xslt");
 
       Map params = new HashMap();
-      params.put("title", fTitle);
+      params.put("title", title);
 
       transform(xsltHtmls, mergedTopicsFile, mergedHtmlsFile, params);
 
@@ -460,10 +485,10 @@ public class DocTool {
         cssWriter.write(css);
         cssWriter.close();
       } catch (IOException e) {
-        e.printStackTrace(fErr);
+        e.printStackTrace(err);
       }
     } else {
-      fOut.println("Skipping html creation since nothing seems to have changed since "
+      out.println("Skipping html creation since nothing seems to have changed since "
           + mergedHtmlsFile.getAbsolutePath());
     }
 
@@ -476,7 +501,7 @@ public class DocTool {
       in = getClass().getClassLoader().getResourceAsStream(filename);
       try {
         if (in == null) {
-          fErr.println("Cannot find file: " + filename);
+          err.println("Cannot find file: " + filename);
           System.exit(-1); // yuck
         }
         StringWriter sw = new StringWriter();
@@ -506,14 +531,14 @@ public class DocTool {
       // merge into the big topics doc.
       //
       boolean foundAny = false;
-      for (int i = 0, n = fHtmlFileBases.length; i < n; ++i) {
-        String filebase = fHtmlFileBases[i];
-        File fileToMerge = new File(fOutDir, filebase + ".topics.xml");
+      for (int i = 0, n = htmlFileBases.length; i < n; ++i) {
+        String filebase = htmlFileBases[i];
+        File fileToMerge = new File(outDir, filebase + ".topics.xml");
         if (fileToMerge.exists()) {
           foundAny = true;
           args.add(fileToMerge.getAbsolutePath());
         } else {
-          fErr.println("Unable to find " + fileToMerge.getName());
+          err.println("Unable to find " + fileToMerge.getName());
         }
       }
 
@@ -522,11 +547,11 @@ public class DocTool {
         traceCommand("SplitterJoiner", argArray);
         SplitterJoiner.main(argArray);
       } else {
-        fErr.println("No topics found");
+        err.println("No topics found");
         return false;
       }
     } catch (IOException e) {
-      e.printStackTrace(fErr);
+      e.printStackTrace(err);
       return false;
     }
     return true;
@@ -536,11 +561,11 @@ public class DocTool {
    * Runs the help process.
    */
   private boolean process() {
-    if (fFileType != null) {
+    if (fileType != null) {
       // Produce XML from JavaDoc.
       //
-      String fileName = fFileBase + "." + fFileType + ".xml";
-      if (!runBooklet(new File(fOutDir, fileName))) {
+      String fileName = base + "." + fileType + ".xml";
+      if (!runBooklet(new File(outDir, fileName))) {
         return false;
       }
     }
@@ -550,7 +575,7 @@ public class DocTool {
     //
     transformExistingIntoTopicXml();
 
-    if (fGenerateHtml) {
+    if (generateHtml) {
       // Merge into HTML.
       if (!genHtml()) {
         return false;
@@ -562,10 +587,10 @@ public class DocTool {
 
   private boolean runBooklet(File bkoutFile) {
     // Write out the list of packages that can be found on the source path.
-    fOut.println("Creating " + bkoutFile.getAbsolutePath());
+    out.println("Creating " + bkoutFile.getAbsolutePath());
     Set srcPackages = findSourcePackages();
     if (srcPackages.isEmpty()) {
-      fErr.println("No input files found");
+      err.println("No input files found");
       return false;
     }
 
@@ -581,27 +606,27 @@ public class DocTool {
 
     // Class path
     args.add("-classpath");
-    args.add(flattenPath(fClassPath));
+    args.add(flattenPath(classPath));
 
     // Source path
     args.add("-sourcepath");
-    args.add(flattenPath(fSourcePath));
+    args.add(flattenPath(sourcePath));
 
     // Overview file
-    if (fOverviewFile != null) {
+    if (overviewFile != null) {
       args.add("-overview");
-      args.add(fOverviewFile.getAbsolutePath());
+      args.add(overviewFile.getAbsolutePath());
     }
 
     // Output file
     args.add("-bkout");
     args.add(bkoutFile.getAbsolutePath());
 
-    if (fPackages != null) {
+    if (packages != null) {
       // Specify the packages to actually emit doc for
       StringBuffer bkdocpkg = new StringBuffer();
-      for (int i = 0; i < fPackages.length; i++) {
-        String pkg = fPackages[i];
+      for (int i = 0; i < packages.length; i++) {
+        String pkg = packages[i];
         bkdocpkg.append(pkg);
         bkdocpkg.append(";");
       }
@@ -630,20 +655,20 @@ public class DocTool {
       traceCommand("SplitterJoiner", argArray);
       SplitterJoiner.main(argArray);
     } catch (IOException e) {
-      e.printStackTrace(fErr);
+      e.printStackTrace(err);
       return false;
     }
     return true;
   }
 
   private void traceCommand(String cmd, String[] args) {
-    fOut.print(cmd);
+    out.print(cmd);
     for (int i = 0, n = args.length; i < n; ++i) {
       String arg = args[i];
-      fOut.print(" ");
-      fOut.print(arg);
+      out.print(" ");
+      out.print(arg);
     }
-    fOut.println();
+    out.println();
   }
 
   private void transform(String xslt, File inFile, File outFile, Map params) {
@@ -683,7 +708,7 @@ public class DocTool {
   }
 
   private void transformExistingIntoTopicXml() {
-    File[] children = fOutDir.listFiles();
+    File[] children = outDir.listFiles();
     if (children != null) {
       for (int i = 0, n = children.length; i < n; ++i) {
         File file = children[i];
@@ -701,18 +726,4 @@ public class DocTool {
       return null;
     }
   }
-
-  private final File[] fClassPath;
-  private final String[] fPackages;
-  private final PrintStream fErr;
-  private final String fFileBase;
-  private final String fFileType;
-  private final boolean fGenerateHtml;
-  private final String[] fHtmlFileBases;
-  private final File[] fImagePath;
-  private final PrintStream fOut;
-  private final File fOutDir;
-  private final File fOverviewFile;
-  private final File[] fSourcePath;
-  private final String fTitle;
 }

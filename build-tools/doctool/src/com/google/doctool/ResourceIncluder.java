@@ -27,6 +27,18 @@ import java.io.InputStream;
  */
 public class ResourceIncluder {
 
+  /**
+   * Copied from {@link com.google.gwt.util.tools.Utility#close(InputStream)}.
+   */
+  public static void close(InputStream is) {
+    try {
+      if (is != null) {
+        is.close();
+      }
+    } catch (IOException e) {
+    }
+  }
+
   public static String getResourceFromClasspathScrubbedForHTML(Tag tag) {
     String partialPath = tag.text();
     try {
@@ -39,18 +51,6 @@ public class ResourceIncluder {
           + ": unable to include resource " + partialPath + " for tag " + tag);
       System.exit(1);
       return null;
-    }
-  }
-
-  /**
-   * Copied from {@link com.google.gwt.util.tools.Utility#close(InputStream)}.
-   */
-  public static void close(InputStream is) {
-    try {
-      if (is != null) {
-        is.close();
-      }
-    } catch (IOException e) {
     }
   }
 

@@ -25,6 +25,28 @@ import java.util.List;
  */
 public class DocToolFactory {
 
+  private final List classPathEntries = new ArrayList();
+
+  private String fileBase;
+
+  private String fileType;
+
+  private boolean generateHtml;
+
+  private final List htmlFileBases = new ArrayList();
+
+  private final List imagePathEntries = new ArrayList();
+
+  private File outDir;
+
+  private File overviewFile;
+
+  private final List packageNameEntries = new ArrayList();
+
+  private final List srcPathEntries = new ArrayList();
+
+  private String title;
+
   public DocToolFactory() {
   }
 
@@ -138,16 +160,4 @@ public class DocToolFactory {
   public void setTitle(String title) {
     this.title = title;
   }
-
-  private final List classPathEntries = new ArrayList();
-  private String fileBase;
-  private String fileType;
-  private boolean generateHtml;
-  private final List htmlFileBases = new ArrayList();
-  private final List imagePathEntries = new ArrayList();
-  private File outDir;
-  private File overviewFile;
-  private final List packageNameEntries = new ArrayList();
-  private final List srcPathEntries = new ArrayList();
-  private String title;
 }
