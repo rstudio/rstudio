@@ -400,32 +400,20 @@ public class TreeItem extends UIObject implements HasHTML {
     contentPanel.setWidget(widget);
   }
 
-  private void clearContentPanel() {
-    if (contentPanel != null) {
-      // Child should not be owned by anyone anymore.
-      Widget child = contentPanel.getWidget();
-      if (contentPanel.getWidget() != null) {
-        contentPanel.remove(child);
-      }
-
-      // Tree should no longer own contentPanel.
-      if (tree != null) {
-        tree.disown(contentPanel);
-        contentPanel = null;
-      }
+  /**
+   * Returns the widget, if any, that should be focused on if this TreeItem is
+   * selected.
+   * 
+   * @return widget to be focused.
+   */
+  protected HasFocus getFocusableWidget() {
+    Widget widget = getWidget();
+    if (widget instanceof HasFocus) {
+      return (HasFocus)widget;
+    } else {
+      return null;
     }
-  }
-
-  private void ensureContentPanel() {
-    if (contentPanel == null) {
-      // Ensure contentElem is empty.
-      DOM.setInnerHTML(contentElem, "");
-      contentPanel = new ContentPanel(contentElem);
-      if (getTree() != null) {
-        tree.adopt(contentPanel);
-      }
-    }
-  }
+   }
 
   void addTreeItems(List accum) {
     for (int i = 0; i < children.size(); i++) {
@@ -462,21 +450,6 @@ public class TreeItem extends UIObject implements HasHTML {
 
     return ret;
   }
-
-  /**
-   * Returns the widget, if any, that should be focused on if this TreeItem is
-   * selected.
-   * 
-   * @return widget to be focused.
-   */
-  protected HasFocus getFocusableWidget() {
-    Widget widget = getWidget();
-    if (widget instanceof HasFocus) {
-      return (HasFocus)widget;
-    } else {
-      return null;
-    }
-   }
 
   String imgSrc(String img) {
     if (tree == null) {
@@ -539,6 +512,33 @@ public class TreeItem extends UIObject implements HasHTML {
     updateState();
     for (int i = 0, n = children.size(); i < n; ++i) {
       ((TreeItem) children.get(i)).updateStateRecursive();
+    }
+  }
+
+  private void clearContentPanel() {
+    if (contentPanel != null) {
+      // Child should not be owned by anyone anymore.
+      Widget child = contentPanel.getWidget();
+      if (contentPanel.getWidget() != null) {
+        contentPanel.remove(child);
+      }
+
+      // Tree should no longer own contentPanel.
+      if (tree != null) {
+        tree.disown(contentPanel);
+        contentPanel = null;
+      }
+    }
+  }
+
+  private void ensureContentPanel() {
+    if (contentPanel == null) {
+      // Ensure contentElem is empty.
+      DOM.setInnerHTML(contentElem, "");
+      contentPanel = new ContentPanel(contentElem);
+      if (getTree() != null) {
+        tree.adopt(contentPanel);
+      }
     }
   }
 

@@ -35,6 +35,12 @@ public final class ProjectCreator extends ToolBase {
 
   private static final String PACKAGE_PATH;
 
+  static {
+    String path = ProjectCreator.class.getName();
+    path = path.substring(0, path.lastIndexOf('.') + 1);
+    PACKAGE_PATH = path.replace('.', '/');
+  }
+
   public static void main(String[] args) {
     ProjectCreator creator = new ProjectCreator();
     if (creator.processArgs(args)) {
@@ -72,10 +78,10 @@ public final class ProjectCreator extends ToolBase {
       // Create an ant build file
       replacements.put("@projectName", ant);
       File antXML = Utility.createNormalFile(outDir, ant + ".ant.xml",
-        overwrite, ignore);
+          overwrite, ignore);
       if (antXML != null) {
         String out = Utility.getFileFromClassPath(PACKAGE_PATH
-          + "project.ant.xmlsrc");
+            + "project.ant.xmlsrc");
         Utility.writeTemplateFile(antXML, out, replacements);
       }
     }
@@ -84,7 +90,7 @@ public final class ProjectCreator extends ToolBase {
       // Create an eclipse project file
       replacements.put("@projectName", eclipse);
       File dotProject = Utility.createNormalFile(outDir, ".project", overwrite,
-        ignore);
+          ignore);
       if (dotProject != null) {
         String out = Utility.getFileFromClassPath(PACKAGE_PATH + ".projectsrc");
         Utility.writeTemplateFile(dotProject, out, replacements);
@@ -92,14 +98,22 @@ public final class ProjectCreator extends ToolBase {
 
       // Create an eclipse classpath file
       File dotClasspath = Utility.createNormalFile(outDir, ".classpath",
-        overwrite, ignore);
+          overwrite, ignore);
       if (dotClasspath != null) {
         String out = Utility.getFileFromClassPath(PACKAGE_PATH
-          + ".classpathsrc");
+            + ".classpathsrc");
         Utility.writeTemplateFile(dotClasspath, out, replacements);
       }
     }
   }
+
+  private String ant = null;
+
+  private String eclipse = null;
+
+  private boolean ignore = false;
+  private File outDir = null;
+  private boolean overwrite = false;
 
   protected ProjectCreator() {
 
@@ -114,7 +128,7 @@ public final class ProjectCreator extends ToolBase {
       }
 
       public String[] getTagArgs() {
-        return new String[]{"projectName"};
+        return new String[] {"projectName"};
       }
 
       public boolean setString(String str) {
@@ -178,16 +192,4 @@ public final class ProjectCreator extends ToolBase {
       return false;
     }
   }
-
-  static {
-    String path = ProjectCreator.class.getName();
-    path = path.substring(0, path.lastIndexOf('.') + 1);
-    PACKAGE_PATH = path.replace('.', '/');
-  }
-
-  private String ant = null;
-  private String eclipse = null;
-  private boolean ignore = false;
-  private File outDir = null;
-  private boolean overwrite = false;
 }

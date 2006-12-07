@@ -52,8 +52,8 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents {
   }
 
   /**
-   * Ensures that the specified item is visible, by adjusting the panel's
-   * scroll position.
+   * Ensures that the specified item is visible, by adjusting the panel's scroll
+   * position.
    * 
    * @param item the item whose visibility is to be ensured
    */
@@ -61,15 +61,6 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents {
     Element scroll = getElement();
     Element element = item.getElement();
     ensureVisibleImpl(scroll, element);
-  }
-
-  /**
-   * Gets the vertical scroll position.
-   * 
-   * @return the vertical scroll position, in pixels
-   */
-  public int getScrollPosition() {
-    return DOM.getIntAttribute(getElement(), "scrollTop");
   }
 
   /**
@@ -81,11 +72,20 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents {
     return DOM.getIntAttribute(getElement(), "scrollLeft");
   }
 
+  /**
+   * Gets the vertical scroll position.
+   * 
+   * @return the vertical scroll position, in pixels
+   */
+  public int getScrollPosition() {
+    return DOM.getIntAttribute(getElement(), "scrollTop");
+  }
+
   public void onBrowserEvent(Event event) {
     if (DOM.eventGetType(event) == Event.ONSCROLL) {
       if (scrollListeners != null) {
         scrollListeners.fireScroll(this, getHorizontalScrollPosition(),
-          getScrollPosition());
+            getScrollPosition());
       }
     }
   }
@@ -104,16 +104,7 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents {
    */
   public void setAlwaysShowScrollBars(boolean alwaysShow) {
     DOM.setStyleAttribute(getElement(), "overflow", alwaysShow ? "scroll"
-      : "auto");
-  }
-
-  /**
-   * Sets the vertical scroll position.
-   * 
-   * @param position the new vertical scroll position, in pixels
-   */
-  public void setScrollPosition(int position) {
-    DOM.setIntAttribute(getElement(), "scrollTop", position);
+        : "auto");
   }
 
   /**
@@ -123,6 +114,15 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents {
    */
   public void setHorizontalScrollPosition(int position) {
     DOM.setIntAttribute(getElement(), "scrollLeft", position);
+  }
+
+  /**
+   * Sets the vertical scroll position.
+   * 
+   * @param position the new vertical scroll position, in pixels
+   */
+  public void setScrollPosition(int position) {
+    DOM.setIntAttribute(getElement(), "scrollTop", position);
   }
 
   private native void ensureVisibleImpl(Element scroll, Element e) /*-{

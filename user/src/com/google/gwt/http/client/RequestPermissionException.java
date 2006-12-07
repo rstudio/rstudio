@@ -16,8 +16,8 @@
 package com.google.gwt.http.client;
 
 /**
- * Exception thrown when the {@link RequestBuilder} attempts to make a request to
- * a URL which violates the <a
+ * Exception thrown when the {@link RequestBuilder} attempts to make a request
+ * to a URL which violates the <a
  * href="http://en.wikipedia.org/wiki/Same_origin_policy">Same-Origin Security
  * Policy</a>.
  * 
@@ -29,6 +29,11 @@ package com.google.gwt.http.client;
  * 
  */
 public class RequestPermissionException extends RequestException {
+
+  /**
+   * URL which caused this exception to be thrown.
+   */
+  private final String url;
 
   /**
    * Constructs an instance of this class for the given URL.
@@ -50,9 +55,4 @@ public class RequestPermissionException extends RequestException {
   public String getURL() {
     return url;
   }
-
-  /**
-   * URL which caused this exception to be thrown.
-   */
-  private final String url;
 }

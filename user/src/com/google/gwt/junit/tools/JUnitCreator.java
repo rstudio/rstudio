@@ -88,6 +88,12 @@ public final class JUnitCreator extends ToolBase {
 
   private static final String PACKAGE_PATH;
 
+  static {
+    String path = JUnitCreator.class.getName();
+    path = path.substring(0, path.lastIndexOf('.') + 1);
+    PACKAGE_PATH = path.replace('.', '/');
+  }
+
   public static void main(String[] args) {
     JUnitCreator creator = new JUnitCreator();
     if (creator.processArgs(args)) {
@@ -251,6 +257,16 @@ public final class JUnitCreator extends ToolBase {
     }
   }
 
+  private String eclipse = null;
+
+  private String fullClassName = null;
+
+  private boolean ignore = false;
+  private String junitPath = null;
+  private String moduleName = null;
+  private File outDir;
+  private boolean overwrite = false;
+
   protected JUnitCreator() {
 
     registerHandler(new ArgHandlerString() {
@@ -369,18 +385,4 @@ public final class JUnitCreator extends ToolBase {
       return false;
     }
   }
-
-  static {
-    String path = JUnitCreator.class.getName();
-    path = path.substring(0, path.lastIndexOf('.') + 1);
-    PACKAGE_PATH = path.replace('.', '/');
-  }
-
-  private String eclipse = null;
-  private String fullClassName = null;
-  private boolean ignore = false;
-  private String junitPath = null;
-  private String moduleName = null;
-  private File outDir;
-  private boolean overwrite = false;
 }

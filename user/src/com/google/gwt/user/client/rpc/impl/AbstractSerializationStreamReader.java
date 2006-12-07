@@ -28,8 +28,10 @@ import java.util.ArrayList;
 public abstract class AbstractSerializationStreamReader extends
     AbstractSerializationStream implements SerializationStreamReader {
 
+  private ArrayList seenArray = new ArrayList();
+
   public void prepareToRead(String encoded) throws SerializationException {
-    fSeenArray.clear();
+    seenArray.clear();
 
     // Read the stream version number
     //
@@ -46,7 +48,7 @@ public abstract class AbstractSerializationStreamReader extends
     if (token < 0) {
       // Negative means a previous object
       // Transform negative 1-based to 0-based.
-      return fSeenArray.get(-(token + 1));
+      return seenArray.get(-(token + 1));
     }
 
     // Positive means a new object
@@ -78,9 +80,7 @@ public abstract class AbstractSerializationStreamReader extends
   protected abstract String getString(int index);
 
   protected final void rememberDecodedObject(Object o) {
-    fSeenArray.add(o);
+    seenArray.add(o);
   }
-
-  private ArrayList fSeenArray = new ArrayList();
 
 }

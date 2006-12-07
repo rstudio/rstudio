@@ -28,6 +28,66 @@ import java.util.Map;
  * Links classes with their localized counterparts.
  */
 class LocalizableLinkageCreator extends AbstractSourceCreator {
+  private static Map findDerivedClasses(TreeLogger logger, JClassType baseClass)
+      throws UnableToCompleteException {
+    // Construct valid set of candidates for this type.
+    Map matchingClasses = new HashMap();
+    // Add base class if possible.
+    if (baseClass.isInterface() == null && baseClass.isAbstract() == false) {
+      matchingClasses.put(LocalizableGenerator.DEFAULT_TOKEN, baseClass);
+    }
+    String baseName = baseClass.getSimpleSourceName();
+
+    // Find matching sub types.
+    JClassType[] x = baseClass.getSubtypes();
+    for (int i = 0; i < x.length; i++) {
+      JClassType subType = x[i];
+      if ((subType.isInterface() == null) && (subType.isAbstract() == false)) {
+        String name = subType.getSimpleSourceName();
+        // Strip locale from type,
+        int localeIndex = name.indexOf("_");
+        String subTypeBaseName = name;
+        if (localeIndex != -1) {
+          subTypeBaseName = name.substring(0, localeIndex);
+        }
+        boolean matches = subTypeBaseName.equals(baseName);
+        if (matches) {
+          boolean isDefault = localeIndex == -1
+              || localeIndex == name.length() - 1;
+          if (isDefault) {
+            // Don't override base as default if present.
+            JClassType defaultClass = (JClassType) matchingClasses.get(LocalizableGenerator.DEFAULT_TOKEN);
+            if (defaultClass != null) {
+              throw error(logger, defaultClass + " and " + baseName
+                  + " are both potencial default classes for " + baseClass);
+            } else {
+              matchingClasses.put(LocalizableGenerator.DEFAULT_TOKEN, subType);
+            }
+          } else {
+            // Don't allow a locale to be ambiguous. Very similar to default
+            // case, different error message.
+            String localeSubString = name.substring(localeIndex + 1);
+            JClassType dopClass = (JClassType) matchingClasses.get(localeSubString);
+            if (dopClass != null) {
+              throw error(logger, dopClass.getQualifiedSourceName() + " and "
+                  + subType.getQualifiedSourceName()
+                  + " are both potential matches to " + baseClass
+                  + " in locale" + localeSubString);
+            }
+            matchingClasses.put(localeSubString, subType);
+          }
+        }
+      }
+    }
+    return matchingClasses;
+  }
+
+  /**
+   * Map to cache linkages of implementation classes and interfaces.
+   */
+  // Change back to ReferenceMap once apache collections is in.
+  private final Map implCache = new HashMap();
+
   /**
    * * Finds associated implementation in the current locale. Here are the rules
    * <p>
@@ -55,7 +115,7 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
 
     if (baseClass.getName().indexOf("_") == 0) {
       throw error(logger, "Cannot have a '_' in the base localizable class "
-        + baseClass);
+          + baseClass);
     }
     Map matchingClasses = findDerivedClasses(logger, baseClass);
     // Now that we have all matches, find best class
@@ -77,7 +137,7 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
       if (localeSuffix == LocalizableGenerator.DEFAULT_TOKEN) {
         // We already shot our wad, no classes matched.
         throw error(logger, "Cannot find a class to bind to argument type "
-          + baseClass.getQualifiedSourceName());
+            + baseClass.getQualifiedSourceName());
       } else if (strip == -1) {
         // Try default.
         localeSuffix = LocalizableGenerator.DEFAULT_TOKEN;
@@ -89,66 +149,4 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
     implCache.put(baseName + locale, className);
     return result.getQualifiedSourceName();
   }
-
-  private static Map findDerivedClasses(TreeLogger logger, JClassType baseClass)
-      throws UnableToCompleteException {
-    // Construct valid set of candidates for this type.
-    Map matchingClasses = new HashMap();
-    // Add base class if possible.
-    if (baseClass.isInterface() == null && baseClass.isAbstract() == false) {
-      matchingClasses.put(LocalizableGenerator.DEFAULT_TOKEN, baseClass);
-    }
-    String baseName = baseClass.getSimpleSourceName();
-
-    // Find matching sub types.
-    JClassType[] x = baseClass.getSubtypes();
-    for (int i = 0; i < x.length; i++) {
-      JClassType subType = x[i];
-      if ((subType.isInterface() == null) && (subType.isAbstract() == false)) {
-        String name = subType.getSimpleSourceName();
-        // Strip locale from type,
-        int localeIndex = name.indexOf("_");
-        String subTypeBaseName = name;
-        if (localeIndex != -1) {
-          subTypeBaseName = name.substring(0, localeIndex);
-        }
-        boolean matches = subTypeBaseName.equals(baseName);
-        if (matches) {
-          boolean isDefault = localeIndex == -1
-            || localeIndex == name.length() - 1;
-          if (isDefault) {
-            // Don't override base as default if present.
-            JClassType defaultClass = (JClassType) matchingClasses
-              .get(LocalizableGenerator.DEFAULT_TOKEN);
-            if (defaultClass != null) {
-              throw error(logger, defaultClass + " and " + baseName
-                + " are both potencial default classes for " + baseClass);
-            } else {
-              matchingClasses.put(LocalizableGenerator.DEFAULT_TOKEN, subType);
-            }
-          } else {
-            // Don't allow a locale to be ambiguous. Very similar to default
-            // case, different error message.
-            String localeSubString = name.substring(localeIndex + 1);
-            JClassType dopClass = (JClassType) matchingClasses
-              .get(localeSubString);
-            if (dopClass != null) {
-              throw error(logger, dopClass.getQualifiedSourceName() + " and "
-                + subType.getQualifiedSourceName()
-                + " are both potential matches to " + baseClass + " in locale"
-                + localeSubString);
-            }
-            matchingClasses.put(localeSubString, subType);
-          }
-        }
-      }
-    }
-    return matchingClasses;
-  }
-
-  /**
-   * Map to cache linkages of implementation classes and interfaces.
-   */
-  // Change back to ReferenceMap once apache collections is in.
-  private final Map implCache = new HashMap();
 }

@@ -37,6 +37,10 @@ public abstract class Timer {
 
   private static ArrayList timers = new ArrayList();
 
+  static {
+    hookWindowClosing();
+  }
+
   private static native void clearInterval(int id) /*-{
     $wnd.clearInterval(id);
   }-*/;
@@ -74,6 +78,10 @@ public abstract class Timer {
       }
     });
   }
+
+  private boolean isRepeating;
+
+  private int timerId;
 
   /**
    * Cancels this timer.
@@ -155,11 +163,4 @@ public abstract class Timer {
     // Run the timer's code.
     run();
   }
-
-  static {
-    hookWindowClosing();
-  }
-
-  private boolean isRepeating;
-  private int timerId;
 }

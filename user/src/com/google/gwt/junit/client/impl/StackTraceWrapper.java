@@ -40,25 +40,6 @@ public final class StackTraceWrapper implements IsSerializable {
   }
 
   /**
-   * Creates an empty {@link StackTraceWrapper}.
-   */
-  public StackTraceWrapper() {
-  }
-
-  /**
-   * Creates a {@link StackTraceWrapper} around an existing
-   * {@link StackTraceElement}.
-   * 
-   * @param ste the {@link StackTraceElement} to wrap.
-   */
-  public StackTraceWrapper(StackTraceElement ste) {
-    className = ste.getClassName();
-    fileName = ste.getFileName();
-    lineNumber = ste.getLineNumber();
-    methodName = ste.getMethodName();
-  }
-
-  /**
    * Corresponds to {@link StackTraceElement#getClassName()}.
    */
   public String className;
@@ -77,4 +58,23 @@ public final class StackTraceWrapper implements IsSerializable {
    * Corresponds to {@link StackTraceElement#getMethodName()}.
    */
   public String methodName;
+
+  /**
+   * Creates an empty {@link StackTraceWrapper}.
+   */
+  public StackTraceWrapper() {
+  }
+
+  /**
+   * Creates a {@link StackTraceWrapper} around an existing
+   * {@link StackTraceElement}.
+   * 
+   * @param ste the {@link StackTraceElement} to wrap.
+   */
+  public StackTraceWrapper(StackTraceElement ste) {
+    className = ste.getClassName();
+    fileName = ste.getFileName();
+    lineNumber = ste.getLineNumber();
+    methodName = ste.getMethodName();
+  }
 }

@@ -28,6 +28,25 @@ class ClassSourceFileComposer implements SourceWriter {
    */
   private static final String STAR_COMMENT_LINE = " * ";
 
+  private boolean atStart;
+
+  /**
+   * Either STAR/BLOCK comment line, not pulled out into a ENUM class because
+   * only used by this class.
+   */
+  private String commentIndicator;
+
+  private final GeneratorContext ctx;
+
+  /**
+   * Are you currently in a comment?
+   */
+  private boolean inComment;
+
+  private int indent;
+
+  private final PrintWriter printWriter;
+
   ClassSourceFileComposer(GeneratorContext ctx, PrintWriter printWriter,
       String targetPackageName, String targetClassShortName,
       String superClassName, String[] interfaceNames, String[] imports,
@@ -36,7 +55,7 @@ class ClassSourceFileComposer implements SourceWriter {
     this.printWriter = printWriter;
     if (targetPackageName == null) {
       throw new IllegalArgumentException("Cannot supply a null package name to"
-        + targetClassShortName);
+          + targetClassShortName);
     }
     // Inlined header to only have one method with a huge number of methods.
     println("package " + targetPackageName + ";");
@@ -162,7 +181,7 @@ class ClassSourceFileComposer implements SourceWriter {
       String superClassName, String[] interfaceNames) {
     if (superClassName != null) {
       throw new IllegalArgumentException("Cannot set superclass name "
-        + superClassName + " on a interface.");
+          + superClassName + " on a interface.");
     }
     print("public interface " + targetClassShortName);
     if (interfaceNames != null && interfaceNames.length > 0) {
@@ -175,18 +194,4 @@ class ClassSourceFileComposer implements SourceWriter {
       }
     }
   }
-
-  private boolean atStart;
-  /**
-   * Either STAR/BLOCK comment line, not pulled out into a ENUM class because
-   * only used by this class.
-   */
-  private String commentIndicator;
-  private final GeneratorContext ctx;
-  /**
-   * Are you currently in a comment?
-   */
-  private boolean inComment;
-  private int indent;
-  private final PrintWriter printWriter;
 }

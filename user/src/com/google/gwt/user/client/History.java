@@ -121,6 +121,15 @@ public class History {
     }
   }
 
+  /**
+   * Removes a history listener.
+   * 
+   * @param listener the listener to be removed
+   */
+  public static void removeHistoryListener(HistoryListener listener) {
+    historyListeners.remove(listener);
+  }
+
   private static void fireHistoryChangedAndCatch(String historyToken,
       UncaughtExceptionHandler handler) {
     try {
@@ -135,14 +144,5 @@ public class History {
       HistoryListener listener = (HistoryListener) it.next();
       listener.onHistoryChanged(historyToken);
     }
-  }
-
-  /**
-   * Removes a history listener.
-   * 
-   * @param listener the listener to be removed
-   */
-  public static void removeHistoryListener(HistoryListener listener) {
-    historyListeners.remove(listener);
   }
 }

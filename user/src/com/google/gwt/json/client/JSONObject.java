@@ -25,10 +25,14 @@ import java.util.Set;
  * set of {@link com.google.gwt.json.client.JSONValue} objects.
  */
 public class JSONObject extends JSONValue {
+  private final JavaScriptObject backStore;
+
+  private final JavaScriptObject frontStore = createBlankObject();
+
   public JSONObject() {
     backStore = createBlankObject();
   }
-  
+
   /**
    * Creates a new JSONObject from the supplied JavaScript value.
    */
@@ -83,14 +87,14 @@ public class JSONObject extends JSONValue {
    */
   public Set keySet() {
     Set keySet = new HashSet();
-    addAllKeysFromJavascriptObject(keySet, frontStore);    
+    addAllKeysFromJavascriptObject(keySet, frontStore);
     addAllKeysFromJavascriptObject(keySet, backStore);
     return keySet;
   }
 
   /**
-   * Maps the specified key to the specified value in this JSONObject. 
-   * If the specified key already has an associated value, it is overwritten.
+   * Maps the specified key to the specified value in this JSONObject. If the
+   * specified key already has an associated value, it is overwritten.
    * 
    * @param key the key to associate with the specified value
    * @param jsonValue the value to assoociate with this key
@@ -109,7 +113,7 @@ public class JSONObject extends JSONValue {
   public int size() {
     return keySet().size();
   }
-  
+
   /**
    * Converts a JSONObject into a JSON representation that can be used to
    * communicate with a JSON service.
@@ -152,7 +156,4 @@ public class JSONObject extends JSONValue {
   private native JavaScriptObject createBlankObject() /*-{
     return {};
   }-*/;
-
-  private final JavaScriptObject backStore;
-  private final JavaScriptObject frontStore = createBlankObject();
 }

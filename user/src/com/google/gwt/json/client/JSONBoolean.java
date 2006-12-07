@@ -40,6 +40,8 @@ public class JSONBoolean extends JSONValue {
     }
   }
 
+  private final boolean value;
+
   /*
    * This private constructor is used to build true and false.
    */
@@ -68,6 +70,4 @@ public class JSONBoolean extends JSONValue {
   public String toString() {
     return Boolean.toString(value);
   }
-
-  private final boolean value;
 }

@@ -18,8 +18,7 @@ package com.google.gwt.user.client.ui.impl;
 import com.google.gwt.user.client.Element;
 
 /**
- * Implementation class used by
- * {@link com.google.gwt.user.client.ui.TextBox}.
+ * Implementation class used by {@link com.google.gwt.user.client.ui.TextBox}.
  */
 public class TextBoxImpl {
 
@@ -41,11 +40,11 @@ public class TextBoxImpl {
     }
   }-*/;
 
-  public native void setSelectionRange(Element elem, int pos, int length) /*-{
-    elem.setSelectionRange(pos, pos + length);
-  }-*/;
-
   public int getTextAreaCursorPos(Element elem) {
     return getCursorPos(elem);
   }
+
+  public native void setSelectionRange(Element elem, int pos, int length) /*-{
+    elem.setSelectionRange(pos, pos + length);
+  }-*/;
 }

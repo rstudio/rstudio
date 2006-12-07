@@ -45,13 +45,13 @@ final class ServiceInterfaceValidator {
 
     for (int index = 0; index < params.length; ++index) {
       asyncParamTypes[index] = getUnparameterizedType(typeOracle,
-        params[index].getType());
+          params[index].getType());
     }
 
     asyncParamTypes[params.length] = typeOracle.findType(AsyncCallback.class.getName());
     if (asyncParamTypes[params.length] == null) {
       throw new IllegalStateException("Unable to locate definition of "
-        + AsyncCallback.class.getName());
+          + AsyncCallback.class.getName());
     }
 
     return asyncParamTypes;
@@ -86,13 +86,13 @@ final class ServiceInterfaceValidator {
   private static void raiseInvalidAsyncIntf(TreeLogger logger,
       JClassType serviceIntf) {
     logger = logger.branch(TreeLogger.ERROR,
-      "No valid asynchronous version for the service interface "
-        + serviceIntf.getQualifiedSourceName(), null);
+        "No valid asynchronous version for the service interface "
+            + serviceIntf.getQualifiedSourceName(), null);
     String correctAsyncIntf = synthesizeAsynchronousInterfaceDefinition(serviceIntf);
     logger.log(TreeLogger.INFO,
-      "A valid definition for an asychronous version of interface "
-        + serviceIntf.getQualifiedSourceName() + " would be:\n"
-        + correctAsyncIntf, null);
+        "A valid definition for an asychronous version of interface "
+            + serviceIntf.getQualifiedSourceName() + " would be:\n"
+            + correctAsyncIntf, null);
   }
 
   private static String synthesizeAsynchronousInterfaceDefinition(
@@ -146,6 +146,18 @@ final class ServiceInterfaceValidator {
     return sb.toString();
   }
 
+  private JClassType objectType;
+
+  private TreeLogger rootLogger;
+
+  private SerializableTypeOracle serializationOracle;
+
+  private JClassType serviceIntf;
+
+  private TypeOracle typeOracle;
+
+  private Map typeToFinalInstanceFieldCache = new IdentityHashMap();
+
   public ServiceInterfaceValidator(TreeLogger logger, GeneratorContext genCtx,
       SerializableTypeOracle serializationOracle, JClassType serviceIntf) {
     this.rootLogger = logger;
@@ -156,7 +168,7 @@ final class ServiceInterfaceValidator {
     this.objectType = typeOracle.getJavaLangObject();
     if (this.objectType == null) {
       logger.log(TreeLogger.ERROR,
-        "Could not find a definition of java.lang.Object", null);
+          "Could not find a definition of java.lang.Object", null);
       throw new RuntimeException();
     }
   }
@@ -168,8 +180,8 @@ final class ServiceInterfaceValidator {
    */
   public boolean isValid() throws TypeOracleException {
     TreeLogger logger = rootLogger.branch(TreeLogger.SPAM,
-      "Validating service interface '" + serviceIntf.getQualifiedSourceName()
-        + "'", null);
+        "Validating service interface '" + serviceIntf.getQualifiedSourceName()
+            + "'", null);
 
     typeToFinalInstanceFieldCache.clear();
 
@@ -198,7 +210,7 @@ final class ServiceInterfaceValidator {
       JField declField = declFields[i];
 
       if (declField.isFinal() && !declField.isStatic()
-        && !declField.isTransient()) {
+          && !declField.isTransient()) {
         // we found an invalid final instance field
         firstFinalInstField = declField;
         break;
@@ -236,24 +248,24 @@ final class ServiceInterfaceValidator {
   private void logSerializableArgumentTypes(TreeLogger logger,
       JParameter param, JType[] serializableTypes) {
     logger = logger.branch(TreeLogger.SPAM, "Argument '" + param.getName()
-      + "' of type '" + param.getType().getQualifiedSourceName()
-      + "' can only be serialized as: ", null);
+        + "' of type '" + param.getType().getQualifiedSourceName()
+        + "' can only be serialized as: ", null);
     logSerializableTypes(logger, serializableTypes);
   }
 
   private void logSerializableExceptionTypes(TreeLogger logger, JType ex,
       JType[] serializableTypes) {
     logger = logger.branch(TreeLogger.SPAM, "Exception type "
-      + ex.getQualifiedSourceName()
-      + " can only be one of the following serializable types: ", null);
+        + ex.getQualifiedSourceName()
+        + " can only be one of the following serializable types: ", null);
     logSerializableTypes(logger, serializableTypes);
   }
 
   private void logSerializableReturnTypes(TreeLogger logger, JType returnType,
       JType[] serializableTypes) {
     logger = logger.branch(TreeLogger.SPAM, "Return type "
-      + returnType.getQualifiedSourceName()
-      + " can only be one of the following serializable types: ", null);
+        + returnType.getQualifiedSourceName()
+        + " can only be one of the following serializable types: ", null);
     logSerializableTypes(logger, serializableTypes);
   }
 
@@ -270,17 +282,17 @@ final class ServiceInterfaceValidator {
         }
 
         TreeLogger branchedLog = logger.branch(TreeLogger.SPAM,
-          classType.getParameterizedQualifiedSourceName(), null);
+            classType.getParameterizedQualifiedSourceName(), null);
 
         JField problematicField = findFirstInvalidFinalField(classType);
         if (problematicField != null && !hasCustomInstantiation(classType)) {
           JType enclosingType = problematicField.getEnclosingType();
 
           String warningMessage = "The field '" + problematicField.toString()
-            + "'";
+              + "'";
           if (enclosingType != classType) {
             warningMessage += ", inherited from '"
-              + enclosingType.getParameterizedQualifiedSourceName() + "',";
+                + enclosingType.getParameterizedQualifiedSourceName() + "',";
           }
 
           warningMessage += " will not be included because it is a 'final' instance field that is not also 'transient'";
@@ -297,32 +309,33 @@ final class ServiceInterfaceValidator {
   private void raiseInvalidArgumentType(TreeLogger logger, JParameter param) {
     if (param.getType() == objectType) {
       logger.branch(
-        TreeLogger.ERROR,
-        "In order to produce smaller client-side code, methods cannot specify 'Object' for parameter types; please choose a more specific parameter type",
-        null);
+          TreeLogger.ERROR,
+          "In order to produce smaller client-side code, methods cannot specify 'Object' for parameter types; please choose a more specific parameter type",
+          null);
     } else {
       logger.branch(TreeLogger.ERROR, "Parameter '" + param.getName()
-        + "' of type '" + param.getType().getParameterizedQualifiedSourceName()
-        + "' is not serializable and/or has no serializable subtypes", null);
+          + "' of type '"
+          + param.getType().getParameterizedQualifiedSourceName()
+          + "' is not serializable and/or has no serializable subtypes", null);
     }
   }
 
   private void raiseInvalidExceptionType(TreeLogger logger, JType ex) {
     logger.branch(TreeLogger.ERROR, "Exception type "
-      + ex.getQualifiedSourceName()
-      + " is not serializable and/or has no serializable subtypes", null);
+        + ex.getQualifiedSourceName()
+        + " is not serializable and/or has no serializable subtypes", null);
   }
 
   private void raiseInvalidReturnType(TreeLogger logger, JType returnType) {
     if (returnType == objectType) {
       logger.branch(
-        TreeLogger.ERROR,
-        "In order to produce smaller client-side code, methods cannot specify 'Object' for return types; please choose a more specific return type",
-        null);
+          TreeLogger.ERROR,
+          "In order to produce smaller client-side code, methods cannot specify 'Object' for return types; please choose a more specific return type",
+          null);
     } else {
       logger.branch(TreeLogger.ERROR, "Return type "
-        + returnType.getParameterizedQualifiedSourceName()
-        + " is not serializable and/or has no serializable subtypes", null);
+          + returnType.getParameterizedQualifiedSourceName()
+          + " is not serializable and/or has no serializable subtypes", null);
     }
   }
 
@@ -353,11 +366,11 @@ final class ServiceInterfaceValidator {
 
       JType[] asyncParamTypes = getAsyncParamTypes(method, typeOracle);
       JMethod asyncMethod = asyncServiceIntf.findMethod(method.getName(),
-        asyncParamTypes);
+          asyncParamTypes);
       if (asyncMethod == null) {
         logger.branch(TreeLogger.ERROR,
-          "No asynchronous version of the synchronous method "
-            + method.getReadableDeclaration(), null);
+            "No asynchronous version of the synchronous method "
+                + method.getReadableDeclaration(), null);
         failed = true;
       }
     }
@@ -379,7 +392,7 @@ final class ServiceInterfaceValidator {
     boolean failed = false;
 
     logger = logger.branch(TreeLogger.SPAM, "Service interface: "
-      + classOrInterface.getQualifiedSourceName(), null);
+        + classOrInterface.getQualifiedSourceName(), null);
 
     JClassType intfs[] = classOrInterface.getImplementedInterfaces();
     for (int index = 0; index < intfs.length; ++index) {
@@ -408,7 +421,7 @@ final class ServiceInterfaceValidator {
    */
   private boolean validMethod(TreeLogger logger, JMethod method) {
     logger = logger.branch(TreeLogger.SPAM, "Service method: "
-      + method.getReadableDeclaration(), null);
+        + method.getReadableDeclaration(), null);
     boolean failed = false;
     JType returnType = method.getReturnType();
     if (returnType != null && returnType != JPrimitiveType.VOID) {
@@ -488,7 +501,7 @@ final class ServiceInterfaceValidator {
     boolean failed = false;
 
     logger = logger.branch(TreeLogger.SPAM, "Service interface: "
-      + serviceIntf.getQualifiedSourceName(), null);
+        + serviceIntf.getQualifiedSourceName(), null);
 
     JClassType intfs[] = serviceIntf.getImplementedInterfaces();
     for (int index = 0; index < intfs.length; ++index) {
@@ -510,11 +523,4 @@ final class ServiceInterfaceValidator {
 
     return !failed;
   }
-
-  private JClassType objectType;
-  private TreeLogger rootLogger;
-  private SerializableTypeOracle serializationOracle;
-  private JClassType serviceIntf;
-  private TypeOracle typeOracle;
-  private Map typeToFinalInstanceFieldCache = new IdentityHashMap();
 }

@@ -64,6 +64,28 @@ public class AbsolutePanel extends ComplexPanel {
   }
 
   /**
+   * Gets the left position of the specified widget within the panel.
+   * 
+   * @param w the widget whose position is to be retrieved
+   * @return the widget's left position
+   */
+  public int getWidgetLeft(Widget w) {
+    checkWidgetParent(w);
+    return DOM.getIntAttribute(w.getElement(), "offsetLeft");
+  }
+
+  /**
+   * Gets the top position of the specified widget within the panel.
+   * 
+   * @param w the widget whose position is to be retrieved
+   * @return the widget's top position
+   */
+  public int getWidgetTop(Widget w) {
+    checkWidgetParent(w);
+    return DOM.getIntAttribute(w.getElement(), "offsetTop");
+  }
+
+  /**
    * Sets the position of the specified child widget. Setting a position of
    * <code>(-1, -1)</code> will cause the child widget to be positioned
    * statically.
@@ -87,32 +109,10 @@ public class AbsolutePanel extends ComplexPanel {
     }
   }
 
-  /**
-   * Gets the left position of the specified widget within the panel.
-   * 
-   * @param w the widget whose position is to be retrieved
-   * @return the widget's left position
-   */
-  public int getWidgetLeft(Widget w) {
-    checkWidgetParent(w);
-    return DOM.getIntAttribute(w.getElement(), "offsetLeft");
-  }
-
-  /**
-   * Gets the top position of the specified widget within the panel.
-   * 
-   * @param w the widget whose position is to be retrieved
-   * @return the widget's top position
-   */
-  public int getWidgetTop(Widget w) {
-    checkWidgetParent(w);
-    return DOM.getIntAttribute(w.getElement(), "offsetTop");
-  }
-
   private void checkWidgetParent(Widget w) {
     if (w.getParent() != this) {
       throw new IllegalArgumentException(
-        "Widget must be a child of this panel.");
+          "Widget must be a child of this panel.");
     }
   }
 }

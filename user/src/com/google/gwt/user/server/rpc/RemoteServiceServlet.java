@@ -64,6 +64,18 @@ public class RemoteServiceServlet extends HttpServlet {
    */
   private static final int UNCOMPRESSED_BYTE_SIZE_LIMIT = 256;
 
+  static {
+    TYPE_NAMES = new HashMap();
+    TYPE_NAMES.put("Z", boolean.class);
+    TYPE_NAMES.put("B", byte.class);
+    TYPE_NAMES.put("C", char.class);
+    TYPE_NAMES.put("D", double.class);
+    TYPE_NAMES.put("F", float.class);
+    TYPE_NAMES.put("I", int.class);
+    TYPE_NAMES.put("J", long.class);
+    TYPE_NAMES.put("S", short.class);
+  }
+
   /**
    * Return true if the response object accepts Gzip encoding. This is done by
    * checking that the accept-encoding header specifies gzip as a supported
@@ -106,7 +118,7 @@ public class RemoteServiceServlet extends HttpServlet {
         Class[] superintfs = intf.getInterfaces();
         for (int i = 0; i < superintfs.length; i++) {
           Method method = findInterfaceMethod(superintfs[i], methodName,
-            paramTypes, true);
+              paramTypes, true);
           if (method != null) {
             return method;
           }
@@ -117,12 +129,20 @@ public class RemoteServiceServlet extends HttpServlet {
     }
   }
 
+  private final Set knownImplementedInterfaces = new HashSet();
+
+  private final ThreadLocal perThreadRequest = new ThreadLocal();
+
+  private final ThreadLocal perThreadResponse = new ThreadLocal();
+
+  private final ServerSerializableTypeOracle serializableTypeOracle;
+
   /**
    * The default constructor.
    */
   public RemoteServiceServlet() {
     serializableTypeOracle = new ServerSerializableTypeOracleImpl(
-      getPackagePaths());
+        getPackagePaths());
   }
 
   /**
@@ -175,7 +195,7 @@ public class RemoteServiceServlet extends HttpServlet {
     // Create a stream to deserialize the request.
     //
     ServerSerializationStreamReader streamReader = new ServerSerializationStreamReader(
-      serializableTypeOracle);
+        serializableTypeOracle);
     streamReader.prepareToRead(payload);
 
     // Read the service interface
@@ -189,9 +209,9 @@ public class RemoteServiceServlet extends HttpServlet {
       // Bad payload, possible hack attempt.
       //
       throw new SecurityException(
-        "Blocked attempt to access interface '"
-          + serviceIntfName
-          + "', which is either not implemented by this servlet or which doesn't extend RemoteService; this is either misconfiguration or a hack attempt");
+          "Blocked attempt to access interface '"
+              + serviceIntfName
+              + "', which is either not implemented by this servlet or which doesn't extend RemoteService; this is either misconfiguration or a hack attempt");
     }
 
     // Actually get the service interface, so that we can query its methods.
@@ -201,7 +221,7 @@ public class RemoteServiceServlet extends HttpServlet {
       serviceIntf = getClassFromName(serviceIntfName);
     } catch (ClassNotFoundException e) {
       throw new SerializationException("Unknown service interface class '"
-        + serviceIntfName + "'", e);
+          + serviceIntfName + "'", e);
     }
 
     // Read the method name.
@@ -220,7 +240,7 @@ public class RemoteServiceServlet extends HttpServlet {
         paramTypes[i] = getClassOrPrimitiveFromName(paramClassName);
       } catch (ClassNotFoundException e) {
         throw new SerializationException("Unknown parameter " + i + " type '"
-          + paramClassName + "'", e);
+            + paramClassName + "'", e);
       }
     }
 
@@ -228,16 +248,19 @@ public class RemoteServiceServlet extends HttpServlet {
     // and not just one that happens to be defined on this class.
     //
     Method serviceIntfMethod = findInterfaceMethod(serviceIntf, methodName,
-      paramTypes, true);
+        paramTypes, true);
 
     // If it wasn't found, don't continue.
     //
     if (serviceIntfMethod == null) {
       // Bad payload, possible hack attempt.
       //
-      throw new SecurityException("Method '" + methodName
-        + "' (or a particular overload) on interface '" + serviceIntfName
-        + "' was not found, this is either misconfiguration or a hack attempt");
+      throw new SecurityException(
+          "Method '"
+              + methodName
+              + "' (or a particular overload) on interface '"
+              + serviceIntfName
+              + "' was not found, this is either misconfiguration or a hack attempt");
     }
 
     // Deserialize the parameters.
@@ -251,13 +274,13 @@ public class RemoteServiceServlet extends HttpServlet {
     //
     String responsePayload = GENERIC_FAILURE_MSG;
     ServerSerializationStreamWriter streamWriter = new ServerSerializationStreamWriter(
-      serializableTypeOracle);
+        serializableTypeOracle);
     Throwable caught = null;
     try {
       Class returnType = serviceIntfMethod.getReturnType();
       Object returnVal = serviceIntfMethod.invoke(this, args);
       responsePayload = createResponse(streamWriter, returnType, returnVal,
-        false);
+          false);
     } catch (IllegalArgumentException e) {
       caught = e;
     } catch (IllegalAccessException e) {
@@ -275,7 +298,7 @@ public class RemoteServiceServlet extends HttpServlet {
         if (isExpectedException(serviceIntfMethod, cause)) {
           Class thrownClass = cause.getClass();
           responsePayload = createResponse(streamWriter, thrownClass, cause,
-            true);
+              true);
           // Don't log the exception on the server
           caught = null;
         }
@@ -289,7 +312,7 @@ public class RemoteServiceServlet extends HttpServlet {
       if (servletContext != null) {
         // Log the exception server side
         servletContext.log("Exception while dispatching incoming RPC call",
-          caught);
+            caught);
       }
     }
 
@@ -379,6 +402,17 @@ public class RemoteServiceServlet extends HttpServlet {
   }
 
   /**
+   * Returns the {@link Class} instance for the named class.
+   * 
+   * @param name the name of a class or primitive type
+   * @return Class instance for the given type name
+   * @throws ClassNotFoundException if the named type was not found
+   */
+  private Class getClassFromName(String name) throws ClassNotFoundException {
+    return Class.forName(name, false, this.getClass().getClassLoader());
+  }
+
+  /**
    * Returns the {@link Class} instance for the named class or primitive type.
    * 
    * @param name the name of a class or primitive type
@@ -396,17 +430,6 @@ public class RemoteServiceServlet extends HttpServlet {
   }
 
   /**
-   * Returns the {@link Class} instance for the named class.
-   * 
-   * @param name the name of a class or primitive type
-   * @return Class instance for the given type name
-   * @throws ClassNotFoundException if the named type was not found
-   */
-  private Class getClassFromName(String name) throws ClassNotFoundException {
-    return Class.forName(name, false, this.getClass().getClassLoader());
-  }
-
-  /**
    * Obtain the special package-prefixes we use to check for custom serializers
    * that would like to live in a package that they cannot. For example,
    * "java.util.ArrayList" is in a sealed package, so instead we use this prefix
@@ -416,7 +439,7 @@ public class RemoteServiceServlet extends HttpServlet {
    * extensible, but it is imaginable, which is why it's implemented this way.
    */
   private String[] getPackagePaths() {
-    return new String[]{"com.google.gwt.user.client.rpc.core"};
+    return new String[] {"com.google.gwt.user.client.rpc.core"};
   }
 
   /**
@@ -545,7 +568,7 @@ public class RemoteServiceServlet extends HttpServlet {
     }
     if (!contentTypeIsOkay) {
       throw new ServletException(
-        "Content-Type must be 'text/plain' with 'charset=utf-8' (or unspecified charset)");
+          "Content-Type must be 'text/plain' with 'charset=utf-8' (or unspecified charset)");
     }
     InputStream in = request.getInputStream();
     try {
@@ -557,7 +580,7 @@ public class RemoteServiceServlet extends HttpServlet {
         byteCount = in.read(payload, offset, len);
         if (byteCount == -1) {
           throw new ServletException("Client did not send " + contentLength
-            + " bytes as expected");
+              + " bytes as expected");
         }
         offset += byteCount;
         len -= byteCount;
@@ -584,8 +607,8 @@ public class RemoteServiceServlet extends HttpServlet {
       response.getWriter().write(GENERIC_FAILURE_MSG);
     } catch (IOException e) {
       servletContext.log(
-        "sendError() failed while sending the previous failure to the client",
-        caught);
+          "sendError() failed while sending the previous failure to the client",
+          caught);
     }
   }
 
@@ -596,7 +619,7 @@ public class RemoteServiceServlet extends HttpServlet {
     String contentType = CONTENT_TYPE_TEXT_PLAIN_UTF8;
 
     if (acceptsGzipEncoding(request)
-      && shouldCompressResponse(request, response, responsePayload)) {
+        && shouldCompressResponse(request, response, responsePayload)) {
       // Compress the reply and adjust headers.
       //
       ByteArrayOutputStream output = null;
@@ -637,21 +660,4 @@ public class RemoteServiceServlet extends HttpServlet {
     response.setStatus(HttpServletResponse.SC_OK);
     response.getOutputStream().write(reply);
   }
-
-  static {
-    TYPE_NAMES = new HashMap();
-    TYPE_NAMES.put("Z", boolean.class);
-    TYPE_NAMES.put("B", byte.class);
-    TYPE_NAMES.put("C", char.class);
-    TYPE_NAMES.put("D", double.class);
-    TYPE_NAMES.put("F", float.class);
-    TYPE_NAMES.put("I", int.class);
-    TYPE_NAMES.put("J", long.class);
-    TYPE_NAMES.put("S", short.class);
-  }
-
-  private final Set knownImplementedInterfaces = new HashSet();
-  private final ThreadLocal perThreadRequest = new ThreadLocal();
-  private final ThreadLocal perThreadResponse = new ThreadLocal();
-  private final ServerSerializableTypeOracle serializableTypeOracle;
 }

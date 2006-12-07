@@ -115,6 +115,15 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
     setStackText(getWidgetCount() - 1, stackText, asHTML);
   }
 
+  /**
+   * Gets the currently selected child index.
+   * 
+   * @return selected child
+   */
+  public int getSelectedIndex() {
+    return visibleStack;
+  }
+
   public Widget getWidget(int index) {
     return getChildren().get(index);
   }
@@ -254,15 +263,6 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
     tr = DOM.getChild(body, (index * 2) + 1);
     UIObject.setVisible(tr, visible);
     getWidget(index).setVisible(visible);
-  }
-
-  /**
-   * Gets the currently selected child index.
-   * 
-   * @return selected child
-   */
-  public int getSelectedIndex() {
-    return visibleStack;
   }
 
 }

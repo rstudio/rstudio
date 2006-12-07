@@ -21,6 +21,8 @@ package com.google.gwt.user.client.rpc;
  */
 public class SerializableException extends Exception implements IsSerializable {
 
+  private String msg;
+
   /**
    * The default constructor. This constructor is used implicitly during
    * serialization or when constructing subclasses.
@@ -57,6 +59,4 @@ public class SerializableException extends Exception implements IsSerializable {
     // nothing
     return null;
   }
-
-  private String msg;
 }

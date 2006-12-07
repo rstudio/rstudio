@@ -20,6 +20,10 @@ package com.google.gwt.user.client.impl;
  */
 class HistoryImplSafari extends HistoryImpl {
 
+  public native String getToken() /*-{
+    return $wnd.__historyToken;
+  }-*/;
+
   public native boolean init() /*-{
     // Check for existence of the history frame.
     var historyFrame = $doc.getElementById('__gwt_historyFrame');
@@ -68,10 +72,6 @@ class HistoryImplSafari extends HistoryImpl {
     };
 
     return true;
-  }-*/;
-
-  public native String getToken() /*-{
-    return $wnd.__historyToken;
   }-*/;
 
   public native void newItem(String historyToken) /*-{

@@ -72,6 +72,19 @@ public abstract class AbstractGeneratorClassCreator extends
   }
 
   /**
+   * List of registered method factories associated with <code>Constant</code>
+   * method implementations.
+   */
+  protected Map methodFactories = new HashMap();
+
+  /**
+   * The interface the generator is conforming to.
+   */
+  JClassType targetClass;
+
+  private final SourceWriter writer;
+
+  /**
    * Creates a new class creator, supplies a place to write the class, the
    * interface to conform to, and the new name.
    * 
@@ -112,47 +125,9 @@ public abstract class AbstractGeneratorClassCreator extends
     methodFactories.put(returnType, creator);
   }
 
-  private void emitMethods(TreeLogger logger, JClassType cur)
-      throws UnableToCompleteException {
-    JMethod[] x = getAllInterfaceMethods(cur);
-    for (int i = 0; i < x.length; i++) {
-      genMethod(logger, x[i]);
-      getWriter().println();
-    }
-  }
-
-  /**
-   * Generates a method declaration for the given method.
-   * 
-   * @param method method to generate
-   * @throws UnableToCompleteException
-   */
-  private void genMethod(TreeLogger logger, JMethod method)
-      throws UnableToCompleteException {
-    String name = method.getName();
-    String returnType = method.getReturnType().getQualifiedSourceName();
-    getWriter().print("public " + returnType + " " + name + "(");
-    JParameter[] params = method.getParameters();
-    for (int i = 0; i < params.length; i++) {
-      if (i != 0) {
-        getWriter().print(",");
-      }
-      getWriter().print(
-        params[i].getType().getParameterizedQualifiedSourceName() + " arg"
-          + (i));
-    }
-    getWriter().println(") {");
-    getWriter().indent();
-    String methodName = method.getName();
-    TreeLogger branch = branch(logger, "Generating method body for "
-      + methodName + "()");
-    emitMethodBody(branch, method);
-    getWriter().outdent();
-    getWriter().println("}");
-  }
-
   /**
    * Returns the standard message when constructing a branch.
+   * 
    * @return branch message
    */
   protected String branchMessage() {
@@ -195,7 +170,7 @@ public abstract class AbstractGeneratorClassCreator extends
     AbstractMethodCreator methodCreator = (AbstractMethodCreator) methodFactories.get(type);
     if (methodCreator == null) {
       String msg = "No current method creator exists for " + method
-        + " only methods with return types of ";
+          + " only methods with return types of ";
       Iterator iter = this.methodFactories.keySet().iterator();
       while (iter.hasNext()) {
         msg += ((JType) iter.next()).getSimpleSourceName();
@@ -218,14 +193,42 @@ public abstract class AbstractGeneratorClassCreator extends
     return writer;
   }
 
-  private final SourceWriter writer;
+  private void emitMethods(TreeLogger logger, JClassType cur)
+      throws UnableToCompleteException {
+    JMethod[] x = getAllInterfaceMethods(cur);
+    for (int i = 0; i < x.length; i++) {
+      genMethod(logger, x[i]);
+      getWriter().println();
+    }
+  }
+
   /**
-   * List of registered method factories associated with <code>Constant</code>
-   * method implementations.
+   * Generates a method declaration for the given method.
+   * 
+   * @param method method to generate
+   * @throws UnableToCompleteException
    */
-  protected Map methodFactories = new HashMap();
-  /**
-   * The interface the generator is conforming to.
-   */
-  JClassType targetClass;
+  private void genMethod(TreeLogger logger, JMethod method)
+      throws UnableToCompleteException {
+    String name = method.getName();
+    String returnType = method.getReturnType().getQualifiedSourceName();
+    getWriter().print("public " + returnType + " " + name + "(");
+    JParameter[] params = method.getParameters();
+    for (int i = 0; i < params.length; i++) {
+      if (i != 0) {
+        getWriter().print(",");
+      }
+      getWriter().print(
+          params[i].getType().getParameterizedQualifiedSourceName() + " arg"
+              + (i));
+    }
+    getWriter().println(") {");
+    getWriter().indent();
+    String methodName = method.getName();
+    TreeLogger branch = branch(logger, "Generating method body for "
+        + methodName + "()");
+    emitMethodBody(branch, method);
+    getWriter().outdent();
+    getWriter().println("}");
+  }
 }

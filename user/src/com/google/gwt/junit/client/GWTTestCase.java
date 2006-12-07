@@ -36,6 +36,11 @@ import junit.framework.TestResult;
  */
 public abstract class GWTTestCase extends TestCase {
 
+  /*
+   * Object that collects the results of this test case execution.
+   */
+  private TestResult testResult = null;
+
   /**
    * Add a checkpoint message to the current test. If this test fails, all
    * checkpoint messages will be appended to the exception description. This can
@@ -171,9 +176,4 @@ public abstract class GWTTestCase extends TestCase {
   protected final void runTest() throws Throwable {
     JUnitShell.runTest(getModuleName(), this, testResult);
   }
-
-  /*
-   * Object that collects the results of this test case execution.
-   */
-  private TestResult testResult = null;
 }

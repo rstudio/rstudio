@@ -42,6 +42,8 @@ public class JSONString extends JSONValue {
     return out;
   }-*/;
 
+  private String value;
+
   /**
    * Creates a new JSONString from the supplied String.
    * 
@@ -61,14 +63,14 @@ public class JSONString extends JSONValue {
   public JSONString isString() {
     return this;
   }
- 
+
   /**
    * Returns the raw Java string value of this item.
    */
   public String stringValue() {
     return value;
   }
-  
+
   /**
    * Returns the JSON formatted value of this string, quoted for evaluating in a
    * JavaScript interpreter.
@@ -83,6 +85,4 @@ public class JSONString extends JSONValue {
     });
     return "\"" + s + "\"";
   }-*/;
-
-  private String value;
 }

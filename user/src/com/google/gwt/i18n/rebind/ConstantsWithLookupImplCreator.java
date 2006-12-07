@@ -31,6 +31,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
+  final JMethod[] allInterfaceMethods;
+
+  private final Map namesToMethodCreators = new HashMap();
+
   ConstantsWithLookupImplCreator(TreeLogger logger, SourceWriter writer,
       JClassType localizableClass, AbstractResource messageBindings,
       TypeOracle oracle) throws UnableToCompleteException {
@@ -40,7 +44,7 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
       // Boolean
       JType booleanType = oracle.parse(boolean.class.getName());
       LookupMethodCreator booleanMethod = new LookupMethodCreator(this,
-        booleanType) {
+          booleanType) {
         public void printReturnTarget() {
           println("return target.booleanValue();");
         }
@@ -54,7 +58,7 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
       // Double
       JType doubleType = oracle.parse(double.class.getName());
       LookupMethodCreator doubleMethod = new LookupMethodCreator(this,
-        doubleType) {
+          doubleType) {
         public void printReturnTarget() {
           println("return target.doubleValue();");
         }
@@ -96,12 +100,12 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
       // Map
       JType mapType = oracle.parse(Map.class.getName());
       namesToMethodCreators.put("getMap",
-        new LookupMethodCreator(this, mapType));
+          new LookupMethodCreator(this, mapType));
 
       // String
       JType stringType = oracle.parse(String.class.getName());
       LookupMethodCreator stringMethod = new LookupMethodCreator(this,
-        stringType) {
+          stringType) {
         public String returnTemplate() {
           return "String answer = {0}();\n cache.put(\"{0}\",answer);return answer;";
         }
@@ -111,13 +115,32 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
       // String Array
       JType stringArray = oracle.getArrayType(stringType);
       namesToMethodCreators.put("getStringArray", new LookupMethodCreator(this,
-        stringArray));
+          stringArray));
 
       setNeedCache(true);
       allInterfaceMethods = getAllInterfaceMethods(localizableClass);
     } catch (TypeOracleException e) {
       throw error(logger, e);
     }
+  }
+
+  /**
+   * Create the method body associated with the given method. Arguments are
+   * arg0...argN.
+   */
+  protected void emitMethodBody(TreeLogger logger, JMethod method)
+      throws UnableToCompleteException {
+    checkMethod(logger, method);
+    if (method.getParameters().length == 1) {
+      String name = method.getName();
+      AbstractMethodCreator c = (AbstractMethodCreator) namesToMethodCreators.get(name);
+      if (c != null) {
+        c.createMethodFor(logger, method, null);
+        return;
+      }
+    }
+    // fall through
+    super.emitMethodBody(logger, method);
   }
 
   /**
@@ -135,40 +158,17 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
         return;
       }
       if (params.length != 1
-        || !params[0].getType().getQualifiedSourceName().equals(
-          "java.lang.String")) {
+          || !params[0].getType().getQualifiedSourceName().equals(
+              "java.lang.String")) {
         String s = method + " must have a single String argument.";
         throw error(logger, s);
       }
     } else {
       if (method.getParameters().length > 0) {
         throw error(
-          logger,
-          "User-defined methods in interfaces extending ConstantsWithLookup must have no parameters and a return type of int, String, String[], ...");
+            logger,
+            "User-defined methods in interfaces extending ConstantsWithLookup must have no parameters and a return type of int, String, String[], ...");
       }
     }
   }
-
-  /**
-   * Create the method body associated with the given method. Arguments are
-   * arg0...argN.
-   */
-  protected void emitMethodBody(TreeLogger logger, JMethod method)
-      throws UnableToCompleteException {
-    checkMethod(logger, method);
-    if (method.getParameters().length == 1) {
-      String name = method.getName();
-      AbstractMethodCreator c = (AbstractMethodCreator) namesToMethodCreators
-        .get(name);
-      if (c != null) {
-        c.createMethodFor(logger, method, null);
-        return;
-      }
-    }
-    // fall through
-    super.emitMethodBody(logger, method);
-  }
-
-  private final Map namesToMethodCreators = new HashMap();
-  final JMethod[] allInterfaceMethods;
 }

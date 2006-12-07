@@ -30,6 +30,27 @@ import java.util.Set;
  * Creates resources.
  */
 public abstract class ResourceFactory {
+  static class SimplePathTree extends AbstractPathTree {
+    String path;
+
+    SimplePathTree(String path) {
+      this.path = path;
+    }
+
+    public AbstractPathTree getChild(int i) {
+      throw new UnsupportedOperationException(
+          "Simple paths have no children, therefore cannot get child: " + i);
+    }
+
+    public String getPath() {
+      return path;
+    }
+
+    public int numChildren() {
+      return 0;
+    }
+  }
+
   private abstract static class AbstractPathTree {
     abstract AbstractPathTree getChild(int i);
 
@@ -39,6 +60,8 @@ public abstract class ResourceFactory {
   }
 
   private static class ClassPathTree extends AbstractPathTree {
+    Class javaInterface;
+
     ClassPathTree(Class javaInterface) {
       this.javaInterface = javaInterface;
     }
@@ -55,11 +78,11 @@ public abstract class ResourceFactory {
     int numChildren() {
       return javaInterface.getInterfaces().length;
     }
-
-    Class javaInterface;
   }
 
   private static class JClassTypePathTree extends AbstractPathTree {
+    JClassType javaInterface;
+
     JClassTypePathTree(JClassType javaInterface) {
       this.javaInterface = javaInterface;
     }
@@ -84,29 +107,6 @@ public abstract class ResourceFactory {
     int numChildren() {
       return javaInterface.getImplementedInterfaces().length;
     }
-
-    JClassType javaInterface;
-  }
-
-  static class SimplePathTree extends AbstractPathTree {
-    SimplePathTree(String path) {
-      this.path = path;
-    }
-
-    public AbstractPathTree getChild(int i) {
-      throw new UnsupportedOperationException(
-        "Simple paths have no children, therefore cannot get child: " + i);
-    }
-
-    public String getPath() {
-      return path;
-    }
-
-    public int numChildren() {
-      return 0;
-    }
-
-    String path;
   }
 
   public static final AbstractResource NOT_FOUND = new AbstractResource() {
@@ -123,6 +123,10 @@ public abstract class ResourceFactory {
   private static Map cache = new HashMap();
 
   private static List loaders = new ArrayList();
+  static {
+    loaders.add(new LocalizedPropertiesResource.Factory());
+  }
+
   /**
    * Clears the resource cache.
    */
@@ -140,7 +144,7 @@ public abstract class ResourceFactory {
   public static AbstractResource getBundle(Class javaInterface, Locale locale) {
     if (javaInterface.isInterface() == false) {
       throw new IllegalArgumentException(javaInterface
-        + " should be an interface.");
+          + " should be an interface.");
     }
     ClassPathTree path = new ClassPathTree(javaInterface);
     return getBundleAux(path, locale, true);
@@ -202,8 +206,8 @@ public abstract class ResourceFactory {
     if (locale != null) {
       if (!("".equals(locale.getVariant()))) {
         // parents, by default, share the list of alternativePaths;
-        parent = getBundleAux(tree, new Locale(locale.getLanguage(), locale
-          .getCountry()), false);
+        parent = getBundleAux(tree, new Locale(locale.getLanguage(),
+            locale.getCountry()), false);
       } else if (!"".equals(locale.getCountry())) {
         parent = getBundleAux(tree, new Locale(locale.getLanguage()), false);
       }
@@ -268,8 +272,8 @@ public abstract class ResourceFactory {
     cache.put(localizedPath, found);
     if (found == null && required) {
       throw new MissingResourceException(
-        "Could not find any resource associated with " + tree.getPath(), null,
-        null);
+          "Could not find any resource associated with " + tree.getPath(),
+          null, null);
     }
     return found;
   }
@@ -277,8 +281,4 @@ public abstract class ResourceFactory {
   abstract String getExt();
 
   abstract AbstractResource load(InputStream m);
-
-  static {
-    loaders.add(new LocalizedPropertiesResource.Factory());
-  }
 }

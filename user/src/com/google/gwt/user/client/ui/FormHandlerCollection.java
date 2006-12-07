@@ -27,6 +27,22 @@ import java.util.Iterator;
 public class FormHandlerCollection extends ArrayList {
 
   /**
+   * Fires a {@link FormHandler#onSubmitComplete(FormSubmitCompleteEvent)} on
+   * all handlers in the collection.
+   * 
+   * @param sender the object sending the event
+   * @param results the results of the form submission
+   */
+  public void fireOnComplete(Object sender, String results) {
+    FormSubmitCompleteEvent event = new FormSubmitCompleteEvent(sender, results);
+
+    for (Iterator it = iterator(); it.hasNext();) {
+      FormHandler handler = (FormHandler) it.next();
+      handler.onSubmitComplete(event);
+    }
+  }
+
+  /**
    * Fires a {@link FormHandler#onSubmit(FormSubmitEvent)} on all handlers in
    * the collection.
    * 
@@ -42,21 +58,5 @@ public class FormHandlerCollection extends ArrayList {
     }
 
     return event.isCancelled();
-  }
-
-  /**
-   * Fires a {@link FormHandler#onSubmitComplete(FormSubmitCompleteEvent)} on
-   * all handlers in the collection.
-   * 
-   * @param sender the object sending the event
-   * @param results the results of the form submission
-   */
-  public void fireOnComplete(Object sender, String results) {
-    FormSubmitCompleteEvent event = new FormSubmitCompleteEvent(sender, results);
-
-    for (Iterator it = iterator(); it.hasNext();) {
-      FormHandler handler = (FormHandler) it.next();
-      handler.onSubmitComplete(event);
-    }
   }
 }

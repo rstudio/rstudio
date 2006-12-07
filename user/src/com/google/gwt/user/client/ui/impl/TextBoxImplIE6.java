@@ -47,18 +47,6 @@ public class TextBoxImplIE6 extends TextBoxImpl {
     }
   }-*/;
 
-  public native void setSelectionRange(Element elem, int pos, int length) /*-{
-    try {
-      var tr = elem.createTextRange();
-      tr.collapse(true);
-      tr.moveStart('character', pos);
-      tr.moveEnd('character', length);
-      tr.select();
-    }
-    catch (e) {
-    }
-  }-*/;
-
   public native int getTextAreaCursorPos(Element elem) /*-{
     try {
       var tr = elem.document.selection.createRange();
@@ -69,6 +57,18 @@ public class TextBoxImplIE6 extends TextBoxImpl {
     }
     catch (e) {
       return 0;
+    }
+  }-*/;
+
+  public native void setSelectionRange(Element elem, int pos, int length) /*-{
+    try {
+      var tr = elem.createTextRange();
+      tr.collapse(true);
+      tr.moveStart('character', pos);
+      tr.moveEnd('character', length);
+      tr.select();
+    }
+    catch (e) {
     }
   }-*/;
 

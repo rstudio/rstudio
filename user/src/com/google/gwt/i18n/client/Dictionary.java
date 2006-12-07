@@ -97,9 +97,13 @@ public final class Dictionary {
 
   static void resourceErrorBadType(String name) {
     throw new MissingResourceException("'" + name
-      + "' is not a JavaScript object and cannot be used as a Dictionary",
-      null, name);
+        + "' is not a JavaScript object and cannot be used as a Dictionary",
+        null, name);
   }
+
+  private JavaScriptObject dict;
+
+  private String label;
 
   /**
    * Constructor for <code>Dictionary</code>.
@@ -109,14 +113,14 @@ public final class Dictionary {
   private Dictionary(String name) {
     if (name == null || "".equals(name)) {
       throw new IllegalArgumentException(
-        "Cannot create a Dictionary with a null or empty name");
+          "Cannot create a Dictionary with a null or empty name");
     }
     this.label = "Dictionary " + name;
     attach(name);
     if (dict == null) {
       throw new MissingResourceException(
-        "Cannot find JavaScript object with the name '" + name + "'", name,
-        null);
+          "Cannot find JavaScript object with the name '" + name + "'", name,
+          null);
     }
   }
 
@@ -193,7 +197,4 @@ public final class Dictionary {
       @com.google.gwt.i18n.client.Dictionary::resourceErrorBadType(Ljava/lang/String;)(name);
     }
   }-*/;
-
-  private JavaScriptObject dict;
-  private String label;
 }

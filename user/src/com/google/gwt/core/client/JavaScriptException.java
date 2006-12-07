@@ -37,6 +37,16 @@ public final class JavaScriptException extends RuntimeException {
   private final String description;
 
   /**
+   * @param name the original JavaScript type name of the exception
+   * @param description the original JavaScript message of the exception
+   */
+  public JavaScriptException(String name, String description) {
+    super("JavaScript " + name + " exception: " + description);
+    this.name = name;
+    this.description = description;
+  }
+
+  /**
    * Useful for server-side instantiation.
    * 
    * @param message the detail message.
@@ -48,13 +58,10 @@ public final class JavaScriptException extends RuntimeException {
   }
 
   /**
-   * @param name the original JavaScript type name of the exception
-   * @param description the original JavaScript message of the exception
+   * @return the original JavaScript message of the exception
    */
-  public JavaScriptException(String name, String description) {
-    super("JavaScript " + name + " exception: " + description);
-    this.name = name;
-    this.description = description;
+  public String getDescription() {
+    return description;
   }
 
   /**
@@ -62,13 +69,6 @@ public final class JavaScriptException extends RuntimeException {
    */
   public String getName() {
     return name;
-  }
-
-  /**
-   * @return the original JavaScript message of the exception
-   */
-  public String getDescription() {
-    return description;
   }
 
 }

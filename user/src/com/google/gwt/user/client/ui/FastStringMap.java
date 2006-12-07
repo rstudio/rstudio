@@ -37,6 +37,10 @@ import java.util.Set;
 class FastStringMap extends AbstractMap {
   private static class ImplMapEntry implements Map.Entry {
 
+    private Object key;
+
+    private Object value;
+
     ImplMapEntry(String key, Object value) {
       this.key = key;
       this.value = value;
@@ -46,7 +50,7 @@ class FastStringMap extends AbstractMap {
       if (a instanceof Map.Entry) {
         Map.Entry s = (Map.Entry) a;
         if (equalsWithNullCheck(key, s.getKey())
-          && equalsWithNullCheck(value, s.getValue())) {
+            && equalsWithNullCheck(value, s.getValue())) {
           return true;
         }
       }
@@ -88,10 +92,9 @@ class FastStringMap extends AbstractMap {
         return a.equals(b);
       }
     }
-
-    private Object key;
-    private Object value;
   }
+
+  JavaScriptObject map;
 
   public FastStringMap() {
     init();
@@ -125,6 +128,8 @@ class FastStringMap extends AbstractMap {
       public Iterator iterator() {
 
         Iterator custom = new Iterator() {
+          Iterator keys = keySet().iterator();
+
           public boolean hasNext() {
             return keys.hasNext();
           }
@@ -137,8 +142,6 @@ class FastStringMap extends AbstractMap {
           public void remove() {
             keys.remove();
           }
-
-          Iterator keys = keySet().iterator();
         };
         return custom;
       }
@@ -254,7 +257,7 @@ class FastStringMap extends AbstractMap {
       return (String) key;
     } else {
       throw new IllegalArgumentException(GWT.getTypeName(this)
-        + " can only have Strings as keys, not" + key);
+          + " can only have Strings as keys, not" + key);
     }
   }
 
@@ -267,7 +270,5 @@ class FastStringMap extends AbstractMap {
      return previous;
    }
    }-*/;
-
-  JavaScriptObject map;
 
 }

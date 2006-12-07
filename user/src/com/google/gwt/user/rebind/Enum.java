@@ -33,10 +33,15 @@ class Enum {
     Enum t = (Enum) pool.get(key);
     if (t == null) {
       throw new IllegalArgumentException(key
-        + " is not a valid Enum type. Current options are " + pool.keySet());
+          + " is not a valid Enum type. Current options are " + pool.keySet());
     }
     return t;
   }
+
+  /**
+   * Associated key.
+   */
+  final String key;
 
   /**
    * Creates a new <code>Enum</code> in a given pool.
@@ -55,9 +60,4 @@ class Enum {
   public String toString() {
     return key;
   }
-
-  /**
-   * Associated key.
-   */
-  final String key;
 }

@@ -25,6 +25,10 @@ public abstract class AbstractSerializationStream {
   public static final int SERIALIZATION_STREAM_FLAGS_NO_TYPE_VERSIONING = 1;
   public static final int SERIALIZATION_STREAM_VERSION = 2;
 
+  protected int flags = 0;
+
+  protected int version;
+
   public final void addFlags(int flags) {
     this.flags |= flags;
   }
@@ -48,7 +52,4 @@ public abstract class AbstractSerializationStream {
   protected final void setVersion(int version) {
     this.version = version;
   }
-
-  protected int flags = 0;
-  protected int version;
 }

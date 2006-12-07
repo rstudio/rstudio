@@ -24,12 +24,6 @@ import java.util.Iterator;
 public interface HasWidgets {
 
   /**
-   * Gets an iterator for the contained widgets. This iterator is required to
-   * implement {@link Iterator#remove()}.
-   */
-  Iterator iterator();
-
-  /**
    * Adds a child widget.
    * 
    * @param w the widget to be added
@@ -39,15 +33,21 @@ public interface HasWidgets {
   void add(Widget w);
 
   /**
+   * Removes all child widgets.
+   */
+  void clear();
+
+  /**
+   * Gets an iterator for the contained widgets. This iterator is required to
+   * implement {@link Iterator#remove()}.
+   */
+  Iterator iterator();
+
+  /**
    * Removes a child widget.
    * 
    * @param w the widget to be removed
    * @return <code>true</code> if the widget was present
    */
   boolean remove(Widget w);
-
-  /**
-   * Removes all child widgets.
-   */
-  void clear();
 }

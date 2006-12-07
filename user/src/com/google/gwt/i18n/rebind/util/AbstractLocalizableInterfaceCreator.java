@@ -46,6 +46,8 @@ import java.util.regex.Pattern;
  */
 public abstract class AbstractLocalizableInterfaceCreator {
   private static class RenameDuplicates extends ResourceKeyFormatter {
+    private Set methodNames = new HashSet();
+
     public String format(String key) {
       if (methodNames.contains(key)) {
         key += "_dup";
@@ -55,8 +57,6 @@ public abstract class AbstractLocalizableInterfaceCreator {
         return key;
       }
     }
-
-    private Set methodNames = new HashSet();
   }
 
   private static class ReplaceBadChars extends ResourceKeyFormatter {
@@ -72,6 +72,19 @@ public abstract class AbstractLocalizableInterfaceCreator {
   private static Pattern DEFAULT_CHARS = Pattern.compile("[.-]");
 
   /**
+   * Composer for the current Constant.
+   */
+  protected SourceWriter composer;
+
+  private List formatters = new ArrayList();
+
+  private File resourceFile;
+
+  private File sourceFile;
+
+  private PrintWriter writer;
+
+  /**
    * Creates a new constants creator.
    * 
    * @param className constant class to create
@@ -84,7 +97,7 @@ public abstract class AbstractLocalizableInterfaceCreator {
       String packageName, File resourceBundle, File targetLocation,
       Class interfaceClass) throws IOException {
     setup(packageName, className, resourceBundle, targetLocation,
-      interfaceClass);
+        interfaceClass);
   }
 
   /**
@@ -120,57 +133,6 @@ public abstract class AbstractLocalizableInterfaceCreator {
     genMethodDecl("String", defaultValue, key, key);
   }
 
-  private void addFormatters() {
-    // For now, we completely control property key formatters.
-    formatters.add(new ReplaceBadChars());
-
-    // Rename Duplicates must always come last.
-    formatters.add(new RenameDuplicates());
-  }
-
-  private String formatKey(String key) {
-    for (int i = 0; i < formatters.size(); i++) {
-      ResourceKeyFormatter formatter = (ResourceKeyFormatter) formatters.get(i);
-      key = formatter.format(key);
-    }
-    if (Util.isValidJavaIdent(key) == false) {
-      System.err.println("Warning: " + key
-        + " is not a legitimate method name. " + sourceFile
-        + " will have compiler errors");
-    }
-    return key;
-  }
-
-  private void genMethodDecl(String type, String defaultValue, String key,
-      String typeArg) {
-    composer.beginJavaDocComment();
-    composer.println("Translated \"" + defaultValue + "\".\n");
-    composer.println("@return translated \"" + defaultValue + "\"");
-    composer.print(I18NSync.ID + typeArg);
-    composer.endJavaDocComment();
-    key = formatKey(key);
-    composer.print(type + " " + key);
-    composer.print("(");
-    genMethodArgs(defaultValue);
-    composer.print(");\n");
-  }
-
-  private void setup(String packageName, String className, File resourceBundle,
-      File targetLocation, Class interfaceClass) throws IOException {
-    ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
-      packageName, className);
-    factory.makeInterface();
-    factory.setJavaDocCommentForClass(javaDocComment(resourceBundle
-      .getCanonicalPath().replace(File.separatorChar, '/')));
-    factory.addImplementedInterface(interfaceClass.getName());
-    FileOutputStream file = new FileOutputStream(targetLocation);
-    Writer underlying = new OutputStreamWriter(file, Util.DEFAULT_ENCODING);
-    writer = new PrintWriter(underlying);
-    composer = factory.createSourceWriter(writer);
-    resourceFile = resourceBundle;
-    sourceFile = targetLocation;
-  }
-
   /**
    * Create method args based upon the default value.
    * 
@@ -194,9 +156,9 @@ public abstract class AbstractLocalizableInterfaceCreator {
     Iterator elements = p.getPropertyMap().entrySet().iterator();
     if (elements.hasNext() == false) {
       throw new IllegalStateException(
-        "File '"
-          + resourceFile
-          + "' cannot be used to generate message classes, as it has no key/value pairs defined.");
+          "File '"
+              + resourceFile
+              + "' cannot be used to generate message classes, as it has no key/value pairs defined.");
     }
     while (elements.hasNext()) {
       Entry s = (Entry) elements.next();
@@ -205,12 +167,54 @@ public abstract class AbstractLocalizableInterfaceCreator {
     composer.commit(new PrintWriterTreeLogger());
   }
 
-  private List formatters = new ArrayList();
-  private File resourceFile;
-  private File sourceFile;
-  private PrintWriter writer;
-  /**
-   * Composer for the current Constant.
-   */
-  protected SourceWriter composer;
+  private void addFormatters() {
+    // For now, we completely control property key formatters.
+    formatters.add(new ReplaceBadChars());
+
+    // Rename Duplicates must always come last.
+    formatters.add(new RenameDuplicates());
+  }
+
+  private String formatKey(String key) {
+    for (int i = 0; i < formatters.size(); i++) {
+      ResourceKeyFormatter formatter = (ResourceKeyFormatter) formatters.get(i);
+      key = formatter.format(key);
+    }
+    if (Util.isValidJavaIdent(key) == false) {
+      System.err.println("Warning: " + key
+          + " is not a legitimate method name. " + sourceFile
+          + " will have compiler errors");
+    }
+    return key;
+  }
+
+  private void genMethodDecl(String type, String defaultValue, String key,
+      String typeArg) {
+    composer.beginJavaDocComment();
+    composer.println("Translated \"" + defaultValue + "\".\n");
+    composer.println("@return translated \"" + defaultValue + "\"");
+    composer.print(I18NSync.ID + typeArg);
+    composer.endJavaDocComment();
+    key = formatKey(key);
+    composer.print(type + " " + key);
+    composer.print("(");
+    genMethodArgs(defaultValue);
+    composer.print(");\n");
+  }
+
+  private void setup(String packageName, String className, File resourceBundle,
+      File targetLocation, Class interfaceClass) throws IOException {
+    ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
+        packageName, className);
+    factory.makeInterface();
+    factory.setJavaDocCommentForClass(javaDocComment(resourceBundle.getCanonicalPath().replace(
+        File.separatorChar, '/')));
+    factory.addImplementedInterface(interfaceClass.getName());
+    FileOutputStream file = new FileOutputStream(targetLocation);
+    Writer underlying = new OutputStreamWriter(file, Util.DEFAULT_ENCODING);
+    writer = new PrintWriter(underlying);
+    composer = factory.createSourceWriter(writer);
+    resourceFile = resourceBundle;
+    sourceFile = targetLocation;
+  }
 }

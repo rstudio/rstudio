@@ -42,20 +42,20 @@ abstract class AbstractLocalizableMethodCreator extends AbstractMethodCreator {
   }
 
   /**
-   * Get the resources associated with this class.
-   * 
-   * @return associated resources.
-   */
-  protected AbstractResource getResources() {
-    return ((ConstantsImplCreator) currentCreator).getResourceBundle();
-  }
-
-  /**
    * Gets the associated locale.
    * 
    * @return the locale
    */
   protected Locale getLocale() {
     return getResources().getLocale();
+  }
+
+  /**
+   * Get the resources associated with this class.
+   * 
+   * @return associated resources.
+   */
+  protected AbstractResource getResources() {
+    return ((ConstantsImplCreator) currentCreator).getResourceBundle();
   }
 }

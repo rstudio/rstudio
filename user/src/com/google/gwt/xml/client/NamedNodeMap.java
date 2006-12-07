@@ -14,20 +14,28 @@
  * the License.
  */
 package com.google.gwt.xml.client;
+
 /*
- * This is an immutable object because Safari
- * does not support mutable attribute maps.
+ * This is an immutable object because Safari does not support mutable attribute
+ * maps.
  */
 
 /**
- * Represents a string-to-node map, used in <code>getAttributes</code>.  
+ * Represents a string-to-node map, used in <code>getAttributes</code>.
  */
 public interface NamedNodeMap {
+  /**
+   * Returns the number of items in this <code>NamedNodeMap</code>.
+   * 
+   * @return the number of items in this <code>NamedNodeMap</code>
+   */
+  public int getLength();
+
   /**
    * This method gets the item having the given name.
    * 
    * @param name - the name used to look up the item
-   * @return the item retrieved 
+   * @return the item retrieved
    */
   public Node getNamedItem(String name);
 
@@ -38,11 +46,4 @@ public interface NamedNodeMap {
    * @return the item retrieved
    */
   public Node item(int index);
-
-  /**
-   * Returns the number of items in this <code>NamedNodeMap</code>.
-   * 
-   * @return the number of items in this <code>NamedNodeMap</code>
-   */
-  public int getLength();
 }

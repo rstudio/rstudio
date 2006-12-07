@@ -16,11 +16,11 @@
 package com.google.gwt.xml.client;
 
 /**
- * Thrown when DOM exceptions occur. Two subclasses exist: 
- * <code>DOMNodeException</code> and <code>DOMParseException</code> which give 
- * more detailed information for DOM manipulation errors and parse errors, 
- * respectively.  All <code>DOMExceptions</code> thrown in this package
- * will be instances of one of those two classes.
+ * Thrown when DOM exceptions occur. Two subclasses exist:
+ * <code>DOMNodeException</code> and <code>DOMParseException</code> which
+ * give more detailed information for DOM manipulation errors and parse errors,
+ * respectively. All <code>DOMExceptions</code> thrown in this package will be
+ * instances of one of those two classes.
  */
 public class DOMException extends RuntimeException {
 
@@ -30,12 +30,12 @@ public class DOMException extends RuntimeException {
   public static final short INVALID_STATE_ERR = 11;
   public static final short SYNTAX_ERR = 12;
 
+  protected short code;
+
   public DOMException(short code, String message) {
     super(message);
     this.code = code;
   }
-
-  protected short code;
 
   /**
    * This method gets the code of this <code>DOMException</code>.

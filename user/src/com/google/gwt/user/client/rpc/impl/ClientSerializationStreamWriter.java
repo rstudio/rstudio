@@ -37,6 +37,18 @@ public final class ClientSerializationStreamWriter extends
     return {};
   }-*/;
 
+  JavaScriptObject objectMap;
+
+  JavaScriptObject stringMap;
+
+  private StringBuffer encodeBuffer;
+
+  private int objectCount;
+
+  private Serializer serializer;
+
+  private ArrayList stringTable = new ArrayList();
+
   public ClientSerializationStreamWriter(Serializer serializer) {
     this.serializer = serializer;
   }
@@ -101,7 +113,8 @@ public final class ClientSerializationStreamWriter extends
     setIntForInt(System.identityHashCode(instance), objectCount++);
   }
 
-  protected void serialize(Object instance, String typeSignature) throws SerializationException {
+  protected void serialize(Object instance, String typeSignature)
+      throws SerializationException {
     serializer.serialize(this, instance, typeSignature);
   }
 
@@ -140,12 +153,5 @@ public final class ClientSerializationStreamWriter extends
     }
     return buffer;
   }
-
-  JavaScriptObject objectMap;
-  JavaScriptObject stringMap;
-  private StringBuffer encodeBuffer;
-  private int objectCount;
-  private Serializer serializer;
-  private ArrayList stringTable = new ArrayList();
 
 }

@@ -34,6 +34,11 @@ import java.util.Map;
  */
 class ConstantsImplCreator extends AbstractLocalizableImplCreator {
   /**
+   * Does a Map need to be generated in order to store complex results?
+   */
+  private boolean needCache = false;
+
+  /**
    * Constructor for <code>ConstantsImplCreator</code>.
    * 
    * @param logger logger to print errors
@@ -56,16 +61,16 @@ class ConstantsImplCreator extends AbstractLocalizableImplCreator {
       JType floatClass = oracle.parse(float.class.getName());
       JType booleanClass = oracle.parse(boolean.class.getName());
       register(stringClass, new SimpleValueMethodCreator(this,
-        SimpleValueMethodCreator.STRING));
+          SimpleValueMethodCreator.STRING));
       register(mapClass, new ConstantsMapMethodCreator(this));
       register(intClass, new SimpleValueMethodCreator(this,
-        SimpleValueMethodCreator.INT));
+          SimpleValueMethodCreator.INT));
       register(doubleClass, new SimpleValueMethodCreator(this,
-        SimpleValueMethodCreator.DOUBLE));
+          SimpleValueMethodCreator.DOUBLE));
       register(floatClass, new SimpleValueMethodCreator(this,
-        SimpleValueMethodCreator.FLOAT));
+          SimpleValueMethodCreator.FLOAT));
       register(booleanClass, new SimpleValueMethodCreator(this,
-        SimpleValueMethodCreator.BOOLEAN));
+          SimpleValueMethodCreator.BOOLEAN));
 
       register(stringArrayClass, new ConstantsStringArrayMethodCreator(this));
     } catch (NotFoundException e) {
@@ -73,6 +78,31 @@ class ConstantsImplCreator extends AbstractLocalizableImplCreator {
     } catch (TypeOracleException e) {
       throw error(logger, e);
     }
+  }
+
+  protected void classEpilog() {
+    if (isNeedCache()) {
+      getWriter().println(
+          "java.util.Map cache = new java.util.HashMap();".toString());
+    }
+  }
+
+  /**
+   * Create the method body associated with the given method. Arguments are
+   * arg0...argN.
+   */
+  protected void emitMethodBody(TreeLogger logger, JMethod method)
+      throws UnableToCompleteException {
+    checkConstantMethod(logger, method);
+    delegateToCreator(logger, method);
+  }
+
+  boolean isNeedCache() {
+    return needCache;
+  }
+
+  void setNeedCache(boolean needCache) {
+    this.needCache = needCache;
   }
 
   /**
@@ -88,34 +118,4 @@ class ConstantsImplCreator extends AbstractLocalizableImplCreator {
       throw error(logger, s);
     }
   }
-
-  /**
-   * Create the method body associated with the given method. Arguments are
-   * arg0...argN.
-   */
-  protected void emitMethodBody(TreeLogger logger, JMethod method)
-      throws UnableToCompleteException {
-    checkConstantMethod(logger, method);
-    delegateToCreator(logger, method);
-  }
-
-  protected void classEpilog() {
-    if (isNeedCache()) {
-      getWriter().println(
-        "java.util.Map cache = new java.util.HashMap();".toString());
-    }
-  }
-
-  boolean isNeedCache() {
-    return needCache;
-  }
-
-  void setNeedCache(boolean needCache) {
-    this.needCache = needCache;
-  }
-
-  /**
-   * Does a Map need to be generated in order to store complex results?
-   */
-  private boolean needCache = false;
 }

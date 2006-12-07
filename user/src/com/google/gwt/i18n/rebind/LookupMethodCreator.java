@@ -29,6 +29,8 @@ import java.text.MessageFormat;
  * Method creator to call the correct Map for the given Dictionary.
  */
 class LookupMethodCreator extends AbstractMethodCreator {
+  private JType returnType;
+
   /**
    * Constructor for <code>LookupMethodCreator</code>.
    * 
@@ -39,6 +41,11 @@ class LookupMethodCreator extends AbstractMethodCreator {
       JType returnType) {
     super(classCreator);
     this.returnType = returnType;
+  }
+
+  public void createMethodFor(TreeLogger logger, JMethod targetMethod,
+      String value) {
+    createMethodFor(targetMethod);
   }
 
   void createMethodFor(JMethod targetMethod) {
@@ -58,7 +65,7 @@ class LookupMethodCreator extends AbstractMethodCreator {
     JMethod[] methods = ((ConstantsWithLookupImplCreator) currentCreator).allInterfaceMethods;
     for (int i = 0; i < methods.length; i++) {
       if (methods[i].getReturnType().equals(returnType)
-        && methods[i] != targetMethod) {
+          && methods[i] != targetMethod) {
         String methodName = methods[i].getName();
         String body = "if(arg0.equals(" + wrap(methodName) + ")){";
         println(body);
@@ -68,7 +75,7 @@ class LookupMethodCreator extends AbstractMethodCreator {
     }
     String format = "throw new java.util.MissingResourceException(\"Cannot find constant ''\" + {0} + \"''; expecting a method name\", \"{1}\", {0});";
     String[] throwArgs = {
-      "arg0", this.currentCreator.getTarget().getQualifiedSourceName()};
+        "arg0", this.currentCreator.getTarget().getQualifiedSourceName()};
     String result = MessageFormat.format(format, throwArgs);
     println(result);
   }
@@ -84,12 +91,5 @@ class LookupMethodCreator extends AbstractMethodCreator {
 
   String returnTemplate() {
     return "return {0}();";
-  }
-
-  private JType returnType;
-
-  public void createMethodFor(TreeLogger logger, JMethod targetMethod,
-      String value) {
-    createMethodFor(targetMethod);
   }
 }

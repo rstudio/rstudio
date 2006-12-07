@@ -37,7 +37,7 @@ public final class I18NCreator extends ToolBase {
 
   /**
    * Utility class to handle class name argument.
-   *
+   * 
    */
   protected class ArgHandlerClassName extends ArgHandlerExtra {
 
@@ -49,8 +49,9 @@ public final class I18NCreator extends ToolBase {
 
       // Check className for certain properties
       if (!arg.matches("[\\w\\$]+(\\.[\\w\\$]+)+")) {
-        System.err.println("'" + arg
-          + "' does not appear to be a valid fully-qualified Java class name.");
+        System.err.println("'"
+            + arg
+            + "' does not appear to be a valid fully-qualified Java class name.");
         return false;
       }
 
@@ -58,14 +59,14 @@ public final class I18NCreator extends ToolBase {
       //
       if (arg.indexOf('$') != -1) {
         System.err.println("'" + arg
-          + "': This version of the tool does not support nested classes");
+            + "': This version of the tool does not support nested classes");
         return false;
       }
 
       String[] parts = arg.split("\\.");
       if (parts.length < 2) {
         System.err.println("'" + arg
-          + "': Cannot live in the root package. Please specify a package.");
+            + "': Cannot live in the root package. Please specify a package.");
         return false;
       }
 
@@ -78,7 +79,7 @@ public final class I18NCreator extends ToolBase {
     }
 
     public String[] getTagArgs() {
-      return new String[]{"interfaceName"};
+      return new String[] {"interfaceName"};
     }
 
     public boolean isRequired() {
@@ -87,6 +88,12 @@ public final class I18NCreator extends ToolBase {
   }
 
   private static final String PACKAGE_PATH;
+
+  static {
+    String path = I18NCreator.class.getName();
+    path = path.substring(0, path.lastIndexOf('.') + 1);
+    PACKAGE_PATH = path.replace('.', '/');
+  }
 
   public static void main(String[] args) {
     I18NCreator creator = new I18NCreator();
@@ -119,8 +126,8 @@ public final class I18NCreator extends ToolBase {
 
     // Figure out what platform we're on
     // 
-    boolean isWindows = gwtDevPath.substring(gwtDevPath.lastIndexOf('/') + 1)
-      .indexOf("windows") >= 0;
+    boolean isWindows = gwtDevPath.substring(gwtDevPath.lastIndexOf('/') + 1).indexOf(
+        "windows") >= 0;
 
     // If the path from here to the install directory is relative, we need to
     // set specific "base" directory tags; this is for sample creation during
@@ -170,19 +177,19 @@ public final class I18NCreator extends ToolBase {
     if (createMessagesInterface) {
       // Create a skeleton i18n messages properties class
       File i18nMessageProperties = Utility.createNormalFile(clientDir,
-        interfaceName + ".properties", overwrite, ignore);
+          interfaceName + ".properties", overwrite, ignore);
       if (i18nMessageProperties != null) {
         String out = Utility.getFileFromClassPath(PACKAGE_PATH
-          + "i18nMessages.propertiessrc");
+            + "i18nMessages.propertiessrc");
         Utility.writeTemplateFile(i18nMessageProperties, out, replacements);
       }
     } else {
       // Create a skeleton i18n constants properties class
       File i18nConstantProperties = Utility.createNormalFile(clientDir,
-        interfaceName + ".properties", overwrite, ignore);
+          interfaceName + ".properties", overwrite, ignore);
       if (i18nConstantProperties != null) {
         String out = Utility.getFileFromClassPath(PACKAGE_PATH
-          + "i18nConstants.propertiessrc");
+            + "i18nConstants.propertiessrc");
         Utility.writeTemplateFile(i18nConstantProperties, out, replacements);
       }
     }
@@ -191,10 +198,10 @@ public final class I18NCreator extends ToolBase {
       // Create an eclipse localizable creator launch config
       replacements.put("@projectName", eclipse);
       File updateLaunchConfig = Utility.createNormalFile(outDir, interfaceName
-        + "-i18n" + ".launch", overwrite, ignore);
+          + "-i18n" + ".launch", overwrite, ignore);
       if (updateLaunchConfig != null) {
         String out = Utility.getFileFromClassPath(PACKAGE_PATH
-          + "I18N-update.launchsrc");
+            + "I18N-update.launchsrc");
         Utility.writeTemplateFile(updateLaunchConfig, out, replacements);
       }
     }
@@ -207,16 +214,25 @@ public final class I18NCreator extends ToolBase {
       extension = "";
     }
     File gwti18n = Utility.createNormalFile(outDir, interfaceName + "-i18n"
-      + extension, overwrite, ignore);
+        + extension, overwrite, ignore);
     if (gwti18n != null) {
       String out = Utility.getFileFromClassPath(PACKAGE_PATH + "gwti18n"
-        + extension + "src");
+          + extension + "src");
       Utility.writeTemplateFile(gwti18n, out, replacements);
       if (extension.length() == 0) {
         Runtime.getRuntime().exec("chmod u+x " + gwti18n.getAbsolutePath());
       }
     }
   }
+
+  private boolean createMessagesInterface = false;
+
+  private String eclipse = null;
+
+  private String fullInterfaceName = null;
+  private boolean ignore = false;
+  private File outDir;
+  private boolean overwrite = false;
 
   protected I18NCreator() {
 
@@ -254,7 +270,7 @@ public final class I18NCreator extends ToolBase {
 
       public String getPurpose() {
         return "Create scripts for a Messages interface "
-          + "rather than a Constants one";
+            + "rather than a Constants one";
       }
 
       public String getTag() {
@@ -285,24 +301,11 @@ public final class I18NCreator extends ToolBase {
   protected boolean run() {
     try {
       createLocalizable(fullInterfaceName, outDir, eclipse,
-        createMessagesInterface, overwrite, ignore);
+          createMessagesInterface, overwrite, ignore);
       return true;
     } catch (IOException e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());
       return false;
     }
   }
-
-  static {
-    String path = I18NCreator.class.getName();
-    path = path.substring(0, path.lastIndexOf('.') + 1);
-    PACKAGE_PATH = path.replace('.', '/');
-  }
-
-  private boolean createMessagesInterface = false;
-  private String eclipse = null;
-  private String fullInterfaceName = null;
-  private boolean ignore = false;
-  private File outDir;
-  private boolean overwrite = false;
 }

@@ -90,6 +90,11 @@ public class JUnitShell extends GWTShell {
    */
   private static JUnitShell unitTestShell;
 
+  static {
+    ModuleDefLoader.forceInherit("com.google.gwt.junit.JUnit");
+    ModuleDefLoader.setEnableCachingModules(true);
+  }
+
   /**
    * Called by {@link com.google.gwt.junit.server.JUnitHostImpl} to get an
    * interface into the test process.
@@ -135,6 +140,32 @@ public class JUnitShell extends GWTShell {
   }
 
   /**
+   * When headless, all logging goes to the console.
+   */
+  private PrintWriterTreeLogger consoleLogger;
+
+  /**
+   * Portal to interact with the servlet.
+   */
+  private JUnitMessageQueue messageQueue = new JUnitMessageQueue();
+
+  /**
+   * What type of test we're running; Local hosted, local web, or remote web.
+   */
+  private RunStyle runStyle = new RunStyleLocalHosted(this);
+
+  /**
+   * The time at which the current test will fail if the client has not yet
+   * started the test.
+   */
+  private long testBeginTimout;
+
+  /**
+   * Class name of the current/last test case to run.
+   */
+  private String testCaseClassName;
+
+  /**
    * Enforce the singleton pattern. The call to {@link GWTShell}'s ctor forces
    * server mode and disables processing extra arguments as URLs to be shown.
    */
@@ -169,7 +200,7 @@ public class JUnitShell extends GWTShell {
       }
 
       public String[] getTagArgs() {
-        return new String[]{"rmiUrl"};
+        return new String[] {"rmiUrl"};
       }
 
       public boolean isUndocumented() {
@@ -266,10 +297,10 @@ public class JUnitShell extends GWTShell {
    */
   protected boolean notDone() {
     if (messageQueue.hasNextTestName(testCaseClassName)
-      && testBeginTimout < System.currentTimeMillis()) {
+        && testBeginTimout < System.currentTimeMillis()) {
       throw new TimeoutException(
-        "The browser did not contact the server within "
-          + TEST_BEGIN_TIMEOUT_MILLIS + "ms.");
+          "The browser did not contact the server within "
+              + TEST_BEGIN_TIMEOUT_MILLIS + "ms.");
     }
 
     if (messageQueue.hasResult(testCaseClassName)) {
@@ -282,7 +313,7 @@ public class JUnitShell extends GWTShell {
   void compileForWebMode(String moduleName) throws UnableToCompleteException {
     BrowserWidgetHost browserHost = getBrowserHost();
     assert (browserHost != null);
-    browserHost.compile(new String[]{moduleName});
+    browserHost.compile(new String[] {moduleName});
   }
 
   /**
@@ -328,8 +359,7 @@ public class JUnitShell extends GWTShell {
       // Match either a non-whitespace, non start of quoted string, or a
       // quoted string that can have embedded, escaped quoting characters
       //
-      Pattern pattern = Pattern
-        .compile("[^\\s\"]+|\"[^\"\\\\]*(\\\\.[^\"\\\\]*)*\"");
+      Pattern pattern = Pattern.compile("[^\\s\"]+|\"[^\"\\\\]*(\\\\.[^\"\\\\]*)*\"");
       Matcher matcher = pattern.matcher(args);
       while (matcher.find()) {
         argList.add(matcher.group());
@@ -338,35 +368,4 @@ public class JUnitShell extends GWTShell {
 
     return (String[]) argList.toArray(new String[argList.size()]);
   }
-
-  static {
-    ModuleDefLoader.forceInherit("com.google.gwt.junit.JUnit");
-    ModuleDefLoader.setEnableCachingModules(true);
-  }
-
-  /**
-   * When headless, all logging goes to the console.
-   */
-  private PrintWriterTreeLogger consoleLogger;
-
-  /**
-   * Portal to interact with the servlet.
-   */
-  private JUnitMessageQueue messageQueue = new JUnitMessageQueue();
-
-  /**
-   * What type of test we're running; Local hosted, local web, or remote web.
-   */
-  private RunStyle runStyle = new RunStyleLocalHosted(this);
-
-  /**
-   * The time at which the current test will fail if the client has not yet
-   * started the test.
-   */
-  private long testBeginTimout;
-
-  /**
-   * Class name of the current/last test case to run.
-   */
-  private String testCaseClassName;
 }

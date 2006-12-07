@@ -20,6 +20,10 @@ package com.google.gwt.user.client.impl;
  */
 class HistoryImplStandard extends HistoryImpl {
 
+  public native String getToken() /*-{
+    return $wnd.__historyToken;
+  }-*/;
+
   public native boolean init() /*-{
     $wnd.__historyToken = '';
 
@@ -46,10 +50,6 @@ class HistoryImplStandard extends HistoryImpl {
     $wnd.__checkHistory();
 
     return true;
-  }-*/;
-
-  public native String getToken() /*-{
-    return $wnd.__historyToken;
   }-*/;
 
   public native void newItem(String historyToken) /*-{

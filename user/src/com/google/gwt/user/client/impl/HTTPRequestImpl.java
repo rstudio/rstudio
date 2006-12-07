@@ -24,6 +24,15 @@ import com.google.gwt.user.client.ResponseTextHandler;
  */
 public class HTTPRequestImpl {
 
+  public boolean asyncGet(String url, ResponseTextHandler handler) {
+    return asyncGet(null, null, url, handler);
+  }
+
+  public boolean asyncGet(String user, String pwd, String url,
+      ResponseTextHandler handler) {
+    return asyncGetImpl(user, pwd, url, handler);
+  }
+
   public boolean asyncPost(String url, String postData,
       ResponseTextHandler handler) {
     return asyncPost(null, null, url, postData, handler);
@@ -34,53 +43,19 @@ public class HTTPRequestImpl {
     return asyncPostImpl(user, pwd, url, postData, handler);
   }
 
-  public boolean asyncGet(String url,  ResponseTextHandler handler) {
-    return asyncGet(null, null, url, handler);
-  }
-
-  public boolean asyncGet(String user, String pwd, String url,
-      ResponseTextHandler handler) {
-    return asyncGetImpl(user, pwd, url, handler);
-  }
-
   public JavaScriptObject createXmlHTTPRequest() {
     return doCreateXmlHTTPRequest();
   }
 
   /**
-   * All the supported browsers except for IE instantiate it as shown. 
+   * All the supported browsers except for IE instantiate it as shown.
    */
   protected native JavaScriptObject doCreateXmlHTTPRequest() /*-{
     return new XMLHttpRequest();
   }-*/;
 
-  private native boolean asyncPostImpl(String user, String pwd, String url, String postData, ResponseTextHandler handler) /*-{
-    var xmlHttp = this.@com.google.gwt.user.client.impl.HTTPRequestImpl::doCreateXmlHTTPRequest()();
-    try {
-      xmlHttp.open("POST", url, true);
-      xmlHttp.setRequestHeader("Content-Type", "text/plain; charset=utf-8");
-      xmlHttp.onreadystatechange = function() {
-        if (xmlHttp.readyState == 4) {
-          delete xmlHttp.onreadystatechange;
-          var localHandler = handler;
-          var responseText = xmlHttp.responseText;
-          handler = null;
-          xmlHttp = null;
-          localHandler.@com.google.gwt.user.client.ResponseTextHandler::onCompletion(Ljava/lang/String;)(responseText);
-        }
-      };
-      xmlHttp.send(postData);
-      return true;
-    }
-    catch (e) {
-      delete xmlHttp.onreadystatechange;
-      handler = null;
-      xmlHttp = null;
-      return false;
-    }
-  }-*/;
-
-  private native boolean asyncGetImpl(String user, String pwd, String url, ResponseTextHandler handler) /*-{
+  private native boolean asyncGetImpl(String user, String pwd, String url,
+      ResponseTextHandler handler) /*-{
     var xmlHttp = this.@com.google.gwt.user.client.impl.HTTPRequestImpl::doCreateXmlHTTPRequest()();
     try {
       xmlHttp.open("GET", url, true);
@@ -96,6 +71,33 @@ public class HTTPRequestImpl {
         }
       };
       xmlHttp.send('');
+      return true;
+    }
+    catch (e) {
+      delete xmlHttp.onreadystatechange;
+      handler = null;
+      xmlHttp = null;
+      return false;
+    }
+  }-*/;
+
+  private native boolean asyncPostImpl(String user, String pwd, String url,
+      String postData, ResponseTextHandler handler) /*-{
+    var xmlHttp = this.@com.google.gwt.user.client.impl.HTTPRequestImpl::doCreateXmlHTTPRequest()();
+    try {
+      xmlHttp.open("POST", url, true);
+      xmlHttp.setRequestHeader("Content-Type", "text/plain; charset=utf-8");
+      xmlHttp.onreadystatechange = function() {
+        if (xmlHttp.readyState == 4) {
+          delete xmlHttp.onreadystatechange;
+          var localHandler = handler;
+          var responseText = xmlHttp.responseText;
+          handler = null;
+          xmlHttp = null;
+          localHandler.@com.google.gwt.user.client.ResponseTextHandler::onCompletion(Ljava/lang/String;)(responseText);
+        }
+      };
+      xmlHttp.send(postData);
       return true;
     }
     catch (e) {

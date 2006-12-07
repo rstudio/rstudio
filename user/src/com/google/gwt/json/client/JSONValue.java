@@ -26,42 +26,12 @@ package com.google.gwt.json.client;
  */
 public abstract class JSONValue {
   /**
-   * Returns non-null if this JSONValue is really a JSONObject.
-   * 
-   * @return a reference to a JSONObject if this JSONValue is a JSONObject or
-   *         <code>null</code> otherwise.
-   */
-  public JSONObject isObject() {
-    return null;
-  }
-
-  /**
    * Returns a non-null reference if this JSONValue is really a JSONArray.
    * 
    * @return a reference to a JSONArray if this JSONValue is a JSONArray or
    *         <code>null</code> otherwise.
    */
   public JSONArray isArray() {
-    return null;
-  }
-
-  /**
-   * Returns a non-null reference if this JSONValue is really a JSONString.
-   * 
-   * @return a reference to a JSONString if this JSONValue is a JSONString or
-   *         <code>null</code> otherwise.
-   */
-  public JSONString isString() {
-    return null;
-  }
-
-  /**
-   * Returns a non-null reference if this JSONValue is really a JSONNumber.
-   * 
-   * @return a reference to a JSONNumber if this JSONValue is a JSONNumber or
-   *         <code>null</code> otherwise.
-   */
-  public JSONNumber isNumber() {
     return null;
   }
 
@@ -82,6 +52,36 @@ public abstract class JSONValue {
    *         <code>null</code> otherwise.
    */
   public JSONNull isNull() {
+    return null;
+  }
+
+  /**
+   * Returns a non-null reference if this JSONValue is really a JSONNumber.
+   * 
+   * @return a reference to a JSONNumber if this JSONValue is a JSONNumber or
+   *         <code>null</code> otherwise.
+   */
+  public JSONNumber isNumber() {
+    return null;
+  }
+
+  /**
+   * Returns non-null if this JSONValue is really a JSONObject.
+   * 
+   * @return a reference to a JSONObject if this JSONValue is a JSONObject or
+   *         <code>null</code> otherwise.
+   */
+  public JSONObject isObject() {
+    return null;
+  }
+
+  /**
+   * Returns a non-null reference if this JSONValue is really a JSONString.
+   * 
+   * @return a reference to a JSONString if this JSONValue is a JSONString or
+   *         <code>null</code> otherwise.
+   */
+  public JSONString isString() {
     return null;
   }
 

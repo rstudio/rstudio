@@ -28,15 +28,25 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
 
   /**
    * <code>FocusImpl</code> contains browser specific focus code for focusable
-   * widgets. This <code>FocusImpl</code> instance is intentionally _not_ rebound, as the
-   * base implementation works on all browsers for truly focusable widgets. The
-   * special cases are only needed for things that aren't naturally focusable on
-   * some browsers, such as DIVs.
+   * widgets. This <code>FocusImpl</code> instance is intentionally _not_
+   * rebound, as the base implementation works on all browsers for truly
+   * focusable widgets. The special cases are only needed for things that aren't
+   * naturally focusable on some browsers, such as DIVs.
    */
   private static final FocusImpl impl = new FocusImpl();
 
+  /**
+   * Gets the FocusImpl instance.
+   * 
+   * @return impl
+   */
+  protected static FocusImpl getFocusImpl() {
+    return impl;
+  }
+
   private ClickListenerCollection clickListeners;
   private FocusListenerCollection focusListeners;
+
   private KeyboardListenerCollection keyboardListeners;
 
   /**
@@ -150,13 +160,5 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
 
   public void setTabIndex(int index) {
     impl.setTabIndex(getElement(), index);
-  }
-  
-  /**
-   * Gets the FocusImpl instance.
-   * @return impl
-   */
-  protected static FocusImpl getFocusImpl() {
-    return impl;
   }
 }

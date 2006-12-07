@@ -32,6 +32,14 @@ public final class ClientSerializationStreamReader extends
     return array.length;
   }-*/;
 
+  int index;
+
+  JavaScriptObject results;
+
+  JavaScriptObject stringTable;
+
+  private Serializer serializer;
+
   public ClientSerializationStreamReader(Serializer serializer) {
     this.serializer = serializer;
   }
@@ -79,7 +87,8 @@ public final class ClientSerializationStreamReader extends
     return getString(readInt());
   }
 
-  protected Object deserialize(String typeSignature) throws SerializationException {
+  protected Object deserialize(String typeSignature)
+      throws SerializationException {
     Object instance = serializer.instantiate(this, typeSignature);
     rememberDecodedObject(instance);
     serializer.deserialize(this, instance, typeSignature);
@@ -97,10 +106,5 @@ public final class ClientSerializationStreamReader extends
   private native JavaScriptObject readJavaScriptObject() /*-{
     return this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::results[--this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::index];
   }-*/;
-
-  int index;
-  JavaScriptObject results;
-  JavaScriptObject stringTable;
-  private Serializer serializer;
 
 }

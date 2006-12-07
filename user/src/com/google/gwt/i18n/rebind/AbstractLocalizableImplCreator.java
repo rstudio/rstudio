@@ -50,8 +50,7 @@ abstract class AbstractLocalizableImplCreator extends
     JClassType constantsWithLookupClass;
     try {
       constantsClass = oracle.getType(LocalizableGenerator.CONSTANTS_NAME);
-      constantsWithLookupClass = oracle
-        .getType(LocalizableGenerator.CONSTANTS_WITH_LOOKUP_NAME);
+      constantsWithLookupClass = oracle.getType(LocalizableGenerator.CONSTANTS_WITH_LOOKUP_NAME);
       messagesClass = oracle.getType(LocalizableGenerator.MESSAGES_NAME);
     } catch (NotFoundException e) {
       // Should never happen in practice.
@@ -63,8 +62,7 @@ abstract class AbstractLocalizableImplCreator extends
 
     // Make sure the interface being rebound extends either Constants or
     // Messages.
-    boolean assignableToConstants = constantsClass
-      .isAssignableFrom(targetClass);
+    boolean assignableToConstants = constantsClass.isAssignableFrom(targetClass);
     boolean assignableToMessages = messagesClass.isAssignableFrom(targetClass);
     if (!assignableToConstants && !assignableToMessages) {
       // Let the implementation generator handle this interface.
@@ -73,8 +71,7 @@ abstract class AbstractLocalizableImplCreator extends
 
     // Make sure that they don't try to extend both Messages and Constants.
     if (assignableToConstants && assignableToMessages) {
-      throw error(logger, name
-        + " cannot extend both Constants and Messages");
+      throw error(logger, name + " cannot extend both Constants and Messages");
     }
 
     // Make sure that the type being rebound is in fact an interface.
@@ -87,11 +84,11 @@ abstract class AbstractLocalizableImplCreator extends
       resource = ResourceFactory.getBundle(targetClass, locale);
     } catch (MissingResourceException e) {
       throw error(
-        logger,
-        "Localization failed; there must be at least one properties file accessible through the classpath in package '"
-          + packageName
-          + "' whose base name is '"
-          + ResourceFactory.getResourceName(targetClass) + "'");
+          logger,
+          "Localization failed; there must be at least one properties file accessible through the classpath in package '"
+              + packageName
+              + "' whose base name is '"
+              + ResourceFactory.getResourceName(targetClass) + "'");
     } catch (IllegalArgumentException e) {
       // A bad key can generate an illegal argument exception.
       throw error(logger, e.getMessage());
@@ -109,27 +106,32 @@ abstract class AbstractLocalizableImplCreator extends
     PrintWriter pw = context.tryCreate(logger, packageName, className);
     if (pw != null) {
       ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
-        packageName, className);
+          packageName, className);
       factory.addImplementedInterface(targetClass.getQualifiedSourceName());
       SourceWriter writer = factory.createSourceWriter(context, pw);
       // Now that we have all the information set up, process the class
       if (constantsWithLookupClass.isAssignableFrom(targetClass)) {
         ConstantsWithLookupImplCreator c = new ConstantsWithLookupImplCreator(
-          logger, writer, targetClass, resource, context.getTypeOracle());
+            logger, writer, targetClass, resource, context.getTypeOracle());
         c.emitClass(logger);
       } else if (constantsClass.isAssignableFrom(targetClass)) {
         ConstantsImplCreator c = new ConstantsImplCreator(logger, writer,
-          targetClass, resource, context.getTypeOracle());
+            targetClass, resource, context.getTypeOracle());
         c.emitClass(logger);
       } else {
         MessagesImplCreator messages = new MessagesImplCreator(logger, writer,
-          targetClass, resource, context.getTypeOracle());
+            targetClass, resource, context.getTypeOracle());
         messages.emitClass(logger);
       }
       context.commit(logger, pw);
     }
     return packageName + "." + className;
   }
+
+  /**
+   * The Dictionary/value bindings used to determine message contents.
+   */
+  private AbstractResource messageBindings;
 
   /**
    * Constructor for <code>AbstractLocalizableImplCreator</code>.
@@ -185,13 +187,13 @@ abstract class AbstractLocalizableImplCreator extends
     }
     String localeString;
     if (messageBindings.getLocale() == null
-      || messageBindings.getLocale().toString().equals("")) {
+        || messageBindings.getLocale().toString().equals("")) {
       localeString = "default";
     } else {
       localeString = messageBindings.getLocale().toString();
     }
     String info = "When locale is '" + localeString + "', property '" + key
-      + "' has the value '" + value + "'";
+        + "' has the value '" + value + "'";
     TreeLogger branch = logger.branch(TreeLogger.TRACE, info, null);
     methodCreator.createMethodFor(branch, method, value);
   }
@@ -208,7 +210,7 @@ abstract class AbstractLocalizableImplCreator extends
     if (id.length > 0) {
       if (id[0].length == 0) {
         logger.log(TreeLogger.WARN, method
-          + " had a mislabeled gwt.key, using method name as key", null);
+            + " had a mislabeled gwt.key, using method name as key", null);
       } else {
         String tag = id[0][0];
         return tag;
@@ -216,9 +218,4 @@ abstract class AbstractLocalizableImplCreator extends
     }
     return method.getName();
   }
-
-  /**
-   * The Dictionary/value bindings used to determine message contents.
-   */
-  private AbstractResource messageBindings;
 }

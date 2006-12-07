@@ -145,7 +145,7 @@ public class I18NSync extends ToolBase {
   public static void createConstantsWithLookupInterfaceFromClassName(
       String className) throws IOException {
     createLocalizableInterfaceFromClassName(className, null,
-      ConstantsWithLookup.class);
+        ConstantsWithLookup.class);
   }
 
   /**
@@ -159,7 +159,7 @@ public class I18NSync extends ToolBase {
   public static void createConstantsWithLookupInterfaceFromClassName(
       String className, File outDir) throws IOException {
     createLocalizableInterfaceFromClassName(className, outDir,
-      ConstantsWithLookup.class);
+        ConstantsWithLookup.class);
   }
 
   /**
@@ -202,11 +202,34 @@ public class I18NSync extends ToolBase {
     System.exit(1);
   }
 
+  static void checkValidJavaSourceOutputFile(File targetSource)
+      throws IOException {
+
+    if (targetSource.isDirectory()) {
+      throw new IOException("Output file'" + targetSource
+          + "' exists and is a directory; cannot overwrite");
+    }
+    if (targetSource.getParentFile().isDirectory() == false) {
+      throw new IOException("The target source's directory '"
+          + targetSource.getParent() + "' must be an existing directory");
+    }
+  }
+
+  static void checkValidResourceInputFile(File resource) throws IOException {
+    if (!resource.getPath().endsWith(".properties")) {
+      throw new IOException("Properties files " + resource
+          + " should end with '.properties'");
+    }
+    if (!resource.exists() || !resource.isFile()) {
+      throw new IOException("Properties file not found: " + resource);
+    }
+  }
+
   private static void checkValidSourceDir(File outDir) throws IOException {
     if (outDir.isDirectory() == false) {
       throw new IOException(outDir
-        + " must be an existing directory. Current path is "
-        + new File(".").getCanonicalPath());
+          + " must be an existing directory. Current path is "
+          + new File(".").getCanonicalPath());
     }
   }
 
@@ -221,7 +244,7 @@ public class I18NSync extends ToolBase {
       checkValidSourceDir(sourceDir);
       String sourcePath = className.replace('.', File.separatorChar);
       sourcePath = sourceDir.getCanonicalFile() + File.separator + sourcePath
-        + ".java";
+          + ".java";
       source = new File(sourcePath);
     }
     // Need both source path and class name for this check
@@ -234,10 +257,10 @@ public class I18NSync extends ToolBase {
     AbstractLocalizableInterfaceCreator creator;
     if (interfaceClass.equals(Messages.class)) {
       creator = new MessagesInterfaceCreator(name, packageName, resource,
-        source);
+          source);
     } else {
       creator = new ConstantsInterfaceCreator(name, packageName, resource,
-        source, interfaceClass);
+          source, interfaceClass);
     }
     creator.generate();
   }
@@ -246,7 +269,7 @@ public class I18NSync extends ToolBase {
     String javaPath = resource.getName();
     javaPath = javaPath.substring(0, javaPath.lastIndexOf("."));
     javaPath = resource.getParentFile().getPath() + File.separator + javaPath
-      + ".java";
+        + ".java";
     File targetClassFile = new File(javaPath);
     return targetClassFile;
   }
@@ -254,45 +277,29 @@ public class I18NSync extends ToolBase {
   private static File urlToResourceFile(String className)
       throws FileNotFoundException, IOException {
     if (className.endsWith(".java") || className.endsWith(".properties")
-      || className.endsWith(".class") || className.indexOf(File.separator) > 0) {
+        || className.endsWith(".class")
+        || className.indexOf(File.separator) > 0) {
       throw new IllegalArgumentException(
-        "class '"
-          + className
-          + "'should not contain an extension. \"com.google.gwt.SomeClass\" is an example of a correctly formed class string");
+          "class '"
+              + className
+              + "'should not contain an extension. \"com.google.gwt.SomeClass\" is an example of a correctly formed class string");
     }
     String resourcePath = className.replace('.', '/') + ".properties";
     URL r = ClassLoader.getSystemResource(resourcePath);
     if (r == null) {
       throw new FileNotFoundException("Could not find the resource '"
-        + resourcePath + " matching '" + className
-        + "' did you remember to add it to your classpath?");
+          + resourcePath + " matching '" + className
+          + "' did you remember to add it to your classpath?");
     }
     File resourceFile = new File(r.getFile());
     return resourceFile;
   }
 
-  static void checkValidJavaSourceOutputFile(File targetSource)
-      throws IOException {
+  private String classNameArg;
 
-    if (targetSource.isDirectory()) {
-      throw new IOException("Output file'" + targetSource
-        + "' exists and is a directory; cannot overwrite");
-    }
-    if (targetSource.getParentFile().isDirectory() == false) {
-      throw new IOException("The target source's directory '"
-        + targetSource.getParent() + "' must be an existing directory");
-    }
-  }
+  private boolean createMessagesArg = false;
 
-  static void checkValidResourceInputFile(File resource) throws IOException {
-    if (!resource.getPath().endsWith(".properties")) {
-      throw new IOException("Properties files " + resource
-        + " should end with '.properties'");
-    }
-    if (!resource.exists() || !resource.isFile()) {
-      throw new IOException("Properties file not found: " + resource);
-    }
-  }
+  private File outDirArg;
 
   private I18NSync() {
     registerHandler(new classNameArgHandler());
@@ -334,8 +341,4 @@ public class I18NSync extends ToolBase {
       return false;
     }
   }
-
-  private String classNameArg;
-  private boolean createMessagesArg = false;
-  private File outDirArg;
 }

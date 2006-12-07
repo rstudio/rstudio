@@ -106,6 +106,23 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
     }
 
     /**
+     * The key associated with <code>process</code> in
+     * <code>processByToken</code>.
+     */
+    private Object key;
+
+    /**
+     * If non-null, the active TimerTask which will kill <code>process</code>
+     * when it fires.
+     */
+    private KillTask killTask;
+
+    /**
+     * The managed child process.
+     */
+    private final Process process;
+
+    /**
      * Constructs a new ProcessManager for the specified process, and adds
      * itself to <code>processByToken</code> using the supplied key. You must
      * hold the lock on <code>processByToken</code> to call this method.
@@ -182,23 +199,6 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
         timer.schedule(killTask, keepAliveMs);
       }
     }
-
-    /**
-     * The key associated with <code>process</code> in
-     * <code>processByToken</code>.
-     */
-    private Object key;
-
-    /**
-     * If non-null, the active TimerTask which will kill <code>process</code>
-     * when it fires.
-     */
-    private KillTask killTask;
-
-    /**
-     * The managed child process.
-     */
-    private final Process process;
   }
 
   /**
@@ -240,6 +240,30 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
       System.out.println(args[i] + " started and awaiting connections");
     }
   }
+
+  /**
+   * The shell command to launch when a new browser is requested.
+   */
+  private final String launchCmd;
+
+  /**
+   * The next token that will be returned from
+   * {@link #launchNewBrowser(String, long)}.
+   */
+  private int nextToken = 1;
+
+  /**
+   * Master map of tokens onto ProcessManagers managing live processes. Also
+   * serves as a lock that must be held before any state-changing operations on
+   * this class may be performed.
+   */
+  private final Map processByToken = new HashMap();
+
+  /**
+   * A single shared Timer used by all instances of
+   * {@link ProcessManager.KillTask}.
+   */
+  private final Timer timer = new Timer();
 
   /**
    * Constructs a manager for a particular shell command.
@@ -321,28 +345,4 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
           + "' for '" + url + "'", e);
     }
   }
-
-  /**
-   * The shell command to launch when a new browser is requested.
-   */
-  private final String launchCmd;
-
-  /**
-   * The next token that will be returned from
-   * {@link #launchNewBrowser(String, long)}.
-   */
-  private int nextToken = 1;
-
-  /**
-   * Master map of tokens onto ProcessManagers managing live processes. Also
-   * serves as a lock that must be held before any state-changing operations on
-   * this class may be performed.
-   */
-  private final Map processByToken = new HashMap();
-
-  /**
-   * A single shared Timer used by all instances of
-   * {@link ProcessManager.KillTask}.
-   */
-  private final Timer timer = new Timer();
 }

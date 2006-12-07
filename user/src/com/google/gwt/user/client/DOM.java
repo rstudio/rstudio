@@ -702,6 +702,11 @@ public class DOM {
     impl.insertChild(parent, child, index);
   }
 
+  public static void insertListItem(Element select, String item, String value,
+      int index) {
+    impl.insertListItem(select, item, value, index);
+  }
+
   /**
    * Determine whether one element is equal to, or the child of, another.
    * 
@@ -855,6 +860,17 @@ public class DOM {
   }
 
   /**
+   * Sets the option text of the given select object.
+   * 
+   * @param select the select object whose option text is being set
+   * @param text the text to set
+   * @param index the index of the option whose text should be set
+   */
+  public static void setOptionText(Element select, String text, int index) {
+    impl.setOptionText(select, text, index);
+  }
+
+  /**
    * Sets an attribute on the given element's style.
    * 
    * @param elem the element whose style attribute is to be set
@@ -950,21 +966,5 @@ public class DOM {
 
     // Pass the event to the listener.
     listener.onBrowserEvent(evt);
-  }
-
-  public static void insertListItem(Element select, String item, String value,
-      int index) {
-    impl.insertListItem(select, item, value, index);
-  }
-
-  /**
-   * Sets the option text of the given select object.
-   * 
-   * @param select the select object whose option text is being set
-   * @param text the text to set
-   * @param index the index of the option whose text should be set
-   */
-  public static void setOptionText(Element select, String text, int index) {
-    impl.setOptionText(select, text, index);
   }
 }

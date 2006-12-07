@@ -24,33 +24,71 @@ import com.google.gwt.core.ext.typeinfo.JType;
  * Interface implemented by any class that wants to answer questions about
  * serializable types.
  */
-public interface SerializableTypeOracle { 
+public interface SerializableTypeOracle {
+  /**
+   * Returns the set of fields that are serializable for a given class type.
+   * This method does not consider any superclass fields.
+   * 
+   * @param classType the class for which we want serializable fields
+   * @return array of fields that meet the serialization criteria.
+   */
+  JField[] applyFieldSerializationPolicy(JClassType classType);
+
   /**
    * Creates a string that represents a serialized instance reference from a
    * qualified type name.
    * 
-   * @param instanceType 
+   * @param instanceType
    * @return string containing a serialized instance reference
    */
   String encodeSerializedInstanceReference(JType instanceType);
 
   /**
+   * Returns the instantiate method on a custom field serializer if there is one
+   * and it is valid or null if there is not.
+   * 
+   * @param type
+   * @return reference to a valid custom field serializer instantiation method
+   *         or null
+   */
+  JMethod getCustomFieldSerializerInstantiateMethodForType(JType type);
+
+  /**
+   * Returns the name of the field serializer for a particular type. This name
+   * can be either the name of a custom field serializer or that of a generated
+   * field serializer. If the type is not serializable then it can return null.
+   * 
+   * @param type the type that is going to be serialized
+   * @return the fully qualified name of the field serializer for the given type
+   */
+  String getFieldSerializerName(JType type);
+
+  /**
+   * Returns the list of all types that are considered serializable.
+   * 
+   * @return array of serializable types
+   */
+  JType[] getSerializableTypes();
+
+  /**
+   * Get the set of serializable types that are assignable to the requested
+   * class, interface, primitive, parameterized, or array type. The set of types
+   * for arrays will always be the inner most component type if it is
+   * serializable or for parameterized types it will be the set of types
+   * assignable to the raw parameterized type.
+   * 
+   * @param type
+   * @return array of serializable types that are assignable to the given type
+   */
+  JType[] getSerializableTypesAssignableTo(JType type);
+
+  /**
    * Returns the serialization signature for a type.
    * 
-   * @param instanceType 
+   * @param instanceType
    * @return a string representing the serialization signature of a type
    */
   String getSerializationSignature(JType instanceType);
-
-  /**
-   * Returns true if the type is serializable. If a type is serializable then
-   * there is a secondary type called a FieldSerializer that provides the
-   * behavior necessary to serialize or deserialize the fields of an instance.
-   * 
-   * @param type the type that maybe serializable 
-   * @return true if the type is serializable
-   */
-  boolean isSerializable(JType type);
 
   /**
    * Returns the serialized name of a type.
@@ -98,39 +136,10 @@ public interface SerializableTypeOracle {
   String getSerializedTypeName(JType type);
 
   /**
-   * Returns the name of the field serializer for a particular type. This name
-   * can be either the name of a custom field serializer or that of a generated
-   * field serializer. If the type is not serializable then it can return null.
-   * 
-   * @param type the type that is going to be serialized 
-   * @return the fully qualified name of the field serializer for the given type
-   */
-  String getFieldSerializerName(JType type);
-
-  /**
-   * Returns the list of all types that are considered serializable.
-   * 
-   * @return array of serializable types
-   */
-  JType[] getSerializableTypes();
-
-  /**
-   * Get the set of serializable types that are assignable to the requested
-   * class, interface, primitive, parameterized, or array type. The set of types
-   * for arrays will always be the inner most component type if it is
-   * serializable or for parameterized types it will be the set of types
-   * assignable to the raw parameterized type.
-   * 
-   * @param type 
-   * @return array of serializable types that are assignable to the given type 
-   */
-  JType[] getSerializableTypesAssignableTo(JType type);
-
-  /**
    * Returns the qualified name of the type serializer class for the given
    * service interface.
    * 
-   * @param serviceIntf service interface 
+   * @param serviceIntf service interface
    * @return name of the type serializer that handles the service interface
    */
   String getTypeSerializerQualifiedName(JClassType serviceIntf);
@@ -145,30 +154,21 @@ public interface SerializableTypeOracle {
   String getTypeSerializerSimpleName(JClassType serviceIntf);
 
   /**
-   * Returns the custom field serializer associated with the given type.  If there
-   * is none, null is returned.
+   * Returns the custom field serializer associated with the given type. If
+   * there is none, null is returned.
    * 
-   * @param type type that may have a custom field serializer 
+   * @param type type that may have a custom field serializer
    * @return custom field serializer or null if there is none
    */
   JClassType hasCustomFieldSerializer(JType type);
 
   /**
-   * Returns the instantiate method on a custom field serializer if there is one
-   * and it is valid or null if there is not.
+   * Returns true if the type is serializable. If a type is serializable then
+   * there is a secondary type called a FieldSerializer that provides the
+   * behavior necessary to serialize or deserialize the fields of an instance.
    * 
-   * @param type
-   * @return reference to a valid custom field serializer instantiation method
-   *         or null
+   * @param type the type that maybe serializable
+   * @return true if the type is serializable
    */
-  JMethod getCustomFieldSerializerInstantiateMethodForType(JType type);
-
-  /**
-   * Returns the set of fields that are serializable for a given class type.  This
-   * method does not consider any superclass fields.
-   * 
-   * @param classType the class for which we want serializable fields
-   * @return array of fields that meet the serialization criteria.
-   */
-  JField[] applyFieldSerializationPolicy(JClassType classType);
+  boolean isSerializable(JType type);
 }

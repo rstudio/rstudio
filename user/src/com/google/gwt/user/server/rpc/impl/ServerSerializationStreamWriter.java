@@ -57,6 +57,19 @@ public final class ServerSerializationStreamWriter extends
    */
   private static final char JS_QUOTE_CHAR = '\"';
 
+  static {
+    JS_CHARS_ESCAPED['\u0000'] = '0';
+    JS_CHARS_ESCAPED['\b'] = 'b';
+    JS_CHARS_ESCAPED['\t'] = 't';
+    JS_CHARS_ESCAPED['\n'] = 'n';
+    // JavaScript Vertical Tab character '\v'
+    JS_CHARS_ESCAPED['\u000b'] = 'v';
+    JS_CHARS_ESCAPED['\f'] = 'f';
+    JS_CHARS_ESCAPED['\r'] = 'r';
+    JS_CHARS_ESCAPED[JS_ESCAPE_CHAR] = JS_ESCAPE_CHAR;
+    JS_CHARS_ESCAPED[JS_QUOTE_CHAR] = JS_QUOTE_CHAR;
+  }
+
   /**
    * This method takes a string and outputs a JavaScript string literal. The
    * data is surrounded with quotes, and any contained characters that need to
@@ -86,6 +99,20 @@ public final class ServerSerializationStreamWriter extends
     output[++j] = JS_QUOTE_CHAR;
     return String.valueOf(output, 0, ++j);
   }
+
+  private int objectCount;
+
+  private IdentityHashMap objectMap = new IdentityHashMap();
+
+  private ServerSerializableTypeOracle serializableTypeOracle;
+
+  private HashMap stringMap = new HashMap();
+
+  private ArrayList stringTable = new ArrayList();
+
+  private ArrayList tokenList = new ArrayList();
+
+  private int tokenListCharCount;
 
   public ServerSerializationStreamWriter(
       ServerSerializableTypeOracle serializableTypeOracle) {
@@ -324,26 +351,5 @@ public final class ServerSerializationStreamWriter extends
     }
     buffer.append("]");
   }
-
-  static {
-    JS_CHARS_ESCAPED['\u0000'] = '0';
-    JS_CHARS_ESCAPED['\b'] = 'b';
-    JS_CHARS_ESCAPED['\t'] = 't';
-    JS_CHARS_ESCAPED['\n'] = 'n';
-    // JavaScript Vertical Tab character '\v'
-    JS_CHARS_ESCAPED['\u000b'] = 'v';
-    JS_CHARS_ESCAPED['\f'] = 'f';
-    JS_CHARS_ESCAPED['\r'] = 'r';
-    JS_CHARS_ESCAPED[JS_ESCAPE_CHAR] = JS_ESCAPE_CHAR;
-    JS_CHARS_ESCAPED[JS_QUOTE_CHAR] = JS_QUOTE_CHAR;
-  }
-
-  private int objectCount;
-  private IdentityHashMap objectMap = new IdentityHashMap();
-  private ServerSerializableTypeOracle serializableTypeOracle;
-  private HashMap stringMap = new HashMap();
-  private ArrayList stringTable = new ArrayList();
-  private ArrayList tokenList = new ArrayList();
-  private int tokenListCharCount;
 
 }

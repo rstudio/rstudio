@@ -25,7 +25,7 @@ import java.util.Set;
 
 /**
  * Factory clas to create <code>ClassSourceFileComposer</code> instances.
- *
+ * 
  */
 public class ClassSourceFileComposerFactory {
   /**
@@ -37,12 +37,17 @@ public class ClassSourceFileComposerFactory {
      * This type is a class.
      */
     public static final JavaSourceCategory CLASS;
-    
+
     /**
      * This type is a interface.
      */
     public static final JavaSourceCategory INTERFACE;
     static Map pool = new HashMap();
+
+    static {
+      CLASS = new JavaSourceCategory("class");
+      INTERFACE = new JavaSourceCategory("interface");
+    }
 
     public static JavaSourceCategory require(String key) {
       return (JavaSourceCategory) Enum.require(key, pool);
@@ -51,12 +56,21 @@ public class ClassSourceFileComposerFactory {
     protected JavaSourceCategory(String key) {
       super(key, pool);
     }
-
-    static {
-      CLASS = new JavaSourceCategory("class");
-      INTERFACE = new JavaSourceCategory("interface");
-    }
   }
+
+  private JavaSourceCategory classCategory = JavaSourceCategory.CLASS;
+
+  private String classComment;
+
+  private String className;
+
+  private Set imports = new HashSet();
+
+  private Set interfaceNames = new HashSet();
+
+  private String packageName;
+
+  private String superClassName;
 
   public ClassSourceFileComposerFactory(String packageName, String className) {
     this.packageName = packageName;
@@ -82,8 +96,8 @@ public class ClassSourceFileComposerFactory {
   public SourceWriter createSourceWriter(GeneratorContext ctx,
       PrintWriter printWriter) {
     return new ClassSourceFileComposer(ctx, printWriter, getCreatedPackage(),
-      getCreatedClassShortName(), getSuperclassName(), getInterfaceNames(),
-      getImports(), classCategory, classComment);
+        getCreatedClassShortName(), getSuperclassName(), getInterfaceNames(),
+        getImports(), classCategory, classComment);
   }
 
   /**
@@ -98,8 +112,8 @@ public class ClassSourceFileComposerFactory {
    */
   public SourceWriter createSourceWriter(PrintWriter printWriter) {
     return new ClassSourceFileComposer(null, printWriter, getCreatedPackage(),
-      getCreatedClassShortName(), getSuperclassName(), getInterfaceNames(),
-      getImports(), classCategory, classComment);
+        getCreatedClassShortName(), getSuperclassName(), getInterfaceNames(),
+        getImports(), classCategory, classComment);
   }
 
   public String getCreatedClassName() {
@@ -143,12 +157,4 @@ public class ClassSourceFileComposerFactory {
   private String[] getImports() {
     return (String[]) imports.toArray(new String[imports.size()]);
   }
-
-  private JavaSourceCategory classCategory = JavaSourceCategory.CLASS;
-  private String classComment;
-  private String className;
-  private Set imports = new HashSet();
-  private Set interfaceNames = new HashSet();
-  private String packageName;
-  private String superClassName;
 }

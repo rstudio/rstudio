@@ -16,30 +16,72 @@
 package com.google.gwt.xml.client;
 
 /*
- * Implementation notes:
- *  Opera has a length limit of 32k on any 
- * <code>CharacterData</code> nodes.
+ * Implementation notes: Opera has a length limit of 32k on any <code>CharacterData</code>
+ * nodes.
  */
 
 /**
- * This interface describes <code>CharacterData</code> XML nodes.  These can be
- * either <code>Text</code>, <code>CDATASection</code> or <code>Comment</code> 
- * nodes. 
+ * This interface describes <code>CharacterData</code> XML nodes. These can be
+ * either <code>Text</code>, <code>CDATASection</code> or
+ * <code>Comment</code> nodes.
  */
-public interface CharacterData extends Node  {
+public interface CharacterData extends Node {
   /**
-   * This method retrieves the data. 
+   * This method appends <code>data</code> to the data in this
+   * <code>CharacterData</code>.
+   * 
+   * @param appendedData the data to be appended to the end
+   */
+  public void appendData(String appendedData);
+
+  /**
+   * This method deletes data, starting at <code>offset</code>, and deleting
+   * <code>count</code> characters.
+   * 
+   * @param offset how far from the beginning to start deleting
+   * @param count how many characters to delete
+   */
+  public void deleteData(int offset, int count);
+
+  /**
+   * This method retrieves the data.
    * 
    * @return the data of this <code>CharacterData</code>
-   */  
+   */
   public String getData();
 
   /**
-   * This method retrieves the length of the data. 
+   * This method retrieves the length of the data.
    * 
    * @return the length of the data contained in this <code>CharacterData</code>
-   */  
+   */
   public int getLength();
+
+  /**
+   * This method inserts data at the specified offset.
+   * 
+   * @param offset how far from the beginning to start inserting
+   * @param insertedData the data to be inserted
+   */
+  public void insertData(int offset, String insertedData);
+
+  /**
+   * This method replaces the substring of data indicated by <code>offset</code>
+   * and <code>count</code> with <code>replacementData</code>.
+   * 
+   * @param offset how far from the beginning to start the replacement
+   * @param replacementData the data that will replace the deleted data
+   * @param count how many characters to delete before inserting
+   *          <code>replacementData</code>
+   */
+  public void replaceData(int offset, int count, String replacementData);
+
+  /**
+   * This method sets the data to <code>data</code>.
+   * 
+   * @param data the new data
+   */
+  public void setData(String data);
 
   /**
    * This method gets a substring of the character data.
@@ -49,47 +91,5 @@ public interface CharacterData extends Node  {
    * @return the specified substring
    */
   public String substringData(int offset, int count);
-
-  /**
-   * This method sets the data to <code>data</code>. 
-   * 
-   * @param data the new data
-   */  
-  public void setData(String data);
-
-  /**
-   * This method appends <code>data</code> to the data in this 
-   * <code>CharacterData</code>.
-   * 
-   * @param appendedData the data to be appended to the end
-   */  
-  public void appendData(String appendedData);
-
-  /**
-   * This method inserts data at the specified offset.
-   * 
-   * @param offset how far from the beginning to start inserting
-   * @param insertedData the data to be inserted
-   */  
-  public void insertData(int offset, String insertedData);
-
-  /**
-   * This method deletes data, starting at <code>offset</code>, and deleting
-   * <code>count</code> characters.
-   * 
-   * @param offset how far from the beginning to start deleting
-   * @param count how many characters to delete
-   */  
-  public void deleteData(int offset, int count);
-
-  /**
-   * This method replaces the substring of data indicated by 
-   * <code>offset</code> and <code>count</code> with <code>replacementData</code>. 
-   * 
-   * @param offset how far from the beginning to start the replacement
-   * @param replacementData the data that will replace the deleted data 
-   * @param count how many characters to delete before inserting <code>replacementData</code>
-   */  
-  public void replaceData(int offset, int count, String replacementData);
 
 }

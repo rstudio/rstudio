@@ -31,16 +31,6 @@ public class Widget extends UIObject implements EventListener {
   private Widget parent;
 
   /**
-   * Gets the panel-defined layout data associated with this widget.
-   * 
-   * @return the widget's layout data
-   * @see #setLayoutData
-   */
-  Object getLayoutData() {
-    return layoutData;
-  }
-
-  /**
    * Gets this widget's parent panel.
    * 
    * @return the widget's parent panel
@@ -64,22 +54,19 @@ public class Widget extends UIObject implements EventListener {
   }
 
   /**
-   * Sets the panel-defined layout data associated with this widget. Only the
-   * panel that currently contains a widget should ever set this value. It
-   * serves as a place to store layout bookkeeping data associated with a
-   * widget.
+   * Removes this widget from its parent widget. If it has no parent, this
+   * method does nothing.
    * 
-   * @param layoutData the widget's layout data
+   * @throws IllegalStateException if this widget's parent does not support
+   *           removal (e.g. {@link Composite})
    */
-  void setLayoutData(Object layoutData) {
-    this.layoutData = layoutData;
-  }
-
-  /**
-   * This method is called when the widget becomes attached to the browser's
-   * document.
-   */
-  protected void onLoad() {
+  public void removeFromParent() {
+    if (parent instanceof HasWidgets) {
+      ((HasWidgets) parent).remove(this);
+    } else if (parent != null) {
+      throw new IllegalStateException(
+          "This widget's parent does not implement HasWidgets");
+    }
   }
 
   /**
@@ -121,6 +108,35 @@ public class Widget extends UIObject implements EventListener {
   }
 
   /**
+   * This method is called when the widget becomes attached to the browser's
+   * document.
+   */
+  protected void onLoad() {
+  }
+
+  /**
+   * Gets the panel-defined layout data associated with this widget.
+   * 
+   * @return the widget's layout data
+   * @see #setLayoutData
+   */
+  Object getLayoutData() {
+    return layoutData;
+  }
+
+  /**
+   * Sets the panel-defined layout data associated with this widget. Only the
+   * panel that currently contains a widget should ever set this value. It
+   * serves as a place to store layout bookkeeping data associated with a
+   * widget.
+   * 
+   * @param layoutData the widget's layout data
+   */
+  void setLayoutData(Object layoutData) {
+    this.layoutData = layoutData;
+  }
+
+  /**
    * Sets this widget's parent. This method should only be called by
    * {@link Panel} and {@link Composite}.
    * 
@@ -133,22 +149,6 @@ public class Widget extends UIObject implements EventListener {
       onDetach();
     } else if (parent.isAttached()) {
       onAttach();
-    }
-  }
-
-  /**
-   * Removes this widget from its parent widget. If it has no parent, this
-   * method does nothing.
-   * 
-   * @throws IllegalStateException if this widget's parent does not support
-   *           removal (e.g. {@link Composite})
-   */
-  public void removeFromParent() {
-    if (parent instanceof HasWidgets) {
-      ((HasWidgets) parent).remove(this);
-    } else if (parent != null) {
-      throw new IllegalStateException(
-        "This widget's parent does not implement HasWidgets");
     }
   }
 }

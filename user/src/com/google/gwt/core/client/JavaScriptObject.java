@@ -29,6 +29,17 @@ package com.google.gwt.core.client;
  */
 public class JavaScriptObject {
 
+  private static native boolean equalsImpl(JavaScriptObject o,
+      JavaScriptObject other) /*-{
+    return o === other;
+  }-*/;
+
+  private static native String toStringImpl(JavaScriptObject o) /*-{
+    if (o.toString)
+      return o.toString();
+    return "[object]";
+  }-*/;
+
   /**
    * the underlying JavaScript object.
    */
@@ -44,6 +55,17 @@ public class JavaScriptObject {
     this.opaque = opaque;
   }
 
+  public boolean equals(Object other) {
+    if (!(other instanceof JavaScriptObject)) {
+      return false;
+    }
+    return equalsImpl(this, (JavaScriptObject) other);
+  };
+
+  public int hashCode() {
+    return Impl.getHashCode(this);
+  }
+
   public String toString() {
     /*
      * Hosted mode will marshal an explicit argument from a JavaScriptObject
@@ -53,26 +75,4 @@ public class JavaScriptObject {
      */
     return toStringImpl(this);
   }
-
-  public boolean equals(Object other) {
-    if (!(other instanceof JavaScriptObject)) {
-      return false;
-    }
-    return equalsImpl(this, (JavaScriptObject) other);
-  }
-
-  public int hashCode() {
-    return Impl.getHashCode(this);
-  };
-
-  private static native String toStringImpl(JavaScriptObject o) /*-{
-    if (o.toString)
-      return o.toString();
-    return "[object]";
-  }-*/;
-
-  private static native boolean equalsImpl(JavaScriptObject o,
-      JavaScriptObject other) /*-{
-    return o === other;
-  }-*/;
 }

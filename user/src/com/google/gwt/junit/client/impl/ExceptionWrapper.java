@@ -25,6 +25,26 @@ import com.google.gwt.user.client.rpc.IsSerializable;
 public final class ExceptionWrapper implements IsSerializable {
 
   /**
+   * Corresponds to {@link Throwable#getCause()}.
+   */
+  public ExceptionWrapper cause;
+
+  /**
+   * Corresponds to {@link Throwable#getMessage()}.
+   */
+  public String message;
+
+  /**
+   * Corresponds to {@link Throwable#getStackTrace()}.
+   */
+  public StackTraceWrapper[] stackTrace;
+
+  /**
+   * The run-time type of the exception.
+   */
+  public String typeName;
+
+  /**
    * Creates an empty {@link ExceptionWrapper}.
    */
   public ExceptionWrapper() {
@@ -44,25 +64,5 @@ public final class ExceptionWrapper implements IsSerializable {
       cause = new ExceptionWrapper(ecause);
     }
   }
-
-  /**
-   * Corresponds to {@link Throwable#getCause()}.
-   */
-  public ExceptionWrapper cause;
-
-  /**
-   * Corresponds to {@link Throwable#getMessage()}.
-   */
-  public String message;
-
-  /**
-   * Corresponds to {@link Throwable#getStackTrace()}.
-   */
-  public StackTraceWrapper[] stackTrace;
-
-  /**
-   * The run-time type of the exception.
-   */
-  public String typeName;
 
 }

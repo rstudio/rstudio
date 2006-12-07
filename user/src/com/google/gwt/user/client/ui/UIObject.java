@@ -25,10 +25,8 @@ import com.google.gwt.user.client.Element;
  */
 public abstract class UIObject {
   private static final String NULL_HANDLE_MSG = "Null widget handle.  If you "
-    + "are creating a composite, ensure that initWidget() has been called.";
+      + "are creating a composite, ensure that initWidget() has been called.";
 
-  private Element element;
- 
   public static native boolean isVisible(Element elem) /*-{
     return (elem.style.display != 'none');
   }-*/;
@@ -53,7 +51,7 @@ public abstract class UIObject {
     }
     if (style.length() == 0) {
       throw new IllegalArgumentException(
-        "Cannot pass is an empty string as a style name.");
+          "Cannot pass is an empty string as a style name.");
     }
 
     // Get the current style string.
@@ -72,13 +70,13 @@ public abstract class UIObject {
         int last = idx + style.length();
         int lastPos = oldStyle.length();
         if ((last == lastPos)
-          || ((last < lastPos) && (oldStyle.charAt(last) == ' '))) {
+            || ((last < lastPos) && (oldStyle.charAt(last) == ' '))) {
           break;
         }
       }
       idx = oldStyle.indexOf(style, idx + 1);
     }
-    
+
     if (add) {
       // Only add the style if it's not already present.
       if (idx == -1) {
@@ -93,6 +91,8 @@ public abstract class UIObject {
       }
     }
   }
+
+  private Element element;
 
   /**
    * Adds a style name to the widget.
@@ -308,7 +308,7 @@ public abstract class UIObject {
    */
   public void sinkEvents(int eventBitsToAdd) {
     DOM.sinkEvents(getElement(), eventBitsToAdd
-      | DOM.getEventsSunk(getElement()));
+        | DOM.getEventsSunk(getElement()));
   }
 
   /**
@@ -334,7 +334,7 @@ public abstract class UIObject {
    */
   public void unsinkEvents(int eventBitsToRemove) {
     DOM.sinkEvents(getElement(), DOM.getEventsSunk(getElement())
-      & (~eventBitsToRemove));
+        & (~eventBitsToRemove));
   }
 
   /**

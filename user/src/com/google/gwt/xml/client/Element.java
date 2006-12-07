@@ -16,86 +16,83 @@
 package com.google.gwt.xml.client;
 
 /*
- * Implementation notes:
- * Internet Explorer does not support any of the namespace methods, so 
- * xxxNS is not supported for all xxx.  
- * Safari does not support Attribute node modification; use
- * <code>setAttribute</code> instead.
-
+ * Implementation notes: Internet Explorer does not support any of the namespace
+ * methods, so xxxNS is not supported for all xxx. Safari does not support
+ * Attribute node modification; use <code>setAttribute</code> instead.
+ * 
  */
 
 /**
- * This interface represents XML DOM elements, which are the basic building 
- * block of XML.  An example follows:
+ * This interface represents XML DOM elements, which are the basic building
+ * block of XML. An example follows:
+ * 
  * <pre>
  *   <sample my_attribute="one">
  *      Some text<child/> more text
  *   </sample>
  * </pre>
  */
-public interface Element extends Node  {
+public interface Element extends Node {
   /**
-   * This method retrieves the tag name. 
-   * 
-   * @return the tag name of this <code>Element</code>
-   */  
-  public String getTagName();
-
-  /**
-   * This method retrieves the attribute which has a name of 
-   * <code>name</code>. 
+   * This method retrieves the attribute which has a name of <code>name</code>.
    * 
    * @param name the name of the attribute to get the value of
    * @return the value of the attribute specified by <code>name</code>
-   */  
+   */
   public String getAttribute(String name);
 
   /**
-   * This method sets the attribute specified by <code>name</code> 
-   * to <code>value</code>. 
-   * 
-   * @param name the name of the attribute to set
-   * @param value the new value this attribute is to have
-   */  
-  public void setAttribute(String name, String value);
-
-  /**
-   * This method removes the attribute which has the specified name. 
-   * 
-   * @param name the name of the attribute to remove
-   */  
-  public void removeAttribute(String name);
-
-  /**
-   * This method retrieves the attribute node which has a name of 
-   * <code>name</code>.  
-   * This <code>Attr</code> will have the same value as would be gotten with 
-   * <code>getAttribute</code>. 
+   * This method retrieves the attribute node which has a name of
+   * <code>name</code>. This <code>Attr</code> will have the same value as
+   * would be gotten with <code>getAttribute</code>.
    * 
    * @param name the name of the <code>Attr</code> to get
-   * @return the attribute node of this <code>Element</code>which has a name 
-   * of <code>name</code>
-   */  
+   * @return the attribute node of this <code>Element</code>which has a name
+   *         of <code>name</code>
+   */
   public Attr getAttributeNode(String name);
 
   /**
-   * This method retrieves the elements by tag name which has a name of 
-   * <code>name</code>. 
+   * This method retrieves the elements by tag name which has a name of
+   * <code>name</code>.
    * 
    * @param name the name of the <code>Element</code> to get
-   * @return the elements by tag name of this <code>Element</code> which has a 
-   * name of <code>name</code>
-   */  
+   * @return the elements by tag name of this <code>Element</code> which has a
+   *         name of <code>name</code>
+   */
   public NodeList getElementsByTagName(String name);
 
   /**
-   * This method determines whether this <code>Element</code> has an 
-   * attribute with the supplied name. 
+   * This method retrieves the tag name.
+   * 
+   * @return the tag name of this <code>Element</code>
+   */
+  public String getTagName();
+
+  /**
+   * This method determines whether this <code>Element</code> has an attribute
+   * with the supplied name.
    * 
    * @param name the name of the attribute
    * @return <code>true</code> if this <code>Element</code> has an attribute
-   * that name.
-   */  
+   *         that name.
+   */
   public boolean hasAttribute(String name);
+
+  /**
+   * This method removes the attribute which has the specified name.
+   * 
+   * @param name the name of the attribute to remove
+   */
+  public void removeAttribute(String name);
+
+  /**
+   * This method sets the attribute specified by <code>name</code> to
+   * <code>value</code>.
+   * 
+   * @param name the name of the attribute to set
+   * @param value the new value this attribute is to have
+   */
+  public void setAttribute(String name, String value);
 
 }

@@ -18,14 +18,16 @@ package com.google.gwt.xml.client.impl;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
- * This class implements the methods for standard browsers that use the DOMParser
- * model of XML parsing.
+ * This class implements the methods for standard browsers that use the
+ * DOMParser model of XML parsing.
  */
 class XMLParserImplStandard extends XMLParserImpl {
 
   protected static native JavaScriptObject createDOMParser() /*-{
     return new DOMParser();
   }-*/;
+
+  protected final JavaScriptObject domParser = createDOMParser();
 
   protected native JavaScriptObject createDocumentImpl() /*-{
     return document.implementation.createDocument("", "", null);
@@ -35,12 +37,12 @@ class XMLParserImplStandard extends XMLParserImpl {
       JavaScriptObject document, String id) /*-{
     return document.getElementById(id);
   }-*/;
-  
-  protected native JavaScriptObject getElementsByTagNameImpl(JavaScriptObject o,
-      String tagName) /*-{
+
+  protected native JavaScriptObject getElementsByTagNameImpl(
+      JavaScriptObject o, String tagName) /*-{
     return o.getElementsByTagNameNS("*",tagName);
   }-*/;
-  
+
   protected String getPrefixImpl(JavaScriptObject jsObject) {
     String fullName = XMLParserImpl.getNodeName(jsObject);
     if (fullName != null && fullName.indexOf(":") != -1) {
@@ -54,7 +56,7 @@ class XMLParserImplStandard extends XMLParserImpl {
     var out = jsObject.importNode(importedNode, deep);
     return (out == null) ? null : out;
   }-*/;
-  
+
   protected native JavaScriptObject parseImpl(String contents) /*-{
     var domParser = this.@com.google.gwt.xml.client.impl.XMLParserImplStandard::domParser;
     var result = domParser.parseFromString(contents,"text/xml");
@@ -66,7 +68,5 @@ class XMLParserImplStandard extends XMLParserImpl {
     }
     return result;
   }-*/;
-  
-  protected final JavaScriptObject domParser = createDOMParser();
 
 }

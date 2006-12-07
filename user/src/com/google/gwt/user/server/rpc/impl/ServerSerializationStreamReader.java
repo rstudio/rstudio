@@ -33,6 +33,14 @@ import java.util.ArrayList;
 public final class ServerSerializationStreamReader extends
     AbstractSerializationStreamReader {
 
+  private ServerSerializableTypeOracle serializableTypeOracle;
+
+  private String[] stringTable;
+
+  private ArrayList tokenList = new ArrayList();
+
+  private int tokenListIndex;
+
   public ServerSerializationStreamReader(
       ServerSerializableTypeOracle serializableTypeOracle) {
     this.serializableTypeOracle = serializableTypeOracle;
@@ -121,8 +129,7 @@ public final class ServerSerializationStreamReader extends
   protected Object deserialize(String typeSignature)
       throws SerializationException {
     Object instance = null;
-    SerializedInstanceReference serializedInstRef = serializableTypeOracle
-        .decodeSerializedInstanceReference(typeSignature);
+    SerializedInstanceReference serializedInstRef = serializableTypeOracle.decodeSerializedInstanceReference(typeSignature);
 
     try {
       Class instanceClass = Class.forName(serializedInstRef.getName(), false,
@@ -135,8 +142,7 @@ public final class ServerSerializationStreamReader extends
 
       validateTypeVersions(instanceClass, serializedInstRef);
 
-      Class customSerializer = serializableTypeOracle
-          .hasCustomFieldSerializer(instanceClass);
+      Class customSerializer = serializableTypeOracle.hasCustomFieldSerializer(instanceClass);
 
       instance = instantiate(customSerializer, instanceClass);
 
@@ -214,8 +220,7 @@ public final class ServerSerializationStreamReader extends
       Object instance) throws SerializationException, IllegalAccessException,
       NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
     Field[] declFields = instanceClass.getDeclaredFields();
-    Field[] serializableFields = serializableTypeOracle
-        .applyFieldSerializationPolicy(declFields);
+    Field[] serializableFields = serializableTypeOracle.applyFieldSerializationPolicy(declFields);
 
     for (int index = 0; index < serializableFields.length; ++index) {
       Field declField = serializableFields[index];
@@ -241,8 +246,9 @@ public final class ServerSerializationStreamReader extends
 
     Class superClass = instanceClass.getSuperclass();
     if (superClass != null && serializableTypeOracle.isSerializable(superClass)) {
-      deserializeImpl(serializableTypeOracle
-          .hasCustomFieldSerializer(superClass), superClass, instance);
+      deserializeImpl(
+          serializableTypeOracle.hasCustomFieldSerializer(superClass),
+          superClass, instance);
     }
   }
 
@@ -285,17 +291,11 @@ public final class ServerSerializationStreamReader extends
       return;
     }
 
-    String serverTypeSignature = serializableTypeOracle
-        .getSerializationSignature(instanceClass);
+    String serverTypeSignature = serializableTypeOracle.getSerializationSignature(instanceClass);
 
     if (!clientTypeSignature.equals(serverTypeSignature)) {
       throw new SerializationException("Invalid type signature for "
           + instanceClass.getName());
     }
   }
-
-  private ServerSerializableTypeOracle serializableTypeOracle;
-  private String[] stringTable;
-  private ArrayList tokenList = new ArrayList();
-  private int tokenListIndex;
 }

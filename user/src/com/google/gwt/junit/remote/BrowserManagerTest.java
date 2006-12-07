@@ -26,12 +26,6 @@ public class BrowserManagerTest {
   private static final int KEEP_ALIVE_MICROSECONDS = 5000;
 
   /**
-   * Not instantiable.
-   */
-  private BrowserManagerTest() {
-  }
-
-  /**
    * Causes the server at the specified URL to launch a window to www.google.com
    * for 5 seconds, then close it.
    * 
@@ -45,5 +39,11 @@ public class BrowserManagerTest {
     }
     BrowserManager browserManager = (BrowserManager) Naming.lookup(args[0]);
     browserManager.launchNewBrowser("www.google.com", KEEP_ALIVE_MICROSECONDS);
+  }
+
+  /**
+   * Not instantiable.
+   */
+  private BrowserManagerTest() {
   }
 }

@@ -81,7 +81,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
     sinkEvents(Event.MOUSEEVENTS | Event.ONCLICK | Event.KEYEVENTS);
     DOM.sinkEvents(focusable, Event.FOCUSEVENTS | Event.KEYEVENTS
-      | DOM.getEventsSunk(focusable));
+        | DOM.getEventsSunk(focusable));
 
     // The 'root' item is invisible and serves only as a container
     // for all top-level items.
@@ -375,7 +375,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
           }
         }
 
-      // Intentional fallthrough.
+        // Intentional fallthrough.
       case Event.ONKEYUP:
         if (eventType == Event.ONKEYUP) {
           // If we got here because of a key tab, then we need to make sure the
@@ -390,7 +390,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
           }
         }
 
-      // Intentional fallthrough.
+        // Intentional fallthrough.
       case Event.ONKEYPRESS: {
         if (keyboardListeners != null) {
           keyboardListeners.fireKeyboardEvent(this, event);
@@ -406,7 +406,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   public boolean remove(Widget w) {
     throw new UnsupportedOperationException(
-      "Widgets should never be directly removed from a tree");
+        "Widgets should never be directly removed from a tree");
   }
 
   public void removeFocusListener(FocusListener listener) {
@@ -507,6 +507,56 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     List accum = new ArrayList();
     root.addTreeItems(accum);
     return accum.iterator();
+  }
+
+  protected void onAttach() {
+    super.onAttach();
+
+    // Ensure that all child widgets are attached.
+    for (Iterator it = iterator(); it.hasNext();) {
+      Widget child = (Widget) it.next();
+      child.onAttach();
+    }
+  }
+
+  protected void onDetach() {
+    super.onDetach();
+
+    // Ensure that all child widgets are detached.
+    for (Iterator it = iterator(); it.hasNext();) {
+      Widget child = (Widget) it.next();
+      child.onDetach();
+    }
+  }
+
+  protected void onLoad() {
+    root.updateStateRecursive();
+  }
+
+  void adopt(TreeItem.ContentPanel content) {
+    getChildWidgets().add(content);
+    content.treeSetParent(this);
+  }
+
+  void disown(TreeItem.ContentPanel item) {
+    getChildWidgets().remove(item);
+    item.treeSetParent(null);
+  }
+
+  void fireStateChanged(TreeItem item) {
+    if (listeners != null) {
+      listeners.fireItemStateChanged(item);
+    }
+  }
+
+  /**
+   * Get the Set of child widgets. Exposed only to allow unit tests to validate
+   * tree.
+   * 
+   * @return the children
+   */
+  Set getChildWidgets() {
+    return childWidgets;
   }
 
   /**
@@ -670,56 +720,6 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         listeners.fireItemSelected(curSelection);
       }
     }
-  }
-
-  protected void onAttach() {
-    super.onAttach();
-
-    // Ensure that all child widgets are attached.
-    for (Iterator it = iterator(); it.hasNext();) {
-      Widget child = (Widget) it.next();
-      child.onAttach();
-    }
-  }
-
-  protected void onDetach() {
-    super.onDetach();
-
-    // Ensure that all child widgets are detached.
-    for (Iterator it = iterator(); it.hasNext();) {
-      Widget child = (Widget) it.next();
-      child.onDetach();
-    }
-  }
-
-  protected void onLoad() {
-    root.updateStateRecursive();
-  }
-
-  void adopt(TreeItem.ContentPanel content) {
-    getChildWidgets().add(content);
-    content.treeSetParent(this);
-  }
-
-  void disown(TreeItem.ContentPanel item) {
-    getChildWidgets().remove(item);
-    item.treeSetParent(null);
-  }
-
-  void fireStateChanged(TreeItem item) {
-    if (listeners != null) {
-      listeners.fireItemStateChanged(item);
-    }
-  }
-
-  /**
-   * Get the Set of child widgets. Exposed only to allow unit tests to validate
-   * tree.
-   * 
-   * @return the children
-   */
-  Set getChildWidgets() {
-    return childWidgets;
   }
 
   private native boolean shouldTreeDelegateFocusToElement(Element elem) /*-{

@@ -34,14 +34,24 @@ final class SerializableType {
     this.isSerializable = isSerializable;
   }
 
-  public JType getType() {
-    return type;
+  public JClassType getCustomSerializer() {
+    if (customSerializerInfo != null) {
+      return customSerializerInfo.getSerializerClass();
+    }
+
+    return null;
   }
 
-  public String toString() {
-    String s = isSerializable() ? "Serializable " : "Unserializable ";
-    s += type.toString();
-    return s;
+  public JMethod getCustomSerializerInstantiateMethod() {
+    if (customSerializerInfo != null) {
+      return customSerializerInfo.getInstantiateMethod();
+    }
+
+    return null;
+  }
+
+  public JType getType() {
+    return type;
   }
 
   public boolean hasCustomSerializer() {
@@ -68,19 +78,9 @@ final class SerializableType {
     this.isSerializable = serializable;
   }
 
-  public JClassType getCustomSerializer() {
-    if (customSerializerInfo != null) {
-      return customSerializerInfo.getSerializerClass();
-    }
-
-    return null;
-  }
-
-  public JMethod getCustomSerializerInstantiateMethod() {
-    if (customSerializerInfo != null) {
-      return customSerializerInfo.getInstantiateMethod();
-    }
-
-    return null;
+  public String toString() {
+    String s = isSerializable() ? "Serializable " : "Unserializable ";
+    s += type.toString();
+    return s;
   }
 }

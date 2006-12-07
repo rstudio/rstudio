@@ -16,28 +16,29 @@
 package com.google.gwt.xml.client;
 
 /**
- * This interface documents the ProcessingInstruction node type.
- * An example is <pre><?target some data?></pre>.
+ * This interface documents the ProcessingInstruction node type. An example is
+ * 
+ * <pre><?target some data?></pre>.
  */
-public interface ProcessingInstruction extends Node  {
+public interface ProcessingInstruction extends Node {
   /**
-   * This method retrieves the target. 
-   * 
-   * @return the target of this <code>ProcessingInstruction</code>
-   */  
-  public String getTarget();
-
-  /**
-   * This method retrieves the data. 
+   * This method retrieves the data.
    * 
    * @return the data of this <code>ProcessingInstruction</code>
-   */  
+   */
   public String getData();
 
   /**
-   * This method sets the data to <code>data</code>. 
+   * This method retrieves the target.
+   * 
+   * @return the target of this <code>ProcessingInstruction</code>
+   */
+  public String getTarget();
+
+  /**
+   * This method sets the data to <code>data</code>.
    * 
    * @param data the new data
-   */  
+   */
   public void setData(String data);
 }

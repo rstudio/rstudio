@@ -38,27 +38,6 @@ final class ReachableTypeOracleImpl implements ReachableTypeOracle {
     this.rootLogger = rootLogger;
   }
 
-  public JType[] getTypesReachableFromType(JType type) {
-    if (type.isClass() == null && type.isParameterized() == null
-      && type.isArray() == null) {
-      // TODO(mmendez): add the proper error message
-      throw new IllegalArgumentException();
-    }
-
-    HashSet cachedResult = (HashSet) reachableTypeCache.get(type);
-    if (cachedResult != null) {
-      return (JType[]) cachedResult.toArray(new JType[cachedResult.size()]);
-    }
-
-    HashSet reachableTypes = new HashSet();
-
-    addTypesReachableFromType(rootLogger, reachableTypes, type);
-
-    reachableTypeCache.put(type, reachableTypes);
-
-    return (JType[]) reachableTypes.toArray(new JType[reachableTypes.size()]);
-  }
-
   public JType[] getTypesReachableFromInterface(JClassType intf) {
     if ((intf == null) || (intf.isInterface() == null)) {
       // TODO(mmendez): add the proper error message
@@ -94,98 +73,47 @@ final class ReachableTypeOracleImpl implements ReachableTypeOracle {
     return (JType[]) reachableTypes.toArray(new JType[reachableTypes.size()]);
   }
 
-  /*
-   * Add all types reachable from this interface.
-   */
-  private void addTypesReachableFromInterface(TreeLogger logger,
-      HashSet reachableTypes, JClassType intf) {
-    logger = logger.branch(TreeLogger.DEBUG,
-      "Adding types reachable from interface " + intf.getQualifiedSourceName(),
-      null);
-
-    JClassType[] intfs = intf.getImplementedInterfaces();
-    for (int intfIndex = 0; intfIndex < intfs.length; ++intfIndex) {
-      JClassType intfImpl = intfs[intfIndex];
-      assert (intfImpl != null);
-
-      addTypesReachableFromInterface(logger, reachableTypes, intfImpl);
+  public JType[] getTypesReachableFromType(JType type) {
+    if (type.isClass() == null && type.isParameterized() == null
+        && type.isArray() == null) {
+      // TODO(mmendez): add the proper error message
+      throw new IllegalArgumentException();
     }
 
-    JMethod[] methods = intf.getMethods();
-    for (int methodIndex = 0; methodIndex < methods.length; ++methodIndex) {
-      JMethod method = methods[methodIndex];
-      assert (method != null);
+    HashSet cachedResult = (HashSet) reachableTypeCache.get(type);
+    if (cachedResult != null) {
+      return (JType[]) cachedResult.toArray(new JType[cachedResult.size()]);
+    }
 
-      addTypesReachableFromMethod(logger, reachableTypes, method);
+    HashSet reachableTypes = new HashSet();
+
+    addTypesReachableFromType(rootLogger, reachableTypes, type);
+
+    reachableTypeCache.put(type, reachableTypes);
+
+    return (JType[]) reachableTypes.toArray(new JType[reachableTypes.size()]);
+  }
+
+  private void addTypeReachableFromParameterizedType(TreeLogger logger,
+      HashSet reachableTypes, JParameterizedType parameterizedType) {
+    assert (parameterizedType != null);
+
+    addTypesReachableFromType(logger, reachableTypes,
+        parameterizedType.getRawType());
+
+    JType typeArgs[] = parameterizedType.getTypeArgs();
+    for (int index = 0; index < typeArgs.length; ++index) {
+      JType typeArg = typeArgs[index];
+
+      addTypesReachableFromType(logger, reachableTypes, typeArg);
     }
   }
 
-  /*
-   * Add all types that are reachable from a method by considering the
-   * parameters return type, and exceptions thrown.
-   */
-  private void addTypesReachableFromMethod(TreeLogger logger,
-      HashSet reachableTypes, JMethod method) {
-    logger = logger.branch(TreeLogger.DEBUG,
-      "Adding types reachable from method " + method.getReadableDeclaration(),
-      null);
-
-    JType returnType = method.getReturnType();
-    if (returnType != null) {
-      addTypesReachableFromType(logger, reachableTypes, returnType);
-    }
-
-    JParameter[] params = method.getParameters();
-    for (int paramIndex = 0; paramIndex < params.length; ++paramIndex) {
-      JParameter param = params[paramIndex];
-      addTypesReachableFromType(logger, reachableTypes, param.getType());
-    }
-
-    JType[] typesThrown = method.getThrows();
-    for (int index = 0; index < typesThrown.length; ++index) {
-      JType typeThrown = typesThrown[index];
-      addTypesReachableFromType(logger, reachableTypes, typeThrown);
-    }
-  }
-
-  /*
-   * Implements the type centric part of the static serializability algorithm.
-   */
-  private void addTypesReachableFromType(TreeLogger logger,
-      HashSet reachableTypes, JType type) {
-    assert (type != null);
-
-    if (reachableTypes.contains(type)) {
-      return;
-    }
-
-    logger = logger
-      .branch(TreeLogger.DEBUG, "Adding types reachable from type "
-        + type.getQualifiedSourceName(), null);
-
-    reachableTypes.add(type);
-
-    if (type.isPrimitive() != null) {
-      return;
-    }
-
-    if (type.isArray() != null) {
-      addTypesReachableFromArray(logger, reachableTypes, type.isArray());
-      return;
-    }
-
-    if (type.isParameterized() != null) {
-      addTypeReachableFromParameterizedType(logger, reachableTypes, type
-        .isParameterized());
-      return;
-    }
-
-    if (type.isClassOrInterface() == null) {
-      return;
-    }
-
-    addTypesReachableFromClassOrInterface(logger, reachableTypes, type
-      .isClassOrInterface());
+  private void addTypesReachableFromArray(TreeLogger logger,
+      HashSet reachableTypes, JArrayType arrayType) {
+    assert (arrayType != null);
+    JType componentType = arrayType.getComponentType();
+    addTypesReachableFromType(logger, reachableTypes, componentType);
   }
 
   private void addTypesReachableFromClassOrInterface(TreeLogger logger,
@@ -229,25 +157,98 @@ final class ReachableTypeOracleImpl implements ReachableTypeOracle {
     }
   }
 
-  private void addTypeReachableFromParameterizedType(TreeLogger logger,
-      HashSet reachableTypes, JParameterizedType parameterizedType) {
-    assert (parameterizedType != null);
+  /*
+   * Add all types reachable from this interface.
+   */
+  private void addTypesReachableFromInterface(TreeLogger logger,
+      HashSet reachableTypes, JClassType intf) {
+    logger = logger.branch(TreeLogger.DEBUG,
+        "Adding types reachable from interface "
+            + intf.getQualifiedSourceName(), null);
 
-    addTypesReachableFromType(logger, reachableTypes, parameterizedType
-      .getRawType());
+    JClassType[] intfs = intf.getImplementedInterfaces();
+    for (int intfIndex = 0; intfIndex < intfs.length; ++intfIndex) {
+      JClassType intfImpl = intfs[intfIndex];
+      assert (intfImpl != null);
 
-    JType typeArgs[] = parameterizedType.getTypeArgs();
-    for (int index = 0; index < typeArgs.length; ++index) {
-      JType typeArg = typeArgs[index];
+      addTypesReachableFromInterface(logger, reachableTypes, intfImpl);
+    }
 
-      addTypesReachableFromType(logger, reachableTypes, typeArg);
+    JMethod[] methods = intf.getMethods();
+    for (int methodIndex = 0; methodIndex < methods.length; ++methodIndex) {
+      JMethod method = methods[methodIndex];
+      assert (method != null);
+
+      addTypesReachableFromMethod(logger, reachableTypes, method);
     }
   }
 
-  private void addTypesReachableFromArray(TreeLogger logger,
-      HashSet reachableTypes, JArrayType arrayType) {
-    assert (arrayType != null);
-    JType componentType = arrayType.getComponentType();
-    addTypesReachableFromType(logger, reachableTypes, componentType);
+  /*
+   * Add all types that are reachable from a method by considering the
+   * parameters return type, and exceptions thrown.
+   */
+  private void addTypesReachableFromMethod(TreeLogger logger,
+      HashSet reachableTypes, JMethod method) {
+    logger = logger.branch(
+        TreeLogger.DEBUG,
+        "Adding types reachable from method " + method.getReadableDeclaration(),
+        null);
+
+    JType returnType = method.getReturnType();
+    if (returnType != null) {
+      addTypesReachableFromType(logger, reachableTypes, returnType);
+    }
+
+    JParameter[] params = method.getParameters();
+    for (int paramIndex = 0; paramIndex < params.length; ++paramIndex) {
+      JParameter param = params[paramIndex];
+      addTypesReachableFromType(logger, reachableTypes, param.getType());
+    }
+
+    JType[] typesThrown = method.getThrows();
+    for (int index = 0; index < typesThrown.length; ++index) {
+      JType typeThrown = typesThrown[index];
+      addTypesReachableFromType(logger, reachableTypes, typeThrown);
+    }
+  }
+
+  /*
+   * Implements the type centric part of the static serializability algorithm.
+   */
+  private void addTypesReachableFromType(TreeLogger logger,
+      HashSet reachableTypes, JType type) {
+    assert (type != null);
+
+    if (reachableTypes.contains(type)) {
+      return;
+    }
+
+    logger = logger.branch(TreeLogger.DEBUG,
+        "Adding types reachable from type " + type.getQualifiedSourceName(),
+        null);
+
+    reachableTypes.add(type);
+
+    if (type.isPrimitive() != null) {
+      return;
+    }
+
+    if (type.isArray() != null) {
+      addTypesReachableFromArray(logger, reachableTypes, type.isArray());
+      return;
+    }
+
+    if (type.isParameterized() != null) {
+      addTypeReachableFromParameterizedType(logger, reachableTypes,
+          type.isParameterized());
+      return;
+    }
+
+    if (type.isClassOrInterface() == null) {
+      return;
+    }
+
+    addTypesReachableFromClassOrInterface(logger, reachableTypes,
+        type.isClassOrInterface());
   }
 }

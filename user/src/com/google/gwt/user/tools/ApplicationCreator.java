@@ -30,13 +30,13 @@ import java.util.Map;
 
 /**
  * Creates a GWT application.
- *
+ * 
  */
 public final class ApplicationCreator extends ToolBase {
 
   /**
    * Arguments for the application creator.
-   *
+   * 
    */
   protected class ArgHandlerAppClass extends ArgHandlerExtra {
 
@@ -49,7 +49,7 @@ public final class ApplicationCreator extends ToolBase {
       // Check className for certain properties
       if (!arg.matches("[\\w\\$]+(\\.[\\w\\$]+)+")) {
         System.err.println("'" + arg
-          + "' does not appear to be a valid fully-qualified Java class name");
+            + "' does not appear to be a valid fully-qualified Java class name");
         return false;
       }
 
@@ -57,16 +57,16 @@ public final class ApplicationCreator extends ToolBase {
       //
       if (arg.indexOf('$') != -1) {
         System.err.println("'" + arg
-          + "': This version of the tool does not support nested classes");
+            + "': This version of the tool does not support nested classes");
         return false;
       }
 
       String[] parts = arg.split("\\.");
       if (parts.length < 2 || !parts[parts.length - 2].equals("client")) {
         System.err.println("'"
-          + arg
-          + "': Please use 'client' as the final package, as in 'com.example.foo.client.MyApp'.\n"
-          + "It isn't technically necessary, but this tool enforces the best practice.");
+            + arg
+            + "': Please use 'client' as the final package, as in 'com.example.foo.client.MyApp'.\n"
+            + "It isn't technically necessary, but this tool enforces the best practice.");
         return false;
       }
 
@@ -79,7 +79,7 @@ public final class ApplicationCreator extends ToolBase {
     }
 
     public String[] getTagArgs() {
-      return new String[]{"className"};
+      return new String[] {"className"};
     }
 
     public boolean isRequired() {
@@ -88,6 +88,12 @@ public final class ApplicationCreator extends ToolBase {
   }
 
   private static final String PACKAGE_PATH;
+
+  static {
+    String path = ApplicationCreator.class.getName();
+    path = path.substring(0, path.lastIndexOf('.') + 1);
+    PACKAGE_PATH = path.replace('.', '/');
+  }
 
   public static void main(String[] args) {
     ApplicationCreator creator = new ApplicationCreator();
@@ -178,10 +184,10 @@ public final class ApplicationCreator extends ToolBase {
     {
       // Create the module
       File moduleXML = Utility.createNormalFile(basePackageDir, className
-        + ".gwt.xml", overwrite, ignore);
+          + ".gwt.xml", overwrite, ignore);
       if (moduleXML != null) {
         String out = Utility.getFileFromClassPath(PACKAGE_PATH
-          + "Module.gwt.xmlsrc");
+            + "Module.gwt.xmlsrc");
         Utility.writeTemplateFile(moduleXML, out, replacements);
       }
     }
@@ -189,10 +195,10 @@ public final class ApplicationCreator extends ToolBase {
     {
       // Create a skeleton html file
       File publicHTML = Utility.createNormalFile(publicDir,
-        className + ".html", overwrite, ignore);
+          className + ".html", overwrite, ignore);
       if (publicHTML != null) {
         String out = Utility.getFileFromClassPath(PACKAGE_PATH
-          + "AppHtml.htmlsrc");
+            + "AppHtml.htmlsrc");
         Utility.writeTemplateFile(publicHTML, out, replacements);
       }
     }
@@ -200,10 +206,10 @@ public final class ApplicationCreator extends ToolBase {
     {
       // Create a skeleton Application class
       File javaClass = Utility.createNormalFile(clientDir, className + ".java",
-        overwrite, ignore);
+          overwrite, ignore);
       if (javaClass != null) {
         String out = Utility.getFileFromClassPath(PACKAGE_PATH
-          + "AppClassTemplate.javasrc");
+            + "AppClassTemplate.javasrc");
         Utility.writeTemplateFile(javaClass, out, replacements);
       }
     }
@@ -212,10 +218,10 @@ public final class ApplicationCreator extends ToolBase {
       // Create an eclipse launch config
       replacements.put("@projectName", eclipse);
       File launchConfig = Utility.createNormalFile(outDir, className
-        + ".launch", overwrite, ignore);
+          + ".launch", overwrite, ignore);
       if (launchConfig != null) {
         String out = Utility.getFileFromClassPath(PACKAGE_PATH
-          + "App.launchsrc");
+            + "App.launchsrc");
         Utility.writeTemplateFile(launchConfig, out, replacements);
       }
     }
@@ -229,10 +235,10 @@ public final class ApplicationCreator extends ToolBase {
     }
 
     File gwtshell = Utility.createNormalFile(outDir, className + "-shell"
-      + extension, overwrite, ignore);
+        + extension, overwrite, ignore);
     if (gwtshell != null) {
       String out = Utility.getFileFromClassPath(PACKAGE_PATH + "gwtshell"
-        + extension + "src");
+          + extension + "src");
       Utility.writeTemplateFile(gwtshell, out, replacements);
       if (extension.length() == 0) {
         Runtime.getRuntime().exec("chmod u+x " + gwtshell.getAbsolutePath());
@@ -240,16 +246,24 @@ public final class ApplicationCreator extends ToolBase {
     }
 
     File gwtcompile = Utility.createNormalFile(outDir, className + "-compile"
-      + extension, overwrite, ignore);
+        + extension, overwrite, ignore);
     if (gwtcompile != null) {
       String out = Utility.getFileFromClassPath(PACKAGE_PATH + "gwtcompile"
-        + extension + "src");
+          + extension + "src");
       Utility.writeTemplateFile(gwtcompile, out, replacements);
       if (extension.length() == 0) {
         Runtime.getRuntime().exec("chmod u+x " + gwtcompile.getAbsolutePath());
       }
     }
   }
+
+  private String eclipse = null;
+
+  private String fullClassName = null;
+
+  private boolean ignore = false;
+  private File outDir;
+  private boolean overwrite = false;
 
   protected ApplicationCreator() {
 
@@ -304,17 +318,5 @@ public final class ApplicationCreator extends ToolBase {
       return false;
     }
   }
-
-  static {
-    String path = ApplicationCreator.class.getName();
-    path = path.substring(0, path.lastIndexOf('.') + 1);
-    PACKAGE_PATH = path.replace('.', '/');
-  }
-
-  private String eclipse = null;
-  private String fullClassName = null;
-  private boolean ignore = false;
-  private File outDir;
-  private boolean overwrite = false;
 
 }

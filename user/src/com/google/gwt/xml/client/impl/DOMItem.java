@@ -23,6 +23,8 @@ import com.google.gwt.user.client.DOM;
  */
 class DOMItem {
 
+  private JavaScriptObject jsObject;
+
   protected DOMItem(JavaScriptObject jso) {
     this.jsObject = jso;
   }
@@ -42,7 +44,7 @@ class DOMItem {
      */
     if (o instanceof DOMItem) {
       return DOM.compare(castToElement(this.getJsObject()),
-        castToElement(((DOMItem) o).getJsObject()));
+          castToElement(((DOMItem) o).getJsObject()));
     }
     return false;
   }
@@ -55,6 +57,4 @@ class DOMItem {
       JavaScriptObject toBeCast) /*-{
     return toBeCast;
   }-*/;
-
-  private JavaScriptObject jsObject;
 }

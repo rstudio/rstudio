@@ -33,6 +33,10 @@ import java.util.Set;
 public class ConstantMap extends HashMap {
 
   private static class DummyMapEntry implements Map.Entry {
+    private final Object key;
+
+    private final Object value;
+
     DummyMapEntry(Object key, Object value) {
       this.key = key;
       this.value = value;
@@ -49,13 +53,12 @@ public class ConstantMap extends HashMap {
     public Object setValue(Object arg0) {
       throw new UnsupportedOperationException();
     }
-
-    private final Object key;
-    private final Object value;
   }
 
   private class OrderedConstantSet extends ArrayList implements Set {
     private class ImmutableIterator implements Iterator {
+      private final Iterator base;
+
       ImmutableIterator(Iterator base) {
         this.base = base;
       }
@@ -71,13 +74,10 @@ public class ConstantMap extends HashMap {
       public void remove() {
         throw new UnsupportedOperationException("Immutable set");
       }
-
-      private final Iterator base;
     }
 
     public void clear() {
-      throw new UnsupportedOperationException(
-        "Immutable set");
+      throw new UnsupportedOperationException("Immutable set");
     }
 
     public Iterator iterator() {
@@ -85,6 +85,12 @@ public class ConstantMap extends HashMap {
       return new ImmutableIterator(base);
     }
   }
+
+  private OrderedConstantSet entries;
+
+  private final OrderedConstantSet keys = new OrderedConstantSet();
+
+  private OrderedConstantSet values;
 
   public void clear() {
     throw unsupported("clear");
@@ -132,10 +138,6 @@ public class ConstantMap extends HashMap {
 
   private UnsupportedOperationException unsupported(String operation) {
     return new UnsupportedOperationException(operation
-      + " not supported on a constant map");
+        + " not supported on a constant map");
   }
-
-  private OrderedConstantSet entries;
-  private final OrderedConstantSet keys = new OrderedConstantSet();
-  private OrderedConstantSet values;
 }

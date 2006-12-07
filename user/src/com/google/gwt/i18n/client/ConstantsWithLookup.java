@@ -33,8 +33,8 @@ import java.util.Map;
  * <p>
  * It is generally preferable to extend <code>Constants</code> rather than
  * <code>ConstantsWithLookup</code> because <code>ConstantsWithLookup</code>
- * forces all constants to be retained in the compiled script, preventing the GWT
- * compiler from pruning unused constant accessors.
+ * forces all constants to be retained in the compiled script, preventing the
+ * GWT compiler from pruning unused constant accessors.
  * </p>
  * 
  * <h3>Required Module</h3>
@@ -51,6 +51,38 @@ import java.util.Map;
  * @see com.google.gwt.i18n.client.Constants
  */
 public interface ConstantsWithLookup extends Constants {
+  /**
+   * Look up <code>boolean</code> by method name.
+   * 
+   * @param methodName method name
+   * @return boolean returned by method
+   */
+  public boolean getBoolean(String methodName);
+
+  /**
+   * Look up <code>double</code> by method name.
+   * 
+   * @param methodName method name
+   * @return double returned by method
+   */
+  public double getDouble(String methodName);
+
+  /**
+   * Look up <code>float</code> by method name.
+   * 
+   * @param methodName method name
+   * @return float returned by method
+   */
+  public float getFloat(String methodName);
+
+  /**
+   * Look up <code>int</code> by method name.
+   * 
+   * @param methodName method name
+   * @return int returned by method
+   */
+  public int getInt(String methodName);
+
   /**
    * Look up <code>Map</code> by method name.
    * 
@@ -74,36 +106,4 @@ public interface ConstantsWithLookup extends Constants {
    * @return String[] returned by method
    */
   public String[] getStringArray(String methodName);
-
-  /**
-   * Look up <code>int</code> by method name.
-   * 
-   * @param methodName method name
-   * @return int returned by method
-   */
-  public int getInt(String methodName);
-
-  /**
-   * Look up <code>double</code> by method name.
-   * 
-   * @param methodName method name
-   * @return double returned by method
-   */
-  public double getDouble(String methodName);
-
-  /**
-   * Look up <code>float</code> by method name.
-   * 
-   * @param methodName method name
-   * @return float returned by method
-   */
-  public float getFloat(String methodName);
-
-  /**
-   * Look up <code>boolean</code> by method name.
-   * 
-   * @param methodName method name
-   * @return boolean returned by method
-   */
-  public boolean getBoolean(String methodName);
 }

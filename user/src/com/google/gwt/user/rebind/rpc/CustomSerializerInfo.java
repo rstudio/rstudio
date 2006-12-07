@@ -21,7 +21,7 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 
 /**
  * Customized Seralizer information.
- *
+ * 
  */
 public class CustomSerializerInfo {
   JClassType serializeeClass;
@@ -34,35 +34,47 @@ public class CustomSerializerInfo {
     return deserializeMethod;
   }
 
+  public JMethod getInstantiateMethod() {
+    return instantiateMethod;
+  }
+
+  public JClassType getSerializeeClass() {
+    return serializeeClass;
+  }
+
+  public JMethod getSerializeMethod() {
+    return serializeMethod;
+  }
+
+  public JClassType getSerializerClass() {
+    return serializerClass;
+  }
+
   public boolean setDeserializeMethod(TreeLogger logger,
       JMethod deserializeMethod) {
 
     if (this.deserializeMethod != null
-      && this.deserializeMethod != deserializeMethod) {
+        && this.deserializeMethod != deserializeMethod) {
       logger.log(TreeLogger.ERROR, "Type "
-        + serializeeClass.getQualifiedSourceName()
-        + " has more than one custom field serializer deserialize method, "
-        + this.deserializeMethod.getReadableDeclaration() + " and "
-        + deserializeMethod.getReadableDeclaration(), null);
+          + serializeeClass.getQualifiedSourceName()
+          + " has more than one custom field serializer deserialize method, "
+          + this.deserializeMethod.getReadableDeclaration() + " and "
+          + deserializeMethod.getReadableDeclaration(), null);
       return false;
     }
     this.deserializeMethod = deserializeMethod;
     return true;
   }
 
-  public JMethod getInstantiateMethod() {
-    return instantiateMethod;
-  }
-
   public boolean setInstantiateMethod(TreeLogger logger,
       JMethod instantiateMethod) {
     if (this.instantiateMethod != null
-      && this.instantiateMethod != instantiateMethod) {
+        && this.instantiateMethod != instantiateMethod) {
       logger.log(TreeLogger.ERROR, "Type "
-        + serializeeClass.getQualifiedSourceName()
-        + " has more than one custom field serializer instantiate method, "
-        + this.instantiateMethod.getReadableDeclaration() + " and "
-        + instantiateMethod.getReadableDeclaration(), null);
+          + serializeeClass.getQualifiedSourceName()
+          + " has more than one custom field serializer instantiate method, "
+          + this.instantiateMethod.getReadableDeclaration() + " and "
+          + instantiateMethod.getReadableDeclaration(), null);
       return false;
     }
 
@@ -70,17 +82,17 @@ public class CustomSerializerInfo {
     return true;
   }
 
-  public JMethod getSerializeMethod() {
-    return serializeMethod;
+  public void setSerializeeClass(JClassType serializeeClass) {
+    this.serializeeClass = serializeeClass;
   }
 
   public boolean setSerializeMethod(TreeLogger logger, JMethod serializeMethod) {
     if (this.serializeMethod != null && this.serializeMethod != serializeMethod) {
       logger.log(TreeLogger.ERROR, "Type "
-        + serializeeClass.getQualifiedSourceName()
-        + " has more than one custom field serializer deserialize method, "
-        + this.serializeMethod.getReadableDeclaration() + " and "
-        + serializeMethod.getReadableDeclaration(), null);
+          + serializeeClass.getQualifiedSourceName()
+          + " has more than one custom field serializer deserialize method, "
+          + this.serializeMethod.getReadableDeclaration() + " and "
+          + serializeMethod.getReadableDeclaration(), null);
       return false;
     }
 
@@ -88,30 +100,17 @@ public class CustomSerializerInfo {
     return true;
   }
 
-  public JClassType getSerializerClass() {
-    return serializerClass;
-  }
-
   public boolean setSerializerClass(TreeLogger logger,
       JClassType serializerClass) {
-    if (this.serializerClass != null
-      && this.serializerClass != serializerClass) {
+    if (this.serializerClass != null && this.serializerClass != serializerClass) {
       logger.log(TreeLogger.ERROR, "Type "
-        + serializeeClass.getQualifiedSourceName()
-        + " has more than one custom field serializer, "
-        + this.serializerClass.getQualifiedSourceName() + " and "
-        + serializerClass.getQualifiedSourceName(), null);
+          + serializeeClass.getQualifiedSourceName()
+          + " has more than one custom field serializer, "
+          + this.serializerClass.getQualifiedSourceName() + " and "
+          + serializerClass.getQualifiedSourceName(), null);
       return false;
     }
     this.serializerClass = serializerClass;
     return true;
-  }
-
-  public JClassType getSerializeeClass() {
-    return serializeeClass;
-  }
-
-  public void setSerializeeClass(JClassType serializeeClass) {
-    this.serializeeClass = serializeeClass;
   }
 }

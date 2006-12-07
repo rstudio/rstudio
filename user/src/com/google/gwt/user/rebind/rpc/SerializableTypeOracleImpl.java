@@ -47,6 +47,38 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
 
   private static final Set TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES = new HashSet();
 
+  static {
+    PRIMITIVE_TYPE_BINARY_NAMES.put("boolean", "Z");
+    PRIMITIVE_TYPE_BINARY_NAMES.put("byte", "B");
+    PRIMITIVE_TYPE_BINARY_NAMES.put("char", "C");
+    PRIMITIVE_TYPE_BINARY_NAMES.put("double", "D");
+    PRIMITIVE_TYPE_BINARY_NAMES.put("float", "F");
+    PRIMITIVE_TYPE_BINARY_NAMES.put("int", "I");
+    PRIMITIVE_TYPE_BINARY_NAMES.put("long", "J");
+    PRIMITIVE_TYPE_BINARY_NAMES.put("short", "S");
+
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Boolean");
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Byte");
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Character");
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Double");
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Exception");
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Float");
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Integer");
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Long");
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Object");
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Short");
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.String");
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Throwable");
+  }
+
+  private Map assignableTypeCache;
+
+  private JType objectType;
+
+  private Map reachableTypes;
+
+  private TypeOracle typeOracle;
+
   public SerializableTypeOracleImpl(TypeOracle typeOracle, Map reachableTypes)
       throws NotFoundException {
     this.reachableTypes = reachableTypes;
@@ -86,7 +118,7 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
 
   public String encodeSerializedInstanceReference(JType instanceType) {
     return getSerializedTypeName(instanceType) + "/"
-      + getSerializationSignature(instanceType);
+        + getSerializationSignature(instanceType);
   }
 
   public String encodeSerializedInstanceReference(String qualifiedTypeName)
@@ -125,7 +157,7 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     JClassType classType = type.isClassOrInterface();
     if (classType != null) {
       String[] name = Shared.synthesizeTopLevelClassName(classType,
-        GENERATED_FIELD_SERIALIZER_SUFFIX);
+          GENERATED_FIELD_SERIALIZER_SUFFIX);
       if (name[0].length() > 0) {
         return name[0] + "." + name[1];
       } else {
@@ -171,7 +203,7 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     JPrimitiveType primitive = type.isPrimitive();
     if (primitive != null) {
       // Primitives are always serializable and assignable to themselves.
-      return new JType[]{primitive};
+      return new JType[] {primitive};
     }
 
     // Order is important here since Parameterized types
@@ -212,7 +244,7 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
       Object val = PRIMITIVE_TYPE_BINARY_NAMES.get(primitiveType.getSimpleSourceName());
       if (val == null) {
         throw new RuntimeException("Unexpected primitive type '"
-          + primitiveType.getQualifiedSourceName() + "'");
+            + primitiveType.getQualifiedSourceName() + "'");
       }
 
       return (String) val;
@@ -222,10 +254,10 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     if (arrayType != null) {
       JType componentType = arrayType.getComponentType();
       boolean isClassOrInterface = (componentType.isArray() == null)
-        && (componentType.isPrimitive() == null);
+          && (componentType.isPrimitive() == null);
       return "[" + (isClassOrInterface ? "L" : "")
-        + getSerializedTypeName(arrayType.getComponentType())
-        + (isClassOrInterface ? ";" : "");
+          + getSerializedTypeName(arrayType.getComponentType())
+          + (isClassOrInterface ? ";" : "");
     }
 
     JParameterizedType parameterizedType = type.isParameterized();
@@ -239,7 +271,7 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     JClassType enclosingType = classType.getEnclosingType();
     if (enclosingType != null) {
       return getSerializedTypeName(enclosingType) + "$"
-        + classType.getSimpleSourceName();
+          + classType.getSimpleSourceName();
     }
 
     JPackage pkg = classType.getPackage();
@@ -258,7 +290,7 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
       Object val = PRIMITIVE_TYPE_BINARY_NAMES.get(type.getSimpleSourceName());
       if (val == null) {
         throw new RuntimeException("Unexpected primitive type '"
-          + type.getQualifiedSourceName() + "'");
+            + type.getQualifiedSourceName() + "'");
       }
 
       return (String) val;
@@ -267,13 +299,14 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     JArrayType arrayType = type.isArray();
     if (arrayType != null) {
       return "["
-        + getSerializedTypeName(arrayType.getComponentType(), addTypeSignature);
+          + getSerializedTypeName(arrayType.getComponentType(),
+              addTypeSignature);
     }
 
     JParameterizedType parameterizedType = type.isParameterized();
     if (parameterizedType != null) {
       return getSerializedTypeName(parameterizedType.getRawType(),
-        addTypeSignature);
+          addTypeSignature);
     }
 
     JClassType classType = type.isClassOrInterface();
@@ -299,7 +332,7 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
       JClassType customSerializer = hasCustomFieldSerializer(classType);
       if (customSerializer != null) {
         serializedTypeName += "/"
-          + getSerializedInstanceReference(customSerializer);
+            + getSerializedInstanceReference(customSerializer);
       }
     }
 
@@ -309,11 +342,11 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
   public String getTypeSerializerQualifiedName(JClassType serviceIntf) {
     if (serviceIntf.isInterface() == null) {
       throw new IllegalArgumentException(serviceIntf.getQualifiedSourceName()
-        + " is not a service interface");
+          + " is not a service interface");
     }
 
     String[] name = Shared.synthesizeTopLevelClassName(serviceIntf,
-      TYPE_SERIALIZER_SUFFIX);
+        TYPE_SERIALIZER_SUFFIX);
     if (name[0].length() > 0) {
       return name[0] + "." + name[1];
     } else {
@@ -324,11 +357,11 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
   public String getTypeSerializerSimpleName(JClassType serviceIntf) {
     if (serviceIntf.isInterface() == null) {
       throw new IllegalArgumentException(serviceIntf.getQualifiedSourceName()
-        + " is not a service interface");
+          + " is not a service interface");
     }
 
     String[] name = Shared.synthesizeTopLevelClassName(serviceIntf,
-      TYPE_SERIALIZER_SUFFIX);
+        TYPE_SERIALIZER_SUFFIX);
     return name[1];
   }
 
@@ -355,7 +388,7 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     JType componentType = arrayType.getComponentType();
     JPrimitiveType primitiveType = componentType.isPrimitive();
     String qualifiedSerializerName = DEFAULT_BUILTIN_CUSTOM_SERIALIZER_PACKAGE_NAME
-      + ".";
+        + ".";
     if (primitiveType != null) {
       qualifiedSerializerName += primitiveType.getSimpleSourceName();
     } else {
@@ -453,33 +486,4 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
 
     return (JType[]) assignableTypes.toArray(new JType[assignableTypes.size()]);
   }
-
-  static {
-    PRIMITIVE_TYPE_BINARY_NAMES.put("boolean", "Z");
-    PRIMITIVE_TYPE_BINARY_NAMES.put("byte", "B");
-    PRIMITIVE_TYPE_BINARY_NAMES.put("char", "C");
-    PRIMITIVE_TYPE_BINARY_NAMES.put("double", "D");
-    PRIMITIVE_TYPE_BINARY_NAMES.put("float", "F");
-    PRIMITIVE_TYPE_BINARY_NAMES.put("int", "I");
-    PRIMITIVE_TYPE_BINARY_NAMES.put("long", "J");
-    PRIMITIVE_TYPE_BINARY_NAMES.put("short", "S");
-
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Boolean");
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Byte");
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Character");
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Double");
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Exception");
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Float");
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Integer");
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Long");
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Object");
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Short");
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.String");
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Throwable");
-  }
-
-  private Map assignableTypeCache;
-  private JType objectType;
-  private Map reachableTypes;
-  private TypeOracle typeOracle;
 }

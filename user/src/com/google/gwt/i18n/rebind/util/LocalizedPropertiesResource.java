@@ -37,7 +37,9 @@ class LocalizedPropertiesResource extends AbstractResource {
       LocalizedPropertiesResource bundle = new LocalizedPropertiesResource(m);
       return bundle;
     }
-  } 
+  }
+
+  private LocalizedProperties props;
 
   public LocalizedPropertiesResource(InputStream m) {
     props = new LocalizedProperties();
@@ -59,6 +61,4 @@ class LocalizedPropertiesResource extends AbstractResource {
   public String toString() {
     return getPath();
   }
-
-  private LocalizedProperties props;
 }

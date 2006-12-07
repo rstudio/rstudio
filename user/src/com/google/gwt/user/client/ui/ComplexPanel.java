@@ -44,22 +44,6 @@ public abstract class ComplexPanel extends Panel {
   }
 
   /**
-   * Inserts a new child widget into the panel.
-   * 
-   * @param w the child widget to be added
-   * @param container the element within which the child will be contained
-   * @param beforeIndex the index before which the widget will be added
-   */
-  protected void insert(Widget w, Element container, int beforeIndex) {
-    if (w.getParent() == this) {
-      return;
-    }
-
-    adopt(w, container);
-    children.insert(w, beforeIndex);
-  }
-
-  /**
    * Adds a new child widget to the panel.
    * 
    * @param w the child widget to be added
@@ -76,5 +60,21 @@ public abstract class ComplexPanel extends Panel {
    */
   protected WidgetCollection getChildren() {
     return children;
+  }
+
+  /**
+   * Inserts a new child widget into the panel.
+   * 
+   * @param w the child widget to be added
+   * @param container the element within which the child will be contained
+   * @param beforeIndex the index before which the widget will be added
+   */
+  protected void insert(Widget w, Element container, int beforeIndex) {
+    if (w.getParent() == this) {
+      return;
+    }
+
+    adopt(w, container);
+    children.insert(w, beforeIndex);
   }
 }

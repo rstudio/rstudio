@@ -38,40 +38,13 @@ class DocumentImpl extends NodeImpl implements Document {
   }
 
   /**
-   * This function delegates to the native method <code>getDocumentElement</code>
-   * in XMLParserImpl.
-   */
-  public Element getDocumentElement() {
-    return (Element) NodeImpl.build(XMLParserImpl.getDocumentElement(this
-      .getJsObject()));
-  }
-
-  /**
-   * This function delegates to the native method <code>getElementById</code>
-   * in XMLParserImpl.
-   */
-  public Element getElementById(String elementId) {
-    return (Element) NodeImpl.build(XMLParserImpl.getElementById(this
-      .getJsObject(), elementId));
-  }
-
-  /**
-   * This function delegates to the native method <code>getElementsByTagName</code>
-   * in XMLParserImpl.
-   */
-  public NodeList getElementsByTagName(String tagName) {
-    return new NodeListImpl(XMLParserImpl.getElementsByTagName(this
-      .getJsObject(), tagName));
-  }
-
-  /**
    * This function delegates to the native method
    * <code>createCDATASection</code> in XMLParserImpl.
    */
   public CDATASection createCDATASection(String data) {
     try {
       return (CDATASection) NodeImpl.build(XMLParserImpl.createCDATASection(
-        this.getJsObject(), data));
+          this.getJsObject(), data));
     } catch (JavaScriptException e) {
       throw new DOMNodeException(DOMException.INVALID_CHARACTER_ERR, e, this);
     }
@@ -83,8 +56,8 @@ class DocumentImpl extends NodeImpl implements Document {
    */
   public Comment createComment(String data) {
     try {
-      return (Comment) NodeImpl.build(XMLParserImpl.createComment(this
-        .getJsObject(), data));
+      return (Comment) NodeImpl.build(XMLParserImpl.createComment(
+          this.getJsObject(), data));
     } catch (JavaScriptException e) {
       throw new DOMNodeException(DOMException.INVALID_CHARACTER_ERR, e, this);
     }
@@ -96,8 +69,7 @@ class DocumentImpl extends NodeImpl implements Document {
    */
   public DocumentFragment createDocumentFragment() {
     try {
-      return (DocumentFragment) NodeImpl.build(XMLParserImpl
-        .createDocumentFragment(this.getJsObject()));
+      return (DocumentFragment) NodeImpl.build(XMLParserImpl.createDocumentFragment(this.getJsObject()));
     } catch (JavaScriptException e) {
       throw new DOMNodeException(DOMException.INVALID_CHARACTER_ERR, e, this);
     }
@@ -109,8 +81,8 @@ class DocumentImpl extends NodeImpl implements Document {
    */
   public Element createElement(String tagName) {
     try {
-      return (Element) NodeImpl.build(XMLParserImpl.createElement(this
-        .getJsObject(), tagName));
+      return (Element) NodeImpl.build(XMLParserImpl.createElement(
+          this.getJsObject(), tagName));
     } catch (JavaScriptException e) {
       throw new DOMNodeException(DOMException.INVALID_CHARACTER_ERR, e, this);
     }
@@ -123,8 +95,8 @@ class DocumentImpl extends NodeImpl implements Document {
   public ProcessingInstruction createProcessingInstruction(String target,
       String data) {
     try {
-      return (ProcessingInstruction) NodeImpl.build(XMLParserImpl
-        .createProcessingInstruction(this.getJsObject(), target, data));
+      return (ProcessingInstruction) NodeImpl.build(XMLParserImpl.createProcessingInstruction(
+          this.getJsObject(), target, data));
     } catch (JavaScriptException e) {
       throw new DOMNodeException(DOMException.INVALID_CHARACTER_ERR, e, this);
     }
@@ -136,11 +108,37 @@ class DocumentImpl extends NodeImpl implements Document {
    */
   public Text createTextNode(String data) {
     try {
-      return (Text) NodeImpl.build(XMLParserImpl.createTextNode(this
-        .getJsObject(), data));
+      return (Text) NodeImpl.build(XMLParserImpl.createTextNode(
+          this.getJsObject(), data));
     } catch (JavaScriptException e) {
       throw new DOMNodeException(DOMException.INVALID_CHARACTER_ERR, e, this);
     }
+  }
+
+  /**
+   * This function delegates to the native method
+   * <code>getDocumentElement</code> in XMLParserImpl.
+   */
+  public Element getDocumentElement() {
+    return (Element) NodeImpl.build(XMLParserImpl.getDocumentElement(this.getJsObject()));
+  }
+
+  /**
+   * This function delegates to the native method <code>getElementById</code>
+   * in XMLParserImpl.
+   */
+  public Element getElementById(String elementId) {
+    return (Element) NodeImpl.build(XMLParserImpl.getElementById(
+        this.getJsObject(), elementId));
+  }
+
+  /**
+   * This function delegates to the native method
+   * <code>getElementsByTagName</code> in XMLParserImpl.
+   */
+  public NodeList getElementsByTagName(String tagName) {
+    return new NodeListImpl(XMLParserImpl.getElementsByTagName(
+        this.getJsObject(), tagName));
   }
 
   /**
@@ -150,17 +148,17 @@ class DocumentImpl extends NodeImpl implements Document {
   public Node importNode(Node importedNode, boolean deep) {
     try {
       return NodeImpl.build(XMLParserImpl.importNode(this.getJsObject(),
-        ((DOMItem) importedNode).getJsObject(), deep));
+          ((DOMItem) importedNode).getJsObject(), deep));
     } catch (JavaScriptException e) {
       throw new DOMNodeException(DOMException.INVALID_STATE_ERR, e, this);
     }
   }
 
   /**
-   * This method returns the string representation of this 
+   * This method returns the string representation of this
    * <code>DocumentImpl</code>.
-   * @return the string representation of this 
-   * <code>DocumentImpl</code>.
+   * 
+   * @return the string representation of this <code>DocumentImpl</code>.
    * @see java.lang.Object#toString()
    */
   public String toString() {

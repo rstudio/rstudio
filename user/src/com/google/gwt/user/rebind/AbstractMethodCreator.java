@@ -26,6 +26,12 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
  */
 public abstract class AbstractMethodCreator extends AbstractSourceCreator {
   /**
+   * AbstractGeneratorClassCreator associated with the method currently in
+   * process.
+   */
+  protected AbstractGeneratorClassCreator currentCreator;
+
+  /**
    * Constructor for <code>AbstractMethodCreator</code>.
    * 
    * @param classCreator
@@ -76,10 +82,4 @@ public abstract class AbstractMethodCreator extends AbstractSourceCreator {
   protected void print(String printMe) {
     currentCreator.getWriter().print(printMe);
   }
-
-  /**
-   * AbstractGeneratorClassCreator associated with the method currently in
-   * process.
-   */
-  protected AbstractGeneratorClassCreator currentCreator;
 }

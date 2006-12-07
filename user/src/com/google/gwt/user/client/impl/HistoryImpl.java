@@ -23,11 +23,13 @@ import com.google.gwt.user.client.History;
  */
 public abstract class HistoryImpl {
 
-  public abstract boolean init();
-  public abstract String getToken();
-  public abstract void newItem(String historyToken);
-
   protected static void onHistoryChanged(String historyToken) {
     History.onHistoryChanged(historyToken);
   }
+
+  public abstract String getToken();
+
+  public abstract boolean init();
+
+  public abstract void newItem(String historyToken);
 }

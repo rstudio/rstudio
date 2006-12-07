@@ -24,6 +24,16 @@ import com.google.gwt.dev.shell.BrowserWidget;
 class RunStyleLocalHosted extends RunStyle {
 
   /**
+   * The containing shell.
+   */
+  protected final JUnitShell shell;
+
+  /**
+   * A browser window to host local tests.
+   */
+  private BrowserWidget browserWindow;
+
+  /**
    * @param shell the containing shell
    */
   RunStyleLocalHosted(JUnitShell shell) {
@@ -49,14 +59,4 @@ class RunStyleLocalHosted extends RunStyle {
     }
     browserWindow.go(url);
   }
-
-  /**
-   * The containing shell.
-   */
-  protected final JUnitShell shell;
-
-  /**
-   * A browser window to host local tests.
-   */
-  private BrowserWidget browserWindow;
 }

@@ -48,7 +48,7 @@ import com.google.gwt.user.client.History;
 public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents {
 
   private Element anchorElem;
-  private ClickListenerCollection fClickListeners;
+  private ClickListenerCollection clickListeners;
   private String targetHistoryToken;
 
   /**
@@ -92,10 +92,10 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents {
   }
 
   public void addClickListener(ClickListener listener) {
-    if (fClickListeners == null) {
-      fClickListeners = new ClickListenerCollection();
+    if (clickListeners == null) {
+      clickListeners = new ClickListenerCollection();
     }
-    fClickListeners.add(listener);
+    clickListeners.add(listener);
   }
 
   public String getHTML() {
@@ -118,8 +118,8 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents {
 
   public void onBrowserEvent(Event event) {
     if (DOM.eventGetType(event) == Event.ONCLICK) {
-      if (fClickListeners != null) {
-        fClickListeners.fireClick(this);
+      if (clickListeners != null) {
+        clickListeners.fireClick(this);
       }
       History.newItem(targetHistoryToken);
       DOM.eventPreventDefault(event);
@@ -127,8 +127,8 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents {
   }
 
   public void removeClickListener(ClickListener listener) {
-    if (fClickListeners != null) {
-      fClickListeners.remove(listener);
+    if (clickListeners != null) {
+      clickListeners.remove(listener);
     }
   }
 

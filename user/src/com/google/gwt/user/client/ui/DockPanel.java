@@ -108,7 +108,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
     if (direction == CENTER) {
       if (center != null) {
         throw new IllegalArgumentException(
-          "Only one CENTER widget may be added");
+            "Only one CENTER widget may be added");
       }
       center = widget;
     }
@@ -214,6 +214,30 @@ public class DockPanel extends CellPanel implements HasAlignment {
   }
 
   /**
+   * Used by {@link #realizeTable(Widget)} to ensure that super.add() is called
+   * at the right time for newly added widgets.
+   * 
+   * @param parent the parent element (always a TD)
+   * @param child the child element to be added
+   * @param beingAdded the widget that is currently being added to the
+   *          DockPanel, if any
+   */
+  private void appendAndMaybeAdopt(Element parent, Element child,
+      Widget beingAdded) {
+    if (beingAdded != null) {
+      // If beingAdded is specified, and the child element is beingAdded's
+      // element, then call super.add() on its behalf.
+      if (DOM.compare(child, beingAdded.getElement())) {
+        super.add(beingAdded, parent);
+        return;
+      }
+    }
+
+    // Normal case -- just append it.
+    DOM.appendChild(parent, child);
+  }
+
+  /**
    * Creates the table representing the DockPanel. This method uses the local
    * list of children in {@link #children}, because when add() is called, the
    * superclass' child list doesn't yet contain the new child.
@@ -298,29 +322,5 @@ public class DockPanel extends CellPanel implements HasAlignment {
       DOM.insertChild(row.tr, centerTd, row.center);
       appendAndMaybeAdopt(centerTd, center.getElement(), beingAdded);
     }
-  }
-
-  /**
-   * Used by {@link #realizeTable(Widget)} to ensure that super.add() is called
-   * at the right time for newly added widgets.
-   * 
-   * @param parent the parent element (always a TD)
-   * @param child the child element to be added
-   * @param beingAdded the widget that is currently being added to the
-   *          DockPanel, if any
-   */
-  private void appendAndMaybeAdopt(Element parent, Element child,
-      Widget beingAdded) {
-    if (beingAdded != null) {
-      // If beingAdded is specified, and the child element is beingAdded's
-      // element, then call super.add() on its behalf.
-      if (DOM.compare(child, beingAdded.getElement())) {
-        super.add(beingAdded, parent);
-        return;
-      }
-    }
-
-    // Normal case -- just append it.
-    DOM.appendChild(parent, child);
   }
 }

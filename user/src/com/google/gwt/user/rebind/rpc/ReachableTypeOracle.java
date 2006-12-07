@@ -24,8 +24,8 @@ import com.google.gwt.core.ext.typeinfo.JType;
  */
 public interface ReachableTypeOracle {
   /**
-   * Determine the set of types that are reachable from the method signatures
-   * in this interface and any interfaces that it implements.  This includes
+   * Determine the set of types that are reachable from the method signatures in
+   * this interface and any interfaces that it implements. This includes
    * parameter types, return types, and checked exception types.
    * 
    * <li>Interface
@@ -33,20 +33,31 @@ public interface ReachableTypeOracle {
    * <li>Types reachable from implemented interfaces
    * <li>Types reachable from non-static member methods
    * </ul>
-   *
+   * 
    * @param intf
    * @return reachable types
    */
   JType[] getTypesReachableFromInterface(JClassType intf);
-  
+
   /**
-   * Determine the set of types that are reachable from a given type.  The rules
+   * Determine the set of type that are reachable from this method signature.
+   * This includes the parameter types, return types, and checked exception
+   * types.
+   * 
+   * @param method
+   * @return reachable types
+   */
+  JType[] getTypesReachableFromMethod(JMethod method);
+
+  /**
+   * Determine the set of types that are reachable from a given type. The rules
    * used to examine the type are as follows:
-   *
+   * 
    * <ul>
    * <li>Primitive
    * <ul>
-   * <li>Only the primitive is reachable. TODO(mmendez): should the boxed version be included?
+   * <li>Only the primitive is reachable. TODO(mmendez): should the boxed
+   * version be included?
    * </ul>
    * <li>Interface
    * <ul>
@@ -55,7 +66,7 @@ public interface ReachableTypeOracle {
    * <li>Method
    * <ul>
    * <li>Method signatures are ignored by this method.
-   * </ul>                 
+   * </ul>
    * <li>Class
    * <ul>
    * <li>Types reachable from the field types
@@ -76,13 +87,4 @@ public interface ReachableTypeOracle {
    * @return reachable types
    */
   JType[] getTypesReachableFromType(JType cls);
-
-  /**
-   * Determine the set of type that are reachable from this method signature.  This
-   * includes the parameter types, return types, and checked exception types.
-   * 
-   * @param method
-   * @return reachable types
-   */
-  JType[] getTypesReachableFromMethod(JMethod method);
 }

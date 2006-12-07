@@ -24,14 +24,6 @@ package com.google.gwt.user.client;
 public final class Random {
 
   /**
-   * Not instantiable. Having different instances of this class would not be
-   * meaningful because no state is stored and the common browser implementation
-   * is shared.
-   */
-  private Random() {
-  }
-
-  /**
    * Returns true or false with roughly equal probability. The underlying
    * browser's random implementation is used.
    */
@@ -68,4 +60,12 @@ public final class Random {
     // "~~" forces the value to a 32 bit integer.
     return ~~(Math.floor(Math.random() * upperBound));
   }-*/;
+
+  /**
+   * Not instantiable. Having different instances of this class would not be
+   * meaningful because no state is stored and the common browser implementation
+   * is shared.
+   */
+  private Random() {
+  }
 }

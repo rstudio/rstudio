@@ -25,14 +25,14 @@ import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
  */
 class SimpleValueMethodCreator extends AbstractLocalizableMethodCreator {
 
-  private static class BadBooleanPropertyValue extends RuntimeException {
-  }
-
   /**
    * Helper class to delegate to the correct Number parser for this method.
    */
   public abstract static class AbstractValueCreator {
     abstract String getValue(String stringVal);
+  }
+
+  private static class BadBooleanPropertyValue extends RuntimeException {
   }
 
   static final AbstractValueCreator DOUBLE = new AbstractValueCreator() {
@@ -67,6 +67,8 @@ class SimpleValueMethodCreator extends AbstractLocalizableMethodCreator {
     }
   };
 
+  private AbstractValueCreator valueCreator;
+
   /**
    * Constructor for <code>SimpleValueMethodCreator</code>.
    * 
@@ -87,10 +89,11 @@ class SimpleValueMethodCreator extends AbstractLocalizableMethodCreator {
     } catch (NumberFormatException e) {
       throw error(logger, value + " could not be parsed as a number.");
     } catch (BadBooleanPropertyValue e) {
-      throw error(logger, "'" + value
-        + "' is not a valid boolean property value; must be 'true' or 'false'");
+      throw error(
+          logger,
+          "'"
+              + value
+              + "' is not a valid boolean property value; must be 'true' or 'false'");
     }
   }
-
-  private AbstractValueCreator valueCreator;
 }

@@ -46,6 +46,16 @@ public abstract class AbstractResource {
    */
   public static final int REPORT_KEYS_THRESHOLD = 30;
 
+  private final List alternativeParents = new ArrayList();
+
+  private Set keySet;
+
+  private Locale locale;
+
+  private String path;
+
+  private AbstractResource primaryParent;
+
   /**
    * @see java.util.ResourceBundle#getLocale()
    */
@@ -137,9 +147,9 @@ public abstract class AbstractResource {
         }
 
         throw new IllegalArgumentException(
-          key
-            + " is not a valid resource key as it does not occur in the default version of "
-            + this + " nor in any of " + alternativeParents);
+            key
+                + " is not a valid resource key as it does not occur in the default version of "
+                + this + " nor in any of " + alternativeParents);
       }
     }
   }
@@ -155,11 +165,10 @@ public abstract class AbstractResource {
       s = parent.getObjectAux(key, false);
     }
     if ((s == null) && (alternativeParents.size() > 0)
-      && (useAlternativeParents)) {
+        && (useAlternativeParents)) {
       for (int i = 0; (i < alternativeParents.size()) && (s == null); i++) {
         // Alternate parents may look at their alternative parents.
-        AbstractResource altParent = (AbstractResource) alternativeParents
-          .get(i);
+        AbstractResource altParent = (AbstractResource) alternativeParents.get(i);
         s = altParent.getObjectAux(key, true);
       }
     }
@@ -213,10 +222,4 @@ public abstract class AbstractResource {
       element.toVerboseStringAux(indent + 1, buf);
     }
   }
-
-  private final List alternativeParents = new ArrayList();
-  private Set keySet;
-  private Locale locale;
-  private String path;
-  private AbstractResource primaryParent;
 }

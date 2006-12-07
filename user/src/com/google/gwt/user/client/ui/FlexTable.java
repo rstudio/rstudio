@@ -92,6 +92,14 @@ public class FlexTable extends HTMLTable {
     }
   }
 
+  private static native void addCells(Element table, int row, int num)/*-{
+    var rowElem = table.rows[row];
+    for(var i = 0; i < num; i++){
+      var cell = $doc.createElement("td");
+      rowElem.appendChild(cell);  
+    }
+ }-*/;
+
   public FlexTable() {
     super();
     setCellFormatter(new FlexCellFormatter());
@@ -196,7 +204,7 @@ public class FlexTable extends HTMLTable {
     prepareRow(row);
     if (column < 0) {
       throw new IndexOutOfBoundsException(
-        "Cannot create a column with a negative index: " + column);
+          "Cannot create a column with a negative index: " + column);
     }
 
     // Ensure that the requested column exists.
@@ -216,7 +224,7 @@ public class FlexTable extends HTMLTable {
   protected void prepareRow(int row) {
     if (row < 0) {
       throw new IndexOutOfBoundsException(
-        "Cannot create a row with a negative index: " + row);
+          "Cannot create a row with a negative index: " + row);
     }
 
     // Ensure that the requested row exists.
@@ -225,12 +233,4 @@ public class FlexTable extends HTMLTable {
       insertRow(i);
     }
   }
-  
-  private static native void addCells(Element table, int row, int num)/*-{
-    var rowElem = table.rows[row];
-    for(var i = 0; i < num; i++){
-      var cell = $doc.createElement("td");
-      rowElem.appendChild(cell);  
-    }
- }-*/;
 }

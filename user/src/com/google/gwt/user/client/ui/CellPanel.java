@@ -37,14 +37,6 @@ public abstract class CellPanel extends ComplexPanel {
     setElement(table);
   }
 
-  protected Element getTable() {
-    return table;
-  }
-
-  protected Element getBody() {
-    return body;
-  }
-
   /**
    * Gets the amount of spacing between this panel's cells.
    * 
@@ -126,6 +118,14 @@ public abstract class CellPanel extends ComplexPanel {
   public void setSpacing(int spacing) {
     this.spacing = spacing;
     DOM.setIntAttribute(table, "cellSpacing", spacing);
+  }
+
+  protected Element getBody() {
+    return body;
+  }
+
+  protected Element getTable() {
+    return table;
   }
 
   private Element getWidgetTd(Widget w) {

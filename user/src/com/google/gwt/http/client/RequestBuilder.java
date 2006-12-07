@@ -46,8 +46,6 @@ import java.util.Set;
  * 
  */
 public class RequestBuilder {
-  private static final HTTPRequestImpl httpRequest = (HTTPRequestImpl) GWT.create(HTTPRequestImpl.class);
-
   /**
    * HTTP request method constants.
    */
@@ -72,6 +70,39 @@ public class RequestBuilder {
    * Specifies that the HTTP POST method should be used.
    */
   public static final Method POST = new Method("POST");
+
+  private static final HTTPRequestImpl httpRequest = (HTTPRequestImpl) GWT.create(HTTPRequestImpl.class);
+
+  /*
+   * Map of header name to value that will be added to the JavaScript
+   * XmlHttpRequest object before sending a request.
+   */
+  private Map headers;
+
+  /*
+   * HTTP method to use when opening an JavaScript XmlHttpRequest object
+   */
+  private String httpMethod;
+
+  /*
+   * Password to use when opening an JavaScript XmlHttpRequest object
+   */
+  private String password;
+
+  /*
+   * Timeout in milliseconds before the request timeouts and fails.
+   */
+  private int timeoutMillis;
+
+  /*
+   * URL to use when opening an JavaScript XmlHttpRequest object.
+   */
+  private String url;
+
+  /*
+   * User to use when opening an JavaScript XmlHttpRequest object
+   */
+  private String user;
 
   /**
    * Creates a builder using the parameters for configuration.
@@ -115,28 +146,6 @@ public class RequestBuilder {
   }
 
   /**
-   * Sets a request header with the given name and value. If a header with the
-   * specified name has already been set then the new value overwrites the
-   * current value.
-   * 
-   * @param header the name of the header
-   * @param value the value of the header
-   * 
-   * @throws NullPointerException if header or value are null
-   * @throws IllegalArgumentException if header or value are the empty string
-   */
-  public void setHeader(String header, String value) {
-    StringValidator.throwIfEmptyOrNull("header", header);
-    StringValidator.throwIfEmptyOrNull("value", value);
-
-    if (headers == null) {
-      headers = new HashMap();
-    }
-
-    headers.put(header, value);
-  }
-
-  /**
    * Sends an HTTP request based on the current builder configuration. If no
    * request headers have been set, the header "Content-Type" will be used with
    * a value of "text/plain; charset=utf-8".
@@ -167,6 +176,28 @@ public class RequestBuilder {
     }
 
     return request;
+  }
+
+  /**
+   * Sets a request header with the given name and value. If a header with the
+   * specified name has already been set then the new value overwrites the
+   * current value.
+   * 
+   * @param header the name of the header
+   * @param value the value of the header
+   * 
+   * @throws NullPointerException if header or value are null
+   * @throws IllegalArgumentException if header or value are the empty string
+   */
+  public void setHeader(String header, String value) {
+    StringValidator.throwIfEmptyOrNull("header", header);
+    StringValidator.throwIfEmptyOrNull("value", value);
+
+    if (headers == null) {
+      headers = new HashMap();
+    }
+
+    headers.put(header, value);
   }
 
   /**
@@ -244,35 +275,4 @@ public class RequestBuilder {
           "text/plain; charset=utf-8");
     }
   }
-
-  /*
-   * Map of header name to value that will be added to the JavaScript
-   * XmlHttpRequest object before sending a request.
-   */
-  private Map headers;
-
-  /*
-   * HTTP method to use when opening an JavaScript XmlHttpRequest object
-   */
-  private String httpMethod;
-
-  /*
-   * Password to use when opening an JavaScript XmlHttpRequest object
-   */
-  private String password;
-
-  /*
-   * Timeout in milliseconds before the request timeouts and fails.
-   */
-  private int timeoutMillis;
-
-  /*
-   * URL to use when opening an JavaScript XmlHttpRequest object.
-   */
-  private String url;
-
-  /*
-   * User to use when opening an JavaScript XmlHttpRequest object
-   */
-  private String user;
 }

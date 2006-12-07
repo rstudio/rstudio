@@ -23,6 +23,13 @@ import com.google.gwt.user.client.Element;
  */
 public class PopupImplIE6 extends PopupImpl {
 
+  public native void onHide(Element popup) /*-{
+    var frame = popup.__frame;
+    frame.parentElement.removeChild(frame);
+    popup.__frame = null;
+    frame.__popup = null;
+  }-*/;
+
   public native void onShow(Element popup) /*-{
     var frame = $doc.createElement('iframe');
     frame.scrolling = 'no';
@@ -36,12 +43,5 @@ public class PopupImplIE6 extends PopupImpl {
     frame.style.setExpression('width', 'this.__popup.offsetWidth');
     frame.style.setExpression('height', 'this.__popup.offsetHeight');
     popup.parentElement.insertBefore(frame, popup);
-  }-*/;
-
-  public native void onHide(Element popup) /*-{
-    var frame = popup.__frame;
-    frame.parentElement.removeChild(frame);
-    popup.__frame = null;
-    frame.__popup = null;
   }-*/;
 }

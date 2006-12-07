@@ -23,7 +23,7 @@ import com.google.gwt.xml.client.DOMException;
 public class DOMParseException extends DOMException {
 
   /**
-   * Maximum size of error message in summary. 
+   * Maximum size of error message in summary.
    */
   private static final int MAX_SUMMARY_LENGTH = 128;
 
@@ -31,19 +31,19 @@ public class DOMParseException extends DOMException {
     return text.substring(0, Math.min(text.length(), MAX_SUMMARY_LENGTH));
   }
 
+  private String contents;
+
   public DOMParseException() {
     super(DOMException.SYNTAX_ERR, "Parse error");
   }
 
   public DOMParseException(String contents) {
-    super(DOMException.SYNTAX_ERR, "Failed to parse: "
-      + summarize(contents));
+    super(DOMException.SYNTAX_ERR, "Failed to parse: " + summarize(contents));
     this.contents = contents;
   }
 
   public DOMParseException(String contents, Throwable e) {
-    super(DOMException.SYNTAX_ERR, "Failed to parse: "
-      + summarize(contents));
+    super(DOMException.SYNTAX_ERR, "Failed to parse: " + summarize(contents));
     initCause(e);
     this.contents = contents;
   }
@@ -51,6 +51,4 @@ public class DOMParseException extends DOMException {
   public String getContents() {
     return contents;
   }
-
-  private String contents;
 }

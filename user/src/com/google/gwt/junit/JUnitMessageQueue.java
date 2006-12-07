@@ -35,6 +35,18 @@ import java.util.Map;
 public class JUnitMessageQueue {
 
   /**
+   * Maps the name of a test class to the method that should be run. Access must
+   * be synchronized.
+   */
+  private final Map nameMap = new HashMap();
+
+  /**
+   * Maps the name of a test class to the last results to be reported. Access
+   * must be synchronized.
+   */
+  private final Map resultsMap = new HashMap();
+
+  /**
    * Only instantiatable within this package.
    */
   JUnitMessageQueue() {
@@ -135,16 +147,4 @@ public class JUnitMessageQueue {
       nameMap.notifyAll();
     }
   }
-
-  /**
-   * Maps the name of a test class to the method that should be run. Access must
-   * be synchronized.
-   */
-  private final Map nameMap = new HashMap();
-
-  /**
-   * Maps the name of a test class to the last results to be reported. Access
-   * must be synchronized.
-   */
-  private final Map resultsMap = new HashMap();
 }

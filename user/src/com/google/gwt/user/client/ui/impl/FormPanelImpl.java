@@ -23,6 +23,16 @@ import com.google.gwt.user.client.Element;
 public class FormPanelImpl {
 
   /**
+   * Gets the form element's encoding.
+   * 
+   * @param form the form whose encoding is to be retrieved
+   * @return the form's encoding type
+   */
+  public native String getEncoding(Element form) /*-{
+    return form.enctype;
+  }-*/;
+
+  /**
    * Gets the response text from the loaded iframe.
    * 
    * @param iframe the iframe from which the response text is to be extracted
@@ -39,28 +49,6 @@ public class FormPanelImpl {
     } catch (e) {
       return null;
     }
-  }-*/;
-
-  /**
-   * Sets the form element's encoding.
-   * 
-   * @param form the form whose encoding is to be set
-   * @param encoding the new encoding type
-   */
-  // To be safe, setting both.
-  public native void setEncoding(Element form, String encoding) /*-{
-    form.enctype = encoding;
-    form.encoding = encoding;
-  }-*/;
-
-  /**
-   * Gets the form element's encoding.
-   * 
-   * @param form the form whose encoding is to be retrieved
-   * @return the form's encoding type
-   */
-  public native String getEncoding(Element form) /*-{
-    return form.enctype;
   }-*/;
 
   /**
@@ -91,6 +79,18 @@ public class FormPanelImpl {
         iframe.__formAction = form.action;
       return listener.@com.google.gwt.user.client.ui.impl.FormPanelImplHost::onFormSubmit()();
     };
+  }-*/;
+
+  /**
+   * Sets the form element's encoding.
+   * 
+   * @param form the form whose encoding is to be set
+   * @param encoding the new encoding type
+   */
+  // To be safe, setting both.
+  public native void setEncoding(Element form, String encoding) /*-{
+    form.enctype = encoding;
+    form.encoding = encoding;
   }-*/;
 
   /**

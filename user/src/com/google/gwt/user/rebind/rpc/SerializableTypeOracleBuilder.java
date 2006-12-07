@@ -41,8 +41,8 @@ import java.util.Map.Entry;
 /**
  * This class is responsible for building an oracle can answer questions about
  * the set of serializable types that are reachable from an interface that
- * extends the {@link com.google.gwt.user.client.rpc.RemoteService RemoteService}
- * interface.
+ * extends the
+ * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService} interface.
  * 
  * <p>
  * A type is serializable if:
@@ -107,6 +107,34 @@ public class SerializableTypeOracleBuilder {
   private static final String UNSERIALIZABLE_FIELD = "Field ''{0}'' is not of a serializable type nor does that type have serializable subtypes";
   private static final String UNSERIALIZABLE_TYPE_ARG = "typeArg ''{0}'' is not of a serializable type, nor does that type have serializable subtypes";
 
+  /*
+   * A map of type to CustomSerializer entry that handles contains information
+   * about the custom serializer that handles it. If there is no entry then the
+   * type does not have a custom serializer.
+   */
+  private Map customSerializers;
+
+  private final JClassType objectType;
+
+  /*
+   * Set of types that are reachable from a service interface
+   */
+  private Map reachableTypes;
+
+  private final Map reasonsForUnserializability = new HashMap();
+
+  private final TreeLogger rootLogger;
+
+  /*
+   * Cache for the JClassType instance associated with the IsSerializable
+   * interface
+   */
+  private final JClassType serializationMarkerIntf;
+
+  private final JClassType stringType;
+
+  private final TypeOracle typeOracle;
+
   public SerializableTypeOracleBuilder(TreeLogger rootLogger,
       TypeOracle typeOracle) throws NotFoundException {
     assert (rootLogger != null);
@@ -129,7 +157,7 @@ public class SerializableTypeOracleBuilder {
     reachableTypes = new IdentityHashMap();
 
     TreeLogger logger = rootLogger.branch(TreeLogger.DEBUG,
-      "Analyzing serializability for " + types.length + " types", null);
+        "Analyzing serializability for " + types.length + " types", null);
 
     customSerializers = initializeCustomSerializers(types);
     if (customSerializers == null) {
@@ -183,18 +211,18 @@ public class SerializableTypeOracleBuilder {
     String qualifiedTypeName = type.getQualifiedSourceName();
 
     JClassType customSerializer = typeOracle.findType(qualifiedTypeName
-      + CUSTOM_FIELD_SERIALIZER_SUFFIX);
+        + CUSTOM_FIELD_SERIALIZER_SUFFIX);
     if (customSerializer != null) {
       return customSerializer;
     }
 
     // Try with the regular name
     String simpleSerializerName = qualifiedTypeName
-      + CUSTOM_FIELD_SERIALIZER_SUFFIX;
+        + CUSTOM_FIELD_SERIALIZER_SUFFIX;
     String[] packagePaths = getPackagePaths();
     for (int i = 0; i < packagePaths.length; ++i) {
       customSerializer = typeOracle.findType(packagePaths[i] + "."
-        + simpleSerializerName);
+          + simpleSerializerName);
       if (customSerializer != null) {
         return customSerializer;
       }
@@ -212,7 +240,7 @@ public class SerializableTypeOracleBuilder {
   }
 
   private String[] getPackagePaths() {
-    return new String[]{"com.google.gwt.user.client.rpc.core"};
+    return new String[] {"com.google.gwt.user.client.rpc.core"};
   }
 
   private String getReasonForUnserializability(JType type) {
@@ -226,7 +254,7 @@ public class SerializableTypeOracleBuilder {
         JType t1 = (JType) o1;
         JType t2 = (JType) o2;
         return t1.getParameterizedQualifiedSourceName().compareTo(
-          t2.getParameterizedQualifiedSourceName());
+            t2.getParameterizedQualifiedSourceName());
       }
     });
 
@@ -281,7 +309,7 @@ public class SerializableTypeOracleBuilder {
 
       if (!hasSerializableSubtypes(fieldType)) {
         addReasonForUnserializability(type, MessageFormat.format(
-          UNSERIALIZABLE_FIELD, new String[]{field.toString()}));
+            UNSERIALIZABLE_FIELD, new String[] {field.toString()}));
         return false;
       }
     }
@@ -360,7 +388,7 @@ public class SerializableTypeOracleBuilder {
     // Validate the list of potential custom field serializers
     //
     return CustomFieldSerializerValidator.validateCustomFieldSerializers(
-      rootLogger, typeOracle, serializers);
+        rootLogger, typeOracle, serializers);
   }
 
   private void initializeSerializability(JType[] types) {
@@ -376,7 +404,7 @@ public class SerializableTypeOracleBuilder {
       //
       CustomSerializerInfo customSerializerInfo = (CustomSerializerInfo) customSerializers.get(type);
       reachableTypes.put(type, new SerializableType(type, true,
-        customSerializerInfo));
+          customSerializerInfo));
     }
   }
 
@@ -470,10 +498,10 @@ public class SerializableTypeOracleBuilder {
     JType[] serializableTypes = getSortedArray(serializableTypesList);
     if (serializableTypes.length > 0) {
       TreeLogger localLogger = logger.branch(TreeLogger.DEBUG,
-        "The following types were determined to be serializable:", null);
+          "The following types were determined to be serializable:", null);
       for (int i = 0; i < serializableTypes.length; ++i) {
         localLogger.log(TreeLogger.DEBUG,
-          serializableTypes[i].getParameterizedQualifiedSourceName(), null);
+            serializableTypes[i].getParameterizedQualifiedSourceName(), null);
       }
     }
 
@@ -485,18 +513,18 @@ public class SerializableTypeOracleBuilder {
       // will WARN, which will upgrade this branch.
       //
       TreeLogger localLogger = logger.branch(TreeLogger.DEBUG,
-        "The following types were determined to be unserializable:", null);
+          "The following types were determined to be unserializable:", null);
 
       for (int i = 0; i < unserializableTypes.length; ++i) {
         JType unserializableType = unserializableTypes[i];
         String reason = getReasonForUnserializability(unserializableType);
         if (reason != null) {
           TreeLogger branch = localLogger.branch(TreeLogger.INFO,
-            unserializableType.getParameterizedQualifiedSourceName(), null);
+              unserializableType.getParameterizedQualifiedSourceName(), null);
           branch.log(TreeLogger.INFO, reason, null);
         } else {
           localLogger.log(TreeLogger.DEBUG,
-            unserializableType.getParameterizedQualifiedSourceName(), null);
+              unserializableType.getParameterizedQualifiedSourceName(), null);
         }
       }
     }
@@ -588,8 +616,8 @@ public class SerializableTypeOracleBuilder {
 
     if (!isSerializable(compType) && !hasSerializableSubtypes(compType)) {
       addReasonForUnserializability(isArray, MessageFormat.format(
-        NO_SERIALIZABLE_COMPONENT_TYPE,
-        new String[]{compType.getQualifiedSourceName()}));
+          NO_SERIALIZABLE_COMPONENT_TYPE,
+          new String[] {compType.getQualifiedSourceName()}));
       return true;
     }
 
@@ -657,8 +685,8 @@ public class SerializableTypeOracleBuilder {
         }
       } else {
         addReasonForUnserializability(type, MessageFormat.format(
-          SUPERCLASS_IS_NOT_SERIALIZABLE,
-          new String[]{superClass.getQualifiedSourceName()}));
+            SUPERCLASS_IS_NOT_SERIALIZABLE,
+            new String[] {superClass.getQualifiedSourceName()}));
       }
     } else {
       addReasonForUnserializability(type, NOT_SERIALIZABLE);
@@ -687,8 +715,8 @@ public class SerializableTypeOracleBuilder {
     JType rawType = parameterizedType.getRawType();
     if (!isSerializable(rawType)) {
       addReasonForUnserializability(parameterizedType, MessageFormat.format(
-        RAW_TYPE_IS_NOT_SERIALIZABLE,
-        new String[]{rawType.getQualifiedSourceName()}));
+          RAW_TYPE_IS_NOT_SERIALIZABLE,
+          new String[] {rawType.getQualifiedSourceName()}));
       return true;
     }
 
@@ -697,40 +725,12 @@ public class SerializableTypeOracleBuilder {
       JType type = typeArgs[index];
       if (!isSerializable(type) && !hasSerializableSubtypes(type)) {
         addReasonForUnserializability(parameterizedType, MessageFormat.format(
-          UNSERIALIZABLE_TYPE_ARG,
-          new String[]{type.getParameterizedQualifiedSourceName()}));
+            UNSERIALIZABLE_TYPE_ARG,
+            new String[] {type.getParameterizedQualifiedSourceName()}));
         return true;
       }
     }
 
     return false;
   }
-
-  /*
-   * A map of type to CustomSerializer entry that handles contains information
-   * about the custom serializer that handles it. If there is no entry then the
-   * type does not have a custom serializer.
-   */
-  private Map customSerializers;
-
-  private final JClassType objectType;
-
-  /*
-   * Set of types that are reachable from a service interface
-   */
-  private Map reachableTypes;
-
-  private final Map reasonsForUnserializability = new HashMap();
-
-  private final TreeLogger rootLogger;
-
-  /*
-   * Cache for the JClassType instance associated with the IsSerializable
-   * interface
-   */
-  private final JClassType serializationMarkerIntf;
-
-  private final JClassType stringType;
-
-  private final TypeOracle typeOracle;
 }

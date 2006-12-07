@@ -40,7 +40,8 @@ import java.util.Vector;
  * </ul>
  * 
  * <p>
- * <h3>Example</h3> {@example com.google.gwt.examples.MenuBarExample}
+ * <h3>Example</h3>
+ * {@example com.google.gwt.examples.MenuBarExample}
  * </p>
  */
 public class MenuBar extends Widget implements PopupListener {
@@ -253,6 +254,15 @@ public class MenuBar extends Widget implements PopupListener {
     this.autoOpen = autoOpen;
   }
 
+  protected void onDetach() {
+    // When the menu is detached, make sure to close all of its children.
+    if (popup != null) {
+      popup.hide();
+    }
+
+    super.onDetach();
+  }
+
   /*
    * Closes all parent menu popups.
    */
@@ -340,10 +350,10 @@ public class MenuBar extends Widget implements PopupListener {
 
     if (vertical) {
       popup.setPopupPosition(item.getAbsoluteLeft() + item.getOffsetWidth(),
-        item.getAbsoluteTop());
+          item.getAbsoluteTop());
     } else {
       popup.setPopupPosition(item.getAbsoluteLeft(), item.getAbsoluteTop()
-        + item.getOffsetHeight());
+          + item.getOffsetHeight());
     }
 
     shownChildMenu = item.getSubMenu();
@@ -354,20 +364,11 @@ public class MenuBar extends Widget implements PopupListener {
     popup.show();
   }
 
-  protected void onDetach() {
-    // When the menu is detached, make sure to close all of its children.
-    if (popup != null) {
-      popup.hide();
-    }
-
-    super.onDetach();
-  }
-
   void itemOver(MenuItem item) {
     if (item == null) {
       // Don't clear selection if the currently selected item's menu is showing.
       if ((selectedItem != null)
-        && (shownChildMenu == selectedItem.getSubMenu())) {
+          && (shownChildMenu == selectedItem.getSubMenu())) {
         return;
       }
     }

@@ -26,16 +26,16 @@ import java.util.Iterator;
  */
 public abstract class Panel extends Widget implements HasWidgets {
 
+  public void add(Widget w) {
+    throw new UnsupportedOperationException("This panel does not support no-arg add()");
+  }
+
   public void clear() {
     Iterator it = iterator();
     while (it.hasNext()) {
       it.next();
       it.remove();
     }
-  }
-
-  public void add(Widget w) {
-    throw new UnsupportedOperationException("This panel does not support no-arg add()");
   }
 
   /**

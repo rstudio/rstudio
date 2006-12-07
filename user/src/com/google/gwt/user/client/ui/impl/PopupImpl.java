@@ -19,8 +19,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
 /**
- * Implementation class used by
- * {@link com.google.gwt.user.client.ui.PopupPanel}.
+ * Implementation class used by {@link com.google.gwt.user.client.ui.PopupPanel}.
  */
 public class PopupImpl {
 
@@ -28,9 +27,9 @@ public class PopupImpl {
     return DOM.createDiv();
   }
 
-  public void onShow(Element popup) {
+  public void onHide(Element popup) {
   }
 
-  public void onHide(Element popup) {
+  public void onShow(Element popup) {
   }
 }

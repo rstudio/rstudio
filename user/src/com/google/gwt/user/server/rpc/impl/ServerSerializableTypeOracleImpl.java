@@ -53,6 +53,31 @@ public class ServerSerializableTypeOracleImpl implements
   private static final Map SERIALIZED_PRIMITIVE_TYPE_NAMES = new HashMap();
   private static final Set TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES = new HashSet();
 
+  static {
+
+    SERIALIZED_PRIMITIVE_TYPE_NAMES.put(boolean.class.getName(), "Z");
+    SERIALIZED_PRIMITIVE_TYPE_NAMES.put(byte.class.getName(), "B");
+    SERIALIZED_PRIMITIVE_TYPE_NAMES.put(char.class.getName(), "C");
+    SERIALIZED_PRIMITIVE_TYPE_NAMES.put(double.class.getName(), "D");
+    SERIALIZED_PRIMITIVE_TYPE_NAMES.put(float.class.getName(), "F");
+    SERIALIZED_PRIMITIVE_TYPE_NAMES.put(int.class.getName(), "I");
+    SERIALIZED_PRIMITIVE_TYPE_NAMES.put(long.class.getName(), "J");
+    SERIALIZED_PRIMITIVE_TYPE_NAMES.put(short.class.getName(), "S");
+
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Boolean.class);
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Byte.class);
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Character.class);
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Double.class);
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Exception.class);
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Float.class);
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Integer.class);
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Long.class);
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Object.class);
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Short.class);
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(String.class);
+    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Throwable.class);
+  }
+
   private static boolean containsCachedSerializerForClass(Class instanceType) {
     synchronized (classCustomSerializerCache) {
       return classCustomSerializerCache.containsKey(instanceType);
@@ -83,6 +108,8 @@ public class ServerSerializableTypeOracleImpl implements
       classCustomSerializerCache.put(instanceType, customFieldSerializer);
     }
   }
+
+  private String[] packagePaths;
 
   public ServerSerializableTypeOracleImpl(String[] packagePaths) {
     this.packagePaths = packagePaths;
@@ -285,31 +312,4 @@ public class ServerSerializableTypeOracleImpl implements
   private String[] getPackagePaths() {
     return packagePaths;
   }
-
-  static {
-
-    SERIALIZED_PRIMITIVE_TYPE_NAMES.put(boolean.class.getName(), "Z");
-    SERIALIZED_PRIMITIVE_TYPE_NAMES.put(byte.class.getName(), "B");
-    SERIALIZED_PRIMITIVE_TYPE_NAMES.put(char.class.getName(), "C");
-    SERIALIZED_PRIMITIVE_TYPE_NAMES.put(double.class.getName(), "D");
-    SERIALIZED_PRIMITIVE_TYPE_NAMES.put(float.class.getName(), "F");
-    SERIALIZED_PRIMITIVE_TYPE_NAMES.put(int.class.getName(), "I");
-    SERIALIZED_PRIMITIVE_TYPE_NAMES.put(long.class.getName(), "J");
-    SERIALIZED_PRIMITIVE_TYPE_NAMES.put(short.class.getName(), "S");
-
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Boolean.class);
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Byte.class);
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Character.class);
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Double.class);
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Exception.class);
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Float.class);
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Integer.class);
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Long.class);
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Object.class);
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Short.class);
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(String.class);
-    TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Throwable.class);
-  }
-
-  private String[] packagePaths;
 }

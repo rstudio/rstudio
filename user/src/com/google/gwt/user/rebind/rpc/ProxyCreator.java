@@ -53,14 +53,12 @@ class ProxyCreator {
   private static final String PROXY_SUFFIX = "_Proxy";
 
   private static final String SERIALIZATION_STREAM_READER_INSTANTIATION = ClientSerializationStreamReader.class.getName()
-    + " streamReader = new "
-    + ClientSerializationStreamReader.class.getName()
-    + "(SERIALIZER);";
+      + " streamReader = new "
+      + ClientSerializationStreamReader.class.getName() + "(SERIALIZER);";
 
   private static final String SERIALIZATION_STREAM_WRITER_INSTANTIATION = ClientSerializationStreamWriter.class.getName()
-    + " streamWriter = new "
-    + ClientSerializationStreamWriter.class.getName()
-    + "(SERIALIZER);";
+      + " streamWriter = new "
+      + ClientSerializationStreamWriter.class.getName() + "(SERIALIZER);";
 
   private static String createOverloadSignature(JMethod method) {
     StringBuffer sb = new StringBuffer();
@@ -90,6 +88,12 @@ class ProxyCreator {
     return type.getQualifiedSourceName();
   }
 
+  private boolean enforceTypeVersioning;
+
+  private SerializableTypeOracle serializableTypeOracle;
+
+  private JClassType serviceIntf;
+
   public ProxyCreator(JClassType serviceIntf,
       SerializableTypeOracle serializableTypeOracle) {
     this.serviceIntf = serviceIntf;
@@ -97,7 +101,7 @@ class ProxyCreator {
 
     if (serviceIntf.isInterface() == null) {
       throw new RuntimeException("Expecting a service interface, but "
-        + serviceIntf.getQualifiedSourceName() + " is not an interface");
+          + serviceIntf.getQualifiedSourceName() + " is not an interface");
     }
   }
 
@@ -108,8 +112,8 @@ class ProxyCreator {
     assert (isValidServiceInterface(logger, context));
 
     logger = logger.branch(TreeLogger.SPAM,
-      "Generating RPC Proxy for service interface '"
-        + serviceIntf.getQualifiedSourceName() + "'", null);
+        "Generating RPC Proxy for service interface '"
+            + serviceIntf.getQualifiedSourceName() + "'", null);
     SourceWriter srcWriter = getSourceWriter(logger, context);
     if (srcWriter == null) {
       return getProxyQualifiedName();
@@ -161,11 +165,11 @@ class ProxyCreator {
     for (i = 0; i < params.length; i++) {
       JParameter param = params[i];
       w.print((i > 0 ? ", " : "") + getJavaTypeName(param.getType()) + " "
-        + param.getName());
+          + param.getName());
     }
 
     w.println((i > 0 ? ", final " : "final ") + AsyncCallback.class.getName()
-      + " callback) {");
+        + " callback) {");
     w.indent();
     w.println("final " + SERIALIZATION_STREAM_READER_INSTANTIATION);
     w.println("final " + SERIALIZATION_STREAM_WRITER_INSTANTIATION);
@@ -181,14 +185,14 @@ class ProxyCreator {
     w.outdent();
     w.println("} catch (" + SerializationException.class.getName() + " e) {");
     w.indentln("callback.onFailure(new " + InvocationException.class.getName()
-      + "(e.getMessage()));");
+        + "(e.getMessage()));");
     w.indentln("return;");
     w.println("}");
 
     // Generate the async response handler.
     //
     w.println(ResponseTextHandler.class.getName() + " handler = new "
-      + ResponseTextHandler.class.getName() + "() {");
+        + ResponseTextHandler.class.getName() + "() {");
     w.indent();
     {
       w.println("public final void onCompletion(String encodedResponse) {");
@@ -273,7 +277,7 @@ class ProxyCreator {
           w.indent();
           {
             w.println("caught = new " + InvocationException.class.getName()
-              + "(encodedResponse);");
+                + "(encodedResponse);");
           }
           w.outdent();
           w.println("}");
@@ -310,8 +314,8 @@ class ProxyCreator {
     //
     w.println("if (!com.google.gwt.user.client.HTTPRequest.asyncPost(getServiceEntryPoint(), streamWriter.toString(), handler))");
     w.indentln("callback.onFailure(new "
-      + InvocationException.class.getName()
-      + "(\"Unable to initiate the asynchronous service invocation -- check the network connection\"));");
+        + InvocationException.class.getName()
+        + "(\"Unable to initiate the asynchronous service invocation -- check the network connection\"));");
     w.outdent();
 
     w.println("}");
@@ -327,7 +331,7 @@ class ProxyCreator {
     JParameter[] params = method.getParameters();
     w.println();
     w.print("private void __" + methodName + "("
-      + ClientSerializationStreamWriter.class.getName() + " streamWriter");
+        + ClientSerializationStreamWriter.class.getName() + " streamWriter");
     for (int i = 0; i < params.length; i++) {
       JParameter param = params[i];
       w.print(", " + getJavaTypeName(param.getType()) + " " + param.getName());
@@ -350,18 +354,18 @@ class ProxyCreator {
 
     if (!shouldEnforceTypeVersioning()) {
       w.println("streamWriter.addFlags("
-        + ClientSerializationStreamReader.class.getName()
-        + ".SERIALIZATION_STREAM_FLAGS_NO_TYPE_VERSIONING);");
+          + ClientSerializationStreamReader.class.getName()
+          + ".SERIALIZATION_STREAM_FLAGS_NO_TYPE_VERSIONING);");
     }
     w.println("streamWriter.writeString(\""
-      + serializableTypeOracle.getSerializedTypeName(serviceIntf) + "\");");
+        + serializableTypeOracle.getSerializedTypeName(serviceIntf) + "\");");
     w.println("streamWriter.writeString(\"" + methodName + "\");");
     w.println("streamWriter.writeInt(" + params.length + ");");
     for (int i = 0; i < params.length; ++i) {
       JParameter param = params[i];
       w.println("streamWriter.writeString(\""
-        + serializableTypeOracle.getSerializedTypeName(param.getType())
-        + "\");");
+          + serializableTypeOracle.getSerializedTypeName(param.getType())
+          + "\");");
     }
 
     // Encode the arguments.
@@ -373,7 +377,7 @@ class ProxyCreator {
 
     w.outdent();
     w.println("}");
-   }
+  }
 
   /**
    * Generate any fields required by the proxy.
@@ -381,7 +385,7 @@ class ProxyCreator {
   private void generateProxyFields(SourceWriter srcWriter) {
     String typeSerializerName = serializableTypeOracle.getTypeSerializerQualifiedName(serviceIntf);
     srcWriter.println("private static final " + typeSerializerName
-      + " SERIALIZER = new " + typeSerializerName + "();");
+        + " SERIALIZER = new " + typeSerializerName + "();");
   }
 
   /**
@@ -474,25 +478,25 @@ class ProxyCreator {
 
   private String getProxyQualifiedName() {
     String[] name = Shared.synthesizeTopLevelClassName(serviceIntf,
-      PROXY_SUFFIX);
+        PROXY_SUFFIX);
     return name[0].length() == 0 ? name[1] : name[0] + "." + name[1];
   }
 
   private String getProxySimpleName() {
     String[] name = Shared.synthesizeTopLevelClassName(serviceIntf,
-      PROXY_SUFFIX);
+        PROXY_SUFFIX);
     return name[1];
   }
 
   private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx) {
     PrintWriter printWriter = ctx.tryCreate(logger, getPackageName(),
-      getProxySimpleName());
+        getProxySimpleName());
     if (printWriter == null) {
       return null;
     }
 
     ClassSourceFileComposerFactory composerFactory = new ClassSourceFileComposerFactory(
-      getPackageName(), getProxySimpleName());
+        getPackageName(), getProxySimpleName());
 
     composerFactory.addImport(GWT.class.getName());
     String className = UncaughtExceptionHandler.class.getName();
@@ -509,7 +513,7 @@ class ProxyCreator {
     PropertyOracle propertyOracle = context.getPropertyOracle();
     try {
       String propVal = propertyOracle.getPropertyValue(logger,
-        Shared.RPC_PROP_ENFORCE_TYPE_VERSIONING);
+          Shared.RPC_PROP_ENFORCE_TYPE_VERSIONING);
       if (propVal != null && propVal.equals("false")) {
         enforceTypeVersioning = false;
       } else {
@@ -537,7 +541,7 @@ class ProxyCreator {
     assert (serializableTypeOracle != null);
 
     ServiceInterfaceValidator siv = new ServiceInterfaceValidator(logger, ctx,
-      serializableTypeOracle, serviceIntf);
+        serializableTypeOracle, serviceIntf);
 
     try {
       return siv.isValid();
@@ -551,8 +555,4 @@ class ProxyCreator {
   private boolean shouldEnforceTypeVersioning() {
     return enforceTypeVersioning;
   }
-
-  private boolean enforceTypeVersioning;
-  private SerializableTypeOracle serializableTypeOracle;
-  private JClassType serviceIntf;
 }

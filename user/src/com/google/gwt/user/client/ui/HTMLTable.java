@@ -179,7 +179,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
         VerticalAlignmentConstant align) {
       prepareCell(row, column);
       DOM.setStyleAttribute(getCellElement(bodyElem, row, column),
-        "verticalAlign", align.getVerticalAlignString());
+          "verticalAlign", align.getVerticalAlignString());
     }
 
     /**
@@ -226,32 +226,6 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     }
 
     /**
-     * Native method to get a cell's element.
-     * 
-     * @param table the table element
-     * @param row the row of the cell
-     * @param col the column of the cell
-     * @return the element
-     */
-
-    private native Element getCellElement(Element table, int row, int col) /*-{
-      var out = table.rows[row].cells[col];
-      return (out == null ? null : out);
-     }-*/;
-
-    /**
-     * Gets the TD element representing the specified cell unsafely (meaning
-     * that it doesn't ensure that the row and column are valid).
-     * 
-     * @param row the row of the cell to be retrieved
-     * @param column the column of the cell to be retrieved
-     * @return the column's TD element
-     */
-    private Element getRawElement(int row, int column) {
-      return getCellElement(bodyElem, row, column);
-    }
-
-    /**
      * Gets the element associated with a cell. If it does not exist and the
      * subtype allows creation of elements, creates it.
      * 
@@ -292,6 +266,32 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
       Element elem = ensureElement(row, column);
       DOM.setAttribute(elem, attrName, value);
     }
+
+    /**
+     * Native method to get a cell's element.
+     * 
+     * @param table the table element
+     * @param row the row of the cell
+     * @param col the column of the cell
+     * @return the element
+     */
+
+    private native Element getCellElement(Element table, int row, int col) /*-{
+      var out = table.rows[row].cells[col];
+      return (out == null ? null : out);
+     }-*/;
+
+    /**
+     * Gets the TD element representing the specified cell unsafely (meaning
+     * that it doesn't ensure that the row and column are valid).
+     * 
+     * @param row the row of the cell to be retrieved
+     * @param column the column of the cell to be retrieved
+     * @return the column's TD element
+     */
+    private Element getRawElement(int row, int column) {
+      return getCellElement(bodyElem, row, column);
+    }
   }
 
   /**
@@ -299,6 +299,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    * by the support cross-browser HTML support for column formatting.
    */
   public class ColumnFormatter {
+    protected Element columnGroup;
+
     /**
      * Adds a style to the specified column.
      * 
@@ -347,7 +349,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
       Element elem = ensureColumn(column);
       DOM.setAttribute(elem, "className", styleName);
     }
- 
+
     /**
      * Sets the width of the specified column.
      * 
@@ -378,8 +380,6 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
       }
       return DOM.getChild(columnGroup, col);
     }
-
-    protected Element columnGroup;
   }
 
   /**
@@ -469,8 +469,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * @throws IndexOutOfBoundsException
      */
     public void setVerticalAlign(int row, VerticalAlignmentConstant align) {
-      DOM.setStyleAttribute(ensureElement(row), "verticalAlign", align
-        .getVerticalAlignString());
+      DOM.setStyleAttribute(ensureElement(row), "verticalAlign",
+          align.getVerticalAlignString());
     }
 
     /**
@@ -518,6 +518,43 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
 
   /** Attribute name to store hash. */
   private static final String HASH_ATTR = "__hash";
+
+  /**
+   * Table's body.
+   */
+  private final Element bodyElem;
+
+  /**
+   * Current cell formatter.
+   */
+  private CellFormatter cellFormatter;
+
+  /**
+   * Column Formatter.
+   */
+  private ColumnFormatter columnFormatter;
+
+  /**
+   * Current row formatter.
+   */
+  private RowFormatter rowFormatter;
+
+  /**
+   * Table element.
+   */
+  private final Element tableElem;
+
+  /**
+   * Current table listener.
+   */
+  private TableListenerCollection tableListeners;
+
+  /**
+   * The element map, used to quickly look up the Widget in a particular cell.
+   * We have to use a map here, because hanging references to Widgets from
+   * Elements would cause memory leaks.
+   */
+  private final FastStringMap widgetMap = new FastStringMap();
 
   /**
    * Create a new empty HTML Table.
@@ -856,84 +893,6 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
   }
 
   /**
-   * Removes any widgets, text, and HTML within the cell. This method assumes
-   * that the requested cell already exists.
-   * 
-   * @param row the cell's row
-   * @param column the cell's column
-   * @param clearInnerHTML should the cell's inner html be cleared?
-   * @return element that has been cleaned
-   */
-  private Element cleanCell(int row, int column, boolean clearInnerHTML) {
-    // Clear whatever is in the cell.
-    Element td = getCellFormatter().getRawElement(row, column);
-    internalClearCell(td, clearInnerHTML);
-    return td;
-  }
-
-  /**
-   * Gets the key associated with the cell. This key is used within the widget
-   * map.
-   * 
-   * @param row the cell's row
-   * @param column the cell's column
-   * @return the associated key
-   */
-  private Object computeKey(int row, int column) {
-    Element e = cellFormatter.getRawElement(row, column);
-    Element child = DOM.getFirstChild(e);
-    if (child == null) {
-      return null;
-    } else {
-      return computeKeyForElement(child);
-    }
-  }
-
-  /**
-   * Computes the key to lookup the Widget.
-   * 
-   * @param widgetElement
-   * @return returns the key
-   */
-  private String computeKeyForElement(Element widgetElement) {
-    return DOM.getAttribute(widgetElement, HASH_ATTR);
-  }
-
-  /**
-   * Gets the Widget associated with the element.
-   * 
-   * @param widgetElement widget's element
-   * @return the widget
-   */
-  private Widget getWidget(Element widgetElement) {
-    Object key = computeKeyForElement(widgetElement);
-    if (key != null) {
-      Widget widget = (Widget) widgetMap.get(key);
-      assert (widget != null);
-      return widget;
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Removes the given widget from a cell. The widget must not be
-   * <code>null</code>.
-   * 
-   * @param widget widget to be removed
-   * @return always return true
-   */
-  private boolean removeWidget(Widget widget) {
-    // Clear the widget's parent.
-    disown(widget);
-
-    // Remove the widget from the map.
-    Object x = widgetMap.remove(computeKeyForElement(widget.getElement()));
-    assert (x != null);
-    return true;
-  }
-
-  /**
    * Bounds checks that the cell exists at the specified location.
    * 
    * @param row cell's row
@@ -944,12 +903,12 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     checkRowBounds(row);
     if (column < 0) {
       throw new IndexOutOfBoundsException("Column " + column
-        + " must be non-negative: " + column);
+          + " must be non-negative: " + column);
     }
     int cellSize = getCellCount(row);
     if (cellSize <= column) {
       throw new IndexOutOfBoundsException("Column index: " + column
-        + ", Column size: " + getCellCount(row));
+          + ", Column size: " + getCellCount(row));
     }
   }
 
@@ -963,7 +922,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     int rowSize = getRowCount();
     if ((row >= rowSize) || (row < 0)) {
       throw new IndexOutOfBoundsException("Row index: " + row + ", Row size: "
-        + rowSize);
+          + rowSize);
     }
   }
 
@@ -1145,9 +1104,9 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
   }
 
   /**
-   * Subclasses must implemea whaccessed. If the row already exists, this method must
-   * do nothing. Otherwise, a subclass must either ensure that the row exists or
-   * throw an {@link IndexOutOfBoundsException}.
+   * Subclasses must implemea whaccessed. If the row already exists, this method
+   * must do nothing. Otherwise, a subclass must either ensure that the row
+   * exists or throw an {@link IndexOutOfBoundsException}.
    * 
    * @param row the cell's row
    */
@@ -1213,39 +1172,80 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
   }
 
   /**
-   * Table's body.
+   * Removes any widgets, text, and HTML within the cell. This method assumes
+   * that the requested cell already exists.
+   * 
+   * @param row the cell's row
+   * @param column the cell's column
+   * @param clearInnerHTML should the cell's inner html be cleared?
+   * @return element that has been cleaned
    */
-  private final Element bodyElem;
+  private Element cleanCell(int row, int column, boolean clearInnerHTML) {
+    // Clear whatever is in the cell.
+    Element td = getCellFormatter().getRawElement(row, column);
+    internalClearCell(td, clearInnerHTML);
+    return td;
+  }
 
   /**
-   * Current cell formatter.
+   * Gets the key associated with the cell. This key is used within the widget
+   * map.
+   * 
+   * @param row the cell's row
+   * @param column the cell's column
+   * @return the associated key
    */
-  private CellFormatter cellFormatter;
+  private Object computeKey(int row, int column) {
+    Element e = cellFormatter.getRawElement(row, column);
+    Element child = DOM.getFirstChild(e);
+    if (child == null) {
+      return null;
+    } else {
+      return computeKeyForElement(child);
+    }
+  }
 
   /**
-   * Column Formatter.
+   * Computes the key to lookup the Widget.
+   * 
+   * @param widgetElement
+   * @return returns the key
    */
-  private ColumnFormatter columnFormatter;
+  private String computeKeyForElement(Element widgetElement) {
+    return DOM.getAttribute(widgetElement, HASH_ATTR);
+  }
 
   /**
-   * Current row formatter.
+   * Gets the Widget associated with the element.
+   * 
+   * @param widgetElement widget's element
+   * @return the widget
    */
-  private RowFormatter rowFormatter;
+  private Widget getWidget(Element widgetElement) {
+    Object key = computeKeyForElement(widgetElement);
+    if (key != null) {
+      Widget widget = (Widget) widgetMap.get(key);
+      assert (widget != null);
+      return widget;
+    } else {
+      return null;
+    }
+  }
 
   /**
-   * Table element.
+   * Removes the given widget from a cell. The widget must not be
+   * <code>null</code>.
+   * 
+   * @param widget widget to be removed
+   * @return always return true
    */
-  private final Element tableElem;
+  private boolean removeWidget(Widget widget) {
+    // Clear the widget's parent.
+    disown(widget);
 
-  /**
-   * Current table listener.
-   */
-  private TableListenerCollection tableListeners;
-
-  /**
-   * The element map, used to quickly look up the Widget in a particular cell.
-   * We have to use a map here, because hanging references to Widgets from
-   * Elements would cause memory leaks.
-   */
-  private final FastStringMap widgetMap = new FastStringMap();
+    // Remove the widget from the map.
+    Object x = widgetMap.remove(computeKeyForElement(widget.getElement()));
+    assert (x != null);
+    return true;
+  }
 }

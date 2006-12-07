@@ -232,6 +232,21 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
+   * Sets the text associated with the item at a given index.
+   * 
+   * @param index the index of the item to be set
+   * @param text the item's new text
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
+  public void setItemText(int index, String text) {
+    checkIndex(index);
+    if (text == null) {
+      throw new NullPointerException("Cannot set an option to have null text");
+    }
+    DOM.setOptionText(getElement(), text, index);
+  }
+
+  /**
    * Sets whether this list allows multiple selections.
    * 
    * @param multiple <code>true</code> to allow multiple selections
@@ -251,21 +266,6 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    */
   public void setSelectedIndex(int index) {
     DOM.setIntAttribute(getElement(), "selectedIndex", index);
-  }
-
-  /**
-   * Sets the text associated with the item at a given index.
-   * 
-   * @param index the index of the item to be set
-   * @param text the item's new text
-   * @throws IndexOutOfBoundsException if the index is out of range
-   */
-  public void setItemText(int index, String text) {
-    checkIndex(index);
-    if (text == null) {
-      throw new NullPointerException("Cannot set an option to have null text");
-    }
-    DOM.setOptionText(getElement(), text, index);
   }
 
   /**

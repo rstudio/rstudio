@@ -20,6 +20,8 @@ package com.google.gwt.json.client;
  */
 public class JSONNumber extends JSONValue {
 
+  private double value;
+
   /**
    * Creates a new JSONNumber from the double value.
    */
@@ -47,6 +49,4 @@ public class JSONNumber extends JSONValue {
   public String toString() {
     return new Double(value).toString();
   }
-
-  private double value;
 }

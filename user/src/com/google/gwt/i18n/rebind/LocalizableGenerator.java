@@ -43,8 +43,7 @@ public class LocalizableGenerator extends Generator {
 
   static final String CONSTANTS_NAME = Constants.class.getName();
 
-  static final String CONSTANTS_WITH_LOOKUP_NAME =
-      ConstantsWithLookup.class.getName();
+  static final String CONSTANTS_WITH_LOOKUP_NAME = ConstantsWithLookup.class.getName();
 
   /**
    * Represents default locale.
@@ -56,6 +55,8 @@ public class LocalizableGenerator extends Generator {
    * The token representing the locale property controlling Localization.
    */
   private static final String PROP_LOCALE = "locale";
+
+  private LocalizableLinkageCreator linkageCreator = new LocalizableLinkageCreator();
 
   /**
    * Generate an implementation for the given type.
@@ -87,7 +88,7 @@ public class LocalizableGenerator extends Generator {
         if (localeChunks.length > 0) {
           if (!localeChunks[0].equals(localeChunks[0].toLowerCase())) {
             logger.log(TreeLogger.ERROR, localeID
-              + "'s language code should be lower case", null);
+                + "'s language code should be lower case", null);
             throw new UnableToCompleteException();
           }
         }
@@ -98,11 +99,10 @@ public class LocalizableGenerator extends Generator {
           // and country.
           locale = new Locale(localeChunks[0], localeChunks[1]);
         } else if (localeChunks.length == 3) {
-          locale =
-              new Locale(localeChunks[0], localeChunks[1], localeChunks[2]);
+          locale = new Locale(localeChunks[0], localeChunks[1], localeChunks[2]);
         } else {
           logger.log(TreeLogger.ERROR, localeID
-            + " is not a correctly formatted locale", null);
+              + " is not a correctly formatted locale", null);
           throw new UnableToCompleteException();
         }
       }
@@ -120,15 +120,11 @@ public class LocalizableGenerator extends Generator {
     }
 
     // Link current locale and interface type to correct implementation class.
-    String generatedClass =
-        AbstractLocalizableImplCreator.generateConstantOrMessageClass(logger,
-          context, locale, targetClass);
+    String generatedClass = AbstractLocalizableImplCreator.generateConstantOrMessageClass(
+        logger, context, locale, targetClass);
     if (generatedClass != null) {
       return generatedClass;
     }
     return linkageCreator.linkWithImplClass(logger, targetClass, locale);
   }
-
-  private LocalizableLinkageCreator linkageCreator =
-      new LocalizableLinkageCreator();
 }

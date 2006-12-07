@@ -34,20 +34,20 @@ public class FormSubmitEvent extends EventObject {
   }
 
   /**
-   * Sets whether the form submit will be cancelled.
-   * 
-   * @param cancel <code>true</code> to cancel the submit
-   */
-  public void setCancelled(boolean cancel) {
-    this.cancel = cancel;
-  }
-
-  /**
    * Gets whether this form submit will be cancelled.
    * 
    * @return <code>true</code> if the form submit will be cancelled
    */
   public boolean isCancelled() {
     return cancel;
+  }
+
+  /**
+   * Sets whether the form submit will be cancelled.
+   * 
+   * @param cancel <code>true</code> to cancel the submit
+   */
+  public void setCancelled(boolean cancel) {
+    this.cancel = cancel;
   }
 }

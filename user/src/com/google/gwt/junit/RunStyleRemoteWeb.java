@@ -32,6 +32,21 @@ class RunStyleRemoteWeb extends RunStyle {
   private static final int PING_KEEPALIVE_MS = 2000;
 
   /**
+   * A remote browser manager.
+   */
+  private final BrowserManager browserManager;
+
+  /**
+   * A local reference to a remote browser process.
+   */
+  private int remoteToken = 0;
+
+  /**
+   * The containing shell.
+   */
+  private final JUnitShell shell;
+
+  /**
    * @param shell the containing shell
    */
   public RunStyleRemoteWeb(JUnitShell shell, BrowserManager browserManager) {
@@ -50,17 +65,16 @@ class RunStyleRemoteWeb extends RunStyle {
         throw new RuntimeException("Unable to determine my ip address", e);
       }
       String url = "http://" + localhost + ":" + shell.getPort() + "/"
-        + moduleName;
+          + moduleName;
       try {
         if (remoteToken > 0) {
           browserManager.killBrowser(remoteToken);
           remoteToken = 0;
         }
-        remoteToken = browserManager
-          .launchNewBrowser(url, INITIAL_KEEPALIVE_MS);
+        remoteToken = browserManager.launchNewBrowser(url, INITIAL_KEEPALIVE_MS);
       } catch (Exception e) {
         shell.getTopLogger().log(TreeLogger.ERROR,
-          "Error launching remote browser", e);
+            "Error launching remote browser", e);
         throw new UnableToCompleteException();
       }
     }
@@ -72,26 +86,11 @@ class RunStyleRemoteWeb extends RunStyle {
         browserManager.keepAlive(remoteToken, PING_KEEPALIVE_MS);
       } catch (Exception e) {
         shell.getTopLogger().log(TreeLogger.WARN,
-          "Unexpected exception keeping remote browser alive", e);
+            "Unexpected exception keeping remote browser alive", e);
         return true;
       }
     }
     return false;
   }
-
-  /**
-   * A remote browser manager.
-   */
-  private final BrowserManager browserManager;
-
-  /**
-   * A local reference to a remote browser process.
-   */
-  private int remoteToken = 0;
-
-  /**
-   * The containing shell.
-   */
-  private final JUnitShell shell;
 
 }

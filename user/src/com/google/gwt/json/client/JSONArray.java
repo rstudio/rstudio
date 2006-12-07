@@ -22,6 +22,10 @@ import com.google.gwt.core.client.JavaScriptObject;
  */
 public class JSONArray extends JSONValue {
 
+  final JavaScriptObject javascriptArray;
+
+  final JavaScriptObject wrappedArray;
+
   /**
    * Creates an empty JSONArray.
    */
@@ -145,7 +149,4 @@ public class JSONArray extends JSONValue {
     var x = this.@com.google.gwt.json.client.JSONArray::wrappedArray[index];
     return x !== undefined;
   }-*/;
-
-  final JavaScriptObject javascriptArray;
-  final JavaScriptObject wrappedArray;
 }

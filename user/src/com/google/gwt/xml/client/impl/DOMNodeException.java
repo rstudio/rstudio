@@ -22,6 +22,8 @@ import com.google.gwt.xml.client.DOMException;
  */
 public class DOMNodeException extends DOMException {
 
+  private DOMItem item;
+
   public DOMNodeException() {
     super((short) 0, "node exception");
   }
@@ -31,7 +33,7 @@ public class DOMNodeException extends DOMException {
     // allow any statements before the super, so
     // toString must be evaluated twice
     super(code, "Error during DOM manipulation of: "
-      + DOMParseException.summarize(item.toString()));
+        + DOMParseException.summarize(item.toString()));
     initCause(e);
     this.item = item;
   }
@@ -39,7 +41,5 @@ public class DOMNodeException extends DOMException {
   public DOMItem getItem() {
     return item;
   }
-
-  private DOMItem item;
 
 }

@@ -51,7 +51,15 @@ import java.io.PrintWriter;
  * fully qualified type names everywhere
  */
 public class FieldSerializerCreator {
-  
+
+  private JClassType serializableClass;
+
+  private JField[] serializableFields;
+
+  private SerializableTypeOracle serializationOracle;
+
+  private SourceWriter sourceWriter;
+
   /**
    * Constructs a field serializer for the class.
    * 
@@ -63,25 +71,24 @@ public class FieldSerializerCreator {
     assert (requestedClass != null);
     assert (requestedClass.isClass() != null);
 
-    fSerializationOracle = serializationOracle;
-    fSerializableClass = requestedClass;
+    this.serializationOracle = serializationOracle;
+    serializableClass = requestedClass;
   }
 
   public String realize(TreeLogger logger, GeneratorContext ctx) {
     assert (ctx != null);
-    assert (fSerializationOracle.isSerializable(getSerializableClass()));
+    assert (serializationOracle.isSerializable(getSerializableClass()));
 
     logger = logger.branch(TreeLogger.SPAM,
         "Generating a field serializer for type '"
-            + fSerializableClass.getQualifiedSourceName() + "'", null);
-    String fieldSerializerName = fSerializationOracle
-        .getFieldSerializerName(getSerializableClass());
+            + serializableClass.getQualifiedSourceName() + "'", null);
+    String fieldSerializerName = serializationOracle.getFieldSerializerName(getSerializableClass());
 
-    fSourceWriter = getSourceWriter(logger, ctx);
-    if (fSourceWriter == null) {
+    sourceWriter = getSourceWriter(logger, ctx);
+    if (sourceWriter == null) {
       return fieldSerializerName;
     }
-    assert fSourceWriter != null;
+    assert sourceWriter != null;
 
     writeFieldAccessors();
 
@@ -89,7 +96,7 @@ public class FieldSerializerCreator {
 
     writeDeserializeMethod();
 
-    fSourceWriter.commit(logger);
+    sourceWriter.commit(logger);
 
     return fieldSerializerName;
   }
@@ -113,8 +120,7 @@ public class FieldSerializerCreator {
    * @return name of the field serializer
    */
   private String getFieldSerializerClassName() {
-    String sourceName = fSerializationOracle
-        .getFieldSerializerName(getSerializableClass());
+    String sourceName = serializationOracle.getFieldSerializerName(getSerializableClass());
 
     int qualifiedSourceNameStart = sourceName.lastIndexOf('.');
     if (qualifiedSourceNameStart >= 0) {
@@ -135,7 +141,7 @@ public class FieldSerializerCreator {
   }
 
   private JClassType getSerializableClass() {
-    return fSerializableClass;
+    return serializableClass;
   }
 
   /**
@@ -144,13 +150,12 @@ public class FieldSerializerCreator {
    * @return array of serializable fields
    */
   private JField[] getSerializableFields() {
-    if (fSerializableFields != null) {
-      return fSerializableFields;
+    if (serializableFields != null) {
+      return serializableFields;
     }
 
-    fSerializableFields = fSerializationOracle
-        .applyFieldSerializationPolicy(getSerializableClass());
-    return fSerializableFields;
+    serializableFields = serializationOracle.applyFieldSerializationPolicy(getSerializableClass());
+    return serializableFields;
   }
 
   /**
@@ -166,8 +171,8 @@ public class FieldSerializerCreator {
 
     JClassType superClass = serializableClass.getSuperclass();
     if (superClass != null) {
-      SerializableTypeOracle serializationOracle = getSerializationOracle();
-      if (serializationOracle.isSerializable(superClass)) {
+      SerializableTypeOracle oracle = getSerializationOracle();
+      if (oracle.isSerializable(superClass)) {
         return superClass;
       }
 
@@ -178,7 +183,7 @@ public class FieldSerializerCreator {
   }
 
   private SerializableTypeOracle getSerializationOracle() {
-    return fSerializationOracle;
+    return serializationOracle;
   }
 
   private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx) {
@@ -203,44 +208,40 @@ public class FieldSerializerCreator {
    */
   private boolean needsAccessorMethods(JField field) {
     /*
-     * Field serializers are always emitted into the the same package as the 
-     * class that they serialize.  This enables the serializer class to 
-     * access all fields except those that are private.
+     * Field serializers are always emitted into the the same package as the
+     * class that they serialize. This enables the serializer class to access
+     * all fields except those that are private.
      * 
-     * Java Access Levels:
-     *   default - package
-     *   private - class only
-     *   protected - package and all subclasses
-     *   public - all
+     * Java Access Levels: default - package private - class only protected -
+     * package and all subclasses public - all
      */
     return field.isPrivate();
   }
 
   private void writeDeserializeMethod() {
-    fSourceWriter.print("public static void deserialize(");
-    fSourceWriter.print(SerializationStreamReader.class.getName());
-    fSourceWriter.print(" streamReader, ");
-    fSourceWriter.print(getSerializableClass().getQualifiedSourceName());
-    fSourceWriter.println(" instance) throws "
+    sourceWriter.print("public static void deserialize(");
+    sourceWriter.print(SerializationStreamReader.class.getName());
+    sourceWriter.print(" streamReader, ");
+    sourceWriter.print(getSerializableClass().getQualifiedSourceName());
+    sourceWriter.println(" instance) throws "
         + SerializationException.class.getName() + "{");
-    fSourceWriter.indent();
+    sourceWriter.indent();
 
     writeFieldDeserializationStatements();
 
-    JClassType serializableClass = getSerializableClass().isClass();
-    if (serializableClass != null) {
-      JClassType serializableSuperClass = getSerializableSuperclass(serializableClass);
+    JClassType jClass = getSerializableClass().isClass();
+    if (jClass != null) {
+      JClassType serializableSuperClass = getSerializableSuperclass(jClass);
       if (serializableSuperClass != null) {
-        String fieldSerializerName = fSerializationOracle
-            .getFieldSerializerName(serializableSuperClass);
-        fSourceWriter.print(fieldSerializerName);
-        fSourceWriter.println(".deserialize(streamReader, instance);");
+        String fieldSerializerName = serializationOracle.getFieldSerializerName(serializableSuperClass);
+        sourceWriter.print(fieldSerializerName);
+        sourceWriter.println(".deserialize(streamReader, instance);");
       }
     }
 
-    fSourceWriter.outdent();
-    fSourceWriter.println("}");
-    fSourceWriter.println();
+    sourceWriter.outdent();
+    sourceWriter.println("}");
+    sourceWriter.println();
   }
 
   /**
@@ -249,11 +250,11 @@ public class FieldSerializerCreator {
    * external class to access the field's value.
    */
   private void writeFieldAccessors() {
-    JField[] serializableFields = getSerializableFields();
-    int fieldCount = serializableFields.length;
+    JField[] jFields = getSerializableFields();
+    int fieldCount = jFields.length;
 
     for (int fieldIndex = 0; fieldIndex < fieldCount; ++fieldIndex) {
-      JField serializableField = serializableFields[fieldIndex];
+      JField serializableField = jFields[fieldIndex];
 
       if (!needsAccessorMethods(serializableField)) {
         continue;
@@ -268,28 +269,26 @@ public class FieldSerializerCreator {
     JType type = getSerializableClass();
     JArrayType isArray = type.isArray();
     if (isArray != null) {
-      fSourceWriter
-          .println("for (int itemIndex = 0; itemIndex < instance.length; ++itemIndex) {");
-      fSourceWriter.indent();
+      sourceWriter.println("for (int itemIndex = 0; itemIndex < instance.length; ++itemIndex) {");
+      sourceWriter.indent();
 
       JType componentType = isArray.getComponentType();
 
-      fSourceWriter.print("instance[itemIndex] = ");
+      sourceWriter.print("instance[itemIndex] = ");
       if (Shared.typeNeedsCast(componentType)) {
-        fSourceWriter
-            .print("(" + componentType.getQualifiedSourceName() + ") ");
+        sourceWriter.print("(" + componentType.getQualifiedSourceName() + ") ");
       }
       String readMethodName = "streamReader.read"
           + Shared.getCallSuffix(componentType);
-      fSourceWriter.println(readMethodName + "();");
-      fSourceWriter.outdent();
-      fSourceWriter.println("}");
+      sourceWriter.println(readMethodName + "();");
+      sourceWriter.outdent();
+      sourceWriter.println("}");
     } else {
-      JField[] serializableFields = getSerializableFields();
-      int fieldCount = serializableFields.length;
+      JField[] jFields = getSerializableFields();
+      int fieldCount = jFields.length;
 
       for (int fieldIndex = 0; fieldIndex < fieldCount; ++fieldIndex) {
-        JField serializableField = serializableFields[fieldIndex];
+        JField serializableField = jFields[fieldIndex];
         JType fieldType = serializableField.getType();
         boolean needsAccessor = needsAccessorMethods(serializableField);
 
@@ -301,22 +300,22 @@ public class FieldSerializerCreator {
         }
 
         if (needsAccessor) {
-          fSourceWriter.print("set");
-          fSourceWriter.print(Shared.capitalize(serializableField.getName()));
-          fSourceWriter.print("(instance, ");
-          fSourceWriter.print(streamReadExpression);
-          fSourceWriter.println(");");
+          sourceWriter.print("set");
+          sourceWriter.print(Shared.capitalize(serializableField.getName()));
+          sourceWriter.print("(instance, ");
+          sourceWriter.print(streamReadExpression);
+          sourceWriter.println(");");
         } else {
-          fSourceWriter.print("instance.");
-          fSourceWriter.print(serializableField.getName());
-          fSourceWriter.print(" = ");
-          fSourceWriter.print(streamReadExpression);
-          fSourceWriter.println(";");
+          sourceWriter.print("instance.");
+          sourceWriter.print(serializableField.getName());
+          sourceWriter.print(" = ");
+          sourceWriter.print(streamReadExpression);
+          sourceWriter.println(";");
         }
       }
     }
 
-    fSourceWriter.println();
+    sourceWriter.println();
   }
 
   /**
@@ -327,70 +326,69 @@ public class FieldSerializerCreator {
     String fieldTypeQualifiedSourceName = fieldType.getQualifiedSourceName();
     String fieldName = serializableField.getName();
 
-    fSourceWriter.print("private static native ");
-    fSourceWriter.print(fieldTypeQualifiedSourceName);
-    fSourceWriter.print(" get");
-    fSourceWriter.print(Shared.capitalize(fieldName));
-    fSourceWriter.print("(");
-    fSourceWriter.print(getSerializableClass().getQualifiedSourceName());
-    fSourceWriter.println(" instance) /*-{");
-    fSourceWriter.indent();
+    sourceWriter.print("private static native ");
+    sourceWriter.print(fieldTypeQualifiedSourceName);
+    sourceWriter.print(" get");
+    sourceWriter.print(Shared.capitalize(fieldName));
+    sourceWriter.print("(");
+    sourceWriter.print(getSerializableClass().getQualifiedSourceName());
+    sourceWriter.println(" instance) /*-{");
+    sourceWriter.indent();
 
-    fSourceWriter.print("return instance.@");
-    fSourceWriter.print(getBinaryTypeName(getSerializableClass()));
-    fSourceWriter.print("::");
-    fSourceWriter.print(fieldName);
-    fSourceWriter.println(";");
+    sourceWriter.print("return instance.@");
+    sourceWriter.print(getBinaryTypeName(getSerializableClass()));
+    sourceWriter.print("::");
+    sourceWriter.print(fieldName);
+    sourceWriter.println(";");
 
-    fSourceWriter.outdent();
-    fSourceWriter.println("}-*/;");
-    fSourceWriter.println();
+    sourceWriter.outdent();
+    sourceWriter.println("}-*/;");
+    sourceWriter.println();
   }
 
   private void writeFieldSerializationStatements() {
     JType type = getSerializableClass();
     JArrayType isArray = type.isArray();
     if (isArray != null) {
-      fSourceWriter.println("int itemCount = instance.length;");
-      fSourceWriter.println();
-      fSourceWriter.println("streamWriter.writeInt(itemCount);");
-      fSourceWriter.println();
-      fSourceWriter
-          .println("for (int itemIndex = 0; itemIndex < itemCount; ++itemIndex) {");
-      fSourceWriter.indent();
+      sourceWriter.println("int itemCount = instance.length;");
+      sourceWriter.println();
+      sourceWriter.println("streamWriter.writeInt(itemCount);");
+      sourceWriter.println();
+      sourceWriter.println("for (int itemIndex = 0; itemIndex < itemCount; ++itemIndex) {");
+      sourceWriter.indent();
       String writeMethodName = "write"
           + Shared.getCallSuffix(isArray.getComponentType());
-      fSourceWriter.print("streamWriter.");
-      fSourceWriter.print(writeMethodName);
-      fSourceWriter.println("(instance[itemIndex]);");
-      fSourceWriter.outdent();
-      fSourceWriter.println("}");
+      sourceWriter.print("streamWriter.");
+      sourceWriter.print(writeMethodName);
+      sourceWriter.println("(instance[itemIndex]);");
+      sourceWriter.outdent();
+      sourceWriter.println("}");
     } else {
-      JField[] serializableFields = getSerializableFields();
-      int fieldCount = serializableFields.length;
+      JField[] jFields = getSerializableFields();
+      int fieldCount = jFields.length;
 
       for (int fieldIndex = 0; fieldIndex < fieldCount; ++fieldIndex) {
-        JField serializableField = serializableFields[fieldIndex];
+        JField serializableField = jFields[fieldIndex];
         JType fieldType = serializableField.getType();
 
         String writeMethodName = "write" + Shared.getCallSuffix(fieldType);
-        fSourceWriter.print("streamWriter.");
-        fSourceWriter.print(writeMethodName);
-        fSourceWriter.print("(");
+        sourceWriter.print("streamWriter.");
+        sourceWriter.print(writeMethodName);
+        sourceWriter.print("(");
 
         if (needsAccessorMethods(serializableField)) {
-          fSourceWriter.print("get");
-          fSourceWriter.print(Shared.capitalize(serializableField.getName()));
-          fSourceWriter.println("(instance));");
+          sourceWriter.print("get");
+          sourceWriter.print(Shared.capitalize(serializableField.getName()));
+          sourceWriter.println("(instance));");
         } else {
-          fSourceWriter.print("instance.");
-          fSourceWriter.print(serializableField.getName());
-          fSourceWriter.println(");");
+          sourceWriter.print("instance.");
+          sourceWriter.print(serializableField.getName());
+          sourceWriter.println(");");
         }
       }
     }
 
-    fSourceWriter.println();
+    sourceWriter.println();
   }
 
   /**
@@ -399,61 +397,54 @@ public class FieldSerializerCreator {
   private void writeFieldSet(JField serializableField) {
     JType fieldType = serializableField.getType();
     String fieldTypeQualifiedSourceName = fieldType.getQualifiedSourceName();
-    String serializableClassQualifedName = getSerializableClass()
-        .getQualifiedSourceName();
+    String serializableClassQualifedName = getSerializableClass().getQualifiedSourceName();
     String fieldName = serializableField.getName();
 
-    fSourceWriter.print("private static native void ");
-    fSourceWriter.print(" set");
-    fSourceWriter.print(Shared.capitalize(fieldName));
-    fSourceWriter.print("(");
-    fSourceWriter.print(serializableClassQualifedName);
-    fSourceWriter.print(" instance, ");
-    fSourceWriter.print(fieldTypeQualifiedSourceName);
-    fSourceWriter.println(" value) /*-{");
-    fSourceWriter.indent();
+    sourceWriter.print("private static native void ");
+    sourceWriter.print(" set");
+    sourceWriter.print(Shared.capitalize(fieldName));
+    sourceWriter.print("(");
+    sourceWriter.print(serializableClassQualifedName);
+    sourceWriter.print(" instance, ");
+    sourceWriter.print(fieldTypeQualifiedSourceName);
+    sourceWriter.println(" value) /*-{");
+    sourceWriter.indent();
 
-    fSourceWriter.print("instance.@");
-    fSourceWriter.print(getBinaryTypeName(getSerializableClass()));
-    fSourceWriter.print("::");
-    fSourceWriter.print(fieldName);
-    fSourceWriter.println(" = value;");
+    sourceWriter.print("instance.@");
+    sourceWriter.print(getBinaryTypeName(getSerializableClass()));
+    sourceWriter.print("::");
+    sourceWriter.print(fieldName);
+    sourceWriter.println(" = value;");
 
-    fSourceWriter.outdent();
-    fSourceWriter.println("}-*/;");
-    fSourceWriter.println();
+    sourceWriter.outdent();
+    sourceWriter.println("}-*/;");
+    sourceWriter.println();
   }
 
   private void writeSerializeMethod() {
-    fSourceWriter.print("public static void serialize(");
-    fSourceWriter.print(SerializationStreamWriter.class.getName());
-    fSourceWriter.print(" streamWriter, ");
-    fSourceWriter.print(getSerializableClass().getQualifiedSourceName());
-    fSourceWriter.println(" instance) throws "
+    sourceWriter.print("public static void serialize(");
+    sourceWriter.print(SerializationStreamWriter.class.getName());
+    sourceWriter.print(" streamWriter, ");
+    sourceWriter.print(getSerializableClass().getQualifiedSourceName());
+    sourceWriter.println(" instance) throws "
         + SerializationException.class.getName() + " {");
-    fSourceWriter.indent();
+    sourceWriter.indent();
 
     writeFieldSerializationStatements();
 
-    JClassType serializableClass = getSerializableClass().isClass();
-    if (serializableClass != null) {
-      JClassType serializableSuperclass = getSerializableSuperclass(serializableClass);
+    JClassType jClass = getSerializableClass().isClass();
+    if (jClass != null) {
+      JClassType serializableSuperclass = getSerializableSuperclass(jClass);
       if (serializableSuperclass != null) {
-        String fieldSerializerName = fSerializationOracle
-            .getFieldSerializerName(serializableSuperclass);
-        fSourceWriter.print(fieldSerializerName);
-        fSourceWriter.println(".serialize(streamWriter, instance);");
+        String fieldSerializerName = serializationOracle.getFieldSerializerName(serializableSuperclass);
+        sourceWriter.print(fieldSerializerName);
+        sourceWriter.println(".serialize(streamWriter, instance);");
       }
     }
 
-    fSourceWriter.outdent();
-    fSourceWriter.println("}");
-    fSourceWriter.println();
+    sourceWriter.outdent();
+    sourceWriter.println("}");
+    sourceWriter.println();
   }
-
-  private JClassType fSerializableClass;
-  private JField[] fSerializableFields;
-  private SerializableTypeOracle fSerializationOracle;
-  private SourceWriter fSourceWriter;
 
 }

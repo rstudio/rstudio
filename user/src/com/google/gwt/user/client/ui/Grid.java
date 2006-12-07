@@ -33,6 +33,27 @@ import com.google.gwt.user.client.Element;
 public class Grid extends HTMLTable {
 
   /**
+   * Native method to add rows into a table with a given number of columns.
+   * 
+   * @param table the table element
+   * @param rows number of rows to add
+   * @param columns the number of columns per row
+   */
+  private static native void addRows(Element table, int rows, int columns) /*-{
+     var td = $doc.createElement("td");
+     td.innerHTML = "&nbsp;";
+     var row = $doc.createElement("tr");
+     for(var cellNum = 0; cellNum < columns; cellNum++) {
+       var cell = td.cloneNode(true);
+       row.appendChild(cell);
+     }
+     table.appendChild(row);
+     for(var rowNum = 1; rowNum < rows; rowNum++) {  
+       table.appendChild(row.cloneNode(true));
+     }
+   }-*/;
+
+  /**
    * Number of columns in the current grid.
    */
   protected int numColumns;
@@ -63,7 +84,7 @@ public class Grid extends HTMLTable {
     this();
     resize(rows, columns);
   }
-  
+
   /**
    * Replaces the contents of the specified cell with a single space.
    * 
@@ -126,7 +147,7 @@ public class Grid extends HTMLTable {
     }
     if (columns <= 0) {
       throw new IndexOutOfBoundsException("Cannot set number of columns to "
-        + columns);
+          + columns);
     }
 
     if (numColumns > columns) {
@@ -159,7 +180,7 @@ public class Grid extends HTMLTable {
     }
     if (rows <= 0) {
       throw new IndexOutOfBoundsException("Cannot set number of rows to "
-        + rows);
+          + rows);
     }
     if (numRows < rows) {
       addRows(getBodyElement(), rows - numRows, numColumns);
@@ -196,12 +217,12 @@ public class Grid extends HTMLTable {
     prepareRow(row);
     if (column < 0) {
       throw new IndexOutOfBoundsException(
-        "Cannot access a column with a negative index: " + column);
+          "Cannot access a column with a negative index: " + column);
     }
 
     if (column >= numColumns) {
       throw new IndexOutOfBoundsException("Column index: " + column
-        + ", Column size: " + numColumns);
+          + ", Column size: " + numColumns);
     }
   }
 
@@ -215,7 +236,7 @@ public class Grid extends HTMLTable {
     // Ensure that the indices are not negative.
     if (column < 0) {
       throw new IndexOutOfBoundsException(
-        "Cannot access a column with a negative index: " + column);
+          "Cannot access a column with a negative index: " + column);
     }
 
     /**
@@ -224,7 +245,7 @@ public class Grid extends HTMLTable {
      */
     if (column >= numColumns) {
       throw new IndexOutOfBoundsException("Column index: " + column
-        + ", Column size: " + numColumns);
+          + ", Column size: " + numColumns);
     }
   }
 
@@ -238,7 +259,7 @@ public class Grid extends HTMLTable {
     // Ensure that the indices are not negative.
     if (row < 0) {
       throw new IndexOutOfBoundsException(
-        "Cannot access a row with a negative index: " + row);
+          "Cannot access a row with a negative index: " + row);
     }
 
     /**
@@ -247,28 +268,7 @@ public class Grid extends HTMLTable {
      */
     if (row >= numRows) {
       throw new IndexOutOfBoundsException("Row index: " + row + ", Row size: "
-        + numRows);
+          + numRows);
     }
   }
-
-  /**
-   * Native method to add rows into a table with a given number of columns.
-   * 
-   * @param table the table element
-   * @param rows number of rows to add
-   * @param columns the number of columns per row
-   */
-  private static native void addRows(Element table, int rows, int columns) /*-{
-     var td = $doc.createElement("td");
-     td.innerHTML = "&nbsp;";
-     var row = $doc.createElement("tr");
-     for(var cellNum = 0; cellNum < columns; cellNum++) {
-       var cell = td.cloneNode(true);
-       row.appendChild(cell);
-     }
-     table.appendChild(row);
-     for(var rowNum = 1; rowNum < rows; rowNum++) {  
-       table.appendChild(row.cloneNode(true));
-     }
-   }-*/;
 }
