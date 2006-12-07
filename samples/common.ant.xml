@@ -1,0 +1,66 @@
+<project name="samples-common">
+	<property name="gwt.root" location="../.." />
+	<property name="project.tail" value="samples/${sample.root}" />
+	<import file="${gwt.root}/common.ant.xml" />
+
+	<property name="sample.package" value="${sample.root}" />
+	<property name="sample.main" value="${sample.module}" />
+
+	<property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
+	<!-- Platform shouldn't matter here, just picking one -->
+	<property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
+
+	<target name="compile" description="Compile all java files">
+		<mkdir dir="${javac.out}" />
+		<gwt.javac>
+			<classpath>
+				<pathelement location="${gwt.user.jar}" />
+				<pathelement location="${gwt.dev.jar}" />
+			</classpath>
+		</gwt.javac>
+	</target>
+
+	<target name="gwtc" description="Compile to JavaScript">
+		<mkdir dir="${project.build}/www" />
+		<java classname="com.google.gwt.dev.GWTCompiler" classpath="src:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
+			<classpath>
+				<pathelement location="${src}" />
+				<pathelement location="${gwt.user.jar}" />
+				<pathelement location="${gwt.dev.jar}" />
+			</classpath>
+			<arg value="-out" />
+			<arg file="${project.build}/www" />
+			<arg value="com.google.gwt.sample.${sample.package}.${sample.module}" />
+		</java>
+	</target>
+
+	<target name="antcall.script" description="Create launch scripts for a particular platform">
+		<mkdir dir="${project.build}/scripts/${platform}" />
+		<java classname="com.google.gwt.user.tools.ApplicationCreator" classpath="${gwt.user.jar}:${gwt.dev.jar}" failonerror="true">
+			<!-- Relative path is important! Paths will be relative in final distro -->
+			<sysproperty key="gwt.devjar" value="../../gwt-dev-${platform}.jar" />
+			<arg value="-ignore" />
+			<arg value="-out" />
+			<arg file="${project.build}/scripts/${platform}" />
+			<arg value="com.google.gwt.sample.${sample.package}.client.${sample.main}" />
+		</java>
+	</target>
+
+	<target name="scripts" description="Create launch scripts">
+		<antcall target="antcall.script">
+			<param name="platform" value="linux" />
+		</antcall>
+		<antcall target="antcall.script">
+			<param name="platform" value="windows" />
+		</antcall>
+		<antcall target="antcall.script">
+			<param name="platform" value="mac" />
+		</antcall>
+	</target>
+
+	<target name="build" depends="compile, gwtc, scripts" description="Build and package this project" />
+
+	<target name="checkstyle" description="Static analysis of source">
+		<gwt.checkstyle />
+	</target>
+</project>
