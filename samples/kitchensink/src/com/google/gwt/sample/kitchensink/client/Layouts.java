@@ -34,15 +34,16 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 public class Layouts extends Sink {
 
   public static SinkInfo init() {
-    return new SinkInfo("Layouts",
-      "This page demonstrates some of the basic GWT panels, each of which "
-        + "arranges its contained widgets differently.  "
-        + "These panels are designed to take advantage of the browser's "
-        + "built-in layout mechanics, which keeps the user interface snappy "
-        + "and helps your AJAX code play nicely with existing HTML.  "
-        + "On the other hand, if you need pixel-perfect control, "
-        + "you can tweak things at a low level using the "
-        + "<code>DOM</code> class.") {
+    return new SinkInfo(
+        "Layouts",
+        "This page demonstrates some of the basic GWT panels, each of which "
+            + "arranges its contained widgets differently.  "
+            + "These panels are designed to take advantage of the browser's "
+            + "built-in layout mechanics, which keeps the user interface snappy "
+            + "and helps your AJAX code play nicely with existing HTML.  "
+            + "On the other hand, if you need pixel-perfect control, "
+            + "you can tweak things at a low level using the "
+            + "<code>DOM</code> class.") {
       public Sink createInstance() {
         return new Layouts();
       }
@@ -51,15 +52,15 @@ public class Layouts extends Sink {
 
   public Layouts() {
     HTML contents = new HTML("This is a <code>ScrollPanel</code> contained at "
-      + "the center of a <code>DockPanel</code>.  "
-      + "By putting some fairly large contents "
-      + "in the middle and setting its size explicitly, it becomes a "
-      + "scrollable area within the page, but without requiring the use of "
-      + "an IFRAME."
-      + "Here's quite a bit more meaningless text that will serve primarily "
-      + "to make this thing scroll off the bottom of its visible area.  "
-      + "Otherwise, you might have to make it really, really small in order "
-      + "to see the nifty scroll bars!");
+        + "the center of a <code>DockPanel</code>.  "
+        + "By putting some fairly large contents "
+        + "in the middle and setting its size explicitly, it becomes a "
+        + "scrollable area within the page, but without requiring the use of "
+        + "an IFRAME."
+        + "Here's quite a bit more meaningless text that will serve primarily "
+        + "to make this thing scroll off the bottom of its visible area.  "
+        + "Otherwise, you might have to make it really, really small in order "
+        + "to see the nifty scroll bars!");
     ScrollPanel scroller = new ScrollPanel(contents);
     scroller.setStyleName("ks-layouts-Scroller");
 
@@ -67,10 +68,10 @@ public class Layouts extends Sink {
     dock.setHorizontalAlignment(DockPanel.ALIGN_CENTER);
     HTML north0 = new HTML("This is the <i>first</i> north component", true);
     HTML east = new HTML(
-      "<center>This<br>is<br>the<br>east<br>component</center>", true);
+        "<center>This<br>is<br>the<br>east<br>component</center>", true);
     HTML south = new HTML("This is the south component");
     HTML west = new HTML(
-      "<center>This<br>is<br>the<br>west<br>component</center>", true);
+        "<center>This<br>is<br>the<br>west<br>component</center>", true);
     HTML north1 = new HTML("This is the <b>second</b> north component", true);
     dock.add(north0, DockPanel.NORTH);
     dock.add(east, DockPanel.EAST);
@@ -83,12 +84,11 @@ public class Layouts extends Sink {
     for (int i = 0; i < 8; ++i) {
       flow.add(new CheckBox("Flow " + i));
     }
-    
+
     HorizontalPanel horz = new HorizontalPanel();
     horz.setVerticalAlignment(VerticalPanel.ALIGN_MIDDLE);
     horz.add(new Button("Button"));
-    horz
-      .add(new HTML("<center>This is a<br>very<br>tall thing</center>", true));
+    horz.add(new HTML("<center>This is a<br>very<br>tall thing</center>", true));
     horz.add(new Button("Button"));
 
     VerticalPanel vert = new VerticalPanel();
@@ -110,9 +110,10 @@ public class Layouts extends Sink {
 
     String id = HTMLPanel.createUniqueId();
     HTMLPanel html = new HTMLPanel(
-      "This is an <code>HTMLPanel</code>.  It allows you to add "
-        + "components inside existing HTML, like this:" + "<span id='" + id
-        + "'></span>" + "Notice how the menu just fits snugly in there?  Cute.");
+        "This is an <code>HTMLPanel</code>.  It allows you to add "
+            + "components inside existing HTML, like this: " + "<span id='" + id
+            + "'></span>"
+            + "Notice how the menu just fits snugly in there?  Cute.");
     DOM.setStyleAttribute(menu.getElement(), "display", "inline");
     html.add(menu, id);
 
