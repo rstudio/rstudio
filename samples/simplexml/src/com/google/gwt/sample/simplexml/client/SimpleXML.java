@@ -165,7 +165,6 @@ public class SimpleXML implements EntryPoint {
             Element elem = (Element) next;
             shippedByTable.setText(0, j, elem.getAttribute("title"));
             shippedByTable.setText(1, j, elem.getFirstChild().getNodeValue());
-
           }
           table.setWidget(rowPos, columnPos++, shippedByTable);
         }
