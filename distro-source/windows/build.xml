@@ -1,0 +1,24 @@
+<project name="dist-windows" default="all" basedir=".">
+	<property name="dist.platform" value="windows" />
+	<import file="../common.ant.xml" />
+	<property name="project.dist" location="${gwt.build.dist}/${project.distname}.zip" />
+
+	<target name="build.platform" description="Copies platform-specific items into the staging area">
+		<copy todir="${project.staging}">
+			<fileset dir="${gwt.tools.lib}/eclipse">
+				<include name="swt-*win32-3235.dll" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="package" depends="build" description="Packages the distro staging area">
+		<mkdir dir="${gwt.build.dist}" />
+		<zip destfile="${project.dist}">
+			<fileset dir="${gwt.build.staging}">
+				<include name="${project.distname}/**"/>
+			</fileset>
+		</zip>
+	</target>
+
+	<target name="all" depends="package" description="Builds and packages this project" />
+</project>

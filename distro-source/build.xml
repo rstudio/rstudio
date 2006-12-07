@@ -1,0 +1,25 @@
+<project name="dist" default="all" basedir=".">
+	<property name="gwt.root" location=".." />
+	<property name="project.tail" value="distro-source" />
+	<import file="${gwt.root}/common.ant.xml" />
+
+	<target name="linux" description="Builds dist/linux">
+		<ant dir="linux" inheritall="false"/>
+	</target>
+	
+	<target name="windows" description="Builds dist/linux">
+		<ant dir="windows" inheritall="false"/>
+	</target>
+
+	<target name="mac" description="Builds dist/linux">
+		<ant dir="mac" inheritall="false"/>
+	</target>
+
+	<target name="clean" description="Cleans this project's intermediate and output files">
+		<delete dir="${gwt.build.dist}" failonerror="false" />
+		<delete dir="${gwt.build.staging}" failonerror="false" />
+	</target>
+
+	<target name="all" depends="linux,windows,mac" description="Builds all platforms" />
+
+</project>
