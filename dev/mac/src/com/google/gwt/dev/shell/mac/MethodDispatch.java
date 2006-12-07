@@ -28,6 +28,12 @@ import java.lang.reflect.Modifier;
  */
 class MethodDispatch implements DispatchMethod {
 
+  private final CompilingClassLoader classLoader;
+
+  private final Method method;
+
+  private final int scriptObject;
+
   public MethodDispatch(CompilingClassLoader classLoader, Method method,
       int scriptObject) {
     this.scriptObject = scriptObject;
@@ -82,8 +88,4 @@ class MethodDispatch implements DispatchMethod {
       LowLevelSaf.popExecState(execState);
     }
   }
-
-  private final CompilingClassLoader classLoader;
-  private final Method method;
-  private final int scriptObject;
 }

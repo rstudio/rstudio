@@ -31,7 +31,6 @@ import org.eclipse.swt.widgets.Shell;
  * Represents an individual browser window and all of its controls.
  */
 public class BrowserWidgetSaf extends BrowserWidget {
-  private static final int REDRAW_PERIOD = 250;
   private class ExternalObject implements DispatchObject {
 
     public int getField(String name) {
@@ -75,7 +74,6 @@ public class BrowserWidgetSaf extends BrowserWidget {
     public void setField(String name, int value) {
     }
   }
-
   private static final class GwtOnLoad implements DispatchMethod {
 
     public int invoke(int execState, int jsthis, int[] jsargs) {
@@ -114,6 +112,12 @@ public class BrowserWidgetSaf extends BrowserWidget {
     }
   }
 
+  private static final int REDRAW_PERIOD = 250;
+
+  static {
+    LowLevelSaf.init();
+  }
+
   public BrowserWidgetSaf(Shell shell, BrowserWidgetHost host) {
     super(shell, host);
 
@@ -138,11 +142,11 @@ public class BrowserWidgetSaf extends BrowserWidget {
       }
 
     });
-    
+
     /*
-     * HACK (knorton) - SWT wrapper on WebKit seems to cause unreliable
-     * repaints when the DOM changes inside of WebView. To compensate for this,
-     * every quarter second, we tell WebView to repaint itself fully.
+     * HACK (knorton) - SWT wrapper on WebKit seems to cause unreliable repaints
+     * when the DOM changes inside of WebView. To compensate for this, every
+     * quarter second, we tell WebView to repaint itself fully.
      */
     getDisplay().timerExec(REDRAW_PERIOD, new Runnable() {
       public void run() {
@@ -155,11 +159,7 @@ public class BrowserWidgetSaf extends BrowserWidget {
         // Reschedule this object to run again
         getDisplay().timerExec(REDRAW_PERIOD, this);
       }
-    }); 
-  }
-
-  static {
-    LowLevelSaf.init();
+    });
   }
 
 }

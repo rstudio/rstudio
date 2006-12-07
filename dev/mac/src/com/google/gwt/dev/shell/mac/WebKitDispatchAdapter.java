@@ -33,18 +33,11 @@ import java.lang.reflect.Method;
  */
 class WebKitDispatchAdapter implements DispatchObject {
 
-  /**
-   * This constructor initializes a dispatcher, around a particular instance.
-   * 
-   * @param cl this class's classLoader
-   * @param aScriptObject the execution iframe's window
-   * @param target the object being wrapped as an IDispatch
-   */
-  WebKitDispatchAdapter(CompilingClassLoader cl, int scriptObject, Object target) {
-    javaDispatch = new JavaDispatchImpl(cl, target);
-    this.classLoader = cl;
-    this.scriptObject = scriptObject;
-  }
+  private final CompilingClassLoader classLoader;
+
+  private final JavaDispatch javaDispatch;
+
+  private final int scriptObject;
 
   /**
    * This constructor initializes as the static dispatcher, which handles only
@@ -55,6 +48,19 @@ class WebKitDispatchAdapter implements DispatchObject {
    */
   WebKitDispatchAdapter(CompilingClassLoader cl, int scriptObject) {
     javaDispatch = new JavaDispatchImpl(cl);
+    this.classLoader = cl;
+    this.scriptObject = scriptObject;
+  }
+
+  /**
+   * This constructor initializes a dispatcher, around a particular instance.
+   * 
+   * @param cl this class's classLoader
+   * @param aScriptObject the execution iframe's window
+   * @param target the object being wrapped as an IDispatch
+   */
+  WebKitDispatchAdapter(CompilingClassLoader cl, int scriptObject, Object target) {
+    javaDispatch = new JavaDispatchImpl(cl, target);
     this.classLoader = cl;
     this.scriptObject = scriptObject;
   }
@@ -97,8 +103,4 @@ class WebKitDispatchAdapter implements DispatchObject {
     Object val = SwtWebKitGlue.convertJSValToObject(field.getType(), value);
     javaDispatch.setFieldValue(dispId, val);
   }
-
-  private final CompilingClassLoader classLoader;
-  private final JavaDispatch javaDispatch;
-  private final int scriptObject;
 }

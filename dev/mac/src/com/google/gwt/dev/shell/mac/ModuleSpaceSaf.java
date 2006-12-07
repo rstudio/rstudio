@@ -24,6 +24,10 @@ import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchObject;
  */
 public class ModuleSpaceSaf extends ModuleSpace {
 
+  private DispatchObject staticDispatch;
+
+  private final int window;
+
   /**
    * Constructs a browser interface for use with a Mozilla global window object.
    */
@@ -32,7 +36,7 @@ public class ModuleSpaceSaf extends ModuleSpace {
 
     // Hang on to the global execution state.
     //
-    this.fWindow = scriptGlobalObject;
+    this.window = scriptGlobalObject;
     LowLevelSaf.gcLock(scriptGlobalObject);
   }
 
@@ -42,12 +46,12 @@ public class ModuleSpaceSaf extends ModuleSpace {
     // a new top-level function.
     //
     String newScript = createNativeMethodInjector(jsniSignature, paramNames, js);
-    LowLevelSaf.executeScriptWithInfo(LowLevelSaf.getGlobalExecState(fWindow),
+    LowLevelSaf.executeScriptWithInfo(LowLevelSaf.getGlobalExecState(window),
         newScript, file, line);
   }
 
   public void dispose() {
-    LowLevelSaf.gcUnlock(fWindow);
+    LowLevelSaf.gcUnlock(window);
     super.dispose();
   }
 
@@ -172,20 +176,19 @@ public class ModuleSpaceSaf extends ModuleSpace {
   }
 
   protected void initializeStaticDispatcher() {
-    fStaticDispatch = new WebKitDispatchAdapter(getIsolatedClassLoader(),
-        fWindow);
+    staticDispatch = new WebKitDispatchAdapter(getIsolatedClassLoader(), window);
 
     // Define the static dispatcher for use by JavaScript.
     //
     createNative("initializeStaticDispatcher", 0, "__defineStatic",
         new String[] {"__arg0"}, "window.__static = __arg0;");
     invokeNativeVoid("__defineStatic", null, new Class[] {Object.class},
-        new Object[] {fStaticDispatch});
+        new Object[] {staticDispatch});
   }
 
   int wrapObjectAsJSObject(Object o) {
-    return SwtWebKitGlue.wrapObjectAsJSObject(getIsolatedClassLoader(),
-        fWindow, o);
+    return SwtWebKitGlue.wrapObjectAsJSObject(getIsolatedClassLoader(), window,
+        o);
   }
 
   /**
@@ -212,7 +215,7 @@ public class ModuleSpaceSaf extends ModuleSpace {
           getIsolatedClassLoader(), types[i], args[i]);
     }
 
-    int result = LowLevelSaf.invoke(curExecState, fWindow, name, jsthis, argv);
+    int result = LowLevelSaf.invoke(curExecState, window, name, jsthis, argv);
     if (!isExceptionActive()) {
       return result;
     }
@@ -226,9 +229,5 @@ public class ModuleSpaceSaf extends ModuleSpace {
     thrown.fillInStackTrace();
     throw thrown;
   }
-
-  private DispatchObject fStaticDispatch;
-
-  private final int fWindow;
 
 }

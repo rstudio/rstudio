@@ -24,14 +24,18 @@ class HandleSaf extends Handle {
     new HandleSaf();
   }
 
+  public static Object createHandle(Class type, int ptr) {
+    return Handle.createHandle(type, ptr);
+  }
+
+  public static int getJSObjectFromHandle(Object o) {
+    return getPtrFromHandle(o);
+  }
+
   /**
    * Not instantiable.
    */
   private HandleSaf() {
-  }
-
-  public static Object createHandle(Class type, int ptr) {
-    return Handle.createHandle(type, ptr);
   }
 
   protected void lockPtr(int ptr) {
@@ -40,10 +44,6 @@ class HandleSaf extends Handle {
 
   protected void unlockPtr(int ptr) {
     LowLevelSaf.gcUnlock(ptr);
-  }
-
-  public static int getJSObjectFromHandle(Object o) {
-    return getPtrFromHandle(o);
   }
 
 }

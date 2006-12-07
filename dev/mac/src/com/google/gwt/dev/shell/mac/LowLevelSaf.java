@@ -28,16 +28,14 @@ import java.util.Stack;
 public class LowLevelSaf {
 
   /**
-   * Provides interface for methods to be exposed
-   * on javascript side. 
+   * Provides interface for methods to be exposed on javascript side.
    */
   public interface DispatchMethod {
     int invoke(int execState, int jsthis, int[] jsargs);
   }
 
   /**
-   * Provides interface for objects to be exposed
-   * on javascript side.
+   * Provides interface for objects to be exposed on javascript side.
    */
   public interface DispatchObject {
     int getField(String name);
@@ -48,6 +46,8 @@ public class LowLevelSaf {
   }
 
   private static boolean sInitialized = false;
+
+  private static ThreadLocal stateStack = new ThreadLocal();
 
   public static boolean coerceToBoolean(int execState, int jsval) {
     boolean[] rval = new boolean[1];
@@ -184,12 +184,30 @@ public class LowLevelSaf {
     _gcUnlock(jsval);
   }
 
+  public static int getExecState() {
+    Stack stack = (Stack) stateStack.get();
+    if (stack == null) {
+      throw new RuntimeException("No thread local execState stack!");
+    }
+    Integer top = (Integer) stack.peek();
+    return top.intValue();
+  }
+
   public static int getGlobalExecState(int scriptObject) {
     int[] rval = new int[1];
     if (!_getGlobalExecState(scriptObject, rval)) {
       throw new RuntimeException("Failed to getGlobalExecState.");
     }
     return rval[0];
+  }
+
+  public static String[] getProcessArgs() {
+    int argc = _getArgc();
+    String[] result = new String[argc];
+    for (int i = 0; i < argc; ++i) {
+      result[i] = _getArgv(i);
+    }
+    return result;
   }
 
   public static synchronized void init() {
@@ -205,7 +223,7 @@ public class LowLevelSaf {
         } catch (IOException e) {
           // ignore problems, failures will occur when the libs try to load
         }
-        
+
         System.load(installPath + '/' + System.mapLibraryName(libName));
         if (!_initNative(DispatchObject.class, DispatchMethod.class)) {
           throw new RuntimeException("Unable to initialize " + libName);
@@ -313,6 +331,26 @@ public class LowLevelSaf {
     _jsUnlock();
   }
 
+  public static void popExecState(int execState) {
+    Stack stack = (Stack) stateStack.get();
+    if (stack == null) {
+      throw new RuntimeException("No thread local execState stack!");
+    }
+    Integer old = (Integer) stack.pop();
+    if (old.intValue() != execState) {
+      throw new RuntimeException("The wrong execState was popped.");
+    }
+  }
+
+  public static void pushExecState(int execState) {
+    Stack stack = (Stack) stateStack.get();
+    if (stack == null) {
+      stack = new Stack();
+      stateStack.set(stack);
+    }
+    stack.push(new Integer(execState));
+  }
+
   /**
    * Call this to raise an exception in JavaScript before returning control.
    * 
@@ -399,7 +437,7 @@ public class LowLevelSaf {
   private static native void _gcUnlock(int jsval);
 
   private static native int _getArgc();
-  
+
   private static native String _getArgv(int i);
 
   private static native boolean _getGlobalExecState(int scriptObject, int[] rval);
@@ -435,45 +473,5 @@ public class LowLevelSaf {
    */
   private LowLevelSaf() {
   }
-
-  public static void pushExecState(int execState) {
-    Stack stack = (Stack) stateStack.get();
-    if (stack == null) {
-      stack = new Stack();
-      stateStack.set(stack);
-    }
-    stack.push(new Integer(execState));
-  }
-
-  public static void popExecState(int execState) {
-    Stack stack = (Stack) stateStack.get();
-    if (stack == null) {
-      throw new RuntimeException("No thread local execState stack!");
-    }
-    Integer old = (Integer) stack.pop();
-    if (old.intValue() != execState) {
-      throw new RuntimeException("The wrong execState was popped.");
-    }
-  }
-
-  public static String[] getProcessArgs() {
-    int argc = _getArgc();
-    String[] result = new String[argc];
-    for (int i = 0; i < argc; ++i) {
-      result[i] = _getArgv(i);
-    }
-    return result;
-  }
-  
-  public static int getExecState() {
-    Stack stack = (Stack) stateStack.get();
-    if (stack == null) {
-      throw new RuntimeException("No thread local execState stack!");
-    }
-    Integer top = (Integer) stack.peek();
-    return top.intValue();
-  }
-
-  private static ThreadLocal stateStack = new ThreadLocal();
 
 }
