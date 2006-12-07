@@ -193,7 +193,7 @@ public final class Utility {
   /**
    * Gets the contents of a file from the class path as a string.
    * 
-   * @param filename the partial path to the resource from this class's class
+   * @param partialPath the partial path to the resource from this class's class
    *          file
    * @return the contents of the file, or <code>null</code> if the file could
    *         not be found
