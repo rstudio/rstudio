@@ -19,6 +19,9 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.TextOutput;
 
+/**
+ * Generates JavaScript source from an AST.
+ */
 public class JsSourceGenerationVisitor extends JsToStringGenerationVisitor {
 
   public JsSourceGenerationVisitor(TextOutput out, NamingStrategy namer) {
