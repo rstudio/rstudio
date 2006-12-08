@@ -6,9 +6,13 @@
 	<!-- "build" is the default when subprojects are directly targetted -->
 	<property name="target" value="build" />
 
-	<target name="dist" depends="dev, user, servlet, jni" description="Run the distributions">
+	<target name="dist" depends="dev, user, servlet, jni, doc" description="Run the distributions">
 		<ant dir="distro-source" inheritall="false" target="${target}" />
 	</target>
+
+  <target name="doc" depends="buildtools, user" description="Build doc">
+    <ant dir="doc" inheritall="false" target="${target}" />
+  </target>
 
 	<target name="dev" depends="buildtools" description="Run dev">
 		<ant dir="dev" inheritall="false" target="${target}" />
