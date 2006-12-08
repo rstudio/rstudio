@@ -40,7 +40,15 @@
 			<fileset file="${gwt.build.lib}/gwt-servlet.jar" />
 			<fileset dir="${gwt.build.jni}/${dist.platform}" />
 			<fileset dir="src" />
-			<!-- TODO: doc -->
+		</copy>
+
+		<mkdir dir="${project.staging}/doc" />
+		<copy todir="${project.staging}/doc">
+			<fileset dir="${gwt.build.out}/doc">
+				<include name="html/**" />
+				<include name="css/**" />
+				<include name="javadoc/**" />
+			</fileset>
 		</copy>
 
 		<copy todir="${project.staging}">
