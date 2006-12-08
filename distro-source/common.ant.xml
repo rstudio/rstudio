@@ -6,6 +6,31 @@
 	<property name="project.distname" value="gwt-${dist.platform}-${gwt.version}" />
 	<property name="project.staging" location="${gwt.build.staging}/${project.distname}" />
 
+	<!-- copies a single sample into the staging directory -->
+	<macrodef name="stage.sample">
+		<attribute name="lname" />
+		<attribute name="uname" />
+		<sequential>
+			<mkdir dir="${project.staging}/samples/@{uname}" />
+			<copy todir="${project.staging}/samples/@{uname}">
+				<fileset dir="${gwt.root}/samples/@{lname}">
+					<include name="src/**" />
+				</fileset>
+				<fileset dir="${gwt.build.out}/samples/@{lname}">
+					<include name="bin/**" />
+					<include name="www/**" />
+				</fileset>
+				<fileset dir="${gwt.build.out}/samples/@{lname}/scripts/${dist.platform}" />
+			</copy>
+			<chmod perm="a+x">
+				<fileset dir="${project.staging}/samples/@{uname}">
+					<include name="@{uname}-compile*" />
+					<include name="@{uname}-shell*" />
+				</fileset>
+			</chmod>
+		</sequential>
+	</macrodef>
+
 	<target name="stage" description="Copies items into the staging area">
 		<mkdir dir="${project.staging}" />
 
@@ -14,11 +39,21 @@
 			<fileset file="${gwt.build.lib}/gwt-user.jar" />
 			<fileset file="${gwt.build.lib}/gwt-servlet.jar" />
 			<fileset dir="${gwt.build.jni}/${dist.platform}" />
-			<!-- TODO: samples, doc -->
+			<!-- TODO: versioning -->
 			<fileset dir="../core/src" />
 			<fileset dir="src" />
+			<!-- TODO: doc -->
 		</copy>
-        <antcall target="stage.platform" />
+
+		<stage.sample lname="dynatable" uname="DynaTable" />
+		<stage.sample lname="hello" uname="Hello" />
+		<stage.sample lname="i18n" uname="I18N" />
+		<stage.sample lname="json" uname="JSON" />
+		<stage.sample lname="kitchensink" uname="KitchenSink" />
+		<stage.sample lname="mail" uname="Mail" />
+		<stage.sample lname="simplexml" uname="SimpleXML" />
+
+		<antcall target="stage.platform" />
 		<chmod perm="a+r">
 			<dirset dir="${project.staging}" />
 			<fileset dir="${project.staging}" />
