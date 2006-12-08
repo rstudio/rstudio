@@ -38,6 +38,20 @@
 		<gwt.unjar toollib="xerces/xml-apis-2.0.2.jar" />
 	</target>
 
+	<target name="filter.src" description="Creates filtered copies of source files" unless="version.uptodate">
+		<delete dir="${src.filtered}" failonerror="false" />
+		<mkdir dir="${src.filtered}" />
+		<copy todir="${src.filtered}" overwrite="true">
+			<fileset dir="src">
+				<include name="com/google/gwt/dev/About.java" />
+			</fileset>
+			<filterset>
+				<filter token="GWT_VERSION" value="${gwt.version}" />
+			</filterset>
+		</copy>
+		<touch file="${src.filtered}/gwt.version-${gwt.version}" />
+	</target>
+
 	<target name="build" depends="unjar.deps" description="Compiles this project">
 		<!--
 		There are classes missing from dev/core that are necessary
@@ -48,8 +62,16 @@
 		<property name="javac.out-dummy" location="${project.build}/bin-dummy" />
 		<mkdir dir="${javac.out-dummy}" />
 		<gwt.javac srcdir="src-dummy" destdir="${javac.out-dummy}" />
+
+		<!-- Files with hardcoded version information must be filtered -->
+		<property name="src.filtered" location="${project.build}/src-filtered" />
+		<available file="${src.filtered}/gwt.version-${gwt.version}" property="version.uptodate" />
+		<antcall target="filter.src" />
+
 		<mkdir dir="${javac.out}" />
-		<gwt.javac>
+		<gwt.javac srcdir="${src.filtered}" />
+		<gwt.javac srcdir="src">
+			<exclude name="com/google/gwt/dev/About.java" />
 			<classpath>
 				<pathelement location="${javac.out-dummy}" />
 				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
@@ -71,7 +93,7 @@
 				<filename name="com/google/gwt/core/ext/**/*.java" negate="yes" />
 			</fileset>
 		</gwt.checkstyle>
-		
+
 		<!-- TODO: fix styles on these files -->
 		<!-- 
 		<gwt.checkstyle>

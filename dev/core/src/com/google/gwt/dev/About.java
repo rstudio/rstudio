@@ -20,7 +20,7 @@ package com.google.gwt.dev;
  */
 public class About {
 
-  public static final String GWT_VERSION_NUM = "${project.version}"; 
+  public static final String GWT_VERSION_NUM = "@GWT_VERSION@"; 
 
   public static final String GWT_NAME = "Google Web Toolkit"; 
 
