@@ -20,6 +20,10 @@ package com.google.gwt.dev.util.msg;
  */
 public final class FormatterForClass extends Formatter {
 
+  public String format(Object toFormat) {
+    return getNiceTypeName((Class) toFormat);
+  }
+
   private String getNiceTypeName(Class targetType) {
     // Screen out common cases.
     // Otherwise, just pass along the class name.
@@ -28,9 +32,5 @@ public final class FormatterForClass extends Formatter {
     } else {
       return targetType.getName();
     }
-  }
-  
-  public String format(Object toFormat) {
-    return getNiceTypeName((Class)toFormat);
   }
 }
