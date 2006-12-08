@@ -19,6 +19,12 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jdt.RebindOracle;
 
+/**
+ * Defines the contract necessary to host a module space. "Hosting a module
+ * space" refers to supporting an isolated logical arena that can load a GWT
+ * module in hosted mode, execute JavaScript, and so on. The primary exmaple of
+ * this is the GWT shell.
+ */
 public interface ModuleSpaceHost extends RebindOracle {
   String[] getEntryPointTypeNames();
 

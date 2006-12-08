@@ -25,6 +25,10 @@ import com.google.gwt.dev.util.Empty;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Implements a {@link PropertyOracle} in terms of a module space, which makes
+ * it possible to execute property providers.
+ */
 public class ModuleSpacePropertyOracle implements PropertyOracle {
 
   private final Properties props;

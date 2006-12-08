@@ -16,10 +16,13 @@
 package com.google.gwt.dev.js;
 
 /**
- * Thrown due to a JavaScript parser exception.
+ * Indicates inability to parse JavaScript source.
  */
 public class JsParserException extends Exception {
 
+  /**
+   * Represents the location of a parser exception.
+   */
   public static class SourceDetail {
     private final int line;
 

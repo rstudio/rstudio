@@ -26,8 +26,14 @@ import com.google.gwt.dev.jjs.ast.Mutator;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a JS construct that should be emitted as a JSON-style object.
+ */
 public class JsonObject extends JExpression {
 
+  /**
+   * An individual property initializer within a JSON object initializer.
+   */
   public static class JsonPropInit extends JNode {
 
     public final Holder labelExpr = new Holder();

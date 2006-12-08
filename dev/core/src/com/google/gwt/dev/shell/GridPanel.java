@@ -21,6 +21,9 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
+/**
+ * Shared boilerplate for grid-style UIs.
+ */
 public class GridPanel extends Composite {
 
   protected static final int FILL = GridData.FILL;

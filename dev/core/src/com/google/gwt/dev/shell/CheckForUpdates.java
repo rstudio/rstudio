@@ -45,6 +45,9 @@ import javax.xml.parsers.ParserConfigurationException;
  */
 public abstract class CheckForUpdates {
 
+  /**
+   * Abstract the action to take when an update is available.
+   */
   public static interface UpdateAvailableCallback {
     void onUpdateAvailable(String html);
   }

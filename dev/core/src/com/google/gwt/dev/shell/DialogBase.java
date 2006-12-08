@@ -32,6 +32,9 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
+/**
+ * Shared boilerplate for dialogs.
+ */
 public abstract class DialogBase extends Dialog implements DisposeListener {
 
   private class Buttons extends GridPanel {

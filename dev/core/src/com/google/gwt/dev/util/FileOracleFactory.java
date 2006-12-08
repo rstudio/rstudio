@@ -49,10 +49,11 @@ import java.util.jar.JarFile;
  * underlying URLClassLoader or file system. However, URLs returned from the
  * FileOracle may become invalid if the contents of the file system change.
  * 
- * Presently, only URLs beginning with* "file:" and "jar:file:" can be inspected
- * to index children. Any other types of URLs will generate a warning. The set
- * of children indexed by "jar:file:" type URLs is fixed at creation time, but
- * the set of children from "file:" type URLs will dynamically query the
+ * Presently, only URLs beginning with <code>file:</code> and
+ * <code>jar:file:</code> can be inspected to index children. Any other types
+ * of URLs will generate a warning. The set of children indexed by
+ * <code>jar:file:</code> type URLs is fixed at creation time, but the set of
+ * children from <code>file:</code> type URLs will dynamically query the
  * underlying file system.
  */
 public class FileOracleFactory {

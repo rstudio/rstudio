@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.util;
 
+/**
+ * Consolidates preallocated empty arrays for use with <code>toArray()</code>.
+ */
 public class Empty {
 
   public static final String[] STRINGS = new String[0];

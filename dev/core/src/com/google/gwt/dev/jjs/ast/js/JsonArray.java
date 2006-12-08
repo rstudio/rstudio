@@ -22,6 +22,9 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.Mutator;
 
+/**
+ * A JSON-style list of JS expressions.
+ */
 public class JsonArray extends JExpression {
 
   public HolderList exprs = new HolderList();

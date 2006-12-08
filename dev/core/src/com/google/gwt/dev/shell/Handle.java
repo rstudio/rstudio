@@ -21,6 +21,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 import java.util.Vector;
 
+/**
+ * Abstracts the concept of an opaque handle to a JavaScript object.
+ */
 public abstract class Handle {
 
   public static final String HANDLE_CLASS = "com.google.gwt.core.client.JavaScriptObject";

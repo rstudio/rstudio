@@ -18,6 +18,9 @@ package com.google.gwt.dev.shell;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+/**
+ * Abstracts the process of interacting with lazily-bound object manipulation.
+ */
 public interface JavaDispatch {
 
   Field getField(int dispId);
