@@ -39,11 +39,11 @@ public class ModuleSpaceIE6 extends ModuleSpace {
   }
   // CHECKSTYLE_ON
 
-  private Variant fStaticDispatch;
+  private Variant staticDispatch;
 
-  private IDispatchProxy fStaticDispatchProxy;
+  private IDispatchProxy staticDispatchProxy;
 
-  private final OleAutomation fWindow;
+  private final OleAutomation window;
 
   /**
    * Constructs a browser interface for use with an IE6 'window' automation
@@ -52,7 +52,7 @@ public class ModuleSpaceIE6 extends ModuleSpace {
   public ModuleSpaceIE6(ModuleSpaceHost host, IDispatch scriptFrameWindow) {
     super(host);
 
-    fWindow = SwtOleGlue.wrapIDispatch(scriptFrameWindow);
+    window = SwtOleGlue.wrapIDispatch(scriptFrameWindow);
   }
 
   public void createNative(String file, int line, String jsniSignature,
@@ -63,7 +63,7 @@ public class ModuleSpaceIE6 extends ModuleSpace {
     String newScript = createNativeMethodInjector(jsniSignature, paramNames, js);
     try {
       // TODO: somehow insert file/line info into the script
-      Variant result = execute(fWindow, newScript);
+      Variant result = execute(window, newScript);
       if (result != null) {
         result.dispose();
       }
@@ -84,15 +84,15 @@ public class ModuleSpaceIE6 extends ModuleSpace {
      * is done cleaning up. We then dispose() the static dispatcher only if it
      * has not already been disposed().
      */
-    if (fStaticDispatch != null) {
-      final Variant staticDispatchToDispose = fStaticDispatch;
-      fStaticDispatch = null;
+    if (staticDispatch != null) {
+      final Variant staticDispatchToDispose = staticDispatch;
+      staticDispatch = null;
 
       Display.getCurrent().asyncExec(new Runnable() {
         public void run() {
           // If the proxy has already been disposed, don't try to do so again,
           // as this will attempt to call through a null vtable.
-          if (!fStaticDispatchProxy.isDisposed()) {
+          if (!staticDispatchProxy.isDisposed()) {
             staticDispatchToDispose.dispose();
           }
         }
@@ -100,8 +100,8 @@ public class ModuleSpaceIE6 extends ModuleSpace {
     }
 
     // Dispose everything else.
-    if (fWindow != null) {
-      fWindow.dispose();
+    if (window != null) {
+      window.dispose();
     }
     super.dispose();
   }
@@ -326,17 +326,17 @@ public class ModuleSpaceIE6 extends ModuleSpace {
   }
 
   protected void initializeStaticDispatcher() {
-    fStaticDispatchProxy = new IDispatchProxy(getIsolatedClassLoader());
-    IDispatch staticDispatch = new IDispatch(fStaticDispatchProxy.getAddress());
-    staticDispatch.AddRef();
-    fStaticDispatch = new Variant(staticDispatch);
+    staticDispatchProxy = new IDispatchProxy(getIsolatedClassLoader());
+    IDispatch staticDisp = new IDispatch(staticDispatchProxy.getAddress());
+    staticDisp.AddRef();
+    this.staticDispatch = new Variant(staticDisp);
 
     // Define the static dispatcher for use by JavaScript.
     //
     createNative("initializeStaticDispatcher", 0, "__defineStatic",
         new String[] {"__arg0"}, "window.__static = __arg0;");
     invokeNativeVoid("__defineStatic", null, new Class[] {Variant.class},
-        new Object[] {fStaticDispatch});
+        new Object[] {this.staticDispatch});
   }
 
   private Variant execute(OleAutomation window, String code) {
@@ -387,13 +387,13 @@ public class ModuleSpaceIE6 extends ModuleSpace {
 
       // Get the function object and its 'call' method.
       //
-      int[] ids = fWindow.getIDsOfNames(new String[] {name});
+      int[] ids = window.getIDsOfNames(new String[] {name});
       if (ids == null) {
         throw new RuntimeException(
             "Could not find a native method with the signature '" + name + "'");
       }
       int functionId = ids[0];
-      funcObjVar = fWindow.getProperty(functionId);
+      funcObjVar = window.getProperty(functionId);
       funcObj = funcObjVar.getAutomation();
       int callDispId = funcObj.getIDsOfNames(new String[] {"call"})[0];
 

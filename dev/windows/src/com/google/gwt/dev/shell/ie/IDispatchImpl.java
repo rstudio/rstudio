@@ -42,17 +42,17 @@ abstract class IDispatchImpl extends COMObject {
    * An exception for wrapping bad HR's.
    */
   protected static class HResultException extends Exception {
-    private int fHR;
+    private int hr;
 
-    private String fSource;
+    private String source;
 
     /**
      * Constructs a standard bad HR exception.
      */
     public HResultException(int hr) {
       super(Integer.toString(hr));
-      fHR = hr;
-      fSource = "Java";
+      this.hr = hr;
+      source = "Java";
     }
 
     /**
@@ -60,8 +60,8 @@ abstract class IDispatchImpl extends COMObject {
      */
     public HResultException(String message) {
       super(message);
-      fHR = COM.DISP_E_EXCEPTION;
-      fSource = "Java";
+      hr = COM.DISP_E_EXCEPTION;
+      source = "Java";
     }
 
     /**
@@ -69,8 +69,8 @@ abstract class IDispatchImpl extends COMObject {
      */
     public HResultException(Throwable e) {
       super(AbstractTreeLogger.getStackTraceAsString(e), e);
-      fHR = COM.DISP_E_EXCEPTION;
-      fSource = "Java";
+      hr = COM.DISP_E_EXCEPTION;
+      source = "Java";
     }
 
     /**
@@ -78,8 +78,8 @@ abstract class IDispatchImpl extends COMObject {
      * structure. Otherwise, it does nothing.
      */
     public void fillExcepInfo(int pExcepInfo) {
-      if (fHR == COM.DISP_E_EXCEPTION) {
-        SwtOleGlue.setEXCEPINFO(pExcepInfo, fHR, fSource, getMessage(), 0);
+      if (hr == COM.DISP_E_EXCEPTION) {
+        SwtOleGlue.setEXCEPINFO(pExcepInfo, hr, source, getMessage(), 0);
       }
     }
 
@@ -87,7 +87,7 @@ abstract class IDispatchImpl extends COMObject {
      * Gets the HR.
      */
     public int getHResult() {
-      return fHR;
+      return hr;
     }
   }
 
