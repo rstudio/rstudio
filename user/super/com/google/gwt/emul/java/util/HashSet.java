@@ -20,32 +20,32 @@ package java.util;
  */
 public class HashSet extends AbstractSet implements Set, Cloneable {
 
-  private HashMap fMap;
+  private HashMap map;
 
   public HashSet() {
-    fMap = new HashMap();
+    map = new HashMap();
   }
 
   public HashSet(Collection c) {
-    fMap = new HashMap(c.size());
+    map = new HashMap(c.size());
     addAll(c);
   }
 
   public HashSet(int initialCapacity) {
-    fMap = new HashMap(initialCapacity);
+    map = new HashMap(initialCapacity);
   }
 
   public HashSet(int initialCapacity, float loadFactor) {
-    fMap = new HashMap(initialCapacity, loadFactor);
+    map = new HashMap(initialCapacity, loadFactor);
   }
 
   public boolean add(Object o) {
-    Object old = fMap.put(o, Boolean.valueOf(true));
+    Object old = map.put(o, Boolean.valueOf(true));
     return (old == null);
   }
 
   public void clear() {
-    fMap.clear();
+    map.clear();
   }
 
   public Object clone() {
@@ -53,27 +53,27 @@ public class HashSet extends AbstractSet implements Set, Cloneable {
   }
 
   public boolean contains(Object o) {
-    return fMap.containsKey(o);
+    return map.containsKey(o);
   }
 
   public boolean isEmpty() {
-    return fMap.isEmpty();
+    return map.isEmpty();
   }
 
   public Iterator iterator() {
-    return fMap.keySet().iterator();
+    return map.keySet().iterator();
   }
 
   public boolean remove(Object o) {
-    return (fMap.remove(o) != null);
+    return (map.remove(o) != null);
   }
 
   public int size() {
-    return fMap.size();
+    return map.size();
   }
 
   public String toString() {
-    return fMap.keySet().toString();
+    return map.keySet().toString();
   }
 
 }

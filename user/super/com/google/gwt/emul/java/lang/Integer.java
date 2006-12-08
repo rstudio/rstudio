@@ -65,24 +65,24 @@ public final class Integer extends Number implements Comparable {
     return new Integer(Integer.parseInt(s, radix));
   }
 
-  private final int fValue;
+  private final int value;
 
   public Integer(int value) {
-    fValue = value;
+    this.value = value;
   }
 
   public Integer(String s) {
-    fValue = parseInt(s);
+    value = parseInt(s);
   }
 
   public byte byteValue() {
-    return (byte) fValue;
+    return (byte) value;
   }
 
   public int compareTo(Integer b) {
-    if (fValue < b.fValue) {
+    if (value < b.value) {
       return -1;
-    } else if (fValue > b.fValue) {
+    } else if (value > b.value) {
       return 1;
     } else {
       return 0;
@@ -94,35 +94,35 @@ public final class Integer extends Number implements Comparable {
   }
 
   public double doubleValue() {
-    return fValue;
+    return value;
   }
 
   public boolean equals(Object o) {
-    return (o instanceof Integer) && (((Integer) o).fValue == fValue);
+    return (o instanceof Integer) && (((Integer) o).value == value);
   }
 
   public float floatValue() {
-    return fValue;
+    return value;
   }
 
   public int hashCode() {
-    return fValue;
+    return value;
   }
 
   public int intValue() {
-    return fValue;
+    return value;
   }
 
   public long longValue() {
-    return fValue;
+    return value;
   }
 
   public short shortValue() {
-    return (short) fValue;
+    return (short) value;
   }
 
   public String toString() {
-    return toString(fValue);
+    return toString(value);
   }
 
 }

@@ -60,24 +60,24 @@ public final class Double extends Number implements Comparable {
     return new Double(Double.parseDouble(s));
   }
 
-  private final double fValue;
+  private final double value;
 
   public Double(double value) {
-    fValue = value;
+    this.value = value;
   }
 
   public Double(String s) {
-    fValue = parseDouble(s);
+    value = parseDouble(s);
   }
 
   public byte byteValue() {
-    return (byte) fValue;
+    return (byte) value;
   }
 
   public int compareTo(Double b) {
-    if (fValue < b.fValue) {
+    if (value < b.value) {
       return -1;
-    } else if (fValue > b.fValue) {
+    } else if (value > b.value) {
       return 1;
     } else {
       return 0;
@@ -89,15 +89,15 @@ public final class Double extends Number implements Comparable {
   }
 
   public double doubleValue() {
-    return fValue;
+    return value;
   }
 
   public boolean equals(Object o) {
-    return (o instanceof Double) && (((Double) o).fValue == fValue);
+    return (o instanceof Double) && (((Double) o).value == value);
   }
 
   public float floatValue() {
-    return (float) fValue;
+    return (float) value;
   }
 
   /**
@@ -110,31 +110,31 @@ public final class Double extends Number implements Comparable {
    * used as keys in a {@link java.util.HashMap}.
    */
   public int hashCode() {
-    return (int) fValue;
+    return (int) value;
   }
 
   public int intValue() {
-    return (int) fValue;
+    return (int) value;
   }
 
   public boolean isInfinite() {
-    return isInfinite(fValue);
+    return isInfinite(value);
   }
 
   public boolean isNaN() {
-    return isNaN(fValue);
+    return isNaN(value);
   }
 
   public long longValue() {
-    return (long) fValue;
+    return (long) value;
   }
 
   public short shortValue() {
-    return (short) fValue;
+    return (short) value;
   }
 
   public String toString() {
-    return toString(fValue);
+    return toString(value);
   }
 
 }

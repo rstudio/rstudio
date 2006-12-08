@@ -108,20 +108,20 @@ public final class Character {
     return String.fromCharCode(c).toUpperCase().charCodeAt(0);
   }-*/;
 
-  private final char fValue;
+  private final char value;
 
   public Character(char value) {
-    fValue = value;
+    this.value = value;
   }
 
   public char charValue() {
-    return fValue;
+    return value;
   }
 
   public int compareTo(Character c) {
-    if (fValue < c.fValue) {
+    if (value < c.value) {
       return -1;
-    } else if (fValue > c.fValue) {
+    } else if (value > c.value) {
       return 1;
     } else {
       return 0;
@@ -133,14 +133,14 @@ public final class Character {
   }
 
   public boolean equals(Object o) {
-    return (o instanceof Character) && (((Character) o).fValue == fValue);
+    return (o instanceof Character) && (((Character) o).value == value);
   }
 
   public int hashCode() {
-    return fValue;
+    return value;
   }
 
   public String toString() {
-    return String.valueOf(fValue);
+    return String.valueOf(value);
   }
 }

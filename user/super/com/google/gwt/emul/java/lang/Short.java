@@ -57,18 +57,18 @@ public final class Short extends Number implements Comparable {
     return new Short(Short.parseShort(s, radix));
   }
 
-  private final short fValue;
+  private final short value;
 
   public Short(short value) {
-    fValue = value;
+    this.value = value;
   }
 
   public Short(String s) {
-    fValue = parseShort(s);
+    value = parseShort(s);
   }
 
   public byte byteValue() {
-    return (byte) fValue;
+    return (byte) value;
   }
 
   public int compareTo(Object o) {
@@ -76,9 +76,9 @@ public final class Short extends Number implements Comparable {
   }
 
   public int compareTo(Short b) {
-    if (fValue < b.fValue) {
+    if (value < b.value) {
       return -1;
-    } else if (fValue > b.fValue) {
+    } else if (value > b.value) {
       return 1;
     } else {
       return 0;
@@ -86,34 +86,34 @@ public final class Short extends Number implements Comparable {
   }
 
   public double doubleValue() {
-    return fValue;
+    return value;
   }
 
   public boolean equals(Object o) {
-    return (o instanceof Short) && (((Short) o).fValue == fValue);
+    return (o instanceof Short) && (((Short) o).value == value);
   }
 
   public float floatValue() {
-    return fValue;
+    return value;
   }
 
   public int hashCode() {
-    return fValue;
+    return value;
   }
 
   public int intValue() {
-    return fValue;
+    return value;
   }
 
   public long longValue() {
-    return fValue;
+    return value;
   }
 
   public short shortValue() {
-    return fValue;
+    return value;
   }
 
   public String toString() {
-    return toString(fValue);
+    return toString(value);
   }
 }

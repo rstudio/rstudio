@@ -83,24 +83,24 @@ public final class Long extends Number implements Comparable {
     return new Long(Long.parseLong(s, radix));
   }
 
-  private final long fValue;
+  private final long value;
 
   public Long(long value) {
-    fValue = value;
+    this.value = value;
   }
 
   public Long(String s) {
-    fValue = parseLong(s);
+    value = parseLong(s);
   }
 
   public byte byteValue() {
-    return (byte) fValue;
+    return (byte) value;
   }
 
   public int compareTo(Long b) {
-    if (fValue < b.fValue) {
+    if (value < b.value) {
       return -1;
-    } else if (fValue > b.fValue) {
+    } else if (value > b.value) {
       return 1;
     } else {
       return 0;
@@ -112,35 +112,35 @@ public final class Long extends Number implements Comparable {
   }
 
   public double doubleValue() {
-    return fValue;
+    return value;
   }
 
   public boolean equals(Object o) {
-    return (o instanceof Long) && (((Long) o).fValue == fValue);
+    return (o instanceof Long) && (((Long) o).value == value);
   }
 
   public float floatValue() {
-    return fValue;
+    return value;
   }
 
   public int hashCode() {
-    return (int) fValue;
+    return (int) value;
   }
 
   public int intValue() {
-    return (int) fValue;
+    return (int) value;
   }
 
   public long longValue() {
-    return fValue;
+    return value;
   }
 
   public short shortValue() {
-    return (short) fValue;
+    return (short) value;
   }
 
   public String toString() {
-    return toString(fValue);
+    return toString(value);
   }
 
 }

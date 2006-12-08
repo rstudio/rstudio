@@ -20,7 +20,7 @@ package java.lang;
  */
 public final class Boolean {
 
-  // CHECKSTYLE_OFF: These have to be created somewhere
+  // CHECKSTYLE_OFF: These have to be created somewhere.
   public static Boolean FALSE = new Boolean(false);
   public static Boolean TRUE = new Boolean(true);
 
@@ -42,10 +42,10 @@ public final class Boolean {
     }
   }
 
-  private boolean fValue;
+  private boolean value;
 
   public Boolean(boolean value) {
-    fValue = value;
+    this.value = value;
   }
 
   public Boolean(String s) {
@@ -53,21 +53,21 @@ public final class Boolean {
   }
 
   public boolean booleanValue() {
-    return fValue;
+    return value;
   }
 
   public boolean equals(Object o) {
-    return (o instanceof Boolean) && (((Boolean) o).fValue == fValue);
+    return (o instanceof Boolean) && (((Boolean) o).value == value);
   }
 
   public int hashCode() {
     // The Java API doc defines these magic numbers.
     final int hashCodeForTrue = 1231;
     final int hashCodeForFalse = 1237;
-    return fValue ? hashCodeForTrue : hashCodeForFalse;
+    return value ? hashCodeForTrue : hashCodeForFalse;
   }
 
   public String toString() {
-    return fValue ? "true" : "false";
+    return value ? "true" : "false";
   }
 }

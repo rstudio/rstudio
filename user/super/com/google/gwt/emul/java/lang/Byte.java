@@ -58,24 +58,24 @@ public final class Byte extends Number implements Comparable {
     return new Byte(Byte.parseByte(s, radix));
   }
 
-  private final byte fValue;
+  private final byte value;
 
   public Byte(byte value) {
-    fValue = value;
+    this.value = value;
   }
 
   public Byte(String s) {
-    fValue = parseByte(s);
+    value = parseByte(s);
   }
 
   public byte byteValue() {
-    return fValue;
+    return value;
   }
 
   public int compareTo(Byte b) {
-    if (fValue < b.fValue) {
+    if (value < b.value) {
       return -1;
-    } else if (fValue > b.fValue) {
+    } else if (value > b.value) {
       return 1;
     } else {
       return 0;
@@ -87,34 +87,34 @@ public final class Byte extends Number implements Comparable {
   }
 
   public double doubleValue() {
-    return fValue;
+    return value;
   }
 
   public boolean equals(Object o) {
-    return (o instanceof Byte) && (((Byte) o).fValue == fValue);
+    return (o instanceof Byte) && (((Byte) o).value == value);
   }
 
   public float floatValue() {
-    return fValue;
+    return value;
   }
 
   public int hashCode() {
-    return fValue;
+    return value;
   }
 
   public int intValue() {
-    return fValue;
+    return value;
   }
 
   public long longValue() {
-    return fValue;
+    return value;
   }
 
   public short shortValue() {
-    return fValue;
+    return value;
   }
 
   public String toString() {
-    return toString(fValue);
+    return toString(value);
   }
 }

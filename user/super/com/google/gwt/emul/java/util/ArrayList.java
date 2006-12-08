@@ -21,35 +21,35 @@ package java.util;
 public class ArrayList extends AbstractList implements List, RandomAccess,
     Cloneable {
 
-  private Vector fVec;
+  private Vector vec;
 
   public ArrayList() {
-    fVec = new Vector();
+    vec = new Vector();
   }
 
   public ArrayList(Collection c) {
-    fVec = new Vector();
+    vec = new Vector();
     addAll(c);
   }
 
   public void add(int index, Object o) {
-    fVec.add(index, o);
+    vec.add(index, o);
   }
 
   public boolean add(Object o) {
-    return fVec.add(o);
+    return vec.add(o);
   }
 
   public boolean addAll(Collection c) {
-    return fVec.addAll(c);
+    return vec.addAll(c);
   }
 
   public boolean addAll(int index, Collection c) {
-    return fVec.addAll(index, c);
+    return vec.addAll(index, c);
   }
 
   public void clear() {
-    fVec.clear();
+    vec.clear();
   }
 
   public Object clone() {
@@ -57,46 +57,46 @@ public class ArrayList extends AbstractList implements List, RandomAccess,
   }
 
   public boolean contains(Object elem) {
-    return fVec.contains(elem);
+    return vec.contains(elem);
   }
 
   public Object get(int index) {
-    return fVec.get(index);
+    return vec.get(index);
   }
 
   public int indexOf(Object elem) {
-    return fVec.indexOf(elem);
+    return vec.indexOf(elem);
   }
 
   public boolean isEmpty() {
-    return (fVec.size() == 0);
+    return (vec.size() == 0);
   }
 
   public Iterator iterator() {
-    return fVec.iterator();
+    return vec.iterator();
   }
 
   public int lastIndexOf(Object o) {
-    return fVec.lastIndexOf(o);
+    return vec.lastIndexOf(o);
   }
 
   public Object remove(int index) {
-    return fVec.remove(index);
+    return vec.remove(index);
   }
 
   public Object set(int index, Object elem) {
-    return fVec.set(index, elem);
+    return vec.set(index, elem);
   }
 
   public int size() {
-    return fVec.size();
+    return vec.size();
   }
 
   public Object[] toArray() {
-    return fVec.toArray();
+    return vec.toArray();
   }
 
   protected void removeRange(int fromIndex, int endIndex) {
-    fVec.removeRange(fromIndex, endIndex);
+    vec.removeRange(fromIndex, endIndex);
   }
 }
