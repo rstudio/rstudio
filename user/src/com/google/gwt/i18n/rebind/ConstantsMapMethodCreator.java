@@ -22,7 +22,9 @@ import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 
 import java.util.MissingResourceException;
 
-/** Creator for methods of the form Map getX() . */
+/**
+ * Creator for methods of the form Map getX() .
+ */
 class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
   /**
    * Constructor for localizable returnType method creator.
@@ -43,18 +45,18 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
   public void createMethodFor(TreeLogger logger, JMethod method,
       final String value) throws UnableToCompleteException {
     String methodName = method.getName();
-    
+
     if (method.getParameters().length > 0) {
       error(
-        logger,
-        methodName
-          + " cannot have parameters; extend Messages instead if you need to create parameterized messages");
+          logger,
+          methodName
+              + " cannot have parameters; extend Messages instead if you need to create parameterized messages");
     }
     // make sure cache exists
     enableCache();
     // check cache for array
     println("java.util.Map args = (java.util.Map) cache.get("
-      + wrap(methodName) + ");");
+        + wrap(methodName) + ");");
     // if not found create Map
     println("if (args == null){");
     indent();
@@ -68,7 +70,7 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
         println("args.put(" + wrap(key) + ", " + wrap(keyValue) + ");");
       } catch (MissingResourceException e) {
         String msg = "While implementing map for " + method.getName()
-          + "(), could not find key '" + args[i] + "'";
+            + "(), could not find key '" + args[i] + "'";
         throw error(logger, msg);
       }
     }

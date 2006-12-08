@@ -136,7 +136,9 @@ public class ClassSourceFileComposerFactory {
     return superClassName;
   }
 
-  /** This class is an interface. */
+  /**
+   * This class is an interface.
+   */
   public void makeInterface() {
     classCategory = JavaSourceCategory.INTERFACE;
   }

@@ -516,7 +516,9 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     }
   }
 
-  /** Attribute name to store hash. */
+  /**
+   * Attribute name to store hash.
+   */
   private static final String HASH_ATTR = "__hash";
 
   /**

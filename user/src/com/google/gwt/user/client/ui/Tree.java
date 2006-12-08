@@ -502,7 +502,9 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     FocusPanel.impl.setTabIndex(focusable, index);
   }
 
-  /** Iterator of tree items. */
+  /**
+   * Iterator of tree items.
+   */
   public Iterator treeItemIterator() {
     List accum = new ArrayList();
     root.addTreeItems(accum);

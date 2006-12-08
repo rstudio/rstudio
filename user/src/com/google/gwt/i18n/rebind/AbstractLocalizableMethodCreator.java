@@ -36,7 +36,9 @@ abstract class AbstractLocalizableMethodCreator extends AbstractMethodCreator {
     super(classCreator);
   }
 
-  /** Enables caching to store computed values. */
+  /**
+   * Enables caching to store computed values.
+   */
   protected void enableCache() {
     ((ConstantsImplCreator) currentCreator).setNeedCache(true);
   }
