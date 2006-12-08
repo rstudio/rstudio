@@ -19,6 +19,9 @@ import com.google.gwt.dev.About;
 
 import java.io.Serializable;
 
+/**
+ * Represents bytecode for a cached class.
+ */
 public class ByteCode implements Serializable {
 
   private static final String systemString = System.getProperty(

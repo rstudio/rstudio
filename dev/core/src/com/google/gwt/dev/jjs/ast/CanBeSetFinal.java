@@ -15,6 +15,10 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+/**
+ * Characteristic interface to be overlaid on AST constructs that can retain a
+ * boolean 'final' flag.
+ */
 public interface CanBeSetFinal {
   void setFinal(boolean b);
 }

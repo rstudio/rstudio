@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+/**
+ * A mutable reference to an AST node.
+ */
 public class Holder extends Mutator implements JVisitable {
 
   private JExpression value;

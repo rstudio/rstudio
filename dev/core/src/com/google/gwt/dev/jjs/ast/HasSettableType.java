@@ -15,6 +15,10 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+/**
+ * Characteristic interface to be overlaid on AST constructs that have a type
+ * that can be explicitly set.
+ */
 public interface HasSettableType extends HasType {
   void setType(JType newType);
 }

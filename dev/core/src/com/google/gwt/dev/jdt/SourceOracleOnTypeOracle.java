@@ -20,6 +20,9 @@ import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 
+/**
+ * Implements a {@link SourceOracle} in terms of a {@link TypeOracle}.
+ */
 public class SourceOracleOnTypeOracle implements SourceOracle {
 
   private final TypeOracle typeOracle;

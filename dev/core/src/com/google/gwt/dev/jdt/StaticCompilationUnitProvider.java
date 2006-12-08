@@ -17,6 +17,9 @@ package com.google.gwt.dev.jdt;
 
 import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 
+/**
+ * Implements a {@link CompilationUnitProvider} as transient (in-memory) source.
+ */
 public class StaticCompilationUnitProvider implements CompilationUnitProvider {
 
   private final String packageName;

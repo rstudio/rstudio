@@ -19,6 +19,10 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 
+/**
+ * Abstracts the process of determining which source file contains a given Java
+ * type and specifying whether or not a given name is a package.
+ */
 public interface SourceOracle {
 
   /**

@@ -15,6 +15,10 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+/**
+ * Represents an array dimension that was not specified in an array
+ * instantiation expression.
+ */
 public class JAbsentArrayDimension extends JLiteral {
 
   /**

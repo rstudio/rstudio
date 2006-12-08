@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+/**
+ * An enumeration of the available unary operators.
+ */
 public class JUnaryOperator {
 
   public static final JUnaryOperator INC = new JUnaryOperator("++");

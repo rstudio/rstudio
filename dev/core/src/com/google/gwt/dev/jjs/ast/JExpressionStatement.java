@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+/**
+ * Repesents a statement that is an expression.
+ */
 public class JExpressionStatement extends JStatement {
 
   private final Holder expr = new Holder();

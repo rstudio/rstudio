@@ -18,6 +18,10 @@ package com.google.gwt.dev.jdt;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
+/**
+ * Abstract the process of determining all of the possible deferred binding
+ * answers for a given type.
+ */
 public interface RebindPermutationOracle {
 
   /**

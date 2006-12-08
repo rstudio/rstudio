@@ -467,7 +467,9 @@ public class GWTShell extends ToolBase {
 
     int prt = getPort();
     if (prt != 80 && prt != 0) {
+      // CHECKSTYLE_OFF: Not really an assembled error message, so no space after ':'.
       return "http://localhost:" + prt + "/" + unknownUrlText;
+      // CHECKSTYLE_ON
     } else {
       return "http://localhost/" + unknownUrlText;
     }

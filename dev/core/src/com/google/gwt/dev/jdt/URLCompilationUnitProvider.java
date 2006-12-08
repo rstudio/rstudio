@@ -24,6 +24,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 
+/**
+ * Implements {@link CompilationUnitProvider} in terms of a URL.
+ */
 public class URLCompilationUnitProvider implements CompilationUnitProvider {
 
   private static File trySimplify(URL url) {

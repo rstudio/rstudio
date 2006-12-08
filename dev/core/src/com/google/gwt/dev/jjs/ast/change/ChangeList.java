@@ -32,6 +32,9 @@ import com.google.gwt.dev.jjs.ast.Mutator;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Manages a list of {@link Change} objects to apply to the AST.
+ */
 public class ChangeList extends ChangeBase {
 
   static String getEnclosingTypeString(String prefix, Object x) {
@@ -81,7 +84,8 @@ public class ChangeList extends ChangeBase {
     addNode(x, -1, x.getEnclosingType().methods);
   }
 
-  public/* <N extends JNode> */void addNode(JNode x, int index, List/* <N> */list) {
+  public/* <N extends JNode> */void addNode(JNode x, int index,
+      List/* <N> */list) {
     AddNode change = new AddNode/* <N> */(x, index, list);
     changes.add(change);
   }

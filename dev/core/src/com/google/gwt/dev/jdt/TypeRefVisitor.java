@@ -32,6 +32,9 @@ import org.eclipse.jdt.internal.compiler.lookup.Scope;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
+/**
+ * Walks the AST to determine every location from which a type is referenced.
+ */
 public abstract class TypeRefVisitor extends ASTVisitor {
 
   public void endVisit(ArrayQualifiedTypeReference x, BlockScope scope) {

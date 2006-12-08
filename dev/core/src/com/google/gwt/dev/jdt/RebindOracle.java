@@ -18,6 +18,9 @@ package com.google.gwt.dev.jdt;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
+/**
+ * Abstracts the implementation of making deferred binding decisions.
+ */
 public interface RebindOracle {
 
   /**

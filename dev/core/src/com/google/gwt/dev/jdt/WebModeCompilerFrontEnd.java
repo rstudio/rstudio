@@ -27,6 +27,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+/**
+ * Provides a reusable front-end based on the JDT compiler that incorporates
+ * GWT-specific concepts such as JSNI and deferred binding.
+ */
 public class WebModeCompilerFrontEnd extends AstCompiler {
 
   private final RebindPermutationOracle rebindPermOracle;

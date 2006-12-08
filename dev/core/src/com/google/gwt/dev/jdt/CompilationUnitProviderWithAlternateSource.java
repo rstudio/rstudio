@@ -18,6 +18,10 @@ package com.google.gwt.dev.jdt;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 
+/**
+ * Wraps an existing compilation unit, retaining the metadata of the original
+ * unit but providing modified source.
+ */
 public class CompilationUnitProviderWithAlternateSource implements
     CompilationUnitProvider {
   private final CompilationUnitProvider cup;

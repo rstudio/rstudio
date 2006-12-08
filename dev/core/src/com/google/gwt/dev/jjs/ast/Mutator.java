@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+/**
+ * Abstracts the process of modifying an AST node.
+ */
 public abstract class Mutator {
 
   public abstract JExpression get();
