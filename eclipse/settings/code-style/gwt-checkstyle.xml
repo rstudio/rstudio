@@ -40,6 +40,8 @@ Description:
         </module>
         <module name="JavadocStyle">
             <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Well formed java docs"/>
+            <property name="checkHtml" value="false"/>
+            <property name="tokens" value="CLASS_DEF,CTOR_DEF,INTERFACE_DEF,METHOD_DEF,VARIABLE_DEF"/>
         </module>
         <module name="NeedBraces">
             <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="make sure if has braces"/>
@@ -58,7 +60,7 @@ Description:
             <property name="tokens" value="METHOD_DEF"/>
         </module>
         <module name="Header">
-            <property name="headerFile" value="${checkstyle.header.file}"/>
+            <property name="header" value="/*\n * Copyright 2006 Google Inc.\n * \n * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;); you may not\n * use this file except in compliance with the License. You may obtain a copy of\n * the License at\n * \n * http://www.apache.org/licenses/LICENSE-2.0\n * \n * Unless required by applicable law or agreed to in writing, software\n * distributed under the License is distributed on an &quot;AS IS&quot; BASIS, WITHOUT\n * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the\n * License for the specific language governing permissions and limitations under\n * the License.\n */"/>
         </module>
         <module name="ImportOrder">
             <property name="groups" value="com.google, com,  junit, net,org, java,javax"/>
@@ -115,11 +117,15 @@ Description:
         <module name="MemberName">
             <property name="format" value="[a-z]|[a-z][a-z_0-9][A-Za-z0-9_]*|[a-z](?&lt;!f)[A-Z0-9]*"/>
         </module>
-        <module name="GenericIllegalRegexp">
-            <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Author tags not allowed"/>
-            <property name="severity" value="error"/>
-            <property name="format" value="author"/>
-            <property name="message" value="Author tags not allowed"/>
+        <module name="TodoComment">
+            <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Author tags"/>
+            <property name="format" value="@author"/>
+        </module>
+        <module name="Regexp">
+            <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="No one line javadoc comments"/>
+            <property name="format" value="[/][*][*][^\n]*[*][/]"/>
+            <property name="message" value="No one line javadoc comments"/>
+            <property name="illegalPattern" value="true"/>
         </module>
     </module>
     <module name="PackageHtml">
@@ -131,5 +137,12 @@ Description:
     <module name="SuppressionCommentFilter">
         <property name="offCommentFormat" value="CHECKSTYLE_OFF"/>
         <property name="onCommentFormat" value="CHECKSTYLE_ON"/>
+    </module>
+    <module name="SuppressionCommentFilter">
+        <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Avoid name checking"/>
+        <property name="offCommentFormat" value="CHECKSTYLE_NAME_CHECKING_OFF"/>
+        <property name="onCommentFormat" value="CHECKSTYLE_NAME_CHECKING_ON"/>
+        <property name="checkFormat" value=".*Name.*"/>
+        <property name="messageFormat" value=".*name.*"/>
     </module>
 </module>
