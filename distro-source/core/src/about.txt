@@ -1,4 +1,4 @@
-Google Web Toolkit ${project.version}
+Google Web Toolkit @GWT_VERSION@
 (c) Copyright Google, Inc. 2006.  All rights reserved.
 Visit Google Code (http://code.google.com/webtoolkit/).
 
@@ -17,6 +17,4 @@ This product includes software developed by:
  - The W3C consortium (http://www.w3.org/)
  - The SAX project (http://www.saxproject.org/)
 
-Source files and licenses for the modifications mentioned above are part of this
-distribution and can be found with their class files inside the included jars.
-See the chart at http://code.google.com/webtoolkit/terms-${project.version}.html#licenses
+For source availability and license information see COPYING.

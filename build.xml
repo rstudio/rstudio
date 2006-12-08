@@ -7,7 +7,7 @@
 	<property name="target" value="build" />
 
 	<target name="dist" depends="dev, user, servlet, jni, doc" description="Run the distributions">
-		<ant dir="distro-source" inheritall="false" target="${target}" />
+		<gwt.ant dir="distro-source" />
 	</target>
 
   <target name="doc" depends="buildtools, user" description="Build doc">
@@ -15,23 +15,23 @@
   </target>
 
 	<target name="dev" depends="buildtools" description="Run dev">
-		<ant dir="dev" inheritall="false" target="${target}" />
+		<gwt.ant dir="dev" />
 	</target>
 
 	<target name="user" depends="buildtools, dev" description="Run user">
-		<ant dir="user" inheritall="false" target="${target}" />
+		<gwt.ant dir="user" />
 	</target>
 
 	<target name="servlet" depends="buildtools, user" description="Run servlet">
-		<ant dir="servlet" inheritall="false" target="${target}" />
+		<gwt.ant dir="servlet" />
 	</target>
 
 	<target name="jni" description="Run jni">
-		<ant dir="jni" inheritall="false" target="${target}" />
+		<gwt.ant dir="jni" />
 	</target>
 
 	<target name="buildtools" description="Build the build tools">
-		<ant dir="build-tools" inheritall="false" target="${target}" />
+		<gwt.ant dir="build-tools" />
 	</target>
 
 	<target name="-do" depends="dist" description="Run all subprojects"/>

@@ -7,11 +7,11 @@
 	<property name="target" value="build" />
 
 	<target name="customchecks" description="Build the checkstyle extensions">
-		<ant dir="customchecks" inheritall="false" target="${target}" />
+		<gwt.ant dir="customchecks" />
 	</target>
 	
 	<target name="doctool" description="Build the doctool">
-		<ant dir="doctool" inheritall="false" target="${target}" />
+		<gwt.ant dir="doctool" />
 	</target>
 
 	<target name="-do" depends="customchecks, doctool" description="Run all subprojects"/>

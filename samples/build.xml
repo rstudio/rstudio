@@ -7,31 +7,31 @@
 	<property name="target" value="build" />
 
 	<target name="dynatable" description="Build dynatable">
-		<ant dir="dynatable" inheritall="false" target="${target}" />
+		<gwt.ant dir="dynatable" />
 	</target>
 
 	<target name="hello" description="Build hello">
-		<ant dir="hello" inheritall="false" target="${target}" />
+		<gwt.ant dir="hello" />
 	</target>
 
 	<target name="i18n" description="Build i18n">
-		<ant dir="i18n" inheritall="false" target="${target}" />
+		<gwt.ant dir="i18n" />
 	</target>
 
 	<target name="json" description="Build json">
-		<ant dir="json" inheritall="false" target="${target}" />
+		<gwt.ant dir="json" />
 	</target>
 
 	<target name="kitchensink" description="Build kitchensink">
-		<ant dir="kitchensink" inheritall="false" target="${target}" />
+		<gwt.ant dir="kitchensink" />
 	</target>
 
 	<target name="mail" description="Build mail">
-		<ant dir="mail" inheritall="false" target="${target}" />
+		<gwt.ant dir="mail" />
 	</target>
 
 	<target name="simplexml" description="Build simplexml">
-		<ant dir="simplexml" inheritall="false" target="${target}" />
+		<gwt.ant dir="simplexml" />
 	</target>
 
 	<target name="-do" depends="dynatable, hello, i18n, json, kitchensink, mail, simplexml" description="Run all subprojects" />

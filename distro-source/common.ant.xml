@@ -39,10 +39,15 @@
 			<fileset file="${gwt.build.lib}/gwt-user.jar" />
 			<fileset file="${gwt.build.lib}/gwt-servlet.jar" />
 			<fileset dir="${gwt.build.jni}/${dist.platform}" />
-			<!-- TODO: versioning -->
-			<fileset dir="../core/src" />
 			<fileset dir="src" />
 			<!-- TODO: doc -->
+		</copy>
+
+		<copy todir="${project.staging}">
+			<fileset dir="../core/src" />
+			<filterset>
+				<filter token="GWT_VERSION" value="${gwt.version}" />
+			</filterset>
 		</copy>
 
 		<stage.sample lname="dynatable" uname="DynaTable" />
