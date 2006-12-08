@@ -10,20 +10,24 @@
 		<ant dir="distro-source" inheritall="false" target="${target}" />
 	</target>
 
-	<target name="dev" description="Run dev">
+	<target name="dev" depends="buildtools" description="Run dev">
 		<ant dir="dev" inheritall="false" target="${target}" />
 	</target>
 
-	<target name="user" depends="dev" description="Run user">
+	<target name="user" depends="buildtools, dev" description="Run user">
 		<ant dir="user" inheritall="false" target="${target}" />
 	</target>
 
-	<target name="servlet" depends="user" description="Run servlet">
+	<target name="servlet" depends="buildtools, user" description="Run servlet">
 		<ant dir="servlet" inheritall="false" target="${target}" />
 	</target>
 
 	<target name="jni" description="Run jni">
 		<ant dir="jni" inheritall="false" target="${target}" />
+	</target>
+
+	<target name="buildtools" description="Build the build tools">
+		<ant dir="build-tools" inheritall="false" target="${target}" />
 	</target>
 
 	<target name="-do" depends="dist" description="Run all subprojects"/>

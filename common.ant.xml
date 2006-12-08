@@ -32,9 +32,6 @@
 	<available file="${gwt.tools}" type="dir" property="gwt.tools.exists" />
 	<fail unless="gwt.tools.exists" message="Cannot find '${gwt.tools}' tools directory; perhaps you should define the GWT_TOOLS environment variable" />
 
-	<!-- Plug-in Tasks -->
-	<taskdef resource="checkstyletask.properties" classpath="${gwt.tools.antlib}/checkstyle-all-4.2.jar" />
-
 	<!-- Global Custom Tasks -->
 	<presetdef name="gwt.javac">
 		<javac srcdir="src" destdir="${javac.out}" classpath="${unjar.out}" debug="${javac.debug}" debuglevel="${javac.debuglevel}" source="${javac.source}" nowarn="${javac.nowarn}" />
@@ -91,17 +88,16 @@
 		</sequential>
 	</macrodef>
 
-	<presetdef name="gwt.checkstyle">
-		<checkstyle config="${gwt.root}/eclipse/settings/code-style/gwtCheckStyle.xml" maxWarnings="0">
-			<fileset dir="src" />
-			<property key="checkstyle.header.file" file="${gwt.root}/eclipse/settings/code-style/google.header" />
-
-			<!-- Location of cache-file if we decide to try turning it on -->
-			<!--
-			<property key="checkstyle.cache.file" file="target/cachefile" />
-			-->
-		</checkstyle>
-	</presetdef>
+	<macrodef name="gwt.checkstyle">
+		<element name="sourcepath" implicit="yes" optional="true"/>
+		<sequential>
+			<taskdef resource="checkstyletask.properties" classpath="${gwt.tools.antlib}/checkstyle-all-4.2.jar;${gwt.build.lib}/gwt-customchecks.jar" />
+			<checkstyle config="${gwt.root}/eclipse/settings/code-style/gwtCheckStyle.xml" maxWarnings="0">
+				<property key="checkstyle.header.file" file="${gwt.root}/eclipse/settings/code-style/google.header" />
+				<sourcepath />
+			</checkstyle>
+		</sequential>
+	</macrodef>
 
 	<!-- Default implementations of the required targets; projects should
 	override the ones that matter -->
