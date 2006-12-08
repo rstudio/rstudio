@@ -19,6 +19,9 @@ import java.io.CharArrayWriter;
 import java.io.PrintWriter;
 import java.util.Arrays;
 
+/**
+ * Implements {@link TextOutput} on top of a character array.
+ */
 public class TextOutputOnCharArray implements TextOutput {
 
   private final CharArrayWriter charArrayWriter;

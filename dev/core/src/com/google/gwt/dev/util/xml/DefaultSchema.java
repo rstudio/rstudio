@@ -20,6 +20,10 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 
 import java.lang.reflect.Method;
 
+/**
+ * A base class for parsing XML that registers standard converters and throws
+ * exceptions.
+ */
 public class DefaultSchema extends Schema {
 
   private final TreeLogger logger;

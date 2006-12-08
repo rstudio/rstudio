@@ -56,7 +56,6 @@ public class HandlerArgs {
    * @return the argument converted to a form that is expected to compatible
    *         with the associated parameter and will work for a reflection
    *         "invoke()" call
-   * @throws UnableToCompleteException if the argument could not be converted
    */
   public Object convertToArg(int i) throws UnableToCompleteException {
     String value = argValues[i];

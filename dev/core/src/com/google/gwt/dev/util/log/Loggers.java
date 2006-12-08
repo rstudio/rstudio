@@ -19,6 +19,9 @@ import com.google.gwt.core.ext.TreeLogger;
 
 import java.net.URL;
 
+/**
+ * Utility methods for creating various sorts of loggers.
+ */
 public class Loggers {
 
   /**

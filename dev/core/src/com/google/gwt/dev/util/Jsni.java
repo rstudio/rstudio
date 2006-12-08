@@ -45,6 +45,9 @@ import java.io.StringReader;
  */
 public class Jsni {
 
+  /**
+   * Represents a logical interval of text.
+   */
   public static class Interval {
 
     public final int end;

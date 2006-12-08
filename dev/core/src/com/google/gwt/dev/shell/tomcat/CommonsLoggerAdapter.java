@@ -17,6 +17,9 @@ package com.google.gwt.dev.shell.tomcat;
 
 import com.google.gwt.core.ext.TreeLogger;
 
+/**
+ * Maps Tomcat's commons logger onto the GWT shell's tree logger.
+ */
 public class CommonsLoggerAdapter implements org.apache.commons.logging.Log {
 
   private TreeLogger log;

@@ -292,7 +292,8 @@ public class FileOracleFactory {
    * 
    * @param logger Logs the process.
    * @param filter If non-null, filters out which files get indexed.
-   * @param url The URL to index, must be "file:" or "jar:file:"
+   * @param url The URL to index, must be <code>file:</code> or
+   *          <code>jar:file:</code>
    * @param pkgBase A prefix to exclude when indexing children.
    * @param logicalNames An output List of Children found under this URL.
    * @param logicalToPhysical An output Map of Children found under this URL
@@ -334,7 +335,7 @@ public class FileOracleFactory {
           // From each child, strip off the leading classpath portion when
           // determining the logical name (sans the pkgBase name we want!)
           //
-          indexJar(logger, filter, "jar:" + jarPath, jarFile, dirPath, pkgBase,
+          indexJar(logger, filter, "jar" + ":" + jarPath, jarFile, dirPath, pkgBase,
               logicalNames, logicalToPhysical);
         } else {
           logger.log(TreeLogger.WARN, "Unexpected error, jar at " + jarURL

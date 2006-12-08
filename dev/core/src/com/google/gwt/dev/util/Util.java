@@ -65,10 +65,6 @@ import java.util.jar.JarEntry;
  */
 public final class Util {
 
-  public static interface MapParserCallback {
-    void parsed(String key, String value);
-  }
-
   public static String DEFAULT_ENCODING = "UTF-8";
 
   public static final File[] EMPTY_ARRAY_FILE = new File[0];

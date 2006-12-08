@@ -21,6 +21,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+/**
+ * A blind byte-by-byte bi-directional proxy.
+ */
 public class NetProxy {
 
   private class ClientToServerProxyConnection extends ProxyConnection {

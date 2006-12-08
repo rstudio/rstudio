@@ -19,6 +19,9 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Retains parsed information about a particular schema clas.
+ */
 public class HandlerClassInfo {
   private static final HandlerMethod[] EMPTY_ARRAY_HANDLERMETHOD = new HandlerMethod[0];
   private static Map sClassInfoMap = new HashMap();

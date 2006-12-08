@@ -22,6 +22,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
+/**
+ * Groups predefined magic HTTP header strings.
+ */
 public final class HttpHeaders {
 
   public static final String IF_MODIFIED_SINCE = "If-Modified-Since";

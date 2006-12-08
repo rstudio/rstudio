@@ -35,6 +35,9 @@ import java.util.List;
  */
 public final class TreeItemLogger extends AbstractTreeLogger {
 
+  /**
+   * Represents an individual log event.
+   */
   public static class LogEvent {
     public final Throwable caught;
 
