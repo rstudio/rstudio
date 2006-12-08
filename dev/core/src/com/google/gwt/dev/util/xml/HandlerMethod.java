@@ -22,6 +22,9 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents metadata about a handler method in a class derived from {@link Schema}. 
+ */
 public final class HandlerMethod {
 
   private static final HandlerParam[] EMPTY_HANDLERPARAMS = new HandlerParam[0];

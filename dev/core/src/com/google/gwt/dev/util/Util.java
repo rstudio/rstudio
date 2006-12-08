@@ -788,7 +788,7 @@ public final class Util {
 
   public static URL toURL(URL jarUrl, String path) {
     try {
-      return new URL("jar:" + jarUrl.toString() + "!/" + path);
+      return new URL("jar" + ":" + jarUrl.toString() + "!/" + path);
     } catch (MalformedURLException e) {
       throw new RuntimeException("Failed to convert a jar path to a URL", e);
     }

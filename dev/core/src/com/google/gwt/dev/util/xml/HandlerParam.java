@@ -18,6 +18,10 @@ package com.google.gwt.dev.util.xml;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+/**
+ * Represents metadata about a parameter in a handler method in a class derived
+ * from {@link Schema}.
+ */
 public final class HandlerParam {
 
   /**
