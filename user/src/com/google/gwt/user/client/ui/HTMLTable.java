@@ -343,7 +343,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * @param column the column whose style name is to be set
      * @param styleName the new style name
      * @see UIObject#setStyleName(String)
-     * @thcolumns IndexOutOfBoundsException
+     * @throws IndexOutOfBoundsException
      */
     public void setStyleName(int column, String styleName) {
       Element elem = ensureColumn(column);
