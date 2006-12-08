@@ -1,0 +1,36 @@
+<project name="buildtools" default="build" basedir=".">
+	<property name="gwt.root" location=".." />
+	<property name="project.tail" value="build-tools" />
+	<import file="${gwt.root}/common.ant.xml" />
+
+	<!-- "build" is the default when subprojects are directly targetted -->
+	<property name="target" value="build" />
+
+	<target name="customchecks" description="Build the checkstyle extensions">
+		<ant dir="customchecks" inheritall="false" target="${target}" />
+	</target>
+	
+	<target name="doctool" description="Build the doctool">
+		<ant dir="doctool" inheritall="false" target="${target}" />
+	</target>
+
+	<target name="-do" depends="customchecks, doctool" description="Run all subprojects"/>
+	
+	<target name="build" description="Builds GWT">
+		<antcall target="-do">
+			<param name="target" value="build" />
+		</antcall>
+	</target>
+
+	<target name="checkstyle" depends="build" description="Static analysis of GWT source">
+		<antcall target="-do">
+			<param name="target" value="checkstyle" />
+		</antcall>
+	</target>
+
+	<target name="test" depends="build" description="Test GWT">
+		<antcall target="-do">
+			<param name="target" value="test" />
+		</antcall>
+	</target>
+</project>
