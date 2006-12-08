@@ -38,11 +38,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+// CHECKSTYLE_NAMING_OFF
 /**
  * Configures a module definition object using XML.
  */
 public class ModuleDefSchema extends Schema {
-
   private final class BodySchema extends Schema {
 
     protected final String __define_property_1_name = null;
@@ -773,3 +773,4 @@ public class ModuleDefSchema extends Schema {
   }
 
 }
+//CHECKSTYLE_NAMING_ON

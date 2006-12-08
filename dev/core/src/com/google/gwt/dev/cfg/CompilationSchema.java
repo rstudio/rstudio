@@ -17,19 +17,20 @@ package com.google.gwt.dev.cfg;
 
 import com.google.gwt.dev.util.xml.Schema;
 
+//CHECKSTYLE_NAMING_OFF
 /**
  * The XML schema class to parse XML for deferred binding conditions.
  */
 public class CompilationSchema extends Schema {
 
   private final class BodySchema extends Schema {
+
     protected final String __generated_type_hash_1_class = null;
 
     protected final String __generated_type_hash_2_hash = null;
 
     protected final String __rebind_decision_1_in = null;
     protected final String __rebind_decision_2_out = null;
-
     protected Schema __generated_type_hash_begin(String type, String hash) {
       compilation.recordGeneratedTypeHash(type, hash);
       return null;
@@ -51,3 +52,4 @@ public class CompilationSchema extends Schema {
     return new BodySchema();
   }
 }
+//CHECKSTYLE_NAMING_ON
