@@ -22,6 +22,8 @@ public abstract class AbstractList extends AbstractCollection implements List {
 
   private final class IteratorImpl implements Iterator {
 
+    int i = 0, last = -1;
+
     public boolean hasNext() {
       return i < size();
     }
@@ -41,8 +43,6 @@ public abstract class AbstractList extends AbstractCollection implements List {
       --i;
       last = -1;
     }
-
-    int i = 0, last = -1;
   }
 
   public void add(int index, Object element) {

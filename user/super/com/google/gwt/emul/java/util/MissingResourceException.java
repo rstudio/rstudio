@@ -21,6 +21,10 @@ package java.util;
  * official Java API doc</a> for details.
  */
 public class MissingResourceException extends RuntimeException {
+  private String className;
+
+  private String key;
+
   public MissingResourceException(String s, String className, String key) {
     super(s);
     this.key = key;
@@ -34,7 +38,4 @@ public class MissingResourceException extends RuntimeException {
   public String getKey() {
     return key;
   }
-
-  private String className;
-  private String key;
 }

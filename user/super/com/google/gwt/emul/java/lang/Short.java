@@ -22,6 +22,41 @@ public final class Short extends Number implements Comparable {
   public static final short MIN_VALUE = (short) 0x8000;
   public static final short MAX_VALUE = (short) 0x7fff;
 
+  public static Short decode(String s) throws NumberFormatException {
+    long x = __parseLongInfer(s);
+    if (__isLongNaN(x)) {
+      throw new NumberFormatException(s);
+    } else {
+      return new Short((short) x);
+    }
+  }
+
+  public static short parseShort(String s) throws NumberFormatException {
+    return parseShort(s, 10);
+  }
+
+  public static short parseShort(String s, int radix)
+      throws NumberFormatException {
+    long x = __parseLongRadix(s, radix);
+    if (__isLongNaN(x)) {
+      throw new NumberFormatException(s);
+    } else {
+      return (short) x;
+    }
+  }
+
+  public static String toString(short b) {
+    return String.valueOf(b);
+  }
+
+  public static Short valueOf(String s) throws NumberFormatException {
+    return new Short(Short.parseShort(s));
+  }
+
+  public static Short valueOf(String s, int radix) throws NumberFormatException {
+    return new Short(Short.parseShort(s, radix));
+  }
+
   private final short fValue;
 
   public Short(short value) {
@@ -32,12 +67,12 @@ public final class Short extends Number implements Comparable {
     fValue = parseShort(s);
   }
 
-  public int compareTo(Object o) {
-    return compareTo((Short) o);
+  public byte byteValue() {
+    return (byte) fValue;
   }
 
-  public int hashCode() {
-    return fValue;
+  public int compareTo(Object o) {
+    return compareTo((Short) o);
   }
 
   public int compareTo(Short b) {
@@ -50,44 +85,19 @@ public final class Short extends Number implements Comparable {
     }
   }
 
-  public boolean equals(Object o) {
-    return (o instanceof Short) && (((Short) o).fValue == fValue);
-  }
-
-  public static String toString(short b) {
-    return String.valueOf(b);
-  }
-
-  public String toString() {
-    return toString(fValue);
-  }
-
-  public static Short decode(String s) throws NumberFormatException {
-    long x = __parseLongInfer(s);
-    if (__isLongNaN(x)) {
-      throw new NumberFormatException(s);
-    } else {
-      return new Short((short) x);
-    }
-  }
-
-  public static Short valueOf(String s) throws NumberFormatException {
-    return new Short(Short.parseShort(s));
-  }
-
-  public static Short valueOf(String s, int radix) throws NumberFormatException {
-    return new Short(Short.parseShort(s, radix));
-  }
-
-  public byte byteValue() {
-    return (byte) fValue;
-  }
-
   public double doubleValue() {
     return fValue;
   }
 
+  public boolean equals(Object o) {
+    return (o instanceof Short) && (((Short) o).fValue == fValue);
+  }
+
   public float floatValue() {
+    return fValue;
+  }
+
+  public int hashCode() {
     return fValue;
   }
 
@@ -103,17 +113,7 @@ public final class Short extends Number implements Comparable {
     return fValue;
   }
 
-  public static short parseShort(String s, int radix)
-      throws NumberFormatException {
-    long x = __parseLongRadix(s, radix);
-    if (__isLongNaN(x)) {
-      throw new NumberFormatException(s);
-    } else {
-      return (short) x;
-    }
-  }
-
-  public static short parseShort(String s) throws NumberFormatException {
-    return parseShort(s, 10);
+  public String toString() {
+    return toString(fValue);
   }
 }

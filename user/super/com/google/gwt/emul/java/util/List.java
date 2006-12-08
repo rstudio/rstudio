@@ -20,46 +20,46 @@ package java.util;
  */
 public interface List extends Collection {
 
-  int size();
-
-  boolean isEmpty();
-
-  boolean contains(Object o);
-
-  Iterator iterator();
-
-  Object[] toArray();
+  void add(int index, Object element);
 
   boolean add(Object o);
-
-  boolean remove(Object o);
-
-  boolean containsAll(Collection c);
 
   boolean addAll(Collection c);
 
   boolean addAll(int index, Collection c);
 
+  void clear();
+
+  boolean contains(Object o);
+
+  boolean containsAll(Collection c);
+
+  boolean equals(Object o);
+
+  Object get(int index);
+
+  int hashCode();
+
+  int indexOf(Object o);
+
+  boolean isEmpty();
+
+  Iterator iterator();
+
+  int lastIndexOf(Object o);
+
+  Object remove(int index);
+
+  boolean remove(Object o);
+
   boolean removeAll(Collection c);
 
   boolean retainAll(Collection c);
 
-  void clear();
-
-  boolean equals(Object o);
-
-  int hashCode();
-
-  Object get(int index);
-
   Object set(int index, Object element);
 
-  void add(int index, Object element);
+  int size();
 
-  Object remove(int index);
-
-  int indexOf(Object o);
-
-  int lastIndexOf(Object o);
+  Object[] toArray();
 
 }

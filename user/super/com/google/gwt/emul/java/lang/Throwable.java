@@ -26,6 +26,10 @@ public class Throwable {
 
   private static final StackTraceElement[] NO_STACK_TRACE = new StackTraceElement[0];
 
+  private Throwable cause;
+
+  private String message;
+
   public Throwable() {
   }
 
@@ -116,7 +120,4 @@ public class Throwable {
       return className;
     }
   }
-
-  private Throwable cause;
-  private String message;
 }

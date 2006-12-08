@@ -22,6 +22,42 @@ public final class Byte extends Number implements Comparable {
   public static final byte MIN_VALUE = (byte) 0x80;
   public static final byte MAX_VALUE = (byte) 0x7F;
 
+  public static Byte decode(String s) throws NumberFormatException {
+    long x = __parseLongInfer(s);
+    if (__isLongNaN(x)) {
+      throw new NumberFormatException(s);
+    } else {
+      return new Byte((byte) x);
+    }
+  }
+
+  public static byte parseByte(String s) throws NumberFormatException {
+    final int baseTen = 10;
+    return parseByte(s, baseTen);
+  }
+
+  public static byte parseByte(String s, int radix)
+      throws NumberFormatException {
+    long x = __parseLongRadix(s, radix);
+    if (__isLongNaN(x)) {
+      throw new NumberFormatException(s);
+    } else {
+      return (byte) x;
+    }
+  }
+
+  public static String toString(byte b) {
+    return String.valueOf(b);
+  }
+
+  public static Byte valueOf(String s) throws NumberFormatException {
+    return new Byte(Byte.parseByte(s));
+  }
+
+  public static Byte valueOf(String s, int radix) throws NumberFormatException {
+    return new Byte(Byte.parseByte(s, radix));
+  }
+
   private final byte fValue;
 
   public Byte(byte value) {
@@ -32,11 +68,7 @@ public final class Byte extends Number implements Comparable {
     fValue = parseByte(s);
   }
 
-  public int compareTo(Object o) {
-    return compareTo((Byte) o);
-  }
-
-  public int hashCode() {
+  public byte byteValue() {
     return fValue;
   }
 
@@ -50,44 +82,23 @@ public final class Byte extends Number implements Comparable {
     }
   }
 
-  public boolean equals(Object o) {
-    return (o instanceof Byte) && (((Byte) o).fValue == fValue);
-  }
-
-  public static String toString(byte b) {
-    return String.valueOf(b);
-  }
-
-  public String toString() {
-    return toString(fValue);
-  }
-
-  public static Byte decode(String s) throws NumberFormatException {
-    long x = __parseLongInfer(s);
-    if (__isLongNaN(x)) {
-      throw new NumberFormatException(s);
-    } else {
-      return new Byte((byte) x);
-    }
-  }
-
-  public static Byte valueOf(String s) throws NumberFormatException {
-    return new Byte(Byte.parseByte(s));
-  }
-
-  public static Byte valueOf(String s, int radix) throws NumberFormatException {
-    return new Byte(Byte.parseByte(s, radix));
-  }
-
-  public byte byteValue() {
-    return fValue;
+  public int compareTo(Object o) {
+    return compareTo((Byte) o);
   }
 
   public double doubleValue() {
     return fValue;
   }
 
+  public boolean equals(Object o) {
+    return (o instanceof Byte) && (((Byte) o).fValue == fValue);
+  }
+
   public float floatValue() {
+    return fValue;
+  }
+
+  public int hashCode() {
     return fValue;
   }
 
@@ -103,18 +114,7 @@ public final class Byte extends Number implements Comparable {
     return fValue;
   }
 
-  public static byte parseByte(String s, int radix)
-      throws NumberFormatException {
-    long x = __parseLongRadix(s, radix);
-    if (__isLongNaN(x)) {
-      throw new NumberFormatException(s);
-    } else {
-      return (byte) x;
-    }
-  }
-
-  public static byte parseByte(String s) throws NumberFormatException {
-    final int baseTen = 10;
-    return parseByte(s, baseTen);
+  public String toString() {
+    return toString(fValue);
   }
 }

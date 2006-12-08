@@ -23,7 +23,24 @@ public final class Boolean {
   // CHECKSTYLE_OFF: These have to be created somewhere
   public static Boolean FALSE = new Boolean(false);
   public static Boolean TRUE = new Boolean(true);
+
   // CHECKSTYLE_ON
+
+  public static String toString(boolean x) {
+    return String.valueOf(x);
+  }
+
+  public static Boolean valueOf(boolean b) {
+    return b ? TRUE : FALSE;
+  }
+
+  public static Boolean valueOf(String s) {
+    if (s != null && s.equalsIgnoreCase("true")) {
+      return TRUE;
+    } else {
+      return FALSE;
+    }
+  }
 
   private boolean fValue;
 
@@ -39,8 +56,8 @@ public final class Boolean {
     return fValue;
   }
 
-  public static String toString(boolean x) {
-    return String.valueOf(x);
+  public boolean equals(Object o) {
+    return (o instanceof Boolean) && (((Boolean) o).fValue == fValue);
   }
 
   public int hashCode() {
@@ -50,23 +67,7 @@ public final class Boolean {
     return fValue ? hashCodeForTrue : hashCodeForFalse;
   }
 
-  public boolean equals(Object o) {
-    return (o instanceof Boolean) && (((Boolean) o).fValue == fValue);
-  }
-
   public String toString() {
     return fValue ? "true" : "false";
-  }
-
-  public static Boolean valueOf(String s) {
-    if (s != null && s.equalsIgnoreCase("true")) {
-      return TRUE;
-    } else {
-      return FALSE;
-    }
-  }
-
-  public static Boolean valueOf(boolean b) {
-    return b ? TRUE : FALSE;
   }
 }

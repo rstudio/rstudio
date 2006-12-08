@@ -36,16 +36,16 @@ public final class System {
    */
   public static final PrintStream out = new PrintStream(null);
 
+  public static native long currentTimeMillis() /*-{
+    return (new Date()).getTime();
+  }-*/;
+
   /**
    * Has no effect; just here for source compatibility.
    * 
    * @skip
    */
   public static native void gc() /*-{
-  }-*/;
-
-  public static native long currentTimeMillis() /*-{
-    return (new Date()).getTime();
   }-*/;
 
   public static native int identityHashCode(Object o) /*-{

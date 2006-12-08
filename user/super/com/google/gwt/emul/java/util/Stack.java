@@ -20,24 +20,10 @@ package java.util;
  */
 public class Stack extends Vector {
 
-  public Object pop() {
-    int sz = size();
-    if (sz > 0) {
-      return remove(sz - 1);
-    } else {
-      throw new EmptyStackException();
-    }
-  }
-
   public Object clone() {
     Stack s = new Stack();
     s.addAll(this);
     return s;
-  }
-
-  public Object push(Object o) {
-    add(o);
-    return o;
   }
 
   public boolean empty() {
@@ -51,6 +37,20 @@ public class Stack extends Vector {
     } else {
       throw new EmptyStackException();
     }
+  }
+
+  public Object pop() {
+    int sz = size();
+    if (sz > 0) {
+      return remove(sz - 1);
+    } else {
+      throw new EmptyStackException();
+    }
+  }
+
+  public Object push(Object o) {
+    add(o);
+    return o;
   }
 
   public int search(Object o) {

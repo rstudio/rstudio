@@ -26,71 +26,7 @@ public final class Math {
   private static final double PI_OVER_180 = PI / 180.0;
   private static final double PI_UNDER_180 = 180.0 / PI;
 
-  public static native double pow(double x, double exp) /*-{
-    return Math.pow(x, exp);
-  }-*/;
-
-  public static native double floor(double x) /*-{
-    return Math.floor(x);
-  }-*/;
-
-  public static native double ceil(double x) /*-{
-    return Math.ceil(x);
-  }-*/;
-
-  public static double min(double x, double y) {
-    return x < y ? x : y;
-  }
-
-  public static double max(double x, double y) {
-    return x > y ? x : y;
-  }
-
-  public static int min(int x, int y) {
-    return x < y ? x : y;
-  }
-
-  public static int max(int x, int y) {
-    return x > y ? x : y;
-  }
-
-  public static native double sin(double x) /*-{
-    return Math.sin(x);
-  }-*/;
-
-  public static native double cos(double x) /*-{
-    return Math.cos(x);
-  }-*/;
-
-  public static native double tan(double x) /*-{
-    return Math.tan(x);
-  }-*/;
-
-  public static native double sqrt(double x) /*-{
-    return Math.sqrt(x);
-  }-*/;
-
-  public static long min(long x, long y) {
-    return x < y ? x : y;
-  }
-
-  public static long max(long x, long y) {
-    return x > y ? x : y;
-  }
-
-  public static float min(float x, float y) {
-    return x < y ? x : y;
-  }
-
-  public static float max(float x, float y) {
-    return x > y ? x : y;
-  }
-
   public static double abs(double x) {
-    return x < 0 ? -x : x;
-  }
-
-  public static long abs(long x) {
     return x < 0 ? -x : x;
   }
 
@@ -99,6 +35,10 @@ public final class Math {
   }
 
   public static int abs(int x) {
+    return x < 0 ? -x : x;
+  }
+
+  public static long abs(long x) {
     return x < 0 ? -x : x;
   }
 
@@ -114,24 +54,84 @@ public final class Math {
     return Math.atan(x);
   }-*/;
 
+  public static native double ceil(double x) /*-{
+    return Math.ceil(x);
+  }-*/;
+
+  public static native double cos(double x) /*-{
+    return Math.cos(x);
+  }-*/;
+
   public static native double exp(double x) /*-{
     return Math.exp(x);
+  }-*/;
+
+  public static native double floor(double x) /*-{
+    return Math.floor(x);
   }-*/;
 
   public static native double log(double x) /*-{
     return Math.log(x);
   }-*/;
 
+  public static double max(double x, double y) {
+    return x > y ? x : y;
+  }
+
+  public static float max(float x, float y) {
+    return x > y ? x : y;
+  }
+
+  public static int max(int x, int y) {
+    return x > y ? x : y;
+  }
+
+  public static long max(long x, long y) {
+    return x > y ? x : y;
+  }
+
+  public static double min(double x, double y) {
+    return x < y ? x : y;
+  }
+
+  public static float min(float x, float y) {
+    return x < y ? x : y;
+  }
+
+  public static int min(int x, int y) {
+    return x < y ? x : y;
+  }
+
+  public static long min(long x, long y) {
+    return x < y ? x : y;
+  }
+
+  public static native double pow(double x, double exp) /*-{
+    return Math.pow(x, exp);
+  }-*/;
+
   public static native double random() /*-{
     return Math.random();
+  }-*/;
+
+  public static native long round(double x) /*-{
+    return Math.round(x);
   }-*/;
 
   public static native int round(float x) /*-{
     return Math.round(x);
   }-*/;
 
-  public static native long round(double x) /*-{
-    return Math.round(x);
+  public static native double sin(double x) /*-{
+    return Math.sin(x);
+  }-*/;
+
+  public static native double sqrt(double x) /*-{
+    return Math.sqrt(x);
+  }-*/;
+
+  public static native double tan(double x) /*-{
+    return Math.tan(x);
   }-*/;
 
   public static double toDegrees(double x) {

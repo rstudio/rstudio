@@ -21,6 +21,8 @@ package java.util;
 public class ArrayList extends AbstractList implements List, RandomAccess,
     Cloneable {
 
+  private Vector fVec;
+
   public ArrayList() {
     fVec = new Vector();
   }
@@ -97,6 +99,4 @@ public class ArrayList extends AbstractList implements List, RandomAccess,
   protected void removeRange(int fromIndex, int endIndex) {
     fVec.removeRange(fromIndex, endIndex);
   }
-
-  private Vector fVec;
 }

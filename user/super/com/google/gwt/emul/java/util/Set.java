@@ -20,32 +20,32 @@ package java.util;
  */
 public interface Set extends Collection {
 
-  int size();
-
-  boolean isEmpty();
-
-  boolean contains(Object o);
-
-  Iterator iterator();
-
-  Object[] toArray();
-
   boolean add(Object o);
-
-  boolean remove(Object o);
-
-  boolean containsAll(Collection c);
 
   boolean addAll(Collection c);
 
-  boolean retainAll(Collection c);
-
-  boolean removeAll(Collection c);
-
   void clear();
+
+  boolean contains(Object o);
+
+  boolean containsAll(Collection c);
 
   boolean equals(Object o);
 
   int hashCode();
+
+  boolean isEmpty();
+
+  Iterator iterator();
+
+  boolean remove(Object o);
+
+  boolean removeAll(Collection c);
+
+  boolean retainAll(Collection c);
+
+  int size();
+
+  Object[] toArray();
 
 }

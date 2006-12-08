@@ -22,6 +22,49 @@ public final class Integer extends Number implements Comparable {
   public static final int MIN_VALUE = 0x80000000;
   public static final int MAX_VALUE = 0x7fffffff;
 
+  public static Integer decode(String s) throws NumberFormatException {
+    long x = __parseLongInfer(s);
+    if (__isLongNaN(x)) {
+      throw new NumberFormatException(s);
+    } else {
+      return new Integer((int) x);
+    }
+  }
+
+  public static int parseInt(String s) throws NumberFormatException {
+    return parseInt(s, 10);
+  }
+
+  public static int parseInt(String s, int radix) throws NumberFormatException {
+    long x = __parseLongRadix(s, radix);
+    if (__isLongNaN(x)) {
+      throw new NumberFormatException(s);
+    } else {
+      return (int) x;
+    }
+  }
+
+  public static String toBinaryString(int x) {
+    return Long.toBinaryString(x);
+  }
+
+  public static String toHexString(int x) {
+    return Long.toHexString(x);
+  }
+
+  public static String toString(int b) {
+    return String.valueOf(b);
+  }
+
+  public static Integer valueOf(String s) throws NumberFormatException {
+    return new Integer(Integer.parseInt(s));
+  }
+
+  public static Integer valueOf(String s, int radix)
+      throws NumberFormatException {
+    return new Integer(Integer.parseInt(s, radix));
+  }
+
   private final int fValue;
 
   public Integer(int value) {
@@ -32,12 +75,8 @@ public final class Integer extends Number implements Comparable {
     fValue = parseInt(s);
   }
 
-  public int compareTo(Object o) {
-    return compareTo((Integer) o);
-  }
-
-  public int hashCode() {
-    return fValue;
+  public byte byteValue() {
+    return (byte) fValue;
   }
 
   public int compareTo(Integer b) {
@@ -50,45 +89,23 @@ public final class Integer extends Number implements Comparable {
     }
   }
 
-  public boolean equals(Object o) {
-    return (o instanceof Integer) && (((Integer) o).fValue == fValue);
-  }
-
-  public static String toString(int b) {
-    return String.valueOf(b);
-  }
-
-  public String toString() {
-    return toString(fValue);
-  }
-
-  public static Integer decode(String s) throws NumberFormatException {
-    long x = __parseLongInfer(s);
-    if (__isLongNaN(x)) {
-      throw new NumberFormatException(s);
-    } else {
-      return new Integer((int) x);
-    }
-  }
-
-  public static Integer valueOf(String s) throws NumberFormatException {
-    return new Integer(Integer.parseInt(s));
-  }
-
-  public static Integer valueOf(String s, int radix)
-      throws NumberFormatException {
-    return new Integer(Integer.parseInt(s, radix));
-  }
-
-  public byte byteValue() {
-    return (byte) fValue;
+  public int compareTo(Object o) {
+    return compareTo((Integer) o);
   }
 
   public double doubleValue() {
     return fValue;
   }
 
+  public boolean equals(Object o) {
+    return (o instanceof Integer) && (((Integer) o).fValue == fValue);
+  }
+
   public float floatValue() {
+    return fValue;
+  }
+
+  public int hashCode() {
     return fValue;
   }
 
@@ -104,25 +121,8 @@ public final class Integer extends Number implements Comparable {
     return (short) fValue;
   }
 
-  public static int parseInt(String s, int radix) throws NumberFormatException {
-    long x = __parseLongRadix(s, radix);
-    if (__isLongNaN(x)) {
-      throw new NumberFormatException(s);
-    } else {
-      return (int) x;
-    }
-  }
-
-  public static int parseInt(String s) throws NumberFormatException {
-    return parseInt(s, 10);
-  }
-
-  public static String toHexString(int x) {
-    return Long.toHexString(x);
-  }
-
-  public static String toBinaryString(int x) {
-    return Long.toBinaryString(x);
+  public String toString() {
+    return toString(fValue);
   }
 
 }

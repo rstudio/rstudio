@@ -36,16 +36,16 @@ public class Object {
    */
   protected transient String typeName;
 
-  public String toString() {
-    return typeName + "@" + hashCode();
-  }
-
   public native boolean equals(Object other) /*-{
     return this === other;
   }-*/;
 
   public int hashCode() {
     return System.identityHashCode(this);
+  }
+
+  public String toString() {
+    return typeName + "@" + hashCode();
   }
 
   /**

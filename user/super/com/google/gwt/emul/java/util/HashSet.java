@@ -20,6 +20,8 @@ package java.util;
  */
 public class HashSet extends AbstractSet implements Set, Cloneable {
 
+  private HashMap fMap;
+
   public HashSet() {
     fMap = new HashMap();
   }
@@ -73,7 +75,5 @@ public class HashSet extends AbstractSet implements Set, Cloneable {
   public String toString() {
     return fMap.keySet().toString();
   }
-
-  private HashMap fMap;
 
 }

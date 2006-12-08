@@ -22,6 +22,14 @@ package java.lang;
  */
 public class StackTraceElement {
 
+  private String className;
+
+  private String fileName;
+
+  private int lineNumber;
+
+  private String methodName;
+
   public String getClassName() {
     return className;
   }
@@ -37,9 +45,4 @@ public class StackTraceElement {
   public String getMethodName() {
     return methodName;
   }
-
-  private String className;
-  private String fileName;
-  private int lineNumber;
-  private String methodName;
 }

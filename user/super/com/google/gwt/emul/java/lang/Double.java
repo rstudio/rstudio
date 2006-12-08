@@ -25,6 +25,41 @@ public final class Double extends Number implements Comparable {
   public static final double NEGATIVE_INFINITY = -1d / 0d;
   public static final double POSITIVE_INFINITY = 1d / 0d;
 
+  public static int compare(double x, double y) {
+    if (x < y) {
+      return -1;
+    } else if (x > y) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+
+  public static native boolean isInfinite(double x) /*-{
+    return !isFinite(x);
+  }-*/;
+
+  public static native boolean isNaN(double x) /*-{
+    return isNaN(x);
+  }-*/;
+
+  public static double parseDouble(String s) throws NumberFormatException {
+    double x = __parseDouble(s);
+    if (isNaN(x)) {
+      throw new NumberFormatException(s);
+    } else {
+      return x;
+    }
+  }
+
+  public static String toString(double b) {
+    return String.valueOf(b);
+  }
+
+  public static Double valueOf(String s) throws NumberFormatException {
+    return new Double(Double.parseDouble(s));
+  }
+
   private final double fValue;
 
   public Double(double value) {
@@ -35,8 +70,34 @@ public final class Double extends Number implements Comparable {
     fValue = parseDouble(s);
   }
 
+  public byte byteValue() {
+    return (byte) fValue;
+  }
+
+  public int compareTo(Double b) {
+    if (fValue < b.fValue) {
+      return -1;
+    } else if (fValue > b.fValue) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+
   public int compareTo(Object o) {
     return compareTo((Double) o);
+  }
+
+  public double doubleValue() {
+    return fValue;
+  }
+
+  public boolean equals(Object o) {
+    return (o instanceof Double) && (((Double) o).fValue == fValue);
+  }
+
+  public float floatValue() {
+    return (float) fValue;
   }
 
   /**
@@ -52,46 +113,16 @@ public final class Double extends Number implements Comparable {
     return (int) fValue;
   }
 
-  public int compareTo(Double b) {
-    if (fValue < b.fValue) {
-      return -1;
-    } else if (fValue > b.fValue) {
-      return 1;
-    } else {
-      return 0;
-    }
-  }
-
-  public boolean equals(Object o) {
-    return (o instanceof Double) && (((Double) o).fValue == fValue);
-  }
-
-  public static String toString(double b) {
-    return String.valueOf(b);
-  }
-
-  public String toString() {
-    return toString(fValue);
-  }
-
-  public static Double valueOf(String s) throws NumberFormatException {
-    return new Double(Double.parseDouble(s));
-  }
-
-  public byte byteValue() {
-    return (byte) fValue;
-  }
-
-  public float floatValue() {
-    return (float) fValue;
-  }
-
-  public double doubleValue() {
-    return fValue;
-  }
-
   public int intValue() {
     return (int) fValue;
+  }
+
+  public boolean isInfinite() {
+    return isInfinite(fValue);
+  }
+
+  public boolean isNaN() {
+    return isNaN(fValue);
   }
 
   public long longValue() {
@@ -102,39 +133,8 @@ public final class Double extends Number implements Comparable {
     return (short) fValue;
   }
 
-  public static int compare(double x, double y) {
-    if (x < y) {
-      return -1;
-    } else if (x > y) {
-      return 1;
-    } else {
-      return 0;
-    }
+  public String toString() {
+    return toString(fValue);
   }
-
-  public static double parseDouble(String s) throws NumberFormatException {
-    double x = __parseDouble(s);
-    if (isNaN(x)) {
-      throw new NumberFormatException(s);
-    } else {
-      return x;
-    }
-  }
-
-  public boolean isNaN() {
-    return isNaN(fValue);
-  }
-
-  public static native boolean isNaN(double x) /*-{
-    return isNaN(x);
-  }-*/;
-
-  public boolean isInfinite() {
-    return isInfinite(fValue);
-  }
-
-  public static native boolean isInfinite(double x) /*-{
-    return !isFinite(x);
-  }-*/;
 
 }

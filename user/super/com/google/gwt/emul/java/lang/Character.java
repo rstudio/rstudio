@@ -26,66 +26,6 @@ public final class Character {
   public static final char MIN_VALUE = '\u0000';
   public static final char MAX_VALUE = '\uFFFF';
 
-  private final char fValue;
-
-  public Character(char value) {
-    fValue = value;
-  }
-
-  public char charValue() {
-    return fValue;
-  }
-
-  public static String toString(char x) {
-    return String.valueOf(x);
-  }
-
-  public static native char toUpperCase(char c) /*-{
-    return String.fromCharCode(c).toUpperCase().charCodeAt(0);
-  }-*/;
-
-  public static native char toLowerCase(char c) /*-{
-    return String.fromCharCode(c).toLowerCase().charCodeAt(0);
-  }-*/;
-
-  public static native boolean isLetter(char c) /*-{
-    return (null != String.fromCharCode(c).match(/[A-Z]/i));
-  }-*/;
-
-  public static native boolean isDigit(char c) /*-{
-    return (null != String.fromCharCode(c).match(/\d/));
-  }-*/;
-
-  public static native boolean isLetterOrDigit(char c) /*-{
-    return (null != String.fromCharCode(c).match(/[A-Z\d]/i));
-  }-*/;
-
-  public int hashCode() {
-    return fValue;
-  }
-
-  public int compareTo(Character c) {
-    if (fValue < c.fValue) {
-      return -1;
-    } else if (fValue > c.fValue) {
-      return 1;
-    } else {
-      return 0;
-    }
-  }
-
-  public int compareTo(Object o) {
-    return compareTo((Character) o);
-  }
-
-  public boolean equals(Object o) {
-    return (o instanceof Character) && (((Character) o).fValue == fValue);
-  }
-
-  public String toString() {
-    return String.valueOf(fValue);
-  }
-
   public static int digit(char c, int radix) {
     if (radix < MIN_RADIX || radix > MAX_RADIX) {
       return -1;
@@ -119,6 +59,18 @@ public final class Character {
     }
   }
 
+  public static native boolean isDigit(char c) /*-{
+    return (null != String.fromCharCode(c).match(/\d/));
+  }-*/;
+
+  public static native boolean isLetter(char c) /*-{
+    return (null != String.fromCharCode(c).match(/[A-Z]/i));
+  }-*/;
+
+  public static native boolean isLetterOrDigit(char c) /*-{
+    return (null != String.fromCharCode(c).match(/[A-Z\d]/i));
+  }-*/;
+
   public static boolean isLowerCase(char c) {
     return toLowerCase(c) == c && isLetter(c);
   }
@@ -142,5 +94,53 @@ public final class Character {
 
   public static boolean isUpperCase(char c) {
     return toUpperCase(c) == c && isLetter(c);
+  }
+
+  public static native char toLowerCase(char c) /*-{
+    return String.fromCharCode(c).toLowerCase().charCodeAt(0);
+  }-*/;
+
+  public static String toString(char x) {
+    return String.valueOf(x);
+  }
+
+  public static native char toUpperCase(char c) /*-{
+    return String.fromCharCode(c).toUpperCase().charCodeAt(0);
+  }-*/;
+
+  private final char fValue;
+
+  public Character(char value) {
+    fValue = value;
+  }
+
+  public char charValue() {
+    return fValue;
+  }
+
+  public int compareTo(Character c) {
+    if (fValue < c.fValue) {
+      return -1;
+    } else if (fValue > c.fValue) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+
+  public int compareTo(Object o) {
+    return compareTo((Character) o);
+  }
+
+  public boolean equals(Object o) {
+    return (o instanceof Character) && (((Character) o).fValue == fValue);
+  }
+
+  public int hashCode() {
+    return fValue;
+  }
+
+  public String toString() {
+    return String.valueOf(fValue);
   }
 }
