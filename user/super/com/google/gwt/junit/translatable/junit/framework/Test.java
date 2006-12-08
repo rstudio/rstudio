@@ -15,6 +15,9 @@
  */
 package junit.framework;
 
+/**
+ * Translatable version of JUnit's <code>Test</code>.
+ */
 public interface Test {
   public abstract int countTestCases();
 }

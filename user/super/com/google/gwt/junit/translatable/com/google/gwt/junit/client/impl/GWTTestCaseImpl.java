@@ -65,7 +65,6 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
         testCase.impl.runTest();
       }
     }
-
   }
 
   /**
@@ -75,6 +74,11 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
    * fail with {@link TimeoutException}.
    */
   private final class KillTimer extends Timer {
+
+    /**
+     * Stashed so the timeout can be reported via {@link TimeoutException}.
+     */
+    private final int timeoutMillis;
 
     public KillTimer(int timeoutMillis) {
       this.timeoutMillis = timeoutMillis;
@@ -90,17 +94,52 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
         // Just do nothing.
       }
     }
-
-    /**
-     * Stashed so the timeout can be reported via {@link TimeoutException}.
-     */
-    private final int timeoutMillis;
   }
 
   /**
    * The remote service to communicate with.
    */
   private static final JUnitHostAsync junitHost = (JUnitHostAsync) GWT.create(JUnitHost.class);
+
+  static {
+    // Bind junitHost to the appropriate url.
+    ServiceDefTarget endpoint = (ServiceDefTarget) junitHost;
+    String url = GWT.getModuleBaseURL() + "junithost";
+    endpoint.setServiceEntryPoint(url);
+
+    // Null out the default uncaught exception handler since control it.
+    GWT.setUncaughtExceptionHandler(null);
+  }
+
+  /**
+   * The collected checkpoint messages.
+   */
+  private List checkPoints;
+
+  /**
+   * Handles all RPC responses.
+   */
+  private final JUnitHostListener junitHostListener = new JUnitHostListener();
+
+  /**
+   * Tracks whether the main test body has run (for asynchronous mode).
+   */
+  private boolean mainTestHasRun = false;
+
+  /**
+   * My paired (enclosing) {@link GWTTestCase}.
+   */
+  private final GWTTestCase outer;
+
+  /**
+   * Tracks whether this test is completely done.
+   */
+  private boolean testIsFinished = false;
+
+  /**
+   * If non-null, a timer to kill the current test case (for asynchronous mode).
+   */
+  private KillTimer timer;
 
   /**
    * Constructs a new GWTTestCaseImpl that is paired one-to-one with a
@@ -150,7 +189,7 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
 
     if (timer == null) {
       throw new IllegalStateException(
-        "This test is not in asynchronous mode; call delayTestFinish() first");
+          "This test is not in asynchronous mode; call delayTestFinish() first");
     }
 
     if (mainTestHasRun) {
@@ -222,7 +261,7 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
       }
     }
     junitHost.reportResultsAndGetNextMethod(outer.getTestName(), ew,
-      junitHostListener);
+        junitHostListener);
   }
 
   /**
@@ -293,44 +332,4 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
       return true;
     }
   }
-
-  static {
-    // Bind junitHost to the appropriate url.
-    ServiceDefTarget endpoint = (ServiceDefTarget) junitHost;
-    String url = GWT.getModuleBaseURL() + "junithost"; 
-    endpoint.setServiceEntryPoint(url);
-
-    // Null out the default uncaught exception handler since control it.
-    GWT.setUncaughtExceptionHandler(null);
-  }
-
-  /**
-   * The collected checkpoint messages.
-   */
-  private List checkPoints;
-
-  /**
-   * Handles all RPC responses.
-   */
-  private final JUnitHostListener junitHostListener = new JUnitHostListener();
-
-  /**
-   * Tracks whether the main test body has run (for asynchronous mode).
-   */
-  private boolean mainTestHasRun = false;
-
-  /**
-   * My paired (enclosing) {@link GWTTestCase}.
-   */
-  private final GWTTestCase outer;
-
-  /**
-   * Tracks whether this test is completely done.
-   */
-  private boolean testIsFinished = false;
-
-  /**
-   * If non-null, a timer to kill the current test case (for asynchronous mode).
-   */
-  private KillTimer timer;
 }

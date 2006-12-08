@@ -17,7 +17,12 @@ package junit.framework;
 
 import com.google.gwt.core.client.GWT;
 
+/**
+ * Translatable version of JUnit's <code>TestCase</code>.
+ */
 public class TestCase extends Assert implements Test {
+
+  private String name;
 
   public int countTestCases() {
     return 1;
@@ -64,7 +69,5 @@ public class TestCase extends Assert implements Test {
 
   protected void tearDown() throws Exception {
   }
-
-  private String name;
 
 }

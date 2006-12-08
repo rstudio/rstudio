@@ -21,6 +21,12 @@ package java.util;
 public class HashMap extends AbstractMap implements Map, Cloneable {
 
   private static class ImplMapEntry implements Map.Entry {
+    private boolean inUse;
+
+    private Object key;
+
+    private Object value;
+
     public boolean equals(Object a) {
       if (a instanceof Map.Entry) {
         Map.Entry s = (Map.Entry) a;
@@ -67,13 +73,21 @@ public class HashMap extends AbstractMap implements Map, Cloneable {
         return a.equals(b);
       }
     }
-
-    private boolean inUse;
-    private Object key;
-    private Object value;
   }
 
   private class ImplMapEntryIterator implements Iterator {
+
+    /**
+     * Always points at the next full slot; equal to <code>entries.length</code>
+     * if we're at the end.
+     */
+    private int i = 0;
+
+    /**
+     * Always points to the last element returned by next, or <code>-1</code>
+     * if there is no last element.
+     */
+    private int last = -1;
 
     public ImplMapEntryIterator() {
       maybeAdvanceToFullSlot();
@@ -113,19 +127,34 @@ public class HashMap extends AbstractMap implements Map, Cloneable {
         }
       }
     }
-
-    /**
-     * Always points at the next full slot; equal to <code>entries.length</code>
-     * if we're at the end.
-     */
-    private int i = 0;
-
-    /**
-     * Always points to the last element returned by next, or <code>-1</code>
-     * if there is no last element.
-     */
-    private int last = -1;
   }
+
+  /**
+   * Number of physically empty slots in {@link #entries}.
+   */
+  private int emptySlots;
+
+  /**
+   * The underlying data store.
+   */
+  private ImplMapEntry[] entries;
+
+  /**
+   * Number of logically full slots in {@link #entries}.
+   */
+  private int fullSlots;
+
+  /**
+   * A number between 0 and 1, exclusive. Used to calculated the new
+   * {@link #threshold} at which this map will be rehashed.
+   */
+  private float loadFactor;
+
+  /**
+   * Always equal to {@link #entries}.length * {@link #loadFactor}. When the
+   * number of non-empty slots exceeds this number, a rehash is performed.
+   */
+  private int threshold;
 
   public HashMap() {
     this(16);
@@ -383,32 +412,5 @@ public class HashMap extends AbstractMap implements Map, Cloneable {
     emptySlots = capacity - fullSlots;
     entries = new ImplMapEntry[capacity];
   }
-
-  /**
-   * Number of physically empty slots in {@link #entries}.
-   */
-  private int emptySlots;
-
-  /**
-   * The underlying data store.
-   */
-  private ImplMapEntry[] entries;
-
-  /**
-   * Number of logically full slots in {@link #entries}.
-   */
-  private int fullSlots;
-
-  /**
-   * A number between 0 and 1, exclusive. Used to calculated the new
-   * {@link #threshold} at which this map will be rehashed.
-   */
-  private float loadFactor;
-
-  /**
-   * Always equal to {@link #entries}.length * {@link #loadFactor}. When the
-   * number of non-empty slots exceeds this number, a rehash is performed.
-   */
-  private int threshold;
 
 }

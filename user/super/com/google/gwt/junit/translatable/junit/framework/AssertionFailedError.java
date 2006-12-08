@@ -16,7 +16,7 @@
 package junit.framework;
 
 /**
- * Thrown when an assertion failed.
+ * Translatable version of JUnit's <code>AssertionFailedError</code>.
  */
 public class AssertionFailedError extends Error {
 

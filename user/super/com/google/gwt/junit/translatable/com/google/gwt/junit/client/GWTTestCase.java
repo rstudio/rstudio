@@ -26,6 +26,12 @@ import junit.framework.TestCase;
  */
 public abstract class GWTTestCase extends TestCase {
 
+  /**
+   * A reference to my implementation class. All substantive methods simply
+   * delegate to the implementation class, to make debugging easier.
+   */
+  public final GWTTestCaseImpl impl = new GWTTestCaseImpl(this);
+
   public final void addCheckpoint(String msg) {
     impl.addCheckpoint(msg);
   }
@@ -41,7 +47,7 @@ public abstract class GWTTestCase extends TestCase {
   public final String[] getCheckpoints() {
     return impl.getCheckpoints();
   }
-  
+
   public abstract String getModuleName();
 
   /**
@@ -69,11 +75,5 @@ public abstract class GWTTestCase extends TestCase {
   protected final void finishTest() {
     impl.finishTest();
   }
-
-  /**
-   * A reference to my implementation class. All substantive methods simply
-   * delegate to the implementation class, to make debugging easier.
-   */
-  public final GWTTestCaseImpl impl = new GWTTestCaseImpl(this);
 
 }
