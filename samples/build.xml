@@ -1,0 +1,56 @@
+<project name="samples" default="build" basedir=".">
+	<property name="gwt.root" location=".." />
+	<property name="project.tail" value="samples" />
+	<import file="${gwt.root}/common.ant.xml" />
+
+	<!-- "build" is the default when subprojects are directly targetted -->
+	<property name="target" value="build" />
+
+	<target name="dynatable" description="Build dynatable">
+		<ant dir="dynatable" inheritall="false" target="${target}" />
+	</target>
+
+	<target name="hello" description="Build hello">
+		<ant dir="hello" inheritall="false" target="${target}" />
+	</target>
+
+	<target name="i18n" description="Build i18n">
+		<ant dir="i18n" inheritall="false" target="${target}" />
+	</target>
+
+	<target name="json" description="Build json">
+		<ant dir="json" inheritall="false" target="${target}" />
+	</target>
+
+	<target name="kitchensink" description="Build kitchensink">
+		<ant dir="kitchensink" inheritall="false" target="${target}" />
+	</target>
+
+	<target name="mail" description="Build mail">
+		<ant dir="mail" inheritall="false" target="${target}" />
+	</target>
+
+	<target name="simplexml" description="Build simplexml">
+		<ant dir="simplexml" inheritall="false" target="${target}" />
+	</target>
+
+	<target name="-do" depends="dynatable, hello, i18n, json, kitchensink, mail, simplexml" description="Run all subprojects" />
+
+	<target name="build" description="Builds GWT">
+		<antcall target="-do">
+			<param name="target" value="build" />
+		</antcall>
+	</target>
+
+	<target name="checkstyle" depends="build" description="Static analysis of GWT source">
+		<antcall target="-do">
+			<param name="target" value="checkstyle" />
+		</antcall>
+	</target>
+
+	<target name="test" depends="build" description="Test GWT">
+		<antcall target="-do">
+			<param name="target" value="test" />
+		</antcall>
+	</target>
+</project>

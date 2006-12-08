@@ -1,0 +1,5 @@
+<project name="i18n" default="build" basedir=".">
+	<property name="sample.root" value="i18n" />
+	<property name="sample.module" value="I18N" />
+	<import file="../common.ant.xml" />
+</project>
