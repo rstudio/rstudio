@@ -73,6 +73,9 @@ import java.math.BigInteger;
 import java.util.Iterator;
 import java.util.Stack;
 
+/**
+ * Parses JavaScript source.
+ */
 public class JsParser {
 
   private final Stack scopeStack = new Stack();

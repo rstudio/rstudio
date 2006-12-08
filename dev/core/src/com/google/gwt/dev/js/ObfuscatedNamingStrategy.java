@@ -18,6 +18,10 @@ package com.google.gwt.dev.js;
 import com.google.gwt.dev.js.ast.JsObfuscatableName;
 import com.google.gwt.dev.js.ast.JsScope;
 
+/**
+ * Implements a naming strategy that obfuscated the standard names of
+ * identifiers.
+ */
 public class ObfuscatedNamingStrategy extends NamingStrategy {
 
   private static final char[] sBase64Chars = new char[] {

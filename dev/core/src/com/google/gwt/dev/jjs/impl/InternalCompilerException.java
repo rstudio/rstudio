@@ -15,13 +15,17 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+/**
+ * Indicates the compiler encountered an unexpected and unsupported state of
+ * operation.
+ */
 public class InternalCompilerException extends RuntimeException {
 
-    public InternalCompilerException(String message) {
-        super(message);
-    }
+  public InternalCompilerException(String message) {
+    super(message);
+  }
 
-    public InternalCompilerException(String message, Throwable cause) {
-        super(message, cause);
-    }
+  public InternalCompilerException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

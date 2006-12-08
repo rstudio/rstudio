@@ -18,6 +18,10 @@ package com.google.gwt.dev.js;
 import com.google.gwt.dev.js.ast.JsObfuscatableName;
 import com.google.gwt.dev.js.ast.JsScope;
 
+/**
+ * Implements a naming strategy that simplifies the standard names of
+ * identifiers to make them readable.
+ */
 public class PrettyNamingStrategy extends NamingStrategy {
 
   // @Override

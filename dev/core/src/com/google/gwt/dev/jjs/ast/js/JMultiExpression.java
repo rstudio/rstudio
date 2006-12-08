@@ -22,6 +22,9 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.Mutator;
 
+/**
+ * Represents multiple ordered expressions as a single compound expression.
+ */
 public class JMultiExpression extends JExpression {
 
   public HolderList exprs = new HolderList();
@@ -40,7 +43,7 @@ public class JMultiExpression extends JExpression {
   }
 
   public boolean hasSideEffects() {
-    
+
     for (int i = 0; i < exprs.size(); ++i) {
       JExpression expr = exprs.getExpr(i);
       if (expr.hasSideEffects()) {

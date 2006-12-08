@@ -27,7 +27,7 @@ import java.util.ListIterator;
 public class HolderList/* <T extends JNode> */implements List/* <T> */,
     JVisitable {
 
-  private final class ListIt implements ListIterator/* <T> */{
+  private final class ListIt implements ListIterator/* <T> */ {
 
     private final ListIterator/* <Mutator<T>> */itImpl;
     private final ListIterator/* <T> */itPeer;

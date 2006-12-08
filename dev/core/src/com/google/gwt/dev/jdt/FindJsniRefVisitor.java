@@ -32,6 +32,9 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.Set;
 
+/**
+ * Walks the AST to find references to Java identifiers from within JSNI blocks.
+ */
 public class FindJsniRefVisitor extends ASTVisitor {
 
   private final Set/* <String> */jsniClasses;

@@ -24,6 +24,10 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
+/**
+ * Abstracts the process of mapping a standard identifier name onto a possibly
+ * alternative name.
+ */
 public abstract class NamingStrategy {
 
   private class RootScopeHandler {

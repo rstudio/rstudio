@@ -18,6 +18,10 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.util.TextOutput;
 
+/**
+ * A convenience base class that combines a {@link JVisitor} with a
+ * {@link TextOutput}.
+ */
 public class TextOutputVisitor extends JVisitor implements TextOutput {
 
   private final TextOutput textOutput;

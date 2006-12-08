@@ -21,6 +21,10 @@ import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 
+/**
+ * Implements <code>ICompilationUnit</code> in terms of a
+ * {@link CompilationUnitProvider}.
+ */
 public class ICompilationUnitAdapter implements ICompilationUnit {
 
   private final CompilationUnitProvider cup;
