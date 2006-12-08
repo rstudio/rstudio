@@ -67,6 +67,9 @@ import com.google.gwt.dev.util.TextOutput;
 
 import java.util.Iterator;
 
+/**
+ * Produces text output from a JavaScript AST.
+ */
 public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits {
 
   private static final char[] CHARS_BREAK = "break".toCharArray();
