@@ -30,17 +30,17 @@ public class Throwable {
   }
 
   public Throwable(String message) {
-    fMessage = message;
+    this.message = message;
   }
 
   public Throwable(String message, Throwable cause) {
-    fCause = cause;
-    fMessage = message;
+    this.cause = cause;
+    this.message = message;
   }
 
   public Throwable(Throwable cause) {
-    fMessage = (cause == null) ? null : cause.toString();
-    fCause = cause;
+    this.message = (cause == null) ? null : cause.toString();
+    this.cause = cause;
   }
 
   /**
@@ -53,7 +53,7 @@ public class Throwable {
   }
 
   public Throwable getCause() {
-    return fCause;
+    return cause;
   }
 
   public String getLocalizedMessage() {
@@ -61,7 +61,7 @@ public class Throwable {
   }
 
   public String getMessage() {
-    return fMessage;
+    return message;
   }
 
   /**
@@ -74,13 +74,13 @@ public class Throwable {
   }
 
   public Throwable initCause(Throwable cause) {
-    if (fCause != null) {
+    if (cause != null) {
       throw new IllegalStateException("Can't overwrite cause");
     }
     if (cause == this) {
       throw new IllegalArgumentException("Self-causation not permitted");
     }
-    fCause = cause;
+    cause = cause;
     return this;
   }
 
@@ -117,6 +117,6 @@ public class Throwable {
     }
   }
 
-  private Throwable fCause;
-  private String fMessage;
+  private Throwable cause;
+  private String message;
 }
