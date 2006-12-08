@@ -16,19 +16,9 @@
 package java.util;
 
 /**
- * Abstract base class for collection implementations. 
+ * Abstract base class for collection implementations.
  */
 public abstract class AbstractCollection implements Collection {
-
-  private Iterator advanceToFind(Iterator iter, Object o) {
-    while (iter.hasNext()) {
-      Object t = iter.next();
-      if (o == null ? t == null : o.equals(t)) {
-        return iter;
-      }
-    }
-    return null;
-  }
 
   public boolean add(Object o) {
     throw new UnsupportedOperationException("add");
@@ -135,5 +125,15 @@ public abstract class AbstractCollection implements Collection {
     }
     sb.append("]");
     return sb.toString();
+  }
+
+  private Iterator advanceToFind(Iterator iter, Object o) {
+    while (iter.hasNext()) {
+      Object t = iter.next();
+      if (o == null ? t == null : o.equals(t)) {
+        return iter;
+      }
+    }
+    return null;
   }
 }
