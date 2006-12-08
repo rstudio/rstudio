@@ -3,7 +3,7 @@
 	This configuration file was written by the eclipse-cs plugin configuration editor
 -->
 <!--
-Checkstyle-Configuration: gwt
+Checkstyle-Configuration: GWT Checkstyle Rules
 Description:
 
 -->
@@ -140,8 +140,8 @@ Description:
     </module>
     <module name="SuppressionCommentFilter">
         <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Avoid name checking"/>
-        <property name="offCommentFormat" value="CHECKSTYLE_NAME_CHECKING_OFF"/>
-        <property name="onCommentFormat" value="CHECKSTYLE_NAME_CHECKING_ON"/>
+        <property name="offCommentFormat" value="CHECKSTYLE_NAMING_OFF"/>
+        <property name="onCommentFormat" value="CHECKSTYLE_NAMING_ON"/>
         <property name="checkFormat" value=".*Name.*"/>
         <property name="messageFormat" value=".*name.*"/>
     </module>
