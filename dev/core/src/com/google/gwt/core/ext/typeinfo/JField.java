@@ -15,6 +15,9 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+/**
+ * Represents a field declaration.
+ */
 public class JField implements HasMetaData {
 
   private final JClassType enclosingType;

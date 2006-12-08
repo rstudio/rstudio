@@ -15,6 +15,9 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+/**
+ * Indicates that a source declaration was not parsed successfully.
+ */
 public class ParseException extends TypeOracleException {
 
   public ParseException() {

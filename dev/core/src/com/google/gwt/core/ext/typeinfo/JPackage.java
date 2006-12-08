@@ -18,6 +18,9 @@ package com.google.gwt.core.ext.typeinfo;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents a logical package.
+ */
 public class JPackage {
 
   private final String name;

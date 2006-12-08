@@ -15,6 +15,9 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+/**
+ * Abstract superclass for types.
+ */
 public abstract class JType {
   public abstract String getJNISignature();
 

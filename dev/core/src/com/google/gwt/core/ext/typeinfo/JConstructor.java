@@ -15,6 +15,9 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+/**
+ * Represents a constructor declaration.
+ */
 public class JConstructor extends JAbstractMethod {
   private final JClassType enclosingType;
 

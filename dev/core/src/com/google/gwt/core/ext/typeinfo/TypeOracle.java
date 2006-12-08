@@ -47,6 +47,7 @@ import java.util.Set;
  * JParameterizedType ls = typeOracle.parse(&quot;java.util.List&lt;java.lang.String&gt;&quot;);
  * assert(ls.getTypeArgs()[0] == s1);
  * </pre>
+ * 
  * </p>
  */
 public class TypeOracle {
@@ -123,7 +124,7 @@ public class TypeOracle {
     if (0 != (bits & MOD_TRANSIENT)) {
       strings.add("transient");
     }
-    
+
     if (0 != (bits & MOD_VOLATILE)) {
       strings.add("volatile");
     }
@@ -206,7 +207,7 @@ public class TypeOracle {
     }
     return null;
   }
-  
+
   /**
    * Gets the type object that represents an array of the specified type. The
    * returned type always has a stable identity so as to guarantee that all
@@ -257,7 +258,6 @@ public class TypeOracle {
    * Gets a package by name. All requests for the same package return the same
    * package object.
    * 
-   * @throws NotFoundException if the specified package name is not available
    * @return the package object associated with the specified name
    */
   public JPackage getPackage(String pkgName) throws NotFoundException {
@@ -298,8 +298,7 @@ public class TypeOracle {
       parameterized.addTypeArg(typeArgs[i]);
     }
     String sig = parameterized.getQualifiedSourceName();
-    JParameterizedType existing =
-        (JParameterizedType) parameterizedTypes.get(sig);
+    JParameterizedType existing = (JParameterizedType) parameterizedTypes.get(sig);
     if (existing == null) {
       parameterizedTypes.put(sig, parameterized);
       existing = parameterized;
@@ -316,8 +315,6 @@ public class TypeOracle {
    * source name rather than its binary name (that is, use a "." rather than a
    * "$").
    * 
-   * @throws NotFoundException thrown if the specified package or type could not
-   *           be found
    * @return the specified type
    */
   public JClassType getType(String name) throws NotFoundException {
@@ -333,8 +330,6 @@ public class TypeOracle {
    * source name rather than its binary name (that is, use a "." rather than a
    * "$").
    * 
-   * @throws NotFoundException thrown if the specified package or type could not
-   *           be found
    * @return the specified type
    */
   public JClassType getType(String pkgName, String topLevelTypeSimpleName)
@@ -394,7 +389,6 @@ public class TypeOracle {
    * 
    * @param type a type signature to be parsed
    * @return the type object corresponding to the parse type
-   * @throws TypeOracleException
    */
   public JType parse(String type) throws TypeOracleException {
     // Remove all internal and external whitespace.
@@ -491,7 +485,7 @@ public class TypeOracle {
   void recordTypeInCompilationUnit(CompilationUnitProvider cup, JClassType type) {
     JClassType[] types = (JClassType[]) typesByCup.get(cup);
     if (types == null) {
-      types = new JClassType[]{type};
+      types = new JClassType[] {type};
     } else {
       JClassType[] temp = new JClassType[types.length + 1];
       System.arraycopy(types, 0, temp, 0, types.length);
@@ -505,11 +499,13 @@ public class TypeOracle {
    * Updates relationships within this type oracle. Should be called after any
    * changes are made.
    * 
-   * @throws TypeOracleException thrown if fundamental baseline correctness
-   *           criteria are violated, most notably the absence of
-   *           "java.lang.Object"
+   * <p>
+   * Throws <code>TypeOracleException</code> thrown if fundamental baseline
+   * correctness criteria are violated, most notably the absence of
+   * "java.lang.Object"
+   * </p>
    */
-    void refresh(TreeLogger logger) throws NotFoundException {
+  void refresh(TreeLogger logger) throws NotFoundException {
     if (javaLangObject == null) {
       javaLangObject = findType("java.lang.Object");
       if (javaLangObject == null) {
@@ -542,9 +538,8 @@ public class TypeOracle {
   }
 
   private void consumeTypeArgMetaData(TreeLogger logger) {
-    logger =
-        logger.branch(TreeLogger.DEBUG, "Examining " + TAG_TYPEARGS + " tags",
-          null);
+    logger = logger.branch(TreeLogger.DEBUG, "Examining " + TAG_TYPEARGS
+        + " tags", null);
     consumeTypeArgMetaData(logger, getTypes());
   }
 
@@ -553,14 +548,14 @@ public class TypeOracle {
       JClassType type = types[i];
       // CTORS not supported yet
 
-      TreeLogger branch =
-          logger.branch(TreeLogger.DEBUG, "Type "
-            + type.getQualifiedSourceName(), null);
+      TreeLogger branch = logger.branch(TreeLogger.DEBUG, "Type "
+          + type.getQualifiedSourceName(), null);
 
       consumeTypeArgMetaData(branch, type.getMethods());
       consumeTypeArgMetaData(branch, type.getFields());
     }
   }
+
   private void consumeTypeArgMetaData(TreeLogger logger, JField[] fields) {
     TreeLogger branch;
     for (int i = 0; i < fields.length; i++) {
@@ -579,9 +574,9 @@ public class TypeOracle {
         if (tokensArray.length > 1) {
           // Too many.
           branch.log(TreeLogger.WARN, "Metadata error on field '"
-            + field.getName() + "' in type '" + field.getEnclosingType()
-            + "': expecting at most one " + TAG_TYPEARGS
-            + " (the last one will be used)", null);
+              + field.getName() + "' in type '" + field.getEnclosingType()
+              + "': expecting at most one " + TAG_TYPEARGS
+              + " (the last one will be used)", null);
         }
 
         // (1) Parse it.
@@ -598,6 +593,7 @@ public class TypeOracle {
       }
     }
   }
+
   private void consumeTypeArgMetaData(TreeLogger logger, JMethod[] methods) {
     TreeLogger branch;
     for (int i = 0; i < methods.length; i++) {
@@ -624,7 +620,7 @@ public class TypeOracle {
             // Expecting at least something.
             //
             branch.log(TreeLogger.WARN,
-              "Metadata error: expecting tokens after " + TAG_TYPEARGS, null);
+                "Metadata error: expecting tokens after " + TAG_TYPEARGS, null);
             throw new UnableToCompleteException();
           }
 
@@ -635,16 +631,15 @@ public class TypeOracle {
             if (!paramsAlreadySet.contains(param)) {
               // These are type args for a param.
               //
-              JType resultingType =
-                  determineActualType(branch, param.getType(), tokens, 1);
+              JType resultingType = determineActualType(branch,
+                  param.getType(), tokens, 1);
               param.setType(resultingType);
               paramsAlreadySet.add(param);
             } else {
               // This parameter type has already been set.
               //
-              msg =
-                  "Metadata error: duplicate attempt to specify type args for parameter '"
-                    + param.getName() + "'";
+              msg = "Metadata error: duplicate attempt to specify type args for parameter '"
+                  + param.getName() + "'";
               branch.log(TreeLogger.WARN, msg, null);
               throw new UnableToCompleteException();
             }
@@ -652,15 +647,14 @@ public class TypeOracle {
             // It's either referring to the return type or a bad param name.
             //
             if (!returnTypeHandled) {
-              JType resultingType =
-                  determineActualType(branch, method.getReturnType(), tokens, 0);
+              JType resultingType = determineActualType(branch,
+                  method.getReturnType(), tokens, 0);
               method.setReturnType(resultingType);
               returnTypeHandled = true;
             } else {
               // The return type has already been set.
               //
-              msg =
-                  "Metadata error: duplicate attempt to specify type args for the return type";
+              msg = "Metadata error: duplicate attempt to specify type args for the return type";
               branch.log(TreeLogger.WARN, msg, null);
             }
           }
@@ -671,11 +665,10 @@ public class TypeOracle {
       }
     }
   }
+
   /*
    * Given a declared type and some number of type arguments determine what the
-   * actual type should be. 
-   * 
-   * @throws UnableToCompleteException
+   * actual type should be.
    */
   private JType determineActualType(TreeLogger logger, JType declType,
       String[] tokens, int startIndex) throws UnableToCompleteException {
@@ -683,8 +676,8 @@ public class TypeOracle {
     //
     JType leafType = declType.getLeafType();
     String typeName = leafType.getQualifiedSourceName();
-    JType resultingType =
-        parseTypeArgTokens(logger, typeName, tokens, startIndex);
+    JType resultingType = parseTypeArgTokens(logger, typeName, tokens,
+        startIndex);
     JArrayType arrayType = declType.isArray();
     if (arrayType != null) {
       arrayType.setLeafType(resultingType);
@@ -694,6 +687,7 @@ public class TypeOracle {
 
     return resultingType;
   }
+
   private JType parseImpl(String type) throws NotFoundException,
       ParseException, BadTypeArgsException {
     if (type.endsWith("[]")) {
@@ -706,7 +700,7 @@ public class TypeOracle {
       int bracket = type.indexOf('<');
       if (bracket == -1) {
         throw new ParseException(
-          "Mismatched brackets; expected '<' to match subsequent '>'");
+            "Mismatched brackets; expected '<' to match subsequent '>'");
       }
 
       // Resolve the raw type.
@@ -717,15 +711,15 @@ public class TypeOracle {
         // The raw type cannot itself be parmeterized.
         //
         throw new BadTypeArgsException(
-          "Only non-parameterized classes and interface can be parameterized");
+            "Only non-parameterized classes and interface can be parameterized");
       } else if (rawType.isClassOrInterface() == null) {
         // The raw type must be a class or interface
         // (not an array or primitive).
         //
         throw new BadTypeArgsException(
-          "Only classes and interface can be parameterized, so "
-            + rawType.getQualifiedSourceName()
-            + " cannot be used in this context");
+            "Only classes and interface can be parameterized, so "
+                + rawType.getQualifiedSourceName()
+                + " cannot be used in this context");
       }
 
       // Resolve each type argument.
@@ -739,9 +733,9 @@ public class TypeOracle {
           // Cannot be primitive.
           //
           throw new BadTypeArgsException(
-            "Type arguments cannot be primitive, so "
-              + typeArgs[i].getQualifiedSourceName()
-              + " cannot be used in this context");
+              "Type arguments cannot be primitive, so "
+                  + typeArgs[i].getQualifiedSourceName()
+                  + " cannot be used in this context");
         }
       }
 
@@ -762,6 +756,7 @@ public class TypeOracle {
 
     throw new NotFoundException(type);
   }
+
   private JType parseTypeArgTokens(TreeLogger logger, String maybeRawType,
       String[] tokens, int startIndex) throws UnableToCompleteException {
     String munged = combine(tokens, startIndex).trim();
@@ -770,9 +765,8 @@ public class TypeOracle {
     try {
       parameterizedType = parse(toParse);
     } catch (TypeOracleException e) {
-      String msg =
-          "Unable to recognize '" + toParse
-            + "' as a type name (is it fully qualified?)";
+      String msg = "Unable to recognize '" + toParse
+          + "' as a type name (is it fully qualified?)";
       logger.log(TreeLogger.WARN, msg, null);
       throw new UnableToCompleteException();
     }

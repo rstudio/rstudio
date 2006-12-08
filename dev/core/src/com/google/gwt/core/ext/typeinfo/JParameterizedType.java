@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Represents a parameterized type in a declaration.
+ */
 public class JParameterizedType extends JType {
 
   private final JClassType parameterized;

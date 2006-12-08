@@ -21,11 +21,13 @@ package com.google.gwt.core.ext;
 public interface PropertyOracle {
 
   /**
+   * Attempts to get a named deferred binding property. Throws
+   * <code>BadPropertyValueException</code> if the property is either
+   * undefined or has a value that is unsupported.
+   * 
    * @param logger the current logger
    * @param propertyName the name of the property
    * @return a value for the property
-   * @throws BadPropertyValueException if the property is either undefined or
-   *           has a value that is unsupported
    */
   String getPropertyValue(TreeLogger logger, String propertyName)
       throws BadPropertyValueException;

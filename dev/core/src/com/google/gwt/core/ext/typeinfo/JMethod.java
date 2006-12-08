@@ -15,6 +15,9 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+/**
+ * Represents a method declaration.
+ */
 public class JMethod extends JAbstractMethod {
 
   private final JClassType enclosingType;

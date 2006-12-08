@@ -15,6 +15,9 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+/**
+ * Represents a parameter in a declaration.
+ */
 public class JParameter implements HasMetaData {
 
   private final HasMetaData metaData = new MetaData();

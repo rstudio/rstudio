@@ -15,6 +15,9 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+/**
+ * Indicates that the requested type info element could not be found.
+ */
 public class NotFoundException extends TypeOracleException {
 
   public NotFoundException() {

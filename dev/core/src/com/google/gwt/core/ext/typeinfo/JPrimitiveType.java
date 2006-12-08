@@ -18,6 +18,9 @@ package com.google.gwt.core.ext.typeinfo;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents a primitive type in a declaration.
+ */
 public class JPrimitiveType extends JType {
 
   public static final JPrimitiveType BOOLEAN = create("boolean", "Z");

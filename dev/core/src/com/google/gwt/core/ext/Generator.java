@@ -23,8 +23,9 @@ public abstract class Generator {
 
   /**
    * Escapes string content to be a valid string literal.
-   * @return an escaped version of <code>unescaped</code>, suitable for being 
-   * enclosed in double quotes in Java source
+   * 
+   * @return an escaped version of <code>unescaped</code>, suitable for being
+   *         enclosed in double quotes in Java source
    */
   public static String escape(String unescaped) {
     int extra = 0;
@@ -72,13 +73,14 @@ public abstract class Generator {
   }
 
   /**
-   * Generate a default constructible subclass of the requested type.
+   * Generate a default constructible subclass of the requested type. The
+   * generator throws <code>UnableToCompleteException</code> if for any reason
+   * it cannot provide a substitute class
    * 
    * @return the name of a subclass to substitute for the requested class, or
    *         return <code>null</code> to cause the requested type itself to be
    *         used
-   * @throws UnableToCompleteException if for any reason the generator cannot
-   *           provide a substitute class
+   * 
    */
   public abstract String generate(TreeLogger logger, GeneratorContext context,
       String typeName) throws UnableToCompleteException;
