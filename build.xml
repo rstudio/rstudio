@@ -6,13 +6,9 @@
 	<!-- "build" is the default when subprojects are directly targetted -->
 	<property name="target" value="build" />
 
-	<target name="dist" depends="dev, user, servlet, jni, doc" description="Run the distributions">
+	<target name="dist" depends="dev, user, servlet, jni, doc, samples" description="Run the distributions">
 		<gwt.ant dir="distro-source" />
 	</target>
-
-  <target name="doc" depends="buildtools, user" description="Build doc">
-    <ant dir="doc" inheritall="false" target="${target}" />
-  </target>
 
 	<target name="dev" depends="buildtools" description="Run dev">
 		<gwt.ant dir="dev" />
@@ -30,12 +26,20 @@
 		<gwt.ant dir="jni" />
 	</target>
 
+	<target name="doc" depends="buildtools, user" description="Build doc">
+		<gwt.ant dir="doc" />
+	</target>
+
+	<target name="samples" depends="dev, user" description="Build samples">
+		<gwt.ant dir="samples" />
+	</target>
+
 	<target name="buildtools" description="Build the build tools">
 		<gwt.ant dir="build-tools" />
 	</target>
 
-	<target name="-do" depends="dist" description="Run all subprojects"/>
-	
+	<target name="-do" depends="dist" description="Run all subprojects" />
+
 	<target name="build" description="Builds GWT">
 		<antcall target="-do">
 			<param name="target" value="build" />
