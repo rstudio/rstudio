@@ -42,10 +42,11 @@ public final class ThreadLocalTreeLoggerProxy implements TreeLogger {
    */
   public TreeLogger branch(Type type, String msg, Throwable caught) {
     TreeLogger logger = (TreeLogger) perThreadLogger.get();
-    if (logger != null)
+    if (logger != null) {
       return logger.branch(type, msg, caught);
-    else
+    } else {
       return this;
+    }
   }
 
   /**
@@ -56,10 +57,11 @@ public final class ThreadLocalTreeLoggerProxy implements TreeLogger {
    */
   public boolean isLoggable(Type type) {
     TreeLogger logger = (TreeLogger) perThreadLogger.get();
-    if (logger != null)
+    if (logger != null) {
       return logger.isLoggable(type);
-    else
+    } else {
       return false;
+    }
   }
 
   /**
@@ -68,8 +70,9 @@ public final class ThreadLocalTreeLoggerProxy implements TreeLogger {
    */
   public void log(Type type, String msg, Throwable caught) {
     TreeLogger logger = (TreeLogger) perThreadLogger.get();
-    if (logger != null)
+    if (logger != null) {
       logger.log(type, msg, caught);
+    }
   }
 
   /**

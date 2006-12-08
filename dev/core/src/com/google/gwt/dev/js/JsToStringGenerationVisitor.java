@@ -740,6 +740,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return false;
   }
 
+  // CHECKSTYLE_NAMING_OFF
   protected void _newline() {
     p.newline();
   }
@@ -1036,7 +1037,8 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
   private void _while() {
     p.print(CHARS_WHILE);
   }
-
+  // CHECKSTYLE_NAMING_ON
+  
   private void indent() {
     p.indentIn();
   }

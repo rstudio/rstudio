@@ -1780,15 +1780,15 @@ public class GenerateJavaAST {
         return null;
       }
       String sname = String.valueOf(name);
-      Map/* <String, JLabel> */labelMap = (Map) this.labelMap.get(enclosingMethod);
-      if (labelMap == null) {
-        labelMap = new HashMap();
-        this.labelMap.put(enclosingMethod, labelMap);
+      Map/* <String, JLabel> */lblMap = (Map) this.labelMap.get(enclosingMethod);
+      if (lblMap == null) {
+        lblMap = new HashMap();
+        this.labelMap.put(enclosingMethod, lblMap);
       }
-      JLabel jlabel = (JLabel) labelMap.get(sname);
+      JLabel jlabel = (JLabel) lblMap.get(sname);
       if (jlabel == null) {
         jlabel = new JLabel(program, sname);
-        labelMap.put(sname, jlabel);
+        lblMap.put(sname, jlabel);
       }
       return jlabel;
     }

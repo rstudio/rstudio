@@ -77,11 +77,11 @@ public abstract class Message {
     }
     fmtParts[args] = fmt.substring(from).toCharArray();
 
-    int minChars = 0;
+    int minNumChars = 0;
     for (int i = 0, n = fmtParts.length; i < n; ++i) {
-      minChars += fmtParts[i].length;
+      minNumChars += fmtParts[i].length;
     }
-    this.minChars = minChars;
+    this.minChars = minNumChars;
   }
 
   protected final Formatter getFormatter(Class c) {

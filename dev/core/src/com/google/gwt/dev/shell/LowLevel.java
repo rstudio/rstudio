@@ -179,6 +179,7 @@ public class LowLevel {
     }
   }
 
+  // CHECKSTYLE_NAMING_OFF
   private static native void _deleteGlobalRefInt(int globalRef);
 
   private static native String _getEnv(String key);
@@ -186,7 +187,8 @@ public class LowLevel {
   private static native int _newGlobalRefInt(Object o);
 
   private static native Object _objFromGlobalRefInt(int globalRef);
-
+  // CHECKSTYLE_NAMING_ON
+  
   /**
    * This class is not instantiable.
    */

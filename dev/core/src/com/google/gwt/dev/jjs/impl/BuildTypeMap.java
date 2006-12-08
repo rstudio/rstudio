@@ -280,6 +280,7 @@ public class BuildTypeMap {
           char[] chars = jsniCode.toCharArray();
           int i = 0, n = chars.length;
           while (line > 0) {
+            // CHECKSTYLE_OFF
             switch (chars[i]) {
               case '\r':
                 // if skip an extra character if this is a CR/LF
@@ -293,6 +294,7 @@ public class BuildTypeMap {
               default:
                 ++i;
             }
+            // CHECKSTYLE_ON
           }
 
           // Map into the original source stream;

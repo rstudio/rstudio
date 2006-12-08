@@ -412,6 +412,7 @@ public class LowLevelSaf {
     System.out.flush();
   }
 
+  // CHECKSTYLE_NAMING_OFF
   private static native boolean _coerceToBoolean(int execState, int jsval,
       boolean[] rval);
 
@@ -467,7 +468,8 @@ public class LowLevelSaf {
 
   private static native boolean _wrapFunction(String name,
       DispatchMethod dispMeth, int[] rval);
-
+  // CHECKSTYLE_NAMING_OFF
+  
   /**
    * Not instantiable.
    */
