@@ -3,6 +3,6 @@
     <fileset name="all" enabled="true" check-config-name="GWT Checks" local="false">
         <file-match-pattern match-pattern=".*core.src.com.google.gwt.*java" include-pattern="true"/>
         <file-match-pattern match-pattern=".*rhino.*" include-pattern="false"/>
-        <file-match-pattern match-pattern=".*windows.src.com.google.gwt.*java" include-pattern="true"/>
+        <file-match-pattern match-pattern=".*linux.src.com.google.gwt.*java" include-pattern="true"/>
     </fileset>
 </fileset-config>
