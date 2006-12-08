@@ -487,11 +487,11 @@ public class JClassType extends JType implements HasMetaData {
   }
 
   void addMethod(JMethod method) {
-    String name = method.getName();
-    List overloads = (List) methods.get(name);
+    String methodName = method.getName();
+    List overloads = (List) methods.get(methodName);
     if (overloads == null) {
       overloads = new ArrayList();
-      methods.put(name, overloads);
+      methods.put(methodName, overloads);
     }
     overloads.add(method);
   }
