@@ -18,7 +18,7 @@
 		<link>
 			<name>core</name>
 			<type>2</type>
-			<locationURI>GWT_ROOT/samples/simplexml</locationURI>
+			<location>GWT_ROOT/samples/simplexml</location>
 		</link>
 	</linkedResources>
 </projectDescription>
