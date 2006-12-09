@@ -29,10 +29,14 @@
 		<path refid="USER_SOURCE_PATH" />
 	</path>
 
+	<condition property="tools.path" value="${gwt.tools.lib}/jdk/tools-1.4.2_09.jar" else="${gwt.tools.lib}/jdk/tools-1.5.0_07.jar:${gwt.tools.lib}/jdk/tools-1.4.2_09.jar">
+		<equals arg1="${ant.java.version}" arg2="1.4"/>
+	</condition>
+
 	<path id="DOC_PATH">
 		<pathelement location="./src" />
-		<pathelement location="${gwt.tools.lib}/jdk/tools-1.4.2_09.jar" />
 		<pathelement location="${gwt.build.lib}/gwt-doctool.jar" />
+		<path path="${tools.path}" />
 		<path refid="USER_SOURCE_PATH" />
 	</path>
 
