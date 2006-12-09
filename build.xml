@@ -57,4 +57,8 @@
 			<param name="target" value="test" />
 		</antcall>
 	</target>
+
+	<target name="clean" description="Cleans the entire GWT build">
+		<delete dir="${gwt.build}" />
+	</target>
 </project>
