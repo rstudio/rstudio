@@ -20,7 +20,9 @@
 					<include name="bin/**" />
 					<include name="www/**" />
 				</fileset>
-				<fileset dir="${gwt.build.out}/samples/@{lname}/scripts/${dist.platform}/*" />
+				<fileset dir="${gwt.build.out}/samples/@{lname}/scripts/${dist.platform}">
+					<include name="*" />
+				</fileset>
 			</copy>
 			<chmod perm="a+x">
 				<fileset dir="${project.staging}/samples/@{uname}">
