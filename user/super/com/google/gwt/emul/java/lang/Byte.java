@@ -16,7 +16,7 @@
 package java.lang;
 
 /**
- * Wraps native byte as an object.
+ * Wraps native <code>byte</code> as an object.
  */
 public final class Byte extends Number implements Comparable {
   public static final byte MIN_VALUE = (byte) 0x80;
