@@ -42,7 +42,7 @@
 		</antcall>
 	</target>
 
-	<target name="checkstyle" depends="build" description="Static analysis of GWT source">
+	<target name="checkstyle" description="Static analysis of GWT source">
 		<antcall target="-do">
 			<param name="target" value="checkstyle" />
 		</antcall>
