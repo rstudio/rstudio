@@ -27,6 +27,11 @@ import java.util.List;
  */
 public class Schedule implements IsSerializable {
 
+  /**
+   * @gwt.typeArgs <com.google.gwt.sample.dynatable.client.TimeSlot>
+   */
+  private List timeSlots = new ArrayList();
+
   public Schedule() {
   }
 
@@ -57,10 +62,5 @@ public class Schedule implements IsSerializable {
   public String toString() {
     return getDescription(null);
   }
-
-  /**
-   * @gwt.typeArgs <com.google.gwt.sample.dynatable.client.TimeSlot>
-   */
-  private List timeSlots = new ArrayList();
 
 }

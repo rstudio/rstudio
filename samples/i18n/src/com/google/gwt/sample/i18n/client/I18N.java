@@ -48,7 +48,7 @@ public class I18N implements EntryPoint {
   private static final String USER_TABLE_STYLE = "userTable";
   private static final String MESSAGES_TABLE_STYLE = "messagesTable";
   private static final String MESSAGES_ARGUMENT_TYPE_STYLE = "messagesArgumentType";
-  /** Root node to start injecting code. */
+  /* Root node to start injecting code. */
   private static final String ROOT = "root";
   private static final int USER_TABLE_WIDTH = 1;
 

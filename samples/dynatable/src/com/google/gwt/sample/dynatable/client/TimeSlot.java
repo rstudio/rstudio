@@ -18,13 +18,19 @@ package com.google.gwt.sample.dynatable.client;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 /**
- * Hold relevant data for a time slot. This class is intended to be
- * serialized as part of RPC calls.
+ * Hold relevant data for a time slot. This class is intended to be serialized
+ * as part of RPC calls.
  */
 public class TimeSlot implements IsSerializable, Comparable {
 
-  private static final transient String[] DAYS = new String[]{
-    "Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat"};
+  private static final transient String[] DAYS = new String[] {
+      "Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat"};
+
+  private int endMinutes;
+
+  private int startMinutes;
+
+  private int zeroBasedDayOfWeek;
 
   public TimeSlot() {
   }
@@ -58,7 +64,7 @@ public class TimeSlot implements IsSerializable, Comparable {
 
   public String getDescription() {
     return DAYS[zeroBasedDayOfWeek] + " " + getHrsMins(startMinutes) + "-"
-      + getHrsMins(endMinutes);
+        + getHrsMins(endMinutes);
   }
 
   public int getEndMinutes() {
@@ -94,10 +100,6 @@ public class TimeSlot implements IsSerializable, Comparable {
     int remainder = mins % 60;
 
     return hrs + ":"
-      + (remainder < 10 ? "0" + remainder : String.valueOf(remainder));
+        + (remainder < 10 ? "0" + remainder : String.valueOf(remainder));
   }
-
-  private int endMinutes;
-  private int startMinutes;
-  private int zeroBasedDayOfWeek;
 }

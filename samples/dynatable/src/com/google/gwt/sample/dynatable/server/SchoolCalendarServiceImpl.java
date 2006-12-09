@@ -28,23 +28,40 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * The implemenation of the RPC service which runs on the server.
+ */
 public class SchoolCalendarServiceImpl extends RemoteServiceServlet implements
     SchoolCalendarService {
 
-  private static final String[] FIRST_NAMES = new String[]{
-    "Inman", "Sally", "Omar", "Teddy", "Jimmy", "Cathy", "Barney", "Fred",
-    "Eddie", "Carlos"};
+  private static final String[] FIRST_NAMES = new String[] {
+      "Inman", "Sally", "Omar", "Teddy", "Jimmy", "Cathy", "Barney", "Fred",
+      "Eddie", "Carlos"};
 
-  private static final String[] LAST_NAMES = new String[]{
-    "Smith", "Jones", "Epps", "Gibbs", "Webber", "Blum", "Mendez", "Crutcher",
-    "Needler", "Wilson", "Chase", "Edelstein"};
+  private static final String[] LAST_NAMES = new String[] {
+      "Smith", "Jones", "Epps", "Gibbs", "Webber", "Blum", "Mendez",
+      "Crutcher", "Needler", "Wilson", "Chase", "Edelstein"};
 
-  private static final String[] SUBJECTS = new String[]{
-    "Chemistry", "Phrenology", "Geometry", "Underwater Basket Weaving",
-    "Basketball", "Computer Science", "Statistics", "Materials Engineering",
-    "English Literature", "Geology"};
+  private static final String[] SUBJECTS = new String[] {
+      "Chemistry", "Phrenology", "Geometry", "Underwater Basket Weaving",
+      "Basketball", "Computer Science", "Statistics", "Materials Engineering",
+      "English Literature", "Geology"};
 
   private static final Person[] NO_PEOPLE = new Person[0];
+
+  private static final int CLASS_LENGTH_MINS = 50;
+
+  private static final int MAX_SCHED_ENTRIES = 5;
+
+  private static final int MIN_SCHED_ENTRIES = 1;
+
+  private static final int MAX_PEOPLE = 100;
+
+  private static final int STUDENTS_PER_PROF = 5;
+
+  private final List people = new ArrayList();
+
+  private final Random rnd = new Random(3);
 
   public SchoolCalendarServiceImpl() {
     generateRandomPeople();
@@ -70,6 +87,15 @@ public class SchoolCalendarServiceImpl extends RemoteServiceServlet implements
     }
 
     return results;
+  }
+
+  /**
+   * Write the serialized response out to stdout. This is a very unusual thing
+   * to do, but it allows us to create a static file version of the response
+   * without deploying a servlet.
+   */
+  protected void onAfterResponseSerialized(String serializedResponse) {
+    System.out.println(serializedResponse);
   }
 
   private void generateRandomPeople() {
@@ -147,21 +173,4 @@ public class SchoolCalendarServiceImpl extends RemoteServiceServlet implements
     int i = rnd.nextInt(a.length);
     return a[i];
   }
-
-  /**
-   * Write the serialized response out to stdout. This is a very unusual thing
-   * to do, but it allows us to create a static file version of the response
-   * without deploying a servlet.
-   */
-  protected void onAfterResponseSerialized(String serializedResponse) {
-    System.out.println(serializedResponse);
-  }
-
-  private final List people = new ArrayList();
-  private final Random rnd = new Random(3);
-  private static final int CLASS_LENGTH_MINS = 50;
-  private static final int MAX_SCHED_ENTRIES = 5;
-  private static final int MIN_SCHED_ENTRIES = 1;
-  private static final int MAX_PEOPLE = 100;
-  private static final int STUDENTS_PER_PROF = 5;
 }

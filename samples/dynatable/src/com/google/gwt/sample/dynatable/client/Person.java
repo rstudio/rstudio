@@ -18,10 +18,14 @@ package com.google.gwt.sample.dynatable.client;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 /**
- * Hold relevant data for Person. This class is meant to be serialized in
- * RPC calls.
+ * Hold relevant data for Person. This class is meant to be serialized in RPC
+ * calls.
  */
 public abstract class Person implements IsSerializable {
+
+  private String description = "DESC";
+
+  private String name;
 
   public Person() {
   }
@@ -43,7 +47,4 @@ public abstract class Person implements IsSerializable {
   public void setName(String name) {
     this.name = name;
   }
-
-  private String description = "DESC";
-  private String name;
 }

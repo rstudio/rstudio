@@ -34,6 +34,14 @@ public class DynaTableWidget extends Composite {
 
   private class NavBar extends Composite implements ClickListener {
 
+    public final DockPanel bar = new DockPanel();
+
+    public final Button gotoFirst = new Button("&lt;&lt;", this);
+
+    public final Button gotoNext = new Button("&gt;", this);
+    public final Button gotoPrev = new Button("&lt;", this);
+    public final HTML status = new HTML();
+
     public NavBar() {
       initWidget(bar);
       bar.setStyleName("navbar");
@@ -72,12 +80,6 @@ public class DynaTableWidget extends Composite {
         refresh();
       }
     }
-
-    public final DockPanel bar = new DockPanel();
-    public final Button gotoFirst = new Button("&lt;&lt;", this);
-    public final Button gotoNext = new Button("&gt;", this);
-    public final Button gotoPrev = new Button("&lt;", this);
-    public final HTML status = new HTML();
   }
 
   private class RowDataAcceptorImpl implements RowDataAcceptor {
@@ -129,12 +131,24 @@ public class DynaTableWidget extends Composite {
     }
   }
 
+  private final RowDataAcceptor acceptor = new RowDataAcceptorImpl();
+
+  private final NavBar navbar = new NavBar();
+
+  private final DockPanel outer = new DockPanel();
+
+  private final DynaTableDataProvider provider;
+
+  private int startRow = 0;
+
+  private final Grid grid = new Grid();
+
   public DynaTableWidget(DynaTableDataProvider provider, String[] columns,
       String[] columnStyles, int rowCount) {
 
     if (columns.length == 0) {
       throw new IllegalArgumentException(
-        "expecting a positive number of columns");
+          "expecting a positive number of columns");
     }
 
     if (columnStyles != null && columns.length != columnStyles.length) {
@@ -148,22 +162,6 @@ public class DynaTableWidget extends Composite {
     outer.add(grid, DockPanel.CENTER);
     initTable(columns, columnStyles, rowCount);
     setStyleName("DynaTable-DynaTableWidget");
-  }
-
-  private void initTable(String[] columns, String[] columnStyles, int rowCount) {
-    // Set up the header row.  It's one greater than the number of visible rows.
-    //
-    grid.resize(rowCount + 1, columns.length);
-    for (int i = 0, n = columns.length; i < n; i++) {
-      grid.setText(0, i, columns[i]);
-      if (columnStyles != null) {
-        grid.getCellFormatter().setStyleName(0, i, columnStyles[i] + " header");
-      }
-    }
-  }
-
-  public void setStatusText(String text) {
-    navbar.status.setText(text);
   }
 
   public void clearStatusText() {
@@ -185,14 +183,23 @@ public class DynaTableWidget extends Composite {
     grid.resizeRows(rows);
   }
 
+  public void setStatusText(String text) {
+    navbar.status.setText(text);
+  }
+
   private int getDataRowCount() {
     return grid.getRowCount() - 1;
   }
 
-  private final RowDataAcceptor acceptor = new RowDataAcceptorImpl();
-  private final NavBar navbar = new NavBar();
-  private final DockPanel outer = new DockPanel();
-  private final DynaTableDataProvider provider;
-  private int startRow = 0;
-  private final Grid grid = new Grid();
+  private void initTable(String[] columns, String[] columnStyles, int rowCount) {
+    // Set up the header row. It's one greater than the number of visible rows.
+    //
+    grid.resize(rowCount + 1, columns.length);
+    for (int i = 0, n = columns.length; i < n; i++) {
+      grid.setText(0, i, columns[i]);
+      if (columnStyles != null) {
+        grid.getCellFormatter().setStyleName(0, i, columnStyles[i] + " header");
+      }
+    }
+  }
 }

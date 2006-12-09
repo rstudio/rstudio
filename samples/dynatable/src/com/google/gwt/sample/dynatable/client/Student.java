@@ -16,10 +16,12 @@
 package com.google.gwt.sample.dynatable.client;
 
 /**
- * Holds relevant data for a Student type Person. This class is intended
- * to be serialized in RPC calls.
+ * Holds relevant data for a Student type Person. This class is intended to be
+ * serialized in RPC calls.
  */
 public class Student extends Person {
+
+  private Schedule classSchedule = new Schedule();
 
   public Schedule getClassSchedule() {
     return classSchedule;
@@ -28,6 +30,4 @@ public class Student extends Person {
   public String getSchedule(boolean[] daysFilter) {
     return classSchedule.getDescription(daysFilter);
   }
-
-  private Schedule classSchedule = new Schedule();
 }

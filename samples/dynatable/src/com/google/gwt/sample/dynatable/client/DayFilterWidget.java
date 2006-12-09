@@ -25,12 +25,14 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * A UI Widget that allows a user to filter the days being displayed in 
- * the dynamic table.
+ * A UI Widget that allows a user to filter the days being displayed in the
+ * dynamic table.
  */
 public class DayFilterWidget extends Composite {
 
   private class DayCheckBox extends CheckBox {
+    public final int day;
+
     public DayCheckBox(String caption, int day) {
       super(caption);
 
@@ -43,8 +45,6 @@ public class DayFilterWidget extends Composite {
       // Initialize based on the calendar's current value.
       setChecked(calendar.getDayIncluded(day));
     }
-
-    public final int day;
   }
 
   private class DayCheckBoxListener implements ClickListener {
@@ -53,6 +53,12 @@ public class DayFilterWidget extends Composite {
       calendar.setDayIncluded(dayCheckBox.day, dayCheckBox.isChecked());
     }
   }
+
+  private final SchoolCalendarWidget calendar;
+
+  private final VerticalPanel outer = new VerticalPanel();
+
+  private final DayCheckBoxListener dayCheckBoxListener = new DayCheckBoxListener();
 
   public DayFilterWidget(SchoolCalendarWidget calendar) {
     this.calendar = calendar;
@@ -97,8 +103,4 @@ public class DayFilterWidget extends Composite {
       }
     }
   }
-
-  private final SchoolCalendarWidget calendar;
-  private final VerticalPanel outer = new VerticalPanel();
-  private final DayCheckBoxListener dayCheckBoxListener = new DayCheckBoxListener();
 }

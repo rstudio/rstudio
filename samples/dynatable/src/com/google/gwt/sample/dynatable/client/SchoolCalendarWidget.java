@@ -23,16 +23,24 @@ import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.ui.Composite;
 
 /**
- * A Composite widget that abstracts a DynaTableWidget and a data provider
- * tied to the <@link SchoolCalendarService> RPC endpoint.
+ * A Composite widget that abstracts a DynaTableWidget and a data provider tied
+ * to the <@link SchoolCalendarService> RPC endpoint.
  */
 public class SchoolCalendarWidget extends Composite {
 
   /**
-   * A data provider that bridges the provides row level updates from the
-   * data available through a <@link SchoolCalendarService>.
+   * A data provider that bridges the provides row level updates from the data
+   * available through a <@link SchoolCalendarService>.
    */
   public class CalendarProvider implements DynaTableDataProvider {
+
+    private final SchoolCalendarServiceAsync calService;
+
+    private int lastMaxRows = -1;
+
+    private Person[] lastPeople;
+
+    private int lastStartRow = -1;
 
     public CalendarProvider() {
       // Initialize the service.
@@ -44,10 +52,10 @@ public class SchoolCalendarWidget extends Composite {
       // (Which is a totally demo hack, by the way :-)
       // 
       ServiceDefTarget target = (ServiceDefTarget) calService;
-      
-      // Use a module-relative URLs to ensure that this client code can find 
-      // its way home, even when the URL changes (as might happen when you 
-      // deploy this as a webapp under an external servlet container). 
+
+      // Use a module-relative URLs to ensure that this client code can find
+      // its way home, even when the URL changes (as might happen when you
+      // deploy this as a webapp under an external servlet container).
       String moduleRelativeURL = GWT.getModuleBaseURL() + "calendar";
       target.setServiceEntryPoint(moduleRelativeURL);
     }
@@ -110,18 +118,22 @@ public class SchoolCalendarWidget extends Composite {
       }
       acceptor.accept(startRow, rows);
     }
-
-    private final SchoolCalendarServiceAsync calService;
-    private int lastMaxRows = -1;
-    private Person[] lastPeople;
-    private int lastStartRow = -1;
   }
 
   private static final boolean USE_STATIC_RPC_ANSWERS = true;
 
+  private final CalendarProvider calProvider = new CalendarProvider();
+
+  private final boolean[] daysFilter = new boolean[] {
+      true, true, true, true, true, true, true};
+
+  private final DynaTableWidget dynaTable;
+
+  private Command pendingRefresh;
+
   public SchoolCalendarWidget(int visibleRows) {
-    String[] columns = new String[]{"Name", "Description", "Schedule"};
-    String[] styles = new String[]{"name", "desc", "sched"};
+    String[] columns = new String[] {"Name", "Description", "Schedule"};
+    String[] styles = new String[] {"name", "desc", "sched"};
     dynaTable = new DynaTableWidget(calProvider, columns, styles, visibleRows);
     initWidget(dynaTable);
   }
@@ -152,10 +164,4 @@ public class SchoolCalendarWidget extends Composite {
       DeferredCommand.add(pendingRefresh);
     }
   }
-
-  private final CalendarProvider calProvider = new CalendarProvider();
-  private final boolean[] daysFilter = new boolean[]{
-    true, true, true, true, true, true, true};
-  private final DynaTableWidget dynaTable;
-  private Command pendingRefresh;
 }
