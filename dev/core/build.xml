@@ -87,19 +87,12 @@
 				<filename name="com/google/gwt/dev/js/rhino/**/*.java" negate="yes" />
 				<filename name="org/eclipse/**/*.java" negate="yes" />
 				<filename name="org/apache/**/*.java" negate="yes" />
-
-				<!-- TODO: fix styles on these files -->
-				<filename name="com/google/gwt/dev/**/*.java" negate="yes" />
-				<filename name="com/google/gwt/core/ext/**/*.java" negate="yes" />
 			</fileset>
 		</gwt.checkstyle>
 
-		<!-- TODO: fix styles on these files -->
-		<!-- 
 		<gwt.checkstyle>
 			<fileset dir="super/com/google/gwt/dev/jjs/intrinsic" />
 		</gwt.checkstyle>
-		-->
 	</target>
 
 	<target name="clean" description="Cleans this project's intermediate and output files">
