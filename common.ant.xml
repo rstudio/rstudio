@@ -141,25 +141,23 @@
 		</sequential>
 	</macrodef>
 
-	<target name="antcall.unjar.maybe" unless="unjar.upToDate">
+	<target name="-unjar.maybe" unless="unjar.upToDate">
 		<mkdir dir="${unjar.out}" />
 		<unjar src="${unjar.path}" dest="${unjar.out}" overwrite="true" />
 		<touch file="${unjar.flagFile}" />
-	</target>
-
-	<target name="antcall.unjar">
-		<basename property="unjar.name" file="${unjar.path}" />
-		<property name="unjar.flagFile" value="${project.build}/${unjar.name}.unjar" />
-		<uptodate property="unjar.upToDate" srcfile="${unjar.path}" targetfile="${unjar.flagFile}" />
-		<antcall target="antcall.unjar.maybe" />
 	</target>
 
 	<macrodef name="gwt.unjar">
 		<attribute name="toollib" default="" />
 		<attribute name="path" default="${gwt.tools.lib}/@{toollib}" />
 		<sequential>
-			<antcall target="antcall.unjar">
+			<basename property="@{path}.unjar.name" file="@{path}" />
+			<property name="@{path}.unjar.flagFile" value="${project.build}/${@{path}.unjar.name}.unjar" />
+			<uptodate property="@{path}.unjar.upToDate" value="unjar.upToDate" srcfile="@{path}" targetfile="${@{path}.unjar.flagFile}" />
+			<antcall target="-unjar.maybe">
+				<param name="${@{path}.unjar.upToDate}" value="true" />
 				<param name="unjar.path" value="@{path}" />
+				<param name="unjar.flagFile" value="${@{path}.unjar.flagFile}" />
 			</antcall>
 		</sequential>
 	</macrodef>
