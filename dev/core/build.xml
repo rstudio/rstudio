@@ -38,13 +38,13 @@
 		<gwt.unjar toollib="xerces/xml-apis-2.0.2.jar" />
 	</target>
 
-	<target name="filter.src" description="Creates filtered copies of source files" unless="version.uptodate">
+	<property name="filter.pattern" value="com/google/gwt/dev/About.java" />
+
+	<target name="-filter.src" description="Creates filtered copies of source files" unless="filter.uptodate">
 		<delete dir="${src.filtered}" failonerror="false" />
 		<mkdir dir="${src.filtered}" />
 		<copy todir="${src.filtered}" overwrite="true">
-			<fileset dir="src">
-				<include name="com/google/gwt/dev/About.java" />
-			</fileset>
+			<fileset dir="src" includes="${filter.pattern}" />
 			<filterset>
 				<filter token="GWT_VERSION" value="${gwt.version}" />
 			</filterset>
@@ -65,13 +65,20 @@
 
 		<!-- Files with hardcoded version information must be filtered -->
 		<property name="src.filtered" location="${project.build}/src-filtered" />
-		<available file="${src.filtered}/gwt.version-${gwt.version}" property="version.uptodate" />
-		<antcall target="filter.src" />
+		<condition property="filter.uptodate">
+			<and>
+				<available file="${src.filtered}/gwt.version-${gwt.version}" />
+				<uptodate>
+					<srcfiles dir="src" includes="${filter.pattern}"/>
+					<globmapper from="*" to="${src.filtered}/*"/>
+				</uptodate>
+			</and>
+		</condition>
+		<antcall target="-filter.src" />
 
 		<mkdir dir="${javac.out}" />
 		<gwt.javac srcdir="${src.filtered}" />
-		<gwt.javac srcdir="src">
-			<exclude name="com/google/gwt/dev/About.java" />
+		<gwt.javac srcdir="src" excludes="${filter.pattern}">
 			<classpath>
 				<pathelement location="${javac.out-dummy}" />
 				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
