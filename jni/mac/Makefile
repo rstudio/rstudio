@@ -16,7 +16,7 @@
 # External WebKit products.
 ## 
 WEBKIT_REDIST=$(GWT_TOOLS)/redist/webkit/WebKit-418.9.tar.gz
-WEBKIT_INCLUDE=$(GWT_TOOLS)/sdk/webkit
+WEBKIT_INCLUDE=$(GWT_TOOLS)/sdk/WebKit-418.9
 
 ##
 # Built products.
