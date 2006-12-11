@@ -27,7 +27,6 @@ public class Throwable {
   private static final StackTraceElement[] NO_STACK_TRACE = new StackTraceElement[0];
 
   private Throwable cause;
-
   private String message;
 
   public Throwable() {
@@ -78,13 +77,13 @@ public class Throwable {
   }
 
   public Throwable initCause(Throwable cause) {
-    if (cause != null) {
+    if (this.cause != null) {
       throw new IllegalStateException("Can't overwrite cause");
     }
     if (cause == this) {
       throw new IllegalArgumentException("Self-causation not permitted");
     }
-    cause = cause;
+    this.cause = cause;
     return this;
   }
 
@@ -120,4 +119,5 @@ public class Throwable {
       return className;
     }
   }
+
 }
