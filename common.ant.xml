@@ -6,11 +6,19 @@
 	<fail unless="project.valid" message="This build file is in an inconsistent state." />
 
 	<condition property="build.host.platform" value="linux">
-		<os family="unix" />
+		<and>
+			<os family="unix" />
+			<not>
+				<contains string="${os.name}" substring="mac" casesensitive="false"/>
+			</not>
+		</and>
 	</condition>
 
 	<condition property="build.host.platform" value="mac">
-		<os family="mac" />
+                <and>
+			<os family="unix" />
+			<contains string="${os.name}" substring="mac" casesensitive="false" />
+		</and>
 	</condition>
 
 	<condition property="build.host.platform" value="windows">
