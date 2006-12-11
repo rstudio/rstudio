@@ -44,6 +44,7 @@
 	<property name="javac.junit.out" location="${project.build}/bin-test" />
 	<property name="javac.debug" value="true" />
 	<property name="javac.debuglevel" value="lines,vars,source" />
+	<property name="javac.encoding" value="utf-8" />
 	<property name="javac.source" value="1.4" />
 	<property name="javac.nowarn" value="true" />
 	<property name="junit.out" location="${project.build}/test" />
@@ -79,7 +80,7 @@
 	</presetdef>
 
 	<presetdef name="gwt.javac">
-		<javac srcdir="src" destdir="${javac.out}" classpath="${unjar.out}" debug="${javac.debug}" debuglevel="${javac.debuglevel}" source="${javac.source}" nowarn="${javac.nowarn}" />
+		<javac srcdir="src" destdir="${javac.out}" classpath="${unjar.out}" debug="${javac.debug}" debuglevel="${javac.debuglevel}" source="${javac.source}" nowarn="${javac.nowarn}" encoding="${javac.encoding}" />
 	</presetdef>
 
 	<presetdef name="gwt.jar">
