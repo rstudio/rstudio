@@ -1,12 +1,12 @@
 package com.google.gwt.i18n.client.gen;
 
-
 /**
- * Interface to represent the constants contained in resource  bundle:
- * 	'C:/src-gwt/gwt-user/src/test/resources/com/google/gwt/i18n/client/gen/TestBadKeys.properties'.
+ * Interface to represent the constants contained in resource bundle:
+ * 'C:/src-gwt/gwt-user/src/test/resources/com/google/gwt/i18n/client/gen/TestBadKeys.properties'.
  */
-public interface TestBadKeys extends com.google.gwt.i18n.client.ConstantsWithLookup {
-  
+public interface TestBadKeys extends
+    com.google.gwt.i18n.client.ConstantsWithLookup {
+
   /**
    * Translated "zh_spacer".
    * 
@@ -48,9 +48,11 @@ public interface TestBadKeys extends com.google.gwt.i18n.client.ConstantsWithLoo
   String __s();
 
   /**
-   * Translated "________________________________________________________________".
+   * Translated
+   * "________________________________________________________________".
    * 
-   * @return translated "________________________________________________________________"
+   * @return translated
+   *         "________________________________________________________________"
    * @gwt.key ----------------------------------------------------------------
    */
   String ________________________________________________________________();

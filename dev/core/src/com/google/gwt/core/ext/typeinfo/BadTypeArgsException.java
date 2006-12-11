@@ -16,8 +16,8 @@
 package com.google.gwt.core.ext.typeinfo;
 
 /**
- * Thrown when TypeOracle finds an invalid typed argument passed to the
- * gwtTypeArgs property.
+ * Thrown when an invalid type is specified as part of a
+ * <code>gwt.typeArgs</code> tag within a doc comment.
  */
 public class BadTypeArgsException extends TypeOracleException {
 

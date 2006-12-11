@@ -16,7 +16,7 @@
 package com.google.gwt.core.ext.typeinfo;
 
 /**
- * Type representing a java array.
+ * Type representing a Java array.
  */
 public class JArrayType extends JType {
 

@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Type representing a java class type.
+ * Type representing a Java class or interface type.
  */
 public class JClassType extends JType implements HasMetaData {
   private static final char[] HEX_CHARS = new char[] {
