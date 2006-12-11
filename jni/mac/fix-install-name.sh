@@ -13,23 +13,25 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-JNILIB=libgwt-webkit.jnilib
-JSCORE_FRAMEWORK=./Frameworks/JavaScriptCore.framework
 
-if [ $# -ne 1 ]; then
-	echo 1>&2 "usage: fix-install-path new_install_path"
+if [ $# -ne 3 ]; then
+	echo 1>&2 "usage: fix-install-path framework_name new_install_path jnilib"
 	exit 1
 fi
+
+FRAMEWORK="./Frameworks/${1}.framework/Versions/A/${1}"
+INSTALL_NAME=$2
+JNILIB=$3
 
 if [ ! -f ${JNILIB} ]; then
 	echo 1>&2 "Unable to locate: ${JNILIB}"
 	exit 1
 fi
 
-if [ ! -d ${JSCORE_FRAMEWORK} ]; then
-	echo 1>&2 "Unable to locate: ${JNILIB}"
+if [ ! -f ${FRAMEWORK} ]; then
+	echo 1>&2 "Unable to locate: ${FRAMEWORK}"
 	exit 1
 fi
 
-CURRENT_NAME=`otool -D ${JSCORE_FRAMEWORK}/Versions/A/JavaScriptCore | tail -n 1`
-install_name_tool -change "${CURRENT_NAME}" "$1" ${JNILIB}
+CURRENT_NAME=`otool -D ${FRAMEWORK} | tail -n 1`
+install_name_tool -change "${CURRENT_NAME}" "${INSTALL_NAME}" ${JNILIB}
