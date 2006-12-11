@@ -57,12 +57,11 @@ public class TabBarTest extends GWTTestCase {
   public void testGetHTML() {
     final TabBar bar = new TabBar();
     bar.addTab("foo");
-    bar.addTab("<B>bar</B>", true);
+    bar.addTab("<b>bar</b>", true);
     bar.addTab("baz");
     assertEquals("foo", bar.getTabHTML(0));
-    assertEquals("<B>bar</B>", bar.getTabHTML(1));
+    assertEquals("<b>bar</b>", bar.getTabHTML(1));
     bar.removeTab(1);
     assertEquals("baz", bar.getTabHTML(1));
-
   }
 }
