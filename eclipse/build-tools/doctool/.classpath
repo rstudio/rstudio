@@ -2,6 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="core/src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry sourcepath="/GWT_TOOLS/lib/jdk/tools-1.4.2_09-src.zip" kind="var" path="GWT_TOOLS/lib/jdk/tools-1.4.2_09.jar"/>
+	<classpathentry kind="var" path="JDK_HOME/lib/tools.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
