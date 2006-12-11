@@ -302,7 +302,7 @@ public class ValueTypesTest extends GWTTestCase {
     });
   }
 
-  public void testLong() {
+  public void disabledTestLong() {
     delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
     service.echo(Long.MAX_VALUE / 2, new AsyncCallback() {
@@ -323,7 +323,7 @@ public class ValueTypesTest extends GWTTestCase {
     });
   }
 
-  public void testLong_MAX_VALUE() {
+  public void disabledTestLong_MAX_VALUE() {
     delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
     service.echo_MAX_VALUE(Long.MAX_VALUE, new AsyncCallback() {
@@ -340,7 +340,7 @@ public class ValueTypesTest extends GWTTestCase {
     });
   }
 
-  public void testLong_MIN_VALUE() {
+  public void disabledTestLong_MIN_VALUE() {
     delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
     service.echo_MIN_VALUE(Long.MIN_VALUE, new AsyncCallback() {
