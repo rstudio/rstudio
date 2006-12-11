@@ -15,15 +15,15 @@
  */
 package com.google.doctool.custom;
 
+import com.sun.javadoc.Tag;
 import com.sun.tools.doclets.Taglet;
-import com.sun.tools.doclets.standard.tags.SimpleTaglet;
 
 import java.util.Map;
 
 /**
  * A taglet for including GWT tip tags in javadoc output.
  */
-public class TipTaglet extends SimpleTaglet {
+public class TipTaglet implements Taglet {
 
   public static void register(Map tagletMap) {
     TipTaglet tag = new TipTaglet();
@@ -35,7 +35,60 @@ public class TipTaglet extends SimpleTaglet {
   }
 
   public TipTaglet() {
-    super("tip", "Tip:", "a");
+  }
+
+  public String getName() {
+    return "tip";
+  }
+
+  public boolean inConstructor() {
+    return true;
+  }
+
+  public boolean inField() {
+    return true;
+  }
+
+  public boolean inMethod() {
+    return true;
+  }
+
+  public boolean inOverview() {
+    return true;
+  }
+
+  public boolean inPackage() {
+    return true;
+  }
+
+  public boolean inType() {
+    return true;
+  }
+
+  public boolean isInlineTag() {
+    return false;
+  }
+
+  public String toString(Tag tag) {
+    return null;
+  }
+
+  public String toString(Tag[] tags) {
+    if (tags == null || tags.length == 0) {
+      return null;
+    }
+    String result = "<DT><B>Tip:</B></DT><DD>";
+    if (tags.length == 1) {
+      result += tags[0].text();
+    } else {
+      result += "<UL>";
+      for (int i = 0; i < tags.length; i++) {
+        result += "<LI>" + tags[i].text() + "</LI>";
+      }
+      result += "</UL>";
+    }
+    result += "</DD>";
+    return result;
   }
 
 }

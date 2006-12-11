@@ -85,7 +85,14 @@ public class ExampleTaglet implements Taglet {
   }
 
   public String toString(Tag[] tags) {
-    return null;
+    if (tags == null || tags.length == 0) {
+      return null;
+    }
+    String result = "";
+    for (int i = 0; i < tags.length; i++) {
+      result += toString(tags[i]);
+    }
+    return result;
   }
 
 }
