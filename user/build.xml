@@ -9,7 +9,7 @@
 	<fileset id="default.hosted.tests" dir="${javac.junit.out}">
 		<!--
 			Causes a security dialog to popup and subsequently blocks testing
-	    -->
+		-->
 		<exclude name="com/google/gwt/user/client/ui/FormPanelTest.class" />
 
 		<!--
@@ -68,7 +68,11 @@
 	<!-- Platform shouldn't matter here, just picking one -->
 	<property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
 
-	<target name="compile" description="Compile all class files">
+	<target name="unjar.deps" description="Unzips all dependency jars into the output folder">
+		<gwt.unjar toollib="tomcat/servlet-api-2.4.jar" />
+	</target>
+
+	<target name="compile" depends="unjar.deps" description="Compile all class files">
 		<mkdir dir="${javac.out}" />
 		<gwt.javac>
 			<classpath>
@@ -100,6 +104,7 @@
 			<fileset dir="src" />
 			<fileset dir="super" />
 			<fileset dir="${javac.out}" />
+			<fileset dir="${unjar.out}" />
 		</gwt.jar>
 	</target>
 
