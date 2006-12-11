@@ -26,6 +26,10 @@
 	</condition>
 	<fail unless="build.host.platform" message="Building on ${os.name} is not supported" />
 
+	<condition property="junit.platform.args" value="-XstartOnFirstThread" else="">
+		<equals arg1="${build.host.platform}" arg2="mac" casesensitive="false"/>
+	</condition>
+
 	<!-- Global Properties -->
 	<property environment="env" />
 	<condition property="gwt.version" value="${env.GWT_VERSION}" else="0.0.0">
@@ -113,6 +117,7 @@
 
 			<echo message="${javac.out} ${javac.junit.out}" />
 			<junit dir="@{test.out}" fork="yes" printsummary="yes" haltonfailure="true">
+                                <jvmarg line="${junit.platform.args}"/>
 				<sysproperty key="gwt.args" value="@{test.args}" />
 				<sysproperty key="gwt.devjar" value="${gwt.dev.staging.jar}" />
 				<sysproperty key="java.awt.headless" value="true" />
