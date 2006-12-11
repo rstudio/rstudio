@@ -33,6 +33,7 @@ import java.util.Set;
  * @index Google Web Toolkit, developer guide
  * @index GWT, developer's guide
  * @childIntro Topic Guide
+ * @tip For a list of JRE classes that GWT can translate out of the box, see the <a href="jre.html">documentation for the GWT JRE emulation library</a>.
  */
 public class DeveloperGuide {
 

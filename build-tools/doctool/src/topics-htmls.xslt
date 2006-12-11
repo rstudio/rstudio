@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
-<!-- edited with XMLSpy v2005 rel. 3 U (http://www.altova.com) by Bruce Johnson (private) -->
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="html" />
@@ -13,103 +12,125 @@
   </xsl:template>
   <xsl:template name="gen-side">
     <div id="side">
+
       <div id="menu">
-        <div class="header item">
+
+        <h4>
           <a href="http://code.google.com/webtoolkit/">
-            Google Web Toolkit
+            <xsl:text>Google Web Toolkit</xsl:text>
           </a>
-        </div>
-        <div class="group">
-          <div class="item">
-            <a href="http://code.google.com/webtoolkit/overview.html">
-              Product Overview
+        </h4>
+
+        <ul>
+          <li>
+            <a href="http://code.google.com/webtoolkit/download.html">
+              <xsl:text>Download GWT</xsl:text>
             </a>
-          </div>
-          <div class="item">
+          </li>
+        </ul>
+
+        <!-- Section: Product Overview -->
+        <ul>
+          <li>
+            <a href="http://code.google.com/webtoolkit/overview.html">
+              <xsl:text>Product Overview</xsl:text>
+            </a>
+          </li>
+          <li>
             <a
               href="http://code.google.com/webtoolkit/gettingstarted.html">
-              Getting Started Guide
+              <xsl:text>Getting Started Guide</xsl:text>
             </a>
-          </div>
-          <div class="item">
-            <a href="http://code.google.com/webtoolkit/download.html">
-              Download SDK
-            </a>
-          </div>
-        </div>
-        <div class="group">
-          <xsl:element name="div">
-            <xsl:attribute name="class">
-              <xsl:text>item</xsl:text>
-              <xsl:if test="contains(id, 'com.google.gwt.doc')">
-                <xsl:text></xsl:text>
-                <xsl:text>selected</xsl:text>
-              </xsl:if>
-            </xsl:attribute>
-            <a href="./com.google.gwt.doc.DeveloperGuide.html">
-              Developer Guide
-            </a>
-          </xsl:element>
-          <div class="group">
-            <div class="item">
-              <a
-                href="http://code.google.com/webtoolkit/documentation/examples/">
-                Example Projects
-              </a>
-            </div>
-            <xsl:element name="div">
-              <xsl:attribute name="class">
-                <xsl:text>item</xsl:text>
-                <xsl:if
-                  test="(contains(id, 'com.google.gwt.') and not(contains(id, 'com.google.gwt.doc.'))) or id = 'gwt'">
-                  <xsl:text></xsl:text>
-                  <xsl:text>selected</xsl:text>
-                </xsl:if>
-              </xsl:attribute>
-              <a href="./gwt.html">GWT Class Reference</a>
-            </xsl:element>
-            <xsl:element name="div">
-              <xsl:attribute name="class">
-                <xsl:text>item</xsl:text>
-                <xsl:if test="contains(id, 'java.') or id='jre'">
-                  <xsl:text></xsl:text>
-                  <xsl:text>selected</xsl:text>
-                </xsl:if>
-              </xsl:attribute>
-              <a href="./jre.html">JRE Emulation Library</a>
-            </xsl:element>
-          </div>
-        </div>
-        <div class="group">
-          <div class="item">
-            <a href="http://code.google.com/webtoolkit/faq.html">
-              Web Toolkit FAQ
-            </a>
-          </div>
-          <div class="item">
-            <a href="http://googlewebtoolkit.blogspot.com/">
-              Web Toolkit Blog
-            </a>
-          </div>
-          <div class="item">
+          </li>
+          <li>
             <a
-              href="http://code.google.com/webtoolkit/thirdparty.html">
-              Third Party Tools
+              href="http://code.google.com/webtoolkit/documentation/examples/">
+              <xsl:text>Example Projects</xsl:text>
             </a>
-          </div>
-          <div class="item">
+          </li>
+        </ul>
+
+        <!-- Section: Developer Guide -->
+        <ul>
+
+          <!-- If the page is inside the dev guide, show the link as selected -->
+          <li>
+            <xsl:element name="a">
+              <xsl:if test="contains(id, 'com.google.gwt.doc')">
+                <xsl:attribute name="class">
+                  <xsl:text>selected</xsl:text>
+                </xsl:attribute>
+              </xsl:if>
+              <xsl:variable name="href">
+                ./com.google.gwt.doc.DeveloperGuide.html
+              </xsl:variable>
+              <xsl:attribute name="href">
+                <xsl:value-of select="normalize-space($href)" />
+              </xsl:attribute>
+              <xsl:text>Developer Guide</xsl:text>
+            </xsl:element>
+          </li>
+
+          <!-- If the page is inside the GWT class ref, show the link as selected -->
+          <li>
+            <xsl:element name="a">
+              <xsl:if
+                test="not(contains(id, 'com.google.gwt.doc.')) and (contains(id, 'com.google.gwt.') or contains(id, 'java.') or id = 'gwt' or id = 'jre')">
+                <xsl:attribute name="class">
+                  <xsl:text>selected</xsl:text>
+                </xsl:attribute>
+              </xsl:if>
+              <xsl:variable name="href">./gwt.html</xsl:variable>
+              <xsl:attribute name="href">
+                <xsl:value-of select="normalize-space($href)" />
+              </xsl:attribute>
+              <xsl:text>Class Reference</xsl:text>
+            </xsl:element>
+          </li>
+          <li>
             <a href="http://code.google.com/webtoolkit/issues/">
-              Issue Tracking
+              <xsl:text>Issue Tracking</xsl:text>
             </a>
-          </div>
-          <div class="item">
+          </li>
+          <li>
             <a
               href="http://groups.google.com/group/Google-Web-Toolkit">
-              Developer Forum
+              <xsl:text>Developer Forum</xsl:text>
             </a>
-          </div>
-        </div>
+          </li>
+        </ul>
+
+        <!-- Section: Important uncategorized links -->
+        <ul>
+          <li>
+            <a href="http://googlewebtoolkit.blogspot.com/">
+              <xsl:text>GWT Blog</xsl:text>
+            </a>
+          </li>
+          <li>
+            <a href="http://code.google.com/webtoolkit/faq.html">
+              <xsl:text>GWT FAQ</xsl:text>
+            </a>
+          </li>
+          <li>
+            <a
+              href="http://code.google.com/webtoolkit/makinggwtbetter.html">
+              <xsl:text>Making GWT Better</xsl:text>
+            </a>
+          </li>
+        </ul>
+
+        <ul>
+          <li>
+            <a
+              href="http://code.google.com/webtoolkit/thirdparty.html">
+              <xsl:text>Third Party Tools</xsl:text>
+            </a>
+          </li>
+        </ul>
+
       </div>
+
       <div id="search">
         <form action="http://www.google.com/search" method="get">
           <div>
@@ -128,6 +149,7 @@
       </div>
     </div>
   </xsl:template>
+
   <xsl:template name="gen-header">
     <div id="gaia">&#160;</div>
     <div id="header">
@@ -152,12 +174,14 @@
           </xsl:call-template>
         </div>
         <span class="item">
-          <a href="http://code.google.com/">Google Code Home</a>
+          <a href="http://code.google.com/">
+            <xsl:text>Google Code Home</xsl:text>
+          </a>
         </span>
         &gt;
         <span class="item">
           <a href="http://code.google.com/webtoolkit/">
-            Google Web Toolkit
+            <xsl:text>Google Web Toolkit</xsl:text>
           </a>
         </span>
         &gt;
@@ -168,6 +192,7 @@
       </div>
     </div>
   </xsl:template>
+
   <xsl:template name="emitPrevTopic">
     <xsl:param name="start" />
     <xsl:variable name="prev"
@@ -198,6 +223,7 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
+
   <xsl:template name="emitDeepestPriorChild">
     <xsl:param name="start" />
     <xsl:choose>
@@ -214,6 +240,7 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
+
   <xsl:template name="emitNextTopic">
     <xsl:param name="start" />
     <xsl:variable name="child" select="$start/topic[position()=1]" />
@@ -245,6 +272,7 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
+
   <!-- Only topics that have titles get pulled in -->
   <xsl:template match="topic[title]">
     <xsl:variable name="filedelim">
@@ -307,7 +335,7 @@
                 <xsl:value-of select="childIntro/text()" />
               </h2>
             </xsl:if>
-            <ul>
+            <ul class="featurelist">
               <xsl:for-each select="topic">
                 <li>
                   <div class="heading">
@@ -380,29 +408,33 @@
               </xsl:text>
             </a>
             <xsl:text>.</xsl:text>
-            <xsl:text disable-output-escaping="yes"><![CDATA[<!--]]></xsl:text>
-              <rdf:RDF xmlns="http://web.resource.org/cc/"
-                xmlns:dc="http://purl.org/dc/elements/1.1/"
-                xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-                <Work rdf:about="">
-                  <license
-                    rdf:resource="http://creativecommons.org/licenses/by/2.5/" />
-                </Work>
-                <License
-                  rdf:about="http://creativecommons.org/licenses/by/2.5/">
-                  <permits
-                    rdf:resource="http://web.resource.org/cc/Reproduction" />
-                  <permits
-                    rdf:resource="http://web.resource.org/cc/Distribution" />
-                  <requires
-                    rdf:resource="http://web.resource.org/cc/Notice" />
-                  <requires
-                    rdf:resource="http://web.resource.org/cc/Attribution" />
-                  <permits
-                    rdf:resource="http://web.resource.org/cc/DerivativeWorks" />
-                </License>
-              </rdf:RDF>
-            <xsl:text disable-output-escaping="yes"><![CDATA[-->]]></xsl:text>
+            <xsl:text disable-output-escaping="yes">
+              <![CDATA[<!--]]>
+            </xsl:text>
+            <rdf:RDF xmlns="http://web.resource.org/cc/"
+              xmlns:dc="http://purl.org/dc/elements/1.1/"
+              xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+              <Work rdf:about="">
+                <license
+                  rdf:resource="http://creativecommons.org/licenses/by/2.5/" />
+              </Work>
+              <License
+                rdf:about="http://creativecommons.org/licenses/by/2.5/">
+                <permits
+                  rdf:resource="http://web.resource.org/cc/Reproduction" />
+                <permits
+                  rdf:resource="http://web.resource.org/cc/Distribution" />
+                <requires
+                  rdf:resource="http://web.resource.org/cc/Notice" />
+                <requires
+                  rdf:resource="http://web.resource.org/cc/Attribution" />
+                <permits
+                  rdf:resource="http://web.resource.org/cc/DerivativeWorks" />
+              </License>
+            </rdf:RDF>
+            <xsl:text disable-output-escaping="yes">
+              <![CDATA[-->]]>
+            </xsl:text>
           </div>
         </div>
 
@@ -415,11 +447,13 @@
       </body>
     </html>
   </xsl:template>
+
   <xsl:template match="@*|node()">
     <xsl:copy>
       <xsl:apply-templates select="@*|node()" />
     </xsl:copy>
   </xsl:template>
+
   <xsl:template match="link">
     <xsl:variable name="testLinkBase"
       select="substring-before(@ref, &quot;#&quot;)" />
@@ -438,6 +472,7 @@
         select="key('topicSearch', $linkBase)" />
     </xsl:call-template>
   </xsl:template>
+
   <xsl:template name="makeLink">
     <!-- This only becomes a hyperlink if the cross-ref can be resolved -->
     <xsl:param name="linkRef" />
@@ -465,4 +500,5 @@
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
+
 </xsl:stylesheet>
