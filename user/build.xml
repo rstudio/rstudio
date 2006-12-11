@@ -105,8 +105,8 @@
 	<target name="build" depends="compile" description="Build and package this project">
 		<mkdir dir="${gwt.build.lib}" />
 		<gwt.jar>
-			<fileset dir="src" />
-			<fileset dir="super" />
+			<fileset dir="src" excludes="**/package.html" />
+			<fileset dir="super" excludes="**/package.html" />
 			<fileset dir="${javac.out}" />
 			<fileset dir="${unjar.out}" />
 		</gwt.jar>
