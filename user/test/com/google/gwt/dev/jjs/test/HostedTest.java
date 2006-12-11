@@ -170,7 +170,7 @@ public class HostedTest extends GWTTestCase {
    * the java.lang.Object::toString() method.
    *
    */
-  public void testJSNIToStringResolution() {
+  public void disabledTestJSNIToStringResolution() {
     class Foo {
       public String toString() {
         return "FOO";
