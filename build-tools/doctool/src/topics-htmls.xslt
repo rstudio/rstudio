@@ -15,7 +15,9 @@
     <div id="side">
       <div id="menu">
         <div class="header item">
-          <a href="http://code.google.com/webtoolkit/">Google Web Toolkit</a>
+          <a href="http://code.google.com/webtoolkit/">
+            Google Web Toolkit
+          </a>
         </div>
         <div class="group">
           <div class="item">
@@ -24,7 +26,8 @@
             </a>
           </div>
           <div class="item">
-            <a href="http://code.google.com/webtoolkit/gettingstarted.html">
+            <a
+              href="http://code.google.com/webtoolkit/gettingstarted.html">
               Getting Started Guide
             </a>
           </div>
@@ -84,10 +87,13 @@
             </a>
           </div>
           <div class="item">
-            <a href="http://googlewebtoolkit.blogspot.com/">Web Toolkit Blog</a>
+            <a href="http://googlewebtoolkit.blogspot.com/">
+              Web Toolkit Blog
+            </a>
           </div>
           <div class="item">
-            <a href="http://code.google.com/webtoolkit/thirdparty.html">
+            <a
+              href="http://code.google.com/webtoolkit/thirdparty.html">
               Third Party Tools
             </a>
           </div>
@@ -97,7 +103,8 @@
             </a>
           </div>
           <div class="item">
-            <a href="http://groups.google.com/group/Google-Web-Toolkit">
+            <a
+              href="http://groups.google.com/group/Google-Web-Toolkit">
               Developer Forum
             </a>
           </div>
@@ -107,7 +114,8 @@
         <form action="http://www.google.com/search" method="get">
           <div>
             <input name="domains" value="code.google.com" type="hidden" />
-            <input name="sitesearch" value="code.google.com" type="hidden" />
+            <input name="sitesearch" value="code.google.com"
+              type="hidden" />
             <div class="header">Search this site:</div>
             <div class="input">
               <input name="q" size="10" />
@@ -125,7 +133,8 @@
     <div id="header">
       <div id="logo">
         <a href="http://code.google.com/">
-          <img src="http://code.google.com/images/code_sm.png" alt="Google" />
+          <img src="http://code.google.com/images/code_sm.png"
+            alt="Google" />
         </a>
       </div>
       <!-- The title for the entire docset -->
@@ -147,7 +156,9 @@
         </span>
         &gt;
         <span class="item">
-          <a href="http://code.google.com/webtoolkit/">Google Web Toolkit</a>
+          <a href="http://code.google.com/webtoolkit/">
+            Google Web Toolkit
+          </a>
         </span>
         &gt;
         <!-- The topic location -->
@@ -192,7 +203,8 @@
     <xsl:choose>
       <xsl:when test="$start/topic">
         <xsl:call-template name="emitDeepestPriorChild">
-          <xsl:with-param name="start" select="$start/topic[position()=last()]" />
+          <xsl:with-param name="start"
+            select="$start/topic[position()=last()]" />
         </xsl:call-template>
       </xsl:when>
       <xsl:otherwise>
@@ -252,7 +264,8 @@
             <xsl:value-of select="title" />
           </xsl:if>
         </title>
-        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <meta http-equiv="content-type"
+          content="text/html; charset=utf-8" />
         <link href="../css/base.css" rel="stylesheet" type="text/css" />
         <link href="./doc.css" rel="stylesheet" type="text/css" />
         <link href="../css/print.css" rel="stylesheet" media="print"
@@ -299,7 +312,8 @@
                 <li>
                   <div class="heading">
                     <xsl:call-template name="makeLink">
-                      <xsl:with-param name="linkText" select="title/node()" />
+                      <xsl:with-param name="linkText"
+                        select="title/node()" />
                       <xsl:with-param name="linkTarget" select="." />
                     </xsl:call-template>
                   </div>
@@ -352,7 +366,8 @@
           <div id="license"
             style="text-align: center; margin: 1em 0em 1em 0em">
             Except as otherwise
-            <a href="http://code.google.com/policies.html#restrictions">
+            <a
+              href="http://code.google.com/policies.html#restrictions">
               <xsl:text>noted</xsl:text>
             </a>
             <xsl:text>, the content of this &#32;</xsl:text>
@@ -360,10 +375,12 @@
             <xsl:text>page is licensed under the &#32;</xsl:text>
             <a rel="license"
               href="http://creativecommons.org/licenses/by/2.5/">
-              <xsl:text>Creative Commons Attribution 2.5 License</xsl:text>
+              <xsl:text>
+                Creative Commons Attribution 2.5 License
+              </xsl:text>
             </a>
             <xsl:text>.</xsl:text>
-            <xsl:comment>
+            <xsl:text disable-output-escaping="yes"><![CDATA[<!--]]></xsl:text>
               <rdf:RDF xmlns="http://web.resource.org/cc/"
                 xmlns:dc="http://purl.org/dc/elements/1.1/"
                 xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
@@ -377,14 +394,15 @@
                     rdf:resource="http://web.resource.org/cc/Reproduction" />
                   <permits
                     rdf:resource="http://web.resource.org/cc/Distribution" />
-                  <requires rdf:resource="http://web.resource.org/cc/Notice" />
+                  <requires
+                    rdf:resource="http://web.resource.org/cc/Notice" />
                   <requires
                     rdf:resource="http://web.resource.org/cc/Attribution" />
                   <permits
                     rdf:resource="http://web.resource.org/cc/DerivativeWorks" />
                 </License>
               </rdf:RDF>
-            </xsl:comment>
+            <xsl:text disable-output-escaping="yes"><![CDATA[-->]]></xsl:text>
           </div>
         </div>
 
@@ -416,7 +434,8 @@
     <xsl:call-template name="makeLink">
       <xsl:with-param name="linkRef" select="@ref" />
       <xsl:with-param name="linkText" select="node()" />
-      <xsl:with-param name="linkTarget" select="key('topicSearch', $linkBase)" />
+      <xsl:with-param name="linkTarget"
+        select="key('topicSearch', $linkBase)" />
     </xsl:call-template>
   </xsl:template>
   <xsl:template name="makeLink">
