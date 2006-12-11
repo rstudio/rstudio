@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2006 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.shell.moz;
 
 import com.google.gwt.dev.shell.LowLevel;
@@ -15,16 +29,14 @@ import java.util.Vector;
 public class LowLevelMoz {
 
   /**
-   * Provides interface for methods to be exposed
-   * on javascript side.
+   * Provides interface for methods to be exposed on javascript side.
    */
   public interface DispatchMethod {
     int invoke(int jsthis, int[] jsargs);
   }
 
   /**
-   * Provides interface for objects to be exposed
-   * on javascript side.
+   * Provides interface for objects to be exposed on javascript side.
    */
   public interface DispatchObject {
     int getField(String name);
@@ -456,6 +468,7 @@ public class LowLevelMoz {
     System.out.flush();
   }
 
+  // CHECKSTYLE_NAMING_OFF: Non JSNI native code may have leading '_'s.
   private static native boolean _coerceTo31Bits(int scriptObject, int jsval,
       int[] rval);
 
@@ -509,6 +522,8 @@ public class LowLevelMoz {
 
   private static native boolean _wrapJSObject(int scriptObject, int jsval,
       int[] rval);
+
+  // CHECKSTYLE_NAMING_ON
 
   /**
    * Not instantiable.
