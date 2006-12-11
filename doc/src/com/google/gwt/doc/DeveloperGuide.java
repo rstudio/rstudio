@@ -2208,7 +2208,7 @@ public class DeveloperGuide {
      * next event. When the last event fires, call <code>finishTest()</code>
      * as normal. </li>
      * <li> Set a counter containing the number of events to wait for. As each
-     * event comes in, decrement the counter. Call <code>testFinish()</code>
+     * event comes in, decrement the counter. Call <code>finishTest()</code>
      * when the counter reaches <code>0.</code> </li>
      * </ul>
      * 
