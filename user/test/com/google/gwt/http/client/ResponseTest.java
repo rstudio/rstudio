@@ -65,8 +65,10 @@ public class ResponseTest extends GWTTestCase {
   /**
    * Test method for
    * {@link com.google.gwt.http.client.Response#getStatusCode()}.
+   * DISABLED - we use a newer version of webkit in our hosted browser than Safari's; we can't reliably
+   * distinguish between the two so we disabled the test
    */
-  public void testGetStatusCode_Safari() {
+  public void disabledTestGetStatusCode_Safari() {
     if (!isSafari()) {
       // Only test this on Safari
       return;
