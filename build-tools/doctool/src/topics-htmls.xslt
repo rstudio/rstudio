@@ -403,9 +403,10 @@
             <xsl:text>page is licensed under the &#32;</xsl:text>
             <a rel="license"
               href="http://creativecommons.org/licenses/by/2.5/">
-              <xsl:text>
+              <xsl:variable name="cclicense">
                 Creative Commons Attribution 2.5 License
-              </xsl:text>
+              </xsl:variable>
+              <xsl:value-of select="normalize-space($cclicense)" />
             </a>
             <xsl:text>.</xsl:text>
             <xsl:text disable-output-escaping="yes">
