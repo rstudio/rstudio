@@ -121,7 +121,7 @@ public class ResponseTest extends GWTTestCase {
    * Test method for
    * {@link com.google.gwt.http.client.Response#getStatusText()}.
    */
-  public void testGetStatusText_Safari() {
+  public void disabledTestGetStatusText_Safari() {
     if (!isSafari()) {
       // Only test this on Safari
       return;
