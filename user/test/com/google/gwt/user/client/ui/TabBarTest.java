@@ -60,7 +60,7 @@ public class TabBarTest extends GWTTestCase {
     bar.addTab("<b>bar</b>", true);
     bar.addTab("baz");
     assertEquals("foo", bar.getTabHTML(0));
-    assertEquals("<b>bar</b>", bar.getTabHTML(1));
+    assertTrue("<b>bar</b>".equalsIgnoreCase(bar.getTabHTML(1)));
     bar.removeTab(1);
     assertEquals("baz", bar.getTabHTML(1));
   }
