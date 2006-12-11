@@ -5,31 +5,6 @@
 	</condition>
 	<fail unless="project.valid" message="This build file is in an inconsistent state." />
 
-	<condition property="build.host.platform" value="linux">
-		<and>
-			<os family="unix" />
-			<not>
-				<contains string="${os.name}" substring="mac" casesensitive="false"/>
-			</not>
-		</and>
-	</condition>
-
-	<condition property="build.host.platform" value="mac">
-                <and>
-			<os family="unix" />
-			<contains string="${os.name}" substring="mac" casesensitive="false" />
-		</and>
-	</condition>
-
-	<condition property="build.host.platform" value="windows">
-		<os family="windows" />
-	</condition>
-	<fail unless="build.host.platform" message="Building on ${os.name} is not supported" />
-
-	<condition property="junit.platform.args" value="-XstartOnFirstThread" else="">
-		<equals arg1="${build.host.platform}" arg2="mac" casesensitive="false"/>
-	</condition>
-
 	<!-- Global Properties -->
 	<property environment="env" />
 	<condition property="gwt.version" value="${env.GWT_VERSION}" else="0.0.0">
@@ -61,6 +36,36 @@
 	<property name="javac.nowarn" value="true" />
 	<property name="junit.out" location="${project.build}/test" />
 
+	<!-- Sanity check -->
+	<available file="${gwt.tools}" type="dir" property="gwt.tools.exists" />
+	<fail unless="gwt.tools.exists" message="Cannot find '${gwt.tools}' tools directory; perhaps you should define the GWT_TOOLS environment variable" />
+
+	<!-- JUnit support -->
+	<condition property="build.host.platform" value="linux">
+		<and>
+			<os family="unix" />
+			<not>
+				<contains string="${os.name}" substring="mac" casesensitive="false" />
+			</not>
+		</and>
+	</condition>
+
+	<condition property="build.host.platform" value="mac">
+		<and>
+			<os family="unix" />
+			<contains string="${os.name}" substring="mac" casesensitive="false" />
+		</and>
+	</condition>
+
+	<condition property="build.host.platform" value="windows">
+		<os family="windows" />
+	</condition>
+	<fail unless="build.host.platform" message="Building on ${os.name} is not supported" />
+
+	<condition property="junit.platform.args" value="-XstartOnFirstThread" else="">
+		<equals arg1="${build.host.platform}" arg2="mac" casesensitive="false" />
+	</condition>
+
 	<property name="gwt.dev.staging.jar" location="${gwt.build.staging}/gwt-${build.host.platform}-${gwt.version}/gwt-dev-${build.host.platform}.jar" />
 	<property name="gwt.junit.port" value="8888" />
 
@@ -69,9 +74,6 @@
 	-->
 	<property name="gwt.remote.browsers" value="" />
 
-	<!-- Sanity check -->
-	<available file="${gwt.tools}" type="dir" property="gwt.tools.exists" />
-	<fail unless="gwt.tools.exists" message="Cannot find '${gwt.tools}' tools directory; perhaps you should define the GWT_TOOLS environment variable" />
 
 	<!-- Pulls in tasks defined in ant-contrib, i.e. foreach -->
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
@@ -117,7 +119,7 @@
 
 			<echo message="${javac.out} ${javac.junit.out}" />
 			<junit dir="@{test.out}" fork="yes" printsummary="yes" haltonfailure="true">
-                                <jvmarg line="${junit.platform.args}"/>
+				<jvmarg line="${junit.platform.args}" />
 				<sysproperty key="gwt.args" value="@{test.args}" />
 				<sysproperty key="gwt.devjar" value="${gwt.dev.staging.jar}" />
 				<sysproperty key="java.awt.headless" value="true" />
