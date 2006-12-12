@@ -5,8 +5,8 @@
 
 	<target name="unjar.deps" description="Unzips all dependency jars into the output folder">
 		<gwt.unjar toollib="apache/tapestry-util-text-4.0.2.jar" />
+		<gwt.unjar toollib="apache/ant-1.6.5.jar" />
 		<gwt.unjar toollib="eclipse/jdt-3.1.1.jar" />
-		<gwt.unjar toollib="apache/ant-1.6.1.jar" />
 		<gwt.unjar toollib="tomcat/ant-launcher-1.6.5.jar" />
 		<gwt.unjar toollib="tomcat/catalina-1.0.jar" />
 		<gwt.unjar toollib="tomcat/catalina-optional-1.0.jar" />
