@@ -14,9 +14,7 @@
 	<target name="build" depends="stage" description="Packages the distro staging area">
 		<mkdir dir="${gwt.build.dist}" />
 		<zip destfile="${project.dist}">
-			<fileset dir="${gwt.build.staging}">
-				<include name="${project.distname}/**" />
-			</fileset>
+			<zipfileset dir="${gwt.build.staging}/${project.distname}" prefix="${project.distname}" />
 		</zip>
 	</target>
 </project>

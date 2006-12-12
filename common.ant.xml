@@ -143,17 +143,14 @@
 		</sequential>
 	</macrodef>
 
-	<macrodef name="gwt.untar">
-		<attribute name="src" />
-		<attribute name="dest" />
+	<macrodef name="gwt.tgz.cat">
+		<attribute name="destfile" />
+		<element name="tar.elements" implicit="true" optional="true" />
 		<sequential>
-			<!-- GNU tar handles permissions and symlinks correctly -->
-			<exec executable="tar" failonerror="true">
-				<arg value="-xpzf" />
-				<arg file="@{src}" />
-				<arg value="-C" />
-				<arg file="@{dest}" />
-			</exec>
+			<taskdef name="tar.cat" classname="com.google.gwt.ant.taskdefs.TarCat" classpath="${gwt.build.lib}/ant-gwt.jar" />
+			<tar.cat destfile="${project.dist}" compression="gzip" longfile="gnu">
+				<tar.elements />
+			</tar.cat>
 		</sequential>
 	</macrodef>
 

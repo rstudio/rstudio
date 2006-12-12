@@ -4,7 +4,16 @@
 	<property name="project.dist" location="${gwt.build.dist}/${project.distname}.tar.gz" />
 
 	<target name="stage.platform" description="Copies platform-specific items into the staging area">
-		<gwt.untar src="${gwt.tools.redist}/webkit/WebKit-418.9.tar.gz" dest="${project.staging}" />
+		<!--
+		 	Try to untar WebKit into the staging directory.  GNU tar handles
+			permissions and symlinks correctly.  It's okay if we fail here.
+		-->
+		<exec executable="tar" failifexecutionfails="false" failonerror="false">
+			<arg value="-xpzf" />
+			<arg file="${gwt.tools.redist}/webkit/WebKit-418.9.tar.gz" />
+			<arg value="-C" />
+			<arg file="${project.staging}" />
+		</exec>
 		<copy todir="${project.staging}">
 			<fileset dir="${gwt.tools.lib}/eclipse">
 				<include name="libswt-*carbon-3235.jnilib" />
@@ -16,13 +25,18 @@
 
 	<target name="build" depends="stage" description="Packages the distro staging area">
 		<mkdir dir="${gwt.build.dist}" />
-		<!-- GNU tar handles permissions and symlinks correctly -->
-		<exec executable="tar" failonerror="true">
-			<arg value="-cpzf" />
-			<arg value="${project.dist}" />
-			<arg value="-C" />
-			<arg file="${gwt.build.staging}" />
-			<arg value="${project.distname}" />
-		</exec>
+		<gwt.tgz.cat destfile="${project.dist}">
+			<tarfileset dir="${gwt.build.staging}/${project.distname}" prefix="${project.distname}">
+				<!-- Frameworks pulled in through includetar -->
+				<exclude name="Frameworks/**" />
+				<patternset refid="chmod.not.executables" />
+			</tarfileset>
+			<tarfileset dir="${gwt.build.staging}/${project.distname}" prefix="${project.distname}" mode="755">
+				<!-- Frameworks pulled in through includetar -->
+				<exclude name="Frameworks/**" />
+				<patternset refid="chmod.executables" />
+			</tarfileset>
+			<includetar src="${gwt.tools.redist}/webkit/WebKit-418.9.tar.gz" compression="gzip" prefix="${project.distname}" />
+		</gwt.tgz.cat>
 	</target>
 </project>

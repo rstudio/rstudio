@@ -6,6 +6,18 @@
 	<property name="project.distname" value="gwt-${dist.platform}-${gwt.version}" />
 	<property name="project.staging" location="${gwt.build.staging}/${project.distname}" />
 
+	<patternset id="chmod.executables">
+		<include name="*Creator*" />
+		<include name="samples/*/*-shell" />
+		<include name="samples/*/*-compile" />
+	</patternset>
+
+	<patternset id="chmod.not.executables">
+		<exclude name="*Creator*" />
+		<exclude name="samples/*/*-shell*" />
+		<exclude name="samples/*/*-compile*" />
+	</patternset>
+
 	<!-- copies a single sample into the staging directory -->
 	<macrodef name="stage.sample">
 		<attribute name="lname" />
@@ -24,12 +36,6 @@
 					<include name="*" />
 				</fileset>
 			</copy>
-			<chmod perm="a+x">
-				<fileset dir="${project.staging}/samples/@{uname}">
-					<include name="@{uname}-compile*" />
-					<include name="@{uname}-shell*" />
-				</fileset>
-			</chmod>
 		</sequential>
 	</macrodef>
 
@@ -69,14 +75,9 @@
 		<stage.sample lname="simplexml" uname="SimpleXML" />
 
 		<antcall target="stage.platform" />
-		<chmod perm="a+r">
-			<dirset dir="${project.staging}" />
-			<fileset dir="${project.staging}" />
-		</chmod>
-		<chmod perm="a+x">
-			<dirset dir="${project.staging}" />
+		<chmod perm="755">
 			<fileset dir="${project.staging}">
-				<include name="*Creator*" />
+				<patternset refid="chmod.executables" />
 			</fileset>
 		</chmod>
 	</target>

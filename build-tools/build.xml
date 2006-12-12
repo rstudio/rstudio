@@ -6,6 +6,10 @@
 	<!-- "build" is the default when subprojects are directly targetted -->
 	<property name="target" value="build" />
 
+	<target name="ant-gwt" description="Builds GWT specific Ant extensions">
+		<gwt.ant dir="ant-gwt" />
+	</target>
+
 	<target name="customchecks" description="Build the checkstyle extensions">
 		<gwt.ant dir="customchecks" />
 	</target>
@@ -14,7 +18,7 @@
 		<gwt.ant dir="doctool" />
 	</target>
 
-	<target name="-do" depends="customchecks, doctool" description="Run all subprojects"/>
+	<target name="-do" depends="ant-gwt, customchecks, doctool" description="Run all subprojects"/>
 	
 	<target name="build" description="Builds GWT">
 		<antcall target="-do">

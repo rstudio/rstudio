@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="core/src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/ant-1.6.5.jar" sourcepath="/GWT_TOOLS/lib/apache/ant-1.6.5-src.zip"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/ant-launcher-1.6.5.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
