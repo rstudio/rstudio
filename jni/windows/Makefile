@@ -1,19 +1,24 @@
-# Copyright 2006 Google Inc. All Rights Reserved.
+# Copyright 2006 Google Inc.
 #
-#-------------------------------------------------------------------------------
-# Macros
-#-------------------------------------------------------------------------------
-SHELL   = /bin/sh
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
 
 ##
 # Target settings
 ##
-ROOTDIR = ./
-PROGNAME:= gwt-ll
-PROG    := $(PROGNAME).dll
-PROGDIR := ./
-OBJDIR  := $(PROGDIR)objs/
-OUT     := $(PROGDIR)image/$(PROG)
+GWT_ROOT = ../../
+OBJDIR  := $(GWT_ROOT)build/out/jni/win32/
+OUTDIR  := $(GWT_ROOT)build/jni/win32/
+OUT     := $(OUTDIR)gwt-ll.dll
 
 ##
 # Tools
@@ -26,8 +31,8 @@ LD       := $(CXX)
 ##
 # List of source, object, and dependency paths plus the path to them
 ##
-SRCDIRS := ./:../gwt-ll-core/
-VPATH   := .:../gwt-ll-core
+SRCDIRS := ./:../core/
+VPATH   := .:../core
 SRCS    := gwt-ll.cpp IE6.cpp
 OBJS    := $(addprefix $(OBJDIR),$(SRCS:.cpp=.o))
 DEPS    := $(addprefix $(OBJDIR),$(SRCS:.cpp=.d))
@@ -35,8 +40,9 @@ DEPS    := $(addprefix $(OBJDIR),$(SRCS:.cpp=.d))
 ##
 # Include path configuration
 ##
-SYSINCS := $(ROOTDIR)../../third_party/j2sdk1.4.2_09/include \
-           $(ROOTDIR)../../third_party/j2sdk1.4.2_09/include/win32
+SYSINCS := \
+    $(JAVA_HOME)/include \
+    $(JAVA_HOME)/include/win32
 INCS := $(addprefix -isystem ,$(SYSINCS))
 
 ##
@@ -52,12 +58,6 @@ LIBS    := $(addprefix -l,$(LIBS))
 CFLAGS   := -Os -fno-exceptions -fshort-wchar -c -MMD -MP -Wno-system-headers $(CFLAGS)
 LDFLAGS  := -s -Wl,--kill-at $(LDFLAGS)
 
-##
-# Clean macros
-##
-CLEANDIRS := $(CLEANDIRS) $(OBJDIR)
-CLEANFILES := $(CLEANFILES) $(OUT)
-
 #-------------------------------------------------------------------------------
 # Rules
 #-------------------------------------------------------------------------------
@@ -65,7 +65,7 @@ CLEANFILES := $(CLEANFILES) $(OUT)
 ##
 # default rule
 ##
-all: $(OBJDIR)libwininet.a $(OUT)
+all: $(OUT)
 
 ##
 # Include the dependency rules
@@ -89,19 +89,13 @@ $(OBJDIR)lib%.a : $(SRCDIR)%.def
 ##
 # Actual output file
 ##
-$(OUT): $(OBJS)
-	@[ -d $(PROGDIR) ] || mkdir -p $(PROGDIR)
-	@[ -d $(PROGDIR)image ] || mkdir -p $(PROGDIR)image
+$(OUT): $(OBJS) $(OBJDIR)libwininet.a
+	@[ -d $(OUTDIR) ] || mkdir -p $(OUTDIR)
 	$(LD) -shared $(LDFLAGS) $(LIBPATH) -o $@ $^ $(LIBS)
 	$(STRIP) --strip-unneeded $@
 
 ##
 # Clean rule
 ##
-clean: clean-wininet
-	@-rm -f $(CLEANFILES)
-	@-rm -rf $(CLEANDIRS)
-	
-clean-wininet:
-	@-rm -f $(OBJDIR)libwininet.a
-	
+clean:
+	@-rm -rf $(OBJDIR) $(OUT)
