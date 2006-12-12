@@ -73,14 +73,11 @@
 	<!-- Platform shouldn't matter here, just picking one -->
 	<property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
 
-	<target name="unjar.deps" description="Unzips all dependency jars into the output folder">
-		<gwt.unjar toollib="tomcat/servlet-api-2.4.jar" />
-	</target>
-
-	<target name="compile" depends="unjar.deps" description="Compile all class files">
+	<target name="compile" description="Compile all class files">
 		<mkdir dir="${javac.out}" />
 		<gwt.javac>
 			<classpath>
+				<pathelement location="${gwt.tools.lib}/tomcat/servlet-api-2.4.jar" />
 				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
 				<pathelement location="${gwt.dev.jar}" />
 			</classpath>
@@ -108,7 +105,7 @@
 			<fileset dir="src" excludes="**/package.html" />
 			<fileset dir="super" excludes="**/package.html" />
 			<fileset dir="${javac.out}" />
-			<fileset dir="${unjar.out}" />
+			<zipfileset src="${gwt.tools.lib}/tomcat/servlet-api-2.4.jar" />
 		</gwt.jar>
 	</target>
 

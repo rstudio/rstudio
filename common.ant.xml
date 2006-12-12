@@ -26,7 +26,6 @@
 	<property name="project.build" location="${gwt.build.out}/${project.tail}" />
 	<property name="project.lib" location="${gwt.build.lib}/gwt-${ant.project.name}.jar" />
 	<property name="project.jni" location="${gwt.build}/${project.tail}" />
-	<property name="unjar.out" location="${project.build}/unjar" />
 	<property name="javac.out" location="${project.build}/bin" />
 	<property name="javac.junit.out" location="${project.build}/bin-test" />
 	<property name="javac.debug" value="true" />
@@ -94,7 +93,7 @@
 	</presetdef>
 
 	<presetdef name="gwt.javac">
-		<javac srcdir="src" destdir="${javac.out}" classpath="${unjar.out}" debug="${javac.debug}" debuglevel="${javac.debuglevel}" source="${javac.source}" nowarn="${javac.nowarn}" encoding="${javac.encoding}" />
+		<javac srcdir="src" destdir="${javac.out}" debug="${javac.debug}" debuglevel="${javac.debuglevel}" source="${javac.source}" nowarn="${javac.nowarn}" encoding="${javac.encoding}" />
 	</presetdef>
 
 	<presetdef name="gwt.jar">
@@ -154,24 +153,14 @@
 		</sequential>
 	</macrodef>
 
-	<target name="-unjar.maybe" unless="unjar.upToDate">
-		<mkdir dir="${unjar.out}" />
-		<unjar src="${unjar.path}" dest="${unjar.out}" overwrite="true" />
-		<touch file="${unjar.flagFile}" />
-	</target>
-
-	<macrodef name="gwt.unjar">
-		<attribute name="toollib" default="" />
-		<attribute name="path" default="${gwt.tools.lib}/@{toollib}" />
+	<macrodef name="gwt.checkstyle">
+		<element name="sourcepath" implicit="yes" optional="true" />
 		<sequential>
-			<basename property="@{path}.unjar.name" file="@{path}" />
-			<property name="@{path}.unjar.flagFile" value="${project.build}/${@{path}.unjar.name}.unjar" />
-			<uptodate property="@{path}.unjar.upToDate" value="unjar.upToDate" srcfile="@{path}" targetfile="${@{path}.unjar.flagFile}" />
-			<antcall target="-unjar.maybe">
-				<param name="${@{path}.unjar.upToDate}" value="true" />
-				<param name="unjar.path" value="@{path}" />
-				<param name="unjar.flagFile" value="${@{path}.unjar.flagFile}" />
-			</antcall>
+			<taskdef resource="checkstyletask.properties" classpath="${gwt.tools.antlib}/checkstyle-all-4.2.jar;${gwt.build.lib}/gwt-customchecks.jar" />
+			<checkstyle config="${gwt.root}/eclipse/settings/code-style/gwt-checkstyle.xml" maxWarnings="0">
+				<property key="checkstyle.header.file" file="${gwt.root}/eclipse/settings/code-style/google.header" />
+				<sourcepath />
+			</checkstyle>
 		</sequential>
 	</macrodef>
 
@@ -183,17 +172,6 @@
 			<property name="@{name}" location="@{location}" />
 			<available file="${@{name}}" property="@{name}.exists" />
 			<fail unless="@{name}.exists" message="@{message}" />
-		</sequential>
-	</macrodef>
-
-	<macrodef name="gwt.checkstyle">
-		<element name="sourcepath" implicit="yes" optional="true" />
-		<sequential>
-			<taskdef resource="checkstyletask.properties" classpath="${gwt.tools.antlib}/checkstyle-all-4.2.jar;${gwt.build.lib}/gwt-customchecks.jar" />
-			<checkstyle config="${gwt.root}/eclipse/settings/code-style/gwt-checkstyle.xml" maxWarnings="0">
-				<property key="checkstyle.header.file" file="${gwt.root}/eclipse/settings/code-style/google.header" />
-				<sourcepath />
-			</checkstyle>
 		</sequential>
 	</macrodef>
 

@@ -5,16 +5,13 @@
 	<property.ensure name="gwt.core.root" location="../core" />
 	<property.ensure name="gwt.core.build" location="${project.build}/../core" />
 
-	<target name="unjar.deps" description="Unzips all dependency jars into the output folder">
-		<gwt.unjar toollib="eclipse/${gwt.dev.swt.jar}" />
-	</target>
-
-	<target name="compile" depends="unjar.deps" description="Compile all java files">
+	<target name="compile" description="Compile all java files">
 		<mkdir dir="${javac.out}" />
 		<gwt.javac>
 			<classpath>
+				<pathelement location="${gwt.tools.lib}/eclipse/${gwt.dev.swt.jar}" />
 				<pathelement location="${gwt.core.build}/bin" />
-				<pathelement location="${gwt.core.build}/unjar" />
+				<pathelement location="${gwt.core.build}/alldeps.jar" />
 			</classpath>
 		</gwt.javac>
 	</target>
@@ -27,8 +24,8 @@
 			<fileset dir="${gwt.core.root}/super" excludes="**/package.html" />
 			<fileset dir="${javac.out}" />
 			<fileset dir="${gwt.core.build}/bin" />
-			<fileset dir="${unjar.out}" />
-			<fileset dir="${gwt.core.build}/unjar" />
+			<zipfileset src="${gwt.tools.lib}/eclipse/${gwt.dev.swt.jar}" />
+			<zipfileset src="${gwt.core.build}/alldeps.jar" />
 			<manifest>
 				<attribute name="Main-Class" value="com.google.gwt.dev.GWTMain" />
 			</manifest>
