@@ -3,11 +3,13 @@
 	<property name="project.tail" value="build-tools/doctool" />
 	<import file="${gwt.root}/common.ant.xml" />
 
+	<property.ensure name="java.tools.path" location="${java.home}/../lib/tools.jar" message="Cannot find ${java.home}/../lib/tools.jar; please use a JDK when building doc rather than a JRE."/>
+
 	<target name="compile" description="Compiles this project">
 		<mkdir dir="${javac.out}" />
 		<gwt.javac>
 			<classpath>
-				<pathelement location="${gwt.tools.lib}/jdk/tools-1.4.2_09.jar" />
+				<pathelement location="${java.tools.path}" />
 			</classpath>
 		</gwt.javac>
 	</target>
