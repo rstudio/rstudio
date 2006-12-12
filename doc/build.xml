@@ -3,6 +3,8 @@
 	<property name="project.tail" value="doc" />
 	<import file="${gwt.root}/common.ant.xml" />
 
+	<property.ensure name="java.tools.path" location="${java.home}/../lib/tools.jar" unless="build.host.ismac" message="Cannot find ${java.home}/../lib/tools.jar; please use a JDK when building doc rather than a JRE." />
+
 	<property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
 	<!-- Platform shouldn't matter here, just picking one -->
 	<property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
@@ -28,8 +30,6 @@
 		<pathelement location="./src" />
 		<path refid="USER_SOURCE_PATH" />
 	</path>
-
-	<property.ensure name="java.tools.path" location="${java.home}/../lib/tools.jar" message="Cannot find ${java.home}/../lib/tools.jar; please use a JDK when building doc rather than a JRE."/>
 
 	<path id="DOC_PATH">
 		<pathelement location="./src" />

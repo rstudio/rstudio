@@ -39,8 +39,8 @@
 	<available file="${gwt.tools}" type="dir" property="gwt.tools.exists" />
 	<fail unless="gwt.tools.exists" message="Cannot find '${gwt.tools}' tools directory; perhaps you should define the GWT_TOOLS environment variable" />
 
-	<!-- JUnit support -->
-	<condition property="build.host.platform" value="linux">
+	<!-- Platform identification -->
+	<condition property="build.host.islinux">
 		<and>
 			<os family="unix" />
 			<not>
@@ -48,16 +48,25 @@
 			</not>
 		</and>
 	</condition>
+	<condition property="build.host.platform" value="linux">
+		<isset property="build.host.islinux" />
+	</condition>
 
-	<condition property="build.host.platform" value="mac">
+	<condition property="build.host.ismac">
 		<and>
 			<os family="unix" />
 			<contains string="${os.name}" substring="mac" casesensitive="false" />
 		</and>
 	</condition>
+	<condition property="build.host.platform" value="mac">
+		<isset property="build.host.ismac" />
+	</condition>
 
-	<condition property="build.host.platform" value="windows">
+	<condition property="build.host.iswindows">
 		<os family="windows" />
+	</condition>
+	<condition property="build.host.platform" value="windows">
+		<isset property="build.host.iswindows" />
 	</condition>
 	<fail unless="build.host.platform" message="Building on ${os.name} is not supported" />
 
@@ -65,6 +74,7 @@
 		<equals arg1="${build.host.platform}" arg2="mac" casesensitive="false" />
 	</condition>
 
+	<!-- JUnit support -->
 	<property name="gwt.dev.staging.jar" location="${gwt.build.staging}/gwt-${build.host.platform}-${gwt.version}/gwt-dev-${build.host.platform}.jar" />
 	<property name="gwt.junit.port" value="8888" />
 
@@ -168,9 +178,15 @@
 		<attribute name="name" />
 		<attribute name="location" />
 		<attribute name="message" default="Cannot find dependency ${@{name}}" />
+		<attribute name="unless" default="__nonexistent_property__" />
 		<sequential>
 			<property name="@{name}" location="@{location}" />
-			<available file="${@{name}}" property="@{name}.exists" />
+			<condition property="@{name}.exists">
+				<or>
+					<available file="${@{name}}" />
+					<isset property="@{unless}" />
+				</or>
+			</condition>
 			<fail unless="@{name}.exists" message="@{message}" />
 		</sequential>
 	</macrodef>
