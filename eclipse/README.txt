@@ -13,6 +13,11 @@ Create a variable named "GWT_TOOLS" pointing to your"tools" folder.
 Window->Preferences->Editors->Text Editors->Spelling
 Enable spell checking, use "settings/english.dictionary".
 
+------------ Output Filtering -------------
+
+Window->Preferences->Java->Compiler->Building
+Make sure "Filtered Resources" includes ".svn/"
+
 ---------- Code style/formatting ----------
 
 Window->Preferences->Java->Code Style->Formatter->Import...
@@ -28,7 +33,6 @@ settings/code-style/gwt.importorder
 Window->Preferences->Java->Appearance->Members Sort Order
 There is no import here, make your settings match:
 settings/code-style/gwt-sort-order.png
-
 
 --------------- Checkstyle ----------------
 
