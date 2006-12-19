@@ -53,4 +53,9 @@
 			<param name="target" value="test" />
 		</antcall>
 	</target>
+
+	<target name="clean" description="Cleans this project's intermediate and output files">
+		<delete dir="${project.build}" />
+		<delete dir="${gwt.build.out}/samples-scripts" />
+	</target>
 </project>

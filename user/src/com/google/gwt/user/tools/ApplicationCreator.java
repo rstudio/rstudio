@@ -241,7 +241,7 @@ public final class ApplicationCreator extends ToolBase {
           + extension + "src");
       Utility.writeTemplateFile(gwtshell, out, replacements);
       if (extension.length() == 0) {
-        Runtime.getRuntime().exec("chmod u+x " + gwtshell.getAbsolutePath());
+        chmodExecutable(gwtshell);
       }
     }
 
@@ -252,15 +252,28 @@ public final class ApplicationCreator extends ToolBase {
           + extension + "src");
       Utility.writeTemplateFile(gwtcompile, out, replacements);
       if (extension.length() == 0) {
-        Runtime.getRuntime().exec("chmod u+x " + gwtcompile.getAbsolutePath());
+        chmodExecutable(gwtcompile);
       }
     }
   }
 
+  /**
+   * Try to make the given file executable. Implementation tries to exec chmod,
+   * which may fail if the platform doesn't support it. Prints a warning to
+   * stderr if the call fails.
+   * 
+   * @param file the file to make executable
+   */
+  private static void chmodExecutable(File file) {
+    try {
+      Runtime.getRuntime().exec("chmod u+x " + file.getAbsolutePath());
+    } catch (Throwable e) {
+      System.err.println(("Warning: cannot exec chmod to set permission on generated file."));
+    }
+  }
+
   private String eclipse = null;
-
   private String fullClassName = null;
-
   private boolean ignore = false;
   private File outDir;
   private boolean overwrite = false;
