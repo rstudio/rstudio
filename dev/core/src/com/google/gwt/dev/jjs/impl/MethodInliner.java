@@ -108,18 +108,18 @@ public class MethodInliner {
       }
 
       List/* <JStatement> */stmts = method.body.statements;
-      boolean didInline = false;
+      boolean possibleToInline = false;
       if (stmts.isEmpty()) {
-        didInline = inlineEmptyMethodCall(x, m, method);
+        possibleToInline = inlineEmptyMethodCall(x, m, method);
       } else if (stmts.size() == 1) {
         JStatement stmt = (JStatement) stmts.get(0);
         if (stmt instanceof JReturnStatement) {
-          didInline = tryInlineSimpleMethodCall(x, m, method,
+          possibleToInline = tryInlineSimpleMethodCall(x, m, method,
               (JReturnStatement) stmt);
         }
       }
 
-      if (!didInline) {
+      if (!possibleToInline) {
         cannotInline.add(method);
       }
     }
@@ -155,8 +155,8 @@ public class MethodInliner {
         // just reference the same JLiteral
         /*
          * hackish: pretend there is an arg that is returned which comes after
-         * all the real args; this allows the evaluation order check below to
-         * succeed
+         * all the real args; this allows the evaluation order check in
+         * tryInlineSimpleMethodCall to succeed
          */
         magicArg[0] = args.size();
         return new Holder(targetReturnExpr);
@@ -237,7 +237,7 @@ public class MethodInliner {
 
       JMultiExpression multi = new JMultiExpression(program);
 
-      // Evaluate the instance argument (we can one even with static calls)
+      // Evaluate the instance argument (we can have one even with static calls)
       JExpression instance = x.getInstance();
       if (instance != null && instance.hasSideEffects()) {
         changes.addExpression(x.instance, multi.exprs);
@@ -258,8 +258,11 @@ public class MethodInliner {
              * Due to the way we construct multis, the magic arg must come last.
              * However, we've encountered a case where an argument coming after
              * the magic arg must be evaluated. Just bail.
+             * 
+             * However, we return true because this call might be inlinable at
+             * other call sites.
              */
-            return false;
+            return true;
           }
         }
       }
@@ -333,9 +336,8 @@ public class MethodInliner {
     return new MethodInliner(program).execImpl();
   }
 
-  private final JProgram program;
-
   private JMethod currentMethod;
+  private final JProgram program;
 
   private MethodInliner(JProgram program) {
     this.program = program;

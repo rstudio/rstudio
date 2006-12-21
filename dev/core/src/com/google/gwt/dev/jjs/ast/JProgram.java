@@ -30,6 +30,7 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Root for the AST representing an entire Java program.
@@ -105,6 +106,13 @@ public class JProgram extends JNode {
                                                                                        * JArrayType>>
                                                                                        */();
 
+  private final Map/* <JMethod, JMethod> */instanceToStaticMap = new IdentityHashMap/*
+                                                                                     * <JMethod,
+                                                                                     * JMethod>
+                                                                                     */();
+
+  private List/* <JsonObject> */jsonTypeTable;
+
   private final JAbsentArrayDimension literalAbsentArrayDim = new JAbsentArrayDimension(
       this);
 
@@ -120,11 +128,27 @@ public class JProgram extends JNode {
 
   private final JBooleanLiteral literalTrue = new JBooleanLiteral(this, true);
 
+  private final TreeLogger logger;
+
   private JField nullField;
 
   private JMethod nullMethod;
 
+  private Map/* <JReferenceType, Integer> */queryIds;
+
   private JMethod rebindCreateMethod;
+
+  private final RebindOracle rebindOracle;
+
+  private final Map/* <String, JField> */specialFields = new HashMap/*
+                                                                     * <String,
+                                                                     * JField>
+                                                                     */();
+
+  private final Map/* <String, JMethod> */specialMethods = new HashMap/*
+                                                                       * <String,
+                                                                       * JMethod>
+                                                                       */();
 
   private final JPrimitiveType typeBoolean = new JPrimitiveType(this,
       "boolean", "Z", literalFalse);
@@ -178,29 +202,6 @@ public class JProgram extends JNode {
 
   private final JPrimitiveType typeVoid = new JPrimitiveType(this, "void", "V",
       null);
-
-  private final Map/* <JMethod, JMethod> */instanceToStaticMap = new IdentityHashMap/*
-                                                                                     * <JMethod,
-                                                                                     * JMethod>
-                                                                                     */();
-
-  private List/* <JsonObject> */jsonTypeTable;
-
-  private final TreeLogger logger;
-
-  private Map/* <JReferenceType, Integer> */queryIds;
-
-  private final RebindOracle rebindOracle;
-
-  private final Map/* <String, JField> */specialFields = new HashMap/*
-                                                                     * <String,
-                                                                     * JField>
-                                                                     */();
-
-  private final Map/* <String, JMethod> */specialMethods = new HashMap/*
-                                                                       * <String,
-                                                                       * JMethod>
-                                                                       */();
 
   public JProgram(TreeLogger logger, RebindOracle rebindOracle) {
     super(null);
@@ -652,6 +653,21 @@ public class JProgram extends JNode {
 
   public void recordQueryIds(Map/* <JReferenceType, Integer> */queryIds) {
     this.queryIds = queryIds;
+  }
+
+  /**
+   * If <code>method</code> is a static impl method, returns the instance
+   * method that <code>method</code> is the implementation of. Otherwise,
+   * returns <code>null</code>.
+   */
+  public JMethod staticImplFor(JMethod method) {
+    for (Iterator it = instanceToStaticMap.entrySet().iterator(); it.hasNext();) {
+      Map.Entry entry = (Entry) it.next();
+      if (entry.getValue() == method) {
+        return (JMethod) entry.getKey();
+      }
+    }
+    return null;
   }
 
   public JReferenceType strongerType(JReferenceType type1, JReferenceType type2) {

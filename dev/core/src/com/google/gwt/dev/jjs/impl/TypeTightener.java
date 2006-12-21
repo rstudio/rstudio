@@ -298,7 +298,25 @@ public class TypeTightener {
       List/* <JMethod> */overrides = x.overrides;
       JMethod[] virtualOverrides = program.typeOracle.getAllVirtualOverrides(x);
 
-      if (overrides.isEmpty() && virtualOverrides.length == 0) {
+      /*
+       * Special case: also add upRefs from a staticImpl's params to the params
+       * of the instance method it is implementing. Most of the time, this would
+       * happen naturally since the instance method delegates to the static.
+       * However, in cases where the static has been inlined into the instance
+       * method, future optimization could tighten an instance call into a
+       * static call at some other call site, and fail to inline. If we allowed
+       * a staticImpl param to be tighter than its instance param, badness would
+       * ensue.
+       */
+      JMethod staticImplFor = program.staticImplFor(x);
+      // Unless the instance method has already been pruned, of course.
+      if (staticImplFor != null
+          && !staticImplFor.getEnclosingType().methods.contains(staticImplFor)) {
+        staticImplFor = null;
+      }
+
+      if (overrides.isEmpty() && virtualOverrides.length == 0
+          && staticImplFor == null) {
         return true;
       }
 
@@ -317,6 +335,11 @@ public class TypeTightener {
         for (int i = 0; i < virtualOverrides.length; ++i) {
           JMethod baseMethod = virtualOverrides[i];
           JParameter baseParam = (JParameter) baseMethod.params.get(j);
+          set.add(baseParam);
+        }
+        if (staticImplFor != null && j > 1) {
+          // static impls have an extra first "this" arg
+          JParameter baseParam = (JParameter) staticImplFor.params.get(j - 1);
           set.add(baseParam);
         }
       }
@@ -481,11 +504,17 @@ public class TypeTightener {
       List/* <JReferenceType> */typeList = new ArrayList/* <JReferenceType> */();
 
       /*
-       * Always assume at least one null assignment; if there really aren't any
-       * other assignments, then this variable will get the null type. If there
-       * are, it won't hurt anything because null type will always lose.
+       * For non-parameters, always assume at least one null assignment; if
+       * there really aren't any other assignments, then this variable will get
+       * the null type. If there are, it won't hurt anything because null type
+       * will always lose.
+       * 
+       * For parameters, don't perform any tightening if we can't find any
+       * actual assignments. The method should eventually get pruned.
        */
-      typeList.add(typeNull);
+      if (!(x instanceof JParameter)) {
+        typeList.add(typeNull);
+      }
 
       Set/* <JExpression> */myAssignments = (Set) assignments.get(x);
       if (myAssignments != null) {
@@ -507,6 +536,10 @@ public class TypeTightener {
             typeList.add(param.getType());
           }
         }
+      }
+
+      if (typeList.isEmpty()) {
+        return;
       }
 
       JReferenceType resultType = program.generalizeTypes(typeList);
@@ -531,18 +564,13 @@ public class TypeTightener {
     set.add(value);
   }
 
-  private final JProgram program;
-  private final JNullType typeNull;
-
-  private final Map/* <JReferenceType, Set<JClassType>> */implementors = new IdentityHashMap();
-
-  private final Map/* <JMethod, Set<JExpression>> */returns = new IdentityHashMap();
-
-  private final Map/* <JMethod, Set<JMethod>> */overriders = new IdentityHashMap();
-
   private final Map/* <JVariable, Set<JExpression>> */assignments = new IdentityHashMap();
-
+  private final Map/* <JReferenceType, Set<JClassType>> */implementors = new IdentityHashMap();
+  private final Map/* <JMethod, Set<JMethod>> */overriders = new IdentityHashMap();
   private final Map/* <JParameter, Set<JParameter>> */paramUpRefs = new IdentityHashMap();
+  private final JProgram program;
+  private final Map/* <JMethod, Set<JExpression>> */returns = new IdentityHashMap();
+  private final JNullType typeNull;
 
   private TypeTightener(JProgram program) {
     this.program = program;

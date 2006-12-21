@@ -94,7 +94,7 @@ public class Pruner {
       }
       for (int i = 0; i < type.methods.size(); ++i) {
         JMethod it = (JMethod) type.methods.get(i);
-        if (!referencedNonTypes.contains(it)
+        if (!methodIsReferenced(it)
             || pruneViaNoninstantiability(isInstantiated, it)) {
           changeList.removeMethod(it);
         }
@@ -119,7 +119,7 @@ public class Pruner {
       for (int i = 1; i < type.methods.size(); ++i) {
         JMethod it = (JMethod) type.methods.get(i);
         // all other interface methods are instance and abstract
-        if (!isInstantiated || !referencedNonTypes.contains(it)) {
+        if (!isInstantiated || !methodIsReferenced(it)) {
           changeList.removeMethod(it);
         }
       }
@@ -136,6 +136,31 @@ public class Pruner {
           type.traverse(this);
         } else {
           changeList.removeType(type);
+        }
+      }
+      return false;
+    }
+
+    /**
+     * Returns <code>true</code> if a method is referenced.
+     */
+    private boolean methodIsReferenced(JMethod method) {
+      // Is the method directly referenced?
+      if (referencedNonTypes.contains(method)) {
+        return true;
+      }
+
+      /*
+       * Special case: if method is the static impl for a live instance method,
+       * don't prune it unless this is the final prune.
+       * 
+       * In some cases, the staticImpl can be inlined into the instance method
+       * but still be needed at other call sites.
+       */
+      JMethod staticImplFor = program.staticImplFor(method);
+      if (staticImplFor != null && referencedNonTypes.contains(staticImplFor)) {
+        if (noSpecialTypes) {
+          return true;
         }
       }
       return false;
@@ -480,8 +505,8 @@ public class Pruner {
    */
   private class UpRefVisitor extends JVisitor {
 
-    private final RescueVisitor rescuer;
     private boolean didRescue = false;
+    private final RescueVisitor rescuer;
 
     public UpRefVisitor(RescueVisitor rescuer) {
       this.rescuer = rescuer;
@@ -529,13 +554,13 @@ public class Pruner {
     return new Pruner(program, noSpecialTypes).execImpl();
   }
 
-  private final JProgram program;
-
   private final boolean noSpecialTypes;
 
-  private final Set/* <JReferenceType> */referencedTypes = new HashSet/* <JReferenceType> */();
+  private final JProgram program;
 
   private final Set/* <JNode> */referencedNonTypes = new HashSet/* <JNode> */();
+
+  private final Set/* <JReferenceType> */referencedTypes = new HashSet/* <JReferenceType> */();
 
   private JMethod stringValueOfChar = null;
 
