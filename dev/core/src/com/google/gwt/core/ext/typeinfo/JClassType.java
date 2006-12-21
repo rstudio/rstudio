@@ -498,7 +498,6 @@ public class JClassType extends JType implements HasMetaData {
 
   void addNestedType(JClassType type) {
     Object existing = nestedTypes.put(type.getSimpleSourceName(), type);
-    assert (existing == null);
   }
 
   JClassType findNestedTypeImpl(String[] typeName, int index) {
