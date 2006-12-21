@@ -5,4 +5,5 @@
         <file-match-pattern match-pattern=".*rhino.*" include-pattern="false"/>
         <file-match-pattern match-pattern=".*linux.src.com.google.gwt.*java" include-pattern="true"/>
     </fileset>
+    <filter name="NonSrcDirs" enabled="true"/>
 </fileset-config>
