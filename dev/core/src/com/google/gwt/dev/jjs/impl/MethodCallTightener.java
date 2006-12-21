@@ -106,7 +106,6 @@ public class MethodCallTightener {
 
       // Update the call site
       JMethodCall call = new JMethodCall(program, null, foundMethod);
-      call.setCanBePolymorphic(true);
       changes.replaceExpression(m, call);
 
       // Copy the qualifier

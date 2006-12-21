@@ -898,8 +898,24 @@ public class GenerateJavaScriptAST {
         }
         qualifier = getName(method).makeRef();
       } else {
-        qualifier = getPolyName(method).makeRef();
-        qualifier.setQualifier((JsExpression) pop()); // instance
+        if (x.isStaticDispatchOnly()) {
+          /*
+           * Dispatch statically (odd case). This happens when a call that must
+           * be static is targetting an instance method that could not be
+           * transformed into a static. For example, making a super call into a
+           * native method currently causes this, because we cannot currently
+           * staticify native methods.
+           * 
+           * Have to use a "call" construct.
+           */
+          qualifier = objectScope.getOrCreateUnobfuscatableName("call").makeRef();
+          qualifier.setQualifier(getName(method).makeRef());
+          jsInvocation.getArguments().add(0, (JsExpression) pop()); // instance
+        } else {
+          // Dispatch polymorphically (normal case).
+          qualifier = getPolyName(method).makeRef();
+          qualifier.setQualifier((JsExpression) pop()); // instance
+        }
       }
       jsInvocation.setQualifier(qualifier);
       push(createCommaExpression(unnecessaryQualifier, jsInvocation));

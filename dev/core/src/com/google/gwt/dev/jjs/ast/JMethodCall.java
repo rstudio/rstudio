@@ -20,17 +20,17 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JMethodCall extends JExpression {
 
-  public final Holder instance = new Holder();
   public HolderList args = new HolderList();
+  public final Holder instance = new Holder();
   private final JMethod method;
   private final JType overrideReturnType;
-  private boolean canBePolymorphic;
+  private boolean staticDispatchOnly = false;
 
   public JMethodCall(JProgram program, JExpression instance, JMethod method) {
     super(program);
     this.instance.set(instance);
     this.method = method;
-    this.canBePolymorphic = false;
+    this.staticDispatchOnly = false;
     this.overrideReturnType = null;
   }
 
@@ -50,13 +50,12 @@ public class JMethodCall extends JExpression {
     super(program);
     this.instance.set(instance);
     this.method = method;
-    this.canBePolymorphic = false;
     assert (overrideReturnType != null);
     this.overrideReturnType = overrideReturnType;
   }
 
   public boolean canBePolymorphic() {
-    return canBePolymorphic && !method.isFinal() && !method.isStatic();
+    return !staticDispatchOnly && !method.isFinal() && !method.isStatic();
   }
 
   public JExpression getInstance() {
@@ -80,8 +79,12 @@ public class JMethodCall extends JExpression {
     return true;
   }
 
-  public void setCanBePolymorphic(boolean canBePolymorphic) {
-    this.canBePolymorphic = canBePolymorphic;
+  public boolean isStaticDispatchOnly() {
+    return staticDispatchOnly;
+  }
+
+  public void setStaticDispatchOnly() {
+    this.staticDispatchOnly = true;
   }
 
   public void traverse(JVisitor visitor) {

@@ -159,7 +159,6 @@ public class JavaToJavaScriptCompiler {
 
       JMethodCall onModuleLoadCall = new JMethodCall(program, qualifier,
           mainMethod);
-      onModuleLoadCall.setCanBePolymorphic(true);
       bootStrapMethod.body.statements.add(new JExpressionStatement(program,
           onModuleLoadCall));
     }

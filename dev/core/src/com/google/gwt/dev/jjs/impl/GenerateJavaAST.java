@@ -863,7 +863,9 @@ public class GenerateJavaAST {
 
       JMethodCall call = new JMethodCall(program, qualifier, method);
       boolean isSuperRef = x.receiver instanceof SuperReference;
-      call.setCanBePolymorphic(!isSuperRef);
+      if (isSuperRef) {
+        call.setStaticDispatchOnly();
+      }
 
       // The arguments come first...
       if (x.arguments != null) {

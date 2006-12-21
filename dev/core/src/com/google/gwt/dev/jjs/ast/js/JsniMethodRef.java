@@ -27,7 +27,6 @@ public class JsniMethodRef extends JMethodCall {
 
   public JsniMethodRef(JProgram program, JMethod method) {
     super(program, null, method);
-    setCanBePolymorphic(true);
   }
 
   public void traverse(JVisitor visitor) {
