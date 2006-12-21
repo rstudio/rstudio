@@ -140,6 +140,7 @@
 					<pathelement location="${javac.junit.out}" />
 					<pathelement location="${javac.out}" />
 					<pathelement location="${gwt.dev.staging.jar}" />
+					<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
 				</classpath>
 
 				<formatter type="plain" />
