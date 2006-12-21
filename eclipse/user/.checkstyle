@@ -3,4 +3,5 @@
     <fileset name="all" enabled="true" check-config-name="GWT Checks" local="false">
         <file-match-pattern match-pattern=".*src.*java" include-pattern="true"/>
     </fileset>
+    <filter name="NonSrcDirs" enabled="true"/>
 </fileset-config>
