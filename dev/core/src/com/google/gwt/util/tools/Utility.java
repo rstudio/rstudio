@@ -280,7 +280,7 @@ public final class Utility {
         String partialPath = Utility.class.getName().replace('.', '/').concat(
           ".class");
         URL url = Utility.class.getClassLoader().getResource(partialPath);
-        if (url != null && url.getProtocol() == "jar") {
+        if (url != null && "jar".equals(url.getProtocol())) {
           String path = url.toString();
           String jarPath = path.substring(path.indexOf("file:"),
             path.lastIndexOf('!'));
