@@ -84,9 +84,9 @@
 		</gwt.javac>
 
 		<!-- Build the BrowserManagerServer_Stub to allow remote browser testing -->
-		<rmic base="${javac.out}" classname="com.google.gwt.junit.remote.BrowserManagerServer">
-			<compilerarg value="-v1.2" />
-		</rmic>
+		<rmic base="${javac.out}"
+                  classname="com.google.gwt.junit.remote.BrowserManagerServer"
+                  stubversion="1.2"/>
 	</target>
 
 	<target name="compile.tests" description="Compiles the test code for this project">
