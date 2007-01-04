@@ -10,7 +10,7 @@ Create a variable named "GWT_TOOLS" pointing to your"tools" folder.
 
 ---------------- Spelling -----------------
 
-Window->Preferences->Editors->Text Editors->Spelling
+Window->Preferences->General->Editors->Text Editors->Spelling
 Enable spell checking, use "settings/english.dictionary".
 
 ------------ Output Filtering -------------
