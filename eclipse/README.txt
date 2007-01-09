@@ -3,10 +3,12 @@ Eclipse 3.2.X instructions
 ---------- Required GWT variables ---------
 
 Window->Preferences->General->Workspace->Linked Resources
-Create a variable named "GWT_ROOT" pointing to your"trunk" folder.
+Create a variable named "GWT_ROOT" pointing to your "trunk" folder.
 
 Window->Preferences->Java->Build Path->Classpath Variables
-Create a variable named "GWT_TOOLS" pointing to your"tools" folder.
+Create a variable named "GWT_TOOLS" pointing to your "tools" folder.
+Create a variable named "JDK_HOME" pointing to the root of your JDK install
+  (for example, C:\Program Files\jdk1.5.0_05 or /usr/lib/j2sdk1.5-sun)
 
 ---------------- Spelling -----------------
 
