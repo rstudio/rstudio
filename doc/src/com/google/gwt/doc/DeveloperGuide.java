@@ -33,7 +33,8 @@ import java.util.Set;
  * @index Google Web Toolkit, developer guide
  * @index GWT, developer's guide
  * @childIntro Topic Guide
- * @tip For a list of JRE classes that GWT can translate out of the box, see the <a href="jre.html">documentation for the GWT JRE emulation library</a>.
+ * @tip For a list of JRE classes that GWT can translate out of the box, see the
+ *      <a href="jre.html">documentation for the GWT JRE emulation library</a>.
  */
 public class DeveloperGuide {
 
@@ -1902,7 +1903,7 @@ public class DeveloperGuide {
          * @gwt.typeArgs <java.lang.String>
          */
         public Set setOfStrings;
-        
+
         /**
          * This field is a Map that must always contain Strings as its keys and
          * values.
@@ -2973,9 +2974,10 @@ public class DeveloperGuide {
   }
 
   /**
-   * All content is Copyright 2006 Google Inc. All rights reserved. <i>Google</i>
-   * and <i>Google Web Toolkit</i> are trademarks of Google Inc in the United
-   * States and/or other countries.
+   * All content is Copyright Google Inc. Most web page content is licensed
+   * under the Creative Commons Attribution 2.5 License, as noted on those
+   * pages. The Google Web Toolkit source code is licensed under terms available
+   * <a href="ttp://code.google.com/webtoolkit/terms.html">here</a>.
    * 
    * <p>
    * <i>Java</i> is a trademark of Sun Microsystems, Inc. in the United States

@@ -367,7 +367,7 @@
         </div>
 
         <div id="footer">
-          &#169;2006 Google
+          &#169;2007 Google
           <span class="noprint">
             -
             <a href="http://www.google.com/">
