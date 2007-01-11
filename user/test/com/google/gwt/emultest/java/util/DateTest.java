@@ -313,11 +313,27 @@ public class DateTest extends GWTTestCase {
 
   /** Testing for public void java.util.Date.setDate(int)* */
   public void testSetDate() {
+    // We only go through dates from 0-28 here. There are some months that do not
+    // have 29, 30, or 31 days - so our assertion would be wrong in the cases where
+    // the current month did not have 29,30,or 31 days
     for (int i = 1; i < 29; i++) {
       Date accum0 = create();
       accum0.setDate(i);
       assertEquals(accum0.getDate(), i);
     }
+  }
+
+  /** Testing to that if we set the day number to 31 for a month that only has 30 days in it,
+      that the date rolls over to the first day of the next month in sequence.
+  */
+  public void testInvalidDateForMonth() {
+    int monthNum = 3; // April
+    int numDaysInOldMonth = 30;
+    int newDayNum = 31;
+    Date dateWithThirtyDays = new Date(2006, monthNum, 30);
+    dateWithThirtyDays.setDate(newDayNum);
+    assertEquals(dateWithThirtyDays.getMonth(), monthNum + 1);
+    assertEquals(dateWithThirtyDays.getDate(), newDayNum - numDaysInOldMonth);
   }
 
   /** Testing for public void java.util.Date.setHours(int)* */
@@ -342,11 +358,29 @@ public class DateTest extends GWTTestCase {
   /** Testing for public void java.util.Date.setMonth(int)* */
   public void testSetMonth() {
     for (int i = 0; i < 12; i++) {
-      Date accum0 = create();
+      // We want to use a fixed date here. If we use the current date, the assertion may fail
+      // when the date is the 29th, 30th, or 31st, and we set the month to one which does
+      // not have 29, 30, or 31 days in it, respectively.
+      Date accum0 = new Date(2006, 12, 1);
       accum0.setMonth(i);
       assertEquals(accum0.getMonth(), i);
     }
 
+  }
+
+  /** We want to test to see that if we are currently in a month with 31 days and we
+      set the month to one which has less than 31 days, that the month returned by the
+      date class will be one higher than the month that we originally set (according to
+      the spec of java.util.date)
+  */
+  public void testSetInvalidMonthForDate() {
+    int dayNum = 31;
+    int newMonthNum = 1;
+    int numDaysInNewMonth = 28;
+    Date dateWithThirtyOneDays = new Date(2006, 12, dayNum);
+    dateWithThirtyOneDays.setMonth(newMonthNum);
+    assertEquals(dateWithThirtyOneDays.getMonth(), newMonthNum + 1);
+    assertEquals(dateWithThirtyOneDays.getDate(), dayNum - numDaysInNewMonth);
   }
 
   /** Testing for public void java.util.Date.setSeconds(int)* */
@@ -371,11 +405,43 @@ public class DateTest extends GWTTestCase {
   /** Testing for public void java.util.Date.setYear(int)* */
   public void testSetYear() {
     for (int i = 1880; i < 2050; i++) {
-      Date accum0 = create();
+      // We want to use a fixed date here. If we use the current date, the assertion may fail
+      // when the date is February 29th, and we set the year to a non-leap year
+      Date accum0 = new Date(2006, 12, 01);
       accum0.setYear(i);
       assertEquals(accum0.getYear(), i);
     }
   }
+
+  /** We want to test to see that if the date is Feb 29th (in a leap year) and we set the
+      year to a non-leap year, that the month and day will roll over to March 1st.
+  */
+  public void testSetInvalidYearForDate() {
+    int dayNum = 29;
+    int monthNum = 1; // February
+    int newYearNum = 2005;
+    int numDaysInFebInNewYear = 28;
+    Date leapYearDate = new Date(2004, monthNum, dayNum);
+    leapYearDate.setYear(newYearNum);
+    assertEquals(leapYearDate.getYear(), newYearNum);
+    assertEquals(leapYearDate.getMonth(), monthNum + 1);
+    assertEquals(leapYearDate.getDate(), dayNum - numDaysInFebInNewYear);
+  }
+
+  /** We want to test to see that if the date is Feb 29th (in a leap year) and we set the
+      year to another leap year, that the month and day will be retained
+  */
+  public void testSetValidLeapYearForDate() {
+    int dayNum = 29;
+    int monthNum = 1; //February
+    int yearNum = 2004;
+    int newYearNum = yearNum + 4;
+    Date leapYearDate = new Date(yearNum, monthNum, dayNum);
+    leapYearDate.setYear(newYearNum);
+    assertEquals(leapYearDate.getYear(), newYearNum);
+    assertEquals(leapYearDate.getMonth(), monthNum);
+    assertEquals(leapYearDate.getDate(), dayNum);
+ }
 
   /** Testing for public java.lang.String java.util.Date.toGMTString()* */
   public void testToGMTString() {

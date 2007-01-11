@@ -28,7 +28,13 @@ public class RequestBuilderTest extends GWTTestCase {
   /**
    * Test method for
    * {@link com.google.gwt.http.client.RequestBuilder#RequestBuilder(java.lang.String, java.lang.String)}.
-   * 
+   * <p>
+   * NOTE: When running this test against Internet Explorer, the security settings of IE affect this test.
+   * The assumption is  that the "Access Data Sources Across Domains" setting is set to "Disabled". This is
+   * the standard setting for the "Internet" zone, which models the case of a user's browser sending a request
+   * to a foreign website. However, if you are running the unit tests against a machine running the GWT app which
+   * falls into your "Trusted Sites" or "Local Network" content zone, this setting's value is different.
+   * You will have to change the setting to "Disabled" in these zones for this test to pass.
    * <p>
    * Test Cases:
    * <ul>
@@ -43,18 +49,21 @@ public class RequestBuilderTest extends GWTTestCase {
     try {
       RequestBuilder builder = new RequestBuilder((RequestBuilder.Method) null,
           null);
+      fail("NullPointerException should have been thrown for construction with null method.");
     } catch (NullPointerException ex) {
       // purposely ignored
     }
 
     try {
       RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, null);
+      fail("NullPointerException should have been thrown for construction with null URL.");
     } catch (NullPointerException ex) {
       // purposely ignored
     }
 
     try {
       RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, "");
+      fail("IllegalArgumentException should have been throw for construction with empty URL.");
     } catch (IllegalArgumentException ex) {
       // purposely ignored
     }
