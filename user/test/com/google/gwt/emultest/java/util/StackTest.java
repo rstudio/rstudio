@@ -1,19 +1,4 @@
-/*
- * Copyright 2006 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
+// Copyright 2006 Google Inc. All Rights Reserved.
 package com.google.gwt.emultest.java.util;
 
 import com.google.gwt.junit.client.GWTTestCase;
@@ -21,24 +6,13 @@ import com.google.gwt.junit.client.GWTTestCase;
 import java.util.EmptyStackException;
 import java.util.Stack;
 
-/**
- * Unit tests for java.util.Stack.
- */
 public class StackTest extends GWTTestCase {
 
   public static final int TEST_SEARCH_SIZE = 10;
   public static final int TEST_SIZE = 10;
   public static Stack testStack = new Stack();
 
-  static {
-    testStack.push("1");
-    testStack.push("2");
-    testStack.push("3");
-  }
-
-  /** 
-   * Checks for emptiness of stack by peeking and popping. 
-   */
+  /** Checks for emptiness of stack by peeking and popping */
   public void checkEmptiness(Stack s) {
     assertTrue(s.empty());
     try {
@@ -54,16 +28,12 @@ public class StackTest extends GWTTestCase {
     }
   }
 
-  /** 
-   * Sets module name so that javascript compiler can operate.
-   */
+  /** Sets module name so that javascript compiler can operate */
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
-  /** 
-   * Tests clone on Stacks. 
-   */
+  /** Tests clone on Stacks */
   public void testClone() {
     Stack large = createLargeStack();
     Stack cloned = (Stack) large.clone();
@@ -90,9 +60,7 @@ public class StackTest extends GWTTestCase {
     checkLargeStack(large, TEST_SIZE);
   }
 
-  /** 
-   * tests empty and tries to get emptyStackException as desired. 
-   */
+  /** tests empty and tries to get emptyStackException as desired */
   public void testEmptyAndEmptyStackException() {
     Stack s = new Stack();
     String item = "empty1";
@@ -103,9 +71,7 @@ public class StackTest extends GWTTestCase {
     checkEmptiness(s);
   }
 
-  /** 
-   * Tests pop and peek. 
-   */
+  /** Tests pop and peek */
   public void testPopAndPeek() {
     int x = testStack.size();
     Object item = testStack.peek();
@@ -113,9 +79,7 @@ public class StackTest extends GWTTestCase {
     assertEquals(x - 1, testStack.size());
   }
 
-  /** 
-   * Tests push and peek. 
-   */
+  /** Tests push and peek */
   public void testPushAndPeek() {
     int x = testStack.size();
     Object item = "4";
@@ -171,6 +135,12 @@ public class StackTest extends GWTTestCase {
       large.push(theFinalInt);
     }
     return large;
+  }
+
+  static {
+    testStack.push("1");
+    testStack.push("2");
+    testStack.push("3");
   }
 
 }

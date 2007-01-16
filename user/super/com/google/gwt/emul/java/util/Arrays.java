@@ -70,12 +70,12 @@ public class Arrays {
     }
    
     var v = new Array();
-    for (var i = 0; i < size; ++i) {
+    for(var i = 0; i < size; ++i){
       v[i] = array[i];
     }
    
-    if (compare != null) {
-      var f = function (a,b) {
+    if(compare != null) {
+      var f = function(a,b) {
         var c = compare.@java.util.Comparator::compare(Ljava/lang/Object;Ljava/lang/Object;)(a,b);
         return c;
       }
@@ -84,7 +84,7 @@ public class Arrays {
       v.sort();
     }
 
-    for (i = 0; i < size; ++i) {
+    for(i = 0; i < size; ++i){
       array[i] = v[i];
     }
 
