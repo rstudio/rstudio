@@ -23,12 +23,8 @@ public final class Byte extends Number implements Comparable {
   public static final byte MAX_VALUE = (byte) 0x7F;
 
   public static Byte decode(String s) throws NumberFormatException {
-    long x = __parseLongInfer(s);
-    if (__isLongNaN(x)) {
-      throw new NumberFormatException(s);
-    } else {
-      return new Byte((byte) x);
-    }
+    long x = __parseLongInfer(s, MIN_VALUE, MAX_VALUE);
+    return new Byte((byte) x);
   }
 
   public static byte parseByte(String s) throws NumberFormatException {
@@ -38,12 +34,7 @@ public final class Byte extends Number implements Comparable {
 
   public static byte parseByte(String s, int radix)
       throws NumberFormatException {
-    long x = __parseLongRadix(s, radix);
-    if (__isLongNaN(x)) {
-      throw new NumberFormatException(s);
-    } else {
-      return (byte) x;
-    }
+    return (byte) __parseLongRadix(s, radix, MIN_VALUE, MAX_VALUE);    
   }
 
   public static String toString(byte b) {

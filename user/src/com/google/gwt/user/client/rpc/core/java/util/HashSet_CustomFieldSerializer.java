@@ -34,12 +34,13 @@ public final class HashSet_CustomFieldSerializer {
       instance.add(streamReader.readObject());
     }
   }
-
+  
   public static void serialize(SerializationStreamWriter streamWriter,
       HashSet instance) throws SerializationException {
     streamWriter.writeInt(instance.size());
     for (Iterator iter = instance.iterator(); iter.hasNext();) {
-      streamWriter.writeObject(iter.next());
+      Object next = iter.next();
+      streamWriter.writeObject(next);
     }
   }
 }

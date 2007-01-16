@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <fileset-config file-format-version="1.2.0" simple-config="false">
-    <fileset name="all" enabled="true" check-config-name="GWT Checks" local="false">
+    <fileset name="all" enabled="true" check-config-name="GwtCodeStyle" local="false">
         <file-match-pattern match-pattern=".*core.src.com.google.gwt.*java" include-pattern="true"/>
         <file-match-pattern match-pattern=".*rhino.*" include-pattern="false"/>
         <file-match-pattern match-pattern=".*linux.src.com.google.gwt.*java" include-pattern="true"/>

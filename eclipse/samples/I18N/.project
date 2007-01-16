@@ -24,7 +24,7 @@
 		<link>
 			<name>core</name>
 			<type>2</type>
-			<location>GWT_ROOT/samples/i18n</location>
+			<locationURI>GWT_ROOT/samples/i18n</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

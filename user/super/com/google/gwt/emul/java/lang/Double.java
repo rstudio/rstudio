@@ -44,12 +44,8 @@ public final class Double extends Number implements Comparable {
   }-*/;
 
   public static double parseDouble(String s) throws NumberFormatException {
-    double x = __parseDouble(s);
-    if (isNaN(x)) {
-      throw new NumberFormatException(s);
-    } else {
-      return x;
-    }
+    double x = __parseDouble(s, -MAX_VALUE, -MIN_VALUE, MIN_VALUE, MAX_VALUE);
+    return x;
   }
 
   public static String toString(double b) {

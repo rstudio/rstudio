@@ -24,12 +24,12 @@
 		<link>
 			<name>linux</name>
 			<type>2</type>
-			<location>GWT_ROOT/dev/linux</location>
+			<locationURI>GWT_ROOT/dev/linux</locationURI>
 		</link>
 		<link>
 			<name>core</name>
 			<type>2</type>
-			<location>GWT_ROOT/dev/core</location>
+			<locationURI>GWT_ROOT/dev/core</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

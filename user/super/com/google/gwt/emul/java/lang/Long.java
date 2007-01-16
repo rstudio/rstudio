@@ -23,12 +23,8 @@ public final class Long extends Number implements Comparable {
   public static final long MAX_VALUE = 0x7fffffffffffffffL;
 
   public static Long decode(String s) throws NumberFormatException {
-    long x = __parseLongInfer(s);
-    if (__isLongNaN(x)) {
-      throw new NumberFormatException(s);
-    } else {
-      return new Long(x);
-    }
+    long x = __parseLongInfer(s, MIN_VALUE, MAX_VALUE);
+    return new Long(x);
   }
 
   public static long parseLong(String s) throws NumberFormatException {
@@ -37,12 +33,7 @@ public final class Long extends Number implements Comparable {
 
   public static long parseLong(String s, int radix)
       throws NumberFormatException {
-    long x = __parseLongRadix(s, radix);
-    if (__isLongNaN(x)) {
-      throw new NumberFormatException(s);
-    } else {
-      return x;
-    }
+    return __parseLongRadix(s, radix, MIN_VALUE, MAX_VALUE);
   }
 
   public static String toBinaryString(long x) {
@@ -64,7 +55,7 @@ public final class Long extends Number implements Comparable {
     }
     String hexStr = "";
     while (x != 0) {
-      int nibble = (int) x & 0xF;
+      int nibble = (int) (x & 0xF);
       hexStr = __hexDigits[nibble] + hexStr;
       x = x >>> 4;
     }
