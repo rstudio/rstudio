@@ -24,7 +24,7 @@
 		<link>
 			<name>core</name>
 			<type>2</type>
-			<locationURI>GWT_ROOT/samples/json</locationURI>
+			<location>GWT_ROOT/samples/json</location>
 		</link>
 	</linkedResources>
 </projectDescription>

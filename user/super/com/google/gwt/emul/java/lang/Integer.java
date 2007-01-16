@@ -23,8 +23,12 @@ public final class Integer extends Number implements Comparable {
   public static final int MAX_VALUE = 0x7fffffff;
 
   public static Integer decode(String s) throws NumberFormatException {
-    long x = __parseLongInfer(s, MIN_VALUE, MAX_VALUE);
-    return new Integer((int) x);
+    long x = __parseLongInfer(s);
+    if (__isLongNaN(x)) {
+      throw new NumberFormatException(s);
+    } else {
+      return new Integer((int) x);
+    }
   }
 
   public static int parseInt(String s) throws NumberFormatException {
@@ -32,7 +36,12 @@ public final class Integer extends Number implements Comparable {
   }
 
   public static int parseInt(String s, int radix) throws NumberFormatException {
-    return (int) __parseLongRadix(s, radix, MIN_VALUE, MAX_VALUE);
+    long x = __parseLongRadix(s, radix);
+    if (__isLongNaN(x)) {
+      throw new NumberFormatException(s);
+    } else {
+      return (int) x;
+    }
   }
 
   public static String toBinaryString(int x) {
@@ -93,7 +102,7 @@ public final class Integer extends Number implements Comparable {
   }
 
   public float floatValue() {
-    return new Float(value).floatValue();
+    return value;
   }
 
   public int hashCode() {

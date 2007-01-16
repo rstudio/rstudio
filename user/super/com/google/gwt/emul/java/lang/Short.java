@@ -23,8 +23,12 @@ public final class Short extends Number implements Comparable {
   public static final short MAX_VALUE = (short) 0x7fff;
 
   public static Short decode(String s) throws NumberFormatException {
-    long x = __parseLongInfer(s, MIN_VALUE, MAX_VALUE);
-    return new Short((short) x);
+    long x = __parseLongInfer(s);
+    if (__isLongNaN(x)) {
+      throw new NumberFormatException(s);
+    } else {
+      return new Short((short) x);
+    }
   }
 
   public static short parseShort(String s) throws NumberFormatException {
@@ -33,7 +37,12 @@ public final class Short extends Number implements Comparable {
 
   public static short parseShort(String s, int radix)
       throws NumberFormatException {
-    return (short) __parseLongRadix(s, radix, MIN_VALUE, MAX_VALUE);
+    long x = __parseLongRadix(s, radix);
+    if (__isLongNaN(x)) {
+      throw new NumberFormatException(s);
+    } else {
+      return (short) x;
+    }
   }
 
   public static String toString(short b) {

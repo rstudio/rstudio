@@ -1,98 +1,80 @@
-/*
- * Copyright 2006 Google Inc.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
+// Copyright 2006 Google Inc. All Rights Reserved.
 package com.google.gwt.emultest.java.lang;
 
-/** 
- * Tests Integer operations, and parsing.  It gets more tests from 
- * <code>NumberTestCase</code>.
- */
-public class IntegerTest extends NumberTestCase {
-  private static final String NEGATIVE_BINARY = "11111111111111111111111110000101";
-  private static final String NEGATIVE_HEX = "ffffff85";
-  private static final String POSITIVE_BINARY = "1111011";
-  private static final String POSITIVE_HEX = "7b";
-  private static final int ZERO = 0;
-  private static final String ZERO_STRING = "0";
+import com.google.gwt.junit.client.GWTTestCase;
 
-  public void testBinaryString() {
-    assertEquals(POSITIVE_BINARY, Integer.toBinaryString((int) positive()));
-    assertEquals(ZERO_STRING, Integer.toBinaryString(ZERO));
-    assertEquals(NEGATIVE_BINARY, Integer.toBinaryString((int) negative()));
+public class IntegerTest extends GWTTestCase {
+
+  public String getModuleName() {
+    return "com.google.gwt.emultest.EmulSuite";
   }
 
-  // Number does not have a compareTo() method.
+  public void testConstructor() {
+    assertEquals(12345, new Integer(12345).intValue());
+    assertEquals(12345, new Integer("12345").intValue());
+  }
+
+  public void testToString() {
+    assertEquals("12345", new Integer(12345).toString());
+    assertEquals("-12345", new Integer("-12345").toString());
+  }
+
   public void testCompareTo() {
-    assertTrue(-1 >= ((Integer) createNegative()).compareTo(createPositive()));
-    assertTrue(1 <= ((Integer) createPositive()).compareTo(createNegative()));
-    assertEquals(0, ((Integer) createPositive()).compareTo(createPositive()));
+    assertEquals(-1, new Integer(12345).compareTo(new Integer(12346)));
+    assertEquals(1, new Integer("12345").compareTo(new Integer(12344)));
+    assertEquals(0, new Integer("12345").compareTo(new Integer(12345)));
+  }
+
+  public void testEquals() {
+    assertFalse(new Integer(12345).equals(new Integer(12346)));
+    assertEquals(new Integer("12345"), new Integer(12345));
+  }
+
+  public void testDecode() {
+    assertEquals(12345, Integer.decode("12345").intValue());
+    try {
+      Integer.decode("abx");
+      fail();
+    } catch (NumberFormatException e) {
+      // pass
+    }
+  }
+
+  public void testHashCode() {
+    assertEquals(1234, new Integer(1234).hashCode());
+  }
+
+  public void testValueOf() {
+    assertEquals(new Integer(12345), Integer.valueOf("12345"));
+    assertEquals(new Integer(1865), Integer.valueOf("12345", 6));
+    assertEquals(12345, Integer.parseInt("12345"));
+    assertEquals(1865, Integer.parseInt("12345", 6));
   }
 
   public void testHexString() {
-    assertEquals(POSITIVE_HEX, Integer.toHexString((int) positive()));
-    assertEquals(ZERO_STRING, Integer.toHexString(ZERO));
-    assertEquals(NEGATIVE_HEX, Integer.toHexString((int) negative()));
+    assertEquals("3039", Integer.toHexString(12345));
+    assertEquals("0", Integer.toHexString(0));
+    assertEquals("ffffcfc7", Integer.toHexString(-12345));
   }
 
-  public void testOverflow() {
-    assertEquals("short overflow", (short) (overflowShort()),
-        createOverflowShort().shortValue());
-    assertEquals("byte overflow", (byte) overflowByte(),
-        createOverflowByte().byteValue());
+  public void testBinaryString() {
+    assertEquals("11000000111001", Integer.toBinaryString(12345));
+    assertEquals("0", Integer.toBinaryString(0));
+    assertEquals("11111111111111111100111111000111", Integer.toBinaryString(-12345));
   }
-  
 
-  protected NumberFactory createNumberFactory() {
-      return new NumberFactory() {
+  public void testXValue() {
+    assertEquals("short",(short) 12345, new Integer(12345).shortValue());
+    assertEquals("long", 1234567890l, new Integer(1234567890).longValue());
+    assertEquals("double", 12345d, new Integer(12345).doubleValue(),0.001);
+    assertEquals("float",12345f, new Integer(12345).floatValue(),0.01);
+    assertEquals("byte", (byte) 123, new Integer(123).byteValue());
+    assertEquals("integer",123, new Integer(123).intValue());
+    assertEquals("short overflow", (short) 10713, new Integer(1234512345).shortValue());
+    assertEquals("double2", 1234512345d, new Integer(1234512345).doubleValue(), 0.001);
+    // Invalid test right now; we don't coerce to single precision
+    // assertEquals("float2",1234512345f, new Integer(1234512345).floatValue(),0.001);
+    assertEquals("byte overflow",(byte) -13, new Integer(123123).byteValue());
+  }
 
-        public Number create(double x) {
-          return new Integer((int) x);
-        }
-
-        public Number create(String x) {
-          return new Integer(x);
-        }
-
-        public long decode(String x) {
-          return Integer.decode(x).longValue();
-        }
-
-        public int maxDecimalPoints() {
-          return 0;
-        }
-
-        public int maxDigits() {
-          return 9;
-        }
-
-        public int maxExponents() {
-          return 0;
-        }
-
-        public int maxMinusSigns() {
-          return 1;
-        }
-
-        public double valueOf(String s) {
-          return Integer.valueOf(s).doubleValue();
-        }
-
-        public double valueOf(String s, int radix) {
-          return Integer.valueOf(s, radix).doubleValue();
-        }
-      };
-    }
 }

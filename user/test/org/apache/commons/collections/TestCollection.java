@@ -257,8 +257,7 @@ public abstract class TestCollection extends TestObject {
             if(!matched[i]) {
                 // the collection didn't match all the confirmed values
                 fail("Collection should contain all values that are in the " +
-                     "confirmed collection" + collection + " confirmed " + 
-                     confirmed);
+                     "confirmed collection");
             }
         }
     }
@@ -410,7 +409,7 @@ public abstract class TestCollection extends TestObject {
     /**
      *  Tests {@link Collection#addAll(Collection)}.
      */
-    public void tesstCollectionAddAll() {
+    public void testCollectionAddAll() {
         if (!isAddSupported()) return;
 
         resetEmpty();

@@ -143,9 +143,6 @@ Description:
         <module name="com.google.gwt.checkstyle.OrderCheck">
             <property name="severity" value="error"/>
         </module>
-        <module name="com.google.gwt.checkstyle.JSNICheck">
-            <property name="severity" value="info"/>
-        </module>
         <module name="com.google.gwt.checkstyle.FieldCheck">
             <property name="severity" value="error"/>
         </module>

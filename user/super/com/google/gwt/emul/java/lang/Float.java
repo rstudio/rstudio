@@ -44,7 +44,12 @@ public final class Float extends Number implements Comparable {
   }-*/;
 
   public static float parseFloat(String s) throws NumberFormatException {
-    return (float)(__parseDouble(s, -MAX_VALUE, -MIN_VALUE, MIN_VALUE, MAX_VALUE));
+    float x = __parseFloat(s);
+    if (isNaN(x)) {
+      throw new NumberFormatException(s);
+    } else {
+      return x;
+    }
   }
 
   public static String toString(float b) {

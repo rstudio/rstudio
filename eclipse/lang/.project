@@ -22,14 +22,14 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>dev</name>
-			<type>2</type>
-			<locationURI>GWT_ROOT/dev/core</locationURI>
-		</link>
-		<link>
 			<name>user</name>
 			<type>2</type>
-			<locationURI>GWT_ROOT/user</locationURI>
+			<location>GWT_ROOT/user</location>
+		</link>
+		<link>
+			<name>dev</name>
+			<type>2</type>
+			<location>GWT_ROOT/dev/core</location>
 		</link>
 	</linkedResources>
 </projectDescription>

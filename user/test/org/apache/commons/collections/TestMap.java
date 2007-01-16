@@ -477,7 +477,7 @@ public abstract class TestMap extends TestObject{
         
         resetFull();
         for(int i = 0; i < values.length; i++) {
-            assertTrue("Map must contain value for a mapping in the map. + values[i]", 
+            assertTrue("Map must contain value for a mapping in the map.", 
                        map.containsValue(values[i]));
         }
         verify();
