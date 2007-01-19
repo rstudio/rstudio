@@ -626,9 +626,9 @@ public class DeveloperGuide {
        * identify the root of a public path entry. Any file appearing in this
        * package or any of its subpackages will be treated as a
        * publicly-accessible resource. The <code>&lt;public&gt;</code> element
-       * support
+       * supports
        * {@link DeveloperGuide.Fundamentals.Modules.PublicPackageFiltering pattern-based filtering}
-       * to allows fine-grained control over which resources get copied into the
+       * to allow fine-grained control over which resources get copied into the
        * output directory during a GWT compile.
        * 
        * <p>
