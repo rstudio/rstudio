@@ -78,25 +78,38 @@ public class TypeMap {
       return cached;
     } else if (binding instanceof BaseTypeBinding) {
       BaseTypeBinding baseTypeBinding = (BaseTypeBinding) binding;
+      // see org.eclipse.jdt.internal.compiler.lookup.TypeIds constants
       switch (baseTypeBinding.id) {
-        case BaseTypeBinding.T_void:
-          return program.getTypeVoid();
-        case BaseTypeBinding.T_boolean:
-          return program.getTypePrimitiveBoolean();
+        case BaseTypeBinding.T_undefined:
+          return null;
+        case BaseTypeBinding.T_JavaLangObject:
+          // here for consistency, should already be cached
+          return program.getTypeJavaLangObject();
         case BaseTypeBinding.T_char:
           return program.getTypePrimitiveChar();
         case BaseTypeBinding.T_byte:
           return program.getTypePrimitiveByte();
         case BaseTypeBinding.T_short:
           return program.getTypePrimitiveShort();
-        case BaseTypeBinding.T_int:
-          return program.getTypePrimitiveInt();
+        case BaseTypeBinding.T_boolean:
+          return program.getTypePrimitiveBoolean();
+        case BaseTypeBinding.T_void:
+          return program.getTypeVoid();
         case BaseTypeBinding.T_long:
           return program.getTypePrimitiveLong();
-        case BaseTypeBinding.T_float:
-          return program.getTypePrimitiveFloat();
         case BaseTypeBinding.T_double:
           return program.getTypePrimitiveDouble();
+        case BaseTypeBinding.T_float:
+          return program.getTypePrimitiveFloat();
+        case BaseTypeBinding.T_int:
+          return program.getTypePrimitiveInt();
+        case BaseTypeBinding.T_JavaLangString:
+          // here for consistency, should already be cached
+          return program.getTypeJavaLangString();
+        case BaseTypeBinding.T_null:
+          return program.getTypeNull();
+        default:
+          return null;
       }
     } else if (binding instanceof ArrayBinding) {
       ArrayBinding arrayBinding = (ArrayBinding) binding;
@@ -110,8 +123,9 @@ public class TypeMap {
           arrayBinding.dimensions);
 
       return arrayType;
+    } else {
+      return null;
     }
-    return null;
   }
 
 }

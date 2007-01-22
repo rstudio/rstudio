@@ -86,9 +86,9 @@ public class CompilerTest extends GWTTestCase {
     oaa[0] = new Object[4];
     oaa[0][0] = "bar";
     assertEquals(oaa[0][0], "bar");
-    
+
     Apple[] apple = cannotOptimize() ? new Granny[3] : new Apple[3];
-    Apple g = cannotOptimize() ? (Apple)new Granny() : (Apple)new Fuji();
+    Apple g = cannotOptimize() ? (Apple) new Granny() : (Apple) new Fuji();
     Apple a = apple[0] = g;
     assertEquals(g, a);
   }
@@ -289,6 +289,14 @@ public class CompilerTest extends GWTTestCase {
     }
   }
 
+  /**
+   * Issue #615: Internal Compiler Error
+   */
+  public void testImplicitNull() {
+    boolean b;
+    String test = ((((b = true) ? null : null) + " ") + b);
+  }
+
   public void testLabels() {
     int i = 0, j = 0;
     outer : for (i = 0; i < 1; ++i) {
@@ -410,7 +418,7 @@ public class CompilerTest extends GWTTestCase {
 
   public void testNullFlowVsClassCastPrecedence() {
     try {
-      ((UninstantiableType)new Object()).returnNull();
+      ((UninstantiableType) new Object()).returnNull();
       fail();
     } catch (ClassCastException e) {
       // success
@@ -428,11 +436,11 @@ public class CompilerTest extends GWTTestCase {
         break;
     }
   }
-  
+
   public void testSubclassStaticInnerAndClinitOrdering() {
     new CheckSubclassStaticInnerAndClinitOrdering();
   }
-  
+
   public void testReturnStatementInCtor() {
     class Foo {
       Foo(int i) {
