@@ -20,7 +20,7 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JCharLiteral extends JLiteral {
 
-  public final char value;
+  private final char value;
 
   /**
    * These are only supposed to be constructed by JProgram.
@@ -34,14 +34,14 @@ public class JCharLiteral extends JLiteral {
     return program.getTypePrimitiveChar();
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
+  public char getValue() {
+    return value;
   }
 
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 
 }

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JConditional;
@@ -22,102 +23,124 @@ import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JType;
-import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.Mutator;
-import com.google.gwt.dev.jjs.ast.change.ChangeList;
 
 /**
  * Replace cast and instanceof operations with calls to the Cast class.
  */
 public class JavaScriptObjectCaster {
 
-  private class AssignmentVisitor extends JVisitor {
-
-    private final ChangeList changeList = new ChangeList(
-        "Synthesize casts from JavaScriptObjects to trigger wrapping.");
+  /**
+   * Synthesize casts from JavaScriptObjects to trigger wrapping.
+   */
+  private class AssignmentVisitor extends JModVisitor {
 
     private JMethod currentMethod;
 
     // @Override
-    public void endVisit(JBinaryOperation x, Mutator m) {
+    public void endVisit(JBinaryOperation x, Context ctx) {
       if (x.isAssignment()) {
-        checkAndReplaceJso(x.rhs, x.getLhs().getType());
+        JType lhsType = x.getLhs().getType();
+        JExpression newRhs = checkAndReplaceJso(x.getRhs(), lhsType);
+        if (newRhs != x.getRhs()) {
+          JBinaryOperation asg = new JBinaryOperation(program,
+              x.getSourceInfo(), lhsType, x.getOp(), x.getLhs(), newRhs);
+          ctx.replaceMe(asg);
+        }
       }
     }
 
     // @Override
-    public void endVisit(JConditional x, Mutator m) {
-      checkAndReplaceJso(x.thenExpr, x.getType());
-      checkAndReplaceJso(x.elseExpr, x.getType());
-    }
-
-    // @Override
-    public void endVisit(JLocalDeclarationStatement x) {
-      JExpression initializer = x.getInitializer();
-      if (initializer != null) {
-        checkAndReplaceJso(x.initializer, x.getLocalRef().getType());
+    public void endVisit(JConditional x, Context ctx) {
+      JExpression newThen = checkAndReplaceJso(x.getThenExpr(), x.getType());
+      JExpression newElse = checkAndReplaceJso(x.getElseExpr(), x.getType());
+      if (newThen != x.getThenExpr() || newElse != x.getElseExpr()) {
+        JConditional newCond = new JConditional(program, x.getSourceInfo(),
+            x.getType(), x.getIfTest(), newThen, newElse);
+        ctx.replaceMe(newCond);
       }
     }
 
     // @Override
-    public void endVisit(JMethod x) {
+    public void endVisit(JLocalDeclarationStatement x, Context ctx) {
+      JExpression newInst = x.getInitializer();
+      if (newInst != null) {
+        newInst = checkAndReplaceJso(newInst, x.getLocalRef().getType());
+        if (newInst != x.getInitializer()) {
+          JLocalDeclarationStatement newStmt = new JLocalDeclarationStatement(
+              program, x.getSourceInfo(), x.getLocalRef(), newInst);
+          ctx.replaceMe(newStmt);
+        }
+      }
+    }
+
+    // @Override
+    public void endVisit(JMethod x, Context ctx) {
       currentMethod = null;
     }
 
     // @Override
-    public void endVisit(JMethodCall x, Mutator m) {
-      if (!x.getTarget().isStatic()) {
-        // for polymorphic calls, force wrapping
-        checkAndReplaceJso(x.instance, program.getTypeJavaLangObject());
-      }
+    public void endVisit(JMethodCall x, Context ctx) {
       for (int i = 0; i < x.getTarget().params.size(); ++i) {
         JParameter param = (JParameter) x.getTarget().params.get(i);
-        checkAndReplaceJso(x.args.getMutator(i), param.getType());
+        JExpression newArg = checkAndReplaceJso(
+            (JExpression) x.getArgs().get(i), param.getType());
+        x.getArgs().set(i, newArg);
+      }
+      if (!x.getTarget().isStatic()) {
+        // for polymorphic calls, force wrapping
+        JExpression newInst = checkAndReplaceJso(x.getInstance(),
+            program.getTypeJavaLangObject());
+        if (newInst != x.getInstance()) {
+          JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
+              newInst, x.getTarget(), x.isStaticDispatchOnly());
+          newCall.getArgs().addAll(x.getArgs());
+          ctx.replaceMe(newCall);
+        }
       }
     }
 
     // @Override
-    public void endVisit(JReturnStatement x) {
-      if (x.getExpression() != null) {
-        checkAndReplaceJso(x.expr, currentMethod.getType());
+    public void endVisit(JReturnStatement x, Context ctx) {
+      if (x.getExpr() != null) {
+        JExpression newExpr = checkAndReplaceJso(x.getExpr(),
+            currentMethod.getType());
+        if (newExpr != x.getExpr()) {
+          JReturnStatement newStmt = new JReturnStatement(program,
+              x.getSourceInfo(), newExpr);
+          ctx.replaceMe(newStmt);
+        }
       }
     }
 
-    public ChangeList getChangeList() {
-      return changeList;
-    }
-
     // @Override
-    public boolean visit(JMethod x) {
+    public boolean visit(JMethod x, Context ctx) {
       currentMethod = x;
       return true;
     }
 
-    private void checkAndReplaceJso(Mutator arg, JType targetType) {
-      JType argType = arg.get().getType();
+    private JExpression checkAndReplaceJso(JExpression arg, JType targetType) {
+      JType argType = arg.getType();
       if (argType == targetType) {
-        return;
+        return arg;
       }
 
       if (!(targetType instanceof JReferenceType)) {
-        return;
+        return arg;
       }
 
       if (!program.isJavaScriptObject(argType)) {
-        return;
+        return arg;
       }
-      JCastOperation cast = new JCastOperation(program, targetType,
-          program.getLiteralNull());
-      ChangeList myChangeList = new ChangeList("Synthesize a cast from '"
-          + argType + "' to '" + targetType + "'.");
-      myChangeList.replaceExpression(cast.expr, arg);
-      myChangeList.replaceExpression(arg, cast);
-      changeList.add(myChangeList);
+      // Synthesize a cast to the target type
+      JCastOperation cast = new JCastOperation(program, arg.getSourceInfo(),
+          targetType, arg);
+      return cast;
     }
   }
 
@@ -132,14 +155,8 @@ public class JavaScriptObjectCaster {
   }
 
   private void execImpl() {
-    {
-      AssignmentVisitor visitor = new AssignmentVisitor();
-      program.traverse(visitor);
-      ChangeList changes = visitor.getChangeList();
-      if (!changes.empty()) {
-        changes.apply();
-      }
-    }
+    AssignmentVisitor visitor = new AssignmentVisitor();
+    visitor.accept(program);
   }
 
 }

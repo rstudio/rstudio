@@ -22,32 +22,48 @@ import java.util.List;
  */
 public class JTryStatement extends JStatement {
 
-  public JBlock tryBlock;
-  public final HolderList catchArgs = new HolderList();
-  public List/*<JBlock>*/ catchBlocks;
-  public JBlock finallyBlock;
+  private final List catchArgs;
+  private final List catchBlocks;
+  private final JBlock finallyBlock;
+  private final JBlock tryBlock;
 
-  public JTryStatement(JProgram program, JBlock tryBlock, List/*<JLocalRef>*/ catchArgs,
-      List/*<JBlock>*/ catchBlocks, JBlock finallyBlock) {
-    super(program);
+  public JTryStatement(JProgram program, JSourceInfo info, JBlock tryBlock,
+      List/* <JLocalRef> */catchArgs, List/* <JBlock> */catchBlocks,
+      JBlock finallyBlock) {
+    super(program, info);
+    assert (catchArgs.size() == catchBlocks.size());
     this.tryBlock = tryBlock;
-    this.catchArgs.addAll(catchArgs);
+    this.catchArgs = catchArgs;
     this.catchBlocks = catchBlocks;
     this.finallyBlock = finallyBlock;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
-      tryBlock.traverse(visitor);
-      catchArgs.traverse(visitor);
-      for (int i = 0; i < catchBlocks.size(); ++i) {
-        JBlock block = (JBlock) catchBlocks.get(i);
-        block.traverse(visitor);
-      }
+  public List getCatchArgs() {
+    return catchArgs;
+  }
+
+  public List/* <JBlock> */getCatchBlocks() {
+    return catchBlocks;
+  }
+
+  public JBlock getFinallyBlock() {
+    return finallyBlock;
+  }
+
+  public JBlock getTryBlock() {
+    return tryBlock;
+  }
+
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      visitor.accept(tryBlock);
+      visitor.accept(catchArgs);
+      visitor.accept(catchBlocks);
+      // TODO: normalize this so it's never null?
       if (finallyBlock != null) {
-        finallyBlock.traverse(visitor);
+        visitor.accept(finallyBlock);
       }
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 }

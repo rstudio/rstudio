@@ -20,20 +20,24 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JContinueStatement extends JStatement {
 
-  public JLabel label;
+  private final JLabel label;
 
-  public JContinueStatement(JProgram program, JLabel label) {
-    super(program);
+  public JContinueStatement(JProgram program, JSourceInfo info, JLabel label) {
+    super(program, info);
     this.label = label;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
+  public JLabel getLabel() {
+    return label;
+  }
+
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
       if (label != null) {
-        label.traverse(visitor);
+        visitor.accept(label);
       }
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

@@ -22,19 +22,23 @@ import java.util.List;
  */
 public class JForStatement extends JStatement {
 
-  public final JStatement body;
-  private final List/* <JStatement> */initializers;
-  private final Holder testExpr = new Holder();
+  private JStatement body;
   private final List/* <JExpressionStatement> */increments;
+  private final List/* <JStatement> */initializers;
+  private JExpression testExpr;
 
-  public JForStatement(JProgram program, List/* <JStatement> */initializers,
-      JExpression testExpr, List/* <JExpressionStatement> */increments,
-      JStatement body) {
-    super(program);
+  public JForStatement(JProgram program, JSourceInfo info,
+      List/* <JStatement> */initializers, JExpression testExpr,
+      List/* <JExpressionStatement> */increments, JStatement body) {
+    super(program, info);
     this.initializers = initializers;
-    this.testExpr.set(testExpr);
+    this.testExpr = testExpr;
     this.increments = increments;
     this.body = body;
+  }
+
+  public JStatement getBody() {
+    return body;
   }
 
   public List/* <JExpressionStatement> */getIncrements() {
@@ -46,25 +50,21 @@ public class JForStatement extends JStatement {
   }
 
   public JExpression getTestExpr() {
-    return testExpr.get();
+    return testExpr;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
-      for (int i = 0; i < initializers.size(); ++i) {
-        JStatement stmt = (JStatement) initializers.get(i);
-        stmt.traverse(visitor);
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      visitor.acceptWithInsertRemove(initializers);
+      if (testExpr != null) {
+        testExpr = visitor.accept(testExpr);
       }
-      testExpr.traverse(visitor);
-      for (int i = 0; i < increments.size(); ++i) {
-        JExpressionStatement stmt = (JExpressionStatement) increments.get(i);
-        stmt.traverse(visitor);
-      }
+      visitor.acceptWithInsertRemove(increments);
       if (body != null) {
-        body.traverse(visitor);
+        body = visitor.accept(body);
       }
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

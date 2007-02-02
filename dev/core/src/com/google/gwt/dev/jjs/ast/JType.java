@@ -20,11 +20,12 @@ package com.google.gwt.dev.jjs.ast;
  */
 public abstract class JType extends JNode implements HasName {
 
-  public String name;
-  public JLiteral defaultValue;
+  protected final String name;
+  private final JLiteral defaultValue;
 
-  public JType(JProgram program, String name, JLiteral defaultValue) {
-    super(program);
+  public JType(JProgram program, JSourceInfo info, String name,
+      JLiteral defaultValue) {
+    super(program, info);
     this.name = name;
     this.defaultValue = defaultValue;
   }

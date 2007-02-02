@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
@@ -41,7 +42,6 @@ import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.Mutator;
 
 /**
  * See the Java Programming Language, 4th Edition, p. 750, Table 2. I just
@@ -54,7 +54,7 @@ class JavaPrecedenceVisitor extends JVisitor {
 
   public static int exec(JExpression expression) {
     JavaPrecedenceVisitor visitor = new JavaPrecedenceVisitor();
-    expression.traverse(visitor);
+    visitor.accept(expression);
     if (visitor.answer < 0) {
       throw new InternalCompilerException("Precedence must be >= 0!");
     }
@@ -67,145 +67,145 @@ class JavaPrecedenceVisitor extends JVisitor {
   }
 
   // @Override
-  public boolean visit(JAbsentArrayDimension x, Mutator m) {
+  public boolean visit(JAbsentArrayDimension x, Context ctx) {
     answer = 0;
     return false;
   }
 
   // @Override
-  public boolean visit(JArrayRef x, Mutator m) {
+  public boolean visit(JArrayRef x, Context ctx) {
     answer = 0;
     return false;
   }
 
   // @Override
-  public boolean visit(JBinaryOperation operation, Mutator mutator) {
-    answer = operation.op.getPrecedence();
+  public boolean visit(JBinaryOperation operation, Context ctx) {
+    answer = operation.getOp().getPrecedence();
     return false;
   }
 
   // @Override
-  public boolean visit(JBooleanLiteral x, Mutator m) {
+  public boolean visit(JBooleanLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
   // @Override
-  public boolean visit(JCastOperation operation, Mutator mutator) {
+  public boolean visit(JCastOperation operation, Context ctx) {
     answer = 2;
     return false;
   }
 
   // @Override
-  public boolean visit(JCharLiteral x, Mutator m) {
+  public boolean visit(JCharLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
   // @Override
-  public boolean visit(JClassLiteral x, Mutator m) {
+  public boolean visit(JClassLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
   // @Override
-  public boolean visit(JConditional conditional, Mutator mutator) {
+  public boolean visit(JConditional conditional, Context ctx) {
     answer = 13;
     return false;
   }
 
   // @Override
-  public boolean visit(JDoubleLiteral x, Mutator m) {
+  public boolean visit(JDoubleLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
   // @Override
-  public boolean visit(JFieldRef x, Mutator m) {
+  public boolean visit(JFieldRef x, Context ctx) {
     answer = 0;
     return false;
   }
 
   // @Override
-  public boolean visit(JFloatLiteral x, Mutator m) {
+  public boolean visit(JFloatLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
   // @Override
-  public boolean visit(JInstanceOf of, Mutator mutator) {
+  public boolean visit(JInstanceOf of, Context ctx) {
     answer = 6;
     return false;
   }
 
   // @Override
-  public boolean visit(JIntLiteral x, Mutator m) {
+  public boolean visit(JIntLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
   // @Override
-  public boolean visit(JLocalRef x, Mutator m) {
+  public boolean visit(JLocalRef x, Context ctx) {
     answer = 0;
     return false;
   }
 
   // @Override
-  public boolean visit(JLongLiteral x, Mutator m) {
+  public boolean visit(JLongLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
   // @Override
-  public boolean visit(JMethodCall x, Mutator m) {
+  public boolean visit(JMethodCall x, Context ctx) {
     answer = 0;
     return false;
   }
 
   // @Override
-  public boolean visit(JNewArray array, Mutator mutator) {
+  public boolean visit(JNewArray array, Context ctx) {
     answer = 2;
     return false;
   }
 
   // @Override
-  public boolean visit(JNewInstance instance, Mutator mutator) {
+  public boolean visit(JNewInstance instance, Context ctx) {
     answer = 2;
     return false;
   }
 
   // @Override
-  public boolean visit(JNullLiteral x, Mutator m) {
+  public boolean visit(JNullLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
   // @Override
-  public boolean visit(JParameterRef x, Mutator m) {
+  public boolean visit(JParameterRef x, Context ctx) {
     answer = 0;
     return false;
   }
 
   // @Override
-  public boolean visit(JPostfixOperation operation, Mutator mutator) {
+  public boolean visit(JPostfixOperation operation, Context ctx) {
     answer = 0;
     return false;
   }
 
   // @Override
-  public boolean visit(JPrefixOperation operation, Mutator mutator) {
+  public boolean visit(JPrefixOperation operation, Context ctx) {
     answer = 1;
     return false;
   }
 
   // @Override
-  public boolean visit(JStringLiteral x, Mutator m) {
+  public boolean visit(JStringLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
   // @Override
-  public boolean visit(JThisRef x, Mutator m) {
+  public boolean visit(JThisRef x, Context ctx) {
     answer = 0;
     return false;
   }

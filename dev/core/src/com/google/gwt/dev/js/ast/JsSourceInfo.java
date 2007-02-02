@@ -13,25 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.jjs.ast.change;
+package com.google.gwt.dev.js.ast;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.jjs.ast.CanBeSetFinal;
-import com.google.gwt.dev.jjs.ast.JNode;
-
-class MakeFinal implements Change {
-  private final CanBeSetFinal x;
-
-  public MakeFinal(CanBeSetFinal x) {
-    this.x = x;
-  }
-
-  public void apply() {
-    x.setFinal(true);
-  }
-
-  public void describe(TreeLogger logger, TreeLogger.Type type) {
-    logger.log(type, "Make final " + ChangeList.getNodeString((JNode) x)
-        + ChangeList.getEnclosingTypeString(" from", x), null);
-  }
+/**
+ * Tracks file and line information for AST nodes.
+ */
+public class JsSourceInfo {
 }

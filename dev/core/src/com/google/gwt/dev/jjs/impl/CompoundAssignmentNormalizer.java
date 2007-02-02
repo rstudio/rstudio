@@ -15,21 +15,20 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.dev.jjs.ast.Holder;
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
+import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JThisRef;
-import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.Mutator;
-import com.google.gwt.dev.jjs.ast.change.ChangeList;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 
 import java.util.ArrayList;
@@ -42,19 +41,20 @@ import java.util.List;
  */
 public class CompoundAssignmentNormalizer {
 
-  private class BreakupAssignOpsVisitor extends JVisitor {
-    private final ChangeList changeList = new ChangeList(
-        "Break apart certain complex assignments.");
+  /**
+   * Breaks apart certain complex assignments.
+   */
+  private class BreakupAssignOpsVisitor extends JModVisitor {
 
     // @Override
-    public void endVisit(JBinaryOperation x, Mutator m) {
+    public void endVisit(JBinaryOperation x, Context ctx) {
       /*
        * Convert to a normal divide operation so we can cast the result. Since
        * the left hand size must be computed twice, we have to replace any
        * left-hand side expressions that could have side effects with
        * temporaries, so that they are only run once.
        */
-      if (x.op == JBinaryOperator.ASG_DIV
+      if (x.getOp() == JBinaryOperator.ASG_DIV
           && x.getType() != program.getTypePrimitiveFloat()
           && x.getType() != program.getTypePrimitiveDouble()) {
 
@@ -65,57 +65,49 @@ public class CompoundAssignmentNormalizer {
          * temporaries, so that they are only run once.
          */
         final int pushUsedLocals = localIndex;
-        JMultiExpression multi = new JMultiExpression(program);
+        JMultiExpression multi = new JMultiExpression(program,
+            x.getSourceInfo());
         ReplaceSideEffectsInLvalue replacer = new ReplaceSideEffectsInLvalue(
             multi);
-        x.lhs.traverse(replacer);
+        JExpression newLhs = replacer.accept(x.getLhs());
         localIndex = pushUsedLocals;
 
         JNullLiteral litNull = program.getLiteralNull();
         JBinaryOperation operation = new JBinaryOperation(program,
-            x.getLhs().getType(), JBinaryOperator.DIV, litNull, litNull);
-        JBinaryOperation asg = new JBinaryOperation(program,
-            x.getLhs().getType(), JBinaryOperator.ASG, litNull, operation);
+            x.getSourceInfo(), newLhs.getType(), JBinaryOperator.DIV, newLhs,
+            x.getRhs());
+        JBinaryOperation asg = new JBinaryOperation(program, x.getSourceInfo(),
+            newLhs.getType(), JBinaryOperator.ASG, newLhs, operation);
 
-        ChangeList myChangeList = new ChangeList("Break '" + x
-            + "' into two operations.");
-
-        myChangeList.replaceExpression(operation.lhs, x.lhs);
-        myChangeList.replaceExpression(operation.rhs, x.rhs);
-        myChangeList.replaceExpression(asg.lhs, x.lhs);
-
-        if (replacer.getChangeList().empty()) {
-          myChangeList.replaceExpression(m, asg);
+        JMultiExpression multiExpr = replacer.getMultiExpr();
+        if (multiExpr.exprs.isEmpty()) {
+          // just use the split assignment expression
+          ctx.replaceMe(asg);
         } else {
-          myChangeList.add(replacer.getChangeList());
-          myChangeList.addExpression(asg, multi.exprs);
-          myChangeList.replaceExpression(m, multi);
+          // add the assignment as the last item in the multi
+          multi.exprs.add(asg);
+          ctx.replaceMe(multi);
         }
-
-        changeList.add(myChangeList);
       }
     }
 
     // @Override
-    public void endVisit(JMethod x) {
+    public void endVisit(JMethod x, Context ctx) {
       clearLocals();
       currentMethod = null;
     }
 
-    public ChangeList getChangeList() {
-      return changeList;
-    }
-
     // @Override
-    public boolean visit(JMethod x) {
+    public boolean visit(JMethod x, Context ctx) {
       currentMethod = x;
       clearLocals();
       return true;
     }
   }
-  private class ReplaceSideEffectsInLvalue extends JVisitor {
-    private final ChangeList changeList = new ChangeList(
-        "Replace side effects in lvalue.");
+  /**
+   * Replaces side effects in lvalue.
+   */
+  private class ReplaceSideEffectsInLvalue extends JModVisitor {
 
     private final JMultiExpression multi;
 
@@ -123,56 +115,65 @@ public class CompoundAssignmentNormalizer {
       this.multi = multi;
     }
 
-    public ChangeList getChangeList() {
-      return changeList;
+    public JMultiExpression getMultiExpr() {
+      return multi;
     }
 
     // @Override
-    public boolean visit(JArrayRef x, Mutator m) {
-      possiblyReplace(x.instance);
-      possiblyReplace(x.indexExpr);
-      return false;
-    }
-
-    // @Override
-    public boolean visit(JFieldRef x, Mutator m) {
-      if (x.getInstance() != null) {
-        possiblyReplace(x.instance);
+    public boolean visit(JArrayRef x, Context ctx) {
+      JExpression newInstance = possiblyReplace(x.getInstance());
+      JExpression newIndexExpr = possiblyReplace(x.getIndexExpr());
+      if (newInstance != x.getInstance() || newIndexExpr != x.getIndexExpr()) {
+        JArrayRef newExpr = new JArrayRef(program, x.getSourceInfo(),
+            newInstance, newIndexExpr);
+        ctx.replaceMe(newExpr);
       }
       return false;
     }
 
     // @Override
-    public boolean visit(JLocalRef x, Mutator m) {
+    public boolean visit(JFieldRef x, Context ctx) {
+      if (x.getInstance() != null) {
+        JExpression newInstance = possiblyReplace(x.getInstance());
+        if (newInstance != x.getInstance()) {
+          JFieldRef newExpr = new JFieldRef(program, x.getSourceInfo(),
+              newInstance, x.getField(), x.getEnclosingType());
+          ctx.replaceMe(newExpr);
+        }
+      }
       return false;
     }
 
     // @Override
-    public boolean visit(JParameterRef x, Mutator m) {
+    public boolean visit(JLocalRef x, Context ctx) {
       return false;
     }
 
     // @Override
-    public boolean visit(JThisRef x, Mutator m) {
+    public boolean visit(JParameterRef x, Context ctx) {
       return false;
     }
 
-    private void possiblyReplace(Holder x) {
-      if (!x.get().hasSideEffects()) {
-        return;
+    // @Override
+    public boolean visit(JThisRef x, Context ctx) {
+      return false;
+    }
+
+    private JExpression possiblyReplace(JExpression x) {
+      if (!x.hasSideEffects()) {
+        return x;
       }
 
       // Create a temp local
       JLocal tempLocal = getTempLocal();
 
       // Create an assignment for this temp and add it to multi.
-      JLocalRef tempRef = new JLocalRef(program, tempLocal);
-      JBinaryOperation asg = new JBinaryOperation(program, x.get().getType(),
-          JBinaryOperator.ASG, tempRef, program.getLiteralNull());
-      changeList.replaceExpression(asg.rhs, x);
-      changeList.addExpression(asg, multi.exprs);
+      JLocalRef tempRef = new JLocalRef(program, x.getSourceInfo(), tempLocal);
+      JBinaryOperation asg = new JBinaryOperation(program, x.getSourceInfo(),
+          x.getType(), JBinaryOperator.ASG, tempRef, x);
+      multi.exprs.add(asg);
       // Update me with the temp
-      changeList.replaceExpression(x, tempRef);
+      return tempRef;
     }
   }
 
@@ -181,12 +182,9 @@ public class CompoundAssignmentNormalizer {
   }
 
   private JMethod currentMethod;
-
-  private final List/* <JLocal> */tempLocals = new ArrayList/* <JLocal> */();
-
   private int localIndex;
-
   private final JProgram program;
+  private final List/* <JLocal> */tempLocals = new ArrayList/* <JLocal> */();
 
   private CompoundAssignmentNormalizer(JProgram program) {
     this.program = program;
@@ -199,19 +197,16 @@ public class CompoundAssignmentNormalizer {
 
   private void execImpl() {
     BreakupAssignOpsVisitor breaker = new BreakupAssignOpsVisitor();
-    program.traverse(breaker);
-    ChangeList changes = breaker.getChangeList();
-    if (!changes.empty()) {
-      changes.apply();
-    }
+    breaker.accept(program);
   }
 
   private JLocal getTempLocal() {
     if (localIndex < tempLocals.size()) {
       return (JLocal) tempLocals.get(localIndex++);
     }
-    JLocal newTemp = program.createLocal(("$t" + localIndex++).toCharArray(),
-        program.getTypeVoid(), false, currentMethod);
+    JLocal newTemp = program.createLocal(null,
+        ("$t" + localIndex++).toCharArray(), program.getTypeVoid(), false,
+        currentMethod);
     tempLocals.add(newTemp);
     return newTemp;
   }

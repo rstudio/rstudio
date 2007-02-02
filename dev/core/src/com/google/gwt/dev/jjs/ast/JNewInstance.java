@@ -22,8 +22,8 @@ public class JNewInstance extends JExpression {
 
   private final JClassType classType;
 
-  public JNewInstance(JProgram program, JClassType classType) {
-    super(program);
+  public JNewInstance(JProgram program, JSourceInfo info, JClassType classType) {
+    super(program, info);
     this.classType = classType;
   }
 
@@ -39,14 +39,10 @@ public class JNewInstance extends JExpression {
     return true;
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 
 }

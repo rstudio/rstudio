@@ -20,38 +20,39 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JPrefixOperation extends JExpression {
 
-  private final Holder arg = new Holder();
-  public JUnaryOperator op;
+  private JExpression arg;
+  private final JUnaryOperator op;
 
-  public JPrefixOperation(JProgram program, JUnaryOperator op, JExpression arg) {
-    super(program);
+  public JPrefixOperation(JProgram program, JSourceInfo info, JUnaryOperator op,
+      JExpression arg) {
+    super(program, info);
     this.op = op;
-    this.arg.set(arg);
+    this.arg = arg;
   }
 
   public JExpression getArg() {
-    return arg.get();
+    return arg;
+  }
+
+  public JUnaryOperator getOp() {
+    return op;
   }
 
   public JType getType() {
     // Unary operators don't change the type of their expression
-    return arg.get().getType();
+    return arg.getType();
   }
 
   public boolean hasSideEffects() {
-    return op == JUnaryOperator.DEC || op == JUnaryOperator.INC
-      || arg.get().hasSideEffects();
+    return getOp() == JUnaryOperator.DEC || getOp() == JUnaryOperator.INC
+        || arg.hasSideEffects();
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
-      arg.traverse(visitor);
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      arg = visitor.accept(arg);
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 
 }

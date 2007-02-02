@@ -23,423 +23,533 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
 import com.google.gwt.dev.jjs.ast.js.JsonObject.JsonPropInit;
+import com.google.gwt.dev.jjs.impl.InternalCompilerException;
+
+import java.util.Iterator;
+import java.util.List;
 
 /**
- * A visitor for iterating through the parse tree.
+ * A visitor for iterating through an AST.
  */
 public class JVisitor {
 
-  public void endVisit(JAbsentArrayDimension x, Mutator m) {
+  protected static final Context UNMODIFIABLE_CONTEXT = new Context() {
+
+    public boolean canInsert() {
+      return false;
+    }
+
+    public boolean canRemove() {
+      return false;
+    }
+
+    public void insertAfter(JNode node) {
+      throw new UnsupportedOperationException();
+    }
+
+    public void insertBefore(JNode node) {
+      throw new UnsupportedOperationException();
+    }
+
+    public void removeMe() {
+      throw new UnsupportedOperationException();
+    }
+
+    public void replaceMe(JNode node) {
+      throw new UnsupportedOperationException();
+    }
+
+  };
+
+  public final JExpression accept(JExpression node) {
+    return (JExpression) doAccept(node);
   }
 
-  public void endVisit(JArrayRef x, Mutator m) {
+  public final JNode accept(JNode node) {
+    return doAccept(node);
   }
 
-  public void endVisit(JArrayType x) {
+  public final JStatement accept(JStatement node) {
+    return (JStatement) doAccept(node);
   }
 
-  public void endVisit(JAssertStatement x) {
+  public final void accept(List list) {
+    doAccept(list);
   }
 
-  public void endVisit(JBinaryOperation x, Mutator m) {
+  public final void acceptWithInsertRemove(List list) {
+    doAcceptWithInsertRemove(list);
   }
 
-  public void endVisit(JBlock x) {
+  public boolean didChange() {
+    throw new UnsupportedOperationException();
   }
 
-  public void endVisit(JBooleanLiteral x, Mutator m) {
+  public void endVisit(JAbsentArrayDimension x, Context ctx) {
   }
 
-  public void endVisit(JBreakStatement x) {
+  public void endVisit(JArrayRef x, Context ctx) {
   }
 
-  public void endVisit(JCaseStatement x) {
+  public void endVisit(JArrayType x, Context ctx) {
   }
 
-  public void endVisit(JCastOperation x, Mutator m) {
+  public void endVisit(JAssertStatement x, Context ctx) {
   }
 
-  public void endVisit(JCharLiteral x, Mutator m) {
+  public void endVisit(JBinaryOperation x, Context ctx) {
   }
 
-  public void endVisit(JClassLiteral x, Mutator m) {
+  public void endVisit(JBlock x, Context ctx) {
   }
 
-  public void endVisit(JClassSeed x, Mutator m) {
+  public void endVisit(JBooleanLiteral x, Context ctx) {
   }
 
-  public void endVisit(JClassType x) {
+  public void endVisit(JBreakStatement x, Context ctx) {
   }
 
-  public void endVisit(JConditional x, Mutator m) {
+  public void endVisit(JCaseStatement x, Context ctx) {
   }
 
-  public void endVisit(JContinueStatement x) {
+  public void endVisit(JCastOperation x, Context ctx) {
   }
 
-  public void endVisit(JDoStatement x) {
+  public void endVisit(JCharLiteral x, Context ctx) {
   }
 
-  public void endVisit(JDoubleLiteral x, Mutator m) {
+  public void endVisit(JClassLiteral x, Context ctx) {
   }
 
-  public void endVisit(JExpressionStatement x) {
+  public void endVisit(JClassSeed x, Context ctx) {
   }
 
-  public void endVisit(JField x) {
+  public void endVisit(JClassType x, Context ctx) {
   }
 
-  public void endVisit(JFieldRef x, Mutator m) {
+  public void endVisit(JConditional x, Context ctx) {
   }
 
-  public void endVisit(JFloatLiteral x, Mutator m) {
+  public void endVisit(JContinueStatement x, Context ctx) {
   }
 
-  public void endVisit(JForStatement x) {
+  public void endVisit(JDoStatement x, Context ctx) {
   }
 
-  public void endVisit(JIfStatement x) {
+  public void endVisit(JDoubleLiteral x, Context ctx) {
   }
 
-  public void endVisit(JInstanceOf x, Mutator m) {
+  public void endVisit(JExpressionStatement x, Context ctx) {
   }
 
-  public void endVisit(JInterfaceType x) {
+  public void endVisit(JField x, Context ctx) {
   }
 
-  public void endVisit(JIntLiteral x, Mutator m) {
+  public void endVisit(JFieldRef x, Context ctx) {
   }
 
-  public void endVisit(JLabel x) {
+  public void endVisit(JFloatLiteral x, Context ctx) {
   }
 
-  public void endVisit(JLabeledStatement x) {
+  public void endVisit(JForStatement x, Context ctx) {
   }
 
-  public void endVisit(JLocal x) {
+  public void endVisit(JIfStatement x, Context ctx) {
   }
 
-  public void endVisit(JLocalDeclarationStatement x) {
+  public void endVisit(JInstanceOf x, Context ctx) {
   }
 
-  public void endVisit(JLocalRef x, Mutator m) {
+  public void endVisit(JInterfaceType x, Context ctx) {
   }
 
-  public void endVisit(JLongLiteral x, Mutator m) {
+  public void endVisit(JIntLiteral x, Context ctx) {
   }
 
-  public void endVisit(JMethod x) {
+  public void endVisit(JLabel x, Context ctx) {
   }
 
-  public void endVisit(JMethodCall x, Mutator m) {
+  public void endVisit(JLabeledStatement x, Context ctx) {
   }
 
-  public void endVisit(JMultiExpression x, Mutator m) {
+  public void endVisit(JLocal x, Context ctx) {
   }
 
-  public void endVisit(JNewArray x, Mutator m) {
+  public void endVisit(JLocalDeclarationStatement x, Context ctx) {
   }
 
-  public void endVisit(JNewInstance x, Mutator m) {
+  public void endVisit(JLocalRef x, Context ctx) {
   }
 
-  public void endVisit(JNullLiteral x, Mutator m) {
+  public void endVisit(JLongLiteral x, Context ctx) {
   }
 
-  public void endVisit(JNullType x) {
+  public void endVisit(JMethod x, Context ctx) {
   }
 
-  public void endVisit(JParameter x) {
+  public void endVisit(JMethodCall x, Context ctx) {
   }
 
-  public void endVisit(JParameterRef x, Mutator m) {
+  public void endVisit(JMultiExpression x, Context ctx) {
   }
 
-  public void endVisit(JPostfixOperation x, Mutator m) {
+  public void endVisit(JNewArray x, Context ctx) {
   }
 
-  public void endVisit(JPrefixOperation x, Mutator m) {
+  public void endVisit(JNewInstance x, Context ctx) {
   }
 
-  public void endVisit(JPrimitiveType x) {
+  public void endVisit(JNullLiteral x, Context ctx) {
   }
 
-  public void endVisit(JProgram x) {
+  public void endVisit(JNullType x, Context ctx) {
   }
 
-  public void endVisit(JReturnStatement x) {
+  public void endVisit(JParameter x, Context ctx) {
   }
 
-  public void endVisit(JsniFieldRef x) {
+  public void endVisit(JParameterRef x, Context ctx) {
   }
 
-  public void endVisit(JsniMethod x) {
+  public void endVisit(JPostfixOperation x, Context ctx) {
   }
 
-  public void endVisit(JsniMethodRef x) {
+  public void endVisit(JPrefixOperation x, Context ctx) {
   }
 
-  public void endVisit(JsonArray x, Mutator m) {
+  public void endVisit(JPrimitiveType x, Context ctx) {
   }
 
-  public void endVisit(JsonObject x, Mutator m) {
+  public void endVisit(JProgram x, Context ctx) {
   }
 
-  public void endVisit(JsonPropInit x) {
+  public void endVisit(JReturnStatement x, Context ctx) {
   }
 
-  public void endVisit(JStringLiteral x, Mutator m) {
+  public void endVisit(JsniFieldRef x, Context ctx) {
   }
 
-  public void endVisit(JSwitchStatement x) {
+  public void endVisit(JsniMethod x, Context ctx) {
   }
 
-  public void endVisit(JThisRef x, Mutator m) {
+  public void endVisit(JsniMethodRef x, Context ctx) {
   }
 
-  public void endVisit(JThrowStatement x) {
+  public void endVisit(JsonArray x, Context ctx) {
   }
 
-  public void endVisit(JTryStatement x) {
+  public void endVisit(JsonObject x, Context ctx) {
   }
 
-  public void endVisit(JWhileStatement x) {
+  public void endVisit(JsonPropInit x, Context ctx) {
   }
 
-  public boolean visit(JAbsentArrayDimension x, Mutator m) {
+  public void endVisit(JStringLiteral x, Context ctx) {
+  }
+
+  public void endVisit(JSwitchStatement x, Context ctx) {
+  }
+
+  public void endVisit(JThisRef x, Context ctx) {
+  }
+
+  public void endVisit(JThrowStatement x, Context ctx) {
+  }
+
+  public void endVisit(JTryStatement x, Context ctx) {
+  }
+
+  public void endVisit(JWhileStatement x, Context ctx) {
+  }
+
+  public boolean visit(JAbsentArrayDimension x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JArrayRef x, Mutator m) {
+  public boolean visit(JArrayRef x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JArrayType x) {
+  public boolean visit(JArrayType x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JAssertStatement x) {
+  public boolean visit(JAssertStatement x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JBinaryOperation x, Mutator m) {
+  public boolean visit(JBinaryOperation x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JBlock x) {
+  public boolean visit(JBlock x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JBooleanLiteral x, Mutator m) {
+  public boolean visit(JBooleanLiteral x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JBreakStatement x) {
+  public boolean visit(JBreakStatement x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JCaseStatement x) {
+  public boolean visit(JCaseStatement x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JCastOperation x, Mutator m) {
+  public boolean visit(JCastOperation x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JCharLiteral x, Mutator m) {
+  public boolean visit(JCharLiteral x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JClassLiteral x, Mutator m) {
+  public boolean visit(JClassLiteral x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JClassSeed x, Mutator m) {
+  public boolean visit(JClassSeed x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JClassType x) {
+  public boolean visit(JClassType x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JConditional x, Mutator m) {
+  public boolean visit(JConditional x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JContinueStatement x) {
+  public boolean visit(JContinueStatement x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JDoStatement x) {
+  public boolean visit(JDoStatement x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JDoubleLiteral x, Mutator m) {
+  public boolean visit(JDoubleLiteral x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JExpressionStatement x) {
+  public boolean visit(JExpressionStatement x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JField x) {
+  public boolean visit(JField x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JFieldRef x, Mutator m) {
+  public boolean visit(JFieldRef x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JFloatLiteral x, Mutator m) {
+  public boolean visit(JFloatLiteral x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JForStatement x) {
+  public boolean visit(JForStatement x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JIfStatement x) {
+  public boolean visit(JIfStatement x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JInstanceOf x, Mutator m) {
+  public boolean visit(JInstanceOf x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JInterfaceType x) {
+  public boolean visit(JInterfaceType x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JIntLiteral x, Mutator m) {
+  public boolean visit(JIntLiteral x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JLabel x) {
+  public boolean visit(JLabel x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JLabeledStatement x) {
+  public boolean visit(JLabeledStatement x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JLocal x) {
+  public boolean visit(JLocal x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JLocalDeclarationStatement x) {
+  public boolean visit(JLocalDeclarationStatement x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JLocalRef x, Mutator m) {
+  public boolean visit(JLocalRef x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JLongLiteral x, Mutator m) {
+  public boolean visit(JLongLiteral x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JMethod x) {
+  public boolean visit(JMethod x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JMethodCall x, Mutator m) {
+  public boolean visit(JMethodCall x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JMultiExpression x, Mutator m) {
+  public boolean visit(JMultiExpression x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JNewArray x, Mutator m) {
+  public boolean visit(JNewArray x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JNewInstance x, Mutator m) {
+  public boolean visit(JNewInstance x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JNullLiteral x, Mutator m) {
+  public boolean visit(JNullLiteral x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JNullType x) {
+  public boolean visit(JNullType x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JParameter x) {
+  public boolean visit(JParameter x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JParameterRef x, Mutator m) {
+  public boolean visit(JParameterRef x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JPostfixOperation x, Mutator m) {
+  public boolean visit(JPostfixOperation x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JPrefixOperation x, Mutator m) {
+  public boolean visit(JPrefixOperation x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JPrimitiveType x) {
+  public boolean visit(JPrimitiveType x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JProgram x) {
+  public boolean visit(JProgram x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JReturnStatement x) {
+  public boolean visit(JReturnStatement x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JsniFieldRef x) {
+  public boolean visit(JsniFieldRef x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JsniMethod x) {
+  public boolean visit(JsniMethod x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JsniMethodRef x) {
+  public boolean visit(JsniMethodRef x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JsonArray x, Mutator m) {
+  public boolean visit(JsonArray x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JsonObject x, Mutator m) {
+  public boolean visit(JsonObject x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JsonPropInit x) {
+  public boolean visit(JsonPropInit x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JStringLiteral x, Mutator m) {
+  public boolean visit(JStringLiteral x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JSwitchStatement x) {
+  public boolean visit(JSwitchStatement x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JThisRef x, Mutator m) {
+  public boolean visit(JThisRef x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JThrowStatement x) {
+  public boolean visit(JThrowStatement x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JTryStatement x) {
+  public boolean visit(JTryStatement x, Context ctx) {
     return true;
   }
 
-  public boolean visit(JWhileStatement x) {
+  public boolean visit(JWhileStatement x, Context ctx) {
     return true;
   }
 
+  protected JNode doAccept(JNode node) {
+    doTraverse(node, UNMODIFIABLE_CONTEXT);
+    return node;
+  }
+
+  protected void doAccept(List list) {
+    for (Iterator it = list.iterator(); it.hasNext();) {
+      doTraverse((JNode) it.next(), UNMODIFIABLE_CONTEXT);
+    }
+  }
+
+  protected void doAcceptWithInsertRemove(List list) {
+    for (Iterator it = list.iterator(); it.hasNext();) {
+      doTraverse((JNode) it.next(), UNMODIFIABLE_CONTEXT);
+    }
+  }
+
+  protected final void doTraverse(JNode node, Context ctx) {
+    // boolean trace = false;
+    // String before = null;
+    try {
+      // trace = !(this instanceof ToStringGenerationVisitor)
+      // && (node instanceof JTryStatement);
+      // if (trace) {
+      // before = node.toSource();
+      // }
+      node.traverse(this, ctx);
+      // if (trace) {
+      // String after = node.toSource();
+      // if (!before.equals(after)) {
+      // System.out.println(this.getClass().getName() + ":");
+      // System.out.println("--");
+      // System.out.println(before);
+      // System.out.println("VV");
+      // System.out.println(after);
+      // System.out.println("---------------------------------------------------------");
+      // }
+      // }
+    } catch (InternalCompilerException ice) {
+      ice.addNode(node);
+      throw ice;
+    } catch (Throwable e) {
+      // if (trace) {
+      // System.out.println(this.getClass().getName() + ":");
+      // System.out.println("--");
+      // System.out.println(before);
+      // System.out.println(e);
+      // }
+      InternalCompilerException ice = new InternalCompilerException(
+          "Unexpected error during visit.", e);
+      ice.addNode(node);
+      throw ice;
+    }
+  }
 }

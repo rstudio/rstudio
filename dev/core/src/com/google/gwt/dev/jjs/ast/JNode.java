@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.impl.SourceGenerationVisitor;
 import com.google.gwt.dev.jjs.impl.ToStringGenerationVisitor;
 import com.google.gwt.dev.util.TextOutputOnCharArray;
 
@@ -22,26 +23,37 @@ import com.google.gwt.dev.util.TextOutputOnCharArray;
  * Base class for all visitable AST nodes.
  */
 public abstract class JNode implements JVisitable {
-  /*
-   * The current visitor pattern uses reflection, but it could be 
-   * replaced by direct code for better performance.
-   */
-  protected final JProgram program;
 
-  protected JNode(JProgram program) {
+  protected final JProgram program;
+  private final JSourceInfo info;
+
+  protected JNode(JProgram program, JSourceInfo info) {
     if (program == null) {
       assert (this instanceof JProgram);
       this.program = (JProgram) this;
     } else {
       this.program = program;
     }
+    this.info = info;
+  }
+
+  public JSourceInfo getSourceInfo() {
+    return info;
+  }
+
+  // Causes source generation to delegate to the one visitor
+  public final String toSource() {
+    TextOutputOnCharArray p = new TextOutputOnCharArray(false);
+    SourceGenerationVisitor v = new SourceGenerationVisitor(p);
+    v.accept(this);
+    return new String(p.getText());
   }
 
   // Causes source generation to delegate to the one visitor
   public final String toString() {
     TextOutputOnCharArray p = new TextOutputOnCharArray(false);
     ToStringGenerationVisitor v = new ToStringGenerationVisitor(p);
-    traverse(v);
+    v.accept(this);
     return new String(p.getText());
   }
 }

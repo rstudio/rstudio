@@ -19,5 +19,12 @@ package com.google.gwt.dev.jjs.ast;
  * Abstracts the idea that a class can be traversed.
  */
 public interface JVisitable {
-  void traverse(JVisitor visitor);
+
+  /**
+   * Causes this object to have the visitor visit itself and its children.
+   * 
+   * @param visitor the visitor that should traverse this node
+   * @param ctx the context of an existing traversal
+   */
+  void traverse(JVisitor visitor, Context ctx);
 }

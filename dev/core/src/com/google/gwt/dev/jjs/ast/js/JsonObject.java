@@ -15,13 +15,12 @@
  */
 package com.google.gwt.dev.jjs.ast.js;
 
-import com.google.gwt.dev.jjs.ast.Holder;
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.Mutator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,29 +35,29 @@ public class JsonObject extends JExpression {
    */
   public static class JsonPropInit extends JNode {
 
-    public final Holder labelExpr = new Holder();
-    public final Holder valueExpr = new Holder();
+    public JExpression labelExpr;
+    public JExpression valueExpr;
 
     public JsonPropInit(JProgram program, JExpression labelExpr,
         JExpression valueExpr) {
-      super(program);
-      this.labelExpr.set(labelExpr);
-      this.valueExpr.set(valueExpr);
+      super(program, null);
+      this.labelExpr = labelExpr;
+      this.valueExpr = valueExpr;
     }
 
-    public void traverse(JVisitor visitor) {
-      if (visitor.visit(this)) {
-        labelExpr.traverse(visitor);
-        valueExpr.traverse(visitor);
+    public void traverse(JVisitor visitor, Context ctx) {
+      if (visitor.visit(this, ctx)) {
+        labelExpr = visitor.accept(labelExpr);
+        valueExpr = visitor.accept(valueExpr);
       }
-      visitor.endVisit(this);
+      visitor.endVisit(this, ctx);
     }
   }
 
   public final List/* <JsonPropInit> */propInits = new ArrayList/* <JsonPropInit> */();
 
   public JsonObject(JProgram program) {
-    super(program);
+    super(program, null);
   }
 
   public JType getType() {
@@ -69,18 +68,11 @@ public class JsonObject extends JExpression {
     return true;
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
-      for (int i = 0; i < propInits.size(); ++i) {
-        JsonPropInit propInit = (JsonPropInit) propInits.get(i);
-        propInit.traverse(visitor);
-      }
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      visitor.accept(propInits);
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 
 }

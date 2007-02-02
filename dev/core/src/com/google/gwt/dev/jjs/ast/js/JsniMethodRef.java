@@ -15,23 +15,25 @@
  */
 package com.google.gwt.dev.jjs.ast.js;
 
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.ast.JSourceInfo;
 
 /**
  * A call to a JSNI method.
  */
 public class JsniMethodRef extends JMethodCall {
 
-  public JsniMethodRef(JProgram program, JMethod method) {
-    super(program, null, method);
+  public JsniMethodRef(JProgram program, JSourceInfo info, JMethod method) {
+    super(program, info, null, method);
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 }

@@ -16,11 +16,11 @@
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Java class literal expression. 
+ * Java class literal expression.
  */
 public class JClassLiteral extends JLiteral {
 
-  public final JType refType;
+  private final JType refType;
 
   /**
    * These are only supposed to be constructed by JProgram.
@@ -30,17 +30,17 @@ public class JClassLiteral extends JLiteral {
     refType = type;
   }
 
+  public JType getRefType() {
+    return refType;
+  }
+
   public JType getType() {
     return program.getTypeJavaLangClass();
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 }

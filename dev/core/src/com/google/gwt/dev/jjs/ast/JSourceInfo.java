@@ -16,18 +16,35 @@
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Abstracts the process of modifying an AST node.
+ * Tracks file and line information for AST nodes.
  */
-public abstract class Mutator {
+public class JSourceInfo {
 
-  public abstract JExpression get();
+  private final int endPos;
+  private final String fileName;
+  private final int startLine;
+  private final int startPos;
 
-  public abstract void insertAfter(JExpression node);
+  public JSourceInfo(int startPos, int endPos, int startLine, String fileName) {
+    this.startPos = startPos;
+    this.endPos = endPos;
+    this.startLine = startLine;
+    this.fileName = fileName;
+  }
 
-  public abstract void insertBefore(JExpression node);
+  public int getEndPos() {
+    return endPos;
+  }
 
-  public abstract void remove();
+  public String getFileName() {
+    return fileName;
+  }
 
-  public abstract JExpression set(JExpression value);
+  public int getStartLine() {
+    return startLine;
+  }
 
+  public int getStartPos() {
+    return startPos;
+  }
 }

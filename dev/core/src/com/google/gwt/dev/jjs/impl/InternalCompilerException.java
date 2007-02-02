@@ -15,6 +15,10 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.ast.JNode;
+
+import org.eclipse.jdt.internal.compiler.ast.ASTNode;
+
 /**
  * Indicates the compiler encountered an unexpected and unsupported state of
  * operation.
@@ -28,4 +32,13 @@ public class InternalCompilerException extends RuntimeException {
   public InternalCompilerException(String message, Throwable cause) {
     super(message, cause);
   }
+
+  public void addNode(ASTNode node) {
+    // TODO Auto-generated method stub
+  }
+
+  public void addNode(JNode node) {
+    // TODO Auto-generated method stub
+  }
+
 }

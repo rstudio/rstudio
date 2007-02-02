@@ -15,22 +15,22 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
+import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
-import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.Mutator;
-import com.google.gwt.dev.jjs.ast.change.ChangeList;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 
 /**
@@ -40,34 +40,15 @@ import com.google.gwt.dev.jjs.ast.js.JsonArray;
  */
 public class ArrayNormalizer {
 
-  private class ArrayVisitor extends JVisitor {
-
-    private final ChangeList changeList = new ChangeList(
-        "Transform array accesses to check bounds.");
+  private class ArrayVisitor extends JModVisitor {
 
     // @Override
-    public void endVisit(JNewArray x, Mutator m) {
-      JArrayType type = x.getArrayType();
-      JLiteral litTypeName = program.getLiteralString(calcClassName(type));
-
-      if (x.initializers != null) {
-        processInitializers(x, m, type, litTypeName);
-      } else {
-        processDims(x, m, type, litTypeName);
-      }
-    }
-
-    public ChangeList getChangeList() {
-      return changeList;
-    }
-
-    // @Override
-    public boolean visit(JBinaryOperation x, Mutator m) {
-      if (x.op == JBinaryOperator.ASG && x.getLhs() instanceof JArrayRef) {
+    public void endVisit(JBinaryOperation x, Context ctx) {
+      if (x.getOp() == JBinaryOperator.ASG && x.getLhs() instanceof JArrayRef) {
         JArrayRef arrayRef = (JArrayRef) x.getLhs();
         if (arrayRef.getType() instanceof JNullType) {
           // will generate a null pointer exception instead
-          return false;
+          return;
         }
         JArrayType arrayType = (JArrayType) arrayRef.getInstance().getType();
         JType elementType = arrayType.getElementType();
@@ -78,23 +59,26 @@ public class ArrayNormalizer {
             && !((JReferenceType) elementType).isFinal()) {
           // replace this assignment with a call to setCheck()
 
-          // DON'T VISIT ARRAYREF, but do visit its children
-          arrayRef.instance.traverse(this);
-          arrayRef.indexExpr.traverse(this);
-          x.rhs.traverse(this);
-
-          JMethodCall call = new JMethodCall(program, null, setCheckMethod);
-          ChangeList myChanges = new ChangeList("Replace " + x
-              + " with a call to Array.setCheck()");
-          myChanges.replaceExpression(m, call);
-          myChanges.addExpression(arrayRef.instance, call.args);
-          myChanges.addExpression(arrayRef.indexExpr, call.args);
-          myChanges.addExpression(x.rhs, call.args);
-          changeList.add(myChanges);
-          return false;
+          JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
+              setCheckMethod);
+          call.getArgs().add(arrayRef.getInstance());
+          call.getArgs().add(arrayRef.getIndexExpr());
+          call.getArgs().add(x.getRhs());
+          ctx.replaceMe(call);
         }
       }
-      return true;
+    }
+
+    // @Override
+    public void endVisit(JNewArray x, Context ctx) {
+      JArrayType type = x.getArrayType();
+      JLiteral litTypeName = program.getLiteralString(calcClassName(type));
+
+      if (x.initializers != null) {
+        processInitializers(x, ctx, type, litTypeName);
+      } else {
+        processDims(x, ctx, type, litTypeName);
+      }
     }
 
     private char[] calcClassName(JArrayType type) {
@@ -111,20 +95,19 @@ public class ArrayNormalizer {
       return className;
     }
 
-    private void processDims(JNewArray x, Mutator m, JArrayType arrayType,
+    private void processDims(JNewArray x, Context ctx, JArrayType arrayType,
         JLiteral litTypeName) {
-      ChangeList myChanges = new ChangeList("Replace " + x
-          + " with a call to Array.initDims()");
       // override the type of the called method with the array's type
-      JMethodCall call = new JMethodCall(program, null, initDims, arrayType);
+      JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
+          initDims, arrayType);
       JsonArray typeIdList = new JsonArray(program);
       JsonArray queryIdList = new JsonArray(program);
       JsonArray dimList = new JsonArray(program);
       JType leafType = arrayType.getLeafType();
-      int outstandingDims = arrayType.dims;
+      int outstandingDims = arrayType.getDims();
       for (int i = 0; i < x.dims.size(); ++i) {
-        Mutator dim = x.dims.getMutator(i);
-        if (dim.get() instanceof JAbsentArrayDimension) {
+        JExpression dim = (JExpression) x.dims.get(i);
+        if (dim instanceof JAbsentArrayDimension) {
           break;
         }
 
@@ -141,44 +124,40 @@ public class ArrayNormalizer {
          */
         JArrayType cur = program.getTypeArray(leafType, outstandingDims--);
         JLiteral typeIdLit = program.getLiteralInt(program.getTypeId(cur));
-        myChanges.addExpression(typeIdLit, typeIdList.exprs);
+        typeIdList.exprs.add(typeIdLit);
         JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(cur));
-        myChanges.addExpression(queryIdLit, queryIdList.exprs);
-        myChanges.addExpression(dim, dimList.exprs);
+        queryIdList.exprs.add(queryIdLit);
+        dimList.exprs.add(dim);
       }
       JType targetType = leafType;
       if (outstandingDims > 0) {
         targetType = program.getTypeArray(targetType, outstandingDims);
       }
 
-      myChanges.addExpression(litTypeName, call.args);
-      myChanges.addExpression(typeIdList, call.args);
-      myChanges.addExpression(queryIdList, call.args);
-      myChanges.addExpression(dimList, call.args);
-      myChanges.addExpression(targetType.getDefaultValue(), call.args);
-      myChanges.replaceExpression(m, call);
-      changeList.add(myChanges);
+      call.getArgs().add(litTypeName);
+      call.getArgs().add(typeIdList);
+      call.getArgs().add(queryIdList);
+      call.getArgs().add(dimList);
+      call.getArgs().add(targetType.getDefaultValue());
+      ctx.replaceMe(call);
     }
 
-    private void processInitializers(JNewArray x, Mutator m,
+    private void processInitializers(JNewArray x, Context ctx,
         JArrayType arrayType, JLiteral litTypeName) {
       // override the type of the called method with the array's type
-      JMethodCall call = new JMethodCall(program, null, initValues, arrayType);
+      JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
+          initValues, arrayType);
       JLiteral typeIdLit = program.getLiteralInt(program.getTypeId(arrayType));
       JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(arrayType));
       JsonArray initList = new JsonArray(program);
-      ChangeList myChanges = new ChangeList("Replace " + x
-          + " with a call to Array.initValues()");
       for (int i = 0; i < x.initializers.size(); ++i) {
-        Mutator initializer = x.initializers.getMutator(i);
-        myChanges.addExpression(initializer, initList.exprs);
+        initList.exprs.add(x.initializers.get(i));
       }
-      myChanges.addExpression(litTypeName, call.args);
-      myChanges.addExpression(typeIdLit, call.args);
-      myChanges.addExpression(queryIdLit, call.args);
-      myChanges.addExpression(initList, call.args);
-      myChanges.replaceExpression(m, call);
-      changeList.add(myChanges);
+      call.getArgs().add(litTypeName);
+      call.getArgs().add(typeIdLit);
+      call.getArgs().add(queryIdLit);
+      call.getArgs().add(initList);
+      ctx.replaceMe(call);
     }
 
     private int tryGetQueryId(JArrayType type) {
@@ -195,13 +174,10 @@ public class ArrayNormalizer {
     new ArrayNormalizer(program).execImpl();
   }
 
-  private final JMethod setCheckMethod;
-
   private final JMethod initDims;
-
   private final JMethod initValues;
-
   private final JProgram program;
+  private final JMethod setCheckMethod;
 
   private ArrayNormalizer(JProgram program) {
     this.program = program;
@@ -212,11 +188,7 @@ public class ArrayNormalizer {
 
   private void execImpl() {
     ArrayVisitor visitor = new ArrayVisitor();
-    program.traverse(visitor);
-    ChangeList changes = visitor.getChangeList();
-    if (!changes.empty()) {
-      changes.apply();
-    }
+    visitor.accept(program);
   }
 
 }

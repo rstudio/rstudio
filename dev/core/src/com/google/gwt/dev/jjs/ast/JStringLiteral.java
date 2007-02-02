@@ -20,7 +20,7 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JStringLiteral extends JLiteral {
 
-  public final String value;
+  private final String value;
 
   /**
    * These are only supposed to be constructed by JProgram.
@@ -34,13 +34,13 @@ public class JStringLiteral extends JLiteral {
     return program.getTypeJavaLangString();
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
+  public String getValue() {
+    return value;
   }
 
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 }

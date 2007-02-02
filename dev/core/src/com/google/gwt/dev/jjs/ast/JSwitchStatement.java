@@ -16,29 +16,34 @@
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Java switch statement. 
+ * Java switch statement.
  */
 public class JSwitchStatement extends JStatement {
 
-  private final Holder expr = new Holder();
-  public JBlock body;
+  private final JBlock body;
+  private JExpression expr;
 
-  public JSwitchStatement(JProgram program, JExpression expr, JBlock body) {
-    super(program);
-    this.expr.set(expr);
+  public JSwitchStatement(JProgram program, JSourceInfo info, JExpression expr,
+      JBlock body) {
+    super(program, info);
+    this.expr = expr;
     this.body = body;
   }
 
-  public JExpression getExpression() {
-    return expr.get();
+  public JBlock getBody() {
+    return body;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
-      expr.traverse(visitor);
-      body.traverse(visitor);
+  public JExpression getExpr() {
+    return expr;
+  }
+
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      expr = visitor.accept(expr);
+      visitor.accept(body);
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

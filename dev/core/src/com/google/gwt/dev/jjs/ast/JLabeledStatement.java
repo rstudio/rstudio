@@ -20,20 +20,29 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JLabeledStatement extends JStatement {
 
-  public final JLabel label;
-  public JStatement body;
-  
-  public JLabeledStatement(JProgram program, JLabel label, JStatement body) {
-    super(program);
+  private JStatement body;
+  private final JLabel label;
+
+  public JLabeledStatement(JProgram program, JSourceInfo info, JLabel label,
+      JStatement body) {
+    super(program, info);
     this.label = label;
     this.body = body;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
-      label.traverse(visitor);
-      body.traverse(visitor);
+  public JStatement getBody() {
+    return body;
+  }
+
+  public JLabel getLabel() {
+    return label;
+  }
+
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      visitor.accept(label);
+      body = visitor.accept(body);
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 }

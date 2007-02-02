@@ -15,12 +15,13 @@
  */
 package com.google.gwt.dev.jjs.ast.js;
 
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.ast.JSourceInfo;
 import com.google.gwt.dev.js.ast.JsFunction;
 
 import java.util.ArrayList;
@@ -35,11 +36,11 @@ public class JsniMethod extends JMethod {
   public final List/* <JsniMethodRef> */jsniMethodRefs = new ArrayList/* <JsniMethodRef> */();
   private JsFunction jsFunction = null;
 
-  public JsniMethod(JProgram program, String name,
-      JReferenceType enclosingType, JType returnType, boolean isStatic,
-      boolean isFinal, boolean isPrivate) {
-    super(program, name, enclosingType, returnType, false, isStatic, isFinal,
-        isPrivate);
+  public JsniMethod(JProgram program, JSourceInfo info,
+      String name, JReferenceType enclosingType, JType returnType,
+      boolean isStatic, boolean isFinal, boolean isPrivate) {
+    super(program, info, name, enclosingType, returnType, false, isStatic,
+        isFinal, isPrivate);
   }
 
   public JsFunction getFunc() {
@@ -56,22 +57,13 @@ public class JsniMethod extends JMethod {
     this.jsFunction = jsFunction;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
-      for (int i = 0; i < params.size(); ++i) {
-        JParameter param = (JParameter) params.get(i);
-        param.traverse(visitor);
-      }
-      for (int i = 0; i < jsniFieldRefs.size(); ++i) {
-        JsniFieldRef fieldRef = (JsniFieldRef) jsniFieldRefs.get(i);
-        fieldRef.traverse(visitor);
-      }
-      for (int i = 0; i < jsniMethodRefs.size(); ++i) {
-        JsniMethodRef methodRef = (JsniMethodRef) jsniMethodRefs.get(i);
-        methodRef.traverse(visitor);
-      }
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      visitor.accept(params);
+      visitor.accept(jsniFieldRefs);
+      visitor.accept(jsniMethodRefs);
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

@@ -20,17 +20,22 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JCastOperation extends JExpression {
 
-  public final JType castType;
-  public final Holder expr = new Holder();
+  private JExpression expr;
+  private final JType castType;
 
-  public JCastOperation(JProgram program, JType castType, JExpression expression) {
-    super(program);
+  public JCastOperation(JProgram program, JSourceInfo info, JType castType,
+      JExpression expr) {
+    super(program, info);
     this.castType = castType;
-    this.expr.set(expression);
+    this.expr = expr;
   }
 
-  public JExpression getExpression() {
-    return expr.get();
+  public JType getCastType() {
+    return castType;
+  }
+
+  public JExpression getExpr() {
+    return expr;
   }
 
   public JType getType() {
@@ -41,18 +46,14 @@ public class JCastOperation extends JExpression {
     // technically this isn't true, but since the same cast on the same
     // expression always evaluates the same way, it effectively has no side
     // effects
-    return getExpression().hasSideEffects();
+    return getExpr().hasSideEffects();
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
-      expr.traverse(visitor);
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      expr = visitor.accept(expr);
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 
 }

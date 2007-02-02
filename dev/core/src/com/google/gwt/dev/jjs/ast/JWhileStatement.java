@@ -20,27 +20,32 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JWhileStatement extends JStatement {
 
-  private final Holder testExpr = new Holder();
-  public JStatement body;
+  private JStatement body;
+  private JExpression testExpr;
 
-  public JWhileStatement(JProgram program, JExpression testExpr, JStatement body) {
-    super(program);
-    this.testExpr.set(testExpr);
+  public JWhileStatement(JProgram program, JSourceInfo info,
+      JExpression testExpr, JStatement body) {
+    super(program, info);
+    this.testExpr = testExpr;
     this.body = body;
   }
 
-  public JExpression getTestExpr() {
-    return testExpr.get();
+  public JStatement getBody() {
+    return body;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
-      testExpr.traverse(visitor);
+  public JExpression getTestExpr() {
+    return testExpr;
+  }
+
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      testExpr = visitor.accept(testExpr);
       if (body != null) {
-        body.traverse(visitor);
+        body = visitor.accept(body);
       }
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

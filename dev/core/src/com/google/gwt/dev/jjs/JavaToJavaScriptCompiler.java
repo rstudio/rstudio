@@ -36,6 +36,7 @@ import com.google.gwt.dev.jjs.impl.CastNormalizer;
 import com.google.gwt.dev.jjs.impl.CastOptimizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.CompoundAssignmentNormalizer;
+import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
 import com.google.gwt.dev.jjs.impl.JavaScriptObjectCaster;
@@ -75,8 +76,8 @@ public class JavaToJavaScriptCompiler {
   private static void findEntryPoints(TreeLogger logger,
       String[] mainClassNames, JProgram program)
       throws UnableToCompleteException {
-    JMethod bootStrapMethod = program.createMethod("init".toCharArray(), null,
-        program.getTypeVoid(), false, true, true, false, false);
+    JMethod bootStrapMethod = program.createMethod(null, "init".toCharArray(),
+        null, program.getTypeVoid(), false, true, true, false, false);
     bootStrapMethod.freezeParamTypes();
 
     for (int i = 0; i < mainClassNames.length; ++i) {
@@ -153,14 +154,14 @@ public class JavaToJavaScriptCompiler {
         }
 
         // Construct a new instance of the class to qualify the non-static call
-        JNewInstance newInstance = new JNewInstance(program, mainClass);
-        qualifier = new JMethodCall(program, newInstance, noArgCtor);
+        JNewInstance newInstance = new JNewInstance(program, null, mainClass);
+        qualifier = new JMethodCall(program, null, newInstance, noArgCtor);
       }
 
-      JMethodCall onModuleLoadCall = new JMethodCall(program, qualifier,
+      JMethodCall onModuleLoadCall = new JMethodCall(program, null, qualifier,
           mainMethod);
       bootStrapMethod.body.statements.add(new JExpressionStatement(program,
-          onModuleLoadCall));
+          null, onModuleLoadCall));
     }
     program.addEntryMethod(bootStrapMethod);
   }
@@ -339,6 +340,7 @@ public class JavaToJavaScriptCompiler {
         didChange = CastOptimizer.exec(jprogram) || didChange;
 
         // dead code removal??
+        didChange = DeadCodeElimination.exec(jprogram) || didChange;
 
         // inlining
         didChange = MethodInliner.exec(jprogram) || didChange;

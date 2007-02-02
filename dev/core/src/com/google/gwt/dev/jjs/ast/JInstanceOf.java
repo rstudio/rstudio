@@ -16,22 +16,26 @@
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Java instance of expression. 
+ * Java instance of expression.
  */
 public class JInstanceOf extends JExpression {
 
-  public final JReferenceType testType;
-  public final Holder expr = new Holder();
+  private JExpression expr;
+  private final JReferenceType testType;
 
-  public JInstanceOf(JProgram program, JReferenceType testType,
-      JExpression expression) {
-    super(program);
+  public JInstanceOf(JProgram program, JSourceInfo info,
+      JReferenceType testType, JExpression expression) {
+    super(program, info);
     this.testType = testType;
-    this.expr.set(expression);
+    this.expr = expression;
   }
 
-  public JExpression getExpression() {
-    return expr.get();
+  public JExpression getExpr() {
+    return expr;
+  }
+
+  public JReferenceType getTestType() {
+    return testType;
   }
 
   public JType getType() {
@@ -42,15 +46,11 @@ public class JInstanceOf extends JExpression {
     return false;
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
-      expr.traverse(visitor);
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      expr = visitor.accept(expr);
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 
 }

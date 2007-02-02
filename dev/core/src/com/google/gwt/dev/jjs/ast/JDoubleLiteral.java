@@ -20,7 +20,7 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JDoubleLiteral extends JLiteral {
 
-  public final double value;
+  private final double value;
 
   /**
    * These are only supposed to be constructed by JProgram.
@@ -34,13 +34,13 @@ public class JDoubleLiteral extends JLiteral {
     return program.getTypePrimitiveDouble();
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
+  public double getValue() {
+    return value;
   }
 
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 }

@@ -15,13 +15,13 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.change.ChangeList;
 import com.google.gwt.dev.jjs.ast.js.JsniMethod;
 
 import java.util.HashSet;
@@ -46,45 +46,46 @@ public class MethodAndClassFinalizer {
    */
   private class FinalizeVisitor extends JVisitor {
 
-    private final ChangeList changeList = new ChangeList(
-        "Finalize effectively final methods and types.");
+    private boolean didChange = false;
 
-    public ChangeList getChangeList() {
-      return changeList;
+    public boolean didChange() {
+      return didChange;
     }
 
     // @Override
-    public boolean visit(JClassType x) {
+    public boolean visit(JClassType x, Context ctx) {
       if (!x.isFinal() && !isSubclassed.contains(x)) {
-        changeList.makeFinal(x);
+        x.setFinal(true);
+        didChange = true;
       }
       for (int i = 0; i < x.methods.size(); ++i) {
         JMethod method = (JMethod) x.methods.get(i);
-        method.traverse(this);
+        accept(method);
       }
       return false;
     }
 
     // @Override
-    public boolean visit(JInterfaceType x) {
+    public boolean visit(JInterfaceType x, Context ctx) {
       for (int i = 0; i < x.methods.size(); ++i) {
         JMethod method = (JMethod) x.methods.get(i);
-        method.traverse(this);
+        accept(method);
       }
       return false;
     }
 
     // @Override
-    public boolean visit(JMethod x) {
+    public boolean visit(JMethod x, Context ctx) {
       if (!x.isFinal() && !isOverriden.contains(x)) {
-        changeList.makeFinal(x);
+        x.setFinal(true);
+        didChange = true;
       }
       return false;
     }
 
     // @Override
-    public boolean visit(JsniMethod x) {
-      return visit((JMethod) x);
+    public boolean visit(JsniMethod x, Context ctx) {
+      return visit((JMethod) x, ctx);
     }
   }
   /**
@@ -93,29 +94,29 @@ public class MethodAndClassFinalizer {
   private class MarkVisitor extends JVisitor {
 
     // @Override
-    public boolean visit(JClassType x) {
+    public boolean visit(JClassType x, Context ctx) {
       if (x.extnds != null) {
         isSubclassed.add(x.extnds);
       }
 
       for (int i = 0; i < x.methods.size(); ++i) {
         JMethod method = (JMethod) x.methods.get(i);
-        method.traverse(this);
+        accept(method);
       }
       return false;
     }
 
     // @Override
-    public boolean visit(JInterfaceType x) {
+    public boolean visit(JInterfaceType x, Context ctx) {
       for (int i = 0; i < x.methods.size(); ++i) {
         JMethod method = (JMethod) x.methods.get(i);
-        method.traverse(this);
+        accept(method);
       }
       return false;
     }
 
     // @Override
-    public boolean visit(JMethod x) {
+    public boolean visit(JMethod x, Context ctx) {
       for (int i = 0; i < x.overrides.size(); ++i) {
         JMethod it = (JMethod) x.overrides.get(i);
         isOverriden.add(it);
@@ -124,17 +125,17 @@ public class MethodAndClassFinalizer {
     }
 
     // @Override
-    public boolean visit(JProgram x) {
+    public boolean visit(JProgram x, Context ctx) {
       for (int i = 0; i < x.getDeclaredTypes().size(); ++i) {
         JReferenceType type = (JReferenceType) x.getDeclaredTypes().get(i);
-        type.traverse(this);
+        accept(type);
       }
       return false;
     }
 
     // @Override
-    public boolean visit(JsniMethod x) {
-      return visit((JMethod) x);
+    public boolean visit(JsniMethod x, Context ctx) {
+      return visit((JMethod) x, ctx);
     }
   }
 
@@ -142,24 +143,20 @@ public class MethodAndClassFinalizer {
     return new MethodAndClassFinalizer().execImpl(program);
   }
 
-  private final Set/* <JClassType> */isSubclassed = new HashSet/* <JClassType> */();
-
   private final Set/* <JMethod> */isOverriden = new HashSet/* <JMethod> */();
+
+  private final Set/* <JClassType> */isSubclassed = new HashSet/* <JClassType> */();
 
   private MethodAndClassFinalizer() {
   }
 
   private boolean execImpl(JProgram program) {
     MarkVisitor marker = new MarkVisitor();
-    program.traverse(marker);
+    marker.accept(program);
+
     FinalizeVisitor finalizer = new FinalizeVisitor();
-    program.traverse(finalizer);
-    ChangeList changes = finalizer.getChangeList();
-    if (changes.empty()) {
-      return false;
-    }
-    changes.apply();
-    return true;
+    finalizer.accept(program);
+    return finalizer.didChange();
   }
 
 }

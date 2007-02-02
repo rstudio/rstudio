@@ -20,26 +20,30 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JBinaryOperation extends JExpression implements HasSettableType {
 
-  public JBinaryOperator op;
-  public final Holder lhs = new Holder();
-  public final Holder rhs = new Holder();
+  private JExpression lhs;
+  private final JBinaryOperator op;
+  private JExpression rhs;
   private JType type;
 
-  public JBinaryOperation(JProgram program, JType type, JBinaryOperator op,
-      JExpression lhs, JExpression rhs) {
-    super(program);
+  public JBinaryOperation(JProgram program, JSourceInfo info, JType type,
+      JBinaryOperator op, JExpression lhs, JExpression rhs) {
+    super(program, info);
     this.op = op;
     this.type = type;
-    this.lhs.set(lhs);
-    this.rhs.set(rhs);
+    this.lhs = lhs;
+    this.rhs = rhs;
   }
 
   public JExpression getLhs() {
-    return lhs.get();
+    return lhs;
+  }
+
+  public JBinaryOperator getOp() {
+    return op;
   }
 
   public JExpression getRhs() {
-    return rhs.get();
+    return rhs;
   }
 
   public JType getType() {
@@ -68,16 +72,12 @@ public class JBinaryOperation extends JExpression implements HasSettableType {
     type = newType;
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
-      lhs.traverse(visitor);
-      rhs.traverse(visitor);
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      lhs = visitor.accept(lhs);
+      rhs = visitor.accept(rhs);
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 
 }

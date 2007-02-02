@@ -21,24 +21,25 @@ package com.google.gwt.dev.jjs.ast;
 public class JFieldRef extends JVariableRef implements HasEnclosingType {
 
   /**
-   * This can only be null if the referenced field is static.
-   */
-  public final Holder instance = new Holder();
-
-  /**
-   * The referenced field.
-   */
-  public JField field;
-
-  /**
    * The enclosing type of this reference.
    */
   private final JReferenceType enclosingType;
 
-  public JFieldRef(JProgram program, JExpression instance, JField field,
-      JReferenceType enclosingType) {
-    super(program, field);
-    this.instance.set(instance);
+  /**
+   * The referenced field.
+   */
+  private JField field;
+
+  /**
+   * This can only be null if the referenced field is static.
+   */
+  private JExpression instance;
+
+  public JFieldRef(JProgram program, JSourceInfo info, JExpression instance,
+      JField field, JReferenceType enclosingType) {
+    super(program, info, field);
+    assert (instance != null || field.isStatic());
+    this.instance = instance;
     this.field = field;
     this.enclosingType = enclosingType;
   }
@@ -52,37 +53,35 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
   }
 
   public JExpression getInstance() {
-    return instance.get();
+    return instance;
   }
 
   public boolean hasSideEffects() {
     // A cross-class reference to a static, non constant field forces clinit
     if (field.isStatic()
-      && (!field.isFinal() || field.constInitializer == null)) {
+        && (!field.isFinal() || field.constInitializer == null)) {
       JReferenceType fieldEncloser = field.getEnclosingType();
       if (enclosingType != fieldEncloser
-        && program.typeOracle.hasClinit(fieldEncloser)) {
+          && program.typeOracle.hasClinit(fieldEncloser)) {
         // Therefore, we have side effects
         return true;
       }
     }
 
-    JExpression expr = instance.get();
+    JExpression expr = instance;
     if (expr == null) {
       return false;
     }
     return expr.hasSideEffects();
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
-      instance.traverse(visitor);
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      if (instance != null) {
+        instance = visitor.accept(instance);
+      }
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 
 }

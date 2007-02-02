@@ -15,47 +15,47 @@ public class CompilerTest extends GWTTestCase {
   private static interface Fruit {
   }
 
-  private static class Granny extends Apple {
-  }
-
   private static class Fuji extends Apple {
   }
 
-  private static class SideEffectCauser {
-    private static Object instance = new Object();
-
-    public static Object causeClinitSideEffect() {
-      return instance;
-    }
-
-    static {
-      CompilerTest.sideEffectChecker++;
-    }
-  }
-
-  private static class SideEffectCauser2 {
-    public static Object causeClinitSideEffect() {
-      return null;
-    }
-
-    static {
-      CompilerTest.sideEffectChecker++;
-    }
+  private static class Granny extends Apple {
   }
 
   private static class NonSideEffectCauser {
     public static final String NOT_A_COMPILE_TIME_CONSTANT = null;
   }
 
+  private static class SideEffectCauser {
+    private static Object instance = new Object();
+
+    static {
+      CompilerTest.sideEffectChecker++;
+    }
+
+    public static Object causeClinitSideEffect() {
+      return instance;
+    }
+  }
+
+  private static class SideEffectCauser2 {
+    static {
+      CompilerTest.sideEffectChecker++;
+    }
+
+    public static Object causeClinitSideEffect() {
+      return null;
+    }
+  }
+
   private static final class UninstantiableType {
+    public Object field;
+
     private UninstantiableType() {
     }
 
     public Object returnNull() {
       return null;
     }
-
-    public Object field;
   }
 
   private static int sideEffectChecker;
@@ -135,6 +135,39 @@ public class CompilerTest extends GWTTestCase {
     assertEquals(2, sideEffectChecker);
     String checkRescued = NonSideEffectCauser.NOT_A_COMPILE_TIME_CONSTANT;
     assertEquals(null, checkRescued);
+  }
+
+  public void testDeadCode() {
+    while (returnFalse()) {
+      break;
+    }
+
+    do {
+      break;
+    } while (false);
+
+    do {
+      break;
+    } while (returnFalse());
+
+    for (; returnFalse();) {
+    }
+
+    boolean check = false;
+    for (check = true; returnFalse(); fail()) {
+      fail();
+    }
+    assertTrue(check);
+
+    if (returnFalse()) {
+      fail();
+    } else {
+    }
+
+    if (!returnFalse()) {
+    } else {
+      fail();
+    }
   }
 
   public void testDeadTypes() {
@@ -339,10 +372,22 @@ public class CompilerTest extends GWTTestCase {
     final String bar = cannotOptimize() ? "bar" : "foo";
     String result = new Object() {
 
+      private String a = foo;
+
+      {
+        a = foo;
+      }
+
       public String toString() {
         return new Object() {
 
           private static final String constantString = "wallawalla";
+
+          private String ai = foo;
+
+          {
+            ai = foo;
+          }
 
           public String toString() {
             // this line used to cause ICE due to no synthetic path to bar
@@ -352,20 +397,8 @@ public class CompilerTest extends GWTTestCase {
             return foo + a + ai;
           }
 
-          {
-            ai = foo;
-          }
-
-          private String ai = foo;
-
         }.toString() + a;
       }
-
-      {
-        a = foo;
-      }
-
-      private String a = foo;
 
     }.toString();
     assertEquals(result, "foofoofoofoo");
@@ -429,20 +462,10 @@ public class CompilerTest extends GWTTestCase {
     new B();
   }
 
-  public void testSwitchStatement() {
-    switch (0) {
-      case 0:
-        int test; // used to cause an ICE
-        break;
-    }
-  }
-
-  public void testSubclassStaticInnerAndClinitOrdering() {
-    new CheckSubclassStaticInnerAndClinitOrdering();
-  }
-
   public void testReturnStatementInCtor() {
     class Foo {
+      int i;
+
       Foo(int i) {
         this.i = i;
         if (i == 0)
@@ -451,18 +474,32 @@ public class CompilerTest extends GWTTestCase {
           return;
         return;
       }
-
-      int i;
     }
     assertEquals(new Foo(0).i, 0);
     assertEquals(new Foo(1).i, 1);
     assertEquals(new Foo(2).i, 2);
   }
 
+  public void testSubclassStaticInnerAndClinitOrdering() {
+    new CheckSubclassStaticInnerAndClinitOrdering();
+  }
+
+  public void testSwitchStatement() {
+    switch (0) {
+      case 0:
+        int test; // used to cause an ICE
+        break;
+    }
+  }
+
   public void testUnaryPlus() {
     int x, y = -7;
     x = +y;
     assertEquals(-7, x);
+  }
+
+  private boolean returnFalse() {
+    return false;
   }
 
 }
@@ -479,13 +516,11 @@ class B extends A {
   }
 }
 
-class Outer {
-  public static class StaticInner {
-  }
-}
-
 // This construct used to cause an ICE
 class CheckSubclassStaticInnerAndClinitOrdering extends Outer.StaticInner {
+  private static class Foo {
+  }
+
   private static final Foo FOO = new Foo();
 
   public CheckSubclassStaticInnerAndClinitOrdering() {
@@ -496,7 +531,9 @@ class CheckSubclassStaticInnerAndClinitOrdering extends Outer.StaticInner {
     // This used to be null due to clinit ordering issues
     Assert.assertNotNull(foo);
   }
+}
 
-  private static class Foo {
+class Outer {
+  public static class StaticInner {
   }
 }

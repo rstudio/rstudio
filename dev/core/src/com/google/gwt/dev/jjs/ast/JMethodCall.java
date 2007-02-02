@@ -15,20 +15,23 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import java.util.ArrayList;
+
 /**
  * Java method call expression.
  */
 public class JMethodCall extends JExpression {
 
-  public HolderList args = new HolderList();
-  public final Holder instance = new Holder();
+  private ArrayList args = new ArrayList();
+  private JExpression instance;
   private final JMethod method;
   private final JType overrideReturnType;
   private boolean staticDispatchOnly = false;
 
-  public JMethodCall(JProgram program, JExpression instance, JMethod method) {
-    super(program);
-    this.instance.set(instance);
+  public JMethodCall(JProgram program, JSourceInfo info, JExpression instance,
+      JMethod method) {
+    super(program, info);
+    this.instance = instance;
     this.method = method;
     this.staticDispatchOnly = false;
     this.overrideReturnType = null;
@@ -45,21 +48,34 @@ public class JMethodCall extends JExpression {
    * allows us to preserve type information during the latter phases of
    * compilation.
    */
-  public JMethodCall(JProgram program, JExpression instance, JMethod method,
-      JType overrideReturnType) {
-    super(program);
-    this.instance.set(instance);
+  public JMethodCall(JProgram program, JSourceInfo info, JExpression instance,
+      JMethod method, JType overrideReturnType) {
+    super(program, info);
+    this.instance = instance;
     this.method = method;
     assert (overrideReturnType != null);
     this.overrideReturnType = overrideReturnType;
+  }
+
+  public JMethodCall(JProgram program, JSourceInfo info, JExpression instance,
+      JMethod method, boolean staticDispatchOnly) {
+    super(program, info);
+    this.instance = instance;
+    this.method = method;
+    this.staticDispatchOnly = staticDispatchOnly;
+    this.overrideReturnType = null;
   }
 
   public boolean canBePolymorphic() {
     return !staticDispatchOnly && !method.isFinal() && !method.isStatic();
   }
 
+  public ArrayList getArgs() {
+    return args;
+  }
+
   public JExpression getInstance() {
-    return instance.get();
+    return instance;
   }
 
   public JMethod getTarget() {
@@ -87,16 +103,14 @@ public class JMethodCall extends JExpression {
     this.staticDispatchOnly = true;
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
-      instance.traverse(visitor);
-      args.traverse(visitor);
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      if (instance != null) {
+        instance = visitor.accept(instance);
+      }
+      visitor.accept(args);
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 
 }

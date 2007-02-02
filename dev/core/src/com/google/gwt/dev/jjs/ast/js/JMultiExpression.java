@@ -15,22 +15,24 @@
  */
 package com.google.gwt.dev.jjs.ast.js;
 
-import com.google.gwt.dev.jjs.ast.HolderList;
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.Mutator;
+import com.google.gwt.dev.jjs.ast.JSourceInfo;
+
+import java.util.ArrayList;
 
 /**
  * Represents multiple ordered expressions as a single compound expression.
  */
 public class JMultiExpression extends JExpression {
 
-  public HolderList exprs = new HolderList();
+  public ArrayList exprs = new ArrayList();
 
-  public JMultiExpression(JProgram program) {
-    super(program);
+  public JMultiExpression(JProgram program, JSourceInfo info) {
+    super(program, info);
   }
 
   public JType getType() {
@@ -38,14 +40,13 @@ public class JMultiExpression extends JExpression {
     if (c == 0) {
       return program.getTypeVoid();
     } else {
-      return exprs.getExpr(c - 1).getType();
+      return ((JExpression) exprs.get(c - 1)).getType();
     }
   }
 
   public boolean hasSideEffects() {
-
     for (int i = 0; i < exprs.size(); ++i) {
-      JExpression expr = exprs.getExpr(i);
+      JExpression expr = (JExpression) exprs.get(i);
       if (expr.hasSideEffects()) {
         return true;
       }
@@ -53,15 +54,11 @@ public class JMultiExpression extends JExpression {
     return false;
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
-      exprs.traverse(visitor);
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      visitor.accept(exprs);
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 
 }

@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.CanBeFinal;
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
@@ -50,25 +51,25 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
   }
 
   // @Override
-  public boolean visit(JClassType x) {
+  public boolean visit(JClassType x, Context ctx) {
     // All classes are deemed "static" so the monolithic compile results can be
     // copy/pasted into a single enclosing class.
     print(CHARS_STATIC);
 
-    super.visit(x);
+    super.visit(x, ctx);
 
     openBlock();
 
     for (int i = 0; i < x.fields.size(); ++i) {
       JField it = (JField) x.fields.get(i);
-      it.traverse(this);
+      accept(it);
       newline();
       newline();
     }
     for (int i = 0; i < x.methods.size(); ++i) {
       JMethod it = (JMethod) x.methods.get(i);
       if (!isEmptyInitializer(it)) {
-        it.traverse(this);
+        accept(it);
         newline();
         newline();
       }
@@ -78,32 +79,32 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
     return false;
   }
 
-  public boolean visit(JField x) {
-    super.visit(x);
+  public boolean visit(JField x, Context ctx) {
+    super.visit(x, ctx);
 
     if (x.constInitializer != null) {
       print(" = ");
-      x.constInitializer.traverse(this);
+      accept(x.constInitializer);
     }
     semi();
     return false;
   }
 
   // @Override
-  public boolean visit(JInterfaceType x) {
-    super.visit(x);
+  public boolean visit(JInterfaceType x, Context ctx) {
+    super.visit(x, ctx);
 
     openBlock();
 
     for (int i = 0; i < x.fields.size(); ++i) {
       JField field = (JField) x.fields.get(i);
-      field.traverse(this);
+      accept(field);
       newline();
       newline();
     }
     for (int i = 0; i < x.methods.size(); ++i) {
       JMethod method = (JMethod) x.methods.get(i);
-      method.traverse(this);
+      accept(method);
       newline();
       newline();
     }
@@ -113,21 +114,21 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
   }
 
   // @Override
-  public boolean visit(JMethod x) {
+  public boolean visit(JMethod x, Context ctx) {
     // special: transcribe clinit and init as if they were initializer blocks
     if (isInitializer(x)) {
       if (x.isStatic()) {
         print(CHARS_STATIC);
       }
-      x.body.traverse(this);
+      accept(x.body);
     } else {
-      super.visit(x);
+      super.visit(x, ctx);
 
       if (x.isAbstract()) {
         semi();
       } else {
         space();
-        x.body.traverse(this);
+        accept(x.body);
       }
     }
 
@@ -135,16 +136,16 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
   }
 
   // @Override
-  public boolean visit(JProgram x) {
+  public boolean visit(JProgram x, Context ctx) {
     for (int i = 0; i < x.entryMethods.size(); ++i) {
       JMethod method = (JMethod) x.entryMethods.get(i);
-      method.traverse(this);
+      accept(method);
       newline();
       newline();
     }
     for (int i = 0; i < x.getDeclaredTypes().size(); ++i) {
       JReferenceType type = (JReferenceType) x.getDeclaredTypes().get(i);
-      type.traverse(this);
+      accept(type);
       newline();
       newline();
     }
@@ -152,8 +153,8 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
   }
 
   // @Override
-  public boolean visit(JsniMethod x) {
-    super.visit(x);
+  public boolean visit(JsniMethod x, Context ctx) {
+    super.visit(x, ctx);
     space();
     print(CHARS_SLASHSTAR);
     String jsniCode = x.getFunc().getBody().toString();

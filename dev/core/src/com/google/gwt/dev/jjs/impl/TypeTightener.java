@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
@@ -28,6 +29,7 @@ import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
@@ -40,8 +42,6 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.Mutator;
-import com.google.gwt.dev.jjs.ast.change.ChangeList;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethod;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
@@ -89,45 +89,45 @@ public class TypeTightener {
   /**
    * Replaces dangling null references with dummy calls.
    */
-  public class FixDanglingRefsVisitor extends JVisitor {
-    private final ChangeList changeList = new ChangeList(
-        "Replace dangling null references with dummy calls.");
+  public class FixDanglingRefsVisitor extends JModVisitor {
 
     // @Override
-    public void endVisit(JArrayRef x, Mutator m) {
+    public void endVisit(JArrayRef x, Context ctx) {
       JExpression instance = x.getInstance();
       if (instance.getType() == typeNull) {
         if (!instance.hasSideEffects()) {
           instance = program.getLiteralNull();
         }
-        JArrayRef arrayRef = new JArrayRef(program, instance,
-            program.getLiteralInt(0));
-        changeList.replaceExpression(m, arrayRef);
+        JArrayRef arrayRef = new JArrayRef(program, x.getSourceInfo(),
+            instance, program.getLiteralInt(0));
+        ctx.replaceMe(arrayRef);
       }
     }
 
     // @Override
-    public void endVisit(JFieldRef x, Mutator m) {
+    public void endVisit(JFieldRef x, Context ctx) {
       JExpression instance = x.getInstance();
       boolean isStatic = x.getField().isStatic();
       if (isStatic && instance != null) {
         // this doesn't really belong here, but while we're here let's remove
         // non-side-effect qualifiers to statics
         if (!instance.hasSideEffects()) {
-          changeList.replaceExpression(x.instance, (JExpression) null);
+          JFieldRef fieldRef = new JFieldRef(program, x.getSourceInfo(), null,
+              x.getField(), x.getEnclosingType());
+          ctx.replaceMe(fieldRef);
         }
       } else if (!isStatic && instance.getType() == typeNull) {
         if (!instance.hasSideEffects()) {
           instance = program.getLiteralNull();
         }
-        JFieldRef fieldRef = new JFieldRef(program, instance,
-            program.getNullField(), null);
-        changeList.replaceExpression(m, fieldRef);
+        JFieldRef fieldRef = new JFieldRef(program, x.getSourceInfo(),
+            instance, program.getNullField(), null);
+        ctx.replaceMe(fieldRef);
       }
     }
 
     // @Override
-    public void endVisit(JMethodCall x, Mutator m) {
+    public void endVisit(JMethodCall x, Context ctx) {
       JExpression instance = x.getInstance();
       JMethod method = x.getTarget();
       boolean isStatic = method.isStatic();
@@ -136,29 +136,30 @@ public class TypeTightener {
         // this doesn't really belong here, but while we're here let's remove
         // non-side-effect qualifiers to statics
         if (!instance.hasSideEffects()) {
-          changeList.replaceExpression(x.instance, (JExpression) null);
+          JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
+              null, x.getTarget());
+          newCall.getArgs().addAll(x.getArgs());
+          ctx.replaceMe(newCall);
         }
       } else if (!isStatic && instance.getType() == typeNull) {
+        // bind null instance calls to the null method
         if (!instance.hasSideEffects()) {
           instance = program.getLiteralNull();
         }
-        JMethodCall call = new JMethodCall(program, instance,
-            program.getNullMethod());
-        changeList.replaceExpression(m, call);
-      } else if (isStaticImpl && x.args.size() > 0
-          && x.args.getExpr(0).getType() == typeNull) {
-        instance = x.args.getExpr(0);
+        JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
+            instance, program.getNullMethod());
+        ctx.replaceMe(newCall);
+      } else if (isStaticImpl && x.getArgs().size() > 0
+          && ((JExpression) x.getArgs().get(0)).getType() == typeNull) {
+        // bind null instance calls to the null method for static impls
+        instance = (JExpression) x.getArgs().get(0);
         if (!instance.hasSideEffects()) {
           instance = program.getLiteralNull();
         }
-        JMethodCall call = new JMethodCall(program, instance,
-            program.getNullMethod());
-        changeList.replaceExpression(m, call);
+        JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
+            instance, program.getNullMethod());
+        ctx.replaceMe(newCall);
       }
-    }
-
-    public ChangeList getChangeList() {
-      return changeList;
     }
   }
   /**
@@ -180,7 +181,7 @@ public class TypeTightener {
     private JMethod currentMethod;
 
     // @Override
-    public void endVisit(JBinaryOperation x, Mutator m) {
+    public void endVisit(JBinaryOperation x, Context ctx) {
       if (x.isAssignment() && (x.getType() instanceof JReferenceType)) {
         JExpression lhs = x.getLhs();
         if (lhs instanceof JVariableRef) {
@@ -190,7 +191,7 @@ public class TypeTightener {
     }
 
     // @Override
-    public void endVisit(JClassType x) {
+    public void endVisit(JClassType x, Context ctx) {
       for (JClassType cur = x; cur != null; cur = cur.extnds) {
         addImplementor(cur, x);
         for (Iterator it = cur.implments.iterator(); it.hasNext();) {
@@ -201,7 +202,7 @@ public class TypeTightener {
     }
 
     // @Override
-    public void endVisit(JField x) {
+    public void endVisit(JField x, Context ctx) {
       if (x.constInitializer != null) {
         addAssignment(x, x.constInitializer);
       }
@@ -209,7 +210,7 @@ public class TypeTightener {
     }
 
     // @Override
-    public void endVisit(JLocalDeclarationStatement x) {
+    public void endVisit(JLocalDeclarationStatement x, Context ctx) {
       JExpression initializer = x.getInitializer();
       if (initializer != null) {
         addAssignment(x.getLocalRef().getTarget(), initializer);
@@ -217,7 +218,7 @@ public class TypeTightener {
     }
 
     // @Override
-    public void endVisit(JMethod x) {
+    public void endVisit(JMethod x, Context ctx) {
       for (int i = 0; i < x.overrides.size(); ++i) {
         JMethod method = (JMethod) x.overrides.get(i);
         addOverrider(method, x);
@@ -231,10 +232,10 @@ public class TypeTightener {
     }
 
     // @Override
-    public void endVisit(JMethodCall x, Mutator m) {
+    public void endVisit(JMethodCall x, Context ctx) {
       // All of the params in the target method are considered to be assigned by
       // the arguments from the caller
-      Iterator/* <JExpression> */argIt = x.args.iterator();
+      Iterator/* <JExpression> */argIt = x.getArgs().iterator();
       ArrayList params = x.getTarget().params;
       for (int i = 0; i < params.size(); ++i) {
         JParameter param = (JParameter) params.get(i);
@@ -246,26 +247,26 @@ public class TypeTightener {
     }
 
     // @Override
-    public void endVisit(JReturnStatement x) {
+    public void endVisit(JReturnStatement x, Context ctx) {
       if (currentMethod.getType() instanceof JReferenceType) {
-        addReturn(currentMethod, x.getExpression());
+        addReturn(currentMethod, x.getExpr());
       }
     }
 
     // @Override
-    public void endVisit(JsniFieldRef x) {
+    public void endVisit(JsniFieldRef x, Context ctx) {
       // If this happens in JSNI, we can't make any type-tightening assumptions
       // Fake an assignment-to-self to prevent tightening
       addAssignment(x.getTarget(), x);
     }
 
     // @Override
-    public void endVisit(JsniMethod x) {
-      endVisit((JMethod) x);
+    public void endVisit(JsniMethod x, Context ctx) {
+      endVisit((JMethod) x, ctx);
     }
 
     // @Override
-    public void endVisit(JsniMethodRef x) {
+    public void endVisit(JsniMethodRef x, Context ctx) {
       // If this happens in JSNI, we can't make any type-tightening assumptions
       // Fake an assignment-to-self on all args to prevent tightening
 
@@ -273,16 +274,16 @@ public class TypeTightener {
 
       for (int i = 0; i < method.params.size(); ++i) {
         JParameter param = (JParameter) method.params.get(i);
-        addAssignment(param, new JParameterRef(program, param));
+        addAssignment(param, new JParameterRef(program, null, param));
       }
     }
 
     // @Override
-    public void endVisit(JTryStatement x) {
+    public void endVisit(JTryStatement x, Context ctx) {
       // Never tighten args to catch blocks
       // Fake an assignment-to-self to prevent tightening
-      for (int i = 0; i < x.catchArgs.size(); ++i) {
-        JLocalRef arg = (JLocalRef) x.catchArgs.get(i);
+      for (int i = 0; i < x.getCatchArgs().size(); ++i) {
+        JLocalRef arg = (JLocalRef) x.getCatchArgs().get(i);
         addAssignment(arg.getTarget(), arg);
       }
     }
@@ -292,7 +293,7 @@ public class TypeTightener {
      * param type in an overriding method if the declaring method is looser.
      */
     // @Override
-    public boolean visit(JMethod x) {
+    public boolean visit(JMethod x, Context ctx) {
       currentMethod = x;
 
       List/* <JMethod> */overrides = x.overrides;
@@ -374,16 +375,20 @@ public class TypeTightener {
    * on it.
    */
   public class TightenTypesVisitor extends JVisitor {
-    private final ChangeList changeList = new ChangeList(
-        "Tighten types on fields, locals, params, methods.");
+
+    private boolean didChange = false;
+
+    public boolean didChange() {
+      return didChange;
+    }
 
     // @Override
-    public void endVisit(JField x) {
+    public void endVisit(JField x, Context ctx) {
       tighten(x);
     }
 
     // @Override
-    public void endVisit(JLocal x) {
+    public void endVisit(JLocal x, Context ctx) {
       tighten(x);
     }
 
@@ -391,7 +396,7 @@ public class TypeTightener {
      * Tighten based on return types and overrides.
      */
     // @Override
-    public void endVisit(JMethod x) {
+    public void endVisit(JMethod x, Context ctx) {
 
       if (!(x.getType() instanceof JReferenceType)) {
         return;
@@ -404,7 +409,8 @@ public class TypeTightener {
 
       // tighten based on non-instantiability
       if (!program.typeOracle.isInstantiatedType(refType)) {
-        changeList.changeType(x, typeNull);
+        x.setType(typeNull);
+        didChange = true;
         return;
       }
 
@@ -436,34 +442,32 @@ public class TypeTightener {
       JReferenceType resultType = program.generalizeTypes(typeList);
       resultType = program.strongerType(refType, resultType);
       if (refType != resultType) {
-        changeList.changeType(x, resultType);
+        x.setType(resultType);
+        didChange = true;
       }
     }
 
     // @Override
-    public void endVisit(JNewArray x, Mutator m) {
+    public void endVisit(JNewArray x, Context ctx) {
       // tighten leaf type based on non-instantiability
       JArrayType arrayType = x.getArrayType();
       JType leafType = arrayType.getLeafType();
       if (leafType instanceof JReferenceType) {
         if (!program.typeOracle.isInstantiatedType((JReferenceType) leafType)) {
           arrayType = program.getTypeArray(typeNull, arrayType.getDims());
-          changeList.changeType(x, arrayType);
+          x.setType(arrayType);
+          didChange = true;
         }
       }
     }
 
     // @Override
-    public void endVisit(JParameter x) {
+    public void endVisit(JParameter x, Context ctx) {
       tighten(x);
     }
 
-    public ChangeList getChangeList() {
-      return changeList;
-    }
-
     // @Override
-    public boolean visit(JClassType x) {
+    public boolean visit(JClassType x, Context ctx) {
       // don't mess with classes used in code gen
       if (program.specialTypes.contains(x)) {
         return false;
@@ -471,7 +475,7 @@ public class TypeTightener {
       return true;
     }
 
-    public boolean visit(JsniMethod x) {
+    public boolean visit(JsniMethod x, Context ctx) {
       /*
        * Explicitly NOT visiting native methods since we can't infer type
        * information.
@@ -496,7 +500,8 @@ public class TypeTightener {
 
       // tighten based on non-instantiability
       if (!program.typeOracle.isInstantiatedType(refType)) {
-        changeList.changeType(x, typeNull);
+        x.setType(typeNull);
+        didChange = true;
         return;
       }
 
@@ -545,7 +550,8 @@ public class TypeTightener {
       JReferenceType resultType = program.generalizeTypes(typeList);
       resultType = program.strongerType(refType, resultType);
       if (refType != resultType) {
-        changeList.changeType(x, resultType);
+        x.setType(resultType);
+        didChange = true;
       }
     }
   }
@@ -578,26 +584,21 @@ public class TypeTightener {
   }
 
   private boolean execImpl() {
-    boolean madeChanges = false;
     RecordVisitor recorder = new RecordVisitor();
-    program.traverse(recorder);
+    recorder.accept(program);
+    boolean madeChanges = false;
     while (true) {
       TightenTypesVisitor tightener = new TightenTypesVisitor();
-      program.traverse(tightener);
-      ChangeList changes = tightener.getChangeList();
-      if (changes.empty()) {
-        return madeChanges;
+      tightener.accept(program);
+      if (!tightener.didChange()) {
+        break;
       }
-      changes.apply();
       madeChanges = true;
 
       FixDanglingRefsVisitor fixer = new FixDanglingRefsVisitor();
-      program.traverse(fixer);
-      changes = fixer.getChangeList();
-      if (!changes.empty()) {
-        changes.apply();
-      }
+      fixer.accept(program);
     }
+    return madeChanges;
   }
 
 }

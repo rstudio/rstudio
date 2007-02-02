@@ -28,15 +28,14 @@ public class JArrayType extends JClassType {
     return name;
   }
 
-  public JType leafType;
-
-  public int dims;
+  private int dims;
+  private JType leafType;
 
   /**
    * These are only supposed to be constructed by JProgram.
    */
   JArrayType(JProgram program, JType leafType, int dims) {
-    super(program, calcName(leafType, dims), false, false);
+    super(program, null, calcName(leafType, dims), false, false);
     this.leafType = leafType;
     this.dims = dims;
   }
@@ -80,10 +79,10 @@ public class JArrayType extends JClassType {
     return false;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

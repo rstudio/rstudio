@@ -16,38 +16,45 @@
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Java if statement. 
+ * Java if statement.
  */
 public class JIfStatement extends JStatement {
 
-  private final Holder ifExpr = new Holder();
-  public JStatement thenStmt;
-  public JStatement elseStmt;
+  private JStatement elseStmt;
+  private JExpression ifExpr;
+  private JStatement thenStmt;
 
-  public JIfStatement(JProgram program, JExpression ifExpr,
-      JStatement thenStmt, JStatement elseStmt) {
-    super(program);
-    this.ifExpr.set(ifExpr);
+  public JIfStatement(JProgram program, JSourceInfo info,
+      JExpression ifExpr, JStatement thenStmt, JStatement elseStmt) {
+    super(program, info);
+    this.ifExpr = ifExpr;
     this.thenStmt = thenStmt;
     this.elseStmt = elseStmt;
   }
 
-  public JExpression getIfExpr() {
-    return ifExpr.get();
+  public JStatement getElseStmt() {
+    return elseStmt;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
-      ifExpr.traverse(visitor);
+  public JExpression getIfExpr() {
+    return ifExpr;
+  }
+
+  public JStatement getThenStmt() {
+    return thenStmt;
+  }
+
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      ifExpr = visitor.accept(ifExpr);
       if (thenStmt != null) {
-        thenStmt.traverse(visitor);
+        thenStmt = visitor.accept(thenStmt);
       }
-      
       if (elseStmt != null) {
-        elseStmt.traverse(visitor);
+        elseStmt = visitor.accept(elseStmt);
       }
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

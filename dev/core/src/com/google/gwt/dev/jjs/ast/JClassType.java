@@ -16,15 +16,16 @@
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Java class type reference expression. 
+ * Java class type reference expression.
  */
 public class JClassType extends JReferenceType implements CanBeSetFinal {
 
   private final boolean isAbstract;
   private boolean isFinal;
 
-  public JClassType(JProgram program, String name, boolean isAbstract, boolean isFinal) {
-    super(program, name);
+  public JClassType(JProgram program, JSourceInfo info, String name,
+      boolean isAbstract, boolean isFinal) {
+    super(program, info, name);
     this.isAbstract = isAbstract;
     this.isFinal = isFinal;
   }
@@ -41,18 +42,12 @@ public class JClassType extends JReferenceType implements CanBeSetFinal {
     isFinal = b;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
-      for (int i = 0; i < fields.size(); ++i) {
-        JField field = (JField) fields.get(i);
-        field.traverse(visitor);
-      }
-      for (int i = 0; i < methods.size(); ++i) {
-        JMethod method = (JMethod) methods.get(i);
-        method.traverse(visitor);
-      }
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      visitor.acceptWithInsertRemove(fields);
+      visitor.acceptWithInsertRemove(methods);
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

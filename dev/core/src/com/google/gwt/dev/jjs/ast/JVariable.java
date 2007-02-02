@@ -21,12 +21,13 @@ package com.google.gwt.dev.jjs.ast;
 public abstract class JVariable extends JNode implements CanBeFinal, HasName,
     HasType, HasSettableType {
 
-  public JType type;
-  public String name;
-  public boolean isFinal;
+  private boolean isFinal;
+  private final String name;
+  private JType type;
 
-  JVariable(JProgram program, String name, JType type, boolean isFinal) {
-    super(program);
+  JVariable(JProgram program, JSourceInfo info, String name, JType type,
+      boolean isFinal) {
+    super(program, info);
     this.name = name;
     this.type = type;
     this.isFinal = isFinal;

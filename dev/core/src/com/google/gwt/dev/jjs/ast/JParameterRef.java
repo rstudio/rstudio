@@ -25,8 +25,8 @@ public class JParameterRef extends JVariableRef {
    */
   private final JParameter param;
 
-  public JParameterRef(JProgram program, JParameter param) {
-    super(program, param);
+  public JParameterRef(JProgram program, JSourceInfo info, JParameter param) {
+    super(program, info, param);
     this.param = param;
   }
 
@@ -38,13 +38,9 @@ public class JParameterRef extends JVariableRef {
     return false;
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 }

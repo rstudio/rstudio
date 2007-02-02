@@ -23,20 +23,17 @@ import java.util.List;
  */
 public class JBlock extends JStatement {
 
-  public List/*<JStatement>*/ statements = new ArrayList/*<JStatement>*/();
+  public List/* <JStatement> */statements = new ArrayList/* <JStatement> */();
 
-  public JBlock(JProgram program) {
-    super(program);
+  public JBlock(JProgram program, JSourceInfo info) {
+    super(program, info);
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
-      for (int i = 0; i < statements.size(); ++i) {
-        JStatement stmt = (JStatement) statements.get(i);
-        stmt.traverse(visitor);
-      }
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      visitor.acceptWithInsertRemove(statements);
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

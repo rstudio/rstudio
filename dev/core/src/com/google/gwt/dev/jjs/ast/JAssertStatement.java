@@ -20,29 +20,31 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JAssertStatement extends JStatement {
 
-  private final Holder testExpr = new Holder();
-  private final Holder arg = new Holder();
+  private JExpression testExpr;
+  private JExpression arg;
 
-  public JAssertStatement(JProgram program, JExpression testExpr, JExpression arg) {
-    super(program);
-    this.testExpr.set(testExpr);
-    this.arg.set(arg);
+  public JAssertStatement(JProgram program, JSourceInfo info,
+      JExpression testExpr, JExpression arg) {
+    super(program, info);
+    this.testExpr = testExpr;
+    this.arg = arg;
   }
 
   public JExpression getArg() {
-    return arg.get();
+    return arg;
   }
 
   public JExpression getTestExpr() {
-    return testExpr.get();
+    return testExpr;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
-      testExpr.traverse(visitor);
-      arg.traverse(visitor);
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      testExpr = visitor.accept(testExpr);
+      if (arg != null) {
+        arg = visitor.accept(arg);
+      }
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
-
 }

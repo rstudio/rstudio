@@ -20,59 +20,54 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JConditional extends JExpression {
 
-  public final Holder thenExpr = new Holder();
-  public final Holder elseExpr = new Holder();
+  private JExpression elseExpr;
+  private JExpression ifTest;
+  private JExpression thenExpr;
   private final JType type;
-  private final Holder ifTest = new Holder();
 
-  public JConditional(JProgram program, JType type, JExpression ifTest,
-      JExpression thenExpr, JExpression elseExpr) {
-    super(program);
+  public JConditional(JProgram program, JSourceInfo info, JType type,
+      JExpression ifTest, JExpression thenExpr, JExpression elseExpr) {
+    super(program, info);
     this.type = type;
-    this.ifTest.set(ifTest);
-    this.thenExpr.set(thenExpr);
-    this.elseExpr.set(elseExpr);
+    this.ifTest = ifTest;
+    this.thenExpr = thenExpr;
+    this.elseExpr = elseExpr;
   }
 
   public JExpression getElseExpr() {
-    return elseExpr.get();
+    return elseExpr;
   }
 
   public JExpression getIfTest() {
-    return ifTest.get();
+    return ifTest;
   }
 
   public JExpression getThenExpr() {
-    return thenExpr.get();
+    return thenExpr;
   }
 
   public JType getType() {
     // TODO(later): allow multiple types for Type Flow?
     if (type instanceof JReferenceType) {
-      return program.generalizeTypes(
-          (JReferenceType) thenExpr.get().getType(),
-          (JReferenceType) elseExpr.get().getType());
+      return program.generalizeTypes((JReferenceType) thenExpr.getType(),
+          (JReferenceType) elseExpr.getType());
     } else {
       return type;
     }
   }
 
   public boolean hasSideEffects() {
-    return ifTest.get().hasSideEffects() || thenExpr.get().hasSideEffects()
-        || elseExpr.get().hasSideEffects();
+    return ifTest.hasSideEffects() || thenExpr.hasSideEffects()
+        || elseExpr.hasSideEffects();
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
-      ifTest.traverse(visitor);
-      thenExpr.traverse(visitor);
-      elseExpr.traverse(visitor);
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      ifTest = visitor.accept(ifTest);
+      thenExpr = visitor.accept(thenExpr);
+      elseExpr = visitor.accept(elseExpr);
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 
 }

@@ -15,41 +15,41 @@
  */
 package com.google.gwt.dev.jjs.ast.js;
 
-import com.google.gwt.dev.jjs.ast.HolderList;
+import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.Mutator;
+
+import java.util.ArrayList;
 
 /**
  * A JSON-style list of JS expressions.
  */
 public class JsonArray extends JExpression {
 
-  public HolderList exprs = new HolderList();
+  public ArrayList exprs = new ArrayList();
 
   public JsonArray(JProgram program) {
-    super(program);
+    super(program, null);
   }
 
   public JType getType() {
-    return program.getTypeVoid();
+    // If JavaScriptObject type is not available, just return the Object type
+    JClassType jsoType = program.getSpecialJavaScriptObject();
+    return (jsoType != null) ? jsoType : program.getTypeJavaLangObject();
   }
 
   public boolean hasSideEffects() {
     return true;
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
-      exprs.traverse(visitor);
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      visitor.accept(exprs);
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 
 }

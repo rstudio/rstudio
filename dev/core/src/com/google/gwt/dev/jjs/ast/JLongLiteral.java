@@ -20,7 +20,7 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JLongLiteral extends JLiteral {
 
-  public final long value;
+  private final long value;
 
   /**
    * These are only supposed to be constructed by JProgram.
@@ -34,13 +34,13 @@ public class JLongLiteral extends JLiteral {
     return program.getTypePrimitiveLong();
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
+  public long getValue() {
+    return value;
   }
 
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 }

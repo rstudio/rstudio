@@ -16,12 +16,12 @@
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Java interface type definition. 
+ * Java interface type definition.
  */
 public class JInterfaceType extends JReferenceType {
 
-  JInterfaceType(JProgram program, String name) {
-    super(program, name);
+  JInterfaceType(JProgram program, JSourceInfo info, String name) {
+    super(program, info, name);
   }
 
   public boolean isAbstract() {
@@ -32,17 +32,11 @@ public class JInterfaceType extends JReferenceType {
     return false;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
-      for (int i = 0; i < fields.size(); ++i) {
-        JField field = (JField) fields.get(i);
-        field.traverse(visitor);
-      }
-      for (int i = 0; i < methods.size(); ++i) {
-        JMethod method = (JMethod) methods.get(i);
-        method.traverse(visitor);
-      }
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      visitor.acceptWithInsertRemove(fields);
+      visitor.acceptWithInsertRemove(methods);
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 }

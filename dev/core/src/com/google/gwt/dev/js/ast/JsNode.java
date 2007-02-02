@@ -25,6 +25,11 @@ import com.google.gwt.dev.util.TextOutputOnCharArray;
  */
 public abstract class JsNode implements JsVisitable {
 
+  public JsSourceInfo getInfo() {
+    // TODO: make this real
+    return null;
+  }
+  
   // @Override
   public String toString() {
     // no obfuscation

@@ -20,13 +20,13 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JThisRef extends JExpression {
 
-  public JClassType classType;
+  private final JClassType classType;
 
   /**
    * These are only supposed to be constructed by JProgram.
    */
-  JThisRef(JProgram program, JClassType classType) {
-    super(program);
+  JThisRef(JProgram program, JSourceInfo info, JClassType classType) {
+    super(program, info);
     this.classType = classType;
   }
 
@@ -42,14 +42,10 @@ public class JThisRef extends JExpression {
     return false;
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 
 }

@@ -21,7 +21,7 @@ package com.google.gwt.dev.jjs.ast;
 public class JNullType extends JReferenceType {
 
   public JNullType(JProgram program) {
-    super(program, "<null>");
+    super(program, null, "<null>");
   }
 
   public String getJavahSignatureName() {
@@ -40,10 +40,10 @@ public class JNullType extends JReferenceType {
     return true;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

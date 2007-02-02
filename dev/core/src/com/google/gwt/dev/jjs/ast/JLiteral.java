@@ -21,7 +21,7 @@ package com.google.gwt.dev.jjs.ast;
 public abstract class JLiteral extends JExpression {
 
   public JLiteral(JProgram program) {
-    super(program);
+    super(program, null);
   }
 
   public boolean hasSideEffects() {

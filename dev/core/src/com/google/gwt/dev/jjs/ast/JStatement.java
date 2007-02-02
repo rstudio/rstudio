@@ -20,8 +20,8 @@ package com.google.gwt.dev.jjs.ast;
  */
 public abstract class JStatement extends JNode {
 
-  public JStatement(JProgram program) {
-    super(program);
+  public JStatement(JProgram program, JSourceInfo info) {
+    super(program, info);
   }
 
 }

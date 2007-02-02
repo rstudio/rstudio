@@ -23,6 +23,7 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
+import com.google.gwt.dev.jjs.ast.JSourceInfo;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.js.JsniMethod;
 import com.google.gwt.dev.js.JsParser;
@@ -34,6 +35,7 @@ import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatements;
 
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
+import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
@@ -41,6 +43,7 @@ import org.eclipse.jdt.internal.compiler.ast.ConstructorDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.LocalDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.Statement;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.env.IGenericType;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
@@ -55,6 +58,7 @@ import org.eclipse.jdt.internal.compiler.lookup.NestedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
+import org.eclipse.jdt.internal.compiler.problem.ProblemHandler;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -89,11 +93,25 @@ public class BuildTypeMap {
    */
   private static class BuildDeclMapVisitor extends ASTVisitor {
 
-    private ArrayList/* <TypeDeclaration> */typeDecls = new ArrayList/* <TypeDeclaration> */();
-    private final TypeMap typeMap;
-    private JProgram program;
-    private final JsProgram jsProgram;
+    private static JSourceInfo makeSourceInfo(
+        AbstractMethodDeclaration methodDecl) {
+      CompilationResult compResult = methodDecl.compilationResult;
+      int[] indexes = compResult.lineSeparatorPositions;
+      String fileName = String.valueOf(compResult.fileName);
+      int startLine = ProblemHandler.searchLineNumber(indexes,
+          methodDecl.sourceStart);
+      return new JSourceInfo(methodDecl.sourceStart, methodDecl.bodyEnd,
+          startLine, fileName);
+    }
+
+    private String currentFileName;
+    private int[] currentSeparatorPositions;
     private final JsParser jsParser = new JsParser();
+    private final JsProgram jsProgram;
+    private JProgram program;
+    private ArrayList/* <TypeDeclaration> */typeDecls = new ArrayList/* <TypeDeclaration> */();
+
+    private final TypeMap typeMap;
 
     public BuildDeclMapVisitor(TypeMap typeMap, JsProgram jsProgram) {
       this.typeMap = typeMap;
@@ -110,10 +128,11 @@ public class BuildTypeMap {
         return true;
       }
 
+      JSourceInfo info = makeInfo(argument);
       LocalVariableBinding b = argument.binding;
       JType localType = (JType) typeMap.get(b.type);
       JMethod enclosingMethod = findEnclosingMethod(scope);
-      JLocal newLocal = program.createLocal(argument.name, localType,
+      JLocal newLocal = program.createLocal(info, argument.name, localType,
           b.isFinal(), enclosingMethod);
       typeMap.put(b, newLocal);
       return true;
@@ -130,7 +149,8 @@ public class BuildTypeMap {
       MethodBinding b = ctorDecl.binding;
       JClassType enclosingType = (JClassType) typeMap.get(scope.enclosingSourceType());
       String name = enclosingType.getShortName();
-      JMethod newMethod = program.createMethod(name.toCharArray(),
+      JSourceInfo info = makeSourceInfo(ctorDecl);
+      JMethod newMethod = program.createMethod(info, name.toCharArray(),
           enclosingType, enclosingType, false, false, true, b.isPrivate(),
           false);
       mapThrownExceptions(newMethod, ctorDecl);
@@ -182,8 +202,10 @@ public class BuildTypeMap {
 
     public boolean visit(FieldDeclaration fieldDeclaration, MethodScope scope) {
       FieldBinding b = fieldDeclaration.binding;
+      JSourceInfo info = makeInfo(fieldDeclaration);
       JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.enclosingSourceType());
-      createField(b, enclosingType, fieldDeclaration.initialization != null);
+      createField(info, b, enclosingType,
+          fieldDeclaration.initialization != null);
       return true;
     }
 
@@ -191,19 +213,22 @@ public class BuildTypeMap {
       LocalVariableBinding b = localDeclaration.binding;
       JType localType = (JType) typeMap.get(localDeclaration.type.resolvedType);
       JMethod enclosingMethod = findEnclosingMethod(scope);
-      JLocal newLocal = program.createLocal(localDeclaration.name, localType,
-          b.isFinal(), enclosingMethod);
+      JSourceInfo info = makeInfo(localDeclaration);
+      JLocal newLocal = program.createLocal(info, localDeclaration.name,
+          localType, b.isFinal(), enclosingMethod);
       typeMap.put(b, newLocal);
       return true;
     }
 
     public boolean visit(MethodDeclaration methodDeclaration, ClassScope scope) {
       MethodBinding b = methodDeclaration.binding;
+      JSourceInfo info = makeSourceInfo(methodDeclaration);
       JType returnType = (JType) typeMap.get(methodDeclaration.returnType.resolvedType);
       JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.enclosingSourceType());
-      JMethod newMethod = program.createMethod(methodDeclaration.selector,
-          enclosingType, returnType, b.isAbstract(), b.isStatic(), b.isFinal(),
-          b.isPrivate(), b.isNative());
+      JMethod newMethod = program.createMethod(info,
+          methodDeclaration.selector, enclosingType, returnType,
+          b.isAbstract(), b.isStatic(), b.isFinal(), b.isPrivate(),
+          b.isNative());
 
       mapThrownExceptions(newMethod, methodDeclaration);
       mapParameters(newMethod, methodDeclaration);
@@ -218,23 +243,21 @@ public class BuildTypeMap {
         int endPos = jsniCode.lastIndexOf("}-*/");
         if (startPos < 0 && endPos < 0) {
           GenerateJavaAST.reportJsniError(
+              info,
               methodDeclaration,
-              "Native methods require a JavaScript implementation enclosed with /*-{ and }-*/",
-              0);
+              "Native methods require a JavaScript implementation enclosed with /*-{ and }-*/");
           return true;
         }
         if (startPos < 0) {
-          GenerateJavaAST.reportJsniError(
-              methodDeclaration,
-              "Unable to find start of native block; begin your JavaScript block with: /*-{",
-              0);
+          GenerateJavaAST.reportJsniError(info, methodDeclaration,
+              "Unable to find start of native block; begin your JavaScript block with: /*-{");
           return true;
         }
         if (endPos < 0) {
           GenerateJavaAST.reportJsniError(
+              info,
               methodDeclaration,
-              "Unable to find end of native block; terminate your JavaScript block with: }-*/",
-              0);
+              "Unable to find end of native block; terminate your JavaScript block with: }-*/");
           return true;
         }
 
@@ -261,6 +284,7 @@ public class BuildTypeMap {
         StringReader sr = new StringReader(syntheticFnHeader + '\n' + jsniCode);
         try {
           // start at -1 to avoid counting our synthetic header
+          // TODO: get the character position start correct
           JsStatements result = jsParser.parse(jsProgram.getScope(), sr, -1);
           JsExprStmt jsExprStmt = (JsExprStmt) result.get(0);
           JsFunction jsFunction = (JsFunction) jsExprStmt.getExpression();
@@ -270,7 +294,6 @@ public class BuildTypeMap {
               "Internal error parsing JSNI in method '" + newMethod
                   + "' in type '" + enclosingType.getName() + "'", e);
         } catch (JsParserException e) {
-
           /*
            * count the number of characters to the problem (from the start of
            * the JSNI code)
@@ -297,10 +320,13 @@ public class BuildTypeMap {
             // CHECKSTYLE_ON
           }
 
+          // TODO: check this
           // Map into the original source stream;
           i += startPos + detail.getLineOffset();
-          String message = e.getMessage();
-          GenerateJavaAST.reportJsniError(methodDeclaration, message, i);
+          info = new JSourceInfo(i, i, info.getStartLine() + detail.getLine(),
+              info.getFileName());
+          GenerateJavaAST.reportJsniError(info, methodDeclaration,
+              e.getMessage());
         }
       }
 
@@ -320,11 +346,11 @@ public class BuildTypeMap {
       return process(typeDeclaration);
     }
 
-    private JField createField(FieldBinding binding,
+    private JField createField(JSourceInfo info, FieldBinding binding,
         JReferenceType enclosingType, boolean hasInitializer) {
       JType type = (JType) typeMap.get(binding.type);
-      JField field = program.createField(binding.name, enclosingType, type,
-          binding.isStatic(), binding.isFinal(), hasInitializer);
+      JField field = program.createField(info, binding.name, enclosingType,
+          type, binding.isStatic(), binding.isFinal(), hasInitializer);
       typeMap.put(binding, field);
       return field;
     }
@@ -332,8 +358,8 @@ public class BuildTypeMap {
     private JField createField(SyntheticArgumentBinding binding,
         JReferenceType enclosingType) {
       JType type = (JType) typeMap.get(binding.type);
-      JField field = program.createField(binding.name, enclosingType, type,
-          false, true, true);
+      JField field = program.createField(null, binding.name, enclosingType,
+          type, false, true, true);
       if (binding.matchingField != null) {
         typeMap.put(binding.matchingField, field);
       }
@@ -344,7 +370,8 @@ public class BuildTypeMap {
     private JParameter createParameter(LocalVariableBinding binding,
         JMethod enclosingMethod) {
       JType type = (JType) typeMap.get(binding.type);
-      JParameter param = program.createParameter(binding.name, type,
+      JSourceInfo info = makeInfo(binding.declaration);
+      JParameter param = program.createParameter(info, binding.name, type,
           binding.isFinal(), enclosingMethod);
       typeMap.put(binding, param);
       return param;
@@ -353,8 +380,8 @@ public class BuildTypeMap {
     private JParameter createParameter(SyntheticArgumentBinding arg,
         String argName, JMethod enclosingMethod) {
       JType type = (JType) typeMap.get(arg.type);
-      JParameter param = program.createParameter(argName.toCharArray(), type,
-          true, enclosingMethod);
+      JParameter param = program.createParameter(null, argName.toCharArray(),
+          type, true, enclosingMethod);
       return param;
     }
 
@@ -374,6 +401,13 @@ public class BuildTypeMap {
 
       AbstractMethodDeclaration referenceMethod = methodScope.referenceMethod();
       return (JMethod) typeMap.get(referenceMethod.binding);
+    }
+
+    private JSourceInfo makeInfo(Statement stmt) {
+      int startLine = ProblemHandler.searchLineNumber(
+          currentSeparatorPositions, stmt.sourceStart);
+      return new JSourceInfo(stmt.sourceStart, stmt.sourceEnd, startLine,
+          currentFileName);
     }
 
     private void mapParameters(JMethod method, AbstractMethodDeclaration x) {
@@ -409,6 +443,9 @@ public class BuildTypeMap {
      * implements the stuff under the hood anyway.
      */
     private boolean process(TypeDeclaration typeDeclaration) {
+      CompilationResult compResult = typeDeclaration.compilationResult;
+      currentSeparatorPositions = compResult.lineSeparatorPositions;
+      currentFileName = String.valueOf(compResult.fileName);
       SourceTypeBinding binding = typeDeclaration.binding;
       if (binding.constantPoolName() == null) {
         /*
@@ -467,8 +504,18 @@ public class BuildTypeMap {
    */
   private static class BuildTypeMapVisitor extends ASTVisitor {
 
-    private final TypeMap typeMap;
+    private static JSourceInfo makeSourceInfo(TypeDeclaration typeDecl) {
+      CompilationResult compResult = typeDecl.compilationResult;
+      int[] indexes = compResult.lineSeparatorPositions;
+      String fileName = String.valueOf(compResult.fileName);
+      int startLine = ProblemHandler.searchLineNumber(indexes,
+          typeDecl.sourceStart);
+      return new JSourceInfo(typeDecl.sourceStart, typeDecl.bodyEnd, startLine,
+          fileName);
+    }
+
     private final JProgram program;
+    private final TypeMap typeMap;
 
     public BuildTypeMapVisitor(TypeMap typeMap) {
       this.typeMap = typeMap;
@@ -511,12 +558,13 @@ public class BuildTypeMap {
         name[0] = localName;
       }
 
+      JSourceInfo info = makeSourceInfo(typeDeclaration);
       JReferenceType newType;
       if (binding.isClass()) {
-        newType = program.createClass(name, binding.isAbstract(),
+        newType = program.createClass(info, name, binding.isAbstract(),
             binding.isFinal());
       } else if (binding.isInterface()) {
-        newType = program.createInterface(name);
+        newType = program.createInterface(info, name);
       } else {
         assert (false);
         return false;
@@ -528,13 +576,13 @@ public class BuildTypeMap {
        * like output JavaScript. Clinit is always in slot 0, init (if it exists)
        * is always in slot 1.
        */
-      JMethod clinit = program.createMethod("$clinit".toCharArray(), newType,
-          program.getTypeVoid(), false, true, true, true, false);
+      JMethod clinit = program.createMethod(null, "$clinit".toCharArray(),
+          newType, program.getTypeVoid(), false, true, true, true, false);
       clinit.freezeParamTypes();
 
       if (newType instanceof JClassType) {
-        JMethod init = program.createMethod("$init".toCharArray(), newType,
-            program.getTypeVoid(), false, false, true, true, false);
+        JMethod init = program.createMethod(null, "$init".toCharArray(),
+            newType, program.getTypeVoid(), false, false, true, true, false);
         init.freezeParamTypes();
       }
 
@@ -569,4 +617,5 @@ public class BuildTypeMap {
       unitDecls[i].traverse(v1, unitDecls[i].scope);
     }
   }
+
 }

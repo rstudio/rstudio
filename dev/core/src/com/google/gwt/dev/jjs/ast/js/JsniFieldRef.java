@@ -15,25 +15,27 @@
  */
 package com.google.gwt.dev.jjs.ast.js;
 
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.ast.JSourceInfo;
 
 /**
  * JSNI reference to a Java field.
  */
 public class JsniFieldRef extends JFieldRef {
 
-  public JsniFieldRef(JProgram program, JField field,
-      JReferenceType enclosingType) {
-    super(program, null, field, enclosingType);
+  public JsniFieldRef(JProgram program, JSourceInfo info,
+      JField field, JReferenceType enclosingType) {
+    super(program, info, null, field, enclosingType);
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 }

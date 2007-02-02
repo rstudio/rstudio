@@ -16,7 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Base class for all Java primitive types.  
+ * Base class for all Java primitive types.
  */
 public class JPrimitiveType extends JType {
 
@@ -25,8 +25,9 @@ public class JPrimitiveType extends JType {
   /**
    * These are only supposed to be constructed by JProgram.
    */
-  JPrimitiveType(JProgram program, String name, String signatureName, JLiteral defaultValue) {
-    super(program, name, defaultValue);
+  JPrimitiveType(JProgram program, String name, String signatureName,
+      JLiteral defaultValue) {
+    super(program, null, name, defaultValue);
     this.signatureName = signatureName;
   }
 
@@ -38,10 +39,10 @@ public class JPrimitiveType extends JType {
     return signatureName;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

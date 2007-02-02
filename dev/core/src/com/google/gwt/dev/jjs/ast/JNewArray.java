@@ -15,17 +15,19 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import java.util.ArrayList;
+
 /**
  * New array experssion.
  */
 public class JNewArray extends JExpression implements HasSettableType {
 
-  public HolderList dims = null;
-  public HolderList initializers = null;
+  public ArrayList dims = null;
+  public ArrayList initializers = null;
   private JArrayType arrayType;
 
-  public JNewArray(JProgram program, JArrayType arrayType) {
-    super(program);
+  public JNewArray(JProgram program, JSourceInfo info, JArrayType arrayType) {
+    super(program, info);
     this.arrayType = arrayType;
   }
 
@@ -45,22 +47,18 @@ public class JNewArray extends JExpression implements HasSettableType {
     this.arrayType = (JArrayType) arrayType;
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
       assert ((dims != null) ^ (initializers != null));
 
       if (dims != null) {
-        dims.traverse(visitor);
+        visitor.accept(dims);
       }
 
       if (initializers != null) {
-        initializers.traverse(visitor);
+        visitor.accept(initializers);
       }
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 }

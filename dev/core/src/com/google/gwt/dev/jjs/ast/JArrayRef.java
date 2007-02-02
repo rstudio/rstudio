@@ -20,25 +20,26 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JArrayRef extends JExpression {
 
-  public final Holder instance = new Holder();
-  public final Holder indexExpr = new Holder();
+  private JExpression instance;
+  private JExpression indexExpr;
 
-  public JArrayRef(JProgram program, JExpression instance, JExpression indexExpr) {
-    super(program);
-    this.instance.set(instance);
-    this.indexExpr.set(indexExpr);
+  public JArrayRef(JProgram program, JSourceInfo info, JExpression instance,
+      JExpression indexExpr) {
+    super(program, info);
+    this.instance = instance;
+    this.indexExpr = indexExpr;
   }
 
   public JExpression getIndexExpr() {
-    return indexExpr.get();
+    return indexExpr;
   }
 
   public JExpression getInstance() {
-    return instance.get();
+    return instance;
   }
 
   public JType getType() {
-    JType type = instance.get().getType();
+    JType type = instance.getType();
     if (type == program.getTypeNull()) {
       return type;
     }
@@ -47,19 +48,15 @@ public class JArrayRef extends JExpression {
   }
 
   public boolean hasSideEffects() {
-    return instance.get().hasSideEffects() || indexExpr.get().hasSideEffects();
+    return instance.hasSideEffects() || indexExpr.hasSideEffects();
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
-      this.instance.traverse(visitor);
-      this.indexExpr.traverse(visitor);
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      instance = visitor.accept(instance);
+      indexExpr = visitor.accept(indexExpr);
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 
 }

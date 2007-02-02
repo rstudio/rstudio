@@ -20,30 +20,32 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JLocalDeclarationStatement extends JStatement {
 
-  public final Holder initializer = new Holder();
-  private final Holder/* <JLocalRef> */localRef = new Holder/* <JLocalRef> */();
+  public JExpression initializer;
+  private JLocalRef localRef;
 
-  public JLocalDeclarationStatement(JProgram program, JLocalRef localRef,
-      JExpression intializer) {
-    super(program);
-    this.localRef.set(localRef);
-    this.initializer.set(intializer);
+  public JLocalDeclarationStatement(JProgram program, JSourceInfo info,
+      JLocalRef localRef, JExpression intializer) {
+    super(program, info);
+    this.localRef = localRef;
+    this.initializer = intializer;
   }
 
   public JExpression getInitializer() {
-    return initializer.get();
+    return initializer;
   }
 
   public JLocalRef getLocalRef() {
-    return (JLocalRef) localRef.get();
+    return localRef;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
-      localRef.traverse(visitor);
-      initializer.traverse(visitor);
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      localRef = (JLocalRef) visitor.accept(localRef);
+      if (initializer != null) {
+        initializer = visitor.accept(initializer);
+      }
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

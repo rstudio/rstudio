@@ -15,19 +15,18 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
-import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.Mutator;
-import com.google.gwt.dev.jjs.ast.change.ChangeList;
 
 /**
  * Update polymorphic method calls to tighter bindings based on the type of the
@@ -43,12 +42,10 @@ public class MethodCallTightener {
    * Updates polymorphic method calls to tighter bindings based on the type of
    * the qualifier.
    */
-  public class MethodCallTighteningVisitor extends JVisitor {
-    private final ChangeList changeList = new ChangeList(
-        "Update polymorphic method calls to tighter bindings based on the type of the qualifier.");
+  public class MethodCallTighteningVisitor extends JModVisitor {
 
     // @Override
-    public void endVisit(JMethodCall x, Mutator m) {
+    public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
       JExpression instance = x.getInstance();
 
@@ -100,30 +97,14 @@ public class MethodCallTightener {
         return;
       }
 
-      ChangeList changes = new ChangeList("Replace call '" + x + "' to type '"
-          + enclosingType + "' with a call to type '"
-          + foundMethod.getEnclosingType() + "'");
-
-      // Update the call site
-      JMethodCall call = new JMethodCall(program, null, foundMethod);
-      changes.replaceExpression(m, call);
-
-      // Copy the qualifier
-      changes.replaceExpression(call.instance, x.instance);
-
-      // Copy the args
-      for (int i = 0; i < x.args.size(); ++i) {
-        Mutator arg = x.args.getMutator(i);
-        changes.addExpression(arg, call.args);
-      }
-
-      changeList.add(changes);
-
-      return;
-    }
-
-    public ChangeList getChangeList() {
-      return changeList;
+      /*
+       * Replace the call to the original method with a call to the same method
+       * on the tighter type.
+       */
+      JMethodCall call = new JMethodCall(program, x.getSourceInfo(),
+          x.getInstance(), foundMethod);
+      call.getArgs().addAll(x.getArgs());
+      ctx.replaceMe(call);
     }
   }
 
@@ -139,14 +120,8 @@ public class MethodCallTightener {
 
   private boolean execImpl() {
     MethodCallTighteningVisitor tightener = new MethodCallTighteningVisitor();
-    program.traverse(tightener);
-    ChangeList changes = tightener.getChangeList();
-    if (changes.empty()) {
-      return false;
-    }
-
-    changes.apply();
-    return true;
+    tightener.accept(program);
+    return tightener.didChange();
   }
 
 }

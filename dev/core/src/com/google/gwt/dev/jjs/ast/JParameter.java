@@ -22,9 +22,9 @@ public class JParameter extends JVariable implements HasEnclosingMethod {
 
   private final JMethod enclosingMethod;
 
-  JParameter(JProgram program, String name, JType type, boolean isFinal,
-      JMethod enclosingMethod) {
-    super(program, name, type, isFinal);
+  JParameter(JProgram program, JSourceInfo info, String name, JType type,
+      boolean isFinal, JMethod enclosingMethod) {
+    super(program, info, name, type, isFinal);
     this.enclosingMethod = enclosingMethod;
   }
 
@@ -32,9 +32,9 @@ public class JParameter extends JVariable implements HasEnclosingMethod {
     return enclosingMethod;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 }

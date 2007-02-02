@@ -20,10 +20,10 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JLabel extends JNode implements HasName {
 
-  public final String name;
-  
-  public JLabel(JProgram program, String name) {
-    super(program);
+  private final String name;
+
+  public JLabel(JProgram program, JSourceInfo info, String name) {
+    super(program, info);
     this.name = name;
   }
 
@@ -31,10 +31,10 @@ public class JLabel extends JNode implements HasName {
     return name;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

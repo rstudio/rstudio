@@ -20,20 +20,23 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JBreakStatement extends JStatement {
 
-  public JLabel label;
+  private final JLabel label;
 
-  public JBreakStatement(JProgram program, JLabel label) {
-    super(program);
+  public JBreakStatement(JProgram program, JSourceInfo info, JLabel label) {
+    super(program, info);
     this.label = label;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
-      if (label != null) {
-        label.traverse(visitor);
-      }
-    }
-    visitor.endVisit(this);
+  public JLabel getLabel() {
+    return label;
   }
 
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      if (label != null) {
+        visitor.accept(label);
+      }
+    }
+    visitor.endVisit(this, ctx);
+  }
 }

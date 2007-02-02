@@ -49,14 +49,14 @@ public class JMethod extends JNode implements HasEnclosingType, HasName,
   /**
    * These are only supposed to be constructed by JProgram.
    */
-  public JMethod(JProgram program, String name, JReferenceType enclosingType,
-      JType returnType, boolean isAbstract, boolean isStatic, boolean isFinal,
-      boolean isPrivate) {
-    super(program);
+  public JMethod(JProgram program, JSourceInfo info, String name,
+      JReferenceType enclosingType, JType returnType, boolean isAbstract,
+      boolean isStatic, boolean isFinal, boolean isPrivate) {
+    super(program, info);
     this.name = name;
     this.enclosingType = enclosingType;
     this.returnType = returnType;
-    this.body = new JBlock(program);
+    this.body = new JBlock(program, info);
     this.isAbstract = isAbstract;
     this.isStatic = isStatic;
     this.isFinal = isFinal;
@@ -121,19 +121,13 @@ public class JMethod extends JNode implements HasEnclosingType, HasName,
     returnType = newType;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
-      for (int i = 0; i < params.size(); ++i) {
-        JParameter param = (JParameter) params.get(i);
-        param.traverse(visitor);
-      }
-      for (int i = 0; i < locals.size(); ++i) {
-        JLocal local = (JLocal) locals.get(i);
-        local.traverse(visitor);
-      }
-      body.traverse(visitor);
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      visitor.accept(params);
+      visitor.accept(locals);
+      visitor.accept(body);
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

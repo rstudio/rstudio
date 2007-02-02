@@ -20,7 +20,7 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JBooleanLiteral extends JLiteral {
 
-  public final boolean value;
+  private final boolean value;
 
   /**
    * These are only supposed to be constructed by JProgram.
@@ -34,14 +34,14 @@ public class JBooleanLiteral extends JLiteral {
     return program.getTypePrimitiveBoolean();
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
+  public boolean getValue() {
+    return value;
   }
 
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 
 }

@@ -16,15 +16,15 @@
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Java local variable definition. 
+ * Java local variable definition.
  */
 public class JLocal extends JVariable implements HasEnclosingMethod {
 
   private final JMethod enclosingMethod;
 
-  JLocal(JProgram program, String name, JType type, boolean isFinal,
-      JMethod enclosingMethod) {
-    super(program, name, type, isFinal);
+  JLocal(JProgram program, JSourceInfo info, String name, JType type,
+      boolean isFinal, JMethod enclosingMethod) {
+    super(program, info, name, type, isFinal);
     this.enclosingMethod = enclosingMethod;
   }
 
@@ -32,10 +32,10 @@ public class JLocal extends JVariable implements HasEnclosingMethod {
     return enclosingMethod;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

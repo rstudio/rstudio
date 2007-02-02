@@ -20,17 +20,17 @@ package com.google.gwt.dev.jjs.ast;
  */
 public abstract class JVariableRef extends JExpression {
 
-  public JVariable target;
-  
-  public JVariableRef(JProgram program, JVariable target) {
-    super(program);
+  protected JVariable target;
+
+  public JVariableRef(JProgram program, JSourceInfo info, JVariable target) {
+    super(program, info);
     this.target = target;
   }
 
   public JVariable getTarget() {
     return target;
   }
-  
+
   public JType getType() {
     return target.getType();
   }

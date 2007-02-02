@@ -19,6 +19,7 @@ import com.google.gwt.dev.jjs.ast.CanBeAbstract;
 import com.google.gwt.dev.jjs.ast.CanBeFinal;
 import com.google.gwt.dev.jjs.ast.CanBeNative;
 import com.google.gwt.dev.jjs.ast.CanBeStatic;
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.HasType;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
@@ -77,7 +78,6 @@ import com.google.gwt.dev.jjs.ast.JThrowStatement;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
-import com.google.gwt.dev.jjs.ast.Mutator;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethod;
@@ -147,70 +147,70 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   // @Override
-  public boolean visit(JAbsentArrayDimension x, Mutator h) {
+  public boolean visit(JAbsentArrayDimension x, Context ctx) {
     // nothing to print, parent prints []
     return false;
   }
 
   // @Override
-  public boolean visit(JArrayRef x, Mutator h) {
+  public boolean visit(JArrayRef x, Context ctx) {
     JExpression instance = x.getInstance();
     parenPush(x, instance);
-    instance.traverse(this);
+    accept(instance);
     parenPop(x, instance);
     print('[');
-    x.getIndexExpr().traverse(this);
+    accept(x.getIndexExpr());
     print(']');
     return false;
   }
 
   // @Override
-  public boolean visit(JArrayType x) {
-    x.leafType.traverse(this);
-    for (int i = 0, c = x.dims; i < c; ++i) {
+  public boolean visit(JArrayType x, Context ctx) {
+    accept(x.getLeafType());
+    for (int i = 0, c = x.getDims(); i < c; ++i) {
       print("[]");
     }
     return false;
   }
 
   // @Override
-  public boolean visit(JAssertStatement x) {
+  public boolean visit(JAssertStatement x, Context ctx) {
     print(CHARS_ASSERT);
-    x.getTestExpr().traverse(this);
+    accept(x.getTestExpr());
     if (x.getArg() != null) {
       print(" : ");
-      x.getArg().traverse(this);
+      accept(x.getArg());
     }
     return false;
   }
 
   // @Override
-  public boolean visit(JBinaryOperation x, Mutator h) {
+  public boolean visit(JBinaryOperation x, Context ctx) {
     // TODO(later): associativity
     JExpression arg1 = x.getLhs();
     parenPush(x, arg1);
-    arg1.traverse(this);
+    accept(arg1);
     parenPop(x, arg1);
 
     space();
-    print(x.op.getSymbol());
+    print(x.getOp().getSymbol());
     space();
 
     JExpression arg2 = x.getRhs();
     parenPush(x, arg2);
-    arg2.traverse(this);
+    accept(arg2);
     parenPop(x, arg2);
 
     return false;
   }
 
   // @Override
-  public boolean visit(JBlock x) {
+  public boolean visit(JBlock x, Context ctx) {
     openBlock();
     for (int i = 0; i < x.statements.size(); ++i) {
       JStatement statement = (JStatement) x.statements.get(i);
       needSemi = true;
-      statement.traverse(this);
+      accept(statement);
       if (needSemi) {
         semi();
       }
@@ -222,26 +222,26 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   // @Override
-  public boolean visit(JBooleanLiteral x, Mutator h) {
-    printBooleanLiteral(x.value);
+  public boolean visit(JBooleanLiteral x, Context ctx) {
+    printBooleanLiteral(x.getValue());
     return false;
   }
 
   // @Override
-  public boolean visit(JBreakStatement x) {
+  public boolean visit(JBreakStatement x, Context ctx) {
     print(CHARS_BREAK);
-    if (x.label != null) {
+    if (x.getLabel() != null) {
       space();
-      x.label.traverse(this);
+      accept(x.getLabel());
     }
     return false;
   }
 
   // @Override
-  public boolean visit(JCaseStatement x) {
-    if (x.getExpression() != null) {
+  public boolean visit(JCaseStatement x, Context ctx) {
+    if (x.getExpr() != null) {
       print(CHARS_CASE);
-      x.getExpression().traverse(this);
+      accept(x.getExpr());
     } else {
       print(CHARS_DEFAULT);
     }
@@ -252,34 +252,34 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   // @Override
-  public boolean visit(JCastOperation x, Mutator h) {
+  public boolean visit(JCastOperation x, Context ctx) {
     lparen();
     printType(x);
     rparen();
     space();
 
-    JExpression expr = x.getExpression();
+    JExpression expr = x.getExpr();
     parenPush(x, expr);
-    expr.traverse(this);
+    accept(expr);
     parenPop(x, expr);
     return false;
   }
 
   // @Override
-  public boolean visit(JCharLiteral x, Mutator h) {
-    printCharLiteral(x.value);
+  public boolean visit(JCharLiteral x, Context ctx) {
+    printCharLiteral(x.getValue());
     return false;
   }
 
   // @Override
-  public boolean visit(JClassLiteral x, Mutator h) {
-    printTypeName(x.refType);
+  public boolean visit(JClassLiteral x, Context ctx) {
+    printTypeName(x.getRefType());
     print(CHARS_DOTCLASS);
     return false;
   }
 
   // @Override
-  public boolean visit(JClassType x) {
+  public boolean visit(JClassType x, Context ctx) {
     printAbstractFlag(x);
     printFinalFlag(x);
     print(CHARS_CLASS);
@@ -306,47 +306,47 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   // @Override
-  public boolean visit(JConditional x, Mutator h) {
+  public boolean visit(JConditional x, Context ctx) {
     // TODO(later): associativity
     JExpression ifTest = x.getIfTest();
     parenPush(x, ifTest);
-    ifTest.traverse(this);
+    accept(ifTest);
     parenPop(x, ifTest);
 
     print(" ? ");
 
     JExpression thenExpr = x.getThenExpr();
     parenPush(x, thenExpr);
-    thenExpr.traverse(this);
+    accept(thenExpr);
     parenPop(x, thenExpr);
 
     print(" : ");
 
     JExpression elseExpr = x.getElseExpr();
     parenPush(x, elseExpr);
-    elseExpr.traverse(this);
+    accept(elseExpr);
     parenPop(x, elseExpr);
 
     return false;
   }
 
   // @Override
-  public boolean visit(JContinueStatement x) {
+  public boolean visit(JContinueStatement x, Context ctx) {
     print(CHARS_CONTINUE);
-    if (x.label != null) {
+    if (x.getLabel() != null) {
       space();
-      x.label.traverse(this);
+      accept(x.getLabel());
     }
     return false;
   }
 
   // @Override
-  public boolean visit(JDoStatement x) {
+  public boolean visit(JDoStatement x, Context ctx) {
     print(CHARS_DO);
-    if (x.body != null) {
-      nestedStatementPush(x.body);
-      x.body.traverse(this);
-      nestedStatementPop(x.body);
+    if (x.getBody() != null) {
+      nestedStatementPush(x.getBody());
+      accept(x.getBody());
+      nestedStatementPop(x.getBody());
     }
     if (needSemi) {
       semi();
@@ -357,25 +357,25 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     }
     print(CHARS_WHILE);
     lparen();
-    x.getTestExpr().traverse(this);
+    accept(x.getTestExpr());
     rparen();
     return false;
   }
 
   // @Override
-  public boolean visit(JDoubleLiteral x, Mutator h) {
-    printDoubleLiteral(x.value);
+  public boolean visit(JDoubleLiteral x, Context ctx) {
+    printDoubleLiteral(x.getValue());
     return false;
   }
 
   // @Override
-  public boolean visit(JExpressionStatement x) {
-    x.getExpression().traverse(this);
+  public boolean visit(JExpressionStatement x, Context ctx) {
+    accept(x.getExpr());
     return false;
   }
 
   // @Override
-  public boolean visit(JField x) {
+  public boolean visit(JField x, Context ctx) {
     // Due to our wacky construction model, only constant fields may be final
     // when generating source
     if (x.constInitializer != null) {
@@ -392,48 +392,48 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   // @Override
-  public boolean visit(JFieldRef x, Mutator h) {
+  public boolean visit(JFieldRef x, Context ctx) {
     JExpression instance = x.getInstance();
     if (instance != null) {
       parenPush(x, instance);
-      instance.traverse(this);
+      accept(instance);
       parenPop(x, instance);
     } else {
-      printTypeName(x.field.enclosingType);
+      printTypeName(x.getField().getEnclosingType());
     }
     print('.');
-    printUniqueName(x.field);
+    printUniqueName(x.getField());
     return false;
   }
 
   // @Override
-  public boolean visit(JFloatLiteral x, Mutator h) {
-    printFloatLiteral(x.value);
+  public boolean visit(JFloatLiteral x, Context ctx) {
+    printFloatLiteral(x.getValue());
     return false;
   }
 
   // @Override
-  public boolean visit(JForStatement x) {
+  public boolean visit(JForStatement x, Context ctx) {
     print(CHARS_FOR);
     lparen();
 
     Iterator/* <JStatement> */iter = x.getInitializers().iterator();
     if (iter.hasNext()) {
       JStatement stmt = (JStatement) iter.next();
-      stmt.traverse(this);
+      accept(stmt);
     }
     suppressType = true;
     while (iter.hasNext()) {
       print(CHARS_COMMA);
       JStatement stmt = (JStatement) iter.next();
-      stmt.traverse(this);
+      accept(stmt);
     }
     suppressType = false;
 
     semi();
     space();
     if (x.getTestExpr() != null) {
-      x.getTestExpr().traverse(this);
+      accept(x.getTestExpr());
     }
 
     semi();
@@ -441,28 +441,28 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     visitCollectionWithCommas(x.getIncrements().iterator());
     rparen();
 
-    if (x.body != null) {
-      nestedStatementPush(x.body);
-      x.body.traverse(this);
-      nestedStatementPop(x.body);
+    if (x.getBody() != null) {
+      nestedStatementPush(x.getBody());
+      accept(x.getBody());
+      nestedStatementPop(x.getBody());
     }
     return false;
   }
 
   // @Override
-  public boolean visit(JIfStatement x) {
+  public boolean visit(JIfStatement x, Context ctx) {
     print(CHARS_IF);
     lparen();
-    x.getIfExpr().traverse(this);
+    accept(x.getIfExpr());
     rparen();
 
-    if (x.thenStmt != null) {
-      nestedStatementPush(x.thenStmt);
-      x.thenStmt.traverse(this);
-      nestedStatementPop(x.thenStmt);
+    if (x.getThenStmt() != null) {
+      nestedStatementPush(x.getThenStmt());
+      accept(x.getThenStmt());
+      nestedStatementPop(x.getThenStmt());
     }
 
-    if (x.elseStmt != null) {
+    if (x.getElseStmt() != null) {
       if (needSemi) {
         semi();
         newline();
@@ -471,15 +471,15 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
         needSemi = true;
       }
       print(CHARS_ELSE);
-      boolean elseIf = x.elseStmt instanceof JIfStatement;
+      boolean elseIf = x.getElseStmt() instanceof JIfStatement;
       if (!elseIf) {
-        nestedStatementPush(x.elseStmt);
+        nestedStatementPush(x.getElseStmt());
       } else {
         space();
       }
-      x.elseStmt.traverse(this);
+      accept(x.getElseStmt());
       if (!elseIf) {
-        nestedStatementPop(x.elseStmt);
+        nestedStatementPop(x.getElseStmt());
       }
     }
 
@@ -487,18 +487,18 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   // @Override
-  public boolean visit(JInstanceOf x, Mutator h) {
-    JExpression expr = x.getExpression();
+  public boolean visit(JInstanceOf x, Context ctx) {
+    JExpression expr = x.getExpr();
     parenPush(x, expr);
-    expr.traverse(this);
+    accept(expr);
     parenPop(x, expr);
     print(CHARS_INSTANCEOF);
-    printTypeName(x.testType);
+    printTypeName(x.getTestType());
     return false;
   }
 
   // @Override
-  public boolean visit(JInterfaceType x) {
+  public boolean visit(JInterfaceType x, Context ctx) {
     print(CHARS_INTERFACE);
     printTypeName(x);
     space();
@@ -518,27 +518,27 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   // @Override
-  public boolean visit(JIntLiteral x, Mutator h) {
-    print(Integer.toString(x.value).toCharArray());
+  public boolean visit(JIntLiteral x, Context ctx) {
+    print(Integer.toString(x.getValue()).toCharArray());
     return false;
   }
 
   // @Override
-  public boolean visit(JLabel x) {
+  public boolean visit(JLabel x, Context ctx) {
     printName(x);
     return false;
   }
 
   // @Override
-  public boolean visit(JLabeledStatement x) {
-    x.label.traverse(this);
+  public boolean visit(JLabeledStatement x, Context ctx) {
+    accept(x.getLabel());
     print(" : ");
-    x.body.traverse(this);
+    accept(x.getBody());
     return false;
   }
 
   // @Override
-  public boolean visit(JLocal x) {
+  public boolean visit(JLocal x, Context ctx) {
     printFinalFlag(x);
     printType(x);
     space();
@@ -547,44 +547,44 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   // @Override
-  public boolean visit(JLocalDeclarationStatement x) {
+  public boolean visit(JLocalDeclarationStatement x, Context ctx) {
     if (!suppressType) {
-      x.getLocalRef().getTarget().traverse(this);
+      accept(x.getLocalRef().getTarget());
     } else {
-      x.getLocalRef().traverse(this);
+      accept(x.getLocalRef());
     }
     JExpression initializer = x.getInitializer();
     if (initializer != null) {
       print(" = ");
-      initializer.traverse(this);
+      accept(initializer);
     }
     return false;
   }
 
   // @Override
-  public boolean visit(JLocalRef x, Mutator h) {
-    printName(x.local);
+  public boolean visit(JLocalRef x, Context ctx) {
+    printName(x.getLocal());
     return false;
   }
 
   // @Override
-  public boolean visit(JLongLiteral x, Mutator h) {
-    printLongLiteral(x.value);
+  public boolean visit(JLongLiteral x, Context ctx) {
+    printLongLiteral(x.getValue());
     return false;
   }
 
   // @Override
-  public boolean visit(JMethod x) {
+  public boolean visit(JMethod x, Context ctx) {
     return printMethodHeader(x);
   }
 
   // @Override
-  public boolean visit(JMethodCall x, Mutator h) {
+  public boolean visit(JMethodCall x, Context ctx) {
     JExpression instance = x.getInstance();
     JMethod target = x.getTarget();
     if (instance != null) {
       parenPush(x, instance);
-      instance.traverse(this);
+      accept(instance);
       parenPop(x, instance);
     } else {
       printTypeName(target.getEnclosingType());
@@ -596,13 +596,13 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
       printName(target);
     }
     lparen();
-    visitCollectionWithCommas(x.args.iterator());
+    visitCollectionWithCommas(x.getArgs().iterator());
     rparen();
     return false;
   }
 
   // @Override
-  public boolean visit(JMultiExpression x, Mutator m) {
+  public boolean visit(JMultiExpression x, Context ctx) {
     lparen();
     visitCollectionWithCommas(x.exprs.iterator());
     rparen();
@@ -610,18 +610,18 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   // @Override
-  public boolean visit(JNewArray x, Mutator h) {
+  public boolean visit(JNewArray x, Context ctx) {
     print(CHARS_NEW);
-    printTypeName(x.getArrayType().leafType);
+    printTypeName(x.getArrayType().getLeafType());
     if (x.initializers != null) {
       print('{');
       visitCollectionWithCommas(x.initializers.iterator());
       print('}');
     } else {
       for (int i = 0; i < x.dims.size(); ++i) {
-        JExpression expr = x.dims.getExpr(i);
+        JExpression expr = (JExpression) x.dims.get(i);
         print('[');
-        expr.traverse(this);
+        accept(expr);
         print(']');
       }
     }
@@ -629,7 +629,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   // @Override
-  public boolean visit(JNewInstance x, Mutator h) {
+  public boolean visit(JNewInstance x, Context ctx) {
     print(CHARS_NEW);
     printType(x);
     lparen();
@@ -638,19 +638,19 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   // @Override
-  public boolean visit(JNullLiteral x, Mutator h) {
+  public boolean visit(JNullLiteral x, Context ctx) {
     print(CHARS_NULL);
     return false;
   }
 
   // @Override
-  public boolean visit(JNullType x) {
+  public boolean visit(JNullType x, Context ctx) {
     printTypeName(x);
     return false;
   }
 
   // @Override
-  public boolean visit(JParameter x) {
+  public boolean visit(JParameter x, Context ctx) {
     printType(x);
     space();
     printName(x);
@@ -658,72 +658,72 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   // @Override
-  public boolean visit(JParameterRef x, Mutator h) {
+  public boolean visit(JParameterRef x, Context ctx) {
     printName(x.getTarget());
     return false;
   }
 
   // @Override
-  public boolean visit(JPostfixOperation x, Mutator h) {
+  public boolean visit(JPostfixOperation x, Context ctx) {
     // TODO(later): associativity
     JExpression arg = x.getArg();
     parenPush(x, arg);
-    arg.traverse(this);
+    accept(arg);
     parenPop(x, arg);
-    print(x.op.getSymbol());
+    print(x.getOp().getSymbol());
     return false;
   }
 
   // @Override
-  public boolean visit(JPrefixOperation x, Mutator h) {
+  public boolean visit(JPrefixOperation x, Context ctx) {
     // TODO(later): associativity
-    print(x.op.getSymbol());
+    print(x.getOp().getSymbol());
     JExpression arg = x.getArg();
     parenPush(x, arg);
-    arg.traverse(this);
+    accept(arg);
     parenPop(x, arg);
     return false;
   }
 
   // @Override
-  public boolean visit(JPrimitiveType x) {
+  public boolean visit(JPrimitiveType x, Context ctx) {
     printTypeName(x);
     return false;
   }
 
   // @Override
-  public boolean visit(JProgram x) {
+  public boolean visit(JProgram x, Context ctx) {
     print("<JProgram>");
     return false;
   }
 
   // @Override
-  public boolean visit(JReturnStatement x) {
+  public boolean visit(JReturnStatement x, Context ctx) {
     print(CHARS_RETURN);
-    if (x.getExpression() != null) {
+    if (x.getExpr() != null) {
       space();
-      x.getExpression().traverse(this);
+      accept(x.getExpr());
     }
     return false;
   }
 
   // @Override
-  public boolean visit(JsniFieldRef x) {
-    return visit(x.getField());
+  public boolean visit(JsniFieldRef x, Context ctx) {
+    return visit(x.getField(), ctx);
   }
 
   // @Override
-  public boolean visit(JsniMethod x) {
+  public boolean visit(JsniMethod x, Context ctx) {
     return printMethodHeader(x);
   }
 
   // @Override
-  public boolean visit(JsniMethodRef x) {
+  public boolean visit(JsniMethodRef x, Context ctx) {
     return printMethodHeader(x.getTarget());
   }
 
   // @Override
-  public boolean visit(JsonArray x, Mutator m) {
+  public boolean visit(JsonArray x, Context ctx) {
     print('[');
     visitCollectionWithCommas(x.exprs.iterator());
     print(']');
@@ -731,7 +731,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   // @Override
-  public boolean visit(JsonObject x, Mutator m) {
+  public boolean visit(JsonObject x, Context ctx) {
     print('{');
     visitCollectionWithCommas(x.propInits.iterator());
     print('}');
@@ -739,79 +739,79 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   // @Override
-  public boolean visit(JsonPropInit x) {
-    x.labelExpr.traverse(this);
+  public boolean visit(JsonPropInit x, Context ctx) {
+    accept(x.labelExpr);
     print(':');
-    x.valueExpr.traverse(this);
+    accept(x.valueExpr);
     return false;
   }
 
   // @Override
-  public boolean visit(JStringLiteral x, Mutator h) {
-    printStringLiteral(x.value);
+  public boolean visit(JStringLiteral x, Context ctx) {
+    printStringLiteral(x.getValue());
     return false;
   }
 
   // @Override
-  public boolean visit(JSwitchStatement x) {
+  public boolean visit(JSwitchStatement x, Context ctx) {
     print(CHARS_SWITCH);
     lparen();
-    x.getExpression().traverse(this);
+    accept(x.getExpr());
     rparen();
     space();
-    nestedStatementPush(x.body);
-    x.body.traverse(this);
-    nestedStatementPop(x.body);
+    nestedStatementPush(x.getBody());
+    accept(x.getBody());
+    nestedStatementPop(x.getBody());
     return false;
   }
 
   // @Override
-  public boolean visit(JThisRef x, Mutator h) {
+  public boolean visit(JThisRef x, Context ctx) {
     print(CHARS_THIS);
     return false;
   }
 
   // @Override
-  public boolean visit(JThrowStatement x) {
+  public boolean visit(JThrowStatement x, Context ctx) {
     print(CHARS_THROW);
-    if (x.getExpression() != null) {
+    if (x.getExpr() != null) {
       space();
-      x.getExpression().traverse(this);
+      accept(x.getExpr());
     }
     return false;
   }
 
   // @Override
-  public boolean visit(JTryStatement x) {
+  public boolean visit(JTryStatement x, Context ctx) {
     print(CHARS_TRY);
-    x.tryBlock.traverse(this);
-    for (int i = 0, c = x.catchArgs.size(); i < c; ++i) {
+    accept(x.getTryBlock());
+    for (int i = 0, c = x.getCatchArgs().size(); i < c; ++i) {
       print(CHARS_CATCH);
       lparen();
-      JLocalRef localRef = (JLocalRef) x.catchArgs.get(i);
-      localRef.getTarget().traverse(this);
+      JLocalRef localRef = (JLocalRef) x.getCatchArgs().get(i);
+      accept(localRef.getTarget());
       rparen();
       space();
-      JBlock block = (JBlock) x.catchBlocks.get(i);
-      block.traverse(this);
+      JBlock block = (JBlock) x.getCatchBlocks().get(i);
+      accept(block);
     }
-    if (x.finallyBlock != null) {
+    if (x.getFinallyBlock() != null) {
       print(CHARS_FINALLY);
-      x.finallyBlock.traverse(this);
+      accept(x.getFinallyBlock());
     }
     return false;
   }
 
   // @Override
-  public boolean visit(JWhileStatement x) {
+  public boolean visit(JWhileStatement x, Context ctx) {
     print(CHARS_WHILE);
     lparen();
-    x.getTestExpr().traverse(this);
+    accept(x.getTestExpr());
     rparen();
-    if (x.body != null) {
-      nestedStatementPush(x.body);
-      x.body.traverse(this);
-      nestedStatementPop(x.body);
+    if (x.getBody() != null) {
+      nestedStatementPush(x.getBody());
+      accept(x.getBody());
+      nestedStatementPop(x.getBody());
     }
     return false;
   }
@@ -1061,12 +1061,12 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   protected void visitCollectionWithCommas(Iterator/* <? extends JNode> */iter) {
     if (iter.hasNext()) {
       JNode node = (JNode) iter.next();
-      node.traverse(this);
+      accept(node);
     }
     while (iter.hasNext()) {
       print(CHARS_COMMA);
       JNode node = (JNode) iter.next();
-      node.traverse(this);
+      accept(node);
     }
   }
 

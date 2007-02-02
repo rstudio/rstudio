@@ -20,22 +20,23 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JExpressionStatement extends JStatement {
 
-  private final Holder expr = new Holder();
+  private JExpression expr;
 
-  public JExpressionStatement(JProgram program, JExpression expr) {
-    super(program);
-    this.expr.set(expr);
+  public JExpressionStatement(JProgram program, JSourceInfo info,
+      JExpression expr) {
+    super(program, info);
+    this.expr = expr;
   }
 
-  public JExpression getExpression() {
-    return expr.get();
+  public JExpression getExpr() {
+    return expr;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
-      expr.traverse(visitor);
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      expr = visitor.accept(expr);
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

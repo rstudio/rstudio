@@ -20,14 +20,14 @@ package com.google.gwt.dev.jjs.ast;
  */
 public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
 
-  public JReferenceType enclosingType;
+  private JReferenceType enclosingType;
   public JLiteral constInitializer;
   private final boolean isStatic;
   private final boolean hasInitializer;
 
-  JField(JProgram program, String name, JReferenceType enclosingType,
-      JType type, boolean isStatic, boolean isFinal, boolean hasInitializer) {
-    super(program, name, type, isFinal);
+  JField(JProgram program, JSourceInfo info, String name,
+      JReferenceType enclosingType, JType type, boolean isStatic, boolean isFinal, boolean hasInitializer) {
+    super(program, info, name, type, isFinal);
     this.enclosingType = enclosingType;
     this.isStatic = isStatic;
     this.hasInitializer  = hasInitializer;
@@ -45,10 +45,10 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
     return isStatic;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

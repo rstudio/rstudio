@@ -13,26 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.jjs.ast.change;
+package com.google.gwt.dev.jjs.ast;
 
-import com.google.gwt.core.ext.TreeLogger;
+/**
+ * The context in which a JNode visitation occurs. This represents the set of
+ * possible operations a JVisitor subclass can perform on the currently visited
+ * node.
+ */
+public interface Context {
 
-import java.util.List;
+  boolean canInsert();
 
-class ClearList/* <N extends JNode> */extends ChangeBase {
+  boolean canRemove();
 
-  private final List/* <N> */list;
+  void insertAfter(JNode node);
 
-  public ClearList(List/* <N> */list) {
-    this.list = list;
-  }
+  void insertBefore(JNode node);
 
-  public void apply() {
-    list.clear();
-  }
+  void removeMe();
 
-  public void describe(TreeLogger logger, TreeLogger.Type type) {
-    logger.log(type, "Clear a list", null);
-  }
-
+  void replaceMe(JNode node);
 }

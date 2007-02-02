@@ -15,12 +15,12 @@
  */
 package com.google.gwt.dev.jjs.ast.js;
 
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.Mutator;
 
 /**
  * An AST node representing a class's constructor function. Only used by
@@ -31,24 +31,24 @@ public class JClassSeed extends JLiteral {
   /**
    * The class being referred to.
    */
-  public final JClassType refType;
+  private final JClassType refType;
 
   public JClassSeed(JProgram program, JClassType type) {
     super(program);
     refType = type;
   }
 
+  public JClassType getRefType() {
+    return refType;
+  }
+
   public JType getType() {
     return program.getTypeJavaLangObject();
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 }

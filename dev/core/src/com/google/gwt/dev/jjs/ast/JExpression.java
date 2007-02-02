@@ -16,16 +16,14 @@
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Base class for all Java expressions. 
+ * Base class for all Java expressions.
  */
 public abstract class JExpression extends JNode implements HasType {
 
-  public JExpression(JProgram program) {
-    super(program);
+  public JExpression(JProgram program, JSourceInfo info) {
+    super(program, info);
   }
 
   public abstract boolean hasSideEffects();
 
-  public abstract void traverse(JVisitor visitor, Mutator mutator);
-  
 }

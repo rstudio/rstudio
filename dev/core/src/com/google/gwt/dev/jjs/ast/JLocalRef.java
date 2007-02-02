@@ -23,28 +23,24 @@ public class JLocalRef extends JVariableRef {
   /**
    * The referenced local.
    */
-  public JLocal local;
+  private JLocal local;
 
-  public JLocalRef(JProgram program, JLocal local) {
-    super(program, local);
+  public JLocalRef(JProgram program, JSourceInfo info, JLocal local) {
+    super(program, info, local);
     this.local = local;
   }
 
   public JLocal getLocal() {
     return local;
   }
-  
+
   public boolean hasSideEffects() {
     return false;
   }
 
-  public void traverse(JVisitor visitor) {
-    traverse(visitor, null);
-  }
-
-  public void traverse(JVisitor visitor, Mutator mutator) {
-    if (visitor.visit(this, mutator)) {
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
     }
-    visitor.endVisit(this, mutator);
+    visitor.endVisit(this, ctx);
   }
 }

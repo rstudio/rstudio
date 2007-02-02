@@ -16,26 +16,28 @@
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Java case statement. 
+ * Java case statement.
  */
 public class JCaseStatement extends JStatement {
 
-  private final Holder/*<JLiteral>*/ expr = new Holder/*<JLiteral>*/();
+  private final JLiteral expr;
 
-  public JCaseStatement(JProgram program, JLiteral expr) {
-    super(program);
-    this.expr.set(expr);
+  public JCaseStatement(JProgram program, JSourceInfo info, JLiteral expr) {
+    super(program, info);
+    this.expr = expr;
   }
 
-  public JLiteral getExpression() {
-    return (JLiteral) expr.get();
+  public JLiteral getExpr() {
+    return expr;
   }
 
-  public void traverse(JVisitor visitor) {
-    if (visitor.visit(this)) {
-      expr.traverse(visitor);
+  public void traverse(JVisitor visitor, Context ctx) {
+    if (visitor.visit(this, ctx)) {
+      if (expr != null) {
+        visitor.accept(expr);
+      }
     }
-    visitor.endVisit(this);
+    visitor.endVisit(this, ctx);
   }
 
 }

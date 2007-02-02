@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
@@ -35,14 +36,13 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.Mutator;
-import com.google.gwt.dev.jjs.ast.change.ChangeList;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethod;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -63,6 +63,8 @@ import java.util.Set;
  * failures at compile time.
  * 
  * TODO(later): prune params and locals
+ * 
+ * TODO(later): make RescueVisitor use less stack?
  */
 public class Pruner {
 
@@ -72,31 +74,33 @@ public class Pruner {
    */
   private class PruneVisitor extends JVisitor {
 
-    private final ChangeList changeList = new ChangeList(
-        "Prune unreferenced methods, fields, and types.");
+    private boolean didChange = false;
 
-    public ChangeList getChangeList() {
-      return changeList;
+    public boolean didChange() {
+      return didChange;
     }
 
     // @Override
-    public boolean visit(JClassType type) {
+    public boolean visit(JClassType type, Context ctx) {
 
       assert (referencedTypes.contains(type));
       boolean isInstantiated = program.typeOracle.isInstantiatedType(type);
 
-      for (int i = 0; i < type.fields.size(); ++i) {
-        JField it = (JField) type.fields.get(i);
-        if (!referencedNonTypes.contains(it)
-            || pruneViaNoninstantiability(isInstantiated, it)) {
-          changeList.removeField(it);
+      for (Iterator it = type.fields.iterator(); it.hasNext();) {
+        JField field = (JField) it.next();
+        if (!referencedNonTypes.contains(field)
+            || pruneViaNoninstantiability(isInstantiated, field)) {
+          it.remove();
+          didChange = true;
         }
       }
-      for (int i = 0; i < type.methods.size(); ++i) {
-        JMethod it = (JMethod) type.methods.get(i);
-        if (!methodIsReferenced(it)
-            || pruneViaNoninstantiability(isInstantiated, it)) {
-          changeList.removeMethod(it);
+
+      for (Iterator it = type.methods.iterator(); it.hasNext();) {
+        JMethod method = (JMethod) it.next();
+        if (!methodIsReferenced(method)
+            || pruneViaNoninstantiability(isInstantiated, method)) {
+          it.remove();
+          didChange = true;
         }
       }
 
@@ -104,23 +108,30 @@ public class Pruner {
     }
 
     // @Override
-    public boolean visit(JInterfaceType type) {
+    public boolean visit(JInterfaceType type, Context ctx) {
       boolean isReferenced = referencedTypes.contains(type);
       boolean isInstantiated = program.typeOracle.isInstantiatedType(type);
 
-      for (int i = 0; i < type.fields.size(); ++i) {
-        JField it = (JField) type.fields.get(i);
+      for (Iterator it = type.fields.iterator(); it.hasNext();) {
+        JField field = (JField) it.next();
         // all interface fields are static and final
-        if (!isReferenced || !referencedNonTypes.contains(it)) {
-          changeList.removeField(it);
+        if (!isReferenced || !referencedNonTypes.contains(field)) {
+          it.remove();
+          didChange = true;
         }
       }
-      // start at index 1; never prune clinit directly out of the interface
-      for (int i = 1; i < type.methods.size(); ++i) {
-        JMethod it = (JMethod) type.methods.get(i);
+
+      Iterator it = type.methods.iterator();
+      if (it.hasNext()) {
+        // start at index 1; never prune clinit directly out of the interface
+        it.next();
+      }
+      while (it.hasNext()) {
+        JMethod method = (JMethod) it.next();
         // all other interface methods are instance and abstract
-        if (!isInstantiated || !methodIsReferenced(it)) {
-          changeList.removeMethod(it);
+        if (!isInstantiated || !methodIsReferenced(method)) {
+          it.remove();
+          didChange = true;
         }
       }
 
@@ -128,14 +139,15 @@ public class Pruner {
     }
 
     // @Override
-    public boolean visit(JProgram program) {
+    public boolean visit(JProgram program, Context ctx) {
       for (int i = 0; i < program.getDeclaredTypes().size(); ++i) {
         JReferenceType type = (JReferenceType) program.getDeclaredTypes().get(i);
         if (referencedTypes.contains(type)
             || program.typeOracle.isInstantiatedType(type)) {
-          type.traverse(this);
+          accept(type);
         } else {
-          changeList.removeType(type);
+          program.getDeclaredTypes().remove(type);
+          didChange = true;
         }
       }
       return false;
@@ -175,6 +187,7 @@ public class Pruner {
       return (!isInstantiated && (!it.isStatic() || program.isStaticImpl(it)));
     }
   }
+
   /**
    * Marks as "referenced" any types, methods, and fields that are reachable.
    * Also marks as "instantiable" any the classes and interfaces that can
@@ -189,9 +202,9 @@ public class Pruner {
     }
 
     // @Override
-    public void endVisit(JBinaryOperation x, Mutator m) {
+    public void endVisit(JBinaryOperation x, Context ctx) {
       // special string concat handling
-      if (x.op == JBinaryOperator.ADD
+      if (x.getOp() == JBinaryOperator.ADD
           && x.getType() == program.getTypeJavaLangString()) {
         rescueByConcat(x.getLhs().getType());
         rescueByConcat(x.getRhs().getType());
@@ -199,7 +212,7 @@ public class Pruner {
     }
 
     // @Override
-    public boolean visit(JArrayType type) {
+    public boolean visit(JArrayType type, Context ctx) {
       assert (referencedTypes.contains(type));
       boolean isInstantiated = instantiatedTypes.contains(type);
 
@@ -225,7 +238,7 @@ public class Pruner {
     }
 
     // @Override
-    public boolean visit(JClassLiteral literal, Mutator mutator) {
+    public boolean visit(JClassLiteral literal, Context ctx) {
       // rescue and instantiate java.lang.Class
       // JLS 12.4.1: do not rescue the target type
       rescue(program.getTypeJavaLangClass(), true, true);
@@ -233,7 +246,7 @@ public class Pruner {
     }
 
     // @Override
-    public boolean visit(JClassType type) {
+    public boolean visit(JClassType type, Context ctx) {
       assert (referencedTypes.contains(type));
       boolean isInstantiated = instantiatedTypes.contains(type);
 
@@ -266,7 +279,7 @@ public class Pruner {
     }
 
     // @Override
-    public boolean visit(JFieldRef ref, Mutator mutator) {
+    public boolean visit(JFieldRef ref, Context ctx) {
       JField target = ref.getField();
 
       // JLS 12.4.1: references to static, non-final, or
@@ -281,7 +294,7 @@ public class Pruner {
     }
 
     // @Override
-    public boolean visit(JInterfaceType type) {
+    public boolean visit(JInterfaceType type, Context ctx) {
       boolean isReferenced = referencedTypes.contains(type);
       boolean isInstantiated = instantiatedTypes.contains(type);
       assert (isReferenced || isInstantiated);
@@ -301,14 +314,14 @@ public class Pruner {
       // visit any field initializers
       for (int i = 0; i < type.fields.size(); ++i) {
         JField it = (JField) type.fields.get(i);
-        it.traverse(this);
+        accept(it);
       }
 
       return false;
     }
 
     // @Override
-    public boolean visit(JMethodCall call, Mutator mutator) {
+    public boolean visit(JMethodCall call, Context ctx) {
       JMethod target = call.getTarget();
       // JLS 12.4.1: references to static methods rescue the enclosing class
       if (target.isStatic()) {
@@ -319,12 +332,12 @@ public class Pruner {
     }
 
     // @Override
-    public boolean visit(JNewArray newArray, Mutator mutator) {
+    public boolean visit(JNewArray newArray, Context ctx) {
       // rescue and instantiate the array type
       JArrayType arrayType = newArray.getArrayType();
       if (newArray.dims != null) {
         // rescue my type and all the implicitly nested types (with fewer dims)
-        int nDims = arrayType.dims;
+        int nDims = arrayType.getDims();
         JType leafType = arrayType.getLeafType();
         assert (newArray.dims.size() == nDims);
         for (int i = 0; i < nDims; ++i) {
@@ -344,28 +357,28 @@ public class Pruner {
     }
 
     // @Override
-    public boolean visit(JNewInstance newInstance, Mutator mutator) {
+    public boolean visit(JNewInstance newInstance, Context ctx) {
       // rescue and instantiate the target class!
       rescue(newInstance.getClassType(), true, true);
       return true;
     }
 
     // @Override
-    public boolean visit(JsniFieldRef x) {
+    public boolean visit(JsniFieldRef x, Context ctx) {
       /*
        * SPECIAL: this could be an assignment that passes a value from
        * JavaScript into Java.
        * 
-       * TODO: technically we only need to do this if the field is being
+       * TODO(later): technically we only need to do this if the field is being
        * assigned to.
        */
       maybeRescueJavaScriptObjectPassingIntoJava(x.getField().getType());
       // JsniFieldRef rescues as JFieldRef
-      return visit(/* (JFieldRef) */x, null);
+      return visit((JFieldRef) x, ctx);
     }
 
     // @Override
-    public boolean visit(JsniMethodRef x) {
+    public boolean visit(JsniMethodRef x, Context ctx) {
       /*
        * SPECIAL: each argument of the call passes a value from JavaScript into
        * Java.
@@ -376,11 +389,11 @@ public class Pruner {
         maybeRescueJavaScriptObjectPassingIntoJava(param.getType());
       }
       // JsniMethodRef rescues as JMethodCall
-      return visit(/* (JMethodCall) */x, null);
+      return visit((JMethodCall) x, ctx);
     }
 
     // @Override
-    public boolean visit(JStringLiteral literal, Mutator mutator) {
+    public boolean visit(JStringLiteral literal, Context ctx) {
       // rescue and instantiate java.lang.String
       rescue(program.getTypeJavaLangString(), true, true);
       return true;
@@ -406,60 +419,51 @@ public class Pruner {
       }
     }
 
-    private boolean rescue(JField field) {
-      if (field == null) {
-        return false;
+    private void rescue(JField field) {
+      if (field != null) {
+        if (!referencedNonTypes.contains(field)) {
+          referencedNonTypes.add(field);
+        }
       }
-
-      if (!referencedNonTypes.contains(field)) {
-        referencedNonTypes.add(field);
-        return true;
-      }
-      return true;
     }
 
     private boolean rescue(JMethod method) {
-      if (method == null) {
-        return false;
-      }
-
-      if (!referencedNonTypes.contains(method)) {
-        referencedNonTypes.add(method);
-        method.traverse(this);
-        if (method instanceof JsniMethod) {
-          /*
-           * SPECIAL: returning from this method passes a value from JavaScript
-           * into Java.
-           */
-          maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
+      if (method != null) {
+        if (!referencedNonTypes.contains(method)) {
+          referencedNonTypes.add(method);
+          accept(method);
+          if (method instanceof JsniMethod) {
+            /*
+             * SPECIAL: returning from this method passes a value from
+             * JavaScript into Java.
+             */
+            maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
+          }
+          return true;
         }
-        return true;
       }
       return false;
     }
 
-    private boolean rescue(JReferenceType type, boolean isReferenced,
+    private void rescue(JReferenceType type, boolean isReferenced,
         boolean isInstantiated) {
-      if (type == null) {
-        return false;
-      }
+      if (type != null) {
 
-      boolean doVisit = false;
-      if (isInstantiated && !instantiatedTypes.contains(type)) {
-        instantiatedTypes.add(type);
-        doVisit = true;
-      }
+        boolean doVisit = false;
+        if (isInstantiated && !instantiatedTypes.contains(type)) {
+          instantiatedTypes.add(type);
+          doVisit = true;
+        }
 
-      if (isReferenced && !referencedTypes.contains(type)) {
-        referencedTypes.add(type);
-        doVisit = true;
-      }
+        if (isReferenced && !referencedTypes.contains(type)) {
+          referencedTypes.add(type);
+          doVisit = true;
+        }
 
-      if (doVisit) {
-        type.traverse(this);
+        if (doVisit) {
+          accept(type);
+        }
       }
-
-      return doVisit;
     }
 
     /**
@@ -517,7 +521,7 @@ public class Pruner {
     }
 
     // @Override
-    public boolean visit(JMethod x) {
+    public boolean visit(JMethod x, Context ctx) {
       if (referencedNonTypes.contains(x)) {
         return false;
       }
@@ -539,14 +543,14 @@ public class Pruner {
     }
 
     // @Override
-    public boolean visit(JProgram x) {
+    public boolean visit(JProgram x, Context ctx) {
       didRescue = false;
       return true;
     }
 
     // @Override
-    public boolean visit(JsniMethod x) {
-      return visit((JMethod) x);
+    public boolean visit(JsniMethod x, Context ctx) {
+      return visit((JMethod) x, ctx);
     }
   }
 
@@ -573,12 +577,10 @@ public class Pruner {
     boolean madeChanges = false;
     while (true) {
       RescueVisitor rescuer = new RescueVisitor();
-
       for (int i = 0; i < program.specialTypes.size(); ++i) {
         JReferenceType type = (JReferenceType) program.specialTypes.get(i);
         rescuer.rescue(type, true, noSpecialTypes);
       }
-
       for (int i = 0; i < program.entryMethods.size(); ++i) {
         JMethod method = (JMethod) program.entryMethods.get(i);
         rescuer.rescue(method);
@@ -587,17 +589,14 @@ public class Pruner {
       UpRefVisitor upRefer = new UpRefVisitor(rescuer);
       do {
         rescuer.commitInstantiatedTypes();
-        program.traverse(upRefer);
+        upRefer.accept(program);
       } while (upRefer.didRescue());
 
       PruneVisitor pruner = new PruneVisitor();
-      program.traverse(pruner);
-
-      ChangeList changes = pruner.getChangeList();
-      if (changes.empty()) {
+      pruner.accept(program);
+      if (!pruner.didChange()) {
         break;
       }
-      changes.apply();
 
       referencedTypes.clear();
       referencedNonTypes.clear();

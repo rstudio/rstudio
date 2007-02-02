@@ -15,17 +15,15 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.dev.jjs.ast.Holder;
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.Mutator;
-import com.google.gwt.dev.jjs.ast.change.ChangeList;
 
 /**
  * Replaces any "GWT.create()" calls with a new expression for the actual result
@@ -33,26 +31,22 @@ import com.google.gwt.dev.jjs.ast.change.ChangeList;
  */
 public class ReplaceRebinds {
 
-  private class RebindVisitor extends JVisitor {
-
-    private final ChangeList changeList = new ChangeList(
-        "Replace GWT.create() with new expressions.");
+  private class RebindVisitor extends JModVisitor {
 
     // @Override
-    public void endVisit(JMethodCall x, Mutator mutator) {
+    public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
       if (method == program.getRebindCreateMethod()) {
-        assert (x.args.size() == 1);
-        JExpression arg = x.args.getExpr(0);
+        assert (x.getArgs().size() == 1);
+        JExpression arg = (JExpression) x.getArgs().get(0);
         assert (arg instanceof JClassLiteral);
         JClassLiteral classLiteral = (JClassLiteral) arg;
-        JClassType classType = program.rebind(classLiteral.refType);
+        JClassType classType = program.rebind(classLiteral.getRefType());
 
         /*
          * Find the appropriate (noArg) constructor. In our AST, constructors
          * are instance methods that should be qualified with a new expression.
          */
-
         JMethod noArgCtor = null;
         for (int i = 0; i < classType.methods.size(); ++i) {
           JMethod ctor = (JMethod) classType.methods.get(i);
@@ -64,14 +58,12 @@ public class ReplaceRebinds {
         }
         assert (noArgCtor != null);
         // Call it, using a new expression as a qualifier
-        JNewInstance newInstance = new JNewInstance(program, classType);
-        JMethodCall call = new JMethodCall(program, newInstance, noArgCtor);
-        changeList.replaceExpression(mutator, new Holder(call));
+        JNewInstance newInstance = new JNewInstance(program, x.getSourceInfo(),
+            classType);
+        JMethodCall call = new JMethodCall(program, x.getSourceInfo(),
+            newInstance, noArgCtor);
+        ctx.replaceMe(call);
       }
-    }
-
-    public ChangeList getChangeList() {
-      return changeList;
     }
   }
 
@@ -87,13 +79,8 @@ public class ReplaceRebinds {
 
   private boolean execImpl() {
     RebindVisitor rebinder = new RebindVisitor();
-    program.traverse(rebinder);
-    ChangeList changes = rebinder.getChangeList();
-    if (changes.empty()) {
-      return false;
-    }
-    changes.apply();
-    return true;
+    rebinder.accept(program);
+    return rebinder.didChange();
   }
 
 }
