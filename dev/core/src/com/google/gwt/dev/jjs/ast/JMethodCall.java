@@ -31,6 +31,7 @@ public class JMethodCall extends JExpression {
   public JMethodCall(JProgram program, JSourceInfo info, JExpression instance,
       JMethod method) {
     super(program, info);
+    assert (instance != null || method.isStatic());
     this.instance = instance;
     this.method = method;
     this.staticDispatchOnly = false;

@@ -28,7 +28,9 @@ import com.google.gwt.dev.jjs.ast.JSourceInfo;
 public class JsniMethodRef extends JMethodCall {
 
   public JsniMethodRef(JProgram program, JSourceInfo info, JMethod method) {
-    super(program, info, null, method);
+    // Just use a null literal as the qualifier on a non-static method
+    super(program, info, method.isStatic() ? null : program.getLiteralNull(),
+        method);
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

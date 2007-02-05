@@ -28,9 +28,10 @@ import com.google.gwt.dev.jjs.ast.JSourceInfo;
  */
 public class JsniFieldRef extends JFieldRef {
 
-  public JsniFieldRef(JProgram program, JSourceInfo info,
-      JField field, JReferenceType enclosingType) {
-    super(program, info, null, field, enclosingType);
+  public JsniFieldRef(JProgram program, JSourceInfo info, JField field,
+      JReferenceType enclosingType) {
+    super(program, info, field.isStatic() ? null : program.getLiteralNull(),
+        field, enclosingType);
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
