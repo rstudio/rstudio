@@ -31,8 +31,10 @@ class DOMImplSafari extends DOMImplStandard {
       // body's offset position already.
       var parent = elem.offsetParent;
       if (parent && (parent.tagName == 'BODY') &&
-          (elem.style.position == 'absolute'))
-        break;
+          (elem.style.position == 'absolute')) {
+        return left;
+      }
+      
       elem = parent;
     }
     return left + $doc.body.scrollLeft;
@@ -47,8 +49,10 @@ class DOMImplSafari extends DOMImplStandard {
       // body's offset position already.
       var parent = elem.offsetParent;
       if (parent && (parent.tagName == 'BODY') &&
-          (elem.style.position == 'absolute'))
-        break;
+          (elem.style.position == 'absolute')) {
+        return top;
+      }
+      
       elem = parent;
     }
     return top + $doc.body.scrollTop;
