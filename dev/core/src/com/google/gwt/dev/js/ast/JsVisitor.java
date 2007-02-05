@@ -44,8 +44,6 @@ public interface JsVisitor {
 
   void endVisit(JsDefault x);
 
-  void endVisit(JsDelete x);
-
   void endVisit(JsDoWhile while1);
 
   void endVisit(JsEmpty x);
@@ -127,8 +125,6 @@ public interface JsVisitor {
   boolean visit(JsDecimalLiteral x);
 
   boolean visit(JsDefault x);
-
-  boolean visit(JsDelete x);
 
   boolean visit(JsDoWhile x);
 

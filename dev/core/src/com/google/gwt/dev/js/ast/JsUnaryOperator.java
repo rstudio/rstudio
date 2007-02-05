@@ -28,12 +28,9 @@ public final class JsUnaryOperator extends JsOperator {
   public static final JsUnaryOperator NOT = create("!", 14, PREFIX);
   public static final JsUnaryOperator DEC = create("--", 14, POSTFIX | PREFIX);
   public static final JsUnaryOperator INC = create("++", 14, POSTFIX | PREFIX);
-// 'delete' is modeled as JsDelete
-//  public static final JsUnaryOperator DELETE = create("delete", 14, PREFIX);
-  // TODO(later): Keep the trailing space on "typeof" until jsgen is better
-  public static final JsUnaryOperator TYPEOF = create("typeof ", 14, PREFIX);
-  // TODO(later): Keep the trailing space on "void" until jsgen is better
-  public static final JsUnaryOperator VOID = create("void ", 14, PREFIX);
+  public static final JsUnaryOperator DELETE = create("delete", 14, PREFIX);
+  public static final JsUnaryOperator TYPEOF = create("typeof", 14, PREFIX);
+  public static final JsUnaryOperator VOID = create("void", 14, PREFIX);
 
   private static JsUnaryOperator create(String symbol, int precedence, int mask) {
     JsUnaryOperator op = new JsUnaryOperator(symbol, precedence, mask);
@@ -42,5 +39,9 @@ public final class JsUnaryOperator extends JsOperator {
 
   private JsUnaryOperator(String symbol, int precedence, int mask) {
     super(symbol, precedence, mask);
+  }
+
+  public boolean isKeyword() {
+    return this == DELETE || this == TYPEOF || this == VOID;
   }
 }

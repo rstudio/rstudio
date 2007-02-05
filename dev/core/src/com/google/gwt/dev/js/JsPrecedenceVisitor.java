@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.dev.js.ast.JsAbstractVisitorWithEndVisits;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
@@ -28,7 +27,6 @@ import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContinue;
 import com.google.gwt.dev.js.ast.JsDecimalLiteral;
 import com.google.gwt.dev.js.ast.JsDefault;
-import com.google.gwt.dev.js.ast.JsDelete;
 import com.google.gwt.dev.js.ast.JsDoWhile;
 import com.google.gwt.dev.js.ast.JsEmpty;
 import com.google.gwt.dev.js.ast.JsExprStmt;
@@ -147,11 +145,6 @@ class JsPrecedenceVisitor extends JsAbstractVisitorWithEndVisits {
 
   public boolean visit(JsDefault x) {
     throw new RuntimeException("Only expressions have precedence.");
-  }
-
-  public boolean visit(JsDelete x) {
-    answer = 14; // not modeled as an operator
-    return false;
   }
 
   public boolean visit(JsDoWhile x) {

@@ -29,7 +29,6 @@ import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContinue;
 import com.google.gwt.dev.js.ast.JsDecimalLiteral;
 import com.google.gwt.dev.js.ast.JsDefault;
-import com.google.gwt.dev.js.ast.JsDelete;
 import com.google.gwt.dev.js.ast.JsDoWhile;
 import com.google.gwt.dev.js.ast.JsEmpty;
 import com.google.gwt.dev.js.ast.JsExprStmt;
@@ -142,10 +141,20 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     JsExpression arg1 = x.getArg1();
     _parenPush(x, arg1, !op.isLeftAssociative());
     arg1.traverse(this);
-    _parenPopOrSpace(x, arg1, !op.isLeftAssociative());
+    boolean needSpace = op.isKeyword() || arg1 instanceof JsPostfixOperation;
+    if (needSpace) {
+      _parenPopOrSpace(x, arg1, !op.isLeftAssociative());
+    } else {
+      _parenPop(x, arg1, !op.isLeftAssociative());
+    }
     p.print(op.getSymbol());
     JsExpression arg2 = x.getArg2();
-    _parenPushOrSpace(x, arg2, op.isLeftAssociative());
+    needSpace = op.isKeyword() || arg2 instanceof JsPrefixOperation;
+    if (needSpace) {
+      _parenPushOrSpace(x, arg2, op.isLeftAssociative());
+    } else {
+      _parenPush(x, arg2, op.isLeftAssociative());
+    }
     arg2.traverse(this);
     _parenPop(x, arg2, op.isLeftAssociative());
     return false;
@@ -297,14 +306,11 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
 
   public boolean visit(JsDecimalLiteral x) {
     String s = x.getValue();
-    boolean needParens = s.startsWith("-");
-    if (needParens) {
-      _lparen();
+    // TODO: optimize this to only the cases that need it
+    if (s.startsWith("-")) {
+      _space();
     }
     p.print(s);
-    if (needParens) {
-      _rparen();
-    }
     return false;
   }
 
@@ -324,15 +330,6 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     }
     outdent();
     needSemi = false;
-    return false;
-  }
-
-  public boolean visit(JsDelete x) {
-    _delete();
-    JsExpression expr = x.getExpr();
-    _parenPushOrSpace(expr, x, true);
-    expr.traverse(this);
-    _parenPopOrSpace(expr, x, true);
     return false;
   }
 
@@ -621,6 +618,9 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
   public boolean visit(JsPrefixOperation x) {
     JsUnaryOperator op = x.getOperator();
     p.print(op.getSymbol());
+    if (op.isKeyword()) {
+      _space();
+    }
     JsExpression arg = x.getArg();
     // unary operators always associate correctly (I think)
     _parenPush(x, arg, true);
@@ -654,9 +654,9 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
 
   public boolean visit(JsReturn x) {
     _return();
-    _space();
     JsExpression expr = x.getExpr();
     if (expr != null) {
+      _space();
       expr.traverse(this);
     }
     return false;
@@ -930,7 +930,6 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return doPop;
   }
 
-  // TODO(later): we often leave a space when we don't need to
   private boolean _parenPush(JsExpression parent, JsExpression child,
       boolean wrongAssoc) {
     boolean doPush = _parenCalc(parent, child, wrongAssoc);
@@ -957,6 +956,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return doPush;
   }
 
+  // TODO(later): we often leave a space when we don't need to
   private boolean _parenPushOrSpace(JsExpression parent, JsExpression child,
       boolean wrongAssoc) {
     boolean doPush = _parenCalc(parent, child, wrongAssoc);
@@ -1040,8 +1040,9 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
   private void _while() {
     p.print(CHARS_WHILE);
   }
+
   // CHECKSTYLE_NAMING_ON
-  
+
   private void indent() {
     p.indentIn();
   }

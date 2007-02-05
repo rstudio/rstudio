@@ -27,7 +27,6 @@ import com.google.gwt.dev.js.ast.JsCatch;
 import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContinue;
 import com.google.gwt.dev.js.ast.JsDefault;
-import com.google.gwt.dev.js.ast.JsDelete;
 import com.google.gwt.dev.js.ast.JsDoWhile;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsExpressions;
@@ -468,17 +467,15 @@ public class JsParser {
   private JsNode mapDeleteProp(Node node) throws JsParserException {
     Node from = node.getFirstChild();
     JsExpression to = mapExpression(from);
-    JsDelete toDelete = new JsDelete();
     if (to instanceof JsNameRef) {
-      toDelete.setExpr((JsNameRef) to);
+      return new JsPrefixOperation(JsUnaryOperator.DELETE, to);
     } else if (to instanceof JsArrayAccess) {
-      toDelete.setExpr((JsArrayAccess) to);
+      return new JsPrefixOperation(JsUnaryOperator.DELETE, to);
     } else {
       throw createParserException(
           "'delete' can only operate on property names and array elements",
           from);
     }
-    return toDelete;
   }
 
   private JsStatement mapDoOrWhileStatement(boolean isWhile, Node ifNode)

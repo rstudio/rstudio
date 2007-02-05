@@ -18,7 +18,7 @@ package com.google.gwt.dev.js.ast;
 /**
  * A JavaScript operator.
  */
-public class JsOperator {
+public abstract class JsOperator {
 
   protected static final int LEFT = 0x01;
   protected static final int INFIX = 0x02;
@@ -44,6 +44,8 @@ public class JsOperator {
   public String getSymbol() {
     return symbol;
   }
+
+  public abstract boolean isKeyword();
 
   public boolean isLeftAssociative() {
     return (mask & LEFT) != 0;

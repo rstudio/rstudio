@@ -27,7 +27,6 @@ import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContinue;
 import com.google.gwt.dev.js.ast.JsDecimalLiteral;
 import com.google.gwt.dev.js.ast.JsDefault;
-import com.google.gwt.dev.js.ast.JsDelete;
 import com.google.gwt.dev.js.ast.JsDoWhile;
 import com.google.gwt.dev.js.ast.JsEmpty;
 import com.google.gwt.dev.js.ast.JsExprStmt;
@@ -99,9 +98,6 @@ public abstract class JsAbstractVisitorWithAllVisits implements JsVisitor {
   }
 
   public void endVisit(JsDefault x) {
-  }
-
-  public void endVisit(JsDelete x) {
   }
 
   public void endVisit(JsDoWhile while1) {
@@ -236,10 +232,6 @@ public abstract class JsAbstractVisitorWithAllVisits implements JsVisitor {
   }
 
   public boolean visit(JsDefault x) {
-    return true;
-  }
-
-  public boolean visit(JsDelete x) {
     return true;
   }
 
