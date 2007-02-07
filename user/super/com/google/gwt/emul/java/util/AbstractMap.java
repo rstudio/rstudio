@@ -16,7 +16,7 @@
 package java.util;
 
 /**
- * Abstract base class for map implementations.
+ * See Sun's JDK 1.4 Javadoc for documentation.
  */
 public abstract class AbstractMap implements Map {
 
@@ -47,18 +47,15 @@ public abstract class AbstractMap implements Map {
     if (obj == this) {
       return true;
     }
-
     if (!(obj instanceof Map)) {
       return false;
     }
-
     Map otherMap = ((Map) obj);
     Set keys = keySet();
     Set otherKeys = otherMap.keySet();
     if (!keys.equals(otherKeys)) {
       return false;
     }
-
     for (Iterator iter = keys.iterator(); iter.hasNext();) {
       Object key = iter.next();
       Object value = get(key);
@@ -67,7 +64,6 @@ public abstract class AbstractMap implements Map {
         return false;
       }
     }
-
     return true;
   }
 
@@ -125,7 +121,10 @@ public abstract class AbstractMap implements Map {
   }
 
   public void putAll(Map t) {
-    throw new UnsupportedOperationException(MSG_CANNOT_MODIFY);
+    for (Iterator iter = t.entrySet().iterator(); iter.hasNext();) {
+      Map.Entry e = (Map.Entry) iter.next();
+      put(e.getKey(), e.getValue());
+    }
   }
 
   public Object remove(Object key) {

@@ -13,19 +13,57 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package java.util;
 
-/**
- * Implements a hash table mapping object keys onto object values.
- */
-public class HashMap extends AbstractMap implements Map, Cloneable {
+import com.google.gwt.core.client.JavaScriptObject;
 
-  private static class ImplMapEntry implements Map.Entry {
-    private boolean inUse;
+/**
+ * 
+ * See Sun's JDK 1.4 documentation for documentation on the <code>HashMap</code>
+ * API.
+ * 
+ * This implementation of <code>HashMap</code> uses JavaScript native data
+ * structures to provide high performance in web mode, using string keys to
+ * index strings, and sparse int keys (via hashCode()) to index everything else.
+ */
+public class HashMap extends AbstractMap {
+  /*
+   * Implementation notes:  
+   *   String keys must be handled specially because we need only store one value 
+   *     for a given string key. 
+   *   String keys can collide with integer ones, as JavaScript treats '0' and 0 
+   *     as the same key.  We resolve this by appending an 'S' on each string key.
+   *   Integer keys are used for everything but Strings, as we get an integer by 
+   *     taking the hashcode, and storing the value there.  Since several keys
+   *     may have the same hashcode, we store a list of key/value pairs at the  
+   *     index of the hashcode.  Javascript arrays are sparse, so this usage costs 
+   *     nothing in performance.  Also, String and integer keys can coexist in the
+   *     same data structure, which reduces storage overhead for small HashMaps.
+   *   Things to pursue:
+   *     Benchmarking shared data store (with the 'S' append) vs one structure for 
+   *       Strings and another for everything else).
+   *     Benchmarking the effect of gathering the common parts of get/put/remove 
+   *       into a shared method.  These methods would have several parameters, and 
+   *       some extra control flow.
+   */
+
+  /**
+   * Implementation of <code>HashMap</code> entry.
+   */
+  private static class EntryImpl implements Map.Entry {
 
     private Object key;
 
     private Object value;
+
+    /**
+     * Constructor for <code>EntryImpl</code>.
+     */
+    public EntryImpl(Object key, Object value) {
+      this.key = key;
+      this.value = value;
+    }
 
     public boolean equals(Object a) {
       if (a instanceof Map.Entry) {
@@ -46,6 +84,9 @@ public class HashMap extends AbstractMap implements Map, Cloneable {
       return value;
     }
 
+    /**
+     * Calculate the hash code using Sun's specified algorithm.
+     */
     public int hashCode() {
       int keyHash = 0;
       int valueHash = 0;
@@ -64,6 +105,13 @@ public class HashMap extends AbstractMap implements Map, Cloneable {
       return old;
     }
 
+    public String toString() {
+      return getKey() + "=" + getValue();
+    }
+
+    /**
+     * Checks to see of a == b correctly handling the case where a is null.
+     */
     private boolean equalsWithNullCheck(Object a, Object b) {
       if (a == b) {
         return true;
@@ -74,343 +122,372 @@ public class HashMap extends AbstractMap implements Map, Cloneable {
       }
     }
   }
+  
+  /**
+   * Iterator for <code>EntrySetImpl</code>.
+   */
+  private final class EntrySetImplIterator implements Iterator {
+    Object last = null;
 
-  private class ImplMapEntryIterator implements Iterator {
+    private final Iterator iter;
 
     /**
-     * Always points at the next full slot; equal to <code>entries.length</code>
-     * if we're at the end.
+     * Constructor for <code>EntrySetIterator</code>.
      */
-    private int i = 0;
-
-    /**
-     * Always points to the last element returned by next, or <code>-1</code>
-     * if there is no last element.
-     */
-    private int last = -1;
-
-    public ImplMapEntryIterator() {
-      maybeAdvanceToFullSlot();
+    public EntrySetImplIterator() {
+      final List l = new ArrayList();
+      addAllFromJavascriptObject(l, map, BOTH_POS);
+      final Iterator lstIter = l.iterator();
+      this.iter = lstIter;
     }
 
     public boolean hasNext() {
-      return (i < entries.length);
+      return iter.hasNext();
     }
 
     public Object next() {
-      if (!hasNext()) {
-        throw new NoSuchElementException();
-      }
-      last = i++;
-      maybeAdvanceToFullSlot();
-      return entries[last];
+      last = iter.next();
+      return last;
     }
 
     public void remove() {
-      if (last < 0) {
-        throw new IllegalStateException();
+      if (last == null) {
+        throw new IllegalStateException("Must call next() before remove().");
+      } else {
+        iter.remove();
+        HashMap.this.remove(((Entry) last).getKey());
       }
-      // do the remove
-      entries[last].inUse = false;
-      --fullSlots;
-      last = -1;
     }
+  }
 
-    /**
-     * Ensure that <code>i</code> points at a full slot; or is equal to
-     * <code>entries.length</code> if we're at the end.
-     */
-    private void maybeAdvanceToFullSlot() {
-      for (; i < entries.length; ++i) {
-        if (entries[i] != null && entries[i].inUse) {
-          return;
+  /**
+   * Keys are stored in the first position of each pair within the JavaScript
+   * dictionary. This constant encodes that fact.
+   */
+  private static final int KEYS_POS = 0;
+
+  /**
+   * Values are stored in the second position of each pair within the JavaScript
+   * dictionary. This constant encodes that fact.
+   */
+  private static final int VALUES_POS = 1;
+
+  /**
+   * This constant is used when new mapping entries should be generated from the
+   * JavaScript item.
+   */
+  private static final int BOTH_POS = 2;
+
+  protected static Map.Entry createEntry(Object key, Object value) {
+    return new EntryImpl(key, value);
+  }
+
+  // Used by JSNI for key processing, not private to avoid eclipse "unused
+  // method" warning.
+  static String asString(Object o) {
+    // All keys must either be entirely numeric, or end with 'S' or be
+    // the sentinel value "null".
+
+    if (o instanceof String) {
+      // Mark all string keys so they do not conflict with numeric ones.
+      return ((String) o) + "S";
+    } else if (o == null) {
+      return "null";
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Finds the <code>JavaScriptObject</code> associated with the given
+   * non-string key.  Used in JSNI.
+   */
+  private static native JavaScriptObject findNode(HashMap me, Object key) /*-{
+    var KEYS_POS = 0;
+    var map = me.@java.util.HashMap::map;
+    var k = key.@java.lang.Object::hashCode()();
+    var candidates = map[k];
+    if (candidates != null) {
+      for (var index in candidates) {
+        var candidate = candidates[index];
+        if (candidate[KEYS_POS].@java.lang.Object::equals(Ljava/lang/Object;)(key)) {
+          return [k, index];
         }
       }
     }
-  }
+    return null;
+  }-*/;
 
   /**
-   * Number of physically empty slots in {@link #entries}.
+   * Underlying JavaScript map.
    */
-  private int emptySlots;
+  private JavaScriptObject map;
 
-  /**
-   * The underlying data store.
-   */
-  private ImplMapEntry[] entries;
-
-  /**
-   * Number of logically full slots in {@link #entries}.
-   */
-  private int fullSlots;
-
-  /**
-   * A number between 0 and 1, exclusive. Used to calculated the new
-   * {@link #threshold} at which this map will be rehashed.
-   */
-  private float loadFactor;
-
-  /**
-   * Always equal to {@link #entries}.length * {@link #loadFactor}. When the
-   * number of non-empty slots exceeds this number, a rehash is performed.
-   */
-  private int threshold;
+  private int currentSize = 0;
 
   public HashMap() {
-    this(16);
+    init();
   }
 
-  public HashMap(int initialCapacity) {
-    this(initialCapacity, 0.75f);
+  public HashMap(HashMap toBeCopied) {
+    this();
+    this.putAll(toBeCopied);
   }
 
-  public HashMap(int initialCapacity, float loadFactor) {
-    if (initialCapacity < 0 || loadFactor <= 0) {
+  public HashMap(int ignored) {
+    // This implementation of HashMap has no need of initial capacities.
+    this(ignored, 0);
+  }
+
+  public HashMap(int ignored, float alsoIgnored) {
+    this();
+    // This implementation of HashMap has no need of load factors or capacities.
+    if (ignored < 0 || alsoIgnored < 0) {
       throw new IllegalArgumentException(
           "initial capacity was negative or load factor was non-positive");
     }
-
-    if (initialCapacity == 0) {
-      // Rather than have to check for 0 every time we rehash, bumping 0 to 1
-      // here.
-      initialCapacity = 1;
-    }
-
-    /*
-     * This implementation does not used linked lists in each slot. It is
-     * physically impossible to store more entries than we have slots, so
-     * fLoadFactor must be < 1 or we'll run out of slots.
-     */
-    if (loadFactor > 0.9f) {
-      loadFactor = 0.9f;
-    }
-
-    this.loadFactor = loadFactor;
-    realloc(initialCapacity);
-  }
-
-  public HashMap(Map m) {
-    this(m.size());
-    putAll(m);
   }
 
   public void clear() {
-    fullSlots = 0;
-    realloc(entries.length);
+    init();
+    currentSize = 0;
   }
 
   public Object clone() {
     return new HashMap(this);
   }
 
-  public boolean containsKey(Object key) {
-    int i = implFindSlot(key);
-    if (i >= 0) {
-      ImplMapEntry entry = entries[i];
-      if (entry != null && entry.inUse) {
-        return true;
-      }
+  public native boolean containsKey(Object key) /*-{
+    var k = @java.util.HashMap::asString(Ljava/lang/Object;)(key);
+    if (k == null) {
+      var location = @java.util.HashMap::findNode(Ljava/util/HashMap;Ljava/lang/Object;)(this, key);
+      return (location != null);
+    } else {
+      return this.@java.util.HashMap::map[k] !== undefined;
     }
-    return false;
-  }
+  }-*/;
 
   public boolean containsValue(Object value) {
-    return super.containsValue(value);
+    return values().contains(value);
   }
 
   public Set entrySet() {
     return new AbstractSet() {
+      public boolean contains(Object entryObj) {
+        Entry entry = (Entry) entryObj;
+        if (entry != null) {
+          Object key = entry.getKey();
+          Object value = entry.getValue();
+          // If the value is null, we only want to return true if the found
+          // value equals null AND the HashMap
+          // contains the given key.
+          if (value != null || HashMap.this.containsKey(key)) {
+            Object foundValue = HashMap.this.get(key);
+            if (value == null) {
+              return foundValue == null;
+            } else {
+              return value.equals(foundValue);
+            }
+          }
+        }
+        return false;
+      }
+
       public Iterator iterator() {
-        return new ImplMapEntryIterator();
+        return new EntrySetImplIterator();
+      }
+
+      public boolean remove(Object entry) {
+        if (contains(entry)) {
+          Object key = ((Entry) entry).getKey();
+          HashMap.this.remove(key);
+          return true;
+        } else {
+          return false;
+        }
       }
 
       public int size() {
-        return fullSlots;
+        return HashMap.this.size();
       }
     };
   }
 
-  public Object get(Object key) {
-    int i = implFindSlot(key);
-    if (i >= 0) {
-      ImplMapEntry entry = entries[i];
-      if (entry != null && entry.inUse) {
-        return entry.value;
+  public native Object get(Object key) /*-{
+    var KEYS_POS = 0;
+    var VALUES_POS = 1;
+    var k = @java.util.HashMap::asString(Ljava/lang/Object;)(key);
+    if (k != null) {
+      var current = this.@java.util.HashMap::map[k];
+      if (current === undefined) {
+        return null;
+      } else { 
+        return current;
+      }
+    } else {    
+      k = key.@java.lang.Object::hashCode()();
+    }
+    var candidates = this.@java.util.HashMap::map[k];
+    if (candidates == null) { 
+      return null;
+    }  
+  
+    // Used because candidates may develop holes as deletions are performed.
+    for (var i in candidates) {
+      if (candidates[i][KEYS_POS].@java.lang.Object::equals(Ljava/lang/Object;)(key)) {
+        return candidates[i][VALUES_POS];
       }
     }
-    return null;
+    return null;    
+  }-*/;
+
+  public boolean isEmpty() {
+    return size() == 0;
   }
 
-  public int hashCode() {
-    int accum = 0;
-    Iterator elements = entrySet().iterator();
-    while (elements.hasNext()) {
-      accum += elements.next().hashCode();
+  public native Object put(Object key, Object value) /*-{
+    var KEYS_POS = 0;
+    var VALUES_POS = 1;
+    var previous = null;
+    var k = @java.util.HashMap::asString(Ljava/lang/Object;)(key);
+    if (k != null) {
+      previous = this.@java.util.HashMap::map[k];
+      this.@java.util.HashMap::map[k] = value;
+      if (previous === undefined) {
+        this.@java.util.HashMap::currentSize++;
+        return null;
+      } else { 
+        return previous;
+      }
+    } else {
+      k = key.@java.lang.Object::hashCode()();
     }
-    return accum;
-  }
-
-  public Set keySet() {
-    return super.keySet();
-  }
-
-  public Object put(Object key, Object value) {
-    /*
-     * If the number of non-empty slots exceeds the threshold, rehash.
-     */
-    if ((entries.length - emptySlots) >= threshold) {
-      implRehash();
+    var candidates = this.@java.util.HashMap::map[k];
+    if (candidates == null) { 
+      candidates = [];
+      this.@java.util.HashMap::map[k] = candidates;
+    }  
+  
+    // Used because candidates may develop holes as deletions are performed.
+    for (var i in candidates) {
+      if (candidates[i][KEYS_POS].@java.lang.Object::equals(Ljava/lang/Object;)(key)) {
+        previous = candidates[i][VALUES_POS];
+        candidates[i] = [key, value]; 
+        return previous;
+      }
     }
-    return implPutNoRehash(key, value);
-  }
+    this.@java.util.HashMap::currentSize++;
+    candidates[candidates.length] = [key,value];
+    return null;    
+  }-*/;
 
-  public void putAll(Map m) {
-    Set entrySet = m.entrySet();
-    for (Iterator iter = entrySet.iterator(); iter.hasNext();) {
-      Map.Entry entry = (Map.Entry) iter.next();
+  public void putAll(Map otherMap) {
+    Iterator iter = otherMap.entrySet().iterator();
+    while (iter.hasNext()) {
+      Map.Entry entry = (Entry) iter.next();
       put(entry.getKey(), entry.getValue());
     }
   }
 
-  public Object remove(Object key) {
-    int i = implFindSlot(key);
-    if (i >= 0) {
-      ImplMapEntry entry = entries[i];
-      if (entry != null && entry.inUse) {
-        entry.inUse = false;
-        --fullSlots;
-        return entry.getValue();
-      }
-    }
-    return null;
-  }
-
-  public int size() {
-    return fullSlots;
-  }
-
-  /**
-   * Finds the i slot with the matching key or the first empty slot. This method
-   * intentionally ignores whether or not an entry is marked "in use" because
-   * the table implements "lazy deletion", meaning that every object keeps its
-   * intrinsic location, whether or not it is considered still in the table or
-   * not.
-   * 
-   * @return the i of the slot in which either the entry having the key was
-   *         found or in which the entry would go; -1 if the hash table is
-   *         totally full
-   */
-  private int implFindSlot(Object key) {
-    int hashCode = (key != null ? key.hashCode() : 7919);
-    hashCode = (hashCode < 0 ? -hashCode : hashCode);
-    int capacity = entries.length;
-    int startIndex = (hashCode % capacity);
-    int slotIndex = startIndex;
-    int stopIndex = capacity;
-    for (int i = 0; i < 2; ++i) {
-      for (; slotIndex < stopIndex; ++slotIndex) {
-        Map.Entry entry = entries[slotIndex];
-        if (entry == null) {
-          return slotIndex;
-        }
-
-        Object testKey = entry.getKey();
-        if (key == null ? testKey == null : key.equals(testKey)) {
-          return slotIndex;
-        }
-      }
-
-      // Wrap around
-      //
-      slotIndex = 0;
-      stopIndex = startIndex;
-    }
-    // The hash table is totally full and the matching item was not found.
-    //
-    return -1;
-  }
-
-  /**
-   * Implements 'put' with the assumption that there will definitely be room for
-   * the new item.
-   */
-  private Object implPutNoRehash(Object key, Object value) {
-    // No need to check for (i == -1) because rehash would've made the array big
-    // enough to find a slot
-    int i = implFindSlot(key);
-    if (entries[i] != null) {
-      // Just updating the value that was already there.
-      // Remember that the existing entry might have been deleted.
-      //
-      ImplMapEntry entry = entries[i];
-
-      Object old = null;
-      if (entry.inUse) {
-        old = entry.value;
+  public native Object remove(Object key) /*-{
+    var VALUES_POS = 1;
+    var map = this.@java.util.HashMap::map;
+    var k = @java.util.HashMap::asString(Ljava/lang/Object;)(key);
+    var previous = null;
+    if (k != null) {
+      previous = map[k];
+      delete map[k];
+      if (previous !== undefined) {
+        this.@java.util.HashMap::currentSize--;
+        return previous;
       } else {
-        ++fullSlots;
+        return null;
       }
-
-      entry.value = value;
-      entry.inUse = true;
-      return old;
-    } else {
-      // This a brand new (key, value) pair.
-      //
-      ++fullSlots;
-      --emptySlots;
-      ImplMapEntry entry = new ImplMapEntry();
-      entry.key = key;
-      entry.value = value;
-      entry.inUse = true;
-      entries[i] = entry;
+    }
+    var location = @java.util.HashMap::findNode(Ljava/util/HashMap;Ljava/lang/Object;)(this, key);
+    if (location == null) {
       return null;
     }
+    this.@java.util.HashMap::currentSize--;
+    var hashCode = location[0];
+    var index = location[1];
+    var previous = map[hashCode][index][VALUES_POS];
+    map[hashCode].splice(index,1);
+    if (map[hashCode].length > 0) {
+      // Not the only cell for this hashCode, so no deletion.
+      return previous;
+    }
+    delete map[hashCode];
+    return previous;
+  }-*/;
+
+  public int size() {
+    return currentSize;
+  }
+
+  public Collection values() {
+    List values = new Vector();
+    addAllValuesFromJavascriptObject(values, map);
+    return values;
+  }
+
+  // Package protected to remove eclipse warning marker.
+  void addAllKeysFromJavascriptObject(Collection source,
+      JavaScriptObject javaScriptObject) {
+    addAllFromJavascriptObject(source, javaScriptObject, KEYS_POS);
   }
 
   /**
-   * Implements a rehash. The underlying array store may or may not be doubled.
+   * Adds all keys, values, or entries to the collection depending upon
+   * typeToAdd.
    */
-  private void implRehash() {
-    // Save the old entry array.
-    //
-    ImplMapEntry[] oldEntries = entries;
-
-    /*
-     * Allocate a new entry array. If the actual number or full slots exceeds
-     * the load factor, double the array size. Otherwise just rehash, clearing
-     * out all the empty slots.
-     */
-    int capacity = oldEntries.length;
-    if (fullSlots > threshold) {
-      capacity *= 2;
-    }
-
-    realloc(capacity);
-
-    // Now put all the in-use entries from the old array into the new array.
-    //
-    for (int i = 0, n = oldEntries.length; i < n; ++i) {
-      ImplMapEntry oldEntry = oldEntries[i];
-      if (oldEntry != null && oldEntry.inUse) {
-        int slot = implFindSlot(oldEntry.key);
-        // the array should be big enough to find a slot no matter what
-        assert (slot >= 0);
-        entries[slot] = oldEntry;
+  private native void addAllFromJavascriptObject(Collection source,
+      JavaScriptObject javaScriptObject, int typeToAdd)
+  /*-{
+    var KEYS_POS = 0;
+    var VALUES_POS = 1;
+    var BOTH_POS = 2;
+    var map = this.@java.util.HashMap::map;
+    for (var hashCode in javaScriptObject) {
+      var entry = null;
+      if (hashCode == "null" || hashCode.charAt(hashCode.length - 1) == 'S') {
+        var key = null;
+        if (typeToAdd != VALUES_POS && hashCode != "null") {
+          key = hashCode.substring(0, hashCode.length - 1);
+        }
+         if (typeToAdd == KEYS_POS) {
+          entry = key
+        } else if (typeToAdd == VALUES_POS) {
+          entry = map[hashCode];
+        } else if (typeToAdd == BOTH_POS) {
+          entry = 
+            @java.util.HashMap::createEntry(Ljava/lang/Object;Ljava/lang/Object;)(
+            key, map[hashCode]);
+        } 
+        source.@java.util.Collection::add(Ljava/lang/Object;)(entry);
+      } else {
+        var candidates = map[hashCode];
+        for (var index in candidates) { 
+          if (typeToAdd != BOTH_POS) {
+            entry = candidates[index][typeToAdd];
+          } else {
+            entry = 
+              @java.util.HashMap::createEntry(Ljava/lang/Object;Ljava/lang/Object;)(
+              candidates[index][0], candidates[index][1]);
+          }
+          source.@java.util.Collection::add(Ljava/lang/Object;)(entry);
+        }
       }
     }
+  }-*/;
+
+  private void addAllValuesFromJavascriptObject(Collection source,
+      JavaScriptObject javaScriptObject) {
+    addAllFromJavascriptObject(source, javaScriptObject, VALUES_POS);
   }
 
-  /**
-   * Set entries to a new array of the given capacity. Automatically recomputes
-   * threshold and emptySlots.
-   * 
-   * @param capacity
-   */
-  private void realloc(int capacity) {
-    threshold = (int) (capacity * loadFactor);
-    emptySlots = capacity - fullSlots;
-    entries = new ImplMapEntry[capacity];
-  }
+  private native void init() /*-{
+    this.@java.util.HashMap::map = [];
+  }-*/;
 
 }

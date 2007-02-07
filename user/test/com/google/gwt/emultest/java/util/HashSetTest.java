@@ -16,8 +16,13 @@ public class HashSetTest extends TestSet {
   public void testAddingKeys(){
     Map map = new HashMap();
     Set keys = new HashSet(map.keySet());
-    keys.add(new Object()); // Throws exception in IE6 (web-mode) but not GWT 
-     
+    keys.add(new Object()); // Throws exception in IE6 (web-mode) but not GWT
+  }
+
+  public void testAddWatch() {
+    HashSet s = new HashSet();
+    s.add("watch");
+    assertTrue(s.contains("watch"));
   }
 
   protected Set makeEmptySet() {
