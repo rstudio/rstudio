@@ -16,70 +16,54 @@
 package java.util;
 
 /**
- * Differences include capacity management and range checking.
- * <p>
- * <b>Capacity</b> There is no speed advantage to pre-allocating array sizes in
- * JavaScript, so this implementation does not include any of the capacity and
- * "growth increment" concepts in the standard Vector class.
- * </p>
- * <p>
- * <b>Range checking</b> For increased performance, this implementation does
- * not check for index validity.
- * </p>
+ * To keep performance characteristics in line with Java community expectations, 
+ * <code>Vector</code> is a wrapper around <code>ArrayList</code>.  
+ *
  */
-public class Vector extends AbstractList implements List, Cloneable,
-    RandomAccess {
+public class Vector extends AbstractList implements List, RandomAccess,
+    Cloneable {
 
-  protected static boolean equals(Object a, Object b) {
-    return (a == null ? b == null : a.equals(b));
-  }
+  private ArrayList arrayList;
 
   public Vector() {
-    initArray();
+    arrayList = new ArrayList();
   }
 
   public Vector(Collection c) {
-    initArray();
+    arrayList = new ArrayList();
     addAll(c);
   }
 
-  public native void add(int index, Object o) /*-{
-    var a = this.array;
-    this.array = a.slice(0, index).concat(o, a.slice(index)); 
-  }-*/;
+  public void add(int index, Object o) {
+    arrayList.add(index, o);
+  }
 
-  public native boolean add(Object o) /*-{
-    var a = this.array;
-    a[a.length] = o;
-    return true; 
-  }-*/;
+  public boolean add(Object o) {
+    return arrayList.add(o);
+  }
 
   public boolean addAll(Collection c) {
-    return super.addAll(c);
+    return arrayList.addAll(c);
   }
 
   public boolean addAll(int index, Collection c) {
-    return super.addAll(index, c);
+    return arrayList.addAll(index, c);
   }
 
   public void addElement(Object o) {
     add(o);
   }
 
-  public native void clear() /*-{
-    this.array.length = 0;
-  }-*/;
+  public void clear() {
+    arrayList.clear();
+  }
 
   public Object clone() {
     return new Vector(this);
   }
 
-  public boolean contains(Object o) {
-    return (indexOf(o) != -1);
-  }
-
-  public boolean containsAll(Collection c) {
-    return super.containsAll(c);
+  public boolean contains(Object elem) {
+    return arrayList.contains(elem);
   }
 
   public void copyInto(Object[] objs) {
@@ -88,14 +72,10 @@ public class Vector extends AbstractList implements List, Cloneable,
     while (++i < n) {
       objs[i] = get(i);
     }
-  }
-
+  } 
+  
   public Object elementAt(int index) {
     return get(index);
-  }
-
-  public boolean equals(Object o) {
-    return super.equals(o);
   }
 
   public Object firstElement() {
@@ -103,80 +83,47 @@ public class Vector extends AbstractList implements List, Cloneable,
   }
 
   public Object get(int index) {
-    if ((index < 0) || (index >= size())) {
-      throw new NoSuchElementException();
-    }
-    return _get(index);
+    return arrayList.get(index);
   }
 
-  public int hashCode() {
-    return super.hashCode();
+  public int indexOf(Object elem) {
+    return arrayList.indexOf(elem);
   }
 
-  public int indexOf(Object o) {
-    return indexOf(o, 0);
+  public int indexOf(Object elem, int index) {
+    return arrayList.indexOf(elem, index);
   }
-
-  public native int indexOf(Object o, int startIndex) /*-{
-    var a = this.array;
-    var i = startIndex-1;
-    var n = a.length;
-    while (++i < n) {
-      if (@java.util.Vector::equals(Ljava/lang/Object;Ljava/lang/Object;)(a[i],o))
-        return i;
-    }
-    return -1;
-  }-*/;
 
   public void insertElementAt(Object o, int index) {
     add(index, o);
   }
 
-  public native boolean isEmpty() /*-{
-    return (this.array.length == 0);
-  }-*/;
+  public boolean isEmpty() {
+    return (arrayList.size() == 0);
+  }
+
+  public Iterator iterator() {
+    return arrayList.iterator();
+  }
 
   public Object lastElement() {
     if (isEmpty()) {
-      throw new NoSuchElementException("last");
+      throw new IndexOutOfBoundsException("last");
     } else {
       return get(size() - 1);
     }
   }
 
   public int lastIndexOf(Object o) {
-    return lastIndexOf(o, size() - 1);
+    return arrayList.lastIndexOf(o);
   }
 
-  public native int lastIndexOf(Object o, int startIndex) /*-{
-    var a = this.array;
-    var i = startIndex;
-    while (i >= 0) {
-      if (@java.util.Vector::equals(Ljava/lang/Object;Ljava/lang/Object;)(a[i],o))
-        return i;
-      --i;
-    }
-    return -1;
-  }-*/;
-
-  public native Object remove(int index) /*-{
-    var a = this.array;
-    var old = a[index];
-    this.array = a.slice(0, index).concat(a.slice(index+1));
-    return old; 
-  }-*/;
-
-  public boolean remove(Object o) {
-    int i = indexOf(o);
-    if (i == -1) {
-      return false;
-    }
-    remove(i);
-    return true;
+  public int lastIndexOf(Object o, int index) {
+    return arrayList.lastIndexOf(o, index);
   }
 
-  public boolean removeAll(Collection c) {
-    return super.removeAll(c);
+  public Object remove(int index) {
+    return arrayList.remove(index);
   }
 
   public void removeAllElements() {
@@ -191,60 +138,27 @@ public class Vector extends AbstractList implements List, Cloneable,
     remove(index);
   }
 
-  public boolean retainAll(Collection c) {
-    return super.retainAll(c);
+  public Object set(int index, Object elem) {
+    return arrayList.set(index, elem);
   }
-
-  public native Object set(int index, Object o) /*-{
-    var a = this.array;
-    var old = a[index];
-    a[index] = o;
-    return old;
-  }-*/;
 
   public void setElementAt(Object o, int index) {
     set(index, o);
   }
 
-  public native void setSize(int newSize) /*-{
-    // Make sure to null-fill any newly created slots (otherwise,
-    // get() can return 'undefined').
-    for (var i = this.array.length; i < newSize; ++i)
-      this.array[i] = null;
+  public void setSize(int size) {
+    arrayList.setSize(size);
+  }
 
-    // Also make sure to clean up orphaned slots (or we'll end up
-    // leaving garbage uncollected).
-    for (var i = this.array.length - 1; i >= newSize; --i)
-      delete this.array[i];
-
-    this.array.length = newSize;
-  }-*/;
-
-  public native int size() /*-{
-    return this.array.length; 
-  }-*/;
+  public int size() {
+    return arrayList.size();
+  }
 
   public Object[] toArray() {
-    return super.toArray();
+    return arrayList.toArray();
   }
 
-  public String toString() {
-    return super.toString();
+  protected void removeRange(int fromIndex, int endIndex) {
+    arrayList.removeRange(fromIndex, endIndex);
   }
-
-  protected native void removeRange(int fromIndex, int endIndex) /*-{
-    var a = this.array;
-    this.array = a.slice(0, fromIndex).concat(a.slice(endIndex));
-  }-*/;
-
-  // CHECKSTYLE_OFF: Underscore prefix is an old convention that could be cleaned up.
-  private native Object _get(int index) /*-{
-    return this.array[index];
-  }-*/;
-  // CHECKSTYLE_ON
-
-  private native void initArray() /*-{
-    this.array = new Array(); 
-  }-*/;
-
 }
