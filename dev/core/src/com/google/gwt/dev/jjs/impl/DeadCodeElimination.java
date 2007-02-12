@@ -26,14 +26,19 @@ import com.google.gwt.dev.jjs.ast.JDoStatement;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JForStatement;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
+import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
+
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Attempts to remove dead code.
@@ -173,20 +178,37 @@ public class DeadCodeElimination {
     }
 
     /**
-     * Prune try statements with no body. Hoist up try statements with no
-     * catches and an empty finally.
+     * 1) Remove catch blocks whose exception type is not instantiable. 2) Prune
+     * try statements with no body. 3) Hoist up try statements with no catches
+     * and an empty finally.
      */
     public void endVisit(JTryStatement x, Context ctx) {
+      // 1) Remove catch blocks whose exception type is not instantiable.
+      List catchArgs = x.getCatchArgs();
+      List catchBlocks = x.getCatchBlocks();
+      for (Iterator itA = catchArgs.iterator(), itB = catchBlocks.iterator(); itA.hasNext();) {
+        JLocalRef localRef = (JLocalRef) itA.next();
+        itB.next();
+        JReferenceType type = (JReferenceType) localRef.getType();
+        if (!program.typeOracle.isInstantiatedType(type)
+            || type == program.getTypeNull()) {
+          itA.remove();
+          itB.remove();
+        }
+      }
+
+      // Compute properties regarding the state of this try statement
       boolean noTry = x.getTryBlock().statements.isEmpty();
       // TODO: normalize finally block handling
       boolean noFinally = (x.getFinallyBlock() == null)
           || x.getFinallyBlock().statements.isEmpty();
-      boolean noCatch = x.getCatchArgs().size() == 0;
+      boolean noCatch = catchArgs.size() == 0;
 
       if (noTry) {
-        // If the try block is empty, just remove it
+        // 2) Prune try statements with no body.
         removeMe(x, ctx);
       } else if (noCatch && noFinally) {
+        // 3) Hoist up try statements with no catches and an empty finally.
         // If there's no catch or finally, there's no point in this even being
         // a try statement, replace myself with the try block
         ctx.replaceMe(x.getTryBlock());

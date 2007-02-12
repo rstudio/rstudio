@@ -155,11 +155,13 @@ public class CastNormalizer {
 
     // @Override
     public void endVisit(JCastOperation x, Context ctx) {
+      assert (x.getCastType() != program.getTypeNull());
       recordCast(x.getCastType(), x.getExpr());
     }
 
     // @Override
     public void endVisit(JInstanceOf x, Context ctx) {
+      assert (x.getTestType() != program.getTypeNull());
       recordCast(x.getTestType(), x.getExpr());
     }
 
