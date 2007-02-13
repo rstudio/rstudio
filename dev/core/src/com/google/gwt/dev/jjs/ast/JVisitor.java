@@ -528,7 +528,7 @@ public class JVisitor {
     if (e instanceof InternalCompilerException) {
       ice = (InternalCompilerException) e;
     } else {
-      ice = new InternalCompilerException("Error constructing Java AST", e);
+      ice = new InternalCompilerException("Unexpected error during visit.", e);
     }
     ice.addNode(node);
     return ice;
