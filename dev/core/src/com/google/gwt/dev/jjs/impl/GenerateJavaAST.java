@@ -84,7 +84,6 @@ import com.google.gwt.dev.js.ast.JsSourceInfo;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.AND_AND_Expression;
-import org.eclipse.jdt.internal.compiler.ast.ASTNode;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.AllocationExpression;
 import org.eclipse.jdt.internal.compiler.ast.ArrayAllocationExpression;
@@ -225,6 +224,19 @@ public class GenerateJavaAST {
       return sb.toString();
     }
 
+    private static InternalCompilerException translateException(JNode node,
+        Throwable e) {
+      InternalCompilerException ice;
+      if (e instanceof InternalCompilerException) {
+        ice = (InternalCompilerException) e;
+        ice.addNode(node);
+      } else {
+        ice = new InternalCompilerException(node,
+            "Error constructing Java AST", e);
+      }
+      return ice;
+    }
+
     private Object[] args = new Object[1];
 
     private JReferenceType currentClass;
@@ -259,54 +271,58 @@ public class GenerateJavaAST {
      */
     public void processType(TypeDeclaration x) {
       currentClass = (JReferenceType) typeMap.get(x.binding);
-      currentClassScope = x.scope;
-      currentSeparatorPositions = x.compilationResult.lineSeparatorPositions;
-      currentFileName = String.valueOf(x.compilationResult.fileName);
+      try {
+        currentClassScope = x.scope;
+        currentSeparatorPositions = x.compilationResult.lineSeparatorPositions;
+        currentFileName = String.valueOf(x.compilationResult.fileName);
 
-      if (x.fields != null) {
-        // Process fields
-        for (int i = 0, n = x.fields.length; i < n; ++i) {
-          FieldDeclaration fieldDeclaration = x.fields[i];
-          if (fieldDeclaration.isStatic()) {
-            // clinit
-            currentMethod = (JMethod) currentClass.methods.get(0);
-            currentMethodScope = x.staticInitializerScope;
-          } else {
-            // init
-            currentMethod = (JMethod) currentClass.methods.get(1);
-            currentMethodScope = x.initializerScope;
-          }
+        if (x.fields != null) {
+          // Process fields
+          for (int i = 0, n = x.fields.length; i < n; ++i) {
+            FieldDeclaration fieldDeclaration = x.fields[i];
+            if (fieldDeclaration.isStatic()) {
+              // clinit
+              currentMethod = (JMethod) currentClass.methods.get(0);
+              currentMethodScope = x.staticInitializerScope;
+            } else {
+              // init
+              currentMethod = (JMethod) currentClass.methods.get(1);
+              currentMethodScope = x.initializerScope;
+            }
 
-          if (fieldDeclaration instanceof Initializer) {
-            assert (currentClass instanceof JClassType);
-            processInitializer((Initializer) fieldDeclaration);
-          } else {
-            processField(fieldDeclaration);
-          }
-        }
-      }
-
-      currentMethodScope = null;
-      currentMethod = null;
-
-      if (x.methods != null) {
-        // Process methods
-        for (int i = 0, n = x.methods.length; i < n; ++i) {
-          if (x.methods[i].isConstructor()) {
-            assert (currentClass instanceof JClassType);
-            processConstructor((ConstructorDeclaration) x.methods[i]);
-          } else if (x.methods[i].isClinit()) {
-            // nothing to do
-          } else {
-            processMethod(x.methods[i]);
+            if (fieldDeclaration instanceof Initializer) {
+              assert (currentClass instanceof JClassType);
+              processInitializer((Initializer) fieldDeclaration);
+            } else {
+              processField(fieldDeclaration);
+            }
           }
         }
-      }
 
-      currentClassScope = null;
-      currentClass = null;
-      currentSeparatorPositions = null;
-      currentFileName = null;
+        currentMethodScope = null;
+        currentMethod = null;
+
+        if (x.methods != null) {
+          // Process methods
+          for (int i = 0, n = x.methods.length; i < n; ++i) {
+            if (x.methods[i].isConstructor()) {
+              assert (currentClass instanceof JClassType);
+              processConstructor((ConstructorDeclaration) x.methods[i]);
+            } else if (x.methods[i].isClinit()) {
+              // nothing to do
+            } else {
+              processMethod(x.methods[i]);
+            }
+          }
+        }
+
+        currentClassScope = null;
+        currentClass = null;
+        currentSeparatorPositions = null;
+        currentFileName = null;
+      } catch (Throwable e) {
+        throw translateException(currentClass, e);
+      }
     }
 
     /**
@@ -319,35 +335,15 @@ public class GenerateJavaAST {
       }
 
       try {
-        try {
-          params[0] = child.getClass();
-          Method method = getClass().getDeclaredMethod(name, params);
-          args[0] = child;
-          return (JNode) method.invoke(this, args);
-        } catch (SecurityException e) {
-          throw new InternalCompilerException("Error during dispatch", e);
-        } catch (NoSuchMethodException e) {
-          String s = params[0].getName();
-          throw new InternalCompilerException("Expecting: private void " + name
-              + "(" + s.substring(s.lastIndexOf('.') + 1) + " x) { }", e);
-        } catch (IllegalArgumentException e) {
-          throw new InternalCompilerException("Error during dispatch", e);
-        } catch (IllegalAccessException e) {
-          throw new InternalCompilerException("Error during dispatch", e);
-        } catch (InvocationTargetException e) {
-          Throwable target = e.getTargetException();
-          if (target instanceof InternalCompilerException) {
-            throw (InternalCompilerException) target;
-          } else {
-            throw new InternalCompilerException(
-                "Error during AST construction", target);
-          }
+        params[0] = child.getClass();
+        Method method = getClass().getDeclaredMethod(name, params);
+        args[0] = child;
+        return (JNode) method.invoke(this, args);
+      } catch (Throwable e) {
+        if (e instanceof InvocationTargetException) {
+          e = ((InvocationTargetException) e).getTargetException();
         }
-      } catch (InternalCompilerException ice) {
-        if (child instanceof ASTNode) {
-          ice.addNode((ASTNode) child);
-        }
-        throw ice;
+        throw translateException(child, e);
       }
     }
 
@@ -449,48 +445,64 @@ public class GenerateJavaAST {
      */
     void processConstructor(ConstructorDeclaration x) {
       JMethod ctor = (JMethod) typeMap.get(x.binding);
-      JSourceInfo info = ctor.body.getSourceInfo();
+      try {
+        JSourceInfo info = ctor.body.getSourceInfo();
 
-      currentMethod = ctor;
-      currentMethodScope = x.scope;
+        currentMethod = ctor;
+        currentMethodScope = x.scope;
 
-      JMethodCall call = null;
-      ExplicitConstructorCall ctorCall = x.constructorCall;
-      if (ctorCall != null) {
-        call = processExpression(ctorCall);
-      }
+        JMethodCall call = null;
+        ExplicitConstructorCall ctorCall = x.constructorCall;
+        if (ctorCall != null) {
+          call = (JMethodCall) dispatch("processExpression", ctorCall);
+        }
 
-      /*
-       * Determine if we have an explicit this call. The presence of an explicit
-       * this call indicates we can skip certain initialization steps (as the
-       * callee will perform those steps for us). These skippable steps are 1)
-       * assigning synthetic args to fields and 2) running initializers.
-       */
-      boolean hasExplicitThis = (ctorCall != null) && !ctorCall.isSuperAccess();
+        /*
+         * Determine if we have an explicit this call. The presence of an
+         * explicit this call indicates we can skip certain initialization steps
+         * (as the callee will perform those steps for us). These skippable
+         * steps are 1) assigning synthetic args to fields and 2) running
+         * initializers.
+         */
+        boolean hasExplicitThis = (ctorCall != null)
+            && !ctorCall.isSuperAccess();
 
-      JClassType enclosingType = (JClassType) ctor.getEnclosingType();
+        JClassType enclosingType = (JClassType) ctor.getEnclosingType();
 
-      // Call clinit; $clinit is always in position 0.
-      JMethod clinitMethod = (JMethod) enclosingType.methods.get(0);
-      JMethodCall clinitCall = new JMethodCall(program, info, null,
-          clinitMethod);
-      ctor.body.statements.add(new JExpressionStatement(program, info,
-          clinitCall));
+        // Call clinit; $clinit is always in position 0.
+        JMethod clinitMethod = (JMethod) enclosingType.methods.get(0);
+        JMethodCall clinitCall = new JMethodCall(program, info, null,
+            clinitMethod);
+        ctor.body.statements.add(new JExpressionStatement(program, info,
+            clinitCall));
 
-      /*
-       * All synthetic fields must be assigned, unless we have an explicit this
-       * constructor call, in which case the callee will assign them for us.
-       */
-      if (!hasExplicitThis) {
-        ReferenceBinding declaringClass = x.binding.declaringClass;
-        if (declaringClass instanceof NestedTypeBinding) {
-          Iterator/* <JParameter> */paramIt = ctor.params.iterator();
-          NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
-          if (nestedBinding.enclosingInstances != null) {
-            for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
-              SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
-              JParameter param = (JParameter) paramIt.next();
-              if (arg.matchingField != null) {
+        /*
+         * All synthetic fields must be assigned, unless we have an explicit
+         * this constructor call, in which case the callee will assign them for
+         * us.
+         */
+        if (!hasExplicitThis) {
+          ReferenceBinding declaringClass = x.binding.declaringClass;
+          if (declaringClass instanceof NestedTypeBinding) {
+            Iterator/* <JParameter> */paramIt = ctor.params.iterator();
+            NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
+            if (nestedBinding.enclosingInstances != null) {
+              for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
+                SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
+                JParameter param = (JParameter) paramIt.next();
+                if (arg.matchingField != null) {
+                  JField field = (JField) typeMap.get(arg);
+                  ctor.body.statements.add(program.createAssignmentStmt(info,
+                      createVariableRef(info, field), createVariableRef(info,
+                          param)));
+                }
+              }
+            }
+
+            if (nestedBinding.outerLocalVariables != null) {
+              for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
+                SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
+                JParameter param = (JParameter) paramIt.next();
                 JField field = (JField) typeMap.get(arg);
                 ctor.body.statements.add(program.createAssignmentStmt(info,
                     createVariableRef(info, field), createVariableRef(info,
@@ -498,57 +510,48 @@ public class GenerateJavaAST {
               }
             }
           }
+        }
 
-          if (nestedBinding.outerLocalVariables != null) {
-            for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
-              SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
-              JParameter param = (JParameter) paramIt.next();
-              JField field = (JField) typeMap.get(arg);
-              ctor.body.statements.add(program.createAssignmentStmt(info,
-                  createVariableRef(info, field),
-                  createVariableRef(info, param)));
+        // optional this or super constructor call
+        if (call != null) {
+          ctor.body.statements.add(new JExpressionStatement(program,
+              makeSourceInfo(ctorCall), call));
+        }
+
+        JExpression thisRef = createThisRef(info, enclosingType);
+
+        /*
+         * Call the synthetic instance initializer method, unless we have an
+         * explicit this constructor call, in which case the callee will.
+         */
+        if (!hasExplicitThis) {
+          // $init is always in position 1 (clinit is in 0)
+          JMethod initMethod = (JMethod) enclosingType.methods.get(1);
+          JMethodCall initCall = new JMethodCall(program, info, thisRef,
+              initMethod);
+          ctor.body.statements.add(new JExpressionStatement(program, info,
+              initCall));
+        }
+
+        // user code (finally!)
+        if (x.statements != null) {
+          for (int i = 0, n = x.statements.length; i < n; ++i) {
+            Statement origStmt = x.statements[i];
+            JStatement jstmt = dispProcessStatement(origStmt);
+            if (jstmt != null) {
+              ctor.body.statements.add(jstmt);
             }
           }
         }
+
+        currentMethodScope = null;
+        currentMethod = null;
+
+        // synthesize a return statement to emulate returning the new object
+        ctor.body.statements.add(new JReturnStatement(program, null, thisRef));
+      } catch (Throwable e) {
+        throw translateException(ctor, e);
       }
-
-      // optional this or super constructor call
-      if (call != null) {
-        ctor.body.statements.add(new JExpressionStatement(program,
-            makeSourceInfo(ctorCall), call));
-      }
-
-      JExpression thisRef = createThisRef(info, enclosingType);
-
-      /*
-       * Call the synthetic instance initializer method, unless we have an
-       * explicit this constructor call, in which case the callee will.
-       */
-      if (!hasExplicitThis) {
-        // $init is always in position 1 (clinit is in 0)
-        JMethod initMethod = (JMethod) enclosingType.methods.get(1);
-        JMethodCall initCall = new JMethodCall(program, info, thisRef,
-            initMethod);
-        ctor.body.statements.add(new JExpressionStatement(program, info,
-            initCall));
-      }
-
-      // user code (finally!)
-      if (x.statements != null) {
-        for (int i = 0, n = x.statements.length; i < n; ++i) {
-          Statement origStmt = x.statements[i];
-          JStatement jstmt = dispProcessStatement(origStmt);
-          if (jstmt != null) {
-            ctor.body.statements.add(jstmt);
-          }
-        }
-      }
-
-      currentMethodScope = null;
-      currentMethod = null;
-
-      // synthesize a return statement to emulate returning the new object
-      ctor.body.statements.add(new JReturnStatement(program, null, thisRef));
     }
 
     JExpression processExpression(AllocationExpression x) {
@@ -1198,62 +1201,68 @@ public class GenerateJavaAST {
          */
         return;
       }
-      JExpression initializer = null;
-      if (declaration.initialization != null) {
-        initializer = dispProcessExpression(declaration.initialization);
-      }
+      try {
+        JExpression initializer = null;
+        if (declaration.initialization != null) {
+          initializer = dispProcessExpression(declaration.initialization);
+        }
 
-      if (initializer instanceof JLiteral) {
-        field.constInitializer = (JLiteral) initializer;
-      } else if (initializer != null) {
-        JSourceInfo info = makeSourceInfo(declaration);
-        JStatement assignStmt = program.createAssignmentStmt(info,
-            createVariableRef(info, field), initializer);
+        if (initializer instanceof JLiteral) {
+          field.constInitializer = (JLiteral) initializer;
+        } else if (initializer != null) {
+          JSourceInfo info = makeSourceInfo(declaration);
+          JStatement assignStmt = program.createAssignmentStmt(info,
+              createVariableRef(info, field), initializer);
 
-        // will either be init or clinit
-        currentMethod.body.statements.add(assignStmt);
+          // will either be init or clinit
+          currentMethod.body.statements.add(assignStmt);
+        }
+      } catch (Throwable e) {
+        throw translateException(field, e);
       }
     }
 
     void processInitializer(Initializer initializer) {
-      JBlock block = processStatement(initializer.block);
-      // will either be init or clinit
-      currentMethod.body.statements.add(block);
+      JBlock block = (JBlock) dispProcessStatement(initializer.block);
+      try {
+        // will either be init or clinit
+        currentMethod.body.statements.add(block);
+      } catch (Throwable e) {
+        throw translateException(initializer, e);
+      }
     }
 
     void processMethod(AbstractMethodDeclaration x) {
       MethodBinding b = x.binding;
       JMethod method = (JMethod) typeMap.get(b);
+      try {
+        if (b.isImplementing() || b.isOverriding()) {
+          tryFindUpRefs(method, b);
+        }
 
-      if (b.isImplementing() || b.isOverriding()) {
-        tryFindUpRefs(method, b);
-      }
+        if (x.isNative()) {
+          processNativeMethod(x, (JsniMethod) method);
+          return;
+        }
 
-      if (x.isNative()) {
-        processNativeMethod(x, (JsniMethod) method);
-        return;
-      }
+        currentMethod = method;
+        currentMethodScope = x.scope;
 
-      currentMethod = method;
-      currentMethodScope = x.scope;
-
-      if (x.statements != null) {
-        for (int i = 0, n = x.statements.length; i < n; ++i) {
-          Statement origStmt = x.statements[i];
-          JStatement jstmt = dispProcessStatement(origStmt);
-          if (jstmt != null) {
-            method.body.statements.add(jstmt);
+        if (x.statements != null) {
+          for (int i = 0, n = x.statements.length; i < n; ++i) {
+            Statement origStmt = x.statements[i];
+            JStatement jstmt = dispProcessStatement(origStmt);
+            if (jstmt != null) {
+              method.body.statements.add(jstmt);
+            }
           }
         }
+        currentMethodScope = null;
+        currentMethod = null;
+      } catch (Throwable e) {
+        throw translateException(method, e);
       }
-      currentMethodScope = null;
-      currentMethod = null;
     }
-
-    // // 5.0
-    // JStatement processStatement(ForeachStatement x) {
-    // return null;
-    // }
 
     void processNativeMethod(AbstractMethodDeclaration x,
         JsniMethod nativeMethod) {
@@ -1318,6 +1327,11 @@ public class GenerateJavaAST {
         }
       }
     }
+
+    // // 5.0
+    // JStatement processStatement(ForeachStatement x) {
+    // return null;
+    // }
 
     JStatement processStatement(AssertStatement x) {
       JSourceInfo info = makeSourceInfo(x);
@@ -1469,7 +1483,7 @@ public class GenerateJavaAST {
 
     JStatement processStatement(SynchronizedStatement x) {
       JSourceInfo info = makeSourceInfo(x);
-      JBlock block = processStatement(x.block);
+      JBlock block = (JBlock) dispProcessStatement(x.block);
       JExpression expr = dispProcessExpression(x.expression);
       block.statements.add(0, new JExpressionStatement(program, info, expr));
       return block;
@@ -1483,7 +1497,7 @@ public class GenerateJavaAST {
 
     JStatement processStatement(TryStatement x) {
       JSourceInfo info = makeSourceInfo(x);
-      JBlock tryBlock = processStatement(x.tryBlock);
+      JBlock tryBlock = (JBlock) dispProcessStatement(x.tryBlock);
       List/* <JLocalRef> */catchArgs = new ArrayList/* <JLocalRef> */();
       List/* <JBlock> */catchBlocks = new ArrayList/* <JBlock> */();
       if (x.catchBlocks != null) {
@@ -1492,10 +1506,10 @@ public class GenerateJavaAST {
           catchArgs.add(createVariableRef(info, local));
         }
         for (int i = 0, c = x.catchBlocks.length; i < c; ++i) {
-          catchBlocks.add(processStatement(x.catchBlocks[i]));
+          catchBlocks.add(dispProcessStatement(x.catchBlocks[i]));
         }
       }
-      JBlock finallyBlock = processStatement(x.finallyBlock);
+      JBlock finallyBlock = (JBlock) dispProcessStatement(x.finallyBlock);
       return new JTryStatement(program, info, tryBlock, catchArgs, catchBlocks,
           finallyBlock);
     }
@@ -2012,6 +2026,24 @@ public class GenerateJavaAST {
       JBinaryOperation binaryOperation = new JBinaryOperation(program, info,
           type, op, exprArg1, exprArg2);
       return binaryOperation;
+    }
+
+    private InternalCompilerException translateException(Object node,
+        Throwable e) {
+      InternalCompilerException ice;
+      if (e instanceof InternalCompilerException) {
+        ice = (InternalCompilerException) e;
+      } else {
+        ice = new InternalCompilerException("Error constructing Java AST", e);
+      }
+      String className = node.getClass().getName();
+      String description = node.toString();
+      JSourceInfo sourceInfo = null;
+      if (node instanceof Statement) {
+        sourceInfo = makeSourceInfo((Statement) node);
+      }
+      ice.addNode(className, description, sourceInfo);
+      return ice;
     }
 
     /**

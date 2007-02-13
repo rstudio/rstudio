@@ -30,6 +30,7 @@ import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
+import com.google.gwt.dev.jjs.ast.JSourceInfo;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.BuildTypeMap;
 import com.google.gwt.dev.jjs.impl.CastNormalizer;
@@ -39,6 +40,7 @@ import com.google.gwt.dev.jjs.impl.CompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
+import com.google.gwt.dev.jjs.impl.InternalCompilerException;
 import com.google.gwt.dev.jjs.impl.JavaScriptObjectCaster;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic;
 import com.google.gwt.dev.jjs.impl.MethodAndClassFinalizer;
@@ -48,6 +50,7 @@ import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.ReplaceRebinds;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
+import com.google.gwt.dev.jjs.impl.InternalCompilerException.NodeInfo;
 import com.google.gwt.dev.js.FullNamingStrategy;
 import com.google.gwt.dev.js.JsSourceGenerationVisitor;
 import com.google.gwt.dev.js.NamingStrategy;
@@ -65,6 +68,8 @@ import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -383,6 +388,36 @@ public class JavaToJavaScriptCompiler {
     } catch (UnableToCompleteException e) {
       // just rethrow
       throw e;
+    } catch (InternalCompilerException e) {
+      TreeLogger topBranch = logger.branch(TreeLogger.ERROR,
+          "An internal compiler exception occurred", e);
+      List nodeTrace = e.getNodeTrace();
+      for (Iterator it = nodeTrace.iterator(); it.hasNext();) {
+        NodeInfo nodeInfo = (NodeInfo) it.next();
+        JSourceInfo info = nodeInfo.getSourceInfo();
+        String msg;
+        if (info != null) {
+          String fileName = info.getFileName();
+          fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
+          fileName = fileName.substring(fileName.lastIndexOf('\\') + 1);
+          msg = "at " + fileName + "(" + info.getStartLine() + "): ";
+        } else {
+          msg = "<no source info>: ";
+        }
+
+        String description = nodeInfo.getDescription();
+        if (description != null) {
+          msg += description;
+        } else {
+          msg += "<no description available>";
+        }
+        TreeLogger nodeBranch = topBranch.branch(TreeLogger.ERROR, msg, null);
+        String className = nodeInfo.getClassName();
+        if (className != null) {
+          nodeBranch.log(TreeLogger.INFO, className, null);
+        }
+      }
+      throw new UnableToCompleteException();
     } catch (Throwable e) {
       logger.log(TreeLogger.ERROR, "Unexpected internal compiler error", e);
       throw new UnableToCompleteException();

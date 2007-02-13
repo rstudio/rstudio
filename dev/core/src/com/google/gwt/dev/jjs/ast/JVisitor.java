@@ -516,40 +516,21 @@ public class JVisitor {
   }
 
   protected final void doTraverse(JNode node, Context ctx) {
-    // boolean trace = false;
-    // String before = null;
     try {
-      // trace = !(this instanceof ToStringGenerationVisitor)
-      // && (node instanceof JTryStatement);
-      // if (trace) {
-      // before = node.toSource();
-      // }
       node.traverse(this, ctx);
-      // if (trace) {
-      // String after = node.toSource();
-      // if (!before.equals(after)) {
-      // System.out.println(this.getClass().getName() + ":");
-      // System.out.println("--");
-      // System.out.println(before);
-      // System.out.println("VV");
-      // System.out.println(after);
-      // System.out.println("---------------------------------------------------------");
-      // }
-      // }
-    } catch (InternalCompilerException ice) {
-      ice.addNode(node);
-      throw ice;
     } catch (Throwable e) {
-      // if (trace) {
-      // System.out.println(this.getClass().getName() + ":");
-      // System.out.println("--");
-      // System.out.println(before);
-      // System.out.println(e);
-      // }
-      InternalCompilerException ice = new InternalCompilerException(
-          "Unexpected error during visit.", e);
-      ice.addNode(node);
-      throw ice;
+      throw translateException(node, e);
     }
+  }
+
+  private InternalCompilerException translateException(JNode node, Throwable e) {
+    InternalCompilerException ice;
+    if (e instanceof InternalCompilerException) {
+      ice = (InternalCompilerException) e;
+    } else {
+      ice = new InternalCompilerException("Error constructing Java AST", e);
+    }
+    ice.addNode(node);
+    return ice;
   }
 }

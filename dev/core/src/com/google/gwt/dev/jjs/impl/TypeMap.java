@@ -49,7 +49,9 @@ public class TypeMap {
   public JNode get(Binding binding) {
     JNode result = internalGet(binding);
     if (result == null) {
-      throw new RuntimeException("Failed to get JNode");
+      InternalCompilerException ice = new InternalCompilerException(
+          "Failed to get JNode");
+      ice.addNode(binding.getClass().getName(), binding.toString(), null);
     }
     return result;
   }

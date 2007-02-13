@@ -104,6 +104,18 @@ public class BuildTypeMap {
           startLine, fileName);
     }
 
+    private static InternalCompilerException translateException(
+        AbstractMethodDeclaration amd, Throwable e) {
+      InternalCompilerException ice;
+      if (e instanceof InternalCompilerException) {
+        ice = (InternalCompilerException) e;
+      } else {
+        ice = new InternalCompilerException("Error building type map", e);
+      }
+      ice.addNode(amd.getClass().getName(), amd.toString(), makeSourceInfo(amd));
+      return ice;
+    }
+
     private String currentFileName;
     private int[] currentSeparatorPositions;
     private final JsParser jsParser = new JsParser();
@@ -124,18 +136,22 @@ public class BuildTypeMap {
     }
 
     public boolean visit(Argument argument, BlockScope scope) {
-      if (scope == scope.methodScope()) {
-        return true;
-      }
+      try {
+        if (scope == scope.methodScope()) {
+          return true;
+        }
 
-      JSourceInfo info = makeInfo(argument);
-      LocalVariableBinding b = argument.binding;
-      JType localType = (JType) typeMap.get(b.type);
-      JMethod enclosingMethod = findEnclosingMethod(scope);
-      JLocal newLocal = program.createLocal(info, argument.name, localType,
-          b.isFinal(), enclosingMethod);
-      typeMap.put(b, newLocal);
-      return true;
+        JSourceInfo info = makeSourceInfo(argument);
+        LocalVariableBinding b = argument.binding;
+        JType localType = (JType) typeMap.get(b.type);
+        JMethod enclosingMethod = findEnclosingMethod(scope);
+        JLocal newLocal = program.createLocal(info, argument.name, localType,
+            b.isFinal(), enclosingMethod);
+        typeMap.put(b, newLocal);
+        return true;
+      } catch (Throwable e) {
+        throw translateException(argument, e);
+      }
     }
 
     /**
@@ -146,191 +162,208 @@ public class BuildTypeMap {
      * for details.
      */
     public boolean visit(ConstructorDeclaration ctorDecl, ClassScope scope) {
-      MethodBinding b = ctorDecl.binding;
-      JClassType enclosingType = (JClassType) typeMap.get(scope.enclosingSourceType());
-      String name = enclosingType.getShortName();
-      JSourceInfo info = makeSourceInfo(ctorDecl);
-      JMethod newMethod = program.createMethod(info, name.toCharArray(),
-          enclosingType, enclosingType, false, false, true, b.isPrivate(),
-          false);
-      mapThrownExceptions(newMethod, ctorDecl);
+      try {
+        MethodBinding b = ctorDecl.binding;
+        JClassType enclosingType = (JClassType) typeMap.get(scope.enclosingSourceType());
+        String name = enclosingType.getShortName();
+        JSourceInfo info = makeSourceInfo(ctorDecl);
+        JMethod newMethod = program.createMethod(info, name.toCharArray(),
+            enclosingType, enclosingType, false, false, true, b.isPrivate(),
+            false);
+        mapThrownExceptions(newMethod, ctorDecl);
 
-      int syntheticParamCount = 0;
-      ReferenceBinding declaringClass = b.declaringClass;
-      if (declaringClass.isNestedType() && !declaringClass.isStatic()) {
-        // add synthentic args for outer this and locals
-        NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
-        Set alreadyNamedVariables = new HashSet();
-        if (nestedBinding.enclosingInstances != null) {
-          for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
-            SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
-            String argName = String.valueOf(arg.name);
-            if (alreadyNamedVariables.contains(argName)) {
-              argName += "_" + i;
+        int syntheticParamCount = 0;
+        ReferenceBinding declaringClass = b.declaringClass;
+        if (declaringClass.isNestedType() && !declaringClass.isStatic()) {
+          // add synthentic args for outer this and locals
+          NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
+          Set alreadyNamedVariables = new HashSet();
+          if (nestedBinding.enclosingInstances != null) {
+            for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
+              SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
+              String argName = String.valueOf(arg.name);
+              if (alreadyNamedVariables.contains(argName)) {
+                argName += "_" + i;
+              }
+              createParameter(arg, argName, newMethod);
+              ++syntheticParamCount;
+              alreadyNamedVariables.add(argName);
             }
-            createParameter(arg, argName, newMethod);
-            ++syntheticParamCount;
-            alreadyNamedVariables.add(argName);
+          }
+
+          if (nestedBinding.outerLocalVariables != null) {
+            for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
+              SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
+              String argName = String.valueOf(arg.name);
+              if (alreadyNamedVariables.contains(argName)) {
+                argName += "_" + i;
+              }
+              createParameter(arg, argName, newMethod);
+              ++syntheticParamCount;
+              alreadyNamedVariables.add(argName);
+            }
           }
         }
 
-        if (nestedBinding.outerLocalVariables != null) {
-          for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
-            SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
-            String argName = String.valueOf(arg.name);
-            if (alreadyNamedVariables.contains(argName)) {
-              argName += "_" + i;
-            }
-            createParameter(arg, argName, newMethod);
-            ++syntheticParamCount;
-            alreadyNamedVariables.add(argName);
-          }
+        // user args
+        mapParameters(newMethod, ctorDecl);
+
+        // remove synthetic args from the original param types list
+        for (; syntheticParamCount > 0; --syntheticParamCount) {
+          newMethod.getOriginalParamTypes().remove(0);
         }
+
+        typeMap.put(b, newMethod);
+        return true;
+      } catch (Throwable e) {
+        throw translateException(ctorDecl, e);
       }
-
-      // user args
-      mapParameters(newMethod, ctorDecl);
-
-      // remove synthetic args from the original param types list
-      for (; syntheticParamCount > 0; --syntheticParamCount) {
-        newMethod.getOriginalParamTypes().remove(0);
-      }
-
-      typeMap.put(b, newMethod);
-      return true;
     }
 
     public boolean visit(FieldDeclaration fieldDeclaration, MethodScope scope) {
-      FieldBinding b = fieldDeclaration.binding;
-      JSourceInfo info = makeInfo(fieldDeclaration);
-      JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.enclosingSourceType());
-      createField(info, b, enclosingType,
-          fieldDeclaration.initialization != null);
-      return true;
+      try {
+        FieldBinding b = fieldDeclaration.binding;
+        JSourceInfo info = makeSourceInfo(fieldDeclaration);
+        JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.enclosingSourceType());
+        createField(info, b, enclosingType,
+            fieldDeclaration.initialization != null);
+        return true;
+      } catch (Throwable e) {
+        throw translateException(fieldDeclaration, e);
+      }
     }
 
     public boolean visit(LocalDeclaration localDeclaration, BlockScope scope) {
-      LocalVariableBinding b = localDeclaration.binding;
-      JType localType = (JType) typeMap.get(localDeclaration.type.resolvedType);
-      JMethod enclosingMethod = findEnclosingMethod(scope);
-      JSourceInfo info = makeInfo(localDeclaration);
-      JLocal newLocal = program.createLocal(info, localDeclaration.name,
-          localType, b.isFinal(), enclosingMethod);
-      typeMap.put(b, newLocal);
-      return true;
+      try {
+        LocalVariableBinding b = localDeclaration.binding;
+        JType localType = (JType) typeMap.get(localDeclaration.type.resolvedType);
+        JMethod enclosingMethod = findEnclosingMethod(scope);
+        JSourceInfo info = makeSourceInfo(localDeclaration);
+        JLocal newLocal = program.createLocal(info, localDeclaration.name,
+            localType, b.isFinal(), enclosingMethod);
+        typeMap.put(b, newLocal);
+        return true;
+      } catch (Throwable e) {
+        throw translateException(localDeclaration, e);
+      }
     }
 
     public boolean visit(MethodDeclaration methodDeclaration, ClassScope scope) {
-      MethodBinding b = methodDeclaration.binding;
-      JSourceInfo info = makeSourceInfo(methodDeclaration);
-      JType returnType = (JType) typeMap.get(methodDeclaration.returnType.resolvedType);
-      JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.enclosingSourceType());
-      JMethod newMethod = program.createMethod(info,
-          methodDeclaration.selector, enclosingType, returnType,
-          b.isAbstract(), b.isStatic(), b.isFinal(), b.isPrivate(),
-          b.isNative());
+      try {
+        MethodBinding b = methodDeclaration.binding;
+        JSourceInfo info = makeSourceInfo(methodDeclaration);
+        JType returnType = (JType) typeMap.get(methodDeclaration.returnType.resolvedType);
+        JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.enclosingSourceType());
+        JMethod newMethod = program.createMethod(info,
+            methodDeclaration.selector, enclosingType, returnType,
+            b.isAbstract(), b.isStatic(), b.isFinal(), b.isPrivate(),
+            b.isNative());
 
-      mapThrownExceptions(newMethod, methodDeclaration);
-      mapParameters(newMethod, methodDeclaration);
-      typeMap.put(b, newMethod);
+        mapThrownExceptions(newMethod, methodDeclaration);
+        mapParameters(newMethod, methodDeclaration);
+        typeMap.put(b, newMethod);
 
-      if (newMethod.isNative()) {
-        // Handle JSNI block
-        char[] source = methodDeclaration.compilationResult().getCompilationUnit().getContents();
-        String jsniCode = String.valueOf(source, methodDeclaration.bodyStart,
-            methodDeclaration.bodyEnd - methodDeclaration.bodyStart + 1);
-        int startPos = jsniCode.indexOf("/*-{");
-        int endPos = jsniCode.lastIndexOf("}-*/");
-        if (startPos < 0 && endPos < 0) {
-          GenerateJavaAST.reportJsniError(
-              info,
-              methodDeclaration,
-              "Native methods require a JavaScript implementation enclosed with /*-{ and }-*/");
-          return true;
-        }
-        if (startPos < 0) {
-          GenerateJavaAST.reportJsniError(info, methodDeclaration,
-              "Unable to find start of native block; begin your JavaScript block with: /*-{");
-          return true;
-        }
-        if (endPos < 0) {
-          GenerateJavaAST.reportJsniError(
-              info,
-              methodDeclaration,
-              "Unable to find end of native block; terminate your JavaScript block with: }-*/");
-          return true;
-        }
-
-        startPos += 3; // move up to open brace
-        endPos += 1; // move past close brace
-
-        jsniCode = jsniCode.substring(startPos, endPos);
-
-        // Here we parse it as an anonymous function, but we will give it a
-        // name later when we generate the JavaScript during codegen.
-        //
-        String syntheticFnHeader = "function (";
-        boolean first = true;
-        for (int i = 0; i < newMethod.params.size(); ++i) {
-          JParameter param = (JParameter) newMethod.params.get(i);
-          if (first) {
-            first = false;
-          } else {
-            syntheticFnHeader += ',';
+        if (newMethod.isNative()) {
+          // Handle JSNI block
+          char[] source = methodDeclaration.compilationResult().getCompilationUnit().getContents();
+          String jsniCode = String.valueOf(source, methodDeclaration.bodyStart,
+              methodDeclaration.bodyEnd - methodDeclaration.bodyStart + 1);
+          int startPos = jsniCode.indexOf("/*-{");
+          int endPos = jsniCode.lastIndexOf("}-*/");
+          if (startPos < 0 && endPos < 0) {
+            GenerateJavaAST.reportJsniError(
+                info,
+                methodDeclaration,
+                "Native methods require a JavaScript implementation enclosed with /*-{ and }-*/");
+            return true;
           }
-          syntheticFnHeader += param.getName();
-        }
-        syntheticFnHeader += ')';
-        StringReader sr = new StringReader(syntheticFnHeader + '\n' + jsniCode);
-        try {
-          // start at -1 to avoid counting our synthetic header
-          // TODO: get the character position start correct
-          JsStatements result = jsParser.parse(jsProgram.getScope(), sr, -1);
-          JsExprStmt jsExprStmt = (JsExprStmt) result.get(0);
-          JsFunction jsFunction = (JsFunction) jsExprStmt.getExpression();
-          ((JsniMethod) newMethod).setFunc(jsFunction);
-        } catch (IOException e) {
-          throw new InternalCompilerException(
-              "Internal error parsing JSNI in method '" + newMethod
-                  + "' in type '" + enclosingType.getName() + "'", e);
-        } catch (JsParserException e) {
-          /*
-           * count the number of characters to the problem (from the start of
-           * the JSNI code)
-           */
-          SourceDetail detail = e.getSourceDetail();
-          int line = detail.getLine();
-          char[] chars = jsniCode.toCharArray();
-          int i = 0, n = chars.length;
-          while (line > 0) {
-            // CHECKSTYLE_OFF
-            switch (chars[i]) {
-              case '\r':
-                // if skip an extra character if this is a CR/LF
-                if (i + 1 < n && chars[i + 1] == '\n') {
-                  ++i;
-                }
-                // intentional fall-through
-              case '\n':
-                --line;
-                // intentional fall-through
-              default:
-                ++i;
+          if (startPos < 0) {
+            GenerateJavaAST.reportJsniError(info, methodDeclaration,
+                "Unable to find start of native block; begin your JavaScript block with: /*-{");
+            return true;
+          }
+          if (endPos < 0) {
+            GenerateJavaAST.reportJsniError(
+                info,
+                methodDeclaration,
+                "Unable to find end of native block; terminate your JavaScript block with: }-*/");
+            return true;
+          }
+
+          startPos += 3; // move up to open brace
+          endPos += 1; // move past close brace
+
+          jsniCode = jsniCode.substring(startPos, endPos);
+
+          // Here we parse it as an anonymous function, but we will give it a
+          // name later when we generate the JavaScript during codegen.
+          //
+          String syntheticFnHeader = "function (";
+          boolean first = true;
+          for (int i = 0; i < newMethod.params.size(); ++i) {
+            JParameter param = (JParameter) newMethod.params.get(i);
+            if (first) {
+              first = false;
+            } else {
+              syntheticFnHeader += ',';
             }
-            // CHECKSTYLE_ON
+            syntheticFnHeader += param.getName();
           }
+          syntheticFnHeader += ')';
+          StringReader sr = new StringReader(syntheticFnHeader + '\n'
+              + jsniCode);
+          try {
+            // start at -1 to avoid counting our synthetic header
+            // TODO: get the character position start correct
+            JsStatements result = jsParser.parse(jsProgram.getScope(), sr, -1);
+            JsExprStmt jsExprStmt = (JsExprStmt) result.get(0);
+            JsFunction jsFunction = (JsFunction) jsExprStmt.getExpression();
+            ((JsniMethod) newMethod).setFunc(jsFunction);
+          } catch (IOException e) {
+            throw new InternalCompilerException(
+                "Internal error parsing JSNI in method '" + newMethod
+                    + "' in type '" + enclosingType.getName() + "'", e);
+          } catch (JsParserException e) {
+            /*
+             * count the number of characters to the problem (from the start of
+             * the JSNI code)
+             */
+            SourceDetail detail = e.getSourceDetail();
+            int line = detail.getLine();
+            char[] chars = jsniCode.toCharArray();
+            int i = 0, n = chars.length;
+            while (line > 0) {
+              // CHECKSTYLE_OFF
+              switch (chars[i]) {
+                case '\r':
+                  // if skip an extra character if this is a CR/LF
+                  if (i + 1 < n && chars[i + 1] == '\n') {
+                    ++i;
+                  }
+                  // intentional fall-through
+                case '\n':
+                  --line;
+                  // intentional fall-through
+                default:
+                  ++i;
+              }
+              // CHECKSTYLE_ON
+            }
 
-          // TODO: check this
-          // Map into the original source stream;
-          i += startPos + detail.getLineOffset();
-          info = new JSourceInfo(i, i, info.getStartLine() + detail.getLine(),
-              info.getFileName());
-          GenerateJavaAST.reportJsniError(info, methodDeclaration,
-              e.getMessage());
+            // TODO: check this
+            // Map into the original source stream;
+            i += startPos + detail.getLineOffset();
+            info = new JSourceInfo(i, i,
+                info.getStartLine() + detail.getLine(), info.getFileName());
+            GenerateJavaAST.reportJsniError(info, methodDeclaration,
+                e.getMessage());
+          }
         }
-      }
 
-      return true;
+        return true;
+      } catch (Throwable e) {
+        throw translateException(methodDeclaration, e);
+      }
     }
 
     public boolean visit(TypeDeclaration localTypeDeclaration, BlockScope scope) {
@@ -370,7 +403,7 @@ public class BuildTypeMap {
     private JParameter createParameter(LocalVariableBinding binding,
         JMethod enclosingMethod) {
       JType type = (JType) typeMap.get(binding.type);
-      JSourceInfo info = makeInfo(binding.declaration);
+      JSourceInfo info = makeSourceInfo(binding.declaration);
       JParameter param = program.createParameter(info, binding.name, type,
           binding.isFinal(), enclosingMethod);
       typeMap.put(binding, param);
@@ -403,7 +436,7 @@ public class BuildTypeMap {
       return (JMethod) typeMap.get(referenceMethod.binding);
     }
 
-    private JSourceInfo makeInfo(Statement stmt) {
+    private JSourceInfo makeSourceInfo(Statement stmt) {
       int startLine = ProblemHandler.searchLineNumber(
           currentSeparatorPositions, stmt.sourceStart);
       return new JSourceInfo(stmt.sourceStart, stmt.sourceEnd, startLine,
@@ -455,44 +488,63 @@ public class BuildTypeMap {
         return false;
       }
       JReferenceType type = (JReferenceType) typeMap.get(binding);
+      try {
+        if (binding.isNestedType() && !binding.isStatic()) {
+          // add synthentic fields for outer this and locals
+          assert (type instanceof JClassType);
+          NestedTypeBinding nestedBinding = (NestedTypeBinding) binding;
+          if (nestedBinding.enclosingInstances != null) {
+            for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
+              SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
+              if (arg.matchingField != null) {
+                createField(arg, type);
+              }
+            }
+          }
 
-      if (binding.isNestedType() && !binding.isStatic()) {
-        // add synthentic fields for outer this and locals
-        assert (type instanceof JClassType);
-        NestedTypeBinding nestedBinding = (NestedTypeBinding) binding;
-        if (nestedBinding.enclosingInstances != null) {
-          for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
-            SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
-            if (arg.matchingField != null) {
+          if (nestedBinding.outerLocalVariables != null) {
+            for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
+              SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
               createField(arg, type);
             }
           }
         }
 
-        if (nestedBinding.outerLocalVariables != null) {
-          for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
-            SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
-            createField(arg, type);
-          }
+        ReferenceBinding superClassBinding = binding.superclass();
+        if (superClassBinding != null) {
+          assert (binding.superclass().isClass());
+          JClassType superClass = (JClassType) typeMap.get(superClassBinding);
+          type.extnds = superClass;
         }
-      }
 
-      ReferenceBinding superClassBinding = binding.superclass();
-      if (superClassBinding != null) {
-        assert (binding.superclass().isClass());
-        JClassType superClass = (JClassType) typeMap.get(superClassBinding);
-        type.extnds = superClass;
+        ReferenceBinding[] superInterfaces = binding.superInterfaces();
+        for (int i = 0; i < superInterfaces.length; ++i) {
+          ReferenceBinding superInterfaceBinding = superInterfaces[i];
+          assert (superInterfaceBinding.isInterface());
+          JInterfaceType superInterface = (JInterfaceType) typeMap.get(superInterfaceBinding);
+          type.implments.add(superInterface);
+        }
+        typeDecls.add(typeDeclaration);
+        return true;
+      } catch (InternalCompilerException ice) {
+        ice.addNode(type);
+        throw ice;
+      } catch (Throwable e) {
+        throw new InternalCompilerException(type, "Error building type map", e);
       }
+    }
 
-      ReferenceBinding[] superInterfaces = binding.superInterfaces();
-      for (int i = 0; i < superInterfaces.length; ++i) {
-        ReferenceBinding superInterfaceBinding = superInterfaces[i];
-        assert (superInterfaceBinding.isInterface());
-        JInterfaceType superInterface = (JInterfaceType) typeMap.get(superInterfaceBinding);
-        type.implments.add(superInterface);
+    private InternalCompilerException translateException(Statement stmt,
+        Throwable e) {
+      InternalCompilerException ice;
+      if (e instanceof InternalCompilerException) {
+        ice = (InternalCompilerException) e;
+      } else {
+        ice = new InternalCompilerException("Error building type map", e);
       }
-      typeDecls.add(typeDeclaration);
-      return true;
+      ice.addNode(stmt.getClass().getName(), stmt.toString(),
+          makeSourceInfo(stmt));
+      return ice;
     }
   }
 
@@ -512,6 +564,19 @@ public class BuildTypeMap {
           typeDecl.sourceStart);
       return new JSourceInfo(typeDecl.sourceStart, typeDecl.bodyEnd, startLine,
           fileName);
+    }
+
+    private static InternalCompilerException translateException(
+        TypeDeclaration typeDecl, Throwable e) {
+      InternalCompilerException ice;
+      if (e instanceof InternalCompilerException) {
+        ice = (InternalCompilerException) e;
+      } else {
+        ice = new InternalCompilerException("Error building type map", e);
+      }
+      ice.addNode(typeDecl.getClass().getName(), typeDecl.toString(),
+          makeSourceInfo(typeDecl));
+      return ice;
     }
 
     private final JProgram program;
@@ -537,57 +602,61 @@ public class BuildTypeMap {
     }
 
     private boolean process(TypeDeclaration typeDeclaration) {
-      char[][] name = typeDeclaration.binding.compoundName;
-      SourceTypeBinding binding = typeDeclaration.binding;
-      if (binding instanceof LocalTypeBinding) {
-        char[] localName = binding.constantPoolName();
-        if (localName == null) {
-          /*
-           * Weird case: if JDT determines that this local class is totally
-           * uninstantiable, it won't bother allocating a local name.
-           */
+      try {
+        char[][] name = typeDeclaration.binding.compoundName;
+        SourceTypeBinding binding = typeDeclaration.binding;
+        if (binding instanceof LocalTypeBinding) {
+          char[] localName = binding.constantPoolName();
+          if (localName == null) {
+            /*
+             * Weird case: if JDT determines that this local class is totally
+             * uninstantiable, it won't bother allocating a local name.
+             */
+            return false;
+          }
+
+          for (int i = 0, c = localName.length; i < c; ++i) {
+            if (localName[i] == '/') {
+              localName[i] = '.';
+            }
+          }
+          name = new char[1][0];
+          name[0] = localName;
+        }
+
+        JSourceInfo info = makeSourceInfo(typeDeclaration);
+        JReferenceType newType;
+        if (binding.isClass()) {
+          newType = program.createClass(info, name, binding.isAbstract(),
+              binding.isFinal());
+        } else if (binding.isInterface()) {
+          newType = program.createInterface(info, name);
+        } else {
+          assert (false);
           return false;
         }
 
-        for (int i = 0, c = localName.length; i < c; ++i) {
-          if (localName[i] == '/') {
-            localName[i] = '.';
-          }
+        /**
+         * We emulate static initializers and intance initializers as methods.
+         * As in other cases, this gives us: simpler AST, easier to optimize,
+         * more like output JavaScript. Clinit is always in slot 0, init (if it
+         * exists) is always in slot 1.
+         */
+        JMethod clinit = program.createMethod(null, "$clinit".toCharArray(),
+            newType, program.getTypeVoid(), false, true, true, true, false);
+        clinit.freezeParamTypes();
+
+        if (newType instanceof JClassType) {
+          JMethod init = program.createMethod(null, "$init".toCharArray(),
+              newType, program.getTypeVoid(), false, false, true, true, false);
+          init.freezeParamTypes();
         }
-        name = new char[1][0];
-        name[0] = localName;
+
+        typeMap.put(binding, newType);
+        return true;
+      } catch (Throwable e) {
+        throw translateException(typeDeclaration, e);
       }
-
-      JSourceInfo info = makeSourceInfo(typeDeclaration);
-      JReferenceType newType;
-      if (binding.isClass()) {
-        newType = program.createClass(info, name, binding.isAbstract(),
-            binding.isFinal());
-      } else if (binding.isInterface()) {
-        newType = program.createInterface(info, name);
-      } else {
-        assert (false);
-        return false;
-      }
-
-      /**
-       * We emulate static initializers and intance initializers as methods. As
-       * in other cases, this gives us: simpler AST, easier to optimize, more
-       * like output JavaScript. Clinit is always in slot 0, init (if it exists)
-       * is always in slot 1.
-       */
-      JMethod clinit = program.createMethod(null, "$clinit".toCharArray(),
-          newType, program.getTypeVoid(), false, true, true, true, false);
-      clinit.freezeParamTypes();
-
-      if (newType instanceof JClassType) {
-        JMethod init = program.createMethod(null, "$init".toCharArray(),
-            newType, program.getTypeVoid(), false, false, true, true, false);
-        init.freezeParamTypes();
-      }
-
-      typeMap.put(binding, newType);
-      return true;
     }
   }
 
