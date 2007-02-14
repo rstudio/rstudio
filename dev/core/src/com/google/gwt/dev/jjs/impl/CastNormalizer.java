@@ -155,8 +155,9 @@ public class CastNormalizer {
 
     // @Override
     public void endVisit(JCastOperation x, Context ctx) {
-      assert (x.getCastType() != program.getTypeNull());
-      recordCast(x.getCastType(), x.getExpr());
+      if (x.getCastType() != program.getTypeNull()) {
+        recordCast(x.getCastType(), x.getExpr());
+      }
     }
 
     // @Override
@@ -351,7 +352,23 @@ public class CastNormalizer {
     public void endVisit(JCastOperation x, Context ctx) {
       JExpression replaceExpr;
       JType toType = x.getCastType();
-      if (toType instanceof JReferenceType) {
+      if (toType instanceof JNullType) {
+        /*
+         * Magic: a null type cast means the user tried a cast that couldn't
+         * possibly work. Typically this means either the statically resolvable
+         * arg type is incompatible with the target type, or the target type was
+         * globally uninstantiable. We handle this cast by throwing a
+         * ClassCastException, unless the argument is null.
+         */
+        JMethod method = program.getSpecialMethod("Cast.throwClassCastExceptionUnlessNull");
+        /*
+         * Override the type of the magic method with the null type.
+         */
+        JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
+            method, program.getTypeNull());
+        call.getArgs().add(x.getExpr());
+        replaceExpr = call;
+      } else if (toType instanceof JReferenceType) {
         JExpression curExpr = x.getExpr();
         JReferenceType refType = (JReferenceType) toType;
         JType argType = x.getExpr().getType();

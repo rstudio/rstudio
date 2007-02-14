@@ -19,10 +19,13 @@ import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
+import com.google.gwt.dev.jjs.ast.JBinaryOperator;
+import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
+import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
@@ -31,6 +34,7 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewArray;
+import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
@@ -39,6 +43,7 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
@@ -58,7 +63,7 @@ import java.util.Set;
  * The purpose of this pass is to record "type flow" information and then use
  * the information to infer places where "tighter" (that is, more specific)
  * types can be inferred for locals, fields, parameters, and method return
- * types.
+ * types. We also optimize dynamic casts and instanceof operations.
  * 
  * Type flow occurs automatically in most JExpressions. But locals, fields,
  * parameters, and method return types serve as "way points" where type
@@ -162,6 +167,7 @@ public class TypeTightener {
       }
     }
   }
+
   /**
    * Record "type flow" information. Variables receive type flow via assignment.
    * As a special case, Parameters also receive type flow based on the types of
@@ -370,21 +376,95 @@ public class TypeTightener {
    * to change the declared type of a field, local, parameter, or method to a
    * more specific type.
    * 
-   * We must iterate mutiple times because each way point we tighten creates
-   * more opportunities to do additional tightening for the things that depend
-   * on it.
+   * Also optimize dynamic casts and instanceof operations where possible.
    */
-  public class TightenTypesVisitor extends JVisitor {
+  public class TightenTypesVisitor extends JModVisitor {
 
-    private boolean didChange = false;
+    /**
+     * <code>true</code> if this visitor has changed the AST apart from calls
+     * to Context.
+     */
+    private boolean myDidChange = false;
 
     public boolean didChange() {
-      return didChange;
+      return myDidChange || super.didChange();
+    }
+
+    public void endVisit(JCastOperation x, Context ctx) {
+      JType argType = x.getExpr().getType();
+      if (!(x.getCastType() instanceof JReferenceType)
+          || !(argType instanceof JReferenceType)) {
+        return;
+      }
+
+      JReferenceType toType = (JReferenceType) x.getCastType();
+      JReferenceType fromType = (JReferenceType) argType;
+
+      boolean triviallyTrue = false;
+      boolean triviallyFalse = false;
+
+      JTypeOracle typeOracle = program.typeOracle;
+      if (typeOracle.canTriviallyCast(fromType, toType)) {
+        triviallyTrue = true;
+      } else if (!typeOracle.isInstantiatedType(toType)) {
+        triviallyFalse = true;
+      } else if (!typeOracle.canTheoreticallyCast(fromType, toType)) {
+        triviallyFalse = true;
+      }
+
+      if (triviallyTrue) {
+        // remove the cast operation
+        ctx.replaceMe(x.getExpr());
+      } else if (triviallyFalse) {
+        // replace with a magic NULL cast
+        JCastOperation newOp = new JCastOperation(program, x.getSourceInfo(),
+            program.getTypeNull(), x.getExpr());
+        ctx.replaceMe(newOp);
+      }
     }
 
     // @Override
     public void endVisit(JField x, Context ctx) {
       tighten(x);
+    }
+
+    // @Override
+    public void endVisit(JInstanceOf x, Context ctx) {
+      JType argType = x.getExpr().getType();
+      if (!(argType instanceof JReferenceType)) {
+        // TODO: is this even possible? Replace with assert maybe.
+        return;
+      }
+
+      JReferenceType toType = x.getTestType();
+      JReferenceType fromType = (JReferenceType) argType;
+
+      boolean triviallyTrue = false;
+      boolean triviallyFalse = false;
+
+      JTypeOracle typeOracle = program.typeOracle;
+      if (fromType == program.getTypeNull()) {
+        // null is never instanceOf anything
+        triviallyFalse = true;
+      } else if (typeOracle.canTriviallyCast(fromType, toType)) {
+        triviallyTrue = true;
+      } else if (!typeOracle.isInstantiatedType(toType)) {
+        triviallyFalse = true;
+      } else if (!typeOracle.canTheoreticallyCast(fromType, toType)) {
+        triviallyFalse = true;
+      }
+
+      if (triviallyTrue) {
+        // replace with a simple null test
+        JNullLiteral nullLit = program.getLiteralNull();
+        JBinaryOperation neq = new JBinaryOperation(program, x.getSourceInfo(),
+            program.getTypePrimitiveBoolean(), JBinaryOperator.NEQ,
+            x.getExpr(), nullLit);
+        ctx.replaceMe(neq);
+      } else if (triviallyFalse) {
+        // replace with a false literal
+        ctx.replaceMe(program.getLiteralBoolean(false));
+      }
     }
 
     // @Override
@@ -410,7 +490,7 @@ public class TypeTightener {
       // tighten based on non-instantiability
       if (!program.typeOracle.isInstantiatedType(refType)) {
         x.setType(typeNull);
-        didChange = true;
+        myDidChange = true;
         return;
       }
 
@@ -443,7 +523,7 @@ public class TypeTightener {
       resultType = program.strongerType(refType, resultType);
       if (refType != resultType) {
         x.setType(resultType);
-        didChange = true;
+        myDidChange = true;
       }
     }
 
@@ -456,7 +536,7 @@ public class TypeTightener {
         if (!program.typeOracle.isInstantiatedType((JReferenceType) leafType)) {
           arrayType = program.getTypeArray(typeNull, arrayType.getDims());
           x.setType(arrayType);
-          didChange = true;
+          myDidChange = true;
         }
       }
     }
@@ -501,7 +581,7 @@ public class TypeTightener {
       // tighten based on non-instantiability
       if (!program.typeOracle.isInstantiatedType(refType)) {
         x.setType(typeNull);
-        didChange = true;
+        myDidChange = true;
         return;
       }
 
@@ -551,7 +631,7 @@ public class TypeTightener {
       resultType = program.strongerType(refType, resultType);
       if (refType != resultType) {
         x.setType(resultType);
-        didChange = true;
+        myDidChange = true;
       }
     }
   }
@@ -586,6 +666,12 @@ public class TypeTightener {
   private boolean execImpl() {
     RecordVisitor recorder = new RecordVisitor();
     recorder.accept(program);
+
+    /*
+     * We must iterate mutiple times because each way point we tighten creates
+     * more opportunities to do additional tightening for the things that depend
+     * on it.
+     */
     boolean madeChanges = false;
     while (true) {
       TightenTypesVisitor tightener = new TightenTypesVisitor();

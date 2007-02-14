@@ -43,10 +43,11 @@ public class JCastOperation extends JExpression {
   }
 
   public boolean hasSideEffects() {
-    // technically this isn't true, but since the same cast on the same
-    // expression always evaluates the same way, it effectively has no side
-    // effects
-    return getExpr().hasSideEffects();
+    // Any live cast operations might throw a ClassCastException
+    //
+    // TODO: revisit this when we support the concept of whether something
+    // can/must complete normally!
+    return true;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

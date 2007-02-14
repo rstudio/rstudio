@@ -34,7 +34,6 @@ import com.google.gwt.dev.jjs.ast.JSourceInfo;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.BuildTypeMap;
 import com.google.gwt.dev.jjs.impl.CastNormalizer;
-import com.google.gwt.dev.jjs.impl.CastOptimizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.CompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
@@ -336,13 +335,11 @@ public class JavaToJavaScriptCompiler {
         // - params based on assignment and call sites
         // - method bodies based on return statements
         // - polymorphic methods based on return types of all implementors
+        // - optimize casts and instanceof
         didChange = TypeTightener.exec(jprogram) || didChange;
 
         // tighten method call bindings
         didChange = MethodCallTightener.exec(jprogram) || didChange;
-
-        // remove unnecessary casts / optimize instanceof
-        didChange = CastOptimizer.exec(jprogram) || didChange;
 
         // dead code removal??
         didChange = DeadCodeElimination.exec(jprogram) || didChange;
