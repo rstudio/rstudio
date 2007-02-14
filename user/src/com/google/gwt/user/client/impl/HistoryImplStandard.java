@@ -30,13 +30,13 @@ class HistoryImplStandard extends HistoryImpl {
     // Get the initial token from the url's hash component.
     var hash = $wnd.location.hash;
     if (hash.length > 0)
-      $wnd.__historyToken = decodeURIComponent(hash.substring(1));
+      $wnd.__historyToken = hash.substring(1);
 
     // Create the timer that checks the browser's url hash every 1/4 s.
     $wnd.__checkHistory = function() {
       var token = '', hash = $wnd.location.hash;
       if (hash.length > 0)
-        token = decodeURIComponent(hash.substring(1));
+        token = hash.substring(1);
 
       if (token != $wnd.__historyToken) {
         $wnd.__historyToken = token;

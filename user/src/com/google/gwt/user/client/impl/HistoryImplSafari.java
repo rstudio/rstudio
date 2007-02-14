@@ -33,7 +33,7 @@ class HistoryImplSafari extends HistoryImpl {
     // Get the initial token from the url's hash component.
     var hash = $wnd.location.hash;
     if (hash.length > 0)
-      $wnd.__historyToken = decodeURIComponent(hash.substring(1));
+      $wnd.__historyToken = hash.substring(1);
     else
       $wnd.__historyToken = '';
 

@@ -4,8 +4,8 @@
 function hst() {
   var search = location.search;
   var historyToken = '';
-  if (location.search.length > 0)
-    historyToken = decodeURIComponent(location.search.substring(1));
+  if (search.length > 0)
+    historyToken = search.substring(1);
 
   document.getElementById('__historyToken').value = historyToken;
   if (parent.__onHistoryChanged)

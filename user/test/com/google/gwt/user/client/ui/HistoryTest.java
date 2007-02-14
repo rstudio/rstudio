@@ -10,6 +10,19 @@ public class HistoryTest extends GWTTestCase {
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
+  
+  /* Tests against issue #572: Double unescaping of history tokens. */
+  public void testTokenEscaping() {
+	final String escToken = "%24%24%24";
+	delayTestFinish(5000);
+	History.addHistoryListener(new HistoryListener() {
+	  public void onHistoryChanged(String token) {
+		assertEquals(escToken,token);
+		finishTest();
+	  }
+	});
+	History.newItem(escToken);
+  }
 
   /*
    * Ensure that non-url-safe strings (such as those containing spaces) are
@@ -51,5 +64,5 @@ public class HistoryTest extends GWTTestCase {
     });
 
     History.newItem("foo bar");
-  }
+  }  
 }

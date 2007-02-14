@@ -34,7 +34,7 @@ class HistoryImplIE6 extends HistoryImpl {
     // Get the initial token from the url's hash component.
     var hash = $wnd.location.hash;
     if (hash.length > 0)
-      $wnd.__historyToken = decodeURIComponent(hash.substring(1));
+      $wnd.__historyToken = hash.substring(1);
     else
       $wnd.__historyToken = '';
 
@@ -73,7 +73,7 @@ class HistoryImplIE6 extends HistoryImpl {
     var urlChecker = function() {
       var hash = $wnd.location.hash;
       if (hash.length > 0) {
-        var token = decodeURIComponent(hash.substring(1));
+        var token = hash.substring(1);
         if ($wnd.__historyToken && (token != $wnd.__historyToken))
           $wnd.location.reload();
       }
