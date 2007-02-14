@@ -21,6 +21,7 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JBreakStatement;
+import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -54,44 +55,59 @@ public class DeadCodeElimination {
      * Short circuit boolean AND or OR expressions when possible.
      */
     public void endVisit(JBinaryOperation x, Context ctx) {
-      if (x.getOp() == JBinaryOperator.AND) {
+      JBinaryOperator op = x.getOp();
+      JExpression lhs = x.getLhs();
+      JExpression rhs = x.getRhs();
+      if (op == JBinaryOperator.AND) {
         // simplify short circuit AND expressions
-        if (x.getLhs() instanceof JBooleanLiteral) {
+        if (lhs instanceof JBooleanLiteral) {
           // eg: if (false && isWhatever()) -> if (false)
           // eg: if (true && isWhatever()) -> if (isWhatever())
-          JBooleanLiteral booleanLiteral = (JBooleanLiteral) x.getLhs();
+          JBooleanLiteral booleanLiteral = (JBooleanLiteral) lhs;
           if (booleanLiteral.getValue()) {
-            ctx.replaceMe(x.getRhs());
+            ctx.replaceMe(rhs);
           } else {
-            ctx.replaceMe(x.getLhs());
+            ctx.replaceMe(lhs);
           }
 
-        } else if (x.getRhs() instanceof JBooleanLiteral) {
+        } else if (rhs instanceof JBooleanLiteral) {
           // eg: if (isWhatever() && true) -> if (isWhatever())
-          JBooleanLiteral booleanLiteral = (JBooleanLiteral) x.getRhs();
+          JBooleanLiteral booleanLiteral = (JBooleanLiteral) rhs;
           if (booleanLiteral.getValue()) {
-            ctx.replaceMe(x.getLhs());
+            ctx.replaceMe(lhs);
           }
         }
 
-      } else if (x.getOp() == JBinaryOperator.OR) {
+      } else if (op == JBinaryOperator.OR) {
         // simplify short circuit OR expressions
-        if (x.getLhs() instanceof JBooleanLiteral) {
+        if (lhs instanceof JBooleanLiteral) {
           // eg: if (true || isWhatever()) -> if (true)
           // eg: if (false || isWhatever()) -> if (isWhatever())
-          JBooleanLiteral booleanLiteral = (JBooleanLiteral) x.getLhs();
+          JBooleanLiteral booleanLiteral = (JBooleanLiteral) lhs;
           if (booleanLiteral.getValue()) {
-            ctx.replaceMe(x.getLhs());
+            ctx.replaceMe(lhs);
           } else {
-            ctx.replaceMe(x.getRhs());
+            ctx.replaceMe(rhs);
           }
 
-        } else if (x.getRhs() instanceof JBooleanLiteral) {
+        } else if (rhs instanceof JBooleanLiteral) {
           // eg: if (isWhatever() || false) -> if (isWhatever())
-          JBooleanLiteral booleanLiteral = (JBooleanLiteral) x.getRhs();
+          JBooleanLiteral booleanLiteral = (JBooleanLiteral) rhs;
           if (!booleanLiteral.getValue()) {
-            ctx.replaceMe(x.getLhs());
+            ctx.replaceMe(lhs);
           }
+        }
+      } else if (op == JBinaryOperator.EQ) {
+        // simplify: null == null -> true
+        if (lhs.getType() == program.getTypeNull()
+            && rhs.getType() == program.getTypeNull()) {
+          ctx.replaceMe(program.getLiteralBoolean(true));
+        }
+      } else if (op == JBinaryOperator.NEQ) {
+        // simplify: null != null -> false
+        if (lhs.getType() == program.getTypeNull()
+            && rhs.getType() == program.getTypeNull()) {
+          ctx.replaceMe(program.getLiteralBoolean(false));
         }
       }
     }
@@ -107,13 +123,28 @@ public class DeadCodeElimination {
       }
     }
 
+    public void endVisit(JConditional x, Context ctx) {
+      JExpression expression = x.getIfTest();
+      if (expression instanceof JBooleanLiteral) {
+        JBooleanLiteral booleanLiteral = (JBooleanLiteral) expression;
+
+        if (booleanLiteral.getValue()) {
+          // If true, replace myself with then expression
+          ctx.replaceMe(x.getThenExpr());
+        } else {
+          // If false, replace myself with else expression
+          ctx.replaceMe(x.getElseExpr());
+        }
+      }
+    }
+
     /**
      * Convert do { } while (false); into a block.
      */
     public void endVisit(JDoStatement x, Context ctx) {
-      final JExpression expression = x.getTestExpr();
+      JExpression expression = x.getTestExpr();
       if (expression instanceof JBooleanLiteral) {
-        final JBooleanLiteral booleanLiteral = (JBooleanLiteral) expression;
+        JBooleanLiteral booleanLiteral = (JBooleanLiteral) expression;
 
         // If false, replace do with do's body
         if (!booleanLiteral.getValue()) {
@@ -131,9 +162,9 @@ public class DeadCodeElimination {
      * Prune for (X; false; Y) statements, but make sure X is run.
      */
     public void endVisit(JForStatement x, Context ctx) {
-      final JExpression expression = x.getTestExpr();
+      JExpression expression = x.getTestExpr();
       if (expression instanceof JBooleanLiteral) {
-        final JBooleanLiteral booleanLiteral = (JBooleanLiteral) expression;
+        JBooleanLiteral booleanLiteral = (JBooleanLiteral) expression;
 
         // If false, replace the for statement with its initializers
         if (!booleanLiteral.getValue()) {
@@ -148,9 +179,9 @@ public class DeadCodeElimination {
      * Prune "if (false)" statements.
      */
     public void endVisit(JIfStatement x, Context ctx) {
-      final JExpression expression = x.getIfExpr();
+      JExpression expression = x.getIfExpr();
       if (expression instanceof JBooleanLiteral) {
-        final JBooleanLiteral booleanLiteral = (JBooleanLiteral) expression;
+        JBooleanLiteral booleanLiteral = (JBooleanLiteral) expression;
 
         if (booleanLiteral.getValue()) {
           // If true, replace myself with then statement
@@ -219,9 +250,9 @@ public class DeadCodeElimination {
      * Prune while (false) statements.
      */
     public void endVisit(JWhileStatement x, Context ctx) {
-      final JExpression expression = x.getTestExpr();
+      JExpression expression = x.getTestExpr();
       if (expression instanceof JBooleanLiteral) {
-        final JBooleanLiteral booleanLiteral = (JBooleanLiteral) expression;
+        JBooleanLiteral booleanLiteral = (JBooleanLiteral) expression;
 
         // If false, prune the while statement
         if (!booleanLiteral.getValue()) {
