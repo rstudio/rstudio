@@ -95,8 +95,6 @@ public abstract class AbstractTreeLogger implements TreeLogger {
 
   public int indexWithinMyParent;
 
-  private UncommittedBranchData uncommitted;
-
   private TreeLogger.Type logLevel = TreeLogger.ALL;
 
   private int nextChildIndex;
@@ -104,6 +102,8 @@ public abstract class AbstractTreeLogger implements TreeLogger {
   private final Object nextChildIndexLock = new Object();
 
   private AbstractTreeLogger parent;
+
+  private UncommittedBranchData uncommitted;
 
   /**
    * The constructor used when creating a top-level logger.
@@ -167,11 +167,7 @@ public abstract class AbstractTreeLogger implements TreeLogger {
   }
 
   public final synchronized boolean isLoggable(TreeLogger.Type type) {
-    TreeLogger.Type maxLevel = logLevel;
-    while (maxLevel != null && maxLevel != type) {
-      maxLevel = maxLevel.getParent();
-    }
-    return maxLevel == type;
+    return !type.isLowerPriorityThan(logLevel);
   }
 
   /**

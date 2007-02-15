@@ -28,14 +28,16 @@ public interface TreeLogger {
    */
   class Type {
 
+    private static final int TYPES_COUNT = 7;
+
     /**
      * MUST lazy-init (@link #instances}. Some compilers (javac) will cause
      * Type's clinit to call TreeLogger's clinit <i>first</i>. This means
      * ERROR, WARN, etc run their constructors before instances can
      * self-initialize.
      */
-    private static Map instances;
-    private static final Type[] NO_TYPES = new Type[0];
+    private static Map labelMap;
+    private static Type[] typeList;
 
     static {
       // ensure the standard types are actually registered
@@ -48,7 +50,7 @@ public interface TreeLogger {
      * @return an array of severity types
      */
     public static Type[] instances() {
-      return (Type[]) instances.values().toArray(NO_TYPES);
+      return (Type[]) typeList.clone();
     }
 
     /**
@@ -59,27 +61,30 @@ public interface TreeLogger {
      *         <code>null</code> if no such type exists
      */
     public static Type valueOf(String label) {
-      return (Type) instances.get(label.toUpperCase());
+      return (Type) labelMap.get(label.toUpperCase());
     }
 
     private final String label;
-
-    private final Type parent;
-
     private final boolean needsAttention;
+    private final int priority;
 
     /**
      * Constructs a log type with an optional parent.
      */
-    private Type(boolean needsAttention, String name, Type parent) {
-      if (instances == null) {
-        instances = new HashMap();
+    private Type(boolean needsAttention, String name, int priority) {
+      if (labelMap == null) {
+        labelMap = new HashMap();
       }
-      Object existing = instances.put(name.toUpperCase(), this);
+      if (typeList == null) {
+        typeList = new Type[TYPES_COUNT];
+      }
+      Object existing = labelMap.put(name.toUpperCase(), this);
       assert (existing == null);
+      assert (typeList[priority] == null);
+      typeList[priority] = this;
       this.needsAttention = needsAttention;
       this.label = name;
-      this.parent = parent;
+      this.priority = priority;
     }
 
     /**
@@ -92,13 +97,16 @@ public interface TreeLogger {
     }
 
     /**
-     * Gets the parent of this severity type.
+     * Determines whether this log type is of lower priority than some other log
+     * type.
      * 
-     * @return the parent
+     * @param other the other log type
+     * @return <code>true</code> if this log type is lower priority
      */
-    public Type getParent() {
-      return parent;
+    public boolean isLowerPriorityThan(Type other) {
+      return this.priority > other.priority;
     }
+
     /**
      * Indicates whether this severity type represents a high severity that
      * should be highlighted for the user.
@@ -109,6 +117,7 @@ public interface TreeLogger {
     public boolean needsAttention() {
       return needsAttention;
     }
+
     public String toString() {
       return label;
     }
@@ -117,38 +126,38 @@ public interface TreeLogger {
   /**
    * Logs an error.
    */
-  Type ERROR = new Type(true, "ERROR", null);
+  Type ERROR = new Type(true, "ERROR", 0);
 
   /**
    * Logs a warning.
    */
-  Type WARN = new Type(true, "WARN", ERROR);
+  Type WARN = new Type(true, "WARN", 1);
 
   /**
    * Logs information.
    */
-  Type INFO = new Type(false, "INFO", WARN);
+  Type INFO = new Type(false, "INFO", 2);
 
   /**
    * Logs information related to lower-level operation.
    */
-  Type TRACE = new Type(false, "TRACE", INFO);
+  Type TRACE = new Type(false, "TRACE", 3);
 
   /**
    * Logs detailed information that could be useful during debugging.
    */
-  Type DEBUG = new Type(false, "DEBUG", TRACE);
+  Type DEBUG = new Type(false, "DEBUG", 4);
 
   /**
    * Logs extremely verbose and detailed information that is typically useful
    * only to product implementors.
    */
-  Type SPAM = new Type(false, "SPAM", DEBUG);
+  Type SPAM = new Type(false, "SPAM", 5);
 
   /**
    * Logs everything -- quite a bit of stuff.
    */
-  Type ALL = new Type(false, "ALL", SPAM);
+  Type ALL = new Type(false, "ALL", 6);
 
   /**
    * A valid logger that ignores all messages. Occasionally useful when calling

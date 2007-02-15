@@ -212,10 +212,18 @@ public final class TreeItemLogger extends AbstractTreeLogger {
       // For types needing attention, set all parents to the warning color.
       //
       if (type.needsAttention()) {
+        boolean propagateColor = true;
         TreeItem parent = child.getParentItem();
         while (parent != null) {
+          LogEvent parentEvent = (LogEvent) parent.getData();
+          if (propagateColor) {
+            if (parentEvent.type.isLowerPriorityThan(type)) {
+              parent.setForeground(color);
+            } else {
+              propagateColor = false;
+            }
+          }
           parent.setExpanded(true);
-          parent.setForeground(color);
           parent = parent.getParentItem();
         }
       }
