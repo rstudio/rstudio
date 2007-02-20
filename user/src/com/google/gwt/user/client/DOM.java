@@ -251,7 +251,7 @@ public class DOM {
   }
 
   /**
-   * Creates an HTML BODY element.
+   * Creates an HTML TBODY element.
    * 
    * @return the newly-created element
    */
@@ -278,7 +278,7 @@ public class DOM {
   }
 
   /**
-   * Creates an HTML THEAD element.
+   * Creates an HTML TH element.
    * 
    * @return the newly-created element
    */
