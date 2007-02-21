@@ -22,6 +22,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.NoSuchElementException;
 
 
 /**
@@ -84,6 +86,28 @@ public abstract class TestList extends TestCollection {
     }
 
 
+
+    /**
+     * Whether or not we are testing an iterator that can be
+     * empty.  Default is true.
+     * 
+     * @return true if Iterators can be empty
+     */
+    public boolean supportsEmptyIterator() {
+        return true;
+    }
+
+    /**
+     * Whether or not we are testing an list that allows
+     * element set.  Default is true.
+     * 
+     * @return true if Lists support element set
+     */
+    public boolean isSetSupported() {
+        return true;
+    }
+    
+    
     /**
      *  Returns the {@link collection} field cast to a {@link List}.
      *
@@ -106,7 +130,315 @@ public abstract class TestList extends TestCollection {
 
   
 
+      public class TestListIterator extends AbstractTestListIterator {
 
+        public Object addSetValue() {
+          return TestList.this.getOtherElements()[0];
+        }
+
+        public boolean supportsRemove() {
+          return TestList.this.isRemoveSupported();
+        }
+
+        public boolean supportsAdd() {
+          return TestList.this.isAddSupported();
+        }
+
+        public boolean supportsSet() {
+          return TestList.this.isSetSupported();
+        }
+
+        public ListIterator makeEmptyListIterator() {
+          resetEmpty();
+          return ((List) TestList.this.collection).listIterator();
+        }
+
+        public ListIterator makeFullListIterator() {
+          resetFull();
+          return ((List) TestList.this.collection).listIterator();
+        }
+
+        public Object makeObject() {
+          return ((List) TestList.this.collection).listIterator();
+        }
+      }
+
+      /**
+       * Tests the read-only bits of {@link List#listIterator()}.
+       */
+      public void testListListIterator() {
+        resetFull();
+        forwardTest(getList().listIterator(), 0);
+        backwardTest(getList().listIterator(), 0);
+      }
+
+      /**
+       * Tests the read-only bits of {@link List#listIterator(int)}.
+       */
+      public void testListListIteratorByIndex() {
+        resetFull();
+        try {
+          getList().listIterator(-1);
+        } catch (IndexOutOfBoundsException ex) {
+        }
+        resetFull();
+        try {
+          getList().listIterator(getList().size() + 1);
+        } catch (IndexOutOfBoundsException ex) {
+        }
+        resetFull();
+        for (int i = 0; i <= confirmed.size(); i++) {
+          forwardTest(getList().listIterator(i), i);
+          backwardTest(getList().listIterator(i), i);
+        }
+        resetFull();
+        for (int i = 0; i <= confirmed.size(); i++) {
+          backwardTest(getList().listIterator(i), i);
+        }
+      }
+
+      // -----------------------------------------------------------------------
+      /**
+       * Tests remove on list iterator is correct.
+       */
+      public void testListListIteratorPreviousRemoveNext() {
+        if (isRemoveSupported() == false)
+          return;
+        resetFull();
+        if (collection.size() < 4)
+          return;
+        ListIterator it = getList().listIterator();
+        Object zero = it.next();
+        Object one = it.next();
+        Object two = it.next();
+        Object two2 = it.previous();
+        Object one2 = it.previous();
+        assertEquals(one, one2);
+        assertEquals(two, two2);
+        assertEquals(zero, getList().get(0));
+        assertEquals(one, getList().get(1));
+        assertEquals(two, getList().get(2));
+        
+        it.remove(); // removed element at index 1 (one)
+        assertEquals(zero, getList().get(0));
+        assertEquals(two, getList().get(1));
+        Object two3 = it.next(); // do next after remove
+        assertEquals(two, two3);
+        assertEquals(collection.size() > 2, it.hasNext());
+        assertEquals(true, it.hasPrevious());
+      }
+
+      /**
+       * Tests remove on list iterator is correct.
+       */
+      public void testListListIteratorPreviousRemovePrevious() {
+        if (isRemoveSupported() == false)
+          return;
+        resetFull();
+        if (collection.size() < 4)
+          return;
+        ListIterator it = getList().listIterator();
+        Object zero = it.next();
+        Object one = it.next();
+        Object two = it.next();
+        Object two2 = it.previous();
+        Object one2 = it.previous();
+        assertEquals(one, one2);
+        assertEquals(two, two2);
+        assertEquals(zero, getList().get(0));
+        assertEquals(one, getList().get(1));
+        assertEquals(two, getList().get(2));
+
+        it.remove(); // removed element at index 1 (one)
+        assertEquals(zero, getList().get(0));
+        assertEquals(two, getList().get(1));
+        Object zero3 = it.previous(); // do previous after remove
+        assertEquals(zero, zero3);
+        assertEquals(false, it.hasPrevious());
+        assertEquals(collection.size() > 2, it.hasNext());
+      }
+
+      /**
+       * Tests remove on list iterator is correct.
+       */
+      public void testListListIteratorNextRemoveNext() {
+        if (isRemoveSupported() == false)
+          return;
+        resetFull();
+        if (collection.size() < 4)
+          return;
+        ListIterator it = getList().listIterator();
+        Object zero = it.next();
+        Object one = it.next();
+        Object two = it.next();
+        assertEquals(zero, getList().get(0));
+        assertEquals(one, getList().get(1));
+        assertEquals(two, getList().get(2));
+        Object three = getList().get(3);
+
+        it.remove(); // removed element at index 2 (two)
+        assertEquals(zero, getList().get(0));
+        assertEquals(one, getList().get(1));
+        Object three2 = it.next(); // do next after remove
+        assertEquals(three, three2);
+        assertEquals(collection.size() > 3, it.hasNext());
+        assertEquals(true, it.hasPrevious());
+      }
+
+      /**
+       * Tests remove on list iterator is correct.
+       */
+      public void testListListIteratorNextRemovePrevious() {
+        if (isRemoveSupported() == false)
+          return;
+        resetFull();
+        if (collection.size() < 4)
+          return;
+        ListIterator it = getList().listIterator();
+        Object zero = it.next();
+        Object one = it.next();
+        Object two = it.next();
+        assertEquals(zero, getList().get(0));
+        assertEquals(one, getList().get(1));
+        assertEquals(two, getList().get(2));
+
+        it.remove(); // removed element at index 2 (two)
+        assertEquals(zero, getList().get(0));
+        assertEquals(one, getList().get(1));
+        Object one2 = it.previous(); // do previous after remove
+        assertEquals(one, one2);
+        assertEquals(true, it.hasNext());
+        assertEquals(true, it.hasPrevious());
+      }
+
+      // -----------------------------------------------------------------------
+      /**
+       * Traverses to the end of the given iterator.
+       * 
+       * @param iter the iterator to traverse
+       * @param i the starting index
+       */
+      private void forwardTest(ListIterator iter, int i) {
+        List list = getList();
+        int max = getFullElements().length;
+
+        while (i < max) {
+          assertTrue("Iterator should have next", iter.hasNext());
+          assertEquals("Iterator.nextIndex should work", iter.nextIndex(), i);
+          assertEquals("Iterator.previousIndex should work", iter.previousIndex(),
+              i - 1);
+          Object o = iter.next();
+          assertEquals("Iterator returned correct element f", list.get(i), o);
+          i++;
+        }
+
+        assertTrue("Iterator shouldn't have next", !iter.hasNext());
+        assertEquals("nextIndex should be size", iter.nextIndex(), max);
+        assertEquals("previousIndex should be size - 1", iter.previousIndex(),
+            max - 1);
+
+        try {
+          iter.next();
+          fail("Exhausted iterator should raise NoSuchElement");
+        } catch (NoSuchElementException e) {
+          // expected
+        }
+      }
+
+      /**
+       * Traverses to the beginning of the given iterator.
+       * 
+       * @param iter the iterator to traverse
+       * @param i the starting index
+       */
+      private void backwardTest(ListIterator iter, int i) {
+        List list = getList();
+
+        while (i > 0) {
+          assertTrue("Iterator should have previous, i:" + i, iter.hasPrevious());
+          assertEquals("Iterator.nextIndex should work, i:" + i, iter.nextIndex(),
+              i);
+          assertEquals("Iterator.previousIndex should work, i:" + i,
+              iter.previousIndex(), i - 1);
+          Object o = iter.previous();
+          assertEquals("Iterator returned correct element b", list.get(i - 1), o);
+          i--;
+        }
+
+        assertTrue("Iterator shouldn't have previous", !iter.hasPrevious());
+        int nextIndex = iter.nextIndex();
+        assertEquals("nextIndex should be 0, actual value: " + nextIndex,
+            nextIndex, 0);
+        int prevIndex = iter.previousIndex();
+        assertEquals("previousIndex should be -1, actual value: " + prevIndex,
+            prevIndex, -1);
+
+        try {
+          iter.previous();
+          fail("Exhausted iterator should raise NoSuchElement");
+        } catch (NoSuchElementException e) {
+          // expected
+        }
+
+      }
+
+      /**
+       * Tests the {@link ListIterator#add(Object)} method of the list iterator.
+       */
+      public void testListIteratorAdd() {
+        if (!isAddSupported())
+          return;
+
+        resetEmpty();
+        List list1 = getList();
+        List list2 = getConfirmedList();
+
+        Object[] elements = getFullElements();
+        ListIterator iter1 = list1.listIterator();
+        ListIterator iter2 = list2.listIterator();
+
+        for (int i = 0; i < elements.length; i++) {
+          iter1.add(elements[i]);
+          iter2.add(elements[i]);
+          verify();
+        }
+
+        resetFull();
+        iter1 = getList().listIterator();
+        iter2 = getConfirmedList().listIterator();
+        for (int i = 0; i < elements.length; i++) {
+          iter1.next();
+          iter2.next();
+          iter1.add(elements[i]);
+          iter2.add(elements[i]);
+          verify();
+        }
+      }
+
+      /**
+       * Tests the {@link ListIterator#set(Object)} method of the list iterator.
+       */
+      public void testListIteratorSet() {
+        if (!isSetSupported())
+          return;
+
+        Object[] elements = getFullElements();
+
+        resetFull();
+        ListIterator iter1 = getList().listIterator();
+        ListIterator iter2 = getConfirmedList().listIterator();
+        for (int i = 0; i < elements.length; i++) {
+          iter1.next();
+          iter2.next();
+          iter1.set(elements[i]);
+          iter2.set(elements[i]);
+          verify();
+        }
+      }
+
+      
+      
+      
     /**
      *  Tests {@link List#add(int,Object)}.
      */

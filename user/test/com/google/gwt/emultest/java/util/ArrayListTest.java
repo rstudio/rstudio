@@ -22,15 +22,12 @@ import org.apache.commons.collections.TestArrayList;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
 /** Tests ArrayList, and, by extension AbstractList.  Uses inheritance to 
  * inherit all of Apache's TestList and TestCollection. */
 public class ArrayListTest extends TestArrayList {
   public ArrayListTest() {
-  }
-
-  protected List makeEmptyList() {
-    return new ArrayList();
   }
 
   public void testAddWatch() {
@@ -39,7 +36,78 @@ public class ArrayListTest extends TestArrayList {
     assertEquals(s.get(0), "watch");
   }
 
+  public void testListIteratorAddInSeveralPositions() {
+    ArrayList l = new ArrayList();
+    ListIterator i = l.listIterator();
+    l.add(new Integer(0));
+    for (int n = 2; n < 5; n += 2) {
+      l.add(new Integer(n));
+    }
+    i = l.listIterator();
+    i.next();
+    i.add(new Integer(1));
+    i.next();
+    i.next();
+    i.previous();
+    i.add(new Integer(3));
+    i.next();
+    i.add(new Integer(5));
+    i.add(new Integer(6));
+    for (int n = 0; n < 6; n++) {
+      assertEquals(new Integer(n), l.get(n));
+    }
+  }
 
+  public void testListIteratorCreateInvalid() {
+    ArrayList l = new ArrayList();
+    l.add(new Integer(1));
+    ListIterator i = l.listIterator(0);
+    try {
+      i = l.listIterator(1);
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+    try {
+      i = l.listIterator(-1);
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }    
+  }
+  
+  public void testListIteratorHasNextHasPreviousAndIndexes() {
+    List l = new ArrayList();
+    ListIterator i = l.listIterator();
+    assertFalse(i.hasNext());
+    assertFalse(i.hasPrevious());
+    i.add(new Integer(1));
+    assertEquals(1,i.nextIndex());
+    assertEquals(0, i.previousIndex());
+    i = l.listIterator();
+    assertEquals(0,i.nextIndex());
+    assertEquals(-1, i.previousIndex());
+    assertTrue(i.hasNext());
+    assertFalse(i.hasPrevious());
+    i.next();
+    assertEquals(1,i.nextIndex());
+    assertEquals(0, i.previousIndex());
+    assertFalse(i.hasNext());
+    assertTrue(i.hasPrevious());    
+  }
+  
+  public void testListIteratorSetInSeveralPositions() {
+    ArrayList l = new ArrayList();
+    for (int n = 0; n < 5; n += 2) {
+      l.add(new Integer(n));
+    }
+    ListIterator i = l.listIterator();
+    for (int n = 0; n < 3; n++) {
+      l.set(n, new Integer(n));
+    }
+    for (int n = 0; n < 3; n++) {
+      assertEquals(new Integer(n), l.get(n));
+    }
+  }
+  
   public void testRemoveRange() {
     if (GWT.isScript()) {
       ArrayList l = new ArrayList();
@@ -48,6 +116,10 @@ public class ArrayListTest extends TestArrayList {
       }
       verifyRemoveRangeWorks(l);
     }
+  }
+  
+  protected List makeEmptyList() {
+    return new ArrayList();
   }
 
   private native void verifyRemoveRangeWorks(ArrayList l) /*-{
@@ -75,5 +147,4 @@ public class ArrayListTest extends TestArrayList {
       @junit.framework.Assert::fail(Ljava/lang/String;)("endIndex - 1 should be empty");
     }
   }-*/;
-  
 }

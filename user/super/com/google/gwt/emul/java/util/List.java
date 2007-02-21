@@ -48,6 +48,10 @@ public interface List extends Collection {
 
   int lastIndexOf(Object o);
 
+  ListIterator listIterator();
+
+  ListIterator listIterator(int from);
+
   Object remove(int index);
 
   boolean remove(Object o);

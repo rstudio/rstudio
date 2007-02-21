@@ -52,6 +52,16 @@ public abstract class TestIterator extends TestObject {
     }
 
     /**
+     * Whether or not we are testing an iterator that supports remove.  
+     * Default is true.
+     * 
+     * @return true if Iterators can remove elements
+     */
+    public boolean supportsRemove() {
+        return true;
+    }
+    
+    /**
      * Should throw a NoSuchElementException.
      */
     public void testEmptyIterator() {
