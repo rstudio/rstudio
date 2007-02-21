@@ -21,10 +21,10 @@ package java.util;
 public abstract class AbstractList extends AbstractCollection implements List {
 
   private class IteratorImpl implements Iterator {
-    /* 
-     * i is the index of the item that will be returned on the next call to next()
-     * last is the index of the item that was returned on the previous call
-     * to next() or previous (for ListIterator), -1 if no such item exists.
+    /*
+     * i is the index of the item that will be returned on the next call to
+     * next() last is the index of the item that was returned on the previous
+     * call to next() or previous (for ListIterator), -1 if no such item exists.
      */
 
     int i = 0, last = -1;
@@ -37,30 +37,30 @@ public abstract class AbstractList extends AbstractCollection implements List {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
-      return get(last = i++); 
-      }    
+      return get(last = i++);
+    }
 
     public void remove() {
       if (last < 0) {
         throw new IllegalStateException();
-      }     
+      }
       AbstractList.this.remove(last);
       i = last;
       last = -1;
     }
   }
-  
+
   /**
    * Implementation of <code>ListIterator</code> for abstract lists.
    */
   private final class ListIteratorImpl extends IteratorImpl implements
       ListIterator {
-    /* 
-     * i is the index of the item that will be returned on the next call to next()
-     * last is the index of the item that was returned on the previous call
-     * to next() or previous (for ListIterator), -1 if no such item exists.
+    /*
+     * i is the index of the item that will be returned on the next call to
+     * next() last is the index of the item that was returned on the previous
+     * call to next() or previous (for ListIterator), -1 if no such item exists.
      */
-    
+
     private ListIteratorImpl() {
       // Nothing to do
     }
@@ -68,7 +68,8 @@ public abstract class AbstractList extends AbstractCollection implements List {
     private ListIteratorImpl(int start) {
       int size = AbstractList.this.size();
       if (start < 0 || start > size) {
-        throw new IndexOutOfBoundsException("Size: " + AbstractList.this.size() + " Index: " + i);
+        throw new IndexOutOfBoundsException("Size: " + AbstractList.this.size()
+            + " Index: " + i);
       }
       i = start;
     }
