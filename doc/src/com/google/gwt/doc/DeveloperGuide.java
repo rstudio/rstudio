@@ -1830,9 +1830,11 @@ public class DeveloperGuide {
      * <li>it is assignable to
      * {@link com.google.gwt.user.client.rpc.IsSerializable}, either because it
      * directly implements the interface or because it derives from a superclass
-     * that does, and </li>
+     * that does</li>
      * <li>all non-<code>transient</code> fields are themselves
-     * serializable.</li>
+     * serializable, and</li>
+     * <li>it explicitly defines a default constructor, which is a constructor that is
+     * declared to be public and takes no arguments</li>
      * </ol>
      * 
      * The <code>transient</code> keyword is honored, so values in transient
@@ -1911,6 +1913,14 @@ public class DeveloperGuide {
          * @gwt.typeArgs <java.lang.String,java.lang.String>
          */
         public Map mapOfStringToString;
+
+        /**
+         * Default Constructor. The Default Constructor's explicit declaration
+         * is required for a serializable class.
+         *
+         */
+        public MyClass() {
+        }
       }
 
       /**
