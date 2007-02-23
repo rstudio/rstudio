@@ -384,12 +384,7 @@ public class GenerateJavaScriptAST {
 
     // @Override
     public void endVisit(JAssertStatement x, Context ctx) {
-      // TODO(later): implement assert
-      if (x.getArg() != null) {
-        pop(); // arg
-      }
-      pop(); // testExpr
-      push(jsProgram.getEmptyStmt());
+      throw new InternalCompilerException("Should not get here.");
     }
 
     // @Override

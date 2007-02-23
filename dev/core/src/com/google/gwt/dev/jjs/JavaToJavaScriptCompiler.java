@@ -32,6 +32,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JSourceInfo;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
+import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.BuildTypeMap;
 import com.google.gwt.dev.jjs.impl.CastNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
@@ -170,8 +171,6 @@ public class JavaToJavaScriptCompiler {
     program.addEntryMethod(bootStrapMethod);
   }
 
-  private final Set/* <IProblem> */problemSet = new HashSet/* <IProblem> */();
-
   private final String[] declEntryPoints;
 
   private final CompilationUnitDeclaration[] goldenCuds;
@@ -181,6 +180,8 @@ public class JavaToJavaScriptCompiler {
   private final boolean obfuscate;
 
   private final boolean prettyNames;
+
+  private final Set/* <IProblem> */problemSet = new HashSet/* <IProblem> */();
 
   public JavaToJavaScriptCompiler(final TreeLogger logger,
       final WebModeCompilerFrontEnd compiler, final String[] declEntryPts)
@@ -305,6 +306,13 @@ public class JavaToJavaScriptCompiler {
         throw new UnableToCompleteException();
       }
 
+      // TODO: figure out how to have a debug mode.
+      boolean isDebugEnabled = false;
+      if (!isDebugEnabled) {
+        // Remove all assert statements.
+        AssertionRemover.exec(jprogram);
+      }
+
       // Compute which classes have clinits
       jprogram.typeOracle.computeAfterAST();
 
@@ -354,6 +362,9 @@ public class JavaToJavaScriptCompiler {
       // (5) "Normalize" the high-level Java tree into a lower-level tree more
       // suited for JavaScript code gen. Don't go reordering these willy-nilly
       // because there are some subtle interdependencies.
+      if (isDebugEnabled) {
+        // AssertionNormalizer.exec(jprogram);
+      }
       CatchBlockNormalizer.exec(jprogram);
       CompoundAssignmentNormalizer.exec(jprogram);
       JavaScriptObjectCaster.exec(jprogram);
