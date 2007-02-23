@@ -17,6 +17,8 @@ package java.lang;
 
 import com.google.gwt.core.client.GWT;
 
+import java.io.PrintStream;
+
 /**
  * See <a
  * href="http://java.sun.com/j2se/1.4.2/docs/api/java/lang/Throwable.html">the
@@ -28,6 +30,7 @@ public class Throwable {
 
   private Throwable cause;
   private String message;
+  private StackTraceElement[] stackTrace = NO_STACK_TRACE;
 
   public Throwable() {
   }
@@ -47,7 +50,7 @@ public class Throwable {
   }
 
   /**
-   * Stack traces are not currently supported.
+   * Stack traces are not currently populated by GWT. This method does nothing.
    * 
    * @return this
    */
@@ -68,12 +71,14 @@ public class Throwable {
   }
 
   /**
-   * Stack traces are not currently supported.
+   * Stack traces are not currently populated by GWT. This method will return a
+   * zero-length array unless a stack trace has been explicitly set with
+   * {@link #setStackTrace(StackTraceElement[])}
    * 
-   * @return always a zero-length array
+   * @return the current stack trace
    */
   public StackTraceElement[] getStackTrace() {
-    return NO_STACK_TRACE;
+    return stackTrace;
   }
 
   public Throwable initCause(Throwable cause) {
@@ -88,6 +93,10 @@ public class Throwable {
   }
 
   public void printStackTrace() {
+    printStackTrace(System.err);
+  }
+
+  public void printStackTrace(PrintStream out) {
     StringBuffer msg = new StringBuffer();
     Throwable currentCause = this;
     while (currentCause != null) {
@@ -101,13 +110,18 @@ public class Throwable {
       msg.append("\n");
       currentCause = currentCause.getCause();
     }
-    System.err.println(msg);
+    out.println(msg);
   }
 
-  /**
-   * Stack traces are not currently supported.
-   */
   public void setStackTrace(StackTraceElement[] stackTrace) {
+    StackTraceElement[] copy = new StackTraceElement[stackTrace.length];
+    for (int i = 0, c = stackTrace.length; i < c; ++i) {
+      if (stackTrace[i] == null) {
+        throw new NullPointerException();
+      }
+      copy[i] = stackTrace[i];
+    }
+    this.stackTrace = copy;
   }
 
   public String toString() {
