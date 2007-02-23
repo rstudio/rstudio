@@ -315,7 +315,9 @@ public abstract class DOMImpl {
       elem.removeChild(elem.firstChild);
     }
     // Add a new text node.
-    elem.appendChild($doc.createTextNode(text));
+    if (text != null) {
+      elem.appendChild($doc.createTextNode(text));
+    }
   }-*/;
 
   public native void setIntAttribute(Element elem, String attr, int value) /*-{
