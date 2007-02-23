@@ -30,7 +30,6 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * Root for the AST representing an entire Java program.
@@ -149,6 +148,11 @@ public class JProgram extends JNode {
                                                                        * <String,
                                                                        * JMethod>
                                                                        */();
+
+  private final Map/* <JMethod, JMethod> */staticToInstanceMap = new IdentityHashMap/*
+                                                                                     * <JMethod,
+                                                                                     * JMethod>
+                                                                                     */();
 
   private final JPrimitiveType typeBoolean = new JPrimitiveType(this,
       "boolean", "Z", literalFalse);
@@ -448,6 +452,11 @@ public class JProgram extends JNode {
     return new JStringLiteral(this, String.valueOf(s));
   }
 
+  public JStringLiteral getLiteralString(String s) {
+    // should conslidate so we can build a string table in output code later?
+    return new JStringLiteral(this, s);
+  }
+
   public JField getNullField() {
     if (nullField == null) {
       nullField = new JField(this, null, "nullField", null, typeNull, false,
@@ -616,7 +625,7 @@ public class JProgram extends JNode {
   }
 
   public boolean isStaticImpl(JMethod method) {
-    return instanceToStaticMap.containsValue(method);
+    return staticToInstanceMap.containsKey(method);
   }
 
   public void putIntoTypeMap(String qualifiedBinaryName, JReferenceType type) {
@@ -628,6 +637,7 @@ public class JProgram extends JNode {
 
   public void putStaticImpl(JMethod method, JMethod staticImpl) {
     instanceToStaticMap.put(method, staticImpl);
+    staticToInstanceMap.put(staticImpl, method);
   }
 
   public JClassType rebind(JType type) {
@@ -662,13 +672,7 @@ public class JProgram extends JNode {
    * returns <code>null</code>.
    */
   public JMethod staticImplFor(JMethod method) {
-    for (Iterator it = instanceToStaticMap.entrySet().iterator(); it.hasNext();) {
-      Map.Entry entry = (Entry) it.next();
-      if (entry.getValue() == method) {
-        return (JMethod) entry.getKey();
-      }
-    }
-    return null;
+    return (JMethod) staticToInstanceMap.get(method);
   }
 
   public JReferenceType strongerType(JReferenceType type1, JReferenceType type2) {

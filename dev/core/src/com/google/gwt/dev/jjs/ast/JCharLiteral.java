@@ -18,7 +18,7 @@ package com.google.gwt.dev.jjs.ast;
 /**
  * Java character literal expression.
  */
-public class JCharLiteral extends JLiteral {
+public class JCharLiteral extends JValueLiteral {
 
   private final char value;
 
@@ -36,6 +36,10 @@ public class JCharLiteral extends JLiteral {
 
   public char getValue() {
     return value;
+  }
+
+  public Object getValueObj() {
+    return new Character(value);
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

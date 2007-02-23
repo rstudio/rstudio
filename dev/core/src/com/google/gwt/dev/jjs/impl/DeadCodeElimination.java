@@ -21,25 +21,38 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JBreakStatement;
+import com.google.gwt.dev.jjs.ast.JCharLiteral;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
+import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JForStatement;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
+import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
+import com.google.gwt.dev.jjs.ast.JLongLiteral;
+import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStatement;
+import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
+import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
+import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Attempts to remove dead code.
@@ -52,7 +65,7 @@ public class DeadCodeElimination {
   public class DeadCodeVisitor extends JModVisitor {
 
     /**
-     * Short circuit boolean AND or OR expressions when possible.
+     * Short circuit binary operations.
      */
     public void endVisit(JBinaryOperation x, Context ctx) {
       JBinaryOperator op = x.getOp();
@@ -108,6 +121,15 @@ public class DeadCodeElimination {
         if (lhs.getType() == program.getTypeNull()
             && rhs.getType() == program.getTypeNull()) {
           ctx.replaceMe(program.getLiteralBoolean(false));
+        }
+      } else if (op == JBinaryOperator.ADD
+          && x.getType() == program.getTypeJavaLangString()) {
+        // try to statically evaluate concatentation
+        if (lhs instanceof JValueLiteral && rhs instanceof JValueLiteral) {
+          Object lhsObj = ((JValueLiteral) lhs).getValueObj();
+          Object rhsObj = ((JValueLiteral) rhs).getValueObj();
+          ctx.replaceMe(program.getLiteralString(String.valueOf(lhsObj)
+              + String.valueOf(rhsObj)));
         }
       }
     }
@@ -197,6 +219,16 @@ public class DeadCodeElimination {
     }
 
     /**
+     * Resolve method calls that can be computed statically.
+     */
+    public void endVisit(JMethodCall x, Context ctx) {
+      JMethod method = x.getTarget();
+      if (method.getEnclosingType() == program.getTypeJavaLangString()) {
+        tryOptimizeStringCall(x, ctx, method);
+      }
+    }
+
+    /**
      * Resolve "!true" into "false" and vice versa.
      */
     public void endVisit(JPrefixOperation x, Context ctx) {
@@ -261,6 +293,10 @@ public class DeadCodeElimination {
       }
     }
 
+    private Class mapType(JType type) {
+      return (Class) typeClassMap.get(type);
+    }
+
     private void removeMe(JStatement stmt, Context ctx) {
       if (ctx.canRemove()) {
         ctx.removeMe();
@@ -268,6 +304,104 @@ public class DeadCodeElimination {
         // empty block statement
         ctx.replaceMe(new JBlock(program, stmt.getSourceInfo()));
       }
+    }
+
+    /**
+     * Replace String methods having literal args with the static result.
+     */
+    private void tryOptimizeStringCall(JMethodCall x, Context ctx,
+        JMethod method) {
+
+      if (method.getType() == program.getTypeVoid()) {
+        return;
+      }
+
+      int skip = 0;
+      Object instance;
+      if (program.isStaticImpl(method)) {
+        // is it static implementation for instance method?
+        method = program.staticImplFor(method);
+        instance = tryTranslateLiteral((JExpression) x.getArgs().get(0),
+            String.class);
+        skip = 1;
+      } else {
+        // instance may be null
+        instance = tryTranslateLiteral(x.getInstance(), String.class);
+      }
+
+      if (instance == null && !method.isStatic()) {
+        return;
+      }
+
+      List params = method.getOriginalParamTypes();
+      Class paramTypes[] = new Class[params.size()];
+      Object paramValues[] = new Object[params.size()];
+      ArrayList args = x.getArgs();
+      for (int i = 0; i != params.size(); ++i) {
+        paramTypes[i] = mapType((JType) params.get(i));
+        if (paramTypes[i] == null) {
+          return;
+        }
+        paramValues[i] = tryTranslateLiteral((JExpression) args.get(i + skip),
+            paramTypes[i]);
+        if (paramValues[i] == null) {
+          return;
+        }
+      }
+
+      try {
+        Method actual = String.class.getMethod(method.getName(), paramTypes);
+        if (actual == null) {
+          return;
+        }
+        Object result = actual.invoke(instance, paramValues);
+        if (result instanceof String) {
+          ctx.replaceMe(program.getLiteralString((String) result));
+        } else if (result instanceof Boolean) {
+          ctx.replaceMe(program.getLiteralBoolean(((Boolean) result).booleanValue()));
+        } else if (result instanceof Character) {
+          ctx.replaceMe(program.getLiteralChar(((Character) result).charValue()));
+        } else if (result instanceof Integer) {
+          ctx.replaceMe(program.getLiteralInt(((Integer) result).intValue()));
+        } else {
+          boolean stopHere = true;
+        }
+      } catch (Exception e) {
+        // If the call threw an exception, just don't optimize
+        boolean stopHere = true;
+      }
+    }
+
+    private Object tryTranslateLiteral(JExpression maybeLit, Class type) {
+      if (!(maybeLit instanceof JValueLiteral)) {
+        return null;
+      }
+      // TODO: make this way better by a mile
+      if (type == boolean.class && maybeLit instanceof JBooleanLiteral) {
+        return Boolean.valueOf(((JBooleanLiteral) maybeLit).getValue());
+      }
+      if (type == char.class && maybeLit instanceof JCharLiteral) {
+        return new Character(((JCharLiteral) maybeLit).getValue());
+      }
+      if (type == double.class && maybeLit instanceof JDoubleLiteral) {
+        return new Double(((JDoubleLiteral) maybeLit).getValue());
+      }
+      if (type == float.class && maybeLit instanceof JIntLiteral) {
+        return new Float(((JIntLiteral) maybeLit).getValue());
+      }
+      if (type == int.class && maybeLit instanceof JIntLiteral) {
+        return new Integer(((JIntLiteral) maybeLit).getValue());
+      }
+      if (type == long.class && maybeLit instanceof JLongLiteral) {
+        return new Long(((JLongLiteral) maybeLit).getValue());
+      }
+      if (type == String.class && maybeLit instanceof JStringLiteral) {
+        return ((JStringLiteral) maybeLit).getValue();
+      }
+      if (type == Object.class && maybeLit instanceof JValueLiteral) {
+        return ((JValueLiteral) maybeLit).getValueObj();
+      }
+      return null;
     }
   }
 
@@ -297,8 +431,20 @@ public class DeadCodeElimination {
 
   private final JProgram program;
 
+  private final Map typeClassMap = new IdentityHashMap();
+
   public DeadCodeElimination(JProgram program) {
     this.program = program;
+    typeClassMap.put(program.getTypeJavaLangObject(), Object.class);
+    typeClassMap.put(program.getTypeJavaLangString(), String.class);
+    typeClassMap.put(program.getTypePrimitiveBoolean(), boolean.class);
+    typeClassMap.put(program.getTypePrimitiveByte(), byte.class);
+    typeClassMap.put(program.getTypePrimitiveChar(), char.class);
+    typeClassMap.put(program.getTypePrimitiveDouble(), double.class);
+    typeClassMap.put(program.getTypePrimitiveFloat(), float.class);
+    typeClassMap.put(program.getTypePrimitiveInt(), int.class);
+    typeClassMap.put(program.getTypePrimitiveLong(), long.class);
+    typeClassMap.put(program.getTypePrimitiveShort(), short.class);
   }
 
   private boolean execImpl() {

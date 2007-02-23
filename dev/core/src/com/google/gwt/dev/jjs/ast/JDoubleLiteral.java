@@ -18,7 +18,7 @@ package com.google.gwt.dev.jjs.ast;
 /**
  * Java double literal expression. 
  */
-public class JDoubleLiteral extends JLiteral {
+public class JDoubleLiteral extends JValueLiteral {
 
   private final double value;
 
@@ -36,6 +36,10 @@ public class JDoubleLiteral extends JLiteral {
 
   public double getValue() {
     return value;
+  }
+
+  public Object getValueObj() {
+    return new Double(value);
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

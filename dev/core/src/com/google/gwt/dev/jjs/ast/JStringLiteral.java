@@ -18,7 +18,7 @@ package com.google.gwt.dev.jjs.ast;
 /**
  * Java literal expression that evaluates to a string.
  */
-public class JStringLiteral extends JLiteral {
+public class JStringLiteral extends JValueLiteral {
 
   private final String value;
 
@@ -35,6 +35,10 @@ public class JStringLiteral extends JLiteral {
   }
 
   public String getValue() {
+    return value;
+  }
+
+  public Object getValueObj() {
     return value;
   }
 

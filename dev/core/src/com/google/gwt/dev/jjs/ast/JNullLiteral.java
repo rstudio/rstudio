@@ -18,7 +18,7 @@ package com.google.gwt.dev.jjs.ast;
 /**
  * Java null literal expression.
  */
-public class JNullLiteral extends JLiteral {
+public class JNullLiteral extends JValueLiteral {
 
   /**
    * These are only supposed to be constructed by JProgram.
@@ -29,6 +29,10 @@ public class JNullLiteral extends JLiteral {
 
   public JType getType() {
     return program.getTypeNull();
+  }
+
+  public Object getValueObj() {
+    return null;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

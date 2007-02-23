@@ -60,6 +60,10 @@ public class CompilerTest extends GWTTestCase {
 
   private static int sideEffectChecker;
 
+  private static String barShouldInline() {
+    return "bar";
+  }
+
   private static native boolean cannotOptimize() /*-{
     return true;
   }-*/;
@@ -478,6 +482,25 @@ public class CompilerTest extends GWTTestCase {
     assertEquals(new Foo(0).i, 0);
     assertEquals(new Foo(1).i, 1);
     assertEquals(new Foo(2).i, 2);
+  }
+  
+  public void testStringOptimizations() {
+    assertEquals("Herro, AJAX", "Hello, AJAX".replace('l', 'r'));
+    assertEquals('J', "Hello, AJAX".charAt(8));
+    assertEquals(11, "Hello, AJAX".length());
+    assertFalse("Hello, AJAX".equals("me"));
+    assertTrue("Hello, AJAX".equals("Hello, AJAX"));
+    assertTrue("Hello, AJAX".equalsIgnoreCase("HELLO, ajax"));
+    assertEquals("hello, ajax", "Hello, AJAX".toLowerCase());
+    
+    assertEquals("foobar", "foo" + barShouldInline());
+    assertEquals("1bar", 1 + barShouldInline());
+    assertEquals("fbar", 'f' + barShouldInline());
+    assertEquals("truebar", true + barShouldInline());
+    assertEquals("3.3bar", 3.3 + barShouldInline());
+    assertEquals("3.3bar", 3.3f + barShouldInline());
+    assertEquals("27bar", 27L + barShouldInline());
+    assertEquals("nullbar", null + barShouldInline());
   }
 
   public void testSubclassStaticInnerAndClinitOrdering() {

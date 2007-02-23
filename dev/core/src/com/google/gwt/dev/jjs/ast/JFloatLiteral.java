@@ -18,7 +18,7 @@ package com.google.gwt.dev.jjs.ast;
 /**
  * Java literal typed as a float.
  */
-public class JFloatLiteral extends JLiteral {
+public class JFloatLiteral extends JValueLiteral {
 
   private final float value;
 
@@ -36,6 +36,10 @@ public class JFloatLiteral extends JLiteral {
 
   public float getValue() {
     return value;
+  }
+
+  public Object getValueObj() {
+    return new Float(value);
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

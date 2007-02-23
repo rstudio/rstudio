@@ -18,7 +18,7 @@ package com.google.gwt.dev.jjs.ast;
 /**
  * Java boolean literal expression.
  */
-public class JBooleanLiteral extends JLiteral {
+public class JBooleanLiteral extends JValueLiteral {
 
   private final boolean value;
 
@@ -36,6 +36,10 @@ public class JBooleanLiteral extends JLiteral {
 
   public boolean getValue() {
     return value;
+  }
+
+  public Object getValueObj() {
+    return Boolean.valueOf(value);
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

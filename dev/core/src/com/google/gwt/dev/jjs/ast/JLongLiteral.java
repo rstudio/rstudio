@@ -18,7 +18,7 @@ package com.google.gwt.dev.jjs.ast;
 /**
  * Java literal expression that evaluates to a Long.
  */
-public class JLongLiteral extends JLiteral {
+public class JLongLiteral extends JValueLiteral {
 
   private final long value;
 
@@ -36,6 +36,10 @@ public class JLongLiteral extends JLiteral {
 
   public long getValue() {
     return value;
+  }
+
+  public Object getValueObj() {
+    return new Long(value);
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

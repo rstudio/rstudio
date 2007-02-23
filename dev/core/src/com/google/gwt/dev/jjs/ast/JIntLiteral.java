@@ -18,7 +18,7 @@ package com.google.gwt.dev.jjs.ast;
 /**
  * Java integer literal expression.
  */
-public class JIntLiteral extends JLiteral {
+public class JIntLiteral extends JValueLiteral {
 
   private final int value;
 
@@ -36,6 +36,10 @@ public class JIntLiteral extends JLiteral {
 
   public int getValue() {
     return value;
+  }
+
+  public Object getValueObj() {
+    return new Integer(value);
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
