@@ -24,9 +24,12 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 public interface RebindOracle {
 
   /**
-   * Determines which type should be substituted for the requested type.
+   * Determines which type should be substituted for the requested type. The
+   * caller must ensure that the result type is instantiable.
    * 
-   * @return the substitute type name, which may be the requested type itself
+   * @return the substitute type name, which may be the requested type itself;
+   *         this method must not return <code>null</code> if sourceTypeName
+   *         is not <code>null</code>
    */
   String rebind(TreeLogger logger, String sourceTypeName)
       throws UnableToCompleteException;

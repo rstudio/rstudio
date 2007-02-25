@@ -171,25 +171,10 @@ public class StandardRebindOracle implements RebindOracle {
 
     Messages.TRACE_TOPLEVEL_REBIND_RESULT.log(logger, result, null);
 
-    if (!isKnownToBeUninstantiable(result)) {
-      return result;
-    } else {
-      Messages.REBIND_RESULT_TYPE_IS_NOT_INSTANTIABLE.log(logger, result, null);
-      throw new UnableToCompleteException();
-    }
+    return result;
   }
 
   protected void onGeneratedTypes(String result, JClassType[] genTypes) {
-  }
-
-  private boolean isKnownToBeUninstantiable(String name) {
-    JClassType type = typeOracle.findType(name);
-    if (type != null) {
-      if (!type.isDefaultInstantiable()) {
-        return true;
-      }
-    }
-    return false;
   }
 
 }

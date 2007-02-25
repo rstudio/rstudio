@@ -26,10 +26,6 @@ import com.google.gwt.dev.util.msg.Message1ToString;
  */
 public final class Messages {
 
-  public static final Message1String REBIND_RESULT_TYPE_IS_NOT_INSTANTIABLE = new Message1String(
-      TreeLogger.WARN,
-      "Deferred binding result type '$0' is not instantiable; expect subsequent failure");
-
   public static final Message1ToString TRACE_CHECKING_RULE = new Message1ToString(
       TreeLogger.DEBUG, "Checking rule $0");
 

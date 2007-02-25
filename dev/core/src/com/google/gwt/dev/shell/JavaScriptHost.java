@@ -158,7 +158,6 @@ public class JavaScriptHost {
     } catch (Throwable e) {
       String msg = "Deferred binding failed for '" + className
         + "' (did you forget to inherit a required module?)";
-      System.err.println(msg);
       throw new RuntimeException(msg, e);
     }
   }

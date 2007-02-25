@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 /**
  * The interface to the low-level browser, this class serves as a 'domain' for a
@@ -29,9 +30,8 @@ import java.lang.reflect.Method;
  */
 public abstract class ModuleSpace implements ShellJavaScriptHost {
 
-  protected static ThreadLocal sThrownJavaExceptionObject = new ThreadLocal();
-
   protected static ThreadLocal sCaughtJavaExceptionObject = new ThreadLocal();
+  protected static ThreadLocal sThrownJavaExceptionObject = new ThreadLocal();
 
   /**
    * Logger is thread local.
@@ -132,9 +132,23 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       if (entryPoints.length > 0) {
         for (int i = 0; i < entryPoints.length; i++) {
           entryPointTypeName = entryPoints[i];
-          Object module = rebindAndCreate(entryPointTypeName);
-          Method onModuleLoad = module.getClass().getMethod("onModuleLoad",
-              null);
+          Class clazz = loadClassFromSourceName(entryPointTypeName);
+          Method onModuleLoad = null;
+          try {
+            onModuleLoad = clazz.getMethod("onModuleLoad", null);
+            if (!Modifier.isStatic(onModuleLoad.getModifiers())) {
+              // it's non-static, so we need to rebind the class
+              onModuleLoad = null;
+            }
+          } catch (NoSuchMethodException e) {
+            // okay, try rebinding it; maybe the rebind result will have one
+          }
+          Object module = null;
+          if (onModuleLoad == null) {
+            module = rebindAndCreate(entryPointTypeName);
+            onModuleLoad = module.getClass().getMethod("onModuleLoad", null);
+          }
+          onModuleLoad.setAccessible(true);
           onModuleLoad.invoke(module, null);
         }
       } else {
@@ -164,16 +178,24 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public Object rebindAndCreate(String requestedClassName)
       throws UnableToCompleteException {
     Throwable caught = null;
+    String msg = null;
+    String resultName = null;
     try {
       // Rebind operates on source-level names.
       //
       String sourceName = requestedClassName.replace('$', '.');
-      String resultName = rebind(sourceName);
+      resultName = rebind(sourceName);
       Class resolvedClass = loadClassFromSourceName(resultName);
-      Constructor ctor = resolvedClass.getDeclaredConstructor(null);
-      ctor.setAccessible(true);
-      return ctor.newInstance(null);
+      if (Modifier.isAbstract(resolvedClass.getModifiers())) {
+        msg = "Deferred binding result type '" + resultName
+            + "' should not be abstract";
+      } else {
+        Constructor ctor = resolvedClass.getDeclaredConstructor(null);
+        ctor.setAccessible(true);
+        return ctor.newInstance(null);
+      }
     } catch (ClassNotFoundException e) {
+      msg = "Could not load deferred binding result type '" + resultName + "'";
       caught = e;
     } catch (InstantiationException e) {
       caught = e;
@@ -182,6 +204,8 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     } catch (ExceptionInInitializerError e) {
       caught = e.getException();
     } catch (NoSuchMethodException e) {
+      msg = "Rebind result '" + resultName
+          + "' has no default (zero argument) constructors.";
       caught = e;
     } catch (InvocationTargetException e) {
       caught = e.getTargetException();
@@ -190,10 +214,11 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     // Always log here because sometimes this method gets called from static
     // initializers and other unusual places, which can obscure the problem.
     //
-    String msg = "Failed to create an instance of '" + requestedClassName
-        + "' via deferred binding ";
+    if (msg == null) {
+      msg = "Failed to create an instance of '" + requestedClassName
+          + "' via deferred binding ";
+    }
     host.getLogger().log(TreeLogger.ERROR, msg, caught);
-
     throw new UnableToCompleteException();
   }
 

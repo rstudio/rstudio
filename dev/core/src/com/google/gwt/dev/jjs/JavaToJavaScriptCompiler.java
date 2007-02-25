@@ -79,7 +79,7 @@ import java.util.Set;
 public class JavaToJavaScriptCompiler {
 
   private static void findEntryPoints(TreeLogger logger,
-      String[] mainClassNames, JProgram program)
+      RebindOracle rebindOracle, String[] mainClassNames, JProgram program)
       throws UnableToCompleteException {
     JMethod bootStrapMethod = program.createMethod(null, "init".toCharArray(),
         null, program.getTypeVoid(), false, true, true, false, false);
@@ -96,73 +96,77 @@ public class JavaToJavaScriptCompiler {
         throw new UnableToCompleteException();
       }
 
-      if (!(referenceType instanceof JClassType)) {
-        logger.log(TreeLogger.ERROR, "Module entry point class '"
-            + mainClassName + "' must be a class", null);
-        throw new UnableToCompleteException();
-      }
-
-      JClassType mainClass = (JClassType) referenceType;
-
-      JMethod mainMethod = null;
-      outer : for (JClassType it = mainClass; it != null; it = it.extnds) {
-        for (int j = 0; j < it.methods.size(); ++j) {
-          JMethod method = (JMethod) it.methods.get(j);
-          if (method.getName().equals("onModuleLoad")) {
-            mainMethod = method;
-            break outer;
-          }
-        }
-      }
-
-      if (mainMethod == null) {
-        logger.log(TreeLogger.ERROR,
-            "Could not find entry method 'onModuleLoad' method in entry-point class "
-                + mainClassName, null);
-        throw new UnableToCompleteException();
-      }
-
-      if (mainMethod.params.size() > 0) {
-        logger.log(TreeLogger.ERROR,
-            "Entry method 'onModuleLoad' in entry-point class " + mainClassName
-                + "must take zero arguments", null);
-        throw new UnableToCompleteException();
-      }
-
-      if (mainMethod.isAbstract()) {
-        logger.log(TreeLogger.ERROR,
-            "Entry method 'onModuleLoad' in entry-point class " + mainClassName
-                + "must not be abstract", null);
-        throw new UnableToCompleteException();
-      }
-
       JExpression qualifier = null;
-      if (!mainMethod.isStatic()) {
-        // Find the appropriate (noArg) constructor
-        JMethod noArgCtor = null;
-        for (int j = 0; j < mainClass.methods.size(); ++j) {
-          JMethod ctor = (JMethod) mainClass.methods.get(j);
-          if (ctor.getName().equals(mainClass.getShortName())) {
-            if (ctor.params.size() == 0) {
-              noArgCtor = ctor;
-            }
-          }
-        }
-        if (noArgCtor == null) {
-          logger.log(
-              TreeLogger.ERROR,
-              "No default (zero argument) constructor could be found in entry-point class "
-                  + mainClassName
-                  + " to qualify a call to non-static entry method 'onModuleLoad'",
-              null);
+      JMethod mainMethod = findMainMethod(referenceType);
+      if (mainMethod == null || !mainMethod.isStatic()) {
+        // Couldn't find a static main method; must rebind the class
+        String originalClassName = mainClassName;
+        mainClassName = rebindOracle.rebind(logger, originalClassName);
+        referenceType = program.getFromTypeMap(mainClassName);
+        if (referenceType == null) {
+          logger.log(TreeLogger.ERROR,
+              "Could not find module entry point class '" + mainClassName
+                  + "' after rebinding from '" + originalClassName + "'", null);
           throw new UnableToCompleteException();
         }
 
-        // Construct a new instance of the class to qualify the non-static call
-        JNewInstance newInstance = new JNewInstance(program, null, mainClass);
-        qualifier = new JMethodCall(program, null, newInstance, noArgCtor);
+        if (!(referenceType instanceof JClassType)) {
+          logger.log(TreeLogger.ERROR, "Module entry point class '"
+              + mainClassName + "' must be a class", null);
+          throw new UnableToCompleteException();
+        }
+
+        JClassType mainClass = (JClassType) referenceType;
+        if (mainClass.isAbstract()) {
+          logger.log(TreeLogger.ERROR, "Module entry point class '"
+              + mainClassName + "' must not be abstract", null);
+          throw new UnableToCompleteException();
+        }
+
+        mainMethod = findMainMethodRecurse(referenceType);
+        if (mainMethod == null) {
+          logger.log(TreeLogger.ERROR,
+              "Could not find entry method 'onModuleLoad()' method in entry point class '"
+                  + mainClassName + "'", null);
+          throw new UnableToCompleteException();
+        }
+
+        if (mainMethod.isAbstract()) {
+          logger.log(TreeLogger.ERROR,
+              "Entry method 'onModuleLoad' in entry point class '"
+                  + mainClassName + "' must not be abstract", null);
+          throw new UnableToCompleteException();
+        }
+
+        if (!mainMethod.isStatic()) {
+          // Find the appropriate (noArg) constructor
+          JMethod noArgCtor = null;
+          for (int j = 0; j < mainClass.methods.size(); ++j) {
+            JMethod ctor = (JMethod) mainClass.methods.get(j);
+            if (ctor.getName().equals(mainClass.getShortName())) {
+              if (ctor.params.size() == 0) {
+                noArgCtor = ctor;
+              }
+            }
+          }
+          if (noArgCtor == null) {
+            logger.log(
+                TreeLogger.ERROR,
+                "No default (zero argument) constructor could be found in entry point class '"
+                    + mainClassName
+                    + "' to qualify a call to non-static entry method 'onModuleLoad'",
+                null);
+            throw new UnableToCompleteException();
+          }
+
+          // Construct a new instance of the class to qualify the non-static
+          // call
+          JNewInstance newInstance = new JNewInstance(program, null, mainClass);
+          qualifier = new JMethodCall(program, null, newInstance, noArgCtor);
+        }
       }
 
+      // qualifier will be null if onModuleLoad is static
       JMethodCall onModuleLoadCall = new JMethodCall(program, null, qualifier,
           mainMethod);
       bootStrapMethod.body.statements.add(new JExpressionStatement(program,
@@ -171,16 +175,33 @@ public class JavaToJavaScriptCompiler {
     program.addEntryMethod(bootStrapMethod);
   }
 
+  private static JMethod findMainMethod(JReferenceType referenceType) {
+    for (int j = 0; j < referenceType.methods.size(); ++j) {
+      JMethod method = (JMethod) referenceType.methods.get(j);
+      if (method.getName().equals("onModuleLoad")) {
+        if (method.params.size() == 0) {
+          return method;
+        }
+      }
+    }
+    return null;
+  }
+
+  private static JMethod findMainMethodRecurse(JReferenceType referenceType) {
+    for (JReferenceType it = referenceType; it != null; it = it.extnds) {
+      JMethod result = findMainMethod(it);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
+  }
+
   private final String[] declEntryPoints;
-
   private final CompilationUnitDeclaration[] goldenCuds;
-
   private long lastModified;
-
   private final boolean obfuscate;
-
   private final boolean prettyNames;
-
   private final Set/* <IProblem> */problemSet = new HashSet/* <IProblem> */();
 
   public JavaToJavaScriptCompiler(final TreeLogger logger,
@@ -321,11 +342,7 @@ public class JavaToJavaScriptCompiler {
 
       // Rebind each entry point.
       //
-      String[] actualEntryPoints = new String[declEntryPoints.length];
-      for (int i = 0; i < declEntryPoints.length; i++) {
-        actualEntryPoints[i] = rebindOracle.rebind(logger, declEntryPoints[i]);
-      }
-      findEntryPoints(logger, actualEntryPoints, jprogram);
+      findEntryPoints(logger, rebindOracle, declEntryPoints, jprogram);
 
       // (4) Optimize the normalized Java AST
       boolean didChange;
