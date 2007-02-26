@@ -15,9 +15,7 @@
  */
 package com.google.gwt.dev.js.ast;
 
-import com.google.gwt.dev.js.FullNamingStrategy;
 import com.google.gwt.dev.js.JsToStringGenerationVisitor;
-import com.google.gwt.dev.js.NamingStrategy;
 import com.google.gwt.dev.util.TextOutputOnCharArray;
 
 /**
@@ -32,10 +30,8 @@ public abstract class JsNode implements JsVisitable {
   
   // @Override
   public String toString() {
-    // no obfuscation
-    NamingStrategy ns = new FullNamingStrategy();
     TextOutputOnCharArray p = new TextOutputOnCharArray(false);
-    JsToStringGenerationVisitor v = new JsToStringGenerationVisitor(p, ns);
+    JsToStringGenerationVisitor v = new JsToStringGenerationVisitor(p);
     traverse(v);
     return new String(p.getText());
   }

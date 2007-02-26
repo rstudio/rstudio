@@ -51,11 +51,11 @@ import com.google.gwt.dev.jjs.impl.ReplaceRebinds;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
 import com.google.gwt.dev.jjs.impl.InternalCompilerException.NodeInfo;
-import com.google.gwt.dev.js.FullNamingStrategy;
+import com.google.gwt.dev.js.JsObfuscateNamer;
+import com.google.gwt.dev.js.JsPrettyNamer;
 import com.google.gwt.dev.js.JsSourceGenerationVisitor;
-import com.google.gwt.dev.js.NamingStrategy;
-import com.google.gwt.dev.js.ObfuscatedNamingStrategy;
-import com.google.gwt.dev.js.PrettyNamingStrategy;
+import com.google.gwt.dev.js.JsSymbolResolver;
+import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.TextOutputOnPrintWriter;
 import com.google.gwt.dev.util.Util;
@@ -400,18 +400,22 @@ public class JavaToJavaScriptCompiler {
       // (7) Generate a JavaScript code DOM from the Java type declarations
       GenerateJavaScriptAST.exec(jprogram, jsProgram);
 
+      // (8) Resolve all unresolved JsNameRefs
+      JsSymbolResolver.exec(jsProgram);
+      
+      // (9) Obfuscate
+      if (obfuscate) {
+        JsObfuscateNamer.exec(jsProgram);
+      } else if (prettyNames) {
+        JsPrettyNamer.exec(jsProgram);
+      } else {
+        JsVerboseNamer.exec(jsProgram);
+      }
+      
       StringWriter sw = new StringWriter();
       PrintWriter pw = new PrintWriter(sw, true);
       TextOutputOnPrintWriter out = new TextOutputOnPrintWriter(pw, obfuscate);
-      NamingStrategy ns;
-      if (obfuscate) {
-        ns = new ObfuscatedNamingStrategy();
-      } else if (prettyNames) {
-        ns = new PrettyNamingStrategy();
-      } else {
-        ns = new FullNamingStrategy();
-      }
-      JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out, ns);
+      JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
       jsProgram.traverse(v);
 
       return sw.toString();

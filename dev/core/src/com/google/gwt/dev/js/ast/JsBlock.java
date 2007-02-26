@@ -15,8 +15,6 @@
  */
 package com.google.gwt.dev.js.ast;
 
-import java.util.Iterator;
-
 /**
  * Represents a JavaScript block statement.
  */
@@ -37,10 +35,7 @@ public class JsBlock extends JsStatement {
 
   public void traverse(JsVisitor v) {
     if (v.visit(this)) {
-      for (Iterator iter = stmts.iterator(); iter.hasNext();) {
-        JsStatement stmt = (JsStatement) iter.next();
-        stmt.traverse(v);
-      }
+      stmts.traverse(v);
     }
     v.endVisit(this);
   }

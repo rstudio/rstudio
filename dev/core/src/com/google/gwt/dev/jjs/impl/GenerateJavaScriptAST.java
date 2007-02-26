@@ -106,7 +106,6 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNode;
-import com.google.gwt.dev.js.ast.JsObfuscatableName;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsParameters;
@@ -131,6 +130,8 @@ import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -143,6 +144,37 @@ import java.util.Stack;
  * Creates a JavaScript AST from a <code>JProgram</code> node.
  */
 public class GenerateJavaScriptAST {
+
+  private class SortVisitor extends JVisitor {
+
+    private final HasNameSort hasNameSort = new HasNameSort();
+
+    public void endVisit(JClassType x, Context ctx) {
+      Collections.sort(x.fields, hasNameSort);
+
+      // Sort the methods manually to avoid sorting clinit out of place!
+      List methods = x.methods;
+      Object a[] = methods.toArray();
+      Arrays.sort(a, 1, a.length, hasNameSort);
+      for (int i = 1; i < a.length; i++) {
+        methods.set(i, a[i]);
+      }
+    }
+
+    public void endVisit(JInterfaceType x, Context ctx) {
+      Collections.sort(x.fields, hasNameSort);
+      Collections.sort(x.methods, hasNameSort);
+    }
+
+    public void endVisit(JMethod x, Context ctx) {
+      Collections.sort(x.locals, hasNameSort);
+    }
+
+    public void endVisit(JProgram x, Context ctx) {
+      Collections.sort(x.entryMethods, hasNameSort);
+      Collections.sort(x.getDeclaredTypes(), hasNameSort);
+    }
+  }
 
   private class CreateNamesAndScopesVisitor extends JVisitor {
 
@@ -158,9 +190,9 @@ public class GenerateJavaScriptAST {
       String name = x.getName();
       String mangleName = mangleName(x);
       if (x.isStatic()) {
-        names.put(x, rootScope.createUniqueObfuscatableName(mangleName, name));
+        names.put(x, topScope.declareName(mangleName, name));
       } else {
-        names.put(x, peek().createUniqueObfuscatableName(mangleName, name));
+        names.put(x, peek().declareName(mangleName, name));
       }
     }
 
@@ -174,14 +206,14 @@ public class GenerateJavaScriptAST {
       if (getName(x) != null) {
         return;
       }
-      names.put(x, peek().getOrCreateObfuscatableName(x.getName()));
+      names.put(x, peek().declareName(x.getName()));
     }
 
     // @Override
     public void endVisit(JLocal x, Context ctx) {
       // locals can conflict, that's okay just reuse the same variable
       JsScope scope = peek();
-      JsName jsName = scope.getOrCreateObfuscatableName(x.getName());
+      JsName jsName = scope.declareName(x.getName());
       names.put(x, jsName);
     }
 
@@ -192,40 +224,39 @@ public class GenerateJavaScriptAST {
 
     // @Override
     public void endVisit(JParameter x, Context ctx) {
-      names.put(x, peek().createUniqueObfuscatableName(x.getName()));
+      names.put(x, peek().declareName(x.getName()));
     }
 
     // @Override
     public void endVisit(JProgram x, Context ctx) {
       // visit special things that may have been culled
       JField field = x.getSpecialField("Object.typeId");
-      names.put(field, objectScope.getOrCreateObfuscatableName(
-          mangleName(field), field.getName()));
-
-      field = x.getSpecialField("Object.typeName");
-      names.put(field,
-          objectScope.getOrCreateObfuscatableName(mangleName(field)));
-
-      field = x.getSpecialField("Cast.typeIdArray");
-      names.put(field, rootScope.getOrCreateObfuscatableName(mangleName(field),
+      names.put(field, objectScope.declareName(mangleName(field),
           field.getName()));
 
+      field = x.getSpecialField("Object.typeName");
+      names.put(field, objectScope.declareName(mangleName(field),
+          field.getName()));
+
+      field = x.getSpecialField("Cast.typeIdArray");
+      names.put(field, topScope.declareName(mangleName(field), field.getName()));
+
       /*
-       * put the null method and field into fObjectScope since they can be
+       * put the null method and field into objectScope since they can be
        * referenced as instance on null-types (as determined by type flow)
        */
       JMethod nullMethod = x.getNullMethod();
       polymorphicNames.put(nullMethod,
-          objectScope.createUniqueObfuscatableName(nullMethod.getName()));
+          objectScope.declareName(nullMethod.getName()));
       JField nullField = x.getNullField();
-      JsName nullFieldName = objectScope.createUniqueObfuscatableName(nullField.getName());
+      JsName nullFieldName = objectScope.declareName(nullField.getName());
       polymorphicNames.put(nullField, nullFieldName);
       names.put(nullField, nullFieldName);
 
       /*
        * put nullMethod in the global scope, too; it's the replacer for clinits
        */
-      nullMethodName = rootScope.createUniqueObfuscatableName(nullMethod.getName());
+      nullMethodName = topScope.declareName(nullMethod.getName());
       names.put(nullMethod, nullMethodName);
     }
 
@@ -236,7 +267,7 @@ public class GenerateJavaScriptAST {
 
     // @Override
     public boolean visit(JClassType x, Context ctx) {
-      // have I already been visited as a supertype?
+      // have I already been visited as a super type?
       JsScope myScope = (JsScope) classScopes.get(x);
       if (myScope != null) {
         push(myScope);
@@ -244,8 +275,7 @@ public class GenerateJavaScriptAST {
       }
 
       // My seed function name
-      names.put(x, rootScope.createUniqueObfuscatableName(getNameString(x),
-          x.getShortName()));
+      names.put(x, topScope.declareName(getNameString(x), x.getShortName()));
 
       // My class scope
       if (x.extnds == null) {
@@ -266,8 +296,7 @@ public class GenerateJavaScriptAST {
         if (parentScope == objectScope) {
           parentScope = interfaceScope;
         }
-        myScope = new JsScope(parentScope);
-        myScope.setDescription("class " + x.getShortName());
+        myScope = new JsScope(parentScope, "class " + x.getShortName());
       }
       classScopes.put(x, myScope);
 
@@ -290,8 +319,7 @@ public class GenerateJavaScriptAST {
       if (!x.isStatic()) {
         if (getPolyName(x) == null) {
           String mangleName = mangleNameForPoly(x);
-          JsName polyName = interfaceScope.getOrCreateObfuscatableName(
-              mangleName, name);
+          JsName polyName = interfaceScope.declareName(mangleName, name);
           polymorphicNames.put(x, polyName);
         }
       }
@@ -305,15 +333,15 @@ public class GenerateJavaScriptAST {
       // my global name
       JsName globalName;
       if (x.getEnclosingType() == null) {
-        globalName = rootScope.createUniqueObfuscatableName(name);
+        globalName = topScope.declareName(name);
       } else {
         String mangleName = mangleNameForGlobal(x);
-        globalName = rootScope.createUniqueObfuscatableName(mangleName, name);
+        globalName = topScope.declareName(mangleName, name);
       }
       names.put(x, globalName);
 
       // create my peer JsFunction
-      JsFunction jsFunction = new JsFunction(rootScope, globalName);
+      JsFunction jsFunction = new JsFunction(topScope, globalName);
       methodMap.put(x, jsFunction);
 
       push(jsFunction.getScope());
@@ -327,18 +355,42 @@ public class GenerateJavaScriptAST {
       if (!x.isStatic()) {
         if (getPolyName(x) == null) {
           String mangleName = mangleNameForPoly(x);
-          JsName polyName = interfaceScope.getOrCreateObfuscatableName(
-              mangleName, name);
+          JsName polyName = interfaceScope.declareName(mangleName, name);
           polymorphicNames.put(x, polyName);
         }
       }
 
       // set my global name now that we have a name allocator
       String fnName = mangleNameForGlobal(x);
-      JsName globalName = rootScope.createUniqueObfuscatableName(fnName, name);
+      JsName globalName = topScope.declareName(fnName, name);
       x.getFunc().setName(globalName);
       names.put(x, globalName);
 
+      return false;
+    }
+
+    public boolean visit(JTryStatement x, Context ctx) {
+      accept(x.getTryBlock());
+
+      List catchArgs = x.getCatchArgs();
+      List catchBlocks = x.getCatchBlocks();
+      for (int i = 0, c = catchArgs.size(); i < c; ++i) {
+        JLocalRef arg = (JLocalRef) catchArgs.get(i);
+        JBlock catchBlock = (JBlock) catchBlocks.get(i);
+        JsCatch jsCatch = new JsCatch(peek(), arg.getTarget().getName());
+        JsParameter jsParam = jsCatch.getParameter();
+        names.put(arg.getTarget(), jsParam.getName());
+        catchMap.put(catchBlock, jsCatch);
+
+        push(jsCatch.getScope());
+        accept(catchBlock);
+        pop();
+      }
+
+      // TODO: normalize this so it's never null?
+      if (x.getFinallyBlock() != null) {
+        accept(x.getFinallyBlock());
+      }
       return false;
     }
 
@@ -361,13 +413,18 @@ public class GenerateJavaScriptAST {
 
     private JMethod currentMethod = null;
 
-    private final JsName globalTemp = rootScope.getOrCreateUnobfuscatableName("_");
+    private final JsName globalTemp = topScope.declareName("_");
 
     private final Stack/* <JsNode> */nodeStack = new Stack/* <JsNode> */();
 
-    private final JsName prototype = objectScope.getOrCreateUnobfuscatableName("prototype");
+    private final JsName prototype = objectScope.declareName("prototype");
 
-    private final JsName window = rootScope.getOrCreateUnobfuscatableName("window");
+    private final JsName window = jsProgram.getRootScope().declareName("window");
+
+    {
+      globalTemp.setObfuscatable(false);
+      prototype.setObfuscatable(false);
+    }
 
     // @Override
     public void endVisit(JAbsentArrayDimension x, Context ctx) {
@@ -466,7 +523,7 @@ public class GenerateJavaScriptAST {
     public void endVisit(JClassLiteral x, Context ctx) {
       // My seed function name
       String nameString = x.getRefType().getJavahSignatureName() + "_classlit";
-      JsName classLit = rootScope.getOrCreateObfuscatableName(nameString);
+      JsName classLit = topScope.declareName(nameString);
       classLits.put(x.getRefType(), classLit);
       push(classLit.makeRef());
     }
@@ -508,7 +565,7 @@ public class GenerateJavaScriptAST {
           JsName seedFuncName = getName(x);
 
           // seed function
-          JsFunction seedFunc = new JsFunction(rootScope, seedFuncName);
+          JsFunction seedFunc = new JsFunction(topScope, seedFuncName);
           JsBlock body = new JsBlock();
           seedFunc.setBody(body);
           globalStmts.add(seedFunc.makeStmt());
@@ -533,7 +590,7 @@ public class GenerateJavaScriptAST {
            * primitive with a modified prototype.
            */
           JsNameRef rhs = prototype.makeRef();
-          rhs.setQualifier(rootScope.getOrCreateUnobfuscatableName("String").makeRef());
+          rhs.setQualifier(jsProgram.getRootScope().declareName("String").makeRef());
           JsExpression tmpAsg = createAssignment(globalTemp.makeRef(), rhs);
           globalStmts.add(tmpAsg.makeStmt());
         }
@@ -557,7 +614,8 @@ public class GenerateJavaScriptAST {
             // _.toString = function(){return this.java_lang_Object_toString();}
 
             // lhs
-            JsName lhsName = rootScope.getOrCreateUnobfuscatableName("toString");
+            JsName lhsName = objectScope.declareName("toString");
+            lhsName.setObfuscatable(false);
             JsNameRef lhs = lhsName.makeRef();
             lhs.setQualifier(globalTemp.makeRef());
 
@@ -567,7 +625,7 @@ public class GenerateJavaScriptAST {
             toStringRef.setQualifier(new JsThisRef());
             call.setQualifier(toStringRef);
             JsReturn jsReturn = new JsReturn(call);
-            JsFunction rhs = new JsFunction(rootScope);
+            JsFunction rhs = new JsFunction(topScope);
             JsBlock body = new JsBlock();
             body.getStatements().add(jsReturn);
             rhs.setBody(body);
@@ -813,7 +871,7 @@ public class GenerateJavaScriptAST {
       if (x.getInitializer() == null) {
         pop(); // localRef
         /*
-         * local decls can only appear in blocks, so it's ok to push null
+         * local decls can only appear in blocks, so it's okay to push null
          * instead of an empty statement
          */
         push(null);
@@ -875,8 +933,7 @@ public class GenerateJavaScriptAST {
       JsVars vars = new JsVars();
       Set alreadySeen = new HashSet();
       for (int i = 0; i < locals.size(); ++i) {
-        JsNameRef localRef = (JsNameRef) locals.get(i);
-        JsName name = localRef.getName();
+        JsName name = (JsName) names.get(x.locals.get(i));
         String ident = name.getIdent();
         if (!alreadySeen.contains(ident)) {
           alreadySeen.add(ident);
@@ -915,14 +972,16 @@ public class GenerateJavaScriptAST {
         if (x.isStaticDispatchOnly()) {
           /*
            * Dispatch statically (odd case). This happens when a call that must
-           * be static is targetting an instance method that could not be
+           * be static is targeting an instance method that could not be
            * transformed into a static. For example, making a super call into a
            * native method currently causes this, because we cannot currently
            * staticify native methods.
            * 
            * Have to use a "call" construct.
            */
-          qualifier = objectScope.getOrCreateUnobfuscatableName("call").makeRef();
+          JsName callName = objectScope.declareName("call");
+          callName.setObfuscatable(false);
+          qualifier = callName.makeRef();
           qualifier.setQualifier(getName(method).makeRef());
           jsInvocation.getArguments().add(0, (JsExpression) pop()); // instance
         } else {
@@ -992,7 +1051,7 @@ public class GenerateJavaScriptAST {
 
       // types don't push
 
-      List/* <JsFunction> */funcs = popList(x.entryMethods.size()); // entrymethods
+      List/* <JsFunction> */funcs = popList(x.entryMethods.size()); // entryMethods
       for (int i = 0; i < funcs.size(); ++i) {
         JsFunction func = (JsFunction) funcs.get(i);
         if (func != null) {
@@ -1015,15 +1074,17 @@ public class GenerateJavaScriptAST {
        * }
        * </pre>
        */
-      JsFunction gwtOnLoad = new JsFunction(rootScope);
+      JsFunction gwtOnLoad = new JsFunction(topScope);
       globalStmts.add(gwtOnLoad.makeStmt());
-      gwtOnLoad.setName(rootScope.getOrCreateUnobfuscatableName("gwtOnLoad"));
+      JsName gwtOnLoadName = topScope.declareName("gwtOnLoad");
+      gwtOnLoadName.setObfuscatable(false);
+      gwtOnLoad.setName(gwtOnLoadName);
       JsBlock body = new JsBlock();
       gwtOnLoad.setBody(body);
       JsScope fnScope = gwtOnLoad.getScope();
       JsParameters params = gwtOnLoad.getParameters();
-      JsObfuscatableName errFn = fnScope.createUniqueObfuscatableName("errFn");
-      JsObfuscatableName modName = fnScope.createUniqueObfuscatableName("modName");
+      JsName errFn = fnScope.declareName("errFn");
+      JsName modName = fnScope.declareName("modName");
       params.add(new JsParameter(errFn));
       params.add(new JsParameter(modName));
       JsIf jsIf = new JsIf();
@@ -1042,7 +1103,7 @@ public class GenerateJavaScriptAST {
           callBlock.getStatements().add(call.makeStmt());
         }
       }
-      JsCatch jsCatch = new JsCatch(fnScope.createUniqueObfuscatableName("e"));
+      JsCatch jsCatch = new JsCatch(fnScope, "e");
       jsTry.getCatches().add(jsCatch);
       JsBlock catchBlock = new JsBlock();
       jsCatch.setBody(catchBlock);
@@ -1097,11 +1158,11 @@ public class GenerateJavaScriptAST {
     public void endVisit(JsniMethod x, Context ctx) {
       JsFunction jsFunc = x.getFunc();
 
-      // replace all jsni idents with a real JsName now that we know it
+      // replace all JSNI idents with a real JsName now that we know it
       jsFunc.traverse(new JsAbstractVisitorWithAllVisits() {
         // @Override
         public void endVisit(JsNameRef x) {
-          String ident = x.getName().getIdent();
+          String ident = x.getIdent();
           if (ident.charAt(0) == '@') {
             HasEnclosingType node = (HasEnclosingType) program.jsniMap.get(ident);
             assert (node != null);
@@ -1109,7 +1170,7 @@ public class GenerateJavaScriptAST {
               JField field = (JField) node;
               JsName jsName = getName(field);
               assert (jsName != null);
-              x.setName(jsName);
+              x.resolve(jsName);
               JsInvocation clinitCall = maybeCreateClinitCall(field);
               if (clinitCall != null) {
                 assert (x.getQualifier() == null);
@@ -1120,7 +1181,7 @@ public class GenerateJavaScriptAST {
               if (x.getQualifier() == null) {
                 JsName jsName = getName(method);
                 assert (jsName != null);
-                x.setName(jsName);
+                x.resolve(jsName);
               } else {
                 JsName jsName = getPolyName(method);
                 if (jsName == null) {
@@ -1128,7 +1189,7 @@ public class GenerateJavaScriptAST {
                   // type that was never actually instantiated.
                   jsName = nullMethodName;
                 }
-                x.setName(jsName);
+                x.resolve(jsName);
               }
             }
           }
@@ -1195,8 +1256,8 @@ public class GenerateJavaScriptAST {
       assert (size < 2 && size == x.getCatchBlocks().size());
       if (size == 1) {
         JsBlock catchBlock = (JsBlock) pop(); // catchBlocks
-        JsNameRef arg = (JsNameRef) pop(); // catchArgs
-        JsCatch jsCatch = new JsCatch(arg.getName());
+        pop(); // catchArgs
+        JsCatch jsCatch = (JsCatch) catchMap.get(x.getCatchBlocks().get(0));
         jsCatch.setBody(catchBlock);
         jsTry.getCatches().add(jsCatch);
       }
@@ -1224,7 +1285,7 @@ public class GenerateJavaScriptAST {
         return false;
       }
 
-      // force supertype to generate code first, this is required for prototype
+      // force super type to generate code first, this is required for prototype
       // chaining to work properly
       if (x.extnds != null && !alreadyRan.contains(x)) {
         accept(x.extnds);
@@ -1246,7 +1307,7 @@ public class GenerateJavaScriptAST {
       JsReturn jsReturn = new JsReturn(window.makeRef());
       JsBlock body = new JsBlock();
       body.getStatements().add(jsReturn);
-      JsFunction nullFunc = new JsFunction(rootScope, nullMethodName);
+      JsFunction nullFunc = new JsFunction(topScope, nullMethodName);
       nullFunc.setBody(body);
       jsProgram.getGlobalBlock().getStatements().add(nullFunc.makeStmt());
       return true;
@@ -1260,7 +1321,7 @@ public class GenerateJavaScriptAST {
 
     public boolean visit(JSwitchStatement x, Context ctx) {
       /*
-       * What a pain.. JSwitchStatement and JsSwitch are modelled completely
+       * What a pain.. JSwitchStatement and JsSwitch are modeled completely
        * differently. Here we try to resolve those differences.
        */
       JsSwitch jsSwitch = new JsSwitch();
@@ -1309,7 +1370,7 @@ public class GenerateJavaScriptAST {
     }
 
     private void handleClinit(JsFunction clinitFunc) {
-      // self-assign to the null func immediately (to prevent reentrancy)
+      // self-assign to the null method immediately (to prevent reentrancy)
       JsExpression asg = createAssignment(clinitFunc.getName().makeRef(),
           nullMethodName.makeRef());
       clinitFunc.getBody().getStatements().add(0, asg.makeStmt());
@@ -1461,36 +1522,45 @@ public class GenerateJavaScriptAST {
     generateJavaScriptAST.execImpl();
   }
 
+  private final Map/* <JBlock, JsCatch> */catchMap = new IdentityHashMap();
   private final Map/* <JType, JsName> */classLits = new IdentityHashMap();
-
   private final Map/* <JClassType, JsScope> */classScopes = new IdentityHashMap();
 
+  /**
+   * Contains JsNames for all interface methods. A special scope is needed so
+   * that independent classes will obfuscate their interface implementation
+   * methods the same way.
+   */
   private final JsScope interfaceScope;
 
   private final JsProgram jsProgram;
-
   private final Map/* <JMethod, JsFunction> */methodMap = new IdentityHashMap();
-
   private final Map/* <HasName, JsName> */names = new IdentityHashMap();
-
   private JsName nullMethodName;
 
+  /**
+   * Contains JsNames for the Object instance methods, such as equals, hashCode,
+   * and toString. All other class scopes have this scope as an ultimate parent.
+   */
   private final JsScope objectScope;
 
   private final Map/* <JMethod, JsName> */polymorphicNames = new IdentityHashMap();
   private final JProgram program;
-  private final JsScope rootScope;
+
+  /**
+   * Contains JsNames for all globals, such as static fields and methods.
+   */
+  private final JsScope topScope;
+
   private final JTypeOracle typeOracle;
 
   private GenerateJavaScriptAST(JProgram program, JsProgram jsProgram) {
     this.program = program;
     typeOracle = program.typeOracle;
     this.jsProgram = jsProgram;
-    rootScope = jsProgram.getScope();
-    objectScope = new JsScope(rootScope);
-    objectScope.setDescription("Object scope");
-    interfaceScope = new JsScope(objectScope);
-    interfaceScope.setDescription("Interfaces");
+    topScope = jsProgram.getScope();
+    objectScope = jsProgram.getObjectScope();
+    interfaceScope = new JsScope(objectScope, "Interfaces");
   }
 
   String getNameString(HasName hasName) {
@@ -1523,6 +1593,8 @@ public class GenerateJavaScriptAST {
   }
 
   private void execImpl() {
+    SortVisitor sorter = new SortVisitor();
+    sorter.accept(program);
     CreateNamesAndScopesVisitor creator = new CreateNamesAndScopesVisitor();
     creator.accept(program);
     GenerateJavaScriptVisitor generator = new GenerateJavaScriptVisitor();

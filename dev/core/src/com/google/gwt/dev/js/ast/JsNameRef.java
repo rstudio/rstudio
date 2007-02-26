@@ -18,22 +18,30 @@ package com.google.gwt.dev.js.ast;
 /**
  * Represents a JavaScript expression that references a name.
  */
-public final class JsNameRef extends JsExpression implements HasName {
+public final class JsNameRef extends JsExpression /*implements HasName*/ {
 
+  private String ident;
   private JsName name;
-
   private JsExpression qualifier;
 
   public JsNameRef(JsName name) {
     this.name = name;
   }
 
-  public JsName getName() {
-    return name;
+  public JsNameRef(String ident) {
+    this.ident = ident;
+  }
+
+  public String getIdent() {
+    return (name == null) ? ident : name.getIdent();
   }
 
   public JsExpression getQualifier() {
     return qualifier;
+  }
+
+  public String getShortIdent() {
+    return (name == null) ? ident : name.getShortIdent();
   }
 
   public boolean isLeaf() {
@@ -44,8 +52,13 @@ public final class JsNameRef extends JsExpression implements HasName {
     }
   }
 
-  public void setName(JsName name) {
+  public boolean isResolved() {
+    return name != null;
+  }
+
+  public void resolve(JsName name) {
     this.name = name;
+    this.ident = null;
   }
 
   public void setQualifier(JsExpression qualifier) {

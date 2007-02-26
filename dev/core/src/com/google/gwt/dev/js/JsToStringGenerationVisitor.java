@@ -101,14 +101,10 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
       'E', 'F'};
 
   protected boolean needSemi = true;
-
-  private final NamingStrategy namer;
-
   private final TextOutput p;
 
-  public JsToStringGenerationVisitor(TextOutput out, NamingStrategy namer) {
+  public JsToStringGenerationVisitor(TextOutput out) {
     this.p = out;
-    this.namer = namer;
   }
 
   public boolean visit(JsArrayAccess x) {
@@ -146,6 +142,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
       _parenPopOrSpace(x, arg1, !op.isLeftAssociative());
     } else {
       _parenPop(x, arg1, !op.isLeftAssociative());
+      _spaceOpt();
     }
     p.print(op.getSymbol());
     JsExpression arg2 = x.getArg2();
@@ -153,6 +150,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     if (needSpace) {
       _parenPushOrSpace(x, arg2, op.isLeftAssociative());
     } else {
+      _spaceOpt();
       _parenPush(x, arg2, op.isLeftAssociative());
     }
     arg2.traverse(this);
@@ -215,7 +213,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     JsNameRef label = x.getLabel();
     if (label != null) {
       _space();
-      _nameOf(label);
+      _nameRef(label);
     }
 
     return false;
@@ -248,7 +246,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     _catch();
     _spaceOpt();
     _lparen();
-    _nameDef(x.getName());
+    _nameDef(x.getParameter().getName());
 
     // Optional catch condition.
     //
@@ -298,7 +296,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     JsNameRef label = x.getLabel();
     if (label != null) {
       _space();
-      _nameOf(label);
+      _nameRef(label);
     }
 
     return false;
@@ -535,7 +533,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
       _parenPop(x, q, false);
       _dot();
     }
-    _nameOf(x);
+    _nameRef(x);
     return false;
   }
 
@@ -845,13 +843,15 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
   }
 
   private void _nameDef(JsName name) {
-    String ident = namer.getIdent(name);
-    p.print(ident);
+    p.print(name.getShortIdent());
   }
 
   private void _nameOf(HasName hasName) {
-    String ident = namer.getIdent(hasName.getName());
-    p.print(ident);
+    _nameDef(hasName.getName());
+  }
+
+  private void _nameRef(JsNameRef nameRef) {
+    p.print(nameRef.getShortIdent());
   }
 
   private boolean _nestedPop(JsStatement statement) {
@@ -917,14 +917,12 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return doPop;
   }
 
-  // TODO(later): we often leave a space when we don't need to
   private boolean _parenPopOrSpace(JsExpression parent, JsExpression child,
       boolean wrongAssoc) {
     boolean doPop = _parenCalc(parent, child, wrongAssoc);
     if (doPop) {
       _rparen();
     } else {
-      // if (!child.isLeaf())
       _space();
     }
     return doPop;
@@ -956,14 +954,12 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return doPush;
   }
 
-  // TODO(later): we often leave a space when we don't need to
   private boolean _parenPushOrSpace(JsExpression parent, JsExpression child,
       boolean wrongAssoc) {
     boolean doPush = _parenCalc(parent, child, wrongAssoc);
     if (doPush) {
       _lparen();
     } else {
-      // if (!child.isLeaf())
       _space();
     }
     return doPush;

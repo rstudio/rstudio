@@ -44,6 +44,7 @@ import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
+import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsRegExp;
 import com.google.gwt.dev.js.ast.JsReturn;
@@ -77,6 +78,7 @@ import java.util.Stack;
  */
 public class JsParser {
 
+  private JsProgram program;
   private final Stack scopeStack = new Stack();
 
   public JsParser() {
@@ -112,6 +114,7 @@ public class JsParser {
 
       // Map the Rhino AST to ours.
       //
+      program = scope.getProgram();
       pushScope(scope);
       JsStatements stmts = mapStatements(topNode);
       popScope();
@@ -216,7 +219,7 @@ public class JsParser {
         return mapName(node);
 
       case TokenStream.STRING:
-        return getScope().getProgram().getStringLiteral(node.getString());
+        return program.getStringLiteral(node.getString());
 
       case TokenStream.NUMBER:
         return mapNumber(node);
@@ -334,8 +337,7 @@ public class JsParser {
     if (unknown instanceof JsStringLiteral) {
       JsStringLiteral lit = (JsStringLiteral) unknown;
       String litName = lit.getValue();
-      JsName name = getScope().getOrCreateUnobfuscatableName(litName);
-      return name.makeRef();
+      return new JsNameRef(litName);
     } else {
       throw createParserException("Expecting a name reference", nameRefNode);
     }
@@ -461,7 +463,7 @@ public class JsParser {
   private JsStatement mapDebuggerStatement() {
     // Calls an optional method to invoke the debugger.
     //
-    return getScope().getProgram().getDebuggerStmt();
+    return program.getDebuggerStmt();
   }
 
   private JsNode mapDeleteProp(Node node) throws JsParserException {
@@ -571,7 +573,7 @@ public class JsParser {
         //
         Node fromIterVarName = fromIter.getFirstChild();
         String fromName = fromIterVarName.getString();
-        JsName toName = getScope().getOrCreateObfuscatableName(fromName);
+        JsName toName = getScope().declareName(fromName);
         toForIn = new JsForIn(toName);
         Node fromIterInit = fromIterVarName.getFirstChild();
         if (fromIterInit != null) {
@@ -593,7 +595,7 @@ public class JsParser {
       if (bodyStmt != null) {
         toForIn.setBody(bodyStmt);
       } else {
-        toForIn.setBody(getScope().getProgram().getEmptyStmt());
+        toForIn.setBody(program.getEmptyStmt());
       }
 
       return toForIn;
@@ -620,7 +622,7 @@ public class JsParser {
       if (bodyStmt != null) {
         toFor.setBody(bodyStmt);
       } else {
-        toFor.setBody(getScope().getProgram().getEmptyStmt());
+        toFor.setBody(program.getEmptyStmt());
       }
       return toFor;
     }
@@ -637,7 +639,7 @@ public class JsParser {
     String fromFnName = fromFnNameNode.getString();
     JsName toFnName = null;
     if (fromFnName != null && fromFnName.length() > 0) {
-      toFnName = getScope().getOrCreateObfuscatableName(fromFnName);
+      toFnName = getScope().declareName(fromFnName);
     }
 
     // Create it, and set the params.
@@ -652,8 +654,7 @@ public class JsParser {
     while (fromParamNode != null) {
       String fromParamName = fromParamNode.getString();
       // should this be unique? I think not since you can have dup args.
-      JsName paramName = toFn.getScope().getOrCreateObfuscatableName(
-          fromParamName);
+      JsName paramName = toFn.getScope().declareName(fromParamName);
       toFn.getParameters().add(new JsParameter(paramName));
       fromParamNode = fromParamNode.getNext();
     }
@@ -693,7 +694,7 @@ public class JsParser {
       //
       Object obj = getPropNode.getProp(Node.SPECIAL_PROP_PROP);
       assert (obj instanceof String);
-      toNameRef = getScope().getOrCreateUnobfuscatableName((String) obj).makeRef();
+      toNameRef = new JsNameRef((String) obj);
     }
     toNameRef.setQualifier(toQualifier);
 
@@ -745,7 +746,7 @@ public class JsParser {
 
   private JsLabel mapLabel(Node labelNode) throws JsParserException {
     String fromName = labelNode.getFirstChild().getString();
-    JsName toName = getScope().getOrCreateObfuscatableName(fromName);
+    JsName toName = getScope().declareName(fromName);
     Node fromStmt = labelNode.getFirstChild().getNext();
     JsLabel toLabel = new JsLabel(toName);
     toLabel.setStmt(mapStatement(fromStmt));
@@ -758,14 +759,7 @@ public class JsParser {
    */
   private JsNameRef mapName(Node node) {
     String ident = node.getString();
-
-    JsName name = getScope().findExistingName(ident);
-    if (name == null) {
-      // This is a name in the ether, so we cannot obfuscate it.
-      //
-      name = getScope().getOrCreateUnobfuscatableName(ident);
-    }
-    return name.makeRef();
+    return new JsNameRef(ident);
   }
 
   private JsNew mapNew(Node newNode) throws JsParserException {
@@ -794,9 +788,9 @@ public class JsParser {
     double x = numberNode.getDouble();
     long j = (long) x;
     if (x == j) {
-      return getScope().getProgram().getIntegralLiteral(BigInteger.valueOf(j));
+      return program.getIntegralLiteral(BigInteger.valueOf(j));
     } else {
-      return getScope().getProgram().getDecimalLiteral(String.valueOf(x));
+      return program.getDecimalLiteral(String.valueOf(x));
     }
   }
 
@@ -863,13 +857,13 @@ public class JsParser {
         return new JsThisRef();
 
       case TokenStream.TRUE:
-        return getScope().getProgram().getTrueLiteral();
+        return program.getTrueLiteral();
 
       case TokenStream.FALSE:
-        return getScope().getProgram().getFalseLiteral();
+        return program.getFalseLiteral();
 
       case TokenStream.NULL:
-        return getScope().getProgram().getNullLiteral();
+        return program.getNullLiteral();
 
       default:
         throw new JsParserException("Unknown primary: " + node.getIntDatum());
@@ -984,7 +978,7 @@ public class JsParser {
     } else {
       // When map() returns null, we return an empty statement.
       //
-      return getScope().getProgram().getEmptyStmt();
+      return program.getEmptyStmt();
     }
   }
 
@@ -1084,9 +1078,7 @@ public class JsParser {
       // Map the catch variable.
       //
       Node fromCatchVarName = fromCatchNode.getFirstChild();
-      JsName name = getScope().getOrCreateObfuscatableName(
-          fromCatchVarName.getString());
-      JsCatch catchBlock = new JsCatch(name);
+      JsCatch catchBlock = new JsCatch(getScope(), fromCatchVarName.getString());
 
       // Pre-advance to the next catch block, if any.
       // We do this here to decide whether or not this is the last one.
@@ -1113,7 +1105,9 @@ public class JsParser {
       // Map the catch body.
       //
       Node fromCatchBody = fromCondition.getNext();
+      pushScope(catchBlock.getScope());
       catchBlock.setBody(mapBlock(fromCatchBody));
+      popScope();
 
       // Attach it.
       //
@@ -1164,7 +1158,7 @@ public class JsParser {
       // literals.
       //
       String fromName = fromVar.getString();
-      JsName toName = getScope().getOrCreateObfuscatableName(fromName);
+      JsName toName = getScope().declareName(fromName);
       JsVars.JsVar toVar = new JsVars.JsVar(toName);
 
       Node fromInit = fromVar.getFirstChild();

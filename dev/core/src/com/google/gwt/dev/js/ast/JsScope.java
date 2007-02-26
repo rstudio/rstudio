@@ -15,10 +15,13 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.js.JsKeywords;
+
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * A scope is a factory for creating and allocating
@@ -48,18 +51,16 @@ import java.util.Map;
 public class JsScope {
 
   private final List/* <JsScope> */children = new ArrayList();
-
-  private String description;
-
-  private final Map/* <String, JsObfuscatableName> */obfuscatableNames = new HashMap();
-
+  private final String description;
+  private final Map/* <String, JsName> */names = new TreeMap();
   private final JsScope parent;
 
   /**
    * Create a scope with parent.
    */
-  public JsScope(JsScope parent) {
+  public JsScope(JsScope parent, String description) {
     assert (parent != null);
+    this.description = description;
     this.parent = parent;
     this.parent.children.add(this);
   }
@@ -67,38 +68,53 @@ public class JsScope {
   /**
    * Subclasses can be parentless.
    */
-  protected JsScope() {
+  protected JsScope(String description) {
+    this.description = description;
     this.parent = null;
   }
 
   /**
-   * Creates an obfuscatable name object associated with the specified ident in
-   * this scope.
+   * Gets a name object associated with the specified ident in this scope,
+   * creating it if necessary.
    * 
-   * @param ident An identifier that must be unique within this scope.
-   * @throws IllegalArgumentException if ident already exists in this scope.
+   * @param ident An identifier that is unique within this scope.
    */
-  public JsObfuscatableName createUniqueObfuscatableName(String ident) {
-    if (obfuscatableNames.containsKey(ident)) {
-      throw new IllegalArgumentException("Identifier already in use: " + ident);
+  public JsName declareName(String ident) {
+    JsName name = findExistingNameNoRecurse(ident);
+    if (name != null) {
+      return name;
     }
-    return getOrCreateObfuscatableName(ident, ident);
+    if (JsKeywords.isKeyword(ident)) {
+      throw new IllegalArgumentException("Cannot create identifier " + ident
+          + "; that name is a reserved word.");
+    }
+    return doCreateName(ident, ident);
   }
 
   /**
-   * Creates an obfuscatable name object associated with the specified ident in
-   * this scope.
+   * Gets a name object associated with the specified ident in this scope,
+   * creating it if necessary.
    * 
-   * @param ident An identifier that must be unique within this scope.
+   * @param ident An identifier that is unique within this scope.
    * @param shortIdent A "pretty" name that does not have to be unique.
-   * @throws IllegalArgumentException if ident already exists in this scope.
+   * @throws IllegalArgumentException if ident already exists in this scope but
+   *           the requested short name does not match the existing short name.
    */
-  public JsObfuscatableName createUniqueObfuscatableName(String ident,
-      String shortIdent) {
-    if (obfuscatableNames.containsKey(ident)) {
-      throw new IllegalArgumentException("Identifier already in use: " + ident);
+  public JsName declareName(String ident, String shortIdent) {
+    JsName name = findExistingNameNoRecurse(ident);
+    if (name != null) {
+      if (!name.getShortIdent().equals(shortIdent)) {
+        throw new IllegalArgumentException("Requested short name " + shortIdent
+            + " conflicts with preexisting short name " + name.getShortIdent()
+            + " for identifier " + ident);
+      }
+      return name;
     }
-    return getOrCreateObfuscatableName(ident, shortIdent);
+    if (JsKeywords.isKeyword(ident)) {
+      throw new IllegalArgumentException("Cannot create identifier " + ident
+          + "; that name is a reserved word.");
+    }
+    return doCreateName(ident, shortIdent);
   }
 
   /**
@@ -107,100 +123,86 @@ public class JsScope {
    * 
    * @return <code>null</code> if the identifier has no associated name
    */
-  public JsName findExistingName(String ident) {
-    JsName name = (JsName) obfuscatableNames.get(ident);
-    if (name != null) {
-      return name;
-    }
-
-    if (parent != null) {
+  public final JsName findExistingName(String ident) {
+    JsName name = findExistingNameNoRecurse(ident);
+    if (name == null && parent != null) {
       return parent.findExistingName(ident);
     }
-
-    return null;
+    return name;
   }
 
-  public List/* <JsScope> */getChildren() {
+  /**
+   * Attempts to find an unobfuscatable name object for the specified ident,
+   * searching in this scope, and if not found, in the parent scopes.
+   * 
+   * @return <code>null</code> if the identifier has no associated name
+   */
+  public final JsName findExistingUnobfuscatableName(String ident) {
+    JsName name = findExistingNameNoRecurse(ident);
+    if (name != null && name.isObfuscatable()) {
+      name = null;
+    }
+    if (name == null && parent != null) {
+      return parent.findExistingUnobfuscatableName(ident);
+    }
+    return name;
+  }
+
+  /**
+   * Returns an iterator for all the names defined by this scope.
+   */
+  public Iterator getAllNames() {
+    return names.values().iterator();
+  }
+
+  /**
+   * Returns a list of this scope's child scopes.
+   */
+  public final List getChildren() {
     return children;
   }
 
   /**
-   * Gets an obfuscatable name object associated with the specified ident in
-   * this scope, creating it if necessary.
-   * 
-   * @param ident An identifier that is unique within this scope.
+   * Returns the parent scope of this scope, or <code>null</code> if this is the
+   * root scope.
    */
-  public JsObfuscatableName getOrCreateObfuscatableName(String ident) {
-    JsObfuscatableName name = (JsObfuscatableName) obfuscatableNames.get(ident);
-    if (name == null) {
-      name = new JsObfuscatableName(this, ident, ident);
-      obfuscatableNames.put(ident, name);
-    }
-    return name;
-  }
-
-  /**
-   * Gets an obfuscatable name object associated with the specified ident in
-   * this scope, creating it if necessary.
-   * 
-   * @param ident An identifier that is unique within this scope.
-   * @param shortIdent A "pretty" name that does not have to be unique.
-   * @throws IllegalArgumentException if ident already exists in this scope but
-   *           the requested short name does not match the existing short name.
-   */
-  public JsObfuscatableName getOrCreateObfuscatableName(String ident,
-      String shortIdent) {
-    JsObfuscatableName name = (JsObfuscatableName) obfuscatableNames.get(ident);
-    if (name == null) {
-      name = new JsObfuscatableName(this, ident, shortIdent);
-      obfuscatableNames.put(ident, name);
-    } else {
-      if (!name.getShortIdent().equals(shortIdent)) {
-        throw new IllegalArgumentException("Requested short name " + shortIdent
-            + " conflicts with preexisting short name " + name.getShortIdent()
-            + " for identifier " + ident);
-      }
-    }
-    return name;
-  }
-
-  /**
-   * Gets an unobfuscatable name object associated with the specified ident in
-   * this scope, creating it if necessary.
-   * 
-   * @param ident An identifier that is unique within this scope.
-   * @throws IllegalArgumentException if ident is a reserved word.
-   */
-  public JsUnobfuscatableName getOrCreateUnobfuscatableName(String ident) {
-    assert (parent != null) : "Subclasses must override getOrCreateUnobfuscatableName() if they do not set a parent";
-    return parent.getOrCreateUnobfuscatableName(ident);
-  }
-
-  public JsScope getParent() {
+  public final JsScope getParent() {
     return parent;
   }
 
+  /**
+   * Returns the associated program.
+   */
   public JsProgram getProgram() {
     assert (parent != null) : "Subclasses must override getProgram() if they do not set a parent";
     return parent.getProgram();
   }
 
-  public boolean hasUnobfuscatableName(String ident) {
-    assert (parent != null) : "Subclasses must override hasUnobfuscatableName() if they do not set a parent";
-    return parent.hasUnobfuscatableName(ident);
+  public final String toString() {
+    if (parent != null) {
+      return description + "->" + parent;
+    } else {
+      return description;
+    }
   }
 
-  public void setDescription(String desc) {
-    this.description = desc;
+  /**
+   * Creates a new name in this scope.
+   */
+  protected JsName doCreateName(String ident, String shortIdent) {
+    JsName name = new JsName(ident, shortIdent);
+    names.put(ident, name);
+    return name;
   }
 
-  public String toString() {
-    assert (parent != null) : "Subclasses must override toString() if they do not set a parent";
-    return description + "->" + parent;
-  }
-
-  protected String getDescription() {
-    return description;
+  /**
+   * Attempts to find the name object for the specified ident, searching in this
+   * scope only.
+   * 
+   * @return <code>null</code> if the identifier has no associated name
+   */
+  protected JsName findExistingNameNoRecurse(String ident) {
+    return (JsName) names.get(ident);
   }
 
 }

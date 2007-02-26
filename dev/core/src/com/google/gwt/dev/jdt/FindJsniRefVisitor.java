@@ -85,7 +85,7 @@ public class FindJsniRefVisitor extends ASTVisitor {
       JsStatements result = jsParser.parse(jsProgram.getScope(), sr, -1);
       result.traverse(new JsAbstractVisitorWithAllVisits() {
         public void endVisit(JsNameRef x) {
-          String ident = x.getName().getIdent();
+          String ident = x.getIdent();
           if (ident.charAt(0) == '@') {
             String className = ident.substring(1, ident.indexOf(':'));
             jsniClasses.add(className);

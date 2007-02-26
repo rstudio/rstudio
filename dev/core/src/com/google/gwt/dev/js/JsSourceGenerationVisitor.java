@@ -24,8 +24,8 @@ import com.google.gwt.dev.util.TextOutput;
  */
 public class JsSourceGenerationVisitor extends JsToStringGenerationVisitor {
 
-  public JsSourceGenerationVisitor(TextOutput out, NamingStrategy namer) {
-    super(out, namer);
+  public JsSourceGenerationVisitor(TextOutput out) {
+    super(out);
   }
 
   // function foo(a, b) {

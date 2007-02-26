@@ -15,23 +15,21 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.dev.util.CharArrayComparator;
-
-import java.util.TreeSet;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Determines whether or not a particular string is a JavaScript keyword or not.
  */
 public class JsKeywords {
 
-  private static TreeSet sJavaScriptKeywords = new TreeSet(
-      CharArrayComparator.INSTANCE);
+  private static Set sJavaScriptKeywords = new HashSet();
 
   static {
     initJavaScriptKeywords();
   }
 
-  public static boolean isKeyword(char[] s) {
+  public static boolean isKeyword(String s) {
     return sJavaScriptKeywords.contains(s);
   }
 
@@ -60,7 +58,7 @@ public class JsKeywords {
         "const", "float", "long", "short", "volatile"};
 
     for (int i = 0; i < keywords.length; i++) {
-      sJavaScriptKeywords.add(keywords[i].toCharArray());
+      sJavaScriptKeywords.add(keywords[i]);
     }
   }
 

@@ -18,15 +18,12 @@ package com.google.gwt.dev.js.ast;
 /**
  * Represents a JavaScript function expression.
  */
-public final class JsFunction extends JsExpression implements HasName, HasScope {
+public class JsFunction extends JsExpression implements HasName {
 
-  private JsBlock body;
-
+  protected JsBlock body;
+  protected final JsParameters params = new JsParameters();
+  protected final JsScope scope;
   private JsName name;
-
-  private final JsParameters params = new JsParameters();
-
-  private final JsScope scope;
 
   /**
    * Creates an anonymous function.
@@ -40,12 +37,10 @@ public final class JsFunction extends JsExpression implements HasName, HasScope 
    */
   public JsFunction(JsScope parent, JsName name) {
     assert (parent != null);
-    this.scope = new JsScope(parent);
-    setName(name);
-  }
-
-  public void accept(JsVisitor v) {
-    v.visit(this);
+    this.name = name;
+    String scopeName = (name == null) ? "<anonymous>" : name.getIdent();
+    scopeName = "function " + scopeName;
+    this.scope = new JsScope(parent, scopeName);
   }
 
   public JsBlock getBody() {
@@ -70,11 +65,6 @@ public final class JsFunction extends JsExpression implements HasName, HasScope 
 
   public void setName(JsName name) {
     this.name = name;
-    String desc = "function <anonymous>";
-    if (name != null) {
-      desc = "function " + name.getIdent();
-    }
-    scope.setDescription(desc);
   }
 
   public void traverse(JsVisitor v) {

@@ -165,7 +165,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -179,17 +178,6 @@ import java.util.Map;
  * JDT nodes and our already-created AST nodes.
  */
 public class GenerateJavaAST {
-
-  /**
-   * Comparator for <code>HasName</code> instances.
-   */
-  public static class HasNameSort implements Comparator {
-    public int compare(Object o1, Object o2) {
-      HasName h1 = (HasName) o1;
-      HasName h2 = (HasName) o2;
-      return h1.getName().compareTo(h2.getName());
-    }
-  }
 
   /**
    * Visit the JDT AST and produce our own AST into the passed-in TypeMap's
@@ -1277,7 +1265,7 @@ public class GenerateJavaAST {
       func.traverse(new JsAbstractVisitorWithAllVisits() {
         // @Override
         public void endVisit(JsNameRef x) {
-          String ident = x.getName().getIdent();
+          String ident = x.getIdent();
           if (ident.charAt(0) == '@') {
             nameRefs.add(x);
           }
@@ -1287,7 +1275,7 @@ public class GenerateJavaAST {
       for (int i = 0; i < nameRefs.size(); ++i) {
         JsNameRef nameRef = (JsNameRef) nameRefs.get(i);
         JSourceInfo info = translateInfo(nameRef.getInfo());
-        String ident = nameRef.getName().getIdent();
+        String ident = nameRef.getIdent();
         HasEnclosingType node = (HasEnclosingType) program.jsniMap.get(ident);
         if (node == null) {
           node = parseJsniRef(info, x, ident);
@@ -2115,7 +2103,7 @@ public class GenerateJavaAST {
   }
 
   public static JSourceInfo translateInfo(JsSourceInfo info) {
-    // TODO Auto-generated method stub
+    // TODO implement this
     return null;
   }
 

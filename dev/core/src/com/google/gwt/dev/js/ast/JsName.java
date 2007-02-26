@@ -18,36 +18,48 @@ package com.google.gwt.dev.js.ast;
 /**
  * An abstract base class for named JavaScript objects.
  */
-public abstract class JsName {
+public class JsName {
 
   private final String ident;
-
-  private final JsScope scope;
+  private boolean isObfuscatable;
+  private String shortIdent;
 
   /**
    * @param scope the scope in which this name is defined
    * @param ident the unmangled ident to use for this name
    */
-  protected JsName(JsScope scope, String ident) {
-    this.scope = scope;
+  JsName(String ident, String shortIdent) {
     this.ident = ident;
+    this.shortIdent = shortIdent;
+    this.isObfuscatable = true;
   }
 
   public String getIdent() {
     return ident;
   }
 
-  public JsScope getScope() {
-    return scope;
+  public String getShortIdent() {
+    return shortIdent;
   }
 
-  public abstract boolean isObfuscatable();
+  public boolean isObfuscatable() {
+    return isObfuscatable;
+  }
 
   public JsNameRef makeRef() {
     return new JsNameRef(this);
   }
 
+  public void setObfuscatable(boolean isObfuscatable) {
+    this.isObfuscatable = isObfuscatable;
+  }
+
+  public void setShortIdent(String shortIdent) {
+    this.shortIdent = shortIdent;
+  }
+
   public String toString() {
     return ident;
   }
+
 }

@@ -13,30 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.js.ast;
+package com.google.gwt.dev.jjs.impl;
+
+import com.google.gwt.dev.jjs.ast.HasName;
+
+import java.util.Comparator;
 
 /**
- * An obfuscatable JavaScript name.
+ * Comparator for <code>HasName</code> instances.
  */
-public final class JsObfuscatableName extends JsName {
-
-  private final String shortIdent;
-
-  /**
-   * @param scope the scope in which this name is defined
-   * @param ident the unmangled ident to use for this name
-   */
-  protected JsObfuscatableName(JsScope scope, String ident, String shortIdent) {
-    super(scope, ident);
-    this.shortIdent = shortIdent;
+public class HasNameSort implements Comparator {
+  public int compare(Object o1, Object o2) {
+    HasName h1 = (HasName) o1;
+    HasName h2 = (HasName) o2;
+    return h1.getName().compareTo(h2.getName());
   }
-
-  public String getShortIdent() {
-    return shortIdent;
-  }
-  
-  public boolean isObfuscatable() {
-    return true;
-  }
-
 }

@@ -18,16 +18,20 @@ package com.google.gwt.dev.js.ast;
 /**
  * Represents a JavaScript catch clause.
  */
-public class JsCatch extends JsNode implements HasCondition, HasName {
+public class JsCatch extends JsNode implements HasCondition {
+
+  protected final JsCatchScope scope;
 
   private JsBlock body;
 
   private JsExpression condition;
 
-  private final JsName name;
+  private final JsParameter param;
 
-  public JsCatch(JsName name) {
-    this.name = name;
+  public JsCatch(JsScope parent, String ident) {
+    assert (parent != null);
+    scope = new JsCatchScope(parent, ident);
+    param = new JsParameter(scope.findExistingName(ident));
   }
 
   public JsBlock getBody() {
@@ -38,8 +42,12 @@ public class JsCatch extends JsNode implements HasCondition, HasName {
     return condition;
   }
 
-  public JsName getName() {
-    return name;
+  public JsParameter getParameter() {
+    return param;
+  }
+
+  public JsScope getScope() {
+    return scope;
   }
 
   public void setBody(JsBlock body) {

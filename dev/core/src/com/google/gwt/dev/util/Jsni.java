@@ -20,17 +20,14 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.dev.js.FullNamingStrategy;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
 import com.google.gwt.dev.js.JsSourceGenerationVisitor;
-import com.google.gwt.dev.js.NamingStrategy;
 import com.google.gwt.dev.js.JsParserException.SourceDetail;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
-import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatements;
@@ -63,14 +60,13 @@ public class Jsni {
   private static class VisitorImpl extends JsSourceGenerationVisitor {
     private final TextOutput out;
 
-    public VisitorImpl(TextOutput out, NamingStrategy namer) {
-      super(out, namer);
+    public VisitorImpl(TextOutput out) {
+      super(out);
       this.out = out;
     }
 
     public boolean visit(JsNameRef x) {
-      JsName name = x.getName();
-      String ident = name.getIdent();
+      String ident = x.getIdent();
       if (ident.startsWith("@")) {
         // Fix up JSNI references in the js body.
         // Cases:
@@ -259,9 +255,8 @@ public class Jsni {
   }
 
   public static String generateJavaScript(JsVisitable node) {
-    NamingStrategy namer = new FullNamingStrategy();
     TextOutputOnCharArray tooca = new TextOutputOnCharArray(false);
-    VisitorImpl vi = new VisitorImpl(tooca, namer);
+    VisitorImpl vi = new VisitorImpl(tooca);
     node.traverse(vi);
     char[] source = tooca.getText();
     return String.valueOf(source);

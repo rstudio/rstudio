@@ -22,7 +22,9 @@ import java.util.Map;
 /**
  * A JavaScript program.
  */
-public final class JsProgram extends JsNode implements HasScope {
+public final class JsProgram extends JsNode {
+
+  private JsStatement debuggerStmt;
 
   private final Map decimalLiteralMap = new HashMap();
 
@@ -36,22 +38,25 @@ public final class JsProgram extends JsNode implements HasScope {
 
   private final JsNullLiteral nullLiteral = new JsNullLiteral();
 
+  private final JsScope objectScope;
+
   private final JsRootScope rootScope;
 
   private final Map stringLiteralMap = new HashMap();
 
-  private final JsBooleanLiteral trueLiteral = new JsBooleanLiteral(true);
+  private final JsScope topScope;
 
-  private JsStatement debuggerStmt;
+  private final JsBooleanLiteral trueLiteral = new JsBooleanLiteral(true);
 
   /**
    * Constructs a JavaScript program object.
    */
   public JsProgram() {
     rootScope = new JsRootScope(this);
-    rootScope.setDescription("Global");
     globalBlock = new JsGlobalBlock();
-    JsName debugger = rootScope.createSpecialUnobfuscatableName("debugger");
+    topScope = new JsScope(rootScope, "Global");
+    objectScope = new JsScope(rootScope, "Object");
+    JsName debugger = rootScope.findExistingName("debugger");
     debuggerStmt = new JsExprStmt(debugger.makeRef());
   }
 
@@ -102,11 +107,25 @@ public final class JsProgram extends JsNode implements HasScope {
     return nullLiteral;
   }
 
+  public JsScope getObjectScope() {
+    return objectScope;
+  }
+
   /**
-   * Gets the one and only root scope.
+   * Gets the quasi-mythical root scope. This is not the same as the top scope;
+   * all unresolvable identifiers wind up here, because they are considered
+   * external to the program.
+   */
+  public JsRootScope getRootScope() {
+    return rootScope;
+  }
+
+  /**
+   * Gets the top level scope. This is the scope of all the statements in the
+   * main program.
    */
   public JsScope getScope() {
-    return rootScope;
+    return topScope;
   }
 
   public JsStringLiteral getStringLiteral(String value) {
