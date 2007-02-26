@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,8 +33,6 @@ public class JTypeOracle {
 
   private final Map/* <JClassType, Set<JInterfaceType>> */couldImplementMap = new IdentityHashMap();
 
-  private JClassType javaLangObject = null;
-
   private final Set/* <JReferenceType> */hasClinitSet = new HashSet();
 
   private final Map/* <JClassType, Set<JInterfaceType>> */implementsMap = new IdentityHashMap();
@@ -42,6 +40,8 @@ public class JTypeOracle {
   private final Set/* <JReferenceType> */instantiatedTypes = new HashSet();
 
   private final Map/* <JInterfaceType, Set<JClassType>> */isImplementedMap = new IdentityHashMap();
+
+  private JClassType javaLangObject = null;
 
   private final JProgram program;
 
@@ -79,7 +79,7 @@ public class JTypeOracle {
         int dims = aType.getDims();
         int qDims = qaType.getDims();
 
-        // null[] or Object[] -> int[][] might work, other combos won't
+        // null[] or Object[] -> int[][] might work, other combinations won't
         if (dims < qDims && leafType != program.getTypeJavaLangObject()
             && !(leafType instanceof JNullType)) {
           return false;
@@ -167,11 +167,7 @@ public class JTypeOracle {
   }
 
   public void computeAfterAST() {
-    hasClinitSet.clear();
-    for (int i = 0; i < program.getDeclaredTypes().size(); ++i) {
-      JReferenceType type = (JReferenceType) program.getDeclaredTypes().get(i);
-      computeHasClinit(type);
-    }
+    recomputeClinits();
   }
 
   public void computeBeforeAST() {
@@ -247,6 +243,14 @@ public class JTypeOracle {
       }
     }
     return instantiatedTypes.contains(type);
+  }
+
+  public void recomputeClinits() {
+    hasClinitSet.clear();
+    for (int i = 0; i < program.getDeclaredTypes().size(); ++i) {
+      JReferenceType type = (JReferenceType) program.getDeclaredTypes().get(i);
+      computeHasClinit(type);
+    }
   }
 
   public void setInstantiatedTypes(Set/* <JReferenceType> */instantiatedTypes) {
@@ -411,7 +415,7 @@ public class JTypeOracle {
   }
 
   /**
-   * Record the all of my superclasses (and myself as a subclass of them).
+   * Record the all of my super classes (and myself as a subclass of them).
    */
   private void recordSuperSubInfo(JClassType type) {
     Set/* <JClassType> */superSet = getOrCreate(superClassMap, type);
@@ -422,7 +426,7 @@ public class JTypeOracle {
   }
 
   /**
-   * Record the all of my superinterfaces (and myself as a subinterface of
+   * Record the all of my super interfaces (and myself as a sub interface of
    * them).
    */
   private void recordSuperSubInfo(JInterfaceType type) {
@@ -431,7 +435,7 @@ public class JTypeOracle {
   }
 
   /**
-   * Recursively record all of my superinterfaces.
+   * Recursively record all of my super interfaces.
    */
   private void recordSuperSubInfo(JInterfaceType base,
       Set/* <JInterfaceType> */superSet, JInterfaceType cur) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -237,7 +237,7 @@ public class JavaToJavaScriptCompiler {
     }
     String[] entryPts = Util.toStringArray(allEntryPoints);
 
-    // Add intrinsics needed for code gen.
+    // Add intrinsics needed for code generation.
     //
     int k = entryPts.length;
     String[] seedTypeNames = new String[k + 3];
@@ -312,7 +312,7 @@ public class JavaToJavaScriptCompiler {
         throw new UnableToCompleteException();
       }
 
-      // Compute all supertype/subtype info
+      // Compute all super type/sub type info
       jprogram.typeOracle.computeBeforeAST();
 
       // (3) Create a normalized Java AST using our own notation.
@@ -352,7 +352,7 @@ public class JavaToJavaScriptCompiler {
         didChange = Pruner.exec(jprogram, true) || didChange;
         // finalize locals, params, fields, methods, classes
         didChange = MethodAndClassFinalizer.exec(jprogram) || didChange;
-        // rewrite non-poly calls as static calls; update all call sites
+        // rewrite non-polymorphic calls as static calls; update all call sites
         didChange = MakeCallsStatic.exec(jprogram) || didChange;
 
         // type flow tightening
@@ -360,7 +360,7 @@ public class JavaToJavaScriptCompiler {
         // - params based on assignment and call sites
         // - method bodies based on return statements
         // - polymorphic methods based on return types of all implementors
-        // - optimize casts and instanceof
+        // - optimize casts and instance of
         didChange = TypeTightener.exec(jprogram) || didChange;
 
         // tighten method call bindings
@@ -372,13 +372,18 @@ public class JavaToJavaScriptCompiler {
         // inlining
         didChange = MethodInliner.exec(jprogram) || didChange;
 
+        if (didChange) {
+          // recompute clinits; some may now be empty
+          jprogram.typeOracle.recomputeClinits();
+        }
+
         // prove that any types that have been culled from the main tree are
         // unreferenced due to type tightening?
       } while (didChange);
 
       // (5) "Normalize" the high-level Java tree into a lower-level tree more
-      // suited for JavaScript code gen. Don't go reordering these willy-nilly
-      // because there are some subtle interdependencies.
+      // suited for JavaScript code generation. Don't go reordering these
+      // willy-nilly because there are some subtle interdependencies.
       if (isDebugEnabled) {
         // AssertionNormalizer.exec(jprogram);
       }
@@ -388,7 +393,7 @@ public class JavaToJavaScriptCompiler {
       CastNormalizer.exec(jprogram);
       ArrayNormalizer.exec(jprogram);
 
-      // (6) Perform furthur post-normalization optimizations
+      // (6) Perform further post-normalization optimizations
       // Prune everything
       Pruner.exec(jprogram, false);
 

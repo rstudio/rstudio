@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ package com.google.gwt.dev.jjs.ast;
 import java.util.ArrayList;
 
 /**
- * New array experssion.
+ * New array expression.
  */
 public class JNewArray extends JExpression implements HasSettableType {
 
@@ -40,7 +40,22 @@ public class JNewArray extends JExpression implements HasSettableType {
   }
 
   public boolean hasSideEffects() {
-    return true;
+    if (initializers != null) {
+      for (int i = 0, c = initializers.size(); i < c; ++i) {
+        if (((JExpression) initializers.get(i)).hasSideEffects()) {
+          return true;
+        }
+      }
+    }
+    if (dims != null) {
+      for (int i = 0, c = dims.size(); i < c; ++i) {
+        if (((JExpression) dims.get(i)).hasSideEffects()) {
+          return true;
+        }
+      }
+    }
+    // The new operation on an array does not actually cause side effects.
+    return false;
   }
 
   public void setType(JType arrayType) {

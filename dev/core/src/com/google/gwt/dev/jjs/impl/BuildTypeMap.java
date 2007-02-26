@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -71,7 +71,7 @@ import java.util.Set;
  * create raw unfinished, unlinked AST nodes for types, methods, fields, and
  * parameters, and to map the original JDT nodes to these AST nodes. That way
  * when GenerateJavaDom runs, it just uses the TypeMap output from this Builder
- * to retrieve whatever referencable nodes it needs without worrying about
+ * to retrieve whatever referenceable nodes it needs without worrying about
  * whether they need to be created. Building our AST from JDT starts here.
  */
 public class BuildTypeMap {
@@ -79,16 +79,16 @@ public class BuildTypeMap {
   /**
    * Creates JNodes for every method, field, initializer, parameter, and local
    * and memorizes the mapping from the JDT Binding to the corresponding JNode
-   * for each thing created. Note that this pass also 1) sets up the
-   * supertype(s) for any member or local types created in BuildTypeMapVisitor
-   * (see the comments there about why it had to be deferred). 2) adds each
+   * for each thing created. Note that this pass also 1) sets up the super
+   * type(s) for any member or local types created in BuildTypeMapVisitor (see
+   * the comments there about why it had to be deferred). 2) adds each
    * user-defined type to a flat list. 3) Creates JNodes for all methods and
    * variables and memorizes the mapping from the JDT Binding to the
    * corresponding JNode for each created method and variable. 4) Maps all
    * synthetic arguments and fields for nested and local classes. 5) Slurps in
    * JSNI code for native methods as an opaque string.
    * 
-   * Note that fethods and fields are not added to their classes here, that
+   * Note that methods and fields are not added to their classes here, that
    * isn't done until {@link GenerateJavaDom}.
    */
   private static class BuildDeclMapVisitor extends ASTVisitor {
@@ -158,7 +158,7 @@ public class BuildTypeMap {
      * Weird: we used to have JConstructor (and JConstructorCall) in our AST,
      * but we got rid of them completely and instead model them as instance
      * methods whose qualifier is a naked no-argument new operation. See
-     * {@link GenerateJavaDom.GenerateJavaDomVisitor#processConstructor(ConstructorDeclaration)}
+     * {@link GenerateJavaAST.JavaASTGenerationVisitor#processConstructor(ConstructorDeclaration)}
      * for details.
      */
     public boolean visit(ConstructorDeclaration ctorDecl, ClassScope scope) {
@@ -175,7 +175,7 @@ public class BuildTypeMap {
         int syntheticParamCount = 0;
         ReferenceBinding declaringClass = b.declaringClass;
         if (declaringClass.isNestedType() && !declaringClass.isStatic()) {
-          // add synthentic args for outer this and locals
+          // add synthetic args for outer this and locals
           NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
           Set alreadyNamedVariables = new HashSet();
           if (nestedBinding.enclosingInstances != null) {
@@ -296,7 +296,7 @@ public class BuildTypeMap {
           jsniCode = jsniCode.substring(startPos, endPos);
 
           // Here we parse it as an anonymous function, but we will give it a
-          // name later when we generate the JavaScript during codegen.
+          // name later when we generate the JavaScript during code generation.
           //
           String syntheticFnHeader = "function (";
           boolean first = true;
@@ -466,14 +466,14 @@ public class BuildTypeMap {
     }
 
     /**
-     * Add synthetic fields, setup supertypes. You'll notice that we DON'T have
+     * Add synthetic fields, setup super types. You'll notice that we DON'T have
      * any concept of "inner" or "outer" types in our AST. Truth is, we found it
      * easier to simply model everything as flat classes and emulate the nesting
      * behavior (and final local access on local classes). It's much closer to
-     * how we'll eventually be generating JavaScript code (codegen is more
-     * straightforward), it makes for fewer kinds of things to worry about when
-     * optimizing (more aggressive optimizations), and it's how Java actually
-     * implements the stuff under the hood anyway.
+     * how we'll eventually be generating JavaScript code (code generation is
+     * more straightforward), it makes for fewer kinds of things to worry about
+     * when optimizing (more aggressive optimizations), and it's how Java
+     * actually implements the stuff under the hood anyway.
      */
     private boolean process(TypeDeclaration typeDeclaration) {
       CompilationResult compResult = typeDeclaration.compilationResult;
@@ -490,7 +490,7 @@ public class BuildTypeMap {
       JReferenceType type = (JReferenceType) typeMap.get(binding);
       try {
         if (binding.isNestedType() && !binding.isStatic()) {
-          // add synthentic fields for outer this and locals
+          // add synthetic fields for outer this and locals
           assert (type instanceof JClassType);
           NestedTypeBinding nestedBinding = (NestedTypeBinding) binding;
           if (nestedBinding.enclosingInstances != null) {
@@ -551,7 +551,7 @@ public class BuildTypeMap {
   /**
    * Creates JNodes for every type and memorizes the mapping from the JDT
    * Binding to the corresponding JNode for each created type. Note that since
-   * there could be forward references, it is not possible to set up supertypes;
+   * there could be forward references, it is not possible to set up super types;
    * it must be done is a subsequent pass.
    */
   private static class BuildTypeMapVisitor extends ASTVisitor {
@@ -637,7 +637,7 @@ public class BuildTypeMap {
         }
 
         /**
-         * We emulate static initializers and intance initializers as methods.
+         * We emulate static initializers and instance initializers as methods.
          * As in other cases, this gives us: simpler AST, easier to optimize,
          * more like output JavaScript. Clinit is always in slot 0, init (if it
          * exists) is always in slot 1.

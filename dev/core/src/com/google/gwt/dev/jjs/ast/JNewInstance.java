@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,9 @@
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Java new instance expression.
+ * A new instance expression. This differs from a standard Java new operation in
+ * that no constructor is implied. Rather, a new operation creates an
+ * uninitialized Object which is passed as an argument to a constructor method.
  */
 public class JNewInstance extends JExpression {
 
@@ -36,7 +38,8 @@ public class JNewInstance extends JExpression {
   }
 
   public boolean hasSideEffects() {
-    return true;
+    // The actual new operation itself has no side effects (see class comment).
+    return false;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

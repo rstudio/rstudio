@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,19 +22,27 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
+import com.google.gwt.dev.jjs.ast.JLocal;
+import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JParameter;
+import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
+import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.JVariable;
+import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethod;
@@ -57,16 +65,37 @@ import java.util.Set;
  * 
  * Note: references to pruned types may still exist in the tree after this pass
  * runs, however, it should only be in contexts that do not rely on any code
- * generation for the pruned type. For example, it's legal to have a varable of
+ * generation for the pruned type. For example, it's legal to have a variable of
  * a pruned type, or to try to cast to a pruned type. These will cause natural
  * failures at run time; or later optimizations might be able to hard-code
  * failures at compile time.
- * 
- * TODO(later): prune params and locals
- * 
- * TODO(later): make RescueVisitor use less stack?
  */
 public class Pruner {
+
+  /**
+   * Remove assignments to pruned fields and locals.
+   * 
+   * TODO(later): prune params too
+   */
+  private class CleanupRefsVisitor extends JModVisitor {
+
+    public void endVisit(JBinaryOperation x, Context ctx) {
+      // The LHS of assignments may have been pruned.
+      if (x.getOp() == JBinaryOperator.ASG) {
+        JExpression lhs = x.getLhs();
+        if (lhs.hasSideEffects()) {
+          return;
+        }
+        if (lhs instanceof JFieldRef || lhs instanceof JLocalRef) {
+          JVariable var = ((JVariableRef) lhs).getTarget();
+          if (!referencedNonTypes.contains(var)) {
+            // Just replace with my RHS
+            ctx.replaceMe(x.getRhs());
+          }
+        }
+      }
+    }
+  }
 
   /**
    * Remove any unreferenced classes and interfaces from JProgram. Remove any
@@ -101,6 +130,8 @@ public class Pruner {
             || pruneViaNoninstantiability(isInstantiated, method)) {
           it.remove();
           didChange = true;
+        } else {
+          accept(method);
         }
       }
 
@@ -135,6 +166,17 @@ public class Pruner {
         }
       }
 
+      return false;
+    }
+
+    public boolean visit(JMethod method, Context ctx) {
+      for (Iterator it = method.locals.iterator(); it.hasNext();) {
+        JLocal local = (JLocal) it.next();
+        if (!referencedNonTypes.contains(local)) {
+          it.remove();
+          didChange = true;
+        }
+      }
       return false;
     }
 
@@ -192,6 +234,8 @@ public class Pruner {
    * Marks as "referenced" any types, methods, and fields that are reachable.
    * Also marks as "instantiable" any the classes and interfaces that can
    * possibly be instantiated.
+   * 
+   * TODO(later): make RescueVisitor use less stack?
    */
   private class RescueVisitor extends JVisitor {
 
@@ -199,16 +243,6 @@ public class Pruner {
 
     public void commitInstantiatedTypes() {
       program.typeOracle.setInstantiatedTypes(instantiatedTypes);
-    }
-
-    // @Override
-    public void endVisit(JBinaryOperation x, Context ctx) {
-      // special string concat handling
-      if (x.getOp() == JBinaryOperator.ADD
-          && x.getType() == program.getTypeJavaLangString()) {
-        rescueByConcat(x.getLhs().getType());
-        rescueByConcat(x.getRhs().getType());
-      }
     }
 
     // @Override
@@ -237,6 +271,55 @@ public class Pruner {
       return false;
     }
 
+    public boolean visit(JBinaryOperation x, Context ctx) {
+      // special string concat handling
+      if (x.getOp() == JBinaryOperator.ADD
+          && x.getType() == program.getTypeJavaLangString()) {
+        rescueByConcat(x.getLhs().getType());
+        rescueByConcat(x.getRhs().getType());
+      } else if (x.getOp() == JBinaryOperator.ASG) {
+        // Don't rescue variables that are merely assigned to and never read
+        boolean doSkip = false;
+        JExpression lhs = x.getLhs();
+        if (lhs.hasSideEffects()) {
+          // cannot skip
+        } else if (lhs instanceof JLocalRef) {
+          // locals are ok to skip
+          doSkip = true;
+        } else if (lhs instanceof JFieldRef) {
+          JFieldRef fieldRef = (JFieldRef) lhs;
+          /*
+           * Whether we can skip depends on what the qualifier is; we have to be
+           * certain the qualifier cannot be a null pointer (in which case we'd
+           * fail to throw the appropriate exception.
+           * 
+           * TODO: better non-null tracking!
+           */
+          JExpression instance = fieldRef.getInstance();
+          if (fieldRef.getField().isStatic()) {
+            // statics are always okay
+            doSkip = true;
+          } else if (instance instanceof JThisRef) {
+            // a this ref cannot be null
+            doSkip = true;
+          } else if (instance instanceof JParameterRef) {
+            JParameter param = ((JParameterRef) instance).getParameter();
+            JMethod enclosingMethod = param.getEnclosingMethod();
+            if (program.isStaticImpl(enclosingMethod)
+                && enclosingMethod.params.get(0) == param) {
+              doSkip = true;
+            }
+          }
+        }
+
+        if (doSkip) {
+          accept(x.getRhs());
+          return false;
+        }
+      }
+      return true;
+    }
+
     // @Override
     public boolean visit(JClassLiteral literal, Context ctx) {
       // rescue and instantiate java.lang.Class
@@ -252,8 +335,8 @@ public class Pruner {
 
       /*
        * SPECIAL: Some classes contain methods used by code generation later.
-       * Unless those transforms have already been performed, we must rescuse
-       * all contained methods for later user.
+       * Unless those transforms have already been performed, we must rescue all
+       * contained methods for later user.
        */
       if (noSpecialTypes && program.specialTypes.contains(type)) {
         for (int i = 0; i < type.methods.size(); ++i) {
@@ -318,6 +401,13 @@ public class Pruner {
       }
 
       return false;
+    }
+
+    // @Override
+    public boolean visit(JLocalRef ref, Context ctx) {
+      JLocal target = ref.getLocal();
+      rescue(target);
+      return true;
     }
 
     // @Override
@@ -419,14 +509,6 @@ public class Pruner {
       }
     }
 
-    private void rescue(JField field) {
-      if (field != null) {
-        if (!referencedNonTypes.contains(field)) {
-          referencedNonTypes.add(field);
-        }
-      }
-    }
-
     private boolean rescue(JMethod method) {
       if (method != null) {
         if (!referencedNonTypes.contains(method)) {
@@ -462,6 +544,14 @@ public class Pruner {
 
         if (doVisit) {
           accept(type);
+        }
+      }
+    }
+
+    private void rescue(JVariable var) {
+      if (var != null) {
+        if (!referencedNonTypes.contains(var)) {
+          referencedNonTypes.add(var);
         }
       }
     }
@@ -559,13 +649,9 @@ public class Pruner {
   }
 
   private final boolean noSpecialTypes;
-
   private final JProgram program;
-
   private final Set/* <JNode> */referencedNonTypes = new HashSet/* <JNode> */();
-
   private final Set/* <JReferenceType> */referencedTypes = new HashSet/* <JReferenceType> */();
-
   private JMethod stringValueOfChar = null;
 
   private Pruner(JProgram program, boolean noSpecialTypes) {
@@ -597,6 +683,9 @@ public class Pruner {
       if (!pruner.didChange()) {
         break;
       }
+
+      CleanupRefsVisitor cleaner = new CleanupRefsVisitor();
+      cleaner.accept(program);
 
       referencedTypes.clear();
       referencedNonTypes.clear();
