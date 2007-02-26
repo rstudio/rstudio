@@ -18,6 +18,7 @@ package com.google.gwt.dev.jdt;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
+import com.google.gwt.core.ext.typeinfo.HasMetaData;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
@@ -27,7 +28,13 @@ import com.google.gwt.dev.shell.ShellJavaScriptHost;
 import com.google.gwt.dev.util.Util;
 
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.Javadoc;
+import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
+import org.eclipse.jdt.internal.compiler.impl.ReferenceContext;
+import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
+import org.eclipse.jdt.internal.compiler.lookup.MethodScope;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 
 import java.io.File;
@@ -51,6 +58,7 @@ import java.util.TreeSet;
  * reflected correctly on reload.
  */
 public class CacheManager {
+
   /**
    * Maps SourceTypeBindings to their associated types.
    */
@@ -89,6 +97,7 @@ public class CacheManager {
       if (!map.containsKey(dependeeFilename)) {
         map.put(dependeeFilename, new HashSet());
       }
+
       get(dependeeFilename).add(dependerFilename);
     }
 
@@ -113,7 +122,7 @@ public class CacheManager {
       queue.add(filename);
       while (true) {
         finished.add(current);
-        Set children = get(filename);
+        Set children = get(current);
         if (children != null) {
           for (Iterator iter = children.iterator(); iter.hasNext();) {
             String child = (String) iter.next();
@@ -127,6 +136,149 @@ public class CacheManager {
         } else {
           current = (String) queue.first();
           queue.remove(current);
+        }
+      }
+    }
+  }
+
+  /**
+   * Visit all of the CUDs and extract dependencies. This visitor handles
+   * explicit TypeRefs via the onTypeRef method AND it also deals with the
+   * gwt.typeArgs annotation.
+   * 
+   * <ol>
+   * <li>Extract the list of type names from the gwt.typeArgs annotation</li>
+   * <li>For each type name, locate the CUD that defines it</li>
+   * <li>Add the referenced CUD as a dependency</li>
+   * </ol>
+   */
+  private final class DependencyVisitor extends TypeRefVisitor {
+    private final Dependencies dependencies;
+
+    private DependencyVisitor(Dependencies dependencies) {
+      this.dependencies = dependencies;
+    }
+
+    public void endVisit(FieldDeclaration fieldDeclaration,
+        final MethodScope scope) {
+      extractDependenciesFromTypeArgs(fieldDeclaration.javadoc,
+          scope.referenceContext(), true);
+    }
+
+    public void endVisit(MethodDeclaration methodDeclaration, ClassScope scope) {
+      extractDependenciesFromTypeArgs(methodDeclaration.javadoc,
+          scope.referenceContext(), false);
+    }
+
+    protected void onTypeRef(SourceTypeBinding referencedType,
+        CompilationUnitDeclaration unitOfReferrer) {
+      // If the referenced type belongs to a compilation unit that
+      // was changed, then the unit in which it
+      // is referenced must also be treated as changed.
+      //
+      String dependeeFilename = String.valueOf(referencedType.getFileName());
+      String dependerFilename = String.valueOf(unitOfReferrer.getFileName());
+
+      dependencies.add(dependerFilename, dependeeFilename);
+    }
+
+    private String combine(String[] strings, int startIndex) {
+      StringBuffer sb = new StringBuffer();
+      for (int i = startIndex; i < strings.length; i++) {
+        String s = strings[i];
+        sb.append(s);
+      }
+      return sb.toString();
+    }
+
+    /**
+     * Extracts additional dependencies based on the gwt.typeArgs annotation.
+     * This is not detected by JDT so we need to do it here. We do not perform
+     * as strict a parse as the TypeOracle would do.
+     * 
+     * @param javadoc javadoc text
+     * @param scope scope that contains the definition
+     * @param isField true if the javadoc is associated with a field
+     */
+    private void extractDependenciesFromTypeArgs(Javadoc javadoc,
+        final ReferenceContext scope, final boolean isField) {
+      if (javadoc == null) {
+        return;
+      }
+      final char[] source = scope.compilationResult().compilationUnit.getContents();
+
+      TypeOracleBuilder.parseMetaDataTags(source, new HasMetaData() {
+        public void addMetaData(String tagName, String[] values) {
+          assert (values != null);
+
+          if (!TypeOracle.TAG_TYPEARGS.equals(tagName)) {
+            // don't care about non gwt.typeArgs
+            return;
+          }
+
+          if (values.length == 0) {
+            return;
+          }
+
+          Set typeNames = new HashSet();
+
+          /*
+           * if the first element starts with a "<" then we assume that no
+           * parameter name was specified
+           */
+          int startIndex = 1;
+          if (values[0].trim().startsWith("<")) {
+            startIndex = 0;
+          }
+
+          extractTypeNamesFromTypeArg(combine(values, startIndex), typeNames);
+
+          Iterator it = typeNames.iterator();
+          while (it.hasNext()) {
+            String typeName = (String) it.next();
+
+            try {
+              ICompilationUnit compilationUnit = astCompiler.getCompilationUnitForType(
+                  TreeLogger.NULL, typeName);
+
+              String dependeeFilename = String.valueOf(compilationUnit.getFileName());
+              String dependerFilename = String.valueOf(scope.compilationResult().compilationUnit.getFileName());
+
+              dependencies.add(dependerFilename, dependeeFilename);
+
+            } catch (UnableToCompleteException e) {
+              // Purposely ignored
+            }
+          }
+        }
+
+        public String[][] getMetaData(String tagName) {
+          return null;
+        }
+
+        public String[] getMetaDataTags() {
+          return null;
+        }
+      }, javadoc);
+    }
+
+    /**
+     * Extracts the type names referenced from a gwt.typeArgs annotation and
+     * adds them to the set of type names.
+     * 
+     * @param typeArg a string containing the type args as the user entered them
+     * @param typeNames the set of type names referenced in the typeArgs string
+     */
+    private void extractTypeNamesFromTypeArg(String typeArg, Set typeNames) {
+      // Remove all whitespace
+      typeArg.replaceAll("\\\\s", "");
+      
+      // Remove anything that is not a raw type name
+      String[] typeArgs = typeArg.split("[\\[\\]<>,]");
+
+      for (int i = 0; i < typeArgs.length; ++i) {
+        if (typeArgs[i].length() > 0) {
+          typeNames.add(typeArgs[i]);
         }
       }
     }
@@ -558,26 +710,15 @@ public class CacheManager {
   void addDependentsToChangedFiles() {
     final Dependencies dependencies = new Dependencies();
 
-    // induction
-    TypeRefVisitor trv = new TypeRefVisitor() {
-      protected void onTypeRef(SourceTypeBinding referencedType,
-          CompilationUnitDeclaration unitOfReferrer) {
-        // If the referenced type belongs to a compilation unit that
-        // was changed, then the unit in which it
-        // is referenced must also be treated as changed.
-        //
-        String referencedFn = String.valueOf(referencedType.getFileName());
-        CompilationUnitDeclaration referencedCup = (CompilationUnitDeclaration) cudsByFileName.get(referencedFn);
-        String fileName = String.valueOf(unitOfReferrer.getFileName());
-        dependencies.add(fileName, referencedFn);
-      };
-    };
+    DependencyVisitor trv = new DependencyVisitor(dependencies);
+
     // Find references to type in units that aren't any longer valid.
     //
     for (Iterator iter = cudsByFileName.values().iterator(); iter.hasNext();) {
       CompilationUnitDeclaration cud = (CompilationUnitDeclaration) iter.next();
       cud.traverse(trv, cud.scope);
     }
+
     Set toTraverse = new HashSet(changedFiles);
     for (Iterator iter = toTraverse.iterator(); iter.hasNext();) {
       String fileName = (String) iter.next();
@@ -679,6 +820,7 @@ public class CacheManager {
     if (!isTypeOracleBuilderFirstTime()) {
       addVolatileFiles(changedFiles);
       addDependentsToChangedFiles();
+
       for (Iterator iter = changedFiles.iterator(); iter.hasNext();) {
         String location = (String) iter.next();
         CompilationUnitProvider cup = (CompilationUnitProvider) getCupsByLocation().get(

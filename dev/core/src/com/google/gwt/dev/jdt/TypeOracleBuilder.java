@@ -94,6 +94,93 @@ public class TypeOracleBuilder {
 
   private static final Pattern PATTERN_WHITESPACE = Pattern.compile("\\s");
 
+  static boolean parseMetaDataTags(char[] unitSource, HasMetaData hasMetaData,
+      Javadoc javadoc) {
+
+    int start = javadoc.sourceStart;
+    int end = javadoc.sourceEnd;
+    char[] comment = CharOperation.subarray(unitSource, start, end + 1);
+    BufferedReader reader = new BufferedReader(new CharArrayReader(comment));
+    String activeTag = null;
+    final List tagValues = new ArrayList();
+    try {
+      String line = reader.readLine();
+      boolean firstLine = true;
+      while (line != null) {
+        if (firstLine) {
+          firstLine = false;
+          int commentStart = line.indexOf("/**");
+          if (commentStart == -1) {
+            // Malformed.
+            return false;
+          }
+          line = line.substring(commentStart + 3);
+        }
+
+        String[] tokens = PATTERN_WHITESPACE.split(line);
+        boolean canIgnoreStar = true;
+        for (int i = 0; i < tokens.length; i++) {
+          String token = tokens[i];
+
+          // Check for the end.
+          //
+          if (token.endsWith("*/")) {
+            token = token.substring(0, token.length() - 2);
+          }
+
+          // Check for an ignored leading star.
+          //
+          if (canIgnoreStar && token.startsWith("*")) {
+            token = token.substring(1);
+            canIgnoreStar = false;
+          }
+
+          // Decide what to do with whatever is left.
+          //
+          if (token.length() > 0) {
+            canIgnoreStar = false;
+            if (token.startsWith("@")) {
+              // A new tag has been introduced.
+              // Subsequent tokens will attach to it.
+              // Make sure we finish the previously active tag before moving on.
+              //
+              if (activeTag != null) {
+                finishTag(hasMetaData, activeTag, tagValues);
+              }
+              activeTag = token.substring(1);
+            } else if (activeTag != null) {
+              // Attach this item to the active tag.
+              //
+              tagValues.add(token);
+            } else {
+              // Just ignore it.
+              //
+            }
+          }
+        }
+
+        line = reader.readLine();
+      }
+    } catch (IOException e) {
+      return false;
+    }
+
+    // To catch the last batch of values, if any.
+    //
+    finishTag(hasMetaData, activeTag, tagValues);
+    return true;
+  }
+
+  private static void finishTag(HasMetaData hasMetaData, String tagName,
+      List tagValues) {
+    // Add the values even if the list is empty, because the presence of the
+    // tag itself might be important.
+    // 
+    String[] values = (String[]) tagValues.toArray(Empty.STRINGS);
+    hasMetaData.addMetaData(tagName, values);
+    tagValues.clear();
+  }
+
   private static void removeInfectedUnits(final TreeLogger logger,
       final Map cudsByFileName) {
 
@@ -368,15 +455,6 @@ public class TypeOracleBuilder {
     return oracle;
   }
 
-  private void finishTag(HasMetaData hasMetaData, String tagName, List tagValues) {
-    // Add the values even if the list is empty, because the presence of the
-    // tag itself might be important.
-    //
-    String[] values = (String[]) tagValues.toArray(Empty.STRINGS);
-    hasMetaData.addMetaData(tagName, values);
-    tagValues.clear();
-  }
-
   private CompilationUnitProvider getCup(TypeDeclaration typeDecl) {
     ICompilationUnit icu = typeDecl.compilationResult.compilationUnit;
     ICompilationUnitAdapter icua = (ICompilationUnitAdapter) icu;
@@ -402,83 +480,6 @@ public class TypeOracleBuilder {
     } else {
       return false;
     }
-  }
-
-  private boolean parseMetaDataTags(char[] unitSource, HasMetaData hasMetaData,
-      Javadoc javadoc) {
-
-    int start = javadoc.sourceStart;
-    int end = javadoc.sourceEnd;
-    char[] comment = CharOperation.subarray(unitSource, start, end + 1);
-    BufferedReader reader = new BufferedReader(new CharArrayReader(comment));
-    String activeTag = null;
-    final List tagValues = new ArrayList();
-    try {
-      String line = reader.readLine();
-      boolean firstLine = true;
-      while (line != null) {
-        if (firstLine) {
-          firstLine = false;
-          int commentStart = line.indexOf("/**");
-          if (commentStart == -1) {
-            // Malformed.
-            return false;
-          }
-          line = line.substring(commentStart + 3);
-        }
-
-        String[] tokens = PATTERN_WHITESPACE.split(line);
-        boolean canIgnoreStar = true;
-        for (int i = 0; i < tokens.length; i++) {
-          String token = tokens[i];
-
-          // Check for the end.
-          //
-          if (token.endsWith("*/")) {
-            token = token.substring(0, token.length() - 2);
-          }
-
-          // Check for an ignored leading star.
-          //
-          if (canIgnoreStar && token.startsWith("*")) {
-            token = token.substring(1);
-            canIgnoreStar = false;
-          }
-
-          // Decide what to do with whatever is left.
-          //
-          if (token.length() > 0) {
-            canIgnoreStar = false;
-            if (token.startsWith("@")) {
-              // A new tag has been introduced.
-              // Subsequent tokens will attach to it.
-              // Make sure we finish the previously active tag before moving on.
-              //
-              if (activeTag != null) {
-                finishTag(hasMetaData, activeTag, tagValues);
-              }
-              activeTag = token.substring(1);
-            } else if (activeTag != null) {
-              // Attach this item to the active tag.
-              //
-              tagValues.add(token);
-            } else {
-              // Just ignore it.
-              //
-            }
-          }
-        }
-
-        line = reader.readLine();
-      }
-    } catch (IOException e) {
-      return false;
-    }
-
-    // To catch the last batch of values, if any.
-    //
-    finishTag(hasMetaData, activeTag, tagValues);
-    return true;
   }
 
   /**

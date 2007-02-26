@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -130,6 +131,38 @@ public class TypeOracle {
     }
 
     return (String[]) strings.toArray(NO_STRINGS);
+  }
+
+  /**
+   * Returns true if the type has been invalidated because it is in the set of
+   * invalid types or if it is a parameterized type and either it raw type or
+   * any one of its type args has been invalidated.
+   * 
+   * @param type type to check
+   * @param invalidTypes set of type known to be invalid
+   * @return true if the type has been invalidated
+   */
+  private static boolean isInvalidatedTypeRecursive(JType type, Set invalidTypes) {
+    if (type instanceof JParameterizedType) {
+      JParameterizedType parameterizedType = (JParameterizedType) type;
+      if (isInvalidatedTypeRecursive(parameterizedType.getRawType(),
+          invalidTypes)) {
+        return true;
+      }
+
+      JType[] typeArgs = parameterizedType.getTypeArgs();
+      for (int i = 0; i < typeArgs.length; ++i) {
+        JType typeArg = typeArgs[i];
+
+        if (isInvalidatedTypeRecursive(typeArg, invalidTypes)) {
+          return true;
+        }
+      }
+
+      return false;
+    } else {
+      return invalidTypes.contains(type);
+    }
   }
 
   private final Map arrayTypes = new IdentityHashMap();
@@ -467,19 +500,31 @@ public class TypeOracle {
     reloadCount++;
   }
 
-  Set invalidateTypesInCompilationUnit(CompilationUnitProvider cup) {
+  /**
+   * Note, this method is called reflectively from the
+   * {@link CacheManager#invalidateOnRefresh(TypeOracle)}
+   * 
+   * @param cup compilation unit whose types will be invalidated
+   */
+  void invalidateTypesInCompilationUnit(CompilationUnitProvider cup) {
     Set invalidTypes = new HashSet();
     JClassType[] types = (JClassType[]) typesByCup.get(cup);
     if (types == null) {
-      return invalidTypes;
+      return;
     }
+
     for (int i = 0; i < types.length; i++) {
-      JPackage jp = types[i].getPackage();
-      invalidTypes.add(types[i].getQualifiedSourceName());
-      jp.remove(types[i]);
+      JClassType classTypeToInvalidate = types[i];
+      invalidTypes.add(classTypeToInvalidate);
     }
+
     typesByCup.remove(cup);
-    return invalidTypes;
+
+    removeInvalidatedArrayTypes(invalidTypes);
+
+    removeInvalidatedParameterizedTypes(invalidTypes);
+
+    removeTypes(invalidTypes);
   }
 
   void recordTypeInCompilationUnit(CompilationUnitProvider cup, JClassType type) {
@@ -771,5 +816,51 @@ public class TypeOracle {
       throw new UnableToCompleteException();
     }
     return parameterizedType;
+  }
+
+  /**
+   * Remove any array type whose leaf type has been invalidated.
+   * 
+   * @param invalidTypes set of types that have been invalidated.
+   */
+  private void removeInvalidatedArrayTypes(Set invalidTypes) {
+    arrayTypes.keySet().removeAll(invalidTypes);
+  }
+
+  /**
+   * Remove any parameterized type that was invalidated because either its raw
+   * type or any one of its type arguements was invalidated.
+   * 
+   * @param invalidTypes set of types known to have been invalidated
+   */
+  private void removeInvalidatedParameterizedTypes(Set invalidTypes) {
+    Iterator iter = parameterizedTypes.values().iterator();
+
+    while (iter.hasNext()) {
+      JType type = (JType) iter.next();
+
+      if (isInvalidatedTypeRecursive(type, invalidTypes)) {
+        iter.remove();
+      }
+    }
+  }
+
+  /**
+   * Removes the specified types from the type oracle.
+   * 
+   * @param invalidTypes set of types to remove
+   */
+  private void removeTypes(Set invalidTypes) {
+    Iterator iter = invalidTypes.iterator();
+
+    while (iter.hasNext()) {
+      JClassType classType = (JClassType) iter.next();
+      JPackage pkg = classType.getPackage();
+      if (pkg != null) {
+        pkg.remove(classType);
+      }
+
+      classType.removeFromSupertypes();
+    }
   }
 }

@@ -515,6 +515,13 @@ public class JClassType extends JType implements HasMetaData {
     notifySuperTypesOf(this);
   }
 
+  /**
+   * Removes references to this instance from all of its super types.
+   */
+  void removeFromSupertypes() {
+    removeSubtype(this);
+  }
+
   private void acceptSubtype(JClassType me) {
     allSubtypes.add(me);
     notifySuperTypesOf(me);
@@ -538,6 +545,20 @@ public class JClassType extends JType implements HasMetaData {
     for (int i = 0, n = interfaces.size(); i < n; ++i) {
       JClassType intf = (JClassType) interfaces.get(i);
       intf.acceptSubtype(me);
+    }
+  }
+
+  private void removeSubtype(JClassType me) {
+    allSubtypes.remove(me);
+
+    if (superclass != null) {
+      superclass.removeSubtype(me);
+    }
+
+    for (int i = 0, n = interfaces.size(); i < n; ++i) {
+      JClassType intf = (JClassType) interfaces.get(i);
+
+      intf.removeSubtype(me);
     }
   }
 }
