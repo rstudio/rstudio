@@ -139,42 +139,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.TreeMap;
+import java.util.Map.Entry;
 
 /**
  * Creates a JavaScript AST from a <code>JProgram</code> node.
  */
 public class GenerateJavaScriptAST {
-
-  private class SortVisitor extends JVisitor {
-
-    private final HasNameSort hasNameSort = new HasNameSort();
-
-    public void endVisit(JClassType x, Context ctx) {
-      Collections.sort(x.fields, hasNameSort);
-
-      // Sort the methods manually to avoid sorting clinit out of place!
-      List methods = x.methods;
-      Object a[] = methods.toArray();
-      Arrays.sort(a, 1, a.length, hasNameSort);
-      for (int i = 1; i < a.length; i++) {
-        methods.set(i, a[i]);
-      }
-    }
-
-    public void endVisit(JInterfaceType x, Context ctx) {
-      Collections.sort(x.fields, hasNameSort);
-      Collections.sort(x.methods, hasNameSort);
-    }
-
-    public void endVisit(JMethod x, Context ctx) {
-      Collections.sort(x.locals, hasNameSort);
-    }
-
-    public void endVisit(JProgram x, Context ctx) {
-      Collections.sort(x.entryMethods, hasNameSort);
-      Collections.sort(x.getDeclaredTypes(), hasNameSort);
-    }
-  }
 
   private class CreateNamesAndScopesVisitor extends JVisitor {
 
@@ -289,9 +260,9 @@ public class GenerateJavaScriptAST {
         parentScope = (JsScope) classScopes.get(x.extnds);
         assert (parentScope != null);
         /*
-         * Wacky, we wedge the global interface scope in between object and all
+         * WEIRD: we wedge the global interface scope in between object and all
          * of its subclasses; this ensures that interface method names trump all
-         * (except Object methods names)
+         * (except Object method names)
          */
         if (parentScope == objectScope) {
           parentScope = interfaceScope;
@@ -299,6 +270,16 @@ public class GenerateJavaScriptAST {
         myScope = new JsScope(parentScope, "class " + x.getShortName());
       }
       classScopes.put(x, myScope);
+
+      // Make a name for my package if it doesn't already exist
+      String packageName = getPackageName(x.getName());
+      if (packageName != null && packageName.length() > 0) {
+        if (packageNames.get(packageName) == null) {
+          String ident = "package_" + packageName.replace('.', '_');
+          JsName jsName = topScope.declareName(ident);
+          packageNames.put(packageName, jsName);
+        }
+      }
 
       push(myScope);
       return true;
@@ -551,6 +532,8 @@ public class GenerateJavaScriptAST {
       }
 
       JsStatements globalStmts = jsProgram.getGlobalBlock().getStatements();
+
+      // declare all methods into the global scope
       for (int i = 0; i < jsFuncs.size(); ++i) {
         JsFunction func = (JsFunction) jsFuncs.get(i);
         if (func != null) {
@@ -559,103 +542,7 @@ public class GenerateJavaScriptAST {
       }
 
       if (typeOracle.isInstantiatedType(x)) {
-
-        // Setup my seed function and prototype
-        if (x != program.getTypeJavaLangString()) {
-          JsName seedFuncName = getName(x);
-
-          // seed function
-          JsFunction seedFunc = new JsFunction(topScope, seedFuncName);
-          JsBlock body = new JsBlock();
-          seedFunc.setBody(body);
-          globalStmts.add(seedFunc.makeStmt());
-
-          // prototype
-          JsNameRef lhs = prototype.makeRef();
-          lhs.setQualifier(seedFuncName.makeRef());
-          JsExpression rhs;
-          if (x.extnds != null) {
-            JsNew newExpr = new JsNew();
-            newExpr.setConstructorExpression(getName(x.extnds).makeRef());
-            rhs = newExpr;
-          } else {
-            rhs = new JsObjectLiteral();
-          }
-          JsExpression protoAsg = createAssignment(lhs, rhs);
-          JsExpression tmpAsg = createAssignment(globalTemp.makeRef(), protoAsg);
-          globalStmts.add(tmpAsg.makeStmt());
-        } else {
-          /*
-           * MAGIC: java.lang.String is implemented as a JavaScript String
-           * primitive with a modified prototype.
-           */
-          JsNameRef rhs = prototype.makeRef();
-          rhs.setQualifier(jsProgram.getRootScope().declareName("String").makeRef());
-          JsExpression tmpAsg = createAssignment(globalTemp.makeRef(), rhs);
-          globalStmts.add(tmpAsg.makeStmt());
-        }
-
-        // setup vtables
-        for (int i = 0; i < x.methods.size(); ++i) {
-          JMethod method = (JMethod) x.methods.get(i);
-          if (!method.isStatic() && !method.isAbstract()) {
-            JsNameRef lhs = getPolyName(method).makeRef();
-            lhs.setQualifier(globalTemp.makeRef());
-            JsNameRef rhs = getName(method).makeRef();
-            JsExpression asg = createAssignment(lhs, rhs);
-            globalStmts.add(new JsExprStmt(asg));
-          }
-        }
-
-        // special: setup a "toString" alias for java.lang.Object.toString()
-        if (x == program.getTypeJavaLangObject()) {
-          JMethod toStringMeth = program.getSpecialMethod("Object.toString");
-          if (x.methods.contains(toStringMeth)) {
-            // _.toString = function(){return this.java_lang_Object_toString();}
-
-            // lhs
-            JsName lhsName = objectScope.declareName("toString");
-            lhsName.setObfuscatable(false);
-            JsNameRef lhs = lhsName.makeRef();
-            lhs.setQualifier(globalTemp.makeRef());
-
-            // rhs
-            JsInvocation call = new JsInvocation();
-            JsNameRef toStringRef = new JsNameRef(getPolyName(toStringMeth));
-            toStringRef.setQualifier(new JsThisRef());
-            call.setQualifier(toStringRef);
-            JsReturn jsReturn = new JsReturn(call);
-            JsFunction rhs = new JsFunction(topScope);
-            JsBlock body = new JsBlock();
-            body.getStatements().add(jsReturn);
-            rhs.setBody(body);
-
-            // asg
-            JsExpression asg = createAssignment(lhs, rhs);
-            globalStmts.add(new JsExprStmt(asg));
-          }
-        }
-
-        // set typeName to be the class name
-        {
-          JField typeIdField = program.getSpecialField("Object.typeName");
-          JsNameRef lhs = getName(typeIdField).makeRef();
-          lhs.setQualifier(globalTemp.makeRef());
-          JsStringLiteral rhs = jsProgram.getStringLiteral(x.getName());
-          JsExpression asg = createAssignment(lhs, rhs);
-          globalStmts.add(new JsExprStmt(asg));
-        }
-
-        // setup my typeId if needed
-        int typeId = program.getTypeId(x);
-        if (typeId >= 0) {
-          JField typeIdField = program.getSpecialField("Object.typeId");
-          JsNameRef fieldRef = getName(typeIdField).makeRef();
-          fieldRef.setQualifier(globalTemp.makeRef());
-          JsIntegralLiteral typeIdLit = jsProgram.getIntegralLiteral(BigInteger.valueOf(typeId));
-          JsExpression asg = createAssignment(fieldRef, typeIdLit);
-          globalStmts.add(new JsExprStmt(asg));
-        }
+        generateClassSetup(x, globalStmts);
       }
 
       // setup fields
@@ -1051,98 +938,22 @@ public class GenerateJavaScriptAST {
 
       // types don't push
 
-      List/* <JsFunction> */funcs = popList(x.entryMethods.size()); // entryMethods
-      for (int i = 0; i < funcs.size(); ++i) {
-        JsFunction func = (JsFunction) funcs.get(i);
+      // Generate entry methods
+      List/* <JsFunction> */entryFuncs = popList(x.entryMethods.size()); // entryMethods
+      for (int i = 0; i < entryFuncs.size(); ++i) {
+        JsFunction func = (JsFunction) entryFuncs.get(i);
         if (func != null) {
           globalStmts.add(func.makeStmt());
         }
       }
 
-      /**
-       * <pre>
-       * function gwtOnLoad(errFn, modName){
-       *   if (errFn) {
-       *     try {
-       *       init();
-       *     } catch(e) {
-       *       errFn(modName);
-       *     }
-       *   } else {
-       *     init();
-       *   }
-       * }
-       * </pre>
-       */
-      JsFunction gwtOnLoad = new JsFunction(topScope);
-      globalStmts.add(gwtOnLoad.makeStmt());
-      JsName gwtOnLoadName = topScope.declareName("gwtOnLoad");
-      gwtOnLoadName.setObfuscatable(false);
-      gwtOnLoad.setName(gwtOnLoadName);
-      JsBlock body = new JsBlock();
-      gwtOnLoad.setBody(body);
-      JsScope fnScope = gwtOnLoad.getScope();
-      JsParameters params = gwtOnLoad.getParameters();
-      JsName errFn = fnScope.declareName("errFn");
-      JsName modName = fnScope.declareName("modName");
-      params.add(new JsParameter(errFn));
-      params.add(new JsParameter(modName));
-      JsIf jsIf = new JsIf();
-      body.getStatements().add(jsIf);
-      jsIf.setIfExpr(errFn.makeRef());
-      JsTry jsTry = new JsTry();
-      jsIf.setThenStmt(jsTry);
-      JsBlock callBlock = new JsBlock();
-      jsIf.setElseStmt(callBlock);
-      jsTry.setTryBlock(callBlock);
-      for (int i = 0; i < funcs.size(); ++i) {
-        JsFunction func = (JsFunction) funcs.get(i);
-        if (func != null) {
-          JsInvocation call = new JsInvocation();
-          call.setQualifier(func.getName().makeRef());
-          callBlock.getStatements().add(call.makeStmt());
-        }
-      }
-      JsCatch jsCatch = new JsCatch(fnScope, "e");
-      jsTry.getCatches().add(jsCatch);
-      JsBlock catchBlock = new JsBlock();
-      jsCatch.setBody(catchBlock);
-      JsInvocation errCall = new JsInvocation();
-      catchBlock.getStatements().add(errCall.makeStmt());
-      errCall.setQualifier(errFn.makeRef());
-      errCall.getArguments().add(modName.makeRef());
+      generateGwtOnLoad(entryFuncs, globalStmts);
 
-      // setup the global type table
-      JField typeIdArray = program.getSpecialField("Cast.typeIdArray");
-      JsNameRef fieldRef = getName(typeIdArray).makeRef();
-      JsArrayLiteral arrayLit = new JsArrayLiteral();
-      for (int i = 0; i < program.getJsonTypeTable().size(); ++i) {
-        JsonObject jsonObject = (JsonObject) program.getJsonTypeTable().get(i);
-        accept(jsonObject);
-        arrayLit.getExpressions().add((JsExpression) pop());
-      }
-      JsExpression asg = createAssignment(fieldRef, arrayLit);
-      globalStmts.add(new JsExprStmt(asg));
-
-      // Class literals are useless right now, just use String literals and the
-      // Object methods will basically work
-      for (Iterator itType = classLits.keySet().iterator(); itType.hasNext();) {
-        JType type = (JType) itType.next();
-        JsName jsName = (JsName) classLits.get(type);
-        String string;
-        if (type instanceof JArrayType) {
-          string = "class " + type.getJsniSignatureName().replace('/', '.');
-        } else if (type instanceof JClassType) {
-          string = "class " + type.getName();
-        } else if (type instanceof JInterfaceType) {
-          string = "interface " + type.getName();
-        } else {
-          string = type.getName();
-        }
-        JsStringLiteral stringLiteral = jsProgram.getStringLiteral(string);
-        asg = createAssignment(jsName.makeRef(), stringLiteral);
-        globalStmts.add(asg.makeStmt());
-      }
+      // a few more vars on the very end
+      JsVars vars = new JsVars();
+      generateTypeTable(vars);
+      generateClassLiterals(vars);
+      globalStmts.add(vars);
     }
 
     // @Override
@@ -1302,14 +1113,17 @@ public class GenerateJavaScriptAST {
 
     // @Override
     public boolean visit(JProgram x, Context ctx) {
-      // handle null method
-      // return 'window' so that fields can be referenced
-      JsReturn jsReturn = new JsReturn(window.makeRef());
-      JsBlock body = new JsBlock();
-      body.getStatements().add(jsReturn);
-      JsFunction nullFunc = new JsFunction(topScope, nullMethodName);
-      nullFunc.setBody(body);
-      jsProgram.getGlobalBlock().getStatements().add(nullFunc.makeStmt());
+      JsStatements globalStatements = jsProgram.getGlobalBlock().getStatements();
+
+      // declare some global vars
+      JsVars vars = new JsVars();
+
+      // reserve the "_" identifier
+      vars.add(new JsVar(globalTemp));
+      generatePackageNames(vars);
+      globalStatements.add(vars);
+
+      generateNullFunc(globalStatements);
       return true;
     }
 
@@ -1367,6 +1181,250 @@ public class GenerateJavaScriptAST {
         return lhs;
       }
       return new JsBinaryOperation(JsBinaryOperator.COMMA, lhs, rhs);
+    }
+
+    private void generateClassLiterals(JsVars vars) {
+      /*
+       * Class literals are useless right now, just use String literals and the
+       * Object methods will basically work.
+       */
+      for (Iterator itType = classLits.keySet().iterator(); itType.hasNext();) {
+        JType type = (JType) itType.next();
+        JsName jsName = (JsName) classLits.get(type);
+        String string;
+        if (type instanceof JArrayType) {
+          string = "class " + type.getJsniSignatureName().replace('/', '.');
+        } else if (type instanceof JClassType) {
+          string = "class " + type.getName();
+        } else if (type instanceof JInterfaceType) {
+          string = "interface " + type.getName();
+        } else {
+          string = type.getName();
+        }
+        JsStringLiteral stringLiteral = jsProgram.getStringLiteral(string);
+        JsVar var = new JsVar(jsName);
+        var.setInitExpr(stringLiteral);
+        vars.add(var);
+      }
+    }
+
+    private void generateClassSetup(JClassType x, JsStatements globalStmts) {
+      generateSeedFuncAndPrototype(x, globalStmts);
+      generateVTables(x, globalStmts);
+
+      if (x == program.getTypeJavaLangObject()) {
+        // special: setup a "toString" alias for java.lang.Object.toString()
+        generateToStringAlias(x, globalStmts);
+      }
+
+      generateTypeName(x, globalStmts);
+      generateTypeId(x, globalStmts);
+    }
+
+    private void generateGwtOnLoad(List entryFuncs, JsStatements globalStmts) {
+      /**
+       * <pre>
+       * function gwtOnLoad(errFn, modName){
+       *   if (errFn) {
+       *     try {
+       *       init();
+       *     } catch(e) {
+       *       errFn(modName);
+       *     }
+       *   } else {
+       *     init();
+       *   }
+       * }
+       * </pre>
+       */
+      JsFunction gwtOnLoad = new JsFunction(topScope);
+      globalStmts.add(gwtOnLoad.makeStmt());
+      JsName gwtOnLoadName = topScope.declareName("gwtOnLoad");
+      gwtOnLoadName.setObfuscatable(false);
+      gwtOnLoad.setName(gwtOnLoadName);
+      JsBlock body = new JsBlock();
+      gwtOnLoad.setBody(body);
+      JsScope fnScope = gwtOnLoad.getScope();
+      JsParameters params = gwtOnLoad.getParameters();
+      JsName errFn = fnScope.declareName("errFn");
+      JsName modName = fnScope.declareName("modName");
+      params.add(new JsParameter(errFn));
+      params.add(new JsParameter(modName));
+      JsIf jsIf = new JsIf();
+      body.getStatements().add(jsIf);
+      jsIf.setIfExpr(errFn.makeRef());
+      JsTry jsTry = new JsTry();
+      jsIf.setThenStmt(jsTry);
+      JsBlock callBlock = new JsBlock();
+      jsIf.setElseStmt(callBlock);
+      jsTry.setTryBlock(callBlock);
+      for (int i = 0; i < entryFuncs.size(); ++i) {
+        JsFunction func = (JsFunction) entryFuncs.get(i);
+        if (func != null) {
+          JsInvocation call = new JsInvocation();
+          call.setQualifier(func.getName().makeRef());
+          callBlock.getStatements().add(call.makeStmt());
+        }
+      }
+      JsCatch jsCatch = new JsCatch(fnScope, "e");
+      jsTry.getCatches().add(jsCatch);
+      JsBlock catchBlock = new JsBlock();
+      jsCatch.setBody(catchBlock);
+      JsInvocation errCall = new JsInvocation();
+      catchBlock.getStatements().add(errCall.makeStmt());
+      errCall.setQualifier(errFn.makeRef());
+      errCall.getArguments().add(modName.makeRef());
+    }
+
+    private void generateNullFunc(JsStatements globalStatements) {
+      // handle null method
+      // return 'window' so we can reference global fields from the invocation
+      JsReturn jsReturn = new JsReturn(window.makeRef());
+      JsBlock body = new JsBlock();
+      body.getStatements().add(jsReturn);
+      JsFunction nullFunc = new JsFunction(topScope, nullMethodName);
+      nullFunc.setBody(body);
+      globalStatements.add(nullFunc.makeStmt());
+    }
+
+    private void generatePackageNames(JsVars vars) {
+      for (Iterator it = packageNames.entrySet().iterator(); it.hasNext();) {
+        Map.Entry entry = (Entry) it.next();
+        String packageName = (String) entry.getKey();
+        JsName name = (JsName) entry.getValue();
+        JsVar jsVar = new JsVar(name);
+        jsVar.setInitExpr(jsProgram.getStringLiteral(packageName));
+        vars.add(jsVar);
+      }
+    }
+
+    private void generateSeedFuncAndPrototype(JClassType x,
+        JsStatements globalStmts) {
+      if (x != program.getTypeJavaLangString()) {
+        JsName seedFuncName = getName(x);
+
+        // seed function
+        // function com_example_foo_Foo() { }
+        JsFunction seedFunc = new JsFunction(topScope, seedFuncName);
+        JsBlock body = new JsBlock();
+        seedFunc.setBody(body);
+        globalStmts.add(seedFunc.makeStmt());
+
+        // setup prototype, assign to temp
+        // _ = com_example_foo_Foo.prototype = new com_example_foo_FooSuper();
+        JsNameRef lhs = prototype.makeRef();
+        lhs.setQualifier(seedFuncName.makeRef());
+        JsExpression rhs;
+        if (x.extnds != null) {
+          JsNew newExpr = new JsNew();
+          newExpr.setConstructorExpression(getName(x.extnds).makeRef());
+          rhs = newExpr;
+        } else {
+          rhs = new JsObjectLiteral();
+        }
+        JsExpression protoAsg = createAssignment(lhs, rhs);
+        JsExpression tmpAsg = createAssignment(globalTemp.makeRef(), protoAsg);
+        globalStmts.add(tmpAsg.makeStmt());
+      } else {
+        /*
+         * MAGIC: java.lang.String is implemented as a JavaScript String
+         * primitive with a modified prototype.
+         */
+        JsNameRef rhs = prototype.makeRef();
+        rhs.setQualifier(jsProgram.getRootScope().declareName("String").makeRef());
+        JsExpression tmpAsg = createAssignment(globalTemp.makeRef(), rhs);
+        globalStmts.add(tmpAsg.makeStmt());
+      }
+    }
+
+    private void generateToStringAlias(JClassType x, JsStatements globalStmts) {
+      JMethod toStringMeth = program.getSpecialMethod("Object.toString");
+      if (x.methods.contains(toStringMeth)) {
+        // _.toString = function(){return this.java_lang_Object_toString();}
+
+        // lhs
+        JsName lhsName = objectScope.declareName("toString");
+        lhsName.setObfuscatable(false);
+        JsNameRef lhs = lhsName.makeRef();
+        lhs.setQualifier(globalTemp.makeRef());
+
+        // rhs
+        JsInvocation call = new JsInvocation();
+        JsNameRef toStringRef = new JsNameRef(getPolyName(toStringMeth));
+        toStringRef.setQualifier(new JsThisRef());
+        call.setQualifier(toStringRef);
+        JsReturn jsReturn = new JsReturn(call);
+        JsFunction rhs = new JsFunction(topScope);
+        JsBlock body = new JsBlock();
+        body.getStatements().add(jsReturn);
+        rhs.setBody(body);
+
+        // asg
+        JsExpression asg = createAssignment(lhs, rhs);
+        globalStmts.add(new JsExprStmt(asg));
+      }
+    }
+
+    private void generateTypeId(JClassType x, JsStatements globalStmts) {
+      int typeId = program.getTypeId(x);
+      if (typeId >= 0) {
+        JField typeIdField = program.getSpecialField("Object.typeId");
+        JsNameRef fieldRef = getName(typeIdField).makeRef();
+        fieldRef.setQualifier(globalTemp.makeRef());
+        JsIntegralLiteral typeIdLit = jsProgram.getIntegralLiteral(BigInteger.valueOf(typeId));
+        JsExpression asg = createAssignment(fieldRef, typeIdLit);
+        globalStmts.add(new JsExprStmt(asg));
+      }
+    }
+
+    private void generateTypeName(JClassType x, JsStatements globalStmts) {
+      JField typeIdField = program.getSpecialField("Object.typeName");
+      JsNameRef lhs = getName(typeIdField).makeRef();
+      lhs.setQualifier(globalTemp.makeRef());
+
+      // Split the full class name into package + class so package strings
+      // can be merged.
+      String className = getClassName(x.getName());
+      String packageName = getPackageName(x.getName());
+      JsExpression rhs;
+      if (packageName != null) {
+        // use "com.example.foo." + "Foo"
+        JsName name = (JsName) packageNames.get(packageName);
+        rhs = new JsBinaryOperation(JsBinaryOperator.ADD, name.makeRef(),
+            jsProgram.getStringLiteral(className));
+      } else {
+        // no package name could be split, just use the full name
+        rhs = jsProgram.getStringLiteral(x.getName());
+      }
+      JsExpression asg = createAssignment(lhs, rhs);
+      globalStmts.add(new JsExprStmt(asg));
+    }
+
+    private void generateTypeTable(JsVars vars) {
+      JField typeIdArray = program.getSpecialField("Cast.typeIdArray");
+      JsName jsName = getName(typeIdArray);
+      JsArrayLiteral arrayLit = new JsArrayLiteral();
+      for (int i = 0; i < program.getJsonTypeTable().size(); ++i) {
+        JsonObject jsonObject = (JsonObject) program.getJsonTypeTable().get(i);
+        accept(jsonObject);
+        arrayLit.getExpressions().add((JsExpression) pop());
+      }
+      JsVar var = new JsVar(jsName);
+      var.setInitExpr(arrayLit);
+      vars.add(var);
+    }
+
+    private void generateVTables(JClassType x, JsStatements globalStmts) {
+      for (int i = 0; i < x.methods.size(); ++i) {
+        JMethod method = (JMethod) x.methods.get(i);
+        if (!method.isStatic() && !method.isAbstract()) {
+          JsNameRef lhs = getPolyName(method).makeRef();
+          lhs.setQualifier(globalTemp.makeRef());
+          JsNameRef rhs = getName(method).makeRef();
+          JsExpression asg = createAssignment(lhs, rhs);
+          globalStmts.add(new JsExprStmt(asg));
+        }
+      }
     }
 
     private void handleClinit(JsFunction clinitFunc) {
@@ -1516,10 +1574,51 @@ public class GenerateJavaScriptAST {
     }
   }
 
+  private class SortVisitor extends JVisitor {
+
+    private final HasNameSort hasNameSort = new HasNameSort();
+
+    public void endVisit(JClassType x, Context ctx) {
+      Collections.sort(x.fields, hasNameSort);
+
+      // Sort the methods manually to avoid sorting clinit out of place!
+      List methods = x.methods;
+      Object a[] = methods.toArray();
+      Arrays.sort(a, 1, a.length, hasNameSort);
+      for (int i = 1; i < a.length; i++) {
+        methods.set(i, a[i]);
+      }
+    }
+
+    public void endVisit(JInterfaceType x, Context ctx) {
+      Collections.sort(x.fields, hasNameSort);
+      Collections.sort(x.methods, hasNameSort);
+    }
+
+    public void endVisit(JMethod x, Context ctx) {
+      Collections.sort(x.locals, hasNameSort);
+    }
+
+    public void endVisit(JProgram x, Context ctx) {
+      Collections.sort(x.entryMethods, hasNameSort);
+      Collections.sort(x.getDeclaredTypes(), hasNameSort);
+    }
+  }
+
   public static void exec(JProgram program, JsProgram jsProgram) {
     GenerateJavaScriptAST generateJavaScriptAST = new GenerateJavaScriptAST(
         program, jsProgram);
     generateJavaScriptAST.execImpl();
+  }
+
+  private static String getClassName(String fullName) {
+    int pos = fullName.lastIndexOf(".");
+    return fullName.substring(pos + 1);
+  }
+
+  private static String getPackageName(String fullName) {
+    int pos = fullName.lastIndexOf(".");
+    return fullName.substring(0, pos + 1);
   }
 
   private final Map/* <JBlock, JsCatch> */catchMap = new IdentityHashMap();
@@ -1543,7 +1642,7 @@ public class GenerateJavaScriptAST {
    * and toString. All other class scopes have this scope as an ultimate parent.
    */
   private final JsScope objectScope;
-
+  private final Map/* <String, JsName> */packageNames = new TreeMap();
   private final Map/* <JMethod, JsName> */polymorphicNames = new IdentityHashMap();
   private final JProgram program;
 
