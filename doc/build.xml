@@ -13,6 +13,11 @@
 	<property name="LANG_PKGS" value="java.lang;java.util" />
 	<property name="DOC_PKGS" value="com.google.gwt.doc" />
 
+	<!--
+		*** Note that if the USER_SOURCE_PATH paths are updated,
+		the fileset dependencies in the outofdate tags in the doc,
+		user, and javadoc targets must be updated as well.
+	-->
 	<path id="USER_SOURCE_PATH">
 		<pathelement location="${gwt.root}/user/src" />
 		<pathelement location="${gwt.root}/user/javadoc" />
@@ -26,6 +31,11 @@
 		<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
 	</path>
 
+	<!--
+		*** Note that if the DOC_SOURCE_PATH paths are updated,
+		the fileset dependencies in the outofdate tags in the
+		doc target must be updated as well.
+	-->
 	<path id="DOC_SOURCE_PATH">
 		<pathelement location="./src" />
 		<path refid="USER_SOURCE_PATH" />
@@ -39,91 +49,206 @@
 	</path>
 
 	<target name="doc">
-		<java classpathref="DOC_PATH" classname="com.google.doctool.DocTool" fork="yes" failonerror="true">
-			<arg value="doc" />
-			<arg value="gwt-doc" />
-			<arg value="-out" />
-			<arg value="${project.build}" />
-			<arg value="-classpath" />
-			<arg pathref="USER_CLASS_PATH" />
-			<arg value="-sourcepath" />
-			<arg pathref="DOC_SOURCE_PATH" />
-			<arg value="-packages" />
-			<arg value="${DOC_PKGS}" />
-		</java>
+		<outofdate>
+			<sourcefiles>
+				<fileset dir="./src">
+					<include name="**/*.java" />
+				</fileset>
+				<fileset dir="${gwt.root}/user/src">
+					<include name="**/*.java" />
+				</fileset>
+				<fileset dir="${gwt.root}/user/javadoc">
+					<include name="**/*.java" />
+				</fileset>
+				<fileset dir="${gwt.root}/user/super">
+					<include name="**/*.java" />
+				</fileset>
+				<fileset dir="${gwt.root}/dev/core/src">
+					<include name="**/*.java" />
+				</fileset>
+			</sourcefiles>
+			<targetfiles>
+				<!--
+					only checks one output file, will not
+					rebuild other files if this one is up
+					to date
+				-->
+				<pathelement path="${project.build}/gwt-doc.doc.xml" />
+			</targetfiles>
+			<sequential>
+				<java classpathref="DOC_PATH" classname="com.google.doctool.DocTool" fork="yes" failonerror="true">
+					<arg value="doc" />
+					<arg value="gwt-doc" />
+					<arg value="-out" />
+					<arg value="${project.build}" />
+					<arg value="-classpath" />
+					<arg pathref="USER_CLASS_PATH" />
+					<arg value="-sourcepath" />
+					<arg pathref="DOC_SOURCE_PATH" />
+					<arg value="-packages" />
+					<arg value="${DOC_PKGS}" />
+				</java>
+			</sequential>
+		</outofdate>
 	</target>
 
 	<target name="user">
-		<move file="${gwt.root}/user/super/com/google/gwt/junit/translatable/com/google/gwt/junit/client/GWTTestCase.java" tofile="${gwt.root}/user/super/com/google/gwt/junit/translatable/com/google/gwt/junit/client/GWTTestCase.java_" failonerror="false" />
-		<java classpathref="DOC_PATH" classname="com.google.doctool.DocTool" fork="yes" failonerror="true">
-			<arg value="java" />
-			<arg value="gwt-user" />
-			<arg value="-out" />
-			<arg value="${project.build}" />
-			<arg value="-overview" />
-			<arg value="./src/gwt-user.html" />
-			<arg value="-classpath" />
-			<arg pathref="USER_CLASS_PATH" />
-			<arg value="-sourcepath" />
-			<arg pathref="USER_SOURCE_PATH" />
-			<arg value="-packages" />
-			<arg value="${USER_PKGS}" />
-		</java>
-		<move file="${gwt.root}/user/super/com/google/gwt/junit/translatable/com/google/gwt/junit/client/GWTTestCase.java_" tofile="${gwt.root}/user/super/com/google/gwt/junit/translatable/com/google/gwt/junit/client/GWTTestCase.java" failonerror="false" />
+		<outofdate>
+			<sourcefiles>
+				<fileset file="./src/gwt-user.html" />
+				<fileset dir="${gwt.root}/user/src">
+					<include name="**/*.java" />
+				</fileset>
+				<fileset dir="${gwt.root}/user/javadoc">
+					<include name="**/*.java" />
+				</fileset>
+				<fileset dir="${gwt.root}/user/super">
+					<include name="**/*.java" />
+				</fileset>
+				<fileset dir="${gwt.root}/dev/core/src">
+					<include name="**/*.java" />
+				</fileset>
+			</sourcefiles>
+			<targetfiles>
+				<!--
+					only checks one output file, will not rebuild other files
+					if this one is up to date
+				-->
+				<pathelement path="${project.build}/gwt-user.java.xml" />
+			</targetfiles>
+			<sequential>
+				<move file="${gwt.root}/user/super/com/google/gwt/junit/translatable/com/google/gwt/junit/client/GWTTestCase.java" tofile="${gwt.root}/user/super/com/google/gwt/junit/translatable/com/google/gwt/junit/client/GWTTestCase.java_" failonerror="false" />
+				<java classpathref="DOC_PATH" classname="com.google.doctool.DocTool" fork="yes" failonerror="true">
+					<arg value="java" />
+					<arg value="gwt-user" />
+					<arg value="-out" />
+					<arg value="${project.build}" />
+					<arg value="-overview" />
+					<arg value="./src/gwt-user.html" />
+					<arg value="-classpath" />
+					<arg pathref="USER_CLASS_PATH" />
+					<arg value="-sourcepath" />
+					<arg pathref="USER_SOURCE_PATH" />
+					<arg value="-packages" />
+					<arg value="${USER_PKGS}" />
+				</java>
+				<move file="${gwt.root}/user/super/com/google/gwt/junit/translatable/com/google/gwt/junit/client/GWTTestCase.java_" tofile="${gwt.root}/user/super/com/google/gwt/junit/translatable/com/google/gwt/junit/client/GWTTestCase.java" failonerror="false" />
+			</sequential>
+		</outofdate>
 	</target>
 
 	<target name="lang">
-		<java classpathref="DOC_PATH" classname="com.google.doctool.DocTool" fork="yes" failonerror="true">
-			<arg value="java" />
-			<arg value="gwt-lang" />
-			<arg value="-out" />
-			<arg value="${project.build}" />
-			<arg value="-overview" />
-			<arg value="./src/gwt-lang.html" />
-			<arg value="-classpath" />
-			<arg pathref="USER_CLASS_PATH" />
-			<arg value="-sourcepath" />
-			<arg path="${gwt.root}/user/super/com/google/gwt/emul" />
-			<arg value="-packages" />
-			<arg value="${LANG_PKGS}" />
-		</java>
+		<outofdate>
+			<sourcefiles>
+				<fileset file="./src/gwt-lang.html" />
+				<fileset dir="${gwt.root}/user/super/com/google/gwt/emul">
+					<include name="**/*.java" />
+				</fileset>
+			</sourcefiles>
+			<targetfiles>
+				<!--
+					only checks one output file, will not rebuild other files
+					if this one is up to date
+				-->
+				<pathelement path="${project.build}/gwt-lang.java.xml" />
+			</targetfiles>
+			<sequential>
+				<java classpathref="DOC_PATH" classname="com.google.doctool.DocTool" fork="yes" failonerror="true">
+					<arg value="java" />
+					<arg value="gwt-lang" />
+					<arg value="-out" />
+					<arg value="${project.build}" />
+					<arg value="-overview" />
+					<arg value="./src/gwt-lang.html" />
+					<arg value="-classpath" />
+					<arg pathref="USER_CLASS_PATH" />
+					<arg value="-sourcepath" />
+					<arg path="${gwt.root}/user/super/com/google/gwt/emul" />
+					<arg value="-packages" />
+					<arg value="${LANG_PKGS}" />
+				</java>
+			</sequential>
+		</outofdate>
 	</target>
 
 	<target name="html" depends="doc,user,lang">
-		<java classpathref="DOC_PATH" classname="com.google.doctool.DocTool" fork="yes" failonerror="true">
-			<arg value="-html" />
-			<arg value="Google Web Toolkit (Beta)" />
-			<arg value="gwt-doc" />
-			<arg value="gwt-user" />
-			<arg value="gwt-lang" />
-			<arg value="-out" />
-			<arg value="${project.build}" />
-			<arg value="-imagepath" />
-			<arg path="./src" />
-		</java>
-		<delete file="${project.build}/html/topics.htmls" />
-		<mkdir dir="${project.build}/css" />
-		<copy todir="${project.build}/css">
-			<fileset dir="src" includes="*.css" />
-		</copy>
+		<outofdate>
+			<sourcefiles>
+				<fileset dir="${project.build}">
+					<include name="gwt-*.xml" />
+				</fileset>
+			</sourcefiles>
+			<targetfiles>
+				<!--
+					only checks one output file, will not rebuild other
+				 	files if this one is up to date
+				-->
+				<pathelement path="${project.build}/topics.xml" />
+			</targetfiles>
+			<sequential>
+				<java classpathref="DOC_PATH" classname="com.google.doctool.DocTool" fork="yes" failonerror="true">
+					<arg value="-html" />
+					<arg value="Google Web Toolkit (Beta)" />
+					<arg value="gwt-doc" />
+					<arg value="gwt-user" />
+					<arg value="gwt-lang" />
+					<arg value="-out" />
+					<arg value="${project.build}" />
+					<arg value="-imagepath" />
+					<arg path="./src" />
+				</java>
+				<delete file="${project.build}/html/topics.htmls" />
+				<mkdir dir="${project.build}/css" />
+				<copy todir="${project.build}/css">
+					<fileset dir="src" includes="*.css" />
+				</copy>
+			</sequential>
+		</outofdate>
 	</target>
 
 	<target name="javadoc">
-		<java classpathref="DOC_PATH" classname="com.google.doctool.custom.GWTJavaDoclet" fork="yes" failonerror="true">
-			<arg value="-quiet" />
-			<arg value="-source" />
-			<arg value="1.4" />
-			<arg value="-d" />
-			<arg value="${project.build}/javadoc" />
-			<arg value="-classpath" />
-			<arg pathref="USER_CLASS_PATH" />
-			<arg value="-sourcepath" />
-			<arg pathref="USER_SOURCE_PATH" />
-			<arg value="-examplepackages" />
-			<arg value="com.google.gwt.examples;com.google.gwt.examples.i18n;com.google.gwt.examples.http.client" />
-			<arg value="-packages" />
-			<arg value="${USER_PKGS}" />
-		</java>
+		<outofdate>
+			<sourcefiles>
+				<fileset file="./src/gwt-user.html" />
+				<fileset dir="${gwt.root}/user/src">
+					<include name="**/*.java" />
+				</fileset>
+				<fileset dir="${gwt.root}/user/javadoc">
+					<include name="**/*.java" />
+				</fileset>
+				<fileset dir="${gwt.root}/user/super">
+					<include name="**/*.java" />
+				</fileset>
+				<fileset dir="${gwt.root}/dev/core/src">
+					<include name="**/*.java" />
+				</fileset>
+			</sourcefiles>
+			<targetfiles>
+				<!--
+					only checks one output file, will not rebuild other
+					files if this one is up to date
+				-->
+				<pathelement path="${project.build}/javadoc/index.html" />
+			</targetfiles>
+			<sequential>
+				<echo>Building javadoc</echo>
+				<java classpathref="DOC_PATH" classname="com.google.doctool.custom.GWTJavaDoclet" fork="yes" failonerror="true">
+					<arg value="-quiet" />
+					<arg value="-source" />
+					<arg value="1.4" />
+					<arg value="-d" />
+					<arg value="${project.build}/javadoc" />
+					<arg value="-classpath" />
+					<arg pathref="USER_CLASS_PATH" />
+					<arg value="-sourcepath" />
+					<arg pathref="USER_SOURCE_PATH" />
+					<arg value="-examplepackages" />
+					<arg value="com.google.gwt.examples;com.google.gwt.examples.i18n;com.google.gwt.examples.http.client" />
+					<arg value="-packages" />
+					<arg value="${USER_PKGS}" />
+				</java>
+			</sequential>
+		</outofdate>
 	</target>
 
 	<target name="build" depends="html, javadoc" />
