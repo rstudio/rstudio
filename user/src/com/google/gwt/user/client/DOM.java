@@ -95,12 +95,30 @@ public class DOM {
   }
 
   /**
+   * Creates an HTML CAPTION element.
+   *
+   * @return the newly-created element
+   */
+  public static Element createCaption() {
+    return impl.createElement("caption");
+  }
+  
+  /**
    * Creates an HTML COL element.
    * 
    * @return the newly-created element
    */
   public static Element createCol() {
     return impl.createElement("col");
+  }
+
+  /**
+   * Creates an HTML COLGROUP element.
+   *
+   * @return the newly-created element
+   */
+  public static Element createColGroup() {
+    return impl.createElement("colgroup");
   }
 
   /**
@@ -278,12 +296,30 @@ public class DOM {
   }
 
   /**
+   * Creates an HTML TFOOT element.
+   *
+   * @return the newly-created element
+   */
+  public static Element createTFoot() {
+    return impl.createElement("tfoot");
+  }
+
+  /**
    * Creates an HTML TH element.
    * 
    * @return the newly-created element
    */
   public static Element createTH() {
     return impl.createElement("th");
+  }
+
+  /**
+   * Creates an HTML THEAD element.
+   *
+   * @return the newly-created element
+   */
+  public static Element createTHead() {
+    return impl.createElement("thead");
   }
 
   /**
