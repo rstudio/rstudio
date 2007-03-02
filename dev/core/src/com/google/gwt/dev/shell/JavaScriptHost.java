@@ -37,10 +37,6 @@ public class JavaScriptHost {
     sHost.createNative(file, line, jsniSignature, paramNames, js);
   }
 
-  public static void ditchHandle(int opaque) {
-    sHost.ditchHandle(opaque);
-  }
-
   public static void exceptionCaught(int number, String name, String description) {
     sHost.exceptionCaught(number, name, description);
   }

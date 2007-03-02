@@ -29,13 +29,11 @@ import com.google.gwt.core.client.JavaScriptObject;
 public final class Element extends JavaScriptObject {
 
   /**
-   * Creates a new <code>Element</code>. This constructor is used internally
-   * and should never be called by a user.
-   * 
-   * @param opaque the underlying DOM element
+   * Not directly instantiable.  Subclasses should also define a protected
+   * no-arg constructor to prevent client code from directly instantiating
+   * the class.
    */
-  Element(int opaque) {
-    super(opaque);
+  protected Element() {
   }
 
   /*

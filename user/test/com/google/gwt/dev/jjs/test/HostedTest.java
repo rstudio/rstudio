@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 /**********************
  *                    *
  *   DO NOT FORMAT    *
@@ -7,6 +21,7 @@
 package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
 public class HostedTest extends GWTTestCase {
@@ -15,6 +30,60 @@ public class HostedTest extends GWTTestCase {
     return s + "foo";
   }
 
+  private native static JavaScriptObject getBoxedBooleanAsObject(boolean v) /*-{
+    return new Boolean(v);
+  }-*/;
+  
+  private native static boolean getBoxedBooleanAsBool(boolean v) /*-{
+    return new Boolean(v);
+  }-*/;
+  
+  private native static JavaScriptObject getBoxedNumberAsObject(double v) /*-{
+    return new Number(v);
+  }-*/;
+  
+  private native static double getBoxedNumberAsDouble(double v) /*-{
+    return new Number(v);
+  }-*/;
+  
+  private native static JavaScriptObject getBoxedStringAsObject(String v) /*-{
+    return new String(v);
+  }-*/;
+  
+  private native static String getBoxedStringAsString(String v) /*-{
+    return new String(v);
+  }-*/;
+  
+  private native static double getDouble(double v) /*-{
+    return -v;
+  }-*/;
+  
+  private native static int getInt(int v) /*-{
+    return -v;
+  }-*/;
+
+  // this should cause an exception
+  private static native Object getIntAsObject() /*-{
+    return 5;
+  }-*/;
+  
+  private native static String getJSOAsString(JavaScriptObject jso) /*-{
+    return "" + jso;
+  }-*/;
+  
+  private native static Object getObject(Object o) /*-{
+    return o;
+  }-*/;
+
+  private native static String getString(String s) /*-{
+    return s + "me";
+  }-*/;
+
+  // ok to return JS string from an Object method
+  private static native Object getStringAsObject() /*-{
+    return "test";
+  }-*/;
+  
   private static native JavaScriptObject getsFooFunc() /*-{
     return @com.google.gwt.dev.jjs.test.HostedTest::sFoo(Ljava/lang/String;);
   }-*/;
@@ -51,6 +120,18 @@ public class HostedTest extends GWTTestCase {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
 
+  public void testBasic() {
+    int iv = getInt(14);
+    assertEquals(iv, -14);
+    double dv = getDouble(31.5);
+    assertEquals(dv, -31.5, 0.0);
+    String sv = getString("test");
+    assertEquals(sv, "testme");
+    Object oin = String.class;
+    Object oout = getObject(oin);
+    assertEquals(oin, oout);
+  }
+  
   public void testByteMarshalling() {
     byte b = 100;
     assertEquals(100, byteAsInt(b));
@@ -142,7 +223,7 @@ public class HostedTest extends GWTTestCase {
    * Tests that we can use a source level name for a nested type instead of the
    * binary name.
    */
-  private static class A {
+  protected static class A {
     public static class B {
       int b = 1;
       public native int getUsingSourceRef() /*-{
@@ -163,6 +244,43 @@ public class HostedTest extends GWTTestCase {
     A.B b = new A.B();
     assertEquals(1, b.getUsingSourceRef());
     assertEquals(1, b.getUsingBinaryRef());
+  }
+
+  /*
+   * Test that returning strings from methods declared as returning Object
+   * works, and that returning a primitive does not.
+   */
+  public void testObjectReturns() {
+    String str = (String)getStringAsObject();
+    assertEquals(str, "test");
+    try {
+      getIntAsObject();
+      // should have thrown an exception in hosted mode,
+      // so fail unless we are in web mode
+      assertTrue(GWT.isScript());
+    } catch(IllegalArgumentException e) {
+      // expected exception
+    }
+  }
+
+  /*
+   * Test that returning JavaScript boxed primitives works as expected.
+   * Currently only String is automatically unboxed, so Boolean and Number
+   * are currently disabled.
+   */
+  public void testAutoBoxing() {
+    JavaScriptObject bvo = getBoxedBooleanAsObject(true);
+    assertEquals(getJSOAsString(bvo), "true");
+    // boolean bv = getBoxedBooleanAsBool(true);
+    // assertEquals(bv, true);
+    JavaScriptObject nvo = getBoxedNumberAsObject(42);
+    assertEquals(getJSOAsString(nvo), "42");
+    // double nv = getBoxedNumberAsDouble(42);
+    // assertEquals(nv, 42, 0);
+    JavaScriptObject svo = getBoxedStringAsObject("test");
+    assertEquals(getJSOAsString(svo), "test");
+    String sv = getBoxedStringAsString("test");
+    assertEquals(sv, "test");
   }
 
   /**

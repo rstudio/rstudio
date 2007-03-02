@@ -20,6 +20,7 @@ import com.google.gwt.dev.shell.BrowserWidget;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
 
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.internal.ole.win32.COM;
 import org.eclipse.swt.internal.ole.win32.IDispatch;
 import org.eclipse.swt.ole.win32.Variant;
@@ -48,7 +49,7 @@ public class BrowserWidgetIE6 extends BrowserWidget {
       try {
         if (moduleName == null) {
           // Indicates the page is being unloaded.
-          //
+          // TODO(jat): add support for unloading only a single module
           onPageUnload();
           return true;
         }
@@ -62,7 +63,7 @@ public class BrowserWidgetIE6 extends BrowserWidget {
         return true;
       } catch (Throwable e) {
         // We do catch Throwable intentionally because there are a ton of things
-        // that can go wrong trying to load a module, including Error-dervied
+        // that can go wrong trying to load a module, including Error-derived
         // things like NoClassDefFoundError.
         // 
         getHost().getLogger().log(TreeLogger.ERROR,
@@ -95,18 +96,18 @@ public class BrowserWidgetIE6 extends BrowserWidget {
         return new Variant(toString());
       } else if (dispId == 1) {
         if ((flags & COM.DISPATCH_METHOD) != 0) {
-          // Invoke
-          Object[] javaParams = SwtOleGlue.convertVariantsToObjects(
-              new Class[] {
-                  IDispatch.class, String.class, String.class, String.class},
-              params, "Calling method 'gwtOnLoad'");
+          try {
+            IDispatch frameWnd = (params[0].getType() == COM.VT_DISPATCH)
+                ? params[0].getDispatch() : null;
+            String moduleName = (params[1].getType() == COM.VT_BSTR)
+                ? params[1].getString() : null;
+            boolean success = gwtOnLoad(frameWnd, moduleName);
 
-          IDispatch frameWnd = (IDispatch) javaParams[0];
-          String moduleName = (String) javaParams[1];
-          boolean success = gwtOnLoad(frameWnd, moduleName);
-
-          // boolean return type
-          return new Variant(success);
+            // boolean return type
+            return new Variant(success);
+          } catch (SWTException e) {
+            throw new HResultException(COM.E_INVALIDARG);
+          }
         } else if ((flags & COM.DISPATCH_PROPERTYGET) != 0) {
           // property get on the method itself
           try {

@@ -79,7 +79,25 @@ abstract class IDispatchImpl extends COMObject {
      */
     public void fillExcepInfo(int pExcepInfo) {
       if (hr == COM.DISP_E_EXCEPTION) {
-        SwtOleGlue.setEXCEPINFO(pExcepInfo, hr, source, getMessage(), 0);
+        String desc = getMessage();
+        // 0: wCode (size = 2)
+        // 4: bstrSource (size = 4)
+        // 8: bstrDescription (size = 4)
+        // 28: scode (size = 4)
+        //
+        OS.MoveMemory(pExcepInfo + 0, new short[] {(short) hr}, 2);
+
+        if (source != null) {
+          int bstrSource = SwtOleGlue.sysAllocString(source);
+          OS.MoveMemory(pExcepInfo + 4, new int[] {bstrSource}, 4);
+        }
+
+        if (desc != null) {
+          int bstrDesc = SwtOleGlue.sysAllocString(desc);
+          OS.MoveMemory(pExcepInfo + 8, new int[] {bstrDesc}, 4);
+        }
+
+        OS.MoveMemory(pExcepInfo + 28, new int[] {0}, 4);
       }
     }
 
@@ -97,6 +115,7 @@ abstract class IDispatchImpl extends COMObject {
   protected static Variant callMethod(CompilingClassLoader cl, Object jthis,
       Variant[] params, Method method) throws InvocationTargetException,
       HResultException {
+    // TODO: make sure we have enough args! It's okay if there are too many.
     Object[] javaParams = SwtOleGlue.convertVariantsToObjects(
         method.getParameterTypes(), params, "Calling method '"
             + method.getName() + "'");

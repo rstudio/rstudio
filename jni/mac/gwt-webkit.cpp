@@ -28,6 +28,38 @@ jmethodID gToStringMeth;
 
 using namespace KJS;
 
+static void PrintJSValue(JSValue* val, char* prefix="") {
+  static const char* typeStrings[]={
+    "unspecified",
+    "number",
+    "boolean",
+    "undefined",
+    "null",
+    "string",
+    "object",
+    "getter/setter",
+  };
+  JSType type = val->type();
+  const char* typeString=typeStrings[type];
+  char buf[256];
+	char* p = buf;
+	p += snprintf(p, sizeof(buf)-(p-buf), "%s%s: ", prefix, typeString);
+	if (val->isNumber()) {
+		p += snprintf(p, sizeof(buf)-(p-buf), "%lf", val->getNumber());
+	} else if(val->isString()) {
+		CString str(val->getString().UTF8String());
+		p += snprintf(p, sizeof(buf)-(p-buf), "%.*s", str.size(), str.c_str());
+	} else if(val->isObject()) {
+		const JSObject* obj = val->getObject();
+		const ClassInfo* cinfo = obj->classInfo();
+		const char* cname = cinfo ? cinfo->className : "js object";
+		p += snprintf(p, sizeof(buf)-(p-buf), "%s @ %08x", cname, unsigned(obj));
+	} else if(val->isBoolean()) {
+		p += snprintf(p, sizeof(buf)-(p-buf), "%s", val->getBoolean() ? "true" : "false");
+	}
+	TRACE(buf);
+}
+
 /*
  * Class:     com_google_gwt_dev_shell_mac_LowLevelSaf
  * Method:    isNull
@@ -35,13 +67,13 @@ using namespace KJS;
  */
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf_isNull
   (JNIEnv *env, jclass, jint jsval) {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_mac_LowLevelSaf__isNull");
+    TRACE("ENTER LowLevelSaf__isNull");
 
   JSValue* val = (JSValue*)jsval;
   if (!val)
     return JNI_FALSE;
 
-    TRACE("SUCESS Java_com_google_gwt_dev_shell_mac_LowLevelSaf__isNull");
+    TRACE("SUCCESS LowLevelSaf__isNull");
   return val->isNull();
 }
 
@@ -50,14 +82,15 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf_isNull
  * Method:    isUndefined
  * Signature: (I)Z
  */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf_isUndefined
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_google_gwt_dev_shell_mac_LowLevelSaf_isUndefined
   (JNIEnv *env, jclass, jint jsval) {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_mac_LowLevelSaf__isUndefined");
+    TRACE("ENTER LowLevelSaf__isUndefined");
   JSValue* val = (JSValue*)jsval;
   if (!val)
     return JNI_FALSE;
 
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_mac_LowLevelSaf__isUndefined");
+    TRACE("SUCCESS LowLevelSaf__isUndefined");
   return val->isUndefined();
 }
 
@@ -66,9 +99,43 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf_isUndef
  * Method:    jsNull
  * Signature: ()I
  */
-JNIEXPORT jint JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf_jsNull
+extern "C" JNIEXPORT jint JNICALL
+Java_com_google_gwt_dev_shell_mac_LowLevelSaf_jsNull
   (JNIEnv *, jclass) {
   return (jint)jsNull();
+}
+
+/*
+ * Class:     com_google_gwt_dev_shell_mac_LowLevelSaf
+ * Method:    getTypeString
+ * Signature: (I)Ljava/lang/String;
+ */
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_google_gwt_dev_shell_mac_LowLevelSaf_getTypeString
+   (JNIEnv *env, jclass, jint jsval) {
+  static const char* typeStrings[]={
+    "unspecified",
+    "number",
+    "boolean",
+    "undefined",
+    "null",
+    "string",
+    "object",
+    "getter/setter",
+  };
+  JSValue* val = (JSValue*)jsval;
+  if (!val)
+    return 0;
+  JSType type = val->type();
+  const char* typeString=typeStrings[type];
+  if (type == ObjectType) {
+	  if (val->isObject(&DispWrapper::info)) {
+ 	  	typeString = "Java object";
+ 	  } else {
+ 	  	typeString = "JS object";
+	  }
+  }
+  return env->NewStringUTF(typeString);
 }
 
 /*
@@ -88,7 +155,7 @@ JNIEXPORT jint JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf_jsUndefined
  */
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1coerceToBoolean
   (JNIEnv * env, jclass, jint execState, jint jsval, jbooleanArray rval) {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1coerceToBoolean");
+    TRACE("ENTER LowLevelSaf__1coerceToBoolean");
 
   if (!execState || !jsval)
     return JNI_FALSE;
@@ -98,7 +165,7 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1coerc
   if (env->ExceptionCheck())
       return JNI_FALSE;
 
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1coerceToBoolean");
+    TRACE("SUCCESS LowLevelSaf__1coerceToBoolean");
   return JNI_TRUE;
 }
 
@@ -109,7 +176,7 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1coerc
  */
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1coerceToDouble
   (JNIEnv *env, jclass, jint execState, jint jsval, jdoubleArray rval) {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1coerceToDouble");
+    TRACE("ENTER LowLevelSaf__1coerceToDouble");
 
   if (!execState || !jsval)
     return JNI_FALSE;
@@ -119,7 +186,7 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1coerc
   if (env->ExceptionCheck())
       return JNI_FALSE;
 
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1coerceToDouble");
+    TRACE("SUCCESS LowLevelSaf__1coerceToDouble");
   return JNI_TRUE;
 }
 
@@ -130,7 +197,7 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1coerc
  */
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1coerceToString
   (JNIEnv *env, jclass, jint execState, jint jsval, jobjectArray rval) {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1coerceToString");
+    TRACE("ENTER LowLevelSaf__1coerceToString");
 
   JSValue *val = (JSValue*)jsval;
   if (!execState || !val)
@@ -152,7 +219,7 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1coerc
   if (env->ExceptionCheck())
     return JNI_FALSE;
 
-  TRACE("SUCCESS Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1coerceToString");
+  TRACE("SUCCESS LowLevelSaf__1coerceToString");
   return JNI_TRUE;
 }
 
@@ -163,7 +230,10 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1coerc
  */
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1convertBoolean
   (JNIEnv *env, jclass, jboolean jval, jintArray rval) {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1convertBoolean");
+    TRACE("ENTER LowLevelSaf__1convertBoolean");
+  char buf[256];
+  snprintf(buf, sizeof(buf), " val=%s", jval ? "true" : "false");
+  TRACE(buf);
 
   JSValue *jsval = (jval == JNI_FALSE) ? jsBoolean(false) : jsBoolean(true);
   if (!jsval)
@@ -173,7 +243,7 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1conve
   if (env->ExceptionCheck())
     return JNI_FALSE;
   
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1convertBoolean");
+    TRACE("SUCCESS LowLevelSaf__1convertBoolean");
   return JNI_TRUE;
 }
 
@@ -184,7 +254,10 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1conve
  */
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1convertDouble
   (JNIEnv *env, jclass, jdouble jval, jintArray rval) {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1convertDouble");
+    TRACE("ENTER LowLevelSaf__1convertDouble");
+  char buf[256];
+  snprintf(buf, sizeof(buf), " val=%lf", jval);
+  TRACE(buf);
 
   JSValue *jsval = jsNumber(jval);
   if (!jsval)
@@ -194,7 +267,7 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1conve
   if (env->ExceptionCheck())
     return JNI_FALSE;
 
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1convertDouble");
+    TRACE("SUCCESS LowLevelSaf__1convertDouble");
   return JNI_TRUE;
 }
 
@@ -205,11 +278,14 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1conve
  */
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1convertString
   (JNIEnv *env, jclass, jstring jval, jintArray rval) {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1convertString");
+    TRACE("ENTER LowLevelSaf__1convertString");
 
   JStringWrap jstr(env, jval);
   if (!jstr.jstr())
     return JNI_FALSE;
+  char buf[256];
+  snprintf(buf, sizeof(buf), " val=%s", jstr.str());
+  TRACE(buf);
   
   JSValue *jsval = jsString(UString((const UChar*)jstr.jstr(), jstr.length()));
   /*
@@ -222,11 +298,14 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1conve
   if (!jsval)
     return JNI_FALSE;
 
+  snprintf(buf, sizeof(buf), " return={%08x} ", unsigned(jsval));
+  PrintJSValue(jsval, buf);
+  
   env->SetIntArrayRegion(rval,0,1,(const jint*)&jsval);
   if (env->ExceptionCheck())
     return JNI_FALSE;
 
-  TRACE("SUCCESS Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1convertString");
+  TRACE("SUCCESS LowLevelSaf__1convertString");
   return JNI_TRUE;
 }
 
@@ -237,20 +316,23 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1conve
  */
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1executeScript
   (JNIEnv* env, jclass, jint execState, jstring code) {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1executeScript"); 
+    TRACE("ENTER LowLevelSaf__1executeScript"); 
   if (!execState || !code)
     return JNI_FALSE;
 
   JStringWrap jcode(env, code);
   if (!jcode.jstr())
     return JNI_FALSE;
-
+  char buf[1024];
+  snprintf(buf, sizeof(buf), " code=%s", jcode.str());
+  TRACE(buf);
+    
   Interpreter* interp = ((ExecState*)execState)->dynamicInterpreter();
   if (!interp)
     return JNI_FALSE;
 
   interp->evaluate(UString(), 0, (const UChar*)jcode.jstr(), jcode.length());
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1executeScript");
+    TRACE("SUCCESS LowLevelSaf__1executeScript");
   return JNI_TRUE;
 }
 
@@ -261,7 +343,7 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1execu
  */
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1executeScriptWithInfo
   (JNIEnv* env, jclass, jint execState, jstring code, jstring file, jint line) {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1executeScriptWithInfo");
+    TRACE("ENTER LowLevelSaf__1executeScriptWithInfo");
   if (!execState || !code || !file)
     return JNI_FALSE;
 
@@ -272,13 +354,17 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1execu
   JStringWrap jfile(env, file);
   if (!jcode.jstr())
     return JNI_FALSE;
-
+  
+  char buf[1024];
+  snprintf(buf, sizeof(buf), " code=%s, file=%s, line=%d", jcode.str(), jfile.str(), line);
+  TRACE(buf);
+  
   Interpreter* interp = ((ExecState*)execState)->dynamicInterpreter();
   if (!interp)
     return JNI_FALSE;
 
   interp->evaluate(UString((const UChar*)jfile.jstr(), jfile.length()), line, (const UChar*)jcode.jstr(), jcode.length());
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1executeScriptWithInfo");
+    TRACE("SUCCESS LowLevelSaf__1executeScriptWithInfo");
   return JNI_TRUE;
 }
 
@@ -309,7 +395,7 @@ JNIEXPORT void JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1gcUnlock
  */
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1getGlobalExecState
   (JNIEnv *env, jclass, jint scriptObject, jintArray rval) {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1getGlobalExecState");
+    TRACE("ENTER LowLevelSaf__1getGlobalExecState");
 
   if (!scriptObject || !((JSValue*)scriptObject)->isObject())
     return JNI_FALSE;
@@ -322,7 +408,7 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1getGl
     env->SetIntArrayRegion(rval, 0, 1, (jint*)&execState);
     if (env->ExceptionCheck())
         return JNI_FALSE;
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1getGlobalExecState");
+    TRACE("SUCCESS LowLevelSaf__1getGlobalExecState");
   return JNI_TRUE;
 
 }
@@ -352,7 +438,7 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1initN
   }
 
 #ifdef FILETRACE
-    gout = fopen("gwt-ll.log", "w");
+    gout = fopen("/tmp/gwt-ll.log", "w");
     filetrace("LOG STARTED");
 #endif // FILETRACE
 
@@ -372,18 +458,22 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1initN
  */
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1invoke
   (JNIEnv* env, jclass, jint jsexecState, jint jsScriptObject, jstring method, jint jsthis, jint argc, jintArray argv, jintArray rval) {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1invoke");
+    TRACE("ENTER LowLevelSaf__1invoke");
 
   if (!jsexecState || !jsScriptObject || !method || !rval)
     return JNI_FALSE;
-  
+  JStringWrap jmethod(env, method);
+  char buf[256];
+  snprintf(buf, sizeof(buf), "sciptObject=%08x, method=%s, argc=%d",
+      jsScriptObject, jmethod.str(), argc);
+  TRACE(buf);
+  PrintJSValue((JSValue*)jsthis, " jsthis=");
   ExecState* execState = (ExecState*)jsexecState;
 
   JSObject* scriptObj = (JSObject*)jsScriptObject;
   if (!scriptObj->isObject())
     return JNI_FALSE;
 
-  JStringWrap jmethod(env, method);
   if (!jmethod.jstr())
     return JNI_FALSE;
 
@@ -408,7 +498,9 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1invok
     env->GetIntArrayRegion(argv, i, 1, &argi);
     if (env->ExceptionCheck())
       return JNI_FALSE;
-
+    snprintf(buf, sizeof(buf), " arg[%d]={%08x} ", i, argi);
+    TRACE(buf);
+    PrintJSValue((JSValue*)argi, buf);
     if (argi) {
       args.append((JSValue*)argi);
     } else {
@@ -417,12 +509,64 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1invok
   }
 
   JSValue* result = func->call(execState, thisObj, args);
-    env->SetIntArrayRegion(rval, 0, 1, (jint*)&result);
-    if (env->ExceptionCheck())
-        return JNI_FALSE;
+  gcProtectNullTolerant(result);
+  PrintJSValue(result, " return=");
+  env->SetIntArrayRegion(rval, 0, 1, (jint*)&result);
+  if (env->ExceptionCheck())
+    return JNI_FALSE;
 
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1invoke");
+  TRACE("SUCCESS LowLevelSaf__1invoke");
   return JNI_TRUE;
+}
+
+/*
+ * Class:     com_google_gwt_dev_shell_mac_LowLevelSaf
+ * Method:    isBoolean
+ * Signature: (I)Z
+ */
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_google_gwt_dev_shell_mac_LowLevelSaf_isBoolean
+  (JNIEnv *, jclass, jint jsval) {
+  if (!jsval)
+    return JNI_FALSE;
+    return ((JSValue*)jsval)->isBoolean() ? JNI_TRUE : JNI_FALSE;
+}
+
+/*
+ * Class:     com_google_gwt_dev_shell_mac_LowLevelSaf
+ * Method:    isNumber
+ * Signature: (I)Z
+ */
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_google_gwt_dev_shell_mac_LowLevelSaf_isNumber
+  (JNIEnv *, jclass, jint jsval) {
+  if (!jsval)
+    return JNI_FALSE;
+  return ((JSValue*)jsval)->isNumber() ? JNI_TRUE : JNI_FALSE;
+}
+
+/*
+ * Class:     com_google_gwt_dev_shell_mac_LowLevelSaf
+ * Method:    _isString
+ * Signature: (I)Z
+ * 
+ * Must return true for JavaScript String objects as well as string primitives.
+ */
+JNIEXPORT jboolean JNICALL
+Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1isString
+  (JNIEnv *, jclass, jint jsval) {
+  if (!jsval)
+    return JNI_FALSE;
+  JSValue* jsValue = reinterpret_cast<JSValue*>(jsval);
+  if(jsValue->isString()) return JNI_TRUE;
+	if(jsValue->isObject()) {
+		const JSObject* obj = jsValue->getObject();
+		const ClassInfo* cinfo = obj->classInfo();
+		if (cinfo && !strcmp(cinfo->className, "String")) {
+			return JNI_TRUE;
+		}
+	}
+	return JNI_FALSE;
 }
 
 /*
@@ -439,24 +583,12 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1isObj
 
 /*
  * Class:     com_google_gwt_dev_shell_mac_LowLevelSaf
- * Method:    _isString
- * Signature: (I)Z
- */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1isString
-  (JNIEnv *, jclass, jint jsval) {
-  if (!jsval)
-    return JNI_FALSE;
-  return ((JSValue*)jsval)->isString() ? JNI_TRUE : JNI_FALSE;
-}
-
-/*
- * Class:     com_google_gwt_dev_shell_mac_LowLevelSaf
  * Method:    _isWrappedDispatch
  * Signature: (I[Z)Z
  */
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1isWrappedDispatch
   (JNIEnv* env, jclass, jint jsval, jbooleanArray rval) {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1isWrappedDispatch");
+    TRACE("ENTER LowLevelSaf__1isWrappedDispatch");
   if (!jsval)
     return JNI_FALSE;
 
@@ -467,7 +599,7 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1isWra
     if (env->ExceptionCheck())
         return JNI_FALSE;
 
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1isWrappedDispatch");
+    TRACE("SUCCESS LowLevelSaf__1isWrappedDispatch");
     return JNI_TRUE;
 }
 
@@ -498,13 +630,13 @@ JNIEXPORT void JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1jsUnlock
  */
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1raiseJavaScriptException
   (JNIEnv *env, jclass, jint execState, jint jsval) {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1raiseJavaScriptException");
+    TRACE("ENTER LowLevelSaf__1raiseJavaScriptException");
 
   if (!execState || !jsval)
     return JNI_FALSE;
 
   ((ExecState*)execState)->setException((JSValue*)jsval);
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1raiseJavaScriptException");
+    TRACE("SUCCESS LowLevelSaf__1raiseJavaScriptException");
   return JNI_TRUE;
 }
 
@@ -515,7 +647,7 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1raise
  */
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1unwrapDispatch
   (JNIEnv* env, jclass, jint jsval, jobjectArray rval) {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1unwrapDispatch");
+    TRACE("ENTER LowLevelSaf__1unwrapDispatch");
   if (!jsval)
     return JNI_FALSE;
 
@@ -528,7 +660,7 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1unwra
     if (env->ExceptionCheck())
         return JNI_FALSE;
 
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1unwrapDispatch");
+    TRACE("SUCCESS LowLevelSaf__1unwrapDispatch");
     return JNI_TRUE;
 }
 
@@ -539,7 +671,7 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1unwra
  */
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1wrapDispatch
   (JNIEnv* env, jclass, jobject dispObj, jintArray rval) {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1wrapDispatch");
+    TRACE("ENTER LowLevelSaf__1wrapDispatch");
 
     jobject dispObjRef = env->NewGlobalRef(dispObj);
     if (!dispObjRef || env->ExceptionCheck())
@@ -553,11 +685,15 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1wrapD
    * out in favor of better memory mgmt scheme.
    */
   gcProtectNullTolerant(wrapper);
+  char buf[256];
+  snprintf(buf, sizeof(buf), " return={%08x} ", unsigned(wrapper));
+  PrintJSValue((JSValue*)wrapper, buf);
+
     env->SetIntArrayRegion(rval, 0, 1, (jint*)&wrapper);
     if (env->ExceptionCheck())
         return JNI_FALSE;
 
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1wrapDispatch");
+    TRACE("SUCCESS LowLevelSaf__1wrapDispatch");
     return JNI_TRUE;
 }
 
@@ -568,7 +704,7 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1wrapD
  */
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1wrapFunction
   (JNIEnv* env, jclass, jstring name, jobject dispMeth, jintArray rval) {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1wrapFunction");
+    TRACE("ENTER LowLevelSaf__1wrapFunction");
 
     jobject dispMethRef = env->NewGlobalRef(dispMeth);
     if (!dispMethRef || env->ExceptionCheck())
@@ -586,11 +722,14 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1wrapF
    * out in favor of better memory mgmt scheme.
    */
   gcProtectNullTolerant(wrapper);
+  char buf[256];
+  snprintf(buf, sizeof(buf), " return={%08x} ", unsigned(wrapper));
+  PrintJSValue((JSValue*)wrapper, buf);
     env->SetIntArrayRegion(rval, 0, 1, (jint*)&wrapper);
     if (env->ExceptionCheck())
         return JNI_FALSE;
 
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1wrapFunction");
+    TRACE("SUCCESS LowLevelSaf__1wrapFunction");
     return JNI_TRUE;
 }
 

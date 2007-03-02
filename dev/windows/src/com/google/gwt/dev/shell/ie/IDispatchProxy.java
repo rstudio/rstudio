@@ -18,6 +18,7 @@ package com.google.gwt.dev.shell.ie;
 import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.shell.JavaDispatch;
 import com.google.gwt.dev.shell.JavaDispatchImpl;
+import com.google.gwt.dev.shell.JsValueGlue;
 import com.google.gwt.dev.shell.LowLevel;
 
 import org.eclipse.swt.internal.ole.win32.COM;
@@ -132,13 +133,21 @@ class IDispatchProxy extends IDispatchImpl {
         // Handle specially.
         //
         return new Variant(myGlobalRef);
-      } else if (dispId >= 0) {
+      } else if (dispId == 0) {
+        if ((flags & COM.DISPATCH_METHOD) != 0) {
+          // implicit call -- "m()"
+          // not supported -- fall through to unsupported failure
+        } else if ((flags & COM.DISPATCH_PROPERTYGET) != 0) {
+          // implicit toString -- "'foo' + m"
+          return new Variant(getTarget().toString());
+        }
+
+      } else if (dispId > 0) {
         if (javaDispatch.isMethod(dispId)) {
           Method method = javaDispatch.getMethod(dispId);
           if ((flags & COM.DISPATCH_METHOD) != 0) {
             // This is a method call.
-            return callMethod(classLoader, javaDispatch.getTarget(), params,
-                method);
+            return callMethod(classLoader, getTarget(), params, method);
           } else if (flags == COM.DISPATCH_PROPERTYGET) {
             // The function is being accessed as a property.
             IDispatchImpl funcObj = new MethodDispatch(classLoader, method);
@@ -152,9 +161,9 @@ class IDispatchProxy extends IDispatchImpl {
             return SwtOleGlue.convertObjectToVariant(classLoader,
                 field.getType(), javaDispatch.getFieldValue(dispId));
           } else if ((flags & (COM.DISPATCH_PROPERTYPUT | COM.DISPATCH_PROPERTYPUTREF)) != 0) {
-            javaDispatch.setFieldValue(dispId,
-                SwtOleGlue.convertVariantToObject(field.getType(), params[0],
-                    "Setting field '" + field.getName() + "'"));
+            javaDispatch.setFieldValue(dispId, JsValueGlue.get(new JsValueIE6(
+                params[0]), field.getType(), "Setting field '"
+                + field.getName() + "'"));
             return new Variant();
           }
         }

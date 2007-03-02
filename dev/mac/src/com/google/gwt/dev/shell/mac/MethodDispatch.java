@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,8 @@
 package com.google.gwt.dev.shell.mac;
 
 import com.google.gwt.dev.shell.CompilingClassLoader;
+import com.google.gwt.dev.shell.JsValue;
+import com.google.gwt.dev.shell.JsValueGlue;
 import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchMethod;
 
 import java.lang.reflect.InvocationTargetException;
@@ -32,17 +34,23 @@ class MethodDispatch implements DispatchMethod {
 
   private final Method method;
 
-  private final int scriptObject;
+  // TODO(jat): remove these references
+  // private final int scriptObject;
 
-  public MethodDispatch(CompilingClassLoader classLoader, Method method,
-      int scriptObject) {
-    this.scriptObject = scriptObject;
+  public MethodDispatch(CompilingClassLoader classLoader, Method method) {
+    // this.scriptObject = scriptObject;
     this.classLoader = classLoader;
     this.method = method;
   }
 
-  public int invoke(int execState, int jsthis, int[] jsargs) {
+  public int invoke(int execState, int jsthisInt, int[] jsargsInt) {
     LowLevelSaf.pushExecState(execState);
+    JsValue jsthis = new JsValueSaf(jsthisInt);
+    JsValue jsargs[] = new JsValue[jsargsInt.length];
+    for (int i = 0; i < jsargsInt.length; ++i) {
+      jsargs[i] = new JsValueSaf(jsargsInt[i]);
+    }
+    JsValueSaf returnValue = new JsValueSaf();
     try {
       Class[] paramTypes = method.getParameterTypes();
       int argc = paramTypes.length;
@@ -50,13 +58,15 @@ class MethodDispatch implements DispatchMethod {
       if (jsargs.length < argc) {
         throw new RuntimeException("Not enough arguments to " + method);
       }
+      if (jsargs.length > argc) {
+        throw new RuntimeException("Too many arguments to " + method);
+      }
       Object jthis = null;
       if ((method.getModifiers() & Modifier.STATIC) == 0) {
-        jthis = SwtWebKitGlue.convertJSValToObject(method.getDeclaringClass(),
-            jsthis);
+        jthis = JsValueGlue.get(jsthis, method.getDeclaringClass(), "invoke this");
       }
       for (int i = 0; i < argc; ++i) {
-        args[i] = SwtWebKitGlue.convertJSValToObject(paramTypes[i], jsargs[i]);
+        args[i] = JsValueGlue.get(jsargs[i], paramTypes[i], "invoke args");
       }
       try {
         Object result;
@@ -67,8 +77,9 @@ class MethodDispatch implements DispatchMethod {
           e.printStackTrace();
           throw new RuntimeException(e);
         }
-        return SwtWebKitGlue.convertObjectToJSVal(scriptObject, classLoader,
-            method.getReturnType(), result);
+        JsValueGlue.set(returnValue, classLoader, method.getReturnType(),
+            result);
+        return returnValue.getJsValue();
       } catch (InvocationTargetException e) {
         // If we get here, it means an exception is being thrown from
         // Java back into JavaScript

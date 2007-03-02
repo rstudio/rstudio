@@ -146,13 +146,11 @@ public final class Event extends JavaScriptObject {
     | ONMOUSEOVER | ONMOUSEOUT;
 
   /**
-   * Creates a new <code>Element</code>. This constructor is used internally
-   * and should never be called by a user.
-   * 
-   * @param opaque the underlying DOM element
+   * Not directly instantiable.  Subclasses should also define a protected
+   * no-arg constructor to prevent client code from directly instantiating
+   * the class.
    */
-  Event(int opaque) {
-    super(opaque);
+  protected Event() {
   }
 
   /*

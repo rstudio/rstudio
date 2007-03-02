@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.shell.mac;
 
+import com.google.gwt.dev.shell.JsValue;
+import com.google.gwt.dev.shell.JsValueGlue;
 import com.google.gwt.dev.shell.ModuleSpace;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
 import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchObject;
@@ -29,7 +31,7 @@ public class ModuleSpaceSaf extends ModuleSpace {
   private final int window;
 
   /**
-   * Constructs a browser interface for use with a Mozilla global window object.
+   * Constructs a browser interface for use with a global window object.
    */
   public ModuleSpaceSaf(ModuleSpaceHost host, int scriptGlobalObject) {
     super(host);
@@ -71,128 +73,8 @@ public class ModuleSpaceSaf extends ModuleSpace {
         getIsolatedClassLoader(), name, message));
   }
 
-  public boolean invokeNativeBoolean(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (LowLevelSaf.isUndefined(jsval) && isExceptionActive()) {
-      return false;
-    }
-    return LowLevelSaf.coerceToBoolean(LowLevelSaf.getExecState(), jsval);
-  }
-
-  public byte invokeNativeByte(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (LowLevelSaf.isUndefined(jsval) && isExceptionActive()) {
-      return 0;
-    }
-    return LowLevelSaf.coerceToByte(LowLevelSaf.getExecState(), jsval);
-  }
-
-  public char invokeNativeChar(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (LowLevelSaf.isUndefined(jsval) && isExceptionActive()) {
-      return 0;
-    }
-    return LowLevelSaf.coerceToChar(LowLevelSaf.getExecState(), jsval);
-  }
-
-  public double invokeNativeDouble(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (LowLevelSaf.isUndefined(jsval) && isExceptionActive()) {
-      return 0;
-    }
-    return LowLevelSaf.coerceToDouble(LowLevelSaf.getExecState(), jsval);
-  }
-
-  public float invokeNativeFloat(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (LowLevelSaf.isUndefined(jsval) && isExceptionActive()) {
-      return 0;
-    }
-    return LowLevelSaf.coerceToFloat(LowLevelSaf.getExecState(), jsval);
-  }
-
-  public Object invokeNativeHandle(String name, Object jthis, Class returnType,
-      Class[] types, Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (LowLevelSaf.isUndefined(jsval) && isExceptionActive()) {
-      return null;
-    }
-    return SwtWebKitGlue.convertJSValToObject(returnType, jsval);
-  }
-
-  public int invokeNativeInt(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (LowLevelSaf.isUndefined(jsval) && isExceptionActive()) {
-      return 0;
-    }
-    return LowLevelSaf.coerceToInt(LowLevelSaf.getExecState(), jsval);
-  }
-
-  public long invokeNativeLong(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (LowLevelSaf.isUndefined(jsval) && isExceptionActive()) {
-      return 0;
-    }
-    return LowLevelSaf.coerceToLong(LowLevelSaf.getExecState(), jsval);
-  }
-
-  public Object invokeNativeObject(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (LowLevelSaf.isUndefined(jsval) && isExceptionActive()) {
-      return null;
-    }
-    return SwtWebKitGlue.convertJSValToObject(Object.class, jsval);
-  }
-
-  public short invokeNativeShort(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (LowLevelSaf.isUndefined(jsval) && isExceptionActive()) {
-      return 0;
-    }
-    return LowLevelSaf.coerceToShort(LowLevelSaf.getExecState(), jsval);
-  }
-
-  public String invokeNativeString(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (LowLevelSaf.isUndefined(jsval) && isExceptionActive()) {
-      return null;
-    }
-    return LowLevelSaf.coerceToString(LowLevelSaf.getExecState(), jsval);
-  }
-
-  public void invokeNativeVoid(String name, Object jthis, Class[] types,
-      Object[] args) {
-    invokeNative(name, jthis, types, args);
-  }
-
-  protected void initializeStaticDispatcher() {
-    staticDispatch = new WebKitDispatchAdapter(getIsolatedClassLoader(), window);
-
-    // Define the static dispatcher for use by JavaScript.
-    //
-    createNative("initializeStaticDispatcher", 0, "__defineStatic",
-        new String[] {"__arg0"}, "window.__static = __arg0;");
-    invokeNativeVoid("__defineStatic", null, new Class[] {Object.class},
-        new Object[] {staticDispatch});
-  }
-
-  int wrapObjectAsJSObject(Object o) {
-    return SwtWebKitGlue.wrapObjectAsJSObject(getIsolatedClassLoader(), window,
-        o);
-  }
-
   /**
-   * Invokes a native javascript function.
+   * Invokes a native JavaScript function.
    * 
    * @param name the name of the function to invoke
    * @param jthis the function's 'this' context
@@ -200,24 +82,21 @@ public class ModuleSpaceSaf extends ModuleSpace {
    * @param args the arguments to be passed
    * @return the return value as a Object.
    */
-  private int invokeNative(String name, Object jthis, Class[] types,
+  protected JsValue doInvoke(String name, Object jthis, Class[] types,
       Object[] args) {
-    // Every time a native method is invoked, release any enqueued COM objects.
-    //
-    HandleSaf.releaseQueuedPtrs();
-
     int jsthis = wrapObjectAsJSObject(jthis);
     int curExecState = LowLevelSaf.getExecState();
     int argc = args.length;
     int argv[] = new int[argc];
     for (int i = 0; i < argc; ++i) {
-      argv[i] = SwtWebKitGlue.convertObjectToJSVal(curExecState,
-          getIsolatedClassLoader(), types[i], args[i]);
+      JsValueSaf jsValue = new JsValueSaf();
+      JsValueGlue.set(jsValue, getIsolatedClassLoader(), types[i], args[i]);
+      argv[i] = jsValue.getJsValue();
     }
 
     int result = LowLevelSaf.invoke(curExecState, window, name, jsthis, argv);
     if (!isExceptionActive()) {
-      return result;
+      return new JsValueSaf(result);
     }
 
     /*
@@ -228,6 +107,31 @@ public class ModuleSpaceSaf extends ModuleSpace {
     RuntimeException thrown = takeJavaException();
     thrown.fillInStackTrace();
     throw thrown;
+  }
+
+  protected void initializeStaticDispatcher() {
+    staticDispatch = new WebKitDispatchAdapter(getIsolatedClassLoader());
+
+    // Define the static dispatcher for use by JavaScript.
+    //
+    createNative("initializeStaticDispatcher", 0, "__defineStatic",
+        new String[] {"__arg0"}, "window.__static = __arg0;");
+    invokeNativeVoid("__defineStatic", null, new Class[] {Object.class},
+        new Object[] {staticDispatch});
+  }
+
+  protected int wrapObjectAsJSObject(Object o) {
+    if (o == null) {
+      return LowLevelSaf.jsNull();
+    }
+    
+    DispatchObject dispObj;
+    if (o instanceof DispatchObject) {
+      dispObj = (DispatchObject) o;
+    } else {
+      dispObj = new WebKitDispatchAdapter(getIsolatedClassLoader(), o);
+    }
+    return LowLevelSaf.wrapDispatch(dispObj);
   }
 
 }

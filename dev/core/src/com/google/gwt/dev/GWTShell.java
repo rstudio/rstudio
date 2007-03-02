@@ -232,9 +232,11 @@ public class GWTShell extends ToolBase {
     }
 
     /**
-     * @param moduleName
-     * @param logger
-     * @return
+     * Load a module.
+     * 
+     * @param moduleName name of the module to load
+     * @param logger TreeLogger to use
+     * @return the loaded module
      * @throws UnableToCompleteException
      */
     private ModuleDef loadModule(final String moduleName, TreeLogger logger)
@@ -580,11 +582,11 @@ public class GWTShell extends ToolBase {
    * specified constituent parts. This method is made to be overridden for
    * subclasses that need to change the behavior of ShellModuleSpaceHost.
    * 
-   * @param logger
+   * @param logger TreeLogger to use
    * @param typeOracle
    * @param moduleDef
    * @param genDir
-   * @return
+   * @return ShellModuleSpaceHost instance
    */
   protected ShellModuleSpaceHost doCreateShellModuleSpaceHost(
       TreeLogger logger, TypeOracle typeOracle, ModuleDef moduleDef, File genDir) {
@@ -628,7 +630,7 @@ public class GWTShell extends ToolBase {
   /**
    * By default we will open the application window.
    * 
-   * @return
+   * @return true if we are running in headless mode
    */
   protected boolean isHeadless() {
     return headlessMode;

@@ -1,4 +1,4 @@
-# Copyright 2006 Google Inc.
+# Copyright 2007 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -15,25 +15,40 @@
 ##
 # Target settings
 ##
+MOZ_SRC=/usr/local/google/home/jat/src/mozilla
+JAVA_HOME=/usr/lib/j2sdk1.5-sun
+GWT_TOOLS=../../../gwt-tools
+
 GWT_ROOT = ../../
 OBJDIR  := $(GWT_ROOT)build/out/jni/linux/
 OUTDIR  := $(GWT_ROOT)build/jni/linux/
+STAGING := $(GWT_ROOT)build/staging/gwt-linux-0.0.0/
 OUT     := $(OUTDIR)libgwt-ll.so
+
+##
+# The location to get .class files from for javah
+##
+CLASSDIR := $(GWT_ROOT)build/out/dev/linux/bin
+# use this if you want to use eclipse to build the class files during
+# development
+#CLASSDIR := $(GWT_ROOT)eclipse/dev/linux/bin
 
 ##
 # Tools
 ##
-CXX      := gcc
+CXX      := g++
 AR       := ar
 STRIP    := strip
 LD       := $(CXX)
+JAVAH    := javah
 
 ##
 # List of source, object, and dependency paths plus the path to them
 ##
 SRCDIRS := ./:../core/
 VPATH   := .:../core
-SRCS    := gwt-ll.cpp Moz.cpp
+SRCS    := gwt-ll.cpp Moz.cpp JsValueMoz.cpp Tracer.cpp \
+	ExternalWrapper.cpp NativeWrapper.cpp JsRootedValue.cpp
 OBJS    := $(addprefix $(OBJDIR),$(SRCS:.cpp=.o))
 DEPS    := $(addprefix $(OBJDIR),$(SRCS:.cpp=.d))
 
@@ -46,7 +61,8 @@ SYSINCS := \
 	$(GWT_TOOLS)/sdk/mozilla-1.7.12/include \
 	$(GWT_TOOLS)/sdk/mozilla-1.7.12/include/extra
 
-INCS := $(addprefix -i ,$(INCS)) $(addprefix -isystem ,$(SYSINCS))
+INCS := $(OBJDIR)
+INCS := $(addprefix -I ,$(INCS)) $(addprefix -isystem ,$(SYSINCS))
 
 ##
 # Libraries and library path
@@ -58,8 +74,8 @@ LIBS     := $(addprefix -l,$(LIBS))
 # for notes on auto-dependency generation, see
 #   http://make.paulandlesley.org/autodep.html
 # -MP obviates the need for sed hackery
-CFLAGS   := -Os -fPIC -fno-omit-frame-pointer -fno-strict-aliasing -D_REENTRANT -c -MMD -MP -Wno-system-headers $(CFLAGS)
-LDFLAGS  := -s -fPIC -fno-omit-frame-pointer -fno-strict-aliasing -D_REENTRANT -Wl,-shared-gcc $(LDFLAGS)
+CFLAGS   := -ggdb -m32 -Os -fPIC -fno-omit-frame-pointer -fno-strict-aliasing -D_REENTRANT -MMD -MP -Wno-system-headers $(CFLAGS)
+LDFLAGS  := -ggdb -m32 -s -fPIC -fno-omit-frame-pointer -fno-strict-aliasing -D_REENTRANT -Wl,-shared-gcc $(LDFLAGS)
 
 #-------------------------------------------------------------------------------
 # Rules
@@ -69,6 +85,11 @@ LDFLAGS  := -s -fPIC -fno-omit-frame-pointer -fno-strict-aliasing -D_REENTRANT -
 # default rule
 ##
 all: $(OUT)
+	@[ -d $(STAGING) ] || mkdir -p $(STAGING)
+	cp $(OUT) $(STAGING)
+
+install: $(OUT)
+	cp $(OUT) prebuilt/
 
 ##
 # Include the dependency rules
@@ -76,11 +97,33 @@ all: $(OUT)
 -include $(DEPS)
 
 ##
+# javah-generated headers for native methods
+##
+$(OBJDIR)LowLevelMoz.h : $(CLASSDIR)/com/google/gwt/dev/shell/moz/LowLevelMoz.class
+	$(JAVAH) -classpath $(CLASSDIR) -o $(OBJDIR)LowLevelMoz.h com.google.gwt.dev.shell.moz.LowLevelMoz
+
+$(OBJDIR)JsValueMoz.h : $(CLASSDIR)/com/google/gwt/dev/shell/moz/JsValueMoz.class
+	$(JAVAH) -classpath $(CLASSDIR) -o $(OBJDIR)JsValueMoz.h com.google.gwt.dev.shell.moz.JsValueMoz
+
+##
+# Dependency rules for generated headers
+# TODO(jat): autogenerate these and others
+##
+$(OBJDIR)Moz.o: $(OBJDIR)LowLevelMoz.h
+$(OBJDIR)JsValueMoz.o: $(OBJDIR)JsValueMoz.h
+
+##
 # Compilation rule for cpp files
 ##
 $(OBJDIR)%.o : $(SRCDIR)%.cpp
 	@[ -d $(OBJDIR) ] || mkdir -p $(OBJDIR)
-	$(CXX) $(CFLAGS) $(INCS) -o $@ $<
+	$(CXX) -c $(CFLAGS) $(INCS) -o $@ $<
+
+%.i : $(SRCDIR)%.cpp
+	$(CXX) -E $(CFLAGS) $(INCS) -o $@ $<
+
+%.I : $(SRCDIR)%.cpp
+	$(CXX) -E -dDI $(CFLAGS) $(INCS) -o $@ $<
 
 ##
 # Actual output file
@@ -88,7 +131,7 @@ $(OBJDIR)%.o : $(SRCDIR)%.cpp
 $(OUT): $(OBJS)
 	@[ -d $(OUTDIR) ] || mkdir -p $(OUTDIR)
 	$(LD) -shared $(LDFLAGS) $(LIBPATH) -o $@ $^ $(LIBS)
-	$(STRIP) --strip-unneeded $@
+#	$(STRIP) --strip-unneeded $@
 
 ##
 # Clean rule

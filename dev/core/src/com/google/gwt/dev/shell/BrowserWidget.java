@@ -331,10 +331,7 @@ public abstract class BrowserWidget extends Composite {
       Map.Entry entry = (Map.Entry) iter.next();
       String moduleName = (String) entry.getKey();
       ModuleSpace space = (ModuleSpace) entry.getValue();
-
-      space.dispose();
-      logger.log(TreeLogger.SPAM, "Cleaning up resources for module "
-          + moduleName, null);
+      unloadModule(space, moduleName);
     }
     moduleSpacesByName.clear();
 
@@ -343,6 +340,18 @@ public abstract class BrowserWidget extends Composite {
       //
       toolbar.openWebModeButton.setEnabled(false);
     }
+  }
+  
+  /**
+   * Unload the specified module.
+   * 
+   * @param moduleSpace a ModuleSpace instance to unload.
+   * @param moduleName the name of the specified module
+   */
+  protected void unloadModule(ModuleSpace moduleSpace, String moduleName) {
+    moduleSpace.dispose();
+    logger.log(TreeLogger.SPAM, "Cleaning up resources for module "
+        + moduleName, null);
   }
 
   private Composite buildLocationBar(Composite parent) {

@@ -75,6 +75,8 @@ GWT_WEBKIT_OBJECTS = gwt-webkit.o DispWrapper.o FuncWrapper.o FunctionObject.o
 ##
 all: $(GWT_LL_LIB) $(GWT_WEBKIT_LIB) $(SWT_LIBS)
 
+staging: all
+	cp libgwt-*.jnilib ../../build/staging/gwt-mac-0.0.0/
 ##
 # Copy WebKit binary frameworks locally.
 ##

@@ -99,8 +99,11 @@ public class LowLevel {
         System.load(installPath + '/' + System.mapLibraryName(libName));
       } catch (UnsatisfiedLinkError e) {
         StringBuffer sb = new StringBuffer();
-        sb.append("Unable to load required native library '" + libName + "'");
-        sb.append("\n\tYour GWT installation may be corrupt");
+        sb.append("Unable to load required native library '" + libName
+            + "'.  Detailed error:\n");
+        sb.append(e.getMessage() + ")\n\n");
+        sb.append("Your GWT installation may be corrupt");
+        System.err.println(sb.toString());
         throw new UnsatisfiedLinkError(sb.toString());
       }
       sInitialized = true;

@@ -213,7 +213,10 @@ public class JsniInjector {
    * Create a legal Java method call that will result in a JSNI invocation.
    * 
    * @param method
-   * @return
+   * @param expectedHeaderLines
+   * @param expectedBodyLines
+   * @return a String of the Java code to call a JSNI method, using
+   *     JavaScriptHost.invokeNative*
    */
   private String genNonNativeVersionOfJsniMethod(JMethod method,
       int expectedHeaderLines, int expectedBodyLines) {
@@ -295,12 +298,13 @@ public class JsniInjector {
     sb.append(Jsni.buildTypeList(method));
     sb.append(',');
 
-    // Build an array containing the arguments based on the names of the params.
+    // Build an array containing the arguments based on the names of the
+    // parameters.
     //
     sb.append(Jsni.buildArgList(method));
     sb.append(");}");
 
-    // Add extra lines at the end to match JSNI body
+    // Add extra lines at the end to match JSNI body.
     //
     for (int i = 0; i < expectedBodyLines; ++i) {
       sb.append('\n');
@@ -415,7 +419,7 @@ public class JsniInjector {
         branch.log(TreeLogger.SPAM, patched[i].getReadableDeclaration(), null);
       }
 
-      // Insert an initializer block immediatley after the opening brace of the
+      // Insert an initializer block immediately after the opening brace of the
       // class.
       //
       char[] block = genInitializerBlock(loc, source, patched);

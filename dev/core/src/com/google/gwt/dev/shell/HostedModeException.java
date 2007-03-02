@@ -13,37 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.shell.mac;
+package com.google.gwt.dev.shell;
 
-import com.google.gwt.dev.shell.Handle;
+/**
+ * An exception that can only occur in hosted mode, but may indicate potential
+ * problems in web mode.
+ */
+public class HostedModeException extends RuntimeException {
 
-class HandleSaf extends Handle {
-
-  static {
-    // put myself in Handle's sImpl field
-    new HandleSaf();
+  public HostedModeException(String message) {
+    super(message);
   }
-
-  public static Object createHandle(Class type, int ptr) {
-    return Handle.createHandle(type, ptr);
-  }
-
-  public static int getJSObjectFromHandle(Object o) {
-    return getPtrFromHandle(o);
-  }
-
-  /**
-   * Not instantiable.
-   */
-  private HandleSaf() {
-  }
-
-  protected void lockPtr(int ptr) {
-    LowLevelSaf.gcLock(ptr);
-  }
-
-  protected void unlockPtr(int ptr) {
-    LowLevelSaf.gcUnlock(ptr);
-  }
-
 }

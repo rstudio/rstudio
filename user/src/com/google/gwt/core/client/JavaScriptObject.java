@@ -41,31 +41,30 @@ public class JavaScriptObject {
   }-*/;
 
   /**
-   * the underlying JavaScript object.
+   * The underlying JavaScript object. This is used internally and should never
+   * be accessed by client code.
    */
-  protected final int opaque;
+  protected Object hostedModeReference;
 
   /**
-   * Creates a new <code>JavaScriptObject</code>. This constructor is used
-   * internally and should never be called by a user.
-   * 
-   * @param opaque the underlying JavaScript object
+   * Not directly instantiable.  Subclasses should also define a protected
+   * no-arg constructor to prevent client code from directly instantiating
+   * the class.
    */
-  protected JavaScriptObject(int opaque) {
-    this.opaque = opaque;
-  }
+  protected JavaScriptObject() {
+  };
 
   public boolean equals(Object other) {
     if (!(other instanceof JavaScriptObject)) {
       return false;
     }
     return equalsImpl(this, (JavaScriptObject) other);
-  };
+  }
 
   public int hashCode() {
     return Impl.getHashCode(this);
   }
-
+  
   public String toString() {
     /*
      * Hosted mode will marshal an explicit argument from a JavaScriptObject

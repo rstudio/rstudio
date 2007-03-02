@@ -48,7 +48,7 @@ public class BrowserWidgetSaf extends BrowserWidget {
       try {
         if (moduleName == null) {
           // Indicates the page is being unloaded.
-          //
+          // TODO(jat): add support to unload a single module
           onPageUnload();
           return true;
         }

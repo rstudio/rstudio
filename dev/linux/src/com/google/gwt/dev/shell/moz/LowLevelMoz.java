@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,20 +29,40 @@ import java.util.Vector;
 public class LowLevelMoz {
 
   /**
-   * Provides interface for methods to be exposed on javascript side.
+   * Provides interface for methods to be exposed on JavaScript side.
    */
   public interface DispatchMethod {
-    int invoke(int jsthis, int[] jsargs);
+    /**
+     * Invoke a Java method from JavaScript.
+     * 
+     * @param jsthis the wrapped Java object to invoke
+     * @param jsargs an array of JavaScript values to pass as parameters
+     * @param returnValue the JavaScript value in which to store the returned
+     *     value
+     */
+    void invoke(int jscontext, int jsthis, int[] jsargs, int returnValue);
   }
 
   /**
-   * Provides interface for objects to be exposed on javascript side.
+   * Provides interface for objects to be exposed to JavaScript code.
    */
   public interface DispatchObject {
-    int getField(String name);
+    /**
+     * Retrieve a field from an object.
+     * 
+     * @param name the name of the field
+     * @param value pointer to the JsRootedValue to receive the field value
+     */
+    void getField(String name, int value);
 
     Object getTarget();
 
+    /**
+     * Set the value of a field on an object.
+     * 
+     * @param name the name of the field
+     * @param value pointer to the JsRootedValue to store into the field
+     */
     void setField(String name, int value);
   }
 
@@ -58,186 +78,11 @@ public class LowLevelMoz {
    */
   interface ExternalObject {
     boolean gwtOnLoad(int scriptGlobalObject, String moduleName);
-
-    /**
-     * TODO: rip this out.
-     */
-    int resolveReference(String ident);
   }
 
-  public static final int JSVAL_NULL = 0;
-  public static final int JSVAL_VOID = 0x80000001;
-  private static final int JSVAL_OBJECT = 0;
-  private static final int JSVAL_STRING = 4;
-  private static final int JSVAL_TAGMASK = 0x7;
-
+  private static int invokeCount = 0;
   private static Vector sExternalFactories = new Vector();
   private static boolean sInitialized = false;
-
-  public static boolean coerceToBoolean(int scriptObject, int jsval) {
-    boolean[] rval = new boolean[1];
-    if (!_coerceToBoolean(scriptObject, jsval, rval)) {
-      throw new RuntimeException("Failed to coerce to boolean value.");
-    }
-    return rval[0];
-  }
-
-  public static byte coerceToByte(int scriptObject, int jsval) {
-    int[] rval = new int[1];
-    if (!_coerceTo31Bits(scriptObject, jsval, rval)) {
-      throw new RuntimeException("Failed to coerce to byte value");
-    }
-    return (byte) rval[0];
-  }
-
-  public static char coerceToChar(int scriptObject, int jsval) {
-    int[] rval = new int[1];
-    if (!_coerceTo31Bits(scriptObject, jsval, rval)) {
-      throw new RuntimeException("Failed to coerce to char value");
-    }
-    return (char) rval[0];
-  }
-
-  public static double coerceToDouble(int scriptObject, int jsval) {
-    double[] rval = new double[1];
-    if (!_coerceToDouble(scriptObject, jsval, rval)) {
-      throw new RuntimeException("Failed to coerce to double value");
-    }
-    return rval[0];
-  }
-
-  public static float coerceToFloat(int scriptObject, int jsval) {
-    double[] rval = new double[1];
-    if (!_coerceToDouble(scriptObject, jsval, rval)) {
-      throw new RuntimeException("Failed to coerce to double value");
-    }
-    return (float) rval[0];
-  }
-
-  public static int coerceToInt(int scriptObject, int jsval) {
-    double[] rval = new double[1];
-    if (!_coerceToDouble(scriptObject, jsval, rval)) {
-      throw new RuntimeException("Failed to coerce to int value");
-    }
-    return (int) rval[0];
-  }
-
-  public static long coerceToLong(int scriptObject, int jsval) {
-    double[] rval = new double[1];
-    if (!_coerceToDouble(scriptObject, jsval, rval)) {
-      throw new RuntimeException("Failed to coerce to long value");
-    }
-    return (long) rval[0];
-  }
-
-  public static short coerceToShort(int scriptObject, int jsval) {
-    int[] rval = new int[1];
-    if (!_coerceTo31Bits(scriptObject, jsval, rval)) {
-      throw new RuntimeException("Failed to coerce to short value");
-    }
-    return (short) rval[0];
-  }
-
-  public static String coerceToString(int scriptObject, int jsval) {
-    String[] rval = new String[1];
-    if (!_coerceToString(scriptObject, jsval, rval)) {
-      throw new RuntimeException("Failed to coerce to String value");
-    }
-    return rval[0];
-  }
-
-  public static int convertBoolean(int scriptObject, boolean v) {
-    int[] rval = new int[1];
-    if (!_convertBoolean(scriptObject, v, rval)) {
-      throw new RuntimeException("Failed to convert Boolean value: "
-          + String.valueOf(v));
-    }
-    return rval[0];
-  }
-
-  public static int convertByte(int scriptObject, byte v) {
-    int[] rval = new int[1];
-    if (!_convert31Bits(scriptObject, v, rval)) {
-      throw new RuntimeException("Failed to convert Byte value: "
-          + String.valueOf(v));
-    }
-    return rval[0];
-  }
-
-  public static int convertChar(int scriptObject, char v) {
-    int[] rval = new int[1];
-    if (!_convert31Bits(scriptObject, v, rval)) {
-      throw new RuntimeException("Failed to convert Char value: "
-          + String.valueOf(v));
-    }
-    return rval[0];
-  }
-
-  public static int convertDouble(int scriptObject, double v) {
-    int[] rval = new int[1];
-    if (!_convertDouble(scriptObject, v, rval)) {
-      throw new RuntimeException("Failed to convert Double value: "
-          + String.valueOf(v));
-    }
-    return rval[0];
-  }
-
-  public static int convertFloat(int scriptObject, float v) {
-    int[] rval = new int[1];
-    if (!_convertDouble(scriptObject, v, rval)) {
-      throw new RuntimeException("Failed to convert Float value: "
-          + String.valueOf(v));
-    }
-    return rval[0];
-  }
-
-  public static int convertInt(int scriptObject, int v) {
-    int[] rval = new int[1];
-    if (!_convertDouble(scriptObject, v, rval)) {
-      throw new RuntimeException("Failed to convert Int value: "
-          + String.valueOf(v));
-    }
-    return rval[0];
-  }
-
-  public static int convertLong(int scriptObject, long v) {
-    int[] rval = new int[1];
-    if (!_convertDouble(scriptObject, v, rval)) {
-      throw new RuntimeException("Failed to convert Long value: "
-          + String.valueOf(v));
-    }
-    return rval[0];
-  }
-
-  public static int convertShort(int scriptObject, short v) {
-    int[] rval = new int[1];
-    if (!_convert31Bits(scriptObject, v, rval)) {
-      throw new RuntimeException("Failed to convert Short value: "
-          + String.valueOf(v));
-    }
-    return rval[0];
-  }
-
-  public static int convertString(int scriptObject, String v) {
-    int[] rval = new int[1];
-    if (!_convertString(scriptObject, v, rval)) {
-      throw new RuntimeException("Failed to convert String value: "
-          + String.valueOf(v));
-    }
-    return rval[0];
-  }
-
-  /**
-   * Executes JavaScript code.
-   * 
-   * @param scriptObject An opaque handle to the script frame window
-   * @param code The JavaScript code to execute
-   */
-  public static void executeScript(int scriptObject, String code) {
-    if (!_executeScript(scriptObject, code)) {
-      throw new RuntimeException("Failed to execute script: " + code);
-    }
-  }
 
   /**
    * Executes JavaScript code, retaining file and line information.
@@ -283,62 +128,27 @@ public class LowLevelMoz {
    * 
    * @param scriptObject An opaque handle to the script frame window
    * @param methodName the method name on jsthis to call
-   * @param jsthis A wrapped java object as a jsval
-   * @param jsargs the arguments to pass to the method
-   * @return the result of the invocation
+   * @param jsthis A wrapped java object as a JsRootedValue pointer
+   * @param jsargs the arguments to pass to the method as JsRootedValue pointers
+   * 
+   * @throws RuntimeException if the invoke fails
    */
-  public static int invoke(int scriptObject, String methodName, int jsthis,
-      int[] jsargs) {
-    int[] rval = new int[1];
-    if (!_invoke(scriptObject, methodName, jsthis, jsargs.length, jsargs, rval)) {
+  public static void invoke(int scriptObject, String methodName,
+      int jsthis, int[] jsargs, int retval) {
+    if (!_invoke(scriptObject, methodName, jsthis, jsargs, retval)) {
       throw new RuntimeException("Failed to invoke native method: "
           + methodName + " with " + jsargs.length + " arguments.");
     }
-    return rval[0];
-  }
-
-  /**
-   * Is the jsval a JSObject?
-   * 
-   * @param jsval the value
-   * @return true if jsval is a JSObject
-   */
-  public static boolean isJSObject(int jsval) {
-    return (jsval & JSVAL_TAGMASK) == JSVAL_OBJECT;
-  }
-
-  /**
-   * Is the jsval a string primitive?
-   * 
-   * @param jsval the value
-   * @return true if the jsval is a string primitive
-   */
-  public static boolean isString(int jsval) {
-    return (jsval & JSVAL_TAGMASK) == JSVAL_STRING;
-  }
-
-  /**
-   * Is the jsval JSObject a wrapped DispatchObject?
-   * 
-   * @param scriptObject An opaque handle to the script frame window
-   * @param jsval the value
-   * @return true if the JSObject is a wrapped DispatchObject
-   */
-  public static boolean isWrappedDispatch(int scriptObject, int jsval) {
-    boolean[] rval = new boolean[1];
-    if (!_isWrappedDispatch(scriptObject, jsval, rval)) {
-      throw new RuntimeException("Failed isWrappedDispatch.");
-    }
-    return rval[0];
   }
 
   /**
    * Call this to raise an exception in JavaScript before returning control.
+   * Currently, the JavaScript exception throw is always null.
    * 
-   * @param scriptObject An opaque handle to the script frame window
+   * @param jscontext A JSContext pointer as a Java int
    */
-  public static void raiseJavaScriptException(int scriptObject, int jsval) {
-    if (!_raiseJavaScriptException(scriptObject, jsval)) {
+  public static void raiseJavaScriptException(int jscontext) {
+    if (!_raiseJavaScriptException(jscontext)) {
       throw new RuntimeException(
           "Failed to raise Java Exception into JavaScript.");
     }
@@ -369,79 +179,6 @@ public class LowLevelMoz {
   }
 
   /**
-   * Unwraps a wrapped DispatchObject.
-   * 
-   * @param scriptObject An opaque handle to the script frame window
-   * @param jsval a value previously returned from wrapDispatch
-   * @return the original DispatchObject
-   */
-  public static DispatchObject unwrapDispatch(int scriptObject, int jsval) {
-    DispatchObject[] rval = new DispatchObject[1];
-    if (!_unwrapDispatch(scriptObject, jsval, rval)) {
-      throw new RuntimeException("Failed to unwrapDispatch.");
-    }
-    return rval[0];
-  }
-
-  /**
-   * Unwraps a wrapped JSObject.
-   * 
-   * @param nsISupports a value previously returned from wrapJSObject
-   * @return the original jsval JSObject
-   */
-  public static int unwrapJSObject(int nsISupports) {
-    int[] rval = new int[1];
-    if (!_unwrapJSObject(nsISupports, rval)) {
-      throw new RuntimeException("Failed to unwrapJSObject.");
-    }
-    return rval[0];
-  }
-
-  /**
-   * @param scriptObject An opaque handle to the script frame window
-   * @param dispObj the DispatchObject to wrap
-   * @return the wrapped object as a jsval JSObject
-   */
-  public static int wrapDispatch(int scriptObject, DispatchObject dispObj) {
-    int[] rval = new int[1];
-    if (!_wrapDispatch(scriptObject, dispObj, rval)) {
-      throw new RuntimeException("Failed to wrapDispatch.");
-    }
-    return rval[0];
-  }
-
-  /**
-   * @param scriptObject An opaque handle to the script frame window
-   * @param name the name of the function to be wrapped
-   * @param dispMeth the DispatchMethod to wrap
-   * @return the wrapped method as a jsval JSObject
-   */
-  public static int wrapFunction(int scriptObject, String name,
-      DispatchMethod dispMeth) {
-    int[] rval = new int[1];
-    if (!_wrapFunction(scriptObject, name, dispMeth, rval)) {
-      throw new RuntimeException("Failed to wrapFunction.");
-    }
-    return rval[0];
-  }
-
-  /**
-   * Creates an nsISupports interface locking the contained JSObject jsval, so
-   * that we can lock/free it correctly via reference counting.
-   * 
-   * @param scriptObject the global script window
-   * @param jsval the JSObject to wrap
-   * @return an nsISupports wrapper object
-   */
-  public static int wrapJSObject(int scriptObject, int jsval) {
-    int[] rval = new int[1];
-    if (!_wrapJSObject(scriptObject, jsval, rval)) {
-      throw new RuntimeException("Failed to createJSObjectHolder.");
-    }
-    return rval[0];
-  }
-
-  /**
    * Called from native code to create an external object for a particular
    * window.
    * 
@@ -469,66 +206,53 @@ public class LowLevelMoz {
   }
 
   // CHECKSTYLE_NAMING_OFF: Non JSNI native code may have leading '_'s.
-  private static native boolean _coerceTo31Bits(int scriptObject, int jsval,
-      int[] rval);
-
-  private static native boolean _coerceToBoolean(int scriptObject, int jsval,
-      boolean[] rval);
-
-  private static native boolean _coerceToDouble(int scriptObject, int jsval,
-      double[] rval);
-
-  private static native boolean _coerceToString(int scriptObject, int jsval,
-      String[] rval);
-
-  private static native boolean _convert31Bits(int scriptObject, int v,
-      int[] rval);
-
-  private static native boolean _convertBoolean(int scriptObject, boolean v,
-      int[] rval);
-
-  private static native boolean _convertDouble(int scriptObject, double v,
-      int[] rval);
-
-  private static native boolean _convertString(int scriptObject, String v,
-      int[] rval);
-
   private static native boolean _executeScript(int scriptObject, String code);
 
   private static native boolean _executeScriptWithInfo(int scriptObject,
       String newScript, String file, int line);
 
+  /**
+   * Native method for invoking a JavaScript method.
+   * 
+   * @param scriptObject nsIScriptGlobalObject* as an int
+   * @param methodName name of JavaScript method
+   * @param jsThisInt JavaScript object to invoke the method on, as a
+   *   JsRootedValue int
+   * @param jsArgsInt array of arguments, as an array of JsRootedValue ints
+   * @param jsRetValint pointer to JsRootedValue to receive return value
+   * @return true on success
+   */
   private static native boolean _invoke(int scriptObject, String methodName,
-      int jsthis, int jsargCount, int[] jsargs, int[] rval);
+      int jsThisInt, int[] jsArgsInt, int jsRetValInt);
 
-  private static native boolean _isWrappedDispatch(int scriptObject, int jsval,
-      boolean[] rval);
-
-  private static native boolean _raiseJavaScriptException(int scriptObject,
-      int jsval);
+  private static native boolean _raiseJavaScriptException(int jscontext);
 
   private static native boolean _registerExternalFactoryHandler();
 
-  private static native boolean _unwrapDispatch(int scriptObject, int jsval,
-      DispatchObject[] rval);
-
-  private static native boolean _unwrapJSObject(int nsISupports, int[] rval);
-
-  private static native boolean _wrapDispatch(int scriptObject,
-      DispatchObject dispObj, int[] rval);
-
-  private static native boolean _wrapFunction(int scriptObject, String name,
-      DispatchMethod dispMeth, int[] rval);
-
-  private static native boolean _wrapJSObject(int scriptObject, int jsval,
-      int[] rval);
-
   // CHECKSTYLE_NAMING_ON
+
+  /**
+   * Print debug information for a JS method invocation.
+   * TODO(jat): remove this method
+   * 
+   * @param methodName the name of the JS method being invoked
+   * @param jsthis the JS object with the named method
+   * @param jsargs an array of arguments to the method
+   */
+  private static void printInvocationParams(String methodName, JsValueMoz jsthis, JsValueMoz[] jsargs) {
+    System.out.println("LowLevelMoz.invoke:");
+    System.out.println(" method = " + methodName);
+    System.out.println(" # args = " + (jsargs.length));
+    System.out.println(" jsthis = " + jsthis.toString());
+    for (int i = 0; i < jsargs.length; ++i) {
+      System.out.println(" jsarg[" + i + "] = " + jsargs[i].toString());
+    }
+    System.out.println("");
+  }
 
   /**
    * Not instantiable.
    */
   private LowLevelMoz() {
   }
-
 }

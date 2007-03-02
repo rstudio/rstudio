@@ -40,13 +40,6 @@ public interface ShellJavaScriptHost {
       String[] paramNames, String js);
 
   /**
-   * Releases a handle.
-   * 
-   * @param opaque the handle to be released
-   */
-  abstract void ditchHandle(int opaque);
-
-  /**
    * Call this when a JavaScript exception is caught.
    */
   abstract void exceptionCaught(int number, String name, String description);

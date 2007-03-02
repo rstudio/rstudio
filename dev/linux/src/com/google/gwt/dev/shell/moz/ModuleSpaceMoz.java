@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.shell.moz;
 
+import com.google.gwt.dev.shell.CompilingClassLoader;
+import com.google.gwt.dev.shell.JsValue;
+import com.google.gwt.dev.shell.JsValueGlue;
 import com.google.gwt.dev.shell.ModuleSpace;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
 import com.google.gwt.dev.shell.moz.LowLevelMoz.DispatchObject;
@@ -41,6 +44,9 @@ public class ModuleSpaceMoz extends ModuleSpace {
     SwtGeckoGlue.addRefInt(window);
   }
 
+  /* (non-Javadoc)
+   * @see com.google.gwt.dev.shell.ShellJavaScriptHost#createNative(java.lang.String, int, java.lang.String, java.lang.String[], java.lang.String)
+   */
   public void createNative(String file, int line, String jsniSignature,
       String[] paramNames, String js) {
     // Execute the function definition within the browser, which will define
@@ -50,11 +56,17 @@ public class ModuleSpaceMoz extends ModuleSpace {
     LowLevelMoz.executeScriptWithInfo(window, newScript, file, line);
   }
 
+  /* (non-Javadoc)
+   * @see com.google.gwt.dev.shell.ModuleSpace#dispose()
+   */
   public void dispose() {
     SwtGeckoGlue.releaseInt(window);
     super.dispose();
   }
 
+  /* (non-Javadoc)
+   * @see com.google.gwt.dev.shell.ShellJavaScriptHost#exceptionCaught(int, java.lang.String, java.lang.String)
+   */
   public void exceptionCaught(int number, String name, String message) {
     RuntimeException thrown = (RuntimeException) sThrownJavaExceptionObject.get();
 
@@ -71,128 +83,8 @@ public class ModuleSpaceMoz extends ModuleSpace {
         getIsolatedClassLoader(), name, message));
   }
 
-  public boolean invokeNativeBoolean(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
-      return false;
-    }
-    return LowLevelMoz.coerceToBoolean(window, jsval);
-  }
-
-  public byte invokeNativeByte(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
-      return 0;
-    }
-    return LowLevelMoz.coerceToByte(window, jsval);
-  }
-
-  public char invokeNativeChar(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
-      return 0;
-    }
-    return LowLevelMoz.coerceToChar(window, jsval);
-  }
-
-  public double invokeNativeDouble(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
-      return 0;
-    }
-    return LowLevelMoz.coerceToDouble(window, jsval);
-  }
-
-  public float invokeNativeFloat(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
-      return 0;
-    }
-    return LowLevelMoz.coerceToFloat(window, jsval);
-  }
-
-  public Object invokeNativeHandle(String name, Object jthis, Class returnType,
-      Class[] types, Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
-      return null;
-    }
-    return SwtGeckoGlue.convertJSValToObject(window, returnType, jsval);
-  }
-
-  public int invokeNativeInt(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
-      return 0;
-    }
-    return LowLevelMoz.coerceToInt(window, jsval);
-  }
-
-  public long invokeNativeLong(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
-      return 0;
-    }
-    return LowLevelMoz.coerceToLong(window, jsval);
-  }
-
-  public Object invokeNativeObject(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
-      return null;
-    }
-    return SwtGeckoGlue.convertJSValToObject(window, Object.class, jsval);
-  }
-
-  public short invokeNativeShort(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
-      return 0;
-    }
-    return LowLevelMoz.coerceToShort(window, jsval);
-  }
-
-  public String invokeNativeString(String name, Object jthis, Class[] types,
-      Object[] args) {
-    int jsval = invokeNative(name, jthis, types, args);
-    if (jsval == LowLevelMoz.JSVAL_VOID && isExceptionActive()) {
-      return null;
-    }
-    return LowLevelMoz.coerceToString(window, jsval);
-  }
-
-  public void invokeNativeVoid(String name, Object jthis, Class[] types,
-      Object[] args) {
-    invokeNative(name, jthis, types, args);
-  }
-
-  protected void initializeStaticDispatcher() {
-    staticDispatch = new GeckoDispatchAdapter(getIsolatedClassLoader(), window);
-
-    // Define the static dispatcher for use by JavaScript.
-    //
-    createNative("initializeStaticDispatcher", 0, "__defineStatic",
-        new String[] {"__arg0"}, "window.__static = __arg0;");
-    invokeNativeVoid("__defineStatic", null, new Class[] {Object.class},
-        new Object[] {staticDispatch});
-  }
-
-  int wrapObjectAsJSObject(Object o) {
-    return SwtGeckoGlue.wrapObjectAsJSObject(getIsolatedClassLoader(), window,
-        o);
-  }
-
   /**
-   * Invokes a native javascript function.
+   * Invokes a native JavaScript function.
    * 
    * @param name the name of the function to invoke
    * @param jthis the function's 'this' context
@@ -200,24 +92,27 @@ public class ModuleSpaceMoz extends ModuleSpace {
    * @param args the arguments to be passed
    * @return the return value as a Object.
    */
-  private int invokeNative(String name, Object jthis, Class[] types,
+  protected JsValue doInvoke(String name, Object jthis, Class[] types,
       Object[] args) {
-    // Every time a native method is invoked, release any enqueued COM objects.
-    //
-    HandleMoz.releaseQueuedPtrs();
 
-    int jsthis = wrapObjectAsJSObject(jthis);
+    JsValueMoz jsthis = JsValueMoz.createUndefinedValue(window);
+    CompilingClassLoader isolatedClassLoader = getIsolatedClassLoader();
+    jsthis.setWrappedJavaObject(isolatedClassLoader, jthis);
 
     int argc = args.length;
-    int argv[] = new int[argc];
+    JsValueMoz argv[] = new JsValueMoz[argc];
+    int[] jsArgsInt = new int[argc];
     for (int i = 0; i < argc; ++i) {
-      argv[i] = SwtGeckoGlue.convertObjectToJSVal(window,
-          getIsolatedClassLoader(), types[i], args[i]);
+      argv[i] = JsValueMoz.createUndefinedValue(window);
+      JsValueGlue.set(argv[i], isolatedClassLoader, types[i], args[i]);
+      jsArgsInt[i] = argv[i].getJsRootedValue();
     }
-
-    int result = LowLevelMoz.invoke(window, name, jsthis, argv);
+    JsValueMoz returnVal = JsValueMoz.createUndefinedValue(window);
+    LowLevelMoz.invoke(window, name, jsthis.getJsRootedValue(),
+        jsArgsInt, returnVal.getJsRootedValue());
+    
     if (!isExceptionActive()) {
-      return result;
+      return returnVal;
     }
 
     /*
@@ -230,4 +125,14 @@ public class ModuleSpaceMoz extends ModuleSpace {
     throw thrown;
   }
 
+  protected void initializeStaticDispatcher() {
+    staticDispatch = new GeckoDispatchAdapter(getIsolatedClassLoader());
+
+    // Define the static dispatcher for use by JavaScript.
+    //
+    createNative("initializeStaticDispatcher", 0, "__defineStatic",
+        new String[] {"__arg0"}, "window.__static = __arg0;");
+    invokeNativeVoid("__defineStatic", null, new Class[] {Object.class},
+        new Object[] {staticDispatch});
+  }
 }

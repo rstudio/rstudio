@@ -33,10 +33,6 @@ public class MiscellaneousTest extends GWTTestCase {
   }
 
   private static class Foo extends JavaScriptObject {
-    protected Foo(int opaque) {
-      super(opaque);
-    }
-
     public String toString() {
       return "Foo";
     }

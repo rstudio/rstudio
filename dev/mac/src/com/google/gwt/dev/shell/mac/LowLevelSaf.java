@@ -210,6 +210,8 @@ public class LowLevelSaf {
     return result;
   }
 
+  public static native String getTypeString(int jsval);
+  
   public static synchronized void init() {
     // Force LowLevel initialization to load gwt-ll
     LowLevel.init();
@@ -232,6 +234,7 @@ public class LowLevelSaf {
         StringBuffer sb = new StringBuffer();
         sb.append("Unable to load required native library '" + libName + "'");
         sb.append("\n\tYour GWT installation may be corrupt");
+        System.err.println(sb.toString());
         throw new UnsatisfiedLinkError(sb.toString());
       }
       sInitialized = true;
@@ -260,9 +263,21 @@ public class LowLevelSaf {
 
   /**
    * @param jsval the js value in question
+   * @return <code>true</code> if the value is a boolean value
+   */
+  public static native boolean isBoolean(int jsval);
+
+  /**
+   * @param jsval the js value in question
    * @return <code>true</code> if the value is the null value
    */
   public static native boolean isNull(int jsval);
+
+  /**
+   * @param jsval the js value in question
+   * @return <code>true</code> if the value is a boolean value
+   */
+  public static native boolean isNumber(int jsval);
 
   /**
    * Is the jsval a JSObject?

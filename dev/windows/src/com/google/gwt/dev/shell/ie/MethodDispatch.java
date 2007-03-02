@@ -16,6 +16,7 @@
 package com.google.gwt.dev.shell.ie;
 
 import com.google.gwt.dev.shell.CompilingClassLoader;
+import com.google.gwt.dev.shell.JsValueGlue;
 
 import org.eclipse.swt.internal.ole.win32.COM;
 import org.eclipse.swt.ole.win32.Variant;
@@ -103,13 +104,17 @@ class MethodDispatch extends IDispatchImpl {
            * First param must be a this object of the correct type (for instance
            * methods). If method is static, it can be null.
            */
-          Object jthis = SwtOleGlue.convertVariantToObject(
-              method.getDeclaringClass(), params[0], "this");
+          Object jthis = JsValueGlue.get(new JsValueIE6(params[0]),
+              method.getDeclaringClass(), "this");
           Variant[] otherParams = new Variant[params.length - 1];
           System.arraycopy(params, 1, otherParams, 0, otherParams.length);
           return callMethod(classLoader, jthis, otherParams, method);
         }
         break;
+      case IDispatchProxy.DISPID_MAGIC_GETGLOBALREF:
+        // We are NOT in fact a "wrapped Java Object", but we don't want to
+        // throw an exception for being asked.
+        return new Variant(0);
       default:
         // The specified member id is out of range.
         throw new HResultException(COM.DISP_E_MEMBERNOTFOUND);

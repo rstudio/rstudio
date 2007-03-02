@@ -1,719 +1,296 @@
-// Copyright 2005 Google Inc.
-// All Rights Reserved.
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 
 // Mozilla-specific hosted-mode methods
 
+#define DEBUG
+
+#include <cstdio>
+
+//#define JS_GetClass JS_GetClassOld
+
 // Mozilla header files
-#include "nsIServiceManagerUtils.h"
-#include "nsComponentManagerUtils.h"
-#include "nsICategoryManager.h"
-#include "nsIScriptNameSpaceManager.h"
-#include "nsIScriptObjectOwner.h"
-#include "nsIScriptGlobalObject.h"
-#include "nsIScriptContext.h"
-#include "nsIDOMWindow.h"
-#include "nsIXPConnect.h"
-#include "nsCOMPtr.h"
-#include "nsAutoPtr.h"
+#include "mozilla-headers.h"
 
 #include <jni.h>
+#include "gwt-jni.h"
+#include "JsRootedValue.h"
+#include "ExternalWrapper.h"
+#include "Tracer.h"
+#include "JsStringWrap.h"
 
-static JNIEnv* gEnv = 0;
-static jclass gClass = 0;
+// include javah-generated header to make sure we match
+#include "LowLevelMoz.h"
 
 //#define FILETRACE
 //#define JAVATRACE
-#if defined(FILETRACE) && defined(JAVATRACE)
-#define TRACE(s) filetrace(s),javatrace(s)
-#elif defined(FILETRACE)
-#define TRACE(s) filetrace(s)
-#elif defined(JAVATRACE)
-#define TRACE(s) javatrace(s)
-#else
-#define TRACE(s) ((void)0)
+
+// TODO(jat) should be in a header
+extern nsCID kGwtExternalCID;
+
+JNIEnv* savedJNIEnv = 0;
+jclass lowLevelMozClass;
+
+static void PrintJSValue(JSContext* cx, jsval val, char* prefix="") {
+  JSType type = JS_TypeOfValue(cx, val);
+  const char* typeString=JS_GetTypeName(cx, type);
+  char buf[256];
+  char* p = buf;
+  p += snprintf(p, sizeof(buf)-(p-buf), "%s%s", prefix, typeString);
+  switch(type) {
+    case JSTYPE_VOID:
+      break;
+    case JSTYPE_BOOLEAN:
+      p += snprintf(p, sizeof(buf)-(p-buf), ": %s",
+          JSVAL_TO_BOOLEAN(val) ? "true" : "false");
+      break;
+    case JSTYPE_NUMBER:
+      if (JSVAL_IS_INT(val)) {
+        p += snprintf(p, sizeof(buf)-(p-buf), ": %d", JSVAL_TO_INT(val));
+      } else {
+        p += snprintf(p, sizeof(buf)-(p-buf), ": %lf",
+            (double)*JSVAL_TO_DOUBLE(val));
+      }
+      break;
+    case JSTYPE_OBJECT: {
+      JSObject* obj = JSVAL_TO_OBJECT(val);
+      if (!JSVAL_IS_OBJECT(val)) break;
+      JSClass* clazz = obj ? JS_GET_CLASS(cx, obj) : 0;
+      p += snprintf(p, sizeof(buf)-(p-buf), " @ %08x, class %s",
+          (unsigned)obj, clazz ? clazz->name : "<null>");
+      break;
+    }
+    case JSTYPE_FUNCTION:
+    case JSTYPE_LIMIT:
+      break;
+    case JSTYPE_STRING: {
+      JsStringWrap str(cx, JSVAL_TO_STRING(val));
+      p += snprintf(p, sizeof(buf)-(p-buf), ": %.*s", str.length(), str.bytes());
+      break;
+    }
+  }
+  Tracer::log("%s", buf);
+}
+
+
+static bool InitGlobals(JNIEnv* env, jclass llClass) {
+  if (savedJNIEnv)
+    return false;
+
+#ifdef FILETRACE
+  Tracer::setFile("gwt-ll.log");
+#endif // FILETRACE
+
+#ifdef JAVATRACE
+  Tracer::setJava(env, llClass);
+#endif // JAVATRACE
+
+#ifdef DEBUG
+  Tracer::setLevel(Tracer::LEVEL_DEBUG);
 #endif
 
-#ifdef FILETRACE
-static FILE* gout = 0;
-static void filetrace(const char* s)
-{
-    fprintf(gout, s);
-    fprintf(gout, "\n");
-    fflush(gout);
-}
-#endif // FILETRACE
-
-#ifdef JAVATRACE
-static jmethodID gTraceMethod = 0;
-static void javatrace(const char* s)
-{
-    if (!gEnv->ExceptionCheck())
-    {
-        jstring out = gEnv->NewStringUTF(s);
-        if (!gEnv->ExceptionCheck())
-            gEnv->CallStaticVoidMethod(gClass, gTraceMethod, out);
-        else
-            gEnv->ExceptionClear();
-    }
-}
-#endif // JAVATRACE
-
-static bool InitGlobals(JNIEnv* env, jclass llClass)
-{
-    if (gEnv)
-        return true;
-
-#ifdef FILETRACE
-    gout = fopen("gwt-ll.log", "w");
-    filetrace("LOG STARTED");
-#endif // FILETRACE
-
-    gClass = static_cast<jclass>(env->NewGlobalRef(llClass));
-    if (!gClass || env->ExceptionCheck())
-        return false;
-
-#ifdef JAVATRACE
-    gTraceMethod = env->GetStaticMethodID(gClass, "trace", "(Ljava/lang/String;)V");
-    if (!gTraceMethod || env->ExceptionCheck())
-        return false;
-#endif // JAVATRACE
-
-    gEnv = env;
-    return true;
+  savedJNIEnv = env;
+  lowLevelMozClass = static_cast<jclass>(env->NewGlobalRef(llClass));
+  return true;
 }
 
-struct JStringWrap
-{
-    JStringWrap(JNIEnv* env, jstring str): env(env), s(str), p(0), jp(0) { }
-    ~JStringWrap() { if (p) env->ReleaseStringUTFChars(s, p); if (jp) env->ReleaseStringChars(s, jp); }
-    const char* str() { if (!p) p = env->GetStringUTFChars(s, 0); return p; }
-    const jchar* jstr() { if (!jp) jp = env->GetStringChars(s, 0); return jp; }
-private:
-    JNIEnv* env;
-    jstring s;
-    const char* p;
-    const jchar* jp;
-};
-
-static void hextrace(int val) {
-    char buf[20];
-    const char* hex = "0123456789ABCDEF";
-    for (int i = 7; i >= 0; --i) {
-        buf[i] = hex[val & 0xF];
-        val >>= 4;
-    }
-    buf[8] = 0;
-    TRACE(buf);
+/*
+ * Print the current Java exception.
+ */
+static void PrintJavaException(JNIEnv* env) {
+  jobject exception = env->ExceptionOccurred();
+  if (!exception) return;
+  fprintf(stderr, "Exception occurred:\n");
+  env->ExceptionDescribe();
+  env->DeleteLocalRef(exception);
 }
 
-static JSBool gwt_invoke(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+/* Called from JavaScript to call a Java method that has previously been
+ * wrapped. 
+ */ 
+JSBool invokeJavaMethod(JSContext *cx, JSObject *obj, uintN argc, jsval *argv,
+    jsval *rval)
 {
-    TRACE("ENTER gwt_invoke");
+  Tracer tracer("invokeJavaMethod");
 
-    // I kid you not; this is how XPConnect gets their function object so they can
-    // multiplex dispatch the call from a common site.  See XPCDispObject.cpp(466)
-    //
-    // I now have a secondary confirmation that this trick is legit.  brandon@mozilla.org
-    // writes:
-    //
-    // argv[-2] is part of the JS API, unabstracted.  Just as argv[0] is the
-    // first argument (if argc != 0), argv[-1] is the |this| parameter (equal
-    // to OBJECT_TO_JSVAL(obj) in a native method with the standard |obj|
-    // second formal parameter name), and argv[-2] is the callee object, tagged
-    // as a jsval.
-    if (JS_TypeOfValue(cx, argv[-2]) != JSTYPE_FUNCTION)
-        return TRACE("FAIL gwt_invoke: JSTYPE_FUNCTION"), JS_FALSE;
-
-    JSObject* funObj = JSVAL_TO_OBJECT(argv[-2]);
-    jsval jsCleanupObj;
-
-    // Pull the wrapper object out of the funObj's reserved slot
-    if (!JS_GetReservedSlot(cx, funObj, 0, &jsCleanupObj))
-        return TRACE("FAIL gwt_invoke: JS_GetReservedSlot"), JS_FALSE;
-
-    JSObject* cleanupObj = JSVAL_TO_OBJECT(jsCleanupObj);
-    if (!cleanupObj)
-        return TRACE("FAIL gwt_invoke: cleanupObj"), JS_FALSE;
-
-    // Get dispMeth global ref out of the wrapper object
-    jobject dispMeth = NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, cleanupObj));
-    if (!dispMeth)
-        return TRACE("FAIL gwt_invoke: dispMeth"), JS_FALSE;
-
-    jclass dispClass = gEnv->GetObjectClass(dispMeth);
-    if (!dispClass || gEnv->ExceptionCheck())
-        return TRACE("FAIL gwt_invoke: GetObjectClass"), JS_FALSE;
-
-    jmethodID invokeID = gEnv->GetMethodID(dispClass, "invoke", "(I[I)I");
-    if (!invokeID || gEnv->ExceptionCheck())
-        return TRACE("FAIL gwt_invoke: GetMethodID"), JS_FALSE;
-
-    jintArray jsargs = gEnv->NewIntArray(argc);
-    if (!jsargs || gEnv->ExceptionCheck())
-        return TRACE("FAIL gwt_invoke: NewIntArray"), JS_FALSE;
-
-    gEnv->SetIntArrayRegion(jsargs, 0, argc, (jint*)argv);
-    if (gEnv->ExceptionCheck())
-        return TRACE("FAIL gwt_invoke: SetIntArrayRegion"), JS_FALSE;
-
-    *rval = gEnv->CallIntMethod(dispMeth, invokeID, argv[-1], jsargs);
-    if (gEnv->ExceptionCheck())
-        return TRACE("FAIL gwt_invoke: java exception is active"), JS_FALSE;
-
-    if (JS_IsExceptionPending(cx))
-        return TRACE("FAIL gwt_invoke: js exception is active"), JS_FALSE;
-
-    TRACE("SUCCESS gwt_invoke");
-    return JS_TRUE;
-}
-
-static JSBool getJavaPropertyStats(JSContext *cx, JSObject *obj, jsval id, jclass& dispClass, jobject& dispObj, jstring& jident)
-{
-    if (!JSVAL_IS_STRING(id))
-        return JS_FALSE;
-
-    jident = gEnv->NewString(JS_GetStringChars(JSVAL_TO_STRING(id)), JS_GetStringLength(JSVAL_TO_STRING(id)));
-    if (!jident || gEnv->ExceptionCheck())
-        return JS_FALSE;
-
-    dispObj = NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, obj));
-    if (!dispObj)
-        return JS_FALSE;
-
-    dispClass = gEnv->GetObjectClass(dispObj);
-    if (gEnv->ExceptionCheck())
-        return JS_FALSE;
-
-    return JS_TRUE;
-}
-
-static JSBool JS_DLL_CALLBACK gwt_nativewrapper_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
-{
-    TRACE("ENTER gwt_nativewrapper_setProperty");
-
-    jclass dispClass;
-    jobject dispObj;
-    jstring ident;
-    if (!getJavaPropertyStats(cx,obj,id,dispClass,dispObj,ident))
-        return JS_FALSE;
-
-    jmethodID setFieldMeth = gEnv->GetMethodID(dispClass, "setField", "(Ljava/lang/String;I)V");
-    if (!setFieldMeth || gEnv->ExceptionCheck())
-        return JS_FALSE;
-
-    gEnv->CallVoidMethod(dispObj, setFieldMeth, ident, *vp);
-    if (gEnv->ExceptionCheck())
-        return JS_FALSE;
-
-    TRACE("SUCCESS gwt_nativewrapper_setProperty");
-    return JS_TRUE;
-}
-
-static JSBool JS_DLL_CALLBACK gwt_nativewrapper_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
-{
-    TRACE("ENTER gwt_nativewrapper_getProperty");
-
-    if (*vp != JSVAL_VOID)
-        return TRACE("SUCCESS, already defined"), JS_TRUE;
-
-    jclass dispClass;
-    jobject dispObj;
-    jstring ident;
-    if (!getJavaPropertyStats(cx,obj,id,dispClass,dispObj,ident))
-        return JS_FALSE;
-
-    jmethodID getFieldMeth = gEnv->GetMethodID(dispClass, "getField", "(Ljava/lang/String;)I");
-    if (!getFieldMeth || gEnv->ExceptionCheck())
-        return JS_FALSE;
-
-    *vp = gEnv->CallIntMethod(dispObj, getFieldMeth, ident);
-    if (gEnv->ExceptionCheck())
-        return JS_FALSE;
-
-    TRACE("SUCCESS gwt_nativewrapper_getProperty");
-    return JS_TRUE;
-}
-
-static void JS_DLL_CALLBACK gwt_nativewrapper_finalize(JSContext *cx, JSObject *obj)
-{
-    jobject dispObj = NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, obj));
-    if (dispObj)
-        gEnv->DeleteGlobalRef(dispObj);
-}
-
-static JSClass gwt_functionwrapper_class = {
-    "gwt_functionwrapper_class", JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, JS_PropertyStub, JS_PropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, gwt_nativewrapper_finalize,
-    JSCLASS_NO_OPTIONAL_MEMBERS
-};
-
-static JSClass gwt_nativewrapper_class = {
-    "gwt_nativewrapper_class", JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, gwt_nativewrapper_getProperty, gwt_nativewrapper_setProperty,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, gwt_nativewrapper_finalize,
-    JSCLASS_NO_OPTIONAL_MEMBERS
-};
-
-static JSBool gwtOnLoad(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
-{
-    TRACE("ENTER gwtOnLoad");
-
-    if (argc < 2)
-        return JS_FALSE;
-
-    JSObject* scriptWindow = 0;
-    if (argv[0] != JSVAL_NULL && argv[0] != JSVAL_VOID) {
-        if (!JS_ValueToObject(cx, argv[0], &scriptWindow))
-            return JS_FALSE;
-    }
-
-    JSString* moduleName = 0;
-    if (argv[1] != JSVAL_NULL && argv[1] != JSVAL_VOID) {
-        moduleName = JS_ValueToString(cx, argv[1]);
-    }
-
-    nsCOMPtr<nsIScriptGlobalObject> scriptGlobal(0);
-    if (scriptWindow) {
-        nsCOMPtr<nsIXPConnect> xpConnect = do_GetService(nsIXPConnect::GetCID());
-        nsCOMPtr<nsIXPConnectWrappedNative> wrappedNative;
-        xpConnect->GetWrappedNativeOfJSObject(cx, scriptWindow, getter_AddRefs(wrappedNative));
-        if (wrappedNative) {
-            nsCOMPtr<nsISupports> native;
-            wrappedNative->GetNative(getter_AddRefs(native));
-            scriptGlobal = do_QueryInterface(native);
-        }
-    }
-
-    jstring jModuleName(0);
-    if (moduleName) {
-        jModuleName = gEnv->NewString(JS_GetStringChars(moduleName), JS_GetStringLength(moduleName));
-        if (!jModuleName || gEnv->ExceptionCheck())
-            return JS_FALSE;
-    }
-    
-    jobject externalObject = NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, obj));
-    jclass objClass = gEnv->GetObjectClass(externalObject);
-    if (!objClass || gEnv->ExceptionCheck())
-        return JS_FALSE;
-    
-    jmethodID methodID = gEnv->GetMethodID(objClass, "gwtOnLoad", "(ILjava/lang/String;)Z");
-    if (!methodID || gEnv->ExceptionCheck())
-        return JS_FALSE;
-    
-    jboolean result = gEnv->CallBooleanMethod(externalObject, methodID, NS_REINTERPRET_CAST(jint, scriptGlobal.get()), jModuleName);
-    if (gEnv->ExceptionCheck())
-        return JS_FALSE;
-
-    *rval = BOOLEAN_TO_JSVAL((result == JNI_FALSE) ? JS_FALSE : JS_TRUE);
-    TRACE("SUCCESS gwtOnLoad");
-    return JS_TRUE;
-}
-
-class ExternalWrapper : public nsIScriptObjectOwner
-{
-public:
-    NS_DECL_ISUPPORTS
-    NS_IMETHOD GetScriptObject(nsIScriptContext *aContext, void** aScriptObject);
-    NS_IMETHOD SetScriptObject(void* aScriptObject);
-    ExternalWrapper(): mScriptObject(0) { }
-private:
-    ~ExternalWrapper() { }
-    void *mScriptObject;
-};
-
-NS_IMPL_ISUPPORTS1(ExternalWrapper, nsIScriptObjectOwner)
-
-static JSBool JS_DLL_CALLBACK gwt_external_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
-{
+  // I kid you not; this is how XPConnect gets their function object so they can
+  // multiplex dispatch the call from a common site.  See XPCDispObject.cpp(466)
+  //
+  // I now have a secondary confirmation that this trick is legit.
+  // brandon@mozilla.org writes:
+  //
+  // argv[-2] is part of the JS API, unabstracted.  Just as argv[0] is the
+  // first argument (if argc != 0), argv[-1] is the |this| parameter (equal
+  // to OBJECT_TO_JSVAL(obj) in a native method with the standard |obj|
+  // second formal parameter name), and argv[-2] is the callee object, tagged
+  // as a jsval.
+  if (JS_TypeOfValue(cx, argv[-2]) != JSTYPE_FUNCTION) {
+    tracer.setFail("not a function type");
     return JS_FALSE;
-}
+  }
+  JSObject* funObj = JSVAL_TO_OBJECT(argv[-2]);
 
-static JSBool JS_DLL_CALLBACK gwt_external_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
-{
-    TRACE("ENTER gwt_external_getProperty");
+  // Pull the wrapper object out of the funObj's reserved slot
+  jsval jsCleanupObj;
+  if (!JS_GetReservedSlot(cx, funObj, 0, &jsCleanupObj)) {
+    tracer.setFail("JS_GetReservedSlot failed");
+    return JS_FALSE;
+  }
+  JSObject* cleanupObj = JSVAL_TO_OBJECT(jsCleanupObj);
+  if (!cleanupObj) {
+    tracer.setFail("cleanupObj is null");
+    return JS_FALSE;
+  }
 
-    if (*vp != JSVAL_VOID)
-        return TRACE("SUCCESS, already defined"), JS_TRUE;
+  // Get DispatchMethod instance out of the wrapper object
+  jobject dispMeth =
+      NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, cleanupObj));
+  if (!dispMeth) {
+    tracer.setFail("dispMeth is null");
+    return JS_FALSE;
+  }
+  jclass dispClass = savedJNIEnv->GetObjectClass(dispMeth);
+  if (!dispClass || savedJNIEnv->ExceptionCheck()) {
+      tracer.setFail("GetObjectClass returns null");
+      return JS_FALSE;
+  }
 
-    if (!JSVAL_IS_STRING(id))
-        return TRACE("FAIL 1"), JS_FALSE;
+  // lookup the invoke method on the dispatch object
+  jmethodID invokeID =
+      savedJNIEnv->GetMethodID(dispClass, "invoke", "(II[II)V");
+  if (!invokeID || savedJNIEnv->ExceptionCheck()) {
+    tracer.setFail("GetMethodID failed");
+    return JS_FALSE;
+  }
 
-    jstring jident = gEnv->NewString(JS_GetStringChars(JSVAL_TO_STRING(id)), JS_GetStringLength(JSVAL_TO_STRING(id)));
-    if (!jident || gEnv->ExceptionCheck())
-        return TRACE("FAIL 2"), JS_FALSE;
+  // create an array of integers to hold the JsRootedValue pointers passed
+  // to the invoke method
+  jintArray args = savedJNIEnv->NewIntArray(argc);
+  if (!args || savedJNIEnv->ExceptionCheck()) {
+    tracer.setFail("NewIntArray failed");
+    return JS_FALSE;
+  }
 
-    jobject externalObject = NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, obj));
-    jclass objClass = gEnv->GetObjectClass(externalObject);
-    if (!objClass || gEnv->ExceptionCheck())
-        return TRACE("FAIL 4"), JS_FALSE;
+  // these arguments are already rooted by the JS interpreter, but we
+  // can't easily take advantage of that without complicating the JsRootedValue
+  // interface.
+  
+  // argv[-1] is OBJECT_TO_JSVAL(this)
+  JsRootedValue* jsThis = new JsRootedValue(cx, argv[-1]);
+  tracer.log("jsthis=%08x, RV=%08x", unsigned(argv[-1]), unsigned(jsThis));
 
-    jmethodID methodID = gEnv->GetMethodID(objClass, "resolveReference", "(Ljava/lang/String;)I");
-    if (!methodID || gEnv->ExceptionCheck())
-        return TRACE("FAIL 5"), JS_FALSE;
-    int retval = gEnv->CallIntMethod(externalObject, methodID, jident);
-    if (gEnv->ExceptionCheck())
-        return TRACE("FAIL 6"), JS_FALSE;
-    *vp = retval;
+  // create JsRootedValues for arguments  
+  JsRootedValue *jsArgs[argc]; 
+  for (uintN i = 0; i < argc; ++i) {
+    jsArgs[i] = new JsRootedValue(cx, argv[i]);
+  }
+  savedJNIEnv->SetIntArrayRegion(args, 0, argc,
+      reinterpret_cast<jint*>(jsArgs));
+  if (savedJNIEnv->ExceptionCheck()) {
+    tracer.setFail("SetIntArrayRegion failed");
+    return JS_FALSE;
+  }
+  
+  // slot for return value
+  JsRootedValue* jsReturnVal = new JsRootedValue(cx);
 
-    TRACE("SUCCESS gwt_external_getProperty");
-    return JS_TRUE;
-}
+  // TODO(jat): small window here where invocation may fail before Java
+  // takes ownership of the JsRootedValue objects.  One solution would be
+  // to reference-count them between Java and C++ (so the reference count
+  // would always be 0, 1, or 2).  Also setField has a similar problem.
+  // I plan to fix this when switching away from Java holding pointers to
+  // C++ objects as part of the fix for 64-bit support (which we could
+  // accomplish inefficiently by changing int to long everywhere, but there
+  // are other 64-bit issues to resolve and we need to reduce the number of
+  // roots the JS interpreter has to search.
+  
+  // call Java method
+  savedJNIEnv->CallVoidMethod(dispMeth, invokeID, reinterpret_cast<int>(cx),
+      reinterpret_cast<int>(jsThis), args,
+      reinterpret_cast<int>(jsReturnVal));
+  
+  JSBool returnValue = JS_TRUE;
+  
+  if (savedJNIEnv->ExceptionCheck()) {
+    tracer.log("dispMeth=%08x", unsigned(dispMeth));
+    tracer.setFail("java exception is active:");
+    PrintJavaException(savedJNIEnv);
+    returnValue = JS_FALSE;
+  } else if (JS_IsExceptionPending(cx)) {
+    tracer.setFail("js exception is active");
+    returnValue = JS_FALSE;
+  }
 
-static void JS_DLL_CALLBACK gwt_external_finalize(JSContext *cx, JSObject *obj)
-{
-    jobject externalObject = NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, obj));
-    if (externalObject)
-        gEnv->DeleteGlobalRef(externalObject);
-    JS_FinalizeStub(cx,obj);
-}
+  // extract return value
+  *rval = jsReturnVal->getValue();
 
-static JSClass gwt_external_class = {
-    "gwt_external_class", JSCLASS_HAS_PRIVATE,
-    JS_PropertyStub, JS_PropertyStub, gwt_external_getProperty, gwt_external_setProperty,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, gwt_external_finalize,
-    JSCLASS_NO_OPTIONAL_MEMBERS
-};
+#if 0
+  // NOTE: C++ objects are not cleaned up here because Java now owns them.
+  // TODO(jat): if reference-counted, they *do* need to be Released here.
+  
+  // free JsRootedValues
+  for (uintN i = 0; i < argc; ++i) {
+    delete jsArgs[i];
+  }
+  delete jsThis;
+  delete jsReturnVal;
+#endif
 
-class nsJSObjectLocker : public nsISupports
-{
-public:
-    NS_DECL_ISUPPORTS
-    nsJSObjectLocker(JSContext* cx, jsval val): mCx(cx), mVal(val) { if (mCx && mVal) JSVAL_LOCK(mCx,mVal); }
-
-    JSContext* const mCx;
-    const jsval mVal;
-
-    // Major hack; compare other object's vtable ptrs to this one to do crude RTTI
-    static nsJSObjectLocker sJSObjectLocker;
-
-private:
-    ~nsJSObjectLocker() { if (mCx && mVal) JSVAL_UNLOCK(mCx,mVal); }
-};
-NS_IMPL_ISUPPORTS0(nsJSObjectLocker)
-
-// Major hack; compare other object's vtable ptrs to this one to do crude RTTI
-nsJSObjectLocker nsJSObjectLocker::sJSObjectLocker(0,0);
-
-NS_IMETHODIMP ExternalWrapper::GetScriptObject(nsIScriptContext *aContext, void** aScriptObject)
-{
-    TRACE("ENTER ExternalWrapper::GetScriptObject");
-
-    if (!aScriptObject)
-        return TRACE("FAIL 0"), NS_ERROR_INVALID_POINTER;
-
-    if (!mScriptObject)
-    {
-        *aScriptObject = 0;
-
-        nsIScriptGlobalObject* globalObject = aContext->GetGlobalObject();
-        nsCOMPtr<nsIDOMWindow> domWindow(do_QueryInterface(globalObject));
-        if (!domWindow)
-            return TRACE("FAIL 1"), NS_ERROR_UNEXPECTED;
-        
-        nsCOMPtr<nsIDOMWindow> topWindow;
-        domWindow->GetTop(getter_AddRefs(topWindow));
-        if (!topWindow)
-            return TRACE("FAIL 2"), NS_ERROR_UNEXPECTED;
-
-        jmethodID methodID = gEnv->GetStaticMethodID(gClass, "createExternalObjectForDOMWindow", "(I)Lcom/google/gwt/dev/shell/moz/LowLevelMoz$ExternalObject;");
-        if (!methodID || gEnv->ExceptionCheck())
-            return TRACE("FAIL 3"), NS_ERROR_UNEXPECTED;
-
-        jobject externalObject = gEnv->CallStaticObjectMethod(gClass, methodID, NS_REINTERPRET_CAST(jint, topWindow.get()));
-        if (!externalObject || gEnv->ExceptionCheck())
-            return TRACE("FAIL 4"), NS_ERROR_UNEXPECTED;
-        externalObject = gEnv->NewGlobalRef(externalObject);
-        if (!externalObject || gEnv->ExceptionCheck())
-            return TRACE("FAIL 5"), NS_ERROR_UNEXPECTED;
-
-        JSContext* cx = NS_REINTERPRET_CAST(JSContext*,aContext->GetNativeContext());
-        if (!cx)
-            return TRACE("FAIL 6"), NS_ERROR_UNEXPECTED;
-        JSObject* newObj = JS_NewObject(cx, &gwt_external_class, 0, globalObject->GetGlobalJSObject());
-        if (!newObj)
-            return TRACE("FAIL 7"), NS_ERROR_OUT_OF_MEMORY;
-        if (!JS_SetPrivate(cx, newObj, externalObject)) {
-            gEnv->DeleteGlobalRef(externalObject);
-            return TRACE("FAIL 8"), NS_ERROR_UNEXPECTED;
-        }
-        if (!JS_DefineFunction(cx, newObj, "gwtOnLoad", gwtOnLoad, 3,
-                JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT))
-            return TRACE("FAIL 9"), NS_ERROR_UNEXPECTED;
-
-        mScriptObject = newObj;
-    }
-
-    *aScriptObject = mScriptObject;
-    TRACE("SUCCESS ExternalWrapper::GetScriptObject");
-    return NS_OK;
-}
-
-NS_IMETHODIMP ExternalWrapper::SetScriptObject(void* aScriptObject)
-{
-    mScriptObject = aScriptObject;
-    return NS_OK;
-}
-
-class nsRpExternalFactory : public nsIFactory
-{
-public:
-    NS_DECL_ISUPPORTS
-    NS_DECL_NSIFACTORY
-    nsRpExternalFactory() { }
-private:
-    ~nsRpExternalFactory() { }
-};
-
-NS_IMPL_ISUPPORTS1(nsRpExternalFactory, nsIFactory)
-
-NS_IMETHODIMP nsRpExternalFactory::CreateInstance(nsISupports *aOuter, const nsIID & aIID, void** aResult)
-{
-    TRACE("ENTER nsRpExternalFactory::CreateInstance");
-
-    if (!aResult)
-        return NS_ERROR_INVALID_POINTER;
-
-    *aResult  = NULL;
-
-    if (aOuter)
-        return NS_ERROR_NO_AGGREGATION;
-
-    nsISupports* object = new ExternalWrapper();
-    if (!object)
-        return NS_ERROR_OUT_OF_MEMORY;
-        
-    nsresult result = object->QueryInterface(aIID, aResult);
-    if (!*aResult || NS_FAILED(result))
-        delete object;
-    else
-        TRACE("SUCCESS nsRpExternalFactory::CreateInstance");
-    return result;
-}
-
-NS_IMETHODIMP nsRpExternalFactory::LockFactory(PRBool lock)
-{
-    return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-#define GWT_EXTERNAL_FACTORY_CID \
-{ 0xF56E23F8, 0x5D06, 0x47F9, \
-{ 0x88, 0x5A, 0xD9, 0xCA, 0xC3, 0x38, 0x41, 0x7F } }
-#define GWT_EXTERNAL_CONTRACTID "@com.google/GWT/external;1"
-
-static NS_DEFINE_CID(kGwtExternalCID, GWT_EXTERNAL_FACTORY_CID);
-
-extern "C" {
-
-/*
- * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
- * Method:    _coerceTo31Bits
- * Signature: (II[I)Z
- */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1coerceTo31Bits
-  (JNIEnv* env, jclass, jint scriptObjInt, jint v, jintArray rval)
-{
-    nsIScriptGlobalObject* scriptObject = NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObjInt);
-    nsCOMPtr<nsIScriptContext> scriptContext(scriptObject->GetContext());
-    if (!scriptContext)
-       return JNI_FALSE;
-    JSContext* cx = (JSContext*)scriptContext->GetNativeContext();
-
-    jint r;
-    if (!JS_ValueToECMAInt32(cx, v, &r))
-        return JNI_FALSE;
-    env->SetIntArrayRegion(rval, 0, 1, &r);
-    if (env->ExceptionCheck())
-       return JNI_FALSE;
-    return JNI_TRUE;
+  return returnValue;
 }
 
 /*
- * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
- * Method:    _coerceToBoolean
- * Signature: (II[Z)Z
+ * Helper function to get reference Java attributes from Javascript.
+ * 
+ * cx - JSContext pointer
+ * obj - JavaScript object which is a wrapped Java object
+ * id - property name, as a jsval string
+ * dispClass - output parameter of DispatchMethod subclass
+ * dispObj - output parameter of Java object
+ * jident - output parameter of property name as a Java string
  */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1coerceToBoolean
-  (JNIEnv* env, jclass, jint scriptObjInt, jint v, jbooleanArray rval)
+JSBool getJavaPropertyStats(JSContext *cx, JSObject *obj, jsval id,
+    jclass& dispClass, jobject& dispObj, jstring& jident)
 {
-    nsIScriptGlobalObject* scriptObject = NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObjInt);
-    nsCOMPtr<nsIScriptContext> scriptContext(scriptObject->GetContext());
-    if (!scriptContext)
-       return JNI_FALSE;
-    JSContext* cx = (JSContext*)scriptContext->GetNativeContext();
+  Tracer tracer("getJavaPropertyStats");
+  if (!JSVAL_IS_STRING(id)) {
+    tracer.setFail("id is not a string");
+    return JS_FALSE;
+  }
 
-    JSBool r;
-    if (!JS_ValueToBoolean(cx, v, &r))
-        return JNI_FALSE;
-    jboolean jr = (r == JS_FALSE) ? JNI_FALSE : JNI_TRUE;
-    env->SetBooleanArrayRegion(rval, 0, 1, &jr);
-    if (env->ExceptionCheck())
-       return JNI_FALSE;
-    return JNI_TRUE;
-}
+  jident = savedJNIEnv->NewString(JS_GetStringChars(JSVAL_TO_STRING(id)),
+      JS_GetStringLength(JSVAL_TO_STRING(id)));
+  if (!jident || savedJNIEnv->ExceptionCheck()) {
+    tracer.setFail("unable to create Java string");
+    return JS_FALSE;
+  }
 
-/*
- * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
- * Method:    _coerceToDouble
- * Signature: (II[D)Z
- */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1coerceToDouble
-  (JNIEnv* env, jclass, jint scriptObjInt, jint v, jdoubleArray rval)
-{
-    nsIScriptGlobalObject* scriptObject = NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObjInt);
-    nsCOMPtr<nsIScriptContext> scriptContext(scriptObject->GetContext());
-    if (!scriptContext)
-       return JNI_FALSE;
-    JSContext* cx = (JSContext*)scriptContext->GetNativeContext();
+  dispObj = NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, obj));
+  if (!dispObj) {
+    tracer.setFail("can't get dispatch object");
+    return JS_FALSE;
+  }
 
-    jdouble r;
-    if (!JS_ValueToNumber(cx, v, &r))
-        return JNI_FALSE;
-    env->SetDoubleArrayRegion(rval, 0, 1, &r);
-    if (env->ExceptionCheck())
-       return JNI_FALSE;
-    return JNI_TRUE;
-}
+  dispClass = savedJNIEnv->GetObjectClass(dispObj);
+  if (savedJNIEnv->ExceptionCheck()) {
+    tracer.setFail("can't get class of dispatch object");
+    return JS_FALSE;
+  }
 
-/*
- * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
- * Method:    _coerceToString
- * Signature: (II[Ljava/lang/String;)Z
- */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1coerceToString
-  (JNIEnv* env, jclass, jint scriptObjInt, jint v, jobjectArray rval)
-{
-    jstring jr(0);
-    if (v != JSVAL_NULL && v != JSVAL_VOID) {
-        nsIScriptGlobalObject* scriptObject = NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObjInt);
-        nsCOMPtr<nsIScriptContext> scriptContext(scriptObject->GetContext());
-        if (!scriptContext)
-            return JNI_FALSE;
-        JSContext* cx = (JSContext*)scriptContext->GetNativeContext();
-
-        JSString* str = JS_ValueToString(cx, v);
-        if (!str)
-            return JNI_FALSE;
-        jr = env->NewString(JS_GetStringChars(str), JS_GetStringLength(str));
-        if (env->ExceptionCheck())
-            return JNI_FALSE;
-    }
-    env->SetObjectArrayElement(rval, 0, jr);
-    if (env->ExceptionCheck())
-       return JNI_FALSE;
-    return JNI_TRUE;
-}
-
-/*
- * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
- * Method:    _convert31Bits
- * Signature: (II[I)Z
- */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1convert31Bits
-  (JNIEnv* env, jclass, int scriptObjInt, jint v, jintArray rval)
-{
-    jint r = INT_TO_JSVAL(v);
-    env->SetIntArrayRegion(rval, 0, 1, &r);
-    if (env->ExceptionCheck())
-       return JNI_FALSE;
-    return JNI_TRUE;
-}
-
-/*
- * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
- * Method:    _convertBoolean
- * Signature: (IZ[I)Z
- */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1convertBoolean
-  (JNIEnv* env, jclass, int scriptObjInt, jboolean v, jintArray rval)
-{
-    jint r = BOOLEAN_TO_JSVAL((v == JNI_FALSE) ? JS_FALSE : JS_TRUE);
-    env->SetIntArrayRegion(rval, 0, 1, &r);
-    if (env->ExceptionCheck())
-       return JNI_FALSE;
-    return JNI_TRUE;
-}
-
-/*
- * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
- * Method:    _convertDouble
- * Signature: (ID[I)Z
- */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1convertDouble
-  (JNIEnv* env, jclass, int scriptObjInt, jdouble v, jintArray rval)
-{
-    nsIScriptGlobalObject* scriptObject = NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObjInt);
-    nsCOMPtr<nsIScriptContext> scriptContext(scriptObject->GetContext());
-    if (!scriptContext)
-       return JNI_FALSE;
-    JSContext* cx = (JSContext*)scriptContext->GetNativeContext();
-
-    jsval rv;
-    if (!JS_NewDoubleValue(cx, jsdouble(v), &rv))
-       return JNI_FALSE;
-    jint r = rv;
-    env->SetIntArrayRegion(rval, 0, 1, &r);
-    if (env->ExceptionCheck())
-       return JNI_FALSE;
-    return JNI_TRUE;
-}
-
-/*
- * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
- * Method:    _convertString
- * Signature: (ILjava/lang/String;[I)Z
- */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1convertString
-  (JNIEnv* env, jclass, int scriptObjInt, jstring v, jintArray rval)
-{
-    jint r = 0;
-    if (v) {
-        JStringWrap jv(env, v);
-        if (!jv.jstr())
-            return JNI_FALSE;
-
-        nsIScriptGlobalObject* scriptObject = NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObjInt);
-        nsCOMPtr<nsIScriptContext> scriptContext(scriptObject->GetContext());
-        if (!scriptContext)
-           return JNI_FALSE;
-        JSContext* cx = (JSContext*)scriptContext->GetNativeContext();
-
-        JSString* str = JS_NewUCStringCopyZ(cx, jv.jstr());
-        if (!str)
-           return JNI_FALSE;
-
-        r = STRING_TO_JSVAL(str);
-    }
-
-    env->SetIntArrayRegion(rval, 0, 1, &r);
-    if (env->ExceptionCheck())
-       return JNI_FALSE;
-    return JNI_TRUE;
-}
-
-/*
- * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
- * Method:    _executeScript
- * Signature: (ILjava/lang/String;)Z
- */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1executeScript
-  (JNIEnv* env, jclass llClass, jint scriptObject, jstring code)
-{
-    JStringWrap jcode(env, code);
-    if (!jcode.jstr())
-        return JNI_FALSE;
-
-    nsIScriptGlobalObject* globalObject = NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObject);
-    nsCOMPtr<nsIScriptContext> scriptContext(globalObject->GetContext());
-    nsXPIDLString scriptString;
-    scriptString = jcode.jstr();
-
-    nsXPIDLString aRetValue;
-    PRBool aIsUndefined;
-    if (NS_FAILED(scriptContext->EvaluateString(scriptString, globalObject->GetGlobalJSObject(),
-            0, __FILE__, __LINE__, 0, aRetValue, &aIsUndefined)))
-        return JNI_FALSE;
-    return JNI_TRUE;
+  return JS_TRUE;
 }
 
 /*
@@ -721,129 +298,143 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1execu
  * Method:    _executeScriptWithInfo
  * Signature: (ILjava/lang/String;Ljava/lang/String;I)Z
  */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1executeScriptWithInfo
-  (JNIEnv* env, jclass llClass, jint scriptObject, jstring code, jstring file, jint line)
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1executeScriptWithInfo
+    (JNIEnv* env, jclass llClass, jint scriptObject, jstring code,
+     jstring file, jint line)
 {
-    JStringWrap jcode(env, code);
-    if (!jcode.jstr())
-        return JNI_FALSE;
+  Tracer tracer("LowLevelMoz._executeScriptWithInfo");
+  JStringWrap jcode(env, code);
+  if (!jcode.jstr()) {
+    tracer.setFail("null code string");
+    return JNI_FALSE;
+  }
+  JStringWrap jfile(env, file);
+  if (!jfile.str()) {
+    tracer.setFail("null file name");
+    return JNI_FALSE;
+  }
+  tracer.log("code=%s, file=%s, line=%d", jcode.str(), jfile.str(), line);
 
-    JStringWrap jfile(env, file);
-    if (!jfile.str())
-        return JNI_FALSE;
+  nsIScriptGlobalObject* globalObject =
+      NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObject);
+  nsCOMPtr<nsIScriptContext> scriptContext(globalObject->GetContext());
+  nsXPIDLString scriptString;
+  scriptString = jcode.jstr();
 
-    nsIScriptGlobalObject* globalObject = NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObject);
-    nsCOMPtr<nsIScriptContext> scriptContext(globalObject->GetContext());
-    nsXPIDLString scriptString;
-    scriptString = jcode.jstr();
-
-    nsXPIDLString aRetValue;
-    PRBool aIsUndefined;
-    if (NS_FAILED(scriptContext->EvaluateString(scriptString, globalObject->GetGlobalJSObject(),
-            0, jfile.str(), line, 0, aRetValue, &aIsUndefined)))
-        return JNI_FALSE;
-    return JNI_TRUE;
+  nsXPIDLString aRetValue;
+  PRBool aIsUndefined;
+  if (NS_FAILED(scriptContext->EvaluateString(scriptString,
+      globalObject->GetGlobalJSObject(), 0, jfile.str(), line, 0,
+      aRetValue, &aIsUndefined))) {
+    tracer.setFail("EvaluateString failed");
+    return JNI_FALSE;
+  }
+  return JNI_TRUE;
 }
 
 /*
  * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
  * Method:    _invoke
- * Signature: (ILjava/lang/String;II[I[I)Z
+ * Signature: (ILjava/lang/String;I[I)I
  */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1invoke
-  (JNIEnv* env, jclass, int scriptObjInt, jstring methodName, jint jsthisval, jint jsargc, jintArray jsargs, jintArray rval)
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1invoke
+    (JNIEnv* env, jclass, int scriptObjInt, jstring methodName, jint jsThisInt,
+     jintArray jsArgsInt, jint jsRetValInt)
 {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1invoke");
+  Tracer tracer("LowLevelMoz._invoke");
 
-    JStringWrap methodStr(env,methodName);
-    if (!methodStr.str())
-       return TRACE("FAIL 1"), JNI_FALSE;
+  JStringWrap methodStr(env, methodName);
+  if (!methodStr.str()) {
+    tracer.setFail("null method name");
+    return JNI_FALSE;
+  }
+  JsRootedValue* jsThisRV = reinterpret_cast<JsRootedValue*>(jsThisInt);
+  jint jsArgc = env->GetArrayLength(jsArgsInt);
+  tracer.log("method=%s, jsthis=%08x, #args=%d", methodStr.str(), jsThisInt,
+     jsArgc);
 
-    nsIScriptGlobalObject* scriptObject = NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObjInt);
-    nsCOMPtr<nsIScriptContext> scriptContext(scriptObject->GetContext());
-    if (!scriptContext)
-       return TRACE("FAIL 2"), JNI_FALSE;
-    JSContext* cx = (JSContext*)scriptContext->GetNativeContext();
-    JSObject* scriptWindow = (JSObject*)scriptObject->GetGlobalJSObject();
+  nsIScriptGlobalObject* scriptObject =
+      NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObjInt);
+  nsCOMPtr<nsIScriptContext> scriptContext(scriptObject->GetContext());
+  if (!scriptContext) {
+    tracer.setFail("can't get script context");
+    return JNI_FALSE;
+  }
+  JSContext* cx
+      = reinterpret_cast<JSContext*>(scriptContext->GetNativeContext());
+  JSObject* scriptWindow
+      = reinterpret_cast<JSObject*>(scriptObject->GetGlobalJSObject());
 
-    jsval fval;
-    if (!JS_GetProperty(cx, scriptWindow, methodStr.str(), &fval))
-       return TRACE("FAIL 3"), JNI_FALSE;
-    if (!JS_ValueToFunction(cx, fval))
-       return TRACE("FAIL 4"), JNI_FALSE;
+  jsval fval;
+  if (!JS_GetProperty(cx, scriptWindow, methodStr.str(), &fval)) {
+    tracer.setFail("JS_GetProperty(method) failed");
+    return JNI_FALSE;
+  }
+  JSFunction* jsFunction = JS_ValueToFunction(cx, fval);
+  if (!jsFunction) {
+    tracer.setFail("JS_ValueToFunction failed");
+    return JNI_FALSE;
+  }
+  
+  // extract arguments in jsval form
+  nsAutoArrayPtr<jint> jsargvals(new jint[jsArgc]);
+  if (!jsargvals) {
+    tracer.setFail("failed to allocate arg array");
+    return JNI_FALSE;
+  }
+  env->GetIntArrayRegion(jsArgsInt, 0, jsArgc, jsargvals);
+  if (env->ExceptionCheck()) {
+    tracer.setFail("copy from Java array failed");
+    return JNI_FALSE;
+  }
+  nsAutoArrayPtr<jsval> jsargs(new jsval[jsArgc]);
+  for (int i = 0; i < jsArgc; ++i) {
+    JsRootedValue* arg = reinterpret_cast<JsRootedValue*>(jsargvals[i]);
+    jsargs[i] = arg->getValue();
+  }
 
-    nsAutoArrayPtr<jint> jsargvals(new jint[jsargc]);
-    if (!jsargvals)
-       return TRACE("FAIL 5"), JNI_FALSE;
+  jsval jsrval;
+  JSObject* jsThis;
+  if (jsThisRV->isNull()) {
+    jsThis = scriptWindow;
+  } else {
+    jsThis = jsThisRV->getObject();
+  }
+  
+  PrintJSValue(cx, OBJECT_TO_JSVAL(jsThis), "jsThis=");
+  for (int i = 0; i < jsArgc; ++i) {
+    char buf[256];
+    snprintf(buf, sizeof(buf), "arg[%d]=", i);
+    PrintJSValue(cx, jsargs[i], buf);
+  }
+  //tracer.log("fval = %08x, args=%08x", fval, jsargs.get());
+  if (!JS_CallFunctionValue(cx, jsThis, fval, jsArgc, jsargs.get(), &jsrval)) {
+    tracer.setFail("JS_CallFunctionValue failed");
+    return JNI_FALSE;
+  }
 
-    env->GetIntArrayRegion(jsargs, 0, jsargc, jsargvals);
-    if (env->ExceptionCheck())
-       return TRACE("FAIL 6"), JNI_FALSE;
-
-    jsval jsrval;
-    JSObject* jsthis = (jsthisval == JSVAL_NULL) ? scriptWindow : JSVAL_TO_OBJECT(jsthisval);
-    if (!JS_CallFunctionValue(cx, jsthis, fval, jsargc, (jsval*)jsargvals.get(), &jsrval))
-       return TRACE("FAIL 7"), JNI_FALSE;
-
-    env->SetIntArrayRegion(rval, 0, 1, (jint*)&jsrval);
-    if (env->ExceptionCheck())
-       return TRACE("FAIL 8"), JNI_FALSE;
-
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1invoke");
-    return JNI_TRUE;
+  PrintJSValue(cx, jsrval, "return value=");
+  JsRootedValue* returnVal = reinterpret_cast<JsRootedValue*>(jsRetValInt);
+  returnVal->setValue(jsrval);
+  return JNI_TRUE;
 }
 
-/*
- * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
- * Method:    _isWrappedDispatch
- * Signature: (II[Z)Z
- */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1isWrappedDispatch
-  (JNIEnv* env, jclass, jint scriptObjInt, jint jsobjval, jbooleanArray rval)
-{
-    TRACE("ENTER Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1isWrappedDispatch");
-
-    nsIScriptGlobalObject* scriptObject = NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObjInt);
-    nsCOMPtr<nsIScriptContext> scriptContext(scriptObject->GetContext());
-    if (!scriptContext)
-       return JNI_FALSE;
-    JSContext* cx = (JSContext*)scriptContext->GetNativeContext();
-
-    jboolean r = JNI_FALSE;
-    if (JSVAL_IS_OBJECT(jsobjval))
-    {
-        JSObject* jsobj = JSVAL_TO_OBJECT(jsobjval);
-        if (JS_InstanceOf(cx, jsobj, &gwt_nativewrapper_class, 0))
-            r = JNI_TRUE;
-    }
-
-    env->SetBooleanArrayRegion(rval, 0, 1, &r);
-    if (env->ExceptionCheck())
-       return JNI_FALSE;
-
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1isWrappedDispatch");
-    return JNI_TRUE;
-}
 
 /*
  * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
  * Method:    _raiseJavaScriptException
- * Signature: (II)Z
+ * Signature: (I)Z
  */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1raiseJavaScriptException
-  (JNIEnv* env, jclass, jint scriptObjInt, jint jsarg)
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1raiseJavaScriptException
+    (JNIEnv* env, jclass, jint jscontext)
 {
-    TRACE("ENTER Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1raiseJavaScriptException");
-
-    nsIScriptGlobalObject* scriptObject = NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObjInt);
-    nsCOMPtr<nsIScriptContext> scriptContext(scriptObject->GetContext());
-    if (!scriptContext)
-       return JNI_FALSE;
-    JSContext* cx = (JSContext*)scriptContext->GetNativeContext();
-    JS_SetPendingException(cx, jsarg);
-
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1raiseJavaScriptException");
-    return JNI_TRUE;
+  Tracer tracer("LowLevelMoz._raiseJavaScriptException");
+  JSContext* cx = reinterpret_cast<JSContext*>(jscontext);
+  JS_SetPendingException(cx, JSVAL_NULL);
+  return JNI_TRUE;
 }
 
 /*
@@ -851,247 +442,42 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1raise
  * Method:    _registerExternalFactoryHandler
  * Signature: ()Z
  */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1registerExternalFactoryHandler
-  (JNIEnv* env, jclass llClass)
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1registerExternalFactoryHandler
+    (JNIEnv* env, jclass llClass)
 {
-    if (!InitGlobals(env, llClass))
-        return JNI_FALSE;
+  if (!InitGlobals(env, llClass))
+    return JNI_FALSE;
 
-    TRACE("ENTER Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1registerExternalFactoryHandler");
+  // tracing isn't setup until after InitGlobals is called
+  Tracer tracer("LowLevelMoz._registerExternalFactoryHandler");
 
-    // Register "window.external" as our own class
-    if (NS_FAILED(nsComponentManager::RegisterFactory(
-            kGwtExternalCID, "externalFactory", GWT_EXTERNAL_CONTRACTID,
-            new nsRpExternalFactory(), PR_TRUE)))
-        return JNI_FALSE;
+  char buf[256];
+  sprintf(buf, " jniEnv=%08x, llClass=%08x", (unsigned)env, (unsigned)llClass);
+  tracer.log(buf);
+  
+  // Register "window.external" as our own class
+  if (NS_FAILED(nsComponentManager::RegisterFactory(
+      kGwtExternalCID, "externalFactory", GWT_EXTERNAL_CONTRACTID,
+      new nsRpExternalFactory(), PR_TRUE))) {
+    tracer.setFail("RegisterFactory failed");
+    return JNI_FALSE;
+  }
 
-    nsCOMPtr<nsICategoryManager> categoryManager = do_GetService(NS_CATEGORYMANAGER_CONTRACTID);
-    if (!categoryManager)
-        return JNI_FALSE;
+  nsCOMPtr<nsICategoryManager> categoryManager =
+      do_GetService(NS_CATEGORYMANAGER_CONTRACTID);
+  if (!categoryManager) {
+    tracer.setFail("unable to get category manager");
+    return JNI_FALSE;
+  }
 
-    nsXPIDLCString previous;
-    if (NS_FAILED(categoryManager->AddCategoryEntry(JAVASCRIPT_GLOBAL_PROPERTY_CATEGORY,
-                            "external", GWT_EXTERNAL_CONTRACTID,
-                            PR_TRUE, PR_TRUE, getter_Copies(previous))))
-        return JNI_FALSE;
+  nsXPIDLCString previous;
+  if (NS_FAILED(categoryManager->AddCategoryEntry(
+      JAVASCRIPT_GLOBAL_PROPERTY_CATEGORY, "external", GWT_EXTERNAL_CONTRACTID,
+      PR_TRUE, PR_TRUE, getter_Copies(previous)))) {
+    tracer.setFail("AddCategoryEntry failed");
+    return JNI_FALSE;
+  }
 
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1registerExternalFactoryHandler");
-    return JNI_TRUE;
+  return JNI_TRUE;
 }
-
-/*
- * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
- * Method:    _unwrapDispatch
- * Signature: (II[Lcom/google/gwt/dev/shell/moz/LowLevelMoz/DispatchObject;)Z
- */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1unwrapDispatch
-  (JNIEnv* env, jclass, jint scriptObjInt, jint jsobjval, jobjectArray rval)
-{
-    TRACE("ENTER Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1unwrapDispatch");
-
-    nsIScriptGlobalObject* scriptObject = NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObjInt);
-    nsCOMPtr<nsIScriptContext> scriptContext(scriptObject->GetContext());
-    if (!scriptContext)
-       return JNI_FALSE;
-    JSContext* cx = (JSContext*)scriptContext->GetNativeContext();
-
-    if (!JSVAL_IS_OBJECT(jsobjval))
-        return JNI_FALSE;
-
-    JSObject* jsobj = JSVAL_TO_OBJECT(jsobjval);
-    if (!JS_InstanceOf(cx, jsobj, &gwt_nativewrapper_class, 0))
-        return JNI_FALSE;
-
-    jobject dispObj = NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, jsobj));
-    if (!dispObj)
-        return JNI_FALSE;
-
-    env->SetObjectArrayElement(rval, 0, dispObj);
-    if (env->ExceptionCheck())
-       return JNI_FALSE;
-
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1unwrapDispatch");
-    return JNI_TRUE;
-}
-
-/*
- * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
- * Method:    _unwrapJSObject
- * Signature: (I[I)Z
- */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1unwrapJSObject
-  (JNIEnv* env, jclass, jint nsISupportsPtr, jintArray rval)
-{
-    TRACE("ENTER Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1unwrapJSObject");
-
-    // MAJOR HACK: check the vtable ptr against a known "good" as a very crude RTTI
-    long *vt1 = NS_REINTERPRET_CAST(long*,NS_STATIC_CAST(nsISupports*, &nsJSObjectLocker::sJSObjectLocker));
-    long *vt2 = NS_REINTERPRET_CAST(long*,nsISupportsPtr);
-    if (*vt1 != *vt2)
-        return JNI_FALSE;
-
-    // probably safe
-    nsJSObjectLocker* jsObjectLocker = NS_STATIC_CAST(nsJSObjectLocker*, NS_REINTERPRET_CAST(nsISupports*,nsISupportsPtr));
-    jsval r = jsObjectLocker->mVal;
-    if (!JSVAL_IS_OBJECT(r))
-        return JNI_FALSE;
-
-    env->SetIntArrayRegion(rval, 0, 1, (jint*)&r);
-    if (env->ExceptionCheck())
-        return JNI_FALSE;
-
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1unwrapJSObject");
-    return JNI_TRUE;
-}
-
-/*
- * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
- * Method:    _wrapDispatch
- * Signature: (ILcom/google/gwt/dev/shell/moz/LowLevelMoz/DispatchObject;[I)Z
- */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1wrapDispatch
-  (JNIEnv* env, jclass, jint scriptObjInt, jobject dispObj, jintArray rval)
-{
-    TRACE("ENTER Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1wrapDispatch");
-
-    nsIScriptGlobalObject* scriptObject = NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObjInt);
-    nsCOMPtr<nsIScriptContext> scriptContext(scriptObject->GetContext());
-    if (!scriptContext)
-       return JNI_FALSE;
-
-    JSContext* cx = (JSContext*)scriptContext->GetNativeContext();
-    JSObject* scriptWindow = (JSObject*)scriptObject->GetGlobalJSObject();
-
-    JSObject* newObj = JS_NewObject(cx, &gwt_nativewrapper_class, 0, scriptWindow);
-    if (!newObj)
-        return JNI_FALSE;
-
-    jobject dispObjRef = env->NewGlobalRef(dispObj);
-    if (!dispObjRef || env->ExceptionCheck())
-        return JNI_FALSE;
-
-    if (!JS_SetPrivate(cx, newObj, dispObjRef))
-    {
-        env->DeleteGlobalRef(dispObjRef);
-        return JNI_FALSE;
-    }
-
-    // forcibly setup a "toString" method to override the default
-    jclass dispClass = env->GetObjectClass(dispObj);
-    if (env->ExceptionCheck())
-        return JS_FALSE;
-
-    jmethodID getFieldMeth = env->GetMethodID(dispClass, "getField", "(Ljava/lang/String;)I");
-    if (!getFieldMeth || env->ExceptionCheck())
-        return JS_FALSE;
-
-    jstring ident = env->NewStringUTF("@java.lang.Object::toString()");
-    if (!ident || env->ExceptionCheck())
-        return JS_FALSE;
-
-    jsval toStringFunc = env->CallIntMethod(dispObj, getFieldMeth, ident);
-    if (env->ExceptionCheck())
-        return JS_FALSE;
-
-    if (!JS_DefineProperty(cx, newObj, "toString", toStringFunc, JS_PropertyStub, JS_PropertyStub, JSPROP_READONLY | JSPROP_PERMANENT))
-        return JNI_FALSE;
-
-    env->SetIntArrayRegion(rval, 0, 1, (jint*)&newObj);
-    if (env->ExceptionCheck())
-        return JNI_FALSE;
-
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1wrapDispatch");
-    return JNI_TRUE;
-}
-
-/*
- * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
- * Method:    _wrapFunction
- * Signature: (ILjava/lang/String;Lcom/google/gwt/dev/shell/moz/LowLevelMoz/DispatchMethod;[I)Z
- */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1wrapFunction
-  (JNIEnv* env, jclass, jint scriptObjInt, jstring name, jobject dispMeth, jintArray rval)
-{
-    TRACE("ENTER Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1wrapFunction");
-
-    nsIScriptGlobalObject* scriptObject = NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObjInt);
-    nsCOMPtr<nsIScriptContext> scriptContext(scriptObject->GetContext());
-    if (!scriptContext)
-        return JNI_FALSE;
-    JSContext* cx = (JSContext*)scriptContext->GetNativeContext();
-    JSObject* scriptWindow = (JSObject*)scriptObject->GetGlobalJSObject();
-
-    JStringWrap nameStr(env, name);
-    if (!nameStr.str())
-        return JNI_FALSE;
-
-    JSFunction* function = JS_NewFunction(cx, gwt_invoke, 0, JSFUN_LAMBDA, 0, nameStr.str());
-    if (!function)
-        return JNI_FALSE;
-
-    JSObject* funObj = JS_GetFunctionObject(function);
-    if (!funObj)
-        return JNI_FALSE;
-
-    // Create a wrapper object to hold and clean up dispMeth
-    JSObject* cleanupObj = JS_NewObject(cx, &gwt_functionwrapper_class, 0, scriptWindow);
-    if (!cleanupObj)
-        return JNI_FALSE;
-
-    jobject dispMethRef = env->NewGlobalRef(dispMeth);
-    if (!dispMethRef || env->ExceptionCheck())
-        return JNI_FALSE;
-
-    // Store our global ref in the wrapper object
-    if (!JS_SetPrivate(cx, cleanupObj, dispMethRef))
-    {
-        env->DeleteGlobalRef(dispMethRef);
-        return JNI_FALSE;
-    }
-
-    // Store the wrapper object in funObj's reserved slot
-    if(!JS_SetReservedSlot(cx, funObj, 0, OBJECT_TO_JSVAL(cleanupObj)))
-        return JS_FALSE;
-
-    env->SetIntArrayRegion(rval, 0, 1, (jint*)&funObj);
-    if (env->ExceptionCheck())
-        return JNI_FALSE;
-
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1wrapFunction");
-    return JNI_TRUE;
-}
-
-/*
- * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
- * Method:    _wrapJSObject
- * Signature: (II[I)Z
- */
-JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1wrapJSObject
-  (JNIEnv* env, jclass, jint scriptObjInt, jint jsobjval, jintArray rval)
-{
-    TRACE("ENTER Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1wrapJSObject");
-
-    if (!JSVAL_IS_OBJECT(jsobjval))
-        return JNI_FALSE;
-
-    nsIScriptGlobalObject* scriptObject = NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObjInt);
-    nsCOMPtr<nsIScriptContext> scriptContext(scriptObject->GetContext());
-    if (!scriptContext)
-        return JNI_FALSE;
-    JSContext* cx = (JSContext*)scriptContext->GetNativeContext();
-
-    nsISupports* objLocker = new nsJSObjectLocker(cx, jsobjval);
-    if (!objLocker)
-        return JNI_FALSE;
-
-    jint r = (jint)objLocker;
-    env->SetIntArrayRegion(rval, 0, 1, &r);
-    if (env->ExceptionCheck())
-        return JNI_FALSE;
-
-    objLocker->AddRef();
-    TRACE("SUCCESS Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1wrapJSObject");
-    return JNI_TRUE;
-}
-
-} // extern "C"
