@@ -47,7 +47,7 @@ JAVAH    := javah
 ##
 SRCDIRS := ./:../core/
 VPATH   := .:../core
-SRCS    := gwt-ll.cpp Moz.cpp JsValueMoz.cpp Tracer.cpp \
+SRCS    := gwt-ll.cpp LowLevelMoz.cpp JsValueMoz.cpp Tracer.cpp \
 	ExternalWrapper.cpp NativeWrapper.cpp JsRootedValue.cpp
 OBJS    := $(addprefix $(OBJDIR),$(SRCS:.cpp=.o))
 DEPS    := $(addprefix $(OBJDIR),$(SRCS:.cpp=.d))
@@ -109,7 +109,7 @@ $(OBJDIR)JsValueMoz.h : $(CLASSDIR)/com/google/gwt/dev/shell/moz/JsValueMoz.clas
 # Dependency rules for generated headers
 # TODO(jat): autogenerate these and others
 ##
-$(OBJDIR)Moz.o: $(OBJDIR)LowLevelMoz.h
+$(OBJDIR)LowLevelMoz.o: $(OBJDIR)LowLevelMoz.h
 $(OBJDIR)JsValueMoz.o: $(OBJDIR)JsValueMoz.h
 
 ##
