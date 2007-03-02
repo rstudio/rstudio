@@ -69,12 +69,21 @@ public class JsSymbolResolver {
       x.resolve(name);
     }
 
+    public void endVisit(JsProgram x) {
+      popScope();
+    }
+
     public boolean visit(JsCatch x) {
       pushScope(x.getScope());
       return true;
     }
 
     public boolean visit(JsFunction x) {
+      pushScope(x.getScope());
+      return true;
+    }
+
+    public boolean visit(JsProgram x) {
       pushScope(x.getScope());
       return true;
     }

@@ -18,11 +18,11 @@
 		</style>
 
 		<!--                                           -->
-		<!-- The module reference below is the link    -->
-		<!-- between html and your Web Toolkit module  -->		
+		<!-- This script loads your compiled module.   -->
+		<!-- If you add any GWT meta tags, they must   -->
+		<!-- be added before this line.                -->
 		<!--                                           -->
-		<meta name='gwt:module' content='@moduleName'>
-		
+		<script language='javascript' src='@moduleName.nocache.js'></script>
 	</head>
 
 	<!--                                           -->
@@ -31,13 +31,6 @@
 	<!-- to create a completely dynamic ui         -->
 	<!--                                           -->
 	<body>
-
-		<!--                                            -->
-		<!-- This script is required bootstrap stuff.   -->
-		<!-- You can put it in the HEAD, but startup    -->
-		<!-- is slightly faster if you include it here. -->
-		<!--                                            -->
-		<script language="javascript" src="gwt.js"></script>
 
 		<!-- OPTIONAL: include this if you want history support -->
 		<iframe id="__gwt_historyFrame" style="width:0;height:0;border:0"></iframe>

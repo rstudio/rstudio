@@ -74,9 +74,9 @@ public class Window {
   }-*/;
 
   /**
-   * Use this method to explicitly disable the window's scrollbars.
-   * Applications that choose to resize their user-interfaces to fit within the
-   * window's client area will normally want to disable window scrolling.
+   * Use this method to explicitly disable the window's scrollbars. Applications
+   * that choose to resize their user-interfaces to fit within the window's
+   * client area will normally want to disable window scrolling.
    * 
    * @param enable <code>false</code> to disable window scrolling
    */
@@ -147,7 +147,7 @@ public class Window {
   }
 
   /**
-   * Sets the size of the margins used within the window's client area.  It is
+   * Sets the size of the margins used within the window's client area. It is
    * sometimes necessary to do this because some browsers, such as Internet
    * Explorer, add margins by default, which can confound attempts to resize
    * panels to fit exactly within the window.
@@ -249,7 +249,8 @@ public class Window {
   }
 
   private static native void init() /*-{
-    $wnd.__gwt_initHandlers(
+    // Magic function defined by the selection script
+    __gwt_initHandlers(
       function() {
         @com.google.gwt.user.client.Window::onResize()();
       },

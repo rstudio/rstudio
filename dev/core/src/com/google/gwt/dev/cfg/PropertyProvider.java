@@ -24,14 +24,20 @@ public class PropertyProvider {
 
   private JsBlock body;
 
+  private final ModuleDef module;
   private final Property property;
 
-  public PropertyProvider(Property property) {
+  public PropertyProvider(ModuleDef module, Property property) {
+    this.module = module;
     this.property = property;
   }
 
   public JsBlock getBody() {
     return body;
+  }
+
+  public ModuleDef getModule() {
+    return module;
   }
 
   public Property getProperty() {

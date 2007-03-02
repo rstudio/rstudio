@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
-import com.google.gwt.dev.util.Empty;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,11 +30,11 @@ import java.util.Map;
  */
 public class ModuleSpacePropertyOracle implements PropertyOracle {
 
+  private final Map prevAnswers = new HashMap();
+
   private final Properties props;
 
   private final ModuleSpace space;
-
-  private final Map prevAnswers = new HashMap();
 
   public ModuleSpacePropertyOracle(Properties props, ModuleSpace space) {
     this.space = space;
@@ -100,12 +99,11 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
     if (value == null) {
       // Invokes the script function.
       //
-      String scriptFnName = makeScriptFnName(prop);
       try {
         // Invoke the property provider function in JavaScript.
         //
-        value = space.invokeNativeString(scriptFnName, null, Empty.CLASSES,
-            Empty.OBJECTS);
+        value = space.invokeNativeString("__gwt_getProperty", null,
+            new Class[] {String.class}, new Object[] {prop.getName()});
       } catch (RuntimeException e) {
         // Treat as an unknown value.
         //
@@ -118,13 +116,5 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
 
     // value may be null if the provider returned an unknown property value.
     return value;
-  }
-
-  /**
-   * Coordinate this property provider function name with the one generated in
-   * {@link com.google.gwt.dev.util.SelectionScriptGenerator#genPropProviders(PrintWriter)}.
-   */
-  private String makeScriptFnName(Property prop) {
-    return "prop$" + prop.getName();
   }
 }

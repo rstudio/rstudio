@@ -72,20 +72,13 @@ public class GWTShellServlet extends HttpServlet {
     }
   }
 
-  /**
-   * When the GWT bootstrap JavaScript starts in hosted mode, it appends this
-   * query param to the url for the nocache file so that this servlet can
-   * generate one on-the-fly.
-   */
-  private static final String HOSTED_MODE_QUERY_PARAM = "h";
-
   private final Map loadedModulesByName = new HashMap();
 
   private final Map loadedServletsByClassName = new HashMap();
 
-  private final Map modulesByServletPath = new HashMap();
-
   private final Map mimeTypes = new HashMap();
+
+  private final Map modulesByServletPath = new HashMap();
 
   private int nextRequestId;
 
@@ -259,6 +252,37 @@ public class GWTShellServlet extends HttpServlet {
     }
   }
 
+  /**
+   * Handle auto-generated resources.
+   * 
+   * @return <code>true</code> if a resource was generated
+   */
+  private boolean autoGenerateResources(HttpServletRequest request,
+      HttpServletResponse response, TreeLogger logger, String partialPath,
+      String moduleName) throws IOException {
+
+    // If the request is of the form ".../moduleName.nocache.js", then
+    // we generate the selection script for them.
+    if (partialPath.equals(moduleName + ".nocache.js")) {
+      // If the '?compiled' request property is specified, don't auto-generate.
+      if (request.getParameter("compiled") == null) {
+        // Generate the .js file.
+        try {
+          String js = genSelectionScript(logger, moduleName);
+          response.setStatus(HttpServletResponse.SC_OK);
+          response.setContentType("text/javascript");
+          response.getWriter().println(js);
+          return true;
+        } catch (UnableToCompleteException e) {
+          // Quietly continue, since this could actually be a request for a
+          // static file that happens to have an unfortunately confusing name.
+        }
+      }
+    }
+
+    return false;
+  }
+
   private void doGetModule(HttpServletRequest request,
       HttpServletResponse response, TreeLogger logger, RequestParts parts)
       throws IOException {
@@ -325,23 +349,10 @@ public class GWTShellServlet extends HttpServlet {
         + partialPath + "' in module '" + moduleName + "' ";
     logger = logger.branch(TreeLogger.TRACE, msg, null);
 
-    // If the request is of the form ".../moduleName.nocache.html[?...]", then
-    // we generate the selection script for them.
-    if (partialPath.equals(moduleName + ".nocache.html")) {
-      // Only generate a selection script for a hosted-mode client.
-      // Otherwise, fall through.
-      if (request.getParameterMap().containsKey(HOSTED_MODE_QUERY_PARAM)) {
-        // Generate the .nocache.html file.
-        try {
-          String html = genSelectionPage(logger, moduleName);
-          response.setContentType("text/html");
-          response.getWriter().println(html);
-          return;
-        } catch (UnableToCompleteException e) {
-          // Quietly continue, since this could actually be a request for a
-          // static file that happens to have an unfortunately confusing name.
-        }
-      }
+    // Handle auto-generation of resources.
+    if (autoGenerateResources(request, response, logger, partialPath,
+        moduleName)) {
+      return;
     }
 
     URL foundResource;
@@ -392,9 +403,13 @@ public class GWTShellServlet extends HttpServlet {
       logger.log(TreeLogger.TRACE, msg, null);
     }
 
-    // Maybe serve it up. Don't let the client cache anything because
-    // this servlet is for development (so files change a lot), and we do at
-    // least honor "If-Modified-Since".
+    // Maybe serve it up. Don't let the client cache anything other than
+    // xxx.cache.yyy files because this servlet is for development (so user
+    // files are assumed to change a lot), although we do honor
+    // "If-Modified-Since".
+
+    boolean infinitelyCacheable = isInfinitelyCacheable(path);
+
     InputStream is = null;
     try {
       // Check for up-to-datedness.
@@ -402,11 +417,14 @@ public class GWTShellServlet extends HttpServlet {
       long lastModified = conn.getLastModified();
       if (isNotModified(request, lastModified)) {
         response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+        if (infinitelyCacheable) {
+          response.setHeader(HttpHeaders.CACHE_CONTROL,
+              HttpHeaders.CACHE_CONTROL_MAXAGE_FOREVER);
+        }
         return;
       }
 
       // Set up headers to really send it.
-      //
       response.setStatus(HttpServletResponse.SC_OK);
       long now = new Date().getTime();
       response.setHeader(HttpHeaders.DATE,
@@ -414,13 +432,26 @@ public class GWTShellServlet extends HttpServlet {
       response.setContentType(mimeType);
       String lastModifiedStr = HttpHeaders.toInternetDateFormat(lastModified);
       response.setHeader(HttpHeaders.LAST_MODIFIED, lastModifiedStr);
-      final long jan2nd1980 = 315637200000L;
-      String inThePastStr = HttpHeaders.toInternetDateFormat(jan2nd1980);
-      response.setHeader(HttpHeaders.EXPIRES, inThePastStr);
 
-      // Send the bytes. To keep it simple, we don't compute the length.
-      // This prevents keep-alive.
-      //
+      // Expiration header. Either immediately stale (requiring an
+      // "If-Modified-Since") or infinitely cacheable (not requiring even a
+      // freshness check).
+      String maxAgeStr;
+      if (infinitelyCacheable) {
+        maxAgeStr = HttpHeaders.CACHE_CONTROL_MAXAGE_FOREVER;
+      } else {
+        maxAgeStr = HttpHeaders.CACHE_CONTROL_MAXAGE_EXPIRED;
+      }
+      response.setHeader(HttpHeaders.CACHE_CONTROL, maxAgeStr);
+
+      // Content length.
+      int contentLength = conn.getContentLength();
+      if (contentLength >= 0) {
+        response.setHeader(HttpHeaders.CONTENT_LENGTH,
+            Integer.toString(contentLength));
+      }
+
+      // Send the bytes.
       is = foundResource.openStream();
       streamOut(is, response.getOutputStream(), 1024 * 8);
     } finally {
@@ -436,19 +467,19 @@ public class GWTShellServlet extends HttpServlet {
   }
 
   /**
-   * Generates a nocache file on the fly. Note that the nocache file that is
+   * Generates a module.js file on the fly. Note that the nocache file that is
    * generated that can only be used for hosted mode. It cannot produce a web
    * mode version, since this servlet doesn't know strong names, since by
    * definition of "hosted mode" JavaScript hasn't been compiled at this point.
    */
-  private String genSelectionPage(TreeLogger logger, String moduleName)
+  private String genSelectionScript(TreeLogger logger, String moduleName)
       throws UnableToCompleteException {
-    String msg = "Generating a selector page for module " + moduleName;
+    String msg = "Generating a selection script for module " + moduleName;
     logger.log(TreeLogger.TRACE, msg, null);
 
     ModuleDef moduleDef = getModuleDef(logger, moduleName);
     SelectionScriptGenerator gen = new SelectionScriptGenerator(moduleDef);
-    return gen.generateSelectionScript();
+    return gen.generateSelectionScript(false);
   }
 
   private synchronized TreeLogger getLogger() {
@@ -665,6 +696,20 @@ public class GWTShellServlet extends HttpServlet {
     mimeTypes.put("Z", "application/x-compress");
     mimeTypes.put("z", "application/x-compress");
     mimeTypes.put("zip", "application/zip");
+  }
+
+  /**
+   * A file is infinitely cacheable if it ends with ".cache.xxx", where "xxx"
+   * can be any extension.
+   */
+  private boolean isInfinitelyCacheable(String path) {
+    int lastDot = path.lastIndexOf('.');
+    if (lastDot >= 0) {
+      if (path.substring(0, lastDot).endsWith(".cache")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

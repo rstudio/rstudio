@@ -37,10 +37,10 @@ public class DefaultPropertyProvider extends PropertyProvider {
    * were to include the selector script in the host page itself rather than in
    * an iframe.
    */
-  public DefaultPropertyProvider(Property property) {
-    super(property);
+  public DefaultPropertyProvider(ModuleDef module, Property property) {
+    super(module, property);
     String src = "function () {";
-    src += "return parent.__gwt_getMetaProperty(\"";
+    src += "return _gwt_getMetaProperty(\"";
     src += property.getName();
     src += "\"); }";
     setBody(parseFunction(src));

@@ -224,6 +224,10 @@ public class ModuleDef {
     return (String[]) entryPointTypeNames.toArray(new String[n]);
   }
 
+  public synchronized String getFunctionName() {
+    return name.replace('.', '_');
+  }
+
   public synchronized String getName() {
     return name;
   }
@@ -379,7 +383,7 @@ public class ModuleDef {
           if (prop.getProvider() == null) {
             // Create a default provider.
             //
-            prop.setProvider(new DefaultPropertyProvider(prop));
+            prop.setProvider(new DefaultPropertyProvider(this, prop));
           }
         } else {
           prop.setActiveValue(knownValues[0]);

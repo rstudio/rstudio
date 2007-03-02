@@ -49,11 +49,11 @@ public class ModuleDefSchema extends Schema {
 
     protected final String __define_property_2_values = null;
 
+    protected final String __entry_point_1_class = null;
+
     protected final String __extend_property_1_name = null;
 
     protected final String __extend_property_2_values = null;
-
-    protected final String __entry_point_1_class = null;
 
     protected final String __generate_with_1_class = null;
 
@@ -145,7 +145,7 @@ public class ModuleDefSchema extends Schema {
     }
 
     protected Schema __property_provider_begin(Property property) {
-      property.setProvider(new PropertyProvider(property));
+      property.setProvider(new PropertyProvider(moduleDef, property));
       return fChild = new PropertyProviderBodySchema();
     }
 
@@ -211,12 +211,12 @@ public class ModuleDefSchema extends Schema {
     protected void __script_end(String src) throws UnableToCompleteException {
       ScriptReadyBodySchema childSchema = (ScriptReadyBodySchema) fChild;
       String js = childSchema.getScriptReadyBlock();
-      if (js == null) {
+      if (js != null) {
         // This is a problem.
         //
         logger.log(
-            TreeLogger.ERROR,
-            "Injected scripts require an associated JavaScript block that indicates when the corresponding script is fully loaded and ready for use",
+            TreeLogger.WARN,
+            "Injected scripts no longer require an associated JavaScript block.",
             null);
         throw new UnableToCompleteException();
       }
@@ -773,4 +773,4 @@ public class ModuleDefSchema extends Schema {
   }
 
 }
-//CHECKSTYLE_NAMING_ON
+// CHECKSTYLE_NAMING_ON
