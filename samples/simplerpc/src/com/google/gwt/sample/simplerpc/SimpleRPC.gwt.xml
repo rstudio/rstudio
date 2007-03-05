@@ -1,0 +1,6 @@
+<module>
+	<inherits name='com.google.gwt.user.User'/>
+	<entry-point class='com.google.gwt.sample.simplerpc.client.SimpleRPC'/>
+	<servlet path='/simpleRPC' class='com.google.gwt.sample.simplerpc.server.SimpleRPCServiceImpl'/>
+</module>
+
