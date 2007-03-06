@@ -1274,7 +1274,9 @@ public class GenerateJavaAST {
 
       for (int i = 0; i < nameRefs.size(); ++i) {
         JsNameRef nameRef = (JsNameRef) nameRefs.get(i);
-        JSourceInfo info = translateInfo(nameRef.getInfo());
+        JSourceInfo info = nativeMethod.getSourceInfo();
+        // TODO: make this tighter when we have real source info
+        // JSourceInfo info = translateInfo(nameRef.getInfo());
         String ident = nameRef.getIdent();
         HasEnclosingType node = (HasEnclosingType) program.jsniMap.get(ident);
         if (node == null) {
