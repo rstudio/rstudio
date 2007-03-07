@@ -15,21 +15,23 @@
 ##
 # Target settings
 ##
-MOZ_SRC=/usr/local/google/home/jat/src/mozilla
-JAVA_HOME=/usr/lib/j2sdk1.5-sun
-GWT_TOOLS=../../../gwt-tools
+#JAVA_HOME
+#JAVA_HOME=/usr/lib/j2sdk1.5-sun
+
+# set GWT_TOOLS only if it is not already defined
+GWT_TOOLS ?= ../../../tools
 
 GWT_ROOT = ../../
 OBJDIR  := $(GWT_ROOT)build/out/jni/linux/
 OUTDIR  := $(GWT_ROOT)build/jni/linux/
-STAGING := $(GWT_ROOT)build/staging/gwt-linux-0.0.0/
 OUT     := $(OUTDIR)libgwt-ll.so
 
 ##
 # The location to get .class files from for javah
 ##
 CLASSDIR := $(GWT_ROOT)build/out/dev/linux/bin
-# use this if you want to use eclipse to build the class files during
+
+# use this instead if you want to use eclipse to build the class files during
 # development
 #CLASSDIR := $(GWT_ROOT)eclipse/dev/linux/bin
 
@@ -40,7 +42,7 @@ CXX      := g++
 AR       := ar
 STRIP    := strip
 LD       := $(CXX)
-JAVAH    := javah
+JAVAH    := $(JAVA_HOME)/bin/javah
 
 ##
 # List of source, object, and dependency paths plus the path to them
@@ -85,9 +87,8 @@ LDFLAGS  := -ggdb -m32 -s -fPIC -fno-omit-frame-pointer -fno-strict-aliasing -D_
 # default rule
 ##
 all: $(OUT)
-	@[ -d $(STAGING) ] || mkdir -p $(STAGING)
-	cp $(OUT) $(STAGING)
 
+# install into prebuilt directory
 install: $(OUT)
 	cp $(OUT) prebuilt/
 
@@ -109,8 +110,8 @@ $(OBJDIR)JsValueMoz.h : $(CLASSDIR)/com/google/gwt/dev/shell/moz/JsValueMoz.clas
 # Dependency rules for generated headers
 # TODO(jat): autogenerate these and others
 ##
-$(OBJDIR)LowLevelMoz.o: $(OBJDIR)LowLevelMoz.h
-$(OBJDIR)JsValueMoz.o: $(OBJDIR)JsValueMoz.h
+$(OBJDIR)LowLevelMoz.o: $(OBJDIR)LowLevelMoz.h $(JAVA_HOME)/include/jni.h
+$(OBJDIR)JsValueMoz.o: $(OBJDIR)JsValueMoz.h $(JAVA_HOME)/include/jni.h
 
 ##
 # Compilation rule for cpp files
@@ -119,6 +120,7 @@ $(OBJDIR)%.o : $(SRCDIR)%.cpp
 	@[ -d $(OBJDIR) ] || mkdir -p $(OBJDIR)
 	$(CXX) -c $(CFLAGS) $(INCS) -o $@ $<
 
+# generate preprocessed output files upon request for debugging
 %.i : $(SRCDIR)%.cpp
 	$(CXX) -E $(CFLAGS) $(INCS) -o $@ $<
 
@@ -128,10 +130,10 @@ $(OBJDIR)%.o : $(SRCDIR)%.cpp
 ##
 # Actual output file
 ##
-$(OUT): $(OBJS)
+$(OUT): $(OBJS) $(GWT_TOOLS)/sdk/mozilla-1.7.12/lib/libxpcomglue_s.a
 	@[ -d $(OUTDIR) ] || mkdir -p $(OUTDIR)
 	$(LD) -shared $(LDFLAGS) $(LIBPATH) -o $@ $^ $(LIBS)
-#	$(STRIP) --strip-unneeded $@
+	$(STRIP) --strip-unneeded $@
 
 ##
 # Clean rule

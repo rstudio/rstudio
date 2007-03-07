@@ -195,7 +195,8 @@ public:
    */
   double getDouble() const {
     jsdouble return_value=0.0;
-    void(JS_ValueToNumber(context_, value_, &return_value)); 
+    // ignore return value -- if it failes, value will remain 0.0
+    JS_ValueToNumber(context_, value_, &return_value); 
     return double(return_value);
   }
   /*

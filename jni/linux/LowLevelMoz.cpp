@@ -340,7 +340,7 @@ Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1executeScriptWithInfo
  */
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1invoke
-    (JNIEnv* env, jclass, int scriptObjInt, jstring methodName, jint jsThisInt,
+    (JNIEnv* env, jclass, jint scriptObjInt, jstring methodName, jint jsThisInt,
      jintArray jsArgsInt, jint jsRetValInt)
 {
   Tracer tracer("LowLevelMoz._invoke");

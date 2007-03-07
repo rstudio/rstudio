@@ -255,9 +255,11 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1conve
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1convertDouble
   (JNIEnv *env, jclass, jdouble jval, jintArray rval) {
     TRACE("ENTER LowLevelSaf__1convertDouble");
+#ifdef ENABLE_TRACING
   char buf[256];
   snprintf(buf, sizeof(buf), " val=%lf", jval);
   TRACE(buf);
+#endif
 
   JSValue *jsval = jsNumber(jval);
   if (!jsval)
@@ -283,9 +285,11 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1conve
   JStringWrap jstr(env, jval);
   if (!jstr.jstr())
     return JNI_FALSE;
+#ifdef ENABLE_TRACING
   char buf[256];
   snprintf(buf, sizeof(buf), " val=%s", jstr.str());
   TRACE(buf);
+#endif
   
   JSValue *jsval = jsString(UString((const UChar*)jstr.jstr(), jstr.length()));
   /*
@@ -298,8 +302,10 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1conve
   if (!jsval)
     return JNI_FALSE;
 
+#ifdef ENABLE_TRACING
   snprintf(buf, sizeof(buf), " return={%08x} ", unsigned(jsval));
   PrintJSValue(jsval, buf);
+#endif
   
   env->SetIntArrayRegion(rval,0,1,(const jint*)&jsval);
   if (env->ExceptionCheck())
@@ -323,9 +329,11 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1execu
   JStringWrap jcode(env, code);
   if (!jcode.jstr())
     return JNI_FALSE;
+#ifdef ENABLE_TRACING
   char buf[1024];
   snprintf(buf, sizeof(buf), " code=%s", jcode.str());
   TRACE(buf);
+#endif
     
   Interpreter* interp = ((ExecState*)execState)->dynamicInterpreter();
   if (!interp)
@@ -354,10 +362,12 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1execu
   JStringWrap jfile(env, file);
   if (!jcode.jstr())
     return JNI_FALSE;
-  
+
+#ifdef ENABLE_TRACING
   char buf[1024];
   snprintf(buf, sizeof(buf), " code=%s, file=%s, line=%d", jcode.str(), jfile.str(), line);
   TRACE(buf);
+#endif
   
   Interpreter* interp = ((ExecState*)execState)->dynamicInterpreter();
   if (!interp)
@@ -463,11 +473,13 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1invok
   if (!jsexecState || !jsScriptObject || !method || !rval)
     return JNI_FALSE;
   JStringWrap jmethod(env, method);
+#ifdef ENABLE_TRACING
   char buf[256];
   snprintf(buf, sizeof(buf), "sciptObject=%08x, method=%s, argc=%d",
       jsScriptObject, jmethod.str(), argc);
   TRACE(buf);
   PrintJSValue((JSValue*)jsthis, " jsthis=");
+#endif
   ExecState* execState = (ExecState*)jsexecState;
 
   JSObject* scriptObj = (JSObject*)jsScriptObject;
@@ -498,9 +510,11 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1invok
     env->GetIntArrayRegion(argv, i, 1, &argi);
     if (env->ExceptionCheck())
       return JNI_FALSE;
+#ifdef ENABLE_TRACING
     snprintf(buf, sizeof(buf), " arg[%d]={%08x} ", i, argi);
     TRACE(buf);
     PrintJSValue((JSValue*)argi, buf);
+#endif
     if (argi) {
       args.append((JSValue*)argi);
     } else {
@@ -510,7 +524,9 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1invok
 
   JSValue* result = func->call(execState, thisObj, args);
   gcProtectNullTolerant(result);
+#ifdef ENABLE_TRACING
   PrintJSValue(result, " return=");
+#endif
   env->SetIntArrayRegion(rval, 0, 1, (jint*)&result);
   if (env->ExceptionCheck())
     return JNI_FALSE;
@@ -685,9 +701,11 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1wrapD
    * out in favor of better memory mgmt scheme.
    */
   gcProtectNullTolerant(wrapper);
+#ifdef ENABLE_TRACING
   char buf[256];
   snprintf(buf, sizeof(buf), " return={%08x} ", unsigned(wrapper));
   PrintJSValue((JSValue*)wrapper, buf);
+#endif
 
     env->SetIntArrayRegion(rval, 0, 1, (jint*)&wrapper);
     if (env->ExceptionCheck())
@@ -722,9 +740,11 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1wrapF
    * out in favor of better memory mgmt scheme.
    */
   gcProtectNullTolerant(wrapper);
+#ifdef ENABLE_TRACING
   char buf[256];
   snprintf(buf, sizeof(buf), " return={%08x} ", unsigned(wrapper));
   PrintJSValue((JSValue*)wrapper, buf);
+#endif
     env->SetIntArrayRegion(rval, 0, 1, (jint*)&wrapper);
     if (env->ExceptionCheck())
         return JNI_FALSE;

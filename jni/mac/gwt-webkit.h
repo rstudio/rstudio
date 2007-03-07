@@ -31,6 +31,10 @@ extern jmethodID gToStringMeth;
 //#define FILETRACE
 //#define JAVATRACE
 
+#if define(FILETRACE) || defined(JAVATRACE)
+#define ENABLE_TRACING
+#endif
+
 #if defined(FILETRACE) && defined(JAVATRACE)
 #define TRACE(s) filetrace(s),javatrace(s)
 #elif defined(FILETRACE)
