@@ -1,0 +1,25 @@
+<html>
+<head><script>
+var $wnd = parent;
+var $doc = $wnd.document;
+var $moduleName;
+</script></head>
+<body>
+<font face='arial' size='-1'>This html file is for hosted mode support.</font>
+<script><!--
+function gwtOnLoad(errFn, modName){
+  $moduleName = modName;
+  if (!external.gwtOnLoad(window, modName)) {
+    if (errFn) {
+      errFn(modName);
+    }
+  }
+}
+
+window.onunload = function() {
+  external.gwtOnLoad(window, null);
+};
+
+var query = window.location.search.substr(1);
+if (query && $wnd[query]) $wnd[query].onScriptLoad();
+--></script></body></html>

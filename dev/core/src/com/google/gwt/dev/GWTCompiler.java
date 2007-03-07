@@ -481,7 +481,8 @@ public class GWTCompiler extends ToolBase {
 
     // Generate the call to tell the bootstrap code that we're ready to go.
     sb.append("\n");
-    sb.append("parent." + moduleFunction + ".onScriptLoad(window);\n");
+    sb.append("if ($wnd." + moduleFunction + ") $wnd." + moduleFunction
+        + ".onScriptLoad();\n");
     sb.append("--></script></body></html>\n");
 
     String s = sb.toString();

@@ -12,29 +12,21 @@
 // License for the specific language governing permissions and limitations under
 // the License.
 // 
-// This startup script should be included in host pages either just after
-// <body> or inside the <head> after module <meta> tags.
+// This startup script is for legacy support and is now deprecated. Instead of
+// using this script, just include the selection script directly.
 //
 (function(){
 	var metas = document.getElementsByTagName("meta");
-
 	for (var i = 0, n = metas.length; i < n; ++i) {
-		var meta = metas[i];
-		var name = meta.getAttribute("name");
-		if (name) {
-			if (name == "gwt:module") {
-				var moduleName = meta.getAttribute("content");
-				if (moduleName) {
-					var eqPos = moduleName.lastIndexOf("=");
-					if (eqPos != -1) {
-						var base = moduleName.substring(0, eqPos);
-						moduleName = moduleName.substring(eqPos + 1);
-						window.__gwt_base = { };
-						window.__gwt_base[moduleName] = base;
-						moduleName = base + '/' + moduleName;
-					}
-					document.write('<script src="' + moduleName + '.nocache.js"></script>');
+		var meta = metas[i], name = meta.getAttribute("name");
+		if (name == "gwt:module") {
+			var content = meta.getAttribute("content");
+			if (content) {
+				var eqPos = content.lastIndexOf("=");
+				if (eqPos != -1) {
+					content = content.substring(0, eqPos) + '/' + content.substring(eqPos + 1);
 				}
+				document.write('<script src="' + content + '.nocache.js"></script>');
 			}
 		}
 	}

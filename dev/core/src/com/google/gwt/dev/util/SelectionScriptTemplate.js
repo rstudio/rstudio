@@ -18,27 +18,33 @@ function __MODULE_FUNC__() {
   // ---------------- INTERNAL GLOBALS ----------------
   
   // Cache symbols locally for good obfuscation
-  var wnd = window;
-  var external = wnd.external;
+  var wnd = window
+  ,doc = document
+  ,external = wnd.external
   
   // These two variables gate calling gwtOnLoad; both must be true to start
-  var scriptsDone, loadDone;
+  ,scriptsDone, loadDone
+  
+  // If non-empty, an alternate base url for this module
+  ,base = ''
   
   // A map of properties that were declared in meta tags
-  var __gwt_metaProps = {};
+  ,metaProps = {}
   
-  // A map of module rebasings
-  var __gwt_base = {};
+  // Maps property names onto sets of legal values for that property.
+  ,values = []
   
-  // These variables contain deferred-binding properties, values, and
-  // providers.
-  //
-  var props = [];
-  var values = [];
-  var providers = [];
+  // Maps property names onto a function to compute that property.
+  ,providers = []
   
-  // Property answers go here
-  var answers = [];
+  // A multi-tier lookup map that uses actual property values to quickly find
+  // the strong name of the cache.js file to load.
+  ,answers = []
+
+  // Error functions.  Default unset in compiled mode, may be set by meta props.
+  ,onLoadErrorFunc, propertyErrorFunc
+  
+  ; // end of global vars
 
   // ------------------ TRUE GLOBALS ------------------
 
@@ -50,31 +56,9 @@ function __MODULE_FUNC__() {
 
   // --------------- INTERNAL FUNCTIONS ---------------
 
-  // The default module load error function; may be overwritten via meta props
-  //
-  function __gwt_onLoadError() {
-    alert('Failed to load module __MODULE_NAME__' +
-      '".\nPlease see the log in the development shell for details.');
-  }
-
-  // The default bad property error function; may be overwritten via meta props
-  //
-  function __gwt_onPropertyError(propName, allowedValues, badValue) {
-    var msg = 'While attempting to load module __MODULE_NAME__, property \"'
-      + propName;
-    if (badValue != null) {
-      msg += '\" was set to the unexpected value \"' + badValue + '\"';
-    } else {
-      msg += '\" was not specified';
-    }
-    msg += 'Allowed values: ' + allowedValues;
-    alert(msg);
-  }
-  
-
   function isHostedMode() {
     return (external && external.gwtOnLoad &&
-        (document.location.href.indexOf('gwt.hybrid') == -1));
+        (wnd.location.search.indexOf('gwt.hybrid') == -1));
   }
   
 
@@ -83,66 +67,80 @@ function __MODULE_FUNC__() {
   //
   function maybeStartModule() {
     if (scriptsDone && loadDone) {
-      var iframe = document.getElementById('__MODULE_NAME__');
+      var iframe = doc.getElementById('__MODULE_NAME__');
       var frameWnd = iframe.contentWindow;
       // copy the init handlers function into the iframe
       frameWnd.__gwt_initHandlers = __MODULE_FUNC__.__gwt_initHandlers;
+      // inject hosted mode property evaluation function
+      if (isHostedMode()) {
+        frameWnd.__gwt_getProperty = function(name) {
+          return computePropValue(name);
+        };
+      }
       // remove this whole function from the global namespace to allow GC
       __MODULE_FUNC__ = null;
-      iframe.contentWindow.gwtOnLoad(__gwt_onLoadError, '__MODULE_NAME__');
+      frameWnd.gwtOnLoad(onLoadErrorFunc, '__MODULE_NAME__');
+    }
+  }
+  
+  // Determine our own script's URL via magic :)
+  //
+  function computeScriptBase() {
+    doc.write('<script id="__gwt_marker___MODULE_NAME__"></script>');
+    var markerScript = doc.getElementById("__gwt_marker___MODULE_NAME__");
+    // the previous script element is this script
+    var content = markerScript.previousSibling.src;
+    if (content) {
+      var eq = content.lastIndexOf('/');
+      if (eq >= 0) {
+        base = content.substring(0, eq + 1);
+      }
+      // remove the marker element
+      markerScript.parentNode.removeChild(markerScript);
     }
   }
   
   // Called to slurp up all <meta> tags:
-  // gwt:property, gwt:base, gwt:onPropertyErrorFn, gwt:onLoadErrorFn
+  // gwt:property, gwt:onPropertyErrorFn, gwt:onLoadErrorFn
   //
   function processMetas() {
     var metas = document.getElementsByTagName('meta');
-  
     for (var i = 0, n = metas.length; i < n; ++i) {
-      var meta = metas[i];
-      var name = meta.getAttribute('name');
+      var meta = metas[i], name = meta.getAttribute('name'), content;
   
       if (name) {
         if (name == 'gwt:property') {
-          var content = meta.getAttribute('content');
+          content = meta.getAttribute('content');
           if (content) {
-            var name = content, value = '';
-            var eq = content.indexOf('=');
-            if (eq != -1) {
+            var value, eq = content.indexOf('=');
+            if (eq >= 0) {
               name = content.substring(0, eq);
               value = content.substring(eq+1);
+            } else {
+              name = content;
+              value = '';
             }
-            __gwt_metaProps[name] = value;
+            metaProps[content] = value;
           }
         } else if (name == 'gwt:onPropertyErrorFn') {
-          var content = meta.getAttribute('content');
+          content = meta.getAttribute('content');
           if (content) {
             try {
-              __gwt_onPropertyError = eval(content);
+              propertyErrorFunc = eval(content);
             } catch (e) {
               alert('Bad handler \"' + content +
                 '\" for \"gwt:onPropertyErrorFn\"');
             }
           }
         } else if (name == 'gwt:onLoadErrorFn') {
-          var content = meta.getAttribute('content');
+          content = meta.getAttribute('content');
           if (content) {
             try {
-              __gwt_onLoadError = eval(content);
+              onLoadErrorFunc = eval(content);
             } catch (e) {
               alert('Bad handler \"' + content + '\" for \"gwt:onLoadErrorFn\"');
             }
           }
-        } else if (name == 'gwt:base') {
-          var content = meta.getAttribute('content');
-          var eqPos = content.lastIndexOf('=');
-          if (eqPos == -1) {
-            continue;
-          }
-          var moduleBase = content.substring(0, eqPos);
-          var moduleName = content.substring(eqPos + 1);
-          __gwt_base[moduleName] = moduleBase;
         }
       }
     }
@@ -163,23 +161,41 @@ function __MODULE_FUNC__() {
    * Returns a meta property value, if any.  Used by DefaultPropertyProvider.
    */
   function __gwt_getMetaProperty(name) {
-    var value = __gwt_metaProps[name];
+    var value = metaProps[name];
     return (value == null) ? null : value;
   }
 
-  // Deferred-binding mapper function.
+  // Deferred-binding mapper function.  Sets a value into the several-level-deep
+  // answers map. The keys are specified by a non-zero-length propValArray,
+  // which should be a flat array target property values. Used by the generated
+  // PERMUTATIONS code.
   //
-  function O(a,v) {
+  function unflattenKeylistIntoAnswers(propValArray, value) {
     var answer = answers;
-    var i = -1;
-    var n = a.length - 1;
-    while (++i < n) {
-      if (!(a[i] in answer)) {
-        answer[a[i]] = [];
-      }
-      answer = answer[a[i]];
+    for (var i = 0, n = propValArray.length - 1; i < n; ++i) {
+      // lazy initialize an empty object for the current key if needed
+      answer = answer[propValArray[i]] || (answer[propValArray[i]] = []);
     }
-    answer[a[n]] = v;
+    // set the final one to the value
+    answer[propValArray[n]] = value;
+  }
+  
+  // Computes the value of a given property.  propName must be a valid property
+  // name. Used by the generated PERMUTATIONS code.
+  //
+  function computePropValue(propName) {
+    var value = providers[propName](), allowedValuesMap = values[propName];
+    if (value in allowedValuesMap) {
+      return value;
+    }
+    var allowedValuesList = [];
+    for (var k in allowedValuesMap) {
+      allowedValuesList[allowedValuesMap[k]] = k;
+    }
+    if (propertyErrorFunc) {
+      propertyErrorFunc(propName, allowedValuesList, value);
+    }
+    throw null;
   }
   
   // --------------- PROPERTY PROVIDERS ---------------
@@ -204,55 +220,47 @@ function __MODULE_FUNC__() {
     loadDone = true;
     maybeStartModule();
   }
-  
+
   // --------------- STRAIGHT-LINE CODE ---------------
 
+  // do it early for compile/browse rebasing
+  computeScriptBase();
+  
 // __SHELL_SERVLET_ONLY_BEGIN__
   // Force shell servlet to serve compiled output for web mode
   if (!isHostedMode()) {
-    document.write('<script src="__MODULE_NAME__.nocache.js?compiled"></script>');
+    doc.write('<script src="' + base + '__MODULE_NAME__.nocache.js?compiled"></script>');
     return;
   }
+
+  // Default shell servlet load error function
+  //
+  onLoadErrorFunc = function() {
+    alert('Failed to load module __MODULE_NAME__' +
+      '".\nPlease see the log in the development shell for details.');
+  };
+
+  // Default shell servlet property error function
+  //
+  propertyErrorFunc = function(propName, allowedValues, badValue) {
+    var msg = 'While attempting to load module __MODULE_NAME__, property \"'
+      + propName;
+    if (badValue != null) {
+      msg += '\" was set to the unexpected value \"' + badValue + '\"';
+    } else {
+      msg += '\" was not specified';
+    }
+    msg += 'Allowed values: ' + allowedValues;
+    alert(msg);
+  };
+
 // __SHELL_SERVLET_ONLY_END__
 
   processMetas();
 
   var strongName;
   if (isHostedMode()) {
-    // In hosted mode, inject the script frame directly.
-    var iframe = document.createElement('iframe');
-    iframe.id = '__MODULE_NAME__';
-    iframe.style.width = '0px';
-    iframe.style.height = '0px';
-    iframe.style.border = '0px';
-    document.body.appendChild(iframe);
-
-    iframe.src = 'blank.html';
-    iframe.onload = function() {
-      var frameWnd = iframe.contentWindow;
-      frameWnd.$wnd = wnd;
-      frameWnd.$doc = wnd.document;
-
-      // inject hosted mode property evaluation function
-      frameWnd.__gwt_getProperty = function(name) {
-        return providers[name]();
-      };
-
-      // inject gwtOnLoad
-      frameWnd.gwtOnLoad = function(errFn, modName) {
-        if (!external.gwtOnLoad(frameWnd, modName)) {
-          errFn(modName);
-        }
-      }
-
-      // Hook the iframe's onunload, so that the hosted browser has a chance
-      // to clean up its ModuleSpaces.
-      frameWnd.onunload = function() {
-        external.gwtOnLoad(frameWnd, null);
-      };
-
-      __MODULE_FUNC__.onScriptLoad();
-    };
+    strongName = "hosted.html?__MODULE_FUNC__";
   } else {
     try {
 // __PERMUTATIONS_BEGIN__
@@ -263,19 +271,14 @@ function __MODULE_FUNC__() {
       return;
     }  
 
-	  // TODO: do we still need this query stuff?
-	  var query = location.search;
-	  query = query.substring(0, query.indexOf('&'));
-
-	  var base = __gwt_base['__MODULE_NAME__'];
-	  var newUrl = (base ? base + '/' : '') + strongName + '.cache.html' + query;
-	  document.write('<iframe id="__MODULE_NAME__" style="width:0;height:0;border:0" src="' + newUrl + '"></iframe>');
+    strongName += '.cache.html';
   }
 
+  doc.write('<iframe id="__MODULE_NAME__" style="width:0;height:0;border:0" src="' + base + strongName + '"></iframe>');
 // __MODULE_DEPS_BEGIN__
   // Module dependencies, such as scripts and css
 // __MODULE_DEPS_END__
-  document.write('<script>__MODULE_FUNC__.onInjectionDone(\'__MODULE_NAME__\')</script>');
+  doc.write('<script>__MODULE_FUNC__.onInjectionDone(\'__MODULE_NAME__\')</script>');
 }
 
 // Called from compiled code to hook the window's resize & load events (the
@@ -290,15 +293,18 @@ function __MODULE_FUNC__() {
 // 3) This function will be copied directly into the script frame window!
 //
 __MODULE_FUNC__.__gwt_initHandlers = function(resize, beforeunload, unload) {
-  var wnd = window;
-  var oldOnResize = wnd.onresize;
+  var wnd = window
+  , oldOnResize = wnd.onresize
+  , oldOnBeforeUnload = wnd.onbeforeunload
+  , oldOnUnload = wnd.onunload
+  ;
+
   wnd.onresize = function() {
    resize();
    if (oldOnResize)
      oldOnResize();
   };
   
-  var oldOnBeforeUnload = wnd.onbeforeunload;
   wnd.onbeforeunload = function() {
    var ret = beforeunload();
   
@@ -311,7 +317,6 @@ __MODULE_FUNC__.__gwt_initHandlers = function(resize, beforeunload, unload) {
    return oldRet;
   };
   
-  var oldOnUnload = wnd.onunload;
   wnd.onunload = function() {
    unload();
    if (oldOnUnload)

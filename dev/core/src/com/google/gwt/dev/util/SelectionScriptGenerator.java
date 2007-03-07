@@ -56,10 +56,52 @@ import java.util.Map.Entry;
 public class SelectionScriptGenerator {
 
   private static String cssInjector(String cssUrl) {
-    return "  if (!__gwt_stylesLoaded['" + cssUrl + "']) {\n"
-        + "    __gwt_stylesLoaded['" + cssUrl + "'] = true;\n"
-        + "    document.write('<link rel=\\\"stylesheet\\\" href=\\\"" + cssUrl
-        + "\\\">');\n" + "  }\n";
+    if (isRelativeURL(cssUrl)) {
+      return "  if (!__gwt_stylesLoaded['"
+          + cssUrl
+          + "']) {\n"
+          + "    __gwt_stylesLoaded['"
+          + cssUrl
+          + "'] = true;\n"
+          + "    document.write('<link rel=\\\"stylesheet\\\" href=\\\"'+base+'"
+          + cssUrl + "\\\">');\n" + "  }\n";
+    } else {
+      return "  if (!__gwt_stylesLoaded['" + cssUrl + "']) {\n"
+          + "    __gwt_stylesLoaded['" + cssUrl + "'] = true;\n"
+          + "    document.write('<link rel=\\\"stylesheet\\\" href=\\\""
+          + cssUrl + "\\\">');\n" + "  }\n";
+    }
+  }
+
+  /**
+   * Determines whether or not the URL is relative.
+   * 
+   * @param src the test url
+   * @return <code>true</code> if the URL is relative, <code>false</code> if
+   *         not
+   */
+  private static boolean isRelativeURL(String src) {
+    // A straight absolute url for the same domain, server, and protocol.
+    if (src.startsWith("/")) {
+      return false;
+    }
+
+    // If it can be parsed as a URL, then it's probably absolute.
+    try {
+      URL testUrl = new URL(src);
+
+      // Let's guess that it is absolute (thus, not relative).
+      return false;
+    } catch (MalformedURLException e) {
+      // Do nothing, since it was a speculative parse.
+    }
+
+    // Since none of the above matched, let's guess that it's relative.
+    return true;
+  }
+
+  private static String literal(String lit) {
+    return "\"" + lit + "\"";
   }
 
   private static void replaceAll(StringBuffer buf, String search, String replace) {
@@ -71,10 +113,21 @@ public class SelectionScriptGenerator {
   }
 
   private static String scriptInjector(String scriptUrl) {
-    return "  if (!__gwt_scriptsLoaded['" + scriptUrl + "']) {\n"
-        + "    __gwt_scriptsLoaded['" + scriptUrl + "'] = true;\n"
-        + "    document.write('<script language=\\\"javascript\\\" src=\\\""
-        + scriptUrl + "\\\"></script>');\n" + "  }\n";
+    if (isRelativeURL(scriptUrl)) {
+      return "  if (!__gwt_scriptsLoaded['"
+          + scriptUrl
+          + "']) {\n"
+          + "    __gwt_scriptsLoaded['"
+          + scriptUrl
+          + "'] = true;\n"
+          + "    document.write('<script language=\\\"javascript\\\" src=\\\"'+base+'"
+          + scriptUrl + "\\\"></script>');\n" + "  }\n";
+    } else {
+      return "  if (!__gwt_scriptsLoaded['" + scriptUrl + "']) {\n"
+          + "    __gwt_scriptsLoaded['" + scriptUrl + "'] = true;\n"
+          + "    document.write('<script language=\\\"javascript\\\" src=\\\""
+          + scriptUrl + "\\\"></script>');\n" + "  }\n";
+    }
   }
 
   private final String moduleFunction;
@@ -88,9 +141,7 @@ public class SelectionScriptGenerator {
    * same generated code for the same set of compilations.
    */
   private final Map propertyValuesSetByStrongName = new TreeMap();
-
   private final Scripts scripts;
-
   private final Styles styles;
 
   /**
@@ -208,12 +259,24 @@ public class SelectionScriptGenerator {
       for (Iterator iterator = propValuesSet.iterator(); iterator.hasNext();) {
         String[] propValues = (String[]) iterator.next();
 
-        pw.print("      O([");
+        pw.print("      unflattenKeylistIntoAnswers([");
+        boolean firstPrint = true;
         for (int i = 0; i < orderedProps.length; i++) {
-          if (i > 0) {
-            pw.print(",");
+          Property prop = orderedProps[i];
+          String activeValue = prop.getActiveValue();
+          if (activeValue == null) {
+            // This is a call to a property provider function; we need it to
+            // select the script.
+            //
+            if (!firstPrint) {
+              pw.print(",");
+            }
+            firstPrint = false;
+            pw.print(literal(propValues[i]));
+          } else {
+            // This property was explicitly set at compile-time; we do not need
+            // it.
           }
-          pw.print(literal(propValues[i]));
         }
         pw.print("]");
         pw.print(",");
@@ -253,56 +316,30 @@ public class SelectionScriptGenerator {
         }
         pw.println();
         pw.println("};");
-
-        // Emit a wrapper that verifies that the value is valid.
-        // It is this function that is called directly to get the propery.
-        pw.println();
-        pw.println("props['" + prop.getName() + "'] = function() {");
-        pw.println("  var v = providers['" + prop.getName() + "']();");
-        pw.println("  var ok = values['" + prop.getName() + "'];");
-        // Make sure this is an allowed value; if so, return.
-        pw.println("  if (v in ok)");
-        pw.println("    return v;");
-        // Not an allowed value, so build a nice message and call the handler.
-        pw.println("  var a = new Array(" + knownValues.length + ");");
-        pw.println("  for (var k in ok)");
-        pw.println("    a[ok[k]] = k;");
-        pw.print("  " + moduleFunction + ".onBadProperty(");
-        pw.print(literal(prop.getName()));
-        pw.println(", a, v);");
-        pw.println("  if (arguments.length > 0) throw null; else return null;");
-        pw.println("};");
-        pw.println();
       }
     }
   }
 
   private void genPropValues(PrintWriter pw) {
-    pw.println("      var F;");
-    pw.print("      var I = [");
     for (int i = 0; i < orderedProps.length; i++) {
-      if (i > 0) {
-        pw.print(", ");
-      }
-
       Property prop = orderedProps[i];
       String activeValue = prop.getActiveValue();
       if (activeValue == null) {
-        // This is a call to a property provider function.
+        // This is a call to a property provider function; we need it to
+        // select the script.
         //
         PropertyProvider provider = prop.getProvider();
         assert (provider != null) : "expecting a default property provider to have been set";
         // When we call the provider, we supply a bogus argument to indicate
         // that it should throw an exception if the property is a bad value.
         // The absence of arguments (as in hosted mode) tells it to return null.
-        pw.print("(F=props['" + prop.getName() + "'],F(1))");
+        pw.print("[");
+        pw.print("computePropValue('" + prop.getName() + "')");
+        pw.print("]");
       } else {
-        // This property was explicitly set at compile-time.
-        //
-        pw.print(literal(activeValue));
+        // This property was explicitly set at compile-time; we do not need it.
       }
     }
-    pw.println("];");
   }
 
   /**
@@ -316,8 +353,8 @@ public class SelectionScriptGenerator {
     replaceAll(buf, "__MODULE_FUNC__", moduleFunction);
     replaceAll(buf, "__MODULE_NAME__", moduleName);
 
-    // Remove hosted mode only stuff
     if (orderedProps != null) {
+      // Remove shell servlet only stuff (hosted mode support)
       int startPos = buf.indexOf("// __SHELL_SERVLET_ONLY_BEGIN__");
       int endPos = buf.indexOf("// __SHELL_SERVLET_ONLY_END__");
       buf.delete(startPos, endPos);
@@ -361,14 +398,10 @@ public class SelectionScriptGenerator {
         // Web mode or hosted mode.
         if (orderedProps.length > 0) {
           pw.println();
-          genPropValues(pw);
-          pw.println();
           genAnswers(pw);
           pw.println();
           pw.print("      strongName = answers");
-          for (int i = 0; i < orderedProps.length; i++) {
-            pw.print("[I[" + i + "]]");
-          }
+          genPropValues(pw);
         } else {
           // Rare case of no properties; happens if you inherit from Core
           // alone.
@@ -391,37 +424,6 @@ public class SelectionScriptGenerator {
     }
 
     mainPw.print(buf.toString());
-  }
-
-  /**
-   * Determines whether or not the URL is relative.
-   * 
-   * @param src the test url
-   * @return <code>true</code> if the URL is relative, <code>false</code> if
-   *         not
-   */
-  private boolean isRelativeURL(String src) {
-    // A straight absolute url for the same domain, server, and protocol.
-    if (src.startsWith("/")) {
-      return false;
-    }
-
-    // If it can be parsed as a URL, then it's probably absolute.
-    try {
-      URL testUrl = new URL(src);
-
-      // Let's guess that it is absolute (thus, not relative).
-      return false;
-    } catch (MalformedURLException e) {
-      // Do nothing, since it was a speculative parse.
-    }
-
-    // Since none of the above matched, let's guess that it's relative.
-    return true;
-  }
-
-  private String literal(String lit) {
-    return "\"" + lit + "\"";
   }
 
 }
