@@ -52,6 +52,7 @@ public class TypeMap {
       InternalCompilerException ice = new InternalCompilerException(
           "Failed to get JNode");
       ice.addNode(binding.getClass().getName(), binding.toString(), null);
+      throw ice;
     }
     return result;
   }
