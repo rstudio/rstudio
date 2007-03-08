@@ -313,9 +313,9 @@ public class GWTShellServlet extends HttpServlet {
     response.setContentType("text/html");
     PrintWriter writer = response.getWriter();
     writer.println("<html><head>");
-    writer.print("<meta name='gwt:module' content='");
+    writer.print("<script language='javascript' src='");
     writer.print(parts.moduleName);
-    writer.println("'>");
+    writer.println(".nocache.js'></script>");
 
     // Create a property for each query param.
     //
@@ -334,7 +334,6 @@ public class GWTShellServlet extends HttpServlet {
 
     writer.println("</head><body>");
     writer.println("<iframe id='__gwt_historyFrame' style='width:0;height:0;border:0'></iframe>");
-    writer.println("<script language='javascript' src='gwt.js'></script>");
     writer.println("</body></html>");
 
     // Done.
