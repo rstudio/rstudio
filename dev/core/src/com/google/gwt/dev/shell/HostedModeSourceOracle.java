@@ -41,6 +41,8 @@ public class HostedModeSourceOracle extends StandardSourceOracle {
       sb.append("    void onUncaughtException(Throwable e);\n");
       sb.append("  }\n");
 
+      sb.append("  private static String sModuleBaseURL = null;\n");
+
       // Hosted mode default to logging
       //
       sb.append("  private static UncaughtExceptionHandler sUncaughtExceptionHandler = \n");
@@ -97,7 +99,10 @@ public class HostedModeSourceOracle extends StandardSourceOracle {
       // Proxy getModuleBaseURL() to the Impl class.
       //
       sb.append("  public static String getModuleBaseURL() {\n");
-      sb.append("    return Impl.getModuleBaseURL();\n");
+      sb.append("    if (sModuleBaseURL == null) {\n");
+      sb.append("      sModuleBaseURL = Impl.getModuleBaseURL();\n");
+      sb.append("    }\n");
+      sb.append("    return sModuleBaseURL;\n");
       sb.append("  }\n");
 
       // Proxy log().

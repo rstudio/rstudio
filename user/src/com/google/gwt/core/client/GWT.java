@@ -35,6 +35,9 @@ public final class GWT {
     void onUncaughtException(Throwable e);
   }
 
+  // cache of the module base URL
+  private static String sModuleBaseURL = null;
+  
   // web mode default is to let the exception go
   // hosted mode default is to log the exception to the log window
   private static UncaughtExceptionHandler sUncaughtExceptionHandler = null;
@@ -74,7 +77,10 @@ public final class GWT {
    * @return if non-empty, the base URL is guaranteed to end with a slash
    */
   public static String getModuleBaseURL() {
-    return Impl.getModuleBaseURL();
+    if (sModuleBaseURL == null) {
+      sModuleBaseURL = Impl.getModuleBaseURL();
+    }
+    return sModuleBaseURL;
   }
 
  /**
