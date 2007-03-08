@@ -37,7 +37,7 @@ public final class GWT {
 
   // cache of the module base URL
   private static String sModuleBaseURL = null;
-  
+
   // web mode default is to let the exception go
   // hosted mode default is to log the exception to the log window
   private static UncaughtExceptionHandler sUncaughtExceptionHandler = null;
@@ -60,7 +60,7 @@ public final class GWT {
     /*
      * In hosted mode, this whole class definition is replaced at runtime with
      * an implementation defined by the hosting environment. Maintainers: see
-     * {@link com.google.gwt.dev.shell.HostedModeSourceOracle#CU_Meta}.
+     * HostedModeSourceOracle.cuMeta}.
      * 
      * In web mode, the compiler directly replaces calls to this method with a
      * new Object() type expression of the correct rebound type.
@@ -69,7 +69,7 @@ public final class GWT {
         "GWT has not been properly initialized; if you are running a unit test, check that your test case extends GWTTestCase");
   }
 
- /**
+  /**
    * Gets the URL prefix of the module which should be prepended to URLs that
    * are intended to be module-relative, such as RPC entry points and files in
    * the module's public path.
@@ -83,14 +83,14 @@ public final class GWT {
     return sModuleBaseURL;
   }
 
- /**
+  /**
    * Gets the name of the running module.
    */
   public static native String getModuleName() /*-{
    return $moduleName;
    }-*/;
 
- /**
+  /**
    * Gets the class name of the specified object, as would be returned by
    * <code>o.getClass().getName()</code>.
    * 
@@ -108,9 +108,8 @@ public final class GWT {
    * on entry to get the active handler. If the active handler is null, the
    * entry point must allow exceptions to escape into the browser. If the
    * handler is non-null, exceptions must be caught and routed to the handler.
-   * See the source code for
-   * <code>{@link com.google.gwt.user.client.DOM}.dispatchEvent()</code> for
-   * an example of how to handle this correctly.
+   * See the source code for <code>DOM.dispatchEvent()</code> for an example
+   * of how to handle this correctly.
    * 
    * @return the currently active handler, or null if no handler is active.
    */
