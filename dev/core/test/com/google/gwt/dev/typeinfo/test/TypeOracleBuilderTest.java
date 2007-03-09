@@ -233,7 +233,7 @@ public class TypeOracleBuilderTest extends TestCase {
    * Tweak this if you want to see the log output.
    */
   private TreeLogger createTreeLogger() {
-    boolean reallyLog = true;
+    boolean reallyLog = false;
     if (reallyLog) {
       AbstractTreeLogger logger = new PrintWriterTreeLogger();
       logger.setMaxDetail(TreeLogger.ALL);

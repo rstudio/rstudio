@@ -3,8 +3,10 @@ package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.jjs.test.ClassCastTestCase;
 import com.google.gwt.dev.jjs.test.CompilerTest;
+import com.google.gwt.dev.jjs.test.Coverage;
 import com.google.gwt.dev.jjs.test.HostedTest;
 import com.google.gwt.dev.jjs.test.InnerClassTest;
+import com.google.gwt.dev.jjs.test.InnerOuterSuperTest;
 import com.google.gwt.dev.jjs.test.MethodBindTest;
 import com.google.gwt.dev.jjs.test.MethodCallTest;
 import com.google.gwt.dev.jjs.test.MethodInterfaceTest;
@@ -31,6 +33,8 @@ public class CompilerSuite {
     suite.addTestSuite(MethodBindTest.class);
     suite.addTestSuite(MiscellaneousTest.class);
     suite.addTestSuite(TestBlankInterface.class);
+    suite.addTestSuite(InnerOuterSuperTest.class);
+    suite.addTestSuite(Coverage.class);
     // $JUnit-END$
 
     return suite;
