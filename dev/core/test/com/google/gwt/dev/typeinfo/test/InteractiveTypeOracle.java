@@ -50,11 +50,12 @@ public class InteractiveTypeOracle {
     // See if we should create a gui logger.
     //
     for (int i = 0; i < args.length; i++) {
-      if ("-gui".equals(args[i])) {
-        logger = TreeLoggerWidget.getAsDetachedWindow(
-          "Interactive Type Oracle Log", 700, 600, true);
-        break;
-      }
+      // TODO: this was removed to avoid making an SWT dependency from test code
+      // if ("-gui".equals(args[i])) {
+      // logger = TreeLoggerWidget.getAsDetachedWindow(
+      // "Interactive Type Oracle Log", 700, 600, true);
+      // break;
+      // }
     }
 
     if (logger == null) {
@@ -132,7 +133,7 @@ public class InteractiveTypeOracle {
 
     if (currType == null && handler.requiresCurrentType()) {
       logger.log(TreeLogger.WARN,
-        "This command requires a current type to be selected", null);
+          "This command requires a current type to be selected", null);
       return false;
     }
 
@@ -198,8 +199,7 @@ public class InteractiveTypeOracle {
       for (int i = 0; i < cmdTokens.length; i++) {
         String cmdToken = cmdTokens[i];
         if (sublogger == null) {
-          sublogger = logger
-            .branch(TreeLogger.INFO, "Available commands", null);
+          sublogger = logger.branch(TreeLogger.INFO, "Available commands", null);
         }
         sublogger.log(TreeLogger.INFO, cmdToken, null);
       }
@@ -233,7 +233,7 @@ public class InteractiveTypeOracle {
 
       currType = type;
       logger.log(TreeLogger.INFO, "Current type is now "
-        + type.getQualifiedSourceName(), null);
+          + type.getQualifiedSourceName(), null);
       return true;
     }
 
@@ -253,7 +253,7 @@ public class InteractiveTypeOracle {
         logger.log(TreeLogger.WARN, "No arguments expected", null);
         logger.log(TreeLogger.INFO, "Usage: subtypes", null);
         logger.log(TreeLogger.INFO, "Prints all subtypes of the current type",
-          null);
+            null);
         return false;
       }
 
@@ -265,10 +265,10 @@ public class InteractiveTypeOracle {
       for (int i = 0; i < subtypes.length; i++) {
         if (sublogger == null) {
           sublogger = logger.branch(TreeLogger.INFO, "Subtypes of " + typename,
-            null);
+              null);
         }
         sublogger.log(TreeLogger.INFO, subtypes[i].getQualifiedSourceName(),
-          null);
+            null);
       }
 
       return true;
@@ -290,7 +290,7 @@ public class InteractiveTypeOracle {
         logger.log(TreeLogger.WARN, "No arguments expected", null);
         logger.log(TreeLogger.INFO, "Usage: fields", null);
         logger.log(TreeLogger.INFO, "Prints the fields of the current type",
-          null);
+            null);
         return false;
       }
 
@@ -301,7 +301,7 @@ public class InteractiveTypeOracle {
       for (int i = 0; i < fields.length; i++) {
         if (sublogger == null) {
           sublogger = logger.branch(TreeLogger.INFO, "Fields of " + typename,
-            null);
+              null);
         }
         sublogger.log(TreeLogger.INFO, fields[i].toString(), null);
       }
@@ -325,7 +325,7 @@ public class InteractiveTypeOracle {
         logger.log(TreeLogger.WARN, "No arguments expected", null);
         logger.log(TreeLogger.INFO, "Usage: methods", null);
         logger.log(TreeLogger.INFO, "Prints the methods of the current type",
-          null);
+            null);
         return false;
       }
 
@@ -336,7 +336,7 @@ public class InteractiveTypeOracle {
       for (int i = 0; i < methods.length; i++) {
         if (sublogger == null) {
           sublogger = logger.branch(TreeLogger.INFO, "Methods of " + typename,
-            null);
+              null);
         }
         sublogger.log(TreeLogger.INFO, methods[i].toString(), null);
       }
@@ -360,7 +360,7 @@ public class InteractiveTypeOracle {
         logger.log(TreeLogger.WARN, "No arguments expected", null);
         logger.log(TreeLogger.INFO, "Usage: nested", null);
         logger.log(TreeLogger.INFO,
-          "Prints the nested types of the current type", null);
+            "Prints the nested types of the current type", null);
         return false;
       }
 
@@ -371,7 +371,7 @@ public class InteractiveTypeOracle {
       for (int i = 0; i < nestedTypes.length; i++) {
         if (sublogger == null) {
           sublogger = logger.branch(TreeLogger.INFO, "Types nested inside "
-            + typename, null);
+              + typename, null);
         }
         sublogger.log(TreeLogger.INFO, nestedTypes[i].toString(), null);
       }
@@ -414,7 +414,7 @@ public class InteractiveTypeOracle {
         logger.log(TreeLogger.WARN, "Bad arguments " + mushed, e);
       } catch (TypeOracleException e) {
         logger.log(TreeLogger.WARN,
-          "Some other type oracle exception while parsing " + mushed, e);
+            "Some other type oracle exception while parsing " + mushed, e);
       }
 
       return true;
@@ -436,14 +436,14 @@ public class InteractiveTypeOracle {
         logger.log(TreeLogger.WARN, "No arguments", null);
         logger.log(TreeLogger.INFO, "Usage: enclosing", null);
         logger.log(TreeLogger.INFO,
-          "Prints the enclosing type of the current type", null);
+            "Prints the enclosing type of the current type", null);
         return false;
       }
 
       JClassType enclosingType = currType.getEnclosingType();
       if (enclosingType != null) {
         logger.log(TreeLogger.INFO, enclosingType.getQualifiedSourceName(),
-          null);
+            null);
       }
 
       return true;
@@ -465,7 +465,7 @@ public class InteractiveTypeOracle {
         logger.log(TreeLogger.WARN, "No arguments", null);
         logger.log(TreeLogger.INFO, "Usage: ctors", null);
         logger.log(TreeLogger.INFO,
-          "Prints the constructors of the current type", null);
+            "Prints the constructors of the current type", null);
         return false;
       }
 
@@ -476,7 +476,7 @@ public class InteractiveTypeOracle {
       for (int i = 0; i < ctors.length; i++) {
         if (sublogger == null) {
           sublogger = logger.branch(TreeLogger.INFO, "Constructors of "
-            + typename, null);
+              + typename, null);
         }
         sublogger.log(TreeLogger.INFO, ctors[i].toString(), null);
       }
@@ -500,8 +500,8 @@ public class InteractiveTypeOracle {
         logger.log(TreeLogger.WARN, "One argument is expected", null);
         logger.log(TreeLogger.INFO, "Usage: overloads <method-name>", null);
         logger.log(TreeLogger.INFO,
-          "Prints the overloads of a particular method in the current type",
-          null);
+            "Prints the overloads of a particular method in the current type",
+            null);
         return false;
       }
 
@@ -512,7 +512,7 @@ public class InteractiveTypeOracle {
       for (int i = 0; i < overloads.length; i++) {
         if (sublogger == null) {
           sublogger = logger.branch(TreeLogger.INFO, "Overloads in " + typename
-            + " of " + args[0], null);
+              + " of " + args[0], null);
         }
         sublogger.log(TreeLogger.INFO, overloads[i].toString(), null);
       }
@@ -535,13 +535,12 @@ public class InteractiveTypeOracle {
         logger.log(TreeLogger.WARN, "No arguments", null);
         logger.log(TreeLogger.INFO, "Usage: supertypes", null);
         logger.log(TreeLogger.INFO,
-          "Prints the hierarchy of supertypes of the current type", null);
+            "Prints the hierarchy of supertypes of the current type", null);
         return false;
       }
 
       String typename = currType.getQualifiedSourceName();
-      logger = logger
-        .branch(TreeLogger.INFO, "Supertypes of " + typename, null);
+      logger = logger.branch(TreeLogger.INFO, "Supertypes of " + typename, null);
       printSupertypesImpl(logger, currType);
       return true;
     }
