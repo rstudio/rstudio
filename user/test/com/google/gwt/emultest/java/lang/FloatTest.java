@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,21 +18,21 @@ package com.google.gwt.emultest.java.lang;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
+/**
+ * TODO: document me.
+ */
 public class FloatTest extends GWTTestCase {
 
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
-  public void testFloatConstants(){
-      assertTrue(Float.isNaN(Float.NaN));
-      assertTrue(Float.isInfinite(Float.NEGATIVE_INFINITY));
-      assertTrue(Float.isInfinite(Float.POSITIVE_INFINITY));
-      assertTrue(Float.NEGATIVE_INFINITY < Float.POSITIVE_INFINITY);
-      assertFalse(Float.NaN == Float.NaN);
-    
+  public void testFloatConstants() {
+    assertTrue(Float.isNaN(Float.NaN));
+    assertTrue(Float.isInfinite(Float.NEGATIVE_INFINITY));
+    assertTrue(Float.isInfinite(Float.POSITIVE_INFINITY));
+    assertTrue(Float.NEGATIVE_INFINITY < Float.POSITIVE_INFINITY);
+    assertFalse(Float.NaN == Float.NaN);
   }
 
-
-  
 }

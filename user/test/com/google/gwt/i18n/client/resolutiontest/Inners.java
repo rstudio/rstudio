@@ -63,7 +63,6 @@ public class Inners {
     }
   }
 
- 
   /**
    * Test Extension of Inner Inner.
    */
@@ -138,21 +137,18 @@ public class Inners {
       public String string() {
         return "piglatin";
       }
-
     }
 
     /** Tests Protected Inner Class. */
     public String testExtendsAnotherInner() {
-      ExtendsAnotherInner clazz = (ExtendsAnotherInner) GWT
-        .create(ExtendsAnotherInner.class);
+      ExtendsAnotherInner clazz = (ExtendsAnotherInner) GWT.create(ExtendsAnotherInner.class);
       Map answer = clazz.extendsAnotherInner();
       return answer.toString();
     }
 
     /** Test for ExtendProtectedInner. */
     public String testExtendsProtectedInner() {
-      ExtendProtectedInner inner = (ExtendsAnotherInner.ExtendProtectedInner) GWT
-        .create(ExtendProtectedInner.class);
+      ExtendProtectedInner inner = (ExtendsAnotherInner.ExtendProtectedInner) GWT.create(ExtendProtectedInner.class);
       return inner.extendProtectedInner();
     }
 

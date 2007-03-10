@@ -1,12 +1,30 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Timer;
 
+/**
+ * TODO: document me.
+ */
 public class FormPanelTest extends GWTTestCase {
-  public static boolean clicked=false;
+  public static boolean clicked = false;
+
   public String getModuleName() {
     return "com.google.gwt.user.UserTest";
   }
@@ -33,7 +51,7 @@ public class FormPanelTest extends GWTTestCase {
         // The server just echoes the contents of the request. The following
         // string should have been present in it.
         assertTrue(event.getResults().indexOf(
-          "Content-Disposition: form-data; name=\"file0\";") != -1);
+            "Content-Disposition: form-data; name=\"file0\";") != -1);
         finishTest();
       }
 
@@ -82,8 +100,8 @@ public class FormPanelTest extends GWTTestCase {
     lb.setSelectedIndex(1);
     lb.setName("lb");
 
-    Hidden h = new Hidden("h","v");
-    
+    Hidden h = new Hidden("h", "v");
+
     FlowPanel panel = new FlowPanel();
     panel.add(tb);
     panel.add(ptb);
@@ -97,14 +115,14 @@ public class FormPanelTest extends GWTTestCase {
     RootPanel.get().add(form);
 
     delayTestFinish(5000);
-    
+
     form.addFormHandler(new FormHandler() {
       public void onSubmitComplete(FormSubmitCompleteEvent event) {
         // The server just echoes the query string. This is what it should look
         // like.
         assertTrue(event.getResults().equals(
-          "tb=text&ptb=password&cb1=on&rb0=on&lb=value1&h=v"));
-        
+            "tb=text&ptb=password&cb1=on&rb0=on&lb=value1&h=v"));
+
         finishTest();
       }
 

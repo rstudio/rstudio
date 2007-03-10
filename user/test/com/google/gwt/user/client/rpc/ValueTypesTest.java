@@ -1,13 +1,29 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
-
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
+/**
+ * TODO: document me.
+ */
 public class ValueTypesTest extends GWTTestCase {
   private static final int TEST_DELAY = 5000;
-  
+
   public String getModuleName() {
     return "com.google.gwt.user.RPCSuite";
   }
@@ -109,7 +125,7 @@ public class ValueTypesTest extends GWTTestCase {
       public void onSuccess(Object result) {
         assertNotNull(result);
         assertEquals((char) (Character.MAX_VALUE / (char) 2),
-          ((Character) result).charValue());
+            ((Character) result).charValue());
         finishTest();
       }
     });
@@ -412,7 +428,7 @@ public class ValueTypesTest extends GWTTestCase {
     if (primitiveTypeTestService == null) {
       primitiveTypeTestService = (ValueTypesTestServiceAsync) GWT.create(ValueTypesTestService.class);
       ((ServiceDefTarget) primitiveTypeTestService).setServiceEntryPoint(GWT.getModuleBaseURL()
-        + "valuetypes");
+          + "valuetypes");
     }
     return primitiveTypeTestService;
   }

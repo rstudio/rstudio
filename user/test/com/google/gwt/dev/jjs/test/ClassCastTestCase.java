@@ -17,6 +17,9 @@ package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
+/**
+ * TODO: document me.
+ */
 public class ClassCastTestCase extends GWTTestCase {
 
   static class Apple extends Food implements CanEatRaw {

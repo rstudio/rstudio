@@ -24,6 +24,11 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
+//CHECKSTYLE_NAMING_OFF
+
+/**
+ * TODO: document me.
+ */
 public class HostedTest extends GWTTestCase {
 
   static String sFoo(String s) {
@@ -224,6 +229,10 @@ public class HostedTest extends GWTTestCase {
    * binary name.
    */
   protected static class A {
+    
+    /**
+     * TODO: document me.
+     */
     public static class B {
       int b = 1;
       public native int getUsingSourceRef() /*-{
@@ -258,7 +267,7 @@ public class HostedTest extends GWTTestCase {
       // should have thrown an exception in hosted mode,
       // so fail unless we are in web mode
       assertTrue(GWT.isScript());
-    } catch(IllegalArgumentException e) {
+    } catch (IllegalArgumentException e) {
       // expected exception
     }
   }
@@ -379,8 +388,8 @@ public class HostedTest extends GWTTestCase {
   jsniK()
   /*-{
   }-*/;
-
+  
   /*-{ try to mess with compiler }-*/
-  private native void jsniL()/*-{}-*/;
+  private native void jsniL()/*-{}-*/ ;
 
 }

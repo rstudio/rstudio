@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.xml.client;
 
 import com.google.gwt.junit.client.GWTTestCase;
@@ -43,22 +57,22 @@ public class XMLTest extends GWTTestCase {
     DocumentFragment createDocumentFragment = d.createDocumentFragment();
     Element elementWithChildren = d.createElement("elementWithChildren");
     ProcessingInstruction createProcessingInstruction = d.createProcessingInstruction(
-      "target", "processing instruction data");
+        "target", "processing instruction data");
     Text createTextNode = d.createTextNode("sample text node");
     // TODO: what is "all" for?
-    List all = asList(new Node[]{
-      createCDATA, createComment, createDocumentFragment, elementWithChildren,
-      createProcessingInstruction, createTextNode});
-    List canHaveChildren = asList(new Node[]{
-      createDocumentFragment, elementWithChildren});
-    List canBeChildren = asList(new Node[]{
-      createCDATA, createComment, elementWithChildren,
-      createProcessingInstruction, createTextNode});
+    List all = asList(new Node[] {
+        createCDATA, createComment, createDocumentFragment,
+        elementWithChildren, createProcessingInstruction, createTextNode});
+    List canHaveChildren = asList(new Node[] {
+        createDocumentFragment, elementWithChildren});
+    List canBeChildren = asList(new Node[] {
+        createCDATA, createComment, elementWithChildren,
+        createProcessingInstruction, createTextNode});
 
     for (int i = 0; i < canHaveChildren.size(); i++) {
       Node parent = (Node) canHaveChildren.get(i);
       Node cloneParent = parent.cloneNode(false);
-      if(canBeChildren.contains(parent)) {
+      if (canBeChildren.contains(parent)) {
         d.appendChild(cloneParent);
       }
       for (int j = 0; j < canBeChildren.size(); j++) {
@@ -69,7 +83,7 @@ public class XMLTest extends GWTTestCase {
         Node clonedChild = cloneParent.getChildNodes().item(j);
         Node hopefullySameChild = (Node) canBeChildren.get(j);
         assertEquals(hopefullySameChild.cloneNode(false).toString(),
-          clonedChild.toString());
+            clonedChild.toString());
       }
       Node deepClonedNode = parent.cloneNode(true);
       assertEquals(parent.toString(), deepClonedNode.toString());
@@ -77,16 +91,15 @@ public class XMLTest extends GWTTestCase {
     XMLParser.removeWhitespace(d);
     if (XMLParser.supportsCDATASection()) {
       assertEquals("<elementWithChildren>" + "<![CDATA[sampl<<< >>e data]]>"
-        + "<!--a sample comment-->" + "<elementWithChildren/>"
-        + "<?target processing instruction data?>" + "sample text node"
-        + "</elementWithChildren>", d.toString());
+          + "<!--a sample comment-->" + "<elementWithChildren/>"
+          + "<?target processing instruction data?>" + "sample text node"
+          + "</elementWithChildren>", d.toString());
     } else {
       // Opera does not support CDATASection nodes
       assertEquals("<elementWithChildren>" + "sample data"
-        + "<!--a sample comment-->" + "<elementWithChildren/>"
-        + "<?target processing instruction data?>" + "sample text node"
-        + "</elementWithChildren>", d.toString());
-
+          + "<!--a sample comment-->" + "<elementWithChildren/>"
+          + "<?target processing instruction data?>" + "sample text node"
+          + "</elementWithChildren>", d.toString());
     }
   }
 
@@ -134,11 +147,11 @@ public class XMLTest extends GWTTestCase {
 
   public void testPrefix() {
     Document d = XMLParser.parse("<?xml version=\"1.0\"?>\r\n"
-      + "<!-- both namespace prefixes are available throughout -->\r\n"
-      + "<bk:book xmlns:bk=\'urn:loc.gov:books\'\r\n"
-      + "         xmlns:isbn=\'urn:ISBN:0-395-36341-6\'>\r\n"
-      + "    <bk:title>Cheaper by the Dozen</bk:title>\r\n"
-      + "    <isbn:number>1568491379</isbn:number>\r\n" + "</bk:book>");
+        + "<!-- both namespace prefixes are available throughout -->\r\n"
+        + "<bk:book xmlns:bk=\'urn:loc.gov:books\'\r\n"
+        + "         xmlns:isbn=\'urn:ISBN:0-395-36341-6\'>\r\n"
+        + "    <bk:title>Cheaper by the Dozen</bk:title>\r\n"
+        + "    <isbn:number>1568491379</isbn:number>\r\n" + "</bk:book>");
     assertEquals(d.getDocumentElement().getNodeName(), "bk:book");
     assertEquals(d.getDocumentElement().getPrefix(), "bk");
     assertEquals(d.getElementsByTagName("book").getLength(), 1);
@@ -149,25 +162,25 @@ public class XMLTest extends GWTTestCase {
     Document d = createTestDocument();
     Element documentElement = d.getDocumentElement();
     assertEquals("getPreviousSibling", documentElement.getPreviousSibling(),
-      d.getChildNodes().item(0));
+        d.getChildNodes().item(0));
     assertEquals("getNextSibling", documentElement.getNextSibling(),
-      d.getChildNodes().item(2));
+        d.getChildNodes().item(2));
     assertEquals("getDocumentElement", documentElement, d.getChildNodes().item(
-      1));
+        1));
     assertEquals("getTagName", documentElement.getTagName(), "doc");
     NodeList documentElementChildNodes = documentElement.getChildNodes();
     int deChildNodesLength = documentElementChildNodes.getLength();
     assertEquals("getFirstChild", documentElement.getFirstChild(),
-      documentElementChildNodes.item(0));
+        documentElementChildNodes.item(0));
     assertEquals("getLastChild", documentElement.getLastChild(),
-      documentElementChildNodes.item(deChildNodesLength - 1));
+        documentElementChildNodes.item(deChildNodesLength - 1));
     assertEquals("getNextSibling2",
-      documentElement.getFirstChild().getNextSibling(),
-      documentElementChildNodes.item(1));
+        documentElement.getFirstChild().getNextSibling(),
+        documentElementChildNodes.item(1));
 
     assertEquals("getPreviousSibling2",
-      documentElement.getLastChild().getPreviousSibling(),
-      documentElementChildNodes.item(deChildNodesLength - 2));
+        documentElement.getLastChild().getPreviousSibling(),
+        documentElementChildNodes.item(deChildNodesLength - 2));
   }
 
   public void testNode() {
@@ -196,7 +209,7 @@ public class XMLTest extends GWTTestCase {
     Document d = XMLParser.parse("<!--hello-->   <a spam=\"ham\">\n  <?pi hello ?>dfgdfg  <b/>\t</a>");
     XMLParser.removeWhitespace(d);
     assertEquals("<!--hello--><a spam=\"ham\"><?pi hello ?>dfgdfg  <b/></a>",
-      d.toString());
+        d.toString());
     try {
       XMLParser.parse("<<<");
       fail();
@@ -215,8 +228,8 @@ public class XMLTest extends GWTTestCase {
 
   public void testText() {
     Document d = createTestDocument();
-    List textLikeNodes = Arrays.asList(new Node[]{
-      d.createTextNode(""), d.createCDATASection(""), d.createComment("")});
+    List textLikeNodes = Arrays.asList(new Node[] {
+        d.createTextNode(""), d.createCDATASection(""), d.createComment("")});
     StringBuffer b = new StringBuffer();
     for (char i = 32; i < 30000; i++) {
       b.append(i);
@@ -225,14 +238,14 @@ public class XMLTest extends GWTTestCase {
       CharacterData textLike = (CharacterData) iter.next();
       textLike.setData(b.toString());
       assertEquals("initialLength type:" + textLike.getNodeType(), 30000 - 32,
-        textLike.getLength());
+          textLike.getLength());
       assertEquals("initialEquals", textLike.getData(), b.toString());
     }
     for (int i = 32; i < 29900; i += 100) {
       for (Iterator iter = textLikeNodes.iterator(); iter.hasNext();) {
         CharacterData textLike = (CharacterData) iter.next();
         assertEquals("substring type:" + textLike.getNodeType() + " count: "
-          + i, b.substring(i, i + 100), textLike.substringData(i, 100));
+            + i, b.substring(i, i + 100), textLike.substringData(i, 100));
       }
     }
     for (Iterator iter = textLikeNodes.iterator(); iter.hasNext();) {
@@ -241,9 +254,9 @@ public class XMLTest extends GWTTestCase {
       textLike.deleteData(100, 100);
       bTemp.delete(100, 200);
       assertEquals("deleteLength type:" + textLike.getNodeType(),
-        bTemp.length(), textLike.getData().length());
+          bTemp.length(), textLike.getData().length());
       assertEquals("deleteEquals type:" + textLike.getNodeType(),
-        bTemp.toString(), textLike.getData());
+          bTemp.toString(), textLike.getData());
       bTemp.setLength(0);
     }
     for (Iterator iter = textLikeNodes.iterator(); iter.hasNext();) {
@@ -253,9 +266,9 @@ public class XMLTest extends GWTTestCase {
       textLike.replaceData(50, 100, " ");
       bTemp.replace(50, 150, " ");
       assertEquals("replaceLength type:" + textLike.getNodeType(),
-        bTemp.length(), textLike.getData().length());
+          bTemp.length(), textLike.getData().length());
       assertEquals("replaceEquals type:" + textLike.getNodeType(),
-        bTemp.toString(), textLike.getData());
+          bTemp.toString(), textLike.getData());
       bTemp.setLength(0);
     }
     for (Iterator iter = textLikeNodes.iterator(); iter.hasNext();) {
@@ -269,17 +282,17 @@ public class XMLTest extends GWTTestCase {
     Text t = (Text) d.getDocumentElement().getChildNodes().item(3);
     Text rightT = t.splitText(5);
     assertEquals("t and leftT parent equality", t.getParentNode(),
-      rightT.getParentNode());
+        rightT.getParentNode());
     assertEquals("leftT.getPreviousSibling", rightT.getPreviousSibling(), t);
     assertEquals("t.length", t.getData().length(), 5);
     assertEquals("leftT.length", rightT.getData().length(), 5);
     assertEquals("t data", t.getData(), "01234");
     assertEquals("LeftT data", rightT.getData(), "56789");
     CDATASection cd = (CDATASection) d.getDocumentElement().getChildNodes().item(
-      5);
+        5);
     Text rightCD = cd.splitText(5);
     assertEquals("cd and leftCd parent equality", cd.getParentNode(),
-      rightCD.getParentNode());
+        rightCD.getParentNode());
     assertEquals("leftCD.getPreviousSibling", rightCD.getPreviousSibling(), cd);
     assertEquals("cd length", cd.getData().length(), 5);
     assertEquals("leftCD.length", rightCD.getData().length(), 5);
@@ -288,10 +301,10 @@ public class XMLTest extends GWTTestCase {
     d.getDocumentElement().normalize();
     if (XMLParser.supportsCDATASection()) {
       assertEquals("normalized t", d.getDocumentElement().getChildNodes().item(
-        3).toString(), "0123456789");
+          3).toString(), "0123456789");
     } else {
       assertEquals("normalized t", d.getDocumentElement().getChildNodes().item(
-        3).toString(), "0123456789abcdefghij");
+          3).toString(), "0123456789abcdefghij");
     }
   }
 
@@ -306,7 +319,7 @@ public class XMLTest extends GWTTestCase {
     top.setAttribute("numAttributes", "2");
     d.appendChild(top);
     ProcessingInstruction commentBefore = d.createProcessingInstruction(
-      "target", "some data");
+        "target", "some data");
     d.insertBefore(commentBefore, top);
     Comment commentAfter = d.createComment("after the element");
     d.insertBefore(commentAfter, null);

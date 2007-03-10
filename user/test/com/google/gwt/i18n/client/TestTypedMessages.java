@@ -16,6 +16,9 @@
 
 package com.google.gwt.i18n.client;
 
+/**
+ * TODO: document me.
+ */
 public interface TestTypedMessages extends Messages {
 
   /**
@@ -25,20 +28,19 @@ public interface TestTypedMessages extends Messages {
   public String testAllTypes(int a, float f, long l, boolean bool, Object obj,
       char c, byte b, short s);
 
-  /* testLotsOfInts = {0}, {1},{2},{3} * */
+  // testLotsOfInts = {0}, {1},{2},{3}
   public String testLotsOfInts(int a, int b, int c, int d);
 
-  /** testSomeObjectTypes = this({0}), StringBuffer({1}), Integer({2}), null{3}); */
+  // testSomeObjectTypes = this({0}), StringBuffer({1}), Integer({2}), null{3});
   public String testSomeObjectTypes(I18NTest test, StringBuffer buf, Integer i,
       Object giveMeANull);
 
-  /** testSingleQuotes = ''A'', ''{0}'', '',''' */
+  // testSingleQuotes = ''A'', ''{0}'', '','''
   public String testSingleQuotes(String someArg);
 
-  /** simpleMessageTest={0}( */
+  // simpleMessageTest={0}
   String simpleMessageTest(float arg);
 
-  /** stringEscaping= "'\ \\ \\\ & \t \n\r\"\' \ end */
+  // stringEscaping= "'\ \\ \\\ & \t \n\r\"\' \ end
   String stringEscaping(int a);
-
 }

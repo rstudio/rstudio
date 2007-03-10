@@ -16,7 +16,9 @@
 
 package com.google.gwt.i18n.client;
 
-
+/**
+ * TODO: document me.
+ */
 public interface TestBinding extends Localizable {
   String a();
 
@@ -46,7 +48,6 @@ class Wrapper {
     public String b() {
       return "b";
     }
-
   }
 
   static class TestBinding_ implements TestBinding {
@@ -61,13 +62,13 @@ class Wrapper {
   }
 }
 
-class Wrapper2{
-   public abstract static class TestBindingImpl implements Localizable{
+class Wrapper2 {
+  public abstract static class TestBindingImpl implements Localizable {
     abstract String a();
 
     abstract String b();
   }
-   
+
   static class TestBindingImpl_a extends TestBindingImpl_b_C_d {
     public String a() {
       return "a";
@@ -78,12 +79,13 @@ class Wrapper2{
     public String a() {
       return "b_c_d";
     }
-    public String b(){
+
+    public String b() {
       return "b_c_d";
     }
   }
 
-  static class TestBinding  extends  TestBindingImpl {
+  static class TestBinding extends TestBindingImpl {
 
     public String a() {
       return "never should be here";
@@ -92,7 +94,6 @@ class Wrapper2{
     public String b() {
       return "never should be here";
     }
-
   }
 
   static class TestBindingImpl_ extends TestBindingImpl {
@@ -106,4 +107,3 @@ class Wrapper2{
     }
   }
 }
-

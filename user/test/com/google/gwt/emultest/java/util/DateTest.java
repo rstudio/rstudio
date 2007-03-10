@@ -1,16 +1,34 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.emultest.java.util;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Date;
 
+/**
+ * TODO: document me.
+ */
 public class DateTest extends GWTTestCase {
   public static final String CURRENT = "CURRENT";
   public static final long DAY_MILLISECONDS_SHIFT = 27;
   public static final String FUTURE = "FUTURE";
   public static final String PAST = "PAST";
   public static final long SECOND_MILLISECONDS_SHIFT = 10;
+
   /** Sets module name so that javascript compiler can operate */
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
@@ -95,7 +113,6 @@ public class DateTest extends GWTTestCase {
     Object a2 = accum2.clone();
     assertFalse(a2 == accum2);
     assertEquals(a2, accum2);
-
   }
 
   /** Testing for public int java.util.Date.compareTo(java.util.Date)* */
@@ -232,15 +249,14 @@ public class DateTest extends GWTTestCase {
     // /////////////////////////////
     Date accum1 = create(PAST);
     long a1 = accum1.getTime();
-    assertEquals(-2839795200000l, a1);
+    assertEquals(-2839795200000L, a1);
 
     // /////////////////////////////
     // Future
     // /////////////////////////////
     Date accum2 = create(FUTURE);
     long a2 = accum2.getTime();
-    assertEquals(1293678245000l, a2);
-
+    assertEquals(1293678245000L, a2);
   }
 
   /** Testing for public int java.util.Date.getTimezoneOffset()* */
@@ -299,7 +315,7 @@ public class DateTest extends GWTTestCase {
     Date accum1 = create(PAST);
     String arg20 = createString(PAST);
     long a1 = Date.parse(arg20);
-    assertEquals(-2840140800000l, a1);
+    assertEquals(-2840140800000L, a1);
 
     // /////////////////////////////
     // Future
@@ -307,14 +323,15 @@ public class DateTest extends GWTTestCase {
     Date accum2 = create(FUTURE);
     String arg30 = createString(FUTURE);
     long a2 = Date.parse(arg30);
-    assertEquals(1293678245000l, a2);
-
+    assertEquals(1293678245000L, a2);
   }
 
   /** Testing for public void java.util.Date.setDate(int)* */
   public void testSetDate() {
-    // We only go through dates from 0-28 here. There are some months that do not
-    // have 29, 30, or 31 days - so our assertion would be wrong in the cases where
+    // We only go through dates from 0-28 here. There are some months that do
+    // not
+    // have 29, 30, or 31 days - so our assertion would be wrong in the cases
+    // where
     // the current month did not have 29,30,or 31 days
     for (int i = 1; i < 29; i++) {
       Date accum0 = create();
@@ -323,9 +340,11 @@ public class DateTest extends GWTTestCase {
     }
   }
 
-  /** Testing to that if we set the day number to 31 for a month that only has 30 days in it,
-      that the date rolls over to the first day of the next month in sequence.
-  */
+  /**
+   * Testing to that if we set the day number to 31 for a month that only has 30
+   * days in it, that the date rolls over to the first day of the next month in
+   * sequence.
+   */
   public void testInvalidDateForMonth() {
     int monthNum = 3; // April
     int numDaysInOldMonth = 30;
@@ -343,7 +362,6 @@ public class DateTest extends GWTTestCase {
       accum0.setHours(i);
       assertEquals(accum0.getHours(), i);
     }
-
   }
 
   /** Testing for public void java.util.Date.setMinutes(int)* */
@@ -358,21 +376,23 @@ public class DateTest extends GWTTestCase {
   /** Testing for public void java.util.Date.setMonth(int)* */
   public void testSetMonth() {
     for (int i = 0; i < 12; i++) {
-      // We want to use a fixed date here. If we use the current date, the assertion may fail
-      // when the date is the 29th, 30th, or 31st, and we set the month to one which does
+      // We want to use a fixed date here. If we use the current date, the
+      // assertion may fail
+      // when the date is the 29th, 30th, or 31st, and we set the month to one
+      // which does
       // not have 29, 30, or 31 days in it, respectively.
       Date accum0 = new Date(2006, 12, 1);
       accum0.setMonth(i);
       assertEquals(accum0.getMonth(), i);
     }
-
   }
 
-  /** We want to test to see that if we are currently in a month with 31 days and we
-      set the month to one which has less than 31 days, that the month returned by the
-      date class will be one higher than the month that we originally set (according to
-      the spec of java.util.date)
-  */
+  /**
+   * We want to test to see that if we are currently in a month with 31 days and
+   * we set the month to one which has less than 31 days, that the month
+   * returned by the date class will be one higher than the month that we
+   * originally set (according to the spec of java.util.date)
+   */
   public void testSetInvalidMonthForDate() {
     int dayNum = 31;
     int newMonthNum = 1;
@@ -394,7 +414,7 @@ public class DateTest extends GWTTestCase {
 
   /** Testing for public void java.util.Date.setTime(long)* */
   public void testSetTime() {
-    long[] values = new long[]{-100000000000l, -100l, 0, 100l, 1000000000l};
+    long[] values = new long[] {-100000000000L, -100L, 0, 100L, 1000000000L};
     for (int i = 0; i < values.length; i++) {
       Date accum0 = create();
       accum0.setTime(values[i]);
@@ -405,7 +425,8 @@ public class DateTest extends GWTTestCase {
   /** Testing for public void java.util.Date.setYear(int)* */
   public void testSetYear() {
     for (int i = 1880; i < 2050; i++) {
-      // We want to use a fixed date here. If we use the current date, the assertion may fail
+      // We want to use a fixed date here. If we use the current date, the
+      // assertion may fail
       // when the date is February 29th, and we set the year to a non-leap year
       Date accum0 = new Date(2006, 12, 01);
       accum0.setYear(i);
@@ -413,9 +434,11 @@ public class DateTest extends GWTTestCase {
     }
   }
 
-  /** We want to test to see that if the date is Feb 29th (in a leap year) and we set the
-      year to a non-leap year, that the month and day will roll over to March 1st.
-  */
+  /**
+   * We want to test to see that if the date is Feb 29th (in a leap year) and we
+   * set the year to a non-leap year, that the month and day will roll over to
+   * March 1st.
+   */
   public void testSetInvalidYearForDate() {
     int dayNum = 29;
     int monthNum = 1; // February
@@ -428,12 +451,13 @@ public class DateTest extends GWTTestCase {
     assertEquals(leapYearDate.getDate(), dayNum - numDaysInFebInNewYear);
   }
 
-  /** We want to test to see that if the date is Feb 29th (in a leap year) and we set the
-      year to another leap year, that the month and day will be retained
-  */
+  /**
+   * We want to test to see that if the date is Feb 29th (in a leap year) and we
+   * set the year to another leap year, that the month and day will be retained
+   */
   public void testSetValidLeapYearForDate() {
     int dayNum = 29;
-    int monthNum = 1; //February
+    int monthNum = 1; // February
     int yearNum = 2004;
     int newYearNum = yearNum + 4;
     Date leapYearDate = new Date(yearNum, monthNum, dayNum);
@@ -441,7 +465,7 @@ public class DateTest extends GWTTestCase {
     assertEquals(leapYearDate.getYear(), newYearNum);
     assertEquals(leapYearDate.getMonth(), monthNum);
     assertEquals(leapYearDate.getDate(), dayNum);
- }
+  }
 
   /** Testing for public java.lang.String java.util.Date.toGMTString()* */
   public void testToGMTString() {

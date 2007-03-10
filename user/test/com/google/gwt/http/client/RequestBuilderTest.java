@@ -1,14 +1,21 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
-
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.http.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.http.client.RequestException;
-import com.google.gwt.http.client.RequestPermissionException;
-import com.google.gwt.http.client.Request;
-import com.google.gwt.http.client.Response;
-import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -29,12 +36,15 @@ public class RequestBuilderTest extends GWTTestCase {
    * Test method for
    * {@link com.google.gwt.http.client.RequestBuilder#RequestBuilder(java.lang.String, java.lang.String)}.
    * <p>
-   * NOTE: When running this test against Internet Explorer, the security settings of IE affect this test.
-   * The assumption is  that the "Access Data Sources Across Domains" setting is set to "Disabled". This is
-   * the standard setting for the "Internet" zone, which models the case of a user's browser sending a request
-   * to a foreign website. However, if you are running the unit tests against a machine running the GWT app which
-   * falls into your "Trusted Sites" or "Local Network" content zone, this setting's value is different.
-   * You will have to change the setting to "Disabled" in these zones for this test to pass.
+   * NOTE: When running this test against Internet Explorer, the security
+   * settings of IE affect this test. The assumption is that the "Access Data
+   * Sources Across Domains" setting is set to "Disabled". This is the standard
+   * setting for the "Internet" zone, which models the case of a user's browser
+   * sending a request to a foreign website. However, if you are running the
+   * unit tests against a machine running the GWT app which falls into your
+   * "Trusted Sites" or "Local Network" content zone, this setting's value is
+   * different. You will have to change the setting to "Disabled" in these zones
+   * for this test to pass.
    * <p>
    * Test Cases:
    * <ul>
@@ -230,7 +240,7 @@ public class RequestBuilderTest extends GWTTestCase {
           + "setRequestHeader");
       builder.setHeader("Foo", "Bar");
       builder.setHeader("Foo", "Bar1");
-      
+
       builder.sendRequest(null, new RequestCallback() {
         public void onError(Request request, Throwable exception) {
           fail("HTTPRequest timed out");

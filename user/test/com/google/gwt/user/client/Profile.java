@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,14 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
- 
-
 package com.google.gwt.user.client;
 
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 
+/**
+ * TODO: document me.
+ */
 public abstract class Profile extends GWTTestCase {
 
   public static String REPORT_TO_BROWSER = "Report to Browser";
@@ -37,8 +38,7 @@ public abstract class Profile extends GWTTestCase {
   private void browserTiming(String s) {
     long elapsed = System.currentTimeMillis() - time;
     RootPanel.get().add(
-      new Label("|" + browser + "|" + s + "|" + elapsed + " milliseconds|"));
-  
+        new Label("|" + browser + "|" + s + "|" + elapsed + " milliseconds|"));
   }
 
   protected void resetTimer() {
@@ -54,7 +54,7 @@ public abstract class Profile extends GWTTestCase {
       browserTiming(s);
     } else if (reportType == REPORT_TO_WIKI) {
       this.addCheckpoint("|" + browser + "|" + s + "|" + elapsed
-        + " milliseconds|");
+          + " milliseconds|");
     } else if (reportType == REPORT_TO_EXCEL) {
       s = s.replace('|', '\t');
       this.addCheckpoint(browser + "\t" + s + "\t" + elapsed);

@@ -1,8 +1,25 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.emultest.java.lang;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
+/**
+ * TODO: document me.
+ */
 public class StringTest extends GWTTestCase {
 
   public String getModuleName() {
@@ -39,7 +56,7 @@ public class StringTest extends GWTTestCase {
     assertEquals(new String(chars, 2, 3), shortString);
     assertEquals(new String(""), "");
     assertEquals(new String(new String(new String(new String("")))), "");
-    assertEquals(new String(new char[]{}), "");
+    assertEquals(new String(new char[] {}), "");
   }
 
   /** tests endsWith */
@@ -137,7 +154,7 @@ public class StringTest extends GWTTestCase {
   public void testReplaceAll() {
     assertEquals("abcdef", "xxxxabcxxdexf".replaceAll("x*", ""));
     assertEquals("1\\1abc123\\123de1234\\1234f", "1abc123de1234f".replaceAll(
-      "([1234]+)", "$1\\\\$1"));
+        "([1234]+)", "$1\\\\$1"));
     assertEquals("\n  \n", "x  x".replaceAll("x", "\n"));
     assertEquals("x  x", "\n  \n".replaceAll("\\\n", "x"));
     assertEquals("x\"\\", "x".replaceAll("x", "\\x\\\"\\\\"));
@@ -146,26 +163,25 @@ public class StringTest extends GWTTestCase {
 
   /** tests split */
   public void testSplit() {
-    compareList("fullSplit", new String[]{"abc", "", "", "de", "f"},
-      "abcxxxdexfxx".split("x"));
-    compareList("emptyRegexSplit", new String[]{
-      "", "a", "b", "c", "x", "x", "d", "e", "x", "f", "x"},
-      "abcxxdexfx".split(""));
-    compareList("2:", "boo:and:foo".split(":", 2), new String[]{
-      "boo", "and:foo"});
-    compareList("5:", "boo:and:foo".split(":", 5), new String[]{
-      "boo", "and", "foo"});
-    compareList("-2:", "boo:and:foo".split(":", -2), new String[]{
-      "boo", "and", "foo"});
-    compareList("5o", "boo:and:foo".split("o", 5), new String[]{
-      "b", "", ":and:f", "", ""});
-    compareList("-2o", "boo:and:foo".split("o", -2), new String[]{
-      "b", "", ":and:f", "", ""});
-    compareList("0o", "boo:and:foo".split("o", 0), new String[]{
-      "b", "", ":and:f"});
-    compareList("0:", "boo:and:foo".split(":", 0), new String[]{
-      "boo", "and", "foo"});
-
+    compareList("fullSplit", new String[] {"abc", "", "", "de", "f"},
+        "abcxxxdexfxx".split("x"));
+    compareList("emptyRegexSplit", new String[] {
+        "", "a", "b", "c", "x", "x", "d", "e", "x", "f", "x"},
+        "abcxxdexfx".split(""));
+    compareList("2:", "boo:and:foo".split(":", 2), new String[] {
+        "boo", "and:foo"});
+    compareList("5:", "boo:and:foo".split(":", 5), new String[] {
+        "boo", "and", "foo"});
+    compareList("-2:", "boo:and:foo".split(":", -2), new String[] {
+        "boo", "and", "foo"});
+    compareList("5o", "boo:and:foo".split("o", 5), new String[] {
+        "b", "", ":and:f", "", ""});
+    compareList("-2o", "boo:and:foo".split("o", -2), new String[] {
+        "b", "", ":and:f", "", ""});
+    compareList("0o", "boo:and:foo".split("o", 0), new String[] {
+        "b", "", ":and:f"});
+    compareList("0:", "boo:and:foo".split(":", 0), new String[] {
+        "boo", "and", "foo"});
   }
 
   /** tests startsWith */
@@ -187,7 +203,7 @@ public class StringTest extends GWTTestCase {
   /** tests toCharArray */
   public void testToCharArray() {
     char[] a1 = "abc".toCharArray();
-    char[] a2 = new char[]{'a', 'b', 'c'};
+    char[] a2 = new char[] {'a', 'b', 'c'};
     for (int i = 0; i < a1.length; i++) {
       assertEquals(a1[i], a2[i]);
     }
@@ -216,7 +232,7 @@ public class StringTest extends GWTTestCase {
     assertEquals(C.CHAR_STRING, String.valueOf(C.CHAR_VALUE));
     assertEquals(C.CHAR_ARRAY_STRING, String.valueOf(C.CHAR_ARRAY_VALUE));
     assertEquals(C.CHAR_ARRAY_STRING_SUB, String.valueOf(C.CHAR_ARRAY_VALUE, 1,
-      4));
+        4));
     assertEquals(C.FALSE_STRING, String.valueOf(C.FALSE_VALUE));
     assertEquals(C.TRUE_STRING, String.valueOf(C.TRUE_VALUE));
   }

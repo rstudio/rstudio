@@ -1,31 +1,47 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.json.client;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
+/**
+ * TODO: document me.
+ */
 public class JSONTest extends GWTTestCase {
-  static final String menuTest =
-      "{\"menu\": {\n" + "  \"id\": \"file\",\n" + "  \"value\": \"File:\",\n"
-        + "  \"popup\": {\n" + "    \"menuitem\": [\n"
-        + "      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},\n"
-        + "      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},\n"
-        + "      {\"value\": \"Close\", \"onclick\": \"CloseDoc()\"}\n"
-        + "    ]\n" + "  }\n" + "}}\n" + "";
+  static final String menuTest = "{\"menu\": {\n" + "  \"id\": \"file\",\n"
+      + "  \"value\": \"File:\",\n" + "  \"popup\": {\n"
+      + "    \"menuitem\": [\n"
+      + "      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},\n"
+      + "      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},\n"
+      + "      {\"value\": \"Close\", \"onclick\": \"CloseDoc()\"}\n"
+      + "    ]\n" + "  }\n" + "}}\n" + "";
 
-  static final String widgetTest =
-      "{\"widget\": {\n"
-        + "    \"debug\": \"on\",\n"
-        + "    \"window\": {\n"
-        + "        \"title\": \"Sample Konfabulator Widget\",        \"name\": \"main_window\",        \"width\": 500,        \"height\": 500\n"
-        + "    },    \"image\": { \n"
-        + "        \"src\": \"Images/Sun.png\",\n"
-        + "        \"name\": \"sun1\",        \"hOffset\": 250,        \"vOffset\": 250,        \"alignment\": \"center\"\n"
-        + "    },    \"text\": {\n"
-        + "        \"data\": \"Click Here\",\n"
-        + "        \"size\": 36,\n"
-        + "        \"style\": \"bold\",        \"name\": \"text1\",        \"hOffset\": 250,        \"vOffset\": 100,        \"alignment\": \"center\",\n"
-        + "        \"onMouseUp\": \"sun1.opacity = (sun1.opacity / 100) * 90;\"\n"
-        + "    }\n" + "}}    \n" + "";
+  static final String widgetTest = "{\"widget\": {\n"
+      + "    \"debug\": \"on\",\n"
+      + "    \"window\": {\n"
+      + "        \"title\": \"Sample Konfabulator Widget\",        \"name\": \"main_window\",        \"width\": 500,        \"height\": 500\n"
+      + "    },    \"image\": { \n"
+      + "        \"src\": \"Images/Sun.png\",\n"
+      + "        \"name\": \"sun1\",        \"hOffset\": 250,        \"vOffset\": 250,        \"alignment\": \"center\"\n"
+      + "    },    \"text\": {\n"
+      + "        \"data\": \"Click Here\",\n"
+      + "        \"size\": 36,\n"
+      + "        \"style\": \"bold\",        \"name\": \"text1\",        \"hOffset\": 250,        \"vOffset\": 100,        \"alignment\": \"center\",\n"
+      + "        \"onMouseUp\": \"sun1.opacity = (sun1.opacity / 100) * 90;\"\n"
+      + "    }\n" + "}}    \n" + "";
 
   /**
    * Returns the module name for GWT unit test running.
@@ -51,17 +67,18 @@ public class JSONTest extends GWTTestCase {
     assertEquals(n, a.get(1));
   }
 
-  /** Test deep recursion of arrays */
+  /**
+   * Test deep recursion of arrays.
+   */
   public void testArrayOfArraysOfArrays() {
     JSONArray array = populateRecursiveArray(3, 5);
     assertEquals(
-      "[[[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]],[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]],[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]]],[[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]],[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]],[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]]],[[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]],[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]],[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]]]]",
-      array.toString());
+        "[[[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]],[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]],[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]]],[[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]],[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]],[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]]],[[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]],[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]],[[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]],[[[],[],[]],[[],[],[]],[[],[],[]]]]]]",
+        array.toString());
     // now to access
     for (int i = 0; i < 5; i++) {
       array = (JSONArray) array.get(0);
     }
-
   }
 
   /**
@@ -78,8 +95,8 @@ public class JSONTest extends GWTTestCase {
     assertTrue("v must be an array", array != null);
     assertEquals("Array size must be 10", 10, array.size());
     for (int i = 0; i < 10; i++) {
-      assertEquals("Array value at " + i + " must be " + i, array.get(i)
-        .isNumber().getValue(), i, 0.001);
+      assertEquals("Array value at " + i + " must be " + i,
+          array.get(i).isNumber().getValue(), i, 0.001);
     }
   }
 
@@ -112,11 +129,9 @@ public class JSONTest extends GWTTestCase {
     charsToEscape[38] = '\t';
     charsToEscape[39] = '/';
     for (int i = 1; i < 40; i++) {
-      o.put("c" + i,
-          new JSONString(new Character(charsToEscape[i]).toString()));
+      o.put("c" + i, new JSONString(new Character(charsToEscape[i]).toString()));
     }
-    assertEquals(
-      "{\"c1\":\"\\u0001\", \"c2\":\"\\u0002\", "
+    assertEquals("{\"c1\":\"\\u0001\", \"c2\":\"\\u0002\", "
         + "\"c3\":\"\\u0003\", \"c4\":\"\\u0004\", \"c5\":\"\\u0005\", "
         + "\"c6\":\"\\u0006\", \"c7\":\"\\u0007\", \"c8\":\"\\b\", "
         + "\"c9\":\"\\t\", \"c10\":\"\\n\", \"c11\":\"\\u000B\", "
@@ -153,41 +168,42 @@ public class JSONTest extends GWTTestCase {
     String s1 = obj.toString();
     String s2 = JSONParser.parse(s1).toString();
     assertEquals(s1, s2);
-    assertEquals("{\"string3\":\"s3\", \"Number3\":3.1, \"Boolean3\":false, "
-      + "\"Null3\":null, \"object3\":{\"string2\":\"s2\", \"Number2\":2.1, "
-      + "\"Boolean2\":true, \"Null2\":null, \"object2\":{\"string1\":\"s1\","
-      + " \"Number1\":1.1, \"Boolean1\":false, \"Null1\":null, \"object1\":{"
-      + "\"string0\":\"s0\", \"Number0\":0.1, \"Boolean0\":true, "
-      + "\"Null0\":null, \"object0\":{}, "
-      + "\"Array0\":[\"s0\",0.1,true,null,{}]}, "
-      + "\"Array1\":[\"s1\",1.1,false,null,{\"string0\":\"s0\", "
-      + "\"Number0\":0.1, \"Boolean0\":true, \"Null0\":null, \"object0\":{}, "
-      + "\"Array0\":[\"s0\",0.1,true,null,{}]}]}, "
-      + "\"Array2\":[\"s2\",2.1,true,null,{\"string1\":\"s1\", "
-      + "\"Number1\":1.1, \"Boolean1\":false, \"Null1\":null, "
-      + "\"object1\":{\"string0\":\"s0\", \"Number0\":0.1, "
-      + "\"Boolean0\":true, \"Null0\":null, \"object0\":{}, "
-      + "\"Array0\":[\"s0\",0.1,true,null,{}]}, "
-      + "\"Array1\":[\"s1\",1.1,false,null,{\"string0\":\"s0\", "
-      + "\"Number0\":0.1, \"Boolean0\":true, \"Null0\":null, "
-      + "\"object0\":{}, \"Array0\":[\"s0\",0.1,true,null,{}]}]}]}, "
-      + "\"Array3\":[\"s3\",3.1,false,null,{\"string2\":\"s2\", "
-      + "\"Number2\":2.1, \"Boolean2\":true, \"Null2\":null, "
-      + "\"object2\":{\"string1\":\"s1\", \"Number1\":1.1, "
-      + "\"Boolean1\":false, \"Null1\":null, \"object1\":{\"string0\":\"s0\","
-      + " \"Number0\":0.1, \"Boolean0\":true, \"Null0\":null, \"object0\":{}, "
-      + "\"Array0\":[\"s0\",0.1,true,null,{}]}, "
-      + "\"Array1\":[\"s1\",1.1,false,null,{\"string0\":\"s0\", "
-      + "\"Number0\":0.1, \"Boolean0\":true, \"Null0\":null, "
-      + "\"object0\":{}, \"Array0\":[\"s0\",0.1,true,null,{}]}]}, "
-      + "\"Array2\":[\"s2\",2.1,true,null,{\"string1\":\"s1\", "
-      + "\"Number1\":1.1, \"Boolean1\":false, \"Null1\":null, "
-      + "\"object1\":{\"string0\":\"s0\", \"Number0\":0.1, "
-      + "\"Boolean0\":true, \"Null0\":null, \"object0\":{}, "
-      + "\"Array0\":[\"s0\",0.1,true,null,{}]}, "
-      + "\"Array1\":[\"s1\",1.1,false,null,{\"string0\":\"s0\", "
-      + "\"Number0\":0.1, \"Boolean0\":true, \"Null0\":null, \"object0\":{},"
-      + " \"Array0\":[\"s0\",0.1,true,null,{}]}]}]}]}", obj.toString());
+    assertEquals(
+        "{\"string3\":\"s3\", \"Number3\":3.1, \"Boolean3\":false, "
+            + "\"Null3\":null, \"object3\":{\"string2\":\"s2\", \"Number2\":2.1, "
+            + "\"Boolean2\":true, \"Null2\":null, \"object2\":{\"string1\":\"s1\","
+            + " \"Number1\":1.1, \"Boolean1\":false, \"Null1\":null, \"object1\":{"
+            + "\"string0\":\"s0\", \"Number0\":0.1, \"Boolean0\":true, "
+            + "\"Null0\":null, \"object0\":{}, "
+            + "\"Array0\":[\"s0\",0.1,true,null,{}]}, "
+            + "\"Array1\":[\"s1\",1.1,false,null,{\"string0\":\"s0\", "
+            + "\"Number0\":0.1, \"Boolean0\":true, \"Null0\":null, \"object0\":{}, "
+            + "\"Array0\":[\"s0\",0.1,true,null,{}]}]}, "
+            + "\"Array2\":[\"s2\",2.1,true,null,{\"string1\":\"s1\", "
+            + "\"Number1\":1.1, \"Boolean1\":false, \"Null1\":null, "
+            + "\"object1\":{\"string0\":\"s0\", \"Number0\":0.1, "
+            + "\"Boolean0\":true, \"Null0\":null, \"object0\":{}, "
+            + "\"Array0\":[\"s0\",0.1,true,null,{}]}, "
+            + "\"Array1\":[\"s1\",1.1,false,null,{\"string0\":\"s0\", "
+            + "\"Number0\":0.1, \"Boolean0\":true, \"Null0\":null, "
+            + "\"object0\":{}, \"Array0\":[\"s0\",0.1,true,null,{}]}]}]}, "
+            + "\"Array3\":[\"s3\",3.1,false,null,{\"string2\":\"s2\", "
+            + "\"Number2\":2.1, \"Boolean2\":true, \"Null2\":null, "
+            + "\"object2\":{\"string1\":\"s1\", \"Number1\":1.1, "
+            + "\"Boolean1\":false, \"Null1\":null, \"object1\":{\"string0\":\"s0\","
+            + " \"Number0\":0.1, \"Boolean0\":true, \"Null0\":null, \"object0\":{}, "
+            + "\"Array0\":[\"s0\",0.1,true,null,{}]}, "
+            + "\"Array1\":[\"s1\",1.1,false,null,{\"string0\":\"s0\", "
+            + "\"Number0\":0.1, \"Boolean0\":true, \"Null0\":null, "
+            + "\"object0\":{}, \"Array0\":[\"s0\",0.1,true,null,{}]}]}, "
+            + "\"Array2\":[\"s2\",2.1,true,null,{\"string1\":\"s1\", "
+            + "\"Number1\":1.1, \"Boolean1\":false, \"Null1\":null, "
+            + "\"object1\":{\"string0\":\"s0\", \"Number0\":0.1, "
+            + "\"Boolean0\":true, \"Null0\":null, \"object0\":{}, "
+            + "\"Array0\":[\"s0\",0.1,true,null,{}]}, "
+            + "\"Array1\":[\"s1\",1.1,false,null,{\"string0\":\"s0\", "
+            + "\"Number0\":0.1, \"Boolean0\":true, \"Null0\":null, \"object0\":{},"
+            + " \"Array0\":[\"s0\",0.1,true,null,{}]}]}]}]}", obj.toString());
   }
 
   public void testNumberBasics() {
@@ -216,7 +232,7 @@ public class JSONTest extends GWTTestCase {
   }
 
   /**
-   * Tests an object whose keys are filled out with numbers, like {"a":
+   * Tests an object whose keys are filled out with numbers, like {"a":1}.
    */
   public void testObjectOfNumbers() {
     JSONObject obj = new JSONObject();
@@ -229,8 +245,8 @@ public class JSONTest extends GWTTestCase {
     assertTrue("v must be an object", objIn != null);
     assertEquals("Object size must be 10", 10, objIn.keySet().size());
     for (int i = 0; i < 10; i++) {
-      assertEquals("Object value at 'Object " + i + "' must be " + i, objIn
-        .get("Object " + i).isNumber().getValue(), i, 0.001);
+      assertEquals("Object value at 'Object " + i + "' must be " + i,
+          objIn.get("Object " + i).isNumber().getValue(), i, 0.001);
     }
   }
 
@@ -259,23 +275,23 @@ public class JSONTest extends GWTTestCase {
     } catch (JSONException e) {
     }
     assertEquals("\"null\" should be null JSONValue", JSONNull.getInstance(),
-      JSONParser.parse("null"));
-    assertEquals("5 should be JSONNumber 5", 5d, JSONParser.parse("5")
-      .isNumber().getValue(), 0.001);
+        JSONParser.parse("null"));
+    assertEquals("5 should be JSONNumber 5", 5d,
+        JSONParser.parse("5").isNumber().getValue(), 0.001);
     assertEquals("\"null\" should be null JSONValue", JSONNull.getInstance(),
-      JSONParser.parse("null"));
+        JSONParser.parse("null"));
     JSONValue somethingHello = JSONParser.parse("[{\"something\":\"hello\"}]");
     JSONArray somethingHelloArray = somethingHello.isArray();
     assertTrue("somethingHello must be a JSONArray",
-      somethingHelloArray != null);
+        somethingHelloArray != null);
     assertTrue("somethingHello size must be one",
-      somethingHelloArray.size() == 1);
+        somethingHelloArray.size() == 1);
     JSONObject somethingHelloObject = somethingHelloArray.get(0).isObject();
     assertTrue("somethingHello element 0 must be a JSONObject",
-      somethingHelloObject != null);
+        somethingHelloObject != null);
     assertTrue("somethingHello element 0 must have hello for key something",
-      somethingHelloObject.get("something").isString().stringValue().equals(
-        "hello"));
+        somethingHelloObject.get("something").isString().stringValue().equals(
+            "hello"));
   }
 
   public void testSimpleNested() {
@@ -294,9 +310,8 @@ public class JSONTest extends GWTTestCase {
     j3.put("j2", j2);
 
     assertEquals(
-      "{\"j1\":{\"test1\":\"\"}, \"j2\":{\"test1\":\"\", \"j2_2\":{\"test1_2\":\"\"}}}",
-      j3.toString());
-
+        "{\"j1\":{\"test1\":\"\"}, \"j2\":{\"test1\":\"\", \"j2_2\":{\"test1_2\":\"\"}}}",
+        j3.toString());
   }
 
   public void testStringBasics() {
@@ -371,7 +386,6 @@ public class JSONTest extends GWTTestCase {
       newArray.set(i, childArray);
     }
     return newArray;
-
   }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
@@ -23,9 +22,12 @@ import com.google.gwt.user.client.ui.TreeItem.ContentPanel;
 
 import java.util.Iterator;
 
+/**
+ * TODO: document me.
+ */
 public class TreeTest extends GWTTestCase {
- public void testClear() {
-   Tree t = new Tree();
+  public void testClear() {
+    Tree t = new Tree();
     // Adding widget to end of tree, widgets still have their parents set
     // correctly.
     TreeItem a = new TreeItem("a");
@@ -44,31 +46,30 @@ public class TreeTest extends GWTTestCase {
     t.addItem("hello");
     t.addItem(eLabel);
     t.clear();
-   assertFalse(t.treeItemIterator().hasNext());
-   assertEquals(0, t.getChildWidgets().size());
+    assertFalse(t.treeItemIterator().hasNext());
+    assertEquals(0, t.getChildWidgets().size());
   }
-  
-  public void testNulls(){
+
+  public void testNulls() {
     // Checking for setting the widget null then clearing the tree.
     Tree t = new Tree();
     TreeItem item = new TreeItem();
     item.setWidget(null);
     t.clear();
-    
+
     TreeItem a = t.addItem("");
-    TreeItem b =t.addItem(new Label("b"));
+    TreeItem b = t.addItem(new Label("b"));
     a.setWidget(null);
     b.setWidget(null);
-    
   }
-  
+
   public void testSwap() {
     Tree t = new Tree();
 
     // Start with text.
     TreeItem item = t.addItem("hello");
-    String inner =  DOM.getInnerHTML(item.getContentElem());
-    assertTrue(inner.indexOf("hello")>=0);
+    String inner = DOM.getInnerHTML(item.getContentElem());
+    assertTrue(inner.indexOf("hello") >= 0);
     t.addItem(item);
     Widget goodbyeWidget = new Label("goodbye");
     item.setWidget(goodbyeWidget);
@@ -81,20 +82,19 @@ public class TreeTest extends GWTTestCase {
     assertTrue(DOM.getInnerHTML(widgetItem.getContentElem()).indexOf("hello") >= 0);
     widgetItem.setText("goodbye");
     assertFalse(DOM.getInnerHTML(widgetItem.getContentElem()).indexOf("hello") >= 0);
-    assertTrue(DOM.getInnerHTML(widgetItem.getContentElem()).indexOf("goodbye")>=0);
+    assertTrue(DOM.getInnerHTML(widgetItem.getContentElem()).indexOf("goodbye") >= 0);
     assertNull(hello.getParent());
 
     // Move widget.
     widgetItem.addItem(item);
     assertEquals(t, goodbyeWidget.getParent().getParent());
     assertEquals(goodbyeWidget, item.getWidget());
-    
+
     // Set back to text.
     item.setText("aloha");
     assertEquals("aloha", DOM.getInnerHTML(item.getContentElem()));
     assertNull(goodbyeWidget.getParent());
     assertNull(item.getWidget());
-
   }
 
   public void testRemove() {
@@ -115,7 +115,6 @@ public class TreeTest extends GWTTestCase {
     assertFalse(iter2.hasNext());
   }
 
-  
   public void testTree() {
     // Simple widget
     Tree t = new Tree();
@@ -134,12 +133,12 @@ public class TreeTest extends GWTTestCase {
     item.setWidget(new Label("now widget"));
     Element elem = item.getContentElem();
     assertEquals(1, DOM.getChildCount(elem));
-   
+
     // Add widget to existing tree.
     Label l2 = new Label("next widget");
     simple.setWidget(l2);
     assertEquals(t, l2.getParent().getParent());
- 
+
     // Remove a tree item, make sure widget is removed from tree, but not tree
     // item.
     simple.remove();
@@ -164,23 +163,23 @@ public class TreeTest extends GWTTestCase {
     assertEquals(t, dLabel.getParent().getParent());
     e.setWidget(eLabel);
     assertEquals(t, eLabel.getParent().getParent());
-   
+
     // Tree inside of Tree.
     Tree childTree = new Tree();
     t.addItem(new TreeItem(childTree));
-    
+
     // Swap TreeItems to new Tree.
     childTree.addItem(c);
     assertEquals(childTree, dLabel.getParent().getParent());
     assertEquals(childTree, eLabel.getParent().getParent());
     assertTrue(childTree.getChildWidgets().contains(eLabel.getParent()));
-    
+
     // Make sure remove clears.
     d.remove();
     assertNull(dLabel.getParent().getParent());
     assertNull(eLabel.getParent().getParent());
     assertFalse(childTree.getChildWidgets().contains(eLabel.getParent()));
- 
+
     // Should not be able to add getParent
     Panel p = new SimplePanel(DOM.createDiv());
     try {
@@ -240,13 +239,13 @@ public class TreeTest extends GWTTestCase {
     t.addItem(simple);
   }
 
-  public void testRootAdd(){
-    Tree t =new Tree();
+  public void testRootAdd() {
+    Tree t = new Tree();
     Label l = new Label("hello");
     t.add(l);
     assertEquals(t, l.getParent().getParent());
   }
-  
+
   public void testInsertSameItemRepeatedly() {
     Tree t = new Tree();
     TreeItem ti = new TreeItem();

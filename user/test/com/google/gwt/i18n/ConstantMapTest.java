@@ -13,15 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
- 
-
 package com.google.gwt.i18n;
 
 import com.google.gwt.i18n.client.impl.ConstantMap;
 
 import java.util.Map;
 
-public class ConstantMapTest extends TestMap{
+/**
+ * TODO: document me.
+ */
+public class ConstantMapTest extends TestMap {
 
   protected Map makeEmptyMap() {
     return new ConstantMap();

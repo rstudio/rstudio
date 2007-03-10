@@ -1,5 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
-
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
@@ -9,6 +22,9 @@ import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClas
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClassWithTransientField;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableSubclass;
 
+/**
+ * TODO: document me.
+ */
 public class InheritanceTest extends TypeSerializerWorkAround {
   // private static final int TEST_DELAY = Integer.MAX_VALUE;
   private static final int TEST_DELAY = 5000;
@@ -69,7 +85,6 @@ public class InheritanceTest extends TypeSerializerWorkAround {
     } catch (RuntimeException ex) {
       workAroundTypeSerializerBug(ex);
     }
-
   }
 
   /**
@@ -125,8 +140,7 @@ public class InheritanceTest extends TypeSerializerWorkAround {
 
           public void onSuccess(Object result) {
             assertNotNull(result);
-            assertTrue(InheritanceTestSetValidator
-                .isValid((SerializableClass) result));
+            assertTrue(InheritanceTestSetValidator.isValid((SerializableClass) result));
             finishTest();
           }
         });
@@ -147,8 +161,7 @@ public class InheritanceTest extends TypeSerializerWorkAround {
 
           public void onSuccess(Object result) {
             assertNotNull(result);
-            assertTrue(InheritanceTestSetValidator
-                .isValid((SerializableSubclass) result));
+            assertTrue(InheritanceTestSetValidator.isValid((SerializableSubclass) result));
             finishTest();
           }
         });
@@ -159,19 +172,19 @@ public class InheritanceTest extends TypeSerializerWorkAround {
     delayTestFinish(TEST_DELAY);
 
     InheritanceTestServiceAsync service = getServiceAsync();
-    service.echo(InheritanceTestSetFactory
-        .createSerializableClassWithTransientField(), new AsyncCallback() {
-      public void onFailure(Throwable caught) {
-        fail(caught.toString());
-      }
+    service.echo(
+        InheritanceTestSetFactory.createSerializableClassWithTransientField(),
+        new AsyncCallback() {
+          public void onFailure(Throwable caught) {
+            fail(caught.toString());
+          }
 
-      public void onSuccess(Object result) {
-        assertNotNull(result);
-        assertTrue(InheritanceTestSetValidator
-            .isValid((SerializableClassWithTransientField) result));
-        finishTest();
-      }
-    });
+          public void onSuccess(Object result) {
+            assertNotNull(result);
+            assertTrue(InheritanceTestSetValidator.isValid((SerializableClassWithTransientField) result));
+            finishTest();
+          }
+        });
   }
 
   /**
@@ -183,8 +196,8 @@ public class InheritanceTest extends TypeSerializerWorkAround {
 
     try {
       InheritanceTestServiceAsync service = getServiceAsync();
-      service.echo(InheritanceTestSetFactory
-          .createSerializableClassWithUnserializableClassField(),
+      service.echo(
+          InheritanceTestSetFactory.createSerializableClassWithUnserializableClassField(),
           new AsyncCallback() {
             public void onFailure(Throwable caught) {
               finishTest();
@@ -208,8 +221,8 @@ public class InheritanceTest extends TypeSerializerWorkAround {
 
     try {
       InheritanceTestServiceAsync service = getServiceAsync();
-      service.echo(InheritanceTestSetFactory
-          .createSerializableClassWithUnserializableObjectField(),
+      service.echo(
+          InheritanceTestSetFactory.createSerializableClassWithUnserializableObjectField(),
           new AsyncCallback() {
             public void onFailure(Throwable caught) {
               finishTest();
@@ -226,10 +239,8 @@ public class InheritanceTest extends TypeSerializerWorkAround {
 
   private InheritanceTestServiceAsync getServiceAsync() {
     if (inheritanceTestService == null) {
-      inheritanceTestService = (InheritanceTestServiceAsync) GWT
-          .create(InheritanceTestService.class);
-      ((ServiceDefTarget) inheritanceTestService).setServiceEntryPoint(GWT
-          .getModuleBaseURL()
+      inheritanceTestService = (InheritanceTestServiceAsync) GWT.create(InheritanceTestService.class);
+      ((ServiceDefTarget) inheritanceTestService).setServiceEntryPoint(GWT.getModuleBaseURL()
           + "inheritance");
     }
     return inheritanceTestService;

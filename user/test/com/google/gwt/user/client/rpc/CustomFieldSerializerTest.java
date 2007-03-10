@@ -1,12 +1,29 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTestSetFactory.SerializableSubclass;
 
+/**
+ * TODO: document me.
+ */
 public class CustomFieldSerializerTest extends TypeSerializerWorkAround {
   private static final int TEST_DELAY = 5000;
-  
+
   public String getModuleName() {
     return "com.google.gwt.user.RPCSuite";
   }
@@ -21,16 +38,16 @@ public class CustomFieldSerializerTest extends TypeSerializerWorkAround {
     try {
       CustomFieldSerializerTestServiceAsync service = getServiceAsync();
       service.echo(
-        CustomFieldSerializerTestSetFactory.createUnserializableSubclass(),
-        new AsyncCallback() {
-          public void onFailure(Throwable caught) {
-            finishTest();
-          }
+          CustomFieldSerializerTestSetFactory.createUnserializableSubclass(),
+          new AsyncCallback() {
+            public void onFailure(Throwable caught) {
+              finishTest();
+            }
 
-          public void onSuccess(Object result) {
-            fail("Class UnserializableSubclass should not be serializable");
-          }
-        });
+            public void onSuccess(Object result) {
+              fail("Class UnserializableSubclass should not be serializable");
+            }
+          });
     } catch (RuntimeException ex) {
       workAroundTypeSerializerBug(ex);
     }
@@ -45,18 +62,18 @@ public class CustomFieldSerializerTest extends TypeSerializerWorkAround {
     try {
       CustomFieldSerializerTestServiceAsync service = getServiceAsync();
       service.echo(
-        CustomFieldSerializerTestSetFactory.createUnserializableClass(),
-        new AsyncCallback() {
-          public void onFailure(Throwable caught) {
-            fail("Class UnserializableClass should be serializable because it has a custom field serializer");
-          }
+          CustomFieldSerializerTestSetFactory.createUnserializableClass(),
+          new AsyncCallback() {
+            public void onFailure(Throwable caught) {
+              fail("Class UnserializableClass should be serializable because it has a custom field serializer");
+            }
 
-          public void onSuccess(Object result) {
-            assertNotNull(result);
-            assertTrue(CustomFieldSerializerTestSetValidator.isValid((UnserializableClass) result));
-            finishTest();
-          }
-        });
+            public void onSuccess(Object result) {
+              assertNotNull(result);
+              assertTrue(CustomFieldSerializerTestSetValidator.isValid((UnserializableClass) result));
+              finishTest();
+            }
+          });
     } catch (RuntimeException ex) {
       workAroundTypeSerializerBug(ex);
     }
@@ -71,25 +88,25 @@ public class CustomFieldSerializerTest extends TypeSerializerWorkAround {
 
     CustomFieldSerializerTestServiceAsync service = getServiceAsync();
     service.echo(
-      CustomFieldSerializerTestSetFactory.createSerializableSubclass(),
-      new AsyncCallback() {
-        public void onFailure(Throwable caught) {
-          fail("Class UnserializableClass should be serializable because it has a custom field serializer");
-        }
+        CustomFieldSerializerTestSetFactory.createSerializableSubclass(),
+        new AsyncCallback() {
+          public void onFailure(Throwable caught) {
+            fail("Class UnserializableClass should be serializable because it has a custom field serializer");
+          }
 
-        public void onSuccess(Object result) {
-          assertNotNull(result);
-          assertTrue(CustomFieldSerializerTestSetValidator.isValid((SerializableSubclass) result));
-          finishTest();
-        }
-      });
+          public void onSuccess(Object result) {
+            assertNotNull(result);
+            assertTrue(CustomFieldSerializerTestSetValidator.isValid((SerializableSubclass) result));
+            finishTest();
+          }
+        });
   }
 
   private CustomFieldSerializerTestServiceAsync getServiceAsync() {
     if (customFieldSerializerTestService == null) {
       customFieldSerializerTestService = (CustomFieldSerializerTestServiceAsync) GWT.create(CustomFieldSerializerTestService.class);
       ((ServiceDefTarget) customFieldSerializerTestService).setServiceEntryPoint(GWT.getModuleBaseURL()
-        + "customfieldserializers");
+          + "customfieldserializers");
     }
     return customFieldSerializerTestService;
   }

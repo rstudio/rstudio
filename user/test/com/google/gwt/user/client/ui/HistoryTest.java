@@ -1,27 +1,44 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.HistoryListener;
 
+/**
+ * TODO: document me.
+ */
 public class HistoryTest extends GWTTestCase {
 
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
-  
+
   /* Tests against issue #572: Double unescaping of history tokens. */
   public void testTokenEscaping() {
-	final String escToken = "%24%24%24";
-	delayTestFinish(5000);
-	History.addHistoryListener(new HistoryListener() {
-	  public void onHistoryChanged(String token) {
-		assertEquals(escToken,token);
-		finishTest();
-	  }
-	});
-	History.newItem(escToken);
+    final String escToken = "%24%24%24";
+    delayTestFinish(5000);
+    History.addHistoryListener(new HistoryListener() {
+      public void onHistoryChanged(String token) {
+        assertEquals(escToken, token);
+        finishTest();
+      }
+    });
+    History.newItem(escToken);
   }
 
   /*
@@ -36,8 +53,9 @@ public class HistoryTest extends GWTTestCase {
       public void onHistoryChanged(String historyToken) {
         switch (state) {
           case 0: {
-            if (!historyToken.equals("foo bar"))
+            if (!historyToken.equals("foo bar")) {
               fail("Expecting token 'foo bar', but got: " + historyToken);
+            }
 
             state = 1;
             History.newItem("baz");
@@ -45,8 +63,9 @@ public class HistoryTest extends GWTTestCase {
           }
 
           case 1: {
-            if (!historyToken.equals("baz"))
+            if (!historyToken.equals("baz")) {
               fail("Expecting token 'baz', but got: " + historyToken);
+            }
 
             state = 2;
             History.back();
@@ -54,8 +73,9 @@ public class HistoryTest extends GWTTestCase {
           }
 
           case 2: {
-            if (!historyToken.equals("foo bar"))
+            if (!historyToken.equals("foo bar")) {
               fail("Expecting token 'foo bar', but got: " + historyToken);
+            }
             finishTest();
             break;
           }
@@ -64,5 +84,5 @@ public class HistoryTest extends GWTTestCase {
     });
 
     History.newItem("foo bar");
-  }  
+  }
 }

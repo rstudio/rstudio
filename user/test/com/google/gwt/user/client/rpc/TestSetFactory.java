@@ -1,5 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
-
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.user.client.rpc;
 
 import java.util.ArrayList;
@@ -8,7 +21,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
 
+/**
+ * TODO: document me.
+ */
 public class TestSetFactory {
+
+  /**
+   * TODO: document me.
+   */
   public static class SerializableClass implements IsSerializable {
     public IsSerializable getElementRef() {
       return elementRef;
@@ -31,6 +51,9 @@ public class TestSetFactory {
     IsSerializable[] elements;
   }
 
+  /**
+   * TODO: document me.
+   */
   public static class SerializableDoublyLinkedNode implements IsSerializable {
     public String getData() {
       return data;
@@ -61,13 +84,22 @@ public class TestSetFactory {
     protected SerializableDoublyLinkedNode rightChild;
   }
 
+  /**
+   * TODO: document me.
+   */
   public static class SerializableList extends ArrayList implements
       IsSerializable {
   }
 
+  /**
+   * TODO: document me.
+   */
   public static class SerializableMap extends HashMap implements IsSerializable {
   }
 
+  /**
+   * TODO: document me.
+   */
   public static class SerializableNode extends UnserializableNode implements
       IsSerializable {
 
@@ -134,48 +166,58 @@ public class TestSetFactory {
     protected SerializableNode next;
   }
 
+  /**
+   * TODO: document me.
+   */
   public static class SerializableSet extends HashSet implements IsSerializable {
   }
 
+  /**
+   * TODO: document me.
+   */
   public static class SerializableVector extends Vector implements
       IsSerializable {
   }
 
+  /**
+   * TODO: document me.
+   */
   public static class UnserializableNode {
   }
 
   public static Boolean[] createBooleanArray() {
-    return new Boolean[]{
-      new Boolean(true), new Boolean(false), new Boolean(true),
-      new Boolean(false)};
+    return new Boolean[] {
+        Boolean.valueOf(true), Boolean.valueOf(false), Boolean.valueOf(true),
+        Boolean.valueOf(false)};
   }
 
   public static Byte[] createByteArray() {
-    return new Byte[]{
-      new Byte(Byte.MAX_VALUE), new Byte(Byte.MIN_VALUE),
-      new Byte(Byte.MAX_VALUE), new Byte(Byte.MIN_VALUE)};
+    return new Byte[] {
+        new Byte(Byte.MAX_VALUE), new Byte(Byte.MIN_VALUE),
+        new Byte(Byte.MAX_VALUE), new Byte(Byte.MIN_VALUE)};
   }
 
   public static Character[] createCharArray() {
-    return new Character[]{
-      new Character(Character.MAX_VALUE), new Character(Character.MIN_VALUE),
-      new Character(Character.MAX_VALUE), new Character(Character.MIN_VALUE)};
+    return new Character[] {
+        new Character(Character.MAX_VALUE), new Character(Character.MIN_VALUE),
+        new Character(Character.MAX_VALUE), new Character(Character.MIN_VALUE)};
   }
 
   public static Date[] createDateArray() {
-    return new Date[]{new Date(1992 - 1900, 9, 18), new Date(1997 - 1900, 6, 6)};
+    return new Date[] {
+        new Date(1992 - 1900, 9, 18), new Date(1997 - 1900, 6, 6)};
   }
 
   public static Double[] createDoubleArray() {
-    return new Double[]{
-      new Double(Double.MAX_VALUE), new Double(Double.MIN_VALUE),
-      new Double(Double.MAX_VALUE), new Double(Double.MIN_VALUE)};
+    return new Double[] {
+        new Double(Double.MAX_VALUE), new Double(Double.MIN_VALUE),
+        new Double(Double.MAX_VALUE), new Double(Double.MIN_VALUE)};
   }
 
   public static Float[] createFloatArray() {
-    return new Float[]{
-      new Float(Float.MAX_VALUE), new Float(Float.MIN_VALUE),
-      new Float(Float.MAX_VALUE), new Float(Float.MIN_VALUE)};
+    return new Float[] {
+        new Float(Float.MAX_VALUE), new Float(Float.MIN_VALUE),
+        new Float(Float.MAX_VALUE), new Float(Float.MIN_VALUE)};
   }
 
   public static HashMap createHashMap() {
@@ -200,66 +242,66 @@ public class TestSetFactory {
   }
 
   public static Integer[] createIntegerArray() {
-    return new Integer[]{
-      new Integer(Integer.MAX_VALUE), new Integer(Integer.MIN_VALUE),
-      new Integer(Integer.MAX_VALUE), new Integer(Integer.MIN_VALUE)};
+    return new Integer[] {
+        new Integer(Integer.MAX_VALUE), new Integer(Integer.MIN_VALUE),
+        new Integer(Integer.MAX_VALUE), new Integer(Integer.MIN_VALUE)};
   }
 
   public static Long[] createLongArray() {
-    return new Long[]{
-      new Long(Long.MAX_VALUE), new Long(Long.MIN_VALUE),
-      new Long(Long.MAX_VALUE), new Long(Long.MIN_VALUE)};
+    return new Long[] {
+        new Long(Long.MAX_VALUE), new Long(Long.MIN_VALUE),
+        new Long(Long.MAX_VALUE), new Long(Long.MIN_VALUE)};
   }
 
   public static boolean[] createPrimitiveBooleanArray() {
-    return new boolean[]{true, true, false, false, true, false};
+    return new boolean[] {true, true, false, false, true, false};
   }
 
   public static byte[] createPrimitiveByteArray() {
-    return new byte[]{
-      Byte.MAX_VALUE, Byte.MIN_VALUE, Byte.MAX_VALUE, Byte.MIN_VALUE};
+    return new byte[] {
+        Byte.MAX_VALUE, Byte.MIN_VALUE, Byte.MAX_VALUE, Byte.MIN_VALUE};
   }
 
   public static char[] createPrimitiveCharArray() {
-    return new char[]{
-      Character.MAX_VALUE, Character.MIN_VALUE, Character.MAX_VALUE,
-      Character.MIN_VALUE};
+    return new char[] {
+        Character.MAX_VALUE, Character.MIN_VALUE, Character.MAX_VALUE,
+        Character.MIN_VALUE};
   }
 
   public static double[] createPrimitiveDoubleArray() {
-    return new double[]{
-      Double.MAX_VALUE, Double.MIN_VALUE, Double.MAX_VALUE, Double.MIN_VALUE};
+    return new double[] {
+        Double.MAX_VALUE, Double.MIN_VALUE, Double.MAX_VALUE, Double.MIN_VALUE};
   }
 
   public static float[] createPrimitiveFloatArray() {
-    return new float[]{
-      Float.MAX_VALUE, Float.MIN_VALUE, Float.MAX_VALUE, Float.MIN_VALUE};
+    return new float[] {
+        Float.MAX_VALUE, Float.MIN_VALUE, Float.MAX_VALUE, Float.MIN_VALUE};
   }
 
   public static int[] createPrimitiveIntegerArray() {
-    return new int[]{
-      Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE,
-      Integer.MIN_VALUE};
+    return new int[] {
+        Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE,
+        Integer.MIN_VALUE};
   }
 
   public static long[] createPrimitiveLongArray() {
-    return new long[]{
-      Long.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE, Long.MIN_VALUE};
+    return new long[] {
+        Long.MAX_VALUE, Long.MIN_VALUE, Long.MAX_VALUE, Long.MIN_VALUE};
   }
 
   public static short[] createPrimitiveShortArray() {
-    return new short[]{
-      Short.MAX_VALUE, Short.MIN_VALUE, Short.MAX_VALUE, Short.MIN_VALUE};
+    return new short[] {
+        Short.MAX_VALUE, Short.MIN_VALUE, Short.MAX_VALUE, Short.MIN_VALUE};
   }
 
   public static Short[] createShortArray() {
-    return new Short[]{
-      new Short(Short.MAX_VALUE), new Short(Short.MIN_VALUE),
-      new Short(Short.MAX_VALUE), new Short(Short.MIN_VALUE)};
+    return new Short[] {
+        new Short(Short.MAX_VALUE), new Short(Short.MIN_VALUE),
+        new Short(Short.MAX_VALUE), new Short(Short.MIN_VALUE)};
   }
 
   public static String[] createStringArray() {
-    return new String[]{null, "", "one", "two"};
+    return new String[] {null, "", "one", "two"};
   }
 
   public static Vector createVector() {
@@ -325,9 +367,9 @@ public class TestSetFactory {
 
   static SerializableClass createSerializableClass() {
     SerializableClass cls = new SerializableClass();
-    IsSerializable[] elements = new IsSerializable[]{
-      new SerializableClass(), new SerializableClass(),
-      new SerializableClass(), new SerializableClass(),};
+    IsSerializable[] elements = new IsSerializable[] {
+        new SerializableClass(), new SerializableClass(),
+        new SerializableClass(), new SerializableClass(),};
 
     cls.setElements(elements);
     cls.setElementRef(elements[3]);

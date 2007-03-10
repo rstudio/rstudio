@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.i18n.tools;
 
 import junit.framework.TestCase;
@@ -7,7 +21,8 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Testing <code>I18NSync</code>.Cannot be currently run as part of automated junit tests due to it's code generation.
+ * Testing <code>I18NSync</code>.Cannot be currently run as part of automated
+ * junit tests due to it's code generation.
  */
 public class I18NSyncTest_ extends TestCase {
   static final File CLIENT_SOURCE_DIR = new File("../../gwt-user/src/test/java");
@@ -38,8 +53,7 @@ public class I18NSyncTest_ extends TestCase {
 
   public void testFileIsDirCase() {
     try {
-      I18NSync
-        .createMessagesInterfaceFromClassName(CLIENT_SOURCE_PACKAGE, null);
+      I18NSync.createMessagesInterfaceFromClassName(CLIENT_SOURCE_PACKAGE, null);
       fail("Should have thrown IOException");
     } catch (IOException e) {
       assertEquals(-1, e.getMessage().indexOf("directory"));
@@ -49,12 +63,12 @@ public class I18NSyncTest_ extends TestCase {
   public void testMainAccess() {
     // Cannot check bad ones due to System.exit(1);
     String[] constants = {
-      CLIENT_SOURCE_PACKAGE + "Shapes", "-out", CLIENT_SOURCE_DIR.getPath()};
+        CLIENT_SOURCE_PACKAGE + "Shapes", "-out", CLIENT_SOURCE_DIR.getPath()};
     I18NSync.main(constants);
 
     String[] messages = {
-      "-createMessages", CLIENT_SOURCE_PACKAGE + "SingleMessages", "-out",
-      CLIENT_SOURCE_DIR.getPath()};
+        "-createMessages", CLIENT_SOURCE_PACKAGE + "SingleMessages", "-out",
+        CLIENT_SOURCE_DIR.getPath()};
     I18NSync.main(messages);
   }
 
@@ -66,10 +80,9 @@ public class I18NSyncTest_ extends TestCase {
   public void testMethodRenaming() throws IOException {
     String className = CLIENT_SOURCE_PACKAGE + "TestBadKeys";
     I18NSync.createConstantsWithLookupInterfaceFromClassName(className,
-      CLIENT_SOURCE_DIR);
+        CLIENT_SOURCE_DIR);
   }
 
-  
   public void testWarning() throws IOException {
     String className = CLIENT_SOURCE_PACKAGE + "TestReallyBadKeys";
     I18NSync.createConstantsWithLookupInterfaceFromClassName(className);

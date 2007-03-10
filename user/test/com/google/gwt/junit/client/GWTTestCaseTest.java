@@ -1,4 +1,19 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 /*
  * Portions copyright 2006 Mat Gessel <mat.gessel@gmail.com>; licensed under
  * Apache 2.0
@@ -14,32 +29,32 @@ import junit.framework.AssertionFailedError;
 public class GWTTestCaseTest extends GWTTestCase {
 
   private static void assertNotEquals(double a, double b, double delta) {
-	boolean failed = false;
+    boolean failed = false;
     try {
       assertEquals(a, b, delta);
     } catch (AssertionFailedError e) {
       // EXPECTED
       failed = true;
     }
-    
+
     if (!failed) {
       fail("Expected failure for assertEquals(" + a + ", " + b + ", " + delta
-           + ")");
+          + ")");
     }
   }
 
   private static void assertNotEquals(float a, float b, float delta) {
-	boolean failed = false;
+    boolean failed = false;
     try {
       assertEquals(a, b, delta);
     } catch (AssertionFailedError e) {
       // EXPECTED
       failed = true;
     }
-    
+
     if (!failed) {
       fail("Expected failure for assertEquals(" + a + ", " + b + ", " + delta
-           + ")");
+          + ")");
     }
   }
 

@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.junit.client.GWTTestCase;
@@ -10,6 +24,9 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class Coverage extends CoverageSuper {
 
+  /**
+   * TODO: document me.
+   */
   public class Inner extends Super {
 
     public int x = 3;
@@ -448,7 +465,6 @@ public class Coverage extends CoverageSuper {
       super.sfoo();
       Inner.super.sfoo();
       Coverage.super.sfoo();
-
     }
 
     private Inner testReferences() {
@@ -523,7 +539,6 @@ public class Coverage extends CoverageSuper {
         i = 7;
       }
       assertEquals(7, i);
-
     }
 
     private void testUnaryExpression() {
@@ -545,9 +560,11 @@ public class Coverage extends CoverageSuper {
         fail();
       }
     }
-
   }
 
+  /**
+   * TODO: document me.
+   */
   public static class Super {
     public static int i = 2;
     public static final int j = 2;
@@ -591,7 +608,6 @@ public class Coverage extends CoverageSuper {
     public String toString() {
       return String.valueOf(x);
     }
-
   }
 
   private static class InnerSub extends Inner {

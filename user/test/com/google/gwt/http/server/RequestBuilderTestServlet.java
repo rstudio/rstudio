@@ -1,3 +1,18 @@
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.http.server;
 
 import java.io.BufferedReader;
@@ -8,16 +23,20 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * TODO: document me.
+ */
 public class RequestBuilderTestServlet extends HttpServlet {
 
   private static String getPathInfoBase() {
     return "/com.google.gwt.http.RequestBuilderTest/testRequestBuilder/";
   }
-  
-  protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+  protected void doDelete(HttpServletRequest request,
+      HttpServletResponse response) throws ServletException, IOException {
     response.setStatus(HttpServletResponse.SC_OK);
   }
-  
+
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     String method = request.getMethod();
@@ -26,7 +45,7 @@ public class RequestBuilderTestServlet extends HttpServlet {
       String value = request.getHeader("Foo");
       response.getWriter().print("Hello");
       if (value.equals("Bar1")) {
-        response.setStatus(HttpServletResponse.SC_OK);  
+        response.setStatus(HttpServletResponse.SC_OK);
       } else {
         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
       }
@@ -56,12 +75,14 @@ public class RequestBuilderTestServlet extends HttpServlet {
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
     }
   }
-  
-  protected void doHead(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+  protected void doHead(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
     response.setStatus(HttpServletResponse.SC_OK);
   }
-  
-  protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+  protected void doPost(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
     BufferedReader reader = request.getReader();
     String content = reader.readLine();
     response.getWriter().print("POST");
@@ -72,7 +93,8 @@ public class RequestBuilderTestServlet extends HttpServlet {
     }
   }
 
-  protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+  protected void doPut(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
     BufferedReader reader = request.getReader();
     String content = reader.readLine();
     if (content.equals("<html><body>Put Me</body></html>")) {
