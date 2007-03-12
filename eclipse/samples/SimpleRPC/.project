@@ -20,11 +20,11 @@
 		<nature>org.eclipse.jdt.core.javanature</nature>
 		<nature>com.atlassw.tools.eclipse.checkstyle.CheckstyleNature</nature>
 	</natures>
-        <linkedResources>
+	<linkedResources>
 		<link>
 			<name>core</name>
 			<type>2</type>
-			<locationURI>GWT_ROOT/samples/simplerpc</locationURI>
+			<location>GWT_ROOT/samples/simplerpc</location>
 		</link>
 	</linkedResources>
 </projectDescription>
