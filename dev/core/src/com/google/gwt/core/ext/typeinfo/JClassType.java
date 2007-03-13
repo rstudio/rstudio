@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,16 +18,17 @@ package com.google.gwt.core.ext.typeinfo;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
 import java.io.UnsupportedEncodingException;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Type representing a Java class or interface type.
@@ -70,6 +71,8 @@ public class JClassType extends JType implements HasMetaData {
   private final int bodyEnd;
 
   private final int bodyStart;
+
+  private JMethod[] cachedOverridableMethods;
 
   private final List constructors = new ArrayList();
 
@@ -305,6 +308,37 @@ public class JClassType extends JType implements HasMetaData {
     }
   }
 
+  /**
+   * Iterates over the most-derived declaration of each unique overridable
+   * method available in the type hierarchy of the specified type, including
+   * those found in superclasses and superinterfaces. A method is overridable if
+   * it is not <code>final</code> and its accessibility is <code>public</code>,
+   * <code>protected</code>, or package protected.
+   * 
+   * Deferred binding generators often need to generate method implementations;
+   * this method offers a convenient way to find candidate methods to implement.
+   * 
+   * Note that the behavior does not match
+   * {@link Class#getMethod(String, Class[])}, which does not return the most
+   * derived method in some cases.
+   * 
+   * @return an array of {@link JMethod} objects representing overridable
+   *         methods
+   */
+  public JMethod[] getOverridableMethods() {
+    if (cachedOverridableMethods == null) {
+      Map methodsBySignature = new TreeMap();
+      getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
+      if (isClass() != null) {
+        getOverridableMethodsOnSuperclassesAndThisClass(methodsBySignature);
+      }
+      int size = methodsBySignature.size();
+      Collection leafMethods = methodsBySignature.values();
+      cachedOverridableMethods = (JMethod[]) leafMethods.toArray(new JMethod[size]);
+    }
+    return cachedOverridableMethods;
+  }
+
   public JPackage getPackage() {
     return declaringPackage;
   }
@@ -525,6 +559,88 @@ public class JClassType extends JType implements HasMetaData {
   private void acceptSubtype(JClassType me) {
     allSubtypes.add(me);
     notifySuperTypesOf(me);
+  }
+
+  private String computeInternalSignature(JMethod method) {
+    StringBuffer sb = new StringBuffer();
+    sb.setLength(0);
+    sb.append(method.getName());
+    JParameter[] params = method.getParameters();
+    for (int j = 0; j < params.length; j++) {
+      JParameter param = params[j];
+      sb.append("/");
+      sb.append(param.getType().getQualifiedSourceName());
+    }
+    return sb.toString();
+  }
+
+  private void getOverridableMethodsOnSuperclassesAndThisClass(
+      Map methodsBySignature) {
+    assert (isClass() != null);
+
+    // Recurse first so that more derived methods will clobber less derived
+    // methods.
+    JClassType superClass = getSuperclass();
+    if (superClass != null) {
+      superClass.getOverridableMethodsOnSuperclassesAndThisClass(methodsBySignature);
+    }
+
+    JMethod[] declaredMethods = getMethods();
+    for (int i = 0; i < declaredMethods.length; i++) {
+      JMethod method = declaredMethods[i];
+
+      // Ensure that this method is overridable.
+      if (method.isFinal() || method.isPrivate()) {
+        // We cannot override this method, so skip it.
+        continue;
+      }
+
+      // We can override this method, so record it.
+      String sig = computeInternalSignature(method);
+      methodsBySignature.put(sig, method);
+    }
+  }
+
+  /**
+   * Gets the methods declared in interfaces that this type extends. If this
+   * type is a class, its own methods are not added. If this type is an
+   * interface, its own methods are added. Used internally by
+   * {@link #getOverridableMethods()}.
+   * 
+   * @param methodsBySignature
+   */
+  private void getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
+      Map methodsBySignature) {
+    // Recurse first so that more derived methods will clobber less derived
+    // methods.
+    JClassType[] superIntfs = getImplementedInterfaces();
+    for (int i = 0; i < superIntfs.length; i++) {
+      JClassType superIntf = superIntfs[i];
+      superIntf.getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
+    }
+
+    if (isInterface() == null) {
+      // This is not an interface, so we're done after having visited its
+      // implemented interfaces.
+      return;
+    }
+
+    JMethod[] declaredMethods = getMethods();
+    for (int i = 0; i < declaredMethods.length; i++) {
+      JMethod method = declaredMethods[i];
+
+      String sig = computeInternalSignature(method);
+      JMethod existing = (JMethod) methodsBySignature.get(sig);
+      if (existing != null) {
+        JClassType existingType = existing.getEnclosingType();
+        JClassType thisType = method.getEnclosingType();
+        if (thisType.isAssignableFrom(existingType)) {
+          // The existing method is in a more-derived type, so don't replace it.
+          continue;
+        }
+      }
+      methodsBySignature.put(sig, method);
+    }
   }
 
   private String makeCompoundName(JClassType type) {
