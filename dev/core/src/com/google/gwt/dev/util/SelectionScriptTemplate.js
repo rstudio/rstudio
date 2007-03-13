@@ -86,15 +86,35 @@ function __MODULE_FUNC__() {
   // Determine our own script's URL via magic :)
   //
   function computeScriptBase() {
-    doc.write('<script id="__gwt_marker___MODULE_NAME__"></script>');
-    var markerScript = doc.getElementById("__gwt_marker___MODULE_NAME__");
-    // the previous script element is this script
-    var content = markerScript.previousSibling.src;
-    if (content) {
-      var eq = content.lastIndexOf('/');
-      if (eq >= 0) {
-        base = content.substring(0, eq + 1);
+    // see if gwt.js left a marker for us
+    var thisScript
+    , markerScript = doc.getElementById("__gwt_js_marker___MODULE_NAME__");
+
+    if (markerScript) {
+      // gwt.js left us a marker; this script should be the next element
+      thisScript = markerScript.nextSibling;
+    } else {
+      // try writing my own marker
+      doc.write('<script id="__gwt_marker___MODULE_NAME__"></script>');
+      markerScript = doc.getElementById("__gwt_marker___MODULE_NAME__");
+      if (markerScript) {
+        // this script should be the previous element
+        thisScript = markerScript.previousSibling;
       }
+    }
+
+    if (thisScript) {
+      // Compute our base url
+      var content = thisScript.src;
+      if (content) {
+        var eq = content.lastIndexOf('/');
+        if (eq >= 0) {
+          base = content.substring(0, eq + 1);
+        }
+      }
+    }
+    
+    if (markerScript) {
       // remove the marker element
       markerScript.parentNode.removeChild(markerScript);
     }

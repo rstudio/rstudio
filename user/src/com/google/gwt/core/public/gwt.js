@@ -20,12 +20,16 @@
 	for (var i = 0, n = metas.length; i < n; ++i) {
 		var meta = metas[i], name = meta.getAttribute("name");
 		if (name == "gwt:module") {
-			var content = meta.getAttribute("content");
+			var modName, content = meta.getAttribute("content");
 			if (content) {
 				var eqPos = content.lastIndexOf("=");
 				if (eqPos != -1) {
-					content = content.substring(0, eqPos) + '/' + content.substring(eqPos + 1);
+					modName = content.substring(eqPos + 1);
+					content = content.substring(0, eqPos) + '/' + modName;
+				} else {
+					modName = content;
 				}
+				document.write('<script id="__gwt_js_marker_' + modName + '"></script>');
 				document.write('<script src="' + content + '.nocache.js"></script>');
 			}
 		}
