@@ -1066,43 +1066,19 @@ public class GenerateJavaAST {
     }
 
     JExpression processExpression(QualifiedSuperReference x) {
-      JClassType type = (JClassType) typeMap.get(x.resolvedType);
-      JSourceInfo info = makeSourceInfo(x);
-      /*
-       * WEIRD: If a superref is qualified with the EXACT type of the innermost
-       * type (in other words, a needless qualifier), it must refer to that
-       * innermost type, because a class can never be nested inside of itself.
-       * In this case, we must treat it as an unqualified superref.
-       * 
-       * In all other cases, the qualified superref cannot possibily refer to
-       * the innermost type (even if the innermost type could be cast to a
-       * compatible type), so we must create a reference to some outer type.
-       */
-      if (type == currentClass) {
-        return createSuperRef(info, type);
-      } else {
-        return createQualifiedSuperRef(info, type);
-      }
+      JClassType refType = (JClassType) typeMap.get(x.resolvedType);
+      JClassType qualType = (JClassType) typeMap.get(x.qualification.resolvedType);
+      assert (refType == qualType.extnds);
+      // Oddly enough, super refs can be modeled as this refs, because whatever
+      // expression they qualify has already been resolved.
+      return processQualifiedThisOrSuperRef(x, qualType);
     }
 
     JExpression processExpression(QualifiedThisReference x) {
-      JClassType type = (JClassType) typeMap.get(x.resolvedType);
-      JSourceInfo info = makeSourceInfo(x);
-      /*
-       * WEIRD: If a thisref is qualified with the EXACT type of the innermost
-       * type (in other words, a needless qualifier), it must refer to that
-       * innermost type, because a class can never be nested inside of itself.
-       * In this case, we must treat it as an unqualified thisref.
-       * 
-       * In all other cases, the qualified thisref cannot possibily refer to the
-       * innermost type (even if the innermost type could be cast to a
-       * compatible type), so we must create a reference to some outer type.
-       */
-      if (type == currentClass) {
-        return createThisRef(info, type);
-      } else {
-        return createQualifiedThisRef(info, type);
-      }
+      JClassType refType = (JClassType) typeMap.get(x.resolvedType);
+      JClassType qualType = (JClassType) typeMap.get(x.qualification.resolvedType);
+      assert (refType == qualType);
+      return processQualifiedThisOrSuperRef(x, qualType);
     }
 
     JExpression processExpression(SingleNameReference x) {
@@ -1135,7 +1111,8 @@ public class GenerateJavaAST {
       JClassType type = (JClassType) typeMap.get(x.resolvedType);
       assert (type == currentClass.extnds);
       JSourceInfo info = makeSourceInfo(x);
-      JExpression superRef = createSuperRef(info, type);
+      // Oddly enough, super refs can be modeled as a this refs.
+      JExpression superRef = createThisRef(info, currentClass);
       return superRef;
     }
 
@@ -1143,7 +1120,7 @@ public class GenerateJavaAST {
       JClassType type = (JClassType) typeMap.get(x.resolvedType);
       assert (type == currentClass);
       JSourceInfo info = makeSourceInfo(x);
-      JExpression thisRef = createThisRef(info, type);
+      JExpression thisRef = createThisRef(info, currentClass);
       return thisRef;
     }
 
@@ -1318,17 +1295,17 @@ public class GenerateJavaAST {
       }
     }
 
-    // // 5.0
-    // JStatement processStatement(ForeachStatement x) {
-    // return null;
-    // }
-
     JStatement processStatement(AssertStatement x) {
       JSourceInfo info = makeSourceInfo(x);
       JExpression expr = dispProcessExpression(x.assertExpression);
       JExpression arg = dispProcessExpression(x.exceptionArgument);
       return new JAssertStatement(program, info, expr, arg);
     }
+
+    // // 5.0
+    // JStatement processStatement(ForeachStatement x) {
+    // return null;
+    // }
 
     JBlock processStatement(Block x) {
       if (x == null) {
@@ -1683,20 +1660,6 @@ public class GenerateJavaAST {
     }
 
     /**
-     * Helper to create a qualified "super" ref (really a synthetic this field
-     * access) of the appropriate type. Always use this method instead of
-     * creating a naked JThisRef or you won't get the synthetic accesses right.
-     */
-    private JExpression createQualifiedSuperRef(JSourceInfo info,
-        JClassType targetType) {
-      assert (currentClass instanceof JClassType);
-      JExpression expr = program.getExprThisRef(info, (JClassType) currentClass);
-      List/* <JExpression> */list = new ArrayList();
-      addAllOuterThisRefsPlusSuperChain(list, expr, (JClassType) currentClass);
-      return createSuperRef(targetType, list);
-    }
-
-    /**
      * Helper to create a qualified "this" ref (really a synthetic this field
      * access) of the appropriate type. Always use this method instead of
      * creating a naked JThisRef or you won't get the synthetic accesses right.
@@ -1711,57 +1674,19 @@ public class GenerateJavaAST {
     }
 
     /**
-     * Helper to create a "super" ref (really a this ref or synthetic this field
-     * access) of the appropriate type. Always use this method instead of
-     * creating a naked JThisRef or you won't get the synthetic accesses right.
-     */
-    private JExpression createSuperRef(JClassType targetType,
-        List/* <JExpression> */list) {
-      assert (currentClass instanceof JClassType);
-      LinkedList/* <JExpression> */workList = new LinkedList/* <JExpression> */();
-      workList.addAll(list);
-
-      while (!workList.isEmpty()) {
-        JExpression expr = (JExpression) workList.removeFirst();
-        JClassType classType = (JClassType) expr.getType();
-        if (classType.extnds == targetType) {
-          return expr;
-        }
-        addAllOuterThisRefsPlusSuperChain(workList, expr, classType);
-      }
-
-      throw new InternalCompilerException(
-          "Cannot create a SuperRef of the appropriate type.");
-    }
-
-    /**
-     * Helper to create a "super" ref (really a this ref or synthetic this field
-     * access) of the appropriate type. Always use this method instead of
-     * creating a naked JThisRef or you won't get the synthetic accesses right.
-     */
-    private JExpression createSuperRef(JSourceInfo info, JClassType targetType) {
-      assert (currentClass instanceof JClassType);
-      JExpression expr = program.getExprThisRef(info, (JClassType) currentClass);
-      List/* <JExpression> */list = new ArrayList();
-      list.add(expr);
-      return createSuperRef(targetType, list);
-    }
-
-    /**
-     * Helper to creates an expression of the target type, possibly by accessing
+     * Helper to create an expression of the target type, possibly by accessing
      * synthetic this fields on the passed-in expression. This is needed by a
      * QualifiedAllocationExpression, because the qualifier may not be the
      * correct type, and we may need use one of its fields.
      */
-    private JExpression createThisRef(JReferenceType targetType,
-        JExpression expr) {
+    private JExpression createThisRef(JReferenceType qualType, JExpression expr) {
       List/* <JExpression> */list = new ArrayList();
       list.add(expr);
-      return createThisRef(targetType, list);
+      return createThisRef(qualType, list);
     }
 
     /**
-     * Helper to creates an expression of the target type, possibly by accessing
+     * Helper to create an expression of the target type, possibly by accessing
      * synthetic this fields on ANY of several passed-in expressions. Why in the
      * world would we need to do this? It turns out that when making an
      * unqualified explicit super constructor call to something that needs a
@@ -1779,7 +1704,7 @@ public class GenerateJavaAST {
      * this ref rooted off the current expression that happens to be the correct
      * type. We have observed this to be consistent with how Java handles it.
      */
-    private JExpression createThisRef(JReferenceType targetType,
+    private JExpression createThisRef(JReferenceType qualType,
         List/* <JExpression> */list) {
       LinkedList/* <JExpression> */workList = new LinkedList/* <JExpression> */();
       workList.addAll(list);
@@ -1789,7 +1714,7 @@ public class GenerateJavaAST {
         for (; classType != null; classType = classType.extnds) {
           // prefer myself or myself-as-supertype over any of my this$ fields
           // that may have already been added to the work list
-          if (program.typeOracle.canTriviallyCast(classType, targetType)) {
+          if (program.typeOracle.canTriviallyCast(classType, qualType)) {
             return expr;
           }
           addAllOuterThisRefs(workList, expr, classType);
@@ -2016,6 +1941,27 @@ public class GenerateJavaAST {
       JBinaryOperation binaryOperation = new JBinaryOperation(program, info,
           type, op, exprArg1, exprArg2);
       return binaryOperation;
+    }
+
+    private JExpression processQualifiedThisOrSuperRef(
+        QualifiedThisReference x, JClassType qualType) {
+      /*
+       * WEIRD: If a thisref or superref is qualified with the EXACT type of the
+       * innermost type (in other words, a needless qualifier), it must refer to
+       * that innermost type, because a class can never be nested inside of
+       * itself. In this case, we must treat it as if it were not qualified.
+       * 
+       * In all other cases, the qualified thisref or superref cannot possibly
+       * refer to the innermost type (even if the innermost type could be cast
+       * to a compatible type), so we must create a reference to some outer
+       * type.
+       */
+      JSourceInfo info = makeSourceInfo(x);
+      if (qualType == currentClass) {
+        return createThisRef(info, qualType);
+      } else {
+        return createQualifiedThisRef(info, qualType);
+      }
     }
 
     private InternalCompilerException translateException(Object node,
