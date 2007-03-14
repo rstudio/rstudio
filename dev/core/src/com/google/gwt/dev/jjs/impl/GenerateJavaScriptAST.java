@@ -631,12 +631,23 @@ public class GenerateJavaScriptAST {
       }
 
       JField field = x.getField();
-      JsInvocation jsInvocation = maybeCreateClinitCall(field);
-      if (jsInvocation != null) {
-        qualifier = createCommaExpression(qualifier, jsInvocation);
+      if (field.isStatic()) {
+        JsExpression realQualifier = maybeCreateClinitCall(field);
+        if (qualifier != null) {
+          // There is an unused qualifier. We must create a comma expression
+          // since there's no way to reference the field from the qualifier.
+          if (realQualifier == null) {
+            // ugh, must synthesize a call to window to be the real qualifier
+            // TODO: this will BREAK when we use inline JS
+            realQualifier = topScope.findExistingUnobfuscatableName("window").makeRef();
+          }
+          realQualifier = createCommaExpression(qualifier, realQualifier);
+        }
+        // the name ref's qualifier is either a clinit, or nothing
+        nameRef.setQualifier(realQualifier);
+      } else {
+        nameRef.setQualifier(qualifier); // instance
       }
-
-      nameRef.setQualifier(qualifier); // instance
       push(nameRef);
     }
 
