@@ -91,6 +91,14 @@ public final class JsBinaryOperator extends JsOperator {
     super(symbol, precedence, mask);
   }
 
+  public boolean isAssignment() {
+    /*
+     * Beware, flaky! Maybe I should have added Yet Another Field to
+     * BinaryOperator?
+     */
+    return (getPrecedence() == ASG.getPrecedence());
+  }
+
   public boolean isKeyword() {
     return this == INSTANCEOF || this == INOP;
   }

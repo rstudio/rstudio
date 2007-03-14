@@ -400,8 +400,6 @@ public class GenerateJavaScriptAST {
 
     private final JsName prototype = objectScope.declareName("prototype");
 
-    private final JsName window = jsProgram.getRootScope().declareName("window");
-
     {
       globalTemp.setObfuscatable(false);
       prototype.setObfuscatable(false);
@@ -443,7 +441,31 @@ public class GenerateJavaScriptAST {
           && x.getLhs().getType() instanceof JReferenceType
           && x.getRhs().getType() instanceof JReferenceType) {
         myOp = JsBinaryOperator.REF_NEQ;
+      } 
+      
+      /*
+       * Due to the way clinits are constructed, you can end up with a comma
+       * operation on the lhs, which is illegal.  Juggle things to put the
+       * operator and rhs inside of the comma expression.
+       */
+      if (myOp.isAssignment() && (lhs instanceof JsBinaryOperation)) {
+        // Find the rightmost comma operation
+        JsBinaryOperation curLhs = (JsBinaryOperation) lhs;
+        assert (curLhs.getOperator() == JsBinaryOperator.COMMA);
+        while (curLhs.getArg2() instanceof JsBinaryOperation) {
+          curLhs = (JsBinaryOperation) curLhs.getArg2();
+          assert (curLhs.getOperator() == JsBinaryOperator.COMMA);
+        }
+        // curLhs is now the rightmost comma operation; create an assignment to
+        // the last arg from this binary operation's rhs
+        JsBinaryOperation asg = new JsBinaryOperation(myOp, curLhs.getArg2(), rhs);
+        // replace the rightmost comma expression's last arg with the asg
+        curLhs.setArg2(asg);
+        // repush the entire comma expression
+        push(lhs);
+        return;
       }
+
       JsBinaryOperation binOp = new JsBinaryOperation(myOp, lhs, rhs);
       push(binOp);
     }
@@ -546,9 +568,19 @@ public class GenerateJavaScriptAST {
       }
 
       // setup fields
+      JsVars vars = new JsVars();
       for (int i = 0; i < jsFields.size(); ++i) {
-        JsStatement stmt = (JsStatement) jsFields.get(i);
-        globalStmts.add(stmt);
+        JsNode node = (JsNode) jsFields.get(i);
+        if (node instanceof JsVar) {
+          vars.add((JsVar) node);
+        } else {
+          assert (node instanceof JsStatement);
+          JsStatement stmt = (JsStatement) jsFields.get(i);
+          globalStmts.add(stmt);
+        }
+      }
+      if (!vars.isEmpty()) {
+        globalStmts.add(vars);
       }
     }
 
@@ -599,56 +631,69 @@ public class GenerateJavaScriptAST {
 
     // @Override
     public void endVisit(JField x, Context ctx) {
-      if (x.hasInitializer() && x.constInitializer == null) {
-        // do nothing
-        push(null);
-        return;
-      }
-
       // if we need an initial value, create an assignment
       if (x.constInitializer != null) {
+        // setup the constant value
         accept(x.constInitializer);
-      } else {
+      } else if (!x.hasInitializer()) {
+        // setup a default value
         accept(x.getType().getDefaultValue());
+      } else {
+        // the variable is setup during clinit, no need to initialize here
+        push(null);
       }
+      JsExpression rhs = (JsExpression) pop();
+      JsName name = getName(x);
 
-      JsNameRef fieldRef = getName(x).makeRef();
-      if (!x.isStatic()) {
-        fieldRef.setQualifier(globalTemp.makeRef());
+      if (x.isStatic()) {
+        // setup a var for the static
+        JsVar var = new JsVar(name);
+        var.setInitExpr(rhs);
+        push(var);
+      } else {
+        // for non-statics, only setup an assignment if needed
+        if (rhs != null) {
+          JsNameRef fieldRef = name.makeRef();
+          fieldRef.setQualifier(globalTemp.makeRef());
+          JsExpression asg = createAssignment(fieldRef, (JsExpression) pop());
+          push(new JsExprStmt(asg));
+        } else {
+          push(null);
+        }
       }
-      JsExpression asg = createAssignment(fieldRef, (JsExpression) pop());
-      push(new JsExprStmt(asg));
     }
 
     // @Override
     public void endVisit(JFieldRef x, Context ctx) {
-      JsName jsFieldName = getName(x.getField());
+      JField field = x.getField();
+      JsName jsFieldName = getName(field);
       JsNameRef nameRef = jsFieldName.makeRef();
-      JsExpression qualifier = null;
+      JsExpression curExpr = nameRef;
+
+      /*
+       * Note: the comma expressions here would cause an illegal tree state if
+       * the result expression ended up on the lhs of an assignment. A hack in
+       * in endVisit(JBinaryOperation) rectifies the situation.
+       */
+      
+      // See if we need a clinit
+      JsInvocation jsInvocation = maybeCreateClinitCall(field);
+      if (jsInvocation != null) {
+        curExpr = createCommaExpression(jsInvocation, curExpr);
+      }
 
       if (x.getInstance() != null) {
-        qualifier = (JsExpression) pop();
+        JsExpression qualifier = (JsExpression) pop();
+        if (field.isStatic()) {
+          // unnecessary qualifier, create a comma expression
+          curExpr = createCommaExpression(qualifier, curExpr);
+        } else {
+          // necessary qualifier, qualify the name ref
+          nameRef.setQualifier(qualifier);
+        }
       }
 
-      JField field = x.getField();
-      if (field.isStatic()) {
-        JsExpression realQualifier = maybeCreateClinitCall(field);
-        if (qualifier != null) {
-          // There is an unused qualifier. We must create a comma expression
-          // since there's no way to reference the field from the qualifier.
-          if (realQualifier == null) {
-            // ugh, must synthesize a call to window to be the real qualifier
-            // TODO: this will BREAK when we use inline JS
-            realQualifier = topScope.findExistingUnobfuscatableName("window").makeRef();
-          }
-          realQualifier = createCommaExpression(qualifier, realQualifier);
-        }
-        // the name ref's qualifier is either a clinit, or nothing
-        nameRef.setQualifier(realQualifier);
-      } else {
-        nameRef.setQualifier(qualifier); // instance
-      }
-      push(nameRef);
+      push(curExpr);
     }
 
     // @Override
@@ -734,9 +779,14 @@ public class GenerateJavaScriptAST {
       }
 
       // setup fields
+      JsVars vars = new JsVars();
       for (int i = 0; i < jsFields.size(); ++i) {
-        JsStatement stmt = (JsStatement) jsFields.get(i);
-        globalStmts.add(stmt);
+        JsNode node = (JsNode) jsFields.get(i);
+        assert (node instanceof JsVar);
+        vars.add((JsVar) node);
+      }
+      if (!vars.isEmpty()) {
+        globalStmts.add(vars);
       }
     }
 
@@ -839,7 +889,7 @@ public class GenerateJavaScriptAST {
         }
       }
 
-      if (vars.iterator().hasNext()) {
+      if (!vars.isEmpty()) {
         jsFunc.getBody().getStatements().add(0, vars);
       }
 
@@ -1289,12 +1339,8 @@ public class GenerateJavaScriptAST {
 
     private void generateNullFunc(JsStatements globalStatements) {
       // handle null method
-      // return 'window' so we can reference global fields from the invocation
-      JsReturn jsReturn = new JsReturn(window.makeRef());
-      JsBlock body = new JsBlock();
-      body.getStatements().add(jsReturn);
       JsFunction nullFunc = new JsFunction(topScope, nullMethodName);
-      nullFunc.setBody(body);
+      nullFunc.setBody(new JsBlock());
       globalStatements.add(nullFunc.makeStmt());
     }
 
@@ -1443,10 +1489,6 @@ public class GenerateJavaScriptAST {
       JsExpression asg = createAssignment(clinitFunc.getName().makeRef(),
           nullMethodName.makeRef());
       clinitFunc.getBody().getStatements().add(0, asg.makeStmt());
-
-      // return 'window' so that fields can be referenced
-      JsReturn jsReturn = new JsReturn(window.makeRef());
-      clinitFunc.getBody().getStatements().add(jsReturn);
     }
 
     private JsInvocation maybeCreateClinitCall(JField x) {

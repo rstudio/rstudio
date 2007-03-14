@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.js.ast.JsVars.JsVar;
+
 /**
  * Implemented by nodes that will visit child nodes.
  */
@@ -98,6 +100,8 @@ public interface JsVisitor {
 
   void endVisit(JsTry x);
 
+  void endVisit(JsVar var);
+
   void endVisit(JsVars x);
 
   void endVisit(JsWhile x);
@@ -179,6 +183,8 @@ public interface JsVisitor {
   boolean visit(JsThrow x);
 
   boolean visit(JsTry x);
+
+  boolean visit(JsVar var);
 
   boolean visit(JsVars x);
 

@@ -27,7 +27,7 @@ public class JsVars extends JsStatement {
   /**
    * A var declared using the JavaScript <code>var</code> statement.
    */
-  public static class JsVar implements HasName {
+  public static class JsVar extends JsNode implements HasName {
 
     private JsExpression initExpr;
 
@@ -48,6 +48,15 @@ public class JsVars extends JsStatement {
     public void setInitExpr(JsExpression initExpr) {
       this.initExpr = initExpr;
     }
+
+    public void traverse(JsVisitor v) {
+      if (v.visit(this)) {
+        if (initExpr != null) {
+          initExpr.traverse(v);
+        }
+      }
+      v.endVisit(this);
+    }
   }
 
   private final List vars = new ArrayList();
@@ -59,6 +68,10 @@ public class JsVars extends JsStatement {
     vars.add(var);
   }
 
+  public boolean isEmpty() {
+    return vars.isEmpty();
+  }
+
   // Iterator returns JsVar objects
   public Iterator iterator() {
     return vars.iterator();
@@ -68,10 +81,7 @@ public class JsVars extends JsStatement {
     if (v.visit(this)) {
       for (Iterator iter = vars.iterator(); iter.hasNext();) {
         JsVar var = (JsVar) iter.next();
-        JsExpression expr = var.getInitExpr();
-        if (expr != null) {
-          expr.traverse(v);
-        }
+        var.traverse(v);
       }
     }
     v.endVisit(this);

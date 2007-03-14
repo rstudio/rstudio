@@ -62,6 +62,7 @@ import com.google.gwt.dev.js.ast.JsTry;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsWhile;
+import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.util.TextOutput;
 
 import java.util.Iterator;
@@ -708,6 +709,20 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return false;
   }
 
+  public boolean visit(JsVar x) {
+    _nameOf(x);
+    JsExpression initExpr = x.getInitExpr();
+    if (initExpr != null) {
+      _spaceOpt();
+      _assignment();
+      _spaceOpt();
+      _parenPushIfCommaExpr(initExpr);
+      initExpr.traverse(this);
+      _parenPopIfCommaExpr(initExpr);
+    }
+    return false;
+  }
+
   public boolean visit(JsVars x) {
     _var();
     _space();
@@ -715,16 +730,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     for (Iterator iter = x.iterator(); iter.hasNext();) {
       sep = _sepCommaOptSpace(sep);
       JsVars.JsVar var = (JsVars.JsVar) iter.next();
-      _nameOf(var);
-      JsExpression initExpr = var.getInitExpr();
-      if (initExpr != null) {
-        _spaceOpt();
-        _assignment();
-        _spaceOpt();
-        _parenPushIfCommaExpr(initExpr);
-        initExpr.traverse(this);
-        _parenPopIfCommaExpr(initExpr);
-      }
+      var.traverse(this);
     }
     return false;
   }

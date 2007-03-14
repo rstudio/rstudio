@@ -57,6 +57,7 @@ import com.google.gwt.dev.js.ast.JsTry;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
+import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
 /**
  * Implements stubs for the <code>endVisit()</code> interface methods.
@@ -178,6 +179,9 @@ public abstract class JsAbstractVisitorWithEndVisits implements JsVisitor {
   }
 
   public void endVisit(JsTry x) {
+  }
+
+  public void endVisit(JsVar x) {
   }
 
   public void endVisit(JsVars x) {

@@ -57,6 +57,7 @@ import com.google.gwt.dev.js.ast.JsThrow;
 import com.google.gwt.dev.js.ast.JsTry;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsWhile;
+import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
 /**
  * Precedence indices from "JavaScript - The Definitive Guide" 4th Edition (page
@@ -269,6 +270,10 @@ class JsPrecedenceVisitor extends JsAbstractVisitorWithEndVisits {
   }
 
   public boolean visit(JsTry x) {
+    throw new RuntimeException("Only expressions have precedence.");
+  }
+
+  public boolean visit(JsVar x) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
