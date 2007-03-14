@@ -186,7 +186,7 @@ public class JsniInjector {
           + Jsni.JAVASCRIPTHOST_NAME
           + "::exceptionCaught"
           + "(ILjava/lang/String;Ljava/lang/String;)\\\"]"
-          + "((e && e.number) ? e.number : 0, e ? e.name : null , e ? e.message : null);\\n"
+          + "((e && e.number) || 0, (e && e.name) || null , (e && e.message) || null);\\n"
           + "}\\n";
 
       // Surround the original JS body statements with a try/catch so that
