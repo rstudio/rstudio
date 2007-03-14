@@ -358,8 +358,8 @@ public class Coverage extends CoverageSuper {
 
     private void testInstanceOfExpression() {
       // InstanceOfExpression
-      Object o = Inner.super;
-      assertTrue(o instanceof Super);
+      Object o = Coverage.this;
+      assertTrue(o instanceof CoverageSuper);
     }
 
     private void testLiterals() {
