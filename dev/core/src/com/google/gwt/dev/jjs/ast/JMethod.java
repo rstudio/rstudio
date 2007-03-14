@@ -27,24 +27,24 @@ public class JMethod extends JNode implements HasEnclosingType, HasName,
     HasType, HasSettableType, CanBeAbstract, CanBeFinal, CanBeSetFinal,
     CanBeNative, CanBeStatic {
 
-  public final List/* <JMethod> */overrides = new ArrayList/* <JMethod> */();
-  public final ArrayList/* <JClassType> */thrownExceptions = new ArrayList/* <JClassType> */();
-  public final ArrayList/* <JParameter> */params = new ArrayList/* <JParameter> */();
-  public final ArrayList/* <JLocal> */locals = new ArrayList/* <JLocal> */();
   public final JBlock body;
+  public final ArrayList/* <JLocal> */locals = new ArrayList/* <JLocal> */();
   /**
-   * If this method overrides another methods, references to the declarations it
-   * overrides. This should be an EXHAUSTIVE list, that is, if A->B->C, then C's
-   * overrides list will contain both A and B.
+   * References to any methods which this method overrides. This should be an
+   * EXHAUSTIVE list, that is, if C overrides B overrides A, then C's overrides
+   * list will contain both A and B.
    */
-  private JType returnType;
+  public final List/* <JMethod> */overrides = new ArrayList/* <JMethod> */();
+  public final ArrayList/* <JParameter> */params = new ArrayList/* <JParameter> */();
+  public final ArrayList/* <JClassType> */thrownExceptions = new ArrayList/* <JClassType> */();
   private final JReferenceType enclosingType;
-  private final String name;
-  private ArrayList/* <JType> */originalParamTypes;
   private final boolean isAbstract;
-  private final boolean isStatic;
   private boolean isFinal;
   private final boolean isPrivate;
+  private final boolean isStatic;
+  private final String name;
+  private ArrayList/* <JType> */originalParamTypes;
+  private JType returnType;
 
   /**
    * These are only supposed to be constructed by JProgram.
