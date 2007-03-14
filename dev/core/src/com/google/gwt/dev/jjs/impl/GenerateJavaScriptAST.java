@@ -655,7 +655,7 @@ public class GenerateJavaScriptAST {
         if (rhs != null) {
           JsNameRef fieldRef = name.makeRef();
           fieldRef.setQualifier(globalTemp.makeRef());
-          JsExpression asg = createAssignment(fieldRef, (JsExpression) pop());
+          JsExpression asg = createAssignment(fieldRef, rhs);
           push(new JsExprStmt(asg));
         } else {
           push(null);
