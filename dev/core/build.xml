@@ -137,6 +137,7 @@
 		<echo message="${javac.out} ${javac.junit.out}" />
 		<junit dir="${junit.out}" fork="yes" printsummary="yes" haltonfailure="true">
 			<classpath>
+				<pathelement location="test" />
 				<pathelement location="${javac.junit.out}" />
 				<pathelement location="${javac.out}" />
 				<pathelement location="${alldeps.jar}" />
