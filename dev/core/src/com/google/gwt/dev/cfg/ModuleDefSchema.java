@@ -212,13 +212,10 @@ public class ModuleDefSchema extends Schema {
       ScriptReadyBodySchema childSchema = (ScriptReadyBodySchema) fChild;
       String js = childSchema.getScriptReadyBlock();
       if (js != null) {
-        // This is a problem.
-        //
         logger.log(
             TreeLogger.WARN,
             "Injected scripts no longer require an associated JavaScript block.",
             null);
-        throw new UnableToCompleteException();
       }
 
       // For consistency, we allow the ready functions to use $wnd even though
