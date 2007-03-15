@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,6 +47,8 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
   private final ModuleDef module;
 
+  private final File outDir;
+
   private RebindOracle rebindOracle;
 
   private ModuleSpace space;
@@ -55,11 +57,15 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
    * @param module the module associated with the hosted module space
    */
   public ShellModuleSpaceHost(TreeLogger logger, TypeOracle typeOracle,
-      ModuleDef module, File genDir) {
+      ModuleDef module, File genDir, File outDir) {
     this.logger = logger;
     this.typeOracle = typeOracle;
     this.module = module;
     this.genDir = genDir;
+
+    // Combine the user's output dir with the module name to get the
+    // module-specific output dir.
+    this.outDir = new File(outDir, module.getName());
   }
 
   public CompilingClassLoader getClassLoader() {
@@ -100,7 +106,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     //
     Rules rules = module.getRules();
     rebindOracle = new StandardRebindOracle(typeOracle, propOracle, rules,
-        genDir, module.getCacheManager());
+        genDir, outDir, module.getCacheManager());
 
     // Create a completely isolated class loader which owns all classes
     // associated with a particular module. This effectively builds a

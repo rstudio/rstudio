@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,8 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Implements rebind logic in terms of a
- * {@link com.google.gwt.dev.cfg.ModuleDef}.
+ * Implements rebind logic in terms of a variety of other well-known oracles.
  */
 public class StandardRebindOracle implements RebindOracle {
 
@@ -53,7 +52,7 @@ public class StandardRebindOracle implements RebindOracle {
 
     public Rebinder(TypeOracle typeOracle, PropertyOracle propOracle) {
       genCtx = new StandardGeneratorContext(typeOracle, propOracle, genDir,
-          cacheManager);
+          outDir, cacheManager);
     }
 
     public String rebind(TreeLogger logger, String typeName)
@@ -136,6 +135,8 @@ public class StandardRebindOracle implements RebindOracle {
 
   private final File genDir;
 
+  private final File outDir;
+
   private final PropertyOracle propOracle;
 
   private final Rules rules;
@@ -143,11 +144,12 @@ public class StandardRebindOracle implements RebindOracle {
   private final TypeOracle typeOracle;
 
   public StandardRebindOracle(TypeOracle typeOracle, PropertyOracle propOracle,
-      Rules rules, File genDir, CacheManager cacheManager) {
+      Rules rules, File genDir, File moduleOutDir, CacheManager cacheManager) {
     this.typeOracle = typeOracle;
     this.propOracle = propOracle;
     this.rules = rules;
     this.genDir = genDir;
+    this.outDir = moduleOutDir;
     if (cacheManager != null) {
       this.cacheManager = cacheManager;
     } else {
@@ -156,9 +158,10 @@ public class StandardRebindOracle implements RebindOracle {
   }
 
   public StandardRebindOracle(TypeOracle typeOracle,
-      StaticPropertyOracle propOracle, Rules rules, File genDir) {
+      StaticPropertyOracle propOracle, Rules rules, File genDir,
+      File moduleOutDir) {
     // This is a path used for non-hosted mode execution; therefore no caching.
-    this(typeOracle, propOracle, rules, genDir, null);
+    this(typeOracle, propOracle, rules, genDir, moduleOutDir, null);
   }
 
   public String rebind(TreeLogger logger, String typeName)

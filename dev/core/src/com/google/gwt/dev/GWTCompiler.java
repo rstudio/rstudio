@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -73,7 +73,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 /**
- * The main executable entry point for the GWT java to javascript compiler.
+ * The main executable entry point for the GWT Java to JavaScript compiler.
  */
 public class GWTCompiler extends ToolBase {
 
@@ -109,7 +109,7 @@ public class GWTCompiler extends ToolBase {
     private Compilation compilation;
 
     public CompilationRebindOracle() {
-      super(typeOracle, propOracle, rules, genDir, cacheManager);
+      super(typeOracle, propOracle, rules, genDir, outDir, cacheManager);
     }
 
     /**
@@ -156,7 +156,7 @@ public class GWTCompiler extends ToolBase {
       RebindPermutationOracle {
 
     private final StandardRebindOracle rebindOracle = new StandardRebindOracle(
-        typeOracle, propOracle, rules, genDir, cacheManager) {
+        typeOracle, propOracle, rules, genDir, outDir, cacheManager) {
 
       /**
        * Record generated types.
@@ -187,11 +187,9 @@ public class GWTCompiler extends ToolBase {
         // generator context (which in turns uses the propOracle), this
         // has the effect we're after. It isn't reentrant, though, so don't
         // expect to call this recursively.
-        //
         propOracle.setPropertyValues(orderedProps, orderedPropValues);
 
         // Ask the rebind oracle.
-        //
         logProperties(logger, orderedProps, orderedPropValues);
         String resultTypeName = rebindOracle.rebind(logger, requestTypeName);
         answers.add(resultTypeName);
@@ -214,7 +212,7 @@ public class GWTCompiler extends ToolBase {
     if (!compiler.getUseGuiLogger()) {
       System.exit(1);
     } else {
-      // This thread returns and the process ends with the gui logger window
+      // This thread returns and the process ends with the GUI logger window
       // is closed. Calling System.exit() doesn't give you a chance to view it.
     }
   }
@@ -312,11 +310,9 @@ public class GWTCompiler extends ToolBase {
     this.module = moduleDef;
 
     // Set up all the initial state.
-    //
     checkModule(logger);
 
     // Tweak the output directory so that output lives under the module name.
-    //
     outDir = new File(outDir, module.getName());
 
     rules = module.getRules();
@@ -596,7 +592,7 @@ public class GWTCompiler extends ToolBase {
           //
           String msg = "Compilation '" + fn + "' refers to generated type '"
               + genTypeName
-              + "' which no longers exists; cache entry will be removed";
+              + "' which no longer exists; cache entry will be removed";
           branch.log(TreeLogger.TRACE, msg, null);
           Util.deleteFilesStartingWith(outDir, strongName);
           isBadCompilation = true;
@@ -658,7 +654,7 @@ public class GWTCompiler extends ToolBase {
     CompilationRebindOracle rebindOracle = new CompilationRebindOracle();
 
     // Tell the property provider above about the current property values.
-    // Note that the rebindOracle is actually senstive to these values because
+    // Note that the rebindOracle is actually sensitive to these values because
     // in its ctor is uses propOracle as its property oracle.
     //
     propOracle.setPropertyValues(currentProps, currentValues);

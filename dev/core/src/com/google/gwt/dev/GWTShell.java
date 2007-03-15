@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -210,7 +210,7 @@ public class GWTShell extends ToolBase {
         //
         TypeOracle typeOracle = moduleDef.getTypeOracle(logger);
         ShellModuleSpaceHost host = doCreateShellModuleSpaceHost(logger,
-            typeOracle, moduleDef, genDir);
+            typeOracle, moduleDef, genDir, outDir);
         return host;
       } finally {
         Cursor normalCursor = display.getSystemCursor(SWT.CURSOR_ARROW);
@@ -589,8 +589,8 @@ public class GWTShell extends ToolBase {
    * @return ShellModuleSpaceHost instance
    */
   protected ShellModuleSpaceHost doCreateShellModuleSpaceHost(
-      TreeLogger logger, TypeOracle typeOracle, ModuleDef moduleDef, File genDir) {
-    return new ShellModuleSpaceHost(logger, typeOracle, moduleDef, genDir);
+      TreeLogger logger, TypeOracle typeOracle, ModuleDef moduleDef, File genDir, File outDir) {
+    return new ShellModuleSpaceHost(logger, typeOracle, moduleDef, genDir, outDir);
   }
 
   /**
