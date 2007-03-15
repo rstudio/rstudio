@@ -53,65 +53,78 @@ public class JSONParser {
     }
   }
 
-  /*
-   * Given a JavaScript object that could be an Object or a primitive JavaScript
-   * type, create the correct subtype of JSONValue and return it.
+  /**
+   * Returns the {@link JSONValue} for a given {@link JavaScriptObject}.  
+   * 
+   * @param jsValue {@link JavaScriptObject} to build a {@link JSONValue} for, 
+   *     this object cannot be a primitive JavaScript type
+   * @return a {@link JSONValue} instance for the {@link JavaScriptObject}
    */
   static JSONValue buildValue(JavaScriptObject jsValue) throws JSONException {
+    
     if (isNull(jsValue)) {
       return JSONNull.getInstance();
     }
+
     if (isArray(jsValue)) {
       return new JSONArray(jsValue);
     }
-    Boolean bool = asBoolean(jsValue);
-    if (bool != null) {
-      return JSONBoolean.getInstance(bool.booleanValue());
+
+    if (isBoolean(jsValue)) {
+      return JSONBoolean.getInstance(asBoolean(jsValue));
     }
-    String str = asString(jsValue);
-    if (str != null) {
-      return new JSONString(str);
+
+    if (isString(jsValue)) {
+      return new JSONString(asString(jsValue));
     }
+
     if (isDouble(jsValue)) {
       return new JSONNumber(asDouble(jsValue));
     }
-    if (isJSONObject(jsValue)) {
+
+    if (isObject(jsValue)) {
       return new JSONObject(jsValue);
     }
-    throw new JSONException(toJavascriptString(jsValue));
+
+    /*
+     * In practice we should never reach this point.  If we do, we cannot make 
+     * any assumptions about the jsValue.
+     */
+    throw new JSONException("Unknown JavaScriptObject type");
   }
 
-  /*
-   * Returns a Boolean representing the truth value of jsValue. Returns null if
-   * jsValue is not a boolean value.
+  /**
+   * Returns the boolean represented by the jsValue. This method
+   * assumes that {@link #isBoolean(JavaScriptObject)} returned
+   * <code>true</code>.
+   * 
+   * @param jsValue JavaScript object to convert
+   * @return the boolean represented by the jsValue
    */
-  private static native Boolean asBoolean(JavaScriptObject jsValue) /*-{
-    if (jsValue instanceof Boolean || ((typeof jsValue)=='boolean')) {
-      if(jsValue==true) {
-        return @java.lang.Boolean::TRUE;
-      } else {
-        return @java.lang.Boolean::FALSE;
-      }
-    }
-    return null;
-  }-*/;
-  
-  /*
-   * Returns the double represented by jsValue.
-   */
-  private static native double asDouble(JavaScriptObject jsValue) /*-{
-    return jsValue;
+  private static native boolean asBoolean(JavaScriptObject jsValue) /*-{
+    return jsValue.valueOf();
   }-*/;
 
-  /*
-   * converts the Javascript Object to a String. Returns null if the object is
-   * not a String.
+  /**
+   * Returns the double represented by jsValue. This method assumes that
+   * {@link #isDouble(JavaScriptObject)} returned <code>true</code>.
+   * 
+   * @param jsValue JavaScript object to convert
+   * @return the double represented by the jsValue
+   */
+  private static native double asDouble(JavaScriptObject jsValue) /*-{
+    return jsValue.valueOf();
+  }-*/;
+
+  /**
+   * Returns the Javascript String as a Java String. This method assumes that
+   * {@link #isString(JavaScriptObject)} returned <code>true</code>.
+   * 
+   * @param jsValue JavaScript object to convert
+   * @return the String represented by the jsValue
    */
   private static native String asString(JavaScriptObject jsValue) /*-{
-    if (jsValue instanceof String || ((typeof jsValue)=='string')) {
-      return jsValue;
-    }
-    return null;
+    return jsValue;
   }-*/;
 
   /*
@@ -126,37 +139,71 @@ public class JSONParser {
     return x;
   }-*/;
 
+  /**
+   * Returns <code>true</code> if the {@link JavaScriptObject} is a wrapped
+   * JavaScript Array.
+   * 
+   * @param jsValue JavaScript object to test
+   * @return <code>true</code> if jsValue is a wrapped JavaScript Array
+   */
   private static native boolean isArray(JavaScriptObject jsValue) /*-{
-    return (jsValue instanceof Array); 
+    return jsValue instanceof Array; 
   }-*/;
 
-  /*
-   * Returns true if jsValue is a double.
+  /**
+   * Returns <code>true</code> if the {@link JavaScriptObject} is a wrapped
+   * JavaScript Boolean.
+   * 
+   * @param jsValue JavaScript object to test
+   * @return <code>true</code> if jsValue is a wrapped JavaScript Boolean
+   */
+  private static native boolean isBoolean(JavaScriptObject jsValue) /*-{
+    return jsValue instanceof Boolean; 
+  }-*/;
+
+  /**
+   * Returns <code>true</code> if the {@link JavaScriptObject} is a wrapped
+   * JavaScript Double.
+   * 
+   * @param jsValue JavaScript object to test
+   * @return <code>true</code> if jsValue is a wrapped JavaScript Double
    */
   private static native boolean isDouble(JavaScriptObject jsValue) /*-{
-    return (jsValue instanceof Number || ((typeof jsValue)=='number'));
+    return jsValue instanceof Number;
   }-*/;
 
-  /*
-   * Given a JavaScriptObject build the corresponding JSONObject representation.
-   * Note it is assumed that the JavaScriptObject is a proper JSON object. This
-   * is done entirely in Javascript because the Javascript code to marshal it
-   * into a Java form would be about the same size.
+  /**
+   * Returns <code>true</code> if the {@link JavaScriptObject} is <code>null</code>
+   * or <code>undefined</code>.
+   * 
+   * @param jsValue JavaScript object to test
+   * @return <code>true</code> if jsValue is <code>null</code> or
+   *         <code>undefined</code>
    */
-  private static native boolean isJSONObject(JavaScriptObject jsObject) /*-{
-    return (jsObject instanceof Object);
+  private static native boolean isNull(JavaScriptObject jsValue) /*-{
+    return jsValue == null;
   }-*/;
 
-  private static native boolean isNull(JavaScriptObject o) /*-{
-    return o == null;
-  }-*/;
-
-  /*
-   * Returns the string value of jsValue. This is more informative than
-   * Object.toString().
+  /**
+   * Returns <code>true</code> if the {@link JavaScriptObject} is a JavaScript
+   * Object.
+   * 
+   * @param jsValue JavaScript object to test
+   * @return <code>true</code> if jsValue is a JavaScript Object
    */
-  private static native String toJavascriptString(JavaScriptObject jsValue) /*-{
-    return jsValue.toString();
+  private static native boolean isObject(JavaScriptObject jsValue) /*-{
+    return jsValue instanceof Object;
+  }-*/;
+
+  /**
+   * Returns <code>true</code> if the {@link JavaScriptObject} is a JavaScript
+   * String.
+   * 
+   * @param jsValue JavaScript object to test
+   * @return <code>true</code> if jsValue is a JavaScript String
+   */
+  private static native boolean isString(JavaScriptObject jsValue) /*-{
+    return jsValue instanceof String;
   }-*/;
 
   /**
