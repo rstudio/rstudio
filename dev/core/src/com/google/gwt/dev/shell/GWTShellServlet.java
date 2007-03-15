@@ -261,21 +261,26 @@ public class GWTShellServlet extends HttpServlet {
       HttpServletResponse response, TreeLogger logger, String partialPath,
       String moduleName) throws IOException {
 
-    // If the request is of the form ".../moduleName.nocache.js", then
-    // we generate the selection script for them.
-    if (partialPath.equals(moduleName + ".nocache.js")) {
+    // If the request is of the form ".../moduleName.nocache.js" or
+    // ".../moduleName.nocache.script.js" then generate the selection script for
+    // them.
+    boolean nocacheHtml = partialPath.equals(moduleName + ".nocache.js");
+    boolean nocacheScript = !nocacheHtml
+        && partialPath.equals(moduleName + ".nocache.script.js");
+    if (nocacheHtml || nocacheScript) {
       // If the '?compiled' request property is specified, don't auto-generate.
       if (request.getParameter("compiled") == null) {
         // Generate the .js file.
         try {
-          String js = genSelectionScript(logger, moduleName);
+          String js = genSelectionScript(logger, moduleName, nocacheScript);
           response.setStatus(HttpServletResponse.SC_OK);
           response.setContentType("text/javascript");
           response.getWriter().println(js);
           return true;
         } catch (UnableToCompleteException e) {
-          // Quietly continue, since this could actually be a request for a
-          // static file that happens to have an unfortunately confusing name.
+          // The error will have already been logged. Continue, since this could
+          // actually be a request for a static file that happens to have an
+          // unfortunately confusing name.
         }
       }
     }
@@ -471,14 +476,16 @@ public class GWTShellServlet extends HttpServlet {
    * mode version, since this servlet doesn't know strong names, since by
    * definition of "hosted mode" JavaScript hasn't been compiled at this point.
    */
-  private String genSelectionScript(TreeLogger logger, String moduleName)
-      throws UnableToCompleteException {
-    String msg = "Generating a selection script for module " + moduleName;
+  private String genSelectionScript(TreeLogger logger, String moduleName,
+      boolean asScript) throws UnableToCompleteException {
+    String msg = asScript ? "Generating a script selection script for module "
+        : "Generating an html selection script for module ";
+    msg += moduleName;
     logger.log(TreeLogger.TRACE, msg, null);
 
     ModuleDef moduleDef = getModuleDef(logger, moduleName);
     SelectionScriptGenerator gen = new SelectionScriptGenerator(moduleDef);
-    return gen.generateSelectionScript(false);
+    return gen.generateSelectionScript(false, asScript);
   }
 
   private synchronized TreeLogger getLogger() {

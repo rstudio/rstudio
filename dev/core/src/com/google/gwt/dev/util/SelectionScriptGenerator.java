@@ -184,14 +184,16 @@ public class SelectionScriptGenerator {
    * 
    * @return an JavaScript whose contents are the definition of a module.js file
    */
-  public String generateSelectionScript(boolean obfuscate) {
+  public String generateSelectionScript(boolean obfuscate, boolean asScript) {
     try {
       String rawSource;
       {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw, true);
 
-        String template = Utility.getFileFromClassPath("com/google/gwt/dev/util/SelectionScriptTemplate.js");
+        String template = Utility.getFileFromClassPath(asScript
+            ? "com/google/gwt/dev/util/SelectionScriptTemplate.script.js"
+            : "com/google/gwt/dev/util/SelectionScriptTemplate.js");
         genScript(pw, template);
 
         pw.close();

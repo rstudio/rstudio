@@ -338,7 +338,7 @@ public class GWTCompiler extends ToolBase {
 
     // Generate a selection script to pick the right permutation.
     //
-    writeSelectionScript(logger, selGen);
+    writeSelectionScripts(logger, selGen);
 
     // Copy all public files into the output directory.
     //
@@ -455,9 +455,6 @@ public class GWTCompiler extends ToolBase {
     sb.append("var $doc = $wnd.document;\n");
     sb.append("var $moduleName = \"" + moduleName + "\";\n");
     sb.append("</script></head>\n");
-
-    // Set up the body to call the onload handler.
-    //
     sb.append("<body>\n");
 
     // A nice message in case someone opens the file directly.
@@ -484,6 +481,38 @@ public class GWTCompiler extends ToolBase {
     sb.append("if ($wnd." + moduleFunction + ") $wnd." + moduleFunction
         + ".onScriptLoad();\n");
     sb.append("--></script></body></html>\n");
+
+    String s = sb.toString();
+    return s;
+  }
+
+  private String getJsPrefix() {
+    StringBuffer sb = new StringBuffer();
+
+    sb.append("(function(){\n");
+
+    // Setup the well-known variables.
+    //
+    sb.append("var $wnd = parent;\n");
+    sb.append("var $doc = $wnd.document;\n");
+    sb.append("var $moduleName = \"" + moduleName + "\";\n");
+
+    String s = sb.toString();
+    return s;
+  }
+
+  private String getJsSuffix() {
+    StringBuffer sb = new StringBuffer();
+    String moduleFunction = module.getName().replace('.', '_');
+
+    // Generate the call to tell the bootstrap code that we're ready to go.
+    sb.append("\n");
+    sb.append("if (" + moduleFunction + ") {\n");
+    sb.append("  var __gwt_initHandlers = " + moduleFunction
+        + ".__gwt_initHandlers;\n");
+    sb.append("  " + moduleFunction + ".onScriptLoad(gwtOnLoad);\n");
+    sb.append("}\n");
+    sb.append("})();\n");
 
     String s = sb.toString();
     return s;
@@ -657,7 +686,7 @@ public class GWTCompiler extends ToolBase {
 
     // Create a wrapper and an unambiguous name for the file.
     //
-    String strongName = writeHtmlWithStrongName(logger, js);
+    String strongName = writeHtmlAndJsWithStrongName(logger, js);
 
     // Write out a cache control file that correlates to this script.
     //
@@ -751,26 +780,36 @@ public class GWTCompiler extends ToolBase {
   }
 
   /**
-   * Writes the script to a file enclosed in an html wrapper, encoded as UTF-8,
-   * and whose filename is an MD5 hash of the script contents.
+   * Writes the script to 1) an HTML file containing the script and 2) a
+   * JavaScript file containing the script. Contenst are encoded as UTF-8, and
+   * the filenames will be an MD5 hash of the script contents.
    * 
    * @return the base part of the strong name, which can be used to create other
    *         files with different extensions
    */
-  private String writeHtmlWithStrongName(TreeLogger logger, String js)
+  private String writeHtmlAndJsWithStrongName(TreeLogger logger, String js)
       throws UnableToCompleteException {
     try {
-      byte[] prefix = getHtmlPrefix().getBytes("UTF-8");
       byte[] scriptBytes = js.getBytes("UTF-8");
-      byte[] suffix = getHtmlSuffix().getBytes("UTF-8");
       String strongName = Util.computeStrongName(scriptBytes);
-      File outFile = new File(outDir, strongName + ".cache.html");
-      Util.writeBytesToFile(logger, outFile, new byte[][] {
-          prefix, scriptBytes, suffix});
-
-      String msg = "Compilation written to " + outFile.getAbsolutePath();
-      logger.log(TreeLogger.TRACE, msg, null);
-
+      {
+        byte[] prefix = getHtmlPrefix().getBytes("UTF-8");
+        byte[] suffix = getHtmlSuffix().getBytes("UTF-8");
+        File outFile = new File(outDir, strongName + ".cache.html");
+        Util.writeBytesToFile(logger, outFile, new byte[][] {
+            prefix, scriptBytes, suffix});
+        String msg = "Compilation written to " + outFile.getAbsolutePath();
+        logger.log(TreeLogger.TRACE, msg, null);
+      }
+      {
+        byte[] prefix = getJsPrefix().getBytes("UTF-8");
+        byte[] suffix = getJsSuffix().getBytes("UTF-8");
+        File outFile = new File(outDir, strongName + ".cache.js");
+        Util.writeBytesToFile(logger, outFile, new byte[][] {
+            prefix, scriptBytes, suffix});
+        String msg = "Compilation written to " + outFile.getAbsolutePath();
+        logger.log(TreeLogger.TRACE, msg, null);
+      }
       return strongName;
     } catch (UnsupportedEncodingException e) {
       logger.log(TreeLogger.ERROR, "Unable to encode compiled script as UTF-8",
@@ -779,14 +818,25 @@ public class GWTCompiler extends ToolBase {
     }
   }
 
-  private void writeSelectionScript(TreeLogger logger,
+  private void writeSelectionScripts(TreeLogger logger,
       SelectionScriptGenerator selGen) {
-    String html = selGen.generateSelectionScript(obfuscate);
-    String fn = module.getName() + ".nocache.js";
-    File selectionFile = new File(outDir, fn);
-    Util.writeStringAsFile(selectionFile, html);
-    String msg = "Compilation selection script written to "
-        + selectionFile.getAbsolutePath();
-    logger.log(TreeLogger.TRACE, msg, null);
+    {
+      String html = selGen.generateSelectionScript(obfuscate, false);
+      String fn = module.getName() + ".nocache.js";
+      File selectionFile = new File(outDir, fn);
+      Util.writeStringAsFile(selectionFile, html);
+      String msg = "Compilation selection script written to "
+          + selectionFile.getAbsolutePath();
+      logger.log(TreeLogger.TRACE, msg, null);
+    }
+    {
+      String html = selGen.generateSelectionScript(obfuscate, true);
+      String fn = module.getName() + ".nocache.script.js";
+      File selectionFile = new File(outDir, fn);
+      Util.writeStringAsFile(selectionFile, html);
+      String msg = "Compilation selection script written to "
+          + selectionFile.getAbsolutePath();
+      logger.log(TreeLogger.TRACE, msg, null);
+    }
   }
 }
