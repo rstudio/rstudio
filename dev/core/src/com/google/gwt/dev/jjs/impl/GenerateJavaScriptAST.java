@@ -1043,11 +1043,17 @@ public class GenerateJavaScriptAST {
               JsName jsName = getName(field);
               assert (jsName != null);
               x.resolve(jsName);
-              JsInvocation clinitCall = maybeCreateClinitCall(field);
-              if (clinitCall != null) {
-                assert (x.getQualifier() == null);
-                x.setQualifier(clinitCall);
-              }
+              /*
+               * TODO FIXME HACK: this is currently broken due to changes in how
+               * static fields are referenced. Commenting this out because it's
+               * better to fail to call clinit than to generate code that cannot
+               * possibly work.
+               */
+              // JsInvocation clinitCall = maybeCreateClinitCall(field);
+              // if (clinitCall != null) {
+              // assert (x.getQualifier() == null);
+              // x.setQualifier(clinitCall);
+              // }
             } else {
               JMethod method = (JMethod) node;
               if (x.getQualifier() == null) {
