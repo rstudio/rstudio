@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -262,11 +262,11 @@ public class GWTShellServlet extends HttpServlet {
       String moduleName) throws IOException {
 
     // If the request is of the form ".../moduleName.nocache.js" or
-    // ".../moduleName.nocache.script.js" then generate the selection script for
+    // ".../moduleName.nocache-xs.js" then generate the selection script for
     // them.
     boolean nocacheHtml = partialPath.equals(moduleName + ".nocache.js");
     boolean nocacheScript = !nocacheHtml
-        && partialPath.equals(moduleName + ".nocache.script.js");
+        && partialPath.equals(moduleName + ".nocache-xs.js");
     if (nocacheHtml || nocacheScript) {
       // If the '?compiled' request property is specified, don't auto-generate.
       if (request.getParameter("compiled") == null) {

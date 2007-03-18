@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -62,20 +62,14 @@ function __MODULE_FUNC__() {
   //
   function computeScriptBase() {
     // see if gwt.js left a marker for us
-    var thisScript
-    , markerScript = doc.getElementById("__gwt_js_marker___MODULE_NAME__");
+    var thisScript, markerScript;
 
+    // try writing a marker
+    doc.write('<script id="__gwt_marker___MODULE_NAME__"></script>');
+    markerScript = doc.getElementById("__gwt_marker___MODULE_NAME__");
     if (markerScript) {
-      // gwt.js left us a marker; this script should be the next element
-      thisScript = markerScript.nextSibling;
-    } else {
-      // try writing my own marker
-      doc.write('<script id="__gwt_marker___MODULE_NAME__"></script>');
-      markerScript = doc.getElementById("__gwt_marker___MODULE_NAME__");
-      if (markerScript) {
-        // this script should be the previous element
-        thisScript = markerScript.previousSibling;
-      }
+      // this script should be the previous element
+      thisScript = markerScript.previousSibling;
     }
 
     if (thisScript) {
@@ -216,7 +210,7 @@ function __MODULE_FUNC__() {
 // __SHELL_SERVLET_ONLY_BEGIN__
   if (!isHostedMode()) {
     // Force shell servlet to serve compiled output for web mode
-    doc.write('<script src="' + base + '__MODULE_NAME__.nocache.script.js?compiled"></script>');
+    doc.write('<script src="' + base + '__MODULE_NAME__.nocache-xs.js?compiled"></script>');
     return;
   } else {
     // This script cannot run hosted mode properly; redirect to the html version
