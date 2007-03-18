@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 package com.google.gwt.dev.util.log;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.shell.LowLevel;
 import com.google.gwt.dev.util.log.TreeItemLogger.LogEvent;
 
 import org.eclipse.swt.SWT;
@@ -36,7 +35,6 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
@@ -49,82 +47,6 @@ import java.io.StringWriter;
  */
 public class TreeLoggerWidget extends Composite implements TreeListener,
     SelectionListener {
-
-  private static AbstractTreeLogger singletonWindowLogger;
-
-  /**
-   * Useful for debugging, this method creates a standalone window in a
-   * background thread and returns a logger you can use to write to it.
-   */
-  public static synchronized AbstractTreeLogger getAsDetachedWindow(
-      final String caption, final int width, final int height,
-      final boolean autoScroll) {
-
-    if (singletonWindowLogger != null) {
-      // Already set.
-      //
-      return singletonWindowLogger;
-    }
-
-    final AbstractTreeLogger[] loggerHolder = new AbstractTreeLogger[1];
-    Thread logWindowThread = new Thread() {
-
-      public void run() {
-        // Create a shell.
-        //
-        Shell shell = new Shell(Display.getCurrent());
-        shell.setText(caption);
-        FillLayout fillLayout = new FillLayout();
-        fillLayout.marginWidth = 0;
-        fillLayout.marginHeight = 0;
-        shell.setLayout(fillLayout);
-
-        // Create a logger in it.
-        //
-        synchronized (loggerHolder) {
-          final TreeLoggerWidget treeLoggerWidget = new TreeLoggerWidget(shell);
-          treeLoggerWidget.setAutoScroll(autoScroll);
-          loggerHolder[0] = treeLoggerWidget.getLogger();
-        }
-
-        // Set the shell's icon and size then show it.
-        //
-        shell.setImage(LowLevel.loadImage("gwt.ico"));
-        shell.setSize(width, height);
-        shell.open();
-
-        // Pump the event loop until the shell is closed.
-        //
-        Display display = Display.getCurrent();
-        while (!shell.isDisposed()) {
-          try {
-            if (!display.readAndDispatch()) {
-              display.sleep();
-            }
-          } catch (Throwable e) {
-            // Ignored -- this method is only intended for test harnesses.
-          }
-        }
-      }
-    };
-
-    // Start the thread and wait until the loggerHolder has something.
-    //
-    logWindowThread.setName("TreeLogger Window");
-    logWindowThread.start();
-    while (singletonWindowLogger == null) {
-      Thread.yield();
-      if (logWindowThread.isAlive()) {
-        synchronized (loggerHolder) {
-          singletonWindowLogger = loggerHolder[0];
-        }
-      } else {
-        throw new IllegalStateException("Log window thread died unexpectedly");
-      }
-    }
-
-    return singletonWindowLogger;
-  }
 
   private boolean autoScroll;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,8 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.dev.shell.mac.LowLevelSaf;
+
+import java.awt.Toolkit;
 
 /**
  * Initializes the low level libraries for Mac.
@@ -41,4 +43,54 @@ public class BootStrapPlatform {
     System.exit(-1);
   }
 
+  /**
+   * 
+   * This works around a complicated set of OS X SWT/AWT compatibilities.
+   * {@link #setSystemProperties()} will typically need to be called first to
+   * ensure that CocoaComponent compatability mode is disabled. The constraints
+   * of using SWT and AWT together are:
+   * 
+   * <p>
+   * 1 - The SWT event dispatch needs to be running on the main application
+   * thread (only possible with -XstartOnFirstThread vm arg).
+   * </p>
+   * <p>
+   * 2 - The first call into AWT must be from the main thread after a SWT
+   * display has been initialized.
+   * </p>
+   * 
+   * This method allows the compiler to have a tree logger in a SWT window and
+   * allow generators to use AWT for image generation.
+   * 
+   * <p>
+   * NOTE: In GUI applications, {@link #setSystemProperties()} and
+   * {@link #maybeInitializeAWT()} will both be called during the bootstrap
+   * process. Command line applications (like 
+   * @{link com.google.gwt.dev.GWTCompiler}) avoid eagerly initializing AWT
+   * and only call {@link #setSystemProperties()} allowing AWT to be
+   * initialized on demand.
+   * </p>
+   */
+  public static void maybeInitializeAWT() {
+    final Toolkit toolkit = Toolkit.getDefaultToolkit();
+  }
+
+  /**
+   * Sets platform specific system properties. Currently, this disables
+   * CocoaComponent CompatibilityMode.
+   * 
+   * <p>
+   * NOTE: In GUI applications, {@link #setSystemProperties()} and
+   * {@link #maybeInitializeAWT()} will both be called during the bootstrap
+   * process. Command line applications (like 
+   * @{link com.google.gwt.dev.GWTCompiler}) avoid eagerly initializing AWT
+   * and only call {@link #setSystemProperties()} allowing AWT to be
+   * initialized on demand.
+   * </p>
+   */
+  public static void setSystemProperties() {
+    // Disable CocoaComponent compatibility mode.
+    System.setProperty("com.apple.eawt.CocoaComponent.CompatibilityMode",
+        "false");
+  }
 }

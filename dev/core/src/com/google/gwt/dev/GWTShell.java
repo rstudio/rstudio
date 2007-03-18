@@ -299,11 +299,18 @@ public class GWTShell extends ToolBase {
   }
 
   public static void main(String[] args) {
+    /*
+     * NOTE: main always exits with a call to System.exit to terminate any
+     * non-daemon threads that were started in Generators. Typically, this is to
+     * shutdown AWT related threads, since the contract for their termination is
+     * still implementation-dependent.
+     */
     BootStrapPlatform.go();
     GWTShell shellMain = new GWTShell();
     if (shellMain.processArgs(args)) {
       shellMain.run();
     }
+    System.exit(0);
   }
 
   /**
@@ -516,14 +523,18 @@ public class GWTShell extends ToolBase {
    */
   public void run() {
     try {
+      // Set any platform specific system properties.      
+      BootStrapPlatform.setSystemProperties();
+      
       if (!startUp()) {
         // Failed to initalize.
-        //
         return;
       }
 
+      // Eager AWT initialization for OS X to ensure safe coexistence with SWT.
+      BootStrapPlatform.maybeInitializeAWT();
+      
       // Tomcat's running now, so launch browsers for startup urls now.
-      //
       launchStartupUrls(getTopLogger());
 
       pumpEventLoop();

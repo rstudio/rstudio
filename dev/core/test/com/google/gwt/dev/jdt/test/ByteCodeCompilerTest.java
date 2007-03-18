@@ -226,12 +226,6 @@ public class ByteCodeCompilerTest extends TestCase {
     private final Set pkgNames;
   }
 
-  public static void main(String[] args) throws UnableToCompleteException {
-    // Run this to try to put the hurtin' on the compiler.
-    //
-    scanAndCompile(Loggers.createOptionalGuiTreeLogger());
-  }
-
   private static void scanAndCompile(TreeLogger logger)
       throws UnableToCompleteException {
     FileOracleFactory fof = new FileOracleFactory();

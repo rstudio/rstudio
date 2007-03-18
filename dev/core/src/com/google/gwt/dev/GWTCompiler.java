@@ -43,8 +43,8 @@ import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.arg.ArgHandlerTreeLoggerFlag;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
+import com.google.gwt.dev.util.log.DetachedTreeLoggerWindow;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-import com.google.gwt.dev.util.log.TreeLoggerWidget;
 import com.google.gwt.dev.util.xml.ReflectiveParser;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerOutDir;
@@ -201,20 +201,21 @@ public class GWTCompiler extends ToolBase {
   private static final String EXT_CACHE_XML = ".cache.xml";
 
   public static void main(String[] args) {
+    /*
+     * NOTE: main always exits with a call to System.exit to terminate any
+     * non-daemon threads that were started in Generators. Typically, this is to
+     * shutdown AWT related threads, since the contract for their termination is
+     * still implementation-dependent.
+     */
     GWTCompiler compiler = new GWTCompiler();
     if (compiler.processArgs(args)) {
       if (compiler.run()) {
-        // The only successful return path.
-        //
-        return;
+        // Exit w/ success code.
+        System.exit(0);
       }
     }
-    if (!compiler.getUseGuiLogger()) {
-      System.exit(1);
-    } else {
-      // This thread returns and the process ends with the GUI logger window
-      // is closed. Calling System.exit() doesn't give you a chance to view it.
-    }
+    // Exit w/ non-success code.
+    System.exit(1);
   }
 
   private final CacheManager cacheManager;
@@ -695,15 +696,51 @@ public class GWTCompiler extends ToolBase {
     return compilation.getStrongName();
   }
 
+  /**
+   * Runs the compiler. If a gui-based TreeLogger is used, this method will not
+   * return until its window is closed by the user.
+   * 
+   * @return success from the compiler, <code>true</code> if the compile
+   *         completed without errors, <code>false</code> otherwise.
+   */
   private boolean run() {
-    AbstractTreeLogger logger;
+    // Set any platform specific system properties.
+    BootStrapPlatform.setSystemProperties();
+    
     if (useGuiLogger) {
-      logger = TreeLoggerWidget.getAsDetachedWindow("Build Output for "
-          + moduleName, 800, 600, true);
-    } else {
-      logger = new PrintWriterTreeLogger();
-    }
+      // Initialize a tree logger window.
+      DetachedTreeLoggerWindow loggerWindow = DetachedTreeLoggerWindow.getInstance(
+          "Build Output for " + moduleName, 800, 600, true);
 
+      // Eager AWT initialization for OS X to ensure safe coexistence with SWT.
+      BootStrapPlatform.maybeInitializeAWT();
+
+      final AbstractTreeLogger logger = loggerWindow.getLogger();
+      final boolean[] success = new boolean[1];
+
+      // Compiler will be spawned onto a second thread, UI thread for tree
+      // logger will remain on the main.
+      Thread compilerThread = new Thread(new Runnable() {
+        public void run() {
+          success[0] = GWTCompiler.this.run(logger);
+        }
+      });
+
+      compilerThread.setName("GWTCompiler Thread");
+      compilerThread.start();
+      loggerWindow.run();
+
+      // Even if the tree logger window is closed, we wait for the compiler
+      // to finish.
+      waitForThreadToTerminate(compilerThread);
+
+      return success[0];
+    } else {
+      return run(new PrintWriterTreeLogger());
+    }
+  }
+
+  private boolean run(AbstractTreeLogger logger) {
     try {
       logger.setMaxDetail(logLevel);
 
@@ -714,9 +751,35 @@ public class GWTCompiler extends ToolBase {
     } catch (UnableToCompleteException e) {
       // We intentionally don't pass in the exception here since the real
       // cause has been logged.
-      //
       logger.log(TreeLogger.ERROR, "Build failed", null);
       return false;
+    }
+  }
+
+  /**
+   * Waits for a thread to terminate before it returns. This method is a
+   * non-cancellable task, in that it will defer thread interruption until it is
+   * done.
+   * 
+   * @param godot the thread that is being waited on.
+   */
+  private void waitForThreadToTerminate(final Thread godot) {
+    // Goetz pattern for non-cancellable tasks.
+    // http://www-128.ibm.com/developerworks/java/library/j-jtp05236.html
+    boolean isInterrupted = false;
+    try {
+      while (true) {
+        try {
+          godot.join();
+          return;
+        } catch (InterruptedException e) {
+          isInterrupted = true;
+        }
+      }
+    } finally {
+      if (isInterrupted) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 
