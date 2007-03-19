@@ -30,6 +30,7 @@ static JSBool JS_DLL_CALLBACK gwt_nativewrapper_getProperty(JSContext *cx,
     JSObject *obj, jsval id, jsval *vp)
 {
   Tracer tracer("gwt_nativewrapper_getProperty");
+  tracer.log("context=%08x", unsigned(cx));
 
   if (*vp != JSVAL_VOID)
     return JS_TRUE;
@@ -61,7 +62,7 @@ static void JS_DLL_CALLBACK gwt_nativewrapper_finalize(JSContext *cx,
 static JSBool JS_DLL_CALLBACK gwt_nativewrapper_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
   Tracer tracer("gwt_nativewrapper_setProperty");
-
+  tracer.log("context=%08x", unsigned(cx));
   jclass dispClass;
   jobject dispObj;
   jstring ident;

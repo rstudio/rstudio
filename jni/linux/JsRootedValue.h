@@ -35,7 +35,6 @@ extern JSClass gwt_nativewrapper_class;
  *
  * See http://developer.mozilla.org/en/docs/JS_AddRoot for details.
  *
- * TODO(jat): handle unboxing Javascript objects like Boolean/etc.
  * TODO(jat): rewrite this to minimize the number of roots held and to
  *    improve 64-bit compatibility.
  */
@@ -43,8 +42,11 @@ class JsRootedValue
 {
 private:
   // the JavaScript String class
-  static JSClass* stringClass;
+  static JSClass*              stringClass;
   
+  // Javascript runtime
+  static JSRuntime*            runtime;
+
   // Javascript context
   JSContext*    context_;
   // underlying Javascript value
@@ -114,19 +116,21 @@ public:
       : context_(rooted_value.context_), value_(rooted_value.value_)
   {
     Tracer tracer("JsRootedValue copy constr", this);
+    tracer.log("context=%08x", unsigned(context_));
     tracer.log("other jsRootedVal=%08x", reinterpret_cast<unsigned>(&rooted_value));
-    if (!JS_AddRoot(context_, &value_)) {
+    if (!JS_AddNamedRootRT(runtime, &value_, "JsRootedValue copy constr")) {
       tracer.log("JsRootedValue copy constructor: JS_AddRoot failed");
       // TODO(jat): handle errors
     }
   }
   
-  JsRootedValue(JSContext* context, jsval value) : context_(context),
-      value_(value)
+  JsRootedValue(JSContext* context, jsval value)
+      : context_(context), value_(value)
   {
     Tracer tracer("JsRootedValue jsval constr", this);
+    tracer.log("context=%08x", unsigned(context_));
     tracer.log("jsval=%08x", value);
-    if (!JS_AddRoot(context_, &value_)) {
+    if (!JS_AddNamedRootRT(runtime, &value_, "JsRootedValue jsval constr")) {
       tracer.log("JsRootedValue jsval constructor: JS_AddRoot failed");
       // TODO(jat): handle errors
     }
@@ -135,17 +139,32 @@ public:
   /*
    * Create a void value - safe since no errors can occur
    */
-  JsRootedValue(JSContext* context) : context_(context), value_(JSVAL_VOID) {  }
+  JsRootedValue(JSContext* context) : context_(context), value_(JSVAL_VOID) {
+    Tracer tracer("JsRootedValue void constr", this);
+    tracer.log("context=%08x", unsigned(context_));
+    if (!JS_AddNamedRootRT(runtime, &value_, "JsRootedValue void constr")) {
+      tracer.log("JsRootedValue jsval constructor: JS_AddRoot failed");
+      // TODO(jat): handle errors
+    }
+  }
   
   /*
    * Destroy this object.
    */
-  virtual ~JsRootedValue() {
+  ~JsRootedValue() {
     Tracer tracer("~JsRootedValue", this);
+    tracer.log("context=%08x", unsigned(context_));
     // ignore error since currently it is not possible to fail
-    JS_RemoveRoot(context_, &value_);
+    JS_RemoveRootRT(runtime, &value_);
   }
-
+  
+  /*
+   * Save a pointer to the JSRuntime if we don't have it yet
+   */
+  static void ensureRuntime(JSContext* context) {
+  	if(!runtime) runtime = JS_GetRuntime(context);
+  }
+  
   /*
    * Return the JSContext* pointer.
    */

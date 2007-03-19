@@ -40,6 +40,8 @@ static JSBool gwtOnLoad(JSContext *cx, JSObject *obj, uintN argc,
     jsval *argv, jsval *rval)
 {
   Tracer tracer("gwtOnLoad");
+  tracer.log("context=%08x", unsigned(cx));
+  JsRootedValue::ensureRuntime(cx);
   if (argc < 2) {
     tracer.setFail("less than 2 args");
     return JS_FALSE;
@@ -78,6 +80,9 @@ static JSBool gwtOnLoad(JSContext *cx, JSObject *obj, uintN argc,
       tracer.setFail("can't get module name in Java string");
       return JS_FALSE;
     }
+    tracer.log("module name=%s", JS_GetStringBytes(moduleName));
+  } else {
+  	tracer.log("null module name");
   }
   
   jobject externalObject = NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, obj));
@@ -93,6 +98,8 @@ static JSBool gwtOnLoad(JSContext *cx, JSObject *obj, uintN argc,
     tracer.setFail("can't get gwtOnLoad method");
     return JS_FALSE;
   }
+  
+  tracer.log("scriptGlobal=%08x", unsigned(scriptGlobal.get()));
   
   jboolean result = savedJNIEnv->CallBooleanMethod(externalObject, methodID,
       NS_REINTERPRET_CAST(jint, scriptGlobal.get()), jModuleName);

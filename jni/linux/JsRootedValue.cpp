@@ -19,6 +19,9 @@
 // intialize static value used to hold the JavaScript String class.
 JSClass* JsRootedValue::stringClass = 0;
 
+// intialize static reference to the sole JSRuntime value in Gecko
+JSRuntime* JsRootedValue::runtime = 0;
+
 /*
  * Actually get the stringClass pointer from JavaScript.
  */

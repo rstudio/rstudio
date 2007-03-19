@@ -133,7 +133,13 @@ $(OBJDIR)%.o : $(SRCDIR)%.cpp
 $(OUT): $(OBJS) $(GWT_TOOLS)/sdk/mozilla-1.7.12/lib/libxpcomglue_s.a
 	@[ -d $(OUTDIR) ] || mkdir -p $(OUTDIR)
 	$(LD) -shared $(LDFLAGS) $(LIBPATH) -o $@ $^ $(LIBS)
-	$(STRIP) --strip-unneeded $@
+#	$(STRIP) --strip-unneeded $@
+
+##
+# copy to staging area for hosted-mode development
+##
+staging: $(OUT)
+	cp $(OUT) ../../build/staging/gwt-linux-0.0.0
 
 ##
 # Clean rule
