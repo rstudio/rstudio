@@ -150,11 +150,27 @@ public class JsValueGlue {
               + value.getTypeString() + ", expected float");
         }
         doubleVal = value.getNumber();
-        if (doubleVal < Float.MIN_VALUE || doubleVal > Float.MAX_VALUE) {
+        
+        // Check for small changes near MIN_VALUE and replace with the
+        // actual endpoint value, in case it is being used as a sentinel
+        // value.  This test works by the subtraction result rounding off to
+        // zero if the delta is not representable in a float.
+        // TODO(jat): add similar test for MAX_VALUE if we have a JS
+        // platform that munges the value while converting to/from strings.
+        if ((float)(doubleVal - Float.MIN_VALUE) == 0.0f) {
+          doubleVal = Float.MIN_VALUE;
+        }
+        
+        float floatVal = (float)doubleVal;
+        if (Float.isInfinite(floatVal) && !Double.isInfinite(doubleVal)) {
+          // in this case we had overflow from the double value which was
+          // outside the range of supported float values, and the cast
+          // converted it to infinity.  Since this lost data, we treat this
+          // as an error in hosted mode.
           throw new HostedModeException(msgPrefix + ": JS value " + doubleVal
               + " out of range for a float");
         }
-        return new Float((float) doubleVal);
+        return new Float(floatVal);
 
       case TypeInfo.TYPE_WRAP_INT:
       case TypeInfo.TYPE_PRIM_INT:

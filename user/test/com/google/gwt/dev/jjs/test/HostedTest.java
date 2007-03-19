@@ -89,6 +89,18 @@ public class HostedTest extends GWTTestCase {
     return "test";
   }-*/;
   
+  private static native void storeFloat(float f) /*-{
+    myFloatValue = f;
+  }-*/;
+  
+  private static native float getFloat() /*-{
+    return myFloatValue;
+  }-*/;
+  
+  private static native float getFloatString() /*-{
+    return Number(myFloatValue.toString());
+  }-*/;
+
   private static native JavaScriptObject getsFooFunc() /*-{
     return @com.google.gwt.dev.jjs.test.HostedTest::sFoo(Ljava/lang/String;);
   }-*/;
@@ -177,6 +189,19 @@ public class HostedTest extends GWTTestCase {
     jsniL();
   }
 
+  public void testFloat() {
+    storeFloat(Float.MIN_VALUE);
+    float f = getFloat();
+    assertTrue(f == Float.MIN_VALUE);
+    f = getFloatString();
+    assertTrue(f == Float.MIN_VALUE);
+    storeFloat(Float.MAX_VALUE);
+    f = getFloat();
+    assertTrue(f == Float.MAX_VALUE);
+    f = getFloatString();
+    assertTrue(f == Float.MAX_VALUE);
+  }
+  
   public void testLocalJsni() {
     
     class Foo {
