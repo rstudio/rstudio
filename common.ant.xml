@@ -48,7 +48,7 @@
 	<property name="javac.source" value="1.4" />
 	<property name="javac.nowarn" value="true" />
 	<property name="junit.out" location="${project.build}/test" />
-
+	
 	<!-- Sanity check -->
 	<available file="${gwt.tools}" type="dir" property="gwt.tools.exists" />
 	<fail unless="gwt.tools.exists" message="Cannot find '${gwt.tools}' tools directory; perhaps you should define the GWT_TOOLS environment variable" />
@@ -91,7 +91,8 @@
 	<!-- JUnit support -->
 	<property name="gwt.dev.staging.jar" location="${gwt.build.staging}/gwt-${build.host.platform}-${gwt.version}/gwt-dev-${build.host.platform}.jar" />
 	<property name="gwt.junit.port" value="8888" />
-
+	<property name="gwt.junit.testcase.includes" value="**/*Test.class"/>
+	
 	<!--
 		Comma delimited list of host and path components on which to run remote browser testing.
 	-->

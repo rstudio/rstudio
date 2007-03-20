@@ -6,7 +6,8 @@
 	<!--
 		Default hosted mode test cases
 	-->
-	<fileset id="default.hosted.tests" dir="${javac.junit.out}">
+	<fileset id="default.hosted.tests" dir="${javac.junit.out}" 
+			 includes="${gwt.junit.testcase.includes}">
 		<!--
 			Causes a security dialog to popup and subsequently blocks testing
 		-->
@@ -16,14 +17,13 @@
 			Need to confirm with JGW if this should still be disabled
 		-->
 		<exclude name="com/google/gwt/user/client/ui/HistoryTest.class" />
-
-		<include name="**/*Test.class" />
 	</fileset>
 
 	<!--
 		Default web mode test cases
 	-->
-	<fileset id="default.web.tests" dir="${javac.junit.out}">
+	<fileset id="default.web.tests" dir="${javac.junit.out}"
+ 		 	 includes="${gwt.junit.testcase.includes}">
 		<!--
 			Causes a security dialog to popup and subsequently blocks testing
 	    -->
@@ -66,8 +66,6 @@
 				com.google.gwt.core.client.JavaScriptException: JavaScript RangeError exception: Maximum call stack size exceeded.
 		-->
 		<exclude name="com/google/gwt/dev/jjs/test/MiscellaneousTest.class" />
-
-		<include name="**/*Test.class" />
 	</fileset>
 
 	<!-- Platform shouldn't matter here, just picking one -->
