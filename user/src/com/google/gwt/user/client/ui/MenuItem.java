@@ -17,7 +17,6 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
 
 /**
  * A widget that can be placed in a
@@ -78,7 +77,6 @@ public class MenuItem extends UIObject implements HasHTML {
 
   private MenuItem(String text, boolean asHTML) {
     setElement(DOM.createTD());
-    sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT);
     setSelectionStyle(false);
 
     if (asHTML) {

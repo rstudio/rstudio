@@ -83,6 +83,8 @@ public class MenuBar extends Widget implements PopupListener {
     Element outer = DOM.createDiv();
     DOM.appendChild(outer, table);
     setElement(outer);
+
+    sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT);
     setStyleName("gwt-MenuBar");
   }
 

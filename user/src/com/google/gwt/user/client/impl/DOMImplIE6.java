@@ -130,15 +130,11 @@ class DOMImplIE6 extends DOMImpl {
         if (!@com.google.gwt.user.client.DOM::previewEvent(Lcom/google/gwt/user/client/Event;)($wnd.event))
           return;
       }
-  
-      var listener, curElem = this;
-      while (curElem && !(listener = curElem.__listener))
-      curElem = curElem.parentElement;
-  
-      if (listener)
-        @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)($wnd.event, curElem, listener);
+
+      if (this.__listener)
+        @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)($wnd.event, this, this.__listener);
     };
-  
+
     $wnd.__dispatchDblClickEvent = function() {
       var newEvent = $doc.createEventObject();
       this.fireEvent('onclick', newEvent);
