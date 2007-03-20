@@ -88,17 +88,21 @@ public class HostedTest extends GWTTestCase {
   private static native Object getStringAsObject() /*-{
     return "test";
   }-*/;
-  
+
   private static native void storeFloat(float f) /*-{
     myFloatValue = f;
   }-*/;
-  
+
   private static native float getFloat() /*-{
     return myFloatValue;
   }-*/;
-  
+
   private static native float getFloatString() /*-{
     return Number(myFloatValue.toString());
+  }-*/;
+
+  private static native int passThroughInt(int val) /*-{
+    return val;
   }-*/;
 
   private static native JavaScriptObject getsFooFunc() /*-{
@@ -148,7 +152,12 @@ public class HostedTest extends GWTTestCase {
     Object oout = getObject(oin);
     assertEquals(oin, oout);
   }
-  
+
+  public void test32BitInt() {
+    assertEquals(Integer.MAX_VALUE, passThroughInt(Integer.MAX_VALUE));
+    assertEquals(Integer.MIN_VALUE, passThroughInt(Integer.MIN_VALUE));
+  }
+
   public void testByteMarshalling() {
     byte b = 100;
     assertEquals(100, byteAsInt(b));

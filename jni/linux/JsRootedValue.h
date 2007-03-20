@@ -245,7 +245,13 @@ public:
    * Returns false on failure.
    */
   bool setInt(int val) {
-    return setValue(INT_TO_JSVAL(val));
+    // check if it fits in 31 bits (ie top two bits are equal).
+    // if not, store it as a double
+    if ((val & 0x80000000) != ((val << 1) & 0x80000000)) {
+      return setDouble(val);
+    } else {
+      return setValue(INT_TO_JSVAL(val));
+    }
   }
   
   /*
