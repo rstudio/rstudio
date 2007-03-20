@@ -15,8 +15,11 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.GWTCompiler;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.log.AbstractTreeLogger;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import junit.framework.TestCase;
 
@@ -27,6 +30,32 @@ import java.io.File;
  * specifically its ant-like inclusion support.
  */
 public class PublicTagTest extends TestCase {
+
+  /**
+   * Provides a convienent interface to the {@link GWTCompiler}. This test
+   * cannot simply call {@link GWTCompiler#main(String[])} since it always
+   * terminates with a call to {@link System#exit(int)}.
+   */
+  private static class Compiler extends GWTCompiler {
+    /**
+     * Run the {@link GWTCompiler} with the specified arguments.
+     * 
+     * @param args arguments passed to the compiler.
+     */
+    static void compile(String[] args) {
+      try {
+        final Compiler compiler = new Compiler();
+        if (compiler.processArgs(args)) {
+          final AbstractTreeLogger logger = new PrintWriterTreeLogger();
+          logger.setMaxDetail(compiler.getLogLevel());
+          compiler.distill(logger, ModuleDefLoader.loadFromClassPath(logger,
+              compiler.getModuleName()));
+        }
+      } catch (UnableToCompleteException e) {
+        throw new RuntimeException("Compilation failed.", e);
+      }
+    }
+  }
 
   public void testPublicTag() {
     // Find the current directory
@@ -46,7 +75,7 @@ public class PublicTagTest extends TestCase {
     assertFalse(moduleDir.exists());
 
     // Compile the dummy app; suppress output to stdout
-    GWTCompiler.main(new String[]{moduleName, "-logLevel", "ERROR"});
+    Compiler.compile(new String[] {moduleName, "-logLevel", "ERROR"});
 
     // Check the output folder
     assertTrue(new File(moduleDir, "good0.html").exists());
