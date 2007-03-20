@@ -28,6 +28,29 @@ public class TabPanelTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
+  /**
+   * Tests to ensure that arbitrary widgets can be added/inserted effectively.
+   */
+  public void testInsertWithWidgets() {
+    TabPanel p = new TabPanel();
+
+    TextBox wa = new TextBox();
+    CheckBox wb = new CheckBox();
+    VerticalPanel wc = new VerticalPanel();
+    wc.add(new Label("First"));
+    wc.add(new Label("Second"));
+
+    p.add(new Label("Content C"), wc);
+    p.insert(new Label("Content B"), wb, 0);
+    p.insert(new Label("Content A"), wa, 0);
+
+    // Call these to ensure we don't throw an exception.
+    assertTrue(p.getTabBar().getTabHTML(0).length() > 0);
+    assertTrue(p.getTabBar().getTabHTML(1).length() > 0);
+    assertTrue(p.getTabBar().getTabHTML(2).length() > 0);
+    assertEquals(3, p.getWidgetCount());
+  }
+
   public void testInsertWithHTML() {
     TabPanel p = new TabPanel();
     Label l = new Label();

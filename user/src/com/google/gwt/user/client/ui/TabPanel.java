@@ -72,7 +72,7 @@ public class TabPanel extends Composite implements TabListener,
 
   public void add(Widget w) {
     throw new UnsupportedOperationException(
-      "A tabText parameter must be specified with add().");
+        "A tabText parameter must be specified with add().");
   }
 
   /**
@@ -94,6 +94,16 @@ public class TabPanel extends Composite implements TabListener,
    */
   public void add(Widget w, String tabText, boolean asHTML) {
     insert(w, tabText, asHTML, getWidgetCount());
+  }
+
+  /**
+   * Adds a widget to the tab panel.
+   * 
+   * @param w the widget to be added
+   * @param tabWidget the widget to be shown in the tab
+   */
+  public void add(Widget w, Widget tabWidget) {
+    insert(w, tabWidget, getWidgetCount());
   }
 
   public void addTabListener(TabListener listener) {
@@ -151,6 +161,19 @@ public class TabPanel extends Composite implements TabListener,
       int beforeIndex) {
     children.insert(widget, beforeIndex);
     tabBar.insertTab(tabText, asHTML, beforeIndex);
+    deck.insert(widget, beforeIndex);
+  }
+
+  /**
+   * Inserts a widget into the tab panel.
+   * 
+   * @param widget the widget to be inserted.
+   * @param tabWidget the widget to be shown on its tab.
+   * @param beforeIndex the index before which it will be inserted.
+   */
+  public void insert(Widget widget, Widget tabWidget, int beforeIndex) {
+    children.insert(widget, beforeIndex);
+    tabBar.insertTab(tabWidget, beforeIndex);
     deck.insert(widget, beforeIndex);
   }
 

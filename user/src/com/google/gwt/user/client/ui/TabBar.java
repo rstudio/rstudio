@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 
 /**
@@ -40,6 +41,31 @@ import com.google.gwt.user.client.Event;
 public class TabBar extends Composite implements SourcesTabEvents,
     ClickListener {
 
+  /**
+   * <code>ClickDecoratorPanel</code> decorates any widget with the minimal
+   * amount of machinery to receive clicks for delegation to the parent.
+   * {@link SourcesClickEvents} is not implemented due to the fact that only a
+   * single observer is needed.
+   */
+  private static final class ClickDecoratorPanel extends SimplePanel {
+    ClickListener delegate;
+
+    ClickDecoratorPanel(Widget child, ClickListener delegate) {
+      this.delegate = delegate;
+      setWidget(child);
+      sinkEvents(Event.ONCLICK);
+    }
+
+    public void onBrowserEvent(Event event) {
+      // No need for call to super.
+      switch (DOM.eventGetType(event)) {
+        case Event.ONCLICK:
+          delegate.onClick(this);
+      }
+    }
+  }
+
+  private static final String STYLENAME_DEFAULT = "gwt-TabBarItem";
   private HorizontalPanel panel = new HorizontalPanel();
   private Widget selectedTab;
   private TabListenerCollection tabListeners;
@@ -86,6 +112,15 @@ public class TabBar extends Composite implements SourcesTabEvents,
     insertTab(text, asHTML, getTabCount());
   }
 
+  /**
+   * Adds a new tab with the specified widget.
+   * 
+   * @param widget the new tab's widget.
+   */
+  public void addTab(Widget widget) {
+    insertTab(widget, getTabCount());
+  }
+
   public void addTabListener(TabListener listener) {
     if (tabListeners == null) {
       tabListeners = new TabListenerCollection();
@@ -127,8 +162,11 @@ public class TabBar extends Composite implements SourcesTabEvents,
     Widget widget = panel.getWidget(index + 1);
     if (widget instanceof HTML) {
       return ((HTML) widget).getHTML();
-    } else {
+    } else if (widget instanceof Label) {
       return ((Label) widget).getText();
+    } else {
+      // This will be a ClickDecorator holding a user-supplied widget.
+      return DOM.getInnerHTML(widget.getElement());
     }
   }
 
@@ -140,9 +178,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * @param beforeIndex the index before which this tab will be inserted
    */
   public void insertTab(String text, boolean asHTML, int beforeIndex) {
-    if ((beforeIndex < 0) || (beforeIndex > getTabCount())) {
-      throw new IndexOutOfBoundsException();
-    }
+    checkInsertBeforeTabIndex(beforeIndex);
 
     Label item;
     if (asHTML) {
@@ -153,7 +189,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
     item.setWordWrap(false);
     item.addClickListener(this);
-    item.setStyleName("gwt-TabBarItem");
+    item.setStyleName(STYLENAME_DEFAULT);
     panel.insert(item, beforeIndex + 1);
   }
 
@@ -165,6 +201,20 @@ public class TabBar extends Composite implements SourcesTabEvents,
    */
   public void insertTab(String text, int beforeIndex) {
     insertTab(text, false, beforeIndex);
+  }
+
+  /**
+   * Inserts a new tab at the specified index.
+   * 
+   * @param widget widget to be used in the new tab.
+   * @param beforeIndex the index before which this tab will be inserted.
+   */
+  public void insertTab(Widget widget, int beforeIndex) {
+    checkInsertBeforeTabIndex(beforeIndex);
+
+    ClickDecoratorPanel decWidget = new ClickDecoratorPanel(widget, this);
+    decWidget.addStyleName(STYLENAME_DEFAULT);
+    panel.insert(decWidget, beforeIndex + 1);
   }
 
   public void onClick(Widget sender) {
@@ -208,20 +258,20 @@ public class TabBar extends Composite implements SourcesTabEvents,
    */
   public boolean selectTab(int index) {
     checkTabIndex(index);
-    
+
     if (tabListeners != null) {
       if (!tabListeners.fireBeforeTabSelected(this, index)) {
         return false;
       }
     }
-    
+
     // Check for -1.
     setSelectionStyle(selectedTab, false);
     if (index == -1) {
       selectedTab = null;
       return true;
     }
-  
+
     selectedTab = panel.getWidget(index + 1);
     setSelectionStyle(selectedTab, true);
 
@@ -229,6 +279,12 @@ public class TabBar extends Composite implements SourcesTabEvents,
       tabListeners.fireTabSelected(this, index);
     }
     return true;
+  }
+
+  private void checkInsertBeforeTabIndex(int beforeIndex) {
+    if ((beforeIndex < 0) || (beforeIndex > getTabCount())) {
+      throw new IndexOutOfBoundsException();
+    }
   }
 
   private void checkTabIndex(int index) {
