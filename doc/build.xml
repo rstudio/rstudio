@@ -243,7 +243,7 @@
 					<arg value="-sourcepath" />
 					<arg pathref="USER_SOURCE_PATH" />
 					<arg value="-examplepackages" />
-					<arg value="com.google.gwt.examples;com.google.gwt.examples.i18n;com.google.gwt.examples.http.client" />
+					<arg value="com.google.gwt.examples;com.google.gwt.examples.i18n;com.google.gwt.examples.http.client;com.google.gwt.examples.rpc.server" />
 					<arg value="-packages" />
 					<arg value="${USER_PKGS}" />
 				</java>
