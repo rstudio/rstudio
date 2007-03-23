@@ -55,17 +55,9 @@ public final class CompilingClassLoader extends ClassLoader {
     private final Map classNameToClassInfo = new HashMap();
 
     /**
-     * Class to ClassInfo map - this is only necessary to make sure that we have
-     * only only {@link DispatchClassInfo} for all of the different permutations
-     * of binary and source name combinations.
-     */
-    private final Map classToClassInfo = new HashMap();
-
-    /**
      * Clears out the contents of this oracle.
      */
     public synchronized void clear() {
-      classToClassInfo.clear();
       classIdToClassInfo.clear();
       classNameToClassInfo.clear();
     }
@@ -213,8 +205,7 @@ public final class CompilingClassLoader extends ClassLoader {
         return null;
       }
 
-      dispClassInfo = (DispatchClassInfo) classToClassInfo.get(cls);
-      if (dispClassInfo == null) {
+     if (dispClassInfo == null) {
         /*
          * we need to create a new DispatchClassInfo since we have never seen
          * this class before under any source or binary class name
