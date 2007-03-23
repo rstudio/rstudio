@@ -68,45 +68,16 @@ protected:
   }
   
   /*
-   * Make this value rooted if the current value is a pointer type
-   * 
-   * Returns false if an error occurred.
+   * Helper for the various constructors
    */
-  bool setRoot() {
-    Tracer tracer("JsRootedValue::setRoot", this);
-    tracer.log("context=%08x, value=%08x", context_, value_);
-    if(JSVAL_IS_GCTHING(value_)) {
-      tracer.log("value is GC - %s", JS_GetTypeName(context_,
-          JS_TypeOfValue(context_, value_)));
-      bool returnVal = JS_AddRoot(context_, &value_);
-      if (!returnVal) {
-        tracer.log("*** JS_AddRoot failed");
-      }
-      return returnVal;
+  void constructorHelper(const char* ctorDesc) {
+    Tracer tracer(ctorDesc, this);
+    if (!JS_AddNamedRootRT(runtime, &value_, ctorDesc)) {
+      tracer.log("JS_AddNamedRootRT failed");
+      // TODO(jat): handle errors
     }
-    return true;
   }
-  /*
-   * Remove this value from the roots list if it was there
-   * 
-   * Returns false if an error occurred (note that currently JS_RemoveRoot
-   * is documented to always return true, so this is not currently possible).
-   */
-  bool removeRoot() {
-    Tracer tracer("JsRootedValue::removeRoot", this);
-    tracer.log("context=%08x, value=%08x", context_, value_);
-    if(JSVAL_IS_GCTHING(value_)) {
-      tracer.log("value is GC - %s", JS_GetTypeName(context_,
-          JS_TypeOfValue(context_, value_)));
-      bool returnVal = JS_RemoveRoot(context_, &value_);
-      if (!returnVal) {
-        tracer.log("*** JS_RemoveRoot failed");
-      }
-      return returnVal;
-    }
-    return true;
-  }
-  
+
 public:
   /*
    * Copy constructor - make another rooted value that refers to the same
@@ -115,37 +86,23 @@ public:
   JsRootedValue(const JsRootedValue& rooted_value)
       : context_(rooted_value.context_), value_(rooted_value.value_)
   {
-    Tracer tracer("JsRootedValue copy constr", this);
-    tracer.log("context=%08x", unsigned(context_));
-    tracer.log("other jsRootedVal=%08x", reinterpret_cast<unsigned>(&rooted_value));
-    if (!JS_AddNamedRootRT(runtime, &value_, "JsRootedValue copy constr")) {
-      tracer.log("JsRootedValue copy constructor: JS_AddRoot failed");
-      // TODO(jat): handle errors
-    }
-  }
-  
-  JsRootedValue(JSContext* context, jsval value)
-      : context_(context), value_(value)
-  {
-    Tracer tracer("JsRootedValue jsval constr", this);
-    tracer.log("context=%08x", unsigned(context_));
-    tracer.log("jsval=%08x", value);
-    if (!JS_AddNamedRootRT(runtime, &value_, "JsRootedValue jsval constr")) {
-      tracer.log("JsRootedValue jsval constructor: JS_AddRoot failed");
-      // TODO(jat): handle errors
-    }
+    constructorHelper("JsRootedValue copy ctor");
   }
   
   /*
-   * Create a void value - safe since no errors can occur
+   * Create a value with a given jsval value
+   */
+  JsRootedValue(JSContext* context, jsval value)
+      : context_(context), value_(value)
+  {
+    constructorHelper("JsRootedValue jsval ctor");
+  }
+  
+  /*
+   * Create a void value
    */
   JsRootedValue(JSContext* context) : context_(context), value_(JSVAL_VOID) {
-    Tracer tracer("JsRootedValue void constr", this);
-    tracer.log("context=%08x", unsigned(context_));
-    if (!JS_AddNamedRootRT(runtime, &value_, "JsRootedValue void constr")) {
-      tracer.log("JsRootedValue jsval constructor: JS_AddRoot failed");
-      // TODO(jat): handle errors
-    }
+    constructorHelper("JsRootedValue void ctor");
   }
   
   /*
@@ -162,7 +119,7 @@ public:
    * Save a pointer to the JSRuntime if we don't have it yet
    */
   static void ensureRuntime(JSContext* context) {
-  	if(!runtime) runtime = JS_GetRuntime(context);
+    if(!runtime) runtime = JS_GetRuntime(context);
   }
   
   /*
@@ -173,7 +130,7 @@ public:
   /*
    * Return the global object for this value's context.
    */
-  JSObject* getGlobalObject() const { return JS_GetGlobalObject(context_); }
+  JSObject* getGlobalObject() const { return JS_GetGlobalObject(getContext()); }
   
   /* 
    * Return the underlying JS object
@@ -214,8 +171,8 @@ public:
    */
   double getDouble() const {
     jsdouble return_value=0.0;
-    // ignore return value -- if it failes, value will remain 0.0
-    JS_ValueToNumber(context_, value_, &return_value); 
+    // ignore return value -- if it fails, value will remain 0.0
+    JS_ValueToNumber(getContext(), value_, &return_value); 
     return double(return_value);
   }
   /*
@@ -225,7 +182,7 @@ public:
    */
   bool setDouble(double val) {
     jsval js_double;
-    if(!JS_NewDoubleValue(context_, jsdouble(val), &js_double)) {
+    if(!JS_NewDoubleValue(getContext(), jsdouble(val), &js_double)) {
       return false;
     }
     return setValue(js_double);
@@ -245,7 +202,7 @@ public:
    * Returns false on failure.
    */
   bool setInt(int val) {
-    // check if it fits in 31 bits (ie top two bits are equal).
+    // check if it fits in 31 bits (ie, top two bits are equal).
     // if not, store it as a double
     if ((val & 0x80000000) != ((val << 1) & 0x80000000)) {
       return setDouble(val);
@@ -304,7 +261,7 @@ public:
    * Return this value as a string, converting as necessary.
    */
   JSString* asString() const {
-    return JS_ValueToString(context_, value_);
+    return JS_ValueToString(getContext(), value_);
   }
   
   /* Returns the string as a JSString pointer.
@@ -336,12 +293,14 @@ public:
   } 
   
   /*
-   * Sets the underlying value, defined by a null-terminated array of UTF16 chars.
+   * Sets the underlying value, defined by a null-terminated array of UTF16
+   * chars.
    * 
    * Returns false on failure.
    */
   bool setString(const wchar_t* utf16) {
-    JSString* str = JS_NewUCStringCopyZ(context_, reinterpret_cast<const jschar*>(utf16));
+    JSString* str = JS_NewUCStringCopyZ(getContext(),
+        reinterpret_cast<const jschar*>(utf16));
     return setValue(STRING_TO_JSVAL(str));
   }
   
@@ -362,14 +321,16 @@ public:
   
   /*
    * Returns the class name of the underlying value.
+   *
    * Result is undefined if it is not actually an object.
    */
   const JSClass* getObjectClass() const {
-    return isObject() ? JS_GET_CLASS(context_, getObject()) : 0;
+    return isObject() ? JS_GET_CLASS(getContext(), getObject()) : 0;
   }
   
   /*
    * Sets the underlying value to be an object.
+   *
    * Returns false on failure.
    */
   bool setObject(JSObject* obj) {
