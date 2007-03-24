@@ -260,20 +260,24 @@ public class JsValueIE6 extends JsValue {
     if (variant.getType() == COM.VT_BSTR) {
       return true;
     }
+    // see if the variant is a wrapper object
     if (variant.getType() != COM.VT_DISPATCH) {
       return false;
     }
-
-    // see if it's a String wrapper object
     OleAutomation auto = null;
     Variant result = null;
     try {
       auto = new OleAutomation(variant.getDispatch());
+      // see if it has a valueOf method
       int[] ids = auto.getIDsOfNames(new String[] {"valueOf"});
       if (ids == null) {
         return false;
       }
       result = auto.invoke(ids[0]);
+      /*
+       * If the return type of the valueOf method is string, we assume it is a
+       * String wrapper object.
+       */ 
       return result.getType() == COM.VT_BSTR;
     } finally {
       if (auto != null) {

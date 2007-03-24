@@ -992,6 +992,11 @@ void setData(int pData){
 			unknownData.AddRef();
 			break;
 		}
+
+		// GOOGLE: map exception name in IE7 to BSTR
+		case COM.VT_WEIRD_IE7_BSTR :
+			type = COM.VT_BSTR;
+			// intentional fall-through to VT_BSTR case
 		case COM.VT_BSTR :
 			// get the address of the memory in which the string resides
 			int[] hMem = new int[1];

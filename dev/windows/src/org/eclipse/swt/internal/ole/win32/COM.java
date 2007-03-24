@@ -8,6 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
+// Modified by Google
 package org.eclipse.swt.internal.ole.win32;
 
 import org.eclipse.swt.internal.win32.*;
@@ -379,6 +380,15 @@ public class COM extends OS {
 	public static final short VT_UI4 = 19;
 	public static final short VT_UNKNOWN = 13;
 	public static final short VT_VARIANT = 12;
+	/*
+	 * GOOGLE: IE7 returns a variant of type 130 from the name field
+	 * of a JavaScript exception, and we can't find documentation of it
+	 * anywhere.  It appears to contain a pointer to a string constant
+	 * that behaves like a VT_BSTR, so we are treating it the same way.
+	 * Note that this is a gross hack using a totally undocumented
+	 * feature, and Microsoft may break these assumptions at any time.
+	 */
+	public static final short VT_WEIRD_IE7_BSTR = 130;
 	public static final short VARIANT_TRUE = -1;
 	public static final short VARIANT_FALSE = 0;
 
