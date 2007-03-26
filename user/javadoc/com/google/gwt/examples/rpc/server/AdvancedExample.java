@@ -66,12 +66,17 @@ public class AdvancedExample extends HttpServlet {
 
         sendResponseForSuccess(httpResponse, encodedResult);
       } catch (IllegalArgumentException e) {
-        throw new SecurityException("Blocked attempt to invoke method "
-            + targetMethod, e);
+        SecurityException securityException = new SecurityException(
+            "Blocked attempt to invoke method " + targetMethod);
+        securityException.initCause(e);
+        throw securityException;
       } catch (IllegalAccessException e) {
-        throw new SecurityException("Blocked attempt to access inaccessible method " 
-            + targetMethod
-            + (targetInstance != null ? " on target " + targetInstance : ""), e);
+        SecurityException securityException = new SecurityException(
+            "Blocked attempt to access inaccessible method "
+                + targetMethod
+                + (targetInstance != null ? " on target " + targetInstance : ""));
+        securityException.initCause(e);
+        throw securityException;
       } catch (InvocationTargetException e) {
         Throwable cause = e.getCause();
 

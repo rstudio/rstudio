@@ -243,7 +243,7 @@ public class RPCTest extends TestCase {
     try {
       String str = RPC.encodeResponseForFailure(A.class.getMethod("method1",
           null), new SerializableException());
-      assertTrue(str.contains("SerializableException"));
+      assertTrue(str.indexOf("SerializableException") != -1);
     } catch (Throwable e) {
       fail(e.getMessage());
     }

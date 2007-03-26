@@ -201,8 +201,11 @@ public final class RPC {
                 + "', which doesn't extend RemoteService; this is either misconfiguration or a hack attempt");
       }
     } catch (ClassNotFoundException e) {
-      throw new SecurityException("Could not locate requested interface '"
-          + serviceIntfName + "' in default classloader", e);
+      SecurityException securityException = new SecurityException(
+          "Could not locate requested interface '" + serviceIntfName
+              + "' in default classloader");
+      securityException.initCause(e);
+      throw securityException;
     }
 
     String serviceMethodName = streamReader.readString();
@@ -345,11 +348,15 @@ public final class RPC {
 
       responsePayload = encodeResponseForSuccess(serviceMethod, result);
     } catch (IllegalAccessException e) {
-      throw new SecurityException(formatIllegalAccessErrorMessage(target,
-          serviceMethod), e);
+      SecurityException securityException = new SecurityException(
+          formatIllegalAccessErrorMessage(target, serviceMethod));
+      securityException.initCause(e);
+      throw securityException;
     } catch (IllegalArgumentException e) {
-      throw new SecurityException(formatIllegalArgumentErrorMessage(target,
-          serviceMethod, args), e);
+      SecurityException securityException = new SecurityException(
+          formatIllegalArgumentErrorMessage(target, serviceMethod, args));
+      securityException.initCause(e);
+      throw securityException;
     } catch (InvocationTargetException e) {
       // Try to encode the caught exception
       //
