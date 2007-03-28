@@ -82,7 +82,7 @@ public class JUnitShell extends GWTShell {
    * Wait a long time for the client to contact the server and begin running the
    * test.
    */
-  private static final int TEST_BEGIN_TIMEOUT_MILLIS = 20000;
+  private static final int TEST_BEGIN_TIMEOUT_MILLIS = 30000;
 
   /**
    * Singleton object for hosting unit tests. All test case instances executed
@@ -143,6 +143,11 @@ public class JUnitShell extends GWTShell {
    * When headless, all logging goes to the console.
    */
   private PrintWriterTreeLogger consoleLogger;
+
+  /**
+   * If true, the last attempt to launch failed.
+   */
+  private boolean lastLaunchFailed;
 
   /**
    * Portal to interact with the servlet.
@@ -323,11 +328,21 @@ public class JUnitShell extends GWTShell {
       TestResult testResult) throws UnableToCompleteException {
 
     String newTestCaseClassName = testCase.getClass().getName();
+    boolean sameTest = newTestCaseClassName.equals(testCaseClassName);
+    if (sameTest && lastLaunchFailed) {
+      throw new UnableToCompleteException();
+    }
+    
     messageQueue.setNextTestName(newTestCaseClassName, testCase.getName());
 
-    boolean forceLaunch = !newTestCaseClassName.equals(testCaseClassName);
-    testCaseClassName = newTestCaseClassName;
-    runStyle.maybeLaunchModule(moduleName, forceLaunch);
+    try {
+      lastLaunchFailed = false;
+      testCaseClassName = newTestCaseClassName;
+      runStyle.maybeLaunchModule(moduleName, !sameTest);
+    } catch (UnableToCompleteException e) {
+      lastLaunchFailed = true;
+      throw e;
+    }
 
     // Wait for test to complete
     try {
