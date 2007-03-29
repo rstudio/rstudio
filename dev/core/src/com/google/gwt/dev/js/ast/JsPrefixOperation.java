@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,36 +18,19 @@ package com.google.gwt.dev.js.ast;
 /**
  * A JavaScript prefix operation.
  */
-public final class JsPrefixOperation extends JsExpression {
-
-  private JsExpression arg;
-
-  private final JsUnaryOperator op;
+public final class JsPrefixOperation extends JsUnaryOperation {
 
   public JsPrefixOperation(JsUnaryOperator op) {
     this(op, null);
   }
 
   public JsPrefixOperation(JsUnaryOperator op, JsExpression arg) {
-    this.op = op;
-    this.arg = arg;
-  }
-
-  public JsExpression getArg() {
-    return arg;
-  }
-
-  public JsUnaryOperator getOperator() {
-    return op;
-  }
-
-  public void setArg(JsExpression arg) {
-    this.arg = arg;
+    super(op, arg);
   }
 
   public void traverse(JsVisitor v) {
     if (v.visit(this)) {
-      arg.traverse(v);
+      super.traverse(v);
     }
     v.endVisit(this);
   }

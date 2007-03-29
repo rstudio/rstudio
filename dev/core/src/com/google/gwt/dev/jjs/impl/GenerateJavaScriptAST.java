@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -123,6 +123,7 @@ import com.google.gwt.dev.js.ast.JsSwitchMember;
 import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.js.ast.JsThrow;
 import com.google.gwt.dev.js.ast.JsTry;
+import com.google.gwt.dev.js.ast.JsUnaryOperation;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsWhile;
@@ -441,32 +442,14 @@ public class GenerateJavaScriptAST {
           && x.getLhs().getType() instanceof JReferenceType
           && x.getRhs().getType() instanceof JReferenceType) {
         myOp = JsBinaryOperator.REF_NEQ;
-      } 
-      
-      /*
-       * Due to the way clinits are constructed, you can end up with a comma
-       * operation on the lhs, which is illegal.  Juggle things to put the
-       * operator and rhs inside of the comma expression.
-       */
-      if (myOp.isAssignment() && (lhs instanceof JsBinaryOperation)) {
-        // Find the rightmost comma operation
-        JsBinaryOperation curLhs = (JsBinaryOperation) lhs;
-        assert (curLhs.getOperator() == JsBinaryOperator.COMMA);
-        while (curLhs.getArg2() instanceof JsBinaryOperation) {
-          curLhs = (JsBinaryOperation) curLhs.getArg2();
-          assert (curLhs.getOperator() == JsBinaryOperator.COMMA);
-        }
-        // curLhs is now the rightmost comma operation; create an assignment to
-        // the last arg from this binary operation's rhs
-        JsBinaryOperation asg = new JsBinaryOperation(myOp, curLhs.getArg2(), rhs);
-        // replace the rightmost comma expression's last arg with the asg
-        curLhs.setArg2(asg);
-        // repush the entire comma expression
-        push(lhs);
-        return;
       }
 
       JsBinaryOperation binOp = new JsBinaryOperation(myOp, lhs, rhs);
+
+      if (maybeShuffleModifyingBinary(binOp)) {
+        return;
+      }
+
       push(binOp);
     }
 
@@ -675,7 +658,7 @@ public class GenerateJavaScriptAST {
        * the result expression ended up on the lhs of an assignment. A hack in
        * in endVisit(JBinaryOperation) rectifies the situation.
        */
-      
+
       // See if we need a clinit
       JsInvocation jsInvocation = maybeCreateClinitCall(field);
       if (jsInvocation != null) {
@@ -983,14 +966,26 @@ public class GenerateJavaScriptAST {
 
     // @Override
     public void endVisit(JPostfixOperation x, Context ctx) {
-      push(new JsPostfixOperation(JavaToJsOperatorMap.get(x.getOp()),
-          (JsExpression) pop())); // arg
+      JsUnaryOperation op = new JsPostfixOperation(
+          JavaToJsOperatorMap.get(x.getOp()), ((JsExpression) pop())); // arg
+
+      if (maybeShuffleModifyingUnary(op)) {
+        return;
+      }
+
+      push(op);
     }
 
     // @Override
     public void endVisit(JPrefixOperation x, Context ctx) {
-      push(new JsPrefixOperation(JavaToJsOperatorMap.get(x.getOp()),
-          (JsExpression) pop())); // arg
+      JsUnaryOperation op = new JsPrefixOperation(
+          JavaToJsOperatorMap.get(x.getOp()), ((JsExpression) pop())); // arg
+
+      if (maybeShuffleModifyingUnary(op)) {
+        return;
+      }
+
+      push(op);
     }
 
     // @Override
@@ -1539,6 +1534,66 @@ public class GenerateJavaScriptAST {
       JsInvocation jsInvocation = new JsInvocation();
       jsInvocation.setQualifier(getName(clinitMethod).makeRef());
       return jsInvocation;
+    }
+
+    /**
+     * Due to the way clinits are constructed, you can end up with a comma
+     * operation as the argument to a modifying operation, which is illegal.
+     * Juggle things to put the operator inside of the comma expression.
+     * 
+     * TODO: move this to a post-generation normalization pass when JS tree
+     * modifying infrastructure is in place.
+     */
+    private boolean maybeShuffleModifyingBinary(JsBinaryOperation x) {
+      JsBinaryOperator myOp = x.getOperator();
+      JsExpression lhs = x.getArg1();
+      JsExpression rhs = x.getArg2();
+
+      if (myOp.isAssignment() && (lhs instanceof JsBinaryOperation)) {
+        // Find the rightmost comma operation
+        JsBinaryOperation curLhs = (JsBinaryOperation) lhs;
+        assert (curLhs.getOperator() == JsBinaryOperator.COMMA);
+        while (curLhs.getArg2() instanceof JsBinaryOperation) {
+          curLhs = (JsBinaryOperation) curLhs.getArg2();
+          assert (curLhs.getOperator() == JsBinaryOperator.COMMA);
+        }
+        // curArg is now the rightmost comma operation; slide our operation in
+        x.setArg1(curLhs.getArg2());
+        curLhs.setArg2(x);
+        // repush the comma expression
+        push(lhs);
+        return true;
+      }
+      return false;
+    }
+
+    /**
+     * Due to the way clinits are constructed, you can end up with a comma
+     * operation as the argument to a modifying operation, which is illegal.
+     * Juggle things to put the operator inside of the comma expression.
+     * 
+     * TODO: move this to a post-generation normalization pass when JS tree
+     * modifying infrastructure is in place.
+     */
+    private boolean maybeShuffleModifyingUnary(JsUnaryOperation x) {
+      JsUnaryOperator myOp = x.getOperator();
+      JsExpression arg = x.getArg();
+      if (myOp.isModifying() && (arg instanceof JsBinaryOperation)) {
+        // Find the rightmost comma operation
+        JsBinaryOperation curArg = (JsBinaryOperation) arg;
+        assert (curArg.getOperator() == JsBinaryOperator.COMMA);
+        while (curArg.getArg2() instanceof JsBinaryOperation) {
+          curArg = (JsBinaryOperation) curArg.getArg2();
+          assert (curArg.getOperator() == JsBinaryOperator.COMMA);
+        }
+        // curArg is now the rightmost comma operation; slide our operation in
+        x.setArg(curArg.getArg2());
+        curArg.setArg2(x);
+        // repush the comma expression
+        push(arg);
+        return true;
+      }
+      return false;
     }
 
     private JsNode pop() {

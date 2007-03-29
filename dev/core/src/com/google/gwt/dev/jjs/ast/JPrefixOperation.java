@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,39 +18,16 @@ package com.google.gwt.dev.jjs.ast;
 /**
  * Java prefix operation expression.
  */
-public class JPrefixOperation extends JExpression {
+public class JPrefixOperation extends JUnaryOperation {
 
-  private JExpression arg;
-  private final JUnaryOperator op;
-
-  public JPrefixOperation(JProgram program, JSourceInfo info, JUnaryOperator op,
-      JExpression arg) {
-    super(program, info);
-    this.op = op;
-    this.arg = arg;
-  }
-
-  public JExpression getArg() {
-    return arg;
-  }
-
-  public JUnaryOperator getOp() {
-    return op;
-  }
-
-  public JType getType() {
-    // Unary operators don't change the type of their expression
-    return arg.getType();
-  }
-
-  public boolean hasSideEffects() {
-    return getOp() == JUnaryOperator.DEC || getOp() == JUnaryOperator.INC
-        || arg.hasSideEffects();
+  public JPrefixOperation(JProgram program, JSourceInfo info,
+      JUnaryOperator op, JExpression arg) {
+    super(program, info, op, arg);
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
-      arg = visitor.accept(arg);
+      super.traverse(visitor, ctx);
     }
     visitor.endVisit(this, ctx);
   }
