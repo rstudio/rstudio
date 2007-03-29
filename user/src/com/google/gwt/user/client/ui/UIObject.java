@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -340,10 +340,27 @@ public abstract class UIObject {
   /**
    * Sets this object's browser element. UIObject subclasses must call this
    * method before attempting to call any other methods.
+   *
+   * If the browser element has already been set, then the current element's
+   * position is located in the DOM and removed. The new element is added into
+   * the previous element's position.
    * 
    * @param elem the object's new element
    */
   protected void setElement(Element elem) {
+    if (this.element != null) {
+      // replace this.element in its parent with elem.
+      replaceNode(this.element, elem);
+    }
     this.element = elem;
   }
+
+  private native void replaceNode(Element node, Element newNode) /*-{
+    var p = node.parentNode;
+    if (!p) {
+      return;
+    }
+    p.insertBefore(newNode, node);
+    p.removeChild(node);
+  }-*/;
 }

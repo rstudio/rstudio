@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
+import com.google.gwt.user.client.Element;
 
 /**
  * The base class for the majority of user-interface objects. Widget adds
@@ -113,6 +114,34 @@ public class Widget extends UIObject implements EventListener {
    */
   protected void onLoad() {
   }
+
+  /**
+    * Sets this object's browser element. Widget subclasses must call this
+    * method before attempting to call any other methods.
+    *
+    * If a browser element has already been attached, then it is replaced with
+    * the new element. The old event listeners are removed from the old browser
+    * element, and the event listeners are set up on the new browser element.
+    *
+    * @param elem the object's new element
+    */
+   protected void setElement(Element elem) {
+     if (attached) {
+       // Remove old event listener to avoid leaking. onDetach will not do this
+       // for us, because it is only called the widget itself is detached from
+       // the document.
+       DOM.setEventListener(getElement(), null);
+     }
+
+     super.setElement(elem);
+
+     if (attached) {
+       // Hook the event listener back up on the new element. onAttach will not
+       // do this for us, because it is only called when the widget itself is
+       // attached to the document.
+       DOM.setEventListener(elem, this);
+     }
+   }
 
   /**
    * Gets the panel-defined layout data associated with this widget.

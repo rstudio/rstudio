@@ -1,0 +1,25 @@
+<!--                                                                        -->
+<!-- Copyright 2007 Google Inc. All Rights Reserved.                        -->
+<!--                                                                        -->
+<!-- This module is required in order to use an Image in its clipped state, -->
+<!-- or an ImageBundle.                                                     -->
+<!--                                                                        -->
+<!-- The implementation differs between Internet Explorer and other         -->
+<!-- browsers, so we use deferred binding to create the correct instance of -->
+<!-- the class based on the user's browser.                                 -->
+<!--                                                                        -->
+<!-- This module is interited by the User module, so it will be available   -->
+<!-- to all GWT applications.                                               -->
+
+<module>
+	<inherits name="com.google.gwt.core.Core" />
+	<inherits name="com.google.gwt.user.UserAgent" />
+
+	<!-- IE needs a different implementation -->
+	<replace-with
+		class="com.google.gwt.user.client.ui.impl.ClippedImageImplIE6">
+		<when-type-is
+			class="com.google.gwt.user.client.ui.impl.ClippedImageImpl" />
+		<when-property-is name="user.agent" value="ie6" />
+	</replace-with>
+</module>

@@ -22,24 +22,31 @@ import com.google.gwt.user.client.ui.LoadListener;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.ClickListener;
 
 public class ImageExample implements EntryPoint {
 
   private Label lbl = new Label();
+  private Button btn = new Button("Clip this image");
+  private Button btn2 = new Button("Restore image");
 
   public void onModuleLoad() {
-    // Create an image, not yet referencing a URL.
-    Image image = new Image();
+    // Create an image, not yet referencing a URL. We make it final so that we
+    // can manipulate the image object within the ClickHandlers for the buttons
+    final Image image = new Image();
 
     // Hook up a load listener, so that we can find out when it loads (or
-    // fails to, as the case may be).
+    // fails to, as the case may be). Once the image loads, we can enable the
+    // buttons that are used to manipulate the images
     image.addLoadListener(new LoadListener() {
-      public void onLoad(Widget sender) {
-        lbl.setText("Done loading.");
-      }
-    
       public void onError(Widget sender) {
         lbl.setText("An error occurred while loading.");
+      }
+
+      // This event may not fire if the image is already cached
+      public void onLoad(Widget sender) {
+        lbl.setText("Done loading.");
       }
     });
 
@@ -47,10 +54,27 @@ public class ImageExample implements EntryPoint {
     lbl.setText("Loading...");
     image.setUrl("http://www.google.com/images/logo.gif");
 
-    // Add the image & label to the root panel.
+    // When the user clicks this button, we want to clip the image
+    btn.addClickListener(new ClickListener() {
+      public void onClick(Widget sender) {
+        image.setVisibleRect(70, 0, 47, 100);
+      }
+    });
+
+    // When the user clicks this button, we want to restore the image to its
+    // unclipped state
+    btn2.addClickListener(new ClickListener() {
+      public void onClick(Widget sender) {
+        image.setUrl("http://www.google.com/images/logo.gif");
+      }
+    });
+
+    // Add the image, label, and clip/restore buttons to the root panel.
     VerticalPanel panel = new VerticalPanel();
     panel.add(lbl);
     panel.add(image);
+    panel.add(btn);
+    panel.add(btn2);
     RootPanel.get().add(panel);
   }
 }
