@@ -80,7 +80,7 @@ public class CheckBox extends ButtonBase implements HasName {
     // Mozilla.
     unsinkEvents(Event.FOCUSEVENTS | Event.ONCLICK);
     DOM.sinkEvents(inputElem, Event.FOCUSEVENTS | Event.ONCLICK
-      | DOM.getEventsSunk(inputElem));
+        | DOM.getEventsSunk(inputElem));
 
     DOM.appendChild(getElement(), inputElem);
     DOM.appendChild(getElement(), labelElem);
@@ -114,6 +114,10 @@ public class CheckBox extends ButtonBase implements HasName {
 
   public boolean isEnabled() {
     return !DOM.getBooleanAttribute(inputElem, "disabled");
+  }
+
+  public void setAccessKey(char key) {
+    DOM.setAttribute(inputElem, "accessKey", "" + key);
   }
 
   /**
