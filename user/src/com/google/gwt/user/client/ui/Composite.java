@@ -29,7 +29,8 @@ import com.google.gwt.user.client.Element;
  * </p>
  * 
  * <p>
- * <h3>Example</h3> {@example com.google.gwt.examples.CompositeExample}
+ * <h3>Example</h3>
+ * {@example com.google.gwt.examples.CompositeExample}
  * </p>
  */
 public abstract class Composite extends Widget {
@@ -42,9 +43,19 @@ public abstract class Composite extends Widget {
   public Element getElement() {
     if (widget == null) {
       throw new IllegalStateException("initWidget() was never called in "
-        + GWT.getTypeName(this));
+          + GWT.getTypeName(this));
     }
     return super.getElement();
+  }
+
+  /**
+   * Provides subclasses access to the topmost widget that defines this
+   * composite.
+   * 
+   * @return the widget
+   */
+  protected Widget getWidget() {
+    return widget;
   }
 
   /**
@@ -58,7 +69,7 @@ public abstract class Composite extends Widget {
     // Make sure the widget is not being set twice.
     if (this.widget != null) {
       throw new IllegalStateException("Composite.initWidget() may only be "
-        + "called once.");
+          + "called once.");
     }
 
     widget.removeFromParent();
