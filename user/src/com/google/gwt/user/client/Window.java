@@ -107,6 +107,36 @@ public class Window {
   }-*/;
 
   /**
+   * Gets the window's scroll left.
+   * 
+   * @return window's scroll left
+   */
+  public static native int getScrollLeft() /*-{
+    // Standard mode used documentElement.scrollLeft. Quirks mode uses 
+    // document.body.scrollLeft. So we take the max of the two.  
+    var scrollLeft = $doc.documentElement.scrollLeft;
+    if(scrollLeft == 0){
+      scrollLeft = $doc.body.scrollLeft
+    }
+    return scrollLeft;
+   }-*/;
+
+  /**
+   * Get the window's scroll top.
+   * 
+   * @return the window's scroll top
+   */
+  public static native int getScrollTop() /*-{
+    // Standard mode used documentElement.scrollTop. Quirks mode uses 
+    // document.body.scrollTop. So we take the max of the two.
+    var scrollTop = $doc.documentElement.scrollTop;
+    if(scrollTop == 0){
+      scrollTop = $doc.body.scrollTop
+    } 
+    return scrollTop;
+    }-*/;
+
+  /**
    * Gets the browser window's current title.
    * 
    * @return the window's title.
@@ -249,7 +279,7 @@ public class Window {
   }
 
   private static native void init() /*-{
-    // Magic function defined by the selection script
+    // Magic function defined by the selection script.
     __gwt_initHandlers(
       function() {
         @com.google.gwt.user.client.Window::onResize()();
