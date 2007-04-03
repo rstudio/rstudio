@@ -15,26 +15,14 @@
  */
 package com.google.gwt.user.client;
 
-import java.util.Vector;
-
 /**
  * This class allows you to execute code after all currently pending event
- * handlers have completed, using the {@link #add(Command)} method. This is
- * useful when you need to execute code outside of the context of the current
- * stack.
+ * handlers have completed, using the {@link #addCommand(Command)} or
+ * {@link #addCommand(IncrementalCommand)} methods. This is useful when you need
+ * to execute code outside of the context of the current stack.
  */
 public class DeferredCommand {
-
-  /**
-   * The list of commands to be processed the next time a timer event is
-   * handled.
-   */
-  private static Vector deferredCommands = new Vector();
-
-  /**
-   * Records whether a timer is pending so we don't set multiple ones.
-   */
-  private static boolean timerIsActive = false;
+  private static final CommandExecutor commandExecutor = new CommandExecutor();
 
   /**
    * Enqueues a {@link Command} to be fired after all current events have been
@@ -44,60 +32,41 @@ public class DeferredCommand {
    *          inserted into the queue. Any events added after the pause will
    *          wait for an additional cycle through the system event loop before
    *          executing. Pauses are cumulative.
+   * 
+   * @deprecated As of release 1.4, replaced by {@link #addCommand(Command)}
    */
   public static void add(Command cmd) {
-    deferredCommands.add(cmd);
-    maybeSetDeferredCommandTimer();
+    commandExecutor.submit(cmd);
   }
 
   /**
-   * Executes the current set of deferred commands before returning.
+   * Enqueues a {@link Command} to be fired after all current events have been
+   * handled.
+   * 
+   * Note that the {@link Command} should not perform any blocking operations.
+   * 
+   * @param cmd the command to be fired. If cmd is null, a "pause" will be
+   *          inserted into the queue. Any events added after the pause will
+   *          wait for an additional cycle through the system event loop before
+   *          executing. Pauses are cumulative.
    */
-  private static void flushDeferredCommands() {
-    /*
-     * Only execute the commands present at the beginning, and always pull from
-     * the beginning of the list. This ensures that if any commands are added
-     * while executing the current ones, they will stay in the list for the next
-     * pass (otherwise, they wouldn't appear deferred).
-     * 
-     * If a deferred command throws an exception, that's okay, we'll just pick
-     * up where we left off on the next tick.
-     */
-    for (int i = 0, max = deferredCommands.size(); i < max; ++i) {
-      Command current = (Command) deferredCommands.remove(0);
-      if (current == null) {
-        /*
-         * This is an indication that we should defer everything else in the
-         * list until the next tick. Leave everything else in the queue.
-         */
-        return;
-      } else {
-        current.execute();
-      }
-    }
+  public static void addCommand(Command cmd) {
+    commandExecutor.submit(cmd);
   }
 
-  private static void maybeSetDeferredCommandTimer() {
-    if (!timerIsActive && !deferredCommands.isEmpty()) {
-      // There are some deferred commands in the queue.
-      // Make sure a timer will fire for them.
-      new Timer() {
-        public void run() {
-          try {
-
-            // execute the pending commands
-            flushDeferredCommands();
-
-          } finally {
-            // this timer has now fired and will not fire again
-            timerIsActive = false;
-
-            // always setup the next timer, even if we're throwing an exception
-            maybeSetDeferredCommandTimer();
-          }
-        }
-      }.schedule(1);
-      timerIsActive = true;
-    }
+  /**
+   * Enqueues an {@link IncrementalCommand} to be fired after all current events
+   * have been handled.
+   * 
+   * Note that the {@link IncrementalCommand} should not perform any blocking
+   * operations.
+   * 
+   * @param cmd the command to be fired. If cmd is null, a "pause" will be
+   *          inserted into the queue. Any events added after the pause will
+   *          wait for an additional cycle through the system event loop before
+   *          executing. Pauses are cumulative.
+   */
+  public static void addCommand(IncrementalCommand cmd) {
+    commandExecutor.submit(cmd);
   }
 }
