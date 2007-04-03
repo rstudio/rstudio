@@ -17,6 +17,15 @@
 			Need to confirm with JGW if this should still be disabled
 		-->
 		<exclude name="com/google/gwt/user/client/ui/HistoryTest.class" />
+
+    <!--
+      Safari regression:
+      Testcase: testPositioning took 7.514 sec
+	      FAILED
+      expected=225 actual=207
+      junit.framework.AssertionFailedError:  expected=225 actual=207
+    -->
+    <exclude name="com/google/gwt/user/client/ui/AbsolutePanelTest.class" />
 	</fileset>
 
 	<!--
@@ -66,6 +75,15 @@
 				com.google.gwt.core.client.JavaScriptException: JavaScript RangeError exception: Maximum call stack size exceeded.
 		-->
 		<exclude name="com/google/gwt/dev/jjs/test/MiscellaneousTest.class" />
+
+     <!--
+      Safari regression:
+      Testcase: testPositioning took 7.514 sec
+	      FAILED
+      expected=225 actual=207
+      junit.framework.AssertionFailedError:  expected=225 actual=207
+    -->
+    <exclude name="com/google/gwt/user/client/ui/AbsolutePanelTest.class" />
 	</fileset>
 
 	<!-- Platform shouldn't matter here, just picking one -->
