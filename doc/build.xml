@@ -52,7 +52,7 @@
 		<outofdate>
 			<sourcefiles>
 				<fileset dir="./src">
-					<include name="**/*.java" />
+          <include name="**/*.java" />
 				</fileset>
 				<fileset dir="${gwt.root}/user/src">
 					<include name="**/*.java" />
@@ -236,6 +236,8 @@
 					<arg value="-quiet" />
 					<arg value="-source" />
 					<arg value="1.4" />
+					<arg value="-encoding"/>
+					<arg value="UTF-8"/>
 					<arg value="-d" />
 					<arg value="${project.build}/javadoc" />
 					<arg value="-classpath" />

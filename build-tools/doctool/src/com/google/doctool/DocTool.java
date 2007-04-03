@@ -611,6 +611,10 @@ public class DocTool {
     // Source path
     args.add("-sourcepath");
     args.add(flattenPath(sourcePath));
+    
+    // Encoding is always UTF-8
+    args.add("-encoding");
+    args.add("UTF-8");
 
     // Overview file
     if (overviewFile != null) {
