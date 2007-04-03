@@ -1,0 +1,9 @@
+<module>
+	<!-- Inherit the JUnit support -->
+	<inherits name='com.google.gwt.junit.JUnit'/>
+	<inherits name = 'com.google.gwt.i18n.I18N'/>
+	<!-- Include client-side source for the test cases -->
+	<source path="client"/>
+	<extend-property name="locale" values="fr"/>
+	<set-property name = "locale" value = "fr"/>
+</module>
