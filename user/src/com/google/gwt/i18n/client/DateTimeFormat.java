@@ -300,7 +300,7 @@ import java.util.Date;
  * <code>GMT:-hhmm</code>.
  * </p>
  */
-public final class DateTimeFormat {
+public class DateTimeFormat {
   /**
    * Class PatternPart holds a "compiled" pattern part.
    */
@@ -575,6 +575,25 @@ public final class DateTimeFormat {
   public String getPattern() {
     return pattern;
   };
+
+  /**
+   * Parses text to produce a {@link Date} value. An
+   * {@link IllegalArgumentException} is thrown if either the text is empty or
+   * if the parse does not consume all characters of the text.
+   * 
+   * @param text the string being parsed
+   * @return a parsed date/time value
+   * @throws IllegalArgumentException if the entire text could not be converted
+   *           into a number
+   */
+  public Date parse(String text) {
+    Date date = new Date();
+    int charsConsumed = parse(text, 0, date);
+    if (charsConsumed == 0 || charsConsumed < text.length()) {
+      throw new IllegalArgumentException(text);
+    }
+    return date;
+  }
 
   /**
    * This method parses the input string, fill its value into a {@link Date}.
@@ -1072,7 +1091,7 @@ public final class DateTimeFormat {
    * Method checks if the pattern part is a numeric field.
    * 
    * @param part pattern part to be examined
-   * @return true if the pattern part is numberic field
+   * @return <code>true</code> if the pattern part is numberic field
    */
   private final boolean isNumeric(PatternPart part) {
     if (part.count <= 0) {
@@ -1518,7 +1537,7 @@ public final class DateTimeFormat {
    *          pattern
    * @param start from where parse start
    * 
-   * @return true if parsing successful
+   * @return <code>true</code> if parsing successful
    */
   private boolean subParseMonth(String text, int[] pos, DateRecord cal,
       int value, int start) {
@@ -1598,7 +1617,7 @@ public final class DateTimeFormat {
    * @param part the pattern part for this field
    * @param cal DateRecord object that will hold parsed value
    * 
-   * @return true if successful.
+   * @return <code>true</code> if successful
    */
   private boolean subParseYear(String text, int[] pos, int start, int value,
       PatternPart part, DateRecord cal) {

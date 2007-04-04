@@ -40,6 +40,27 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     return fmt.format(toFormat);
   }
 
+  public void testParseConsumesAllCharacters() {
+    String toParse = "July 11, 1938";
+    DateTimeFormat longDateFormat = DateTimeFormat.getLongDateFormat();
+
+    try {
+      Date actualDate = longDateFormat.parse(toParse);
+      String actualFormat = longDateFormat.format(actualDate);
+      assertEquals(toParse, actualFormat);
+    } catch (IllegalArgumentException e) {
+      fail("Should not have thrown an exception");
+    }
+
+    try {
+      String toParseMangled = toParse + " asdfasdfasdf";
+      longDateFormat.parse(toParseMangled);
+      fail("Should have thrown an exception on failure to parse");
+    } catch (IllegalArgumentException e) {
+      // Success.
+    }
+  }
+
   public void testAbutField() {
     Date date = new Date();
 
