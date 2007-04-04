@@ -301,7 +301,7 @@ import java.util.Map;
  * subpattern is for negative numbers.
  * </p>
  */
-public final class NumberFormat {
+public class NumberFormat {
 
   // Sets of constants as defined for the default locale.
   private static final NumberConstants defaultNumberConstants = (NumberConstants) GWT.create(NumberConstants.class);
@@ -560,17 +560,17 @@ public final class NumberFormat {
    * </p>
    * 
    * @param text the string to be parsed
-   * @param pos position to pass in and get back
+   * @param inOutPos position to pass in and get back
    * @return a double value representing the parsed number, or <code>0.0</code>
    *         if the parse fails
    */
-  public double parse(String text, int[] pos) {
-    int start = pos[0];
+  public double parse(String text, int[] inOutPos) {
+    int start = inOutPos[0];
     boolean gotPositive, gotNegative;
     double ret = 0.0;
 
-    gotPositive = (text.indexOf(positivePrefix, pos[0]) == pos[0]);
-    gotNegative = (text.indexOf(negativePrefix, pos[0]) == pos[0]);
+    gotPositive = (text.indexOf(positivePrefix, inOutPos[0]) == inOutPos[0]);
+    gotNegative = (text.indexOf(negativePrefix, inOutPos[0]) == inOutPos[0]);
 
     if (gotPositive && gotNegative) {
       if (positivePrefix.length() > negativePrefix.length()) {
@@ -581,35 +581,35 @@ public final class NumberFormat {
     }
 
     if (gotPositive) {
-      pos[0] += positivePrefix.length();
+      inOutPos[0] += positivePrefix.length();
     } else if (gotNegative) {
-      pos[0] += negativePrefix.length();
+      inOutPos[0] += negativePrefix.length();
     }
 
     // Process digits or Inf, and find decimal position.
-    if (text.indexOf(numberConstants.infinity(), pos[0]) == pos[0]) {
-      pos[0] += numberConstants.infinity().length();
+    if (text.indexOf(numberConstants.infinity(), inOutPos[0]) == inOutPos[0]) {
+      inOutPos[0] += numberConstants.infinity().length();
       ret = Double.POSITIVE_INFINITY;
-    } else if (text.indexOf(numberConstants.notANumber(), pos[0]) == pos[0]) {
-      pos[0] += numberConstants.notANumber().length();
+    } else if (text.indexOf(numberConstants.notANumber(), inOutPos[0]) == inOutPos[0]) {
+      inOutPos[0] += numberConstants.notANumber().length();
       ret = Double.NaN;
     } else {
-      ret = parseNumber(text, pos);
+      ret = parseNumber(text, inOutPos);
     }
 
     // Check for suffix.
     if (gotPositive) {
-      if (!(text.indexOf(positiveSuffix, pos[0]) == pos[0])) {
-        pos[0] = start;
+      if (!(text.indexOf(positiveSuffix, inOutPos[0]) == inOutPos[0])) {
+        inOutPos[0] = start;
         return 0.0;
       }
-      pos[0] += positiveSuffix.length();
+      inOutPos[0] += positiveSuffix.length();
     } else if (gotNegative) {
-      if (!(text.indexOf(negativeSuffix, pos[0]) == pos[0])) {
-        pos[0] = start;
+      if (!(text.indexOf(negativeSuffix, inOutPos[0]) == inOutPos[0])) {
+        inOutPos[0] = start;
         return 0.0;
       }
-      pos[0] += negativeSuffix.length();
+      inOutPos[0] += negativeSuffix.length();
     }
 
     if (gotNegative) {
