@@ -140,7 +140,7 @@ function __MODULE_FUNC__() {
               name = content;
               value = '';
             }
-            metaProps[content] = value;
+            metaProps[name] = value;
           }
         } else if (name == 'gwt:onPropertyErrorFn') {
           content = meta.getAttribute('content');
