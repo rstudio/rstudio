@@ -101,6 +101,8 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
    */
   private static final JUnitHostAsync junitHost = (JUnitHostAsync) GWT.create(JUnitHost.class);
 
+  private static String SERVERLESS_QUERY_PARAM = "gwt.junit.testfuncname";
+
   static {
     // Bind junitHost to the appropriate url.
     ServiceDefTarget endpoint = (ServiceDefTarget) junitHost;
@@ -110,6 +112,30 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
     // Null out the default uncaught exception handler since control it.
     GWT.setUncaughtExceptionHandler(null);
   }
+
+  private static String checkForQueryParamTestToRun() {
+    String query = getQuery();
+    int pos = query.indexOf("?" + SERVERLESS_QUERY_PARAM + "=");
+    if (pos < 0) {
+      pos = query.indexOf("&" + SERVERLESS_QUERY_PARAM + "=");
+    }
+    if (pos < 0) {
+      return null;
+    }
+    // advance past param name to to param value; +2 for the '&' and '='
+    pos += SERVERLESS_QUERY_PARAM.length() + 2;
+    query = query.substring(pos);
+    // trim any query params that follow
+    pos = query.indexOf('&');
+    if (pos >= 0) {
+      query = query.substring(0, pos);
+    }
+    return query;
+  }
+
+  private static native String getQuery() /*-{
+    return $wnd.location.search || '';  
+  }-*/;
 
   /**
    * The collected checkpoint messages.
@@ -130,6 +156,11 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
    * My paired (enclosing) {@link GWTTestCase}.
    */
   private final GWTTestCase outer;
+
+  /**
+   * If true, run a single test case with no RPC.
+   */
+  private boolean serverless = false;
 
   /**
    * Tracks whether this test is completely done.
@@ -219,11 +250,21 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
    * Implementation of {@link GWTTestCase#onModuleLoad()}.
    */
   public void onModuleLoad() {
-    /*
-     * Kick off the test running process by getting the first method to run from
-     * the server.
-     */
-    junitHost.getFirstMethod(outer.getTestName(), junitHostListener);
+    String queryParamTestToRun = checkForQueryParamTestToRun();
+    if (queryParamTestToRun != null) {
+      /*
+       * Just run a single test with no server-side interaction.
+       */
+      outer.setName(queryParamTestToRun);
+      serverless = true;
+      runTest();
+    } else {
+      /*
+       * Normal operation: Kick off the test running process by getting the
+       * first method to run from the server.
+       */
+      junitHost.getFirstMethod(outer.getTestName(), junitHostListener);
+    }
   }
 
   /**
@@ -250,6 +291,11 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
     testIsFinished = true;
 
     resetAsyncState();
+
+    if (serverless) {
+      // That's it, we're done
+      return;
+    }
 
     ExceptionWrapper ew = null;
     if (ex != null) {

@@ -128,10 +128,10 @@ public class JUnitShell extends GWTShell {
       JUnitShell shell = new JUnitShell();
       String[] args = shell.synthesizeArgs();
       if (!shell.processArgs(args)) {
-        System.exit(1);
+        throw new RuntimeException("Invalid shell arguments");
       }
       if (!shell.startUp()) {
-        return null;
+        throw new RuntimeException("Shell failed to start");
       }
       unitTestShell = shell;
     }
@@ -143,6 +143,11 @@ public class JUnitShell extends GWTShell {
    * When headless, all logging goes to the console.
    */
   private PrintWriterTreeLogger consoleLogger;
+
+  /**
+   * Name of the module containing the current/last module to run. 
+   */
+  private String currentModuleName;
 
   /**
    * If true, the last attempt to launch failed.
@@ -275,8 +280,10 @@ public class JUnitShell extends GWTShell {
 
     // Tweak the module for JUnit support
     //
-    module.clearEntryPoints();
-    module.addEntryPointTypeName(testCaseClassName);
+    if (moduleName.equals(currentModuleName)) {
+      module.clearEntryPoints();
+      module.addEntryPointTypeName(testCaseClassName);
+    }
     return module;
   }
 
@@ -338,6 +345,7 @@ public class JUnitShell extends GWTShell {
     try {
       lastLaunchFailed = false;
       testCaseClassName = newTestCaseClassName;
+      currentModuleName = moduleName;
       runStyle.maybeLaunchModule(moduleName, !sameTest);
     } catch (UnableToCompleteException e) {
       lastLaunchFailed = true;
