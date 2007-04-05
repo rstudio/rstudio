@@ -46,7 +46,6 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
 
   private ClickListenerCollection clickListeners;
   private FocusListenerCollection focusListeners;
-
   private KeyboardListenerCollection keyboardListeners;
 
   /**
@@ -160,5 +159,18 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
 
   public void setTabIndex(int index) {
     impl.setTabIndex(getElement(), index);
+  }
+
+  /**
+   * Fire all current {@link ClickListener}.
+   */
+  void fireClickListeners() {
+    /*
+     * Implementation note: PushButton needs to fire click listeners manually.
+     * Exposing this method so it can do so.
+     */
+    if (clickListeners != null) {
+      clickListeners.fireClick(this);
+    }
   }
 }
