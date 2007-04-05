@@ -159,6 +159,19 @@ public class Window {
   }-*/;
 
   /**
+   * Displays a request for information in a modal dialog box, along with the
+   * standard 'OK' and 'Cancel' buttons.
+   * 
+   * @param msg the message to be displayed
+   * @param initialValue the initial value in the dialog's text field
+   * @return the value entered by the user if 'OK' was pressed, or
+   *         <code>null</code> if 'Cancel' was pressed
+   */
+  public static native String prompt(String msg, String defaultValue) /*-{
+    return $wnd.prompt(msg, defaultValue);
+  }-*/;
+
+  /**
    * Removes a window closing listener.
    * 
    * @param listener the listener to be removed
