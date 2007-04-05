@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,13 +25,14 @@ import com.google.gwt.dev.js.JsParserException;
 import com.google.gwt.dev.js.JsSourceGenerationVisitor;
 import com.google.gwt.dev.js.JsParserException.SourceDetail;
 import com.google.gwt.dev.js.ast.JsBlock;
+import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsNameRef;
+import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatements;
-import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.shell.JavaScriptHost;
 
 import java.io.IOException;
@@ -65,7 +66,7 @@ public class Jsni {
       this.out = out;
     }
 
-    public boolean visit(JsNameRef x) {
+    public boolean visit(JsNameRef x, JsContext ctx) {
       String ident = x.getIdent();
       if (ident.startsWith("@")) {
         // Fix up JSNI references in the js body.
@@ -88,7 +89,7 @@ public class Jsni {
         //
         JsExpression q = x.getQualifier();
         if (q != null) {
-          q.traverse(this);
+          accept(q);
           out.print("[\"");
           out.print(ident);
           out.print("\"]");
@@ -99,7 +100,7 @@ public class Jsni {
         }
         return false;
       } else {
-        return super.visit(x);
+        return super.visit(x, ctx);
       }
     }
   }
@@ -245,7 +246,7 @@ public class Jsni {
     return new Interval(srcStart, srcEnd);
   }
 
-  public static String generateEscapedJavaScript(JsVisitable node) {
+  public static String generateEscapedJavaScript(JsNode node) {
     String source = generateJavaScript(node);
     StringBuffer body = new StringBuffer(source.length());
     body.append(source);
@@ -254,10 +255,10 @@ public class Jsni {
     return body.toString();
   }
 
-  public static String generateJavaScript(JsVisitable node) {
+  public static String generateJavaScript(JsNode node) {
     TextOutputOnCharArray tooca = new TextOutputOnCharArray(false);
     VisitorImpl vi = new VisitorImpl(tooca);
-    node.traverse(vi);
+    vi.accept(node);
     char[] source = tooca.getText();
     return String.valueOf(source);
   }

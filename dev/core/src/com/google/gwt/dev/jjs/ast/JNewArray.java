@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 import java.util.ArrayList;
 
 /**
@@ -26,7 +28,7 @@ public class JNewArray extends JExpression implements HasSettableType {
   public ArrayList initializers = null;
   private JArrayType arrayType;
 
-  public JNewArray(JProgram program, JSourceInfo info, JArrayType arrayType) {
+  public JNewArray(JProgram program, SourceInfo info, JArrayType arrayType) {
     super(program, info);
     this.arrayType = arrayType;
   }

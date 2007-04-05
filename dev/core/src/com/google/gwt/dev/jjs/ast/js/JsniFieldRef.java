@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,20 +15,20 @@
  */
 package com.google.gwt.dev.jjs.ast.js;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.JSourceInfo;
 
 /**
  * JSNI reference to a Java field.
  */
 public class JsniFieldRef extends JFieldRef {
 
-  public JsniFieldRef(JProgram program, JSourceInfo info, JField field,
+  public JsniFieldRef(JProgram program, SourceInfo info, JField field,
       JReferenceType enclosingType) {
     super(program, info, field.isStatic() ? null : program.getLiteralNull(),
         field, enclosingType);

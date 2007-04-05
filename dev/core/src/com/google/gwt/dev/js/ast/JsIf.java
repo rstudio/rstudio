@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,14 +53,14 @@ public final class JsIf extends JsStatement {
     this.thenStmt = thenStmt;
   }
 
-  public void traverse(JsVisitor v) {
-    if (v.visit(this)) {
-      ifExpr.traverse(v);
-      thenStmt.traverse(v);
+  public void traverse(JsVisitor v, JsContext ctx) {
+    if (v.visit(this, ctx)) {
+      ifExpr = v.accept(ifExpr);
+      thenStmt = v.accept(thenStmt);
       if (elseStmt != null) {
-        elseStmt.traverse(v);
+        elseStmt = v.accept(elseStmt);
       }
     }
-    v.endVisit(this);
+    v.endVisit(this, ctx);
   }
 }

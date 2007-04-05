@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Base class for any reference to a <code>JVariable</code> derived class.
  */
@@ -22,7 +24,7 @@ public abstract class JVariableRef extends JExpression {
 
   protected JVariable target;
 
-  public JVariableRef(JProgram program, JSourceInfo info, JVariable target) {
+  public JVariableRef(JProgram program, SourceInfo info, JVariable target) {
     super(program, info);
     this.target = target;
   }

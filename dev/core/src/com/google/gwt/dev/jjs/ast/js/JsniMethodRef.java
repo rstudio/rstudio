@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,19 +15,19 @@
  */
 package com.google.gwt.dev.jjs.ast.js;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.JSourceInfo;
 
 /**
  * A call to a JSNI method.
  */
 public class JsniMethodRef extends JMethodCall {
 
-  public JsniMethodRef(JProgram program, JSourceInfo info, JMethod method) {
+  public JsniMethodRef(JProgram program, SourceInfo info, JMethod method) {
     // Just use a null literal as the qualifier on a non-static method
     super(program, info, method.isStatic() ? null : program.getLiteralNull(),
         method);

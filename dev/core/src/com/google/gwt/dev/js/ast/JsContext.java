@@ -13,17 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.jjs.ast;
+package com.google.gwt.dev.js.ast;
 
 /**
- * Base class for any Java literal expression.
+ * The context in which a JsNode visitation occurs. This represents the set of
+ * possible operations a JsVisitor subclass can perform on the currently visited
+ * node.
  */
-public abstract class JValueLiteral extends JLiteral {
+public interface JsContext {
 
-  public JValueLiteral(JProgram program) {
-    super(program);
-  }
+  boolean canInsert();
 
-  public abstract Object getValueObj();
+  boolean canRemove();
 
+  void insertAfter(JsNode node);
+
+  void insertBefore(JsNode node);
+
+  void removeMe();
+
+  void replaceMe(JsNode node);
 }

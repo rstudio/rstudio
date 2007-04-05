@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Java field definition. 
  */
@@ -25,7 +27,7 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
   private final boolean isStatic;
   private final boolean hasInitializer;
 
-  JField(JProgram program, JSourceInfo info, String name,
+  JField(JProgram program, SourceInfo info, String name,
       JReferenceType enclosingType, JType type, boolean isStatic, boolean isFinal, boolean hasInitializer) {
     super(program, info, name, type, isFinal);
     this.enclosingType = enclosingType;

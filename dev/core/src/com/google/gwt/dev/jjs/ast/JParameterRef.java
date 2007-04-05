@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Java method parameter reference expression.
  */
@@ -25,7 +27,7 @@ public class JParameterRef extends JVariableRef {
    */
   private final JParameter param;
 
-  public JParameterRef(JProgram program, JSourceInfo info, JParameter param) {
+  public JParameterRef(JProgram program, SourceInfo info, JParameter param) {
     super(program, info, param);
     this.param = param;
   }

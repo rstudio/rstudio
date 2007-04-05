@@ -13,17 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.jjs.ast;
+package com.google.gwt.dev.jjs;
 
 /**
- * Base class for any Java literal expression.
+ * Abstract view of a class that has source info.
  */
-public abstract class JValueLiteral extends JLiteral {
+public interface HasSourceInfo {
 
-  public JValueLiteral(JProgram program) {
-    super(program);
-  }
-
-  public abstract Object getValueObj();
-
+  /**
+   * Return the source info associated with this object.
+   */
+  SourceInfo getSourceInfo();
 }

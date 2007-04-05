@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Repesents a statement that is an expression.
  */
@@ -22,7 +24,7 @@ public class JExpressionStatement extends JStatement {
 
   private JExpression expr;
 
-  public JExpressionStatement(JProgram program, JSourceInfo info,
+  public JExpressionStatement(JProgram program, SourceInfo info,
       JExpression expr) {
     super(program, info);
     this.expr = expr;

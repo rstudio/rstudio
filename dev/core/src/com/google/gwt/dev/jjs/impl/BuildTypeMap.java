@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
@@ -23,7 +25,6 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
-import com.google.gwt.dev.jjs.ast.JSourceInfo;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.js.JsniMethod;
 import com.google.gwt.dev.js.JsParser;
@@ -93,14 +94,14 @@ public class BuildTypeMap {
    */
   private static class BuildDeclMapVisitor extends ASTVisitor {
 
-    private static JSourceInfo makeSourceInfo(
+    private static SourceInfo makeSourceInfo(
         AbstractMethodDeclaration methodDecl) {
       CompilationResult compResult = methodDecl.compilationResult;
       int[] indexes = compResult.lineSeparatorPositions;
       String fileName = String.valueOf(compResult.fileName);
       int startLine = ProblemHandler.searchLineNumber(indexes,
           methodDecl.sourceStart);
-      return new JSourceInfo(methodDecl.sourceStart, methodDecl.bodyEnd,
+      return new SourceInfo(methodDecl.sourceStart, methodDecl.bodyEnd,
           startLine, fileName);
     }
 
@@ -141,7 +142,7 @@ public class BuildTypeMap {
           return true;
         }
 
-        JSourceInfo info = makeSourceInfo(argument);
+        SourceInfo info = makeSourceInfo(argument);
         LocalVariableBinding b = argument.binding;
         JType localType = (JType) typeMap.get(b.type);
         JMethod enclosingMethod = findEnclosingMethod(scope);
@@ -166,7 +167,7 @@ public class BuildTypeMap {
         MethodBinding b = ctorDecl.binding;
         JClassType enclosingType = (JClassType) typeMap.get(scope.enclosingSourceType());
         String name = enclosingType.getShortName();
-        JSourceInfo info = makeSourceInfo(ctorDecl);
+        SourceInfo info = makeSourceInfo(ctorDecl);
         JMethod newMethod = program.createMethod(info, name.toCharArray(),
             enclosingType, enclosingType, false, false, true, b.isPrivate(),
             false);
@@ -223,7 +224,7 @@ public class BuildTypeMap {
     public boolean visit(FieldDeclaration fieldDeclaration, MethodScope scope) {
       try {
         FieldBinding b = fieldDeclaration.binding;
-        JSourceInfo info = makeSourceInfo(fieldDeclaration);
+        SourceInfo info = makeSourceInfo(fieldDeclaration);
         JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.enclosingSourceType());
         createField(info, b, enclosingType,
             fieldDeclaration.initialization != null);
@@ -238,7 +239,7 @@ public class BuildTypeMap {
         LocalVariableBinding b = localDeclaration.binding;
         JType localType = (JType) typeMap.get(localDeclaration.type.resolvedType);
         JMethod enclosingMethod = findEnclosingMethod(scope);
-        JSourceInfo info = makeSourceInfo(localDeclaration);
+        SourceInfo info = makeSourceInfo(localDeclaration);
         JLocal newLocal = program.createLocal(info, localDeclaration.name,
             localType, b.isFinal(), enclosingMethod);
         typeMap.put(b, newLocal);
@@ -251,7 +252,7 @@ public class BuildTypeMap {
     public boolean visit(MethodDeclaration methodDeclaration, ClassScope scope) {
       try {
         MethodBinding b = methodDeclaration.binding;
-        JSourceInfo info = makeSourceInfo(methodDeclaration);
+        SourceInfo info = makeSourceInfo(methodDeclaration);
         JType returnType = (JType) typeMap.get(methodDeclaration.returnType.resolvedType);
         JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.enclosingSourceType());
         JMethod newMethod = program.createMethod(info,
@@ -353,7 +354,7 @@ public class BuildTypeMap {
             // TODO: check this
             // Map into the original source stream;
             i += startPos + detail.getLineOffset();
-            info = new JSourceInfo(i, i,
+            info = new SourceInfo(i, i,
                 info.getStartLine() + detail.getLine(), info.getFileName());
             GenerateJavaAST.reportJsniError(info, methodDeclaration,
                 e.getMessage());
@@ -379,7 +380,7 @@ public class BuildTypeMap {
       return process(typeDeclaration);
     }
 
-    private JField createField(JSourceInfo info, FieldBinding binding,
+    private JField createField(SourceInfo info, FieldBinding binding,
         JReferenceType enclosingType, boolean hasInitializer) {
       JType type = (JType) typeMap.get(binding.type);
       JField field = program.createField(info, binding.name, enclosingType,
@@ -403,7 +404,7 @@ public class BuildTypeMap {
     private JParameter createParameter(LocalVariableBinding binding,
         JMethod enclosingMethod) {
       JType type = (JType) typeMap.get(binding.type);
-      JSourceInfo info = makeSourceInfo(binding.declaration);
+      SourceInfo info = makeSourceInfo(binding.declaration);
       JParameter param = program.createParameter(info, binding.name, type,
           binding.isFinal(), enclosingMethod);
       typeMap.put(binding, param);
@@ -436,10 +437,10 @@ public class BuildTypeMap {
       return (JMethod) typeMap.get(referenceMethod.binding);
     }
 
-    private JSourceInfo makeSourceInfo(Statement stmt) {
+    private SourceInfo makeSourceInfo(Statement stmt) {
       int startLine = ProblemHandler.searchLineNumber(
           currentSeparatorPositions, stmt.sourceStart);
-      return new JSourceInfo(stmt.sourceStart, stmt.sourceEnd, startLine,
+      return new SourceInfo(stmt.sourceStart, stmt.sourceEnd, startLine,
           currentFileName);
     }
 
@@ -556,13 +557,13 @@ public class BuildTypeMap {
    */
   private static class BuildTypeMapVisitor extends ASTVisitor {
 
-    private static JSourceInfo makeSourceInfo(TypeDeclaration typeDecl) {
+    private static SourceInfo makeSourceInfo(TypeDeclaration typeDecl) {
       CompilationResult compResult = typeDecl.compilationResult;
       int[] indexes = compResult.lineSeparatorPositions;
       String fileName = String.valueOf(compResult.fileName);
       int startLine = ProblemHandler.searchLineNumber(indexes,
           typeDecl.sourceStart);
-      return new JSourceInfo(typeDecl.sourceStart, typeDecl.bodyEnd, startLine,
+      return new SourceInfo(typeDecl.sourceStart, typeDecl.bodyEnd, startLine,
           fileName);
     }
 
@@ -624,7 +625,7 @@ public class BuildTypeMap {
           name[0] = localName;
         }
 
-        JSourceInfo info = makeSourceInfo(typeDeclaration);
+        SourceInfo info = makeSourceInfo(typeDeclaration);
         JReferenceType newType;
         if (binding.isClass()) {
           newType = program.createClass(info, name, binding.isAbstract(),

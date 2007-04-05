@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
@@ -31,7 +32,6 @@ import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.JSourceInfo;
 
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -116,7 +116,7 @@ public class MakeCallsStatic {
       RewriteMethodBody rewriter = new RewriteMethodBody(thisParam, varMap);
       rewriter.accept(newMethod);
 
-      JSourceInfo bodyInfo = x.body.getSourceInfo();
+      SourceInfo bodyInfo = x.body.getSourceInfo();
       // delegate from the instance method to the static method
       JMethodCall newCall = new JMethodCall(program, bodyInfo, null, newMethod);
       newCall.getArgs().add(program.getExprThisRef(bodyInfo, enclosingType));

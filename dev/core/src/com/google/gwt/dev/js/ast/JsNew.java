@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,11 +39,11 @@ public final class JsNew extends JsExpression implements HasArguments {
     this.ctorExpr = ctorExpr;
   }
 
-  public void traverse(JsVisitor v) {
-    if (v.visit(this)) {
-      ctorExpr.traverse(v);
-      args.traverse(v);
+  public void traverse(JsVisitor v, JsContext ctx) {
+    if (v.visit(this, ctx)) {
+      ctorExpr = v.accept(ctorExpr);
+      v.accept(args);
     }
-    v.endVisit(this);
+    v.endVisit(this, ctx);
   }
 }

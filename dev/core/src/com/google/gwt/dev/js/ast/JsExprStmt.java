@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,7 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsExprStmt extends JsStatement {
 
-  private final JsExpression expr;
+  private JsExpression expr;
 
   public JsExprStmt(JsExpression expr) {
     this.expr = expr;
@@ -30,10 +30,10 @@ public final class JsExprStmt extends JsStatement {
     return expr;
   }
 
-  public void traverse(JsVisitor v) {
-    if (v.visit(this)) {
-      expr.traverse(v);
+  public void traverse(JsVisitor v, JsContext ctx) {
+    if (v.visit(this, ctx)) {
+      expr = v.accept(expr);
     }
-    v.endVisit(this);
+    v.endVisit(this, ctx);
   }
 }

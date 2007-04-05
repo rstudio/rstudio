@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,15 @@
 package com.google.gwt.dev.js.ast;
 
 /**
- * Implemented by nodes that can be visited.
+ * Abstracts the idea that a class can be traversed.
  */
 public interface JsVisitable {
-  void traverse(JsVisitor v);
+
+  /**
+   * Causes this object to have the visitor visit itself and its children.
+   * 
+   * @param visitor the visitor that should traverse this node
+   * @param ctx the context of an existing traversal
+   */
+  void traverse(JsVisitor visitor, JsContext ctx);
 }

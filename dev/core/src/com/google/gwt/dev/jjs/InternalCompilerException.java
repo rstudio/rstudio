@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,10 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.jjs.impl;
+package com.google.gwt.dev.jjs;
 
-import com.google.gwt.dev.jjs.ast.JNode;
-import com.google.gwt.dev.jjs.ast.JSourceInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,11 +26,6 @@ import java.util.List;
 public class InternalCompilerException extends RuntimeException {
 
   /**
-   * Tracks if there's a pending addNode() to avoid recursion sickness.
-   */
-  private static final ThreadLocal pendingICE = new ThreadLocal();
-
-  /**
    * Information regarding a node that was being processed when an
    * InternalCompilerException was thrown.
    */
@@ -40,10 +33,9 @@ public class InternalCompilerException extends RuntimeException {
 
     private final String className;
     private final String description;
-    private final JSourceInfo sourceInfo;
+    private final SourceInfo sourceInfo;
 
-    private NodeInfo(String className, String description,
-        JSourceInfo sourceInfo) {
+    private NodeInfo(String className, String description, SourceInfo sourceInfo) {
       this.className = className;
       this.description = description;
       this.sourceInfo = sourceInfo;
@@ -66,17 +58,23 @@ public class InternalCompilerException extends RuntimeException {
     /**
      * Returns the node's source info, if available; otherwise <code>null</code>.
      */
-    public JSourceInfo getSourceInfo() {
+    public SourceInfo getSourceInfo() {
       return sourceInfo;
     }
   }
+
+  /**
+   * Tracks if there's a pending addNode() to avoid recursion sickness.
+   */
+  private static final ThreadLocal pendingICE = new ThreadLocal();
 
   private final List nodeTrace = new ArrayList();
 
   /**
    * Constructs a new exception with the specified node, message, and cause.
    */
-  public InternalCompilerException(JNode node, String message, Throwable cause) {
+  public InternalCompilerException(HasSourceInfo node, String message,
+      Throwable cause) {
     this(message, cause);
     addNode(node);
   }
@@ -99,7 +97,7 @@ public class InternalCompilerException extends RuntimeException {
    * Adds a node to the end of the node trace. This is similar to how a stack
    * trace works.
    */
-  public void addNode(JNode node) {
+  public void addNode(HasSourceInfo node) {
     InternalCompilerException other = (InternalCompilerException) pendingICE.get();
     if (other != null) {
       // Avoiding recursion sickness: Yet Another ICE must have occured while
@@ -109,7 +107,7 @@ public class InternalCompilerException extends RuntimeException {
 
     String className = null;
     String description = null;
-    JSourceInfo sourceInfo = null;
+    SourceInfo sourceInfo = null;
     try {
       pendingICE.set(this);
       className = node.getClass().getName();
@@ -131,7 +129,7 @@ public class InternalCompilerException extends RuntimeException {
    * similar to how a stack trace works.
    */
   public void addNode(String className, String description,
-      JSourceInfo sourceInfo) {
+      SourceInfo sourceInfo) {
     nodeTrace.add(new NodeInfo(className, description, sourceInfo));
   }
 

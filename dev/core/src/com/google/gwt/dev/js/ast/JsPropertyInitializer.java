@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,11 +48,11 @@ public class JsPropertyInitializer extends JsNode {
     this.valueExpr = valueExpr;
   }
 
-  public void traverse(JsVisitor v) {
-    if (v.visit(this)) {
-      labelExpr.traverse(v);
-      valueExpr.traverse(v);
+  public void traverse(JsVisitor v, JsContext ctx) {
+    if (v.visit(this, ctx)) {
+      labelExpr = v.accept(labelExpr);
+      valueExpr = v.accept(valueExpr);
     }
-    v.endVisit(this);
+    v.endVisit(this, ctx);
   }
 }

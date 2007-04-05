@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,12 +37,12 @@ public final class JsReturn extends JsStatement {
     this.expr = expr;
   }
 
-  public void traverse(JsVisitor v) {
-    if (v.visit(this)) {
+  public void traverse(JsVisitor v, JsContext ctx) {
+    if (v.visit(this, ctx)) {
       if (expr != null) {
-        expr.traverse(v);
+        expr = v.accept(expr);
       }
     }
-    v.endVisit(this);
+    v.endVisit(this, ctx);
   }
 }

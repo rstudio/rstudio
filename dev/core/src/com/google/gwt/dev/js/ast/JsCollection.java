@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Represents a collection of JavaScript language objects.
  */
-public class JsCollection extends JsNode {
+public class JsCollection {
 
   private final List/* <JsNode> */list = new ArrayList/* <JsNode> */();
 
@@ -40,6 +40,10 @@ public class JsCollection extends JsNode {
     return (JsNode) list.get(index);
   }
 
+  public boolean isEmpty() {
+    return list.isEmpty();
+  }
+
   public Iterator iterator() {
     return list.iterator();
   }
@@ -50,12 +54,5 @@ public class JsCollection extends JsNode {
 
   public int size() {
     return list.size();
-  }
-
-  public void traverse(JsVisitor v) {
-    for (int i = 0; i < list.size(); ++i) {
-      JsNode node = (JsNode) list.get(i);
-      node.traverse(v);
-    }
   }
 }

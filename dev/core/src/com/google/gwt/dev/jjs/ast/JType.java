@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Base class for any types entity.
  */
@@ -23,7 +25,7 @@ public abstract class JType extends JNode implements HasName {
   protected final String name;
   private final JLiteral defaultValue;
 
-  public JType(JProgram program, JSourceInfo info, String name,
+  public JType(JProgram program, SourceInfo info, String name,
       JLiteral defaultValue) {
     super(program, info);
     this.name = name;

@@ -220,7 +220,7 @@ public class SelectionScriptGenerator {
         PrintWriter pw = new PrintWriter(sw, true);
         TextOutputOnPrintWriter out = new TextOutputOnPrintWriter(pw, obfuscate);
         JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
-        jsProgram.traverse(v);
+        v.accept(jsProgram);
         return sw.toString();
       }
     } catch (IOException e) {

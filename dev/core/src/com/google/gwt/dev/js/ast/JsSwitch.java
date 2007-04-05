@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,11 +39,11 @@ public class JsSwitch extends JsStatement {
     this.expr = expr;
   }
 
-  public void traverse(JsVisitor v) {
-    if (v.visit(this)) {
-      expr.traverse(v);
-      cases.traverse(v);
+  public void traverse(JsVisitor v, JsContext ctx) {
+    if (v.visit(this, ctx)) {
+      expr = v.accept(expr);
+      v.acceptWithInsertRemove(cases);
     }
-    v.endVisit(this);
+    v.endVisit(this, ctx);
   }
 }

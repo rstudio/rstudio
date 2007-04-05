@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,14 +49,14 @@ public class JsTry extends JsStatement {
     tryBlock = block;
   }
 
-  public void traverse(JsVisitor v) {
-    if (v.visit(this)) {
-      tryBlock.traverse(v);
-      catches.traverse(v);
+  public void traverse(JsVisitor v, JsContext ctx) {
+    if (v.visit(this, ctx)) {
+      tryBlock = (JsBlock) v.accept(tryBlock);
+      v.acceptWithInsertRemove(catches);
       if (finallyBlock != null) {
-        finallyBlock.traverse(v);
+        finallyBlock = (JsBlock) v.accept(finallyBlock);
       }
     }
-    v.endVisit(this);
+    v.endVisit(this, ctx);
   }
 }

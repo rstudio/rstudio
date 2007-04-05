@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,19 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.jjs.ast;
+package com.google.gwt.dev.jjs;
 
 /**
  * Tracks file and line information for AST nodes.
  */
-public class JSourceInfo {
+public class SourceInfo {
 
   private final int endPos;
   private final String fileName;
   private final int startLine;
   private final int startPos;
 
-  public JSourceInfo(int startPos, int endPos, int startLine, String fileName) {
+  public SourceInfo(int startPos, int endPos, int startLine, String fileName) {
     this.startPos = startPos;
     this.endPos = endPos;
     this.startLine = startLine;

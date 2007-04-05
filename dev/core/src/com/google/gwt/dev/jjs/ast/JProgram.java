@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,9 +19,10 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor;
 import com.google.gwt.dev.jdt.RebindOracle;
+import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.js.JClassSeed;
 import com.google.gwt.dev.jjs.ast.js.JsniMethod;
-import com.google.gwt.dev.jjs.impl.InternalCompilerException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -222,14 +223,14 @@ public class JProgram extends JNode {
   /**
    * Helper to create an assignment, used to initalize fields, etc.
    */
-  public JExpressionStatement createAssignmentStmt(JSourceInfo info,
+  public JExpressionStatement createAssignmentStmt(SourceInfo info,
       JExpression lhs, JExpression rhs) {
     JBinaryOperation assign = new JBinaryOperation(this, info, lhs.getType(),
         JBinaryOperator.ASG, lhs, rhs);
     return new JExpressionStatement(this, info, assign);
   }
 
-  public JClassType createClass(JSourceInfo info, char[][] name,
+  public JClassType createClass(SourceInfo info, char[][] name,
       boolean isAbstract, boolean isFinal) {
     String sname = dotify(name);
     JClassType x = new JClassType(this, info, sname, isAbstract, isFinal);
@@ -260,7 +261,7 @@ public class JProgram extends JNode {
     return x;
   }
 
-  public JField createField(JSourceInfo info, char[] name,
+  public JField createField(SourceInfo info, char[] name,
       JReferenceType enclosingType, JType type, boolean isStatic,
       boolean isFinal, boolean hasInitializer) {
     assert (name != null);
@@ -290,7 +291,7 @@ public class JProgram extends JNode {
     return x;
   }
 
-  public JInterfaceType createInterface(JSourceInfo info, char[][] name) {
+  public JInterfaceType createInterface(SourceInfo info, char[][] name) {
     String sname = dotify(name);
     JInterfaceType x = new JInterfaceType(this, info, sname);
 
@@ -300,7 +301,7 @@ public class JProgram extends JNode {
     return x;
   }
 
-  public JLocal createLocal(JSourceInfo info, char[] name, JType type,
+  public JLocal createLocal(SourceInfo info, char[] name, JType type,
       boolean isFinal, JMethod enclosingMethod) {
     assert (name != null);
     assert (type != null);
@@ -314,7 +315,7 @@ public class JProgram extends JNode {
     return x;
   }
 
-  public JMethod createMethod(JSourceInfo info, char[] name,
+  public JMethod createMethod(SourceInfo info, char[] name,
       JReferenceType enclosingType, JType returnType, boolean isAbstract,
       boolean isStatic, boolean isFinal, boolean isPrivate, boolean isNative) {
     assert (name != null);
@@ -346,7 +347,7 @@ public class JProgram extends JNode {
     return x;
   }
 
-  public JParameter createParameter(JSourceInfo info, char[] name, JType type,
+  public JParameter createParameter(SourceInfo info, char[] name, JType type,
       boolean isFinal, JMethod enclosingMethod) {
     assert (name != null);
     assert (type != null);
@@ -379,7 +380,7 @@ public class JProgram extends JNode {
     return allTypes;
   }
 
-  public JThisRef getExprThisRef(JSourceInfo info, JClassType enclosingType) {
+  public JThisRef getExprThisRef(SourceInfo info, JClassType enclosingType) {
     return new JThisRef(this, info, enclosingType);
   }
 

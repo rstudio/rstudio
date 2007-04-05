@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.HasSourceInfo;
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.impl.SourceGenerationVisitor;
 import com.google.gwt.dev.jjs.impl.ToStringGenerationVisitor;
 import com.google.gwt.dev.util.TextOutputOnCharArray;
@@ -22,12 +24,12 @@ import com.google.gwt.dev.util.TextOutputOnCharArray;
 /**
  * Base class for all visitable AST nodes.
  */
-public abstract class JNode implements JVisitable {
+public abstract class JNode implements JVisitable, HasSourceInfo {
 
   protected final JProgram program;
-  private final JSourceInfo info;
+  private final SourceInfo info;
 
-  protected JNode(JProgram program, JSourceInfo info) {
+  protected JNode(JProgram program, SourceInfo info) {
     if (program == null) {
       assert (this instanceof JProgram);
       this.program = (JProgram) this;
@@ -37,7 +39,7 @@ public abstract class JNode implements JVisitable {
     this.info = info;
   }
 
-  public JSourceInfo getSourceInfo() {
+  public SourceInfo getSourceInfo() {
     return info;
   }
 

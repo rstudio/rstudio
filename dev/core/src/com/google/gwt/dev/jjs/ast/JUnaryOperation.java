@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Java prefix or postfix operation expression.
  */
@@ -23,7 +25,7 @@ public abstract class JUnaryOperation extends JExpression {
   private JExpression arg;
   private final JUnaryOperator op;
 
-  public JUnaryOperation(JProgram program, JSourceInfo info,
+  public JUnaryOperation(JProgram program, SourceInfo info,
       JUnaryOperator op, JExpression arg) {
     super(program, info);
     this.op = op;

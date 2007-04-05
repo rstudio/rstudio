@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.CanBeStatic;
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.HasName;
@@ -62,7 +64,6 @@ import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
-import com.google.gwt.dev.jjs.ast.JSourceInfo;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JSwitchStatement;
@@ -76,10 +77,11 @@ import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethod;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
-import com.google.gwt.dev.js.JsAbstractVisitorWithAllVisits;
+import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsSourceInfo;
+import com.google.gwt.dev.js.ast.JsVisitor;
 
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
@@ -434,7 +436,7 @@ public class GenerateJavaAST {
     void processConstructor(ConstructorDeclaration x) {
       JMethod ctor = (JMethod) typeMap.get(x.binding);
       try {
-        JSourceInfo info = ctor.body.getSourceInfo();
+        SourceInfo info = ctor.body.getSourceInfo();
 
         currentMethod = ctor;
         currentMethodScope = x.scope;
@@ -543,7 +545,7 @@ public class GenerateJavaAST {
     }
 
     JExpression processExpression(AllocationExpression x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       SourceTypeBinding typeBinding = (SourceTypeBinding) x.resolvedType;
       if (typeBinding.constantPoolName() == null) {
         /*
@@ -626,13 +628,13 @@ public class GenerateJavaAST {
 
     JExpression processExpression(AND_AND_Expression x) {
       JType type = (JType) typeMap.get(x.resolvedType);
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       return processBinaryOperation(info, JBinaryOperator.AND, type, x.left,
           x.right);
     }
 
     JExpression processExpression(ArrayAllocationExpression x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JArrayType type = (JArrayType) typeMap.get(x.resolvedType);
       JNewArray newArray = new JNewArray(program, info, type);
 
@@ -661,7 +663,7 @@ public class GenerateJavaAST {
     }
 
     JExpression processExpression(ArrayInitializer x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JArrayType type = (JArrayType) typeMap.get(x.resolvedType);
       JNewArray newArray = new JNewArray(program, info, type);
 
@@ -677,7 +679,7 @@ public class GenerateJavaAST {
     }
 
     JExpression processExpression(ArrayReference x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JArrayRef arrayRef = new JArrayRef(program, info,
           dispProcessExpression(x.receiver), dispProcessExpression(x.position));
       return arrayRef;
@@ -685,7 +687,7 @@ public class GenerateJavaAST {
 
     JExpression processExpression(Assignment x) {
       JType type = (JType) typeMap.get(x.resolvedType);
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       return processBinaryOperation(info, JBinaryOperator.ASG, type, x.lhs,
           x.expression);
     }
@@ -746,12 +748,12 @@ public class GenerateJavaAST {
       }
 
       JType type = (JType) typeMap.get(x.resolvedType);
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       return processBinaryOperation(info, op, type, x.left, x.right);
     }
 
     JExpression processExpression(CastExpression x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JType type = (JType) typeMap.get(x.resolvedType);
       JCastOperation cast = new JCastOperation(program, info, type,
           dispProcessExpression(x.expression));
@@ -806,12 +808,12 @@ public class GenerateJavaAST {
       }
 
       JType type = (JType) typeMap.get(x.resolvedType);
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       return processBinaryOperation(info, op, type, x.lhs, x.expression);
     }
 
     JExpression processExpression(ConditionalExpression x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JType type = (JType) typeMap.get(x.resolvedType);
       JExpression ifTest = dispProcessExpression(x.condition);
       JExpression thenExpr = dispProcessExpression(x.valueIfTrue);
@@ -836,7 +838,7 @@ public class GenerateJavaAST {
       }
 
       JType type = (JType) typeMap.get(x.resolvedType);
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       return processBinaryOperation(info, op, type, x.left, x.right);
     }
 
@@ -853,7 +855,7 @@ public class GenerateJavaAST {
     }
 
     JExpression processExpression(FieldReference x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       FieldBinding fieldBinding = x.binding;
       JField field;
       if (fieldBinding.declaringClass == null) {
@@ -872,14 +874,14 @@ public class GenerateJavaAST {
     }
 
     JExpression processExpression(InstanceOfExpression x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JExpression expr = dispProcessExpression(x.expression);
       JReferenceType testType = (JReferenceType) typeMap.get(x.type.resolvedType);
       return new JInstanceOf(program, info, testType, expr);
     }
 
     JExpression processExpression(MessageSend x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JType type = (JType) typeMap.get(x.resolvedType);
       JMethod method = (JMethod) typeMap.get(x.binding);
       assert (type == method.getType());
@@ -924,13 +926,13 @@ public class GenerateJavaAST {
 
     JExpression processExpression(OR_OR_Expression x) {
       JType type = (JType) typeMap.get(x.resolvedType);
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       return processBinaryOperation(info, JBinaryOperator.OR, type, x.left,
           x.right);
     }
 
     JExpression processExpression(PostfixExpression x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JUnaryOperator op;
 
       switch (x.operator) {
@@ -952,7 +954,7 @@ public class GenerateJavaAST {
     }
 
     JExpression processExpression(PrefixExpression x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JUnaryOperator op;
 
       switch (x.operator) {
@@ -987,7 +989,7 @@ public class GenerateJavaAST {
         return processExpression((AllocationExpression) x);
       }
 
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       MethodBinding b = x.binding;
       JMethod ctor = (JMethod) typeMap.get(b);
       JClassType enclosingType = (JClassType) ctor.getEnclosingType();
@@ -1029,7 +1031,7 @@ public class GenerateJavaAST {
     }
 
     JExpression processExpression(QualifiedNameReference x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       Binding binding = x.binding;
       JNode node = typeMap.get(binding);
       if (!(node instanceof JVariable)) {
@@ -1082,7 +1084,7 @@ public class GenerateJavaAST {
     }
 
     JExpression processExpression(SingleNameReference x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       Binding binding = x.binding;
       Object target = typeMap.get(binding);
       if (!(target instanceof JVariable)) {
@@ -1110,7 +1112,7 @@ public class GenerateJavaAST {
     JExpression processExpression(SuperReference x) {
       JClassType type = (JClassType) typeMap.get(x.resolvedType);
       assert (type == currentClass.extnds);
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       // Oddly enough, super refs can be modeled as a this refs.
       JExpression superRef = createThisRef(info, currentClass);
       return superRef;
@@ -1119,13 +1121,13 @@ public class GenerateJavaAST {
     JExpression processExpression(ThisReference x) {
       JClassType type = (JClassType) typeMap.get(x.resolvedType);
       assert (type == currentClass);
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JExpression thisRef = createThisRef(info, currentClass);
       return thisRef;
     }
 
     JExpression processExpression(UnaryExpression x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JUnaryOperator op;
       int operator = ((x.bits & UnaryExpression.OperatorMASK) >> UnaryExpression.OperatorSHIFT);
 
@@ -1175,7 +1177,7 @@ public class GenerateJavaAST {
         if (initializer instanceof JLiteral) {
           field.constInitializer = (JLiteral) initializer;
         } else if (initializer != null) {
-          JSourceInfo info = makeSourceInfo(declaration);
+          SourceInfo info = makeSourceInfo(declaration);
           JStatement assignStmt = program.createAssignmentStmt(info,
               createVariableRef(info, field), initializer);
 
@@ -1239,19 +1241,19 @@ public class GenerateJavaAST {
 
       // resolve jsni refs
       final List/* <JsNameRef> */nameRefs = new ArrayList/* <JsNameRef> */();
-      func.traverse(new JsAbstractVisitorWithAllVisits() {
+      new JsVisitor() {
         // @Override
-        public void endVisit(JsNameRef x) {
+        public void endVisit(JsNameRef x, JsContext ctx) {
           String ident = x.getIdent();
           if (ident.charAt(0) == '@') {
             nameRefs.add(x);
           }
         }
-      });
+      }.accept(func);
 
       for (int i = 0; i < nameRefs.size(); ++i) {
         JsNameRef nameRef = (JsNameRef) nameRefs.get(i);
-        JSourceInfo info = nativeMethod.getSourceInfo();
+        SourceInfo info = nativeMethod.getSourceInfo();
         // TODO: make this tighter when we have real source info
         // JSourceInfo info = translateInfo(nameRef.getInfo());
         String ident = nameRef.getIdent();
@@ -1296,7 +1298,7 @@ public class GenerateJavaAST {
     }
 
     JStatement processStatement(AssertStatement x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JExpression expr = dispProcessExpression(x.assertExpression);
       JExpression arg = dispProcessExpression(x.exceptionArgument);
       return new JAssertStatement(program, info, expr, arg);
@@ -1312,7 +1314,7 @@ public class GenerateJavaAST {
         return null;
       }
 
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JBlock block = new JBlock(program, info);
       if (x.statements != null) {
         for (int i = 0, n = x.statements.length; i < n; ++i) {
@@ -1326,25 +1328,25 @@ public class GenerateJavaAST {
     }
 
     JStatement processStatement(BreakStatement x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       return new JBreakStatement(program, info, getOrCreateLabel(info,
           currentMethod, x.label));
     }
 
     JStatement processStatement(CaseStatement x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JExpression expression = dispProcessExpression(x.constantExpression);
       return new JCaseStatement(program, info, (JLiteral) expression);
     }
 
     JStatement processStatement(ContinueStatement x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       return new JContinueStatement(program, info, getOrCreateLabel(info,
           currentMethod, x.label));
     }
 
     JStatement processStatement(DoStatement x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JExpression loopTest = dispProcessExpression(x.condition);
       JStatement loopBody = dispProcessStatement(x.action);
       JDoStatement stmt = new JDoStatement(program, info, loopTest, loopBody);
@@ -1356,7 +1358,7 @@ public class GenerateJavaAST {
     }
 
     JStatement processStatement(ForStatement x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       // SEE NOTE ON JDT FORCED OPTIMIZATIONS
       // If false, just return the initializers
       // for (init; false; inc) { x } => { init }
@@ -1394,7 +1396,7 @@ public class GenerateJavaAST {
         }
       }
 
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JExpression expr = dispProcessExpression(x.condition);
       JStatement thenStmt = dispProcessStatement(x.thenStatement);
       JStatement elseStmt = dispProcessStatement(x.elseStatement);
@@ -1408,13 +1410,13 @@ public class GenerateJavaAST {
       if (body == null) {
         return null;
       }
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       return new JLabeledStatement(program, info, getOrCreateLabel(info,
           currentMethod, x.label), body);
     }
 
     JStatement processStatement(LocalDeclaration x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JLocal local = (JLocal) typeMap.get(x.binding);
       JLocalRef localRef = new JLocalRef(program, info, local);
       JExpression initializer = dispProcessExpression(x.initialization);
@@ -1423,7 +1425,7 @@ public class GenerateJavaAST {
     }
 
     JStatement processStatement(ReturnStatement x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       if (currentMethodScope.referenceContext instanceof ConstructorDeclaration) {
         /*
          * Special: constructors are implemented as instance methods that return
@@ -1441,7 +1443,7 @@ public class GenerateJavaAST {
     }
 
     JStatement processStatement(SwitchStatement x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JExpression expression = dispProcessExpression(x.expression);
       JBlock block = new JBlock(program, info);
       block.statements = processStatements(x.statements);
@@ -1449,7 +1451,7 @@ public class GenerateJavaAST {
     }
 
     JStatement processStatement(SynchronizedStatement x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JBlock block = (JBlock) dispProcessStatement(x.block);
       JExpression expr = dispProcessExpression(x.expression);
       block.statements.add(0, new JExpressionStatement(program, info, expr));
@@ -1457,13 +1459,13 @@ public class GenerateJavaAST {
     }
 
     JStatement processStatement(ThrowStatement x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JExpression toThrow = dispProcessExpression(x.exception);
       return new JThrowStatement(program, info, toThrow);
     }
 
     JStatement processStatement(TryStatement x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JBlock tryBlock = (JBlock) dispProcessStatement(x.tryBlock);
       List/* <JLocalRef> */catchArgs = new ArrayList/* <JLocalRef> */();
       List/* <JBlock> */catchBlocks = new ArrayList/* <JBlock> */();
@@ -1496,7 +1498,7 @@ public class GenerateJavaAST {
           return null;
         }
       }
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JExpression loopTest = dispProcessExpression(x.condition);
       JStatement loopBody = dispProcessStatement(x.action);
       JWhileStatement stmt = new JWhileStatement(program, info, loopTest,
@@ -1518,7 +1520,7 @@ public class GenerateJavaAST {
     }
 
     JMethodCall processSuperConstructorCall(ExplicitConstructorCall x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JMethod ctor = (JMethod) typeMap.get(x.binding);
       JExpression trueQualifier = createThisRef(info, currentClass);
       JMethodCall call = new JMethodCall(program, info, trueQualifier, ctor);
@@ -1591,7 +1593,7 @@ public class GenerateJavaAST {
     }
 
     JMethodCall processThisConstructorCall(ExplicitConstructorCall x) {
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       JMethod ctor = (JMethod) typeMap.get(x.binding);
       JExpression trueQualifier = createThisRef(info, currentClass);
       JMethodCall call = new JMethodCall(program, info, trueQualifier, ctor);
@@ -1664,7 +1666,7 @@ public class GenerateJavaAST {
      * access) of the appropriate type. Always use this method instead of
      * creating a naked JThisRef or you won't get the synthetic accesses right.
      */
-    private JExpression createQualifiedThisRef(JSourceInfo info,
+    private JExpression createQualifiedThisRef(SourceInfo info,
         JClassType targetType) {
       assert (currentClass instanceof JClassType);
       JExpression expr = program.getExprThisRef(info, (JClassType) currentClass);
@@ -1730,8 +1732,7 @@ public class GenerateJavaAST {
      * the appropriate type. Always use this method instead of creating a naked
      * JThisRef or you won't get the synthetic accesses right.
      */
-    private JExpression createThisRef(JSourceInfo info,
-        JReferenceType targetType) {
+    private JExpression createThisRef(SourceInfo info, JReferenceType targetType) {
       assert (currentClass instanceof JClassType);
       return createThisRef(targetType, program.getExprThisRef(info,
           (JClassType) currentClass));
@@ -1741,7 +1742,7 @@ public class GenerateJavaAST {
      * Creates an appropriate JVariableRef for the polymorphic type of the
      * requested JVariable.
      */
-    private JVariableRef createVariableRef(JSourceInfo info, JVariable variable) {
+    private JVariableRef createVariableRef(SourceInfo info, JVariable variable) {
       if (variable instanceof JLocal) {
         JLocal local = (JLocal) variable;
         if (local.getEnclosingMethod() != currentMethod) {
@@ -1777,8 +1778,8 @@ public class GenerateJavaAST {
      * Creates an appropriate JVariableRef for the polymorphic type of the
      * requested JVariable.
      */
-    private JVariableRef createVariableRef(JSourceInfo info,
-        JVariable variable, Binding binding) {
+    private JVariableRef createVariableRef(SourceInfo info, JVariable variable,
+        Binding binding) {
       // Fix up the reference if it's to an outer local/param
       variable = possiblyReferenceOuterLocal(variable, binding);
       if (variable == null) {
@@ -1797,7 +1798,7 @@ public class GenerateJavaAST {
      * Get a new label of a particular name, or create a new one if it doesn't
      * exist already.
      */
-    private JLabel getOrCreateLabel(JSourceInfo info, JMethod enclosingMethod,
+    private JLabel getOrCreateLabel(SourceInfo info, JMethod enclosingMethod,
         char[] name) {
       if (name == null) {
         return null;
@@ -1816,14 +1817,14 @@ public class GenerateJavaAST {
       return jlabel;
     }
 
-    private JSourceInfo makeSourceInfo(Statement x) {
+    private SourceInfo makeSourceInfo(Statement x) {
       int startLine = ProblemHandler.searchLineNumber(
           currentSeparatorPositions, x.sourceStart);
-      return new JSourceInfo(x.sourceStart, x.sourceEnd, startLine,
+      return new SourceInfo(x.sourceStart, x.sourceEnd, startLine,
           currentFileName);
     }
 
-    private HasEnclosingType parseJsniRef(JSourceInfo info,
+    private HasEnclosingType parseJsniRef(SourceInfo info,
         AbstractMethodDeclaration x, String ident) {
       String[] parts = ident.substring(1).split("::");
       assert (parts.length == 2);
@@ -1934,7 +1935,7 @@ public class GenerateJavaAST {
      * look for the specific operators that we think should match each JDT node,
      * and throw an error if there's a mismatch.
      */
-    private JExpression processBinaryOperation(JSourceInfo info,
+    private JExpression processBinaryOperation(SourceInfo info,
         JBinaryOperator op, JType type, Expression arg1, Expression arg2) {
       JExpression exprArg1 = dispProcessExpression(arg1);
       JExpression exprArg2 = dispProcessExpression(arg2);
@@ -1956,7 +1957,7 @@ public class GenerateJavaAST {
        * to a compatible type), so we must create a reference to some outer
        * type.
        */
-      JSourceInfo info = makeSourceInfo(x);
+      SourceInfo info = makeSourceInfo(x);
       if (qualType == currentClass) {
         return createThisRef(info, qualType);
       } else {
@@ -1974,7 +1975,7 @@ public class GenerateJavaAST {
       }
       String className = node.getClass().getName();
       String description = node.toString();
-      JSourceInfo sourceInfo = null;
+      SourceInfo sourceInfo = null;
       if (node instanceof Statement) {
         sourceInfo = makeSourceInfo((Statement) node);
       }
@@ -2040,7 +2041,7 @@ public class GenerateJavaAST {
     Collections.sort(jprogram.getDeclaredTypes(), new HasNameSort());
   }
 
-  public static void reportJsniError(JSourceInfo info,
+  public static void reportJsniError(SourceInfo info,
       AbstractMethodDeclaration methodDeclaration, String message) {
     CompilationResult compResult = methodDeclaration.compilationResult();
     DefaultProblem problem = new DefaultProblem(
@@ -2050,7 +2051,7 @@ public class GenerateJavaAST {
     compResult.record(problem, methodDeclaration);
   }
 
-  public static JSourceInfo translateInfo(JsSourceInfo info) {
+  public static SourceInfo translateInfo(JsSourceInfo info) {
     // TODO implement this
     return null;
   }

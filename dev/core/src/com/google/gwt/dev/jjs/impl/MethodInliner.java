@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -30,7 +31,6 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.JSourceInfo;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 
 import java.util.ArrayList;
@@ -155,7 +155,7 @@ public class MethodInliner {
      * should be inlinable, but we have to first examine the field reference and
      * then recursively determine that the qualifier is inlinable.
      */
-    private JExpression canInlineExpression(JSourceInfo info,
+    private JExpression canInlineExpression(SourceInfo info,
         JExpression targetExpr, List/* <JParameter> */params, ArrayList args,
         int[] magicArg) {
       if (targetExpr instanceof JLiteral) {

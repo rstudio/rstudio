@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Binary operator expression.
  */
@@ -25,7 +27,7 @@ public class JBinaryOperation extends JExpression implements HasSettableType {
   private JExpression rhs;
   private JType type;
 
-  public JBinaryOperation(JProgram program, JSourceInfo info, JType type,
+  public JBinaryOperation(JProgram program, SourceInfo info, JType type,
       JBinaryOperator op, JExpression lhs, JExpression rhs) {
     super(program, info);
     this.op = op;

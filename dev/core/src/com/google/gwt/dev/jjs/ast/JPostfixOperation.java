@@ -15,12 +15,14 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Java postfix operation expression.
  */
 public class JPostfixOperation extends JUnaryOperation {
 
-  public JPostfixOperation(JProgram program, JSourceInfo info,
+  public JPostfixOperation(JProgram program, SourceInfo info,
       JUnaryOperator op, JExpression arg) {
     super(program, info, op, arg);
   }

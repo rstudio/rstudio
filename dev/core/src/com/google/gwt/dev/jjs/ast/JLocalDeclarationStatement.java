@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Java initialized local variable statement.
  */
@@ -23,7 +25,7 @@ public class JLocalDeclarationStatement extends JStatement {
   public JExpression initializer;
   private JLocalRef localRef;
 
-  public JLocalDeclarationStatement(JProgram program, JSourceInfo info,
+  public JLocalDeclarationStatement(JProgram program, SourceInfo info,
       JLocalRef localRef, JExpression intializer) {
     super(program, info);
     this.localRef = localRef;

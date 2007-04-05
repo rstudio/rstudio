@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,12 +15,14 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Java interface type definition.
  */
 public class JInterfaceType extends JReferenceType {
 
-  JInterfaceType(JProgram program, JSourceInfo info, String name) {
+  JInterfaceType(JProgram program, SourceInfo info, String name) {
     super(program, info, name);
   }
 

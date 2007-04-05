@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -81,25 +81,25 @@ public class JsFor extends JsStatement {
     this.initVars = initVars;
   }
 
-  public void traverse(JsVisitor v) {
-    if (v.visit(this)) {
+  public void traverse(JsVisitor v, JsContext ctx) {
+    if (v.visit(this, ctx)) {
       assert (!(initExpr != null && initVars != null));
 
       if (initExpr != null) {
-        initExpr.traverse(v);
+        initExpr = v.accept(initExpr);
       } else if (initVars != null) {
-        initVars.traverse(v);
+        initVars = (JsVars) v.accept(initVars);
       }
 
       if (condition != null) {
-        condition.traverse(v);
+        condition = v.accept(condition);
       }
 
       if (incrExpr != null) {
-        incrExpr.traverse(v);
+        incrExpr = v.accept(incrExpr);
       }
-      body.traverse(v);
+      body = v.accept(body);
     }
-    v.endVisit(this);
+    v.endVisit(this, ctx);
   }
 }

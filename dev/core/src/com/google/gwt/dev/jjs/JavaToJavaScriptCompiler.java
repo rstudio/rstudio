@@ -22,6 +22,7 @@ import com.google.gwt.dev.jdt.ICompilationUnitAdapter;
 import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
+import com.google.gwt.dev.jjs.InternalCompilerException.NodeInfo;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
@@ -30,7 +31,6 @@ import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
-import com.google.gwt.dev.jjs.ast.JSourceInfo;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.BuildTypeMap;
@@ -40,7 +40,6 @@ import com.google.gwt.dev.jjs.impl.CompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
-import com.google.gwt.dev.jjs.impl.InternalCompilerException;
 import com.google.gwt.dev.jjs.impl.JavaScriptObjectCaster;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic;
 import com.google.gwt.dev.jjs.impl.MethodAndClassFinalizer;
@@ -50,7 +49,6 @@ import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.ReplaceRebinds;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
-import com.google.gwt.dev.jjs.impl.InternalCompilerException.NodeInfo;
 import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsPrettyNamer;
 import com.google.gwt.dev.js.JsSourceGenerationVisitor;
@@ -416,7 +414,7 @@ public class JavaToJavaScriptCompiler {
       PrintWriter pw = new PrintWriter(sw, true);
       TextOutputOnPrintWriter out = new TextOutputOnPrintWriter(pw, obfuscate);
       JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
-      jsProgram.traverse(v);
+      v.accept(jsProgram);
 
       return sw.toString();
     } catch (UnableToCompleteException e) {
@@ -428,7 +426,7 @@ public class JavaToJavaScriptCompiler {
       List nodeTrace = e.getNodeTrace();
       for (Iterator it = nodeTrace.iterator(); it.hasNext();) {
         NodeInfo nodeInfo = (NodeInfo) it.next();
-        JSourceInfo info = nodeInfo.getSourceInfo();
+        SourceInfo info = nodeInfo.getSourceInfo();
         String msg;
         if (info != null) {
           String fileName = info.getFileName();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import com.google.gwt.dev.js.ast.JsBreak;
 import com.google.gwt.dev.js.ast.JsCase;
 import com.google.gwt.dev.js.ast.JsCatch;
 import com.google.gwt.dev.js.ast.JsConditional;
+import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsContinue;
 import com.google.gwt.dev.js.ast.JsDecimalLiteral;
 import com.google.gwt.dev.js.ast.JsDefault;
@@ -46,7 +47,6 @@ import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
-import com.google.gwt.dev.js.ast.JsParameters;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
@@ -61,6 +61,7 @@ import com.google.gwt.dev.js.ast.JsThrow;
 import com.google.gwt.dev.js.ast.JsTry;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsVars;
+import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.util.TextOutput;
@@ -70,7 +71,7 @@ import java.util.Iterator;
 /**
  * Produces text output from a JavaScript AST.
  */
-public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits {
+public class JsToStringGenerationVisitor extends JsVisitor {
 
   private static final char[] CHARS_BREAK = "break".toCharArray();
   private static final char[] CHARS_CASE = "case".toCharArray();
@@ -108,36 +109,36 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     this.p = out;
   }
 
-  public boolean visit(JsArrayAccess x) {
+  public boolean visit(JsArrayAccess x, JsContext ctx) {
     JsExpression arrayExpr = x.getArrayExpr();
     _parenPush(x, arrayExpr, false);
-    arrayExpr.traverse(this);
+    accept(arrayExpr);
     _parenPop(x, arrayExpr, false);
     _lsquare();
-    x.getIndexExpr().traverse(this);
+    accept(x.getIndexExpr());
     _rsquare();
     return false;
   }
 
-  public boolean visit(JsArrayLiteral x) {
+  public boolean visit(JsArrayLiteral x, JsContext ctx) {
     _lsquare();
     boolean sep = false;
     for (Iterator iter = x.getExpressions().iterator(); iter.hasNext();) {
       JsExpression arg = (JsExpression) iter.next();
       sep = _sepCommaOptSpace(sep);
       _parenPushIfCommaExpr(arg);
-      arg.traverse(this);
+      accept(arg);
       _parenPopIfCommaExpr(arg);
     }
     _rsquare();
     return false;
   }
 
-  public boolean visit(JsBinaryOperation x) {
+  public boolean visit(JsBinaryOperation x, JsContext ctx) {
     JsBinaryOperator op = x.getOperator();
     JsExpression arg1 = x.getArg1();
     _parenPush(x, arg1, !op.isLeftAssociative());
-    arg1.traverse(this);
+    accept(arg1);
     boolean needSpace = op.isKeyword() || arg1 instanceof JsPostfixOperation;
     if (needSpace) {
       _parenPopOrSpace(x, arg1, !op.isLeftAssociative());
@@ -154,13 +155,13 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
       _spaceOpt();
       _parenPush(x, arg2, op.isLeftAssociative());
     }
-    arg2.traverse(this);
+    accept(arg2);
     _parenPop(x, arg2, op.isLeftAssociative());
     return false;
   }
 
-  public boolean visit(JsBlock block) {
-    boolean needBraces = !block.isGlobalBlock();
+  public boolean visit(JsBlock x, JsContext ctx) {
+    boolean needBraces = !x.isGlobalBlock();
 
     if (needBraces) {
       // Open braces.
@@ -168,10 +169,10 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
       _blockOpen();
     }
 
-    for (Iterator iter = block.getStatements().iterator(); iter.hasNext();) {
+    for (Iterator iter = x.getStatements().iterator(); iter.hasNext();) {
       JsStatement stmt = (JsStatement) iter.next();
       needSemi = true;
-      stmt.traverse(this);
+      accept(stmt);
       if (needSemi) {
         /*
          * Special treatment of function decls: function decls always set
@@ -199,7 +200,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return false;
   }
 
-  public boolean visit(JsBooleanLiteral x) {
+  public boolean visit(JsBooleanLiteral x, JsContext ctx) {
     if (x.getValue()) {
       _true();
     } else {
@@ -208,7 +209,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return false;
   }
 
-  public boolean visit(JsBreak x) {
+  public boolean visit(JsBreak x, JsContext ctx) {
     _break();
 
     JsNameRef label = x.getLabel();
@@ -220,10 +221,10 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return false;
   }
 
-  public boolean visit(JsCase x) {
+  public boolean visit(JsCase x, JsContext ctx) {
     _case();
     _space();
-    x.getCaseExpr().traverse(this);
+    accept(x.getCaseExpr());
     _colon();
     _newlineOpt();
 
@@ -231,7 +232,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     for (Iterator iter = x.getStmts().iterator(); iter.hasNext();) {
       JsStatement stmt = (JsStatement) iter.next();
       needSemi = true;
-      stmt.traverse(this);
+      accept(stmt);
       if (needSemi) {
         _semi();
       }
@@ -242,7 +243,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return false;
   }
 
-  public boolean visit(JsCatch x) {
+  public boolean visit(JsCatch x, JsContext ctx) {
     _spaceOpt();
     _catch();
     _spaceOpt();
@@ -256,42 +257,42 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
       _space();
       _if();
       _space();
-      catchCond.traverse(this);
+      accept(catchCond);
     }
 
     _rparen();
     _spaceOpt();
-    x.getBody().traverse(this);
+    accept(x.getBody());
 
     return false;
   }
 
-  public boolean visit(JsConditional x) {
+  public boolean visit(JsConditional x, JsContext ctx) {
     // right associative
     {
       JsExpression testExpression = x.getTestExpression();
       _parenPush(x, testExpression, true);
-      testExpression.traverse(this);
+      accept(testExpression);
       _parenPop(x, testExpression, true);
     }
     _questionMark();
     {
       JsExpression thenExpression = x.getThenExpression();
       _parenPush(x, thenExpression, true);
-      thenExpression.traverse(this);
+      accept(thenExpression);
       _parenPop(x, thenExpression, true);
     }
     _colon();
     {
       JsExpression elseExpression = x.getElseExpression();
       _parenPush(x, elseExpression, false);
-      elseExpression.traverse(this);
+      accept(elseExpression);
       _parenPop(x, elseExpression, false);
     }
     return false;
   }
 
-  public boolean visit(JsContinue x) {
+  public boolean visit(JsContinue x, JsContext ctx) {
     _continue();
 
     JsNameRef label = x.getLabel();
@@ -303,7 +304,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return false;
   }
 
-  public boolean visit(JsDecimalLiteral x) {
+  public boolean visit(JsDecimalLiteral x, JsContext ctx) {
     String s = x.getValue();
     // TODO: optimize this to only the cases that need it
     if (s.startsWith("-")) {
@@ -313,7 +314,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return false;
   }
 
-  public boolean visit(JsDefault x) {
+  public boolean visit(JsDefault x, JsContext ctx) {
     _default();
     _colon();
 
@@ -321,7 +322,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     for (Iterator iter = x.getStmts().iterator(); iter.hasNext();) {
       JsStatement stmt = (JsStatement) iter.next();
       needSemi = true;
-      stmt.traverse(this);
+      accept(stmt);
       if (needSemi) {
         _semi();
       }
@@ -332,10 +333,10 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return false;
   }
 
-  public boolean visit(JsDoWhile x) {
+  public boolean visit(JsDoWhile x, JsContext ctx) {
     _do();
     _nestedPush(x.getBody(), true);
-    x.getBody().traverse(this);
+    accept(x.getBody());
     _nestedPop(x.getBody());
     if (needSemi) {
       _semi();
@@ -347,22 +348,22 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     _while();
     _spaceOpt();
     _lparen();
-    x.getCondition().traverse(this);
+    accept(x.getCondition());
     _rparen();
     return false;
   }
 
-  public boolean visit(JsEmpty x) {
+  public boolean visit(JsEmpty x, JsContext ctx) {
     return false;
   }
 
-  public boolean visit(JsExprStmt x) {
+  public boolean visit(JsExprStmt x, JsContext ctx) {
     final JsExpression expr = x.getExpression();
-    expr.traverse(this);
+    accept(expr);
     return false;
   }
 
-  public boolean visit(JsFor x) {
+  public boolean visit(JsFor x, JsContext ctx) {
     _for();
     _spaceOpt();
     _lparen();
@@ -370,9 +371,9 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     // The init expressions or var decl.
     //
     if (x.getInitExpr() != null) {
-      x.getInitExpr().traverse(this);
+      accept(x.getInitExpr());
     } else if (x.getInitVars() != null) {
-      x.getInitVars().traverse(this);
+      accept(x.getInitVars());
     }
 
     _semi();
@@ -381,7 +382,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     //
     if (x.getCondition() != null) {
       _spaceOpt();
-      x.getCondition().traverse(this);
+      accept(x.getCondition());
     }
 
     _semi();
@@ -390,17 +391,17 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     //
     if (x.getIncrExpr() != null) {
       _spaceOpt();
-      x.getIncrExpr().traverse(this);
+      accept(x.getIncrExpr());
     }
 
     _rparen();
     _nestedPush(x.getBody(), false);
-    x.getBody().traverse(this);
+    accept(x.getBody());
     _nestedPop(x.getBody());
     return false;
   }
 
-  public boolean visit(JsForIn x) {
+  public boolean visit(JsForIn x, JsContext ctx) {
     _for();
     _spaceOpt();
     _lparen();
@@ -414,22 +415,22 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
         _spaceOpt();
         _assignment();
         _spaceOpt();
-        x.getIterExpr().traverse(this);
+        accept(x.getIterExpr());
       }
     } else {
       // Just a name ref.
       //
-      x.getIterExpr().traverse(this);
+      accept(x.getIterExpr());
     }
 
     _space();
     _in();
     _space();
-    x.getObjExpr().traverse(this);
+    accept(x.getObjExpr());
 
     _rparen();
     _nestedPush(x.getBody(), false);
-    x.getBody().traverse(this);
+    accept(x.getBody());
     _nestedPop(x.getBody());
     return false;
   }
@@ -438,7 +439,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
   // stmts...
   // }
   //
-  public boolean visit(JsFunction x) {
+  public boolean visit(JsFunction x, JsContext ctx) {
     _function();
 
     // Functions can be anonymous.
@@ -448,22 +449,29 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
       _nameOf(x);
     }
 
-    x.getParameters().traverse(this);
+    _lparen();
+    boolean sep = false;
+    for (Iterator iter = x.getParameters().iterator(); iter.hasNext();) {
+      JsParameter param = (JsParameter) iter.next();
+      sep = _sepCommaOptSpace(sep);
+      accept(param);
+    }
+    _rparen();
 
     // suppress body text in ToString, let subclass provide
 
     return false;
   }
 
-  public boolean visit(JsIf x) {
+  public boolean visit(JsIf x, JsContext ctx) {
     _if();
     _spaceOpt();
     _lparen();
-    x.getIfExpr().traverse(this);
+    accept(x.getIfExpr());
     _rparen();
     JsStatement thenStmt = x.getThenStmt();
     _nestedPush(thenStmt, false);
-    thenStmt.traverse(this);
+    accept(thenStmt);
     _nestedPop(thenStmt);
     JsStatement elseStmt = x.getElseStmt();
     if (elseStmt != null) {
@@ -481,7 +489,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
       } else {
         _space();
       }
-      elseStmt.traverse(this);
+      accept(elseStmt);
       if (!elseIf) {
         _nestedPop(elseStmt);
       }
@@ -489,7 +497,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return false;
   }
 
-  public boolean visit(JsIntegralLiteral x) {
+  public boolean visit(JsIntegralLiteral x, JsContext ctx) {
     String s = x.getValue().toString();
     boolean needParens = s.startsWith("-");
     if (needParens) {
@@ -502,8 +510,8 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return false;
   }
 
-  public boolean visit(JsInvocation x) {
-    x.getQualifier().traverse(this);
+  public boolean visit(JsInvocation x, JsContext ctx) {
+    accept(x.getQualifier());
 
     _lparen();
     boolean sep = false;
@@ -511,26 +519,26 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
       JsExpression arg = (JsExpression) iter.next();
       sep = _sepCommaOptSpace(sep);
       _parenPushIfCommaExpr(arg);
-      arg.traverse(this);
+      accept(arg);
       _parenPopIfCommaExpr(arg);
     }
     _rparen();
     return false;
   }
 
-  public boolean visit(JsLabel x) {
+  public boolean visit(JsLabel x, JsContext ctx) {
     _nameOf(x);
     _colon();
     _spaceOpt();
-    x.getStmt().traverse(this);
+    accept(x.getStmt());
     return false;
   }
 
-  public boolean visit(JsNameRef x) {
+  public boolean visit(JsNameRef x, JsContext ctx) {
     JsExpression q = x.getQualifier();
     if (q != null) {
       _parenPush(x, q, false);
-      q.traverse(this);
+      accept(q);
       _parenPop(x, q, false);
       _dot();
     }
@@ -538,13 +546,13 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return false;
   }
 
-  public boolean visit(JsNew x) {
+  public boolean visit(JsNew x, JsContext ctx) {
     _new();
     _space();
 
     JsExpression ctorExpr = x.getConstructorExpression();
     _parenPush(x, ctorExpr, true);
-    ctorExpr.traverse(this);
+    accept(ctorExpr);
     _parenPop(x, ctorExpr, true);
 
     _lparen();
@@ -553,7 +561,7 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
       JsExpression arg = (JsExpression) iter.next();
       sep = _sepCommaOptSpace(sep);
       _parenPushIfCommaExpr(arg);
-      arg.traverse(this);
+      accept(arg);
       _parenPopIfCommaExpr(arg);
     }
     _rparen();
@@ -561,12 +569,12 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return false;
   }
 
-  public boolean visit(JsNullLiteral x) {
+  public boolean visit(JsNullLiteral x, JsContext ctx) {
     _null();
     return false;
   }
 
-  public boolean visit(JsObjectLiteral x) {
+  public boolean visit(JsObjectLiteral x, JsContext ctx) {
     _lbrace();
     boolean sep = false;
     for (Iterator iter = x.getPropertyInitializers().iterator(); iter.hasNext();) {
@@ -574,47 +582,35 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
       JsPropertyInitializer propInit = (JsPropertyInitializer) iter.next();
       JsExpression labelExpr = propInit.getLabelExpr();
       _parenPushIfConditional(labelExpr);
-      labelExpr.traverse(this);
+      accept(labelExpr);
       _parenPopIfConditional(labelExpr);
       _colon();
       JsExpression valueExpr = propInit.getValueExpr();
       _parenPushIfConditional(valueExpr);
-      valueExpr.traverse(this);
+      accept(valueExpr);
       _parenPopIfConditional(valueExpr);
     }
     _rbrace();
     return false;
   }
 
-  public boolean visit(JsParameter x) {
+  public boolean visit(JsParameter x, JsContext ctx) {
     _nameOf(x);
     return false;
   }
 
-  public boolean visit(JsParameters x) {
-    _lparen();
-    boolean sep = false;
-    for (Iterator iter = x.iterator(); iter.hasNext();) {
-      JsParameter param = (JsParameter) iter.next();
-      sep = _sepCommaOptSpace(sep);
-      param.traverse(this);
-    }
-    _rparen();
-    return false;
-  }
-
-  public boolean visit(JsPostfixOperation x) {
+  public boolean visit(JsPostfixOperation x, JsContext ctx) {
     JsUnaryOperator op = x.getOperator();
     JsExpression arg = x.getArg();
     // unary operators always associate correctly (I think)
     _parenPush(x, arg, true);
-    arg.traverse(this);
+    accept(arg);
     _parenPop(x, arg, true);
     p.print(op.getSymbol());
     return false;
   }
 
-  public boolean visit(JsPrefixOperation x) {
+  public boolean visit(JsPrefixOperation x, JsContext ctx) {
     JsUnaryOperator op = x.getOperator();
     p.print(op.getSymbol());
     if (op.isKeyword()) {
@@ -623,24 +619,24 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     JsExpression arg = x.getArg();
     // unary operators always associate correctly (I think)
     _parenPush(x, arg, true);
-    arg.traverse(this);
+    accept(arg);
     _parenPop(x, arg, true);
     return false;
   }
 
-  public boolean visit(JsProgram x) {
+  public boolean visit(JsProgram x, JsContext ctx) {
     p.print("<JsProgram>");
     return false;
   }
 
-  public boolean visit(JsPropertyInitializer x) {
+  public boolean visit(JsPropertyInitializer x, JsContext ctx) {
     // Since there are separators, we actually print the property init
     // in visit(JsObjectLiteral).
     //
     return false;
   }
 
-  public boolean visit(JsRegExp x) {
+  public boolean visit(JsRegExp x, JsContext ctx) {
     _slash();
     p.print(x.getPattern());
     _slash();
@@ -651,65 +647,65 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
     return false;
   }
 
-  public boolean visit(JsReturn x) {
+  public boolean visit(JsReturn x, JsContext ctx) {
     _return();
     JsExpression expr = x.getExpr();
     if (expr != null) {
       _space();
-      expr.traverse(this);
+      accept(expr);
     }
     return false;
   }
 
-  public boolean visit(JsStringLiteral x) {
+  public boolean visit(JsStringLiteral x, JsContext ctx) {
     printStringLiteral(x.getValue());
     return false;
   }
 
-  public boolean visit(JsSwitch x) {
+  public boolean visit(JsSwitch x, JsContext ctx) {
     _switch();
     _spaceOpt();
     _lparen();
-    x.getExpr().traverse(this);
+    accept(x.getExpr());
     _rparen();
     _spaceOpt();
     _blockOpen();
-    x.getCases().traverse(this);
+    accept(x.getCases());
     _blockClose();
     return false;
   }
 
-  public boolean visit(JsThisRef x) {
+  public boolean visit(JsThisRef x, JsContext ctx) {
     _this();
     return false;
   }
 
-  public boolean visit(JsThrow x) {
+  public boolean visit(JsThrow x, JsContext ctx) {
     _throw();
     _space();
-    x.getExpr().traverse(this);
+    accept(x.getExpr());
     return false;
   }
 
-  public boolean visit(JsTry x) {
+  public boolean visit(JsTry x, JsContext ctx) {
     _try();
     _spaceOpt();
-    x.getTryBlock().traverse(this);
+    accept(x.getTryBlock());
 
-    x.getCatches().traverse(this);
+    accept(x.getCatches());
 
     JsBlock finallyBlock = x.getFinallyBlock();
     if (finallyBlock != null) {
       _spaceOpt();
       _finally();
       _spaceOpt();
-      finallyBlock.traverse(this);
+      accept(finallyBlock);
     }
 
     return false;
   }
 
-  public boolean visit(JsVar x) {
+  public boolean visit(JsVar x, JsContext ctx) {
     _nameOf(x);
     JsExpression initExpr = x.getInitExpr();
     if (initExpr != null) {
@@ -717,32 +713,32 @@ public class JsToStringGenerationVisitor extends JsAbstractVisitorWithEndVisits 
       _assignment();
       _spaceOpt();
       _parenPushIfCommaExpr(initExpr);
-      initExpr.traverse(this);
+      accept(initExpr);
       _parenPopIfCommaExpr(initExpr);
     }
     return false;
   }
 
-  public boolean visit(JsVars x) {
+  public boolean visit(JsVars x, JsContext ctx) {
     _var();
     _space();
     boolean sep = false;
     for (Iterator iter = x.iterator(); iter.hasNext();) {
       sep = _sepCommaOptSpace(sep);
       JsVars.JsVar var = (JsVars.JsVar) iter.next();
-      var.traverse(this);
+      accept(var);
     }
     return false;
   }
 
-  public boolean visit(JsWhile x) {
+  public boolean visit(JsWhile x, JsContext ctx) {
     _while();
     _spaceOpt();
     _lparen();
-    x.getCondition().traverse(this);
+    accept(x.getCondition());
     _rparen();
     _nestedPush(x.getBody(), false);
-    x.getBody().traverse(this);
+    accept(x.getBody());
     _nestedPop(x.getBody());
     return false;
   }

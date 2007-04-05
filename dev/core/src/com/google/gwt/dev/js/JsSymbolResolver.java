@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,13 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.js.ast.JsCatch;
+import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
+import com.google.gwt.dev.js.ast.JsVisitor;
 
 import java.util.Stack;
 
@@ -32,19 +34,19 @@ public class JsSymbolResolver {
   /**
    * Resolves any unresolved JsNameRefs.
    */
-  private class JsResolveSymbolsVisitor extends JsAbstractVisitorWithAllVisits {
+  private class JsResolveSymbolsVisitor extends JsVisitor {
 
     private final Stack scopeStack = new Stack();
 
-    public void endVisit(JsCatch x) {
+    public void endVisit(JsCatch x, JsContext ctx) {
       popScope();
     }
 
-    public void endVisit(JsFunction x) {
+    public void endVisit(JsFunction x, JsContext ctx) {
       popScope();
     }
 
-    public void endVisit(JsNameRef x) {
+    public void endVisit(JsNameRef x, JsContext ctx) {
       if (x.isResolved()) {
         return;
       }
@@ -69,21 +71,21 @@ public class JsSymbolResolver {
       x.resolve(name);
     }
 
-    public void endVisit(JsProgram x) {
+    public void endVisit(JsProgram x, JsContext ctx) {
       popScope();
     }
 
-    public boolean visit(JsCatch x) {
+    public boolean visit(JsCatch x, JsContext ctx) {
       pushScope(x.getScope());
       return true;
     }
 
-    public boolean visit(JsFunction x) {
+    public boolean visit(JsFunction x, JsContext ctx) {
       pushScope(x.getScope());
       return true;
     }
 
-    public boolean visit(JsProgram x) {
+    public boolean visit(JsProgram x, JsContext ctx) {
       pushScope(x.getScope());
       return true;
     }
@@ -113,6 +115,6 @@ public class JsSymbolResolver {
 
   private void execImpl() {
     JsResolveSymbolsVisitor resolver = new JsResolveSymbolsVisitor();
-    program.traverse(resolver);
+    resolver.accept(program);
   }
 }

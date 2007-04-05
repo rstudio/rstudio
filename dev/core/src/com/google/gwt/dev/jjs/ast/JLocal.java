@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Java local variable definition.
  */
@@ -22,7 +24,7 @@ public class JLocal extends JVariable implements HasEnclosingMethod {
 
   private final JMethod enclosingMethod;
 
-  JLocal(JProgram program, JSourceInfo info, String name, JType type,
+  JLocal(JProgram program, SourceInfo info, String name, JType type,
       boolean isFinal, JMethod enclosingMethod) {
     super(program, info, name, type, isFinal);
     this.enclosingMethod = enclosingMethod;

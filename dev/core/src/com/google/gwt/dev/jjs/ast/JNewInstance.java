@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * A new instance expression. This differs from a standard Java new operation in
  * that no constructor is implied. Rather, a new operation creates an
@@ -24,7 +26,7 @@ public class JNewInstance extends JExpression {
 
   private final JClassType classType;
 
-  public JNewInstance(JProgram program, JSourceInfo info, JClassType classType) {
+  public JNewInstance(JProgram program, SourceInfo info, JClassType classType) {
     super(program, info);
     this.classType = classType;
   }

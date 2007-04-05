@@ -15,12 +15,14 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Java prefix operation expression.
  */
 public class JPrefixOperation extends JUnaryOperation {
 
-  public JPrefixOperation(JProgram program, JSourceInfo info,
+  public JPrefixOperation(JProgram program, SourceInfo info,
       JUnaryOperator op, JExpression arg) {
     super(program, info, op, arg);
   }

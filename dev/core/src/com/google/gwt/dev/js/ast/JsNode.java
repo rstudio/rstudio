@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,25 +15,35 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.HasSourceInfo;
+import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.js.JsSourceGenerationVisitor;
 import com.google.gwt.dev.js.JsToStringGenerationVisitor;
 import com.google.gwt.dev.util.TextOutputOnCharArray;
 
 /**
  * Base class for all JS AST elements.
  */
-public abstract class JsNode implements JsVisitable {
+public abstract class JsNode implements JsVisitable, HasSourceInfo {
 
-  public JsSourceInfo getInfo() {
+  public SourceInfo getSourceInfo() {
     // TODO: make this real
     return null;
   }
   
-  // @Override
-  public String toString() {
+  // Causes source generation to delegate to the one visitor
+  public final String toSource() {
     TextOutputOnCharArray p = new TextOutputOnCharArray(false);
-    JsToStringGenerationVisitor v = new JsToStringGenerationVisitor(p);
-    traverse(v);
+    JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(p);
+    v.accept(this);
     return new String(p.getText());
   }
-  
+
+  // Causes source generation to delegate to the one visitor
+  public final String toString() {
+    TextOutputOnCharArray p = new TextOutputOnCharArray(false);
+    JsToStringGenerationVisitor v = new JsToStringGenerationVisitor(p);
+    v.accept(this);
+    return new String(p.getText());
+  }
 }

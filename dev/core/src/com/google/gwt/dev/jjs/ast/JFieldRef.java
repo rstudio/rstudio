@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,6 +14,8 @@
  * the License.
  */
 package com.google.gwt.dev.jjs.ast;
+
+import com.google.gwt.dev.jjs.SourceInfo;
 
 /**
  * Java field reference expression.
@@ -35,7 +37,7 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
    */
   private JExpression instance;
 
-  public JFieldRef(JProgram program, JSourceInfo info, JExpression instance,
+  public JFieldRef(JProgram program, SourceInfo info, JExpression instance,
       JField field, JReferenceType enclosingType) {
     super(program, info, field);
     assert (instance != null || field.isStatic());

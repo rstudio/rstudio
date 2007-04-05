@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.TextOutput;
@@ -32,14 +33,14 @@ public class JsSourceGenerationVisitor extends JsToStringGenerationVisitor {
   // stmts...
   // }
   //
-  public boolean visit(JsFunction x) {
-    super.visit(x);
-    x.getBody().traverse(this);
+  public boolean visit(JsFunction x, JsContext ctx) {
+    super.visit(x, ctx);
+    accept(x.getBody());
     needSemi = true;
     return false;
   }
 
-  public boolean visit(JsProgram x) {
+  public boolean visit(JsProgram x, JsContext ctx) {
     // Descend naturally.
     return true;
   }

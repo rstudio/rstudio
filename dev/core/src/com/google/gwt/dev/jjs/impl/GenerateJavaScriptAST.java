@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.HasName;
@@ -80,7 +81,6 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethod;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
 import com.google.gwt.dev.jjs.ast.js.JsonObject.JsonPropInit;
-import com.google.gwt.dev.js.JsAbstractVisitorWithAllVisits;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
@@ -91,6 +91,7 @@ import com.google.gwt.dev.js.ast.JsCase;
 import com.google.gwt.dev.js.ast.JsCatch;
 import com.google.gwt.dev.js.ast.JsCollection;
 import com.google.gwt.dev.js.ast.JsConditional;
+import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsContinue;
 import com.google.gwt.dev.js.ast.JsDefault;
 import com.google.gwt.dev.js.ast.JsDoWhile;
@@ -126,6 +127,7 @@ import com.google.gwt.dev.js.ast.JsTry;
 import com.google.gwt.dev.js.ast.JsUnaryOperation;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsVars;
+import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
@@ -1026,9 +1028,9 @@ public class GenerateJavaScriptAST {
       JsFunction jsFunc = x.getFunc();
 
       // replace all JSNI idents with a real JsName now that we know it
-      jsFunc.traverse(new JsAbstractVisitorWithAllVisits() {
+      new JsVisitor() {
         // @Override
-        public void endVisit(JsNameRef x) {
+        public void endVisit(JsNameRef x, JsContext ctx) {
           String ident = x.getIdent();
           if (ident.charAt(0) == '@') {
             HasEnclosingType node = (HasEnclosingType) program.jsniMap.get(ident);
@@ -1067,7 +1069,7 @@ public class GenerateJavaScriptAST {
             }
           }
         }
-      });
+      }.accept(jsFunc);
 
       JsInvocation jsInvocation = maybeCreateClinitCall(x);
       if (jsInvocation != null) {

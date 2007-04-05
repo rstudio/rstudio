@@ -28,10 +28,10 @@ public final class JsPostfixOperation extends JsUnaryOperation {
     super(op, arg);
   }
 
-  public void traverse(JsVisitor v) {
-    if (v.visit(this)) {
-      super.traverse(v);
+  public void traverse(JsVisitor v, JsContext ctx) {
+    if (v.visit(this, ctx)) {
+      super.traverse(v, ctx);
     }
-    v.endVisit(this);
+    v.endVisit(this, ctx);
   }
 }

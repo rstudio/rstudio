@@ -15,13 +15,14 @@
  */
 package com.google.gwt.dev.jdt;
 
-import com.google.gwt.dev.jjs.impl.InternalCompilerException;
-import com.google.gwt.dev.js.JsAbstractVisitorWithAllVisits;
+import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
+import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatements;
+import com.google.gwt.dev.js.ast.JsVisitor;
 
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
@@ -83,15 +84,15 @@ public class FindJsniRefVisitor extends ASTVisitor {
     try {
       // start at -1 to avoid counting our synthetic header
       JsStatements result = jsParser.parse(jsProgram.getScope(), sr, -1);
-      result.traverse(new JsAbstractVisitorWithAllVisits() {
-        public void endVisit(JsNameRef x) {
+      new JsVisitor() {
+        public void endVisit(JsNameRef x, JsContext ctx) {
           String ident = x.getIdent();
           if (ident.charAt(0) == '@') {
             String className = ident.substring(1, ident.indexOf(':'));
             jsniClasses.add(className);
           }
         }
-      });
+      }.accept(result);
     } catch (IOException e) {
       throw new InternalCompilerException(
           "Internal error searching for JSNI references", e);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 import java.util.ArrayList;
 
 /**
@@ -28,7 +30,7 @@ public class JMethodCall extends JExpression {
   private final JType overrideReturnType;
   private boolean staticDispatchOnly = false;
 
-  public JMethodCall(JProgram program, JSourceInfo info, JExpression instance,
+  public JMethodCall(JProgram program, SourceInfo info, JExpression instance,
       JMethod method) {
     super(program, info);
     assert (instance != null || method.isStatic());
@@ -49,7 +51,7 @@ public class JMethodCall extends JExpression {
    * allows us to preserve type information during the latter phases of
    * compilation.
    */
-  public JMethodCall(JProgram program, JSourceInfo info, JExpression instance,
+  public JMethodCall(JProgram program, SourceInfo info, JExpression instance,
       JMethod method, JType overrideReturnType) {
     super(program, info);
     this.instance = instance;
@@ -58,7 +60,7 @@ public class JMethodCall extends JExpression {
     this.overrideReturnType = overrideReturnType;
   }
 
-  public JMethodCall(JProgram program, JSourceInfo info, JExpression instance,
+  public JMethodCall(JProgram program, SourceInfo info, JExpression instance,
       JMethod method, boolean staticDispatchOnly) {
     super(program, info);
     this.instance = instance;

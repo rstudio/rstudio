@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,13 +15,13 @@
  */
 package com.google.gwt.dev.jjs.ast.js;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.JSourceInfo;
 import com.google.gwt.dev.js.ast.JsFunction;
 
 import java.util.ArrayList;
@@ -36,7 +36,7 @@ public class JsniMethod extends JMethod {
   public final List/* <JsniMethodRef> */jsniMethodRefs = new ArrayList/* <JsniMethodRef> */();
   private JsFunction jsFunction = null;
 
-  public JsniMethod(JProgram program, JSourceInfo info,
+  public JsniMethod(JProgram program, SourceInfo info,
       String name, JReferenceType enclosingType, JType returnType,
       boolean isStatic, boolean isFinal, boolean isPrivate) {
     super(program, info, name, enclosingType, returnType, false, isStatic,
