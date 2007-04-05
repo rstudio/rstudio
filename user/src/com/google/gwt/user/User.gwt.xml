@@ -1,5 +1,5 @@
 <!--                                                                        -->
-<!-- Copyright 2006 Google Inc. All Rights Reserved.                        -->
+<!-- Copyright 2007 Google Inc. All Rights Reserved.                        -->
 <!--                                                                        -->
 <!-- Combines all user facilities into a single module for convenience.     -->
 <!-- Most new code should inherit this module.                              -->
@@ -14,5 +14,6 @@
    <inherits name="com.google.gwt.user.Form"/>
    <inherits name="com.google.gwt.user.TextBox"/>
    <inherits name="com.google.gwt.user.Focus"/>
+   <inherits name="com.google.gwt.user.ImageBundle"/>  
    <inherits name="com.google.gwt.user.ClippedImage"/>
 </module>

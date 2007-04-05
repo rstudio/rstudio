@@ -1,0 +1,13 @@
+<!--                                                                        -->
+<!-- Copyright 2007 Google Inc. All Rights Reserved.                        -->
+<!-- ImageBundle support.                                                   -->
+<!--                                                                        -->
+<module>
+  <!-- Inherit ClippedImage, because ImageBundleGerator uses                -->
+  <!-- ClippedImagePrototype, which depends on ClippedImage                 -->
+  <inherits name="com.google.gwt.user.ClippedImage" />
+
+  <generate-with class="com.google.gwt.user.rebind.ImageBundleGenerator">
+    <when-type-assignable class="com.google.gwt.user.client.ImageBundle" />
+  </generate-with>
+</module>
