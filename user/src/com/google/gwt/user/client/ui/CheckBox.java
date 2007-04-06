@@ -78,7 +78,6 @@ public class CheckBox extends ButtonBase implements HasName {
 
     // Add focus event to actual input widget. Required by Opera and old
     // Mozilla.
-    unsinkEvents(Event.FOCUSEVENTS | Event.ONCLICK);
     DOM.sinkEvents(inputElem, Event.FOCUSEVENTS | Event.ONCLICK
         | DOM.getEventsSunk(inputElem));
 
@@ -114,6 +113,16 @@ public class CheckBox extends ButtonBase implements HasName {
 
   public boolean isEnabled() {
     return !DOM.getBooleanAttribute(inputElem, "disabled");
+  }
+
+  public void onBrowserEvent(Event event) {
+    // Block the events from the label as they are automatically delegated to
+    // the event.
+    if (DOM.eventGetTarget(event).equals(labelElem)) {
+      return;
+    } else {
+      super.onBrowserEvent(event);
+    }
   }
 
   public void setAccessKey(char key) {
