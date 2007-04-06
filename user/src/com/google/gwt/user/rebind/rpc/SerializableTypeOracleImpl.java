@@ -281,10 +281,7 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
 
     return classType.getSimpleSourceName();
   }
-
-  /**
-   * 
-   */
+ 
   public String getSerializedTypeName(JType type, boolean addTypeSignature) {
     if (type.isPrimitive() != null) {
       Object val = PRIMITIVE_TYPE_BINARY_NAMES.get(type.getSimpleSourceName());

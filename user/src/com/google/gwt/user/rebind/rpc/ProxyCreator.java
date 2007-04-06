@@ -389,7 +389,6 @@ class ProxyCreator {
   }
 
   /**
-   * 
    * @param ctx
    * @param w
    */
@@ -441,10 +440,7 @@ class ProxyCreator {
     String asyncIntf = serviceIntf.getQualifiedSourceName() + "Async";
     return asyncIntf;
   }
-
-  /**
-   * 
-   */
+ 
   private String getDefaultServiceDefName() {
     String[][] metaData = serviceIntf.getMetaData(ENTRY_POINT_TAG);
     if (metaData.length == 0) {
