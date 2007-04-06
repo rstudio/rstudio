@@ -87,10 +87,7 @@ public class JUnitTestCaseStubGenerator extends Generator {
   private String getSimpleStubClassName(JClassType baseClass) {
     return "__" + baseClass.getSimpleSourceName() + "_unitTestImpl";
   }
-
-  /**
-   * 
-   */
+ 
   private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx,
       String packageName, String className, String superclassName) {
 
