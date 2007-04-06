@@ -308,7 +308,6 @@ public abstract class CustomButton extends ButtonBase implements
   private Face downDisabled;
 
   /**
-   * 
    * Constructor for <code>CustomButton</code>.
    * 
    * @param upImage image for the default (up) face of the button
@@ -319,7 +318,6 @@ public abstract class CustomButton extends ButtonBase implements
   }
 
   /**
-   * 
    * Constructor for <code>CustomButton</code>.
    * 
    * @param upImage image for the default (up) face of the button
@@ -343,7 +341,6 @@ public abstract class CustomButton extends ButtonBase implements
   }
 
   /**
-   * 
    * Constructor for <code>CustomButton</code>.
    * 
    * @param upImage image for the default (up) face of the button
@@ -355,7 +352,6 @@ public abstract class CustomButton extends ButtonBase implements
   }
 
   /**
-   * 
    * Constructor for <code>CustomButton</code>.
    * 
    * @param upText the text for the default (up) face of the button.
@@ -377,7 +373,6 @@ public abstract class CustomButton extends ButtonBase implements
   }
 
   /**
-   * 
    * Constructor for <code>CustomButton</code>.
    * 
    * @param upText the text for the default (up) face of the button
