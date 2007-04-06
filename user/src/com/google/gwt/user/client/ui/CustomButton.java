@@ -37,8 +37,6 @@ import com.google.gwt.user.client.Event;
  * contents, it will use the contents defined by the <code>down</code> face.
  * </p>
  * 
- * 
- * 
  * <p>
  * The supported faces are defined below:
  * </p>
@@ -72,7 +70,6 @@ import com.google.gwt.user.client.Event;
  * <td>face shown when button is up and hovering</td>
  * <td> up </td>
  * </tr>
- * 
  * 
  * <tr>
  * <td>upDisabled</td>
