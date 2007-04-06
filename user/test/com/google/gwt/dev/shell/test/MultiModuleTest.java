@@ -17,7 +17,6 @@ package com.google.gwt.dev.shell.test;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
