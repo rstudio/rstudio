@@ -41,7 +41,6 @@ abstract class AbstractItemPicker extends Composite implements ItemPicker {
     private int index;
 
     /**
-     * 
      * Constructor for <code>Item</code>.
      * 
      * @param index index associated with item
@@ -101,7 +100,6 @@ abstract class AbstractItemPicker extends Composite implements ItemPicker {
   }
 
   /**
-   * 
    * Constructor for <code>ItemPicker</code>.
    * 
    * @param itemStyleName CSS style name for default items
