@@ -84,7 +84,6 @@ public class ColorPicker extends AbstractItemPicker {
   }
 
   /**
-   * 
    * Constructor for {@link ColorPicker}. The passed in {@link Collection}
    * should contain objects such that the {@link String#toString()} method
    * returns a representation of a CSS color.
@@ -158,8 +157,9 @@ public class ColorPicker extends AbstractItemPicker {
   }
 
   /**
-   * Sets the items in the {@link ColorPicker}. Each color's {@link String#toString()}
-   *          method should return a representation of a CSS color.
+   * Sets the items in the {@link ColorPicker}. Each color's
+   * {@link String#toString()} method should return a representation of a CSS
+   * color.
    * 
    * @param colors collection of colors.
    */
