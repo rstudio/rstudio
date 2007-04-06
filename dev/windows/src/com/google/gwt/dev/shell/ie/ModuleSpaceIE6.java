@@ -30,6 +30,49 @@ import org.eclipse.swt.widgets.Display;
  * Internet Explorer 6.
  */
 public class ModuleSpaceIE6 extends ModuleSpace {
+  /**
+   * Invoke a JavaScript function.  The static function exists to allow
+   * platform-dependent code to make JavaScript calls without having a
+   * ModuleSpaceIE6 (and all that entails) if it is not required.
+   * 
+   * @param window the window containing the function
+   * @param name the name of the function
+   * @param vArgs the array of arguments.  vArgs[0] is the this parameter
+   *     supplied to the function, which must be null if it is static.
+   * @return the return value of the JavaScript function
+   */
+  protected static Variant doInvokeOnWindow(OleAutomation window, String name,
+      Variant[] vArgs) {
+    OleAutomation funcObj = null;
+    Variant funcObjVar = null;
+    try {
+
+      // Get the function object and its 'call' method.
+      //
+      int[] ids = window.getIDsOfNames(new String[] {name});
+      if (ids == null) {
+        throw new RuntimeException(
+            "Could not find a native method with the signature '" + name + "'");
+      }
+      int functionId = ids[0];
+      funcObjVar = window.getProperty(functionId);
+      funcObj = funcObjVar.getAutomation();
+      int callDispId = funcObj.getIDsOfNames(new String[] {"call"})[0];
+
+      // Invoke it and return the result.
+      //
+      return funcObj.invoke(callDispId, vArgs);
+
+    } finally {
+      if (funcObjVar != null) {
+        funcObjVar.dispose();
+      }
+
+      if (funcObj != null) {
+        funcObj.dispose();
+      }
+    }
+  }
 
   // CHECKSTYLE_OFF
   private static int CODE(int hresult) {
@@ -47,9 +90,11 @@ public class ModuleSpaceIE6 extends ModuleSpace {
   /**
    * Constructs a browser interface for use with an IE6 'window' automation
    * object.
+   * @param moduleName 
    */
-  public ModuleSpaceIE6(ModuleSpaceHost host, IDispatch scriptFrameWindow) {
-    super(host);
+  public ModuleSpaceIE6(ModuleSpaceHost host, IDispatch scriptFrameWindow,
+      String moduleName, Object key) {
+    super(host, moduleName, key);
 
     window = new OleAutomation(scriptFrameWindow);
   }
@@ -134,8 +179,6 @@ public class ModuleSpaceIE6 extends ModuleSpace {
    */
   protected JsValue doInvoke(String name, Object jthis, Class[] types,
       Object[] args) {
-    OleAutomation funcObj = null;
-    Variant funcObjVar = null;
     Variant[] vArgs = null;
     try {
       // Build the argument list, including 'jthis'.
@@ -151,21 +194,7 @@ public class ModuleSpaceIE6 extends ModuleSpace {
             getIsolatedClassLoader(), types[i], args[i]);
       }
 
-      // Get the function object and its 'call' method.
-      //
-      int[] ids = window.getIDsOfNames(new String[] {name});
-      if (ids == null) {
-        throw new RuntimeException(
-            "Could not find a native method with the signature '" + name + "'");
-      }
-      int functionId = ids[0];
-      funcObjVar = window.getProperty(functionId);
-      funcObj = funcObjVar.getAutomation();
-      int callDispId = funcObj.getIDsOfNames(new String[] {"call"})[0];
-
-      // Invoke it and return the result.
-      //
-      Variant result = funcObj.invoke(callDispId, vArgs);
+      Variant result = doInvokeOnWindow(window, name, vArgs);
       try {
         if (!isExceptionActive()) {
           return new JsValueIE6(result);
@@ -189,14 +218,6 @@ public class ModuleSpaceIE6 extends ModuleSpace {
         if (vArgs[i] != null) {
           vArgs[i].dispose();
         }
-      }
-
-      if (funcObjVar != null) {
-        funcObjVar.dispose();
-      }
-
-      if (funcObj != null) {
-        funcObj.dispose();
       }
     }
   }

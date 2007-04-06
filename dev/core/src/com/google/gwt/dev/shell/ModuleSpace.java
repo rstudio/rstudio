@@ -85,8 +85,15 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
 
   private final ModuleSpaceHost host;
 
-  protected ModuleSpace(final ModuleSpaceHost host) {
+  private final String moduleName;
+
+  private final Object key;
+
+  protected ModuleSpace(ModuleSpaceHost host, String moduleName,
+      Object key) {
     this.host = host;
+    this.moduleName = moduleName;
+    this.key = key;
     TreeLogger hostLogger = host.getLogger();
     threadLocalLogger.set(hostLogger);
   }
@@ -101,6 +108,24 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
 
     // Clear out the class loader's cache
     host.getClassLoader().clear();
+  }
+
+  /**
+   * Get the unique key for this module.
+   * 
+   * @return the unique key
+   */
+  public Object getKey() {
+    return key;
+  }
+
+  /**
+   * Get the module name.
+   * 
+   * @return the module name
+   */
+  public String getModuleName() {
+    return moduleName;
   }
 
   public boolean invokeNativeBoolean(String name, Object jthis, Class[] types,

@@ -23,6 +23,7 @@ import com.google.gwt.dev.shell.ModuleSpaceHost;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.internal.ole.win32.COM;
 import org.eclipse.swt.internal.ole.win32.IDispatch;
+import org.eclipse.swt.ole.win32.OleAutomation;
 import org.eclipse.swt.ole.win32.Variant;
 import org.eclipse.swt.widgets.Shell;
 
@@ -44,22 +45,29 @@ public class BrowserWidgetIE6 extends BrowserWidget {
      * 
      * @param frameWnd a reference to the IFRAME in which the module's injected
      *          JavaScript will live
+     * @param moduleName the name of the module to load, null if this is being
+     *          unloaded
      */
     public boolean gwtOnLoad(IDispatch frameWnd, String moduleName) {
       try {
         if (moduleName == null) {
-          // Indicates the page is being unloaded.
-          // TODO(jat): add support for unloading only a single module
-          onPageUnload();
+          // Indicates one or more modules are being unloaded.
+          handleUnload(frameWnd);
           return true;
         }
+        
+        // set the module ID
+        int moduleID = ++nextModuleID;
+        Integer key = new Integer(moduleID);
+        setIntProperty(frameWnd, "__gwt_module_id", moduleID);
 
         // Attach a new ModuleSpace to make it programmable.
         //
         ModuleSpaceHost msh = getHost().createModuleSpaceHost(
             BrowserWidgetIE6.this, moduleName);
-        ModuleSpaceIE6 moduleSpace = new ModuleSpaceIE6(msh, frameWnd);
-        attachModuleSpace(moduleName, moduleSpace);
+        ModuleSpaceIE6 moduleSpace = new ModuleSpaceIE6(msh, frameWnd,
+            moduleName, key);
+        attachModuleSpace(moduleSpace);
         return true;
       } catch (Throwable e) {
         // We do catch Throwable intentionally because there are a ton of things
@@ -86,6 +94,19 @@ public class BrowserWidgetIE6 extends BrowserWidget {
       }
 
       throw new HResultException(DISP_E_UNKNOWNNAME);
+    }
+
+    /**
+     * Unload one or more modules.
+     * 
+     * @param frameWnd window to unload, null if all
+     */
+    protected void handleUnload(IDispatch frameWnd) {
+      Integer key = null;
+      if (frameWnd != null) {
+        key = new Integer(getIntProperty(frameWnd, "__gwt_module_id"));
+      }
+      doUnload(key);
     }
 
     protected Variant invoke(int dispId, int flags, Variant[] params)
@@ -130,6 +151,74 @@ public class BrowserWidgetIE6 extends BrowserWidget {
     }
   }
 
+  // counter to generate unique module IDs
+  private static int nextModuleID = 0;
+
+  /**
+   * Get a property off a window object as an integer.
+   * 
+   * @param frameWnd inner code frame
+   * @param propName name of the property to get
+   * @return the property value as an integer
+   * @throws RuntimeException if the property does not exist
+   */
+  private static int getIntProperty(IDispatch frameWnd, String propName) {
+    OleAutomation window = null;
+    try {
+      window = new OleAutomation(frameWnd);
+      int[] dispID = window.getIDsOfNames(new String[] { propName });
+      if (dispID == null) {
+        throw new RuntimeException("No such property " + propName);
+      }
+      Variant value = null;
+      try {
+        value = window.getProperty(dispID[0]);
+        return value.getInt();
+      } finally {
+        if (value != null) {
+          value.dispose();
+        }
+      }
+    } finally {
+      if (window != null) {
+        window.dispose();
+      }
+    }
+  }
+
+  /**
+   * Set a property off a window object from an integer value.
+   * 
+   * @param frameWnd inner code frame
+   * @param propName name of the property to set
+   * @param intValue the value to set
+   * @throws RuntimeException if the property does not exist
+   */
+  private static void setIntProperty(IDispatch frameWnd, String propName,
+      int intValue) {
+    OleAutomation window = null;
+    try {
+      window = new OleAutomation(frameWnd);
+      int[] dispID = window.getIDsOfNames(new String[] { propName });
+      if (dispID == null) {
+        throw new RuntimeException("No such property " + propName);
+      }
+      Variant value = null;
+      try {
+        value = new Variant(intValue);
+        window.setProperty(dispID[0], value);
+      } finally {
+        if (value != null) {
+          value.dispose();
+        }
+      }
+    } finally {
+      if (window != null) {
+        window.dispose();
+      }
+    }
+  }
+
   public BrowserWidgetIE6(Shell shell, BrowserWidgetHost host) {
     super(shell, host);
 
@@ -142,5 +231,4 @@ public class BrowserWidgetIE6 extends BrowserWidget {
     //
     LowLevelIE6.init();
   }
-
 }

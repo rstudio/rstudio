@@ -20,6 +20,8 @@ window.onunload = function() {
   external.gwtOnLoad(window, null);
 };
 
+window.__gwt_module_id = 0;
+
 var query = window.location.search.substr(1);
 if (query && $wnd[query]) $wnd[query].onScriptLoad();
 --></script></body></html>

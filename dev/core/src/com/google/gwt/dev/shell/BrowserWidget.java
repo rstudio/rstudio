@@ -54,6 +54,7 @@ import org.eclipse.swt.widgets.ToolItem;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -114,7 +115,13 @@ public abstract class BrowserWidget extends Composite {
         browser.stop();
       } else if (evt.widget == openWebModeButton) {
         // first, compile
-        Set keySet = moduleSpacesByName.keySet();
+        Set keySet = new HashSet();
+        for (Iterator iter = loadedModules.entrySet().iterator();
+            iter.hasNext(); ) {
+          ModuleSpace module
+              = (ModuleSpace) ((Map.Entry) iter.next()).getValue();
+          keySet.add(module.getModuleName());
+        }
         String[] moduleNames = Util.toStringArray(keySet);
         if (moduleNames.length == 0) {
           // A latent problem with a module.
@@ -198,19 +205,20 @@ public abstract class BrowserWidget extends Composite {
     logger.log(TreeLogger.ERROR,
         "Unable to find a default external web browser", null);
 
-    logger.log(
-        TreeLogger.WARN,
-        "Try setting the environment varable GWT_EXTERNAL_BROWSER to your web browser executable before launching the GWT shell",
-        null);
+    logger.log(TreeLogger.WARN, "Try setting the environment variable "
+        + "GWT_EXTERNAL_BROWSER to your web browser executable before "
+        + "launching the GWT shell", null);
   }
 
   protected Browser browser;
-
+  
   private Color bgColor = new Color(null, 239, 237, 216);
 
   private Button goButton;
 
   private final BrowserWidgetHost host;
+
+  private final Map loadedModules = new HashMap();
 
   private Text location;
 
@@ -219,8 +227,6 @@ public abstract class BrowserWidget extends Composite {
   private Label statusBar;
 
   private Toolbar toolbar;
-
-  private Map moduleSpacesByName = new HashMap();
 
   public BrowserWidget(Composite parent, BrowserWidgetHost host) {
     super(parent, SWT.NONE);
@@ -234,7 +240,7 @@ public abstract class BrowserWidget extends Composite {
     Composite secondBar = buildLocationBar(this);
 
     browser = new Browser(this, SWT.NONE);
-
+    
     {
       statusBar = new Label(this, SWT.BORDER | SWT.SHADOW_IN);
       statusBar.setBackground(bgColor);
@@ -304,17 +310,20 @@ public abstract class BrowserWidget extends Composite {
   /**
    * Initializes and attaches module space to this browser widget. Called by
    * subclasses in response to calls from JavaScript.
+   * 
+   * @param space ModuleSpace instance to initialize
    */
-  protected final void attachModuleSpace(String moduleName, ModuleSpace space)
+  protected final void attachModuleSpace(ModuleSpace space)
       throws UnableToCompleteException {
+    Object key = space.getKey();
+    loadedModules.put(key, space);
 
+    logger.log(TreeLogger.SPAM, "Loading module " + space.getModuleName()
+        + " (id " + key.toString() + ")", null);
+    
     // Let the space do its thing.
     //
     space.onLoad(logger);
-
-    // Remember this new module space so that we can dispose of it later.
-    //
-    moduleSpacesByName.put(moduleName, space);
 
     // Enable the compile button since we successfully loaded.
     //
@@ -322,36 +331,49 @@ public abstract class BrowserWidget extends Composite {
   }
 
   /**
-   * Disposes all the attached module spaces from the prior page (not the one
-   * that just loaded). Called when this widget is disposed but, more
-   * interestingly, whenever the browser's page changes.
+   * Unload one or more modules.  If key is null, emulate old behavior
+   * by unloading all loaded modules.
+   * 
+   * @param key unique key to identify module to unload or null for all 
    */
-  protected void onPageUnload() {
-    for (Iterator iter = moduleSpacesByName.entrySet().iterator(); iter.hasNext();) {
-      Map.Entry entry = (Map.Entry) iter.next();
-      String moduleName = (String) entry.getKey();
-      ModuleSpace space = (ModuleSpace) entry.getValue();
-      unloadModule(space, moduleName);
+  protected void doUnload(Object key) {
+    if (key == null) {
+      // BEGIN BACKWARD COMPATIBILITY
+      // remove all modules
+      for (Iterator iter = loadedModules.entrySet().iterator();
+          iter.hasNext(); ) {
+        unloadModule((ModuleSpace) ((Map.Entry) iter.next()).getValue());
+      }
+      loadedModules.clear();
+      // END BACKWARD COMPATIBILITY
+    } else {
+      ModuleSpace moduleSpace = (ModuleSpace) loadedModules.get(key);
+      if (moduleSpace == null) {
+        throw new HostedModeException("Can't find frame window for " + key);
+      }
+      unloadModule(moduleSpace);
+      loadedModules.remove(key);
     }
-    moduleSpacesByName.clear();
-
-    if (!toolbar.openWebModeButton.isDisposed()) {
-      // Disable the compile buton.
-      //
-      toolbar.openWebModeButton.setEnabled(false);
+    if (loadedModules.isEmpty()) {
+      if (!toolbar.openWebModeButton.isDisposed()) {
+        // Disable the compile buton.
+        //
+        toolbar.openWebModeButton.setEnabled(false);
+      }     
     }
   }
-  
+
   /**
    * Unload the specified module.
    * 
    * @param moduleSpace a ModuleSpace instance to unload.
-   * @param moduleName the name of the specified module
    */
-  protected void unloadModule(ModuleSpace moduleSpace, String moduleName) {
+  protected void unloadModule(ModuleSpace moduleSpace) {
+    String moduleName = moduleSpace.getModuleName();
+    Object key = moduleSpace.getKey();
     moduleSpace.dispose();
-    logger.log(TreeLogger.SPAM, "Cleaning up resources for module "
-        + moduleName, null);
+    logger.log(TreeLogger.SPAM, "Unloading module " + moduleName
+        + " (id " + key.toString() + ")", null);
   }
 
   private Composite buildLocationBar(Composite parent) {

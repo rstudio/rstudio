@@ -32,9 +32,13 @@ public class ModuleSpaceSaf extends ModuleSpace {
 
   /**
    * Constructs a browser interface for use with a global window object.
+   * 
+   * @param moduleName name of the module 
+   * @param key unique key for this instance of the module
    */
-  public ModuleSpaceSaf(ModuleSpaceHost host, int scriptGlobalObject) {
-    super(host);
+  public ModuleSpaceSaf(ModuleSpaceHost host, int scriptGlobalObject,
+      String moduleName, Object key) {
+    super(host, moduleName, key);
 
     // Hang on to the global execution state.
     //

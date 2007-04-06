@@ -47,18 +47,19 @@ public class BrowserWidgetSaf extends BrowserWidget {
     public boolean gwtOnLoad(int scriptObject, String moduleName) {
       try {
         if (moduleName == null) {
-          // Indicates the page is being unloaded.
-          // TODO(jat): add support to unload a single module
-          onPageUnload();
+          // Indicates one or more modules are being unloaded.
+          handleUnload(scriptObject);
           return true;
         }
 
         // Attach a new ModuleSpace to make it programmable.
         //
+        Integer key = new Integer(scriptObject);
         ModuleSpaceHost msh = getHost().createModuleSpaceHost(
             BrowserWidgetSaf.this, moduleName);
-        ModuleSpace moduleSpace = new ModuleSpaceSaf(msh, scriptObject);
-        attachModuleSpace(moduleName, moduleSpace);
+        ModuleSpace moduleSpace = new ModuleSpaceSaf(msh, scriptObject,
+            moduleName, key);
+        attachModuleSpace(moduleSpace);
         return true;
       } catch (Throwable e) {
         // We do catch Throwable intentionally because there are a ton of things
@@ -72,6 +73,19 @@ public class BrowserWidgetSaf extends BrowserWidget {
     }
 
     public void setField(String name, int value) {
+    }
+
+    /**
+     * Unload one or more modules.
+     * 
+     * @param scriptObject window to unload, 0 if all
+     */
+    protected void handleUnload(int scriptObject) {
+      Integer key = null;
+      if (scriptObject != 0) {
+        key = new Integer(scriptObject);
+      }
+      doUnload(key);
     }
   }
   private static final class GwtOnLoad implements DispatchMethod {

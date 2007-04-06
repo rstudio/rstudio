@@ -29,18 +29,12 @@ import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.internal.mozilla.nsIWebBrowser;
 import org.eclipse.swt.widgets.Shell;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Represents an individual browser window and all of its controls.
  */
 public class BrowserWidgetMoz extends BrowserWidget {
 
   private class ExternalObjectImpl implements ExternalObject {
-
-    private Map modulesByScriptObject = new HashMap();
-    private Map namesByScriptObject = new HashMap();
 
     public boolean gwtOnLoad(int scriptObject, String moduleName) {
       try {
@@ -51,14 +45,14 @@ public class BrowserWidgetMoz extends BrowserWidget {
           return true;
         }
 
+        Object key = new Integer(scriptObject);
         // Attach a new ModuleSpace to make it programmable.
         //
         ModuleSpaceHost msh = getHost().createModuleSpaceHost(
             BrowserWidgetMoz.this, moduleName);
-        ModuleSpace moduleSpace = new ModuleSpaceMoz(msh, scriptObject);
-        attachModuleSpace(moduleName, moduleSpace);
-        modulesByScriptObject.put(new Integer(scriptObject), moduleSpace);
-        namesByScriptObject.put(new Integer(scriptObject), moduleName);
+        ModuleSpace moduleSpace = new ModuleSpaceMoz(msh, scriptObject,
+            moduleName, key);
+        attachModuleSpace(moduleSpace);
         return true;
       } catch (Throwable e) {
         // We do catch Throwable intentionally because there are a ton of things
@@ -74,29 +68,14 @@ public class BrowserWidgetMoz extends BrowserWidget {
     /**
      * Unload one or more modules.
      * 
-     * TODO(jat): Note that currently the JS code does not unload individual
-     * modules, so this change is in preparation for when the JS code is
-     * fixed. 
-     * 
      * @param scriptObject window to unload, 0 if all
      */
     protected void handleUnload(int scriptObject) {
-      // TODO(jat): true below restores original behavior of always
-      // unloading all modules until the resulting GC issues (the
-      // order of destruction is undefined so JS_RemoveRoot gets
-      // called on a non-existent JSContext)
-      if (true || scriptObject == 0) {
-        onPageUnload();
-        modulesByScriptObject.clear();
-        namesByScriptObject.clear();
-        return;
+      Integer key = null;
+      if (scriptObject != 0) {
+        key = new Integer(scriptObject);
       }
-      Integer key = new Integer(scriptObject);
-      ModuleSpace moduleSpace = (ModuleSpace)modulesByScriptObject.get(key);
-      String moduleName = (String)namesByScriptObject.get(key);
-      unloadModule(moduleSpace, moduleName);
-      modulesByScriptObject.remove(key);
-      namesByScriptObject.remove(key);
+      doUnload(key);
     }
   }
 
