@@ -41,7 +41,6 @@ class NamedNodeMapImpl extends NodeListImpl implements NamedNodeMap {
   }
 
   /**
-   * 
    * This method gets the item at the index position.
    * 
    * @param name - the name of the item 
