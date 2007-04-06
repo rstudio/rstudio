@@ -76,10 +76,10 @@ public class MultiModuleTest extends GWTTestCase {
   private Frame[] frame = new Frame[2];
 
   /**
-   * Flags indicating the "A" version of frame i is displayed, used to toggle
+   * Flags indicating the "B" version of frame i is displayed, used to toggle
    * the individual frames.
    */
-  private boolean[] frameA = new boolean[2];
+  private boolean[] frameB = new boolean[2];
 
   /**
    * The top-level panel for callbacks.
@@ -372,9 +372,9 @@ public class MultiModuleTest extends GWTTestCase {
    * @param frameNumber the number of the frame to replace, starting with 0
    */
   private void toggleFrame(int frameNumber, String url, Map params) {
-    params.put("frame", (frameNumber + 1) + (frameA[frameNumber] ? "b" : "a"));
+    params.put("frame", (frameNumber + 1) + (frameB[frameNumber] ? "a" : "b"));
     frame[frameNumber].setUrl(buildURL(url, params));
-    frameA[frameNumber] = !frameA[frameNumber];
+    frameB[frameNumber] = !frameB[frameNumber];
     addToBeLoaded(0, 1);
   }
 }
