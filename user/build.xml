@@ -18,14 +18,14 @@
 		-->
 		<exclude name="com/google/gwt/user/client/ui/HistoryTest.class" />
 
-    <!--
-      Safari regression:
-      Testcase: testPositioning took 7.514 sec
-	      FAILED
-      expected=225 actual=207
-      junit.framework.AssertionFailedError:  expected=225 actual=207
-    -->
-    <exclude name="com/google/gwt/user/client/ui/AbsolutePanelTest.class" />
+		<!--
+			Safari regression:
+				Testcase: testPositioning took 7.514 sec
+				FAILED
+					expected=225 actual=207
+					junit.framework.AssertionFailedError:  expected=225 actual=207
+		-->
+		<exclude name="com/google/gwt/user/client/ui/AbsolutePanelTest.class" />
 	</fileset>
 
 	<!--
@@ -35,7 +35,7 @@
  		 	 includes="${gwt.junit.testcase.includes}">
 		<!--
 			Causes a security dialog to popup and subsequently blocks testing
-	    -->
+		-->
 		<exclude name="com/google/gwt/user/client/ui/FormPanelTest.class" />
 
 		<!--
@@ -76,14 +76,14 @@
 		-->
 		<exclude name="com/google/gwt/dev/jjs/test/MiscellaneousTest.class" />
 
-     <!--
-      Safari regression:
-      Testcase: testPositioning took 7.514 sec
-	      FAILED
-      expected=225 actual=207
-      junit.framework.AssertionFailedError:  expected=225 actual=207
-    -->
-    <exclude name="com/google/gwt/user/client/ui/AbsolutePanelTest.class" />
+		<!--
+			Safari regression:
+				Testcase: testPositioning took 7.514 sec
+					FAILED
+				expected=225 actual=207
+				junit.framework.AssertionFailedError:  expected=225 actual=207
+		-->
+		<exclude name="com/google/gwt/user/client/ui/AbsolutePanelTest.class" />
 	</fileset>
 
 	<!-- Platform shouldn't matter here, just picking one -->
