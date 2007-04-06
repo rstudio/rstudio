@@ -40,7 +40,6 @@ public class PushButton extends CustomButton {
   }
 
   /**
-   * 
    * Constructor for <code>PushButton</code>.
    * 
    * @param upImage image for the default(up) face of the button
@@ -50,7 +49,6 @@ public class PushButton extends CustomButton {
   }
 
   /**
-   * 
    * Constructor for <code>PushButton</code>.
    * 
    * @param upImage image for the default(up) face of the button
@@ -72,7 +70,6 @@ public class PushButton extends CustomButton {
   }
 
   /**
-   * 
    * Constructor for <code>PushButton</code>. The supplied image is used to
    * construct the default face of the button.
    * 
@@ -84,7 +81,6 @@ public class PushButton extends CustomButton {
   }
 
   /**
-   * 
    * Constructor for <code>PushButton</code>. The supplied text is used to
    * construct the default face of the button.
    * 
@@ -106,7 +102,6 @@ public class PushButton extends CustomButton {
   }
 
   /**
-   * 
    * Constructor for <code>PushButton</code>.
    * 
    * @param upText the text for the default (up) face of the button

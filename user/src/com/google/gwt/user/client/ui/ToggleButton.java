@@ -39,7 +39,6 @@ public class ToggleButton extends CustomButton {
   }
 
   /**
-   * 
    * Constructor for <code>ToggleButton</code>. The supplied image is used to
    * construct the default face.
    * 
@@ -50,7 +49,6 @@ public class ToggleButton extends CustomButton {
   }
 
   /**
-   * 
    * Constructor for <code>ToggleButton</code>.
    * 
    * @param upImage image for the default(up) face of the button
@@ -72,7 +70,6 @@ public class ToggleButton extends CustomButton {
   }
 
   /**
-   * 
    * Constructor for <code>ToggleButton</code>. The supplied image is used to
    * construct the default face of the button.
    * 
@@ -84,7 +81,6 @@ public class ToggleButton extends CustomButton {
   }
 
   /**
-   * 
    * Constructor for <code>ToggleButton</code>. The supplied text is used to
    * construct the default face of the button.
    * 
@@ -106,7 +102,6 @@ public class ToggleButton extends CustomButton {
   }
 
   /**
-   * 
    * Constructor for <code>ToggleButton</code>.
    * 
    * @param upText the text for the default (up) face of the button
