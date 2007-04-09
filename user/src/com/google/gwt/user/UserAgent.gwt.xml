@@ -6,31 +6,35 @@
 <!--                                                                        -->
 <module>
 
-	<!-- Browser-sensitive code should use the 'user.agent' property -->
-	<define-property name="user.agent" values="ie6,gecko,gecko1_8,safari,opera"/>
+  <!-- Browser-sensitive code should use the 'user.agent' property -->
+  <define-property name="user.agent" values="ie6,gecko,gecko1_8,safari,opera"/>
 
-	<property-provider name="user.agent"><![CDATA[
+  <property-provider name="user.agent"><![CDATA[
       var ua = navigator.userAgent.toLowerCase();
+      var makeVersion = function(result) {
+          return (parseInt(result[1]) * 1000) + parseInt(result[2]);
+      };
+
       if (ua.indexOf("opera") != -1) {
-      	return "opera";
-      }
-      else if (ua.indexOf("webkit") != -1) {
-      	return "safari";
-      }
-      else if ((ua.indexOf("msie 6.0") != -1) ||
-               (ua.indexOf("msie 7.0") != -1)) {
-      	return "ie6";
-  	  }
-      else if (ua.indexOf("gecko") != -1) {
-		var result = /rv:([0-9]+)\.([0-9]+)/.exec(ua);
-		if (result && result.length == 3) {
-		  var version = (parseInt(result[1]) * 10) + parseInt(result[2]);
-		  if (version >= 18)
-		    return "gecko1_8";
-		}
-		return "gecko";
+        return "opera";
+      } else if (ua.indexOf("webkit") != -1) {
+        return "safari";
+      } else if (ua.indexOf("msie") != -1) {
+        var result = /msie ([0-9]+)\.([0-9]+)/.exec(ua);
+        if (result && result.length == 3) {
+          if (makeVersion(result) >= 6000) {
+            return "ie6";
+          }
+        }
+      } else if (ua.indexOf("gecko") != -1) {
+        var result = /rv:([0-9]+)\.([0-9]+)/.exec(ua);
+        if (result && result.length == 3) {
+          if (makeVersion(result) >= 1008)
+            return "gecko1_8";
+          }
+        return "gecko";
       }
       return "unknown";
-	]]></property-provider>
+  ]]></property-provider>
 
 </module>
