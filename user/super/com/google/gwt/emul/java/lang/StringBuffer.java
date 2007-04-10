@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -73,14 +73,17 @@ public final class StringBuffer implements CharSequence {
   }
 
   public native StringBuffer append(String toAppend) /*-{
-    var last = this.js.length-1;
-    var lastLength=this.js[last].length;
-    if(this.length > lastLength*lastLength) {
-      this.js[last]=this.js[last]+toAppend; 
+    if ( toAppend === null ) {
+      toAppend = 'null';
+    }
+    var last = this.js.length - 1;
+    var lastLength = this.js[last].length;
+    if(this.length > lastLength * lastLength) {
+      this.js[last] = this.js[last] + toAppend;
     } else {
       this.js.push(toAppend);
     }
-    this.length+=toAppend.length;
+    this.length += toAppend.length;
     return this;
   }-*/;
 
@@ -171,7 +174,7 @@ public final class StringBuffer implements CharSequence {
     start = Math.max(Math.min(this.length,start),0);
     end = Math.max(Math.min(this.length,end),0);
     this.length = this.length - end + start + toInsert.length;
-    var i=0;
+    var i = 0;
     // Searching for the start
     var len = this.js[i].length;
     while(i < this.js.length && len < start) {
@@ -199,7 +202,7 @@ public final class StringBuffer implements CharSequence {
 
     // making sure that end falls between two chunks
     if(end > 0) {
-      this.js[startOfDelete]=this.js[startOfDelete].substring(end);
+      this.js[startOfDelete] = this.js[startOfDelete].substring(end);
     }
 
     this.js.splice(startOfDelete,0,toInsert);
