@@ -20,11 +20,30 @@ package com.google.gwt.user.client.ui;
  * {@link KeyboardListenerCollection} used to correctly hook up event listeners
  * to the composite's wrapped widget.
  * 
+ * <p>
+ * For example, {@link Composite} widgets often need to listen to events
+ * generated on their wrapped widget. Upon the firing of a wrapped widget's
+ * event, the composite widget must fire its own listeners with itself as the
+ * source of the event. To use a {@link DelegatingKeyboardListenerCollection},
+ * simply use the {@link DelegatingKeyboardListenerCollection} instead of a
+ * {@link KeyboardListenerCollection}. For example, in {@link SuggestBox}, the
+ * following code is used to listen to keyboard events on the {@link SuggestBox}'s
+ * underlying widget.
+ * </p>
+ * 
+ * <pre>
+ *  public void addKeyboardListener(KeyboardListener listener) {
+ *    if (keyboardListeners == null) {
+ *      keyboardListeners = new DelegatingKeyboardListenerCollection(this, box);
+ *    }
+ *    keyboardListeners.add(listener);
+ *  }
+ *</pre>
  */
-public class DelegatingKeyboardListenerCollection extends KeyboardListenerCollection
-    implements KeyboardListener {
+public class DelegatingKeyboardListenerCollection extends
+    KeyboardListenerCollection implements KeyboardListener {
 
-  private Widget owner;
+  private final Widget owner;
 
   /**
    * Constructor for {@link DelegatingKeyboardListenerCollection}.

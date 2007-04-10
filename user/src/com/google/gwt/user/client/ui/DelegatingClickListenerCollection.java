@@ -19,12 +19,30 @@ package com.google.gwt.user.client.ui;
 /**
  * {@link ClickListenerCollection} used to correctly hook up listeners which
  * need to listen to events from another source.
+ * <p>
+ * For example, {@link Composite} widgets often need to listen to events
+ * generated on their wrapped widget. Upon the firing of a wrapped widget's
+ * event, the composite widget must fire its own listeners with itself as the
+ * source of the event. To use a {@link DelegatingClickListenerCollection},
+ * simply use the {@link DelegatingClickListenerCollection} instead of a
+ * {@link ClickListenerCollection}. For example, in {@link SuggestBox}, the
+ * following code is used to listen to click events on the {@link SuggestBox}'s
+ * underlying widget.
+ * </p>
  * 
+ * <pre>
+ *  public void addClickListener(ClickListener listener) {
+ *    if (clickListeners == null) {
+ *      clickListeners = new DelegatingClickListenerCollection(this, box);
+ *    }
+ *    clickListeners.add(listener);
+ *  }
+ *</pre>
  */
 public class DelegatingClickListenerCollection extends ClickListenerCollection
     implements ClickListener {
 
-  private Widget owner;
+  private final Widget owner;
 
   /**
    * Constructor for {@link DelegatingClickListenerCollection}.
