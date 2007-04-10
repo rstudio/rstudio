@@ -11,6 +11,7 @@
 			<zipfileset file="${gwt.build.lib}/gwt-dev-${dist.platform}.jar" prefix="${project.distname}" />
 			<zipfileset file="${gwt.build.lib}/gwt-user.jar" prefix="${project.distname}" />
 			<zipfileset file="${gwt.build.lib}/gwt-servlet.jar" prefix="${project.distname}" />
+                        <zipfileset file="${gwt.build.lib}/gwt-benchmark-viewer.jar" prefix="${project.distname}" />
 
 			<!-- jni libs-->
 			<zipfileset dir="${gwt.build.jni}/${dist.platform}" prefix="${project.distname}" />

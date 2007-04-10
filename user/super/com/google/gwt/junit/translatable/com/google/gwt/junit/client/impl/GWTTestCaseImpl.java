@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,9 @@ import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.junit.client.TestResults;
+import com.google.gwt.junit.client.Trial;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -173,6 +176,17 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
   private KillTimer timer;
 
   /**
+   * The time the test began execution;
+   */
+  private long testBeginMillis;
+
+  /**
+   * Collective test results.
+   *
+   */
+  private TestResults results = new TestResults();
+
+  /**
    * Constructs a new GWTTestCaseImpl that is paired one-to-one with a
    * {@link GWTTestCase}.
    * 
@@ -288,27 +302,68 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
    * @param ex The results of this test.
    */
   private void reportResultsAndRunNextMethod(Throwable ex) {
-    testIsFinished = true;
-
-    resetAsyncState();
+    List trials = results.getTrials();
 
     if (serverless) {
       // That's it, we're done
       return;
     }
+    
+    // TODO(tobyr) - Consider making this logic polymorphic which will remove
+    //               instanceof test
+    //
+    // If this is not a benchmark, we have to create a fake trial run
+    if ( ! (outer instanceof com.google.gwt.junit.client.Benchmark) ) {
+      Trial trial = new Trial();
+      long testDurationMillis = System.currentTimeMillis() - testBeginMillis;
+      trial.setRunTimeMillis( testDurationMillis );
 
-    ExceptionWrapper ew = null;
-    if (ex != null) {
-      ew = new ExceptionWrapper(ex);
-      if (checkPoints != null) {
-        for (int i = 0, c = checkPoints.size(); i < c; ++i) {
-          ew.message += "\n" + checkPoints.get(i);
+      if (ex != null) {
+        ExceptionWrapper ew = new ExceptionWrapper(ex);
+        if (checkPoints != null) {
+          for (int i = 0, c = checkPoints.size(); i < c; ++i) {
+            ew.message += "\n" + checkPoints.get(i);
+          }
         }
+        trial.setExceptionWrapper( ew );
+      }
+
+      trials.add( trial );
+    }
+    // If this was a benchmark, we need to handle exceptions specially
+    else {
+      // If an exception occurred, it happened without the trial being recorded
+      // We, unfortunately, don't know the trial parameters at this point.
+      // We should consider putting the exception handling code directly into
+      // the generated Benchmark subclasses.
+      if (ex != null) {
+        ExceptionWrapper ew = new ExceptionWrapper(ex);
+        if (checkPoints != null) {
+          for (int i = 0, c = checkPoints.size(); i < c; ++i) {
+            ew.message += "\n" + checkPoints.get(i);
+          }
+        }
+        Trial trial = new Trial();
+        trial.setExceptionWrapper( ew );
+        trials.add( trial );
       }
     }
-    junitHost.reportResultsAndGetNextMethod(outer.getTestName(), ew,
-        junitHostListener);
+
+    results.setSourceRef( getDocumentLocation() );
+    testIsFinished = true;
+    resetAsyncState();
+    String testName = outer.getTestName();
+    junitHost.reportResultsAndGetNextMethod(testName, results, junitHostListener);
   }
+
+  public TestResults getTestResults() {
+    return results;
+  }
+
+  private native String getDocumentLocation() /*-{
+    return $doc.location.toString();
+  }-*/;
+
 
   /**
    * Cleans up any asynchronous mode state.
@@ -334,6 +389,11 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
    */
   private void runTest() {
     Throwable caught = null;
+
+    testBeginMillis = System.currentTimeMillis();
+    results = new TestResults();
+
+
     if (shouldCatchExceptions()) {
       // Make sure no exceptions escape
       GWT.setUncaughtExceptionHandler(this);

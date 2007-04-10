@@ -1,5 +1,5 @@
 <!--                                                                        -->
-<!-- Copyright 2006 Google Inc. All Rights Reserved.                        -->
+<!-- Copyright 2007 Google Inc. All Rights Reserved.                        -->
 <!-- Deferred binding rules for browser selection.                          -->
 <!--                                                                        -->
 <!-- Do not inherit this module directly.  Running GWTTestCase under JUnit  -->
@@ -13,6 +13,10 @@
 
   <generate-with class="com.google.gwt.junit.rebind.JUnitTestCaseStubGenerator">
     <when-type-assignable class="com.google.gwt.junit.client.GWTTestCase"/>
+  </generate-with>
+
+  <generate-with class="com.google.gwt.junit.rebind.BenchmarkGenerator">
+    <when-type-assignable class="com.google.gwt.junit.client.Benchmark"/>
   </generate-with>
 
   <servlet path='/junithost' class='com.google.gwt.junit.server.JUnitHostImpl'/>

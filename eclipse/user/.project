@@ -24,7 +24,7 @@
 		<link>
 			<name>core</name>
 			<type>2</type>
-			<location>GWT_ROOT/user</location>
+			<locationURI>GWT_ROOT/user</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

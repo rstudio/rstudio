@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,18 +20,34 @@ import com.google.gwt.junit.JUnitShell;
 import com.google.gwt.junit.client.impl.ExceptionWrapper;
 import com.google.gwt.junit.client.impl.JUnitHost;
 import com.google.gwt.junit.client.impl.StackTraceWrapper;
+import com.google.gwt.junit.client.TestResults;
+import com.google.gwt.junit.client.Trial;
 import com.google.gwt.user.client.rpc.InvocationException;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
- * An RPC servlet that serves as a proxy to GWTUnitTestShell. Enables
+ * An RPC servlet that serves as a proxy to JUnitTestShell. Enables
  * communication between the unit test code running in a browser and the real
  * test process.
  */
 public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
+
+  /**
+   * A maximum timeout to wait for the test system to respond with the next
+   * test. Practically speaking, the test system should respond nearly instantly
+   * if there are furthur tests to run.
+   */
+  private static final int TIME_TO_WAIT_FOR_TESTNAME = 300000;
+
+  // DEBUG timeout
+  // TODO(tobyr) Make this configurable
+  // private static final int TIME_TO_WAIT_FOR_TESTNAME = 500000;
 
   /**
    * A hook into GWTUnitTestShell, the underlying unit test process.
@@ -39,22 +55,15 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
   private static JUnitMessageQueue sHost = null;
 
   /**
-   * A maximum timeout to wait for the test system to respond with the next
-   * test. Practically speaking, the test system should respond nearly instantly
-   * if there are furthur tests to run.
-   */
-  private static final int TIME_TO_WAIT_FOR_TESTNAME = 5000;
-
-  /**
-   * Tries to grab the GWTUnitTestShell sHost environment to communicate with the
-   * real test process.
+   * Tries to grab the GWTUnitTestShell sHost environment to communicate with
+   * the real test process.
    */
   private static synchronized JUnitMessageQueue getHost() {
     if (sHost == null) {
       sHost = JUnitShell.getMessageQueue();
       if (sHost == null) {
         throw new InvocationException(
-          "Unable to find JUnitShell; is this servlet running under GWTTestCase?");
+            "Unable to find JUnitShell; is this servlet running under GWTTestCase?");
       }
     }
     return sHost;
@@ -72,14 +81,27 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
   }
 
   public String getFirstMethod(String testClassName) {
-    return getHost().getNextTestName(testClassName, TIME_TO_WAIT_FOR_TESTNAME);
+    return getHost().getNextTestName(getClientId(), testClassName,
+        TIME_TO_WAIT_FOR_TESTNAME);
   }
 
   public String reportResultsAndGetNextMethod(String testClassName,
-      ExceptionWrapper ew) {
+      TestResults results) {
     JUnitMessageQueue host = getHost();
-    host.reportResults(testClassName, deserialize(ew));
-    return host.getNextTestName(testClassName, TIME_TO_WAIT_FOR_TESTNAME);
+    HttpServletRequest request = getThreadLocalRequest();
+    String agent = request.getHeader("User-Agent");
+    results.setAgent(agent);
+    String machine = request.getRemoteHost();
+    results.setHost(machine);
+    List trials = results.getTrials();
+    for (int i = 0; i < trials.size(); ++i) {
+      Trial trial = (Trial) trials.get(i);
+      ExceptionWrapper ew = trial.getExceptionWrapper();
+      trial.setException(deserialize(ew));
+    }
+    host.reportResults(testClassName, results);
+    return host.getNextTestName(getClientId(), testClassName,
+        TIME_TO_WAIT_FOR_TESTNAME);
   }
 
   /**
@@ -97,14 +119,14 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
       try {
         // try ExType(String, Throwable)
         Constructor ctor = exClass.getDeclaredConstructor(new Class[]{
-          String.class, Throwable.class});
+            String.class, Throwable.class});
         ctor.setAccessible(true);
         ex = (Throwable) ctor.newInstance(new Object[]{ew.message, cause});
       } catch (Throwable e) {
         // try ExType(String)
         try {
           Constructor ctor = exClass
-            .getDeclaredConstructor(new Class[]{String.class});
+              .getDeclaredConstructor(new Class[]{String.class});
           ctor.setAccessible(true);
           ex = (Throwable) ctor.newInstance(new Object[]{ew.message});
           ex.initCause(cause);
@@ -112,7 +134,7 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
           // try ExType(Throwable)
           try {
             Constructor ctor = exClass
-              .getDeclaredConstructor(new Class[]{Throwable.class});
+                .getDeclaredConstructor(new Class[]{Throwable.class});
             ctor.setAccessible(true);
             ex = (Throwable) ctor.newInstance(new Object[]{cause});
             setField(exClass, "detailMessage", ex, ew.message);
@@ -126,8 +148,8 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
               setField(exClass, "detailMessage", ex, ew.message);
             } catch (Throwable e4) {
               // we're out of options
-              this.log("Failed to deserialize exception of type '"
-                + ew.typeName + "'; no available constructor", e4);
+              this.log("Failed to deserialize getException of type '"
+                  + ew.typeName + "'; no available constructor", e4);
 
               // fall through
             }
@@ -136,8 +158,9 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
       }
 
     } catch (Throwable e) {
-      this.log("Failed to deserialize exception of type '" + ew.typeName + "'",
-        e);
+      this.log(
+          "Failed to deserialize getException of type '" + ew.typeName + "'",
+          e);
     }
 
     if (ex == null) {
@@ -154,13 +177,14 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
   private StackTraceElement deserialize(StackTraceWrapper stw) {
     StackTraceElement ste = null;
     Object[] args = new Object[]{
-      stw.className, stw.methodName, stw.fileName, new Integer(stw.lineNumber)};
+        stw.className, stw.methodName, stw.fileName,
+        new Integer(stw.lineNumber)};
     try {
       try {
         // Try the 4-arg ctor (JRE 1.5)
         Constructor ctor = StackTraceElement.class
-          .getDeclaredConstructor(new Class[]{
-            String.class, String.class, String.class, int.class});
+            .getDeclaredConstructor(new Class[]{
+                String.class, String.class, String.class, int.class});
         ctor.setAccessible(true);
         ste = (StackTraceElement) ctor.newInstance(args);
       } catch (NoSuchMethodException e) {
@@ -191,4 +215,13 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
     return result;
   }
 
+  /**
+   * Returns a "client id" for the current request.
+   */
+  private String getClientId() {
+    HttpServletRequest request = getThreadLocalRequest();
+    String agent = request.getHeader("User-Agent");
+    String machine = request.getRemoteHost();
+    return machine + " / " + agent;
+  }
 }

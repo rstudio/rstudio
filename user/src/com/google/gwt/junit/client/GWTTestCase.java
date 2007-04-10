@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,7 +43,7 @@ public abstract class GWTTestCase extends TestCase {
 
   /**
    * Add a checkpoint message to the current test. If this test fails, all
-   * checkpoint messages will be appended to the exception description. This can
+   * checkpoint messages will be appended to the getException description. This can
    * be useful in web mode for determining how far test execution progressed
    * before a failure occurs.
    * 
@@ -64,7 +64,7 @@ public abstract class GWTTestCase extends TestCase {
    * pin down where exceptions are originating.
    * 
    * @return <code>true</code> for normal JUnit behavior, or
-   *         <code>false</code> to disable normal JUnit exception reporting
+   *         <code>false</code> to disable normal JUnit getException reporting
    */
   public boolean catchExceptions() {
     return true;
@@ -123,8 +123,8 @@ public abstract class GWTTestCase extends TestCase {
    * <ol>
    * <li> If {@link #finishTest()} is called before the delay period expires,
    * the test will succeed.</li>
-   * <li> If any exception escapes from an event handler during the delay
-   * period, the test will error with the thrown exception.</li>
+   * <li> If any getException escapes from an event handler during the delay
+   * period, the test will error with the thrown getException.</li>
    * <li> If the delay period expires and neither of the above has happened, the
    * test will error with a {@link TimeoutException}. </li>
    * </ol>
@@ -168,6 +168,17 @@ public abstract class GWTTestCase extends TestCase {
    */
   protected final void finishTest() {
     // implemented in the translatable version of this class
+  }
+
+  /**
+   * Returns the overall test results for this unit test.
+   *
+   * These TestResults are more comprehensive than JUnit's default test results,
+   * and are automatically collected by GWT's testing infrastructure.
+   */
+  protected final TestResults getTestResults() {
+    // implemented in the translatable version of this class
+    return null;
   }
 
   /**

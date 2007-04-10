@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,136 +15,198 @@
  */
 package com.google.gwt.junit;
 
-import java.util.HashMap;
+import com.google.gwt.junit.client.TestResults;
+
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.HashMap;
 
 /**
- * A message queue to pass data between {@link JUnitShell} and
- * {@link com.google.gwt.junit.server.JUnitHostImpl} in a thread-safe manner.
- * 
- * <p>
- * The public methods are called by the servlet to find out what test to execute
- * next, and to report the results of the last test to run.
- * </p>
- * 
- * <p>
- * The protected methods are called by the shell to fetch test results and drive
- * the next test the client should run.
- * </p>
+ * A message queue to pass data between {@link JUnitShell} and {@link
+ * com.google.gwt.junit.server.JUnitHostImpl} in a thread-safe manner.
+ *
+ * <p> The public methods are called by the servlet to find out what test to
+ * execute next, and to report the results of the last test to run. </p>
+ *
+ * <p> The protected methods are called by the shell to fetch test results and
+ * drive the next test the client should run. </p>
  */
 public class JUnitMessageQueue {
 
   /**
-   * Maps the name of a test class to the method that should be run. Access must
-   * be synchronized.
+   * Tracks which test each client is requesting.
+   *
+   * Key = client-id (e.g. agent+host) Value = the index of the current
+   * requested test
    */
-  private final Map nameMap = new HashMap();
+  private Map/*<String,Integer>*/ clientTestRequests
+      = new HashMap/*<String,Integer>*/();
 
   /**
-   * Maps the name of a test class to the last results to be reported. Access
-   * must be synchronized.
+   * The index of the current test being executed.
    */
-  private final Map resultsMap = new HashMap();
+  private int currentTestIndex = -1;
 
   /**
-   * Only instantiatable within this package.
+   * The number of TestCase clients executing in parallel.
+   */
+  private int numClients = 1;
+
+  /**
+   * The lock used to synchronize access around testMethod, clientTestRequests,
+   * and currentTestIndex.
+   */
+  private Object readTestLock = new Object();
+
+  /**
+   * The lock used to synchronize access around testResults.
+   */
+  private Object resultsLock = new Object();
+
+  /**
+   * The name of the test method to execute. We don't need the class, because
+   * the remote TestCases already knows the class.
+   */
+  private String testMethod;
+
+  /**
+   * The results for the current test method.
+   */
+  private List/*<TestResults>*/ testResults = new ArrayList/*<TestResults>*/();
+
+  /**
+   * Creates a message queue with one client.
+   *
+   * @see JUnitMessageQueue#JUnitMessageQueue(int)
    */
   JUnitMessageQueue() {
   }
 
   /**
-   * Called by the servlet to query for for the next method to test.
-   * 
-   * @param testClassName The name of the test class.
-   * @param timeout How long to wait for an answer.
-   * @return The next test to run, or <code>null</code> if
-   *         <code>timeout</code> is exceeded or the next test does not match
-   *         <code>testClassName</code>.
+   * Only instantiatable within this package.
+   *
+   * @param numClients The number of parallel clients being served by this
+   * queue.
    */
-  public String getNextTestName(String testClassName, long timeout) {
-    synchronized (nameMap) {
+  JUnitMessageQueue(int numClients) {
+    this.numClients = numClients;
+  }
+
+  /**
+   * Called by the servlet to query for for the next method to test.
+   *
+   * @param testClassName The name of the test class.
+   * @param timeout       How long to wait for an answer.
+   * @return The next test to run, or <code>null</code> if <code>timeout</code>
+   *         is exceeded or the next test does not match <code>testClassName</code>.
+   */
+  public String getNextTestName(String clientId, String testClassName,
+      long timeout) {
+    synchronized (readTestLock) {
       long stopTime = System.currentTimeMillis() + timeout;
-      while (!nameMap.containsKey(testClassName)) {
+
+      while (!testIsAvailableFor(clientId)) {
         long timeToWait = stopTime - System.currentTimeMillis();
         if (timeToWait < 1) {
           return null;
         }
         try {
-          nameMap.wait(timeToWait);
+          readTestLock.wait(timeToWait);
         } catch (InterruptedException e) {
           // just abort
           return null;
         }
       }
 
-      return (String) nameMap.remove(testClassName);
+      bumpClientTestRequest(clientId);
+
+      return testMethod;
     }
   }
 
   /**
    * Called by the servlet to report the results of the last test to run.
-   * 
+   *
    * @param testClassName The name of the test class.
-   * @param t The exception thrown by the last test, or <code>null</code> if
-   *          the test completed without error.
+   * @param results       The result of running the test.
    */
-  public void reportResults(String testClassName, Throwable t) {
-    synchronized (resultsMap) {
-      resultsMap.put(testClassName, t);
+  public void reportResults(String testClassName, TestResults results) {
+
+    // TODO(tobyr): testClassName is not needed now
+    synchronized (resultsLock) {
+      testResults.add(results);
     }
   }
 
   /**
-   * Called by the shell to fetch the results of a completed test.
-   * 
+   * Fetches the results of a completed test.
+   *
    * @param testClassName The name of the test class.
-   * @return An exception thrown from a failed test, or <code>null</code> if
+   * @return An getException thrown from a failed test, or <code>null</code> if
    *         the test completed without error.
    */
-  Throwable getResult(String testClassName) {
-    synchronized (resultsMap) {
-      return (Throwable) resultsMap.remove(testClassName);
-    }
-  }
-
-  /**
-   * Called by the shell to see if the servlet has begun running the current
-   * test.
-   * 
-   * @param testClassName
-   * @return <code>true</code> if the servlet has not yet fetched the next
-   *         test name, otherwise <code>false</code>.
-   */
-  boolean hasNextTestName(String testClassName) {
-    synchronized (nameMap) {
-      return nameMap.containsKey(testClassName);
-    }
+  List/*<TestResults>*/ getResults(String testClassName) {
+    // TODO(tobyr): testClassName is not needed now
+    return (List/*<TestResult>*/) testResults;
   }
 
   /**
    * Called by the shell to see if the currently-running test has completed.
-   * 
+   *
    * @param testClassName The name of the test class.
    * @return If the test has completed, <code>true</code>, otherwise
    *         <code>false</code>.
    */
   boolean hasResult(String testClassName) {
-    synchronized (resultsMap) {
-      return resultsMap.containsKey(testClassName);
+
+    // TODO(tobyr): testClassName is not needed now
+    synchronized (resultsLock) {
+      return testResults.size() == numClients;
     }
   }
 
   /**
    * Called by the shell to set the name of the next method to run for this test
    * class.
-   * 
+   *
    * @param testClassName The name of the test class.
-   * @param testName The name of the method to run.
+   * @param testName      The name of the method to run.
    */
   void setNextTestName(String testClassName, String testName) {
-    synchronized (nameMap) {
-      nameMap.put(testClassName, testName);
-      nameMap.notifyAll();
+
+    // TODO(tobyr): testClassName is not needed now
+    synchronized (readTestLock) {
+      testMethod = testName;
+      ++currentTestIndex;
+      testResults = new ArrayList/*<TestResults>*/(numClients);
+      readTestLock.notifyAll();
     }
+  }
+
+  /**
+   * Sets the number of clients that will be executing the JUnit tests in
+   * parallel.
+   *
+   * @param numClients must be > 0
+   */
+  void setNumClients(int numClients) {
+    this.numClients = numClients;
+  }
+
+  // This method requires that readTestLock is being held for the duration.
+  private void bumpClientTestRequest(String clientId) {
+    Integer index = (Integer) clientTestRequests.get(clientId);
+    clientTestRequests.put(clientId, new Integer(index.intValue() + 1));
+  }
+
+  // This method requires that readTestLock is being held for the duration.
+  private boolean testIsAvailableFor(String clientId) {
+    Integer index = (Integer) clientTestRequests.get(clientId);
+    if (index == null) {
+      index = new Integer(0);
+      clientTestRequests.put(clientId, index);
+    }
+    return index.intValue() == currentTestIndex;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 package com.google.gwt.junit.client.impl;
 
 import com.google.gwt.user.client.rpc.RemoteService;
+import com.google.gwt.junit.client.TestResults;
 
 /**
  * An interface for {@link com.google.gwt.junit.client.GWTTestCase} to communicate with the test process
@@ -36,9 +37,8 @@ public interface JUnitHost extends RemoteService {
    * run.
    * 
    * @param testClassName The class name of the calling test case.
-   * @param ew The wrapped exception thrown by the the last test, or
-   *          <code>null</code> if the last test completed successfully.
+   * @param results The results of executing the test
    * @return the name of the next method to run.
    */
-  String reportResultsAndGetNextMethod(String testClassName, ExceptionWrapper ew);
+  String reportResultsAndGetNextMethod(String testClassName, TestResults results);
 }

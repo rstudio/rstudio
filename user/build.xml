@@ -9,6 +9,11 @@
 	<fileset id="default.hosted.tests" dir="${javac.junit.out}" 
 			 includes="${gwt.junit.testcase.includes}">
 		<!--
+			Requires manual testing, because it generates intentional failures.
+		-->
+		<exclude name="com/google/gwt/junit/client/ParallelRemoteTest.class" />
+
+		<!--
 			Causes a security dialog to popup and subsequently blocks testing
 		-->
 		<exclude name="com/google/gwt/user/client/ui/FormPanelTest.class" />
@@ -95,6 +100,7 @@
 			<classpath>
 				<pathelement location="${gwt.tools.lib}/tomcat/servlet-api-2.4.jar" />
 				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+				<pathelement location="${gwt.tools.lib}/jfreechart/jfreechart-1.0.3.jar" />
 				<pathelement location="${gwt.dev.jar}" />
 			</classpath>
 		</gwt.javac>

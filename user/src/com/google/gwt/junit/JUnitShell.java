@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,11 @@ import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.junit.client.TimeoutException;
+import com.google.gwt.junit.client.TestResults;
+import com.google.gwt.junit.client.Trial;
+import com.google.gwt.junit.client.Benchmark;
 import com.google.gwt.junit.remote.BrowserManager;
+import com.google.gwt.junit.benchmarks.BenchmarkReport;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
 
@@ -33,39 +37,58 @@ import junit.framework.TestResult;
 
 import java.rmi.Naming;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.io.File;
 
 /**
  * This class is responsible for hosting JUnit test case execution. There are
  * three main pieces to the JUnit system.
- * 
- * <ul>
- * <li>Test environment</li>
- * <li>Client classes</li>
- * <li>Server classes</li>
- * </ul>
- * 
- * <p>
- * The test environment consists of this class and the non-translatable version
- * of {@link com.google.gwt.junit.client.GWTTestCase}. These two classes
- * integrate directly into the real JUnit test process.
- * </p>
- * 
- * <p>
- * The client classes consist of the translatable version of
- * {@link com.google.gwt.junit.client.GWTTestCase}, translatable JUnit classes,
- * and the user's own {@link com.google.gwt.junit.client.GWTTestCase}-derived
- * class. The client communicates to the server via RPC.
- * </p>
- * 
- * <p>
- * The server consists of {@link com.google.gwt.junit.server.JUnitHostImpl}, an
- * RPC servlet which communicates back to the test environment through a
- * {@link JUnitMessageQueue}, thus closing the loop.
- * </p>
+ *
+ * <ul> <li>Test environment</li> <li>Client classes</li> <li>Server
+ * classes</li> </ul>
+ *
+ * <p> The test environment consists of this class and the non-translatable
+ * version of {@link com.google.gwt.junit.client.GWTTestCase}. These two classes
+ * integrate directly into the real JUnit test process. </p>
+ *
+ * <p> The client classes consist of the translatable version of {@link
+ * com.google.gwt.junit.client.GWTTestCase}, translatable JUnit classes, and the
+ * user's own {@link com.google.gwt.junit.client.GWTTestCase}-derived class. The
+ * client communicates to the server via RPC. </p>
+ *
+ * <p> The server consists of {@link com.google.gwt.junit.server.JUnitHostImpl},
+ * an RPC servlet which communicates back to the test environment through a
+ * {@link JUnitMessageQueue}, thus closing the loop. </p>
  */
 public class JUnitShell extends GWTShell {
+
+  /**
+   * Executes shutdown logic for JUnitShell
+   *
+   * Sadly, there's no simple way to know when all unit tests have finished
+   * executing. So this class is registered as a VM shutdown hook so that work
+   * can be done at the end of testing - for example, writing out the reports.
+   */
+  private class Shutdown implements Runnable {
+
+    public void run() {
+      try {
+        String reportPath = System.getProperty(Benchmark.REPORT_PATH);
+        if (reportPath == null || reportPath.trim().equals("")) {
+          reportPath = System.getProperty("user.dir");
+        }
+        report.generate(reportPath + File.separator + "report-"
+            + new Date().getTime() + ".xml");
+      } catch (Exception e) {
+        // It really doesn't matter how we got here.
+        // Regardless of the failure, the VM is shutting down.
+        e.printStackTrace();
+      }
+    }
+  }
 
   /**
    * This is a system property that, when set, emulates command line arguments.
@@ -84,6 +107,10 @@ public class JUnitShell extends GWTShell {
    */
   private static final int TEST_BEGIN_TIMEOUT_MILLIS = 30000;
 
+  // A larger value when debugging the unit test framework, so you
+  // don't get spurious timeouts.
+  // private static final int TEST_BEGIN_TIMEOUT_MILLIS = 200000;
+
   /**
    * Singleton object for hosting unit tests. All test case instances executed
    * by the TestRunner will use the single unitTestShell.
@@ -98,7 +125,7 @@ public class JUnitShell extends GWTShell {
   /**
    * Called by {@link com.google.gwt.junit.server.JUnitHostImpl} to get an
    * interface into the test process.
-   * 
+   *
    * @return The {@link JUnitMessageQueue} interface that belongs to the
    *         singleton {@link JUnitShell}, or <code>null</code> if no such
    *         singleton exists.
@@ -111,9 +138,23 @@ public class JUnitShell extends GWTShell {
   }
 
   /**
+   * Called by {@link com.google.gwt.junit.rebind.JUnitTestCaseStubGenerator} to
+   * add test meta data to the test report.
+   *
+   * @return The {@link BenchmarkReport} that belongs to the singleton {@link
+   *         JUnitShell}, or <code>null</code> if no such singleton exists.
+   */
+  public static BenchmarkReport getReport() {
+    if (unitTestShell == null) {
+      return null;
+    }
+    return unitTestShell.report;
+  }
+
+  /**
    * Entry point for {@link com.google.gwt.junit.client.GWTTestCase}. Gets or
-   * creates the singleton {@link JUnitShell} and invokes its
-   * {@link #runTestImpl(String, TestCase, TestResult)}.
+   * creates the singleton {@link JUnitShell} and invokes its {@link
+   * #runTestImpl(String, TestCase, TestResult)}.
    */
   public static void runTest(String moduleName, TestCase testCase,
       TestResult testResult) throws UnableToCompleteException {
@@ -121,7 +162,8 @@ public class JUnitShell extends GWTShell {
   }
 
   /**
-   * Lazily initialize the singleton JUnitShell.
+   * Retrieves the JUnitShell. This should only be invoked during TestRunner
+   * execution of JUnit tests.
    */
   private static JUnitShell getUnitTestShell() {
     if (unitTestShell == null) {
@@ -130,10 +172,17 @@ public class JUnitShell extends GWTShell {
       if (!shell.processArgs(args)) {
         throw new RuntimeException("Invalid shell arguments");
       }
+
+      shell.messageQueue = new JUnitMessageQueue(shell.numClients);
+
       if (!shell.startUp()) {
         throw new RuntimeException("Shell failed to start");
       }
+
+      shell.report = new BenchmarkReport(shell.getTopLogger());
       unitTestShell = shell;
+
+      Runtime.getRuntime().addShutdownHook(new Thread(shell. new Shutdown()));
     }
 
     return unitTestShell;
@@ -157,7 +206,19 @@ public class JUnitShell extends GWTShell {
   /**
    * Portal to interact with the servlet.
    */
-  private JUnitMessageQueue messageQueue = new JUnitMessageQueue();
+  private JUnitMessageQueue messageQueue;
+
+  /**
+   * The number of test clients executing in parallel. With -remoteweb, users
+   * can specify a number of parallel test clients, but by default we only have
+   * 1.
+   */
+  private int numClients = 1;
+
+  /**
+   * The result of benchmark runs.
+   */
+  private BenchmarkReport report;
 
   /**
    * What type of test we're running; Local hosted, local web, or remote web.
@@ -168,7 +229,7 @@ public class JUnitShell extends GWTShell {
    * The time at which the current test will fail if the client has not yet
    * started the test.
    */
-  private long testBeginTimout;
+  private long testBeginTimeout;
 
   /**
    * Class name of the current/last test case to run.
@@ -219,8 +280,13 @@ public class JUnitShell extends GWTShell {
 
       public boolean setString(String str) {
         try {
-          BrowserManager browserManager = (BrowserManager) Naming.lookup(str);
-          runStyle = new RunStyleRemoteWeb(JUnitShell.this, browserManager);
+          String[] urls = str.split(",");
+          numClients = urls.length;
+          BrowserManager[] browserManagers = new BrowserManager[ numClients ];
+          for (int i = 0; i < numClients; ++i) {
+            browserManagers[i] = (BrowserManager) Naming.lookup(urls[i]);
+          }
+          runStyle = new RunStyleRemoteWeb(JUnitShell.this, browserManagers);
         } catch (Exception e) {
           System.err.println("Error connecting to browser manager at " + str);
           e.printStackTrace();
@@ -308,12 +374,14 @@ public class JUnitShell extends GWTShell {
    * to complete.
    */
   protected boolean notDone() {
+    /*
     if (messageQueue.hasNextTestName(testCaseClassName)
-        && testBeginTimout < System.currentTimeMillis()) {
+        && testBeginTimeout < System.currentTimeMillis()) {
       throw new TimeoutException(
           "The browser did not contact the server within "
               + TEST_BEGIN_TIMEOUT_MILLIS + "ms.");
     }
+    */
 
     if (messageQueue.hasResult(testCaseClassName)) {
       return false;
@@ -356,18 +424,51 @@ public class JUnitShell extends GWTShell {
     try {
       // Set a timeout period to automatically fail if the servlet hasn't been
       // contacted; something probably went wrong (the module failed to load?)
-      testBeginTimout = System.currentTimeMillis() + TEST_BEGIN_TIMEOUT_MILLIS;
+      // testBeginTimeout = System.currentTimeMillis() + TEST_BEGIN_TIMEOUT_MILLIS;
       pumpEventLoop();
     } catch (TimeoutException e) {
       testResult.addError(testCase, e);
       return;
     }
 
-    Throwable result = messageQueue.getResult(testCaseClassName);
-    if (result instanceof AssertionFailedError) {
-      testResult.addFailure(testCase, (AssertionFailedError) result);
-    } else if (result != null) {
-      testResult.addError(testCase, result);
+    List/*JUnitMessageQueue.TestResult*/ results = messageQueue
+        .getResults(testCaseClassName);
+
+    if (results == null) {
+      return;
+    }
+
+    boolean parallelTesting = numClients > 1;
+
+    for (int i = 0; i < results.size(); ++i) {
+      TestResults result = (TestResults) results.get(i);
+      Trial firstTrial = (Trial) result.getTrials().get(0);
+      Throwable exception = firstTrial.getException();
+
+      // In the case that we're running multiple clients at once, we need to
+      // let the user know the browser in which the failure happened
+      if (parallelTesting && exception != null) {
+        String msg = "Remote test failed at " + result.getHost() + " on " + result.getAgent();
+        if (exception instanceof AssertionFailedError) {
+          AssertionFailedError newException = new AssertionFailedError(msg + "\n" + exception.getMessage());
+          newException.setStackTrace(exception.getStackTrace());
+          exception = newException;
+        } else {
+          exception = new RuntimeException(msg, exception);
+        }
+      }
+
+      // A "successful" failure
+      if (exception instanceof AssertionFailedError) {
+        testResult.addFailure(testCase, (AssertionFailedError) exception);       
+      } else if (exception != null) {
+        // A real failure
+        testResult.addError(testCase, exception);
+      }
+
+      if (testCase instanceof Benchmark) {
+        report.addBenchmarkResults(testCase, result);
+      }
     }
   }
 
@@ -382,7 +483,8 @@ public class JUnitShell extends GWTShell {
       // Match either a non-whitespace, non start of quoted string, or a
       // quoted string that can have embedded, escaped quoting characters
       //
-      Pattern pattern = Pattern.compile("[^\\s\"]+|\"[^\"\\\\]*(\\\\.[^\"\\\\]*)*\"");
+      Pattern pattern = Pattern
+          .compile("[^\\s\"]+|\"[^\"\\\\]*(\\\\.[^\"\\\\]*)*\"");
       Matcher matcher = pattern.matcher(args);
       while (matcher.find()) {
         argList.add(matcher.group());

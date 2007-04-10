@@ -1,0 +1,95 @@
+<project name="benchmark-viewer" default="build" basedir=".">
+	<property name="gwt.root" location="../.." />
+	<property name="project.tail" value="tools/benchmark-viewer" />
+	<import file="${gwt.root}/common.ant.xml" />
+
+	<!--
+		Default hosted mode test cases
+	-->
+	<fileset id="default.hosted.tests" dir="${javac.junit.out}">
+		<include name="**/*Test.class" />
+	</fileset>
+
+	<!--
+		Default web mode test cases
+	-->
+	<fileset id="default.web.tests" dir="${javac.junit.out}">
+		<include name="**/*Test.class" />
+	</fileset>
+
+	<!-- Platform shouldn't matter here, just picking one -->
+	<property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
+	<property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
+
+	<target name="compile" description="Compile all class files">
+		<mkdir dir="${javac.out}" />
+		<gwt.javac>
+			<classpath>
+				<pathelement location="${gwt.tools.lib}/tomcat/servlet-api-2.4.jar" />
+				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+				<pathelement location="${gwt.tools.lib}/jfreechart/jfreechart-1.0.3.jar" />
+				<pathelement location="${gwt.dev.jar}" />
+				<pathelement location="${gwt.user.jar}" />
+			</classpath>
+		</gwt.javac>
+	</target>
+
+	<target name="compile.tests" description="Compiles the test code for this project">
+		<mkdir dir="${javac.junit.out}" />
+		<gwt.javac srcdir="test" destdir="${javac.junit.out}">
+			<classpath>
+				<pathelement location="${javac.out}" />
+				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+				<pathelement location="${gwt.dev.staging.jar}" />
+			</classpath>
+		</gwt.javac>
+	</target>
+
+	<target name="build" depends="compile" description="Build and package this project">
+		<mkdir dir="${gwt.build.lib}" />
+		<gwt.jar>
+			<fileset dir="src" excludes="**/package.html" />
+			<fileset dir="${javac.out}" />
+                        <zipfileset src="${gwt.tools.lib}/jfreechart/gnujaxp.jar"/>
+                        <zipfileset src="${gwt.tools.lib}/jfreechart/itext-1.4.6.jar"/>
+                        <zipfileset src="${gwt.tools.lib}/jfreechart/jcommon-1.0.6.jar"/>
+                        <zipfileset src="${gwt.tools.lib}/jfreechart/jfreechart-1.0.3.jar"/>
+		</gwt.jar>
+	</target>
+
+	<target name="checkstyle" description="Static analysis of source">
+		<gwt.checkstyle>
+			<fileset dir="src"/>
+		</gwt.checkstyle>
+	</target>
+
+	<target name="remoteweb-test" description="Run a remoteweb test at the given host and path">
+		<echo message="Performing remote browser testing at rmi://${gwt.remote.browser}" />
+		<gwt.junit test.args="-port ${gwt.junit.port} -out www -web -remoteweb rmi://${gwt.remote.browser}" test.out="${junit.out}/${gwt.remote.browser}" test.cases="default.web.tests" />
+	</target>
+
+	<target name="test" depends="compile, compile.tests" description="Run hosted-mode, web-mode and remoteweb tests for this project.">
+		<property.ensure name="distro.built" location="${gwt.dev.staging.jar}" message="GWT must be built before performing any tests.  This can be fixed by running ant in the ${gwt.root} directory." />
+
+		<!--
+			Run hosted and web mode tests for the platform on which this build
+			is executing
+		-->
+		<parallel threadcount="1">
+			<gwt.junit test.args="-port ${gwt.junit.port}" test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="default.hosted.tests" />
+
+			<gwt.junit test.args="-port ${gwt.junit.port} -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode" test.cases="default.web.tests" />
+
+			<!--
+				Run remote browser testing for the comma delimited list of remote browsers
+			-->
+			<foreach list="${gwt.remote.browsers}" delimiter="," parallel="true" maxThreads="1" target="remoteweb-test" param="gwt.remote.browser" />
+		</parallel>
+	</target>
+
+	<target name="clean" description="Cleans this project's intermediate and output files">
+		<delete dir="${project.build}" />
+		<delete file="${project.lib}" />
+	</target>
+</project>
+

@@ -1,0 +1,15 @@
+<!--                                                                        -->
+<!-- Copyright 2007 Google Inc. All Rights Reserved.                        -->
+<!-- Deferred binding rules for browser selection.                          -->
+<!--                                                                        -->
+<module>
+  <inherits name="com.google.gwt.user.User"/>
+  <inherits name="com.google.gwt.http.HTTP"/>
+
+  <source path="client"/>
+
+  <entry-point class="com.google.gwt.junit.viewer.client.ReportViewer"/>
+
+  <servlet path='/test_reports' class='com.google.gwt.junit.viewer.server.ReportServerImpl'/>
+  <servlet path='/test_images' class='com.google.gwt.junit.viewer.server.ReportImageServer'/>
+</module>

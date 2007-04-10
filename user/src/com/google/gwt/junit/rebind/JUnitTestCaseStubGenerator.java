@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,21 +23,143 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
-import java.util.HashSet;
+import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.HashMap;
 
 /**
  * This class generates a stub class for classes that derive from GWTTestCase.
  * This stub class provides the necessary bridge between our Hosted or Hybrid
  * mode classes and the JUnit system.
+ *
  */
 public class JUnitTestCaseStubGenerator extends Generator {
 
-  private static final String GWT_TESTCASE_CLASS_NAME = GWTTestCase.class.getName();
+  interface MethodFilter {
+    public boolean accept( JMethod method );
+  }
+
+  private static final String GWT_TESTCASE_CLASS_NAME = "com.google.gwt.junit.client.GWTTestCase";
+
+  /**
+   * Returns the method names for the set of methods that are strictly JUnit
+   * test methods (have no arguments).
+   *
+   * @param requestedClass
+   */
+  public static String[] getTestMethodNames(JClassType requestedClass) {
+    return (String[]) getAllMethods( requestedClass, new MethodFilter() {
+      public boolean accept(JMethod method) {
+        return isJUnitTestMethod(method,false);
+      }
+    } ).keySet().toArray( new String[] {} );
+  }
+
+  /**
+   * Like JClassType.getMethod( String name ), except:
+   *
+   *  <li>it accepts a filter</li>
+   *  <li>it searches the inheritance hierarchy (includes subclasses)</li>
+   *
+   * For methods which are overriden, only the most derived implementations are included.
+   *
+   * @param type The type to search. Must not be null
+   * @return Map<String.List<JMethod>> The set of matching methods. Will not be null.
+   */
+  static Map getAllMethods( JClassType type, MethodFilter filter ) {
+    Map methods = new HashMap/*<String,List<JMethod>>*/();
+    JClassType cls = type;
+
+    while (cls != null) {
+      JMethod[] clsDeclMethods = cls.getMethods();
+
+      // For every method, include it iff our filter accepts it
+      // and we don't already have a matching method
+      for (int i = 0, n = clsDeclMethods.length; i < n; ++i) {
+
+        JMethod declMethod = clsDeclMethods[i];
+
+        if ( ! filter.accept(declMethod) ) {
+          continue;
+        }
+
+        List list = (List)methods.get(declMethod.getName());
+
+        if (list == null) {
+          list = new ArrayList();
+          methods.put(declMethod.getName(),list);
+          list.add(declMethod);
+          continue;
+        }
+
+        JParameter[] declParams = declMethod.getParameters();
+
+        for (int j = 0; j < list.size(); ++j) {
+          JMethod method = (JMethod)list.get(j);
+          JParameter[] parameters = method.getParameters();
+          if ( ! equals( declParams, parameters )) {
+            list.add(declMethod );
+          }
+        }
+      }
+      cls = cls.getSuperclass();
+    }
+
+    return methods;
+  }
+
+  /**
+   * Returns true if the method is considered to be a valid JUnit test method.
+   * The criteria are that the method's name begin with "test", have public
+   * access, and not be static. You must choose to include or exclude methods
+   * which have arguments.
+   *
+   */
+  static boolean isJUnitTestMethod(JMethod method, boolean acceptArgs) {
+    if (!method.getName().startsWith("test")) {
+      return false;
+    }
+
+    if (!method.isPublic() || method.isStatic()) {
+      return false;
+    }
+
+    return acceptArgs || method.getParameters().length == 0 && ! acceptArgs;
+  }
+
+  /**
+   * Returns true iff the two sets of parameters are of the same lengths and types.
+   *
+   * @param params1 must not be null
+   * @param params2 must not be null
+   */
+  private static boolean equals( JParameter[] params1, JParameter[] params2 ) {
+    if ( params1.length != params2.length ) {
+      return false;
+    }
+    for ( int i = 0; i < params1.length; ++i ) {
+      if ( params1[ i ].getType() != params2[ i ].getType() ) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  String qualifiedStubClassName;
+  String simpleStubClassName;
+  String typeName;
+  TreeLogger logger;
+  String packageName;
+
+  private JClassType requestedClass;
+  private SourceWriter sourceWriter;
+  private TypeOracle typeOracle;
 
   /**
    * Create a new type that statisfies the rebind request.
@@ -45,40 +167,62 @@ public class JUnitTestCaseStubGenerator extends Generator {
   public String generate(TreeLogger logger, GeneratorContext context,
       String typeName) throws UnableToCompleteException {
 
-    TypeOracle typeOracle = context.getTypeOracle();
+    if ( ! init( logger, context, typeName ) ) {
+      return qualifiedStubClassName;
+    }
+
+    writeSource();
+    sourceWriter.commit( logger );
+
+    return qualifiedStubClassName;
+  }
+
+  public JClassType getRequestedClass() {
+    return requestedClass;
+  }
+
+  public SourceWriter getSourceWriter() {
+    return sourceWriter;
+  }
+
+  public TypeOracle getTypeOracle() {
+    return typeOracle;
+  }
+
+  boolean init(TreeLogger logger, GeneratorContext context,String typeName) throws
+      UnableToCompleteException {
+
+    this.typeName = typeName;
+    this.logger = logger;
+    typeOracle = context.getTypeOracle();
     assert typeOracle != null;
 
-    JClassType requestedClass;
     try {
       requestedClass = typeOracle.getType(typeName);
     } catch (NotFoundException e) {
       logger.log(TreeLogger.ERROR, "Could not find type '" + typeName
-        + "'; please see the log, as this usually indicates a previous error ",
-        e);
+          + "'; please see the log, as this usually indicates a previous error ",
+          e);
       throw new UnableToCompleteException();
     }
 
     // Get the stub class name, and see if its source file exists.
     //
-    String simpleStubClassName = getSimpleStubClassName(requestedClass);
+    simpleStubClassName = getSimpleStubClassName(requestedClass);
+    packageName = requestedClass.getPackage().getName();
+    qualifiedStubClassName = packageName + "." + simpleStubClassName;
 
-    String packageName = requestedClass.getPackage().getName();
-    String qualifiedStubClassName = packageName + "." + simpleStubClassName;
+    sourceWriter = getSourceWriter(logger, context, packageName,
+        simpleStubClassName, requestedClass.getQualifiedSourceName());
 
-    SourceWriter sw = getSourceWriter(logger, context, packageName,
-      simpleStubClassName, requestedClass.getQualifiedSourceName());
-    if (sw == null) {
-      return qualifiedStubClassName;
-    }
+    return sourceWriter != null;
+  }
 
+  void writeSource() throws UnableToCompleteException {
     String[] testMethods = getTestMethodNames(requestedClass);
-    writeGetNewTestCase(simpleStubClassName, sw);
-    writeDoRunTestMethod(testMethods, sw);
-    writeGetTestName(typeName, sw);
-
-    sw.commit(logger);
-
-    return qualifiedStubClassName;
+    writeGetNewTestCase(simpleStubClassName, sourceWriter);
+    writeDoRunTestMethod(testMethods, sourceWriter);
+    writeGetTestName(typeName, sourceWriter);
   }
 
   /**
@@ -87,7 +231,7 @@ public class JUnitTestCaseStubGenerator extends Generator {
   private String getSimpleStubClassName(JClassType baseClass) {
     return "__" + baseClass.getSimpleSourceName() + "_unitTestImpl";
   }
- 
+
   private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx,
       String packageName, String className, String superclassName) {
 
@@ -102,70 +246,6 @@ public class JUnitTestCaseStubGenerator extends Generator {
     composerFactory.setSuperclass(superclassName);
 
     return composerFactory.createSourceWriter(ctx, printWriter);
-  }
-
-  /**
-   * Given a class return all methods that are considered JUnit test methods up
-   * to but not including the declared methods of the class named
-   * GWT_TESTCASE_CLASS_NAME.
-   */
-  private String[] getTestMethodNames(JClassType requestedClass) {
-    HashSet testMethodNames = new HashSet();
-    JClassType cls = requestedClass;
-
-    while (true) {
-      // We do not consider methods in the GWT superclass or above
-      //
-      if (isGWTTestCaseClass(cls)) {
-        break;
-      }
-
-      JMethod[] clsDeclMethods = cls.getMethods();
-      for (int i = 0, n = clsDeclMethods.length; i < n; ++i) {
-        JMethod declMethod = clsDeclMethods[i];
-
-        // Skip methods that are not JUnit test methods.
-        //
-        if (!isJUnitTestMethod(declMethod)) {
-          continue;
-        }
-
-        if (testMethodNames.contains(declMethod.getName())) {
-          continue;
-        }
-
-        testMethodNames.add(declMethod.getName());
-      }
-
-      cls = cls.getSuperclass();
-    }
-
-    return (String[]) testMethodNames.toArray(new String[testMethodNames.size()]);
-  }
-
-  /**
-   * Returns true if the class is the special GWT Test Case derived class.
-   */
-  private boolean isGWTTestCaseClass(JClassType cls) {
-    return cls.getQualifiedSourceName().equalsIgnoreCase(
-      GWT_TESTCASE_CLASS_NAME);
-  }
-
-  /**
-   * Returns true if the method is considered to be a valid JUnit test method.
-   * The criteria are that the method's name begin with "test", have public
-   * access, and not be static.
-   */
-  private boolean isJUnitTestMethod(JMethod method) {
-    if (!method.getName().startsWith("test")) {
-      return false;
-    }
-
-    if (!method.isPublic() || method.isStatic()) {
-      return false;
-    }
-
-    return true;
   }
 
   private void writeDoRunTestMethod(String[] testMethodNames, SourceWriter sw) {

@@ -9,7 +9,7 @@
 	<!-- Platform shouldn't matter here, just picking one -->
 	<property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
 
-	<property name="USER_PKGS" value="com.google.gwt.core.client;com.google.gwt.core.ext;com.google.gwt.core.ext.typeinfo;com.google.gwt.i18n.client;com.google.gwt.json.client;com.google.gwt.junit.client;com.google.gwt.user.client;com.google.gwt.user.client.rpc;com.google.gwt.user.client.ui;com.google.gwt.user.server.rpc;com.google.gwt.xml.client;com.google.gwt.http.client" />
+	<property name="USER_PKGS" value="com.google.gwt.core.client;com.google.gwt.core.ext;com.google.gwt.core.ext.typeinfo;com.google.gwt.i18n.client;com.google.gwt.json.client;com.google.gwt.junit.client;com.google.gwt.user.client;com.google.gwt.user.client.rpc;com.google.gwt.user.client.ui;com.google.gwt.user.server.rpc;com.google.gwt.xml.client;com.google.gwt.http.client;com.google.gwt.junit.viewer.client" />
 	<property name="LANG_PKGS" value="java.lang;java.util" />
 	<property name="DOC_PKGS" value="com.google.gwt.doc" />
 
@@ -29,6 +29,7 @@
 		<pathelement location="${gwt.user.jar}" />
 		<pathelement location="${gwt.dev.jar}" />
 		<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+                <pathelement location="${gwt.tools.lib}/jfreechart/jfreechart-1.0.3.jar" />
 	</path>
 
 	<!--
@@ -245,7 +246,7 @@
 					<arg value="-sourcepath" />
 					<arg pathref="USER_SOURCE_PATH" />
 					<arg value="-examplepackages" />
-					<arg value="com.google.gwt.examples;com.google.gwt.examples.i18n;com.google.gwt.examples.http.client;com.google.gwt.examples.rpc.server" />
+					<arg value="com.google.gwt.examples;com.google.gwt.examples.i18n;com.google.gwt.examples.http.client;com.google.gwt.examples.rpc.server;com.google.gwt.examples.benchmarks" />
 					<arg value="-packages" />
 					<arg value="${USER_PKGS}" />
 				</java>

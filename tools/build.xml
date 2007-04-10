@@ -1,0 +1,15 @@
+<project name="tools" default="build" basedir=".">
+	<property name="gwt.root" location=".." />
+	<property name="project.tail" value="tools" />
+	<import file="${gwt.root}/common.ant.xml" />
+
+        <!-- "build" is the default when subprojects are directly targetted -->
+        <property name="target" value="build" />
+      
+        <target name="build" depends="benchmark-viewer" description="Builds all targets"/>
+
+        <target name="benchmark-viewer" depends="" description="Run benchmark-viewer">
+                <gwt.ant dir="benchmark-viewer" />
+        </target>
+</project>
+

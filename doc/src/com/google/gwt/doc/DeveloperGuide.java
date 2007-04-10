@@ -2229,6 +2229,34 @@ public class DeveloperGuide {
     public static class JUnitAsync {
     }
 
+    /**
+     * GWT's <a href="http://www.junit.org">JUnit</a> integration provides
+     * special support for creating and reporting on benchmarks. Specifically,
+     * GWT has introduced a new {@link com.google.gwt.junit.client.Benchmark}
+     * class which provides built-in facilities for common benchmarking needs.
+     *
+     * To take advantage of benchmarking support, take the following steps:
+     * <ol>
+     *   <li>Review the documentation on
+     * {@link com.google.gwt.junit.client.Benchmark}. Take a look at the
+     * example benchmark code.</li>
+     *   <li>Create your own benchmark by subclassing
+     * {@link com.google.gwt.junit.client.Benchmark}.
+     * Execute your benchmark like you would any normal JUnit test. By default,
+     * the test results are written to a report XML file in your working
+     * directory.</li>
+     *   <li>Run <code>benchmarkViewer</code> to browse visualizations
+     * (graphs/charts) of your report data. The <code>benchmarkViewer</code> is
+     * a GWT tool in the root of your GWT installation directory that displays
+     * benchmark reports.</li>
+     * </ol>
+     *
+     * @title Benchmarking
+     * @synopsis How to use GWT's JUnit support to create and report on
+     * benchmarks to help you optimize your code.
+     */
+    public static class JUnitBenchmarking {
+    }
   }
 
   /**
