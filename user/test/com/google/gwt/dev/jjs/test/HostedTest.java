@@ -31,23 +31,44 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class HostedTest extends GWTTestCase {
 
+  /**
+   * Tests that we can use a source level name for a nested type instead of the
+   * binary name.
+   */
+  protected static class A {
+    
+    /**
+     * TODO: document me.
+     */
+    public static class B {
+      int b = 1;
+      public native int getUsingBinaryRef() /*-{
+      return this.@com.google.gwt.dev.jjs.test.HostedTest$A$B::b;
+    }-*/;
+      
+      public native int getUsingSourceRef() /*-{
+        return this.@com.google.gwt.dev.jjs.test.HostedTest.A.B::b;
+      }-*/;
+    }
+  }
+
   static String sFoo(String s) {
     return s + "foo";
   }
-
-  private native static JavaScriptObject getBoxedBooleanAsObject(boolean v) /*-{
-    return new Boolean(v);
-  }-*/;
   
   private native static boolean getBoxedBooleanAsBool(boolean v) /*-{
     return new Boolean(v);
   }-*/;
   
-  private native static JavaScriptObject getBoxedNumberAsObject(double v) /*-{
-    return new Number(v);
+  private native static JavaScriptObject getBoxedBooleanAsObject(boolean v) /*-{
+    return new Boolean(v);
   }-*/;
   
   private native static double getBoxedNumberAsDouble(double v) /*-{
+    return new Number(v);
+  }-*/;
+  
+  private native static JavaScriptObject getBoxedNumberAsObject(double v) /*-{
     return new Number(v);
   }-*/;
   
@@ -62,6 +83,14 @@ public class HostedTest extends GWTTestCase {
   private native static double getDouble(double v) /*-{
     return -v;
   }-*/;
+
+  private static native float getFloat() /*-{
+    return myFloatValue;
+  }-*/;
+  
+  private static native float getFloatString() /*-{
+    return Number(myFloatValue.toString());
+  }-*/;
   
   private native static int getInt(int v) /*-{
     return -v;
@@ -71,13 +100,17 @@ public class HostedTest extends GWTTestCase {
   private static native Object getIntAsObject() /*-{
     return 5;
   }-*/;
-  
+
   private native static String getJSOAsString(JavaScriptObject jso) /*-{
     return "" + jso;
   }-*/;
-  
+
   private native static Object getObject(Object o) /*-{
     return o;
+  }-*/;
+
+  private static native JavaScriptObject getsFooFunc() /*-{
+    return @com.google.gwt.dev.jjs.test.HostedTest::sFoo(Ljava/lang/String;);
   }-*/;
 
   private native static String getString(String s) /*-{
@@ -89,24 +122,8 @@ public class HostedTest extends GWTTestCase {
     return "test";
   }-*/;
 
-  private static native void storeFloat(float f) /*-{
-    myFloatValue = f;
-  }-*/;
-
-  private static native float getFloat() /*-{
-    return myFloatValue;
-  }-*/;
-
-  private static native float getFloatString() /*-{
-    return Number(myFloatValue.toString());
-  }-*/;
-
   private static native int passThroughInt(int val) /*-{
     return val;
-  }-*/;
-
-  private static native JavaScriptObject getsFooFunc() /*-{
-    return @com.google.gwt.dev.jjs.test.HostedTest::sFoo(Ljava/lang/String;);
   }-*/;
 
   private static native String sFooCall(String s) /*-{
@@ -137,173 +154,17 @@ public class HostedTest extends GWTTestCase {
     return fooFunc(s);
   }-*/;
 
+  private static native void storeFloat(float f) /*-{
+    myFloatValue = f;
+  }-*/;
+
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
-  }
-
-  public void testBasic() {
-    int iv = getInt(14);
-    assertEquals(iv, -14);
-    double dv = getDouble(31.5);
-    assertEquals(dv, -31.5, 0.0);
-    String sv = getString("test");
-    assertEquals(sv, "testme");
-    Object oin = String.class;
-    Object oout = getObject(oin);
-    assertEquals(oin, oout);
   }
 
   public void test32BitInt() {
     assertEquals(Integer.MAX_VALUE, passThroughInt(Integer.MAX_VALUE));
     assertEquals(Integer.MIN_VALUE, passThroughInt(Integer.MIN_VALUE));
-  }
-
-  public void testByteMarshalling() {
-    byte b = 100;
-    assertEquals(100, byteAsInt(b));
-    b = -125;
-    assertEquals(-125, byteAsInt(b));
-  }
-
-  public void testFunctionCaching() {
-    assertEquals("barfoo", sFooCall("bar"));
-    assertEquals("barfoo", sFooDirect("bar"));
-    assertEquals("barfoo", sFooInvoke("bar"));
-    assertEquals("barfoo", sFooRoundTrip(getsFooFunc(), "bar"));
-
-    assertEquals("barfoo", fooCall("bar"));
-    assertEquals("barfoo", fooDirect("bar"));
-    assertEquals("barfoo", fooRoundTrip(getFooFunc(), "bar"));
-
-    String sFooString = getsFooFunc().toString();
-    assertEquals(sFooString, sFooFuncAsStr());
-    assertEquals(sFooString, sFooFuncToString());
-    String fooString = getFooFunc().toString();
-    assertEquals(fooString, fooFuncAsStr());
-    assertEquals(fooString, fooFuncToString());
-  }
-
-  public void testJsniFormats() {
-    jsniA();
-    jsniB();
-    jsniC();
-    jsniD();
-    jsniE();
-    jsniF();
-    jsniG();
-    jsniH();
-    jsniI();
-    jsniJ();
-    jsniK();
-    jsniL();
-  }
-
-  public void testFloat() {
-    storeFloat(Float.MIN_VALUE);
-    float f = getFloat();
-    assertTrue(f == Float.MIN_VALUE);
-    f = getFloatString();
-    assertTrue(f == Float.MIN_VALUE);
-    storeFloat(Float.MAX_VALUE);
-    f = getFloat();
-    assertTrue(f == Float.MAX_VALUE);
-    f = getFloatString();
-    assertTrue(f == Float.MAX_VALUE);
-  }
-  
-  public void testLocalJsni() {
-    
-    class Foo {
-      native String a() /*-{
-        return "blah";
-      }-*/;
-
-      native String b() /*-{
-        return this.@com.google.gwt.dev.jjs.test.HostedTest$1$Foo::a()();
-      }-*/;
-
-      String c() {
-        return a();
-      }
-    }
-    
-    Foo f = new Foo();
-    assertEquals(f.a(), "blah");
-    assertEquals(f.b(), "blah");
-    assertEquals(f.c(), "blah");
-    
-    Foo fo = new Foo() {
-      native String a() /*-{
-        return "oblah";
-      }-*/;
-
-      native String b() /*-{
-        return this.@com.google.gwt.dev.jjs.test.HostedTest$1$Foo::a()();
-      }-*/;
-
-      native String c() /*-{
-        return this.@com.google.gwt.dev.jjs.test.HostedTest$1::a()();
-      }-*/;
-    };
-    
-    assertEquals(fo.a(), "oblah");
-    assertEquals(fo.b(), "oblah");
-    assertEquals(fo.c(), "oblah");
-  }
-
-  public void testLongMarshalling() {
-    // a big number that cannot accurately be represented as a double
-    long l = 1234567890123456789L;
-    double d = l;
-    assertTrue(isEq(l, d));
-  }
-
-  /**
-   * Tests that we can use a source level name for a nested type instead of the
-   * binary name.
-   */
-  protected static class A {
-    
-    /**
-     * TODO: document me.
-     */
-    public static class B {
-      int b = 1;
-      public native int getUsingSourceRef() /*-{
-        return this.@com.google.gwt.dev.jjs.test.HostedTest.A.B::b;
-      }-*/;
-      
-      public native int getUsingBinaryRef() /*-{
-      return this.@com.google.gwt.dev.jjs.test.HostedTest$A$B::b;
-    }-*/;
-    }
-  }
-  
-  /**
-   * Tests that we are able to use binary and source level names when referencing
-   * a Java identifier from JSNI.
-   */
-  public void testJavaMemberRefResolution() {
-    A.B b = new A.B();
-    assertEquals(1, b.getUsingSourceRef());
-    assertEquals(1, b.getUsingBinaryRef());
-  }
-
-  /*
-   * Test that returning strings from methods declared as returning Object
-   * works, and that returning a primitive does not.
-   */
-  public void testObjectReturns() {
-    String str = (String)getStringAsObject();
-    assertEquals(str, "test");
-    try {
-      getIntAsObject();
-      // should have thrown an exception in hosted mode,
-      // so fail unless we are in web mode
-      assertTrue(GWT.isScript());
-    } catch (IllegalArgumentException e) {
-      // expected exception
-    }
   }
 
   /*
@@ -326,12 +187,87 @@ public class HostedTest extends GWTTestCase {
     assertEquals(sv, "test");
   }
 
+  public void testBasic() {
+    int iv = getInt(14);
+    assertEquals(iv, -14);
+    double dv = getDouble(31.5);
+    assertEquals(dv, -31.5, 0.0);
+    String sv = getString("test");
+    assertEquals(sv, "testme");
+    Object oin = String.class;
+    Object oout = getObject(oin);
+    assertEquals(oin, oout);
+  }
+
+  public void testByteMarshalling() {
+    byte b = 100;
+    assertEquals(100, byteAsInt(b));
+    b = -125;
+    assertEquals(-125, byteAsInt(b));
+  }
+
+  public void testFloat() {
+    storeFloat(Float.MIN_VALUE);
+    float f = getFloat();
+    assertTrue(f == Float.MIN_VALUE);
+    f = getFloatString();
+    assertTrue(f == Float.MIN_VALUE);
+    storeFloat(Float.MAX_VALUE);
+    f = getFloat();
+    assertTrue(f == Float.MAX_VALUE);
+    f = getFloatString();
+    assertTrue(f == Float.MAX_VALUE);
+  }
+  
+  public void testFunctionCaching() {
+    assertEquals("barfoo", sFooCall("bar"));
+    assertEquals("barfoo", sFooDirect("bar"));
+    assertEquals("barfoo", sFooInvoke("bar"));
+    assertEquals("barfoo", sFooRoundTrip(getsFooFunc(), "bar"));
+
+    assertEquals("barfoo", fooCall("bar"));
+    assertEquals("barfoo", fooDirect("bar"));
+    assertEquals("barfoo", fooRoundTrip(getFooFunc(), "bar"));
+
+    String sFooString = getsFooFunc().toString();
+    assertEquals(sFooString, sFooFuncAsStr());
+    assertEquals(sFooString, sFooFuncToString());
+    String fooString = getFooFunc().toString();
+    assertEquals(fooString, fooFuncAsStr());
+    assertEquals(fooString, fooFuncToString());
+  }
+
+  /**
+   * Tests that we are able to use binary and source level names when referencing
+   * a Java identifier from JSNI.
+   */
+  public void testJavaMemberRefResolution() {
+    A.B b = new A.B();
+    assertEquals(1, b.getUsingSourceRef());
+    assertEquals(1, b.getUsingBinaryRef());
+  }
+
+  public void testJsniFormats() {
+    jsniA();
+    jsniB();
+    jsniC();
+    jsniD();
+    jsniE();
+    jsniF();
+    jsniG();
+    jsniH();
+    jsniI();
+    jsniJ();
+    jsniK();
+    jsniL();
+  }
+  
   /**
    * Tests that using the JavaScript toString method results in a call to 
    * the java.lang.Object::toString() method.
    *
    */
-  public void disabledTestJSNIToStringResolution() {
+  public void testJSNIToStringResolution() {
     class Foo {
       public String toString() {
         return "FOO";
@@ -340,17 +276,81 @@ public class HostedTest extends GWTTestCase {
     
     assertEquals("FOO", callJSNIToString(new Foo()));
   }
-  
-  private native String callJSNIToString(Object obj) /*-{
-    return obj.toString();
-  }-*/;
+
+  public void testLocalJsni() {
+    
+    class Foo {
+      native String a() /*-{
+        return "blah";
+      }-*/;
+
+      native String b() /*-{
+        return this.@com.google.gwt.dev.jjs.test.HostedTest$2$Foo::a()();
+      }-*/;
+
+      String c() {
+        return a();
+      }
+    }
+    
+    Foo f = new Foo();
+    assertEquals(f.a(), "blah");
+    assertEquals(f.b(), "blah");
+    assertEquals(f.c(), "blah");
+    
+    Foo fo = new Foo() {
+      native String a() /*-{
+        return "oblah";
+      }-*/;
+
+      native String b() /*-{
+        return this.@com.google.gwt.dev.jjs.test.HostedTest$2$Foo::a()();
+      }-*/;
+
+      native String c() /*-{
+        return this.@com.google.gwt.dev.jjs.test.HostedTest$1::a()();
+      }-*/;
+    };
+    
+    assertEquals(fo.a(), "oblah");
+    assertEquals(fo.b(), "oblah");
+    assertEquals(fo.c(), "oblah");
+  }
+
+  public void testLongMarshalling() {
+    // a big number that cannot accurately be represented as a double
+    long l = 1234567890123456789L;
+    double d = l;
+    assertTrue(isEq(l, d));
+  }
+
+  /*
+   * Test that returning strings from methods declared as returning Object
+   * works, and that returning a primitive does not.
+   */
+  public void testObjectReturns() {
+    String str = (String)getStringAsObject();
+    assertEquals(str, "test");
+    try {
+      getIntAsObject();
+      // should have thrown an exception in hosted mode,
+      // so fail unless we are in web mode
+      assertTrue(GWT.isScript());
+    } catch (IllegalArgumentException e) {
+      // expected exception
+    }
+  }
   
   String foo(String s) {
     return s + "foo";
   }
-
+  
   private native int byteAsInt(byte b) /*-{
     return b;
+  }-*/;
+
+  private native String callJSNIToString(Object obj) /*-{
+    return obj.toString();
   }-*/;
 
   private native String fooCall(String s) /*-{

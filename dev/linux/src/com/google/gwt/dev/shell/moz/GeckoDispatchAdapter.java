@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
- * Wraps an arbitrary Java Object as a Dispatchable component. The class was
+ * Wraps an arbitrary Java Object as a Dispatch component. The class was
  * motivated by the need to expose Java objects into JavaScript.
  * 
  * An instance of this class with no target is used to globally access all
@@ -91,9 +91,6 @@ class GeckoDispatchAdapter implements DispatchObject {
         classLoader.putMethodDispatch(method, dispMethod);
       }
       jsValue.setWrappedFunction(method.toString(), dispMethod);
-//      LowLevelMoz.wrapFunction(scriptObject, method.toString(),
-//          dispMethod, (JsValueMoz)jsValue);
-      return;
     }
   }
 

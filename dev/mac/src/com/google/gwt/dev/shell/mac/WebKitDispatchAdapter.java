@@ -27,7 +27,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 /**
- * Wraps an arbitrary Java Object as a Dispatchable component. The class was
+ * Wraps an arbitrary Java Object as a Dispatch component. The class was
  * motivated by the need to expose Java objects into JavaScript.
  * 
  * An instance of this class with no target is used to globally access all
@@ -44,7 +44,6 @@ class WebKitDispatchAdapter implements DispatchObject {
    * static method calls and field references.
    * 
    * @param cl this class's classLoader
-   * @param aScriptObject the execution iframe's window
    */
   WebKitDispatchAdapter(CompilingClassLoader cl) {
     javaDispatch = new JavaDispatchImpl(cl);
@@ -55,7 +54,6 @@ class WebKitDispatchAdapter implements DispatchObject {
    * This constructor initializes a dispatcher, around a particular instance.
    * 
    * @param cl this class's classLoader
-   * @param aScriptObject the execution iframe's window
    * @param target the object being wrapped as an IDispatch
    */
   WebKitDispatchAdapter(CompilingClassLoader cl, Object target) {
@@ -114,4 +112,9 @@ class WebKitDispatchAdapter implements DispatchObject {
     Object val = JsValueGlue.get(jsValue, field.getType(), "setField");
     javaDispatch.setFieldValue(dispId, val);
   }
+
+  public String toString() {
+    return getTarget().toString();
+  }
+
 }

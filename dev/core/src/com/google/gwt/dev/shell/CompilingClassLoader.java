@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -83,17 +83,13 @@ public final class CompilingClassLoader extends ClassLoader {
      */
     public synchronized int getDispId(String jsniMemberRef) {
       /*
-       * MAGIC: toString is id 0
-       * 
-       * We need to check for toString early on to handle the JavaScript
-       * toString method. We do a case insensitive check to make sure that
-       * tostring in JavaScript would work.
+       * Map JS toString() onto the Java toString() method.
        * 
        * TODO : is it true that tostring is valid in JavaScript? JavaScript is
        * case sensitive.
        */
-      if (jsniMemberRef.equalsIgnoreCase("toString")) {
-        return 0;
+      if (jsniMemberRef.equals("toString")) {
+        jsniMemberRef = "@java.lang.Object::toString()";
       }
 
       // References are of the form "@class::field" or
@@ -205,7 +201,7 @@ public final class CompilingClassLoader extends ClassLoader {
         return null;
       }
 
-     if (dispClassInfo == null) {
+      if (dispClassInfo == null) {
         /*
          * we need to create a new DispatchClassInfo since we have never seen
          * this class before under any source or binary class name

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -136,17 +136,6 @@ public class JavaDispatchImpl implements JavaDispatch {
    * @return the member
    */
   protected Member getMember(int dispId) {
-    if (dispId == 0) {
-      try {
-        return Object.class.getDeclaredMethod("toString", null);
-      } catch (SecurityException e) {
-        // Should never get here
-        e.printStackTrace();
-      } catch (NoSuchMethodException e) {
-        // Should never get here
-        e.printStackTrace();
-      }
-    }
     DispatchClassInfo clsInfo = classLoader.getClassInfoByDispId(dispId);
     return clsInfo.getMember(dispId);
   }

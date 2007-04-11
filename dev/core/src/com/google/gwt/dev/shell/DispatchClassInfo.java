@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -59,10 +59,6 @@ public class DispatchClassInfo {
     }
 
     return id.intValue();
-  }
-
-  public Class getWrappedClass() {
-    return cls;
   }
 
   private void addMember(Member member, String sig) {
@@ -131,38 +127,7 @@ public class DispatchClassInfo {
   private void lazyInitTargetMembers() {
     if (memberById == null) {
       memberById = new ArrayList();
-      try {
-        // MAGIC: 0 is the default property
-        memberById.add(cls.getMethod("toString", null));
-      } catch (SecurityException e) {
-        e.printStackTrace();
-      } catch (NoSuchMethodException e) {
-        /*
-         * Interfaces do not automatically inherit toString() implicitly. If
-         * they have not defined a toString() method then we will pick the one
-         * from java.lang.Object::toString() method and use that at slot zero.
-         * 
-         * TODO(mmendez): How should we handle the case where a user writes JSNI
-         * code to interact with an instance that is typed as a particular
-         * interface? Should a user write JSNI code as follows:
-         * 
-         * x.@com.google.gwt.HasFocus::equals(Ljava/lang/Object;)(y)
-         * 
-         * or
-         * 
-         * x.@java.lang.Object::equals(Ljava/lang/Object;)(y)
-         */
-        if (cls.isInterface()) {
-          try {
-            memberById.add(Object.class.getMethod("toString", null));
-          } catch (Exception e1) {
-            e1.printStackTrace();
-          }
-        } else {
-          e.printStackTrace();
-        }
-      }
-
+      memberById.add(null); // 0 is reserved; it's magic on Win32
       memberIdByName = new HashMap();
       lazyInitTargetMembersUsingReflectionHelper(cls);
     }
@@ -174,6 +139,19 @@ public class DispatchClassInfo {
     if (superclass != null) {
       lazyInitTargetMembersUsingReflectionHelper(superclass);
     }
+
+    /*
+     * TODO(mmendez): How should we handle the case where a user writes JSNI
+     * code to interact with an instance that is typed as a particular
+     * interface? Should a user write JSNI code as follows:
+     * 
+     * x.@com.google.gwt.HasFocus::equals(Ljava/lang/Object;)(y)
+     * 
+     * or
+     * 
+     * x.@java.lang.Object::equals(Ljava/lang/Object;)(y)
+     * 
+     */
 
     // Get the methods on this class/interface.
     //
