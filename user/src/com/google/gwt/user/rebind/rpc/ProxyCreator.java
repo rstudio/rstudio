@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -243,7 +243,7 @@ class ProxyCreator {
         w.println("try {");
         w.indent();
         {
-          w.println("if (encodedResponse.startsWith(\"{OK}\")) {");
+          w.println("if (encodedResponse.startsWith(\"//OK\")) {");
           w.indent();
           {
             w.println("streamReader.prepareToRead(encodedResponse.substring(4));");
@@ -266,7 +266,7 @@ class ProxyCreator {
             w.println(";");
           }
           w.outdent();
-          w.println("} else if (encodedResponse.startsWith(\"{EX}\")) {");
+          w.println("} else if (encodedResponse.startsWith(\"//EX\")) {");
           w.indent();
           {
             w.println("streamReader.prepareToRead(encodedResponse.substring(4));");

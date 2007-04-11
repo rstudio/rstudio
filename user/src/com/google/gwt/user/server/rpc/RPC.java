@@ -391,7 +391,7 @@ public final class RPC {
       stream.serializeValue(object, responseClass);
     }
 
-    String bufferStr = (wasThrown ? "{EX}" : "{OK}") + stream.toString();
+    String bufferStr = (wasThrown ? "//EX" : "//OK") + stream.toString();
     return bufferStr;
   }
 
