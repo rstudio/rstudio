@@ -29,5 +29,6 @@
    <inherits name="com.google.gwt.user.Focus"/>
    <inherits name="com.google.gwt.user.ImageBundle"/>  
    <inherits name="com.google.gwt.user.ClippedImage"/>
+   <inherits name="com.google.gwt.user.RichText"/>
    <inherits name="com.google.gwt.user.SplitPanel"/>
 </module>
