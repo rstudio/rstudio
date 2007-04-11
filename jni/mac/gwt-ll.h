@@ -114,10 +114,10 @@ JNIEXPORT void JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1gcLock
 /*
  * Class:     com_google_gwt_dev_shell_mac_LowLevelSaf
  * Method:    _gcUnlock
- * Signature: (I)V
+ * Signature: (ILjava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1gcUnlock
-  (JNIEnv *, jclass, jint);
+  (JNIEnv *, jclass, jint, jstring);
 
 /*
  * Class:     com_google_gwt_dev_shell_mac_LowLevelSaf

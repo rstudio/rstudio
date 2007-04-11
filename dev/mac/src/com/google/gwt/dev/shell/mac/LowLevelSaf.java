@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,22 +20,39 @@ import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Stack;
 
 /**
  * Various low-level helper methods for dealing with Safari.
+ * 
+ * The basic rule is that any JSValue passed to Java code from native code will
+ * always be GC-protected in the native code and Java will always unprotect it
+ * when the value is finalized. It should always be stored in a JsValue object
+ * immediately to make sure it is cleaned up properly when it is no longer
+ * needed. This approach is required to avoid a race condition where the value
+ * is allocated in JNI code but could be garbage collected before Java takes
+ * ownership of the value. Java values passed into JavaScript store a GlobalRef
+ * of a WebKitDispatchAdapter or MethodDispatch objects, which are freed when
+ * the JS value is finalized.
  */
 public class LowLevelSaf {
+  /**
+   * Flag to enable tracking of object creation sites. Package-protected to
+   * allow JsValueSaf to use it as well.
+   */
+  static final boolean debugObjectCreation = false;
 
   /**
-   * Provides interface for methods to be exposed on javascript side.
+   * Provides interface for methods to be exposed on JavaScript side.
    */
   public interface DispatchMethod {
     int invoke(int execState, int jsthis, int[] jsargs);
   }
 
   /**
-   * Provides interface for objects to be exposed on javascript side.
+   * Provides interface for objects to be exposed on JavaScript side.
    */
   public interface DispatchObject {
     int getField(String name);
@@ -180,8 +197,36 @@ public class LowLevelSaf {
     _gcLock(jsval);
   }
 
-  public static void gcUnlock(int jsval) {
-    _gcUnlock(jsval);
+  public static void gcUnlock(int jsval, Throwable creationStackTrace) {
+    String str = null;
+    if (debugObjectCreation) {
+      if (creationStackTrace == null) {
+        creationStackTrace = new Throwable();
+        creationStackTrace.fillInStackTrace();
+      }
+      StringWriter sWriter = new StringWriter();
+      PrintWriter pWriter = new PrintWriter(sWriter);
+      creationStackTrace.printStackTrace(pWriter);
+      str = sWriter.toString();
+      // remove the header line, keep the first 5 lines of the stack trace
+      int begin = str.indexOf("\n") + 1;
+      int nextNL = begin - 1;
+      // loop precondition: nextNL points to a newline or 0 if there is none
+      for (int i = 0; i < 5; ++i) {
+        nextNL = str.indexOf("\n", nextNL + 1);
+        if (nextNL < 0) {
+          break;
+        }
+      }
+      // loop postcondition: nextNL points to the fifth newline or is -1
+      //   if there are not 5 newlines
+      if (nextNL < 0) {
+        str = str.substring(begin);
+      } else {
+        str = str.substring(begin, nextNL);
+      }
+    }
+    _gcUnlock(jsval, str);
   }
 
   public static int getExecState() {
@@ -211,7 +256,7 @@ public class LowLevelSaf {
   }
 
   public static native String getTypeString(int jsval);
-  
+
   public static synchronized void init() {
     // Force LowLevel initialization to load gwt-ll
     LowLevel.init();
@@ -450,7 +495,7 @@ public class LowLevelSaf {
 
   private static native void _gcLock(int jsval);
 
-  private static native void _gcUnlock(int jsval);
+  private static native void _gcUnlock(int jsval, String trace);
 
   private static native int _getArgc();
 
@@ -483,8 +528,9 @@ public class LowLevelSaf {
 
   private static native boolean _wrapFunction(String name,
       DispatchMethod dispMeth, int[] rval);
+
   // CHECKSTYLE_NAMING_OFF
-  
+
   /**
    * Not instantiable.
    */

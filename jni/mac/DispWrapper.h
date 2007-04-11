@@ -1,5 +1,5 @@
 /* 
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,37 +19,42 @@
 #include "gwt-webkit.h"
 #include <kjs/object.h>
 
-// This class actually wraps Java objects
+/*
+ * This class wraps Java WebKitDispatchAdapter objects.
+ */
 class DispWrapper : public KJS::JSObject {
 public:
-	// dispObj MUST be a global ref
+  // dispObj MUST be a global ref
     DispWrapper(jobject dispObj);
-	virtual ~DispWrapper();
-	jobject getDispObj();
+  virtual ~DispWrapper();
+  jobject getDispObj();
 
 public:
-	// implementations of JSObject methods
-    const KJS::ClassInfo *classInfo() const { return &info; }
+  // implementations of JSObject methods
+  const KJS::ClassInfo *classInfo() const { return &info; }
 
-    virtual bool getOwnPropertySlot(KJS::ExecState*, const KJS::Identifier&, KJS::PropertySlot&);
-    virtual bool canPut(KJS::ExecState*, const KJS::Identifier&) const;
-    virtual void put(KJS::ExecState*, const KJS::Identifier&, KJS::JSValue*, int);
-    virtual bool deleteProperty(KJS::ExecState*, const KJS::Identifier&);
-    virtual KJS::JSValue *defaultValue(KJS::ExecState*, KJS::JSType) const;
-    virtual bool implementsCall() const;
-    virtual KJS::JSValue *callAsFunction(KJS::ExecState*, KJS::JSObject*, const KJS::List&);
-    
-    static const KJS::ClassInfo info;
+  virtual bool getOwnPropertySlot(KJS::ExecState*, const KJS::Identifier&,
+      KJS::PropertySlot&);
+  virtual bool canPut(KJS::ExecState*, const KJS::Identifier&) const;
+  virtual void put(KJS::ExecState*, const KJS::Identifier&, KJS::JSValue*, int);
+  virtual bool deleteProperty(KJS::ExecState*, const KJS::Identifier&);
+  virtual KJS::JSValue *defaultValue(KJS::ExecState*, KJS::JSType) const;
+  virtual bool implementsCall() const;
+  virtual KJS::JSValue *callAsFunction(KJS::ExecState*, KJS::JSObject*,
+      const KJS::List&);
+  
+  static const KJS::ClassInfo info;
 
 private:
-	static KJS::JSValue* getter(KJS::ExecState*, KJS::JSObject*, const KJS::Identifier&, const KJS::PropertySlot&);
+  static KJS::JSValue* getter(KJS::ExecState*, KJS::JSObject*,
+      const KJS::Identifier&, const KJS::PropertySlot&);
 
 private:
-	jobject dispObj;
+  jobject dispObj;
 };
 
 inline jobject DispWrapper::getDispObj() {
-	return dispObj;
+  return dispObj;
 }
 
 #endif

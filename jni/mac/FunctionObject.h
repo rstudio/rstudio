@@ -1,5 +1,5 @@
 /* 
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,35 +21,39 @@
 
 class FunctionObject : public KJS::JSObject {
 protected:
-    FunctionObject(const KJS::UString& name);
+  FunctionObject(const KJS::UString& name);
 
 public:
-    const KJS::ClassInfo *classInfo() const { return &info; }
+  const KJS::ClassInfo *classInfo() const { return &info; }
 
-	// shared implementations of JSObject methods
-    virtual bool getOwnPropertySlot(KJS::ExecState*, const KJS::Identifier&, KJS::PropertySlot&);
-    virtual bool canPut(KJS::ExecState*, const KJS::Identifier&) const;
-    virtual void put(KJS::ExecState*, const KJS::Identifier&, KJS::JSValue*, int);
-    virtual bool deleteProperty(KJS::ExecState*, const KJS::Identifier&);
-    virtual KJS::JSValue *defaultValue(KJS::ExecState*, KJS::JSType) const;
-    virtual bool implementsCall() const;
-	
-	// subclasses must implement
-    virtual KJS::JSValue *callAsFunction(KJS::ExecState*, KJS::JSObject*, const KJS::List&) = 0;
+  // shared implementations of JSObject methods
+  virtual bool getOwnPropertySlot(KJS::ExecState*, const KJS::Identifier&,
+      KJS::PropertySlot&);
+  virtual bool canPut(KJS::ExecState*, const KJS::Identifier&) const;
+  virtual void put(KJS::ExecState*, const KJS::Identifier&, KJS::JSValue*, int);
+  virtual bool deleteProperty(KJS::ExecState*, const KJS::Identifier&);
+  virtual KJS::JSValue *defaultValue(KJS::ExecState*, KJS::JSType) const;
+  virtual bool implementsCall() const;
+  
+  // subclasses must implement
+  virtual KJS::JSValue *callAsFunction(KJS::ExecState*, KJS::JSObject*,
+      const KJS::List&) = 0;
     
-    static const KJS::ClassInfo info;
+  static const KJS::ClassInfo info;
 
 private:
-	static KJS::JSValue* getter(KJS::ExecState*, KJS::JSObject*, const KJS::Identifier&, const KJS::PropertySlot&);
+  static KJS::JSValue* getter(KJS::ExecState*, KJS::JSObject*,
+      const KJS::Identifier&, const KJS::PropertySlot&);
 
 private:
-	KJS::UString name;
+  KJS::UString name;
 };
 
 class ToStringFunction : public FunctionObject {
 public:
-	ToStringFunction();
-    virtual KJS::JSValue *callAsFunction(KJS::ExecState*, KJS::JSObject*, const KJS::List&);
+  ToStringFunction();
+  virtual KJS::JSValue *callAsFunction(KJS::ExecState*, KJS::JSObject*,
+      const KJS::List&);
 };
 
 #endif

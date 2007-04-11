@@ -1,5 +1,5 @@
 /* 
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,7 @@ extern "C" char ***_NSGetArgv(void);
  */
 JNIEXPORT jint JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1getArgc
   (JNIEnv* env , jclass) {
-	return *_NSGetArgc();
+  return *_NSGetArgc();
 }
 
 /*
@@ -35,12 +35,14 @@ JNIEXPORT jint JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1getArgc
  * Method:    _getArgv
  * Signature: ()Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1getArgv
-  (JNIEnv* env, jclass, jint i) {
-	int argc = *_NSGetArgc();
-	if (i < 0 || i >= argc) {
-		return 0;
-	}
-	char **argv = *_NSGetArgv();
-	return env->NewStringUTF(argv[i]);
+JNIEXPORT jstring JNICALL
+Java_com_google_gwt_dev_shell_mac_LowLevelSaf__1getArgv
+    (JNIEnv* env, jclass, jint i)
+{
+  int argc = *_NSGetArgc();
+  if (i < 0 || i >= argc) {
+    return 0;
+  }
+  char **argv = *_NSGetArgv();
+  return env->NewStringUTF(argv[i]);
 }

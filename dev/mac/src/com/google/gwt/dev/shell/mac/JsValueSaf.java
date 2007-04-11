@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,11 +21,22 @@ import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchObject;
 
 /**
  * Represents a Safari JavaScript value.
+ * 
+ * The basic rule is that any JSValue passed to Java code from native code will
+ * always be GC-protected in the native code and Java will always unprotect it
+ * when the value is finalized. It should always be stored in a JsValue object
+ * immediately to make sure it is cleaned up properly when it is no longer
+ * needed. This approach is required to avoid a race condition where the value
+ * is allocated in JNI code but could be garbage collected before Java takes
+ * ownership of the value. Java values passed into JavaScript store a GlobalRef
+ * of a WebKitDispatchAdapter or MethodDispatch objects, which are freed when
+ * the JS value is finalized.
  */
 public class JsValueSaf extends JsValue {
 
   private static class JsCleanupSaf implements JsCleanup {
     private final int jsval;
+    private final Throwable creationStackTrace;
 
     /**
      * Create a cleanup object which takes care of cleaning up the underlying JS
@@ -33,8 +44,9 @@ public class JsValueSaf extends JsValue {
      * 
      * @param jsval JSValue pointer as an integer
      */
-    public JsCleanupSaf(int jsval) {
+    public JsCleanupSaf(int jsval, Throwable creationStackTrace) {
       this.jsval = jsval;
+      this.creationStackTrace = creationStackTrace;
     }
 
     /*
@@ -43,12 +55,26 @@ public class JsValueSaf extends JsValue {
      * @see com.google.gwt.dev.shell.JsValue.JsCleanup#doCleanup()
      */
     public void doCleanup() {
-      // TODO(jat): perform cleanup operation
+      LowLevelSaf.gcUnlock(jsval, creationStackTrace);
     }
   }
 
-  // pointer to underlying JSValue object as an integer
+  /* 
+   * Underlying JSValue* as an integer.
+   */
   private int jsval;
+  
+  /*
+   * Stores a stack trace of the creation site for debugging.
+   */
+  private Throwable creationStackTrace;
+
+  /**
+   * Create a Java wrapper around an undefined JSValue.
+   */
+  public JsValueSaf() {
+    init(LowLevelSaf.jsUndefined());
+  }
 
   /**
    * Create a Java wrapper around the underlying JSValue.
@@ -56,11 +82,7 @@ public class JsValueSaf extends JsValue {
    * @param jsval a pointer to the underlying JSValue object as an integer
    */
   public JsValueSaf(int jsval) {
-    this.jsval = jsval;
-  }
-
-  public JsValueSaf() {
-    this.jsval = LowLevelSaf.jsUndefined();
+    init(jsval);
   }
 
   public boolean getBoolean() {
@@ -134,47 +156,60 @@ public class JsValueSaf extends JsValue {
   }
 
   public void setBoolean(boolean val) {
-    jsval = LowLevelSaf.convertBoolean(val);
+    setJsVal(LowLevelSaf.convertBoolean(val));
   }
 
   public void setByte(byte val) {
-    jsval = LowLevelSaf.convertDouble(val);
+    setJsVal(LowLevelSaf.convertDouble(val));
   }
 
   public void setChar(char val) {
-    jsval = LowLevelSaf.convertDouble(val);
+    setJsVal(LowLevelSaf.convertDouble(val));
   }
 
   public void setDouble(double val) {
-    jsval = LowLevelSaf.convertDouble(val);
+    setJsVal(LowLevelSaf.convertDouble(val));
   }
 
   public void setInt(int val) {
-    jsval = LowLevelSaf.convertDouble(val);
-  }
-  
-  public void setJsVal(int jsval) {
-    this.jsval = jsval;
+    setJsVal(LowLevelSaf.convertDouble(val));
   }
 
+  /**
+   * Set a new value.  Unlock the previous value, but do *not* lock the new
+   * value (see class comment).
+   * 
+   * @param jsval the new value to set
+   */
+  public void setJsVal(int jsval) {
+    LowLevelSaf.gcUnlock(this.jsval, creationStackTrace);
+    init(jsval);
+  }
+  
   public void setNull() {
-    jsval = LowLevelSaf.jsNull();
+    setJsVal(LowLevelSaf.jsNull());
   }
 
   public void setShort(short val) {
-    jsval = LowLevelSaf.convertDouble(val);
+    setJsVal(LowLevelSaf.convertDouble(val));
   }
 
   public void setString(String val) {
-    jsval = LowLevelSaf.convertString(val);
+    setJsVal(LowLevelSaf.convertString(val));
   }
 
   public void setUndefined() {
-    jsval = LowLevelSaf.jsUndefined();
+    setJsVal(LowLevelSaf.jsUndefined());
   }
 
   public void setValue(JsValue other) {
-    jsval = ((JsValueSaf)other).jsval;
+    int jsvalOther = ((JsValueSaf)other).jsval;
+    /*
+     * Add another lock to this jsval, since both the other object and this
+     * one will eventually release it.
+     */
+    LowLevelSaf.gcLock(jsvalOther);
+    setJsVal(jsvalOther);
   }
 
   public void setWrappedJavaObject(CompilingClassLoader cl, Object val) {
@@ -187,11 +222,27 @@ public class JsValueSaf extends JsValue {
     } else {
       dispObj = new WebKitDispatchAdapter(cl, val);
     }
-    jsval = LowLevelSaf.wrapDispatch(dispObj);
+    setJsVal(LowLevelSaf.wrapDispatch(dispObj));
   }
 
   protected JsCleanup createCleanupObject() {
-    return new JsCleanupSaf(jsval);
+    return new JsCleanupSaf(jsval, creationStackTrace);
+  }
+
+  /**
+   * Initialization helper method.
+   * @param jsval underlying JSValue*
+   */
+  private void init(int jsval) {
+    this.jsval = jsval;
+    
+    // only create and fill in the stack trace if we are debugging
+    if (LowLevelSaf.debugObjectCreation) {
+      this.creationStackTrace = new Throwable();
+      this.creationStackTrace.fillInStackTrace();
+    } else {
+      this.creationStackTrace = null;
+    }
   }
 
 }

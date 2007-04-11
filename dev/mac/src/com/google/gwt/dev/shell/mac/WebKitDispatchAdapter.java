@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,9 +39,6 @@ class WebKitDispatchAdapter implements DispatchObject {
 
   private final JavaDispatch javaDispatch;
 
-  // TODO(jat): remove these references
-  // private final int scriptObject;
-
   /**
    * This constructor initializes as the static dispatcher, which handles only
    * static method calls and field references.
@@ -52,7 +49,6 @@ class WebKitDispatchAdapter implements DispatchObject {
   WebKitDispatchAdapter(CompilingClassLoader cl) {
     javaDispatch = new JavaDispatchImpl(cl);
     this.classLoader = cl;
-    // this.scriptObject = scriptObject;
   }
 
   /**
@@ -65,9 +61,11 @@ class WebKitDispatchAdapter implements DispatchObject {
   WebKitDispatchAdapter(CompilingClassLoader cl, Object target) {
     javaDispatch = new JavaDispatchImpl(cl, target);
     this.classLoader = cl;
-    // this.scriptObject = scriptObject;
   }
 
+  /* (non-Javadoc)
+   * @see com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchObject#getField(java.lang.String)
+   */
   public int getField(String name) {
     int dispId = classLoader.getDispId(name);
     if (dispId < 0) {
@@ -79,7 +77,6 @@ class WebKitDispatchAdapter implements DispatchObject {
       JsValueGlue.set(jsValue, classLoader, field.getType(),
           javaDispatch.getFieldValue(dispId));
       int jsval = jsValue.getJsValue();
-      LowLevelSaf.gcLock(jsval);
       return jsval;
     } else {
       Method method = javaDispatch.getMethod(dispId);
@@ -93,10 +90,16 @@ class WebKitDispatchAdapter implements DispatchObject {
     }
   }
 
+  /* (non-Javadoc)
+   * @see com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchObject#getTarget()
+   */
   public Object getTarget() {
     return javaDispatch.getTarget();
   }
 
+  /* (non-Javadoc)
+   * @see com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchObject#setField(java.lang.String, int)
+   */
   public void setField(String name, int value) {
     JsValue jsValue = new JsValueSaf(value);
     int dispId = classLoader.getDispId(name);

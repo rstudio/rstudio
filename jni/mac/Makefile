@@ -1,4 +1,4 @@
-# Copyright 2006 Google Inc.
+# Copyright 2007 Google Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -11,6 +11,11 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
+
+##
+# Try a GWT_TOOLS default if it isn't set
+##
+GWT_TOOLS ?= ../../../tools
 
 ##
 # External WebKit products.
@@ -77,6 +82,7 @@ all: $(GWT_LL_LIB) $(GWT_WEBKIT_LIB) $(SWT_LIBS)
 
 staging: all
 	cp libgwt-*.jnilib ../../build/staging/gwt-mac-0.0.0/
+
 ##
 # Copy WebKit binary frameworks locally.
 ##
@@ -99,6 +105,8 @@ gwt-ll.o: ../core/gwt-ll.cpp
 gwt-args.o: gwt-args.cpp
 	$(CC) -c -o gwt-args.o $(CFLAGS) gwt-args.cpp
 
+gwt-webkit.o: gwt-webkit.h
+
 ##
 # Rule for final lib for gwt-ll.
 ##
@@ -111,6 +119,9 @@ $(GWT_LL_LIB): $(GWT_LL_OBJECTS)
 $(GWT_WEBKIT_LIB): Frameworks $(GWT_WEBKIT_OBJECTS)
 	$(CC) -o $(GWT_WEBKIT_LIB) $(JSCORE_LFLAGS) $(GWT_WEBKIT_OBJECTS)
 	$(FIX_INSTALL_NAME) JavaScriptCore $(JSCORE_INSTALL_NAME) $(GWT_WEBKIT_LIB)
+
+install: $(GWT_LL_LIB) $(GWT_WEBKIT_LIB)
+	cp $(GWT_LL_LIB) $(GWT_WEBKIT_LIB) prebuilt/
 
 ##
 # Unpack and patch SWT source.

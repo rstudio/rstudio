@@ -1,5 +1,5 @@
 /* 
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,23 +19,26 @@
 #include "FunctionObject.h"
 #include <jni.h>
 
-// This class actually wraps Java method objects
+/*
+ * Wraps Java methods (MethodDispatch)
+ */
 class FuncWrapper : public FunctionObject {
 public:
-	// funcObj MUST be a global ref
-	FuncWrapper(const KJS::UString& name, jobject funcObj);
-	virtual ~FuncWrapper();
-	jobject getFuncObj();
+  // funcObj MUST be a global ref
+  FuncWrapper(const KJS::UString& name, jobject funcObj);
+  virtual ~FuncWrapper();
+  jobject getFuncObj();
 
 public:
-    virtual KJS::JSValue *callAsFunction(KJS::ExecState*, KJS::JSObject*, const KJS::List&);
+  virtual KJS::JSValue *callAsFunction(KJS::ExecState*, KJS::JSObject*,
+      const KJS::List&);
 
 private:
-	jobject funcObj;
+  jobject funcObj;
 };
 
 inline jobject FuncWrapper::getFuncObj() {
-	return funcObj;
+  return funcObj;
 }
 
 #endif
