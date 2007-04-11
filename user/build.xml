@@ -39,6 +39,11 @@
 	<fileset id="default.web.tests" dir="${javac.junit.out}"
  		 	 includes="${gwt.junit.testcase.includes}">
 		<!--
+			Requires manual testing, because it generates intentional failures.
+		-->
+		<exclude name="com/google/gwt/junit/client/ParallelRemoteTest.class" />
+		
+		<!--
 			Causes a security dialog to popup and subsequently blocks testing
 		-->
 		<exclude name="com/google/gwt/user/client/ui/FormPanelTest.class" />

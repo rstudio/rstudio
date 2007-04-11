@@ -18,13 +18,12 @@ package com.google.gwt.junit.client.impl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.junit.client.TestResults;
 import com.google.gwt.junit.client.TimeoutException;
+import com.google.gwt.junit.client.Trial;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.junit.client.TestResults;
-import com.google.gwt.junit.client.Trial;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -136,6 +135,10 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
     return query;
   }
 
+  private static native String getDocumentLocation() /*-{
+    return $doc.location.toString();
+  }-*/;
+
   private static native String getQuery() /*-{
     return $wnd.location.search || '';  
   }-*/;
@@ -161,9 +164,20 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
   private final GWTTestCase outer;
 
   /**
+   * Collective test results.
+   *
+   */
+  private TestResults results = new TestResults();
+
+  /**
    * If true, run a single test case with no RPC.
    */
   private boolean serverless = false;
+
+  /**
+   * The time the test began execution.
+   */
+  private long testBeginMillis;
 
   /**
    * Tracks whether this test is completely done.
@@ -174,17 +188,6 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
    * If non-null, a timer to kill the current test case (for asynchronous mode).
    */
   private KillTimer timer;
-
-  /**
-   * The time the test began execution;
-   */
-  private long testBeginMillis;
-
-  /**
-   * Collective test results.
-   *
-   */
-  private TestResults results = new TestResults();
 
   /**
    * Constructs a new GWTTestCaseImpl that is paired one-to-one with a
@@ -260,6 +263,10 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
     }
   }
 
+  public TestResults getTestResults() {
+    return results;
+  }
+
   /**
    * Implementation of {@link GWTTestCase#onModuleLoad()}.
    */
@@ -329,9 +336,8 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
       }
 
       trials.add( trial );
-    }
-    // If this was a benchmark, we need to handle exceptions specially
-    else {
+    } else {
+      // If this was a benchmark, we need to handle exceptions specially
       // If an exception occurred, it happened without the trial being recorded
       // We, unfortunately, don't know the trial parameters at this point.
       // We should consider putting the exception handling code directly into
@@ -355,15 +361,6 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
     String testName = outer.getTestName();
     junitHost.reportResultsAndGetNextMethod(testName, results, junitHostListener);
   }
-
-  public TestResults getTestResults() {
-    return results;
-  }
-
-  private native String getDocumentLocation() /*-{
-    return $doc.location.toString();
-  }-*/;
-
 
   /**
    * Cleans up any asynchronous mode state.
@@ -392,7 +389,6 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
 
     testBeginMillis = System.currentTimeMillis();
     results = new TestResults();
-
 
     if (shouldCatchExceptions()) {
       // Make sure no exceptions escape
