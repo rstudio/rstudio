@@ -14,7 +14,13 @@
  * the License.
  */
 
-package com.google.gwt.user.client.ui;
+package com.google.gwt.user.client.ui.impl;
+
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.ui.KeyboardListener;
+import com.google.gwt.user.client.ui.UIObject;
+import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -22,19 +28,22 @@ import java.util.Iterator;
 /**
  * Suggestion picker. Each "item" represents a suggestion.
  */
-public class SuggestPicker extends AbstractItemPicker {
-
+public class SuggestPickerImpl extends AbstractItemPickerImpl {
   /**
    * Default style for the picker.
    */
   private static final String STYLENAME_DEFAULT = "gwt-SuggestPicker";
-
+  private final boolean asHTML;
   private int startInvisible = Integer.MAX_VALUE;
 
   /**
-   * Constructor for <code>SuggestPicker</code>.
+   * Constructor for <code>SuggestPickerImpl</code>.
+   * 
+   * @param asHTML flag used to indicate how to treat {@link Suggestion} display
+   *          strings
    */
-  public SuggestPicker() {
+  public SuggestPickerImpl(boolean asHTML) {
+    this.asHTML = asHTML;
     setStyleName(STYLENAME_DEFAULT);
   }
 
@@ -66,12 +75,15 @@ public class SuggestPicker extends AbstractItemPicker {
   /**
    * Sets the suggestions associated with this picker.
    * 
-   * @param suggestions suggestions for this picker; the suggestions must have
-   *          valid {@link String#toString()} methods
+   * @param suggestions suggestions for this picker
    */
   public final void setItems(Collection suggestions) {
     setItems(suggestions.iterator());
   }
+
+  protected native Element getRow(Element elem, int row)/*-{
+    return elem.rows[row];
+   }-*/;
 
   void shiftSelection(int shift) {
     int newSelect = getSelectedIndex() + shift;
@@ -91,7 +103,7 @@ public class SuggestPicker extends AbstractItemPicker {
   private Item ensureItem(int itemIndex) {
     for (int i = super.getItemCount(); i <= itemIndex; i++) {
       Item item = new Item(i);
-      getLayout().setWidget(i, 0, item);
+      addItem(item, true);
     }
     return getItem(itemIndex);
   }
@@ -107,7 +119,14 @@ public class SuggestPicker extends AbstractItemPicker {
     // suggestion.
     while (suggestions.hasNext()) {
       Item item = ensureItem(itemCount);
-      format(item.getElement(), suggestions.next());
+      Suggestion suggestion = (Suggestion) suggestions.next();
+      String display = suggestion.getDisplayString();
+      if (asHTML) {
+        DOM.setInnerHTML(item.getElement(), display);
+      } else {
+        DOM.setInnerText(item.getElement(), display);
+      }
+      item.setValue(suggestion.getValue());
       ++itemCount;
     }
 
@@ -136,8 +155,7 @@ public class SuggestPicker extends AbstractItemPicker {
    * @param visible visible boolean
    */
   private void setVisible(int itemIndex, boolean visible) {
-    UIObject.setVisible(getLayout().getRowFormatter().getElement(itemIndex),
-        visible);
+    UIObject.setVisible(getRow(body, itemIndex), visible);
   }
 
 }

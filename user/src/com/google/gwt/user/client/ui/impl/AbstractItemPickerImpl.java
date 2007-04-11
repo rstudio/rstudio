@@ -14,11 +14,15 @@
  * the License.
  */
 
-package com.google.gwt.user.client.ui;
+package com.google.gwt.user.client.ui.impl;
 
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.ChangeListener;
+import com.google.gwt.user.client.ui.ChangeListenerCollection;
+import com.google.gwt.user.client.ui.UIObject;
+import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,19 +30,13 @@ import java.util.Collection;
 /**
  * Helpful base implementation of the {@link ItemPicker} interface.
  */
-abstract class AbstractItemPicker extends Composite implements ItemPicker {
-  /*
-   * Implementation note:AbstractItemPicker is package protected because we are
-   * hoping we might eventually be able to slip in a more efficient
-   * implementation of this class, so do not want to be bound by this
-   * implementation.
-   */
-
+abstract class AbstractItemPickerImpl extends Widget {
   /**
    * Selectable item.
    */
-  class Item extends Widget {
+  class Item extends UIObject {
     private int index;
+    private Object value;
 
     /**
      * Constructor for <code>Item</code>.
@@ -46,26 +44,14 @@ abstract class AbstractItemPicker extends Composite implements ItemPicker {
      * @param index index associated with item
      */
     Item(int index) {
-      setElement(DOM.createDiv());
-      sinkEvents(Event.ONMOUSEDOWN | Event.ONMOUSEOVER);
+      setElement(DOM.createTD());
       this.index = index;
-      this.setStyleName(itemStyleName);
+      this.setStyleName(STYLENAME_ITEM);
       items.add(index, this);
     }
 
-    public void onBrowserEvent(Event event) {
-      switch (DOM.eventGetType(event)) {
-        case Event.ONMOUSEOVER:
-          setSelection(this);
-          break;
-        case Event.ONMOUSEDOWN:
-          commitSelection();
-          break;
-      }
-    }
-
     public String toString() {
-      return "value: " + getValue(getIndex()) + " index: " + this.getIndex();
+      return "value: " + this.getValue() + " index: " + this.getIndex();
     }
 
     /**
@@ -77,44 +63,37 @@ abstract class AbstractItemPicker extends Composite implements ItemPicker {
       return index;
     }
 
-    AbstractItemPicker getOwner() {
-      return AbstractItemPicker.this;
+    AbstractItemPickerImpl getOwner() {
+      return AbstractItemPickerImpl.this;
+    }
+
+    Object getValue() {
+      return value;
+    }
+
+    void setValue(Object value) {
+      this.value = value;
     }
   }
 
   private static final String STYLENAME_SELECTED_ITEM = "selected";
   private static final String STYLENAME_ITEM = "item";
 
+  final Element body;
+  private Element currentTR;
+  private final ArrayList items;
   private ChangeListenerCollection changeListeners = new ChangeListenerCollection();
   private Item selectedItem;
-  private final String selectedStyleName;
-  private final String itemStyleName;
-  private final ArrayList items;
 
-  /**
-   * Constructor for <code>ItemPicker</code>. Provides "item" as the default
-   * item style name, and "selected" as the default selected item style name.
-   */
-  public AbstractItemPicker() {
-    this(STYLENAME_ITEM, STYLENAME_SELECTED_ITEM);
-  }
-
-  /**
-   * Constructor for <code>ItemPicker</code>.
-   * 
-   * @param itemStyleName CSS style name for default items
-   * @param selectedItemStyleName CSS style name for the currently selected item
-   */
-  public AbstractItemPicker(String itemStyleName, String selectedItemStyleName) {
-    initWidget(new FlexTable());
-    this.selectedStyleName = selectedItemStyleName;
-    this.itemStyleName = itemStyleName;
-
-    // CSS does not effect padding and spacing correctly. So setting to 0
-    // here.
-    getLayout().setCellPadding(0);
-    getLayout().setCellSpacing(0);
+  public AbstractItemPickerImpl() {
     items = new ArrayList();
+    Element table = DOM.createTable();
+    body = DOM.createTBody();
+    DOM.appendChild(table, body);
+    setElement(table);
+    sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT);
+    DOM.setIntAttribute(table, "cellPadding", 0);
+    DOM.setIntAttribute(table, "cellSpacing", 0);
   }
 
   public final void addChangeListener(ChangeListener listener) {
@@ -146,15 +125,35 @@ abstract class AbstractItemPicker extends Composite implements ItemPicker {
   }
 
   public final Object getSelectedValue() {
-    int index = getSelectedIndex();
-    if (index == -1) {
+    Item item = getSelectedItem();
+    if (item == null) {
       return null;
+    } else {
+      return item.getValue();
     }
-    return getValue(index);
   }
 
-  public Object getValue(int index) {
-    return getValue(getItem(index).getElement());
+  public void onBrowserEvent(Event event) {
+    super.onBrowserEvent(event);
+    Item item = findItem(DOM.eventGetTarget(event));
+    switch (DOM.eventGetType(event)) {
+      case Event.ONCLICK: {
+        commitSelection();
+        break;
+      }
+      case Event.ONMOUSEOVER: {
+        if (item != null) {
+          setSelection(item);
+        }
+        break;
+      }
+      case Event.ONMOUSEOUT: {
+        if (item != null) {
+          setSelection(null);
+        }
+        break;
+      }
+    }
   }
 
   public final void removeChangeListener(ChangeListener listener) {
@@ -168,32 +167,16 @@ abstract class AbstractItemPicker extends Composite implements ItemPicker {
     setSelection(item);
   }
 
-  /**
-   * Formats the displayed element using the information given by the user
-   * supplied item.
-   * 
-   * @param displayedElement the element used to the display the item
-   * @param item the user supplied item information
-   */
-  protected void format(Element displayedElement, Object item) {
-    DOM.setInnerHTML(displayedElement, item.toString());
-  }
-
-  /**
-   * Gets the value from a given element. By default this method is used by
-   * {@link AbstractItemPicker#getValue(int)} to compute the value that should
-   * be returned to the user.
-   * 
-   * @param displayedElement displayed element
-   * @return the value associated with the given displayed element
-   */
-  protected Object getValue(Element displayedElement) {
-    return DOM.getInnerText(displayedElement);
+  void addItem(Item item, boolean vertical) {
+    if (vertical) {
+      currentTR = DOM.createTR();
+      DOM.appendChild(body, currentTR);
+    }
+    DOM.appendChild(currentTR, item.getElement());
   }
 
   void clearItems() {
     items.clear();
-    getLayout().clear();
   }
 
   /**
@@ -204,10 +187,6 @@ abstract class AbstractItemPicker extends Composite implements ItemPicker {
    */
   Item getItem(int index) {
     return (Item) items.get(index);
-  }
-
-  FlexTable getLayout() {
-    return (FlexTable) getWidget();
   }
 
   /**
@@ -231,15 +210,15 @@ abstract class AbstractItemPicker extends Composite implements ItemPicker {
 
     // Remove old selected item.
     if (selectedItem != null) {
-      selectedItem.removeStyleName(selectedStyleName);
-      selectedItem.addStyleName(itemStyleName);
+      selectedItem.removeStyleName(STYLENAME_SELECTED_ITEM);
+      selectedItem.addStyleName(STYLENAME_ITEM);
     }
 
     // Add new selected item.
     selectedItem = item;
     if (selectedItem != null) {
-      selectedItem.removeStyleName(itemStyleName);
-      selectedItem.addStyleName(selectedStyleName);
+      selectedItem.removeStyleName(STYLENAME_ITEM);
+      selectedItem.addStyleName(STYLENAME_SELECTED_ITEM);
     }
   }
 
@@ -259,4 +238,14 @@ abstract class AbstractItemPicker extends Composite implements ItemPicker {
     }
   }
 
+  private Item findItem(Element hItem) {
+    for (int i = 0; i < items.size(); ++i) {
+      Item item = (Item) items.get(i);
+      if (DOM.isOrHasChild(item.getElement(), hItem)) {
+        return item;
+      }
+    }
+
+    return null;
+  }
 }
