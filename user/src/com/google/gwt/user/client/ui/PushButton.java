@@ -21,6 +21,19 @@ import com.google.gwt.user.client.Event;
 
 /**
  * A normal push button with custom styling.
+ * 
+ * <p>
+ * <img class='gallery' src='PushButton.png'/>
+ * </p>
+ * 
+ * <h3>CSS Style Rules</h3>
+ * <ul class="css">
+ * <li>.gwt-PushButton-up/down/up-hovering/down-hovering/up-disabled/down-disabled {.html-face}</li>
+ * </ul>
+ * 
+ * <p>
+ * <h3>Example</h3> {@example com.google.gwt.examples.PushButtonExample}
+ * </p>
  */
 public class PushButton extends CustomButton {
 
@@ -111,6 +124,16 @@ public class PushButton extends CustomButton {
     super(upText, downText);
   }
 
+  /**
+   * Constructor for <code>PushButton</code>.
+   * 
+   * @param upText the text for the default (up) face of the button
+   * @param downText the text for down face of the button
+   * @param listener the click listener
+   */
+  public PushButton(String upText, String downText, ClickListener listener) {
+    super(upText, downText, listener);
+  }
   public void onBrowserEvent(Event event) {
     // Should not act on button if the button is disabled. This can happen
     // because an event is bubbled up from a non-disabled interior component.

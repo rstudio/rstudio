@@ -24,16 +24,16 @@ import com.google.gwt.user.client.Event;
  * Custom Button is a base button class with built in support for a set number
  * of button faces.
  * 
- * Each face has its own style modifier. For example, <code>downHovering</code>
- * is assigned the CSS modifier <i>downHovering</i>. So, if the button's
- * overall style name is <i>gwt-PushButton</i> then when showing the
- * <code>downHovering</code> face, the button's style is <i>
- * gwt-PushButton-downHovering</i>.
+ * Each face has its own style modifier. For example, the state for down and
+ * hovering is assigned the CSS modifier <i>down-hovering</i>. So, if the
+ * button's overall style name is <i>gwt-PushButton</i> then when showing the
+ * <code>down-hovering</code> face, the button's style is <i>
+ * gwt-PushButton-down-hovering</i>.
  * 
  * <p>
  * Each button face can be assigned is own image, text, or html contents. If no
  * content is defined for a face, then the face will use the contents of another
- * face. For example, if <code>downHovering</code> does not have defined
+ * face. For example, if <code>down-hovering</code> does not have defined
  * contents, it will use the contents defined by the <code>down</code> face.
  * </p>
  * 
@@ -65,28 +65,28 @@ import com.google.gwt.user.client.Event;
  * </tr>
  * 
  * <tr>
- * <td>upHovering</td>
+ * <td>up-hovering</td>
  * <td> {@link #getUpHoveringFace()} </td>
  * <td>face shown when button is up and hovering</td>
  * <td> up </td>
  * </tr>
  * 
  * <tr>
- * <td>upDisabled</td>
+ * <td>up-disabled</td>
  * <td> {@link #getUpDisabledFace()} </td>
  * <td>face shown when button is up and disabled</td>
  * <td> up</td>
  * </tr>
  * 
  * <tr>
- * <td>downHovering</td>
+ * <td>down-hovering</td>
  * <td> {@link #getDownHoveringFace()} </td>
  * <td>face shown when button is down and hovering</td>
  * <td> down</td>
  * </tr>
  * 
  * <tr>
- * <td>downDisabled</td>
+ * <td>down-disabled</td>
  * <td> {@link #getDownDisabledFace()} </td>
  * <td>face shown when button is down and disabled</td>
  * <td>down</td>
@@ -380,6 +380,19 @@ public abstract class CustomButton extends ButtonBase implements
    */
   public CustomButton(String upText, String downText) {
     this(upText);
+    getDownFace().setText(downText);
+  }
+
+  /**
+   * Constructor for <code>CustomButton</code>.
+   * 
+   * @param upText the text for the default (up) face of the button
+   * @param downText the text for the down face of the button
+   * @param listener the click listener
+   */
+  public CustomButton(String upText, String downText, ClickListener listener) {
+    this(upText, downText);
+    addClickListener(listener);
   }
 
   /**

@@ -23,6 +23,18 @@ import com.google.gwt.user.client.Event;
  * A <code>ToggleButton</code> is a stylish stateful button which allows the
  * user to toggle between <code>up</code> and <code>down</code> states.
  * 
+ * <p>
+ * <img class='gallery' src='ToggleButton.png'/>
+ * </p>
+ * 
+ * <h3>CSS Style Rules</h3>
+ * <ul class="css">
+ * <li>.gwt-ToggleButton-up/down/up-hovering/down-hovering/up-disabled/down-disabled {.html-face}</li>
+ * </ul>
+ * 
+ * <p>
+ * <h3>Example</h3> {@example com.google.gwt.examples.ToggleButtonExample}
+ * </p>
  */
 public class ToggleButton extends CustomButton {
   private static String STYLENAME_DEFAULT = "gwt-ToggleButton";
