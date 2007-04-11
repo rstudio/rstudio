@@ -49,13 +49,19 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
   private KeyboardListenerCollection keyboardListeners;
 
   /**
-   * Creates a new focus component that wraps the specified browser element.
+   * Creates a new focus widget with no element. {@link #setElement(Element)}
+   * must be called before any other methods.
+   */
+  protected FocusWidget() {
+  }
+
+  /**
+   * Creates a new focus widget that wraps the specified browser element.
    * 
    * @param elem the element to be wrapped
    */
   protected FocusWidget(Element elem) {
     setElement(elem);
-    sinkEvents(Event.ONCLICK | Event.FOCUSEVENTS | Event.KEYEVENTS);
   }
 
   public void addClickListener(ClickListener listener) {
@@ -159,6 +165,11 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
 
   public void setTabIndex(int index) {
     impl.setTabIndex(getElement(), index);
+  }
+
+  protected void setElement(Element elem) {
+    super.setElement(elem);
+    sinkEvents(Event.ONCLICK | Event.FOCUSEVENTS | Event.KEYEVENTS);
   }
 
   /**

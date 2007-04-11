@@ -20,6 +20,10 @@ package com.google.gwt.user.client.ui.impl;
  */
 public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
 
+  public native String getText() /*-{
+    return this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerText;
+  }-*/;
+
   public native void initElement() /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     var _this = this;
@@ -56,9 +60,5 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     body.attachEvent('onmouseover', handler);
     body.attachEvent('onmouseout', handler);
     body.attachEvent('onclick', handler);
-  }-*/;
-
-  public native String getText() /*-{
-    return this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerText;
   }-*/;
 }

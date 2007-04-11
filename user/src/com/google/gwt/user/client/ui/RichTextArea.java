@@ -100,6 +100,11 @@ public class RichTextArea extends FocusWidget implements HasHTML,
     boolean isUnderlined();
 
     /**
+     * Selects all the text.
+     */
+    void selectAll();
+
+    /**
      * Sets the background color.
      * 
      * @param color the new background color
@@ -158,68 +163,6 @@ public class RichTextArea extends FocusWidget implements HasHTML,
      * Toggles underline.
      */
     void toggleUnderline();
-
-    /**
-     * Selects all the text.
-     */
-    void selectAll();
-  }
-
-  /**
-   * Font size enumeration. Represents the seven basic HTML font sizes, as
-   * defined in CSS.
-   */
-  public static class FontSize {
-
-    /**
-     * Represents an XX-Small font.
-     */
-    public static final FontSize XX_SMALL = new FontSize(1);
-
-    /**
-     * Represents an X-Small font.
-     */
-    public static final FontSize X_SMALL = new FontSize(2);
-
-    /**
-     * Represents a Small font.
-     */
-    public static final FontSize SMALL = new FontSize(3);
-
-    /**
-     * Represents a Medium font.
-     */
-    public static final FontSize MEDIUM = new FontSize(4);
-
-    /**
-     * Represents a Large font.
-     */
-    public static final FontSize LARGE = new FontSize(5);
-
-    /**
-     * Represents an X-Large font.
-     */
-    public static final FontSize X_LARGE = new FontSize(6);
-
-    /**
-     * Represents an XX-Large font.
-     */
-    public static final FontSize XX_LARGE = new FontSize(7);
-
-    private int number;
-
-    private FontSize(int number) {
-      this.number = number;
-    }
-
-    /**
-     * Gets the HTML font number associated with this font size.
-     * 
-     * @return an integer from 1 to 7 inclusive
-     */
-    public int getNumber() {
-      return number;
-    }
   }
 
   /**
@@ -290,6 +233,63 @@ public class RichTextArea extends FocusWidget implements HasHTML,
      * Toggles strikethrough.
      */
     void toggleStrikethrough();
+  }
+
+  /**
+   * Font size enumeration. Represents the seven basic HTML font sizes, as
+   * defined in CSS.
+   */
+  public static class FontSize {
+
+    /**
+     * Represents an XX-Small font.
+     */
+    public static final FontSize XX_SMALL = new FontSize(1);
+
+    /**
+     * Represents an X-Small font.
+     */
+    public static final FontSize X_SMALL = new FontSize(2);
+
+    /**
+     * Represents a Small font.
+     */
+    public static final FontSize SMALL = new FontSize(3);
+
+    /**
+     * Represents a Medium font.
+     */
+    public static final FontSize MEDIUM = new FontSize(4);
+
+    /**
+     * Represents a Large font.
+     */
+    public static final FontSize LARGE = new FontSize(5);
+
+    /**
+     * Represents an X-Large font.
+     */
+    public static final FontSize X_LARGE = new FontSize(6);
+
+    /**
+     * Represents an XX-Large font.
+     */
+    public static final FontSize XX_LARGE = new FontSize(7);
+
+    private int number;
+
+    private FontSize(int number) {
+      this.number = number;
+    }
+
+    /**
+     * Gets the HTML font number associated with this font size.
+     * 
+     * @return an integer from 1 to 7 inclusive
+     */
+    public int getNumber() {
+      return number;
+    }
   }
 
   /**
