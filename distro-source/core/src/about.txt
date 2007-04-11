@@ -10,11 +10,12 @@ This product includes software developed by:
  - The Eclipse Foundation (http://www.eclipse.org/).
    - Java Development Tools (http://www.eclipse.org/jdt/)
    - Standard Widget Toolkit (http://www.eclipse.org/swt/) with modifications
+ - The JFreeChart project (http://www.jfree.org/jfreechart/)
  - The Mozilla Foundation (http://www.mozilla.org/).
    - Mozilla 1.7.12 (http://www.mozilla.org/releases/mozilla1.7.12/)
    - Rhino (http://www.mozilla.org/rhino/) with modifications
+ - The SAX project (http://www.saxproject.org/)
  - The WebKit Open Source Project (http://www.webkit.org)
  - The W3C consortium (http://www.w3.org/)
- - The SAX project (http://www.saxproject.org/)
 
 For source availability and license information see COPYING.

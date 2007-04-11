@@ -208,6 +208,12 @@ e.g. "gwt-dev-linux.jar".
     Mac: http://download.eclipse.org/eclipse/downloads/drops/R-3.2.1-200609210945/download.php?dropFile=swt-3.2.1-carbon-macosx.zip
     modifications are at org/eclipse/swt within gwt-dev.jar
 
+* JFreeChart
+  License: GNU Lesser General Public License v. 2.1
+    http://www.gnu.org/licenses/lgpl.html
+  Source code availability: 
+    http://jfree.org/jfreechart/download.html
+
 * Mozilla Rhino
   License: Mozilla Public License v. 1.1
     http://www.mozilla.org/MPL/MPL-1.1.txt
