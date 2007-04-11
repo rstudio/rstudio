@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.doc;
 
 import com.google.gwt.core.client.GWT;
@@ -14,6 +28,7 @@ import com.google.gwt.user.client.ui.CellPanel;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.KeyboardListenerAdapter;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -1079,8 +1094,9 @@ public class DeveloperGuide {
    *           {@link DeveloperGuide.UserInterface.WidgetGallery the gallery},
    *           GWT includes a variety of pre-built Java
    *           {@link DeveloperGuide.UserInterface.WidgetsAndPanels widgets and panels}
-   *           that can serve as cross-browser building blocks for your
-   *           application.
+   *           that serve as cross-browser building blocks for your application.
+   *           GWT also includes unique and powerful optimization facilities
+   *           such as {@link ImageBundles image bundles}.
    * @childIntro Specifics
    */
   public static class UserInterface {
@@ -1485,6 +1501,325 @@ public class DeveloperGuide {
      */
     public static class StyleSheets {
     }
+
+    /**
+     * Typically, an application uses many small images for icons. An HTTP
+     * request has to be sent to the server for each of these images, and in
+     * some cases, the size of the image is smaller than the HTTP response
+     * header that is sent back with the image data. These round trips to the
+     * server for small pieces of data are wasteful. Even when the images have
+     * been cached by the client, a 304 ("Not Modified") request is still sent
+     * to check and see if the image has changed. Since images change
+     * infrequently, these freshness checks are also wasteful.
+     * 
+     * <p>
+     * Sending out requests and freshness checks for many images will slow down
+     * your application. HTTP 1.1 requires browsers to limit the number of
+     * outgoing HTTP connections to two per domain/port. A multitude of image
+     * requests will tie up the browser's available connections, which blocks
+     * the application's RPC requests. RPC requests are the real work that the
+     * application needs to do.
+     * </p>
+     * 
+     * <p>
+     * To solve this problem, GWT introduces the concept of an <i>image bundle</i>.
+     * An image bundle is a composition of many images into a single image,
+     * along with an interface for accessing the individual images from within
+     * the composite. Users can define an image bundle that contains the images
+     * used by their application, and GWT will automatically create the
+     * composite image and provide an implementation of the interface for
+     * accessing each individual image. Instead of a round trip to the server
+     * for each image, only one round trip to the server for the composite image
+     * is needed.
+     * </p>
+     * 
+     * <p>
+     * Since the filename of the composite image is based on a hash of the
+     * file's contents, the filename will change only if the composite image is
+     * changed. This means that it is safe for clients to cache the composite
+     * image permanently, which avoids the unnecessary freshness checks for
+     * unchanged images. To make this work, the server configuration needs to
+     * specify that composite images never expire.
+     * </p>
+     * 
+     * <p>
+     * In addition to speeding up startup, image bundles prevent the 'bouncy'
+     * effect of image loading in browsers. While images are loading, browsers
+     * put a standard placeholder for each image in the UI. The placeholder is a
+     * standard size because the browser does not know what the size of an image
+     * is until it has been fully downloaded from the server. The result is a
+     * 'bouncy' effect, where images 'pop' into the UI once they are downloaded.
+     * With image bundles, the size of each individual image within the bundle
+     * is discovered when the bundle is created, so the size of the image can be
+     * explicitly set whenever images from a bundle are used in an application.
+     * </p>
+     * 
+     * @title Image Bundles
+     * @childIntro Specifics
+     * @synopsis Optimize the performance of your application by reducing the
+     *           number of HTTP requests for images.
+     * @see com.google.gwt.user.client.ImageBundle
+     * @tip To make all image bundle files permanently cacheable, set up a rule
+     *      in your web server to emit the <code>Expires</code> response
+     *      header for any files ending with "<code>.cache.*</code>". Such a
+     *      rule would automatically match generated image bundle filenames
+     *      (e.g. <code>320ADF600D31858000C612E939F0AD1A.cache.png</code>).
+     *      The <a
+     *      href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html">HTTP/1.1
+     *      specification</a> recommends specifying date of approximately one
+     *      year in the future for the <code>Expires</code> header to indicate
+     *      that the resource is permanently cacheable.
+     */
+    public static class ImageBundles {
+
+      /**
+       * To define an image bundle, the user needs to extend the
+       * {@link com.google.gwt.user.client.ImageBundle ImageBundle} interface.
+       * The ImageBundle interface is a tag interface that can be extended to
+       * define new image bundles.
+       * 
+       * <p>
+       * The derived interface can have zero or more methods, where each method
+       * <ul>
+       * <li>takes no parameters,</li>
+       * <li>has a return type of
+       * {@link com.google.gwt.user.client.ui.AbstractImagePrototype}, and</li>
+       * <li>may have an optional <code>gwt.resource</code> metadata tag
+       * which specifies the name of the image file in the module's classpath
+       * </li>
+       * </ul>
+       * </p>
+       * 
+       * <p>
+       * Valid image file types are <code>png</code>, <code>gif</code>,
+       * and <code>jpg</code>. If the image name contains '<code>/</code>'
+       * characters, it is assumed to be the name of a resource on the
+       * classpath, formatted as would be expected by
+       * <code>ClassLoader.getResource(String)</code>. Otherwise, the image
+       * must be located in the same package as the user-defined image bundle.
+       * </p>
+       * 
+       * <p>
+       * If the <code>gwt.resource</code> metadata tag is not specified, then
+       * </p>
+       * 
+       * <ul>
+       * <li>the image filename is assumed to match the method name,</li>
+       * <li>the extension is assumed to be either <code>.png</code>,
+       * <code>.gif</code>, or <code>.jpg</code>, and </li>
+       * <li>the file is assumed to be in the same package as the derived
+       * interface</li>
+       * </ul>
+       * 
+       * <p>
+       * In the event that there are multiple image files with different
+       * extensions, the order of extension precedence is (1) <code>png</code>,
+       * (2) <code>gif</code>, then (3) <code>jpg</code>.
+       * </p>
+       * 
+       * <p>
+       * An image bundle for icons in a word processor application could be
+       * defined as follows:
+       * 
+       * <pre class="code">
+       * public interface WordProcessorImageBundle extends ImageBundle {
+       * 
+       *   /**
+       *    * Would match the file 'new_file_icon.png', 'new_file_icon.gif', or
+       *    * 'new_file_icon.png' located in the same package as this type.
+       *    *&#47;
+       *   public AbstractimagePrototype new_file_icon();
+       * 
+       *   /**
+       *    * Would match the file 'open_file_icon.gif' located in the same package
+       *    * as this type.
+       *    * @gwt.resource open_file_icon.gif
+       *    *&#47;
+       *   public AbstractImagePrototpe openFileIcon();
+       * 
+       *   /**
+       *    * Would match the file 'savefile.gif' located in the package
+       *    * 'com.mycompany.mygwtapp.icons', provided that this package
+       *    * is part of the module's classpath.
+       *    * @gwt.resource com/mycompany/mygwtapp/icons/savefile.gif
+       *    *&#47;
+       *   public AbstractImagePrototype saveFileIcon();
+       * }
+       * </pre>
+       * 
+       * </p>
+       * 
+       * <p>
+       * Methods in an image bundle return <code>AbstractImagePrototype</code>
+       * objects (rather than <code>Image</code> objects, as you might have
+       * expected) because <code>AbstractImagePrototype</code> objects provide
+       * additional lightweight representations of an image. For example, the
+       * {@link com.google.gwt.user.client.ui.AbstractImagePrototype#getHTML()}
+       * method provides an HTML fragment representing an image without having
+       * to create an actual instance of the {@link Image} widget. In some
+       * cases, it can be more efficient to manage images using these HTML
+       * fragments.
+       * </p>
+       * 
+       * <p>
+       * Another use of <code>AbstractImagePrototype</code> is to use
+       * {@link com.google.gwt.user.client.ui.AbstractImagePrototype#applyTo(Image)}
+       * to transform an existing <code>Image</code> into one that matches the
+       * prototype without having to instantiate another <code>Image</code>
+       * object. This can be useful if your application has an image that needs
+       * to be swapped depending on some user-initiated action. Of course, if an
+       * <code>Image</code> is exactly what you need, the
+       * {@link com.google.gwt.user.client.ui.AbstractImagePrototype#createImage()}
+       * method can be used to generate new <code>Image</code> instances.
+       * </p>
+       * 
+       * <p>
+       * The following example shows how to use the image bundle that we just
+       * defined in your application:
+       * 
+       * <pre class="code">
+       * WordProcessorImageBundle wpImageBundle = (WordProcessorImageBundle) GWT
+       *        .create(WordProcessorImageBundle.class);
+       * HorizontalPanel tbPanel = new HorizontalPanel();
+       * tbPanel.add(wpImageBundle.new_file_icon().createImage());
+       * tbPanel.add(wpImageBundle.openFileIcon().createImage());
+       * tbPanel.add(wpImageBundle.saveFileIcon().createImage());
+       * </pre>
+       * 
+       * </p>
+       * 
+       * @title Creating and Using an Image Bundle
+       * @synopsis Define an image bundle and use it in your application.
+       * @see com.google.gwt.user.client.ImageBundle
+       * @see com.google.gwt.user.client.ui.AbstractImagePrototype
+       * @tip Image bundles are immutable, so you can keep a reference to a
+       *      singleton instance of an image bundle instead of creating a new
+       *      instance every time the image bundle is needed.
+       */
+      public static class DefiningAndUsingImageBundle {
+      }
+
+      /**
+       * Sometimes applications need different images depending on the locale
+       * that the user is in. When using image bundles, this means that we need
+       * different image bundles for different locales. Although image bundles
+       * and localization are orthognal concepts, they can work together by
+       * having locale-specific factories create instances of image bundles.
+       * 
+       * <p>
+       * The best way to explain this technique is with an example. Suppose that
+       * we define the following <code>ImageBundle</code> for use by a mail
+       * application:
+       * 
+       * <pre class="code">
+       * public interface MailImageBundle extends ImageBundle {
+       * 
+       *  /**
+       *   * The default 'Help' icon if no locale-specific image is specified.
+       *   * Will match 'help_icon.png', 'help_icon.gif', or 'help_icon.jpg' in
+       *   * the same package as this type.
+       *   *&#47;
+       *  public AbstractImagePrototype help_icon();
+       * 
+       *  /**
+       *   * The default 'Compose New Message' icon if no locale-specific 
+       *   * image is specified.
+       *   * @gwt.resource compose_new_message_icon.gif
+       *   *&#47;
+       *  public AbstractImagePrototype composeNewMessageIcon();
+       * }
+       * </pre>
+       * 
+       * </p>
+       * Suppose the application has to handle both English and French users. We
+       * define English and French variations of each image in
+       * <code>MailImageBundle</code> by creating locale-specific image
+       * bundles that extend <code>MailImageBundle</code>:
+       * 
+       * <pre class="code">
+       * public interface MailImageBundle_en extends MailImageBundle {
+       * 
+       *  /**
+       *   * The English version of the 'Compose New Message' icon.
+       *   * Since we are not overriding the help_icon() method, this bundle
+       *   * uses the inherited method from MailImageBundle.
+       *   * @gwt.resource compose_new_message_icon_en.gif
+       *   *&#47;
+       *  public AbstractImagePrototype composeNewMessageIcon();
+       * }
+       * 
+       * public interface MailimageBundle_fr extends MailImageBundle {
+       * 
+       *  /**
+       *   * The French version of the 'Help' icon.
+       *   * @gwt.resource help_icon_fr.gif
+       *   *&#47;
+       *  public AbstractImagePrototype help_icon();
+       * 
+       *  /**
+       *   * The French version of the 'Compose New Message' icon.
+       *   * @gwt.resource compose_new_message_icon_fr.gif
+       *   *&#47;
+       *  public AbstractImagePrototype composeNewMessageIcon();
+       * }
+       * </pre>
+       * 
+       * The final step is to create a mechanism for choosing the correct image
+       * bundle based on the user's locale. By extending
+       * {@link com.google.gwt.i18n.client.Localizable Localizable}, we can
+       * create a locale-sensitive factory that will return new instances of
+       * <code>MailImageBundle</code> that match the factory's locale:
+       * 
+       * <pre class="code">
+       * public interface MailImageBundleFactory extends Localizable {
+       * 
+       *    public MailImageBundle createImageBundle();
+       * }
+       * 
+       * public class MailImageBundleFactory_en extends MailImageBundleFactory {
+       * 
+       *    public MailImageBundle createImageBundle() {
+       *        return (MailImageBundle) GWT.create(MailImageBundle_en.class);
+       *    }
+       * }
+       * 
+       * public class MailImageBundleFactory_fr extends MailImageBundleFactory {
+       * 
+       *    public MailImageBundle createImageBundle() {
+       *        return (MailImageBundle) GWT.create(MailImageBundle_fr.class);
+       *    }
+       * }
+       * </pre>
+       * 
+       * The application code that utilizes a locale-sensitive image bundle
+       * would look something like this:
+       * 
+       * <pre class="code">
+       * // Create a locale-sensitive MailImageBundleFactory
+       * MailImageBundleFactory mailImageBundleFactory = (MailImageBundleFactory) GWT
+       *        .create(MailImageBundleFactory.class);
+       * 
+       * // This will return a locale-sensitive MailImageBundle, since we are using
+       * // a locale-sensitive factory to create it.
+       * MailImageBundle mailImageBundle = mailImageBundleFactory.createImageBundle();
+       * 
+       * // Get the image prototype for the icon that we are interested in.
+       * AbstractImagePrototype helpIconProto = mailImageBundle.help_icon();
+       * 
+       * // Create an Image object from the prototype and add it to a panel.
+       * panel.add(helpIconProto.createImage());
+       * </pre>
+       * 
+       * @title Image Bundles and Localization
+       * @synopsis Create locale-sensitive image bundles by using GWT's
+       *           localization capabilities.
+       * @see com.google.gwt.user.client.ImageBundle
+       * @see com.google.gwt.i18n.client.Localizable
+       * 
+       */
+      public static class InteractionWithLocalization {
+      }
+    }
   }
 
   /**
@@ -1833,8 +2168,8 @@ public class DeveloperGuide {
      * that does</li>
      * <li>all non-<code>transient</code> fields are themselves
      * serializable, and</li>
-     * <li>it explicitly defines a default constructor, which is a constructor that is
-     * declared to be public and takes no arguments</li>
+     * <li>it explicitly defines a default constructor, which is a constructor
+     * that is declared to be public and takes no arguments</li>
      * </ol>
      * 
      * The <code>transient</code> keyword is honored, so values in transient
@@ -1917,7 +2252,7 @@ public class DeveloperGuide {
         /**
          * Default Constructor. The Default Constructor's explicit declaration
          * is required for a serializable class.
-         *
+         * 
          */
         public MyClass() {
         }

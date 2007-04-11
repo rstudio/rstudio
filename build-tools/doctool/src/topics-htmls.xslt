@@ -1,4 +1,20 @@
 <?xml version="1.0"?>
+
+<!--
+Copyright 2007 Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not
+use this file except in compliance with the License. You may obtain a copy of
+the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+License for the specific language governing permissions and limitations under
+the License.
+-->
 <xsl:stylesheet version="1.0"
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="html" />
@@ -328,39 +344,63 @@
               </div>
             </div>
           </xsl:for-each>
+          
           <!-- Links to child topics -->
-          <xsl:if test="childIntro">
-            <xsl:if test="childIntro/text()">
-              <h2>
-                <xsl:value-of select="childIntro/text()" />
-              </h2>
-            </xsl:if>
-            <ul class="featurelist">
-              <xsl:for-each select="topic">
-                <li>
-                  <div class="heading">
-                    <xsl:call-template name="makeLink">
-                      <xsl:with-param name="linkText"
-                        select="title/node()" />
-                      <xsl:with-param name="linkTarget" select="." />
-                    </xsl:call-template>
-                  </div>
-                  <xsl:if test="synopsis">
-                    <div>
-                      <xsl:apply-templates select="synopsis" />
-                    </div>
-                  </xsl:if>
-                </li>
-              </xsl:for-each>
-            </ul>
-          </xsl:if>
+		  <xsl:if test="childIntro">
+		    <xsl:if test="childIntro/text()">
+		      <h2>
+		        <xsl:value-of select="childIntro/text()" />
+		      </h2>
+		    </xsl:if>
+		    
+		    <xsl:if test="topic">
+		    	<ul class="childToc">
+		            <xsl:for-each select="topic">
+		            	<li>
+		            	
+				          <div class="heading">
+				            <xsl:call-template name="makeLink">
+				              <xsl:with-param name="linkText"
+				                select="title/node()" />
+				              <xsl:with-param name="linkTarget" select="." />
+				            </xsl:call-template>
+				          </div>
+				          
+				          <xsl:if test="synopsis">
+				            <div class="synopsis">
+				              <xsl:apply-templates select="synopsis/node()" />
+				            </div>
+				          </xsl:if>
+
+				          <xsl:if test="topic">
+				            <ul>
+			                  <xsl:for-each select="topic">
+			                  	<li>
+						            <xsl:call-template name="makeLink">
+						              <xsl:with-param name="linkText"
+						                select="title/node()" />
+						              <xsl:with-param name="linkTarget" select="." />
+						            </xsl:call-template>
+						            <xsl:if test="position() != last()">,</xsl:if>
+						      	</li>
+			  	              </xsl:for-each>
+				            </ul>
+				          </xsl:if>
+
+						</li>
+			          
+		            </xsl:for-each>
+				</ul>
+			</xsl:if>
+		  </xsl:if>
+          
           <!-- See also links -->
           <xsl:if test="seeAlso/link">
             <div class="topicSeeAlso">
               <h2>Related topics</h2>
               <xsl:for-each select="seeAlso/link">
                 <xsl:apply-templates select="." />
-                <xsl:if test="position()!=last()">,</xsl:if>
+                <xsl:if test="position()!=last()">, </xsl:if>
               </xsl:for-each>
             </div>
           </xsl:if>
@@ -448,7 +488,7 @@
       </body>
     </html>
   </xsl:template>
-
+  
   <xsl:template match="@*|node()">
     <xsl:copy>
       <xsl:apply-templates select="@*|node()" />
