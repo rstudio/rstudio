@@ -17,10 +17,11 @@ package com.google.gwt.sample.kitchensink.client;
 
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.KeyboardListenerAdapter;
 import com.google.gwt.user.client.ui.PasswordTextBox;
+import com.google.gwt.user.client.ui.RichTextArea;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.TextBoxBase;
@@ -60,10 +61,23 @@ public class Text extends Sink {
     panel.add(createTextThing(passwordText));
     panel.add(new HTML("Text area:"));
     panel.add(createTextThing(textArea));
+    panel.add(new HTML("Rich text area:"));
+    panel.add(createRichText());
     initWidget(panel);
   }
 
   public void onShow() {
+  }
+
+  private Widget createRichText() {
+    RichTextArea area = new RichTextArea();
+    RichTextToolbar tb = new RichTextToolbar(area);
+
+    VerticalPanel p = new VerticalPanel();
+    p.add(tb);
+    p.add(area);
+    area.setWidth("100%");
+    return p;
   }
 
   private Widget createTextThing(final TextBoxBase textBox) {
