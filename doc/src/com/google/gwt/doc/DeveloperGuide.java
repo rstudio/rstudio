@@ -333,32 +333,28 @@ public class DeveloperGuide {
      * 
      * <pre class="code">
      * &lt;html&gt;
-     *      &lt;head&gt;
-     *      
-     *          &lt;!-- The fully-qualified module name --&gt;
-     *          &lt;meta name='gwt:module' content='com.example.cal.Calendar'&gt;
-     *          
-     *          &lt;!-- Properties can be specified to influence deferred binding --&gt;
-     *          &lt;meta name='gwt:property' content='locale=en_UK'&gt;
-     *          
-     *          &lt;!-- Stylesheets are optional, but useful --&gt;
-     *          &lt;link rel="stylesheet" href="Calendar.css"&gt;
-     *          
-     *          &lt;!-- Titles are optional, but useful --&gt;
-     *          &lt;title&gt;Calendar App&lt;/title&gt;
-     *          
-     *      &lt;/head&gt;
-     *      &lt;body&gt;
-     *       
-     *          &lt;!-- Include the bootstrap script just inside the body or in the head    --&gt;
-     *          &lt;!-- (startup is slightly faster if you place it just after the body tag --&gt;
-     *          &lt;script language="javascript" src="gwt.js"&gt;&lt;/script&gt;
-     *          
-     *          &lt;!-- Include a history iframe to enable full GWT history support --&gt;
-     *          &lt;!-- (the id must be exactly as shown)                           --&gt;
-     *          &lt;iframe id="__gwt_historyFrame" style="width:0;height:0;border:0"&gt;&lt;/iframe&gt;
-     *          
-     *      &lt;/body&gt;
+     *  &lt;head&gt;
+     *  
+     *    &lt;!-- Properties can be specified to influence deferred binding --&gt;
+     *    &lt;meta name='gwt:property' content='locale=en_UK'&gt;
+     *    
+     *    &lt;!-- Stylesheets are optional, but useful --&gt;
+     *    &lt;link rel="stylesheet" href="Calendar.css"&gt;
+     *    
+     *    &lt;!-- Titles are optional, but useful --&gt;
+     *    &lt;title&gt;Calendar App&lt;/title&gt;
+     *    
+     *  &lt;/head&gt;
+     *  &lt;body&gt;
+     *   
+     *    &lt;!-- The fully-qualified module name, followed by 'nocache.js' --&gt;
+     *    &lt;script language="javascript" src="com.example.cal.Calendar.nocache.js"&gt;&lt;/script&gt;
+     *    
+     *    &lt;!-- Include a history iframe to enable full GWT history support --&gt;
+     *    &lt;!-- (the id must be exactly as shown)                           --&gt;
+     *    &lt;iframe id="__gwt_historyFrame" style="width:0;height:0;border:0"&gt;&lt;/iframe&gt;
+     *    
+     *  &lt;/body&gt;
      * &lt;/html&gt;
      * </pre>
      * 
@@ -664,18 +660,16 @@ public class DeveloperGuide {
        * servlets may be loaded in this manner, including those from inherited
        * modules.</dd>
        * 
-       * <dt>&lt;script src="<i>js-url</i>"&gt;<i>script ready-function body</i>&lt;/script&gt;</dt>
+       * <dt>&lt;script src="<i>js-url</i>"/&gt;</dt>
        * <dd>Automatically injects the external JavaScript file located at the
-       * location specified by <i>src</i>. <i>script ready-function body</i>
-       * is a JavaScript function body that returns <code>true</code> when the
-       * script is known to be initialized. See
-       * {@link DeveloperGuide.Fundamentals.Modules.AutomaticResourceInjection automatic resource injection}
+       * location specified by <i>src</i>. See
+       * {@link DeveloperGuide.Fundamentals.Modules.AutomaticResourceInjection automatic resource inclusion}
        * for details.</dd>
        * 
        * <dt>&lt;stylesheet src="<i>css-url</i>"/&gt;</dt>
        * <dd>Automatically injects the external CSS file located at the
        * location specified by <i>src</i>. See
-       * {@link DeveloperGuide.Fundamentals.Modules.AutomaticResourceInjection automatic resource injection}
+       * {@link DeveloperGuide.Fundamentals.Modules.AutomaticResourceInjection automatic resource inclusion}
        * for details.</dd>
        * 
        * <dt>&lt;extend-property name="<i>client-property-name</i>" values="<i>comma-separated-values</i>"/&gt;</dt>
@@ -699,47 +693,23 @@ public class DeveloperGuide {
        * causing them to be automatically loaded when the module itself is
        * loaded.
        * 
-       * <h2>Injecting External JavaScript</h2>
-       * Script injection is a convenient way to automatically associate
-       * external JavaScript files with your module. The script injection uses
-       * the following syntax:
+       * <h2>Including External JavaScript</h2>
+       * Script inclusion is a convenient way to automatically associate
+       * external JavaScript files with your module. Use the following syntax to
+       * cause an external JavaScript file to be loaded into the
+       * {@link HostPage host page} before your module entry point is called.
        * 
-       * <pre class="code">
-       * &lt;script src="<i>js-url</i>"&gt;&lt;![CDATA[
-       *   <i>script ready-function body</i> 
-       * ]]&gt;&lt;/script&gt;
-       * </pre>
+       * <pre class="code">&lt;script src="<i>js-url</i>"/&gt;</pre>
        * 
-       * where <i>ready-function body</i> is the body of a JavaScript function
-       * that returns <code>true</code> when the script is loaded and is ready
-       * for use. The script is loaded into the namespace of the
+       * The script is loaded into the namespace of the
        * {@link DeveloperGuide.Fundamentals.HostPage host page} as if you had
        * included it explicitly using the HTML <code>&lt;script&gt;</code>
-       * element.
+       * element. The script will be loaded before your
+       * {@link com.google.gwt.core.client.EntryPoint#onModuleLoad() onModuleLoad()}
+       * is called.
        * 
-       * 
-       * <p>
-       * For example, suppose your module relies on a script called
-       * <code>InjectedScript.js</code> that looks like this:
-       * 
-       * {@gwt.include com/google/gwt/examples/module/InjectedScript.js}
-       * 
-       * Your module might look like this:
-       * 
-       * {@gwt.include com/google/gwt/examples/module/ScriptInjection.gwt.xml}
-       * </p>
-       * 
-       * <p>
-       * The purpose of the ready-function is to determine unambiguously that
-       * the script is fully loaded, so that your GWT code can use
-       * {@link DeveloperGuide.JavaScriptNativeInterface JSNI} and be sure the
-       * referenced identifiers are available. In the example above, the
-       * existence of the function <code>bar</code> indicates that the script
-       * is ready.
-       * </p>
-       * 
-       * <h2>Injecting External Stylesheets</h2>
-       * Stylesheet injection is a convenient way to automatically associate
+       * <h2>Including External Stylesheets</h2>
+       * Stylesheet inclusion is a convenient way to automatically associate
        * external CSS files with your module. Use the following syntax to cause
        * a CSS file to be automatically attached to the
        * {@link HostPage host page}.
@@ -750,18 +720,22 @@ public class DeveloperGuide {
        * inclusion into the page reflects the order in which the elements appear
        * in your module XML.
        * 
-       * <h2>Injection and Module Inheritance</h2>
-       * Module inheritance makes resource injection particularly convenient. If
+       * <h2>Inclusion and Module Inheritance</h2>
+       * Module inheritance makes resource inclusion particularly convenient. If
        * you wish to create a reusable library that relies upon particular
        * stylesheets or JavaScript files, you can be sure that clients of your
        * library have everything they need automatically by inheriting from your
        * module.
        * 
-       * @title Automatic Resource Injection
+       * @title Automatic Resource Inclusion
        * @synopsis Modules can contain references to external JavaScript and CSS
        *           files, causing them to be automatically loaded when the
        *           module itself is loaded.
        * @see DeveloperGuide.Fundamentals.Modules.ModuleXml
+       * @tip Versions of GWT prior to 1.4 required a script-ready function to
+       *      determine when an included script was loaded. This is no longer
+       *      required; all included scripts will be loaded when your
+       *      application starts, in the order in which they are declared.
        */
       public static class AutomaticResourceInjection {
       }
@@ -2252,7 +2226,6 @@ public class DeveloperGuide {
         /**
          * Default Constructor. The Default Constructor's explicit declaration
          * is required for a serializable class.
-         * 
          */
         public MyClass() {
         }
@@ -2569,26 +2542,25 @@ public class DeveloperGuide {
      * special support for creating and reporting on benchmarks. Specifically,
      * GWT has introduced a new {@link com.google.gwt.junit.client.Benchmark}
      * class which provides built-in facilities for common benchmarking needs.
-     *
+     * 
      * To take advantage of benchmarking support, take the following steps:
      * <ol>
-     *   <li>Review the documentation on
+     * <li>Review the documentation on
      * {@link com.google.gwt.junit.client.Benchmark}. Take a look at the
      * example benchmark code.</li>
-     *   <li>Create your own benchmark by subclassing
-     * {@link com.google.gwt.junit.client.Benchmark}.
-     * Execute your benchmark like you would any normal JUnit test. By default,
-     * the test results are written to a report XML file in your working
-     * directory.</li>
-     *   <li>Run <code>benchmarkViewer</code> to browse visualizations
-     * (graphs/charts) of your report data. The <code>benchmarkViewer</code> is
-     * a GWT tool in the root of your GWT installation directory that displays
-     * benchmark reports.</li>
+     * <li>Create your own benchmark by subclassing
+     * {@link com.google.gwt.junit.client.Benchmark}. Execute your benchmark
+     * like you would any normal JUnit test. By default, the test results are
+     * written to a report XML file in your working directory.</li>
+     * <li>Run <code>benchmarkViewer</code> to browse visualizations
+     * (graphs/charts) of your report data. The <code>benchmarkViewer</code>
+     * is a GWT tool in the root of your GWT installation directory that
+     * displays benchmark reports.</li>
      * </ol>
-     *
+     * 
      * @title Benchmarking
      * @synopsis How to use GWT's JUnit support to create and report on
-     * benchmarks to help you optimize your code.
+     *           benchmarks to help you optimize your code.
      */
     public static class JUnitBenchmarking {
     }
@@ -3205,6 +3177,13 @@ public class DeveloperGuide {
      * <code>null</code>; never return <code>undefined</code> from a JSNI
      * method or unpredictable behavior will occur. </li>
      * 
+     * <li> Violating any of these marshaling rules in
+     * {@link DeveloperGuide.Fundamentals.HostedMode hosted mode} will generate
+     * a <code>com.google.gwt.dev.shell.HostedModeException</code> detailing
+     * the problem. This exception is not
+     * {@link DeveloperGuide.Fundamentals.ClientSide translatable} and never
+     * thrown in {@link DeveloperGuide.Fundamentals.WebMode web mode}. </li>
+     * 
      * <li> {@link JavaScriptObject} is a magical type that gets special
      * treatment from the GWT compiler and hosted browser. Its purpose is to
      * provide an opaque representation of native JavaScript objects to Java
@@ -3213,6 +3192,9 @@ public class DeveloperGuide {
      * 
      * @title Sharing objects between Java source and JavaScript
      * @synopsis How Java objects appear to JavaScript code and vice-versa.
+     * @tip When returning a possibly undefined value from a JSNI method, we
+     *      suggest using the idiom <blockquote><code>return (value == null) ? null : value;</code></blockquote>
+     *      to avoid returning <code>undefined</code>.
      */
     public static class Marshaling {
     }
