@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,14 +18,14 @@ package com.google.gwt.junit.viewer.server;
 import com.google.gwt.junit.viewer.client.Report;
 
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Hydrates a Report from its XML representation.
@@ -34,7 +34,7 @@ class ReportXml {
 
   /**
    * Hydrates a Report from its XML representation.
-   *
+   * 
    * @param element The XML element to hydrate from.
    * @return a new report (with null id)
    */
@@ -54,11 +54,10 @@ class ReportXml {
 
     report.setGwtVersion(element.getAttribute("gwt_version"));
 
-    List/*<Element>*/ children = getElementChildren(element, "category");
-    report.setCategories(new ArrayList/*<Category>*/(children.size()));
+    List/* <Element> */children = getElementChildren(element, "category");
+    report.setCategories(new ArrayList/* <Category> */(children.size()));
     for (int i = 0; i < children.size(); ++i) {
-      report.getCategories()
-          .add(CategoryXml.fromXml((Element) children.get(i)));
+      report.getCategories().add(CategoryXml.fromXml((Element) children.get(i)));
     }
 
     return report;
@@ -69,10 +68,10 @@ class ReportXml {
     return children.getLength() == 0 ? null : (Element) children.item(0);
   }
 
-  static List/*<Element>*/ getElementChildren(Element e, String name) {
+  static List/* <Element> */getElementChildren(Element e, String name) {
     NodeList children = e.getElementsByTagName(name);
     int numElements = children.getLength();
-    List/*<Element>*/ elements = new ArrayList/*<Element>*/(numElements);
+    List/* <Element> */elements = new ArrayList/* <Element> */(numElements);
     for (int i = 0; i < children.getLength(); ++i) {
       Node n = children.item(i);
       elements.add((Element) n);

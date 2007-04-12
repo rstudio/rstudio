@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -17,27 +17,27 @@ package com.google.gwt.junit.viewer.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.rpc.ServiceDefTarget;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CellPanel;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.ClickListener;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
-import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.rpc.ServiceDefTarget;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -45,15 +45,15 @@ import java.util.Map;
  * to operate correctly, you must have both the {@link ReportServer} RPC and
  * {@link com.google.gwt.junit.viewer.server.ReportImageServer} servlets up and
  * running within a servlet container.
- *
+ * 
  * <code>ReportViewer's</code> GWT XML module is configured to start these
- * servlets by default. Just start <code>ReportViewer</code> in hosted mode, and
- * GWT will run them within its own embedded servlet engine. For example,
- *
+ * servlets by default. Just start <code>ReportViewer</code> in hosted mode,
+ * and GWT will run them within its own embedded servlet engine. For example,
+ * 
  * <pre>java -cp &lt;classpath&gt; com.google.gwt.dev.GWTShell -out
  * ReportViewerShell/www
  * com.google.gwt.junit.viewer.ReportViewer/ReportViewer.html</pre>
- *
+ * 
  * You can configure the location where ReportServer reads the benchmark reports
  * from by setting the system property named in
  * {@link com.google.gwt.junit.client.Benchmark#REPORT_PATH}.
@@ -85,7 +85,7 @@ public class ReportViewer implements EntryPoint {
 
   HTML statusLabel;
 
-  List/*<ReportSummary>*/ summaries;
+  List/* <ReportSummary> */summaries;
 
   VerticalPanel summariesPanel;
 
@@ -104,17 +104,16 @@ public class ReportViewer implements EntryPoint {
 
     reportServer.getReportSummaries(new AsyncCallback() {
       public void onFailure(Throwable caught) {
-        String msg = "<p>" + caught.toString() + "</p>" +
-                     "<p>Is your path to the reports correct?</p>";
+        String msg = "<p>" + caught.toString() + "</p>"
+            + "<p>Is your path to the reports correct?</p>";
         statusLabel.setHTML(msg);
       }
 
       public void onSuccess(Object result) {
-        summaries = (List/*<ReportSummary>*/) result;
+        summaries = (List/* <ReportSummary> */) result;
         if (summaries != null) {
           if (summaries.size() == 0) {
-            statusLabel.setText(
-                "There are no benchmark reports available in this folder.");
+            statusLabel.setText("There are no benchmark reports available in this folder.");
           }
           Collections.sort(summaries, new Comparator() {
             public int compare(Object o1, Object o2) {
@@ -140,8 +139,8 @@ public class ReportViewer implements EntryPoint {
     tempReportTable.setWidget(0, 1, new Label("GWT Version"));
 
     if (report == null) {
-      tempReportTable
-          .setWidget(1, 0, new Label("No currently selected report."));
+      tempReportTable.setWidget(1, 0,
+          new Label("No currently selected report."));
       tempReportTable.getFlexCellFormatter().setColSpan(1, 0, 3);
       return tempReportTable;
     }
@@ -169,8 +168,8 @@ public class ReportViewer implements EntryPoint {
         categoryTable.setBorderWidth(0);
         categoryTable.setCellPadding(5);
         categoryTable.setText(0, 0, c.getName());
-        categoryTable.getFlexCellFormatter()
-            .setStyleName(0, 0, "benchmark-category");
+        categoryTable.getFlexCellFormatter().setStyleName(0, 0,
+            "benchmark-category");
 
         categoryTable.setWidget(0, 1, new Label("Description"));
         categoryTable.setWidget(1, 0, new Label(c.getName()));
@@ -195,32 +194,33 @@ public class ReportViewer implements EntryPoint {
         benchmarkTable.setCellPadding(5);
         benchmarkTable.setText(0, 0, benchmark.getName());
         // benchmarkTable.setText( 0, 1, benchmark.getDescription());
-        benchmarkTable.setWidget(1, 0,
-            new HTML("<pre>" + benchmark.getSourceCode() + "</pre>"));
-        benchmarkTable.getFlexCellFormatter()
-            .setStyleName(0, 0, "benchmark-name");
-        // benchmarkTable.getFlexCellFormatter().setStyleName( 0, 1, "benchmark-description" );
-        benchmarkTable.getFlexCellFormatter()
-            .setStyleName(1, 0, "benchmark-code");
+        benchmarkTable.setWidget(1, 0, new HTML("<pre>"
+            + benchmark.getSourceCode() + "</pre>"));
+        benchmarkTable.getFlexCellFormatter().setStyleName(0, 0,
+            "benchmark-name");
+        // benchmarkTable.getFlexCellFormatter().setStyleName( 0, 1,
+        // "benchmark-description" );
+        benchmarkTable.getFlexCellFormatter().setStyleName(1, 0,
+            "benchmark-code");
 
         // TODO(tobyr) Provide detailed benchmark information.
-        // Following commented code is a step in that direction. 
-/*
-        benchmarkTable.setWidget( 0, 1, new Label( "Description"));
-        benchmarkTable.setWidget( 0, 2, new Label( "Class Name"));
-        benchmarkTable.setWidget( 0, 3, new Label( "Source Code"));
-        benchmarkTable.setWidget( 1, 0, new Label( benchmark.getName()));
-        benchmarkTable.setWidget( 1, 1, new Label( benchmark.getDescription()));
-        benchmarkTable.setWidget( 1, 2, new Label( benchmark.getClassName()));
-        benchmarkTable.setWidget( 1, 3, new HTML( "<pre>" + benchmark.getSourceCode() + "</pre>"));
-*/
+        // Following commented code is a step in that direction.
+        /*
+         * benchmarkTable.setWidget( 0, 1, new Label( "Description"));
+         * benchmarkTable.setWidget( 0, 2, new Label( "Class Name"));
+         * benchmarkTable.setWidget( 0, 3, new Label( "Source Code"));
+         * benchmarkTable.setWidget( 1, 0, new Label( benchmark.getName()));
+         * benchmarkTable.setWidget( 1, 1, new Label(
+         * benchmark.getDescription())); benchmarkTable.setWidget( 1, 2, new
+         * Label( benchmark.getClassName())); benchmarkTable.setWidget( 1, 3,
+         * new HTML( "<pre>" + benchmark.getSourceCode() + "</pre>"));
+         */
         topTable.setWidget(currentRow++, 0, benchmarkTable);
 
         FlexTable resultsTable = new FlexTable();
         resultsTable.setBorderWidth(0);
         resultsTable.setCellPadding(5);
-        FlexTable.FlexCellFormatter resultsFormatter = resultsTable
-            .getFlexCellFormatter();
+        FlexTable.FlexCellFormatter resultsFormatter = resultsTable.getFlexCellFormatter();
         topTable.setWidget(currentRow++, 0, resultsTable);
 
         Collections.sort(benchmark.getResults(), new Comparator() {
@@ -250,33 +250,30 @@ public class ReportViewer implements EntryPoint {
           Result result = (Result) benchmark.getResults().get(k);
 
           /*
-          resultsTable.setWidget( 0, 0, new Label( "Result Agent"));
-          resultsTable.setWidget( 0, 1, new Label( "Host"));
-          resultsTable.setWidget( 0, 2, new Label( "Graph"));
-          resultsTable.setWidget( 1, 0, new Label( result.getAgent()));
-          resultsTable.setWidget( 1, 1, new Label( result.getHost()));
-          */
+           * resultsTable.setWidget( 0, 0, new Label( "Result Agent"));
+           * resultsTable.setWidget( 0, 1, new Label( "Host"));
+           * resultsTable.setWidget( 0, 2, new Label( "Graph"));
+           * resultsTable.setWidget( 1, 0, new Label( result.getAgent()));
+           * resultsTable.setWidget( 1, 1, new Label( result.getHost()));
+           */
 
           resultsTable.setWidget(0, k, new Image(getImageUrl(report.getId(),
               c.getName(), benchmark.getClassName(), benchmark.getName(),
               result.getAgent())));
 
           /*
-          FlexTable allTrialsTable = new FlexTable();
-          allTrialsTable.setBorderWidth(1);
-          allTrialsTable.setCellPadding(5);
-          FlexTable.CellFormatter allTrialsFormatter = allTrialsTable
-              .getFlexCellFormatter();
-          topTable.setWidget(currentRow++, 0, allTrialsTable);
-          allTrialsTable.setWidget(0, k, trialsTable);
-          allTrialsFormatter
-              .setAlignment(0, k, HasHorizontalAlignment.ALIGN_CENTER,
-                  HasVerticalAlignment.ALIGN_TOP);
-          */
+           * FlexTable allTrialsTable = new FlexTable();
+           * allTrialsTable.setBorderWidth(1); allTrialsTable.setCellPadding(5);
+           * FlexTable.CellFormatter allTrialsFormatter = allTrialsTable
+           * .getFlexCellFormatter(); topTable.setWidget(currentRow++, 0,
+           * allTrialsTable); allTrialsTable.setWidget(0, k, trialsTable);
+           * allTrialsFormatter .setAlignment(0, k,
+           * HasHorizontalAlignment.ALIGN_CENTER,
+           * HasVerticalAlignment.ALIGN_TOP);
+           */
 
-          resultsFormatter
-              .setAlignment(2, k, HasHorizontalAlignment.ALIGN_LEFT,
-                  HasVerticalAlignment.ALIGN_TOP);
+          resultsFormatter.setAlignment(2, k,
+              HasHorizontalAlignment.ALIGN_LEFT, HasVerticalAlignment.ALIGN_TOP);
 
           // A table of straight data for all trials for an agent
           FlexTable trialsTable = new FlexTable();
@@ -288,9 +285,9 @@ public class ReportViewer implements EntryPoint {
           if (k == 0) {
             resultsTable.setWidget(1, k, visibilityButton);
             resultsFormatter.setColSpan(1, k, benchmark.getResults().size());
-            resultsFormatter
-                .setAlignment(1, k, HasHorizontalAlignment.ALIGN_LEFT,
-                    HasVerticalAlignment.ALIGN_MIDDLE);
+            resultsFormatter.setAlignment(1, k,
+                HasHorizontalAlignment.ALIGN_LEFT,
+                HasVerticalAlignment.ALIGN_MIDDLE);
           }
 
           resultsTable.setWidget(2, k, trialsTable);
@@ -366,11 +363,11 @@ public class ReportViewer implements EntryPoint {
         }
       });
       tempSummariesTable.setWidget(index, 0, idLabel);
-      tempSummariesTable
-          .setWidget(index, 1, new Label(summary.getDateString()));
-      tempSummariesTable
-          .setWidget(index, 2, new Label(summary.getNumTests() + ""));
-      // tempSummariesTable.setWidget( index, 3, new Label(summary.allTestsSucceeded() + ""));
+      tempSummariesTable.setWidget(index, 1, new Label(summary.getDateString()));
+      tempSummariesTable.setWidget(index, 2, new Label(summary.getNumTests()
+          + ""));
+      // tempSummariesTable.setWidget( index, 3, new
+      // Label(summary.allTestsSucceeded() + ""));
     }
 
     return tempSummariesTable;
@@ -382,10 +379,6 @@ public class ReportViewer implements EntryPoint {
     reportTable = table;
     reportPanel.insert(reportTable, 1);
   }
-
-//  private native String getDocumentLocation() /*-{
-//    return window.location;
-//  }-*/;
 
   private void displaySummaries() {
     FlexTable table = createSummariesTable();
@@ -403,16 +396,13 @@ public class ReportViewer implements EntryPoint {
 
   private String getImageUrl(String report, String category, String testClass,
       String testMethod, String agent) {
-    return imageServer + encode(report) + "/" +
-        encode(category) + "/" +
-        encode(testClass) + "/" +
-        encode(testMethod) + "/" +
-        encode(agent);
+    return imageServer + encode(report) + "/" + encode(category) + "/"
+        + encode(testClass) + "/" + encode(testMethod) + "/" + encode(agent);
   }
 
   /**
    * Loads report details asynchronously for a given report.
-   *
+   * 
    * @param id the non-null id of the report
    */
   private void getReportDetails(String id) {

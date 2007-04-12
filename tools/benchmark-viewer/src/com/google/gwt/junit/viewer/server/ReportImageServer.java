@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,65 +15,71 @@
  */
 package com.google.gwt.junit.viewer.server;
 
-import com.google.gwt.junit.viewer.client.Report;
-import com.google.gwt.junit.viewer.client.Category;
 import com.google.gwt.junit.viewer.client.Benchmark;
+import com.google.gwt.junit.viewer.client.BrowserInfo;
+import com.google.gwt.junit.viewer.client.Category;
+import com.google.gwt.junit.viewer.client.Report;
 import com.google.gwt.junit.viewer.client.Result;
 import com.google.gwt.junit.viewer.client.Trial;
-import com.google.gwt.junit.viewer.client.BrowserInfo;
 
-import org.jfree.data.category.DefaultCategoryDataset;
-import org.jfree.data.xy.XYSeries;
-import org.jfree.data.xy.XYSeriesCollection;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.encoders.EncoderUtil;
 import org.jfree.chart.encoders.ImageFormat;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.InputStream;
-import java.io.ByteArrayInputStream;
-import java.net.URLDecoder;
-import java.awt.image.BufferedImage;
 import java.awt.Font;
-import java.util.List;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.TreeMap;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.ServletException;
 
 /**
  * Serves up report images for the ReportViewer application. Generates the
  * charts/graphs which contain the benchmarking data for a report.
- *
- * <p>This servlet requires the name of the report file, the category, the
- * benchmark class, the test method, and the browser agent.<p>
- *
- * <p>An Example URI:<pre>
+ * 
+ * <p>
+ * This servlet requires the name of the report file, the category, the
+ * benchmark class, the test method, and the browser agent.
+ * <p>
+ * 
+ * <p>
+ * An Example URI:
+ * 
+ * <pre>
  * /com.google.gwt.junit.viewer.ReportViewer/test_images/
  *   report-12345.xml/
  *   RemoveCategory/
  *   com.google.gwt.junit.client.ArrayListAndVectorBenchmark/
  *   testArrayListRemoves/
  *   Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.7.12) Gecko/20050920/
- * </pre></p>
+ * </pre>
+ * 
+ * </p>
  */
 public class ReportImageServer extends HttpServlet {
 
   private static final String charset = "UTF-8";
 
-  private static void copy(InputStream in, OutputStream out)
-      throws IOException {
+  private static void copy(InputStream in, OutputStream out) throws IOException {
     byte[] buf = new byte[512];
 
     while (true) {
@@ -95,20 +101,22 @@ public class ReportImageServer extends HttpServlet {
 
     // Pick the domain and series variables for our graph.
     // Right now we only handle up to two "user" variables.
-    // We set the domain variable to the be the one containing the most unique values.
+    // We set the domain variable to the be the one containing the most unique
+    // values.
     int numVariables = firstTrial.getVariables().size();
 
     String domainVariable = null;
     String seriesVariable = null;
 
-    Map/*<String,Set<String>>*/ variableValues = null;
+    Map/* <String,Set<String>> */variableValues = null;
 
     if (numVariables == 1) {
-      domainVariable = (String) firstTrial.getVariables().keySet().iterator()
-          .next();
+      domainVariable = (String) firstTrial.getVariables().keySet().iterator().next();
     } else {
-      // TODO(tobyr): Do something smarter, like allow the user to specify which variables
-      // are domain and series, along with the variables which are held constant.
+      // TODO(tobyr): Do something smarter, like allow the user to specify which
+      // variables
+      // are domain and series, along with the variables which are held
+      // constant.
 
       variableValues = new HashMap();
 
@@ -145,10 +153,8 @@ public class ReportImageServer extends HttpServlet {
       }
 
       if (numValuesMap.values().size() > 0) {
-        domainVariable = (String) ((List) numValuesMap
-            .get(numValuesMap.lastKey())).get(0);
-        seriesVariable = (String) ((List) numValuesMap
-            .get(numValuesMap.firstKey())).get(0);
+        domainVariable = (String) ((List) numValuesMap.get(numValuesMap.lastKey())).get(0);
+        seriesVariable = (String) ((List) numValuesMap.get(numValuesMap.firstKey())).get(0);
       }
     }
 
@@ -162,12 +168,13 @@ public class ReportImageServer extends HttpServlet {
       DefaultCategoryDataset data = new DefaultCategoryDataset();
       data.addValue(trial.getRunTimeMillis(), "result", "result");
 
-      return ChartFactory.createBarChart(title, testName, valueTitle,
-          data, PlotOrientation.VERTICAL, false, false, false);
+      return ChartFactory.createBarChart(title, testName, valueTitle, data,
+          PlotOrientation.VERTICAL, false, false, false);
     } else if (numVariables == 1) {
 
       // Show a line graph with only 1 series
-      // Or.... choose between a line graph and a bar graph depending upon whether the
+      // Or.... choose between a line graph and a bar graph depending upon
+      // whether the
       // type of the domain is numeric.
 
       XYSeriesCollection data = new XYSeriesCollection();
@@ -176,7 +183,7 @@ public class ReportImageServer extends HttpServlet {
 
       for (Iterator it = trials.iterator(); it.hasNext();) {
         Trial trial = (Trial) it.next();
-        if ( trial.getException() != null) {
+        if (trial.getException() != null) {
           continue;
         }
         double time = trial.getRunTimeMillis();
@@ -200,14 +207,14 @@ public class ReportImageServer extends HttpServlet {
 
         for (Iterator trialsIt = trials.iterator(); trialsIt.hasNext();) {
           Trial trial = (Trial) trialsIt.next();
-          if ( trial.getException() != null) {
+          if (trial.getException() != null) {
             continue;
           }
           Map variables = trial.getVariables();
           if (variables.get(seriesVariable).equals(seriesValue)) {
             double time = trial.getRunTimeMillis();
-            String domainValue = (String) trial.getVariables()
-                .get(domainVariable);
+            String domainValue = (String) trial.getVariables().get(
+                domainVariable);
             series.add(Double.parseDouble(domainValue), time);
           }
         }
@@ -224,46 +231,42 @@ public class ReportImageServer extends HttpServlet {
     // Leaving this around until we can handle multivariate charts in dimensions
     // greater than two.
 
-    // Code for creating a category data set - probably better with a bar chart instead of line chart
+    // Code for creating a category data set - probably better with a bar chart
+    // instead of line chart
     /*
-    DefaultCategoryDataset data = new DefaultCategoryDataset();
-    String series = domainVariable;
-
-    for ( Iterator it = trials.iterator(); it.hasNext(); ) {
-      Trial trial = (Trial) it.next();
-      double time = trial.getRunTimeMillis();
-      String domainValue = (String) trial.getVariables().get( domainVariable );
-      data.addValue( time, series, domainValue );
-    }
-
-    String title = "";
-    String categoryTitle = domainVariable;
-    PlotOrientation orientation = PlotOrientation.VERTICAL;
-
-    chart = ChartFactory.createLineChart( title, categoryTitle, valueTitle, data, orientation, true, true, false );
-    */
+     * DefaultCategoryDataset data = new DefaultCategoryDataset(); String series =
+     * domainVariable;
+     * 
+     * for ( Iterator it = trials.iterator(); it.hasNext(); ) { Trial trial =
+     * (Trial) it.next(); double time = trial.getRunTimeMillis(); String
+     * domainValue = (String) trial.getVariables().get( domainVariable );
+     * data.addValue( time, series, domainValue ); }
+     * 
+     * String title = ""; String categoryTitle = domainVariable; PlotOrientation
+     * orientation = PlotOrientation.VERTICAL;
+     * 
+     * chart = ChartFactory.createLineChart( title, categoryTitle, valueTitle,
+     * data, orientation, true, true, false );
+     */
 
     /*
-    DefaultCategoryDataset data = new DefaultCategoryDataset();
-    String series1 = "firefox";
-    String series2 = "ie";
-
-    data.addValue( 1.0, series1, "1024");
-    data.addValue( 2.0, series1, "2048");
-    data.addValue( 4.0, series1, "4096");
-    data.addValue( 8.0, series1, "8192");
-
-    data.addValue( 2.0, series2, "1024");
-    data.addValue( 4.0, series2, "2048");
-    data.addValue( 8.0, series2, "4096");
-    data.addValue( 16.0, series2,"8192");
-
-    String title = "";
-    String categoryTitle = "size";
-    PlotOrientation orientation = PlotOrientation.VERTICAL;
-
-    chart = ChartFactory.createLineChart( title, categoryTitle, valueTitle, data, orientation, true, true, false );
-    */
+     * DefaultCategoryDataset data = new DefaultCategoryDataset(); String
+     * series1 = "firefox"; String series2 = "ie";
+     * 
+     * data.addValue( 1.0, series1, "1024"); data.addValue( 2.0, series1,
+     * "2048"); data.addValue( 4.0, series1, "4096"); data.addValue( 8.0,
+     * series1, "8192");
+     * 
+     * data.addValue( 2.0, series2, "1024"); data.addValue( 4.0, series2,
+     * "2048"); data.addValue( 8.0, series2, "4096"); data.addValue( 16.0,
+     * series2,"8192");
+     * 
+     * String title = ""; String categoryTitle = "size"; PlotOrientation
+     * orientation = PlotOrientation.VERTICAL;
+     * 
+     * chart = ChartFactory.createLineChart( title, categoryTitle, valueTitle,
+     * data, orientation, true, true, false );
+     */
   }
 
   public void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -307,8 +310,7 @@ public class ReportImageServer extends HttpServlet {
   }
 
   private void handleRequest(HttpServletRequest request,
-      HttpServletResponse response)
-      throws IOException, ServletException {
+      HttpServletResponse response) throws IOException, ServletException {
 
     String uri = request.getRequestURI();
     String requestString = uri.split("test_images/")[1];
@@ -345,9 +347,10 @@ public class ReportImageServer extends HttpServlet {
 
     chart.getTitle().setFont(Font.decode("Arial"));
 
-    // Try to fit all the graphs into a 1024 window, with a min of 240 and a max of 480
-    final int graphWidth = Math
-        .max(240, Math.min(480, (1024 - 10 * results.size()) / results.size()));
+    // Try to fit all the graphs into a 1024 window, with a min of 240 and a max
+    // of 480
+    final int graphWidth = Math.max(240, Math.min(480,
+        (1024 - 10 * results.size()) / results.size()));
     BufferedImage img = chart.createBufferedImage(graphWidth, 240);
     byte[] image = EncoderUtil.encode(img, ImageFormat.PNG);
 
