@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
+import com.google.gwt.user.client.Element;
+
 /**
  * IE6-specific implementation of rich-text editing.
  */
@@ -27,19 +29,15 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
   public native void initElement() /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     var _this = this;
-
     elem.onload = function() {
-      var doc = elem.contentWindow.document; 
-      doc.designMode = 'On';
-
-      doc.open();
-      doc.write('<html><body></body></html>');
-      doc.close();
-
-      // Initialize event handling.
       _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplIE6::initEvents()();
     };
+    elem.src = "RichTextIE.html";
   }-*/;
+
+  boolean isRichEditingActive(Element e) {
+    return true;
+  }
 
   native void initEvents() /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;

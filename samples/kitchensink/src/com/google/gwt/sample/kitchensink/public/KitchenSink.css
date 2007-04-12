@@ -255,49 +255,49 @@ a:visited {
 
 .gwt-RichTextToolbar .gwt-PushButton-up {
   margin-right: 2px;
-  border: 1px solid transparent;
+  border: 1px solid #C3D9FF;
 }
 
 .gwt-RichTextToolbar .gwt-PushButton-up-hovering {
   margin-right: 2px;
-  border: 1px solid transparent;
+  border: 1px solid #C3D9FF;
   border-color: #E8F1FF rgb(157, 174, 205) rgb(157, 174, 205) rgb(232, 241, 255)
 }
 
 .gwt-RichTextToolbar .gwt-PushButton-down {
   margin-right: 2px;
-  border: 1px solid transparent;
+  border: 1px solid #C3D9FF;
   border-color: #9DAECD rgb(232, 241, 255) rgb(232, 241, 255) rgb(157, 174, 205);
 }
 
 .gwt-RichTextToolbar .gwt-PushButton-down-hovering {
   margin-right: 2px;
-  border: 1px solid transparent;
+  border: 1px solid #C3D9FF;
   border-color: #9DAECD rgb(232, 241, 255) rgb(232, 241, 255) rgb(157, 174, 205);
 }
 
 .gwt-RichTextToolbar .gwt-ToggleButton-up {
   margin-right: 2px;
-  border: 1px solid transparent;
+  border: 1px solid #C3D9FF;
 }
 
 .gwt-RichTextToolbar .gwt-ToggleButton-up-hovering {
   margin-right: 2px;
-  border: 1px solid transparent;
+  border: 1px solid #C3D9FF;
   border-color: #E8F1FF rgb(157, 174, 205) rgb(157, 174, 205) rgb(232, 241, 255)
 }
 
 .gwt-RichTextToolbar .gwt-ToggleButton-down {
   margin-right: 2px;
   background-color: #E8F1FF;
-  border: 1px solid transparent;
+  border: 1px solid #C3D9FF;
   border-color: #9DAECD rgb(232, 241, 255) rgb(232, 241, 255) rgb(157, 174, 205);
 }
 
 .gwt-RichTextToolbar .gwt-ToggleButton-down-hovering {
   margin-right: 2px;
   background-color: #E8F1FF;
-  border: 1px solid transparent;
+  border: 1px solid #C3D9FF;
   border-color: #9DAECD rgb(232, 241, 255) rgb(232, 241, 255) rgb(157, 174, 205);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,9 +21,9 @@ function __MODULE_FUNC__() {
   var wnd = window
   ,doc = document
   ,external = wnd.external
-  
+
   // These two variables gate calling gwtOnLoad; both must be true to start
-  ,scriptsDone, loadDone
+  ,scriptsDone, loadDone, bodyDone
   
   // If non-empty, an alternate base url for this module
   ,base = ''
@@ -54,19 +54,29 @@ function __MODULE_FUNC__() {
   if (!wnd.__gwt_stylesLoaded) { wnd.__gwt_stylesLoaded = {}; }
   if (!wnd.__gwt_scriptsLoaded) { wnd.__gwt_scriptsLoaded = {}; }
 
+  // --------------- WINDOW ONLOAD HOOK ---------------
+
+  var oldOnLoad = wnd.onload;
+  wnd.onload = function() {
+    if (oldOnLoad) {
+      oldOnLoad();
+    }
+    bodyDone = true;
+    maybeStartModule();
+  };
+
   // --------------- INTERNAL FUNCTIONS ---------------
 
   function isHostedMode() {
     return (external && external.gwtOnLoad &&
         (wnd.location.search.indexOf('gwt.hybrid') == -1));
   }
-  
 
   // Called by both onScriptLoad() and onInjectionDone(). It causes
   // the specified module to be cranked up.
   //
   function maybeStartModule() {
-    if (scriptsDone && loadDone) {
+    if (scriptsDone && loadDone && bodyDone) {
       var iframe = doc.getElementById('__MODULE_NAME__');
       var frameWnd = iframe.contentWindow;
       // copy the init handlers function into the iframe
