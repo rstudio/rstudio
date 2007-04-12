@@ -35,6 +35,10 @@ import java.util.Iterator;
  * </ul>
  * 
  * <p>
+ * <img class='gallery' src='DisclosurePanel.png'/>
+ * </p>
+ * 
+ * <p>
  * The header and content sections can be easily selected using css with a child
  * selector:<br/> .gwt-DisclosurePanel-open .header { ... }
  * </p>

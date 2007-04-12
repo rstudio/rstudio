@@ -1133,6 +1133,16 @@ public class DeveloperGuide {
      * </tr>
      * 
      * <tr class='gallery-link'>
+     * <td><a href='com.google.gwt.user.client.ui.PushButton.html'>PushButton</a></td>
+     * <td><a href='com.google.gwt.user.client.ui.ToggleButton.html'>ToggleButton</a></td>
+     * </tr>
+     * 
+     * <tr class='gallery'>
+     * <td><img class='gallery' src='PushButton.png'/> </td>
+     * <td><img class='gallery' src='ToggleButton.png'/> </td>
+     * </tr>
+     * 
+     * <tr class='gallery-link'>
      * <td><a href='com.google.gwt.user.client.ui.CheckBox.html'>CheckBox</a></td>
      * <td><a href='com.google.gwt.user.client.ui.TextBox.html'>TextBox</a></td>
      * </tr>
@@ -1216,6 +1226,16 @@ public class DeveloperGuide {
      * </tr>
      * 
      * <tr class='gallery-link'>
+     * <td><a href='com.google.gwt.user.client.ui.VerticalSplitPanel.html'>VerticalSplitPanel</a></td>
+     * <td><a href='com.google.gwt.user.client.ui.HorizontalSplitPanel.html'>HorizontalSplitPanel</a></td>
+     * </tr>
+     * 
+     * <tr class='gallery'>
+     * <td><img class='gallery' src='VerticalSplitPanel.png'/> </td>
+     * <td><img class='gallery' src='HorizontalSplitPanel.png'/> </td>
+     * </tr>
+     * 
+     * <tr class='gallery-link'>
      * <td><a href='com.google.gwt.user.client.ui.DockPanel.html'>DockPanel</a></td>
      * <td><a href='com.google.gwt.user.client.ui.TabPanel.html'>TabPanel</a></td>
      * </tr>
@@ -1223,6 +1243,24 @@ public class DeveloperGuide {
      * <tr class='gallery'>
      * <td><img class='gallery' src='DockPanel.png'/> </td>
      * <td><img class='gallery' src='TabPanel.png'/> </td>
+     * </tr>
+     * 
+     * <tr class='gallery-link'>
+     * <td><a href='com.google.gwt.user.client.ui.RichTextArea.html'>RichTextArea</a></td>
+     * <td><a href='com.google.gwt.user.client.ui.DisclosurePanel.html'>DisclosurePanel</a></td>
+     * </tr>
+     * 
+     * <tr class='gallery'>
+     * <td><img class='gallery' src='RichTextArea.png'/> </td>
+     * <td><img class='gallery' src='DisclosurePanel.png'/> </td>
+     * </tr>
+     * 
+     * <tr class='gallery-link'>
+     * <td><a href='com.google.gwt.user.client.ui.SuggestBox.html'>SuggestBox</a></td>
+     * </tr>
+     * 
+     * <tr class='gallery'>
+     * <td><img class='gallery' src='SuggestBox.png'/> </td>
      * </tr>
      * 
      * </table>
