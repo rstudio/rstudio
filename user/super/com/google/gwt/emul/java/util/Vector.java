@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +33,15 @@ public class Vector extends AbstractList implements List, RandomAccess,
     arrayList = new ArrayList();
     addAll(c);
   }
+
+ /**
+   * There is no speed advantage to pre-allocating array sizes in JavaScript,
+   * so the <code>intialCapacity</code> parameter is ignored. This constructor is
+   * only present for compatibility with JDK 1.4's API.
+   */
+  public Vector(int initialCapacity) {
+    arrayList = new ArrayList(initialCapacity);
+  } 
 
   public void add(int index, Object o) {
     arrayList.add(index, o);

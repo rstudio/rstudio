@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,10 @@ import com.google.gwt.core.client.JavaScriptObject;
  * <p>
  * <b>Capacity</b> There is no speed advantage to pre-allocating array sizes in
  * JavaScript, so this implementation does not include any of the capacity and
- * "growth increment" concepts in the standard ArrayList class.
+ * "growth increment" concepts in the standard ArrayList class. Although
+ * <code>ArrayList(int)</code> accepts a value for the intitial capacity of
+ * the array, this constructor simply delegates to <code>ArrayList()</code>.
+ * It is only present for compatibility with JDK 1.4's API.
  * </p>
  * <p>
  * <b>Dual endedness</b> For increased performance, this implementation supports
@@ -71,6 +74,17 @@ public class ArrayList extends AbstractList implements List, Cloneable,
   public ArrayList(Collection c) {
     initArray();
     addAll(c);
+  }
+
+  /**
+   * There is no speed advantage to pre-allocating array sizes in JavaScript,
+   * so the <code>intialCapacity</code> parameter is ignored. This constructor is
+   * only present for compatibility with JDK 1.4's API.
+   */
+  public ArrayList(int initialCapacity) {
+    // initialCapacity is ignored in JS implementation; this constructor is
+    // present for JDK 1.4 compatibility
+    this();
   }
 
   public native void add(int index, Object o) /*-{
