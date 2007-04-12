@@ -69,14 +69,38 @@ public abstract class GWTTestCase extends TestCase {
   }
 
   protected final void delayTestFinish(int timeoutMillis) {
-    impl.delayTestFinish(timeoutMillis);
+    if (supportsAsync()) {
+      impl.delayTestFinish(timeoutMillis);
+    } else {
+      throw new UnsupportedOperationException(
+        "This test case does not support asynchronous mode." );
+    }
   }
 
   protected final void finishTest() {
-    impl.finishTest();
+    if (supportsAsync()) {
+      impl.finishTest();
+    } else {
+      throw new UnsupportedOperationException(
+        "This test case does not support asynchronous mode." );
+    }
   }
 
   protected final TestResults getTestResults() {
     return impl.getTestResults();
+  }
+
+  /**
+   * Returns true if this test case supports asynchronous mode. By default,
+   * this is set to true. Originally introduced for Benchmarks which
+   * don't currently support asynchronous mode.
+   *
+   * <p>Note that overriders of this method may report different answers for
+   * the same test case during the same run, so it is not safe to cache
+   * the results.</p>
+   *
+   */
+  protected boolean supportsAsync() {
+    return true;
   }
 }

@@ -141,6 +141,9 @@ public abstract class GWTTestCase extends TestCase {
    * @param timeoutMillis how long to wait before the current test will time out
    * @tip Subsequent calls to this method reset the timeout.
    * @see #finishTest()
+   *
+   * @throws UnsupportedOperationException if this test case is a
+   *         {@link Benchmark}
    */
   protected final void delayTestFinish(int timeoutMillis) {
     // implemented in the translatable version of this class
@@ -164,6 +167,9 @@ public abstract class GWTTestCase extends TestCase {
    * </p>
    * 
    * @throws IllegalStateException if this test is not in asynchronous mode.
+   * @throws UnsupportedOperationException if this test case is a
+   *         {@link Benchmark}
+   *
    * @see #delayTestFinish(int)
    */
   protected final void finishTest() {

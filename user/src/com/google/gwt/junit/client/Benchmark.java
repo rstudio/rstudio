@@ -80,6 +80,12 @@ package com.google.gwt.junit.client;
  * {@link com.google.gwt.junit.client.Benchmark} class level.</li>
  * </ul>
  *
+ * <p>Please note that {@link Benchmark}s do not currently support asynchronous
+ * testing mode. Calling
+ * {@link com.google.gwt.junit.client.GWTTestCase#delayTestFinish(int)}
+ * or {@link com.google.gwt.junit.client.GWTTestCase#finishTest()} will result
+ * in an UnsupportedOperationException.</p>
+ *
  * <h2>Examples of benchmarking in action</h2>
  *
  * <h3>A simple benchmark example</h3>
@@ -94,6 +100,7 @@ package com.google.gwt.junit.client;
  * sophisticated example of benchmarking. It demonstrates the use of "begin"
  * and "end" test methods, parameterized test methods, and automatic
  * test execution limits.
+ *
  *
  * {@example com.google.gwt.examples.benchmarks.ArrayListAndVectorBenchmark}
  */

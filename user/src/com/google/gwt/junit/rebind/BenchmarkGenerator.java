@@ -196,12 +196,10 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
   public void writeSource() throws UnableToCompleteException {
     super.writeSource();
 
-    // Needed for benchmarking the overhead of the function call to the
-    // benchmark
     generateEmptyFunc(getSourceWriter());
-
     implementZeroArgTestMethods();
     implementParameterizedTestMethods();
+    generateAsyncCode();
     JUnitShell.getReport().addBenchmark(getRequestedClass(), getTypeOracle());
   }
 
@@ -319,6 +317,50 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
   }
 
   /**
+   * Currently, the benchmarking subsystem does not support async Benchmarks,
+   * so we need to generate some additional code that prevents the user
+   * from entering async mode in their Benchmark, even though we're using
+   * it internally.
+   *
+   * Generates the code for the "supportsAsync" functionality in the
+   * translatable version of GWTTestCase. This includes:
+   *
+   *   - the supportsAsync flag
+   *   - the supportsAsync method
+   *   - the privateDelayTestFinish method
+   *   - the privateFinishTest method
+   *
+   */
+  private void generateAsyncCode() {
+    SourceWriter writer = getSourceWriter();
+
+    writer.println( "private boolean supportsAsync;" );
+    writer.println();
+    writer.println( "public boolean supportsAsync() {");
+    writer.println( "  return supportsAsync;");
+    writer.println( "}");
+    writer.println();
+    writer.println( "private void privateDelayTestFinish(int timeout) {" );
+    writer.println( "  supportsAsync = true;");
+    writer.println( "  try {");
+    writer.println( "    delayTestFinish(timeout);");
+    writer.println( "  } finally {");
+    writer.println( "    supportsAsync = false;");
+    writer.println( "  }");
+    writer.println( "}");
+    writer.println();
+    writer.println( "private void privateFinishTest() {" );
+    writer.println( "  supportsAsync = true;");
+    writer.println( "  try {");
+    writer.println( "    finishTest();");
+    writer.println( "  } finally {");
+    writer.println( "    supportsAsync = false;");
+    writer.println( "  }");
+    writer.println( "}");
+    writer.println();
+  }
+
+  /**
    * Generates an empty JSNI function to help us benchmark function call
    * overhead.
    *
@@ -406,7 +448,7 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
 
       sw.println("public void " + name + "() {");
       sw.indent();
-      sw.println("  delayTestFinish( 2000 );");
+      sw.println("  privateDelayTestFinish( 2000 );");
       sw.println();
 
       MutableBoolean isBounded = new MutableBoolean();
@@ -441,7 +483,7 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
           "final com.google.gwt.junit.client.impl.PermutationIterator permutationIt = new com.google.gwt.junit.client.impl.PermutationIterator( ranges );\n" +
           "com.google.gwt.user.client.DeferredCommand.addCommand( new com.google.gwt.user.client.IncrementalCommand() {\n" +
           "  public boolean execute() {\n" +
-          "    delayTestFinish( 10000 );\n" +
+          "    privateDelayTestFinish( 10000 );\n" +
           "    if ( permutationIt.hasNext() ) {\n" +
           "      com.google.gwt.junit.client.impl.PermutationIterator.Permutation permutation = (com.google.gwt.junit.client.impl.PermutationIterator.Permutation) permutationIt.next();\n"
       );
@@ -496,7 +538,7 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
       sw.println(
           "      return true;\n" +
           "    }\n" +
-          "    finishTest();\n" +
+          "    privateFinishTest();\n" +
           "    return false;\n" +
           "  }\n" +
           "} );\n"
