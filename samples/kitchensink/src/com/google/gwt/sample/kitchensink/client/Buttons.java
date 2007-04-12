@@ -18,7 +18,9 @@ package com.google.gwt.sample.kitchensink.client;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.RadioButton;
+import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
@@ -45,6 +47,8 @@ public class Buttons extends Sink {
   private RadioButton radio1 = new RadioButton("group0", "Choice 1");
   private RadioButton radio2 = new RadioButton("group0", "Choice 2 (Disabled)");
   private RadioButton radio3 = new RadioButton("group0", "Choice 3");
+  private PushButton pushButton = new PushButton("PushButton");
+  private ToggleButton toggleButton = new ToggleButton("ToggleButton");
 
   public Buttons() {
     HorizontalPanel hp;
@@ -65,6 +69,11 @@ public class Buttons extends Sink {
     hp.add(radio1);
     hp.add(radio2);
     hp.add(radio3);
+
+    panel.add(hp = new HorizontalPanel());
+    hp.setSpacing(8);
+    hp.add(pushButton);
+    hp.add(toggleButton);
 
     disabledButton.setEnabled(false);
     disabledCheck.setEnabled(false);

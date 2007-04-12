@@ -2,8 +2,12 @@ body {
   background-color: white;
   color: black;
   font-family: Arial, sans-serif;
-  font-size: smaller;
+	font-size: 10pt;
   margin: 20px 20px 20px 20px;
+}
+
+table {
+	font-size: 100%;
 }
 
 code {
@@ -28,7 +32,6 @@ a:visited {
 }
 
 .gwt-CheckBox {
-  font-size: smaller;
 }
 
 .gwt-DialogBox {
@@ -62,7 +65,6 @@ a:visited {
 }
 
 .gwt-HTML {
-  font-size: smaller;
 }
 
 .gwt-Hyperlink {
@@ -72,7 +74,6 @@ a:visited {
 }
 
 .gwt-Label {
-  font-size: smaller;
 }
 
 .gwt-ListBox {
@@ -86,7 +87,6 @@ a:visited {
 
 .gwt-MenuBar .gwt-MenuItem {
   padding: 1px 4px 1px 4px;
-  font-size: smaller;
   cursor: default;
 }
 
@@ -98,7 +98,6 @@ a:visited {
 }
 
 .gwt-RadioButton {
-  font-size: smaller;
 }
 
 .gwt-TabPanel {
@@ -110,7 +109,6 @@ a:visited {
 
 .gwt-TabBar {
   background-color: #C3D9FF;
-  font-size: smaller;
 }
 
 .gwt-TabBar .gwt-TabBarFirst {
@@ -153,7 +151,6 @@ a:visited {
 }
 
 .gwt-Tree .gwt-TreeItem {
-  font-size: smaller;
 }
 
 .gwt-Tree .gwt-TreeItem-selected {
@@ -177,6 +174,8 @@ a:visited {
   padding: 2px;
   border: 1px solid transparent;
   border-color: #E8F1FF rgb(157, 174, 205) rgb(157, 174, 205) rgb(232, 241, 255)
+  cursor: pointer;
+  cursor: hand;
 }
 
 .gwt-PushButton-up-hovering {
@@ -184,6 +183,8 @@ a:visited {
   padding: 2px;
   border: 1px solid transparent;
   border-color: #E8F1FF rgb(157, 174, 205) rgb(157, 174, 205) rgb(232, 241, 255)
+  cursor: pointer;
+  cursor: hand;
 }
 
 .gwt-PushButton-down {
@@ -191,6 +192,8 @@ a:visited {
   padding: 2px;
   border: 1px solid transparent;
   border-color: #9DAECD rgb(232, 241, 255) rgb(232, 241, 255) rgb(157, 174, 205);
+  cursor: pointer;
+  cursor: hand;
 }
 
 .gwt-PushButton-down-hovering {
@@ -198,6 +201,8 @@ a:visited {
   padding: 2px;
   border: 1px solid transparent;
   border-color: #9DAECD rgb(232, 241, 255) rgb(232, 241, 255) rgb(157, 174, 205);
+  cursor: pointer;
+  cursor: hand;
 }
 
 .gwt-ToggleButton-up {
@@ -205,6 +210,8 @@ a:visited {
   padding: 2px;
   border: 1px solid transparent;
   border-color: #E8F1FF rgb(157, 174, 205) rgb(157, 174, 205) rgb(232, 241, 255)
+  cursor: pointer;
+  cursor: hand;
 }
 
 .gwt-ToggleButton-up-hovering {
@@ -212,6 +219,8 @@ a:visited {
   padding: 2px;
   border: 1px solid transparent;
   border-color: #E8F1FF rgb(157, 174, 205) rgb(157, 174, 205) rgb(232, 241, 255)
+  cursor: pointer;
+  cursor: hand;
 }
 
 .gwt-ToggleButton-down {
@@ -220,6 +229,8 @@ a:visited {
   background-color: #E8F1FF;
   border: 1px solid transparent;
   border-color: #9DAECD rgb(232, 241, 255) rgb(232, 241, 255) rgb(157, 174, 205);
+  cursor: pointer;
+  cursor: hand;
 }
 
 .gwt-ToggleButton-down-hovering {
@@ -228,6 +239,8 @@ a:visited {
   background-color: #E8F1FF;
   border: 1px solid transparent;
   border-color: #9DAECD rgb(232, 241, 255) rgb(232, 241, 255) rgb(157, 174, 205);
+  cursor: pointer;
+  cursor: hand;
 }
 
 .gwt-RichTextArea {
@@ -295,6 +308,7 @@ a:visited {
 
 .gwt-HorizontalSplitPanel .splitter {
 	background-color: #C3D9FF;
+	cursor: move;
 }
 
 .gwt-VerticalSplitPanel {
@@ -303,6 +317,20 @@ a:visited {
 .gwt-VerticalSplitPanel .splitter {
 	background-color: #C3D9FF;
 	height: 8px;
+	cursor: move;
+}
+
+.gwt-SuggestBoxPopup {
+	border: 2px solid #C3D9FF;
+}
+
+.gwt-SuggestBoxPopup .item {
+	padding: 2px;
+}
+
+.gwt-SuggestBoxPopup .item-selected {
+	background-color: #C3D9FF;
+	padding: 2px;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -316,13 +344,11 @@ a:visited {
 .ks-Info {
   background-color: #C3D9FF;
   padding: 10px 10px 2px 10px;
-  font-size: smaller;
 }
 
 .ks-List {
   margin-top: 8px;
   margin-bottom: 8px;
-  font-size: smaller;
 }
 
 .ks-List .ks-SinkItem {

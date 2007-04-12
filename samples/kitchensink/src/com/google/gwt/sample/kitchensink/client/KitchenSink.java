@@ -139,6 +139,7 @@ public class KitchenSink implements EntryPoint, HistoryListener {
     list.addSink(Trees.init());
     list.addSink(Frames.init());
     list.addSink(Tabs.init());
+    list.addSink(Splitters.init());
   }
 
   private void showInfo() {

@@ -29,6 +29,7 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.RichTextArea;
 import com.google.gwt.user.client.ui.ToggleButton;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -137,6 +138,83 @@ public class RichTextToolbar extends Composite {
   }
 
   /**
+   * This {@link Constants} interface is used to make the toolbar's strings
+   * internationalizable.
+   */
+  public interface Strings extends Constants {
+
+    String black();
+
+    String blue();
+
+    String bold();
+
+    String color();
+
+    String createLink();
+
+    String font();
+
+    String green();
+
+    String hr();
+
+    String indent();
+
+    String insertImage();
+
+    String italic();
+
+    String justifyCenter();
+
+    String justifyLeft();
+
+    String justifyRight();
+
+    String large();
+
+    String medium();
+
+    String normal();
+
+    String ol();
+
+    String outdent();
+
+    String red();
+
+    String removeFormat();
+
+    String removeLink();
+
+    String size();
+
+    String small();
+
+    String strikeThrough();
+
+    String subscript();
+
+    String superscript();
+
+    String ul();
+
+    String underline();
+
+    String white();
+
+    String xlarge();
+
+    String xsmall();
+
+    String xxlarge();
+
+    String xxsmall();
+
+    String yellow();
+  }
+
+  /**
    * We use an inner EventListener class to avoid exposing event methods on the
    * RichTextToolbar itself.
    */
@@ -230,83 +308,6 @@ public class RichTextToolbar extends Composite {
     }
   }
 
-  /**
-   * This {@link Constants} interface is used to make the toolbar's strings
-   * internationalizable.
-   */
-  public interface Strings extends Constants {
-
-    String bold();
-
-    String createLink();
-
-    String hr();
-
-    String indent();
-
-    String insertImage();
-
-    String italic();
-
-    String justifyCenter();
-
-    String justifyLeft();
-
-    String justifyRight();
-
-    String ol();
-
-    String outdent();
-
-    String removeFormat();
-
-    String removeLink();
-
-    String strikeThrough();
-
-    String subscript();
-
-    String superscript();
-
-    String ul();
-
-    String underline();
-
-    String color();
-
-    String black();
-
-    String white();
-
-    String red();
-
-    String green();
-
-    String yellow();
-
-    String blue();
-
-    String font();
-
-    String normal();
-
-    String size();
-
-    String xxsmall();
-
-    String xsmall();
-
-    String small();
-
-    String medium();
-
-    String large();
-
-    String xlarge();
-
-    String xxlarge();
-  }
-
   private static final RichTextArea.FontSize[] fontSizesConstants = new RichTextArea.FontSize[] {
       RichTextArea.FontSize.XX_SMALL, RichTextArea.FontSize.X_SMALL,
       RichTextArea.FontSize.SMALL, RichTextArea.FontSize.MEDIUM,
@@ -321,7 +322,9 @@ public class RichTextToolbar extends Composite {
   private RichTextArea.BasicFormatter basic;
   private RichTextArea.ExtendedFormatter extended;
 
-  private HorizontalPanel panel = new HorizontalPanel();
+  private VerticalPanel outer = new VerticalPanel();
+  private HorizontalPanel topPanel = new HorizontalPanel();
+  private HorizontalPanel bottomPanel = new HorizontalPanel();
   private ToggleButton bold;
   private ToggleButton italic;
   private ToggleButton underline;
@@ -356,49 +359,54 @@ public class RichTextToolbar extends Composite {
     this.basic = richText.getBasicFormatter();
     this.extended = richText.getExtendedFormatter();
 
-    initWidget(panel);
+    outer.add(topPanel);
+    outer.add(bottomPanel);
+    topPanel.setWidth("100%");
+    bottomPanel.setWidth("100%");
+
+    initWidget(outer);
     setStyleName("gwt-RichTextToolbar");
 
     if (basic != null) {
-      panel.add(bold = createToggleButton(images.bold(), strings.bold()));
-      panel.add(italic = createToggleButton(images.italic(), strings.italic()));
-      panel.add(underline = createToggleButton(images.underline(),
+      topPanel.add(bold = createToggleButton(images.bold(), strings.bold()));
+      topPanel.add(italic = createToggleButton(images.italic(), strings.italic()));
+      topPanel.add(underline = createToggleButton(images.underline(),
           strings.underline()));
-      panel.add(subscript = createToggleButton(images.subscript(),
+      topPanel.add(subscript = createToggleButton(images.subscript(),
           strings.subscript()));
-      panel.add(superscript = createToggleButton(images.superscript(),
+      topPanel.add(superscript = createToggleButton(images.superscript(),
           strings.superscript()));
-      panel.add(justifyLeft = createPushButton(images.justifyLeft(),
+      topPanel.add(justifyLeft = createPushButton(images.justifyLeft(),
           strings.justifyLeft()));
-      panel.add(justifyCenter = createPushButton(images.justifyCenter(),
+      topPanel.add(justifyCenter = createPushButton(images.justifyCenter(),
           strings.justifyCenter()));
-      panel.add(justifyRight = createPushButton(images.justifyRight(),
+      topPanel.add(justifyRight = createPushButton(images.justifyRight(),
           strings.justifyRight()));
     }
 
     if (extended != null) {
-      panel.add(strikethrough = createToggleButton(images.strikeThrough(),
+      topPanel.add(strikethrough = createToggleButton(images.strikeThrough(),
           strings.strikeThrough()));
-      panel.add(indent = createPushButton(images.indent(), strings.indent()));
-      panel.add(outdent = createPushButton(images.outdent(), strings.outdent()));
-      panel.add(hr = createPushButton(images.hr(), strings.hr()));
-      panel.add(ol = createPushButton(images.ol(), strings.ol()));
-      panel.add(ul = createPushButton(images.ul(), strings.ul()));
-      panel.add(insertImage = createPushButton(images.insertImage(),
+      topPanel.add(indent = createPushButton(images.indent(), strings.indent()));
+      topPanel.add(outdent = createPushButton(images.outdent(), strings.outdent()));
+      topPanel.add(hr = createPushButton(images.hr(), strings.hr()));
+      topPanel.add(ol = createPushButton(images.ol(), strings.ol()));
+      topPanel.add(ul = createPushButton(images.ul(), strings.ul()));
+      topPanel.add(insertImage = createPushButton(images.insertImage(),
           strings.insertImage()));
-      panel.add(createLink = createPushButton(images.createLink(),
+      topPanel.add(createLink = createPushButton(images.createLink(),
           strings.createLink()));
-      panel.add(removeLink = createPushButton(images.removeLink(),
+      topPanel.add(removeLink = createPushButton(images.removeLink(),
           strings.removeLink()));
-      panel.add(removeFormat = createPushButton(images.removeFormat(),
+      topPanel.add(removeFormat = createPushButton(images.removeFormat(),
           strings.removeFormat()));
     }
 
     if (basic != null) {
-      panel.add(backColors = createColorList("Background"));
-      panel.add(foreColors = createColorList("Foreground"));
-      panel.add(fonts = createFontList());
-      panel.add(fontSizes = createFontSizes());
+      bottomPanel.add(backColors = createColorList("Background"));
+      bottomPanel.add(foreColors = createColorList("Foreground"));
+      bottomPanel.add(fonts = createFontList());
+      bottomPanel.add(fontSizes = createFontSizes());
 
       // We only use these listeners for updating status, so don't hook them up
       // unless at least basic editing is supported.

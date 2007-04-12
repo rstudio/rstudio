@@ -19,11 +19,12 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -80,6 +81,10 @@ public class Layouts extends Sink {
     dock.add(north1, DockPanel.NORTH);
     dock.add(scroller, DockPanel.CENTER);
 
+    DisclosurePanel disc = new DisclosurePanel("Click to disclose something:");
+    disc.setContent(new HTML("This widget is is shown and hidden<br>by the "
+        + "disclosure panel that wraps it."));
+
     FlowPanel flow = new FlowPanel();
     for (int i = 0; i < 8; ++i) {
       flow.add(new CheckBox("Flow " + i));
@@ -111,8 +116,8 @@ public class Layouts extends Sink {
     String id = HTMLPanel.createUniqueId();
     HTMLPanel html = new HTMLPanel(
         "This is an <code>HTMLPanel</code>.  It allows you to add "
-            + "components inside existing HTML, like this: " + "<span id='" + id
-            + "'></span>"
+            + "components inside existing HTML, like this: " + "<span id='"
+            + id + "'></span>"
             + "Notice how the menu just fits snugly in there?  Cute.");
     DOM.setStyleAttribute(menu.getElement(), "display", "inline");
     html.add(menu, id);
@@ -123,6 +128,8 @@ public class Layouts extends Sink {
 
     panel.add(makeLabel("Dock Panel"));
     panel.add(dock);
+    panel.add(makeLabel("Disclosure Panel"));
+    panel.add(disc);
     panel.add(makeLabel("Flow Panel"));
     panel.add(flow);
     panel.add(makeLabel("Horizontal Panel"));
