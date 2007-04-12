@@ -76,7 +76,7 @@ abstract class AbstractItemPickerImpl extends Widget {
     }
   }
 
-  private static final String STYLENAME_SELECTED_ITEM = "selected";
+  private static final String STYLENAME_SELECTED_ITEM = "item-selected";
   private static final String STYLENAME_ITEM = "item";
 
   final Element body;
