@@ -35,10 +35,6 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     elem.src = "RichTextIE.html";
   }-*/;
 
-  boolean isRichEditingActive(Element e) {
-    return true;
-  }
-
   native void initEvents() /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     var handler = function(evt) {
@@ -59,4 +55,8 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     body.attachEvent('onmouseout', handler);
     body.attachEvent('onclick', handler);
   }-*/;
+
+  boolean isRichEditingActive(Element e) {
+    return true;
+  }
 }

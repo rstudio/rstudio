@@ -17,17 +17,23 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
+/**
+ * TODO(bobv): comment me.
+ */
 public class PrefixTreeTest extends GWTTestCase {
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
-  
+
   /**
    * Ensure that names of functions declared on the Object prototype are valid
-   * data to insert into the PrefixTree
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=631
+   * data to insert into the PrefixTree (<a
+   * href="http://code.google.com/p/google-web-toolkit/issues/detail?id=631">issue
+   * #631)</a>.
    */
   public void testBug631Prefixes() {
     // Set the prefix length large enough so that we ensure prefixes are
@@ -57,8 +63,9 @@ public class PrefixTreeTest extends GWTTestCase {
 
   /**
    * Ensure that names of functions declared on the Object prototype are valid
-   * data to insert into the PrefixTree
-   * http://code.google.com/p/google-web-toolkit/issues/detail?id=631
+   * data to insert into the PrefixTree(<a
+   * href="http://code.google.com/p/google-web-toolkit/issues/detail?id=631">issue
+   * #631)</a>.
    */
   public void testBug631Suffixes() {
     // Set the prefix length large enough so that we ensure suffixes are

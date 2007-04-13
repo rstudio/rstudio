@@ -59,6 +59,7 @@ public class DeveloperGuide {
     GWTTestCase gtc;
     JavaScriptObject jso;
     JavaScriptException jse;
+    Image img;
   }
 
   /**
