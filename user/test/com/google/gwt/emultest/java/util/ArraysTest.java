@@ -20,13 +20,16 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * TODO: document me.
+ * Tests {@link Arrays}.
  */
 public class ArraysTest extends EmulTestBase {
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
+  /**
+   * Tests {@link Arrays#asList(Object[])}.
+   */
   public void testAsList() {
     // 0
     Object[] test = {};
@@ -42,6 +45,272 @@ public class ArraysTest extends EmulTestBase {
     assertEquals(test3, result3);
   }
 
+  /**
+   * Test Arrays.binarySearch(byte[], byte).
+   * 
+   * Verify the following cases:
+   *   empty array
+   *   odd numbers of elements
+   *   even numbers of elements
+   *   not found value larger than all elements
+   *   not found value smaller than all elements
+   *   negative values
+   */
+  public void testBinarySearchByte() {
+    byte[] a1 = {};
+    int ret = Arrays.binarySearch(a1, (byte) 0);
+    assertEquals(-1, ret);
+    byte[] a2 = {1, 7, 31};
+    ret = Arrays.binarySearch(a2, (byte) 3);
+    assertEquals(-2, ret);
+    ret = Arrays.binarySearch(a2, (byte) 31);
+    assertEquals(2, ret);
+    byte[] a3 = {-71, 0, 35, 36};
+    ret = Arrays.binarySearch(a3, (byte) 42);
+    assertEquals(-5, ret);
+    ret = Arrays.binarySearch(a3, (byte) -80);
+    assertEquals(-1, ret);
+    ret = Arrays.binarySearch(a3, (byte) -71);
+    assertEquals(0, ret);    
+  }
+
+  /**
+   * Test Arrays.binarySearch(char[], char).
+   * 
+   * Verify the following cases:
+   *   empty array
+   *   odd numbers of elements
+   *   even numbers of elements
+   *   not found value larger than all elements
+   *   not found value smaller than all elements
+   */
+  public void testBinarySearchChar() {
+    char[] a1 = {};
+    int ret = Arrays.binarySearch(a1, (char) 0);
+    assertEquals(-1, ret);
+    char[] a2 = {1, 7, 31};
+    ret = Arrays.binarySearch(a2, (char) 3);
+    assertEquals(-2, ret);
+    ret = Arrays.binarySearch(a2, (char) 31);
+    assertEquals(2, ret);
+    char[] a3 = {1, 2, 35, 36};
+    ret = Arrays.binarySearch(a3, (char) 42);
+    assertEquals(-5, ret);
+    ret = Arrays.binarySearch(a3, (char) 0);
+    assertEquals(-1, ret);
+    ret = Arrays.binarySearch(a3, (char) 1);
+    assertEquals(0, ret);    
+  }
+
+  /**
+   * Test Arrays.binarySearch(double[], double).
+   * 
+   * Verify the following cases:
+   *   empty array
+   *   odd numbers of elements
+   *   even numbers of elements
+   *   not found value larger than all elements
+   *   not found value smaller than all elements
+   *   negative values
+   */
+  public void testBinarySearchDouble() {
+    double[] a1 = {};
+    int ret = Arrays.binarySearch(a1, 0);
+    assertEquals(-1, ret);
+    double[] a2 = {1, 7, 31};
+    ret = Arrays.binarySearch(a2, 3);
+    assertEquals(-2, ret);
+    ret = Arrays.binarySearch(a2, 31);
+    assertEquals(2, ret);
+    double[] a3 = {-71, 0, 35, 36};
+    ret = Arrays.binarySearch(a3, 42);
+    assertEquals(-5, ret);
+    ret = Arrays.binarySearch(a3, -80);
+    assertEquals(-1, ret);
+    ret = Arrays.binarySearch(a3, -71);
+    assertEquals(0, ret);    
+  }
+
+  /**
+   * Test Arrays.binarySearch(float[], float).
+   * 
+   * Verify the following cases:
+   *   empty array
+   *   odd numbers of elements
+   *   even numbers of elements
+   *   not found value larger than all elements
+   *   not found value smaller than all elements
+   *   negative values
+   */
+  public void testBinarySearchFloat() {
+    float[] a1 = {};
+    int ret = Arrays.binarySearch(a1, 0);
+    assertEquals(-1, ret);
+    float[] a2 = {1, 7, 31};
+    ret = Arrays.binarySearch(a2, 3);
+    assertEquals(-2, ret);
+    ret = Arrays.binarySearch(a2, 31);
+    assertEquals(2, ret);
+    float[] a3 = {-71, 0, 35, 36};
+    ret = Arrays.binarySearch(a3, 42);
+    assertEquals(-5, ret);
+    ret = Arrays.binarySearch(a3, -80);
+    assertEquals(-1, ret);
+    ret = Arrays.binarySearch(a3, -71);
+    assertEquals(0, ret);    
+  }
+
+  /**
+   * Test Arrays.binarySearch(int[], int).
+   * 
+   * Verify the following cases:
+   *   empty array
+   *   odd numbers of elements
+   *   even numbers of elements
+   *   not found value larger than all elements
+   *   not found value smaller than all elements
+   *   negative values
+   */
+  public void testBinarySearchInt() {
+    int[] a1 = {};
+    int ret = Arrays.binarySearch(a1, 0);
+    assertEquals(-1, ret);
+    int[] a2 = {1, 7, 31};
+    ret = Arrays.binarySearch(a2, 3);
+    assertEquals(-2, ret);
+    ret = Arrays.binarySearch(a2, 31);
+    assertEquals(2, ret);
+    int[] a3 = {-71, 0, 35, 36};
+    ret = Arrays.binarySearch(a3, 42);
+    assertEquals(-5, ret);
+    ret = Arrays.binarySearch(a3, -80);
+    assertEquals(-1, ret);
+    ret = Arrays.binarySearch(a3, -71);
+    assertEquals(0, ret);    
+  }
+
+  /**
+   * Test Arrays.binarySearch(long[], long).
+   * 
+   * Verify the following cases:
+   *   empty array
+   *   odd numbers of elements
+   *   even numbers of elements
+   *   not found value larger than all elements
+   *   not found value smaller than all elements
+   *   negative values
+   */
+  public void testBinarySearchLong() {
+    long[] a1 = {};
+    int ret = Arrays.binarySearch(a1, 0L);
+    assertEquals(-1, ret);
+    long[] a2 = {1, 7, 31};
+    ret = Arrays.binarySearch(a2, 3L);
+    assertEquals(-2, ret);
+    ret = Arrays.binarySearch(a2, 31L);
+    assertEquals(2, ret);
+    long[] a3 = {-71, 0, 35, 36};
+    ret = Arrays.binarySearch(a3, 42L);
+    assertEquals(-5, ret);
+    ret = Arrays.binarySearch(a3, -80L);
+    assertEquals(-1, ret);
+    ret = Arrays.binarySearch(a3, -71L);
+    assertEquals(0, ret);    
+  }
+
+  /**
+   * Test Arrays.binarySearch(Object[], Object).
+   * 
+   * Verify the following cases:
+   *   empty array
+   *   odd numbers of elements
+   *   even numbers of elements
+   *   not found value larger than all elements
+   *   not found value smaller than all elements
+   */
+  public void testBinarySearchObject() {
+    Object[] a1 = {};
+    int ret = Arrays.binarySearch(a1, "");
+    assertEquals(-1, ret);
+    Object[] a2 = {"a", "g", "y"};
+    ret = Arrays.binarySearch(a2, "c");
+    assertEquals(-2, ret);
+    ret = Arrays.binarySearch(a2, "y");
+    assertEquals(2, ret);
+    Object[] a3 = {"b", "c", "x", "y"};
+    ret = Arrays.binarySearch(a3, "z");
+    assertEquals(-5, ret);
+    ret = Arrays.binarySearch(a3, "a");
+    assertEquals(-1, ret);
+    ret = Arrays.binarySearch(a3, "b");
+    assertEquals(0, ret);    
+  }
+
+  /**
+   * Test Arrays.binarySearch(Object[], Object, Comparator).
+   * 
+   * Verify the following cases:
+   *   empty array
+   *   odd numbers of elements
+   *   even numbers of elements
+   *   not found value larger than all elements
+   *   not found value smaller than all elements
+   */
+  public void testBinarySearchObjectComparator() {
+    Comparator inverseSort = new Comparator() {
+      public int compare(Object o1, Object o2) {
+        return ((Comparable) o2).compareTo(o1);
+      }
+    };
+    Object[] a1 = {};
+    int ret = Arrays.binarySearch(a1, "", inverseSort);
+    assertEquals(-1, ret);
+    Object[] a2 = {"y", "g", "a"};
+    ret = Arrays.binarySearch(a2, "c", inverseSort);
+    assertEquals(-3, ret);
+    ret = Arrays.binarySearch(a2, "a", inverseSort);
+    assertEquals(2, ret);
+    Object[] a3 = {"y", "x", "c", "b"};
+    ret = Arrays.binarySearch(a3, "a", inverseSort);
+    assertEquals(-5, ret);
+    ret = Arrays.binarySearch(a3, "z", inverseSort);
+    assertEquals(-1, ret);
+    ret = Arrays.binarySearch(a3, "y", inverseSort);
+    assertEquals(0, ret);    
+  }
+
+  /**
+   * Test Arrays.binarySearch(short[], short).
+   * 
+   * Verify the following cases:
+   *   empty array
+   *   odd numbers of elements
+   *   even numbers of elements
+   *   not found value larger than all elements
+   *   not found value smaller than all elements
+   *   negative values
+   */
+  public void testBinarySearchShort() {
+    short[] a1 = {};
+    int ret = Arrays.binarySearch(a1, (short) 0);
+    assertEquals(-1, ret);
+    short[] a2 = {1, 7, 31};
+    ret = Arrays.binarySearch(a2, (short) 3);
+    assertEquals(-2, ret);
+    ret = Arrays.binarySearch(a2, (short) 31);
+    assertEquals(2, ret);
+    short[] a3 = {-71, 0, 35, 36};
+    ret = Arrays.binarySearch(a3, (short) 42);
+    assertEquals(-5, ret);
+    ret = Arrays.binarySearch(a3, (short) -80);
+    assertEquals(-1, ret);
+    ret = Arrays.binarySearch(a3, (short) -71);
+    assertEquals(0, ret);    
+  }
+
+  /**
+   * Tests simple use cases for {@link Arrays#sort(Object[])}.
+   */
   public void testSimpleSort() {
     // empty case
     Object[] test = {};
@@ -61,6 +330,9 @@ public class ArraysTest extends EmulTestBase {
     }
   }
 
+  /**
+   * Tests {@link Arrays#sort(Object[], Comparator)}.
+   */
   public void testSort() {
     Object[] x = {"c", "b", "b", "a"};
     int hash = x[1].hashCode();
