@@ -63,7 +63,7 @@ public final class Event extends JavaScriptObject {
   public static final int ONDBLCLICK = 0x00002;
 
   /**
-   * Fired when a scrollable element's scroll offset changes.
+   * Fired when an image encounters an error.
    */
   public static final int ONERROR = 0x10000;
 
