@@ -203,7 +203,7 @@ public class ImageBundleGenerator extends Generator {
         logger.log(
             TreeLogger.ERROR,
             "Resource " + imageNameFromMetaData +
-                "not found on classpath (is the name specified as Class.getResource() would expect?)",
+                " not found on classpath (is the name specified as Class.getResource() would expect?)",
             null);
         throw new UnableToCompleteException();
       }
