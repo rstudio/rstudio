@@ -1360,46 +1360,27 @@ public class GenerateJavaAST {
     JStatement processStatement(ForStatement x) {
       SourceInfo info = makeSourceInfo(x);
       // SEE NOTE ON JDT FORCED OPTIMIZATIONS
-      // If false, just return the initializers
-      // for (init; false; inc) { x } => { init }
-      if (x.condition != null) {
-        Constant cst = x.condition.optimizedBooleanConstant();
-        if (cst != Constant.NotAConstant) {
-          if (!cst.booleanValue()) {
-            JBlock block = new JBlock(program, info);
-            block.statements = processStatements(x.initializations);
-            return block;
-          }
-        }
-      }
+      // If the condition is false, don't process the body
+      boolean removeBody = isOptimizedFalse(x.condition);
 
       List/* <? extends JStatement> */init = processStatements(x.initializations);
       JExpression expr = dispProcessExpression(x.condition);
       List/* <JExpressionStatement> */incr = processStatements(x.increments);
-      JStatement body = dispProcessStatement(x.action);
+      JStatement body = removeBody ? null : dispProcessStatement(x.action);
       return new JForStatement(program, info, init, expr, incr, body);
     }
 
     JStatement processStatement(IfStatement x) {
       // SEE NOTE ON JDT FORCED OPTIMIZATIONS
-      // If constant, just return the appropriate case
-      // if (true) x; else y; => x
-      // if (false) x; else y; => y
-      // if (true) x; => x
-      // if (false) x; => ;
-      Constant cst = x.condition.optimizedBooleanConstant();
-      if (cst != Constant.NotAConstant) {
-        if (cst.booleanValue()) {
-          return dispProcessStatement(x.thenStatement);
-        } else {
-          return dispProcessStatement(x.elseStatement);
-        }
-      }
+      // If the condition is false, don't process the then statement
+      // If the condition is false, don't process the else statement
+      boolean removeThen = isOptimizedFalse(x.condition);
+      boolean removeElse = isOptimizedTrue(x.condition);
 
       SourceInfo info = makeSourceInfo(x);
       JExpression expr = dispProcessExpression(x.condition);
-      JStatement thenStmt = dispProcessStatement(x.thenStatement);
-      JStatement elseStmt = dispProcessStatement(x.elseStatement);
+      JStatement thenStmt = removeThen ? null : dispProcessStatement(x.thenStatement);
+      JStatement elseStmt = removeElse ? null : dispProcessStatement(x.elseStatement);
       JIfStatement ifStmt = new JIfStatement(program, info, expr, thenStmt,
           elseStmt);
       return ifStmt;
@@ -1490,17 +1471,12 @@ public class GenerateJavaAST {
 
     JStatement processStatement(WhileStatement x) {
       // SEE NOTE ON JDT FORCED OPTIMIZATIONS
-      // If false, just return nothing
-      // while (false) { x } => ;
-      Constant cst = x.condition.optimizedBooleanConstant();
-      if (cst != Constant.NotAConstant) {
-        if (!cst.booleanValue()) {
-          return null;
-        }
-      }
+      // If the condition is false, don't process the body
+      boolean removeBody = isOptimizedFalse(x.condition);
+
       SourceInfo info = makeSourceInfo(x);
       JExpression loopTest = dispProcessExpression(x.condition);
-      JStatement loopBody = dispProcessStatement(x.action);
+      JStatement loopBody = removeBody ? null : dispProcessStatement(x.action);
       JWhileStatement stmt = new JWhileStatement(program, info, loopTest,
           loopBody);
       return stmt;
@@ -2054,6 +2030,38 @@ public class GenerateJavaAST {
   public static SourceInfo translateInfo(JsSourceInfo info) {
     // TODO implement this
     return null;
+  }
+
+  /**
+   * Returns <code>true</code> if JDT optimized the condition to
+   * <code>false</code>.
+   */
+  private static boolean isOptimizedFalse(Expression condition) {
+    if (condition != null) {
+      Constant cst = condition.optimizedBooleanConstant();
+      if (cst != Constant.NotAConstant) {
+        if (cst.booleanValue() == false) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns <code>true</code> if JDT optimized the condition to
+   * <code>true</code>.
+   */
+  private static boolean isOptimizedTrue(Expression condition) {
+    if (condition != null) {
+      Constant cst = condition.optimizedBooleanConstant();
+      if (cst != Constant.NotAConstant) {
+        if (cst.booleanValue() == true) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
 }

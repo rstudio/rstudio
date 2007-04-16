@@ -191,7 +191,31 @@ public class CompilerTest extends GWTTestCase {
     } else {
       fail();
     }
-  }
+
+    // For these following tests, make sure that side effects in conditions
+    // get propagated, even if they cause introduction of dead code.
+    // 
+    boolean b = false;
+    if ((b = true) ? true : true) {
+    }
+    assertTrue(b);
+
+    boolean c = true;
+    int val = 0;
+    for ( val = 1; c = false; ++val ) {
+    }
+    assertFalse(c);
+
+    boolean d = true;
+    while (d = false) {
+    }
+    assertFalse(d);
+    
+    boolean e = true;
+    if (true | (e = false)) {
+    }
+    assertFalse(e);
+   }
 
   public void testDeadTypes() {
     if (false) {
