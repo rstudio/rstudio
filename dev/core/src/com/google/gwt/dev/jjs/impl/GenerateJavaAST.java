@@ -996,6 +996,18 @@ public class GenerateJavaAST {
       JNewInstance newInstance = new JNewInstance(program, info, enclosingType);
       JMethodCall call = new JMethodCall(program, info, newInstance, ctor);
       JExpression qualifier = dispProcessExpression(x.enclosingInstance);
+      List qualList = new ArrayList();
+      qualList.add(qualifier);
+      
+      /*
+       * Really weird: Sometimes an allocation expression needs both its
+       * explicit qualifier AND its implicit enclosing class! We add this second
+       * because the explicit qualifier takes precedence.
+       */
+      if (!currentMethod.isStatic()) {
+        JExpression implicitOuter = program.getExprThisRef(info, (JClassType) currentClass);
+        qualList.add(implicitOuter);
+      }
 
       // Plain old regular arguments
       if (x.arguments != null) {
@@ -1013,7 +1025,7 @@ public class GenerateJavaAST {
           for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
             SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
             JClassType syntheticThisType = (JClassType) typeMap.get(arg.type);
-            call.getArgs().add(createThisRef(syntheticThisType, qualifier));
+            call.getArgs().add(createThisRef(syntheticThisType, qualList));
           }
         }
         // Synthetic locals for local classes

@@ -76,41 +76,49 @@ public class InnerOuterSuperTest extends GWTTestCase {
     }
   }
 
+  private final Outer outer  = new Outer(1);
+
+  private final Outer.OuterIsSuper outerIsSuper = outer.new OuterIsSuper(2);
+
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
 
-  public void testInnerOuterSuper() {
-    Outer outer = new Outer(1);
-    Outer.OuterIsSuper outerIsSuper = outer.new OuterIsSuper(2);
-
-    {
-      // QualifiedAlloc: outer becomes Outer or OuterIsSuper???
-      Outer.OuterIsNotSuper outerIsNotSuper = outerIsSuper.new OuterIsNotSuper();
-      int whatIsIt = outerIsNotSuper.getValue();
-      assertEquals(2, whatIsIt);
-    }
-
-    {
-      // [unqualified]Alloc: outer becomes Outer or OuterIsSuper???
-      Outer.OuterIsNotSuper outerIsNotSuper = outerIsSuper.unqualifiedAlloc();
-      int whatIsIt = outerIsNotSuper.getValue();
-      assertEquals(2, whatIsIt);
-    }
-
-    {
-      // QualifiedSupercall: outer becomes Outer or OuterIsSuper???
-      Outer.TestQualifiedSuperCall testQualifiedSuperCall = new Outer.TestQualifiedSuperCall();
-      int whatIsIt = testQualifiedSuperCall.getValue();
-      assertEquals(2, whatIsIt);
-    }
-
-    {
-      // UnqualifiedSupercall: outer becomes Outer or OuterIsSuper???
-      Outer.TestUnqualifiedSuperCall testUnqualifiedSuperCall = outerIsSuper.new TestUnqualifiedSuperCall();
-      int whatIsIt = testUnqualifiedSuperCall.getValue();
-      assertEquals(2, whatIsIt);
-    }
+  public void testOuterIsNotSuper() {
+    Outer.OuterIsNotSuper x = outerIsSuper.new OuterIsNotSuper();
+    assertEquals(2, x.getValue());
   }
 
+  public void testOuterIsNotSuperAnon() {
+    Outer.OuterIsNotSuper x = outerIsSuper.new OuterIsNotSuper() {
+    };
+    assertEquals(2, x.getValue());
+  }
+
+  public void testQualifiedSuperCall() {
+    Outer.TestQualifiedSuperCall x = new Outer.TestQualifiedSuperCall();
+    assertEquals(2, x.getValue());
+  }
+
+  public void testQualifiedSuperCallAnon() {
+    Outer.TestQualifiedSuperCall x = new Outer.TestQualifiedSuperCall() {
+    };
+    assertEquals(2, x.getValue());
+  }
+
+  public void testUnqualifiedAlloc() {
+    Outer.OuterIsNotSuper x = outerIsSuper.unqualifiedAlloc();
+    assertEquals(2, x.getValue());
+  }
+
+  public void testUnqualifiedSuperCall() {
+    Outer.TestUnqualifiedSuperCall x = outerIsSuper.new TestUnqualifiedSuperCall();
+    assertEquals(2, x.getValue());
+  }
+
+  public void testUnqualifiedSuperCallAnon() {
+    Outer.TestUnqualifiedSuperCall x = outerIsSuper.new TestUnqualifiedSuperCall() {
+    };
+    assertEquals(2, x.getValue());
+  }
 }
