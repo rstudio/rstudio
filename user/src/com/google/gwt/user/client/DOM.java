@@ -71,6 +71,7 @@ public class DOM {
    * @param elem1 the first element to be compared
    * @param elem2 the second element to be compared
    * @return <code>true</code> if they are in fact the same element
+   * @see #isOrHasChild(Element, Element)
    */
   public static boolean compare(Element elem1, Element elem2) {
     return impl.compare(elem1, elem2);
@@ -749,6 +750,7 @@ public class DOM {
    * @param parent the potential parent element
    * @param child the potential child element
    * @return <code>true</code> if the relationship holds
+   * @see #compare(Element, Element)
    */
   public static boolean isOrHasChild(Element parent, Element child) {
     return impl.isOrHasChild(parent, child);
