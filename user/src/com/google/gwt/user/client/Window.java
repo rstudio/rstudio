@@ -90,7 +90,7 @@ public class Window {
    * @return the window's client height
    */
   public static native int getClientHeight() /*-{
-    // Standard mode || Widow's standard mode || Windows quirks mode.
+    // Non-IE browsers || IE standard mode || IE quirks mode.
     return $wnd.innerHeight || $doc.documentElement.clientHeight || 
         $doc.body.clientHeight;
   }-*/;
@@ -101,7 +101,7 @@ public class Window {
    * @return the window's client width
    */
   public static native int getClientWidth() /*-{
-    // Standard mode || Windows standard mode || Windows quirks mode.
+    // Non-IE browsers || IE standard mode || IE quirks mode.
     return $wnd.innerWidth || $doc.documentElement.clientWidth || $doc.body.clientWidth;
   }-*/;
 
