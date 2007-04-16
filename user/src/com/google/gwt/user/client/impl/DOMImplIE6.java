@@ -35,7 +35,7 @@ class DOMImplIE6 extends DOMImpl {
   public native Element createInputRadioElement(String group) /*-{
     return $doc.createElement("<INPUT type='RADIO' name='" + group + "'>");
   }-*/;
-
+ 
   public native Element eventGetTarget(Event evt) /*-{
     var elem = evt.srcElement;
     return elem ? elem : null;
@@ -55,29 +55,23 @@ class DOMImplIE6 extends DOMImpl {
   }-*/;
 
   public native int getAbsoluteLeft(Element elem) /*-{
-    // Standard mode used documentElement.scrollLeft. Quirks mode uses 
-    // document.body.scrollLeft. So we take the max of the two.  
-    var scrollLeft = $doc.documentElement.scrollLeft;
-    if(scrollLeft == 0){
-      scrollLeft = $doc.body.scrollLeft
-    }
+    // Standard mode || Quirks mode.
+    var scrollLeft = $doc.documentElement.scrollLeft || $doc.body.scrollLeft;
     
-    // Offset needed as IE starts the window's upper left at
-    // 2,2 rather than 0,0.
-    return (elem.getBoundingClientRect().left + scrollLeft) - 2;
+    // Standard mode use $doc.documentElement.clientLeft (= always 2)
+    // Quirks mode use $doc.body.clientLeft (=BODY border width)
+    return (elem.getBoundingClientRect().left + scrollLeft)
+        - ($doc.documentElement.clientLeft || $doc.body.clientLeft);
   }-*/;
 
   public native int getAbsoluteTop(Element elem) /*-{
-    // Standard mode used documentElement.scrollTop. Quirks mode uses 
-    // document.body.scrollTop. So we take the max of the two.
-    var scrollTop = $doc.documentElement.scrollTop;
-    if(scrollTop == 0){
-      scrollTop = $doc.body.scrollTop
-    } 
-    
-    // Offset needed as IE starts the window's upper left as 2,2 
-    // rather than 0,0.
-    return (elem.getBoundingClientRect().top +  scrollTop) - 2;
+    // Standard mode || Quirks mode.
+    var scrollTop = $doc.documentElement.scrollTop || $doc.body.scrollTop;
+  
+    // Standard mode use $doc.documentElement.clientTop (= always 2)
+    // Quirks mode use $doc.body.clientTop (= BODY border width)
+    return (elem.getBoundingClientRect().top +  scrollTop)
+        - ($doc.documentElement.clientTop || $doc.body.clientTop);
    }-*/;
 
   public native Element getChild(Element elem, int index) /*-{
