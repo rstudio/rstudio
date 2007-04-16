@@ -90,9 +90,9 @@ public class Window {
    * @return the window's client height
    */
   public static native int getClientHeight() /*-{
-    if ($wnd.innerHeight)
-      return $wnd.innerHeight;
-    return $doc.body.clientHeight;
+    // Standard mode || Widow's standard mode || Windows quirks mode.
+    return $wnd.innerHeight || $doc.documentElement.clientHeight || 
+        $doc.body.clientHeight;
   }-*/;
 
   /**
@@ -101,9 +101,8 @@ public class Window {
    * @return the window's client width
    */
   public static native int getClientWidth() /*-{
-    if ($wnd.innerWidth)
-      return $wnd.innerWidth;
-    return $doc.body.clientWidth;
+    // Standard mode || Windows standard mode || Windows quirks mode.
+    return $wnd.innerWidth || $doc.documentElement.clientWidth || $doc.body.clientWidth;
   }-*/;
 
   /**
@@ -112,14 +111,9 @@ public class Window {
    * @return window's scroll left
    */
   public static native int getScrollLeft() /*-{
-    // Standard mode used documentElement.scrollLeft. Quirks mode uses 
-    // document.body.scrollLeft. So we take the max of the two.  
-    var scrollLeft = $doc.documentElement.scrollLeft;
-    if(scrollLeft == 0){
-      scrollLeft = $doc.body.scrollLeft
-    }
-    return scrollLeft;
-   }-*/;
+    // Standard mode || Quirks mode.  
+    return $doc.documentElement.scrollLeft || $doc.body.scrollLeft
+  }-*/;
 
   /**
    * Get the window's scroll top.
@@ -127,14 +121,9 @@ public class Window {
    * @return the window's scroll top
    */
   public static native int getScrollTop() /*-{
-    // Standard mode used documentElement.scrollTop. Quirks mode uses 
-    // document.body.scrollTop. So we take the max of the two.
-    var scrollTop = $doc.documentElement.scrollTop;
-    if(scrollTop == 0){
-      scrollTop = $doc.body.scrollTop
-    } 
-    return scrollTop;
-    }-*/;
+    // Standard mode || Quirks mode. 
+    return $doc.documentElement.scrollTop || $doc.body.scrollTop;
+  }-*/;
 
   /**
    * Gets the browser window's current title.
@@ -167,8 +156,8 @@ public class Window {
    * @return the value entered by the user if 'OK' was pressed, or
    *         <code>null</code> if 'Cancel' was pressed
    */
-  public static native String prompt(String msg, String defaultValue) /*-{
-    return $wnd.prompt(msg, defaultValue);
+  public static native String prompt(String msg, String initialValue) /*-{
+    return $wnd.prompt(msg, initialValue);
   }-*/;
 
   /**
