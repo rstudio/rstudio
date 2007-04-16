@@ -173,6 +173,10 @@ public class BuildTypeMap {
             false);
         mapThrownExceptions(newMethod, ctorDecl);
 
+        // user args
+        mapParameters(newMethod, ctorDecl);
+        // original params are now frozen
+
         int syntheticParamCount = 0;
         ReferenceBinding declaringClass = b.declaringClass;
         if (declaringClass.isNestedType() && !declaringClass.isStatic()) {
@@ -204,14 +208,6 @@ public class BuildTypeMap {
               alreadyNamedVariables.add(argName);
             }
           }
-        }
-
-        // user args
-        mapParameters(newMethod, ctorDecl);
-
-        // remove synthetic args from the original param types list
-        for (; syntheticParamCount > 0; --syntheticParamCount) {
-          newMethod.getOriginalParamTypes().remove(0);
         }
 
         typeMap.put(b, newMethod);

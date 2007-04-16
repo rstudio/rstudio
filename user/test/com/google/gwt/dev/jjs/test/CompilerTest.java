@@ -413,6 +413,21 @@ public class CompilerTest extends GWTTestCase {
     assertEquals(1, j);
   }
 
+  public void testLocalClasses() {
+    class Foo {
+      public Foo(int j) {
+        assertEquals(1, j);
+      };
+    }
+    final int i;
+    new Foo(i = 1) {
+      {
+        assertEquals(1, i);
+      }
+    };
+    assertEquals(1, i);
+  }
+  
   public void testLocalRefs() {
     final String foo = cannotOptimize() ? "foo" : "bar";
     final String bar = cannotOptimize() ? "bar" : "foo";
