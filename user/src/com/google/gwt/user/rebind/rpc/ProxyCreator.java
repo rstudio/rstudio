@@ -39,6 +39,7 @@ import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader;
 import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
+import com.google.gwt.dev.generator.NameFactory;
 
 import java.io.PrintWriter;
 import java.util.HashSet;
@@ -156,8 +157,15 @@ class ProxyCreator {
    * Calls the __ version to encode.
    */
   private void generateAsynchronousProxyMethod(SourceWriter w, JMethod method) {
+
     JType returnType = method.getReturnType();
     JParameter[] params = method.getParameters();
+
+    NameFactory nameFactory = new NameFactory();
+
+    for (int i = 0; i < params.length; ++i) {
+      nameFactory.addName(params[i].getName());
+    }
 
     w.println();
     w.print("public void " + method.getName() + "(");
@@ -183,9 +191,12 @@ class ProxyCreator {
       w.println(");");
     }
     w.outdent();
-    w.println("} catch (" + SerializationException.class.getName() + " e) {");
+
+    String exceptionName = nameFactory.createName("e");
+    w.println("} catch (" + SerializationException.class.getName() + " "
+        + exceptionName + ") {");
     w.indentln("callback.onFailure(new " + InvocationException.class.getName()
-        + "(e.getMessage()));");
+        + "(" + exceptionName + ".getMessage()));");
     w.indentln("return;");
     w.println("}");
 
