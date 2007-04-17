@@ -18,6 +18,7 @@ package com.google.gwt.junit;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.GWTShell;
+import com.google.gwt.dev.BootStrapPlatform;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
@@ -167,6 +168,7 @@ public class JUnitShell extends GWTShell {
    */
   private static JUnitShell getUnitTestShell() {
     if (unitTestShell == null) {
+      BootStrapPlatform.go();
       JUnitShell shell = new JUnitShell();
       String[] args = shell.synthesizeArgs();
       if (!shell.processArgs(args)) {
