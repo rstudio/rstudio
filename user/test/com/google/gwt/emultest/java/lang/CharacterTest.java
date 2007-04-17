@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,22 +22,26 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class CharacterTest extends GWTTestCase {
 
-  public static final int NUM_CHARS_HANDLED = 127;
-  public static String allChars;
+  /**
+   * TODO: document me.
+   */
+  public abstract class Changer {
+    String original;
 
-  /** Sets module name so that javascript compiler can operate */
-  public String getModuleName() {
-    return "com.google.gwt.emultest.EmulSuite";
-  }
-
-  static {
-    StringBuffer b = new StringBuffer();
-    for (char c = 0; c < NUM_CHARS_HANDLED; c++) {
-      b.append(c);
+    public Changer(String o) {
+      original = o;
     }
-    allChars = b.toString();
-  }
 
+    public abstract char change(char c);
+
+    public String changed() {
+      StringBuffer buf = new StringBuffer();
+      for (int i = 0; i < original.length(); i++) {
+        buf.append(change(original.charAt(i)));
+      }
+      return buf.toString();
+    }
+  }
   /**
    * TODO: document me.
    */
@@ -61,16 +65,6 @@ public class CharacterTest extends GWTTestCase {
     public abstract boolean pass(char c);
   }
 
-  class UpperCaseJudge extends Judge {
-    public UpperCaseJudge(String s) {
-      super(s);
-    }
-
-    public boolean pass(char c) {
-      return Character.isUpperCase(c);
-    }
-  }
-
   class LowerCaseJudge extends Judge {
     public LowerCaseJudge(String s) {
       super(s);
@@ -81,8 +75,33 @@ public class CharacterTest extends GWTTestCase {
     }
   }
 
-  Judge upperCaseJudge = new UpperCaseJudge(allChars);
-  Judge lowerCaseJudge = new LowerCaseJudge(allChars);
+  class UpperCaseJudge extends Judge {
+    public UpperCaseJudge(String s) {
+      super(s);
+    }
+
+    public boolean pass(char c) {
+      return Character.isUpperCase(c);
+    }
+  }
+
+  public static String allChars;
+
+  public static final int NUM_CHARS_HANDLED = 127;
+
+  static {
+    StringBuffer b = new StringBuffer();
+    for (char c = 0; c < NUM_CHARS_HANDLED; c++) {
+      b.append(c);
+    }
+    allChars = b.toString();
+  }
+
+  Judge digitJudge = new Judge(allChars) {
+    public boolean pass(char c) {
+      return Character.isDigit(c);
+    }
+  };
   Judge letterJudge = new Judge(allChars) {
     public boolean pass(char c) {
       return Character.isLetter(c);
@@ -93,11 +112,12 @@ public class CharacterTest extends GWTTestCase {
       return Character.isLetterOrDigit(c);
     }
   };
-  Judge digitJudge = new Judge(allChars) {
-    public boolean pass(char c) {
-      return Character.isDigit(c);
+  Changer lowerCaseChanger = new Changer(allChars) {
+    public char change(char c) {
+      return Character.toLowerCase(c);
     }
   };
+  Judge lowerCaseJudge = new LowerCaseJudge(allChars);
   Judge spaceJudge = new Judge(allChars) {
     public boolean pass(char c) {
       return Character.isSpace(c);
@@ -108,66 +128,18 @@ public class CharacterTest extends GWTTestCase {
       return Character.toUpperCase(c);
     }
   };
-  Changer lowerCaseChanger = new Changer(allChars) {
-    public char change(char c) {
-      return Character.toLowerCase(c);
-    }
-  };
+  Judge upperCaseJudge = new UpperCaseJudge(allChars);
 
-  public static void testToFromDigit() {
-    for (int i = 0; i < 16; i++) {
-      assertEquals(i, Character.digit(Character.forDigit(i, 16), 16));
-    }
-    assertEquals(1, Character.digit('1', 10));
-    assertEquals('9', Character.forDigit(9, 10));
-    assertEquals(-1, Character.digit('A', 10));
-  }
-
-  /**
-   * TODO: document me.
-   */
-  public abstract class Changer {
-    String original;
-
-    public Changer(String o) {
-      original = o;
-    }
-
-    public String changed() {
-      StringBuffer buf = new StringBuffer();
-      for (int i = 0; i < original.length(); i++) {
-        buf.append(change(original.charAt(i)));
-      }
-      return buf.toString();
-    }
-
-    public abstract char change(char c);
-  }
-
-  public void testConstructor() {
-    assertEquals(new Character((char) 32), new Character(' '));
+  public String getModuleName() {
+    return "com.google.gwt.emultest.EmulSuite";
   }
 
   public void testCharValue() {
     assertEquals(new Character((char) 32).charValue(), (char) 32);
   }
 
-  public void testToString() {
-    assertEquals(new Character((char) 32).toString(), " ");
-  }
-
-  public void testUpperCase() {
-    assertEquals("wrong number of uppercase letters", 26,
-        upperCaseJudge.allPass().length());
-    assertEquals("wrong number of uppercase letters after toUpperCase", 52,
-        new UpperCaseJudge(upperCaseChanger.changed()).allPass().length());
-  }
-
-  public void testLowerCase() {
-    assertEquals("wrong number of lowercase letters", 26,
-        lowerCaseJudge.allPass().length());
-    assertEquals("wrong number of lowercase letters after toLowerCase", 52,
-        new LowerCaseJudge(lowerCaseChanger.changed()).allPass().length());
+  public void testConstructor() {
+    assertEquals(new Character((char) 32), new Character(' '));
   }
 
   public void testDigit() {
@@ -183,8 +155,36 @@ public class CharacterTest extends GWTTestCase {
         letterOrDigitJudge.allPass().length());
   }
 
+  public void testLowerCase() {
+    assertEquals("wrong number of lowercase letters", 26,
+        lowerCaseJudge.allPass().length());
+    assertEquals("wrong number of lowercase letters after toLowerCase", 52,
+        new LowerCaseJudge(lowerCaseChanger.changed()).allPass().length());
+  }
+
   public void testSpace() {
     assertEquals("wrong number of spaces", 5, spaceJudge.allPass().length());
   }
 
+  public void testToFromDigit() {
+    for (int i = 0; i < 16; i++) {
+      assertEquals(i, Character.digit(Character.forDigit(i, 16), 16));
+    }
+    assertEquals(1, Character.digit('1', 10));
+    assertEquals('9', Character.forDigit(9, 10));
+    assertEquals(-1, Character.digit('7', 6));
+    assertEquals(-1, Character.digit('8', 8));
+    assertEquals(-1, Character.digit('A', 10));
+  }
+
+  public void testToString() {
+    assertEquals(new Character((char) 32).toString(), " ");
+  }
+
+  public void testUpperCase() {
+    assertEquals("wrong number of uppercase letters", 26,
+        upperCaseJudge.allPass().length());
+    assertEquals("wrong number of uppercase letters after toUpperCase", 52,
+        new UpperCaseJudge(upperCaseChanger.changed()).allPass().length());
+  }
 }
