@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,10 +20,12 @@ import com.google.gwt.junit.client.GWTTestCase;
 import java.util.Date;
 
 /**
- * TODO: document me.
+ * Tests for GWT's emulation of the JRE Date class. 
  */
 public class DateTest extends GWTTestCase {
   public static final String CURRENT = "CURRENT";
+  public static final String TO_STRING_PATTERN =
+      "\\w{3} \\w{3} \\d{2} \\d{2}:\\d{2}:\\d{2}( .+)? \\d{4}";
   public static final long DAY_MILLISECONDS_SHIFT = 27;
   public static final String FUTURE = "FUTURE";
   public static final String PAST = "PAST";
@@ -502,6 +504,29 @@ public class DateTest extends GWTTestCase {
     Date accum2 = create(FUTURE);
     String a2 = accum2.toLocaleString();
     assertTrue(a2.indexOf("2010") != -1);
+  }
+
+  /** Date docs specify an exact format for toString() */
+  public void testToString() {
+    // /////////////////////////////
+    // Past
+    // /////////////////////////////
+    Date d = create(PAST);
+    String s = d.toString();
+
+    assertTrue("Bad format " + s, s.matches(TO_STRING_PATTERN));
+    assertEquals("Parsing returned unequal dates from " + s,
+        d, new Date(Date.parse(s)));
+
+    // /////////////////////////////
+    // Future
+    // /////////////////////////////
+    d = create(FUTURE);
+    s = d.toString();
+
+    assertTrue("Bad format " + s, s.matches(TO_STRING_PATTERN));
+    assertEquals("Parsing returned unequal dates from " + s,
+        d, new Date(Date.parse(s)));
   }
 
   /** Testing for public static long java.util.Date.UTC(int,int,int,int,int,int)* */

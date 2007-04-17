@@ -1,12 +1,12 @@
 /*
- * Copyright 2006 Google Inc.
- * 
+ * Copyright 2007 Google Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,6 +19,20 @@ package java.util;
  * Represents a date and time.
  */
 public class Date implements Cloneable, Comparable {
+  /**
+   * Used only by toString().
+   */
+  private static final String[] DAYS = {
+      "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
+  };
+
+  /**
+   * Used only by toString().
+   */
+  private static final String[] MONTHS = {
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  };
 
   // CHECKSTYLE_OFF: The underscore prefix is an old convention that could be
   // easily replaced.
@@ -92,6 +106,34 @@ public class Date implements Cloneable, Comparable {
 
   public int compareTo(Object other) {
     return compareTo((Date) other);
+  }
+
+  /**
+   *  Return the names for the days of the week as specified by the Date
+   *  specification.
+   */
+  private static String dayToString(int day) {
+    return DAYS[day];
+  }
+
+  /**
+   *  Return the names for the months of the year as specified by the Date
+   *  specification.
+   */
+  private static String monthToString(int month) {
+    return MONTHS[month];
+  }
+
+  /**
+   *  Ensure a number is displayed with two digits.
+   *  @return A two-character representation of the number.
+   */
+  private static String padTwo(int number) {
+    if (number < 10) {
+      return "0" + number;
+    } else {
+      return String.valueOf(number);
+    }
   }
 
   public boolean equals(Object obj) {
@@ -179,7 +221,27 @@ public class Date implements Cloneable, Comparable {
   }-*/;
 
   public native String toString() /*-{
-    return this.jsdate.toString();
+    var d = this.jsdate;
+    var padTwo = @java.util.Date::padTwo(I);
+    var day =
+        @java.util.Date::dayToString(I)(this.jsdate.getDay());
+    var month =
+        @java.util.Date::monthToString(I)(this.jsdate.getMonth());
+
+    // Compute timezone offset. The value that getTimezoneOffset returns is
+    // backwards for the transformation that we want.
+    var offset = -d.getTimezoneOffset();
+    var hourOffset = String((offset >= 0) ?
+        "+" + Math.floor(offset / 60) : Math.ceil(offset / 60));
+    var minuteOffset = padTwo(Math.abs(offset) % 60);
+
+    return day + " " + month + " " +
+        padTwo(d.getDate()) + " " +
+        padTwo(d.getHours()) + ":" +
+        padTwo(d.getMinutes()) + ":" +
+        padTwo(d.getSeconds()) +
+        " GMT" + hourOffset + minuteOffset +
+        + " " + d.getFullYear();
   }-*/;
 
   private native void init() /*-{
