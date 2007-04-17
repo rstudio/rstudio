@@ -17,14 +17,20 @@ package com.google.gwt.dev.jdt;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor.DeferredBindingSite;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Util;
 
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
+import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
+import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
+import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -68,7 +74,7 @@ public class WebModeCompilerFrontEnd extends AstCompiler {
    * Pull in types referenced only via JSNI.
    */
   protected String[] doFindAdditionalTypesUsingJsni(TreeLogger logger,
-      CompilationUnitDeclaration cud) throws UnableToCompleteException {
+      CompilationUnitDeclaration cud) {
     Set dependentTypeNames = new HashSet();
     FindJsniRefVisitor v = new FindJsniRefVisitor(dependentTypeNames);
     cud.traverse(v, cud.scope);
@@ -79,24 +85,79 @@ public class WebModeCompilerFrontEnd extends AstCompiler {
    * Pull in types implicitly referenced through rebind answers.
    */
   protected String[] doFindAdditionalTypesUsingRebinds(TreeLogger logger,
-      CompilationUnitDeclaration cud) throws UnableToCompleteException {
+      CompilationUnitDeclaration cud) {
     Set dependentTypeNames = new HashSet();
 
     // Find all the deferred binding request types.
     //
-    Set requestedTypes = new HashSet();
+    Map requestedTypes = new HashMap();
     FindDeferredBindingSitesVisitor v = new FindDeferredBindingSitesVisitor(
         requestedTypes);
     cud.traverse(v, cud.scope);
 
     // For each, ask the host for every possible deferred binding answer.
     //
-    for (Iterator iter = requestedTypes.iterator(); iter.hasNext();) {
+    for (Iterator iter = requestedTypes.keySet().iterator(); iter.hasNext();) {
       String reqType = (String) iter.next();
-      String[] resultTypes = rebindPermOracle.getAllPossibleRebindAnswers(
-          getLogger(), reqType);
+      DeferredBindingSite site = (DeferredBindingSite) requestedTypes.get(reqType);
 
-      Util.addAll(dependentTypeNames, resultTypes);
+      try {
+        String[] resultTypes = rebindPermOracle.getAllPossibleRebindAnswers(
+            getLogger(), reqType);
+        // Check that each result is instantiable.
+        for (int i = 0; i < resultTypes.length; ++i) {
+          String typeName = resultTypes[i];
+
+          // This causes the compiler to find the additional type, possibly
+          // winding its back to ask for the compilation unit from the source
+          // oracle.
+          //
+          ReferenceBinding type = resolvePossiblyNestedType(typeName);
+
+          // Sanity check rebind results.
+          if (type == null) {
+            FindDeferredBindingSitesVisitor.reportRebindProblem(site,
+                "Rebind result '" + typeName + "' could not be found");
+            continue;
+          }
+          if (!type.isClass()) {
+            FindDeferredBindingSitesVisitor.reportRebindProblem(site,
+                "Rebind result '" + typeName + "' must be a class");
+            continue;
+          }
+          if (type.isAbstract()) {
+            FindDeferredBindingSitesVisitor.reportRebindProblem(site,
+                "Rebind result '" + typeName + "' cannot be abstract");
+            continue;
+          }
+          if (type.isNestedType() && !type.isStatic()) {
+            FindDeferredBindingSitesVisitor.reportRebindProblem(site,
+                "Rebind result '" + typeName
+                    + "' cannot be a non-static nested class");
+            continue;
+          }
+          if (type.isLocalType()) {
+            FindDeferredBindingSitesVisitor.reportRebindProblem(site,
+                "Rebind result '" + typeName + "' cannot be a local class");
+            continue;
+          }
+          // Look for a noArg ctor.
+          MethodBinding noArgCtor = type.getExactMethod("<init>".toCharArray(),
+              TypeBinding.NoParameters, cud.scope);
+
+          if (noArgCtor == null) {
+            FindDeferredBindingSitesVisitor.reportRebindProblem(site,
+                "Rebind result '" + typeName
+                    + "' has no default (zero argument) constructors.");
+            continue;
+          }
+          dependentTypeNames.add(typeName);
+        }
+        Util.addAll(dependentTypeNames, resultTypes);
+      } catch (UnableToCompleteException e) {
+        FindDeferredBindingSitesVisitor.reportRebindProblem(site,
+            "Failed to resolve '" + reqType + "' via deferred binding.");
+      }
     }
     return (String[]) dependentTypeNames.toArray(Empty.STRINGS);
   }

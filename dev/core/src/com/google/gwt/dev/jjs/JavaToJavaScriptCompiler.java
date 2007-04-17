@@ -248,13 +248,10 @@ public class JavaToJavaScriptCompiler {
     //
     goldenCuds = compiler.getCompilationUnitDeclarations(logger, seedTypeNames);
 
-    // See if there are none. If so, then we had problems.
+    // Check for compilation problems. We don't log here because any problems
+    // found here will have already been logged by AbstractCompiler.
     //
-    if (goldenCuds.length == 0) {
-      logger.log(TreeLogger.ERROR, "Cannot proceed due to previous errors",
-          null);
-      throw new UnableToCompleteException();
-    }
+    checkForErrors(logger, false);
 
     // Find the newest of all these.
     //
@@ -274,12 +271,6 @@ public class JavaToJavaScriptCompiler {
       String loc = newestCup.getLocation();
       String msg = "Newest compilation unit is '" + loc + "'";
       logger.log(TreeLogger.DEBUG, msg, null);
-    }
-
-    // Check for errors in the returned compilation units
-    //
-    if (checkForErrors(logger)) {
-      throw new UnableToCompleteException();
     }
   }
 
@@ -306,9 +297,7 @@ public class JavaToJavaScriptCompiler {
 
       // BuildTypeMap can uncover syntactic JSNI errors; report & abort
       // 
-      if (checkForErrors(logger)) {
-        throw new UnableToCompleteException();
-      }
+      checkForErrors(logger, true);
 
       // Compute all super type/sub type info
       jprogram.typeOracle.computeBeforeAST();
@@ -321,9 +310,7 @@ public class JavaToJavaScriptCompiler {
 
       // GenerateJavaAST can uncover semantic JSNI errors; report & abort
       // 
-      if (checkForErrors(logger)) {
-        throw new UnableToCompleteException();
-      }
+      checkForErrors(logger, true);
 
       // TODO: figure out how to have a debug mode.
       boolean isDebugEnabled = false;
@@ -400,7 +387,7 @@ public class JavaToJavaScriptCompiler {
 
       // (8) Resolve all unresolved JsNameRefs
       JsSymbolResolver.exec(jsProgram);
-      
+
       // (9) Obfuscate
       if (obfuscate) {
         JsObfuscateNamer.exec(jsProgram);
@@ -409,7 +396,7 @@ public class JavaToJavaScriptCompiler {
       } else {
         JsVerboseNamer.exec(jsProgram);
       }
-      
+
       StringWriter sw = new StringWriter();
       PrintWriter pw = new PrintWriter(sw, true);
       TextOutputOnPrintWriter out = new TextOutputOnPrintWriter(pw, obfuscate);
@@ -460,14 +447,22 @@ public class JavaToJavaScriptCompiler {
     return lastModified;
   }
 
-  private boolean checkForErrors(final TreeLogger logger) {
+  private void checkForErrors(final TreeLogger logger, boolean itemizeErrors)
+      throws UnableToCompleteException {
     boolean compilationFailed = false;
+    if (goldenCuds.length == 0) {
+      compilationFailed = true;
+    }
     for (int iCud = 0; iCud < goldenCuds.length; iCud++) {
       CompilationUnitDeclaration cud = goldenCuds[iCud];
       CompilationResult result = cud.compilationResult();
       if (result.hasErrors()) {
         compilationFailed = true;
-        TreeLogger branch = logger.branch(TreeLogger.TRACE, "Errors in "
+        // Early out if we don't need to itemize.
+        if (!itemizeErrors) {
+          break;
+        }
+        TreeLogger branch = logger.branch(TreeLogger.ERROR, "Errors in "
             + String.valueOf(result.getFileName()), null);
         IProblem[] errors = result.getErrors();
         for (int i = 0; i < errors.length; i++) {
@@ -483,25 +478,22 @@ public class JavaToJavaScriptCompiler {
           String msg = problem.toString();
           msg = msg.substring(msg.indexOf(' '));
 
-          // Append 'file (line,pos): msg' to the error message.
+          // Append 'file (line): msg' to the error message.
           //
           int line = problem.getSourceLineNumber();
-          // int sourceStart = problem.getSourceStart();
-          // int lineStart = (line > 1) ? result.lineSeparatorPositions[line -
-          // 2] : 0;
-          // int charPos = sourceStart - lineStart;
           StringBuffer msgBuf = new StringBuffer();
           msgBuf.append("Line ");
           msgBuf.append(line);
-          // msgBuf.append(" (pos ");
-          // msgBuf.append(charPos);
           msgBuf.append(": ");
           msgBuf.append(msg);
-          branch.log(problem.isError() ? TreeLogger.ERROR : TreeLogger.TRACE,
-              msgBuf.toString(), null);
+          branch.log(TreeLogger.ERROR, msgBuf.toString(), null);
         }
       }
     }
-    return compilationFailed;
+    if (compilationFailed) {
+      logger.log(TreeLogger.ERROR, "Cannot proceed due to previous errors",
+          null);
+      throw new UnableToCompleteException();
+    }
   }
 }

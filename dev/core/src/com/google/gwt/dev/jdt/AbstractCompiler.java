@@ -36,9 +36,7 @@ import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
-import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
-import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblemFactory;
 
 import java.util.HashMap;
@@ -119,14 +117,7 @@ public abstract class AbstractCompiler {
 
       // Examine the cud for magic types.
       //
-      String[] typeNames;
-      try {
-        typeNames = doFindAdditionalTypesUsingJsni(logger, cud);
-      } catch (UnableToCompleteException e) {
-        problemReporter.abortDueToInternalError(
-            "Unable to resolve required JSNI dependencies", cud);
-        return;
-      }
+      String[] typeNames = doFindAdditionalTypesUsingJsni(logger, cud);
 
       // Accept each new compilation unit.
       //
@@ -143,13 +134,7 @@ public abstract class AbstractCompiler {
         lookupEnvironment.getType(chars);
       }
 
-      try {
-        typeNames = doFindAdditionalTypesUsingRebinds(logger, cud);
-      } catch (UnableToCompleteException e) {
-        problemReporter.abortDueToInternalError(
-            "Unable to resolve required rebind dependencies", cud);
-        return;
-      }
+      typeNames = doFindAdditionalTypesUsingRebinds(logger, cud);
 
       // Accept each new compilation unit, and check for instantiability
       //
@@ -163,42 +148,6 @@ public abstract class AbstractCompiler {
         // oracle.
         //
         ReferenceBinding type = resolvePossiblyNestedType(typeName);
-
-        // sanity check rebind results
-        if (type == null) {
-          problemReporter.abortDueToInternalError("Rebind result '" + typeName
-              + "' could not be found");
-          return;
-        }
-        if (!type.isClass()) {
-          problemReporter.abortDueToInternalError("Rebind result '" + typeName
-              + "' must be a class");
-          return;
-        }
-        if (type.isAbstract()) {
-          problemReporter.abortDueToInternalError("Rebind result '" + typeName
-              + "' cannot be abstract");
-          return;
-        }
-        if (type.isNestedType() && !type.isStatic()) {
-          problemReporter.abortDueToInternalError("Rebind result '" + typeName
-              + "' cannot be a non-static nested class");
-          return;
-        }
-        if (type.isLocalType()) {
-          problemReporter.abortDueToInternalError("Rebind result '" + typeName
-              + "' cannot be a local class");
-          return;
-        }
-        // look for a noArg ctor
-        MethodBinding noArgCtor = type.getExactMethod("<init>".toCharArray(),
-            TypeBinding.NoParameters, cud.scope);
-
-        if (noArgCtor == null) {
-          problemReporter.abortDueToInternalError("Rebind result '" + typeName
-              + "' has no default (zero argument) constructors.");
-          return;
-        }
       }
 
       // Optionally remember this cud.
@@ -490,12 +439,12 @@ public abstract class AbstractCompiler {
   }
 
   protected String[] doFindAdditionalTypesUsingJsni(TreeLogger logger,
-      CompilationUnitDeclaration cud) throws UnableToCompleteException {
+      CompilationUnitDeclaration cud) {
     return Empty.STRINGS;
   }
 
   protected String[] doFindAdditionalTypesUsingRebinds(TreeLogger logger,
-      CompilationUnitDeclaration cud) throws UnableToCompleteException {
+      CompilationUnitDeclaration cud) {
     return Empty.STRINGS;
   }
 
@@ -568,6 +517,10 @@ public abstract class AbstractCompiler {
       rememberPackage(packageName.substring(0, i));
     }
     knownPackages.add(packageName);
+  }
+
+  protected ReferenceBinding resolvePossiblyNestedType(String typeName) {
+    return compiler.resolvePossiblyNestedType(typeName);
   }
 
   protected void setLogger(TreeLogger logger) {

@@ -16,14 +16,20 @@
 package com.google.gwt.dev.jdt;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
+import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
+import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.ClassLiteralAccess;
 import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.MessageSend;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
+import org.eclipse.jdt.internal.compiler.lookup.Scope;
+import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
+import org.eclipse.jdt.internal.compiler.problem.ProblemHandler;
 import org.eclipse.jdt.internal.compiler.problem.ProblemReporter;
+import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
 
-import java.util.Set;
+import java.util.Map;
 
 /**
  * Walks a
@@ -33,13 +39,41 @@ import java.util.Set;
  */
 public class FindDeferredBindingSitesVisitor extends ASTVisitor {
 
+  /**
+   * Information about the site at which a rebind request was found, used to
+   * report problems.
+   */
+  public static class DeferredBindingSite {
+    public final MessageSend messageSend;
+
+    public final Scope scope;
+
+    public DeferredBindingSite(MessageSend messageSend, Scope scope) {
+      this.messageSend = messageSend;
+      this.scope = scope;
+    }
+  }
+
   public static final String REBIND_MAGIC_CLASS = "com.google.gwt.core.client.GWT";
   public static final String REBIND_MAGIC_METHOD = "create";
 
-  private final Set results;
+  public static void reportRebindProblem(DeferredBindingSite site,
+      String message) {
+    MessageSend messageSend = site.messageSend;
+    Scope scope = site.scope;
+    CompilationResult compResult = scope.compilationUnitScope().referenceContext().compilationResult();
+    int startLine = ProblemHandler.searchLineNumber(
+        compResult.lineSeparatorPositions, messageSend.sourceStart());
+    DefaultProblem problem = new DefaultProblem(compResult.fileName, message,
+        IProblem.Unclassified, null, ProblemSeverities.Error,
+        messageSend.sourceStart, messageSend.sourceEnd, startLine);
+    compResult.record(problem, scope.referenceContext());
+  }
 
-  public FindDeferredBindingSitesVisitor(Set results) {
-    this.results = results;
+  private final Map results;
+
+  public FindDeferredBindingSitesVisitor(Map requestedTypes) {
+    this.results = requestedTypes;
   }
 
   public void endVisit(MessageSend messageSend, BlockScope scope) {
@@ -65,23 +99,24 @@ public class FindDeferredBindingSitesVisitor extends ASTVisitor {
       return;
     }
 
+    DeferredBindingSite site = new DeferredBindingSite(messageSend, scope);
+    
     Expression[] args = messageSend.arguments;
     if (args.length != 1) {
-      problemReporter.abortDueToInternalError(
-          "GWT.create() should take exactly one argument", messageSend);
+      reportRebindProblem(site, "GWT.create() should take exactly one argument");
       return;
     }
 
     Expression arg = args[0];
     if (!(arg instanceof ClassLiteralAccess)) {
-      problemReporter.abortDueToInternalError(
-          "Only class literals may be used as arguments to GWT.create()",
-          messageSend);
+      reportRebindProblem(site, "Only class literals may be used as arguments to GWT.create()");
       return;
     }
 
     ClassLiteralAccess cla = (ClassLiteralAccess) arg;
     String typeName = String.valueOf(cla.targetType.readableName());
-    results.add(typeName);
+    if (!results.containsKey(typeName)) {
+      results.put(typeName, site);
+    }
   }
 }
