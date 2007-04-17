@@ -637,8 +637,8 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
       int left = DOM.getAbsoluteLeft(selectedElem) - containerLeft;
       int top = DOM.getAbsoluteTop(selectedElem) - containerTop;
-      int width = DOM.getIntAttribute(selectedElem, "offsetWidth");
-      int height = DOM.getIntAttribute(selectedElem, "offsetHeight");
+      int width = DOM.getElementPropertyInt(selectedElem, "offsetWidth");
+      int height = DOM.getElementPropertyInt(selectedElem, "offsetHeight");
 
       // Set the focusable element's position and size to exactly underlap the
       // item's content element.

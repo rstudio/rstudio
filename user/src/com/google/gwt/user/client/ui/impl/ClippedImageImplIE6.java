@@ -45,8 +45,8 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
     // It really only needs to be enough to show the revealed portion.
     int imgWidth = left + width;
     int imgHeight = top + height;
-    DOM.setIntAttribute(img, "width", imgWidth);
-    DOM.setIntAttribute(img, "height", imgHeight);
+    DOM.setElementPropertyInt(img, "width", imgWidth);
+    DOM.setElementPropertyInt(img, "height", imgHeight);
   }
 
   public String getHTML(String url, int left, int top, int width, int height) {

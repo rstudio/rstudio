@@ -59,7 +59,7 @@ public class Frame extends Widget {
    * @return the frame's URL
    */
   public String getUrl() {
-    return DOM.getAttribute(getElement(), "src");
+    return DOM.getElementProperty(getElement(), "src");
   }
 
   /**
@@ -68,6 +68,6 @@ public class Frame extends Widget {
    * @param url the frame's new URL
    */
   public void setUrl(String url) {
-    DOM.setAttribute(getElement(), "src", url);
+    DOM.setElementProperty(getElement(), "src", url);
   }
 }

@@ -69,7 +69,7 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents {
    * @return the horizontal scroll position, in pixels
    */
   public int getHorizontalScrollPosition() {
-    return DOM.getIntAttribute(getElement(), "scrollLeft");
+    return DOM.getElementPropertyInt(getElement(), "scrollLeft");
   }
 
   /**
@@ -78,7 +78,7 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents {
    * @return the vertical scroll position, in pixels
    */
   public int getScrollPosition() {
-    return DOM.getIntAttribute(getElement(), "scrollTop");
+    return DOM.getElementPropertyInt(getElement(), "scrollTop");
   }
 
   public void onBrowserEvent(Event event) {
@@ -113,7 +113,7 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents {
    * @param position the new horizontal scroll position, in pixels
    */
   public void setHorizontalScrollPosition(int position) {
-    DOM.setIntAttribute(getElement(), "scrollLeft", position);
+    DOM.setElementPropertyInt(getElement(), "scrollLeft", position);
   }
 
   /**
@@ -122,7 +122,7 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents {
    * @param position the new vertical scroll position, in pixels
    */
   public void setScrollPosition(int position) {
-    DOM.setIntAttribute(getElement(), "scrollTop", position);
+    DOM.setElementPropertyInt(getElement(), "scrollTop", position);
   }
 
   private native void ensureVisibleImpl(Element scroll, Element e) /*-{

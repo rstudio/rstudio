@@ -55,7 +55,7 @@ public abstract class UIObject {
     }
 
     // Get the current style string.
-    String oldStyle = DOM.getAttribute(elem, "className");
+    String oldStyle = DOM.getElementProperty(elem, "className");
     int idx;
     if (oldStyle == null) {
       idx = -1;
@@ -80,14 +80,14 @@ public abstract class UIObject {
     if (add) {
       // Only add the style if it's not already present.
       if (idx == -1) {
-        DOM.setAttribute(elem, "className", oldStyle + " " + style);
+        DOM.setElementProperty(elem, "className", oldStyle + " " + style);
       }
     } else {
       // Don't try to remove the style if it's not there.
       if (idx != -1) {
         String begin = oldStyle.substring(0, idx);
         String end = oldStyle.substring(idx + style.length());
-        DOM.setAttribute(elem, "className", begin + end);
+        DOM.setElementProperty(elem, "className", begin + end);
       }
     }
   }
@@ -140,7 +140,7 @@ public abstract class UIObject {
    * @return the object's offset height
    */
   public int getOffsetHeight() {
-    return DOM.getIntAttribute(element, "offsetHeight");
+    return DOM.getElementPropertyInt(element, "offsetHeight");
   }
 
   /**
@@ -150,7 +150,7 @@ public abstract class UIObject {
    * @return the object's offset width
    */
   public int getOffsetWidth() {
-    return DOM.getIntAttribute(element, "offsetWidth");
+    return DOM.getElementPropertyInt(element, "offsetWidth");
   }
 
   /**
@@ -160,7 +160,7 @@ public abstract class UIObject {
    * @see #setStyleName(String)
    */
   public String getStyleName() {
-    return DOM.getAttribute(element, "className");
+    return DOM.getElementProperty(element, "className");
   }
 
   /**
@@ -170,7 +170,7 @@ public abstract class UIObject {
    * @return the object's title
    */
   public String getTitle() {
-    return DOM.getAttribute(element, "title");
+    return DOM.getElementProperty(element, "title");
   }
 
   /**
@@ -264,7 +264,7 @@ public abstract class UIObject {
       throw new RuntimeException(NULL_HANDLE_MSG);
     }
 
-    DOM.setAttribute(element, "className", style);
+    DOM.setElementProperty(element, "className", style);
   }
 
   /**
@@ -274,7 +274,7 @@ public abstract class UIObject {
    * @param title the object's new title
    */
   public void setTitle(String title) {
-    DOM.setAttribute(element, "title", title);
+    DOM.setElementProperty(element, "title", title);
   }
 
   /**

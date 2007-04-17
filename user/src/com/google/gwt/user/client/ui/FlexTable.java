@@ -49,7 +49,7 @@ public class FlexTable extends HTMLTable {
      * @throws IndexOutOfBoundsException
      */
     public int getColSpan(int row, int column) {
-      return DOM.getIntAttribute(getElement(row, column), "colSpan");
+      return DOM.getElementPropertyInt(getElement(row, column), "colSpan");
     }
 
     /**
@@ -62,7 +62,7 @@ public class FlexTable extends HTMLTable {
      * @throws IndexOutOfBoundsException
      */
     public int getRowSpan(int row, int column) {
-      return DOM.getIntAttribute(getElement(row, column), "rowSpan");
+      return DOM.getElementPropertyInt(getElement(row, column), "rowSpan");
     }
 
     /**
@@ -75,7 +75,7 @@ public class FlexTable extends HTMLTable {
      * @throws IndexOutOfBoundsException
      */
     public void setColSpan(int row, int column, int colSpan) {
-      DOM.setIntAttribute(ensureElement(row, column), "colSpan", colSpan);
+      DOM.setElementPropertyInt(ensureElement(row, column), "colSpan", colSpan);
     }
 
     /**
@@ -88,7 +88,7 @@ public class FlexTable extends HTMLTable {
      * @throws IndexOutOfBoundsException
      */
     public void setRowSpan(int row, int column, int rowSpan) {
-      DOM.setIntAttribute(ensureElement(row, column), "rowSpan", rowSpan);
+      DOM.setElementPropertyInt(ensureElement(row, column), "rowSpan", rowSpan);
     }
   }
 

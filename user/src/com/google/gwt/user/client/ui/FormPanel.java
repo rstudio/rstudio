@@ -104,7 +104,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     // submitted. We have to create the iframe using innerHTML, because setting
     // an iframe's 'name' property dynamically doesn't work on most browsers.
     String formName = "FormPanel_" + (++formId);
-    DOM.setAttribute(getElement(), "target", formName);
+    DOM.setElementProperty(getElement(), "target", formName);
     DOM.setInnerHTML(getElement(), "<iframe name='" + formName + "'>");
     iframe = DOM.getFirstChild(getElement());
 
@@ -164,7 +164,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * @return the form's action
    */
   public String getAction() {
-    return DOM.getAttribute(getElement(), "action");
+    return DOM.getElementProperty(getElement(), "action");
   }
 
   /**
@@ -184,7 +184,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * @return the form's method
    */
   public String getMethod() {
-    return DOM.getAttribute(getElement(), "method");
+    return DOM.getElementProperty(getElement(), "method");
   }
 
   /**
@@ -195,7 +195,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * @return the form's target.
    */
   public String getTarget() {
-    return DOM.getAttribute(getElement(), "target");
+    return DOM.getElementProperty(getElement(), "target");
   }
 
   public boolean onFormSubmit() {
@@ -226,7 +226,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * @param url the form's action
    */
   public void setAction(String url) {
-    DOM.setAttribute(getElement(), "action", url);
+    DOM.setElementProperty(getElement(), "action", url);
   }
 
   /**
@@ -246,7 +246,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * @param method the form's method
    */
   public void setMethod(String method) {
-    DOM.setAttribute(getElement(), "method", method);
+    DOM.setElementProperty(getElement(), "method", method);
   }
 
   /**
@@ -283,6 +283,6 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   }
 
   private void setTarget(String target) {
-    DOM.setAttribute(getElement(), "target", target);
+    DOM.setElementProperty(getElement(), "target", target);
   }
 }

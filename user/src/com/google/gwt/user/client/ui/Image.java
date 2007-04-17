@@ -110,7 +110,7 @@ public class Image extends Widget implements SourcesClickEvents,
     }
 
     public int getHeight(Image image) {
-      return DOM.getIntAttribute(image.getElement(), "height");
+      return DOM.getElementPropertyInt(image.getElement(), "height");
     }
 
     public int getOriginLeft() {
@@ -122,15 +122,15 @@ public class Image extends Widget implements SourcesClickEvents,
     }
 
     public String getUrl(Image image) {
-      return DOM.getAttribute(image.getElement(), "src");
+      return DOM.getElementProperty(image.getElement(), "src");
     }
 
     public int getWidth(Image image) {
-      return DOM.getIntAttribute(image.getElement(), "width");
+      return DOM.getElementPropertyInt(image.getElement(), "width");
     }
 
     public void setUrl(Image image, String url) {
-      DOM.setAttribute(image.getElement(), "src", url);
+      DOM.setElementProperty(image.getElement(), "src", url);
     }
 
     public void setUrlAndVisibleRect(Image image, String url, int left,
@@ -278,7 +278,7 @@ public class Image extends Widget implements SourcesClickEvents,
    */
   public static void prefetch(String url) {
     Element img = DOM.createImg();
-    DOM.setAttribute(img, "src", url);
+    DOM.setElementProperty(img, "src", url);
     prefetchImages.put(url, img);
   }
 

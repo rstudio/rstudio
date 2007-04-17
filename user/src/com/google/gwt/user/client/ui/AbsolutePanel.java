@@ -71,7 +71,7 @@ public class AbsolutePanel extends ComplexPanel {
    */
   public int getWidgetLeft(Widget w) {
     checkWidgetParent(w);
-    return DOM.getIntAttribute(w.getElement(), "offsetLeft");
+    return DOM.getElementPropertyInt(w.getElement(), "offsetLeft");
   }
 
   /**
@@ -82,7 +82,7 @@ public class AbsolutePanel extends ComplexPanel {
    */
   public int getWidgetTop(Widget w) {
     checkWidgetParent(w);
-    return DOM.getIntAttribute(w.getElement(), "offsetTop");
+    return DOM.getElementPropertyInt(w.getElement(), "offsetTop");
   }
 
   /**

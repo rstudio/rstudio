@@ -110,7 +110,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   public String getName() {
-    return DOM.getAttribute(getElement(), "name");
+    return DOM.getElementProperty(getElement(), "name");
   }
 
   /**
@@ -121,7 +121,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * @return the selected index, or <code>-1</code> if none is selected
    */
   public int getSelectedIndex() {
-    return DOM.getIntAttribute(getElement(), "selectedIndex");
+    return DOM.getElementPropertyInt(getElement(), "selectedIndex");
   }
 
   /**
@@ -135,7 +135,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
     checkIndex(index);
 
     Element option = DOM.getChild(getElement(), index);
-    return DOM.getAttribute(option, "value");
+    return DOM.getElementProperty(option, "value");
   }
 
   /**
@@ -145,7 +145,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * @return the visible item count
    */
   public int getVisibleItemCount() {
-    return DOM.getIntAttribute(getElement(), "size");
+    return DOM.getElementPropertyInt(getElement(), "size");
   }
 
   /**
@@ -180,7 +180,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
     checkIndex(index);
 
     Element option = DOM.getChild(getElement(), index);
-    return DOM.getBooleanAttribute(option, "selected");
+    return DOM.getElementPropertyBoolean(option, "selected");
   }
 
   /**
@@ -189,7 +189,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * @return <code>true</code> if multiple selection is allowed
    */
   public boolean isMultipleSelect() {
-    return DOM.getBooleanAttribute(getElement(), "multiple");
+    return DOM.getElementPropertyBoolean(getElement(), "multiple");
   }
 
   public void onBrowserEvent(Event event) {
@@ -228,7 +228,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
     checkIndex(index);
 
     Element option = DOM.getChild(getElement(), index);
-    DOM.setBooleanAttribute(option, "selected", selected);
+    DOM.setElementPropertyBoolean(option, "selected", selected);
   }
 
   /**
@@ -252,11 +252,11 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * @param multiple <code>true</code> to allow multiple selections
    */
   public void setMultipleSelect(boolean multiple) {
-    DOM.setBooleanAttribute(getElement(), "multiple", multiple);
+    DOM.setElementPropertyBoolean(getElement(), "multiple", multiple);
   }
 
   public void setName(String name) {
-    DOM.setAttribute(getElement(), "name", name);
+    DOM.setElementProperty(getElement(), "name", name);
   }
 
   /**
@@ -265,7 +265,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * @param index the index of the item to be selected
    */
   public void setSelectedIndex(int index) {
-    DOM.setIntAttribute(getElement(), "selectedIndex", index);
+    DOM.setElementPropertyInt(getElement(), "selectedIndex", index);
   }
 
   /**
@@ -281,7 +281,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
     checkIndex(index);
 
     Element option = DOM.getChild(getElement(), index);
-    DOM.setAttribute(option, "value", value);
+    DOM.setElementProperty(option, "value", value);
   }
 
   /**
@@ -291,7 +291,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * @param visibleItems the visible item count
    */
   public void setVisibleItemCount(int visibleItems) {
-    DOM.setIntAttribute(getElement(), "size", visibleItems);
+    DOM.setElementPropertyInt(getElement(), "size", visibleItems);
   }
 
   private void checkIndex(int index) {

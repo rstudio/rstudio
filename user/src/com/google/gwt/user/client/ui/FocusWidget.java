@@ -95,7 +95,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
    * @return <code>true</code> if the widget is enabled
    */
   public boolean isEnabled() {
-    return !DOM.getBooleanAttribute(getElement(), "disabled");
+    return !DOM.getElementPropertyBoolean(getElement(), "disabled");
   }
 
   public void onBrowserEvent(Event event) {
@@ -142,7 +142,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
   }
 
   public void setAccessKey(char key) {
-    DOM.setAttribute(getElement(), "accessKey", "" + key);
+    DOM.setElementProperty(getElement(), "accessKey", "" + key);
   }
 
   /**
@@ -152,7 +152,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
    *          to disable it
    */
   public void setEnabled(boolean enabled) {
-    DOM.setBooleanAttribute(getElement(), "disabled", !enabled);
+    DOM.setElementPropertyBoolean(getElement(), "disabled", !enabled);
   }
 
   public void setFocus(boolean focused) {

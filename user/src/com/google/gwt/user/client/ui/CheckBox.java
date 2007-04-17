@@ -85,8 +85,8 @@ public class CheckBox extends ButtonBase implements HasName {
     DOM.appendChild(getElement(), labelElem);
 
     String uid = "check" + (++uniqueId);
-    DOM.setAttribute(inputElem, "id", uid);
-    DOM.setAttribute(labelElem, "htmlFor", uid);
+    DOM.setElementProperty(inputElem, "id", uid);
+    DOM.setElementProperty(labelElem, "htmlFor", uid);
   }
 
   public String getHTML() {
@@ -94,7 +94,7 @@ public class CheckBox extends ButtonBase implements HasName {
   }
 
   public String getName() {
-    return DOM.getAttribute(inputElem, "name");
+    return DOM.getElementProperty(inputElem, "name");
   }
 
   public String getText() {
@@ -108,11 +108,11 @@ public class CheckBox extends ButtonBase implements HasName {
    */
   public boolean isChecked() {
     String propName = isAttached() ? "checked" : "defaultChecked";
-    return DOM.getBooleanAttribute(inputElem, propName);
+    return DOM.getElementPropertyBoolean(inputElem, propName);
   }
 
   public boolean isEnabled() {
-    return !DOM.getBooleanAttribute(inputElem, "disabled");
+    return !DOM.getElementPropertyBoolean(inputElem, "disabled");
   }
 
   public void onBrowserEvent(Event event) {
@@ -126,7 +126,7 @@ public class CheckBox extends ButtonBase implements HasName {
   }
 
   public void setAccessKey(char key) {
-    DOM.setAttribute(inputElem, "accessKey", "" + key);
+    DOM.setElementProperty(inputElem, "accessKey", "" + key);
   }
 
   /**
@@ -135,12 +135,12 @@ public class CheckBox extends ButtonBase implements HasName {
    * @param checked <code>true</code> to check the check box
    */
   public void setChecked(boolean checked) {
-    DOM.setBooleanAttribute(inputElem, "checked", checked);
-    DOM.setBooleanAttribute(inputElem, "defaultChecked", checked);
+    DOM.setElementPropertyBoolean(inputElem, "checked", checked);
+    DOM.setElementPropertyBoolean(inputElem, "defaultChecked", checked);
   }
 
   public void setEnabled(boolean enabled) {
-    DOM.setBooleanAttribute(inputElem, "disabled", !enabled);
+    DOM.setElementPropertyBoolean(inputElem, "disabled", !enabled);
   }
 
   public void setFocus(boolean focused) {
@@ -156,7 +156,7 @@ public class CheckBox extends ButtonBase implements HasName {
   }
 
   public void setName(String name) {
-    DOM.setAttribute(inputElem, "name", name);
+    DOM.setElementProperty(inputElem, "name", name);
   }
 
   public void setTabIndex(int index) {

@@ -33,7 +33,7 @@ public class FileUpload extends Widget implements HasName {
    */
   public FileUpload() {
     setElement(DOM.createElement("input"));
-    DOM.setAttribute(getElement(), "type", "file");
+    DOM.setElementProperty(getElement(), "type", "file");
     setStyleName("gwt-FileUpload");
   }
 
@@ -44,14 +44,14 @@ public class FileUpload extends Widget implements HasName {
    * @return the widget's filename
    */
   public String getFilename() {
-    return DOM.getAttribute(getElement(), "value");
+    return DOM.getElementProperty(getElement(), "value");
   }
 
   public String getName() {
-    return DOM.getAttribute(getElement(), "name");
+    return DOM.getElementProperty(getElement(), "name");
   }
 
   public void setName(String name) {
-    DOM.setAttribute(getElement(), "name", name);
+    DOM.setElementProperty(getElement(), "name", name);
   }
 }

@@ -128,7 +128,7 @@ public class TextBoxBase extends FocusWidget implements SourcesKeyboardEvents,
   }
 
   public String getName() {
-    return DOM.getAttribute(getElement(), "name");
+    return DOM.getElementProperty(getElement(), "name");
   }
 
   /**
@@ -151,7 +151,7 @@ public class TextBoxBase extends FocusWidget implements SourcesKeyboardEvents,
   }
 
   public String getText() {
-    return DOM.getAttribute(getElement(), "value");
+    return DOM.getElementProperty(getElement(), "value");
   }
 
   public void onBrowserEvent(Event event) {
@@ -230,7 +230,7 @@ public class TextBoxBase extends FocusWidget implements SourcesKeyboardEvents,
   }
 
   public void setName(String name) {
-    DOM.setAttribute(getElement(), "name", name);
+    DOM.setElementProperty(getElement(), "name", name);
   }
 
   /**
@@ -252,7 +252,7 @@ public class TextBoxBase extends FocusWidget implements SourcesKeyboardEvents,
   }
 
   public void setText(String text) {
-    DOM.setAttribute(getElement(), "value", text);
+    DOM.setElementProperty(getElement(), "value", text);
   }
 
   /**

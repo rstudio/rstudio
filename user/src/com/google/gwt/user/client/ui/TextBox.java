@@ -49,7 +49,7 @@ public class TextBox extends TextBoxBase {
    * @return the maximum length, in characters
    */
   public int getMaxLength() {
-    return DOM.getIntAttribute(getElement(), "maxLength");
+    return DOM.getElementPropertyInt(getElement(), "maxLength");
   }
 
   /**
@@ -58,7 +58,7 @@ public class TextBox extends TextBoxBase {
    * @return the number of visible characters
    */
   public int getVisibleLength() {
-    return DOM.getIntAttribute(getElement(), "size");
+    return DOM.getElementPropertyInt(getElement(), "size");
   }
 
   /**
@@ -67,7 +67,7 @@ public class TextBox extends TextBoxBase {
    * @param length the maximum length, in characters
    */
   public void setMaxLength(int length) {
-    DOM.setIntAttribute(getElement(), "maxLength", length);
+    DOM.setElementPropertyInt(getElement(), "maxLength", length);
   }
 
   /**
@@ -76,6 +76,6 @@ public class TextBox extends TextBoxBase {
    * @param length the number of visible characters
    */
   public void setVisibleLength(int length) {
-    DOM.setIntAttribute(getElement(), "size", length);
+    DOM.setElementPropertyInt(getElement(), "size", length);
   }
 }

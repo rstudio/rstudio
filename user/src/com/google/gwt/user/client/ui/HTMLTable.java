@@ -74,7 +74,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * @throws IndexOutOfBoundsException
      */
     public String getStyleName(int row, int column) {
-      return DOM.getAttribute(getElement(row, column), "className");
+      return DOM.getElementProperty(getElement(row, column), "className");
     }
 
     /**
@@ -133,7 +133,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     public void setHeight(int row, int column, String height) {
       prepareCell(row, column);
       Element elem = getCellElement(bodyElem, row, column);
-      DOM.setAttribute(elem, "height", height);
+      DOM.setElementProperty(elem, "height", height);
     }
 
     /**
@@ -149,7 +149,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
         HorizontalAlignmentConstant align) {
       prepareCell(row, column);
       Element elem = getCellElement(bodyElem, row, column);
-      DOM.setAttribute(elem, "align", align.getTextAlignString());
+      DOM.setElementProperty(elem, "align", align.getTextAlignString());
     }
 
     /**
@@ -208,7 +208,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     public void setWidth(int row, int column, String width) {
       // Give the subclass a chance to prepare the cell.
       prepareCell(row, column);
-      DOM.setAttribute(getCellElement(bodyElem, row, column), "width", width);
+      DOM.setElementProperty(getCellElement(bodyElem, row, column), "width", width);
     }
 
     /**
@@ -250,7 +250,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      */
     protected String getAttr(int row, int column, String attr) {
       Element elem = getElement(row, column);
-      return DOM.getAttribute(elem, attr);
+      return DOM.getElementProperty(elem, attr);
     }
 
     /**
@@ -264,7 +264,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      */
     protected void setAttr(int row, int column, String attrName, String value) {
       Element elem = ensureElement(row, column);
-      DOM.setAttribute(elem, attrName, value);
+      DOM.setElementProperty(elem, attrName, value);
     }
 
     /**
@@ -322,7 +322,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * @return the style name
      */
     public String getStyleName(int column) {
-      return DOM.getAttribute(ensureColumn(column), "className");
+      return DOM.getElementProperty(ensureColumn(column), "className");
     }
 
     /**
@@ -347,7 +347,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      */
     public void setStyleName(int column, String styleName) {
       Element elem = ensureColumn(column);
-      DOM.setAttribute(elem, "className", styleName);
+      DOM.setElementProperty(elem, "className", styleName);
     }
 
     /**
@@ -358,7 +358,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * @throws IndexOutOfBoundsException
      */
     public void setWidth(int column, String width) {
-      DOM.setAttribute(ensureColumn(column), "width", width);
+      DOM.setElementProperty(ensureColumn(column), "width", width);
     }
 
     private Element ensureColumn(int col) {
@@ -420,7 +420,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * @return the style name
      */
     public String getStyleName(int row) {
-      return DOM.getAttribute(getElement(row), "className");
+      return DOM.getElementProperty(getElement(row), "className");
     }
 
     /**
@@ -457,7 +457,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      */
     public void setStyleName(int row, String styleName) {
       Element elem = ensureElement(row);
-      DOM.setAttribute(elem, "className", styleName);
+      DOM.setElementProperty(elem, "className", styleName);
     }
 
     /**
@@ -512,7 +512,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      */
     protected void setAttr(int row, String attrName, String value) {
       Element elem = ensureElement(row);
-      DOM.setAttribute(elem, attrName, value);
+      DOM.setElementProperty(elem, attrName, value);
     }
   }
 
@@ -635,7 +635,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    * @return the cell padding, in pixels
    */
   public int getCellPadding() {
-    return DOM.getIntAttribute(tableElem, "cellPadding");
+    return DOM.getElementPropertyInt(tableElem, "cellPadding");
   }
 
   /**
@@ -644,7 +644,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    * @return the cell spacing, in pixels
    */
   public int getCellSpacing() {
-    return DOM.getIntAttribute(tableElem, "cellSpacing");
+    return DOM.getElementPropertyInt(tableElem, "cellSpacing");
   }
 
   public ColumnFormatter getColumnFormatter() {
@@ -802,7 +802,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    * @param width the width of the border, in pixels
    */
   public void setBorderWidth(int width) {
-    DOM.setAttribute(tableElem, "border", "" + width);
+    DOM.setElementProperty(tableElem, "border", "" + width);
   }
 
   /**
@@ -811,7 +811,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    * @param padding the cell padding, in pixels
    */
   public void setCellPadding(int padding) {
-    DOM.setIntAttribute(tableElem, "cellPadding", padding);
+    DOM.setElementPropertyInt(tableElem, "cellPadding", padding);
   }
 
   /**
@@ -820,7 +820,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    * @param spacing the cell spacing, in pixels
    */
   public void setCellSpacing(int spacing) {
-    DOM.setIntAttribute(tableElem, "cellSpacing", spacing);
+    DOM.setElementPropertyInt(tableElem, "cellSpacing", spacing);
   }
 
   /**
@@ -886,7 +886,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
       // Add the widget to the map.
       String hash = Integer.toString(widget.hashCode());
       Element e = widget.getElement();
-      DOM.setAttribute(e, HASH_ATTR, hash);
+      DOM.setElementProperty(e, HASH_ATTR, hash);
       widgetMap.put(hash, widget);
 
       // Set the widget's parent.
@@ -991,7 +991,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     Element td = DOM.eventGetTarget(event);
     for (; td != null; td = DOM.getParent(td)) {
       // If it's a TD, it might be the one we're looking for.
-      if (DOM.getAttribute(td, "tagName").equalsIgnoreCase("td")) {
+      if (DOM.getElementProperty(td, "tagName").equalsIgnoreCase("td")) {
         // Make sure it's directly a part of this table before returning it.
         Element tr = DOM.getParent(td);
         Element body = DOM.getParent(tr);
@@ -1214,7 +1214,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    * @return returns the key
    */
   private String computeKeyForElement(Element widgetElement) {
-    return DOM.getAttribute(widgetElement, HASH_ATTR);
+    return DOM.getElementProperty(widgetElement, HASH_ATTR);
   }
 
   /**

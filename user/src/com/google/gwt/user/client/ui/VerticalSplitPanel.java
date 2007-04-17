@@ -45,11 +45,11 @@ public final class VerticalSplitPanel extends SplitPanel {
   private static final int BOTTOM = 1;
 
   private static int getClientHeight(Element elem) {
-    return DOM.getIntAttribute(elem, "clientHeight");
+    return DOM.getElementPropertyInt(elem, "clientHeight");
   }
 
   private static int getOffsetTop(Element elem) {
-    return DOM.getIntAttribute(elem, "offsetTop");
+    return DOM.getElementPropertyInt(elem, "offsetTop");
   }
 
   private static Element lockStyles(final Element elem) {

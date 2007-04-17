@@ -145,7 +145,7 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents {
    */
   public void setTargetHistoryToken(String targetHistoryToken) {
     this.targetHistoryToken = targetHistoryToken;
-    DOM.setAttribute(anchorElem, "href", "#" + targetHistoryToken);
+    DOM.setElementProperty(anchorElem, "href", "#" + targetHistoryToken);
   }
 
   public void setText(String text) {

@@ -77,7 +77,7 @@ abstract class SplitPanel extends Panel {
    */
   static final void setElementClassname(final Element elem,
       final String className) {
-    DOM.setAttribute(elem, "className", className);
+    DOM.setElementProperty(elem, "className", className);
   }
 
   // The enclosed widgets.

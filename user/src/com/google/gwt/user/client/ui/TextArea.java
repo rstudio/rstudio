@@ -50,7 +50,7 @@ public class TextArea extends TextBoxBase {
    * @return the requested width, in characters
    */
   public int getCharacterWidth() {
-    return DOM.getIntAttribute(getElement(), "cols");
+    return DOM.getElementPropertyInt(getElement(), "cols");
   }
 
   public int getCursorPos() {
@@ -67,7 +67,7 @@ public class TextArea extends TextBoxBase {
    * @return the number of visible lines
    */
   public int getVisibleLines() {
-    return DOM.getIntAttribute(getElement(), "rows");
+    return DOM.getElementPropertyInt(getElement(), "rows");
   }
 
   /**
@@ -77,7 +77,7 @@ public class TextArea extends TextBoxBase {
    * @param width the requested width, in characters
    */
   public void setCharacterWidth(int width) {
-    DOM.setIntAttribute(getElement(), "cols", width);
+    DOM.setElementPropertyInt(getElement(), "cols", width);
   }
 
   /**
@@ -86,6 +86,6 @@ public class TextArea extends TextBoxBase {
    * @param lines the number of visible lines
    */
   public void setVisibleLines(int lines) {
-    DOM.setIntAttribute(getElement(), "rows", lines);
+    DOM.setElementPropertyInt(getElement(), "rows", lines);
   }
 }

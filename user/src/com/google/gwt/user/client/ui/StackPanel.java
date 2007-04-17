@@ -50,8 +50,8 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
 
     body = DOM.createTBody();
     DOM.appendChild(table, body);
-    DOM.setIntAttribute(table, "cellSpacing", 0);
-    DOM.setIntAttribute(table, "cellPadding", 0);
+    DOM.setElementPropertyInt(table, "cellSpacing", 0);
+    DOM.setElementPropertyInt(table, "cellPadding", 0);
 
     DOM.sinkEvents(table, Event.ONCLICK);
     setStyleName("gwt-StackPanel");
@@ -74,15 +74,15 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
     DOM.appendChild(body, tr);
     DOM.appendChild(tr, td);
     setStyleName(td, "gwt-StackPanelItem", true);
-    DOM.setIntAttribute(td, "__index", index);
-    DOM.setAttribute(td, "height", "1px");
+    DOM.setElementPropertyInt(td, "__index", index);
+    DOM.setElementProperty(td, "height", "1px");
 
     tr = DOM.createTR();
     td = DOM.createTD();
     DOM.appendChild(body, tr);
     DOM.appendChild(tr, td);
-    DOM.setAttribute(td, "height", "100%");
-    DOM.setAttribute(td, "vAlign", "top");
+    DOM.setElementProperty(td, "height", "100%");
+    DOM.setElementProperty(td, "vAlign", "top");
 
     super.add(w, td);
 
@@ -203,7 +203,7 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
 
   private int getDividerIndex(Element elem) {
     while ((elem != null) && !DOM.compare(elem, getElement())) {
-      String expando = DOM.getAttribute(elem, "__index");
+      String expando = DOM.getElementProperty(elem, "__index");
       if (expando != null) {
         return Integer.parseInt(expando);
       }
@@ -239,9 +239,9 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
     for (int i = rowIndex; i < rows; i = i + 2) {
       Element childTR = DOM.getChild(body, i);
       Element td = DOM.getFirstChild(childTR);
-      int curIndex = DOM.getIntAttribute(td, "__index");
+      int curIndex = DOM.getElementPropertyInt(td, "__index");
       assert (curIndex == (i / 2) - 1);
-      DOM.setIntAttribute(td, "__index", index);
+      DOM.setElementPropertyInt(td, "__index", index);
       ++index;
     }
 

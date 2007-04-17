@@ -46,6 +46,6 @@ public class NamedFrame extends Frame {
    * @return the frame's name
    */
   public String getName() {
-    return DOM.getAttribute(getElement(), "name");
+    return DOM.getElementProperty(getElement(), "name");
   }
 }

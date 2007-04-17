@@ -216,11 +216,11 @@ public final class HorizontalSplitPanel extends SplitPanel {
   private static final int DEFAULT_SPLITTER_WIDTH = 10;
 
   private static final int getClientWidth(final Element elem) {
-    return DOM.getIntAttribute(elem, "clientWidth");
+    return DOM.getElementPropertyInt(elem, "clientWidth");
   }
 
   private static final int getOffsetWidth(final Element elem) {
-    return DOM.getIntAttribute(elem, "offsetWidth");
+    return DOM.getElementPropertyInt(elem, "offsetWidth");
   }
 
   private static final void setWidth(Element elem, String size) {
@@ -340,8 +340,8 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
     DOM.setInnerHTML(splitTD, "&nbsp;");
 
-    DOM.setAttribute(table, "cellSpacing", "0");
-    DOM.setAttribute(table, "cellPadding", "0");
+    DOM.setElementProperty(table, "cellSpacing", "0");
+    DOM.setElementProperty(table, "cellPadding", "0");
 
     addElementScrolling(leftContentDiv);
     addElementScrolling(rightContentDiv);
@@ -357,6 +357,6 @@ public final class HorizontalSplitPanel extends SplitPanel {
      * Ensures that the splitter is of reasonable width when no CSS is active on
      * it, but this value is immediately overridden by CSS values.
      */
-    DOM.setIntAttribute(splitTD, "width", DEFAULT_SPLITTER_WIDTH);
+    DOM.setElementPropertyInt(splitTD, "width", DEFAULT_SPLITTER_WIDTH);
   }
 }

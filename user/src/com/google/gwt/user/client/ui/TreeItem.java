@@ -109,10 +109,10 @@ public class TreeItem extends UIObject implements HasHTML {
     DOM.appendChild(tdImg, imgElem);
     DOM.appendChild(tdContent, contentElem);
 
-    DOM.setAttribute(getElement(), "position", "relative");
+    DOM.setElementProperty(getElement(), "position", "relative");
     DOM.setStyleAttribute(contentElem, "display", "inline");
     DOM.setStyleAttribute(getElement(), "whiteSpace", "nowrap");
-    DOM.setAttribute(itemTable, "whiteSpace", "nowrap");
+    DOM.setElementProperty(itemTable, "whiteSpace", "nowrap");
     DOM.setStyleAttribute(childSpanElem, "whiteSpace", "nowrap");
     setStyleName(contentElem, "gwt-TreeItem", true);
   }
@@ -432,7 +432,7 @@ public class TreeItem extends UIObject implements HasHTML {
   }
 
   int getContentHeight() {
-    return DOM.getIntAttribute(itemTable, "offsetHeight");
+    return DOM.getElementPropertyInt(itemTable, "offsetHeight");
   }
 
   Element getImageElement() {
@@ -444,7 +444,7 @@ public class TreeItem extends UIObject implements HasHTML {
     int ret = 0;
 
     while (item != null) {
-      ret += DOM.getIntAttribute(item.getElement(), "offsetTop");
+      ret += DOM.getElementPropertyInt(item.getElement(), "offsetTop");
       item = item.getParentItem();
     }
 
@@ -493,7 +493,7 @@ public class TreeItem extends UIObject implements HasHTML {
   void updateState() {
     if (children.size() == 0) {
       UIObject.setVisible(childSpanElem, false);
-      DOM.setAttribute(imgElem, "src", imgSrc("tree_white.gif"));
+      DOM.setElementProperty(imgElem, "src", imgSrc("tree_white.gif"));
       return;
     }
 
@@ -501,10 +501,10 @@ public class TreeItem extends UIObject implements HasHTML {
     // or the children will always take up space.
     if (open) {
       UIObject.setVisible(childSpanElem, true);
-      DOM.setAttribute(imgElem, "src", imgSrc("tree_open.gif"));
+      DOM.setElementProperty(imgElem, "src", imgSrc("tree_open.gif"));
     } else {
       UIObject.setVisible(childSpanElem, false);
-      DOM.setAttribute(imgElem, "src", imgSrc("tree_closed.gif"));
+      DOM.setElementProperty(imgElem, "src", imgSrc("tree_closed.gif"));
     }
   }
 

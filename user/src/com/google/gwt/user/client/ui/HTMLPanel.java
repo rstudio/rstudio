@@ -72,7 +72,7 @@ public class HTMLPanel extends ComplexPanel {
    * panel is attached to the DOM, so {@link Dom#getElementById} won't yet work.
    */
   private Element getElementById(Element elem, String id) {
-    String elemId = DOM.getAttribute(elem, "id");
+    String elemId = DOM.getElementProperty(elem, "id");
     if ((elemId != null) && elemId.equals(id)) {
       return elem;
     }

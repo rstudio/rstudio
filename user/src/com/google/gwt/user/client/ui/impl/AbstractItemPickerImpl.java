@@ -92,8 +92,8 @@ abstract class AbstractItemPickerImpl extends Widget {
     DOM.appendChild(table, body);
     setElement(table);
     sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT);
-    DOM.setIntAttribute(table, "cellPadding", 0);
-    DOM.setIntAttribute(table, "cellSpacing", 0);
+    DOM.setElementPropertyInt(table, "cellPadding", 0);
+    DOM.setElementPropertyInt(table, "cellSpacing", 0);
   }
 
   public final void addChangeListener(ChangeListener listener) {

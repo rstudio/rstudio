@@ -37,11 +37,11 @@ public class RichTextAreaImpl {
   }
 
   public String getHTML() {
-    return DOM.getAttribute(elem, "value");
+    return DOM.getElementProperty(elem, "value");
   }
 
   public String getText() {
-    return DOM.getAttribute(elem, "value");
+    return DOM.getElementProperty(elem, "value");
   }
 
   public void hookEvents(RichTextArea owner) {
@@ -70,11 +70,11 @@ public class RichTextAreaImpl {
   }-*/;
 
   public void setHTML(String html) {
-    DOM.setAttribute(elem, "value", html);
+    DOM.setElementProperty(elem, "value", html);
   }
 
   public void setText(String text) {
-    DOM.setAttribute(elem, "value", text);
+    DOM.setElementProperty(elem, "value", text);
   }
 
   public void unhookEvents(RichTextArea owner) {

@@ -101,7 +101,7 @@ public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
     }
 
     // Unsupported fallback.
-    DOM.setAttribute(elem, "value", html);
+    DOM.setElementProperty(elem, "value", html);
   }
 
   public void setText(String text) {
@@ -110,7 +110,7 @@ public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
     }
 
     // Unsupported fallback.
-    DOM.setAttribute(elem, "value", text);
+    DOM.setElementProperty(elem, "value", text);
   }
 
   public void unhookEvents(RichTextArea owner) {

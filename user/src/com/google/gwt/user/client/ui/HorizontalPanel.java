@@ -39,8 +39,8 @@ public class HorizontalPanel extends CellPanel implements IndexedPanel,
     tableRow = DOM.createTR();
     DOM.appendChild(getBody(), tableRow);
 
-    DOM.setAttribute(getTable(), "cellSpacing", "0");
-    DOM.setAttribute(getTable(), "cellPadding", "0");
+    DOM.setElementProperty(getTable(), "cellSpacing", "0");
+    DOM.setElementProperty(getTable(), "cellPadding", "0");
   }
 
   /**

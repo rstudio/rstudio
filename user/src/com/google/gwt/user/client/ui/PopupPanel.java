@@ -76,7 +76,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @return the popup's left position
    */
   public int getPopupLeft() {
-    return DOM.getIntAttribute(getElement(), "offsetLeft");
+    return DOM.getElementPropertyInt(getElement(), "offsetLeft");
   }
 
   /**
@@ -85,7 +85,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @return the popup's top position
    */
   public int getPopupTop() {
-    return DOM.getIntAttribute(getElement(), "offsetTop");
+    return DOM.getElementPropertyInt(getElement(), "offsetTop");
   }
 
   /**

@@ -23,13 +23,14 @@ import com.google.gwt.user.client.Element;
  * Represents a hidden field in an HTML form.
  */
 public class Hidden extends Widget implements HasName {
+
   /**
    * Constructor for <code>Hidden</code>.
    */
   public Hidden() {
     Element e = DOM.createElement("input");
     setElement(e);
-    DOM.setAttribute(e, "type", "hidden");
+    DOM.setElementProperty(e, "type", "hidden");
   }
 
   /**
@@ -59,7 +60,7 @@ public class Hidden extends Widget implements HasName {
    * @return the default value
    */
   public String getDefaultValue() {
-    return DOM.getAttribute(getElement(), "defaultValue");
+    return DOM.getElementProperty(getElement(), "defaultValue");
   }
 
   /**
@@ -68,7 +69,7 @@ public class Hidden extends Widget implements HasName {
    * @return the id
    */
   public String getID() {
-    return DOM.getAttribute(getElement(), "id");
+    return DOM.getElementProperty(getElement(), "id");
   }
 
   /**
@@ -78,7 +79,7 @@ public class Hidden extends Widget implements HasName {
    */
 
   public String getName() {
-    return DOM.getAttribute(getElement(), "name");
+    return DOM.getElementProperty(getElement(), "name");
   }
 
   /**
@@ -87,7 +88,7 @@ public class Hidden extends Widget implements HasName {
    * @return the value
    */
   public String getValue() {
-    return DOM.getAttribute(getElement(), "value");
+    return DOM.getElementProperty(getElement(), "value");
   }
 
   /**
@@ -96,7 +97,7 @@ public class Hidden extends Widget implements HasName {
    * @param defaultValue default value to set
    */
   public void setDefaultValue(String defaultValue) {
-    DOM.setAttribute(getElement(), "defaultValue", defaultValue);
+    DOM.setElementProperty(getElement(), "defaultValue", defaultValue);
   }
 
   /**
@@ -105,7 +106,7 @@ public class Hidden extends Widget implements HasName {
    * @param id id to set
    */
   public void setID(String id) {
-    DOM.setAttribute(getElement(), "id", id);
+    DOM.setElementProperty(getElement(), "id", id);
   }
 
   /**
@@ -119,7 +120,7 @@ public class Hidden extends Widget implements HasName {
     } else if (name.equals("")) {
       throw new IllegalArgumentException("Name cannot be an empty string.");
     }
-    DOM.setAttribute(getElement(), "name", name);
+    DOM.setElementProperty(getElement(), "name", name);
   }
 
   /**
@@ -128,7 +129,6 @@ public class Hidden extends Widget implements HasName {
    * @param value value to set
    */
   public void setValue(String value) {
-    DOM.setAttribute(getElement(), "value", value);
+    DOM.setElementProperty(getElement(), "value", value);
   }
-
 }

@@ -57,7 +57,7 @@ public final class DisclosurePanel extends Composite implements
       // Anchor is used to allow keyboard access.
       super(DOM.createAnchor());
       Element elem = getElement();
-      DOM.setAttribute(elem, "href", "javascript:void(0);");
+      DOM.setElementProperty(elem, "href", "javascript:void(0);");
       // Avoids layout problems from having blocks in inlines.
       DOM.setStyleAttribute(elem, "display", "block");
       sinkEvents(Event.ONCLICK);
@@ -106,8 +106,8 @@ public final class DisclosurePanel extends Composite implements
       DOM.appendChild(tr, labelTD);
 
       // set image TD to be same width as image.
-      DOM.setAttribute(imageTD, "align", "center");
-      DOM.setAttribute(imageTD, "valign", "middle");
+      DOM.setElementProperty(imageTD, "align", "center");
+      DOM.setElementProperty(imageTD, "valign", "middle");
       DOM.setStyleAttribute(imageTD, "width", ICON_SIZE[0] + "px");
 
       DOM.appendChild(imageTD, iconImage.getElement());

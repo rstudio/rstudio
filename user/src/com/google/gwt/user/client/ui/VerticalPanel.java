@@ -35,8 +35,8 @@ public class VerticalPanel extends CellPanel implements IndexedPanel,
    * Creates an empty vertical panel.
    */
   public VerticalPanel() {
-    DOM.setAttribute(getTable(), "cellSpacing", "0");
-    DOM.setAttribute(getTable(), "cellPadding", "0");
+    DOM.setElementProperty(getTable(), "cellSpacing", "0");
+    DOM.setElementProperty(getTable(), "cellPadding", "0");
   }
 
   /**

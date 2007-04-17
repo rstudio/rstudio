@@ -149,24 +149,37 @@ public abstract class DOMImpl {
     return top + $doc.body.scrollTop;
   }-*/;
 
-  public native String getAttribute(Element elem, String attr) /*-{
-    var ret = elem[attr];
-    return (ret == null) ? null : String(ret);
-  }-*/;
-
-  public native boolean getBooleanAttribute(Element elem, String attr) /*-{
-    return !!elem[attr];
-  }-*/;
-
   public abstract Element getChild(Element elem, int index);
 
   public abstract int getChildCount(Element elem);
 
   public abstract int getChildIndex(Element parent, Element child);
 
+  public native String getElementAttribute(Element elem, String attr) /*-{
+    var ret = elem.getAttribute(attr);
+    return (ret == null) ? null : ret;
+  }-*/;
+  
   public native Element getElementById(String id) /*-{
     var elem = $doc.getElementById(id);
     return elem ? elem : null;
+  }-*/;
+
+  public native String getElementProperty(Element elem, String prop) /*-{
+    var ret = elem[prop];
+    return (ret == null) ? null : String(ret);
+  }-*/;
+
+  public native boolean getElementPropertyBoolean(Element elem, String prop) /*-{
+    return !!elem[prop];
+  }-*/;
+
+  public native int getElementPropertyInt(Element elem, String prop) /*-{
+    var i = parseInt(elem[prop]);
+    if (!i) {
+      return 0;
+    }
+    return i;
   }-*/;
 
   public native int getEventsSunk(Element elem) /*-{
@@ -196,14 +209,6 @@ public abstract class DOMImpl {
     return text;
   }-*/;
 
-  public native int getIntAttribute(Element elem, String attr) /*-{
-    var i = parseInt(elem[attr]);
-    if (!i) {
-      return 0;
-    }
-    return i;
-  }-*/;
-
   public native int getIntStyleAttribute(Element elem, String attr) /*-{
     var i = parseInt(elem.style[attr]);
     if (!i) {
@@ -231,7 +236,7 @@ public abstract class DOMImpl {
     Element option = DOM.createElement("OPTION");
     DOM.setInnerText(option, item);
     if (value != null) {
-      DOM.setAttribute(option, "value", value);
+      DOM.setElementProperty(option, "value", value);
     }
     if (index == -1) {
       DOM.appendChild(select, option);
@@ -247,7 +252,7 @@ public abstract class DOMImpl {
   public native void removeChild(Element parent, Element child) /*-{
     parent.removeChild(child);
   }-*/;
-
+  
   public native void scrollIntoView(Element elem) /*-{
     var left = elem.offsetLeft, top = elem.offsetTop;
     var width = elem.offsetWidth, height = elem.offsetHeight;
@@ -286,16 +291,24 @@ public abstract class DOMImpl {
     }
   }-*/;
 
-  public native void setAttribute(Element elem, String attr, String value) /*-{
-    elem[attr] = value;
-  }-*/;
-
-  public native void setBooleanAttribute(Element elem, String attr,
-      boolean value) /*-{
-    elem[attr] = value;
-  }-*/;
-
   public abstract void setCapture(Element elem);
+
+  public native void setElementAttribute(Element elem, String attr, String value) /*-{
+    elem.setAttribute(attr, value);
+  }-*/;
+  
+  public native void setElementProperty(Element elem, String prop, String value) /*-{
+    elem[prop] = value;
+  }-*/;
+
+  public native void setElementPropertyBoolean(Element elem, String prop,
+      boolean value) /*-{
+    elem[prop] = value;
+  }-*/;
+
+  public native void setElementPropertyInt(Element elem, String prop, int value) /*-{
+    elem[prop] = value;
+  }-*/;
 
   public native void setEventListener(Element elem,
       EventListener listener) /*-{
@@ -318,10 +331,6 @@ public abstract class DOMImpl {
     if (text != null) {
       elem.appendChild($doc.createTextNode(text));
     }
-  }-*/;
-
-  public native void setIntAttribute(Element elem, String attr, int value) /*-{
-    elem[attr] = value;
   }-*/;
 
   public native void setIntStyleAttribute(Element elem, String attr, int value) /*-{

@@ -93,8 +93,8 @@ public class DockPanel extends CellPanel implements HasAlignment {
    * Creates an empty dock panel.
    */
   public DockPanel() {
-    DOM.setIntAttribute(getTable(), "cellSpacing", 0);
-    DOM.setIntAttribute(getTable(), "cellPadding", 0);
+    DOM.setElementPropertyInt(getTable(), "cellSpacing", 0);
+    DOM.setElementPropertyInt(getTable(), "cellPadding", 0);
   }
 
   /**
@@ -173,7 +173,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
     LayoutData data = (LayoutData) w.getLayoutData();
     data.hAlign = align.getTextAlignString();
     if (data.td != null) {
-      DOM.setAttribute(data.td, "align", data.hAlign);
+      DOM.setElementProperty(data.td, "align", data.hAlign);
     }
   }
 
@@ -280,32 +280,32 @@ public class DockPanel extends CellPanel implements HasAlignment {
 
       Element td = DOM.createTD();
       layout.td = td;
-      DOM.setAttribute(layout.td, "align", layout.hAlign);
+      DOM.setElementProperty(layout.td, "align", layout.hAlign);
       DOM.setStyleAttribute(layout.td, "verticalAlign", layout.vAlign);
-      DOM.setAttribute(layout.td, "width", layout.width);
-      DOM.setAttribute(layout.td, "height", layout.height);
+      DOM.setElementProperty(layout.td, "width", layout.width);
+      DOM.setElementProperty(layout.td, "height", layout.height);
 
       if (layout.direction == NORTH) {
         DOM.insertChild(rows[northRow].tr, td, rows[northRow].center);
         appendAndMaybeAdopt(td, child.getElement(), beingAdded);
-        DOM.setIntAttribute(td, "colSpan", eastCol - westCol + 1);
+        DOM.setElementPropertyInt(td, "colSpan", eastCol - westCol + 1);
         ++northRow;
       } else if (layout.direction == SOUTH) {
         DOM.insertChild(rows[southRow].tr, td, rows[southRow].center);
         appendAndMaybeAdopt(td, child.getElement(), beingAdded);
-        DOM.setIntAttribute(td, "colSpan", eastCol - westCol + 1);
+        DOM.setElementPropertyInt(td, "colSpan", eastCol - westCol + 1);
         --southRow;
       } else if (layout.direction == WEST) {
         TmpRow row = rows[northRow];
         DOM.insertChild(row.tr, td, row.center++);
         appendAndMaybeAdopt(td, child.getElement(), beingAdded);
-        DOM.setIntAttribute(td, "rowSpan", southRow - northRow + 1);
+        DOM.setElementPropertyInt(td, "rowSpan", southRow - northRow + 1);
         ++westCol;
       } else if (layout.direction == EAST) {
         TmpRow row = rows[northRow];
         DOM.insertChild(row.tr, td, row.center);
         appendAndMaybeAdopt(td, child.getElement(), beingAdded);
-        DOM.setIntAttribute(td, "rowSpan", southRow - northRow + 1);
+        DOM.setElementPropertyInt(td, "rowSpan", southRow - northRow + 1);
         --eastCol;
       } else if (layout.direction == CENTER) {
         // Defer adding the center widget, so that it can be added after all

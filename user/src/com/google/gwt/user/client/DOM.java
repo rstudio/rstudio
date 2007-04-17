@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,8 +32,9 @@ public class DOM {
   private static DOMImpl impl;
   private static Element sCaptureElem;
 
-  private static Vector sEventPreviewStack = new Vector(); // <BrowserEventPreview>
-
+  //<BrowserEventPreview>
+  private static Vector sEventPreviewStack = new Vector();
+  
   static {
     impl = (DOMImpl) GWT.create(DOMImpl.class);
     impl.init();
@@ -561,9 +562,11 @@ public class DOM {
    * @param elem the element whose attribute is to be retrieved
    * @param attr the name of the attribute
    * @return the attribute's value
+   * @deprecated Use the more appropriately named 
+   * {@link #getElementProperty(Element, String)} instead.
    */
   public static String getAttribute(Element elem, String attr) {
-    return impl.getAttribute(elem, attr);
+    return getElementProperty(elem, attr);
   }
 
   /**
@@ -572,9 +575,11 @@ public class DOM {
    * @param elem the element whose attribute is to be set
    * @param attr the name of the attribute to be set
    * @return the attribute's value as a boolean
+   * @deprecated Use the more appropriately named 
+   * {@link #getElementPropertyBoolean(Element, String)} instead.
    */
   public static boolean getBooleanAttribute(Element elem, String attr) {
-    return impl.getBooleanAttribute(elem, attr);
+    return getElementPropertyBoolean(elem, attr);
   }
 
   /**
@@ -621,6 +626,17 @@ public class DOM {
   }
 
   /**
+   * Gets the named attribute from the element.
+   * 
+   * @param elem the element whose property is to be retrieved
+   * @param attr the name of the attribute
+   * @return the value of the attribute
+   */
+  public static String getElementAttribute(Element elem, String attr) {
+     return impl.getElementAttribute(elem, attr);
+  }
+  
+  /**
    * Gets the element associated with the given unique id within the entire
    * document.
    * 
@@ -630,7 +646,39 @@ public class DOM {
   public static Element getElementById(String id) {
     return impl.getElementById(id);
   }
-
+  /**
+   * Gets any named property from an element, as a string.
+   * 
+   * @param elem the element whose property is to be retrieved
+   * @param prop the name of the property
+   * @return the property's value
+   */
+  public static String getElementProperty(Element elem, String prop) {
+     return impl.getElementProperty(elem, prop);
+  }
+  
+  /**
+   * Gets any named property from an element, as a boolean.
+   * 
+   * @param elem the element whose property is to be retrieved
+   * @param prop the name of the property
+   * @return the property's value as a boolean
+   */
+  public static boolean getElementPropertyBoolean(Element elem, String prop) {
+     return impl.getElementPropertyBoolean(elem, prop);
+  }
+  
+  /**
+   * Gets any named property from an element, as an int.
+   * 
+   * @param elem the element whose property is to be retrieved
+   * @param prop the name of the property
+   * @return the property's value as an int
+   */
+  public static int getElementPropertyInt(Element elem, String prop) {
+     return impl.getElementPropertyInt(elem, prop);
+  }
+  
   /**
    * Gets the current set of events sunk by a given element.
    * 
@@ -679,9 +727,11 @@ public class DOM {
    * @param elem the element whose attribute is to be retrieved
    * @param attr the name of the attribute to be retrieved
    * @return the attribute's value as an integer
+   * @deprecated Use the more appropriately named 
+   * {@link #getElementPropertyInt(Element, String)} instead.
    */
   public static int getIntAttribute(Element elem, String attr) {
-    return impl.getIntAttribute(elem, attr);
+    return getElementPropertyInt(elem, attr);
   }
 
   /**
@@ -792,7 +842,6 @@ public class DOM {
     // receive events.
     sEventPreviewStack.remove(preview);
   }
-
   /**
    * Scrolls the given element into view.
    * 
@@ -815,9 +864,11 @@ public class DOM {
    * @param elem the element whose attribute is to be set
    * @param attr the name of the attribute to be set
    * @param value the new attribute value
+   * @deprecated Use the more appropriately named 
+   * {@link #setElementProperty(Element, String, String)} instead.
    */
   public static void setAttribute(Element elem, String attr, String value) {
-    impl.setAttribute(elem, attr, value);
+    setElementProperty(elem, attr, value);
   }
 
   /**
@@ -826,10 +877,12 @@ public class DOM {
    * @param elem the element whose attribute is to be set
    * @param attr the name of the attribute to be set
    * @param value the attribute's new boolean value
+   * @deprecated Use the more appropriately named 
+   * {@link #setElementPropertyBoolean(Element, String, boolean)} instead.
    */
   public static void setBooleanAttribute(Element elem, String attr,
       boolean value) {
-    impl.setBooleanAttribute(elem, attr, value);
+    setElementPropertyBoolean(elem, attr, value);
   }
 
   /**
@@ -841,6 +894,54 @@ public class DOM {
   public static void setCapture(Element elem) {
     sCaptureElem = elem;
     impl.setCapture(elem);
+  }
+  
+  /**
+   * Sets an attribute on a given element.
+   * 
+   * @param elem element whose attribute is to be set
+   * @param attr the name of the attribute
+   * @param value the value to which the attribute should be set
+   */
+  public static void setElementAttribute(Element elem, String attr,
+      String value) {
+    impl.setElementAttribute(elem, attr, value);
+  }
+  
+  /**
+   * Sets a property on the given element.
+   * 
+   * @param elem the element whose property is to be set
+   * @param prop the name of the property to be set
+   * @param value the new property value
+   */
+  public static void setElementProperty(Element elem, String prop,
+      String value) {
+    impl.setElementProperty(elem, prop, value);
+  }
+
+  /**
+   * Sets a boolean property on the given element.
+   * 
+   * @param elem the element whose property is to be set
+   * @param prop the name of the property to be set
+   * @param value the new property value as a boolean
+   */
+  public static void setElementPropertyBoolean(Element elem, String prop,
+      boolean value) {
+    impl.setElementPropertyBoolean(elem, prop, value);
+  }
+
+  /**
+   * Sets an int property on the given element.
+   * 
+   * @param elem the element whose property is to be set
+   * @param prop the name of the property to be set
+   * @param value the new property value as an int
+   */
+  public static void setElementPropertyInt(Element elem, String prop,
+      int value) {
+    impl.setElementPropertyInt(elem, prop, value);
   }
 
   /**
@@ -881,9 +982,11 @@ public class DOM {
    * @param elem the element whose attribute is to be set
    * @param attr the name of the attribute to be set
    * @param value the attribute's new integer value
+   * @deprecated Use the more appropriately named 
+   * {@link #setElementPropertyInt(Element, String, int)} instead.
    */
   public static void setIntAttribute(Element elem, String attr, int value) {
-    impl.setIntAttribute(elem, attr, value);
+    setElementPropertyInt(elem, attr, value);
   }
 
   /**
@@ -893,7 +996,8 @@ public class DOM {
    * @param attr the name of the style attribute to be set
    * @param value the style attribute's new integer value
    */
-  public static void setIntStyleAttribute(Element elem, String attr, int value) {
+  public static void setIntStyleAttribute(Element elem, String attr,
+      int value) {
     impl.setIntStyleAttribute(elem, attr, value);
   }
 
@@ -915,7 +1019,8 @@ public class DOM {
    * @param attr the name of the style attribute to be set
    * @param value the style attribute's new value
    */
-  public static void setStyleAttribute(Element elem, String attr, String value) {
+  public static void setStyleAttribute(Element elem, String attr,
+      String value) {
     impl.setStyleAttribute(elem, attr, value);
   }
 
@@ -971,7 +1076,8 @@ public class DOM {
     // If event previews are present, redirect events to the topmost of them.
     boolean ret = true;
     if (sEventPreviewStack.size() > 0) {
-      EventPreview preview = (EventPreview) sEventPreviewStack.get(sEventPreviewStack.size() - 1);
+      EventPreview preview =
+        (EventPreview) sEventPreviewStack.get(sEventPreviewStack.size() - 1);
       if (!(ret = preview.onEventPreview(evt))) {
         // If the preview cancels the event, stop it from bubbling and
         // performing its default action.
