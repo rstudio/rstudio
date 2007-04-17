@@ -17,7 +17,6 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.Event;
 
 /**
  * A standard check box widget (also serves as a base class for
@@ -76,11 +75,9 @@ public class CheckBox extends ButtonBase implements HasName {
     inputElem = elem;
     labelElem = DOM.createLabel();
 
-    // Add focus event to actual input widget. Required by Opera and old
-    // Mozilla.
-    DOM.sinkEvents(inputElem, Event.FOCUSEVENTS | Event.ONCLICK
-        | DOM.getEventsSunk(inputElem));
-
+    // Hook events to input widget rather than the check box element.
+    DOM.sinkEvents(inputElem, DOM.getEventsSunk(this.getElement()));
+    DOM.sinkEvents(this.getElement(), 0);
     DOM.appendChild(getElement(), inputElem);
     DOM.appendChild(getElement(), labelElem);
 
@@ -113,16 +110,6 @@ public class CheckBox extends ButtonBase implements HasName {
 
   public boolean isEnabled() {
     return !DOM.getElementPropertyBoolean(inputElem, "disabled");
-  }
-
-  public void onBrowserEvent(Event event) {
-    // Block the events from the label as they are automatically delegated to
-    // the event.
-    if (DOM.eventGetTarget(event).equals(labelElem)) {
-      return;
-    } else {
-      super.onBrowserEvent(event);
-    }
   }
 
   public void setAccessKey(char key) {
@@ -168,10 +155,26 @@ public class CheckBox extends ButtonBase implements HasName {
   }
 
   /**
+   * This method is called when a widget is attached to the browser's document.
+   * onAttach needs special handling for the CheckBox case. Must still call
+   * {@link Widget#onAttach()} to preserve the <code>onAttach</code> contract.
+   */
+  protected void onAttach() {
+    // Sets the event listener on the inputElem, as in this case that's the
+    // element we want so input on.
+    DOM.setEventListener(inputElem, this);
+    super.onAttach();
+  }
+
+  /**
    * This method is called when a widget is detached from the browser's
-   * document. Overridden because of IE bug that throws away checked state.
+   * document. Overridden because of IE bug that throws away checked state and
+   * in order to clear the event listener off of the <code>inputElem</code>.
    */
   protected void onDetach() {
+    // Clear out the inputElem's event listener (breaking the circular
+    // reference between it and the widget).
+    DOM.setEventListener(inputElem, null);
     setChecked(isChecked());
     super.onDetach();
   }
