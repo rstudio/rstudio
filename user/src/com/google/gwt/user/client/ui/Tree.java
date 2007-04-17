@@ -334,7 +334,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         // If nothing's selected, select the first item.
         if (curSelection == null) {
           if (root.getChildCount() > 0) {
-            onSelection(root.getChild(0), true);
+            onSelection(root.getChild(0), true, true);
           }
           super.onBrowserEvent(event);
           return;
@@ -495,7 +495,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
       return;
     }
 
-    onSelection(item, fireEvents);
+    onSelection(item, fireEvents, true);
   }
 
   public void setTabIndex(int index) {
@@ -583,7 +583,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         item.setState(!item.getState(), true);
         return true;
       } else if (DOM.isOrHasChild(item.getElement(), hElem)) {
-        onSelection(item, true);
+        onSelection(item, true, !shouldTreeDelegateFocusToElement(hElem));
         return true;
       }
     }
@@ -672,12 +672,12 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
     if (!dig || !sel.getState()) {
       if (idx < parent.getChildCount() - 1) {
-        onSelection(parent.getChild(idx + 1), true);
+        onSelection(parent.getChild(idx + 1), true, true);
       } else {
         moveSelectionDown(parent, false);
       }
     } else if (sel.getChildCount() > 0) {
-      onSelection(sel.getChild(0), true);
+      onSelection(sel.getChild(0), true, true);
     }
   }
 
@@ -693,13 +693,13 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
     if (idx > 0) {
       TreeItem sibling = parent.getChild(idx - 1);
-      onSelection(findDeepestOpenChild(sibling), true);
+      onSelection(findDeepestOpenChild(sibling), true, true);
     } else {
-      onSelection(parent, true);
+      onSelection(parent, true, true);
     }
   }
 
-  private void onSelection(TreeItem item, boolean fireEvents) {
+  private void onSelection(TreeItem item, boolean fireEvents, boolean moveFocus) {
 
     // 'root' isn't a real item, so don't let it be selected
     // (some cases in the keyboard handler will try to do this)
@@ -713,7 +713,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
     curSelection = item;
 
-    if (curSelection != null) {
+    if (moveFocus && curSelection != null) {
       moveFocus(curSelection);
 
       // Select the item and fire the selection event.
