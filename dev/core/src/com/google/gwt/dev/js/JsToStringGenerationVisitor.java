@@ -1102,9 +1102,6 @@ public class JsToStringGenerationVisitor extends JsVisitor {
         case '\t':
           escape = 't';
           break;
-        case 0xb:
-          escape = 'v';
-          break; // Java lacks \v.
         case '"':
           escape = '"';
           break; // only reach here if == quoteChar
