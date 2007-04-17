@@ -32,6 +32,95 @@ import java.util.Map;
  * sizeof(void*)=4
  */
 public class JsValueMoz extends JsValue {
+
+  /**
+   * Records debug information, only used when {@link JsValueMoz#debugFlag} is
+   * <code>true</code>.
+   */
+  private static class DebugLogging {
+    private Map alreadyCleanedJsRootedValues = Collections.synchronizedMap(new HashMap());
+    private int maxActive = 0;
+    private int numActive = 0;
+    private Map seenJsRootedValues = Collections.synchronizedMap(new HashMap());
+    private int totAlloc = 0;
+
+    /**
+     * Count a JsValueMoz instance being created.
+     * 
+     * Verify that the underlying JsRootedValue is not currently active, and
+     * mark that it is active.
+     * 
+     * This is debug code that is only executed if debugFlag is true. Since this
+     * is a private static final field, the compiler should optimize out all
+     * this code. It is useful to have for tracking down problems, so it is
+     * being left in but disabled.
+     */
+    public void createInstance(int jsRootedValue) {
+      Integer jsrv = new Integer(jsRootedValue);
+      if (seenJsRootedValues.containsKey(jsrv)) {
+        Throwable t = (Throwable) seenJsRootedValues.get(jsrv);
+        String msg = hexString(jsRootedValue);
+        System.err.println(msg + ", original caller stacktrace:");
+        t.printStackTrace();
+        throw new RuntimeException(msg);
+      }
+      Throwable t = new Throwable();
+      seenJsRootedValues.put(jsrv, t);
+      if (alreadyCleanedJsRootedValues.containsKey(jsrv)) {
+        alreadyCleanedJsRootedValues.remove(jsrv);
+      }
+      if (++numActive > maxActive) {
+        maxActive = numActive;
+      }
+      ++totAlloc;
+    }
+
+    /**
+     * Count a JsValueMoz instance being destroyed.
+     * 
+     * Verify that this instance hasn't already been destroyed, that it has
+     * previously been created, and that the underlying JsRootedValue is only
+     * being cleaned once.
+     * 
+     * This is debug code that is only executed if debugFlag is true. Since this
+     * is a private static final field, the compiler should optimize out all
+     * this code. It is useful to have for tracking down problems, so it is
+     * being left in but disabled.
+     */
+    public void destroyInstance(int jsRootedValue) {
+      if (jsRootedValue == 0) {
+        throw new RuntimeException("Cleaning already-cleaned JsValueMoz");
+      }
+      Integer jsrv = new Integer(jsRootedValue);
+      if (!seenJsRootedValues.containsKey(jsrv)) {
+        throw new RuntimeException("cleaning up 0x" + hexString(jsRootedValue)
+            + ", not active");
+      }
+      if (alreadyCleanedJsRootedValues.containsKey(jsrv)) {
+        Throwable t = (Throwable) seenJsRootedValues.get(jsrv);
+        String msg = "Already cleaned 0x" + hexString(jsRootedValue);
+        System.err.println(msg + ", original allocator stacktrace:");
+        t.printStackTrace();
+        throw new RuntimeException(msg);
+      }
+      Throwable t = new Throwable();
+      alreadyCleanedJsRootedValues.put(jsrv, t);
+      seenJsRootedValues.remove(jsrv);
+      --numActive;
+    }
+
+    /**
+     * Print collected statistics on JsValueMoz usage.
+     */
+    public void dumpStatistics() {
+      System.gc();
+      System.out.println("JsValueMoz usage:");
+      System.out.println(" " + totAlloc + " total instances created");
+      System.out.println(" " + maxActive + " at any one time");
+      System.out.println(" " + seenJsRootedValues.size() + " uncleaned entries");
+    }
+  }
+
   private static class JsCleanupMoz implements JsCleanup {
     private final int jsRootedValue;
 
@@ -45,18 +134,19 @@ public class JsValueMoz extends JsValue {
   }
 
   /**
-   * This must match the value from jsapi.h
+   * Flag to enable debug checks on underlying JsRootedValues.
+   */
+  private static final boolean debugFlag = false;
+
+  /**
+   * Flag to enable debug checks on underlying JsRootedValues.
+   */
+  private static final DebugLogging debugInfo = debugFlag ? new DebugLogging() : null;
+
+  /**
+   * This must match the value from jsapi.h.
    */
   private static final int JSVAL_VOID = 0x80000001;
-
-  // TODO(jat): remove debugging code before 1.4 final
-  private static Map alreadyCleanedJsRootedValues
-      = Collections.synchronizedMap(new HashMap());
-  private static int maxActive = 0;
-  private static int numActive = 0;
-  private static Map seenJsRootedValues 
-      = Collections.synchronizedMap(new HashMap());
-  private static int totAlloc = 0;
 
   /**
    * Create a new undefined JavaScript value.
@@ -66,17 +156,6 @@ public class JsValueMoz extends JsValue {
    */
   public static JsValueMoz createUndefinedValue(int scriptObject) {
     return new JsValueMoz(scriptObject, JSVAL_VOID);
-  }
-
-  /**
-   * Print collected statistics on JsValueMoz usage.
-   */
-  public static void dumpStatistics() {
-    System.gc();
-    System.out.println("JsValueMoz usage:");
-    System.out.println(" " + totAlloc + " total instances created");
-    System.out.println(" " + maxActive + " at any one time");
-    System.out.println(" " + seenJsRootedValues.size() + " uncleaned entries");
   }
 
   // CHECKSTYLE_NAMING_OFF -- native methods start with '_'
@@ -160,6 +239,18 @@ public class JsValueMoz extends JsValue {
     _destroyJsRootedValue(jsRootedValue);
   }
 
+  /**
+   * Convert an address to a hex string.
+   * 
+   * @param jsRootedValue underlying JavaScript value as an opaque integer
+   * @return a string with the JavaScript value represented as hex
+   */
+  private static String hexString(int jsRootedValue) {
+    long l = jsRootedValue;
+    l = l & 0xffffffffL;
+    return Long.toHexString(l);
+  }
+
   // pointer to underlying JsRootedValue object as an integer
   private int jsRootedValue;
 
@@ -171,7 +262,9 @@ public class JsValueMoz extends JsValue {
    */
   public JsValueMoz(int jsRootedValue) {
     this.jsRootedValue = jsRootedValue;
-    createInstance();
+    if (debugFlag) {
+      debugInfo.createInstance(jsRootedValue);
+    }
   }
 
   /**
@@ -181,11 +274,14 @@ public class JsValueMoz extends JsValue {
    */
   public JsValueMoz(JsValueMoz other) {
     jsRootedValue = _copyJsRootedValue(other.jsRootedValue);
-    createInstance();
+    if (debugFlag) {
+      debugInfo.createInstance(jsRootedValue);
+    }
   }
-  
+
   /**
    * Create a JsValue object with the JavaScript value jsval.
+   * 
    * Only used internally.
    * 
    * @param scriptObject reference to containing window object in JavaScript
@@ -193,7 +289,9 @@ public class JsValueMoz extends JsValue {
    */
   protected JsValueMoz(int scriptObject, int jsval) {
     jsRootedValue = _createJsRootedValue(scriptObject, jsval);
-    createInstance();
+    if (debugFlag) {
+      debugInfo.createInstance(jsRootedValue);
+    }
   }
 
   /*
@@ -459,78 +557,15 @@ public class JsValueMoz extends JsValue {
   }
 
   /**
-   * create a cleanup object that will free the underlying JsRootedValue object.
+   * Create a cleanup object that will free the underlying JsRootedValue object.
    */
   protected JsCleanup createCleanupObject() {
     JsCleanup cleanup = new JsCleanupMoz(jsRootedValue);
-    destroyInstance();
+    if (debugFlag) {
+      debugInfo.destroyInstance(jsRootedValue);
+      jsRootedValue = 0;
+    }
     return cleanup;
-  }
-
-  /**
-   * Count a JsValueMoz instance being created.
-   */
-  protected void createInstance() {
-    // TODO(jat): remove this debug code before 1.4 final
-    Integer jsrv = new Integer(jsRootedValue);
-    if (seenJsRootedValues.containsKey(jsrv)) {
-      Throwable t = (Throwable) seenJsRootedValues.get(jsrv);
-      String msg = hexString(jsRootedValue);
-      System.err.println(msg + ", original caller stacktrace:");
-      t.printStackTrace();
-      throw new RuntimeException(msg);
-    }
-    Throwable t = new Throwable();
-    t.fillInStackTrace();
-    seenJsRootedValues.put(jsrv, t);
-    if (alreadyCleanedJsRootedValues.containsKey(jsrv)) {
-      alreadyCleanedJsRootedValues.remove(jsrv);
-    }
-    if (++numActive > maxActive) {
-      maxActive = numActive;
-    }
-    ++totAlloc;
-  }
-
-  /**
-   * Count a JsValueMoz instance being destroyed.
-   */
-  protected void destroyInstance() {
-    // TODO(jat): remove this debug code before 1.4 final
-    if (jsRootedValue == 0) {
-      throw new RuntimeException("Cleaning already-cleaned JsValueMoz");
-    }
-    Integer jsrv = new Integer(jsRootedValue);
-    if (!seenJsRootedValues.containsKey(jsrv)) {
-      throw new RuntimeException("cleaning up 0x" + hexString(jsRootedValue)
-          + ", not active");
-    }
-    if (alreadyCleanedJsRootedValues.containsKey(jsrv)) {
-      Throwable t = (Throwable) seenJsRootedValues.get(jsrv);
-      String msg = "Already cleaned 0x" + hexString(jsRootedValue);
-      System.err.println(msg + ", original allocator stacktrace:");
-      t.printStackTrace();
-      throw new RuntimeException(msg);
-    }
-    Throwable t = new Throwable();
-    t.fillInStackTrace();
-    alreadyCleanedJsRootedValues.put(jsrv, t);
-    seenJsRootedValues.remove(jsrv);
-    jsRootedValue = 0;
-    --numActive;
-  }
-
-  /**
-   * Convert an address to a hex string.
-   * TODO(jat): remove this method
-   * 
-   * @param jsRootedValue underlying JavaScript value as an opaque integer
-   * @return a string with the JavaScript value represented as hex
-   */
-  private String hexString(int jsRootedValue) {
-    long l = jsRootedValue;
-    l = l & 0xffffffffL;
-    return Long.toHexString(l);
   }
 
 }
