@@ -53,6 +53,10 @@ public class JsVisitor {
 
   };
 
+  public final void accept(JsCollection collection) {
+    doAccept(collection);
+  }
+
   public final JsExpression accept(JsExpression node) {
     return (JsExpression) doAccept(node);
   }
@@ -63,10 +67,6 @@ public class JsVisitor {
 
   public final JsStatement accept(JsStatement node) {
     return (JsStatement) doAccept(node);
-  }
-
-  public final void accept(JsCollection collection) {
-    doAccept(collection);
   }
 
   public final void acceptWithInsertRemove(JsCollection collection) {
@@ -105,6 +105,9 @@ public class JsVisitor {
   }
 
   public void endVisit(JsContinue x, JsContext ctx) {
+  }
+
+  public void endVisit(JsDebugger x, JsContext ctx) {
   }
 
   public void endVisit(JsDecimalLiteral x, JsContext ctx) {
@@ -240,6 +243,10 @@ public class JsVisitor {
     return true;
   }
 
+  public boolean visit(JsDebugger x, JsContext ctx) {
+    return true;
+  }
+
   public boolean visit(JsDecimalLiteral x, JsContext ctx) {
     return true;
   }
@@ -368,15 +375,15 @@ public class JsVisitor {
     return true;
   }
 
-  protected JsNode doAccept(JsNode node) {
-    doTraverse(node, UNMODIFIABLE_CONTEXT);
-    return node;
-  }
-
   protected void doAccept(JsCollection collection) {
     for (Iterator it = collection.iterator(); it.hasNext();) {
       doTraverse((JsNode) it.next(), UNMODIFIABLE_CONTEXT);
     }
+  }
+
+  protected JsNode doAccept(JsNode node) {
+    doTraverse(node, UNMODIFIABLE_CONTEXT);
+    return node;
   }
 
   protected void doAcceptWithInsertRemove(JsCollection collection) {

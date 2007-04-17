@@ -28,6 +28,7 @@ import com.google.gwt.dev.js.ast.JsCatch;
 import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsContinue;
+import com.google.gwt.dev.js.ast.JsDebugger;
 import com.google.gwt.dev.js.ast.JsDecimalLiteral;
 import com.google.gwt.dev.js.ast.JsDefault;
 import com.google.gwt.dev.js.ast.JsDoWhile;
@@ -77,6 +78,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   private static final char[] CHARS_CASE = "case".toCharArray();
   private static final char[] CHARS_CATCH = "catch".toCharArray();
   private static final char[] CHARS_CONTINUE = "continue".toCharArray();
+  private static final char[] CHARS_DEBUGGER = "debugger".toCharArray();
   private static final char[] CHARS_DEFAULT = "default".toCharArray();
   private static final char[] CHARS_DELETE = "delete".toCharArray();
   private static final char[] CHARS_DO = "do".toCharArray();
@@ -301,6 +303,11 @@ public class JsToStringGenerationVisitor extends JsVisitor {
       _nameRef(label);
     }
 
+    return false;
+  }
+
+  public boolean visit(JsDebugger x, JsContext ctx) {
+    _debugger();
     return false;
   }
 
@@ -786,6 +793,10 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
   private void _continue() {
     p.print(CHARS_CONTINUE);
+  }
+
+  private void _debugger() {
+    p.print(CHARS_DEBUGGER);
   }
 
   private void _default() {

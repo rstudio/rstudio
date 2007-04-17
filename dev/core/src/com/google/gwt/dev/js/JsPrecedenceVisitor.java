@@ -26,6 +26,7 @@ import com.google.gwt.dev.js.ast.JsCatch;
 import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsContinue;
+import com.google.gwt.dev.js.ast.JsDebugger;
 import com.google.gwt.dev.js.ast.JsDecimalLiteral;
 import com.google.gwt.dev.js.ast.JsDefault;
 import com.google.gwt.dev.js.ast.JsDoWhile;
@@ -137,6 +138,10 @@ class JsPrecedenceVisitor extends JsVisitor {
   }
 
   public boolean visit(JsContinue x, JsContext ctx) {
+    throw new RuntimeException("Only expressions have precedence.");
+  }
+
+  public boolean visit(JsDebugger x, JsContext ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 

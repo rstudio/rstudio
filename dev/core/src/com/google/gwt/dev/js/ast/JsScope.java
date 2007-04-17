@@ -50,6 +50,16 @@ import java.util.TreeMap;
  */
 public class JsScope {
 
+  /**
+   * Prevents the client from programmatically creating an illegal ident.
+   */
+  private static String maybeMangleKeyword(String ident) {
+    if (JsKeywords.isKeyword(ident)) {
+      ident = ident + "_$";
+    }
+    return ident;
+  }
+
   private final List/* <JsScope> */children = new ArrayList();
   private final String description;
   private final Map/* <String, JsName> */names = new TreeMap();
@@ -80,13 +90,10 @@ public class JsScope {
    * @param ident An identifier that is unique within this scope.
    */
   public JsName declareName(String ident) {
+    ident = maybeMangleKeyword(ident);
     JsName name = findExistingNameNoRecurse(ident);
     if (name != null) {
       return name;
-    }
-    if (JsKeywords.isKeyword(ident)) {
-      throw new IllegalArgumentException("Cannot create identifier " + ident
-          + "; that name is a reserved word.");
     }
     return doCreateName(ident, ident);
   }
@@ -101,6 +108,8 @@ public class JsScope {
    *           the requested short name does not match the existing short name.
    */
   public JsName declareName(String ident, String shortIdent) {
+    ident = maybeMangleKeyword(ident);
+    shortIdent = maybeMangleKeyword(shortIdent);
     JsName name = findExistingNameNoRecurse(ident);
     if (name != null) {
       if (!name.getShortIdent().equals(shortIdent)) {
@@ -109,10 +118,6 @@ public class JsScope {
             + " for identifier " + ident);
       }
       return name;
-    }
-    if (JsKeywords.isKeyword(ident)) {
-      throw new IllegalArgumentException("Cannot create identifier " + ident
-          + "; that name is a reserved word.");
     }
     return doCreateName(ident, shortIdent);
   }
@@ -124,6 +129,7 @@ public class JsScope {
    * @return <code>null</code> if the identifier has no associated name
    */
   public final JsName findExistingName(String ident) {
+    ident = maybeMangleKeyword(ident);
     JsName name = findExistingNameNoRecurse(ident);
     if (name == null && parent != null) {
       return parent.findExistingName(ident);
@@ -138,6 +144,7 @@ public class JsScope {
    * @return <code>null</code> if the identifier has no associated name
    */
   public final JsName findExistingUnobfuscatableName(String ident) {
+    ident = maybeMangleKeyword(ident);
     JsName name = findExistingNameNoRecurse(ident);
     if (name != null && name.isObfuscatable()) {
       name = null;
@@ -163,8 +170,8 @@ public class JsScope {
   }
 
   /**
-   * Returns the parent scope of this scope, or <code>null</code> if this is the
-   * root scope.
+   * Returns the parent scope of this scope, or <code>null</code> if this is
+   * the root scope.
    */
   public final JsScope getParent() {
     return parent;

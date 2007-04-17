@@ -24,7 +24,7 @@ import java.util.Map;
  */
 public final class JsProgram extends JsNode {
 
-  private JsStatement debuggerStmt;
+  private final JsStatement debuggerStmt = new JsDebugger();
 
   private final Map decimalLiteralMap = new HashMap();
 
@@ -56,8 +56,6 @@ public final class JsProgram extends JsNode {
     globalBlock = new JsGlobalBlock();
     topScope = new JsScope(rootScope, "Global");
     objectScope = new JsScope(rootScope, "Object");
-    JsName debugger = rootScope.findExistingName("debugger");
-    debuggerStmt = new JsExprStmt(debugger.makeRef());
   }
 
   /**
@@ -139,16 +137,6 @@ public final class JsProgram extends JsNode {
 
   public JsBooleanLiteral getTrueLiteral() {
     return trueLiteral;
-  }
-
-  /**
-   * Specifies a {@link JsStatement} to use whenever parsed source includes a
-   * <code>debugger</code> statement.
-   * 
-   * @see #getDebuggerStmt()
-   */
-  public void setDebuggerStmt(JsStatement debuggerStmt) {
-    this.debuggerStmt = debuggerStmt;
   }
 
   public void traverse(JsVisitor v, JsContext ctx) {

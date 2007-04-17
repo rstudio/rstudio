@@ -376,6 +376,14 @@ public class CompilerTest extends GWTTestCase {
     String test = ((((b = true) ? null : null) + " ") + b);
   }
 
+  public void testJavaScriptReservedWords() {
+    boolean delete = cannotOptimize();
+    for (int in = 0; in < 10; ++in) {
+      assertTrue(in < 10);
+      assertTrue(delete);
+    }
+  }
+  
   public void testLabels() {
     int i = 0, j = 0;
     outer : for (i = 0; i < 1; ++i) {
