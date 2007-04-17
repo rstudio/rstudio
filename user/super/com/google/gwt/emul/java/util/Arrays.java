@@ -316,7 +316,7 @@ public class Arrays {
   }
 
   public static void sort(Object[] x, Comparator s) {
-    nativeSort(x, x.length, s);
+    nativeSort(x, x.length, s != null ? s : natural);
   }
 
   // FUTURE: 5.0 support
@@ -364,7 +364,6 @@ public class Arrays {
     for(i = 0; i < size; ++i){
       array[i] = v[i];
     }
-
   }-*/;
 
 }
