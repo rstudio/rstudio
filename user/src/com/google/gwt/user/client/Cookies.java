@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,28 +15,69 @@
  */
 package com.google.gwt.user.client;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Provides access to browser cookies stored on the client.  Because of browser
+ * Provides access to browser cookies stored on the client. Because of browser
  * restrictions, you will only be able to access cookies associated with the
  * current page's domain.
  */
 public class Cookies {
 
   /**
-   * Gets the cookie associated with the given key.
-   * 
-   * @param key the key of the cookie to be retrieved
-   * @return the cookie's value.
+   * Cached copy of cookies.
    */
-  public static native String getCookie(String key) /*-{
-    var cookies = @com.google.gwt.user.client.Cookies::loadCookies()();
-    var value = cookies[key];
-    return (value == null) ? null : value;
+  static HashMap cachedCookies = null;
+
+  /**
+   * Raw cookie string stored to allow cached cookies to be invalidated on
+   * write.
+   */
+  // Used only in JSNI.
+  static String rawCookies;
+
+  /**
+   * Gets the cookie associated with the given name.
+   * 
+   * @param name the name of the cookie to be retrieved
+   * @return the cookie's value
+   */
+  public static String getCookie(String name) {
+    Map cookiesMap = ensureCookies();
+    return (String) cookiesMap.get(name);
+  }
+
+  /**
+   * Gets the names of all cookies in this page's domain.
+   * 
+   * @return the names of all cookies
+   */
+  public static Collection getCookieNames() {
+    return ensureCookies().keySet();
+  }
+
+  /**
+   * Removes the cookie associated with the given name.
+   * 
+   * @param name the name of the cookie to be removed
+   */
+  public static native void removeCookie(String name) /*-{
+    $doc.cookie = name + "='';expires='Fri, 02-Jan-1970 00:00:00 GMT'"; 
   }-*/;
+
+  /**
+   * Sets a cookie. The cookie will expire when the current browser session is
+   * ended.
+   * 
+   * @param name the cookie's name
+   * @param value the cookie's value
+   */
+  public static void setCookie(String name, String value) {
+    setCookieImpl(name, value, "", null, null, false);
+  }
 
   /**
    * Sets a cookie.
@@ -61,18 +102,15 @@ public class Cookies {
    */
   public static void setCookie(String name, String value, Date expires,
       String domain, String path, boolean secure) {
-    setCookie(name, value, expires.getTime(), domain, path, secure);
+    setCookieImpl(name, value, expires.toGMTString(), domain, path, secure);
   }
 
-  static native JavaScriptObject loadCookies() /*-{
-    var cookies = {};
-
+  static native void loadCookies(HashMap m) /*-{
     var docCookie = $doc.cookie;
     if (docCookie && docCookie != '') {
       var crumbs = docCookie.split('; ');
       for (var i = 0; i < crumbs.length; ++i) {
         var name, value;
-
         var eqIdx = crumbs[i].indexOf('=');
         if (eqIdx == -1) {
           name = crumbs[i];
@@ -81,21 +119,37 @@ public class Cookies {
           name = crumbs[i].substring(0, eqIdx);
           value = crumbs[i].substring(eqIdx + 1);
         }
-
-        cookies[decodeURIComponent(name)] = decodeURIComponent(value);
+        name = decodeURIComponent(name);
+        value = decodeURIComponent(value);
+        m.@java.util.Map::put(Ljava/lang/Object;Ljava/lang/Object;)(name,value);
       }
     }
-
-    return cookies;
   }-*/;
 
-  private static native void setCookie(String name, String value, long expires,
-      String domain, String path, boolean secure) /*-{
-    var date = new Date(expires);
+  private static HashMap ensureCookies() {
+    if (cachedCookies == null || needsRefresh()) {
+      cachedCookies = new HashMap();
+      loadCookies(cachedCookies);
+    }
+    return cachedCookies;
+  }
 
+  private static native boolean needsRefresh() /*-{
+    var docCookie = $doc.cookie;
+        
+    // Check to see if cached cookies need to be invalidated.
+    if (docCookie != '' && docCookie != @com.google.gwt.user.client.Cookies::rawCookies) {  
+      @com.google.gwt.user.client.Cookies::rawCookies = docCookie;
+      return true;
+    } else {
+      return false;
+    } 
+  }-*/;
+
+  private static native void setCookieImpl(String name, String value,
+      String expires, String domain, String path, boolean secure) /*-{
     var c = encodeURIComponent(name) + '=' + encodeURIComponent(value);
-    c += ';expires=' + date.toGMTString();
-
+    c += ';expires=' + expires;
     if (domain)
       c += ';domain=' + domain;
     if (path)
