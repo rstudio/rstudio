@@ -239,8 +239,6 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
     for (int i = rowIndex; i < rows; i = i + 2) {
       Element childTR = DOM.getChild(body, i);
       Element td = DOM.getFirstChild(childTR);
-      int curIndex = DOM.getElementPropertyInt(td, "__index");
-      assert (curIndex == (i / 2) - 1);
       DOM.setElementPropertyInt(td, "__index", index);
       ++index;
     }
