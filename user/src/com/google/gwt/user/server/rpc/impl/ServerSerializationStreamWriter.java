@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,6 +34,8 @@ import java.util.IdentityHashMap;
 public final class ServerSerializationStreamWriter extends
     AbstractSerializationStreamWriter {
 
+  private static final char NON_BREAKING_HYPHEN = '\u2011';
+
   /**
    * Number of escaped JS Chars.
    */
@@ -57,13 +59,24 @@ public final class ServerSerializationStreamWriter extends
    */
   private static final char JS_QUOTE_CHAR = '\"';
 
+  /**
+   * Index into this array using a nibble, 4 bits, to get the corresponding
+   * hexa-decimal character representation.
+   */
+  private static final char NIBBLE_TO_HEX_CHAR[] = {
+      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
+      'E', 'F'};
+
   static {
+    /*
+     * NOTE: The JS VM in IE6 & IE7 do not interpret \v correctly. They convert
+     * JavaScript Vertical Tab character '\v' into 'v'. As such, we do not use
+     * the short form of the unicode escape here.
+     */
     JS_CHARS_ESCAPED['\u0000'] = '0';
     JS_CHARS_ESCAPED['\b'] = 'b';
     JS_CHARS_ESCAPED['\t'] = 't';
     JS_CHARS_ESCAPED['\n'] = 'n';
-    // JavaScript Vertical Tab character '\v'
-    JS_CHARS_ESCAPED['\u000b'] = 'v';
     JS_CHARS_ESCAPED['\f'] = 'f';
     JS_CHARS_ESCAPED['\r'] = 'r';
     JS_CHARS_ESCAPED[JS_ESCAPE_CHAR] = JS_ESCAPE_CHAR;
@@ -73,31 +86,125 @@ public final class ServerSerializationStreamWriter extends
   /**
    * This method takes a string and outputs a JavaScript string literal. The
    * data is surrounded with quotes, and any contained characters that need to
-   * be escaped are mapped them onto their escape sequence.
+   * be escaped are mapped onto their escape sequence.
    * 
-   * Assumptions: We are targetting a version of JavaScript that that is later
-   * than 1.3 that supports unicode strings. Therefore there is no need to
-   * escape unicode characters.
+   * Assumptions: We are targeting a version of JavaScript that that is later
+   * than 1.3 that supports unicode strings.
    */
   private static String escapeString(String toEscape) {
     // make output big enough to escape every character (plus the quotes)
     char[] input = toEscape.toCharArray();
-    char[] output = new char[input.length * 2 + 2];
+    CharVector charVector = new CharVector(input.length * 2 + 2, input.length);
 
-    int j = 0;
-    output[j] = JS_QUOTE_CHAR;
+    charVector.add(JS_QUOTE_CHAR);
 
     for (int i = 0, n = input.length; i < n; ++i) {
       char c = input[i];
       if (c < NUMBER_OF_JS_ESCAPED_CHARS && JS_CHARS_ESCAPED[c] != 0) {
-        output[++j] = JS_ESCAPE_CHAR;
-        output[++j] = JS_CHARS_ESCAPED[c];
+        charVector.add(JS_ESCAPE_CHAR);
+        charVector.add(JS_CHARS_ESCAPED[c]);
+      } else if (needsUnicodeEscape(c)) {
+        charVector.add(JS_ESCAPE_CHAR);
+        unicodeEscape(c, charVector);
       } else {
-        output[++j] = c;
+        charVector.add(c);
       }
     }
-    output[++j] = JS_QUOTE_CHAR;
-    return String.valueOf(output, 0, ++j);
+
+    charVector.add(JS_QUOTE_CHAR);
+    return String.valueOf(charVector.asArray(), 0, charVector.getSize());
+  }
+
+  /**
+   * Returns <code>true</code> if the character requires the \\uXXXX unicode
+   * character escape sequence. This is necessary if the raw character could be
+   * consumed and/or interpreted as a special character when the JSON encoded
+   * response is evaluated. For example, 0x2028 and 0x2029 are alternate line
+   * endings for JS per ECMA-232, which are respected by Firefox and
+   * Mozilla.
+   * 
+   * @param ch character to check
+   * @return <code>true</code> if the character requires the \\uXXXX unicode
+   *         character escape
+   * 
+   * Notes:
+   * <ol>
+   * <li> The following cases are a more conservative set of cases which are are
+   * in the future proofing space as opposed to the required minimal set. We
+   * could remove these and still pass our tests.
+   * <ul>
+   * <li>UNASSIGNED - 6359</li>
+   * <li>NON_SPACING_MARK - 530</li>
+   * <li>ENCLOSING_MARK - 10</li>
+   * <li>COMBINING_SPACE_MARK - 131</li>
+   * <li>SPACE_SEPARATOR - 19</li>
+   * <li>CONTROL - 65</li>
+   * <li>PRIVATE_USE - 6400</li>
+   * <li>DASH_PUNCTUATION - 1</li>
+   * <li>Total Characters Escaped: 13515</li>
+   * </ul>
+   * </li>
+   * <li> The following cases are the minimal amount of escaping required to
+   * prevent test failure.
+   * <ul>
+   * <li>LINE_SEPARATOR - 1</li>
+   * <li>PARAGRAPH_SEPARATOR - 1</li>
+   * <li>FORMAT - 32</li>
+   * <li>SURROGATE - 2048</li>
+   * <li>Total Characters Escaped: 2082</li>
+   * </li>
+   * </ul>
+   * </li>
+   * </ol>
+   */
+  private static boolean needsUnicodeEscape(char ch) {
+    switch (Character.getType(ch)) {
+      // Conservative
+      case Character.COMBINING_SPACING_MARK:
+      case Character.ENCLOSING_MARK:
+      case Character.NON_SPACING_MARK:
+      case Character.UNASSIGNED:
+      case Character.PRIVATE_USE:
+      case Character.SPACE_SEPARATOR:
+      case Character.CONTROL:
+
+      // Minimal
+      case Character.LINE_SEPARATOR:
+      case Character.FORMAT:
+      case Character.PARAGRAPH_SEPARATOR:
+      case Character.SURROGATE:
+        return true;
+
+      default:
+        if (ch == NON_BREAKING_HYPHEN) {
+          // This can be expanded into a break followed by a hyphen
+          return true;
+        }
+        break;
+    }
+
+    return false;
+  }
+
+  /**
+   * Writes either the two or four character escape sequence for a character.
+   * 
+   * 
+   * @param ch character to unicode escape
+   * @param charVector char vector to receive the unicode escaped representation
+   */
+  private static void unicodeEscape(char ch, CharVector charVector) {
+    if (ch < 256) {
+      charVector.add('x');
+      charVector.add(NIBBLE_TO_HEX_CHAR[(ch >> 4) & 0x0F]);
+      charVector.add(NIBBLE_TO_HEX_CHAR[ch & 0x0F]);
+    } else {
+      charVector.add('u');
+      charVector.add(NIBBLE_TO_HEX_CHAR[(ch >> 12) & 0x0F]);
+      charVector.add(NIBBLE_TO_HEX_CHAR[(ch >> 8) & 0x0F]);
+      charVector.add(NIBBLE_TO_HEX_CHAR[(ch >> 4) & 0x0F]);
+      charVector.add(NIBBLE_TO_HEX_CHAR[ch & 0x0F]);
+    }
   }
 
   private int objectCount;
@@ -351,5 +458,4 @@ public final class ServerSerializationStreamWriter extends
     }
     buffer.append("]");
   }
-
 }

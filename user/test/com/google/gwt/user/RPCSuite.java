@@ -20,6 +20,7 @@ import com.google.gwt.user.client.rpc.CustomFieldSerializerTest;
 import com.google.gwt.user.client.rpc.InheritanceTest;
 import com.google.gwt.user.client.rpc.ObjectGraphTest;
 import com.google.gwt.user.client.rpc.RemoteServiceServletTest;
+import com.google.gwt.user.client.rpc.UnicodeEscapingTest;
 import com.google.gwt.user.client.rpc.ValueTypesTest;
 import com.google.gwt.user.server.rpc.RPCTest;
 
@@ -32,7 +33,6 @@ import junit.framework.TestSuite;
 public class RPCSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite("Test for com.google.gwt.user.client.rpc");
-    
 
     suite.addTestSuite(RPCTest.class);
     suite.addTestSuite(ValueTypesTest.class);
@@ -41,6 +41,7 @@ public class RPCSuite {
     suite.addTestSuite(CustomFieldSerializerTest.class);
     suite.addTestSuite(ObjectGraphTest.class);
     suite.addTestSuite(RemoteServiceServletTest.class);
+    suite.addTestSuite(UnicodeEscapingTest.class);
     
     return suite;
   }
