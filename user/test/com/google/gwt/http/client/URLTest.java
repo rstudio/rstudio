@@ -43,12 +43,8 @@ public class URLTest extends GWTTestCase {
       // expected exception was thrown
     }
 
-    try {
-      URL.decode("");
-      fail("Expected IllegalArgumentException");
-    } catch (IllegalArgumentException ex) {
-      // expected exception was thrown
-    }
+    assertEquals("", URL.decode(""));
+    assertEquals(" ", URL.decode(" "));
 
     String actualURL = URL.decode(ENCODED_URL);
     assertEquals(DECODED_URL, actualURL);
@@ -66,12 +62,8 @@ public class URLTest extends GWTTestCase {
       // expected exception was thrown
     }
 
-    try {
-      URL.decodeComponent("");
-      fail("Expected IllegalArgumentException");
-    } catch (IllegalArgumentException ex) {
-      // expected exception was thrown
-    }
+    assertEquals("", URL.decodeComponent(""));
+    assertEquals(" ", URL.decodeComponent(" "));
 
     String actualURLComponent = URL.decodeComponent(ENCODED_URL_COMPONENT);
     assertEquals(DECODED_URL_COMPONENT, actualURLComponent);
@@ -89,12 +81,8 @@ public class URLTest extends GWTTestCase {
       // expected exception was thrown
     }
 
-    try {
-      URL.encode("");
-      fail("Expected IllegalArgumentException");
-    } catch (IllegalArgumentException ex) {
-      // expected exception was thrown
-    }
+    assertEquals("", URL.encode(""));
+    assertEquals("%20",URL.encode(" "));
 
     String actualURL = URL.encode(DECODED_URL);
     assertEquals(ENCODED_URL, actualURL);
@@ -112,12 +100,8 @@ public class URLTest extends GWTTestCase {
       // expected exception was thrown
     }
 
-    try {
-      URL.encodeComponent("");
-      fail("Expected IllegalArgumentException");
-    } catch (IllegalArgumentException ex) {
-      // expected exception was thrown
-    }
+    assertEquals("", URL.encodeComponent(""));
+    assertEquals("+", URL.encodeComponent(" "));
 
     String actualURLComponent = URL.encodeComponent(DECODED_URL_COMPONENT);
     assertEquals(ENCODED_URL_COMPONENT, actualURLComponent);

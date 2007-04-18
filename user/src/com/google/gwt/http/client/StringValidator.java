@@ -33,25 +33,37 @@ final class StringValidator {
   }
 
   /**
-   * Validates a string not null and not empty. This method ignores leading and
-   * trailing whitespace.
+   * Throws if <code>value</code> is <code>null</code> or empty. This method
+   * ignores leading and trailing whitespace.
    * 
    * @param name the name of the value, used in error messages
    * @param value the string value that needs to be validated
    * 
    * @throws IllegalArgumentException if the string is empty, or all whitespace
-   * @throws NullPointerException if the string is null
+   * @throws NullPointerException if the string is <code>null</code>
    */
   public static void throwIfEmptyOrNull(String name, String value) {
     assert (name != null);
     assert (name.trim().length() != 0);
 
-    if (null == value) {
-      throw new NullPointerException(name + " can not be null");
-    }
+    throwIfNull(name, value);
 
     if (0 == value.trim().length()) {
       throw new IllegalArgumentException(name + " can not be empty");
+    }
+  }
+
+  /**
+   * Throws a {@link NullPointerException} if the value is <code>null</code>.
+   * 
+   * @param name the name of the value, used in error messages
+   * @param value the string value that needs to be validated
+   * 
+   * @throws NullPointerException if the value is <code>null</code>
+   */
+  public static void throwIfNull(String name, String value) {
+    if (null == value) {
+      throw new NullPointerException(name + " can not be null");
     }
   }
 

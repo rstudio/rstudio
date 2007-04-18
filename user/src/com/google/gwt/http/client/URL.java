@@ -33,9 +33,11 @@ public final class URL {
    * 
    * @param encodedURL string containing encoded URL encoded sequences
    * @return string with no encoded URL encoded sequences
+   * 
+   * @throws NullPointerException if encodedURL is <code>null</code>
    */
   public static String decode(String encodedURL) {
-    StringValidator.throwIfEmptyOrNull("encodedURL", encodedURL);
+    StringValidator.throwIfNull("encodedURL", encodedURL);
     return decodeImpl(encodedURL);
   }
 
@@ -46,9 +48,11 @@ public final class URL {
    * @param encodedURLComponent string containing encoded URL component
    *        sequences
    * @return string with no encoded URL component encoded sequences
+   * 
+   * @throws NullPointerException if encodedURLComponent is <code>null</code>
    */
   public static String decodeComponent(String encodedURLComponent) {
-    StringValidator.throwIfEmptyOrNull("encodedURLComponent",
+    StringValidator.throwIfNull("encodedURLComponent",
         encodedURLComponent);
     return decodeComponentImpl(encodedURLComponent);
   }
@@ -83,9 +87,11 @@ public final class URL {
    * @param decodedURL a string containing URL characters that may require
    *        encoding
    * @return a string with all invalid URL characters escaped
+   * 
+   * @throws NullPointerException if decodedURL is <code>null</code>
    */
   public static String encode(String decodedURL) {
-    StringValidator.throwIfEmptyOrNull("decodedURL", decodedURL);
+    StringValidator.throwIfNull("decodedURL", decodedURL);
     return encodeImpl(decodedURL);
   }
 
@@ -116,9 +122,11 @@ public final class URL {
    * 
    * @param decodedURLComponent a string containing invalid URL characters
    * @return a string with all invalid URL characters escaped
+   * 
+   * @throws NullPointerException if decodedURLComponent is <code>null</code>
    */
   public static String encodeComponent(String decodedURLComponent) {
-    StringValidator.throwIfEmptyOrNull("decodedURLComponent",
+    StringValidator.throwIfNull("decodedURLComponent",
         decodedURLComponent);
     return encodeComponentImpl(decodedURLComponent);
   }
