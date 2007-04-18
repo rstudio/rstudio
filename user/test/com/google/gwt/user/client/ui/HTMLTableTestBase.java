@@ -54,8 +54,9 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
 
   public void testIterator() {
     // Check remove.
-    HTMLTable t = getTable(1, 1);
-    t.setWidget(0, 0, new Label("hello"));
+    HTMLTable t = getTable(5, 5);
+    Label l = new Label("hello");
+    t.setWidget(0, 0, l);
     Iterator iter = t.iterator();
     iter.next();
     iter.remove();
