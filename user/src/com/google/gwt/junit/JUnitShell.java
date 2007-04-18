@@ -103,14 +103,10 @@ public class JUnitShell extends GWTShell {
   private static final String PROP_JUNIT_HYBRID_MODE = "gwt.hybrid";
 
   /**
-   * Wait a long time for the client to contact the server and begin running the
-   * test.
+   * The amount of time to wait for all clients to have contacted the server and
+   * begun running the test.
    */
-  private static final int TEST_BEGIN_TIMEOUT_MILLIS = 30000;
-
-  // A larger value when debugging the unit test framework, so you
-  // don't get spurious timeouts.
-  // private static final int TEST_BEGIN_TIMEOUT_MILLIS = 200000;
+  private static final int TEST_BEGIN_TIMEOUT_MILLIS = 60000;
 
   /**
    * Singleton object for hosting unit tests. All test case instances executed
@@ -376,14 +372,12 @@ public class JUnitShell extends GWTShell {
    * to complete.
    */
   protected boolean notDone() {
-    /*
-    if (messageQueue.hasNextTestName(testCaseClassName)
+    if (!messageQueue.haveAllClientsRetrievedCurrentTest()
         && testBeginTimeout < System.currentTimeMillis()) {
       throw new TimeoutException(
           "The browser did not contact the server within "
               + TEST_BEGIN_TIMEOUT_MILLIS + "ms.");
     }
-    */
 
     if (messageQueue.hasResult(testCaseClassName)) {
       return false;
@@ -419,16 +413,18 @@ public class JUnitShell extends GWTShell {
       runStyle.maybeLaunchModule(moduleName, !sameTest);
     } catch (UnableToCompleteException e) {
       lastLaunchFailed = true;
-      throw e;
+      testResult.addError(testCase, e);
+      return;
     }
 
     // Wait for test to complete
     try {
       // Set a timeout period to automatically fail if the servlet hasn't been
       // contacted; something probably went wrong (the module failed to load?)
-      // testBeginTimeout = System.currentTimeMillis() + TEST_BEGIN_TIMEOUT_MILLIS;
+      testBeginTimeout = System.currentTimeMillis() + TEST_BEGIN_TIMEOUT_MILLIS;
       pumpEventLoop();
     } catch (TimeoutException e) {
+      lastLaunchFailed = true;
       testResult.addError(testCase, e);
       return;
     }

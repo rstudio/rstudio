@@ -17,10 +17,12 @@ package com.google.gwt.junit;
 
 import com.google.gwt.junit.client.TestResults;
 
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A message queue to pass data between {@link JUnitShell} and {@link
@@ -175,6 +177,28 @@ public class JUnitMessageQueue {
     synchronized (resultsLock) {
       assert (testClassName.equals(testClass));
       return testResults.size() == numClients;
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if all clients have requested the
+   * currently-running test.
+   */
+  boolean haveAllClientsRetrievedCurrentTest() {
+    synchronized (readTestLock) {
+      // If a client hasn't yet contacted, it will have no entry
+      Collection clientIndices = clientTestRequests.values();
+      if (clientIndices.size() < numClients) {
+        return false;
+      }
+      // Every client must have been bumped PAST the current test index
+      for (Iterator it = clientIndices.iterator(); it.hasNext();) {
+        Integer value = (Integer) it.next();
+        if (value.intValue() <= currentTestIndex) {
+          return false;
+        }
+      }
+      return true;
     }
   }
 
