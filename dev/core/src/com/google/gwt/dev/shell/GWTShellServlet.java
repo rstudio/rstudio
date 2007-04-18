@@ -72,6 +72,8 @@ public class GWTShellServlet extends HttpServlet {
     }
   }
 
+  private static final String XHTML_MIME_TYPE = "application/xhtml+xml";
+  
   private final Map loadedModulesByName = new HashMap();
 
   private final Map loadedServletsByClassName = new HashMap();
@@ -110,7 +112,7 @@ public class GWTShellServlet extends HttpServlet {
       response.setContentType("text/html");
       PrintWriter writer = response.getWriter();
       writer.println("<html><body><basefont face='arial'>");
-      writer.println("To launch an an application, specify a URL of the form <code>/<i>module</i>/<i>file.html</i></code>");
+      writer.println("To launch an application, specify a URL of the form <code>/<i>module</i>/<i>file.html</i></code>");
       writer.println("</body></html>");
       return;
     }
@@ -407,6 +409,8 @@ public class GWTShellServlet extends HttpServlet {
       logger.log(TreeLogger.TRACE, msg, null);
     }
 
+    maybeIssueXhtmlWarning(logger, mimeType, partialPath);
+    
     // Maybe serve it up. Don't let the client cache anything other than
     // xxx.cache.yyy files because this servlet is for development (so user
     // files are assumed to change a lot), although we do honor
@@ -753,6 +757,25 @@ public class GWTShellServlet extends HttpServlet {
       //
       return false;
     }
+  }
+
+  private void maybeIssueXhtmlWarning(TreeLogger logger, String mimeType,
+      String path) {
+    if (!XHTML_MIME_TYPE.equals(mimeType)) {
+      return;
+    }
+
+    String msg = "File was returned with content-type of \"" + mimeType
+        + "\". GWT requires browser features that are not available to "
+        + "documents with this content-type.";
+
+    int ix = path.lastIndexOf('.');
+    if (ix >= 0 && ix < path.length()) {
+      String base = path.substring(0, ix);
+      msg += " Consider renaming \"" + path + "\" to \"" + base + ".html\".";
+    }
+
+    logger.log(TreeLogger.WARN, msg, null);
   }
 
   private void sendErrorResponse(HttpServletResponse response, int statusCode,
