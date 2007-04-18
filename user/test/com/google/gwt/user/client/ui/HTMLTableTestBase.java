@@ -19,10 +19,11 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
 import com.google.gwt.user.client.ui.HTMLTable.RowFormatter;
 
+import java.util.Iterator;
 import java.util.List;
 
 /**
- * TODO: document me.
+ * Base test for HTMLTable derived classes.
  */
 public abstract class HTMLTableTestBase extends GWTTestCase {
 
@@ -50,6 +51,37 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
   }
 
   public abstract HTMLTable getTable(int row, int column);
+
+  public void testIterator() {
+    // Check remove.
+    HTMLTable t = getTable(1, 1);
+    t.setWidget(0, 0, new Label("hello"));
+    Iterator iter = t.iterator();
+    iter.next();
+    iter.remove();
+    Iterator iter2 = t.iterator();
+    assertFalse(iter2.hasNext());
+
+    // Check put after remove.
+    Widget w = new Label("bo");
+    t.setWidget(0, 0, w);
+    Iterator iter3 = t.iterator();
+    assertEquals(w, iter3.next());
+    assertFalse(iter3.hasNext());
+
+    // Check swapping widgets.
+    Widget w2 = new Label("ba");
+    t.setWidget(0, 0, w2);
+    assertEquals(w2, t.iterator().next());
+
+    // Check put after put.
+    Widget w3 = new Label("be");
+    t.setWidget(1, 1, w3);
+    Iterator iter4 = t.iterator();
+    assertEquals(w2, iter4.next());
+    assertEquals(w3, iter4.next());
+    assertFalse(iter4.hasNext());
+  }
 
   public void testBoundsOnEmptyTable() {
     HTMLTable t = getTable(0, 0);

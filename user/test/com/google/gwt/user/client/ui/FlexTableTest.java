@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 
 /**
@@ -24,6 +25,59 @@ public class FlexTableTest extends HTMLTableTestBase {
 
   public HTMLTable getTable(int row, int column) {
     return new FlexTable();
+  }
+
+  public void testWidgetPos() {
+    FlexTable t = new FlexTable();
+    HTML widget_3_0 = new HTML("3,0");
+    HTML widget_3_1 = new HTML("3,1");
+    HTML widget_1_2 = new HTML("1,2");
+
+    t.setWidget(0, 0, widget_3_1);
+    t.insertRow(0); 
+    t.insertCell(1, 0);
+    t.setWidget(1, 0, widget_3_0);
+    t.insertRow(0);
+    t.setWidget(0, 0, widget_1_2);
+    t.insertCells(0, 0, 2);
+    t.insertRow(0);
+    int hit = 0;
+    for (int row = 0; row < 4; row++) {
+      int colBounds = t.getCellCount(row);
+      for (int col = 0; col < colBounds; col++) {
+        Widget widget = t.getWidget(row, col);
+        if (row == 3 && col == 0) {
+          ++hit;
+          assertEquals(widget_3_0, widget);
+        } else if (row == 3 && col == 1) {
+          ++hit;
+          assertEquals(widget_3_1, widget);
+        } else if (row == 1 && col == 2) {
+          ++hit;
+          assertEquals(widget_1_2, widget);
+        } else {
+          if (widget != null)
+            System.err.println("row:" + row + " col:" + col + "widgeT:"
+                + DOM.toString(widget.getElement()));
+          assertNull(widget);
+        }
+      }
+    }
+    assertEquals(3, hit);
+    
+    // Move widget.
+    t.setWidget(3, 2, widget_1_2);
+    assertEquals(widget_1_2, t.getWidget(3, 2));
+    assertNull(t.getWidget(1, 2));
+
+    // Remove by widget.
+    t.remove(widget_3_0);
+    assertNull(t.getWidget(3, 0));
+    assertEquals(widget_3_1, t.getWidget(3, 1));
+
+    // Remove by cell.
+    t.removeCell(3, 1);
+    assertEquals(widget_1_2, t.getWidget(3, 1));
   }
 
   public void testInertFirst() {
