@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,8 +27,25 @@ import com.google.gwt.user.client.Element;
  * room for its absolutely-positioned children. It must be explicitly sized in
  * order to make room for them.
  * </p>
+ *
+ * <p>
+ * Once a widget has been added to an absolute panel, the panel effectively
+ * "owns" the positioning of the widget. Any existing positioning attributes
+ * on the widget may be modified by the panel.
+ * </p>
  */
 public class AbsolutePanel extends ComplexPanel {
+
+  /**
+   * Changes a DOM element's positioning to static.
+   *
+   * @param elem the DOM element 
+   */
+  private static void changeToStaticPositioning(Element elem) {
+    DOM.setStyleAttribute(elem, "left", "");
+    DOM.setStyleAttribute(elem, "top", "");
+    DOM.setStyleAttribute(elem, "position", "static");
+  }
 
   /**
    * Creates an empty absolute panel.
@@ -99,14 +116,25 @@ public class AbsolutePanel extends ComplexPanel {
 
     Element h = w.getElement();
     if ((left == -1) && (top == -1)) {
-      DOM.setStyleAttribute(h, "left", "");
-      DOM.setStyleAttribute(h, "top", "");
-      DOM.setStyleAttribute(h, "position", "static");
+      changeToStaticPositioning(h);
     } else {
       DOM.setStyleAttribute(h, "position", "absolute");
       DOM.setStyleAttribute(h, "left", left + "px");
       DOM.setStyleAttribute(h, "top", top + "px");
     }
+  }
+
+  /**
+   * Calls the superclass' <code>disown(Widget)</code> method, and sets the
+   * the positioning of the widget to static. This is done so that any
+   * positioning changes to the widget that were done by the panel are undone
+   * when the widget is disowned from the panel.
+   *
+   * @param w the widget to be disowned
+   */
+  protected void disown(Widget w) {
+    super.disown(w);
+    changeToStaticPositioning(w.getElement());
   }
 
   private void checkWidgetParent(Widget w) {
