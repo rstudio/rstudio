@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 package com.google.gwt.user.client.impl;
 
 /**
- * Standard history implementation, currently used only on Mozilla browsers.
+ * Standard history implementation, currently used only on Opera browsers.
  */
 class HistoryImplStandard extends HistoryImpl {
 
@@ -53,9 +53,9 @@ class HistoryImplStandard extends HistoryImpl {
   }-*/;
 
   public native void newItem(String historyToken) /*-{
-    if(historyToken == "" || historyToken == null){
-      historyToken = "#";
+    if (historyToken == null) {
+      historyToken = "";
     }
     $wnd.location.hash = encodeURIComponent(historyToken);
-   }-*/;
+  }-*/;
 }

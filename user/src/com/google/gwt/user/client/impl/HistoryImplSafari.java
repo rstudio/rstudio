@@ -76,6 +76,9 @@ class HistoryImplSafari extends HistoryImpl {
 
   public native void newItem(String historyToken) /*-{
     var iframe = $doc.getElementById('__gwt_historyFrame');
+    if (historyToken == null) {
+      historyToken = "";
+    }
     iframe.contentWindow.location.href = 'history.html?' + historyToken;
   }-*/;
 }
