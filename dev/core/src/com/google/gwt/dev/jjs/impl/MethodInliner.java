@@ -28,6 +28,7 @@ import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JVisitor;
@@ -117,7 +118,7 @@ public class MethodInliner {
       List/* <JStatement> */stmts = method.body.statements;
       boolean possibleToInline = false;
       if (stmts.isEmpty()) {
-        inlineEmptyMethodCall(x, ctx);
+        tryInlineEmptyMethodCall(x, ctx);
         possibleToInline = true;
       } else if (stmts.size() == 1) {
         JStatement stmt = (JStatement) stmts.get(0);
@@ -197,9 +198,59 @@ public class MethodInliner {
     }
 
     /**
+     * Returns <code>true</code> if inlining the target expression would
+     * eliminate a necessary clinit.
+     */
+    private boolean checkClinitViolation(JMethodCall x,
+        JExpression resultExpression) {
+      JReferenceType targetEnclosingType = x.getTarget().getEnclosingType();
+      if (!program.typeOracle.hasClinit(targetEnclosingType)) {
+        // No clinit needed; target doesn't have one.
+        return false;
+      }
+      if (program.isStaticImpl(x.getTarget())) {
+        // No clinit needed; target is really an instance method.
+        return false;
+      }
+      if (currentMethod.getEnclosingType() == targetEnclosingType) {
+        // No clinit needed; intra-class call.
+        // TODO: we could maybe broaden the test condition to include types that
+        // we can statically determine must have been initialized.
+        return false;
+      }
+
+      /*
+       * Potential clinit violation! We can only allow this if the result is
+       * itself a static field ref into the target class, which would trigger
+       * the clinit itself.
+       */
+
+      // resultExpression might be null, which behaves correctly here.
+      if (!(resultExpression instanceof JFieldRef)) {
+        return true;
+      }
+      JFieldRef fieldRefResult = (JFieldRef) resultExpression;
+      JField fieldResult = fieldRefResult.getField();
+      if (!fieldResult.isStatic()) {
+        // A nonstatic field reference won't trigger the clinit we need.
+        return true;
+      }
+      if (fieldResult.getEnclosingType() != targetEnclosingType) {
+        // We have a static field reference, but it's to the wrong class (not
+        // the class whose clinit we must trigger).
+        return true;
+      }
+      // The correct cross-class static field reference will trigger the clinit.
+      return false;
+    }
+
+    /**
      * Inlines a call to an empty method.
      */
-    private void inlineEmptyMethodCall(JMethodCall x, Context ctx) {
+    private void tryInlineEmptyMethodCall(JMethodCall x, Context ctx) {
+      if (checkClinitViolation(x, null)) {
+        return;
+      }
       JMultiExpression multi = new JMultiExpression(program, x.getSourceInfo());
       JExpression instance = x.getInstance();
       if (instance != null && instance.hasSideEffects()) {
@@ -231,6 +282,17 @@ public class MethodInliner {
 
       if (resultExpression == null) {
         return false; // cannot inline
+      }
+
+      // The expression is inlinable.
+
+      if (checkClinitViolation(x, resultExpression)) {
+        /*
+         * Inlining here would cause a clinit to not fire, so we can't. But
+         * return true, because this method could still be inlined from within
+         * the same class.
+         */
+        return true;
       }
 
       // the argument that is returned by the inlined method

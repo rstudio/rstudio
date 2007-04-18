@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.test;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.junit.client.GWTTestCase;
 
@@ -63,6 +62,15 @@ public class CompilerTest extends GWTTestCase {
 
     public static Object causeClinitSideEffect() {
       return null;
+    }
+  }
+
+  private static class SideEffectCauser3 {
+    static {
+      CompilerTest.sideEffectChecker++;
+    }
+
+    public static void causeClinitSideEffect() {
     }
   }
 
@@ -152,10 +160,9 @@ public class CompilerTest extends GWTTestCase {
     SideEffectCauser.causeClinitSideEffect();
     assertEquals(1, sideEffectChecker);
     SideEffectCauser2.causeClinitSideEffect();
-    if (GWT.isScript()) {
-      ++sideEffectChecker; // CR #767
-    }
     assertEquals(2, sideEffectChecker);
+    SideEffectCauser3.causeClinitSideEffect();
+    assertEquals(3, sideEffectChecker);
     String checkRescued = NonSideEffectCauser.NOT_A_COMPILE_TIME_CONSTANT;
     assertEquals(null, checkRescued);
   }
