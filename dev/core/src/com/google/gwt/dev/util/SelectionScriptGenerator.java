@@ -397,23 +397,21 @@ public class SelectionScriptGenerator {
       // If the ordered props are specified, then we're generating for both
       // modes.
       if (orderedProps != null) {
-        // Web mode or hosted mode.
-        if (orderedProps.length > 0) {
+        // Determine if there's only one possible answer.
+        if (propertyValuesSetByStrongName.size() > 1) {
+          // Multiple answers; generate computations.
           pw.println();
           genAnswers(pw);
           pw.println();
           pw.print("      strongName = answers");
           genPropValues(pw);
         } else {
-          // Rare case of no properties; happens if you inherit from Core
-          // alone.
-          assert (orderedProps.length == 0);
+          // Only one answer; explicit properties set or rare cases.
           Set entrySet = propertyValuesSetByStrongName.entrySet();
           assert (entrySet.size() == 1);
           Map.Entry entry = (Entry) entrySet.iterator().next();
           String strongName = (String) entry.getKey();
-          // There is exactly one compilation, so it is unconditionally
-          // selected.
+          // Just use a literal for the single answer.
           pw.print("    strongName = " + literal(strongName));
         }
         pw.println(";");
