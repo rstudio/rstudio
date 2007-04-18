@@ -149,6 +149,6 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents {
   }
 
   public void setText(String text) {
-    DOM.setInnerHTML(anchorElem, text);
+    DOM.setInnerText(anchorElem, text);
   }
 }
