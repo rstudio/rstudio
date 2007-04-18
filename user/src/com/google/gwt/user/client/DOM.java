@@ -831,6 +831,17 @@ public class DOM {
   }
 
   /**
+   * Removes the named attribute from the given element.
+   *
+   * @param elem the element whose attribute is to be removed
+   * @param attr the name of the element to remove
+   * @return true if the element was removed, false if the element did not exist
+   */
+  public static void removeElementAttribute(Element elem, String attr) {
+    impl.removeElementAttribute(elem, attr);
+  }
+
+  /**
    * Removes an element from the preview stack. This element will no longer
    * capture events, though any preview underneath it will begin to do so.
    * 

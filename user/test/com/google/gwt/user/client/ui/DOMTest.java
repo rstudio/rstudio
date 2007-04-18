@@ -41,6 +41,19 @@ public class DOMTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
+  /**
+   * Test DOM.get/set/removeElementAttribute() methods.
+   */
+  public void testElementAttribute() {
+    Element div = DOM.createDiv();
+    DOM.setElementAttribute(div, "class", "testClass");
+    String cssClass = DOM.getElementAttribute(div, "class");
+    assertEquals("testClass", cssClass);
+    DOM.removeElementAttribute(div, "class");
+    cssClass = DOM.getElementAttribute(div, "class");
+    assertNull(cssClass);
+  }
+  
   public void testGetParent() {
     Element element = RootPanel.get().getElement();
     int i = 0;

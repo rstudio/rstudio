@@ -253,6 +253,10 @@ public abstract class DOMImpl {
     parent.removeChild(child);
   }-*/;
   
+  public native void removeElementAttribute(Element elem, String attr) /*-{
+    elem.removeAttribute(attr);
+  }-*/;
+
   public native void scrollIntoView(Element elem) /*-{
     var left = elem.offsetLeft, top = elem.offsetTop;
     var width = elem.offsetWidth, height = elem.offsetHeight;
