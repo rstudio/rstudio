@@ -17,18 +17,18 @@ package com.google.gwt.junit;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.GWTShell;
 import com.google.gwt.dev.BootStrapPlatform;
+import com.google.gwt.dev.GWTShell;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-import com.google.gwt.junit.client.TimeoutException;
-import com.google.gwt.junit.client.TestResults;
-import com.google.gwt.junit.client.Trial;
-import com.google.gwt.junit.client.Benchmark;
-import com.google.gwt.junit.remote.BrowserManager;
 import com.google.gwt.junit.benchmarks.BenchmarkReport;
+import com.google.gwt.junit.client.Benchmark;
+import com.google.gwt.junit.client.TestResults;
+import com.google.gwt.junit.client.TimeoutException;
+import com.google.gwt.junit.client.Trial;
+import com.google.gwt.junit.remote.BrowserManager;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
 
@@ -36,39 +36,48 @@ import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 
+import java.io.File;
 import java.rmi.Naming;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.io.File;
 
 /**
  * This class is responsible for hosting JUnit test case execution. There are
  * three main pieces to the JUnit system.
- *
- * <ul> <li>Test environment</li> <li>Client classes</li> <li>Server
- * classes</li> </ul>
- *
- * <p> The test environment consists of this class and the non-translatable
- * version of {@link com.google.gwt.junit.client.GWTTestCase}. These two classes
- * integrate directly into the real JUnit test process. </p>
- *
- * <p> The client classes consist of the translatable version of {@link
+ * 
+ * <ul>
+ * <li>Test environment</li>
+ * <li>Client classes</li>
+ * <li>Server classes</li>
+ * </ul>
+ * 
+ * <p>
+ * The test environment consists of this class and the non-translatable version
+ * of {@link com.google.gwt.junit.client.GWTTestCase}. These two classes
+ * integrate directly into the real JUnit test process.
+ * </p>
+ * 
+ * <p>
+ * The client classes consist of the translatable version of {@link
  * com.google.gwt.junit.client.GWTTestCase}, translatable JUnit classes, and the
- * user's own {@link com.google.gwt.junit.client.GWTTestCase}-derived class. The
- * client communicates to the server via RPC. </p>
- *
- * <p> The server consists of {@link com.google.gwt.junit.server.JUnitHostImpl},
- * an RPC servlet which communicates back to the test environment through a
- * {@link JUnitMessageQueue}, thus closing the loop. </p>
+ * user's own {@link com.google.gwt.junit.client.GWTTestCase}-derived class.
+ * The client communicates to the server via RPC.
+ * </p>
+ * 
+ * <p>
+ * The server consists of {@link com.google.gwt.junit.server.JUnitHostImpl}, an
+ * RPC servlet which communicates back to the test environment through a
+ * {@link JUnitMessageQueue}, thus closing the loop.
+ * </p>
  */
 public class JUnitShell extends GWTShell {
 
   /**
    * Executes shutdown logic for JUnitShell
-   *
+   * 
    * Sadly, there's no simple way to know when all unit tests have finished
    * executing. So this class is registered as a VM shutdown hook so that work
    * can be done at the end of testing - for example, writing out the reports.
@@ -122,7 +131,7 @@ public class JUnitShell extends GWTShell {
   /**
    * Called by {@link com.google.gwt.junit.server.JUnitHostImpl} to get an
    * interface into the test process.
-   *
+   * 
    * @return The {@link JUnitMessageQueue} interface that belongs to the
    *         singleton {@link JUnitShell}, or <code>null</code> if no such
    *         singleton exists.
@@ -137,7 +146,7 @@ public class JUnitShell extends GWTShell {
   /**
    * Called by {@link com.google.gwt.junit.rebind.JUnitTestCaseStubGenerator} to
    * add test meta data to the test report.
-   *
+   * 
    * @return The {@link BenchmarkReport} that belongs to the singleton {@link
    *         JUnitShell}, or <code>null</code> if no such singleton exists.
    */
@@ -180,7 +189,7 @@ public class JUnitShell extends GWTShell {
       shell.report = new BenchmarkReport(shell.getTopLogger());
       unitTestShell = shell;
 
-      Runtime.getRuntime().addShutdownHook(new Thread(shell. new Shutdown()));
+      Runtime.getRuntime().addShutdownHook(new Thread(shell.new Shutdown()));
     }
 
     return unitTestShell;
@@ -192,7 +201,7 @@ public class JUnitShell extends GWTShell {
   private PrintWriterTreeLogger consoleLogger;
 
   /**
-   * Name of the module containing the current/last module to run. 
+   * Name of the module containing the current/last module to run.
    */
   private String currentModuleName;
 
@@ -280,7 +289,7 @@ public class JUnitShell extends GWTShell {
         try {
           String[] urls = str.split(",");
           numClients = urls.length;
-          BrowserManager[] browserManagers = new BrowserManager[ numClients ];
+          BrowserManager[] browserManagers = new BrowserManager[numClients];
           for (int i = 0; i < numClients; ++i) {
             browserManagers[i] = (BrowserManager) Naming.lookup(urls[i]);
           }
@@ -403,7 +412,7 @@ public class JUnitShell extends GWTShell {
     if (sameTest && lastLaunchFailed) {
       throw new UnableToCompleteException();
     }
-    
+
     messageQueue.setNextTestName(newTestCaseClassName, testCase.getName());
 
     try {
@@ -429,8 +438,7 @@ public class JUnitShell extends GWTShell {
       return;
     }
 
-    List/*JUnitMessageQueue.TestResult*/ results = messageQueue
-        .getResults(testCaseClassName);
+    List/* JUnitMessageQueue.TestResult */results = messageQueue.getResults(testCaseClassName);
 
     if (results == null) {
       return;
@@ -446,9 +454,11 @@ public class JUnitShell extends GWTShell {
       // In the case that we're running multiple clients at once, we need to
       // let the user know the browser in which the failure happened
       if (parallelTesting && exception != null) {
-        String msg = "Remote test failed at " + result.getHost() + " on " + result.getAgent();
+        String msg = "Remote test failed at " + result.getHost() + " on "
+            + result.getAgent();
         if (exception instanceof AssertionFailedError) {
-          AssertionFailedError newException = new AssertionFailedError(msg + "\n" + exception.getMessage());
+          AssertionFailedError newException = new AssertionFailedError(msg
+              + "\n" + exception.getMessage());
           newException.setStackTrace(exception.getStackTrace());
           exception = newException;
         } else {
@@ -458,7 +468,7 @@ public class JUnitShell extends GWTShell {
 
       // A "successful" failure
       if (exception instanceof AssertionFailedError) {
-        testResult.addFailure(testCase, (AssertionFailedError) exception);       
+        testResult.addFailure(testCase, (AssertionFailedError) exception);
       } else if (exception != null) {
         // A real failure
         testResult.addError(testCase, exception);
@@ -481,8 +491,7 @@ public class JUnitShell extends GWTShell {
       // Match either a non-whitespace, non start of quoted string, or a
       // quoted string that can have embedded, escaped quoting characters
       //
-      Pattern pattern = Pattern
-          .compile("[^\\s\"]+|\"[^\"\\\\]*(\\\\.[^\"\\\\]*)*\"");
+      Pattern pattern = Pattern.compile("[^\\s\"]+|\"[^\"\\\\]*(\\\\.[^\"\\\\]*)*\"");
       Matcher matcher = pattern.matcher(args);
       while (matcher.find()) {
         argList.add(matcher.group());
