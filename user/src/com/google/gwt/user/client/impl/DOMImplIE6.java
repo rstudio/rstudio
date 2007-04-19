@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -212,9 +212,5 @@ class DOMImplIE6 extends DOMImpl {
     elem.onscroll      = (bits & 0x04000) ? $wnd.__dispatchEvent : null;
     elem.onload        = (bits & 0x08000) ? $wnd.__dispatchEvent : null;
     elem.onerror       = (bits & 0x10000) ? $wnd.__dispatchEvent : null;
-  }-*/;
-
-  public native String toString(Element elem) /*-{
-    return elem.outerHTML;
   }-*/;
 }

@@ -20,7 +20,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
 /**
- * Test DOM methods.
+ * Tests standard DOM operations in the {@link DOM} class.
  */
 public class DOMTest extends GWTTestCase {
 
@@ -54,6 +54,9 @@ public class DOMTest extends GWTTestCase {
     assertNull(cssClass);
   }
   
+  /**
+   * Tests the ability to do a parent-ward walk in the DOM.
+   */
   public void testGetParent() {
     Element element = RootPanel.get().getElement();
     int i = 0;
@@ -69,6 +72,10 @@ public class DOMTest extends GWTTestCase {
     // top of the parent hierarchy.
   }
 
+  /**
+   * Tests that {@link DOM#isOrHasChild(Element, Element)} works consistently
+   * across browsers.
+   */
   public void testIsOrHasChild() {
     Element div = DOM.createDiv();
     Element childDiv = DOM.createDiv();
@@ -78,6 +85,10 @@ public class DOMTest extends GWTTestCase {
     assertFalse(DOM.isOrHasChild(childDiv, div));
   }
 
+  /**
+   * Tests that {@link DOM#setInnerText(Element, String)} works consistently
+   * across browsers.
+   */
   public void testSetInnerText() {
     Element tableElem = DOM.createTable();
 
@@ -105,9 +116,45 @@ public class DOMTest extends GWTTestCase {
     assertTrue(getDenormalizedChildCount(tdElem) == 0);
   }
 
+  /**
+   * Tests {@link DOM#toString(Element)} against likely failure points.
+   */
   public void testToString() {
     Button b = new Button("abcdef");
     assertTrue(b.toString().indexOf("abcdef") != -1);
     assertTrue(b.toString().toLowerCase().indexOf("button") != -1);
+
+    // Test <img src="http://.../logo.gif" />
+    Element image = DOM.createImg();
+    String imageUrl = "http://www.google.com/images/logo.gif";
+    DOM.setElementProperty(image, "src", imageUrl);
+    String imageToString = DOM.toString(image).trim().toLowerCase();
+    assertTrue(imageToString.startsWith("<img"));
+    assertTrue(imageToString.indexOf(imageUrl) != -1);
+
+    // Test <input name="flinks" />
+    Element input = DOM.createInputText();
+    DOM.setElementProperty(input, "name", "flinks");
+    final String inputToString = DOM.toString(input).trim().toLowerCase();
+    assertTrue(inputToString.startsWith("<input"));
+
+    // Test <select><option>....</select>
+    Element select = DOM.createSelect();
+    for (int i = 0; i < 10; i++) {
+      final Element option = DOM.createElement("option");
+      DOM.appendChild(select, option);
+      DOM.setInnerText(option, "item #" + i);
+    }
+    String selectToString = DOM.toString(select).trim().toLowerCase();
+    assertTrue(selectToString.startsWith("<select"));
+    for (int i = 0; i < 10; i++) {
+      assertTrue(selectToString.indexOf("item #" + i) != -1);
+    }
+
+    // Test <meta name="robots" />
+    Element meta = DOM.createElement("meta");
+    DOM.setElementProperty(meta, "name", "robots");
+    String metaToString = DOM.toString(meta).trim().toLowerCase();
+    assertTrue(metaToString.startsWith("<meta"));
   }
 }

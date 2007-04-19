@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
 /**
- * Base implementation of {@link com.google.gwt.user.client.impl.DomImpl} shared
+ * Base implementation of {@link com.google.gwt.user.client.impl.DOMImpl} shared
  * by those browsers that come a bit closer to supporting a common standard (ie,
  * not IE).
  */
@@ -237,16 +237,5 @@ abstract class DOMImplStandard extends DOMImpl {
     elem.onscroll      = (bits & 0x04000) ? $wnd.__dispatchEvent : null;
     elem.onload        = (bits & 0x08000) ? $wnd.__dispatchEvent : null;
     elem.onerror       = (bits & 0x10000) ? $wnd.__dispatchEvent : null;
-  }-*/;
-
-  public native String toString(Element elem) /*-{
-    // Basic idea is to use the innerHTML property by copying the node into a 
-    // div and getting the innerHTML
-    var temp = elem.cloneNode(true);
-    var tempDiv = $doc.createElement("DIV");
-    tempDiv.appendChild(temp);
-    outer = tempDiv.innerHTML;
-    temp.innerHTML = "";
-    return outer;
   }-*/;
 }

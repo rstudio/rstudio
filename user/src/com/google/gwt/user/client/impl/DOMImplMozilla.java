@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -119,5 +119,16 @@ class DOMImplMozilla extends DOMImplStandard {
     if (elem.isSameNode($wnd.__captureElem)) {
       $wnd.__captureElem = null;
     }
+  }-*/;
+  
+  public native String toString(Element elem) /*-{
+    // Basic idea is to use the innerHTML property by copying the node into a 
+    // div and getting the innerHTML
+    var temp = elem.cloneNode(true);
+    var tempDiv = $doc.createElement("DIV");
+    tempDiv.appendChild(temp);
+    outer = tempDiv.innerHTML;
+    temp.innerHTML = "";
+    return outer;
   }-*/;
 }
