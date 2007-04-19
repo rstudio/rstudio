@@ -274,7 +274,11 @@ public abstract class UIObject {
    * @param title the object's new title
    */
   public void setTitle(String title) {
-    DOM.setElementProperty(element, "title", title);
+    if (title == null || title.length() == 0) {
+      DOM.removeElementAttribute(element, "title");
+    } else {
+      DOM.setElementAttribute(element, "title", title);
+    }
   }
 
   /**
