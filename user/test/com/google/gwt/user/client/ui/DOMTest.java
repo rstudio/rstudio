@@ -20,7 +20,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
 /**
- * TODO: document me.
+ * Test DOM methods.
  */
 public class DOMTest extends GWTTestCase {
 
@@ -67,6 +67,15 @@ public class DOMTest extends GWTTestCase {
     }
     // If we get here, we pass, because we encountered no errors going to the
     // top of the parent hierarchy.
+  }
+
+  public void testIsOrHasChild() {
+    Element div = DOM.createDiv();
+    Element childDiv = DOM.createDiv();
+    assertFalse(DOM.isOrHasChild(div, childDiv));
+    DOM.appendChild(div, childDiv);
+    assertTrue(DOM.isOrHasChild(div, childDiv));
+    assertFalse(DOM.isOrHasChild(childDiv, div));
   }
 
   public void testSetInnerText() {

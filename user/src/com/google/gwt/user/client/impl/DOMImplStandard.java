@@ -197,11 +197,13 @@ abstract class DOMImplStandard extends DOMImpl {
 
   public native boolean isOrHasChild(Element parent, Element child) /*-{
     while (child) {
-      if (parent == child)
+      if (parent == child) {
         return true;
+      }
       child = child.parentNode;
-      if (child.nodeType != 1)
+      if (child && (child.nodeType != 1)) {
         child = null;
+      }
     }
     return false;
   }-*/;
