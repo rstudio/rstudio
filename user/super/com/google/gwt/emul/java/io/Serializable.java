@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,16 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.user.client.rpc;
+package java.io;
 
-import java.io.Serializable;
+import com.google.gwt.user.client.rpc.IsSerializable;
+import com.google.gwt.user.client.rpc.RemoteService;
 
 /**
- * Marker interface indicating that a type is intended to be used with a
- * {@link RemoteService}. Do not confuse this interface with
- * {@link Serializable java.io.Serializable}, which is included in the GWT JRE
- * Emulation Library for source compatibility only and which will not by itself
- * make a class usable with a {@link RemoteService}.
+ * Provided for source compatibility only; implementing
+ * <code>java.io.Serializable</code> is not a substitute for
+ * {@link IsSerializable} for use with a {@link RemoteService}.
  */
-public interface IsSerializable {
+public interface Serializable {
 }
