@@ -194,7 +194,8 @@ public class JsniInjector {
       // Note that the method body itself will print curly braces, so we don't
       // need them around the try/catch.
       //
-      String js = jsTry + Jsni.generateEscapedJavaScript(jsniBody) + jsCatch;
+      String js = jsTry + Jsni.generateEscapedJavaScriptForHostedMode(jsniBody)
+          + jsCatch;
       String jsniSig = Jsni.getJsniSignature(method);
 
       // figure out starting line number
@@ -216,7 +217,7 @@ public class JsniInjector {
    * @param expectedHeaderLines
    * @param expectedBodyLines
    * @return a String of the Java code to call a JSNI method, using
-   *     JavaScriptHost.invokeNative*
+   *         JavaScriptHost.invokeNative*
    */
   private String genNonNativeVersionOfJsniMethod(JMethod method,
       int expectedHeaderLines, int expectedBodyLines) {

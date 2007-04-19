@@ -296,7 +296,7 @@ public class SelectionScriptGenerator {
         // Emit a provider function, defined by the user in module config.
         PropertyProvider provider = prop.getProvider();
         assert (provider != null) : "expecting a default property provider to have been set";
-        String js = Jsni.generateJavaScript(provider.getBody());
+        String js = provider.getBody().toSource();
         pw.print("providers['" + prop.getName() + "'] = function() ");
         pw.print(js);
         pw.println(";");

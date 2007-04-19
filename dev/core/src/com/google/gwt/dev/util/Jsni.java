@@ -58,10 +58,41 @@ public class Jsni {
     }
   }
 
-  private static class VisitorImpl extends JsSourceGenerationVisitor {
+  /**
+   * Generate source code, fixing up any JSNI references for hosted mode.
+   * 
+   * <p/><table>
+   * <tr>
+   * <td>Original</td>
+   * <td>Becomes</td>
+   * </tr>
+   * <tr>
+   * <td><code>.@class::method(params)(args)</code></td>
+   * 
+   * <td><code>["@class::method(params)"](args)</code></td>
+   * </tr>
+   * <tr>
+   * <td><code>@class::method(params)(args)</code></td>
+   * 
+   * <td><code>__static["@class::method(params)"](args)</code></td>
+   * </tr>
+   * <tr>
+   * <td><code>.@class::field</code></td>
+   * 
+   * <td><code>["@class::field"]</code></td>
+   * </tr>
+   * <tr>
+   * <td><code>@class::field</code></td>
+   * 
+   * <td><code>__static["@class::field"]</code></td>
+   * </tr>
+   * </table>
+   */
+  private static class JsSourceGenWithJsniIdentFixup extends
+      JsSourceGenerationVisitor {
     private final TextOutput out;
 
-    public VisitorImpl(TextOutput out) {
+    public JsSourceGenWithJsniIdentFixup(TextOutput out) {
       super(out);
       this.out = out;
     }
@@ -69,24 +100,6 @@ public class Jsni {
     public boolean visit(JsNameRef x, JsContext ctx) {
       String ident = x.getIdent();
       if (ident.startsWith("@")) {
-        // Fix up JSNI references in the js body.
-        // Cases:
-        // .@class::method(params)(args)
-        // becomes
-        // ["@class::method(params)"](args)
-        // 
-        // @class::method(params)(args)
-        // becomes
-        // __static["@class::method(params)"](args)
-        //
-        // .@class::field
-        // becomes
-        // ["@class::field"]
-        // 
-        // @class::field
-        // becomes
-        // __static["@class::field"]
-        //
         JsExpression q = x.getQualifier();
         if (q != null) {
           accept(q);
@@ -246,21 +259,20 @@ public class Jsni {
     return new Interval(srcStart, srcEnd);
   }
 
-  public static String generateEscapedJavaScript(JsNode node) {
-    String source = generateJavaScript(node);
+  /**
+   * Returns a string representing the source output of the JsNode, where all
+   * JSNI idents have been replaced with legal JavaScript for hosted mode.
+   * 
+   * The output has quotes and slashes escaped so that the result can be part of
+   * a legal Java source code string literal.
+   */
+  public static String generateEscapedJavaScriptForHostedMode(JsNode node) {
+    String source = generateJavaScriptForHostedMode(node);
     StringBuffer body = new StringBuffer(source.length());
     body.append(source);
     escapeQuotesAndSlashes(body);
     fixupLinebreaks(body);
     return body.toString();
-  }
-
-  public static String generateJavaScript(JsNode node) {
-    TextOutputOnCharArray tooca = new TextOutputOnCharArray(false);
-    VisitorImpl vi = new VisitorImpl(tooca);
-    vi.accept(node);
-    char[] source = tooca.getText();
-    return String.valueOf(source);
   }
 
   /**
@@ -361,6 +373,18 @@ public class Jsni {
         i += 1;
       }
     }
+  }
+
+  /**
+   * Returns a string representing the source output of the JsNode, where all
+   * JSNI idents have been replaced with legal JavaScript for hosted mode.
+   */
+  private static String generateJavaScriptForHostedMode(JsNode node) {
+    TextOutputOnCharArray tooca = new TextOutputOnCharArray(false);
+    JsSourceGenWithJsniIdentFixup vi = new JsSourceGenWithJsniIdentFixup(tooca);
+    vi.accept(node);
+    char[] source = tooca.getText();
+    return String.valueOf(source);
   }
 
 }
