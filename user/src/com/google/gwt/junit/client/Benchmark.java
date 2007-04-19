@@ -101,7 +101,6 @@ package com.google.gwt.junit.client;
  * and "end" test methods, parameterized test methods, and automatic
  * test execution limits.
  *
- *
  * {@example com.google.gwt.examples.benchmarks.ArrayListAndVectorBenchmark}
  */
 public abstract class Benchmark extends GWTTestCase {
