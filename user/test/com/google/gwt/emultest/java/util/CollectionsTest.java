@@ -63,26 +63,18 @@ public class CollectionsTest extends EmulTestBase {
     assertEquals(createSortedList(), a);
   }
 
-  public static void testSortWithComparator() {
+  public void testSortWithComparator() {
     Comparator x = new Comparator() {
-
       public int compare(Object o1, Object o2) {
-        Object[] schema = {"b", new Integer(5), "c", new Integer(4)};
-        List l = Arrays.asList(schema);
-        int first = l.indexOf(o1);
-        int second = l.indexOf(o2);
-        if (first < second) {
-          return -1;
-        } else if (first == second) {
-          return 0;
-        } else {
-          return 1;
-        }
+        String s1 = (String) o1;
+        String s2 = (String) o2;
+        // sort into reverse order
+        return s2.compareTo(s1);
       }
     };
     List a = createSortedList();
     Collections.sort(a, x);
-    Object[] expected = {"b", "c", "a"};
+    Object[] expected = {"c", "b", "a"};
     assertEquals(expected, a);
   }
 
