@@ -116,9 +116,9 @@ public class JUnitTestCaseStubGenerator extends Generator {
 
   /**
    * Returns true if the method is considered to be a valid JUnit test method.
-   * The criteria are that the method's name begin with "test", have public
-   * access, and not be static. You must choose to include or exclude methods
-   * which have arguments.
+   * The criteria are that the method's name begin with "test" and have public
+   * access. The method may be static. You must choose to include or exclude
+   * methods which have arguments.
    *
    */
   static boolean isJUnitTestMethod(JMethod method, boolean acceptArgs) {
@@ -126,7 +126,7 @@ public class JUnitTestCaseStubGenerator extends Generator {
       return false;
     }
 
-    if (!method.isPublic() || method.isStatic()) {
+    if (!method.isPublic()) {
       return false;
     }
 
