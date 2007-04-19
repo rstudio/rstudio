@@ -37,9 +37,18 @@ public final class ClientSerializationStreamWriter extends
     return {};
   }-*/;
 
-  JavaScriptObject objectMap;
+  /*
+   * Accessed from JSNI code, so ignore unused warning.
+   */
+  private JavaScriptObject objectMap;
 
-  JavaScriptObject stringMap;
+  /*
+   * Accesses need to be prefixed with ':' to prevent conflict with built-in
+   * JavaScript properties.
+   *
+   * Accessed from JSNI code, so ignore unused warning.
+   */
+  private JavaScriptObject stringMap;
 
   private StringBuffer encodeBuffer;
 
@@ -123,8 +132,9 @@ public final class ClientSerializationStreamWriter extends
     return (result == null) ? -1 : result;
   }-*/;
 
+  // prefix needed to prevent conflict with built-in JavaScript properties.
   private native int getIntForString(String key) /*-{
-    var result = this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter::stringMap[key];
+    var result = this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter::stringMap[':' + key];
     return (result == null) ? 0 : result;
   }-*/;
 
@@ -132,8 +142,9 @@ public final class ClientSerializationStreamWriter extends
     this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter::objectMap[key] = value;
   }-*/;
 
+  // prefix needed to prevent conflict with built-in JavaScript properties.
   private native void setIntForString(String key, int value) /*-{
-    this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter::stringMap[key] = value;
+    this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter::stringMap[':' + key] = value;
   }-*/;
 
   private void writeHeader(StringBuffer buffer) {

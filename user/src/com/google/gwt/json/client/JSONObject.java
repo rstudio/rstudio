@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,34 +43,52 @@ public class JSONObject extends JSONValue {
   /**
    * Tests whether or not this JSONObject contains the specified key.
    * 
+   * We use Object.hasOwnProperty here to verify that a given key is
+   * specified on this object rather than a superclass (such as standard
+   * properties defined on Object).
+   * 
    * @param key the key to search for
    * @return <code>true</code> if the JSONObject contains the specified key
    */
   public native boolean containsKey(String key) /*-{
-    return this.@com.google.gwt.json.client.JSONObject::backStore[key] !== undefined
-        || this.@com.google.gwt.json.client.JSONObject::frontStore[key] !== undefined;
+    return Object.prototype.hasOwnProperty.call(
+        this.@com.google.gwt.json.client.JSONObject::backStore, key)
+        || Object.prototype.hasOwnProperty.call(
+        this.@com.google.gwt.json.client.JSONObject::frontStore, key);
   }-*/;
 
   /**
    * Gets the JSONValue associated with the specified key.
+   * 
+   * We use Object.hasOwnProperty here to verify that a given key is
+   * specified on this object rather than a superclass (such as standard
+   * properties defined on Object).
    * 
    * @param key the key to search for
    * @return if found, the value associated with the specified key, or
    *         <code>null</code> otherwise
    */
   public native JSONValue get(String key) /*-{
-    if (this.@com.google.gwt.json.client.JSONObject::backStore[key] !== undefined) {
-      var x=this.@com.google.gwt.json.client.JSONObject::backStore[key];
-      if (typeof x == 'number' || typeof x == 'string' || typeof x == 'array' || typeof x == 'boolean') {
+    if (Object.prototype.hasOwnProperty.call(
+        this.@com.google.gwt.json.client.JSONObject::backStore, key))
+    {
+      var x = this.@com.google.gwt.json.client.JSONObject::backStore[key];
+      if (typeof x == 'number' || typeof x == 'string' || typeof x == 'array'
+          || typeof x == 'boolean')
+      {
         x = Object(x); 
       }
       this.@com.google.gwt.json.client.JSONObject::frontStore[key]=
-        // don't linebreak the next line
-        @com.google.gwt.json.client.JSONParser::buildValue(Lcom/google/gwt/core/client/JavaScriptObject;)(x);
+          // don't linebreak the next line
+          @com.google.gwt.json.client.JSONParser::buildValue(Lcom/google/gwt/core/client/JavaScriptObject;)(x);
       delete this.@com.google.gwt.json.client.JSONObject::backStore[key];
     }
-    var out = this.@com.google.gwt.json.client.JSONObject::frontStore[key];
-    return (out == null) ? null : out;
+    if (Object.prototype.hasOwnProperty.call(
+        this.@com.google.gwt.json.client.JSONObject::frontStore, key))
+    {
+      return this.@com.google.gwt.json.client.JSONObject::frontStore[key];
+    }
+    return null;
   }-*/;
 
   /**
@@ -102,7 +120,8 @@ public class JSONObject extends JSONValue {
    *         <code>null</code> otherwise
    */
   public native JSONValue put(String key, JSONValue jsonValue) /*-{
-    var out = this.@com.google.gwt.json.client.JSONObject::get(Ljava/lang/String;)(key);
+    var out =   // can't break next line
+      this.@com.google.gwt.json.client.JSONObject::get(Ljava/lang/String;)(key);
     this.@com.google.gwt.json.client.JSONObject::frontStore[key] = jsonValue;
     return out;
   }-*/;

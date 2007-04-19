@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,8 @@
  */
 package java.lang;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 /**
  * Intrinsic string class.
  */
@@ -30,9 +32,10 @@ public final class String implements Comparable, CharSequence {
   // CHECKSTYLE_OFF: This class has special needs.
 
   /**
+   * accesses need to be prefixed with ':' to prevent conflict with built-in JavaScript properties.    
    * @skip
    */
-  protected static Object hashCache;
+  private static JavaScriptObject hashCache;
 
   public static native String valueOf(boolean x) /*-{ return x ? "true" : "false"; }-*/;
 
@@ -128,8 +131,9 @@ public final class String implements Comparable, CharSequence {
     return me.toString() == other;
   }-*/;
 
+  // Prefix needed to prevent conflict with built-in JavaScript properties.
   private static native int __hashCode(String me) /*-{
-    var hashCode = @java.lang.String::hashCache[me];
+    var hashCode = @java.lang.String::hashCache[':' + me];
     if (hashCode) {
       return hashCode;
     }
@@ -141,7 +145,7 @@ public final class String implements Comparable, CharSequence {
       hashCode <<= 1;
       hashCode += me.charCodeAt(i);
     }
-    @java.lang.String::hashCache[me] = hashCode;
+    @java.lang.String::hashCache[':' + me] = hashCode;
     return hashCode;
   }-*/;
 

@@ -373,6 +373,24 @@ public class CollectionsTest extends GWTTestCase {
     });
   }
 
+  public void testStringArray() {
+    delayTestFinish(TEST_DELAY);
+
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final String[] expected = TestSetFactory.createStringArray();
+    service.echo(expected, new AsyncCallback() {
+      public void onFailure(Throwable caught) {
+        fail(caught.toString());
+      }
+
+      public void onSuccess(Object result) {
+        assertNotNull(result);
+        assertTrue(TestSetValidator.equals(expected, (String[]) result));
+        finishTest();
+      }
+    });
+  }
+
   public void testShortArray() {
     delayTestFinish(TEST_DELAY);
 

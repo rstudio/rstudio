@@ -17,7 +17,9 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
+import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Tests <code>FastStringMap</code>Right now, no tests are directly run here,
@@ -42,6 +44,39 @@ public class FastStringMapTest extends GWTTestCase {
   public void test() {
     // Only FastStringMap specific tests should go here. Look in
     // com.google.gwt.user.maptests.FastStringMapTest for all apache Map tests.
+  }
+  
+  /*
+   * Test for collisions between stored strings and JavaScript Object
+   * properties.
+   */
+  public void testJSOCollision() {
+    Map map = makeEmptyMap();
+    assertEquals(0, map.size());
+    map.put("k1", "v1");
+    assertEquals(1, map.size());
+    assertEquals("v1", (String) map.get("k1"));
+    map.put("toString", "toStringVal");
+    assertEquals(2, map.size());
+    assertEquals("toStringVal", (String) map.get("toString"));
+    map.put("watch", "watchVal");
+    Set keys = map.keySet();
+    assertEquals(3, keys.size());
+    map.put("__proto__", "__proto__Val");
+    assertEquals(4 ,map.size());
+    assertEquals("__proto__Val", (String)map.get("__proto__"));
+    map.put("k1", "v1b");
+    keys = map.keySet();
+    assertEquals(4, keys.size());
+    Collection values = map.values();
+    assertEquals(4, values.size());
+    map.put("k2", "v1b");
+    values = map.values();
+    assertEquals(5, values.size());
+    map.put("","empty");
+    assertEquals("empty", (String) map.get(""));  
+    map.remove("k2");
+    assertEquals(5, values.size());
   }
 
 }

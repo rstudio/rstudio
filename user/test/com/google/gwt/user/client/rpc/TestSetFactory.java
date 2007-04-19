@@ -300,8 +300,13 @@ public class TestSetFactory {
         new Short(Short.MAX_VALUE), new Short(Short.MIN_VALUE)};
   }
 
+  /*
+   * Check names that collide with JS properties inherited from Object.prototype
+   * to make sure they are handled properly.
+   */
   public static String[] createStringArray() {
-    return new String[] {null, "", "one", "two"};
+    return new String[] {null, "", "one", "two", "toString", "watch",
+        "prototype", "eval", "valueOf", "constructor", "__proto__" };
   }
 
   public static Vector createVector() {

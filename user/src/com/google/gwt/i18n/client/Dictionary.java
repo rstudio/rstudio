@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -127,14 +127,20 @@ public final class Dictionary {
   /**
    * Get the value associated with the given Dictionary key.
    * 
+   * We have to call Object.hasOwnProperty to verify that the value is
+   * defined on this object, rather than a superclass, since normal Object
+   * properties are also visible on this object.
+   * 
    * @param key to lookup
    * @return the value
    * @throws MissingResourceException if the value is not found
    */
   public native String get(String key) /*-{
    var value = this.@com.google.gwt.i18n.client.Dictionary::dict[key];
-   if (value == null) {
-   this.@com.google.gwt.i18n.client.Dictionary::resourceError(Ljava/lang/String;)(key);
+   if (value == null || !Object.prototype.hasOwnProperty.call(
+       this.@com.google.gwt.i18n.client.Dictionary::dict, key))
+   {
+     this.@com.google.gwt.i18n.client.Dictionary::resourceError(Ljava/lang/String;)(key);
    }
    return String(value);
    }-*/;

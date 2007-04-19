@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,6 +57,7 @@ class FastStringMap extends AbstractMap {
       return false;
     }
 
+    // strip prefix from key
     public Object getKey() {
       return key;
     }
@@ -94,7 +95,11 @@ class FastStringMap extends AbstractMap {
     }
   }
 
-  JavaScriptObject map;
+  /*
+   * Accesses need to be prefixed with ':' to prevent conflict with built-in
+   * JavaScript properties.
+   */    
+  private JavaScriptObject map;
 
   public FastStringMap() {
     init();
@@ -157,14 +162,12 @@ class FastStringMap extends AbstractMap {
     return get(keyMustBeString(key));
   }
 
+  // Prepend ':' to avoid conflicts with built-in Object properties.
   public native Object get(String key) /*-{
-   var value = this.@com.google.gwt.user.client.ui.FastStringMap::map[key];
-   if(value == null){
-     return null;
-   } else{
-     return value;
-   }
-   }-*/;
+    var value
+        = this.@com.google.gwt.user.client.ui.FastStringMap::map[':' + key];
+    return (value == null) ? null : value;
+  }-*/;
 
   public boolean isEmpty() {
     return size() == 0;
@@ -192,15 +195,13 @@ class FastStringMap extends AbstractMap {
     return put(keyMustBeString(key), widget);
   }
 
+  // Prepend ':' to avoid conflicts with built-in Object properties.
   public native Object put(String key, Object widget) /*-{
-   var previous =  this.@com.google.gwt.user.client.ui.FastStringMap::map[key];
-   this.@com.google.gwt.user.client.ui.FastStringMap::map[key] = widget; 
-   if(previous == null){
-     return null;
-   } else{
-     return previous;
-   }
-   }-*/;
+    var previous
+        = this.@com.google.gwt.user.client.ui.FastStringMap::map[':' + key];
+    this.@com.google.gwt.user.client.ui.FastStringMap::map[':' + key] = widget;
+    return (previous == null) ? null : previous;
+  }-*/;
 
   public void putAll(Map arg0) {
     Iterator iter = arg0.entrySet().iterator();
@@ -214,14 +215,15 @@ class FastStringMap extends AbstractMap {
     return remove(keyMustBeString(key));
   }
 
+  // only count keys with ':' prefix
   public native int size() /*-{
-   var value = this.@com.google.gwt.user.client.ui.FastStringMap::map;
-   var count = 0;
-   for(var key in value){
-     ++count;
-   }
-     return count;
-   }-*/;
+    var value = this.@com.google.gwt.user.client.ui.FastStringMap::map;
+    var count = 0;
+    for(var key in value) {
+      if (key.charAt(0) == ':') ++count;
+    }
+    return count;
+  }-*/;
 
   public Collection values() {
     List values = new ArrayList();
@@ -229,28 +231,33 @@ class FastStringMap extends AbstractMap {
     return values;
   }
 
+  // only count keys with ':' prefix
   private native void addAllKeysFromJavascriptObject(Collection s,
       JavaScriptObject javaScriptObject) /*-{
-   for(var key in javaScriptObject) {
-     s.@java.util.Collection::add(Ljava/lang/Object;)(key);
-   }
-   }-*/;
+    for(var key in javaScriptObject) {
+      if (key.charAt(0) != ':') continue;
+      s.@java.util.Collection::add(Ljava/lang/Object;)(key.substring(1));
+    }
+  }-*/;
 
+  // only count keys with ':' prefix
   private native void addAllValuesFromJavascriptObject(Collection s,
       JavaScriptObject javaScriptObject) /*-{
-   for(var key in javaScriptObject) {
-     var value = javaScriptObject[key];
-     s.@java.util.Collection::add(Ljava/lang/Object;)(value);
-   }
-   }-*/;
+    for(var key in javaScriptObject) {
+      if (key.charAt(0) != ':') continue;
+      var value = javaScriptObject[key];
+      s.@java.util.Collection::add(Ljava/lang/Object;)(value);
+    }
+  }-*/;
 
+  // Prepend ':' to avoid conflicts with built-in Object properties.
   private native boolean containsKey(String key, JavaScriptObject obj)/*-{
-   return obj[key] !== undefined;
-   }-*/;
+    return obj[':' + key] !== undefined;
+  }-*/;
 
   private native void init() /*-{
-   this.@com.google.gwt.user.client.ui.FastStringMap::map = [];
-   }-*/;
+    this.@com.google.gwt.user.client.ui.FastStringMap::map = [];
+  }-*/;
 
   private String keyMustBeString(Object key) {
     if (key instanceof String) {
@@ -261,14 +268,11 @@ class FastStringMap extends AbstractMap {
     }
   }
 
+  // Prepend ':' to avoid conflicts with built-in Object properties.
   private native Object remove(String key) /*-{
-   var previous =  this.@com.google.gwt.user.client.ui.FastStringMap::map[key];
-   delete this.@com.google.gwt.user.client.ui.FastStringMap::map[key];
-   if(previous == null){
-     return null;
-   } else{
-     return previous;
-   }
-   }-*/;
-
+    var previous
+        = this.@com.google.gwt.user.client.ui.FastStringMap::map[':' + key];
+    delete this.@com.google.gwt.user.client.ui.FastStringMap::map[':' + key];
+    return (previous == null) ? null : previous;
+  }-*/;
 }

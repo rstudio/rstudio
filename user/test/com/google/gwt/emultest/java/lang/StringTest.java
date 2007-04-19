@@ -101,6 +101,41 @@ public class StringTest extends GWTTestCase {
     assertEquals(haystack.indexOf(""), 0);
   }
 
+  /**
+   * Tests hashing with strings.
+   *
+   * The specific strings used in this test used to trigger failures
+   * because we use a JavaScript object as a hash map to cache the
+   * computed hash codes.  This conflicts with built-in properties
+   * defined on objects -- see issue #631.
+   *
+   */
+  public void testHashCode() {
+    String[] testStrings = {
+        "watch", "unwatch", "toString", "toSource", "eval", "valueOf",
+        "constructor", "__proto__"
+    };
+    int[] savedHash = new int[testStrings.length];
+    for (int i = 0; i < testStrings.length; ++i ) {
+      savedHash[i] = testStrings[i].hashCode();
+      
+      /*
+       * Verify that the resulting hash code is numeric, since this is not
+       * enforced in web mode.
+       */
+      String str = Integer.toString(savedHash[i]);
+      for (int j = 0; j < str.length(); ++j) {
+        char ch = str.charAt(j);
+        assertTrue("Bad character '" + ch + "' (U+0" + Integer.toHexString(ch)
+            + ")", ch == '-' || ch == ' ' || Character.isDigit(ch));
+      }
+    }
+    // verify the hash codes are constant for a given string
+    for (int i = 0; i < testStrings.length; ++i ) {
+      assertEquals(savedHash[i], testStrings[i].hashCode());
+    }
+  }
+
   /** tests lastIndexOf */
   public void testLastIndexOf() {
     String x = "abcdeabcdef";
