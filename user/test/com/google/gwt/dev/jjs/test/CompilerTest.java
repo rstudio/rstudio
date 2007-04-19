@@ -74,6 +74,22 @@ public class CompilerTest extends GWTTestCase {
     }
   }
 
+  private static class SideEffectCauser4 {
+    public static String causeClinitSideEffectOnRead = "foo";
+
+    static {
+      CompilerTest.sideEffectChecker++;
+    }
+  }
+
+  private static class SideEffectCauser5 {
+    public static String causeClinitSideEffectOnRead = "bar";
+
+    static {
+      CompilerTest.sideEffectChecker++;
+    }
+  }
+
   private static final class UninstantiableType {
     public Object field;
 
@@ -102,6 +118,10 @@ public class CompilerTest extends GWTTestCase {
   private static void foo(Throwable throwable) {
     Object o = throwable;
   }
+
+  private static native String jsniReadSideEffectCauser5() /*-{
+    return @com.google.gwt.dev.jjs.test.CompilerTest$SideEffectCauser5::causeClinitSideEffectOnRead;
+  }-*/;
 
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
@@ -163,6 +183,10 @@ public class CompilerTest extends GWTTestCase {
     assertEquals(2, sideEffectChecker);
     SideEffectCauser3.causeClinitSideEffect();
     assertEquals(3, sideEffectChecker);
+    String foo = SideEffectCauser4.causeClinitSideEffectOnRead;
+    assertEquals(4, sideEffectChecker);
+    String bar = jsniReadSideEffectCauser5();
+    assertEquals(5, sideEffectChecker);
     String checkRescued = NonSideEffectCauser.NOT_A_COMPILE_TIME_CONSTANT;
     assertEquals(null, checkRescued);
   }

@@ -49,6 +49,7 @@ import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.ReplaceRebinds;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
+import com.google.gwt.dev.js.JsNormalizer;
 import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsPrettyNamer;
 import com.google.gwt.dev.js.JsSourceGenerationVisitor;
@@ -385,10 +386,13 @@ public class JavaToJavaScriptCompiler {
       // (7) Generate a JavaScript code DOM from the Java type declarations
       GenerateJavaScriptAST.exec(jprogram, jsProgram);
 
-      // (8) Resolve all unresolved JsNameRefs
+      // (8) Fix invalid constructs created during JS AST gen
+      JsNormalizer.exec(jsProgram);
+
+      // (9) Resolve all unresolved JsNameRefs
       JsSymbolResolver.exec(jsProgram);
 
-      // (9) Obfuscate
+      // (10) Obfuscate
       if (obfuscate) {
         JsObfuscateNamer.exec(jsProgram);
       } else if (prettyNames) {

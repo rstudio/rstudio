@@ -103,6 +103,7 @@ import com.google.gwt.dev.js.ast.JsIf;
 import com.google.gwt.dev.js.ast.JsIntegralLiteral;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsLabel;
+import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
@@ -127,7 +128,6 @@ import com.google.gwt.dev.js.ast.JsTry;
 import com.google.gwt.dev.js.ast.JsUnaryOperation;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsVars;
-import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
@@ -446,13 +446,7 @@ public class GenerateJavaScriptAST {
         myOp = JsBinaryOperator.REF_NEQ;
       }
 
-      JsBinaryOperation binOp = new JsBinaryOperation(myOp, lhs, rhs);
-
-      if (maybeShuffleModifyingBinary(binOp)) {
-        return;
-      }
-
-      push(binOp);
+      push(new JsBinaryOperation(myOp, lhs, rhs));
     }
 
     // @Override
@@ -970,11 +964,6 @@ public class GenerateJavaScriptAST {
     public void endVisit(JPostfixOperation x, Context ctx) {
       JsUnaryOperation op = new JsPostfixOperation(
           JavaToJsOperatorMap.get(x.getOp()), ((JsExpression) pop())); // arg
-
-      if (maybeShuffleModifyingUnary(op)) {
-        return;
-      }
-
       push(op);
     }
 
@@ -982,11 +971,6 @@ public class GenerateJavaScriptAST {
     public void endVisit(JPrefixOperation x, Context ctx) {
       JsUnaryOperation op = new JsPrefixOperation(
           JavaToJsOperatorMap.get(x.getOp()), ((JsExpression) pop())); // arg
-
-      if (maybeShuffleModifyingUnary(op)) {
-        return;
-      }
-
       push(op);
     }
 
@@ -1028,7 +1012,7 @@ public class GenerateJavaScriptAST {
       JsFunction jsFunc = x.getFunc();
 
       // replace all JSNI idents with a real JsName now that we know it
-      new JsVisitor() {
+      new JsModVisitor() {
         // @Override
         public void endVisit(JsNameRef x, JsContext ctx) {
           String ident = x.getIdent();
@@ -1040,17 +1024,13 @@ public class GenerateJavaScriptAST {
               JsName jsName = getName(field);
               assert (jsName != null);
               x.resolve(jsName);
-              /*
-               * TODO FIXME HACK: this is currently broken due to changes in how
-               * static fields are referenced. Commenting this out because it's
-               * better to fail to call clinit than to generate code that cannot
-               * possibly work.
-               */
-              // JsInvocation clinitCall = maybeCreateClinitCall(field);
-              // if (clinitCall != null) {
-              // assert (x.getQualifier() == null);
-              // x.setQualifier(clinitCall);
-              // }
+
+              // See if we need to add a clinit call to a static field ref
+              JsInvocation clinitCall = maybeCreateClinitCall(field);
+              if (clinitCall != null) {
+                JsExpression commaExpr = createCommaExpression(clinitCall, x);
+                ctx.replaceMe(commaExpr);
+              }
             } else {
               JMethod method = (JMethod) node;
               if (x.getQualifier() == null) {
@@ -1536,66 +1516,6 @@ public class GenerateJavaScriptAST {
       JsInvocation jsInvocation = new JsInvocation();
       jsInvocation.setQualifier(getName(clinitMethod).makeRef());
       return jsInvocation;
-    }
-
-    /**
-     * Due to the way clinits are constructed, you can end up with a comma
-     * operation as the argument to a modifying operation, which is illegal.
-     * Juggle things to put the operator inside of the comma expression.
-     * 
-     * TODO: move this to a post-generation normalization pass when JS tree
-     * modifying infrastructure is in place.
-     */
-    private boolean maybeShuffleModifyingBinary(JsBinaryOperation x) {
-      JsBinaryOperator myOp = x.getOperator();
-      JsExpression lhs = x.getArg1();
-      JsExpression rhs = x.getArg2();
-
-      if (myOp.isAssignment() && (lhs instanceof JsBinaryOperation)) {
-        // Find the rightmost comma operation
-        JsBinaryOperation curLhs = (JsBinaryOperation) lhs;
-        assert (curLhs.getOperator() == JsBinaryOperator.COMMA);
-        while (curLhs.getArg2() instanceof JsBinaryOperation) {
-          curLhs = (JsBinaryOperation) curLhs.getArg2();
-          assert (curLhs.getOperator() == JsBinaryOperator.COMMA);
-        }
-        // curArg is now the rightmost comma operation; slide our operation in
-        x.setArg1(curLhs.getArg2());
-        curLhs.setArg2(x);
-        // repush the comma expression
-        push(lhs);
-        return true;
-      }
-      return false;
-    }
-
-    /**
-     * Due to the way clinits are constructed, you can end up with a comma
-     * operation as the argument to a modifying operation, which is illegal.
-     * Juggle things to put the operator inside of the comma expression.
-     * 
-     * TODO: move this to a post-generation normalization pass when JS tree
-     * modifying infrastructure is in place.
-     */
-    private boolean maybeShuffleModifyingUnary(JsUnaryOperation x) {
-      JsUnaryOperator myOp = x.getOperator();
-      JsExpression arg = x.getArg();
-      if (myOp.isModifying() && (arg instanceof JsBinaryOperation)) {
-        // Find the rightmost comma operation
-        JsBinaryOperation curArg = (JsBinaryOperation) arg;
-        assert (curArg.getOperator() == JsBinaryOperator.COMMA);
-        while (curArg.getArg2() instanceof JsBinaryOperation) {
-          curArg = (JsBinaryOperation) curArg.getArg2();
-          assert (curArg.getOperator() == JsBinaryOperator.COMMA);
-        }
-        // curArg is now the rightmost comma operation; slide our operation in
-        x.setArg(curArg.getArg2());
-        curArg.setArg2(x);
-        // repush the comma expression
-        push(arg);
-        return true;
-      }
-      return false;
     }
 
     private JsNode pop() {
