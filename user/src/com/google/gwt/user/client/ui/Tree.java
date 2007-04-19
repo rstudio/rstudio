@@ -726,12 +726,11 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   private native boolean shouldTreeDelegateFocusToElement(Element elem) /*-{
     var name = elem.nodeName;
-    var focus = 
-        ((name == "SELECT") || 
+    return ((name == "SELECT") || 
         (name == "INPUT")  || 
-        (name == "CHECKBOX") ||
-        (name == "TEXTAREA")
-    );
-    return focus;
+        (name == "TEXTAREA") ||
+        (name == "OPTION") ||
+        (name == "BUTTON") ||
+        (name == "LABEL"));
   }-*/;
 }
