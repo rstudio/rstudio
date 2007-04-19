@@ -15,8 +15,6 @@
  */
 package com.google.gwt.user.client.rpc;
 
-import java.io.Serializable;
-
 /**
  * Marker interface indicating that a type is intended to be used with a
  * {@link RemoteService}. Do not confuse this interface with

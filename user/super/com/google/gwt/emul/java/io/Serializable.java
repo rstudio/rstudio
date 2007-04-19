@@ -15,9 +15,6 @@
  */
 package java.io;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
-import com.google.gwt.user.client.rpc.RemoteService;
-
 /**
  * Provided for source compatibility only; implementing
  * <code>java.io.Serializable</code> is not a substitute for
