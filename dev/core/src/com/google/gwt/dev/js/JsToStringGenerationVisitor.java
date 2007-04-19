@@ -99,10 +99,14 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   private static final char[] CHARS_TRY = "try".toCharArray();
   private static final char[] CHARS_VAR = "var".toCharArray();
   private static final char[] CHARS_WHILE = "while".toCharArray();
-
   private static final char[] HEX_DIGITS = {
       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
       'E', 'F'};
+
+  /**
+   * How many lines of code to print inside of a JsBlock when printing terse.
+   */
+  private static final int JSBLOCK_LINES_TO_PRINT = 3;
 
   protected boolean needSemi = true;
   private final TextOutput p;
@@ -163,42 +167,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   }
 
   public boolean visit(JsBlock x, JsContext ctx) {
-    boolean needBraces = !x.isGlobalBlock();
-
-    if (needBraces) {
-      // Open braces.
-      //
-      _blockOpen();
-    }
-
-    for (Iterator iter = x.getStatements().iterator(); iter.hasNext();) {
-      JsStatement stmt = (JsStatement) iter.next();
-      needSemi = true;
-      accept(stmt);
-      if (needSemi) {
-        /*
-         * Special treatment of function decls: function decls always set
-         * fNeedSemi back to true. But if they are the only item in a statement
-         * (i.e. not part of an assignment operation), just give them a newline
-         * instead of a semi since it makes obfuscated code so much "nicer"
-         * (sic).
-         */
-        if (stmt instanceof JsExprStmt
-            && ((JsExprStmt) stmt).getExpression() instanceof JsFunction) {
-          _newline();
-        } else {
-          _semi();
-          _newlineOpt();
-        }
-      }
-    }
-
-    if (needBraces) {
-      // Close braces.
-      //
-      _blockClose();
-    }
-    needSemi = false;
+    printJsBlockOptionalTruncate(x, true);
     return false;
   }
 
@@ -465,8 +434,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     }
     _rparen();
 
-    // suppress body text in ToString, let subclass provide
-
+    accept(x.getBody());
+    needSemi = true;
     return false;
   }
 
@@ -757,6 +726,51 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
   protected void _newlineOpt() {
     p.newlineOpt();
+  }
+
+  protected void printJsBlockOptionalTruncate(JsBlock x, boolean truncate) {
+    boolean needBraces = !x.isGlobalBlock();
+
+    if (needBraces) {
+      // Open braces.
+      //
+      _blockOpen();
+    }
+
+    int count = 0;
+    for (Iterator iter = x.getStatements().iterator(); iter.hasNext(); ++count) {
+      if (truncate && count > JSBLOCK_LINES_TO_PRINT) {
+        p.print("[...]");
+        _newlineOpt();
+        break;
+      }
+      JsStatement stmt = (JsStatement) iter.next();
+      needSemi = true;
+      accept(stmt);
+      if (needSemi) {
+        /*
+         * Special treatment of function decls: function decls always set
+         * needSemi back to true. But if they are the only item in a statement
+         * (i.e. not part of an assignment operation), just give them a newline
+         * instead of a semi since it makes obfuscated code so much "nicer"
+         * (sic).
+         */
+        if (stmt instanceof JsExprStmt
+            && ((JsExprStmt) stmt).getExpression() instanceof JsFunction) {
+          _newline();
+        } else {
+          _semi();
+          _newlineOpt();
+        }
+      }
+    }
+
+    if (needBraces) {
+      // Close braces.
+      //
+      _blockClose();
+    }
+    needSemi = false;
   }
 
   private void _assignment() {

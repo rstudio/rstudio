@@ -15,8 +15,8 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.TextOutput;
 
@@ -29,20 +29,14 @@ public class JsSourceGenerationVisitor extends JsToStringGenerationVisitor {
     super(out);
   }
 
-  // function foo(a, b) {
-  // stmts...
-  // }
-  //
-  public boolean visit(JsFunction x, JsContext ctx) {
-    super.visit(x, ctx);
-    accept(x.getBody());
-    needSemi = true;
-    return false;
-  }
-
   public boolean visit(JsProgram x, JsContext ctx) {
     // Descend naturally.
     return true;
+  }
+
+  public boolean visit(JsBlock x, JsContext ctx) {
+    printJsBlockOptionalTruncate(x, false);
+    return false;
   }
 
 }
