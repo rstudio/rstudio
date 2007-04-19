@@ -62,7 +62,7 @@ public class MiscellaneousTest extends GWTTestCase {
     }
 
     private static native void clinitInNative() /*-{
-     }-*/;
+    }-*/;
 
     private int foo() {
       this.toString();
@@ -91,20 +91,20 @@ public class MiscellaneousTest extends GWTTestCase {
   }
 
   private static native void clinitFromNative() /*-{
-   @com.google.gwt.dev.jjs.test.MiscellaneousTest$HasClinit::i = 5;
-   }-*/;
+    @com.google.gwt.dev.jjs.test.MiscellaneousTest$HasClinit::i = 5;
+  }-*/;
 
   private static native Foo getFoo() /*-{
-   return {};
-   }-*/;
+    return {};
+  }-*/;
 
   private static native JavaScriptObject getJso() /*-{
-   return {toString:function(){return 'jso';}}; 
-   }-*/;
+    return {toString:function(){return 'jso';}}; 
+  }-*/;
 
   private static native void throwNativeException() /*-{
-   var a; a.asdf();
-   }-*/;
+    var a; a.asdf();
+  }-*/;
 
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
@@ -114,9 +114,9 @@ public class MiscellaneousTest extends GWTTestCase {
     {
       // thwart optimizer
       Object f1 = noOptimizeFalse() ? (Object) new PolyA()
-        : (Object) new IFoo[1];
+          : (Object) new IFoo[1];
       assertTrue(GWT.getTypeName(f1).equals(
-        "[Lcom.google.gwt.dev.jjs.test.MiscellaneousTest$IFoo;"));
+          "[Lcom.google.gwt.dev.jjs.test.MiscellaneousTest$IFoo;"));
       assertFalse(f1 instanceof PolyA[][]);
       assertFalse(f1 instanceof IFoo[][]);
       assertFalse(f1 instanceof PolyA[]);
@@ -126,18 +126,18 @@ public class MiscellaneousTest extends GWTTestCase {
       assertTrue(f1 instanceof Object[]);
       assertFalse(f1 instanceof Object[][]);
 
-      assertAllCanStore((Object[]) f1, new Object[]{new PolyA(), new IFoo() {
+      assertAllCanStore((Object[]) f1, new Object[] {new PolyA(), new IFoo() {
       }});
-      assertNoneCanStore((Object[]) f1, new Object[]{
-        new PolyB(), new Object(), new Object[0]});
+      assertNoneCanStore((Object[]) f1, new Object[] {
+          new PolyB(), new Object(), new Object[0]});
     }
 
     {
       // thwart optimizer
       Object a1 = noOptimizeFalse() ? (Object) new PolyA()
-        : (Object) new PolyA[1];
-      assertEquals("[Lcom.google.gwt.dev.jjs.test.MiscellaneousTest$PolyA;", GWT
-        .getTypeName(a1));
+          : (Object) new PolyA[1];
+      assertEquals("[Lcom.google.gwt.dev.jjs.test.MiscellaneousTest$PolyA;",
+          GWT.getTypeName(a1));
       assertFalse(a1 instanceof PolyA[][]);
       assertFalse(a1 instanceof IFoo[][]);
       assertTrue(a1 instanceof PolyA[]);
@@ -147,17 +147,17 @@ public class MiscellaneousTest extends GWTTestCase {
       assertTrue(a1 instanceof Object[]);
       assertFalse(a1 instanceof Object[][]);
 
-      assertAllCanStore((Object[]) a1, new Object[]{new PolyA()});
-      assertNoneCanStore((Object[]) a1, new Object[]{new IFoo() {
+      assertAllCanStore((Object[]) a1, new Object[] {new PolyA()});
+      assertNoneCanStore((Object[]) a1, new Object[] {new IFoo() {
       }, new PolyB(), new Object(), new Object[0]});
     }
 
     {
       // thwart optimizer
       Object f2 = noOptimizeFalse() ? (Object) new PolyA()
-        : (Object) new IFoo[1][];
-      assertEquals("[[Lcom.google.gwt.dev.jjs.test.MiscellaneousTest$IFoo;", GWT
-        .getTypeName(f2));
+          : (Object) new IFoo[1][];
+      assertEquals("[[Lcom.google.gwt.dev.jjs.test.MiscellaneousTest$IFoo;",
+          GWT.getTypeName(f2));
       assertFalse(f2 instanceof PolyA[][]);
       assertTrue(f2 instanceof IFoo[][]);
       assertFalse(f2 instanceof PolyA[]);
@@ -167,17 +167,17 @@ public class MiscellaneousTest extends GWTTestCase {
       assertTrue(f2 instanceof Object[]);
       assertTrue(f2 instanceof Object[][]);
 
-      assertAllCanStore((Object[]) f2, new Object[]{new PolyA[0], new IFoo[0]});
-      assertNoneCanStore((Object[]) f2, new Object[]{new IFoo() {
+      assertAllCanStore((Object[]) f2, new Object[] {new PolyA[0], new IFoo[0]});
+      assertNoneCanStore((Object[]) f2, new Object[] {new IFoo() {
       }, new PolyB(), new Object(), new Object[0]});
     }
 
     {
       // thwart optimizer
       Object a2 = noOptimizeFalse() ? (Object) new PolyA()
-        : (Object) new PolyA[1][];
-      assertEquals("[[Lcom.google.gwt.dev.jjs.test.MiscellaneousTest$PolyA;", GWT
-        .getTypeName(a2));
+          : (Object) new PolyA[1][];
+      assertEquals("[[Lcom.google.gwt.dev.jjs.test.MiscellaneousTest$PolyA;",
+          GWT.getTypeName(a2));
       assertTrue(a2 instanceof PolyA[][]);
       assertTrue(a2 instanceof IFoo[][]);
       assertFalse(a2 instanceof PolyA[]);
@@ -187,20 +187,19 @@ public class MiscellaneousTest extends GWTTestCase {
       assertTrue(a2 instanceof Object[]);
       assertTrue(a2 instanceof Object[][]);
 
-
-      assertAllCanStore((Object[]) a2, new Object[]{new PolyA[0]});
-      assertNoneCanStore((Object[]) a2, new Object[]{new IFoo() {
+      assertAllCanStore((Object[]) a2, new Object[] {new PolyA[0]});
+      assertNoneCanStore((Object[]) a2, new Object[] {new IFoo() {
       }, new PolyB(), new Object(), new Object[0], new IFoo[0]});
     }
   }
 
   public void testArrays() {
-    int[] c = new int[]{1, 2};
+    int[] c = new int[] {1, 2};
     assertEquals("[I", GWT.getTypeName(c));
-    int[][] d = new int[][]{{1, 2}, {3, 4}};
+    int[][] d = new int[][] { {1, 2}, {3, 4}};
     assertEquals("[[I", GWT.getTypeName(d));
     assertEquals("[I", GWT.getTypeName(d[1]));
-    int[][][] e = new int[][][]{{{1, 2}, {3, 4}}, {{5, 6}, {7, 8}}};
+    int[][][] e = new int[][][] { { {1, 2}, {3, 4}}, { {5, 6}, {7, 8}}};
     assertEquals("[[[I", GWT.getTypeName(e));
     assertEquals("[[I", GWT.getTypeName(e[1]));
     assertEquals("[I", GWT.getTypeName(e[1][1]));
@@ -309,9 +308,9 @@ public class MiscellaneousTest extends GWTTestCase {
     assertEquals("hihi", x + x);
 
     assertEquals(
-      "blahcom.google.gwt.dev.jjs.test.MiscellaneousTestabctruefalsenullc27",
-      ("blah" + this + String.valueOf(new char[]{'a', 'b', 'c'}) + true + false
-        + null + 'c' + 27));
+        "blahcom.google.gwt.dev.jjs.test.MiscellaneousTestabctruefalsenullc27",
+        ("blah" + this + String.valueOf(new char[] {'a', 'b', 'c'}) + true
+            + false + null + 'c' + 27));
   }
 
   public String toString() {
