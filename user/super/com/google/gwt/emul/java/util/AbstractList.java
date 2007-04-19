@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -209,7 +209,10 @@ public abstract class AbstractList extends AbstractCollection implements List {
   }
 
   protected void removeRange(int fromIndex, int endIndex) {
-    throw new UnsupportedOperationException("removeRange");
+    ListIterator iter = listIterator(fromIndex);
+    for (int i = fromIndex; i < endIndex; ++i) {
+      iter.next();
+      iter.remove();
+    }
   }
-
 }
