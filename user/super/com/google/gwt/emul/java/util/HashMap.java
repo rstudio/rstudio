@@ -19,7 +19,6 @@ package java.util;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
- * 
  * See Sun's JDK 1.4 documentation for documentation on the <code>HashMap</code>
  * API.
  * 
