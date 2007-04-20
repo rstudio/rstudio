@@ -200,7 +200,9 @@ public class ModuleSpaceIE6 extends ModuleSpace {
           return new JsValueIE6(result);
         }
       } finally {
-        result.dispose();
+        if (result != null) {
+          result.dispose();
+        }
       }
 
       /*
