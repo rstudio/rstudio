@@ -17,6 +17,8 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jdt.ByteCodeCompiler;
 import com.google.gwt.dev.jdt.CacheManager;
 import com.google.gwt.util.tools.Utility;
@@ -97,6 +99,9 @@ public final class CompilingClassLoader extends ClassLoader {
       int endClassName = jsniMemberRef.indexOf("::");
       if (endClassName == -1 || jsniMemberRef.length() < 1
           || jsniMemberRef.charAt(0) != '@') {
+        logger.log(TreeLogger.WARN, "Malformed JSNI reference '"
+            + jsniMemberRef + "'; expect subsequent failures",
+            new NoSuchFieldError(jsniMemberRef));
         return -1;
       }
 
@@ -111,7 +116,10 @@ public final class CompilingClassLoader extends ClassLoader {
         return synthesizeDispId(dispClassInfo.getClassId(), memberId);
       }
 
-      // Mask the specific error and let the caller handle it.
+      logger.log(TreeLogger.WARN, "Class '" + className
+          + "' in JSNI reference '" + jsniMemberRef
+          + "' could not be found; expect subsequent failures",
+          new ClassNotFoundException(className));
       return -1;
     }
 
@@ -149,28 +157,15 @@ public final class CompilingClassLoader extends ClassLoader {
      * @return {@link java.lang.Class} instance, if found, or null
      */
     private Class getClassFromBinaryOrSourceName(String className) {
-      /*
-       * Process the class name from right to left.
-       */
-      int fromIndex = className.length();
-      while (fromIndex > 0) {
-        String enclosingClassName = className.substring(0, fromIndex);
-
-        Class cls = getClassFromBinaryName(enclosingClassName);
-        if (cls != null) {
-          if (fromIndex < className.length()) {
-            String binaryClassName = enclosingClassName
-                + className.substring(fromIndex).replace('.', '$');
-            return getClassFromBinaryName(binaryClassName);
-          } else {
-            return cls;
-          }
-        } else {
-          fromIndex = enclosingClassName.lastIndexOf('.', fromIndex);
-        }
+      // Try the type oracle first
+      JClassType type = typeOracle.findType(className.replace('$', '.'));
+      if (type != null) {
+        // Use the type oracle to compute the exact binary name
+        String jniSig = type.getJNISignature();
+        jniSig = jniSig.substring(1, jniSig.length() - 1);
+        className = jniSig.replace('/', '.');
       }
-
-      return null;
+      return getClassFromBinaryName(className);
     }
 
     /**
@@ -241,11 +236,14 @@ public final class CompilingClassLoader extends ClassLoader {
 
   private final Map methodToDispatch = new HashMap();
 
-  public CompilingClassLoader(TreeLogger logger, ByteCodeCompiler compiler)
-      throws UnableToCompleteException {
+  private final TypeOracle typeOracle;
+
+  public CompilingClassLoader(TreeLogger logger, ByteCodeCompiler compiler,
+      TypeOracle typeOracle) throws UnableToCompleteException {
     super(null);
     this.logger = logger;
     this.compiler = compiler;
+    this.typeOracle = typeOracle;
 
     // SPECIAL MAGIC: Prevents the compile process from ever trying to compile
     // these guys from source, which is what we want, since they are special and

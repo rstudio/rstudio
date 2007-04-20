@@ -119,7 +119,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     // accidentally 'escaping' its domain and loading classes from the system
     // class loader (the one that loaded the shell itself).
     //
-    classLoader = new CompilingClassLoader(logger, compiler);
+    classLoader = new CompilingClassLoader(logger, compiler, typeOracle);
   }
 
   public String rebind(TreeLogger rebindLogger, String sourceTypeName)
