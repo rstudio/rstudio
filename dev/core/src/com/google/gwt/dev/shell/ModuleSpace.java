@@ -298,8 +298,11 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
         caught = ((ExceptionInInitializerError) caught).getException();
       }
 
-      final String unableToLoadMessage = "Unable to load module entry point class "
+      String unableToLoadMessage = "Unable to load module entry point class "
           + entryPointTypeName;
+      if (caught != null) {
+        unableToLoadMessage += " (see associated exception for details)";
+      }
       logger.log(TreeLogger.ERROR, unableToLoadMessage, caught);
       throw new UnableToCompleteException();
     }
