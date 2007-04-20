@@ -48,6 +48,10 @@ public class JsCollection {
     return list.iterator();
   }
 
+  public JsNode removeNode(int i) {
+    return (JsNode) list.remove(i);
+  }
+
   public void setNode(int index, JsNode o) {
     list.set(index, o);
   }

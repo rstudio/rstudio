@@ -18,7 +18,6 @@ package com.google.gwt.dev.js.ast;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A visitor for iterating through and modifying an AST.
@@ -55,7 +54,7 @@ public class JsModVisitor extends JsVisitor {
 
   private class ListContext implements JsContext {
     private int index;
-    private List list;
+    private JsCollection collection;
     private boolean removed;
     private boolean replaced;
 
@@ -69,41 +68,41 @@ public class JsModVisitor extends JsVisitor {
 
     public void insertAfter(JsNode node) {
       checkRemoved();
-      list.add(index + 1, node);
+      collection.addNode(index + 1, node);
       didChange = true;
     }
 
     public void insertBefore(JsNode node) {
       checkRemoved();
-      list.add(index++, node);
+      collection.addNode(index++, node);
       didChange = true;
     }
 
     public void removeMe() {
       checkState();
-      list.remove(index--);
+      collection.removeNode(index--);
       didChange = removed = true;
     }
 
     public void replaceMe(JsNode node) {
       checkState();
-      checkReplacement((JsNode) list.get(index), node);
-      list.set(index, node);
+      checkReplacement(collection.getNode(index), node);
+      collection.setNode(index, node);
       didChange = replaced = true;
     }
 
     protected void doReplace(Class targetClass, JsNode x) {
       checkState();
-      checkReplacement((JsNode) list.get(index), x);
-      list.set(index, x);
+      checkReplacement(collection.getNode(index), x);
+      collection.setNode(index, x);
       didChange = replaced = true;
     }
 
-    protected void traverse(List list) {
-      this.list = list;
-      for (index = 0; index < list.size(); ++index) {
+    protected void traverse(JsCollection collection) {
+      this.collection = collection;
+      for (index = 0; index < collection.size(); ++index) {
         removed = replaced = false;
-        doTraverse((JsNode) list.get(index), this);
+        doTraverse(collection.getNode(index), this);
       }
     }
 
@@ -201,21 +200,21 @@ public class JsModVisitor extends JsVisitor {
     }
   }
 
-  protected void doAccept(List list) {
+  protected void doAccept(JsCollection collection) {
     NodeContext ctx = (NodeContext) nodeContextPool.take();
     try {
-      for (int i = 0, c = list.size(); i < c; ++i) {
-        list.set(i, ctx.traverse((JsNode) list.get(i)));
+      for (int i = 0, c = collection.size(); i < c; ++i) {
+        collection.setNode(i, ctx.traverse(collection.getNode(i)));
       }
     } finally {
       nodeContextPool.release(ctx);
     }
   }
 
-  protected void doAcceptWithInsertRemove(List list) {
+  protected void doAcceptWithInsertRemove(JsCollection collection) {
     ListContext ctx = (ListContext) listContextPool.take();
     try {
-      ctx.traverse(list);
+      ctx.traverse(collection);
     } finally {
       listContextPool.release(ctx);
     }
