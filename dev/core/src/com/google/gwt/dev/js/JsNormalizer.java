@@ -19,12 +19,12 @@ import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExpression;
+import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsUnaryOperation;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
-import com.google.gwt.dev.js.ast.JsVisitor;
 
 /**
  * Fixes any semantic errors introduced by JS AST gen.
@@ -40,7 +40,7 @@ public class JsNormalizer {
   /**
    * Resolves any unresolved JsNameRefs.
    */
-  private class JsNormalizing extends JsVisitor {
+  private class JsNormalizing extends JsModVisitor {
 
     public void endVisit(JsBinaryOperation x, JsContext ctx) {
       maybeShuffleModifyingBinary(x, ctx);
