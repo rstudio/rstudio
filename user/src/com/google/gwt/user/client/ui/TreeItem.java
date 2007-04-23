@@ -109,10 +109,8 @@ public class TreeItem extends UIObject implements HasHTML {
     DOM.appendChild(tdImg, imgElem);
     DOM.appendChild(tdContent, contentElem);
 
-    DOM.setElementProperty(getElement(), "position", "relative");
     DOM.setStyleAttribute(contentElem, "display", "inline");
     DOM.setStyleAttribute(getElement(), "whiteSpace", "nowrap");
-    DOM.setElementProperty(itemTable, "whiteSpace", "nowrap");
     DOM.setStyleAttribute(childSpanElem, "whiteSpace", "nowrap");
     setStyleName(contentElem, "gwt-TreeItem", true);
   }
@@ -409,11 +407,11 @@ public class TreeItem extends UIObject implements HasHTML {
   protected HasFocus getFocusableWidget() {
     Widget widget = getWidget();
     if (widget instanceof HasFocus) {
-      return (HasFocus)widget;
+      return (HasFocus) widget;
     } else {
       return null;
     }
-   }
+  }
 
   void addTreeItems(List accum) {
     for (int i = 0; i < children.size(); i++) {
@@ -472,7 +470,7 @@ public class TreeItem extends UIObject implements HasHTML {
       if (this.tree.getSelectedItem() == this) {
         this.tree.setSelectedItem(null);
       }
- 
+
       // Detach contentPanel from old tree.
       if (contentPanel != null) {
         this.tree.disown(contentPanel);
