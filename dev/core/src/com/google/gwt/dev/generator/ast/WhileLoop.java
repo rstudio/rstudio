@@ -18,23 +18,23 @@ package com.google.gwt.dev.generator.ast;
 import java.util.List;
 
 /**
- * A Node that represents a Java while loop.
+ * A Node that represents a Java <code>while</code> loop.
  */
 public class WhileLoop implements Statements {
 
-  StatementsList body;
+  private final StatementsList body = new StatementsList();
 
-  String test;
+  private final String test;
 
   /**
-   * Creates a new while loop with <code>test</code> as the test Expression.
-   * The WhileLoop has an empty body.
+   * Creates a new <code>while</code> loop with <code>test</code> as the test
+   * {@link Expression}. The <code>WhileLoop</code> has an empty body.
    *
-   * @param test An Expression that must be of type boolean. Must be non-null.
+   * @param test A textual <code>boolean</code> {@link Expression}. Must not be
+   * <code>null</code>.
    */
   public WhileLoop(String test) {
     this.test = test;
-    this.body = new StatementsList();
   }
 
   public List getStatements() {

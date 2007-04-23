@@ -18,15 +18,15 @@ package com.google.gwt.dev.generator.ast;
 import java.util.List;
 
 /**
- * Represents one or more groups of Statements. Can optionally be added to.
- *
+ * Represents one or more groups of {@link Statement}s. Can optionally be
+ * added to.
  */
 public interface Statements extends Node {
 
   /**
-   * Returns a list of Statements.
+   * Returns a list of {@link Statement}s.
    *
-   * @return a non-null list of Statements.
+   * @return a non <code>null</code> list of {@link Statement}s.
    */
   public List getStatements();
 }

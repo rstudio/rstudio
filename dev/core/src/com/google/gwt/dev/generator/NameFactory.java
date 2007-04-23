@@ -20,21 +20,21 @@ import java.util.HashSet;
 import java.util.Collection;
 
 /**
- * Generates unique identifiers. Use this class to avoid generating
+ * Generates unqiue identifiers. Use this class to avoid generating
  * conflicting names with user code. This class isn't smart enough to know
  * about scopes (which isn't generally a problem for generators in any case).
  */
 public class NameFactory {
 
-  private Set usedNames = new HashSet();
+  private final Set usedNames = new HashSet();
 
   /**
-   * Creates a new NameFactory that knows about <code> existingNames</code>.
+   * Creates a new <code>NameFactory</code> that knows about
+   * <code>existingNames</code>.
    *
-   * @param existingNames a Collection of strings, may be null
+   * @param existingNames a list of names that may be <code>null</code>.
    */
   public NameFactory(Collection existingNames) {
-    this.usedNames = new HashSet();
     if (existingNames == null) {
       return;
     }
@@ -42,20 +42,20 @@ public class NameFactory {
   }
 
   /**
-   * Creates a new NameFactory that doesn't know about any existing names.
+   * Creates a new <code>NameFactory</code> that doesn't know about any existing
+   * names.
    */
   public NameFactory() {
     this(null);
   }
 
   /**
-   * Adds a name to the set of already known identifiers.  This implementation
-   * asserts that the identifier is unique.
+   * Adds a name to the set of already known identifiers. Has no affect if the
+   * name is already considered an existing identifier.
    *
-   * @param name a non-null, unique name
+   * @param name a not <code>null</code> name
    */
   public void addName(String name) {
-    assert (!usedNames.contains(name));
     usedNames.add(name);
   }
 
@@ -63,13 +63,11 @@ public class NameFactory {
    * Creates a new unique name based off of <code>name</code> and adds it to
    * the list of known names.
    *
-   * @param name a non-null name to base the new unique name from
-   * @return a new unique, non-null name. This name may be possibly identical
-   *         to <code>name</code>
+   * @param name a not <code>null</code> name to base the new unique name from
+   * @return a new unique, not <code>null</code> name. This name may be possibly
+   * identical to <code>name</code>.
    */
   public String createName(String name) {
-    assert (name != null);
-    
     String newName = name;
 
     for (int count = 0; true; ++count) {

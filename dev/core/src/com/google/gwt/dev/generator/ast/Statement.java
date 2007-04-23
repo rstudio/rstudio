@@ -19,21 +19,22 @@ import java.util.List;
 import java.util.Arrays;
 
 /**
- * A Node that represents a single Java statement.
+ * A {@link Node} that represents a single Java statement.
  */
 public class Statement extends BaseNode implements Statements {
 
-  String code;
+  private String code;
 
-  Expression expression;
+  private Expression expression;
 
-  private List list;
+  private final List list;
 
   /**
-   * Creates a new statement from a String of code representing an Expression.
-   * Automatically appends a semicolon to <code>code</code>.
+   * Creates a new <code>Statement</code> from a {@link String} of code
+   * representing an {@link Expression}. Automatically appends a semicolon to
+   * <code>code</code>.
    *
-   * @param code An Expression. Should not end with a semicolon.
+   * @param code A textual {@link Expression}. Should not end with a semicolon.
    */
   public Statement(String code) {
     this.code = code;
@@ -41,9 +42,9 @@ public class Statement extends BaseNode implements Statements {
   }
 
   /**
-   * Creates a new statement from an Expression.
+   * Creates a new <code>Statement</code> from an {@link Expression}.
    *
-   * @param expression A non-null Expression.
+   * @param expression A non <code>null</code> {@link Expression}.
    */
   public Statement(Expression expression) {
     this.expression = expression;
@@ -51,8 +52,8 @@ public class Statement extends BaseNode implements Statements {
   }
 
   /**
-   * Returns this single Statement as a List of Statements of size, one.
-   *
+   * Returns this single <code>Statement</code> as a {@link java.util.List} of
+   * {@link Statement}s of size, one.
    */
   public List getStatements() {
     return list;

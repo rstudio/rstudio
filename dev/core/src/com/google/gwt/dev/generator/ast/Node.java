@@ -16,15 +16,15 @@
 package com.google.gwt.dev.generator.ast;
 
 /**
- * An AST node. Must be able to return it's code representation as a String.
- *
+ * An AST node. Must be able to return it's code representation as a
+ * {@link String}.
  */
 public interface Node {
 
   /**
-   * The Java code representation of this Node.
+   * The Java code representation of this <code>Node</code>.
    *
-   * @return a non-null String.
+   * @return a not <code>null</code> {@link String}.
    */
   public String toCode();
 }

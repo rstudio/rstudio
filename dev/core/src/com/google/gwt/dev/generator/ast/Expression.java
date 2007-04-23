@@ -16,16 +16,16 @@
 package com.google.gwt.dev.generator.ast;
 
 /**
- * A Node that represents a Java expression. An expression is a parsable value
- * that is a subset of a statement. For example,
+ * A {@link Node} that represents a Java expression. An <code>Expression</code>
+ * is a parsable value that is a subset of a {@link Statement}. For example,
  *
  * <ul> <li>foo( a, b )</li> <li>14</li> <li>11 / 3</li> <li>x</li> </ul>
  *
- * are all Expressions.
+ * are all <code>Expressions</code>.
  */
 public class Expression extends BaseNode {
 
-  String code;
+  protected String code;
 
   public Expression() {
     code = "";

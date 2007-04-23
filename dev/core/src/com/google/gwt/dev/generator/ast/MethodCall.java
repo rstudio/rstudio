@@ -18,14 +18,14 @@ package com.google.gwt.dev.generator.ast;
 import java.util.List;
 
 /**
- * A Node that represents a method call Expression, for example,
- * foo( a, b, c ).
+ * An {@link Expression} that represents a method call, for example,
+ * <code>foo( a, b, c )</code>.
  */
 public class MethodCall extends Expression {
 
-  List arguments;
+  private final List arguments;
 
-  String name;
+  private final String name;
 
   /**
    * Creates a new MethodCall Expression.

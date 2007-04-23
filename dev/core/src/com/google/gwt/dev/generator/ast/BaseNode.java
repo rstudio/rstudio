@@ -16,7 +16,7 @@
 package com.google.gwt.dev.generator.ast;
 
 /**
- * A simple base class for implementing an AST node.
+ * A simple base class for implementing an AST {@link Node}.
  */
 public abstract class BaseNode implements Node {
 

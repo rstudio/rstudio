@@ -20,24 +20,21 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
- * An implementation of <code>Statements</code> that is composed of a list of
- * <code>Statements</code>.
+ * An implementation of {@link Statements} that is composed of a list of
+ * {@link Statement}s.
  */
 public class StatementsList extends BaseNode implements Statements {
 
-  List/*<Statements>*/ statements;
+  private final List/*<Statements>*/ statements = new ArrayList();
 
   /**
-   * Creates a new StatementsList with no Statements.
-   *
+   * Creates a new <code>StatementsList</code> with no {@link Statements}.
    */
   public StatementsList() {
-    statements = new ArrayList();
   }
 
   /**
-   * Returns the Statements that are in this list.
-   *
+   * Returns the {@link Statements} that are in this list.
    */
   public List getStatements() {
     return statements;
