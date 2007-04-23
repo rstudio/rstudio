@@ -20,6 +20,8 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
 /**
+ * 
+ * Panel test.
  * TODO: add circular containment test.
  */
 public class PanelTest extends GWTTestCase {
@@ -39,6 +41,19 @@ public class PanelTest extends GWTTestCase {
     public Widget getImplWidget() {
       return lbl;
     }
+  }
+
+  public void testOnAttach() {
+    // Used to call onDetach when not attached.
+    Widget someWidget = new TextBox();
+    Panel panel1 = new SimplePanel(); // new and unattached
+    Panel panel2 = new SimplePanel(); // new and unattached
+    panel1.add(someWidget);
+    panel2.add(someWidget);
+
+    // Make sure that the RootPanel does not throw an exception.
+    RootPanel.get().setParent(null);
+    RootPanel.get().setParent(null);
   }
 
   public void testAdoptException() {
