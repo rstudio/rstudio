@@ -75,10 +75,12 @@ public class Widget extends UIObject implements EventListener {
    * It must not be overridden, except by {@link Panel}. To receive
    * notification when a widget is attached to the document, override the
    * {@link #onLoad} method.
+   * @throws IllegalStateException if this widget is already attached
    */
   protected void onAttach() {
     if (attached) {
-      return;
+      throw new IllegalStateException(
+          "Should only call onAttach when the widget is detached from the browser's document");
     }
 
     attached = true;
@@ -95,10 +97,13 @@ public class Widget extends UIObject implements EventListener {
   /**
    * This method is called when a widget is detached from the browser's
    * document. It must not be overridden, except by {@link Panel}.
+   * 
+   * @throws IllegalStateException if this widget is already detached
    */
   protected void onDetach() {
     if (!attached) {
-      return;
+      throw new IllegalStateException(
+          "Should only call onDetach when the widget is attached to the browser's document");
     }
     attached = false;
 
@@ -116,32 +121,31 @@ public class Widget extends UIObject implements EventListener {
   }
 
   /**
-    * Sets this object's browser element. Widget subclasses must call this
-    * method before attempting to call any other methods.
-    *
-    * If a browser element has already been attached, then it is replaced with
-    * the new element. The old event listeners are removed from the old browser
-    * element, and the event listeners are set up on the new browser element.
-    *
-    * @param elem the object's new element
-    */
-   protected void setElement(Element elem) {
-     if (attached) {
-       // Remove old event listener to avoid leaking. onDetach will not do this
-       // for us, because it is only called the widget itself is detached from
-       // the document.
-       DOM.setEventListener(getElement(), null);
-     }
+   * Sets this object's browser element. Widget subclasses must call this method
+   * before attempting to call any other methods.
+   * 
+   * If a browser element has already been attached, then it is replaced with
+   * the new element. The old event listeners are removed from the old browser
+   * element, and the event listeners are set up on the new browser element.
+   * 
+   * @param elem the object's new element
+   */
+  protected void setElement(Element elem) {
+    if (attached) {
+      // Remove old event listener to avoid leaking. onDetach will not do this
+      // for us, because it is only called when the widget itself is detached from
+      // the document.
+      DOM.setEventListener(getElement(), null);
+    }
 
-     super.setElement(elem);
-
-     if (attached) {
-       // Hook the event listener back up on the new element. onAttach will not
-       // do this for us, because it is only called when the widget itself is
-       // attached to the document.
-       DOM.setEventListener(elem, this);
-     }
-   }
+    super.setElement(elem);
+    if (attached) {
+      // Hook the event listener back up on the new element. onAttach will not
+      // do this for us, because it is only called when the widget itself is
+      // attached to the document.
+      DOM.setEventListener(elem, this);
+    }
+  }
 
   /**
    * Gets the panel-defined layout data associated with this widget.
@@ -172,10 +176,12 @@ public class Widget extends UIObject implements EventListener {
    * @param parent the widget's new parent
    */
   void setParent(Widget parent) {
+    Widget oldParent = this.parent;
     this.parent = parent;
-
     if (parent == null) {
-      onDetach();
+      if (oldParent != null && oldParent.isAttached()) {
+        onDetach();
+      }
     } else if (parent.isAttached()) {
       onAttach();
     }
