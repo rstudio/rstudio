@@ -1,12 +1,12 @@
 /*
- * Copyright 2006 Google Inc.
- * 
+ * Copyright 2007 Google Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -52,12 +52,25 @@ public class DialogBox extends PopupPanel implements HasHTML, MouseListener {
   /**
    * Creates an empty dialog box specifying its "auto-hide" property. It should
    * not be shown until its child widget has been added using {@link #add(Widget)}.
-   * 
+   *
    * @param autoHide <code>true</code> if the dialog should be automatically
    *          hidden when the user clicks outside of it
    */
   public DialogBox(boolean autoHide) {
-    super(autoHide);
+    this(autoHide, false);
+  }
+
+  /**
+   * Creates an empty dialog box specifying its "auto-hide" property. It should
+   * not be shown until its child widget has been added using {@link #add(Widget)}.
+   *
+   * @param autoHide <code>true</code> if the dialog should be automatically
+   *          hidden when the user clicks outside of it
+   * @param modal <code>true</code> if keyboard and mouse events for widgets
+   *          not contained by the dialog should be ignored
+   */
+  public DialogBox(boolean autoHide, boolean modal) {
+    super(autoHide, modal);
     panel.setWidget(0,0,caption);
     panel.setHeight("100%");
     panel.setBorderWidth(0);
@@ -134,7 +147,7 @@ public class DialogBox extends PopupPanel implements HasHTML, MouseListener {
     if (w != null) {
       panel.setWidget(1,0,w);
     }
- 
+
     child = w;
   }
 }
