@@ -956,6 +956,18 @@ public final class Util {
     return true;
   }
 
+  /**
+   * Escapes '&', '<', '>', '"', and '\'' to their XML entity equivalents.
+   */
+  private static String escapeXml(String unescaped) {
+    String escaped = unescaped.replaceAll("\\&", "&amp;");
+    escaped = escaped.replaceAll("\\<", "&lt;");
+    escaped = escaped.replaceAll("\\>", "&gt;");
+    escaped = escaped.replaceAll("\\\"", "&quot;");
+    escaped = escaped.replaceAll("\\'", "&apos;");
+    return escaped;
+  }
+
   private static void writeAttribute(PrintWriter w, Attr attr, int depth)
       throws IOException {
     w.write(attr.getName());
@@ -1053,7 +1065,9 @@ public final class Util {
   }
 
   private static void writeText(PrintWriter w, Text text) throws DOMException {
-    w.write(text.getNodeValue());
+    String nodeValue = text.getNodeValue();
+    String escaped = escapeXml(nodeValue);
+    w.write(escaped);
   }
 
   /**

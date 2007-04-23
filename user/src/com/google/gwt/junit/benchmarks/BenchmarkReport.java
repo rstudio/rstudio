@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,62 +15,57 @@
  */
 package com.google.gwt.junit.benchmarks;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.HasMetaData;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.junit.rebind.BenchmarkGenerator;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.junit.client.TestResults;
 import com.google.gwt.junit.client.Trial;
+import com.google.gwt.junit.rebind.BenchmarkGenerator;
+import com.google.gwt.util.tools.Utility;
 
 import junit.framework.TestCase;
 
+import org.eclipse.jdt.internal.compiler.IProblemFactory;
+import org.eclipse.jdt.internal.compiler.ISourceElementRequestor;
+import org.eclipse.jdt.internal.compiler.SourceElementParser;
+import org.eclipse.jdt.internal.compiler.SourceElementRequestorAdapter;
+import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
+import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
+import org.eclipse.jdt.internal.compiler.problem.DefaultProblemFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
-import org.eclipse.jdt.internal.compiler.IProblemFactory;
-import org.eclipse.jdt.internal.compiler.SourceElementParser;
-import org.eclipse.jdt.internal.compiler.ISourceElementRequestor;
-import org.eclipse.jdt.internal.compiler.SourceElementRequestorAdapter;
-import org.eclipse.jdt.internal.compiler.problem.DefaultProblemFactory;
-import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
 
-import java.io.IOException;
-import java.io.FileOutputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileReader;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.text.BreakIterator;
+import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Locale;
-import java.util.regex.Pattern;
+import java.util.Map;
 import java.util.regex.Matcher;
-import java.text.DateFormat;
-import java.text.BreakIterator;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.dom.DOMSource;
 
 /**
  * Generates a detailed report that contains the results of all of the
  * benchmark-related unit tests executed during a unit test session. The primary
  * user of this class is JUnitShell.
- *
+ * 
  * The report is in XML format. To view the XML reports, use benchmarkViewer.
- *
  */
 public class BenchmarkReport {
 
@@ -81,17 +76,15 @@ public class BenchmarkReport {
 
     private MetaData metaData;
 
-    private List/*<JUnitMessageQueue.TestResult>*/ results;
+    private List/* <JUnitMessageQueue.TestResult> */results;
 
     private TestCase test;
 
     BenchmarkXml(TestCase test,
-        List/*<JUnitMessageQueue.TestResult>*/ results) {
+        List/* <JUnitMessageQueue.TestResult> */results) {
       this.test = test;
       this.results = results;
-      Map/*<String,MetaData>*/ methodMetaData
-          = (Map/*<String,MetaData>*/) testMetaData
-          .get(test.getClass().toString());
+      Map/* <String,MetaData> */methodMetaData = (Map/* <String,MetaData> */) testMetaData.get(test.getClass().toString());
       metaData = (MetaData) methodMetaData.get(test.getName());
     }
 
@@ -149,8 +142,8 @@ public class BenchmarkReport {
         trialElement.appendChild(variableElement);
       }
 
-      trialElement
-          .setAttribute("timing", String.valueOf(trial.getRunTimeMillis()));
+      trialElement.setAttribute("timing",
+          String.valueOf(trial.getRunTimeMillis()));
 
       Throwable exception = trial.getException();
 
@@ -166,11 +159,11 @@ public class BenchmarkReport {
 
   /**
    * Parses a .java source file to get the source code for methods.
-   *
+   * 
    * This Parser takes some shortcuts based on the fact that it's only being
    * used to locate test methods for unit tests. (For example, only requiring a
    * method name instead of a full type signature for lookup).
-   *
+   * 
    * TODO(tobyr) I think that I might be able to replace all this code with a
    * call to the existing metadata interface. Check declEnd/declStart in
    * JAbstractMethod.
@@ -179,7 +172,7 @@ public class BenchmarkReport {
 
     static class MethodBody {
 
-      int declarationEnd;   // the character index of the end of the method
+      int declarationEnd; // the character index of the end of the method
 
       int declarationStart; // the character index of the start of the method
 
@@ -189,8 +182,7 @@ public class BenchmarkReport {
     private MethodBody currentMethod; // Only used during the visitor
 
     // But it's less painful
-    private Map/*<String,MethodBody>*/ methods
-        = new HashMap/*<String,MethodBody>*/();
+    private Map/* <String,MethodBody> */methods = new HashMap/* <String,MethodBody> */();
 
     // Contains the contents of the entire source file
     private char[] sourceContents;
@@ -245,22 +237,17 @@ public class BenchmarkReport {
 
     /**
      * Returns the source code for the method of the given name.
-     *
+     * 
      * @return null if the source code for the method can not be located
      */
     public String getMethod(JMethod method) {
       /*
-      MethodBody methodBody = (MethodBody)methods.get( method.getName() );
-      if ( methodBody == null ) {
-        return null;
-      }
-      if ( methodBody.source == null ) {
-        methodBody.source = new String(sourceContents,
-        methodBody.declarationStart, methodBody.declarationEnd - methodBody.
-        declarationStart + 1);
-      }
-      return methodBody.source;
-      */
+       * MethodBody methodBody = (MethodBody)methods.get( method.getName() ); if (
+       * methodBody == null ) { return null; } if ( methodBody.source == null ) {
+       * methodBody.source = new String(sourceContents,
+       * methodBody.declarationStart, methodBody.declarationEnd - methodBody.
+       * declarationStart + 1); } return methodBody.source;
+       */
       return new String(sourceContents, method.getDeclStart(),
           method.getDeclEnd() - method.getDeclStart() + 1);
     }
@@ -271,21 +258,40 @@ public class BenchmarkReport {
    */
   private class ReportXml {
 
-    private Map/*<String,Element>*/ categoryElementMap
-        = new HashMap/*<String,Element>*/();
+    private Map/* <String,Element> */categoryElementMap = new HashMap/* <String,Element> */();
 
     private Date date = new Date();
 
     private String version = "unknown";
 
+    Element toElement(Document doc) {
+      Element report = doc.createElement("gwt_benchmark_report");
+      String dateString = DateFormat.getDateTimeInstance().format(date);
+      report.setAttribute("date", dateString);
+      report.setAttribute("gwt_version", version);
+
+      // - Add each test result into the report.
+      // - Add the category for the test result, if necessary.
+      for (Iterator entryIt = testResults.entrySet().iterator(); entryIt.hasNext();) {
+        Map.Entry entry = (Map.Entry) entryIt.next();
+        TestCase test = (TestCase) entry.getKey();
+        List/* <JUnitMessageQueue.TestResult> */results = (List/* <JUnitMessageQueue.TestResult> */) entry.getValue();
+        BenchmarkXml xml = new BenchmarkXml(test, results);
+        Element categoryElement = getCategoryElement(doc, report,
+            xml.metaData.getCategory().getClassName());
+        categoryElement.appendChild(xml.toElement(doc));
+      }
+
+      return report;
+    }
+
     /**
      * Locates or creates the category element by the specified name.
-     *
+     * 
      * @param doc The document to search
      * @return The matching category element
      */
-    private Element getCategoryElement(Document doc, Element report,
-        String name) {
+    private Element getCategoryElement(Document doc, Element report, String name) {
       Element e = (Element) categoryElementMap.get(name);
 
       if (e != null) {
@@ -302,42 +308,18 @@ public class BenchmarkReport {
 
       return categoryElement;
     }
-
-    Element toElement(Document doc) {
-      Element report = doc.createElement("gwt_benchmark_report");
-      String dateString = DateFormat.getDateTimeInstance().format(date);
-      report.setAttribute("date", dateString);
-      report.setAttribute("gwt_version", version);
-
-      // - Add each test result into the report.
-      // - Add the category for the test result, if necessary.
-      for (Iterator entryIt = testResults.entrySet().iterator();
-          entryIt.hasNext();) {
-        Map.Entry entry = (Map.Entry) entryIt.next();
-        TestCase test = (TestCase) entry.getKey();
-        List/*<JUnitMessageQueue.TestResult>*/ results
-            = (List/*<JUnitMessageQueue.TestResult>*/) entry.getValue();
-        BenchmarkXml xml = new BenchmarkXml(test, results);
-        Element categoryElement = getCategoryElement(doc, report,
-            xml.metaData.getCategory().getClassName());
-        categoryElement.appendChild(xml.toElement(doc));
-      }
-
-      return report;
-    }
   }
 
   private static final String GWT_BENCHMARK_CATEGORY = "gwt.benchmark.category";
 
-  private static final String GWT_BENCHMARK_DESCRIPTION
-      = "gwt.benchmark.description";
+  private static final String GWT_BENCHMARK_DESCRIPTION = "gwt.benchmark.description";
 
   private static final String GWT_BENCHMARK_NAME = "gwt.benchmark.name";
 
   private static File findSourceFile(JClassType klass) {
     final char separator = File.separator.charAt(0);
-    String filePath = klass.getPackage().getName().replace('.', separator) +
-        separator + klass.getSimpleSourceName() + ".java";
+    String filePath = klass.getPackage().getName().replace('.', separator)
+        + separator + klass.getSimpleSourceName() + ".java";
     String[] paths = getClassPath();
 
     for (int i = 0; i < paths.length; ++i) {
@@ -356,8 +338,7 @@ public class BenchmarkReport {
     return path.split(File.pathSeparator);
   }
 
-  private static String getSimpleMetaData(HasMetaData hasMetaData,
-      String name) {
+  private static String getSimpleMetaData(HasMetaData hasMetaData, String name) {
     String[][] allValues = hasMetaData.getMetaData(name);
 
     if (allValues == null) {
@@ -394,26 +375,23 @@ public class BenchmarkReport {
       source.append("\n");
     }
 
-    char[] buf = new char[ source.length() ];
+    char[] buf = new char[source.length()];
     source.getChars(0, buf.length, buf, 0);
 
     return buf;
   }
 
-  private Map/*<String,Map<CategoryImpl>*/ testCategories
-      = new HashMap/*<String,CategoryImpl>*/();
+  private Map/* <String,Map<CategoryImpl> */testCategories = new HashMap/* <String,CategoryImpl> */();
 
-  private Map/*<String,Map<String,MetaData>>*/ testMetaData
-      = new HashMap/*<String,Map<String,MetaData>>*/();
+  private Map/* <String,Map<String,MetaData>> */testMetaData = new HashMap/* <String,Map<String,MetaData>> */();
 
-  private Map/*<TestCase,List<JUnitMessageQueue.TestResult>>*/ testResults
-      = new HashMap/*<TestCase,JUnitMessageQueue.List<TestResult>>*/();
+  private Map/* <TestCase,List<JUnitMessageQueue.TestResult>> */testResults = new HashMap/* <TestCase,JUnitMessageQueue.List<TestResult>> */();
 
   private TypeOracle typeOracle;
 
   private TreeLogger logger;
 
-  public BenchmarkReport( TreeLogger logger ) {
+  public BenchmarkReport(TreeLogger logger) {
     this.logger = logger;
   }
 
@@ -427,20 +405,17 @@ public class BenchmarkReport {
     String categoryType = getSimpleMetaData(benchmarkClass,
         GWT_BENCHMARK_CATEGORY);
 
-    Map zeroArgMethods = BenchmarkGenerator
-        .getNotOverloadedTestMethods(benchmarkClass);
-    Map/*<String,JMethod>*/ parameterizedMethods = BenchmarkGenerator
-        .getParameterizedTestMethods(benchmarkClass, TreeLogger.NULL);
-    List/*<JMethod>*/ testMethods = new ArrayList/*<JMethod>*/(
+    Map zeroArgMethods = BenchmarkGenerator.getNotOverloadedTestMethods(benchmarkClass);
+    Map/* <String,JMethod> */parameterizedMethods = BenchmarkGenerator.getParameterizedTestMethods(
+        benchmarkClass, TreeLogger.NULL);
+    List/* <JMethod> */testMethods = new ArrayList/* <JMethod> */(
         zeroArgMethods.size() + parameterizedMethods.size());
     testMethods.addAll(zeroArgMethods.values());
     testMethods.addAll(parameterizedMethods.values());
 
-    Map/*<String,MetaData>*/ metaDataMap
-        = (Map/*<String,MetaData>*/) testMetaData
-        .get(benchmarkClass.toString());
+    Map/* <String,MetaData> */metaDataMap = (Map/* <String,MetaData> */) testMetaData.get(benchmarkClass.toString());
     if (metaDataMap == null) {
-      metaDataMap = new HashMap/*<String,MetaData>*/();
+      metaDataMap = new HashMap/* <String,MetaData> */();
       testMetaData.put(benchmarkClass.toString(), metaDataMap);
     }
 
@@ -451,8 +426,8 @@ public class BenchmarkReport {
     } catch (IOException e) {
       // if we fail to create the parser for some reason, we'll have to just
       // deal with a null parser.
-      logger.log(TreeLogger.WARN,
-          "Unable to parse the code for " + benchmarkClass, e);
+      logger.log(TreeLogger.WARN, "Unable to parse the code for "
+          + benchmarkClass, e);
     }
 
     // Add all of the benchmark methods
@@ -465,22 +440,23 @@ public class BenchmarkReport {
         methodCategoryType = categoryType;
       }
       CategoryImpl methodCategory = getCategory(methodCategoryType);
-      String sourceCode = parser == null ? null : parser.getMethod(method);
+      StringBuffer sourceCode = parser == null ? null : new StringBuffer(
+          parser.getMethod(method));
       StringBuffer summary = new StringBuffer();
       StringBuffer comment = new StringBuffer();
       getComment(sourceCode, summary, comment);
 
       MetaData metaData = new MetaData(benchmarkClass.toString(), methodName,
-          sourceCode, methodCategory, methodName, summary.toString());
+          sourceCode != null ? sourceCode.toString() : null, methodCategory,
+          methodName, summary.toString());
       metaDataMap.put(methodName, metaData);
     }
   }
 
   public void addBenchmarkResults(TestCase test, TestResults results) {
-    List/*<TestResults>*/ currentResults = (List/*<TestResults>*/) testResults
-        .get(test);
+    List/* <TestResults> */currentResults = (List/* <TestResults> */) testResults.get(test);
     if (currentResults == null) {
-      currentResults = new ArrayList/*<TestResults>*/();
+      currentResults = new ArrayList/* <TestResults> */();
       testResults.put(test, currentResults);
     }
     currentResults.add(results);
@@ -489,12 +465,15 @@ public class BenchmarkReport {
   /**
    * Generates reports for all of the benchmarks which were added to the
    * generator.
-   *
+   * 
    * @param outputPath The path to write the reports to.
+   * @throws ParserConfigurationException
+   * @throws UnableToCompleteException
+   * @throws IOException
    * @throws IOException If anything goes wrong writing to outputPath
    */
-  public void generate(String outputPath)
-      throws IOException, TransformerException, ParserConfigurationException {
+  public void generate(String outputPath) throws ParserConfigurationException,
+      UnableToCompleteException, IOException {
 
     // Don't generate a new report if no tests were actually run.
     if (testResults.size() == 0) {
@@ -503,25 +482,34 @@ public class BenchmarkReport {
 
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     DocumentBuilder builder = factory.newDocumentBuilder();
-
     Document doc = builder.newDocument();
     doc.appendChild(new ReportXml().toElement(doc));
+    byte[] xmlBytes = Util.toXmlUtf8(doc);
+    FileOutputStream fos = null;
+    try {
+      fos = new FileOutputStream(outputPath);
+      fos.write(xmlBytes);
+    } finally {
+      Utility.close(fos);
+    }
 
-    // TODO(tobyr) Looks like indenting is busted
-    // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6296446
-    // Not a big deal, since we don't intend to read the XML by hand anyway
-    TransformerFactory transformerFactory = TransformerFactory.newInstance();
-    // Think this can be used with JDK 1.5
-    // transformerFactory.setAttribute( "indent-number", new Integer(2) );
-    Transformer serializer = transformerFactory.newTransformer();
-    serializer.setOutputProperty(OutputKeys.METHOD, "xml");
-    serializer.setOutputProperty(OutputKeys.INDENT, "yes");
-    serializer
-        .setOutputProperty("{ http://xml.apache.org/xslt }indent-amount", "2");
-    BufferedOutputStream docOut = new BufferedOutputStream(
-        new FileOutputStream(outputPath));
-    serializer.transform(new DOMSource(doc), new StreamResult(docOut));
-    docOut.close();
+    // TODO(bruce) The code below is commented out because of GWT Issue 958.
+
+    // // TODO(tobyr) Looks like indenting is busted
+    // // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6296446
+    // // Not a big deal, since we don't intend to read the XML by hand anyway
+    // TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    // // Think this can be used with JDK 1.5
+    // // transformerFactory.setAttribute( "indent-number", new Integer(2) );
+    // Transformer serializer = transformerFactory.newTransformer();
+    // serializer.setOutputProperty(OutputKeys.METHOD, "xml");
+    // serializer.setOutputProperty(OutputKeys.INDENT, "yes");
+    // serializer
+    // .setOutputProperty("{ http://xml.apache.org/xslt }indent-amount", "2");
+    // BufferedOutputStream docOut = new BufferedOutputStream(
+    // new FileOutputStream(outputPath));
+    // serializer.transform(new DOMSource(doc), new StreamResult(docOut));
+    // docOut.close();
   }
 
   private CategoryImpl getCategory(String name) {
@@ -554,7 +542,7 @@ public class BenchmarkReport {
    * first sentence summary in <code>summary</code> and the body of the entire
    * comment (including the summary) in <code>comment</code>.
    */
-  private void getComment(String sourceCode, StringBuffer summary,
+  private void getComment(StringBuffer sourceCode, StringBuffer summary,
       StringBuffer comment) {
 
     if (sourceCode == null) {
@@ -569,20 +557,20 @@ public class BenchmarkReport {
     Pattern p = Pattern.compile(regex, Pattern.DOTALL);
     Matcher m = p.matcher(sourceCode);
 
-    if (! m.find()) {
+    // Early out if there is no javadoc comment.
+    if (!m.find()) {
       return;
     }
 
     String commentStr = m.group();
 
-    p = Pattern.compile(
-        "(/\\*\\*\\s*)" +  // The comment header
+    p = Pattern.compile("(/\\*\\*\\s*)" + // The comment header
         "(((\\s*\\**\\s*)([^\n\r]*)[\n\r]+)*)" // The comment body
     );
 
     m = p.matcher(commentStr);
 
-    if (! m.find()) {
+    if (!m.find()) {
       return;
     }
 
@@ -601,5 +589,25 @@ public class BenchmarkReport {
     }
 
     comment.append(bareComment);
+
+    // Measure the indentation width on the second line to infer what the
+    // first line indent should be.
+    p = Pattern.compile("[^\\r\\n]+[\\r\\n]+(\\s+)\\*", Pattern.MULTILINE);
+    m = p.matcher(sourceCode);
+    int indentLen = 0;
+    if (m.find()) {
+      String indent = m.group(1);
+      indentLen = indent.length() - 1;
+    }
+    StringBuffer leadingIndent = new StringBuffer();
+    for (int i = 0; i < indentLen; ++i) {
+      leadingIndent.append(' ');
+    }
+
+    // By inserting at 0 here, we are assuming that sourceCode begins with
+    // /**, which is actually a function of how JDT sees a declaration start.
+    // If in the future, you see bogus indentation here, it means that this
+    // assumption is bad.
+    sourceCode.insert(0, leadingIndent);
   }
 }
