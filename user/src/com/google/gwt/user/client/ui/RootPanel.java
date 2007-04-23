@@ -85,8 +85,8 @@ public class RootPanel extends AbsolutePanel {
    * @return the document's body element
    */
   public static native Element getBodyElement() /*-{
-   return $doc.body;
-   }-*/;
+    return $doc.body;
+  }-*/;
 
   private static void hookWindowClosing() {
     // Catch the window closing event.
@@ -97,7 +97,9 @@ public class RootPanel extends AbsolutePanel {
         // avoid potential memory leaks.
         for (Iterator it = rootPanels.values().iterator(); it.hasNext();) {
           RootPanel gwt = (RootPanel) it.next();
-          gwt.onDetach();
+          if (gwt.isAttached()) {
+            gwt.onDetach();
+          }
         }
       }
 
