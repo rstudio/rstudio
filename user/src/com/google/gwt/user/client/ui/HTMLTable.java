@@ -164,7 +164,10 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      */
     public void setStyleName(int row, int column, String styleName) {
       prepareCell(row, column);
-      setAttr(row, column, "className", styleName);
+      Element elem = getCellElement(bodyElem, row, column);
+      // IE uses attribute "className", FireFox uses attribute "class", so
+      // avoiding the problem by using properties instead.
+      DOM.setElementProperty(elem, "className", styleName);
     }
 
     /**
@@ -252,7 +255,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      */
     protected String getAttr(int row, int column, String attr) {
       Element elem = getElement(row, column);
-      return DOM.getElementProperty(elem, attr);
+      return DOM.getElementAttribute(elem, attr);
     }
 
     /**
@@ -266,7 +269,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      */
     protected void setAttr(int row, int column, String attrName, String value) {
       Element elem = ensureElement(row, column);
-      DOM.setElementProperty(elem, attrName, value);
+      DOM.setElementAttribute(elem, attrName, value);
     }
 
     /**
@@ -349,6 +352,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      */
     public void setStyleName(int column, String styleName) {
       Element elem = ensureColumn(column);
+      // IE uses attribute "className", FireFox uses attribute "class", so
+      // avoiding the problem by using properties instead.
       DOM.setElementProperty(elem, "className", styleName);
     }
 
@@ -514,7 +519,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      */
     protected void setAttr(int row, String attrName, String value) {
       Element elem = ensureElement(row);
-      DOM.setElementProperty(elem, attrName, value);
+      DOM.setElementAttribute(elem, attrName, value);
     }
   }
 
