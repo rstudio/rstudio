@@ -216,6 +216,69 @@ public class ValueTypesTest extends GWTTestCase {
     });
   }
 
+  /**
+   * Validate that NaNs (not-a-number, such as 0/0) propagate
+   * properly via RPC.
+   */
+  public void testDouble_NaN() {
+    delayTestFinish(TEST_DELAY);
+    ValueTypesTestServiceAsync service = getServiceAsync();
+    service.echo(Double.NaN, new AsyncCallback() {
+
+      public void onFailure(Throwable caught) {
+        fail(caught.toString());
+      }
+
+      public void onSuccess(Object result) {
+        assertNotNull(result);
+        assertTrue(Double.isNaN(((Double) result).doubleValue()));
+        finishTest();
+      }
+    });
+  }
+
+  /**
+   * Validate that negative infinity propagates properly via RPC.
+   */
+  public void testDouble_NegInfinity() {
+    delayTestFinish(TEST_DELAY);
+    ValueTypesTestServiceAsync service = getServiceAsync();
+    service.echo(Double.NEGATIVE_INFINITY, new AsyncCallback() {
+
+      public void onFailure(Throwable caught) {
+        fail(caught.toString());
+      }
+
+      public void onSuccess(Object result) {
+        assertNotNull(result);
+        double doubleValue = ((Double) result).doubleValue();
+        assertTrue(Double.isInfinite(doubleValue) && doubleValue < 0);
+        finishTest();
+      }
+    });
+  }
+
+  /**
+   * Validate that positive infinity propagates properly via RPC.
+   */
+  public void testDouble_PosInfinity() {
+    delayTestFinish(TEST_DELAY);
+    ValueTypesTestServiceAsync service = getServiceAsync();
+    service.echo(Double.POSITIVE_INFINITY, new AsyncCallback() {
+
+      public void onFailure(Throwable caught) {
+        fail(caught.toString());
+      }
+
+      public void onSuccess(Object result) {
+        assertNotNull(result);
+        double doubleValue = ((Double) result).doubleValue();
+        assertTrue(Double.isInfinite(doubleValue) && doubleValue > 0);
+        finishTest();
+      }
+    });
+  }
+
   public void testFloat() {
     delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
@@ -262,6 +325,69 @@ public class ValueTypesTest extends GWTTestCase {
       public void onSuccess(Object result) {
         assertNotNull(result);
         assertEquals(Float.MIN_VALUE, ((Float) result).floatValue(), 0.0);
+        finishTest();
+      }
+    });
+  }
+
+  /**
+   * Validate that NaNs (not-a-number, such as 0/0) propagate
+   * properly via RPC.
+   */
+  public void testFloat_NaN() {
+    delayTestFinish(TEST_DELAY);
+    ValueTypesTestServiceAsync service = getServiceAsync();
+    service.echo(Float.NaN, new AsyncCallback() {
+
+      public void onFailure(Throwable caught) {
+        fail(caught.toString());
+      }
+
+      public void onSuccess(Object result) {
+        assertNotNull(result);
+        assertTrue(Float.isNaN(((Float) result).floatValue()));
+        finishTest();
+      }
+    });
+  }
+
+  /**
+   * Validate that negative infinity propagates properly via RPC.
+   */
+  public void testFloat_NegInfinity() {
+    delayTestFinish(TEST_DELAY);
+    ValueTypesTestServiceAsync service = getServiceAsync();
+    service.echo(Float.NEGATIVE_INFINITY, new AsyncCallback() {
+
+      public void onFailure(Throwable caught) {
+        fail(caught.toString());
+      }
+
+      public void onSuccess(Object result) {
+        assertNotNull(result);
+        float floatValue = ((Float) result).floatValue();
+        assertTrue(Float.isInfinite(floatValue) && floatValue < 0);
+        finishTest();
+      }
+    });
+  }
+
+  /**
+   * Validate that positive infinity propagates properly via RPC.
+   */
+  public void testFloat_PosInfinity() {
+    delayTestFinish(TEST_DELAY);
+    ValueTypesTestServiceAsync service = getServiceAsync();
+    service.echo(Float.POSITIVE_INFINITY, new AsyncCallback() {
+
+      public void onFailure(Throwable caught) {
+        fail(caught.toString());
+      }
+
+      public void onSuccess(Object result) {
+        assertNotNull(result);
+        float floatValue = ((Float) result).floatValue();
+        assertTrue(Float.isInfinite(floatValue) && floatValue > 0);
         finishTest();
       }
     });

@@ -18,7 +18,10 @@ package com.google.gwt.user.server.rpc;
 import com.google.gwt.user.client.rpc.ValueTypesTestService;
 
 /**
- * TODO: document me.
+ * Server-side code for ValueTypesTest.  Mostly just echoes back the values
+ * received from the client, but some methods verify the value received to
+ * make sure it isn't mangled on the way to the server and then unmangled
+ * on the way back to the client.
  */
 public class ValueTypesTestServiceImpl extends RemoteServiceServlet implements
     ValueTypesTestService {
@@ -101,8 +104,8 @@ public class ValueTypesTestServiceImpl extends RemoteServiceServlet implements
 
   public long echo_MAX_VALUE(long value) {
     if (value != Long.MAX_VALUE) {
-      throw new RuntimeException("expected:" + Long.toString(Long.MAX_VALUE)
-          + " actual:" + Long.toString(value));
+      throw new RuntimeException("expected: " + Long.toString(Long.MAX_VALUE)
+          + " actual: " + Long.toString(value));
     }
 
     return value;
@@ -158,8 +161,8 @@ public class ValueTypesTestServiceImpl extends RemoteServiceServlet implements
 
   public long echo_MIN_VALUE(long value) {
     if (value != Long.MIN_VALUE) {
-      throw new RuntimeException("expected:" + Long.toString(Long.MIN_VALUE)
-          + " actual:" + Long.toString(value));
+      throw new RuntimeException("expected: " + Long.toString(Long.MIN_VALUE)
+          + " actual: " + Long.toString(value));
     }
 
     return value;
