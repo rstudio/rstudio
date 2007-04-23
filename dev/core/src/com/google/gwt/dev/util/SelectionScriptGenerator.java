@@ -216,12 +216,10 @@ public class SelectionScriptGenerator {
           JsVerboseNamer.exec(jsProgram);
         }
 
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw, true);
-        TextOutputOnPrintWriter out = new TextOutputOnPrintWriter(pw, obfuscate);
+        DefaultTextOutput out = new DefaultTextOutput(obfuscate);
         JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
         v.accept(jsProgram);
-        return sw.toString();
+        return out.toString();
       }
     } catch (IOException e) {
       throw new RuntimeException("Error processing selection script template.",

@@ -19,7 +19,7 @@ import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.impl.SourceGenerationVisitor;
 import com.google.gwt.dev.jjs.impl.ToStringGenerationVisitor;
-import com.google.gwt.dev.util.TextOutputOnCharArray;
+import com.google.gwt.dev.util.DefaultTextOutput;
 
 /**
  * Base class for all visitable AST nodes.
@@ -45,17 +45,17 @@ public abstract class JNode implements JVisitable, HasSourceInfo {
 
   // Causes source generation to delegate to the one visitor
   public final String toSource() {
-    TextOutputOnCharArray p = new TextOutputOnCharArray(false);
-    SourceGenerationVisitor v = new SourceGenerationVisitor(p);
+    DefaultTextOutput out = new DefaultTextOutput(false);
+    SourceGenerationVisitor v = new SourceGenerationVisitor(out);
     v.accept(this);
-    return new String(p.getText());
+    return out.toString();
   }
 
   // Causes source generation to delegate to the one visitor
   public final String toString() {
-    TextOutputOnCharArray p = new TextOutputOnCharArray(false);
-    ToStringGenerationVisitor v = new ToStringGenerationVisitor(p);
+    DefaultTextOutput out = new DefaultTextOutput(false);
+    ToStringGenerationVisitor v = new ToStringGenerationVisitor(out);
     v.accept(this);
-    return new String(p.getText());
+    return out.toString();
   }
 }

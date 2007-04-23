@@ -56,7 +56,7 @@ import com.google.gwt.dev.js.JsSourceGenerationVisitor;
 import com.google.gwt.dev.js.JsSymbolResolver;
 import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.util.TextOutputOnPrintWriter;
+import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Util;
 
 import org.eclipse.jdt.core.compiler.IProblem;
@@ -64,8 +64,6 @@ import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -401,13 +399,10 @@ public class JavaToJavaScriptCompiler {
         JsVerboseNamer.exec(jsProgram);
       }
 
-      StringWriter sw = new StringWriter();
-      PrintWriter pw = new PrintWriter(sw, true);
-      TextOutputOnPrintWriter out = new TextOutputOnPrintWriter(pw, obfuscate);
+      DefaultTextOutput out = new DefaultTextOutput(obfuscate);
       JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
       v.accept(jsProgram);
-
-      return sw.toString();
+      return out.toString();
     } catch (UnableToCompleteException e) {
       // just rethrow
       throw e;

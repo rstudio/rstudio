@@ -16,29 +16,26 @@
 package com.google.gwt.dev.util;
 
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Arrays;
 
 /**
  * Adapts {@link TextOutput} to a print writer.
  */
-public final class TextOutputOnPrintWriter implements TextOutput {
+public final class DefaultTextOutput implements TextOutput {
 
   private final boolean compact;
   private int identLevel = 0;
-  private int indentGranularity;
+  private int indentGranularity = 2;
   private char[][] indents = new char[][] {new char[0]};
   private boolean justNewlined;
   private final PrintWriter p;
+  private final StringWriter sw;
 
-  public TextOutputOnPrintWriter(PrintWriter writer, boolean compact) {
-    this(writer, compact, 2);
-  }
-
-  public TextOutputOnPrintWriter(PrintWriter writer, boolean compact,
-      int indentGranularity) {
-    this.indentGranularity = indentGranularity;
+  public DefaultTextOutput(boolean compact) {
     this.compact = compact;
-    p = writer;
+    sw = new StringWriter();
+    p = new PrintWriter(sw, false);
   }
 
   public void indentIn() {
@@ -54,41 +51,42 @@ public final class TextOutputOnPrintWriter implements TextOutput {
       indents = newIndents;
     }
   }
-
+  
   public void indentOut() {
     --identLevel;
   }
 
   public void newline() {
-    p.println();
+    if (compact) {
+      p.print('\n');
+    } else {
+      p.println();
+    }
     justNewlined = true;
   }
 
   public void newlineOpt() {
     if (!compact) {
       p.println();
+      justNewlined = true;
     }
-    justNewlined = true;
   }
 
   public void print(char c) {
     maybeIndent();
     p.print(c);
-    p.flush();
     justNewlined = false;
   }
 
   public void print(char[] s) {
     maybeIndent();
     p.print(s);
-    p.flush();
     justNewlined = false;
   }
 
   public void print(String s) {
     maybeIndent();
     p.print(s);
-    p.flush();
     justNewlined = false;
   }
 
@@ -96,7 +94,6 @@ public final class TextOutputOnPrintWriter implements TextOutput {
     if (!compact) {
       maybeIndent();
       p.print(c);
-      p.flush();
     }
   }
 
@@ -104,7 +101,6 @@ public final class TextOutputOnPrintWriter implements TextOutput {
     if (!compact) {
       maybeIndent();
       p.print(s);
-      p.flush();
     }
   }
 
@@ -112,8 +108,12 @@ public final class TextOutputOnPrintWriter implements TextOutput {
     if (!compact) {
       maybeIndent();
       p.print(s);
-      p.flush();
     }
+  }
+
+  public String toString() {
+    p.flush();
+    return sw.toString();
   }
 
   private void maybeIndent() {

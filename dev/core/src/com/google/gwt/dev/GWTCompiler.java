@@ -36,6 +36,7 @@ import com.google.gwt.dev.jdt.StandardSourceOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.shell.StandardRebindOracle;
+import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.SelectionScriptGenerator;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
@@ -441,78 +442,92 @@ public class GWTCompiler extends ToolBase {
   }
 
   private String getHtmlPrefix() {
-    StringBuffer sb = new StringBuffer();
-
-    sb.append("<html>\n");
+    DefaultTextOutput out = new DefaultTextOutput(obfuscate);
+    out.print("<html>");
+    out.newlineOpt();
 
     // Setup the well-known variables.
     //
-    sb.append("<head><script>\n");
-    sb.append("var $wnd = parent;\n");
-    sb.append("var $doc = $wnd.document;\n");
-    sb.append("var $moduleName = \"" + moduleName + "\";\n");
-    sb.append("</script></head>\n");
-    sb.append("<body>\n");
+    out.print("<head><script>");
+    out.newlineOpt();
+    out.print("var $wnd = parent;");
+    out.newlineOpt();
+    out.print("var $doc = $wnd.document;");
+    out.newlineOpt();
+    out.print("var $moduleName = \"" + moduleName + "\";");
+    out.newlineOpt();
+    out.print("</script></head>");
+    out.newlineOpt();
+    out.print("<body>");
+    out.newlineOpt();
 
     // A nice message in case someone opens the file directly.
     //
-    sb.append("<font face='arial' size='-1'>This script is part of module</font>\n");
-    sb.append("<code>");
-    sb.append(module.getName());
-    sb.append("</code>\n");
+    out.print("<font face='arial' size='-1'>This script is part of module</font>");
+    out.newlineOpt();
+    out.print("<code>");
+    out.print(module.getName());
+    out.print("</code>");
+    out.newlineOpt();
 
     // Begin a script block inside the body. It's commented out so that the
     // browser won't mistake strings containing "<script>" for actual script.
-    sb.append("<script><!--\n");
-
-    String s = sb.toString();
-    return s;
+    out.print("<script><!--");
+    out.newline();
+    return out.toString();
   }
 
   private String getHtmlSuffix() {
-    StringBuffer sb = new StringBuffer();
+    DefaultTextOutput out = new DefaultTextOutput(obfuscate);
     String moduleFunction = module.getName().replace('.', '_');
 
     // Generate the call to tell the bootstrap code that we're ready to go.
-    sb.append("\n");
-    sb.append("if ($wnd." + moduleFunction + ") $wnd." + moduleFunction
-        + ".onScriptLoad();\n");
-    sb.append("--></script></body></html>\n");
+    out.newlineOpt();
+    out.print("if ($wnd." + moduleFunction + ") $wnd." + moduleFunction
+        + ".onScriptLoad();");
+    out.newline();
+    out.print("--></script></body></html>");
+    out.newlineOpt();
 
-    String s = sb.toString();
-    return s;
+    return out.toString();
   }
 
   private String getJsPrefix() {
-    StringBuffer sb = new StringBuffer();
+    DefaultTextOutput out = new DefaultTextOutput(obfuscate);
 
-    sb.append("(function(){\n");
+    out.print("(function(){");
+    out.newlineOpt();
 
     // Setup the well-known variables.
     //
-    sb.append("var $wnd = parent;\n");
-    sb.append("var $doc = $wnd.document;\n");
-    sb.append("var $moduleName = \"" + moduleName + "\";\n");
+    out.print("var $wnd = parent;");
+    out.newlineOpt();
+    out.print("var $doc = $wnd.document;");
+    out.newlineOpt();
+    out.print("var $moduleName = \"" + moduleName + "\";");
+    out.newlineOpt();
 
-    String s = sb.toString();
-    return s;
+    return out.toString();
   }
 
   private String getJsSuffix() {
-    StringBuffer sb = new StringBuffer();
+    DefaultTextOutput out = new DefaultTextOutput(obfuscate);
     String moduleFunction = module.getName().replace('.', '_');
 
     // Generate the call to tell the bootstrap code that we're ready to go.
-    sb.append("\n");
-    sb.append("if (" + moduleFunction + ") {\n");
-    sb.append("  var __gwt_initHandlers = " + moduleFunction
-        + ".__gwt_initHandlers;\n");
-    sb.append("  " + moduleFunction + ".onScriptLoad(gwtOnLoad);\n");
-    sb.append("}\n");
-    sb.append("})();\n");
+    out.newlineOpt();
+    out.print("if (" + moduleFunction + ") {");
+    out.newlineOpt();
+    out.print("  var __gwt_initHandlers = " + moduleFunction
+        + ".__gwt_initHandlers;");
+    out.print("  " + moduleFunction + ".onScriptLoad(gwtOnLoad);");
+    out.newlineOpt();
+    out.print("}");
+    out.newlineOpt();
+    out.print("})();");
+    out.newlineOpt();
 
-    String s = sb.toString();
-    return s;
+    return out.toString();
   }
 
   /**
@@ -706,7 +721,7 @@ public class GWTCompiler extends ToolBase {
   private boolean run() {
     // Set any platform specific system properties.
     BootStrapPlatform.setSystemProperties();
-    
+
     if (useGuiLogger) {
       // Initialize a tree logger window.
       DetachedTreeLoggerWindow loggerWindow = DetachedTreeLoggerWindow.getInstance(

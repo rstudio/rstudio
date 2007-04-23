@@ -380,11 +380,10 @@ public class Jsni {
    * JSNI idents have been replaced with legal JavaScript for hosted mode.
    */
   private static String generateJavaScriptForHostedMode(JsNode node) {
-    TextOutputOnCharArray tooca = new TextOutputOnCharArray(false);
-    JsSourceGenWithJsniIdentFixup vi = new JsSourceGenWithJsniIdentFixup(tooca);
+    DefaultTextOutput out = new DefaultTextOutput(false);
+    JsSourceGenWithJsniIdentFixup vi = new JsSourceGenWithJsniIdentFixup(out);
     vi.accept(node);
-    char[] source = tooca.getText();
-    return String.valueOf(source);
+    return out.toString();
   }
 
 }
