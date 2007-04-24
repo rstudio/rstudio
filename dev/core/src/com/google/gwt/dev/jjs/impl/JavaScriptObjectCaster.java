@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JConditional;
@@ -31,7 +32,8 @@ import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 
 /**
- * Replace cast and instanceof operations with calls to the Cast class.
+ * Synthesize casts for JavaScriptObject types in cases where dynamic type
+ * information may be necessary.
  */
 public class JavaScriptObjectCaster {
 
@@ -47,6 +49,13 @@ public class JavaScriptObjectCaster {
       if (x.isAssignment()) {
         JType lhsType = x.getLhs().getType();
         JExpression newRhs = checkAndReplaceJso(x.getRhs(), lhsType);
+        if (newRhs == x.getRhs()) {
+          // There's another case to check: if we have an array store that may
+          // trigger a type check, we need to wrap the rhs.
+          if (x.getLhs() instanceof JArrayRef) {
+            newRhs = checkAndReplaceJsoArrayStore(newRhs, lhsType);
+          }
+        }
         if (newRhs != x.getRhs()) {
           JBinaryOperation asg = new JBinaryOperation(program,
               x.getSourceInfo(), lhsType, x.getOp(), x.getLhs(), newRhs);
@@ -124,17 +133,39 @@ public class JavaScriptObjectCaster {
       return true;
     }
 
+    /**
+     * Wraps a JSO-typed argument if the target type is a different type.
+     */
     private JExpression checkAndReplaceJso(JExpression arg, JType targetType) {
       JType argType = arg.getType();
       if (argType == targetType) {
         return arg;
       }
-
       if (!(targetType instanceof JReferenceType)) {
         return arg;
       }
-
       if (!program.isJavaScriptObject(argType)) {
+        return arg;
+      }
+      // Synthesize a cast to the arg type to force a wrap
+      JCastOperation cast = new JCastOperation(program, arg.getSourceInfo(),
+          argType, arg);
+      return cast;
+    }
+
+    /**
+     * Wraps a JSO-typed argument if the target array element type might
+     * generate an array store check.
+     */
+    private JExpression checkAndReplaceJsoArrayStore(JExpression arg,
+        JType targetType) {
+      if (!(targetType instanceof JReferenceType)) {
+        return arg;
+      }
+      if (((JReferenceType) targetType).isFinal()) {
+        return arg;
+      }
+      if (!program.isJavaScriptObject(arg.getType())) {
         return arg;
       }
       // Synthesize a cast to the target type

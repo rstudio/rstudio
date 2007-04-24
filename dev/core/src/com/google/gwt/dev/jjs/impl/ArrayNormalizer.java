@@ -56,7 +56,8 @@ public class ArrayNormalizer {
         // see if we need to do a checked store
         // primitives and (effectively) final are statically correct
         if (elementType instanceof JReferenceType
-            && !((JReferenceType) elementType).isFinal()) {
+            && (!((JReferenceType) elementType).isFinal())
+            || elementType != x.getRhs().getType()) {
           // replace this assignment with a call to setCheck()
 
           JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
