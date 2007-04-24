@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -34,19 +34,19 @@ import java.util.HashMap;
  * image is constructed, and how it is transformed after construction. Methods
  * will operate differently depending on the mode that the image is in. These
  * differences are detailed in the documentation for each method.
- * 
+ *
  * <p>
  * If an image transitions between clipped mode and unclipped mode, any
  * {@link Element}-specific attributes added by the user (including style
  * attributes, style names, and style modifiers), except for event listeners,
  * will be lost.
  * </p>
- * 
+ *
  * <h3>CSS Style Rules</h3>
  * <ul class="css">
  * <li>.gwt-Image { }</li>
  * </ul>
- * 
+ *
  * Tranformations between clipped and unclipped state will result in a loss of
  * any style names that were set/added; the only style names that are preserved
  * are those that are mentioned in the static CSS style rules. Due to
@@ -55,14 +55,14 @@ import java.util.HashMap;
  * expected when an image is in clipped mode. These limitations can usually be
  * easily worked around by encapsulating the image in a container widget that
  * can itself be styled.
- * 
+ *
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.ImageExample}
  * </p>
  */
 public class Image extends Widget implements SourcesClickEvents,
-    SourcesMouseEvents, SourcesLoadEvents {
+    SourcesLoadEvents, SourcesMouseEvents, SourcesMouseWheelEvents {
 
   /**
    * Abstract class which is used to hold the state associated with an image
@@ -101,7 +101,7 @@ public class Image extends Widget implements SourcesClickEvents,
     UnclippedState(Image image) {
       image.setElement(DOM.createImg());
       image.sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONLOAD
-          | Event.ONERROR);
+          | Event.ONERROR | Event.ONMOUSEWHEEL);
     }
 
     UnclippedState(Image image, String url) {
@@ -183,7 +183,7 @@ public class Image extends Widget implements SourcesClickEvents,
        * because the root element is a wrapper element around the <img> element.
        * Since we are synthesizing a load event, we do not need to sink the
        * onload event.
-       * 
+       *
        * We use a deferred command here to simulate the native version of the
        * load event as closely as possible. In the native event case, it is
        * unlikely that a second load event would occur while you are in the load
@@ -273,7 +273,7 @@ public class Image extends Widget implements SourcesClickEvents,
 
   /**
    * Causes the browser to pre-fetch the image at a given URL.
-   * 
+   *
    * @param url the URL of the image to be prefetched
    */
   public static void prefetch(String url) {
@@ -285,6 +285,7 @@ public class Image extends Widget implements SourcesClickEvents,
   private ClickListenerCollection clickListeners;
   private LoadListenerCollection loadListeners;
   private MouseListenerCollection mouseListeners;
+  private MouseWheelListenerCollection mouseWheelListeners;
 
   private State state;
 
@@ -299,7 +300,7 @@ public class Image extends Widget implements SourcesClickEvents,
   /**
    * Creates an image with a specified URL. The load event will be fired once
    * the image at the given URL has been retrieved by the browser.
-   * 
+   *
    * @param url the URL of the image to be displayed
    */
   public Image(String url) {
@@ -316,7 +317,7 @@ public class Image extends Widget implements SourcesClickEvents,
    * the width and height are specified explicitly by the user, this behavior
    * will not cause problems with retrieving the width and height of a clipped
    * image in a load event handler.
-   * 
+   *
    * @param url the URL of the image to be displayed
    * @param left the horizontal co-ordinate of the upper-left vertex of the
    *          visibility rectangle
@@ -351,11 +352,18 @@ public class Image extends Widget implements SourcesClickEvents,
     mouseListeners.add(listener);
   }
 
+  public void addMouseWheelListener(MouseWheelListener listener) {
+    if (mouseWheelListeners == null) {
+      mouseWheelListeners = new MouseWheelListenerCollection();
+    }
+    mouseWheelListeners.add(listener);
+  }
+
   /**
    * Gets the height of the image. When the image is in the unclipped state, the
    * height of the image is not known until the image has been loaded (i.e. load
    * event has been fired for the image).
-   * 
+   *
    * @return the height of the image, or 0 if the height is unknown
    */
   public int getHeight() {
@@ -367,7 +375,7 @@ public class Image extends Widget implements SourcesClickEvents,
    * visibility rectangle. If the image is in the unclipped state, then the
    * visibility rectangle is assumed to be the rectangle which encompasses the
    * entire image, which has an upper-left vertex of (0,0).
-   * 
+   *
    * @return the horizontal co-ordinate of the upper-left vertex of the image's
    *         visibility rectangle
    */
@@ -380,7 +388,7 @@ public class Image extends Widget implements SourcesClickEvents,
    * visibility rectangle. If the image is in the unclipped state, then the
    * visibility rectangle is assumed to be the rectangle which encompasses the
    * entire image, which has an upper-left vertex of (0,0).
-   * 
+   *
    * @return the vertical co-ordinate of the upper-left vertex of the image's
    *         visibility rectangle
    */
@@ -392,7 +400,7 @@ public class Image extends Widget implements SourcesClickEvents,
    * Gets the URL of the image. The URL that is returned is not necessarily the
    * URL that was passed in by the user. It may have been transformed to an
    * absolute URL.
-   * 
+   *
    * @return the image URL
    */
   public String getUrl() {
@@ -403,7 +411,7 @@ public class Image extends Widget implements SourcesClickEvents,
    * Gets the width of the image. When the image is in the unclipped state, the
    * width of the image is not known until the image has been loaded (i.e. load
    * event has been fired for the image).
-   * 
+   *
    * @return the width of the image, or 0 if the width is unknown
    */
   public int getWidth() {
@@ -428,6 +436,11 @@ public class Image extends Widget implements SourcesClickEvents,
         }
         break;
       }
+      case Event.ONMOUSEWHEEL:
+        if (mouseWheelListeners != null) {
+          mouseWheelListeners.fireMouseWheelEvent(this, event);
+        }
+        break;
       case Event.ONLOAD: {
         if (loadListeners != null) {
           loadListeners.fireLoad(this);
@@ -461,12 +474,18 @@ public class Image extends Widget implements SourcesClickEvents,
     }
   }
 
+  public void removeMouseWheelListener(MouseWheelListener listener) {
+    if (mouseWheelListeners != null) {
+      mouseWheelListeners.remove(listener);
+    }
+  }
+
   /**
    * Sets the URL of the image to be displayed. If the image is in the clipped
    * state, a call to this method will cause a transition of the image to the
    * unclipped state. Regardless of whether or not the image is in the clipped
    * or unclipped state, a load event will be fired.
-   * 
+   *
    * @param url the image URL
    */
   public void setUrl(String url) {
@@ -480,7 +499,7 @@ public class Image extends Widget implements SourcesClickEvents,
    * visibility rectangle co-ordinates. If the image is currently in the
    * unclipped state, a call to this method will cause a transition to the
    * clipped state.
-   * 
+   *
    * @param url the image URL
    * @param left the horizontal coordinate of the upper-left vertex of the
    *          visibility rectangle
@@ -503,7 +522,7 @@ public class Image extends Widget implements SourcesClickEvents,
    * is in the unclipped state, a call to this method will cause a transition of
    * the image to the clipped state. This transition will cause a load event to
    * fire.
-   * 
+   *
    * @param left the horizontal coordinate of the upper-left vertex of the
    *          visibility rectangle
    * @param top the vertical coordinate of the upper-left vertex of the

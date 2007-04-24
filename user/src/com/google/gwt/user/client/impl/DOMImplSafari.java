@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,11 +16,16 @@
 package com.google.gwt.user.client.impl;
 
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.Event;
 
 /**
  * Safari implementation of {@link com.google.gwt.user.client.impl.DOMImpl}.
  */
 class DOMImplSafari extends DOMImplStandard {
+
+  public native int eventGetMouseWheelVelocityY(Event evt) /*-{
+    return -evt.wheelDelta / 40;
+  }-*/;
 
   public native int getAbsoluteLeft(Element elem) /*-{
     var left = 0;
@@ -34,7 +39,7 @@ class DOMImplSafari extends DOMImplStandard {
           (elem.style.position == 'absolute')) {
         return left;
       }
-      
+
       elem = parent;
     }
     return left + $doc.body.scrollLeft;
@@ -52,7 +57,7 @@ class DOMImplSafari extends DOMImplStandard {
           (elem.style.position == 'absolute')) {
         return top;
       }
-      
+
       elem = parent;
     }
     return top + $doc.body.scrollTop;

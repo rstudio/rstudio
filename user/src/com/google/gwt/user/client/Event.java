@@ -1,12 +1,12 @@
 /*
- * Copyright 2006 Google Inc.
- * 
+ * Copyright 2007 Google Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -124,6 +124,11 @@ public final class Event extends JavaScriptObject {
   public static final int ONMOUSEUP = 0x00008;
 
   /**
+   * Fired when the user scrolls the mouse wheel over an element.
+   */
+  public static final int ONMOUSEWHEEL = 0x20000;
+
+  /**
    * Fired when a scrollable element's scroll offset changes.
    */
   public static final int ONSCROLL = 0x04000;
@@ -140,7 +145,7 @@ public final class Event extends JavaScriptObject {
 
   /**
    * A bit-mask covering all mouse events (down, up, move, over, and out), but
-   * not click or dblclick.
+   * not click, dblclick, or wheel events.
    */
   public static final int MOUSEEVENTS = ONMOUSEDOWN | ONMOUSEUP | ONMOUSEMOVE
     | ONMOUSEOVER | ONMOUSEOUT;
@@ -155,7 +160,7 @@ public final class Event extends JavaScriptObject {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.lang.Object#equals(java.lang.Object)
    */
   public boolean equals(Object other) {
@@ -164,7 +169,7 @@ public final class Event extends JavaScriptObject {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.lang.Object#hashCode()
    */
   public int hashCode() {
@@ -173,7 +178,7 @@ public final class Event extends JavaScriptObject {
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see java.lang.Object#toString()
    */
   public String toString() {

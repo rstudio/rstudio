@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -34,7 +34,7 @@ public class DOM {
 
   //<BrowserEventPreview>
   private static Vector sEventPreviewStack = new Vector();
-  
+
   static {
     impl = (DOMImpl) GWT.create(DOMImpl.class);
     impl.init();
@@ -46,7 +46,7 @@ public class DOM {
    * to their listeners. Note that the event preview will receive <u>all </u>
    * events, including those received due to bubbling, whereas normal event
    * handlers only receive explicitly sunk events.
-   * 
+   *
    * @param preview the event preview to be added to the stack.
    */
   public static void addEventPreview(EventPreview preview) {
@@ -57,7 +57,7 @@ public class DOM {
 
   /**
    * Appends one element to another's list of children.
-   * 
+   *
    * @param parent the parent element
    * @param child its new child
    */
@@ -68,7 +68,7 @@ public class DOM {
   /**
    * Compares two elements for equality (note that reference equality is not
    * sufficient to determine equality among elements on most browsers).
-   * 
+   *
    * @param elem1 the first element to be compared
    * @param elem2 the second element to be compared
    * @return <code>true</code> if they are in fact the same element
@@ -80,7 +80,7 @@ public class DOM {
 
   /**
    * Creates an HTML A element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createAnchor() {
@@ -89,7 +89,7 @@ public class DOM {
 
   /**
    * Creates an HTML BUTTON element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createButton() {
@@ -104,10 +104,10 @@ public class DOM {
   public static Element createCaption() {
     return impl.createElement("caption");
   }
-  
+
   /**
    * Creates an HTML COL element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createCol() {
@@ -125,7 +125,7 @@ public class DOM {
 
   /**
    * Creates an HTML DIV element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createDiv() {
@@ -134,7 +134,7 @@ public class DOM {
 
   /**
    * Creates an HTML element.
-   * 
+   *
    * @param tagName the HTML tag of the element to be created
    * @return the newly-created element
    */
@@ -144,7 +144,7 @@ public class DOM {
 
   /**
    * Creates an HTML FIELDSET element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createFieldSet() {
@@ -153,7 +153,7 @@ public class DOM {
 
   /**
    * Creates an HTML FORM element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createForm() {
@@ -162,7 +162,7 @@ public class DOM {
 
   /**
    * Creates an HTML IFRAME element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createIFrame() {
@@ -171,7 +171,7 @@ public class DOM {
 
   /**
    * Creates an HTML IMG element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createImg() {
@@ -180,7 +180,7 @@ public class DOM {
 
   /**
    * Creates an HTML INPUT type='CHECK' element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createInputCheck() {
@@ -189,7 +189,7 @@ public class DOM {
 
   /**
    * Creates an HTML INPUT type='PASSWORD' element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createInputPassword() {
@@ -198,7 +198,7 @@ public class DOM {
 
   /**
    * Creates an HTML INPUT type='RADIO' element.
-   * 
+   *
    * @param group the name of the group with which this radio button will be
    *          associated
    * @return the newly-created element
@@ -209,7 +209,7 @@ public class DOM {
 
   /**
    * Creates an HTML INPUT type='TEXT' element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createInputText() {
@@ -218,7 +218,7 @@ public class DOM {
 
   /**
    * Creates an HTML LABEL element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createLabel() {
@@ -227,7 +227,7 @@ public class DOM {
 
   /**
    * Creates an HTML LEGEND element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createLegend() {
@@ -236,7 +236,7 @@ public class DOM {
 
   /**
    * Creates an HTML OPTIONS element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createOptions() {
@@ -245,7 +245,7 @@ public class DOM {
 
   /**
    * Creates an HTML SELECT element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createSelect() {
@@ -254,7 +254,7 @@ public class DOM {
 
   /**
    * Creates an HTML SPAN element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createSpan() {
@@ -263,7 +263,7 @@ public class DOM {
 
   /**
    * Creates an HTML TABLE element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createTable() {
@@ -272,7 +272,7 @@ public class DOM {
 
   /**
    * Creates an HTML TBODY element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createTBody() {
@@ -281,7 +281,7 @@ public class DOM {
 
   /**
    * Creates an HTML TD element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createTD() {
@@ -290,7 +290,7 @@ public class DOM {
 
   /**
    * Creates an HTML TEXTAREA element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createTextArea() {
@@ -308,7 +308,7 @@ public class DOM {
 
   /**
    * Creates an HTML TH element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createTH() {
@@ -326,7 +326,7 @@ public class DOM {
 
   /**
    * Creates an HTML TR element.
-   * 
+   *
    * @return the newly-created element
    */
   public static Element createTR() {
@@ -336,7 +336,7 @@ public class DOM {
   /**
    * Cancels bubbling for the given event. This will stop the event from being
    * propagated to parent elements.
-   * 
+   *
    * @param evt the event on which to cancel bubbling
    * @param cancel <code>true</code> to cancel bubbling
    */
@@ -346,7 +346,7 @@ public class DOM {
 
   /**
    * Gets whether the ALT key was depressed when the given event occurred.
-   * 
+   *
    * @param evt the event to be tested
    * @return <code>true</code> if ALT was depressed when the event occurred
    */
@@ -356,7 +356,7 @@ public class DOM {
 
   /**
    * Gets the mouse buttons that were depressed when the given event occurred.
-   * 
+   *
    * @param evt the event to be tested
    * @return a bit-field, defined by {@link Event#BUTTON_LEFT},
    *         {@link Event#BUTTON_MIDDLE}, and {@link Event#BUTTON_RIGHT}
@@ -367,7 +367,7 @@ public class DOM {
 
   /**
    * Gets the mouse x-position within the browser window's client area.
-   * 
+   *
    * @param evt the event to be tested
    * @return the mouse x-position
    */
@@ -377,7 +377,7 @@ public class DOM {
 
   /**
    * Gets the mouse y-position within the browser window's client area.
-   * 
+   *
    * @param evt the event to be tested
    * @return the mouse y-position
    */
@@ -387,7 +387,7 @@ public class DOM {
 
   /**
    * Gets whether the CTRL key was depressed when the given event occurred.
-   * 
+   *
    * @param evt the event to be tested
    * @return <code>true</code> if CTRL was depressed when the event occurred
    */
@@ -398,7 +398,7 @@ public class DOM {
   /**
    * Gets the element from which the mouse pointer was moved (only valid for
    * {@link Event#ONMOUSEOVER}).
-   * 
+   *
    * @param evt the event to be tested
    * @return the element from which the mouse pointer was moved
    */
@@ -408,13 +408,13 @@ public class DOM {
 
   /**
    * Gets the key code associated with this event.
-   * 
+   *
    * <p>
    * For {@link Event#ONKEYPRESS}, this method returns the Unicode value of the
    * character generated. For {@link Event#ONKEYDOWN} and {@link Event#ONKEYUP},
    * it returns the code associated with the physical key.
    * </p>
-   * 
+   *
    * @param evt the event to be tested
    * @return the Unicode character or key code.
    * @see com.google.gwt.user.client.ui.KeyboardListener
@@ -424,8 +424,28 @@ public class DOM {
   }
 
   /**
+   * Gets the velocity of the mouse wheel associated with the event along the
+   * Y axis.
+   * <p>
+   * The velocity of the event is an artifical measurement for relative
+   * comparisons of wheel activity.  It is affected by some non-browser
+   * factors, including choice of input hardware and mouse acceleration
+   * settings.  The sign of the velocity measurement agrees with the screen
+   * coordinate system; negative values are towards the origin and positive
+   * values are away from the origin.  Standard scrolling speed is approximately
+   * ten units per event.
+   * </p>
+   *
+   * @param evt the event to be examined.
+   * @return The velocity of the mouse wheel.
+   */
+  public static int eventGetMouseWheelVelocityY(Event evt) {
+    return impl.eventGetMouseWheelVelocityY(evt);
+  }
+
+  /**
    * Gets the key-repeat state of this event.
-   * 
+   *
    * @param evt the event to be tested
    * @return <code>true</code> if this key event was an auto-repeat
    */
@@ -435,7 +455,7 @@ public class DOM {
 
   /**
    * Gets the mouse x-position on the user's display.
-   * 
+   *
    * @param evt the event to be tested
    * @return the mouse x-position
    */
@@ -445,7 +465,7 @@ public class DOM {
 
   /**
    * Gets the mouse y-position on the user's display.
-   * 
+   *
    * @param evt the event to be tested
    * @return the mouse y-position
    */
@@ -455,7 +475,7 @@ public class DOM {
 
   /**
    * Gets whether the shift key was depressed when the given event occurred.
-   * 
+   *
    * @param evt the event to be tested
    * @return <code>true</code> if shift was depressed when the event occurred
    */
@@ -465,7 +485,7 @@ public class DOM {
 
   /**
    * Returns the element that was the actual target of the given event.
-   * 
+   *
    * @param evt the event to be tested
    * @return the target element
    */
@@ -476,7 +496,7 @@ public class DOM {
   /**
    * Gets the element to which the mouse pointer was moved (only valid for
    * {@link Event#ONMOUSEOUT}).
-   * 
+   *
    * @param evt the event to be tested
    * @return the element to which the mouse pointer was moved
    */
@@ -486,7 +506,7 @@ public class DOM {
 
   /**
    * Gets the enumerated type of this event (as defined in {@link Event}).
-   * 
+   *
    * @param evt the event to be tested
    * @return the event's enumerated type
    */
@@ -496,7 +516,7 @@ public class DOM {
 
   /**
    * Gets the type of the given event as a string.
-   * 
+   *
    * @param evt the event to be tested
    * @return the event's type name
    */
@@ -506,7 +526,7 @@ public class DOM {
 
   /**
    * Prevents the browser from taking its default action for the given event.
-   * 
+   *
    * @param evt the event whose default action is to be prevented
    */
   public static void eventPreventDefault(Event evt) {
@@ -515,7 +535,7 @@ public class DOM {
 
   /**
    * Sets the key code associated with the given keyboard event.
-   * 
+   *
    * @param evt the event whose key code is to be set
    * @param key the new key code
    */
@@ -526,7 +546,7 @@ public class DOM {
   /**
    * Returns a stringized version of the event. This string is for debugging
    * purposes and will NOT be consistent on different browsers.
-   * 
+   *
    * @param evt the event to stringize
    * @return a string form of the event
    */
@@ -537,7 +557,7 @@ public class DOM {
   /**
    * Gets an element's absolute left coordinate in the document's coordinate
    * system.
-   * 
+   *
    * @param elem the element to be measured
    * @return the element's absolute left coordinate
    */
@@ -548,7 +568,7 @@ public class DOM {
   /**
    * Gets an element's absolute top coordinate in the document's coordinate
    * system.
-   * 
+   *
    * @param elem the element to be measured
    * @return the element's absolute top coordinate
    */
@@ -558,11 +578,11 @@ public class DOM {
 
   /**
    * Gets any named attribute from an element, as a string.
-   * 
+   *
    * @param elem the element whose attribute is to be retrieved
    * @param attr the name of the attribute
    * @return the attribute's value
-   * @deprecated Use the more appropriately named 
+   * @deprecated Use the more appropriately named
    * {@link #getElementProperty(Element, String)} instead.
    */
   public static String getAttribute(Element elem, String attr) {
@@ -571,11 +591,11 @@ public class DOM {
 
   /**
    * Gets a boolean attribute on the given element.
-   * 
+   *
    * @param elem the element whose attribute is to be set
    * @param attr the name of the attribute to be set
    * @return the attribute's value as a boolean
-   * @deprecated Use the more appropriately named 
+   * @deprecated Use the more appropriately named
    * {@link #getElementPropertyBoolean(Element, String)} instead.
    */
   public static boolean getBooleanAttribute(Element elem, String attr) {
@@ -584,7 +604,7 @@ public class DOM {
 
   /**
    * Gets the element that currently has mouse capture.
-   * 
+   *
    * @return a handle to the capture element, or <code>null</code> if none
    *         exists
    */
@@ -594,7 +614,7 @@ public class DOM {
 
   /**
    * Gets an element's n-th child element.
-   * 
+   *
    * @param parent the element whose child is to be retrieved
    * @param index the index of the child element
    * @return the n-th child element
@@ -605,7 +625,7 @@ public class DOM {
 
   /**
    * Gets the number of child elements present in a given parent element.
-   * 
+   *
    * @param parent the element whose children are to be counted
    * @return the number of children
    */
@@ -615,7 +635,7 @@ public class DOM {
 
   /**
    * Gets the index of a given child element within its parent.
-   * 
+   *
    * @param parent the parent element
    * @param child the child element
    * @return the child's index within its parent, or <code>-1</code> if it is
@@ -627,7 +647,7 @@ public class DOM {
 
   /**
    * Gets the named attribute from the element.
-   * 
+   *
    * @param elem the element whose property is to be retrieved
    * @param attr the name of the attribute
    * @return the value of the attribute
@@ -635,11 +655,11 @@ public class DOM {
   public static String getElementAttribute(Element elem, String attr) {
      return impl.getElementAttribute(elem, attr);
   }
-  
+
   /**
    * Gets the element associated with the given unique id within the entire
    * document.
-   * 
+   *
    * @param id the id whose associated element is to be retrieved
    * @return the associated element, or <code>null</code> if none is found
    */
@@ -648,7 +668,7 @@ public class DOM {
   }
   /**
    * Gets any named property from an element, as a string.
-   * 
+   *
    * @param elem the element whose property is to be retrieved
    * @param prop the name of the property
    * @return the property's value
@@ -656,10 +676,10 @@ public class DOM {
   public static String getElementProperty(Element elem, String prop) {
      return impl.getElementProperty(elem, prop);
   }
-  
+
   /**
    * Gets any named property from an element, as a boolean.
-   * 
+   *
    * @param elem the element whose property is to be retrieved
    * @param prop the name of the property
    * @return the property's value as a boolean
@@ -667,10 +687,10 @@ public class DOM {
   public static boolean getElementPropertyBoolean(Element elem, String prop) {
      return impl.getElementPropertyBoolean(elem, prop);
   }
-  
+
   /**
    * Gets any named property from an element, as an int.
-   * 
+   *
    * @param elem the element whose property is to be retrieved
    * @param prop the name of the property
    * @return the property's value as an int
@@ -678,10 +698,10 @@ public class DOM {
   public static int getElementPropertyInt(Element elem, String prop) {
      return impl.getElementPropertyInt(elem, prop);
   }
-  
+
   /**
    * Gets the current set of events sunk by a given element.
-   * 
+   *
    * @param elem the element whose events are to be retrieved
    * @return a bitfield describing the events sunk on this element (its possible
    *         values are described in {@link Event})
@@ -692,7 +712,7 @@ public class DOM {
 
   /**
    * Gets the first child element of the given element.
-   * 
+   *
    * @param elem the element whose child is to be retrieved
    * @return the child element
    */
@@ -702,7 +722,7 @@ public class DOM {
 
   /**
    * Gets an HTML representation of an element's children.
-   * 
+   *
    * @param elem the element whose HTML is to be retrieved
    * @return the HTML representation of the element's children
    */
@@ -713,7 +733,7 @@ public class DOM {
   /**
    * Gets the text contained within an element. If the element has child
    * elements, only the text between them will be retrieved.
-   * 
+   *
    * @param elem the element whose inner text is to be retrieved
    * @return the text inside this element
    */
@@ -723,11 +743,11 @@ public class DOM {
 
   /**
    * Gets an integer attribute on a given element.
-   * 
+   *
    * @param elem the element whose attribute is to be retrieved
    * @param attr the name of the attribute to be retrieved
    * @return the attribute's value as an integer
-   * @deprecated Use the more appropriately named 
+   * @deprecated Use the more appropriately named
    * {@link #getElementPropertyInt(Element, String)} instead.
    */
   public static int getIntAttribute(Element elem, String attr) {
@@ -736,7 +756,7 @@ public class DOM {
 
   /**
    * Gets an integer attribute on a given element's style.
-   * 
+   *
    * @param elem the element whose style attribute is to be retrieved
    * @param attr the name of the attribute to be retrieved
    * @return the style attribute's value as an integer
@@ -747,7 +767,7 @@ public class DOM {
 
   /**
    * Gets an element's next sibling element.
-   * 
+   *
    * @param elem the element whose sibling is to be retrieved
    * @return the sibling element
    */
@@ -757,7 +777,7 @@ public class DOM {
 
   /**
    * Gets an element's parent element.
-   * 
+   *
    * @param elem the element whose parent is to be retrieved
    * @return the parent element
    */
@@ -767,7 +787,7 @@ public class DOM {
 
   /**
    * Gets an attribute of the given element's style.
-   * 
+   *
    * @param elem the element whose style attribute is to be retrieved
    * @param attr the name of the style attribute to be retrieved
    * @return the style attribute's value
@@ -778,7 +798,7 @@ public class DOM {
 
   /**
    * Inserts an element as a child of the given parent element.
-   * 
+   *
    * @param parent the parent element
    * @param child the child element
    * @param index the index before which the child will be inserted (any value
@@ -796,7 +816,7 @@ public class DOM {
 
   /**
    * Determine whether one element is equal to, or the child of, another.
-   * 
+   *
    * @param parent the potential parent element
    * @param child the potential child element
    * @return <code>true</code> if the relationship holds
@@ -809,7 +829,7 @@ public class DOM {
   /**
    * Releases mouse capture on the given element. Calling this method has no
    * effect if the element does not currently have mouse capture.
-   * 
+   *
    * @param elem the element to release capture
    * @see #setCapture(Element)
    */
@@ -822,7 +842,7 @@ public class DOM {
 
   /**
    * Removes a child element from the given parent element.
-   * 
+   *
    * @param parent the parent element
    * @param child the child element to be removed
    */
@@ -835,7 +855,6 @@ public class DOM {
    *
    * @param elem the element whose attribute is to be removed
    * @param attr the name of the element to remove
-   * @return true if the element was removed, false if the element did not exist
    */
   public static void removeElementAttribute(Element elem, String attr) {
     impl.removeElementAttribute(elem, attr);
@@ -844,7 +863,7 @@ public class DOM {
   /**
    * Removes an element from the preview stack. This element will no longer
    * capture events, though any preview underneath it will begin to do so.
-   * 
+   *
    * @param preview the event preview to be removed from the stack
    */
   public static void removeEventPreview(EventPreview preview) {
@@ -855,14 +874,14 @@ public class DOM {
   }
   /**
    * Scrolls the given element into view.
-   * 
+   *
    * <p>
    * This method crawls up the DOM hierarchy, adjusting the scrollLeft and
    * scrollTop properties of each scrollable element to ensure that the
    * specified element is completely in view. It adjusts each scroll position by
    * the minimum amount necessary.
    * </p>
-   * 
+   *
    * @param elem the element to be made visible
    */
   public static void scrollIntoView(Element elem) {
@@ -871,11 +890,11 @@ public class DOM {
 
   /**
    * Sets an attribute on the given element.
-   * 
+   *
    * @param elem the element whose attribute is to be set
    * @param attr the name of the attribute to be set
    * @param value the new attribute value
-   * @deprecated Use the more appropriately named 
+   * @deprecated Use the more appropriately named
    * {@link #setElementProperty(Element, String, String)} instead.
    */
   public static void setAttribute(Element elem, String attr, String value) {
@@ -884,11 +903,11 @@ public class DOM {
 
   /**
    * Sets a boolean attribute on the given element.
-   * 
+   *
    * @param elem the element whose attribute is to be set
    * @param attr the name of the attribute to be set
    * @param value the attribute's new boolean value
-   * @deprecated Use the more appropriately named 
+   * @deprecated Use the more appropriately named
    * {@link #setElementPropertyBoolean(Element, String, boolean)} instead.
    */
   public static void setBooleanAttribute(Element elem, String attr,
@@ -899,17 +918,17 @@ public class DOM {
   /**
    * Sets mouse-capture on the given element. This element will directly receive
    * all mouse events until {@link #releaseCapture(Element)} is called on it.
-   * 
+   *
    * @param elem the element on which to set mouse capture
    */
   public static void setCapture(Element elem) {
     sCaptureElem = elem;
     impl.setCapture(elem);
   }
-  
+
   /**
    * Sets an attribute on a given element.
-   * 
+   *
    * @param elem element whose attribute is to be set
    * @param attr the name of the attribute
    * @param value the value to which the attribute should be set
@@ -918,10 +937,10 @@ public class DOM {
       String value) {
     impl.setElementAttribute(elem, attr, value);
   }
-  
+
   /**
    * Sets a property on the given element.
-   * 
+   *
    * @param elem the element whose property is to be set
    * @param prop the name of the property to be set
    * @param value the new property value
@@ -933,7 +952,7 @@ public class DOM {
 
   /**
    * Sets a boolean property on the given element.
-   * 
+   *
    * @param elem the element whose property is to be set
    * @param prop the name of the property to be set
    * @param value the new property value as a boolean
@@ -945,7 +964,7 @@ public class DOM {
 
   /**
    * Sets an int property on the given element.
-   * 
+   *
    * @param elem the element whose property is to be set
    * @param prop the name of the property to be set
    * @param value the new property value as an int
@@ -958,7 +977,7 @@ public class DOM {
   /**
    * Sets the {@link EventListener} to receive events for the given element.
    * Only one such listener may exist for a single element.
-   * 
+   *
    * @param elem the element whose listener is to be set
    * @param listener the listener to receive {@link Event events}
    */
@@ -968,7 +987,7 @@ public class DOM {
 
   /**
    * Sets the HTML contained within an element.
-   * 
+   *
    * @param elem the element whose inner HTML is to be set
    * @param html the new html
    */
@@ -979,7 +998,7 @@ public class DOM {
   /**
    * Sets the text contained within an element. If the element already has
    * children, they will be destroyed.
-   * 
+   *
    * @param elem the element whose inner text is to be set
    * @param text the new text
    */
@@ -989,11 +1008,11 @@ public class DOM {
 
   /**
    * Sets an integer attribute on the given element.
-   * 
+   *
    * @param elem the element whose attribute is to be set
    * @param attr the name of the attribute to be set
    * @param value the attribute's new integer value
-   * @deprecated Use the more appropriately named 
+   * @deprecated Use the more appropriately named
    * {@link #setElementPropertyInt(Element, String, int)} instead.
    */
   public static void setIntAttribute(Element elem, String attr, int value) {
@@ -1002,7 +1021,7 @@ public class DOM {
 
   /**
    * Sets an integer attribute on the given element's style.
-   * 
+   *
    * @param elem the element whose style attribute is to be set
    * @param attr the name of the style attribute to be set
    * @param value the style attribute's new integer value
@@ -1014,7 +1033,7 @@ public class DOM {
 
   /**
    * Sets the option text of the given select object.
-   * 
+   *
    * @param select the select object whose option text is being set
    * @param text the text to set
    * @param index the index of the option whose text should be set
@@ -1025,7 +1044,7 @@ public class DOM {
 
   /**
    * Sets an attribute on the given element's style.
-   * 
+   *
    * @param elem the element whose style attribute is to be set
    * @param attr the name of the style attribute to be set
    * @param value the style attribute's new value
@@ -1039,7 +1058,7 @@ public class DOM {
    * Sets the current set of events sunk by a given element. These events will
    * be fired to the nearest {@link EventListener} specified on any of the
    * element's parents.
-   * 
+   *
    * @param elem the element whose events are to be retrieved
    * @param eventBits a bitfield describing the events sunk on this element (its
    *          possible values are described in {@link Event})
@@ -1051,7 +1070,7 @@ public class DOM {
   /**
    * Returns a stringized version of the element. This string is for debugging
    * purposes and will NOT be consistent on different browsers.
-   * 
+   *
    * @param elem the element to stringize
    * @return a string form of the element
    */
@@ -1061,7 +1080,7 @@ public class DOM {
 
   /**
    * This method is called directly by native code when any event is fired.
-   * 
+   *
    * @param evt the handle to the event being fired.
    * @param elem the handle to the element that received the event.
    * @param listener the listener associated with the element that received the
@@ -1079,7 +1098,7 @@ public class DOM {
   /**
    * This method is called directly by native code when event preview is being
    * used.
-   * 
+   *
    * @param evt a handle to the event being previewed
    * @return <code>false</code> to cancel the event
    */

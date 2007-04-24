@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -35,7 +35,11 @@ class DOMImplIE6 extends DOMImpl {
   public native Element createInputRadioElement(String group) /*-{
     return $doc.createElement("<INPUT type='RADIO' name='" + group + "'>");
   }-*/;
- 
+
+  public native int eventGetMouseWheelVelocityY(Event evt) /*-{
+    return -evt.wheelDelta / 40;
+  }-*/;
+
   public native Element eventGetTarget(Event evt) /*-{
     var elem = evt.srcElement;
     return elem ? elem : null;
@@ -57,7 +61,7 @@ class DOMImplIE6 extends DOMImpl {
   public native int getAbsoluteLeft(Element elem) /*-{
     // Standard mode || Quirks mode.
     var scrollLeft = $doc.documentElement.scrollLeft || $doc.body.scrollLeft;
-    
+
     // Standard mode use $doc.documentElement.clientLeft (= always 2)
     // Quirks mode use $doc.body.clientLeft (=BODY border width)
     return (elem.getBoundingClientRect().left + scrollLeft)
@@ -67,7 +71,7 @@ class DOMImplIE6 extends DOMImpl {
   public native int getAbsoluteTop(Element elem) /*-{
     // Standard mode || Quirks mode.
     var scrollTop = $doc.documentElement.scrollTop || $doc.body.scrollTop;
-  
+
     // Standard mode use $doc.documentElement.clientTop (= always 2)
     // Quirks mode use $doc.body.clientTop (= BODY border width)
     return (elem.getBoundingClientRect().top +  scrollTop)
@@ -135,11 +139,12 @@ class DOMImplIE6 extends DOMImpl {
       if (this.__eventBits & 2)
         $wnd.__dispatchEvent.call(this);
     };
-  
+
     $doc.body.onclick       =
     $doc.body.onmousedown   =
     $doc.body.onmouseup     =
     $doc.body.onmousemove   =
+    $doc.body.onmousewheel  =
     $doc.body.onkeydown     =
     $doc.body.onkeypress    =
     $doc.body.onkeyup       =
@@ -212,5 +217,6 @@ class DOMImplIE6 extends DOMImpl {
     elem.onscroll      = (bits & 0x04000) ? $wnd.__dispatchEvent : null;
     elem.onload        = (bits & 0x08000) ? $wnd.__dispatchEvent : null;
     elem.onerror       = (bits & 0x10000) ? $wnd.__dispatchEvent : null;
+    elem.onmousewheel  = (bits & 0x20000) ? $wnd.__dispatchEvent : null;
   }-*/;
 }

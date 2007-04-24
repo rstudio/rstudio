@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -166,6 +166,7 @@ abstract class DOMImplStandard extends DOMImpl {
     $wnd.addEventListener('mousedown', $wnd.__dispatchCapturedMouseEvent, true);
     $wnd.addEventListener('mouseup', $wnd.__dispatchCapturedMouseEvent, true);
     $wnd.addEventListener('mousemove', $wnd.__dispatchCapturedMouseEvent, true);
+    $wnd.addEventListener('mousewheel', $wnd.__dispatchCapturedMouseEvent, true);
     $wnd.addEventListener('keydown', $wnd.__dispatchCapturedEvent, true);
     $wnd.addEventListener('keyup', $wnd.__dispatchCapturedEvent, true);
     $wnd.addEventListener('keypress', $wnd.__dispatchCapturedEvent, true);
@@ -237,5 +238,6 @@ abstract class DOMImplStandard extends DOMImpl {
     elem.onscroll      = (bits & 0x04000) ? $wnd.__dispatchEvent : null;
     elem.onload        = (bits & 0x08000) ? $wnd.__dispatchEvent : null;
     elem.onerror       = (bits & 0x10000) ? $wnd.__dispatchEvent : null;
+    elem.onmousewheel  = (bits & 0x20000) ? $wnd.__dispatchEvent : null;
   }-*/;
 }

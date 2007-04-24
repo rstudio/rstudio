@@ -13,28 +13,25 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.user.client.impl;
-
-import com.google.gwt.user.client.Event;
+package com.google.gwt.user.client.ui;
 
 /**
- * Opera implementation of {@link com.google.gwt.user.client.impl.DOMImpl}.
+ * A widget that implements this interface sources the events defined by the
+ * {@link com.google.gwt.user.client.ui.MouseWheelListener} interface.
  */
-public class DOMImplOpera extends DOMImplStandard {
+public interface SourcesMouseWheelEvents {
 
-  public native int eventGetButton(Event evt) /*-{
-    // Opera and IE disagree on what the button codes for left button should be.
-    // Translating to match IE standard.
-    var button = evt.button;
-    if(button == 0){
-      return 1;
-    } else {
-      return button;
-    }
-  }-*/;
+  /**
+   * Adds a listener interface to receive mouse events.
+   *
+   * @param listener the listener interface to add
+   */
+  void addMouseWheelListener(MouseWheelListener listener);
 
-  public native int eventGetMouseWheelVelocityY(Event evt) /*-{
-    return evt.detail * 4;
-  }-*/;
-
+  /**
+   * Removes a previously added listener interface.
+   *
+   * @param listener the listener interface to remove
+   */
+  void removeMouseWheelListener(MouseWheelListener listener);
 }

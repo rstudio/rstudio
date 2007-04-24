@@ -1,12 +1,12 @@
 /*
- * Copyright 2006 Google Inc.
- * 
+ * Copyright 2007 Google Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,7 +25,7 @@ import com.google.gwt.user.client.ui.impl.FocusImpl;
  * catch mouse and keyboard events.
  */
 public class FocusPanel extends SimplePanel implements HasFocus,
-    SourcesClickEvents, SourcesMouseEvents {
+    SourcesClickEvents, SourcesMouseEvents, SourcesMouseWheelEvents {
 
   static final FocusImpl impl = (FocusImpl) GWT.create(FocusImpl.class);
 
@@ -33,11 +33,12 @@ public class FocusPanel extends SimplePanel implements HasFocus,
   private FocusListenerCollection focusListeners;
   private KeyboardListenerCollection keyboardListeners;
   private MouseListenerCollection mouseListeners;
+  private MouseWheelListenerCollection mouseWheelListeners;
 
   public FocusPanel() {
     super(impl.createFocusable());
     sinkEvents(Event.FOCUSEVENTS | Event.KEYEVENTS | Event.ONCLICK
-      | Event.MOUSEEVENTS);
+      | Event.MOUSEEVENTS | Event.ONMOUSEWHEEL);
   }
 
   public FocusPanel(Widget child) {
@@ -73,6 +74,13 @@ public class FocusPanel extends SimplePanel implements HasFocus,
     mouseListeners.add(listener);
   }
 
+  public void addMouseWheelListener(MouseWheelListener listener) {
+    if (mouseWheelListeners == null) {
+      mouseWheelListeners = new MouseWheelListenerCollection();
+    }
+    mouseWheelListeners.add(listener);
+  }
+
   public int getTabIndex() {
     return impl.getTabIndex(getElement());
   }
@@ -92,6 +100,12 @@ public class FocusPanel extends SimplePanel implements HasFocus,
       case Event.ONMOUSEOUT:
         if (mouseListeners != null) {
           mouseListeners.fireMouseEvent(this, event);
+        }
+        break;
+
+      case Event.ONMOUSEWHEEL:
+        if (mouseWheelListeners != null) {
+          mouseWheelListeners.fireMouseWheelEvent(this, event);
         }
         break;
 
@@ -133,6 +147,12 @@ public class FocusPanel extends SimplePanel implements HasFocus,
   public void removeMouseListener(MouseListener listener) {
     if (mouseListeners != null) {
       mouseListeners.remove(listener);
+    }
+  }
+
+  public void removeMouseWheelListener(MouseWheelListener listener) {
+    if (mouseWheelListeners != null) {
+      mouseWheelListeners.remove(listener);
     }
   }
 

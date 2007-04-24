@@ -13,28 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.user.client.impl;
+package com.google.gwt.user.client.ui;
 
-import com.google.gwt.user.client.Event;
+import java.util.EventListener;
 
 /**
- * Opera implementation of {@link com.google.gwt.user.client.impl.DOMImpl}.
+ * Event listener interface for mouse wheel events.
  */
-public class DOMImplOpera extends DOMImplStandard {
+public interface MouseWheelListener extends EventListener {
 
-  public native int eventGetButton(Event evt) /*-{
-    // Opera and IE disagree on what the button codes for left button should be.
-    // Translating to match IE standard.
-    var button = evt.button;
-    if(button == 0){
-      return 1;
-    } else {
-      return button;
-    }
-  }-*/;
-
-  public native int eventGetMouseWheelVelocityY(Event evt) /*-{
-    return evt.detail * 4;
-  }-*/;
-
+  /**
+   * Fired when the user scrolls the mouse wheel over a widget.
+   *
+   * @param sender the widget sending the event
+   * @param x the x coordinate of the mouse
+   * @param y the y coordinate of the mouse
+   * @param velocity the velocity information for the wheel event
+   */
+  void onMouseWheel(Widget sender, int x, int y, MouseWheelVelocity velocity);
 }

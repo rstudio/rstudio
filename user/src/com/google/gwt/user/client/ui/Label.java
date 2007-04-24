@@ -1,12 +1,12 @@
 /*
- * Copyright 2006 Google Inc.
- * 
+ * Copyright 2007 Google Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,35 +20,37 @@ import com.google.gwt.user.client.Event;
 
 /**
  * A widget that contains arbitrary text, <i>not</i> interpreted as HTML.
- * 
+ *
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-Label { }</li>
  * </ul>
- * 
+ *
  * <p>
  * <h3>Example</h3> {@example com.google.gwt.examples.HTMLExample}
  * </p>
  */
 public class Label extends Widget implements SourcesClickEvents,
-    SourcesMouseEvents, HasHorizontalAlignment, HasText, HasWordWrap {
+    SourcesMouseEvents, SourcesMouseWheelEvents,
+    HasHorizontalAlignment, HasText, HasWordWrap {
 
   private ClickListenerCollection clickListeners;
   private HorizontalAlignmentConstant horzAlign;
   private MouseListenerCollection mouseListeners;
+  private MouseWheelListenerCollection mouseWheelListeners;
 
   /**
    * Creates an empty label.
    */
   public Label() {
     setElement(DOM.createDiv());
-    sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS);
+    sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONMOUSEWHEEL);
     setStyleName("gwt-Label");
   }
 
   /**
    * Creates a label with the specified text.
-   * 
+   *
    * @param text the new label's text
    */
   public Label(String text) {
@@ -58,7 +60,7 @@ public class Label extends Widget implements SourcesClickEvents,
 
   /**
    * Creates a label with the specified text.
-   * 
+   *
    * @param text the new label's text
    * @param wordWrap <code>false</code> to disable word wrapping
    */
@@ -79,6 +81,13 @@ public class Label extends Widget implements SourcesClickEvents,
       mouseListeners = new MouseListenerCollection();
     }
     mouseListeners.add(listener);
+  }
+
+  public void addMouseWheelListener(MouseWheelListener listener) {
+    if (mouseWheelListeners == null) {
+      mouseWheelListeners = new MouseWheelListenerCollection();
+    }
+    mouseWheelListeners.add(listener);
   }
 
   public HorizontalAlignmentConstant getHorizontalAlignment() {
@@ -110,6 +119,12 @@ public class Label extends Widget implements SourcesClickEvents,
           mouseListeners.fireMouseEvent(this, event);
         }
         break;
+
+      case Event.ONMOUSEWHEEL:
+        if (mouseWheelListeners != null) {
+          mouseWheelListeners.fireMouseWheelEvent(this, event);
+        }
+        break;
     }
   }
 
@@ -122,6 +137,12 @@ public class Label extends Widget implements SourcesClickEvents,
   public void removeMouseListener(MouseListener listener) {
     if (mouseListeners != null) {
       mouseListeners.remove(listener);
+    }
+  }
+
+  public void removeMouseWheelListener(MouseWheelListener listener) {
+    if (mouseWheelListeners != null) {
+      mouseWheelListeners.remove(listener);
     }
   }
 

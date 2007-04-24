@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -77,6 +77,8 @@ public abstract class DOMImpl {
     return evt.which ? evt.which : evt.keyCode;
   }-*/;
 
+  public abstract int eventGetMouseWheelVelocityY(Event evt);
+
   public native boolean eventGetRepeat(Event evt) /*-{
     return evt.repeat;
   }-*/;
@@ -120,6 +122,8 @@ public abstract class DOMImpl {
       case "mouseup": return 0x00008;
       case "scroll": return 0x04000;
       case "error": return 0x10000;
+      case "mousewheel": return 0x20000;
+      case "DOMMouseScroll": return 0x20000;
     }
   }-*/;
 
@@ -139,7 +143,7 @@ public abstract class DOMImpl {
     }
     return left + $doc.body.scrollLeft;
   }-*/;
-  
+
   public native int getAbsoluteTop(Element elem) /*-{
     var top = 0;
     while (elem) {
@@ -159,7 +163,7 @@ public abstract class DOMImpl {
     var ret = elem.getAttribute(attr);
     return (ret == null) ? null : ret;
   }-*/;
-  
+
   public native Element getElementById(String id) /*-{
     var elem = $doc.getElementById(id);
     return elem ? elem : null;
@@ -199,7 +203,7 @@ public abstract class DOMImpl {
     var text = '', child = node.firstChild;
     while (child) {
       // 1 == Element node
-      if (child.nodeType == 1) { 
+      if (child.nodeType == 1) {
         text += this.@com.google.gwt.user.client.impl.DOMImpl::getInnerText(Lcom/google/gwt/user/client/Element;)(child);
       } else if (child.nodeValue) {
         text += child.nodeValue;
@@ -252,7 +256,7 @@ public abstract class DOMImpl {
   public native void removeChild(Element parent, Element child) /*-{
     parent.removeChild(child);
   }-*/;
-  
+
   public native void removeElementAttribute(Element elem, String attr) /*-{
     elem.removeAttribute(attr);
   }-*/;
@@ -300,7 +304,7 @@ public abstract class DOMImpl {
   public native void setElementAttribute(Element elem, String attr, String value) /*-{
     elem.setAttribute(attr, value);
   }-*/;
-  
+
   public native void setElementProperty(Element elem, String prop, String value) /*-{
     elem[prop] = value;
   }-*/;
@@ -342,8 +346,8 @@ public abstract class DOMImpl {
   }-*/;
 
   public native void setOptionText(Element select, String text, int index) /*-{
-    // IE doesn't properly update the screen when you use 
-    // setAttribute("option", text), so we instead directly assign to the 
+    // IE doesn't properly update the screen when you use
+    // setAttribute("option", text), so we instead directly assign to the
     // 'option' property, which works correctly on all browsers.
     var option = select.options[index];
     option.text = text;
