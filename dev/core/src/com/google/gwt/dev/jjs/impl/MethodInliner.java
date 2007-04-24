@@ -204,18 +204,12 @@ public class MethodInliner {
     private boolean checkClinitViolation(JMethodCall x,
         JExpression resultExpression) {
       JReferenceType targetEnclosingType = x.getTarget().getEnclosingType();
-      if (!program.typeOracle.hasClinit(targetEnclosingType)) {
-        // No clinit needed; target doesn't have one.
+      if (!program.typeOracle.checkClinit(currentMethod.getEnclosingType(), targetEnclosingType)) {
+        // Access from this class to the target class won't trigger a clinit
         return false;
       }
       if (program.isStaticImpl(x.getTarget())) {
         // No clinit needed; target is really an instance method.
-        return false;
-      }
-      if (currentMethod.getEnclosingType() == targetEnclosingType) {
-        // No clinit needed; intra-class call.
-        // TODO: we could maybe broaden the test condition to include types that
-        // we can statically determine must have been initialized.
         return false;
       }
 

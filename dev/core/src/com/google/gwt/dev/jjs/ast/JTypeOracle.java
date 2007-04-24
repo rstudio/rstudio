@@ -98,7 +98,7 @@ public class JTypeOracle {
 
       JClassType cType = (JClassType) type;
       if (qType instanceof JClassType) {
-        return getOrCreate(subClassMap, cType).contains(qType);
+        return isSubClass(cType, (JClassType) qType);
       } else if (qType instanceof JInterfaceType) {
         return getOrCreate(couldImplementMap, cType).contains(qType);
       }
@@ -148,15 +148,15 @@ public class JTypeOracle {
 
       JClassType cType = (JClassType) type;
       if (qType instanceof JClassType) {
-        return getOrCreate(superClassMap, cType).contains(qType);
+        return isSuperClass(cType, (JClassType) qType);
       } else if (qType instanceof JInterfaceType) {
-        return getOrCreate(implementsMap, cType).contains(qType);
+        return implementsInterface(cType, (JInterfaceType) qType);
       }
     } else if (type instanceof JInterfaceType) {
 
       JInterfaceType iType = (JInterfaceType) type;
       if (qType instanceof JInterfaceType) {
-        return getOrCreate(superInterfaceMap, iType).contains(qType);
+        return extendsInterface(iType, (JInterfaceType) qType);
       }
     } else if (type instanceof JNullType) {
 
@@ -164,6 +164,33 @@ public class JTypeOracle {
     }
 
     return false;
+  }
+
+  /**
+   * Returns <code>true</code> if a static field access of <code>toType</code>
+   * from within <code>fromType</code> should generate a clinit call. This
+   * will be true in cases where <code>toType</code> has a live clinit method
+   * which we cannot statically know has already run. We can statically know the
+   * clinit method has already run when:
+   * <ol>
+   * <li><code>fromType == toType</code></li>
+   * <li><code>toType</code> is a superclass of <code>fromType</code>
+   * (because <code>toType</code>'s clinit would have already run
+   * <code>fromType</code>'s clinit; see JLS 12.4)</li>
+   * </ol>
+   */
+  public boolean checkClinit(JReferenceType fromType, JReferenceType toType) {
+    if (fromType == toType) {
+      return false;
+    }
+    if (!hasClinit(toType)) {
+      return false;
+    }
+    if (fromType instanceof JClassType && toType instanceof JClassType
+        && isSuperClass((JClassType) fromType, (JClassType) toType)) {
+      return false;
+    }
+    return true;
   }
 
   public void computeAfterAST() {
@@ -209,6 +236,13 @@ public class JTypeOracle {
     }
   }
 
+  /**
+   * Returns true if qType is a superinterface of type, directly or indirectly.
+   */
+  public boolean extendsInterface(JInterfaceType type, JInterfaceType qType) {
+    return getOrCreate(superInterfaceMap, type).contains(qType);
+  }
+
   public JMethod[] getAllVirtualOverrides(JMethod method) {
     Set/* <JMethod> */results = new HashSet/* <JMethod> */();
     Map/* <JClassType, Set<JMethod>> */overrideMap = getOrCreateMap(
@@ -228,7 +262,25 @@ public class JTypeOracle {
   }
 
   public boolean hasClinit(JReferenceType type) {
+    if (hasDirectClinit(type)) {
+      return true;
+    }
+    if (type != null && type.extnds != null) {
+      return hasClinit(type.extnds);
+    }
+    return false;
+  }
+
+  public boolean hasDirectClinit(JReferenceType type) {
     return hasClinitSet.contains(type);
+  }
+
+  /**
+   * Returns true if qType is an implemented interface of type, directly or
+   * indirectly.
+   */
+  public boolean implementsInterface(JClassType type, JInterfaceType qType) {
+    return getOrCreate(implementsMap, type).contains(qType);
   }
 
   public boolean isInstantiatedType(JReferenceType type) {
@@ -243,6 +295,20 @@ public class JTypeOracle {
       }
     }
     return instantiatedTypes.contains(type);
+  }
+
+  /**
+   * Returns true if qType is a subclass of type, directly or indirectly.
+   */
+  public boolean isSubClass(JClassType type, JClassType qType) {
+    return getOrCreate(subClassMap, type).contains(qType);
+  }
+
+  /**
+   * Returns true if qType is a superclass of type, directly or indirectly.
+   */
+  public boolean isSuperClass(JClassType type, JClassType qType) {
+    return getOrCreate(superClassMap, type).contains(qType);
   }
 
   public void recomputeClinits() {

@@ -62,9 +62,8 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
     // A cross-class reference to a static, non constant field forces clinit
     if (field.isStatic()
         && (!field.isFinal() || field.constInitializer == null)) {
-      JReferenceType fieldEncloser = field.getEnclosingType();
-      if (enclosingType != fieldEncloser
-          && program.typeOracle.hasClinit(fieldEncloser)) {
+      if (program.typeOracle.checkClinit(enclosingType,
+          field.getEnclosingType())) {
         // Therefore, we have side effects
         return true;
       }

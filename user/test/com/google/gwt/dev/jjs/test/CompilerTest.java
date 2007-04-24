@@ -90,6 +90,16 @@ public class CompilerTest extends GWTTestCase {
     }
   }
 
+  private static class SideEffectCauser6Super {
+    static {
+      CompilerTest.sideEffectChecker++;
+    }
+  }
+
+  private static class SideEffectCauser6 extends SideEffectCauser6Super {
+    public static String causeClinitSideEffectOnRead = "bar";
+  }
+
   private static final class UninstantiableType {
     public Object field;
 
@@ -185,8 +195,10 @@ public class CompilerTest extends GWTTestCase {
     assertEquals(3, sideEffectChecker);
     String foo = SideEffectCauser4.causeClinitSideEffectOnRead;
     assertEquals(4, sideEffectChecker);
-    String bar = jsniReadSideEffectCauser5();
+    jsniReadSideEffectCauser5();
     assertEquals(5, sideEffectChecker);
+    foo = SideEffectCauser6.causeClinitSideEffectOnRead;
+    assertEquals(6, sideEffectChecker);
     String checkRescued = NonSideEffectCauser.NOT_A_COMPILE_TIME_CONSTANT;
     assertEquals(null, checkRescued);
   }

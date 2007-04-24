@@ -886,14 +886,14 @@ public class GenerateJavaAST {
       JMethod method = (JMethod) typeMap.get(x.binding);
       assert (type == method.getType());
 
-      JExpression qualifier = dispProcessExpression(x.receiver);
+      JExpression qualifier;
       if (x.receiver instanceof ThisReference) {
         if (method.isStatic()) {
           // don't bother qualifying it, it's a no-op
-          // TODO(???): this may be handled by later optimizations now
           qualifier = null;
         } else if (x.receiver instanceof QualifiedThisReference) {
-          // do nothing, the qualifier is correct
+          // use the supplied qualifier
+          qualifier = dispProcessExpression(x.receiver);
         } else {
           /*
            * In cases where JDT had to synthesize a this ref for us, it could
@@ -902,6 +902,8 @@ public class GenerateJavaAST {
            */
           qualifier = createThisRef(info, method.getEnclosingType());
         }
+      } else {
+        qualifier = dispProcessExpression(x.receiver);
       }
 
       JMethodCall call = new JMethodCall(program, info, qualifier, method);
