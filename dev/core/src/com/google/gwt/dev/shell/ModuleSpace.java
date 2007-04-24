@@ -83,14 +83,49 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     return (TreeLogger) threadLocalLogger.get();
   }
 
-  private final ModuleSpaceHost host;
+  /**
+   * Tricky one, this. Reaches over into this modules's JavaScriptHost class and
+   * sets its static 'host' field to be the specified ModuleSpace instance
+   * (which will either be this ModuleSpace or null).
+   * 
+   * @param moduleSpace the ModuleSpace instance to store using
+   *          JavaScriptHost.setHost().
+   * @see JavaScriptHost
+   */
+  private static void setJavaScriptHost(ModuleSpace moduleSpace, ClassLoader cl) {
+    // Find the application's JavaScriptHost interface.
+    //
+    Throwable caught;
+    try {
+      final String jsHostClassName = JavaScriptHost.class.getName();
+      Class jsHostClass = Class.forName(jsHostClassName, true, cl);
+      final Class[] paramTypes = new Class[] {ShellJavaScriptHost.class};
+      Method setHostMethod = jsHostClass.getMethod("setHost", paramTypes);
+      setHostMethod.invoke(jsHostClass, new Object[] {moduleSpace});
+      return;
+    } catch (ClassNotFoundException e) {
+      caught = e;
+    } catch (SecurityException e) {
+      caught = e;
+    } catch (NoSuchMethodException e) {
+      caught = e;
+    } catch (IllegalArgumentException e) {
+      caught = e;
+    } catch (IllegalAccessException e) {
+      caught = e;
+    } catch (InvocationTargetException e) {
+      caught = e.getTargetException();
+    }
+    throw new RuntimeException("Error initializing JavaScriptHost", caught);
+  }
 
-  private final String moduleName;
+  private final ModuleSpaceHost host;
 
   private final Object key;
 
-  protected ModuleSpace(ModuleSpaceHost host, String moduleName,
-      Object key) {
+  private final String moduleName;
+
+  protected ModuleSpace(ModuleSpaceHost host, String moduleName, Object key) {
     this.host = host;
     this.moduleName = moduleName;
     this.key = key;
@@ -435,37 +470,10 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   /**
-   * Tricky one, this. Reaches over into this modules's JavaScriptHost class and
-   * sets its static 'host' field to be null.
-   * 
-   * @see JavaScriptHost
+   * Clear the module's JavaScriptHost 'host' field.
    */
   private void clearJavaScriptHost() {
-    // Find the application's JavaScriptHost interface.
-    //
-    Throwable caught;
-    try {
-      final String jsHostClassName = JavaScriptHost.class.getName();
-      Class jsHostClass = Class.forName(jsHostClassName, true,
-          getIsolatedClassLoader());
-      final Class[] paramTypes = new Class[] {ShellJavaScriptHost.class};
-      Method setHostMethod = jsHostClass.getMethod("setHost", paramTypes);
-      setHostMethod.invoke(jsHostClass, new Object[] {null});
-      return;
-    } catch (ClassNotFoundException e) {
-      caught = e;
-    } catch (SecurityException e) {
-      caught = e;
-    } catch (NoSuchMethodException e) {
-      caught = e;
-    } catch (IllegalArgumentException e) {
-      caught = e;
-    } catch (IllegalAccessException e) {
-      caught = e;
-    } catch (InvocationTargetException e) {
-      caught = e.getTargetException();
-    }
-    throw new RuntimeException("Error unintializing JavaScriptHost", caught);
+    setJavaScriptHost(null, getIsolatedClassLoader());
   }
 
   /**
@@ -491,37 +499,10 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   /**
-   * Tricky one, this. Reaches over into this modules's JavaScriptHost class and
-   * sets its static 'host' field to be this ModuleSpace instance.
-   * 
-   * @see JavaScriptHost
+   * Set the module's JavaScriptHost 'host' field to this ModuleSpace instance.
    */
   private void setJavaScriptHost() {
-    // Find the application's JavaScriptHost interface.
-    //
-    Throwable caught;
-    try {
-      final String jsHostClassName = JavaScriptHost.class.getName();
-      Class jsHostClass = Class.forName(jsHostClassName, true,
-          getIsolatedClassLoader());
-      final Class[] paramTypes = new Class[] {ShellJavaScriptHost.class};
-      Method setHostMethod = jsHostClass.getMethod("setHost", paramTypes);
-      setHostMethod.invoke(jsHostClass, new Object[] {this});
-      return;
-    } catch (ClassNotFoundException e) {
-      caught = e;
-    } catch (SecurityException e) {
-      caught = e;
-    } catch (NoSuchMethodException e) {
-      caught = e;
-    } catch (IllegalArgumentException e) {
-      caught = e;
-    } catch (IllegalAccessException e) {
-      caught = e;
-    } catch (InvocationTargetException e) {
-      caught = e.getTargetException();
-    }
-    throw new RuntimeException("Error intializing JavaScriptHost", caught);
+    setJavaScriptHost(this, getIsolatedClassLoader());
   }
 
 }
