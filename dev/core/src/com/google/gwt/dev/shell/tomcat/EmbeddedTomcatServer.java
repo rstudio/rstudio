@@ -30,12 +30,15 @@ import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.core.StandardHost;
 import org.apache.catalina.startup.Embedded;
 import org.apache.catalina.startup.HostConfig;
+import org.apache.coyote.tomcat5.CoyoteConnector;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.URL;
 
 /**
@@ -45,6 +48,10 @@ public class EmbeddedTomcatServer {
 
   static EmbeddedTomcatServer sTomcat;
 
+  public static int getPort() {
+    return sTomcat.port;
+  }
+
   public static synchronized String start(TreeLogger topLogger, int port,
       File outDir) {
     if (sTomcat != null) {
@@ -53,7 +60,6 @@ public class EmbeddedTomcatServer {
 
     try {
       new EmbeddedTomcatServer(topLogger, port, outDir);
-      sTomcat.catEmbedded.start();
       return null;
     } catch (LifecycleException e) {
       String msg = e.getMessage();
@@ -84,18 +90,55 @@ public class EmbeddedTomcatServer {
     }
   }
 
+  /**
+   * Returns what local port the Tomcat connector is running on.
+   * 
+   * When starting Tomcat with port 0 (i.e. choose an open port), there is just
+   * no way to figure out what port it actually chose. So we're using pure
+   * hackery to steal the port via reflection. The only works because we bundle
+   * Tomcat with GWT and know exactly what version it is.
+   */
+  private static int computeLocalPort(Connector connector) {
+    Throwable caught = null;
+    try {
+      Field phField = CoyoteConnector.class.getDeclaredField("protocolHandler");
+      phField.setAccessible(true);
+      Object protocolHandler = phField.get(connector);
+
+      Field epField = protocolHandler.getClass().getDeclaredField("ep");
+      epField.setAccessible(true);
+      Object endPoint = epField.get(protocolHandler);
+
+      Field ssField = endPoint.getClass().getDeclaredField("serverSocket");
+      ssField.setAccessible(true);
+      ServerSocket serverSocket = (ServerSocket) ssField.get(endPoint);
+
+      return serverSocket.getLocalPort();
+    } catch (SecurityException e) {
+      caught = e;
+    } catch (NoSuchFieldException e) {
+      caught = e;
+    } catch (IllegalArgumentException e) {
+      caught = e;
+    } catch (IllegalAccessException e) {
+      caught = e;
+    }
+    throw new RuntimeException(
+        "Failed to retrieve the startup port from Embedded Tomcat", caught);
+  }
+
   private Embedded catEmbedded;
 
   private Engine catEngine;
 
   private StandardHost catHost = null;
 
-  private final int port;
+  private int port;
 
   private final TreeLogger startupBranchLogger;
 
   private EmbeddedTomcatServer(final TreeLogger topLogger, int listeningPort,
-      final File outDir) {
+      final File outDir) throws LifecycleException {
     if (topLogger == null) {
       throw new NullPointerException("No logger specified");
     }
@@ -115,10 +158,6 @@ public class EmbeddedTomcatServer {
     // An inner class is almost right, except there's no outer instance.
     //
     sTomcat = this;
-
-    // Set the port, which is used in the creation of catalina.home.
-    //
-    port = listeningPort;
 
     // Assume the working directory is simply the user's current directory.
     //
@@ -190,8 +229,17 @@ public class EmbeddedTomcatServer {
     //
     catEmbedded.addEngine(catEngine);
     InetAddress nullAddr = null;
-    Connector connector = catEmbedded.createConnector(nullAddr, port, false);
+    Connector connector = catEmbedded.createConnector(nullAddr, listeningPort,
+        false);
     catEmbedded.addConnector(connector);
+
+    // start up!
+    catEmbedded.start();
+    port = computeLocalPort(connector);
+
+    if (port != listeningPort) {
+      logger.log(TreeLogger.INFO, "HTTP listening on port " + port, null);
+    }
   }
 
   public TreeLogger getLogger() {

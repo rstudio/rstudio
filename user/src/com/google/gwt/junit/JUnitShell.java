@@ -367,6 +367,14 @@ public class JUnitShell extends GWTShell {
     return false;
   }
 
+  protected ArgHandlerPort getArgHandlerPort() {
+    return new ArgHandlerPort() {
+      public String[] getDefaultArgs() {
+        return new String[] {"-port", "auto"};
+      }
+    };
+  }
+
   protected void initializeLogger() {
     if (isHeadless()) {
       consoleLogger = new PrintWriterTreeLogger();

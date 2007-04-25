@@ -36,7 +36,6 @@ import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerFlag;
-import com.google.gwt.util.tools.ArgHandlerInt;
 import com.google.gwt.util.tools.ArgHandlerOutDir;
 import com.google.gwt.util.tools.ArgHandlerString;
 import com.google.gwt.util.tools.ToolBase;
@@ -73,7 +72,7 @@ public class GWTShell extends ToolBase {
     }
 
     public String getPurpose() {
-      return "Prevents the user browsing URLS that match the specified regexes (comma or space separated)";
+      return "Prevents the user browsing URLs that match the specified regexes (comma or space separated)";
     }
 
     public String getTag() {
@@ -110,7 +109,7 @@ public class GWTShell extends ToolBase {
   /**
    * Handles the -port command line flag.
    */
-  protected class ArgHandlerPort extends ArgHandlerInt {
+  protected class ArgHandlerPort extends ArgHandlerString {
 
     public String[] getDefaultArgs() {
       return new String[] {"-port", "8888"};
@@ -125,11 +124,22 @@ public class GWTShell extends ToolBase {
     }
 
     public String[] getTagArgs() {
-      return new String[] {"port-number"};
+      return new String[] {"port-number | \"auto\""};
     }
 
-    public void setInt(int value) {
-      setPort(value);
+    public boolean setString(String value) {
+      if (value.equals("auto")) {
+        port = 0;
+      } else {
+        try {
+          port = Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+          String msg = "A port must be an integer or \"auto\"";
+          getTopLogger().log(TreeLogger.ERROR, msg, null);
+          return false;
+        }
+      }
+      return true;
     }
   }
 
@@ -162,7 +172,7 @@ public class GWTShell extends ToolBase {
     }
 
     public String getPurpose() {
-      return "Allows the user to browse URLS that match the specified regexes (comma or space separated)";
+      return "Allows the user to browse URLs that match the specified regexes (comma or space separated)";
     }
 
     public String getTag() {
@@ -350,7 +360,7 @@ public class GWTShell extends ToolBase {
   }
 
   protected GWTShell(boolean forceServer, boolean noURLs) {
-    registerHandler(new ArgHandlerPort());
+    registerHandler(getArgHandlerPort());
 
     if (!forceServer) {
       registerHandler(new ArgHandlerNoServerFlag());
@@ -523,9 +533,9 @@ public class GWTShell extends ToolBase {
    */
   public void run() {
     try {
-      // Set any platform specific system properties.      
+      // Set any platform specific system properties.
       BootStrapPlatform.setSystemProperties();
-      
+
       if (!startUp()) {
         // Failed to initalize.
         return;
@@ -533,7 +543,7 @@ public class GWTShell extends ToolBase {
 
       // Eager AWT initialization for OS X to ensure safe coexistence with SWT.
       BootStrapPlatform.maybeInitializeAWT();
-      
+
       // Tomcat's running now, so launch browsers for startup urls now.
       launchStartupUrls(getTopLogger());
 
@@ -600,8 +610,10 @@ public class GWTShell extends ToolBase {
    * @return ShellModuleSpaceHost instance
    */
   protected ShellModuleSpaceHost doCreateShellModuleSpaceHost(
-      TreeLogger logger, TypeOracle typeOracle, ModuleDef moduleDef, File genDir, File outDir) {
-    return new ShellModuleSpaceHost(logger, typeOracle, moduleDef, genDir, outDir);
+      TreeLogger logger, TypeOracle typeOracle, ModuleDef moduleDef,
+      File genDir, File outDir) {
+    return new ShellModuleSpaceHost(logger, typeOracle, moduleDef, genDir,
+        outDir);
   }
 
   /**
@@ -627,6 +639,13 @@ public class GWTShell extends ToolBase {
    */
   protected boolean doShouldCheckForUpdates() {
     return true;
+  }
+
+  /**
+   * Derived classes can override to set a default port.
+   */
+  protected ArgHandlerPort getArgHandlerPort() {
+    return new ArgHandlerPort();
   }
 
   protected BrowserWidgetHost getBrowserHost() {
@@ -726,6 +745,9 @@ public class GWTShell extends ToolBase {
         System.err.println(whyFailed);
         return false;
       }
+
+      // Record what port Tomcat is actually running on. 
+      port = EmbeddedTomcatServer.getPort();
     }
 
     return true;
