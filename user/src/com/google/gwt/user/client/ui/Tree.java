@@ -1,12 +1,12 @@
 /*
- * Copyright 2006 Google Inc.
- * 
+ * Copyright 2007 Google Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -117,7 +117,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   /**
    * Adds the widget as a root tree item.
-   * 
+   *
    * @see com.google.gwt.user.client.ui.HasWidgets#add(com.google.gwt.user.client.ui.Widget)
    * @param widget widget to add.
    */
@@ -134,7 +134,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   /**
    * Adds a simple tree item containing the specified text.
-   * 
+   *
    * @param itemText the text of the item to be added
    * @return the item that was added
    */
@@ -147,7 +147,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   /**
    * Adds an item to the root level of this tree.
-   * 
+   *
    * @param item the item to be added
    */
   public void addItem(TreeItem item) {
@@ -157,7 +157,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   /**
    * Adds a new tree item containing the specified widget.
-   * 
+   *
    * @param widget the widget to be added
    */
   public TreeItem addItem(Widget widget) {
@@ -215,7 +215,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   /**
    * Gets this tree's default image package.
-   * 
+   *
    * @return the tree's image package
    * @see #setImageBase
    */
@@ -225,7 +225,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   /**
    * Gets the top-level tree item at the specified index.
-   * 
+   *
    * @param index the index to be retrieved
    * @return the item at that index
    */
@@ -235,7 +235,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   /**
    * Gets the number of items contained at the root of this tree.
-   * 
+   *
    * @return this tree's item count
    */
   public int getItemCount() {
@@ -244,7 +244,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   /**
    * Gets the currently selected item.
-   * 
+   *
    * @return the selected item
    */
   public TreeItem getSelectedItem() {
@@ -362,6 +362,12 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
           case KeyboardListener.KEY_LEFT: {
             if (curSelection.getState()) {
               curSelection.setState(false);
+            } else {
+              TreeItem parent = curSelection.getParentItem();
+              if (parent != null) {
+                parent.setState(false);
+                setSelectedItem(parent);
+              }
             }
             DOM.eventPreventDefault(event);
             break;
@@ -369,6 +375,9 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
           case KeyboardListener.KEY_RIGHT: {
             if (!curSelection.getState()) {
               curSelection.setState(true);
+              if (curSelection.getChildCount() > 0) {
+                setSelectedItem(curSelection.getChild(0));
+              }
             }
             DOM.eventPreventDefault(event);
             break;
@@ -417,7 +426,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   /**
    * Removes an item from the root level of this tree.
-   * 
+   *
    * @param item the item to be removed
    */
   public void removeItem(TreeItem item) {
@@ -470,7 +479,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   /**
    * Selects a specified item.
-   * 
+   *
    * @param item the item to be selected, or <code>null</code> to deselect all
    *          items
    */
@@ -480,7 +489,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   /**
    * Selects a specified item.
-   * 
+   *
    * @param item the item to be selected, or <code>null</code> to deselect all
    *          items
    * @param fireEvents <code>true</code> to allow selection events to be fired
@@ -554,7 +563,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   /**
    * Get the Set of child widgets. Exposed only to allow unit tests to validate
    * tree.
-   * 
+   *
    * @return the children
    */
   Set getChildWidgets() {
@@ -620,7 +629,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   /**
    * Move the tree focus to the specified selected item.
-   * 
+   *
    * @param selection
    */
   private void moveFocus(TreeItem selection) {
@@ -726,8 +735,8 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   private native boolean shouldTreeDelegateFocusToElement(Element elem) /*-{
     var name = elem.nodeName;
-    return ((name == "SELECT") || 
-        (name == "INPUT")  || 
+    return ((name == "SELECT") ||
+        (name == "INPUT")  ||
         (name == "TEXTAREA") ||
         (name == "OPTION") ||
         (name == "BUTTON") ||
