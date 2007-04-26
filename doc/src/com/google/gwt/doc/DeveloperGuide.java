@@ -19,15 +19,18 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.ImageBundle;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
+import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CellPanel;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.KeyboardListenerAdapter;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -1633,34 +1636,9 @@ public class DeveloperGuide {
        * <p>
        * An image bundle for icons in a word processor application could be
        * defined as follows:
-       * 
-       * <pre class="code">
-       * public interface WordProcessorImageBundle extends ImageBundle {
-       * 
-       *   /**
-       *    * Would match the file 'new_file_icon.png', 'new_file_icon.gif', or
-       *    * 'new_file_icon.png' located in the same package as this type.
-       *    *&#47;
-       *   public AbstractimagePrototype new_file_icon();
-       * 
-       *   /**
-       *    * Would match the file 'open_file_icon.gif' located in the same package
-       *    * as this type.
-       *    * @gwt.resource open_file_icon.gif
-       *    *&#47;
-       *   public AbstractImagePrototpe openFileIcon();
-       * 
-       *   /**
-       *    * Would match the file 'savefile.gif' located in the package
-       *    * 'com.mycompany.mygwtapp.icons', provided that this package
-       *    * is part of the module's classpath.
-       *    * @gwt.resource com/mycompany/mygwtapp/icons/savefile.gif
-       *    *&#47;
-       *   public AbstractImagePrototype saveFileIcon();
-       * }
-       * </pre>
-       * 
        * </p>
+       * 
+       * {@example WordProcessorImageBundle}
        * 
        * <p>
        * Methods in an image bundle return <code>AbstractImagePrototype</code>
@@ -1689,17 +1667,9 @@ public class DeveloperGuide {
        * <p>
        * The following example shows how to use the image bundle that we just
        * defined in your application:
-       * 
-       * <pre class="code">
-       * WordProcessorImageBundle wpImageBundle = (WordProcessorImageBundle) GWT
-       *        .create(WordProcessorImageBundle.class);
-       * HorizontalPanel tbPanel = new HorizontalPanel();
-       * tbPanel.add(wpImageBundle.new_file_icon().createImage());
-       * tbPanel.add(wpImageBundle.openFileIcon().createImage());
-       * tbPanel.add(wpImageBundle.saveFileIcon().createImage());
-       * </pre>
-       * 
        * </p>
+       * 
+       * {@example #useImageBundle()}
        * 
        * @title Creating and Using an Image Bundle
        * @synopsis Define an image bundle and use it in your application.
@@ -1710,6 +1680,44 @@ public class DeveloperGuide {
        *      instance every time the image bundle is needed.
        */
       public static class DefiningAndUsingImageBundle {
+
+        public void useImageBundle() {
+          WordProcessorImageBundle wpImageBundle = (WordProcessorImageBundle) GWT.create(WordProcessorImageBundle.class);
+          HorizontalPanel tbPanel = new HorizontalPanel();
+          tbPanel.add(wpImageBundle.new_file_icon().createImage());
+          tbPanel.add(wpImageBundle.openFileIcon().createImage());
+          tbPanel.add(wpImageBundle.saveFileIcon().createImage());
+        }
+
+        /**
+         * @skip
+         */
+        public interface WordProcessorImageBundle extends ImageBundle {
+
+          /**
+           * Would match the file 'new_file_icon.png', 'new_file_icon.gif', or
+           * 'new_file_icon.png' located in the same package as this type.
+           */
+          public AbstractImagePrototype new_file_icon();
+
+          /**
+           * Would match the file 'open_file_icon.gif' located in the same
+           * package as this type.
+           * 
+           * @gwt.resource open_file_icon.gif
+           */
+          public AbstractImagePrototype openFileIcon();
+
+          /**
+           * Would match the file 'savefile.gif' located in the package
+           * 'com.mycompany.mygwtapp.icons', provided that this package is part
+           * of the module's classpath.
+           * 
+           * @gwt.resource com/mycompany/mygwtapp/icons/savefile.gif
+           */
+          public AbstractImagePrototype saveFileIcon();
+        }
+
       }
 
       /**
