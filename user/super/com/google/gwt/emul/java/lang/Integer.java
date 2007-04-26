@@ -1,12 +1,12 @@
 /*
- * Copyright 2006 Google Inc.
- * 
+ * Copyright 2007 Google Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -23,12 +23,7 @@ public final class Integer extends Number implements Comparable {
   public static final int MAX_VALUE = 0x7fffffff;
 
   public static Integer decode(String s) throws NumberFormatException {
-    long x = __parseLongInfer(s);
-    if (__isLongNaN(x)) {
-      throw new NumberFormatException(s);
-    } else {
-      return new Integer((int) x);
-    }
+    return new Integer((int)__decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
   }
 
   public static int parseInt(String s) throws NumberFormatException {
@@ -36,12 +31,7 @@ public final class Integer extends Number implements Comparable {
   }
 
   public static int parseInt(String s, int radix) throws NumberFormatException {
-    long x = __parseLongRadix(s, radix);
-    if (__isLongNaN(x)) {
-      throw new NumberFormatException(s);
-    } else {
-      return (int) x;
-    }
+    return (int)__parseAndValidateLong(s, radix, MIN_VALUE, MAX_VALUE);
   }
 
   public static String toBinaryString(int x) {

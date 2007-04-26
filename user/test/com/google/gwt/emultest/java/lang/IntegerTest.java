@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -36,6 +36,57 @@ public class IntegerTest extends GWTTestCase {
     assertEquals("-12345", new Integer("-12345").toString());
   }
 
+  public void testBadStrings() {
+    try {
+      new Integer("05abcd");
+      fail("Constructor should have thrown NumberFormatException");
+    } catch (NumberFormatException e) {
+      // Expected behavior
+    }
+
+    try {
+      Integer.decode("05abcd");
+      fail("Decode should have thrown NumberFormatException");
+    } catch (NumberFormatException e) {
+      // Expected behavior
+    }
+
+    try {
+      Integer.parseInt("05abcd");
+      fail("parseInt should have thrown NumberFormatException");
+    } catch (NumberFormatException e) {
+      // Expected behavior
+    }
+    
+    try {
+      Integer.parseInt(String.valueOf(Long.MAX_VALUE));
+      fail("parseInt should reject numbers greater than the range of int");
+    } catch (NumberFormatException e) {
+      // Expected behavior
+    }
+    
+    try {
+      Integer.parseInt(String.valueOf(Long.MIN_VALUE));
+      fail("parseInt should reject numbers less than the range of int");
+    } catch (NumberFormatException e) {
+      // Expected behavior
+    }
+    
+    try {
+      Integer.parseInt(String.valueOf((long)Integer.MAX_VALUE + 1));
+      fail("parseInt should reject numbers greater than the range of int");
+    } catch (NumberFormatException e) {
+      // Expected behavior
+    }
+    
+    try {
+      Integer.parseInt(String.valueOf((long)Integer.MIN_VALUE - 1));
+      fail("parseInt should reject numbers less than the range of int");
+    } catch (NumberFormatException e) {
+      // Expected behavior
+    }
+  }
+
   public void testCompareTo() {
     assertEquals(-1, new Integer(12345).compareTo(new Integer(12346)));
     assertEquals(1, new Integer("12345").compareTo(new Integer(12344)));
@@ -48,7 +99,15 @@ public class IntegerTest extends GWTTestCase {
   }
 
   public void testDecode() {
+    assertEquals(Integer.MAX_VALUE,
+        Integer.decode(String.valueOf(Integer.MAX_VALUE)).intValue());
+    assertEquals(Integer.MIN_VALUE,
+        Integer.decode(String.valueOf(Integer.MIN_VALUE)).intValue());
     assertEquals(12345, Integer.decode("12345").intValue());
+    assertEquals(31, Integer.decode("0x1f").intValue());
+    assertEquals(-31, Integer.decode("-0X1F").intValue());
+    assertEquals(31, Integer.decode("#1f").intValue());
+    assertEquals(10, Integer.decode("012").intValue());
     try {
       Integer.decode("abx");
       fail();
