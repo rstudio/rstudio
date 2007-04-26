@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Mat Gessel (mat.gessel@gmail.com)
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
