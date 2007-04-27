@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,10 @@ import java.util.HashSet;
  * Abstract base class for TreeLoggers.
  */
 public abstract class AbstractTreeLogger implements TreeLogger {
+
+  // This message is package-protected so that the unit test can access it.
+  static final String OUT_OF_MEMORY_MSG = "Out of memory; to increase the "
+      + "amount of memory, use the -Xmx flag at startup (java -Xmx128M ...)";
 
   private static class UncommittedBranchData {
 
@@ -140,11 +144,22 @@ public abstract class AbstractTreeLogger implements TreeLogger {
     //
     childLogger.parent = this;
 
-    // We can avoid committing this branch entry until and unless a some
+    // We can avoid committing this branch entry until and unless some
     // child (or grandchild) tries to log something that is loggable,
     // in which case there will be cascading commits of the parent branches.
     //
     childLogger.uncommitted = new UncommittedBranchData(type, msg, caught);
+
+    // This logic is intertwined with log(). If a log message is associated
+    // with an out-of-memory condition, then we turn it into a branch,
+    // so this method can be called directly from log(). It is of course
+    // also possible for someone to call branch() directly. In either case, we
+    // (1) turn the original message into an ERROR and
+    // (2) drop an extra log message that explains how to recover
+    if (causedByOutOfMemory(caught)) {
+      type = TreeLogger.ERROR;
+      childLogger.log(type, OUT_OF_MEMORY_MSG, null);
+    }
 
     // Decide whether we want to log the branch message eagerly or lazily.
     //
@@ -180,6 +195,13 @@ public abstract class AbstractTreeLogger implements TreeLogger {
 
     if (msg == null) {
       msg = "(Null log message)";
+    }
+
+    // If this log message is caused by being out of memory, we
+    // provide a little extra help by creating a child log message.
+    if (causedByOutOfMemory(caught)) {
+      branch(TreeLogger.ERROR, msg, caught);
+      return;
     }
 
     int childIndex = allocateNextChildIndex();
@@ -231,6 +253,25 @@ public abstract class AbstractTreeLogger implements TreeLogger {
       // postincrement because we want indices to start at 0
       return nextChildIndex++;
     }
+  }
+
+  /**
+   * Scans <code>t</code> and its causes for {@link OutOfMemoryError}.
+   * 
+   * @param t a possibly null {@link Throwable}
+   * @return true if {@link OutOfMemoryError} appears anywhere in the cause list
+   *         or if <code>t</code> is an {@link OutOfMemoryError}.
+   */
+  private boolean causedByOutOfMemory(Throwable t) {
+
+    while (t != null) {
+      if (t instanceof OutOfMemoryError) {
+        return true;
+      }
+      t = t.getCause();
+    }
+
+    return false;
   }
 
   /**
