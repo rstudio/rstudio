@@ -189,7 +189,7 @@ public class Image extends Widget implements SourcesClickEvents,
        * unlikely that a second load event would occur while you are in the load
        * event handler.
        */
-      DeferredCommand.add(new Command() {
+      DeferredCommand.addCommand(new Command() {
         public void execute() {
           if (image.loadListeners != null) {
             image.loadListeners.fireLoad(image);

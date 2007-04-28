@@ -148,7 +148,7 @@ public class WebModeCompilerFrontEnd extends AstCompiler {
           if (noArgCtor == null) {
             FindDeferredBindingSitesVisitor.reportRebindProblem(site,
                 "Rebind result '" + typeName
-                    + "' has no default (zero argument) constructors.");
+                    + "' has no default (zero argument) constructors");
             continue;
           }
           dependentTypeNames.add(typeName);
@@ -156,7 +156,7 @@ public class WebModeCompilerFrontEnd extends AstCompiler {
         Util.addAll(dependentTypeNames, resultTypes);
       } catch (UnableToCompleteException e) {
         FindDeferredBindingSitesVisitor.reportRebindProblem(site,
-            "Failed to resolve '" + reqType + "' via deferred binding.");
+            "Failed to resolve '" + reqType + "' via deferred binding");
       }
     }
     return (String[]) dependentTypeNames.toArray(Empty.STRINGS);
