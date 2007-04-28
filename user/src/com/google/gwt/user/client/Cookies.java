@@ -43,7 +43,7 @@ public class Cookies {
    * Gets the cookie associated with the given name.
    * 
    * @param name the name of the cookie to be retrieved
-   * @return the cookie's value
+   * @return the cookie's value, or <code>null</code> if the cookie doesn't exist
    */
   public static String getCookie(String name) {
     Map cookiesMap = ensureCookies();
