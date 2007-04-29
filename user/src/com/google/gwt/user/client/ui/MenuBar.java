@@ -312,7 +312,7 @@ public class MenuBar extends Widget implements PopupListener {
         // Fire the item's command.
         Command cmd = item.getCommand();
         if (cmd != null) {
-          DeferredCommand.add(cmd);
+          DeferredCommand.addCommand(cmd);
         }
       }
       return;
