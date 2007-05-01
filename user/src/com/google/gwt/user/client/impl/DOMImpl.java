@@ -68,13 +68,13 @@ public abstract class DOMImpl {
   }-*/;
 
   public native Element eventGetFromElement(Event evt) /*-{
-    return evt.fromElement ? evt.fromElement : null;
+    return evt.fromElement || null;
   }-*/;
 
   public native int eventGetKeyCode(Event evt) /*-{
     // 'which' gives the right key value, except when it doesn't -- in which
     // case, keyCode gives the right value on all browsers.
-    return evt.which ? evt.which : evt.keyCode;
+    return evt.which || evt.keyCode;
   }-*/;
 
   public abstract int eventGetMouseWheelVelocityY(Event evt);
@@ -166,7 +166,7 @@ public abstract class DOMImpl {
 
   public native Element getElementById(String id) /*-{
     var elem = $doc.getElementById(id);
-    return elem ? elem : null;
+    return elem || null;
   }-*/;
 
   public native String getElementProperty(Element elem, String prop) /*-{
@@ -187,7 +187,7 @@ public abstract class DOMImpl {
   }-*/;
 
   public native int getEventsSunk(Element elem) /*-{
-    return elem.__eventBits ? elem.__eventBits : 0;
+    return elem.__eventBits || 0;
   }-*/;
 
   public abstract Element getFirstChild(Element elem);

@@ -41,12 +41,11 @@ class DOMImplIE6 extends DOMImpl {
   }-*/;
 
   public native Element eventGetTarget(Event evt) /*-{
-    var elem = evt.srcElement;
-    return elem ? elem : null;
+    return evt.srcElement || null;
   }-*/;
 
   public native Element eventGetToElement(Event evt) /*-{
-    return evt.toElement ? evt.toElement : null;
+    return evt.toElement || null;
   }-*/;
 
   public native void eventPreventDefault(Event evt) /*-{
@@ -80,7 +79,7 @@ class DOMImplIE6 extends DOMImpl {
 
   public native Element getChild(Element elem, int index) /*-{
     var child = elem.children[index];
-    return child ? child : null;
+    return child || null;
   }-*/;
 
   public native int getChildCount(Element elem) /*-{
@@ -98,7 +97,7 @@ class DOMImplIE6 extends DOMImpl {
 
   public native Element getFirstChild(Element elem) /*-{
     var child = elem.firstChild;
-    return child ? child : null;
+    return child || null;
   }-*/;
 
   public native String getInnerText(Element elem) /*-{
@@ -108,12 +107,12 @@ class DOMImplIE6 extends DOMImpl {
 
   public native Element getNextSibling(Element elem) /*-{
     var sib = elem.nextSibling;
-    return sib ? sib : null;
+    return sib || null;
   }-*/;
 
   public native Element getParent(Element elem) /*-{
     var parent = elem.parentElement;
-    return parent ? parent : null;
+    return parent || null;
   }-*/;
 
   public native String iframeGetSrc(Element elem) /*-{

@@ -37,12 +37,12 @@ abstract class DOMImplStandard extends DOMImpl {
   }-*/;
 
   public native Element eventGetTarget(Event evt) /*-{
-    return evt.target ? evt.target : null;
+    return evt.target || null;
   }-*/;
 
   public native Element eventGetToElement(Event evt) /*-{
     // Standard browsers use relatedTarget rather than toElement.
-    return evt.relatedTarget ? evt.relatedTarget : null;
+    return evt.relatedTarget || null;
   }-*/;
 
   public native void eventPreventDefault(Event evt) /*-{
@@ -95,14 +95,14 @@ abstract class DOMImplStandard extends DOMImpl {
     var child = elem.firstChild;
     while (child && child.nodeType != 1)
       child = child.nextSibling;
-    return child ? child : null;
+    return child || null;
   }-*/;
 
   public native Element getNextSibling(Element elem) /*-{
     var sib = elem.nextSibling;
     while (sib && sib.nodeType != 1)
       sib = sib.nextSibling;
-    return sib ? sib : null;
+    return sib || null;
   }-*/;
 
   public native Element getParent(Element elem) /*-{
@@ -112,7 +112,7 @@ abstract class DOMImplStandard extends DOMImpl {
     }
     if (parent.nodeType != 1)
       parent = null;
-    return parent ? parent : null;
+    return parent || null;
   }-*/;
 
   public native String iframeGetSrc(Element elem) /*-{
