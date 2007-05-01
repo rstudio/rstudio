@@ -139,6 +139,7 @@
 
 	<target name="checkstyle" description="Static analysis of source">
 		<gwt.checkstyle>
+			<fileset dir="src" />
 			<fileset dir="super/com/google/gwt/emul" />
 			<fileset dir="super/com/google/gwt/junit/translatable" />
 		</gwt.checkstyle>
