@@ -18,9 +18,9 @@ function __MODULE_FUNC__() {
   // ---------------- INTERNAL GLOBALS ----------------
   
   // Cache symbols locally for good obfuscation
-  var wnd = window
-  ,doc = document
-  ,external = wnd.external
+  var $wnd = window
+  ,$doc = document
+  ,external = $wnd.external
 
   // These two variables gate calling gwtOnLoad; both must be true to start
   ,scriptsDone, loadDone, bodyDone
@@ -51,13 +51,13 @@ function __MODULE_FUNC__() {
   // Maps to synchronize the loading of styles and scripts; resources are loaded
   // only once, even when multiple modules depend on them.  This API must not
   // change across GWT versions.
-  if (!wnd.__gwt_stylesLoaded) { wnd.__gwt_stylesLoaded = {}; }
-  if (!wnd.__gwt_scriptsLoaded) { wnd.__gwt_scriptsLoaded = {}; }
+  if (!$wnd.__gwt_stylesLoaded) { $wnd.__gwt_stylesLoaded = {}; }
+  if (!$wnd.__gwt_scriptsLoaded) { $wnd.__gwt_scriptsLoaded = {}; }
 
   // --------------- WINDOW ONLOAD HOOK ---------------
 
-  var oldOnLoad = wnd.onload;
-  wnd.onload = function() {
+  var oldOnLoad = $wnd.onload;
+  $wnd.onload = function() {
     if (oldOnLoad) {
       oldOnLoad();
     }
@@ -69,7 +69,7 @@ function __MODULE_FUNC__() {
 
   function isHostedMode() {
     return (external && external.gwtOnLoad &&
-        (wnd.location.search.indexOf('gwt.hybrid') == -1));
+        ($wnd.location.search.indexOf('gwt.hybrid') == -1));
   }
 
   // Called by both onScriptLoad() and onInjectionDone(). It causes
@@ -77,7 +77,7 @@ function __MODULE_FUNC__() {
   //
   function maybeStartModule() {
     if (scriptsDone && loadDone && bodyDone) {
-      var iframe = doc.getElementById('__MODULE_NAME__');
+      var iframe = $doc.getElementById('__MODULE_NAME__');
       var frameWnd = iframe.contentWindow;
       // copy the init handlers function into the iframe
       frameWnd.__gwt_initHandlers = __MODULE_FUNC__.__gwt_initHandlers;
@@ -98,15 +98,15 @@ function __MODULE_FUNC__() {
   function computeScriptBase() {
     // see if gwt.js left a marker for us
     var thisScript
-    , markerScript = doc.getElementById("__gwt_js_marker___MODULE_NAME__");
+    , markerScript = $doc.getElementById("__gwt_js_marker___MODULE_NAME__");
 
     if (markerScript) {
       // gwt.js left us a marker; this script should be the next element
       thisScript = markerScript.nextSibling;
     } else {
       // try writing my own marker
-      doc.write('<script id="__gwt_marker___MODULE_NAME__"></script>');
-      markerScript = doc.getElementById("__gwt_marker___MODULE_NAME__");
+      $doc.write('<script id="__gwt_marker___MODULE_NAME__"></script>');
+      markerScript = $doc.getElementById("__gwt_marker___MODULE_NAME__");
       if (markerScript) {
         // this script should be the previous element
         thisScript = markerScript.previousSibling;
@@ -259,7 +259,7 @@ function __MODULE_FUNC__() {
 // __SHELL_SERVLET_ONLY_BEGIN__
   // Force shell servlet to serve compiled output for web mode
   if (!isHostedMode()) {
-    doc.write('<script src="' + base + '__MODULE_NAME__.nocache.js?compiled"></script>');
+    $doc.write('<script src="' + base + '__MODULE_NAME__.nocache.js?compiled"></script>');
     return;
   }
 
@@ -304,11 +304,11 @@ function __MODULE_FUNC__() {
     strongName += '.cache.html';
   }
 
-  doc.write('<iframe id="__MODULE_NAME__" style="width:0;height:0;border:0" src="' + base + strongName + '"></iframe>');
+  $doc.write('<iframe id="__MODULE_NAME__" style="width:0;height:0;border:0" src="' + base + strongName + '"></iframe>');
 // __MODULE_DEPS_BEGIN__
   // Module dependencies, such as scripts and css
 // __MODULE_DEPS_END__
-  doc.write('<script>__MODULE_FUNC__.onInjectionDone(\'__MODULE_NAME__\')</script>');
+  $doc.write('<script>__MODULE_FUNC__.onInjectionDone(\'__MODULE_NAME__\')</script>');
 }
 
 // Called from compiled code to hook the window's resize & load events (the
@@ -323,19 +323,19 @@ function __MODULE_FUNC__() {
 // 3) This function will be copied directly into the script frame window!
 //
 __MODULE_FUNC__.__gwt_initHandlers = function(resize, beforeunload, unload) {
-  var wnd = window
-  , oldOnResize = wnd.onresize
-  , oldOnBeforeUnload = wnd.onbeforeunload
-  , oldOnUnload = wnd.onunload
+  var $wnd = window
+  , oldOnResize = $wnd.onresize
+  , oldOnBeforeUnload = $wnd.onbeforeunload
+  , oldOnUnload = $wnd.onunload
   ;
 
-  wnd.onresize = function() {
+  $wnd.onresize = function() {
    resize();
    if (oldOnResize)
      oldOnResize();
   };
   
-  wnd.onbeforeunload = function() {
+  $wnd.onbeforeunload = function() {
    var ret = beforeunload();
   
    var oldRet;
@@ -347,7 +347,7 @@ __MODULE_FUNC__.__gwt_initHandlers = function(resize, beforeunload, unload) {
    return oldRet;
   };
   
-  wnd.onunload = function() {
+  $wnd.onunload = function() {
    unload();
    if (oldOnUnload)
      oldOnUnload();

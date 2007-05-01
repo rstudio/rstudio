@@ -18,9 +18,9 @@ function __MODULE_FUNC__() {
   // ---------------- INTERNAL GLOBALS ----------------
   
   // Cache symbols locally for good obfuscation
-  var wnd = window
-  ,doc = document
-  ,external = wnd.external
+  var $wnd = window
+  ,$doc = document
+  ,external = $wnd.external
   
   // If non-empty, an alternate base url for this module
   ,base = ''
@@ -48,14 +48,14 @@ function __MODULE_FUNC__() {
   // Maps to synchronize the loading of styles and scripts; resources are loaded
   // only once, even when multiple modules depend on them.  This API must not
   // change across GWT versions.
-  if (!wnd.__gwt_stylesLoaded) { wnd.__gwt_stylesLoaded = {}; }
-  if (!wnd.__gwt_scriptsLoaded) { wnd.__gwt_scriptsLoaded = {}; }
+  if (!$wnd.__gwt_stylesLoaded) { $wnd.__gwt_stylesLoaded = {}; }
+  if (!$wnd.__gwt_scriptsLoaded) { $wnd.__gwt_scriptsLoaded = {}; }
 
   // --------------- INTERNAL FUNCTIONS ---------------
 
   function isHostedMode() {
     return (external && external.gwtOnLoad &&
-        (wnd.location.search.indexOf('gwt.hybrid') == -1));
+        ($wnd.location.search.indexOf('gwt.hybrid') == -1));
   }
   
   // Determine our own script's URL via magic :)
@@ -65,8 +65,8 @@ function __MODULE_FUNC__() {
     var thisScript, markerScript;
 
     // try writing a marker
-    doc.write('<script id="__gwt_marker___MODULE_NAME__"></script>');
-    markerScript = doc.getElementById("__gwt_marker___MODULE_NAME__");
+    $doc.write('<script id="__gwt_marker___MODULE_NAME__"></script>');
+    markerScript = $doc.getElementById("__gwt_marker___MODULE_NAME__");
     if (markerScript) {
       // this script should be the previous element
       thisScript = markerScript.previousSibling;
@@ -210,12 +210,12 @@ function __MODULE_FUNC__() {
 // __SHELL_SERVLET_ONLY_BEGIN__
   if (!isHostedMode()) {
     // Force shell servlet to serve compiled output for web mode
-    doc.write('<script src="' + base + '__MODULE_NAME__.nocache-xs.js?compiled"></script>');
+    $doc.write('<script src="' + base + '__MODULE_NAME__.nocache-xs.js?compiled"></script>');
     return;
   } else {
     // This script cannot run hosted mode properly; redirect to the html version
     // TODO: figure out how to run hosted mode in the main window
-    doc.write('<script src="' + base + '__MODULE_NAME__.nocache.js"></script>');
+    $doc.write('<script src="' + base + '__MODULE_NAME__.nocache.js"></script>');
     return;
   }
 // __SHELL_SERVLET_ONLY_END__
@@ -235,7 +235,7 @@ function __MODULE_FUNC__() {
 // __MODULE_DEPS_BEGIN__
   // Module dependencies, such as scripts and css
 // __MODULE_DEPS_END__
-  doc.write('<script src="' + base + strongName + '"></script>');
+  $doc.write('<script src="' + base + strongName + '"></script>');
 }
 
 // Called from compiled code to hook the window's resize & load events (the
@@ -250,19 +250,19 @@ function __MODULE_FUNC__() {
 // 3) This function will be copied directly into the script namespace.
 //
 __MODULE_FUNC__.__gwt_initHandlers = function(resize, beforeunload, unload) {
-  var wnd = window
-  , oldOnResize = wnd.onresize
-  , oldOnBeforeUnload = wnd.onbeforeunload
-  , oldOnUnload = wnd.onunload
+  var $wnd = window
+  , oldOnResize = $wnd.onresize
+  , oldOnBeforeUnload = $wnd.onbeforeunload
+  , oldOnUnload = $wnd.onunload
   ;
 
-  wnd.onresize = function() {
+  $wnd.onresize = function() {
    resize();
    if (oldOnResize)
      oldOnResize();
   };
   
-  wnd.onbeforeunload = function() {
+  $wnd.onbeforeunload = function() {
    var ret = beforeunload();
   
    var oldRet;
@@ -274,7 +274,7 @@ __MODULE_FUNC__.__gwt_initHandlers = function(resize, beforeunload, unload) {
    return oldRet;
   };
   
-  wnd.onunload = function() {
+  $wnd.onunload = function() {
    unload();
    if (oldOnUnload)
      oldOnUnload();
