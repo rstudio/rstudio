@@ -252,6 +252,16 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     RootPanel.get().add(this);
     impl.onShow(getElement());
   }
+  
+  /**
+   * This method is called when a widget is detached from the browser's
+   * document. To receive notification before the PopupPanel is removed from the
+   * document, override the {@link Widget#onUnload()} method instead.
+   */
+  protected void onDetach() {
+    DOM.removeEventPreview(this);
+    super.onDetach();
+  }
 
   /**
    * Remove focus from an Element.
@@ -268,7 +278,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       return;
     }
     showing = false;
-    DOM.removeEventPreview(this);
 
     RootPanel.get().remove(this);
     impl.onHide(getElement());
