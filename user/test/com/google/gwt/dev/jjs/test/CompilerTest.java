@@ -90,14 +90,14 @@ public class CompilerTest extends GWTTestCase {
     }
   }
 
+  private static class SideEffectCauser6 extends SideEffectCauser6Super {
+    public static String causeClinitSideEffectOnRead = "bar";
+  }
+
   private static class SideEffectCauser6Super {
     static {
       CompilerTest.sideEffectChecker++;
     }
-  }
-
-  private static class SideEffectCauser6 extends SideEffectCauser6Super {
-    public static String causeClinitSideEffectOnRead = "bar";
   }
 
   private static final class UninstantiableType {
@@ -117,10 +117,6 @@ public class CompilerTest extends GWTTestCase {
     return "bar";
   }
 
-  private static native boolean cannotOptimize() /*-{
-    return true;
-  }-*/;
-
   private static void foo(String string) {
     Object o = string;
   }
@@ -131,6 +127,14 @@ public class CompilerTest extends GWTTestCase {
 
   private static native String jsniReadSideEffectCauser5() /*-{
     return @com.google.gwt.dev.jjs.test.CompilerTest$SideEffectCauser5::causeClinitSideEffectOnRead;
+  }-*/;
+
+  private static native boolean noOptimizeFalse() /*-{
+    return false;
+  }-*/;
+
+  private static native boolean noOptimizeTrue() /*-{
+    return true;
   }-*/;
 
   public String getModuleName() {
@@ -148,8 +152,8 @@ public class CompilerTest extends GWTTestCase {
     oaa[0][0] = "bar";
     assertEquals(oaa[0][0], "bar");
 
-    Apple[] apple = cannotOptimize() ? new Granny[3] : new Apple[3];
-    Apple g = cannotOptimize() ? (Apple) new Granny() : (Apple) new Fuji();
+    Apple[] apple = noOptimizeTrue() ? new Granny[3] : new Apple[3];
+    Apple g = noOptimizeTrue() ? (Apple) new Granny() : (Apple) new Fuji();
     Apple a = apple[0] = g;
     assertEquals(g, a);
   }
@@ -201,6 +205,28 @@ public class CompilerTest extends GWTTestCase {
     assertEquals(6, sideEffectChecker);
     String checkRescued = NonSideEffectCauser.NOT_A_COMPILE_TIME_CONSTANT;
     assertEquals(null, checkRescued);
+  }
+
+  public void testConditionals() {
+    assertTrue(noOptimizeTrue() ? noOptimizeTrue() : noOptimizeFalse());
+    assertFalse(noOptimizeFalse() ? noOptimizeTrue() : noOptimizeFalse());
+    assertFalse(noOptimizeTrue() ? noOptimizeFalse() : noOptimizeTrue());
+    assertTrue(noOptimizeFalse() ? noOptimizeFalse() : noOptimizeTrue());
+
+    assertTrue(true ? noOptimizeTrue() : noOptimizeFalse());
+    assertFalse(false ? noOptimizeTrue() : noOptimizeFalse());
+    assertFalse(true ? noOptimizeFalse() : noOptimizeTrue());
+    assertTrue(false ? noOptimizeFalse() : noOptimizeTrue());
+
+    assertTrue(noOptimizeTrue() ? true : noOptimizeFalse());
+    assertFalse(noOptimizeFalse() ? true : noOptimizeFalse());
+    assertFalse(noOptimizeTrue() ? false : noOptimizeTrue());
+    assertTrue(noOptimizeFalse() ? false : noOptimizeTrue());
+
+    assertTrue(noOptimizeTrue() ? noOptimizeTrue() : false);
+    assertFalse(noOptimizeFalse() ? noOptimizeTrue() : false);
+    assertFalse(noOptimizeTrue() ? noOptimizeFalse() : true);
+    assertTrue(noOptimizeFalse() ? noOptimizeFalse() : true);
   }
 
   public void testDeadCode() {
@@ -420,7 +446,7 @@ public class CompilerTest extends GWTTestCase {
   }
 
   public void testJavaScriptReservedWords() {
-    boolean delete = cannotOptimize();
+    boolean delete = noOptimizeTrue();
     for (int in = 0; in < 10; ++in) {
       assertTrue(in < 10);
       assertTrue(delete);
@@ -480,8 +506,8 @@ public class CompilerTest extends GWTTestCase {
   }
   
   public void testLocalRefs() {
-    final String foo = cannotOptimize() ? "foo" : "bar";
-    final String bar = cannotOptimize() ? "bar" : "foo";
+    final String foo = noOptimizeTrue() ? "foo" : "bar";
+    final String bar = noOptimizeTrue() ? "bar" : "foo";
     String result = new Object() {
 
       private String a = foo;
@@ -514,6 +540,27 @@ public class CompilerTest extends GWTTestCase {
 
     }.toString();
     assertEquals(result, "foofoofoofoo");
+  }
+
+  public void testNotOptimizations() {
+    assertFalse(!true);
+    assertTrue(!false);
+    
+    assertTrue(!(noOptimizeTrue() == noOptimizeFalse()));
+    assertFalse(!(noOptimizeTrue() != noOptimizeFalse()));
+    
+    assertFalse(!(3 < 4));
+    assertFalse(!(3 <= 4));
+    assertTrue(!(3 > 4));
+    assertTrue(!(3 >= 4));
+    
+    assertTrue(!(4 < 3));
+    assertTrue(!(4 <= 3));
+    assertFalse(!(4 > 3));
+    assertFalse(!(4 >= 3));
+    
+    assertTrue(!!noOptimizeTrue());
+    assertFalse(!!noOptimizeFalse());
   }
 
   public void testNullFlow() {

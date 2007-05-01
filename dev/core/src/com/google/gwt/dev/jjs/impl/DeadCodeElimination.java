@@ -85,9 +85,12 @@ public class DeadCodeElimination {
 
         } else if (rhs instanceof JBooleanLiteral) {
           // eg: if (isWhatever() && true) -> if (isWhatever())
+          // eg: if (isWhatever() && false) -> if (false), unless side effects
           JBooleanLiteral booleanLiteral = (JBooleanLiteral) rhs;
           if (booleanLiteral.getValue()) {
             ctx.replaceMe(lhs);
+          } else if (!lhs.hasSideEffects()) {
+            ctx.replaceMe(rhs);
           }
         }
 
@@ -105,9 +108,12 @@ public class DeadCodeElimination {
 
         } else if (rhs instanceof JBooleanLiteral) {
           // eg: if (isWhatever() || false) -> if (isWhatever())
+          // eg: if (isWhatever() && true) -> if (true), unless side effects
           JBooleanLiteral booleanLiteral = (JBooleanLiteral) rhs;
           if (!booleanLiteral.getValue()) {
             ctx.replaceMe(lhs);
+          } else if (!lhs.hasSideEffects()) {
+            ctx.replaceMe(rhs);
           }
         }
       } else if (op == JBinaryOperator.EQ) {
@@ -146,16 +152,48 @@ public class DeadCodeElimination {
     }
 
     public void endVisit(JConditional x, Context ctx) {
-      JExpression expression = x.getIfTest();
-      if (expression instanceof JBooleanLiteral) {
-        JBooleanLiteral booleanLiteral = (JBooleanLiteral) expression;
-
-        if (booleanLiteral.getValue()) {
-          // If true, replace myself with then expression
-          ctx.replaceMe(x.getThenExpr());
+      JExpression condExpr = x.getIfTest();
+      JExpression thenExpr = x.getThenExpr();
+      JExpression elseExpr = x.getElseExpr();
+      if (condExpr instanceof JBooleanLiteral) {
+        if (((JBooleanLiteral) condExpr).getValue()) {
+          // e.g. (true ? then : else) -> then
+          ctx.replaceMe(thenExpr);
         } else {
-          // If false, replace myself with else expression
-          ctx.replaceMe(x.getElseExpr());
+          // e.g. (false ? then : else) -> else
+          ctx.replaceMe(elseExpr);
+        }
+      } else if (thenExpr instanceof JBooleanLiteral) {
+        if (((JBooleanLiteral) thenExpr).getValue()) {
+          // e.g. (cond ? true : else) -> cond || else
+          JBinaryOperation binOp = new JBinaryOperation(program,
+              x.getSourceInfo(), x.getType(), JBinaryOperator.OR, condExpr,
+              elseExpr);
+          ctx.replaceMe(binOp);
+        } else {
+          // e.g. (cond ? false : else) -> !cond && else
+          JPrefixOperation notCondExpr = new JPrefixOperation(program,
+              condExpr.getSourceInfo(), JUnaryOperator.NOT, condExpr);
+          JBinaryOperation binOp = new JBinaryOperation(program,
+              x.getSourceInfo(), x.getType(), JBinaryOperator.AND, notCondExpr,
+              elseExpr);
+          ctx.replaceMe(binOp);
+        }
+      } else if (elseExpr instanceof JBooleanLiteral) {
+        if (((JBooleanLiteral) elseExpr).getValue()) {
+          // e.g. (cond ? then : true) -> !cond || then
+          JPrefixOperation notCondExpr = new JPrefixOperation(program,
+              condExpr.getSourceInfo(), JUnaryOperator.NOT, condExpr);
+          JBinaryOperation binOp = new JBinaryOperation(program,
+              x.getSourceInfo(), x.getType(), JBinaryOperator.OR, notCondExpr,
+              thenExpr);
+          ctx.replaceMe(binOp);
+        } else {
+          // e.g. (cond ? then : false) -> cond && then
+          JBinaryOperation binOp = new JBinaryOperation(program,
+              x.getSourceInfo(), x.getType(), JBinaryOperator.AND, condExpr,
+              thenExpr);
+          ctx.replaceMe(binOp);
         }
       }
     }
@@ -229,13 +267,53 @@ public class DeadCodeElimination {
     }
 
     /**
-     * Resolve "!true" into "false" and vice versa.
+     * Simplify the ! operator if possible.
      */
     public void endVisit(JPrefixOperation x, Context ctx) {
       if (x.getOp() == JUnaryOperator.NOT) {
-        if (x.getArg() instanceof JBooleanLiteral) {
-          JBooleanLiteral booleanLiteral = (JBooleanLiteral) x.getArg();
+        JExpression arg = x.getArg();
+        if (arg instanceof JBooleanLiteral) {
+          // e.g. !true -> false; !false -> true
+          JBooleanLiteral booleanLiteral = (JBooleanLiteral) arg;
           ctx.replaceMe(program.getLiteralBoolean(!booleanLiteral.getValue()));
+        } else if (arg instanceof JBinaryOperation) {
+          // try to invert the binary operator
+          JBinaryOperation argOp = (JBinaryOperation) arg;
+          JBinaryOperator op = argOp.getOp();
+          JBinaryOperator newOp = null;
+          if (op == JBinaryOperator.EQ) {
+            // e.g. !(x == y) -> x != y
+            newOp = JBinaryOperator.NEQ;
+          } else if (op == JBinaryOperator.NEQ) {
+            // e.g. !(x != y) -> x == y
+            newOp = JBinaryOperator.EQ;
+          } else if (op == JBinaryOperator.GT) {
+            // e.g. !(x > y) -> x <= y
+            newOp = JBinaryOperator.LTE;
+          } else if (op == JBinaryOperator.LTE) {
+            // e.g. !(x <= y) -> x > y
+            newOp = JBinaryOperator.GT;
+          } else if (op == JBinaryOperator.GTE) {
+            // e.g. !(x >= y) -> x < y
+            newOp = JBinaryOperator.LT;
+          } else if (op == JBinaryOperator.LT) {
+            // e.g. !(x < y) -> x >= y
+            newOp = JBinaryOperator.GTE;
+          }
+          if (newOp != null) {
+            JBinaryOperation newBinOp = new JBinaryOperation(program,
+                argOp.getSourceInfo(), argOp.getType(), newOp, argOp.getLhs(),
+                argOp.getRhs());
+            ctx.replaceMe(newBinOp);
+          }
+        } else if (arg instanceof JPrefixOperation) {
+          // try to invert the unary operator
+          JPrefixOperation argOp = (JPrefixOperation) arg;
+          JUnaryOperator op = argOp.getOp();
+          // e.g. !!x -> x
+          if (op == JUnaryOperator.NOT) {
+            ctx.replaceMe(argOp.getArg());
+          }
         }
       }
     }
