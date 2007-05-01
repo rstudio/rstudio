@@ -235,13 +235,14 @@ public abstract class DOMImpl {
   public abstract void insertChild(Element parent, Element child,
       int index);
 
+  /**
+   * @see DOM#insertListItem(Element, String, String, int)
+   */
   public void insertListItem(Element select, String item, String value,
       int index) {
     Element option = DOM.createElement("OPTION");
     DOM.setInnerText(option, item);
-    if (value != null) {
-      DOM.setElementProperty(option, "value", value);
-    }
+    DOM.setElementProperty(option, "value", value);
     if (index == -1) {
       DOM.appendChild(select, option);
     } else {

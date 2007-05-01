@@ -809,6 +809,16 @@ public class DOM {
     impl.insertChild(parent, child, index);
   }
 
+  /**
+   * Creates an <code>&lt;option&gt;</code> element and inserts it as a child
+   * of the specified <code>&lt;select&gt;</code> element.
+   * 
+   * @param select the <code>&lt;select&gt;</code> element
+   * @param item the text of the new item; cannot be <code>null</code>
+   * @param value the <code>value</code> attribute for the new
+   *          <code>&lt;option&gt;</code>; cannot be <code>null</code>
+   * @param index the index at which to insert the child
+   */
   public static void insertListItem(Element select, String item, String value,
       int index) {
     impl.insertListItem(select, item, value, index);

@@ -60,7 +60,10 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
-   * Adds an item to the list box.
+   * Adds an item to the list box. This method has the same effect as 
+   * <pre>
+   * addItem(item, item)
+   * </pre>
    * 
    * @param item the text of the item to be added
    */
@@ -69,11 +72,11 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
-   * Adds an item to the list box.
+   * Adds an item to the list box, specifying an initial value for the item.
    * 
    * @param item the text of the item to be added
    * @param value the item's value, to be submitted if it is part of a
-   *          {@link FormPanel}.
+   *          {@link FormPanel}; cannot be <code>null</code>
    */
   public void addItem(String item, String value) {
     insertItem(item, value, INSERT_AT_END);
@@ -125,7 +128,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
-   * Gets the value associated with the item at a given index.
+   * Gets the value associated with the item at a given index. 
    * 
    * @param index the index of the item to be retrieved
    * @return the item's associated value
@@ -149,17 +152,20 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
-   * Inserts an item into the list box.
+   * Inserts an item into the list box. Has the same effect as 
+   * <pre>
+   * insertItem(item, item, index)
+   * </pre>
    * 
    * @param item the text of the item to be inserted
    * @param index the index at which to insert it
    */
   public void insertItem(String item, int index) {
-    insertItem(item, null, index);
+    insertItem(item, item, index);
   }
 
   /**
-   * Inserts an item into the list box.
+   * Inserts an item into the list box, specifying an initial value for the item.
    * 
    * @param item the text of the item to be inserted
    * @param value the item's value, to be submitted if it is part of a
@@ -271,15 +277,14 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   /**
    * Sets the value associated with the item at a given index. This value can be
    * used for any purpose, but is also what is passed to the server when the
-   * ListBox is submitted as part of a {@link FormPanel}.
+   * list box is submitted as part of a {@link FormPanel}.
    * 
    * @param index the index of the item to be set
-   * @param value the item's new value
+   * @param value the item's new value; cannot be <code>null</code>
    * @throws IndexOutOfBoundsException if the index is out of range
    */
   public void setValue(int index, String value) {
     checkIndex(index);
-
     Element option = DOM.getChild(getElement(), index);
     DOM.setElementProperty(option, "value", value);
   }

@@ -165,13 +165,13 @@ class DOMImplIE6 extends DOMImpl {
     // When we try to pass the populated option into this method, IE
     // chokes, so we create the option here instead.
     var newOption = document.createElement("Option");
-    if(index==-1){
+    if (index == -1) {
       select.add(newOption);
     } else{
-      select.add(newOption,index);
+      select.add(newOption, index);
     }
-    newOption.text=text;
-    newOption.value=value;
+    newOption.text = text;   // assumed not null
+    newOption.value = value; // assumed not null
   }-*/;
 
   public native boolean isOrHasChild(Element parent, Element child) /*-{
