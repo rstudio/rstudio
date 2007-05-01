@@ -139,9 +139,10 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
           return true;
         }
 
-        // If it's an outside click event, and auto-hide is enabled:
-        // hide the popup and _don't_ eat the event.
-        if (!eventTargetsPopup && autoHide && (type == Event.ONCLICK)) {
+        // If it's an outside click and auto-hide is enabled:
+        // hide the popup and _don't_ eat the event. ONMOUSEDOWN is used to
+        // prevent problems with showing a popup in response to a mousedown.
+        if (!eventTargetsPopup && autoHide && (type == Event.ONMOUSEDOWN)) {
           hide(true);
           return true;
         }
