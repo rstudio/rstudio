@@ -232,6 +232,10 @@ public abstract class DOMImpl {
 
   public abstract void init();
 
+  public native void insertBefore(Element parent, Element child, Element before) /*-{
+    parent.insertBefore(child, before);
+  }-*/;
+
   public abstract void insertChild(Element parent, Element child,
       int index);
 

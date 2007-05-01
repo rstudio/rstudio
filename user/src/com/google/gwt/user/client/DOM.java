@@ -797,10 +797,23 @@ public class DOM {
   }
 
   /**
+   * Inserts an element as a child of the given parent element, before another
+   * child of that parent.
+   * 
+   * @param parent the parent element
+   * @param child the child element to add to <code>parent</code>
+   * @param before an existing child element of <code>parent</code> before
+   *          which <code>child</code> will be inserted
+   */
+  public static void insertBefore(Element parent, Element child, Element before) {
+    impl.insertBefore(parent, child, before);
+  }
+
+  /**
    * Inserts an element as a child of the given parent element.
    *
    * @param parent the parent element
-   * @param child the child element
+   * @param child the child element to add to <code>parent</code>
    * @param index the index before which the child will be inserted (any value
    *          greater than the number of existing children will cause the child
    *          to be appended)
