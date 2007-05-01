@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
@@ -72,9 +73,15 @@ public class Widget extends UIObject implements EventListener {
 
   /**
    * This method is called when a widget is attached to the browser's document.
-   * It must not be overridden, except by {@link Panel}. To receive
-   * notification when a widget is attached to the document, override the
-   * {@link #onLoad} method.
+   * To receive notification after a Widget has been added from the
+   * document, override the {@link #onLoad} method.
+   * 
+   * <p>
+   * Subclasses that override this method must call
+   * <code>super.onAttach()</code> to ensure that the Widget has been
+   * attached to the underlying Element.
+   * </p>
+   * 
    * @throws IllegalStateException if this widget is already attached
    */
   protected void onAttach() {
@@ -96,7 +103,16 @@ public class Widget extends UIObject implements EventListener {
 
   /**
    * This method is called when a widget is detached from the browser's
-   * document. It must not be overridden, except by {@link Panel}.
+   * document. To receive notification before a Widget is removed from the
+   * document, override the {@link #onUnload} method.
+   * 
+   * <p>
+   * Subclasses that override this method must call
+   * <code>super.onDetach()</code> to ensure that the Widget has been
+   * detached from the underlying Element.  Failure to do so will result
+   * in application memeroy leaks due to circular references between DOM
+   * Elements and JavaScript objects.
+   * </p>
    * 
    * @throws IllegalStateException if this widget is already detached
    */
@@ -105,19 +121,31 @@ public class Widget extends UIObject implements EventListener {
       throw new IllegalStateException(
           "Should only call onDetach when the widget is attached to the browser's document");
     }
-    attached = false;
-
-    // Clear out the element's event listener (breaking the circular
-    // reference between it and the widget).
-    //
-    DOM.setEventListener(getElement(), null);
+    
+    // Give the user a chance to clean up, but don't trust the code to not throw
+    try {
+      onUnload();
+    } finally {
+      attached = false;
+  
+      // Clear out the element's event listener (breaking the circular
+      // reference between it and the widget).
+      DOM.setEventListener(getElement(), null);
+    }
   }
 
   /**
-   * This method is called when the widget becomes attached to the browser's
-   * document.
+   * This method is called immediately after a widget becomes attached to the
+   * browser's document.
    */
   protected void onLoad() {
+  }
+  
+  /**
+   * This method is called immediately before a widget will be detached from the
+   * browser's document.
+   */
+  protected void onUnload() {
   }
 
   /**
@@ -181,9 +209,13 @@ public class Widget extends UIObject implements EventListener {
     if (parent == null) {
       if (oldParent != null && oldParent.isAttached()) {
         onDetach();
+        assert !isAttached() :
+            "Failure of " + GWT.getTypeName(this) + " to call super.onDetach()";
       }
     } else if (parent.isAttached()) {
       onAttach();
+        assert isAttached() :
+            "Failure of " + GWT.getTypeName(this) + " to call super.onAttach()";
     }
   }
 }
