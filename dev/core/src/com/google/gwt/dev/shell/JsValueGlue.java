@@ -219,7 +219,7 @@ public class JsValueGlue {
 
     // Just don't know what do to with this.
     throw new IllegalArgumentException(msgPrefix + ": Cannot convert to type "
-        + TypeInfo.getSourceRepresentation(type, "") + " from "
+        + TypeInfo.getSourceRepresentation(type) + " from "
         + value.getTypeString());
   }
 

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.server.rpc;
 
-import com.google.gwt.dev.util.TypeInfo;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.server.rpc.impl.ServerSerializableTypeOracle;
@@ -185,7 +184,7 @@ public final class RPC {
         // The service does not implement the requested interface
         throw new SecurityException("Blocked attempt to access interface '"
             + serviceIntfName + "', which is not implemented by '"
-            + TypeInfo.getSourceRepresentation(type, "")
+            + printTypeName(type)
             + "'; this is either misconfiguration or a hack attempt");
       }
     }
@@ -197,7 +196,7 @@ public final class RPC {
         // The requested interface is not a RemoteService interface
         throw new SecurityException(
             "Blocked attempt to access interface '"
-                + TypeInfo.getSourceRepresentation(serviceIntf, "")
+                + printTypeName(serviceIntf)
                 + "', which doesn't extend RemoteService; this is either misconfiguration or a hack attempt");
       }
     } catch (ClassNotFoundException e) {
@@ -304,7 +303,7 @@ public final class RPC {
       if (actualReturnType == null
           || !methodReturnType.isAssignableFrom(actualReturnType)) {
         throw new IllegalArgumentException("Type '"
-            + TypeInfo.getSourceRepresentation(object.getClass(), "")
+            + printTypeName(object.getClass())
             + "' does not match the return type in the method's signature: '"
             + getSourceRepresentation(serviceMethod) + "'");
       }
@@ -427,7 +426,7 @@ public final class RPC {
 
     if (target != null) {
       sb.append(" on target '");
-      sb.append(TypeInfo.getSourceRepresentation(target.getClass(), ""));
+      sb.append(printTypeName(target.getClass()));
       sb.append("'");
     }
 
@@ -445,7 +444,7 @@ public final class RPC {
 
     if (target != null) {
       sb.append(" on target '");
-      sb.append(TypeInfo.getSourceRepresentation(target.getClass(), ""));
+      sb.append(printTypeName(target.getClass()));
       sb.append("'");
     }
 
@@ -469,12 +468,12 @@ public final class RPC {
       if (i > 0) {
         sb.append(", ");
       }
-      sb.append(TypeInfo.getSourceRepresentation(parameterTypes[i], ""));
+      sb.append(printTypeName(parameterTypes[i]));
     }
     sb.append(")'");
 
     sb.append(" in interface '");
-    sb.append(TypeInfo.getSourceRepresentation(serviceIntf, ""));
+    sb.append(printTypeName(serviceIntf));
     sb.append("'");
 
     return sb.toString();
@@ -634,6 +633,44 @@ public final class RPC {
     }
 
     return false;
+  }
+
+  /**
+   * Straight copy from
+   * {@link com.google.gwt.dev.util.TypeInfo#getSourceRepresentation(Class)} to
+   * avoid runtime dependency on gwt-dev.
+   */
+  private static String printTypeName(Class type) {
+    // Primitives
+    //
+    if (type.equals(Integer.TYPE)) {
+      return "int";
+    } else if (type.equals(Long.TYPE)) {
+      return "long";
+    } else if (type.equals(Short.TYPE)) {
+      return "short";
+    } else if (type.equals(Byte.TYPE)) {
+      return "byte";
+    } else if (type.equals(Character.TYPE)) {
+      return "char";
+    } else if (type.equals(Boolean.TYPE)) {
+      return "boolean";
+    } else if (type.equals(Float.TYPE)) {
+      return "float";
+    } else if (type.equals(Double.TYPE)) {
+      return "double";
+    }
+
+    // Arrays
+    //
+    if (type.isArray()) {
+      Class componentType = type.getComponentType();
+      return printTypeName(componentType) + "[]";
+    }
+
+    // Everything else
+    //
+    return type.getName().replace('$', '.');
   }
 
   /**

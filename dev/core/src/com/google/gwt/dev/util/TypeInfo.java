@@ -111,7 +111,7 @@ public class TypeInfo {
     return after.toString();
   }
 
-  public static String getSourceRepresentation(Class type, String optArrayDim) {
+  public static String getSourceRepresentation(Class type) {
     // Primitives
     //
     if (type.equals(Integer.TYPE)) {
@@ -136,7 +136,7 @@ public class TypeInfo {
     //
     if (type.isArray()) {
       Class componentType = type.getComponentType();
-      return getSourceRepresentation(componentType, optArrayDim) + "[]";
+      return getSourceRepresentation(componentType) + "[]";
     }
 
     // Everything else
