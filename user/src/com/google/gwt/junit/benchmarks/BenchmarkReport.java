@@ -16,7 +16,6 @@
 package com.google.gwt.junit.benchmarks;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.HasMetaData;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
@@ -468,12 +467,11 @@ public class BenchmarkReport {
    * 
    * @param outputPath The path to write the reports to.
    * @throws ParserConfigurationException
-   * @throws UnableToCompleteException
    * @throws IOException
    * @throws IOException If anything goes wrong writing to outputPath
    */
   public void generate(String outputPath) throws ParserConfigurationException,
-      UnableToCompleteException, IOException {
+      IOException {
 
     // Don't generate a new report if no tests were actually run.
     if (testResults.size() == 0) {

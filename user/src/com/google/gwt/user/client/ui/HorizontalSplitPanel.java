@@ -42,8 +42,8 @@ import com.google.gwt.user.client.Element;
 public final class HorizontalSplitPanel extends SplitPanel {
 
   /**
-   * The resizing implementation for standard browsers (Anything other than
-   * Safari and IE6/7)
+   * The resizing implementation for standard browsers (anything other than
+   * Safari and IE6/7).
    */
   private static class Impl {
     // The x position of the mouse when drag resizing begins.

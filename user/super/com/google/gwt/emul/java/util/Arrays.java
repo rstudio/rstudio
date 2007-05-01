@@ -68,7 +68,7 @@ public class Arrays {
   /**
    * Perform a binary search on a sorted char array.
    *
-   * @param sortedArray char array to search
+   * @param a char array to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative
    *   number which is the index of the next larger value (or just past
