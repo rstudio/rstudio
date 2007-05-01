@@ -154,7 +154,7 @@ class DOMImplIE6 extends DOMImpl {
   }-*/;
 
   public native void insertChild(Element parent, Element child, int index) /*-{
-    if (index == parent.children.length)
+    if (index >= parent.children.length)
       parent.appendChild(child);
     else
       parent.insertBefore(child, parent.children[index]);

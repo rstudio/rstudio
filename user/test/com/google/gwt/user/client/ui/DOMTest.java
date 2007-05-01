@@ -53,7 +53,7 @@ public class DOMTest extends GWTTestCase {
     cssClass = DOM.getElementAttribute(div, "class");
     assertNull(cssClass);
   }
-  
+
   /**
    * Tests the ability to do a parent-ward walk in the DOM.
    */
@@ -70,6 +70,18 @@ public class DOMTest extends GWTTestCase {
     }
     // If we get here, we pass, because we encountered no errors going to the
     // top of the parent hierarchy.
+  }
+
+  /**
+   * Tests {@link DOM#insertChild(Element, Element, int)}.
+   *
+   */
+  public void testInsertChild() {
+    Element parent = RootPanel.get().getElement();
+    Element div = DOM.createDiv();
+    DOM.insertChild(parent, div, Integer.MAX_VALUE);
+    Element child = DOM.getChild(RootPanel.get().getElement(), DOM.getChildCount(parent) - 1);
+    assertEquals(div, child);
   }
 
   /**
