@@ -94,6 +94,10 @@ public class CheckBox extends ButtonBase implements HasName {
     return DOM.getElementProperty(inputElem, "name");
   }
 
+  public int getTabIndex() {
+    return getFocusImpl().getTabIndex(inputElem);
+  }
+
   public String getText() {
     return DOM.getInnerText(labelElem);
   }
