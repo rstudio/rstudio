@@ -1066,6 +1066,25 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
   // CHECKSTYLE_NAMING_ON
 
+  /**
+   * Escapes any closing XML tags embedded in <code>str</code>, which could
+   * potentially cause a parse failure in a browser, for example, embedding
+   * a closing <code>&lt;script&gt;</code> tag.
+   *
+   * @param str an unescaped literal; May be null
+   */
+  private void escapeClosingTags(StringBuffer str) {
+    if (str == null) {
+      return;
+    }
+
+    int index = 0;
+
+    while ((index = str.indexOf("</", index)) != -1) {
+      str.insert(index + 1, '\\');
+    }
+  }
+
   private void indent() {
     p.indentIn();
   }
@@ -1076,11 +1095,12 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
   /**
    * Adapted from
-   * {@link com.google.javascript.jscomp.rhino.ScriptRuntime#escapeString(String)}.
+   * {@link com.google.gwt.dev.js.rhino.ScriptRuntime#escapeString(String)}.
    * The difference is that we quote with either &quot; or &apos; depending on
    * which one is used less inside the string.
    */
   private void printStringLiteral(String value) {
+
     char[] chars = value.toCharArray();
     final int n = chars.length;
     int quoteCount = 0;
@@ -1096,14 +1116,17 @@ public class JsToStringGenerationVisitor extends JsVisitor {
       }
     }
 
+    StringBuffer result = new StringBuffer(value.length() + 16);
+
     char quoteChar = (quoteCount < aposCount) ? '"' : '\'';
     p.print(quoteChar);
+
     for (int i = 0; i < n; ++i) {
       char c = chars[i];
 
       if (' ' <= c && c <= '~' && c != quoteChar && c != '\\') {
         // an ordinary print character (like C isprint())
-        p.print(c);
+        result.append(c);
         continue;
       }
 
@@ -1137,28 +1160,31 @@ public class JsToStringGenerationVisitor extends JsVisitor {
           escape = '\\';
           break;
       }
+
       if (escape >= 0) {
         // an \escaped sort of character
-        p.print('\\');
-        p.print((char) escape);
+        result.append('\\');
+        result.append((char) escape);
       } else {
         int hexSize;
         if (c < 256) {
           // 2-digit hex
-          p.print("\\x");
+          result.append("\\x");
           hexSize = 2;
         } else {
           // Unicode.
-          p.print("\\u");
+          result.append("\\u");
           hexSize = 4;
         }
         // append hexadecimal form of ch left-padded with 0
         for (int shift = (hexSize - 1) * 4; shift >= 0; shift -= 4) {
           int digit = 0xf & (c >> shift);
-          p.print(HEX_DIGITS[digit]);
+          result.append(HEX_DIGITS[digit]);
         }
       }
     }
-    p.print(quoteChar);
+    result.append(quoteChar);
+    escapeClosingTags(result);
+    p.print(result.toString());
   }
 }
