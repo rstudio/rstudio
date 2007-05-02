@@ -43,6 +43,14 @@ public abstract class DOMImpl {
 
   public abstract Element createInputRadioElement(String group);
 
+  public Element createSelectElement(boolean multiple) {
+    Element select = createElement("select");
+    if (multiple) {
+      setElementPropertyBoolean(select, "multiple", true);
+    }
+    return select;
+  }
+
   public native void eventCancelBubble(Event evt, boolean cancel) /*-{
     evt.cancelBubble = cancel;
   }-*/;

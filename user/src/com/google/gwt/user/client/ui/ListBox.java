@@ -44,10 +44,20 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   private ChangeListenerCollection changeListeners;
 
   /**
-   * Creates an empty list box.
+   * Creates an empty list box in single selection mode.
    */
   public ListBox() {
-    super(DOM.createSelect());
+    this(false);
+  }
+
+  /**
+   * Creates an empty list box. The preferred way to enable multiple selections
+   * is to use this constructor rather than {@link #setMultipleSelect(boolean)}.
+   * 
+   * @param isMultipleSelect specifies if multiple selection is enabled
+   */
+  public ListBox(boolean isMultipleSelect) {
+    super(DOM.createSelect(isMultipleSelect));
     sinkEvents(Event.ONCHANGE);
     setStyleName("gwt-ListBox");
   }
@@ -60,7 +70,8 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
-   * Adds an item to the list box. This method has the same effect as 
+   * Adds an item to the list box. This method has the same effect as
+   * 
    * <pre>
    * addItem(item, item)
    * </pre>
@@ -128,7 +139,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
-   * Gets the value associated with the item at a given index. 
+   * Gets the value associated with the item at a given index.
    * 
    * @param index the index of the item to be retrieved
    * @return the item's associated value
@@ -152,7 +163,8 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
-   * Inserts an item into the list box. Has the same effect as 
+   * Inserts an item into the list box. Has the same effect as
+   * 
    * <pre>
    * insertItem(item, item, index)
    * </pre>
@@ -165,7 +177,8 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
-   * Inserts an item into the list box, specifying an initial value for the item.
+   * Inserts an item into the list box, specifying an initial value for the
+   * item.
    * 
    * @param item the text of the item to be inserted
    * @param value the item's value, to be submitted if it is part of a
@@ -253,11 +266,15 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
-   * Sets whether this list allows multiple selections.
+   * Sets whether this list allows multiple selections. <em>NOTE: The preferred
+   * way of enabling multiple selections in a list box is by using the
+   * {@link #ListBox(boolean)} constructor. Using this method can spuriously
+   * fail on Internet Explorer 6.0.</em>
    * 
    * @param multiple <code>true</code> to allow multiple selections
    */
   public void setMultipleSelect(boolean multiple) {
+    // TODO: we can remove the above doc admonition once we address issue 1007
     DOM.setElementPropertyBoolean(getElement(), "multiple", multiple);
   }
 

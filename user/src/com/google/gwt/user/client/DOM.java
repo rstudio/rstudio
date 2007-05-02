@@ -244,12 +244,24 @@ public class DOM {
   }
 
   /**
-   * Creates an HTML SELECT element.
+   * Creates a single-selection HTML SELECT element. Equivalent to 
+   * <pre>
+   * createSelect(false)
+   * </pre>
    *
    * @return the newly-created element
    */
   public static Element createSelect() {
-    return impl.createElement("select");
+    return DOM.createSelect(false);
+  }
+
+  /**
+   * Creates an HTML SELECT element.
+   *
+   * @return the newly-created element
+   */
+  public static Element createSelect(boolean multiple) {
+    return impl.createSelectElement(multiple);
   }
 
   /**

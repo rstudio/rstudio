@@ -36,6 +36,18 @@ class DOMImplIE6 extends DOMImpl {
     return $doc.createElement("<INPUT type='RADIO' name='" + group + "'>");
   }-*/;
 
+  /**
+   * Supports creating a select control with the multiple attribute to work
+   * around a bug in IE6 where changing the multiple attribute in a
+   * setAttribute call can cause subsequent setSelected calls to misbehave.
+   * Although this bug is fixed in IE7, this DOMImpl specialization is used
+   * for both IE6 and IE7, but it should be harmless.
+   */
+  public native Element createSelectElement(boolean multiple) /*-{
+    var html = multiple ? "<SELECT MULTIPLE>" : "<SELECT>"; 
+    return $doc.createElement(html);
+  }-*/;
+
   public native int eventGetMouseWheelVelocityY(Event evt) /*-{
     return -evt.wheelDelta / 40;
   }-*/;

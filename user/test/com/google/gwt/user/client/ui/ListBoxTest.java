@@ -37,12 +37,31 @@ public class ListBoxTest extends GWTTestCase {
   }
 
   public void testSelection() {
-    ListBox box = new ListBox();
-    box.addItem("a");
-    box.setSelectedIndex(-1);
-    assertEquals(-1, box.getSelectedIndex());
-    box.setSelectedIndex(0);
-    assertEquals("a", box.getItemText(box.getSelectedIndex()));
+    {
+      ListBox box = new ListBox();
+      box.addItem("a");
+      box.setSelectedIndex(-1);
+      assertEquals(-1, box.getSelectedIndex());
+      box.setSelectedIndex(0);
+      assertEquals("a", box.getItemText(box.getSelectedIndex()));
+    }
+
+    // Testing multiple selection
+    {
+      ListBox box = new ListBox(true);
+      box.setMultipleSelect(true);
+      box.addItem("a");
+      box.addItem("b");
+      box.addItem("c");
+
+      for (int j = 0; j < box.getItemCount(); j++) {
+        box.setItemSelected(j, true);
+      }
+
+      for (int j = 0; j < box.getItemCount(); j++) {
+        assertTrue(box.isItemSelected(j));
+      }
+    }
   }
 
   public void testSetStyleNames() {
