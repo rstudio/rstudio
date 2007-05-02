@@ -18,13 +18,16 @@ package com.google.gwt.dev.jjs.ast;
 import com.google.gwt.dev.jjs.SourceInfo;
 
 /**
- * Repesents a statement that is an expression.
+ * Represents a statement that is an expression.
  */
 public class JExpressionStatement extends JStatement {
 
   private JExpression expr;
 
-  public JExpressionStatement(JProgram program, SourceInfo info,
+  /**
+   * Constructed via {@link JExpression#makeStatement()}.
+   */
+  JExpressionStatement(JProgram program, SourceInfo info,
       JExpression expr) {
     super(program, info);
     this.expr = expr;

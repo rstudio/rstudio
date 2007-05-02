@@ -227,7 +227,7 @@ public class JProgram extends JNode {
       JExpression lhs, JExpression rhs) {
     JBinaryOperation assign = new JBinaryOperation(this, info, lhs.getType(),
         JBinaryOperator.ASG, lhs, rhs);
-    return new JExpressionStatement(this, info, assign);
+    return assign.makeStatement();
   }
 
   public JClassType createClass(SourceInfo info, char[][] name,

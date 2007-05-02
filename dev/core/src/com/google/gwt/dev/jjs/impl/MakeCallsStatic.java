@@ -18,7 +18,6 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
-import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -126,7 +125,7 @@ public class MakeCallsStatic {
       }
       JStatement statement;
       if (oldReturnType == program.getTypeVoid()) {
-        statement = new JExpressionStatement(program, bodyInfo, newCall);
+        statement = newCall.makeStatement();
       } else {
         statement = new JReturnStatement(program, bodyInfo, newCall);
       }

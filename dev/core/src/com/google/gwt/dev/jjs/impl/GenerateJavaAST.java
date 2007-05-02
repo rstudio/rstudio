@@ -37,7 +37,6 @@ import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
-import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JFloatLiteral;
@@ -364,7 +363,7 @@ public class GenerateJavaAST {
         if (expr == null) {
           return null;
         }
-        stmt = new JExpressionStatement(program, makeSourceInfo(x), expr);
+        stmt = expr.makeStatement();
       } else {
         stmt = (JStatement) dispatch("processStatement", x);
       }
@@ -441,10 +440,11 @@ public class GenerateJavaAST {
         currentMethod = ctor;
         currentMethodScope = x.scope;
 
-        JMethodCall call = null;
+        JMethodCall superOrThisCall = null;
         ExplicitConstructorCall ctorCall = x.constructorCall;
         if (ctorCall != null) {
-          call = (JMethodCall) dispatch("processExpression", ctorCall);
+          superOrThisCall = (JMethodCall) dispatch("processExpression",
+              ctorCall);
         }
 
         /*
@@ -463,8 +463,7 @@ public class GenerateJavaAST {
         JMethod clinitMethod = (JMethod) enclosingType.methods.get(0);
         JMethodCall clinitCall = new JMethodCall(program, info, null,
             clinitMethod);
-        ctor.body.statements.add(new JExpressionStatement(program, info,
-            clinitCall));
+        ctor.body.statements.add(clinitCall.makeStatement());
 
         /*
          * All synthetic fields must be assigned, unless we have an explicit
@@ -503,9 +502,8 @@ public class GenerateJavaAST {
         }
 
         // optional this or super constructor call
-        if (call != null) {
-          ctor.body.statements.add(new JExpressionStatement(program,
-              makeSourceInfo(ctorCall), call));
+        if (superOrThisCall != null) {
+          ctor.body.statements.add(superOrThisCall.makeStatement());
         }
 
         JExpression thisRef = createThisRef(info, enclosingType);
@@ -519,8 +517,7 @@ public class GenerateJavaAST {
           JMethod initMethod = (JMethod) enclosingType.methods.get(1);
           JMethodCall initCall = new JMethodCall(program, info, thisRef,
               initMethod);
-          ctor.body.statements.add(new JExpressionStatement(program, info,
-              initCall));
+          ctor.body.statements.add(initCall.makeStatement());
         }
 
         // user code (finally!)
@@ -1000,14 +997,15 @@ public class GenerateJavaAST {
       JExpression qualifier = dispProcessExpression(x.enclosingInstance);
       List qualList = new ArrayList();
       qualList.add(qualifier);
-      
+
       /*
        * Really weird: Sometimes an allocation expression needs both its
        * explicit qualifier AND its implicit enclosing class! We add this second
        * because the explicit qualifier takes precedence.
        */
       if (!currentMethod.isStatic()) {
-        JExpression implicitOuter = program.getExprThisRef(info, (JClassType) currentClass);
+        JExpression implicitOuter = program.getExprThisRef(info,
+            (JClassType) currentClass);
         qualList.add(implicitOuter);
       }
 
@@ -1393,8 +1391,10 @@ public class GenerateJavaAST {
 
       SourceInfo info = makeSourceInfo(x);
       JExpression expr = dispProcessExpression(x.condition);
-      JStatement thenStmt = removeThen ? null : dispProcessStatement(x.thenStatement);
-      JStatement elseStmt = removeElse ? null : dispProcessStatement(x.elseStatement);
+      JStatement thenStmt = removeThen ? null
+          : dispProcessStatement(x.thenStatement);
+      JStatement elseStmt = removeElse ? null
+          : dispProcessStatement(x.elseStatement);
       JIfStatement ifStmt = new JIfStatement(program, info, expr, thenStmt,
           elseStmt);
       return ifStmt;
@@ -1449,7 +1449,7 @@ public class GenerateJavaAST {
       SourceInfo info = makeSourceInfo(x);
       JBlock block = (JBlock) dispProcessStatement(x.block);
       JExpression expr = dispProcessExpression(x.expression);
-      block.statements.add(0, new JExpressionStatement(program, info, expr));
+      block.statements.add(0, expr.makeStatement());
       return block;
     }
 

@@ -236,23 +236,27 @@ public class DeadCodeElimination {
     }
 
     /**
-     * Prune "if (false)" statements.
+     * Simplify if statements.
      */
     public void endVisit(JIfStatement x, Context ctx) {
-      JExpression expression = x.getIfExpr();
-      if (expression instanceof JBooleanLiteral) {
-        JBooleanLiteral booleanLiteral = (JBooleanLiteral) expression;
-
-        if (booleanLiteral.getValue()) {
+      JExpression expr = x.getIfExpr();
+      JStatement thenStmt = x.getThenStmt();
+      JStatement elseStmt = x.getElseStmt();
+      if (expr instanceof JBooleanLiteral) {
+        JBooleanLiteral booleanLiteral = (JBooleanLiteral) expr;
+        boolean boolVal = booleanLiteral.getValue();
+        if (boolVal && !isEmpty(thenStmt)) {
           // If true, replace myself with then statement
-          ctx.replaceMe(x.getThenStmt());
-        } else if (x.getElseStmt() != null) {
+          ctx.replaceMe(thenStmt);
+        } else if (!boolVal && !isEmpty(elseStmt)) {
           // If false, replace myself with else statement
-          ctx.replaceMe(x.getElseStmt());
+          ctx.replaceMe(elseStmt);
         } else {
           // just prune me
           removeMe(x, ctx);
         }
+      } else if (isEmpty(thenStmt) && isEmpty(elseStmt)) {
+        ctx.replaceMe(expr.makeStatement());
       }
     }
 
@@ -341,8 +345,7 @@ public class DeadCodeElimination {
       // Compute properties regarding the state of this try statement
       boolean noTry = x.getTryBlock().statements.isEmpty();
       // TODO: normalize finally block handling
-      boolean noFinally = (x.getFinallyBlock() == null)
-          || x.getFinallyBlock().statements.isEmpty();
+      boolean noFinally = isEmpty(x.getFinallyBlock());
       boolean noCatch = catchArgs.size() == 0;
 
       if (noTry) {
@@ -369,6 +372,16 @@ public class DeadCodeElimination {
           removeMe(x, ctx);
         }
       }
+    }
+
+    /**
+     * TODO: if the AST were normalized, we wouldn't need this.
+     */
+    private boolean isEmpty(JStatement stmt) {
+      if (stmt == null) {
+        return true;
+      }
+      return (stmt instanceof JBlock && ((JBlock) stmt).statements.isEmpty());
     }
 
     private Class mapType(JType type) {

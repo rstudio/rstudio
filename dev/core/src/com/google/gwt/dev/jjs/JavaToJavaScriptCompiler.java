@@ -25,7 +25,6 @@ import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
 import com.google.gwt.dev.jjs.InternalCompilerException.NodeInfo;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
-import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
@@ -166,8 +165,7 @@ public class JavaToJavaScriptCompiler {
       // qualifier will be null if onModuleLoad is static
       JMethodCall onModuleLoadCall = new JMethodCall(program, null, qualifier,
           mainMethod);
-      bootStrapMethod.body.statements.add(new JExpressionStatement(program,
-          null, onModuleLoadCall));
+      bootStrapMethod.body.statements.add(onModuleLoadCall.makeStatement());
     }
     program.addEntryMethod(bootStrapMethod);
   }
