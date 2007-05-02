@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,16 +20,17 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventPreview;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.impl.PopupImpl;
 
 /**
  * A panel that can "pop up" over other widgets. It overlays the browser's
  * client area (and any previously-created popups).
- *
+ * 
  * <p>
  * <img class='gallery' src='PopupPanel.png'/>
  * </p>
- *
+ * 
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.PopupPanelExample}
@@ -38,10 +39,10 @@ import com.google.gwt.user.client.ui.impl.PopupImpl;
 public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     EventPreview {
 
-  private static final PopupImpl impl = (PopupImpl)GWT.create(PopupImpl.class);
+  private static final PopupImpl impl = (PopupImpl) GWT.create(PopupImpl.class);
 
-  private PopupListenerCollection popupListeners;
   private boolean autoHide, modal, showing;
+  private PopupListenerCollection popupListeners;
 
   /**
    * Creates an empty popup panel. A child widget must be added to it before it
@@ -54,7 +55,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   /**
    * Creates an empty popup panel, specifying its "auto-hide" property.
-   *
+   * 
    * @param autoHide <code>true</code> if the popup should be automatically
    *          hidden when the user clicks outside of it
    */
@@ -65,7 +66,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   /**
    * Creates an empty popup panel, specifying its "auto-hide" property.
-   *
+   * 
    * @param autoHide <code>true</code> if the popup should be automatically
    *          hidden when the user clicks outside of it
    * @param modal <code>true</code> if keyboard or mouse events that do not
@@ -84,8 +85,28 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
+   * Centers the popup in the browser window.
+   * 
+   * <p>
+   * Note that the popup must be shown before this method is called.
+   * </p>
+   */
+  public void center() {
+    // Centering will not work properly until the panel is shown, because it
+    // cannot be measured until it is attached to the DOM.
+    if (!showing) {
+      throw new IllegalStateException("PopupPanel must be shown before it may "
+          + "be centered.");
+    }
+
+    int left = (Window.getClientWidth() - getOffsetWidth()) / 2;
+    int top = (Window.getClientHeight() - getOffsetHeight()) / 2;
+    setPopupPosition(Window.getScrollLeft() + left, Window.getScrollTop() + top);
+  }
+
+  /**
    * Gets the popup's left position relative to the browser's client area.
-   *
+   * 
    * @return the popup's left position
    */
   public int getPopupLeft() {
@@ -94,7 +115,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   /**
    * Gets the popup's top position relative to the browser's client area.
-   *
+   * 
    * @return the popup's top position
    */
   public int getPopupTop() {
@@ -117,15 +138,15 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     switch (type) {
       case Event.ONKEYDOWN: {
         return onKeyDownPreview((char) DOM.eventGetKeyCode(event),
-          KeyboardListenerCollection.getKeyboardModifiers(event));
+            KeyboardListenerCollection.getKeyboardModifiers(event));
       }
       case Event.ONKEYUP: {
         return onKeyUpPreview((char) DOM.eventGetKeyCode(event),
-          KeyboardListenerCollection.getKeyboardModifiers(event));
+            KeyboardListenerCollection.getKeyboardModifiers(event));
       }
       case Event.ONKEYPRESS: {
         return onKeyPressPreview((char) DOM.eventGetKeyCode(event),
-          KeyboardListenerCollection.getKeyboardModifiers(event));
+            KeyboardListenerCollection.getKeyboardModifiers(event));
       }
 
       case Event.ONMOUSEDOWN:
@@ -164,7 +185,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Popups get an opportunity to preview keyboard events before they are passed
    * to any other widget.
-   *
+   * 
    * @param key the key code of the depressed key
    * @param modifiers keyboard modifiers, as specified in
    *          {@link KeyboardListener}.
@@ -177,7 +198,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Popups get an opportunity to preview keyboard events before they are passed
    * to any other widget.
-   *
+   * 
    * @param key the unicode character pressed
    * @param modifiers keyboard modifiers, as specified in
    *          {@link KeyboardListener}.
@@ -190,7 +211,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Popups get an opportunity to preview keyboard events before they are passed
    * to any other widget.
-   *
+   * 
    * @param key the key code of the released key
    * @param modifiers keyboard modifiers, as specified in
    *          {@link KeyboardListener}.
@@ -216,7 +237,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Sets the popup's position relative to the browser's client area. The
    * popup's position may be set before calling {@link #show()}.
-   *
+   * 
    * @param left the left position, in pixels
    * @param top the top position, in pixels
    */
@@ -253,7 +274,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     RootPanel.get().add(this);
     impl.onShow(getElement());
   }
-  
+
   /**
    * This method is called when a widget is detached from the browser's
    * document. To receive notification before the PopupPanel is removed from the
@@ -266,6 +287,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   /**
    * Remove focus from an Element.
+   * 
    * @param elt The Element on which <code>blur()</code> will be invoked
    */
   private native void blur(Element elt) /*-{
