@@ -20,18 +20,28 @@
 	<inherits name="com.google.gwt.core.Core"/>
 	<inherits name="com.google.gwt.user.UserAgent"/>
 
-	<!-- Fall through to this rule for all other browsers -->
+	<!-- Fall through to this rule for all other browsers. -->
 	<replace-with class="com.google.gwt.user.client.impl.HistoryImplStandard">
 		<when-type-is class="com.google.gwt.user.client.impl.HistoryImpl"/>
 	</replace-with>
 
-	<!-- IE has a completely different history implementation -->
+  <!-- Mozilla has a slightly different history implementation than the     -->
+  <!-- standard case.                                                       -->
+  <replace-with class="com.google.gwt.user.client.impl.HistoryImplMozilla">
+    <when-type-is class="com.google.gwt.user.client.impl.HistoryImpl"/>
+    <any>
+			<when-property-is name="user.agent" value="gecko1_8"/>
+			<when-property-is name="user.agent" value="gecko"/>
+		</any>
+  </replace-with>
+
+  <!-- IE has a completely different history implementation. -->
 	<replace-with class="com.google.gwt.user.client.impl.HistoryImplIE6">
 		<when-type-is class="com.google.gwt.user.client.impl.HistoryImpl"/>
 		<when-property-is name="user.agent" value="ie6"/>
 	</replace-with>
 
-	<!-- Safari has yet another history implementation -->
+	<!-- Safari has yet another history implementation. -->
 	<replace-with class="com.google.gwt.user.client.impl.HistoryImplSafari">
 		<when-type-is class="com.google.gwt.user.client.impl.HistoryImpl"/>
 		<when-property-is name="user.agent" value="safari"/>
