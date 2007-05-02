@@ -80,8 +80,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     DOM.appendChild(getElement(), focusable);
 
     sinkEvents(Event.MOUSEEVENTS | Event.ONCLICK | Event.KEYEVENTS);
-    DOM.sinkEvents(focusable, Event.FOCUSEVENTS | Event.KEYEVENTS
-        | DOM.getEventsSunk(focusable));
+    DOM.sinkEvents(focusable, Event.FOCUSEVENTS);
 
     // The 'root' item is invisible and serves only as a container
     // for all top-level items.
@@ -528,6 +527,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
       Widget child = (Widget) it.next();
       child.onAttach();
     }
+    DOM.setEventListener(focusable, this);
   }
 
   protected void onDetach() {
@@ -538,6 +538,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
       Widget child = (Widget) it.next();
       child.onDetach();
     }
+    DOM.setEventListener(focusable, null);
   }
 
   protected void onLoad() {
