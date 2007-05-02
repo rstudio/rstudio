@@ -407,6 +407,15 @@ public class CompilerTest extends GWTTestCase {
       ;
   }-*/;
 
+  public void testEmptyTryBlock() {
+    int x = 0;
+    try {
+    } finally {
+      x = 1;
+    }
+    assertEquals(1, x);
+  }
+
   public void testForStatement() {
     {
       int i;
@@ -452,7 +461,7 @@ public class CompilerTest extends GWTTestCase {
       assertTrue(delete);
     }
   }
-  
+
   public void testLabels() {
     int i = 0, j = 0;
     outer : for (i = 0; i < 1; ++i) {
@@ -504,7 +513,7 @@ public class CompilerTest extends GWTTestCase {
     };
     assertEquals(1, i);
   }
-  
+
   public void testLocalRefs() {
     final String foo = noOptimizeTrue() ? "foo" : "bar";
     final String bar = noOptimizeTrue() ? "bar" : "foo";
@@ -638,7 +647,7 @@ public class CompilerTest extends GWTTestCase {
     assertEquals(new Foo(1).i, 1);
     assertEquals(new Foo(2).i, 2);
   }
-  
+
   public void testStringOptimizations() {
     assertEquals("Herro, AJAX", "Hello, AJAX".replace('l', 'r'));
     assertEquals('J', "Hello, AJAX".charAt(8));

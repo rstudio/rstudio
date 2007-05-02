@@ -343,14 +343,19 @@ public class DeadCodeElimination {
       }
 
       // Compute properties regarding the state of this try statement
-      boolean noTry = x.getTryBlock().statements.isEmpty();
-      // TODO: normalize finally block handling
-      boolean noFinally = isEmpty(x.getFinallyBlock());
+      boolean noTry = isEmpty(x.getTryBlock());
       boolean noCatch = catchArgs.size() == 0;
+      boolean noFinally = isEmpty(x.getFinallyBlock());
 
       if (noTry) {
         // 2) Prune try statements with no body.
-        removeMe(x, ctx);
+        if (noFinally) {
+          // if there's no finally, prune the whole thing
+          removeMe(x, ctx);
+        } else {
+          // replace the try statement with just the contents of the finally
+          ctx.replaceMe(x.getFinallyBlock());
+        }
       } else if (noCatch && noFinally) {
         // 3) Hoist up try statements with no catches and an empty finally.
         // If there's no catch or finally, there's no point in this even being
