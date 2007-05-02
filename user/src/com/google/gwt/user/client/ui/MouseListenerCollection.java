@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Window;
 
 import java.util.Iterator;
 import java.util.Vector;
@@ -62,10 +63,15 @@ public class MouseListenerCollection extends Vector {
    * @param event the {@link Event} received by the widget
    */
   public void fireMouseEvent(Widget sender, Event event) {
+    final Element senderElem = sender.getElement();
     int x = DOM.eventGetClientX(event)
-        - DOM.getAbsoluteLeft(sender.getElement());
+        - DOM.getAbsoluteLeft(sender.getElement())
+        + DOM.getElementPropertyInt(senderElem, "scrollLeft")
+        + Window.getScrollLeft();
     int y = DOM.eventGetClientY(event)
-        - DOM.getAbsoluteTop(sender.getElement());
+        - DOM.getAbsoluteTop(sender.getElement())
+        + DOM.getElementPropertyInt(senderElem, "scrollTop")
+        + Window.getScrollTop();
 
     switch (DOM.eventGetType(event)) {
       case Event.ONMOUSEDOWN:

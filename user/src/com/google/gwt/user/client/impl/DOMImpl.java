@@ -137,20 +137,32 @@ public abstract class DOMImpl {
 
   public native int getAbsoluteLeft(Element elem) /*-{
     var left = 0;
+    var curr = elem;
+    // This intentionally excludes body which has a null offsetParent.    
+    while (curr.offsetParent) {
+      left -= curr.scrollLeft;
+      curr = curr.parentNode;
+    }
     while (elem) {
-      left += elem.offsetLeft - elem.scrollLeft;
+      left += elem.offsetLeft;
       elem = elem.offsetParent;
     }
-    return left + $doc.body.scrollLeft;
+    return left;
   }-*/;
 
   public native int getAbsoluteTop(Element elem) /*-{
     var top = 0;
+    var curr = elem;
+    // This intentionally excludes body which has a null offsetParent.    
+    while (curr.offsetParent) {
+      top -= curr.scrollTop;
+      curr = curr.parentNode;
+    }
     while (elem) {
-      top += elem.offsetTop - elem.scrollTop;
+      top += elem.offsetTop;
       elem = elem.offsetParent;
     }
-    return top + $doc.body.scrollTop;
+    return top;
   }-*/;
 
   public abstract Element getChild(Element elem, int index);

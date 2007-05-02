@@ -16,7 +16,9 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Window;
 
 import java.util.Iterator;
 import java.util.Vector;
@@ -53,10 +55,15 @@ public class MouseWheelListenerCollection extends Vector {
    */
   public void fireMouseWheelEvent(Widget sender, Event event) {
     if (DOM.eventGetType(event) == Event.ONMOUSEWHEEL) {
+      final Element senderElem = sender.getElement();
       int x = DOM.eventGetClientX(event)
-          - DOM.getAbsoluteLeft(sender.getElement());
+          - DOM.getAbsoluteLeft(sender.getElement())
+          + DOM.getElementPropertyInt(senderElem, "scrollLeft")
+          + Window.getScrollLeft();          
       int y = DOM.eventGetClientY(event)
-          - DOM.getAbsoluteTop(sender.getElement());
+          - DOM.getAbsoluteTop(sender.getElement())
+          + DOM.getElementPropertyInt(senderElem, "scrollTop")
+          + Window.getScrollTop();          
       MouseWheelVelocity velocity = new MouseWheelVelocity(event);
 
       fireMouseWheel(sender, x, y, velocity);
