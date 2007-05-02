@@ -85,4 +85,33 @@ public class HistoryTest extends GWTTestCase {
 
     History.newItem("foo bar");
   }
+
+  /*
+   * Tests against issue #879: Ensure that empty history tokens do not add
+   * additional characters after the '#' symbol in the URL.
+   */
+  public void testEmptyHistoryTokens() {
+    delayTestFinish(5000);
+
+    History.addHistoryListener(new HistoryListener() {
+      public void onHistoryChanged(String historyToken) {
+
+        if (historyToken == null) {
+          fail("historyToken should not be null");
+        }
+
+        if (historyToken.equals("foobar")) {
+          History.newItem("");
+        } else {
+          assertEquals(0, historyToken.length());
+          finishTest();
+        }
+      }
+    });
+
+    // We must first start out with a non-blank history token. Adding a blank
+    // history token in the initial state will not cause an onHistoryChanged
+    // event to fire.
+    History.newItem("foobar");
+  }
 }
