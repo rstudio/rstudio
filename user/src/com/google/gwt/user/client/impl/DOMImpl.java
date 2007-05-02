@@ -277,7 +277,10 @@ public abstract class DOMImpl {
 
     var cur = elem.parentNode;
     while (cur && (cur.nodeType == 1)) {
-      if ((cur.style.overflow == 'auto') || (cur.style.overflow == 'scroll')) {
+      // body tags are implicitly scrollable
+      if ((cur.style.overflow == 'auto') || (cur.style.overflow == 'scroll') ||
+          (cur.tagName == 'BODY')) {
+      
         if (left < cur.scrollLeft) {
           cur.scrollLeft = left;
         }
