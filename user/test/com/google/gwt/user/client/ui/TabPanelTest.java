@@ -27,6 +27,125 @@ public class TabPanelTest extends GWTTestCase {
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
+  
+  public void testUnmodifiableDeckPanelSubclasses() {
+    TabPanel p = new TabPanel();
+    DeckPanel d = p.getDeckPanel();
+    
+    try {
+      d.add(new Label("No"));
+      fail("Internal DeckPanel should not allow add() method");
+    } catch (UnsupportedOperationException e) {
+      // Expected behavior
+    }
+    
+    try {
+      d.insert(new Label("No"), 0);
+      fail("Internal DeckPanel should not allow insert() method");
+    } catch (UnsupportedOperationException e) {
+      // Expected behavior
+    }
+
+    try {
+      d.clear();
+      fail("Internal DeckPanel should not allow clear() method");
+    } catch (UnsupportedOperationException e) {
+      // Expected behavior
+    }
+  }
+  
+  public void testUnmodifiableTabBarSubclasses() {
+    TabPanel p = new TabPanel();
+    TabBar b = p.getTabBar();
+    
+    try {
+      b.addTab("no");
+      fail("Internal TabBar should not allow addTab() method");
+    } catch (UnsupportedOperationException e) {
+      // Expected behavior
+    }
+
+    try {
+      b.addTab("no", true);
+      fail("Internal TabBar should not allow addTab() method");
+    } catch (UnsupportedOperationException e) {
+      // Expected behavior
+    }
+    
+    try {
+      b.addTab(new Label("no"));
+      fail("Internal TabBar should not allow addTab() method");
+    } catch (UnsupportedOperationException e) {
+      // Expected behavior
+    }
+
+    try {
+      b.insertTab("no", 0);
+      fail("Internal TabBar should not allow insertTab() method");
+    } catch (UnsupportedOperationException e) {
+      // Expected behavior
+    }
+    
+    try {
+      b.insertTab("no", true, 0);
+      fail("Internal TabBar should not allow insertTab() method");
+    } catch (UnsupportedOperationException e) {
+      // Expected behavior
+    }
+    
+    try {
+      b.insertTab(new Label("no"), 0);
+      fail("Internal TabBar should not allow insertTab() method");
+    } catch (UnsupportedOperationException e) {
+      // Expected behavior
+    }
+                                
+    try {
+      b.removeTab(0);
+      fail("Internal TabBar should not allow removeTab() method");
+    } catch (UnsupportedOperationException e) {
+      // Expected behavior
+    }
+  }
+
+  public void testInsertMultipleTimes() {
+    TabPanel p = new TabPanel();
+
+    TextBox tb = new TextBox();
+    p.add(tb, "Title");
+    p.add(tb, "Title");
+    p.add(tb, "Title3");
+    
+    assertEquals(1, p.getWidgetCount());
+    assertEquals(0, p.getWidgetIndex(tb));
+    Iterator i = p.iterator();
+    assertTrue(i.hasNext());
+    assertTrue(tb.equals((Widget)i.next()));
+    assertFalse(i.hasNext());
+    
+    Label l = new Label();
+    p.add(l, "Title");
+    p.add(l, "Title");
+    p.add(l, "Title3");
+    assertEquals(2, p.getWidgetCount());
+    assertEquals(0, p.getWidgetIndex(tb));
+    assertEquals(1, p.getWidgetIndex(l));
+    
+    p.insert(l, "Title", 0);
+    assertEquals(2, p.getWidgetCount());
+    assertEquals(0, p.getWidgetIndex(l));
+    assertEquals(1, p.getWidgetIndex(tb));
+    
+    p.insert(l, "Title", 1);
+    assertEquals(2, p.getWidgetCount());
+    assertEquals(0, p.getWidgetIndex(l));
+    assertEquals(1, p.getWidgetIndex(tb));
+
+    p.insert(l, "Title", 2);
+    assertEquals(2, p.getWidgetCount());
+    assertEquals(0, p.getWidgetIndex(tb));
+    assertEquals(1, p.getWidgetIndex(l));
+  }
 
   /**
    * Tests to ensure that arbitrary widgets can be added/inserted effectively.

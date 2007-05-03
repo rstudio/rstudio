@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,9 +48,121 @@ import java.util.Iterator;
 public class TabPanel extends Composite implements TabListener,
     SourcesTabEvents, HasWidgets, IndexedPanel {
 
-  private WidgetCollection children = new WidgetCollection(this);
-  private DeckPanel deck = new DeckPanel();
-  private TabBar tabBar = new TabBar();
+  /**
+   * This extension of DeckPanel overrides the public mutator methods to
+   * prevent external callers from adding to the state of the DeckPanel.
+   * <p>
+   * Removal of Widgets is supported so that WidgetCollection.WidgetIterator
+   * operates as expected.
+   * </p><p>
+   * We ensure that the DeckPanel cannot become of of sync with its
+   * associated TabBar by delegating all mutations to the TabBar to this
+   * implementation of DeckPanel.
+   * </p>
+   */
+  private static class TabbedDeckPanel extends DeckPanel {
+    private UnmodifiableTabBar tabBar;
+    
+    public TabbedDeckPanel(UnmodifiableTabBar tabBar) {
+      this.tabBar = tabBar;
+    }
+    
+    public void clear() {
+      throw new UnsupportedOperationException(
+          "Use TabPanel.clear() to alter the DeckPanel");
+    }
+    
+    public void insert(Widget w, int beforeIndex) {
+      throw new UnsupportedOperationException(
+          "Use TabPanel.insert() to alter the DeckPanel");
+    }
+    
+    public boolean remove(Widget w) {
+      // Removal of items from the TabBar is delegated to the DeckPanel
+      // to ensure consistency
+      int idx = getWidgetIndex(w);
+      if (idx != -1) {
+        tabBar.removeTabProtected(idx);
+        return super.remove(w);
+      }
+
+      return false;
+    }
+    
+    protected void insertProtected(Widget w, String tabText, boolean asHTML,
+        int beforeIndex) {
+    
+      // Check to see if the TabPanel already contains the Widget.  If so,
+      // remove it and see if we need to shift the position to the left.
+      int idx = getWidgetIndex(w);
+      if (idx != -1) {
+        remove(w);
+        if (idx < beforeIndex) {
+          beforeIndex--;
+        }
+      }
+      
+      tabBar.insertTabProtected(tabText, asHTML, beforeIndex);
+      super.insert(w, beforeIndex);
+    }
+    
+    protected void insertProtected(Widget w, Widget tabWidget,
+        int beforeIndex) {
+    
+      // Check to see if the TabPanel already contains the Widget.  If so,
+      // remove it and see if we need to shift the position to the left.
+      int idx = getWidgetIndex(w);
+      if (idx != -1) {
+        remove(w);
+        if (idx < beforeIndex) {
+          beforeIndex--;
+        }
+      }
+      
+      tabBar.insertTabProtected(tabWidget, beforeIndex);
+      super.insert(w, beforeIndex);
+    }
+  };
+  
+  /**
+   * This extension of TabPanel overrides the public mutator methods to
+   * prevent external callers from modifying the state of the TabBar.
+   */
+  private static class UnmodifiableTabBar extends TabBar {
+    public void insertTab(String text, boolean asHTML, int beforeIndex) {
+      throw new UnsupportedOperationException(
+          "Use TabPanel.insert() to alter the TabBar");
+    }
+    
+    public void insertTab(Widget widget, int beforeIndex) {
+      throw new UnsupportedOperationException(
+          "Use TabPanel.insert() to alter the TabBar");
+    }
+    
+    public void removeTab(int index) {
+      // It's possible for removeTab() to function correctly, but it's
+      // preferable to have only TabbedDeckPanel.remove() be operable,
+      // especially since TabBar does not export an Iterator over its values.
+      throw new UnsupportedOperationException(
+          "Use TabPanel.remove() to alter the TabBar");
+    }
+    
+    protected void insertTabProtected(String text, boolean asHTML,
+        int beforeIndex) {
+      super.insertTab(text, asHTML, beforeIndex);
+    }
+    
+    protected void insertTabProtected(Widget widget, int beforeIndex) {
+      super.insertTab(widget, beforeIndex);
+    }
+    
+    protected void removeTabProtected(int index) {
+      super.removeTab(index);
+    }
+  }
+  
+  private UnmodifiableTabBar tabBar = new UnmodifiableTabBar();
+  private TabbedDeckPanel deck = new TabbedDeckPanel(tabBar);
   private TabListenerCollection tabListeners;
 
   /**
@@ -76,7 +188,8 @@ public class TabPanel extends Composite implements TabListener,
   }
 
   /**
-   * Adds a widget to the tab panel.
+   * Adds a widget to the tab panel.  If the Widget is already attached to
+   * the TabPanel, it will be moved to the right-most index.
    * 
    * @param w the widget to be added
    * @param tabText the text to be shown on its tab
@@ -86,7 +199,8 @@ public class TabPanel extends Composite implements TabListener,
   }
 
   /**
-   * Adds a widget to the tab panel.
+   * Adds a widget to the tab panel.  If the Widget is already attached to
+   * the TabPanel, it will be moved to the right-most index.
    * 
    * @param w the widget to be added
    * @param tabText the text to be shown on its tab
@@ -97,7 +211,8 @@ public class TabPanel extends Composite implements TabListener,
   }
 
   /**
-   * Adds a widget to the tab panel.
+   * Adds a widget to the tab panel.  If the Widget is already attached to
+   * the TabPanel, it will be moved to the right-most index.
    * 
    * @param w the widget to be added
    * @param tabWidget the widget to be shown in the tab
@@ -120,7 +235,9 @@ public class TabPanel extends Composite implements TabListener,
   }
 
   /**
-   * Gets the deck panel within this tab panel.
+   * Gets the deck panel within this tab panel.  Adding or removing Widgets
+   * from the DeckPanel is not supported and will throw
+   * UnsupportedOperationExceptions.
    * 
    * @return the deck panel
    */
@@ -129,7 +246,9 @@ public class TabPanel extends Composite implements TabListener,
   }
 
   /**
-   * Gets the tab bar within this tab panel.
+   * Gets the tab bar within this tab panel.  Adding or removing tabs from
+   * from the TabBar is not supported and will throw
+   * UnsupportedOperationExceptions.
    * 
    * @return the tab bar
    */
@@ -138,19 +257,20 @@ public class TabPanel extends Composite implements TabListener,
   }
 
   public Widget getWidget(int index) {
-    return children.get(index);
+    return deck.getWidget(index);
   }
 
   public int getWidgetCount() {
-    return children.size();
+    return deck.getWidgetCount();
   }
 
   public int getWidgetIndex(Widget widget) {
-    return children.indexOf(widget);
+    return deck.getWidgetIndex(widget);
   }
 
   /**
-   * Inserts a widget into the tab panel.
+   * Inserts a widget into the tab panel.  If the Widget is already attached
+   * to the TabPanel, it will be moved to the requested index.
    * 
    * @param widget the widget to be inserted
    * @param tabText the text to be shown on its tab
@@ -159,26 +279,26 @@ public class TabPanel extends Composite implements TabListener,
    */
   public void insert(Widget widget, String tabText, boolean asHTML,
       int beforeIndex) {
-    children.insert(widget, beforeIndex);
-    tabBar.insertTab(tabText, asHTML, beforeIndex);
-    deck.insert(widget, beforeIndex);
+    // Delegate updates to the TabBar to our DeckPanel implementation
+    deck.insertProtected(widget, tabText, asHTML, beforeIndex);
   }
 
   /**
-   * Inserts a widget into the tab panel.
+   * Inserts a widget into the tab panel.  If the Widget is already attached
+   * to the TabPanel, it will be moved to the requested index.
    * 
    * @param widget the widget to be inserted.
    * @param tabWidget the widget to be shown on its tab.
    * @param beforeIndex the index before which it will be inserted.
    */
   public void insert(Widget widget, Widget tabWidget, int beforeIndex) {
-    children.insert(widget, beforeIndex);
-    tabBar.insertTab(tabWidget, beforeIndex);
-    deck.insert(widget, beforeIndex);
+    // Delegate updates to the TabBar to our DeckPanel implementation
+    deck.insertProtected(widget, tabWidget, beforeIndex);
   }
 
   /**
-   * Inserts a widget into the tab panel.
+   * Inserts a widget into the tab panel.  If the Widget is already attached
+   * to the TabPanel, it will be moved to the requested index.
    * 
    * @param widget the widget to be inserted
    * @param tabText the text to be shown on its tab
@@ -189,7 +309,9 @@ public class TabPanel extends Composite implements TabListener,
   }
 
   public Iterator iterator() {
-    return children.iterator();
+    // The Iterator returned by DeckPanel supports removal and will invoke
+    // TabbedDeckPanel.remove(), which is an active function.
+    return deck.iterator();
   }
 
   public boolean onBeforeTabSelected(SourcesTabEvents sender, int tabIndex) {
@@ -207,7 +329,8 @@ public class TabPanel extends Composite implements TabListener,
   }
 
   public boolean remove(int index) {
-    return remove(getWidget(index));
+    // Delegate updates to the TabBar to our DeckPanel implementation
+    return deck.remove(index);
   }
 
   /**
@@ -216,15 +339,8 @@ public class TabPanel extends Composite implements TabListener,
    * @param widget the widget to be removed
    */
   public boolean remove(Widget widget) {
-    int index = getWidgetIndex(widget);
-    if (index == -1) {
-      return false;
-    }
-
-    children.remove(widget);
-    tabBar.removeTab(index);
-    deck.remove(widget);
-    return true;
+    // Delegate updates to the TabBar to our DeckPanel implementation
+    return deck.remove(widget);
   }
 
   public void removeTabListener(TabListener listener) {
