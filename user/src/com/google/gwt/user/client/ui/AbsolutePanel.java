@@ -69,15 +69,22 @@ public class AbsolutePanel extends ComplexPanel {
   }
 
   /**
-   * Adds a widget to the panel at the specified position.
+   * Adds a widget to the panel at the specified position. Setting a position
+   * of <code>(-1, -1)</code> will cause the child widget to be positioned
+   * statically.
    * 
    * @param w the widget to be added
    * @param left the widget's left position
    * @param top the widget's top position
    */
   public void add(Widget w, int left, int top) {
+    // In order to avoid the potential for a flicker effect, it is necessary
+    // to set the position of the widget before adding it to the AbsolutePanel.
+    // The Widget should be removed from its parent before any positional
+    // changes are made to prevent flickering.
+    w.removeFromParent();
+    setWidgetPositionImpl(w, left, top);
     add(w);
-    setWidgetPosition(w, left, top);
   }
 
   /**
@@ -113,15 +120,7 @@ public class AbsolutePanel extends ComplexPanel {
    */
   public void setWidgetPosition(Widget w, int left, int top) {
     checkWidgetParent(w);
-
-    Element h = w.getElement();
-    if ((left == -1) && (top == -1)) {
-      changeToStaticPositioning(h);
-    } else {
-      DOM.setStyleAttribute(h, "position", "absolute");
-      DOM.setStyleAttribute(h, "left", left + "px");
-      DOM.setStyleAttribute(h, "top", top + "px");
-    }
+    setWidgetPositionImpl(w, left, top);
   }
 
   /**
@@ -141,6 +140,17 @@ public class AbsolutePanel extends ComplexPanel {
     if (w.getParent() != this) {
       throw new IllegalArgumentException(
           "Widget must be a child of this panel.");
+    }
+  }
+
+  private void setWidgetPositionImpl(Widget w, int left, int top) {
+    Element h = w.getElement();
+    if ((left == -1) && (top == -1)) {
+      changeToStaticPositioning(h);
+    } else {
+      DOM.setStyleAttribute(h, "position", "absolute");
+      DOM.setStyleAttribute(h, "left", left + "px");
+      DOM.setStyleAttribute(h, "top", top + "px");
     }
   }
 }
