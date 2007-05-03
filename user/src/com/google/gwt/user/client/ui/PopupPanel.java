@@ -260,6 +260,25 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     DOM.setStyleAttribute(elem, "left", left + "px");
     DOM.setStyleAttribute(elem, "top", top + "px");
   }
+  
+  /**
+   * Sets whether this object is visible.
+   *
+   * @param visible <code>true</code> to show the object, <code>false</code>
+   *          to hide it
+   */
+  public void setVisible(boolean visible) {
+    // We use visibility here instead of UIObject's default of display
+    // Because the panel is absolutely positioned, this will not create
+    // "holes" in displayed contents and it allows normal layout passes
+    // to occur so the size of the PopupPanel can be reliably determined.
+    DOM.setStyleAttribute(getElement(), "visibility",
+        visible ? "visible" : "hidden");
+    
+    // If the PopupImpl creates an iframe shim, it's also necessary to hide it
+    // as well.
+    impl.setVisible(getElement(), visible);
+  }
 
   /**
    * Shows the popup. It must have a child widget before this method is called.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,5 +43,9 @@ public class PopupImplIE6 extends PopupImpl {
     frame.style.setExpression('width', 'this.__popup.offsetWidth');
     frame.style.setExpression('height', 'this.__popup.offsetHeight');
     popup.parentElement.insertBefore(frame, popup);
+  }-*/;
+  
+  public native void setVisible(Element popup, boolean visible) /*-{
+    popup.__frame.style.visibility = visible ? 'visible' : 'hidden';    
   }-*/;
 }
