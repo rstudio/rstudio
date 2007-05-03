@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,7 +44,8 @@ public class HorizontalPanel extends CellPanel implements IndexedPanel,
   }
 
   /**
-   * Adds a child widget to the panel.
+   * Adds a child widget to the panel. If the Widget is already attached to the
+   * HorizontalPanel, it will be moved to the end of the panel.
    * 
    * @param w the widget to be added
    */
@@ -73,7 +74,8 @@ public class HorizontalPanel extends CellPanel implements IndexedPanel,
   }
 
   /**
-   * Inserts a widget before the specified index.
+   * Inserts a widget before the specified index. If the Widget is already
+   * attached to the HorizontalPanel, it will be moved to the specified index.
    * 
    * @param w the widget to be inserted
    * @param beforeIndex the index before which it will be inserted
@@ -83,7 +85,18 @@ public class HorizontalPanel extends CellPanel implements IndexedPanel,
   public void insert(Widget w, int beforeIndex) {
     // Call this early to ensure that the table doesn't end up partially
     // constructed when an exception is thrown from adopt().
-    w.removeFromParent();
+    int idx = getWidgetIndex(w);
+    if (idx == -1) {
+      w.removeFromParent();
+    } else {
+      remove(w);
+
+      // If the Widget's previous position was left of the desired new position
+      // shift the desired position left to reflect the removal
+      if (idx < beforeIndex) {
+        beforeIndex--;
+      }
+    }
 
     Element td = DOM.createTD();
     DOM.insertChild(tableRow, td, beforeIndex);
