@@ -16,7 +16,9 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 
 /**
@@ -55,6 +57,39 @@ public class DOMTest extends GWTTestCase {
   }
 
   /**
+   * Tests {@link DOM#getAbsoluteLeft(Element)} and
+   * {@link DOM#getAbsoluteTop(Element)}.
+   */
+  public void testGetAbsolutePosition() {
+    final int border = 8;
+    final int margin = 9;
+    final int padding = 10;
+
+    final int top = 15;
+    final int left = 14;
+
+    final Element elem = DOM.createDiv();
+    DOM.appendChild(RootPanel.getBodyElement(), elem);
+
+    DOM.setStyleAttribute(elem, "position", "absolute");
+    DOM.setStyleAttribute(elem, "border", border + "px");
+    DOM.setStyleAttribute(elem, "padding", padding + "px");
+    DOM.setStyleAttribute(elem, "margin", margin + "px");
+
+    DOM.setStyleAttribute(elem, "top", top + "px");
+    DOM.setStyleAttribute(elem, "left", left + "px");
+
+    delayTestFinish(1000);
+    DeferredCommand.addCommand(new Command() {
+      public void execute() {
+        assertEquals(top + margin, DOM.getAbsoluteTop(elem));
+        assertEquals(left + margin, DOM.getAbsoluteLeft(elem));
+        finishTest();
+      }
+    });
+  }
+
+  /**
    * Tests the ability to do a parent-ward walk in the DOM.
    */
   public void testGetParent() {
@@ -71,7 +106,7 @@ public class DOMTest extends GWTTestCase {
     // If we get here, we pass, because we encountered no errors going to the
     // top of the parent hierarchy.
   }
-
+  
   /**
    * Tests {@link DOM#insertChild(Element, Element, int)}.
    *

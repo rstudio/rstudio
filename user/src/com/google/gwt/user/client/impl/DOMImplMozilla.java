@@ -52,37 +52,6 @@ class DOMImplMozilla extends DOMImplStandard {
     return evt.detail;
   }-*/;
 
-  public native int getAbsoluteLeft(Element elem) /*-{
-    var left = $doc.getBoxObjectFor(elem).x;
-    var parent = elem;
-
-    while (parent) {
-      // Sometimes get NAN.
-      if (parent.scrollLeft > 0) {
-        left = left -  parent.scrollLeft;
-      }
-      parent = parent.parentNode;
-    }
-
-  // Must cover both Standard and Quirks mode.
-    return left + $doc.body.scrollLeft + $doc.documentElement.scrollLeft;
-  }-*/;
-
-  public native int getAbsoluteTop(Element elem) /*-{
-    var top = $doc.getBoxObjectFor(elem).y;
-    var parent = elem;
-    while (parent) {
-      // Sometimes get NAN.
-      if (parent.scrollTop > 0) {
-        top -= parent.scrollTop;
-      }
-      parent = parent.parentNode;
-    }
-
-    // Must cover both Standard and Quirks mode.
-    return top + $doc.body.scrollTop + $doc.documentElement.scrollTop;
-  }-*/;
-
   public native int getChildIndex(Element parent, Element toFind) /*-{
     var count = 0, child = parent.firstChild;
     while (child) {
