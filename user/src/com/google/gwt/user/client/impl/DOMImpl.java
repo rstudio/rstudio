@@ -75,9 +75,7 @@ public abstract class DOMImpl {
     return evt.ctrlKey;
   }-*/;
 
-  public native Element eventGetFromElement(Event evt) /*-{
-    return evt.fromElement || null;
-  }-*/;
+  public abstract Element eventGetFromElement(Event evt);
 
   public native int eventGetKeyCode(Event evt) /*-{
     // 'which' gives the right key value, except when it doesn't -- in which

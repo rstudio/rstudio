@@ -36,6 +36,10 @@ class DOMImplIE6 extends DOMImpl {
     return $doc.createElement("<INPUT type='RADIO' name='" + group + "'>");
   }-*/;
 
+  public native Element eventGetFromElement(Event evt) /*-{
+    return evt.fromElement ? evt.fromElement : null;
+  }-*/;
+
   /**
    * Supports creating a select control with the multiple attribute to work
    * around a bug in IE6 where changing the multiple attribute in a

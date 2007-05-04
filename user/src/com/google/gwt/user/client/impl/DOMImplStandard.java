@@ -36,6 +36,11 @@ abstract class DOMImplStandard extends DOMImpl {
     return elem;
   }-*/;
 
+  public native Element eventGetFromElement(Event evt) /*-{
+    // Standard browsers use relatedTarget rather than fromElement.
+    return evt.relatedTarget ? evt.relatedTarget : null;
+  }-*/;
+
   public native Element eventGetTarget(Event evt) /*-{
     return evt.target || null;
   }-*/;
