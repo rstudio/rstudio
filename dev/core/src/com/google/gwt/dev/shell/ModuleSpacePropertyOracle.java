@@ -47,18 +47,15 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
   public String getPropertyValue(TreeLogger logger, String propertyName)
       throws BadPropertyValueException {
     if (propertyName == null) {
-      throw new IllegalArgumentException("null property name");
+      throw new NullPointerException("propertyName");
     }
 
     Property prop = props.find(propertyName);
     if (prop == null) {
       // Don't know this property; that's not good.
       //
-      throw new IllegalArgumentException("unknown property name: "
-          + propertyName);
+      throw new BadPropertyValueException(propertyName);
     }
-
-    String value;
 
     // Check if this property has already been queried for; if so, return
     // the same answer. This is necessary to match web mode behavior since
@@ -66,28 +63,21 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
     // cause exceptions to be thrown to make sure we are consistent even
     // in throwing exceptions for the same property.
     if (prevAnswers.containsKey(propertyName)) {
-      value = (String) prevAnswers.get(propertyName);
+      return (String) prevAnswers.get(propertyName);
     } else {
-      value = computePropertyValue(logger, propertyName, prop);
-
-      // Cache it always.
+      String value = computePropertyValue(logger, propertyName, prop);
       prevAnswers.put(propertyName, value);
-    }
-
-    if (value != null) {
-      // Good value.
       return value;
-    } else {
-      // Bad value due to the provider returning an unknown value.
-      // The message for this exception will indicate that the property is
-      // missing, which is probably most appropriate. The fact that this chain
-      // of events was caused by the provider returning an invalid value will
-      // already have been made known by calling the JS bad property value
-      // handler function.
-      throw new BadPropertyValueException(propertyName);
     }
   }
 
+  /**
+   * Returns the value of the specified property.
+   * 
+   * @throws BadPropertyValueException if the property value could not be
+   *           computed, or if the returned result is not a legal value for this
+   *           property.
+   */
   private String computePropertyValue(TreeLogger logger, String propertyName,
       Property prop) throws BadPropertyValueException {
     String value;
@@ -115,6 +105,13 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
     }
 
     // value may be null if the provider returned an unknown property value.
-    return value;
+    if (prop.isKnownValue(value)) {
+      return value;
+    } else {
+      // Bad value due to the provider returning an unknown value.
+      // The fact that the provider returned an invalid value will also
+      // have been reported to the JS bad property value handler function.
+      throw new BadPropertyValueException(propertyName, value);
+    }
   }
 }

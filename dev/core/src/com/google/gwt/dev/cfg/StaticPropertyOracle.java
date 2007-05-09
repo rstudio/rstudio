@@ -53,7 +53,7 @@ public class StaticPropertyOracle implements PropertyOracle {
 
     // Didn't find it.
     //
-    return null;
+    throw new BadPropertyValueException(propertyName);
   }
 
   public void setPropertyValues(Property[] props, String[] values) {
