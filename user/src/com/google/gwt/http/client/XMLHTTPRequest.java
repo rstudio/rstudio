@@ -47,6 +47,43 @@ final class XMLHTTPRequest {
    }-*/;
 
   /**
+   * Tests if the JavaScript <code>XmlHttpRequest.status</code> property is
+   * readable. This can return failure in two different known scenarios:
+   *
+   * <ol>
+   * <li>On Mozilla, after a network error, attempting to read the status
+   * code results in an exception being thrown. See
+   * <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=238559">https://bugzilla.mozilla.org/show_bug.cgi?id=238559</a>.
+   * </li>
+   * <li>On Safari, if the HTTP response does not include any response text. See
+   * <a href="http://bugs.webkit.org/show_bug.cgi?id=3810">http://bugs.webkit.org/show_bug.cgi?id=3810</a>.
+   * </li>
+   * </ol>
+   * 
+   * @param xmlHttpRequest the JavaScript <code>XmlHttpRequest</code> object
+   *        to test
+   * @return a String message containing an error message if the
+   * <code>XmlHttpRequest.status</code> code is unreadable or null if the
+   * status code could be successfully read.
+   */
+  static native String getBrowserSpecificFailure(
+      JavaScriptObject xmlHttpRequest) /*-{
+    try {
+      if (xmlHttpRequest.status === undefined) {
+        return "XmlHttpRequest.status == undefined, please see Safari bug " +
+               "http://bugs.webkit.org/show_bug.cgi?id=3810 for more details";
+      }
+      return null;
+    }
+    catch ( e ) {
+      return "Unable to read XmlHttpRequest.status; likely causes are a " +
+             "networking error or bad cross-domain request. Please see " +
+             "https://bugzilla.mozilla.org/show_bug.cgi?id=238559 for more " +
+             "details";
+    }
+  }-*/;
+
+  /**
    * Returns an array of headers built by parsing the string of headers returned
    * by the JavaScript <code>XmlHttpRequest</code> object.
    * 
@@ -117,27 +154,6 @@ final class XMLHTTPRequest {
 
   static native String getStatusText(JavaScriptObject xmlHttpRequest) /*-{
    return xmlHttpRequest.statusText;
-   }-*/;
-
-  /**
-   * Tests if the JavaScript <code>XmlHttpRequest.status</code> property is 
-   * undefined. Currently, this happens on Safari if the HTTP response does not 
-   * include any response text.
-   * 
-   * @param xmlHttpRequest the JavaScript <code>XmlHttpRequest</code> object 
-   *        to test
-   * @return true if the <code>XmlHttpRequest.status</code> code is undefined
-   * 
-   * NOTE: Safari has a bug, <a
-   * href="http://bugs.webkit.org/show_bug.cgi?id=3810">
-   * http://bugs.webkit.org/show_bug.cgi?id=3810</a>, in its XmlHttpRequest
-   * implementation that can result in the status code being undefined if the
-   * HTTP response does not contain any text.
-   * 
-   */
-  static native boolean hasStatusCodeUndefinedBug(
-      JavaScriptObject xmlHttpRequest) /*-{
-   return xmlHttpRequest.status === undefined;
    }-*/;
 
   static boolean isResponseReady(JavaScriptObject xmlHttpRequest) {

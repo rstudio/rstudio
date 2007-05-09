@@ -237,9 +237,9 @@ public class Request {
     final JavaScriptObject xmlHttp = xmlHttpRequest;
     xmlHttpRequest = null;
 
-    if (XMLHTTPRequest.hasStatusCodeUndefinedBug(xmlHttp)) {
-      Throwable exception = new RuntimeException(
-          "XmlHttpRequest.status == undefined, please see Safari bug http://bugs.webkit.org/show_bug.cgi?id=3810 for more details");
+    String errorMsg = XMLHTTPRequest.getBrowserSpecificFailure(xmlHttp);
+    if (errorMsg != null) {
+      Throwable exception = new RuntimeException(errorMsg);
       callback.onError(this, exception);
     } else {
       Response response = createResponse(xmlHttp);
