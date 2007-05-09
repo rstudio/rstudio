@@ -1,1 +1,1 @@
-@java -Dcom.google.gwt.junit.reportPath="%1" -cp "%~dp0/gwt-user.jar;%~dp0/gwt-dev-windows.jar;%~dp0/gwt-benchmark-viewer.jar" com.google.gwt.dev.GWTShell com.google.gwt.junit.viewer.ReportViewer/ReportViewer.html;
+@java -Dcom.google.gwt.junit.reportPath="%1" -cp "%~dp0/gwt-user.jar;%~dp0/gwt-dev-windows.jar;%~dp0/gwt-benchmark-viewer.jar" com.google.gwt.dev.GWTShell -port auto com.google.gwt.junit.viewer.ReportViewer/ReportViewer.html?gwt.hybrid;

@@ -1,7 +1,22 @@
 <project name="benchmark-viewer" default="build" basedir=".">
-	<property name="gwt.root" location="../.." />
+
+        <!--
+          TODO(tobyr) 
+
+          Once we have more than a single tool, this build should be re-examined
+          to see if several of the targets should be lifted into common.ant.xml.
+          The simple targets, like tests*, clean, and checkstyle are good
+          candidates, while the other targets depend heavily on the actual
+          makeup of the future tools.
+        -->
+
+        <property name="gwt.root" location="../.." />
 	<property name="project.tail" value="tools/benchmark-viewer" />
 	<import file="${gwt.root}/common.ant.xml" />
+
+        <property name="tools.build" value="${gwt.build.out}/${project.tail}" />
+        <property name="tools.module" value="com.google.gwt.junit.viewer.ReportViewer" />
+        <property name="tools.module.path" value="com/google/gwt/junit/viewer/public" />
 
 	<!--
 		Default hosted mode test cases
@@ -45,11 +60,16 @@
 		</gwt.javac>
 	</target>
 
-	<target name="build" depends="compile" description="Build and package this project">
+	<target name="build" depends="compile, gwtc" description="Build and package this project">
 		<mkdir dir="${gwt.build.lib}" />
+                <copy todir="${tools.build}/www-new/${tools.module.path}" flatten="true" >
+                  <fileset dir="${tools.build}/www/${tools.module}" />
+                </copy>
+                    
 		<gwt.jar>
 			<fileset dir="src" excludes="**/package.html" />
 			<fileset dir="${javac.out}" />
+                        <fileset dir="${tools.build}/www-new" />
                         <zipfileset src="${gwt.tools.lib}/jfreechart/itext-1.4.6.jar"/>
                         <zipfileset src="${gwt.tools.lib}/jfreechart/jcommon-1.0.6.jar"/>
                         <zipfileset src="${gwt.tools.lib}/jfreechart/jfreechart-1.0.3.jar"/>
@@ -60,6 +80,15 @@
 		<gwt.checkstyle>
 			<fileset dir="src"/>
 		</gwt.checkstyle>
+	</target>
+
+	<target name="gwtc" description="Compile to JavaScript">
+	  	<mkdir dir="${tools.build}/www" />
+		<java dir="${tools.build}" classname="com.google.gwt.dev.GWTCompiler" classpath="src:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
+			<arg value="-out" />
+			<arg file="${tools.build}/www" />
+			<arg value="${tools.module}" />
+		</java>
 	</target>
 
 	<target name="remoteweb-test" description="Run a remoteweb test at the given host and path">
