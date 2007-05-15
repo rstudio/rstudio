@@ -13,18 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package java.util;
 
 /**
  * Utility methods related to native arrays.
  */
 public class Arrays {
-
-  private static Comparator natural = new Comparator() {
-    public int compare(Object o1, Object o2) {
-      return ((Comparable) o1).compareTo(o2);
-    }
-  };
 
   public static List asList(Object[] array) {
     List accum = new ArrayList();
@@ -240,9 +235,11 @@ public class Arrays {
    *   number which is the index of the next larger value (or just past
    *   the end of the array if the searched value is larger than all elements
    *   in the array) minus 1 (to ensure error returns are negative)
+   * @throws ClassCastException if <code>key</code> is not comparable to
+   *   <code>sortedArray</code>'s elements.
    */
   public static int binarySearch(final Object[] sortedArray, final Object key) {
-    return binarySearch(sortedArray, key, natural);
+    return binarySearch(sortedArray, key, Comparators.natural());
   }
 
   /**
@@ -251,14 +248,19 @@ public class Arrays {
    * 
    * @param sortedArray object array to search
    * @param key value to search for
-   * @param comparator comparision function
+   * @param comparator comparision function, <code>null</code> indicates
+   *   <i>natural ordering</i> should be used.
    * @return the index of an element with a matching value, or a negative
    *   number which is the index of the next larger value (or just past
    *   the end of the array if the searched value is larger than all elements
    *   in the array) minus 1 (to ensure error returns are negative)
+   * @throws ClassCastException if <code>key</code> and
+   *   <code>sortedArray</code>'s elements cannot be compared by
+   *   <code>comparator</code>.
    */
   public static int binarySearch(final Object[] sortedArray, final Object key,
-      final Comparator comparator) {
+      Comparator comparator) {
+    comparator = comparator != null ? comparator : Comparators.natural();
     int low = 0;
     int high = sortedArray.length - 1;
 
@@ -312,11 +314,11 @@ public class Arrays {
   }
 
   public static void sort(Object[] x) {
-    nativeSort(x, x.length, natural);
+    nativeSort(x, x.length, Comparators.natural());
   }
 
   public static void sort(Object[] x, Comparator s) {
-    nativeSort(x, x.length, s != null ? s : natural);
+    nativeSort(x, x.length, s != null ? s : Comparators.natural());
   }
 
   // FUTURE: 5.0 support

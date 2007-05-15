@@ -255,6 +255,7 @@ public class ArraysTest extends EmulTestBase {
    *   even numbers of elements
    *   not found value larger than all elements
    *   not found value smaller than all elements
+   *   null Comparator uses natural ordering
    */
   public void testBinarySearchObjectComparator() {
     Comparator inverseSort = new Comparator() {
@@ -276,7 +277,11 @@ public class ArraysTest extends EmulTestBase {
     ret = Arrays.binarySearch(a3, "z", inverseSort);
     assertEquals(-1, ret);
     ret = Arrays.binarySearch(a3, "y", inverseSort);
-    assertEquals(0, ret);    
+    assertEquals(0, ret);
+
+    Object[] a4 = {"a", "b", "c", "d", "e"};
+    ret = Arrays.binarySearch(a4, "d", null); // should not NPE
+    assertEquals(3, ret);
   }
 
   /**

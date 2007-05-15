@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * TODO: document me.
@@ -42,6 +43,74 @@ public class CollectionsTest extends EmulTestBase {
     l.add(new Integer(4));
     return l;
   }
+
+  /**
+   * Test Collections.binarySearch(List, Object).
+   *
+   * Verify the following cases:
+   *   empty List
+   *   odd numbers of elements
+   *   even numbers of elements
+   *   not found value larger than all elements
+   *   not found value smaller than all elements
+   */
+  public void testBinarySearchObject() {
+    List a1 = new ArrayList();
+    int ret = Collections.binarySearch(a1, "");
+    assertEquals(-1, ret);
+    List a2 = new ArrayList(Arrays.asList(new String[] {"a", "g", "y"}));
+    ret = Collections.binarySearch(a2, "c");
+    assertEquals(-2, ret);
+    ret = Collections.binarySearch(a2, "y");
+    assertEquals(2, ret);
+    List a3 = new ArrayList(Arrays.asList(new String[]{"b", "c", "x", "y"}));
+    ret = Collections.binarySearch(a3, "z");
+    assertEquals(-5, ret);
+    ret = Collections.binarySearch(a3, "a");
+    assertEquals(-1, ret);
+    ret = Collections.binarySearch(a3, "b");
+    assertEquals(0, ret);
+  }
+
+  /**
+   * Test Collections.binarySearch(List, Object, Comparator).
+   *
+   * Verify the following cases:
+   *   empty List
+   *   odd numbers of elements
+   *   even numbers of elements
+   *   not found value larger than all elements
+   *   not found value smaller than all elements
+   *   null Comparator uses natural ordering
+   */
+  public void testBinarySearchObjectComparator() {
+    Comparator inverseSort = new Comparator() {
+      public int compare(Object o1, Object o2) {
+        return ((Comparable) o2).compareTo(o1);
+      }
+    };
+    List a1 = new ArrayList();
+    int ret = Collections.binarySearch(a1, "", inverseSort);
+    assertEquals(-1, ret);
+    List a2 = new ArrayList(Arrays.asList(new String[]{"y", "g", "a"}));
+    ret = Collections.binarySearch(a2, "c", inverseSort);
+    assertEquals(-3, ret);
+    ret = Collections.binarySearch(a2, "a", inverseSort);
+    assertEquals(2, ret);
+    List a3 = new ArrayList(Arrays.asList(new String[]{"y", "x", "c", "b"}));
+    ret = Collections.binarySearch(a3, "a", inverseSort);
+    assertEquals(-5, ret);
+    ret = Collections.binarySearch(a3, "z", inverseSort);
+    assertEquals(-1, ret);
+    ret = Collections.binarySearch(a3, "y", inverseSort);
+    assertEquals(0, ret);
+
+    List a4 = new ArrayList(Arrays.asList(
+        new String[]{"a", "b", "c", "d", "e"}));
+    ret = Collections.binarySearch(a4, "d", null); // should not NPE
+    assertEquals(3, ret);
+  }
+
 
   public void testReverse() {
     List a = createSortedList();
