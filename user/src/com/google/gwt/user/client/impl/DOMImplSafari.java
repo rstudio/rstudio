@@ -37,6 +37,12 @@ class DOMImplSafari extends DOMImplStandard {
   }-*/;
 
   public native int getAbsoluteLeft(Element elem) /*-{
+    // Unattached elements and elements (or their ancestors) with style
+    // 'display: none' have no offsetLeft.
+    if (elem.offsetLeft == null) {
+      return 0;
+    }
+
     var left = 0;
     var curr = elem;
     // This intentionally excludes body which has a null offsetParent.
@@ -61,6 +67,12 @@ class DOMImplSafari extends DOMImplStandard {
   }-*/;
 
   public native int getAbsoluteTop(Element elem) /*-{
+    // Unattached elements and elements (or their ancestors) with style
+    // 'display: none' have no offsetTop.
+    if (elem.offsetTop == null) {
+      return 0;
+    }
+
     var top = 0;
     var curr = elem;
     // This intentionally excludes body which has a null offsetParent.
