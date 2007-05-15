@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -59,7 +59,7 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
 
   /**
    * Adds a new child with the given widget.
-   *
+   * 
    * @param w the widget to be added
    */
   public void add(Widget w) {
@@ -95,7 +95,7 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
 
   /**
    * Adds a new child with the given widget and header.
-   *
+   * 
    * @param w the widget to be added
    * @param stackText the header text associated with this widget
    */
@@ -106,7 +106,7 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
   /**
    * Adds a new child with the given widget and header, optionally interpreting
    * the header as HTML.
-   *
+   * 
    * @param w the widget to be added
    * @param stackText the header text associated with this widget
    * @param asHTML <code>true</code> to treat the specified text as HTML
@@ -118,7 +118,7 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
 
   /**
    * Gets the currently selected child index.
-   *
+   * 
    * @return selected child
    */
   public int getSelectedIndex() {
@@ -140,11 +140,9 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
   public void onBrowserEvent(Event event) {
     if (DOM.eventGetType(event) == Event.ONCLICK) {
       Element target = DOM.eventGetTarget(event);
-      if (isDividerOwn(target)) {
-        int index = getDividerIndex(target);
-        if (index != -1) {
-          showStack(index);
-        }
+      int index = findDividerIndex(target);
+      if (index != -1) {
+        showStack(index);
       }
     }
   }
@@ -159,7 +157,7 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
 
   /**
    * Sets the text associated with a child by its index.
-   *
+   * 
    * @param index the index of the child whose text is to be set
    * @param text the text to be associated with it
    */
@@ -169,7 +167,7 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
 
   /**
    * Sets the text associated with a child by its index.
-   *
+   * 
    * @param index the index of the child whose text is to be set
    * @param text the text to be associated with it
    * @param asHTML <code>true</code> to treat the specified text as HTML
@@ -189,7 +187,7 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
 
   /**
    * Shows the widget at the specified child index.
-   *
+   * 
    * @param index the index of the child to be shown
    */
   public void showStack(int index) {
@@ -205,29 +203,23 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
     setStackVisible(visibleStack, true);
   }
 
-  private int getDividerIndex(Element elem) {
+  private int findDividerIndex(Element elem) {
     while ((elem != null) && !DOM.compare(elem, getElement())) {
       String expando = DOM.getElementProperty(elem, "__index");
       if (expando != null) {
-        return Integer.parseInt(expando);
+        // Make sure it belongs to me!
+        int ownerHash = DOM.getElementPropertyInt(elem, "__owner");
+        if (ownerHash == hashCode()) {
+          // Yes, it's mine.
+          return Integer.parseInt(expando);
+        } else {
+          // It must belong to some nested StackPanel.
+          return -1;
+        }
       }
-
       elem = DOM.getParent(elem);
     }
-
     return -1;
-  }
-
-  /**
-   * In the case of nested StackPanels, it's necessary to tell if a
-   * particular StackPanel owns the target of a click before responding to it.
-   * @param elem The Element to examine
-   * @return <code>true</code> iff the Element one to which the StackPanel
-   *           should respond.
-   */
-  private boolean isDividerOwn(Element elem) {
-    int owner = DOM.getElementPropertyInt(elem, "__owner");
-    return owner == hashCode();
   }
 
   private boolean remove(Widget child, int index) {
