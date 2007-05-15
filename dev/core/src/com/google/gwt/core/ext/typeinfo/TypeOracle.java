@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -330,7 +330,7 @@ public class TypeOracle {
     for (int i = 0; i < typeArgs.length; i++) {
       parameterized.addTypeArg(typeArgs[i]);
     }
-    String sig = parameterized.getQualifiedSourceName();
+    String sig = parameterized.getParameterizedQualifiedSourceName();
     JParameterizedType existing = (JParameterizedType) parameterizedTypes.get(sig);
     if (existing == null) {
       parameterizedTypes.put(sig, parameterized);
@@ -769,20 +769,8 @@ public class TypeOracle {
 
       // Resolve each type argument.
       //
-      String typeArgGuts = type.substring(bracket + 1, type.length() - 1);
-      String[] typeArgNames = typeArgGuts.split(",");
-      JType[] typeArgs = new JType[typeArgNames.length];
-      for (int i = 0; i < typeArgNames.length; i++) {
-        typeArgs[i] = parseImpl(typeArgNames[i]);
-        if (typeArgs[i].isPrimitive() != null) {
-          // Cannot be primitive.
-          //
-          throw new BadTypeArgsException(
-              "Type arguments cannot be primitive, so "
-                  + typeArgs[i].getQualifiedSourceName()
-                  + " cannot be used in this context");
-        }
-      }
+      String typeArgContents = type.substring(bracket + 1, type.length() - 1);
+      JType[] typeArgs = parseTypeArgContents(typeArgContents);
 
       // Intern this type.
       //
@@ -800,6 +788,67 @@ public class TypeOracle {
     }
 
     throw new NotFoundException(type);
+  }
+
+  private void parseTypeArgComponent(List typeArgList, String typeArgComponent)
+      throws NotFoundException, ParseException, BadTypeArgsException {
+    JType typeArg = parseImpl(typeArgComponent);
+    if (typeArg.isPrimitive() != null) {
+      // Cannot be primitive.
+      //
+      throw new BadTypeArgsException("Type arguments cannot be primitive, so "
+          + typeArg.getQualifiedSourceName()
+          + " cannot be used in this context");
+    }
+
+    typeArgList.add(typeArg);
+  }
+
+  /**
+   * Returns an array of types specified inside of a gwt.typeArgs javadoc
+   * annotation.
+   */
+  private JType[] parseTypeArgContents(String typeArgContents)
+      throws ParseException, NotFoundException, BadTypeArgsException {
+    List typeArgList = new ArrayList();
+
+    int start = 0;
+    for (int offset = 0, length = typeArgContents.length(); offset < length; ++offset) {
+      char ch = typeArgContents.charAt(offset);
+      switch (ch) {
+        case '<':
+          // scan for closing '>' while ignoring commas
+          for (int depth = 1; depth > 0; ) {
+            if (++offset == length) {
+              throw new ParseException(
+              "Mismatched brackets; expected '<' to match subsequent '>'");
+            }
+            
+            char ich = typeArgContents.charAt(offset);
+            if (ich == '<') {
+              ++depth;
+            } else if (ich == '>') {
+              --depth;
+            }
+          }
+          break;
+        case '>':
+          throw new ParseException("No matching '<' for '>'");
+        case ',':
+          String typeArgComponent = typeArgContents.substring(start, offset);
+          parseTypeArgComponent(typeArgList, typeArgComponent);
+          start = offset + 1;
+          break;
+        default:
+          break;
+      }
+    }
+
+    String typeArgComponent = typeArgContents.substring(start);
+    parseTypeArgComponent(typeArgList, typeArgComponent);
+
+    JType[] typeArgs = (JType[]) typeArgList.toArray(new JType[typeArgList.size()]);
+    return typeArgs;
   }
 
   private JType parseTypeArgTokens(TreeLogger logger, String maybeRawType,
