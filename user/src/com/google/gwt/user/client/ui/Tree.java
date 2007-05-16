@@ -346,43 +346,43 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
           return;
         }
 
-        // Handle keyboard events
-        switch (DOM.eventGetKeyCode(event)) {
-          case KeyboardListener.KEY_UP: {
-            moveSelectionUp(curSelection);
-            DOM.eventPreventDefault(event);
-            break;
-          }
-          case KeyboardListener.KEY_DOWN: {
-            moveSelectionDown(curSelection, true);
-            DOM.eventPreventDefault(event);
-            break;
-          }
-          case KeyboardListener.KEY_LEFT: {
-            if (curSelection.getState()) {
-              curSelection.setState(false);
-            } else {
-              TreeItem parent = curSelection.getParentItem();
-              if (parent != null) {
-                parent.setState(false);
-                setSelectedItem(parent);
-              }
+        // Handle keyboard events if keyboard navigation is enabled
+        if (isKeyboardNavigationEnabled(curSelection)) {
+          switch (DOM.eventGetKeyCode(event)) {
+            case KeyboardListener.KEY_UP: {
+              moveSelectionUp(curSelection);
+              DOM.eventPreventDefault(event);
+              break;
             }
-            DOM.eventPreventDefault(event);
-            break;
-          }
-          case KeyboardListener.KEY_RIGHT: {
-            if (!curSelection.getState()) {
-              curSelection.setState(true);
-              if (curSelection.getChildCount() > 0) {
-                setSelectedItem(curSelection.getChild(0));
-              }
+            case KeyboardListener.KEY_DOWN: {
+              moveSelectionDown(curSelection, true);
+              DOM.eventPreventDefault(event);
+              break;
             }
-            DOM.eventPreventDefault(event);
-            break;
+            case KeyboardListener.KEY_LEFT: {
+              if (curSelection.getState()) {
+                curSelection.setState(false);
+              } else {
+                TreeItem parent = curSelection.getParentItem();
+                if (parent != null) {
+                  setSelectedItem(parent);
+                }
+              }
+              DOM.eventPreventDefault(event);
+              break;
+            }
+            case KeyboardListener.KEY_RIGHT: {
+              if (!curSelection.getState()) {
+                curSelection.setState(true);
+              } else if (curSelection.getChildCount() > 0) {
+                  setSelectedItem(curSelection.getChild(0));
+              }
+              DOM.eventPreventDefault(event);
+              break;
+            }
           }
         }
-
+        
         // Intentional fallthrough.
       case Event.ONKEYUP:
         if (eventType == Event.ONKEYUP) {
@@ -519,6 +519,19 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return accum.iterator();
   }
 
+  /**
+   * Indicates if keyboard navigation is enabled for the Tree and for a given
+   * TreeItem.  Subclasses of Tree can override this function to selectively
+   * enable or disable keyboard navigation.
+   * 
+   * @param currentItem the currently selected TreeItem
+   * @return <code>true</code> if the Tree will response to arrow keys by
+   *           changing the currently selected item
+   */
+  protected boolean isKeyboardNavigationEnabled(TreeItem currentItem) {
+    return true;
+  }
+  
   protected void onAttach() {
     super.onAttach();
 
