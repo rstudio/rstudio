@@ -171,7 +171,7 @@ public class Image extends Widget implements SourcesClickEvents,
       this.height = height;
       this.url = url;
       image.setElement(impl.createStructure(url, left, top, width, height));
-      image.sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS);
+      image.sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONMOUSEWHEEL);
       fireSyntheticLoadEvent(image);
     }
 
