@@ -31,17 +31,29 @@ public class PopupImplIE6 extends PopupImpl {
   }-*/;
 
   public native void onShow(Element popup) /*-{
+    // TODO: make this more Java and less JSNI?
     var frame = $doc.createElement('iframe');
     frame.scrolling = 'no';
     frame.frameBorder = 0;
-    frame.style.position = 'absolute';
 
     popup.__frame = frame;
     frame.__popup = popup;
-    frame.style.setExpression('left', 'this.__popup.offsetLeft');
-    frame.style.setExpression('top', 'this.__popup.offsetTop');
-    frame.style.setExpression('width', 'this.__popup.offsetWidth');
-    frame.style.setExpression('height', 'this.__popup.offsetHeight');
+
+    // Make the frame shadow the popup
+    var style = frame.style;
+    style.position = 'absolute';
+
+    // takes effect immediately
+    style.left = popup.offsetLeft;
+    style.top = popup.offsetTop;
+    style.width = popup.offsetWidth;
+    style.height = popup.offsetHeight;
+        
+    // updates position and dimensions as popup is moved & resized
+    style.setExpression('left', 'this.__popup.offsetLeft');
+    style.setExpression('top', 'this.__popup.offsetTop');
+    style.setExpression('width', 'this.__popup.offsetWidth');
+    style.setExpression('height', 'this.__popup.offsetHeight');
     popup.parentElement.insertBefore(frame, popup);
   }-*/;
   
