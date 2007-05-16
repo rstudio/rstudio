@@ -182,13 +182,13 @@ public class Pruner {
 
     // @Override
     public boolean visit(JProgram program, Context ctx) {
-      for (int i = 0; i < program.getDeclaredTypes().size(); ++i) {
-        JReferenceType type = (JReferenceType) program.getDeclaredTypes().get(i);
+      for (Iterator it = program.getDeclaredTypes().iterator(); it.hasNext(); ) {
+        JReferenceType type = (JReferenceType) it.next();
         if (referencedTypes.contains(type)
             || program.typeOracle.isInstantiatedType(type)) {
           accept(type);
         } else {
-          program.getDeclaredTypes().remove(type);
+          it.remove();
           didChange = true;
         }
       }
@@ -619,14 +619,18 @@ public class Pruner {
       for (int i = 0; i < x.overrides.size(); ++i) {
         JMethod ref = (JMethod) x.overrides.get(i);
         if (referencedNonTypes.contains(ref)) {
-          didRescue |= rescuer.rescue(x);
+          rescuer.rescue(x);
+          didRescue = true;
+          return false;
         }
       }
       JMethod[] virtualOverrides = program.typeOracle.getAllVirtualOverrides(x);
       for (int i = 0; i < virtualOverrides.length; ++i) {
         JMethod ref = virtualOverrides[i];
         if (referencedNonTypes.contains(ref)) {
-          didRescue |= rescuer.rescue(x);
+          rescuer.rescue(x);
+          didRescue = true;
+          return false;
         }
       }
       return false;
