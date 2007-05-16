@@ -33,6 +33,11 @@ public class PopupImplIE6 extends PopupImpl {
   public native void onShow(Element popup) /*-{
     // TODO: make this more Java and less JSNI?
     var frame = $doc.createElement('iframe');
+
+    // Setting a src prevents mixed-content warnings.
+    // http://weblogs.asp.net/bleroy/archive/2005/08/09/how-to-put-a-div-over-a-select-in-ie.aspx
+    frame.src = "javascript:''";
+
     frame.scrolling = 'no';
     frame.frameBorder = 0;
 

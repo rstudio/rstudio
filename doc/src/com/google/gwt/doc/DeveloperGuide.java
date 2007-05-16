@@ -356,7 +356,7 @@ public class DeveloperGuide {
      *    
      *    &lt;!-- Include a history iframe to enable full GWT history support --&gt;
      *    &lt;!-- (the id must be exactly as shown)                           --&gt;
-     *    &lt;iframe id="__gwt_historyFrame" style="width:0;height:0;border:0"&gt;&lt;/iframe&gt;
+     *    &lt;iframe src="javascript:''" id="__gwt_historyFrame" style="width:0;height:0;border:0"&gt;&lt;/iframe&gt;
      *    
      *  &lt;/body&gt;
      * &lt;/html&gt;
