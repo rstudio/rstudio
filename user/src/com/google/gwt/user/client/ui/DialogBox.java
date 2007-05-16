@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
 
 /**
  * A form of popup that has a caption area at the top and can be dragged by the
@@ -92,6 +93,19 @@ public class DialogBox extends PopupPanel implements HasHTML, MouseListener {
 
   public String getText() {
     return caption.getText();
+  }
+
+  public boolean onEventPreview(Event event) {
+    // We need to preventDefault() on mouseDown events (outside of the
+    // DialogBox content) to keep text from being selected when it
+    // is dragged.
+    if (DOM.eventGetType(event) == Event.ONMOUSEDOWN) {
+      if (DOM.isOrHasChild(caption.getElement(), DOM.eventGetTarget(event))) {
+        DOM.eventPreventDefault(event);
+      }
+    }
+
+    return super.onEventPreview(event);
   }
 
   public void onMouseDown(Widget sender, int x, int y) {

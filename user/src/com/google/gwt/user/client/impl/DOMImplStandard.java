@@ -146,26 +146,6 @@ abstract class DOMImplStandard extends DOMImpl {
       return true;
     };
 
-    $wnd.addEventListener(
-      'mouseout',
-      function(evt){
-        var cap = $wnd.__captureElem;
-        if (cap) {
-          if (!evt.relatedTarget) {
-            // When the mouse leaves the window during capture, release capture
-            // and synthesize an 'onlosecapture' event.
-            $wnd.__captureElem = null;
-            if (cap.__listener) {
-              var lcEvent = $doc.createEvent('UIEvent');
-              lcEvent.initUIEvent('losecapture', false, false, $wnd, 0);
-              @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(lcEvent, cap, cap.__listener);
-            }
-          }
-        }
-      },
-      true
-    );
-
     $wnd.addEventListener('click', $wnd.__dispatchCapturedMouseEvent, true);
     $wnd.addEventListener('dblclick', $wnd.__dispatchCapturedMouseEvent, true);
     $wnd.addEventListener('mousedown', $wnd.__dispatchCapturedMouseEvent, true);
