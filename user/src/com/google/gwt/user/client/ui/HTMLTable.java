@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,14 +16,15 @@
 
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * HTMLTable contains the common table algorithms for
@@ -507,7 +508,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
 
     protected native Element getRow(Element elem, int row)/*-{
       return elem.rows[row];
-     }-*/;
+    }-*/;
 
     /**
      * Convenience methods to set an attribute on a row.
@@ -526,21 +527,33 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
   /**
    * Creates a mapping from elements to their associated widgets.
    */
-  private class WidgetMapper {
-    // Using a native Javacript array to associate table cells with Widgets.
-    // Stamps each Widget's element with an id. If GWT ever decided to
-    // provide an int map, then this class should be modified to use it.
+  private static class WidgetMapper {
 
-    /**
-     * Stores the widgetArray, accessed via JSNI calls.
-     */
-    // Default access to supress warnings of unused fields.
-    JavaScriptObject widgetArray = createNativeArray();
+    private static class FreeNode {
+      int index;
+      FreeNode next;
+      public FreeNode(int index, FreeNode next) {
+        this.index = index;
+        this.next = next;
+      }
+    }
 
-    /**
-     * Counter to ensure each widget is given its own unique id.
-     */
-    private int widgetStamp = 1;
+    private static native void clearWidgetIndex(Element elem) /*-{
+      elem["__widgetID"] = null;
+    }-*/;
+
+    private static native int getWidgetIndex(Element elem) /*-{
+      var index = elem["__widgetID"];
+      return (index == null) ? -1 : index;
+    }-*/;
+
+    private static native void setWidgetIndex(Element elem, int index) /*-{
+      elem["__widgetID"] = index;
+    }-*/;
+
+    private FreeNode freeList = null;
+
+    private ArrayList widgetList = new ArrayList();
 
     /**
      * Returns the widget associated with the given element.
@@ -548,40 +561,12 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * @param elem widget's element
      * @return the widget
      */
-    public native Widget getWidget(Element elem) /*-{
-      // Check to see if we have a widget associated with this cell.
-      // Using native reference to avoid parsing overhead.
-      var index = elem["__widgetID"];
-      if  (index == null) {
-        // Text or HTML node, so no widget associated with it.
+    public Widget getWidget(Element elem) {
+      int index = getWidgetIndex(elem);
+      if (index < 0) {
         return null;
       }
-    
-      // As we have a widget, find and return it.
-      var array = this.@com.google.gwt.user.client.ui.HTMLTable.WidgetMapper::widgetArray;
-      var result = array[index];
-      if (result == null)  {
-        return null;
-      } else {
-        return result;
-      }
-     }-*/;
-
-    /**
-     * Gets the Widget associated with the given cell.
-     * 
-     * @param row the cell's row
-     * @param column the cell's column
-     * @return the widget
-     */
-    public Widget getWidget(int row, int column) {
-      Element e = cellFormatter.getRawElement(row, column);
-      Element child = DOM.getFirstChild(e);
-      if (child == null) {
-        return null;
-      } else {
-        return getWidget(child);
-      }
+      return (Widget) widgetList.get(index);
     }
 
     /**
@@ -590,9 +575,16 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * @param widget widget to add
      */
     public void putWidget(Widget widget) {
-      DOM.setElementPropertyInt(widget.getElement(), "__widgetID", widgetStamp);
-      putWidgetImpl(widgetStamp, widget);
-      ++widgetStamp;
+      int index;
+      if (freeList == null) {
+        index = widgetList.size();
+        widgetList.add(widget);
+      } else {
+        index = freeList.index;
+        widgetList.set(index, widget);
+        freeList = freeList.next;
+      }
+      setWidgetIndex(widget.getElement(), index);
     }
 
     /**
@@ -600,12 +592,10 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * 
      * @param elem the widget's element
      */
-    public native void removeWidgetByElement(Element elem) /*-{
-      // Using native reference to avoid parsing overhead.
-      var index = elem["__widgetID"];
-      var array = this.@com.google.gwt.user.client.ui.HTMLTable.WidgetMapper::widgetArray;
-      delete array[index] ;
-    }-*/;
+    public void removeWidgetByElement(Element elem) {
+      int index = getWidgetIndex(elem);
+      removeImpl(elem, index);
+    }
 
     /**
      * Creates an iterator of widgets.
@@ -613,27 +603,52 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * @return the iterator
      */
     public Iterator widgetIterator() {
-      WidgetCollection collection = new WidgetCollection(HTMLTable.this);
-      fillWidgets(collection);
-      return collection.iterator();
+      // TODO: look at using the WidgetIterators class!
+      return new Iterator() {
+        int lastIndex = -1;
+        int nextIndex = -1;
+        {
+          findNext();
+        }
+
+        public boolean hasNext() {
+          return nextIndex < widgetList.size();
+        }
+
+        public Object next() {
+          if (!hasNext()) {
+            throw new NoSuchElementException();
+          }
+          Object result = widgetList.get(nextIndex);
+          lastIndex = nextIndex;
+          findNext();
+          return result;
+        }
+
+        public void remove() {
+          if (lastIndex < 0) {
+            throw new IllegalStateException();
+          }
+          Widget w = (Widget) widgetList.get(lastIndex);
+          removeImpl(w.getElement(), lastIndex);
+          lastIndex = -1;
+        }
+
+        private void findNext() {
+          while (++nextIndex < widgetList.size()) {
+            if (widgetList.get(nextIndex) != null) {
+              return;
+            }
+          }
+        }
+      };
     }
 
-    private native JavaScriptObject createNativeArray() /*-{
-      return [];
-    }-*/;
-
-    private native void fillWidgets(WidgetCollection widgets) /*-{
-      var array = this.@com.google.gwt.user.client.ui.HTMLTable.WidgetMapper::widgetArray;
-      for (var index in array) { 
-        var widget = array[index];
-        widgets.@com.google.gwt.user.client.ui.WidgetCollection::add(Lcom/google/gwt/user/client/ui/Widget;)(widget);
-      }
-   }-*/;
-
-    private native void putWidgetImpl(int index, Widget widget) /*-{
-      var array = this.@com.google.gwt.user.client.ui.HTMLTable.WidgetMapper::widgetArray;
-      array[index] = widget;
-    }-*/;
+    private void removeImpl(Element elem, int index) {
+      clearWidgetIndex(elem);
+      widgetList.set(index, null);
+      freeList = new FreeNode(index, freeList);
+    }
   }
 
   /**
@@ -698,7 +713,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
   public void clear() {
     for (int row = 0; row < getRowCount(); ++row) {
       for (int col = 0; col < getCellCount(row); ++col) {
-        Widget child = widgetMap.getWidget(row, col);
+        Widget child = getWidgetImpl(row, col);
         if (child != null) {
           remove(child);
         }
@@ -818,7 +833,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    */
   public Widget getWidget(int row, int column) {
     checkCellBounds(row, column);
-    return widgetMap.getWidget(row, column);
+    return getWidgetImpl(row, column);
   }
 
   /**
@@ -1062,7 +1077,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    */
   protected native int getDOMCellCount(Element tableBody, int row) /*-{
     return tableBody.rows[row].cells.length;
-   }-*/;
+  }-*/;
 
   /**
    * Directly ask the underlying DOM what the cell count on the given row is.
@@ -1085,7 +1100,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
 
   protected native int getDOMRowCount(Element elem) /*-{
     return elem.rows.length;
-   }-*/;
+  }-*/;
 
   /**
    * Determines the TD associated with the specified event.
@@ -1286,5 +1301,22 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     Element td = getCellFormatter().getRawElement(row, column);
     internalClearCell(td, clearInnerHTML);
     return td;
+  }
+
+  /**
+   * Gets the Widget associated with the given cell.
+   * 
+   * @param row the cell's row
+   * @param column the cell's column
+   * @return the widget
+   */
+  private Widget getWidgetImpl(int row, int column) {
+    Element e = cellFormatter.getRawElement(row, column);
+    Element child = DOM.getFirstChild(e);
+    if (child == null) {
+      return null;
+    } else {
+      return widgetMap.getWidget(child);
+    }
   }
 }
