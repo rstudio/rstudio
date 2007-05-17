@@ -72,8 +72,14 @@ public class GWTShellServlet extends HttpServlet {
     }
   }
 
+  /**
+   * This the default cache time in seconds for files that aren't either
+   * *.cache.*, *.nocache.*.
+   */
+  private static final int DEFAULT_CACHE_SECONDS = 5;
+
   private static final String XHTML_MIME_TYPE = "application/xhtml+xml";
-  
+
   private final Map loadedModulesByName = new HashMap();
 
   private final Map loadedServletsByClassName = new HashMap();
@@ -264,17 +270,18 @@ public class GWTShellServlet extends HttpServlet {
       String moduleName) throws IOException {
 
     // If the request is of the form ".../moduleName.nocache.js" or
-    // ".../moduleName.nocache-xs.js" then generate the selection script for
+    // ".../moduleName-xs.nocache.js" then generate the selection script for
     // them.
     boolean nocacheHtml = partialPath.equals(moduleName + ".nocache.js");
     boolean nocacheScript = !nocacheHtml
-        && partialPath.equals(moduleName + ".nocache-xs.js");
+        && partialPath.equals(moduleName + "-xs.nocache.js");
     if (nocacheHtml || nocacheScript) {
       // If the '?compiled' request property is specified, don't auto-generate.
       if (request.getParameter("compiled") == null) {
         // Generate the .js file.
         try {
           String js = genSelectionScript(logger, moduleName, nocacheScript);
+          setResponseCacheHeaders(response, 0); // do not cache selection script
           response.setStatus(HttpServletResponse.SC_OK);
           response.setContentType("text/javascript");
           response.getWriter().println(js);
@@ -340,13 +347,26 @@ public class GWTShellServlet extends HttpServlet {
     }
 
     writer.println("</head><body>");
-    writer.println("<iframe src=\"javascript:''\" id='__gwt_historyFrame' " +
-            "style='width:0;height:0;border:0'></iframe>");
+    writer.println("<iframe src=\"javascript:''\" id='__gwt_historyFrame' "
+        + "style='width:0;height:0;border:0'></iframe>");
     writer.println("</body></html>");
 
     // Done.
   }
 
+  /**
+   * Fetch a file and return it as the HTTP response, setting the cache-related
+   * headers according to the name of the file (see
+   * {@link #getCacheTime(String)}). This function honors If-Modified-Since to
+   * minimize the impact of limiting caching of files for development.
+   * 
+   * @param request the HTTP request
+   * @param response the HTTP response
+   * @param logger a TreeLogger to use for debug output
+   * @param partialPath the path within the module
+   * @param moduleName the name of the module
+   * @throws IOException
+   */
   private void doGetPublicFile(HttpServletRequest request,
       HttpServletResponse response, TreeLogger logger, String partialPath,
       String moduleName) throws IOException {
@@ -411,13 +431,8 @@ public class GWTShellServlet extends HttpServlet {
     }
 
     maybeIssueXhtmlWarning(logger, mimeType, partialPath);
-    
-    // Maybe serve it up. Don't let the client cache anything other than
-    // xxx.cache.yyy files because this servlet is for development (so user
-    // files are assumed to change a lot), although we do honor
-    // "If-Modified-Since".
 
-    boolean infinitelyCacheable = isInfinitelyCacheable(path);
+    long cacheSeconds = getCacheTime(path);
 
     InputStream is = null;
     try {
@@ -426,10 +441,7 @@ public class GWTShellServlet extends HttpServlet {
       long lastModified = conn.getLastModified();
       if (isNotModified(request, lastModified)) {
         response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
-        if (infinitelyCacheable) {
-          response.setHeader(HttpHeaders.CACHE_CONTROL,
-              HttpHeaders.CACHE_CONTROL_MAXAGE_FOREVER);
-        }
+        setResponseCacheHeaders(response, cacheSeconds);
         return;
       }
 
@@ -445,13 +457,7 @@ public class GWTShellServlet extends HttpServlet {
       // Expiration header. Either immediately stale (requiring an
       // "If-Modified-Since") or infinitely cacheable (not requiring even a
       // freshness check).
-      String maxAgeStr;
-      if (infinitelyCacheable) {
-        maxAgeStr = HttpHeaders.CACHE_CONTROL_MAXAGE_FOREVER;
-      } else {
-        maxAgeStr = HttpHeaders.CACHE_CONTROL_MAXAGE_EXPIRED;
-      }
-      response.setHeader(HttpHeaders.CACHE_CONTROL, maxAgeStr);
+      setResponseCacheHeaders(response, cacheSeconds);
 
       // Content length.
       int contentLength = conn.getContentLength();
@@ -491,6 +497,28 @@ public class GWTShellServlet extends HttpServlet {
     ModuleDef moduleDef = getModuleDef(logger, moduleName);
     SelectionScriptGenerator gen = new SelectionScriptGenerator(moduleDef);
     return gen.generateSelectionScript(false, asScript);
+  }
+
+  /**
+   * Get the length of time a given file should be cacheable. If the path
+   * contains *.nocache.*, it is never cacheable; if it contains *.cache.*, it
+   * is infinitely cacheable; anything else gets a default time.
+   * 
+   * @return cache time in seconds, or 0 if the file is not cacheable at all
+   */
+  private long getCacheTime(String path) {
+    int lastDot = path.lastIndexOf('.');
+    if (lastDot >= 0) {
+      String prefix = path.substring(0, lastDot);
+      if (prefix.endsWith(".cache")) {
+        // RFC2616 says to never give a cache time of more than a year
+        // http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.21
+        return HttpHeaders.SEC_YR;
+      } else if (prefix.endsWith(".nocache")) {
+        return 0;
+      }
+    }
+    return DEFAULT_CACHE_SECONDS;
   }
 
   private synchronized TreeLogger getLogger() {
@@ -710,20 +738,6 @@ public class GWTShellServlet extends HttpServlet {
   }
 
   /**
-   * A file is infinitely cacheable if it ends with ".cache.xxx", where "xxx"
-   * can be any extension.
-   */
-  private boolean isInfinitelyCacheable(String path) {
-    int lastDot = path.lastIndexOf('.');
-    if (lastDot >= 0) {
-      if (path.substring(0, lastDot).endsWith(".cache")) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /**
    * Checks to see whether or not a client's file is out of date relative to the
    * original.
    */
@@ -784,6 +798,41 @@ public class GWTShellServlet extends HttpServlet {
     response.setContentType("text/html");
     response.getWriter().println(msg);
     response.setStatus(statusCode);
+  }
+
+  /**
+   * Sets the Cache-control and Expires headers in the response based on the
+   * supplied cache time.
+   * 
+   * Expires is used in addition to Cache-control for older clients or proxies
+   * which may not properly understand Cache-control.
+   * 
+   * @param response the HttpServletResponse to update
+   * @param cacheTime non-negative number of seconds to cache the response; 0
+   *          means specifically do not allow caching at all.
+   * @throws IllegalArgumentException if cacheTime is negative
+   */
+  private void setResponseCacheHeaders(HttpServletResponse response,
+      long cacheTime) {
+    long expires;
+    if (cacheTime < 0) {
+      throw new IllegalArgumentException("cacheTime of " + cacheTime
+          + " is negative");
+    }
+    if (cacheTime > 0) {
+      // Expire the specified seconds in the future.
+      expires = new Date().getTime() + cacheTime * HttpHeaders.MS_SEC;
+    } else {
+      // Prevent caching by using a time in the past for cache expiration.
+      // Use January 2, 1970 00:00:00, to account for timezone changes
+      // in case a browser tries to convert to a local timezone first
+      // 0=Jan 1, so add 1 day's worth of milliseconds to get Jan 2
+      expires = HttpHeaders.SEC_DAY * HttpHeaders.MS_SEC;
+    }
+    response.setHeader(HttpHeaders.CACHE_CONTROL,
+        HttpHeaders.CACHE_CONTROL_MAXAGE + cacheTime);
+    String expiresString = HttpHeaders.toInternetDateFormat(expires);
+    response.setHeader(HttpHeaders.EXPIRES, expiresString);
   }
 
   private void streamOut(InputStream in, OutputStream out, int bufferSize)

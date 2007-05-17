@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,13 +38,7 @@ public final class HttpHeaders {
   public static final long SEC_YR = SEC_DAY * 365;
 
   public static final String CACHE_CONTROL = "Cache-Control";
-  public static final String CACHE_CONTROL_MAXAGE_EXPIRED = "max-age=0";
-
-  /*
-   * "Forever" = 1 year according to
-   * http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.21
-   */
-  public static final String CACHE_CONTROL_MAXAGE_FOREVER = "max-age=" + SEC_YR;
+  public static final String CACHE_CONTROL_MAXAGE = "max-age=";
   public static final String CACHE_CONTROL_MUST_REVALIDATE = "must-revalidate";
   public static final String CACHE_CONTROL_NO_CACHE = "no-cache";
   public static final String CACHE_CONTROL_PRIVATE = "private";

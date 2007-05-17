@@ -905,7 +905,7 @@ public class GWTCompiler extends ToolBase {
     }
     {
       String html = selGen.generateSelectionScript(obfuscate, true);
-      String fn = module.getName() + ".nocache-xs.js";
+      String fn = module.getName() + "-xs.nocache.js";
       File selectionFile = new File(outDir, fn);
       Util.writeStringAsFile(selectionFile, html);
       String msg = "Compilation selection script written to "
