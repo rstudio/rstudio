@@ -20,7 +20,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
 /**
- * TODO: document me.
+ * Tests the DockPanel widget.
  */
 public class DockPanelTest extends GWTTestCase {
 
@@ -98,5 +98,10 @@ public class DockPanelTest extends GWTTestCase {
     assertTrue(l3.attachedWhenLoaded);
     assertTrue(l4.attachedWhenLoaded);
     assertTrue(l5.attachedWhenLoaded);
+
+    // Ensure that adding an existing child again moves it to the new slot.
+    // (move l4 from SOUTH to NORTH)
+    dock.add(l4, DockPanel.NORTH);
+    assertTrue(((DockPanel.LayoutData)l4.getLayoutData()).direction == DockPanel.NORTH);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,8 +40,10 @@ public class DockPanel extends CellPanel implements HasAlignment {
     }
   }
 
-  private static class LayoutData {
-
+  /*
+   * This class is package-protected for use with DockPanelTest.
+   */
+  static class LayoutData {
     public DockLayoutConstant direction;
     public String hAlign = "left";
     public String height = "";
@@ -98,12 +100,21 @@ public class DockPanel extends CellPanel implements HasAlignment {
   }
 
   /**
-   * Adds a widget to the specified edge of the dock.
+   * Adds a widget to the specified edge of the dock. If the widget is already a
+   * child of this panel, this method behaves as though {@link #remove(Widget)}
+   * had already been called.
    * 
    * @param widget the widget to be added
    * @param direction the widget's direction in the dock
+   * 
+   * @throws IllegalArgumentException when adding to the {@link #CENTER} and
+   *           there is already a different widget there
    */
   public void add(Widget widget, DockLayoutConstant direction) {
+    if (widget.getParent() == this) {
+      remove(widget);
+    }
+
     // Ensure that a second 'center' widget is not being added.
     if (direction == CENTER) {
       if (center != null) {
