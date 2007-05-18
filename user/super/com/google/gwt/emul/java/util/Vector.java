@@ -23,7 +23,7 @@ package java.util;
 public class Vector extends AbstractList implements List, RandomAccess,
     Cloneable {
 
-  private ArrayList arrayList;
+  private transient ArrayList arrayList;
 
   public Vector() {
     arrayList = new ArrayList();

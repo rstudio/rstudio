@@ -20,7 +20,7 @@ package java.util;
  */
 public class HashSet extends AbstractSet implements Set, Cloneable {
 
-  private HashMap map;
+  private transient HashMap map;
 
   public HashSet() {
     map = new HashMap();

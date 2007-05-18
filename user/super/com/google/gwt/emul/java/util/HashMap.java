@@ -220,7 +220,7 @@ public class HashMap extends AbstractMap {
   /**
    * Underlying JavaScript map.
    */
-  private JavaScriptObject map;
+  private transient JavaScriptObject map;
 
   private int currentSize = 0;
 

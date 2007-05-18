@@ -40,6 +40,9 @@ public class InheritanceTestSetFactory {
    */
   public static class Circle extends Shape {
     private String name;
+    public native void doStuff() /*-{
+      alert("foo");
+    }-*/;
   }
 
   /**
@@ -56,12 +59,6 @@ public class InheritanceTestSetFactory {
   public static class MyClass implements AnonymousClassInterface {
     public void foo() {
     }
-  }
-
-  /**
-   * TODO: document me.
-   */
-  public class NonStaticInnerClass implements IsSerializable {
   }
 
   /**
@@ -122,22 +119,6 @@ public class InheritanceTestSetFactory {
   /**
    * TODO: document me.
    */
-  public static class SerializableClassWithUnserializableClassField extends
-      SerializableClass {
-    UnserializableClass cls;
-  }
-
-  /**
-   * TODO: document me.
-   */
-  public static class SerializableClassWithUnserializableObjectField extends
-      SerializableClass {
-    Object obj;
-  }
-
-  /**
-   * TODO: document me.
-   */
   public static class SerializableSubclass extends SerializableClass {
     public int getD() {
       return d;
@@ -148,12 +129,6 @@ public class InheritanceTestSetFactory {
     }
 
     private int d = 4;
-  }
-
-  /**
-   * TODO: document me.
-   */
-  public static class UnserializableClass {
   }
 
   public static Circle createCircle() {
@@ -172,12 +147,12 @@ public class InheritanceTestSetFactory {
     return cls;
   }
 
-  public static SerializableClassWithUnserializableClassField createSerializableClassWithUnserializableClassField() {
-    return new SerializableClassWithUnserializableClassField();
-  }
-
-  public static SerializableClassWithUnserializableObjectField createSerializableClassWithUnserializableObjectField() {
-    return new SerializableClassWithUnserializableObjectField();
+  public static SerializableClass createNonStaticInnerClass() {
+    return new SerializableClass() {
+      public String toString() {
+        return "foo";
+      }
+    };
   }
 
   public static SerializableClass createSerializableSubclass() {

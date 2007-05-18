@@ -17,9 +17,7 @@ package com.google.gwt.user.rebind.rpc;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
-import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.GeneratorContext;
-import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
@@ -28,7 +26,7 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.core.ext.typeinfo.TypeOracleException;
+import com.google.gwt.dev.generator.NameFactory;
 import com.google.gwt.user.client.ResponseTextHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.InvocationException;
@@ -39,7 +37,6 @@ import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader;
 import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
-import com.google.gwt.dev.generator.NameFactory;
 
 import java.io.PrintWriter;
 import java.util.HashSet;
@@ -97,30 +94,23 @@ class ProxyCreator {
 
   public ProxyCreator(JClassType serviceIntf,
       SerializableTypeOracle serializableTypeOracle) {
+    assert (serviceIntf.isInterface() != null);
+    
     this.serviceIntf = serviceIntf;
     this.serializableTypeOracle = serializableTypeOracle;
-
-    if (serviceIntf.isInterface() == null) {
-      throw new RuntimeException("Expecting a service interface, but "
-          + serviceIntf.getQualifiedSourceName() + " is not an interface");
-    }
   }
 
   /**
    * Creates a proxy class for the requested class.
    */
   public String create(TreeLogger logger, GeneratorContext context) {
-    assert (isValidServiceInterface(logger, context));
-
-    logger = logger.branch(TreeLogger.SPAM,
-        "Generating RPC Proxy for service interface '"
-            + serviceIntf.getQualifiedSourceName() + "'", null);
     SourceWriter srcWriter = getSourceWriter(logger, context);
     if (srcWriter == null) {
       return getProxyQualifiedName();
     }
 
-    initializeProperties(logger, context);
+    enforceTypeVersioning = Shared.shouldEnforceTypeVersioning(logger,
+        context.getPropertyOracle());
 
     generateProxyFields(srcWriter);
 
@@ -451,7 +441,7 @@ class ProxyCreator {
     String asyncIntf = serviceIntf.getQualifiedSourceName() + "Async";
     return asyncIntf;
   }
- 
+
   private String getDefaultServiceDefName() {
     String[][] metaData = serviceIntf.getMetaData(ENTRY_POINT_TAG);
     if (metaData.length == 0) {
@@ -514,49 +504,6 @@ class ProxyCreator {
     composerFactory.addImplementedInterface(getAsyncIntfQualifiedName());
 
     return composerFactory.createSourceWriter(ctx, printWriter);
-  }
-
-  private void initializeProperties(TreeLogger logger, GeneratorContext context) {
-    PropertyOracle propertyOracle = context.getPropertyOracle();
-    try {
-      String propVal = propertyOracle.getPropertyValue(logger,
-          Shared.RPC_PROP_ENFORCE_TYPE_VERSIONING);
-      if (propVal != null && propVal.equals("false")) {
-        enforceTypeVersioning = false;
-      } else {
-        enforceTypeVersioning = true;
-      }
-
-      return;
-    } catch (BadPropertyValueException e) {
-      // Purposely ignored, because we want to enforce RPC versioning if
-      // the property is not defined
-      //
-    }
-
-    enforceTypeVersioning = true;
-  }
-
-  /**
-   * This is really a test method that allows us to assert at the start of the
-   * create method that we are in fact dealing with a valid service interface.
-   * If you are running with assertions diabled, this code should not be called.
-   */
-  private boolean isValidServiceInterface(TreeLogger logger,
-      GeneratorContext ctx) {
-    assert (serviceIntf != null);
-    assert (serializableTypeOracle != null);
-
-    ServiceInterfaceValidator siv = new ServiceInterfaceValidator(logger, ctx,
-        serializableTypeOracle, serviceIntf);
-
-    try {
-      return siv.isValid();
-    } catch (TypeOracleException e) {
-      logger.branch(TreeLogger.ERROR, "TypeOracleException: ", e);
-      // Purposely ignored
-      return false;
-    }
   }
 
   private boolean shouldEnforceTypeVersioning() {

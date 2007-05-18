@@ -25,9 +25,27 @@
 	-->
 	<define-property name="gwt.enforceRPCTypeVersioning" values="true,false" />
 	
-	<!-- Default RPC versioning to be on -->
+	<!-- Default RPC versioning to be on. -->
 	<set-property name="gwt.enforceRPCTypeVersioning" value="true"/>
 	
+	<!-- 
+		Declare a property to determine whether or not warnings should be issued
+		if an auto-serializable type has any unseriablizable subtypes.
+	-->
+	<define-property name="gwt.allowUnserializableSubtypesOfAutoSerializableTypes" values="true,false" />
+	
+	<!-- Default warning enabled. -->
+	<set-property name="gwt.allowUnserializableSubtypesOfAutoSerializableTypes" value="false"/>
+
+	<!-- 
+		Declare a property to determine whether or warnings for final instance 
+		fields should be suppressed.
+	-->
+	<define-property name="gwt.suppressNonStaticFinalFieldWarnings" values="true,false" />
+	
+	<!-- Default warning for non-static, final fields enabled -->
+	<set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="false" />
+
 	<generate-with class="com.google.gwt.user.rebind.rpc.ServiceInterfaceProxyGenerator">
 		<when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
 	</generate-with>

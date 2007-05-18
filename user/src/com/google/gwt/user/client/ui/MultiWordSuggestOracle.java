@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.user.client.rpc.IsSerializable;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -62,10 +64,16 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
   /**
    * Suggestion class for {@link MultiWordSuggestOracle}.
    */
-  protected static class MultiWordSuggestion implements Suggestion {
-    private final String value;
-    private final String displayString;
+  public static class MultiWordSuggestion implements Suggestion, IsSerializable {
+    private String value;
+    private String displayString;
 
+    /**
+     * Constructor used by RPC.
+     */
+    public MultiWordSuggestion() {
+    }
+    
     /**
      * Constructor for <code>MultiWordSuggestion</code>.
      * 

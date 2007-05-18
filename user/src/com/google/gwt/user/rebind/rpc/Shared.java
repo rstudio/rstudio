@@ -15,6 +15,9 @@
  */
 package com.google.gwt.user.rebind.rpc;
 
+import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
@@ -79,6 +82,25 @@ class Shared {
   }
 
   /**
+   * Returns <code>true</code> if the generated code should enforce type
+   * versioning.
+   */
+  static boolean shouldEnforceTypeVersioning(TreeLogger logger, PropertyOracle propertyOracle) {
+    try {
+      String propVal = propertyOracle.getPropertyValue(logger,
+          RPC_PROP_ENFORCE_TYPE_VERSIONING);
+      if (propVal.equals("false")) {
+        return false;
+      }
+    } catch (BadPropertyValueException e) {
+      // Purposely ignored, because we want to enforce RPC versioning if
+      // the property is not defined.
+    }
+    // Assume type versioning unless the user explicitly turns it off.
+    return true;
+  }
+
+  /**
    * Computes a good name for a class related to the specified type, such that
    * the computed name can be a top-level class in the same package as the
    * specified type.
@@ -129,5 +151,4 @@ class Shared {
       && !type.getQualifiedSourceName().equals("java.lang.String")
       && !type.getQualifiedSourceName().equals("java.lang.Object");
   }
-
 }

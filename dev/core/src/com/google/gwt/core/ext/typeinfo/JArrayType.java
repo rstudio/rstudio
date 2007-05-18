@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,6 +42,10 @@ public class JArrayType extends JType {
     return componentType.getLeafType();
   }
 
+  public String getParameterizedQualifiedSourceName() {
+    return getComponentType().getParameterizedQualifiedSourceName() + "[]";
+  }
+
   public String getQualifiedSourceName() {
     if (lazyQualifiedName == null) {
       lazyQualifiedName = getComponentType().getQualifiedSourceName() + "[]";
@@ -52,9 +56,9 @@ public class JArrayType extends JType {
   public int getRank() {
     JArrayType componentArrayType = componentType.isArray();
     if (componentArrayType != null) {
-      return 1 + componentArrayType.getRank(); 
+      return 1 + componentArrayType.getRank();
     }
-    
+
     return 1;
   }
 
@@ -64,11 +68,11 @@ public class JArrayType extends JType {
     }
     return lazySimpleName;
   }
- 
+
   public JArrayType isArray() {
     return this;
   }
-  
+
   public JClassType isClass() {
     // intentional null
     return null;
@@ -78,16 +82,17 @@ public class JArrayType extends JType {
     // intentional null
     return null;
   }
-  
+
   public JParameterizedType isParameterized() {
     // intentional null
     return null;
   }
-  
+
   public JPrimitiveType isPrimitive() {
     // intentional null
     return null;
   }
+
   public void setLeafType(JType type) {
     JArrayType componentTypeIsArray = componentType.isArray();
     if (componentTypeIsArray != null) {
@@ -96,6 +101,7 @@ public class JArrayType extends JType {
       componentType = type;
     }
   }
+
   public String toString() {
     return getQualifiedSourceName();
   }

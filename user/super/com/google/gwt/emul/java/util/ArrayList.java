@@ -55,7 +55,7 @@ public class ArrayList extends AbstractList implements List, Cloneable,
    * This field holds the javascript array, and is not private to avoid Eclipse
    * warnings. 
    */
-  JavaScriptObject array;
+  transient JavaScriptObject array;
   /** 
    * This field holds the last populated index of the array and is not private
    * to avoid Eclipse warnings.

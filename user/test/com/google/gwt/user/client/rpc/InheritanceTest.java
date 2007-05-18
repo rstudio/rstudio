@@ -34,7 +34,7 @@ public class InheritanceTest extends TypeSerializerWorkAround {
   }
 
   /**
-   * Test that anonymous classes are not serializable
+   * Test that anonymous classes are not serializable.
    */
   public void testAnonymousClasses() {
     delayTestFinish(TEST_DELAY);
@@ -88,23 +88,23 @@ public class InheritanceTest extends TypeSerializerWorkAround {
   }
 
   /**
-   * Test that non-static inner classes are not serializable
+   * Test that non-static inner classes are not serializable.
    */
   public void testNonStaticInnerClass() {
     delayTestFinish(TEST_DELAY);
 
-    InheritanceTestSetFactory factory = new InheritanceTestSetFactory();
     InheritanceTestServiceAsync service = getServiceAsync();
     try {
-      service.echo(factory.new NonStaticInnerClass(), new AsyncCallback() {
-        public void onFailure(Throwable caught) {
-          finishTest();
-        }
+      service.echo(InheritanceTestSetFactory.createNonStaticInnerClass(),
+          new AsyncCallback() {
+            public void onFailure(Throwable caught) {
+              finishTest();
+            }
 
-        public void onSuccess(Object result) {
-          fail("Non-static inner classes should not be serializable");
-        }
-      });
+            public void onSuccess(Object result) {
+              fail("Non-static inner classes should not be serializable");
+            }
+          });
     } catch (RuntimeException ex) {
       workAroundTypeSerializerBug(ex);
     }
@@ -126,7 +126,7 @@ public class InheritanceTest extends TypeSerializerWorkAround {
   }
 
   /**
-   * Test that a valid serializable class can be serialized
+   * Test that a valid serializable class can be serialized.
    */
   public void testSerializableClass() {
     delayTestFinish(TEST_DELAY);
@@ -147,7 +147,7 @@ public class InheritanceTest extends TypeSerializerWorkAround {
   }
 
   /**
-   * Test that IsSerializable is inherited, also test static inner classes
+   * Test that IsSerializable is inherited, also test static inner classes.
    */
   public void testSerializableSubclass() {
     delayTestFinish(TEST_DELAY);
@@ -167,7 +167,9 @@ public class InheritanceTest extends TypeSerializerWorkAround {
         });
   }
 
-  // test that transient fields do not prevent serializability
+  /**
+   * Tests that transient fields do not prevent serializability.
+   */
   public void testTransientFieldExclusion() {
     delayTestFinish(TEST_DELAY);
 
@@ -185,56 +187,6 @@ public class InheritanceTest extends TypeSerializerWorkAround {
             finishTest();
           }
         });
-  }
-
-  /**
-   * Test that unserializable fields prevent a class from being serializable
-   * also tests unserializable subclasses
-   */
-  public void testUnserializableClassField() {
-    delayTestFinish(TEST_DELAY);
-
-    try {
-      InheritanceTestServiceAsync service = getServiceAsync();
-      service.echo(
-          InheritanceTestSetFactory.createSerializableClassWithUnserializableClassField(),
-          new AsyncCallback() {
-            public void onFailure(Throwable caught) {
-              finishTest();
-            }
-
-            public void onSuccess(Object result) {
-              fail("Class SerializableClassWithUnserializableClassField should not be serializable");
-            }
-          });
-    } catch (RuntimeException ex) {
-      workAroundTypeSerializerBug(ex);
-    }
-  }
-
-  /**
-   * Test that unserializable fields prevent a class from being serializable,
-   * also tests unserializable subclasses
-   */
-  public void testUnserializableObjectField() {
-    delayTestFinish(TEST_DELAY);
-
-    try {
-      InheritanceTestServiceAsync service = getServiceAsync();
-      service.echo(
-          InheritanceTestSetFactory.createSerializableClassWithUnserializableObjectField(),
-          new AsyncCallback() {
-            public void onFailure(Throwable caught) {
-              finishTest();
-            }
-
-            public void onSuccess(Object result) {
-              fail("Class SerializableClassWithUnserializableObjectField should not be serializable");
-            }
-          });
-    } catch (RuntimeException ex) {
-      workAroundTypeSerializerBug(ex);
-    }
   }
 
   private InheritanceTestServiceAsync getServiceAsync() {

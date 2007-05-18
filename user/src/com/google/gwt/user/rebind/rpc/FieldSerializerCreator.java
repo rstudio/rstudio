@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
-import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
@@ -52,11 +51,11 @@ import java.io.PrintWriter;
  */
 public class FieldSerializerCreator {
 
-  private JClassType serializableClass;
+  private final JClassType serializableClass;
 
-  private JField[] serializableFields;
+  private final JField[] serializableFields;
 
-  private SerializableTypeOracle serializationOracle;
+  private final SerializableTypeOracle serializationOracle;
 
   private SourceWriter sourceWriter;
 
@@ -73,16 +72,17 @@ public class FieldSerializerCreator {
 
     this.serializationOracle = serializationOracle;
     serializableClass = requestedClass;
+    serializableFields = serializationOracle.getSerializableFields(requestedClass);
   }
 
   public String realize(TreeLogger logger, GeneratorContext ctx) {
     assert (ctx != null);
-    assert (serializationOracle.isSerializable(getSerializableClass()));
+    assert (serializationOracle.isSerializable(serializableClass));
 
-    logger = logger.branch(TreeLogger.SPAM,
+    logger = logger.branch(TreeLogger.DEBUG,
         "Generating a field serializer for type '"
             + serializableClass.getQualifiedSourceName() + "'", null);
-    String fieldSerializerName = serializationOracle.getFieldSerializerName(getSerializableClass());
+    String fieldSerializerName = serializationOracle.getFieldSerializerName(serializableClass);
 
     sourceWriter = getSourceWriter(logger, ctx);
     if (sourceWriter == null) {
@@ -102,25 +102,12 @@ public class FieldSerializerCreator {
   }
 
   /**
-   * Returns the binary type name of a given {@link JClassType}.
-   * 
-   * @param classType
-   * @return the binary name of a {@link JClassType}
-   * 
-   * @see java.lang.Class#getName()
-   */
-  private String getBinaryTypeName(JClassType classType) {
-    return classType.getPackage().getName() + "."
-        + classType.getName().replace('.', '$');
-  }
-
-  /**
    * Returns the name of the field serializer which will deal with this class.
    * 
    * @return name of the field serializer
    */
   private String getFieldSerializerClassName() {
-    String sourceName = serializationOracle.getFieldSerializerName(getSerializableClass());
+    String sourceName = serializationOracle.getFieldSerializerName(serializableClass);
 
     int qualifiedSourceNameStart = sourceName.lastIndexOf('.');
     if (qualifiedSourceNameStart >= 0) {
@@ -130,64 +117,8 @@ public class FieldSerializerCreator {
     return sourceName;
   }
 
-  /**
-   * Returns the package that will contain the field serializer.
-   * 
-   * @return the package where this field serializer will live
-   */
-  private JPackage getFieldSerializerPackage() {
-    JClassType classType = getSerializableClass();
-    return classType.getPackage();
-  }
-
-  private JClassType getSerializableClass() {
-    return serializableClass;
-  }
-
-  /**
-   * Returns an array of serializable fields declared on this class.
-   * 
-   * @return array of serializable fields
-   */
-  private JField[] getSerializableFields() {
-    if (serializableFields != null) {
-      return serializableFields;
-    }
-
-    serializableFields = serializationOracle.applyFieldSerializationPolicy(getSerializableClass());
-    return serializableFields;
-  }
-
-  /**
-   * Returns the next serializable superclass.
-   * 
-   * @param serializableClass
-   * @return next serializable superclass
-   */
-  private JClassType getSerializableSuperclass(JClassType serializableClass) {
-    if (serializableClass == null) {
-      return null;
-    }
-
-    JClassType superClass = serializableClass.getSuperclass();
-    if (superClass != null) {
-      SerializableTypeOracle oracle = getSerializationOracle();
-      if (oracle.isSerializable(superClass)) {
-        return superClass;
-      }
-
-      return getSerializableSuperclass(superClass);
-    }
-
-    return null;
-  }
-
-  private SerializableTypeOracle getSerializationOracle() {
-    return serializationOracle;
-  }
-
   private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx) {
-    String packageName = getFieldSerializerPackage().getName();
+    String packageName = serializableClass.getPackage().getName();
     String className = getFieldSerializerClassName();
 
     PrintWriter printWriter = ctx.tryCreate(logger, packageName, className);
@@ -222,21 +153,18 @@ public class FieldSerializerCreator {
     sourceWriter.print("public static void deserialize(");
     sourceWriter.print(SerializationStreamReader.class.getName());
     sourceWriter.print(" streamReader, ");
-    sourceWriter.print(getSerializableClass().getQualifiedSourceName());
+    sourceWriter.print(serializableClass.getQualifiedSourceName());
     sourceWriter.println(" instance) throws "
         + SerializationException.class.getName() + "{");
     sourceWriter.indent();
 
     writeFieldDeserializationStatements();
 
-    JClassType jClass = getSerializableClass().isClass();
-    if (jClass != null) {
-      JClassType serializableSuperClass = getSerializableSuperclass(jClass);
-      if (serializableSuperClass != null) {
-        String fieldSerializerName = serializationOracle.getFieldSerializerName(serializableSuperClass);
-        sourceWriter.print(fieldSerializerName);
-        sourceWriter.println(".deserialize(streamReader, instance);");
-      }
+    JClassType superClass = serializableClass.getSuperclass();
+    if (superClass != null && serializationOracle.isSerializable(superClass)) {
+      String fieldSerializerName = serializationOracle.getFieldSerializerName(superClass);
+      sourceWriter.print(fieldSerializerName);
+      sourceWriter.println(".deserialize(streamReader, instance);");
     }
 
     sourceWriter.outdent();
@@ -250,7 +178,7 @@ public class FieldSerializerCreator {
    * external class to access the field's value.
    */
   private void writeFieldAccessors() {
-    JField[] jFields = getSerializableFields();
+    JField[] jFields = serializableFields;
     int fieldCount = jFields.length;
 
     for (int fieldIndex = 0; fieldIndex < fieldCount; ++fieldIndex) {
@@ -266,7 +194,7 @@ public class FieldSerializerCreator {
   }
 
   private void writeFieldDeserializationStatements() {
-    JType type = getSerializableClass();
+    JType type = serializableClass;
     JArrayType isArray = type.isArray();
     if (isArray != null) {
       sourceWriter.println("for (int itemIndex = 0; itemIndex < instance.length; ++itemIndex) {");
@@ -284,7 +212,7 @@ public class FieldSerializerCreator {
       sourceWriter.outdent();
       sourceWriter.println("}");
     } else {
-      JField[] jFields = getSerializableFields();
+      JField[] jFields = serializableFields;
       int fieldCount = jFields.length;
 
       for (int fieldIndex = 0; fieldIndex < fieldCount; ++fieldIndex) {
@@ -331,12 +259,12 @@ public class FieldSerializerCreator {
     sourceWriter.print(" get");
     sourceWriter.print(Shared.capitalize(fieldName));
     sourceWriter.print("(");
-    sourceWriter.print(getSerializableClass().getQualifiedSourceName());
+    sourceWriter.print(serializableClass.getQualifiedSourceName());
     sourceWriter.println(" instance) /*-{");
     sourceWriter.indent();
 
     sourceWriter.print("return instance.@");
-    sourceWriter.print(getBinaryTypeName(getSerializableClass()));
+    sourceWriter.print(serializationOracle.getSerializedTypeName(serializableClass));
     sourceWriter.print("::");
     sourceWriter.print(fieldName);
     sourceWriter.println(";");
@@ -347,7 +275,7 @@ public class FieldSerializerCreator {
   }
 
   private void writeFieldSerializationStatements() {
-    JType type = getSerializableClass();
+    JType type = serializableClass;
     JArrayType isArray = type.isArray();
     if (isArray != null) {
       sourceWriter.println("int itemCount = instance.length;");
@@ -364,7 +292,7 @@ public class FieldSerializerCreator {
       sourceWriter.outdent();
       sourceWriter.println("}");
     } else {
-      JField[] jFields = getSerializableFields();
+      JField[] jFields = serializableFields;
       int fieldCount = jFields.length;
 
       for (int fieldIndex = 0; fieldIndex < fieldCount; ++fieldIndex) {
@@ -397,7 +325,7 @@ public class FieldSerializerCreator {
   private void writeFieldSet(JField serializableField) {
     JType fieldType = serializableField.getType();
     String fieldTypeQualifiedSourceName = fieldType.getQualifiedSourceName();
-    String serializableClassQualifedName = getSerializableClass().getQualifiedSourceName();
+    String serializableClassQualifedName = serializableClass.getQualifiedSourceName();
     String fieldName = serializableField.getName();
 
     sourceWriter.print("private static native void ");
@@ -411,7 +339,7 @@ public class FieldSerializerCreator {
     sourceWriter.indent();
 
     sourceWriter.print("instance.@");
-    sourceWriter.print(getBinaryTypeName(getSerializableClass()));
+    sourceWriter.print(serializationOracle.getSerializedTypeName(serializableClass));
     sourceWriter.print("::");
     sourceWriter.print(fieldName);
     sourceWriter.println(" = value;");
@@ -425,23 +353,20 @@ public class FieldSerializerCreator {
     sourceWriter.print("public static void serialize(");
     sourceWriter.print(SerializationStreamWriter.class.getName());
     sourceWriter.print(" streamWriter, ");
-    sourceWriter.print(getSerializableClass().getQualifiedSourceName());
+    sourceWriter.print(serializableClass.getQualifiedSourceName());
     sourceWriter.println(" instance) throws "
         + SerializationException.class.getName() + " {");
     sourceWriter.indent();
 
     writeFieldSerializationStatements();
 
-    JClassType jClass = getSerializableClass().isClass();
-    if (jClass != null) {
-      JClassType serializableSuperclass = getSerializableSuperclass(jClass);
-      if (serializableSuperclass != null) {
-        String fieldSerializerName = serializationOracle.getFieldSerializerName(serializableSuperclass);
-        sourceWriter.print(fieldSerializerName);
-        sourceWriter.println(".serialize(streamWriter, instance);");
-      }
+    JClassType superClass = serializableClass.getSuperclass();
+    if (superClass != null && serializationOracle.isSerializable(superClass)) {
+      String fieldSerializerName = serializationOracle.getFieldSerializerName(superClass);
+      sourceWriter.print(fieldSerializerName);
+      sourceWriter.println(".serialize(streamWriter, instance);");
     }
-
+    
     sourceWriter.outdent();
     sourceWriter.println("}");
     sourceWriter.println();

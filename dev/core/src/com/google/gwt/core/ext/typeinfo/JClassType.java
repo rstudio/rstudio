@@ -420,8 +420,7 @@ public class JClassType extends JType implements HasMetaData {
    * operation. Specifically, the class must
    * <ul>
    * <li>be a class rather than an interface, </li>
-   * <li>have either no constructors or a parameterless <code>public</code>
-   * constructor, and</li>
+   * <li>have either no constructors or a parameterless constructor, and</li>
    * <li>be a top-level class or a static nested class.</li>
    * </ul>
    * 

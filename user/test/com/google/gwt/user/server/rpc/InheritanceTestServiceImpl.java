@@ -15,14 +15,13 @@
  */
 package com.google.gwt.user.server.rpc;
 
+import com.google.gwt.user.client.rpc.InheritanceTestService;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory;
 import com.google.gwt.user.client.rpc.InheritanceTestSetValidator;
-import com.google.gwt.user.client.rpc.InheritanceTestService;
-import com.google.gwt.user.client.rpc.IsSerializable;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.AnonymousClassInterface;
+import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.Circle;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClass;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClassWithTransientField;
-import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableSubclass;
 
 /**
  * TODO: document me.
@@ -34,8 +33,8 @@ public class InheritanceTestServiceImpl extends RemoteServiceServlet implements
     return serializable;
   }
 
-  public IsSerializable echo(IsSerializable serializable) {
-    return serializable;
+  public Circle echo(Circle circle) {
+    return circle;
   }
 
   public SerializableClass echo(SerializableClass serializableClass) {
@@ -59,15 +58,7 @@ public class InheritanceTestServiceImpl extends RemoteServiceServlet implements
     return serializableClass;
   }
 
-  public SerializableSubclass echo(SerializableSubclass serializableSubclass) {
-    if (!InheritanceTestSetValidator.isValid(serializableSubclass)) {
-      throw new RuntimeException();
-    }
-
-    return serializableSubclass;
-  }
-
   public SerializableClass getUnserializableClass() {
-    return new InheritanceTestSetFactory.SerializableClassWithUnserializableClassField();
+    return InheritanceTestSetFactory.createNonStaticInnerClass();
   }
 }

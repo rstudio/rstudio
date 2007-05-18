@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,107 +20,51 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.core.ext.typeinfo.TypeOracleException;
-import com.google.gwt.user.client.rpc.RemoteService;
 
 /**
- * Generator for rpc service interface.
+ * Generator for producing the asynchronous version of a {@link RemoteService}
+ * interface.
  */
 public class ServiceInterfaceProxyGenerator extends Generator {
-  
+
   public String generate(TreeLogger logger, GeneratorContext ctx,
       String requestedClass) throws UnableToCompleteException {
 
     TypeOracle typeOracle = ctx.getTypeOracle();
     assert (typeOracle != null);
 
-    JType requestedType = typeOracle.findType(requestedClass);
-    if (requestedType == null) {
+    JClassType remoteService = typeOracle.findType(requestedClass);
+    if (remoteService == null) {
       logger.log(TreeLogger.ERROR, "Unable to find metadata for type '"
-        + requestedClass + "'", null);
+          + requestedClass + "'", null);
       throw new UnableToCompleteException();
     }
 
-    JClassType serviceIntf = requestedType.isInterface();
-    if (serviceIntf == null) {
-      logger.log(TreeLogger.ERROR, requestedType.getQualifiedSourceName()
-        + " is not an interface", null);
+    if (remoteService.isInterface() == null) {
+      logger.log(TreeLogger.ERROR, remoteService.getQualifiedSourceName()
+          + " is not an interface", null);
       throw new UnableToCompleteException();
     }
 
-    JType[] reachableTypes = getReachableTypes(logger, serviceIntf);
+    logger = logger.branch(TreeLogger.DEBUG,
+        "Generating client proxy for remote service interface '"
+            + remoteService.getQualifiedSourceName() + "'", null);
+    
+    SerializableTypeOracleBuilder stob = new SerializableTypeOracleBuilder(
+        logger, typeOracle);
+    SerializableTypeOracle sto = stob.build(ctx.getPropertyOracle(),
+        remoteService);
 
-    SerializableTypeOracle serializableTypeOracle;
-    try {
-      // If we did not determine that java.lang.String was reachable then we
-      // force it to be here since the proxy code requires that it be
-      //
-      JClassType stringType = typeOracle.getType("java.lang.String");
-      if (!contains(reachableTypes, stringType)) {
-        reachableTypes = add(reachableTypes, stringType);
-      }
+    generateTypeSerializer(logger, ctx, remoteService, sto);
 
-      serializableTypeOracle = getSerializableTypeOracle(logger, typeOracle,
-        reachableTypes);
-
-      if (!isValidServiceInterface(logger, ctx, serializableTypeOracle,
-        serviceIntf)) {
-        return null;
-      }
-
-      generateTypeSerializer(logger, ctx, serviceIntf, serializableTypeOracle);
-
-    } catch (NotFoundException e) {
-      logger.log(TreeLogger.ERROR, e.getMessage(), null);
-      throw new UnableToCompleteException();
-
-    } catch (TypeOracleException e) {
-      logger.log(TreeLogger.ERROR, "Unexpected TypeOracleException", e);
-      throw new UnableToCompleteException();
-    }
-
-    // The name of the proxy class must be the first one in the ';' delimited
-    // list of items.
-    //
-    String proxyClassName = generateProxy(logger, ctx, serviceIntf,
-      serializableTypeOracle);
-    return proxyClassName;
-  }
-
-  public ProxyCreator getProxyCreator(JClassType serviceIntf,
-      SerializableTypeOracle serializableTypeOracle) {
-    return new ProxyCreator(serviceIntf, serializableTypeOracle);
-  }
-
-  public boolean isCompatibleWith(Class classOrInterface) {
-    return classOrInterface.isInterface()
-      && RemoteService.class.isAssignableFrom(classOrInterface);
-  }
-
-  private JType[] add(JType[] reachableTypes, JClassType typeToAdd) {
-    JType[] newArray = new JType[reachableTypes.length + 1];
-    System.arraycopy(reachableTypes, 0, newArray, 0, reachableTypes.length);
-    newArray[reachableTypes.length] = typeToAdd;
-    return newArray;
-  }
-
-  private boolean contains(JType[] reachableTypes, JClassType stringType) {
-    for (int i = 0; i < reachableTypes.length; ++i) {
-      if (reachableTypes[i] == stringType) {
-        return true;
-      }
-    }
-
-    return false;
+    return generateProxy(logger, ctx, remoteService, sto);
   }
 
   private String generateProxy(TreeLogger logger, GeneratorContext ctx,
       JClassType serviceIntf, SerializableTypeOracle serializableTypeOracle) {
-    ProxyCreator proxyCreator = getProxyCreator(serviceIntf,
-      serializableTypeOracle);
+    ProxyCreator proxyCreator = new ProxyCreator(serviceIntf,
+        serializableTypeOracle);
 
     return proxyCreator.create(logger, ctx);
   }
@@ -129,35 +73,7 @@ public class ServiceInterfaceProxyGenerator extends Generator {
       GeneratorContext ctx, JClassType serviceIntf,
       SerializableTypeOracle serializableTypeOracle) {
     TypeSerializerCreator typeSerializerCreator = new TypeSerializerCreator(
-      serializableTypeOracle);
-    return typeSerializerCreator.realize(logger, ctx, serviceIntf);
-  }
-
-  private JType[] getReachableTypes(TreeLogger logger, JClassType serviceIntf) {
-    ReachableTypeOracle reachableTypeOracle = new ReachableTypeOracleImpl(
-      logger);
-    JType[] reachableTypes = reachableTypeOracle.getTypesReachableFromInterface(serviceIntf);
-
-    return reachableTypes;
-  }
-
-  private SerializableTypeOracle getSerializableTypeOracle(TreeLogger logger,
-      TypeOracle typeOracle, JType[] reachableTypes) throws NotFoundException {
-    SerializableTypeOracleBuilder serializableTypeOracleBuilder = new SerializableTypeOracleBuilder(
-      logger, typeOracle);
-    SerializableTypeOracle serializableTypeOracle = serializableTypeOracleBuilder.build(reachableTypes);
-    return serializableTypeOracle;
-  }
-
-  private boolean isValidServiceInterface(TreeLogger logger,
-      GeneratorContext ctx, SerializableTypeOracle serializableTypeOracle,
-      JClassType serviceIntf) throws TypeOracleException {
-    ServiceInterfaceValidator serviceInterfaceValidator = new ServiceInterfaceValidator(
-      logger, ctx, serializableTypeOracle, serviceIntf);
-    if (!serviceInterfaceValidator.isValid()) {
-      return false;
-    }
-
-    return true;
+        logger, serializableTypeOracle, ctx, serviceIntf);
+    return typeSerializerCreator.realize(logger);
   }
 }

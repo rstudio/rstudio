@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,45 +18,36 @@ package com.google.gwt.user.rebind.rpc;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
-import com.google.gwt.core.ext.typeinfo.JMethod;
-import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.zip.CRC32;
 
 final class SerializableTypeOracleImpl implements SerializableTypeOracle {
 
   private static final String DEFAULT_BUILTIN_CUSTOM_SERIALIZER_PACKAGE_NAME = "com.google.gwt.user.client.rpc.core.java.lang";
-  private static final String GENERATED_FIELD_SERIALIZER_SUFFIX = "_FieldSerializer";
-  private static final Map PRIMITIVE_TYPE_BINARY_NAMES = new HashMap();
-  private static final String TYPE_SERIALIZER_SUFFIX = "_TypeSerializer";
+  private static final Comparator FIELD_COMPARATOR = new Comparator() {
+    public int compare(Object o1, Object o2) {
+      JField f1 = (JField) o1;
+      JField f2 = (JField) o2;
 
+      return f1.getName().compareTo(f2.getName());
+    }
+  };
+  private static final String GENERATED_FIELD_SERIALIZER_SUFFIX = "_FieldSerializer";
+  private static final String TYPE_SERIALIZER_SUFFIX = "_TypeSerializer";
   private static final Set TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES = new HashSet();
 
   static {
-    PRIMITIVE_TYPE_BINARY_NAMES.put("boolean", "Z");
-    PRIMITIVE_TYPE_BINARY_NAMES.put("byte", "B");
-    PRIMITIVE_TYPE_BINARY_NAMES.put("char", "C");
-    PRIMITIVE_TYPE_BINARY_NAMES.put("double", "D");
-    PRIMITIVE_TYPE_BINARY_NAMES.put("float", "F");
-    PRIMITIVE_TYPE_BINARY_NAMES.put("int", "I");
-    PRIMITIVE_TYPE_BINARY_NAMES.put("long", "J");
-    PRIMITIVE_TYPE_BINARY_NAMES.put("short", "S");
-
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Boolean");
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Byte");
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Character");
@@ -71,77 +62,17 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Throwable");
   }
 
-  private Map assignableTypeCache;
+  private final JType[] serializableTypes;
+  private final Set /* <JType> */serializableTypesSet;
+  private final TypeOracle typeOracle;
 
-  private JType objectType;
+  public SerializableTypeOracleImpl(TypeOracle typeOracle,
+      JType[] serializableTypes) {
 
-  private Map reachableTypes;
-
-  private TypeOracle typeOracle;
-
-  public SerializableTypeOracleImpl(TypeOracle typeOracle, Map reachableTypes)
-      throws NotFoundException {
-    this.reachableTypes = reachableTypes;
+    this.serializableTypes = serializableTypes;
+    serializableTypesSet = new HashSet();
+    serializableTypesSet.addAll(Arrays.asList(serializableTypes));
     this.typeOracle = typeOracle;
-    assignableTypeCache = new IdentityHashMap();
-    objectType = typeOracle.getType("java.lang.Object");
-  }
-
-  public JField[] applyFieldSerializationPolicy(JClassType classType) {
-    ArrayList fields = new ArrayList();
-    JField[] declFields = classType.getFields();
-    for (int iField = 0; iField < declFields.length; ++iField) {
-      JField field = declFields[iField];
-      // TODO(mmendez): this is shared with the serializable type oracle
-      // builder, join with that
-      if (field.isStatic() || field.isTransient() || field.isFinal()) {
-        continue;
-      }
-
-      fields.add(field);
-    }
-
-    Comparator fieldComp = new Comparator() {
-      public int compare(Object o1, Object o2) {
-        JField f1 = (JField) o1;
-        JField f2 = (JField) o2;
-
-        return f1.getName().compareTo(f2.getName());
-      }
-    };
-
-    // TODO(mmendez): clean this up
-    JField[] fieldsArray = (JField[]) fields.toArray(new JField[fields.size()]);
-    Arrays.sort(fieldsArray, fieldComp);
-    return fieldsArray;
-  }
-
-  public String encodeSerializedInstanceReference(JType instanceType) {
-    return getSerializedTypeName(instanceType) + "/"
-        + getSerializationSignature(instanceType);
-  }
-
-  public String encodeSerializedInstanceReference(String qualifiedTypeName)
-      throws ClassNotFoundException {
-    JClassType type = typeOracle.findType(qualifiedTypeName);
-    if (type == null) {
-      throw new ClassNotFoundException();
-    }
-
-    return encodeSerializedInstanceReference(type);
-  }
-
-  /**
-   * For a given type find it's custom field serializer, if it has one, and then
-   * try to find a valid instantiation method.
-   */
-  public JMethod getCustomFieldSerializerInstantiateMethodForType(JType type) {
-    SerializableType reachableType = (SerializableType) reachableTypes.get(type);
-    if (reachableType == null) {
-      return null;
-    }
-
-    return reachableType.getCustomSerializerInstantiateMethod();
   }
 
   public String getFieldSerializerName(JType type) {
@@ -169,61 +100,32 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     }
   }
 
-  public JType[] getSerializableTypes() {
-    ArrayList list = new ArrayList();
-    Set entrySet = reachableTypes.entrySet();
-    assert (entrySet != null);
-
-    Iterator iter = entrySet.iterator();
-    while (iter.hasNext()) {
-      Entry entry = (Entry) iter.next();
-      SerializableType reachableType = (SerializableType) entry.getValue();
-      assert (reachableType != null);
-
-      if (reachableType.getType().isPrimitive() != null) {
+  /**
+   * Returns the fields which qualify for serialization.
+   */
+  public JField[] getSerializableFields(JClassType classType) {
+    List fields = new ArrayList();
+    JField[] declFields = classType.getFields();
+    for (int iField = 0; iField < declFields.length; ++iField) {
+      JField field = declFields[iField];
+      // TODO(mmendez): this is shared with the serializable type oracle
+      // builder, join with that
+      if (field.isStatic() || field.isTransient() || field.isFinal()) {
         continue;
       }
 
-      if (reachableType.isSerializable()) {
-        list.add(reachableType.getType());
-      }
+      fields.add(field);
     }
 
-    return (JType[]) list.toArray(new JType[list.size()]);
+    Collections.sort(fields, FIELD_COMPARATOR);
+    return (JField[]) fields.toArray(new JField[fields.size()]);
   }
 
-  public JType[] getSerializableTypesAssignableTo(JType type) {
-    // Object is treated specially since it cannot be the root
-    // of serializable subtypes
-    //
-    if (type == objectType) {
-      return new JType[0];
-    }
-
-    JPrimitiveType primitive = type.isPrimitive();
-    if (primitive != null) {
-      // Primitives are always serializable and assignable to themselves.
-      return new JType[] {primitive};
-    }
-
-    // Order is important here since Parameterized types
-    JParameterizedType parameterizedType = type.isParameterized();
-    if (parameterizedType != null) {
-      return getSerializableTypesAssignableTo(parameterizedType.getRawType());
-    }
-
-    JArrayType arrayType = type.isArray();
-    if (arrayType != null) {
-      return getSerializableTypesAssignableTo(arrayType.getLeafType());
-    }
-
-    JClassType classOrInterface = type.isClassOrInterface();
-    if (classOrInterface != null) {
-      return getSerializableTypesAssignableTo(classOrInterface);
-    }
-
-    // Otherwise return the empty array
-    return new JType[0];
+  /**
+   * 
+   */
+  public JType[] getSerializableTypes() {
+    return serializableTypes;
   }
 
   public String getSerializationSignature(JType type) {
@@ -234,30 +136,20 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     return Long.toString(crc.getValue());
   }
 
-  public String getSerializedInstanceReference(JType type) {
-    return getSerializedTypeName(type, false);
-  }
-
   public String getSerializedTypeName(JType type) {
     JPrimitiveType primitiveType = type.isPrimitive();
     if (primitiveType != null) {
-      Object val = PRIMITIVE_TYPE_BINARY_NAMES.get(primitiveType.getSimpleSourceName());
-      if (val == null) {
-        throw new RuntimeException("Unexpected primitive type '"
-            + primitiveType.getQualifiedSourceName() + "'");
-      }
-
-      return (String) val;
+      return primitiveType.getJNISignature();
     }
 
     JArrayType arrayType = type.isArray();
     if (arrayType != null) {
-      JType componentType = arrayType.getComponentType();
-      boolean isClassOrInterface = (componentType.isArray() == null)
-          && (componentType.isPrimitive() == null);
-      return "[" + (isClassOrInterface ? "L" : "")
-          + getSerializedTypeName(arrayType.getComponentType())
-          + (isClassOrInterface ? ";" : "");
+      JType component = arrayType.getComponentType();
+      if (component.isClassOrInterface() != null) {
+        return "[L" + getSerializedTypeName(arrayType.getComponentType()) + ";";
+      } else {
+        return "[" + getSerializedTypeName(arrayType.getComponentType());
+      }
     }
 
     JParameterizedType parameterizedType = type.isParameterized();
@@ -274,66 +166,7 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
           + classType.getSimpleSourceName();
     }
 
-    JPackage pkg = classType.getPackage();
-    if (pkg != null) {
-      return pkg.getName() + "." + classType.getSimpleSourceName();
-    }
-
-    return classType.getSimpleSourceName();
-  }
- 
-  public String getSerializedTypeName(JType type, boolean addTypeSignature) {
-    if (type.isPrimitive() != null) {
-      Object val = PRIMITIVE_TYPE_BINARY_NAMES.get(type.getSimpleSourceName());
-      if (val == null) {
-        throw new RuntimeException("Unexpected primitive type '"
-            + type.getQualifiedSourceName() + "'");
-      }
-
-      return (String) val;
-    }
-
-    JArrayType arrayType = type.isArray();
-    if (arrayType != null) {
-      return "["
-          + getSerializedTypeName(arrayType.getComponentType(),
-              addTypeSignature);
-    }
-
-    JParameterizedType parameterizedType = type.isParameterized();
-    if (parameterizedType != null) {
-      return getSerializedTypeName(parameterizedType.getRawType(),
-          addTypeSignature);
-    }
-
-    JClassType classType = type.isClassOrInterface();
-    assert (classType != null);
-
-    String serializedTypeName;
-    JClassType enclosingType = classType.getEnclosingType();
-    if (enclosingType != null) {
-      serializedTypeName = getSerializedTypeName(enclosingType, false) + "$";
-    } else {
-      JPackage pkg = classType.getPackage();
-      if (pkg != null) {
-        serializedTypeName = pkg.getName() + ".";
-      } else {
-        serializedTypeName = "";
-      }
-    }
-
-    serializedTypeName += classType.getSimpleSourceName();
-
-    if (addTypeSignature) {
-      serializedTypeName += "/" + getSerializationSignature(classType);
-      JClassType customSerializer = hasCustomFieldSerializer(classType);
-      if (customSerializer != null) {
-        serializedTypeName += "/"
-            + getSerializedInstanceReference(customSerializer);
-      }
-    }
-
-    return serializedTypeName;
+    return classType.getQualifiedSourceName();
   }
 
   public String getTypeSerializerQualifiedName(JClassType serviceIntf) {
@@ -363,12 +196,8 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
   }
 
   public JClassType hasCustomFieldSerializer(JType type) {
-    SerializableType reachableType = (SerializableType) reachableTypes.get(type);
-    if (reachableType == null) {
-      return null;
-    }
-
-    JClassType customSerializer = reachableType.getCustomSerializer();
+    JClassType customSerializer = SerializableTypeOracleBuilder.findCustomFieldSerializer(
+        typeOracle, type);
     if (customSerializer != null) {
       return customSerializer;
     }
@@ -396,13 +225,11 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     return typeOracle.findType(qualifiedSerializerName);
   }
 
+  /**
+   * Returns <code>true</code> if the type is serializable.
+   */
   public boolean isSerializable(JType type) {
-    SerializableType reachableType = (SerializableType) reachableTypes.get(type);
-    if (reachableType == null) {
-      return false;
-    }
-
-    return reachableType.isSerializable();
+    return serializableTypesSet.contains(type);
   }
 
   private boolean excludeImplementationFromSerializationSignature(
@@ -437,7 +264,7 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
       generateSerializationSignature(isArray.getComponentType(), crc);
     } else if (type.isClassOrInterface() != null) {
       JClassType isClassOrInterface = type.isClassOrInterface();
-      JField[] fields = applyFieldSerializationPolicy(isClassOrInterface);
+      JField[] fields = getSerializableFields(isClassOrInterface);
       for (int i = 0; i < fields.length; ++i) {
         JField field = fields[i];
         assert (field != null);
@@ -451,36 +278,5 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
         generateSerializationSignature(superClass, crc);
       }
     }
-  }
-
-  /**
-   * Get all serializable types that can be assigned to the requested type.
-   */
-  private JType[] getSerializableTypesAssignableTo(JClassType classOrInterface) {
-    HashSet assignableTypes = (HashSet) assignableTypeCache.get(classOrInterface);
-    if (assignableTypes != null) {
-      return (JType[]) assignableTypes.toArray(new JType[assignableTypes.size()]);
-    }
-
-    assignableTypes = new HashSet();
-    boolean isSerializable = isSerializable(classOrInterface);
-    if (isSerializable) {
-      assignableTypes.add(classOrInterface);
-    }
-
-    JClassType[] subTypes = classOrInterface.getSubtypes();
-    for (int index = 0; index < subTypes.length; ++index) {
-      JClassType subType = subTypes[index];
-
-      if (isSerializable(subType)) {
-        assignableTypes.add(subType);
-      }
-    }
-
-    // Cache the results in case we need it later
-    //
-    assignableTypeCache.put(classOrInterface, assignableTypes);
-
-    return (JType[]) assignableTypes.toArray(new JType[assignableTypes.size()]);
   }
 }
