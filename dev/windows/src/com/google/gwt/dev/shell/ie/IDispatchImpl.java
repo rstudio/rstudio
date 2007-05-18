@@ -305,15 +305,8 @@ abstract class IDispatchImpl extends COMObject {
       // Java back into JavaScript
 
       Throwable t = e.getTargetException();
-      RuntimeException re;
-      if (t instanceof RuntimeException) {
-        re = (RuntimeException) t;
-      } else {
-        re = new RuntimeException("Checked exception thrown into JavaScript"
-            + " (web mode behavior may differ)", t);
-      }
-      ex = new HResultException(re);
-      ModuleSpace.setThrownJavaException(re);
+      ex = new HResultException(t);
+      ModuleSpace.setThrownJavaException(t);
     } catch (Exception e) {
       // Log to the console for detailed examination.
       //

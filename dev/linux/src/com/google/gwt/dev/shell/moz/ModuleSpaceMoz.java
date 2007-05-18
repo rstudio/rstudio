@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,15 +20,12 @@ import com.google.gwt.dev.shell.JsValue;
 import com.google.gwt.dev.shell.JsValueGlue;
 import com.google.gwt.dev.shell.ModuleSpace;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
-import com.google.gwt.dev.shell.moz.LowLevelMoz.DispatchObject;
 
 /**
  * An implementation of {@link com.google.gwt.dev.shell.ModuleSpace} for
  * Mozilla.
  */
 public class ModuleSpaceMoz extends ModuleSpace {
-
-  private DispatchObject staticDispatch;
 
   private final int window;
 
@@ -45,8 +42,11 @@ public class ModuleSpaceMoz extends ModuleSpace {
     SwtGeckoGlue.addRefInt(window);
   }
 
-  /* (non-Javadoc)
-   * @see com.google.gwt.dev.shell.ShellJavaScriptHost#createNative(java.lang.String, int, java.lang.String, java.lang.String[], java.lang.String)
+  /*
+   * (non-Javadoc)
+   * 
+   * @see com.google.gwt.dev.shell.ShellJavaScriptHost#createNative(java.lang.String,
+   *      int, java.lang.String, java.lang.String[], java.lang.String)
    */
   public void createNative(String file, int line, String jsniSignature,
       String[] paramNames, String js) {
@@ -57,31 +57,14 @@ public class ModuleSpaceMoz extends ModuleSpace {
     LowLevelMoz.executeScriptWithInfo(window, newScript, file, line);
   }
 
-  /* (non-Javadoc)
+  /*
+   * (non-Javadoc)
+   * 
    * @see com.google.gwt.dev.shell.ModuleSpace#dispose()
    */
   public void dispose() {
     SwtGeckoGlue.releaseInt(window);
     super.dispose();
-  }
-
-  /* (non-Javadoc)
-   * @see com.google.gwt.dev.shell.ShellJavaScriptHost#exceptionCaught(int, java.lang.String, java.lang.String)
-   */
-  public void exceptionCaught(int number, String name, String message) {
-    RuntimeException thrown = (RuntimeException) sThrownJavaExceptionObject.get();
-
-    // See if the caught exception is null (thus thrown by us)
-    if (thrown != null) {
-      if (name == null && message == null) {
-        sCaughtJavaExceptionObject.set(thrown);
-        sThrownJavaExceptionObject.set(null);
-        return;
-      }
-    }
-
-    sCaughtJavaExceptionObject.set(createJavaScriptException(
-        getIsolatedClassLoader(), name, message));
   }
 
   /**
@@ -109,31 +92,12 @@ public class ModuleSpaceMoz extends ModuleSpace {
       jsArgsInt[i] = argv[i].getJsRootedValue();
     }
     JsValueMoz returnVal = JsValueMoz.createUndefinedValue(window);
-    LowLevelMoz.invoke(window, name, jsthis.getJsRootedValue(),
-        jsArgsInt, returnVal.getJsRootedValue());
-    
-    if (!isExceptionActive()) {
-      return returnVal;
-    }
-
-    /*
-     * The stack trace on the stored exception will not be very useful due to
-     * how it was created. Using fillInStackTrace() resets the stack trace to
-     * this moment in time, which is usually far more useful.
-     */
-    RuntimeException thrown = takeJavaException();
-    thrown.fillInStackTrace();
-    throw thrown;
+    LowLevelMoz.invoke(window, name, jsthis.getJsRootedValue(), jsArgsInt,
+        returnVal.getJsRootedValue());
+    return returnVal;
   }
 
-  protected void initializeStaticDispatcher() {
-    staticDispatch = new GeckoDispatchAdapter(getIsolatedClassLoader());
-
-    // Define the static dispatcher for use by JavaScript.
-    //
-    createNative("initializeStaticDispatcher", 0, "__defineStatic",
-        new String[] {"__arg0"}, "window.__static = __arg0;");
-    invokeNativeVoid("__defineStatic", null, new Class[] {Object.class},
-        new Object[] {staticDispatch});
+  protected Object getStaticDispatcher() {
+    return new GeckoDispatchAdapter(getIsolatedClassLoader());
   }
 }

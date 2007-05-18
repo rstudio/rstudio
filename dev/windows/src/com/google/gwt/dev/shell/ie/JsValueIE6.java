@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -404,12 +404,17 @@ public class JsValueIE6 extends JsValue {
    * @see com.google.gwt.dev.shell.JsValue#setWrappedJavaObject(com.google.gwt.dev.shell.CompilingClassLoader,
    *      java.lang.Object)
    */
-  public void setWrappedJavaObject(CompilingClassLoader cl, Object obj) {
-    if (obj == null) {
+  public void setWrappedJavaObject(CompilingClassLoader cl, Object val) {
+    IDispatchImpl dispObj;
+    if (val == null) {
       setNull();
       return;
+    } else if (val instanceof IDispatchImpl) {
+      dispObj = (IDispatchImpl)val;
+    } else {
+      dispObj = new IDispatchProxy(cl, val);
     }
-    IDispatch disp = new IDispatch(new IDispatchProxy(cl, obj).getAddress());
+    IDispatch disp = new IDispatch(dispObj.getAddress());
     disp.AddRef();
     setVariant(new Variant(disp));
   }

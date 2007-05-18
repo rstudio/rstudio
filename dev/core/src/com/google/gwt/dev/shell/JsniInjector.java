@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -233,6 +233,8 @@ public class JsniInjector {
         false, false);
 
     sb.append(methodDecl + " {");
+    // wrap the call in a try-catch block
+    sb.append("try {");
 
     // Write the Java call to the property invoke method, adding
     // downcasts where necessary.
@@ -303,7 +305,21 @@ public class JsniInjector {
     // parameters.
     //
     sb.append(Jsni.buildArgList(method));
-    sb.append(");}");
+    sb.append(");");
+
+    // Catch exceptions; rethrow if the exception is RTE or declared.
+    sb.append("} catch (java.lang.Throwable __gwt_exception) {");
+    sb.append("if (__gwt_exception instanceof java.lang.RuntimeException) throw (java.lang.RuntimeException) __gwt_exception;");
+    JType[] throwTypes = method.getThrows();
+    for (int i = 0; i < throwTypes.length; ++i) {
+      String typeName = throwTypes[i].getQualifiedSourceName();
+      sb.append("if (__gwt_exception instanceof " + typeName + ") throw (" + typeName
+          + ") __gwt_exception;");
+    }
+    sb.append("throw new java.lang.RuntimeException(\"Undeclared checked exception thrown out of JavaScript; web mode behavior may differ.\", __gwt_exception);");
+    sb.append("}");
+
+    sb.append("}");
 
     // Add extra lines at the end to match JSNI body.
     //

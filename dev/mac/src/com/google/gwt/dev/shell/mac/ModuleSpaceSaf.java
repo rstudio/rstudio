@@ -26,14 +26,12 @@ import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchObject;
  */
 public class ModuleSpaceSaf extends ModuleSpace {
 
-  private DispatchObject staticDispatch;
-
   private final int window;
 
   /**
    * Constructs a browser interface for use with a global window object.
    * 
-   * @param moduleName name of the module 
+   * @param moduleName name of the module
    * @param key unique key for this instance of the module
    */
   public ModuleSpaceSaf(ModuleSpaceHost host, int scriptGlobalObject,
@@ -61,22 +59,6 @@ public class ModuleSpaceSaf extends ModuleSpace {
     super.dispose();
   }
 
-  public void exceptionCaught(int number, String name, String message) {
-    RuntimeException thrown = (RuntimeException) sThrownJavaExceptionObject.get();
-
-    // See if the caught exception is null (thus thrown by us)
-    if (thrown != null) {
-      if (name == null && message == null) {
-        sCaughtJavaExceptionObject.set(thrown);
-        sThrownJavaExceptionObject.set(null);
-        return;
-      }
-    }
-
-    sCaughtJavaExceptionObject.set(createJavaScriptException(
-        getIsolatedClassLoader(), name, message));
-  }
-
   /**
    * Invokes a native JavaScript function.
    * 
@@ -99,36 +81,18 @@ public class ModuleSpaceSaf extends ModuleSpace {
     }
 
     int result = LowLevelSaf.invoke(curExecState, window, name, jsthis, argv);
-    if (!isExceptionActive()) {
-      return new JsValueSaf(result);
-    }
+    return new JsValueSaf(result);
+}
 
-    /*
-     * The stack trace on the stored exception will not be very useful due to
-     * how it was created. Using fillInStackTrace() resets the stack trace to
-     * this moment in time, which is usually far more useful.
-     */
-    RuntimeException thrown = takeJavaException();
-    thrown.fillInStackTrace();
-    throw thrown;
-  }
-
-  protected void initializeStaticDispatcher() {
-    staticDispatch = new WebKitDispatchAdapter(getIsolatedClassLoader());
-
-    // Define the static dispatcher for use by JavaScript.
-    //
-    createNative("initializeStaticDispatcher", 0, "__defineStatic",
-        new String[] {"__arg0"}, "window.__static = __arg0;");
-    invokeNativeVoid("__defineStatic", null, new Class[] {Object.class},
-        new Object[] {staticDispatch});
+  protected Object getStaticDispatcher() {
+    return new WebKitDispatchAdapter(getIsolatedClassLoader());
   }
 
   protected int wrapObjectAsJSObject(Object o) {
     if (o == null) {
       return LowLevelSaf.jsNull();
     }
-    
+
     DispatchObject dispObj;
     if (o instanceof DispatchObject) {
       dispObj = (DispatchObject) o;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -88,16 +88,9 @@ class MethodDispatch implements DispatchMethod {
       // If we get here, it means an exception is being thrown from
       // Java back into JavaScript
       Throwable t = e.getTargetException();
-      RuntimeException re;
-      if (t instanceof RuntimeException) {
-        re = (RuntimeException) t;
-      } else {
-        re = new RuntimeException("Checked exception thrown into JavaScript"
-            + " (Web Mode behavior may differ)", t);
-      }
       // TODO(jat): if this was originally JavaScript exception, re-throw the
       // original exception rather than just a null. 
-      ModuleSpaceMoz.setThrownJavaException(re);
+      ModuleSpaceMoz.setThrownJavaException(t);
       LowLevelMoz.raiseJavaScriptException(jscontext);
     } catch (IllegalArgumentException e) {
       // TODO(jat): log to treelogger instead?  If so, how do I get to it?

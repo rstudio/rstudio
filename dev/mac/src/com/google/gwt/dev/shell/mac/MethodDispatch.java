@@ -84,14 +84,7 @@ class MethodDispatch implements DispatchMethod {
         // If we get here, it means an exception is being thrown from
         // Java back into JavaScript
         Throwable t = e.getTargetException();
-        RuntimeException re;
-        if (t instanceof RuntimeException) {
-          re = (RuntimeException) t;
-        } else {
-          re = new RuntimeException("Checked exception thrown into JavaScript"
-              + " (Web Mode behavior may differ)", t);
-        }
-        ModuleSpaceSaf.setThrownJavaException(re);
+        ModuleSpaceSaf.setThrownJavaException(t);
         LowLevelSaf.raiseJavaScriptException(execState, LowLevelSaf.jsNull());
         return LowLevelSaf.jsUndefined();
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,73 +48,73 @@ public interface ShellJavaScriptHost {
    * Invoke a native JavaScript function that returns a boolean value.
    */
   abstract boolean invokeNativeBoolean(String name, Object jthis,
-      Class[] types, Object[] args);
+      Class[] types, Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns a byte value.
    */
   abstract byte invokeNativeByte(String name, Object jthis, Class[] types,
-      Object[] args);
+      Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns a character value.
    */
   abstract char invokeNativeChar(String name, Object jthis, Class[] types,
-      Object[] args);
+      Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns a double value.
    */
   abstract double invokeNativeDouble(String name, Object jthis, Class[] types,
-      Object[] args);
+      Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns a float value.
    */
   abstract float invokeNativeFloat(String name, Object jthis, Class[] types,
-      Object[] args);
+      Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns a handle value.
    */
   abstract Object invokeNativeHandle(String name, Object jthis,
-      Class returnType, Class[] types, Object[] args);
+      Class returnType, Class[] types, Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns an integer value.
    */
   abstract int invokeNativeInt(String name, Object jthis, Class[] types,
-      Object[] args);
+      Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns a long value.
    */
   abstract long invokeNativeLong(String name, Object jthis, Class[] types,
-      Object[] args);
+      Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns an object value.
    */
   abstract Object invokeNativeObject(String name, Object jthis, Class[] types,
-      Object[] args);
+      Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns a short value.
    */
   abstract short invokeNativeShort(String name, Object jthis, Class[] types,
-      Object[] args);
+      Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns a string value.
    */
   abstract String invokeNativeString(String name, Object jthis, Class[] types,
-      Object[] args);
+      Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns no value.
    */
   abstract void invokeNativeVoid(String name, Object jthis, Class[] types,
-      Object[] args);
+      Object[] args) throws Throwable;
 
   /**
    * Logs to the dev shell logger.

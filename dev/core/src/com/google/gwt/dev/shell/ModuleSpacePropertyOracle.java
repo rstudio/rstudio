@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -94,7 +94,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
         //
         value = space.invokeNativeString("__gwt_getProperty", null,
             new Class[] {String.class}, new Object[] {prop.getName()});
-      } catch (RuntimeException e) {
+      } catch (Throwable e) {
         // Treat as an unknown value.
         //
         String msg = "Error while executing the JavaScript provider for property '"

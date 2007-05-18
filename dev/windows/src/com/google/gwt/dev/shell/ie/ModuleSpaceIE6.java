@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,6 @@ import com.google.gwt.dev.shell.ie.IDispatchImpl.HResultException;
 import org.eclipse.swt.internal.ole.win32.IDispatch;
 import org.eclipse.swt.ole.win32.OleAutomation;
 import org.eclipse.swt.ole.win32.Variant;
-import org.eclipse.swt.widgets.Display;
 
 /**
  * An implementation of {@link com.google.gwt.dev.shell.ModuleSpace} for
@@ -31,14 +30,14 @@ import org.eclipse.swt.widgets.Display;
  */
 public class ModuleSpaceIE6 extends ModuleSpace {
   /**
-   * Invoke a JavaScript function.  The static function exists to allow
+   * Invoke a JavaScript function. The static function exists to allow
    * platform-dependent code to make JavaScript calls without having a
    * ModuleSpaceIE6 (and all that entails) if it is not required.
    * 
    * @param window the window containing the function
    * @param name the name of the function
-   * @param vArgs the array of arguments.  vArgs[0] is the this parameter
-   *     supplied to the function, which must be null if it is static.
+   * @param vArgs the array of arguments. vArgs[0] is the this parameter
+   *          supplied to the function, which must be null if it is static.
    * @return the return value of the JavaScript function
    */
   protected static Variant doInvokeOnWindow(OleAutomation window, String name,
@@ -78,19 +77,15 @@ public class ModuleSpaceIE6 extends ModuleSpace {
   private static int CODE(int hresult) {
     return hresult & 0xFFFF;
   }
-
   // CHECKSTYLE_ON
-
-  private Variant staticDispatch;
-
-  private IDispatchProxy staticDispatchProxy;
 
   private final OleAutomation window;
 
   /**
    * Constructs a browser interface for use with an IE6 'window' automation
    * object.
-   * @param moduleName 
+   * 
+   * @param moduleName
    */
   public ModuleSpaceIE6(ModuleSpaceHost host, IDispatch scriptFrameWindow,
       String moduleName, Object key) {
@@ -119,53 +114,11 @@ public class ModuleSpaceIE6 extends ModuleSpace {
   }
 
   public void dispose() {
-    /*
-     * Dispose the static dispatcher. This should be simple and straightforward,
-     * but isn't, because IE (especially 7) appears to over-Release() the static
-     * dispatcher on unload (less often when shutting down, but occasionally
-     * then as well). Because this occurs *after* the window unload event, we
-     * intentionally use Display.asyncExec() to defer it until after the browser
-     * is done cleaning up. We then dispose() the static dispatcher only if it
-     * has not already been disposed().
-     */
-    if (staticDispatch != null) {
-      final Variant staticDispatchToDispose = staticDispatch;
-      staticDispatch = null;
-
-      Display.getCurrent().asyncExec(new Runnable() {
-        public void run() {
-          // If the proxy has already been disposed, don't try to do so again,
-          // as this will attempt to call through a null vtable.
-          if (!staticDispatchProxy.isDisposed()) {
-            staticDispatchToDispose.dispose();
-          }
-        }
-      });
-    }
-
     // Dispose everything else.
     if (window != null) {
       window.dispose();
     }
     super.dispose();
-  }
-
-  public void exceptionCaught(int number, String name, String message) {
-    RuntimeException thrown = (RuntimeException) sThrownJavaExceptionObject.get();
-
-    // See if the caught exception matches the thrown exception
-    if (thrown != null) {
-      HResultException hre = new HResultException(thrown);
-      if (CODE(hre.getHResult()) == CODE(number)
-          && hre.getMessage().equals(message)) {
-        sCaughtJavaExceptionObject.set(thrown);
-        sThrownJavaExceptionObject.set(null);
-        return;
-      }
-    }
-
-    sCaughtJavaExceptionObject.set(createJavaScriptException(
-        getIsolatedClassLoader(), name, message));
   }
 
   /**
@@ -178,7 +131,7 @@ public class ModuleSpaceIE6 extends ModuleSpace {
    * @return the return value as a Variant.
    */
   protected JsValue doInvoke(String name, Object jthis, Class[] types,
-      Object[] args) {
+      Object[] args) throws Throwable {
     Variant[] vArgs = null;
     try {
       // Build the argument list, including 'jthis'.
@@ -196,23 +149,12 @@ public class ModuleSpaceIE6 extends ModuleSpace {
 
       Variant result = doInvokeOnWindow(window, name, vArgs);
       try {
-        if (!isExceptionActive()) {
-          return new JsValueIE6(result);
-        }
+        return new JsValueIE6(result);
       } finally {
         if (result != null) {
           result.dispose();
         }
       }
-
-      /*
-       * The stack trace on the stored exception will not be very useful due to
-       * how it was created. Using fillInStackTrace() resets the stack trace to
-       * this moment in time, which is usually far more useful.
-       */
-      RuntimeException thrown = takeJavaException();
-      thrown.fillInStackTrace();
-      throw thrown;
     } finally {
       // We allocated variants for all arguments, so we must dispose them all.
       //
@@ -223,19 +165,14 @@ public class ModuleSpaceIE6 extends ModuleSpace {
       }
     }
   }
+  
+  protected Object getStaticDispatcher() {
+    return new IDispatchProxy(getIsolatedClassLoader());
+  }
 
-  protected void initializeStaticDispatcher() {
-    staticDispatchProxy = new IDispatchProxy(getIsolatedClassLoader());
-    IDispatch staticDisp = new IDispatch(staticDispatchProxy.getAddress());
-    staticDisp.AddRef();
-    this.staticDispatch = new Variant(staticDisp);
-
-    // Define the static dispatcher for use by JavaScript.
-    //
-    createNative("initializeStaticDispatcher", 0, "__defineStatic",
-        new String[] {"__arg0"}, "window.__static = __arg0;");
-    invokeNativeVoid("__defineStatic", null, new Class[] {Variant.class},
-        new Object[] {this.staticDispatch});
+  protected boolean isExceptionSame(Throwable original, int number, String name, String message) {
+    HResultException hre = new HResultException(original);
+    return CODE(hre.getHResult()) == CODE(number) && hre.getMessage().equals(message);
   }
 
   private Variant execute(String code) {

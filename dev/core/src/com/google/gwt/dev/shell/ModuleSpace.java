@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,25 +30,25 @@ import java.lang.reflect.Modifier;
  */
 public abstract class ModuleSpace implements ShellJavaScriptHost {
 
-  protected static ThreadLocal sCaughtJavaExceptionObject = new ThreadLocal();
+  private static ThreadLocal sCaughtJavaExceptionObject = new ThreadLocal();
 
-  protected static ThreadLocal sLastThrownJavaException = new ThreadLocal();
+  private static ThreadLocal sLastThrownJavaException = new ThreadLocal();
 
-  protected static ThreadLocal sThrownJavaExceptionObject = new ThreadLocal();
+  private static ThreadLocal sThrownJavaExceptionObject = new ThreadLocal();
 
   /**
    * Logger is thread local.
    */
   private static ThreadLocal threadLocalLogger = new ThreadLocal();
 
-  public static void setThrownJavaException(RuntimeException re) {
-    RuntimeException was = (RuntimeException) sLastThrownJavaException.get();
-    if (was != re) {
+  public static void setThrownJavaException(Throwable t) {
+    Throwable was = (Throwable) sLastThrownJavaException.get();
+    if (was != t) {
       // avoid logging the same exception twice
-      getLogger().log(TreeLogger.WARN, "Exception thrown into JavaScript", re);
-      sLastThrownJavaException.set(re);
+      getLogger().log(TreeLogger.WARN, "Exception thrown into JavaScript", t);
+      sLastThrownJavaException.set(t);
     }
-    sThrownJavaExceptionObject.set(re);
+    sThrownJavaExceptionObject.set(t);
   }
 
   protected static RuntimeException createJavaScriptException(ClassLoader cl,
@@ -145,6 +145,22 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     host.getClassLoader().clear();
   }
 
+  public void exceptionCaught(int number, String name, String message) {
+    Throwable thrown = (Throwable) sThrownJavaExceptionObject.get();
+
+    if (thrown != null) {
+      // See if the caught exception was thrown by us
+      if (isExceptionSame(thrown, number, name, message)) {
+        sCaughtJavaExceptionObject.set(thrown);
+        sThrownJavaExceptionObject.set(null);
+        return;
+      }
+    }
+
+    sCaughtJavaExceptionObject.set(createJavaScriptException(
+        getIsolatedClassLoader(), name, message));
+  }
+  
   /**
    * Get the unique key for this module.
    * 
@@ -164,7 +180,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   public boolean invokeNativeBoolean(String name, Object jthis, Class[] types,
-      Object[] args) {
+      Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     Boolean value = (Boolean) JsValueGlue.get(result, Boolean.class,
         "invokeNativeBoolean(" + name + ")");
@@ -172,7 +188,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   public byte invokeNativeByte(String name, Object jthis, Class[] types,
-      Object[] args) {
+      Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     Byte value = (Byte) JsValueGlue.get(result, Byte.class, "invokeNativeByte("
         + name + ")");
@@ -180,7 +196,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   public char invokeNativeChar(String name, Object jthis, Class[] types,
-      Object[] args) {
+      Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     Character value = (Character) JsValueGlue.get(result, Character.class,
         "invokeNativeCharacter(" + name + ")");
@@ -188,7 +204,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   public double invokeNativeDouble(String name, Object jthis, Class[] types,
-      Object[] args) {
+      Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     Double value = (Double) JsValueGlue.get(result, Double.class,
         "invokeNativeDouble(" + name + ")");
@@ -196,7 +212,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   public float invokeNativeFloat(String name, Object jthis, Class[] types,
-      Object[] args) {
+      Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     Float value = (Float) JsValueGlue.get(result, Float.class,
         "invokeNativeFloat(" + name + ")");
@@ -204,7 +220,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   public Object invokeNativeHandle(String name, Object jthis, Class returnType,
-      Class[] types, Object[] args) {
+      Class[] types, Object[] args) throws Throwable {
 
     JsValue result = invokeNative(name, jthis, types, args);
     return JsValueGlue.get(result, returnType, "invokeNativeHandle(" + name
@@ -212,7 +228,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   public int invokeNativeInt(String name, Object jthis, Class[] types,
-      Object[] args) {
+      Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     Integer value = (Integer) JsValueGlue.get(result, Integer.class,
         "invokeNativeInteger(" + name + ")");
@@ -220,7 +236,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   public long invokeNativeLong(String name, Object jthis, Class[] types,
-      Object[] args) {
+      Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     Long value = (Long) JsValueGlue.get(result, Long.class, "invokeNativeLong("
         + name + ")");
@@ -228,14 +244,14 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   public Object invokeNativeObject(String name, Object jthis, Class[] types,
-      Object[] args) {
+      Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     return JsValueGlue.get(result, Object.class, "invokeNativeObject(" + name
         + ")");
   }
 
   public short invokeNativeShort(String name, Object jthis, Class[] types,
-      Object[] args) {
+      Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     Short value = (Short) JsValueGlue.get(result, Short.class,
         "invokeNativeShort(" + name + ")");
@@ -243,14 +259,14 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   public String invokeNativeString(String name, Object jthis, Class[] types,
-      Object[] args) {
+      Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     return (String) JsValueGlue.get(result, String.class, "invokeNativeString("
         + name + ")");
   }
 
   public void invokeNativeVoid(String name, Object jthis, Class[] types,
-      Object[] args) {
+      Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     if (!result.isUndefined()) {
       getLogger().log(
@@ -287,7 +303,16 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
 
     // Make sure we can resolve JSNI references to static Java names.
     //
-    initializeStaticDispatcher();
+    try {
+      Object staticDispatch = getStaticDispatcher();
+      createNative("initializeStaticDispatcher", 0, "__defineStatic",
+          new String[] {"__arg0"}, "window.__static = __arg0;");
+      invokeNativeVoid("__defineStatic", null, new Class[] {Object.class},
+          new Object[] {staticDispatch});
+    } catch (Throwable e) {
+      logger.log(TreeLogger.ERROR, "Unable to initialize static dispatcher", e);
+      throw new UnableToCompleteException();
+    }
 
     // Actually run user code.
     //
@@ -416,7 +441,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
    * @return the return value as a Variant.
    */
   protected abstract JsValue doInvoke(String name, Object jthis, Class[] types,
-      Object[] args);
+      Object[] args) throws Throwable;
 
   protected CompilingClassLoader getIsolatedClassLoader() {
     return host.getClassLoader();
@@ -425,7 +450,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   /**
    * Injects the magic needed to resolve JSNI references from module-space.
    */
-  protected abstract void initializeStaticDispatcher();
+  protected abstract Object getStaticDispatcher();
 
   /**
    * Invokes a native JavaScript function.
@@ -437,14 +462,31 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
    * @return the return value as a Variant.
    */
   protected final JsValue invokeNative(String name, Object jthis,
-      Class[] types, Object[] args) {
+      Class[] types, Object[] args) throws Throwable {
     // Whenever a native method is invoked, release any enqueued cleanup objects
     JsValue.mainThreadCleanup();
-    return doInvoke(name, jthis, types, args);
+    JsValue result = doInvoke(name, jthis, types, args);
+    // Is an exception active?
+    Throwable thrown = (Throwable) sCaughtJavaExceptionObject.get();
+    if (thrown == null) {
+      return result;
+    }
+    sCaughtJavaExceptionObject.set(null);
+
+    /*
+     * The stack trace on the stored exception will not be very useful due to
+     * how it was created. Using fillInStackTrace() resets the stack trace to
+     * this moment in time, which is usually far more useful.
+     */
+    thrown.fillInStackTrace();
+    throw thrown;
   }
 
-  protected boolean isExceptionActive() {
-    return sCaughtJavaExceptionObject.get() != null;
+  protected boolean isExceptionSame(Throwable original, int number,
+      String name, String message) {
+    // For most platforms, the null exception means we threw it.
+    // IE overrides this.
+    return (name == null && message == null);
   }
 
   protected String rebind(String sourceName) throws UnableToCompleteException {
@@ -461,12 +503,6 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       host.getLogger().log(TreeLogger.ERROR, msg, e);
       throw new UnableToCompleteException();
     }
-  }
-
-  protected RuntimeException takeJavaException() {
-    RuntimeException re = (RuntimeException) sCaughtJavaExceptionObject.get();
-    sCaughtJavaExceptionObject.set(null);
-    return re;
   }
 
   /**
