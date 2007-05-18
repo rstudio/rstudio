@@ -22,6 +22,9 @@ function __MODULE_FUNC__() {
   ,$doc = document
   ,external = $wnd.external
   
+  // These variables gate calling gwtOnLoad; all must be true to start
+  ,gwtOnLoad, bodyDone
+
   // If non-empty, an alternate base url for this module
   ,base = ''
   
@@ -51,6 +54,18 @@ function __MODULE_FUNC__() {
   if (!$wnd.__gwt_stylesLoaded) { $wnd.__gwt_stylesLoaded = {}; }
   if (!$wnd.__gwt_scriptsLoaded) { $wnd.__gwt_scriptsLoaded = {}; }
 
+  // --------------- WINDOW ONLOAD HOOK ---------------
+
+  var oldOnLoad = $wnd.onload;
+  $wnd.onload = function() {
+    if (oldOnLoad) {
+      $wnd.onload = oldOnLoad;
+      $wnd.onload();
+    }
+    bodyDone = true;
+    maybeStartModule();
+  };
+
   // --------------- INTERNAL FUNCTIONS ---------------
 
   function isHostedMode() {
@@ -58,6 +73,16 @@ function __MODULE_FUNC__() {
         ($wnd.location.search.indexOf('gwt.hybrid') == -1));
   }
   
+  // Called by onScriptLoad() and onload(). It causes
+  // the specified module to be cranked up.
+  //
+  function maybeStartModule() {
+    // TODO: it may not be necessary to check gwtOnLoad here.
+    if (gwtOnLoad && bodyDone) {
+      gwtOnLoad(onLoadErrorFunc, '__MODULE_NAME__');
+    }
+  }
+
   // Determine our own script's URL via magic :)
   //
   function computeScriptBase() {
@@ -196,10 +221,11 @@ function __MODULE_FUNC__() {
 
   // Called when the compiled script identified by moduleName is done loading.
   //
-  __MODULE_FUNC__.onScriptLoad = function(gwtOnLoad) {
+  __MODULE_FUNC__.onScriptLoad = function(gwtOnLoadFunc) {
     // remove this whole function from the global namespace to allow GC
     __MODULE_FUNC__ = null;
-    gwtOnLoad(onLoadErrorFunc, '__MODULE_NAME__');
+    gwtOnLoad = gwtOnLoadFunc;
+    maybeStartModule();
   }
 
   // --------------- STRAIGHT-LINE CODE ---------------

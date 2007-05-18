@@ -22,7 +22,7 @@ function __MODULE_FUNC__() {
   ,$doc = document
   ,external = $wnd.external
 
-  // These two variables gate calling gwtOnLoad; both must be true to start
+  // These variables gate calling gwtOnLoad; all must be true to start
   ,scriptsDone, loadDone, bodyDone
   
   // If non-empty, an alternate base url for this module
@@ -59,7 +59,8 @@ function __MODULE_FUNC__() {
   var oldOnLoad = $wnd.onload;
   $wnd.onload = function() {
     if (oldOnLoad) {
-      oldOnLoad();
+      $wnd.onload = oldOnLoad;
+      $wnd.onload();
     }
     bodyDone = true;
     maybeStartModule();
@@ -72,7 +73,7 @@ function __MODULE_FUNC__() {
         ($wnd.location.search.indexOf('gwt.hybrid') == -1));
   }
 
-  // Called by both onScriptLoad() and onInjectionDone(). It causes
+  // Called by onScriptLoad(), onInjectionDone(), and onload(). It causes
   // the specified module to be cranked up.
   //
   function maybeStartModule() {
