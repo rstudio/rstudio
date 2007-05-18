@@ -174,7 +174,7 @@ public class DOMTest extends GWTTestCase {
     // Test <img src="http://.../logo.gif" />
     Element image = DOM.createImg();
     String imageUrl = "http://www.google.com/images/logo.gif";
-    DOM.setElementProperty(image, "src", imageUrl);
+    DOM.setImgSrc(image, imageUrl);
     String imageToString = DOM.toString(image).trim().toLowerCase();
     assertTrue(imageToString.startsWith("<img"));
     assertTrue(imageToString.indexOf(imageUrl) != -1);

@@ -27,6 +27,17 @@ import com.google.gwt.user.client.Element;
  */
 public class ClippedImageImplIE6 extends ClippedImageImpl {
   
+  private static native void injectGlobalHandler() /*-{
+    $wnd.__gwt_transparentImgHandler = function (elem) {
+      elem.onerror = null;
+      @com.google.gwt.user.client.DOM::setImgSrc(Lcom/google/gwt/user/client/Element;Ljava/lang/String;)(elem, "clear.cache.gif");
+    };
+  }-*/;
+  
+  public ClippedImageImplIE6() {
+    injectGlobalHandler();
+  }
+
   public void adjust(Element clipper, String url, int left, int top, int width,
       int height) {
 
@@ -59,8 +70,9 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
         + -left + "px; margin-top: " + -top + "px" + "border: 0px";
 
     String clippedImgHtml = "<gwt:clipper style=\""
-        + clipperStyle + "\"><img src='clear.cache.gif' style=\"" + imgStyle
-        + "\" width=" + (left + width) + " height=" + (top + height)
+        + clipperStyle
+        + "\"><img src='about:blank' onerror='if(window.__gwt_transparentImgHandler)window.__gwt_transparentImgHandler(this);else this.src=\"clear.cache.gif\"' style=\""
+        + imgStyle + "\" width=" + (left + width) + " height=" + (top + height)
         + " border='0'></gwt:clipper>";
 
     return clippedImgHtml;

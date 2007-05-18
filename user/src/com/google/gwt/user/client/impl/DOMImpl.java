@@ -210,6 +210,10 @@ public abstract class DOMImpl {
 
   public abstract Element getFirstChild(Element elem);
 
+  public native String getImgSrc(Element img) /*-{
+    return img.src;
+  }-*/;
+
   public native String getInnerHTML(Element elem) /*-{
     var ret = elem.innerHTML;
     return (ret == null) ? null : ret;
@@ -347,6 +351,10 @@ public abstract class DOMImpl {
   public native void setEventListener(Element elem,
       EventListener listener) /*-{
     elem.__listener = listener;
+  }-*/;
+
+  public native void setImgSrc(Element img, String src) /*-{
+    img.src = src;
   }-*/;
 
   public native void setInnerHTML(Element elem, String html) /*-{

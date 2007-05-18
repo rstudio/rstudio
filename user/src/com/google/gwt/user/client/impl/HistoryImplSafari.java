@@ -44,7 +44,8 @@ class HistoryImplSafari extends HistoryImplFrame {
   
   protected native void newItemImpl(Element historyFrame, String historyToken) /*-{
     historyToken = historyToken || "";
-    historyFrame.contentWindow.location.href = 'history.html?' + historyToken;
+    var base = @com.google.gwt.core.client.GWT::getModuleBaseURL()();
+    historyFrame.contentWindow.location.href = base + 'history.html?' + historyToken;
   }-*/;
 
 }

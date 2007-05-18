@@ -733,6 +733,18 @@ public class DOM {
   }
 
   /**
+   * Gets the src attribute of an img element. This method is paired with
+   * {@link #setImgSrc(Element, String)} so that it always returns the correct
+   * url.
+   *
+   * @param img a non-null img whose src attribute is to be read.
+   * @return the src url of the img
+   */
+  public static String getImgSrc(Element img) {
+    return impl.getImgSrc(img);
+  }
+
+  /**
    * Gets an HTML representation of an element's children.
    *
    * @param elem the element whose HTML is to be retrieved
@@ -907,6 +919,7 @@ public class DOM {
     // receive events.
     sEventPreviewStack.remove(preview);
   }
+
   /**
    * Scrolls the given element into view.
    *
@@ -1018,6 +1031,17 @@ public class DOM {
    */
   public static void setEventListener(Element elem, EventListener listener) {
     impl.setEventListener(elem, listener);
+  }
+
+  /**
+   * Sets the src attribute of an img element. This method ensures that imgs
+   * only ever have their contents requested one single time from the server.
+   *
+   * @param img a non-null img whose src attribute will be set.
+   * @param src a non-null url for the img
+   */
+  public static void setImgSrc(Element img, String src) {
+    impl.setImgSrc(img, src);
   }
 
   /**
