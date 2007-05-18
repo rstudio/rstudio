@@ -25,8 +25,7 @@ import com.google.gwt.user.client.Element;
  * <img class='gallery' src='VerticalPanel.png'/>
  * </p>
  */
-public class VerticalPanel extends CellPanel implements IndexedPanel,
-    HasAlignment {
+public class VerticalPanel extends CellPanel implements HasAlignment {
 
   private HorizontalAlignmentConstant horzAlign = ALIGN_LEFT;
   private VerticalAlignmentConstant vertAlign = ALIGN_TOP;
@@ -57,18 +56,6 @@ public class VerticalPanel extends CellPanel implements IndexedPanel,
     return vertAlign;
   }
 
-  public Widget getWidget(int index) {
-    return getChildren().get(index);
-  }
-
-  public int getWidgetCount() {
-    return getChildren().size();
-  }
-
-  public int getWidgetIndex(Widget child) {
-    return getChildren().indexOf(child);
-  }
-
   /**
    * Inserts a widget before the specified index. If the Widget is already
    * attached to the VerticalPanel, it will be moved to the specified index.
@@ -79,35 +66,14 @@ public class VerticalPanel extends CellPanel implements IndexedPanel,
    *           range
    */
   public void insert(Widget w, int beforeIndex) {
-    // Call this early to ensure that the table doesn't end up partially
-    // constructed when an exception is thrown from adopt().
-    int idx = getWidgetIndex(w);
-    if (idx == -1) {
-      w.removeFromParent();
-    } else {
-      remove(w);
-
-      // If the Widget's previous position was left of the desired new position
-      // shift the desired position left to reflect the removal
-      if (idx < beforeIndex) {
-        beforeIndex--;
-      }
-    }
-
     Element tr = DOM.createTR();
     Element td = DOM.createTD();
-
-    DOM.insertChild(getBody(), tr, beforeIndex);
+    beforeIndex = super.insert(w, td, beforeIndex);
     DOM.appendChild(tr, td);
-
-    super.insert(w, td, beforeIndex);
+    DOM.insertChild(getBody(), tr, beforeIndex);
 
     setCellHorizontalAlignment(w, horzAlign);
     setCellVerticalAlignment(w, vertAlign);
-  }
-
-  public boolean remove(int index) {
-    return remove(getWidget(index));
   }
 
   public boolean remove(Widget w) {

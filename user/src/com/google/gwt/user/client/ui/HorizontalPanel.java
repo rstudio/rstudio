@@ -25,8 +25,7 @@ import com.google.gwt.user.client.Element;
  * <img class='gallery' src='HorizontalPanel.png'/>
  * </p>
  */
-public class HorizontalPanel extends CellPanel implements IndexedPanel,
-    HasAlignment {
+public class HorizontalPanel extends CellPanel implements HasAlignment {
 
   private HorizontalAlignmentConstant horzAlign = ALIGN_LEFT;
   private Element tableRow;
@@ -61,18 +60,6 @@ public class HorizontalPanel extends CellPanel implements IndexedPanel,
     return vertAlign;
   }
 
-  public Widget getWidget(int index) {
-    return getChildren().get(index);
-  }
-
-  public int getWidgetCount() {
-    return getChildren().size();
-  }
-
-  public int getWidgetIndex(Widget child) {
-    return getChildren().indexOf(child);
-  }
-
   /**
    * Inserts a widget before the specified index. If the Widget is already
    * attached to the HorizontalPanel, it will be moved to the specified index.
@@ -83,32 +70,12 @@ public class HorizontalPanel extends CellPanel implements IndexedPanel,
    *           range
    */
   public void insert(Widget w, int beforeIndex) {
-    // Call this early to ensure that the table doesn't end up partially
-    // constructed when an exception is thrown from adopt().
-    int idx = getWidgetIndex(w);
-    if (idx == -1) {
-      w.removeFromParent();
-    } else {
-      remove(w);
-
-      // If the Widget's previous position was left of the desired new position
-      // shift the desired position left to reflect the removal
-      if (idx < beforeIndex) {
-        beforeIndex--;
-      }
-    }
-
     Element td = DOM.createTD();
+    beforeIndex = super.insert(w, td, beforeIndex);
     DOM.insertChild(tableRow, td, beforeIndex);
-
-    super.insert(w, td, beforeIndex);
 
     setCellHorizontalAlignment(w, horzAlign);
     setCellVerticalAlignment(w, vertAlign);
-  }
-
-  public boolean remove(int index) {
-    return remove(getWidget(index));
   }
 
   public boolean remove(Widget w) {

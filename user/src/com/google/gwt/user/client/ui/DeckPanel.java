@@ -30,7 +30,7 @@ import com.google.gwt.user.client.Element;
  * will be cleared.
  * </p>
  */
-public class DeckPanel extends ComplexPanel implements IndexedPanel {
+public class DeckPanel extends ComplexPanel {
 
   private Widget visibleWidget;
 
@@ -59,18 +59,6 @@ public class DeckPanel extends ComplexPanel implements IndexedPanel {
     return getWidgetIndex(visibleWidget);
   }
 
-  public Widget getWidget(int index) {
-    return getChildren().get(index);
-  }
-
-  public int getWidgetCount() {
-    return getChildren().size();
-  }
-
-  public int getWidgetIndex(Widget child) {
-    return getChildren().indexOf(child);
-  }
-
   /**
    * Inserts a widget before the specified index.
    * 
@@ -80,20 +68,12 @@ public class DeckPanel extends ComplexPanel implements IndexedPanel {
    *           range
    */
   public void insert(Widget w, int beforeIndex) {
-    if ((beforeIndex < 0) || (beforeIndex > getWidgetCount())) {
-      throw new IndexOutOfBoundsException();
-    }
-
     super.insert(w, getElement(), beforeIndex);
 
     Element child = w.getElement();
     DOM.setStyleAttribute(child, "width", "100%");
     DOM.setStyleAttribute(child, "height", "100%");
     w.setVisible(false);
-  }
-
-  public boolean remove(int index) {
-    return remove(getWidget(index));
   }
 
   public boolean remove(Widget w) {

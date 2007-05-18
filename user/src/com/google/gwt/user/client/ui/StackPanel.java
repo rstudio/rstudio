@@ -36,7 +36,7 @@ import com.google.gwt.user.client.Event;
  * {@example com.google.gwt.examples.StackPanelExample}
  * </p>
  */
-public class StackPanel extends ComplexPanel implements IndexedPanel {
+public class StackPanel extends ComplexPanel {
 
   private Element body;
   private int visibleStack = -1;
@@ -63,34 +63,7 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
    * @param w the widget to be added
    */
   public void add(Widget w) {
-    // Call this early to ensure that the table doesn't end up partially
-    // constructed when an exception is thrown from adopt().
-    w.removeFromParent();
-
-    int index = getWidgetCount();
-
-    Element tr = DOM.createTR();
-    Element td = DOM.createTD();
-    DOM.appendChild(body, tr);
-    DOM.appendChild(tr, td);
-    setStyleName(td, "gwt-StackPanelItem", true);
-    DOM.setElementPropertyInt(td, "__index", index);
-    DOM.setElementPropertyInt(td, "__owner", hashCode());
-    DOM.setElementProperty(td, "height", "1px");
-
-    tr = DOM.createTR();
-    td = DOM.createTD();
-    DOM.appendChild(body, tr);
-    DOM.appendChild(tr, td);
-    DOM.setElementProperty(td, "height", "100%");
-    DOM.setElementProperty(td, "vAlign", "top");
-
-    super.add(w, td);
-
-    setStackVisible(index, false);
-    if (visibleStack == -1) {
-      showStack(0);
-    }
+    insert(w, getWidgetCount());
   }
 
   /**
@@ -125,16 +98,53 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
     return visibleStack;
   }
 
-  public Widget getWidget(int index) {
-    return getChildren().get(index);
-  }
+  /**
+   * Inserts a widget before the specified index.
+   * 
+   * @param w the widget to be inserted
+   * @param beforeIndex the index before which it will be inserted
+   * @throws IndexOutOfBoundsException if <code>beforeIndex</code> is out of
+   *           range
+   */
+  public void insert(Widget w, int beforeIndex) {
+    // header
+    Element trh = DOM.createTR();
+    Element tdh = DOM.createTD();
+    DOM.appendChild(trh, tdh);
 
-  public int getWidgetCount() {
-    return getChildren().size();
-  }
+    // body
+    Element trb = DOM.createTR();
+    Element tdb = DOM.createTD();
+    DOM.appendChild(trb, tdb);
 
-  public int getWidgetIndex(Widget child) {
-    return getChildren().indexOf(child);
+    beforeIndex = super.insert(w, tdb, beforeIndex);
+    // DOM indices are 2x logical indices; 2 dom elements per stack item
+    int effectiveIndex = beforeIndex * 2;
+    // this ordering puts the body below the header
+    DOM.insertChild(body, trb, effectiveIndex);
+    DOM.insertChild(body, trh, effectiveIndex);
+
+    // header styling
+    setStyleName(tdh, "gwt-StackPanelItem", true);
+    DOM.setElementPropertyInt(tdh, "__owner", hashCode());
+    DOM.setElementProperty(tdh, "height", "1px");
+
+    // body styling
+    DOM.setElementProperty(tdb, "height", "100%");
+    DOM.setElementProperty(tdb, "vAlign", "top");
+
+    // Update indices of all elements to the right.
+    updateIndicesFrom(beforeIndex);
+
+    // Correct visible stack for new location.
+    if (visibleStack == -1) {
+      showStack(0);
+    } else {
+      setStackVisible(beforeIndex, false);
+      if (visibleStack >= beforeIndex) {
+        ++visibleStack;
+      }
+    }
   }
 
   public void onBrowserEvent(Event event) {
@@ -223,6 +233,7 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
   }
 
   private boolean remove(Widget child, int index) {
+    // TODO: is this check really necessary?
     if (child.getParent() != this) {
       return false;
     }
@@ -241,15 +252,9 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
     tr = DOM.getChild(body, rowIndex);
     DOM.removeChild(body, tr);
     super.remove(child);
-    int rows = getWidgetCount() * 2;
 
-    // Update all the indexes.
-    for (int i = rowIndex; i < rows; i = i + 2) {
-      Element childTR = DOM.getChild(body, i);
-      Element td = DOM.getFirstChild(childTR);
-      DOM.setElementPropertyInt(td, "__index", index);
-      ++index;
-    }
+    // Update indices of all elements to the right.
+    updateIndicesFrom(rowIndex);
 
     return true;
   }
@@ -269,6 +274,14 @@ public class StackPanel extends ComplexPanel implements IndexedPanel {
     tr = DOM.getChild(body, (index * 2) + 1);
     UIObject.setVisible(tr, visible);
     getWidget(index).setVisible(visible);
+  }
+
+  private void updateIndicesFrom(int beforeIndex) {
+    for (int i = beforeIndex, c = getWidgetCount(); i < c; ++i) {
+      Element childTR = DOM.getChild(body, i * 2);
+      Element childTD = DOM.getFirstChild(childTR);
+      DOM.setElementPropertyInt(childTD, "__index", i);
+    }
   }
 
 }

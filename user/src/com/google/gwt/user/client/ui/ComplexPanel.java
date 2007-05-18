@@ -22,24 +22,40 @@ import java.util.Iterator;
 /**
  * Abstract base class for panels that can contain multiple child widgets.
  */
-public abstract class ComplexPanel extends Panel {
+public abstract class ComplexPanel extends Panel implements IndexedPanel {
 
   private WidgetCollection children = new WidgetCollection(this);
 
+  public Widget getWidget(int index) {
+    return getChildren().get(index);
+  }
+
+  public int getWidgetCount() {
+    return getChildren().size();
+  }
+
+  public int getWidgetIndex(Widget child) {
+    return getChildren().indexOf(child);
+  }
+
   public Iterator iterator() {
-    return children.iterator();
+    return getChildren().iterator();
+  }
+
+  public boolean remove(int index) {
+    return remove(getWidget(index));
   }
 
   public boolean remove(Widget w) {
     // Make sure this panel actually contains the child widget.
-    if (!children.contains(w)) {
+    if (!getChildren().contains(w)) {
       return false;
     }
 
     // Disown it.
     disown(w);
 
-    children.remove(w);
+    getChildren().remove(w);
     return true;
   }
 
@@ -48,9 +64,10 @@ public abstract class ComplexPanel extends Panel {
    * 
    * @param w the child widget to be added
    * @param container the element within which the child will be contained
+   * @return the index at which the widget was added
    */
-  protected void add(Widget w, Element container) {
-    insert(w, container, children.size());
+  protected int add(Widget w, Element container) {
+    return insert(w, container, getChildren().size());
   }
 
   /**
@@ -68,13 +85,27 @@ public abstract class ComplexPanel extends Panel {
    * @param w the child widget to be added
    * @param container the element within which the child will be contained
    * @param beforeIndex the index before which the widget will be added
+   * @return the index at which the widget was added
    */
-  protected void insert(Widget w, Element container, int beforeIndex) {
-    if (w.getParent() == this) {
-      return;
+  protected int insert(Widget w, Element container, int beforeIndex) {
+    if ((beforeIndex < 0) || (beforeIndex > getWidgetCount())) {
+      throw new IndexOutOfBoundsException();
     }
-
+    // Call this early to ensure that the table doesn't end up partially
+    // constructed when an exception is thrown from adopt().
+    int idx = getWidgetIndex(w);
+    if (idx == -1) {
+      w.removeFromParent();
+    } else {
+      remove(w);
+      // If the Widget's previous position was left of the desired new position
+      // shift the desired position left to reflect the removal
+      if (idx < beforeIndex) {
+        beforeIndex--;
+      }
+    }
     adopt(w, container);
-    children.insert(w, beforeIndex);
+    getChildren().insert(w, beforeIndex);
+    return beforeIndex;
   }
 }

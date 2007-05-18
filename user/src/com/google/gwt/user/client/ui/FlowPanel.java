@@ -25,7 +25,7 @@ import com.google.gwt.user.client.DOM;
  * <img class='gallery' src='FlowPanel.png'/>
  * </p>
  */
-public class FlowPanel extends ComplexPanel implements IndexedPanel {
+public class FlowPanel extends ComplexPanel {
 
   /**
    * Creates an empty flow panel.
@@ -43,19 +43,15 @@ public class FlowPanel extends ComplexPanel implements IndexedPanel {
     super.add(w, getElement());
   }
 
-  public Widget getWidget(int index) {
-    return getChildren().get(index);
-  }
-
-  public int getWidgetCount() {
-    return getChildren().size();
-  }
-
-  public int getWidgetIndex(Widget child) {
-    return getChildren().indexOf(child);
-  }
-
-  public boolean remove(int index) {
-    return remove(getWidget(index));
+  /**
+   * Inserts a widget before the specified index.
+   * 
+   * @param w the widget to be inserted
+   * @param beforeIndex the index before which it will be inserted
+   * @throws IndexOutOfBoundsException if <code>beforeIndex</code> is out of
+   *           range
+   */
+  public void insert(Widget w, int beforeIndex) {
+    super.insert(w, getElement(), beforeIndex);
   }
 }
