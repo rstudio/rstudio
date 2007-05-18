@@ -96,6 +96,11 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
   }
 
+  /**
+   * {@link CompilationUnitProvider} used to represent generated source code 
+   * which is stored on disk.  This class is only used if the -gen flag is
+   * specified.
+   */
   private static final class GeneratedCUP extends URLCompilationUnitProvider {
     private GeneratedCUP(URL url, String name) {
       super(url, name);
@@ -105,6 +110,10 @@ public class StandardGeneratorContext implements GeneratorContext {
       // Make it seem really old so it won't cause recompiles.
       //
       return 0L;
+    }
+    
+    public boolean isTransient() {
+      return true;
     }
   }
 
@@ -274,12 +283,13 @@ public class StandardGeneratorContext implements GeneratorContext {
           genTypeNames.add(genTypeName);
           CompilationUnitProvider cup = writeSource(logger, gcup, typeName);
           builder.addCompilationUnit(cup);
-
+          cacheManager.addGeneratedCup(cup);
+          
           if (subBranch != null) {
             subBranch.log(TreeLogger.DEBUG, cup.getLocation(), null);
           }
         }
-        cacheManager.markVolatileFiles(committedGeneratedCups);
+        
         builder.build(branch);
       }
 
