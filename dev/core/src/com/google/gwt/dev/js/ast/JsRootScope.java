@@ -46,7 +46,7 @@ public final class JsRootScope extends JsScope {
         "Error", "Function", "Global", "Image", "Math", "Number", "Object",
         "RegExp", "String", "VBArray", "window", "document", "event",
         "arguments", "call", "toString", "$wnd", "$doc", "$moduleName",
-        "debugger", "undefined"};
+        "$moduleBase", "debugger", "undefined"};
 
     for (int i = 0; i < commonBuiltins.length; i++) {
       String ident = commonBuiltins[i];

@@ -38,9 +38,8 @@ final class Impl {
      (o.$H ? o.$H : (o.$H = @com.google.gwt.core.client.Impl::getNextHashId()()));
   }-*/;
 
-  static native String getModuleBaseURL() /*-{
-    // this is intentionally not using $doc, because we want the module's own url
-    var s = document.location.href;
+  static native String getHostPageBaseURL() /*-{
+    var s = $doc.location.href;
 
     // Pull off any hash.
     var i = s.indexOf('#');
@@ -59,5 +58,13 @@ final class Impl {
       
     // Ensure a final slash if non-empty.
     return s.length > 0 ? s + "/" : "";
+  }-*/;
+
+  static native String getModuleBaseURL() /*-{
+    return $moduleBase;
+  }-*/;
+
+  static native String getModuleName() /*-{
+    return $moduleName;
   }-*/;
 }

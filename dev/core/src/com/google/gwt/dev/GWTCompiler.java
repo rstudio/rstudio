@@ -454,7 +454,7 @@ public class GWTCompiler extends ToolBase {
     out.newlineOpt();
     out.print("var $doc = $wnd.document;");
     out.newlineOpt();
-    out.print("var $moduleName = \"" + moduleName + "\";");
+    out.print("var $moduleName, $moduleBase;");
     out.newlineOpt();
     out.print("</script></head>");
     out.newlineOpt();
@@ -500,11 +500,11 @@ public class GWTCompiler extends ToolBase {
 
     // Setup the well-known variables.
     //
-    out.print("var $wnd = parent;");
+    out.print("var $wnd = window;");
     out.newlineOpt();
     out.print("var $doc = $wnd.document;");
     out.newlineOpt();
-    out.print("var $moduleName = \"" + moduleName + "\";");
+    out.print("var $moduleName, $moduleBase;");
     out.newlineOpt();
 
     return out.toString();

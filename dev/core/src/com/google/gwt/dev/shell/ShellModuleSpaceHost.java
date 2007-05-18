@@ -89,8 +89,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     // Create a host for the hosted mode compiler.
     // We add compilation units to it as deferred binding generators write them.
     //
-    SourceOracle srcOracle = new HostedModeSourceOracle(typeOracle,
-        module.getName());
+    SourceOracle srcOracle = new HostedModeSourceOracle(typeOracle);
 
     // Create or find the compiler to be used by the compiling class loader.
     //

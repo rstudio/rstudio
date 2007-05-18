@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,10 @@ package com.google.gwt.core.client;
  * deferred binding.
  */
 public final class GWT {
+  /*
+   * This is the web mode version of this class. Because it's so special,
+   * there's also a hosted mode version.  See GWT.java-hosted.
+   */
 
   /**
    * This interface is used to catch exceptions at the "top level" just before
@@ -35,11 +39,7 @@ public final class GWT {
     void onUncaughtException(Throwable e);
   }
 
-  // cache of the module base URL
-  private static String sModuleBaseURL = null;
-
   // web mode default is to let the exception go
-  // hosted mode default is to log the exception to the log window
   private static UncaughtExceptionHandler sUncaughtExceptionHandler = null;
 
   /**
@@ -58,15 +58,23 @@ public final class GWT {
    */
   public static Object create(Class classLiteral) {
     /*
-     * In hosted mode, this whole class definition is replaced at runtime with
-     * an implementation defined by the hosting environment. Maintainers: see
-     * HostedModeSourceOracle.cuMeta}.
-     * 
      * In web mode, the compiler directly replaces calls to this method with a
      * new Object() type expression of the correct rebound type.
      */
     throw new RuntimeException(
         "GWT has not been properly initialized; if you are running a unit test, check that your test case extends GWTTestCase");
+  }
+
+  /**
+   * Gets the URL prefix of the hosting page, useful for prepending to relative
+   * paths of resources which may be relative to the host page. Typically, you
+   * should use {@link #getModuleBaseURL()} unless you have a specific reason to
+   * load a resource relative to the host page.
+   * 
+   * @return if non-empty, the base URL is guaranteed to end with a slash
+   */
+  public static String getHostPageBaseURL() {
+    return Impl.getHostPageBaseURL();
   }
 
   /**
@@ -77,18 +85,15 @@ public final class GWT {
    * @return if non-empty, the base URL is guaranteed to end with a slash
    */
   public static String getModuleBaseURL() {
-    if (sModuleBaseURL == null) {
-      sModuleBaseURL = Impl.getModuleBaseURL();
-    }
-    return sModuleBaseURL;
+    return Impl.getModuleBaseURL();
   }
 
   /**
    * Gets the name of the running module.
    */
-  public static native String getModuleName() /*-{
-   return $moduleName;
-   }-*/;
+  public static String getModuleName() {
+    return Impl.getModuleName();
+  }
 
   /**
    * Gets the class name of the specified object, as would be returned by

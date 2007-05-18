@@ -90,7 +90,7 @@ function __MODULE_FUNC__() {
       }
       // remove this whole function from the global namespace to allow GC
       __MODULE_FUNC__ = null;
-      frameWnd.gwtOnLoad(onLoadErrorFunc, '__MODULE_NAME__');
+      frameWnd.gwtOnLoad(onLoadErrorFunc, '__MODULE_NAME__', base);
     }
   }
   
@@ -114,15 +114,30 @@ function __MODULE_FUNC__() {
       }
     }
 
-    if (thisScript) {
+    function getDirectoryOfFile(path) {
+      var eq = path.lastIndexOf('/');
+      return (eq >= 0) ? path.substring(0, eq + 1) : '';
+    };
+
+    if (thisScript && thisScript.src) {
       // Compute our base url
-      var content = thisScript.src;
-      if (content) {
-        var eq = content.lastIndexOf('/');
-        if (eq >= 0) {
-          base = content.substring(0, eq + 1);
-        }
-      }
+      base = getDirectoryOfFile(thisScript.src);
+    }
+    
+    // Make the base URL absolute
+    if (base == '') {
+      // Trivial case; the base must be the same as the document location
+      base = getDirectoryOfFile($doc.location.href);
+    } else if ((base.match(/^\w+:\/\//))) {
+      // If the URL is obviously absolute, do nothing.
+    } else {
+      // Probably a relative URL; use magic to make the browser absolutify it.
+      // I wish there were a better way to do this, but this seems the only
+      // sure way!  (A side benefit is it preloads clear.cache.gif)
+      // Note: this trick is harmless if the URL was really already absolute.
+      var img = $doc.createElement("img");
+      img.src = base + 'clear.cache.gif';
+      base = getDirectoryOfFile(img.src);
     }
     
     if (markerScript) {

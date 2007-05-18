@@ -1273,7 +1273,9 @@ public class GenerateJavaScriptAST {
     private void generateGwtOnLoad(List entryFuncs, JsStatements globalStmts) {
       /**
        * <pre>
-       * function gwtOnLoad(errFn, modName){
+       * function gwtOnLoad(errFn, modName, modBase){
+       *   $moduleName = modName;
+       *   $moduleBase = modBase;
        *   if (errFn) {
        *     try {
        *       init();
@@ -1297,8 +1299,17 @@ public class GenerateJavaScriptAST {
       JsParameters params = gwtOnLoad.getParameters();
       JsName errFn = fnScope.declareName("errFn");
       JsName modName = fnScope.declareName("modName");
+      JsName modBase = fnScope.declareName("modBase");
       params.add(new JsParameter(errFn));
       params.add(new JsParameter(modName));
+      params.add(new JsParameter(modBase));
+      JsExpression asg = createAssignment(
+          topScope.findExistingUnobfuscatableName("$moduleName").makeRef(),
+          modName.makeRef());
+      body.getStatements().add(asg.makeStmt());
+      asg = createAssignment(topScope.findExistingUnobfuscatableName(
+          "$moduleBase").makeRef(), modBase.makeRef());
+      body.getStatements().add(asg.makeStmt());
       JsIf jsIf = new JsIf();
       body.getStatements().add(jsIf);
       jsIf.setIfExpr(errFn.makeRef());
@@ -1493,7 +1504,8 @@ public class GenerateJavaScriptAST {
       }
 
       JReferenceType enclosingType = x.getEnclosingType();
-      if (!typeOracle.checkClinit(currentMethod.getEnclosingType(), enclosingType)) {
+      if (!typeOracle.checkClinit(currentMethod.getEnclosingType(),
+          enclosingType)) {
         return null;
       }
 
