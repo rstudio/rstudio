@@ -356,11 +356,11 @@ public class SerializableTypeOracleBuilder {
   }
 
   private static void logSerializableTypes(TreeLogger logger, JType[] types) {
-    logger = logger.branch(TreeLogger.INFO, "Identified " + types.length
+    logger = logger.branch(TreeLogger.DEBUG, "Identified " + types.length
         + " serializable type" + ((types.length == 1) ? "" : "s"), null);
 
     for (int i = 0; i < types.length; ++i) {
-      logger.branch(TreeLogger.INFO,
+      logger.branch(TreeLogger.DEBUG,
           types[i].getParameterizedQualifiedSourceName(), null);
     }
   }
