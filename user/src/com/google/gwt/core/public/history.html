@@ -7,14 +7,15 @@ function hst() {
   if (search.length > 0)
     historyToken = search.substring(1);
 
-  document.getElementById('__historyToken').value = historyToken;
-  if (parent.__onHistoryChanged)
-    parent.__onHistoryChanged(historyToken);
+  document.getElementById('__gwt_historyToken').value = historyToken;
+  if (parent.__gwt_onHistoryLoad) {
+    parent.__gwt_onHistoryLoad(historyToken);
+  }
 }
 </script></head>
 <body onload='hst()'>
 
-<input type='text' id='__historyToken'>
+<input type='text' id='__gwt_historyToken'>
 
 </body>
 </html>

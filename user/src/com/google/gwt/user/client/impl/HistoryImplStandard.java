@@ -20,17 +20,13 @@ package com.google.gwt.user.client.impl;
  */
 class HistoryImplStandard extends HistoryImpl {
 
-  public native String getToken() /*-{
-    return $wnd.__historyToken;
-  }-*/;
-
   public native boolean init() /*-{
-    $wnd.__historyToken = '';
+    $wnd.__gwt_historyToken = '';
 
     // Get the initial token from the url's hash component.
     var hash = $wnd.location.hash;
     if (hash.length > 0)
-      $wnd.__historyToken = hash.substring(1);
+      $wnd.__gwt_historyToken = hash.substring(1);
 
     // Create the timer that checks the browser's url hash every 1/4 s.
     $wnd.__checkHistory = function() {
@@ -38,8 +34,8 @@ class HistoryImplStandard extends HistoryImpl {
       if (hash.length > 0)
         token = hash.substring(1);
 
-      if (token != $wnd.__historyToken) {
-        $wnd.__historyToken = token;
+      if (token != $wnd.__gwt_historyToken) {
+        $wnd.__gwt_historyToken = token;
         @com.google.gwt.user.client.impl.HistoryImpl::onHistoryChanged(Ljava/lang/String;)(token);
       }
 

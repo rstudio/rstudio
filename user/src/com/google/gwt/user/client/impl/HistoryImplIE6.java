@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,55 +15,15 @@
  */
 package com.google.gwt.user.client.impl;
 
+import com.google.gwt.user.client.Element;
+
 /**
  * Internet Explorer 6 implementation of
- * {@link com.google.gwt.user.client.impl.HistoryImpl}.
+ * {@link com.google.gwt.user.client.impl.HistoryImplFrame}.
  */
-class HistoryImplIE6 extends HistoryImpl {
+class HistoryImplIE6 extends HistoryImplFrame {
 
-  public native String getToken() /*-{
-    return $wnd.__historyToken;
-  }-*/;
-
-  public native boolean init() /*-{
-    // Check for existence of the history frame.
-    var historyFrame = $doc.getElementById('__gwt_historyFrame');
-    if (!historyFrame)
-      return false;
-
-    // Get the initial token from the url's hash component.
-    var hash = $wnd.location.hash;
-    if (hash.length > 0)
-      $wnd.__historyToken = hash.substring(1);
-    else
-      $wnd.__historyToken = '';
-
-    // Initialize the history iframe.  If '__historyToken' already exists, then
-    // we're probably backing into the app, so _don't_ set the iframe's location.
-    var tokenElement = null;
-    if (historyFrame.contentWindow) {
-      var doc = historyFrame.contentWindow.document;
-      tokenElement = doc ? doc.getElementById('__historyToken') : null;
-    }
-
-    if (tokenElement)
-      $wnd.__historyToken = tokenElement.value;
-    else
-      historyFrame.src = 'history.html?' + $wnd.__historyToken;
-
-    // Expose the '__onHistoryChanged' function, which will be called by
-    // the history frame when it loads.
-    $wnd.__onHistoryChanged = function(token) {
-      // Change the URL and notify the application that its history frame
-      // is changing.  Note that setting location.hash does _not_ add a history
-      // frame on IE, so we don't have to do a 'location.replace()'.
-      if (token != $wnd.__historyToken) {
-        $wnd.__historyToken = token;
-        $wnd.location.hash = encodeURIComponent(token);
-        @com.google.gwt.user.client.impl.HistoryImpl::onHistoryChanged(Ljava/lang/String;)(token);
-      }
-    };
-
+  private static native void initUrlCheckTimer() /*-{
     // This is the URL check timer.  It detects when an unexpected change
     // occurs in the document's URL (e.g. when the user enters one manually
     // or selects a 'favorite', but only the #hash part changes).  When this
@@ -74,21 +34,43 @@ class HistoryImplIE6 extends HistoryImpl {
       var hash = $wnd.location.hash;
       if (hash.length > 0) {
         var token = hash.substring(1);
-        if ($wnd.__historyToken && (token != $wnd.__historyToken))
+        if ($wnd.__gwt_historyToken && (token != $wnd.__gwt_historyToken))
           $wnd.location.reload();
       }
       $wnd.setTimeout(urlChecker, 250);
     };
     urlChecker();
-
-    return true;
   }-*/;
 
-  public native void newItem(String historyToken) /*-{
-    var iframe = $doc.getElementById('__gwt_historyFrame');
-    if (historyToken == null) {
-      historyToken = "";
+  public boolean init() {
+    if (!super.init()) {
+      return false;
     }
-    iframe.contentWindow.location.href = 'history.html?' + historyToken;
+    initUrlCheckTimer();
+    return true;
+  }
+
+  protected native String getTokenElementContent(Element tokenElement) /*-{
+    return tokenElement.innerText;
+  }-*/;
+
+  protected native void injectGlobalHandler() /*-{
+    $wnd.__gwt_onHistoryLoad = function(token) {
+      // Change the URL and notify the application that its history frame
+      // is changing.
+      if (token != $wnd.__gwt_historyToken) {
+        $wnd.__gwt_historyToken = token;
+        $wnd.location.hash = encodeURIComponent(token);
+        @com.google.gwt.user.client.impl.HistoryImpl::onHistoryChanged(Ljava/lang/String;)(token);
+      }
+    };
+  }-*/;
+  
+  protected native void newItemImpl(Element historyFrame, String historyToken) /*-{
+    historyToken = historyToken || "";
+    var doc = historyFrame.contentWindow.document;
+    doc.open();
+    doc.write('<html><body onload="if(parent.__gwt_onHistoryLoad)parent.__gwt_onHistoryLoad(__gwt_historyToken.innerText)"><div id="__gwt_historyToken">' + historyToken + '</div></body></html>');
+    doc.close();
   }-*/;
 }
