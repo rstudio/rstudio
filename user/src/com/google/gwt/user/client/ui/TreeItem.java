@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,8 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 /**
  * An item that can be contained within a
@@ -65,9 +65,10 @@ public class TreeItem extends UIObject implements HasHTML {
     }
   }
 
-  private Vector children = new Vector();
+  private ArrayList children = new ArrayList();
   private ContentPanel contentPanel;
-  private Element itemTable, contentElem, imgElem, childSpanElem;
+  private Element itemTable, contentElem, childSpanElem;
+  private final Image statusImage = new Image();
   private boolean open;
   private TreeItem parent;
   private boolean selected;
@@ -82,7 +83,6 @@ public class TreeItem extends UIObject implements HasHTML {
     itemTable = DOM.createTable();
     contentElem = DOM.createSpan();
     childSpanElem = DOM.createSpan();
-    imgElem = DOM.createImg();
 
     // Uses the following Element hierarchy:
     // <div (handle)>
@@ -106,7 +106,7 @@ public class TreeItem extends UIObject implements HasHTML {
 
     DOM.appendChild(getElement(), itemTable);
     DOM.appendChild(getElement(), childSpanElem);
-    DOM.appendChild(tdImg, imgElem);
+    DOM.appendChild(tdImg, statusImage.getElement());
     DOM.appendChild(tdContent, contentElem);
 
     DOM.setStyleAttribute(contentElem, "display", "inline");
@@ -421,7 +421,7 @@ public class TreeItem extends UIObject implements HasHTML {
     }
   }
 
-  Vector getChildren() {
+  ArrayList getChildren() {
     return children;
   }
 
@@ -434,7 +434,7 @@ public class TreeItem extends UIObject implements HasHTML {
   }
 
   Element getImageElement() {
-    return imgElem;
+    return statusImage.getElement();
   }
 
   int getTreeTop() {
@@ -447,14 +447,6 @@ public class TreeItem extends UIObject implements HasHTML {
     }
 
     return ret;
-  }
-
-  String imgSrc(String img) {
-    if (tree == null) {
-      return img;
-    }
-    String src = tree.getImageBase() + img;
-    return src;
   }
 
   void setParentItem(TreeItem parent) {
@@ -489,9 +481,16 @@ public class TreeItem extends UIObject implements HasHTML {
   }
 
   void updateState() {
+    // If the tree hasn't been set, there is no visual state to update.
+    if (tree == null) {
+      return;
+    }
+    
+    TreeImages images = tree.getImages();
+    
     if (children.size() == 0) {
       UIObject.setVisible(childSpanElem, false);
-      DOM.setElementProperty(imgElem, "src", imgSrc("tree_white.gif"));
+      images.treeLeaf().applyTo(statusImage);
       return;
     }
 
@@ -499,10 +498,10 @@ public class TreeItem extends UIObject implements HasHTML {
     // or the children will always take up space.
     if (open) {
       UIObject.setVisible(childSpanElem, true);
-      DOM.setElementProperty(imgElem, "src", imgSrc("tree_open.gif"));
+      images.treeOpen().applyTo(statusImage);
     } else {
       UIObject.setVisible(childSpanElem, false);
-      DOM.setElementProperty(imgElem, "src", imgSrc("tree_closed.gif"));
+      images.treeClosed().applyTo(statusImage);
     }
   }
 

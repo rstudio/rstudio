@@ -49,13 +49,73 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     HasFocus {
 
   /**
+   * Provides images to support the the deprecated case where a url prefix is
+   * passed in through {@link Tree#setImageBase(String)}. This class is used
+   * in such a way that it will be completely removed by the compiler if the
+   * deprecated methods, {@link Tree#setImageBase(String)} and
+   * {@link Tree#getImageBase()}, are not called.
+   */
+  private static class ImagesFromImageBase implements TreeImages {
+    /**
+     * A convience image prototype that implements
+     * {@link AbstractImagePrototype#applyTo(Image)} for a specified image
+     * name.
+     */
+    private class Prototype extends AbstractImagePrototype {
+      private final String imageUrl;
+
+      Prototype(String url) {
+        imageUrl = url;
+      }
+
+      public void applyTo(Image image) {
+        image.setUrl(baseUrl + imageUrl);
+      }
+
+      public Image createImage() {
+        // NOTE: This class is only used internally and, therefore only needs
+        // to support applyTo(Image).
+        throw new UnsupportedOperationException("createImage is unsupported.");
+      }
+
+      public String getHTML() {
+        // NOTE: This class is only used internally and, therefore only needs
+        // to support applyTo(Image).
+        throw new UnsupportedOperationException("getHTML is unsupported.");
+      }
+    }
+
+    private final String baseUrl;
+
+    ImagesFromImageBase(String baseUrl) {
+      this.baseUrl = baseUrl;
+    }
+
+    public AbstractImagePrototype treeClosed() {
+      return new Prototype("tree_closed.gif");
+    }
+    
+    public AbstractImagePrototype treeLeaf() {
+      return new Prototype("tree_white.gif");
+    }
+
+    public AbstractImagePrototype treeOpen() {
+      return new Prototype("tree_open.gif");
+    }
+
+    String getBaseUrl() {
+      return baseUrl;
+    }
+  }
+
+  /**
    * Map of TreeItem.ContentPanel --> Tree Items.
    */
   private final Set childWidgets = new HashSet();
   private TreeItem curSelection;
   private final Element focusable;
   private FocusListenerCollection focusListeners;
-  private String imageBase = GWT.getModuleBaseURL();
+  private TreeImages images;
   private KeyboardListenerCollection keyboardListeners;
   private TreeListenerCollection listeners;
   private MouseListenerCollection mouseListeners = null;
@@ -71,6 +131,16 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    * Constructs an empty tree.
    */
   public Tree() {
+    this((TreeImages) GWT.create(TreeImages.class));
+  }
+
+  /**
+   * Constructs a tree that uses the specified image bundle for images.
+   * 
+   * @param images a bundle that provides tree specific images
+   */
+  public Tree(TreeImages images) {
+    this.images = images;
     setElement(DOM.createDiv());
     DOM.setStyleAttribute(getElement(), "position", "relative");
     focusable = FocusPanel.impl.createFocusable();
@@ -217,9 +287,13 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    * 
    * @return the tree's image package
    * @see #setImageBase
+   * @deprecated Use {@link #Tree(TreeImages)} as it provides a more efficent
+   *             and manageable way to supply a set of images to be used within
+   *             a tree.
    */
   public String getImageBase() {
-    return imageBase;
+    return (images instanceof ImagesFromImageBase)
+        ? ((ImagesFromImageBase) images).getBaseUrl() : GWT.getModuleBaseURL();
   }
 
   /**
@@ -375,14 +449,14 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
               if (!curSelection.getState()) {
                 curSelection.setState(true);
               } else if (curSelection.getChildCount() > 0) {
-                  setSelectedItem(curSelection.getChild(0));
+                setSelectedItem(curSelection.getChild(0));
               }
               DOM.eventPreventDefault(event);
               break;
             }
           }
         }
-        
+
         // Intentional fallthrough.
       case Event.ONKEYUP:
         if (eventType == Event.ONKEYUP) {
@@ -470,9 +544,14 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    * Sets the base URL under which this tree will find its default images. These
    * images must be named "tree_white.gif", "tree_open.gif", and
    * "tree_closed.gif".
+   * 
+   * @param baseUrl
+   * @deprecated Use {@link #Tree(TreeImages)} as it provides a more efficent
+   *             and manageable way to supply a set of images to be used within
+   *             a tree.
    */
   public void setImageBase(String baseUrl) {
-    imageBase = baseUrl;
+    images = new ImagesFromImageBase(baseUrl);
     root.updateStateRecursive();
   }
 
@@ -521,17 +600,17 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   /**
    * Indicates if keyboard navigation is enabled for the Tree and for a given
-   * TreeItem.  Subclasses of Tree can override this function to selectively
+   * TreeItem. Subclasses of Tree can override this function to selectively
    * enable or disable keyboard navigation.
    * 
    * @param currentItem the currently selected TreeItem
    * @return <code>true</code> if the Tree will response to arrow keys by
-   *           changing the currently selected item
+   *         changing the currently selected item
    */
   protected boolean isKeyboardNavigationEnabled(TreeItem currentItem) {
     return true;
   }
-  
+
   protected void onAttach() {
     super.onAttach();
 
@@ -584,6 +663,10 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return childWidgets;
   }
 
+  TreeImages getImages() {
+    return images;
+  }
+
   /**
    * Collects parents going up the element tree, terminated at the tree root.
    */
@@ -602,7 +685,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
     TreeItem item = findItemByChain(chain, 0, root);
     if (item != null) {
-      if (DOM.compare(item.getImageElement(), hElem)) {
+      if (DOM.isOrHasChild(item.getImageElement(), hElem)) {
         item.setState(!item.getState(), true);
         return true;
       } else if (DOM.isOrHasChild(item.getElement(), hElem)) {
