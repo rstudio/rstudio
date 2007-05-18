@@ -396,12 +396,14 @@ public class RichTextArea extends FocusWidget implements HasHTML,
         break;
 
       case Event.ONCHANGE:
+        // TODO: there's no code to fire this on IE6.
         if (changeListeners != null) {
           changeListeners.fireChange(this);
         }
         break;
 
       default:
+        // ClickEvents and KeyboardEvents
         super.onBrowserEvent(event);
     }
   }
@@ -438,6 +440,6 @@ public class RichTextArea extends FocusWidget implements HasHTML,
 
   protected void onDetach() {
     super.onDetach();
-    impl.unhookEvents(this);
+    impl.unhookEvents();
   }
 }

@@ -77,7 +77,7 @@ public class RichTextAreaImpl {
     DOM.setElementProperty(elem, "value", text);
   }
 
-  public void unhookEvents(RichTextArea owner) {
+  public void unhookEvents() {
     DOM.setEventListener(elem, null);
   }
 

@@ -39,7 +39,7 @@ public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
       return super.getHTML();
     }
 
-    // Unsupported fallback.
+    // THIS DOESN'T WORK, unless there's a compiler bug!
     return ((RichTextAreaImpl) this).getHTML();
   }
 
@@ -48,7 +48,7 @@ public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
       return super.getText();
     }
 
-    // Unsupported fallback.
+    // THIS DOESN'T WORK, unless there's a compiler bug!
     return ((RichTextAreaImpl) this).getText();
   }
 
@@ -58,7 +58,7 @@ public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
       return;
     }
 
-    // Unsupported fallback.
+    // THIS DOESN'T WORK, unless there's a compiler bug!
     ((RichTextAreaImpl) this).hookEvents(owner);
   }
 
@@ -68,7 +68,7 @@ public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
       return;
     }
 
-    // Unsupported fallback.
+    // THIS DOESN'T WORK, unless there's a compiler bug!
     ((RichTextAreaImpl) this).initElement();
   }
 
@@ -113,14 +113,14 @@ public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
     DOM.setElementProperty(elem, "value", text);
   }
 
-  public void unhookEvents(RichTextArea owner) {
+  public void unhookEvents() {
     if (supportsEditing) {
-      super.unhookEvents(owner);
+      super.unhookEvents();
       return;
     }
 
-    // Unsupported fallback.
-    ((RichTextAreaImpl) this).unhookEvents(owner);
+    // THIS DOESN'T WORK, unless there's a compiler bug!
+    ((RichTextAreaImpl) this).unhookEvents();
   }
 
   void execCommand(String cmd, String param) {

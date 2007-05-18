@@ -202,10 +202,6 @@ public class RichTextAreaImplStandard extends RichTextAreaImpl implements
     execCommand("Underline", "False");
   }
 
-  public native void unhookEvents(RichTextArea owner) /*-{
-    this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.__listener = null;
-  }-*/;
-
   void execCommand(String cmd, String param) {
     if (isRichEditingActive(elem)) {
       // When executing a command, focus the iframe first, since some commands

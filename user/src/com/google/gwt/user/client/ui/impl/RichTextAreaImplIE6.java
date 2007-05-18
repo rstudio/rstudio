@@ -17,53 +17,84 @@ package com.google.gwt.user.client.ui.impl;
 
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.ui.RichTextArea;
 
 /**
  * IE6-specific implementation of rich-text editing.
  */
 public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
 
+  private static native void attachEvents(Element elem) /*-{
+    var handler = function() {
+      if (elem.__listener) {
+        // Weird: this code has the context of the script frame, but we need the
+        // event from the edit iframe's window.
+        var evt = elem.contentWindow.event;
+        elem.__listener.@com.google.gwt.user.client.ui.RichTextArea::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+      }
+    };
+  
+    var body = elem.contentWindow.document.body;
+    body.onkeydown =
+    body.onkeyup =
+    body.onkeypress =
+    body.onmousedown =
+    body.onmouseup =
+    body.onmousemove =
+    body.onmouseover =
+    body.onmouseout =
+    body.onclick = handler;
+  }-*/;
+
+  private static native void detachEvents(Element elem) /*-{
+    var body = elem.contentWindow.document.body;
+    body.onkeydown =
+    body.onkeyup =
+    body.onkeypress =
+    body.onmousedown =
+    body.onmouseup =
+    body.onmousemove =
+    body.onmouseover =
+    body.onmouseout =
+    body.onclick = null;
+  }-*/;
+
+  private static native String getText(Element elem) /*-{
+    return elem.contentWindow.document.body.innerText;
+  }-*/;
+
+  private static native void writeHtml(Element elem) /*-{
+    var doc = elem.contentWindow.document;
+    doc.open();
+    doc.write('<html><body CONTENTEDITABLE="true"></body></html>');
+    doc.close();
+  }-*/;
+
   public Element createElement() {
     Element elem = super.createElement();
     DOM.setElementProperty(elem, "src", "javascript:''");
     return elem;
   }
-  
-  public native String getText() /*-{
-    return this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerText;
-  }-*/;
 
-  public native void initElement() /*-{
-    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
-    var _this = this;
-    elem.onload = function() {
-      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplIE6::initEvents()();
-    };
-    elem.src = "RichTextIE.html";
-  }-*/;
+  public String getText() {
+    return getText(elem);
+  }
 
-  native void initEvents() /*-{
-    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
-    var handler = function(evt) {
-      if (elem.__listener) {
-        elem.__listener.
-          @com.google.gwt.user.client.ui.RichTextArea::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
-      }
-    };
+  public void hookEvents(RichTextArea owner) {
+    attachEvents(elem);
+    super.hookEvents(owner);
+  }
 
-    var body = elem.contentWindow.document.body;
-    body.attachEvent('onkeydown', handler);
-    body.attachEvent('onkeyup', handler);
-    body.attachEvent('onkeypress', handler);
-    body.attachEvent('onmousedown', handler);
-    body.attachEvent('onmouseup', handler);
-    body.attachEvent('onmousemove', handler);
-    body.attachEvent('onmouseover', handler);
-    body.attachEvent('onmouseout', handler);
-    body.attachEvent('onclick', handler);
-  }-*/;
+  public void initElement() {
+    writeHtml(elem);
+  }
 
-  boolean isRichEditingActive(Element e) {
+  public void unhookEvents() {
+    super.unhookEvents();
+    detachEvents(elem);
+  }
+
+  boolean isRichEditingActive(Element elem) {
     return true;
   }
 }
