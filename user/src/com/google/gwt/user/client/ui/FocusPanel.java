@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.impl.FocusImpl;
@@ -27,7 +26,7 @@ import com.google.gwt.user.client.ui.impl.FocusImpl;
 public class FocusPanel extends SimplePanel implements HasFocus,
     SourcesClickEvents, SourcesMouseEvents, SourcesMouseWheelEvents {
 
-  static final FocusImpl impl = (FocusImpl) GWT.create(FocusImpl.class);
+  static final FocusImpl impl = FocusImpl.getFocusImplForPanel();
 
   private ClickListenerCollection clickListeners;
   private FocusListenerCollection focusListeners;

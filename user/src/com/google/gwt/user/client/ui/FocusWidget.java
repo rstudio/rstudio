@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,14 +26,7 @@ import com.google.gwt.user.client.ui.impl.FocusImpl;
 public abstract class FocusWidget extends Widget implements SourcesClickEvents,
     SourcesFocusEvents, HasFocus {
 
-  /**
-   * <code>FocusImpl</code> contains browser specific focus code for focusable
-   * widgets. This <code>FocusImpl</code> instance is intentionally _not_
-   * rebound, as the base implementation works on all browsers for truly
-   * focusable widgets. The special cases are only needed for things that aren't
-   * naturally focusable on some browsers, such as DIVs.
-   */
-  private static final FocusImpl impl = new FocusImpl();
+  private static final FocusImpl impl = FocusImpl.getFocusImplForWidget();
 
   /**
    * Gets the FocusImpl instance.
