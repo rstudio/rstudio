@@ -80,7 +80,10 @@ public abstract class UIObject {
     if (add) {
       // Only add the style if it's not already present.
       if (idx == -1) {
-        DOM.setElementProperty(elem, "className", oldStyle + " " + style);
+        if (oldStyle.length() > 0) {
+          oldStyle += " ";
+        }
+        DOM.setElementProperty(elem, "className", oldStyle + style);
       }
     } else {
       // Don't try to remove the style if it's not there.
