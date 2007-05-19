@@ -252,7 +252,7 @@ public class TextBoxBase extends FocusWidget implements SourcesKeyboardEvents,
   }
 
   public void setText(String text) {
-    DOM.setElementProperty(getElement(), "value", text);
+    DOM.setElementProperty(getElement(), "value", text != null ? text : "");
   }
 
   /**

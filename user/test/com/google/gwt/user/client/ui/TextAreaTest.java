@@ -18,14 +18,29 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * TODO: document me.
+ * Tests {@link TextArea}.
  */
 public class TextAreaTest extends GWTTestCase {
 
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
+  
+  /**
+   * Tests that {@link TextArea#setText(String)} appropriately converts nulls to
+   * empty strings.
+   */
+  public void testNullMeansEmptyString() {
+    TextArea area = new TextArea();
+    area.setText(null);
+    assertEquals("setText(null) should result in empty string",
+        "", area.getText());
+  }
 
+  /**
+   * Tests that {@link TextArea#setCursorPos(int)} updates the cursor position
+   * correctly.
+   */
   public void testMovingCursor() {
     TextArea area = new TextArea();
     RootPanel.get().add(area);
@@ -36,6 +51,9 @@ public class TextAreaTest extends GWTTestCase {
     }
   }
 
+  /**
+   * Tests various text selection methods in text area.
+   */
   public void disabledTestSelection() {
     TextArea area = new TextArea();
     assertEquals("", area.getSelectedText());
