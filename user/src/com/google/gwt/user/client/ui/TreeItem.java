@@ -248,7 +248,7 @@ public class TreeItem extends UIObject implements HasHTML {
    * 
    * @return the containing tree
    */
-  public Tree getTree() {
+  public final Tree getTree() {
     return tree;
   }
 
@@ -370,7 +370,7 @@ public class TreeItem extends UIObject implements HasHTML {
     this.open = open;
     updateState();
 
-    if (fireEvents) {
+    if (fireEvents && tree != null) {
       tree.fireStateChanged(this);
     }
   }
@@ -533,7 +533,7 @@ public class TreeItem extends UIObject implements HasHTML {
       // Ensure contentElem is empty.
       DOM.setInnerHTML(contentElem, "");
       contentPanel = new ContentPanel(contentElem);
-      if (getTree() != null) {
+      if (tree != null) {
         tree.adopt(contentPanel);
       }
     }
