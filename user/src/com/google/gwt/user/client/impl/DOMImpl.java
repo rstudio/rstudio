@@ -83,6 +83,10 @@ public abstract class DOMImpl {
     return evt.which || evt.keyCode;
   }-*/;
 
+  public native boolean eventGetMetaKey(Event evt) /*-{
+    return !!evt.getMetaKey;
+  }-*/;
+
   public abstract int eventGetMouseWheelVelocityY(Event evt);
 
   public native boolean eventGetRepeat(Event evt) /*-{

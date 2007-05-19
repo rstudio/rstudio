@@ -36,6 +36,7 @@ public class KeyboardListenerCollection extends Vector {
    */
   public static int getKeyboardModifiers(Event event) {
     return (DOM.eventGetShiftKey(event) ? KeyboardListener.MODIFIER_SHIFT : 0)
+      | (DOM.eventGetMetaKey(event) ? KeyboardListener.MODIFIER_META : 0)
       | (DOM.eventGetCtrlKey(event) ? KeyboardListener.MODIFIER_CTRL : 0)
       | (DOM.eventGetAltKey(event) ? KeyboardListener.MODIFIER_ALT : 0);
   }

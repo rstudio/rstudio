@@ -436,6 +436,16 @@ public class DOM {
   }
 
   /**
+   * Gets whether the META key was depressed when the given event occurred.
+   *
+   * @param evt the event to be tested
+   * @return <code>true</code> if META was depressed when the event occurred
+   */
+  public static boolean eventGetMetaKey(Event evt) {
+    return impl.eventGetMetaKey(evt);
+  }
+
+  /**
    * Gets the velocity of the mouse wheel associated with the event along the
    * Y axis.
    * <p>

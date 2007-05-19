@@ -41,6 +41,7 @@ public interface KeyboardListener extends EventListener {
 
   public static final int MODIFIER_ALT = 4;
   public static final int MODIFIER_CTRL = 2;
+  public static final int MODIFIER_META = 8;
   public static final int MODIFIER_SHIFT = 1;
 
   /**
