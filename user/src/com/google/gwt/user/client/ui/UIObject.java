@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,12 +19,74 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
 /**
- * The base class for all user-interface objects. It simply wraps a DOM element,
+ * The superclass for all user-interface objects. It simply wraps a DOM element,
  * and cannot receive events. Most interesting user-interface classes derive
  * from {@link com.google.gwt.user.client.ui.Widget}.
+ * 
+ * <h3>Styling With CSS</h3>
+ * <p>
+ * All <code>UIObject</code> objects can be styled using CSS. Style names that
+ * are specified programmatically in Java source are implicitly associated with
+ * CSS style rules. In terms of HTML and CSS, a GWT style name is the element's
+ * CSS "class". By convention, GWT style names are of the form
+ * <code>[project]-[widget]</code>.
+ * </p>
+ * 
+ * <p>
+ * For example, the {@link Button} widget has the style name
+ * <code>gwt-Button</code>, meaning that within the <code>Button</code>
+ * constructor, the following call occurs:
+ * 
+ * <pre class="code">
+ * setStyleName("gwt-Button");</pre>
+ * 
+ * A corresponding CSS style rule can then be written as follows:
+ * 
+ * <pre class="code">
+ * // Example of how you might choose to style a Button widget 
+ * .gwt-Button {
+ *   background-color: yellow;
+ *   color: black;
+ *   font-size: 24pt;
+ * }</pre>
+ * 
+ * Note the dot prefix in the CSS style rule. This syntax is called a <a
+ * href="http://www.w3.org/TR/REC-CSS2/selector.html#class-html">CSS class
+ * selector</a>.
+ * </p>
+ * 
+ * <h3>Style Name Specifics</h3>
+ * <p>
+ * Every <code>UIObject</code> has a <i>primary style name</i> that
+ * identifies the key CSS style rule that should always be applied to it. Use
+ * {@link #setStyleName(String)} to specify an object's primary style name. In
+ * most cases, the primary style name is set in a widget's constructor and never
+ * changes again during execution. In the case that no primary style name is
+ * specified, it defaults to <code>gwt-nostyle</code>.
+ * </p>
+ * 
+ * <p>
+ * More complex styling behavior can be achieved by manipulating an object's
+ * <i>secondary style names</i>. Secondary style names can be added and removed
+ * using {@link #addStyleName(String)} and {@link #removeStyleName(String)}.
+ * The purpose of secondary style names is to associate a variety of CSS style
+ * rules over time as an object progresses through different visual states.
+ * </p>
+ * 
+ * <p>
+ * There is an important special formulation of secondary style names called
+ * <i>dependent style names</i>. A dependent style name is a secondary style
+ * name prefixed with the primary style name of the widget itself. See
+ * {@link #addStyleName(String)} for details.
+ * </p>
  */
 public abstract class UIObject {
-  private static final String NULL_HANDLE_MSG = "Null widget handle.  If you "
+
+  private static final String EMPTY_STYLENAME_MSG = "Style names cannot be empty";
+
+  private static final String STYLE_EMPTY = "gwt-nostyle";
+
+  private static final String NULL_HANDLE_MSG = "Null widget handle. If you "
       + "are creating a composite, ensure that initWidget() has been called.";
 
   public static native boolean isVisible(Element elem) /*-{
@@ -36,12 +98,12 @@ public abstract class UIObject {
   }-*/;
 
   /**
-   * This convenience method implements allows one to easily add or remove the
-   * style name for any element. This can be useful when you need to add and
-   * remove styles from a sub-element within a {@link UIObject}.
-   *
+   * This convenience method adds or removes a secondary style name to the
+   * primary style name for a given element. Set {@link #setStyleName(String)}
+   * for a description of how primary and secondary style names are used.
+   * 
    * @param elem the element whose style is to be modified
-   * @param style the style name to be added or removed
+   * @param style the secondary style name to be added or removed
    * @param add <code>true</code> to add the given style, <code>false</code>
    *          to remove it
    */
@@ -49,9 +111,10 @@ public abstract class UIObject {
     if (elem == null) {
       throw new RuntimeException(NULL_HANDLE_MSG);
     }
+
+    style = style.trim();
     if (style.length() == 0) {
-      throw new IllegalArgumentException(
-          "Cannot pass is an empty string as a style name.");
+      throw new IllegalArgumentException(EMPTY_STYLENAME_MSG);
     }
 
     // Get the current style string.
@@ -88,6 +151,10 @@ public abstract class UIObject {
     } else {
       // Don't try to remove the style if it's not there.
       if (idx != -1) {
+        if (idx == 0) {
+          // You can't remove the base (i.e. the first) style name.
+          throw new IllegalArgumentException("Cannot remove base style name");
+        }
         String begin = oldStyle.substring(0, idx);
         String end = oldStyle.substring(idx + style.length());
         DOM.setElementProperty(elem, "className", begin + end);
@@ -98,9 +165,82 @@ public abstract class UIObject {
   private Element element;
 
   /**
-   * Adds a style name to the widget.
+   * Adds a secondary or dependent style name to this object. A secondary style
+   * name is an additional style name that is, in HTML/CSS terms, included as a
+   * space-separated token in the value of the CSS <code>class</code>
+   * attribute for this object's root element.
+   * 
+   * <p>
+   * The most important use for this method is to add a special kind of
+   * secondary style name called a <i>dependent style name</i>. To add a
+   * dependent style name, prefix the 'style' argument with the result of
+   * {@link #getStyleName()}. For example, suppose the primary style name is
+   * <code>gwt-TextBox</code>. If the following method is called as
+   * <code>obj.setReadOnly(true)</code>:
+   * </p>
+   * 
+   * <pre class="code">
+   * public void setReadOnly(boolean readOnly) {
+   *   isReadOnlyMode = readOnly;
+   *   
+   *   // Create a dependent style name.
+   *   String readOnlyStyle = getStyleName() + "-readonly";
+   *    
+   *   if (readOnly) {
+   *     addStyleName(readOnlyStyle);
+   *   } else {
+   *     removeStyleName(readOnlyStyle);
+   *   }
+   * }</pre>
+   * 
+   * <p>
+   * then both of the CSS style rules below will be applied:
+   * </p>
+   * 
+   * <pre class="code">
    *
-   * @param style the style name to be added
+   * // This rule is based on the primary style name and is always active.
+   * .gwt-TextBox {
+   *   font-size: 12pt;
+   * }
+   * 
+   * // This rule is based on a dependent style name that is only active
+   * // when the widget has called addStyleName(getStyleName() + "-readonly"). 
+   * .gwt-TextBox-readonly {
+   *   background-color: lightgrey;
+   *   border: none;
+   * }</pre>
+   * 
+   * <p>
+   * Dependent style names are powerful because they are automatically updated
+   * whenever the primary style name changes. Continuing with the example above,
+   * if the primary style name changed due to the following call:
+   * </p>
+   * 
+   * <pre class="code">setStyleName("my-TextThingy");</pre>
+   * 
+   * <p>
+   * then the object would be re-associated with style rules below rather than
+   * those above:
+   * </p>
+   * 
+   * <pre class="code">
+   * .my-TextThingy {
+   *   font-size: 12pt;
+   * }
+   * 
+   * .my-TextThingy-readonly {
+   *   background-color: lightgrey;
+   *   border: none;
+   * }</pre>
+   * 
+   * <p>
+   * Secondary style names that are not dependent style names are not
+   * automatically updated when the primary style name changes.
+   * </p>
+   * 
+   * @param style the secondary style name to be added
+   * @see UIObject
    * @see #removeStyleName(String)
    */
   public void addStyleName(String style) {
@@ -110,7 +250,7 @@ public abstract class UIObject {
   /**
    * Gets the object's absolute left position in pixels, as measured from the
    * browser window's client area.
-   *
+   * 
    * @return the object's absolute left position
    */
   public int getAbsoluteLeft() {
@@ -120,7 +260,7 @@ public abstract class UIObject {
   /**
    * Gets the object's absolute top position in pixels, as measured from the
    * browser window's client area.
-   *
+   * 
    * @return the object's absolute top position
    */
   public int getAbsoluteTop() {
@@ -129,7 +269,7 @@ public abstract class UIObject {
 
   /**
    * Gets a handle to the object's underlying DOM element.
-   *
+   * 
    * @return the object's browser element
    */
   public Element getElement() {
@@ -139,7 +279,7 @@ public abstract class UIObject {
   /**
    * Gets the object's offset height in pixels. This is the total height of the
    * object, including decorations such as border, margin, and padding.
-   *
+   * 
    * @return the object's offset height
    */
   public int getOffsetHeight() {
@@ -149,7 +289,7 @@ public abstract class UIObject {
   /**
    * Gets the object's offset width in pixels. This is the total width of the
    * object, including decorations such as border, margin, and padding.
-   *
+   * 
    * @return the object's offset width
    */
   public int getOffsetWidth() {
@@ -157,19 +297,30 @@ public abstract class UIObject {
   }
 
   /**
-   * Gets the style name associated with the object.
-   *
-   * @return the object's style name
+   * Gets the primary style name associated with the object.
+   * 
+   * @return the object's primary style name
    * @see #setStyleName(String)
+   * @see #addStyleName(String)
+   * @see #removeStyleName(String)
    */
   public String getStyleName() {
-    return DOM.getElementProperty(element, "className");
+    String fullClassName = DOM.getElementProperty(element, "className");
+
+    // The base style name is always the first token of the full CSS class
+    // name. There can be no leading whitespace in the class name, so it's not
+    // necessary to trim() it.
+    int spaceIdx = fullClassName.indexOf(' ');
+    if (spaceIdx >= 0) {
+      return fullClassName.substring(0, spaceIdx);
+    }
+    return fullClassName;
   }
 
   /**
    * Gets the title associated with this object. The title is the 'tool-tip'
    * displayed to users when they hover over the object.
-   *
+   * 
    * @return the object's title
    */
   public String getTitle() {
@@ -178,7 +329,7 @@ public abstract class UIObject {
 
   /**
    * Determines whether or not this object is visible.
-   *
+   * 
    * @return <code>true</code> if the object is visible
    */
   public boolean isVisible() {
@@ -186,9 +337,9 @@ public abstract class UIObject {
   }
 
   /**
-   * Removes a style name from the widget.
-   *
-   * @param style the style name to be added
+   * Removes a secondary style name.
+   * 
+   * @param style the secondary style name to be removed
    * @see #addStyleName(String)
    */
   public void removeStyleName(String style) {
@@ -198,21 +349,20 @@ public abstract class UIObject {
   /**
    * Sets the object's height. This height does not include decorations such as
    * border, margin, and padding.
-   *
+   * 
    * @param height the object's new height, in CSS units (e.g. "10px", "1em")
    */
   public void setHeight(String height) {
     // This exists to deal with an inconsistency in IE's implementation where
     // it won't accept negative numbers in length measurements
-    assert extractLengthValue(height.trim().toLowerCase()) >= 0 :
-        "CSS heights should not be negative";
+    assert extractLengthValue(height.trim().toLowerCase()) >= 0 : "CSS heights should not be negative";
     DOM.setStyleAttribute(element, "height", height);
   }
 
   /**
    * Sets the object's size, in pixels, not including decorations such as
    * border, margin, and padding.
-   *
+   * 
    * @param width the object's new width, in pixels
    * @param height the object's new height, in pixels
    */
@@ -228,7 +378,7 @@ public abstract class UIObject {
   /**
    * Sets the object's size. This size does not include decorations such as
    * border, margin, and padding.
-   *
+   * 
    * @param width the object's new width, in CSS units (e.g. "10px", "1em")
    * @param height the object's new height, in CSS units (e.g. "10px", "1em")
    */
@@ -238,31 +388,9 @@ public abstract class UIObject {
   }
 
   /**
-   * Sets the object's style name, removing all other styles.
-   *
-   * <p>
-   * The style name is the name referred to in CSS style rules (in HTML, this is
-   * referred to as the element's "class"). By convention, style rules are of
-   * the form <code>[project]-[widget]</code> (e.g. the {@link Button}
-   * widget's style name is <code>.gwt-Button</code>).
-   * </p>
-   *
-   * <p>
-   * For example, if a widget's style name is <code>myProject-MyWidget</code>,
-   * then the style rule that applies to it will be
-   * <code>.myProject-MyWidget</code>. Note the "dot" prefix -- this is
-   * necessary because calling this method sets the underlying element's
-   * <code>className</code> property.
-   * </p>
-   *
-   * <p>
-   * An object may have any number of style names, which may be manipulated
-   * using {@link #addStyleName(String)} and {@link #removeStyleName(String)}.
-   * The attributes of all styles associated with the object will be applied to
-   * it.
-   * </p>
-   *
-   * @param style the style name to be added
+   * Sets the object's primary style name and updates all dependent style names.
+   * 
+   * @param style the new primary style name
    * @see #addStyleName(String)
    * @see #removeStyleName(String)
    */
@@ -271,13 +399,20 @@ public abstract class UIObject {
       throw new RuntimeException(NULL_HANDLE_MSG);
     }
 
-    DOM.setElementProperty(element, "className", style);
+    // Style names cannot contain leading or trailing whitespace, and cannot
+    // legally be empty.
+    style = style.trim();
+    if (style.length() == 0) {
+      throw new IllegalArgumentException(EMPTY_STYLENAME_MSG);
+    }
+
+    updatePrimaryAndDependentStyleNames(element, style);
   }
 
   /**
    * Sets the title associated with this object. The title is the 'tool-tip'
    * displayed to users when they hover over the object.
-   *
+   * 
    * @param title the object's new title
    */
   public void setTitle(String title) {
@@ -290,7 +425,7 @@ public abstract class UIObject {
 
   /**
    * Sets whether this object is visible.
-   *
+   * 
    * @param visible <code>true</code> to show the object, <code>false</code>
    *          to hide it
    */
@@ -301,14 +436,13 @@ public abstract class UIObject {
   /**
    * Sets the object's width. This width does not include decorations such as
    * border, margin, and padding.
-   *
+   * 
    * @param width the object's new width, in CSS units (e.g. "10px", "1em")
    */
   public void setWidth(String width) {
     // This exists to deal with an inconsistency in IE's implementation where
     // it won't accept negative numbers in length measurements
-    assert extractLengthValue(width.trim().toLowerCase()) >= 0 :
-        "CSS widths should not be negative";
+    assert extractLengthValue(width.trim().toLowerCase()) >= 0 : "CSS widths should not be negative";
     DOM.setStyleAttribute(element, "width", width);
   }
 
@@ -316,7 +450,7 @@ public abstract class UIObject {
    * Adds a set of events to be sunk by this object. Note that only
    * {@link Widget widgets} may actually receive events, but can receive events
    * from all objects contained within them.
-   *
+   * 
    * @param eventBitsToAdd a bitfield representing the set of events to be added
    *          to this element's event set
    * @see com.google.gwt.user.client.Event
@@ -329,7 +463,7 @@ public abstract class UIObject {
   /**
    * This method is overridden so that any object can be viewed in the debugger
    * as an HTML snippet.
-   *
+   * 
    * @return a string representation of the object
    */
   public String toString() {
@@ -341,7 +475,7 @@ public abstract class UIObject {
 
   /**
    * Removes a set of events from this object's event list.
-   *
+   * 
    * @param eventBitsToRemove a bitfield representing the set of events to be
    *          removed from this element's event set
    * @see #sinkEvents
@@ -355,11 +489,11 @@ public abstract class UIObject {
   /**
    * Sets this object's browser element. UIObject subclasses must call this
    * method before attempting to call any other methods.
-   *
+   * 
    * If the browser element has already been set, then the current element's
    * position is located in the DOM and removed. The new element is added into
    * the previous element's position.
-   *
+   * 
    * @param elem the object's new element
    */
   protected void setElement(Element elem) {
@@ -367,16 +501,19 @@ public abstract class UIObject {
       // replace this.element in its parent with elem.
       replaceNode(this.element, elem);
     }
+
     this.element = elem;
+    DOM.setElementProperty(element, "className", STYLE_EMPTY);
   }
 
   /**
-   *  Intended to be used to pull the value out of a CSS length.  We rely
-   *  on the behavior of parseFloat to ignore non-numeric chars in its
-   *  input.  If the value is "auto" or "inherit", 0 will be returned.
-   *  @param s The CSS length string to extract
-   *  @return The leading numeric portion of <code>s</code>, or 0 if
-   *          "auto" or "inherit" are passed in.
+   * Intended to be used to pull the value out of a CSS length. We rely on the
+   * behavior of parseFloat to ignore non-numeric chars in its input. If the
+   * value is "auto" or "inherit", 0 will be returned.
+   * 
+   * @param s The CSS length string to extract
+   * @return The leading numeric portion of <code>s</code>, or 0 if "auto" or
+   *         "inherit" are passed in.
    */
   private native double extractLengthValue(String s) /*-{
     if (s == "auto" || s == "inherit") {
@@ -394,4 +531,40 @@ public abstract class UIObject {
     p.insertBefore(newNode, node);
     p.removeChild(node);
   }-*/;
+
+  /**
+   * Replaces all instances of the primary style name with newPrimaryStyleName.
+   */
+  private native void updatePrimaryAndDependentStyleNames(Element elem, String newStyle) /*-{
+    var className = elem.className;
+
+    var spaceIdx = className.indexOf(' ');
+    if (spaceIdx >= 0) {
+      // Get the old base style name from the beginning of the className.
+      var oldStyle = className.substring(0, spaceIdx);
+
+      // Replace oldStyle with newStyle. We have to do this by hand because
+      // there is no String.replaceAll() and String.replace() takes a regex,
+      // which we can't guarantee is safe on arbitrary class names.
+      var newClassName = '', curIdx = 0;
+      while (true) {
+        var idx = className.indexOf(oldStyle, curIdx);
+        if (idx == -1) {
+          newClassName += className.substring(curIdx);
+          break;
+        }
+
+        newClassName += className.substring(curIdx, idx);
+        newClassName += newStyle;
+        curIdx = idx + oldStyle.length;
+      }
+
+      elem.className = newClassName;
+    } else {
+      // There was no space, and therefore only one class name, which we can
+      // simply clobber.
+      elem.className = newStyle;
+    }
+  }-*/;
 }
+
