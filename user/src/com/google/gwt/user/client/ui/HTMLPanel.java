@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,7 @@ public class HTMLPanel extends ComplexPanel {
   private static int sUid;
 
   /**
-   * A helper method for creating unique id's for elements within dynamically-
+   * A helper method for creating unique IDs for elements within dynamically-
    * generated HTML. This is important because no two elements in a document
    * should have the same id.
    * 
@@ -60,7 +60,7 @@ public class HTMLPanel extends ComplexPanel {
   public void add(Widget widget, String id) {
     Element elem = getElementById(getElement(), id);
     if (elem == null) {
-      throw new NoSuchElementException();
+      throw new NoSuchElementException(id);
     }
 
     super.add(widget, elem);
