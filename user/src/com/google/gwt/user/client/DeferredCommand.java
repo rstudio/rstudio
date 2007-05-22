@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,12 +45,14 @@ public class DeferredCommand {
    * 
    * Note that the {@link Command} should not perform any blocking operations.
    * 
-   * @param cmd the command to be fired. If cmd is null, a "pause" will be
-   *          inserted into the queue. Any events added after the pause will
-   *          wait for an additional cycle through the system event loop before
-   *          executing. Pauses are cumulative.
+   * @param cmd the command to be fired
+   * @throws NullPointerException if cmd is <code>null</code>
    */
   public static void addCommand(Command cmd) {
+    if (cmd == null) {
+      throw new NullPointerException("cmd can not be null");
+    }
+
     commandExecutor.submit(cmd);
   }
 
@@ -61,12 +63,24 @@ public class DeferredCommand {
    * Note that the {@link IncrementalCommand} should not perform any blocking
    * operations.
    * 
-   * @param cmd the command to be fired. If cmd is null, a "pause" will be
-   *          inserted into the queue. Any events added after the pause will
-   *          wait for an additional cycle through the system event loop before
-   *          executing. Pauses are cumulative.
+   * @param cmd the command to be fired
+   * @throws NullPointerException if cmd is <code>null</code>
    */
   public static void addCommand(IncrementalCommand cmd) {
+    if (cmd == null) {
+      throw new NullPointerException("cmd can not be null");
+    }
+
     commandExecutor.submit(cmd);
+  }
+
+  /**
+   * Adds a "pause" to the queue of {@link DeferredCommand}s. Any
+   * {@link DeferredCommand}s or pauses that are added after this pause will
+   * wait for an additional cycle through the system event loop before
+   * executing.
+   */
+  public static void addPause() {
+    commandExecutor.submit((Command) null);
   }
 }
