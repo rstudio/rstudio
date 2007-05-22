@@ -356,7 +356,7 @@ public abstract class BrowserWidget extends Composite {
     }
     if (loadedModules.isEmpty()) {
       if (!toolbar.openWebModeButton.isDisposed()) {
-        // Disable the compile buton.
+        // Disable the compile button.
         //
         toolbar.openWebModeButton.setEnabled(false);
       }     
