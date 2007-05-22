@@ -19,98 +19,97 @@ package com.google.gwt.user.client;
  * A tag interface that is used in the generation of image bundles. An image
  * bundle is a composition of multiple images into a single large image, along
  * with an interface for accessing a specific image's
- * {@link com.google.gwt.user.client.ui.AbstractImagePrototype prototype}
- * from within the composition. Using <code>GWT.create(<i>class</i>)</code> to
- * instantiate a type that directly extends or implements <code>ImageBundle</code>
- * generates an image bundle.
- *
+ * {@link com.google.gwt.user.client.ui.AbstractImagePrototype prototype} from
+ * within the composition. Obtain an image bundle instance by calling
+ * <code>GWT.create(<i>T</i>)</code>, where <code>T</code> is an
+ * interface that directly or indirectly extends <code>ImageBundle</code>.
+ * 
  * <p>
- * To create and use an image bundle, users must extend the
- * <code>ImageBundle</code> interface, and add a method declaration for each
- * image that is to be part of the bundle.
- * </p>
- *
- * <p>
- * Methods must have a return type of
- * {@link com.google.gwt.user.client.ui.AbstractImagePrototype AbstractImagePrototype},
- * and take no parameters. The image name can be specified by using the
+ * To create and use an image bundle, extend the <code>ImageBundle</code>
+ * interface, and add a method declaration for each image that is to be part of
+ * the bundle. Each method must take no parameters and must have a return type
+ * of
+ * {@link com.google.gwt.user.client.ui.AbstractImagePrototype AbstractImagePrototype}.
+ * The image name can optionally be specified using the
  * <code>gwt.resource</code> metadata tag. Valid image name extensions are
- * <code>png</code>, <code>gif</code>, or <code>jpg</code>. If the image name
- * contains '/' characters, it is assumed to be the name of a resource
- * on the classpath, formatted as would be expected by
- * <code>ClassLoader.getResource(String)</code>. Otherwise, the image must
- * be located in the same package as the user-defined image bundle.
+ * <code>png</code>, <code>gif</code>, or <code>jpg</code>. If the
+ * image name contains '/' characters, it is assumed to be the name of a
+ * resource on the classpath, formatted as would be expected by
+ * <code>ClassLoader.getResource(String)</code>. Otherwise, the image must be
+ * located in the same package as the user-defined image bundle.
  * </p>
- *
+ * 
  * <p>
- * An image bundle that uses the metadata tag to specify image names might look
- * something like this:
- *
+ * The easiest way to create image bundle is to omit the
+ * <code>gwt.resource</code> metadata tag, and name the method the same as the
+ * image name, excluding the extension. When the image name is inferred in this
+ * manner, the image name's extension is assumed to be either <code>png</code>,
+ * <code>gif</code>, or <code>jpg</code>, and the image location must be
+ * in the same package as the user-defined image bundle. In the event that there
+ * are multiple image files that have the same name with different extensions,
+ * the order of extension precedence is <code>png</code>, <code>gif</code>,
+ * <code>jpg</code>.
+ * 
+ * <h3>Example</h3>
+ * 
  * <pre class="code">
  * public interface MyImageBundle extends ImageBundle {
  *
- *  // The metadata tag contains no '/' characters, so btn_submit_icon.gif
- *  // must be located in the same package as MyImageBundle.
+ *   /**
+ *    * Notice that the gwt.resource metadata tag is not present, 
+ *    * so the method name itself is assumed to match the associated 
+ *    * image filename.
+ *    *
+ *    * One of btn_submit_icon.png, btn_submit_icon.gif, or 
+ *    * btn_submit_icon.jpg must be located in the same package 
+ *    * as MyImageBundle.
+ *    *&#47; 
+ *   public AbstractImagePrototype btn_submit_icon();
  *
- *  /**
- *   * @gwt.resource btn_submit_icon.gif
- *   *&#47;
- *  public AbstractImagePrototype submitButtonIcon();
- *
- *  // btn_cancel_icon.png must be located in the package com.mycompany.myapp.icons,
- *  // and this package must be on the classpath.
- *
- *  /**
- *   * @gwt.resource com/mycompany/myapp/icons/btn_cancel_icon.png
- *   *&#47;
- *  public AbstractImagePrototype cancelButtonIcon();
- *
+ *   // No doc comment is required if you want the default 
+ *   // name-matching behavior.
+ *   public AbstractImagePrototype cancelButtonIcon();
  * }
  * </pre>
- *
+ * 
  * </p>
- *
+ * 
  * <p>
- * Another way to specify the image name is to omit the metadata tag, and name
- * the method the same as the image name, excluding the extension. When the
- * image name is provided in this manner, the image name's extension is assumed
- * to be either <code>png</code>, <code>gif</code>, or <code>jpg</code>, and the
- * image location must be in the same package as the user-defined image bundle.
- * In the event that there are multiple image files that have the same name with
- * different extensions, the order of extension precedence is <code>png</code>,
- * <code>gif</code>, <code>jpg</code>. A conversion of the example above to use
- * the method names as the image names would look like this:
- *
+ * An image bundle that uses the <code>gwt.resource</code> metadata tag to
+ * specify image names might look something like this:
+ * 
  * <pre class="code">
  * public interface MyImageBundle extends ImageBundle {
  *
- *  // One of btn_submit_icon.png, btn_submit_icon.gif, or btn_submit_icon.jpg
- *  // must be located in the same package as MyImageBundle.
- *  // Notice that the gwt.resource metadata tag is not present.
+ *   /**
+ *    * The metadata tag contains no '/' characters, so 
+ *    * btn_submit_icon.gif must be located in the same 
+ *    * package as MyImageBundle.
+ *    *
+ *    * @gwt.resource btn_submit_icon.gif
+ *    *&#47;
+ *   public AbstractImagePrototype submitButtonIcon();
  *
- *  public void btn_submit_icon();
- *
- *  // Since the image is not located in the same package as MyImageBundle, we
- *  // have to use the metadata tag to specify the image name
- *
- *  /**
- *   * @gwt.resource com/mycompany/myapp/icons/btn_cancel_icon.png
- *   *&#47;
- *  public void cancelButtonIcon();
- *
+ *   /**
+ *    * btn_cancel_icon.png must be located in the package 
+ *    * com.mycompany.myapp.icons (which must be on the classpath).
+ *    *
+ *    * @gwt.resource com/mycompany/myapp/icons/btn_cancel_icon.png
+ *    *&#47;
+ *   public AbstractImagePrototype cancelButtonIcon();
  * }
  * </pre>
- *
+ * 
  * </p>
- *
+ * 
  * <p>
  * Here is how MyImageBundle might be used in an application:
- *
+ * 
  * <pre class="code">
  *  ...
  *
  *  // Create a new instance of MyImageBundle using GWT.create.
- *  // This only needs to be done once - a reference to myImageBundle should
+ *  // This only needs to be done once - a reference to myImageBundle can
  *  // be kept for use by other parts of the application.
  *  MyImageBundle myImageBundle = (MyImageBundle) GWT.create(MyImageBundle.class);
  *
@@ -124,7 +123,7 @@ package com.google.gwt.user.client;
  *
  * ...
  * </pre>
- *
+ * 
  * </p>
  * 
  * <h3>For More Information</h3>
@@ -132,7 +131,8 @@ package com.google.gwt.user.client;
  * @see com.google.gwt.user.client.ui.AbstractImagePrototype
  * @see com.google.gwt.user.client.ui.Image#Image(String, int, int, int, int)
  * @see com.google.gwt.user.client.ui.Image#setVisibleRect(int, int, int, int)
- * @see com.google.gwt.user.client.ui.Image#setUrlAndVisibleRect(String, int, int, int, int)
+ * @see com.google.gwt.user.client.ui.Image#setUrlAndVisibleRect(String, int,
+ *      int, int, int)
  */
 public interface ImageBundle {
 }
