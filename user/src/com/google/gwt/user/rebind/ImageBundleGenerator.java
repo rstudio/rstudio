@@ -50,6 +50,9 @@ public class ImageBundleGenerator extends Generator {
   private static final String CLIPPEDIMAGEPROTOTYPE_QNAME =
       "com.google.gwt.user.client.ui.impl.ClippedImagePrototype";
 
+  private static final String GWT_QNAME =
+      "com.google.gwt.core.client.GWT";
+
   private static final String IMAGEBUNDLE_QNAME = "com.google.gwt.user.client.ImageBundle";
 
   private static final String METADATA_TAG = "gwt.resource";
@@ -138,6 +141,7 @@ public class ImageBundleGenerator extends Generator {
         pkgName, subName);
     f.addImport(ABSTRACTIMAGEPROTOTYPE_QNAME);
     f.addImport(CLIPPEDIMAGEPROTOTYPE_QNAME);
+    f.addImport(GWT_QNAME);
     f.addImplementedInterface(userType.getQualifiedSourceName());
 
     PrintWriter pw = context.tryCreate(logger, pkgName, subName);
@@ -157,8 +161,10 @@ public class ImageBundleGenerator extends Generator {
       // Write the compound image into the output directory.
       String bundledImageUrl = bulder.writeBundledImage(logger, context);
 
-      // Emit a constant for the composite url.
-      sw.print("private static final String IMAGE_BUNDLE_URL = \"");
+      // Emit a constant for the composite URL. Note that we prepend the
+      // module's base URL so that the module can reference its own resources
+      // independently of the host HTML page.
+      sw.print("private static final String IMAGE_BUNDLE_URL = GWT.getModuleBaseURL() + \"");
       sw.print(escape(bundledImageUrl));
       sw.println("\";");
 
