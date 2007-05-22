@@ -26,9 +26,7 @@ public interface MouseWheelListener extends EventListener {
    * Fired when the user scrolls the mouse wheel over a widget.
    *
    * @param sender the widget sending the event
-   * @param x the x coordinate of the mouse
-   * @param y the y coordinate of the mouse
    * @param velocity the velocity information for the wheel event
    */
-  void onMouseWheel(Widget sender, int x, int y, MouseWheelVelocity velocity);
+  void onMouseWheel(Widget sender, MouseWheelVelocity velocity);
 }

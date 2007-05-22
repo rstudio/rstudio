@@ -34,16 +34,13 @@ public class MouseWheelListenerCollection extends Vector {
    * Fires a mouse wheel event to all listeners.
    *
    * @param sender the widget sending the event
-   * @param x the x coordinate of the mouse
-   * @param y the y coordinate of the mouse
    * @param velocity the velocity information for the event
    */
-  public void fireMouseWheel(Widget sender, int x, int y,
-      MouseWheelVelocity velocity) {
+  public void fireMouseWheel(Widget sender, MouseWheelVelocity velocity) {
 
     for (Iterator it = iterator(); it.hasNext();) {
       MouseWheelListener listener = (MouseWheelListener) it.next();
-      listener.onMouseWheel(sender, x, y, velocity);
+      listener.onMouseWheel(sender, velocity);
     }
   }
 
@@ -55,18 +52,9 @@ public class MouseWheelListenerCollection extends Vector {
    */
   public void fireMouseWheelEvent(Widget sender, Event event) {
     if (DOM.eventGetType(event) == Event.ONMOUSEWHEEL) {
-      final Element senderElem = sender.getElement();
-      int x = DOM.eventGetClientX(event)
-          - DOM.getAbsoluteLeft(sender.getElement())
-          + DOM.getElementPropertyInt(senderElem, "scrollLeft")
-          + Window.getScrollLeft();          
-      int y = DOM.eventGetClientY(event)
-          - DOM.getAbsoluteTop(sender.getElement())
-          + DOM.getElementPropertyInt(senderElem, "scrollTop")
-          + Window.getScrollTop();          
       MouseWheelVelocity velocity = new MouseWheelVelocity(event);
 
-      fireMouseWheel(sender, x, y, velocity);
+      fireMouseWheel(sender, velocity);
     }
   }
 }

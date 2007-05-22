@@ -33,7 +33,7 @@ class DOMImplSafari extends DOMImplStandard {
   }-*/;
 
   public native int eventGetMouseWheelVelocityY(Event evt) /*-{
-    return -evt.wheelDelta / 40;
+    return Math.round(-evt.wheelDelta / 40);
   }-*/;
 
   public native int getAbsoluteLeft(Element elem) /*-{
