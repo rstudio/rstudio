@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,11 +26,13 @@ import com.google.gwt.user.client.DOM;
  * 
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
- * <li>.gwt-TextBox { }</li>
+ * <li>.gwt-TextBox { primary style }</li>
+ * <li>.gwt-TextBox-readonly { dependent style set when the text box is read-only }</li>
  * </ul>
  * 
  * <p>
- * <h3>Example</h3> {@example com.google.gwt.examples.TextBoxExample}
+ * <h3>Example</h3>
+ * {@example com.google.gwt.examples.TextBoxExample}
  * </p>
  */
 public class TextBox extends TextBoxBase {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -154,6 +154,16 @@ public class TextBoxBase extends FocusWidget implements SourcesKeyboardEvents,
     return DOM.getElementProperty(getElement(), "value");
   }
 
+  /**
+   * Determines whether or not the widget is read-only.
+   * 
+   * @return <code>true</code> if the widget is currently read-only,
+   *         <code>false</code> if the widget is currently editable
+   */
+  public boolean isReadOnly() {
+    return DOM.getElementPropertyBoolean(getElement(), "readOnly");
+  }
+
   public void onBrowserEvent(Event event) {
     // Call the superclass' implementation first (because FocusWidget fires
     // some events itself).
@@ -231,6 +241,22 @@ public class TextBoxBase extends FocusWidget implements SourcesKeyboardEvents,
 
   public void setName(String name) {
     DOM.setElementProperty(getElement(), "name", name);
+  }
+
+  /**
+   * Turns read-only mode on or off.
+   * 
+   * @param readOnly if <code>true</code>, the widget becomes read-only; if
+   *          <code>false</code> the widget becomes editable
+   */
+  public void setReadOnly(boolean readOnly) {
+    DOM.setElementPropertyBoolean(getElement(), "readOnly", readOnly);
+    String readOnlyStyle = getStyleName() + "-readonly";
+    if (readOnly) {
+      addStyleName(readOnlyStyle);
+    } else {
+      removeStyleName(readOnlyStyle);
+    }
   }
 
   /**
