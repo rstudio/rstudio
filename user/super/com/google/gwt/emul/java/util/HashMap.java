@@ -228,7 +228,7 @@ public class HashMap extends AbstractMap {
     init();
   }
 
-  public HashMap(HashMap toBeCopied) {
+  public HashMap(Map toBeCopied) {
     this();
     this.putAll(toBeCopied);
   }
