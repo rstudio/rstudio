@@ -108,7 +108,7 @@ public class LowLevelMoz {
     } catch (IOException e) {
       // ignore problems, failures will occur when the libs try to load
     }
-    return installPath + "/mozilla-1.7.12";
+    return installPath + "/mozilla-1.7.13";
   }
 
   public static synchronized void init() {

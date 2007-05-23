@@ -54,14 +54,17 @@ SRCS    := gwt-ll.cpp LowLevelMoz.cpp JsValueMoz.cpp Tracer.cpp \
 OBJS    := $(addprefix $(OBJDIR),$(SRCS:.cpp=.o))
 DEPS    := $(addprefix $(OBJDIR),$(SRCS:.cpp=.d))
 
+MOZDIR = $(GWT_TOOLS)/sdk/mozilla-1.7.13
+MOZINC = $(MOZDIR)/include
+MOZLIB = $(MOZDIR)/lib
+
 ##
 # Include path configuration
 ##
 SYSINCS := \
     $(JAVA_HOME)/include \
     $(JAVA_HOME)/include/linux \
-	$(GWT_TOOLS)/sdk/mozilla-1.7.12/include \
-	$(GWT_TOOLS)/sdk/mozilla-1.7.12/include/extra
+    $(MOZINC) $(MOZINC)/extra
 
 INCS := $(OBJDIR)
 INCS := $(addprefix -I ,$(INCS)) $(addprefix -isystem ,$(SYSINCS))
@@ -70,7 +73,7 @@ INCS := $(addprefix -I ,$(INCS)) $(addprefix -isystem ,$(SYSINCS))
 # Libraries and library path
 ##
 LIBS    = xpcomglue_s
-LIBPATH = -L$(GWT_TOOLS)/sdk/mozilla-1.7.12/lib
+LIBPATH = -L$(MOZLIB)
 LIBS     := $(addprefix -l,$(LIBS))
 
 # for notes on auto-dependency generation, see
@@ -130,7 +133,7 @@ $(OBJDIR)%.o : $(SRCDIR)%.cpp
 ##
 # Actual output file
 ##
-$(OUT): $(OBJS) $(GWT_TOOLS)/sdk/mozilla-1.7.12/lib/libxpcomglue_s.a
+$(OUT): $(OBJS) $(MOZLIB)/libxpcomglue_s.a
 	@[ -d $(OUTDIR) ] || mkdir -p $(OUTDIR)
 	$(LD) -shared $(LDFLAGS) $(LIBPATH) -o $@ $^ $(LIBS)
 	$(STRIP) --strip-unneeded $@

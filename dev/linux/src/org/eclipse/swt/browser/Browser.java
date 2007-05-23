@@ -161,11 +161,34 @@ public Browser(Composite parent, int style) {
 
 		try {
 			/*
+			 * GOOGLE: Eclipse seems to always add /usr/lib/mozilla onto the
+			 * java.library.path, which results in loading the system-supplied
+			 * libraries to fulfill dependencies rather than the ones we built.
+			 * So, to get around this, we load each library specifically.
+			 */
+			System.load(mozillaPath + "/libnspr4.so");
+			System.load(mozillaPath + "/libplc4.so");
+			System.load(mozillaPath + "/libplds4.so");
+
+			/*
 			* GOOGLE: For some reason, swt-mozilla won't load unless xpcom is
 			* loaded first. I don't know why it fails for me, or why it
 			* doesn't fail for the SWT guys, but this seems to fix it.
+			*
+			* This may in fact be related to the problem above.
 			*/
 			System.load (mozillaPath + "/libxpcom.so");
+			System.load(mozillaPath + "/libmozz.so");
+			System.load(mozillaPath + "/libmozjs.so");
+			System.load(mozillaPath + "/libgkgfx.so");
+			System.load(mozillaPath + "/components/libtypeaheadfind.so");
+			System.load(mozillaPath + "/components/libembedcomponents.so");
+			System.load(mozillaPath + "/components/libpref.so");
+			System.load(mozillaPath + "/components/libsystem-pref.so");
+			System.load(mozillaPath + "/components/libnecko.so");
+			System.load(mozillaPath + "/components/libcaps.so");
+			System.load(mozillaPath + "/components/libjsd.so");
+			System.load(mozillaPath + "/libgtkembedmoz.so");
 			Library.loadLibrary ("swt-mozilla"); //$NON-NLS-1$
 		} catch (UnsatisfiedLinkError e) {
 			try {

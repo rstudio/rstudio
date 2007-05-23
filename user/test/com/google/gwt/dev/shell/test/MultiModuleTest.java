@@ -176,8 +176,8 @@ public class MultiModuleTest extends GWTTestCase {
     frame.setHeight("100%");
     frame.setWidth("100%");
     RootPanel.get().add(frame);
-    // wait up to 30 seconds for inner frames module to do its job
-    delayTestFinish(30000);
+    // wait up to 60 seconds for inner frames module to do its job
+    delayTestFinish(60000);
   }
 
   /**

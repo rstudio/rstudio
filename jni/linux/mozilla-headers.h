@@ -25,5 +25,6 @@
 #include "nsIScriptContext.h"
 #include "nsIDOMWindow.h"
 #include "nsIXPConnect.h"
+#include "nsIFactory.h"
 #include "nsCOMPtr.h"
 #include "nsAutoPtr.h"

@@ -446,7 +446,8 @@ public class JUnitShell extends GWTShell {
       return;
     }
 
-    List/* JUnitMessageQueue.TestResult */results = messageQueue.getResults(testCaseClassName);
+    List/* JUnitMessageQueue.TestResult */results
+        = messageQueue.getResults(testCaseClassName);
 
     if (results == null) {
       return;
