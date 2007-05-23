@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,7 +46,7 @@ abstract class AbstractItemPickerImpl extends Widget {
     Item(int index) {
       setElement(DOM.createTD());
       this.index = index;
-      this.setStyleName(STYLENAME_ITEM);
+      this.setStyleName(STYLENAME_PRIMARY_ITEM);
       items.add(index, this);
     }
 
@@ -76,8 +76,8 @@ abstract class AbstractItemPickerImpl extends Widget {
     }
   }
 
-  private static final String STYLENAME_SELECTED_ITEM = "item-selected";
-  private static final String STYLENAME_ITEM = "item";
+  private static final String STYLENAME_DEPENDENT_SELECTED = "-selected";
+  private static final String STYLENAME_PRIMARY_ITEM = "item";
 
   final Element body;
   private Element currentTR;
@@ -208,17 +208,15 @@ abstract class AbstractItemPickerImpl extends Widget {
       return;
     }
 
-    // Remove old selected item.
+    // Remove "selected" style from the item.
     if (selectedItem != null) {
-      selectedItem.removeStyleName(STYLENAME_SELECTED_ITEM);
-      selectedItem.addStyleName(STYLENAME_ITEM);
+      selectedItem.removeStyleName(selectedItem.getStyleName() + STYLENAME_DEPENDENT_SELECTED);
     }
 
-    // Add new selected item.
+    // Add the "selected" style to the item.
     selectedItem = item;
     if (selectedItem != null) {
-      selectedItem.removeStyleName(STYLENAME_ITEM);
-      selectedItem.addStyleName(STYLENAME_SELECTED_ITEM);
+      selectedItem.addStyleName(selectedItem.getStyleName() + STYLENAME_DEPENDENT_SELECTED);
     }
   }
 
