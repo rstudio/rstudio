@@ -425,10 +425,10 @@ public class Pruner {
     public boolean visit(JNewArray newArray, Context ctx) {
       // rescue and instantiate the array type
       JArrayType arrayType = newArray.getArrayType();
-      JType leafType = arrayType.getLeafType();
       if (newArray.dims != null) {
         // rescue my type and all the implicitly nested types (with fewer dims)
         int nDims = arrayType.getDims();
+        JType leafType = arrayType.getLeafType();
         assert (newArray.dims.size() == nDims);
         for (int i = 0; i < nDims; ++i) {
           if (newArray.dims.get(i) instanceof JAbsentArrayDimension) {
@@ -439,11 +439,6 @@ public class Pruner {
       } else {
         // just rescue my own specific type
         rescue(arrayType, true, true);
-      }
-
-      // Rescue the array's base element type for reference types
-      if (leafType instanceof JReferenceType) {
-        rescue((JReferenceType) leafType, true, false);
       }
 
       // also rescue and instantiate the "base" array type
