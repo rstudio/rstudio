@@ -20,7 +20,9 @@ import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.HistoryListener;
 
 /**
- * TODO: document me.
+ * Tests for the history system.
+ * 
+ * TODO: find a way to test unescaping of the initial hash value.
  */
 public class HistoryTest extends GWTTestCase {
 

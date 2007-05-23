@@ -33,9 +33,18 @@ class HistoryImplIE6 extends HistoryImplFrame {
     var urlChecker = function() {
       var hash = $wnd.location.hash;
       if (hash.length > 0) {
-        var token = hash.substring(1);
-        if ($wnd.__gwt_historyToken && (token != $wnd.__gwt_historyToken))
+        var token = '';
+        try {
+          token = decodeURIComponent(hash.substring(1));
+        } catch (e) {
+          // If there's a bad hash, always reload. This could only happen if
+          // if someone entered or linked to a bad url.
           $wnd.location.reload();
+        }
+
+        if ($wnd.__gwt_historyToken && (token != $wnd.__gwt_historyToken)) {
+          $wnd.location.reload();
+        }
       }
       $wnd.setTimeout(urlChecker, 250);
     };
@@ -54,6 +63,25 @@ class HistoryImplIE6 extends HistoryImplFrame {
     return tokenElement.innerText;
   }-*/;
 
+  protected native void initHistoryToken() /*-{
+    // Get the initial token from the url's hash component.
+    var hash = $wnd.location.hash;
+    if (hash.length > 0) {
+      try {
+        $wnd.__gwt_historyToken = decodeURIComponent(hash.substring(1));
+      } catch (e) {
+        // Clear the bad hash and __gwt_historyToken
+        // (this can't have been a valid token).
+        $wnd.location.hash = '';
+        $wnd.__gwt_historyToken = '';
+      }
+      return;
+    }
+
+    // There was no hash. Just start off with an empty token.
+    $wnd.__gwt_historyToken = '';
+  }-*/;
+
   protected native void injectGlobalHandler() /*-{
     $wnd.__gwt_onHistoryLoad = function(token) {
       // Change the URL and notify the application that its history frame
@@ -65,12 +93,15 @@ class HistoryImplIE6 extends HistoryImplFrame {
       }
     };
   }-*/;
-  
-  protected native void newItemImpl(Element historyFrame, String historyToken) /*-{
+
+  protected native void newItemImpl(Element historyFrame, String historyToken, boolean forceAdd) /*-{
     historyToken = historyToken || "";
-    var doc = historyFrame.contentWindow.document;
-    doc.open();
-    doc.write('<html><body onload="if(parent.__gwt_onHistoryLoad)parent.__gwt_onHistoryLoad(__gwt_historyToken.innerText)"><div id="__gwt_historyToken">' + historyToken + '</div></body></html>');
-    doc.close();
+
+    if (forceAdd || ($wnd.__gwt_historyToken != historyToken)) {
+      var doc = historyFrame.contentWindow.document;
+      doc.open();
+      doc.write('<html><body onload="if(parent.__gwt_onHistoryLoad)parent.__gwt_onHistoryLoad(__gwt_historyToken.innerText)"><div id="__gwt_historyToken">' + historyToken + '</div></body></html>');
+      doc.close();
+    }
   }-*/;
 }

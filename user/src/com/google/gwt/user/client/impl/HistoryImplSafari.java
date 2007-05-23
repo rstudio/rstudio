@@ -26,26 +26,46 @@ class HistoryImplSafari extends HistoryImplFrame {
   protected native String getTokenElementContent(Element tokenElement) /*-{
     return tokenElement.value;
   }-*/;
-  
+
+  protected native void initHistoryToken() /*-{
+    // Get the initial token from the url's hash component.
+    var hash = $wnd.location.hash;
+    if (hash.length > 0)
+      $wnd.__gwt_historyToken = decodeURIComponent(hash.substring(1));
+    else
+      $wnd.__gwt_historyToken = '';
+  }-*/;
+
   protected native void injectGlobalHandler() /*-{
     $wnd.__gwt_onHistoryLoad = function(token) {
+      token = decodeURIComponent(token);
+
       // Change the URL and notify the application that its history frame
       // is changing.
       if (token != $wnd.__gwt_historyToken) {
         $wnd.__gwt_historyToken = token;
-        // TODO(jgw): fix the bookmark update, if possible.  The following code
-        // screws up the browser by (a) making it pretend that it's loading the
-        // page indefinitely, and (b) causing all text to disappear (!)
+
+// TODO(jgw): can't actually do this on Safari without screwing everything up.
 //        $wnd.location.hash = encodeURIComponent(token);
+
+        // Fire the event.
         @com.google.gwt.user.client.impl.HistoryImpl::onHistoryChanged(Ljava/lang/String;)(token);
       }
     };
   }-*/;
-  
-  protected native void newItemImpl(Element historyFrame, String historyToken) /*-{
-    historyToken = historyToken || "";
-    var base = @com.google.gwt.core.client.GWT::getModuleBaseURL()();
-    historyFrame.contentWindow.location.href = base + 'history.html?' + historyToken;
-  }-*/;
 
+  protected native void newItemImpl(Element historyFrame, String historyToken,
+      boolean forceAdd) /*-{
+    // Ignore 'forceAdd'. It's only needed on IE.
+
+    // The history frame's contentWindow can be null when backing into an
+    // application. For some reason, the history frame will finish loading
+    // *after* the application itself, which is a bit of a race condition.
+    if (historyFrame.contentWindow) {
+      historyToken = historyToken || "";
+
+      var base = @com.google.gwt.core.client.GWT::getModuleBaseURL()();
+      historyFrame.contentWindow.location.href = base + 'history.html?' + historyToken;
+    }
+  }-*/;
 }

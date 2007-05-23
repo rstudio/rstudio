@@ -39,15 +39,6 @@ abstract class HistoryImplFrame extends HistoryImpl {
     return tokenElement;
   }-*/;
 
-  private static native void initHistoryToken() /*-{
-    // Get the initial token from the url's hash component.
-    var hash = $wnd.location.hash;
-    if (hash.length > 0)
-      $wnd.__gwt_historyToken = hash.substring(1);
-    else
-      $wnd.__gwt_historyToken = '';
-  }-*/;
-  
   private Element historyFrame;
 
   public boolean init() {
@@ -58,13 +49,13 @@ abstract class HistoryImplFrame extends HistoryImpl {
 
     initHistoryToken();
 
-    // Initialize the history iframe.  If a token element already exists, then
+    // Initialize the history iframe. If a token element already exists, then
     // we're probably backing into the app, so _don't_ create a new item.
     Element tokenElement = getTokenElement(historyFrame);
     if (tokenElement != null) {
       setToken(getTokenElementContent(tokenElement));
     } else {
-      newItem(getToken());
+      newItemImpl(historyFrame, getToken(), true);
     }
 
     injectGlobalHandler();
@@ -72,12 +63,15 @@ abstract class HistoryImplFrame extends HistoryImpl {
   }
 
   public void newItem(String historyToken) {
-    newItemImpl(historyFrame, historyToken);
+    newItemImpl(historyFrame, historyToken, false);
   }
 
   protected abstract String getTokenElementContent(Element tokenElement);
 
+  protected abstract void initHistoryToken();
+
   protected abstract void injectGlobalHandler();
 
-  protected abstract void newItemImpl(Element historyFrame2, String historyToken);
+  protected abstract void newItemImpl(Element historyFrame,
+      String historyToken, boolean forceAdd);
 }
