@@ -29,8 +29,9 @@ import java.util.Iterator;
  * 
  * <h3>CSS Style Rules</h3>
  * <ul class="css">
- * <li>.gwt-DisclosurePanel-open { the panel when it is open }</li>
- * <li>.gwt-DisclosurePanel-closed { the panel when it is closed }</li>
+ * <li>.gwt-DisclosurePanel { the panel's primary style }</li>
+ * <li>.gwt-DisclosurePanel-open { dependent style set when panel is open }</li>
+ * <li>.gwt-DisclosurePanel-closed { dependent style set when panel is closed }</li>
  * <li>.header { the header section }</li>
  * <li>.content { the content section }</li>
  * </ul>
@@ -152,9 +153,9 @@ public final class DisclosurePanel extends Composite implements
   // Stylename constants.
   private static final String STYLENAME_DEFAULT = "gwt-DisclosurePanel";
 
-  private static final String STYLENAME_POSTFIX_OPEN = "-open";
+  private static final String STYLENAME_SUFFIX_OPEN = "-open";
 
-  private static final String STYLENAME_POSTFIX_CLOSED = "-closed";
+  private static final String STYLENAME_SUFFIX_CLOSED = "-closed";
 
   private static final String STYLENAME_HEADER = "header";
 
@@ -182,8 +183,6 @@ public final class DisclosurePanel extends Composite implements
   private Widget content;
 
   private boolean isOpen = false;
-
-  private String baseStylename = STYLENAME_DEFAULT;
 
   /**
    * null until #{@link #addEventHandler(DisclosureHandler)} is called (lazily
@@ -393,25 +392,6 @@ public final class DisclosurePanel extends Composite implements
     }
   }
 
-  /**
-   * Sets the base stylename on this panel.
-   * <p>
-   * The style name is the prefix that is used to create CSS class selectors to
-   * style this widget. The default style name is ".gwt-DisclosurePanel". The
-   * appropriate CSS selectors are .STYLENAME-open and .STYLENAME-closed for the
-   * open and closed states, respectively.
-   * </p>
-   * 
-   * @param styleName the prefix to uses in CSS class names.
-   * @see com.google.gwt.user.client.ui.UIObject#setStyleName(java.lang.String)
-   */
-  public final void setStyleName(String styleName) {
-    removeStyleName(baseStylename
-        + ((isOpen) ? STYLENAME_POSTFIX_OPEN : STYLENAME_POSTFIX_CLOSED));
-    baseStylename = styleName;
-    setContentDisplay();
-  }
-
   private void fireEvent() {
     if (handlers == null) {
       return;
@@ -432,17 +412,19 @@ public final class DisclosurePanel extends Composite implements
     initWidget(mainPanel);
     mainPanel.add(header);
     this.isOpen = isOpen;
+    setStyleName(STYLENAME_DEFAULT);
     setContentDisplay();
   }
 
   private void setContentDisplay() {
     // UIObject#replaceStylename has been suggested and would replace this.
+    String primaryStyleName = getStyleName();
     if (isOpen) {
-      removeStyleName(baseStylename + STYLENAME_POSTFIX_CLOSED);
-      addStyleName(baseStylename + STYLENAME_POSTFIX_OPEN);
+      removeStyleName(primaryStyleName + STYLENAME_SUFFIX_CLOSED);
+      addStyleName(primaryStyleName + STYLENAME_SUFFIX_OPEN);
     } else {
-      removeStyleName(baseStylename + STYLENAME_POSTFIX_OPEN);
-      addStyleName(baseStylename + STYLENAME_POSTFIX_CLOSED);
+      removeStyleName(primaryStyleName + STYLENAME_SUFFIX_OPEN);
+      addStyleName(primaryStyleName + STYLENAME_SUFFIX_CLOSED);
     }
 
     if (content != null) {
