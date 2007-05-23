@@ -118,7 +118,7 @@ public abstract class UIObject {
     }
 
     // Get the current style string.
-    String oldStyle = DOM.getElementProperty(elem, "className");
+    String oldStyle = ensurePrimaryStyleName(elem);
     int idx;
     if (oldStyle == null) {
       idx = -1;
@@ -160,6 +160,23 @@ public abstract class UIObject {
         DOM.setElementProperty(elem, "className", begin + end);
       }
     }
+  }
+
+  /**
+   * Ensure that the root element has a primary style name. If one is not
+   * already present, then it is assigned the default style name.
+   * 
+   * @return the primary style name
+   */
+  private static String ensurePrimaryStyleName(Element elem) {
+    String className = DOM.getElementProperty(elem, "className").trim();
+
+    if ("".equals(className)) {
+      className = STYLE_EMPTY;
+      DOM.setElementProperty(elem, "className", className);
+    }
+    
+    return className;
   }
 
   private Element element;
@@ -305,7 +322,7 @@ public abstract class UIObject {
    * @see #removeStyleName(String)
    */
   public String getStyleName() {
-    String fullClassName = DOM.getElementProperty(element, "className");
+    String fullClassName = ensurePrimaryStyleName(element);
 
     // The base style name is always the first token of the full CSS class
     // name. There can be no leading whitespace in the class name, so it's not
@@ -406,6 +423,7 @@ public abstract class UIObject {
       throw new IllegalArgumentException(EMPTY_STYLENAME_MSG);
     }
 
+    ensurePrimaryStyleName(element);
     updatePrimaryAndDependentStyleNames(element, style);
   }
 
@@ -503,7 +521,10 @@ public abstract class UIObject {
     }
 
     this.element = elem;
-    DOM.setElementProperty(element, "className", STYLE_EMPTY);
+    
+    // We do not actually force the creation of a primary style name here.
+    // Instead, we do it lazily -- when it is aboslutely required -- 
+    // in getStyleName(), addStyleName(), and removeStyleName().
   }
 
   /**
@@ -531,7 +552,7 @@ public abstract class UIObject {
     p.insertBefore(newNode, node);
     p.removeChild(node);
   }-*/;
-
+  
   /**
    * Replaces all instances of the primary style name with newPrimaryStyleName.
    */
