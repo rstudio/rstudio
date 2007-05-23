@@ -46,6 +46,22 @@ public class InnerOuterSuperTest extends GWTTestCase {
         super(i);
       }
 
+      public int checkDispatch() {
+        return 2;
+      }
+      
+      public int checkDispatchFromSub1() {
+        return super.checkDispatch();
+      }
+
+      public int checkDispatchFromSub2() {
+        return new Outer(1) {
+          public int go() {
+            return OuterIsSuper.super.checkDispatch();
+          }
+        }.go();
+      }
+
       public OuterIsNotSuper unqualifiedAlloc() {
         return new OuterIsNotSuper();
       }
@@ -73,6 +89,10 @@ public class InnerOuterSuperTest extends GWTTestCase {
 
     public Outer(int i) {
       value = i;
+    }
+    
+    public int checkDispatch() {
+      return 1;
     }
   }
 
@@ -104,6 +124,11 @@ public class InnerOuterSuperTest extends GWTTestCase {
     Outer.TestQualifiedSuperCall x = new Outer.TestQualifiedSuperCall() {
     };
     assertEquals(2, x.getValue());
+  }
+
+  public void testSuperDispatch() {
+    assertEquals(1, outerIsSuper.checkDispatchFromSub1());
+    assertEquals(1, outerIsSuper.checkDispatchFromSub2());
   }
 
   public void testUnqualifiedAlloc() {

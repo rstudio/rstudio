@@ -904,7 +904,11 @@ public class GenerateJavaAST {
       }
 
       JMethodCall call = new JMethodCall(program, info, qualifier, method);
-      boolean isSuperRef = x.receiver instanceof SuperReference;
+
+      // On a super ref, don't allow polymorphic dispatch. Oddly enough,
+      // QualifiedSuperReference not derived from SuperReference!
+      boolean isSuperRef = x.receiver instanceof SuperReference
+          || x.receiver instanceof QualifiedSuperReference;
       if (isSuperRef) {
         call.setStaticDispatchOnly();
       }
