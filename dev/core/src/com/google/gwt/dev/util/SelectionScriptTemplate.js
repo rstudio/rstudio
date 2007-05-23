@@ -57,10 +57,10 @@ function __MODULE_FUNC__() {
   // --------------- WINDOW ONLOAD HOOK ---------------
 
   var oldOnLoad = $wnd.onload;
-  $wnd.onload = function() {
+  $wnd.onload = function(evt) {
     if (oldOnLoad) {
       $wnd.onload = oldOnLoad;
-      $wnd.onload();
+      $wnd.onload(evt);
     }
     bodyDone = true;
     maybeStartModule();
@@ -345,28 +345,28 @@ __MODULE_FUNC__.__gwt_initHandlers = function(resize, beforeunload, unload) {
   , oldOnUnload = $wnd.onunload
   ;
 
-  $wnd.onresize = function() {
+  $wnd.onresize = function(evt) {
    resize();
    if (oldOnResize)
-     oldOnResize();
+     oldOnResize(evt);
   };
   
-  $wnd.onbeforeunload = function() {
+  $wnd.onbeforeunload = function(evt) {
    var ret = beforeunload();
   
    var oldRet;
    if (oldOnBeforeUnload)
-     oldRet = oldOnBeforeUnload();
+     oldRet = oldOnBeforeUnload(evt);
   
    if (ret !== null)
      return ret;
    return oldRet;
   };
   
-  $wnd.onunload = function() {
+  $wnd.onunload = function(evt) {
    unload();
    if (oldOnUnload)
-     oldOnUnload();
+     oldOnUnload(evt);
   };
 }
 
