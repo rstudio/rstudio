@@ -27,6 +27,7 @@ import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JForStatement;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
@@ -215,6 +216,12 @@ public class DeadCodeElimination {
             ctx.replaceMe(x.getBody());
           }
         }
+      }
+    }
+
+    public void endVisit(JExpressionStatement x, Context ctx) {
+      if (!x.getExpr().hasSideEffects()) {
+        removeMe(x, ctx);
       }
     }
 

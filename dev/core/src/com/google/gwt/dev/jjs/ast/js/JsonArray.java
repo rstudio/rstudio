@@ -42,7 +42,12 @@ public class JsonArray extends JExpression {
   }
 
   public boolean hasSideEffects() {
-    return true;
+    for (int i = 0, c = exprs.size(); i < c; ++i) {
+      if (((JExpression) exprs.get(i)).hasSideEffects()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

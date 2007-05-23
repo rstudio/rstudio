@@ -606,11 +606,7 @@ public class GenerateJavaScriptAST {
     // @Override
     public void endVisit(JExpressionStatement x, Context ctx) {
       JsExpression expr = (JsExpression) pop(); // expr
-      if (x.getExpr().hasSideEffects()) {
-        push(expr.makeStmt());
-      } else {
-        push(jsProgram.getEmptyStmt());
-      }
+      push(expr.makeStmt());
     }
 
     // @Override

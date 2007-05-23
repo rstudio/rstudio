@@ -65,7 +65,14 @@ public class JsonObject extends JExpression {
   }
 
   public boolean hasSideEffects() {
-    return true;
+    for (int i = 0, c = propInits.size(); i < c; ++i) {
+      JsonPropInit propInit = ((JsonPropInit) propInits.get(i));
+      if (propInit.labelExpr.hasSideEffects()
+          || propInit.valueExpr.hasSideEffects()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

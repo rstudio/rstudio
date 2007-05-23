@@ -42,11 +42,17 @@ public class JArrayRef extends JExpression {
 
   public JType getType() {
     JType type = instance.getType();
-    if (type == program.getTypeNull()) {
-      return type;
+    JNullType typeNull = program.getTypeNull();
+    if (type == typeNull) {
+      return typeNull;
     }
     JArrayType arrayType = (JArrayType) type;
-    return arrayType.getElementType();
+    JType elementType = arrayType.getElementType();
+    if (elementType instanceof JReferenceType
+        && !program.typeOracle.isInstantiatedType((JReferenceType) elementType)) {
+      return typeNull;
+    }
+    return elementType;
   }
 
   public boolean hasSideEffects() {

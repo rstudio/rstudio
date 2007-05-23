@@ -17,7 +17,6 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
-import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
@@ -33,7 +32,6 @@ import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
-import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
@@ -524,20 +522,6 @@ public class TypeTightener {
       if (refType != resultType) {
         x.setType(resultType);
         myDidChange = true;
-      }
-    }
-
-    // @Override
-    public void endVisit(JNewArray x, Context ctx) {
-      // tighten leaf type based on non-instantiability
-      JArrayType arrayType = x.getArrayType();
-      JType leafType = arrayType.getLeafType();
-      if (leafType instanceof JReferenceType) {
-        if (!program.typeOracle.isInstantiatedType((JReferenceType) leafType)) {
-          arrayType = program.getTypeArray(typeNull, arrayType.getDims());
-          x.setType(arrayType);
-          myDidChange = true;
-        }
       }
     }
 

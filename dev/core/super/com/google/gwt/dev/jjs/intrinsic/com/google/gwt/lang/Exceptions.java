@@ -31,20 +31,6 @@ final class Exceptions {
   }
 
   /**
-   * Easily throw a ClassCastException from native or generated code.
-   */
-  static void throwClassCastException() throws ClassCastException {
-    throw new ClassCastException();
-  }
-
-  /**
-   * Easily throw a NullPointerException from native or generated code.
-   */
-  static void throwNullPointerException() throws NullPointerException {
-    throw new NullPointerException();
-  }
-
-  /**
    * Returns the description of an unexpected JavaScript exception (not a normal
    * Java one).
    */

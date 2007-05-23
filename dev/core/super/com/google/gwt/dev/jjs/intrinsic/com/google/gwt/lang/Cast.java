@@ -44,7 +44,7 @@ final class Cast {
   static native Object dynamicCast(Object src, int dstId) /*-{
     if (src != null)
       @com.google.gwt.lang.Cast::canCast(II)(src.@java.lang.Object::typeId,dstId)
-      || @com.google.gwt.lang.Exceptions::throwClassCastException()();
+      || @com.google.gwt.lang.Cast::throwClassCastException()();
 
     return src;
   }-*/;
@@ -127,14 +127,23 @@ final class Cast {
   }
 
   /**
+   * Unconditionally throw a {@link ClassCastException}. Called from {#link
+   * {@link #dynamicCast(Object, int)}.
+   */
+  static Object throwClassCastException() throws ClassCastException {
+    throw new ClassCastException();
+  }
+
+  /**
    * Check a statically false cast, which can succeed if the argument is null.
+   * Called by compiler-generated code based on static type information.
    */
   static Object throwClassCastExceptionUnlessNull(Object o)
       throws ClassCastException {
     if (o != null) {
       throw new ClassCastException();
     }
-    return null;
+    return o;
   }
 
   static native JavaScriptObject wrapJSO(JavaScriptObject jso, Object seed) /*-{
