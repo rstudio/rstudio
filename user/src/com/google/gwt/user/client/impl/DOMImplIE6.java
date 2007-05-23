@@ -25,6 +25,18 @@ import com.google.gwt.user.client.Event;
  */
 class DOMImplIE6 extends DOMImpl {
 
+  private static native int getBodyClientLeft() /*-{
+    // Standard mode uses $doc.documentElement.clientLeft
+    // Quirks mode uses $doc.body.clientLeft
+    return $doc.documentElement.clientLeft || $doc.body.clientLeft;
+  }-*/;
+
+  private static native int getBodyClientTop() /*-{
+    // Standards mode uses $doc.documentElement.clientTop
+    // Quirks mode uses $doc.body.clientTop
+    return $doc.documentElement.clientTop || $doc.body.clientTop;
+  }-*/;
+
   /**
    * A native map of image source URL strings to Image objects. All Image
    * objects with values in this map are waiting on an asynchronous load to
@@ -56,6 +68,16 @@ class DOMImplIE6 extends DOMImpl {
     var html = multiple ? "<SELECT MULTIPLE>" : "<SELECT>"; 
     return $doc.createElement(html);
   }-*/;
+  
+  public native int eventGetClientX(Event evt) /*-{
+    return evt.clientX -
+        @com.google.gwt.user.client.impl.DOMImplIE6::getBodyClientLeft()();
+  }-*/;
+
+  public native int eventGetClientY(Event evt) /*-{
+    return evt.clientY -
+        @com.google.gwt.user.client.impl.DOMImplIE6::getBodyClientTop()();
+  }-*/;
 
   public native Element eventGetFromElement(Event evt) /*-{
     return evt.fromElement ? evt.fromElement : null;
@@ -85,21 +107,15 @@ class DOMImplIE6 extends DOMImpl {
   public native int getAbsoluteLeft(Element elem) /*-{
     // Standard mode || Quirks mode.
     var scrollLeft = $doc.documentElement.scrollLeft || $doc.body.scrollLeft;
-
-    // Standard mode use $doc.documentElement.clientLeft (= always 2)
-    // Quirks mode use $doc.body.clientLeft (=BODY border width)
     return (elem.getBoundingClientRect().left + scrollLeft)
-        - ($doc.documentElement.clientLeft || $doc.body.clientLeft);
+        - @com.google.gwt.user.client.impl.DOMImplIE6::getBodyClientLeft()();
   }-*/;
 
   public native int getAbsoluteTop(Element elem) /*-{
     // Standard mode || Quirks mode.
     var scrollTop = $doc.documentElement.scrollTop || $doc.body.scrollTop;
-
-    // Standard mode use $doc.documentElement.clientTop (= always 2)
-    // Quirks mode use $doc.body.clientTop (= BODY border width)
-    return (elem.getBoundingClientRect().top +  scrollTop)
-        - ($doc.documentElement.clientTop || $doc.body.clientTop);
+    return (elem.getBoundingClientRect().top + scrollTop)
+        - @com.google.gwt.user.client.impl.DOMImplIE6::getBodyClientTop()();
    }-*/;
 
   public native Element getChild(Element elem, int index) /*-{
@@ -229,8 +245,8 @@ class DOMImplIE6 extends DOMImpl {
 
   public native void releaseCapture(Element elem) /*-{
     elem.releaseCapture();
-  }-*/; 
-  
+  }-*/;
+
   public native void setCapture(Element elem) /*-{
     elem.setCapture();
   }-*/;
