@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -86,11 +87,16 @@ public final class DisclosurePanel extends Composite implements
      * for the label.
      */
     private final Element labelTD;
+    
+    private final Image iconImage;
+    private final DisclosurePanelImages images;
+    
+    private DefaultHeader(DisclosurePanelImages images, String text) {
+      this.images = images;
 
-    private final Image iconImage = new Image(ICON_IMAGE, -ICON_SIZE[0], 0,
-        ICON_SIZE[0], ICON_SIZE[1]);
-
-    private DefaultHeader(String text) {
+      iconImage = isOpen ? images.disclosurePanelOpen().createImage()
+          : images.disclosurePanelClosed().createImage();
+      
       // I do not need any Widgets here, just a DOM structure.
       Element root = DOM.createTable();
       Element tbody = DOM.createTBody();
@@ -108,7 +114,7 @@ public final class DisclosurePanel extends Composite implements
       // set image TD to be same width as image.
       DOM.setElementProperty(imageTD, "align", "center");
       DOM.setElementProperty(imageTD, "valign", "middle");
-      DOM.setStyleAttribute(imageTD, "width", ICON_SIZE[0] + "px");
+      DOM.setStyleAttribute(imageTD, "width", iconImage.getWidth() + "px");
 
       DOM.appendChild(imageTD, iconImage.getElement());
 
@@ -135,8 +141,11 @@ public final class DisclosurePanel extends Composite implements
     }
 
     private void setStyle() {
-      iconImage.setUrlAndVisibleRect(ICON_IMAGE, (isOpen) ? ICON_SIZE[0] : 0,
-          0, ICON_SIZE[0], ICON_SIZE[1]);
+      if (isOpen) {
+        images.disclosurePanelOpen().applyTo(iconImage);
+      } else {
+        images.disclosurePanelClosed().applyTo(iconImage);
+      }
     }
   }
 
@@ -151,10 +160,9 @@ public final class DisclosurePanel extends Composite implements
 
   private static final String STYLENAME_CONTENT = "content";
 
-  // Icon properties.
-  private static final String ICON_IMAGE = "disclosure.png";
-
-  private static final int[] ICON_SIZE = new int[] {16, 16};
+  private static DisclosurePanelImages createDefaultImages() {
+    return (DisclosurePanelImages) GWT.create(DisclosurePanelImages.class);
+  }
 
   /**
    * top level widget. The first child will be a reference to {@link #header}.
@@ -182,12 +190,27 @@ public final class DisclosurePanel extends Composite implements
    * initialized).
    */
   private ArrayList /* <DisclosureHandler> */handlers;
-
+  
   /**
    * Creates an empty DisclosurePanel that is initially closed.
    */
   public DisclosurePanel() {
     init(false);
+  }
+
+  /**
+   * Creates a DisclosurePanel with the specified header text, an initial
+   * open/close state and a bundle of images to be used in the default header
+   * widget.
+   * 
+   * @param images a bundle that provides disclosure panel specific images
+   * @param headerText the text to be displayed in the header
+   * @param isOpen the initial open/close state of the content panel
+   */
+  public DisclosurePanel(DisclosurePanelImages images, String headerText,
+      boolean isOpen) {
+    init(isOpen);
+    setHeader(new DefaultHeader(images, headerText));
   }
 
   /**
@@ -197,31 +220,30 @@ public final class DisclosurePanel extends Composite implements
    * @param headerText the text to be displayed in the header.
    */
   public DisclosurePanel(String headerText) {
-    this(headerText, false);
+    this(createDefaultImages(), headerText, false);
   }
 
   /**
    * Creates a DisclosurePanel with the specified header text and an initial
    * open/close state.
    * 
-   * @param headerText the text to be displayed in the header.
-   * @param isOpen the initial open/close state of the content panel.
+   * @param headerText the text to be displayed in the header
+   * @param isOpen the initial open/close state of the content panel
    */
   public DisclosurePanel(String headerText, boolean isOpen) {
-    init(isOpen);
-    setHeader(new DefaultHeader(headerText));
+    this(createDefaultImages(), headerText, isOpen);
   }
 
   /**
    * Creates a DisclosurePanel that will be initially closed using a widget as
    * the header.
    * 
-   * @param header the widget to be used as a header.
+   * @param header the widget to be used as a header
    */
   public DisclosurePanel(Widget header) {
     this(header, false);
   }
-
+  
   /**
    * Creates a DisclosurePanel using a widget as the header and an initial
    * open/close state.
