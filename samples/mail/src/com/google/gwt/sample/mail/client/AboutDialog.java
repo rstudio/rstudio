@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,9 @@ package com.google.gwt.sample.mail.client;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.DialogBox;
-import com.google.gwt.user.client.ui.DockPanel;
-import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.KeyboardListener;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -30,43 +28,29 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class AboutDialog extends DialogBox {
 
-  private static final String LOGO_IMAGE = "http://www.google.com/images/logo_sm.gif";
-
   public AboutDialog() {
     // Use this opportunity to set the dialog's caption.
     setText("About the Mail Sample");
 
-    // Create a DockPanel to contain the 'about' label and the 'OK' button.
-    DockPanel outer = new DockPanel();
-    outer.setSpacing(4);
+    // Create a VerticalPanel to contain the 'about' label and the 'OK' button.
+    VerticalPanel outer = new VerticalPanel();
 
-    outer.add(new Image(LOGO_IMAGE), DockPanel.WEST);
+    // Create the 'about' text and set a style name so we can style it with CSS.
+
+    HTML text = new HTML("This sample application demonstrates the "
+        + "construction of a complex user interface using GWT's built-in "
+        + "widgets.  Have a look at the code to see how easy it is to build "
+        + "your own apps!");
+    text.setStyleName("mail-AboutText");
+    outer.add(text);
 
     // Create the 'OK' button, along with a listener that hides the dialog
-    // when the button is clicked. Adding it to the 'south' position within
-    // the dock causes it to be placed at the bottom.
-    HorizontalPanel buttonPanel = new HorizontalPanel();
-    buttonPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
-    buttonPanel.add(new Button("Close", new ClickListener() {
+    // when the button is clicked.
+    outer.add(new Button("Close", new ClickListener() {
       public void onClick(Widget sender) {
         hide();
       }
     }));
-    outer.add(buttonPanel, DockPanel.SOUTH);
-
-    // Create the 'about' label. Placing it in the 'rest' position within the
-    // dock causes it to take up any remaining space after the 'OK' button
-    // has been laid out.
-    HTML text = new HTML(
-      "This sample application demonstrates the construction "
-        + "of a complex user interface using GWT's built-in widgets.  Have a look "
-        + "at the code to see how easy it is to build your own apps!");
-    text.setStyleName("mail-AboutText");
-    outer.add(text, DockPanel.CENTER);
-
-    // Add a bit of spacing and margin to the dock to keep the components from
-    // being placed too closely together.
-    outer.setSpacing(8);
 
     setWidget(outer);
   }

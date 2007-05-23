@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 package com.google.gwt.sample.mail.client;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
@@ -34,18 +35,30 @@ public class Mail implements EntryPoint, WindowResizeListener {
   private static Mail singleton;
 
   /**
+   * Instantiate an application-level image bundle. This object will provide
+   * programmatic access to all the images needed by widgets.
+   */
+  private static final Images images = (Images) GWT.create(Images.class);
+
+  /**
+   * An aggragate image bundle that pulls together all the images for this
+   * application into a single bundle.
+   */
+  public interface Images extends Shortcuts.Images, TopPanel.Images {
+  }
+
+  /**
    * Gets the singleton Mail instance.
    */
   public static Mail get() {
     return singleton;
   }
 
-  private TopPanel topPanel = new TopPanel();
+  private TopPanel topPanel = new TopPanel(images);
   private VerticalPanel rightPanel = new VerticalPanel();
   private MailList mailList;
   private MailDetail mailDetail = new MailDetail();
-
-  private Shortcuts shortcuts = new Shortcuts();
+  private Shortcuts shortcuts = new Shortcuts(images);
 
   /**
    * Displays the specified item.
@@ -102,11 +115,13 @@ public class Mail implements EntryPoint, WindowResizeListener {
     // Call the window resized handler to get the initial sizes setup. Doing
     // this in a deferred command causes it to occur after all widgets' sizes
     // have been computed by the browser.
-    DeferredCommand.add(new Command() {
+    DeferredCommand.addCommand(new Command() {
       public void execute() {
         onWindowResized(Window.getClientWidth(), Window.getClientHeight());
       }
     });
+
+    onWindowResized(Window.getClientWidth(), Window.getClientHeight());
   }
 
   public void onWindowResized(int width, int height) {

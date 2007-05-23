@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,11 +15,14 @@
  */
 package com.google.gwt.sample.mail.client;
 
+import com.google.gwt.user.client.ImageBundle;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -28,10 +31,17 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class TopPanel extends Composite implements ClickListener {
 
+  /**
+   * An image bundle for this widgets images.
+   */
+  public interface Images extends ImageBundle {
+    AbstractImagePrototype logo();
+  }
+
   private HTML signOutLink = new HTML("<a href='javascript:;'>Sign Out</a>");
   private HTML aboutLink = new HTML("<a href='javascript:;'>About</a>");
 
-  public TopPanel() {
+  public TopPanel(Images images) {
     HorizontalPanel outer = new HorizontalPanel();
     VerticalPanel inner = new VerticalPanel();
 
@@ -43,6 +53,10 @@ public class TopPanel extends Composite implements ClickListener {
     links.add(signOutLink);
     links.add(aboutLink);
 
+    final Image logo = images.logo().createImage();
+    outer.add(logo);
+    outer.setCellHorizontalAlignment(logo, HorizontalPanel.ALIGN_LEFT);
+
     outer.add(inner);
     inner.add(new HTML("<b>Welcome back, foo@example.com</b>"));
     inner.add(links);
@@ -51,7 +65,7 @@ public class TopPanel extends Composite implements ClickListener {
     aboutLink.addClickListener(this);
 
     initWidget(outer);
-    inner.setStyleName("mail-TopPanel");
+    setStyleName("mail-TopPanel");
     links.setStyleName("mail-TopPanelLinks");
   }
 
@@ -63,13 +77,8 @@ public class TopPanel extends Composite implements ClickListener {
       // Note that showing a dialog box does not block -- execution continues
       // normally, and the dialog fires an event when it is closed.
       AboutDialog dlg = new AboutDialog();
-
-      // Position it roughly in the middle of the screen.
-      int left = (Window.getClientWidth() - 512) / 2;
-      int top = (Window.getClientHeight() - 256) / 2;
-      dlg.setPopupPosition(left, top);
-
       dlg.show();
+      dlg.center();
     }
   }
 }

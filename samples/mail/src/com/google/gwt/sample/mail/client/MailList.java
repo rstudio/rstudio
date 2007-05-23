@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,9 +33,9 @@ public class MailList extends Composite implements TableListener, ClickListener 
 
   private HTML countLabel = new HTML();
   private HTML newerButton = new HTML("<a href='javascript:;'>&lt; newer</a>",
-    true);
+      true);
   private HTML olderButton = new HTML("<a href='javascript:;'>older &gt;</a>",
-    true);
+      true);
   private int startIndex, selectedRow = -1;
   private FlexTable table = new FlexTable();
   private HorizontalPanel navBar = new HorizontalPanel();
@@ -43,7 +43,7 @@ public class MailList extends Composite implements TableListener, ClickListener 
   public MailList() {
     // Setup the table.
     table.setCellSpacing(0);
-    table.setCellPadding(2);
+    table.setCellPadding(0);
     table.setWidth("100%");
 
     // Hook up events.
@@ -53,8 +53,7 @@ public class MailList extends Composite implements TableListener, ClickListener 
 
     // Create the 'navigation' bar at the upper-right.
     HorizontalPanel innerNavBar = new HorizontalPanel();
-    innerNavBar.setStyleName("mail-ListNavBar");
-    innerNavBar.setSpacing(8);
+    navBar.setStyleName("mail-ListNavBar");
     innerNavBar.add(newerButton);
     innerNavBar.add(countLabel);
     innerNavBar.add(olderButton);
@@ -107,9 +106,9 @@ public class MailList extends Composite implements TableListener, ClickListener 
    */
   private void initTable() {
     // Create the header row.
-    table.setText(0, 0, "sender");
-    table.setText(0, 1, "email");
-    table.setText(0, 2, "subject");
+    table.setText(0, 0, "Sender");
+    table.setText(0, 1, "Email");
+    table.setText(0, 2, "Subject");
     table.setWidget(0, 3, navBar);
     table.getRowFormatter().setStyleName(0, "mail-ListHeader");
 
@@ -137,7 +136,7 @@ public class MailList extends Composite implements TableListener, ClickListener 
     if (item == null) {
       return;
     }
-    
+
     styleRow(selectedRow, false);
     styleRow(row, true);
 

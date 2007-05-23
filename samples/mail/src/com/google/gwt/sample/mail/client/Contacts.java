@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,13 +15,15 @@
  */
 package com.google.gwt.sample.mail.client;
 
+import com.google.gwt.user.client.ImageBundle;
+import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -31,12 +33,21 @@ import com.google.gwt.user.client.ui.Widget;
 public class Contacts extends Composite {
 
   /**
+   * An image bundle for this widget and an example of the use of @gwt.resource.
+   */
+  public interface Images extends ImageBundle {
+    /**
+     * @gwt.resource default_photo.jpg
+     */
+    AbstractImagePrototype defaultPhoto();
+  }
+
+  /**
    * Simple data structure representing a contact.
    */
   private class Contact {
     public String email;
     public String name;
-    public String photo = "default_photo.jpg";
 
     public Contact(String name, String email) {
       this.name = name;
@@ -62,7 +73,7 @@ public class Contacts extends Composite {
 
       HorizontalPanel hp = new HorizontalPanel();
       hp.setSpacing(4);
-      hp.add(new Image(contact.photo));
+      hp.add(images.defaultPhoto().createImage());
       hp.add(inner);
 
       add(hp);
@@ -83,14 +94,19 @@ public class Contacts extends Composite {
       new Contact("John von Neumann", "john@example.com")};
 
   private VerticalPanel panel = new VerticalPanel();
+  private final Images images;
 
-  public Contacts() {
+  public Contacts(Images images) {
+    SimplePanel outer = new SimplePanel();
+    outer.setWidget(panel);
+
+    this.images = images;
     // Add all the contacts to the list.
     for (int i = 0; i < contacts.length; ++i) {
       addContact(contacts[i]);
     }
 
-    initWidget(panel);
+    initWidget(outer);
     setStyleName("mail-Contacts");
   }
 
@@ -103,8 +119,8 @@ public class Contacts extends Composite {
     link.addClickListener(new ClickListener() {
       public void onClick(Widget sender) {
         ContactPopup popup = new ContactPopup(contact);
-        int left = link.getAbsoluteLeft() + 32;
-        int top = link.getAbsoluteTop() + 8;
+        int left = link.getAbsoluteLeft() + 14;
+        int top = link.getAbsoluteTop() + 14;
         popup.setPopupPosition(left, top);
         popup.show();
       }
