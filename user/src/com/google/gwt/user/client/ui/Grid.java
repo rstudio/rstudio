@@ -145,7 +145,7 @@ public class Grid extends HTMLTable {
     if (numColumns == columns) {
       return;
     }
-    if (columns <= 0) {
+    if (columns < 0) {
       throw new IndexOutOfBoundsException("Cannot set number of columns to "
           + columns);
     }
@@ -178,7 +178,7 @@ public class Grid extends HTMLTable {
     if (numRows == rows) {
       return;
     }
-    if (rows <= 0) {
+    if (rows < 0) {
       throw new IndexOutOfBoundsException("Cannot set number of rows to "
           + rows);
     }

@@ -85,13 +85,7 @@ public class GridTest extends HTMLTableTestBase {
     assertEquals(4, DOM.getChildCount(e));
   }
 
-  private String getNormalizedStyleName(Grid.ColumnFormatter formatter,
-      int index) {
-    return formatter.getStyleName(index).replaceAll("  ", " ").trim();
-  }
-
   public void testColumnMessage() {
-
     Grid r = new Grid(1, 1);
 
     try {
@@ -109,4 +103,24 @@ public class GridTest extends HTMLTableTestBase {
     }
   }
 
+  /**
+   * Ensures row and column counts stay in sync during resizing.
+   */
+  public void testResizing() {
+    Grid r = new Grid(4, 1);
+    assertEquals(4, r.getRowCount());
+    assertEquals(1, r.getColumnCount());
+    r.resizeRows(0);
+    assertEquals(0, r.getRowCount());
+    r.resizeColumns(0);
+    assertEquals(0, r.getColumnCount());
+    r.resize(3, 2);
+    assertEquals(3, r.getRowCount());
+    assertEquals(2, r.getColumnCount());
+  }
+
+  private String getNormalizedStyleName(Grid.ColumnFormatter formatter,
+      int index) {
+    return formatter.getStyleName(index).replaceAll("  ", " ").trim();
+  }
 }
