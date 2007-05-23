@@ -88,13 +88,13 @@ public class TypeSerializerCreator {
     logger = logger.branch(TreeLogger.DEBUG,
         "Generating TypeSerializer for service interface '"
             + getServiceInterface().getQualifiedSourceName() + "'", null);
-    String generatedTypeNames = serializationOracle.getTypeSerializerQualifiedName(getServiceInterface());
-
-    generatedTypeNames += ";" + createFieldSerializers(logger, context);
+    String typeSerializerName = serializationOracle.getTypeSerializerQualifiedName(getServiceInterface());
     if (srcWriter == null) {
-      return generatedTypeNames;
+      return typeSerializerName;
     }
-
+    
+    createFieldSerializers(logger, context);
+    
     writeStaticFields();
 
     writeCreateMethods();
@@ -117,7 +117,7 @@ public class TypeSerializerCreator {
 
     srcWriter.commit(logger);
 
-    return generatedTypeNames;
+    return typeSerializerName;
   }
 
   private String buildArrayInstantiationExpression(JArrayType array) {
@@ -143,19 +143,21 @@ public class TypeSerializerCreator {
    * Create a field serializer for a type if it does not have a custom
    * serializer.
    */
-  private String createFieldSerializer(TreeLogger logger, GeneratorContext ctx,
+  private void createFieldSerializer(TreeLogger logger, GeneratorContext ctx,
       JType type) {
     assert (type != null);
     assert (serializationOracle.isSerializable(type));
 
     JParameterizedType parameterizedType = type.isParameterized();
     if (parameterizedType != null) {
-      return createFieldSerializer(logger, ctx, parameterizedType.getRawType());
+      createFieldSerializer(logger, ctx, parameterizedType.getRawType());
+      return;
     }
 
     JClassType customFieldSerializer = serializationOracle.hasCustomFieldSerializer(type);
     if (customFieldSerializer != null) {
-      return customFieldSerializer.getQualifiedSourceName();
+      customFieldSerializer.getQualifiedSourceName();
+      return;
     }
 
     /*
@@ -169,27 +171,21 @@ public class TypeSerializerCreator {
 
     FieldSerializerCreator creator = new FieldSerializerCreator(
         serializationOracle, type.isClass());
-    return creator.realize(logger, ctx);
+    creator.realize(logger, ctx);
   }
 
   /*
    * Create all of the necessary field serializers.
    */
-  private String createFieldSerializers(TreeLogger logger, GeneratorContext ctx) {
+  private void createFieldSerializers(TreeLogger logger, GeneratorContext ctx) {
     JType[] types = getSerializableTypes();
     int typeCount = types.length;
-    String fieldSerializerNames = "";
     for (int typeIndex = 0; typeIndex < typeCount; ++typeIndex) {
       JType type = types[typeIndex];
       assert (type != null);
 
-      String fieldSerializerName = createFieldSerializer(logger, ctx, type);
-      if (fieldSerializerName != null) {
-        fieldSerializerNames += fieldSerializerName + ";";
-      }
+      createFieldSerializer(logger, ctx, type);
     }
-
-    return fieldSerializerNames;
   }
 
   private JMethod getCustomInstantiateMethod(JType type) {

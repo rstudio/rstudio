@@ -23,8 +23,8 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 
 /**
- * Generator for producing the asynchronous version of a {@link RemoteService}
- * interface.
+ * Generator for producing the asynchronous version of a
+ * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService} interface.
  */
 public class ServiceInterfaceProxyGenerator extends Generator {
 
@@ -47,33 +47,12 @@ public class ServiceInterfaceProxyGenerator extends Generator {
       throw new UnableToCompleteException();
     }
 
-    logger = logger.branch(TreeLogger.DEBUG,
+    ProxyCreator proxyCreator = new ProxyCreator(remoteService);
+
+    TreeLogger proxyLogger = logger.branch(TreeLogger.DEBUG,
         "Generating client proxy for remote service interface '"
             + remoteService.getQualifiedSourceName() + "'", null);
-    
-    SerializableTypeOracleBuilder stob = new SerializableTypeOracleBuilder(
-        logger, typeOracle);
-    SerializableTypeOracle sto = stob.build(ctx.getPropertyOracle(),
-        remoteService);
 
-    generateTypeSerializer(logger, ctx, remoteService, sto);
-
-    return generateProxy(logger, ctx, remoteService, sto);
-  }
-
-  private String generateProxy(TreeLogger logger, GeneratorContext ctx,
-      JClassType serviceIntf, SerializableTypeOracle serializableTypeOracle) {
-    ProxyCreator proxyCreator = new ProxyCreator(serviceIntf,
-        serializableTypeOracle);
-
-    return proxyCreator.create(logger, ctx);
-  }
-
-  private String generateTypeSerializer(TreeLogger logger,
-      GeneratorContext ctx, JClassType serviceIntf,
-      SerializableTypeOracle serializableTypeOracle) {
-    TypeSerializerCreator typeSerializerCreator = new TypeSerializerCreator(
-        logger, serializableTypeOracle, ctx, serviceIntf);
-    return typeSerializerCreator.realize(logger);
+    return proxyCreator.create(proxyLogger, ctx);
   }
 }

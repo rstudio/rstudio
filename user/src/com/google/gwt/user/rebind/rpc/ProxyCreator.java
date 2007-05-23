@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
@@ -39,12 +40,11 @@ import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
 
 /**
- * Creates client-side proxies for remote services.
+ * Creates a client-side proxy for a
+ * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService} interface
+ * as well as the necessary type and field serializers.
  */
 class ProxyCreator {
   private static final String ENTRY_POINT_TAG = "gwt.defaultEntryPoint";
@@ -57,21 +57,6 @@ class ProxyCreator {
   private static final String SERIALIZATION_STREAM_WRITER_INSTANTIATION = ClientSerializationStreamWriter.class.getName()
       + " streamWriter = new "
       + ClientSerializationStreamWriter.class.getName() + "(SERIALIZER);";
-
-  private static String createOverloadSignature(JMethod method) {
-    StringBuffer sb = new StringBuffer();
-    sb.append(method.getName());
-    sb.append('(');
-    JParameter[] params = method.getParameters();
-    for (int i = 0; i < params.length; ++i) {
-      if (i > 0) {
-        sb.append(", ");
-      }
-      sb.append(params[i].getType().getQualifiedSourceName());
-    }
-    sb.append(')');
-    return sb.toString();
-  }
 
   /*
    * This method returns the real type name. Currently, it only affects
@@ -88,35 +73,43 @@ class ProxyCreator {
 
   private boolean enforceTypeVersioning;
 
-  private SerializableTypeOracle serializableTypeOracle;
-
   private JClassType serviceIntf;
 
-  public ProxyCreator(JClassType serviceIntf,
-      SerializableTypeOracle serializableTypeOracle) {
+  public ProxyCreator(JClassType serviceIntf) {
     assert (serviceIntf.isInterface() != null);
-    
+
     this.serviceIntf = serviceIntf;
-    this.serializableTypeOracle = serializableTypeOracle;
   }
 
   /**
-   * Creates a proxy class for the requested class.
+   * Creates the client-side proxy class.
+   * 
+   * @throws UnableToCompleteException
    */
-  public String create(TreeLogger logger, GeneratorContext context) {
+  public String create(TreeLogger logger, GeneratorContext context)
+      throws UnableToCompleteException {
     SourceWriter srcWriter = getSourceWriter(logger, context);
     if (srcWriter == null) {
       return getProxyQualifiedName();
     }
 
+    SerializableTypeOracleBuilder stob = new SerializableTypeOracleBuilder(
+        logger, context.getTypeOracle());
+    SerializableTypeOracle sto = stob.build(context.getPropertyOracle(),
+        serviceIntf);
+
+    TypeSerializerCreator tsc = new TypeSerializerCreator(logger, sto, context,
+        serviceIntf);
+    tsc.realize(logger);
+
     enforceTypeVersioning = Shared.shouldEnforceTypeVersioning(logger,
         context.getPropertyOracle());
 
-    generateProxyFields(srcWriter);
+    generateProxyFields(srcWriter, sto);
 
     generateServiceDefTargetImpl(srcWriter);
 
-    generateProxyMethods(srcWriter);
+    generateProxyMethods(srcWriter, sto);
 
     srcWriter.commit(logger);
 
@@ -124,8 +117,9 @@ class ProxyCreator {
   }
 
   /*
-   * Give a type emit an expression for deserializing that type from a
-   * serialization stream.
+   * Given a type emit an expression for calling the correct
+   * SerializationStreamReader method which reads the corresponding 
+   * instance out of the stream.
    */
   protected final void generateDecodeCall(SourceWriter w, JType type) {
     w.print("streamReader.");
@@ -133,8 +127,8 @@ class ProxyCreator {
   }
 
   /*
-   * Give a type emit an expression for serializing that type into a
-   * serialization stream.
+   * Given a type emit an expression for calling the correct
+   * SerializationStreamWriter method which writes that type into the stream.
    */
   protected void generateEncodeCall(SourceWriter w, JParameter parameter) {
     JType paramType = parameter.getType();
@@ -326,8 +320,7 @@ class ProxyCreator {
    * Generate the code that addresses the service.
    */
   private void generateProxyEncode(SourceWriter w,
-      SerializableTypeOracle serializableTypeOracle, JClassType serviceIntf,
-      JMethod method) {
+      SerializableTypeOracle serializableTypeOracle, JMethod method) {
     String methodName = method.getName();
     JParameter[] params = method.getParameters();
     w.println();
@@ -359,7 +352,8 @@ class ProxyCreator {
           + ".SERIALIZATION_STREAM_FLAGS_NO_TYPE_VERSIONING);");
     }
     w.println("streamWriter.writeString(\""
-        + serializableTypeOracle.getSerializedTypeName(serviceIntf) + "\");");
+        + serializableTypeOracle.getSerializedTypeName(method.getEnclosingType())
+        + "\");");
     w.println("streamWriter.writeString(\"" + methodName + "\");");
     w.println("streamWriter.writeInt(" + params.length + ");");
     for (int i = 0; i < params.length; ++i) {
@@ -383,37 +377,21 @@ class ProxyCreator {
   /**
    * Generate any fields required by the proxy.
    */
-  private void generateProxyFields(SourceWriter srcWriter) {
+  private void generateProxyFields(SourceWriter srcWriter,
+      SerializableTypeOracle serializableTypeOracle) {
     String typeSerializerName = serializableTypeOracle.getTypeSerializerQualifiedName(serviceIntf);
     srcWriter.println("private static final " + typeSerializerName
         + " SERIALIZER = new " + typeSerializerName + "();");
   }
 
-  /**
-   * @param ctx
-   * @param w
-   */
-  private void generateProxyMethods(SourceWriter w) {
-    Set seenMethods = new HashSet();
-    LinkedList workList = new LinkedList();
-    workList.addLast(serviceIntf);
-    while (!workList.isEmpty()) {
-      JClassType curIntf = (JClassType) workList.removeFirst();
-      JMethod[] methods = curIntf.getMethods();
-      for (int index = 0; index < methods.length; ++index) {
-        JMethod method = methods[index];
-        assert (method != null);
-        String signature = createOverloadSignature(method);
-        if (!seenMethods.contains(signature)) {
-          seenMethods.add(signature);
-          generateProxyEncode(w, serializableTypeOracle, curIntf, method);
-          generateAsynchronousProxyMethod(w, method);
-        }
-      }
-      JClassType[] interfaces = curIntf.getImplementedInterfaces();
-      for (int index = 0; index < interfaces.length; ++index) {
-        workList.addLast(interfaces[index]);
-      }
+  private void generateProxyMethods(SourceWriter w,
+      SerializableTypeOracle serializableTypeOracle) {
+
+    JMethod[] methods = serviceIntf.getOverridableMethods();
+    for (int i = 0; i < methods.length; ++i) {
+      JMethod method = methods[i];
+      generateProxyEncode(w, serializableTypeOracle, method);
+      generateAsynchronousProxyMethod(w, method);
     }
   }
 
