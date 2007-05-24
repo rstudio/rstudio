@@ -27,6 +27,10 @@ public class PopupImpl {
     return DOM.createDiv();
   }
 
+  public Element getContainerElement(Element popup) {
+    return popup;
+  }
+
   public void onHide(Element popup) {
   }
 
