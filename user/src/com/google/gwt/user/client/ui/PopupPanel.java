@@ -26,11 +26,7 @@ import com.google.gwt.user.client.ui.impl.PopupImpl;
 /**
  * A panel that can "pop up" over other widgets. It overlays the browser's
  * client area (and any previously-created popups).
- * <p/>
- * The width and height of the PopupPanel cannot be explicitly set; they are
- * determined by the PopupPanel's widget. Calls to {@link #setWidth(String)} and
- * {@link #setHeight(String)} will call these methods on the PopupPanel's
- * widget.
+ * 
  * <p>
  * <img class='gallery' src='PopupPanel.png'/>
  * </p>
@@ -54,6 +50,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    */
   public PopupPanel() {
     super(impl.createElement());
+    DOM.setStyleAttribute(getElement(), "position", "absolute");
   }
 
   /**
@@ -125,10 +122,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     return DOM.getElementPropertyInt(getElement(), "offsetTop");
   }
 
-  public String getStyleName() {
-    return DOM.getElementProperty(getContainerElement(), "className");
-  }
-
   /**
    * Hides the popup. This has no effect if it is not currently visible.
    */
@@ -198,7 +191,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       }
     }
 
-    return !modal || eventTargetsPopup;
+    return !modal || (modal && eventTargetsPopup);
   }
 
   /**
@@ -241,25 +234,15 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   public boolean remove(Widget w) {
-    return super.remove(w);
+    if (!super.remove(w)) {
+      return false;
+    }
+    return true;
   }
 
   public void removePopupListener(PopupListener listener) {
     if (popupListeners != null) {
       popupListeners.remove(listener);
-    }
-  }
-
-  /**
-   * Calls {@link Widget#setHeight(String)} on this panel's widget. If this panel
-   * does not have a widget, then this call does nothing.
-   *
-   * @param height the new height of this panel's widget, in CSS units (e.g. "10px", "1em")
-   */
-  public void setHeight(String height) {
-    Widget childWidget = getWidget();
-    if (childWidget != null) {
-      childWidget.setHeight(height);
     }
   }
 
@@ -310,19 +293,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Calls {@link Widget#setWidth(String)} on this panel's widget. If this panel
-   * does not have a widget, then this call does nothing.
-   *
-   * @param width the new width of this panel's widget, in CSS units (e.g. "10px", "1em")
-   */
-   public void setWidth(String width) {
-    Widget childWidget = getWidget();
-    if (childWidget != null)  {
-      childWidget.setWidth(width);
-    }
-  }
-
-  /**
    * Shows the popup. It must have a child widget before this method is called.
    */
   public void show() {
@@ -333,12 +303,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     DOM.addEventPreview(this);
 
     RootPanel.get().add(this);
-    DOM.setStyleAttribute(getElement(), "position", "absolute");
     impl.onShow(getElement());
-  }
-
-  protected Element getContainerElement() {
-   return impl.getContainerElement(getElement());
   }
 
   /**
