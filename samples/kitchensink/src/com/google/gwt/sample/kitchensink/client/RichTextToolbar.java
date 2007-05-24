@@ -410,7 +410,6 @@ public class RichTextToolbar extends Composite {
 
       // We only use these listeners for updating status, so don't hook them up
       // unless at least basic editing is supported.
-      richText.addChangeListener(listener);
       richText.addKeyboardListener(listener);
       richText.addClickListener(listener);
     }

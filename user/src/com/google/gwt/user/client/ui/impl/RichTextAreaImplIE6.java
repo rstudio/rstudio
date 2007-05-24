@@ -23,29 +23,6 @@ import com.google.gwt.user.client.Element;
  */
 public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
 
-  native void initEvents() /*-{
-    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
-    var handler = function() {
-      if (elem.__listener) {
-        // Weird: this code has the context of the script frame, but we need the
-        // event from the edit iframe's window.
-        var evt = elem.contentWindow.event;
-        elem.__listener.@com.google.gwt.user.client.ui.RichTextArea::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
-      }
-    };
-
-    var body = elem.contentWindow.document.body;
-    body.onkeydown =
-    body.onkeyup =
-    body.onkeypress =
-    body.onmousedown =
-    body.onmouseup =
-    body.onmousemove =
-    body.onmouseover =
-    body.onmouseout =
-    body.onclick = handler;
-  }-*/;
-
   private static native void detachEvents(Element elem) /*-{
     var body = elem.contentWindow.document.body;
     body.onkeydown =
@@ -92,6 +69,29 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     super.unhookEvents();
     detachEvents(elem);
   }
+
+  native void initEvents() /*-{
+    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
+    var handler = function() {
+      if (elem.__listener) {
+        // Weird: this code has the context of the script frame, but we need the
+        // event from the edit iframe's window.
+        var evt = elem.contentWindow.event;
+        elem.__listener.@com.google.gwt.user.client.ui.RichTextArea::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+      }
+    };
+
+    var body = elem.contentWindow.document.body;
+    body.onkeydown =
+    body.onkeyup =
+    body.onkeypress =
+    body.onmousedown =
+    body.onmouseup =
+    body.onmousemove =
+    body.onmouseover =
+    body.onmouseout =
+    body.onclick = handler;
+  }-*/;
 
   boolean isRichEditingActive(Element elem) {
     return true;

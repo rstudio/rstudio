@@ -23,8 +23,8 @@ import com.google.gwt.user.client.ui.RichTextArea;
  */
 public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
 
-  private static boolean richTextSupported = detectEditingSupport();
   private static RichTextAreaImpl old;
+  private static boolean richTextSupported = detectEditingSupport();
 
   static {
     // If rich text is not supported by this version of Opera, create an
@@ -90,6 +90,12 @@ public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
     return richTextSupported;
   }
 
+  public void setBackColor(String color) {
+    // Opera uses 'BackColor' for the *entire area's* background. 'HiliteColor'
+    // does what we actually want.
+    execCommand("HiliteColor", color);
+  }
+
   public native void setFocus(boolean focused) /*-{
     // Opera needs the *iframe* focused, not its window.
     if (focused) {
@@ -120,11 +126,5 @@ public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
       old.unhookEvents();
     }
     super.unhookEvents();
-  }
-
-  public void setBackColor(String color) {
-    // Opera uses 'BackColor' for the *entire area's* background. 'HiliteColor'
-    // does what we actually want.
-    execCommand("HiliteColor", color);
   }
 }
