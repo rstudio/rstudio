@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,12 +15,16 @@
  */
 package com.google.gwt.sample.kitchensink.client;
 
-import com.google.gwt.sample.kitchensink.client.Sink.SinkInfo;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Hyperlink;
-import com.google.gwt.user.client.ui.VerticalPanel;
-
 import java.util.ArrayList;
+
+import com.google.gwt.sample.kitchensink.client.Sink.SinkInfo;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Hyperlink;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Widget;
 
 /**
  * The left panel that contains all of the sinks, along with a short description
@@ -28,22 +32,52 @@ import java.util.ArrayList;
  */
 public class SinkList extends Composite {
 
-  private VerticalPanel list = new VerticalPanel();
+  private class MouseLink extends Hyperlink {
+
+    private int index;
+
+    public MouseLink(String name, int index) {
+      super(name, name);
+      this.index = index;
+      sinkEvents(Event.MOUSEEVENTS);
+    }
+
+    public void onBrowserEvent(Event event) {
+      switch (DOM.eventGetType(event)) {
+        case Event.ONMOUSEOVER:
+          mouseOver(index);
+          break;
+
+        case Event.ONMOUSEOUT:
+          mouseOut(index);
+          break;
+      }
+
+      super.onBrowserEvent(event);
+    }
+  }
+
+  private HorizontalPanel list = new HorizontalPanel();
   private ArrayList sinks = new ArrayList();
+
   private int selectedSink = -1;
 
   public SinkList() {
     initWidget(list);
+    list.add(new Image("images/gwt-logo.png"));
     setStyleName("ks-List");
   }
 
   public void addSink(final SinkInfo info) {
     String name = info.getName();
-    Hyperlink link = new Hyperlink(name, name);
-    link.setStyleName("ks-SinkItem");
+    int index = list.getWidgetCount() - 1;
 
+    MouseLink link = new MouseLink(name, index);
     list.add(link);
     sinks.add(info);
+
+    list.setCellVerticalAlignment(link, HorizontalPanel.ALIGN_BOTTOM);
+    styleSink(index, false);
   }
 
   public SinkInfo find(String sinkName) {
@@ -59,16 +93,50 @@ public class SinkList extends Composite {
 
   public void setSinkSelection(String name) {
     if (selectedSink != -1) {
-      list.getWidget(selectedSink).removeStyleName("ks-SinkItem-selected");
+      styleSink(selectedSink, false);
     }
-    
+
     for (int i = 0; i < sinks.size(); ++i) {
       SinkInfo info = (SinkInfo) sinks.get(i);
       if (info.getName().equals(name)) {
         selectedSink = i;
-        list.getWidget(selectedSink).addStyleName("ks-SinkItem-selected");
+        styleSink(selectedSink, true);
         return;
       }
     }
+  }
+
+  private void mouseOut(int index) {
+    if (index != selectedSink) {
+      colorSink(index, false);
+    }
+  }
+
+  private void mouseOver(int index) {
+    if (index != selectedSink) {
+      colorSink(index, true);
+    }
+  }
+
+  private void styleSink(int index, boolean selected) {
+    String style = (index == 0) ? "ks-FirstSinkItem" : "ks-SinkItem";
+    if (selected) {
+      style += "-selected";
+    }
+
+    Widget w = list.getWidget(index + 1);
+    w.setStyleName(style);
+
+    colorSink(index, selected);
+  }
+
+  private void colorSink(int index, boolean on) {
+    String color = "";
+    if (on) {
+      color = ((SinkInfo) sinks.get(index)).getColor();
+    }
+
+    Widget w = list.getWidget(index + 1);
+    DOM.setStyleAttribute(w.getElement(), "backgroundColor", color);
   }
 }

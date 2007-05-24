@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,12 +19,12 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.DockPanel;
-import com.google.gwt.user.client.ui.Frame;
-import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Demonstrates {@link com.google.gwt.user.client.ui.PopupPanel} and
@@ -37,27 +37,22 @@ public class Popups extends Sink implements ClickListener {
    */
   private static class MyDialog extends DialogBox implements ClickListener {
     public MyDialog() {
-      setText("Sample DialogBox with embedded Frame");
+      setText("Sample DialogBox");
 
-      Frame iframe = new Frame("rembrandt/LaMarcheNocturne.html");
       Button closeButton = new Button("Close", this);
       HTML msg = new HTML(
-        "<center>This is an example of a standard dialog box component.<br>  "
-          + "You can put pretty much anything you like into it,<br>such as the "
-          + "following IFRAME:</center>", true);
+          "<center>This is an example of a standard dialog box component.</center>",
+          true);
 
       DockPanel dock = new DockPanel();
       dock.setSpacing(4);
 
       dock.add(closeButton, DockPanel.SOUTH);
       dock.add(msg, DockPanel.NORTH);
-      dock.add(iframe, DockPanel.CENTER);
+      dock.add(new Image("images/jimmy.jpg"), DockPanel.CENTER);
 
       dock.setCellHorizontalAlignment(closeButton, DockPanel.ALIGN_RIGHT);
-      dock.setCellWidth(iframe, "100%");
       dock.setWidth("100%");
-      iframe.setWidth("36em");
-      iframe.setHeight("20em");
       setWidget(dock);
     }
 
@@ -74,7 +69,7 @@ public class Popups extends Sink implements ClickListener {
       super(true);
 
       HTML contents = new HTML(
-        "Click anywhere outside this popup to make it disappear.");
+          "Click anywhere outside this popup to make it disappear.");
       contents.setWidth("128px");
       setWidget(contents);
 
@@ -84,20 +79,22 @@ public class Popups extends Sink implements ClickListener {
 
   public static SinkInfo init() {
     return new SinkInfo(
-      "Popups",
-      "This page demonstrates GWT's built-in support for in-page "
-        + "popups.  The first is a very simple informational popup that closes "
-        + "itself automatically when you click off of it.  The second is a more "
-        + "complex draggable dialog box. If you're wondering why there's "
-        + "a list box at the bottom, it's to demonstrate that you can drag the "
-        + "dialog box over it.  "
-        + "This is noteworthy because some browsers render lists and combos in "
-        + "a funky way that, if GWT didn't do some magic for you, would " 
-        + "normally cause the dialog box to appear to hover <i>underneath</i> "
-        + "the list box.  Fortunately, you don't have to worry about it -- "
-        + "just use the GWT <code>DialogBox</code> class.") {
+        "Popups",
+        "<h2>Popups and Dialog Boxes</h2>"
+            + "<p>This page demonstrates GWT's built-in support for in-page "
+            + "popups.  The first is a very simple informational popup that closes "
+            + "itself automatically when you click off of it.  The second is a more "
+            + "complex draggable dialog box. If you're wondering why there's "
+            + "a list box at the bottom, it's to demonstrate that you can drag the "
+            + "dialog box over it (this obscure corner case often renders incorrectly "
+            + "on some browsers).</p>") {
+
       public Sink createInstance() {
         return new Popups();
+      }
+
+      public String getColor() {
+        return "#bf2a2a";
       }
     };
   }
@@ -111,7 +108,7 @@ public class Popups extends Sink implements ClickListener {
     panel.add(dialogButton);
 
     ListBox list = new ListBox();
-    list.setVisibleItemCount(5);
+    list.setVisibleItemCount(1);
     for (int i = 0; i < 10; ++i) {
       list.addItem("list item " + i);
     }
@@ -130,10 +127,8 @@ public class Popups extends Sink implements ClickListener {
       p.show();
     } else if (sender == dialogButton) {
       DialogBox dlg = new MyDialog();
-      int left = dialogButton.getAbsoluteLeft() + 10;
-      int top = dialogButton.getAbsoluteTop() + 10;
-      dlg.setPopupPosition(left, top);
       dlg.show();
+      dlg.center();
     }
   }
 

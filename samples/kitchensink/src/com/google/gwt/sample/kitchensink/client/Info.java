@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.kitchensink.client;
 
-import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
 
 /**
  * Introduction page.
@@ -23,16 +23,8 @@ import com.google.gwt.user.client.ui.HTML;
 public class Info extends Sink {
 
   public static SinkInfo init() {
-    return new SinkInfo("Info", "Introduction to the Kitchen Sink.") {
-      public Sink createInstance() {
-        return new Info();
-      }
-    };
-  }
-
-  public Info() {
-    initWidget(new HTML(
-      "<div class='infoProse'>This is the Kitchen Sink sample.  "
+    return new SinkInfo("Intro", "<h2>Introduction to the Kitchen Sink</h2>" +
+            "<p>This is the Kitchen Sink sample.  "
         + "It demonstrates many of the widgets in the Google Web Toolkit."
         + "<p>This sample also demonstrates something else really useful in GWT: "
         + "history support.  "
@@ -40,8 +32,16 @@ public class Info extends Sink {
         + "updated with the current <i>history token</i>, which keeps the app "
         + "in a bookmarkable state.  The back and forward buttons work properly "
         + "as well.  Finally, notice that you can right-click a link and 'open "
-        + "in new window' (or middle-click for a new tab in Firefox).</p></div>",
-      true));
+        + "in new window' (or middle-click for a new tab in Firefox).</p></p>") {
+
+      public Sink createInstance() {
+        return new Info();
+      }
+    };
+  }
+
+  public Info() {
+    initWidget(new Label());
   }
 
   public void onShow() {

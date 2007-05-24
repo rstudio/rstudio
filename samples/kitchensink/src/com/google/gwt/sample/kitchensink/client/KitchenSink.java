@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +17,9 @@ package com.google.gwt.sample.kitchensink.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.sample.kitchensink.client.Sink.SinkInfo;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.HistoryListener;
-import com.google.gwt.user.client.ui.DockPanel;
-import com.google.gwt.user.client.ui.HasAlignment;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -34,8 +33,7 @@ public class KitchenSink implements EntryPoint, HistoryListener {
   private SinkInfo curInfo;
   private Sink curSink;
   private HTML description = new HTML();
-  private DockPanel panel = new DockPanel();
-  private DockPanel sinkContainer;
+  private VerticalPanel panel = new VerticalPanel();
 
   public void onHistoryChanged(String token) {
     // Find the SinkInfo associated with the history context. If one is
@@ -53,23 +51,11 @@ public class KitchenSink implements EntryPoint, HistoryListener {
     // Load all the sinks.
     loadSinks();
 
-    // Put the sink list on the left, and add the outer dock panel to the
-    // root.
-    sinkContainer = new DockPanel();
-    sinkContainer.setStyleName("ks-Sink");
-
-    VerticalPanel vp = new VerticalPanel();
-    vp.setWidth("100%");
-    vp.add(description);
-    vp.add(sinkContainer);
+    panel.add(list);
+    panel.add(description);
+    panel.setWidth("100%");
 
     description.setStyleName("ks-Info");
-
-    panel.add(list, DockPanel.WEST);
-    panel.add(vp, DockPanel.CENTER);
-
-    panel.setCellVerticalAlignment(list, HasAlignment.ALIGN_TOP);
-    panel.setCellWidth(vp, "100%");
 
     History.addHistoryListener(this);
     RootPanel.get().add(panel);
@@ -96,7 +82,7 @@ public class KitchenSink implements EntryPoint, HistoryListener {
     // Remove the old sink from the display area.
     if (curSink != null) {
       curSink.onHide();
-      sinkContainer.remove(curSink);
+      panel.remove(curSink);
     }
 
     // Get the new sink instance, and display its description in the
@@ -113,11 +99,13 @@ public class KitchenSink implements EntryPoint, HistoryListener {
       History.newItem(info.getName());
     }
 
+    // Change the description background color.
+    DOM.setStyleAttribute(description.getElement(), "backgroundColor",
+        info.getColor());
+
     // Display the new sink.
-    sinkContainer.add(curSink, DockPanel.CENTER);
-    sinkContainer.setCellWidth(curSink, "100%");
-    sinkContainer.setCellHeight(curSink, "100%");
-    sinkContainer.setCellVerticalAlignment(curSink, DockPanel.ALIGN_TOP);
+    panel.add(curSink);
+    panel.setCellHorizontalAlignment(curSink, VerticalPanel.ALIGN_CENTER);
     curSink.onShow();
   }
 
@@ -128,21 +116,14 @@ public class KitchenSink implements EntryPoint, HistoryListener {
    */
   protected void loadSinks() {
     list.addSink(Info.init());
-    list.addSink(Buttons.init());
-    list.addSink(Menus.init());
-    list.addSink(Images.init());
-    list.addSink(Layouts.init());
+    list.addSink(Widgets.init());
+    list.addSink(Panels.init());
     list.addSink(Lists.init());
-    list.addSink(Popups.init());
-    list.addSink(Tables.init());
     list.addSink(Text.init());
-    list.addSink(Trees.init());
-    list.addSink(Frames.init());
-    list.addSink(Tabs.init());
-    list.addSink(Splitters.init());
+    list.addSink(Popups.init());
   }
 
   private void showInfo() {
-    show(list.find("Info"), false);
+    show(list.find("Intro"), false);
   }
 }

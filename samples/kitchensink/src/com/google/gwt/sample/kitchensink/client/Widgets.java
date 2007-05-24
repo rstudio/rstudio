@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,9 +15,14 @@
  */
 package com.google.gwt.sample.kitchensink.client;
 
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.MenuBar;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.ToggleButton;
@@ -26,14 +31,20 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 /**
  * Demonstrates the various button widgets.
  */
-public class Buttons extends Sink {
+public class Widgets extends Sink implements Command {
 
   public static SinkInfo init() {
-    return new SinkInfo("Buttons",
-      "GWT supports all the myriad types of buttons that exist in HTML.  "
-        + "Here are a few for your viewing pleasure.") {
+    return new SinkInfo("Widgets", "<h2>Basic Widgets</h2>" +
+      "<p>GWT has all sorts of the basic widgets you would expect from any " +
+      "toolkit.</p><p>Below, you can see various kinds of buttons, check boxes, " +
+      "radio buttons, and menus.</p>") {
+
       public Sink createInstance() {
-        return new Buttons();
+        return new Widgets();
+      }
+
+      public String getColor() {
+        return "#bf2a2a";
       }
     };
   }
@@ -47,11 +58,13 @@ public class Buttons extends Sink {
   private RadioButton radio1 = new RadioButton("group0", "Choice 1");
   private RadioButton radio2 = new RadioButton("group0", "Choice 2 (Disabled)");
   private RadioButton radio3 = new RadioButton("group0", "Choice 3");
-  private PushButton pushButton = new PushButton("PushButton");
-  private ToggleButton toggleButton = new ToggleButton("ToggleButton");
+  private PushButton pushButton = new PushButton(new Image("images/gwt-logo.png"));
+  private ToggleButton toggleButton = new ToggleButton(new Image("images/gwt-logo.png"));
 
-  public Buttons() {
+  public Widgets() {
     HorizontalPanel hp;
+
+    panel.add(createMenu());
 
     panel.add(hp = new HorizontalPanel());
     hp.setSpacing(8);
@@ -81,6 +94,42 @@ public class Buttons extends Sink {
 
     panel.setSpacing(8);
     initWidget(panel);
+  }
+
+  public MenuBar createMenu() {
+    MenuBar menu = new MenuBar();
+    menu.setAutoOpen(true);
+
+    MenuBar subMenu = new MenuBar(true);
+    subMenu.addItem("<code>Code</code>", true, this);
+    subMenu.addItem("<strike>Strikethrough</strike>", true, this);
+    subMenu.addItem("<u>Underlined</u>", true, this);
+
+    MenuBar menu0 = new MenuBar(true);
+    menu0.addItem("<b>Bold</b>", true, this);
+    menu0.addItem("<i>Italicized</i>", true, this);
+    menu0.addItem("More &#187;", true, subMenu);
+    MenuBar menu1 = new MenuBar(true);
+    menu1.addItem("<font color='#FF0000'><b>Apple</b></font>", true, this);
+    menu1.addItem("<font color='#FFFF00'><b>Banana</b></font>", true, this);
+    menu1.addItem("<font color='#FFFFFF'><b>Coconut</b></font>", true, this);
+    menu1.addItem("<font color='#8B4513'><b>Donut</b></font>", true, this);
+    MenuBar menu2 = new MenuBar(true);
+    menu2.addItem("Bling", this);
+    menu2.addItem("Ginormous", this);
+    menu2.addItem("<code>w00t!</code>", true, this);
+
+    menu.addItem(new MenuItem("Style", menu0));
+    menu.addItem(new MenuItem("Fruit", menu1));
+    menu.addItem(new MenuItem("Term", menu2));
+
+    menu.setWidth("100%");
+
+    return menu;
+  }
+
+  public void execute() {
+    Window.alert("Thank you for selecting a menu item.");
   }
 
   public void onShow() {

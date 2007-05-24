@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,13 +21,37 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.SuggestBox;
+import com.google.gwt.user.client.ui.Tree;
+import com.google.gwt.user.client.ui.TreeItem;
+import com.google.gwt.user.client.ui.TreeListener;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Demonstrates {@link com.google.gwt.user.client.ui.ListBox}.
  */
-public class Lists extends Sink implements ChangeListener {
+public class Lists extends Sink implements ChangeListener, TreeListener {
+
+  private static class PendingItem extends TreeItem {
+    public PendingItem() {
+      super("Please wait...");
+    }
+  }
+
+  private static class Proto {
+    public Proto[] children;
+    public TreeItem item;
+    public String text;
+
+    public Proto(String text) {
+      this.text = text;
+    }
+
+    public Proto(String text, Proto[] children) {
+      this(text);
+      this.children = children;
+    }
+  }
 
   private static final String[][] stringLists = new String[][] {
       new String[] {"foo0", "bar0", "baz0", "toto0", "tintin0"},
@@ -52,20 +76,65 @@ public class Lists extends Sink implements ChangeListener {
       "xml", "xargs", "xeno", "yacc", "yank (the vi command)", "zealot", "zoe",
       "zebra"};
 
+  private static Proto[] fProto = new Proto[]{
+    new Proto("Beethoven", new Proto[]{
+      new Proto("Concertos", new Proto[]{
+        new Proto("No. 1 - C"), new Proto("No. 2 - B-Flat Major"),
+        new Proto("No. 3 - C Minor"), new Proto("No. 4 - G Major"),
+        new Proto("No. 5 - E-Flat Major"),}),
+      new Proto("Quartets", new Proto[]{
+        new Proto("Six String Quartets"), new Proto("Three String Quartets"),
+        new Proto("Grosse Fugue for String Quartets"),}),
+      new Proto("Sonatas", new Proto[]{
+        new Proto("Sonata in A Minor"), new Proto("Sonata in F Major"),}),
+      new Proto("Symphonies", new Proto[]{
+        new Proto("No. 1 - C Major"), new Proto("No. 2 - D Major"),
+        new Proto("No. 3 - E-Flat Major"), new Proto("No. 4 - B-Flat Major"),
+        new Proto("No. 5 - C Minor"), new Proto("No. 6 - F Major"),
+        new Proto("No. 7 - A Major"), new Proto("No. 8 - F Major"),
+        new Proto("No. 9 - D Minor"),}),}),
+    new Proto("Brahms", new Proto[]{
+      new Proto("Concertos", new Proto[]{
+        new Proto("Violin Concerto"), new Proto("Double Concerto - A Minor"),
+        new Proto("Piano Concerto No. 1 - D Minor"),
+        new Proto("Piano Concerto No. 2 - B-Flat Major"),}),
+      new Proto("Quartets", new Proto[]{
+        new Proto("Piano Quartet No. 1 - G Minor"),
+        new Proto("Piano Quartet No. 2 - A Major"),
+        new Proto("Piano Quartet No. 3 - C Minor"),
+        new Proto("String Quartet No. 3 - B-Flat Minor"),}),
+      new Proto("Sonatas", new Proto[]{
+        new Proto("Two Sonatas for Clarinet - F Minor"),
+        new Proto("Two Sonatas for Clarinet - E-Flat Major"),}),
+      new Proto("Symphonies", new Proto[]{
+        new Proto("No. 1 - C Minor"), new Proto("No. 2 - D Minor"),
+        new Proto("No. 3 - F Major"), new Proto("No. 4 - E Minor"),}),}),
+    new Proto("Mozart", new Proto[]{new Proto("Concertos", new Proto[]{
+      new Proto("Piano Concerto No. 12"), new Proto("Piano Concerto No. 17"),
+      new Proto("Clarinet Concerto"), new Proto("Violin Concerto No. 5"),
+      new Proto("Violin Concerto No. 4"),}),}),};
+
   public static SinkInfo init() {
     return new SinkInfo("Lists",
-        "Here is the ListBox widget in its two major forms.") {
+        "<h2>Lists and Trees</h2>" +
+        "<p>GWT provides a number of ways to display lists and trees. This " +
+        "includes the browser's built-in list and drop-down boxes, as well as " +
+        "the more advanced suggestion combo-box and trees.</p><p>Try typing " +
+        "some text in the SuggestBox below to see what happens!</p>") {
+
       public Sink createInstance() {
         return new Lists();
       }
     };
   }
-
   private ListBox combo = new ListBox();
   private ListBox list = new ListBox();
-  private Label echo = new Label();
+
   private MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
+
   private SuggestBox suggestBox = new SuggestBox(oracle);
+
+  private Tree tree = new Tree();
 
   public Lists() {
     combo.setVisibleItemCount(1);
@@ -95,36 +164,54 @@ public class Lists extends Sink implements ChangeListener {
     horz.add(combo);
     horz.add(list);
     horz.add(suggestPanel);
+    horz.add(tree);
 
     VerticalPanel panel = new VerticalPanel();
     panel.setHorizontalAlignment(VerticalPanel.ALIGN_LEFT);
     panel.add(horz);
-    panel.add(echo);
     initWidget(panel);
 
-    echoSelection();
+    for (int i = 0; i < fProto.length; ++i) {
+      createItem(fProto[i]);
+      tree.addItem(fProto[i].item);
+    }
+
+    tree.addTreeListener(this);
+    tree.setWidth("20em");
   }
 
   public void onChange(Widget sender) {
     if (sender == combo) {
       fillList(combo.getSelectedIndex());
     } else if (sender == list) {
-      echoSelection();
     }
   }
 
   public void onShow() {
   }
 
-  private void echoSelection() {
-    // Determine which items are selected, and display them.
-    String msg = "Selected items: ";
-    for (int i = 0; i < list.getItemCount(); ++i) {
-      if (list.isItemSelected(i)) {
-        msg += list.getItemText(i) + " ";
+  public void onTreeItemSelected(TreeItem item) {
+  }
+
+  public void onTreeItemStateChanged(TreeItem item) {
+    TreeItem child = item.getChild(0);
+    if (child instanceof PendingItem) {
+      item.removeItem(child);
+
+      Proto proto = (Proto) item.getUserObject();
+      for (int i = 0; i < proto.children.length; ++i) {
+        createItem(proto.children[i]);
+        item.addItem(proto.children[i].item);
       }
     }
-    echo.setText(msg);
+  }
+
+  private void createItem(Proto proto) {
+    proto.item = new TreeItem(proto.text);
+    proto.item.setUserObject(proto);
+    if (proto.children != null) {
+      proto.item.addItem(new PendingItem());
+    }
   }
 
   private void fillList(int idx) {
@@ -134,7 +221,5 @@ public class Lists extends Sink implements ChangeListener {
     for (int i = 0; i < strings.length; ++i) {
       list.addItem(strings[i]);
     }
-
-    echoSelection();
   }
 }
