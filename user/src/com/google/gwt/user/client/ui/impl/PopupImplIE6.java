@@ -48,6 +48,9 @@ public class PopupImplIE6 extends PopupImpl {
     var style = frame.style;
     style.position = 'absolute';
 
+    // Don't get in the way of transparency effects
+    style.filter = 'alpha(opacity=0)';
+
     // takes effect immediately
     style.left = popup.offsetLeft;
     style.top = popup.offsetTop;
