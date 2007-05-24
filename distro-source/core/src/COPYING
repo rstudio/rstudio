@@ -230,3 +230,10 @@ e.g. "gwt-dev-linux.jar".
     http://www.gnu.org/licenses/lgpl.html
   Source code availability: 
     http://webkit.org/building/checkout.html
+
+* Browser Detect v2.1.6
+  License: Creative Commons Attribution 1.0
+    http://creativecommons.org/licenses/by/1.0/
+  Source code availability:
+    http://google-web-toolkit.googlecode.com/svn/trunk/tools/benchmark-viewer/src/com/google/gwt/junit/viewer/client/BrowserInfo.java
+    (transliterated into Java source)
