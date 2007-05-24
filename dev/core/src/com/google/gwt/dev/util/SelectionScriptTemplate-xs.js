@@ -69,8 +69,14 @@ function __MODULE_FUNC__() {
   // --------------- INTERNAL FUNCTIONS ---------------
 
   function isHostedMode() {
-    return (external && external.gwtOnLoad &&
-        ($wnd.location.search.indexOf('gwt.hybrid') == -1));
+    try {
+      return (external && external.gwtOnLoad &&
+          ($wnd.location.search.indexOf('gwt.hybrid') == -1));
+    } catch (e) {
+      // Defensive: some versions of IE7 reportedly can throw an exception
+      // evaluating "external.gwtOnLoad".
+      return false;
+    }
   }
   
   // Called by onScriptLoad() and onload(). It causes
