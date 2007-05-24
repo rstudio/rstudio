@@ -50,7 +50,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    */
   public PopupPanel() {
     super(impl.createElement());
-    DOM.setStyleAttribute(getElement(), "position", "absolute");
   }
 
   /**
@@ -303,6 +302,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     DOM.addEventPreview(this);
 
     RootPanel.get().add(this);
+    DOM.setStyleAttribute(getElement(), "position", "absolute");
     impl.onShow(getElement());
   }
 
