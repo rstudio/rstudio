@@ -28,10 +28,10 @@ public class Info extends Sink {
         + "It demonstrates many of the widgets in the Google Web Toolkit."
         + "<p>This sample also demonstrates something else really useful in GWT: "
         + "history support.  "
-        + "When you click on a link at the left, the location bar will be "
+        + "When you click on a tab, the location bar will be "
         + "updated with the current <i>history token</i>, which keeps the app "
         + "in a bookmarkable state.  The back and forward buttons work properly "
-        + "as well.  Finally, notice that you can right-click a link and 'open "
+        + "as well.  Finally, notice that you can right-click a tab and 'open "
         + "in new window' (or middle-click for a new tab in Firefox).</p></p>") {
 
       public Sink createInstance() {
