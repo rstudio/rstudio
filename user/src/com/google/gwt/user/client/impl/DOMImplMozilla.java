@@ -52,6 +52,26 @@ class DOMImplMozilla extends DOMImplStandard {
     return evt.detail;
   }-*/;
 
+  public native int getAbsoluteLeft(Element elem) /*-{
+    // We cannot use DOMImpl here because offsetLeft/Top return erroneous
+    // values when overflow is not visible.  We have to difference screenX
+    // here due to a change in getBoxObjectFor which causes inconsistencies
+    // on whether the calculations are inside or outside of the element's
+    // border.
+    return $doc.getBoxObjectFor(elem).screenX
+        - $doc.getBoxObjectFor($doc.documentElement).screenX;
+  }-*/;
+
+  public native int getAbsoluteTop(Element elem) /*-{
+    // We cannot use DOMImpl here because offsetLeft/Top return erroneous
+    // values when overflow is not visible.  We have to difference screenY
+    // here due to a change in getBoxObjectFor which causes inconsistencies
+    // on whether the calculations are inside or outside of the element's
+    // border.
+    return $doc.getBoxObjectFor(elem).screenY
+        - $doc.getBoxObjectFor($doc.documentElement).screenY;
+  }-*/;
+  
   public native int getChildIndex(Element parent, Element toFind) /*-{
     var count = 0, child = parent.firstChild;
     while (child) {
