@@ -19,72 +19,25 @@ package com.google.gwt.sample.i18n.client;
 import com.google.gwt.i18n.client.ConstantsWithLookup;
 
 /**
- * Translated colors.
+ * Internationalized constants used by
+ * {@link ConstantsWithLookupExampleController}.
  */
-public interface Colors extends ConstantsWithLookup {
+public interface ColorConstants extends ConstantsWithLookup {
 
-  /**
-   * Translated "Black".
-   * 
-   * @return translated "Black"
-   * @gwt.key black
-   */
   String black();
 
-  /**
-   * Translated "Blue".
-   * 
-   * @return translated "Blue"
-   * @gwt.key blue
-   */
   String blue();
 
-  /**
-   * Translated "Green".
-   * 
-   * @return translated "Green"
-   * @gwt.key green
-   */
   String green();
 
-  /**
-   * Translated "Grey".
-   * 
-   * @return translated "Grey"
-   * @gwt.key grey
-   */
   String grey();
 
-  /**
-   * Translated "Light Grey".
-   * 
-   * @return translated "Light Grey"
-   * @gwt.key lightGrey
-   */
   String lightGrey();
 
-  /**
-   * Translated "Red".
-   * 
-   * @return translated "Red"
-   * @gwt.key red
-   */
   String red();
 
-  /**
-   * Translated "White".
-   * 
-   * @return translated "White"
-   * @gwt.key white
-   */
   String white();
 
-  /**
-   * Translated "Yellow".
-   * 
-   * @return translated "Yellow"
-   * @gwt.key yellow
-   */
   String yellow();
 
 }
