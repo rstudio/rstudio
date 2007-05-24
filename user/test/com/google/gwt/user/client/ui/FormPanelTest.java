@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Timer;
@@ -37,7 +38,7 @@ public class FormPanelTest extends GWTTestCase {
     form.setMethod(FormPanel.METHOD_POST);
     form.setEncoding(FormPanel.ENCODING_MULTIPART);
     assertEquals(FormPanel.ENCODING_MULTIPART, form.getEncoding());
-    form.setAction("/formHandler");
+    form.setAction(GWT.getModuleBaseURL() + "formHandler");
 
     FileUpload file = new FileUpload();
     file.setName("file0");
@@ -69,7 +70,7 @@ public class FormPanelTest extends GWTTestCase {
     final FormPanel form = new FormPanel();
     form.setMethod(FormPanel.METHOD_GET);
     form.setEncoding(FormPanel.ENCODING_URLENCODED);
-    form.setAction("/formHandler");
+    form.setAction(GWT.getModuleBaseURL() + "formHandler");
 
     TextBox tb = new TextBox();
     tb.setText("text");
@@ -120,9 +121,8 @@ public class FormPanelTest extends GWTTestCase {
       public void onSubmitComplete(FormSubmitCompleteEvent event) {
         // The server just echoes the query string. This is what it should look
         // like.
-        assertTrue(event.getResults().equals(
-            "tb=text&ptb=password&cb1=on&rb0=on&lb=value1&h=v"));
-
+        assertEquals("tb=text&ptb=password&cb1=on&rb0=on&lb=value1&h=v",
+            event.getResults());
         finishTest();
       }
 
@@ -161,7 +161,7 @@ public class FormPanelTest extends GWTTestCase {
     final NamedFrame frame = new NamedFrame("myFrame");
     FormPanel form = new FormPanel(frame);
     form.setMethod(FormPanel.METHOD_POST);
-    form.setAction("/formHandler?sendHappyHtml");
+    form.setAction(GWT.getModuleBaseURL() + "formHandler?sendHappyHtml");
     RootPanel.get().add(form);
     RootPanel.get().add(frame);
 

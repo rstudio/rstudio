@@ -234,7 +234,7 @@ public class TreeTest extends GWTTestCase {
     } catch (UnsupportedOperationException e) {
       // Expected.
     }
-    assert (t.getItemCount() == 0);
+    assertEquals(1, t.getItemCount());
     simple.setWidget(new Label("I'm confused"));
     t.addItem(simple);
   }

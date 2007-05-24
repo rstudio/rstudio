@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -199,17 +200,20 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   }
 
   public boolean onFormSubmit() {
-    if (formHandlers != null) {
-      // fireOnSubmit() returns true if the submit should be cancelled
-      return !formHandlers.fireOnSubmit(this);
+    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
+    if (handler != null) {
+      return onFormSubmitAndCatch(handler);
+    } else {
+      return onFormSubmitImpl();
     }
-
-    return true;
   }
 
   public void onFrameLoad() {
-    if (formHandlers != null) {
-      formHandlers.fireOnComplete(this, impl.getTextContents(iframe));
+    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
+    if (handler != null) {
+      onFrameLoadAndCatch(handler);
+    } else {
+      onFrameLoadImpl();
     }
   }
 
@@ -280,6 +284,38 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
     // Unhook the iframe's onLoad when detached.
     impl.unhookEvents(iframe, getElement());
+  }
+
+  private boolean onFormSubmitAndCatch(UncaughtExceptionHandler handler) {
+    try {
+      return onFormSubmitImpl();
+    } catch (Throwable e) {
+      handler.onUncaughtException(e);
+      return false;
+    }
+  }
+
+  private boolean onFormSubmitImpl() {
+    if (formHandlers != null) {
+      // fireOnSubmit() returns true if the submit should be cancelled
+      return !formHandlers.fireOnSubmit(this);
+    }
+
+    return true;
+  }
+
+  private void onFrameLoadAndCatch(UncaughtExceptionHandler handler) {
+    try {
+      onFrameLoadImpl();
+    } catch (Throwable e) {
+      handler.onUncaughtException(e);
+    }
+  }
+
+  private void onFrameLoadImpl() {
+    if (formHandlers != null) {
+      formHandlers.fireOnComplete(this, impl.getTextContents(iframe));
+    }
   }
 
   private void setTarget(String target) {

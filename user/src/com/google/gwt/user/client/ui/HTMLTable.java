@@ -352,10 +352,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * @throws IndexOutOfBoundsException
      */
     public void setStyleName(int column, String styleName) {
-      Element elem = ensureColumn(column);
-      // IE uses attribute "className", FireFox uses attribute "class", so
-      // avoiding the problem by using properties instead.
-      DOM.setElementProperty(elem, "className", styleName);
+      UIObject.resetStyleName(ensureColumn(column), styleName);
     }
 
     /**
@@ -452,7 +449,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * @throws IndexOutOfBoundsException
      */
     public void removeStyleName(int row, String styleName) {
-      UIObject.setStyleName(getElement(row), styleName, false);
+      UIObject.setStyleName(ensureElement(row), styleName, false);
     }
 
     /**
@@ -464,8 +461,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * @throws IndexOutOfBoundsException
      */
     public void setStyleName(int row, String styleName) {
-      Element elem = ensureElement(row);
-      DOM.setElementProperty(elem, "className", styleName);
+      UIObject.resetStyleName(ensureElement(row), styleName);
     }
 
     /**

@@ -38,6 +38,7 @@ public class HistoryTest extends GWTTestCase {
       public void onHistoryChanged(String token) {
         assertEquals(escToken, token);
         finishTest();
+        History.removeHistoryListener(this);
       }
     });
     History.newItem(escToken);
@@ -79,6 +80,7 @@ public class HistoryTest extends GWTTestCase {
               fail("Expecting token 'foo bar', but got: " + historyToken);
             }
             finishTest();
+            History.removeHistoryListener(this);
             break;
           }
         }
@@ -107,6 +109,7 @@ public class HistoryTest extends GWTTestCase {
         } else {
           assertEquals(0, historyToken.length());
           finishTest();
+          History.removeHistoryListener(this);
         }
       }
     });

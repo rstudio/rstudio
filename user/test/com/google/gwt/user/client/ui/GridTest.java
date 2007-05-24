@@ -61,19 +61,20 @@ public class GridTest extends HTMLTableTestBase {
   public void testColumnFormatter() {
     Grid r = new Grid(4, 5);
     Grid.ColumnFormatter columns = r.getColumnFormatter();
-    columns.setStyleName(0, "a");
-    assertEquals("a", columns.getStyleName(0));
+    columns.setStyleName(0, "base");
+    columns.addStyleName(0, "a");
+    assertEquals("base a", columns.getStyleName(0));
     columns.addStyleName(0, "b");
-    assertEquals("a b", getNormalizedStyleName(columns, 0));
+    assertEquals("base a b", getNormalizedStyleName(columns, 0));
     columns.addStyleName(0, "c");
-    assertEquals("a b c", getNormalizedStyleName(columns, 0));
+    assertEquals("base a b c", getNormalizedStyleName(columns, 0));
     // Remove first.
     columns.removeStyleName(0, "a");
-    assertEquals("b c", getNormalizedStyleName(columns, 0));
+    assertEquals("base b c", getNormalizedStyleName(columns, 0));
 
     // Remove last.
     columns.removeStyleName(0, "c");
-    assertEquals("b", getNormalizedStyleName(columns, 0));
+    assertEquals("base b", getNormalizedStyleName(columns, 0));
 
     // Only one column should be created.
     Element e = DOM.getChild(r.getElement(), 0);

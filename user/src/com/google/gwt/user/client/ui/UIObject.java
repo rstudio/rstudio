@@ -84,10 +84,10 @@ public abstract class UIObject {
 
   private static final String EMPTY_STYLENAME_MSG = "Style names cannot be empty";
 
-  private static final String STYLE_EMPTY = "gwt-nostyle";
-
   private static final String NULL_HANDLE_MSG = "Null widget handle. If you "
       + "are creating a composite, ensure that initWidget() has been called.";
+
+  private static final String STYLE_EMPTY = "gwt-nostyle";
 
   public static native boolean isVisible(Element elem) /*-{
     return (elem.style.display != 'none');
@@ -96,6 +96,29 @@ public abstract class UIObject {
   public static native void setVisible(Element elem, boolean visible) /*-{
     elem.style.display = visible ? '' : 'none';
   }-*/;
+
+  /**
+   * Sets the object's primary style name and updates all dependent style names.
+   * 
+   * @param elem the element whose style is to be reset
+   * @param style the new primary style name
+   * @see #setStyleName(Element, String, boolean)
+   */
+  protected static void resetStyleName(Element elem, String style) {
+    if (elem == null) {
+      throw new RuntimeException(NULL_HANDLE_MSG);
+    }
+
+    // Style names cannot contain leading or trailing whitespace, and cannot
+    // legally be empty.
+    style = style.trim();
+    if (style.length() == 0) {
+      throw new IllegalArgumentException(EMPTY_STYLENAME_MSG);
+    }
+
+    ensurePrimaryStyleName(elem);
+    updatePrimaryAndDependentStyleNames(elem, style);
+  }
 
   /**
    * This convenience method adds or removes a secondary style name to the
@@ -178,6 +201,41 @@ public abstract class UIObject {
     
     return className;
   }
+
+  /**
+   * Replaces all instances of the primary style name with newPrimaryStyleName.
+   */
+  private static native void updatePrimaryAndDependentStyleNames(Element elem, String newStyle) /*-{
+    var className = elem.className;
+
+    var spaceIdx = className.indexOf(' ');
+    if (spaceIdx >= 0) {
+      // Get the old base style name from the beginning of the className.
+      var oldStyle = className.substring(0, spaceIdx);
+
+      // Replace oldStyle with newStyle. We have to do this by hand because
+      // there is no String.replaceAll() and String.replace() takes a regex,
+      // which we can't guarantee is safe on arbitrary class names.
+      var newClassName = '', curIdx = 0;
+      while (true) {
+        var idx = className.indexOf(oldStyle, curIdx);
+        if (idx == -1) {
+          newClassName += className.substring(curIdx);
+          break;
+        }
+
+        newClassName += className.substring(curIdx, idx);
+        newClassName += newStyle;
+        curIdx = idx + oldStyle.length;
+      }
+
+      elem.className = newClassName;
+    } else {
+      // There was no space, and therefore only one class name, which we can
+      // simply clobber.
+      elem.className = newStyle;
+    }
+  }-*/;
 
   private Element element;
 
@@ -412,19 +470,7 @@ public abstract class UIObject {
    * @see #removeStyleName(String)
    */
   public void setStyleName(String style) {
-    if (element == null) {
-      throw new RuntimeException(NULL_HANDLE_MSG);
-    }
-
-    // Style names cannot contain leading or trailing whitespace, and cannot
-    // legally be empty.
-    style = style.trim();
-    if (style.length() == 0) {
-      throw new IllegalArgumentException(EMPTY_STYLENAME_MSG);
-    }
-
-    ensurePrimaryStyleName(element);
-    updatePrimaryAndDependentStyleNames(element, style);
+    resetStyleName(element, style);
   }
 
   /**
@@ -537,13 +583,13 @@ public abstract class UIObject {
    *         "inherit" are passed in.
    */
   private native double extractLengthValue(String s) /*-{
-    if (s == "auto" || s == "inherit") {
+    if (s == "auto" || s == "inherit" || s == "") {
       return 0;
     } else {
       return parseFloat(s);
     }
   }-*/;
-
+  
   private native void replaceNode(Element node, Element newNode) /*-{
     var p = node.parentNode;
     if (!p) {
@@ -552,40 +598,6 @@ public abstract class UIObject {
     p.insertBefore(newNode, node);
     p.removeChild(node);
   }-*/;
-  
-  /**
-   * Replaces all instances of the primary style name with newPrimaryStyleName.
-   */
-  private native void updatePrimaryAndDependentStyleNames(Element elem, String newStyle) /*-{
-    var className = elem.className;
-
-    var spaceIdx = className.indexOf(' ');
-    if (spaceIdx >= 0) {
-      // Get the old base style name from the beginning of the className.
-      var oldStyle = className.substring(0, spaceIdx);
-
-      // Replace oldStyle with newStyle. We have to do this by hand because
-      // there is no String.replaceAll() and String.replace() takes a regex,
-      // which we can't guarantee is safe on arbitrary class names.
-      var newClassName = '', curIdx = 0;
-      while (true) {
-        var idx = className.indexOf(oldStyle, curIdx);
-        if (idx == -1) {
-          newClassName += className.substring(curIdx);
-          break;
-        }
-
-        newClassName += className.substring(curIdx, idx);
-        newClassName += newStyle;
-        curIdx = idx + oldStyle.length;
-      }
-
-      elem.className = newClassName;
-    } else {
-      // There was no space, and therefore only one class name, which we can
-      // simply clobber.
-      elem.className = newStyle;
-    }
-  }-*/;
 }
+
 

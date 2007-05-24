@@ -56,8 +56,8 @@ public class CustomButtonTest extends GWTTestCase {
       Map.Entry entry = (Entry) entries.next();
       Face f = (Face) entry.getValue();
       b.setCurrentFace(f);
-      assertEquals("random-" + f.getName(), DOM.getElementProperty(
-          b.getElement(), "className").trim());
+      assertTrue(DOM.getElementProperty(b.getElement(), "className").indexOf(
+          "random-" + f.getName()) >= 0);
     }
 
     entries = faces.entrySet().iterator();

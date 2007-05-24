@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.DOM;
 
 /**
  * Tests {@link ListBox}. Needs many, many more tests.
@@ -66,23 +67,26 @@ public class ListBoxTest extends GWTTestCase {
 
   public void testSetStyleNames() {
     ListBox box = new ListBox();
-    box.removeStyleName("gwt-ListBox");
-    assertEquals("", box.getStyleName());
+    try {
+      box.removeStyleName("gwt-ListBox");
+      fail("Should have thrown illegal argument exception");
+    } catch (IllegalArgumentException e) {
+    }
 
     // Check subset problems.
     box.addStyleName("superset");
     box.addStyleName("super");
-    assertEquals("superset super", getNormalizedStyleName(box));
+    assertEquals("gwt-ListBox superset super", getNormalizedStyleName(box));
 
     // Remove a style that doesn't exist.
     box.removeStyleName("sup");
-    assertEquals("superset super", getNormalizedStyleName(box));
+    assertEquals("gwt-ListBox superset super", getNormalizedStyleName(box));
     box.removeStyleName("super");
-    assertEquals("superset", getNormalizedStyleName(box));
+    assertEquals("gwt-ListBox superset", getNormalizedStyleName(box));
     box.addStyleName("two styles");
-    assertEquals("superset two styles", getNormalizedStyleName(box));
+    assertEquals("gwt-ListBox superset two styles", getNormalizedStyleName(box));
     box.removeStyleName("superset");
-    assertEquals("two styles", getNormalizedStyleName(box));
+    assertEquals("gwt-ListBox two styles", getNormalizedStyleName(box));
     box.removeStyleName("two styles");
     try {
       box.addStyleName("");
@@ -93,7 +97,7 @@ public class ListBoxTest extends GWTTestCase {
     box.addStyleName("superset");
     box.addStyleName("two");
     box.addStyleName("styles");
-    assertEquals("superset two styles", getNormalizedStyleName(box));
+    assertEquals("gwt-ListBox superset two styles", getNormalizedStyleName(box));
   }
 
   public void testText() {
@@ -162,7 +166,7 @@ public class ListBoxTest extends GWTTestCase {
   }
 
   private String getNormalizedStyleName(ListBox box) {
-    return box.getStyleName().replaceAll("  ", " ").trim();
+    return DOM.getElementProperty(box.getElement(), "className").replaceAll("  ", " ").trim();
   }
 
 }
