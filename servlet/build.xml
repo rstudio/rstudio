@@ -15,6 +15,8 @@
 				<exclude name="com/google/gwt/i18n/tools/**" />
 				<exclude name="com/google/gwt/json/**" />
 				<exclude name="com/google/gwt/junit/*" />
+				<exclude name="com/google/gwt/junit/benchmarks/**" />
+				<exclude name="com/google/gwt/junit/client/Benchmark.*" />
 				<exclude name="com/google/gwt/junit/client/GWTTestCase.*" />
 				<exclude name="com/google/gwt/junit/rebind/**" />
 				<exclude name="com/google/gwt/junit/remote/**" />
