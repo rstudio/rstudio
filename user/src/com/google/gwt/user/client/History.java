@@ -56,7 +56,7 @@ public class History {
       GWT.log(
           "Unable to initialize the history subsystem; did you "
               + "include the history frame in your host page? Try "
-              + "<iframe id='__gwt_historyFrame' style='width:0;height:0;border:0'>"
+              + "<iframe src=\"javascript:''\" id='__gwt_historyFrame' style='width:0;height:0;border:0'>"
               + "</iframe>", null);
     }
   }
