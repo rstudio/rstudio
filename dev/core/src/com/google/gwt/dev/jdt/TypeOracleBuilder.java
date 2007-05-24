@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -100,6 +100,9 @@ public class TypeOracleBuilder {
     int start = javadoc.sourceStart;
     int end = javadoc.sourceEnd;
     char[] comment = CharOperation.subarray(unitSource, start, end + 1);
+    if (comment == null) {
+      comment = new char[0];
+    }
     BufferedReader reader = new BufferedReader(new CharArrayReader(comment));
     String activeTag = null;
     final List tagValues = new ArrayList();
