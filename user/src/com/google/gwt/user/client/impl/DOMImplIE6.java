@@ -333,7 +333,9 @@ class DOMImplIE6 extends DOMImpl {
     elem.__eventBits = bits;
 
     elem.onclick       = (bits & 0x00001) ? $wnd.__dispatchEvent : null;
-    elem.ondblclick    = (bits & 0x00002) ? $wnd.__dispatchDblClickEvent : null;
+    // Add an ondblclick handler if onclick is desired to ensure that
+    // a user's double-click will result in two onclick events
+    elem.ondblclick    = (bits & (0x00001 | 0x00002)) ? $wnd.__dispatchDblClickEvent : null;
     elem.onmousedown   = (bits & 0x00004) ? $wnd.__dispatchEvent : null;
     elem.onmouseup     = (bits & 0x00008) ? $wnd.__dispatchEvent : null;
     elem.onmouseover   = (bits & 0x00010) ? $wnd.__dispatchEvent : null;
