@@ -17,10 +17,7 @@ package com.google.gwt.user.client.rpc;
 
 /**
  * Marker interface indicating that a type is intended to be used with a
- * {@link RemoteService}. Do not confuse this interface with
- * {@link Serializable java.io.Serializable}, which is included in the GWT JRE
- * Emulation Library for source compatibility only and which will not by itself
- * make a class usable with a {@link RemoteService}.
+ * {@link RemoteService}.
  */
 public interface IsSerializable {
 }

@@ -21,6 +21,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.ImageBundle;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
@@ -38,6 +39,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1138,7 +1140,8 @@ public class DeveloperGuide {
      * 
      * <tr class='gallery-link'>
      * <td><a href='com.google.gwt.user.client.ui.PushButton.html'>PushButton</a></td>
-     * <td><a href='com.google.gwt.user.client.ui.ToggleButton.html'>ToggleButton</a></td>
+     * <td><a
+     * href='com.google.gwt.user.client.ui.ToggleButton.html'>ToggleButton</a></td>
      * </tr>
      * 
      * <tr class='gallery'>
@@ -1230,8 +1233,10 @@ public class DeveloperGuide {
      * </tr>
      * 
      * <tr class='gallery-link'>
-     * <td><a href='com.google.gwt.user.client.ui.VerticalSplitPanel.html'>VerticalSplitPanel</a></td>
-     * <td><a href='com.google.gwt.user.client.ui.HorizontalSplitPanel.html'>HorizontalSplitPanel</a></td>
+     * <td><a
+     * href='com.google.gwt.user.client.ui.VerticalSplitPanel.html'>VerticalSplitPanel</a></td>
+     * <td><a
+     * href='com.google.gwt.user.client.ui.HorizontalSplitPanel.html'>HorizontalSplitPanel</a></td>
      * </tr>
      * 
      * <tr class='gallery'>
@@ -1250,8 +1255,10 @@ public class DeveloperGuide {
      * </tr>
      * 
      * <tr class='gallery-link'>
-     * <td><a href='com.google.gwt.user.client.ui.RichTextArea.html'>RichTextArea</a></td>
-     * <td><a href='com.google.gwt.user.client.ui.DisclosurePanel.html'>DisclosurePanel</a></td>
+     * <td><a
+     * href='com.google.gwt.user.client.ui.RichTextArea.html'>RichTextArea</a></td>
+     * <td><a
+     * href='com.google.gwt.user.client.ui.DisclosurePanel.html'>DisclosurePanel</a></td>
      * </tr>
      * 
      * <tr class='gallery'>
@@ -2184,13 +2191,12 @@ public class DeveloperGuide {
      * A user-defined class is serializable if
      * <ol>
      * <li>it is assignable to
-     * {@link com.google.gwt.user.client.rpc.IsSerializable}, either because it
-     * directly implements the interface or because it derives from a superclass
-     * that does</li>
-     * <li>all non-<code>transient</code> fields are themselves
-     * serializable, and</li>
-     * <li>it explicitly defines a default constructor, which is a constructor
-     * that is declared to be public and takes no arguments</li>
+     * {@link com.google.gwt.user.client.rpc.IsSerializable} or
+     * {@link java.io.Serializable}, either because it directly implements one
+     * of these interfaces or because it derives from a superclass that does</li>
+     * <li>all non-<code>final</code>, non-<code>transient</code>
+     * instance fields are themselves serializable, and</li>
+     * <li>it has a <code>public</code> default (zero argument) constructor</li>
      * </ol>
      * 
      * The <code>transient</code> keyword is honored, so values in transient
@@ -2247,7 +2253,7 @@ public class DeveloperGuide {
      *      Java interface
      *      <code><a href="http://java.sun.com/j2se/1.4.2/docs/api/java/io/Serializable.html">Serializable</a></code>.
      *      All references to serialization are referring to the GWT concept as
-     *      defined below.
+     *      defined above.
      */
     public static class SerializableTypes {
 
@@ -2311,6 +2317,7 @@ public class DeveloperGuide {
      * specified in the service interface.
      * 
      * <h2>Unexpected Exceptions</h2>
+     * <h3>InvocationException</h3>
      * An RPC may not reach the
      * {@link DeveloperGuide.RemoteProcedureCalls.ImplementingServices service implementation}
      * at all. This can happen for many reasons: the network may be
@@ -2331,6 +2338,23 @@ public class DeveloperGuide {
      * service implementation, and so on. In these cases, a
      * {@link com.google.gwt.user.client.rpc.InvocationException} is thrown in
      * application code.
+     * </p>
+     * 
+     * <h3>IncompatibleRemoteServiceException</h3>
+     * <p>
+     * Another type of failure can be caused by an incompatibility between the
+     * client and the server. This most commonly occurs when a change to a
+     * {@link DeveloperGuide.RemoteProcedureCalls.ImplementingServices service implementation}
+     * is deployed to a server but out-of-date clients are still active. For
+     * more details please see
+     * {@link com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException IncompatibleRemoteServiceException}.
+     * </p>
+     * 
+     * <p>
+     * When the client code receives an
+     * {@link com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException IncompatibleRemoteServiceException},
+     * it should ultimately attempt to refresh the browser in order to pick up
+     * the latest client.
      * </p>
      * 
      * @title Handling Exceptions
