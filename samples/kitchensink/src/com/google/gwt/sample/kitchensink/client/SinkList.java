@@ -15,8 +15,6 @@
  */
 package com.google.gwt.sample.kitchensink.client;
 
-import java.util.ArrayList;
-
 import com.google.gwt.sample.kitchensink.client.Sink.SinkInfo;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -25,6 +23,8 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
+
+import java.util.ArrayList;
 
 /**
  * The left panel that contains all of the sinks, along with a short description
@@ -106,6 +106,16 @@ public class SinkList extends Composite {
     }
   }
 
+  private void colorSink(int index, boolean on) {
+    String color = "";
+    if (on) {
+      color = ((SinkInfo) sinks.get(index)).getColor();
+    }
+
+    Widget w = list.getWidget(index + 1);
+    DOM.setStyleAttribute(w.getElement(), "backgroundColor", color);
+  }
+
   private void mouseOut(int index) {
     if (index != selectedSink) {
       colorSink(index, false);
@@ -128,15 +138,5 @@ public class SinkList extends Composite {
     w.setStyleName(style);
 
     colorSink(index, selected);
-  }
-
-  private void colorSink(int index, boolean on) {
-    String color = "";
-    if (on) {
-      color = ((SinkInfo) sinks.get(index)).getColor();
-    }
-
-    Widget w = list.getWidget(index + 1);
-    DOM.setStyleAttribute(w.getElement(), "backgroundColor", color);
   }
 }
