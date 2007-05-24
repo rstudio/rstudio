@@ -15,10 +15,8 @@
  */
 package java.io;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
-
 /**
- * Provided for interoperability; RPC treats this interface synonimously with
+ * Provided for interoperability; RPC treats this interface synonymously with
  * {@link com.google.gwt.user.client.rpc.IsSerializable IsSerializable}.
  * The Java serialization protocol is explicitly not supported.
  */
