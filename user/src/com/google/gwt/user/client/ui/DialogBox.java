@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -52,8 +52,9 @@ public class DialogBox extends PopupPanel implements HasHTML, MouseListener {
 
   /**
    * Creates an empty dialog box specifying its "auto-hide" property. It should
-   * not be shown until its child widget has been added using {@link #add(Widget)}.
-   *
+   * not be shown until its child widget has been added using
+   * {@link #add(Widget)}.
+   * 
    * @param autoHide <code>true</code> if the dialog should be automatically
    *          hidden when the user clicks outside of it
    */
@@ -63,8 +64,9 @@ public class DialogBox extends PopupPanel implements HasHTML, MouseListener {
 
   /**
    * Creates an empty dialog box specifying its "auto-hide" property. It should
-   * not be shown until its child widget has been added using {@link #add(Widget)}.
-   *
+   * not be shown until its child widget has been added using
+   * {@link #add(Widget)}.
+   * 
    * @param autoHide <code>true</code> if the dialog should be automatically
    *          hidden when the user clicks outside of it
    * @param modal <code>true</code> if keyboard and mouse events for widgets
@@ -72,14 +74,15 @@ public class DialogBox extends PopupPanel implements HasHTML, MouseListener {
    */
   public DialogBox(boolean autoHide, boolean modal) {
     super(autoHide, modal);
-    panel.setWidget(0,0,caption);
+    panel.setWidget(0, 0, caption);
     panel.setHeight("100%");
     panel.setBorderWidth(0);
     panel.setCellPadding(0);
     panel.setCellSpacing(0);
-    panel.getCellFormatter().setHeight(1,0,"100%");
-    panel.getCellFormatter().setWidth(1,0,"100%");
-    panel.getCellFormatter().setAlignment(1,0, HasHorizontalAlignment.ALIGN_CENTER, HasVerticalAlignment.ALIGN_MIDDLE);
+    panel.getCellFormatter().setHeight(1, 0, "100%");
+    panel.getCellFormatter().setWidth(1, 0, "100%");
+    panel.getCellFormatter().setAlignment(1, 0,
+        HasHorizontalAlignment.ALIGN_CENTER, HasVerticalAlignment.ALIGN_MIDDLE);
     super.setWidget(panel);
 
     setStyleName("gwt-DialogBox");
@@ -159,9 +162,24 @@ public class DialogBox extends PopupPanel implements HasHTML, MouseListener {
 
     // Add the widget to the center of the cell.
     if (w != null) {
-      panel.setWidget(1,0,w);
+      panel.setWidget(1, 0, w);
     }
 
     child = w;
+  }
+
+  /**
+   * Override, so that interior panel reflows to match parent's new width.
+   * 
+   * @Override
+   */
+  public void setWidth(String width) {
+    super.setWidth(width);
+
+    // note that you CANNOT call panel.setWidth("100%") until parent's width
+    // has been explicitly set, b/c until then parent's width is unconstrained
+    // and setting panel's width to 100% will flow parent to 100% of browser
+    // (i.e. can't do this in constructor)
+    panel.setWidth("100%");
   }
 }
