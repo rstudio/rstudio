@@ -55,7 +55,7 @@ public final class Integer extends Number implements Comparable {
     return new Integer(Integer.parseInt(s, radix));
   }
 
-  private final int value;
+  private final transient int value;
 
   public Integer(int value) {
     this.value = value;

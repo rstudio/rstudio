@@ -40,6 +40,8 @@ public interface ReportServer extends RemoteService {
    * Returns a list of summaries of all the Benchmark reports.
    * 
    * @return a non-null list of ReportSummary
+   * 
+   * @gwt.typeArgs <com.google.gwt.junit.viewer.client.ReportSummary>
    */
   public List/* <ReportSummary> */getReportSummaries();
 }

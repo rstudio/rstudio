@@ -28,6 +28,9 @@ public class Result implements IsSerializable {
 
   private String host;
 
+  /**
+   * @gwt.typeArgs <com.google.gwt.junit.viewer.client.Trial>
+   */
   private List trials;
 
   public Result() {

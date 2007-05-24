@@ -47,7 +47,7 @@ public final class Short extends Number implements Comparable {
     return new Short(Short.parseShort(s, radix));
   }
 
-  private final short value;
+  private final transient short value;
 
   public Short(short value) {
     this.value = value;

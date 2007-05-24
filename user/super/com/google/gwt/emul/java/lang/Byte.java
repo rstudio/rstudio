@@ -48,7 +48,7 @@ public final class Byte extends Number implements Comparable {
     return new Byte(Byte.parseByte(s, radix));
   }
 
-  private final byte value;
+  private final transient byte value;
 
   public Byte(byte value) {
     this.value = value;

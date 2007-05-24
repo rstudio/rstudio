@@ -113,7 +113,7 @@ public final class Character {
     return String.fromCharCode(c).toUpperCase().charCodeAt(0);
   }-*/;
 
-  private final char value;
+  private final transient char value;
 
   public Character(char value) {
     this.value = value;

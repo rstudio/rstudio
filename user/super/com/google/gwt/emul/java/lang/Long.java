@@ -73,7 +73,7 @@ public final class Long extends Number implements Comparable {
     return new Long(Long.parseLong(s, radix));
   }
 
-  private final long value;
+  private final transient long value;
 
   public Long(long value) {
     this.value = value;

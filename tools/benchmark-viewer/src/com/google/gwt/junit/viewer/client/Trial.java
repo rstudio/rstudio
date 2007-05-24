@@ -29,6 +29,9 @@ public class Trial implements IsSerializable {
 
   double runTimeMillis;
 
+  /**
+   * @gwt.typeArgs <java.lang.String,java.lang.String>
+   */
   Map/* <String,String> */variables;
 
   public Trial() {
