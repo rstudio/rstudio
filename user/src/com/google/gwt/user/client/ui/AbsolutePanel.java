@@ -88,25 +88,27 @@ public class AbsolutePanel extends ComplexPanel {
   }
 
   /**
-   * Gets the left position of the specified widget within the panel.
+   * Gets the position of the left outer border edge of the widget relative to
+   * the left outer border edge of the panel.
    * 
    * @param w the widget whose position is to be retrieved
    * @return the widget's left position
    */
   public int getWidgetLeft(Widget w) {
     checkWidgetParent(w);
-    return DOM.getElementPropertyInt(w.getElement(), "offsetLeft");
+    return DOM.getAbsoluteLeft(w.getElement()) - DOM.getAbsoluteLeft(getElement());
   }
 
   /**
-   * Gets the top position of the specified widget within the panel.
+   * Gets the position of the top outer border edge of the widget relative to
+   * the top outer border edge of the panel.
    * 
    * @param w the widget whose position is to be retrieved
    * @return the widget's top position
    */
   public int getWidgetTop(Widget w) {
     checkWidgetParent(w);
-    return DOM.getElementPropertyInt(w.getElement(), "offsetTop");
+    return DOM.getAbsoluteTop(w.getElement()) - DOM.getAbsoluteTop(getElement());
   }
 
   /**
