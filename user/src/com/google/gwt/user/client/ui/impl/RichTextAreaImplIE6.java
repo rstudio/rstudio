@@ -17,14 +17,14 @@ package com.google.gwt.user.client.ui.impl;
 
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.ui.RichTextArea;
 
 /**
  * IE6-specific implementation of rich-text editing.
  */
 public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
 
-  private static native void attachEvents(Element elem) /*-{
+  native void initEvents() /*-{
+    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     var handler = function() {
       if (elem.__listener) {
         // Weird: this code has the context of the script frame, but we need the
@@ -33,7 +33,7 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
         elem.__listener.@com.google.gwt.user.client.ui.RichTextArea::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
       }
     };
-  
+
     var body = elem.contentWindow.document.body;
     body.onkeydown =
     body.onkeyup =
@@ -63,13 +63,6 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     return elem.contentWindow.document.body.innerText;
   }-*/;
 
-  private static native void writeHtml(Element elem) /*-{
-    var doc = elem.contentWindow.document;
-    doc.open();
-    doc.write('<html><body CONTENTEDITABLE="true"></body></html>');
-    doc.close();
-  }-*/;
-
   public Element createElement() {
     Element elem = super.createElement();
     DOM.setElementProperty(elem, "src", "javascript:''");
@@ -80,14 +73,20 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     return getText(elem);
   }
 
-  public void hookEvents(RichTextArea owner) {
-    attachEvents(elem);
-    super.hookEvents(owner);
-  }
+  public native void initElement() /*-{
+    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
+    var _this = this;
 
-  public void initElement() {
-    writeHtml(elem);
-  }
+    window.setTimeout(function() {
+      var doc = elem.contentWindow.document;
+      doc.open();
+      doc.write('<html><body CONTENTEDITABLE="true"></body></html>');
+      doc.close();
+
+      // Initialize event handling.
+      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplIE6::initEvents()();
+    }, 1);
+  }-*/;
 
   public void unhookEvents() {
     super.unhookEvents();

@@ -25,8 +25,8 @@ import com.google.gwt.user.client.ui.impl.RichTextAreaImpl;
  * 
  * Because some browsers do not support rich text editing, and others support
  * only a limited subset of functionality, there are two formatter interfaces,
- * accessed via {@link #getBasicFormatter()} and {@link #getExtendedFormatter()}. A
- * browser that does not support rich text editing at all will return
+ * accessed via {@link #getBasicFormatter()} and {@link #getExtendedFormatter()}.
+ * A browser that does not support rich text editing at all will return
  * <code>null</code> for both of these, while one that supports only the basic
  * functionality will return <code>null</code> for the latter.
  * 
@@ -40,7 +40,7 @@ import com.google.gwt.user.client.ui.impl.RichTextAreaImpl;
  * </ul>
  */
 public class RichTextArea extends FocusWidget implements HasHTML,
-    SourcesMouseEvents, SourcesChangeEvents {
+    SourcesMouseEvents {
 
   /**
    * This interface is used to access basic formatting options, when available.
@@ -325,7 +325,6 @@ public class RichTextArea extends FocusWidget implements HasHTML,
   }
 
   private RichTextAreaImpl impl = (RichTextAreaImpl) GWT.create(RichTextAreaImpl.class);
-  private ChangeListenerCollection changeListeners;
   private MouseListenerCollection mouseListeners;
 
   /**
@@ -334,13 +333,6 @@ public class RichTextArea extends FocusWidget implements HasHTML,
   public RichTextArea() {
     setElement(impl.getElement());
     setStyleName("gwt-RichTextArea");
-  }
-
-  public void addChangeListener(ChangeListener listener) {
-    if (changeListeners == null) {
-      changeListeners = new ChangeListenerCollection();
-    }
-    changeListeners.add(listener);
   }
 
   public void addMouseListener(MouseListener listener) {
@@ -395,22 +387,9 @@ public class RichTextArea extends FocusWidget implements HasHTML,
         }
         break;
 
-      case Event.ONCHANGE:
-        // TODO: there's no code to fire this on IE6.
-        if (changeListeners != null) {
-          changeListeners.fireChange(this);
-        }
-        break;
-
       default:
         // ClickEvents and KeyboardEvents
         super.onBrowserEvent(event);
-    }
-  }
-
-  public void removeChangeListener(ChangeListener listener) {
-    if (changeListeners != null) {
-      changeListeners.remove(listener);
     }
   }
 

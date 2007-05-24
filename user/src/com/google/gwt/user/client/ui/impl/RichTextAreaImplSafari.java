@@ -54,7 +54,7 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
   }-*/;
 
   public native void setFocus(boolean focused) /*-{
-    // Opera needs the *iframe* focused, not its window.
+    // Safari needs the *iframe* focused, not its window.
     if (focused) {
       this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.focus();
       this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.__gwt_restoreSelection();

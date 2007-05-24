@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.RichTextArea;
 
@@ -24,66 +23,71 @@ import com.google.gwt.user.client.ui.RichTextArea;
  */
 public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
 
-  private static boolean supportsEditing;
+  private static boolean richTextSupported = detectEditingSupport();
+  private static RichTextAreaImpl old;
+
+  static {
+    // If rich text is not supported by this version of Opera, create an
+    // instance of the default impl and shunt all calls to it.
+    if (!richTextSupported) {
+      old = new RichTextAreaImpl();
+    }
+  }
+
+  private static native boolean detectEditingSupport() /*-{
+    return !!$doc.designMode;
+  }-*/;
 
   public Element createElement() {
-    supportsEditing = detectEditingSupport();
-    if (supportsEditing) {
-      return super.createElement();
+    if (old != null) {
+      return old.createElement();
     }
-    return DOM.createTextArea();
+    return super.createElement();
+  }
+
+  public Element getElement() {
+    if (old != null) {
+      return old.getElement();
+    }
+    return super.getElement();
   }
 
   public String getHTML() {
-    if (supportsEditing) {
-      return super.getHTML();
+    if (old != null) {
+      return old.getHTML();
     }
-
-    // THIS DOESN'T WORK, unless there's a compiler bug!
-    return ((RichTextAreaImpl) this).getHTML();
+    return super.getHTML();
   }
 
   public String getText() {
-    if (supportsEditing) {
-      return super.getText();
+    if (old != null) {
+      return old.getText();
     }
-
-    // THIS DOESN'T WORK, unless there's a compiler bug!
-    return ((RichTextAreaImpl) this).getText();
+    return super.getText();
   }
 
   public void hookEvents(RichTextArea owner) {
-    if (supportsEditing) {
-      super.hookEvents(owner);
+    if (old != null) {
+      old.hookEvents(owner);
       return;
     }
-
-    // THIS DOESN'T WORK, unless there's a compiler bug!
-    ((RichTextAreaImpl) this).hookEvents(owner);
+    super.hookEvents(owner);
   }
 
   public void initElement() {
-    if (supportsEditing) {
-      super.initElement();
+    if (old != null) {
+      old.initElement();
       return;
     }
-
-    // THIS DOESN'T WORK, unless there's a compiler bug!
-    ((RichTextAreaImpl) this).initElement();
+    super.initElement();
   }
 
   public boolean isBasicEditingSupported() {
-    return supportsEditing;
+    return richTextSupported;
   }
 
-  public boolean isFullEditingSupported() {
-    return supportsEditing;
-  }
-
-  public void setBackColor(String color) {
-    // Opera uses 'BackColor' for the *entire area's* background. 'HiliteColor'
-    // does what we actually want.
-    execCommand("HiliteColor", color);
+  public boolean isExtendedEditingSupported() {
+    return richTextSupported;
   }
 
   public native void setFocus(boolean focused) /*-{
@@ -96,57 +100,31 @@ public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
   }-*/;
 
   public void setHTML(String html) {
-    if (supportsEditing) {
-      super.setHTML(html);
+    if (old != null) {
+      old.setHTML(html);
+      return;
     }
-
-    // Unsupported fallback.
-    DOM.setElementProperty(elem, "value", html);
+    super.setHTML(html);
   }
 
   public void setText(String text) {
-    if (supportsEditing) {
-      super.setText(text);
+    if (old != null) {
+      old.setText(text);
+      return;
     }
-
-    // Unsupported fallback.
-    DOM.setElementProperty(elem, "value", text);
+    super.setText(text);
   }
 
   public void unhookEvents() {
-    if (supportsEditing) {
-      super.unhookEvents();
-      return;
+    if (old != null) {
+      old.unhookEvents();
     }
-
-    // THIS DOESN'T WORK, unless there's a compiler bug!
-    ((RichTextAreaImpl) this).unhookEvents();
+    super.unhookEvents();
   }
 
-  void execCommand(String cmd, String param) {
-    if (isRichEditingActive(elem)) {
-      // Opera doesn't need focus for execCommand() to work, but focusing
-      // the editor causes it to lose its selection, so we focus *after*
-      // execCommand().
-      execCommandAssumingFocus(cmd, param);
-      setFocus(true);
-
-      // TODO: Opera has now lost its selection. Figure out a way to restore it
-      // reliably.
-    }
+  public void setBackColor(String color) {
+    // Opera uses 'BackColor' for the *entire area's* background. 'HiliteColor'
+    // does what we actually want.
+    execCommand("HiliteColor", color);
   }
-
-  boolean queryCommandState(String cmd) {
-    // Opera doesn't need focus (and setting it dumps selection).
-    return queryCommandStateAssumingFocus(cmd);
-  }
-
-  String queryCommandValue(String cmd) {
-    // Opera doesn't need focus (and setting it dumps selection).
-    return queryCommandValueAssumingFocus(cmd);
-  }
-
-  private native boolean detectEditingSupport() /*-{
-    return !!$doc.designMode;
-  }-*/;
 }
