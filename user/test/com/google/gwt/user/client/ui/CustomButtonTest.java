@@ -56,8 +56,8 @@ public class CustomButtonTest extends GWTTestCase {
       Map.Entry entry = (Entry) entries.next();
       Face f = (Face) entry.getValue();
       b.setCurrentFace(f);
-      assertTrue(DOM.getElementProperty(b.getElement(), "className").indexOf(
-          "random-" + f.getName()) >= 0);
+      assertEquals("random random-" + f.getName(), DOM.getElementProperty(
+          b.getElement(), "className").trim());
     }
 
     entries = faces.entrySet().iterator();
@@ -69,6 +69,7 @@ public class CustomButtonTest extends GWTTestCase {
       b.setCurrentFace(f);
       String computedStyleName = DOM.getElementProperty(b.getElement(),
           "className");
+      assertTrue(computedStyleName.indexOf("random") == 0);
       assertTrue(computedStyleName.indexOf("random-" + f.getName()) >= 0);
       assertTrue(computedStyleName.indexOf("fobar") >= 0);
     }

@@ -28,7 +28,8 @@ import com.google.gwt.user.client.Event;
  * hovering is assigned the CSS modifier <i>down-hovering</i>. So, if the
  * button's overall style name is <i>gwt-PushButton</i> then when showing the
  * <code>down-hovering</code> face, the button's style is <i>
- * gwt-PushButton-down-hovering</i>.
+ * gwt-PushButton-down-hovering</i>. The overall style name can be used to
+ * change the style of the button irrespective of the current face.
  * 
  * <p>
  * Each button face can be assigned is own image, text, or html contents. If no
@@ -263,11 +264,6 @@ public abstract class CustomButton extends ButtonBase implements
   private static final int DOWN_DISABLED = DOWN | DISABLED_ATTRIBUTE;
 
   /**
-   * Base style name. By default gwt-CustomButton.
-   */
-  private String baseStyleName;
-
-  /**
    * The button's current face element.
    */
   private Element curFaceElement;
@@ -454,17 +450,6 @@ public abstract class CustomButton extends ButtonBase implements
     return getCurrentFace().getHTML();
   }
 
-  /**
-   * Gets the style name associated with the object. The actual CSS style name
-   * for the button will be this name + "-" + current face name.
-   * 
-   * @return the object's style name
-   * @see #setStyleName(String)
-   */
-  public final String getStyleName() {
-    return baseStyleName;
-  }
-
   public int getTabIndex() {
     return FocusPanel.impl.getTabIndex(getElement());
   }
@@ -562,26 +547,6 @@ public abstract class CustomButton extends ButtonBase implements
    */
   public void setHTML(String html) {
     getCurrentFace().setHTML(html);
-  }
-
-  /**
-   * Sets the style name associated with the object. The actual CSS style name
-   * for the button will be this name + "-" + current face name.
-   * 
-   * @param styleName the object's style name
-   * @see #setStyleName(String)
-   */
-  public final void setStyleName(String styleName) {
-    if (styleName == null) {
-      throw new IllegalStateException("Cannot set the base style name to null");
-    }
-    if (curFace != null) {
-      super.removeStyleName(getCSSStyleName());
-      baseStyleName = styleName;
-      super.addStyleName(getCSSStyleName());
-    } else {
-      baseStyleName = styleName;
-    }
   }
 
   public void setTabIndex(int index) {
@@ -714,7 +679,7 @@ public abstract class CustomButton extends ButtonBase implements
    * @return the modified style name
    */
   private String getCSSStyleName() {
-    return baseStyleName + "-" + curFace.getName();
+    return getStyleName() + "-" + curFace.getName();
   }
 
   private Face getFaceFromID(int id) {
