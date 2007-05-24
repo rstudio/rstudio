@@ -15,9 +15,9 @@
  */
 package com.google.gwt.user.server.rpc;
 
-import com.google.gwt.user.client.rpc.InheritanceTestService;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory;
 import com.google.gwt.user.client.rpc.InheritanceTestSetValidator;
+import com.google.gwt.user.client.rpc.InheritanceTestServiceSubtype;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.AnonymousClassInterface;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.Circle;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClass;
@@ -27,7 +27,7 @@ import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClas
  * TODO: document me.
  */
 public class InheritanceTestServiceImpl extends RemoteServiceServlet implements
-    InheritanceTestService {
+    InheritanceTestServiceSubtype {
 
   public AnonymousClassInterface echo(AnonymousClassInterface serializable) {
     return serializable;
@@ -56,6 +56,9 @@ public class InheritanceTestServiceImpl extends RemoteServiceServlet implements
     serializableClass.setObj("hello");
 
     return serializableClass;
+  }
+
+  public void foo() {
   }
 
   public SerializableClass getUnserializableClass() {

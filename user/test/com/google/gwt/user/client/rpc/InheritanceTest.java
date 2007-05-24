@@ -191,7 +191,7 @@ public class InheritanceTest extends TypeSerializerWorkAround {
 
   private InheritanceTestServiceAsync getServiceAsync() {
     if (inheritanceTestService == null) {
-      inheritanceTestService = (InheritanceTestServiceAsync) GWT.create(InheritanceTestService.class);
+      inheritanceTestService = (InheritanceTestServiceAsync) GWT.create(InheritanceTestServiceSubtype.class);
       ((ServiceDefTarget) inheritanceTestService).setServiceEntryPoint(GWT.getModuleBaseURL()
           + "inheritance");
     }

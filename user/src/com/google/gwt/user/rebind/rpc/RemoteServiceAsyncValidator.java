@@ -17,17 +17,17 @@ package com.google.gwt.user.rebind.rpc;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JParameter;
-import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
-import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Validates the asynchronous version of
@@ -48,7 +48,7 @@ class RemoteServiceAsyncValidator {
     sb.append(serviceIntf.getSimpleSourceName());
     sb.append("Async {\n");
 
-    JMethod[] methods = serviceIntf.getMethods();
+    JMethod[] methods = serviceIntf.getOverridableMethods();
     for (int index = 0; index < methods.length; ++index) {
       JMethod method = methods[index];
       assert (method != null);
@@ -82,8 +82,8 @@ class RemoteServiceAsyncValidator {
 
     return sb.toString();
   }
-  private final JClassType asyncCallbackClass;
 
+  private final JClassType asyncCallbackClass;
   private final TypeOracle typeOracle;
 
   RemoteServiceAsyncValidator(TypeOracle typeOracle) throws NotFoundException {
@@ -91,49 +91,58 @@ class RemoteServiceAsyncValidator {
     asyncCallbackClass = typeOracle.getType(AsyncCallback.class.getName());
   }
 
+  /**
+   * Checks that for there is an asynchronous
+   * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService}
+   * interface and that it has an asynchronous version of every synchronous
+   * method.
+   * 
+   * @throws UnableToCompleteException if the asynchronous
+   *           {@link com.google.gwt.user.client.rpc.RemoteService RemoteService}
+   *           was not found, or if it does not have an asynchronous method
+   *           version of every synchronous one
+   */
   public void validateRemoteServiceAsync(TreeLogger logger,
       JClassType remoteService) throws UnableToCompleteException {
-    logger = logger.branch(TreeLogger.DEBUG,
+    TreeLogger branch = logger.branch(TreeLogger.DEBUG,
         "Checking the synchronous interface '"
             + remoteService.getQualifiedSourceName()
             + "' against its asynchronous version '"
             + remoteService.getQualifiedSourceName() + "Async'", null);
-
-    JClassType remoteServiceAsync = typeOracle.findType(remoteService.getQualifiedSourceName()
-        + "Async");
     boolean failed = false;
-    if (remoteServiceAsync == null) {
-      logger.branch(TreeLogger.ERROR,
+    JClassType serviceAsync = typeOracle.findType(remoteService.getQualifiedSourceName()
+        + "Async");
+    if (serviceAsync == null) {
+      failed = true;
+      branch.branch(TreeLogger.ERROR,
           "Could not find an asynchronous version for the service interface "
               + remoteService.getQualifiedSourceName(), null);
-      failed = true;
     } else {
+      JMethod[] asyncMethods = serviceAsync.getOverridableMethods();
       JMethod[] syncMethods = remoteService.getOverridableMethods();
-      JMethod[] asyncMethods = remoteServiceAsync.getOverridableMethods();
 
-      if (syncMethods.length != asyncMethods.length) {
-        logger.branch(TreeLogger.ERROR, "The asynchronous version of "
+      if (asyncMethods.length != syncMethods.length) {
+        branch.branch(TreeLogger.ERROR, "The asynchronous version of "
             + remoteService.getQualifiedSourceName() + " has "
             + (asyncMethods.length > syncMethods.length ? "more" : "less")
             + " methods than the synchronous version", null);
         failed = true;
       } else {
+        Map asyncMethodMap = initializeAsyncMethodMap(asyncMethods);
         for (int i = 0; i < syncMethods.length; ++i) {
-          JMethod method = syncMethods[i];
-
-          JMethod asyncMethod = remoteServiceAsync.findMethod(method.getName(),
-              getAsyncParamTypes(method));
-
+          JMethod syncMethod = syncMethods[i];
+          String asyncSig = computeAsyncMethodSignature(syncMethod);
+          JMethod asyncMethod = (JMethod) asyncMethodMap.get(asyncSig);
           if (asyncMethod == null) {
-            logger.branch(TreeLogger.ERROR,
+            branch.branch(TreeLogger.ERROR,
                 "Missing asynchronous version of the synchronous method '"
-                    + method.getReadableDeclaration() + "'", null);
+                    + syncMethod.getReadableDeclaration() + "'", null);
             failed = true;
           } else if (asyncMethod.getReturnType() != JPrimitiveType.VOID) {
-            logger.branch(TreeLogger.ERROR,
+            branch.branch(TreeLogger.ERROR,
                 "The asynchronous version of the synchronous method '"
-                    + method.getReadableDeclaration()
-                    + "' must have a void return type", null);
+                    + syncMethod.getReadableDeclaration()
+                    + "' must have a 'void' return type", null);
             failed = true;
           }
         }
@@ -141,44 +150,48 @@ class RemoteServiceAsyncValidator {
     }
 
     if (failed) {
-      logValidAsyncInterfaceDeclaration(logger, remoteService);
+      logValidAsyncInterfaceDeclaration(branch, remoteService);
       throw new UnableToCompleteException();
     }
   }
 
-  private JType[] getAsyncParamTypes(JMethod method) {
-    JParameter[] params = method.getParameters();
-    JType[] asyncParamTypes = new JType[params.length + 1];
-
-    for (int index = 0; index < params.length; ++index) {
-      asyncParamTypes[index] = getRawType(params[index].getType());
-    }
-
-    asyncParamTypes[params.length] = asyncCallbackClass;
-
-    return asyncParamTypes;
+  private String computeAsyncMethodSignature(JMethod syncMethod) {
+    return computeInternalSignature(syncMethod) + "/"
+        + asyncCallbackClass.getQualifiedSourceName();
   }
 
-  private JType getRawType(JType type) {
-    JParameterizedType parameterized = type.isParameterized();
-    if (parameterized != null) {
-      return getRawType(parameterized.getRawType());
+  private String computeInternalSignature(JMethod method) {
+    StringBuffer sb = new StringBuffer();
+    sb.setLength(0);
+    sb.append(method.getName());
+    JParameter[] params = method.getParameters();
+    for (int j = 0; j < params.length; j++) {
+      JParameter param = params[j];
+      sb.append("/");
+      sb.append(param.getType().getQualifiedSourceName());
     }
+    return sb.toString();
+  }
 
-    JArrayType arrayType = type.isArray();
-    if (arrayType != null) {
-      return typeOracle.getArrayType(getRawType(arrayType.getComponentType()));
+  /**
+   * Builds a map of asynchronous method internal signatures to the
+   * corresponding asynchronous {@link JMethod}.
+   */
+  private Map initializeAsyncMethodMap(JMethod[] asyncMethods) {
+    Map /* <String,JClassType> */sigs = new TreeMap();
+    for (int i = 0; i < asyncMethods.length; ++i) {
+      JMethod asyncMethod = asyncMethods[i];
+      sigs.put(computeInternalSignature(asyncMethod), asyncMethod);
     }
-
-    return type;
+    return sigs;
   }
 
   private void logValidAsyncInterfaceDeclaration(TreeLogger logger,
       JClassType remoteService) {
-    logger = logger.branch(TreeLogger.INFO,
-        "A valid definition for an asynchronous version of interface '"
+    TreeLogger branch = logger.branch(TreeLogger.INFO,
+        "A valid definition for the asynchronous version of interface '"
             + remoteService.getQualifiedSourceName() + "' would be:\n", null);
-    logger.log(TreeLogger.ERROR,
+    branch.log(TreeLogger.ERROR,
         synthesizeAsynchronousInterfaceDefinition(remoteService), null);
   }
 }

@@ -72,11 +72,6 @@ import java.util.TreeSet;
  * <li>Is not default instantiable</li>
  * <li>Has a non-static, non-transient, non-final field whose type is not
  * serializable</li>
- * <li>Has native methods</li>
- * <li>Has a reachable subtype that is not automatically serializable, this
- * error can be treated as a warning if the
- * gwt.allowUnserializableSubtypesOfAutoSerializableTypes property is set to
- * <code>true</code></li>
  * </ul>
  * 
  * <p/> A class qualifies for manual serialization if:
@@ -104,6 +99,10 @@ import java.util.TreeSet;
  * <li>Has native methods</li>
  * <li>Is assignable to {@link Collection} or {@link Map} but it is not a
  * parameterized type</li>
+ * <li>Is automatically serializable and one of its subtypes is not;
+ * this warning can be treated as an error if the
+ * gwt.allowUnserializableSubtypesOfAutoSerializableTypes property is set to
+ * <code>false</code></li>
  * </ul>
  */
 public class SerializableTypeOracleBuilder {
