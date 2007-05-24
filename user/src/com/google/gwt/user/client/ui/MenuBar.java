@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,7 @@ import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  * A standard menu bar widget. A menu bar can contain any number of menu items,
@@ -47,7 +47,7 @@ import java.util.Vector;
 public class MenuBar extends Widget implements PopupListener {
 
   private Element body;
-  private Vector items = new Vector();
+  private ArrayList items = new ArrayList();
   private MenuBar parentMenu;
   private PopupPanel popup;
   private MenuItem selectedItem;

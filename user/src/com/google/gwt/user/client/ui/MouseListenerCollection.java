@@ -20,15 +20,15 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Vector;
 
 /**
  * A helper class for implementers of the SourcesMouseEvents interface. This
- * subclass of Vector assumes that all objects added to it will be of type
- * {@link com.google.gwt.user.client.ui.MouseListener}.
+ * subclass of {@linkArrayList} assumes that all objects added to it will be of
+ * type {@link com.google.gwt.user.client.ui.MouseListener}.
  */
-public class MouseListenerCollection extends Vector {
+public class MouseListenerCollection extends ArrayList {
 
   /**
    * Fires a mouse down event to all listeners.

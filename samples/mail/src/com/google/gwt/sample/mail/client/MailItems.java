@@ -15,7 +15,7 @@
  */
 package com.google.gwt.sample.mail.client;
 
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  * A simple client-side generator of fake email messages.
@@ -215,7 +215,7 @@ public class MailItems {
 
   private static int senderIdx = 0, emailIdx = 0, subjectIdx = 0,
       fragmentIdx = 0;
-  private static Vector items = new Vector();
+  private static ArrayList items = new ArrayList();
 
   static {
     for (int i = 0; i < NUM_ITEMS; ++i) {

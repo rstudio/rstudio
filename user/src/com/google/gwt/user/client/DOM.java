@@ -19,7 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.user.client.impl.DOMImpl;
 
-import java.util.Vector;
+import java.util.ArrayList;
 
 /**
  * This class provides a set of static methods that allow you to manipulate the
@@ -33,7 +33,7 @@ public class DOM {
   private static Element sCaptureElem;
 
   //<BrowserEventPreview>
-  private static Vector sEventPreviewStack = new Vector();
+  private static ArrayList sEventPreviewStack = new ArrayList();
 
   static {
     impl = (DOMImpl) GWT.create(DOMImpl.class);

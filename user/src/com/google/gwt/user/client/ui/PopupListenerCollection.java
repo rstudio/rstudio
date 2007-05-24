@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,15 +15,15 @@
  */
 package com.google.gwt.user.client.ui;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Vector;
 
 /**
  * A helper class for implementers of the SourcesPopupEvents interface. This
- * subclass of Vector assumes that all objects added to it will be of type
- * {@link com.google.gwt.user.client.ui.PopupListener}.
+ * subclass of {@linkArrayList} assumes that all objects added to it will be of
+ * type {@link com.google.gwt.user.client.ui.PopupListener}.
  */
-public class PopupListenerCollection extends Vector {
+public class PopupListenerCollection extends ArrayList {
 
   /**
    * Fires a popup closed event to all listeners.

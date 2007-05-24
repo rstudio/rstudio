@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.Vector;
 
 /**
  * A standard hierarchical tree widget. The tree contains a hierarchy of
@@ -463,7 +462,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
           // If we got here because of a key tab, then we need to make sure the
           // current tree item is selected.
           if (DOM.eventGetKeyCode(event) == KeyboardListener.KEY_TAB) {
-            Vector chain = new Vector();
+            ArrayList chain = new ArrayList();
             collectElementChain(chain, getElement(), DOM.eventGetTarget(event));
             TreeItem item = findItemByChain(chain, 0, root);
             if (item != getSelectedItem()) {
@@ -670,7 +669,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   /**
    * Collects parents going up the element tree, terminated at the tree root.
    */
-  private void collectElementChain(Vector chain, Element hRoot, Element hElem) {
+  private void collectElementChain(ArrayList chain, Element hRoot, Element hElem) {
     if ((hElem == null) || DOM.compare(hElem, hRoot)) {
       return;
     }
@@ -680,7 +679,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   private boolean elementClicked(TreeItem root, Element hElem) {
-    Vector chain = new Vector();
+    ArrayList chain = new ArrayList();
     collectElementChain(chain, getElement(), hElem);
 
     TreeItem item = findItemByChain(chain, 0, root);
@@ -704,7 +703,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return findDeepestOpenChild(item.getChild(item.getChildCount() - 1));
   }
 
-  private TreeItem findItemByChain(Vector chain, int idx, TreeItem root) {
+  private TreeItem findItemByChain(ArrayList chain, int idx, TreeItem root) {
     if (idx == chain.size()) {
       return root;
     }
