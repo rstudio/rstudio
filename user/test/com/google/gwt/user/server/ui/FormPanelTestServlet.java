@@ -23,8 +23,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.google.gwt.user.client.ui.FormPanelTest;
-
 /**
  * Servlet for use with {@link FormPanelTest}.
  */
