@@ -26,7 +26,11 @@ import com.google.gwt.user.client.ui.impl.PopupImpl;
 /**
  * A panel that can "pop up" over other widgets. It overlays the browser's
  * client area (and any previously-created popups).
- * 
+ * <p/>
+ * The width and height of the PopupPanel cannot be explicitly set; they are
+ * determined by the PopupPanel's widget. Calls to {@link #setWidth(String)} and
+ * {@link #setHeight(String)} will call these methods on the PopupPanel's
+ * widget.
  * <p>
  * <img class='gallery' src='PopupPanel.png'/>
  * </p>
@@ -50,7 +54,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    */
   public PopupPanel() {
     super(impl.createElement());
-    DOM.setStyleAttribute(getElement(), "position", "absolute");
   }
 
   /**
@@ -122,6 +125,10 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     return DOM.getElementPropertyInt(getElement(), "offsetTop");
   }
 
+  public String getStyleName() {
+    return DOM.getElementProperty(getContainerElement(), "className");
+  }
+
   /**
    * Hides the popup. This has no effect if it is not currently visible.
    */
@@ -137,16 +144,28 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     int type = DOM.eventGetType(event);
     switch (type) {
       case Event.ONKEYDOWN: {
-        return onKeyDownPreview((char) DOM.eventGetKeyCode(event),
-            KeyboardListenerCollection.getKeyboardModifiers(event));
+        if (eventTargetsPopup) {
+          return onKeyDownPreview((char) DOM.eventGetKeyCode(event),
+              KeyboardListenerCollection.getKeyboardModifiers(event));
+        } else {
+          return !modal;
+        }
       }
       case Event.ONKEYUP: {
-        return onKeyUpPreview((char) DOM.eventGetKeyCode(event),
-            KeyboardListenerCollection.getKeyboardModifiers(event));
+        if (eventTargetsPopup) {
+          return onKeyUpPreview((char) DOM.eventGetKeyCode(event),
+              KeyboardListenerCollection.getKeyboardModifiers(event));
+        } else {
+          return !modal;
+        }
       }
       case Event.ONKEYPRESS: {
-        return onKeyPressPreview((char) DOM.eventGetKeyCode(event),
-            KeyboardListenerCollection.getKeyboardModifiers(event));
+        if (eventTargetsPopup) {
+          return onKeyPressPreview((char) DOM.eventGetKeyCode(event),
+              KeyboardListenerCollection.getKeyboardModifiers(event));
+        } else {
+          return !modal;
+        }
       }
 
       case Event.ONMOUSEDOWN:
@@ -179,12 +198,12 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       }
     }
 
-    return !modal || (modal && eventTargetsPopup);
+    return !modal || eventTargetsPopup;
   }
 
   /**
    * Popups get an opportunity to preview keyboard events before they are passed
-   * to any other widget.
+   * to a widget contained by the Popup.
    * 
    * @param key the key code of the depressed key
    * @param modifiers keyboard modifiers, as specified in
@@ -192,12 +211,12 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @return <code>false</code> to suppress the event
    */
   public boolean onKeyDownPreview(char key, int modifiers) {
-    return !modal;
+    return true;
   }
 
   /**
    * Popups get an opportunity to preview keyboard events before they are passed
-   * to any other widget.
+   * to a widget contained by the Popup.
    * 
    * @param key the unicode character pressed
    * @param modifiers keyboard modifiers, as specified in
@@ -205,12 +224,12 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @return <code>false</code> to suppress the event
    */
   public boolean onKeyPressPreview(char key, int modifiers) {
-    return !modal;
+    return true;
   }
 
   /**
    * Popups get an opportunity to preview keyboard events before they are passed
-   * to any other widget.
+   * to a widget contained by the Popup.
    * 
    * @param key the key code of the released key
    * @param modifiers keyboard modifiers, as specified in
@@ -218,19 +237,29 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @return <code>false</code> to suppress the event
    */
   public boolean onKeyUpPreview(char key, int modifiers) {
-    return !modal;
+    return true;
   }
 
   public boolean remove(Widget w) {
-    if (!super.remove(w)) {
-      return false;
-    }
-    return true;
+    return super.remove(w);
   }
 
   public void removePopupListener(PopupListener listener) {
     if (popupListeners != null) {
       popupListeners.remove(listener);
+    }
+  }
+
+  /**
+   * Calls {@link Widget#setHeight(String)} on this panel's widget. If this panel
+   * does not have a widget, then this call does nothing.
+   *
+   * @param height the new height of this panel's widget, in CSS units (e.g. "10px", "1em")
+   */
+  public void setHeight(String height) {
+    Widget childWidget = getWidget();
+    if (childWidget != null) {
+      childWidget.setHeight(height);
     }
   }
 
@@ -260,7 +289,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     DOM.setStyleAttribute(elem, "left", left + "px");
     DOM.setStyleAttribute(elem, "top", top + "px");
   }
-  
+
   /**
    * Sets whether this object is visible.
    *
@@ -281,6 +310,19 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
+   * Calls {@link Widget#setWidth(String)} on this panel's widget. If this panel
+   * does not have a widget, then this call does nothing.
+   *
+   * @param width the new width of this panel's widget, in CSS units (e.g. "10px", "1em")
+   */
+   public void setWidth(String width) {
+    Widget childWidget = getWidget();
+    if (childWidget != null)  {
+      childWidget.setWidth(width);
+    }
+  }
+
+  /**
    * Shows the popup. It must have a child widget before this method is called.
    */
   public void show() {
@@ -291,7 +333,12 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     DOM.addEventPreview(this);
 
     RootPanel.get().add(this);
+    DOM.setStyleAttribute(getElement(), "position", "absolute");
     impl.onShow(getElement());
+  }
+
+  protected Element getContainerElement() {
+   return impl.getContainerElement(getElement());
   }
 
   /**
