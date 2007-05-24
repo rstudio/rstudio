@@ -15,8 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.user.client.ImageBundle;
-
 /**
  * An {@link ImageBundle} that provides images for
  * {@link com.google.gwt.user.client.ui.Tree}.
@@ -30,7 +28,7 @@ public interface TreeImages extends ImageBundle {
   /**
    * An image indicating an open branch.
    * 
-   * @return a prototye of this image
+   * @return a prototype of this image
    */
   AbstractImagePrototype treeOpen();
 

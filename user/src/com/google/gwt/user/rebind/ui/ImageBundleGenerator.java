@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.user.rebind;
+package com.google.gwt.user.rebind.ui;
 
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
@@ -23,41 +23,40 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
+import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.net.URL;
 
 /**
  * Generates an implementation of a user-defined interface <code>T</code> that
- * extends {@link com.google.gwt.user.client.ImageBundle}.
+ * extends {@link com.google.gwt.user.client.ui.ImageBundle}.
  * 
  * Each method in <code>T</code> must be declared to return
- * {@link com.google.gwt.user.client.ui.AbstractImagePrototype},
- * take no parameters, and optionally specify the metadata tag
- * <code>gwt.resource</code> as the name of an image that can be found in the
- * classpath. In the absence of the metatadata tag, the method name with an
- * extension of <code>.png, .jpg, or .gif</code> defines the name of the image,
- * and the image file must be located in the same package as <code>T</code>.
+ * {@link com.google.gwt.user.client.ui.AbstractImagePrototype}, take no
+ * parameters, and optionally specify the metadata tag <code>gwt.resource</code>
+ * as the name of an image that can be found in the classpath. In the absence of
+ * the metatadata tag, the method name with an extension of
+ * <code>.png, .jpg, or .gif</code> defines the name of the image, and the
+ * image file must be located in the same package as <code>T</code>.
  */
 public class ImageBundleGenerator extends Generator {
 
-  private static final String ABSTRACTIMAGEPROTOTYPE_QNAME =
-      "com.google.gwt.user.client.ui.AbstractImagePrototype";
+  private static final String ABSTRACTIMAGEPROTOTYPE_QNAME = "com.google.gwt.user.client.ui.AbstractImagePrototype";
 
-  private static final String CLIPPEDIMAGEPROTOTYPE_QNAME =
-      "com.google.gwt.user.client.ui.impl.ClippedImagePrototype";
+  private static final String CLIPPEDIMAGEPROTOTYPE_QNAME = "com.google.gwt.user.client.ui.impl.ClippedImagePrototype";
 
-  private static final String GWT_QNAME =
-      "com.google.gwt.core.client.GWT";
+  private static final String GWT_QNAME = "com.google.gwt.core.client.GWT";
 
-  private static final String IMAGEBUNDLE_QNAME = "com.google.gwt.user.client.ImageBundle";
+  private static final String[] IMAGE_FILE_EXTENSIONS = {"png", "gif", "jpg"};
+
+  private static final String IMAGEBUNDLE_QNAME = "com.google.gwt.user.client.ui.ImageBundle";
 
   private static final String METADATA_TAG = "gwt.resource";
-
-  private static final String [] IMAGE_FILE_EXTENSIONS = {"png", "gif", "jpg"};
 
   public ImageBundleGenerator() {
   }
@@ -86,8 +85,7 @@ public class ImageBundleGenerator extends Generator {
   }
 
   private void generateImageMethod(TreeLogger logger,
-                                   ImageBundleBuilder compositeImage,
-                                   SourceWriter sw, JMethod method)
+      ImageBundleBuilder compositeImage, SourceWriter sw, JMethod method)
       throws UnableToCompleteException {
 
     String imageName = getImageUrlFromMetaDataOrMethodName(logger, method);
@@ -111,8 +109,8 @@ public class ImageBundleGenerator extends Generator {
       sw.print(Integer.toString(imageRect.width));
       sw.print(", ");
       sw.print(Integer.toString(imageRect.height));
-      sw.println(");");   
-      
+      sw.println(");");
+
       sw.print(decl);
       sw.println(" {");
 
@@ -120,7 +118,7 @@ public class ImageBundleGenerator extends Generator {
         sw.indent();
         sw.print("return ");
         sw.print(singletonName);
-        sw.println(";");     
+        sw.println(";");
         sw.outdent();
       }
 
@@ -183,8 +181,7 @@ public class ImageBundleGenerator extends Generator {
 
   // Assume this is only called for valid methods.
   private String getImageUrlFromMetaDataOrMethodName(TreeLogger logger,
-                                                     JMethod method)
-      throws UnableToCompleteException {
+      JMethod method) throws UnableToCompleteException {
 
     String[][] md = method.getMetaData(METADATA_TAG);
 
@@ -198,18 +195,21 @@ public class ImageBundleGenerator extends Generator {
       if (imageNameFromMetaData.indexOf("/") == -1) {
         String pkgName = method.getEnclosingType().getPackage().getName();
         // This construction handles the default package correctly, too.
-        imageNameFromMetaData = pkgName.replace('.', '/') + "/" + imageNameFromMetaData;
+        imageNameFromMetaData = pkgName.replace('.', '/') + "/"
+            + imageNameFromMetaData;
       }
 
       // Make sure that the resource exists on the classpath. In the future,
       // this code will have to be changed if images are loaded from the
       // source path or public path.
-      URL imageResourceURL = getClass().getClassLoader().getResource(imageNameFromMetaData);
+      URL imageResourceURL = getClass().getClassLoader().getResource(
+          imageNameFromMetaData);
       if (imageResourceURL == null) {
         logger.log(
             TreeLogger.ERROR,
-            "Resource " + imageNameFromMetaData +
-                " not found on classpath (is the name specified as Class.getResource() would expect?)",
+            "Resource "
+                + imageNameFromMetaData
+                + " not found on classpath (is the name specified as Class.getResource() would expect?)",
             null);
         throw new UnableToCompleteException();
       }
@@ -218,17 +218,19 @@ public class ImageBundleGenerator extends Generator {
     }
 
     String imageNameFromMethod = null;
-    String packageAndMethodName = 
-        method.getEnclosingType().getPackage().getName().replace('.', '/') +
-        '/' + method.getName();
+    String packageAndMethodName = method.getEnclosingType().getPackage().getName().replace(
+        '.', '/')
+        + '/' + method.getName();
     // There is no metadata available, so the image url will be generated from
     // the method name with an image file extension.
     for (int i = 0; i < IMAGE_FILE_EXTENSIONS.length; i++) {
-      String possibleImageName = packageAndMethodName + '.' + IMAGE_FILE_EXTENSIONS[i];
+      String possibleImageName = packageAndMethodName + '.'
+          + IMAGE_FILE_EXTENSIONS[i];
       // Check to see if the resource exists on the classpath for each possible
       // image file extension. This code will have to be changed if images are
       // loaded from the source path or the public path.
-      URL imageResourceURL = getClass().getClassLoader().getResource(possibleImageName);
+      URL imageResourceURL = getClass().getClassLoader().getResource(
+          possibleImageName);
       if (imageResourceURL != null) {
         imageNameFromMethod = possibleImageName;
         break;
@@ -249,8 +251,11 @@ public class ImageBundleGenerator extends Generator {
 
       logger.log(
           TreeLogger.ERROR,
-          "Resource " + packageAndMethodName + ".(" + errorStringBuf.toString() +
-              ") not found on classpath (is the name specified as Class.getResource() would expect?)",
+          "Resource "
+              + packageAndMethodName
+              + ".("
+              + errorStringBuf.toString()
+              + ") not found on classpath (is the name specified as Class.getResource() would expect?)",
           null);
       throw new UnableToCompleteException();
     }
@@ -290,8 +295,9 @@ public class ImageBundleGenerator extends Generator {
       }
 
       String[][] md = method.getMetaData(METADATA_TAG);
-      if ( (md.length > 1) || (md.length == 1 && md[0].length != 1)) {
-        rejectedMethodsAndWhy.put(method,
+      if ((md.length > 1) || (md.length == 1 && md[0].length != 1)) {
+        rejectedMethodsAndWhy.put(
+            method,
             "Expecting either no metadata tags, or one metadata tag of the form '@gwt.resource <resource-name>'");
       }
     }

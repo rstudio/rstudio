@@ -19,7 +19,7 @@
   <!-- ClippedImagePrototype, which depends on ClippedImage                 -->
   <inherits name="com.google.gwt.user.ClippedImage" />
 
-  <generate-with class="com.google.gwt.user.rebind.ImageBundleGenerator">
-    <when-type-assignable class="com.google.gwt.user.client.ImageBundle" />
+  <generate-with class="com.google.gwt.user.rebind.ui.ImageBundleGenerator">
+    <when-type-assignable class="com.google.gwt.user.client.ui.ImageBundle" />
   </generate-with>
 </module>

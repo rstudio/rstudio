@@ -15,8 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.user.client.ImageBundle;
-
 /**
  * An {@link ImageBundle} that provides images for {@link DisclosurePanel}.
  */
@@ -25,14 +23,14 @@ public interface DisclosurePanelImages extends ImageBundle {
   /**
    * An image indicating an open disclosure panel.
    * 
-   * @return a prototye of this image
+   * @return a prototype of this image
    */
   AbstractImagePrototype disclosurePanelOpen();
   
   /**
    * An image indicating a closed disclosure panel.
    * 
-   * @return a prototye of this image
+   * @return a prototype of this image
    */
   AbstractImagePrototype disclosurePanelClosed();
 }
