@@ -60,6 +60,9 @@ public final class HorizontalSplitPanel extends SplitPanel {
      * @param panel the panel
      */
     protected void init(HorizontalSplitPanel panel) {
+      // Ensure that the right side will be aggressive in expanding leftwards
+      setWidth(panel.rightTD, "100%");
+      setWidth(panel.rightDiv, "100%");
     }
 
     /**
@@ -113,6 +116,9 @@ public final class HorizontalSplitPanel extends SplitPanel {
      */
     protected void setSplitPosition(final HorizontalSplitPanel panel,
         final String pos) {
+      // Save the location of the splitter for future use
+      panel.lastSplitPosition = pos;
+
       /*
        * This default impl adjusts the width of the first level div and depends
        * on the outer table to adjust its cell widths appropriately.
@@ -154,6 +160,8 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
     protected void setSplitPosition(final HorizontalSplitPanel panel,
         final String pos) {
+      // Save the location of the splitter for future use
+      panel.lastSplitPosition = pos;
       final Element leftTD = panel.leftTD;
       // adjust the width of the table cell instead of the inner div.
       setWidth(leftTD, pos);
@@ -201,6 +209,8 @@ public final class HorizontalSplitPanel extends SplitPanel {
     }
 
     protected void setSplitPosition(final HorizontalSplitPanel panel, String pos) {
+      // Save the location of the splitter for future use
+      panel.lastSplitPosition = pos;
       // Adjust the width of the table cell instead of the inner div.
       setWidth(panel.leftTD, pos);
     }
@@ -222,6 +232,10 @@ public final class HorizontalSplitPanel extends SplitPanel {
   private static final int getOffsetWidth(final Element elem) {
     return DOM.getElementPropertyInt(elem, "offsetWidth");
   }
+
+  private static final native int parseInt(String number) /*-{
+   return parseInt(number);
+   }-*/;
 
   private static final void setWidth(Element elem, String size) {
     DOM.setStyleAttribute(elem, "width", size);
@@ -247,6 +261,12 @@ public final class HorizontalSplitPanel extends SplitPanel {
   private final Element leftDiv, rightDiv;
 
   private final Impl impl = (Impl) GWT.create(Impl.class);
+
+  /**
+   * If the split position is set while the split panel is not attached, save it
+   * here to be applied when the panel is attached to the document.
+   */
+  private String lastSplitPosition = "50%";
 
   /**
    * Creates an empty horizontal split panel.
@@ -309,7 +329,26 @@ public final class HorizontalSplitPanel extends SplitPanel {
   }
 
   public final void setSplitPosition(String pos) {
-    impl.setSplitPosition(this, pos);
+    lastSplitPosition = pos.trim();
+    if (!lastSplitPosition.endsWith("%")) {
+      impl.setSplitPosition(this, pos);
+    } else if (isAttached()) {
+      // We have to convert percentage-based lengths to absolute lengths, but
+      // this can only be done while attached and after a rendering cycle if
+      // the attachment was triggered by a UI event.
+      DeferredCommand.addCommand(new Command() {
+        public void execute() {
+          int percentage = parseInt(lastSplitPosition);
+          impl.setSplitPosition(HorizontalSplitPanel.this,
+              (getOffsetWidth() * (percentage / 100.0)) + "px");
+        }
+      });
+    }
+  }
+
+  protected void onLoad() {
+    // If the split position has been changed while detached, apply the change
+    setSplitPosition(lastSplitPosition);
   }
 
   final void onSplitterResize(int x, int y) {
