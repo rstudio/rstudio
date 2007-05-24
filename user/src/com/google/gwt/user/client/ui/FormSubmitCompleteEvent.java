@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,28 +22,28 @@ import java.util.EventObject;
  */
 public class FormSubmitCompleteEvent extends EventObject {
 
-  private String results;
+  private String resultHtml;
 
   /**
    * Creates a new event with information about the source and submit results.
    * 
    * @param source the object sending the event
-   * @param results the result text returned by the server
+   * @param resultHtml the result html returned by the server
    */
-  public FormSubmitCompleteEvent(Object source, String results) {
+  public FormSubmitCompleteEvent(Object source, String resultHtml) {
     super(source);
-    this.results = results;
+    this.resultHtml = resultHtml;
   }
 
   /**
    * Gets the result text of the form submission.
    * 
-   * @return the result text, or <code>null</code> if there was an error
-   *         reading the result text
-   * @tip The result text can be <code>null</code> as a result of submitting a
+   * @return the result html, or <code>null</code> if there was an error
+   *         reading it
+   * @tip The result html can be <code>null</code> as a result of submitting a
    *      form to a different domain.
    */
   public String getResults() {
-    return results;
+    return resultHtml;
   }
 }

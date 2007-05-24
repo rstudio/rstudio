@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,19 +22,6 @@ import com.google.gwt.user.client.Element;
  */
 public class FormPanelImplIE6 extends FormPanelImpl {
 
-  public native String getTextContents(Element iframe) /*-{
-    try {
-      // Make sure the iframe's document is loaded.
-      if (!iframe.contentWindow.document)
-        return null;
-  
-      // IE6 puts the raw text in a <pre> element. InnerText gets around this.
-      return iframe.contentWindow.document.body.innerText;
-    } catch (e) {
-      return null;
-    }
-  }-*/;
-
   public native void hookEvents(Element iframe, Element form, FormPanelImplHost listener) /*-{
     if (iframe) {
       iframe.onreadystatechange = function() {
@@ -42,7 +29,7 @@ public class FormPanelImplIE6 extends FormPanelImpl {
         // generated when the iframe is first added to the DOM.
         if (!iframe.__formAction)
           return;
-  
+
         if (iframe.readyState == 'complete') {
           // If the iframe's contentWindow has not navigated to the expected action
           // url, then it must be an error, so we ignore it.

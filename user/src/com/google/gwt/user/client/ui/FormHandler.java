@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,12 @@ public interface FormHandler extends EventListener {
 
   /**
    * Fired when the form is submitted.
+   * 
+   * <p>
+   * The FormPanel must <em>not</em> be detached (i.e. removed from its parent
+   * or otherwise disconnected from a {@link RootPanel}) until the submission
+   * is complete. Otherwise, notification of submission will fail.
+   * </p>
    * 
    * @param event an event object containing information about the form
    *          submission

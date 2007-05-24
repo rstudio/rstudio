@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -74,14 +74,6 @@ public class FormPanelExample implements EntryPoint {
 
     // Add an event handler to the form.
     form.addFormHandler(new FormHandler() {
-      public void onSubmitComplete(FormSubmitCompleteEvent event) {
-        // When the form submission is successfully completed, this event is
-        // fired. Assuming the service returned a response of type text/plain,
-        // we can get the result text here (see the FormPanel documentation for
-        // further explanation).
-        Window.alert(event.getResults());
-      }
-
       public void onSubmit(FormSubmitEvent event) {
         // This event is fired just before the form is submitted. We can take
         // this opportunity to perform validation.
@@ -89,6 +81,14 @@ public class FormPanelExample implements EntryPoint {
           Window.alert("The text box must not be empty");
           event.setCancelled(true);
         }
+      }
+
+      public void onSubmitComplete(FormSubmitCompleteEvent event) {
+        // When the form submission is successfully completed, this event is
+        // fired. Assuming the service returned a response of type text/html,
+        // we can get the result text here (see the FormPanel documentation for
+        // further explanation).
+        Window.alert(event.getResults());
       }
     });
 

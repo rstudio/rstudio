@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,32 +23,34 @@ import com.google.gwt.user.client.Element;
 public class FormPanelImpl {
 
   /**
+   * Gets the response html from the loaded iframe.
+   * 
+   * @param iframe the iframe from which the response html is to be extracted
+   * @return the response html
+   */
+  public native String getContents(Element iframe) /*-{
+    try {
+      // Make sure the iframe's window & document are loaded.
+      if (!iframe.contentWindow || !iframe.contentWindow.document)
+        return null;
+
+      // Get the body's entire inner HTML.
+      return iframe.contentWindow.document.body.innerHTML;
+    } catch (e) {
+      return null;
+    }
+  }-*/;
+
+  /**
    * Gets the form element's encoding.
    * 
    * @param form the form whose encoding is to be retrieved
    * @return the form's encoding type
    */
   public native String getEncoding(Element form) /*-{
+    // We can always get 'enctype', no matter which browser, because we set
+    // both 'encoding' and 'enctype' in setEncoding().
     return form.enctype;
-  }-*/;
-
-  /**
-   * Gets the response text from the loaded iframe.
-   * 
-   * @param iframe the iframe from which the response text is to be extracted
-   * @return the response text
-   */
-  public native String getTextContents(Element iframe) /*-{
-    try {
-      // Make sure the iframe's document is loaded.
-      if (!iframe.contentWindow.document)
-        return null;
-
-      // 'Normal' browsers just put the raw text in the body.
-      return iframe.contentWindow.document.body.innerHTML;
-    } catch (e) {
-      return null;
-    }
   }-*/;
 
   /**
@@ -60,7 +62,6 @@ public class FormPanelImpl {
    */
   public native void hookEvents(Element iframe, Element form,
       FormPanelImplHost listener) /*-{
-
     if (iframe) {
       iframe.onload = function() {
         // If there is no __formAction yet, this is a spurious onload
@@ -87,8 +88,8 @@ public class FormPanelImpl {
    * @param form the form whose encoding is to be set
    * @param encoding the new encoding type
    */
-  // To be safe, setting both.
   public native void setEncoding(Element form, String encoding) /*-{
+    // To be safe, setting both.
     form.enctype = encoding;
     form.encoding = encoding;
   }-*/;

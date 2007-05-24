@@ -16,8 +16,10 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.impl.FormPanelImpl;
@@ -84,6 +86,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   private static FormPanelImpl impl = (FormPanelImpl) GWT.create(FormPanelImpl.class);
 
   private FormHandlerCollection formHandlers;
+  private String frameName;
   private Element iframe;
 
   /**
@@ -93,25 +96,23 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * 
    * <p>
    * The back-end server is expected to respond with a content-type of
-   * 'text/plain'. If any other content-type is specified by the server, then
-   * the result text sent in the onFormSubmit event will be unpredictable across
-   * browsers.
+   * 'text/html', meaning that the text returned will be treated as HTML. If any
+   * other content-type is specified by the server, then the result html sent in
+   * the onFormSubmit event will be unpredictable across browsers, and the
+   * {@link FormHandler#onSubmitComplete(FormSubmitCompleteEvent)} event may not
+   * fire at all.
    * </p>
+   * 
+   * @tip The initial implementation of FormPanel specified that the server
+   *      respond with a content-type of 'text/plain'. This has been
+   *      intentionally changed to specify 'text/html' because 'text/plain'
+   *      cannot be made to work properly on all browsers.
    */
   public FormPanel() {
     super(DOM.createForm());
 
-    // Attach a hidden IFrame to the form. This is the iframe that will be
-    // submitted. We have to create the iframe using innerHTML, because setting
-    // an iframe's 'name' property dynamically doesn't work on most browsers.
-    String formName = "FormPanel_" + (++formId);
-    DOM.setElementProperty(getElement(), "target", formName);
-    DOM.setInnerHTML(getElement(), "<iframe name='" + formName + "'>");
-    iframe = DOM.getFirstChild(getElement());
-
-    DOM.setIntStyleAttribute(iframe, "width", 0);
-    DOM.setIntStyleAttribute(iframe, "height", 0);
-    DOM.setIntStyleAttribute(iframe, "border", 0);
+    frameName = "FormPanel_" + (++formId);
+    setTarget(frameName);
 
     sinkEvents(Event.ONLOAD);
   }
@@ -255,6 +256,12 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
   /**
    * Submits the form.
+   * 
+   * <p>
+   * The FormPanel must <em>not</em> be detached (i.e. removed from its parent
+   * or otherwise disconnected from a {@link RootPanel}) until the submission
+   * is complete. Otherwise, notification of submission will fail.
+   * </p>
    */
   public void submit() {
     // Fire the onSubmit event, because javascript's form.submit() does not
@@ -271,6 +278,10 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   protected void onAttach() {
     super.onAttach();
 
+    // Create and attach a hidden iframe to the body element.
+    createFrame();
+    DOM.appendChild(RootPanel.getBodyElement(), iframe);
+
     // Hook up the underlying iframe's onLoad event when attached to the DOM.
     // Making this connection only when attached avoids memory-leak issues.
     // The FormPanel cannot use the built-in GWT event-handling mechanism
@@ -284,6 +295,23 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
     // Unhook the iframe's onLoad when detached.
     impl.unhookEvents(iframe, getElement());
+
+    DOM.removeChild(RootPanel.getBodyElement(), iframe);
+    iframe = null;
+  }
+
+  private void createFrame() {
+    // Attach a hidden IFrame to the form. This is the target iframe to which
+    // the form will be submitted. We have to create the iframe using innerHTML,
+    // because setting an iframe's 'name' property dynamically doesn't work on
+    // most browsers.
+    Element dummy = DOM.createDiv();
+    DOM.setInnerHTML(dummy, "<iframe name='" + frameName + "'>");
+    iframe = DOM.getFirstChild(dummy);
+
+    DOM.setIntStyleAttribute(iframe, "width", 0);
+    DOM.setIntStyleAttribute(iframe, "height", 0);
+    DOM.setIntStyleAttribute(iframe, "border", 0);
   }
 
   private boolean onFormSubmitAndCatch(UncaughtExceptionHandler handler) {
@@ -314,7 +342,15 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
   private void onFrameLoadImpl() {
     if (formHandlers != null) {
-      formHandlers.fireOnComplete(this, impl.getTextContents(iframe));
+      // Fire onComplete events in a deferred command. This is necessary
+      // because clients that detach the form panel when submission is
+      // complete can cause some browsers (i.e. Mozilla) to go into an
+      // 'infinite loading' state. See issue 916.
+      DeferredCommand.addCommand(new Command() {
+        public void execute() {
+          formHandlers.fireOnComplete(this, impl.getContents(iframe));
+        }
+      });
     }
   }
 

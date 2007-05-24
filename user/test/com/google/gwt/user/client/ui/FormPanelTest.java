@@ -21,13 +21,36 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Timer;
 
 /**
- * TODO: document me.
+ * Tests the FormPanel.
+ * 
+ * @see FormPanelTestServlet
  */
 public class FormPanelTest extends GWTTestCase {
   public static boolean clicked = false;
 
   public String getModuleName() {
     return "com.google.gwt.user.UserTest";
+  }
+
+  public void testCancelSubmit() {
+    TextBox tb = new TextBox();
+    tb.setName("q");
+
+    FormPanel form = new FormPanel();
+    form.setWidget(tb);
+    form.setAction("http://www.google.com/search");
+
+    form.addFormHandler(new FormHandler() {
+      public void onSubmit(FormSubmitEvent event) {
+        event.setCancelled(true);
+      }
+
+      public void onSubmitComplete(FormSubmitCompleteEvent event) {
+        fail("Form was cancelled and should not have been submitted");
+      }
+    });
+
+    form.submit();
   }
 
   /**
@@ -48,15 +71,15 @@ public class FormPanelTest extends GWTTestCase {
 
     delayTestFinish(5000);
     form.addFormHandler(new FormHandler() {
+      public void onSubmit(FormSubmitEvent event) {
+      }
+
       public void onSubmitComplete(FormSubmitCompleteEvent event) {
         // The server just echoes the contents of the request. The following
         // string should have been present in it.
         assertTrue(event.getResults().indexOf(
             "Content-Disposition: form-data; name=\"file0\";") != -1);
         finishTest();
-      }
-
-      public void onSubmit(FormSubmitEvent event) {
       }
     });
     form.submit();
@@ -118,36 +141,49 @@ public class FormPanelTest extends GWTTestCase {
     delayTestFinish(5000);
 
     form.addFormHandler(new FormHandler() {
+      public void onSubmit(FormSubmitEvent event) {
+      }
+
       public void onSubmitComplete(FormSubmitCompleteEvent event) {
         // The server just echoes the query string. This is what it should look
         // like.
-        assertEquals("tb=text&ptb=password&cb1=on&rb0=on&lb=value1&h=v",
-            event.getResults());
+        assertTrue(event.getResults().equals(
+            "tb=text&amp;ptb=password&amp;cb1=on&amp;rb0=on&amp;lb=value1&amp;h=v"));
         finishTest();
-      }
-
-      public void onSubmit(FormSubmitEvent event) {
       }
     });
 
     form.submit();
   }
 
-  public void testCancelSubmit() {
+  public void testSubmitAndHideDialog() {
+    final FormPanel form = new FormPanel();
+    form.setMethod(FormPanel.METHOD_GET);
+    form.setEncoding(FormPanel.ENCODING_URLENCODED);
+    form.setAction("/formHandler");
+
     TextBox tb = new TextBox();
-    tb.setName("q");
+    form.add(tb);
+    tb.setText("text");
+    tb.setName("tb");
 
-    FormPanel form = new FormPanel();
-    form.setWidget(tb);
-    form.setAction("http://www.google.com/search");
+    final DialogBox dlg = new DialogBox();
+    dlg.setWidget(form);
+    dlg.show();
 
+    delayTestFinish(5000);
     form.addFormHandler(new FormHandler() {
-      public void onSubmitComplete(FormSubmitCompleteEvent event) {
-        fail("Form was cancelled and should not have been submitted");
+      public void onSubmit(FormSubmitEvent event) {
       }
 
-      public void onSubmit(FormSubmitEvent event) {
-        event.setCancelled(true);
+      public void onSubmitComplete(FormSubmitCompleteEvent event) {
+        // Make sure we get our results back.
+        assertTrue(event.getResults().equals("tb=text"));
+        finishTest();
+
+        // Hide the dialog on submit complete. This was causing problems at one
+        // point because hiding the dialog detached the form and iframe.
+        dlg.hide();
       }
     });
 
@@ -174,8 +210,8 @@ public class FormPanelTest extends GWTTestCase {
       }
 
       private native boolean isHappyDivPresent(Element iframe) /*-{
-       return !!iframe.contentWindow.document.getElementById(':)');
-       }-*/;
+        return !!iframe.contentWindow.document.getElementById(':)');
+      }-*/;
     };
 
     // Wait 5 seconds before checking the results.

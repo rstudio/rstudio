@@ -23,13 +23,17 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.gwt.user.client.ui.FormPanelTest;
+
 /**
- * TODO: document me.
+ * Servlet for use with {@link FormPanelTest}.
  */
 public class FormPanelTestServlet extends HttpServlet {
 
   protected void doGet(HttpServletRequest req, HttpServletResponse rsp)
       throws ServletException, IOException {
+
+    rsp.setContentType("text/html");
 
     String query = req.getQueryString();
     if (query != null) {
@@ -40,6 +44,8 @@ public class FormPanelTestServlet extends HttpServlet {
 
   protected void doPost(HttpServletRequest req, HttpServletResponse rsp)
       throws ServletException, IOException {
+
+    rsp.setContentType("text/html");
 
     String query = req.getQueryString();
     if (query != null) {
