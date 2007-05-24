@@ -284,8 +284,8 @@ public final class ServerSerializationStreamReader extends
     String clientTypeSignature = serializedInstRef.getSignature();
     if (clientTypeSignature.length() == 0) {
       if (shouldEnforceTypeVersioning()) {
-        // TODO(mmendez): add a more descriptive error message here
-        throw new SerializationException();
+        throw new SerializationException("Missing type signature for "
+            + instanceClass.getName());
       }
 
       return;

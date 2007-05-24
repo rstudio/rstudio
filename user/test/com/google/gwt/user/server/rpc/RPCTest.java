@@ -15,9 +15,9 @@
  */
 package com.google.gwt.user.server.rpc;
 
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.SerializableException;
-import com.google.gwt.user.client.rpc.SerializationException;
 
 import junit.framework.TestCase;
 
@@ -84,8 +84,6 @@ public class RPCTest extends TestCase {
       fail("Expected NullPointerException");
     } catch (NullPointerException e) {
       // expected to get here
-    } catch (SerializationException e) {
-      fail(e.getMessage());
     }
 
     // Case 2
@@ -94,15 +92,14 @@ public class RPCTest extends TestCase {
       fail("Expected IllegalArgumentException");
     } catch (IllegalArgumentException e) {
       // expected to get here
-    } catch (SerializationException e) {
-      fail(e.getMessage());
     }
 
     // Case 3
     try {
       RPCRequest request = RPC.decodeRequest(VALID_ENCODED_REQUEST);
-    } catch (SerializationException e) {
-      e.printStackTrace();
+    } catch (Throwable e) {
+      // not expected to get here
+      fail(e.getClass().getName() + " should not have been thrown by RPC.decodeRequest(String)");
     }
   }
 
@@ -132,8 +129,6 @@ public class RPCTest extends TestCase {
       fail("Expected NullPointerException");
     } catch (NullPointerException e) {
       // expected to get here
-    } catch (SerializationException e) {
-      fail(e.getMessage());
     }
 
     // Case 2
@@ -142,48 +137,30 @@ public class RPCTest extends TestCase {
       fail("Expected IllegalArgumentException");
     } catch (IllegalArgumentException e) {
       // expected to get here
-    } catch (SerializationException e) {
-      fail(e.getMessage());
     }
 
     // Case 3
-    try {
-      RPCRequest request = RPC.decodeRequest(VALID_ENCODED_REQUEST, null);
-      assertEquals(A.class.getMethod("method2", null), request.getMethod());
-      assertTrue(request.getParameters().length == 0);
-    } catch (SerializationException e) {
-      e.printStackTrace();
-    }
+    RPCRequest request;
+    request = RPC.decodeRequest(VALID_ENCODED_REQUEST, null);
+    assertEquals(A.class.getMethod("method2", null), request.getMethod());
+    assertTrue(request.getParameters().length == 0);
 
     // Case 4
-    try {
-      RPCRequest request = RPC.decodeRequest(VALID_ENCODED_REQUEST, A.class);
-      assertEquals(A.class.getMethod("method2", null), request.getMethod());
-      assertTrue(request.getParameters().length == 0);
-    } catch (SerializationException e) {
-      e.printStackTrace();
-    }
+    request = RPC.decodeRequest(VALID_ENCODED_REQUEST, A.class);
+    assertEquals(A.class.getMethod("method2", null), request.getMethod());
+    assertTrue(request.getParameters().length == 0);
 
     // Case 5
     try {
-      RPCRequest request = RPC.decodeRequest(INVALID_INTERFACE_REQUEST, B.class);
-    } catch (SecurityException e) {
+      request = RPC.decodeRequest(INVALID_INTERFACE_REQUEST, B.class);
+    } catch (IncompatibleRemoteServiceException e) {
       // should get here
-      System.out.println(e.getMessage());
-    } catch (Throwable e) {
-      e.printStackTrace();
-      fail(e.getMessage());
     }
-
     // Case 6
     try {
-      RPCRequest request = RPC.decodeRequest(INVALID_METHOD_REQUEST, A.class);
-    } catch (SecurityException e) {
+      request = RPC.decodeRequest(INVALID_METHOD_REQUEST, A.class);
+    } catch (IncompatibleRemoteServiceException e) {
       // should get here
-      System.out.println(e.getMessage());
-    } catch (Throwable e) {
-      e.printStackTrace();
-      fail(e.getMessage());
     }
   }
 
@@ -203,9 +180,6 @@ public class RPCTest extends TestCase {
     // Case 1
     try {
       RPC.encodeResponseForFailure(null, new Throwable());
-      fail("Expected NullPointerException");
-    } catch (NullPointerException e) {
-      // expected to get here
     } catch (Throwable e) {
       fail(e.getMessage());
     }
@@ -234,7 +208,6 @@ public class RPCTest extends TestCase {
       fail("Expected UnexpectedException");
     } catch (UnexpectedException e) {
       // expected to get here
-      System.out.println(e.getMessage());
     } catch (Throwable e) {
       fail(e.getMessage());
     }
@@ -294,7 +267,6 @@ public class RPCTest extends TestCase {
       RPC.encodeResponseForSuccess(A_method2, new SerializableException());
     } catch (IllegalArgumentException e) {
       // expected to get here
-      System.out.println(e.getMessage());
     } catch (Throwable e) {
       e.printStackTrace();
       fail(e.getMessage());
@@ -347,7 +319,6 @@ public class RPCTest extends TestCase {
       }, A_method1, null);
     } catch (SecurityException e) {
       // expected to get here
-      System.out.println(e.getMessage());
     } catch (Throwable e) {
       e.printStackTrace();
       fail(e.getMessage());
@@ -369,7 +340,6 @@ public class RPCTest extends TestCase {
       }, A_method1, new Integer[] {new Integer(1)});
     } catch (SecurityException e) {
       // expected to get here
-      System.out.println(e.getMessage());
     } catch (Throwable e) {
       e.printStackTrace();
       fail(e.getMessage());
@@ -392,7 +362,6 @@ public class RPCTest extends TestCase {
       }, A_method1, null);
     } catch (UnexpectedException e) {
       // expected to get here
-      System.out.println(e.getMessage());
     } catch (Throwable e) {
       e.printStackTrace();
       fail(e.getMessage());

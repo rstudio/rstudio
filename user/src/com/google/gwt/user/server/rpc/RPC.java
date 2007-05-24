@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.server.rpc;
 
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.server.rpc.impl.ServerSerializableTypeOracle;
@@ -109,20 +110,21 @@ public final class RPC {
    *          the service method
    * @return an {@link RPCRequest} instance
    * 
-   * @throws SerializationException if the encodedRequest contents cannot be
-   *           deserialized
-   * @throws SecurityException if any of the following conditions apply:
+   * @throws IncompatibleRemoteServiceException if any of the following
+   *           conditions apply:
    *           <ul>
+   *           <li>if the types in the encoded request cannot be deserialized</li>
    *           <li><code>RPC.class.getClassLoader()</code> cannot load the
-   *           service interface requested in the encoded request</li>
+   *           service interface requested in the encodedRequest</li>
    *           <li>the requested interface is not assignable to
    *           {@link RemoteService}</li>
-   *           <li>the service method requested in the encoded request is not a
+   *           <li>the service method requested in the encodedRequest is not a
    *           member of the requested service interface</li>
+   *           <li>the type parameter is not <code>null</code> and is not
+   *           assignable to the requested {@link RemoteService} interface
    *           </ul>
    */
-  public static RPCRequest decodeRequest(String encodedRequest)
-      throws SerializationException {
+  public static RPCRequest decodeRequest(String encodedRequest) {
     return decodeRequest(encodedRequest, null);
   }
 
@@ -149,10 +151,10 @@ public final class RPC {
    * 
    * @throws NullPointerException if the encodedRequest is <code>null</code>
    * @throws IllegalArgumentException if the encodedRequest is an empty string
-   * @throws SerializationException if the types in the encoded request cannot
-   *           be deserialized
-   * @throws SecurityException if any of the following conditions apply:
+   * @throws IncompatibleRemoteServiceException if any of the following
+   *           conditions apply:
    *           <ul>
+   *           <li>if the types in the encoded request cannot be deserialized</li>
    *           <li><code>RPC.class.getClassLoader()</code> cannot load the
    *           service interface requested in the encodedRequest</li>
    *           <li>the requested interface is not assignable to
@@ -163,8 +165,7 @@ public final class RPC {
    *           assignable to the requested {@link RemoteService} interface
    *           </ul>
    */
-  public static RPCRequest decodeRequest(String encodedRequest, Class type)
-      throws SerializationException {
+  public static RPCRequest decodeRequest(String encodedRequest, Class type) {
     if (encodedRequest == null) {
       throw new NullPointerException("encodedRequest cannot be null");
     }
@@ -173,102 +174,103 @@ public final class RPC {
       throw new IllegalArgumentException("encodedRequest cannot be empty");
     }
 
-    ServerSerializationStreamReader streamReader = new ServerSerializationStreamReader(
-        serializableTypeOracle);
-    streamReader.prepareToRead(encodedRequest);
-
-    String serviceIntfName = streamReader.readString();
-
-    if (type != null) {
-      if (!implementsInterface(type, serviceIntfName)) {
-        // The service does not implement the requested interface
-        throw new SecurityException("Blocked attempt to access interface '"
-            + serviceIntfName + "', which is not implemented by '"
-            + printTypeName(type)
-            + "'; this is either misconfiguration or a hack attempt");
-      }
-    }
-
-    Class serviceIntf;
     try {
-      serviceIntf = getClassFromSerializedName(serviceIntfName);
-      if (!RemoteService.class.isAssignableFrom(serviceIntf)) {
-        // The requested interface is not a RemoteService interface
-        throw new SecurityException(
-            "Blocked attempt to access interface '"
-                + printTypeName(serviceIntf)
-                + "', which doesn't extend RemoteService; this is either misconfiguration or a hack attempt");
+      ServerSerializationStreamReader streamReader = new ServerSerializationStreamReader(
+          serializableTypeOracle);
+      streamReader.prepareToRead(encodedRequest);
+
+      String serviceIntfName = streamReader.readString();
+
+      if (type != null) {
+        if (!implementsInterface(type, serviceIntfName)) {
+          // The service does not implement the requested interface
+          throw new IncompatibleRemoteServiceException(
+              "Blocked attempt to access interface '" + serviceIntfName
+                  + "', which is not implemented by '" + printTypeName(type)
+                  + "'; this is either misconfiguration or a hack attempt");
+        }
       }
-    } catch (ClassNotFoundException e) {
-      SecurityException securityException = new SecurityException(
-          "Could not locate requested interface '" + serviceIntfName
-              + "' in default classloader");
-      securityException.initCause(e);
-      throw securityException;
-    }
 
-    String serviceMethodName = streamReader.readString();
-
-    int paramCount = streamReader.readInt();
-    Class[] parameterTypes = new Class[paramCount];
-
-    for (int i = 0; i < parameterTypes.length; i++) {
-      String paramClassName = streamReader.readString();
+      Class serviceIntf;
       try {
-        parameterTypes[i] = getClassFromSerializedName(paramClassName);
+        serviceIntf = getClassFromSerializedName(serviceIntfName);
+        if (!RemoteService.class.isAssignableFrom(serviceIntf)) {
+          // The requested interface is not a RemoteService interface
+          throw new IncompatibleRemoteServiceException(
+              "Blocked attempt to access interface '"
+                  + printTypeName(serviceIntf)
+                  + "', which doesn't extend RemoteService; this is either misconfiguration or a hack attempt");
+        }
       } catch (ClassNotFoundException e) {
-        throw new SerializationException("Unknown parameter " + i + " type '"
-            + paramClassName + "'", e);
+        throw new IncompatibleRemoteServiceException(
+            "Could not locate requested interface '" + serviceIntfName
+                + "' in default classloader", e);
       }
+
+      String serviceMethodName = streamReader.readString();
+
+      int paramCount = streamReader.readInt();
+      Class[] parameterTypes = new Class[paramCount];
+
+      for (int i = 0; i < parameterTypes.length; i++) {
+        String paramClassName = streamReader.readString();
+        try {
+          parameterTypes[i] = getClassFromSerializedName(paramClassName);
+        } catch (ClassNotFoundException e) {
+          throw new IncompatibleRemoteServiceException("Parameter " + i
+              + " of is of an unknown type '" + paramClassName + "'", e);
+        }
+      }
+
+      Method method = findInterfaceMethod(serviceIntf, serviceMethodName,
+          parameterTypes, true);
+
+      if (method == null) {
+        throw new IncompatibleRemoteServiceException(
+            formatMethodNotFoundErrorMessage(serviceIntf, serviceMethodName,
+                parameterTypes));
+      }
+
+      Object[] parameterValues = new Object[parameterTypes.length];
+      for (int i = 0; i < parameterValues.length; i++) {
+        parameterValues[i] = streamReader.deserializeValue(parameterTypes[i]);
+      }
+
+      return new RPCRequest(method, parameterValues);
+
+    } catch (SerializationException ex) {
+      throw new IncompatibleRemoteServiceException(ex.getMessage(), ex);
     }
-
-    Method method = findInterfaceMethod(serviceIntf, serviceMethodName,
-        parameterTypes, true);
-
-    if (method == null) {
-      throw new SecurityException(formatMethodNotFoundErrorMessage(serviceIntf,
-          serviceMethodName, parameterTypes));
-    }
-
-    Object[] parameterValues = new Object[parameterTypes.length];
-    for (int i = 0; i < parameterValues.length; i++) {
-      parameterValues[i] = streamReader.deserializeValue(parameterTypes[i]);
-    }
-
-    return new RPCRequest(method, parameterValues);
   }
 
   /**
-   * Returns a string that encodes an exception. It is an error to try to encode
-   * an exception that is not in the method's list of checked exceptions.
+   * Returns a string that encodes an exception. If method is not
+   * <code>null</code>, it is an error if the exception is not in the
+   * method's list of checked exceptions.
    * 
-   * @param serviceMethod the method that threw the exception
+   * @param serviceMethod the method that threw the exception, maybe
+   *          <code>null</code>
    * @param cause the {@link Throwable} that was thrown
-   * @return a string that encodes the exception, if the exception was expected
+   * @return a string that encodes the exception
    * 
-   * @throws NullPointerException if either the serviceMethod or the cause are
-   *           <code>null</code>
+   * @throws NullPointerException if the the cause is <code>null</code>
    * @throws SerializationException if the result cannot be serialized
    * @throws UnexpectedException if the result was an unexpected exception (a
    *           checked exception not declared in the serviceMethod's signature)
    */
   public static String encodeResponseForFailure(Method serviceMethod,
       Throwable cause) throws SerializationException {
-    if (serviceMethod == null) {
-      throw new NullPointerException("serviceMethod cannot be null");
-    }
-
     if (cause == null) {
       throw new NullPointerException("cause cannot be null");
     }
 
-    if (RPC.isExpectedException(serviceMethod, cause)) {
-      return encodeResponse(cause.getClass(), cause, true);
-    } else {
+    if (serviceMethod != null && !RPC.isExpectedException(serviceMethod, cause)) {
       throw new UnexpectedException("Service method '"
           + getSourceRepresentation(serviceMethod)
           + "' threw an unexpected exception: " + cause.toString(), cause);
     }
+
+    return encodeResponse(cause.getClass(), cause, true);
   }
 
   /**
@@ -677,5 +679,6 @@ public final class RPC {
    * Static classes have no constructability.
    */
   private RPC() {
+    // Not instantiable
   }
 }

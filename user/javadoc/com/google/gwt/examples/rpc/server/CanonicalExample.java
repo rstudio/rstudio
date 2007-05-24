@@ -15,6 +15,7 @@
  */
 package com.google.gwt.examples.rpc.server;
 
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.server.rpc.RPC;
 import com.google.gwt.user.server.rpc.RPCRequest;
@@ -29,9 +30,12 @@ public class CanonicalExample extends RemoteServiceServlet {
    * that encodes either the method return or an exception thrown by it.
    */
   public String processCall(String payload) throws SerializationException {
-    RPCRequest rpcRequest = RPC.decodeRequest(payload, this.getClass());
-
-    return RPC.invokeAndEncodeResponse(this, rpcRequest.getMethod(),
-        rpcRequest.getParameters());
+    try {
+      RPCRequest rpcRequest = RPC.decodeRequest(payload, this.getClass());
+      return RPC.invokeAndEncodeResponse(this, rpcRequest.getMethod(),
+          rpcRequest.getParameters());
+    } catch (IncompatibleRemoteServiceException ex) {
+      return RPC.encodeResponseForFailure(null, ex);
+    }
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.server.rpc;
 
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.SerializationException;
 
 import java.io.ByteArrayOutputStream;
@@ -206,19 +207,23 @@ public class RemoteServiceServlet extends HttpServlet {
    * This is public so that it can be unit tested easily without HTTP.
    * 
    * @param payload the UTF-8 request payload
-   * @throws SerializationException if cannot deserialize the request, or cannot
-   *           serialize the response
-   * @throws SecurityException if there is a problem locating or invoking the
-   *           service method on the destination object
+   * @return a string which encodes either the method's return, a checked
+   *         exception thrown by the method, or an
+   *         {@link IncompatibleRemoteServiceException}
+   * @throws SerializationException if we cannot serialize the response
    * @throws UnexpectedException if the invocation throws a checked exception
    *           that is not declared in the service method's signature
    * @throws RuntimeException if the service method throws an unchecked
    *           exception (the exception will be the one thrown by the service)
    */
   public String processCall(String payload) throws SerializationException {
-    RPCRequest rpcRequest = RPC.decodeRequest(payload, this.getClass());
-    return RPC.invokeAndEncodeResponse(this, rpcRequest.getMethod(),
-        rpcRequest.getParameters());
+    try {
+      RPCRequest rpcRequest = RPC.decodeRequest(payload, this.getClass());
+      return RPC.invokeAndEncodeResponse(this, rpcRequest.getMethod(),
+          rpcRequest.getParameters());
+    } catch (IncompatibleRemoteServiceException ex) {
+      return RPC.encodeResponseForFailure(null, ex);
+    }
   }
 
   /**
@@ -236,8 +241,8 @@ public class RemoteServiceServlet extends HttpServlet {
    * Note that if the desired behavior is to both send the GENERIC_FAILURE_MSG
    * response AND to rethrow the exception, then this method should first send
    * the GENERIC_FAILURE_MSG response itself (using getThreadLocalResponse), and
-   * then rethrow the exception.  Rethrowing the exception will cause it to escape
-   * into the servlet container.
+   * then rethrow the exception. Rethrowing the exception will cause it to
+   * escape into the servlet container.
    * 
    * @param e the exception which was thrown
    */

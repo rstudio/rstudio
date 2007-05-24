@@ -28,6 +28,7 @@ import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -458,11 +459,14 @@ public class SerializableTypeOracleBuilder {
       streamWriterClass = typeOracle.getType(SerializationStreamWriter.class.getName());
 
       // String is always serializable
-      MetaTypeInfo mti = getMetaTypeInfo(stringClass);
-      mti.setSerializable(true);
+      MetaTypeInfo stringMti = getMetaTypeInfo(stringClass);
+      stringMti.setSerializable(true);
+
+      // IncompatibleRemoteServiceException is always serializable
+      MetaTypeInfo incompatibleRemoteServiceExceptionMti = getMetaTypeInfo(typeOracle.getType(IncompatibleRemoteServiceException.class.getName()));
+      incompatibleRemoteServiceExceptionMti.setSerializable(true);
 
       remoteServiceAsyncValidator = new RemoteServiceAsyncValidator(typeOracle);
-
     } catch (NotFoundException e) {
       rootLogger.log(TreeLogger.ERROR, null, e);
       throw new UnableToCompleteException();

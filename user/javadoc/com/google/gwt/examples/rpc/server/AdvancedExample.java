@@ -15,6 +15,7 @@
  */
 package com.google.gwt.examples.rpc.server;
 
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.server.rpc.RPC;
 import com.google.gwt.user.server.rpc.RPCRequest;
 
@@ -42,56 +43,60 @@ public class AdvancedExample extends HttpServlet {
     String payload = readPayloadAsUtf8(httpRequest);
 
     try {
-      RPCRequest rpcRequest = RPC.decodeRequest(payload);
-
-      Object targetInstance = getInstanceToHandleRequest(httpRequest,
-          rpcRequest);
-
-      Method targetMethod = maybeMapRequestedMethod(targetInstance,
-          rpcRequest.getMethod());
-
-      Object[] targetParameters = maybeMapParameters(rpcRequest.getParameters());
-
       try {
-        Object result = targetMethod.invoke(targetInstance, targetParameters);
-
-        result = maybeMapResult(rpcRequest.getMethod(), result);
-
-        /*
-         * Encode the object that will be given to the client code's
-         * AsyncCallback::onSuccess(Object) method.
-         */
-        String encodedResult = RPC.encodeResponseForSuccess(
-            rpcRequest.getMethod(), result);
-
-        sendResponseForSuccess(httpResponse, encodedResult);
-      } catch (IllegalArgumentException e) {
-        SecurityException securityException = new SecurityException(
-            "Blocked attempt to invoke method " + targetMethod);
-        securityException.initCause(e);
-        throw securityException;
-      } catch (IllegalAccessException e) {
-        SecurityException securityException = new SecurityException(
-            "Blocked attempt to access inaccessible method "
-                + targetMethod
-                + (targetInstance != null ? " on target " + targetInstance : ""));
-        securityException.initCause(e);
-        throw securityException;
-      } catch (InvocationTargetException e) {
-        Throwable cause = e.getCause();
-
-        Throwable mappedThrowable = maybeMapThrowable(cause,
+        RPCRequest rpcRequest = RPC.decodeRequest(payload);
+  
+        Object targetInstance = getInstanceToHandleRequest(httpRequest,
+            rpcRequest);
+  
+        Method targetMethod = maybeMapRequestedMethod(targetInstance,
             rpcRequest.getMethod());
-
-        /*
-         * Encode the exception that will be passed back to the client's client
-         * code's AsyncCallback::onFailure(Throwable) method.
-         */
-        String failurePayload = RPC.encodeResponseForFailure(
-            rpcRequest.getMethod(), mappedThrowable);
-
-        sendResponseForFailure(httpResponse, failurePayload);
-      }
+  
+        Object[] targetParameters = maybeMapParameters(rpcRequest.getParameters());
+  
+        try {
+          Object result = targetMethod.invoke(targetInstance, targetParameters);
+  
+          result = maybeMapResult(rpcRequest.getMethod(), result);
+  
+          /*
+           * Encode the object that will be given to the client code's
+           * AsyncCallback::onSuccess(Object) method.
+           */
+          String encodedResult = RPC.encodeResponseForSuccess(
+              rpcRequest.getMethod(), result);
+  
+          sendResponseForSuccess(httpResponse, encodedResult);
+        } catch (IllegalArgumentException e) {
+          SecurityException securityException = new SecurityException(
+              "Blocked attempt to invoke method " + targetMethod);
+          securityException.initCause(e);
+          throw securityException;
+        } catch (IllegalAccessException e) {
+          SecurityException securityException = new SecurityException(
+              "Blocked attempt to access inaccessible method "
+                  + targetMethod
+                  + (targetInstance != null ? " on target " + targetInstance : ""));
+          securityException.initCause(e);
+          throw securityException;
+        } catch (InvocationTargetException e) {
+          Throwable cause = e.getCause();
+  
+          Throwable mappedThrowable = maybeMapThrowable(cause,
+              rpcRequest.getMethod());
+  
+          /*
+           * Encode the exception that will be passed back to the client's client
+           * code's AsyncCallback::onFailure(Throwable) method.
+           */
+          String failurePayload = RPC.encodeResponseForFailure(
+              rpcRequest.getMethod(), mappedThrowable);
+  
+          sendResponseForFailure(httpResponse, failurePayload);
+        }
+      } catch (IncompatibleRemoteServiceException e) {
+        sendResponseForFailure(httpResponse, RPC.encodeResponseForFailure(null, e));
+      } 
     } catch (Throwable e) {
       /*
        * Return a generic error which will be passed to the client code's

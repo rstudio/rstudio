@@ -30,6 +30,7 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.dev.generator.NameFactory;
 import com.google.gwt.user.client.ResponseTextHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.InvocationException;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
@@ -179,8 +180,7 @@ class ProxyCreator {
     String exceptionName = nameFactory.createName("e");
     w.println("} catch (" + SerializationException.class.getName() + " "
         + exceptionName + ") {");
-    w.indentln("callback.onFailure(new " + InvocationException.class.getName()
-        + "(" + exceptionName + ".getMessage()));");
+    w.indentln("callback.onFailure(" + exceptionName + ");");
     w.indentln("return;");
     w.println("}");
 
@@ -276,6 +276,12 @@ class ProxyCreator {
           }
           w.outdent();
           w.println("}");
+        }
+        w.outdent();
+        w.println("} catch (" + SerializationException.class.getName() + " e) {");
+        w.indent();
+        {
+          w.println("caught = new " + IncompatibleRemoteServiceException.class.getName() + "();");
         }
         w.outdent();
         w.println("} catch (Throwable e) {");
