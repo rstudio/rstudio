@@ -366,6 +366,9 @@ public class DateTimeFormat {
    * 
    * @return a <code>DateTimeFormat</code> object that can be used for format
    *         or parse date/time values matching the specified pattern
+   * 
+   * @throws IllegalArgumentException if the specified pattern could not be
+   *           parsed
    */
   public static DateTimeFormat getFormat(String pattern) {
     return new DateTimeFormat(pattern, defaultDateTimeConstants);

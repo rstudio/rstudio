@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -179,7 +179,7 @@ abstract class AbstractLocalizableImplCreator extends
       TreeLogger child = logger.branch(TreeLogger.ERROR, s, null);
       Set keys = messageBindings.keySet();
       if (keys.size() < AbstractResource.REPORT_KEYS_THRESHOLD) {
-        String keyString = "keys found: " + keys;
+        String keyString = "Keys found: " + keys;
         throw error(child, keyString);
       } else {
         throw new UnableToCompleteException();

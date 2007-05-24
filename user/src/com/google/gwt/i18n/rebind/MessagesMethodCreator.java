@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,9 +46,10 @@ class MessagesMethodCreator extends AbstractMethodCreator {
     Object[] expected;
 
     // Find safe string to store 'real' quotes during escape.
-    // Using '~' rather than null string or one of a-X because it is very can
+    // Using '~' rather than null string or one of a-X because we can
     // easily test what happens with multiple '~'s.
     String safeReplaceString = "~";
+
     while (template.indexOf(safeReplaceString) >= 0) {
       safeReplaceString += "~";
     }
@@ -58,25 +59,30 @@ class MessagesMethodCreator extends AbstractMethodCreator {
       expected = new Object[numArgs];
     } catch (ParseException e) {
       logger.log(TreeLogger.INFO, "Failed to parse the message " + template
-        + " so cannot verify the number of passed-in arguments", e);
+          + " so cannot verify the number of passed-in arguments", e);
       expected = new Object[numParams];
     }
+
     if (numParams != expected.length) {
-      String s = "Wrong number of template arguments\n\t " + m.getName()
-        + " args: " + numParams + "\n\t" + template + " args: "
-        + expected.length;
-      throw error(logger, s);
+      StringBuffer msg = new StringBuffer();
+      msg.append("The method has ");
+      msg.append(numParams);
+      msg.append(numParams == 1 ? " parameter" : " parameters");
+      msg.append(", but the message template has ");
+      msg.append(expected.length);
+      msg.append(expected.length == 1 ? " placeholder" : " placeholders");
+      throw error(logger, msg.toString());
     }
     for (int i = 0; i < expected.length; i++) {
       expected[i] = safeReplaceString + " + arg" + i + " + "
-        + safeReplaceString;
+          + safeReplaceString;
     }
     String formattedString;
     try {
       formattedString = MessageFormat.format(template, expected);
     } catch (IllegalArgumentException e) {
       throw error(logger, "Message Template '" + template
-        + "' did not format correctly", e);
+          + "' did not format correctly", e);
     }
     formattedString = wrap(formattedString);
     formattedString = formattedString.replaceAll(safeReplaceString, "\"");

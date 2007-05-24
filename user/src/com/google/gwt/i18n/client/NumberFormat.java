@@ -362,6 +362,7 @@ public class NumberFormat {
    * 
    * @param pattern pattern for this formatter
    * @return a NumberFormat instance
+   * @throws IllegalArgumentException if the specified pattern is invalid
    */
   public static NumberFormat getFormat(String pattern) {
     return new NumberFormat(pattern, defaultNumberConstants.defCurrencyCode());
@@ -374,6 +375,7 @@ public class NumberFormat {
    * @param pattern pattern for this formatter
    * @param currencyCode international currency code
    * @return a NumberFormat instance
+   * @throws IllegalArgumentException if the specified pattern is invalid
    */
   public static NumberFormat getFormat(String pattern, String currencyCode) {
     return new NumberFormat(pattern, currencyCode);
@@ -799,9 +801,14 @@ public class NumberFormat {
         break;
       }
     }
-    ret = Double.parseDouble(normalizedText.toString());
-    ret = ret / scale;
-    return ret;
+    
+    try {
+      ret = Double.parseDouble(normalizedText.toString());
+      ret = ret / scale;
+      return ret;
+    } catch (NumberFormatException e) {
+      return 0.0;
+    }
   }
 
   /**
