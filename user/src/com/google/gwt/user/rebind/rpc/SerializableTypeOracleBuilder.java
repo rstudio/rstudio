@@ -114,7 +114,7 @@ public class SerializableTypeOracleBuilder {
   static final class TypeState {
     private final String state;
 
-    private TypeState(String state) {
+    protected TypeState(String state) {
       this.state = state;
     }
 
@@ -653,8 +653,7 @@ public class SerializableTypeOracleBuilder {
       }
 
       if (type.isAbstract() && type.getSubtypes().length == 0) {
-        setUnserializableAndLog(logger, TreeLogger.ERROR,
-            "Is abstract and it has no serializable subtypes", type);
+        // Just ignore pure, abstract classes that have no subtypes
         return;
       }
 
@@ -707,11 +706,12 @@ public class SerializableTypeOracleBuilder {
 
       if (mti.qualifiesForAutoSerialization()) {
         if (nSerializableSubtypes < nSubtypes) {
-          if (!allowUnserializableSubtypesOfAutoSerializableTypes
-              || nSerializableSubtypes == 0) {
-            setUnserializableAndLog(logger, TreeLogger.ERROR,
-                "Not all subtypes are serializable", type);
-          }
+          setUnserializableAndLog(logger,
+              allowUnserializableSubtypesOfAutoSerializableTypes
+                  ? TreeLogger.WARN : TreeLogger.ERROR,
+              "Not all subtypes of the automatically serializable type '"
+                  + type.getQualifiedSourceName()
+                  + "' are themselves automatically serializable", type);
         }
       } else if (!mti.qualifiesForManualSerialization()
           && nSerializableSubtypes == 0) {
@@ -776,12 +776,27 @@ public class SerializableTypeOracleBuilder {
     if (classOrInterface != null) {
       if (classOrInterface.isAssignableTo(collectionClass)
           || classOrInterface.isAssignableTo(mapClass)) {
-        logger.branch(
+        TreeLogger localLogger = logger.branch(
             TreeLogger.WARN,
             "Type '"
                 + type.getQualifiedSourceName()
-                + "' should be parameterized to ensure that the correct types are considered for serialization; add a gwt.typeArgs javadoc annotation to correct this warning",
+                + "' should be parameterized to help the compiler produce the smallest code size possible for your module. Since the gwt.typeArgs javadoc annotation is missing, all subtypes of Object will be analyzed for serializability even if they are not directly or indirectly used",
             null);
+
+        /*
+         * This will pull in the world and the set of serializable types will be
+         * larger than it needs to be. We exclude types that do not qualify for
+         * serialization to avoid generating false errors due to types that do
+         * not qualify for serialization and have no serializable subtypes.
+         */
+        JClassType[] allTypes = typeOracle.getJavaLangObject().getSubtypes();
+        for (int i = 0; i < allTypes.length; ++i) {
+          JClassType cls = allTypes[i];
+          MetaTypeInfo mti = getMetaTypeInfo(cls);
+          if (mti.qualifiesForSerialization()) {
+            checkType(localLogger, cls, true);
+          }
+        }
       }
     }
   }
