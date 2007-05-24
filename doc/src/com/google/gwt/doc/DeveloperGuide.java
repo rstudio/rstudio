@@ -19,7 +19,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.ImageBundle;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.IsSerializable;
@@ -33,6 +32,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.ImageBundle;
 import com.google.gwt.user.client.ui.KeyboardListenerAdapter;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -1581,7 +1581,7 @@ public class DeveloperGuide {
      * @childIntro Specifics
      * @synopsis Optimize the performance of your application by reducing the
      *           number of HTTP requests for images.
-     * @see com.google.gwt.user.client.ImageBundle
+     * @see com.google.gwt.user.client.ui.ImageBundle
      * @tip To make all image bundle files permanently cacheable, set up a rule
      *      in your web server to emit the <code>Expires</code> response
      *      header for any files ending with "<code>.cache.*</code>". Such a
@@ -1597,9 +1597,9 @@ public class DeveloperGuide {
 
       /**
        * To define an image bundle, the user needs to extend the
-       * {@link com.google.gwt.user.client.ImageBundle ImageBundle} interface.
-       * The ImageBundle interface is a tag interface that can be extended to
-       * define new image bundles.
+       * {@link com.google.gwt.user.client.ui.ImageBundle ImageBundle}
+       * interface. The ImageBundle interface is a tag interface that can be
+       * extended to define new image bundles.
        * 
        * <p>
        * The derived interface can have zero or more methods, where each method
@@ -1680,7 +1680,7 @@ public class DeveloperGuide {
        * 
        * @title Creating and Using an Image Bundle
        * @synopsis Define an image bundle and use it in your application.
-       * @see com.google.gwt.user.client.ImageBundle
+       * @see com.google.gwt.user.client.ui.ImageBundle
        * @see com.google.gwt.user.client.ui.AbstractImagePrototype
        * @tip Image bundles are immutable, so you can keep a reference to a
        *      singleton instance of an image bundle instead of creating a new
@@ -1841,7 +1841,7 @@ public class DeveloperGuide {
        * @title Image Bundles and Localization
        * @synopsis Create locale-sensitive image bundles by using GWT's
        *           localization capabilities.
-       * @see com.google.gwt.user.client.ImageBundle
+       * @see com.google.gwt.user.client.ui.ImageBundle
        * @see com.google.gwt.i18n.client.Localizable
        * 
        */
