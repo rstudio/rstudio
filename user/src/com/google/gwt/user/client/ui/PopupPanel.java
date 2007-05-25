@@ -25,10 +25,9 @@ import com.google.gwt.user.client.ui.impl.PopupImpl;
 
 /**
  * A panel that can "pop up" over other widgets. It overlays the browser's
- * client area (and any previously-created popups).
- * <p/>
- * The width and height of the PopupPanel cannot be explicitly set; they are
- * determined by the PopupPanel's widget. Calls to {@link #setWidth(String)} and
+ * client area (and any previously-created popups). <p/> The width and height of
+ * the PopupPanel cannot be explicitly set; they are determined by the
+ * PopupPanel's widget. Calls to {@link #setWidth(String)} and
  * {@link #setHeight(String)} will call these methods on the PopupPanel's
  * widget.
  * <p>
@@ -240,10 +239,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     return true;
   }
 
-  public boolean remove(Widget w) {
-    return super.remove(w);
-  }
-
   public void removePopupListener(PopupListener listener) {
     if (popupListeners != null) {
       popupListeners.remove(listener);
@@ -251,10 +246,11 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Calls {@link Widget#setHeight(String)} on this panel's widget. If this panel
-   * does not have a widget, then this call does nothing.
-   *
-   * @param height the new height of this panel's widget, in CSS units (e.g. "10px", "1em")
+   * Calls {@link Widget#setHeight(String)} on this panel's widget. If this
+   * panel does not have a widget, then this call does nothing.
+   * 
+   * @param height the new height of this panel's widget, in CSS units (e.g.
+   *          "10px", "1em")
    */
   public void setHeight(String height) {
     Widget childWidget = getWidget();
@@ -290,9 +286,18 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     DOM.setStyleAttribute(elem, "top", top + "px");
   }
 
+  public void setTitle(String title) {
+    Element containerElement = getContainerElement();
+    if (title == null || title.length() == 0) {
+      DOM.removeElementAttribute(containerElement, "title");
+    } else {
+      DOM.setElementAttribute(containerElement, "title", title);
+    }
+  }
+
   /**
    * Sets whether this object is visible.
-   *
+   * 
    * @param visible <code>true</code> to show the object, <code>false</code>
    *          to hide it
    */
@@ -301,9 +306,9 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     // Because the panel is absolutely positioned, this will not create
     // "holes" in displayed contents and it allows normal layout passes
     // to occur so the size of the PopupPanel can be reliably determined.
-    DOM.setStyleAttribute(getElement(), "visibility",
-        visible ? "visible" : "hidden");
-    
+    DOM.setStyleAttribute(getElement(), "visibility", visible ? "visible"
+        : "hidden");
+
     // If the PopupImpl creates an iframe shim, it's also necessary to hide it
     // as well.
     impl.setVisible(getElement(), visible);
@@ -312,12 +317,13 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Calls {@link Widget#setWidth(String)} on this panel's widget. If this panel
    * does not have a widget, then this call does nothing.
-   *
-   * @param width the new width of this panel's widget, in CSS units (e.g. "10px", "1em")
+   * 
+   * @param width the new width of this panel's widget, in CSS units (e.g.
+   *          "10px", "1em")
    */
-   public void setWidth(String width) {
+  public void setWidth(String width) {
     Widget childWidget = getWidget();
-    if (childWidget != null)  {
+    if (childWidget != null) {
       childWidget.setWidth(width);
     }
   }
@@ -378,14 +384,4 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       popupListeners.firePopupClosed(this, autoClosed);
     }
   }
-
-  public void setTitle(String title) {
-    Element containerElement = getContainerElement();
-     if (title == null || title.length() == 0) {
-       DOM.removeElementAttribute(containerElement, "title");
-     } else {
-       DOM.setElementAttribute(containerElement, "title", title);
-     }
-   }
 }
-

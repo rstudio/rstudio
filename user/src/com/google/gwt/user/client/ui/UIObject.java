@@ -612,5 +612,3 @@ public abstract class UIObject {
     p.removeChild(node);
   }-*/;
 }
-
-
