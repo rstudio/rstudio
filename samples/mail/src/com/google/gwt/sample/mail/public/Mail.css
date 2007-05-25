@@ -27,7 +27,6 @@ a:visited {
 
 .gwt-DialogBox .Caption {
 	background: url(gradient.gif) repeat-x top left;
-	background-color: #f00;
 	font-weight: bold;
 	cursor: default;
 	padding: 5px 10px;

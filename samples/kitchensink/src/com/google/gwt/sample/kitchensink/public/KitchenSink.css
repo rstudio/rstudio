@@ -104,6 +104,7 @@ a:visited {
 
 .gwt-TabPanelBottom {
   background-color: #E8EEF7;
+  border-top: 4px solid #87B3FF;
 }
 
 .gwt-TabBar {
@@ -111,34 +112,29 @@ a:visited {
 }
 
 .gwt-TabBar .gwt-TabBarFirst {
-  font-size: 12pt;
-  border-bottom: 2px solid #87B3FF;
-  border-right: 2px solid #87B3FF;
-  padding-left: 3px;
 }
 
 .gwt-TabBar .gwt-TabBarRest {
-  border-bottom: 2px solid #87B3FF;
-  padding-right: 3px;
 }
 
 .gwt-TabBar .gwt-TabBarItem {
-  border-top: 2px solid #C3D9FF;
-  border-right: 2px solid #87B3FF;
-  border-bottom: 2px solid #87B3FF;
-  padding: 2px;
+  padding: 4px;
   cursor: pointer;
   cursor: hand;
+
+  background-color: #e8eef7;
+  border-bottom: 2px solid white;
+  margin-right: 2px;
 }
 
 .gwt-TabBar .gwt-TabBarItem-selected {
+  padding: 4px;
   font-weight: bold;
-  background-color: #E8EEF7;
-  border-top: 2px solid #87B3FF;
-  border-right: 2px solid #87B3FF;
-  border-bottom: 2px solid #E8EEF7;
-  padding: 2px;
   cursor: default;
+
+  background-color: #87b3ff;
+  border-bottom: 2px solid #87b3ff;
+  margin-right: 2px;
 }
 
 .gwt-TextArea {
