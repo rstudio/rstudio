@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -26,11 +26,11 @@ import com.google.gwt.user.client.Element;
  * user to interactively change the proportion of the width dedicated to each of
  * the two widgets. Widgets contained within a <code>HorizontalSplitPanel</code>
  * will be automatically decorated with scrollbars when necessary.
- * 
+ *
  * <p>
  * <img class='gallery' src='HorizontalSplitPanel.png'/>
  * </p>
- * 
+ *
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-HorizontalSplitPanel { the panel itself }</li>
@@ -56,7 +56,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
     /**
      * Initializes css properties on the panels DOM structure.
-     * 
+     *
      * @param panel the panel
      */
     protected void init(HorizontalSplitPanel panel) {
@@ -67,7 +67,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
     /**
      * Called on each mouse move event during drag resizing.
-     * 
+     *
      * @param panel the panel
      * @param pos the current horizontal mouse position relative to the panel
      */
@@ -96,7 +96,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
     /**
      * Called whenever drag resizing begins.
-     * 
+     *
      * @param panel the panel
      * @param pos the current horizontal mouse position relative to the panel
      */
@@ -110,7 +110,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
     /**
      * Sets the horizontal position of the splitter.
-     * 
+     *
      * @param panel the panel
      * @param pos the position as a css length
      */
@@ -131,6 +131,10 @@ public final class HorizontalSplitPanel extends SplitPanel {
    * The resizing implementation for IE6/7.
    */
   private static class ImplIE6 extends Impl {
+    private static native void addWidthExpression(Element elem) /*-{
+      elem.style.setExpression('width', '"100%"');
+    }-*/;
+
     protected void init(final HorizontalSplitPanel panel) {
       /*
        * Without fixed table layout, IE will not respected the table width
@@ -138,16 +142,10 @@ public final class HorizontalSplitPanel extends SplitPanel {
        */
       DOM.setStyleAttribute(panel.table, "tableLayout", "fixed");
 
-      /*
-       * Since the DOM structure will not have finished full layout, we must
-       * defer until later to ensure that the inner divs update to the proper
-       * size.
-       */
-      DeferredCommand.addCommand(new Command() {
-        public void execute() {
-          updateDivWidth(panel);
-        }
-      });
+      addWidthExpression(panel.leftDiv);
+      addWidthExpression(panel.rightDiv);
+      addWidthExpression(panel.getElement(LEFT));
+      addWidthExpression(panel.getElement(RIGHT));
     }
 
     protected void onSplitResizeStarted(final HorizontalSplitPanel panel,
@@ -165,21 +163,6 @@ public final class HorizontalSplitPanel extends SplitPanel {
       final Element leftTD = panel.leftTD;
       // adjust the width of the table cell instead of the inner div.
       setWidth(leftTD, pos);
-      updateDivWidth(panel);
-    }
-
-    /*
-     * IE6 will not properly auto size the inner divs unless we explicitly set
-     * their width to something that forces a layout. NOTE: 100% works for
-     * quirks mode but will be problematic for standards mode when there are
-     * margins, border or padding.
-     */
-    private void updateDivWidth(final HorizontalSplitPanel panel) {
-      final String size = "100%";
-      setWidth(panel.leftDiv, size);
-      setWidth(panel.rightDiv, size);
-      setWidth(panel.getElement(LEFT), size);
-      setWidth(panel.getElement(RIGHT), size);
     }
   }
 
@@ -244,7 +227,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
   /**
    * DOM elements needed to support splitter dragging. The underlying DOM
    * structure is:
-   * 
+   *
    * <pre>
    *   table
    *     td (leftTD)
@@ -289,7 +272,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
   /**
    * Gets the widget in the left side of the panel.
-   * 
+   *
    * @return the widget, <code>null</code> if there is not one.
    */
   public final Widget getLeftWidget() {
@@ -298,7 +281,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
   /**
    * Gets the widget in the right side of the panel.
-   * 
+   *
    * @return the widget, <code>null</code> if there is not one.
    */
   public final Widget getRightWidget() {
@@ -312,7 +295,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
   /**
    * Sets the widget in the left side of the panel.
-   * 
+   *
    * @param w the widget
    */
   public final void setLeftWidget(Widget w) {
@@ -321,7 +304,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
   /**
    * Sets the widget in the right side of the panel.
-   * 
+   *
    * @param w the widget
    */
   public final void setRightWidget(Widget w) {

@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
@@ -26,11 +27,11 @@ import com.google.gwt.user.client.Element;
  * of the two widgets. Widgets contained within a
  * <code>VerticalSplitterPanel</code> will be automatically decorated with
  * scrollbars when neccessary.
- * 
+ *
  * <p>
  * <img class='gallery' src='VerticalSplitPanel.png'/>
  * </p>
- * 
+ *
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-VerticalSplitPanel { the panel itself }</li>
@@ -43,9 +44,32 @@ public final class VerticalSplitPanel extends SplitPanel {
 
   private static final int TOP = 0;
   private static final int BOTTOM = 1;
+  private static final Impl impl = (Impl) GWT.create(Impl.class);
 
-  private static int getClientHeight(Element elem) {
-    return DOM.getElementPropertyInt(elem, "clientHeight");
+  /**
+   * Provides different implementations for retrieving an element's height. The
+   * default binding is based on DOM1 clientHeight.
+   */
+  private static class Impl {
+    /**
+     * Gets an element's height.
+     *
+     * @param elem an element
+     * @return the height of the element
+     */
+    protected int getElementHeight(Element elem) {
+      return DOM.getElementPropertyInt(elem, "clientHeight");
+    }
+  }
+
+  /**
+   * Provides an implementation for IE6 based on Element.getBoundingClientRect.
+   */
+  private static class ImplIE6 extends Impl {
+    protected native int getElementHeight(Element elem) /*-{
+      var box = elem.getBoundingClientRect();
+      return box.bottom - box.top;
+    }-*/;
   }
 
   private static int getOffsetTop(Element elem) {
@@ -113,7 +137,7 @@ public final class VerticalSplitPanel extends SplitPanel {
 
   /**
    * Gets the widget in the bottom of the panel.
-   * 
+   *
    * @return the widget, <code>null</code> if there is not one
    */
   public final Widget getBottomWidget() {
@@ -122,7 +146,7 @@ public final class VerticalSplitPanel extends SplitPanel {
 
   /**
    * Gets the widget in the top of the panel.
-   * 
+   *
    * @return the widget, <code>null</code> if there is not one
    */
   public final Widget getTopWidget() {
@@ -131,7 +155,7 @@ public final class VerticalSplitPanel extends SplitPanel {
 
   /**
    * Sets the widget in the bottom of the panel.
-   * 
+   *
    * @param w the widget
    */
   public final void setBottomWidget(Widget w) {
@@ -145,7 +169,7 @@ public final class VerticalSplitPanel extends SplitPanel {
 
   /**
    * Sets the widget in the top of the panel.
-   * 
+   *
    * @param w the widget
    */
   public final void setTopWidget(Widget w) {
@@ -163,8 +187,8 @@ public final class VerticalSplitPanel extends SplitPanel {
 
     // Compute what the new top height should be.
     final int newTopHeight = initialTopHeight + (y - initialThumbPos);
-    final int newBotHeight = getClientHeight(botElem)
-        + getClientHeight(topElem) - newTopHeight;
+    final int newBotHeight = impl.getElementHeight(botElem)
+        + impl.getElementHeight(topElem) - newTopHeight;
 
     /*
      * NOTE: The bottom must be adjusted before the top due to FF bug which
@@ -184,7 +208,7 @@ public final class VerticalSplitPanel extends SplitPanel {
 
   final void onSplitterResizeStarted(int x, int y) {
     initialThumbPos = y;
-    initialTopHeight = getClientHeight(getElement(TOP));
+    initialTopHeight = impl.getElementHeight(getElement(TOP));
   }
 
   /**
@@ -200,7 +224,7 @@ public final class VerticalSplitPanel extends SplitPanel {
      * of the bottom div must change. We do this by comparing the clientHeight
      * of the root div with the offsetTop of a probe div under the bottom div.
      */
-    final int adjust = getClientHeight(thisElem)
+    final int adjust = impl.getElementHeight(thisElem)
         - (getOffsetTop(probeElem) - getOffsetTop(thisElem));
 
     /*
@@ -221,10 +245,10 @@ public final class VerticalSplitPanel extends SplitPanel {
      * reported clientHeight. If that is non-zero, it tells us how much to
      * accomodate for margin, border and what not.
      */
-    final int curHeight = getClientHeight(bottomElem);
+    final int curHeight = impl.getElementHeight(bottomElem);
     final int newHeight = curHeight + adjust;
     setHeight(bottomElem, newHeight);
-    final int error = getClientHeight(bottomElem) - newHeight;
+    final int error = impl.getElementHeight(bottomElem) - newHeight;
 
     if (error == 0) {
       return;
