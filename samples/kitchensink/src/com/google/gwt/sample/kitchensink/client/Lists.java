@@ -164,7 +164,6 @@ public class Lists extends Sink implements ChangeListener, TreeListener {
     horz.add(combo);
     horz.add(list);
     horz.add(suggestPanel);
-    horz.add(tree);
 
     VerticalPanel panel = new VerticalPanel();
     panel.setHorizontalAlignment(VerticalPanel.ALIGN_LEFT);
@@ -179,6 +178,7 @@ public class Lists extends Sink implements ChangeListener, TreeListener {
 
     tree.addTreeListener(this);
     tree.setWidth("20em");
+    horz.add(tree);
   }
 
   public void onChange(Widget sender) {
