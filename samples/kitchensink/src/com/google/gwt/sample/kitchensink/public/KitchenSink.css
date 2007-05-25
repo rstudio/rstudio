@@ -32,6 +32,11 @@ a:visited {
 .gwt-Button {
 }
 
+.gwt-Button[disabled] {
+  background: lightGray;
+  color: darkGray;
+}
+
 .gwt-Canvas {
 }
 
