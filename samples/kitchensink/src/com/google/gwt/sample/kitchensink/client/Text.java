@@ -63,21 +63,21 @@ public class Text extends Sink {
     TextBox readOnlyTextBox = new TextBox();
     readOnlyTextBox.setReadOnly(true);
     readOnlyTextBox.setText("read only");
-    readOnlyTextBox.setWidth("20em");
 
     VerticalPanel vp = new VerticalPanel();
     vp.setSpacing(8);
     vp.add(new HTML("Normal text box:"));
-    vp.add(createTextThing(textBox));
-    vp.add(readOnlyTextBox);
+    vp.add(createTextThing(textBox, true));
+    vp.add(createTextThing(readOnlyTextBox, false));
     vp.add(new HTML("Password text box:"));
-    vp.add(createTextThing(passwordText));
+    vp.add(createTextThing(passwordText, true));
     vp.add(new HTML("Text area:"));
-    vp.add(createTextThing(textArea));
+    vp.add(createTextThing(textArea, true));
 
     textArea.setVisibleLines(5);
 
     Widget richText = createRichText();
+    richText.setWidth("32em");
 
     HorizontalPanel hp = new HorizontalPanel();
     hp.add(vp);
@@ -108,29 +108,32 @@ public class Text extends Sink {
     return p;
   }
 
-  private Widget createTextThing(final TextBoxBase textBox) {
+  private Widget createTextThing(final TextBoxBase textBox,
+      boolean addSelection) {
     HorizontalPanel p = new HorizontalPanel();
     p.setSpacing(4);
 
+    textBox.setWidth("20em");
     p.add(textBox);
 
-    final HTML echo = new HTML();
-
-    p.add(echo);
-    textBox.addKeyboardListener(new KeyboardListenerAdapter() {
-      public void onKeyUp(Widget sender, char keyCode, int modifiers) {
-        updateText(textBox, echo);
-      }
-    });
-
-    textBox.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
-        updateText(textBox, echo);
-      }
-    });
-
-    textBox.setWidth("20em");
-    updateText(textBox, echo);
+    if (addSelection) {
+      final HTML echo = new HTML();
+  
+      p.add(echo);
+      textBox.addKeyboardListener(new KeyboardListenerAdapter() {
+        public void onKeyUp(Widget sender, char keyCode, int modifiers) {
+          updateText(textBox, echo);
+        }
+      });
+  
+      textBox.addClickListener(new ClickListener() {
+        public void onClick(Widget sender) {
+          updateText(textBox, echo);
+        }
+      });
+  
+      updateText(textBox, echo);
+    }
     return p;
   }
 
