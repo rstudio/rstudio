@@ -45,6 +45,11 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   private static final PopupImpl impl = (PopupImpl) GWT.create(PopupImpl.class);
 
   private boolean autoHide, modal, showing;
+
+  // Used to track requested size across changing child widgets
+  private String desiredHeight;
+  private String desiredWidth;
+
   private PopupListenerCollection popupListeners;
 
   /**
@@ -245,17 +250,12 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     }
   }
 
-  /**
-   * Calls {@link Widget#setHeight(String)} on this panel's widget. If this
-   * panel does not have a widget, then this call does nothing.
-   * 
-   * @param height the new height of this panel's widget, in CSS units (e.g.
-   *          "10px", "1em")
-   */
   public void setHeight(String height) {
-    Widget childWidget = getWidget();
-    if (childWidget != null) {
-      childWidget.setHeight(height);
+    desiredHeight = height;
+    maybeUpdateSize();
+    // If the user cleared the size, revert to not trying to control children.
+    if (height.length() == 0) {
+      desiredHeight = null;
     }
   }
 
@@ -314,17 +314,17 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     impl.setVisible(getElement(), visible);
   }
 
-  /**
-   * Calls {@link Widget#setWidth(String)} on this panel's widget. If this panel
-   * does not have a widget, then this call does nothing.
-   * 
-   * @param width the new width of this panel's widget, in CSS units (e.g.
-   *          "10px", "1em")
-   */
+  public void setWidget(Widget w) {
+    super.setWidget(w);
+    maybeUpdateSize();
+  }
+
   public void setWidth(String width) {
-    Widget childWidget = getWidget();
-    if (childWidget != null) {
-      childWidget.setWidth(width);
+    desiredWidth = width;
+    maybeUpdateSize();
+    // If the user cleared the size, revert to not trying to control children.
+    if (width.length() == 0) {
+      desiredWidth = null;
     }
   }
 
@@ -382,6 +382,24 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     impl.onHide(getElement());
     if (popupListeners != null) {
       popupListeners.firePopupClosed(this, autoClosed);
+    }
+  }
+
+  /**
+   * We control size by setting our child widget's size. However, if we don't
+   * currently have a child, we record the size the user wanted so that when we
+   * do get a child, we can set it correctly. Until size is explicitly cleared,
+   * any child put into the popup will be given that size.
+   */
+  private void maybeUpdateSize() {
+    Widget w = getWidget();
+    if (w != null) {
+      if (desiredHeight != null) {
+        w.setHeight(desiredHeight);
+      }
+      if (desiredWidth != null) {
+        w.setWidth(desiredWidth);
+      }
     }
   }
 }

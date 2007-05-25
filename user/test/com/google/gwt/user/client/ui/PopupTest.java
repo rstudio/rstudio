@@ -41,10 +41,10 @@ public class PopupTest extends GWTTestCase {
     popup.setWidget(lbl);
     popup.show();
 
-    assertEquals(popup.getOffsetWidth(), 384);
-    assertEquals(popup.getOffsetHeight(), 128);
-    assertEquals(popup.getPopupLeft(), 128);
-    assertEquals(popup.getPopupTop(), 64);
+    assertEquals(384, popup.getOffsetWidth());
+    assertEquals(128, popup.getOffsetHeight());
+    assertEquals(128, popup.getPopupLeft());
+    assertEquals(64, popup.getPopupTop());
 
     // Make sure that setting the popup's size & position works _after_
     // setting its widget (and that clearing its size properly resizes it to
@@ -52,10 +52,10 @@ public class PopupTest extends GWTTestCase {
     popup.setSize("", "");
     popup.setPopupPosition(16, 16);
 
-    assertEquals(popup.getOffsetWidth(), lbl.getOffsetWidth());
-    assertEquals(popup.getOffsetHeight(), lbl.getOffsetHeight());
-    assertEquals(popup.getAbsoluteLeft(), 16);
-    assertEquals(popup.getAbsoluteTop(), 16);
+    assertEquals(lbl.getOffsetWidth(), popup.getOffsetWidth());
+    assertEquals(lbl.getOffsetHeight(), popup.getOffsetHeight());
+    assertEquals(16, popup.getAbsoluteLeft());
+    assertEquals(16, popup.getAbsoluteTop());
 
     // Ensure that hiding the popup fires the appropriate events.
     delayTestFinish(1000);
