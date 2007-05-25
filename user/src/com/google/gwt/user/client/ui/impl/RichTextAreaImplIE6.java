@@ -40,38 +40,7 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     return elem.contentWindow.document.body.innerText;
   }-*/;
 
-  public Element createElement() {
-    Element elem = super.createElement();
-    DOM.setElementProperty(elem, "src", "javascript:''");
-    return elem;
-  }
-
-  public String getText() {
-    return getText(elem);
-  }
-
-  public native void initElement() /*-{
-    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
-    var _this = this;
-
-    window.setTimeout(function() {
-      var doc = elem.contentWindow.document;
-      doc.open();
-      doc.write('<html><body CONTENTEDITABLE="true"></body></html>');
-      doc.close();
-
-      // Initialize event handling.
-      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplIE6::initEvents()();
-    }, 1);
-  }-*/;
-
-  public void unhookEvents() {
-    super.unhookEvents();
-    detachEvents(elem);
-  }
-
-  native void initEvents() /*-{
-    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
+  private static native void initEvents(Element elem) /*-{
     var handler = function() {
       if (elem.__listener) {
         // Weird: this code has the context of the script frame, but we need the
@@ -92,6 +61,33 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     body.onmouseout =
     body.onclick = handler;
   }-*/;
+
+  public Element createElement() {
+    Element elem = super.createElement();
+    DOM.setElementProperty(elem, "src", "javascript:''");
+    return elem;
+  }
+
+  public String getText() {
+    return getText(elem);
+  }
+
+  public native void initElement() /*-{
+    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
+
+    window.setTimeout(function() {
+      var doc = elem.contentWindow.document;
+      doc.write('<html><body CONTENTEDITABLE="true"></body></html>');
+
+      // Initialize event handling.
+      @com.google.gwt.user.client.ui.impl.RichTextAreaImplIE6::initEvents(Lcom/google/gwt/user/client/Element;)(elem);
+    }, 1);
+  }-*/;
+
+  public void unhookEvents() {
+    super.unhookEvents();
+    detachEvents(elem);
+  }
 
   boolean isRichEditingActive(Element elem) {
     return true;
