@@ -67,7 +67,7 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
     String imgStyle =
         "filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='"
         + url + "',sizingMethod='crop'); margin-left: "
-        + -left + "px; margin-top: " + -top + "px" + "border: 0px";
+        + -left + "px; margin-top: " + -top + "px; border: none";
 
     String clippedImgHtml = "<gwt:clipper style=\""
         + clipperStyle

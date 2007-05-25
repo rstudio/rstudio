@@ -306,12 +306,10 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     // because setting an iframe's 'name' property dynamically doesn't work on
     // most browsers.
     Element dummy = DOM.createDiv();
-    DOM.setInnerHTML(dummy, "<iframe name='" + frameName + "'>");
-    iframe = DOM.getFirstChild(dummy);
+    DOM.setInnerHTML(dummy, "<iframe name='" + frameName
+        + "' style='width:0;height:0;border:0'>");
 
-    DOM.setIntStyleAttribute(iframe, "width", 0);
-    DOM.setIntStyleAttribute(iframe, "height", 0);
-    DOM.setIntStyleAttribute(iframe, "border", 0);
+    iframe = DOM.getFirstChild(dummy);
   }
 
   private boolean onFormSubmitAndCatch(UncaughtExceptionHandler handler) {

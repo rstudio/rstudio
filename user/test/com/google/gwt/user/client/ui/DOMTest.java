@@ -72,7 +72,7 @@ public class DOMTest extends GWTTestCase {
     DOM.appendChild(RootPanel.getBodyElement(), elem);
 
     DOM.setStyleAttribute(elem, "position", "absolute");
-    DOM.setStyleAttribute(elem, "border", border + "px");
+    DOM.setStyleAttribute(elem, "border", border + "px solid #000");
     DOM.setStyleAttribute(elem, "padding", padding + "px");
     DOM.setStyleAttribute(elem, "margin", margin + "px");
 
