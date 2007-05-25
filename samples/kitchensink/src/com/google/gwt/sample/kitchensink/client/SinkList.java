@@ -21,7 +21,6 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Hyperlink;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -62,9 +61,9 @@ public class SinkList extends Composite {
 
   private int selectedSink = -1;
 
-  public SinkList() {
+  public SinkList(Sink.Images images) {
     initWidget(list);
-    list.add(new Image("images/gwt-logo.png"));
+    list.add(images.gwtLogo().createImage());
     setStyleName("ks-List");
   }
 

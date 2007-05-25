@@ -20,7 +20,6 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PushButton;
@@ -33,14 +32,14 @@ import com.google.gwt.user.client.ui.VerticalPanel;
  */
 public class Widgets extends Sink implements Command {
 
-  public static SinkInfo init() {
+  public static SinkInfo init(final Sink.Images images) {
     return new SinkInfo("Widgets", "<h2>Basic Widgets</h2>" +
       "<p>GWT has all sorts of the basic widgets you would expect from any " +
       "toolkit.</p><p>Below, you can see various kinds of buttons, check boxes, " +
       "radio buttons, and menus.</p>") {
 
       public Sink createInstance() {
-        return new Widgets();
+        return new Widgets(images);
       }
 
       public String getColor() {
@@ -58,10 +57,13 @@ public class Widgets extends Sink implements Command {
   private RadioButton radio1 = new RadioButton("group0", "Choice 1");
   private RadioButton radio2 = new RadioButton("group0", "Choice 2 (Disabled)");
   private RadioButton radio3 = new RadioButton("group0", "Choice 3");
-  private PushButton pushButton = new PushButton(new Image("images/gwt-logo.png"));
-  private ToggleButton toggleButton = new ToggleButton(new Image("images/gwt-logo.png"));
+  private PushButton pushButton;
+  private ToggleButton toggleButton;
 
-  public Widgets() {
+  public Widgets(Sink.Images images) {
+    pushButton = new PushButton(images.gwtLogo().createImage());
+    toggleButton = new ToggleButton(images.gwtLogo().createImage());
+
     HorizontalPanel hp;
 
     panel.add(createMenu());

@@ -16,6 +16,7 @@
 package com.google.gwt.sample.kitchensink.client;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.sample.kitchensink.client.Sink.SinkInfo;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.History;
@@ -29,7 +30,9 @@ import com.google.gwt.user.client.ui.VerticalPanel;
  */
 public class KitchenSink implements EntryPoint, HistoryListener {
 
-  protected SinkList list = new SinkList();
+  private static final Sink.Images images = (Sink.Images) GWT.create(Sink.Images.class);
+
+  protected SinkList list = new SinkList(images);
   private SinkInfo curInfo;
   private Sink curSink;
   private HTML description = new HTML();
@@ -116,9 +119,9 @@ public class KitchenSink implements EntryPoint, HistoryListener {
    */
   protected void loadSinks() {
     list.addSink(Info.init());
-    list.addSink(Widgets.init());
-    list.addSink(Panels.init());
-    list.addSink(Lists.init());
+    list.addSink(Widgets.init(images));
+    list.addSink(Panels.init(images));
+    list.addSink(Lists.init(images));
     list.addSink(Text.init());
     list.addSink(Popups.init());
   }

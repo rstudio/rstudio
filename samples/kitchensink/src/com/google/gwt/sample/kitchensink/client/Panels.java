@@ -24,7 +24,6 @@ import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.HorizontalSplitPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -34,7 +33,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
  */
 public class Panels extends Sink {
 
-  public static SinkInfo init() {
+  public static SinkInfo init(final Sink.Images images) {
     return new SinkInfo(
         "Panels",
         "<h2>Panels</h2><p>This page demonstrates some of the basic GWT panels, each of which "
@@ -47,7 +46,7 @@ public class Panels extends Sink {
             + "<code>DOM</code> class.</p>") {
 
       public Sink createInstance() {
-        return new Panels();
+        return new Panels(images);
       }
 
       public String getColor() {
@@ -56,7 +55,7 @@ public class Panels extends Sink {
     };
   }
 
-  public Panels() {
+  public Panels(Sink.Images images) {
     HTML contents = new HTML("This is a <code>ScrollPanel</code> contained at "
         + "the center of a <code>DockPanel</code>.  "
         + "By putting some fairly large contents "
@@ -122,7 +121,7 @@ public class Panels extends Sink {
     Grid grid = new Grid(4, 4);
     for (int r = 0; r < 4; ++r) {
       for (int c = 0; c < 4; ++c) {
-        grid.setWidget(r, c, new Image("images/gwt-logo.png"));
+        grid.setWidget(r, c, images.gwtLogo().createImage());
       }
     }
 

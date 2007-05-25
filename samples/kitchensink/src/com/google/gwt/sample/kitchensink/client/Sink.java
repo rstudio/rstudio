@@ -15,13 +15,23 @@
  */
 package com.google.gwt.sample.kitchensink.client;
 
+import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.ImageBundle;
+import com.google.gwt.user.client.ui.TreeImages;
 
 /**
  * A 'sink' is a single panel of the kitchen sink. They are meant to be lazily
  * instantiated so that the application doesn't pay for all of them on startup.
  */
 public abstract class Sink extends Composite {
+
+  /**
+   * An image provider to make available images to Sinks.
+   */
+  public interface Images extends ImageBundle, TreeImages {
+    AbstractImagePrototype gwtLogo();
+  }
 
   /**
    * Encapsulated information about a sink. Each sink is expected to have a

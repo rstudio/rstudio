@@ -114,7 +114,7 @@ public class Lists extends Sink implements ChangeListener, TreeListener {
       new Proto("Clarinet Concerto"), new Proto("Violin Concerto No. 5"),
       new Proto("Violin Concerto No. 4"),}),}),};
 
-  public static SinkInfo init() {
+  public static SinkInfo init(final Sink.Images images) {
     return new SinkInfo("Lists",
         "<h2>Lists and Trees</h2>" +
         "<p>GWT provides a number of ways to display lists and trees. This " +
@@ -123,7 +123,7 @@ public class Lists extends Sink implements ChangeListener, TreeListener {
         "some text in the SuggestBox below to see what happens!</p>") {
 
       public Sink createInstance() {
-        return new Lists();
+        return new Lists(images);
       }
     };
   }
@@ -134,9 +134,9 @@ public class Lists extends Sink implements ChangeListener, TreeListener {
 
   private SuggestBox suggestBox = new SuggestBox(oracle);
 
-  private Tree tree = new Tree();
+  private Tree tree;
 
-  public Lists() {
+  public Lists(Sink.Images images) {
     combo.setVisibleItemCount(1);
     combo.addChangeListener(this);
     list.setVisibleItemCount(10);
@@ -153,7 +153,7 @@ public class Lists extends Sink implements ChangeListener, TreeListener {
     for (int i = 0; i < words.length; ++i) {
       oracle.add(words[i]);
     }
-
+    
     VerticalPanel suggestPanel = new VerticalPanel();
     suggestPanel.add(new Label("Suggest box:"));
     suggestPanel.add(suggestBox);
@@ -171,6 +171,7 @@ public class Lists extends Sink implements ChangeListener, TreeListener {
     panel.add(horz);
     initWidget(panel);
 
+    tree = new Tree(images);
     for (int i = 0; i < fProto.length; ++i) {
       createItem(fProto[i]);
       tree.addItem(fProto[i].item);
