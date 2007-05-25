@@ -182,6 +182,9 @@ public class JSON {
     searchButton.setText(SEARCH_BUTTON_DEFAULT_TEXT);
     searchButton.addClickListener(new SearchButtonClickListener());
 
+    // Avoids showing an "empty" cell
+    jsonTree.setVisible(false);
+
     // Find out where the host page wants the button.
     //
     RootPanel searchButtonSlot = RootPanel.get("search");
