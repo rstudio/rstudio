@@ -42,13 +42,183 @@
       <a name="Release_Notes_Current"></a>
       <h2>Release Notes for @GWT_VERSION@</h2>
       <p>
-      Description here.
+      This is the Release Candidate for GWT 1.4, the first GWT release developed with major participation
+      from GWT open source contributors.  It's been a long time coming, but we hope it's been worth the wait.
+      In addition to tons of new features, optimizations, and performance enhancements, we've fixed more than
+      150 bugs.  There are some important behavioral and potentially breaking API changes; if you read nothing
+      else, please read these following sections!
       </p>
 
-      <h3>Fixed Issues</h3>
+      <h3>Behavioral Changes</h3>
+      <p>Important changes in the behavior of existing GWT features.</p>
+      <h4>Critical Changes to RPC</h4>
+      In general, the old RPC system was too lenient and failed to warn at compile time about things
+      that could cause problems at runtime.  You may find that the new RPC system emits a lot of warnings (or
+      even errors) for code that works (or used to work) just fine.  While this may be annoying in the short
+      term, fixing your code to avoid these warnings will result in a smaller, faster, and more reliable app.
       <ul>
-        <li><a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=0">Issue #0 - description</a></li>
+        <li><b>Bad code that worked before might not now</b><br/>
+        Previously, if you declared one particular component type via gwt.typeArgs at compile time, you could
+        often get away with passing a different type at runtime.  For example, placing a Date in an
+        ArrayList of String might work.  This type of code is less likely to work now, and we hope to be even
+        stricter in the future.  Bottom line: don't do this.
+        </li>
+        <li><b><a href="doc/html/java.io.Serializable.html">Serializable</a> equivalent to
+        <a href="doc/html/com.google.gwt.user.client.rpc.IsSerializable.html">IsSerializable</a></b><br/>
+        We don't support any of the semantics of Java serialization, but by popular demand, Serializable and
+        IsSerializable are now equivalent for the purposes of RPC.  This should improve server-side
+        interoperability and remove much of the need for DTOs.
+        </li>
+        <li><b>Warn about missing gwt.typeArgs</b><br/>
+        Every Collection or Map type should have an associated
+        <a href="doc/html/com.google.gwt.doc.DeveloperGuide.RemoteProcedureCalls.SerializableTypes.html">gwt.typeArgs
+        javadoc annotation</a>.  In the past, a missing gwt.typeArgs would generally have no noticeable effect,
+        because a bug in the RPC system would generate code for all available serializable types, even if they
+        weren't used in your service interface.  Now that this bug has been fixed, you can achieve <b>significant</b>
+        shrinkage in the size of your compiled output by fixing these warnings.
+        </li>
+        <li><b>Warn about serializable subclasses that violate the serialization restrictions</b><br/>
+        If you have a class that implements IsSerializable or Serializable, but that class lacks a default
+        constructor or contains fields which cannot be serialized, a compile time warning will be generated.
+        Resolve these warnings to avoid exceptions being thrown at runtime.
+        </li>
+        <li><b>Warn about non-transient, final instance fields</b><br/>
+        We have never serialized this type of field, and now we will warn about the existence of such fields.  The
+        warning can be suppressed via a module property.
+        </li>
+        <li><b>Warn about local and non-static nested types that implement IsSerializable or Serializable</b><br/>
+        We have never serialized these types of classes and will now generate a warning.
+        </li>
+        <li><b>Warn about native methods in serializable classes</b><br/>
+        We warn about this condition because it will cause UnsatisfiedLinkErrors if method is called on the server.
+        </li>
       </ul>
+      <h4>Module Script Tags</h4>
+      <ul>
+        <li>In previous versions of GWT, a script tag contained a nested JavaScript expression that would
+        determine when the script had been successfully loaded.  Script load order is now handled automatically and
+        these expressions are ignored.  A warning will be issued in hosted mode.  For reference, see
+        <a href="doc/html/com.google.gwt.doc.DeveloperGuide.Fundamentals.Modules.AutomaticResourceInjection.html">here</a>.
+        </li>
+      </ul>
+      <h4>More Hosted Mode Checks Related to JSNI</h4>
+      <ul>
+        <li>Previously, when passing values from JavaScript into Jave, hosted mode would silently coerce
+        a JavaScript value of an incorrect type into the declared Java type.  Unforunately, this would
+        allow code to work in hosted mode that could fail in unexpected ways in web mode.  Hosted mode
+        will now throw a HostedModeException if you try to pass an incompatible type.  See
+        <a href="doc/html/com.google.gwt.doc.DeveloperGuide.JavaScriptNativeInterface.Marshaling.html">here</a>
+        for more details.
+        </li>
+      </ul>
+
+      <h3>Breaking API Changes</h3>
+      We've made a few API changes in this release that may require minor tweaks to existing code.  Any such changes
+      that affect you should only take a few minutes to rectify.
+
+      <h4><a href="doc/html/com.google.gwt.core.client.JavaScriptObject.html">JavaScriptObject</a></h4>
+      <ul>
+        <li>Although subclassing JavaScriptObject is still not supported, we know some of you have done this anyway. :) The
+        existing (int) constructor has been removed in favor of a protected no-arg constructor.  Read the source code for
+        <a href="doc/html/com.google.gwt.user.client.Element.html">Element</a> for an example of how JavaScriptObject must
+        be subclassed now.
+        </li>
+      </ul>
+      <h4><a href="doc/html/com.google.gwt.user.client.DeferredCommand.html">DeferredCommand</a></h4>
+      <ul>
+        <li>We've deprecated the add() method in favor of addCommand() in order to support the new
+        <a href="doc/html/com.google.gwt.user.client.IncrementalCommand.html">IncrementalCommand</a> interface.  Had we
+        simply added a new method overload, existing code that passed in a null literal would have failed to compile.</li>
+        <li>The new addPause() method should be used instead of add(null).</li>
+      </ul>
+      <h4><a href="doc/html/com.google.gwt.user.client.ui.UIObject.html">UIObject</a></h4>
+      <ul>
+        <li>We've formalized the way style names are handled in UIObject (which applies to all widgets as well). Style
+        names have been separated into "base", "dependent", and "secondary" styles, which are detailed in the UIObject
+        documentation. The interface is unchanged (get/setStyleName(), add/removeStyleName()), and should not affect most
+        widgets. One potentially breaking change: widgets may no longer use removeStyleName() to remove the "base" style
+        name. See the UIObject documentation for a full explanation.</li>
+      </ul>
+
+      <h3>New Features</h3>
+      Here are a few of the coolest new features and enhancements in GWT 1.4.
+      <ul>
+        <li><b>Size and Speed Optimizations</b><ul>
+           <li>New <a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=610">size</a>
+           <a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=599">improvements</a> in the GWT compiler
+           produce JavaScript that is 10-20% smaller; just recompile your app with 1.4.</li>
+           <li>An enhanced startup sequence reduces the size of your module's startup script by 80%. More importantly, the
+           new startup sequence removes an HTTP round-trip, making startup latency about 33% faster.</li>
+           <li>The above optimizations combined with <a href="#ImageBundle">ImageBundle</a>, make it possible for GWT-based applications
+           to load surprisingly quickly. To see for yourself, check out startup time of the
+           <a href="samples/Mail/www/com.google.gwt.sample.mail.Mail/Mail.html">Mail</a> sample.</li>
+        </ul></li>
+        <li><b>Deployment Enhancements</b><ul>
+           <li>GWT RPC is no longer tied to exclusively to servlets. New
+           <a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=389">modularized RPC</a> server code makes
+           it easy to connect GWT RPC to your choice of Java back-ends.</li>
+           <li>Adding GWT modules to an HTML page has been simplified. Instead of adding a &lt;meta name='gwt:module'&gt; and
+           &lt;script src='gwt.js'&gt;, you just add a single script element for your module.</li>
+           <li>Cross-site script inclusion is now supported. The compiler produces a "-xs" (meaning "cross-site") version of
+           your module's startup script that can be included without being restricted by the same-origin policy. WARNING:
+           including scripts from other sites that you don't fully trust is a
+           <a href="http://groups.google.com/group/Google-Web-Toolkit/web/security-for-gwt-applications">big security risk</a>.</li>
+        </ul></li>
+        <li><b>Widget and Library Enhancements</b><ul>
+           <li><a href="doc/html/com.google.gwt.user.client.ui.RichTextArea.html">RichTextArea</a> allows "drop in"
+           functionality for rich text editing.</li>
+           <li><a href="doc/html/com.google.gwt.user.client.ui.SuggestBox.html">SuggestBox</a> makes it easy to add
+           auto-complete functionality.</li>
+           <li>Splitters! <a href="doc/html/com.google.gwt.user.client.ui.HorizontalSplitPanel.html">HorizontalSplitPanel</a>
+           and <a href="doc/html/com.google.gwt.user.client.ui.VerticalSplitPanel.html">VerticalSplitPanel</a> enable you to
+           resize portions of the user interface.</li>
+           <li><a href="doc/html/com.google.gwt.user.client.ui.PushButton.html">PushButton</a> and
+           <a href="doc/html/com.google.gwt.user.client.ui.ToggleButton.html">ToggleButton</a> are easy-to-customize button
+           widgets that can enhance the look-and-feel of your UI.</li>
+           <li><a href="doc/html/com.google.gwt.user.client.ui.DisclosurePanel.html">DisclosurePanel</a> is a simple,
+           nice-looking panel that lets users easily hide and show portions of your application UI.</li>
+           <li><a href="doc/html/com.google.gwt.i18n.client.DateTimeFormat.html">DateTimeFormat</a> and
+           <a href="doc/html/com.google.gwt.i18n.client.NumberFormat.html">NumberFormat</a> make it easy to format and parse
+           dates, times, and numbers for users all over the world.</li>
+           <li><a href="doc/html/com.google.gwt.user.client.IncrementalCommand.html">IncrementalCommand</a> helps you
+           implement long-running tasks in your client code without triggering "slow script" warnings.</li>
+           <li>A new <a href="http://docs.google.com/View?docid=d9s6nb7_1d723ft">benchmarking subsystem</a> integrates with
+           JUnit to let you record and compare the speed of code snippets across multiple browsers and multiple parameter
+           ranges. Benchmarking is a powerful way to identify bottlenecks and compare performance of alternative implementations.</li>
+           <li>The oft-requested <a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=21">java.io.Serializable</a> is
+           now included in the JRE emulation library and is synonymous with IsSerializable for the purpose of GWT RPC.</li>
+           <li><a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=844">Mouse wheel events</a> are now available
+           on a variety of widgets.</li>
+        </ul></li>
+        <a name="#ImageBundle"></a>
+        <li><b><a href="doc/html/com.google.gwt.user.client.ui.ImageBundle.html">ImageBundle</a></b><ul>
+           <li>ImageBundle is the single biggest have-to-see-it-to-believe-it feature in this release. Image bundles make it trivially
+           easy to combine dozens of images into a single "image strip", collapsing what would have been dozens of HTTP requests into
+           one: a single, permanently-cacheable image file.</li>
+           <li>Image bundles manage everything for you automatically, from computing clipping rectangles to making transparent PNGs
+           work in IE6. You can even choose to get the clipped image as an Image widget or as pure HTML for inclusion in a larger HTML
+           template.</li>
+           <li>In addition to enabling a blazing-fast startup, image bundles help make the UI look better during startup, too. Typical
+           AJAX apps exhibit "bouncy relayout" as individual images are loaded one-at-a-time. Fixing this problem has historically
+           required laboriously pre-initializing the width and height of each individual image ahead of time. Image bundles do the
+           same thing automatically. The dimensions of each clipped image are computed at compile time while the bundled
+           image file is being created. Voila! The result is a fast, non-ugly user startup experience that requires no extra work on
+           the part of the GWT developer to keep up-to-date.</li>
+           <li>See the <a href="http://code.google.com/p/google-web-toolkit/wiki/ImageBundleDesign">design doc</a> for more
+           details.</li>
+        </ul></li>
+      </ul>
+      
+      <p>
+      See the GWT issue tracker for
+      <a href="http://code.google.com/p/google-web-toolkit/issues/list?can=1&q=status%3AFixed%20milestone%3A1_4_RC%20type%3Aenhancement&num=1000">the
+      complete list of enhancements</a> in this release.</p>
+ 
+      <h3>Fixed Issues</h3>
+      <p>
+      See the GWT issue tracker for
+      <a href="http://code.google.com/p/google-web-toolkit/issues/list?can=1&q=status%3AFixed%20milestone%3A1_4_RC%20type%3Adefect&num=1000">the
+      complete list of bug fixes</a> in this release.</p>
 
       <hr/>
       <a name="Release_Notes_1_3_3"></a>
