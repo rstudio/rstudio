@@ -160,7 +160,7 @@ public class FormPanelTest extends GWTTestCase {
     final FormPanel form = new FormPanel();
     form.setMethod(FormPanel.METHOD_GET);
     form.setEncoding(FormPanel.ENCODING_URLENCODED);
-    form.setAction("/formHandler");
+    form.setAction(GWT.getModuleBaseURL() + "formHandler");
 
     TextBox tb = new TextBox();
     form.add(tb);
