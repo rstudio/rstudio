@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -240,6 +240,11 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   /**
    * Sets whether an individual list item is selected.
    * 
+   * <p>
+   * Note that setting the selection programmatically does <em>not</em> cause
+   * the {@link ChangeListener#onChange(Widget)} event to be fired.
+   * </p>
+   * 
    * @param index the index of the item to be selected or unselected
    * @param selected <code>true</code> to select the item
    */
@@ -284,6 +289,11 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
 
   /**
    * Sets the currently selected index.
+   * 
+   * <p>
+   * Note that setting the selected index programmatically does <em>not</em>
+   * cause the {@link ChangeListener#onChange(Widget)} event to be fired.
+   * </p>
    * 
    * @param index the index of the item to be selected
    */
