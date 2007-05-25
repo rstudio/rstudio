@@ -59,7 +59,7 @@ public class DialogBox extends PopupPanel implements HasHTML, MouseListener {
    *          hidden when the user clicks outside of it
    */
   public DialogBox(boolean autoHide) {
-    this(autoHide, false);
+    this(autoHide, true);
   }
 
   /**
