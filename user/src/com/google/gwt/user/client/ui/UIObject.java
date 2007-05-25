@@ -319,7 +319,7 @@ public abstract class UIObject {
    * @see #removeStyleName(String)
    */
   public void addStyleName(String style) {
-    setStyleName(element, style, true);
+    setStyleName(getStyleElement(), style, true);
   }
 
   /**
@@ -380,7 +380,7 @@ public abstract class UIObject {
    * @see #removeStyleName(String)
    */
   public String getStyleName() {
-    String fullClassName = ensurePrimaryStyleName(element);
+    String fullClassName = ensurePrimaryStyleName(getStyleElement());
 
     // The base style name is always the first token of the full CSS class
     // name. There can be no leading whitespace in the class name, so it's not
@@ -418,7 +418,7 @@ public abstract class UIObject {
    * @see #addStyleName(String)
    */
   public void removeStyleName(String style) {
-    setStyleName(element, style, false);
+    setStyleName(getStyleElement(), style, false);
   }
 
   /**
@@ -430,7 +430,8 @@ public abstract class UIObject {
   public void setHeight(String height) {
     // This exists to deal with an inconsistency in IE's implementation where
     // it won't accept negative numbers in length measurements
-    assert extractLengthValue(height.trim().toLowerCase()) >= 0 : "CSS heights should not be negative";
+    assert extractLengthValue(height.trim().toLowerCase()) >= 0 :
+      "CSS heights should not be negative";
     DOM.setStyleAttribute(element, "height", height);
   }
 
@@ -470,7 +471,7 @@ public abstract class UIObject {
    * @see #removeStyleName(String)
    */
   public void setStyleName(String style) {
-    resetStyleName(element, style);
+    resetStyleName(getStyleElement(), style);
   }
 
   /**
@@ -506,7 +507,8 @@ public abstract class UIObject {
   public void setWidth(String width) {
     // This exists to deal with an inconsistency in IE's implementation where
     // it won't accept negative numbers in length measurements
-    assert extractLengthValue(width.trim().toLowerCase()) >= 0 : "CSS widths should not be negative";
+    assert extractLengthValue(width.trim().toLowerCase()) >= 0 :
+      "CSS widths should not be negative";
     DOM.setStyleAttribute(element, "width", width);
   }
 
@@ -551,6 +553,17 @@ public abstract class UIObject {
   }
 
   /**
+   * Template method that returns the element to which style names will be
+   * applied. By default it returns the root element, but this method may be
+   * overridden to apply styles to a child element.
+   * 
+   * @return the element to which style names will be applied
+   */
+  protected Element getStyleElement() {
+    return element;
+  }
+
+  /**
    * Sets this object's browser element. UIObject subclasses must call this
    * method before attempting to call any other methods.
    * 
@@ -567,7 +580,7 @@ public abstract class UIObject {
     }
 
     this.element = elem;
-    
+
     // We do not actually force the creation of a primary style name here.
     // Instead, we do it lazily -- when it is aboslutely required -- 
     // in getStyleName(), addStyleName(), and removeStyleName().
