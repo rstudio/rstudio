@@ -8,6 +8,10 @@ body {
 	margin-top: 3px;
 }
 
+table {
+	empty-cells: hide;
+}
+
 .intro {
 	border: 1px solid #C3D9FF;
 	background-color: #E8EEF7;
