@@ -103,7 +103,7 @@
       </ul>
       <h4>More Hosted Mode Checks Related to JSNI</h4>
       <ul>
-        <li>Previously, when passing values from JavaScript into Jave, hosted mode would silently coerce
+        <li>Previously, when passing values from JavaScript into Java, hosted mode would silently coerce
         a JavaScript value of an incorrect type into the declared Java type.  Unforunately, this would
         allow code to work in hosted mode that could fail in unexpected ways in web mode.  Hosted mode
         will now throw a HostedModeException if you try to pass an incompatible type.  See
