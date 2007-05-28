@@ -52,59 +52,58 @@
       <h3>Behavioral Changes</h3>
       <p>Important changes in the behavior of existing GWT features.</p>
       <h4>Critical Changes to RPC</h4>
-      In general, the old RPC system was too lenient and failed to warn at compile time about things
-      that could cause problems at runtime.  You may find that the new RPC system emits a lot of warnings (or
-      even errors) for code that works (or used to work) just fine.  While this may be annoying in the short
-      term, fixing your code to avoid these warnings will result in a smaller, faster, and more reliable app.
+      In previous versions, the RPC subsystem was too lenient and failed to warn at compile time about potential (though unusual)
+      edge cases that could in theory cause problems at runtime.  Beginning with version 1.4, the RPC subsystem emits additional warnings and errors to help 
+      you identify error-prone constructs.  While this new behavior may seem annoying at first, rest assured that fixing your code to avoid RPC warnings will result in a smaller, faster, and more reliable app.
       <ul>
-        <li><b>Bad code that worked before might not now</b><br/>
-        Previously, if you declared one particular component type via gwt.typeArgs at compile time, you could
+        <li><b>Bad code that happened to work before might not now</b><br/>
+        Previously, if you declared one particular component type via @gwt.typeArgs at compile time, you could
         often get away with passing a different type at runtime.  For example, placing a Date in an
-        ArrayList of String might work.  This type of code is less likely to work now, and we hope to be even
-        stricter in the future.  Bottom line: don't do this.
+        ArrayList of String might work.  This type of code is less likely to work now and will likely become more
+        strict in the future.  Bottom line: don't do this. Make sure collections only contain the declared item type (or subtypes thereof).
         </li>
         <li><b><a href="doc/html/java.io.Serializable.html">Serializable</a> equivalent to
         <a href="doc/html/com.google.gwt.user.client.rpc.IsSerializable.html">IsSerializable</a></b><br/>
-        We don't support any of the semantics of Java serialization, but by popular demand, Serializable and
+        Although GWT's RPC mechanism doesn't purport to honor the semantics of Java serialization, by popular demand, Serializable and
         IsSerializable are now equivalent for the purposes of RPC.  This should improve server-side
         interoperability and remove much of the need for DTOs.
         </li>
         <li><b>Warn about missing gwt.typeArgs</b><br/>
         Every Collection or Map type should have an associated
         <a href="doc/html/com.google.gwt.doc.DeveloperGuide.RemoteProcedureCalls.SerializableTypes.html">gwt.typeArgs
-        javadoc annotation</a>.  In the past, a missing gwt.typeArgs would generally have no noticeable effect,
+        javadoc annotation</a>.  In the past, a missing @gwt.typeArgs would generally have no noticeable effect,
         because a bug in the RPC system would generate code for all available serializable types, even if they
         weren't used in your service interface.  Now that this bug has been fixed, you can achieve <b>significant</b>
-        shrinkage in the size of your compiled output by fixing these warnings.
+        reduction in the size of your compiled output by fixing these warnings.
         </li>
         <li><b>Warn about serializable subclasses that violate the serialization restrictions</b><br/>
-        If you have a class that implements IsSerializable or Serializable, but that class lacks a default
-        constructor or contains fields which cannot be serialized, a compile time warning will be generated.
-        Resolve these warnings to avoid exceptions being thrown at runtime.
+        An RPC warning is emitted for classes that are assignable to IsSerializable or Serializable but that lack a default
+        constructor or contain fields which cannot be serialized. 
+        It is important to resolve these warnings to avoid rare but confusing situations in which exceptions would be thrown at runtime.
         </li>
         <li><b>Warn about non-transient, final instance fields</b><br/>
-        We have never serialized this type of field, and now we will warn about the existence of such fields.  The
-        warning can be suppressed via a module property.
+        RPC has never actually serialized <code>final</code> instance fields, but now it explicitly warns about the existence of such fields unless they are also <code>transient</code>.  
+        Thus, the warning can be addressed by making <code>final</code> instance fields <code>transient</code> as well, or it can be suppressed via a module property.
         </li>
         <li><b>Warn about local and non-static nested types that implement IsSerializable or Serializable</b><br/>
-        We have never serialized these types of classes and will now generate a warning.
+        RPC has never serialized these kinds of classes and will now generate a warning.
         </li>
         <li><b>Warn about native methods in serializable classes</b><br/>
-        We warn about this condition because it will cause UnsatisfiedLinkErrors if method is called on the server.
+        Attempting to serialize classes that contain <code>native</code> methods will cause UnsatisfiedLinkErrors if such methods are called in server-side code.
         </li>
       </ul>
       <h4>Module Script Tags</h4>
       <ul>
-        <li>In previous versions of GWT, a script tag contained a nested JavaScript expression that would
+        <li>In previous versions of GWT, including external JavaScript files via a module &lt;script&gt; tag required a nested JavaScript expression &mdash; called a <i>script-ready function</i> &mdash; that would
         determine when the script had been successfully loaded.  Script load order is now handled automatically and
         these expressions are ignored.  A warning will be issued in hosted mode.  For reference, see
         <a href="doc/html/com.google.gwt.doc.DeveloperGuide.Fundamentals.Modules.AutomaticResourceInjection.html">here</a>.
         </li>
       </ul>
-      <h4>More Hosted Mode Checks Related to JSNI</h4>
+      <h4>Additional Hosted Mode Checks Related to JSNI</h4>
       <ul>
         <li>Previously, when passing values from JavaScript into Java, hosted mode would silently coerce
-        a JavaScript value of an incorrect type into the declared Java type.  Unforunately, this would
+        a JavaScript value of an incorrect type into the declared Java type.  Unfortunately, this would
         allow code to work in hosted mode that could fail in unexpected ways in web mode.  Hosted mode
         will now throw a HostedModeException if you try to pass an incompatible type.  See
         <a href="doc/html/com.google.gwt.doc.DeveloperGuide.JavaScriptNativeInterface.Marshaling.html">here</a>
@@ -113,31 +112,31 @@
       </ul>
 
       <h3>Breaking API Changes</h3>
-      We've made a few API changes in this release that may require minor tweaks to existing code.  Any such changes
+      This release also includes API changes that may require minor tweaks to existing code.  Any such changes
       that affect you should only take a few minutes to rectify.
 
       <h4><a href="doc/html/com.google.gwt.core.client.JavaScriptObject.html">JavaScriptObject</a></h4>
       <ul>
-        <li>Although subclassing JavaScriptObject is still not supported, we know some of you have done this anyway. :) The
-        existing (int) constructor has been removed in favor of a protected no-arg constructor.  Read the source code for
+        <li>Although subclassing JavaScriptObject is not supported, some people do so anyway at their own risk :) 
+        Please note that the existing (int) constructor has been removed in favor of a protected no-arg constructor.  Read the source code for
         <a href="doc/html/com.google.gwt.user.client.Element.html">Element</a> for an example of how JavaScriptObject must
-        be subclassed now.
+        be subclassed now (that is, if subclassing were supported...which, of course, it isn't).
         </li>
       </ul>
       <h4><a href="doc/html/com.google.gwt.user.client.DeferredCommand.html">DeferredCommand</a></h4>
       <ul>
-        <li>We've deprecated the add() method in favor of addCommand() in order to support the new
+        <li>The add() method is deprecated in favor of addCommand() in order to support the new
         <a href="doc/html/com.google.gwt.user.client.IncrementalCommand.html">IncrementalCommand</a> interface.  Had we
         simply added a new method overload, existing code that passed in a null literal would have failed to compile.</li>
         <li>The new addPause() method should be used instead of add(null).</li>
       </ul>
       <h4><a href="doc/html/com.google.gwt.user.client.ui.UIObject.html">UIObject</a></h4>
       <ul>
-        <li>We've formalized the way style names are handled in UIObject (which applies to all widgets as well). Style
-        names have been separated into "base", "dependent", and "secondary" styles, which are detailed in the UIObject
-        documentation. The interface is unchanged (get/setStyleName(), add/removeStyleName()), and should not affect most
-        widgets. One potentially breaking change: widgets may no longer use removeStyleName() to remove the "base" style
-        name. See the UIObject documentation for a full explanation.</li>
+        <li>The intended use and behavior of style names has been formalized in UIObject (and therefore in all widgets). All style
+        names are now classified as "primary", "secondary", and "dependent" styles, the meanings of which are detailed in the UIObject
+        documentation. The relevant method signatures remain unchanged (get/setStyleName(), add/removeStyleName()), and most
+        widgets should be unaffected. One potentially breaking change, however, is that an exception is thrown if an attempt is made to remove the primary style name of a widget using removeStyleName().
+        See the UIObject documentation for a full explanation.</li>
       </ul>
 
       <h3>New Features</h3>
