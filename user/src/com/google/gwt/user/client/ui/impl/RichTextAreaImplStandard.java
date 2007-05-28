@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.RichTextArea;
 import com.google.gwt.user.client.ui.RichTextArea.FontSize;
@@ -25,6 +26,12 @@ import com.google.gwt.user.client.ui.RichTextArea.Justification;
  */
 public class RichTextAreaImplStandard extends RichTextAreaImpl implements
     RichTextArea.BasicFormatter, RichTextArea.ExtendedFormatter {
+
+  /**
+   * Holds a cached copy of any user setHTML/setText actions until the real
+   * text area is fully initialized.  Becomes <code>null</code> after init.
+   */
+  private Element beforeInitPlaceholder = DOM.createDiv();
 
   public native Element createElement() /*-{
     return $doc.createElement('iframe');
@@ -42,13 +49,13 @@ public class RichTextAreaImplStandard extends RichTextAreaImpl implements
     return queryCommandValue("ForeColor");
   }
 
-  public native String getHTML() /*-{
-    return this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerHTML;
-  }-*/;
+  public final String getHTML() {
+    return beforeInitPlaceholder == null ? getHTMLImpl() : DOM.getInnerHTML(beforeInitPlaceholder);
+  }
 
-  public native String getText() /*-{
-    return this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.textContent;
-  }-*/;
+  public final String getText() {
+    return beforeInitPlaceholder == null ? getTextImpl() : DOM.getInnerText(beforeInitPlaceholder);
+  }
 
   public native void hookEvents(RichTextArea owner) /*-{
     this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.__listener = owner;
@@ -65,6 +72,9 @@ public class RichTextAreaImplStandard extends RichTextAreaImpl implements
 
       // Initialize event handling.
       _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::initEvents()();
+      
+      // Send notification that the iframe has reached design mode.
+      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitialized()();
     }, 1);
   }-*/;
 
@@ -160,9 +170,13 @@ public class RichTextAreaImplStandard extends RichTextAreaImpl implements
     execCommand("ForeColor", color);
   }
 
-  public native void setHTML(String html) /*-{
-    this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerHTML = html;
-  }-*/;
+  public final void setHTML(String html) {
+    if (beforeInitPlaceholder == null) {
+      setHTMLImpl(html);
+    } else {
+      DOM.setInnerHTML(beforeInitPlaceholder, html);
+    }
+  }
 
   public void setJustification(Justification justification) {
     if (justification == Justification.CENTER) {
@@ -174,9 +188,13 @@ public class RichTextAreaImplStandard extends RichTextAreaImpl implements
     }
   }
 
-  public native void setText(String text) /*-{
-    this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.textContent = text;
-  }-*/;
+  public final void setText(String text) {
+    if (beforeInitPlaceholder == null) {
+      setTextImpl(text);
+    } else {
+      DOM.setInnerText(beforeInitPlaceholder, text);
+    }
+  }
 
   public void toggleBold() {
     execCommand("Bold", "false");
@@ -201,6 +219,22 @@ public class RichTextAreaImplStandard extends RichTextAreaImpl implements
   public void toggleUnderline() {
     execCommand("Underline", "False");
   }
+
+  protected native String getHTMLImpl() /*-{
+    return this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerHTML;
+  }-*/;
+
+  protected native String getTextImpl() /*-{
+    return this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.textContent;
+  }-*/;
+
+  protected native void setHTMLImpl(String html) /*-{
+    this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerHTML = html;
+  }-*/;
+
+  protected native void setTextImpl(String text) /*-{
+    this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.textContent = text;
+  }-*/;
 
   void execCommand(String cmd, String param) {
     if (isRichEditingActive(elem)) {
@@ -238,6 +272,12 @@ public class RichTextAreaImplStandard extends RichTextAreaImpl implements
   native boolean isRichEditingActive(Element e) /*-{
     return ((e.contentWindow.document.designMode).toUpperCase()) == 'ON';
   }-*/;
+
+  void onElementInitialized() {
+    // When the iframe is ready, ensure cached content is set.
+    setHTMLImpl(DOM.getInnerHTML(beforeInitPlaceholder));
+    beforeInitPlaceholder = null;
+  }
 
   boolean queryCommandState(String cmd) {
     if (isRichEditingActive(elem)) {

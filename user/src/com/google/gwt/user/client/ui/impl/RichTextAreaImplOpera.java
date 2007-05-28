@@ -52,20 +52,6 @@ public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
     return super.getElement();
   }
 
-  public String getHTML() {
-    if (old != null) {
-      return old.getHTML();
-    }
-    return super.getHTML();
-  }
-
-  public String getText() {
-    if (old != null) {
-      return old.getText();
-    }
-    return super.getText();
-  }
-
   public void hookEvents(RichTextArea owner) {
     if (old != null) {
       old.hookEvents(owner);
@@ -105,26 +91,40 @@ public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
     }
   }-*/;
 
-  public void setHTML(String html) {
-    if (old != null) {
-      old.setHTML(html);
-      return;
-    }
-    super.setHTML(html);
-  }
-
-  public void setText(String text) {
-    if (old != null) {
-      old.setText(text);
-      return;
-    }
-    super.setText(text);
-  }
-
   public void unhookEvents() {
     if (old != null) {
       old.unhookEvents();
     }
     super.unhookEvents();
+  }
+
+  protected String getHTMLImpl() {
+    if (old != null) {
+      return old.getHTML();
+    }
+    return super.getHTMLImpl();
+  }
+
+  protected String getTextImpl() {
+    if (old != null) {
+      return old.getText();
+    }
+    return super.getTextImpl();
+  }
+
+  protected void setHTMLImpl(String html) {
+    if (old != null) {
+      old.setHTML(html);
+      return;
+    }
+    super.setHTMLImpl(html);
+  }
+
+  protected void setTextImpl(String text) {
+    if (old != null) {
+      old.setText(text);
+      return;
+    }
+    super.setTextImpl(text);
   }
 }

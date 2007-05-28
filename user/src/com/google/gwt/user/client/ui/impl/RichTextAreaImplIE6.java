@@ -62,25 +62,28 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     body.onclick = handler;
   }-*/;
 
+  private static native void setText(Element elem, String text) /*-{
+    elem.contentWindow.document.body.innerText = text;
+  }-*/;
+
   public Element createElement() {
     Element elem = super.createElement();
     DOM.setElementProperty(elem, "src", "javascript:''");
     return elem;
   }
 
-  public String getText() {
-    return getText(elem);
-  }
-
   public native void initElement() /*-{
-    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
-
+    var _this = this;
     window.setTimeout(function() {
+      var elem = _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
       var doc = elem.contentWindow.document;
       doc.write('<html><body CONTENTEDITABLE="true"></body></html>');
 
       // Initialize event handling.
       @com.google.gwt.user.client.ui.impl.RichTextAreaImplIE6::initEvents(Lcom/google/gwt/user/client/Element;)(elem);
+
+      // Send notification that the iframe has reached design mode.
+      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitialized()();
     }, 1);
   }-*/;
 
@@ -89,6 +92,14 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     detachEvents(elem);
   }
 
+  protected String getTextImpl() {
+    return getText(elem);
+  }
+
+  protected void setTextImpl(String text) {
+    setText(elem, text);
+  }
+  
   boolean isRichEditingActive(Element elem) {
     return true;
   }
