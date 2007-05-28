@@ -16,12 +16,23 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Window;
 
 /**
  * TODO: document me.
  */
 public class PopupTest extends GWTTestCase {
+
+  /**
+   * Expose otherwise private or protected methods.
+   */
+  private class TestablePopupPanel extends PopupPanel {
+    public Element getContainerElement() {
+      return super.getContainerElement();
+    }
+  }
 
   public String getModuleName() {
     return "com.google.gwt.user.User";
@@ -65,5 +76,14 @@ public class PopupTest extends GWTTestCase {
       }
     });
     popup.hide();
+  }
+  
+  public void testSeparateContainers() {
+    TestablePopupPanel p1 = new TestablePopupPanel();
+    TestablePopupPanel p2 = new TestablePopupPanel();
+    assertTrue(p1.getContainerElement() != null);
+    assertTrue(p2.getContainerElement() != null);
+    assertFalse(
+        DOM.compare(p1.getContainerElement(), p2.getContainerElement()));
   }
 }

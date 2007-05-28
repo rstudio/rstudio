@@ -45,12 +45,22 @@ import com.google.gwt.user.client.Element;
  */
 public class PopupImplMozilla extends PopupImpl {
 
-  private Element containerElement = null;
+  /**
+   * Cache the value to avoid repeated calls.
+   */
+  private static boolean isMac = isMac();
+  
+  private static native boolean isMac() /*-{
+    if (navigator.userAgent.indexOf("Macintosh") != -1) {
+      return true;
+    }  
+    return false;
+  }-*/;
 
   public Element createElement() {
     final Element outerElem = DOM.createDiv();
 
-    if (isMac()) {
+    if (isMac) {
       // To solve the scrollbar rendering problem on the Mac, we have to make
       // the PopupPanel a 'heavyweight' element by setting a style of
       // 'overflow:auto' on the outermost div. This ensures that all of the
@@ -77,25 +87,12 @@ public class PopupImplMozilla extends PopupImpl {
           DOM.setStyleAttribute(outerElem, "overflow", "auto");
         }
       });
-
-      // Keep a reference to the container element in order to avoid further
-      // calls to isMac() in getContainerElement().
-      containerElement = DOM.getFirstChild(outerElem);
-    } else {
-      containerElement = outerElem;
     }
 
     return outerElem;
   }
 
-  public Element getContainerElement(Element popup) {
-    return containerElement;
+  public Element getContainerElement(Element outerElem) {
+    return isMac ? DOM.getFirstChild(outerElem) : outerElem;
   }
-
-  private native boolean isMac() /*-{
-    if (navigator.userAgent.indexOf("Macintosh") != -1) {
-      return true;
-    }  
-    return false;
-  }-*/;
 }
