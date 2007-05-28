@@ -262,7 +262,7 @@ a:visited {
 .gwt-RichTextToolbar .gwt-PushButton-up-hovering {
   margin-right: 2px;
   border: 1px solid #C3D9FF;
-  border-color: #E8F1FF rgb(157, 174, 205) rgb(157, 174, 205) rgb(232, 241, 255)
+  border-color: #E8F1FF rgb(157, 174, 205) rgb(157, 174, 205) rgb(232, 241, 255);
 }
 
 .gwt-RichTextToolbar .gwt-PushButton-down {
@@ -285,7 +285,7 @@ a:visited {
 .gwt-RichTextToolbar .gwt-ToggleButton-up-hovering {
   margin-right: 2px;
   border: 1px solid #C3D9FF;
-  border-color: #E8F1FF rgb(157, 174, 205) rgb(157, 174, 205) rgb(232, 241, 255)
+  border-color: #E8F1FF rgb(157, 174, 205) rgb(157, 174, 205) rgb(232, 241, 255);
 }
 
 .gwt-RichTextToolbar .gwt-ToggleButton-down {
