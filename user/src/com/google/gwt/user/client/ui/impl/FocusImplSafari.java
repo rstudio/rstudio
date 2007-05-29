@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Element;
 
 /**
@@ -23,6 +24,23 @@ import com.google.gwt.user.client.Element;
  * element that has zero width and height.
  */
 public class FocusImplSafari extends FocusImplOld {
+  
+  public native void blur(Element elem) /*-{
+    // Attempts to blur elements from within an event callback will generally
+    // be unsuccessful, so we invoke blur() from outside of the callback.
+    $wnd.setTimeout(function() {
+      elem.firstChild.blur();
+    }, 0);
+  }-*/;
+
+  public native void focus(Element elem) /*-{
+    // Attempts to focus elements from within an event callback will generally
+    // be unsuccessful, so we invoke focus() from outside of the callback.
+    $wnd.setTimeout(function() {
+      elem.firstChild.focus();
+    }, 0);
+  }-*/;
+
   protected native Element createHiddenInput() /*-{
     var input = $doc.createElement('input');
     input.type = 'text';
@@ -31,4 +49,19 @@ public class FocusImplSafari extends FocusImplOld {
     input.style.position = 'absolute';
     return input;
   }-*/;
+
+  protected native JavaScriptObject createMouseHandler() /*-{
+    return function() {
+      // This function is called directly as an event handler, so 'this' is
+      // set up by the browser to be the div on which the event is fired.
+      var firstChild = this.firstChild;
+
+      // Attempts to focus elements from within an event callback will generally
+      // be unsuccessful, so we invoke focus() from outside of the callback.
+      $wnd.setTimeout(function() {
+        firstChild.focus();
+      }, 0);
+    }
+  }-*/;
+
 }

@@ -24,37 +24,13 @@ import com.google.gwt.user.client.Element;
  */
 public class FocusImplOld extends FocusImpl {
 
-  static JavaScriptObject blurHandler = createBlurHandler();
-  static JavaScriptObject focusHandler = createFocusHandler();
-  static JavaScriptObject mouseHandler = createMouseHandler();
-
-  private static native JavaScriptObject createBlurHandler() /*-{
-    return function(evt) {
-      // This function is called directly as an event handler, so 'this' is
-      // set up by the browser to be the input on which the event is fired.
-      if (this.parentNode.onblur) {
-        this.parentNode.onblur(evt);
-      } 
-    };
-  }-*/;
-
-  private static native JavaScriptObject createFocusHandler() /*-{
-    return function(evt) {
-      // This function is called directly as an event handler, so 'this' is
-      // set up by the browser to be the input on which the event is fired.
-      if (this.parentNode.onfocus) {
-        this.parentNode.onfocus(evt);
-      } 
-    };
-  }-*/;
-
-  private static native JavaScriptObject createMouseHandler() /*-{
-    return function() {
-      // This function is called directly as an event handler, so 'this' is
-      // set up by the browser to be the div on which the event is fired.
-      this.firstChild.focus();
-    };
-  }-*/;
+  /*
+   * Use isolated method calls to create all of the handlers to avoid creating
+   * memory leaks via handler-closures-element.
+   */
+  JavaScriptObject blurHandler = createBlurHandler();
+  JavaScriptObject focusHandler = createFocusHandler();
+  JavaScriptObject mouseHandler = createMouseHandler();
 
   public native void blur(Element elem) /*-{
     elem.firstChild.blur();
@@ -77,17 +53,17 @@ public class FocusImplOld extends FocusImpl {
 
     input.addEventListener(
       'blur',
-      @com.google.gwt.user.client.ui.impl.FocusImplOld::blurHandler,
+      this.@com.google.gwt.user.client.ui.impl.FocusImplOld::blurHandler,
       false);
 
     input.addEventListener(
       'focus',
-      @com.google.gwt.user.client.ui.impl.FocusImplOld::focusHandler,
+      this.@com.google.gwt.user.client.ui.impl.FocusImplOld::focusHandler,
       false);
 
     div.addEventListener(
       'mousedown',
-      @com.google.gwt.user.client.ui.impl.FocusImplOld::mouseHandler,
+      this.@com.google.gwt.user.client.ui.impl.FocusImplOld::mouseHandler,
       false);
 
     div.appendChild(input);
@@ -110,6 +86,26 @@ public class FocusImplOld extends FocusImpl {
     elem.firstChild.tabIndex = index;
   }-*/;
 
+  protected native JavaScriptObject createBlurHandler() /*-{
+    return function(evt) {
+      // This function is called directly as an event handler, so 'this' is
+      // set up by the browser to be the input on which the event is fired.
+      if (this.parentNode.onblur) {
+        this.parentNode.onblur(evt);
+      } 
+    };
+  }-*/;
+
+  protected native JavaScriptObject createFocusHandler() /*-{
+    return function(evt) {
+      // This function is called directly as an event handler, so 'this' is
+      // set up by the browser to be the input on which the event is fired.
+      if (this.parentNode.onfocus) {
+        this.parentNode.onfocus(evt);
+      } 
+    };
+  }-*/;
+
   protected native Element createHiddenInput() /*-{
     var input = $doc.createElement('input');
     input.type = 'text';
@@ -117,5 +113,13 @@ public class FocusImplOld extends FocusImpl {
     input.style.zIndex = -1;
     input.style.position = 'absolute';
     return input;
+  }-*/;
+
+  protected native JavaScriptObject createMouseHandler() /*-{
+    return function() {
+      // This function is called directly as an event handler, so 'this' is
+      // set up by the browser to be the div on which the event is fired.
+      this.firstChild.focus();
+    };
   }-*/;
 }
