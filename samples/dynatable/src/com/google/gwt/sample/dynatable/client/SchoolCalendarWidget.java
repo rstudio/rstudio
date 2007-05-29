@@ -161,7 +161,7 @@ public class SchoolCalendarWidget extends Composite {
           dynaTable.refresh();
         }
       };
-      DeferredCommand.add(pendingRefresh);
+      DeferredCommand.addCommand(pendingRefresh);
     }
   }
 }
