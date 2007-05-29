@@ -275,8 +275,10 @@ public class RichTextAreaImplStandard extends RichTextAreaImpl implements
 
   void onElementInitialized() {
     // When the iframe is ready, ensure cached content is set.
-    setHTMLImpl(DOM.getInnerHTML(beforeInitPlaceholder));
-    beforeInitPlaceholder = null;
+    if (beforeInitPlaceholder != null) {
+      setHTMLImpl(DOM.getInnerHTML(beforeInitPlaceholder));
+      beforeInitPlaceholder = null;
+    }
   }
 
   boolean queryCommandState(String cmd) {
