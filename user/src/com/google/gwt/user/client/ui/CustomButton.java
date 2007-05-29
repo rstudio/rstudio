@@ -304,6 +304,16 @@ public abstract class CustomButton extends ButtonBase implements
   private Face downDisabled;
 
   /**
+   * If <code>true</code>, this widget is capturing with the mouse held down.
+   */
+  private boolean isCapturing;
+
+  /**
+   * If <code>true</code>, this widget has focus with the space bar down.
+   */
+  private boolean isFocusing;
+
+  /**
    * Constructor for <code>CustomButton</code>.
    * 
    * @param upImage image for the default (up) face of the button
@@ -505,14 +515,86 @@ public abstract class CustomButton extends ButtonBase implements
 
     int type = DOM.eventGetType(event);
     switch (type) {
+      case Event.ONMOUSEDOWN:
+        setFocus(true);
+        onClickStart();
+        DOM.setCapture(getElement());
+        isCapturing = true;
+        // Prevent dragging (on some browsers);
+        DOM.eventPreventDefault(event);
+        break;
+      case Event.ONMOUSEUP:
+        if (isCapturing) {
+          isCapturing = false;
+          DOM.releaseCapture(getElement());
+          if (isHovering()) {
+            onClick();
+          }
+        }
+        break;
+      case Event.ONMOUSEMOVE:
+        if (isCapturing) {
+          // Prevent dragging (on other browsers);
+          DOM.eventPreventDefault(event);
+        }
+        break;
       case Event.ONMOUSEOUT:
-        setHovering(false);
+        if (DOM.isOrHasChild(getElement(), DOM.eventGetTarget(event))) {
+          if (isCapturing) {
+            onClickCancel();
+          }
+          setHovering(false);
+        }
         break;
       case Event.ONMOUSEOVER:
-        setHovering(true);
+        if (DOM.isOrHasChild(getElement(), DOM.eventGetTarget(event))) {
+          setHovering(true);
+          if (isCapturing) {
+            onClickStart();
+          }
+        }
+        break;
+      case Event.ONCLICK:
+        // we handle clicks ourselves
+        return;
+      case Event.ONBLUR:
+        if (isFocusing) {
+          isFocusing = false;
+          onClickCancel();
+        }
+        break;
+      case Event.ONLOSECAPTURE:
+        if (isCapturing) {
+          isCapturing = false;
+          onClickCancel();
+        }
         break;
     }
+
     super.onBrowserEvent(event);
+
+    // Synthesize clicks based on keyboard events AFTER the normal key handling.
+    char keyCode = (char) DOM.eventGetKeyCode(event);
+    switch (type) {
+      case Event.ONKEYDOWN:
+        if (keyCode == ' ') {
+          isFocusing = true;
+          onClickStart();
+        }
+        break;
+      case Event.ONKEYUP:
+        if (isFocusing && keyCode == ' ') {
+          isFocusing = false;
+          onClick();
+        }
+        break;
+      case Event.ONKEYPRESS:
+        if (keyCode == '\n' || keyCode == '\r') {
+          onClickStart();
+          onClick();
+        }
+        break;
+    }
   }
 
   public void setAccessKey(char key) {
@@ -529,6 +611,9 @@ public abstract class CustomButton extends ButtonBase implements
     if (isEnabled() != enabled) {
       toggleDisabled();
       super.setEnabled(enabled);
+      if (!enabled) {
+        cleanupCaptureState();
+      }
     }
   }
 
@@ -581,6 +666,42 @@ public abstract class CustomButton extends ButtonBase implements
   }
 
   /**
+   * Called when the user finishes clicking on this button. The default behavior
+   * is to fire the click event to listeners. Subclasses that override
+   * {@link #onClickStart()} should override this method to restore the normal
+   * widget display.
+   */
+  protected void onClick() {
+    fireClickListeners();
+  }
+
+  /**
+   * Called when the user aborts a click in progress; for example, by dragging
+   * the mouse outside of the button before releasing the mouse button.
+   * Subclasses that override {@link #onClickStart()} should override this
+   * method to restore the normal widget display.
+   */
+  protected void onClickCancel() {
+  }
+
+  /**
+   * Called when the user begins to click on this button. Subclasses may
+   * override this method to display the start of the click visually; such
+   * subclasses should also override {@link #onClick()} and
+   * {@link #onClickCancel()} to restore normal visual state. Each
+   * <code>onClickStart</code> will eventually be followed by either
+   * <code>onClick</code> or <code>onClickCancel</code>, depending on
+   * whether the click is completed.
+   */
+  protected void onClickStart() {
+  }
+
+  protected void onDetach() {
+    super.onDetach();
+    cleanupCaptureState();
+  }
+
+  /**
    * Sets whether this button is down.
    * 
    * @param down <code>true</code> to press the button, <code>false</code>
@@ -612,9 +733,7 @@ public abstract class CustomButton extends ButtonBase implements
      * Implementation note: Package protected so we can use it when testing the
      * button.
      */
-
     finishSetup();
-
     return curFace;
   }
 
@@ -658,6 +777,19 @@ public abstract class CustomButton extends ButtonBase implements
   void toggleDown() {
     int newFaceID = getCurrentFace().getFaceID() ^ DOWN_ATTRIBUTE;
     setCurrentFace(newFaceID);
+  }
+
+  /**
+   * Resets internal state if this button can no longer service events. This can
+   * occur when the widget becomes detached or disabled.
+   */
+  private void cleanupCaptureState() {
+    if (isCapturing || isFocusing) {
+      DOM.releaseCapture(getElement());
+      isCapturing = false;
+      isFocusing = false;
+      onClickCancel();
+    }
   }
 
   private Face createFace(Face delegateTo, final String name, final int faceID) {

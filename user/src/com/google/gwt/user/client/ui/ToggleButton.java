@@ -16,9 +16,6 @@
 
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
-
 /**
  * A <code>ToggleButton</code> is a stylish stateful button which allows the
  * user to toggle between <code>up</code> and <code>down</code> states.
@@ -61,6 +58,17 @@ public class ToggleButton extends CustomButton {
   }
 
   /**
+   * Constructor for <code>ToggleButton</code>. The supplied image is used to
+   * construct the default face of the button.
+   * 
+   * @param upImage image for the default (up) face of the button
+   * @param listener the click listener
+   */
+  public ToggleButton(Image upImage, ClickListener listener) {
+    super(upImage, listener);
+  }
+
+  /**
    * Constructor for <code>ToggleButton</code>.
    * 
    * @param upImage image for the default(up) face of the button
@@ -79,17 +87,6 @@ public class ToggleButton extends CustomButton {
    */
   public ToggleButton(Image upImage, Image downImage, ClickListener listener) {
     super(upImage, downImage, listener);
-  }
-
-  /**
-   * Constructor for <code>ToggleButton</code>. The supplied image is used to
-   * construct the default face of the button.
-   * 
-   * @param upImage image for the default (up) face of the button
-   * @param listener the click listener
-   */
-  public ToggleButton(Image upImage, ClickListener listener) {
-    super(upImage, listener);
   }
 
   /**
@@ -124,23 +121,17 @@ public class ToggleButton extends CustomButton {
   }
 
   public boolean isDown() {
+    // Changes access to public.
     return super.isDown();
   }
-
-  public void onBrowserEvent(Event event) {
-    if (isEnabled() == false) {
-      return;
-    }
-    int type = DOM.eventGetType(event);
-    switch (type) {
-      case Event.ONCLICK:
-        toggleDown();
-        break;
-    }
-    super.onBrowserEvent(event);
+  
+  public void setDown(boolean down) {
+    // Changes access to public.
+    super.setDown(down);
   }
-
-  public void setDown(boolean isDown) {
-    super.setDown(isDown);
+  
+  protected void onClick() {
+    toggleDown();
+    super.onClick();
   }
 }

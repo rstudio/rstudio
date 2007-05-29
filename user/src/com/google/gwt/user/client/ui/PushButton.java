@@ -16,9 +16,6 @@
 
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
-
 /**
  * A normal push button with custom styling.
  * 
@@ -38,8 +35,6 @@ import com.google.gwt.user.client.Event;
 public class PushButton extends CustomButton {
 
   private static final String STYLENAME_DEFAULT = "gwt-PushButton";
-
-  private boolean waitingForMouseUp = false;
 
   {
     setStyleName(STYLENAME_DEFAULT);
@@ -62,6 +57,17 @@ public class PushButton extends CustomButton {
   }
 
   /**
+   * Constructor for <code>PushButton</code>. The supplied image is used to
+   * construct the default face of the button.
+   * 
+   * @param upImage image for the default (up) face of the button
+   * @param listener the click listener
+   */
+  public PushButton(Image upImage, ClickListener listener) {
+    super(upImage, listener);
+  }
+
+  /**
    * Constructor for <code>PushButton</code>.
    * 
    * @param upImage image for the default(up) face of the button
@@ -79,18 +85,7 @@ public class PushButton extends CustomButton {
    * @param listener clickListener
    */
   public PushButton(Image upImage, Image downImage, ClickListener listener) {
-    super(upImage, listener);
-  }
-
-  /**
-   * Constructor for <code>PushButton</code>. The supplied image is used to
-   * construct the default face of the button.
-   * 
-   * @param upImage image for the default (up) face of the button
-   * @param listener the click listener
-   */
-  public PushButton(Image upImage, ClickListener listener) {
-    super(upImage, listener);
+    super(upImage, downImage, listener);
   }
 
   /**
@@ -134,37 +129,17 @@ public class PushButton extends CustomButton {
   public PushButton(String upText, String downText, ClickListener listener) {
     super(upText, downText, listener);
   }
-  public void onBrowserEvent(Event event) {
-    // Should not act on button if the button is disabled. This can happen
-    // because an event is bubbled up from a non-disabled interior component.
-    if (isEnabled() == false) {
-      return;
-    }
-    int type = DOM.eventGetType(event);
-    switch (type) {
-      case Event.ONMOUSEDOWN:
-        waitingForMouseUp = true;
-        setDown(true);
-        break;
-      case Event.ONCLICK:
-        // Must synthesize click events because when we have two separate face
-        // elements for up/down, no click events are generated.
-        return;
-      case Event.ONMOUSEUP:
-        if (waitingForMouseUp) {
-          fireClickListeners();
-        }
-        waitingForMouseUp = false;
-        setDown(false);
-        break;
-      case Event.ONMOUSEOUT:
-        setDown(false);
-        break;
-      case Event.ONMOUSEOVER:
-        if (waitingForMouseUp) {
-          setDown(true);
-        }
-    }
-    super.onBrowserEvent(event);
+
+  protected void onClick() {
+    setDown(false);
+    super.onClick();
+  }
+  
+  protected void onClickCancel() {
+    setDown(false);
+  }
+
+  protected void onClickStart() {
+    setDown(true);
   }
 }
