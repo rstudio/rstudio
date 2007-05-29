@@ -145,7 +145,7 @@ public class Panels extends Sink {
       "splitter look a bit more interesting... "));
 
     initWidget(hSplit);
-    hSplit.setSize("100%", "400px");
+    hSplit.setSize("100%", "450px");
   }
 
   public void onShow() {

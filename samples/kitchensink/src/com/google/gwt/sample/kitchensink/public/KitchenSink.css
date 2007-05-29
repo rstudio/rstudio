@@ -104,11 +104,12 @@ a:visited {
 
 .gwt-TabPanelBottom {
   background-color: #E8EEF7;
-  border-top: 4px solid #87B3FF;
 }
 
 .gwt-TabBar {
   padding-top: 2px;
+  border-bottom: 4px solid #87B3FF;
+  background-color: #fff;
 }
 
 .gwt-TabBar .gwt-TabBarFirst {
@@ -309,6 +310,10 @@ a:visited {
 .gwt-HorizontalSplitPanel .splitter {
 	background-color: #C3D9FF;
 	cursor: move;
+}
+
+.gwt-HorizontalSplitPanel .left {
+  background-color: #E8EEF7;
 }
 
 .gwt-VerticalSplitPanel {
