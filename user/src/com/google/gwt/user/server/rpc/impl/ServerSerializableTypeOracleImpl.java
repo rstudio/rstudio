@@ -17,6 +17,7 @@ package com.google.gwt.user.server.rpc.impl;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -213,7 +214,8 @@ public class ServerSerializableTypeOracleImpl implements
     if (instanceType.isPrimitive()) {
       return true;
     }
-    if (IsSerializable.class.isAssignableFrom(instanceType)) {
+    if (IsSerializable.class.isAssignableFrom(instanceType) ||
+        Serializable.class.isAssignableFrom(instanceType)) {
       return true;
     }
     return hasCustomFieldSerializer(instanceType) != null;

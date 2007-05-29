@@ -20,6 +20,7 @@ import com.google.gwt.user.client.rpc.InheritanceTestSetValidator;
 import com.google.gwt.user.client.rpc.InheritanceTestServiceSubtype;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.AnonymousClassInterface;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.Circle;
+import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.JavaSerializableClass;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClass;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClassWithTransientField;
 
@@ -35,6 +36,10 @@ public class InheritanceTestServiceImpl extends RemoteServiceServlet implements
 
   public Circle echo(Circle circle) {
     return circle;
+  }
+
+  public JavaSerializableClass echo(JavaSerializableClass javaSerializableClass) {
+    return javaSerializableClass;
   }
 
   public SerializableClass echo(SerializableClass serializableClass) {

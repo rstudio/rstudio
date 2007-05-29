@@ -17,6 +17,7 @@ package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.AnonymousClassInterface;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.Circle;
+import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.JavaSerializableClass;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClass;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClassWithTransientField;
 
@@ -27,6 +28,8 @@ public interface InheritanceTestServiceAsync {
   void echo(AnonymousClassInterface serializable, AsyncCallback callback);
 
   void echo(Circle circle, AsyncCallback callback);
+  
+  void echo(JavaSerializableClass javaSerializableClass, AsyncCallback callback);
   
   void echo(SerializableClass serializableClass, AsyncCallback callback);
 

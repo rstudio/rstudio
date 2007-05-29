@@ -17,6 +17,7 @@ package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.AnonymousClassInterface;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.Circle;
+import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.JavaSerializableClass;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClass;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClassWithTransientField;
 
@@ -28,6 +29,8 @@ public interface InheritanceTestService extends RemoteService {
 
   Circle echo(Circle circle);
 
+  JavaSerializableClass echo(JavaSerializableClass javaSerializableClass);
+  
   SerializableClass echo(SerializableClass serializableClass);
 
   SerializableClassWithTransientField echo(

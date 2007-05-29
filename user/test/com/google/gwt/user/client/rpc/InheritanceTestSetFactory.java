@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.rpc;
 
+import java.io.Serializable;
+
 /**
  * TODO: document me.
  */
@@ -23,16 +25,8 @@ public class InheritanceTestSetFactory {
   /**
    * TODO: document me.
    */
-  public static class Shape implements IsSerializable {
-    private String name;
-
-    public String getName() {
-      return name;
-    }
-
-    public void setName(String name) {
-      this.name = name;
-    }
+  public static interface AnonymousClassInterface extends IsSerializable {
+    void foo();
   }
 
   /**
@@ -40,16 +34,38 @@ public class InheritanceTestSetFactory {
    */
   public static class Circle extends Shape {
     private String name;
+
     public native void doStuff() /*-{
-      alert("foo");
-    }-*/;
+     alert("foo");
+     }-*/;
+  }
+
+  /**
+   * TODO: document me.
+   */  
+  public static class JavaSerializableBaseClass implements Serializable {
+    private int field1 = -1;
+
+    public JavaSerializableBaseClass() {
+    }
+
+    public JavaSerializableBaseClass(int field1) {
+      this.field1 = field1;
+    }
   }
 
   /**
    * TODO: document me.
    */
-  public static interface AnonymousClassInterface extends IsSerializable {
-    void foo();
+  public static class JavaSerializableClass extends JavaSerializableBaseClass {
+    private int field2 = -2;
+
+    public JavaSerializableClass() {
+    }
+
+    public JavaSerializableClass(int field2) {
+      this.field2 = field2;
+    }
   }
 
   /**
@@ -65,6 +81,16 @@ public class InheritanceTestSetFactory {
    * TODO: document me.
    */
   public static class SerializableClass implements IsSerializable {
+    protected int d = 4;
+
+    int e = 5;
+
+    private int a = 1;
+
+    private int b = 2;
+
+    private int c = 3;
+
     public int getA() {
       return a;
     }
@@ -88,16 +114,6 @@ public class InheritanceTestSetFactory {
     public void setC(int c) {
       this.c = c;
     }
-
-    private int a = 1;
-
-    private int b = 2;
-
-    private int c = 3;
-
-    protected int d = 4;
-
-    int e = 5;
   }
 
   /**
@@ -105,6 +121,8 @@ public class InheritanceTestSetFactory {
    */
   public static class SerializableClassWithTransientField extends
       SerializableClass {
+    private transient Object obj;
+
     public Object getObj() {
       return obj;
     }
@@ -112,14 +130,14 @@ public class InheritanceTestSetFactory {
     public void setObj(Object obj) {
       this.obj = obj;
     }
-
-    private transient Object obj;
   }
 
   /**
    * TODO: document me.
    */
   public static class SerializableSubclass extends SerializableClass {
+    private int d = 4;
+
     public int getD() {
       return d;
     }
@@ -127,14 +145,35 @@ public class InheritanceTestSetFactory {
     public void setD(int d) {
       this.d = d;
     }
+  }
 
-    private int d = 4;
+  /**
+   * TODO: document me.
+   */
+  public static class Shape implements IsSerializable {
+    private String name;
+
+    public String getName() {
+      return name;
+    }
+
+    public void setName(String name) {
+      this.name = name;
+    }
   }
 
   public static Circle createCircle() {
     Circle circle = new Circle();
     circle.setName("Circle");
     return circle;
+  }
+
+  public static SerializableClass createNonStaticInnerClass() {
+    return new SerializableClass() {
+      public String toString() {
+        return "foo";
+      }
+    };
   }
 
   public static SerializableClass createSerializableClass() {
@@ -145,14 +184,6 @@ public class InheritanceTestSetFactory {
     SerializableClassWithTransientField cls = new SerializableClassWithTransientField();
     cls.setObj("hello");
     return cls;
-  }
-
-  public static SerializableClass createNonStaticInnerClass() {
-    return new SerializableClass() {
-      public String toString() {
-        return "foo";
-      }
-    };
   }
 
   public static SerializableClass createSerializableSubclass() {

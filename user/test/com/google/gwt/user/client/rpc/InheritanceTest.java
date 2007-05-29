@@ -29,6 +29,8 @@ public class InheritanceTest extends TypeSerializerWorkAround {
   // private static final int TEST_DELAY = Integer.MAX_VALUE;
   private static final int TEST_DELAY = 5000;
 
+  private InheritanceTestServiceAsync inheritanceTestService;
+
   public String getModuleName() {
     return "com.google.gwt.user.RPCSuite";
   }
@@ -85,6 +87,26 @@ public class InheritanceTest extends TypeSerializerWorkAround {
     } catch (RuntimeException ex) {
       workAroundTypeSerializerBug(ex);
     }
+  }
+
+  /**
+   * Tests that transient fields do not prevent serializability.
+   */
+  public void testJavaSerializableClass() {
+    delayTestFinish(TEST_DELAY);
+
+    InheritanceTestServiceAsync service = getServiceAsync();
+    service.echo(new InheritanceTestSetFactory.JavaSerializableClass(3),
+        new AsyncCallback() {
+          public void onFailure(Throwable caught) {
+            fail(caught.toString());
+          }
+
+          public void onSuccess(Object result) {
+            assertNotNull(result);
+            finishTest();
+          }
+        });
   }
 
   /**
@@ -197,6 +219,4 @@ public class InheritanceTest extends TypeSerializerWorkAround {
     }
     return inheritanceTestService;
   }
-
-  private InheritanceTestServiceAsync inheritanceTestService;
 }
