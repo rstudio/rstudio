@@ -20,14 +20,19 @@
 	<inherits name="com.google.gwt.core.Core"/>
 	<inherits name="com.google.gwt.user.UserAgent"/>
 
-	<!-- Safari, old Mozilla, and Opera need a different implementation -->
+	<!-- old Mozilla, and Opera need a different implementation -->
 	<replace-with class="com.google.gwt.user.client.ui.impl.FocusImplOld">
 		<when-type-is class="com.google.gwt.user.client.ui.impl.FocusImpl"/>
 		<any>
-		    <when-property-is name="user.agent" value="safari"/>
 		    <when-property-is name="user.agent" value="gecko"/>		      
 			<when-property-is name="user.agent" value="opera"/>
  	    </any>
+	</replace-with>
+
+	<!--  Safari needs a different hidden input -->	
+	<replace-with class="com.google.gwt.user.client.ui.impl.FocusImplSafari">
+		<when-type-is class="com.google.gwt.user.client.ui.impl.FocusImpl"/>
+		<when-property-is name="user.agent" value="safari"/>
 	</replace-with>
 
 	<!-- IE's implementation traps exceptions on invalid setFocus() -->

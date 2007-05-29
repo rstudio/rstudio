@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -64,11 +64,7 @@ public class FocusImplOld extends FocusImpl {
     // Use the infamous 'hidden input' trick to make a div effectively
     // focusable.
     var div = $doc.createElement('div');
-    var input = $doc.createElement('input');
-    input.type = 'text';
-    input.style.width = input.style.height = 0;
-    input.style.zIndex = -1;
-    input.style.position = 'absolute';
+    var input = this.@com.google.gwt.user.client.ui.impl.FocusImplOld::createHiddenInput()();
 
     // Add a mousedown listener to the div to focuses the input (to mimic the
     // behavior of focusable elements on other browsers), and focus listeners
@@ -112,5 +108,14 @@ public class FocusImplOld extends FocusImpl {
 
   public native void setTabIndex(Element elem, int index) /*-{
     elem.firstChild.tabIndex = index;
+  }-*/;
+
+  protected native Element createHiddenInput() /*-{
+    var input = $doc.createElement('input');
+    input.type = 'text';
+    input.style.width = input.style.height = 0;
+    input.style.zIndex = -1;
+    input.style.position = 'absolute';
+    return input;
   }-*/;
 }
