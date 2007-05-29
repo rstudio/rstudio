@@ -72,6 +72,14 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
     }
   }
 
+  protected native String getTextImpl() /*-{
+    return this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerText;
+  }-*/;
+
+  protected native void setTextImpl(String text) /*-{
+    this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerText = text;
+  }-*/;
+
   native void initEvents() /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     var wnd = elem.contentWindow;
