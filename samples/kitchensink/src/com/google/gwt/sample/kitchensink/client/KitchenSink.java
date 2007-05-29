@@ -107,8 +107,10 @@ public class KitchenSink implements EntryPoint, HistoryListener {
         info.getColor());
 
     // Display the new sink.
+    curSink.setVisible(false);
     panel.add(curSink);
     panel.setCellHorizontalAlignment(curSink, VerticalPanel.ALIGN_CENTER);
+    curSink.setVisible(true);
     curSink.onShow();
   }
 
