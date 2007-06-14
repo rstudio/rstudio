@@ -224,7 +224,7 @@ public class Image extends Widget implements SourcesClickEvents,
 
     public void setUrlAndVisibleRect(Image image, String url, int left,
         int top, int width, int height) {
-      if (!url.equals(url) || this.left != left || this.top != top
+      if (!this.url.equals(url) || this.left != left || this.top != top
           || this.width != width || this.height != height) {
 
         this.url = url;
