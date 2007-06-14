@@ -1439,7 +1439,7 @@ public class GenerateJavaScriptAST {
       String className = getClassName(x.getName());
       String packageName = getPackageName(x.getName());
       JsExpression rhs;
-      if (packageName != null) {
+      if (packageName.length() > 0) {
         // use "com.example.foo." + "Foo"
         JsName name = (JsName) packageNames.get(packageName);
         rhs = new JsBinaryOperation(JsBinaryOperator.ADD, name.makeRef(),
