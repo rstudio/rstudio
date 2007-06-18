@@ -55,7 +55,7 @@
 			</tarfileset>
 
 			<includetar
-                          src="${gwt.tools.redist}/mozilla/mozilla-1.7.13.tar.gz"
+                          src="${gwt.tools.redist}/mozilla/mozilla-1.7.12.tar.gz"
                           compression="gzip" prefix="${project.distname}" />
 		</gwt.tgz.cat>
 
