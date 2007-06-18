@@ -129,10 +129,13 @@ public Browser(Composite parent, int style) {
 	int /*long*/[] result = new int /*long*/[1];
 	if (!mozilla) {
 		/*
-		* GOOGLE: We ship our own bundled version of Mozilla; ignore the
-		* environment and just use ours.
+		* GOOGLE: We ship our own bundled version of Mozilla; the
+		* bootstrap process stores the path of the one we loaded in
+		* the system property swt.mozilla.path, so we get it from
+		* there rather than using SWT's normal process to find it.
 		*/
-		String mozillaPath = LowLevelMoz.getMozillaDirectory();
+		String mozillaPath = System.getProperty("swt.mozilla.path");
+        
 		int ptr;
 		//String mozillaPath = null;
 		//int /*long*/ ptr = OS.getenv(Converter.wcsToMbcs(null, XPCOM.MOZILLA_FIVE_HOME, true));
@@ -147,48 +150,7 @@ public Browser(Composite parent, int style) {
 		//	SWT.error(SWT.ERROR_NO_HANDLES, null, " [Unknown Mozilla path (MOZILLA_FIVE_HOME not set)]"); //$NON-NLS-1$
 		//}
 
-		/*
-		* Note.  Embedding a Mozilla GTK1.2 causes a crash.  The workaround
-		* is to check the version of GTK used by Mozilla by looking for
-		* the libwidget_gtk.so library used by Mozilla GTK1.2. Mozilla GTK2
-		* uses the libwidget_gtk2.so library.   
-		*/
-		File file = new File(mozillaPath, "components/libwidget_gtk.so"); //$NON-NLS-1$
-		if (file.exists()) {
-			dispose();
-			SWT.error(SWT.ERROR_NO_HANDLES, null, " [Mozilla GTK2 required (GTK1.2 detected)]"); //$NON-NLS-1$							
-		}
-
 		try {
-			/*
-			 * GOOGLE: Eclipse seems to always add /usr/lib/mozilla onto the
-			 * java.library.path, which results in loading the system-supplied
-			 * libraries to fulfill dependencies rather than the ones we built.
-			 * So, to get around this, we load each library specifically.
-			 */
-			System.load(mozillaPath + "/libnspr4.so");
-			System.load(mozillaPath + "/libplc4.so");
-			System.load(mozillaPath + "/libplds4.so");
-
-			/*
-			* GOOGLE: For some reason, swt-mozilla won't load unless xpcom is
-			* loaded first. I don't know why it fails for me, or why it
-			* doesn't fail for the SWT guys, but this seems to fix it.
-			*
-			* This may in fact be related to the problem above.
-			*/
-			System.load (mozillaPath + "/libxpcom.so");
-			System.load(mozillaPath + "/libmozz.so");
-			System.load(mozillaPath + "/libmozjs.so");
-			System.load(mozillaPath + "/libgkgfx.so");
-			System.load(mozillaPath + "/components/libtypeaheadfind.so");
-			System.load(mozillaPath + "/components/libembedcomponents.so");
-			System.load(mozillaPath + "/components/libpref.so");
-			System.load(mozillaPath + "/components/libsystem-pref.so");
-			System.load(mozillaPath + "/components/libnecko.so");
-			System.load(mozillaPath + "/components/libcaps.so");
-			System.load(mozillaPath + "/components/libjsd.so");
-			System.load(mozillaPath + "/libgtkembedmoz.so");
 			Library.loadLibrary ("swt-mozilla"); //$NON-NLS-1$
 		} catch (UnsatisfiedLinkError e) {
 			try {

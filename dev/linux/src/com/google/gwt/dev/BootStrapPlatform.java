@@ -15,19 +15,42 @@
  */
 package com.google.gwt.dev;
 
+import com.google.gwt.dev.shell.moz.MozillaInstall;
+
 /**
  * Initializes low-level libraries for linux.
  */
 public class BootStrapPlatform {
 
+  /**
+   * Find a usable Mozilla installation and load it. Fail immediately, logging
+   * to stderr and exiting with a failure code, if we are unable to find or load
+   * it. If successful, store the loaded path in the property swt.mozilla.path
+   * so SWT's Browser object can use it.
+   */
   public static void go() {
-    // nothing to do
+    MozillaInstall mozInstall = MozillaInstall.find();
+    if (mozInstall == null) {
+      System.err.println("** Unable to find a usable Mozilla install **");
+      System.err.println("You may specify one in mozilla-hosted-browser.conf, "
+          + "see comments in the file for details.");
+      System.exit(1);
+    }
+    try {
+      mozInstall.load();
+    } catch (UnsatisfiedLinkError e) {
+      System.err.println("** Unable to load Mozilla for hosted mode **");
+      e.printStackTrace();
+      System.exit(1);
+    }
+    String mozillaPath = mozInstall.getPath();
+    System.setProperty("swt.mozilla.path", mozillaPath);
   }
 
   public static void maybeInitializeAWT() {
     // nothing to do
   }
-  
+
   public static void setSystemProperties() {
     // nothing to do
   }

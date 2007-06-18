@@ -81,6 +81,9 @@ public class BrowserWidgetMoz extends BrowserWidget {
 
   public BrowserWidgetMoz(Shell shell, BrowserWidgetHost host) {
     super(shell, host);
+    host.getLogger().log(TreeLogger.DEBUG,
+        "Using Mozilla install at " + MozillaInstall.getLoaded().getPath(),
+        null);
 
     // Expose a 'window.external' object factory. The created object's
     // gwtOnLoad() method will be called when a hosted mode application's

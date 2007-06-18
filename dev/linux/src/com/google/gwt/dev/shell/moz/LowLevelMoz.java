@@ -16,10 +16,7 @@
 package com.google.gwt.dev.shell.moz;
 
 import com.google.gwt.dev.shell.LowLevel;
-import com.google.gwt.util.tools.Utility;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.Vector;
 
@@ -98,17 +95,6 @@ public class LowLevelMoz {
       throw new RuntimeException(file + "(" + line
           + "): Failed to execute script: " + code);
     }
-  }
-
-  public static String getMozillaDirectory() {
-    String installPath = Utility.getInstallPath();
-    try {
-      // try to make absolute
-      installPath = new File(installPath).getCanonicalPath();
-    } catch (IOException e) {
-      // ignore problems, failures will occur when the libs try to load
-    }
-    return installPath + "/mozilla-1.7.13";
   }
 
   public static synchronized void init() {
@@ -239,7 +225,8 @@ public class LowLevelMoz {
    * @param jsthis the JS object with the named method
    * @param jsargs an array of arguments to the method
    */
-  private static void printInvocationParams(String methodName, JsValueMoz jsthis, JsValueMoz[] jsargs) {
+  private static void printInvocationParams(String methodName,
+      JsValueMoz jsthis, JsValueMoz[] jsargs) {
     System.out.println("LowLevelMoz.invoke:");
     System.out.println(" method = " + methodName);
     System.out.println(" # args = " + (jsargs.length));
