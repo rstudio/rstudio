@@ -84,7 +84,7 @@ public abstract class DOMImpl {
   }-*/;
 
   public native boolean eventGetMetaKey(Event evt) /*-{
-    return !!evt.getMetaKey;
+    return !!evt.metaKey;
   }-*/;
 
   public abstract int eventGetMouseWheelVelocityY(Event evt);
