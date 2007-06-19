@@ -44,12 +44,15 @@ class DOMImplSafari extends DOMImplStandard {
     }
 
     var left = 0;
-    var curr = elem;
-    // This intentionally excludes body which has a null offsetParent.
-    while (curr.offsetParent) {
-      left -= curr.scrollLeft;
-      curr = curr.parentNode;
+    var curr = elem.parentNode;
+    if (curr) {
+      // This intentionally excludes body which has a null offsetParent.
+      while (curr.offsetParent) {
+        left -= curr.scrollLeft;
+        curr = curr.parentNode;
+      }
     }
+    
     while (elem) {
       left += elem.offsetLeft;
 
@@ -74,12 +77,15 @@ class DOMImplSafari extends DOMImplStandard {
     }
 
     var top = 0;
-    var curr = elem;
-    // This intentionally excludes body which has a null offsetParent.
-    while (curr.offsetParent) {
-      top -= curr.scrollTop;
-      curr = curr.parentNode;
+    var curr = elem.parentNode;
+    if (curr) {
+      // This intentionally excludes body which has a null offsetParent.
+      while (curr.offsetParent) {
+        top -= curr.scrollTop;
+        curr = curr.parentNode;
+      }
     }
+    
     while (elem) {
       top += elem.offsetTop;
 

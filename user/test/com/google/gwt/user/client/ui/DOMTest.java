@@ -90,6 +90,39 @@ public class DOMTest extends GWTTestCase {
   }
 
   /**
+   * Tests {@link DOM#getAbsoluteTop(Element)} and
+   * {@link DOM#getAbsoluteLeft(Element)} for consistency when the element
+   * contains children and has scrollbars. See issue #1093 for more details.
+   * 
+   */
+  public void testGetAbsolutePositionWhenScrolled() {
+    final Element outer = DOM.createDiv();
+    final Element inner = DOM.createDiv();
+
+    DOM.setStyleAttribute(outer, "position", "absolute");
+    DOM.setStyleAttribute(outer, "top", "0px");
+    DOM.setStyleAttribute(outer, "left", "0px");
+    DOM.setStyleAttribute(outer, "overflow", "auto");
+    DOM.setStyleAttribute(outer, "width", "200px");
+    DOM.setStyleAttribute(outer, "height", "200px");
+   
+    DOM.setStyleAttribute(inner, "marginTop", "800px");
+    DOM.setStyleAttribute(inner, "marginLeft", "800px");
+
+    DOM.appendChild(outer, inner);
+    DOM.appendChild(RootPanel.getBodyElement(), outer);
+    DOM.setInnerText(inner, ":-)");
+    DOM.scrollIntoView(inner);
+
+    // Ensure that we are scrolled.
+    assertTrue(DOM.getElementPropertyInt(outer, "scrollTop") > 0);
+    assertTrue(DOM.getElementPropertyInt(outer, "scrollLeft") > 0);
+
+    assertEquals(0, DOM.getAbsoluteTop(outer));
+    assertEquals(0, DOM.getAbsoluteLeft(outer));
+  }
+
+  /**
    * Tests the ability to do a parent-ward walk in the DOM.
    */
   public void testGetParent() {
@@ -106,7 +139,7 @@ public class DOMTest extends GWTTestCase {
     // If we get here, we pass, because we encountered no errors going to the
     // top of the parent hierarchy.
   }
-  
+
   /**
    * Tests {@link DOM#insertChild(Element, Element, int)}.
    *
@@ -115,7 +148,8 @@ public class DOMTest extends GWTTestCase {
     Element parent = RootPanel.get().getElement();
     Element div = DOM.createDiv();
     DOM.insertChild(parent, div, Integer.MAX_VALUE);
-    Element child = DOM.getChild(RootPanel.get().getElement(), DOM.getChildCount(parent) - 1);
+    Element child = DOM.getChild(RootPanel.get().getElement(),
+        DOM.getChildCount(parent) - 1);
     assertEquals(div, child);
   }
 

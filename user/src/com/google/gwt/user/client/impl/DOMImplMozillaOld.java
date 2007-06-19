@@ -31,8 +31,8 @@ public class DOMImplMozillaOld extends DOMImplMozilla {
     var left = $doc.getBoxObjectFor(elem).x - Math.round(
         style.getPropertyCSSValue('border-left-width').getFloatValue(
         CSSPrimitiveValue.CSS_PX));
-    var parent = elem;
-
+        
+    var parent = elem.parentNode;
     while (parent) {
       // Sometimes get NAN.
       if (parent.scrollLeft > 0) {
@@ -51,7 +51,7 @@ public class DOMImplMozillaOld extends DOMImplMozilla {
         style.getPropertyCSSValue('border-top-width').getFloatValue(
         CSSPrimitiveValue.CSS_PX));
       
-    var parent = elem;
+    var parent = elem.parentNode;
     while (parent) {
       // Sometimes get NAN.
       if (parent.scrollTop > 0) {
