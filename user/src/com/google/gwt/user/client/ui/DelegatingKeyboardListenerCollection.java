@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,7 +44,7 @@ public class DelegatingKeyboardListenerCollection extends
     KeyboardListenerCollection implements KeyboardListener {
 
   private final Widget owner;
-
+  
   /**
    * Constructor for {@link DelegatingKeyboardListenerCollection}.
    * 
@@ -66,6 +66,6 @@ public class DelegatingKeyboardListenerCollection extends
   }
 
   public void onKeyUp(Widget sender, char keyCode, int modifiers) {
-    fireKeyPress(owner, keyCode, modifiers);
+    fireKeyUp(owner, keyCode, modifiers);
   }
 }
