@@ -85,26 +85,25 @@ public class Window {
   }-*/;
 
   /**
-   * Gets the height of the browser window's client area.
+   * Gets the height of the browser window's client area excluding the
+   * scroll bar.
    * 
    * @return the window's client height
    */
-  public static native int getClientHeight() /*-{
-    // Non-IE browsers || IE standard mode || IE quirks mode.
-    return $wnd.innerHeight || $doc.documentElement.clientHeight || 
-        $doc.body.clientHeight;
-  }-*/;
+  public static int getClientHeight() {
+    return DOM.windowGetClientHeight();
+  }
 
   /**
-   * Gets the width of the browser window's client area.
+   * Gets the width of the browser window's client area excluding the
+   * vertical scroll bar.
    * 
    * @return the window's client width
    */
-  public static native int getClientWidth() /*-{
-    // Non-IE browsers || IE standard mode || IE quirks mode.
-    return $wnd.innerWidth || $doc.documentElement.clientWidth || $doc.body.clientWidth;
-  }-*/;
-
+  public static int getClientWidth() {
+    return DOM.windowGetClientWidth();
+  }
+ 
   /**
    * Gets the window's scroll left.
    * 

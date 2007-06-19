@@ -1146,7 +1146,27 @@ public class DOM {
   public static String toString(Element elem) {
     return impl.toString(elem);
   }
+  
+  /**
+   * Gets the height of the browser window's client area excluding the
+   * scroll bar.
+   * 
+   * @return the window's client height
+   */
+  public static int windowGetClientHeight() {
+    return impl.windowGetClientHeight();
+  };
 
+  /**
+   * Gets the width of the browser window's client area excluding the
+   * vertical scroll bar.
+   * 
+   * @return the window's client width
+   */
+  public static int windowGetClientWidth() {
+    return impl.windowGetClientWidth();
+  }
+  
   /**
    * This method is called directly by native code when any event is fired.
    *

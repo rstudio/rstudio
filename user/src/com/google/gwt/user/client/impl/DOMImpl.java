@@ -401,4 +401,24 @@ public abstract class DOMImpl {
   public native String toString(Element elem) /*-{
     return elem.outerHTML;
   }-*/;
+
+  /**
+   * Gets the height of the browser window's client area excluding the
+   * scroll bar.
+   * 
+   * @return the window's client height
+   */
+  public native int windowGetClientHeight() /*-{
+    return $doc.body.clientHeight; 
+  }-*/;
+
+  /**
+   * Gets the width of the browser window's client area excluding the
+   * vertical scroll bar.
+   * 
+   * @return the window's client width
+   */
+  public native int windowGetClientWidth() /*-{
+    return $doc.body.clientWidth; 
+  }-*/;
 }

@@ -95,4 +95,24 @@ class DOMImplSafari extends DOMImplStandard {
     }
     return top;
   }-*/;
+
+  /**
+   * Gets the height of the browser window's client area excluding the
+   * scroll bar.
+   * 
+   * @return the window's client height
+   */
+  public native int windowGetClientHeight() /*-{
+    return $wnd.innerHeight;
+  }-*/;
+
+  /**
+   * Gets the width of the browser window's client area excluding the
+   * vertical scroll bar.
+   * 
+   * @return the window's client width
+   */
+  public native int windowGetClientWidth() /*-{
+    return $wnd.innerWidth;
+  }-*/;
 }
