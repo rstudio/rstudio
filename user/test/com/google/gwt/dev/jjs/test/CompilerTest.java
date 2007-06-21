@@ -180,6 +180,10 @@ public class CompilerTest extends GWTTestCase {
     Apple g = noOptimizeTrue() ? (Apple) new Granny() : (Apple) new Fuji();
     Apple a = apple[0] = g;
     assertEquals(g, a);
+
+    byte[] bytes = new byte[10];
+    bytes[0] = (byte) '1';
+    assertEquals(49, bytes[0]);
   }
 
   public void testCastOptimizer() {

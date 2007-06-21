@@ -53,19 +53,21 @@ public class ArrayNormalizer {
         JArrayType arrayType = (JArrayType) arrayRef.getInstance().getType();
         JType elementType = arrayType.getElementType();
 
-        // see if we need to do a checked store
-        // primitives and (effectively) final are statically correct
-        if (elementType instanceof JReferenceType
-            && (!((JReferenceType) elementType).isFinal())
-            || elementType != x.getRhs().getType()) {
-          // replace this assignment with a call to setCheck()
-
-          JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
-              setCheckMethod);
-          call.getArgs().add(arrayRef.getInstance());
-          call.getArgs().add(arrayRef.getIndexExpr());
-          call.getArgs().add(x.getRhs());
-          ctx.replaceMe(call);
+        /*
+         * See if we need to do a checked store. Primitives and (effectively)
+         * final are statically correct.
+         */
+        if (elementType instanceof JReferenceType) {
+          if (!((JReferenceType) elementType).isFinal()
+              || elementType != x.getRhs().getType()) {
+            // replace this assignment with a call to setCheck()
+            JMethodCall call = new JMethodCall(program, x.getSourceInfo(),
+                null, setCheckMethod);
+            call.getArgs().add(arrayRef.getInstance());
+            call.getArgs().add(arrayRef.getIndexExpr());
+            call.getArgs().add(x.getRhs());
+            ctx.replaceMe(call);
+          }
         }
       }
     }
