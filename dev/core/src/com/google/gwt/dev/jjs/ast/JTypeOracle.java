@@ -262,16 +262,6 @@ public class JTypeOracle {
   }
 
   public boolean hasClinit(JReferenceType type) {
-    if (hasDirectClinit(type)) {
-      return true;
-    }
-    if (type != null && type.extnds != null) {
-      return hasClinit(type.extnds);
-    }
-    return false;
-  }
-
-  public boolean hasDirectClinit(JReferenceType type) {
     return hasClinitSet.contains(type);
   }
 

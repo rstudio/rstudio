@@ -100,6 +100,30 @@ public class CompilerTest extends GWTTestCase {
     }
   }
 
+  /**
+   * Ensures that a superclass's clinit is run before supercall arguments are
+   * evaluated.
+   */
+  private static class SideEffectCauser7 extends SideEffectCauser7Super {
+    public SideEffectCauser7() {
+      super(SideEffectCauser7Super.SHOULD_BE_TRUE);
+    }
+  }
+
+  private static class SideEffectCauser7Super {
+    public static boolean SHOULD_BE_TRUE = false;
+    
+    static {
+      SHOULD_BE_TRUE = true;
+    }
+
+    public SideEffectCauser7Super(boolean should_be_true) {
+      if (should_be_true) {
+        CompilerTest.sideEffectChecker++;
+      }
+    }
+  }
+
   private static final class UninstantiableType {
     public Object field;
 
@@ -203,6 +227,8 @@ public class CompilerTest extends GWTTestCase {
     assertEquals(5, sideEffectChecker);
     foo = SideEffectCauser6.causeClinitSideEffectOnRead;
     assertEquals(6, sideEffectChecker);
+    new SideEffectCauser7();
+    assertEquals(7, sideEffectChecker);
     String checkRescued = NonSideEffectCauser.NOT_A_COMPILE_TIME_CONSTANT;
     assertEquals(null, checkRescued);
   }

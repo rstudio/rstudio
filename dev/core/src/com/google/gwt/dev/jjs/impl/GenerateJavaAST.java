@@ -265,6 +265,18 @@ public class GenerateJavaAST {
         currentSeparatorPositions = x.compilationResult.lineSeparatorPositions;
         currentFileName = String.valueOf(x.compilationResult.fileName);
 
+        /*
+         * Make clinits chain to super class (JDT doesn't write code to do
+         * this). Call super class $clinit; $clinit is always in position 0.
+         */
+        if (currentClass.extnds != null) {
+          JMethod myClinit = (JMethod) currentClass.methods.get(0);
+          JMethod superClinit = (JMethod) currentClass.extnds.methods.get(0);
+          JMethodCall superClinitCall = new JMethodCall(program,
+              myClinit.getSourceInfo(), null, superClinit);
+          myClinit.body.statements.add(0, superClinitCall.makeStatement());
+        }
+
         if (x.fields != null) {
           // Process fields
           for (int i = 0, n = x.fields.length; i < n; ++i) {

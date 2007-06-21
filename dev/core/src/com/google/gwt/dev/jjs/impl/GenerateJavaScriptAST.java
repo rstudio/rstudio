@@ -526,13 +526,8 @@ public class GenerateJavaScriptAST {
       List/* <JsFunction> */jsFuncs = popList(x.methods.size()); // methods
       List/* <JsStatement> */jsFields = popList(x.fields.size()); // fields
 
-      if (typeOracle.hasDirectClinit(x)) {
-        // see if there's a super class we need to chain to
-        JClassType superType = x.extnds;
-        while (superType != null && !typeOracle.hasDirectClinit(superType)) {
-          superType = superType.extnds;
-        }
-        handleClinit((JsFunction) jsFuncs.get(0), superType);
+      if (typeOracle.hasClinit(x)) {
+        handleClinit((JsFunction) jsFuncs.get(0));
       } else {
         jsFuncs.set(0, null);
       }
@@ -752,9 +747,9 @@ public class GenerateJavaScriptAST {
 
       JsStatements globalStmts = jsProgram.getGlobalBlock().getStatements();
 
-      if (typeOracle.hasDirectClinit(x)) {
+      if (typeOracle.hasClinit(x)) {
         JsFunction clinitFunc = (JsFunction) jsFuncs.get(0);
-        handleClinit(clinitFunc, null);
+        handleClinit(clinitFunc);
         globalStmts.add(clinitFunc.makeStmt());
       }
 
@@ -1479,19 +1474,12 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    private void handleClinit(JsFunction clinitFunc, JReferenceType chainTo) {
+    private void handleClinit(JsFunction clinitFunc) {
       JsStatements statements = clinitFunc.getBody().getStatements();
       // self-assign to the null method immediately (to prevent reentrancy)
       JsExpression asg = createAssignment(clinitFunc.getName().makeRef(),
           nullMethodName.makeRef());
       statements.add(0, asg.makeStmt());
-      if (chainTo != null) {
-        JMethod chainToMeth = (JMethod) chainTo.methods.get(0);
-        JsInvocation jsInvocation = new JsInvocation();
-        JsNameRef qualifier = getName(chainToMeth).makeRef();
-        jsInvocation.setQualifier(qualifier);
-        statements.add(1, jsInvocation.makeStmt());
-      }
     }
 
     private JsInvocation maybeCreateClinitCall(JField x) {
@@ -1505,11 +1493,6 @@ public class GenerateJavaScriptAST {
         return null;
       }
 
-      // The actual target class might not have a direct clinit; find the super
-      // class that does.
-      while (!typeOracle.hasDirectClinit(enclosingType)) {
-        enclosingType = enclosingType.extnds;
-      }
       JMethod clinitMethod = (JMethod) enclosingType.methods.get(0);
       JsInvocation jsInvocation = new JsInvocation();
       jsInvocation.setQualifier(getName(clinitMethod).makeRef());
@@ -1532,11 +1515,6 @@ public class GenerateJavaScriptAST {
         return null;
       }
 
-      // The actual target class might not have a direct clinit; find the super
-      // class that does.
-      while (!typeOracle.hasDirectClinit(enclosingType)) {
-        enclosingType = enclosingType.extnds;
-      }
       JMethod clinitMethod = (JMethod) enclosingType.methods.get(0);
       JsInvocation jsInvocation = new JsInvocation();
       jsInvocation.setQualifier(getName(clinitMethod).makeRef());
