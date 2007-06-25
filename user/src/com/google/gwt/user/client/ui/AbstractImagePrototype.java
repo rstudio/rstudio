@@ -18,7 +18,7 @@ package com.google.gwt.user.client.ui;
 /**
  * An opaque representation of a particular image such that the image can be
  * accessed either as an HTML fragment or as an {@link Image} object. An image
- * protype can be thought of as an abstract image factory with additional
+ * prototype can be thought of as an abstract image factory with additional
  * capabilities.
  * 
  * <p>
