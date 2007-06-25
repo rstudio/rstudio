@@ -51,6 +51,9 @@ public class PopupImplIE6 extends PopupImpl {
     // Don't get in the way of transparency effects
     style.filter = 'alpha(opacity=0)';
 
+    // Visibility of frame should match visiblity of popup element.
+    style.visibility = popup.style.visibility;
+  
     // takes effect immediately
     style.left = popup.offsetLeft;
     style.top = popup.offsetTop;
@@ -66,6 +69,8 @@ public class PopupImplIE6 extends PopupImpl {
   }-*/;
   
   public native void setVisible(Element popup, boolean visible) /*-{
-    popup.__frame.style.visibility = visible ? 'visible' : 'hidden';    
+    if (popup.__frame) {
+      popup.__frame.style.visibility = visible ? 'visible' : 'hidden';
+    }
   }-*/;
 }
