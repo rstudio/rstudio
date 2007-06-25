@@ -477,16 +477,14 @@ public class DateTest extends GWTTestCase {
     // /////////////////////////////
     Date accum1 = create(PAST);
     String a1 = accum1.toGMTString();
-    a1 = a1.replaceAll("UTC", "GMT");
-    assertTrue(a1.indexOf("5 Jan 1880 00:00:00") != -1);
+    assertEquals("5 Jan 1880 00:00:00 GMT", a1);
 
     // /////////////////////////////
     // Future
     // /////////////////////////////
     Date accum2 = create(FUTURE);
     String a2 = accum2.toGMTString();
-    a2 = a2.replaceAll("UTC", "GMT");
-    assertTrue(a2.indexOf("30 Dec 2010 03:04:05 GMT") != -1);
+    assertEquals("30 Dec 2010 03:04:05 GMT", a2);
   }
 
   /** Testing for public java.lang.String java.util.Date.toLocaleString()* */

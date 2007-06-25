@@ -213,7 +213,18 @@ public class Date implements Cloneable, Comparable {
   }-*/;
 
   public native String toGMTString() /*-{
-    return this.jsdate.toGMTString();
+    var d = this.jsdate;
+    var padTwo = @java.util.Date::padTwo(I);
+    var month =
+        @java.util.Date::monthToString(I)(this.jsdate.getUTCMonth());
+  
+    return d.getUTCDate() + " " +
+        month + " " +
+        d.getUTCFullYear() + " " +
+        padTwo(d.getUTCHours()) + ":" +
+        padTwo(d.getUTCMinutes()) + ":" +
+        padTwo(d.getUTCSeconds()) +
+        " GMT";
   }-*/;
 
   public native String toLocaleString() /*-{
