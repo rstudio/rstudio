@@ -1592,6 +1592,11 @@ public class DeveloperGuide {
      *      specification</a> recommends specifying date of approximately one
      *      year in the future for the <code>Expires</code> header to indicate
      *      that the resource is permanently cacheable.
+     * @tip If your image bundle files are going to be accessed via the HTTPS
+     *      protocol, see the section entitled "Image Bundles and the HTTPS Protocol"
+     *      in the {@link com.google.gwt.user.client.ui.ImageBundle ImageBundle documentation}.
+     *      To support Internet Explorer, some changes to your web application
+     *      configuration may be required.
      */
     public static class ImageBundles {
 
