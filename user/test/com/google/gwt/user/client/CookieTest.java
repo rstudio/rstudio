@@ -20,7 +20,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import java.util.Date;
 
 /**
- * TODO: document me.
+ * Test Case for {@link Cookies}.
  */
 public class CookieTest extends GWTTestCase {
 
@@ -51,5 +51,39 @@ public class CookieTest extends GWTTestCase {
     Cookies.setCookie("novalue", "", expires);
     assertEquals(Cookies.getCookie("novalue"), "");
     assertEquals(Cookies.getCookie("notpresent"), null);
+  }
+  
+  /*
+   * Test that the cookie will expire correctly after a set amount of time,
+   * but does not expire before that time. 
+   */
+  public void testExpires() {
+    // Test that the cookie expires in 5 seconds
+    Date expiresEarly = new Date(new Date().getTime() + (5 * 1000));
+    Date expiresLate  = new Date(new Date().getTime() + (60 * 1000));
+    Cookies.setCookie("shouldExpireEarly", "early", expiresEarly);
+    Cookies.setCookie("shouldExpireLate", "late", expiresLate);
+    Cookies.setCookie("shouldNotExpire", "forever", null);
+
+    // Wait until the cookie expires before checking it
+    Timer timer = new Timer() {
+      public void run() {
+        // Verify that the early expiring cookie does NOT exist
+        assertNull(Cookies.getCookie("shouldExpireEarly"));
+
+        // Verify that the late expiring cookie does exist
+        assertEquals(Cookies.getCookie("shouldExpireLate"), "late");
+
+        // Verify the session cookie doesn't expire
+        assertEquals(Cookies.getCookie("shouldNotExpire"), "forever");
+        Cookies.removeCookie("shouldNotExpire");
+        assertNull(Cookies.getCookie("shouldNotExpire"));
+        
+        // Finish the test
+        finishTest();
+      }
+    };
+    timer.schedule(5010);
+    delayTestFinish(6 * 1000);
   }
 }

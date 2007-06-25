@@ -76,7 +76,7 @@ public class Cookies {
    * @param value the cookie's value
    */
   public static void setCookie(String name, String value) {
-    setCookieImpl(name, value, "", null, null, false);
+    setCookieImpl(name, value, 0, null, null, false);
   }
 
   /**
@@ -102,7 +102,7 @@ public class Cookies {
    */
   public static void setCookie(String name, String value, Date expires,
       String domain, String path, boolean secure) {
-    setCookieImpl(name, value, expires.toGMTString(), domain, path, secure);
+    setCookieImpl(name, value, (expires == null) ? 0 : expires.getTime(), domain, path, secure);
   }
 
   static native void loadCookies(HashMap m) /*-{
@@ -147,9 +147,10 @@ public class Cookies {
   }-*/;
 
   private static native void setCookieImpl(String name, String value,
-      String expires, String domain, String path, boolean secure) /*-{
+      long expires, String domain, String path, boolean secure) /*-{
     var c = encodeURIComponent(name) + '=' + encodeURIComponent(value);
-    c += ';expires=' + expires;
+    if ( expires )
+      c += ';expires=' + (new Date(expires)).toGMTString();
     if (domain)
       c += ';domain=' + domain;
     if (path)
