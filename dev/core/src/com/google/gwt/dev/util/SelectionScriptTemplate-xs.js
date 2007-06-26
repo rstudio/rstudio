@@ -257,7 +257,7 @@ function __MODULE_FUNC__() {
 // __SHELL_SERVLET_ONLY_BEGIN__
   if (!isHostedMode()) {
     // Force shell servlet to serve compiled output for web mode
-    $doc.write('<script src="' + base + '__MODULE_NAME__.nocache-xs.js?compiled"></script>');
+    $doc.write('<script src="' + base + '__MODULE_NAME__-xs.nocache.js?compiled"></script>');
     return;
   } else {
     // This script cannot run hosted mode properly; redirect to the html version
