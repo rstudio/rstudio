@@ -56,15 +56,26 @@ function __MODULE_FUNC__() {
 
   // --------------- WINDOW ONLOAD HOOK ---------------
 
-  var oldOnLoad = $wnd.onload;
-  $wnd.onload = function(evt) {
-    if (oldOnLoad) {
-      $wnd.onload = oldOnLoad;
-      $wnd.onload(evt);
+  var onBodyDone = function() {
+    if (!bodyDone) {
+      bodyDone = true;
+      maybeStartModule();
     }
-    bodyDone = true;
-    maybeStartModule();
   };
+
+  // For everyone that supports DOMContentLoaded.
+  if ($doc.addEventListener) {
+    $doc.addEventListener("DOMContentLoaded", onBodyDone, false);
+  }
+
+  // Fallback. If onBodyDone() gets fired twice, it's not a big deal.
+  var onBodyDoneTimerId = setInterval(function() {
+    if (/interactive|loaded|complete/.test($doc.readyState)) {
+      clearInterval(onBodyDoneTimerId);
+      onBodyDone();
+      onBodyDone = null;
+    }
+  }, 50);
 
   // --------------- INTERNAL FUNCTIONS ---------------
 
@@ -129,11 +140,18 @@ function __MODULE_FUNC__() {
       // Compute our base url
       base = getDirectoryOfFile(thisScript.src);
     }
-    
+
     // Make the base URL absolute
     if (base == '') {
-      // Trivial case; the base must be the same as the document location
-      base = getDirectoryOfFile($doc.location.href);
+      // If there's a base tag, use it.
+      var baseElements = $doc.getElementsByTagName('base');
+      if (baseElements.length > 0) {
+        // It's always the last parsed base tag that will apply to this script.
+        base = baseElements[baseElements.length - 1].href;
+      } else {
+        // No base tag; the base must be the same as the document location.
+        base = getDirectoryOfFile($doc.location.href);
+      }
     } else if ((base.match(/^\w+:\/\//))) {
       // If the URL is obviously absolute, do nothing.
     } else {
