@@ -1002,7 +1002,8 @@ void setData(int pData){
 			int[] hMem = new int[1];
 			OS.MoveMemory(hMem, pData + 8, 4);
 			if (hMem[0] == 0) {
-				type = COM.VT_EMPTY;
+				// A VT_BSTR with a null pointer is equivalent to an empty string
+				stringData = ""; //$NON-NLS-1$
 				break;
 			}
 			// Get the size of the string from the OS - the size is expressed in number
