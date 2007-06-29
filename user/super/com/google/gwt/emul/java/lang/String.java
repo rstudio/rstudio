@@ -35,7 +35,7 @@ public final class String implements Comparable, CharSequence {
    * accesses need to be prefixed with ':' to prevent conflict with built-in JavaScript properties.    
    * @skip
    */
-  private static JavaScriptObject hashCache;
+  static JavaScriptObject hashCache;
 
   public static native String valueOf(boolean x) /*-{ return x ? "true" : "false"; }-*/;
 
@@ -64,13 +64,13 @@ public final class String implements Comparable, CharSequence {
     return valueOf(x, 0, x.length);
   }
 
-  public static native String valueOf(double x) /*-{ return x.toString(); }-*/;
+  public static native String valueOf(double x) /*-{ return "" + x; }-*/;
 
-  public static native String valueOf(float x) /*-{ return x.toString(); }-*/;
+  public static native String valueOf(float x) /*-{ return "" + x; }-*/;
 
-  public static native String valueOf(int x) /*-{ return x.toString(); }-*/;
+  public static native String valueOf(int x) /*-{ return "" + x; }-*/;
 
-  public static native String valueOf(long x) /*-{ return x.toString(); }-*/;
+  public static native String valueOf(long x) /*-{ return "" + x; }-*/;
 
   public static String valueOf(Object x) {
     return x != null ? x.toString() : "null";
@@ -128,29 +128,7 @@ public final class String implements Comparable, CharSequence {
 
   private static native boolean __equals(String me, Object other) /*-{
     // Coerce me to a primitive string to force string comparison
-    return me.toString() == other;
-  }-*/;
-
-  // Prefix needed to prevent conflict with built-in JavaScript properties.
-  private static native int __hashCode(String me) /*-{
-    var hashCode = @java.lang.String::hashCache[':' + me];
-    if (hashCode) {
-      return hashCode;
-    }
-   
-    hashCode = 0;
-    var len = me.length;
-    var i = len;
-    while (--i >= 0) {
-      hashCode <<= 1;
-      hashCode += me.charCodeAt(i);
-    }
-    @java.lang.String::hashCache[':' + me] = hashCode;
-    return hashCode;
-  }-*/;
-
-  private static native void __initHashCache() /*-{
-    @java.lang.String::hashCache = {};
+    return String(me) == other;
   }-*/;
 
   public String() {
@@ -183,21 +161,26 @@ public final class String implements Comparable, CharSequence {
   }
 
   public int compareTo(String other) {
-    int length = Math.min(this.length(), other.length());
+    int thisLength = this.length();
+    int otherLength = other.length();
+    int length = Math.min(thisLength, otherLength);
     for (int i = 0; i < length; i++) {
-      if (this.charAt(i) != other.charAt(i)) {
-        return this.charAt(i) - other.charAt(i);
+      char thisChar = this.charAt(i);
+      char otherChar = other.charAt(i);
+      if (thisChar != otherChar) {
+        return thisChar - otherChar;
       }
     }
-    return this.length() - other.length();
+    return thisLength - otherLength;
   }
 
-  public native String concat(String other) /*-{
-    return this+other;
+  public native String concat(String str) /*-{
+    return this + str;
   }-*/;
 
   public native boolean endsWith(String suffix) /*-{
-    return this.lastIndexOf(suffix) != -1 && (this.lastIndexOf(suffix) == (this.length - suffix.length));
+    return (this.lastIndexOf(suffix) != -1)
+       && (this.lastIndexOf(suffix) == (this.length - suffix.length));
   }-*/;
 
   public boolean equals(Object other) {
@@ -212,9 +195,36 @@ public final class String implements Comparable, CharSequence {
     return (this == other) || (this.toLowerCase() == other.toLowerCase());
   }-*/;
 
-  public int hashCode() {
-    return __hashCode(this);
-  }
+  public native int hashCode() /*-{
+    var hashCache = @java.lang.String::hashCache;
+    if (!hashCache) {
+      hashCache = @java.lang.String::hashCache = {};
+    }
+  
+    // Prefix needed to prevent conflict with built-in JavaScript properties.
+    var key  = ':' + this;
+    var hashCode = hashCache[key];
+    // Must check null/undefined because 0 is a legal hashCode
+    if (hashCode == null) {
+      hashCode = 0;
+      var n = this.length;
+      // In our hash code calculation, only 32 characters will actually affect
+      // the final value, so there's no need to sample more than 32 characters.
+      // To get a better hash code, we'd like to evenly distribute these
+      // characters throughout the string.  That means that for lengths between
+      // 0 and 63 (inclusive), we increment by 1.  For 64-95, 2; 96-127, 3; and
+      // so on.  The complicated formula below computes just that.  The "| 0"
+      // operation is a fast way to coerce the division result to an integer.
+      var inc = (n < 64) ? 1 : ((n / 32) | 0);
+      for (var i = 0; i < n; i += inc) {
+        hashCode <<= 1;
+        hashCode += this.charCodeAt(i);
+      }
+      hashCode |= 0; // force to 32-bits
+      hashCache[key] = hashCode
+    }
+    return hashCode;
+  }-*/;
 
   public native int indexOf(int ch) /*-{
     return this.indexOf(String.fromCharCode(ch));
@@ -228,8 +238,8 @@ public final class String implements Comparable, CharSequence {
     return this.indexOf(str);
   }-*/;
 
-  public native int indexOf(String other, int startIndex) /*-{
-    return this.indexOf(other, startIndex);
+  public native int indexOf(String str, int startIndex) /*-{
+    return this.indexOf(str, startIndex);
   }-*/;
 
   public native int lastIndexOf(int ch) /*-{
@@ -409,10 +419,6 @@ public final class String implements Comparable, CharSequence {
     var r2 = r1.replace(/\s*$/, '');
     return r2;
   }-*/;
-
-  static {
-    String.__initHashCache();
-  }
 
   // CHECKSTYLE_ON
 }
