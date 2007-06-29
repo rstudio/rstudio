@@ -17,10 +17,8 @@ package com.google.gwt.dev.jjs.ast.js;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
-import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JAbstractMethodBody;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
-import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.js.ast.JsFunction;
 
@@ -28,19 +26,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A Java native method that is implemented in JSNI code.
+ * Represents a the body of a method. Can be Java or JSNI.
  */
-public class JsniMethod extends JMethod {
+public class JsniMethodBody extends JAbstractMethodBody {
 
   public final List/* <JsniFieldRef> */jsniFieldRefs = new ArrayList/* <JsniFieldRef> */();
+
   public final List/* <JsniMethodRef> */jsniMethodRefs = new ArrayList/* <JsniMethodRef> */();
+
   private JsFunction jsFunction = null;
 
-  public JsniMethod(JProgram program, SourceInfo info,
-      String name, JReferenceType enclosingType, JType returnType,
-      boolean isStatic, boolean isFinal, boolean isPrivate) {
-    super(program, info, name, enclosingType, returnType, false, isStatic,
-        isFinal, isPrivate);
+  public JsniMethodBody(JProgram program, SourceInfo info) {
+    super(program, info);
   }
 
   public JsFunction getFunc() {
@@ -59,11 +56,9 @@ public class JsniMethod extends JMethod {
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
-      visitor.accept(params);
       visitor.accept(jsniFieldRefs);
       visitor.accept(jsniMethodRefs);
     }
     visitor.endVisit(this, ctx);
   }
-
 }

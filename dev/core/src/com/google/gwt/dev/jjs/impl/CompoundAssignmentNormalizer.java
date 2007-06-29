@@ -23,7 +23,7 @@ import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
-import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
@@ -92,14 +92,14 @@ public class CompoundAssignmentNormalizer {
     }
 
     // @Override
-    public void endVisit(JMethod x, Context ctx) {
+    public void endVisit(JMethodBody x, Context ctx) {
       clearLocals();
-      currentMethod = null;
+      currentMethodBody = null;
     }
 
     // @Override
-    public boolean visit(JMethod x, Context ctx) {
-      currentMethod = x;
+    public boolean visit(JMethodBody x, Context ctx) {
+      currentMethodBody = x;
       clearLocals();
       return true;
     }
@@ -181,7 +181,7 @@ public class CompoundAssignmentNormalizer {
     new CompoundAssignmentNormalizer(program).execImpl();
   }
 
-  private JMethod currentMethod;
+  private JMethodBody currentMethodBody;
   private int localIndex;
   private final JProgram program;
   private final List/* <JLocal> */tempLocals = new ArrayList/* <JLocal> */();
@@ -206,7 +206,7 @@ public class CompoundAssignmentNormalizer {
     }
     JLocal newTemp = program.createLocal(null,
         ("$t" + localIndex++).toCharArray(), program.getTypeVoid(), false,
-        currentMethod);
+        currentMethodBody);
     tempLocals.add(newTemp);
     return newTemp;
   }

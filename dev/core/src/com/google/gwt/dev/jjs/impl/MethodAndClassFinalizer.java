@@ -22,7 +22,6 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.js.JsniMethod;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -82,11 +81,6 @@ public class MethodAndClassFinalizer {
       }
       return false;
     }
-
-    // @Override
-    public boolean visit(JsniMethod x, Context ctx) {
-      return visit((JMethod) x, ctx);
-    }
   }
   /**
    * Find all methods and classes that ARE overriden/subclassed.
@@ -131,11 +125,6 @@ public class MethodAndClassFinalizer {
         accept(type);
       }
       return false;
-    }
-
-    // @Override
-    public boolean visit(JsniMethod x, Context ctx) {
-      return visit((JMethod) x, ctx);
     }
   }
 

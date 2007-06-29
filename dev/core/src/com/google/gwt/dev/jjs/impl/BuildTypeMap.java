@@ -22,11 +22,12 @@ import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
-import com.google.gwt.dev.jjs.ast.js.JsniMethod;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
 import com.google.gwt.dev.js.JsParserException.SourceDetail;
@@ -145,9 +146,9 @@ public class BuildTypeMap {
         SourceInfo info = makeSourceInfo(argument);
         LocalVariableBinding b = argument.binding;
         JType localType = (JType) typeMap.get(b.type);
-        JMethod enclosingMethod = findEnclosingMethod(scope);
+        JMethodBody enclosingBody = findEnclosingMethod(scope);
         JLocal newLocal = program.createLocal(info, argument.name, localType,
-            b.isFinal(), enclosingMethod);
+            b.isFinal(), enclosingBody);
         typeMap.put(b, newLocal);
         return true;
       } catch (Throwable e) {
@@ -234,10 +235,10 @@ public class BuildTypeMap {
       try {
         LocalVariableBinding b = localDeclaration.binding;
         JType localType = (JType) typeMap.get(localDeclaration.type.resolvedType);
-        JMethod enclosingMethod = findEnclosingMethod(scope);
+        JMethodBody enclosingBody = findEnclosingMethod(scope);
         SourceInfo info = makeSourceInfo(localDeclaration);
         JLocal newLocal = program.createLocal(info, localDeclaration.name,
-            localType, b.isFinal(), enclosingMethod);
+            localType, b.isFinal(), enclosingBody);
         typeMap.put(b, newLocal);
         return true;
       } catch (Throwable e) {
@@ -315,7 +316,7 @@ public class BuildTypeMap {
             JsStatements result = jsParser.parse(jsProgram.getScope(), sr, -1);
             JsExprStmt jsExprStmt = (JsExprStmt) result.get(0);
             JsFunction jsFunction = (JsFunction) jsExprStmt.getExpression();
-            ((JsniMethod) newMethod).setFunc(jsFunction);
+            ((JsniMethodBody) newMethod.getBody()).setFunc(jsFunction);
           } catch (IOException e) {
             throw new InternalCompilerException(
                 "Internal error parsing JSNI in method '" + newMethod
@@ -350,8 +351,8 @@ public class BuildTypeMap {
             // TODO: check this
             // Map into the original source stream;
             i += startPos + detail.getLineOffset();
-            info = new SourceInfo(i, i,
-                info.getStartLine() + detail.getLine(), info.getFileName());
+            info = new SourceInfo(i, i, info.getStartLine() + detail.getLine(),
+                info.getFileName());
             GenerateJavaAST.reportJsniError(info, methodDeclaration,
                 e.getMessage());
           }
@@ -415,22 +416,25 @@ public class BuildTypeMap {
       return param;
     }
 
-    private JMethod findEnclosingMethod(BlockScope scope) {
+    private JMethodBody findEnclosingMethod(BlockScope scope) {
+      JMethod method;
       MethodScope methodScope = scope.methodScope();
       if (methodScope.isInsideInitializer()) {
         JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.classScope().referenceContext.binding);
         if (methodScope.isStatic) {
           // clinit
-          return (JMethod) enclosingType.methods.get(0);
+          method = (JMethod) enclosingType.methods.get(0);
         } else {
           // init
           assert (enclosingType instanceof JClassType);
-          return (JMethod) enclosingType.methods.get(1);
+          method = (JMethod) enclosingType.methods.get(1);
         }
+      } else {
+        AbstractMethodDeclaration referenceMethod = methodScope.referenceMethod();
+        method = (JMethod) typeMap.get(referenceMethod.binding);
       }
-
-      AbstractMethodDeclaration referenceMethod = methodScope.referenceMethod();
-      return (JMethod) typeMap.get(referenceMethod.binding);
+      assert !method.isNative() && !method.isAbstract();
+      return (JMethodBody) method.getBody();
     }
 
     private SourceInfo makeSourceInfo(Statement stmt) {
@@ -548,8 +552,8 @@ public class BuildTypeMap {
   /**
    * Creates JNodes for every type and memorizes the mapping from the JDT
    * Binding to the corresponding JNode for each created type. Note that since
-   * there could be forward references, it is not possible to set up super types;
-   * it must be done is a subsequent pass.
+   * there could be forward references, it is not possible to set up super
+   * types; it must be done is a subsequent pass.
    */
   private static class BuildTypeMapVisitor extends ASTVisitor {
 

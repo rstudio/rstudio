@@ -349,7 +349,8 @@ public class JTypeOracle {
 
   private void computeHasClinit(JReferenceType type) {
     JMethod method = (JMethod) type.methods.get(0);
-    if (!method.body.statements.isEmpty()) {
+    JMethodBody body = (JMethodBody) method.getBody();
+    if (!body.getStatements().isEmpty()) {
       hasClinitSet.add(type);
     }
   }

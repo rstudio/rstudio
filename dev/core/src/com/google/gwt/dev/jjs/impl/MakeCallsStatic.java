@@ -17,10 +17,10 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JAbstractMethodBody;
 import com.google.gwt.dev.jjs.ast.JClassType;
-import com.google.gwt.dev.jjs.ast.JLocal;
-import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JParameter;
@@ -31,9 +31,17 @@ import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
+import com.google.gwt.dev.js.ast.JsContext;
+import com.google.gwt.dev.js.ast.JsFunction;
+import com.google.gwt.dev.js.ast.JsModVisitor;
+import com.google.gwt.dev.js.ast.JsName;
+import com.google.gwt.dev.js.ast.JsParameter;
+import com.google.gwt.dev.js.ast.JsThisRef;
 
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -59,29 +67,84 @@ public class MakeCallsStatic {
    * it. Sometimes the instance method can be pruned later since we update all
    * non-polymorphic call sites.
    */
-  private class CreateStaticImplsVisitor extends JModVisitor {
+  private class CreateStaticImplsVisitor extends JVisitor {
+
+    /**
+     * When code is moved from an instance method to a static method, all
+     * thisRefs must be replaced with paramRefs to the synthetic this param.
+     */
+    private class RewriteJsniMethodBody extends JsModVisitor {
+
+      private final JsName thisParam;
+
+      public RewriteJsniMethodBody(JsName thisParam) {
+        this.thisParam = thisParam;
+      }
+
+      // @Override
+      public void endVisit(JsThisRef x, JsContext ctx) {
+        ctx.replaceMe(thisParam.makeRef());
+      }
+
+      // @Override
+      public boolean visit(JsFunction x, JsContext ctx) {
+        // Don't recurse into nested functions!
+        return false;
+      }
+    }
+
+    /**
+     * When code is moved from an instance method to a static method, all
+     * thisRefs must be replaced with paramRefs to the synthetic this param.
+     * ParameterRefs also need to be targeted to the params in the new method.
+     */
+    private class RewriteMethodBody extends JModVisitor {
+
+      private final JParameter thisParam;
+      private final Map/* <JVariable, JVariable> */varMap;
+
+      public RewriteMethodBody(JParameter thisParam,
+          Map/* <JVariable, JVariable> */varMap) {
+        this.thisParam = thisParam;
+        this.varMap = varMap;
+      }
+
+      // @Override
+      public void endVisit(JParameterRef x, Context ctx) {
+        JParameter param = (JParameter) varMap.get(x.getTarget());
+        JParameterRef paramRef = new JParameterRef(program, x.getSourceInfo(),
+            param);
+        ctx.replaceMe(paramRef);
+      }
+
+      // @Override
+      public void endVisit(JThisRef x, Context ctx) {
+        JParameterRef paramRef = new JParameterRef(program, x.getSourceInfo(),
+            thisParam);
+        ctx.replaceMe(paramRef);
+      }
+    }
 
     // @Override
     public boolean visit(JMethod x, Context ctx) {
-      if (!toBeMadeStatic.contains(x)) {
-        return false;
-      }
-
       // Let's do it!
       JClassType enclosingType = (JClassType) x.getEnclosingType();
-      JType oldReturnType = x.getType();
+      JType returnType = x.getType();
+      SourceInfo sourceInfo = x.getSourceInfo();
+      int myIndexInClass = enclosingType.methods.indexOf(x);
+      assert (myIndexInClass >= 0);
 
       // Create the new static method
       String newName = "$" + x.getName();
 
       /*
        * Don't use the JProgram helper because it auto-adds the new method to
-       * its enclosing class, which will break iteration.
+       * its enclosing class.
        */
-      JMethod newMethod = new JMethod(program, x.getSourceInfo(), newName,
-          enclosingType, oldReturnType, false, true, true, x.isPrivate());
+      JMethod newMethod = new JMethod(program, sourceInfo, newName,
+          enclosingType, returnType, false, true, true, x.isPrivate());
 
-      // Setup all params and locals; map from the old method to the new method
+      // Setup parameters; map from the old params to the new params
       JParameter thisParam = program.createParameter(null,
           "this$static".toCharArray(), enclosingType, true, newMethod);
       Map/* <JVariable, JVariable> */varMap = new IdentityHashMap();
@@ -94,47 +157,50 @@ public class MakeCallsStatic {
       }
       newMethod.freezeParamTypes();
 
-      // Copy all locals over to the new method
-      for (int i = 0; i < x.locals.size(); ++i) {
-        JLocal oldVar = (JLocal) x.locals.get(i);
-        JLocal newVar = program.createLocal(oldVar.getSourceInfo(),
-            oldVar.getName().toCharArray(), oldVar.getType(), oldVar.isFinal(),
-            newMethod);
-        varMap.put(oldVar, newVar);
-      }
-      x.locals.clear();
-
       // Move the body of the instance method to the static method
-      newMethod.body.statements.addAll(x.body.statements);
-      x.body.statements.clear();
+      JAbstractMethodBody movedBody = x.getBody();
+      newMethod.setBody(movedBody);
 
-      /*
-       * Rewrite the method body. Update all thisRefs to paramrefs. Update
-       * paramRefs and localRefs to target the params/locals in the new method.
-       */
-      RewriteMethodBody rewriter = new RewriteMethodBody(thisParam, varMap);
-      rewriter.accept(newMethod);
-
-      SourceInfo bodyInfo = x.body.getSourceInfo();
-      // delegate from the instance method to the static method
-      JMethodCall newCall = new JMethodCall(program, bodyInfo, null, newMethod);
-      newCall.getArgs().add(program.getExprThisRef(bodyInfo, enclosingType));
+      // Create a new body for the instance method that delegates to the static
+      JMethodBody newBody = new JMethodBody(program, sourceInfo);
+      x.setBody(newBody);
+      JMethodCall newCall = new JMethodCall(program, sourceInfo, null,
+          newMethod);
+      newCall.getArgs().add(program.getExprThisRef(sourceInfo, enclosingType));
       for (int i = 0; i < x.params.size(); ++i) {
         JParameter param = (JParameter) x.params.get(i);
-        newCall.getArgs().add(new JParameterRef(program, bodyInfo, param));
+        newCall.getArgs().add(new JParameterRef(program, sourceInfo, param));
       }
       JStatement statement;
-      if (oldReturnType == program.getTypeVoid()) {
+      if (returnType == program.getTypeVoid()) {
         statement = newCall.makeStatement();
       } else {
-        statement = new JReturnStatement(program, bodyInfo, newCall);
+        statement = new JReturnStatement(program, sourceInfo, newCall);
       }
-      x.body.statements.add(statement);
+      newBody.getStatements().add(statement);
+
+      /*
+       * Rewrite the method body. Update all thisRefs to paramRefs. Update
+       * paramRefs and localRefs to target the params/locals in the new method.
+       */
+      if (newMethod.isNative()) {
+        // For natives, we also need to create the JsParameter for this$static,
+        // because the jsFunc already has parameters.
+        // TODO: Do we really need to do that in BuildTypeMap?
+        JsFunction jsFunc = ((JsniMethodBody) movedBody).getFunc();
+        JsName paramName = jsFunc.getScope().declareName("this$static");
+        jsFunc.getParameters().add(0, new JsParameter(paramName));
+        RewriteJsniMethodBody rewriter = new RewriteJsniMethodBody(paramName);
+        // Accept the body to avoid the recursion blocker.
+        rewriter.accept(jsFunc.getBody());
+      } else {
+        RewriteMethodBody rewriter = new RewriteMethodBody(thisParam, varMap);
+        rewriter.accept(movedBody);
+      }
 
       // Add the new method as a static impl of the old method
       program.putStaticImpl(x, newMethod);
-      assert (ctx.canInsert());
-      ctx.insertAfter(newMethod);
+      enclosingType.methods.add(myIndexInClass + 1, newMethod);
       return false;
     }
   }
@@ -163,9 +229,6 @@ public class MakeCallsStatic {
         return;
       }
       if (method.isAbstract()) {
-        return;
-      }
-      if (method.isNative()) {
         return;
       }
       if (method == program.getNullMethod()) {
@@ -212,44 +275,6 @@ public class MakeCallsStatic {
     }
   }
 
-  /**
-   * When code is moved from an instance method to a static method, all this
-   * refs must be replaced with param refs to the synthetic this param.
-   */
-  private class RewriteMethodBody extends JModVisitor {
-
-    private final JParameter thisParam;
-    private final Map/* <JVariable, JVariable> */varMap;
-
-    public RewriteMethodBody(JParameter thisParam,
-        Map/* <JVariable, JVariable> */varMap) {
-      this.thisParam = thisParam;
-      this.varMap = varMap;
-    }
-
-    // @Override
-    public void endVisit(JLocalRef x, Context ctx) {
-      JLocal local = (JLocal) varMap.get(x.getTarget());
-      JLocalRef localRef = new JLocalRef(program, x.getSourceInfo(), local);
-      ctx.replaceMe(localRef);
-    }
-
-    // @Override
-    public void endVisit(JParameterRef x, Context ctx) {
-      JParameter param = (JParameter) varMap.get(x.getTarget());
-      JParameterRef paramRef = new JParameterRef(program, x.getSourceInfo(),
-          param);
-      ctx.replaceMe(paramRef);
-    }
-
-    // @Override
-    public void endVisit(JThisRef x, Context ctx) {
-      JParameterRef paramRef = new JParameterRef(program, x.getSourceInfo(),
-          thisParam);
-      ctx.replaceMe(paramRef);
-    }
-  }
-
   public static boolean exec(JProgram program) {
     return new MakeCallsStatic(program).execImpl();
   }
@@ -270,9 +295,9 @@ public class MakeCallsStatic {
     }
 
     CreateStaticImplsVisitor creator = new CreateStaticImplsVisitor();
-    creator.accept(program);
-    if (!creator.didChange()) {
-      return false;
+    for (Iterator it = toBeMadeStatic.iterator(); it.hasNext();) {
+      JMethod method = (JMethod) it.next();
+      creator.accept(method);
     }
 
     RewriteCallSites rewriter = new RewriteCallSites();

@@ -46,7 +46,6 @@ import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
-import com.google.gwt.dev.jjs.ast.js.JsniMethod;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 
 import java.util.ArrayList;
@@ -265,17 +264,10 @@ public class TypeTightener {
     }
 
     // @Override
-    public void endVisit(JsniMethod x, Context ctx) {
-      endVisit((JMethod) x, ctx);
-    }
-
-    // @Override
     public void endVisit(JsniMethodRef x, Context ctx) {
       // If this happens in JSNI, we can't make any type-tightening assumptions
       // Fake an assignment-to-self on all args to prevent tightening
-
       JMethod method = x.getTarget();
-
       for (int i = 0; i < method.params.size(); ++i) {
         JParameter param = (JParameter) method.params.get(i);
         addAssignment(param, new JParameterRef(program, null, param));
@@ -475,6 +467,15 @@ public class TypeTightener {
      */
     // @Override
     public void endVisit(JMethod x, Context ctx) {
+      /*
+       * Explicitly NOT visiting native methods since we can't infer type
+       * information.
+       * 
+       * TODO(later): can we figure out simple pass-through info?
+       */
+      if (x.isNative()) {
+        return;
+      }
 
       if (!(x.getType() instanceof JReferenceType)) {
         return;
@@ -539,14 +540,14 @@ public class TypeTightener {
       return true;
     }
 
-    public boolean visit(JsniMethod x, Context ctx) {
+    public boolean visit(JMethod x, Context ctx) {
       /*
        * Explicitly NOT visiting native methods since we can't infer type
        * information.
        * 
        * TODO(later): can we figure out simple pass-through info?
        */
-      return false;
+      return !x.isNative();
     }
 
     /**

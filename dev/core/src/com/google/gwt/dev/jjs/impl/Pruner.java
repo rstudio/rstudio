@@ -29,6 +29,7 @@ import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewArray;
@@ -45,7 +46,6 @@ import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
-import com.google.gwt.dev.jjs.ast.js.JsniMethod;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 
 import java.util.ArrayList;
@@ -169,8 +169,8 @@ public class Pruner {
       return false;
     }
 
-    public boolean visit(JMethod method, Context ctx) {
-      for (Iterator it = method.locals.iterator(); it.hasNext();) {
+    public boolean visit(JMethodBody x, Context ctx) {
+      for (Iterator it = x.locals.iterator(); it.hasNext();) {
         JLocal local = (JLocal) it.next();
         if (!referencedNonTypes.contains(local)) {
           it.remove();
@@ -182,7 +182,7 @@ public class Pruner {
 
     // @Override
     public boolean visit(JProgram program, Context ctx) {
-      for (Iterator it = program.getDeclaredTypes().iterator(); it.hasNext(); ) {
+      for (Iterator it = program.getDeclaredTypes().iterator(); it.hasNext();) {
         JReferenceType type = (JReferenceType) it.next();
         if (referencedTypes.contains(type)
             || program.typeOracle.isInstantiatedType(type)) {
@@ -514,7 +514,7 @@ public class Pruner {
         if (!referencedNonTypes.contains(method)) {
           referencedNonTypes.add(method);
           accept(method);
-          if (method instanceof JsniMethod) {
+          if (method.isNative()) {
             /*
              * SPECIAL: returning from this method passes a value from
              * JavaScript into Java.
@@ -640,11 +640,6 @@ public class Pruner {
     public boolean visit(JProgram x, Context ctx) {
       didRescue = false;
       return true;
-    }
-
-    // @Override
-    public boolean visit(JsniMethod x, Context ctx) {
-      return visit((JMethod) x, ctx);
     }
   }
 

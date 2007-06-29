@@ -52,6 +52,7 @@ import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
@@ -74,7 +75,7 @@ import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
-import com.google.gwt.dev.jjs.ast.js.JsniMethod;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -236,6 +237,8 @@ public class GenerateJavaAST {
 
     private JMethod currentMethod;
 
+    private JMethodBody currentMethodBody;
+
     private MethodScope currentMethodScope;
 
     private int[] currentSeparatorPositions;
@@ -274,7 +277,8 @@ public class GenerateJavaAST {
           JMethod superClinit = (JMethod) currentClass.extnds.methods.get(0);
           JMethodCall superClinitCall = new JMethodCall(program,
               myClinit.getSourceInfo(), null, superClinit);
-          myClinit.body.statements.add(0, superClinitCall.makeStatement());
+          JMethodBody body = (JMethodBody) myClinit.getBody();
+          body.getStatements().add(0, superClinitCall.makeStatement());
         }
 
         if (x.fields != null) {
@@ -284,10 +288,12 @@ public class GenerateJavaAST {
             if (fieldDeclaration.isStatic()) {
               // clinit
               currentMethod = (JMethod) currentClass.methods.get(0);
+              currentMethodBody = (JMethodBody) currentMethod.getBody();
               currentMethodScope = x.staticInitializerScope;
             } else {
               // init
               currentMethod = (JMethod) currentClass.methods.get(1);
+              currentMethodBody = (JMethodBody) currentMethod.getBody();
               currentMethodScope = x.initializerScope;
             }
 
@@ -447,7 +453,7 @@ public class GenerateJavaAST {
     void processConstructor(ConstructorDeclaration x) {
       JMethod ctor = (JMethod) typeMap.get(x.binding);
       try {
-        SourceInfo info = ctor.body.getSourceInfo();
+        SourceInfo info = ctor.getSourceInfo();
 
         currentMethod = ctor;
         currentMethodScope = x.scope;
@@ -475,7 +481,9 @@ public class GenerateJavaAST {
         JMethod clinitMethod = (JMethod) enclosingType.methods.get(0);
         JMethodCall clinitCall = new JMethodCall(program, info, null,
             clinitMethod);
-        ctor.body.statements.add(clinitCall.makeStatement());
+        JMethodBody body = (JMethodBody) ctor.getBody();
+        List statements = body.getStatements();
+        statements.add(clinitCall.makeStatement());
 
         /*
          * All synthetic fields must be assigned, unless we have an explicit
@@ -493,7 +501,7 @@ public class GenerateJavaAST {
                 JParameter param = (JParameter) paramIt.next();
                 if (arg.matchingField != null) {
                   JField field = (JField) typeMap.get(arg);
-                  ctor.body.statements.add(program.createAssignmentStmt(info,
+                  statements.add(program.createAssignmentStmt(info,
                       createVariableRef(info, field), createVariableRef(info,
                           param)));
                 }
@@ -505,7 +513,7 @@ public class GenerateJavaAST {
                 SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
                 JParameter param = (JParameter) paramIt.next();
                 JField field = (JField) typeMap.get(arg);
-                ctor.body.statements.add(program.createAssignmentStmt(info,
+                statements.add(program.createAssignmentStmt(info,
                     createVariableRef(info, field), createVariableRef(info,
                         param)));
               }
@@ -515,7 +523,7 @@ public class GenerateJavaAST {
 
         // optional this or super constructor call
         if (superOrThisCall != null) {
-          ctor.body.statements.add(superOrThisCall.makeStatement());
+          statements.add(superOrThisCall.makeStatement());
         }
 
         JExpression thisRef = createThisRef(info, enclosingType);
@@ -529,7 +537,7 @@ public class GenerateJavaAST {
           JMethod initMethod = (JMethod) enclosingType.methods.get(1);
           JMethodCall initCall = new JMethodCall(program, info, thisRef,
               initMethod);
-          ctor.body.statements.add(initCall.makeStatement());
+          statements.add(initCall.makeStatement());
         }
 
         // user code (finally!)
@@ -538,7 +546,7 @@ public class GenerateJavaAST {
             Statement origStmt = x.statements[i];
             JStatement jstmt = dispProcessStatement(origStmt);
             if (jstmt != null) {
-              ctor.body.statements.add(jstmt);
+              statements.add(jstmt);
             }
           }
         }
@@ -547,7 +555,7 @@ public class GenerateJavaAST {
         currentMethod = null;
 
         // synthesize a return statement to emulate returning the new object
-        ctor.body.statements.add(new JReturnStatement(program, null, thisRef));
+        statements.add(new JReturnStatement(program, null, thisRef));
       } catch (Throwable e) {
         throw translateException(ctor, e);
       }
@@ -1210,7 +1218,7 @@ public class GenerateJavaAST {
               createVariableRef(info, field), initializer);
 
           // will either be init or clinit
-          currentMethod.body.statements.add(assignStmt);
+          currentMethodBody.getStatements().add(assignStmt);
         }
       } catch (Throwable e) {
         throw translateException(field, e);
@@ -1221,7 +1229,7 @@ public class GenerateJavaAST {
       JBlock block = (JBlock) dispProcessStatement(initializer.block);
       try {
         // will either be init or clinit
-        currentMethod.body.statements.add(block);
+        currentMethodBody.getStatements().add(block);
       } catch (Throwable e) {
         throw translateException(initializer, e);
       }
@@ -1236,11 +1244,12 @@ public class GenerateJavaAST {
         }
 
         if (x.isNative()) {
-          processNativeMethod(x, (JsniMethod) method);
+          processNativeMethod(x, (JsniMethodBody) method.getBody());
           return;
         }
 
         currentMethod = method;
+        currentMethodBody = (JMethodBody) method.getBody();
         currentMethodScope = x.scope;
 
         if (x.statements != null) {
@@ -1248,11 +1257,12 @@ public class GenerateJavaAST {
             Statement origStmt = x.statements[i];
             JStatement jstmt = dispProcessStatement(origStmt);
             if (jstmt != null) {
-              method.body.statements.add(jstmt);
+              currentMethodBody.getStatements().add(jstmt);
             }
           }
         }
         currentMethodScope = null;
+        currentMethodBody = null;
         currentMethod = null;
       } catch (Throwable e) {
         throw translateException(method, e);
@@ -1260,9 +1270,9 @@ public class GenerateJavaAST {
     }
 
     void processNativeMethod(AbstractMethodDeclaration x,
-        JsniMethod nativeMethod) {
+        JsniMethodBody nativeMethodBody) {
 
-      JsFunction func = nativeMethod.getFunc();
+      JsFunction func = nativeMethodBody.getFunc();
       if (func == null) {
         return;
       }
@@ -1281,7 +1291,7 @@ public class GenerateJavaAST {
 
       for (int i = 0; i < nameRefs.size(); ++i) {
         JsNameRef nameRef = (JsNameRef) nameRefs.get(i);
-        SourceInfo info = nativeMethod.getSourceInfo();
+        SourceInfo info = nativeMethodBody.getSourceInfo();
         // TODO: make this tighter when we have real source info
         // JSourceInfo info = translateInfo(nameRef.getInfo());
         String ident = nameRef.getIdent();
@@ -1316,11 +1326,11 @@ public class GenerateJavaAST {
           JField field = (JField) node;
           JsniFieldRef fieldRef = new JsniFieldRef(program, info, field,
               currentClass);
-          nativeMethod.jsniFieldRefs.add(fieldRef);
+          nativeMethodBody.jsniFieldRefs.add(fieldRef);
         } else {
           JMethod method = (JMethod) node;
           JsniMethodRef methodRef = new JsniMethodRef(program, info, method);
-          nativeMethod.jsniMethodRefs.add(methodRef);
+          nativeMethodBody.jsniMethodRefs.add(methodRef);
         }
       }
     }

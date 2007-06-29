@@ -22,7 +22,7 @@ import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.js.JClassSeed;
-import com.google.gwt.dev.jjs.ast.js.JsniMethod;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -302,15 +302,15 @@ public class JProgram extends JNode {
   }
 
   public JLocal createLocal(SourceInfo info, char[] name, JType type,
-      boolean isFinal, JMethod enclosingMethod) {
+      boolean isFinal, JMethodBody enclosingMethodBody) {
     assert (name != null);
     assert (type != null);
-    assert (enclosingMethod != null);
+    assert (enclosingMethodBody != null);
 
     JLocal x = new JLocal(this, info, String.valueOf(name), type, isFinal,
-        enclosingMethod);
+        enclosingMethodBody);
 
-    enclosingMethod.locals.add(x);
+    enclosingMethodBody.locals.add(x);
 
     return x;
   }
@@ -322,14 +322,13 @@ public class JProgram extends JNode {
     assert (returnType != null);
     assert (!isAbstract || !isNative);
 
-    JMethod x;
     String sname = String.valueOf(name);
+    JMethod x = new JMethod(this, info, sname, enclosingType, returnType, isAbstract,
+        isStatic, isFinal, isPrivate);
     if (isNative) {
-      x = new JsniMethod(this, info, sname, enclosingType, returnType,
-          isStatic, isFinal, isPrivate);
-    } else {
-      x = new JMethod(this, info, sname, enclosingType, returnType, isAbstract,
-          isStatic, isFinal, isPrivate);
+      x.setBody(new JsniMethodBody(this, info));
+    } else if (!isAbstract) {
+      x.setBody(new JMethodBody(this, info));
     }
 
     if (sname.equals(FindDeferredBindingSitesVisitor.REBIND_MAGIC_METHOD)
@@ -468,8 +467,8 @@ public class JProgram extends JNode {
 
   public JMethod getNullMethod() {
     if (nullMethod == null) {
-      nullMethod = new JsniMethod(this, null, "nullMethod", null, typeNull,
-          false, true, true);
+      nullMethod = new JMethod(this, null, "nullMethod", null, typeNull,
+          false, false, true, true);
     }
     return nullMethod;
   }

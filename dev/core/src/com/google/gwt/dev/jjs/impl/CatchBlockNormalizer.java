@@ -25,6 +25,7 @@ import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -48,9 +49,9 @@ public class CatchBlockNormalizer {
   private class CollapseCatchBlocks extends JModVisitor {
 
     // @Override
-    public void endVisit(JMethod x, Context ctx) {
+    public void endVisit(JMethodBody x, Context ctx) {
       clearLocals();
-      currentMethod = null;
+      currentMethodBody = null;
     }
 
     // @Override
@@ -85,11 +86,11 @@ public class CatchBlockNormalizer {
         JLocalRef arg = (JLocalRef) x.getCatchArgs().get(i);
         catchInfo = block.getSourceInfo();
         JReferenceType argType = (JReferenceType) arg.getType();
-        // if ($e instanceof Argtype) { userVar = $e; <user code> }
+        // if ($e instanceof ArgType) { userVar = $e; <user code> }
         JExpression ifTest = new JInstanceOf(program, catchInfo, argType, exRef);
         asg = program.createAssignmentStmt(catchInfo, arg, exRef);
         if (!block.statements.isEmpty()) {
-          // Only bother adding the assingment if the block is non-empty
+          // Only bother adding the assignment if the block is non-empty
           block.statements.add(0, asg);
         }
         // nest the previous as an else for me
@@ -104,8 +105,8 @@ public class CatchBlockNormalizer {
     }
 
     // @Override
-    public boolean visit(JMethod x, Context ctx) {
-      currentMethod = x;
+    public boolean visit(JMethodBody x, Context ctx) {
+      currentMethodBody = x;
       clearLocals();
       return true;
     }
@@ -123,7 +124,7 @@ public class CatchBlockNormalizer {
     new CatchBlockNormalizer(program).execImpl();
   }
 
-  private JMethod currentMethod;
+  private JMethodBody currentMethodBody;
   private int localIndex;
   private final JProgram program;
   private final List/* <JLocal> */tempLocals = new ArrayList/* <JLocal> */();
@@ -150,7 +151,7 @@ public class CatchBlockNormalizer {
     if (localIndex == tempLocals.size()) {
       JLocal newTemp = program.createLocal(null,
           ("$e" + localIndex).toCharArray(), program.getTypeJavaLangObject(),
-          false, currentMethod);
+          false, currentMethodBody);
       tempLocals.add(newTemp);
     }
     ++localIndex;

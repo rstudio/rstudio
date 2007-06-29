@@ -24,6 +24,7 @@ import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
@@ -115,7 +116,8 @@ public class MethodInliner {
         return;
       }
 
-      List/* <JStatement> */stmts = method.body.statements;
+      JMethodBody body = (JMethodBody) method.getBody();
+      List/* <JStatement> */stmts = body.getStatements();
       boolean possibleToInline = false;
       if (stmts.isEmpty()) {
         tryInlineEmptyMethodCall(x, ctx);

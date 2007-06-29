@@ -53,6 +53,7 @@ import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
@@ -77,7 +78,7 @@ import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.jjs.ast.js.JClassSeed;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
-import com.google.gwt.dev.jjs.ast.js.JsniMethod;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
 import com.google.gwt.dev.jjs.ast.js.JsonObject.JsonPropInit;
@@ -235,11 +236,6 @@ public class GenerateJavaScriptAST {
     }
 
     // @Override
-    public void endVisit(JsniMethod x, Context ctx) {
-      // didn't push anything
-    }
-
-    // @Override
     public boolean visit(JClassType x, Context ctx) {
       // have I already been visited as a super type?
       JsScope myScope = (JsScope) classScopes.get(x);
@@ -297,7 +293,6 @@ public class GenerateJavaScriptAST {
 
     // @Override
     public boolean visit(JMethod x, Context ctx) {
-
       // my polymorphic name
       String name = x.getName();
       if (!x.isStatic()) {
@@ -324,35 +319,21 @@ public class GenerateJavaScriptAST {
       }
       names.put(x, globalName);
 
-      // create my peer JsFunction
-      JsFunction jsFunction = new JsFunction(topScope, globalName);
-      methodMap.put(x, jsFunction);
-
+      JsFunction jsFunction;
+      if (x.isNative()) {
+        // set the global name of the JSNI peer
+        JsniMethodBody body = (JsniMethodBody) x.getBody();
+        jsFunction = body.getFunc();
+        jsFunction.setName(globalName);
+      } else {
+        // create a new peer JsFunction
+        jsFunction = new JsFunction(topScope, globalName);
+        methodBodyMap.put(x.getBody(), jsFunction);
+      }
       push(jsFunction.getScope());
       return true;
     }
-
-    // @Override
-    public boolean visit(JsniMethod x, Context ctx) {
-      // my polymorphic name
-      String name = x.getName();
-      if (!x.isStatic()) {
-        if (getPolyName(x) == null) {
-          String mangleName = mangleNameForPoly(x);
-          JsName polyName = interfaceScope.declareName(mangleName, name);
-          polymorphicNames.put(x, polyName);
-        }
-      }
-
-      // set my global name now that we have a name allocator
-      String fnName = mangleNameForGlobal(x);
-      JsName globalName = topScope.declareName(fnName, name);
-      x.getFunc().setName(globalName);
-      names.put(x, globalName);
-
-      return false;
-    }
-
+    
     public boolean visit(JTryStatement x, Context ctx) {
       accept(x.getTryBlock());
 
@@ -822,24 +803,42 @@ public class GenerateJavaScriptAST {
 
     // @Override
     public void endVisit(JMethod x, Context ctx) {
-
-      JsBlock body = (JsBlock) pop();
-      List/* <JsNameRef> */locals = popList(x.locals.size()); // locals
-      List/* <JsParameter> */params = popList(x.params.size()); // params
-
       if (x.isAbstract()) {
         push(null);
         return;
       }
 
-      JsFunction jsFunc = (JsFunction) methodMap.get(x);
-      jsFunc.setBody(body); // body
+      JsFunction jsFunc = (JsFunction) pop(); // body
+      List/* <JsParameter> */params = popList(x.params.size()); // params
 
-      JsParameters jsParams = jsFunc.getParameters();
-      for (int i = 0; i < params.size(); ++i) {
-        JsParameter param = (JsParameter) params.get(i);
-        jsParams.add(param);
+      if (!x.isNative()) {
+        // Setup params on the generated function. A native method already got
+        // its jsParams set in BuildTypeMap.
+        // TODO: Do we really need to do that in BuildTypeMap?
+        JsParameters jsParams = jsFunc.getParameters();
+        for (int i = 0; i < params.size(); ++i) {
+          JsParameter param = (JsParameter) params.get(i);
+          jsParams.add(param);
+        }
       }
+
+      JsInvocation jsInvocation = maybeCreateClinitCall(x);
+      if (jsInvocation != null) {
+        jsFunc.getBody().getStatements().add(0, jsInvocation.makeStmt());
+      }
+
+      push(jsFunc);
+      currentMethod = null;
+    }
+
+    // @Override
+    public void endVisit(JMethodBody x, Context ctx) {
+
+      JsBlock body = (JsBlock) pop();
+      List/* <JsNameRef> */locals = popList(x.locals.size()); // locals
+
+      JsFunction jsFunc = (JsFunction) methodBodyMap.get(x);
+      jsFunc.setBody(body); // body
 
       /*
        * Emit a statement to declare the method's complete set of local
@@ -868,13 +867,7 @@ public class GenerateJavaScriptAST {
         jsFunc.getBody().getStatements().add(0, vars);
       }
 
-      JsInvocation jsInvocation = maybeCreateClinitCall(x);
-      if (jsInvocation != null) {
-        jsFunc.getBody().getStatements().add(0, jsInvocation.makeStmt());
-      }
-
       push(jsFunc);
-      currentMethod = null;
     }
 
     // @Override
@@ -1004,7 +997,7 @@ public class GenerateJavaScriptAST {
     }
 
     // @Override
-    public void endVisit(JsniMethod x, Context ctx) {
+    public void endVisit(JsniMethodBody x, Context ctx) {
       JsFunction jsFunc = x.getFunc();
 
       // replace all JSNI idents with a real JsName now that we know it
@@ -1047,13 +1040,7 @@ public class GenerateJavaScriptAST {
         }
       }.accept(jsFunc);
 
-      JsInvocation jsInvocation = maybeCreateClinitCall(x);
-      if (jsInvocation != null) {
-        jsFunc.getBody().getStatements().add(0, jsInvocation.makeStmt());
-      }
-
       push(jsFunc);
-      currentMethod = null;
     }
 
     // @Override
@@ -1147,6 +1134,9 @@ public class GenerateJavaScriptAST {
 
     // @Override
     public boolean visit(JMethod x, Context ctx) {
+      if (x.isAbstract()) {
+        return false;
+      }
       currentMethod = x;
       return true;
     }
@@ -1165,12 +1155,6 @@ public class GenerateJavaScriptAST {
 
       generateNullFunc(globalStatements);
       return true;
-    }
-
-    // @Override
-    public boolean visit(JsniMethod x, Context ctx) {
-      currentMethod = x;
-      return false;
     }
 
     public boolean visit(JSwitchStatement x, Context ctx) {
@@ -1634,7 +1618,7 @@ public class GenerateJavaScriptAST {
       Collections.sort(x.methods, hasNameSort);
     }
 
-    public void endVisit(JMethod x, Context ctx) {
+    public void endVisit(JMethodBody x, Context ctx) {
       Collections.sort(x.locals, hasNameSort);
     }
 
@@ -1672,7 +1656,7 @@ public class GenerateJavaScriptAST {
   private final JsScope interfaceScope;
 
   private final JsProgram jsProgram;
-  private final Map/* <JMethod, JsFunction> */methodMap = new IdentityHashMap();
+  private final Map/* <JMethodBody, JsFunction> */methodBodyMap = new IdentityHashMap();
   private final Map/* <HasName, JsName> */names = new IdentityHashMap();
   private JsName nullMethodName;
 

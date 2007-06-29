@@ -24,20 +24,20 @@ import java.util.List;
 /**
  * A Java method implementation.
  */
-public class JMethod extends JNode implements HasEnclosingType, HasName,
+public final class JMethod extends JNode implements HasEnclosingType, HasName,
     HasType, HasSettableType, CanBeAbstract, CanBeFinal, CanBeSetFinal,
     CanBeNative, CanBeStatic {
 
-  public final JBlock body;
-  public final ArrayList/* <JLocal> */locals = new ArrayList/* <JLocal> */();
   /**
    * References to any methods which this method overrides. This should be an
    * EXHAUSTIVE list, that is, if C overrides B overrides A, then C's overrides
    * list will contain both A and B.
    */
   public final List/* <JMethod> */overrides = new ArrayList/* <JMethod> */();
+
   public final ArrayList/* <JParameter> */params = new ArrayList/* <JParameter> */();
   public final ArrayList/* <JClassType> */thrownExceptions = new ArrayList/* <JClassType> */();
+  private JAbstractMethodBody body = null;
   private final JReferenceType enclosingType;
   private final boolean isAbstract;
   private boolean isFinal;
@@ -57,7 +57,6 @@ public class JMethod extends JNode implements HasEnclosingType, HasName,
     this.name = name;
     this.enclosingType = enclosingType;
     this.returnType = returnType;
-    this.body = new JBlock(program, info);
     this.isAbstract = isAbstract;
     this.isStatic = isStatic;
     this.isFinal = isFinal;
@@ -73,6 +72,10 @@ public class JMethod extends JNode implements HasEnclosingType, HasName,
       JParameter param = (JParameter) params.get(i);
       originalParamTypes.add(param.getType());
     }
+  }
+
+  public JAbstractMethodBody getBody() {
+    return body;
   }
 
   public JReferenceType getEnclosingType() {
@@ -103,7 +106,11 @@ public class JMethod extends JNode implements HasEnclosingType, HasName,
   }
 
   public boolean isNative() {
-    return false;
+    if (body == null) {
+      return false;
+    } else {
+      return body.isNative();
+    }
   }
 
   public boolean isPrivate() {
@@ -112,6 +119,14 @@ public class JMethod extends JNode implements HasEnclosingType, HasName,
 
   public boolean isStatic() {
     return isStatic;
+  }
+
+  public void setBody(JAbstractMethodBody body) {
+    if (body != null) {
+      body.setMethod(null);
+    }
+    this.body = body;
+    body.setMethod(this);
   }
 
   public void setFinal(boolean b) {
@@ -125,8 +140,9 @@ public class JMethod extends JNode implements HasEnclosingType, HasName,
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       visitor.accept(params);
-      visitor.accept(locals);
-      visitor.accept(body);
+      if (body != null) {
+        body = (JAbstractMethodBody) visitor.accept(body);
+      }
     }
     visitor.endVisit(this, ctx);
   }

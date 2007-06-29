@@ -56,6 +56,7 @@ import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
@@ -80,7 +81,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
-import com.google.gwt.dev.jjs.ast.js.JsniMethod;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
@@ -137,6 +138,10 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   protected static final char[] CHARS_TRUE = "true".toCharArray();
   protected static final char[] CHARS_TRY = "try ".toCharArray();
   protected static final char[] CHARS_WHILE = "while ".toCharArray();
+
+  protected static boolean isInitializer(JMethod x) {
+    return x.getName().equals("$clinit") || x.getName().equals("$init");
+  }
 
   private boolean needSemi = true;
 
@@ -575,7 +580,32 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
 
   // @Override
   public boolean visit(JMethod x, Context ctx) {
-    return printMethodHeader(x);
+    // special: transcribe clinit and init as if they were initializer blocks
+    if (isInitializer(x)) {
+      if (x.isStatic()) {
+        print(CHARS_STATIC);
+      }
+      accept(x.getBody());
+    } else {
+      printMethodHeader(x);
+      if (x.isAbstract()) {
+        semi();
+      } else {
+        space();
+        accept(x.getBody());
+      }
+    }
+
+    return false;
+  }
+
+  // @Override
+  public boolean visit(JMethodBody x, Context ctx) {
+    print("{");
+    // don't visit my block
+    newline();
+    print("}");
+    return false;
   }
 
   // @Override
@@ -713,13 +743,18 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   // @Override
-  public boolean visit(JsniMethod x, Context ctx) {
-    return printMethodHeader(x);
+  public boolean visit(JsniMethodBody x, Context ctx) {
+    print("/*-{");
+    // don't visit my block
+    newline();
+    print("}-*/");
+    semi();
+    return false;
   }
-
   // @Override
   public boolean visit(JsniMethodRef x, Context ctx) {
-    return printMethodHeader(x.getTarget());
+    printMethodHeader(x.getTarget());
+    return false;
   }
 
   // @Override
@@ -967,7 +1002,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     }
   }
 
-  protected boolean printMethodHeader(JMethod x) {
+  protected void printMethodHeader(JMethod x) {
     // Modifiers
     if (x.isPrivate()) {
       print(CHARS_PRIVATE);
@@ -1000,7 +1035,6 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
         printTypeName((JType) iter.next());
       }
     }
-    return false;
   }
 
   protected void printName(HasName x) {

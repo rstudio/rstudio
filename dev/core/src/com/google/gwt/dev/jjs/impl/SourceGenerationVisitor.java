@@ -21,11 +21,12 @@ import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
-import com.google.gwt.dev.jjs.ast.js.JsniMethod;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.util.TextOutput;
 
 /**
@@ -45,6 +46,11 @@ import com.google.gwt.dev.util.TextOutput;
  * try/catch/throw, and overrides of Object methods.
  */
 public class SourceGenerationVisitor extends ToStringGenerationVisitor {
+
+  private static boolean isEmptyInitializer(JMethod x) {
+    return isInitializer(x)
+        && (((JMethodBody) x.getBody()).getStatements().size() == 0);
+  }
 
   public SourceGenerationVisitor(TextOutput textOutput) {
     super(textOutput);
@@ -114,25 +120,9 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
   }
 
   // @Override
-  public boolean visit(JMethod x, Context ctx) {
-    // special: transcribe clinit and init as if they were initializer blocks
-    if (isInitializer(x)) {
-      if (x.isStatic()) {
-        print(CHARS_STATIC);
-      }
-      accept(x.body);
-    } else {
-      super.visit(x, ctx);
-
-      if (x.isAbstract()) {
-        semi();
-      } else {
-        space();
-        accept(x.body);
-      }
-    }
-
-    return false;
+  public boolean visit(JMethodBody x, Context ctx) {
+    // actually visit my block
+    return true;
   }
 
   // @Override
@@ -153,10 +143,8 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
   }
 
   // @Override
-  public boolean visit(JsniMethod x, Context ctx) {
-    super.visit(x, ctx);
-    space();
-    print(CHARS_SLASHSTAR);
+  public boolean visit(JsniMethodBody x, Context ctx) {
+    print("/*-");
     String jsniCode = x.getFunc().getBody().toString();
     String[] splits = jsniCode.split("\r|\n");
     for (int i = 0, c = splits.length; i < c; ++i) {
@@ -165,9 +153,8 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
       }
       print(splits[i]);
     }
-    print(CHARS_STARSLASH);
+    print("-*/");
     semi();
-
     return false;
   }
 
@@ -183,14 +170,6 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
     } else {
       super.printTypeName(type);
     }
-  }
-
-  private boolean isEmptyInitializer(JMethod x) {
-    return isInitializer(x) && (x.body.statements.size() == 0);
-  }
-
-  private boolean isInitializer(JMethod x) {
-    return x.getName().equals("$clinit") || x.getName().equals("$init");
   }
 
 }

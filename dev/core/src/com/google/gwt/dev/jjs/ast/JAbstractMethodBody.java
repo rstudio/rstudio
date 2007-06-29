@@ -18,26 +18,22 @@ package com.google.gwt.dev.jjs.ast;
 import com.google.gwt.dev.jjs.SourceInfo;
 
 /**
- * Java local variable definition.
+ * Represents a the body of a method. Can be Java or JSNI.
  */
-public class JLocal extends JVariable implements HasEnclosingMethod {
+public abstract class JAbstractMethodBody extends JNode {
+  protected JMethod method;
 
-  private final JMethodBody enclosingMethodBody;
-
-  JLocal(JProgram program, SourceInfo info, String name, JType type,
-      boolean isFinal, JMethodBody enclosingMethodBody) {
-    super(program, info, name, type, isFinal);
-    this.enclosingMethodBody = enclosingMethodBody;
+  protected JAbstractMethodBody(JProgram program, SourceInfo info) {
+    super(program, info);
   }
 
-  public JMethod getEnclosingMethod() {
-    return enclosingMethodBody.method;
+  public JMethod getMethod() {
+    return method;
   }
 
-  public void traverse(JVisitor visitor, Context ctx) {
-    if (visitor.visit(this, ctx)) {
-    }
-    visitor.endVisit(this, ctx);
-  }
+  public abstract boolean isNative();
 
+  public void setMethod(JMethod method) {
+    this.method = method; 
+  }
 }

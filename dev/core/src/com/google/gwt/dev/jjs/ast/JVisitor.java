@@ -19,7 +19,7 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.js.JClassSeed;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
-import com.google.gwt.dev.jjs.ast.js.JsniMethod;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
@@ -187,6 +187,9 @@ public class JVisitor {
   public void endVisit(JMethod x, Context ctx) {
   }
 
+  public void endVisit(JMethodBody x, Context ctx) {
+  }
+
   public void endVisit(JMethodCall x, Context ctx) {
   }
 
@@ -229,7 +232,7 @@ public class JVisitor {
   public void endVisit(JsniFieldRef x, Context ctx) {
   }
 
-  public void endVisit(JsniMethod x, Context ctx) {
+  public void endVisit(JsniMethodBody x, Context ctx) {
   }
 
   public void endVisit(JsniMethodRef x, Context ctx) {
@@ -398,6 +401,10 @@ public class JVisitor {
     return true;
   }
 
+  public boolean visit(JMethodBody x, Context ctx) {
+    return true;
+  }
+
   public boolean visit(JMethodCall x, Context ctx) {
     return true;
   }
@@ -454,7 +461,7 @@ public class JVisitor {
     return true;
   }
 
-  public boolean visit(JsniMethod x, Context ctx) {
+  public boolean visit(JsniMethodBody x, Context ctx) {
     return true;
   }
 
