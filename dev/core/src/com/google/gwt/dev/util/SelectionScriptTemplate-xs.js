@@ -56,12 +56,20 @@ function __MODULE_FUNC__() {
 
   // --------------- WINDOW ONLOAD HOOK ---------------
 
-  var onBodyDone = function() {
+  var onBodyDoneTimerId;
+  function onBodyDone() {
     if (!bodyDone) {
       bodyDone = true;
       maybeStartModule();
+
+      if ($doc.removeEventListener) {
+        $doc.removeEventListener("DOMContentLoaded", onBodyDone);
+      }
+      if (onBodyDoneTimerId) {
+      	clearInterval(onBodyDoneTimerId);
+      }
     }
-  };
+  }
 
   // For everyone that supports DOMContentLoaded.
   if ($doc.addEventListener) {
@@ -71,9 +79,7 @@ function __MODULE_FUNC__() {
   // Fallback. If onBodyDone() gets fired twice, it's not a big deal.
   var onBodyDoneTimerId = setInterval(function() {
     if (/interactive|loaded|complete/.test($doc.readyState)) {
-      clearInterval(onBodyDoneTimerId);
       onBodyDone();
-      onBodyDone = null;
     }
   }, 50);
 
