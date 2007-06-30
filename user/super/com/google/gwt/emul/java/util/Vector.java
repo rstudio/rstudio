@@ -18,7 +18,6 @@ package java.util;
 /**
  * To keep performance characteristics in line with Java community expectations, 
  * <code>Vector</code> is a wrapper around <code>ArrayList</code>.  
- *
  */
 public class Vector extends AbstractList implements List, RandomAccess,
     Cloneable {

@@ -18,110 +18,103 @@ package java.util;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
- * See Sun's JDK 1.4 documentation for documentation.   
+ * See Sun's JDK 1.4 documentation for documentation.
  * 
- * Differences between this implementation and JDK 1.4 <code>ArrayList</code>
- * include capacity management and range checking.
- * <p>
- * <b>Capacity</b> There is no speed advantage to pre-allocating array sizes in
- * JavaScript, so this implementation does not include any of the capacity and
- * "growth increment" concepts in the standard ArrayList class. Although
- * <code>ArrayList(int)</code> accepts a value for the intitial capacity of
- * the array, this constructor simply delegates to <code>ArrayList()</code>.
- * It is only present for compatibility with JDK 1.4's API.
- * </p>
- * <p>
- * <b>Dual endedness</b> For increased performance, this implementation supports
- * constant time insertion and deletion from either end.
+ * This implementation differs from JDK 1.4 <code>ArrayList</code> in terms of
+ * capacity management. There is no speed advantage to pre-allocating array
+ * sizes in JavaScript, so this implementation does not include any of the
+ * capacity and "growth increment" concepts in the standard ArrayList class.
+ * Although <code>ArrayList(int)</code> accepts a value for the intitial
+ * capacity of the array, this constructor simply delegates to
+ * <code>ArrayList()</code>. It is only present for compatibility with JDK
+ * 1.4's API.
  * </p>
  */
 public class ArrayList extends AbstractList implements List, Cloneable,
     RandomAccess {
-  /*
-   * Implementation notes:  
-   *   Currently if one uses an ArrayList as a ring buffer, adding from one end,
-   *   and deleting from the other, the indexes will increase (or decrease) 
-   *   without ever being normalized.  Back of the envelope calculations 
-   *   indicate that at 30 indexes per second, it will take a year of solid run
-   *   time to chew through the billion indexes needed to get into trouble.
-   *   Given that it seemed better not to rebalance than to charge everyone the
-   *   extra code size the rebalancing code would represent. 
-   */
 
-  protected static boolean equals(Object a, Object b) {
-    return (a == null ? b == null : a.equals(b));
-  } 
-  /** 
-   * This field holds the javascript array, and is not private to avoid Eclipse
-   * warnings. 
+  private static native void addImpl(JavaScriptObject array, int index, Object o) /*-{
+    array.splice(index, 0, o);
+  }-*/;
+
+  private static boolean equals(Object a, Object b) {
+    return a == b || (a != null && a.equals(b));
+  }
+
+  private static native Object getImpl(JavaScriptObject array, int index) /*-{
+    return array[index];
+  }-*/;
+
+  private static native void removeRangeImpl(JavaScriptObject array, int index,
+      int count) /*-{
+    array.splice(index, count);
+  }-*/;
+
+  private static native void setImpl(JavaScriptObject array, int index, Object o) /*-{
+    array[index] = o;
+  }-*/;
+
+  private static native void setSizeImpl(JavaScriptObject array, int newSize) /*-{
+    array.length = newSize;
+  }-*/;
+
+  /**
+   * This field holds a JavaScript array.
    */
-  transient JavaScriptObject array;
-  /** 
-   * This field holds the last populated index of the array and is not private
-   * to avoid Eclipse warnings.
+  private transient JavaScriptObject array;
+
+  /**
+   * The size of the array.
    */
-  int endIndex;
-  /** 
-   * This field holds the first populated index of the array and is not private
-   * to avoid Eclipse warnings.
-   */
-  int startIndex;
+  private int size;
+
+  {
+    clearImpl();
+  }
 
   public ArrayList() {
-    initArray();
   }
 
   public ArrayList(Collection c) {
-    initArray();
     addAll(c);
   }
 
   /**
-   * There is no speed advantage to pre-allocating array sizes in JavaScript,
-   * so the <code>intialCapacity</code> parameter is ignored. This constructor is
+   * There is no speed advantage to pre-allocating array sizes in JavaScript, so
+   * the <code>intialCapacity</code> parameter is ignored. This constructor is
    * only present for compatibility with JDK 1.4's API.
    */
   public ArrayList(int initialCapacity) {
     // initialCapacity is ignored in JS implementation; this constructor is
     // present for JDK 1.4 compatibility
-    this();
   }
 
-  public native void add(int index, Object o) /*-{
-    var array  = this.@java.util.ArrayList::array;
-    var endIndex = this.@java.util.ArrayList::endIndex;
-    var startIndex = this.@java.util.ArrayList::startIndex;
-    // This if is not an else if to call attention to the early return.
-    if (index + startIndex == endIndex) {
-      // If we are at the end simply set the next element to hold the value.
-      array[endIndex] = o;
-      this.@java.util.ArrayList::endIndex++;
-      return;
+  public void add(int index, Object o) {
+    if (index < 0 || index > size) {
+      indexOutOfBounds(index);
     }
-    if (index == 0) {
-      // If we are adding at the beginning, simply set the new element, and 
-      // move the beginning back.
-      array[--this.@java.util.ArrayList::startIndex] = o;
-      return;
-    }
-    
-    // Somewhere in the middle, so do range checking and the splice.
-    // Range checking, must be more permissive since one can add off the end.
-    this.@java.util.ArrayList::verifyIndexOneExtra(I)(index);
-    array.splice(index + startIndex, 0, o);
-    // The end of the array moved forward if we got here so record that.
-    this.@java.util.ArrayList::endIndex++;
-  }-*/;
+    addImpl(array, index, o);
+    ++size;
+  }
 
   public boolean add(Object o) {
-    add(size(),o);
+    setImpl(array, size++, o);
     return true;
   }
- 
-  public void clear() {
-    setSize(0);
+
+  public boolean addAll(Collection c) {
+    Iterator iter = c.iterator();
+    boolean changed = iter.hasNext();
+    while (iter.hasNext()) {
+      setImpl(array, size++, iter.next());
+    }
+    return changed;
   }
-  
+
+  public void clear() {
+    clearImpl();
+  }
+
   public Object clone() {
     return new ArrayList(this);
   }
@@ -129,30 +122,32 @@ public class ArrayList extends AbstractList implements List, Cloneable,
   public boolean contains(Object o) {
     return (indexOf(o) != -1);
   }
- 
-  public native Object get(int index) /*-{
-    this.@java.util.ArrayList::verifyIndex(I)(index);
-    var startIndex = this.@java.util.ArrayList::startIndex;
-    return this.@java.util.ArrayList::array[index + startIndex];
-  }-*/;
-  
+
+  public Object get(int index) {
+    if (index < 0 || index >= size) {
+      indexOutOfBounds(index);
+    }
+    return getImpl(array, index);
+  }
+
   public int indexOf(Object o) {
     return indexOf(o, 0);
   }
 
-  public native boolean isEmpty() /*-{
-    return (this.@java.util.ArrayList::endIndex == this.@java.util.ArrayList::startIndex);
-  }-*/;
+  public boolean isEmpty() {
+    return size == 0;
+  }
 
   public int lastIndexOf(Object o) {
-     return lastIndexOf(o, size() - 1);
+    return lastIndexOf(o, size() - 1);
   }
 
   public Object remove(int index) {
-    Object old = get(index);
-    removeRange(index,index + 1);
-    return old;
-  } 
+    Object previous = get(index);
+    removeRangeImpl(array, index, 1);
+    --size;
+    return previous;
+  }
 
   public boolean remove(Object o) {
     int i = indexOf(o);
@@ -163,127 +158,70 @@ public class ArrayList extends AbstractList implements List, Cloneable,
     return true;
   }
 
-  public native Object set(int index, Object o) /*-{
-    this.@java.util.ArrayList::verifyIndex(I)(index);
-    var array = this.@java.util.ArrayList::array;
-    var startIndex = this.@java.util.ArrayList::startIndex;
-    var old = array[index + startIndex];
-    array[index + startIndex] = o;
-    return old;
-  }-*/;
-
-  public native int size() /*-{
-    return this.@java.util.ArrayList::endIndex - this.@java.util.ArrayList::startIndex; 
-  }-*/;
-  
-  protected native void removeRange(int fromIndex, int toIndex) /*-{
-    this.@java.util.ArrayList::verifyIndexOneExtra(I)(fromIndex);
-    this.@java.util.ArrayList::verifyIndexOneExtra(I)(toIndex);
-    var array = this.@java.util.ArrayList::array;
-    var startIndex = this.@java.util.ArrayList::startIndex;
-    var endIndex = this.@java.util.ArrayList::endIndex;
-    if (fromIndex == 0) {
-      // Chop off the beginning.
-      for (var i = startIndex; i < (toIndex + startIndex); i++) {
-        delete array[i];
-      }
-      this.@java.util.ArrayList::startIndex += (toIndex - fromIndex);
-    } else if (toIndex + startIndex == endIndex) {
-      // Chop off the end.
-      for (var i = (fromIndex + startIndex); i < endIndex; i++) {
-        delete array[i];
-      }
-      this.@java.util.ArrayList::endIndex = (fromIndex + startIndex);
-    } else {
-      // Splice from the middle.
-      var numToRemove = toIndex - fromIndex;
-      array.splice(fromIndex + startIndex, numToRemove);
-      this.@java.util.ArrayList::endIndex -= numToRemove;
-    }
-  }-*/;
-  
-  native int indexOf(Object o, int index) /*-{
-    var array = this.@java.util.ArrayList::array;
-    var startIndex = this.@java.util.ArrayList::startIndex;
-    var i = index + startIndex;
-    var endIndex = this.@java.util.ArrayList::endIndex;            
-    while (i < endIndex) {
-      if (@java.util.ArrayList::equals(Ljava/lang/Object;Ljava/lang/Object;)(array[i],o)) {
-        return i - startIndex;
-      }
-      ++i;
-    }
-    return -1;
-  }-*/;
-  
-  /**
-   * Throws an <code>indexOutOfBoundsException</code>, and is not 
-   * private to avoid eclipse warnings.
-   */
-  void indexOutOfBounds(int i) {
-    throw new IndexOutOfBoundsException("Size: " + this.size() + " Index: " + i);
+  public Object set(int index, Object o) {
+    Object previous = get(index);
+    setImpl(array, index, o);
+    return previous;
   }
-  
-  /**
-   * Computes the last index of an element given an offset, and is
-   * not private to avoid eclipse warnings.
-   */
-  native int lastIndexOf(Object o, int index) /*-{
-    var array = this.@java.util.ArrayList::array;
-    var startIndex = this.@java.util.ArrayList::startIndex;
-    var i = index + startIndex;
-    while (i >= startIndex) {
-      if (@java.util.ArrayList::equals(Ljava/lang/Object;Ljava/lang/Object;)(array[i],o)) {
-        return i - startIndex;
+
+  public int size() {
+    return size;
+  }
+
+  protected int indexOf(Object o, int index) {
+    if (index < 0) {
+      indexOutOfBounds(index);
+    }
+    for (; index < size; ++index) {
+      if (equals(o, getImpl(array, index))) {
+        return index;
       }
-      --i;
     }
     return -1;
-  }-*/;
+  }
+
+  protected int lastIndexOf(Object o, int index) {
+    if (index >= size) {
+      indexOutOfBounds(index);
+    }
+    for (; index >= 0; --index) {
+      if (equals(o, getImpl(array, index))) {
+        return index;
+      }
+    }
+    return -1;
+  }
+
+  protected void removeRange(int fromIndex, int endIndex) {
+    if (fromIndex < 0 || fromIndex >= size) {
+      indexOutOfBounds(fromIndex);
+    }
+    if (endIndex < fromIndex || endIndex > size) {
+      indexOutOfBounds(endIndex);
+    }
+    int count = endIndex - fromIndex;
+    removeRangeImpl(array, fromIndex, count);
+    size -= count;
+  }
 
   /**
-   * This function sets the size of the array, and is used in Vector.
+   * This function sets the size of the array, and is used by Vector.
    */
-  native void setSize(int newSize) /*-{
-    // Make sure to null fill any newly created slots (otherwise,
-    // get() can return 'undefined').
-    var endIndex = this.@java.util.ArrayList::endIndex;
-    var startIndex = this.@java.util.ArrayList::startIndex;
-    var array = this.@java.util.ArrayList::array;
-    var newEnd = newSize + startIndex;
-    for (var i = endIndex; i < newEnd; ++i) {
-      array[i] = null;
+  protected void setSize(int newSize) {
+    if (newSize < 0) {
+      indexOutOfBounds(newSize);
     }
+    setSizeImpl(array, newSize);
+    // null fill any new slots if size < newSize
+    for (; size < newSize; ++size) {
+      setImpl(array, size, null);
+    }
+    // assignment necessary when size > newSize
+    size = newSize;
+  }
 
-    // Also make sure to clean up orphaned slots (or we'll end up
-    // leaving garbage uncollected).
-    for (var i = endIndex - 1; i >= newEnd; --i) {
-      delete array[i];
-    }
-    this.@java.util.ArrayList::endIndex = newEnd;
-  }-*/;
-  
-  native void verifyIndex(int index) /*-{
-    var endIndex = this.@java.util.ArrayList::endIndex;
-    var startIndex = this.@java.util.ArrayList::startIndex;
-    if (index < 0 || index + startIndex >= endIndex) {
-      this.@java.util.ArrayList::indexOutOfBounds(I)(index);
-    }
-  }-*/;
-  
-  native void verifyIndexOneExtra(int index) /*-{
-    var endIndex = this.@java.util.ArrayList::endIndex;
-    var startIndex = this.@java.util.ArrayList::startIndex;
-    if (index < 0 || index + startIndex > endIndex) {
-      this.@java.util.ArrayList::indexOutOfBounds(I)(index);
-    }
-  }-*/;
- 
-  private native void initArray() /*-{
-    this.@java.util.ArrayList::array = new Array();
-    var HALFWAY_INDEX = 1000000000; // Halfway through the address space
-    // Javascript arrays are sparse, so this wastes no space
-    this.@java.util.ArrayList::startIndex = HALFWAY_INDEX;
-    this.@java.util.ArrayList::endIndex = HALFWAY_INDEX;
-  }-*/;
+  private void clearImpl() {
+    array = JavaScriptObject.createArray();
+    size = 0;
+  }
 }

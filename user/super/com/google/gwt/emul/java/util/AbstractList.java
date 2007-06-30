@@ -30,14 +30,14 @@ public abstract class AbstractList extends AbstractCollection implements List {
     int i = 0, last = -1;
 
     public boolean hasNext() {
-      return i < size();
+      return i < AbstractList.this.size();
     }
 
     public Object next() {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
-      return get(last = i++);
+      return AbstractList.this.get(last = i++);
     }
 
     public void remove() {
@@ -68,8 +68,7 @@ public abstract class AbstractList extends AbstractCollection implements List {
     private ListIteratorImpl(int start) {
       int size = AbstractList.this.size();
       if (start < 0 || start > size) {
-        throw new IndexOutOfBoundsException("Size: " + AbstractList.this.size()
-            + " Index: " + i);
+        AbstractList.this.indexOutOfBounds(start);
       }
       i = start;
     }
@@ -91,7 +90,7 @@ public abstract class AbstractList extends AbstractCollection implements List {
       if (!hasPrevious()) {
         throw new NoSuchElementException();
       }
-      return get(last = --i);
+      return AbstractList.this.get(last = --i);
     }
 
     public int previousIndex() {
@@ -206,6 +205,14 @@ public abstract class AbstractList extends AbstractCollection implements List {
 
   public Object set(int index, Object element) {
     throw new UnsupportedOperationException("set");
+  }
+
+  /**
+   * Throws an <code>indexOutOfBoundsException</code>.
+   */
+  protected void indexOutOfBounds(int i) {
+    throw new IndexOutOfBoundsException("Index: " + i + ", Size: "
+        + this.size());
   }
 
   protected void removeRange(int fromIndex, int endIndex) {

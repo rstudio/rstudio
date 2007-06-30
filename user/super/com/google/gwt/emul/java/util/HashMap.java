@@ -250,24 +250,6 @@ public class HashMap extends AbstractMap {
   }-*/;
 
   /**
-   * Returns a new array.
-   * 
-   * TODO: move this to JavaScriptObject?
-   */
-  private static native JavaScriptObject createArray() /*-{
-    return [];
-  }-*/;
-
-  /**
-   * Returns a new object.
-   * 
-   * TODO: move this to JavaScriptObject?
-   */
-  private static native JavaScriptObject createObject() /*-{
-    return {};
-  }-*/;
-
-  /**
    * Returns <code>undefined</code>. This is technically a violation of the
    * JSNI contract, so we have to be very careful how we use the result.
    */
@@ -417,7 +399,7 @@ public class HashMap extends AbstractMap {
   private transient JavaScriptObject stringMap;
 
   {
-    clear();
+    clearImpl();
   }
 
   public HashMap() {
@@ -441,10 +423,7 @@ public class HashMap extends AbstractMap {
   }
 
   public void clear() {
-    hashCodeMap = createArray();
-    stringMap = createObject();
-    nullSlot = UNDEFINED;
-    size = 0;
+    clearImpl();
   }
 
   public Object clone() {
@@ -538,6 +517,13 @@ public class HashMap extends AbstractMap {
 
   public int size() {
     return size;
+  }
+
+  private void clearImpl() {
+    hashCodeMap = JavaScriptObject.createArray();
+    stringMap = JavaScriptObject.createObject();
+    nullSlot = UNDEFINED;
+    size = 0;
   }
 
 }

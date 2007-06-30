@@ -29,6 +29,20 @@ package com.google.gwt.core.client;
  */
 public class JavaScriptObject {
 
+  /**
+   * Returns a new array.
+   */
+  public static native JavaScriptObject createArray() /*-{
+    return [];
+  }-*/;
+  
+  /**
+   * Returns a new object.
+   */
+  public static native JavaScriptObject createObject() /*-{
+    return {};
+  }-*/;
+
   private static native boolean equalsImpl(JavaScriptObject o,
       JavaScriptObject other) /*-{
     return o === other;
