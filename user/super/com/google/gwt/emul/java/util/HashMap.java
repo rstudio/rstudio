@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package java.util;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -21,36 +20,33 @@ import com.google.gwt.core.client.JavaScriptObject;
 /**
  * See Sun's JDK 1.4 documentation for documentation on the <code>HashMap</code>
  * API.
- * 
- * This implementation of <code>HashMap</code> uses JavaScript native data
- * structures to provide high performance in web mode, using string keys to
- * index strings, and sparse int keys (via hashCode()) to index everything else.
  */
 public class HashMap extends AbstractMap {
   /*
-   * Implementation notes:  
-   *   String keys must be handled specially because we need only store one value 
-   *     for a given string key. 
-   *   String keys can collide with integer ones, as JavaScript treats '0' and 0 
-   *     as the same key.  We resolve this by appending an 'S' on each string key.
-   *   Integer keys are used for everything but Strings, as we get an integer by 
-   *     taking the hashcode, and storing the value there.  Since several keys
-   *     may have the same hashcode, we store a list of key/value pairs at the  
-   *     index of the hashcode.  Javascript arrays are sparse, so this usage costs 
-   *     nothing in performance.  Also, String and integer keys can coexist in the
-   *     same data structure, which reduces storage overhead for small HashMaps.
-   *   Things to pursue:
-   *     Benchmarking shared data store (with the 'S' append) vs one structure for 
-   *       Strings and another for everything else).
-   *     Benchmarking the effect of gathering the common parts of get/put/remove 
-   *       into a shared method.  These methods would have several parameters, and 
-   *       some extra control flow.
+   * Implementation notes:
+   * 
+   * String keys are stored in a separate map from non-String keys. String keys
+   * are mapped to their values via a JS associative map, stringMap. String keys
+   * could collide with intrinsic properties (like watch, constructor) so we
+   * prepend each key with a ':' inside of stringMap.
+   * 
+   * Integer keys are used to index all non-string keys. A key's hashCode is the
+   * index in hashCodeMap which should contain that key. Since several keys may
+   * have the same hash, each value in hashCodeMap is actually an array
+   * containing all entries whose keys share the same hash.
    */
 
   /**
    * Implementation of <code>HashMap</code> entry.
    */
   private static class EntryImpl implements Map.Entry {
+
+    /**
+     * Helper method for constructing Map.Entry objects from JSNI code.
+     */
+    static Map.Entry create(Object key, Object value) {
+      return new EntryImpl(key, value);
+    }
 
     private Object key;
 
@@ -64,11 +60,11 @@ public class HashMap extends AbstractMap {
       this.value = value;
     }
 
-    public boolean equals(Object a) {
-      if (a instanceof Map.Entry) {
-        Map.Entry s = (Map.Entry) a;
-        if (equalsWithNullCheck(key, s.getKey())
-            && equalsWithNullCheck(value, s.getValue())) {
+    public boolean equals(Object other) {
+      if (other instanceof Map.Entry) {
+        Map.Entry entry = (Map.Entry) other;
+        if (equalsWithNullCheck(key, entry.getKey())
+            && equalsWithNullCheck(value, entry.getValue())) {
           return true;
         }
       }
@@ -107,37 +103,62 @@ public class HashMap extends AbstractMap {
     public String toString() {
       return getKey() + "=" + getValue();
     }
+  }
 
-    /**
-     * Checks to see of a == b correctly handling the case where a is null.
-     */
-    private boolean equalsWithNullCheck(Object a, Object b) {
-      if (a == b) {
-        return true;
-      } else if (a == null) {
-        return false;
-      } else {
-        return a.equals(b);
+  private final class EntrySet extends AbstractSet {
+
+    public void clear() {
+      HashMap.this.clear();
+    }
+
+    public boolean contains(Object o) {
+      if (o instanceof Map.Entry) {
+        Map.Entry entry = (Map.Entry) o;
+        Object key = entry.getKey();
+        if (HashMap.this.containsKey(key)) {
+          Object value = HashMap.this.get(key);
+          return equalsWithNullCheck(entry.getValue(), value);
+        }
       }
+      return false;
+    }
+
+    public Iterator iterator() {
+      return new EntrySetIterator();
+    }
+
+    public boolean remove(Object entry) {
+      if (contains(entry)) {
+        Object key = ((Map.Entry) entry).getKey();
+        HashMap.this.remove(key);
+        return true;
+      }
+      return false;
+    }
+
+    public int size() {
+      return HashMap.this.size();
     }
   }
-  
+
   /**
    * Iterator for <code>EntrySetImpl</code>.
    */
-  private final class EntrySetImplIterator implements Iterator {
-    Object last = null;
-
+  private final class EntrySetIterator implements Iterator {
+    private Map.Entry last = null;
     private final Iterator iter;
 
     /**
      * Constructor for <code>EntrySetIterator</code>.
      */
-    public EntrySetImplIterator() {
-      final List l = new ArrayList();
-      addAllFromJavascriptObject(l, map, BOTH_POS);
-      final Iterator lstIter = l.iterator();
-      this.iter = lstIter;
+    public EntrySetIterator() {
+      List list = new ArrayList();
+      if (nullSlot != UNDEFINED) {
+        list.add(new EntryImpl(null, nullSlot));
+      }
+      addAllStringEntries(stringMap, list);
+      addAllHashEntries(hashCodeMap, list);
+      this.iter = list.iterator();
     }
 
     public boolean hasNext() {
@@ -145,8 +166,7 @@ public class HashMap extends AbstractMap {
     }
 
     public Object next() {
-      last = iter.next();
-      return last;
+      return last = (Map.Entry) iter.next();
     }
 
     public void remove() {
@@ -154,83 +174,235 @@ public class HashMap extends AbstractMap {
         throw new IllegalStateException("Must call next() before remove().");
       } else {
         iter.remove();
-        HashMap.this.remove(((Entry) last).getKey());
+        HashMap.this.remove(last.getKey());
+        last = null;
       }
     }
   }
 
   /**
-   * Keys are stored in the first position of each pair within the JavaScript
-   * dictionary. This constant encodes that fact.
+   * Contains JS <code>undefined</code>. This is technically a violation of
+   * the JSNI contract, so we have to be very careful with this.
    */
-  private static final int KEYS_POS = 0;
+  private static final Object UNDEFINED = createUndefinedValue();
 
-  /**
-   * Values are stored in the second position of each pair within the JavaScript
-   * dictionary. This constant encodes that fact.
-   */
-  private static final int VALUES_POS = 1;
-
-  /**
-   * This constant is used when new mapping entries should be generated from the
-   * JavaScript item.
-   */
-  private static final int BOTH_POS = 2;
-
-  protected static Map.Entry createEntry(Object key, Object value) {
-    return new EntryImpl(key, value);
-  }
-
-  // Used by JSNI for key processing, not private to avoid eclipse "unused
-  // method" warning.
-  static String asString(Object o) {
-    // All keys must either be entirely numeric, or end with 'S' or be
-    // the sentinel value "null".
-
-    if (o instanceof String) {
-      // Mark all string keys so they do not conflict with numeric ones.
-      return ((String) o) + "S";
-    } else if (o == null) {
-      return "null";
-    } else {
-      return null;
-    }
-  }
-
-  /**
-   * Finds the <code>JavaScriptObject</code> associated with the given
-   * non-string key.  Used in JSNI.
-   */
-  private static native JavaScriptObject findNode(HashMap me, Object key) /*-{
-    var KEYS_POS = 0;
-    var map = me.@java.util.HashMap::map;
-    var k = key.@java.lang.Object::hashCode()();
-    var candidates = map[k];
-    if (candidates != null) {
-      for (var index in candidates) {
-        var candidate = candidates[index];
-        if (candidate[KEYS_POS].@java.lang.Object::equals(Ljava/lang/Object;)(key)) {
-          return [k, index];
+  private static native void addAllHashEntries(JavaScriptObject hashCodeMap,
+      Collection dest) /*-{
+    for (var hashCode in hashCodeMap) {
+      // sanity check that it's really an integer
+      if (hashCode == parseInt(hashCode)) {
+        var array = hashCodeMap[hashCode];
+        for (var i = 0, c = array.length; i < c; ++i) {
+          dest.@java.util.Collection::add(Ljava/lang/Object;)(array[i]);
         }
       }
     }
-    return null;
+  }-*/;
+  
+  private static native void addAllStringEntries(JavaScriptObject stringMap,
+      Collection dest) /*-{
+    for (var key in stringMap) {
+      // only keys that start with a colon ':' count
+      if (key.charCodeAt(0) == 58) {
+        var value = stringMap[key];
+        var entry = @java.util.HashMap$EntryImpl::create(Ljava/lang/Object;Ljava/lang/Object;)(key.substring(1), value);
+        dest.@java.util.Collection::add(Ljava/lang/Object;)(entry);
+      }
+    }
   }-*/;
 
   /**
-   * Underlying JavaScript map.
+   * Returns true if hashCodeMap contains any Map.Entry whose value is Object
+   * equal to <code>value</code>.
    */
-  private transient JavaScriptObject map;
+  private static native boolean containsHashValue(JavaScriptObject hashCodeMap, Object value) /*-{
+    for (var hashCode in hashCodeMap) {
+      // sanity check that it's really one of ours
+      if (hashCode == parseInt(hashCode)) {
+        var array = hashCodeMap[hashCode];
+        for (var i = 0, c = array.length; i < c; ++i) {
+          var entry = array[i];
+          var entryValue = entry.@java.util.Map$Entry::getValue()();
+          if (@java.util.HashMap::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(value, entryValue)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }-*/;
+  
+  /**
+   * Returns true if stringMap contains any key whose value is Object equal to
+   * <code>value</code>.
+   */
+  private static native boolean containsStringValue(JavaScriptObject stringMap, Object value) /*-{
+    for (var key in stringMap) {
+      // only keys that start with a colon ':' count
+      if (key.charCodeAt(0) == 58) {
+        var entryValue = stringMap[key];
+        if (@java.util.HashMap::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(value, entryValue)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }-*/;
 
-  private int currentSize = 0;
+  /**
+   * Returns <code>undefined</code>. This is technically a violation of the
+   * JSNI contract, so we have to be very careful how we use the result.
+   */
+  private static native JavaScriptObject createUndefinedValue() /*-{
+    // intentionally return undefined
+  }-*/;
 
-  public HashMap() {
-    init();
+  /**
+   * Checks for equality of Objects, null-sensitive.
+   */
+  private static boolean equalsWithNullCheck(Object a, Object b) {
+    if (a == b) {
+      return true;
+    } else if (a == null) {
+      return false;
+    } else {
+      return a.equals(b);
+    }
   }
 
-  public HashMap(Map toBeCopied) {
-    this();
-    this.putAll(toBeCopied);
+  /**
+   * Returns the Map.Entry whose key is equal to <code>key</code>, provided
+   * that <code>key</code>'s hash code is Object equal to
+   * <code>hashCode</code>; or <code>null</code> if no such Map.Entry
+   * exists at the specified hashCode.
+   */
+  private static native Object getHashValue(JavaScriptObject hashCodeMap,
+      Object key, int hashCode) /*-{
+    var array = hashCodeMap[hashCode];
+    if (array) {
+      for (var i = 0, c = array.length; i < c; ++i) {
+        var entry = array[i];
+        var entryKey = entry.@java.util.Map$Entry::getKey()();
+        if (@java.util.HashMap::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
+          return entry.@java.util.Map$Entry::getValue()();
+        }
+      }
+    }
+    // intentionally return undefined
+  }-*/;
+
+  /**
+   * Returns the value for the given key in the stringMap. Returns
+   * <code>undefined</code> if the specified key does not exist.
+   */
+  private static native Object getStringValue(JavaScriptObject stringMap,
+      String key) /*-{
+    return stringMap[':' + key];
+  }-*/;
+
+  /**
+   * Sets the specified key to the specified value in the hashCodeMap. Returns
+   * the value previously at that key. Returns <code>undefined</code> if the
+   * specified key did not exist.
+   */
+  private static native Object putHashValue(JavaScriptObject hashCodeMap,
+      Object key, Object value, int hashCode) /*-{
+    var array = hashCodeMap[hashCode];
+    if (array) {
+      for (var i = 0, c = array.length; i < c; ++i) {
+        var entry = array[i];
+        var entryKey = entry.@java.util.Map$Entry::getKey()();
+        if (@java.util.HashMap::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
+          // Found an exact match, just update the existing entry
+          var previous = entry.@java.util.Map$Entry::getValue()();
+          entry.@java.util.Map$Entry::setValue(Ljava/lang/Object;)(value);
+          return previous;
+        }
+      }
+    } else {
+      array = hashCodeMap[hashCode] = [];
+    }
+    var entry = @java.util.HashMap$EntryImpl::create(Ljava/lang/Object;Ljava/lang/Object;)(key, value);
+    array.push(entry);
+    // intentionally return undefined
+  }-*/;
+
+  /**
+   * Sets the specified key to the specified value in the stringMap. Returns the
+   * value previously at that key. Returns <code>undefined</code> if the
+   * specified key did not exist.
+   */
+  private static native Object putStringValue(JavaScriptObject stringMap,
+      String key, Object value) /*-{
+    key = ':' + key;
+    var result = stringMap[key] 
+    stringMap[key] = value;
+    return result;
+  }-*/;
+  
+  /**
+   * Removes the pair whose key is equal to <code>key</code> from
+   * <code>hashCodeMap</code>, provided that <code>key</code>'s hash code
+   * is <code>hashCode</code>. Returns the value that was associated with the
+   * removed key, or undefined if no such key existed.
+   */
+  private static native Object removeHashValue(JavaScriptObject hashCodeMap,
+      Object key, int hashCode) /*-{
+    var array = hashCodeMap[hashCode];
+    if (array) {
+      for (var i = 0, c = array.length; i < c; ++i) {
+        var entry = array[i];
+        var entryKey = entry.@java.util.Map$Entry::getKey()();
+        if (@java.util.HashMap::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
+          if (array.length == 1) {
+            // remove the whole array
+            delete hashCodeMap[hashCode];
+          } else {
+            // splice out the entry we're removing
+            array.splice(i, 1);
+          }
+          return entry.@java.util.Map$Entry::getValue()();
+        }
+      }
+    }
+    // intentionally return undefined
+  }-*/;
+  
+  /**
+   * Removes the specified key from the stringMap and returns the value that was
+   * previously there. Returns <code>undefined</code> if the specified key
+   * does not exist.
+   */
+  private static native Object removeStringValue(JavaScriptObject stringMap,
+      String key) /*-{
+    key = ':' + key;
+    var result = stringMap[key];
+    delete stringMap[key];
+    return result;
+  }-*/;
+
+  /**
+   * A map of integral hashCodes onto entries.
+   */
+  private transient JavaScriptObject hashCodeMap;
+
+  /**
+   * This is the slot that holds the value associated with the "null" key.
+   */
+  private transient Object nullSlot;
+
+  private int size;
+
+  /**
+   * A map of Strings onto values.
+   */
+  private transient JavaScriptObject stringMap;
+
+  {
+    clear();
+  }
+
+  public HashMap() {
   }
 
   public HashMap(int ignored) {
@@ -239,7 +411,6 @@ public class HashMap extends AbstractMap {
   }
 
   public HashMap(int ignored, float alsoIgnored) {
-    this();
     // This implementation of HashMap has no need of load factors or capacities.
     if (ignored < 0 || alsoIgnored < 0) {
       throw new IllegalArgumentException(
@@ -247,246 +418,108 @@ public class HashMap extends AbstractMap {
     }
   }
 
+  public HashMap(Map toBeCopied) {
+    this.putAll(toBeCopied);
+  }
+
   public void clear() {
-    init();
-    currentSize = 0;
+    hashCodeMap = JavaScriptObject.createArray();
+    stringMap = JavaScriptObject.createObject();
+    nullSlot = UNDEFINED;
+    size = 0;
   }
 
   public Object clone() {
     return new HashMap(this);
   }
 
-  public native boolean containsKey(Object key) /*-{
-    var k = @java.util.HashMap::asString(Ljava/lang/Object;)(key);
-    if (k == null) {
-      var location = @java.util.HashMap::findNode(Ljava/util/HashMap;Ljava/lang/Object;)(this, key);
-      return (location != null);
+  public boolean containsKey(Object key) {
+    if (key instanceof String) {
+      return getStringValue(stringMap, (String) key) != UNDEFINED;
+    } else if (key == null) {
+      return nullSlot != UNDEFINED;
     } else {
-      return this.@java.util.HashMap::map[k] !== undefined;
+      return getHashValue(hashCodeMap, key, key.hashCode()) != UNDEFINED;
     }
-  }-*/;
+  }
 
   public boolean containsValue(Object value) {
-    return values().contains(value);
+    if (nullSlot != UNDEFINED && equalsWithNullCheck(nullSlot, value)) {
+      return true;
+    } else if (containsStringValue(stringMap, value)) {
+      return true;
+    } else if (containsHashValue(hashCodeMap, value)) {
+      return true;
+    }
+    return false;
   }
 
   public Set entrySet() {
-    return new AbstractSet() {
-      public boolean contains(Object entryObj) {
-        Entry entry = (Entry) entryObj;
-        if (entry != null) {
-          Object key = entry.getKey();
-          Object value = entry.getValue();
-          // If the value is null, we only want to return true if the found
-          // value equals null AND the HashMap
-          // contains the given key.
-          if (value != null || HashMap.this.containsKey(key)) {
-            Object foundValue = HashMap.this.get(key);
-            if (value == null) {
-              return foundValue == null;
-            } else {
-              return value.equals(foundValue);
-            }
-          }
-        }
-        return false;
-      }
-
-      public Iterator iterator() {
-        return new EntrySetImplIterator();
-      }
-
-      public boolean remove(Object entry) {
-        if (contains(entry)) {
-          Object key = ((Entry) entry).getKey();
-          HashMap.this.remove(key);
-          return true;
-        } else {
-          return false;
-        }
-      }
-
-      public int size() {
-        return HashMap.this.size();
-      }
-    };
+    return new EntrySet();
   }
 
-  public native Object get(Object key) /*-{
-    var KEYS_POS = 0;
-    var VALUES_POS = 1;
-    var k = @java.util.HashMap::asString(Ljava/lang/Object;)(key);
-    if (k != null) {
-      var current = this.@java.util.HashMap::map[k];
-      if (current === undefined) {
-        return null;
-      } else { 
-        return current;
-      }
-    } else {    
-      k = key.@java.lang.Object::hashCode()();
+  public Object get(Object key) {
+    Object result;
+    if (key instanceof String) {
+      result = getStringValue(stringMap, (String) key);
+    } else if (key == null) {
+      result = nullSlot;
+    } else {
+      result = getHashValue(hashCodeMap, key, key.hashCode());
     }
-    var candidates = this.@java.util.HashMap::map[k];
-    if (candidates == null) { 
-      return null;
-    }  
-  
-    // Used because candidates may develop holes as deletions are performed.
-    for (var i in candidates) {
-      if (candidates[i][KEYS_POS].@java.lang.Object::equals(Ljava/lang/Object;)(key)) {
-        return candidates[i][VALUES_POS];
-      }
-    }
-    return null;    
-  }-*/;
+    return (result == UNDEFINED) ? null : result;
+  }
 
   public boolean isEmpty() {
     return size() == 0;
   }
 
-  public native Object put(Object key, Object value) /*-{
-    var KEYS_POS = 0;
-    var VALUES_POS = 1;
-    var previous = null;
-    var k = @java.util.HashMap::asString(Ljava/lang/Object;)(key);
-    if (k != null) {
-      previous = this.@java.util.HashMap::map[k];
-      this.@java.util.HashMap::map[k] = value;
-      if (previous === undefined) {
-        this.@java.util.HashMap::currentSize++;
-        return null;
-      } else { 
-        return previous;
-      }
+  public Object put(Object key, Object value) {
+    Object previous;
+    if (key instanceof String) {
+      previous = putStringValue(stringMap, (String) key, value);
+    } else if (key == null) {
+      previous = nullSlot;
+      nullSlot = value;
     } else {
-      k = key.@java.lang.Object::hashCode()();
+      previous = putHashValue(hashCodeMap, key, value, key.hashCode());
     }
-    var candidates = this.@java.util.HashMap::map[k];
-    if (candidates == null) { 
-      candidates = [];
-      this.@java.util.HashMap::map[k] = candidates;
-    }  
-  
-    // Used because candidates may develop holes as deletions are performed.
-    for (var i in candidates) {
-      if (candidates[i][KEYS_POS].@java.lang.Object::equals(Ljava/lang/Object;)(key)) {
-        previous = candidates[i][VALUES_POS];
-        candidates[i] = [key, value]; 
-        return previous;
-      }
+    if (previous == UNDEFINED) {
+      ++size;
+      return null;
+    } else {
+      return previous;
     }
-    this.@java.util.HashMap::currentSize++;
-    candidates[candidates.length] = [key,value];
-    return null;    
-  }-*/;
+  }
 
   public void putAll(Map otherMap) {
     Iterator iter = otherMap.entrySet().iterator();
     while (iter.hasNext()) {
-      Map.Entry entry = (Entry) iter.next();
+      Map.Entry entry = (Map.Entry) iter.next();
       put(entry.getKey(), entry.getValue());
     }
   }
 
-  public native Object remove(Object key) /*-{
-    var VALUES_POS = 1;
-    var map = this.@java.util.HashMap::map;
-    var k = @java.util.HashMap::asString(Ljava/lang/Object;)(key);
-    var previous = null;
-    if (k != null) {
-      previous = map[k];
-      delete map[k];
-      if (previous !== undefined) {
-        this.@java.util.HashMap::currentSize--;
-        return previous;
-      } else {
-        return null;
-      }
+  public Object remove(Object key) {
+    Object previous;
+    if (key instanceof String) {
+      previous = removeStringValue(stringMap, (String) key);
+    } else if (key == null) {
+      previous = nullSlot;
+      nullSlot = UNDEFINED;
+    } else {
+      previous = removeHashValue(hashCodeMap, key, key.hashCode());
     }
-    var location = @java.util.HashMap::findNode(Ljava/util/HashMap;Ljava/lang/Object;)(this, key);
-    if (location == null) {
+    if (previous == UNDEFINED) {
       return null;
-    }
-    this.@java.util.HashMap::currentSize--;
-    var hashCode = location[0];
-    var index = location[1];
-    var previous = map[hashCode][index][VALUES_POS];
-    map[hashCode].splice(index,1);
-    if (map[hashCode].length > 0) {
-      // Not the only cell for this hashCode, so no deletion.
+    } else {
+      --size;
       return previous;
     }
-    delete map[hashCode];
-    return previous;
-  }-*/;
+  }
 
   public int size() {
-    return currentSize;
+    return size;
   }
-
-  public Collection values() {
-    List values = new ArrayList();
-    addAllValuesFromJavascriptObject(values, map);
-    return values;
-  }
-
-  // Package protected to remove eclipse warning marker.
-  void addAllKeysFromJavascriptObject(Collection source,
-      JavaScriptObject javaScriptObject) {
-    addAllFromJavascriptObject(source, javaScriptObject, KEYS_POS);
-  }
-
-  /**
-   * Adds all keys, values, or entries to the collection depending upon
-   * typeToAdd.
-   */
-  private native void addAllFromJavascriptObject(Collection source,
-      JavaScriptObject javaScriptObject, int typeToAdd)
-  /*-{
-    var KEYS_POS = 0;
-    var VALUES_POS = 1;
-    var BOTH_POS = 2;
-    var map = this.@java.util.HashMap::map;
-    for (var hashCode in javaScriptObject) {
-      var entry = null;
-      if (hashCode == "null" || hashCode.charAt(hashCode.length - 1) == 'S') {
-        var key = null;
-        if (typeToAdd != VALUES_POS && hashCode != "null") {
-          key = hashCode.substring(0, hashCode.length - 1);
-        }
-         if (typeToAdd == KEYS_POS) {
-          entry = key
-        } else if (typeToAdd == VALUES_POS) {
-          entry = map[hashCode];
-        } else if (typeToAdd == BOTH_POS) {
-          entry = 
-            @java.util.HashMap::createEntry(Ljava/lang/Object;Ljava/lang/Object;)(
-            key, map[hashCode]);
-        } 
-        source.@java.util.Collection::add(Ljava/lang/Object;)(entry);
-      } else {
-        var candidates = map[hashCode];
-        for (var index in candidates) { 
-          if (typeToAdd != BOTH_POS) {
-            entry = candidates[index][typeToAdd];
-          } else {
-            entry = 
-              @java.util.HashMap::createEntry(Ljava/lang/Object;Ljava/lang/Object;)(
-              candidates[index][0], candidates[index][1]);
-          }
-          source.@java.util.Collection::add(Ljava/lang/Object;)(entry);
-        }
-      }
-    }
-  }-*/;
-
-  private void addAllValuesFromJavascriptObject(Collection source,
-      JavaScriptObject javaScriptObject) {
-    addAllFromJavascriptObject(source, javaScriptObject, VALUES_POS);
-  }
-
-  private native void init() /*-{
-    this.@java.util.HashMap::map = [];
-  }-*/;
 
 }
