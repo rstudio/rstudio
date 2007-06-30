@@ -64,7 +64,9 @@ import java.util.Collection;
  * <li>.gwt-SuggestBoxPopup .item-selected { a selected suggestion }</li>
  * </ul>
  * 
- * @see SuggestOracle, MultiWordSuggestOracle, TextBoxBase
+ * @see SuggestOracle
+ * @see MultiWordSuggestOracle
+ * @see TextBoxBase
  */
 public final class SuggestBox extends Composite implements HasText, HasFocus,
     SourcesClickEvents, SourcesFocusEvents, SourcesChangeEvents,

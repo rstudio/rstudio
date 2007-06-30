@@ -21,7 +21,7 @@ import java.util.Iterator;
 /**
  * A helper class for implementers of the
  * {@link com.google.gwt.user.client.ui.SourcesTableEvents} interface. This
- * subclass of {@linkArrayList} assumes that all objects added to it will be of
+ * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.TableListener}.
  */
 public class TableListenerCollection extends ArrayList {

@@ -16,7 +16,8 @@
 package com.google.gwt.user.client;
 
 /**
- * Exception reported to the current {@link UncaughtExceptionHandler} when a
+ * Exception reported to the current
+ * {@link com.google.gwt.core.client.GWT.UncaughtExceptionHandler} when a
  * deferred {@link IncrementalCommand} is canceled as a result of a slow script
  * warning.
  */
