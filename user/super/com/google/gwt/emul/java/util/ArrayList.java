@@ -20,6 +20,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 /**
  * See Sun's JDK 1.4 documentation for documentation.
  * 
+ * <p>
  * This implementation differs from JDK 1.4 <code>ArrayList</code> in terms of
  * capacity management. There is no speed advantage to pre-allocating array
  * sizes in JavaScript, so this implementation does not include any of the
