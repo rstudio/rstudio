@@ -145,8 +145,8 @@ public class HashMap extends AbstractMap {
    * Iterator for <code>EntrySetImpl</code>.
    */
   private final class EntrySetIterator implements Iterator {
-    private Map.Entry last = null;
     private final Iterator iter;
+    private Map.Entry last = null;
 
     /**
      * Constructor for <code>EntrySetIterator</code>.
@@ -250,6 +250,24 @@ public class HashMap extends AbstractMap {
   }-*/;
 
   /**
+   * Returns a new array.
+   * 
+   * TODO: move this to JavaScriptObject?
+   */
+  private static native JavaScriptObject createArray() /*-{
+    return [];
+  }-*/;
+
+  /**
+   * Returns a new object.
+   * 
+   * TODO: move this to JavaScriptObject?
+   */
+  private static native JavaScriptObject createObject() /*-{
+    return {};
+  }-*/;
+
+  /**
    * Returns <code>undefined</code>. This is technically a violation of the
    * JSNI contract, so we have to be very careful how we use the result.
    */
@@ -339,7 +357,7 @@ public class HashMap extends AbstractMap {
     stringMap[key] = value;
     return result;
   }-*/;
-  
+
   /**
    * Removes the pair whose key is equal to <code>key</code> from
    * <code>hashCodeMap</code>, provided that <code>key</code>'s hash code
@@ -423,8 +441,8 @@ public class HashMap extends AbstractMap {
   }
 
   public void clear() {
-    hashCodeMap = JavaScriptObject.createArray();
-    stringMap = JavaScriptObject.createObject();
+    hashCodeMap = createArray();
+    stringMap = createObject();
     nullSlot = UNDEFINED;
     size = 0;
   }
