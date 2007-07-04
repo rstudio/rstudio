@@ -63,7 +63,7 @@ function __MODULE_FUNC__() {
       maybeStartModule();
 
       if ($doc.removeEventListener) {
-        $doc.removeEventListener("DOMContentLoaded", onBodyDone);
+        $doc.removeEventListener("DOMContentLoaded", onBodyDone, false);
       }
       if (onBodyDoneTimerId) {
       	clearInterval(onBodyDoneTimerId);
