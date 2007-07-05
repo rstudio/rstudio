@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui.impl;
 
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.core.client.GWT;
 
 /**
  * Uses a combination of a clear image and a background image to clip all except
@@ -48,8 +49,8 @@ public class ClippedImageImpl {
         + "px; background: url(" + url + ") no-repeat " + (-left + "px ")
         + (-top + "px");
 
-    String clippedImgHtml = "<img src='clear.cache.gif' style='"
-        + style + "' border='0'>";
+    String clippedImgHtml = "<img src='" + GWT.getModuleBaseURL() +
+        "clear.cache.gif' style='" + style + "' border='0'>";
 
     return clippedImgHtml;
   }

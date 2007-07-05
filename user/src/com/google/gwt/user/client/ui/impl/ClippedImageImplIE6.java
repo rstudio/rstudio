@@ -34,7 +34,7 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
   private static native void injectGlobalHandler() /*-{
     $wnd.__gwt_transparentImgHandler = function (elem) {
       elem.onerror = null;
-      @com.google.gwt.user.client.DOM::setImgSrc(Lcom/google/gwt/user/client/Element;Ljava/lang/String;)(elem, "clear.cache.gif");
+      @com.google.gwt.user.client.DOM::setImgSrc(Lcom/google/gwt/user/client/Element;Ljava/lang/String;)(elem, @com.google.gwt.core.client.GWT::getModuleBaseURL()() + "clear.cache.gif");
     };
   }-*/;
   
@@ -87,7 +87,7 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
         + clipperStyle
         + "\"><img src='"
         + moduleBaseUrlProtocol
-        + "' onerror='if(window.__gwt_transparentImgHandler)window.__gwt_transparentImgHandler(this);else this.src=\"clear.cache.gif\"' style=\""
+        + "' onerror='if(window.__gwt_transparentImgHandler)window.__gwt_transparentImgHandler(this);else this.src=\"" + GWT.getModuleBaseURL() + "clear.cache.gif\"' style=\""
         + imgStyle + "\" width=" + (left + width) + " height=" + (top + height)
         + " border='0'></gwt:clipper>";
 
