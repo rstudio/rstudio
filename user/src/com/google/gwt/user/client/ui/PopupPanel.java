@@ -112,6 +112,26 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
+    * Gets the panel's offset height in pixels. Calls to {@link #setHeight(String)}
+    * before the panel's child widget is set will not influence the offset height.
+    *
+    * @return the object's offset height
+    */
+   public int getOffsetHeight() {
+     return super.getOffsetHeight();
+   }
+
+   /**
+    * Gets the panel's offset width in pixels. Calls to {@link #setWidth(String)}
+    * before the panel's child widget is set will not influence the offset width.
+    *
+    * @return the object's offset width
+    */
+   public int getOffsetWidth() {
+     return super.getOffsetWidth();
+   }
+
+  /**
    * Gets the popup's left position relative to the browser's client area.
    * 
    * @return the popup's left position
@@ -250,6 +270,13 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     }
   }
 
+  /**
+   * Sets the height of the panel's child widget. If the panel's child widget
+   * has not been set, the height passed in will be cached and used to set
+   * the height immediately after the child widget is set.
+   *
+   * @param height the object's new height, in CSS units (e.g. "10px", "1em")
+   */
   public void setHeight(String height) {
     desiredHeight = height;
     maybeUpdateSize();
@@ -319,6 +346,13 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     maybeUpdateSize();
   }
 
+  /**
+   * Sets the width of the panel's child widget. If the panel's child widget
+   * has not been set, the width passed in will be cached and used to set
+   * the width immediately after the child widget is set.
+   *
+   * @param width the object's new width, in CSS units (e.g. "10px", "1em")
+   */
   public void setWidth(String width) {
     desiredWidth = width;
     maybeUpdateSize();
