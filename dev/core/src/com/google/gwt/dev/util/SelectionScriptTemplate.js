@@ -54,35 +54,6 @@ function __MODULE_FUNC__() {
   if (!$wnd.__gwt_stylesLoaded) { $wnd.__gwt_stylesLoaded = {}; }
   if (!$wnd.__gwt_scriptsLoaded) { $wnd.__gwt_scriptsLoaded = {}; }
 
-  // --------------- WINDOW ONLOAD HOOK ---------------
-
-  var onBodyDoneTimerId;
-  function onBodyDone() {
-    if (!bodyDone) {
-      bodyDone = true;
-      maybeStartModule();
-
-      if ($doc.removeEventListener) {
-        $doc.removeEventListener("DOMContentLoaded", onBodyDone, false);
-      }
-      if (onBodyDoneTimerId) {
-      	clearInterval(onBodyDoneTimerId);
-      }
-    }
-  }
-
-  // For everyone that supports DOMContentLoaded.
-  if ($doc.addEventListener) {
-    $doc.addEventListener("DOMContentLoaded", onBodyDone, false);
-  }
-
-  // Fallback. If onBodyDone() gets fired twice, it's not a big deal.
-  var onBodyDoneTimerId = setInterval(function() {
-    if (/loaded|complete/.test($doc.readyState)) {
-      onBodyDone();
-    }
-  }, 50);
-
   // --------------- INTERNAL FUNCTIONS ---------------
 
   function isHostedMode() {
@@ -334,6 +305,35 @@ function __MODULE_FUNC__() {
 
   processMetas();
 
+  // --------------- WINDOW ONLOAD HOOK ---------------
+
+  var onBodyDoneTimerId;
+  function onBodyDone() {
+    if (!bodyDone) {
+      bodyDone = true;
+      maybeStartModule();
+
+      if ($doc.removeEventListener) {
+        $doc.removeEventListener("DOMContentLoaded", onBodyDone, false);
+      }
+      if (onBodyDoneTimerId) {
+      	clearInterval(onBodyDoneTimerId);
+      }
+    }
+  }
+
+  // For everyone that supports DOMContentLoaded.
+  if ($doc.addEventListener) {
+    $doc.addEventListener("DOMContentLoaded", onBodyDone, false);
+  }
+
+  // Fallback. If onBodyDone() gets fired twice, it's not a big deal.
+  var onBodyDoneTimerId = setInterval(function() {
+    if (/loaded|complete/.test($doc.readyState)) {
+      onBodyDone();
+    }
+  }, 50);
+ 
   var strongName;
   if (isHostedMode()) {
     strongName = "hosted.html?__MODULE_FUNC__";
