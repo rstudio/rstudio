@@ -142,18 +142,21 @@ abstract class SplitPanel extends Panel {
         if (DOM.isOrHasChild(splitElem, target)) {
           startResizingFrom(DOM.eventGetClientX(event) - getAbsoluteLeft(),
               DOM.eventGetClientY(event) - getAbsoluteTop());
+          DOM.setCapture(getElement());
           DOM.eventPreventDefault(event);
         }
         break;
       }
 
       case Event.ONMOUSEUP: {
+        DOM.releaseCapture(getElement());
         stopResizing();
         break;
       }
 
       case Event.ONMOUSEMOVE: {
         if (isResizing()) {
+          assert DOM.getCaptureElement() != null;
           onSplitterResize(DOM.eventGetClientX(event) - getAbsoluteLeft(),
               DOM.eventGetClientY(event) - getAbsoluteTop());
           DOM.eventPreventDefault(event);
