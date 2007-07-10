@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.AnonymousClassInterface;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.Circle;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClass;
@@ -25,7 +26,7 @@ import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableSubc
 /**
  * TODO: document me.
  */
-public class InheritanceTest extends TypeSerializerWorkAround {
+public class InheritanceTest extends GWTTestCase {
   // private static final int TEST_DELAY = Integer.MAX_VALUE;
   private static final int TEST_DELAY = 5000;
 
@@ -42,23 +43,19 @@ public class InheritanceTest extends TypeSerializerWorkAround {
     delayTestFinish(TEST_DELAY);
 
     InheritanceTestServiceAsync service = getServiceAsync();
-    try {
-      service.echo(new AnonymousClassInterface() {
-        public void foo() {
-          // TODO Auto-generated method stub
-        }
-      }, new AsyncCallback() {
-        public void onFailure(Throwable caught) {
-          finishTest();
-        }
+    service.echo(new AnonymousClassInterface() {
+      public void foo() {
+        // purposely empty
+      }
+    }, new AsyncCallback() {
+      public void onFailure(Throwable caught) {
+        finishTest();
+      }
 
-        public void onSuccess(Object result) {
-          fail("Anonymous inner classes should not be serializable");
-        }
-      });
-    } catch (RuntimeException ex) {
-      workAroundTypeSerializerBug(ex);
-    }
+      public void onSuccess(Object result) {
+        fail("Anonymous inner classes should not be serializable");
+      }
+    });
   }
 
   /**
@@ -70,23 +67,18 @@ public class InheritanceTest extends TypeSerializerWorkAround {
   public void testFieldShadowing() {
     delayTestFinish(TEST_DELAY);
 
-    try {
-      InheritanceTestServiceAsync service = getServiceAsync();
-      service.echo(InheritanceTestSetFactory.createCircle(),
-          new AsyncCallback() {
-            public void onFailure(Throwable caught) {
-              fail("Unexpected failure");
-            }
+    InheritanceTestServiceAsync service = getServiceAsync();
+    service.echo(InheritanceTestSetFactory.createCircle(), new AsyncCallback() {
+      public void onFailure(Throwable caught) {
+        fail("Unexpected failure");
+      }
 
-            public void onSuccess(Object result) {
-              Circle circle = (Circle) result;
-              assertNotNull(circle.getName());
-              finishTest();
-            }
-          });
-    } catch (RuntimeException ex) {
-      workAroundTypeSerializerBug(ex);
-    }
+      public void onSuccess(Object result) {
+        Circle circle = (Circle) result;
+        assertNotNull(circle.getName());
+        finishTest();
+      }
+    });
   }
 
   /**
@@ -116,20 +108,16 @@ public class InheritanceTest extends TypeSerializerWorkAround {
     delayTestFinish(TEST_DELAY);
 
     InheritanceTestServiceAsync service = getServiceAsync();
-    try {
-      service.echo(InheritanceTestSetFactory.createNonStaticInnerClass(),
-          new AsyncCallback() {
-            public void onFailure(Throwable caught) {
-              finishTest();
-            }
+    service.echo(InheritanceTestSetFactory.createNonStaticInnerClass(),
+        new AsyncCallback() {
+          public void onFailure(Throwable caught) {
+            finishTest();
+          }
 
-            public void onSuccess(Object result) {
-              fail("Non-static inner classes should not be serializable");
-            }
-          });
-    } catch (RuntimeException ex) {
-      workAroundTypeSerializerBug(ex);
-    }
+          public void onSuccess(Object result) {
+            fail("Non-static inner classes should not be serializable");
+          }
+        });
   }
 
   public void testReturnOfUnserializableClassFromServer() {

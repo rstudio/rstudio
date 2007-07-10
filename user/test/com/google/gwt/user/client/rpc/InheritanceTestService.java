@@ -15,14 +15,18 @@
  */
 package com.google.gwt.user.client.rpc;
 
+import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.AbstractClass;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.AnonymousClassInterface;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.Circle;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.JavaSerializableClass;
+import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.MySerializableInterface;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClass;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClassWithTransientField;
 
 /**
- * TODO: document me.
+ * Service interface used by the
+ * {@link com.google.gwt.user.client.rpc.InheritanceTest InheritanceTest} unit
+ * test.
  */
 public interface InheritanceTestService extends RemoteService {
   AnonymousClassInterface echo(AnonymousClassInterface serializable);
@@ -30,11 +34,38 @@ public interface InheritanceTestService extends RemoteService {
   Circle echo(Circle circle);
 
   JavaSerializableClass echo(JavaSerializableClass javaSerializableClass);
-  
+
   SerializableClass echo(SerializableClass serializableClass);
 
   SerializableClassWithTransientField echo(
       SerializableClassWithTransientField serializableClass);
+
+  /**
+   * Used to test <a
+   * href="http://code.google.com/p/google-web-toolkit/issues/detail?id=1163">Issue
+   * 1163</a>.
+   * 
+   * @return
+   */
+  AbstractClass getAbstractClass();
+
+  /**
+   * Used to test <a
+   * href="http://code.google.com/p/google-web-toolkit/issues/detail?id=1163">Issue
+   * 1163</a>.
+   * 
+   * @return
+   */
+  MySerializableInterface getSerializableInterface1();
+
+  /**
+   * Used to test <a
+   * href="http://code.google.com/p/google-web-toolkit/issues/detail?id=1163">Issue
+   * 1163</a>.
+   * 
+   * @return
+   */
+  MySerializableInterface getSerializableInterface2();
 
   SerializableClass getUnserializableClass();
 }

@@ -67,7 +67,7 @@ class CustomFieldSerializerValidator {
           serializee.getQualifiedSourceName()}));
     }
 
-    if (!serializee.isDefaultInstantiable()) {
+    if (!serializee.isAbstract() && !serializee.isDefaultInstantiable()) {
       JMethod instantiate = serializer.findMethod("instantiate",
           new JType[] {streamReaderClass});
       if (!isValidCustomFieldSerializerMethod(instantiate, serializee)) {

@@ -16,13 +16,23 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTestSetFactory.SerializableSubclass;
 
 /**
- * TODO: document me.
+ * Tests the following scenarios:
+ * <ul>
+ * <li>Manually serializable types use their custom field serializer</li>
+ * <li>Subtypes of manually serializable types that are not auto-serializable
+ * fail to be serialized</li>
+ * <li>Automatically serializable subtypes of manually serialized types can be
+ * serialized</li>
+ * </ul>
  */
-public class CustomFieldSerializerTest extends TypeSerializerWorkAround {
+public class CustomFieldSerializerTest extends GWTTestCase {
   private static final int TEST_DELAY = 5000;
+
+  private CustomFieldSerializerTestServiceAsync customFieldSerializerTestService;
 
   public String getModuleName() {
     return "com.google.gwt.user.RPCSuite";
@@ -35,22 +45,18 @@ public class CustomFieldSerializerTest extends TypeSerializerWorkAround {
   public void testCustomFieldSerializabilityInheritance() {
     delayTestFinish(TEST_DELAY);
 
-    try {
-      CustomFieldSerializerTestServiceAsync service = getServiceAsync();
-      service.echo(
-          CustomFieldSerializerTestSetFactory.createUnserializableSubclass(),
-          new AsyncCallback() {
-            public void onFailure(Throwable caught) {
-              finishTest();
-            }
+    CustomFieldSerializerTestServiceAsync service = getServiceAsync();
+    service.echo(
+        CustomFieldSerializerTestSetFactory.createUnserializableSubclass(),
+        new AsyncCallback() {
+          public void onFailure(Throwable caught) {
+            finishTest();
+          }
 
-            public void onSuccess(Object result) {
-              fail("Class UnserializableSubclass should not be serializable");
-            }
-          });
-    } catch (RuntimeException ex) {
-      workAroundTypeSerializerBug(ex);
-    }
+          public void onSuccess(Object result) {
+            fail("Class UnserializableSubclass should not be serializable");
+          }
+        });
   }
 
   /**
@@ -59,27 +65,23 @@ public class CustomFieldSerializerTest extends TypeSerializerWorkAround {
   public void testCustomFieldSerialization() {
     delayTestFinish(TEST_DELAY);
 
-    try {
-      CustomFieldSerializerTestServiceAsync service = getServiceAsync();
-      service.echo(
-          CustomFieldSerializerTestSetFactory.createUnserializableClass(),
-          new AsyncCallback() {
-            public void onFailure(Throwable caught) {
-              fail("Class UnserializableClass should be serializable because it has a custom field serializer");
-            }
+    CustomFieldSerializerTestServiceAsync service = getServiceAsync();
+    service.echo(
+        CustomFieldSerializerTestSetFactory.createUnserializableClass(),
+        new AsyncCallback() {
+          public void onFailure(Throwable caught) {
+            fail("Class UnserializableClass should be serializable because it has a custom field serializer");
+          }
 
-            public void onSuccess(Object result) {
-              assertNotNull(result);
-              assertTrue(CustomFieldSerializerTestSetValidator.isValid((UnserializableClass) result));
-              finishTest();
-            }
-          });
-    } catch (RuntimeException ex) {
-      workAroundTypeSerializerBug(ex);
-    }
+          public void onSuccess(Object result) {
+            assertNotNull(result);
+            assertTrue(CustomFieldSerializerTestSetValidator.isValid((ManuallySerializedClass) result));
+            finishTest();
+          }
+        });
   }
 
-  /*
+  /**
    * Test that serializable subclasses of classes that have custom field
    * serializers serialize and deserialize correctly
    */
@@ -110,6 +112,4 @@ public class CustomFieldSerializerTest extends TypeSerializerWorkAround {
     }
     return customFieldSerializerTestService;
   }
-
-  private CustomFieldSerializerTestServiceAsync customFieldSerializerTestService;
 }

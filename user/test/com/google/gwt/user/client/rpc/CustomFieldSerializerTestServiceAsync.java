@@ -18,10 +18,13 @@ package com.google.gwt.user.client.rpc;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTestSetFactory.SerializableSubclass;
 
 /**
- * TODO: document me.
+ * Asynchronous service interface used by the
+ * {@link com.google.gwt.user.client.rpc.CustomFieldSerializerTest CustomFieldSerializerTest}
+ * unit test.
  */
 public interface CustomFieldSerializerTestServiceAsync {
-  void echo(SerializableSubclass serializableClass, AsyncCallback callback);
+  void echo(ManuallySerializedClass manuallySerializableClass,
+      AsyncCallback callback);
 
-  void echo(UnserializableClass unserializableClass, AsyncCallback callback);
+  void echo(SerializableSubclass serializableClass, AsyncCallback callback);
 }

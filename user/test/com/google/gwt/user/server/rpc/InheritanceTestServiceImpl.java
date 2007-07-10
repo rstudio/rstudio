@@ -18,6 +18,8 @@ package com.google.gwt.user.server.rpc;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory;
 import com.google.gwt.user.client.rpc.InheritanceTestSetValidator;
 import com.google.gwt.user.client.rpc.InheritanceTestServiceSubtype;
+import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.AbstractClass;
+import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.MySerializableInterface;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.AnonymousClassInterface;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.Circle;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.JavaSerializableClass;
@@ -25,7 +27,9 @@ import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClas
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClassWithTransientField;
 
 /**
- * TODO: document me.
+ * Servlet used by the
+ * {@link com.google.gwt.user.client.rpc.InheritanceTest InheritanceTest} unit
+ * test.
  */
 public class InheritanceTestServiceImpl extends RemoteServiceServlet implements
     InheritanceTestServiceSubtype {
@@ -64,6 +68,21 @@ public class InheritanceTestServiceImpl extends RemoteServiceServlet implements
   }
 
   public void foo() {
+  }
+
+  public AbstractClass getAbstractClass() {
+    // never actually called, used in testing the RPC generator
+    return null;
+  }
+
+  public MySerializableInterface getSerializableInterface1() {
+    // never actually called, used in testing the RPC generator
+    return null;
+  }
+
+  public MySerializableInterface getSerializableInterface2() {
+    // never actually called, used in testing the RPC generator
+    return null;
   }
 
   public SerializableClass getUnserializableClass() {

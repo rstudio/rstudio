@@ -17,14 +17,25 @@ package com.google.gwt.user.server.rpc;
 
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTestService;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTestSetValidator;
-import com.google.gwt.user.client.rpc.UnserializableClass;
+import com.google.gwt.user.client.rpc.ManuallySerializedClass;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTestSetFactory.SerializableSubclass;
 
 /**
- * TODO: document me.
+ * Servlet used by the
+ * {@link com.google.gwt.user.client.rpc.CustomFieldSerializerTest CustomFieldSerializerTest}
+ * unit test.
  */
 public class CustomFieldSerializerTestServiceImpl extends RemoteServiceServlet
     implements CustomFieldSerializerTestService {
+
+  public ManuallySerializedClass echo(
+      ManuallySerializedClass unserializableClass) {
+    if (!CustomFieldSerializerTestSetValidator.isValid(unserializableClass)) {
+      throw new RuntimeException();
+    }
+
+    return unserializableClass;
+  }
 
   public SerializableSubclass echo(SerializableSubclass serializableClass) {
     if (!CustomFieldSerializerTestSetValidator.isValid(serializableClass)) {
@@ -32,13 +43,5 @@ public class CustomFieldSerializerTestServiceImpl extends RemoteServiceServlet
     }
 
     return serializableClass;
-  }
-
-  public UnserializableClass echo(UnserializableClass unserializableClass) {
-    if (!CustomFieldSerializerTestSetValidator.isValid(unserializableClass)) {
-      throw new RuntimeException();
-    }
-
-    return unserializableClass;
   }
 }

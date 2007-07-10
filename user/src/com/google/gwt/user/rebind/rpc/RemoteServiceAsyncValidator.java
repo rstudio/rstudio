@@ -86,9 +86,15 @@ class RemoteServiceAsyncValidator {
   private final JClassType asyncCallbackClass;
   private final TypeOracle typeOracle;
 
-  RemoteServiceAsyncValidator(TypeOracle typeOracle) throws NotFoundException {
+  RemoteServiceAsyncValidator(TreeLogger logger, TypeOracle typeOracle)
+      throws UnableToCompleteException {
     this.typeOracle = typeOracle;
-    asyncCallbackClass = typeOracle.getType(AsyncCallback.class.getName());
+    try {
+      asyncCallbackClass = typeOracle.getType(AsyncCallback.class.getName());
+    } catch (NotFoundException e) {
+      logger.log(TreeLogger.ERROR, null, e);
+      throw new UnableToCompleteException();
+    }
   }
 
   /**

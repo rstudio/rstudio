@@ -18,9 +18,22 @@ package com.google.gwt.user.client.rpc;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTestSetFactory.SerializableSubclass;
 
 /**
- * TODO: document me.
+ * Data validator used by the
+ * {@link com.google.gwt.user.client.rpc.CustomFieldSerializerTest CustomFieldSerializerTest}
+ * unit test.
  */
 public class CustomFieldSerializerTestSetValidator {
+  public static boolean isValid(ManuallySerializedClass manuallySerializedClass) {
+    if (manuallySerializedClass == null) {
+      return false;
+    }
+
+    return manuallySerializedClass.getA() == 4
+        && manuallySerializedClass.getB() == 5
+        && manuallySerializedClass.getC() == 6
+        && manuallySerializedClass.getObj().equals("bye");
+  }
+
   public static boolean isValid(SerializableSubclass serializableSubclass) {
     if (serializableSubclass == null) {
       return false;
@@ -30,16 +43,6 @@ public class CustomFieldSerializerTestSetValidator {
       return false;
     }
 
-    return isValid((UnserializableClass) serializableSubclass);
-  }
-
-  public static boolean isValid(UnserializableClass unserializableClass) {
-    if (unserializableClass == null) {
-      return false;
-    }
-
-    return unserializableClass.getA() == 4 && unserializableClass.getB() == 5
-        && unserializableClass.getC() == 6
-        && unserializableClass.getObj().equals("bye");
+    return isValid((ManuallySerializedClass) serializableSubclass);
   }
 }

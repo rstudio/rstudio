@@ -21,8 +21,11 @@ import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.JavaSerializable
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClass;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClassWithTransientField;
 
+
 /**
- * TODO: document me.
+ * Async service interface used by the
+ * {@link com.google.gwt.user.client.rpc.InheritanceTest InheritanceTest} unit
+ * test.
  */
 public interface InheritanceTestServiceAsync {
   void echo(AnonymousClassInterface serializable, AsyncCallback callback);
@@ -36,5 +39,11 @@ public interface InheritanceTestServiceAsync {
   void echo(SerializableClassWithTransientField serializableClass,
       AsyncCallback callback);
 
+  void getAbstractClass(AsyncCallback callback);
+  
+  void getSerializableInterface1(AsyncCallback callback);
+  
+  void getSerializableInterface2(AsyncCallback callback);
+  
   void getUnserializableClass(AsyncCallback callback);
 }

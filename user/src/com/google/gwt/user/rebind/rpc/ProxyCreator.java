@@ -27,6 +27,7 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.generator.NameFactory;
 import com.google.gwt.user.client.ResponseTextHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -94,8 +95,18 @@ class ProxyCreator {
       return getProxyQualifiedName();
     }
 
+    TypeOracle typeOracle = context.getTypeOracle();
+    
+    // Make sure that the async and synchronous versions of the RemoteService
+    // agree with one another
+    //
+    RemoteServiceAsyncValidator rsav = new RemoteServiceAsyncValidator(logger,
+        typeOracle);
+    rsav.validateRemoteServiceAsync(logger, serviceIntf);
+
+    // Determine the set of serializable types
     SerializableTypeOracleBuilder stob = new SerializableTypeOracleBuilder(
-        logger, context.getTypeOracle());
+        logger, typeOracle);
     SerializableTypeOracle sto = stob.build(context.getPropertyOracle(),
         serviceIntf);
 
@@ -119,8 +130,8 @@ class ProxyCreator {
 
   /*
    * Given a type emit an expression for calling the correct
-   * SerializationStreamReader method which reads the corresponding 
-   * instance out of the stream.
+   * SerializationStreamReader method which reads the corresponding instance out
+   * of the stream.
    */
   protected final void generateDecodeCall(SourceWriter w, JType type) {
     w.print("streamReader.");
@@ -278,10 +289,12 @@ class ProxyCreator {
           w.println("}");
         }
         w.outdent();
-        w.println("} catch (" + SerializationException.class.getName() + " e) {");
+        w.println("} catch (" + SerializationException.class.getName()
+            + " e) {");
         w.indent();
         {
-          w.println("caught = new " + IncompatibleRemoteServiceException.class.getName() + "();");
+          w.println("caught = new "
+              + IncompatibleRemoteServiceException.class.getName() + "();");
         }
         w.outdent();
         w.println("} catch (Throwable e) {");

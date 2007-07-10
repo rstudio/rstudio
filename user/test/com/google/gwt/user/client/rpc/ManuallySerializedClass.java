@@ -22,7 +22,15 @@ package com.google.gwt.user.client.rpc;
  * serializer. Once we fix this bug we can move this class into the test set
  * factory.
  */
-public class UnserializableClass {
+public class ManuallySerializedClass {
+  private int a = 1;
+
+  private int b = 2;
+
+  private int c = 3;
+
+  private Object obj = "hello";
+
   public int getA() {
     return a;
   }
@@ -54,12 +62,4 @@ public class UnserializableClass {
   public void setObj(Object obj) {
     this.obj = obj;
   }
-
-  private int a = 1;
-
-  private int b = 2;
-
-  private int c = 3;
-
-  private Object obj = "hello";
 }

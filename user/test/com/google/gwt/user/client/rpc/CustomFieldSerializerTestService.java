@@ -18,10 +18,12 @@ package com.google.gwt.user.client.rpc;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTestSetFactory.SerializableSubclass;
 
 /**
- * TODO: document me.
+ * Service interface used by the
+ * {@link com.google.gwt.user.client.rpc.CustomFieldSerializerTest CustomFieldSerializerTest}
+ * unit test.
  */
 public interface CustomFieldSerializerTestService extends RemoteService {
-  SerializableSubclass echo(SerializableSubclass serializableClass);
+  ManuallySerializedClass echo(ManuallySerializedClass manuallySerializableClass);
 
-  UnserializableClass echo(UnserializableClass unserializableClass);
+  SerializableSubclass echo(SerializableSubclass serializableClass);
 }

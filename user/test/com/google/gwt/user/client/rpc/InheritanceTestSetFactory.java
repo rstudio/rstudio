@@ -18,9 +18,19 @@ package com.google.gwt.user.client.rpc;
 import java.io.Serializable;
 
 /**
- * TODO: document me.
+ * Test data factory used by the
+ * {@link com.google.gwt.user.client.rpc.InheritanceTest InheritanceTest} unit
+ * test.
  */
 public class InheritanceTestSetFactory {
+
+  /**
+   * Used to test <a
+   * href="http://code.google.com/p/google-web-toolkit/issues/detail?id=1163">Issue
+   * 1163</a>.
+   */
+  public static class AbstractClass implements IsSerializable {
+  }
 
   /**
    * TODO: document me.
@@ -42,7 +52,7 @@ public class InheritanceTestSetFactory {
 
   /**
    * TODO: document me.
-   */  
+   */
   public static class JavaSerializableBaseClass implements Serializable {
     private int field1 = -1;
 
@@ -75,6 +85,23 @@ public class InheritanceTestSetFactory {
   public static class MyClass implements AnonymousClassInterface {
     public void foo() {
     }
+  }
+
+  /**
+   * Used to test <a
+   * href="http://code.google.com/p/google-web-toolkit/issues/detail?id=1163">Issue
+   * 1163</a>.
+   */
+  public static interface MySerializableInterface extends IsSerializable {
+  }
+
+  /**
+   * Used to test <a
+   * href="http://code.google.com/p/google-web-toolkit/issues/detail?id=1163">Issue
+   * 1163</a>.
+   */
+  public static interface MySerializableInterfaceSubtype extends
+      MySerializableInterface {
   }
 
   /**

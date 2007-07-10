@@ -16,15 +16,20 @@
 package com.google.gwt.user.client.rpc;
 
 /**
- * TODO: document me.
+ * Generated test data for the
+ * {@link com.google.gwt.user.client.rpc.CustomFieldSerializerTest CustomFieldSerializerTest}
+ * unit test.
  */
 public class CustomFieldSerializerTestSetFactory {
 
   /**
-   * TODO: document me.
+   * Used to test an automatically serializable subclass of a manually
+   * serializable subtype
    */
-  public static class SerializableSubclass extends UnserializableClass
+  public static class SerializableSubclass extends ManuallySerializedClass
       implements IsSerializable {
+    private int d = 4;
+
     public int getD() {
       return d;
     }
@@ -32,22 +37,21 @@ public class CustomFieldSerializerTestSetFactory {
     public void setD(int d) {
       this.d = d;
     }
-
-    private int d = 4;
   }
 
   /**
-   * TODO: document me.
+   * Used to test a subclass of a manually serializable type that is not
+   * automatically or manually serializable.
    */
-  public static class UnserializableSubclass extends UnserializableClass {
+  public static class UnserializableSubclass extends ManuallySerializedClass {
   }
 
   public static SerializableSubclass createSerializableSubclass() {
     return new SerializableSubclass();
   }
 
-  public static UnserializableClass createUnserializableClass() {
-    return new UnserializableClass();
+  public static ManuallySerializedClass createUnserializableClass() {
+    return new ManuallySerializedClass();
   }
 
   public static UnserializableSubclass createUnserializableSubclass() {
