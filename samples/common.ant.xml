@@ -36,13 +36,14 @@
 		<outofdate>
 			<sourcefiles>
 				<fileset dir="src" />
+				<fileset dir="${sample.build}/bin" />
 				<fileset file="${gwt.user.jar}" />
 				<fileset file="${gwt.dev.jar}" />
 			</sourcefiles>
 			<targetfiles path="${sample.build}/www/com.google.gwt.sample.${sample.package}.${sample.module}/com.google.gwt.sample.${sample.package}.${sample.module}.nocache.html" />
 			<sequential>
 				<mkdir dir="${sample.build}/www" />
-				<java dir="${sample.build}" classname="com.google.gwt.dev.GWTCompiler" classpath="src:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
+				<java dir="${sample.build}" classname="com.google.gwt.dev.GWTCompiler" classpath="src:${sample.build}/bin:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
 					<arg value="-out" />
 					<arg file="${sample.build}/www" />
 					<arg value="com.google.gwt.sample.${sample.package}.${sample.module}" />
