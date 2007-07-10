@@ -72,32 +72,49 @@ public class Widget extends UIObject implements EventListener {
   }
 
   /**
+   * If a widget implements HasWidgets, it must override this method and
+   * call onAttach() for each of its child widgets.
+   * 
+   * @see Panel#onAttach()
+   */
+  protected void doAttachChildren() {
+  }
+
+  /**
+   * If a widget implements HasWidgets, it must override this method and
+   * call onDetach() for each of its child widgets.
+   * 
+   * @see Panel#onDetach()
+   */
+  protected void doDetachChildren() {
+  }
+
+  /**
    * This method is called when a widget is attached to the browser's document.
-   * To receive notification after a Widget has been added from the
+   * To receive notification after a Widget has been added to the
    * document, override the {@link #onLoad} method.
    * 
    * <p>
    * Subclasses that override this method must call
    * <code>super.onAttach()</code> to ensure that the Widget has been
-   * attached to the underlying Element.
+   * attached to its underlying Element.
    * </p>
    * 
    * @throws IllegalStateException if this widget is already attached
    */
   protected void onAttach() {
-    if (attached) {
+    if (isAttached()) {
       throw new IllegalStateException(
           "Should only call onAttach when the widget is detached from the browser's document");
     }
 
     attached = true;
-
-    // Set the main element's event listener. This should only be set
-    // while the widget is attached, because it creates a circular
-    // reference between JavaScript and the DOM.
     DOM.setEventListener(getElement(), this);
+    doAttachChildren();
 
-    // Now that the widget is attached, call onLoad().
+    // onLoad() gets called only *after* all of the children are attached and
+    // the attached flag is set. This allows widgets to be notified when they
+    // are fully attached, and panels when all of their children are attached.
     onLoad();
   }
 
@@ -110,27 +127,27 @@ public class Widget extends UIObject implements EventListener {
    * Subclasses that override this method must call
    * <code>super.onDetach()</code> to ensure that the Widget has been
    * detached from the underlying Element.  Failure to do so will result
-   * in application memeroy leaks due to circular references between DOM
+   * in application memory leaks due to circular references between DOM
    * Elements and JavaScript objects.
    * </p>
    * 
    * @throws IllegalStateException if this widget is already detached
    */
   protected void onDetach() {
-    if (!attached) {
+    if (!isAttached()) {
       throw new IllegalStateException(
           "Should only call onDetach when the widget is attached to the browser's document");
     }
-    
-    // Give the user a chance to clean up, but don't trust the code to not throw
+
     try {
+      // onUnload() gets called *before* everything else (the opposite of
+      // onLoad()).
       onUnload();
     } finally {
-      attached = false;
-  
-      // Clear out the element's event listener (breaking the circular
-      // reference between it and the widget).
+      // Put this in a finally, just in case onUnload throws an exception.
+      doDetachChildren();
       DOM.setEventListener(getElement(), null);
+      attached = false;
     }
   }
 
@@ -140,7 +157,7 @@ public class Widget extends UIObject implements EventListener {
    */
   protected void onLoad() {
   }
-  
+
   /**
    * This method is called immediately before a widget will be detached from the
    * browser's document.
@@ -159,7 +176,7 @@ public class Widget extends UIObject implements EventListener {
    * @param elem the object's new element
    */
   protected void setElement(Element elem) {
-    if (attached) {
+    if (isAttached()) {
       // Remove old event listener to avoid leaking. onDetach will not do this
       // for us, because it is only called when the widget itself is detached from
       // the document.
@@ -167,7 +184,7 @@ public class Widget extends UIObject implements EventListener {
     }
 
     super.setElement(elem);
-    if (attached) {
+    if (isAttached()) {
       // Hook the event listener back up on the new element. onAttach will not
       // do this for us, because it is only called when the widget itself is
       // attached to the document.

@@ -48,6 +48,13 @@ public abstract class Composite extends Widget {
     return super.getElement();
   }
 
+  public boolean isAttached() {
+    if (widget != null) {
+      return widget.isAttached();
+    }
+    return false;
+  }
+
   /**
    * Provides subclasses access to the topmost widget that defines this
    * composite.
@@ -84,17 +91,19 @@ public abstract class Composite extends Widget {
   }
 
   protected void onAttach() {
-    super.onAttach();
-
-    // Call onAttach() on behalf of the contained widget.
     widget.onAttach();
+    onLoad();
   }
 
   protected void onDetach() {
-    super.onDetach();
-
-    // Call onDetach() on behalf of the contained widget.
-    widget.onDetach();
+    try {
+      onUnload();
+    } finally {
+      // We don't want an exception in user code to keep us from calling the
+      // super implementation (or event listeners won't get cleaned up and
+      // the attached flag will be wrong).
+      widget.onDetach();
+    }
   }
 
   /**

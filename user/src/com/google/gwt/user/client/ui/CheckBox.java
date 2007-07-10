@@ -163,11 +163,10 @@ public class CheckBox extends ButtonBase implements HasName {
    * onAttach needs special handling for the CheckBox case. Must still call
    * {@link Widget#onAttach()} to preserve the <code>onAttach</code> contract.
    */
-  protected void onAttach() {
+  protected void onLoad() {
     // Sets the event listener on the inputElem, as in this case that's the
     // element we want so input on.
     DOM.setEventListener(inputElem, this);
-    super.onAttach();
   }
 
   /**
@@ -175,11 +174,10 @@ public class CheckBox extends ButtonBase implements HasName {
    * document. Overridden because of IE bug that throws away checked state and
    * in order to clear the event listener off of the <code>inputElem</code>.
    */
-  protected void onDetach() {
+  protected void onUnload() {
     // Clear out the inputElem's event listener (breaking the circular
     // reference between it and the widget).
     DOM.setEventListener(inputElem, null);
     setChecked(isChecked());
-    super.onDetach();
   }
 }

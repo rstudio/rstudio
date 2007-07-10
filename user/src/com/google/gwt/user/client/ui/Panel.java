@@ -71,15 +71,14 @@ public abstract class Panel extends Widget implements HasWidgets {
       throw new IllegalArgumentException("w is not a child of this panel");
     }
 
-    // Remove it at the DOM and GWT levels.
+    // setParent() must be called before removeChild() to ensure that the
+    // element is still attached when onDetach()/onUnload() are called.
     Element elem = w.getElement();
     w.setParent(null);
     DOM.removeChild(DOM.getParent(elem), elem);
   }
 
-  protected void onAttach() {
-    super.onAttach();
-
+  protected void doAttachChildren() {
     // Ensure that all child widgets are attached.
     for (Iterator it = iterator(); it.hasNext();) {
       Widget child = (Widget) it.next();
@@ -87,13 +86,29 @@ public abstract class Panel extends Widget implements HasWidgets {
     }
   }
 
-  protected void onDetach() {
-    super.onDetach();
-
+  protected void doDetachChildren() {
     // Ensure that all child widgets are detached.
     for (Iterator it = iterator(); it.hasNext();) {
       Widget child = (Widget) it.next();
       child.onDetach();
     }
+  }
+
+  /**
+   * A Panel's onLoad method will be called after all of its children are
+   * attached.
+   * 
+   * @see Widget#onLoad()
+   */
+  protected void onLoad() {
+  }
+
+  /**
+   * A Panel's onUnload method will be called before its children become
+   * detached themselves.
+   * 
+   * @see Widget#onLoad()
+   */
+  protected void onUnload() {
   }
 }

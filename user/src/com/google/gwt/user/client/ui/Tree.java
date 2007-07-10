@@ -597,6 +597,24 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return accum.iterator();
   }
 
+  protected void doAttachChildren() {
+    // Ensure that all child widgets are attached.
+    for (Iterator it = iterator(); it.hasNext();) {
+      Widget child = (Widget) it.next();
+      child.onAttach();
+    }
+    DOM.setEventListener(focusable, this);
+  }
+
+  protected void doDetachChildren() {
+    // Ensure that all child widgets are detached.
+    for (Iterator it = iterator(); it.hasNext();) {
+      Widget child = (Widget) it.next();
+      child.onDetach();
+    }
+    DOM.setEventListener(focusable, null);
+  }
+
   /**
    * Indicates if keyboard navigation is enabled for the Tree and for a given
    * TreeItem. Subclasses of Tree can override this function to selectively
@@ -608,28 +626,6 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    */
   protected boolean isKeyboardNavigationEnabled(TreeItem currentItem) {
     return true;
-  }
-
-  protected void onAttach() {
-    super.onAttach();
-
-    // Ensure that all child widgets are attached.
-    for (Iterator it = iterator(); it.hasNext();) {
-      Widget child = (Widget) it.next();
-      child.onAttach();
-    }
-    DOM.setEventListener(focusable, this);
-  }
-
-  protected void onDetach() {
-    super.onDetach();
-
-    // Ensure that all child widgets are detached.
-    for (Iterator it = iterator(); it.hasNext();) {
-      Widget child = (Widget) it.next();
-      child.onDetach();
-    }
-    DOM.setEventListener(focusable, null);
   }
 
   protected void onLoad() {
