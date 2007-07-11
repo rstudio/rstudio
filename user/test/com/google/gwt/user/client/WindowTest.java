@@ -35,27 +35,25 @@ public class WindowTest extends GWTTestCase {
   public void testGetClientSize() {
     // Get the dimensions without any scroll bars
     Window.enableScrolling(false);
-    int oldClientHeight = Window.getClientHeight();
-    int oldClientWidth = Window.getClientWidth();
-    assertTrue(oldClientHeight > 0);
-    assertTrue(oldClientWidth > 0);
+    final int oldClientHeight = Window.getClientHeight();
+    final int oldClientWidth = Window.getClientWidth();
+    assertTrue( oldClientHeight > 0 );
+    assertTrue( oldClientWidth > 0 );
 
     // Compare to the dimensions with scroll bars
     Window.enableScrolling(true);
-    Label largeDOM = new Label();
+    final Label largeDOM = new Label();
     largeDOM.setPixelSize(oldClientWidth + 100, oldClientHeight + 100);
     RootPanel.get().add(largeDOM);
-    int newClientHeight = Window.getClientHeight();
-    int newClientWidth = Window.getClientWidth();
-    assertTrue(newClientHeight < oldClientHeight);
-    assertTrue(newClientWidth < oldClientWidth);
-
-    // Increase the size of the contents and verify we still have the same
-    // client height and width 
-    largeDOM.setPixelSize(oldClientWidth + 500, oldClientHeight + 500);
-    int finalClientHeight = Window.getClientHeight();
-    int finalClientWidth = Window.getClientWidth();
-    assertEquals(newClientHeight, finalClientHeight);
-    assertEquals(newClientWidth, finalClientWidth);
+    DeferredCommand.addCommand(new Command() {
+      public void execute() {
+        int newClientHeight = Window.getClientHeight();
+        int newClientWidth  = Window.getClientWidth();
+        assertTrue( newClientHeight < oldClientHeight );
+        assertTrue( newClientWidth < oldClientWidth );
+        finishTest();
+      }
+    });
+    delayTestFinish(200);
   }
 }
