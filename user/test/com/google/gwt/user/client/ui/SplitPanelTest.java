@@ -72,12 +72,12 @@ public class SplitPanelTest extends GWTTestCase {
     assertTrue(panel.getRightWidget() == widgetA);
 
     // Ensure we ended up at the right size.
-    assertEquals(panel.getOffsetWidth(), 100);
-    assertEquals(panel.getOffsetHeight(), 100);
+    assertEquals(100, panel.getOffsetWidth());
+    assertEquals(100, panel.getOffsetHeight());
   }
 
   /**
-   * Tests creation, widget assignment, null assigment for
+   * Tests creation, widget assignment, null assignment for
    * {@link VerticalSplitPanel}.
    */
   public void testVerticalSplitPanelCreate() {
@@ -113,7 +113,7 @@ public class SplitPanelTest extends GWTTestCase {
     assertTrue(panel.getBottomWidget() == widgetA);
 
     // Ensure we ended up at the right size.
-    assertEquals(panel.getOffsetWidth(), 100);
-    assertEquals(panel.getOffsetHeight(), 100);
+    assertEquals(100, panel.getOffsetWidth());
+    assertEquals(100, panel.getOffsetHeight());
   }
 }
