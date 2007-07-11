@@ -33,6 +33,8 @@ import java.util.ArrayList;
 public final class ServerSerializationStreamReader extends
     AbstractSerializationStreamReader {
 
+  private final ClassLoader classLoader;
+
   private ServerSerializableTypeOracle serializableTypeOracle;
 
   private String[] stringTable;
@@ -42,7 +44,9 @@ public final class ServerSerializationStreamReader extends
   private int tokenListIndex;
 
   public ServerSerializationStreamReader(
-      ServerSerializableTypeOracle serializableTypeOracle) {
+      ServerSerializableTypeOracle serializableTypeOracle,
+      ClassLoader classLoader) {
+    this.classLoader = classLoader;
     this.serializableTypeOracle = serializableTypeOracle;
   }
 
@@ -133,7 +137,7 @@ public final class ServerSerializationStreamReader extends
 
     try {
       Class instanceClass = Class.forName(serializedInstRef.getName(), false,
-          this.getClass().getClassLoader());
+          classLoader);
 
       if (!serializableTypeOracle.isSerializable(instanceClass)) {
         throw new SerializationException("Class '" + instanceClass.getName()

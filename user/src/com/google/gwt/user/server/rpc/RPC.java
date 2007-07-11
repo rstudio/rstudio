@@ -114,8 +114,10 @@ public final class RPC {
    *           conditions apply:
    *           <ul>
    *           <li>if the types in the encoded request cannot be deserialized</li>
-   *           <li><code>RPC.class.getClassLoader()</code> cannot load the
-   *           service interface requested in the encodedRequest</li>
+   *           <li>if the {@link ClassLoader} acquired from
+   *           <code>Thread.currentThread().getContextClassLoader()</code>
+   *           cannot load the service interface or any of the types specified
+   *           in the encodedRequest</li>
    *           <li>the requested interface is not assignable to
    *           {@link RemoteService}</li>
    *           <li>the service method requested in the encodedRequest is not a
@@ -155,8 +157,10 @@ public final class RPC {
    *           conditions apply:
    *           <ul>
    *           <li>if the types in the encoded request cannot be deserialized</li>
-   *           <li><code>RPC.class.getClassLoader()</code> cannot load the
-   *           service interface requested in the encodedRequest</li>
+   *           <li>if the {@link ClassLoader} acquired from
+   *           <code>Thread.currentThread().getContextClassLoader()</code>
+   *           cannot load the service interface or any of the types specified
+   *           in the encodedRequest</li>
    *           <li>the requested interface is not assignable to
    *           {@link RemoteService}</li>
    *           <li>the service method requested in the encodedRequest is not a
@@ -174,9 +178,11 @@ public final class RPC {
       throw new IllegalArgumentException("encodedRequest cannot be empty");
     }
 
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+
     try {
       ServerSerializationStreamReader streamReader = new ServerSerializationStreamReader(
-          serializableTypeOracle);
+          serializableTypeOracle, classLoader);
       streamReader.prepareToRead(encodedRequest);
 
       String serviceIntfName = streamReader.readString();
@@ -193,7 +199,7 @@ public final class RPC {
 
       Class serviceIntf;
       try {
-        serviceIntf = getClassFromSerializedName(serviceIntfName);
+        serviceIntf = getClassFromSerializedName(serviceIntfName, classLoader);
         if (!RemoteService.class.isAssignableFrom(serviceIntf)) {
           // The requested interface is not a RemoteService interface
           throw new IncompatibleRemoteServiceException(
@@ -215,7 +221,8 @@ public final class RPC {
       for (int i = 0; i < parameterTypes.length; i++) {
         String paramClassName = streamReader.readString();
         try {
-          parameterTypes[i] = getClassFromSerializedName(paramClassName);
+          parameterTypes[i] = getClassFromSerializedName(paramClassName,
+              classLoader);
         } catch (ClassNotFoundException e) {
           throw new IncompatibleRemoteServiceException("Parameter " + i
               + " of is of an unknown type '" + paramClassName + "'", e);
@@ -485,17 +492,18 @@ public final class RPC {
    * Returns the {@link Class} instance for the named class or primitive type.
    * 
    * @param serializedName the serialized name of a class or primitive type
+   * @param classLoader the classLoader used to load {@link Class}es
    * @return Class instance for the given type name
    * @throws ClassNotFoundException if the named type was not found
    */
-  private static Class getClassFromSerializedName(String serializedName)
-      throws ClassNotFoundException {
+  private static Class getClassFromSerializedName(String serializedName,
+      ClassLoader classLoader) throws ClassNotFoundException {
     Object value = TYPE_NAMES.get(serializedName);
     if (value != null) {
       return (Class) value;
     }
 
-    return Class.forName(serializedName, false, RPC.class.getClassLoader());
+    return Class.forName(serializedName, false, classLoader);
   }
 
   /**
