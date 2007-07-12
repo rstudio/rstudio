@@ -42,12 +42,32 @@ import com.google.gwt.user.client.ui.impl.PopupImpl;
 public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     EventPreview {
 
+  /**
+   * A callback that is used to set the position of a {@link PopupPanel} right
+   * before it is shown.
+   */
+  public interface PositionCallback {
+
+    /**
+     * Provides the opportunity to set the position of the PopupPanel right
+     * before the PopupPanel is shown. The offsetWidth and offsetHeight values
+     * of the PopupPanel are made available to allow for positioning based on
+     * its size.
+     *
+     * @param offsetWidth the offsetWidth of the PopupPanel
+     * @param offsetHeight the offsetHeight of the PopupPanel
+     * @see PopupPanel#setPopupPositionAndShow(PositionCallback)
+     */
+    public void setPosition(int offsetWidth, int offsetHeight);
+  }
+
   private static final PopupImpl impl = (PopupImpl) GWT.create(PopupImpl.class);
 
   private boolean autoHide, modal, showing;
 
   // Used to track requested size across changing child widgets
   private String desiredHeight;
+
   private String desiredWidth;
 
   private PopupListenerCollection popupListeners;
@@ -58,6 +78,11 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    */
   public PopupPanel() {
     super(impl.createElement());
+
+    // Default position of popup should be in the upper-left corner of the
+    // window. By setting a default position, the popup will not appear in
+    // an undefined location if it is shown before its position is set.
+    setPopupPosition(0,0);
   }
 
   /**
@@ -92,23 +117,24 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Centers the popup in the browser window.
-   * 
-   * <p>
-   * Note that the popup must be shown before this method is called.
-   * </p>
+   * Centers the popup in the browser window and shows it. If the popup was
+   * already showing, then the popup is centered. 
    */
   public void center() {
-    // Centering will not work properly until the panel is shown, because it
-    // cannot be measured until it is attached to the DOM.
-    if (!showing) {
-      throw new IllegalStateException("PopupPanel must be shown before it may "
-          + "be centered.");
+    boolean initiallyShowing = showing;
+
+    if (!initiallyShowing) {
+      setVisible(false);
+      show();
     }
 
     int left = (Window.getClientWidth() - getOffsetWidth()) / 2;
     int top = (Window.getClientHeight() - getOffsetHeight()) / 2;
     setPopupPosition(Window.getScrollLeft() + left, Window.getScrollTop() + top);
+
+    if (!initiallyShowing) {
+      setVisible(true);
+    }
   }
 
   /**
@@ -303,6 +329,24 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     DOM.setStyleAttribute(elem, "top", top + "px");
   }
 
+  /**
+   * Sets the popup's position using a {@link PositionCallback}, and shows
+   * the popup. The callback allows positioning to be performed based on
+   * the offsetWidth and offsetHeight of the popup, which are normally
+   * not available until the popup is showing. By positioning the popup
+   * before it is shown, the the popup will not jump from its original
+   * position to the new position.
+   *
+   * @param callback the callback to set the position of the popup
+   * @see PositionCallback#setPosition(int offsetWidth, int offsetHeight)
+   */
+  public void setPopupPositionAndShow(PositionCallback callback) {
+    setVisible(false);
+    show();
+    callback.setPosition(getOffsetWidth(), getOffsetHeight());
+    setVisible(true);
+  }
+
   public void setTitle(String title) {
     Element containerElement = getContainerElement();
     if (title == null || title.length() == 0) {
@@ -362,8 +406,12 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     showing = true;
     DOM.addEventPreview(this);
 
-    RootPanel.get().add(this);
+    // Set the position attribute, and then attach to the DOM. Otherwise,
+    // the PopupPanel will appear to 'jump' from its static/relative position
+    // to its absolute position (issue #1231).
     DOM.setStyleAttribute(getElement(), "position", "absolute");
+    RootPanel.get().add(this);
+
     impl.onShow(getElement());
   }
 

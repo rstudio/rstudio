@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,8 +22,9 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.Window;
 
-public class PopupPanelExample implements EntryPoint, ClickListener {
+public class PopupPanelExample implements EntryPoint {
 
   private static class MyPopup extends PopupPanel {
 
@@ -40,14 +41,40 @@ public class PopupPanelExample implements EntryPoint, ClickListener {
   }
 
   public void onModuleLoad() {
-    Button b = new Button("Click me");
-    b.addClickListener(this);
+    Button b1 = new Button("Click me to show popup");
+    b1.addClickListener(new ClickListener() {
+      public void onClick(Widget sender) {
+        // Instantiate the popup and show it.
+        new MyPopup().show();
+      }
+    });
 
-    RootPanel.get().add(b);
-  }
+    RootPanel.get().add(b1);
 
-  public void onClick(Widget sender) {
-    // Instantiate the popup and show it.
-    new MyPopup().show();
+    Button b2 = new Button("Click me to show popup partway across the screen");
+
+    b2.addClickListener(new ClickListener() {
+      public void onClick(Widget sender) {
+        // Create the new popup.
+        final MyPopup popup = new MyPopup();
+        // Position the popup 1/3rd of the way down and across the screen, and
+        // show the popup. Since the position calculation is based on the
+        // offsetWidth and offsetHeight of the popup, you have to use the
+        // setPopupPositionAndShow(callback) method. The alternative would
+        // be to call show(), calculate the left and top positions, and
+        // call setPopupPosition(left, top). This would have the ugly side
+        // effect of the popup jumping from its original position to its
+        // new position.
+        popup.setPopupPositionAndShow(new PopupPanel.PositionCallback() {
+          public void setPosition(int offsetWidth, int offsetHeight) {
+            int left = (Window.getClientWidth() - offsetWidth) / 3;
+            int top = (Window.getClientHeight() - offsetHeight) / 3;
+            popup.setPopupPosition(left, top);
+          }
+        });
+      }
+    });
+
+    RootPanel.get().add(b2);
   }
 }

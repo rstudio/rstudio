@@ -127,10 +127,7 @@ public class Popups extends Sink implements ClickListener {
       p.show();
     } else if (sender == dialogButton) {
       DialogBox dlg = new MyDialog();
-      dlg.show();
-      dlg.setVisible(false);
       dlg.center();
-      dlg.setVisible(true);
     }
   }
 
