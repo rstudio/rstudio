@@ -276,7 +276,7 @@ function __MODULE_FUNC__() {
         $doc.removeEventListener("DOMContentLoaded", onBodyDone, false);
       }
       if (onBodyDoneTimerId) {
-      	clearInterval(onBodyDoneTimerId);
+        clearInterval(onBodyDoneTimerId);
       }
     }
   }
@@ -328,28 +328,31 @@ __MODULE_FUNC__.__gwt_initHandlers = function(resize, beforeunload, unload) {
   ;
 
   $wnd.onresize = function(evt) {
-   resize();
-   if (oldOnResize)
-     oldOnResize(evt);
+   try {
+     resize();
+   } finally {
+     oldOnResize && oldOnResize(evt);
+   }
   };
   
   $wnd.onbeforeunload = function(evt) {
-   var ret = beforeunload();
-  
-   var oldRet;
-   if (oldOnBeforeUnload)
-     oldRet = oldOnBeforeUnload(evt);
-  
-   if (ret !== null)
-     return ret;
-   return oldRet;
+    var ret, oldRet;
+    try {
+      ret = beforeunload();
+    } finally {
+      oldRet = oldOnBeforeUnload && oldOnBeforeUnload(evt);
+    }
+   // We should never return null as IE6 will coerce it into a string.
+    return ret || oldRet || undefined;
   };
   
   $wnd.onunload = function(evt) {
-   unload();
-   if (oldOnUnload)
-     oldOnUnload(evt);
+    try {
+      unload();
+    } finally {
+      oldOnUnload && oldOnUnload(evt);
+    }
   };
-}
+};
 
 __MODULE_FUNC__();

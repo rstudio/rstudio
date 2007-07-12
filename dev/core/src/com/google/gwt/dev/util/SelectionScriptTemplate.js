@@ -317,7 +317,7 @@ function __MODULE_FUNC__() {
         $doc.removeEventListener("DOMContentLoaded", onBodyDone, false);
       }
       if (onBodyDoneTimerId) {
-      	clearInterval(onBodyDoneTimerId);
+        clearInterval(onBodyDoneTimerId);
       }
     }
   }
@@ -350,7 +350,14 @@ function __MODULE_FUNC__() {
     strongName += '.cache.html';
   }
 
-  $doc.write('<iframe id="__MODULE_NAME__" style="width:0;height:0;border:0" src="' + base + strongName + '"></iframe>');
+  $doc.write('<iframe id="__MODULE_NAME__" style="width:0;height:0;border:0" src="javascript:\'\'"></iframe>');
+  var iframe = $doc.getElementById('__MODULE_NAME__');
+  
+  // The true src cannot be included in the tag that is emitted with $doc.write,
+  // because Safari and IE will reload outdated cache.html files and fail to
+  // load.
+  iframe.src = base + strongName;
+  
 // __MODULE_DEPS_BEGIN__
   // Module dependencies, such as scripts and css
 // __MODULE_DEPS_END__
@@ -376,28 +383,31 @@ __MODULE_FUNC__.__gwt_initHandlers = function(resize, beforeunload, unload) {
   ;
 
   $wnd.onresize = function(evt) {
-   resize();
-   if (oldOnResize)
-     oldOnResize(evt);
+    try {
+      resize();
+    } finally {
+      oldOnResize && oldOnResize(evt);
+    }
   };
   
   $wnd.onbeforeunload = function(evt) {
-   var ret = beforeunload();
-  
-   var oldRet;
-   if (oldOnBeforeUnload)
-     oldRet = oldOnBeforeUnload(evt);
-  
-   if (ret !== null)
-     return ret;
-   return oldRet;
+    var ret, oldRet;
+    try {
+      ret = beforeunload();
+    } finally {
+      oldRet = oldOnBeforeUnload && oldOnBeforeUnload(evt);
+    }
+   // We should never return null as IE6 will coerce it into a string.
+    return ret || oldRet || undefined;
   };
   
   $wnd.onunload = function(evt) {
-   unload();
-   if (oldOnUnload)
-     oldOnUnload(evt);
+    try {
+      unload();
+    } finally {
+      oldOnUnload && oldOnUnload(evt);
+    }
   };
-}
+};
 
 __MODULE_FUNC__();
