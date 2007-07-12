@@ -812,7 +812,7 @@ public abstract class CustomButton extends ButtonBase implements
    * @return the modified style name
    */
   private String getCSSStyleName() {
-    return getBaseStyleName() + "-" + curFace.getName();
+    return getStyleName() + "-" + curFace.getName();
   }
 
   private Face getFaceFromID(int id) {
