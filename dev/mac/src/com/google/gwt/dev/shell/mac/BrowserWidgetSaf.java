@@ -110,7 +110,8 @@ public class BrowserWidgetSaf extends BrowserWidget {
         if (!LowLevelSaf.isObject(jsargs[0])) {
           return jsFalse;
         }
-        if (!LowLevelSaf.isString(jsargs[1])) {
+        if (!LowLevelSaf.isNull(jsargs[1])
+            && !LowLevelSaf.isString(jsargs[1])) {
           return jsFalse;
         }
         String moduleName = LowLevelSaf.coerceToString(execState, jsargs[1]);
