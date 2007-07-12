@@ -91,6 +91,9 @@ public abstract class Number {
   protected static long __parseAndValidateLong(String s, int radix,
       long lowerBound, long upperBound) throws NumberFormatException {
   
+    if (s == null) {
+      throw new NumberFormatException("Unable to parse null");
+    }
     int length = s.length();
     int startIndex = (length > 0) && (s.charAt(0) == '-') ? 1 : 0;
   
