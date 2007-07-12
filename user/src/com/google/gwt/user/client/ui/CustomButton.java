@@ -539,7 +539,8 @@ public abstract class CustomButton extends ButtonBase implements
         }
         break;
       case Event.ONMOUSEOUT:
-        if (DOM.isOrHasChild(getElement(), DOM.eventGetTarget(event))) {
+        if (DOM.isOrHasChild(getElement(), DOM.eventGetTarget(event)) &&
+            !DOM.isOrHasChild(getElement(), DOM.eventGetToElement(event))) {
           if (isCapturing) {
             onClickCancel();
           }
@@ -811,7 +812,7 @@ public abstract class CustomButton extends ButtonBase implements
    * @return the modified style name
    */
   private String getCSSStyleName() {
-    return getStyleName() + "-" + curFace.getName();
+    return getBaseStyleName() + "-" + curFace.getName();
   }
 
   private Face getFaceFromID(int id) {

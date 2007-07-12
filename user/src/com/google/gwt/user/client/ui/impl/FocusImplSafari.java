@@ -46,6 +46,9 @@ public class FocusImplSafari extends FocusImplOld {
     input.type = 'text';
     input.style.opacity = 0;
     input.style.zIndex = -1;
+    input.style.height = '1px';
+    input.style.width = '1px';
+    input.style.overflow = 'hidden';
     input.style.position = 'absolute';
     return input;
   }-*/;
