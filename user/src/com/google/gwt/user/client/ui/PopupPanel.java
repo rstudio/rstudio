@@ -161,35 +161,25 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   public boolean onEventPreview(Event event) {
-
     Element target = DOM.eventGetTarget(event);
     boolean eventTargetsPopup = DOM.isOrHasChild(getElement(), target);
 
     int type = DOM.eventGetType(event);
     switch (type) {
       case Event.ONKEYDOWN: {
-        if (eventTargetsPopup) {
-          return onKeyDownPreview((char) DOM.eventGetKeyCode(event),
-              KeyboardListenerCollection.getKeyboardModifiers(event));
-        } else {
-          return !modal;
-        }
+        boolean allow = onKeyDownPreview((char) DOM.eventGetKeyCode(event),
+            KeyboardListenerCollection.getKeyboardModifiers(event));
+        return allow && (eventTargetsPopup || !modal);
       }
       case Event.ONKEYUP: {
-        if (eventTargetsPopup) {
-          return onKeyUpPreview((char) DOM.eventGetKeyCode(event),
-              KeyboardListenerCollection.getKeyboardModifiers(event));
-        } else {
-          return !modal;
-        }
+        boolean allow =  onKeyUpPreview((char) DOM.eventGetKeyCode(event),
+            KeyboardListenerCollection.getKeyboardModifiers(event));
+        return allow && (eventTargetsPopup || !modal);
       }
       case Event.ONKEYPRESS: {
-        if (eventTargetsPopup) {
-          return onKeyPressPreview((char) DOM.eventGetKeyCode(event),
-              KeyboardListenerCollection.getKeyboardModifiers(event));
-        } else {
-          return !modal;
-        }
+        boolean allow =  onKeyPressPreview((char) DOM.eventGetKeyCode(event),
+            KeyboardListenerCollection.getKeyboardModifiers(event));
+        return allow && (eventTargetsPopup || !modal);
       }
 
       case Event.ONMOUSEDOWN:
