@@ -41,8 +41,10 @@ public class AbsolutePanel extends ComplexPanel {
    *
    * @param elem the DOM element 
    */
-  private static void changeToStaticPositioning(Element elem) {  
-    DOM.setStyleAttribute(elem, "position", "static");
+  private static void changeToStaticPositioning(Element elem) {
+    DOM.setStyleAttribute(elem, "left", "");
+    DOM.setStyleAttribute(elem, "top", "");
+    DOM.setStyleAttribute(elem, "position", "");
   }
 
   /**

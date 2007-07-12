@@ -57,6 +57,13 @@ public class PopupTest extends GWTTestCase {
     assertEquals(128, popup.getPopupLeft());
     assertEquals(64, popup.getPopupTop());
 
+    // Make sure that the popup returns to the correct position
+    // after hiding and showing it.
+    popup.hide();
+    popup.show();
+    assertEquals(128, popup.getPopupLeft());
+    assertEquals(64, popup.getPopupTop());
+
     // Make sure that setting the popup's size & position works _after_
     // setting its widget (and that clearing its size properly resizes it to
     // its widget's size).

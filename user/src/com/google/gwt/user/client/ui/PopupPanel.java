@@ -70,6 +70,12 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   private String desiredWidth;
 
+  // the left style attribute in pixels
+  private int leftPosition = -1;
+  
+  // The top style attribute in pixels
+  private int topPosition = -1; 
+  
   private PopupListenerCollection popupListeners;
 
   /**
@@ -321,6 +327,10 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       top = 0;
     }
 
+    // Save the position of the popup
+    leftPosition = left;
+    topPosition = top;
+
     // Set the popup's position manually, allowing setPopupPosition() to be
     // called before show() is called (so a popup can be positioned without it
     // 'jumping' on the screen).
@@ -410,6 +420,9 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     // the PopupPanel will appear to 'jump' from its static/relative position
     // to its absolute position (issue #1231).
     DOM.setStyleAttribute(getElement(), "position", "absolute");
+    if (topPosition != -1) {
+      setPopupPosition(leftPosition, topPosition);
+    }
     RootPanel.get().add(this);
 
     impl.onShow(getElement());
