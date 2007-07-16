@@ -307,6 +307,21 @@ function __MODULE_FUNC__() {
 
   // --------------- WINDOW ONLOAD HOOK ---------------
 
+  var strongName;
+  if (isHostedMode()) {
+    strongName = "hosted.html?__MODULE_FUNC__";
+  } else {
+    try {
+// __PERMUTATIONS_BEGIN__
+      // Permutation logic
+// __PERMUTATIONS_END__
+    } catch (e) {
+      // intentionally silent on property failure
+      return;
+    }  
+    strongName += '.cache.html';
+  }
+  
   var onBodyDoneTimerId;
   function onBodyDone() {
     if (!bodyDone) {
@@ -322,42 +337,34 @@ function __MODULE_FUNC__() {
     }
   }
 
+  var scriptInjected;
+  function maybeInjectFrame() {
+    if (!scriptInjected && $doc.body) {
+      scriptInjected = true;
+      var iframe = $doc.createElement('iframe');
+      iframe.id = "__MODULE_NAME__";
+      iframe.src = base + strongName;
+      iframe.style.cssText = "position:absolute;width:0;height:0;border:none";
+      $doc.body.appendChild(iframe);
+    }
+  }
+  
   // For everyone that supports DOMContentLoaded.
   if ($doc.addEventListener) {
-    $doc.addEventListener("DOMContentLoaded", onBodyDone, false);
+    $doc.addEventListener("DOMContentLoaded", function() {
+      maybeInjectFrame();
+      onBodyDone();
+    }, false);
   }
 
   // Fallback. If onBodyDone() gets fired twice, it's not a big deal.
   var onBodyDoneTimerId = setInterval(function() {
+    maybeInjectFrame();
     if (/loaded|complete/.test($doc.readyState)) {
       onBodyDone();
     }
   }, 50);
- 
-  var strongName;
-  if (isHostedMode()) {
-    strongName = "hosted.html?__MODULE_FUNC__";
-  } else {
-    try {
-// __PERMUTATIONS_BEGIN__
-      // Permutation logic
-// __PERMUTATIONS_END__
-    } catch (e) {
-      // intentionally silent on property failure
-      return;
-    }  
 
-    strongName += '.cache.html';
-  }
-
-  $doc.write('<iframe id="__MODULE_NAME__" style="width:0;height:0;border:0" src="javascript:\'\'"></iframe>');
-  var iframe = $doc.getElementById('__MODULE_NAME__');
-  
-  // The true src cannot be included in the tag that is emitted with $doc.write,
-  // because Safari and IE will reload outdated cache.html files and fail to
-  // load.
-  iframe.src = base + strongName;
-  
 // __MODULE_DEPS_BEGIN__
   // Module dependencies, such as scripts and css
 // __MODULE_DEPS_END__
@@ -397,8 +404,15 @@ __MODULE_FUNC__.__gwt_initHandlers = function(resize, beforeunload, unload) {
     } finally {
       oldRet = oldOnBeforeUnload && oldOnBeforeUnload(evt);
     }
-   // We should never return null as IE6 will coerce it into a string.
-    return ret || oldRet || undefined;
+    // Avoid returning null as IE6 will coerce it into a string.
+    // Ensure that "" gets returned properly.
+    if (ret != null) {
+      return ret;
+    }
+    if (oldRet != null) {
+      return oldRet;
+    }
+    // returns undefined.
   };
   
   $wnd.onunload = function(evt) {

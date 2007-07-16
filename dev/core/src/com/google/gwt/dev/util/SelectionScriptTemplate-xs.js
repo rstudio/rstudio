@@ -342,8 +342,15 @@ __MODULE_FUNC__.__gwt_initHandlers = function(resize, beforeunload, unload) {
     } finally {
       oldRet = oldOnBeforeUnload && oldOnBeforeUnload(evt);
     }
-   // We should never return null as IE6 will coerce it into a string.
-    return ret || oldRet || undefined;
+    // Avoid returning null as IE6 will coerce it into a string.
+    // Ensure that "" gets returned properly.
+    if (ret != null) {
+	  return ret;
+	}
+	if (oldRet != null) {
+	  return oldRet;
+	}
+   // returns undefined.
   };
   
   $wnd.onunload = function(evt) {
