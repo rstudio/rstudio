@@ -137,7 +137,7 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
                 .getDeclaredConstructor(new Class[]{Throwable.class});
             ctor.setAccessible(true);
             ex = (Throwable) ctor.newInstance(new Object[]{cause});
-            setField(exClass, "detailMessage", ex, ew.message);
+            setField(Throwable.class, "detailMessage", ex, ew.message);
           } catch (Throwable e3) {
             // try ExType()
             try {
@@ -145,7 +145,7 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
               ctor.setAccessible(true);
               ex = (Throwable) ctor.newInstance(null);
               ex.initCause(cause);
-              setField(exClass, "detailMessage", ex, ew.message);
+              setField(Throwable.class, "detailMessage", ex, ew.message);
             } catch (Throwable e4) {
               // we're out of options
               this.log("Failed to deserialize getException of type '"
