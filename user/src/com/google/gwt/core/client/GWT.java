@@ -61,8 +61,12 @@ public final class GWT {
      * In web mode, the compiler directly replaces calls to this method with a
      * new Object() type expression of the correct rebound type.
      */
-    throw new RuntimeException(
-        "GWT has not been properly initialized; if you are running a unit test, check that your test case extends GWTTestCase");
+    throw new UnsupportedOperationException(
+        "ERROR: GWT.create() is only usable in client code!  It cannot be called, "
+            + "for example, from server code.  If you are running a unit test, "
+            + "check that your test case extends GWTTestCase and that GWT.create() "
+            + "is not called from within an initializer, constructor, or "
+            + "setUp()/tearDown().");
   }
 
   /**
