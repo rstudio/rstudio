@@ -25,11 +25,14 @@ import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JType;
+
+import java.util.ArrayList;
 
 /**
  * Synthesize casts for JavaScriptObject types in cases where dynamic type
@@ -115,6 +118,23 @@ public class JavaScriptObjectCaster {
     }
 
     // @Override
+    public void endVisit(JNewArray x, Context ctx) {
+      JType leafType = x.getArrayType().getElementType();
+      ArrayList initializers = x.initializers;
+      if (initializers != null) {
+        for (int i = 0; i < initializers.size(); ++i) {
+          JExpression intializer = (JExpression) initializers.get(i);
+          JExpression newInitializer = checkAndReplaceJsoArrayStore(intializer,
+              x.getArrayType().getLeafType());
+          if (intializer != newInitializer) {
+            initializers.set(i, newInitializer);
+            this.didChange = true;
+          }
+        }
+      }
+    }
+
+    // @Override
     public void endVisit(JReturnStatement x, Context ctx) {
       if (x.getExpr() != null) {
         JExpression newExpr = checkAndReplaceJso(x.getExpr(),
@@ -154,15 +174,14 @@ public class JavaScriptObjectCaster {
     }
 
     /**
-     * Wraps a JSO-typed argument if the target array element type might
-     * generate an array store check.
+     * Wraps a JSO-typed argument.
+     * 
+     * TODO: We could eliminate casts cases where the array instance was never
+     * cast to a weaker type.
      */
     private JExpression checkAndReplaceJsoArrayStore(JExpression arg,
         JType targetType) {
       if (!(targetType instanceof JReferenceType)) {
-        return arg;
-      }
-      if (((JReferenceType) targetType).isFinal()) {
         return arg;
       }
       if (!program.isJavaScriptObject(arg.getType())) {

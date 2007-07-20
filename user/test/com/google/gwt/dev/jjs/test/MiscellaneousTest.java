@@ -291,7 +291,21 @@ public class MiscellaneousTest extends GWTTestCase {
     assertEquals("Foo", y.toString());
     jso = getJso();
     assertEquals("jso", jso.toString());
+  }
 
+  public void testJsoArrayInit() {
+    Object[] jsos = {getJso(), ""};
+    JavaScriptObject jso = (JavaScriptObject) jsos[0];
+  }
+
+  public void testJsoArrayStore() {
+    // Verify that a JSO stored into an array was correctly wrapped
+    String[] strings = {""};
+    JavaScriptObject[] jsos = {getJso()};
+    Object[] objArray = noOptimizeFalse() ? (Object[]) strings : jsos;
+    JavaScriptObject jso = (JavaScriptObject) objArray[0];
+
+    // Verify that ArrayStoreExceptions are generated in the correct cases
     try {
       JavaScriptObject[] typeTightenedFooArray = new Foo[3];
       typeTightenedFooArray[0] = getJso();
