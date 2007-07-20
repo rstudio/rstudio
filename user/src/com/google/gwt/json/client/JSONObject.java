@@ -25,12 +25,49 @@ import java.util.Set;
  * set of {@link com.google.gwt.json.client.JSONValue} objects.
  */
 public class JSONObject extends JSONValue {
+
+  /**
+   * A sentinel value for {@link #removeBack(JavaScriptObject, String)} to
+   * return when an entry does not exist.
+   */
+  private static JavaScriptObject UNDEFINED = JavaScriptObject.createObject();
+
+  private static native void addAllKeysFromJavascriptObject(Set s,
+      JavaScriptObject javaScriptObject) /*-{
+    for(var key in javaScriptObject) {
+      s.@java.util.Set::add(Ljava/lang/Object;)(key);
+    }
+  }-*/;
+
+  private static native JSONValue getFront(JavaScriptObject frontStore, String key) /*-{
+    key = String(key);
+    return Object.prototype.hasOwnProperty.call(frontStore, key) ? frontStore[key] : null;
+  }-*/;
+
+  private static native void putFront(JavaScriptObject frontStore, String key,
+      JSONValue jsonValue) /*-{
+    frontStore[String(key)] = jsonValue;
+  }-*/;
+
+  private static native JavaScriptObject removeBack(JavaScriptObject backStore, String key) /*-{
+    key = String(key);
+    if (Object.prototype.hasOwnProperty.call(backStore, key)) {
+      var x = backStore[key];
+      delete backStore[key];
+      if (typeof x != 'object') {
+        x = Object(x); 
+      }
+      return x;
+    }
+    return @com.google.gwt.json.client.JSONObject::UNDEFINED;
+  }-*/;
+
   private final JavaScriptObject backStore;
 
-  private final JavaScriptObject frontStore = createBlankObject();
+  private final JavaScriptObject frontStore = JavaScriptObject.createObject();
 
   public JSONObject() {
-    backStore = createBlankObject();
+    backStore = JavaScriptObject.createObject();
   }
 
   /**
@@ -43,60 +80,49 @@ public class JSONObject extends JSONValue {
   /**
    * Tests whether or not this JSONObject contains the specified key.
    * 
-   * We use Object.hasOwnProperty here to verify that a given key is
-   * specified on this object rather than a superclass (such as standard
-   * properties defined on Object).
+   * We use Object.hasOwnProperty here to verify that a given key is specified
+   * on this object rather than a superclass (such as standard properties
+   * defined on Object).
    * 
    * @param key the key to search for
    * @return <code>true</code> if the JSONObject contains the specified key
    */
-  public native boolean containsKey(String key) /*-{
-    return Object.prototype.hasOwnProperty.call(
-        this.@com.google.gwt.json.client.JSONObject::backStore, key)
-        || Object.prototype.hasOwnProperty.call(
-        this.@com.google.gwt.json.client.JSONObject::frontStore, key);
-  }-*/;
+  public boolean containsKey(String key) {
+    return get(key) != null;
+  }
 
   /**
    * Gets the JSONValue associated with the specified key.
    * 
-   * We use Object.hasOwnProperty here to verify that a given key is
-   * specified on this object rather than a superclass (such as standard
-   * properties defined on Object).
+   * We use Object.hasOwnProperty here to verify that a given key is specified
+   * on this object rather than a superclass (such as standard properties
+   * defined on Object).
    * 
    * @param key the key to search for
    * @return if found, the value associated with the specified key, or
    *         <code>null</code> otherwise
    */
-  public native JSONValue get(String key) /*-{
-    if (Object.prototype.hasOwnProperty.call(
-        this.@com.google.gwt.json.client.JSONObject::backStore, key))
-    {
-      var x = this.@com.google.gwt.json.client.JSONObject::backStore[key];
-      if (typeof x == 'number' || typeof x == 'string' || typeof x == 'array'
-          || typeof x == 'boolean')
-      {
-        x = Object(x); 
+  public JSONValue get(String key) {
+    if (key == null) {
+      return null;
+    }
+    JSONValue result = getFront(frontStore, key);
+    if (result == null) {
+      JavaScriptObject jso = removeBack(backStore, key);
+      if (jso != UNDEFINED) {
+        result = JSONParser.buildValue(jso);
+        putFront(frontStore, key, result);
       }
-      this.@com.google.gwt.json.client.JSONObject::frontStore[key]=
-          // don't linebreak the next line
-          @com.google.gwt.json.client.JSONParser::buildValue(Lcom/google/gwt/core/client/JavaScriptObject;)(x);
-      delete this.@com.google.gwt.json.client.JSONObject::backStore[key];
     }
-    if (Object.prototype.hasOwnProperty.call(
-        this.@com.google.gwt.json.client.JSONObject::frontStore, key))
-    {
-      return this.@com.google.gwt.json.client.JSONObject::frontStore[key];
-    }
-    return null;
-  }-*/;
+    return result;
+  }
 
   /**
    * Returns <code>this</code>, as this is a JSONObject.
    */
   public JSONObject isObject() {
     return this;
-  }
+  };
 
   /**
    * Returns keys for which this JSONObject has associations.
@@ -115,16 +141,19 @@ public class JSONObject extends JSONValue {
    * specified key already has an associated value, it is overwritten.
    * 
    * @param key the key to associate with the specified value
-   * @param jsonValue the value to assoociate with this key
+   * @param jsonValue the value to associate with this key
    * @return if one existed, the previous value associated with the key, or
    *         <code>null</code> otherwise
+   * @throws NullPointerException if key is <code>null</code>
    */
-  public native JSONValue put(String key, JSONValue jsonValue) /*-{
-    var out =   // can't break next line
-      this.@com.google.gwt.json.client.JSONObject::get(Ljava/lang/String;)(key);
-    this.@com.google.gwt.json.client.JSONObject::frontStore[key] = jsonValue;
-    return out;
-  }-*/;
+  public JSONValue put(String key, JSONValue jsonValue) {
+    if (key == null) {
+      throw new NullPointerException();
+    }
+    JSONValue previous = get(key);
+    putFront(frontStore, key, jsonValue);
+    return previous;
+  }
 
   /**
    * Determines the number of keys on this object.
@@ -163,16 +192,5 @@ public class JSONObject extends JSONValue {
     }
     out.push("}")
     return out.join("");
-  }-*/;
-
-  private native void addAllKeysFromJavascriptObject(Set s,
-      JavaScriptObject javaScriptObject) /*-{
-    for(var key in javaScriptObject) {
-     s.@java.util.Set::add(Ljava/lang/Object;)(key);
-    }
-  }-*/;
-
-  private native JavaScriptObject createBlankObject() /*-{
-    return {};
   }-*/;
 }

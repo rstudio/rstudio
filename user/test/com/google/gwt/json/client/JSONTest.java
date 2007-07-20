@@ -301,16 +301,16 @@ public class JSONTest extends GWTTestCase {
     JSONObject j2 = new JSONObject();
     j2.put("test1", new JSONString(""));
 
-    JSONObject j2_2 = new JSONObject();
-    j2_2.put("test1_2", new JSONString(""));
-    j2.put("j2_2", j2_2);
+    JSONObject j22 = new JSONObject();
+    j22.put("test12", new JSONString(""));
+    j2.put("j22", j22);
 
     JSONObject j3 = new JSONObject();
     j3.put("j1", j1);
     j3.put("j2", j2);
 
     assertEquals(
-        "{\"j1\":{\"test1\":\"\"}, \"j2\":{\"test1\":\"\", \"j2_2\":{\"test1_2\":\"\"}}}",
+        "{\"j1\":{\"test1\":\"\"}, \"j2\":{\"test1\":\"\", \"j22\":{\"test12\":\"\"}}}",
         j3.toString());
   }
 
@@ -326,6 +326,17 @@ public class JSONTest extends GWTTestCase {
     checkRoundTripJsonText("\"hel\\\"lo\"", "hel\"lo");
     checkRoundTripJsonText("\"hel\\\\lo\"", "hel\\lo");
     checkRoundTripJsonText("\"hel\\\\\\\"lo\"", "hel\\\"lo");
+  }
+
+  public void testStringTypes() {
+    JSONObject object = JSONParser.parse("{\"a\":\"b\",\"null\":\"foo\"}").isObject();
+    assertNotNull(object);
+
+    assertEquals("b", object.get(stringAsPrimitive("a")).isString().stringValue());
+    assertEquals("b", object.get(stringAsObject("a")).isString().stringValue());
+    assertEquals("foo", object.get(stringAsPrimitive("null")).isString().stringValue());
+    assertEquals("foo", object.get(stringAsObject("null")).isString().stringValue());
+    assertNull(object.get(null));
   }
 
   public void testWidget() {
@@ -388,4 +399,11 @@ public class JSONTest extends GWTTestCase {
     return newArray;
   }
 
+  private native String stringAsObject(String str) /*-{
+    return new String(str);
+  }-*/;
+
+  private native String stringAsPrimitive(String str) /*-{
+    return String(str);
+  }-*/;
 }
