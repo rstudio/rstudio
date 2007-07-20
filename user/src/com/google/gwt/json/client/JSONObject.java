@@ -26,17 +26,16 @@ import java.util.Set;
  */
 public class JSONObject extends JSONValue {
 
-  /**
-   * A sentinel value for {@link #removeBack(JavaScriptObject, String)} to
-   * return when an entry does not exist.
-   */
-  private static JavaScriptObject UNDEFINED = JavaScriptObject.createObject();
-
   private static native void addAllKeysFromJavascriptObject(Set s,
       JavaScriptObject javaScriptObject) /*-{
     for(var key in javaScriptObject) {
       s.@java.util.Set::add(Ljava/lang/Object;)(key);
     }
+  }-*/;
+
+  private static native boolean containsBack(JavaScriptObject backStore, String key) /*-{
+    key = String(key);
+    return Object.prototype.hasOwnProperty.call(backStore, key);
   }-*/;
 
   private static native JSONValue getFront(JavaScriptObject frontStore, String key) /*-{
@@ -51,15 +50,12 @@ public class JSONObject extends JSONValue {
 
   private static native JavaScriptObject removeBack(JavaScriptObject backStore, String key) /*-{
     key = String(key);
-    if (Object.prototype.hasOwnProperty.call(backStore, key)) {
-      var x = backStore[key];
-      delete backStore[key];
-      if (typeof x != 'object') {
-        x = Object(x); 
-      }
-      return x;
+    var result = backStore[key];
+    delete backStore[key];
+    if (typeof result != 'object') {
+      result = Object(result); 
     }
-    return @com.google.gwt.json.client.JSONObject::UNDEFINED;
+    return result;
   }-*/;
 
   private final JavaScriptObject backStore;
@@ -107,12 +103,10 @@ public class JSONObject extends JSONValue {
       return null;
     }
     JSONValue result = getFront(frontStore, key);
-    if (result == null) {
+    if (result == null && containsBack(backStore, key)) {
       JavaScriptObject jso = removeBack(backStore, key);
-      if (jso != UNDEFINED) {
-        result = JSONParser.buildValue(jso);
-        putFront(frontStore, key, result);
-      }
+      result = JSONParser.buildValue(jso);
+      putFront(frontStore, key, result);
     }
     return result;
   }
@@ -169,24 +163,24 @@ public class JSONObject extends JSONValue {
    * @return a JSON string representation of this JSONObject instance
    */
   public native String toString() /*-{
-    for (var x in this.@com.google.gwt.json.client.JSONObject::backStore) {
-      // we are wrapping everything in backStore so that frontStore is canonical
-      this.@com.google.gwt.json.client.JSONObject::get(Ljava/lang/String;)(x);
+    for (var key in this.@com.google.gwt.json.client.JSONObject::backStore) {
+      // Wrap everything in backStore so that frontStore is canonical.
+      this.@com.google.gwt.json.client.JSONObject::get(Ljava/lang/String;)(key);
     }
     var out = [];
     out.push("{");
     var first = true;
-    for (var x in this.@com.google.gwt.json.client.JSONObject::frontStore) {
+    for (var key in this.@com.google.gwt.json.client.JSONObject::frontStore) {
       if(first) {
         first = false;
       } else {
         out.push(", ");
       }
       var subObj = 
-        (this.@com.google.gwt.json.client.JSONObject::frontStore[x]).
+        (this.@com.google.gwt.json.client.JSONObject::frontStore[key]).
           @com.google.gwt.json.client.JSONValue::toString()();
       out.push("\"");
-      out.push(x);
+      out.push(key);
       out.push("\":");
       out.push(subObj);
     }

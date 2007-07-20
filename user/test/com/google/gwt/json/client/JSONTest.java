@@ -225,7 +225,7 @@ public class JSONTest extends GWTTestCase {
 
   public void testObjectBasics() {
     JSONObject s = new JSONObject();
-    assertNull(null, s.get("buba"));
+    assertNull(s.get("buba"));
     s.put("a", new JSONString("A"));
     s.put("a", new JSONString("AA"));
     assertEquals("\"AA\"", s.get("a").toString());
