@@ -24,16 +24,16 @@ import com.google.gwt.user.client.Event;
 class DOMImplSafari extends DOMImplStandard {
   public native int eventGetClientX(Event evt) /*-{
     // In Safari2: clientX is wrong and pageX is returned instead.
-    return evt.pageX - $doc.body.scrollLeft;
+    return evt.pageX - $doc.body.scrollLeft || -1;
   }-*/;
 
   public native int eventGetClientY(Event evt) /*-{
     // In Safari2: clientY is wrong and pageY is returned instead.
-    return evt.pageY - $doc.body.scrollTop;
+    return evt.pageY - $doc.body.scrollTop || -1;
   }-*/;
 
   public native int eventGetMouseWheelVelocityY(Event evt) /*-{
-    return Math.round(-evt.wheelDelta / 40);
+    return Math.round(-evt.wheelDelta / 40) || -1;
   }-*/;
 
   public native int getAbsoluteLeft(Element elem) /*-{

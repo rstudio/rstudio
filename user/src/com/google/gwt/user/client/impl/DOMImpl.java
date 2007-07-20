@@ -56,23 +56,23 @@ public abstract class DOMImpl {
   }-*/;
 
   public native boolean eventGetAltKey(Event evt) /*-{
-    return evt.altKey;
+    return !!evt.altKey;
   }-*/;
 
   public native int eventGetButton(Event evt) /*-{
-    return evt.button;
+    return evt.button || -1;
   }-*/;
 
   public native int eventGetClientX(Event evt) /*-{
-    return evt.clientX;
+    return evt.clientX || -1;
   }-*/;
 
   public native int eventGetClientY(Event evt) /*-{
-    return evt.clientY;
+    return evt.clientY || -1;
   }-*/;
 
   public native boolean eventGetCtrlKey(Event evt) /*-{
-    return evt.ctrlKey;
+    return !!evt.ctrlKey;
   }-*/;
 
   public abstract Element eventGetFromElement(Event evt);
@@ -80,7 +80,8 @@ public abstract class DOMImpl {
   public native int eventGetKeyCode(Event evt) /*-{
     // 'which' gives the right key value, except when it doesn't -- in which
     // case, keyCode gives the right value on all browsers.
-    return evt.which || evt.keyCode;
+    // If all else fails, return an error code
+    return evt.which || evt.keyCode || -1;
   }-*/;
 
   public native boolean eventGetMetaKey(Event evt) /*-{
@@ -90,19 +91,19 @@ public abstract class DOMImpl {
   public abstract int eventGetMouseWheelVelocityY(Event evt);
 
   public native boolean eventGetRepeat(Event evt) /*-{
-    return evt.repeat;
+    return !!evt.repeat;
   }-*/;
 
   public native int eventGetScreenX(Event evt) /*-{
-    return evt.screenX;
+    return evt.screenX || -1;
   }-*/;
 
   public native int eventGetScreenY(Event evt) /*-{
-    return evt.screenY;
+    return evt.screenY || -1;
   }-*/;
 
   public native boolean eventGetShiftKey(Event evt) /*-{
-    return evt.shiftKey;
+    return !!evt.shiftKey;
   }-*/;
 
   public abstract Element eventGetTarget(Event evt);

@@ -43,13 +43,12 @@ class DOMImplMozilla extends DOMImplStandard {
       return 1;
     } else if (button == 1) {
       return 4;
-    } else {
-      return button;
     }
+    return button || -1;
  }-*/;
 
   public native int eventGetMouseWheelVelocityY(Event evt) /*-{
-    return evt.detail;
+    return evt.detail || -1;
   }-*/;
 
   public native int getAbsoluteLeft(Element elem) /*-{

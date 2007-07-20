@@ -84,7 +84,7 @@ class DOMImplIE6 extends DOMImpl {
   }-*/;
 
   public native int eventGetMouseWheelVelocityY(Event evt) /*-{
-    return Math.round(-evt.wheelDelta / 40);
+    return Math.round(-evt.wheelDelta / 40) || -1;
   }-*/;
 
   public native Element eventGetTarget(Event evt) /*-{

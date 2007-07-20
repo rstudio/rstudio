@@ -151,6 +151,16 @@ public final class Event extends JavaScriptObject {
     | ONMOUSEOVER | ONMOUSEOUT;
 
   /**
+   * Error code returned by DOM.getEventXXX methods when the actual integer
+   * value is undefined.  For example, DOM.getEventKeyCode returns UNDEFINED
+   * for some non-keyboard events.
+   * 
+   * For some events, some browsers return undefined while others return data
+   * for certain events.
+   */
+  public static final int UNDEFINED = -1;
+  
+  /**
    * Not directly instantiable.  Subclasses should also define a protected
    * no-arg constructor to prevent client code from directly instantiating
    * the class.

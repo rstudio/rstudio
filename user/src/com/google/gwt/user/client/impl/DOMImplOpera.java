@@ -30,12 +30,12 @@ public class DOMImplOpera extends DOMImplStandard {
     if(button == 0){
       return 1;
     } else {
-      return button;
+      return button || -1;
     }
   }-*/;
 
   public native int eventGetMouseWheelVelocityY(Event evt) /*-{
-    return evt.detail * 4;
+    return evt.detail * 4 || -1;
   }-*/;
 
   public native int getAbsoluteLeft(Element elem) /*-{
