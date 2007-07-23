@@ -21,7 +21,7 @@
 
 #include "Tracer.h"
 
-extern JSClass gwt_nativewrapper_class;
+extern "C" JSClass gwt_nativewrapper_class;
 
 /*
  * Holds a root for Javascript objects, so the JS interpreter knows not to
@@ -301,6 +301,17 @@ public:
   bool setString(const wchar_t* utf16) {
     JSString* str = JS_NewUCStringCopyZ(getContext(),
         reinterpret_cast<const jschar*>(utf16));
+    return setValue(STRING_TO_JSVAL(str));
+  }
+  
+  /*
+   * Sets the underlying value, defined by a counted array of UTF16 chars.
+   * 
+   * Returns false on failure.
+   */
+  bool setString(const wchar_t* utf16, size_t len) {
+    JSString* str = JS_NewUCStringCopyN(getContext(),
+        reinterpret_cast<const jschar*>(utf16), len);
     return setValue(STRING_TO_JSVAL(str));
   }
   

@@ -23,7 +23,7 @@
 
 // comment this out to remove almost all runtime overhead (with usual compiler
 // support) from tracing.
-#define ENABLE_TRACING
+//#define ENABLE_TRACING
 
 /*
  * Utility class for tracing.  This class is intended to be used as follows:

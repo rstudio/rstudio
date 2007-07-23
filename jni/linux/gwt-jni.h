@@ -24,8 +24,8 @@ extern JNIEnv* savedJNIEnv;
 extern jclass lowLevelMozClass;
 
 // JavaScript class objects
-extern JSClass gwt_nativewrapper_class;
-extern JSClass gwt_functionwrapper_class;
+extern "C" JSClass gwt_nativewrapper_class;
+extern "C" JSClass gwt_functionwrapper_class;
 
 extern jobject NewJsValueMoz(JSContext* context);
 extern jobject NewJsValueMoz(JsRootedValue* js_rooted_value);

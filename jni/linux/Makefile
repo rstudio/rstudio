@@ -54,7 +54,7 @@ SRCS    := gwt-ll.cpp LowLevelMoz.cpp JsValueMoz.cpp Tracer.cpp \
 OBJS    := $(addprefix $(OBJDIR),$(SRCS:.cpp=.o))
 DEPS    := $(addprefix $(OBJDIR),$(SRCS:.cpp=.d))
 
-MOZDIR = $(GWT_TOOLS)/sdk/mozilla-1.7.13
+MOZDIR = $(GWT_TOOLS)/sdk/mozilla-1.7.12
 MOZINC = $(MOZDIR)/include
 MOZLIB = $(MOZDIR)/lib
 

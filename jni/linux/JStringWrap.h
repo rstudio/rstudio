@@ -36,6 +36,9 @@ class JStringWrap {
       if (!jp) jp = env->GetStringChars(s, 0);
       return jp;
     }
+    int length() {
+      return env->GetStringLength(s);
+    }
   private:
     JNIEnv* env;
     jstring s;

@@ -609,7 +609,8 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1setString
     return;
   }
   tracer.log("string=%s", strVal.str());
-  if(!jsRootedValue->setString(reinterpret_cast<const wchar_t*>(stringUTF16))) {
+  if(!jsRootedValue->setString(reinterpret_cast<const wchar_t*>(stringUTF16),
+      strVal.length())) {
     tracer.throwHostedModeException(jniEnv, "Unable to allocate JS string");
     return;
   }
