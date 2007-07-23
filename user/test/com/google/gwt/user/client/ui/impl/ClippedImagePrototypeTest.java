@@ -36,7 +36,7 @@ import java.util.ArrayList;
 public class ClippedImagePrototypeTest extends GWTTestCase {
 
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.UserTest";
   }
 
   /**

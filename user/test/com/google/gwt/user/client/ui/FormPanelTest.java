@@ -29,7 +29,7 @@ public class FormPanelTest extends GWTTestCase {
   public static boolean clicked = false;
 
   public String getModuleName() {
-    return "com.google.gwt.user.UserTest";
+    return "com.google.gwt.user.FormPanelTest";
   }
 
   public void testCancelSubmit() {

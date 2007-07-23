@@ -14,5 +14,5 @@
 
 <module>
 	<inherits name="com.google.gwt.user.User"/>
-	<public path="public-test"/>
+	<servlet path='/formHandler' class='com.google.gwt.user.server.ui.FormPanelTestServlet'/>
 </module>

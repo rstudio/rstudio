@@ -27,7 +27,7 @@ public class DisclosurePanelTest extends GWTTestCase {
   private static final int CLOSE = 1;
 
   public String getModuleName() {
-    return "com.google.gwt.user.UserTest";
+    return "com.google.gwt.user.User";
   }
 
   /**

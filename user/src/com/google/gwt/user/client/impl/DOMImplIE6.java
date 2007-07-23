@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.impl;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
@@ -36,14 +35,6 @@ class DOMImplIE6 extends DOMImpl {
     // Quirks mode uses $doc.body.clientTop
     return $doc.documentElement.clientTop || $doc.body.clientTop;
   }-*/;
-
-  /**
-   * A native map of image source URL strings to Image objects. All Image
-   * objects with values in this map are waiting on an asynchronous load to
-   * complete and have event handlers hooked. The moment the image finishes
-   * loading, it will be removed from this map.
-   */
-  JavaScriptObject srcImgMap;
 
   public native boolean compare(Element elem1, Element elem2) /*-{
     if (!elem1 && !elem2)
@@ -145,9 +136,9 @@ class DOMImplIE6 extends DOMImpl {
    * The src may not be set yet because of funky logic in setImgSrc(). See
    * setImgSrc().
    */
-  public native String getImgSrc(Element img) /*-{
-    return img.__targetSrc || img.src;
-  }-*/;
+  public String getImgSrc(Element img) {
+    return ImageSrcIE6.getImgSrc(img);
+  }
 
   public native String getInnerText(Element elem) /*-{
     var ret = elem.innerText;
@@ -178,9 +169,6 @@ class DOMImplIE6 extends DOMImpl {
       // ignore error on other browsers
     }
   
-    // Initialize the URL -> Image map.
-    this.@com.google.gwt.user.client.impl.DOMImplIE6::srcImgMap = {};
-
     // Set up event dispatchers.
     $wnd.__dispatchEvent = function() {
       if ($wnd.event.returnValue == null) {
@@ -251,77 +239,16 @@ class DOMImplIE6 extends DOMImpl {
     elem.setCapture();
   }-*/;
 
-  /*
+  /**
    * Works around an IE problem where multiple images trying to load at the same
    * time will generate a request per image. We fix this by only allowing the
    * first image of a given URL to set its source immediately, but simultaneous
    * requests for the same URL don't actually get their source set until the
    * original load is complete.
-   * 
-   * See comment on srcImgMap for the invariants that hold for the synthetic
-   * Image objects which are values in the map.
    */
-  public native void setImgSrc(Element img, String src) /*-{
-    // Grab the URL -> Image map.
-    var map = this.@com.google.gwt.user.client.impl.DOMImplIE6::srcImgMap;
-    
-    // See if there's already an image for this URL in the map (e.g. loading).
-    var queuedImg = map[src];
-    if (queuedImg) {
-      // just add myself to its array, it will set my source later
-      queuedImg.__kids.push(img);
-      // record the desired src so it can be retreived synchronously
-      img.__targetSrc = src;
-      return; 
-    }
-
-    // No outstanding requests; load the image.
-    img.src = src;
-
-    // If the image was in cache, the load may have just happened synchronously.
-    if (img.complete) {
-      // We're done
-      return;
-    }
-
-    // Image is loading asynchronously; put in map for chaining.
-    var kids = img.__kids = [];
-    map[src] = img;
-
-    // Store all the old handlers
-    var _onload = img.onload, _onerror = img.onerror, _onabort = img.onabort;
-
-    // Same cleanup code matter what state we end up in.
-    img.onload = function() {
-      finish("onload");
-    }
-    img.onerror = function() {
-      finish("onerror");
-    }
-    img.onabort = function() {
-      finish("onabort");
-    }
-
-    function finish(whichEvent) {
-      // Clean up: restore event handlers and remove from map.
-      img.onload = _onload; img.onerror = _onerror; img.onabort = _onabort;
-      delete map[src];
-      
-      // Set the source for all kids in a timer to ensure caching has happened.
-      window.setTimeout(function() {
-        for (var i = 0; i < kids.length; ++i) {
-          kids[i].src = img.src;
-          // clear the target src now that it's resolved
-          kids[i].__targetSrc = null;
-        }
-      }, 0);      
-      
-      // call the original handler, if any
-      if (img[whichEvent]) {
-        img[whichEvent]();
-      }
-    }
-  }-*/;
+  public void setImgSrc(Element img, String src) {
+    ImageSrcIE6.setImgSrc(img, src);
+  }
 
   public native void setInnerText(Element elem, String text) /*-{
     if (!text)

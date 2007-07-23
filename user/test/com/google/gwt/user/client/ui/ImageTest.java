@@ -41,7 +41,7 @@ public class ImageTest extends GWTTestCase {
   }-*/;
 
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.UserTest";
   }
 
   /**

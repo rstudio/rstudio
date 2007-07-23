@@ -20,11 +20,18 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.Timer;
 
 /**
  * Tests standard DOM operations in the {@link DOM} class.
  */
 public class DOMTest extends GWTTestCase {
+
+  public static void assertEndsWith(String ending, String testStr) {
+    if (ending != testStr && (testStr == null || !testStr.endsWith(ending))) {
+      fail("expected ending=" + ending + " actual=" + testStr);
+    }
+  }
 
   /**
    * Helper method to return the denormalized child count of a DOM Element. For
@@ -40,7 +47,7 @@ public class DOMTest extends GWTTestCase {
   }-*/;
 
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.UserTest";
   }
 
   /**
@@ -105,7 +112,7 @@ public class DOMTest extends GWTTestCase {
     DOM.setStyleAttribute(outer, "overflow", "auto");
     DOM.setStyleAttribute(outer, "width", "200px");
     DOM.setStyleAttribute(outer, "height", "200px");
-   
+
     DOM.setStyleAttribute(inner, "marginTop", "800px");
     DOM.setStyleAttribute(inner, "marginLeft", "800px");
 
@@ -142,7 +149,7 @@ public class DOMTest extends GWTTestCase {
 
   /**
    * Tests {@link DOM#insertChild(Element, Element, int)}.
-   *
+   * 
    */
   public void testInsertChild() {
     Element parent = RootPanel.get().getElement();
@@ -195,6 +202,212 @@ public class DOMTest extends GWTTestCase {
     // child nodes
     // should be deleted, including any text nodes, for all supported browsers.
     assertTrue(getDenormalizedChildCount(tdElem) == 0);
+  }
+
+  /**
+   * Tests the correctness of setting the <code>src</code> attribute on
+   * images. The reason for these complicated tests is that DOMImplIE6 has a
+   * complex delay-load strategy to address the fact that loading multiple
+   * images of the same type on IE6 can cause multiple redundant requests when
+   * the image is not already cached.
+   * 
+   * This tests the following transformation, where letters refer to URLs and
+   * number refer to indexes.
+   * 
+   * <pre>
+   * 0:A -> 0:B
+   * <pre>
+   */
+  public void testSetSrc0() {
+    final Element image = DOM.createImg();
+    DOM.setImgSrc(image, "a0.gif");
+    assertEndsWith("a0.gif", DOM.getImgSrc(image));
+    DOM.setImgSrc(image, "b0.gif");
+    assertEndsWith("b0.gif", DOM.getImgSrc(image));
+    delayTestFinish(500);
+    new Timer() {
+      public void run() {
+        assertEndsWith("b0.gif", DOM.getImgSrc(image));
+        finishTest();
+      }
+    }.schedule(100);
+  }
+
+  /**
+   * Tests the correctness of setting the <code>src</code> attribute on
+   * images. The reason for these complicated tests is that DOMImplIE6 has a
+   * complex delay-load strategy to address the fact that loading multiple
+   * images of the same type on IE6 can cause multiple redundant requests when
+   * the image is not already cached.
+   * 
+   * This tests the following transformation, where letters refer to URLs and
+   * number refer to indexes.
+   * 
+   * <pre>
+   * 0:A   ->  0:A 1:B
+   * |         |
+   * |---|     |
+   * 1:A 2:A   2:A
+   * <pre>
+   */
+  public void testSetSrc1() {
+    final Element[] images = new Element[] {
+        DOM.createImg(), DOM.createImg(), DOM.createImg()};
+    DOM.setImgSrc(images[0], "a1.gif");
+    DOM.setImgSrc(images[1], "a1.gif");
+    DOM.setImgSrc(images[2], "a1.gif");
+    assertEndsWith("a1.gif", DOM.getImgSrc(images[0]));
+    assertEndsWith("a1.gif", DOM.getImgSrc(images[1]));
+    assertEndsWith("a1.gif", DOM.getImgSrc(images[2]));
+    DOM.setImgSrc(images[1], "b1.gif");
+    assertEndsWith("a1.gif", DOM.getImgSrc(images[0]));
+    assertEndsWith("b1.gif", DOM.getImgSrc(images[1]));
+    assertEndsWith("a1.gif", DOM.getImgSrc(images[2]));
+    delayTestFinish(500);
+    new Timer() {
+      public void run() {
+        assertEndsWith("a1.gif", DOM.getImgSrc(images[0]));
+        assertEndsWith("b1.gif", DOM.getImgSrc(images[1]));
+        assertEndsWith("a1.gif", DOM.getImgSrc(images[2]));
+        finishTest();
+      }
+    }.schedule(100);
+  }
+
+  /**
+   * Tests the correctness of setting the <code>src</code> attribute on
+   * images. The reason for these complicated tests is that DOMImplIE6 has a
+   * complex delay-load strategy to address the fact that loading multiple
+   * images of the same type on IE6 can cause multiple redundant requests when
+   * the image is not already cached.
+   * 
+   * This tests the following transformation, where letters refer to URLs and
+   * number refer to indexes.
+   * 
+   * <pre>
+   * 0:A   ->  1:A 0:B
+   * |         |
+   * |---|     |
+   * 1:A 2:A   2:A
+   * <pre>
+   */
+  public void testSetSrc2() {
+    final Element[] images = new Element[] {
+        DOM.createImg(), DOM.createImg(), DOM.createImg()};
+    DOM.setImgSrc(images[0], "a2.gif");
+    DOM.setImgSrc(images[1], "a2.gif");
+    DOM.setImgSrc(images[2], "a2.gif");
+    assertEndsWith("a2.gif", DOM.getImgSrc(images[0]));
+    assertEndsWith("a2.gif", DOM.getImgSrc(images[1]));
+    assertEndsWith("a2.gif", DOM.getImgSrc(images[2]));
+    DOM.setImgSrc(images[0], "b2.gif");
+    assertEndsWith("b2.gif", DOM.getImgSrc(images[0]));
+    assertEndsWith("a2.gif", DOM.getImgSrc(images[1]));
+    assertEndsWith("a2.gif", DOM.getImgSrc(images[2]));
+    delayTestFinish(500);
+    new Timer() {
+      public void run() {
+        assertEndsWith("b2.gif", DOM.getImgSrc(images[0]));
+        assertEndsWith("a2.gif", DOM.getImgSrc(images[1]));
+        assertEndsWith("a2.gif", DOM.getImgSrc(images[2]));
+        finishTest();
+      }
+    }.schedule(100);
+  }
+
+  /**
+   * Tests the correctness of setting the <code>src</code> attribute on
+   * images. The reason for these complicated tests is that DOMImplIE6 has a
+   * complex delay-load strategy to address the fact that loading multiple
+   * images of the same type on IE6 can cause multiple redundant requests when
+   * the image is not already cached.
+   * 
+   * This tests the following transformation, where letters refer to URLs and
+   * number refer to indexes.
+   * 
+   * <pre>
+   * 0:A 3:B ->  1:A 3:B
+   * |           |   |
+   * |---|       |   |
+   * 1:A 2:A     2:A 0:B
+   * <pre>
+   */
+  public void testSetSrc3() {
+    final Element[] images = new Element[] {
+        DOM.createImg(), DOM.createImg(), DOM.createImg(), DOM.createImg()};
+    DOM.setImgSrc(images[0], "a3.gif");
+    DOM.setImgSrc(images[1], "a3.gif");
+    DOM.setImgSrc(images[2], "a3.gif");
+    DOM.setImgSrc(images[3], "b3.gif");
+    assertEndsWith("a3.gif", DOM.getImgSrc(images[0]));
+    assertEndsWith("a3.gif", DOM.getImgSrc(images[1]));
+    assertEndsWith("a3.gif", DOM.getImgSrc(images[2]));
+    assertEndsWith("b3.gif", DOM.getImgSrc(images[3]));
+    DOM.setImgSrc(images[0], "b3.gif");
+    assertEndsWith("b3.gif", DOM.getImgSrc(images[0]));
+    assertEndsWith("a3.gif", DOM.getImgSrc(images[1]));
+    assertEndsWith("a3.gif", DOM.getImgSrc(images[2]));
+    assertEndsWith("b3.gif", DOM.getImgSrc(images[3]));
+    delayTestFinish(500);
+    new Timer() {
+      public void run() {
+        assertEndsWith("b3.gif", DOM.getImgSrc(images[0]));
+        assertEndsWith("a3.gif", DOM.getImgSrc(images[1]));
+        assertEndsWith("a3.gif", DOM.getImgSrc(images[2]));
+        assertEndsWith("b3.gif", DOM.getImgSrc(images[3]));
+        finishTest();
+      }
+    }.schedule(100);
+  }
+
+  /**
+   * Tests the correctness of setting the <code>src</code> attribute on
+   * images. The reason for these complicated tests is that DOMImplIE6 has a
+   * complex delay-load strategy to address the fact that loading multiple
+   * images of the same type on IE6 can cause multiple redundant requests when
+   * the image is not already cached.
+   * 
+   * This tests the following transformation, where letters refer to URLs and
+   * number refer to indexes.
+   * 
+   * <pre>
+   * 0:A     3:B ->  0:A 3:B
+   * |       |       |   |
+   * |---|   |       |   |---|
+   * 1:A 2:A 4:B     1:A 4:B 2:B
+   * <pre>
+   */
+  public void testSetSrc4() {
+    final Element[] images = new Element[] {
+        DOM.createImg(), DOM.createImg(), DOM.createImg(), DOM.createImg(),
+        DOM.createImg()};
+    DOM.setImgSrc(images[0], "a4.gif");
+    DOM.setImgSrc(images[1], "a4.gif");
+    DOM.setImgSrc(images[2], "a4.gif");
+    DOM.setImgSrc(images[3], "b4.gif");
+    DOM.setImgSrc(images[4], "b4.gif");
+    assertEndsWith("a4.gif", DOM.getImgSrc(images[0]));
+    assertEndsWith("a4.gif", DOM.getImgSrc(images[1]));
+    assertEndsWith("a4.gif", DOM.getImgSrc(images[2]));
+    assertEndsWith("b4.gif", DOM.getImgSrc(images[3]));
+    assertEndsWith("b4.gif", DOM.getImgSrc(images[4]));
+    DOM.setImgSrc(images[2], "b4.gif");
+    assertEndsWith("a4.gif", DOM.getImgSrc(images[0]));
+    assertEndsWith("a4.gif", DOM.getImgSrc(images[1]));
+    assertEndsWith("b4.gif", DOM.getImgSrc(images[2]));
+    assertEndsWith("b4.gif", DOM.getImgSrc(images[3]));
+    assertEndsWith("b4.gif", DOM.getImgSrc(images[4]));
+    delayTestFinish(500);
+    new Timer() {
+      public void run() {
+        assertEndsWith("a4.gif", DOM.getImgSrc(images[0]));
+        assertEndsWith("a4.gif", DOM.getImgSrc(images[1]));
+        assertEndsWith("b4.gif", DOM.getImgSrc(images[2]));
+        assertEndsWith("b4.gif", DOM.getImgSrc(images[3]));
+        assertEndsWith("b4.gif", DOM.getImgSrc(images[4]));
+        finishTest();
+      }
+    }.schedule(100);
   }
 
   /**
