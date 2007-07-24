@@ -37,6 +37,14 @@ public class JavaScriptObject {
   }-*/;
   
   /**
+   * Returns an empty function.
+   */
+  public static native JavaScriptObject createFunction() /*-{
+    return function() {
+    };
+  }-*/;
+
+  /**
    * Returns a new object.
    */
   public static native JavaScriptObject createObject() /*-{

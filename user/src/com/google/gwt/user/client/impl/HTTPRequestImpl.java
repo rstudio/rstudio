@@ -24,6 +24,12 @@ import com.google.gwt.user.client.ResponseTextHandler;
  */
 public class HTTPRequestImpl {
 
+  static JavaScriptObject nullFunc;
+  
+  public HTTPRequestImpl() {
+    nullFunc = JavaScriptObject.createFunction();
+  }
+  
   public boolean asyncGet(String url, ResponseTextHandler handler) {
     return asyncGet(null, null, url, handler);
   }
@@ -62,21 +68,14 @@ public class HTTPRequestImpl {
       xmlHttp.setRequestHeader("Content-Type", "text/plain; charset=utf-8");
       xmlHttp.onreadystatechange = function() {
         if (xmlHttp.readyState == 4) {
-          delete xmlHttp.onreadystatechange;
-          var localHandler = handler;
-          var responseText = xmlHttp.responseText;
-          handler = null;
-          xmlHttp = null;
-          localHandler.@com.google.gwt.user.client.ResponseTextHandler::onCompletion(Ljava/lang/String;)(responseText);
+          xmlHttp.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
+          handler.@com.google.gwt.user.client.ResponseTextHandler::onCompletion(Ljava/lang/String;)(xmlHttp.responseText);
         }
       };
       xmlHttp.send('');
       return true;
-    }
-    catch (e) {
-      delete xmlHttp.onreadystatechange;
-      handler = null;
-      xmlHttp = null;
+    } catch (e) {
+      xmlHttp.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
       return false;
     }
   }-*/;
@@ -89,21 +88,15 @@ public class HTTPRequestImpl {
       xmlHttp.setRequestHeader("Content-Type", "text/plain; charset=utf-8");
       xmlHttp.onreadystatechange = function() {
         if (xmlHttp.readyState == 4) {
-          delete xmlHttp.onreadystatechange;
-          var localHandler = handler;
-          var responseText = xmlHttp.responseText;
-          handler = null;
-          xmlHttp = null;
-          localHandler.@com.google.gwt.user.client.ResponseTextHandler::onCompletion(Ljava/lang/String;)(responseText);
+          xmlHttp.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
+          handler.@com.google.gwt.user.client.ResponseTextHandler::onCompletion(Ljava/lang/String;)(xmlHttp.responseText);
         }
       };
       xmlHttp.send(postData);
       return true;
     }
     catch (e) {
-      delete xmlHttp.onreadystatechange;
-      handler = null;
-      xmlHttp = null;
+      xmlHttp.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
       return false;
     }
   }-*/;

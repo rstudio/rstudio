@@ -34,37 +34,38 @@ final class XMLHTTPRequest {
    * JavaScript <code>XmlHttpRequest.onreadystatechange</code> handler function 
    * maybe still be called after it is deleted. The theory is that the callback 
    * is cached somewhere.  Setting the handler to null has the desired effect on 
-   * Mozilla but it causes IE to crash during the assignment.
+   * Mozilla but it causes IE to crash during the assignment. The solution is to
+   * set it to an empty function.
    */
   static native void abort(JavaScriptObject xmlHttpRequest) /*-{
-   delete xmlHttpRequest.onreadystatechange;
-   
-   xmlHttpRequest.abort();
-   }-*/;
+    xmlHttpRequest.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
+    xmlHttpRequest.abort();
+  }-*/;
 
   static native String getAllResponseHeaders(JavaScriptObject xmlHttpRequest) /*-{
-   return xmlHttpRequest.getAllResponseHeaders();
-   }-*/;
+    return xmlHttpRequest.getAllResponseHeaders();
+  }-*/;
 
   /**
    * Tests if the JavaScript <code>XmlHttpRequest.status</code> property is
    * readable. This can return failure in two different known scenarios:
-   *
+   * 
    * <ol>
-   * <li>On Mozilla, after a network error, attempting to read the status
-   * code results in an exception being thrown. See
-   * <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=238559">https://bugzilla.mozilla.org/show_bug.cgi?id=238559</a>.
+   * <li>On Mozilla, after a network error, attempting to read the status code
+   * results in an exception being thrown. See <a
+   * href="https://bugzilla.mozilla.org/show_bug.cgi?id=238559">https://bugzilla.mozilla.org/show_bug.cgi?id=238559</a>.
    * </li>
-   * <li>On Safari, if the HTTP response does not include any response text. See
-   * <a href="http://bugs.webkit.org/show_bug.cgi?id=3810">http://bugs.webkit.org/show_bug.cgi?id=3810</a>.
+   * <li>On Safari, if the HTTP response does not include any response text.
+   * See <a
+   * href="http://bugs.webkit.org/show_bug.cgi?id=3810">http://bugs.webkit.org/show_bug.cgi?id=3810</a>.
    * </li>
    * </ol>
    * 
    * @param xmlHttpRequest the JavaScript <code>XmlHttpRequest</code> object
-   *        to test
+   *          to test
    * @return a String message containing an error message if the
-   * <code>XmlHttpRequest.status</code> code is unreadable or null if the
-   * status code could be successfully read.
+   *         <code>XmlHttpRequest.status</code> code is unreadable or null if
+   *         the status code could be successfully read.
    */
   static native String getBrowserSpecificFailure(
       JavaScriptObject xmlHttpRequest) /*-{
@@ -74,8 +75,7 @@ final class XMLHTTPRequest {
                "http://bugs.webkit.org/show_bug.cgi?id=3810 for more details";
       }
       return null;
-    }
-    catch ( e ) {
+    } catch (e) {
       return "Unable to read XmlHttpRequest.status; likely causes are a " +
              "networking error or bad cross-domain request. Please see " +
              "https://bugzilla.mozilla.org/show_bug.cgi?id=238559 for more " +
@@ -130,31 +130,30 @@ final class XMLHTTPRequest {
   }
 
   static native int getReadyState(JavaScriptObject xmlHttpRequest) /*-{
-   return xmlHttpRequest.readyState;
-   }-*/;
+    return xmlHttpRequest.readyState;
+  }-*/;
 
   static native String getResponseHeader(JavaScriptObject xmlHttpRequest,
       String header) /*-{
-   try {
-   return xmlHttpRequest.getResponseHeader(header);
-   } catch (ex) {
-   // purposely ignored
-   }
-   
-   return null;
-   }-*/;
+    try {
+      return xmlHttpRequest.getResponseHeader(header);
+    } catch (e) {
+      // purposely ignored
+    }
+    return null;
+  }-*/;
 
   static native String getResponseText(JavaScriptObject xmlHttpRequest) /*-{
-   return xmlHttpRequest.responseText;
-   }-*/;
+    return xmlHttpRequest.responseText;
+  }-*/;
 
   static native int getStatusCode(JavaScriptObject xmlHttpRequest) /*-{
-   return xmlHttpRequest.status;
-   }-*/;
+    return xmlHttpRequest.status;
+  }-*/;
 
   static native String getStatusText(JavaScriptObject xmlHttpRequest) /*-{
-   return xmlHttpRequest.statusText;
-   }-*/;
+    return xmlHttpRequest.statusText;
+  }-*/;
 
   static boolean isResponseReady(JavaScriptObject xmlHttpRequest) {
     return getReadyState(xmlHttpRequest) == LOADED;
@@ -175,51 +174,45 @@ final class XMLHTTPRequest {
    */
   static native String open(JavaScriptObject xmlHttpRequest, String httpMethod,
       String url, boolean async, String user, String password) /*-{
-   try {
-   xmlHttpRequest.open(httpMethod, url, async, user, password);
-   } catch (e) {
-   return e.toString();
-   }
-   
-   return null;
-   }-*/;
+    try {
+      xmlHttpRequest.open(httpMethod, url, async, user, password);
+      return null;
+    } catch (e) {
+      return e.toString();
+    }
+  }-*/;
 
   /*
    * Creates a closure that calls the HTTPRequest::fireOnResponseRecieved method
    * when the server's response is received and sends the data.
    */
-  static native String send(JavaScriptObject xmlHttpRequest,
-      Request httpRequest, String requestData, RequestCallback callback) /*-{
-   var xmlHttp = xmlHttpRequest;
-
-   xmlHttp.onreadystatechange = function() {
-   if (xmlHttp.readyState == @com.google.gwt.http.client.XMLHTTPRequest::LOADED) {
-   delete xmlHttp.onreadystatechange;
-   
-   httpRequest.@com.google.gwt.http.client.Request::fireOnResponseReceived(Lcom/google/gwt/http/client/RequestCallback;)(callback);
-   }
-   };
-   
-   try {
-   xmlHttp.send(requestData);
-   } catch (e) {
-   return e.toString();
-   }
-   
-   return null;
-   }-*/;
+  static native String send(JavaScriptObject xmlHttpRequest, Request httpRequest,
+      String requestData, RequestCallback callback) /*-{
+    xmlHttpRequest.onreadystatechange = function() {
+      if (xmlHttpRequest.readyState == @com.google.gwt.http.client.XMLHTTPRequest::LOADED) {
+        xmlHttpRequest.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
+        httpRequest.@com.google.gwt.http.client.Request::fireOnResponseReceived(Lcom/google/gwt/http/client/RequestCallback;)(callback);
+      }
+    };
+    try {
+      xmlHttpRequest.send(requestData);
+      return null;
+    } catch (e) {
+      xmlHttpRequest.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
+      return e.toString();
+    }
+  }-*/;
 
   static native String setRequestHeader(JavaScriptObject xmlHttpRequest,
       String header, String value) /*-{
-   try {
-   xmlHttpRequest.setRequestHeader(header, value);
-   } catch (e) {
-   return e.toString();
-   }
-   
-   return null;
-   }-*/;
-
+    try {
+      xmlHttpRequest.setRequestHeader(header, value);
+      return null;
+    } catch (e) {
+      return e.toString();
+    }
+  }-*/;
+  
   private XMLHTTPRequest() {
   }
 }
