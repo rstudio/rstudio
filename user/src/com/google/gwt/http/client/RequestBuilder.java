@@ -157,12 +157,26 @@ public class RequestBuilder {
    */
   public Request sendRequest(String requestData, RequestCallback callback)
       throws RequestException {
-    JavaScriptObject xmlHttpRequest = httpRequest.createXmlHTTPRequest();
 
-    String openError = XMLHTTPRequest.open(xmlHttpRequest, httpMethod, url,
-        true, user, password);
+    if (user == null && password != null) {
+      throw new IllegalStateException("A password is set, but no user is set");
+    }
+
+    JavaScriptObject xmlHttpRequest = httpRequest.createXmlHTTPRequest();
+    String openError;
+    if (password != null) {
+      openError = XMLHTTPRequest.open(xmlHttpRequest, httpMethod, url, true,
+          user, password);
+    } else if (user != null) {
+      openError = XMLHTTPRequest.open(xmlHttpRequest, httpMethod, url, true,
+          user);
+    } else {
+      openError = XMLHTTPRequest.open(xmlHttpRequest, httpMethod, url, true);
+    }
     if (openError != null) {
-      throw new RequestPermissionException(url);
+      RequestPermissionException requestPermissionException = new RequestPermissionException(url);
+      requestPermissionException.initCause(new RequestException(openError));
+      throw requestPermissionException;
     }
 
     setHeaders(xmlHttpRequest);

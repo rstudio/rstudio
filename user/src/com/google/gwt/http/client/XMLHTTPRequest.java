@@ -168,6 +168,49 @@ final class XMLHTTPRequest {
    * @param httpMethod the method to use for open call
    * @param url the URL to use for the open call
    * @param async true if we should do an asynchronous open 
+   * @return error message if an exception is thrown or null if there is none 
+   */
+  static native String open(JavaScriptObject xmlHttpRequest, String httpMethod,
+      String url, boolean async) /*-{
+    try {
+      xmlHttpRequest.open(httpMethod, url, async);
+      return null;
+    } catch (e) {
+      return e.message;
+    }
+  }-*/;
+
+  /**
+   * Opens the request and catches any exceptions thrown. If an exception is
+   * caught, its string representation will be returned. This is the only signal
+   * that an error has occurred.
+   * 
+   * @param xmlHttpRequest JavaScript <code>XmlHttpRequest</code> object  
+   * @param httpMethod the method to use for open call
+   * @param url the URL to use for the open call
+   * @param async true if we should do an asynchronous open 
+   * @param user user to use in the URL
+   * @return error message if an exception is thrown or null if there is none 
+   */
+  static native String open(JavaScriptObject xmlHttpRequest, String httpMethod,
+      String url, boolean async, String user) /*-{
+    try {
+      xmlHttpRequest.open(httpMethod, url, async, user);
+      return null;
+    } catch (e) {
+      return e.message;
+    }
+  }-*/;
+
+  /**
+   * Opens the request and catches any exceptions thrown. If an exception is
+   * caught, its string representation will be returned. This is the only signal
+   * that an error has occurred.
+   * 
+   * @param xmlHttpRequest JavaScript <code>XmlHttpRequest</code> object  
+   * @param httpMethod the method to use for open call
+   * @param url the URL to use for the open call
+   * @param async true if we should do an asynchronous open 
    * @param user user to use in the URL
    * @param password password to use in the URL
    * @return error message if an exception is thrown or null if there is none 
@@ -178,7 +221,7 @@ final class XMLHTTPRequest {
       xmlHttpRequest.open(httpMethod, url, async, user, password);
       return null;
     } catch (e) {
-      return e.toString();
+      return e.message;
     }
   }-*/;
 
@@ -199,7 +242,7 @@ final class XMLHTTPRequest {
       return null;
     } catch (e) {
       xmlHttpRequest.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
-      return e.toString();
+      return e.message;
     }
   }-*/;
 
@@ -209,7 +252,7 @@ final class XMLHTTPRequest {
       xmlHttpRequest.setRequestHeader(header, value);
       return null;
     } catch (e) {
-      return e.toString();
+      return e.message;
     }
   }-*/;
   
