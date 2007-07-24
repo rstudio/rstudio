@@ -52,6 +52,8 @@ bool Tracer::setJava(JNIEnv* env, jclass clazz) {
   return true;
 }
 
+#endif // ENABLE_TRACING
+
 /*
  * Throw a HostedModeException and log a failure message.
  * 
@@ -62,10 +64,10 @@ bool Tracer::setJava(JNIEnv* env, jclass clazz) {
  * msg - failure message 
  */
 void Tracer::throwHostedModeException(JNIEnv* env, const char* msg) {
+#ifdef ENABLE_TRACING
   setFail(msg);
+#endif // ENABLE_TRACING
   jclass exceptionClass
       = env->FindClass("com/google/gwt/dev/shell/HostedModeException");
-  env->ThrowNew(exceptionClass, fail_msg_);
+  env->ThrowNew(exceptionClass, msg);
 }
-
-#endif // ENABLE_TRACING
