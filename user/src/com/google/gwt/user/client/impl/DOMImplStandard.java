@@ -158,8 +158,14 @@ abstract class DOMImplStandard extends DOMImpl {
 
     // Set up normal event dispatcher.
     $wnd.__dispatchEvent = function(evt) {
-      if (this.__listener)
-        @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, this, this.__listener);
+      var listener, curElem = this;
+      while (curElem && !(listener = curElem.__listener))
+        curElem = curElem.parentNode;
+      if (curElem && curElem.nodeType != 1)
+        curElem = null;
+
+      if (listener)
+        @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, curElem, listener);
     };
 
     $wnd.__captureElem = null;

@@ -408,6 +408,19 @@ public class DOM {
   }
 
   /**
+   * Gets the current target element of the given event. This is the element
+   * whose listener fired last, not the element which fired the event
+   * initially.
+   *
+   * @param evt the event
+   * @return the event's current target element
+   * @see DOM#eventGetTarget(Event)
+   */
+  public static Element eventGetCurrentTarget(Event evt) {
+    return impl.eventGetCurrentTarget(evt);
+  }
+
+  /**
    * Gets the element from which the mouse pointer was moved (only valid for
    * {@link Event#ONMOUSEOVER}).
    *

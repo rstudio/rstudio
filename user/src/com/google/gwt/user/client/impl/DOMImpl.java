@@ -75,6 +75,10 @@ public abstract class DOMImpl {
     return !!evt.ctrlKey;
   }-*/;
 
+  public native Element eventGetCurrentTarget(Event evt) /*-{
+    return evt.currentTarget;
+  }-*/;
+
   public abstract Element eventGetFromElement(Event evt);
 
   public native int eventGetKeyCode(Event evt) /*-{
