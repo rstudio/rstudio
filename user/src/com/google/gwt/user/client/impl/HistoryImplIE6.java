@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.impl;
 
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
 /**
@@ -22,7 +23,20 @@ import com.google.gwt.user.client.Element;
  * {@link com.google.gwt.user.client.impl.HistoryImplFrame}.
  */
 class HistoryImplIE6 extends HistoryImplFrame {
-
+  
+  /**
+   * Sanitizes an untrusted string to be used in an HTML context. NOTE: This
+   * method of escaping strings should only be used on Internet Explorer.
+   * 
+   * @param maybeHtml untrusted string that may contain html
+   * @return sanitized string
+   */
+  private static String escapeHtml(String maybeHtml) {
+    final Element div = DOM.createDiv();
+    DOM.setInnerText(div, maybeHtml);
+    return DOM.getInnerHTML(div);
+  }
+  
   private static native void initUrlCheckTimer() /*-{
     // This is the URL check timer.  It detects when an unexpected change
     // occurs in the document's URL (e.g. when the user enters one manually
@@ -95,8 +109,7 @@ class HistoryImplIE6 extends HistoryImplFrame {
   }-*/;
 
   protected native void newItemImpl(Element historyFrame, String historyToken, boolean forceAdd) /*-{
-    historyToken = historyToken || "";
-
+    historyToken = @com.google.gwt.user.client.impl.HistoryImplIE6::escapeHtml(Ljava/lang/String;)(historyToken || "");
     if (forceAdd || ($wnd.__gwt_historyToken != historyToken)) {
       var doc = historyFrame.contentWindow.document;
       doc.open();
