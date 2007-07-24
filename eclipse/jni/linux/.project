@@ -24,9 +24,24 @@
 			<locationURI>GWT_ROOT/jni/linux</locationURI>
 		</link>
 		<link>
+			<name>jdk-include</name>
+			<type>2</type>
+			<locationURI>JAVA_HOME/include</locationURI>
+		</link>
+		<link>
+			<name>mozilla-sdk</name>
+			<type>2</type>
+			<locationURI>GWT_TOOLS/sdk/mozilla-1.7.12</locationURI>
+		</link>
+		<link>
 			<name>core</name>
 			<type>2</type>
 			<locationURI>GWT_ROOT/jni/core</locationURI>
+		</link>
+		<link>
+			<name>headers-gen</name>
+			<type>2</type>
+			<locationURI>GWT_ROOT/build/out/jni/linux</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>
