@@ -224,13 +224,13 @@ public class DOMTest extends GWTTestCase {
     assertEndsWith("a0.gif", DOM.getImgSrc(image));
     DOM.setImgSrc(image, "b0.gif");
     assertEndsWith("b0.gif", DOM.getImgSrc(image));
-    delayTestFinish(500);
+    delayTestFinish(2000);
     new Timer() {
       public void run() {
-        assertEndsWith("b0.gif", DOM.getImgSrc(image));
+        assertEndsWith("b0.gif", DOM.getElementProperty(image, "src"));
         finishTest();
       }
-    }.schedule(100);
+    }.schedule(1000);
   }
 
   /**
@@ -263,15 +263,15 @@ public class DOMTest extends GWTTestCase {
     assertEndsWith("a1.gif", DOM.getImgSrc(images[0]));
     assertEndsWith("b1.gif", DOM.getImgSrc(images[1]));
     assertEndsWith("a1.gif", DOM.getImgSrc(images[2]));
-    delayTestFinish(500);
+    delayTestFinish(2000);
     new Timer() {
       public void run() {
-        assertEndsWith("a1.gif", DOM.getImgSrc(images[0]));
-        assertEndsWith("b1.gif", DOM.getImgSrc(images[1]));
-        assertEndsWith("a1.gif", DOM.getImgSrc(images[2]));
+        assertEndsWith("a1.gif", DOM.getElementProperty(images[0], "src"));
+        assertEndsWith("b1.gif", DOM.getElementProperty(images[1], "src"));
+        assertEndsWith("a1.gif", DOM.getElementProperty(images[2], "src"));
         finishTest();
       }
-    }.schedule(100);
+    }.schedule(1000);
   }
 
   /**
@@ -304,15 +304,15 @@ public class DOMTest extends GWTTestCase {
     assertEndsWith("b2.gif", DOM.getImgSrc(images[0]));
     assertEndsWith("a2.gif", DOM.getImgSrc(images[1]));
     assertEndsWith("a2.gif", DOM.getImgSrc(images[2]));
-    delayTestFinish(500);
+    delayTestFinish(2000);
     new Timer() {
       public void run() {
-        assertEndsWith("b2.gif", DOM.getImgSrc(images[0]));
-        assertEndsWith("a2.gif", DOM.getImgSrc(images[1]));
-        assertEndsWith("a2.gif", DOM.getImgSrc(images[2]));
+        assertEndsWith("b2.gif", DOM.getElementProperty(images[0], "src"));
+        assertEndsWith("a2.gif", DOM.getElementProperty(images[1], "src"));
+        assertEndsWith("a2.gif", DOM.getElementProperty(images[2], "src"));
         finishTest();
       }
-    }.schedule(100);
+    }.schedule(1000);
   }
 
   /**
@@ -348,16 +348,16 @@ public class DOMTest extends GWTTestCase {
     assertEndsWith("a3.gif", DOM.getImgSrc(images[1]));
     assertEndsWith("a3.gif", DOM.getImgSrc(images[2]));
     assertEndsWith("b3.gif", DOM.getImgSrc(images[3]));
-    delayTestFinish(500);
+    delayTestFinish(2000);
     new Timer() {
       public void run() {
-        assertEndsWith("b3.gif", DOM.getImgSrc(images[0]));
-        assertEndsWith("a3.gif", DOM.getImgSrc(images[1]));
-        assertEndsWith("a3.gif", DOM.getImgSrc(images[2]));
-        assertEndsWith("b3.gif", DOM.getImgSrc(images[3]));
+        assertEndsWith("b3.gif", DOM.getElementProperty(images[0], "src"));
+        assertEndsWith("a3.gif", DOM.getElementProperty(images[1], "src"));
+        assertEndsWith("a3.gif", DOM.getElementProperty(images[2], "src"));
+        assertEndsWith("b3.gif", DOM.getElementProperty(images[3], "src"));
         finishTest();
       }
-    }.schedule(100);
+    }.schedule(1000);
   }
 
   /**
@@ -397,17 +397,17 @@ public class DOMTest extends GWTTestCase {
     assertEndsWith("b4.gif", DOM.getImgSrc(images[2]));
     assertEndsWith("b4.gif", DOM.getImgSrc(images[3]));
     assertEndsWith("b4.gif", DOM.getImgSrc(images[4]));
-    delayTestFinish(500);
+    delayTestFinish(2000);
     new Timer() {
       public void run() {
-        assertEndsWith("a4.gif", DOM.getImgSrc(images[0]));
-        assertEndsWith("a4.gif", DOM.getImgSrc(images[1]));
-        assertEndsWith("b4.gif", DOM.getImgSrc(images[2]));
-        assertEndsWith("b4.gif", DOM.getImgSrc(images[3]));
-        assertEndsWith("b4.gif", DOM.getImgSrc(images[4]));
+        assertEndsWith("a4.gif", DOM.getElementProperty(images[0], "src"));
+        assertEndsWith("a4.gif", DOM.getElementProperty(images[1], "src"));
+        assertEndsWith("b4.gif", DOM.getElementProperty(images[2], "src"));
+        assertEndsWith("b4.gif", DOM.getElementProperty(images[3], "src"));
+        assertEndsWith("b4.gif", DOM.getElementProperty(images[4], "src"));
         finishTest();
       }
-    }.schedule(100);
+    }.schedule(1000);
   }
 
   /**

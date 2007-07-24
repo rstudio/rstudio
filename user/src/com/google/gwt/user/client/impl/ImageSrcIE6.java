@@ -58,8 +58,9 @@ class ImageSrcIE6 {
     // See if this element is already pending.
     String oldSrc = getPendingSrc(img);
     if (oldSrc != null) {
-      // The element is pending.
+      // The element is pending; there must be a top node for this src.
       Element top = getTop(srcImgMap, oldSrc);
+      assert (top != null);
       if (top.equals(img)) {
         // It's a pending parent.
         removeTop(srcImgMap, top);
@@ -102,14 +103,16 @@ class ImageSrcIE6 {
     }
 
     // Image is loading asynchronously; put in map for chaining.
-    var kids = img.__kids = [];
-    srcImgMap[src] = img;
+    img.__kids = [];
     img.__pendingSrc = src;
+    srcImgMap[src] = img;
     
     var _onload = img.onload, _onerror = img.onerror, _onabort = img.onabort;
     
     // Same cleanup code matter what state we end up in.
     function finish(_originalHandler) {
+      // Grab a copy of the kids.
+      var kids = img.__kids;
       img.__cleanup();
 
       // Set the src for all kids in a timer to ensure caching has happened.
@@ -186,11 +189,24 @@ class ImageSrcIE6 {
     var kids = img.__kids;
     img.__cleanup();
 
-    // Just rebuild the kids from the top.
-    // It's O(n), but it's safer than dealing with weird states and shouldn't
-    // matter in practice.
-    for (var i = 0, c = kids.length; i < c; ++i) {
-      @com.google.gwt.user.client.impl.ImageSrcIE6::setImgSrc(Lcom/google/gwt/user/client/Element;Ljava/lang/String;)(kids[i], src);
+    // Restructure the kids, if any.
+    if (img = kids[0]) {
+      // Try to elect a new top node.
+      img.__pendingSrc = null;
+      @com.google.gwt.user.client.impl.ImageSrcIE6::addTop(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/user/client/Element;Ljava/lang/String;)(srcImgMap, img, src);
+      if (img.__pendingSrc) {
+        // It became a top node, add the rest as children.
+        kids.splice(0, 1);
+        img.__kids = kids;
+      } else {
+        // It loaded immediately; just finish the rest.
+        // This is an extremely unlikely case, but could theoretically happen
+        // depending on how a browser's network and UI threads are synchronized.
+        for (var i = 1, c = kids.length; i < c; ++i) {
+          kids[i].src = src;
+          kids[i].__pendingSrc = null;
+        }
+      }
     }
   }-*/;
 }
