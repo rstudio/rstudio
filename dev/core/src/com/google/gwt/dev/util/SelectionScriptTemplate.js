@@ -345,7 +345,10 @@ function __MODULE_FUNC__() {
       iframe.id = "__MODULE_NAME__";
       iframe.src = base + strongName;
       iframe.style.cssText = "position:absolute;width:0;height:0;border:none";
-      $doc.body.appendChild(iframe);
+      var body = $doc.body;
+      // If the body has no children, this call will perform equivalently to
+      // body.appendChild(iframe).
+      body.insertBefore(iframe, body.firstChild);
     }
   }
   
