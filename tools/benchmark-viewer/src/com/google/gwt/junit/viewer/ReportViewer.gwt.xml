@@ -24,4 +24,6 @@
 
   <servlet path='/test_reports' class='com.google.gwt.junit.viewer.server.ReportServerImpl'/>
   <servlet path='/test_images' class='com.google.gwt.junit.viewer.server.ReportImageServer'/>
+
+  <stylesheet src="ReportViewer.css"/>
 </module>

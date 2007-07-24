@@ -28,20 +28,11 @@ import com.google.gwt.util.tools.Utility;
 
 import junit.framework.TestCase;
 
-import org.eclipse.jdt.internal.compiler.IProblemFactory;
-import org.eclipse.jdt.internal.compiler.ISourceElementRequestor;
-import org.eclipse.jdt.internal.compiler.SourceElementParser;
-import org.eclipse.jdt.internal.compiler.SourceElementRequestorAdapter;
-import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
-import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
-import org.eclipse.jdt.internal.compiler.problem.DefaultProblemFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.text.BreakIterator;
 import java.text.DateFormat;
@@ -50,7 +41,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -62,7 +52,7 @@ import javax.xml.parsers.ParserConfigurationException;
 /**
  * Generates a detailed report that contains the results of all of the
  * benchmark-related unit tests executed during a unit test session. The primary
- * user of this class is JUnitShell.
+ * user of this class is {@link com.google.gwt.junit.JUnitShell}.
  * 
  * The report is in XML format. To view the XML reports, use benchmarkViewer.
  */
@@ -83,7 +73,9 @@ public class BenchmarkReport {
         List/* <JUnitMessageQueue.TestResult> */results) {
       this.test = test;
       this.results = results;
-      Map/* <String,MetaData> */methodMetaData = (Map/* <String,MetaData> */) testMetaData.get(test.getClass().toString());
+      Map/* <String,MetaData> */methodMetaData
+          = (Map/* <String,MetaData> */) testMetaData
+          .get(test.getClass().toString());
       metaData = (MetaData) methodMetaData.get(test.getName());
     }
 
@@ -157,98 +149,65 @@ public class BenchmarkReport {
   }
 
   /**
-   * Parses a .java source file to get the source code for methods.
-   * 
-   * This Parser takes some shortcuts based on the fact that it's only being
-   * used to locate test methods for unit tests. (For example, only requiring a
-   * method name instead of a full type signature for lookup).
-   * 
-   * TODO(tobyr) I think that I might be able to replace all this code with a
-   * call to the existing metadata interface. Check declEnd/declStart in
-   * JAbstractMethod.
+   * Parses .java source files to get source code for methods.
    */
-  private static class Parser {
+  private class Parser {
 
-    static class MethodBody {
-
-      int declarationEnd; // the character index of the end of the method
-
-      int declarationStart; // the character index of the start of the method
-
-      String source;
-    }
-
-    private MethodBody currentMethod; // Only used during the visitor
-
-    // But it's less painful
-    private Map/* <String,MethodBody> */methods = new HashMap/* <String,MethodBody> */();
-
-    // Contains the contents of the entire source file
-    private char[] sourceContents;
-
-    Parser(JClassType klass) throws IOException {
-
-      Map settings = new HashMap();
-      settings.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_1_4);
-      settings.put(CompilerOptions.OPTION_TargetPlatform,
-          CompilerOptions.VERSION_1_4);
-      settings.put(CompilerOptions.OPTION_DocCommentSupport,
-          CompilerOptions.ENABLED);
-      CompilerOptions options = new CompilerOptions(settings);
-
-      IProblemFactory problemFactory = new DefaultProblemFactory(
-          Locale.getDefault());
-
-      // Save off the bounds of any method that is a test method
-      ISourceElementRequestor requestor = new SourceElementRequestorAdapter() {
-        public void enterMethod(MethodInfo methodInfo) {
-          String name = new String(methodInfo.name);
-          if (name.startsWith("test")) {
-            currentMethod = new MethodBody();
-            currentMethod.declarationStart = methodInfo.declarationStart;
-            methods.put(name, currentMethod);
-          }
-        }
-
-        public void exitMethod(int declarationEnd, int defaultValueStart,
-            int defaultValueEnd) {
-          if (currentMethod != null) {
-            currentMethod.declarationEnd = declarationEnd;
-            currentMethod = null;
-          }
-        }
-      };
-
-      boolean reportLocalDeclarations = true;
-      boolean optimizeStringLiterals = true;
-
-      SourceElementParser parser = new SourceElementParser(requestor,
-          problemFactory, options, reportLocalDeclarations,
-          optimizeStringLiterals);
-
-      File sourceFile = findSourceFile(klass);
-      sourceContents = read(sourceFile);
-      CompilationUnit unit = new CompilationUnit(sourceContents,
-          sourceFile.getName(), null);
-
-      parser.parseCompilationUnit(unit, true);
-    }
+    /**
+     * Maps classes to the contents of their source files.
+     */
+    private Map/*<JClassType,String>*/ classSources = new HashMap();
 
     /**
      * Returns the source code for the method of the given name.
-     * 
-     * @return null if the source code for the method can not be located
+     *
+     * @param method a not <code>null</code> method
+     * @return <code>null</code> if the source code for the method can not be
+     *         located
      */
     public String getMethod(JMethod method) {
-      /*
-       * MethodBody methodBody = (MethodBody)methods.get( method.getName() ); if (
-       * methodBody == null ) { return null; } if ( methodBody.source == null ) {
-       * methodBody.source = new String(sourceContents,
-       * methodBody.declarationStart, methodBody.declarationEnd - methodBody.
-       * declarationStart + 1); } return methodBody.source;
-       */
-      return new String(sourceContents, method.getDeclStart(),
-          method.getDeclEnd() - method.getDeclStart() + 1);
+      JClassType clazz = method.getEnclosingType();
+
+      if (!classSources.containsKey(clazz)) {
+        char[] sourceContents = null;
+        File sourceFile = findSourceFile(clazz);
+        if ( sourceFile != null ) {
+          Util.readFileAsChars(sourceFile);
+          classSources.put(clazz, sourceContents);
+        }
+
+        if (sourceContents == null) {
+          classSources.put(clazz, null);
+          String msg = "An unknown I/O exception occured while trying to read "
+              + sourceFile.getAbsolutePath();
+          logger.log(TreeLogger.WARN, msg, null);
+        } else {
+          classSources.put(clazz, new String(sourceContents));
+          String msg = "BenchmarkReport read the contents of " + sourceFile
+              .getAbsolutePath();
+          TreeLogger branch = logger.branch(TreeLogger.DEBUG, msg, null);
+          if (logger.isLoggable(TreeLogger.SPAM)) {
+            branch.log(TreeLogger.SPAM, new String(sourceContents), null);
+          }
+        }
+      }
+
+      String source = (String) classSources.get(clazz);
+      
+      if (source == null) {
+        return source;
+      }
+
+      try {
+        return source.substring(method.getDeclStart(), method.getDeclEnd() + 1);
+      } catch (IndexOutOfBoundsException e) {
+        logger.log(TreeLogger.WARN, "Unable to parse " + method.getName(), e);
+        // Have seen this happen when the compiler read the source using one
+        // character encoding, and then this Parser read it in a different
+        // encoding. I don't know if there are other cases in which this can
+        // occur.
+        return null;
+      }
     }
   }
 
@@ -257,7 +216,8 @@ public class BenchmarkReport {
    */
   private class ReportXml {
 
-    private Map/* <String,Element> */categoryElementMap = new HashMap/* <String,Element> */();
+    private Map/* <String,Element> */categoryElementMap
+        = new HashMap/* <String,Element> */();
 
     private Date date = new Date();
 
@@ -269,12 +229,12 @@ public class BenchmarkReport {
       report.setAttribute("date", dateString);
       report.setAttribute("gwt_version", version);
 
-      // - Add each test result into the report.
-      // - Add the category for the test result, if necessary.
-      for (Iterator entryIt = testResults.entrySet().iterator(); entryIt.hasNext();) {
-        Map.Entry entry = (Map.Entry) entryIt.next();
+      // Add each test result into the report.
+      // Add the category for the test result, if necessary.
+      for (Iterator it = testResults.entrySet().iterator(); it.hasNext();) {
+        Map.Entry entry = (Map.Entry) it.next();
         TestCase test = (TestCase) entry.getKey();
-        List/* <JUnitMessageQueue.TestResult> */results = (List/* <JUnitMessageQueue.TestResult> */) entry.getValue();
+        List/*<JUnitMessageQueue.TestResult>*/results = (List) entry.getValue();
         BenchmarkXml xml = new BenchmarkXml(test, results);
         Element categoryElement = getCategoryElement(doc, report,
             xml.metaData.getCategory().getClassName());
@@ -288,9 +248,13 @@ public class BenchmarkReport {
      * Locates or creates the category element by the specified name.
      * 
      * @param doc The document to search
+     * @param report The report to which the category belongs
+     * @param name The name of the category
+     *
      * @return The matching category element
      */
-    private Element getCategoryElement(Document doc, Element report, String name) {
+    private Element getCategoryElement(Document doc, Element report,
+        String name) {
       Element e = (Element) categoryElementMap.get(name);
 
       if (e != null) {
@@ -311,14 +275,15 @@ public class BenchmarkReport {
 
   private static final String GWT_BENCHMARK_CATEGORY = "gwt.benchmark.category";
 
-  private static final String GWT_BENCHMARK_DESCRIPTION = "gwt.benchmark.description";
+  private static final String GWT_BENCHMARK_DESCRIPTION
+      = "gwt.benchmark.description";
 
   private static final String GWT_BENCHMARK_NAME = "gwt.benchmark.name";
 
-  private static File findSourceFile(JClassType klass) {
+  private static File findSourceFile(JClassType clazz) {
     final char separator = File.separator.charAt(0);
-    String filePath = klass.getPackage().getName().replace('.', separator)
-        + separator + klass.getSimpleSourceName() + ".java";
+    String filePath = clazz.getPackage().getName().replace('.', separator)
+        + separator + clazz.getSimpleSourceName() + ".java";
     String[] paths = getClassPath();
 
     for (int i = 0; i < paths.length; ++i) {
@@ -358,37 +323,18 @@ public class BenchmarkReport {
     return resultString.equals("") ? null : resultString;
   }
 
-  private static char[] read(File f) throws IOException {
-    // TODO(tobyr) Can be done oh so much faster by just reading directly into
-    // a char[]
+  private TreeLogger logger;
 
-    BufferedReader reader = new BufferedReader(new FileReader(f));
-    StringBuffer source = new StringBuffer((int) f.length());
+  private Parser parser = new Parser();
 
-    while (true) {
-      String line = reader.readLine();
-      if (line == null) {
-        break;
-      }
-      source.append(line);
-      source.append("\n");
-    }
+  private Map /*<String,Map<CategoryImpl>*/ testCategories = new HashMap();
 
-    char[] buf = new char[source.length()];
-    source.getChars(0, buf.length, buf, 0);
+  private Map /*<String,Map<String,MetaData>>*/ testMetaData = new HashMap();
 
-    return buf;
-  }
-
-  private Map/* <String,Map<CategoryImpl> */testCategories = new HashMap/* <String,CategoryImpl> */();
-
-  private Map/* <String,Map<String,MetaData>> */testMetaData = new HashMap/* <String,Map<String,MetaData>> */();
-
-  private Map/* <TestCase,List<JUnitMessageQueue.TestResult>> */testResults = new HashMap/* <TestCase,JUnitMessageQueue.List<TestResult>> */();
+  private Map/*<TestCase,List<JUnitMessageQueue.TestResult>>*/ testResults
+      = new HashMap();
 
   private TypeOracle typeOracle;
-
-  private TreeLogger logger;
 
   public BenchmarkReport(TreeLogger logger) {
     this.logger = logger;
@@ -397,6 +343,11 @@ public class BenchmarkReport {
   /**
    * Adds the Benchmark to the report. All of the metadata about the benchmark
    * (category, name, description, etc...) is recorded from the TypeOracle.
+   *
+   * @param benchmarkClass The benchmark class to record. Must not be
+   * <code>null</code>.
+   * @param typeOracle The <code>TypeOracle<code> for the compilation session.
+   * Must not be <code>null</code>.  
    */
   public void addBenchmark(JClassType benchmarkClass, TypeOracle typeOracle) {
 
@@ -404,29 +355,21 @@ public class BenchmarkReport {
     String categoryType = getSimpleMetaData(benchmarkClass,
         GWT_BENCHMARK_CATEGORY);
 
-    Map zeroArgMethods = BenchmarkGenerator.getNotOverloadedTestMethods(benchmarkClass);
-    Map/* <String,JMethod> */parameterizedMethods = BenchmarkGenerator.getParameterizedTestMethods(
-        benchmarkClass, TreeLogger.NULL);
-    List/* <JMethod> */testMethods = new ArrayList/* <JMethod> */(
+    Map zeroArgMethods = BenchmarkGenerator
+        .getNotOverloadedTestMethods(benchmarkClass);
+    Map/* <String,JMethod> */parameterizedMethods = BenchmarkGenerator
+        .getParameterizedTestMethods(
+            benchmarkClass, TreeLogger.NULL);
+    List/* <JMethod> */testMethods = new ArrayList(
         zeroArgMethods.size() + parameterizedMethods.size());
     testMethods.addAll(zeroArgMethods.values());
     testMethods.addAll(parameterizedMethods.values());
 
-    Map/* <String,MetaData> */metaDataMap = (Map/* <String,MetaData> */) testMetaData.get(benchmarkClass.toString());
+    Map/*<String,MetaData>*/ metaDataMap = (Map) testMetaData
+        .get(benchmarkClass.toString());
     if (metaDataMap == null) {
       metaDataMap = new HashMap/* <String,MetaData> */();
       testMetaData.put(benchmarkClass.toString(), metaDataMap);
-    }
-
-    Parser parser = null;
-
-    try {
-      parser = new Parser(benchmarkClass);
-    } catch (IOException e) {
-      // if we fail to create the parser for some reason, we'll have to just
-      // deal with a null parser.
-      logger.log(TreeLogger.WARN, "Unable to parse the code for "
-          + benchmarkClass, e);
     }
 
     // Add all of the benchmark methods
@@ -439,21 +382,25 @@ public class BenchmarkReport {
         methodCategoryType = categoryType;
       }
       CategoryImpl methodCategory = getCategory(methodCategoryType);
-      StringBuffer sourceCode = parser == null ? null : new StringBuffer(
-          parser.getMethod(method));
+
+      String methodSource = parser.getMethod(method);
+      StringBuffer sourceBuffer = (methodSource == null) ? null
+          : new StringBuffer(methodSource);
       StringBuffer summary = new StringBuffer();
       StringBuffer comment = new StringBuffer();
-      getComment(sourceCode, summary, comment);
+      getComment(sourceBuffer, summary, comment);
 
       MetaData metaData = new MetaData(benchmarkClass.toString(), methodName,
-          sourceCode != null ? sourceCode.toString() : null, methodCategory,
+          (sourceBuffer != null) ? sourceBuffer.toString() : null,
+          methodCategory,
           methodName, summary.toString());
       metaDataMap.put(methodName, metaData);
     }
   }
 
   public void addBenchmarkResults(TestCase test, TestResults results) {
-    List/* <TestResults> */currentResults = (List/* <TestResults> */) testResults.get(test);
+    List/* <TestResults> */currentResults
+        = (List/* <TestResults> */) testResults.get(test);
     if (currentResults == null) {
       currentResults = new ArrayList/* <TestResults> */();
       testResults.put(test, currentResults);
@@ -466,8 +413,7 @@ public class BenchmarkReport {
    * generator.
    * 
    * @param outputPath The path to write the reports to.
-   * @throws ParserConfigurationException
-   * @throws IOException
+   * @throws ParserConfigurationException If an error occurs during xml parsing
    * @throws IOException If anything goes wrong writing to outputPath
    */
   public void generate(String outputPath) throws ParserConfigurationException,
@@ -539,6 +485,11 @@ public class BenchmarkReport {
    * Parses out the JavaDoc comment from a string of source code. Returns the
    * first sentence summary in <code>summary</code> and the body of the entire
    * comment (including the summary) in <code>comment</code>.
+   *
+   * @param sourceCode The source code of a function, including its comment.
+   * Modified to remove leading whitespace.
+   * @param summary Modified to contain the first sentence of the comment.
+   * @param comment Modified to contain the entire comment.
    */
   private void getComment(StringBuffer sourceCode, StringBuffer summary,
       StringBuffer comment) {

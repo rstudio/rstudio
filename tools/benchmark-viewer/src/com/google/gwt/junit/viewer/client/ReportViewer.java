@@ -33,6 +33,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.TableListener;
+import com.google.gwt.user.client.ui.SourcesTableEvents;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,6 +71,26 @@ public class ReportViewer implements EntryPoint {
     }
   }
 
+  private class SummariesTableListener implements TableListener {
+
+    private FlexTable summariesTable;
+
+    SummariesTableListener(FlexTable summariesTable) {
+      this.summariesTable = summariesTable;
+    }
+
+    public void onCellClicked(SourcesTableEvents sender, int row, int col) {
+      if (currentSelectedRow != -1) {
+        summariesTable.getRowFormatter().removeStyleName(currentSelectedRow,
+            "viewer-SelectedRow");
+      }
+      currentSelectedRow = row;
+      summariesTable.getRowFormatter().addStyleName(row, "viewer-SelectedRow");
+      ReportSummary summary = (ReportSummary) summaries.get(row - 1);
+      getReportDetails(summary.getId());
+    }
+  }
+
   private static final String baseUrl = GWT.getModuleBaseURL();
 
   private static final String imageServer = baseUrl + "test_images/";
@@ -92,6 +114,8 @@ public class ReportViewer implements EntryPoint {
   FlexTable summariesTable;
 
   CellPanel topPanel;
+
+  private int currentSelectedRow = -1;
 
   public void onModuleLoad() {
 
@@ -193,7 +217,7 @@ public class ReportViewer implements EntryPoint {
         benchmarkTable.setBorderWidth(0);
         benchmarkTable.setCellPadding(5);
         benchmarkTable.setText(0, 0, benchmark.getName());
-        // benchmarkTable.setText( 0, 1, benchmark.getDescription());
+        // benchmarkTable.setText(0, 1, benchmark.getDescription());
         benchmarkTable.setWidget(1, 0, new HTML("<pre>"
             + benchmark.getSourceCode() + "</pre>"));
         benchmarkTable.getFlexCellFormatter().setStyleName(0, 0,
@@ -204,7 +228,7 @@ public class ReportViewer implements EntryPoint {
             "benchmark-code");
 
         // TODO(tobyr) Provide detailed benchmark information.
-        // Following commented code is a step in that direction.
+        // Following bits of commented code are steps in that direction.
         /*
          * benchmarkTable.setWidget( 0, 1, new Label( "Description"));
          * benchmarkTable.setWidget( 0, 2, new Label( "Class Name"));
@@ -232,9 +256,14 @@ public class ReportViewer implements EntryPoint {
         }); // Should be done once in the RPC
 
         final List trialsTables = new ArrayList();
-        final MutableBool isVisible = new MutableBool(false);
 
-        Button visibilityButton = new Button("Show Data", new ClickListener() {
+        Result sampleResult = (Result) benchmark.getResults().get(0);
+        Trial sampleTrial = (Trial) sampleResult.getTrials().get(0);
+        int numVariables = sampleTrial.getVariables().size();
+        final MutableBool isVisible = new MutableBool(numVariables > 2);
+        String buttonName = isVisible.value ? "Hide Data" : "Show Data";
+
+        Button visibilityButton = new Button(buttonName, new ClickListener() {
           public void onClick(Widget sender) {
             isVisible.value = !isVisible.value;
             for (int i = 0; i < trialsTables.size(); ++i) {
@@ -248,18 +277,21 @@ public class ReportViewer implements EntryPoint {
 
         for (int k = 0; k < benchmark.getResults().size(); ++k) {
           Result result = (Result) benchmark.getResults().get(k);
+          List trials = result.getTrials();
 
-          /*
-           * resultsTable.setWidget( 0, 0, new Label( "Result Agent"));
-           * resultsTable.setWidget( 0, 1, new Label( "Host"));
-           * resultsTable.setWidget( 0, 2, new Label( "Graph"));
-           * resultsTable.setWidget( 1, 0, new Label( result.getAgent()));
-           * resultsTable.setWidget( 1, 1, new Label( result.getHost()));
-           */
-
-          resultsTable.setWidget(0, k, new Image(getImageUrl(report.getId(),
-              c.getName(), benchmark.getClassName(), benchmark.getName(),
-              result.getAgent())));
+          // Currently only support graphs for results of 2 variables or less
+          if (numVariables <= 2) {
+            resultsTable.setWidget(0, k, new Image(getImageUrl(report.getId(),
+                c.getName(), benchmark.getClassName(), benchmark.getName(),
+                result.getAgent())));
+          } else {
+            if (k == 0) {
+              resultsTable.setHTML(0, k, "<b>"
+                  + BrowserInfo.getBrowser(result.getAgent())
+                  + "</b><br><font size=\"-1\">(Graphs are not yet available "
+                  + "for benchmarks with more than two parameters)</font>");
+            }
+          }
 
           /*
            * FlexTable allTrialsTable = new FlexTable();
@@ -277,7 +309,7 @@ public class ReportViewer implements EntryPoint {
 
           // A table of straight data for all trials for an agent
           FlexTable trialsTable = new FlexTable();
-          trialsTable.setVisible(false);
+          trialsTable.setVisible(isVisible.value);
           trialsTables.add(trialsTable);
           trialsTable.setBorderWidth(1);
           trialsTable.setCellPadding(5);
@@ -292,11 +324,8 @@ public class ReportViewer implements EntryPoint {
 
           resultsTable.setWidget(2, k, trialsTable);
 
-          List trials = result.getTrials();
           int numTrials = trials.size();
-          int numVariables = ((Trial) trials.get(0)).getVariables().size();
 
-          Trial sampleTrial = (Trial) trials.get(0);
           Map variables = sampleTrial.getVariables();
           List variableNames = new ArrayList(variables.keySet());
           Collections.sort(variableNames);
@@ -304,11 +333,11 @@ public class ReportViewer implements EntryPoint {
           // Write out the variable column headers
           for (int varIndex = 0; varIndex < numVariables; ++varIndex) {
             String varName = (String) variableNames.get(varIndex);
-            trialsTable.setWidget(0, varIndex, new HTML(varName));
+            trialsTable.setHTML(0, varIndex, varName);
           }
 
           // Timing header
-          trialsTable.setWidget(0, numVariables, new HTML("Timing (ms)"));
+          trialsTable.setHTML(0, numVariables, "Timing (ms)");
 
           // Write out all the trial data
           for (int l = 0; l < numTrials; ++l) {
@@ -318,7 +347,7 @@ public class ReportViewer implements EntryPoint {
             for (int varIndex = 0; varIndex < numVariables; ++varIndex) {
               String varName = (String) variableNames.get(varIndex);
               String varValue = (String) trial.getVariables().get(varName);
-              trialsTable.setWidget(l + 1, varIndex, new HTML(varValue));
+              trialsTable.setHTML(l + 1, varIndex, varValue);
             }
 
             // Write out the timing data
@@ -328,7 +357,7 @@ public class ReportViewer implements EntryPoint {
             } else {
               data = trial.getRunTimeMillis() + "";
             }
-            trialsTable.setWidget(l + 1, numVariables, new HTML(data));
+            trialsTable.setHTML(l + 1, numVariables, data);
           }
         }
       }
@@ -340,12 +369,14 @@ public class ReportViewer implements EntryPoint {
   private FlexTable createSummariesTable() {
 
     FlexTable tempSummariesTable = new FlexTable();
+    tempSummariesTable.addStyleName("viewer-List");
     tempSummariesTable.setCellPadding(5);
     tempSummariesTable.setBorderWidth(1);
-    tempSummariesTable.setWidget(0, 0, new Label("Id"));
+    tempSummariesTable.setCellSpacing(0);
+    tempSummariesTable.setWidget(0, 0, new Label("Report"));
     tempSummariesTable.setWidget(0, 1, new Label("Date Created"));
     tempSummariesTable.setWidget(0, 2, new Label("Tests"));
-    // tempSummariesTable.setWidget( 0, 3, new Label( "Succeeded"));
+    tempSummariesTable.getRowFormatter().addStyleName(0, "viewer-ListHeader");
 
     if (summaries == null) {
       tempSummariesTable.setWidget(1, 0, new Label("Fetching reports..."));
@@ -356,19 +387,15 @@ public class ReportViewer implements EntryPoint {
     for (int i = 0; i < summaries.size(); ++i) {
       ReportSummary summary = (ReportSummary) summaries.get(i);
       int index = i + 1;
-      Label idLabel = new Label(summary.getId());
-      idLabel.addClickListener(new ClickListener() {
-        public void onClick(Widget w) {
-          getReportDetails(((Label) w).getText());
-        }
-      });
-      tempSummariesTable.setWidget(index, 0, idLabel);
+      tempSummariesTable.setHTML(index, 0, "<a href=\"javascript:void(0)\">"
+          + summary.getId() + "</a>");
       tempSummariesTable.setWidget(index, 1, new Label(summary.getDateString()));
-      tempSummariesTable.setWidget(index, 2, new Label(summary.getNumTests()
-          + ""));
-      // tempSummariesTable.setWidget( index, 3, new
-      // Label(summary.allTestsSucceeded() + ""));
+      tempSummariesTable.setWidget(index, 2, new Label(
+          String.valueOf(summary.getNumTests())));
     }
+
+    tempSummariesTable.addTableListener(new SummariesTableListener(
+        tempSummariesTable));
 
     return tempSummariesTable;
   }

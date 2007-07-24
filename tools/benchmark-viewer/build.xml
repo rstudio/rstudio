@@ -43,6 +43,7 @@
 				<pathelement location="${gwt.tools.lib}/tomcat/servlet-api-2.4.jar" />
 				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
 				<pathelement location="${gwt.tools.lib}/jfreechart/jfreechart-1.0.3.jar" />
+				<pathelement location="${gwt.tools.lib}/jfreechart/jcommon-1.0.6.jar" />
 				<pathelement location="${gwt.dev.jar}" />
 				<pathelement location="${gwt.user.jar}" />
 			</classpath>

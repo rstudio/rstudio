@@ -20,7 +20,6 @@ import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
@@ -39,7 +38,6 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1049,6 +1047,38 @@ public class DeveloperGuide {
       public static class i18nCreator {
       }
 
+      /**
+       * Reads
+       * {@link com.google.gwt.doc.DeveloperGuide.JUnitIntegration.JUnitBenchmarking benchmark}
+       * reports from a folder and displays their results, including various
+       * visualizations.
+       *
+       * <p>
+       * <code>benchmarkViewer [path]</code>
+       * </p>
+       *
+       * <table width="80%" align="center">
+       * <tr>
+       * <td><code>path</code></td>
+       * <td>Specify the path to the XML <code>benchmark</code> reports. If the
+       * path is not specified, it defaults to the current working directory.</td>
+       * </tr>
+       * </table>
+       *
+       * <h2>Example</h2>
+       *
+       * <pre class="code">
+       * ~/Foo> benchmarkViewer my/benchmark/results
+       * </pre>
+       *
+       * Looks for report XML files in the folder <code>my/benchmark/results</code>
+       * and displays them in the viewer.
+       *
+       * @title benchmarkViewer
+       * @synopsis Displays benchmark results.
+       */
+      public static class benchmarkViewer {
+      }
     }
   }
 
@@ -2628,10 +2658,10 @@ public class DeveloperGuide {
      * {@link com.google.gwt.junit.client.Benchmark}. Execute your benchmark
      * like you would any normal JUnit test. By default, the test results are
      * written to a report XML file in your working directory.</li>
-     * <li>Run <code>benchmarkViewer</code> to browse visualizations
-     * (graphs/charts) of your report data. The <code>benchmarkViewer</code>
-     * is a GWT tool in the root of your GWT installation directory that
-     * displays benchmark reports.</li>
+     * <li>Run {@link com.google.gwt.doc.DeveloperGuide.Fundamentals.CommandLineTools.benchmarkViewer}
+     * to browse visualizations (graphs/charts) of your report data. The
+     * <code>benchmarkViewer</code> is a GWT tool in the root of your GWT
+     * installation directory that displays benchmark reports.</li>
      * </ol>
      * 
      * @title Benchmarking
