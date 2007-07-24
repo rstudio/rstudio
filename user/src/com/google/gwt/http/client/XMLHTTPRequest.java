@@ -176,7 +176,7 @@ final class XMLHTTPRequest {
       xmlHttpRequest.open(httpMethod, url, async);
       return null;
     } catch (e) {
-      return e.message;
+      return e.message || e.toString();
     }
   }-*/;
 
@@ -198,7 +198,7 @@ final class XMLHTTPRequest {
       xmlHttpRequest.open(httpMethod, url, async, user);
       return null;
     } catch (e) {
-      return e.message;
+      return e.message || e.toString();
     }
   }-*/;
 
@@ -221,7 +221,7 @@ final class XMLHTTPRequest {
       xmlHttpRequest.open(httpMethod, url, async, user, password);
       return null;
     } catch (e) {
-      return e.message;
+      return e.message || e.toString();
     }
   }-*/;
 
@@ -242,7 +242,7 @@ final class XMLHTTPRequest {
       return null;
     } catch (e) {
       xmlHttpRequest.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
-      return e.message;
+      return e.message || e.toString();
     }
   }-*/;
 
@@ -252,7 +252,7 @@ final class XMLHTTPRequest {
       xmlHttpRequest.setRequestHeader(header, value);
       return null;
     } catch (e) {
-      return e.message;
+      return e.message || e.toString();
     }
   }-*/;
   
