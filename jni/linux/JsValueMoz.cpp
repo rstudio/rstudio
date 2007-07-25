@@ -34,15 +34,18 @@
  * Returns null on failure.  Caller is responsible for deleting
  * returned JsRootedValue when done with it.
  */
-JsRootedValue* GetFieldAsRootedValue(JSContext* context, jclass clazz,
+static JsRootedValue* GetFieldAsRootedValue(JSContext* cx, jclass clazz,
     jobject obj, jstring fieldName)
 {
+  Tracer tracer("GetFieldAsRootedValue");
+  JsRootedValue::ContextManager context(cx);
   jmethodID getFieldMeth = savedJNIEnv->GetMethodID(clazz, "getField",
       "(Ljava/lang/String;I)V");
-  if (!getFieldMeth || savedJNIEnv->ExceptionCheck())
+  if (!getFieldMeth || savedJNIEnv->ExceptionCheck()) {
     return 0;
+  }
 
-  JsRootedValue* jsRootedValue = new JsRootedValue(context);
+  JsRootedValue* jsRootedValue = new JsRootedValue();
   savedJNIEnv->CallVoidMethod(obj, getFieldMeth, fieldName,
   	 reinterpret_cast<jint>(jsRootedValue));
   if (savedJNIEnv->ExceptionCheck()) {
@@ -63,18 +66,22 @@ JsRootedValue* GetFieldAsRootedValue(JSContext* context, jclass clazz,
  * 
  * returns true on success, false on failure
  */
-bool SetFieldFromRootedValue(JSContext* context, jclass clazz,
+static bool SetFieldFromRootedValue(JSContext* cx, jclass clazz,
     jobject obj, jstring fieldName, JsRootedValue* jsRootedValue)
 {
+  Tracer tracer("SetFieldAsRootedValue");
+  JsRootedValue::ContextManager context(cx);
   jmethodID getFieldMeth = savedJNIEnv->GetMethodID(clazz, "setField",
       "(Ljava/lang/String;I)V");
-  if (!getFieldMeth || savedJNIEnv->ExceptionCheck())
+  if (!getFieldMeth || savedJNIEnv->ExceptionCheck()) {
     return false;
+  }
 
   savedJNIEnv->CallVoidMethod(obj, getFieldMeth, fieldName,
   	 reinterpret_cast<jint>(jsRootedValue));
-  if (savedJNIEnv->ExceptionCheck())
+  if (savedJNIEnv->ExceptionCheck()) {
     return false;
+  }
 
   return true;
 }
@@ -88,7 +95,9 @@ static void ThrowHostedModeException(JNIEnv* jniEnv, const char* msg) {
   jniEnv->ThrowNew(exceptionClass, msg);
 }
 
-
+/*
+ * Types of jsvals.
+ */
 enum JsValueType {
   JSVAL_TYPE_VOID=0,
   JSVAL_TYPE_NULL,
@@ -99,6 +108,9 @@ enum JsValueType {
   JSVAL_TYPE_UNKNOWN,
 };
 
+/*
+ * Names of jsval types -- must match the order of the enum above.
+ */
 static const char* JsValueTypeStrings[]={
   "undefined",
   "null",
@@ -109,6 +121,9 @@ static const char* JsValueTypeStrings[]={
   "unknown",
 };
 
+/*
+ * Return the type of a jsval.
+ */
 static JsValueType GetValueType(jsval val) {
   if(JSVAL_IS_VOID(val)) {
     return JSVAL_TYPE_VOID;
@@ -128,24 +143,156 @@ static JsValueType GetValueType(jsval val) {
 }
 
 /*
+ * Called from JavaScript to call a Java method that has previously been
+ * wrapped.  See _setWrappedFunction for use.
+ */ 
+static JSBool invokeJavaMethod(JSContext *cx, JSObject *obj, uintN argc,
+    jsval *argv, jsval *rval)
+{
+  Tracer tracer("invokeJavaMethod");
+  JsRootedValue::ContextManager context(cx);
+
+  // I kid you not; this is how XPConnect gets their function object so they can
+  // multiplex dispatch the call from a common site.  See XPCDispObject.cpp(466)
+  //
+  // I now have a secondary confirmation that this trick is legit.
+  // brandon@mozilla.org writes:
+  //
+  // argv[-2] is part of the JS API, unabstracted.  Just as argv[0] is the
+  // first argument (if argc != 0), argv[-1] is the |this| parameter (equal
+  // to OBJECT_TO_JSVAL(obj) in a native method with the standard |obj|
+  // second formal parameter name), and argv[-2] is the callee object, tagged
+  // as a jsval.
+  if (JS_TypeOfValue(cx, argv[-2]) != JSTYPE_FUNCTION) {
+    tracer.setFail("not a function type");
+    return JS_FALSE;
+  }
+  JSObject* funObj = JSVAL_TO_OBJECT(argv[-2]);
+
+  // Pull the wrapper object out of the funObj's reserved slot
+  jsval jsCleanupObj;
+  if (!JS_GetReservedSlot(cx, funObj, 0, &jsCleanupObj)) {
+    tracer.setFail("JS_GetReservedSlot failed");
+    return JS_FALSE;
+  }
+  JSObject* cleanupObj = JSVAL_TO_OBJECT(jsCleanupObj);
+  if (!cleanupObj) {
+    tracer.setFail("cleanupObj is null");
+    return JS_FALSE;
+  }
+
+  // Get DispatchMethod instance out of the wrapper object
+  jobject dispMeth =
+      NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, cleanupObj));
+  if (!dispMeth) {
+    tracer.setFail("dispMeth is null");
+    return JS_FALSE;
+  }
+  jclass dispClass = savedJNIEnv->GetObjectClass(dispMeth);
+  if (!dispClass || savedJNIEnv->ExceptionCheck()) {
+    tracer.setFail("GetObjectClass returns null");
+    return JS_FALSE;
+  }
+
+  // lookup the invoke method on the dispatch object
+  jmethodID invokeID =
+      savedJNIEnv->GetMethodID(dispClass, "invoke", "(I[II)V");
+  if (!invokeID || savedJNIEnv->ExceptionCheck()) {
+    tracer.setFail("GetMethodID failed");
+    return JS_FALSE;
+  }
+
+  // create an array of integers to hold the JsRootedValue pointers passed
+  // to the invoke method
+  jintArray args = savedJNIEnv->NewIntArray(argc);
+  if (!args || savedJNIEnv->ExceptionCheck()) {
+    tracer.setFail("NewIntArray failed");
+    return JS_FALSE;
+  }
+
+  // these arguments are already rooted by the JS interpreter, but we
+  // can't easily take advantage of that without complicating the JsRootedValue
+  // interface.
+  
+  // argv[-1] is OBJECT_TO_JSVAL(this)
+  JsRootedValue* jsThis = new JsRootedValue(argv[-1]);
+  tracer.log("jsthis=%08x, RV=%08x", unsigned(argv[-1]), unsigned(jsThis));
+
+  // create JsRootedValues for arguments  
+  JsRootedValue *jsArgs[argc]; 
+  for (uintN i = 0; i < argc; ++i) {
+    jsArgs[i] = new JsRootedValue(argv[i]);
+  }
+  savedJNIEnv->SetIntArrayRegion(args, 0, argc,
+      reinterpret_cast<jint*>(jsArgs));
+  if (savedJNIEnv->ExceptionCheck()) {
+    tracer.setFail("SetIntArrayRegion failed");
+    return JS_FALSE;
+  }
+  
+  // slot for return value
+  JsRootedValue* jsReturnVal = new JsRootedValue();
+
+  // TODO(jat): small window here where invocation may fail before Java
+  // takes ownership of the JsRootedValue objects.  One solution would be
+  // to reference-count them between Java and C++ (so the reference count
+  // would always be 0, 1, or 2).  Also setField has a similar problem.
+  // I plan to fix this when switching away from Java holding pointers to
+  // C++ objects as part of the fix for 64-bit support (which we could
+  // accomplish inefficiently by changing int to long everywhere, but there
+  // are other 64-bit issues to resolve and we need to reduce the number of
+  // roots the JS interpreter has to search.
+  
+  // call Java method
+  savedJNIEnv->CallVoidMethod(dispMeth, invokeID, reinterpret_cast<int>(jsThis),
+      args, reinterpret_cast<int>(jsReturnVal));
+  
+  JSBool returnValue = JS_TRUE;
+  
+  if (savedJNIEnv->ExceptionCheck()) {
+    tracer.log("dispMeth=%08x", unsigned(dispMeth));
+    tracer.setFail("java exception is active:");
+    jobject exception = savedJNIEnv->ExceptionOccurred();
+    if (exception) {
+      fprintf(stderr, "Exception occurred in MethodDispatch.invoke:\n");
+      savedJNIEnv->ExceptionDescribe();
+      savedJNIEnv->DeleteLocalRef(exception);
+    }
+    returnValue = JS_FALSE;
+  } else if (JS_IsExceptionPending(cx)) {
+    tracer.setFail("js exception is active");
+    returnValue = JS_FALSE;
+  }
+
+  // extract return value
+  *rval = jsReturnVal->getValue();
+
+#if 0
+  // NOTE: C++ objects are not cleaned up here because Java now owns them.
+  // TODO(jat): if reference-counted, they *do* need to be Released here.
+  
+  // free JsRootedValues
+  for (uintN i = 0; i < argc; ++i) {
+    delete jsArgs[i];
+  }
+  delete jsThis;
+  delete jsReturnVal;
+#endif
+
+  return returnValue;
+}
+
+/*
  * Class:     com_google_gwt_dev_shell_moz_JsValueMoz
  * Method:    _createJsRootedValue()
- * Signature: (II)I
+ * Signature: (I)I
  */
 extern "C" JNIEXPORT jint JNICALL
 Java_com_google_gwt_dev_shell_moz_JsValueMoz__1createJsRootedValue
-  (JNIEnv* jniEnv, jclass, jint scriptObjInt, jint jsval)
+  (JNIEnv* jniEnv, jclass, jint jsval)
 {
   Tracer tracer("JsValueMoz._createJsRootedValue");
-  nsIScriptGlobalObject* scriptObject = NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObjInt);
-  nsCOMPtr<nsIScriptContext> scriptContext(scriptObject->GetContext());
-  if (!scriptContext) {
-    ThrowHostedModeException(jniEnv, "Unable to get script context");
-    tracer.setFail("Unable to get script context");
-    return 0;
-  }
-  JSContext* context = NS_REINTERPRET_CAST(JSContext*, scriptContext->GetNativeContext());
-  JsRootedValue* jsRootedValue = new JsRootedValue(context, jsval);
+  JsRootedValue* jsRootedValue = new JsRootedValue(jsval);
   return NS_REINTERPRET_CAST(jint, jsRootedValue);
 }
 
@@ -203,8 +350,6 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1getBoolean
  * Signature: (I)I
  * 
  * @see com.google.gwt.dev.shell.moz.JsValueMoz#getInt()
- * 
- * TODO(jat): unboxing Javascript Integer type?
  */
 extern "C" JNIEXPORT jint JNICALL
 Java_com_google_gwt_dev_shell_moz_JsValueMoz__1getInt
@@ -274,14 +419,14 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1getTypeString
       (jsRootedValueInt);
   Tracer tracer("JsValueMoz._getTypeString", jsRootedValue);
   jsval val = jsRootedValue->getValue();
-  JSContext* context = jsRootedValue->getContext();
+  JSContext* cx = JsRootedValue::currentContext();
   JsValueType valueType = GetValueType(val);
   const char* typeString = 0;
   char buf[256];
   if(valueType == JSVAL_TYPE_OBJECT) {
     JSObject* jsObject = JSVAL_TO_OBJECT(val);
-    JSClass* objClass = JS_GET_CLASS(context, jsObject);
-    if (JS_InstanceOf(context, jsObject,
+    JSClass* objClass = JS_GET_CLASS(cx, jsObject);
+    if (JS_InstanceOf(cx, jsObject,
         &gwt_nativewrapper_class, 0)) {
       typeString = "Java object";
     } else {
@@ -315,14 +460,14 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1getWrappedJavaObject
     return 0;
   }
   JSObject* jsObject = JSVAL_TO_OBJECT(val);
-  JSContext* context = jsRootedValue->getContext();
-  if(!JS_InstanceOf(context, jsObject, &gwt_nativewrapper_class, 0)) {
+  JSContext* cx = JsRootedValue::currentContext();
+  if(!JS_InstanceOf(cx, jsObject, &gwt_nativewrapper_class, 0)) {
     tracer.throwHostedModeException(jniEnv,
       "Javascript object not a Java object");
     return 0;
   } 
   jobject javaObject
-      = NS_REINTERPRET_CAST(jobject, JS_GetPrivate(context, jsObject));
+      = NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, jsObject));
   return javaObject;
 } 
 
@@ -374,7 +519,7 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1isJavaScriptObject
   bool returnValue = false;
   if(JSVAL_IS_OBJECT(val)) {
     JSObject* jsObject = JSVAL_TO_OBJECT(val);
-    returnValue = !JS_InstanceOf(jsRootedValue->getContext(), jsObject,
+    returnValue = !JS_InstanceOf(JsRootedValue::currentContext(), jsObject,
         &gwt_nativewrapper_class, 0);
     tracer.log("jsobject=%08x, isJSObject=%s", unsigned(jsObject),
         returnValue ? "true" : "false");
@@ -485,7 +630,7 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1isWrappedJavaObject
   bool returnValue = false;
   if(JSVAL_IS_OBJECT(val)) {
     JSObject* jsObject = JSVAL_TO_OBJECT(val);
-    returnValue = JS_InstanceOf(jsRootedValue->getContext(), jsObject,
+    returnValue = JS_InstanceOf(JsRootedValue::currentContext(), jsObject,
         &gwt_nativewrapper_class, 0);
     tracer.log("jsobject=%08x, wrappedJava=%s", unsigned(jsObject),
         returnValue ? "true" : "false");
@@ -567,8 +712,7 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1setJsRootedValue
   JsRootedValue* jsOtherRootedValue = reinterpret_cast<JsRootedValue*>
       (jsOtherRootedValueInt);
   Tracer tracer("JsValueMoz._setJsRootedValue", jsRootedValue);
-  jsRootedValue->setContextValue(jsOtherRootedValue->getContext(),
-      jsOtherRootedValue->getValue());
+  jsRootedValue->setValue(jsOtherRootedValue->getValue());
 }
 
 /*
@@ -647,15 +791,17 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1setWrappedJavaObject
   JsRootedValue* jsRootedValue = reinterpret_cast<JsRootedValue*>
       (jsRootedValueInt);
   Tracer tracer("JsValueMoz._setWrappedJavaObject", jsRootedValue);
-  JSContext* context = jsRootedValue->getContext();
-  JSObject* scriptWindow = JS_GetGlobalObject(context);
-  JSObject* newObj = JS_NewObject(context, &gwt_nativewrapper_class, 0,
+  JSContext* cx = JsRootedValue::currentContext();
+  JSObject* scriptWindow = JS_GetGlobalObject(cx);
+  JSObject* newObj = JS_NewObject(cx, &gwt_nativewrapper_class, 0,
       scriptWindow);
   if (!newObj) {
     tracer.throwHostedModeException(jniEnv,
         "Unable to allocate JS object to wrap Java object");
     return;
   }
+  // Save in output value so it won't get GCed.
+  jsRootedValue->setObject(newObj); 
   tracer.log("jsobject=%08x", unsigned(newObj));
   
   // TODO(jat): how does this globalref get freed?
@@ -665,7 +811,7 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1setWrappedJavaObject
         "Unable to allocate global reference for JS wrapper");
     return;
   } 
-  if (!JS_SetPrivate(context, newObj, dispObjRef)) {
+  if (!JS_SetPrivate(cx, newObj, dispObjRef)) {
     jniEnv->DeleteGlobalRef(dispObjRef);
     tracer.throwHostedModeException(jniEnv,
         "Unable to allocate global reference for JS wrapper");
@@ -674,39 +820,34 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1setWrappedJavaObject
   // forcibly setup a "toString" method to override the default
   jclass dispClass = jniEnv->GetObjectClass(obj);
   if (jniEnv->ExceptionCheck()) {
-    jniEnv->DeleteGlobalRef(dispObjRef);
-    tracer.setFail("can't get object class");
+    tracer.throwHostedModeException(jniEnv, "Can't get object class");
     return;
   } 
   jmethodID getFieldMeth = jniEnv->GetMethodID(dispClass, "getField",
       "(Ljava/lang/String;I)V");
   if (!getFieldMeth || jniEnv->ExceptionCheck()) {
-    jniEnv->DeleteGlobalRef(dispObjRef);
-    tracer.setFail("can't get getField method");
+    tracer.throwHostedModeException(jniEnv, "Can't get getField method");
     return;
   } 
   jstring ident = jniEnv->NewStringUTF("@java.lang.Object::toString()");
   if (!ident || jniEnv->ExceptionCheck()) {
-    jniEnv->DeleteGlobalRef(dispObjRef);
-    tracer.setFail("can't create Java string for toString method name");
+    tracer.throwHostedModeException(jniEnv,
+        "Can't create Java string for toString method name");
     return;
   }
   // allocate a new root to hold the result of the getField call
-  JsRootedValue* toStringFunc = new JsRootedValue(context, JSVAL_VOID); 
+  JsRootedValue* toStringFunc = new JsRootedValue(); 
   jniEnv->CallVoidMethod(obj, getFieldMeth, ident,
       NS_REINTERPRET_CAST(jint, toStringFunc));
   if (toStringFunc->isUndefined() || jniEnv->ExceptionCheck()) {
-    jniEnv->DeleteGlobalRef(dispObjRef);
-    tracer.setFail("getField(toString) failed");
+    tracer.throwHostedModeException(jniEnv, "getField(toString) failed");
     return;
   } 
-  if (!JS_DefineProperty(context, newObj, "toString", toStringFunc->getValue(),
+  if (!JS_DefineProperty(cx, newObj, "toString", toStringFunc->getValue(),
       JS_PropertyStub, JS_PropertyStub, JSPROP_READONLY | JSPROP_PERMANENT)) {
-    jniEnv->DeleteGlobalRef(dispObjRef);
-    tracer.setFail("can't define JS toString method");
+    tracer.throwHostedModeException(jniEnv, "Can't define JS toString method");
     return;
   }
-  jsRootedValue->setObject(newObj); 
 } 
 
 /*
@@ -724,8 +865,8 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1setWrappedFunction
   JsRootedValue* jsRootedValue = reinterpret_cast<JsRootedValue*>
       (jsRootedValueInt);
   Tracer tracer("JsValueMoz._setWrappedFunction", jsRootedValue);
-  JSContext* context = jsRootedValue->getContext();
-  JSObject* scriptWindow = JS_GetGlobalObject(context);
+  JSContext* cx = JsRootedValue::currentContext();
+  JSObject* scriptWindow = JS_GetGlobalObject(cx);
   JStringWrap nameStr(jniEnv, methodName);
   if (!nameStr.str()) {
     tracer.throwHostedModeException(jniEnv,
@@ -734,8 +875,8 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1setWrappedFunction
   }
   tracer.log("JsRootedValue=%08x, method=%s, obj=%08x", jsRootedValueInt,
       nameStr.str(), unsigned(dispatchMethod));
-  JSFunction* function = JS_NewFunction(context, invokeJavaMethod, 0, JSFUN_LAMBDA, 0,
-      nameStr.str());
+  JSFunction* function = JS_NewFunction(cx, invokeJavaMethod, 0,
+      JSFUN_LAMBDA, 0, nameStr.str());
   if (!function) {
     tracer.throwHostedModeException(jniEnv, "JS_NewFunction failed");
     return;
@@ -745,31 +886,35 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1setWrappedFunction
     tracer.throwHostedModeException(jniEnv, "JS_GetFunctionObject failed");
     return;
   }
-  // Create a wrapper object to hold and clean up dispMeth
-  JSObject* cleanupObj = JS_NewObject(context, &gwt_functionwrapper_class, 0,
+  // Save in output value so it won't get GCed.
+  jsRootedValue->setObject(funObj); 
+
+  // Create a cleanup object to hold and clean up dispMeth
+  JSObject* cleanupObj = JS_NewObject(cx, &gwt_functionwrapper_class, 0,
       scriptWindow);
   if (!cleanupObj) {
     tracer.throwHostedModeException(jniEnv, "JS_NewObject failed");
     return;
   }
-  jobject dispMethRef = jniEnv->NewGlobalRef(dispatchMethod);
-  if (!dispMethRef || jniEnv->ExceptionCheck()) {
+  tracer.log("funObj=%08x, cleanupObj=%08x", unsigned(funObj),
+      unsigned(cleanupObj));
+  // Store the cleanup object in funObj's reserved slot; now GC protected.
+  if(!JS_SetReservedSlot(cx, funObj, 0, OBJECT_TO_JSVAL(cleanupObj))) {
+    tracer.throwHostedModeException(jniEnv, "JS_SetReservedSlot failed");
     return;
   }
-
+  jobject dispMethRef = jniEnv->NewGlobalRef(dispatchMethod);
+  if (!dispMethRef || jniEnv->ExceptionCheck()) {
+    tracer.throwHostedModeException(jniEnv,
+        "NewGlobalRef(dispatchMethod) failed");
+    return;
+  }
   // Store our global ref in the wrapper object
-  if (!JS_SetPrivate(context, cleanupObj, dispMethRef)) {
+  if (!JS_SetPrivate(cx, cleanupObj, dispMethRef)) {
     jniEnv->DeleteGlobalRef(dispMethRef);
     tracer.throwHostedModeException(jniEnv, "JS_SetPrivate(cleanupObj) failed");
     return;
   }
-  // Store the wrapper object in funObj's reserved slot
-  if(!JS_SetReservedSlot(context, funObj, 0, OBJECT_TO_JSVAL(cleanupObj))) {
-    // TODO(jat): what to do with global ref?
-    tracer.throwHostedModeException(jniEnv, "JS_SetReservedSlot failed");
-    return;
-  }
-  jsRootedValue->setObject(funObj);
 }      
 
 /*
@@ -787,7 +932,7 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1toString
       (jsRootedValueInt);
   Tracer tracer("JsValueMoz._toString", jsRootedValue);
   jsval val = jsRootedValue->getValue();
-  JSContext* cx = jsRootedValue->getContext();
+  JSContext* cx = JsRootedValue::currentContext();
 
   // if it is a JavaScript object that has a toString member function
   // call that, otherwise call JS_ValueToString

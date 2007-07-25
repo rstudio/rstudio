@@ -22,10 +22,10 @@ public:
   NS_DECL_ISUPPORTS
   NS_IMETHOD GetScriptObject(nsIScriptContext *aContext, void** aScriptObject);
   NS_IMETHOD SetScriptObject(void* aScriptObject);
-  ExternalWrapper(): mScriptObject(0) { }
+  ExternalWrapper(): jsWindowExternalObject(0) { }
 private:
   ~ExternalWrapper() { }
-  void *mScriptObject;
+  void *jsWindowExternalObject;
 };
 
 class nsRpExternalFactory : public nsIFactory {

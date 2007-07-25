@@ -20,6 +20,7 @@
 #include "mozilla-headers.h"
 
 #include "Tracer.h"
+#include <stack>
 
 extern "C" JSClass gwt_nativewrapper_class;
 
@@ -42,13 +43,14 @@ class JsRootedValue
 {
 private:
   // the JavaScript String class
-  static JSClass*              stringClass;
+  static JSClass* stringClass;
   
   // Javascript runtime
-  static JSRuntime*            runtime;
+  static JSRuntime* runtime;
 
-  // Javascript context
-  JSContext*    context_;
+  // stack of Javascript contexts
+  static std::stack<JSContext*> contextStack;
+
   // underlying Javascript value
   jsval         value_;
 
@@ -78,13 +80,64 @@ protected:
     }
   }
 
+  /*
+   * Push a new JavaScript execution context.
+   */
+  static void pushContext(JSContext* context) {
+    Tracer tracer("JsRootedValue::pushContext");
+    tracer.log("pushed context=%08x", unsigned(context));
+    contextStack.push(context);
+  }
+  
+  /*
+   * Pop a JavaScript execution context from the context stack.
+   */
+  static void popContext() {
+    Tracer tracer("JsRootedValue::popContext");
+    JSContext* context = currentContext();
+    contextStack.pop();
+    tracer.log("popped context=%08x", unsigned(context));
+  }
+
 public:
+  /*
+   * This is a helper class used to push/pop JSContext values automatically,
+   * using RAII.  Simply create a ContextManager object on the stack and it
+   * will push the context at creation time and pop it at destruction time,
+   * so you don't have to worry about covering all the exit paths from a
+   * function.
+   */
+  class ContextManager {
+  public:
+    explicit ContextManager(JSContext* context) {
+      JsRootedValue::pushContext(context);
+    }
+    ~ContextManager() {
+      JsRootedValue::popContext();
+    }
+  };
+
+  /*
+   * This is a helper class to manage short-lived roots on the stack, using
+   * RAII to free the roots when no longer needed.
+   */
+  class Temp {
+  private:
+    void* ptr_;
+  public:
+    explicit Temp(void* ptr) : ptr_(ptr) {
+      JS_AddNamedRootRT(runtime, ptr_, "temporary root");
+    }
+    ~Temp() {
+      JS_RemoveRootRT(runtime, ptr_);
+    }
+  };
+  
   /*
    * Copy constructor - make another rooted value that refers to the same
    * JavaScript object (or has the same value if a primitive)
    */
-  JsRootedValue(const JsRootedValue& rooted_value)
-      : context_(rooted_value.context_), value_(rooted_value.value_)
+  JsRootedValue(const JsRootedValue& rooted_value) : value_(rooted_value.value_)
   {
     constructorHelper("JsRootedValue copy ctor");
   }
@@ -92,8 +145,7 @@ public:
   /*
    * Create a value with a given jsval value
    */
-  JsRootedValue(JSContext* context, jsval value)
-      : context_(context), value_(value)
+  JsRootedValue(jsval value) : value_(value)
   {
     constructorHelper("JsRootedValue jsval ctor");
   }
@@ -101,7 +153,7 @@ public:
   /*
    * Create a void value
    */
-  JsRootedValue(JSContext* context) : context_(context), value_(JSVAL_VOID) {
+  JsRootedValue() : value_(JSVAL_VOID) {
     constructorHelper("JsRootedValue void ctor");
   }
   
@@ -110,7 +162,6 @@ public:
    */
   ~JsRootedValue() {
     Tracer tracer("~JsRootedValue", this);
-    tracer.log("context=%08x", unsigned(context_));
     // ignore error since currently it is not possible to fail
     JS_RemoveRootRT(runtime, &value_);
   }
@@ -123,30 +174,24 @@ public:
   }
   
   /*
-   * Return the JSContext* pointer.
+   * Return the current JavaScript execution context.
    */
-  JSContext* getContext() const { return context_; }
-  
-  /*
-   * Return the global object for this value's context.
-   */
-  JSObject* getGlobalObject() const { return JS_GetGlobalObject(getContext()); }
-  
+  static JSContext* currentContext() {
+    Tracer tracer("JsRootedValue::currentContext");
+    if (contextStack.empty()) {
+      // TODO(jat): better error handling?
+      fprintf(stderr, "JsRootedValue::currentContext - context stack empty\n");
+      ::abort();
+    }
+    JSContext* context = contextStack.top();
+    tracer.log("context=%08x", unsigned(context));
+    return context;
+  }
+
   /* 
    * Return the underlying JS object
    */
   jsval getValue() const { return value_; }
-  
-  /*
-   * Sets the value of the underlying JS object and its context.
-   * 
-   * Returns false if an error occurred.
-   */
-  bool setContextValue(JSContext* new_context, jsval new_value) {
-    context_ = new_context;
-    value_ = new_value;
-    return true;
-  }
   
   /*
    * Sets the value of the underlying JS object.
@@ -172,7 +217,7 @@ public:
   double getDouble() const {
     jsdouble return_value=0.0;
     // ignore return value -- if it fails, value will remain 0.0
-    JS_ValueToNumber(getContext(), value_, &return_value); 
+    JS_ValueToNumber(currentContext(), value_, &return_value); 
     return double(return_value);
   }
   /*
@@ -182,7 +227,7 @@ public:
    */
   bool setDouble(double val) {
     jsval js_double;
-    if(!JS_NewDoubleValue(getContext(), jsdouble(val), &js_double)) {
+    if(!JS_NewDoubleValue(currentContext(), jsdouble(val), &js_double)) {
       return false;
     }
     return setValue(js_double);
@@ -261,7 +306,7 @@ public:
    * Return this value as a string, converting as necessary.
    */
   JSString* asString() const {
-    return JS_ValueToString(getContext(), value_);
+    return JS_ValueToString(currentContext(), value_);
   }
   
   /* Returns the string as a JSString pointer.
@@ -299,7 +344,7 @@ public:
    * Returns false on failure.
    */
   bool setString(const wchar_t* utf16) {
-    JSString* str = JS_NewUCStringCopyZ(getContext(),
+    JSString* str = JS_NewUCStringCopyZ(currentContext(),
         reinterpret_cast<const jschar*>(utf16));
     return setValue(STRING_TO_JSVAL(str));
   }
@@ -310,7 +355,7 @@ public:
    * Returns false on failure.
    */
   bool setString(const wchar_t* utf16, size_t len) {
-    JSString* str = JS_NewUCStringCopyN(getContext(),
+    JSString* str = JS_NewUCStringCopyN(currentContext(),
         reinterpret_cast<const jschar*>(utf16), len);
     return setValue(STRING_TO_JSVAL(str));
   }
@@ -336,7 +381,7 @@ public:
    * Result is undefined if it is not actually an object.
    */
   const JSClass* getObjectClass() const {
-    return isObject() ? JS_GET_CLASS(getContext(), getObject()) : 0;
+    return isObject() ? JS_GET_CLASS(currentContext(), getObject()) : 0;
   }
   
   /*

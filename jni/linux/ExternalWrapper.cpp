@@ -41,6 +41,7 @@ static JSBool gwtOnLoad(JSContext *cx, JSObject *obj, uintN argc,
 {
   Tracer tracer("gwtOnLoad");
   tracer.log("context=%08x", unsigned(cx));
+  JsRootedValue::ContextManager context(cx);
   JsRootedValue::ensureRuntime(cx);
   if (argc < 2) {
     tracer.setFail("less than 2 args");
@@ -120,6 +121,7 @@ static JSBool JS_DLL_CALLBACK gwt_external_getProperty(JSContext *cx,
     JSObject *obj, jsval id, jsval *vp)
 {
   Tracer tracer("gwt_external_getProperty");
+  JsRootedValue::ContextManager context(cx);
   if (*vp != JSVAL_VOID)
     return JS_TRUE;
 
@@ -166,10 +168,13 @@ static JSBool JS_DLL_CALLBACK gwt_external_getProperty(JSContext *cx,
 
 static void JS_DLL_CALLBACK gwt_external_finalize(JSContext *cx, JSObject *obj)
 {
+  // We don't need to push a context if all we do is DeleteGlobalRef
+  Tracer tracer("gwt_external_finalize", obj);
   jobject externalObject = NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, obj));
-  if (externalObject)
+  if (externalObject) {
     savedJNIEnv->DeleteGlobalRef(externalObject);
-  JS_FinalizeStub(cx,obj);
+  }
+  JS_FinalizeStub(cx, obj);
 }
 
 static JSBool JS_DLL_CALLBACK gwt_external_setProperty(JSContext *cx,
@@ -201,7 +206,14 @@ NS_IMETHODIMP ExternalWrapper::GetScriptObject(nsIScriptContext *aContext,
     tracer.setFail("null script object pointer");
     return NS_ERROR_INVALID_POINTER;
   }
-  if (!mScriptObject) {
+  if (!jsWindowExternalObject) {
+    JSContext* cx = NS_REINTERPRET_CAST(JSContext*,
+        aContext->GetNativeContext());
+    if (!cx) {
+      tracer.setFail("can't get JSContext");
+      return NS_ERROR_UNEXPECTED;
+    }
+    JsRootedValue::ContextManager context(cx);
     *aScriptObject = 0;
 
     nsIScriptGlobalObject* globalObject = aContext->GetGlobalObject();
@@ -239,12 +251,6 @@ NS_IMETHODIMP ExternalWrapper::GetScriptObject(nsIScriptContext *aContext,
       tracer.setFail("can't get GlobalRef for external object");
       return NS_ERROR_UNEXPECTED;
     }
-    JSContext* cx = NS_REINTERPRET_CAST(JSContext*,
-        aContext->GetNativeContext());
-    if (!cx) {
-      tracer.setFail("can't get JSContext");
-      return NS_ERROR_UNEXPECTED;
-    }
     JSObject* newObj = JS_NewObject(cx, &gwt_external_class, 0,
         globalObject->GetGlobalJSObject());
     if (!newObj) {
@@ -262,16 +268,16 @@ NS_IMETHODIMP ExternalWrapper::GetScriptObject(nsIScriptContext *aContext,
       tracer.setFail("can't define gwtOnLoad function on JavaScript object");
       return NS_ERROR_UNEXPECTED;
     }
-    mScriptObject = newObj;
+    jsWindowExternalObject = newObj;
   }
 
-  *aScriptObject = mScriptObject;
+  *aScriptObject = jsWindowExternalObject;
   return NS_OK;
 }
 
 NS_IMETHODIMP ExternalWrapper::SetScriptObject(void* aScriptObject)
 {
-    mScriptObject = aScriptObject;
+    jsWindowExternalObject = aScriptObject;
     return NS_OK;
 }
 

@@ -79,7 +79,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
   protected JsValue doInvoke(String name, Object jthis, Class[] types,
       Object[] args) {
 
-    JsValueMoz jsthis = JsValueMoz.createUndefinedValue(window);
+    JsValueMoz jsthis = new JsValueMoz();
     CompilingClassLoader isolatedClassLoader = getIsolatedClassLoader();
     jsthis.setWrappedJavaObject(isolatedClassLoader, jthis);
 
@@ -87,11 +87,11 @@ public class ModuleSpaceMoz extends ModuleSpace {
     JsValueMoz argv[] = new JsValueMoz[argc];
     int[] jsArgsInt = new int[argc];
     for (int i = 0; i < argc; ++i) {
-      argv[i] = JsValueMoz.createUndefinedValue(window);
+      argv[i] = new JsValueMoz();
       JsValueGlue.set(argv[i], isolatedClassLoader, types[i], args[i]);
       jsArgsInt[i] = argv[i].getJsRootedValue();
     }
-    JsValueMoz returnVal = JsValueMoz.createUndefinedValue(window);
+    JsValueMoz returnVal = new JsValueMoz();
     LowLevelMoz.invoke(window, name, jsthis.getJsRootedValue(), jsArgsInt,
         returnVal.getJsRootedValue());
     return returnVal;

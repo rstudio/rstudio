@@ -129,7 +129,7 @@ public class JsValueMoz extends JsValue {
     }
 
     public void doCleanup() {
-      JsValueMoz.destroyJsRootedValue(jsRootedValue);
+      _destroyJsRootedValue(jsRootedValue);
     }
   }
 
@@ -141,22 +141,13 @@ public class JsValueMoz extends JsValue {
   /**
    * Flag to enable debug checks on underlying JsRootedValues.
    */
-  private static final DebugLogging debugInfo = debugFlag ? new DebugLogging() : null;
+  private static final DebugLogging debugInfo = debugFlag ? new DebugLogging()
+      : null;
 
   /**
    * This must match the value from jsapi.h.
    */
   private static final int JSVAL_VOID = 0x80000001;
-
-  /**
-   * Create a new undefined JavaScript value.
-   * 
-   * @param scriptObject
-   * @return JsValueMoz object with an undefined value.
-   */
-  public static JsValueMoz createUndefinedValue(int scriptObject) {
-    return new JsValueMoz(scriptObject, JSVAL_VOID);
-  }
 
   // CHECKSTYLE_NAMING_OFF -- native methods start with '_'
   protected static native boolean _getBoolean(int jsRootedValue);
@@ -212,32 +203,22 @@ public class JsValueMoz extends JsValue {
 
   private static native int _copyJsRootedValue(int jsRootedValue);
 
-  private static native int _createJsRootedValue(int scriptObject, int jsval);
-
-  private static native void _destroyJsRootedValue(int jsRootedValue);
-
-  // CHECKSTYLE_NAMING_ON
-
   /**
    * Create a JsRootedValue and return a pointer to it as a Java int.
    * 
-   * @param scriptObject opaque script object pointer as an integer.
    * @param jsval JavaScript jsval for initial value
    * @return pointer to JsRootedValue object as an integer
    */
-  private static int createJsRootedValue(int scriptObject, int jsval) {
-    int jsRootedValue = _createJsRootedValue(scriptObject, jsval);
-    return jsRootedValue;
-  }
+  private static native int _createJsRootedValue(int jsval);
 
   /**
    * Destroy a JsRootedValue.
    * 
    * @param jsRootedValue pointer to underlying JsRootedValue as an integer.
    */
-  private static void destroyJsRootedValue(int jsRootedValue) {
-    _destroyJsRootedValue(jsRootedValue);
-  }
+  private static native void _destroyJsRootedValue(int jsRootedValue);
+
+  // CHECKSTYLE_NAMING_ON
 
   /**
    * Convert an address to a hex string.
@@ -253,6 +234,16 @@ public class JsValueMoz extends JsValue {
 
   // pointer to underlying JsRootedValue object as an integer
   private int jsRootedValue;
+
+  /**
+   * Create a JsValueMoz object representing the undefined value.
+   */
+  public JsValueMoz() {
+    this.jsRootedValue = _createJsRootedValue(JSVAL_VOID);
+    if (debugFlag) {
+      debugInfo.createInstance(jsRootedValue);
+    }
+  }
 
   /**
    * Create a JsValueMoz object wrapping a JsRootedValue object given the
@@ -274,21 +265,6 @@ public class JsValueMoz extends JsValue {
    */
   public JsValueMoz(JsValueMoz other) {
     jsRootedValue = _copyJsRootedValue(other.jsRootedValue);
-    if (debugFlag) {
-      debugInfo.createInstance(jsRootedValue);
-    }
-  }
-
-  /**
-   * Create a JsValue object with the JavaScript value jsval.
-   * 
-   * Only used internally.
-   * 
-   * @param scriptObject reference to containing window object in JavaScript
-   * @param jsval a JavaScript jsval as a 32-bit int
-   */
-  protected JsValueMoz(int scriptObject, int jsval) {
-    jsRootedValue = _createJsRootedValue(scriptObject, jsval);
     if (debugFlag) {
       debugInfo.createInstance(jsRootedValue);
     }

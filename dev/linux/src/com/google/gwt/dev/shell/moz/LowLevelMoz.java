@@ -35,9 +35,9 @@ public class LowLevelMoz {
      * @param jsthis the wrapped Java object to invoke
      * @param jsargs an array of JavaScript values to pass as parameters
      * @param returnValue the JavaScript value in which to store the returned
-     *     value
+     *          value
      */
-    void invoke(int jscontext, int jsthis, int[] jsargs, int returnValue);
+    void invoke(int jsthis, int[] jsargs, int returnValue);
   }
 
   /**
@@ -119,8 +119,8 @@ public class LowLevelMoz {
    * 
    * @throws RuntimeException if the invoke fails
    */
-  public static void invoke(int scriptObject, String methodName,
-      int jsthis, int[] jsargs, int retval) {
+  public static void invoke(int scriptObject, String methodName, int jsthis,
+      int[] jsargs, int retval) {
     if (!_invoke(scriptObject, methodName, jsthis, jsargs, retval)) {
       throw new RuntimeException("Failed to invoke native method: "
           + methodName + " with " + jsargs.length + " arguments.");
@@ -130,11 +130,9 @@ public class LowLevelMoz {
   /**
    * Call this to raise an exception in JavaScript before returning control.
    * Currently, the JavaScript exception throw is always null.
-   * 
-   * @param jscontext A JSContext pointer as a Java int
    */
-  public static void raiseJavaScriptException(int jscontext) {
-    if (!_raiseJavaScriptException(jscontext)) {
+  public static void raiseJavaScriptException() {
+    if (!_raiseJavaScriptException()) {
       throw new RuntimeException(
           "Failed to raise Java Exception into JavaScript.");
     }
@@ -192,7 +190,6 @@ public class LowLevelMoz {
   }
 
   // CHECKSTYLE_NAMING_OFF: Non JSNI native code may have leading '_'s.
-  private static native boolean _executeScript(int scriptObject, String code);
 
   private static native boolean _executeScriptWithInfo(int scriptObject,
       String newScript, String file, int line);
@@ -203,7 +200,7 @@ public class LowLevelMoz {
    * @param scriptObject nsIScriptGlobalObject* as an int
    * @param methodName name of JavaScript method
    * @param jsThisInt JavaScript object to invoke the method on, as a
-   *   JsRootedValue int
+   *          JsRootedValue int
    * @param jsArgsInt array of arguments, as an array of JsRootedValue ints
    * @param jsRetValint pointer to JsRootedValue to receive return value
    * @return true on success
@@ -211,7 +208,7 @@ public class LowLevelMoz {
   private static native boolean _invoke(int scriptObject, String methodName,
       int jsThisInt, int[] jsArgsInt, int jsRetValInt);
 
-  private static native boolean _raiseJavaScriptException(int jscontext);
+  private static native boolean _raiseJavaScriptException();
 
   private static native boolean _registerExternalFactoryHandler();
 
@@ -219,6 +216,7 @@ public class LowLevelMoz {
 
   /**
    * Print debug information for a JS method invocation.
+   * 
    * TODO(jat): remove this method
    * 
    * @param methodName the name of the JS method being invoked

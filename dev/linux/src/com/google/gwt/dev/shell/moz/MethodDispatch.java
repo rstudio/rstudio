@@ -40,20 +40,18 @@ class MethodDispatch implements DispatchMethod {
   }
 
   /**
-   * Invoke a Java method from JavaScript.
-   * This is called solely from native code.
+   * Invoke a Java method from JavaScript. This is called solely from native
+   * code.
    * 
-   * @param jscontext JSContext* passed as an integer
    * @param jsthis JavaScript reference to Java object
    * @param jsargs array of JavaScript values for parameters
    * @param returnValue JavaScript value to return result in
    * @throws RuntimeException if improper arguments are supplied
    * 
    * TODO(jat): lift most of this interface to platform-independent code (only
-   *     exceptions still need to be made platform-independent)
+   * exceptions still need to be made platform-independent)
    */
-  public void invoke(int jscontext, int jsthisInt, int[] jsargsInt,
-      int returnValueInt) {
+  public void invoke(int jsthisInt, int[] jsargsInt, int returnValueInt) {
     JsValue jsthis = new JsValueMoz(jsthisInt);
     JsValue jsargs[] = new JsValue[jsargsInt.length];
     for (int i = 0; i < jsargsInt.length; ++i) {
@@ -89,11 +87,11 @@ class MethodDispatch implements DispatchMethod {
       // Java back into JavaScript
       Throwable t = e.getTargetException();
       // TODO(jat): if this was originally JavaScript exception, re-throw the
-      // original exception rather than just a null. 
+      // original exception rather than just a null.
       ModuleSpaceMoz.setThrownJavaException(t);
-      LowLevelMoz.raiseJavaScriptException(jscontext);
+      LowLevelMoz.raiseJavaScriptException();
     } catch (IllegalArgumentException e) {
-      // TODO(jat): log to treelogger instead?  If so, how do I get to it?
+      // TODO(jat): log to treelogger instead? If so, how do I get to it?
       System.err.println("MethodDispatch.invoke, method=" + method.toString()
           + ": argument mismatch");
       for (int i = 0; i < argc; ++i) {

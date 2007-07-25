@@ -48,9 +48,6 @@
 // include javah-generated header to make sure we match
 #include "LowLevelMoz.h"
 
-// TODO(jat) should be in a header
-extern nsCID kGwtExternalCID;
-
 JNIEnv* savedJNIEnv = 0;
 jclass lowLevelMozClass;
 
@@ -202,199 +199,13 @@ static bool InitGlobals(JNIEnv* env, jclass llClass) {
 }
 
 /*
- * Print the current Java exception.
- */
-static void PrintJavaException(JNIEnv* env) {
-  jobject exception = env->ExceptionOccurred();
-  if (!exception) return;
-  fprintf(stderr, "Exception occurred:\n");
-  env->ExceptionDescribe();
-  env->DeleteLocalRef(exception);
-}
-
-/* Called from JavaScript to call a Java method that has previously been
- * wrapped. 
- */ 
-JSBool invokeJavaMethod(JSContext *cx, JSObject *obj, uintN argc, jsval *argv,
-    jsval *rval)
-{
-  Tracer tracer("invokeJavaMethod");
-
-  // I kid you not; this is how XPConnect gets their function object so they can
-  // multiplex dispatch the call from a common site.  See XPCDispObject.cpp(466)
-  //
-  // I now have a secondary confirmation that this trick is legit.
-  // brandon@mozilla.org writes:
-  //
-  // argv[-2] is part of the JS API, unabstracted.  Just as argv[0] is the
-  // first argument (if argc != 0), argv[-1] is the |this| parameter (equal
-  // to OBJECT_TO_JSVAL(obj) in a native method with the standard |obj|
-  // second formal parameter name), and argv[-2] is the callee object, tagged
-  // as a jsval.
-  if (JS_TypeOfValue(cx, argv[-2]) != JSTYPE_FUNCTION) {
-    tracer.setFail("not a function type");
-    return JS_FALSE;
-  }
-  JSObject* funObj = JSVAL_TO_OBJECT(argv[-2]);
-
-  // Pull the wrapper object out of the funObj's reserved slot
-  jsval jsCleanupObj;
-  if (!JS_GetReservedSlot(cx, funObj, 0, &jsCleanupObj)) {
-    tracer.setFail("JS_GetReservedSlot failed");
-    return JS_FALSE;
-  }
-  JSObject* cleanupObj = JSVAL_TO_OBJECT(jsCleanupObj);
-  if (!cleanupObj) {
-    tracer.setFail("cleanupObj is null");
-    return JS_FALSE;
-  }
-
-  // Get DispatchMethod instance out of the wrapper object
-  jobject dispMeth =
-      NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, cleanupObj));
-  if (!dispMeth) {
-    tracer.setFail("dispMeth is null");
-    return JS_FALSE;
-  }
-  jclass dispClass = savedJNIEnv->GetObjectClass(dispMeth);
-  if (!dispClass || savedJNIEnv->ExceptionCheck()) {
-      tracer.setFail("GetObjectClass returns null");
-      return JS_FALSE;
-  }
-
-  // lookup the invoke method on the dispatch object
-  jmethodID invokeID =
-      savedJNIEnv->GetMethodID(dispClass, "invoke", "(II[II)V");
-  if (!invokeID || savedJNIEnv->ExceptionCheck()) {
-    tracer.setFail("GetMethodID failed");
-    return JS_FALSE;
-  }
-
-  // create an array of integers to hold the JsRootedValue pointers passed
-  // to the invoke method
-  jintArray args = savedJNIEnv->NewIntArray(argc);
-  if (!args || savedJNIEnv->ExceptionCheck()) {
-    tracer.setFail("NewIntArray failed");
-    return JS_FALSE;
-  }
-
-  // these arguments are already rooted by the JS interpreter, but we
-  // can't easily take advantage of that without complicating the JsRootedValue
-  // interface.
-  
-  // argv[-1] is OBJECT_TO_JSVAL(this)
-  JsRootedValue* jsThis = new JsRootedValue(cx, argv[-1]);
-  tracer.log("jsthis=%08x, RV=%08x", unsigned(argv[-1]), unsigned(jsThis));
-
-  // create JsRootedValues for arguments  
-  JsRootedValue *jsArgs[argc]; 
-  for (uintN i = 0; i < argc; ++i) {
-    jsArgs[i] = new JsRootedValue(cx, argv[i]);
-  }
-  savedJNIEnv->SetIntArrayRegion(args, 0, argc,
-      reinterpret_cast<jint*>(jsArgs));
-  if (savedJNIEnv->ExceptionCheck()) {
-    tracer.setFail("SetIntArrayRegion failed");
-    return JS_FALSE;
-  }
-  
-  // slot for return value
-  JsRootedValue* jsReturnVal = new JsRootedValue(cx);
-
-  // TODO(jat): small window here where invocation may fail before Java
-  // takes ownership of the JsRootedValue objects.  One solution would be
-  // to reference-count them between Java and C++ (so the reference count
-  // would always be 0, 1, or 2).  Also setField has a similar problem.
-  // I plan to fix this when switching away from Java holding pointers to
-  // C++ objects as part of the fix for 64-bit support (which we could
-  // accomplish inefficiently by changing int to long everywhere, but there
-  // are other 64-bit issues to resolve and we need to reduce the number of
-  // roots the JS interpreter has to search.
-  
-  // call Java method
-  savedJNIEnv->CallVoidMethod(dispMeth, invokeID, reinterpret_cast<int>(cx),
-      reinterpret_cast<int>(jsThis), args,
-      reinterpret_cast<int>(jsReturnVal));
-  
-  JSBool returnValue = JS_TRUE;
-  
-  if (savedJNIEnv->ExceptionCheck()) {
-    tracer.log("dispMeth=%08x", unsigned(dispMeth));
-    tracer.setFail("java exception is active:");
-    PrintJavaException(savedJNIEnv);
-    returnValue = JS_FALSE;
-  } else if (JS_IsExceptionPending(cx)) {
-    tracer.setFail("js exception is active");
-    returnValue = JS_FALSE;
-  }
-
-  // extract return value
-  *rval = jsReturnVal->getValue();
-
-#if 0
-  // NOTE: C++ objects are not cleaned up here because Java now owns them.
-  // TODO(jat): if reference-counted, they *do* need to be Released here.
-  
-  // free JsRootedValues
-  for (uintN i = 0; i < argc; ++i) {
-    delete jsArgs[i];
-  }
-  delete jsThis;
-  delete jsReturnVal;
-#endif
-
-  return returnValue;
-}
-
-/*
- * Helper function to get reference Java attributes from Javascript.
- * 
- * cx - JSContext pointer
- * obj - JavaScript object which is a wrapped Java object
- * id - property name, as a jsval string
- * dispClass - output parameter of DispatchMethod subclass
- * dispObj - output parameter of Java object
- * jident - output parameter of property name as a Java string
- */
-JSBool getJavaPropertyStats(JSContext *cx, JSObject *obj, jsval id,
-    jclass& dispClass, jobject& dispObj, jstring& jident)
-{
-  Tracer tracer("getJavaPropertyStats");
-  if (!JSVAL_IS_STRING(id)) {
-    tracer.setFail("id is not a string");
-    return JS_FALSE;
-  }
-
-  jident = savedJNIEnv->NewString(JS_GetStringChars(JSVAL_TO_STRING(id)),
-      JS_GetStringLength(JSVAL_TO_STRING(id)));
-  if (!jident || savedJNIEnv->ExceptionCheck()) {
-    tracer.setFail("unable to create Java string");
-    return JS_FALSE;
-  }
-
-  dispObj = NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, obj));
-  if (!dispObj) {
-    tracer.setFail("can't get dispatch object");
-    return JS_FALSE;
-  }
-
-  dispClass = savedJNIEnv->GetObjectClass(dispObj);
-  if (savedJNIEnv->ExceptionCheck()) {
-    tracer.setFail("can't get class of dispatch object");
-    return JS_FALSE;
-  }
-
-  return JS_TRUE;
-}
-
-/*
  * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
  * Method:    _executeScriptWithInfo
  * Signature: (ILjava/lang/String;Ljava/lang/String;I)Z
  */
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1executeScriptWithInfo
-    (JNIEnv* env, jclass llClass, jint scriptObject, jstring code,
+    (JNIEnv* env, jclass llClass, jint scriptObjectInt, jstring code,
      jstring file, jint line)
 {
   Tracer tracer("LowLevelMoz._executeScriptWithInfo");
@@ -409,18 +220,20 @@ Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1executeScriptWithInfo
     return JNI_FALSE;
   }
   tracer.log("code=%s, file=%s, line=%d", jcode.str(), jfile.str(), line);
+  JSContext* cx = JsRootedValue::currentContext();
+  nsCOMPtr<nsIScriptContext> scriptContext(GetScriptContextFromJSContext(cx));
 
-  nsIScriptGlobalObject* globalObject =
-      NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObject);
-  nsCOMPtr<nsIScriptContext> scriptContext(globalObject->GetContext());
+  nsIScriptGlobalObject* scriptObject =
+      NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObjectInt);
+  JSObject* scriptWindow =
+      reinterpret_cast<JSObject*>(scriptObject->GetGlobalJSObject());
   nsXPIDLString scriptString;
   scriptString = jcode.jstr();
 
   nsXPIDLString aRetValue;
   PRBool aIsUndefined;
-  if (NS_FAILED(scriptContext->EvaluateString(scriptString,
-      globalObject->GetGlobalJSObject(), 0, jfile.str(), line, 0,
-      aRetValue, &aIsUndefined))) {
+  if (NS_FAILED(scriptContext->EvaluateString(scriptString, scriptWindow, 0,
+      jfile.str(), line, 0, aRetValue, &aIsUndefined))) {
     tracer.setFail("EvaluateString failed");
     return JNI_FALSE;
   }
@@ -448,16 +261,9 @@ Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1invoke
   jint jsArgc = env->GetArrayLength(jsArgsInt);
   tracer.log("method=%s, jsthis=%08x, #args=%d", methodStr.str(), jsThisInt,
      jsArgc);
-
+  JSContext* cx = JsRootedValue::currentContext();
   nsIScriptGlobalObject* scriptObject =
       NS_REINTERPRET_CAST(nsIScriptGlobalObject*, scriptObjInt);
-  nsCOMPtr<nsIScriptContext> scriptContext(scriptObject->GetContext());
-  if (!scriptContext) {
-    tracer.setFail("can't get script context");
-    return JNI_FALSE;
-  }
-  JSContext* cx
-      = reinterpret_cast<JSContext*>(scriptContext->GetNativeContext());
   JSObject* scriptWindow
       = reinterpret_cast<JSObject*>(scriptObject->GetGlobalJSObject());
 
@@ -519,15 +325,14 @@ Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1invoke
 /*
  * Class:     com_google_gwt_dev_shell_moz_LowLevelMoz
  * Method:    _raiseJavaScriptException
- * Signature: (I)Z
+ * Signature: ()Z
  */
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_google_gwt_dev_shell_moz_LowLevelMoz__1raiseJavaScriptException
-    (JNIEnv* env, jclass, jint jscontext)
+    (JNIEnv* env, jclass)
 {
   Tracer tracer("LowLevelMoz._raiseJavaScriptException");
-  JSContext* cx = reinterpret_cast<JSContext*>(jscontext);
-  JS_SetPendingException(cx, JSVAL_NULL);
+  JS_SetPendingException(JsRootedValue::currentContext(), JSVAL_NULL);
   return JNI_TRUE;
 }
 

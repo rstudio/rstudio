@@ -23,20 +23,10 @@
 extern JNIEnv* savedJNIEnv;
 extern jclass lowLevelMozClass;
 
-// JavaScript class objects
-extern "C" JSClass gwt_nativewrapper_class;
-extern "C" JSClass gwt_functionwrapper_class;
+extern nsCID kGwtExternalCID;
 
-extern jobject NewJsValueMoz(JSContext* context);
-extern jobject NewJsValueMoz(JsRootedValue* js_rooted_value);
-extern JsRootedValue* GetJsRootedValue(jobject jsvalue);
-extern JsRootedValue* GetFieldAsRootedValue(JSContext* context, jclass clazz,
-    jobject obj, jstring field_name);
-extern bool SetFieldFromRootedValue(JSContext* context, jclass clazz,
-    jobject obj, jstring field_name, JsRootedValue* js_rooted_value);
-extern JSBool getJavaPropertyStats(JSContext *cx, JSObject *obj, jsval id,
-    jclass& dispClass, jobject& dispObj, jstring& jident);
-extern JSBool invokeJavaMethod(JSContext *cx, JSObject *obj, uintN argc,
-    jsval *argv, jsval *rval);
-    
+// JavaScript class objects
+extern JSClass gwt_nativewrapper_class;
+extern JSClass gwt_functionwrapper_class;
+
 #endif /*JNI_LINUX_GWT_JNI_H_*/

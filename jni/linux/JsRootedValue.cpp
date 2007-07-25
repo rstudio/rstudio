@@ -16,25 +16,29 @@
 
 #include "JsRootedValue.h"
 
-// intialize static value used to hold the JavaScript String class.
+// Initialize static value used to hold the JavaScript String class.
 JSClass* JsRootedValue::stringClass = 0;
 
-// intialize static reference to the sole JSRuntime value in Gecko
+// Initialize static reference to the sole JSRuntime value in Gecko.
 JSRuntime* JsRootedValue::runtime = 0;
+
+// Static stack of JavaScript execution contexts.
+std::stack<JSContext*> JsRootedValue::contextStack;
 
 /*
  * Actually get the stringClass pointer from JavaScript.
  */
 void JsRootedValue::fetchStringClass() const {
   Tracer tracer("JsRootedValue::fetchStringClass");
-  jsval val = JS_GetEmptyStringValue(context_);
+  JSContext* cx = currentContext();
+  jsval val = JS_GetEmptyStringValue(cx);
   JSObject* obj;
   // on error, leave stringClass null
-  if (!JS_ValueToObject(context_, val, &obj)) return;
+  if (!JS_ValueToObject(cx, val, &obj)) return;
   if (!obj) {
     tracer.log("ensureStringClass: null object");
     return;
   }
-  stringClass = JS_GET_CLASS(context_, obj);
+  stringClass = JS_GET_CLASS(cx, obj);
   tracer.log("stringClass=%08x", unsigned(stringClass));
 }
