@@ -30,7 +30,7 @@ public class DialogBoxExample implements EntryPoint, ClickListener {
       // Set the dialog box's caption.
       setText("My First Dialog");
 
-      // DialogBox is a SimplePanel, so you have to set it's widget property to
+      // DialogBox is a SimplePanel, so you have to set its widget property to
       // whatever you want its contents to be.
       Button ok = new Button("OK");
       ok.addClickListener(new ClickListener() {
