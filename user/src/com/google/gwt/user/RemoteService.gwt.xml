@@ -29,21 +29,6 @@
 	<set-property name="gwt.enforceRPCTypeVersioning" value="true"/>
 	
 	<!-- 
-		Declare a property to determine whether or not warnings should be issued
-		if an auto-serializable type has any unseriablizable subtypes.
-	-->
-	<define-property name="gwt.allowUnserializableSubtypesOfAutoSerializableTypes" values="true,false" />
-	
-	<!-- 
-		Default to a warning if any of the subtypes of an auto serializable 
-		type are not also auto serializable.
-		
-		TODO: We should tighten this since it really is an error.  However, to
-		give people time to transition we will just make it a warning for now.
-	-->
-	<set-property name="gwt.allowUnserializableSubtypesOfAutoSerializableTypes" value="true"/>
-
-	<!-- 
 		Declare a property to determine whether or warnings for final instance 
 		fields should be suppressed.
 	-->

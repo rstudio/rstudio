@@ -27,6 +27,7 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
+import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
@@ -42,6 +43,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -142,11 +144,11 @@ public class SerializableTypeOracleBuilder {
    * Represents additional information about a type with regards to its
    * serializability.
    */
-  private static class MetaTypeInfo {
+  private class MetaTypeInfo {
     /**
      * An issue that prevents a type from being serializable.
      */
-    private static class SerializationIssue {
+    private class SerializationIssue implements Comparable {
       final String issueMessage;
 
       final TreeLogger.Type issueType;
@@ -155,29 +157,37 @@ public class SerializableTypeOracleBuilder {
         this.issueType = issueType;
         this.issueMessage = issueMessage;
       }
+
+      public int compareTo(Object obj) {
+        SerializationIssue other = (SerializationIssue) obj;
+        if (issueType == other.issueType) {
+          return issueMessage.compareTo(other.issueMessage);
+        }
+
+        if (issueType.isLowerPriorityThan(other.issueType)) {
+          return -1;
+        }
+
+        return 1;
+      }
     }
 
     /**
      * <code>true</code> if the type is assignable to {@link IsSerializable}
      * or {@link java.io.Serializable Serializable}.
      */
-    private boolean autoSerializable;
+    private final boolean autoSerializable;
 
     /**
-     * <code>true</code> if the type was checked from a custom field
-     * serializer.
+     * <code>true</code> if the this type directly implements one of the
+     * marker interfaces.
      */
-    private boolean checkedInManualContext;
-
-    /**
-     * <code>true</code> if the subtypes of this type were also checked.
-     */
-    private boolean checkedSubtypes;
+    private Boolean directlyImplementsMarker;
 
     /**
      * Custom field serializer or <code>null</code> if there isn't one.
      */
-    private JClassType manualSerializer;
+    private final JClassType manualSerializer;
 
     /**
      * <code>true</code> if the type is automatically or manually serializable
@@ -186,10 +196,15 @@ public class SerializableTypeOracleBuilder {
     private boolean serializable;
 
     /**
+     * List of serializable types that are assignable to this one.
+     */
+    private List serializableTypesAssignableToMe;
+
+    /**
      * List of serialization warnings or errors that prevent this type from
      * being serializable.
      */
-    private Set /* <SerializationIssue> */serializationIssues;
+    private Set /* <SerializationIssue> */serializationIssues = new TreeSet/* <SerializationIssue> */();
 
     /**
      * The state that this type is currently in.
@@ -201,6 +216,11 @@ public class SerializableTypeOracleBuilder {
      */
     private final JType type;
 
+    /**
+     * <code>true</code> if the subtypes of this type were also checked.
+     */
+    private boolean typeRoot;
+
     MetaTypeInfo(JType type, boolean autoSerializable,
         JClassType manualSerializer) {
       this.type = type;
@@ -210,29 +230,41 @@ public class SerializableTypeOracleBuilder {
 
     public void addSerializationIssue(TreeLogger.Type issueType,
         String issueMessage) {
-      if (serializationIssues == null) {
-        serializationIssues = new TreeSet/* <SerializationIssue> */();
-      }
-
       serializationIssues.add(new SerializationIssue(issueType, issueMessage));
     }
 
-    public void clearSerializationIssues() {
-      if (serializationIssues != null) {
-        serializationIssues.clear();
+    /**
+     * Returns <code>true</code> if this type directly implements one of the
+     * marker interfaces.
+     * 
+     * @return <code>true</code> if this type directly implements one of the
+     *         marker interfaces.
+     */
+    public boolean directlyImplementsMarkerInterface() {
+      JClassType isClassOrInterface = type.isClassOrInterface();
+      if (isClassOrInterface == null) {
+        return false;
       }
-    }
 
-    public boolean getCheckedInManualContext() {
-      return checkedInManualContext;
-    }
+      if (directlyImplementsMarker == null) {
+        if (directlyImplementsInterface(isClassOrInterface, isSerializableClass)
+            || directlyImplementsInterface(isClassOrInterface,
+                serializableClass)) {
+          directlyImplementsMarker = Boolean.TRUE;
+        } else {
+          directlyImplementsMarker = Boolean.FALSE;
+        }
+      }
 
-    public boolean getCheckedSubtypes() {
-      return checkedSubtypes;
+      return directlyImplementsMarker.booleanValue();
     }
 
     public JClassType getManualSerializer() {
       return manualSerializer;
+    }
+
+    public List getSerializableTypesAssignableToMe() {
+      return serializableTypesAssignableToMe;
     }
 
     public Set /* <SerializationIssue> */getSerializationIssues() {
@@ -258,29 +290,27 @@ public class SerializableTypeOracleBuilder {
     }
 
     /**
-     * Returns <code>true</code> if this type needs to be rechecked. This
-     * happens if we are asked to check the subtypes and we did not previously
-     * check them. Or if this type is not serializable and we previously checked
-     * this type from a type which used manual serialization.
+     * Returns <code>true</code> if this type was seen as part of a method
+     * signature or as a field type.
+     */
+    public boolean isTypeRoot() {
+      return typeRoot;
+    }
+
+    /**
+     * Returns <code>true</code> if this type needs to be rechecked. Only type
+     * roots types have their subtypes analyzed. However it is possible that
+     * this type was previously checked as the super type of a root type in
+     * which case not all of its subtypes were analyzed.
      * 
-     * @param checkSubtypes <code>true</code> if we need to check the subtypes
-     * @param inManualContext <code>true</code> if we are checking this type
-     *          from a manually serializable type
+     * @param asTypeRoot <code>true</code> if we are being asked to check this
+     *          type as a type root
      * @return <code>true</code> if this type needs to be rechecked
      */
-    public boolean needToRecheck(boolean checkSubtypes, boolean inManualContext) {
+    public boolean needToRecheck(boolean asTypeRoot) {
       assert (state == SerializableTypeOracleBuilder.CHECK_SUCCEEDED);
 
-      if (!qualifiesForSerialization() && !inManualContext
-          && getCheckedInManualContext()) {
-        return true;
-      }
-
-      if (checkSubtypes && !getCheckedSubtypes()) {
-        return true;
-      }
-
-      return false;
+      return asTypeRoot && !isTypeRoot();
     }
 
     /**
@@ -309,20 +339,35 @@ public class SerializableTypeOracleBuilder {
           || qualifiesForManualSerialization();
     }
 
-    public void setCheckedInManualContext(boolean checkedInManualContext) {
-      this.checkedInManualContext = checkedInManualContext;
-    }
+    /**
+     * Reset any state cached by this type.
+     */
+    public void reset() {
+      serializationIssues.clear();
 
-    public void setCheckedSubtypes(boolean checkedSubtypes) {
-      this.checkedSubtypes = checkedSubtypes;
+      serializableTypesAssignableToMe = null;
+
+      state = NOT_CHECKED;
+
+      serializable = false;
+
+      directlyImplementsMarker = null;
     }
 
     public void setSerializable(boolean serializable) {
       this.serializable = serializable;
     }
 
+    public void setSerializableTypesAssignableToMe(List serializableTypes) {
+      serializableTypesAssignableToMe = serializableTypes;
+    }
+
     public void setState(TypeState newState) {
       state = newState;
+    }
+
+    public void setTypeRoot(boolean checkedSubtypes) {
+      this.typeRoot = checkedSubtypes;
     }
   }
 
@@ -389,6 +434,118 @@ public class SerializableTypeOracleBuilder {
     return customSerializer;
   }
 
+  private static void addEdge(Map adjList, JClassType subclass, JClassType clazz) {
+    List edges = (List) adjList.get(subclass);
+    if (edges == null) {
+      edges = new ArrayList();
+      adjList.put(subclass, edges);
+    }
+
+    edges.add(clazz);
+  }
+
+  /**
+   * Returns <code>true</code> if the list of serializable types contains at
+   * least one concrete serializable type.
+   */
+  private static boolean containsConcreteSerializableTypes(
+      List serializableTypes) {
+    Iterator it = serializableTypes.iterator();
+    while (it.hasNext()) {
+      JType type = (JType) it.next();
+      JType leafType = type.getLeafType();
+
+      JClassType clazz = leafType.isClass();
+      if (clazz != null && !clazz.isAbstract()) {
+        return true;
+      } else if (leafType.isPrimitive() != null) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private static void depthFirstSearch(Set seen, Map adjList, JClassType type) {
+    if (seen.contains(type)) {
+      return;
+    }
+    seen.add(type);
+
+    List children = (List) adjList.get(type);
+    if (children != null) {
+      Iterator it = children.iterator();
+      while (it.hasNext()) {
+        JClassType child = (JClassType) it.next();
+
+        if (!seen.contains(child)) {
+          depthFirstSearch(seen, adjList, child);
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if the type directly implements the specified
+   * interface.
+   * 
+   * @param type type to check
+   * @param intf interface to look for
+   * @return <code>true</code> if the type directly implements the specified
+   *         interface
+   */
+  private static boolean directlyImplementsInterface(JClassType type,
+      JClassType intf) {
+    return directlyImplementsInterfaceRecursive(new HashSet(), type, intf);
+  }
+
+  private static boolean directlyImplementsInterfaceRecursive(Set seen,
+      JClassType clazz, JClassType intf) {
+
+    if (clazz == intf) {
+      return true;
+    }
+
+    JClassType[] intfImpls = clazz.getImplementedInterfaces();
+
+    for (int i = 0; i < intfImpls.length; ++i) {
+      JClassType intfImpl = intfImpls[i];
+
+      if (!seen.contains(intfImpl)) {
+        seen.add(intfImpl);
+
+        if (directlyImplementsInterfaceRecursive(seen, intfImpl, intf)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Returns all types on the path from the root type to the serializable
+   * leaves.
+   * 
+   * @param root the root type
+   * @param leaves the set of serializable leaf types
+   * @return all types on the path from the root type to the serializable leaves
+   */
+  private static List getAllTypesBetweenRootTypeAndSerializableLeaves(
+      JClassType root, List leaves) {
+    Map adjList = getInvertedTypeHierarchy(root);
+    Set types = new HashSet();
+
+    Iterator it = leaves.iterator();
+    while (it.hasNext()) {
+      JClassType type = (JClassType) it.next();
+
+      depthFirstSearch(types, adjList, type);
+    }
+
+    return Arrays.asList(types.toArray());
+  }
+
   private static JArrayType getArrayType(TypeOracle typeOracle, int rank,
       JType component) {
     assert (rank > 0);
@@ -403,6 +560,44 @@ public class SerializableTypeOracleBuilder {
     return array;
   }
 
+  /**
+   * Given a root type return an adjacency list that is the inverted type
+   * hierarchy.
+   */
+  private static Map getInvertedTypeHierarchy(JClassType root) {
+    Map adjList = new HashMap/* <JClassType, List<JClassType>> */();
+    Set seen = new HashSet /* <JClassType> */();
+    Stack queue = new Stack /* <JClassType> */();
+    queue.push(root);
+    while (!queue.isEmpty()) {
+      JClassType clazz = (JClassType) queue.pop();
+      JClassType[] subclasses = clazz.getSubtypes();
+
+      if (seen.contains(clazz)) {
+        continue;
+      }
+      seen.add(clazz);
+
+      for (int i = 0; i < subclasses.length; ++i) {
+        JClassType subclass = subclasses[i];
+
+        if (clazz.isInterface() != null) {
+          if (directlyImplementsInterface(subclass, clazz)) {
+            addEdge(adjList, subclass, clazz);
+            queue.push(subclass);
+          }
+        } else {
+          if (subclass.getSuperclass() == clazz) {
+            addEdge(adjList, subclass, clazz);
+            queue.push(subclass);
+          }
+        }
+      }
+    }
+
+    return adjList;
+  }
+
   private static void logSerializableTypes(TreeLogger logger, JType[] types) {
     TreeLogger localLogger = logger.branch(TreeLogger.DEBUG, "Identified "
         + types.length + " serializable type"
@@ -415,15 +610,14 @@ public class SerializableTypeOracleBuilder {
   }
 
   /**
-   * If <code>true</code> it is not an error if all of the subtypes of an
-   * automatically serializable type are not themselves serializable.
-   */
-  private boolean allowUnserializableSubtypesOfAutoSerializableTypes;
-
-  /**
    * Cache of the {@link JClassType} for {@link Collection}.
    */
   private final JClassType collectionClass;
+
+  /**
+   * Cache of the {@link JClassType} for {@link Exception}.
+   */
+  private final JClassType exceptionClass;
 
   /**
    * Cache of the {@link JClassType} for {@link IsSerializable}.
@@ -497,6 +691,7 @@ public class SerializableTypeOracleBuilder {
 
     try {
       collectionClass = typeOracle.getType(Collection.class.getName());
+      exceptionClass = typeOracle.getType(Exception.class.getName());
       isSerializableClass = typeOracle.getType(IsSerializable.class.getName());
       mapClass = typeOracle.getType(Map.class.getName());
       serializableClass = typeOracle.getType(Serializable.class.getName());
@@ -598,66 +793,8 @@ public class SerializableTypeOracleBuilder {
     }
   }
 
-  /**
-   * The component type of an array must be serializable.
-   */
-  private void checkArray(TreeLogger logger, JArrayType array) {
-    checkType(
-        logger.branch(TreeLogger.DEBUG, "Analyzing component type:", null),
-        array.getComponentType(), true);
-
-    JType leafType = array.getLeafType();
-    JClassType classOrInterface = leafType.isClassOrInterface();
-    if (leafType.isPrimitive() != null) {
-      getMetaTypeInfo(array).setSerializable(true);
-    } else if (classOrInterface != null) {
-      MetaTypeInfo mti = getMetaTypeInfo(classOrInterface);
-      if (mti.isSerializable()) {
-        getMetaTypeInfo(array).setSerializable(true);
-      }
-
-      JClassType[] subtypes = classOrInterface.getSubtypes();
-      for (int i = 0; i < subtypes.length; ++i) {
-        JClassType component = subtypes[i];
-        MetaTypeInfo cmti = getMetaTypeInfo(component);
-        if (cmti.isSerializable()) {
-          JArrayType covariantArray = getArrayType(typeOracle, array.getRank(),
-              component);
-
-          logger.branch(TreeLogger.DEBUG,
-              covariantArray.getParameterizedQualifiedSourceName(), null);
-
-          getMetaTypeInfo(covariantArray).setSerializable(true);
-        }
-      }
-    }
-  }
-
   private void checkClassOrInterface(TreeLogger logger, JClassType type,
       boolean checkSubtypes) {
-    if (type == stringClass) {
-      // we know that it is serializable
-      return;
-    }
-
-    MetaTypeInfo mti = getMetaTypeInfo(type);
-    if (type == typeOracle.getJavaLangObject()) {
-      if (inManualSerializationContext()) {
-        TreeLogger branch = logger.branch(
-            TreeLogger.WARN,
-            "Object was reached from a manually serializable type; all subtypes of Object which qualify for serialization will be considered",
-            null);
-        checkAllSubtypesOfObject(branch);
-      } else {
-        setUnserializableAndLog(
-            logger,
-            TreeLogger.ERROR,
-            "In order to produce smaller client-side code, 'Object' is not allowed; consider using a more specific type",
-            mti);
-      }
-
-      return;
-    }
 
     JClassType superclass = type.getSuperclass();
     if (superclass != null) {
@@ -676,18 +813,33 @@ public class SerializableTypeOracleBuilder {
       }
     }
 
+    MetaTypeInfo mti = getMetaTypeInfo(type);
     if (mti.qualifiesForSerialization()) {
       if (mti.qualifiesForManualSerialization()) {
         List failures = CustomFieldSerializerValidator.validate(
             streamReaderClass, streamWriterClass, mti.getManualSerializer(),
             type);
         if (!failures.isEmpty()) {
-          setUnserializableAndLog(logger, TreeLogger.ERROR, failures, mti);
+          validationFailed = true;
+          markAsUnserializableAndLog(logger, TreeLogger.ERROR, failures, mti);
           return;
         }
       } else {
+        if (!mti.directlyImplementsMarkerInterface()) {
+          if (superclass != null
+              && !getMetaTypeInfo(superclass).isSerializable()) {
+            markAsUnserializableAndLog(logger, TreeLogger.WARN, "Superclass '"
+                + superclass.getQualifiedSourceName()
+                + "' is not serializable and this type does not implement '"
+                + IsSerializable.class.getName() + "' or '"
+                + Serializable.class.getName() + "'; see previous log entries",
+                mti);
+            return;
+          }
+        }
+
         if (type.isLocalType()) {
-          setUnserializableAndLog(
+          markAsUnserializableAndLog(
               logger,
               TreeLogger.WARN,
               "Is a local type, it will be excluded from the set of serializable types",
@@ -696,7 +848,7 @@ public class SerializableTypeOracleBuilder {
         }
 
         if (type.isMemberType() && !type.isStatic()) {
-          setUnserializableAndLog(
+          markAsUnserializableAndLog(
               logger,
               TreeLogger.WARN,
               "Is nested but not static, it will be excluded from the set of serializable types",
@@ -706,10 +858,10 @@ public class SerializableTypeOracleBuilder {
 
         if (type.isClass() != null && !type.isAbstract()
             && !type.isDefaultInstantiable()) {
-          setUnserializableAndLog(
+          markAsUnserializableAndLog(
               logger,
-              TreeLogger.ERROR,
-              "Was not default instantiable (it must have a zero-argument public constructor or no constructors at all)",
+              TreeLogger.WARN,
+              "Was not default instantiable (it must have a zero-argument, public constructor or no constructors at all)",
               mti);
           return;
         }
@@ -720,12 +872,15 @@ public class SerializableTypeOracleBuilder {
       checkFields(logger, type);
 
       checkMethods(logger, type);
+    } else {
+      logger.branch(TreeLogger.DEBUG, "Type '"
+          + type.getParameterizedQualifiedSourceName()
+          + "' is not assignable to '" + IsSerializable.class.getName()
+          + "' or '" + Serializable.class.getName()
+          + "' nor does it have a custom field serializer", null);
     }
 
     if (checkSubtypes) {
-      int nSubtypes = 0;
-      int nSerializableSubtypes = 0;
-
       JClassType[] subtypes = type.getSubtypes();
       if (subtypes.length > 0) {
         TreeLogger localLogger = logger.branch(TreeLogger.DEBUG,
@@ -736,21 +891,6 @@ public class SerializableTypeOracleBuilder {
           MetaTypeInfo smti = getMetaTypeInfo(subtype);
           if (smti.qualifiesForSerialization()) {
             checkType(localLogger, subtype, false);
-
-            ++nSubtypes;
-
-            if (smti.isSerializable()) {
-              ++nSerializableSubtypes;
-            } else {
-              localLogger.branch(TreeLogger.DEBUG,
-                  subtype.getParameterizedQualifiedSourceName()
-                      + " is not serializable", null);
-
-              if (subtype.isLocalType() || subtype.isMemberType()
-                  && !subtype.isStatic()) {
-                --nSubtypes;
-              }
-            }
           } else {
             localLogger.branch(TreeLogger.DEBUG, "Not analyzing subclass '"
                 + subtype.getParameterizedQualifiedSourceName()
@@ -761,34 +901,12 @@ public class SerializableTypeOracleBuilder {
           }
         }
       }
-
-      if (mti.qualifiesForAutoSerialization()) {
-        if (nSerializableSubtypes < nSubtypes) {
-          setUnserializableAndLog(logger,
-              allowUnserializableSubtypesOfAutoSerializableTypes
-                  ? TreeLogger.WARN : TreeLogger.ERROR,
-              "Not all subtypes of the automatically serializable type '"
-                  + type.getQualifiedSourceName()
-                  + "' are themselves automatically serializable", mti);
-        }
-      } else if (!mti.qualifiesForManualSerialization()
-          && nSerializableSubtypes == 0) {
-        /*
-         * The type does not qualify for either serialization and it has no
-         * serializable subtypes; this is only an error if we are not in the
-         * context of a custom field serializer
-         */
-        String message = MessageFormat.format(
-            "Type ''{0}'' is not assignable to IsSerializable or java.io.Serializable, it does not have a custom field serializer and it does not have any serializable subtypes",
-            new String[] {type.getParameterizedQualifiedSourceName()});
-        setUnserializableAndLog(logger, inManualSerializationContext()
-            ? TreeLogger.WARN : TreeLogger.ERROR, message, mti);
-      }
     }
   }
 
   private void checkFields(TreeLogger logger, JClassType classOrInterface) {
     TreeLogger localLogger = logger;
+    MetaTypeInfo mti = getMetaTypeInfo(classOrInterface);
     JField[] fields = classOrInterface.getFields();
     if (fields.length > 0) {
       localLogger = localLogger.branch(TreeLogger.DEBUG, "Analyzing Fields:",
@@ -814,8 +932,12 @@ public class SerializableTypeOracleBuilder {
         TreeLogger fieldLogger = localLogger.branch(TreeLogger.DEBUG,
             field.toString(), null);
         JType fieldType = field.getType();
-        checkForUnparameterizedType(fieldLogger, fieldType);
-        checkType(fieldLogger, fieldType, true);
+
+        if (!checkTypeRoot(fieldLogger, fieldType, false)) {
+          if (mti.qualifiesForAutoSerialization()) {
+            mti.setSerializable(false);
+          }
+        }
       }
 
       typesBeingAnalyzed.pop();
@@ -869,7 +991,7 @@ public class SerializableTypeOracleBuilder {
    * Checks that a type which qualifies as either automatically serializable or
    * manually serializable actually is.
    */
-  private void checkType(TreeLogger logger, JType type, boolean checkSubtypes) {
+  private void checkType(TreeLogger logger, JType type, boolean isRootType) {
     if (type == null || type.isPrimitive() != null) {
       return;
     }
@@ -889,13 +1011,13 @@ public class SerializableTypeOracleBuilder {
           + "' is being analyzed; skipping", null);
       return;
     } else if (state == SerializableTypeOracleBuilder.CHECK_SUCCEEDED) {
-      if (!mti.needToRecheck(checkSubtypes, inManualSerializationContext())) {
+      if (!mti.needToRecheck(isRootType)) {
         localLogger.branch(TreeLogger.DEBUG, "Type has already been analyzed",
             null);
         return;
       }
 
-      mti.clearSerializationIssues();
+      mti.reset();
     }
 
     mti.setState(SerializableTypeOracleBuilder.CHECK_IN_PROGRESS);
@@ -906,27 +1028,81 @@ public class SerializableTypeOracleBuilder {
           localLogger.branch(TreeLogger.DEBUG, "Analyzing raw type", null),
           parameterized.getRawType(), true);
 
-      checkTypes(localLogger.branch(TreeLogger.DEBUG, "Analyzing type args",
-          null), parameterized.getTypeArgs());
+      TreeLogger branch = localLogger.branch(TreeLogger.DEBUG,
+          "Analyzing type args", null);
+      JType[] typeArgs = parameterized.getTypeArgs();
+      for (int i = 0; i < typeArgs.length; ++i) {
+        checkType(branch, typeArgs[i], true);
+      }
     } else if (type.isArray() != null) {
-      checkArray(localLogger, type.isArray());
+      checkType(localLogger.branch(TreeLogger.DEBUG,
+          "Analyzing component type:", null),
+          type.isArray().getComponentType(), true);
     } else if (type.isClassOrInterface() != null) {
-      checkClassOrInterface(localLogger, type.isClassOrInterface(),
-          checkSubtypes);
+      checkClassOrInterface(localLogger, type.isClassOrInterface(), isRootType);
     }
 
     if (mti.getState() != SerializableTypeOracleBuilder.CHECK_FAILED) {
       mti.setState(SerializableTypeOracleBuilder.CHECK_SUCCEEDED);
     }
 
-    mti.setCheckedSubtypes(checkSubtypes);
-    mti.setCheckedInManualContext(inManualSerializationContext());
+    mti.setTypeRoot(isRootType);
   }
 
-  private void checkTypes(TreeLogger logger, JType[] types) {
-    for (int i = 0; i < types.length; ++i) {
-      checkType(logger, types[i], true);
+  /**
+   * Check any type that is used in the method signature of a
+   * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService} method
+   * or as the field type of a type reachable from the method signature.
+   */
+  private boolean checkTypeRoot(TreeLogger logger, JType type,
+      boolean errorOnNoSerializableSubtypes) {
+
+    if (type.getLeafType() == typeOracle.getJavaLangObject()) {
+      if (!inManualSerializationContext()) {
+        markAsUnserializableAndLog(
+            logger,
+            TreeLogger.WARN,
+            "In order to produce smaller client-side code, 'Object' is not allowed; consider using a more specific type",
+            getMetaTypeInfo(type));
+
+        if (errorOnNoSerializableSubtypes) {
+          validationFailed = true;
+        }
+
+        return false;
+      }
+
+      logger.branch(
+          TreeLogger.WARN,
+          "Object was reached from a manually serializable type; all subtypes of Object which qualify for serialization will be considered",
+          null);
     }
+
+    checkForUnparameterizedType(logger, type);
+    checkType(logger, type, true);
+
+    List serializableTypes = getSerializableTypesAssignableTo(type);
+    if (serializableTypes.size() == 0) {
+      markAsUnserializableAndLog(
+          logger,
+          errorOnNoSerializableSubtypes ? TreeLogger.ERROR : TreeLogger.WARN,
+          "Type '"
+              + type.getParameterizedQualifiedSourceName()
+              + "' was not serializable and none of its subtypes were either; see previous log entries",
+          getMetaTypeInfo(type));
+
+      if (errorOnNoSerializableSubtypes) {
+        validationFailed = true;
+      }
+
+      return false;
+    } else if (!containsConcreteSerializableTypes(serializableTypes)) {
+      logger.branch(TreeLogger.WARN,
+          "There are only abstract serializable types assignable to '"
+              + type.getParameterizedQualifiedSourceName() + "'", null);
+    }
+
+    return true;
   }
 
   private MetaTypeInfo getMetaTypeInfo(JType type) {
@@ -949,22 +1125,80 @@ public class SerializableTypeOracleBuilder {
     return mti;
   }
 
-  private void initializeProperties(TreeLogger logger,
-      PropertyOracle propertyOracle) {
-    // Assume subtype warnings unless user explicitly turns it off.
-    allowUnserializableSubtypesOfAutoSerializableTypes = false;
+  /**
+   * Returns the list of serializable types that can be assigned to the
+   * specified type. If the list was empty then there were no types which
+   * qualified.
+   */
+  private List getSerializableTypesAssignableTo(JType type) {
+    MetaTypeInfo mti = getMetaTypeInfo(type);
+    List serializableTypes = mti.getSerializableTypesAssignableToMe();
+    if (serializableTypes == null) {
+      JArrayType isArray = type.isArray();
+      JClassType isClassOrInterface = type.isClassOrInterface();
+      JParameterizedType isParameterized = type.isParameterized();
+      JPrimitiveType isPrimitive = type.isPrimitive();
 
-    try {
-      String propVal = propertyOracle.getPropertyValue(logger,
-          "gwt.allowUnserializableSubtypesOfAutoSerializableTypes");
-      if (propVal.equals("true")) {
-        allowUnserializableSubtypesOfAutoSerializableTypes = true;
+      serializableTypes = new ArrayList();
+      if (isArray != null) {
+        // array
+        JType leafType = isArray.getLeafType();
+        if (leafType.isPrimitive() != null) {
+          serializableTypes.add(isArray);
+          getMetaTypeInfo(isArray).setSerializable(true);
+        } else {
+          List leafTypes = getSerializableTypesAssignableTo(leafType);
+          List covariantLeafTypes = getAllTypesBetweenRootTypeAndSerializableLeaves(
+              leafType.isClassOrInterface(), leafTypes);
+
+          Iterator iter = covariantLeafTypes.iterator();
+          while (iter.hasNext()) {
+            JClassType clazz = (JClassType) iter.next();
+            JArrayType covariantArray = getArrayType(typeOracle,
+                isArray.getRank(), clazz);
+            serializableTypes.add(covariantArray);
+            getMetaTypeInfo(covariantArray).setSerializable(true);
+          }
+        }
+      } else if (isParameterized != null) {
+        // parameterized type
+        JType[] typeArgs = isParameterized.getTypeArgs();
+        boolean failed = false;
+        for (int i = 0; i < typeArgs.length && !failed; ++i) {
+          JType typeArg = typeArgs[i];
+          failed = (getSerializableTypesAssignableTo(typeArg).size() == 0);
+        }
+
+        if (!failed) {
+          serializableTypes = getSerializableTypesAssignableTo(isParameterized.getRawType());
+        }
+      } else if (isClassOrInterface != null) {
+        // class or interface
+        if (getMetaTypeInfo(type).isSerializable()) {
+          serializableTypes.add(type);
+        }
+
+        JClassType[] subtypes = isClassOrInterface.getSubtypes();
+        for (int i = 0; i < subtypes.length; ++i) {
+          JClassType subtype = subtypes[i];
+          if (getMetaTypeInfo(subtype).isSerializable()) {
+            serializableTypes.add(subtype);
+          }
+        }
+
+      } else {
+        assert (isPrimitive != null && isPrimitive != JPrimitiveType.VOID);
+        serializableTypes.add(type);
       }
-    } catch (BadPropertyValueException e) {
-      // Purposely ignored, because we do not want to allow subtypes that are
-      // not serializable by default.
+
+      mti.setSerializableTypesAssignableToMe(serializableTypes);
     }
 
+    return serializableTypes;
+  }
+
+  private void initializeProperties(TreeLogger logger,
+      PropertyOracle propertyOracle) {
     suppressNonStaticFinalFieldWarnings = false;
     try {
       String propVal = propertyOracle.getPropertyValue(logger,
@@ -1023,25 +1257,20 @@ public class SerializableTypeOracleBuilder {
     }
   }
 
-  private void setUnserializableAndLog(TreeLogger logger,
-      TreeLogger.Type logType, List failures, MetaTypeInfo mti) {
-    Iterator iter = failures.iterator();
-    while (iter.hasNext()) {
-      setUnserializableAndLog(logger, logType, (String) iter.next(), mti);
-    }
-  }
-
-  private void setUnserializableAndLog(TreeLogger logger,
+  private void markAsUnserializableAndLog(TreeLogger logger,
       TreeLogger.Type logType, String logMessage, MetaTypeInfo mti) {
     mti.setState(SerializableTypeOracleBuilder.CHECK_FAILED);
     mti.setSerializable(false);
     mti.addSerializationIssue(logType, logMessage);
-
-    if (logType == TreeLogger.ERROR) {
-      validationFailed = true;
-    }
-
     logger.branch(logType, logMessage, null);
+  }
+
+  private void markAsUnserializableAndLog(TreeLogger logger,
+      TreeLogger.Type logType, List failures, MetaTypeInfo mti) {
+    Iterator iter = failures.iterator();
+    while (iter.hasNext()) {
+      markAsUnserializableAndLog(logger, logType, (String) iter.next(), mti);
+    }
   }
 
   private void validateRemoteService(TreeLogger logger, JClassType remoteService) {
@@ -1055,11 +1284,12 @@ public class SerializableTypeOracleBuilder {
       TreeLogger methodLogger = validationLogger.branch(TreeLogger.DEBUG,
           method.toString(), null);
       JType returnType = method.getReturnType();
-      TreeLogger returnTypeLogger = methodLogger.branch(TreeLogger.DEBUG,
-          "Return type: " + returnType.getParameterizedQualifiedSourceName(),
-          null);
-      checkForUnparameterizedType(returnTypeLogger, returnType);
-      checkType(returnTypeLogger, returnType, true);
+      if (returnType != JPrimitiveType.VOID) {
+        TreeLogger returnTypeLogger = methodLogger.branch(TreeLogger.DEBUG,
+            "Return type: " + returnType.getParameterizedQualifiedSourceName(),
+            null);
+        checkTypeRoot(returnTypeLogger, returnType, true);
+      }
 
       JParameter[] params = method.getParameters();
       for (int j = 0; j < params.length; ++j) {
@@ -1067,14 +1297,26 @@ public class SerializableTypeOracleBuilder {
         TreeLogger paramLogger = methodLogger.branch(TreeLogger.DEBUG,
             "Parameter: " + param.toString(), null);
         JType paramType = param.getType();
-        checkForUnparameterizedType(paramLogger, paramType);
-        checkType(paramLogger, paramType, true);
+        checkTypeRoot(paramLogger, paramType, true);
       }
 
       JType[] exs = method.getThrows();
       if (exs.length > 0) {
-        checkTypes(methodLogger.branch(TreeLogger.DEBUG, "Throws:", null),
-            method.getThrows());
+        TreeLogger throwsLogger = methodLogger.branch(TreeLogger.DEBUG,
+            "Throws:", null);
+        for (int j = 0; j < exs.length; ++j) {
+          JType ex = exs[j];
+          if (!exceptionClass.isAssignableFrom(ex.isClass())) {
+            throwsLogger = throwsLogger.branch(
+                TreeLogger.WARN,
+                "'"
+                    + ex.getQualifiedSourceName()
+                    + "' is not a checked exception; only checked exceptions may be used",
+                null);
+          }
+
+          checkTypeRoot(throwsLogger, ex, true);
+        }
       }
     }
   }

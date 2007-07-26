@@ -94,6 +94,8 @@ public interface CollectionsTestService extends RemoteService {
   Short[] echo(Short[] value) throws CollectionsTestServiceException;
 
   String[] echo(String[] value) throws CollectionsTestServiceException;
+  
+  String[][] echo(String[][] value) throws CollectionsTestServiceException;
 
   /**
    * @gwt.typeArgs value <com.google.gwt.user.client.rpc.IsSerializable>

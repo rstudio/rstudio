@@ -248,6 +248,11 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
     return actual;
   }
 
+  public String[][] echo(String[][] value)
+      throws CollectionsTestServiceException {
+    return value;
+  }
+
   public Vector echo(Vector actual) throws CollectionsTestServiceException {
     Vector expected = TestSetFactory.createVector();
     if (!TestSetValidator.isValid(expected, actual)) {

@@ -66,6 +66,8 @@ public interface CollectionsTestServiceAsync {
   void echo(Short[] value, AsyncCallback callback);
 
   void echo(String[] value, AsyncCallback callback);
+  
+  void echo(String[][] value, AsyncCallback callback);
 
   void echo(Vector value, AsyncCallback callback);
 }
