@@ -48,4 +48,5 @@ public interface Collection {
 
   Object[] toArray();
 
+  Object[] toArray(Object[] a);
 }

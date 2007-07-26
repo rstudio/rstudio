@@ -15,6 +15,8 @@
  */
 package java.util;
 
+import com.google.gwt.lang.Array;
+
 /**
  * Abstract base class for collection implementations.
  */
@@ -100,14 +102,22 @@ public abstract class AbstractCollection implements Collection {
   public abstract int size();
 
   public Object[] toArray() {
-    int n = size();
-    int i = 0;
-    Object[] array = new Object[n];
-    for (Iterator iter = iterator(); iter.hasNext();) {
-      Object o = iter.next();
-      array[i++] = o;
+    return toArray(new Object[size()]);
+  }
+
+  public Object[] toArray(Object[] a) {
+    int size = size();
+    if (a.length < size) {
+      a = Array.clonify(a, size);
     }
-    return array;
+    int i = 0;
+    for (Iterator it = iterator(); it.hasNext(); ) {
+      a[i++] = it.next();
+    }
+    if (a.length > size) {
+      a[size] = null;
+    }
+    return a;
   }
 
   public String toString() {

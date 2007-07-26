@@ -111,7 +111,6 @@ public class CollectionsTest extends EmulTestBase {
     assertEquals(3, ret);
   }
 
-
   public void testReverse() {
     List a = createSortedList();
     Collections.reverse(a);

@@ -24,6 +24,15 @@ package com.google.gwt.lang;
 public final class Array {
 
   /**
+   * Construct a new array of the exact same type as a given array, specifying
+   * the desired length of the new array.
+   */
+  public static native Object[] clonify(Object[] a, int length) /*-{
+    // Use JSNI magic to effect a castless type change.
+    return @com.google.gwt.lang.Array::clonify(Lcom/google/gwt/lang/Array;I)(a, length);
+  }-*/;
+
+  /**
    * Creates an array like "new T[a][b][c][][]" by passing in javascript objects
    * as follows: [a, b, c].
    */
@@ -66,6 +75,10 @@ public final class Array {
   private static native Object _set(Array array, int index, Object value) /*-{
     return array[index] = value;
   }-*/;
+
+  private static Array clonify(Array a, int length) {
+    return new Array(length, a.typeId, a.queryId, a.typeName);
+  }
 
   /**
    * Gets an the first value from a JSON int array.

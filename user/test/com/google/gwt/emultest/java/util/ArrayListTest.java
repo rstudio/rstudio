@@ -125,7 +125,7 @@ public class ArrayListTest extends TestArrayList {
       fail();
     } catch (IndexOutOfBoundsException expected) {
     }
-    
+
     try {
       l.removeRange(2, 1);
       fail();
@@ -147,6 +147,48 @@ public class ArrayListTest extends TestArrayList {
     for (int i = 3; i < 8; i++) {
       Integer elem = (Integer) l.get(i);
       assertEquals(i + 2, elem.intValue());
+    }
+  }
+
+  public void testToArray() {
+    ArrayList l = new ArrayList();
+    for (int i = 0; i < 10; i++) {
+      l.add(new Integer(i));
+    }
+
+    {
+      Object[] objArray = l.toArray();
+      assertEquals(10, objArray.length);
+      for (int i = 0; i < 10; i++) {
+        Integer elem = (Integer) objArray[i];
+        assertEquals(i, elem.intValue());
+      }
+    }
+
+    {
+      Integer[] intArray = new Integer[13];
+      intArray[10] = new Integer(10);
+      intArray[11] = new Integer(11);
+      intArray[12] = new Integer(12);
+      intArray = (Integer[]) l.toArray(intArray);
+      assertEquals(13, intArray.length);
+      for (int i = 0; i < 13; i++) {
+        if (i == 10) {
+          assertNull(intArray[i]);
+        } else {
+          Integer elem = intArray[i];
+          assertEquals(i, elem.intValue());
+        }
+      }
+    }
+
+    {
+      Integer[] intArray = (Integer[]) l.toArray(new Integer[0]);
+      assertEquals(10, intArray.length);
+      for (int i = 0; i < 10; i++) {
+        Integer elem = intArray[i];
+        assertEquals(i, elem.intValue());
+      }
     }
   }
 

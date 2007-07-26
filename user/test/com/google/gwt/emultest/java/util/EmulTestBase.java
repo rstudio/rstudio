@@ -31,7 +31,9 @@ public class EmulTestBase extends GWTTestCase {
     }
   }
 
-  /** Easy way to test what should be in a list */
+  /**
+   * Easy way to test what should be in a list.
+   */
   protected static void assertEquals(Object[] array, List target) {
     assertEquals(array.length, target.size());
     for (int i = 0; i < array.length; i++) {

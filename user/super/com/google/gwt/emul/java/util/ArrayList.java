@@ -16,6 +16,7 @@
 package java.util;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.lang.Array;
 
 /**
  * See Sun's JDK 1.4 documentation for documentation.
@@ -167,6 +168,22 @@ public class ArrayList extends AbstractList implements List, Cloneable,
 
   public int size() {
     return size;
+  }
+
+  /*
+   * Faster than the iterator-based implementation in AbstractCollection.
+   */
+  public Object[] toArray(Object[] a) {
+    if (a.length < size) {
+      a = Array.clonify(a, size);
+    }
+    for (int i = 0; i < size; ++i) {
+      a[i] = getImpl(array, i);
+    }
+    if (a.length > size) {
+      a[size] = null;
+    }
+    return a;
   }
 
   protected int indexOf(Object o, int index) {
