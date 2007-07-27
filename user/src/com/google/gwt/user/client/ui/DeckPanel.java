@@ -95,7 +95,7 @@ public class DeckPanel extends ComplexPanel {
    * @param index the index of the widget to be shown
    */
   public void showWidget(int index) {
-    checkIndex(index);
+    checkIndexBoundsForAccess(index);
 
     if (visibleWidget != null) {
       visibleWidget.setVisible(false);
@@ -118,11 +118,5 @@ public class DeckPanel extends ComplexPanel {
     DOM.setStyleAttribute(w.getElement(), "width", "");
     DOM.setStyleAttribute(w.getElement(), "height", "");
     w.setVisible(true);
-  }
-
-  private void checkIndex(int index) {
-    if ((index < 0) || (index >= getWidgetCount())) {
-      throw new IndexOutOfBoundsException();
-    }
   }
 }

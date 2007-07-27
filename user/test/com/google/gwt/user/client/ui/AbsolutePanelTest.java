@@ -27,6 +27,10 @@ public class AbsolutePanelTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
+  public void testAttachDetachOrder() {
+    HasWidgetsTester.testAttachDetachOrder(new AbsolutePanel());
+  }
+
   public void testPositioning() {
     // Make an absolute panel with a label at (42, 43).
     AbsolutePanel abs = new AbsolutePanel();

@@ -20,18 +20,22 @@ import com.google.gwt.user.client.DOM;
 
 /**
  * Tests both {@link HorizontalSplitPanel} and {@link VerticalSplitPanel}.
- * 
  */
 public class SplitPanelTest extends GWTTestCase {
-  public String getModuleName() {
-    return "com.google.gwt.user.User";
-  }
 
-  private Widget createMockWidget() {
+  private static Widget createMockWidget() {
     final Label label = new Label();
     label.setText("Testing 1, 2, 3");
     DOM.setStyleAttribute(label.getElement(), "fontSize", "72pt");
     return label;
+  }
+
+  public String getModuleName() {
+    return "com.google.gwt.user.User";
+  }
+
+  public void testHorizontalAttachDetachOrder() {
+    HasWidgetsTester.testAttachDetachOrder(new HorizontalSplitPanel());
   }
 
   /**
@@ -74,6 +78,10 @@ public class SplitPanelTest extends GWTTestCase {
     // Ensure we ended up at the right size.
     assertEquals(100, panel.getOffsetWidth());
     assertEquals(100, panel.getOffsetHeight());
+  }
+
+  public void testVerticalAttachDetachOrder() {
+    HasWidgetsTester.testAttachDetachOrder(new VerticalSplitPanel());
   }
 
   /**

@@ -18,25 +18,15 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Panel test.
- * TODO: add circular containment test.
+ * Test the FocusPanel widget.
  */
-public class PanelTest extends GWTTestCase {
+public class FocusPanelTest extends GWTTestCase {
 
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
 
-  public void testOnAttach() {
-    // Used to call onDetach when not attached.
-    Widget someWidget = new TextBox();
-    Panel panel1 = new SimplePanel(); // new and unattached
-    Panel panel2 = new SimplePanel(); // new and unattached
-    panel1.add(someWidget);
-    panel2.add(someWidget);
-
-    // Make sure that the RootPanel does not throw an exception.
-    RootPanel.get().setParent(null);
-    RootPanel.get().setParent(null);
+  public void testAttachDetachOrder() {
+    HasWidgetsTester.testAttachDetachOrder(new FocusPanel());
   }
 }

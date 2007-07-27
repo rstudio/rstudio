@@ -61,7 +61,8 @@ public abstract class Panel extends Widget implements HasWidgets {
 
   /**
    * This method must be called whenever a Widget is removed. It ensures that
-   * the Widget's parent is cleared.
+   * the Widget's parent is cleared. It also detaches the Widget's DOM element
+   * from its container, ensuring that this process occurs in the right order.
    * 
    * @param w the widget to be disowned
    */

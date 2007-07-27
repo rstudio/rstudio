@@ -80,7 +80,7 @@ public abstract class CellPanel extends ComplexPanel {
       HorizontalAlignmentConstant align) {
     Element td = getWidgetTd(w);
     if (td != null) {
-      DOM.setElementProperty(td, "align", align.getTextAlignString());
+      setCellHorizontalAlignment(td, align);
     }
   }
 
@@ -94,7 +94,7 @@ public abstract class CellPanel extends ComplexPanel {
   public void setCellVerticalAlignment(Widget w, VerticalAlignmentConstant align) {
     Element td = getWidgetTd(w);
     if (td != null) {
-      DOM.setStyleAttribute(td, "verticalAlign", align.getVerticalAlignString());
+      setCellVerticalAlignment(td, align);
     }
   }
 
@@ -126,6 +126,16 @@ public abstract class CellPanel extends ComplexPanel {
 
   protected Element getTable() {
     return table;
+  }
+
+  protected void setCellHorizontalAlignment(Element td,
+      HorizontalAlignmentConstant align) {
+    DOM.setElementProperty(td, "align", align.getTextAlignString());
+  }
+
+  protected void setCellVerticalAlignment(Element td,
+      VerticalAlignmentConstant align) {
+    DOM.setStyleAttribute(td, "verticalAlign", align.getVerticalAlignString());
   }
 
   private Element getWidgetTd(Widget w) {

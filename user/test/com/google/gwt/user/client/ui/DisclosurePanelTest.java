@@ -44,6 +44,10 @@ public class DisclosurePanelTest extends GWTTestCase {
         ""));
   }
 
+  public void testAttachDetachOrder() {
+    HasWidgetsTester.testAttachDetachOrder(new DisclosurePanel());
+  }
+
   /**
    * Test to ensure that event handler dispatch function appropriately.
    */

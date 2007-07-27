@@ -70,12 +70,21 @@ public class HorizontalPanel extends CellPanel implements HasAlignment {
    *           range
    */
   public void insert(Widget w, int beforeIndex) {
-    Element td = DOM.createTD();
-    beforeIndex = super.insert(w, td, beforeIndex);
-    DOM.insertChild(tableRow, td, beforeIndex);
+    checkIndexBoundsForInsertion(beforeIndex);
 
-    setCellHorizontalAlignment(w, horzAlign);
-    setCellVerticalAlignment(w, vertAlign);
+    Element td = DOM.createTD();
+    setCellHorizontalAlignment(td, horzAlign);
+    setCellVerticalAlignment(td, vertAlign);
+    /*
+     * The case where we reinsert an already existing child is tricky.
+     * 
+     * For the WIDGET, it ultimately removes first and inserts second, so we
+     * have to adjust the index within ComplexPanel.insert(). But for the DOM,
+     * we insert first and remove second, which means we DON'T need to adjust
+     * the index.
+     */
+    DOM.insertChild(tableRow, td, beforeIndex);
+    super.insert(w, td, beforeIndex);
   }
 
   public boolean remove(Widget w) {
@@ -83,10 +92,12 @@ public class HorizontalPanel extends CellPanel implements HasAlignment {
       return false;
     }
 
+    // Get the TD to be removed, before calling super.remove(), because
+    // super.remove() will detach the child widget's element from its parent.
     Element td = DOM.getParent(w.getElement());
-    DOM.removeChild(tableRow, td);
-
     super.remove(w);
+
+    DOM.removeChild(tableRow, td);
     return true;
   }
 

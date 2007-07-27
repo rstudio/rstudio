@@ -49,16 +49,16 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   /**
    * Provides images to support the the deprecated case where a url prefix is
-   * passed in through {@link Tree#setImageBase(String)}. This class is used
-   * in such a way that it will be completely removed by the compiler if the
+   * passed in through {@link Tree#setImageBase(String)}. This class is used in
+   * such a way that it will be completely removed by the compiler if the
    * deprecated methods, {@link Tree#setImageBase(String)} and
    * {@link Tree#getImageBase()}, are not called.
    */
   private static class ImagesFromImageBase implements TreeImages {
+
     /**
      * A convience image prototype that implements
-     * {@link AbstractImagePrototype#applyTo(Image)} for a specified image
-     * name.
+     * {@link AbstractImagePrototype#applyTo(Image)} for a specified image name.
      */
     private class Prototype extends AbstractImagePrototype {
       private final String imageUrl;
@@ -93,7 +93,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     public AbstractImagePrototype treeClosed() {
       return new Prototype("tree_closed.gif");
     }
-    
+
     public AbstractImagePrototype treeLeaf() {
       return new Prototype("tree_white.gif");
     }
@@ -159,6 +159,8 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         if ((item.getParentItem() != null) || (item.getTree() != null)) {
           item.remove();
         }
+        DOM.appendChild(Tree.this.getElement(), item.getElement());
+
         item.setTree(this.getTree());
 
         // Explicitly set top-level items' parents to null.
@@ -173,10 +175,13 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         if (!getChildren().contains(item)) {
           return;
         }
+
         // Update Item state.
         item.setTree(null);
         item.setParentItem(null);
         getChildren().remove(item);
+
+        DOM.removeChild(Tree.this.getElement(), item.getElement());
       }
     };
     root.setTree(this);
@@ -220,7 +225,6 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    */
   public void addItem(TreeItem item) {
     root.addItem(item);
-    DOM.appendChild(getElement(), item.getElement());
   }
 
   /**
@@ -229,9 +233,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    * @param widget the widget to be added
    */
   public TreeItem addItem(Widget widget) {
-    TreeItem item = root.addItem(widget);
-    DOM.appendChild(getElement(), item.getElement());
-    return item;
+    return root.addItem(widget);
   }
 
   public void addKeyboardListener(KeyboardListener listener) {
@@ -327,14 +329,10 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return FocusPanel.impl.getTabIndex(focusable);
   }
 
-  /**
-   * Returns all <code>TreeItem.ContentPanel</code> elements contained within
-   * this tree. The existence of the <code>TreeItem.ContentPanel</code> class
-   * is an implementation detail that may or may not be preserved in future
-   * versions of Tree.
-   */
   public Iterator iterator() {
-    return getChildWidgets().iterator();
+    final Widget[] widgets = new Widget[childWidgets.size()];
+    childWidgets.toArray((Object[]) widgets);
+    return WidgetIterators.createWidgetIterator(this, widgets);
   }
 
   public void onBrowserEvent(Event event) {
@@ -486,8 +484,16 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   public boolean remove(Widget w) {
-    throw new UnsupportedOperationException(
-        "Widgets should never be directly removed from a tree");
+    // Make sure this panel actually contains the child widget.
+    if (!childWidgets.contains(w)) {
+      return false;
+    }
+
+    // Disown it.
+    disown(w);
+
+    childWidgets.remove(w);
+    return true;
   }
 
   public void removeFocusListener(FocusListener listener) {
@@ -503,7 +509,6 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    */
   public void removeItem(TreeItem item) {
     root.removeItem(item);
-    DOM.removeChild(getElement(), item.getElement());
   }
 
   /**
@@ -632,14 +637,31 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     root.updateStateRecursive();
   }
 
-  void adopt(TreeItem.ContentPanel content) {
-    getChildWidgets().add(content);
-    content.treeSetParent(this);
+  void adopt(Widget widget, Element container) {
+    // Remove the widget from its current parent, if any.
+    widget.removeFromParent();
+
+    // Attach it at the DOM and GWT levels.
+    if (container != null) {
+      DOM.appendChild(container, widget.getElement());
+    }
+
+    childWidgets.add(widget);
+    widget.setParent(this);
   }
 
-  void disown(TreeItem.ContentPanel item) {
-    getChildWidgets().remove(item);
-    item.treeSetParent(null);
+  void disown(Widget widget) {
+    // Only disown it if it's actually contained in this panel.
+    if (widget.getParent() != this) {
+      throw new IllegalArgumentException("w is not a child of this panel");
+    }
+
+    // setParent() must be called before removeChild() to ensure that the
+    // element is still attached when onDetach()/onUnload() are called.
+    Element elem = widget.getElement();
+    widget.setParent(null);
+    DOM.removeChild(DOM.getParent(elem), elem);
+    childWidgets.remove(widget);
   }
 
   void fireStateChanged(TreeItem item) {
@@ -648,11 +670,8 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     }
   }
 
-  /**
-   * Get the Set of child widgets. Exposed only to allow unit tests to validate
-   * tree.
-   * 
-   * @return the children
+  /*
+   * This method exists solely to support unit tests.
    */
   Set getChildWidgets() {
     return childWidgets;
@@ -801,7 +820,6 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   private void onSelection(TreeItem item, boolean fireEvents, boolean moveFocus) {
-
     // 'root' isn't a real item, so don't let it be selected
     // (some cases in the keyboard handler will try to do this)
     if (item == root) {

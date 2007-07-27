@@ -27,6 +27,12 @@ import java.util.List;
  */
 public abstract class HTMLTableTestBase extends GWTTestCase {
 
+  static class Adder implements HasWidgetsTester.WidgetAdder {
+    public void addChild(HasWidgets container, Widget child) {
+      ((HTMLTable) container).setWidget(0, 0, child);
+    }
+  }
+
   public static void assertEquals(Object[] x, Object[] y) {
     assertEquals(x.length, y.length);
     for (int i = 0; i < y.length; i++) {
@@ -51,6 +57,28 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
   }
 
   public abstract HTMLTable getTable(int row, int column);
+
+  public void testAttachDetachOrder() {
+    HasWidgetsTester.testAttachDetachOrder(getTable(1, 1), new Adder());
+  }
+
+  public void testBoundsOnEmptyTable() {
+    HTMLTable t = getTable(0, 0);
+    try {
+      t.getCellFormatter().getElement(4, 5);
+    } catch (IndexOutOfBoundsException e) {
+      return;
+    }
+    fail("should have throw an index out of bounds");
+  }
+
+  public void testDoubleSet() {
+    HTMLTable t = getTable(4, 4);
+    t.setWidget(0, 0, new Label());
+    Widget s = new Label();
+    t.setWidget(0, 0, s);
+    assertEquals(s, t.getWidget(0, 0));
+  }
 
   public void testIterator() {
     // Check remove.
@@ -84,22 +112,16 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
     assertFalse(iter4.hasNext());
   }
 
-  public void testBoundsOnEmptyTable() {
-    HTMLTable t = getTable(0, 0);
-    try {
-      t.getCellFormatter().getElement(4, 5);
-    } catch (IndexOutOfBoundsException e) {
-      return;
-    }
-    fail("should have throw an index out of bounds");
-  }
-
-  public void testDoubleSet() {
+  public void testSettingCellAttributes() {
+    // These tests simple test for errors while setting these fields. The
+    // Patient sample under the survey project has the visual part of the test.
     HTMLTable t = getTable(4, 4);
-    t.setWidget(0, 0, new Label());
-    Widget s = new Label();
-    t.setWidget(0, 0, s);
-    assertEquals(s, t.getWidget(0, 0));
+
+    CellFormatter formatter = t.getCellFormatter();
+    formatter.setHeight(0, 0, "100%");
+    formatter.setVerticalAlignment(0, 1, HasVerticalAlignment.ALIGN_BOTTOM);
+    formatter.setHorizontalAlignment(1, 1, HasHorizontalAlignment.ALIGN_RIGHT);
+    formatter.setWidth(0, 2, "100%");
   }
 
   public void testStyles() {
@@ -123,17 +145,5 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
     assertEquals("goodbye hello", t.getCellFormatter().getStyleName(2, 2));
     t.getRowFormatter().setStyleName(3, "newStyle");
     assertEquals("newStyle", t.getRowFormatter().getStyleName(3));
-  }
-
-  public void testSettingCellAttributes() {
-    // These tests simple test for errors while setting these fields. The
-    // Patient sample under the survey project has the visual part of the test.
-    HTMLTable t = getTable(4, 4);
-
-    CellFormatter formatter = t.getCellFormatter();
-    formatter.setHeight(0, 0, "100%");
-    formatter.setVerticalAlignment(0, 1, HasVerticalAlignment.ALIGN_BOTTOM);
-    formatter.setHorizontalAlignment(1, 1, HasHorizontalAlignment.ALIGN_RIGHT);
-    formatter.setWidth(0, 2, "100%");
   }
 }

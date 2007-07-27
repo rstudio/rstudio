@@ -24,6 +24,12 @@ import com.google.gwt.user.client.Element;
  */
 public class DockPanelTest extends GWTTestCase {
 
+  static class Adder implements HasWidgetsTester.WidgetAdder {
+    public void addChild(HasWidgets container, Widget child) {
+      ((DockPanel) container).add(child, DockPanel.NORTH);
+    }
+  }
+
   private static class OnLoadTestLabel extends Label {
     boolean attachedWhenLoaded;
 
@@ -102,6 +108,10 @@ public class DockPanelTest extends GWTTestCase {
     // Ensure that adding an existing child again moves it to the new slot.
     // (move l4 from SOUTH to NORTH)
     dock.add(l4, DockPanel.NORTH);
-    assertTrue(((DockPanel.LayoutData)l4.getLayoutData()).direction == DockPanel.NORTH);
+    assertTrue(((DockPanel.LayoutData) l4.getLayoutData()).direction == DockPanel.NORTH);
+  }
+
+  public void testAttachDetachOrder() {
+    HasWidgetsTester.testAttachDetachOrder(new DockPanel(), new Adder());
   }
 }

@@ -64,10 +64,57 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel {
    * 
    * @param w the child widget to be added
    * @param container the element within which the child will be contained
-   * @return the index at which the widget was added
    */
-  protected int add(Widget w, Element container) {
-    return insert(w, container, getChildren().size());
+  protected void add(Widget w, Element container) {
+    insert(w, container, getChildren().size());
+  }
+
+  /**
+   * Adjusts beforeIndex to account for the possibility that the given widget is
+   * already a child of this panel.
+   * 
+   * @param w the widget to be removed
+   * @param beforeIndex the index at which it will be added to this panel
+   * @return the modified index
+   */
+  protected int adjustIndex(Widget w, int beforeIndex) {
+    checkIndexBoundsForInsertion(beforeIndex);
+
+    // Check to see if this widget is already a direct child.
+    if (w.getParent() == this) {
+      // If the Widget's previous position was left of the desired new position
+      // shift the desired position left to reflect the removal
+      int idx = getWidgetIndex(w);
+      if (idx < beforeIndex) {
+        beforeIndex--;
+      }
+    }
+
+    return beforeIndex;
+  }
+
+  /**
+   * Checks that <code>index</code> is in the range [0, getWidgetCount()),
+   * which is the valid range on accessible indexes.
+   * 
+   * @param index the index being accessed
+   */
+  protected void checkIndexBoundsForAccess(int index) {
+    if (index < 0 || index >= getWidgetCount()) {
+      throw new IndexOutOfBoundsException();
+    }
+  }
+
+  /**
+   * Checks that <code>index</code> is in the range [0, getWidgetCount()],
+   * which is the valid range for indexes on an insertion.
+   * 
+   * @param index the index where insertion will occur
+   */
+  protected void checkIndexBoundsForInsertion(int index) {
+    if (index < 0 || index > getWidgetCount()) {
+      throw new IndexOutOfBoundsException();
+    }
   }
 
   /**
@@ -85,27 +132,11 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel {
    * @param w the child widget to be added
    * @param container the element within which the child will be contained
    * @param beforeIndex the index before which the widget will be added
-   * @return the index at which the widget was added
    */
-  protected int insert(Widget w, Element container, int beforeIndex) {
-    if ((beforeIndex < 0) || (beforeIndex > getWidgetCount())) {
-      throw new IndexOutOfBoundsException();
-    }
-    // Call this early to ensure that the table doesn't end up partially
-    // constructed when an exception is thrown from adopt().
-    int idx = getWidgetIndex(w);
-    if (idx == -1) {
-      w.removeFromParent();
-    } else {
-      remove(w);
-      // If the Widget's previous position was left of the desired new position
-      // shift the desired position left to reflect the removal
-      if (idx < beforeIndex) {
-        beforeIndex--;
-      }
-    }
+  protected void insert(Widget w, Element container, int beforeIndex) {
+    // Adjust beforeIndex, in case the widget is already a child of this panel.
+    beforeIndex = adjustIndex(w, beforeIndex);
     adopt(w, container);
     getChildren().insert(w, beforeIndex);
-    return beforeIndex;
   }
 }

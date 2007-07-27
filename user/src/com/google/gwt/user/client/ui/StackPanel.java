@@ -117,9 +117,10 @@ public class StackPanel extends ComplexPanel {
     Element tdb = DOM.createTD();
     DOM.appendChild(trb, tdb);
 
-    beforeIndex = super.insert(w, tdb, beforeIndex);
     // DOM indices are 2x logical indices; 2 dom elements per stack item
+    beforeIndex = adjustIndex(w, beforeIndex);
     int effectiveIndex = beforeIndex * 2;
+
     // this ordering puts the body below the header
     DOM.insertChild(body, trb, effectiveIndex);
     DOM.insertChild(body, trh, effectiveIndex);
@@ -132,6 +133,10 @@ public class StackPanel extends ComplexPanel {
     // body styling
     DOM.setElementProperty(tdb, "height", "100%");
     DOM.setElementProperty(tdb, "vAlign", "top");
+
+    // Now that the DOM is connected, call insert (this ensures that onLoad() is
+    // not fired until the child widget is attached to the DOM).
+    super.insert(w, tdb, beforeIndex);
 
     // Update indices of all elements to the right.
     updateIndicesFrom(beforeIndex);
@@ -238,6 +243,9 @@ public class StackPanel extends ComplexPanel {
       return false;
     }
 
+    // Make sure to call this before disconnecting the DOM.
+    super.remove(child);
+
     // Correct visible stack for new location.
     if (visibleStack == index) {
       visibleStack = -1;
@@ -251,7 +259,6 @@ public class StackPanel extends ComplexPanel {
     DOM.removeChild(body, tr);
     tr = DOM.getChild(body, rowIndex);
     DOM.removeChild(body, tr);
-    super.remove(child);
 
     // Update indices of all elements to the right.
     updateIndicesFrom(rowIndex);

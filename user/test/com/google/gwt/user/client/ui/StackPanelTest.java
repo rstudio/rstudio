@@ -22,6 +22,12 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class StackPanelTest extends GWTTestCase {
 
+  static class Adder implements HasWidgetsTester.WidgetAdder {
+    public void addChild(HasWidgets container, Widget child) {
+      ((StackPanel) container).add(child, "foo");
+    }
+  }
+
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
@@ -37,6 +43,31 @@ public class StackPanelTest extends GWTTestCase {
       accum += l.getText();
     }
     return accum;
+  }
+
+  public void testAttachDetachOrder() {
+    HasWidgetsTester.testAttachDetachOrder(new StackPanel(), new Adder());
+  }
+
+  /**
+   * Tests getSelectedStack.
+   */
+  public void testGetSelectedStack() {
+    StackPanel p = new StackPanel();
+    assertEquals(-1, p.getSelectedIndex());
+    Label a = new Label("a");
+    Label b = new Label("b");
+    Label c = new Label("c");
+    Label d = new Label("d");
+    p.add(a);
+    p.add(b, "b");
+    p.add(c);
+    p.add(d, "d");
+    assertEquals(0, p.getSelectedIndex());
+    p.showStack(2);
+    assertEquals(2, p.getSelectedIndex());
+    p.showStack(-1);
+    assertEquals(-1, p.getSelectedIndex());
   }
 
   /**
@@ -72,26 +103,5 @@ public class StackPanelTest extends GWTTestCase {
     // Remove d.
     p.remove(a);
     assertEquals("d", curContents(p));
-  }
-
-  /**
-   * Tests getSelectedStack.
-   */
-  public void testGetSelectedStack() {
-    StackPanel p = new StackPanel();
-    assertEquals(-1, p.getSelectedIndex());
-    Label a = new Label("a");
-    Label b = new Label("b");
-    Label c = new Label("c");
-    Label d = new Label("d");
-    p.add(a);
-    p.add(b, "b");
-    p.add(c);
-    p.add(d, "d");
-    assertEquals(0, p.getSelectedIndex());
-    p.showStack(2);
-    assertEquals(2, p.getSelectedIndex());
-    p.showStack(-1);
-    assertEquals(-1, p.getSelectedIndex());
   }
 }

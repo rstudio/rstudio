@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.HasWidgetsTester.WidgetAdder;
 
 /**
  * Tests the FormPanel.
@@ -30,6 +31,10 @@ public class FormPanelTest extends GWTTestCase {
 
   public String getModuleName() {
     return "com.google.gwt.user.FormPanelTest";
+  }
+
+  public void testAttachDetachOrder(HasWidgets container, WidgetAdder adder) {
+    HasWidgetsTester.testAttachDetachOrder(new FormPanel());
   }
 
   public void testCancelSubmit() {

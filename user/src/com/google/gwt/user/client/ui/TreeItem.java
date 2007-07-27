@@ -31,42 +31,7 @@ import java.util.List;
  */
 public class TreeItem extends UIObject implements HasHTML {
 
-  /**
-   * <code>Panel</code> containing the <code>Widget</code> associated with
-   * the current tree item.
-   */
-  class ContentPanel extends SimplePanel {
-    private ContentPanel(Element e) {
-      super(e);
-    }
-
-    /**
-     * Gets the <code>TreeItem</code> associated with this
-     * <code>ContentPanel</code> for testing purposes.
-     * 
-     * @return the tree item
-     */
-    TreeItem getTreeItem() {
-      return TreeItem.this;
-    }
-
-    /**
-     * Prevent anyone from stealing a tree item's content pane.
-     * 
-     * @see com.google.gwt.user.client.ui.Widget#setParent(com.google.gwt.user.client.ui.Widget)
-     */
-    void setParent(Widget widget) {
-      throw new UnsupportedOperationException(
-        "Cannot directly setParent on a WidgetTreeItem's ContentPanel");
-    }
-
-    void treeSetParent(Widget widget) {
-      super.setParent(widget);
-    }
-  }
-
   private ArrayList children = new ArrayList();
-  private ContentPanel contentPanel;
   private Element itemTable, contentElem, childSpanElem;
   private final Image statusImage = new Image();
   private boolean open;
@@ -74,6 +39,7 @@ public class TreeItem extends UIObject implements HasHTML {
   private boolean selected;
   private Object userObject;
   private Tree tree;
+  private Widget widget;
 
   /**
    * Creates an empty tree item.
@@ -94,7 +60,7 @@ public class TreeItem extends UIObject implements HasHTML {
     //  </table>
     //  <span (childSpanElem)> children </span>
     // </div>
-  
+
     Element tbody = DOM.createTBody(), tr = DOM.createTR();
     Element tdImg = DOM.createTD(), tdContent = DOM.createTD();
     DOM.appendChild(itemTable, tbody);
@@ -267,10 +233,7 @@ public class TreeItem extends UIObject implements HasHTML {
    * @return the widget
    */
   public Widget getWidget() {
-    if (contentPanel == null) {
-      return null;
-    }
-    return contentPanel.getWidget();
+    return widget;
   }
 
   /**
@@ -309,7 +272,7 @@ public class TreeItem extends UIObject implements HasHTML {
     // Update Item state.
     item.setTree(null);
     item.setParentItem(null);
-    
+
     children.remove(item);
     DOM.removeChild(childSpanElem, item.getElement());
 
@@ -328,7 +291,7 @@ public class TreeItem extends UIObject implements HasHTML {
   }
 
   public void setHTML(String html) {
-    clearContentPanel();
+    setWidget(null);
     DOM.setInnerHTML(contentElem, html);
   }
 
@@ -376,7 +339,7 @@ public class TreeItem extends UIObject implements HasHTML {
   }
 
   public void setText(String text) {
-    clearContentPanel();
+    setWidget(null);
     DOM.setInnerText(contentElem, text);
   }
 
@@ -391,11 +354,21 @@ public class TreeItem extends UIObject implements HasHTML {
 
   /**
    * Sets the current widget. Any existing child widget will be removed.
+   * 
    * @param widget Widget to set
    */
-  public void setWidget(Widget widget) {
-    ensureContentPanel();
-    contentPanel.setWidget(widget);
+  public void setWidget(Widget newWidget) {
+    if (widget != null) {
+      tree.remove(widget);
+    }
+
+    // Clear out any existing content before adding a widget.
+    DOM.setInnerHTML(contentElem, "");
+
+    widget = newWidget;
+    if ((widget != null) && (tree != null)) {
+      tree.adopt(widget, contentElem);
+    }
   }
 
   /**
@@ -405,9 +378,9 @@ public class TreeItem extends UIObject implements HasHTML {
    * @return widget to be focused.
    */
   protected HasFocus getFocusableWidget() {
-    Widget widget = getWidget();
-    if (widget instanceof HasFocus) {
-      return (HasFocus) widget;
+    Widget w = getWidget();
+    if (w instanceof HasFocus) {
+      return (HasFocus) w;
     } else {
       return null;
     }
@@ -463,9 +436,9 @@ public class TreeItem extends UIObject implements HasHTML {
         this.tree.setSelectedItem(null);
       }
 
-      // Detach contentPanel from old tree.
-      if (contentPanel != null) {
-        this.tree.disown(contentPanel);
+      // Detach widget from old tree.
+      if (widget != null) {
+        this.tree.disown(widget);
       }
     }
     this.tree = tree;
@@ -474,8 +447,8 @@ public class TreeItem extends UIObject implements HasHTML {
     }
     updateState();
     if (tree != null) {
-      if (contentPanel != null) {
-        tree.adopt(contentPanel);
+      if (widget != null) {
+        tree.adopt(widget, contentElem);
       }
     }
   }
@@ -485,9 +458,9 @@ public class TreeItem extends UIObject implements HasHTML {
     if (tree == null) {
       return;
     }
-    
+
     TreeImages images = tree.getImages();
-    
+
     if (children.size() == 0) {
       UIObject.setVisible(childSpanElem, false);
       images.treeLeaf().applyTo(statusImage);
@@ -511,32 +484,4 @@ public class TreeItem extends UIObject implements HasHTML {
       ((TreeItem) children.get(i)).updateStateRecursive();
     }
   }
-
-  private void clearContentPanel() {
-    if (contentPanel != null) {
-      // Child should not be owned by anyone anymore.
-      Widget child = contentPanel.getWidget();
-      if (contentPanel.getWidget() != null) {
-        contentPanel.remove(child);
-      }
-
-      // Tree should no longer own contentPanel.
-      if (tree != null) {
-        tree.disown(contentPanel);
-        contentPanel = null;
-      }
-    }
-  }
-
-  private void ensureContentPanel() {
-    if (contentPanel == null) {
-      // Ensure contentElem is empty.
-      DOM.setInnerHTML(contentElem, "");
-      contentPanel = new ContentPanel(contentElem);
-      if (tree != null) {
-        tree.adopt(contentPanel);
-      }
-    }
-  }
-
 }
