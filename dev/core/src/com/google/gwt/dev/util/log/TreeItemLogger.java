@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * Tree logger built on an SWT tree item.
@@ -212,9 +213,22 @@ public final class TreeItemLogger extends AbstractTreeLogger {
       // For types needing attention, set all parents to the warning color.
       //
       if (type.needsAttention()) {
+        /*
+         * Originally, this code would expand TreeItems from this child up to
+         * its top level ancestor. However, on Mac and Linux, the TreeItems fail
+         * to expand if its parent is not already expanded. It appears to be an
+         * interaction between SWT and GTK, specifically bug
+         * https://bugs.eclipse.org/bugs/show_bug.cgi?id=97757. The following
+         * loop stores the ancestors and the second loop will set the expanded
+         * attribute on from the top level ancestor down to this child.
+         */
+        Stack parents = new Stack();
+
         boolean propagateColor = true;
         TreeItem parent = child.getParentItem();
         while (parent != null) {
+          parents.push(parent);
+
           LogEvent parentEvent = (LogEvent) parent.getData();
           if (propagateColor) {
             if (parentEvent.type.isLowerPriorityThan(type)) {
@@ -223,8 +237,13 @@ public final class TreeItemLogger extends AbstractTreeLogger {
               propagateColor = false;
             }
           }
-          parent.setExpanded(true);
+
           parent = parent.getParentItem();
+        }
+
+        while (!parents.isEmpty()) {
+          parent = (TreeItem) parents.pop();
+          parent.setExpanded(true);
         }
       }
     }
