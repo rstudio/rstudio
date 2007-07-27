@@ -163,14 +163,17 @@ public class ArrayListTest extends TestArrayList {
         Integer elem = (Integer) objArray[i];
         assertEquals(i, elem.intValue());
       }
+      // should not cause ArrayStore
+      objArray[0] = new Object();
     }
 
     {
-      Integer[] intArray = new Integer[13];
-      intArray[10] = new Integer(10);
-      intArray[11] = new Integer(11);
-      intArray[12] = new Integer(12);
-      intArray = (Integer[]) l.toArray(intArray);
+      Integer[] firstArray = new Integer[13];
+      firstArray[10] = new Integer(10);
+      firstArray[11] = new Integer(11);
+      firstArray[12] = new Integer(12);
+      Integer[] intArray = (Integer[]) l.toArray(firstArray);
+      assertTrue(firstArray == intArray);
       assertEquals(13, intArray.length);
       for (int i = 0; i < 13; i++) {
         if (i == 10) {
@@ -180,14 +183,30 @@ public class ArrayListTest extends TestArrayList {
           assertEquals(i, elem.intValue());
         }
       }
+      try {
+        Object[] objArray = noOptimizeFalse() ? new Object[1] : intArray;
+        assertTrue(objArray instanceof Integer[]);
+        objArray[0] = new Object();
+        fail("expected ArrayStoreException");
+      } catch (ArrayStoreException e) {
+      }
     }
 
     {
-      Integer[] intArray = (Integer[]) l.toArray(new Integer[0]);
+      Integer[] firstArray = new Integer[0];
+      Integer[] intArray = (Integer[]) l.toArray(firstArray);
+      assertFalse(firstArray == intArray);
       assertEquals(10, intArray.length);
       for (int i = 0; i < 10; i++) {
         Integer elem = intArray[i];
         assertEquals(i, elem.intValue());
+      }
+      try {
+        Object[] objArray = noOptimizeFalse() ? new Object[1] : intArray;
+        assertTrue(objArray instanceof Integer[]);
+        objArray[0] = new Object();
+        fail("expected ArrayStoreException");
+      } catch (ArrayStoreException e) {
       }
     }
   }
@@ -195,4 +214,8 @@ public class ArrayListTest extends TestArrayList {
   protected List makeEmptyList() {
     return new ArrayList();
   }
+  
+  private static native boolean noOptimizeFalse() /*-{
+    return false;
+  }-*/;
 }
