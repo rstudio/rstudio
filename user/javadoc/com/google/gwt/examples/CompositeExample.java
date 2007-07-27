@@ -51,7 +51,7 @@ public class CompositeExample implements EntryPoint {
       checkBox.setChecked(true);
       checkBox.addClickListener(this);
 
-      // All composites must call setWidget() in their constructors.
+      // All composites must call initWidget() in their constructors.
       initWidget(panel);
 
       // Give the overall composite a style name.
