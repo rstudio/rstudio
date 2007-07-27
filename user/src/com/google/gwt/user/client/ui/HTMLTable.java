@@ -840,7 +840,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    * @return <code>true</code> if the specified cell exists
    */
   public boolean isCellPresent(int row, int column) {
-    if ((row >= getRowCount()) && (row < 0)) {
+    if ((row >= getRowCount()) || (row < 0)) {
       return false;
     }
     if ((column < 0) || (column >= getCellCount(row))) {
