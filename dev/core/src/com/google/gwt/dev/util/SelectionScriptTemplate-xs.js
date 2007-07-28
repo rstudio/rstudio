@@ -110,7 +110,10 @@ function __MODULE_FUNC__() {
         base = baseElements[baseElements.length - 1].href;
       } else {
         // No base tag; the base must be the same as the document location.
-        base = getDirectoryOfFile($doc.location.href);
+        var loc = $doc.location;
+        var href = loc.href;
+        base = getDirectoryOfFile(href.substr(0, href.length
+        	- loc.hash.length));
       }
     } else if ((base.match(/^\w+:\/\//))) {
       // If the URL is obviously absolute, do nothing.
