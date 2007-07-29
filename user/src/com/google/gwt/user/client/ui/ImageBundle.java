@@ -129,6 +129,29 @@ package com.google.gwt.user.client.ui;
  * 
  * </p>
  *
+ * <h3>Security Warning: Image Bundle's use of the javax.image.imageio Classes</h3>
+ * Certain versions of the JVM are susceptible to a vulnerability in the
+ * javax.image.imageio classes, which are generally used to parse images.
+ * These classes are used by image bundle's implementation to combine all
+ * of the images into a single composite image.
+ *
+ * <p>
+ * It is possible that the vulnerability could be exploited by using a
+ * specially crafted image as part of an image bundle. To prevent this
+ * type of attack from occurring, use a version of the JVM that 
+ * includes a fix for this vulnerability. See the following link for more
+ * information:
+ * </p>
+ * 
+ * <pre>
+ * <a href="http://sunsolve.sun.com/search/document.do?assetkey=1-26-102934-1">http://sunsolve.sun.com/search/document.do?assetkey=1-26-102934-1</a>
+ * </pre>
+ *
+ * <p>
+ * Alternatively, if the images to be used in the bundle are trusted, then
+ * it is not necessary to upgrade the JVM.
+ * </p>
+ * 
  * <h3>Caching Recommendations for Image Bundle Files</h3>
  * Since the filename for the image bundle's composite image is based on a hash
  * of the file's contents, the server can tell the browser to cache the file
@@ -145,61 +168,40 @@ package com.google.gwt.user.client.ui;
  * resource is permanently cacheable.
  * </p>
  *
- * <h3>Image Bundles and the HTTPS Protocol</h3>
- * There is an issue with displaying image bundle images in Internet Explorer
- * when:
- *
- * <ul>
- *  <li>The image bundle's composite image is requested using the HTTPS protocol, and</li>
- *  <li>The web application has a security constraint set for the composite image</li>
- * </ul>
- *
- * This issue is known to occur with the web application servers Tomcat and
- * Glassfish. It stems from the way in which Internet Explorer renders
- * the composite image, and the caching headers that are set by Tomcat and
- * Glassfish when the HTTPS protocol is used to request a resource protected
- * by a security constraint. 
+ * <h3>Using Security Constraints to Protect Image Bundle Files</h3>
+ * When a web application has a security constraint set for the composite
+ * image, web application servers may change the image's HTTP response headers
+ * so that web browsers will not cache it. For example, Tomcat and Glassfish
+ * set the HTTP response headers <code>Pragma: No-cache</code>,
+ * <code>Cache-Control: None</code>, and <code>Expires: Thu, 1 Jan 1970 00:00:00</code>
+ * (or some other date in the past).
  *
  * <p>
- * The native format for the composite image is <code>png</code>, and
- * versions of Internet Explorer prior to 7 cannot render <code>png</code>
- * transparerency. To get around this problem, we make use of a plugin built
- * into the operating system.
+ * This can lead to performance problems when using image bundles, because the
+ * large composite image will be re-requested unecessarily. In addition,
+ * <code>clear.cache.gif</code>, which is a blank image used by the image bundle
+ * implementation, will be re-requested as well. While some browsers will only
+ * re-request these images for each page load, others will re-request them for
+ * each image on the page that is part of an image bundle.
  * </p>
- *
- * <p>
- * Internet Explorer specifies that files which require a plugin for viewing
- * must be cached by the brower. That way, the plugin can read the cached file
- * from the disk. Whenever the composite image has a security constraint specified
- * by the web application's configuration and is requested using the HTTPS protocol,
- * both Tomcat and Glassfish automatically append the HTTP headers
- * <code>Pragma: No-cache</code> and <code>Cache-Control: no-cache</code>
- * to the response.
- * </p>
- *
- * <p>
- * When the browser recieves the response, it does not cache the composite image.
- * Since the composite image is not stored on disk, the plugin is unable to render
- * it, and all of the images in the application which rely on the composite image
- * will not be displayed.
- * </p>
- *
- * <p>
  *
  * There are several ways to work around this issue:
  *
  * <ol>
  *  <li>
- *    Add a servlet filter which overrides the <code>Pragma</code> and
- *    <code>Cache-Control</code> headers for <code>png</code> files. These
- *    headers should either be removed, or set in such a way that the file will
- *    be cached by the browser.
+ *    Modify the servlet which serves <code>png</code> and <code>gif</code> files
+ *    so that it explicitly sets the <code>Pragma</code>, <code>Cache-Control</code>,
+ *    and <code>Expires</code> headers. The <code>Pragma</code> and
+ *    <code>Cache-Control</code> headers should be removed. The
+ *    <code>Expires</code> header should be set according to the
+ *    caching recommendations mentioned in the previous section.
  *  </li>
  *  <li>
- *    Use the <code>securePagesWithPragma</code> (works in Glassfish and Tomcat)
- *    or <code>disableProxyCaching</code> settings (works in Tomcat) in your
- *    web application configuration file. Refer to your web application
- *    server's documentation for specific instructions.
+ *    If using Tomcat, use the <code>disableProxyCaching</code>
+ *    property in your web application configuration file to prevent the
+ *    <code>Pragma</code>, <code>Cache-Control</code>, and <code>Expires</code>
+ *    headers from being changed by the server. Refer to your web application
+ *    server's documentation for more information.
  *  </li>
  *  <li>
  *    Exclude the image bundle's composite image from the web application's
@@ -213,6 +215,47 @@ package com.google.gwt.user.client.ui;
  *  </li>
  * </ol>
  *
+ * <h3>Image Bundles and the HTTPS Protocol</h3>
+ * There is an issue with displaying image bundle images in Internet Explorer
+ * when:
+ *
+ * <ul>
+ *  <li>The image bundle's composite image is requested using the HTTPS protocol, and</li>
+ *  <li>The web application has a security constraint set for the composite image</li>
+ * </ul>
+ *
+ * This issue is known to occur with the web application servers Tomcat and
+ * Glassfish.
+ *
+ * <p>
+ * The native format for the composite image is <code>png</code>, and
+ * versions of Internet Explorer prior to 7 cannot render <code>png</code>
+ * transparerency. To get around this problem, we make use of a plugin built
+ * into the operating system.
+ * </p>
+ *
+ * <p>
+ * Internet Explorer specifies that files which require a plugin for viewing
+ * must be cached by the brower. That way, the plugin can read the cached file
+ * from the disk. Whenever the composite image is protected by a security
+ * constraint, the web application server sets caching headers on the response
+ * to prevent the browser from caching the image (see the previous section for
+ * details).
+ * </p>
+ *
+ * <p>
+ * When using the HTTP protocol, Internet Explorer will disregard the
+ * <code>Pragma: No-cache</code> and <code>Cache-Control: None</code> headers,
+ * and will cache the image. However, When using the HTTPS protocol, Internet
+ * Explorer will enforce these headers, and will not cache the image.
+ * Since the composite image is not stored on disk, the plugin is unable to render
+ * it, and all of the images in the application which rely on the composite image
+ * will not be displayed.
+ * </p>
+ *
+ * <p>
+ * To work around this issue, follow the recommendations outlined in the previous
+ * section.
  * </p>
  *
  * <h3>For More Information</h3>

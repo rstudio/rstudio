@@ -1612,21 +1612,24 @@ public class DeveloperGuide {
      * @synopsis Optimize the performance of your application by reducing the
      *           number of HTTP requests for images.
      * @see com.google.gwt.user.client.ui.ImageBundle
-     * @tip To make all image bundle files permanently cacheable, set up a rule
-     *      in your web server to emit the <code>Expires</code> response
-     *      header for any files ending with "<code>.cache.*</code>". Such a
-     *      rule would automatically match generated image bundle filenames
-     *      (e.g. <code>320ADF600D31858000C612E939F0AD1A.cache.png</code>).
-     *      The <a
-     *      href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html">HTTP/1.1
-     *      specification</a> recommends specifying date of approximately one
-     *      year in the future for the <code>Expires</code> header to indicate
-     *      that the resource is permanently cacheable.
-     * @tip If your image bundle files are going to be accessed via the HTTPS
-     *      protocol, see the section entitled "Image Bundles and the HTTPS Protocol"
-     *      in the {@link com.google.gwt.user.client.ui.ImageBundle ImageBundle documentation}.
-     *      To support Internet Explorer, some changes to your web application
-     *      configuration may be required.
+     * @tip Check out the
+     *      {@link com.google.gwt.user.client.ui.ImageBundle ImageBundle documentation}
+     *      for important information regarding:
+     *      <ul>
+     *        <li>
+     *           A potential security issue with the generation of the composite
+     *          image on certain versions of the JVM
+     *        </li>
+     *        <li>
+     *          Caching recommendations for image bundle files
+     *        </li>
+     *        <li>
+     *          Protecting image bundle files with web application security constraints
+     *        </li>
+     *        <li>
+     *          Using image bundles with the HTTPS protocol
+     *        </li>
+     *      </ul>
      */
     public static class ImageBundles {
 
