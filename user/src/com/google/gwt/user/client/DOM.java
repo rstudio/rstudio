@@ -29,6 +29,8 @@ import java.util.ArrayList;
  */
 public class DOM {
 
+  // The current event being fired
+  private static Event currentEvent = null;
   private static DOMImpl impl;
   private static Element sCaptureElem;
 
@@ -405,6 +407,18 @@ public class DOM {
    */
   public static boolean eventGetCtrlKey(Event evt) {
     return impl.eventGetCtrlKey(evt);
+  }
+  
+  /**
+   * Gets the current event that is being fired.  The current event
+   * is only available within the lifetime of the onBrowserEvent function.
+   * Once the onBrowserEvent method returns, the current event is reset
+   * to null.
+   * 
+   * @return the current event
+   */
+  public static Event eventGetCurrentEvent() {
+    return currentEvent;
   }
 
   /**
@@ -1240,7 +1254,14 @@ public class DOM {
       }
     }
 
-    // Pass the event to the listener.
-    listener.onBrowserEvent(evt);
+    // Preserve the current event in case we are in a reentrant event dispatch.
+    Event prevCurrentEvent = currentEvent;
+    currentEvent = evt;
+    try {
+      // Pass the event to the listener.
+      listener.onBrowserEvent(evt);
+    } finally {
+      currentEvent = prevCurrentEvent;
+    }
   }
 }
