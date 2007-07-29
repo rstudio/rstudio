@@ -59,10 +59,10 @@ import com.google.gwt.user.client.Element;
  * <p>
  * Every <code>UIObject</code> has a <i>primary style name</i> that
  * identifies the key CSS style rule that should always be applied to it. Use
- * {@link #setStyleName(String)} to specify an object's primary style name. In
- * most cases, the primary style name is set in a widget's constructor and never
- * changes again during execution. In the case that no primary style name is
- * specified, it defaults to <code>gwt-nostyle</code>.
+ * {@link #setStylePrimaryName(String)} to specify an object's primary style
+ * name. In most cases, the primary style name is set in a widget's constructor
+ * and never changes again during execution. In the case that no primary style
+ * name is specified, it defaults to the first style name that is added.
  * </p>
  * 
  * <p>
@@ -87,8 +87,6 @@ public abstract class UIObject {
   private static final String NULL_HANDLE_MSG = "Null widget handle. If you "
       + "are creating a composite, ensure that initWidget() has been called.";
 
-  private static final String STYLE_EMPTY = "gwt-nostyle";
-
   public static native boolean isVisible(Element elem) /*-{
     return (elem.style.display != 'none');
   }-*/;
@@ -98,32 +96,50 @@ public abstract class UIObject {
   }-*/;
 
   /**
-   * Sets the object's primary style name and updates all dependent style names.
+   * Gets all of the element's style names, as a space-separated list.
    * 
-   * @param elem the element whose style is to be reset
-   * @param style the new primary style name
-   * @see #setStyleName(Element, String, boolean)
+   * @param elem the element whose style is to be retrieved
+   * @return the objects's space-separated style names
    */
-  protected static void resetStyleName(Element elem, String style) {
-    if (elem == null) {
-      throw new RuntimeException(NULL_HANDLE_MSG);
-    }
-
-    // Style names cannot contain leading or trailing whitespace, and cannot
-    // legally be empty.
-    style = style.trim();
-    if (style.length() == 0) {
-      throw new IllegalArgumentException(EMPTY_STYLENAME_MSG);
-    }
-
-    ensurePrimaryStyleName(elem);
-    updatePrimaryAndDependentStyleNames(elem, style);
+  protected static String getStyleName(Element elem) {
+    return DOM.getElementProperty(elem, "className");
   }
 
   /**
-   * This convenience method adds or removes a secondary style name to the
-   * primary style name for a given element. Set {@link #setStyleName(String)}
-   * for a description of how primary and secondary style names are used.
+   * Gets the element's primary style name.
+   * 
+   * @param elem the element whose primary style name is to be retrieved
+   * @return the element's primary style name
+   */
+  protected static String getStylePrimaryName(Element elem) {
+    String fullClassName = getStyleName(elem);
+
+    // The primary style name is always the first token of the full CSS class
+    // name. There can be no leading whitespace in the class name, so it's not
+    // necessary to trim() it.
+    int spaceIdx = fullClassName.indexOf(' ');
+    if (spaceIdx >= 0) {
+      return fullClassName.substring(0, spaceIdx);
+    }
+    return fullClassName;
+  }
+
+  /**
+   * Clears all of the element's style names and sets it to the given style.
+   * 
+   * @param elem the element whose style is to be modified
+   * @param styleName the new style name
+   */
+  protected static void setStyleName(Element elem, String styleName) {
+    DOM.setElementProperty(elem, "className", styleName);
+  }
+
+  /**
+   * This convenience method adds or removes a style name for a given element.
+   * This method is typically used to add and remove secondary style names, but
+   * it can be used to remove primary stylenames as well, but that is not
+   * recommended. See {@link #setStyleName(String)} for a description of how
+   * primary and secondary style names are used.
    * 
    * @param elem the element whose style is to be modified
    * @param style the secondary style name to be added or removed
@@ -141,14 +157,8 @@ public abstract class UIObject {
     }
 
     // Get the current style string.
-    String oldStyle = ensurePrimaryStyleName(elem);
-    int idx;
-    if (oldStyle == null) {
-      idx = -1;
-      oldStyle = "";
-    } else {
-      idx = oldStyle.indexOf(style);
-    }
+    String oldStyle = getStyleName(elem);
+    int idx = oldStyle.indexOf(style);
 
     // Calculate matching index.
     while (idx != -1) {
@@ -174,70 +184,91 @@ public abstract class UIObject {
     } else {
       // Don't try to remove the style if it's not there.
       if (idx != -1) {
-        if (idx == 0) {
-          // You can't remove the base (i.e. the first) style name.
-          throw new IllegalArgumentException("Cannot remove base style name");
+        // Get the leading and trailing parts, without the removed name.
+        String begin = oldStyle.substring(0, idx).trim();
+        String end = oldStyle.substring(idx + style.length()).trim();
+
+        // Some contortions to make sure we don't leave extra spaces.
+        String newClassName;
+        if (begin.length() == 0) {
+          newClassName = end;
+        } else if (end.length() == 0) {
+          newClassName = begin;
+        } else {
+          newClassName = begin + " " + end;
         }
-        String begin = oldStyle.substring(0, idx);
-        String end = oldStyle.substring(idx + style.length());
-        DOM.setElementProperty(elem, "className", begin + end);
+
+        DOM.setElementProperty(elem, "className", newClassName);
       }
     }
   }
 
   /**
-   * Ensure that the root element has a primary style name. If one is not
-   * already present, then it is assigned the default style name.
+   * Sets the element's primary style name and updates all dependent style
+   * names.
    * 
-   * @return the primary style name
+   * @param elem the element whose style is to be reset
+   * @param style the new primary style name
+   * @see #setStyleName(Element, String, boolean)
    */
-  private static String ensurePrimaryStyleName(Element elem) {
-    String className = DOM.getElementProperty(elem, "className").trim();
-
-    if ("".equals(className)) {
-      className = STYLE_EMPTY;
-      DOM.setElementProperty(elem, "className", className);
+  protected static void setStylePrimaryName(Element elem, String style) {
+    if (elem == null) {
+      throw new RuntimeException(NULL_HANDLE_MSG);
     }
-    
-    return className;
+
+    // Style names cannot contain leading or trailing whitespace, and cannot
+    // legally be empty.
+    style = style.trim();
+    if (style.length() == 0) {
+      throw new IllegalArgumentException(EMPTY_STYLENAME_MSG);
+    }
+
+    updatePrimaryAndDependentStyleNames(elem, style);
   }
 
   /**
    * Replaces all instances of the primary style name with newPrimaryStyleName.
    */
-  private static native void updatePrimaryAndDependentStyleNames(Element elem, String newStyle) /*-{
-    var className = elem.className;
-
-    var spaceIdx = className.indexOf(' ');
-    if (spaceIdx >= 0) {
-      // Get the old base style name from the beginning of the className.
-      var oldStyle = className.substring(0, spaceIdx);
-
-      // Replace oldStyle with newStyle. We have to do this by hand because
-      // there is no String.replaceAll() and String.replace() takes a regex,
-      // which we can't guarantee is safe on arbitrary class names.
-      var newClassName = '', curIdx = 0;
-      while (true) {
-        var idx = className.indexOf(oldStyle, curIdx);
-        if (idx == -1) {
-          newClassName += className.substring(curIdx);
-          break;
-        }
-
-        newClassName += className.substring(curIdx, idx);
-        newClassName += newStyle;
-        curIdx = idx + oldStyle.length;
-      }
-
-      elem.className = newClassName;
-    } else {
-      // There was no space, and therefore only one class name, which we can
-      // simply clobber.
-      elem.className = newStyle;
+  private static native void updatePrimaryAndDependentStyleNames(Element elem,
+      String newPrimaryStyle) /*-{
+    var classes = elem.className.split(/\s+/);
+    if (!classes) {
+      return;
     }
+    
+    var oldPrimaryStyle = classes[0];
+    var oldPrimaryStyleLen = oldPrimaryStyle.length;
+   
+    classes[0] = newPrimaryStyle;
+    for (var i = 1, n = classes.length; i < n; i++) {
+      var name = classes[i];
+      if (name.length > oldPrimaryStyleLen
+          && name.charAt(oldPrimaryStyleLen) == '-'
+          && name.indexOf(oldPrimaryStyle) == 0) {
+        classes[i] = newPrimaryStyle + name.substring(oldPrimaryStyleLen);
+      }
+    }
+    elem.className = classes.join(" ");
   }-*/;
 
   private Element element;
+
+  /**
+   * Adds a dependent style name by specifying the style name's suffix. The
+   * actual form of the style name that is added is:
+   * 
+   * <pre class="code">
+   * getStylePrimaryName() + '-' + styleSuffix
+   * </pre>
+   * 
+   * @param styleSuffix the suffix of the dependent style to be added.
+   * @see #setStylePrimaryName(String)
+   * @see #removeStyleDependentName(String)
+   * @see #addStyleName(String)
+   */
+  public void addStyleDependentName(String styleSuffix) {
+    addStyleName(getStylePrimaryName() + '-' + styleSuffix);
+  }
 
   /**
    * Adds a secondary or dependent style name to this object. A secondary style
@@ -248,10 +279,11 @@ public abstract class UIObject {
    * <p>
    * The most important use for this method is to add a special kind of
    * secondary style name called a <i>dependent style name</i>. To add a
-   * dependent style name, prefix the 'style' argument with the result of
-   * {@link #getStyleName()}. For example, suppose the primary style name is
-   * <code>gwt-TextBox</code>. If the following method is called as
-   * <code>obj.setReadOnly(true)</code>:
+   * dependent style name, use {@link #setStyleDependentName(String)}, which
+   * will prefix the 'style' argument with the result of
+   * {@link #getStylePrimaryName()} (followed by a '-'). For example, suppose
+   * the primary style name is <code>gwt-TextBox</code>. If the following
+   * method is called as <code>obj.setReadOnly(true)</code>:
    * </p>
    * 
    * <pre class="code">
@@ -259,12 +291,12 @@ public abstract class UIObject {
    *   isReadOnlyMode = readOnly;
    *   
    *   // Create a dependent style name.
-   *   String readOnlyStyle = getStyleName() + "-readonly";
+   *   String readOnlyStyle = "readonly";
    *    
    *   if (readOnly) {
-   *     addStyleName(readOnlyStyle);
+   *     addStyleDependentName(readOnlyStyle);
    *   } else {
-   *     removeStyleName(readOnlyStyle);
+   *     removeStyleDependentName(readOnlyStyle);
    *   }
    * }</pre>
    * 
@@ -280,7 +312,8 @@ public abstract class UIObject {
    * }
    * 
    * // This rule is based on a dependent style name that is only active
-   * // when the widget has called addStyleName(getStyleName() + "-readonly"). 
+   * // when the widget has called addStyleName(getStylePrimaryName() +
+   * // "-readonly").
    * .gwt-TextBox-readonly {
    *   background-color: lightgrey;
    *   border: none;
@@ -292,11 +325,11 @@ public abstract class UIObject {
    * if the primary style name changed due to the following call:
    * </p>
    * 
-   * <pre class="code">setStyleName("my-TextThingy");</pre>
+   * <pre class="code">setStylePrimaryName("my-TextThingy");</pre>
    * 
    * <p>
-   * then the object would be re-associated with style rules below rather than
-   * those above:
+   * then the object would be re-associated with following style rules, removing
+   * those that were shown above.
    * </p>
    * 
    * <pre class="code">
@@ -372,6 +405,18 @@ public abstract class UIObject {
   }
 
   /**
+   * Gets all of the object's style names, as a space-separated list. If you
+   * wish to retrieve only the primary style name, call
+   * {@link #getStylePrimaryName()}.
+   * 
+   * @return the objects's space-separated style names
+   * @see #getStylePrimaryName()
+   */
+  public String getStyleName() {
+    return getStyleName(getStyleElement());
+  }
+
+  /**
    * Gets the primary style name associated with the object.
    * 
    * @return the object's primary style name
@@ -379,17 +424,8 @@ public abstract class UIObject {
    * @see #addStyleName(String)
    * @see #removeStyleName(String)
    */
-  public String getStyleName() {
-    String fullClassName = ensurePrimaryStyleName(getStyleElement());
-
-    // The base style name is always the first token of the full CSS class
-    // name. There can be no leading whitespace in the class name, so it's not
-    // necessary to trim() it.
-    int spaceIdx = fullClassName.indexOf(' ');
-    if (spaceIdx >= 0) {
-      return fullClassName.substring(0, spaceIdx);
-    }
-    return fullClassName;
+  public String getStylePrimaryName() {
+    return getStylePrimaryName(getStyleElement());
   }
 
   /**
@@ -412,7 +448,21 @@ public abstract class UIObject {
   }
 
   /**
-   * Removes a secondary style name.
+   * Removes a dependent style name by specifying the style name's suffix.
+   * 
+   * @param styleSuffix the suffix of the dependent style to be removed
+   * @see #setStylePrimaryName(Element, String)
+   * @see #addStyleDependentName(String)
+   * @see #addStyleName(String)
+   */
+  public void removeStyleDependentName(String styleSuffix) {
+    removeStyleName(getStylePrimaryName() + '-' + styleSuffix);
+  }
+
+  /**
+   * Removes a style name. This method is typically used to remove secondary
+   * style names, but it can be used to remove primary stylenames as well. That
+   * use is not recommended.
    * 
    * @param style the secondary style name to be removed
    * @see #addStyleName(String)
@@ -430,8 +480,7 @@ public abstract class UIObject {
   public void setHeight(String height) {
     // This exists to deal with an inconsistency in IE's implementation where
     // it won't accept negative numbers in length measurements
-    assert extractLengthValue(height.trim().toLowerCase()) >= 0 :
-      "CSS heights should not be negative";
+    assert extractLengthValue(height.trim().toLowerCase()) >= 0 : "CSS heights should not be negative";
     DOM.setStyleAttribute(element, "height", height);
   }
 
@@ -464,14 +513,26 @@ public abstract class UIObject {
   }
 
   /**
+   * Clears all of the object's style names and sets it to the given style. You
+   * should normally use {@link #setStylePrimaryName(String)} unless you wish to
+   * explicitly remove all existing styles.
+   * 
+   * @param style the new style name
+   * @see #setStylePrimaryName(String)
+   */
+  public void setStyleName(String style) {
+    setStyleName(getStyleElement(), style);
+  }
+
+  /**
    * Sets the object's primary style name and updates all dependent style names.
    * 
    * @param style the new primary style name
    * @see #addStyleName(String)
    * @see #removeStyleName(String)
    */
-  public void setStyleName(String style) {
-    resetStyleName(getStyleElement(), style);
+  public void setStylePrimaryName(String style) {
+    setStylePrimaryName(getStyleElement(), style);
   }
 
   /**
@@ -507,8 +568,7 @@ public abstract class UIObject {
   public void setWidth(String width) {
     // This exists to deal with an inconsistency in IE's implementation where
     // it won't accept negative numbers in length measurements
-    assert extractLengthValue(width.trim().toLowerCase()) >= 0 :
-      "CSS widths should not be negative";
+    assert extractLengthValue(width.trim().toLowerCase()) >= 0 : "CSS widths should not be negative";
     DOM.setStyleAttribute(element, "width", width);
   }
 
@@ -580,10 +640,6 @@ public abstract class UIObject {
     }
 
     this.element = elem;
-
-    // We do not actually force the creation of a primary style name here.
-    // Instead, we do it lazily -- when it is aboslutely required -- 
-    // in getStyleName(), addStyleName(), and removeStyleName().
   }
 
   /**
@@ -602,7 +658,7 @@ public abstract class UIObject {
       return parseFloat(s);
     }
   }-*/;
-  
+
   private native void replaceNode(Element node, Element newNode) /*-{
     var p = node.parentNode;
     if (!p) {

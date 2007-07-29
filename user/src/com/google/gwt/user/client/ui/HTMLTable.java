@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
@@ -67,16 +66,29 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     }
 
     /**
-     * Gets a style from a specified row.
+     * Gets the style of a specified cell.
      * 
-     * @param row the row of the cell which the style while be added to
-     * @param column the column of the cell which the style will be added to
+     * @param row the cell's row
+     * @param column the cell's column
      * @see UIObject#getStyleName()
      * @return returns the style name
      * @throws IndexOutOfBoundsException
      */
     public String getStyleName(int row, int column) {
-      return DOM.getElementProperty(getElement(row, column), "className");
+      return UIObject.getStyleName(getElement(row, column));
+    }
+
+    /**
+     * Gets the primary style of a specified cell.
+     * 
+     * @param row the cell's row
+     * @param column the cell's column
+     * @see UIObject#getStylePrimaryName()
+     * @return returns the style name
+     * @throws IndexOutOfBoundsException
+     */
+    public String getStylePrimaryName(int row, int column) {
+      return UIObject.getStylePrimaryName(getElement(row, column));
     }
 
     /**
@@ -165,10 +177,21 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      */
     public void setStyleName(int row, int column, String styleName) {
       prepareCell(row, column);
-      Element elem = getCellElement(bodyElem, row, column);
-      // IE uses attribute "className", FireFox uses attribute "class", so
-      // avoiding the problem by using properties instead.
-      DOM.setElementProperty(elem, "className", styleName);
+      UIObject.setStyleName(getCellElement(bodyElem, row, column), styleName);
+    }
+
+    /**
+     * Sets the primary style name associated with the specified cell.
+     * 
+     * @param row the row of the cell whose style name is to be set
+     * @param column the column of the cell whose style name is to be set
+     * @param styleName the new style name
+     * @see UIObject#setStylePrimaryName(String)
+     * @throws IndexOutOfBoundsException
+     */
+    public void setStylePrimaryName(int row, int column, String styleName) {
+      UIObject.setStylePrimaryName(getCellElement(bodyElem, row, column),
+        styleName);
     }
 
     /**
@@ -310,7 +333,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     /**
      * Adds a style to the specified column.
      * 
-     * @param col the col to which the style while be added
+     * @param col the col to which the style will be added
      * @param styleName the style name to be added
      * @see UIObject#addStyleName(String)
      * @throws IndexOutOfBoundsException
@@ -320,21 +343,33 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     }
 
     /**
-     * Gets a style from a specified column.
+     * Gets the style of the specified column.
      * 
-     * @param column the column to which the style while be added
+     * @param column the column to be queried
+     * @return the style name
      * @see UIObject#getStyleName()
      * @throws IndexOutOfBoundsException
-     * @return the style name
      */
     public String getStyleName(int column) {
-      return DOM.getElementProperty(ensureColumn(column), "className");
+      return UIObject.getStyleName(ensureColumn(column));
+    }
+
+    /**
+     * Gets the primary style of the specified column.
+     * 
+     * @param column the column to be queried
+     * @return the style name
+     * @see UIObject#getStylePrimaryName()
+     * @throws IndexOutOfBoundsException
+     */
+    public String getStylePrimaryName(int column) {
+      return UIObject.getStylePrimaryName(ensureColumn(column));
     }
 
     /**
      * Removes a style from the specified column.
      * 
-     * @param column the column to which the style while be removed
+     * @param column the column from which the style will be removed
      * @param styleName the style name to be removed
      * @see UIObject#removeStyleName(String)
      * @throws IndexOutOfBoundsException
@@ -352,7 +387,19 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * @throws IndexOutOfBoundsException
      */
     public void setStyleName(int column, String styleName) {
-      UIObject.resetStyleName(ensureColumn(column), styleName);
+      UIObject.setStyleName(ensureColumn(column), styleName);
+    }
+
+    /**
+     * Sets the primary style name associated with the specified column.
+     * 
+     * @param column the column whose style name is to be set
+     * @param styleName the new style name
+     * @see UIObject#setStylePrimaryName(String)
+     * @throws IndexOutOfBoundsException
+     */
+    public void setStylePrimaryName(int column, String styleName) {
+      UIObject.setStylePrimaryName(ensureColumn(column), styleName);
     }
 
     /**
@@ -395,7 +442,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     /**
      * Adds a style to the specified row.
      * 
-     * @param row the row to which the style while be added
+     * @param row the row to which the style will be added
      * @param styleName the style name to be added
      * @see UIObject#addStyleName(String)
      * @throws IndexOutOfBoundsException
@@ -417,15 +464,27 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     }
 
     /**
-     * Gets a style from a specified row.
+     * Gets the style of the specified row.
      * 
-     * @param row the row to which the style while be added
+     * @param row the row to be queried
+     * @return the style name
      * @see UIObject#getStyleName()
      * @throws IndexOutOfBoundsException
-     * @return the style name
      */
     public String getStyleName(int row) {
-      return DOM.getElementProperty(getElement(row), "className");
+      return UIObject.getStyleName(getElement(row));
+    }
+
+    /**
+     * Gets the primary style of the specified row.
+     * 
+     * @param row the row to be queried
+     * @return the style name
+     * @see UIObject#getStylePrimaryName()
+     * @throws IndexOutOfBoundsException
+     */
+    public String getStylePrimaryName(int row) {
+      return UIObject.getStylePrimaryName(getElement(row));
     }
 
     /**
@@ -443,7 +502,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     /**
      * Removes a style from the specified row.
      * 
-     * @param row the row to which the style while be removed
+     * @param row the row from which the style will be removed
      * @param styleName the style name to be removed
      * @see UIObject#removeStyleName(String)
      * @throws IndexOutOfBoundsException
@@ -461,7 +520,19 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * @throws IndexOutOfBoundsException
      */
     public void setStyleName(int row, String styleName) {
-      UIObject.resetStyleName(ensureElement(row), styleName);
+      UIObject.setStyleName(ensureElement(row), styleName);
+    }
+
+    /**
+     * Sets the primary style name associated with the specified row.
+     * 
+     * @param row the row whose style name is to be set
+     * @param styleName the new style name
+     * @see UIObject#setStylePrimaryName(String)
+     * @throws IndexOutOfBoundsException
+     */
+    public void setStylePrimaryName(int row, String styleName) {
+      UIObject.setStylePrimaryName(ensureElement(row), styleName);
     }
 
     /**

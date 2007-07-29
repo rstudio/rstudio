@@ -41,7 +41,7 @@ public class CustomButtonTest extends GWTTestCase {
     ToggleButton b = new ToggleButton("up", "down");
     b.setStyleName("random");
     b.setDown(true);
-    assertEquals(b.getStyleName(), "random");
+    assertEquals(b.getStylePrimaryName(), "random");
 
     Map faces = new HashMap();
     faces.put("downDisabled", b.getDownDisabledFace());
@@ -56,8 +56,8 @@ public class CustomButtonTest extends GWTTestCase {
       Map.Entry entry = (Entry) entries.next();
       Face f = (Face) entry.getValue();
       b.setCurrentFace(f);
-      assertEquals("random random-" + f.getName(), DOM.getElementProperty(
-          b.getElement(), "className").trim());
+      assertEquals("random", b.getStylePrimaryName());
+      assertTrue(b.getStyleName().indexOf("random-" + f.getName()) != -1);
     }
 
     entries = faces.entrySet().iterator();
@@ -154,5 +154,4 @@ public class CustomButtonTest extends GWTTestCase {
     assertFalse(b.isDown());
     assertFalse(b.isEnabled());
   }
-
 }

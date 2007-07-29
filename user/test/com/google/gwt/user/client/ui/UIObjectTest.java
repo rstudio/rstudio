@@ -23,59 +23,26 @@ import com.google.gwt.user.client.DOM;
  */
 public class UIObjectTest extends GWTTestCase {
 
-  public String getModuleName() {
-    return "com.google.gwt.user.User";
-  }
-
   static class MyObject extends UIObject {
     MyObject() {
       setElement(DOM.createDiv());
     }
   }
 
-  public void testEmpty() {
-    MyObject o = new MyObject();
-
-    assertEquals("gwt-nostyle", o.getStyleName());
-    doStuff(o);
-    assertEquals("gwt-nostyle", o.getStyleName());
+  public String getModuleName() {
+    return "com.google.gwt.user.User";
   }
 
-  public void testNormal() {
-    // Test the basic set/get case.
+  public void testAccidentalPrimary() {
     MyObject o = new MyObject();
-
-    o.setStyleName("baseStyle");
-
-    assertEquals("baseStyle", o.getStyleName());
-    doStuff(o);
-    assertEquals("baseStyle", o.getStyleName());
-  }
-
-  public void testAddStyleBeforeSet() {
-    MyObject o = new MyObject();
-
-    // Test that adding a style name before calling setStyleName() causes the
-    // gwt-nostyle class to get added.
-    o.addStyleName("userStyle");
-    assertStartsWithClass(o, "gwt-nostyle");
-    assertContainsClass(o, "userStyle");
-    o.removeStyleName("userStyle");
-    assertDoesNotContainClass(o, "userStyle");
-
-    // getStyleName() should still be "gwt-nostyle".
-    assertEquals("gwt-nostyle", o.getStyleName());
-
-    doStuff(o);
-
-    assertStartsWithClass(o, "gwt-nostyle");
-    assertEquals("gwt-nostyle", o.getStyleName());
+    o.addStyleName("accidentalPrimary");
+    assertEquals("accidentalPrimary", o.getStylePrimaryName());
   }
 
   public void testAddAndRemoveEmptyStyleName() {
     MyObject o = new MyObject();
 
-    o.setStyleName("base");
+    o.setStylePrimaryName("primary");
     try {
       o.addStyleName("");
       fail();
@@ -104,77 +71,115 @@ public class UIObjectTest extends GWTTestCase {
       // This *should* throw.
     }
 
-    assertEquals("base", o.getStyleName());
+    assertEquals("primary", o.getStylePrimaryName());
   }
 
-  public void testSetEmptyBaseStyleName() {
+  public void testNormal() {
+    // Test the basic set/get case.
+    MyObject o = new MyObject();
+    o.setStylePrimaryName("primaryStyle");
+
+    // Note: getStyleName() explicitly returns the className attribute, so it
+    // doesn't guarantee that there aren't leading or trailing spaces.
+    assertEquals("primaryStyle", o.getStyleName());
+    doDependentAndSecondaryStyleTest(o);
+    assertEquals("primaryStyle", o.getStyleName());
+  }
+
+  public void testSetEmptyPrimaryStyleName() {
     MyObject o = new MyObject();
     try {
-      o.setStyleName("");
+      o.setStylePrimaryName("");
       fail();
     } catch (IllegalArgumentException e) {
       // This *should* throw.
     }
 
     try {
-      o.setStyleName(" ");
+      o.setStylePrimaryName(" ");
       fail();
     } catch (IllegalArgumentException e) {
       // This *should* throw.
     }
   }
 
-  public void testRemoveBaseStyleName() {
+  public void testSetStyleNameNormalization() {
     MyObject o = new MyObject();
-    o.setStyleName("base");
 
-    try {
-      o.removeStyleName("base");
-      fail();
-    } catch (IllegalArgumentException e) {
-      // This *should* throw.
+    o.setStylePrimaryName(" one ");
+    o.addStyleName("  two  ");
+    o.addStyleName("\tthree\t");
+
+    assertEquals("one two three", o.getStyleName());
+  }
+
+  public void testSetStylePrimaryName() {
+    MyObject o = new MyObject();
+    o.setStylePrimaryName("gwt");
+    o.addStyleDependentName("dependent");
+    o.addStyleName("i-heart-gwt");
+    o.addStyleName("i-gwt-heart");
+
+    assertTrue(containsClass(o, "gwt"));
+    assertTrue(containsClass(o, "gwt-dependent"));
+    assertTrue(containsClass(o, "i-heart-gwt"));
+    assertTrue(containsClass(o, "i-gwt-heart"));
+
+    o.setStylePrimaryName("awt");
+
+    assertPrimaryStyleNameEquals(o, "awt");
+    assertTrue(containsClass(o, "awt-dependent"));
+    assertFalse(containsClass(o, "gwt-dependent"));
+    assertTrue(containsClass(o, "i-heart-gwt"));
+    assertTrue(containsClass(o, "i-gwt-heart"));
+    assertFalse(containsClass(o, "i-heart-awt"));
+    assertFalse(containsClass(o, "i-awt-heart"));
+  }
+
+  private void assertPrimaryStyleNameEquals(UIObject o, String className) {
+    String attr = DOM.getElementProperty(o.getElement(), "className");
+    assertTrue(attr.indexOf(className) == 0);
+    assertTrue(attr.length() == className.length()
+        || attr.charAt(className.length()) == ' ');
+  }
+
+  private boolean containsClass(UIObject o, String className) {
+    String[] classes = DOM.getElementProperty(o.getElement(), "className").split(
+        "\\s+");
+    for (int i = 0; i < classes.length; i++) {
+      if (className.equals(classes[i])) {
+        return true;
+      }
     }
+    return false;
   }
 
   // doStuff() should leave MyObject's style in the same state it started in.
-  private void doStuff(MyObject o) {
-    // Test that the base style remains the first class, and that the dependent
-    // style shows up.
-    o.addStyleName(o.getStyleName() + "-dependent");
-    assertContainsClass(o, o.getStyleName() + "-dependent");
+  private void doDependentAndSecondaryStyleTest(MyObject o) {
+    // Test that the primary style remains the first class, and that the
+    // dependent style shows up.
+    o.addStyleDependentName("dependent");
+    assertTrue(containsClass(o, o.getStylePrimaryName() + "-dependent"));
 
-    String oldBaseStyle = o.getStyleName();
+    String oldPrimaryStyle = o.getStylePrimaryName();
 
-    // Test that replacing the base style name works (and doesn't munge up the
-    // user style).
-    o.addStyleName("userStyle");
-    o.setStyleName("newBaseStyle");
+    // Test that replacing the primary style name works (and doesn't munge up
+    // the secondary style).
+    o.addStyleName("secondaryStyle");
+    o.setStylePrimaryName("newPrimaryStyle");
 
-    assertEquals("newBaseStyle", o.getStyleName());
-    assertStartsWithClass(o, "newBaseStyle");
-    assertContainsClass(o, "newBaseStyle-dependent");
-    assertContainsClass(o, "userStyle");
-    assertDoesNotContainClass(o, oldBaseStyle);
-    assertDoesNotContainClass(o, oldBaseStyle + "-dependent");
+    assertEquals("newPrimaryStyle", o.getStylePrimaryName());
+    assertPrimaryStyleNameEquals(o, "newPrimaryStyle");
+    assertTrue(containsClass(o, "newPrimaryStyle-dependent"));
+    assertTrue(containsClass(o, "secondaryStyle"));
+    assertFalse(containsClass(o, oldPrimaryStyle));
+    assertFalse(containsClass(o, oldPrimaryStyle + "-dependent"));
 
     // Clean up & return.
-    o.setStyleName(oldBaseStyle);
-    o.removeStyleName(oldBaseStyle + "-dependent");
-    o.removeStyleName("userStyle");
-  }
-
-  private void assertContainsClass(UIObject o, String className) {
-    String attr = DOM.getElementProperty(o.getElement(), "className");
-    assertTrue(attr.indexOf(className) != -1);
-  }
-
-  private void assertDoesNotContainClass(UIObject o, String className) {
-    String attr = DOM.getElementProperty(o.getElement(), "className");
-    assertTrue(attr.indexOf(className) == -1);
-  }
-
-  private void assertStartsWithClass(UIObject o, String className) {
-    String attr = DOM.getElementProperty(o.getElement(), "className");
-    assertTrue(attr.indexOf(className) == 0);
+    o.setStylePrimaryName(oldPrimaryStyle);
+    o.removeStyleDependentName("dependent");
+    o.removeStyleName("secondaryStyle");
+    assertFalse(containsClass(o, o.getStylePrimaryName() + "-dependent"));
+    assertFalse(containsClass(o, "secondaryStyle"));
   }
 }

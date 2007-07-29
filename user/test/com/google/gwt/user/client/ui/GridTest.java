@@ -65,16 +65,16 @@ public class GridTest extends HTMLTableTestBase {
     columns.addStyleName(0, "a");
     assertEquals("base a", columns.getStyleName(0));
     columns.addStyleName(0, "b");
-    assertEquals("base a b", getNormalizedStyleName(columns, 0));
+    assertEquals("base a b", columns.getStyleName(0));
     columns.addStyleName(0, "c");
-    assertEquals("base a b c", getNormalizedStyleName(columns, 0));
+    assertEquals("base a b c", columns.getStyleName(0));
     // Remove first.
     columns.removeStyleName(0, "a");
-    assertEquals("base b c", getNormalizedStyleName(columns, 0));
+    assertEquals("base b c", columns.getStyleName(0));
 
     // Remove last.
     columns.removeStyleName(0, "c");
-    assertEquals("base b", getNormalizedStyleName(columns, 0));
+    assertEquals("base b", columns.getStyleName(0));
 
     // Only one column should be created.
     Element e = DOM.getChild(r.getElement(), 0);
@@ -118,10 +118,5 @@ public class GridTest extends HTMLTableTestBase {
     r.resize(3, 2);
     assertEquals(3, r.getRowCount());
     assertEquals(2, r.getColumnCount());
-  }
-
-  private String getNormalizedStyleName(Grid.ColumnFormatter formatter,
-      int index) {
-    return formatter.getStyleName(index).replaceAll("  ", " ").trim();
   }
 }

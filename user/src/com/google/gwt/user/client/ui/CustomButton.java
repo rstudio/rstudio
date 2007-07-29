@@ -753,11 +753,11 @@ public abstract class CustomButton extends ButtonBase implements
      */
     if (curFace != newFace) {
       if (curFace != null) {
-        super.removeStyleName(getCSSStyleName());
+        removeStyleDependentName(curFace.getName());
       }
       curFace = newFace;
       setCurrentFaceElement(newFace.getFace());
-      super.addStyleName(getCSSStyleName());
+      addStyleDependentName(curFace.getName());
     }
   }
 
@@ -804,15 +804,6 @@ public abstract class CustomButton extends ButtonBase implements
         return faceID;
       }
     };
-  }
-
-  /**
-   * Gets the modified style name.
-   * 
-   * @return the modified style name
-   */
-  private String getCSSStyleName() {
-    return getStyleName() + "-" + curFace.getName();
   }
 
   private Face getFaceFromID(int id) {

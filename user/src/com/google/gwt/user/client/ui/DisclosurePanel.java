@@ -153,9 +153,9 @@ public final class DisclosurePanel extends Composite implements
   // Stylename constants.
   private static final String STYLENAME_DEFAULT = "gwt-DisclosurePanel";
 
-  private static final String STYLENAME_SUFFIX_OPEN = "-open";
+  private static final String STYLENAME_SUFFIX_OPEN = "open";
 
-  private static final String STYLENAME_SUFFIX_CLOSED = "-closed";
+  private static final String STYLENAME_SUFFIX_CLOSED = "closed";
 
   private static final String STYLENAME_HEADER = "header";
 
@@ -417,14 +417,12 @@ public final class DisclosurePanel extends Composite implements
   }
 
   private void setContentDisplay() {
-    // UIObject#replaceStylename has been suggested and would replace this.
-    String primaryStyleName = getStyleName();
     if (isOpen) {
-      removeStyleName(primaryStyleName + STYLENAME_SUFFIX_CLOSED);
-      addStyleName(primaryStyleName + STYLENAME_SUFFIX_OPEN);
+      removeStyleDependentName(STYLENAME_SUFFIX_CLOSED);
+      addStyleDependentName(STYLENAME_SUFFIX_OPEN);
     } else {
-      removeStyleName(primaryStyleName + STYLENAME_SUFFIX_OPEN);
-      addStyleName(primaryStyleName + STYLENAME_SUFFIX_CLOSED);
+      removeStyleDependentName(STYLENAME_SUFFIX_OPEN);
+      addStyleDependentName(STYLENAME_SUFFIX_CLOSED);
     }
 
     if (content != null) {

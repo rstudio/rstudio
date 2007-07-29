@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.DOM;
 
 /**
  * Tests {@link ListBox}. Needs many, many more tests.
@@ -67,26 +66,21 @@ public class ListBoxTest extends GWTTestCase {
 
   public void testSetStyleNames() {
     ListBox box = new ListBox();
-    try {
-      box.removeStyleName("gwt-ListBox");
-      fail("Should have thrown illegal argument exception");
-    } catch (IllegalArgumentException e) {
-    }
 
     // Check subset problems.
     box.addStyleName("superset");
     box.addStyleName("super");
-    assertEquals("gwt-ListBox superset super", getNormalizedStyleName(box));
+    assertEquals("gwt-ListBox superset super", box.getStyleName());
 
     // Remove a style that doesn't exist.
     box.removeStyleName("sup");
-    assertEquals("gwt-ListBox superset super", getNormalizedStyleName(box));
+    assertEquals("gwt-ListBox superset super", box.getStyleName());
     box.removeStyleName("super");
-    assertEquals("gwt-ListBox superset", getNormalizedStyleName(box));
+    assertEquals("gwt-ListBox superset", box.getStyleName());
     box.addStyleName("two styles");
-    assertEquals("gwt-ListBox superset two styles", getNormalizedStyleName(box));
+    assertEquals("gwt-ListBox superset two styles", box.getStyleName());
     box.removeStyleName("superset");
-    assertEquals("gwt-ListBox two styles", getNormalizedStyleName(box));
+    assertEquals("gwt-ListBox two styles", box.getStyleName());
     box.removeStyleName("two styles");
     try {
       box.addStyleName("");
@@ -97,7 +91,7 @@ public class ListBoxTest extends GWTTestCase {
     box.addStyleName("superset");
     box.addStyleName("two");
     box.addStyleName("styles");
-    assertEquals("gwt-ListBox superset two styles", getNormalizedStyleName(box));
+    assertEquals("gwt-ListBox superset two styles", box.getStyleName());
   }
 
   public void testText() {
@@ -164,9 +158,4 @@ public class ListBoxTest extends GWTTestCase {
       assertEquals("item text", box.getItemText(1));
     }
   }
-
-  private String getNormalizedStyleName(ListBox box) {
-    return DOM.getElementProperty(box.getElement(), "className").replaceAll("  ", " ").trim();
-  }
-
 }

@@ -76,7 +76,7 @@ abstract class AbstractItemPickerImpl extends Widget {
     }
   }
 
-  private static final String STYLENAME_DEPENDENT_SELECTED = "-selected";
+  private static final String STYLENAME_DEPENDENT_SELECTED = "selected";
   private static final String STYLENAME_PRIMARY_ITEM = "item";
 
   final Element body;
@@ -210,13 +210,13 @@ abstract class AbstractItemPickerImpl extends Widget {
 
     // Remove "selected" style from the item.
     if (selectedItem != null) {
-      selectedItem.removeStyleName(selectedItem.getStyleName() + STYLENAME_DEPENDENT_SELECTED);
+      selectedItem.removeStyleDependentName(STYLENAME_DEPENDENT_SELECTED);
     }
 
     // Add the "selected" style to the item.
     selectedItem = item;
     if (selectedItem != null) {
-      selectedItem.addStyleName(selectedItem.getStyleName() + STYLENAME_DEPENDENT_SELECTED);
+      selectedItem.addStyleDependentName(STYLENAME_DEPENDENT_SELECTED);
     }
   }
 

@@ -251,11 +251,11 @@ public class TextBoxBase extends FocusWidget implements SourcesKeyboardEvents,
    */
   public void setReadOnly(boolean readOnly) {
     DOM.setElementPropertyBoolean(getElement(), "readOnly", readOnly);
-    String readOnlyStyle = getStyleName() + "-readonly";
+    String readOnlyStyle = "readonly";
     if (readOnly) {
-      addStyleName(readOnlyStyle);
+      addStyleDependentName(readOnlyStyle);
     } else {
-      removeStyleName(readOnlyStyle);
+      removeStyleDependentName(readOnlyStyle);
     }
   }
 
