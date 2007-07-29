@@ -191,6 +191,15 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
     }
   }
 
+  /**
+   * Removes all of the suggestions from the oracle.
+   */
+  public void clear() {
+    tree.clear();
+    toCandidates.clear();
+    toRealSuggestions.clear();
+  }
+
   public boolean isDisplayStringHTML() {
     return true;
   }
@@ -329,8 +338,7 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
 
   /**
    * Creates a set of potential candidates that match the given query.
-   * 
-   * @param limit number of candidates to return
+   *
    * @param query query string
    * @return possible candidates
    */
