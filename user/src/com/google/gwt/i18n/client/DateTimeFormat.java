@@ -198,8 +198,9 @@ import java.util.Date;
  * 
  * <h3>Parsing Dates and Times</h3>
  * <p>
- * This implementation could parse partial date/time. Current date/time will be
- * used to fill in the unavailable part.
+ * This implementation could parse partial date/time. Current date will be
+ * used to fill in the unavailable date part.  00:00:00 will be used to
+ * fill in the time part.
  * </p>
  * 
  * <p>
@@ -591,6 +592,9 @@ public class DateTimeFormat {
    */
   public Date parse(String text) {
     Date date = new Date();
+    date.setHours(0);
+    date.setMinutes(0);
+    date.setSeconds(0);
     int charsConsumed = parse(text, 0, date);
     if (charsConsumed == 0 || charsConsumed < text.length()) {
       throw new IllegalArgumentException(text);
