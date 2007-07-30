@@ -22,12 +22,12 @@ import com.google.gwt.user.client.Element;
  * A panel that displays all of its child widgets in a 'deck', where only one
  * can be visible at a time. It is used by
  * {@link com.google.gwt.user.client.ui.TabPanel}.
- *
+ * 
  * <p>
  * Once a widget has been added to a DeckPanel, its visibility, width, and
- * height attributes will be manipulated. When the widget is removed from
- * the DeckPanel, it will be visible, and its width and height attributes
- * will be cleared.
+ * height attributes will be manipulated. When the widget is removed from the
+ * DeckPanel, it will be visible, and its width and height attributes will be
+ * cleared.
  * </p>
  */
 public class DeckPanel extends ComplexPanel {
@@ -105,12 +105,12 @@ public class DeckPanel extends ComplexPanel {
   }
 
   /**
-   * Calls the superclass' <code>disown(Widget)</code> method, makes the widget
-   * visible, and clears the widget's width and height attributes. This is done
-   * so that any changes to the visibility, height, or width of the widget
-   * that were done by the panel are undone when the widget is disowned from
-   * the panel.
-   *
+   * Calls the superclass' <code>disown(Widget)</code> method, makes the
+   * widget visible, and clears the widget's width and height attributes. This
+   * is done so that any changes to the visibility, height, or width of the
+   * widget that were done by the panel are undone when the widget is disowned
+   * from the panel.
+   * 
    * @param w the widget to be disowned
    */
   protected void disown(Widget w) {

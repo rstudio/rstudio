@@ -72,8 +72,8 @@ public class Widget extends UIObject implements EventListener {
   }
 
   /**
-   * If a widget implements HasWidgets, it must override this method and
-   * call onAttach() for each of its child widgets.
+   * If a widget implements HasWidgets, it must override this method and call
+   * onAttach() for each of its child widgets.
    * 
    * @see Panel#onAttach()
    */
@@ -81,8 +81,8 @@ public class Widget extends UIObject implements EventListener {
   }
 
   /**
-   * If a widget implements HasWidgets, it must override this method and
-   * call onDetach() for each of its child widgets.
+   * If a widget implements HasWidgets, it must override this method and call
+   * onDetach() for each of its child widgets.
    * 
    * @see Panel#onDetach()
    */
@@ -91,13 +91,13 @@ public class Widget extends UIObject implements EventListener {
 
   /**
    * This method is called when a widget is attached to the browser's document.
-   * To receive notification after a Widget has been added to the
-   * document, override the {@link #onLoad} method.
+   * To receive notification after a Widget has been added to the document,
+   * override the {@link #onLoad} method.
    * 
    * <p>
    * Subclasses that override this method must call
-   * <code>super.onAttach()</code> to ensure that the Widget has been
-   * attached to its underlying Element.
+   * <code>super.onAttach()</code> to ensure that the Widget has been attached
+   * to its underlying Element.
    * </p>
    * 
    * @throws IllegalStateException if this widget is already attached
@@ -125,10 +125,10 @@ public class Widget extends UIObject implements EventListener {
    * 
    * <p>
    * Subclasses that override this method must call
-   * <code>super.onDetach()</code> to ensure that the Widget has been
-   * detached from the underlying Element.  Failure to do so will result
-   * in application memory leaks due to circular references between DOM
-   * Elements and JavaScript objects.
+   * <code>super.onDetach()</code> to ensure that the Widget has been detached
+   * from the underlying Element. Failure to do so will result in application
+   * memory leaks due to circular references between DOM Elements and JavaScript
+   * objects.
    * </p>
    * 
    * @throws IllegalStateException if this widget is already detached
@@ -178,7 +178,8 @@ public class Widget extends UIObject implements EventListener {
   protected void setElement(Element elem) {
     if (isAttached()) {
       // Remove old event listener to avoid leaking. onDetach will not do this
-      // for us, because it is only called when the widget itself is detached from
+      // for us, because it is only called when the widget itself is detached
+      // from
       // the document.
       DOM.setEventListener(getElement(), null);
     }
@@ -226,13 +227,13 @@ public class Widget extends UIObject implements EventListener {
     if (parent == null) {
       if (oldParent != null && oldParent.isAttached()) {
         onDetach();
-        assert !isAttached() :
-            "Failure of " + GWT.getTypeName(this) + " to call super.onDetach()";
+        assert !isAttached() : "Failure of " + GWT.getTypeName(this)
+            + " to call super.onDetach()";
       }
     } else if (parent.isAttached()) {
       onAttach();
-        assert isAttached() :
-            "Failure of " + GWT.getTypeName(this) + " to call super.onAttach()";
+      assert isAttached() : "Failure of " + GWT.getTypeName(this)
+          + " to call super.onAttach()";
     }
   }
 }

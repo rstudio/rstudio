@@ -27,19 +27,19 @@ import com.google.gwt.user.client.Element;
  * room for its absolutely-positioned children. It must be explicitly sized in
  * order to make room for them.
  * </p>
- *
+ * 
  * <p>
  * Once a widget has been added to an absolute panel, the panel effectively
- * "owns" the positioning of the widget. Any existing positioning attributes
- * on the widget may be modified by the panel.
+ * "owns" the positioning of the widget. Any existing positioning attributes on
+ * the widget may be modified by the panel.
  * </p>
  */
 public class AbsolutePanel extends ComplexPanel {
 
   /**
    * Changes a DOM element's positioning to static.
-   *
-   * @param elem the DOM element 
+   * 
+   * @param elem the DOM element
    */
   private static void changeToStaticPositioning(Element elem) {
     DOM.setStyleAttribute(elem, "left", "");
@@ -69,8 +69,8 @@ public class AbsolutePanel extends ComplexPanel {
   }
 
   /**
-   * Adds a widget to the panel at the specified position. Setting a position
-   * of <code>(-1, -1)</code> will cause the child widget to be positioned
+   * Adds a widget to the panel at the specified position. Setting a position of
+   * <code>(-1, -1)</code> will cause the child widget to be positioned
    * statically.
    * 
    * @param w the widget to be added
@@ -96,7 +96,8 @@ public class AbsolutePanel extends ComplexPanel {
    */
   public int getWidgetLeft(Widget w) {
     checkWidgetParent(w);
-    return DOM.getAbsoluteLeft(w.getElement()) - DOM.getAbsoluteLeft(getElement());
+    return DOM.getAbsoluteLeft(w.getElement())
+        - DOM.getAbsoluteLeft(getElement());
   }
 
   /**
@@ -108,7 +109,8 @@ public class AbsolutePanel extends ComplexPanel {
    */
   public int getWidgetTop(Widget w) {
     checkWidgetParent(w);
-    return DOM.getAbsoluteTop(w.getElement()) - DOM.getAbsoluteTop(getElement());
+    return DOM.getAbsoluteTop(w.getElement())
+        - DOM.getAbsoluteTop(getElement());
   }
 
   /**
@@ -130,7 +132,7 @@ public class AbsolutePanel extends ComplexPanel {
    * the positioning of the widget to static. This is done so that any
    * positioning changes to the widget that were done by the panel are undone
    * when the widget is disowned from the panel.
-   *
+   * 
    * @param w the widget to be disowned
    */
   protected void disown(Widget w) {
