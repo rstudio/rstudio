@@ -304,7 +304,6 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * @param col the column of the cell
      * @return the element
      */
-
     private native Element getCellElement(Element table, int row, int col) /*-{
       var out = table.rows[row].cells[col];
       return (out == null ? null : out);
@@ -415,11 +414,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
 
     private Element ensureColumn(int col) {
       prepareColumn(col);
-
-      if (columnGroup == null) {
-        columnGroup = DOM.createElement("colgroup");
-        DOM.insertChild(getElement(), columnGroup, 0);
-      }
+      prepareColumnGroup();
 
       int num = DOM.getChildCount(columnGroup);
       if (num <= col) {
@@ -431,6 +426,20 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
         return colElement;
       }
       return DOM.getChild(columnGroup, col);
+    }
+    
+    /**
+     * Prepare the colgroup tag for the first time, guarenteeing that it
+     * exists and has at least one col tag in it.  This method corrects
+     * a Mozilla issue where the col tag will affect the wrong column if
+     * a col tag doesn't exist when the element is attached to the page.
+     */
+    private void prepareColumnGroup() {
+      if (columnGroup == null) {
+        columnGroup = DOM.createElement("colgroup");
+        DOM.insertChild(tableElem, columnGroup, 0);
+        DOM.appendChild(columnGroup, DOM.createElement("col"));
+      }
     }
   }
 
@@ -1343,6 +1352,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
 
   protected void setColumnFormatter(ColumnFormatter formatter) {
     columnFormatter = formatter;
+    columnFormatter.prepareColumnGroup();
   }
 
   /**
