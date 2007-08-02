@@ -35,7 +35,12 @@ public class TextBoxExample implements EntryPoint {
     // Let's disallow non-numeric entry in the normal text box.
     tb.addKeyboardListener(new KeyboardListenerAdapter() {
       public void onKeyPress(Widget sender, char keyCode, int modifiers) {
-        if (!Character.isDigit(keyCode)) {
+        if ((!Character.isDigit(keyCode)) && (keyCode != (char) KEY_TAB)
+            && (keyCode != (char) KEY_BACKSPACE)
+            && (keyCode != (char) KEY_DELETE) && (keyCode != (char) KEY_ENTER) 
+            && (keyCode != (char) KEY_HOME) && (keyCode != (char) KEY_END)
+            && (keyCode != (char) KEY_LEFT) && (keyCode != (char) KEY_UP)
+            && (keyCode != (char) KEY_RIGHT) && (keyCode != (char) KEY_DOWN)) {
           // TextBox.cancelKey() suppresses the current keyboard event.
           ((TextBox)sender).cancelKey();
         }
