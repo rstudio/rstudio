@@ -37,14 +37,10 @@ import com.google.gwt.user.client.Element;
  * <li>.gwt-VerticalSplitPanel { the panel itself }</li>
  * <li>.gwt-VerticalSplitPanel top { the top container }</li>
  * <li>.gwt-VerticalSplitPanel bottom { the bottom container }</li>
- * <li>.gwt-VerticalSplitPanel splitter { the splitter }</li>
+ * <li>.gwt-VerticalSplitPanel vsplitter { the splitter }</li>
  * </ul>
  */
 public final class VerticalSplitPanel extends SplitPanel {
-
-  private static final int TOP = 0;
-  private static final int BOTTOM = 1;
-  private static final Impl impl = (Impl) GWT.create(Impl.class);
 
   /**
    * Provides different implementations for retrieving an element's height. The
@@ -71,6 +67,12 @@ public final class VerticalSplitPanel extends SplitPanel {
       return box.bottom - box.top;
     }-*/;
   }
+
+  private static final int TOP = 0;
+
+  private static final int BOTTOM = 1;
+
+  private static final Impl impl = (Impl) GWT.create(Impl.class);
 
   private static int getOffsetTop(Element elem) {
     return DOM.getElementPropertyInt(elem, "offsetTop");
@@ -122,7 +124,7 @@ public final class VerticalSplitPanel extends SplitPanel {
     preventElementPadding(bottomElem);
 
     setElementClassname(topElem, "top");
-    setElementClassname(splitElem, "splitter");
+    setElementClassname(splitElem, "vsplitter");
     setElementClassname(bottomElem, "bottom");
 
     setStyleName("gwt-VerticalSplitPanel");
@@ -133,6 +135,8 @@ public final class VerticalSplitPanel extends SplitPanel {
         updateBottomHeight();
       }
     });
+
+    setSplitPosition("50%");
   }
 
   /**
@@ -160,6 +164,11 @@ public final class VerticalSplitPanel extends SplitPanel {
    */
   public final void setBottomWidget(Widget w) {
     setWidget(BOTTOM, w);
+  }
+
+  public void setHeight(String height) {
+    super.setHeight(height);
+    updateBottomHeight();
   }
 
   public final void setSplitPosition(String size) {
