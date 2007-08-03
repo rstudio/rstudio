@@ -235,6 +235,6 @@ public class TreeTest extends GWTTestCase {
     d.remove();
     assertNull(dLabel.getParent());
     assertNull(eLabel.getParent());
-    assertFalse(childTree.getChildWidgets().contains(eLabel.getParent()));
+    assertFalse(childTree.getChildWidgets().containsKey(eLabel.getParent()));
   }
 }

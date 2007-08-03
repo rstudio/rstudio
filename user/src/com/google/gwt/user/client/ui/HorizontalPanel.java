@@ -49,7 +49,9 @@ public class HorizontalPanel extends CellPanel implements HasAlignment {
    * @param w the widget to be added
    */
   public void add(Widget w) {
-    insert(w, getWidgetCount());
+    Element td = createAlignedTd();
+    DOM.appendChild(tableRow, td);
+    super.add(w, td);
   }
 
   public HorizontalAlignmentConstant getHorizontalAlignment() {
@@ -72,9 +74,6 @@ public class HorizontalPanel extends CellPanel implements HasAlignment {
   public void insert(Widget w, int beforeIndex) {
     checkIndexBoundsForInsertion(beforeIndex);
 
-    Element td = DOM.createTD();
-    setCellHorizontalAlignment(td, horzAlign);
-    setCellVerticalAlignment(td, vertAlign);
     /*
      * The case where we reinsert an already existing child is tricky.
      * 
@@ -83,22 +82,20 @@ public class HorizontalPanel extends CellPanel implements HasAlignment {
      * we insert first and remove second, which means we DON'T need to adjust
      * the index.
      */
+    Element td = createAlignedTd();
     DOM.insertChild(tableRow, td, beforeIndex);
-    super.insert(w, td, beforeIndex);
+    super.insert(w, td, beforeIndex, false);
   }
 
   public boolean remove(Widget w) {
-    if (w.getParent() != this) {
-      return false;
-    }
-
     // Get the TD to be removed, before calling super.remove(), because
     // super.remove() will detach the child widget's element from its parent.
     Element td = DOM.getParent(w.getElement());
-    super.remove(w);
-
-    DOM.removeChild(tableRow, td);
-    return true;
+    boolean removed = super.remove(w);
+    if (removed) {
+      DOM.removeChild(tableRow, td);
+    }
+    return removed;
   }
 
   /**
@@ -119,5 +116,12 @@ public class HorizontalPanel extends CellPanel implements HasAlignment {
    */
   public void setVerticalAlignment(VerticalAlignmentConstant align) {
     vertAlign = align;
+  }
+
+  private Element createAlignedTd() {
+    Element td = DOM.createTD();
+    setCellHorizontalAlignment(td, horzAlign);
+    setCellVerticalAlignment(td, vertAlign);
+    return td;
   }
 }

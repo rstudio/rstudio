@@ -21,10 +21,10 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * A standard hierarchical tree widget. The tree contains a hierarchy of
@@ -108,9 +108,9 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   /**
-   * Map of TreeItem.ContentPanel --> Tree Items.
+   * Map of TreeItem.widget -> TreeItem.
    */
-  private final Set childWidgets = new HashSet();
+  private final Map childWidgets = new HashMap();
   private TreeItem curSelection;
   private final Element focusable;
   private FocusListenerCollection focusListeners;
@@ -331,7 +331,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   public Iterator iterator() {
     final Widget[] widgets = new Widget[childWidgets.size()];
-    childWidgets.toArray((Object[]) widgets);
+    childWidgets.keySet().toArray(widgets);
     return WidgetIterators.createWidgetIterator(this, widgets);
   }
 
@@ -484,15 +484,14 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   public boolean remove(Widget w) {
-    // Make sure this panel actually contains the child widget.
-    if (!childWidgets.contains(w)) {
+    // Validate.
+    TreeItem item = (TreeItem) childWidgets.get(w);
+    if (item == null) {
       return false;
     }
 
-    // Disown it.
-    disown(w);
-
-    childWidgets.remove(w);
+    // Delegate to TreeItem.setWidget, which performs correct removal.
+    item.setWidget(null);
     return true;
   }
 
@@ -637,31 +636,10 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     root.updateStateRecursive();
   }
 
-  void adopt(Widget widget, Element container) {
-    // Remove the widget from its current parent, if any.
-    widget.removeFromParent();
-
-    // Attach it at the DOM and GWT levels.
-    if (container != null) {
-      DOM.appendChild(container, widget.getElement());
-    }
-
-    childWidgets.add(widget);
+  void adopt(Widget widget, TreeItem treeItem) {
+    assert (!childWidgets.containsKey(widget));
+    childWidgets.put(widget, treeItem);
     widget.setParent(this);
-  }
-
-  void disown(Widget widget) {
-    // Only disown it if it's actually contained in this panel.
-    if (widget.getParent() != this) {
-      throw new IllegalArgumentException("w is not a child of this panel");
-    }
-
-    // setParent() must be called before removeChild() to ensure that the
-    // element is still attached when onDetach()/onUnload() are called.
-    Element elem = widget.getElement();
-    widget.setParent(null);
-    DOM.removeChild(DOM.getParent(elem), elem);
-    childWidgets.remove(widget);
   }
 
   void fireStateChanged(TreeItem item) {
@@ -673,12 +651,23 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   /*
    * This method exists solely to support unit tests.
    */
-  Set getChildWidgets() {
+  Map getChildWidgets() {
     return childWidgets;
   }
 
   TreeImages getImages() {
     return images;
+  }
+
+  void orphan(Widget widget) {
+    // Validation should already be done.
+    assert (widget.getParent() == this);
+
+    // Orphan.
+    widget.setParent(null);
+
+    // Logical detach.
+    childWidgets.remove(widget);
   }
 
   /**

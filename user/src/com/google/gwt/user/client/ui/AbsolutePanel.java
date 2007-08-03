@@ -114,6 +114,20 @@ public class AbsolutePanel extends ComplexPanel {
   }
 
   /**
+   * Overrides {@link ComplexPanel#remove(Widget)} to change the removed
+   * Widget's element back to static positioning.This is done so that any
+   * positioning changes to the widget that were done by the panel are undone
+   * when the widget is disowned from the panel.
+   */
+  public boolean remove(Widget w) {
+    boolean removed = super.remove(w);
+    if (removed) {
+      changeToStaticPositioning(w.getElement());
+    }
+    return removed;
+  }
+
+  /**
    * Sets the position of the specified child widget. Setting a position of
    * <code>(-1, -1)</code> will cause the child widget to be positioned
    * statically.
@@ -125,19 +139,6 @@ public class AbsolutePanel extends ComplexPanel {
   public void setWidgetPosition(Widget w, int left, int top) {
     checkWidgetParent(w);
     setWidgetPositionImpl(w, left, top);
-  }
-
-  /**
-   * Calls the superclass' <code>disown(Widget)</code> method, and sets the
-   * the positioning of the widget to static. This is done so that any
-   * positioning changes to the widget that were done by the panel are undone
-   * when the widget is disowned from the panel.
-   * 
-   * @param w the widget to be disowned
-   */
-  protected void disown(Widget w) {
-    super.disown(w);
-    changeToStaticPositioning(w.getElement());
   }
 
   private void checkWidgetParent(Widget w) {

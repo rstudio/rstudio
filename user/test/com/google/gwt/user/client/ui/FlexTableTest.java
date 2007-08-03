@@ -34,7 +34,7 @@ public class FlexTableTest extends HTMLTableTestBase {
     HTML widget_1_2 = new HTML("1,2");
 
     t.setWidget(0, 0, widget_3_1);
-    t.insertRow(0); 
+    t.insertRow(0);
     t.insertCell(1, 0);
     t.setWidget(1, 0, widget_3_0);
     t.insertRow(0);
@@ -56,15 +56,16 @@ public class FlexTableTest extends HTMLTableTestBase {
           ++hit;
           assertEquals(widget_1_2, widget);
         } else {
-          if (widget != null)
-            System.err.println("row:" + row + " col:" + col + "widgeT:"
+          if (widget != null) {
+            System.err.println("row: " + row + ", col: " + col + ", widget: "
                 + DOM.toString(widget.getElement()));
+          }
           assertNull(widget);
         }
       }
     }
     assertEquals(3, hit);
-    
+
     // Move widget.
     t.setWidget(3, 2, widget_1_2);
     assertEquals(widget_1_2, t.getWidget(3, 2));

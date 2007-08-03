@@ -52,6 +52,6 @@ public class FlowPanel extends ComplexPanel {
    *           range
    */
   public void insert(Widget w, int beforeIndex) {
-    super.insert(w, getElement(), beforeIndex);
+    super.insert(w, getElement(), beforeIndex, true);
   }
 }

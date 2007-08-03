@@ -47,7 +47,8 @@ public class DeckPanel extends ComplexPanel {
    * @param w the widget to be added
    */
   public void add(Widget w) {
-    insert(w, getWidgetCount());
+    super.add(w, getElement());
+    initChildWidget(w);
   }
 
   /**
@@ -68,24 +69,20 @@ public class DeckPanel extends ComplexPanel {
    *           range
    */
   public void insert(Widget w, int beforeIndex) {
-    super.insert(w, getElement(), beforeIndex);
-
-    Element child = w.getElement();
-    DOM.setStyleAttribute(child, "width", "100%");
-    DOM.setStyleAttribute(child, "height", "100%");
-    w.setVisible(false);
+    super.insert(w, getElement(), beforeIndex, true);
+    initChildWidget(w);
   }
 
   public boolean remove(Widget w) {
-    if (!super.remove(w)) {
-      return false;
-    }
+    boolean removed = super.remove(w);
+    if (removed) {
+      resetChildWidget(w);
 
-    if (visibleWidget == w) {
-      visibleWidget = null;
+      if (visibleWidget == w) {
+        visibleWidget = null;
+      }
     }
-
-    return true;
+    return removed;
   }
 
   /**
@@ -105,16 +102,21 @@ public class DeckPanel extends ComplexPanel {
   }
 
   /**
-   * Calls the superclass' <code>disown(Widget)</code> method, makes the
-   * widget visible, and clears the widget's width and height attributes. This
-   * is done so that any changes to the visibility, height, or width of the
-   * widget that were done by the panel are undone when the widget is disowned
-   * from the panel.
-   * 
-   * @param w the widget to be disowned
+   * Make the widget invisible, and set its width and height to full.
    */
-  protected void disown(Widget w) {
-    super.disown(w);
+  private void initChildWidget(Widget w) {
+    Element child = w.getElement();
+    DOM.setStyleAttribute(child, "width", "100%");
+    DOM.setStyleAttribute(child, "height", "100%");
+    w.setVisible(false);
+  }
+
+  /**
+   * Make the widget visible, and clear the widget's width and height
+   * attributes. This is done so that any changes to the visibility, height, or
+   * width of the widget that were done by the panel are undone.
+   */
+  private void resetChildWidget(Widget w) {
     DOM.setStyleAttribute(w.getElement(), "width", "");
     DOM.setStyleAttribute(w.getElement(), "height", "");
     w.setVisible(true);

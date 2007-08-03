@@ -136,7 +136,7 @@ public class StackPanel extends ComplexPanel {
 
     // Now that the DOM is connected, call insert (this ensures that onLoad() is
     // not fired until the child widget is attached to the DOM).
-    super.insert(w, tdb, beforeIndex);
+    super.insert(w, tdb, beforeIndex, false);
 
     // Update indices of all elements to the right.
     updateIndicesFrom(beforeIndex);
@@ -238,32 +238,27 @@ public class StackPanel extends ComplexPanel {
   }
 
   private boolean remove(Widget child, int index) {
-    // TODO: is this check really necessary?
-    if (child.getParent() != this) {
-      return false;
-    }
-
     // Make sure to call this before disconnecting the DOM.
-    super.remove(child);
+    boolean removed = super.remove(child);
+    if (removed) {
+      // Calculate which internal table elements to remove.
+      int rowIndex = 2 * index;
+      Element tr = DOM.getChild(body, rowIndex);
+      DOM.removeChild(body, tr);
+      tr = DOM.getChild(body, rowIndex);
+      DOM.removeChild(body, tr);
 
-    // Correct visible stack for new location.
-    if (visibleStack == index) {
-      visibleStack = -1;
-    } else if (visibleStack > index) {
-      --visibleStack;
+      // Correct visible stack for new location.
+      if (visibleStack == index) {
+        visibleStack = -1;
+      } else if (visibleStack > index) {
+        --visibleStack;
+      }
+
+      // Update indices of all elements to the right.
+      updateIndicesFrom(rowIndex);
     }
-
-    // Calculate which internal table elements to remove.
-    int rowIndex = 2 * index;
-    Element tr = DOM.getChild(body, rowIndex);
-    DOM.removeChild(body, tr);
-    tr = DOM.getChild(body, rowIndex);
-    DOM.removeChild(body, tr);
-
-    // Update indices of all elements to the right.
-    updateIndicesFrom(rowIndex);
-
-    return true;
+    return removed;
   }
 
   private void setStackVisible(int index, boolean visible) {

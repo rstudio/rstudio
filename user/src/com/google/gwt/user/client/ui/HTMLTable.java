@@ -191,7 +191,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      */
     public void setStylePrimaryName(int row, int column, String styleName) {
       UIObject.setStylePrimaryName(getCellElement(bodyElem, row, column),
-        styleName);
+          styleName);
     }
 
     /**
@@ -305,8 +305,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * @return the element
      */
     private native Element getCellElement(Element table, int row, int col) /*-{
-      var out = table.rows[row].cells[col];
-      return (out == null ? null : out);
+     var out = table.rows[row].cells[col];
+     return (out == null ? null : out);
      }-*/;
 
     /**
@@ -583,8 +583,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     }
 
     protected native Element getRow(Element elem, int row)/*-{
-      return elem.rows[row];
-    }-*/;
+     return elem.rows[row];
+     }-*/;
 
     /**
      * Convenience methods to set an attribute on a row.
@@ -608,6 +608,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     private static class FreeNode {
       int index;
       FreeNode next;
+
       public FreeNode(int index, FreeNode next) {
         this.index = index;
         this.next = next;
@@ -615,21 +616,21 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     }
 
     private static native void clearWidgetIndex(Element elem) /*-{
-      elem["__widgetID"] = null;
-    }-*/;
+     elem["__widgetID"] = null;
+     }-*/;
 
     private static native int getWidgetIndex(Element elem) /*-{
-      var index = elem["__widgetID"];
-      return (index == null) ? -1 : index;
-    }-*/;
+     var index = elem["__widgetID"];
+     return (index == null) ? -1 : index;
+     }-*/;
 
     private static native void setWidgetIndex(Element elem, int index) /*-{
-      elem["__widgetID"] = index;
-    }-*/;
+     elem["__widgetID"] = index;
+     }-*/;
 
     private FreeNode freeList = null;
 
-    private ArrayList widgetList = new ArrayList();
+    private final ArrayList widgetList = new ArrayList();
 
     /**
      * Returns the widget associated with the given element.
@@ -706,7 +707,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
             throw new IllegalStateException();
           }
           Widget w = (Widget) widgetList.get(lastIndex);
-          removeImpl(w.getElement(), lastIndex);
+          assert (w.getParent() instanceof HTMLTable);
+          w.removeFromParent();
           lastIndex = -1;
         }
 
@@ -975,12 +977,20 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    * @return was the widget removed from the table.
    */
   public boolean remove(Widget widget) {
-    // Make sure the Widget is actually contained in this table.
+    // Validate.
     if (widget.getParent() != this) {
       return false;
     }
-    widgetMap.removeWidgetByElement(widget.getElement());
-    disown(widget);
+
+    // Orphan.
+    orphan(widget);
+
+    // Physical detach.
+    Element elem = widget.getElement();
+    DOM.removeChild(DOM.getParent(elem), elem);
+
+    // Logical detach.
+    widgetMap.removeWidgetByElement(elem);
     return true;
   }
 
@@ -1076,18 +1086,18 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
   public void setWidget(int row, int column, Widget widget) {
     prepareCell(row, column);
     if (widget != null) {
-      // Call this early to ensure that the table doesn't end up partially
-      // constructed when an exception is thrown from adopt().
       widget.removeFromParent();
 
-      // Attach it to the cell's TD.
+      // Removes any existing widget.
       Element td = cleanCell(row, column, true);
 
-      // Add the widget to the map.
+      // Logical attach.
       widgetMap.putWidget(widget);
 
-      // Set the widget's parent.
-      adopt(widget, td);
+      // Physical attach.
+      DOM.appendChild(td, widget.getElement());
+
+      adopt(widget);
     }
   }
 
@@ -1152,8 +1162,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    * @return number of columns in the row
    */
   protected native int getDOMCellCount(Element tableBody, int row) /*-{
-    return tableBody.rows[row].cells.length;
-  }-*/;
+   return tableBody.rows[row].cells.length;
+   }-*/;
 
   /**
    * Directly ask the underlying DOM what the cell count on the given row is.
@@ -1175,8 +1185,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
   }
 
   protected native int getDOMRowCount(Element elem) /*-{
-    return elem.rows.length;
-  }-*/;
+   return elem.rows.length;
+   }-*/;
 
   /**
    * Determines the TD associated with the specified event.
@@ -1305,9 +1315,9 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
   }
 
   /**
-   * Subclasses must implemea whaccessed. If the row already exists, this method
-   * must do nothing. Otherwise, a subclass must either ensure that the row
-   * exists or throw an {@link IndexOutOfBoundsException}.
+   * Subclasses must implement this method. If the row already exists, this
+   * method must do nothing. Otherwise, a subclass must either ensure that the
+   * row exists or throw an {@link IndexOutOfBoundsException}.
    * 
    * @param row the cell's row
    */

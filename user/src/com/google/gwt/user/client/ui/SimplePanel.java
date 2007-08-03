@@ -53,7 +53,8 @@ public class SimplePanel extends Panel {
   public void add(Widget w) {
     // Can't add() more than one widget to a SimplePanel.
     if (getWidget() != null) {
-      throw new IllegalStateException("SimplePanel can only contain one child widget");
+      throw new IllegalStateException(
+          "SimplePanel can only contain one child widget");
     }
     setWidget(w);
   }
@@ -95,31 +96,52 @@ public class SimplePanel extends Panel {
   }
 
   public boolean remove(Widget w) {
-    if (widget == w) {
-      disown(w);
-      widget = null;
-      return true;
+    // Validate.
+    if (widget != w) {
+      return false;
     }
-    return false;
+
+    // Orphan.
+    orphan(w);
+
+    // Physical detach.
+    DOM.removeChild(getContainerElement(), w.getElement());
+
+    // Logical detach.
+    widget = null;
+    return true;
   }
 
   /**
    * Sets this panel's widget. Any existing child widget will be removed.
    * 
-   * @param w the panel's new widget (<code>null</code> will clear the panel)
+   * @param w the panel's new widget, or <code>null</code> to clear the panel
    */
   public void setWidget(Widget w) {
-    // If there is already a widget attached, remove it.
-    if (widget != null) {
-      disown(widget);
+    // Validate
+    if (w == widget) {
+      return;
     }
+
+    // Detach new child.
+    if (w != null) {
+      w.removeFromParent();
+    }
+
+    // Remove old child.
+    if (widget != null) {
+      remove(widget);
+    }
+
+    // Logical attach.
+    widget = w;
 
     if (w != null) {
-      // Adopt the child.
-      adopt(w, getContainerElement());
-    }
+      // Physical attach.
+      DOM.appendChild(getContainerElement(), widget.getElement());
 
-    widget = w;
+      adopt(w);
+    }
   }
 
   /**

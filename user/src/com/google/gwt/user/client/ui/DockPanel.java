@@ -18,7 +18,6 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
@@ -89,7 +88,6 @@ public class DockPanel extends CellPanel implements HasAlignment {
   private HorizontalAlignmentConstant horzAlign = ALIGN_LEFT;
   private VerticalAlignmentConstant vertAlign = ALIGN_TOP;
   private Widget center;
-  private ArrayList children = new ArrayList();
 
   /**
    * Creates an empty dock panel.
@@ -111,28 +109,36 @@ public class DockPanel extends CellPanel implements HasAlignment {
    *           there is already a different widget there
    */
   public void add(Widget widget, DockLayoutConstant direction) {
-    if (widget.getParent() == this) {
-      remove(widget);
-    }
-
-    // Ensure that a second 'center' widget is not being added.
+    // Validate
     if (direction == CENTER) {
-      if (center != null) {
+      // Early out on the case of reinserting the center at the center.
+      if (widget == center) {
+        return;
+      } else if (center != null) {
+        // Ensure a second 'center' widget is not being added.
         throw new IllegalArgumentException(
             "Only one CENTER widget may be added");
       }
+    }
+
+    // Detach new child.
+    widget.removeFromParent();
+
+    // Logical attach.
+    getChildren().add(widget);
+    if (direction == CENTER) {
       center = widget;
     }
 
+    // Physical attach.
     LayoutData layout = new LayoutData(direction);
     widget.setLayoutData(layout);
     setCellHorizontalAlignment(widget, horzAlign);
     setCellVerticalAlignment(widget, vertAlign);
+    realizeTable();
 
-    // Store the child widget in the local child list, which is used by
-    // realizeTable().
-    children.add(widget);
-    realizeTable(widget);
+    // Adopt.
+    adopt(widget);
   }
 
   public HorizontalAlignmentConstant getHorizontalAlignment() {
@@ -158,17 +164,15 @@ public class DockPanel extends CellPanel implements HasAlignment {
   }
 
   public boolean remove(Widget w) {
-    // Clear the center widget.
-    if (w == center) {
-      center = null;
+    boolean removed = super.remove(w);
+    if (removed) {
+      // Clear the center widget.
+      if (w == center) {
+        center = null;
+      }
+      realizeTable();
     }
-
-    boolean ret = super.remove(w);
-    if (ret) {
-      children.remove(w);
-      realizeTable(null);
-    }
-    return ret;
+    return removed;
   }
 
   public void setCellHeight(Widget w, String height) {
@@ -225,46 +229,17 @@ public class DockPanel extends CellPanel implements HasAlignment {
   }
 
   /**
-   * Used by {@link #realizeTable(Widget)} to ensure that super.add() is called
-   * at the right time for newly added widgets.
-   * 
-   * @param parent the parent element (always a TD)
-   * @param child the child element to be added
-   * @param beingAdded the widget that is currently being added to the
-   *          DockPanel, if any
+   * (Re)creates the DOM structure of the table representing the DockPanel,
+   * based on the order and layout of the children.
    */
-  private void appendAndMaybeAdopt(Element parent, Element child,
-      Widget beingAdded) {
-    if (beingAdded != null) {
-      // If beingAdded is specified, and the child element is beingAdded's
-      // element, then call super.add() on its behalf.
-      if (DOM.compare(child, beingAdded.getElement())) {
-        super.add(beingAdded, parent);
-        return;
-      }
-    }
-
-    // Normal case -- just append it.
-    DOM.appendChild(parent, child);
-  }
-
-  /**
-   * Creates the table representing the DockPanel. This method uses the local
-   * list of children in {@link #children}, because when add() is called, the
-   * superclass' child list doesn't yet contain the new child.
-   * 
-   * @param beingAdded if a widget is being added, it must be specified here.
-   *          This allows the method to take care of calling super.add() on its
-   *          behalf, at the right time.
-   */
-  private void realizeTable(Widget beingAdded) {
+  private void realizeTable() {
     Element bodyElem = getBody();
     while (DOM.getChildCount(bodyElem) > 0) {
       DOM.removeChild(bodyElem, DOM.getChild(bodyElem, 0));
     }
 
     int rowCount = 1, colCount = 1;
-    for (Iterator it = children.iterator(); it.hasNext();) {
+    for (Iterator it = getChildren().iterator(); it.hasNext();) {
       Widget child = (Widget) it.next();
       DockLayoutConstant dir = ((LayoutData) child.getLayoutData()).direction;
       if ((dir == NORTH) || (dir == SOUTH)) {
@@ -285,7 +260,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
     int northRow = 0, southRow = rowCount - 1;
     Element centerTd = null;
 
-    for (Iterator it = children.iterator(); it.hasNext();) {
+    for (Iterator it = getChildren().iterator(); it.hasNext();) {
       Widget child = (Widget) it.next();
       LayoutData layout = (LayoutData) child.getLayoutData();
 
@@ -298,24 +273,24 @@ public class DockPanel extends CellPanel implements HasAlignment {
 
       if (layout.direction == NORTH) {
         DOM.insertChild(rows[northRow].tr, td, rows[northRow].center);
-        appendAndMaybeAdopt(td, child.getElement(), beingAdded);
+        DOM.appendChild(td, child.getElement());
         DOM.setElementPropertyInt(td, "colSpan", eastCol - westCol + 1);
         ++northRow;
       } else if (layout.direction == SOUTH) {
         DOM.insertChild(rows[southRow].tr, td, rows[southRow].center);
-        appendAndMaybeAdopt(td, child.getElement(), beingAdded);
+        DOM.appendChild(td, child.getElement());
         DOM.setElementPropertyInt(td, "colSpan", eastCol - westCol + 1);
         --southRow;
       } else if (layout.direction == WEST) {
         TmpRow row = rows[northRow];
         DOM.insertChild(row.tr, td, row.center++);
-        appendAndMaybeAdopt(td, child.getElement(), beingAdded);
+        DOM.appendChild(td, child.getElement());
         DOM.setElementPropertyInt(td, "rowSpan", southRow - northRow + 1);
         ++westCol;
       } else if (layout.direction == EAST) {
         TmpRow row = rows[northRow];
         DOM.insertChild(row.tr, td, row.center);
-        appendAndMaybeAdopt(td, child.getElement(), beingAdded);
+        DOM.appendChild(td, child.getElement());
         DOM.setElementPropertyInt(td, "rowSpan", southRow - northRow + 1);
         --eastCol;
       } else if (layout.direction == CENTER) {
@@ -331,7 +306,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
     if (center != null) {
       TmpRow row = rows[northRow];
       DOM.insertChild(row.tr, centerTd, row.center);
-      appendAndMaybeAdopt(centerTd, center.getElement(), beingAdded);
+      DOM.appendChild(centerTd, center.getElement());
     }
   }
 }

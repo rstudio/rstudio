@@ -179,8 +179,7 @@ public class Widget extends UIObject implements EventListener {
     if (isAttached()) {
       // Remove old event listener to avoid leaking. onDetach will not do this
       // for us, because it is only called when the widget itself is detached
-      // from
-      // the document.
+      // from the document.
       DOM.setEventListener(getElement(), null);
     }
 
@@ -220,20 +219,29 @@ public class Widget extends UIObject implements EventListener {
    * {@link Panel} and {@link Composite}.
    * 
    * @param parent the widget's new parent
+   * @throws IllegalStateException if <code>parent</code> is non-null and the
+   *           widget already has a parent
    */
   void setParent(Widget parent) {
     Widget oldParent = this.parent;
-    this.parent = parent;
     if (parent == null) {
       if (oldParent != null && oldParent.isAttached()) {
         onDetach();
         assert !isAttached() : "Failure of " + GWT.getTypeName(this)
             + " to call super.onDetach()";
       }
-    } else if (parent.isAttached()) {
-      onAttach();
-      assert isAttached() : "Failure of " + GWT.getTypeName(this)
-          + " to call super.onAttach()";
+      this.parent = null;
+    } else {
+      if (oldParent != null) {
+        throw new IllegalStateException(
+            "Cannot set a new parent without first clearing the old parent");
+      }
+      this.parent = parent;
+      if (parent.isAttached()) {
+        onAttach();
+        assert isAttached() : "Failure of " + GWT.getTypeName(this)
+            + " to call super.onAttach()";
+      }
     }
   }
 }

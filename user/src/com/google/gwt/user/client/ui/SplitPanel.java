@@ -167,10 +167,6 @@ abstract class SplitPanel extends Panel {
   }
 
   public boolean remove(Widget widget) {
-    if (widget == null) {
-      throw new IllegalArgumentException("Widget must not be null");
-    }
-
     if (widgets[0] == widget) {
       setWidget(0, null);
       return true;
@@ -178,7 +174,6 @@ abstract class SplitPanel extends Panel {
       setWidget(1, null);
       return true;
     }
-
     return false;
   }
 
@@ -226,14 +221,35 @@ abstract class SplitPanel extends Panel {
    * @param w the widget
    */
   protected final void setWidget(int index, Widget w) {
-    if (widgets[index] != null) {
-      disown(widgets[index]);
+    Widget oldWidget = widgets[index];
+
+    // Validate.
+    if (oldWidget == w) {
+      return;
     }
 
+    // Detach the new child.
+    if (w != null) {
+      w.removeFromParent();
+    }
+
+    // Remove the old child.
+    if (oldWidget != null) {
+      // Orphan old.
+      orphan(oldWidget);
+      // Physical detach old.
+      DOM.removeChild(elements[index], oldWidget.getElement());
+    }
+
+    // Logical detach old / attach new.
     widgets[index] = w;
 
     if (w != null) {
-      adopt(w, elements[index]);
+      // Physical attach new.
+      DOM.appendChild(elements[index], w.getElement());
+
+      // Adopt new.
+      adopt(w);
     }
   }
 

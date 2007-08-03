@@ -120,16 +120,22 @@ public class TreeItem extends UIObject implements HasHTML {
    */
 
   public void addItem(TreeItem item) {
-    // If this element already belongs to a tree or tree item, it should be
-    // removed.
+    // Detach item from existing parent.
     if ((item.getParentItem() != null) || (item.getTree() != null)) {
       item.remove();
     }
-    item.setTree(tree);
+
+    // Logical attach.
     item.setParentItem(this);
     children.add(item);
+
+    // Physical attach.
     DOM.setStyleAttribute(item.getElement(), "marginLeft", "16px");
     DOM.appendChild(childSpanElem, item.getElement());
+
+    // Adopt.
+    item.setTree(tree);
+
     if (children.size() == 1) {
       updateState();
     }
@@ -266,15 +272,20 @@ public class TreeItem extends UIObject implements HasHTML {
    */
 
   public void removeItem(TreeItem item) {
+    // Validate.
     if (!children.contains(item)) {
       return;
     }
-    // Update Item state.
-    item.setTree(null);
-    item.setParentItem(null);
 
-    children.remove(item);
+    // Orphan.
+    item.setTree(null);
+
+    // Physical detach.
     DOM.removeChild(childSpanElem, item.getElement());
+
+    // Logical detach.
+    item.setParentItem(null);
+    children.remove(item);
 
     if (children.size() == 0) {
       updateState();
@@ -355,19 +366,34 @@ public class TreeItem extends UIObject implements HasHTML {
   /**
    * Sets the current widget. Any existing child widget will be removed.
    * 
-   * @param widget Widget to set
+   * @param newWidget Widget to set
    */
   public void setWidget(Widget newWidget) {
-    if (widget != null) {
-      tree.remove(widget);
+    // Detach new child from old parent.
+    if (newWidget != null) {
+      newWidget.removeFromParent();
     }
 
+    // Detach old child from tree.
+    if (widget != null && tree != null) {
+      tree.orphan(widget);
+    }
+
+    // Physical detach old from self.
     // Clear out any existing content before adding a widget.
     DOM.setInnerHTML(contentElem, "");
 
+    // Logical detach old/attach new.
     widget = newWidget;
-    if ((widget != null) && (tree != null)) {
-      tree.adopt(widget, contentElem);
+
+    if (newWidget != null) {
+      // Physical attach new.
+      DOM.appendChild(contentElem, newWidget.getElement());
+
+      // Attach child to tree.
+      if (tree != null) {
+        tree.adopt(widget, this);
+      }
     }
   }
 
@@ -426,29 +452,33 @@ public class TreeItem extends UIObject implements HasHTML {
     this.parent = parent;
   }
 
-  void setTree(Tree tree) {
-    if (this.tree == tree) {
+  void setTree(Tree newTree) {
+    // Early out.
+    if (tree == newTree) {
       return;
     }
 
-    if (this.tree != null) {
-      if (this.tree.getSelectedItem() == this) {
-        this.tree.setSelectedItem(null);
+    // Remove this item from existing tree.
+    if (tree != null) {
+      if (tree.getSelectedItem() == this) {
+        tree.setSelectedItem(null);
       }
 
-      // Detach widget from old tree.
       if (widget != null) {
-        this.tree.disown(widget);
+        tree.orphan(widget);
       }
     }
-    this.tree = tree;
+
+    tree = newTree;
     for (int i = 0, n = children.size(); i < n; ++i) {
-      ((TreeItem) children.get(i)).setTree(tree);
+      ((TreeItem) children.get(i)).setTree(newTree);
     }
     updateState();
-    if (tree != null) {
+
+    if (newTree != null) {
       if (widget != null) {
-        tree.adopt(widget, contentElem);
+        // Add my widget to the new tree.
+        newTree.adopt(widget, this);
       }
     }
   }

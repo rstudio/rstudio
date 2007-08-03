@@ -73,20 +73,23 @@ public abstract class Composite extends Widget {
    * @param widget the widget to be wrapped
    */
   protected void initWidget(Widget widget) {
-    // Make sure the widget is not being set twice.
+    // Validate.  Make sure the widget is not being set twice.
     if (this.widget != null) {
       throw new IllegalStateException("Composite.initWidget() may only be "
           + "called once.");
     }
 
+    // Detach the new child.
     widget.removeFromParent();
 
     // Use the contained widget's element as the composite's element,
     // effectively merging them within the DOM.
     setElement(widget.getElement());
 
-    // The Composite now owns this widget.
+    // Logical attach.
     this.widget = widget;
+    
+    // Adopt.
     widget.setParent(this);
   }
 
@@ -107,9 +110,9 @@ public abstract class Composite extends Widget {
   }
 
   /**
-   * Sets the widget to be wrapped by the composite.
+   * This method was for initializing the Widget to be wrapped by this Composite,
+   * but has been deprecated in favor of {@link #initWidget(Widget)}.
    * 
-   * @param widget the widget to be wrapped
    * @deprecated this method is deprecated, and will be removed when GWT leaves
    *             beta (use {@link #initWidget(Widget)} instead)
    */

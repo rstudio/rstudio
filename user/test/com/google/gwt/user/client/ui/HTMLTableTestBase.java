@@ -86,7 +86,7 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
     Label l = new Label("hello");
     t.setWidget(0, 0, l);
     Iterator iter = t.iterator();
-    iter.next();
+    assertEquals(l, iter.next());
     iter.remove();
     Iterator iter2 = t.iterator();
     assertFalse(iter2.hasNext());
@@ -101,15 +101,17 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
     // Check swapping widgets.
     Widget w2 = new Label("ba");
     t.setWidget(0, 0, w2);
-    assertEquals(w2, t.iterator().next());
+    Iterator iter4 = t.iterator();
+    assertEquals(w2, iter4.next());
+    assertFalse(iter4.hasNext());
 
     // Check put after put.
     Widget w3 = new Label("be");
     t.setWidget(1, 1, w3);
-    Iterator iter4 = t.iterator();
-    assertEquals(w2, iter4.next());
-    assertEquals(w3, iter4.next());
-    assertFalse(iter4.hasNext());
+    Iterator iter5 = t.iterator();
+    assertEquals(w2, iter5.next());
+    assertEquals(w3, iter5.next());
+    assertFalse(iter5.hasNext());
   }
 
   public void testSettingCellAttributes() {
