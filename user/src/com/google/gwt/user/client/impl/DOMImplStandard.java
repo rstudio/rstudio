@@ -29,10 +29,10 @@ abstract class DOMImplStandard extends DOMImpl {
     return (elem1 == elem2);
   }-*/;
 
-  public native Element createInputRadioElement(String group) /*-{
+  public native Element createInputRadioElement(String name) /*-{
     var elem = $doc.createElement("INPUT");
     elem.type = 'radio';
-    elem.name = group;
+    elem.name = name;
     return elem;
   }-*/;
 

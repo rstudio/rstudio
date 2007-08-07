@@ -201,12 +201,12 @@ public class DOM {
   /**
    * Creates an HTML INPUT type='RADIO' element.
    *
-   * @param group the name of the group with which this radio button will be
+   * @param name the name of the group with which this radio button will be
    *          associated
    * @return the newly-created element
    */
-  public static Element createInputRadio(String group) {
-    return impl.createInputRadioElement(group);
+  public static Element createInputRadio(String name) {
+    return impl.createInputRadioElement(name);
   }
 
   /**

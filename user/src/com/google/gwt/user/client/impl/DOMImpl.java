@@ -41,7 +41,7 @@ public abstract class DOMImpl {
     return e;
   }-*/;
 
-  public abstract Element createInputRadioElement(String group);
+  public abstract Element createInputRadioElement(String name);
 
   public Element createSelectElement(boolean multiple) {
     Element select = createElement("select");

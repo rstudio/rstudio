@@ -44,8 +44,8 @@ class DOMImplIE6 extends DOMImpl {
     return (elem1.uniqueID == elem2.uniqueID);
   }-*/;
 
-  public native Element createInputRadioElement(String group) /*-{
-    return $doc.createElement("<INPUT type='RADIO' name='" + group + "'>");
+  public native Element createInputRadioElement(String name) /*-{
+    return $doc.createElement("<INPUT type='RADIO' name='" + name + "'>");
   }-*/;
 
   /**

@@ -180,4 +180,39 @@ public class CheckBox extends ButtonBase implements HasName {
     DOM.setEventListener(inputElem, null);
     setChecked(isChecked());
   }
+  
+  /**
+   * Replace the current input element with a new one.
+   * 
+   * @param elem the new input element
+   */
+  protected void replaceInputElement(Element elem) {
+    // Collect information we need to set
+    int tabIndex = getTabIndex();
+    boolean checked = isChecked();
+    boolean enabled = isEnabled();
+    String uid = DOM.getElementProperty(inputElem, "id"); 
+    String accessKey = DOM.getElementProperty(inputElem, "accessKey");
+    
+    // Clear out the old input element
+    setChecked(false);
+    DOM.setElementProperty(inputElem, "id", "");
+    DOM.setElementProperty(inputElem, "accessKey", "");
+    
+    // Quickly do the actual replace
+    DOM.removeChild(getElement(), inputElem);
+    DOM.insertChild(getElement(), elem, 0);
+    inputElem = elem;
+
+    // Setup the new element
+    DOM.sinkEvents(inputElem, DOM.getEventsSunk(this.getElement()));
+    DOM.setEventListener(inputElem, this);
+    DOM.setElementProperty(inputElem, "id", uid);
+    if (accessKey != "") {
+      DOM.setElementProperty(inputElem, "accessKey", accessKey);
+    }
+    setTabIndex(tabIndex);
+    setChecked(checked);
+    setEnabled(enabled);
+  }
 }

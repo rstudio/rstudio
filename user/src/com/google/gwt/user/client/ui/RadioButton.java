@@ -36,13 +36,18 @@ import com.google.gwt.user.client.DOM;
 public class RadioButton extends CheckBox {
 
   /**
-   * Creates a new radio associated with a particular group. All radio buttons
-   * associated with the same group name belong to a mutually-exclusive set.
+   * Creates a new radio associated with a particular group name. All radio
+   * buttons associated with the same group name belong to a mutually-exclusive
+   * set.
    * 
-   * @param group the group with which to associate the radio button
+   * Radio buttons are grouped by their name attribute, so changing their
+   * name using the setName() method will also change their associated
+   * group.
+   * 
+   * @param name the group name with which to associate the radio button
    */
-  public RadioButton(String group) {
-    super(DOM.createInputRadio(group));
+  public RadioButton(String name) {
+    super(DOM.createInputRadio(name));
     setStyleName("gwt-RadioButton");
   }
 
@@ -51,11 +56,15 @@ public class RadioButton extends CheckBox {
    * with the given HTML label. All radio buttons associated with the same group
    * name belong to a mutually-exclusive set.
    * 
-   * @param group the group with which to associate the radio button
+   * Radio buttons are grouped by their name attribute, so changing their
+   * name using the setName() method will also change their associated
+   * group.
+   * 
+   * @param name the group name with which to associate the radio button
    * @param label this radio button's label
    */
-  public RadioButton(String group, String label) {
-    this(group);
+  public RadioButton(String name, String label) {
+    this(name);
     setText(label);
   }
 
@@ -65,16 +74,37 @@ public class RadioButton extends CheckBox {
    * buttons associated with the same group name belong to a mutually-exclusive
    * set.
    * 
-   * @param group the group with which to associate the radio button
+   * Radio buttons are grouped by their name attribute, so changing their
+   * name using the setName() method will also change their associated
+   * group.
+   * 
+   * @param name name the group with which to associate the radio button
    * @param label this radio button's label
    * @param asHTML <code>true</code> to treat the specified label as HTML
    */
-  public RadioButton(String group, String label, boolean asHTML) {
-    this(group);
+  public RadioButton(String name, String label, boolean asHTML) {
+    this(name);
     if (asHTML) {
       setHTML(label);
     } else {
       setText(label);
     }
+  }
+
+  /**
+   * Change the group name of this radio button.
+   * 
+   * Radio buttons are grouped by their name attribute, so changing their
+   * name using the setName() method will also change their associated
+   * group.
+   * 
+   * If changing this group name results in a new radio group with
+   * multiple radio buttons selected, this radio button will remain
+   * selected and the other radio buttons will be unselected.
+   *  
+   * @param name name the group with which to associate the radio button
+   */
+  public void setName(String name) {
+    super.replaceInputElement(DOM.createInputRadio(name));
   }
 }
