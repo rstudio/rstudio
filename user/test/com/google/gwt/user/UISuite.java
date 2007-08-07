@@ -16,6 +16,7 @@
 package com.google.gwt.user;
 
 import com.google.gwt.user.client.ui.AbsolutePanelTest;
+import com.google.gwt.user.client.ui.CheckBoxTest;
 import com.google.gwt.user.client.ui.CustomButtonTest;
 import com.google.gwt.user.client.ui.DOMTest;
 import com.google.gwt.user.client.ui.DisclosurePanelTest;
@@ -37,6 +38,7 @@ import com.google.gwt.user.client.ui.NamedFrameTest;
 import com.google.gwt.user.client.ui.PanelTest;
 import com.google.gwt.user.client.ui.PopupTest;
 import com.google.gwt.user.client.ui.PrefixTreeTest;
+import com.google.gwt.user.client.ui.RadioButtonTest;
 import com.google.gwt.user.client.ui.ScrollPanelTest;
 import com.google.gwt.user.client.ui.SplitPanelTest;
 import com.google.gwt.user.client.ui.StackPanelTest;
@@ -61,6 +63,7 @@ public class UISuite {
         "Test for suite for the com.google.gwt.ui module");
 
     suite.addTestSuite(AbsolutePanelTest.class);
+    suite.addTestSuite(CheckBoxTest.class);
     suite.addTestSuite(CustomButtonTest.class);
     suite.addTestSuite(DisclosurePanelTest.class);
     suite.addTestSuite(DockPanelTest.class);
@@ -82,6 +85,7 @@ public class UISuite {
     suite.addTestSuite(PanelTest.class);
     suite.addTestSuite(PopupTest.class);
     suite.addTestSuite(PrefixTreeTest.class);
+    suite.addTestSuite(RadioButtonTest.class);
     suite.addTestSuite(ScrollPanelTest.class);
     suite.addTestSuite(SplitPanelTest.class);
     suite.addTestSuite(StackPanelTest.class);
