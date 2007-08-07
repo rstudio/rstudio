@@ -382,7 +382,7 @@ public class JavaToJavaScriptCompiler {
       Pruner.exec(jprogram, false);
 
       // (7) Generate a JavaScript code DOM from the Java type declarations
-      GenerateJavaScriptAST.exec(jprogram, jsProgram);
+      GenerateJavaScriptAST.exec(jprogram, jsProgram, obfuscate, prettyNames);
 
       // (8) Fix invalid constructs created during JS AST gen
       JsNormalizer.exec(jsProgram);

@@ -74,6 +74,11 @@ public class CastNormalizer {
           instantiatedArrayTypes.add(arrayType);
         }
       }
+
+      // Reserve query id 1 for java.lang.String to facilitate the mashup case.
+      // Multiple GWT modules need to modify String's prototype the same way.
+      recordCastInternal(program.getTypeJavaLangString(),
+          program.getTypeJavaLangObject());
     }
 
     public void computeTypeIds() {
@@ -81,6 +86,10 @@ public class CastNormalizer {
       // the 0th entry is the "always false" entry
       classes.add(null);
       jsonObjects.add(new JsonObject(program));
+
+      // Do java.lang.String first to reserve typeId 1 for the mashup case.
+      computeSourceClass(program.getTypeJavaLangString());
+      assert (classes.size() == 2);
 
       /*
        * Compute the list of classes than can successfully satisfy cast

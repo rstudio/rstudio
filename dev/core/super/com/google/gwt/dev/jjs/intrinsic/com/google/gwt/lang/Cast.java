@@ -29,12 +29,8 @@ final class Cast {
   protected static Object typeIdArray;
 
   protected static native boolean canCast(int srcId, int dstId) /*-{
-    // either a null or 0 both will be false, short circuit
-    if (!srcId)
-      return false;
-    
-    // force to boolean
-    return !!@com.google.gwt.lang.Cast::typeIdArray[srcId][dstId];
+    // Force to boolean.
+    return !!(srcId && @com.google.gwt.lang.Cast::typeIdArray[srcId][dstId]);
   }-*/;
 
   static native String charToString(char x) /*-{
@@ -50,10 +46,8 @@ final class Cast {
   }-*/;
 
   static native boolean instanceOf(Object src, int dstId) /*-{
-    if (src==null)
-      return false;
-
-    return @com.google.gwt.lang.Cast::canCast(II)(src.@java.lang.Object::typeId,dstId);
+    return (src != null) &&
+        @com.google.gwt.lang.Cast::canCast(II)(src.@java.lang.Object::typeId,dstId);
   }-*/;
 
   /**

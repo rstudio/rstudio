@@ -136,6 +136,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
@@ -167,7 +168,14 @@ public class GenerateJavaScriptAST {
       if (x.isStatic()) {
         names.put(x, topScope.declareName(mangleName, name));
       } else {
-        names.put(x, peek().declareName(mangleName, name));
+        JsName jsName;
+        if (belongsToObject(x)) {
+          jsName = peek().declareName(mangleNameForObject(x));
+          jsName.setObfuscatable(false);
+        } else {
+          jsName = peek().declareName(mangleName, name);
+        }
+        names.put(x, jsName);
       }
     }
 
@@ -204,18 +212,6 @@ public class GenerateJavaScriptAST {
 
     // @Override
     public void endVisit(JProgram x, Context ctx) {
-      // visit special things that may have been culled
-      JField field = x.getSpecialField("Object.typeId");
-      names.put(field, objectScope.declareName(mangleName(field),
-          field.getName()));
-
-      field = x.getSpecialField("Object.typeName");
-      names.put(field, objectScope.declareName(mangleName(field),
-          field.getName()));
-
-      field = x.getSpecialField("Cast.typeIdArray");
-      names.put(field, topScope.declareName(mangleName(field), field.getName()));
-
       /*
        * put the null method and field into objectScope since they can be
        * referenced as instance on null-types (as determined by type flow)
@@ -298,7 +294,13 @@ public class GenerateJavaScriptAST {
       if (!x.isStatic()) {
         if (getPolyName(x) == null) {
           String mangleName = mangleNameForPoly(x);
-          JsName polyName = interfaceScope.declareName(mangleName, name);
+          JsName polyName;
+          if (belongsToObject(x)) {
+            polyName = interfaceScope.declareName(mangleNameForObject(x));
+            polyName.setObfuscatable(false);
+          } else {
+            polyName = interfaceScope.declareName(mangleName, name);
+          }
           polymorphicNames.put(x, polyName);
         }
       }
@@ -333,7 +335,7 @@ public class GenerateJavaScriptAST {
       push(jsFunction.getScope());
       return true;
     }
-    
+
     public boolean visit(JTryStatement x, Context ctx) {
       accept(x.getTryBlock());
 
@@ -984,7 +986,9 @@ public class GenerateJavaScriptAST {
       JsVars vars = new JsVars();
       generateTypeTable(vars);
       generateClassLiterals(vars);
-      globalStmts.add(vars);
+      if (!vars.isEmpty()) {
+        globalStmts.add(vars);
+      }
     }
 
     // @Override
@@ -1400,7 +1404,12 @@ public class GenerateJavaScriptAST {
       int typeId = program.getTypeId(x);
       if (typeId >= 0) {
         JField typeIdField = program.getSpecialField("Object.typeId");
-        JsNameRef fieldRef = getName(typeIdField).makeRef();
+        JsName typeIdName = getName(typeIdField);
+        if (typeIdName == null) {
+          // Was pruned; this compilation must have no dynamic casts.
+          return;
+        }
+        JsNameRef fieldRef = typeIdName.makeRef();
         fieldRef.setQualifier(globalTemp.makeRef());
         JsIntegralLiteral typeIdLit = jsProgram.getIntegralLiteral(BigInteger.valueOf(typeId));
         JsExpression asg = createAssignment(fieldRef, typeIdLit);
@@ -1409,8 +1418,13 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateTypeName(JClassType x, JsStatements globalStmts) {
-      JField typeIdField = program.getSpecialField("Object.typeName");
-      JsNameRef lhs = getName(typeIdField).makeRef();
+      JField typeNameField = program.getSpecialField("Object.typeName");
+      JsName typeNameName = getName(typeNameField);
+      if (typeNameName == null) {
+        // Was pruned; this compilation must not use GWT.getTypeName().
+        return;
+      }
+      JsNameRef lhs = typeNameName.makeRef();
       lhs.setQualifier(globalTemp.makeRef());
 
       // Split the full class name into package + class so package strings
@@ -1420,8 +1434,8 @@ public class GenerateJavaScriptAST {
       JsExpression rhs;
       if (packageName.length() > 0) {
         // use "com.example.foo." + "Foo"
-        JsName name = (JsName) packageNames.get(packageName);
-        rhs = new JsBinaryOperation(JsBinaryOperator.ADD, name.makeRef(),
+        JsNameRef packageRef = ((JsName) packageNames.get(packageName)).makeRef();
+        rhs = new JsBinaryOperation(JsBinaryOperator.ADD, packageRef,
             jsProgram.getStringLiteral(className));
       } else {
         // no package name could be split, just use the full name
@@ -1433,14 +1447,18 @@ public class GenerateJavaScriptAST {
 
     private void generateTypeTable(JsVars vars) {
       JField typeIdArray = program.getSpecialField("Cast.typeIdArray");
-      JsName jsName = getName(typeIdArray);
+      JsName typeIdArrayName = getName(typeIdArray);
+      if (typeIdArrayName == null) {
+        // Was pruned; this compilation must not use GWT.getTypeName().
+        return;
+      }
       JsArrayLiteral arrayLit = new JsArrayLiteral();
       for (int i = 0; i < program.getJsonTypeTable().size(); ++i) {
         JsonObject jsonObject = (JsonObject) program.getJsonTypeTable().get(i);
         accept(jsonObject);
         arrayLit.getExpressions().add((JsExpression) pop());
       }
-      JsVar var = new JsVar(jsName);
+      JsVar var = new JsVar(typeIdArrayName);
       var.setInitExpr(arrayLit);
       vars.add(var);
     }
@@ -1628,9 +1646,10 @@ public class GenerateJavaScriptAST {
     }
   }
 
-  public static void exec(JProgram program, JsProgram jsProgram) {
+  public static void exec(JProgram program, JsProgram jsProgram,
+      boolean obfuscate, boolean prettyNames) {
     GenerateJavaScriptAST generateJavaScriptAST = new GenerateJavaScriptAST(
-        program, jsProgram);
+        program, jsProgram, obfuscate, prettyNames);
     generateJavaScriptAST.execImpl();
   }
 
@@ -1669,20 +1688,53 @@ public class GenerateJavaScriptAST {
   private final Map/* <JMethod, JsName> */polymorphicNames = new IdentityHashMap();
   private final JProgram program;
 
+  private final Map/* <String, String> */specialObfuscatedIdents = new HashMap();
+
   /**
    * Contains JsNames for all globals, such as static fields and methods.
    */
   private final JsScope topScope;
 
   private final JTypeOracle typeOracle;
+  private final boolean obfuscate;
+  private final boolean prettyNames;
 
-  private GenerateJavaScriptAST(JProgram program, JsProgram jsProgram) {
+  private GenerateJavaScriptAST(JProgram program, JsProgram jsProgram,
+      boolean obfuscate, boolean prettyNames) {
     this.program = program;
     typeOracle = program.typeOracle;
     this.jsProgram = jsProgram;
     topScope = jsProgram.getScope();
     objectScope = jsProgram.getObjectScope();
     interfaceScope = new JsScope(objectScope, "Interfaces");
+    this.obfuscate = obfuscate;
+    this.prettyNames = prettyNames;
+
+    if (obfuscate) {
+      specialObfuscatedIdents.put("hashCode", "hC");
+      specialObfuscatedIdents.put("equals", "eQ");
+      specialObfuscatedIdents.put("toString", "tS");
+      specialObfuscatedIdents.put("typeId", "tI");
+      specialObfuscatedIdents.put("typeName", "tN");
+    }
+  }
+
+  boolean belongsToObject(JMethod x) {
+    JClassType typeJavaLangObject = program.getTypeJavaLangObject();
+    if (x.getEnclosingType() == typeJavaLangObject) {
+      return true;
+    }
+    for (Iterator it = x.overrides.iterator(); it.hasNext();) {
+      JMethod override = (JMethod) it.next();
+      if (override.getEnclosingType() == typeJavaLangObject) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  boolean belongsToObject(JField x) {
+    return x.getEnclosingType() == program.getTypeJavaLangObject();
   }
 
   String getNameString(HasName hasName) {
@@ -1703,6 +1755,16 @@ public class GenerateJavaScriptAST {
       s += type.getJavahSignatureName();
     }
     return s;
+  }
+
+  String mangleNameForObject(HasName x) {
+    if (obfuscate) {
+      return (String) specialObfuscatedIdents.get(x.getName());
+    } else if (prettyNames) {
+      return x.getName() + "$";
+    } else {
+      return "java_lang_Object_" + getNameString(x) + "$";
+    }
   }
 
   String mangleNameForPoly(JMethod x) {
