@@ -165,13 +165,13 @@ class SwtOleGlue {
   }
 
   /**
-   * Wrapper for the OS' SysAllocString().
+   * Convert a Java string to a COM BSTR.
+   * 
+   * Wrapper for the OS' SysAllocStringLen(), since SysAllocString() is not
+   * safe for embedded nulls.
    */
   public static int sysAllocString(String s) {
-    int len = s.length();
-    char[] chars = new char[len + 1];
-    s.getChars(0, len, chars, 0);
-    return COM.SysAllocString(chars);
+    return COM.SysAllocStringLen(s.toCharArray(), s.length());
   }
  
 }

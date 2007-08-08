@@ -536,8 +536,8 @@ void getData(int pData){
 			break;
 		case COM.VT_BSTR :
 			COM.MoveMemory(pData, new short[] {type}, 2);
-			char[] data = (stringData+"\0").toCharArray();
-			int ptr = COM.SysAllocString(data);
+			int ptr = COM.SysAllocStringLen(stringData.toCharArray(),
+				stringData.length()); // GOOGLE
 			COM.MoveMemory(pData + 8, new int[] {ptr}, 4);
 			break;
 	

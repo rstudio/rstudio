@@ -453,6 +453,7 @@ public static final native int StgIsStorageFile(char[] pwcsName);
 public static final native int StgOpenStorage(char[] pwcsName, int pstgPriority, int grfMode, int snbExclude, int reserved, int[] ppstgOpen);
 public static final native int StringFromCLSID(GUID rclsid, int[] ppsz); 
 public static final native int SysAllocString(char [] sz);
+public static final native int SysAllocStringLen(char [] sz, int len); // GOOGLE
 public static final native void SysFreeString(int bstr);
 public static final native int SysStringByteLen(int bstr);
 public static final native int VariantChangeType(int pvargDest, int pvarSrc, short wFlags, short vt);

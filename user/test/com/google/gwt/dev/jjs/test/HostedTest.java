@@ -117,6 +117,10 @@ public class HostedTest extends GWTTestCase {
     return s + "me";
   }-*/;
 
+  private native static int getStringLength(String s) /*-{
+    return s.length;
+  }-*/;
+
   // ok to return JS string from an Object method
   private static native Object getStringAsObject() /*-{
     return "test";
@@ -204,6 +208,12 @@ public class HostedTest extends GWTTestCase {
     assertEquals(100, byteAsInt(b));
     b = -125;
     assertEquals(-125, byteAsInt(b));
+  }
+
+  public void testEmbeddedNullsInStrings() {
+    String s = "Pre\u0000Post";
+    assertEquals(s.length(), getStringLength(s));
+    assertEquals(s + "me", getString(s));
   }
 
   public void testFloat() {
