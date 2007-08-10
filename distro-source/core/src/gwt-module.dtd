@@ -28,10 +28,23 @@
 	path CDATA #REQUIRED
 >
 <!-- Specify the public resource path, relative to the classpath location of the module descriptor -->
-<!ELEMENT public EMPTY>
+<!ELEMENT public (include | exclude)*>
 <!ATTLIST public
 	path CDATA #REQUIRED
+        includes CDATA #IMPLIED
+        excludes CDATA #IMPLIED
+        defaultexclude (yes | no) "yes"
+        casesensitive (true | false) "true"
 >
+<!ELEMENT include EMPTY>
+<!ATTLIST include
+        name CDATA #REQUIRED
+>
+<!ELEMENT exclude EMPTY>
+<!ATTLIST exclude
+        name CDATA #REQUIRED
+>
+
 <!-- Define a module entry point -->
 <!ELEMENT entry-point EMPTY>
 <!ATTLIST entry-point
@@ -54,8 +67,8 @@
     class CDATA #REQUIRED
 >
 
-<!-- ----------------^^^ Commonly-used elements ^^^ ----------------->
-<!-- ----------------VVV Deferred binding elements VVV--------------->
+<!--                 ^^^ Commonly-used elements ^^^                -->
+<!--                VVV Deferred binding elements VVV              -->
 
 <!-- Define a property and allowable values (comma-separated identifiers) -->
 <!ELEMENT define-property EMPTY>
@@ -80,13 +93,15 @@
 <!ATTLIST property-provider
 	name CDATA #REQUIRED
 >
+<!-- All possible predicates -->
+<!ENTITY % predicates "when-property-is | when-type-assignable | when-type-is | all | any | none">
 <!-- Deferred binding assignment to substitute a named class -->
-<!ELEMENT replace-with (when-property-is | when-type-assignable | when-type-is | all | any | none)*>
+<!ELEMENT replace-with (%predicates;)*>
 <!ATTLIST replace-with
 	class CDATA #REQUIRED
 >
 <!-- Deferred binding assignment to substitute a generated class -->
-<!ELEMENT generate-with (when-property-is | when-type-assignable | when-type-is | all | any | none)*>
+<!ELEMENT generate-with (%predicates;)*>
 <!ATTLIST generate-with
 	class CDATA #REQUIRED
 >
@@ -107,10 +122,10 @@
 	class CDATA #REQUIRED
 >
 <!-- Predicate that ANDs all child conditions -->
-<!ELEMENT all ((when-property-is | when-type-assignable | when-type-is | all | any | none)*)>
+<!ELEMENT all (%predicates;)*>
 <!-- Predicate that ORs all child conditions -->
-<!ELEMENT any ((when-property-is | when-type-assignable | when-type-is | all | any | none)*)>
+<!ELEMENT any (%predicates;)*>
 <!-- Predicate that NANDs all child conditions -->
-<!ELEMENT none ((when-property-is | when-type-assignable | when-type-is | all | any | none)*)>
+<!ELEMENT none (%predicates;)*>
 <!-- Used internally by GWT system modules to rebase packages into the root namespace -->
 <!ELEMENT super-source EMPTY>
