@@ -73,7 +73,7 @@ public abstract class Composite extends Widget {
    * @param widget the widget to be wrapped
    */
   protected void initWidget(Widget widget) {
-    // Validate.  Make sure the widget is not being set twice.
+    // Validate. Make sure the widget is not being set twice.
     if (this.widget != null) {
       throw new IllegalStateException("Composite.initWidget() may only be "
           + "called once.");
@@ -88,7 +88,7 @@ public abstract class Composite extends Widget {
 
     // Logical attach.
     this.widget = widget;
-    
+
     // Adopt.
     widget.setParent(this);
   }
@@ -110,11 +110,11 @@ public abstract class Composite extends Widget {
   }
 
   /**
-   * This method was for initializing the Widget to be wrapped by this Composite,
-   * but has been deprecated in favor of {@link #initWidget(Widget)}.
+   * This method was for initializing the Widget to be wrapped by this
+   * Composite, but has been deprecated in favor of {@link #initWidget(Widget)}.
    * 
-   * @deprecated this method is deprecated, and will be removed when GWT leaves
-   *             beta (use {@link #initWidget(Widget)} instead)
+   * @deprecated this method is deprecated, and will be removed (use
+   *             {@link #initWidget(Widget)} instead)
    */
   protected void setWidget(Widget widget) {
     initWidget(widget);
