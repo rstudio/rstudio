@@ -64,7 +64,7 @@
 <setting id="org.eclipse.jdt.core.formatter.indent_statements_compare_to_body" value="true"/>
 <setting id="org.eclipse.jdt.core.formatter.indent_switchstatements_compare_to_cases" value="true"/>
 <setting id="org.eclipse.jdt.core.formatter.indent_switchstatements_compare_to_switch" value="true"/>
-<setting id="org.eclipse.jdt.core.formatter.indentation.size" value="4"/>
+<setting id="org.eclipse.jdt.core.formatter.indentation.size" value="2"/>
 <setting id="org.eclipse.jdt.core.formatter.insert_new_line_after_annotation" value="insert"/>
 <setting id="org.eclipse.jdt.core.formatter.insert_new_line_after_opening_brace_in_array_initializer" value="do not insert"/>
 <setting id="org.eclipse.jdt.core.formatter.insert_new_line_at_end_of_file_if_missing" value="do not insert"/>
