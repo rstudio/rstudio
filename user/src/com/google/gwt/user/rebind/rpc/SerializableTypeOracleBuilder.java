@@ -923,7 +923,8 @@ public class SerializableTypeOracleBuilder {
           MetaTypeInfo smti = getMetaTypeInfo(subType);
           if (smti.qualifiesForSerialization()) {
             checkType(localLogger, subType, false);
-            if (!subType.isAbstract() && subType.isDefaultInstantiable()) {
+            if (!subType.isAbstract()
+                && (subType.isDefaultInstantiable() || smti.qualifiesForManualSerialization())) {
               smti.setMaybeInstantiated(true);
             }
           } else {
