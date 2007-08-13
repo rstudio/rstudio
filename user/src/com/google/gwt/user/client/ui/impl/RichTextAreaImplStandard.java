@@ -24,7 +24,7 @@ import com.google.gwt.user.client.ui.RichTextArea.Justification;
 /**
  * Basic rich text platform implementation.
  */
-public class RichTextAreaImplStandard extends RichTextAreaImpl implements
+public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implements
     RichTextArea.BasicFormatter, RichTextArea.ExtendedFormatter {
 
   /**
@@ -56,27 +56,6 @@ public class RichTextAreaImplStandard extends RichTextAreaImpl implements
   public final String getText() {
     return beforeInitPlaceholder == null ? getTextImpl() : DOM.getInnerText(beforeInitPlaceholder);
   }
-
-  public native void hookEvents(RichTextArea owner) /*-{
-    this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.__listener = owner;
-  }-*/;
-
-  public native void initElement() /*-{
-    // Some browsers don't like setting designMode until slightly _after_
-    // the iframe becomes attached to the DOM. Any non-zero timeout will do
-    // just fine.
-    var _this = this;
-    setTimeout(function() {
-      // Turn on design mode.
-      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.designMode = 'On';
-
-      // Initialize event handling.
-      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::initEvents()();
-      
-      // Send notification that the iframe has reached design mode.
-      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitialized()();
-    }, 1);
-  }-*/;
 
   public void insertHorizontalRule() {
     execCommand("InsertHorizontalRule", null);
@@ -220,6 +199,32 @@ public class RichTextAreaImplStandard extends RichTextAreaImpl implements
     execCommand("Underline", "False");
   }
 
+  public void uninitElement() {
+    // Unhook all custom event handlers when the element is detached.
+    unhookEvents();
+
+    // Recreate the placeholder element and store the iframe's contents in it.
+    // This is necessary because some browsers will wipe the iframe's contents
+    // when it is removed from the DOM.
+    String html = getHTML();
+    beforeInitPlaceholder = DOM.createDiv();
+    DOM.setInnerHTML(beforeInitPlaceholder, html);
+  }
+
+  public native void initElement()  /*-{
+    // Most browsers don't like setting designMode until slightly _after_
+    // the iframe becomes attached to the DOM. Any non-zero timeout will do
+    // just fine.
+    var _this = this;
+    setTimeout(function() {
+      // Turn on design mode.
+      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.designMode = 'On';
+
+      // Send notification that the iframe has reached design mode.
+      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitialized()();
+    }, 1);
+  }-*/;
+
   protected native String getHTMLImpl() /*-{
     return this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerHTML;
   }-*/;
@@ -228,12 +233,84 @@ public class RichTextAreaImplStandard extends RichTextAreaImpl implements
     return this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.textContent;
   }-*/;
 
+  protected native void hookEvents() /*-{
+    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
+    var wnd = elem.contentWindow;
+
+    elem.__gwt_handler = function(evt) {
+      if (elem.__listener) {
+        elem.__listener.@com.google.gwt.user.client.ui.RichTextArea::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+      }
+    };
+
+    elem.__gwt_focusHandler = function(evt) {
+      if (elem.__gwt_isFocused) {
+        return;
+      }
+
+      elem.__gwt_isFocused = true;
+      elem.__gwt_handler(evt);
+    };
+
+    elem.__gwt_blurHandler = function(evt) {
+      if (!elem.__gwt_isFocused) {
+        return;
+      }
+
+      elem.__gwt_isFocused = false;
+      elem.__gwt_handler(evt);
+    };
+
+    wnd.addEventListener('keydown', elem.__gwt_handler, true);
+    wnd.addEventListener('keyup', elem.__gwt_handler, true);
+    wnd.addEventListener('keypress', elem.__gwt_handler, true);
+    wnd.addEventListener('mousedown', elem.__gwt_handler, true);
+    wnd.addEventListener('mouseup', elem.__gwt_handler, true);
+    wnd.addEventListener('mousemove', elem.__gwt_handler, true);
+    wnd.addEventListener('mouseover', elem.__gwt_handler, true);
+    wnd.addEventListener('mouseout', elem.__gwt_handler, true);
+    wnd.addEventListener('click', elem.__gwt_handler, true);
+
+    wnd.addEventListener('focus', elem.__gwt_focusHandler, true);
+    wnd.addEventListener('blur', elem.__gwt_blurHandler, true);
+  }-*/;
+
+  protected void onElementInitialized() {
+    super.onElementInitialized();
+
+    // When the iframe is ready, ensure cached content is set.
+    if (beforeInitPlaceholder != null) {
+      setHTMLImpl(DOM.getInnerHTML(beforeInitPlaceholder));
+      beforeInitPlaceholder = null;
+    }
+  }
+
   protected native void setHTMLImpl(String html) /*-{
     this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerHTML = html;
   }-*/;
 
   protected native void setTextImpl(String text) /*-{
     this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.textContent = text;
+  }-*/;
+
+  protected native void unhookEvents() /*-{
+    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
+    var wnd = elem.contentWindow;
+
+    wnd.removeEventListener('keydown', elem.__gwt_handler, true);
+    wnd.removeEventListener('keyup', elem.__gwt_handler, true);
+    wnd.removeEventListener('keypress', elem.__gwt_handler, true);
+    wnd.removeEventListener('mousedown', elem.__gwt_handler, true);
+    wnd.removeEventListener('mouseup', elem.__gwt_handler, true);
+    wnd.removeEventListener('mousemove', elem.__gwt_handler, true);
+    wnd.removeEventListener('mouseover', elem.__gwt_handler, true);
+    wnd.removeEventListener('mouseout', elem.__gwt_handler, true);
+    wnd.removeEventListener('click', elem.__gwt_handler, true);
+
+    wnd.removeEventListener('focus', elem.__gwt_focusHandler, true);
+    wnd.removeEventListener('blur', elem.__gwt_blurHandler, true);
+
+    elem.__gwt_handler = null;
   }-*/;
 
   void execCommand(String cmd, String param) {
@@ -249,37 +326,9 @@ public class RichTextAreaImplStandard extends RichTextAreaImpl implements
     this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.execCommand(cmd, false, param);
   }-*/;
 
-  native void initEvents() /*-{
-    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
-    var handler = function(evt) {
-      if (elem.__listener) {
-        elem.__listener.@com.google.gwt.user.client.ui.RichTextArea::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
-      }
-    };
-
-    var wnd = elem.contentWindow;
-    wnd.addEventListener('keydown', handler, true);
-    wnd.addEventListener('keyup', handler, true);
-    wnd.addEventListener('keypress', handler, true);
-    wnd.addEventListener('mousedown', handler, true);
-    wnd.addEventListener('mouseup', handler, true);
-    wnd.addEventListener('mousemove', handler, true);
-    wnd.addEventListener('mouseover', handler, true);
-    wnd.addEventListener('mouseout', handler, true);
-    wnd.addEventListener('click', handler, true);
-  }-*/;
-
   native boolean isRichEditingActive(Element e) /*-{
     return ((e.contentWindow.document.designMode).toUpperCase()) == 'ON';
   }-*/;
-
-  void onElementInitialized() {
-    // When the iframe is ready, ensure cached content is set.
-    if (beforeInitPlaceholder != null) {
-      setHTMLImpl(DOM.getInnerHTML(beforeInitPlaceholder));
-      beforeInitPlaceholder = null;
-    }
-  }
 
   boolean queryCommandState(String cmd) {
     if (isRichEditingActive(elem)) {

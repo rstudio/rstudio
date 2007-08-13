@@ -18,11 +18,14 @@ package com.google.gwt.user.client.ui.impl;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.RichTextArea;
 
 /**
  * Base class for RichText platform implementations. The default version
  * simply creates a text area with no rich text support.
+ * 
+ * This is not currently used by any user-agent, but will provide a
+ * &lt;textarea&gt; fallback in the event a future browser fails to implement
+ * rich text editing.
  */
 public class RichTextAreaImpl {
 
@@ -44,13 +47,8 @@ public class RichTextAreaImpl {
     return DOM.getElementProperty(elem, "value");
   }
 
-  public void hookEvents(RichTextArea owner) {
-    DOM.setEventListener(elem, owner);
-  }
-
   public void initElement() {
-    DOM.sinkEvents(elem, Event.MOUSEEVENTS | Event.KEYEVENTS | Event.ONCHANGE
-        | Event.ONCLICK);
+    onElementInitialized();
   }
 
   public boolean isBasicEditingSupported() {
@@ -77,11 +75,19 @@ public class RichTextAreaImpl {
     DOM.setElementProperty(elem, "value", text);
   }
 
-  public void unhookEvents() {
-    DOM.setEventListener(elem, null);
+  public void uninitElement() {
   }
 
   protected Element createElement() {
     return DOM.createTextArea();
+  }
+
+  protected void hookEvents() {
+    DOM.sinkEvents(elem, Event.MOUSEEVENTS | Event.KEYEVENTS | Event.ONCHANGE
+      | Event.ONCLICK | Event.FOCUSEVENTS);
+  }
+
+  protected void onElementInitialized() {
+    hookEvents();
   }
 }

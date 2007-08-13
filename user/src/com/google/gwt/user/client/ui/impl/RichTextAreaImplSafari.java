@@ -55,11 +55,14 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
 
   public native void setFocus(boolean focused) /*-{
     // Safari needs the *iframe* focused, not its window.
+    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     if (focused) {
-      this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.focus();
-      this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.__gwt_restoreSelection();
+      elem.focus();
+      if (elem.__gwt_restoreSelection) {
+        elem.__gwt_restoreSelection();
+      }
     } else {
-      this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.blur();
+      elem.blur();
     }
   }-*/;
 
@@ -76,26 +79,28 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
     return this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerText;
   }-*/;
 
-  protected native void setTextImpl(String text) /*-{
-    this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerText = text;
-  }-*/;
-
-  native void initEvents() /*-{
+  protected native void hookEvents() /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     var wnd = elem.contentWindow;
     var doc = wnd.document;
 
     // Create an expando on the element to hold the selection state.
-    elem.__gwt_selection = { baseOffset:0, extentOffset:0, baseNode:null, extentNode:null };
+    elem.__gwt_selection = { baseOffset:0, extentOffset:0, baseNode:null,
+      extentNode:null };
 
     // A function for restoring the selection state.
     elem.__gwt_restoreSelection = function() {
       var sel = elem.__gwt_selection;
-      wnd.getSelection().setBaseAndExtent(sel.baseNode, sel.baseOffset, sel.extentNode, sel.extentOffset);
+
+      // wnd.getSelection is not defined if the iframe isn't attached.
+      if (wnd.getSelection) {
+        wnd.getSelection().setBaseAndExtent(sel.baseNode, sel.baseOffset,
+          sel.extentNode, sel.extentOffset);
+      }
     };
 
     // Generic event dispatcher. Also stores selection state.
-    var handler = function(evt) {
+    elem.__gwt_handler = function(evt) {
       // Store the editor's selection state.
       var s = wnd.getSelection();
       elem.__gwt_selection = {
@@ -113,20 +118,60 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
 
       // Dispatch the event.
       if (elem.__listener) {
-        elem.__listener.
-        @com.google.gwt.user.client.ui.RichTextArea::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+        elem.__listener.@com.google.gwt.user.client.ui.RichTextArea::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
       }
     };
 
-    wnd.addEventListener('keydown', handler, true);
-    wnd.addEventListener('keyup', handler, true);
-    wnd.addEventListener('keypress', handler, true);
-    wnd.addEventListener('mousedown', handler, true);
-    wnd.addEventListener('mouseup', handler, true);
-    wnd.addEventListener('mousemove', handler, true);
-    wnd.addEventListener('mouseover', handler, true);
-    wnd.addEventListener('mouseout', handler, true);
-    wnd.addEventListener('click', handler, true);
+    wnd.addEventListener('keydown', elem.__gwt_handler, true);
+    wnd.addEventListener('keyup', elem.__gwt_handler, true);
+    wnd.addEventListener('keypress', elem.__gwt_handler, true);
+    wnd.addEventListener('mousedown', elem.__gwt_handler, true);
+    wnd.addEventListener('mouseup', elem.__gwt_handler, true);
+    wnd.addEventListener('mousemove', elem.__gwt_handler, true);
+    wnd.addEventListener('mouseover', elem.__gwt_handler, true);
+    wnd.addEventListener('mouseout', elem.__gwt_handler, true);
+    wnd.addEventListener('click', elem.__gwt_handler, true);
+
+    // Focus/blur event handlers. For some reason, [add|remove]eventListener()
+    // doesn't work on the iframe element (at least not for focus/blur). Don't
+    // dispatch through the normal handler method, as some of the querying we do
+    // there interferes with focus.
+    elem.onfocus = function(evt) {
+      if (elem.__listener) {
+        elem.__listener.@com.google.gwt.user.client.ui.RichTextArea::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+      }
+    };
+
+    elem.onblur = function(evt) {
+      if (elem.__listener) {
+        elem.__listener.@com.google.gwt.user.client.ui.RichTextArea::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+      }
+    };
+  }-*/;
+
+  protected native void setTextImpl(String text) /*-{
+    this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerText = text;
+  }-*/;
+
+  protected native void unhookEvents() /*-{
+    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
+    var wnd = elem.contentWindow;
+
+    wnd.removeEventListener('keydown', elem.__gwt_handler, true);
+    wnd.removeEventListener('keyup', elem.__gwt_handler, true);
+    wnd.removeEventListener('keypress', elem.__gwt_handler, true);
+    wnd.removeEventListener('mousedown', elem.__gwt_handler, true);
+    wnd.removeEventListener('mouseup', elem.__gwt_handler, true);
+    wnd.removeEventListener('mousemove', elem.__gwt_handler, true);
+    wnd.removeEventListener('mouseover', elem.__gwt_handler, true);
+    wnd.removeEventListener('mouseout', elem.__gwt_handler, true);
+    wnd.removeEventListener('click', elem.__gwt_handler, true);
+
+    elem.__gwt_restoreSelection = null;
+    elem.__gwt_handler = null;
+
+    elem.onfocus = null;
+    elem.onblur = null;
   }-*/;
 
   private native void capabilityTest(Element elem) /*-{

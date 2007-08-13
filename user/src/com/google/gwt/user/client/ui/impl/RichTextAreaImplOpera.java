@@ -15,66 +15,10 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
-import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.ui.RichTextArea;
-
 /**
  * Opera implementation of rich-text editing.
  */
 public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
-
-  private static RichTextAreaImpl old;
-  private static boolean richTextSupported = detectEditingSupport();
-
-  static {
-    // If rich text is not supported by this version of Opera, create an
-    // instance of the default impl and shunt all calls to it.
-    if (!richTextSupported) {
-      old = new RichTextAreaImpl();
-    }
-  }
-
-  private static native boolean detectEditingSupport() /*-{
-    return !!$doc.designMode;
-  }-*/;
-
-  public Element createElement() {
-    if (old != null) {
-      return old.createElement();
-    }
-    return super.createElement();
-  }
-
-  public Element getElement() {
-    if (old != null) {
-      return old.getElement();
-    }
-    return super.getElement();
-  }
-
-  public void hookEvents(RichTextArea owner) {
-    if (old != null) {
-      old.hookEvents(owner);
-      return;
-    }
-    super.hookEvents(owner);
-  }
-
-  public void initElement() {
-    if (old != null) {
-      old.initElement();
-      return;
-    }
-    super.initElement();
-  }
-
-  public boolean isBasicEditingSupported() {
-    return richTextSupported;
-  }
-
-  public boolean isExtendedEditingSupported() {
-    return richTextSupported;
-  }
 
   public void setBackColor(String color) {
     // Opera uses 'BackColor' for the *entire area's* background. 'HiliteColor'
@@ -90,41 +34,4 @@ public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
       this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.blur();
     }
   }-*/;
-
-  public void unhookEvents() {
-    if (old != null) {
-      old.unhookEvents();
-    }
-    super.unhookEvents();
-  }
-
-  protected String getHTMLImpl() {
-    if (old != null) {
-      return old.getHTML();
-    }
-    return super.getHTMLImpl();
-  }
-
-  protected String getTextImpl() {
-    if (old != null) {
-      return old.getText();
-    }
-    return super.getTextImpl();
-  }
-
-  protected void setHTMLImpl(String html) {
-    if (old != null) {
-      old.setHTML(html);
-      return;
-    }
-    super.setHTMLImpl(html);
-  }
-
-  protected void setTextImpl(String text) {
-    if (old != null) {
-      old.setText(text);
-      return;
-    }
-    super.setTextImpl(text);
-  }
 }

@@ -290,6 +290,10 @@ public class RichTextArea extends FocusWidget implements HasHTML,
     public int getNumber() {
       return number;
     }
+    
+    public String toString() {
+      return Integer.toString(number);
+    }
   }
 
   /**
@@ -388,7 +392,7 @@ public class RichTextArea extends FocusWidget implements HasHTML,
         break;
 
       default:
-        // ClickEvents and KeyboardEvents
+        // ClickEvents, KeyboardEvents, and FocusEvents
         super.onBrowserEvent(event);
     }
   }
@@ -400,7 +404,11 @@ public class RichTextArea extends FocusWidget implements HasHTML,
   }
 
   public void setFocus(boolean focused) {
-    impl.setFocus(focused);
+    // There are different problems on each browser when you try to focus an
+    // unattached rich text iframe, so just cut it off early.
+    if (isAttached()) {
+      impl.setFocus(focused);
+    }
   }
 
   public void setHTML(String html) {
@@ -414,11 +422,10 @@ public class RichTextArea extends FocusWidget implements HasHTML,
   protected void onAttach() {
     super.onAttach();
     impl.initElement();
-    impl.hookEvents(this);
   }
 
   protected void onDetach() {
     super.onDetach();
-    impl.unhookEvents();
+    impl.uninitElement();
   }
 }
