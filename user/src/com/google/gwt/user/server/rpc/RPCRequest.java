@@ -18,8 +18,8 @@ package com.google.gwt.user.server.rpc;
 import java.lang.reflect.Method;
 
 /**
- * Describes an incoming RPC request in terms of a resolved
- * {@link Method} and an array of arguments.
+ * Describes an incoming RPC request in terms of a resolved {@link Method} and
+ * an array of arguments.
  */
 public final class RPCRequest {
 
@@ -34,24 +34,43 @@ public final class RPCRequest {
   private final Object[] parameters;
 
   /**
+   * {@link SerializationPolicy} used for decoding this request and for encoding
+   * the responses.
+   */
+  private final SerializationPolicy serializationPolicy;
+
+  /**
    * Construct an RPCRequest.
    */
-  public RPCRequest (Method method, Object[] parameters) {
+  public RPCRequest(Method method, Object[] parameters,
+      SerializationPolicy serializationPolicy) {
     this.method = method;
     this.parameters = parameters;
+    this.serializationPolicy = serializationPolicy;
   }
 
   /**
    * Get the request's method.
    */
-  public Method getMethod () {
+  public Method getMethod() {
     return method;
   }
 
   /**
    * Get the request's parameters.
    */
-  public Object[] getParameters () {
+  public Object[] getParameters() {
     return parameters;
+  }
+
+  /**
+   * Returns the {@link SerializationPolicy} used to decode this request. This
+   * is also the <code>SerializationPolicy</code> that should be used to
+   * encode responses.
+   * 
+   * @return {@link SerializationPolicy} used to decode this request
+   */
+  public SerializationPolicy getSerializationPolicy() {
+    return serializationPolicy;
   }
 }

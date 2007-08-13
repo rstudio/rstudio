@@ -29,6 +29,7 @@ import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.generator.NameFactory;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.user.client.ResponseTextHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
@@ -40,8 +41,16 @@ import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader;
 import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
+import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Creates a client-side proxy for a
@@ -51,14 +60,6 @@ import java.io.PrintWriter;
 class ProxyCreator {
   private static final String ENTRY_POINT_TAG = "gwt.defaultEntryPoint";
   private static final String PROXY_SUFFIX = "_Proxy";
-
-  private static final String SERIALIZATION_STREAM_READER_INSTANTIATION = ClientSerializationStreamReader.class.getName()
-      + " streamReader = new "
-      + ClientSerializationStreamReader.class.getName() + "(SERIALIZER);";
-
-  private static final String SERIALIZATION_STREAM_WRITER_INSTANTIATION = ClientSerializationStreamWriter.class.getName()
-      + " streamWriter = new "
-      + ClientSerializationStreamWriter.class.getName() + "(SERIALIZER);";
 
   /*
    * This method returns the real type name. Currently, it only affects
@@ -79,7 +80,6 @@ class ProxyCreator {
 
   public ProxyCreator(JClassType serviceIntf) {
     assert (serviceIntf.isInterface() != null);
-
     this.serviceIntf = serviceIntf;
   }
 
@@ -96,7 +96,7 @@ class ProxyCreator {
     }
 
     TypeOracle typeOracle = context.getTypeOracle();
-    
+
     // Make sure that the async and synchronous versions of the RemoteService
     // agree with one another
     //
@@ -117,7 +117,10 @@ class ProxyCreator {
     enforceTypeVersioning = Shared.shouldEnforceTypeVersioning(logger,
         context.getPropertyOracle());
 
-    generateProxyFields(srcWriter, sto);
+    String serializationPolicyStrongName = writeSerializationPolicyFile(logger,
+        context, sto);
+
+    generateProxyFields(srcWriter, sto, serializationPolicyStrongName);
 
     generateServiceDefTargetImpl(srcWriter);
 
@@ -175,8 +178,14 @@ class ProxyCreator {
     w.println((i > 0 ? ", final " : "final ") + AsyncCallback.class.getName()
         + " callback) {");
     w.indent();
-    w.println("final " + SERIALIZATION_STREAM_READER_INSTANTIATION);
-    w.println("final " + SERIALIZATION_STREAM_WRITER_INSTANTIATION);
+    w.println("final "
+        + (ClientSerializationStreamReader.class.getName()
+            + " streamReader = new "
+            + ClientSerializationStreamReader.class.getName() + "(SERIALIZER);"));
+    w.println("final "
+        + (ClientSerializationStreamWriter.class.getName()
+            + " streamWriter = new "
+            + ClientSerializationStreamWriter.class.getName() + "(SERIALIZER, GWT.getModuleBaseURL(), SERIALIZATION_POLICY);"));
     w.println("try {");
     w.indent();
     {
@@ -370,10 +379,16 @@ class ProxyCreator {
           + ClientSerializationStreamReader.class.getName()
           + ".SERIALIZATION_STREAM_FLAGS_NO_TYPE_VERSIONING);");
     }
-    w.println("streamWriter.writeString(\""
-        + serializableTypeOracle.getSerializedTypeName(method.getEnclosingType())
-        + "\");");
+
+    // Write the remote service interface's binary name
+    JClassType remoteService = method.getEnclosingType();
+    String remoteServiceBinaryName = serializableTypeOracle.getSerializedTypeName(remoteService);
+    w.println("streamWriter.writeString(\"" + remoteServiceBinaryName + "\");");
+
+    // Write the method name
     w.println("streamWriter.writeString(\"" + methodName + "\");");
+
+    // Write the parameter count followed by the parameter values
     w.println("streamWriter.writeInt(" + params.length + ");");
     for (int i = 0; i < params.length; ++i) {
       JParameter param = params[i];
@@ -397,10 +412,13 @@ class ProxyCreator {
    * Generate any fields required by the proxy.
    */
   private void generateProxyFields(SourceWriter srcWriter,
-      SerializableTypeOracle serializableTypeOracle) {
+      SerializableTypeOracle serializableTypeOracle,
+      String serializationPolicyStrongName) {
     String typeSerializerName = serializableTypeOracle.getTypeSerializerQualifiedName(serviceIntf);
     srcWriter.println("private static final " + typeSerializerName
         + " SERIALIZER = new " + typeSerializerName + "();");
+    srcWriter.println("private static final String SERIALIZATION_POLICY =\""
+        + serializationPolicyStrongName + "\";");
   }
 
   private void generateProxyMethods(SourceWriter w,
@@ -505,5 +523,58 @@ class ProxyCreator {
 
   private boolean shouldEnforceTypeVersioning() {
     return enforceTypeVersioning;
+  }
+
+  private String writeSerializationPolicyFile(TreeLogger logger,
+      GeneratorContext ctx, SerializableTypeOracle sto)
+      throws UnableToCompleteException {
+    try {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      OutputStreamWriter osw = new OutputStreamWriter(baos,
+          SerializationPolicyLoader.SERIALIZATION_POLICY_FILE_ENCODING);
+      PrintWriter pw = new PrintWriter(osw);
+
+      JType[] serializableTypes = sto.getSerializableTypes();
+      for (int i = 0; i < serializableTypes.length; ++i) {
+        JType serializableType = serializableTypes[i];
+        String binaryTypeName = sto.getSerializedTypeName(serializableType);
+        boolean maybeInstantiated = sto.maybeInstantiated(serializableType);
+        pw.println(binaryTypeName + ", " + Boolean.toString(maybeInstantiated));
+      }
+
+      // Closes the wrapped streams.
+      pw.close();
+
+      byte[] serializationPolicyFileContents = baos.toByteArray();
+      MessageDigest md5 = MessageDigest.getInstance("MD5");
+      md5.update(serializationPolicyFileContents);
+
+      String serializationPolicyName = Util.toHexString(md5.digest());
+      String serializationPolicyFileName = SerializationPolicyLoader.getSerializationPolicyFileName(serializationPolicyName);
+      OutputStream os = ctx.tryCreateResource(logger,
+          serializationPolicyFileName);
+      if (os != null) {
+        os.write(serializationPolicyFileContents);
+        ctx.commitResource(logger, os);
+      } else {
+        logger.log(TreeLogger.TRACE,
+            "SerializationPolicy file for RemoteService '"
+                + serviceIntf.getQualifiedSourceName()
+                + "' already exists; no need to rewrite it.", null);
+      }
+
+      return serializationPolicyName;
+    } catch (NoSuchAlgorithmException e) {
+      logger.log(TreeLogger.ERROR, "Error initializing MD5", e);
+      throw new UnableToCompleteException();
+    } catch (UnsupportedEncodingException e) {
+      logger.log(TreeLogger.ERROR,
+          SerializationPolicyLoader.SERIALIZATION_POLICY_FILE_ENCODING
+              + " is not supported", e);
+      throw new UnableToCompleteException();
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, null, e);
+      throw new UnableToCompleteException();
+    }
   }
 }

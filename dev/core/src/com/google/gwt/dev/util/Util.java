@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -765,6 +765,25 @@ public final class Util {
       a[i] = iter.next();
     }
     return a;
+  }
+
+  /**
+   * Returns a string representation of the byte array as a series of
+   * hexadecimal characters.
+   * 
+   * @param bytes byte array to convert
+   * @return a string representation of the byte array as a series of
+   *         hexadecimal characters
+   */
+  public static String toHexString(byte[] bytes) {
+    char[] hexString = new char[2 * bytes.length];
+    int j = 0;
+    for (int i = 0; i < bytes.length; i++) {
+      hexString[j++] = Util.HEX_CHARS[(bytes[i] & 0xF0) >> 4];
+      hexString[j++] = Util.HEX_CHARS[bytes[i] & 0x0F];
+    }
+    
+    return new String(hexString);
   }
 
   /**

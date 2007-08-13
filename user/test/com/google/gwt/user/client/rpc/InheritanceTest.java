@@ -27,7 +27,6 @@ import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableSubc
  * TODO: document me.
  */
 public class InheritanceTest extends GWTTestCase {
-  // private static final int TEST_DELAY = Integer.MAX_VALUE;
   private static final int TEST_DELAY = 5000;
 
   private InheritanceTestServiceAsync inheritanceTestService;
@@ -70,7 +69,7 @@ public class InheritanceTest extends GWTTestCase {
     InheritanceTestServiceAsync service = getServiceAsync();
     service.echo(InheritanceTestSetFactory.createCircle(), new AsyncCallback() {
       public void onFailure(Throwable caught) {
-        fail("Unexpected failure");
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -91,7 +90,7 @@ public class InheritanceTest extends GWTTestCase {
     service.echo(new InheritanceTestSetFactory.JavaSerializableClass(3),
         new AsyncCallback() {
           public void onFailure(Throwable caught) {
-            fail(caught.toString());
+            TestSetValidator.rethrowException(caught);
           }
 
           public void onSuccess(Object result) {
@@ -145,7 +144,7 @@ public class InheritanceTest extends GWTTestCase {
     service.echo(InheritanceTestSetFactory.createSerializableClass(),
         new AsyncCallback() {
           public void onFailure(Throwable caught) {
-            fail(caught.toString());
+            TestSetValidator.rethrowException(caught);
           }
 
           public void onSuccess(Object result) {
@@ -166,7 +165,7 @@ public class InheritanceTest extends GWTTestCase {
     service.echo(InheritanceTestSetFactory.createSerializableSubclass(),
         new AsyncCallback() {
           public void onFailure(Throwable caught) {
-            fail(caught.toString());
+            TestSetValidator.rethrowException(caught);
           }
 
           public void onSuccess(Object result) {
@@ -188,7 +187,7 @@ public class InheritanceTest extends GWTTestCase {
         InheritanceTestSetFactory.createSerializableClassWithTransientField(),
         new AsyncCallback() {
           public void onFailure(Throwable caught) {
-            fail(caught.toString());
+            TestSetValidator.rethrowException(caught);
           }
 
           public void onSuccess(Object result) {

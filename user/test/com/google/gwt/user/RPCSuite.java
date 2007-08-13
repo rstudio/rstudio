@@ -19,30 +19,38 @@ import com.google.gwt.user.client.rpc.CollectionsTest;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTest;
 import com.google.gwt.user.client.rpc.InheritanceTest;
 import com.google.gwt.user.client.rpc.ObjectGraphTest;
-import com.google.gwt.user.client.rpc.RemoteServiceServletTest;
 import com.google.gwt.user.client.rpc.UnicodeEscapingTest;
 import com.google.gwt.user.client.rpc.ValueTypesTest;
+import com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilderTest;
 import com.google.gwt.user.server.rpc.RPCTest;
+import com.google.gwt.user.server.rpc.SerializationPolicyLoaderTest;
+import com.google.gwt.user.server.rpc.impl.LegacySerializationPolicyTest;
+import com.google.gwt.user.server.rpc.impl.StandardSerializationPolicyTest;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
 /**
- * TODO: document me.
+ * A collection of TestCases for the RPC system.
  */
 public class RPCSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite("Test for com.google.gwt.user.client.rpc");
 
+    suite.addTestSuite(SerializableTypeOracleBuilderTest.class);
     suite.addTestSuite(RPCTest.class);
     suite.addTestSuite(ValueTypesTest.class);
     suite.addTestSuite(InheritanceTest.class);
     suite.addTestSuite(CollectionsTest.class);
     suite.addTestSuite(CustomFieldSerializerTest.class);
     suite.addTestSuite(ObjectGraphTest.class);
-    suite.addTestSuite(RemoteServiceServletTest.class);
+    suite.addTestSuite(com.google.gwt.user.client.rpc.RemoteServiceServletTest.class);
+    suite.addTestSuite(com.google.gwt.user.server.rpc.RemoteServiceServletTest.class);
     suite.addTestSuite(UnicodeEscapingTest.class);
-    
+    suite.addTestSuite(LegacySerializationPolicyTest.class);
+    suite.addTestSuite(StandardSerializationPolicyTest.class);
+    suite.addTestSuite(SerializationPolicyLoaderTest.class);
+
     return suite;
   }
 }

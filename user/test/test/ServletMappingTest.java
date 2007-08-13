@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
+import com.google.gwt.user.client.rpc.TestSetValidator;
 
 /**
  * TODO: document me.
@@ -35,10 +36,9 @@ public class ServletMappingTest extends GWTTestCase {
    * Should call the implementation that returns 1.
    */
   public void testServletMapping1() {
-    String url = "test";
     makeAsyncCall(GWT.getModuleBaseURL() + "test", new AsyncCallback() {
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -54,7 +54,7 @@ public class ServletMappingTest extends GWTTestCase {
   public void testServletMapping2() {
     makeAsyncCall(GWT.getModuleBaseURL() + "test/longer", new AsyncCallback() {
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -70,7 +70,7 @@ public class ServletMappingTest extends GWTTestCase {
   public void testServletMapping3() {
     makeAsyncCall(GWT.getModuleBaseURL() + "test/long", new AsyncCallback() {
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -121,7 +121,7 @@ public class ServletMappingTest extends GWTTestCase {
     makeAsyncCall(GWT.getModuleBaseURL() + "test/long?a=b&c=d",
         new AsyncCallback() {
           public void onFailure(Throwable caught) {
-            fail(caught.toString());
+            TestSetValidator.rethrowException(caught);
           }
 
           public void onSuccess(Object result) {
@@ -138,7 +138,7 @@ public class ServletMappingTest extends GWTTestCase {
     makeAsyncCall(GWT.getModuleBaseURL()
         + "totally/different/but/valid?a=b&c=d", new AsyncCallback() {
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,33 +33,59 @@ public final class ClientSerializationStreamWriter extends
     sb.append('\uffff');
   }
 
-  private static native JavaScriptObject createJavaScriptObject() /*-{
-    return {};
-  }-*/;
+  private StringBuffer encodeBuffer;
+
+  private final String moduleBaseURL;
+
+  private int objectCount;
 
   /*
    * Accessed from JSNI code, so ignore unused warning.
    */
   private JavaScriptObject objectMap;
 
+  private final String serializationPolicyStrongName;
+
+  private final Serializer serializer;
+
   /*
    * Accesses need to be prefixed with ':' to prevent conflict with built-in
    * JavaScript properties.
-   *
+   * 
    * Accessed from JSNI code, so ignore unused warning.
    */
   private JavaScriptObject stringMap;
 
-  private StringBuffer encodeBuffer;
-
-  private int objectCount;
-
-  private Serializer serializer;
-
   private ArrayList stringTable = new ArrayList();
 
+  /**
+   * Constructs a <code>ClientSerializationStreamWriter</code> that does not
+   * use a serialization policy file.
+   * 
+   * @param serializer the {@link Serializer} to use
+   */
   public ClientSerializationStreamWriter(Serializer serializer) {
     this.serializer = serializer;
+    this.moduleBaseURL = null;
+    this.serializationPolicyStrongName = null;
+    // Override the default version if no policy info is given.
+    setVersion(SERIALIZATION_STREAM_VERSION_WITHOUT_SERIALIZATION_POLICY);
+  }
+
+  /**
+   * Constructs a <code>ClientSerializationStreamWriter</code> using the
+   * specified module base URL and the serialization policy.
+   * 
+   * @param serializer the {@link Serializer} to use
+   * @param moduleBaseURL the location of the module
+   * @param serializationPolicyStrongName the strong name of serialization
+   *            policy
+   */
+  public ClientSerializationStreamWriter(Serializer serializer,
+      String moduleBaseURL, String serializationPolicyStrongName) {
+    this.serializer = serializer;
+    this.moduleBaseURL = moduleBaseURL;
+    this.serializationPolicyStrongName = serializationPolicyStrongName;
   }
 
   /**
@@ -68,10 +94,15 @@ public final class ClientSerializationStreamWriter extends
    */
   public void prepareToWrite() {
     objectCount = 0;
-    objectMap = createJavaScriptObject();
-    stringMap = createJavaScriptObject();
+    objectMap = JavaScriptObject.createObject();
+    stringMap = JavaScriptObject.createObject();
     stringTable.clear();
     encodeBuffer = new StringBuffer();
+
+    if (hasSerializationPolicyInfo()) {
+      writeString(moduleBaseURL);
+      writeString(serializationPolicyStrongName);
+    }
   }
 
   public String toString() {
@@ -148,7 +179,7 @@ public final class ClientSerializationStreamWriter extends
   }-*/;
 
   private void writeHeader(StringBuffer buffer) {
-    append(buffer, String.valueOf(SERIALIZATION_STREAM_VERSION));
+    append(buffer, String.valueOf(getVersion()));
     append(buffer, String.valueOf(getFlags()));
   }
 

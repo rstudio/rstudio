@@ -60,8 +60,8 @@ public interface SerializableTypeOracle {
   String getSerializationSignature(JType instanceType);
 
   /**
-   * Returns the serialized name of a type.  The serialized name of a type is
-   * the name that would be returned by {@link Class#getName()}.
+   * Returns the serialized name of a type. The serialized name of a type is the
+   * name that would be returned by {@link Class#getName()}.
    * 
    * @param type
    * @return serialized name of a type
@@ -104,4 +104,13 @@ public interface SerializableTypeOracle {
    * @return true if the type is serializable
    */
   boolean isSerializable(JType type);
+
+  /**
+   * Returns <code>true</code> if the type might be instantiated as part of 
+   * deserialization or serialization.
+   * 
+   * @param type the type to test
+   * @return <code>true</code> if the type might be instantiated
+   */
+  boolean maybeInstantiated(JType type);
 }

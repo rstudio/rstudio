@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -261,5 +262,18 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
     }
 
     return actual;
+  }
+
+  /**
+   * Return the result of Arrays.asList(Object[]) to force an
+   * InvocationException on the client.
+   */
+  public List getArraysAsList(List value) {
+    Byte[] retVal = new Byte[10];
+    for (byte i = 0; i < 10; ++i) {
+      retVal[i] = (Byte) value.get(i);
+    }
+
+    return Arrays.asList(retVal);
   }
 }

@@ -410,4 +410,13 @@ public class TestSetValidator {
 
     return true;
   }
+
+  public static void rethrowException(Throwable caught) {
+    if (caught instanceof RuntimeException) {
+      throw (RuntimeException) caught;
+    } else {
+      throw new RuntimeException(caught);
+    }
+  }
+
 }

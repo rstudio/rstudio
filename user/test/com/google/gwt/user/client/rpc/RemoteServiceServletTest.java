@@ -55,7 +55,7 @@ public class RemoteServiceServletTest extends GWTTestCase {
     service.test(new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {

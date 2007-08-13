@@ -34,7 +34,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo_FALSE(false, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -51,7 +51,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo_TRUE(true, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -68,7 +68,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo((byte) (Byte.MAX_VALUE / (byte) 2), new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -85,7 +85,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo_MAX_VALUE(Byte.MAX_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -102,7 +102,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo_MIN_VALUE(Byte.MIN_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -119,7 +119,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo((char) (Character.MAX_VALUE / (char) 2), new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -137,7 +137,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo_MAX_VALUE(Character.MAX_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -154,7 +154,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo_MIN_VALUE(Character.MIN_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -171,7 +171,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo(Double.MAX_VALUE / 2, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -188,7 +188,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo_MAX_VALUE(Double.MAX_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -205,7 +205,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo_MIN_VALUE(Double.MIN_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -226,7 +226,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo(Double.NaN, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -246,7 +246,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo(Double.NEGATIVE_INFINITY, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -267,7 +267,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo(Double.POSITIVE_INFINITY, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -285,7 +285,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo(Float.MAX_VALUE / 2, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -302,7 +302,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo_MAX_VALUE(Float.MAX_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -319,7 +319,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo_MIN_VALUE(Float.MIN_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -340,7 +340,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo(Float.NaN, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -360,7 +360,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo(Float.NEGATIVE_INFINITY, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -381,7 +381,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo(Float.POSITIVE_INFINITY, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -399,7 +399,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo(Integer.MAX_VALUE / 2, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -416,7 +416,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo_MAX_VALUE(Integer.MAX_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -433,7 +433,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo_MIN_VALUE(Integer.MIN_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -450,7 +450,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo(Long.MAX_VALUE / 2, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -471,7 +471,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo_MAX_VALUE(Long.MAX_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -488,7 +488,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo_MIN_VALUE(Long.MIN_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -505,7 +505,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo((short) (Short.MAX_VALUE / (short) 2), new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -522,7 +522,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo_MAX_VALUE(Short.MAX_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -539,7 +539,7 @@ public class ValueTypesTest extends GWTTestCase {
     service.echo_MIN_VALUE(Short.MIN_VALUE, new AsyncCallback() {
 
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {

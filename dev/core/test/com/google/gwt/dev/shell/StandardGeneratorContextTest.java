@@ -135,7 +135,7 @@ public class StandardGeneratorContextTest extends TestCase {
       throws UnableToCompleteException, IOException {
     String path = createTempOutFilename();
     OutputStream os = genCtx.tryCreateResource(mockLogger, path);
-    os.write("going to call commit twice after this...".getBytes());
+    os.write("going to call commit twice after this...".getBytes(Util.DEFAULT_ENCODING));
     genCtx.commitResource(mockLogger, os);
     File createdFile = new File(tempOutDir, path);
     assertTrue(createdFile.exists());
@@ -309,7 +309,8 @@ public class StandardGeneratorContextTest extends TestCase {
   private String createTempOutFilename() {
     File tempFile;
     do {
-      tempFile = new File(tempOutDir, System.currentTimeMillis() + "-" + (++tempFileCounter) + ".gwt.tmp");
+      tempFile = new File(tempOutDir, System.currentTimeMillis() + "-"
+          + (++tempFileCounter) + ".gwt.tmp");
     } while (tempFile.exists());
     return tempFile.getName();
   }

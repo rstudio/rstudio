@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,17 +17,23 @@ package com.google.gwt.user.client.rpc.impl;
 
 /**
  * Base class for the client and server serialization streams. This class
- * handles the basic serialization and desirialization formatting for primitive
+ * handles the basic serialization and deserialization formatting for primitive
  * types since these are common between the client and the server.
  */
 public abstract class AbstractSerializationStream {
 
   public static final int SERIALIZATION_STREAM_FLAGS_NO_TYPE_VERSIONING = 1;
-  public static final int SERIALIZATION_STREAM_VERSION = 2;
+  public static final int SERIALIZATION_STREAM_VERSION = 3;
 
-  protected int flags = 0;
+  /**
+   * The last legacy stream version which does not use a
+   * {@link com.google.gwt.user.server.rpc.SerializationPolicy SerializationPolicy}.
+   */
+  public static final int SERIALIZATION_STREAM_VERSION_WITHOUT_SERIALIZATION_POLICY = 2;
 
-  protected int version;
+  private int flags = 0;
+
+  private int version = SERIALIZATION_STREAM_VERSION;
 
   public final void addFlags(int flags) {
     this.flags |= flags;
@@ -47,6 +53,17 @@ public abstract class AbstractSerializationStream {
 
   public final boolean shouldEnforceTypeVersioning() {
     return (flags & SERIALIZATION_STREAM_FLAGS_NO_TYPE_VERSIONING) == 0;
+  }
+
+  /**
+   * Returns <code>true</code> if this stream encodes information which can be
+   * used to lookup a {@link SerializationPolicy}.
+   * 
+   * @return <code>true</code> if this stream encodes information which can be
+   *         used to lookup a <code>SerializationPolicy</code>
+   */
+  protected boolean hasSerializationPolicyInfo() {
+    return getVersion() > SERIALIZATION_STREAM_VERSION_WITHOUT_SERIALIZATION_POLICY;
   }
 
   protected final void setVersion(int version) {

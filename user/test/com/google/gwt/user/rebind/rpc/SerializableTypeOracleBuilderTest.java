@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.rebind.rpc;
 
-import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -40,14 +39,46 @@ import com.google.gwt.user.rebind.rpc.testcases.client.ObjectInMethodSignature;
 import junit.framework.TestCase;
 
 import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * Used to test the {@link SerializableTypeOracleBuilder}.
  */
 public class SerializableTypeOracleBuilderTest extends TestCase {
+  /**
+   * Used to test the results produced by the {@link SerializableTypeOracle}.
+   */
+  static class TypeInfo {
+    boolean maybeInstantiated;
+    final String sourceName;
+
+    TypeInfo(String binaryName, boolean maybeInstantiated) {
+      this.sourceName = makeSourceName(binaryName);
+      this.maybeInstantiated = maybeInstantiated;
+    }
+
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+
+      if (!(obj instanceof TypeInfo)) {
+        return false;
+      }
+
+      TypeInfo other = (TypeInfo) obj;
+      return sourceName.equals(other.sourceName)
+          && maybeInstantiated == other.maybeInstantiated;
+    }
+
+    public String toString() {
+      return "{ " + sourceName + ", " + Boolean.toString(maybeInstantiated)
+          + " }";
+    }
+  }
+
   private static class MockPropertyOracle implements PropertyOracle {
-    public String getPropertyValue(TreeLogger logger, String propertyName)
-        throws BadPropertyValueException {
+    public String getPropertyValue(TreeLogger logger, String propertyName) {
       // Could mock "gwt.enforceRPCTypeVersioning" etc here
       return "";
     }
@@ -64,33 +95,59 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     ModuleDefLoader.forceInherit("com.google.gwt.junit.JUnit");
   }
 
-  private static String[] getSortedSerializableTypeNames(
-      SerializableTypeOracle sto) {
-    JType[] actualTypes = sto.getSerializableTypes();
-    String[] names = new String[actualTypes.length];
-    for (int i = 0; i < actualTypes.length; ++i) {
-      names[i] = actualTypes[i].getParameterizedQualifiedSourceName();
+  private static TypeInfo[] getActualTypeInfo(SerializableTypeOracle sto) {
+    JType[] types = sto.getSerializableTypes();
+    TypeInfo[] actual = new TypeInfo[types.length];
+    for (int i = 0; i < types.length; ++i) {
+      JType type = types[i];
+      actual[i] = new TypeInfo(type.getParameterizedQualifiedSourceName(),
+          sto.maybeInstantiated(type));
     }
-    Arrays.sort(names);
-    return names;
+    sort(actual);
+    return actual;
   }
 
   private static String makeSourceName(String binaryName) {
     return binaryName.replace('$', '.');
   }
 
-  private static String toString(String[] strings) {
+  private static void sort(TypeInfo[] typeInfos) {
+    Arrays.sort(typeInfos, new Comparator() {
+      public int compare(Object o1, Object o2) {
+        if (o1 == o2) {
+          return 0;
+        }
+
+        TypeInfo ti1 = (TypeInfo) o1;
+        TypeInfo ti2 = (TypeInfo) o2;
+
+        return ti1.sourceName.compareTo(ti2.sourceName);
+      }
+    });
+  }
+
+  private static String toString(TypeInfo[] typeInfos) {
     StringBuffer sb = new StringBuffer();
     sb.append("[");
-    for (int i = 0; i < strings.length; ++i) {
+    for (int i = 0; i < typeInfos.length; ++i) {
       if (i != 0) {
         sb.append(",");
       }
-      sb.append(strings[i]);
+      sb.append(typeInfos[i].toString());
+      sb.append("\n");
     }
 
     sb.append("]");
     return sb.toString();
+  }
+
+  private static void validateSTO(SerializableTypeOracle sto,
+      TypeInfo[] expected) {
+    sort(expected);
+    TypeInfo[] actual = getActualTypeInfo(sto);
+
+    assertTrue("Expected: \n" + toString(expected) + ",\n Actual: \n"
+        + toString(actual), Arrays.equals(expected, actual));
   }
 
   /**
@@ -98,6 +155,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   private final TreeLogger logger = SUPPRESS_LOGGER_OUTPUT ? TreeLogger.NULL
       : new PrintWriterTreeLogger();
+
   private final ModuleDef moduleDef;
 
   private final PropertyOracle propertyOracle = new MockPropertyOracle();
@@ -126,30 +184,28 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
         logger, typeOracle);
     SerializableTypeOracle sto = stob.build(propertyOracle, testServiceClass);
 
-    String[] actualTypes = getSortedSerializableTypeNames(sto);
-    String[] expectedTypes = new String[] {
-        IncompatibleRemoteServiceException.class.getName(),
-        makeSourceName(CovariantArrays.AA.class.getName()) + "[]",
-        makeSourceName(CovariantArrays.BB.class.getName()) + "[]",
-        makeSourceName(CovariantArrays.CC.class.getName()) + "[]",
-        makeSourceName(CovariantArrays.DD.class.getName()) + "[]",
-        makeSourceName(CovariantArrays.A.class.getName()) + "[]",
-        makeSourceName(CovariantArrays.B.class.getName()) + "[]",
-        makeSourceName(CovariantArrays.B.class.getName()),
-        makeSourceName(CovariantArrays.C.class.getName()) + "[]",
-        makeSourceName(CovariantArrays.D.class.getName()) + "[]",
-        makeSourceName(CovariantArrays.D.class.getName()),
-        String.class.getName()};
-    Arrays.sort(expectedTypes);
-    assertTrue("Expected: " + toString(expectedTypes) + ", Actual: "
-        + toString(actualTypes), Arrays.equals(expectedTypes, actualTypes));
+    TypeInfo[] expected = new TypeInfo[] {
+        new TypeInfo(IncompatibleRemoteServiceException.class.getName(), true),
+        new TypeInfo(CovariantArrays.AA.class.getName() + "[]", true),
+        new TypeInfo(CovariantArrays.BB.class.getName() + "[]", true),
+        new TypeInfo(CovariantArrays.CC.class.getName() + "[]", true),
+        new TypeInfo(CovariantArrays.DD.class.getName() + "[]", true),
+        new TypeInfo(CovariantArrays.A.class.getName() + "[]", true),
+        new TypeInfo(CovariantArrays.B.class.getName() + "[]", true),
+        new TypeInfo(CovariantArrays.B.class.getName(), true),
+        new TypeInfo(CovariantArrays.C.class.getName() + "[]", true),
+        new TypeInfo(CovariantArrays.D.class.getName() + "[]", true),
+        new TypeInfo(CovariantArrays.D.class.getName(), true),
+        new TypeInfo(String.class.getName(), true)};
+    validateSTO(sto, expected);
   }
 
   /**
    * Tests that a manually serialized type with a field that is not serializable
    * does not cause the generator to fail.
    */
-  public void testManualSerialization() throws NotFoundException, UnableToCompleteException {
+  public void testManualSerialization() throws NotFoundException,
+      UnableToCompleteException {
     JClassType testServiceClass = typeOracle.getType(ManualSerialization.class.getName());
     SerializableTypeOracleBuilder stob = new SerializableTypeOracleBuilder(
         logger, typeOracle);
@@ -197,15 +253,15 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
         logger, typeOracle);
     SerializableTypeOracle sto = stob.build(propertyOracle, testServiceClass);
 
-    String[] actualTypes = getSortedSerializableTypeNames(sto);
-    String[] expectedTypes = new String[] {
-        IncompatibleRemoteServiceException.class.getName(),
-        makeSourceName(NotAllSubtypesAreSerializable.B.class.getName()),
-        makeSourceName(NotAllSubtypesAreSerializable.D.class.getName()),
-        String.class.getName()};
-    Arrays.sort(expectedTypes);
-    assertTrue("Expected: " + toString(expectedTypes) + ", Actual: "
-        + toString(actualTypes), Arrays.equals(expectedTypes, actualTypes));
+    TypeInfo[] expected = new TypeInfo[] {
+        new TypeInfo(IncompatibleRemoteServiceException.class.getName(), true),
+        new TypeInfo(
+            makeSourceName(NotAllSubtypesAreSerializable.B.class.getName()),
+            true),
+        new TypeInfo(
+            makeSourceName(NotAllSubtypesAreSerializable.D.class.getName()),
+            true), new TypeInfo(String.class.getName(), true)};
+    validateSTO(sto, expected);
   }
 
   /**
@@ -248,6 +304,12 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     JClassType testServiceClass = typeOracle.getType(AbstractSerializableTypes.class.getName());
     SerializableTypeOracleBuilder stob = new SerializableTypeOracleBuilder(
         logger, typeOracle);
-    stob.build(propertyOracle, testServiceClass);
+    SerializableTypeOracle sto = stob.build(propertyOracle, testServiceClass);
+    TypeInfo[] expected = new TypeInfo[] {
+        new TypeInfo(IncompatibleRemoteServiceException.class.getName(), true),
+        new TypeInfo(AbstractSerializableTypes.AbstractClass.class.getName(),
+            false), new TypeInfo(String.class.getName(), true)};
+
+    validateSTO(sto, expected);
   }
 }

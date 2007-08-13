@@ -18,6 +18,7 @@ package com.google.gwt.user.server.rpc;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.SerializableException;
+import com.google.gwt.user.client.rpc.SerializationException;
 
 import junit.framework.TestCase;
 
@@ -40,29 +41,50 @@ public class RPCTest extends TestCase {
     void method1();
   }
 
-  private final String VALID_ENCODED_REQUEST = "0\uffff" + // version
+  private final String VALID_ENCODED_REQUEST = "3\uffff" + // version
+      "0\uffff" + // flags
+      "4\uffff" + // string table entry count
+      A.class.getName() + "\uffff" + // string table entry #0
+      "method2" + "\uffff" + // string table entry #1
+      "moduleBaseURL" + "\uffff" + // string table entry #2
+      "whitelistHashcode" + "\uffff" + // string table entry #4
+      "3\uffff" + // module base URL
+      "4\uffff" + // whitelist hashcode
+      "1\uffff" + // interface name
+      "2\uffff" + // method name
+      "0\uffff"; // param count
+
+  private final String INVALID_METHOD_REQUEST = "3\uffff" + // version
+      "0\uffff" + // flags
+      "4\uffff" + // string table entry count
+      A.class.getName() + "\uffff" + // string table entry #0
+      "method3" + "\uffff" + // string table entry #1
+      "moduleBaseURL" + "\uffff" + // string table entry #2
+      "whitelistHashcode" + "\uffff" + // string table entry #4
+      "3\uffff" + // module base URL
+      "4\uffff" + // whitelist hashcode
+      "1\uffff" + // interface name
+      "2\uffff" + // method name
+      "0\uffff"; // param count
+
+  private final String INVALID_INTERFACE_REQUEST = "3\uffff" + // version
+      "0\uffff" + // flags
+      "4\uffff" + // string table entry count
+      B.class.getName() + "\uffff" + // string table entry #0
+      "method1" + "\uffff" + // string table entry #1
+      "moduleBaseURL" + "\uffff" + // string table entry #2
+      "whitelistHashcode" + "\uffff" + // string table entry #4
+      "3\uffff" + // module base URL
+      "4\uffff" + // whitelist hashcode
+      "1\uffff" + // interface name
+      "2\uffff" + // method name
+      "0\uffff"; // param count
+
+  private final String VALID_PRE_RPC_RESOURCE_ENCODED_REQUEST = "2\uffff" + // version
       "0\uffff" + // flags
       "2\uffff" + // string table entry count
       A.class.getName() + "\uffff" + // string table entry #0
       "method2" + "\uffff" + // string table entry #1
-      "1\uffff" + // interface name
-      "2\uffff" + // method name
-      "0\uffff"; // param count
-
-  private final String INVALID_METHOD_REQUEST = "0\uffff" + // version
-      "0\uffff" + // flags
-      "2\uffff" + // string table entry count
-      A.class.getName() + "\uffff" + // string table entry #0
-      "method3" + "\uffff" + // string table entry #1
-      "1\uffff" + // interface name
-      "2\uffff" + // method name
-      "0\uffff"; // param count
-
-  private final String INVALID_INTERFACE_REQUEST = "0\uffff" + // version
-      "0\uffff" + // flags
-      "2\uffff" + // string table entry count
-      B.class.getName() + "\uffff" + // string table entry #0
-      "method1" + "\uffff" + // string table entry #1
       "1\uffff" + // interface name
       "2\uffff" + // method name
       "0\uffff"; // param count
@@ -95,12 +117,7 @@ public class RPCTest extends TestCase {
     }
 
     // Case 3
-    try {
-      RPCRequest request = RPC.decodeRequest(VALID_ENCODED_REQUEST);
-    } catch (Throwable e) {
-      // not expected to get here
-      fail(e.getClass().getName() + " should not have been thrown by RPC.decodeRequest(String)");
-    }
+    RPC.decodeRequest(VALID_ENCODED_REQUEST);
   }
 
   /**
@@ -153,19 +170,35 @@ public class RPCTest extends TestCase {
     // Case 5
     try {
       request = RPC.decodeRequest(INVALID_INTERFACE_REQUEST, B.class);
+      fail("Expected IncompatibleRemoteServiceException");
     } catch (IncompatibleRemoteServiceException e) {
       // should get here
     }
     // Case 6
     try {
       request = RPC.decodeRequest(INVALID_METHOD_REQUEST, A.class);
+      fail("Expected IncompatibleRemoteServiceException");
     } catch (IncompatibleRemoteServiceException e) {
       // should get here
     }
   }
 
   /**
-   * Tests for method {@link RPC#encodeResponseForFailure(Method, Throwable)}
+   * Tests that method
+   * {@link RPC#decodeRequest(String, Class, SerializationPolicyProvider)} can
+   * handle the decoding of requests from pre-RPC resource (whitelist) clients.
+   * 
+   * @throws SerializationException
+   */
+  public void testDecodeRequestPreRPCResourceFile() {
+    RPCRequest rpcRequest = RPC.decodeRequest(
+        VALID_PRE_RPC_RESOURCE_ENCODED_REQUEST, A.class, null);
+    SerializationPolicy serializationPolicy = rpcRequest.getSerializationPolicy();
+    assertEquals(RPC.getDefaultSerializationPolicy(), serializationPolicy);
+  }
+
+  /**
+   * Tests for method {@link RPC#encodeResponseForFailure(Method, Throwable)}.
    * 
    * Cases:
    * <ol>
@@ -175,21 +208,18 @@ public class RPCTest extends TestCase {
    * <li>Method is specified to throw an exception of the given type</li>
    * </ol>
    * 
+   * @throws NoSuchMethodException
+   * @throws SecurityException
+   * @throws SerializationException
+   * 
    */
-  public void testEncodeResponseForFailure() {
+  public void testEncodeResponseForFailure() throws SecurityException,
+      NoSuchMethodException, SerializationException {
     // Case 1
-    try {
-      RPC.encodeResponseForFailure(null, new Throwable());
-    } catch (Throwable e) {
-      fail(e.getMessage());
-    }
+    RPC.encodeResponseForFailure(null, new SerializableException());
 
     Method A_method1 = null;
-    try {
-      A_method1 = A.class.getMethod("method1", null);
-    } catch (Throwable e) {
-      fail(e.getMessage());
-    }
+    A_method1 = A.class.getMethod("method1", null);
 
     // Case 2
     try {
@@ -197,8 +227,6 @@ public class RPCTest extends TestCase {
       fail("Expected NullPointerException");
     } catch (NullPointerException e) {
       // expected to get here
-    } catch (Throwable e) {
-      fail(e.getMessage());
     }
 
     // Case 3
@@ -208,18 +236,12 @@ public class RPCTest extends TestCase {
       fail("Expected UnexpectedException");
     } catch (UnexpectedException e) {
       // expected to get here
-    } catch (Throwable e) {
-      fail(e.getMessage());
     }
 
     // Case 4
-    try {
-      String str = RPC.encodeResponseForFailure(A.class.getMethod("method1",
-          null), new SerializableException());
-      assertTrue(str.indexOf("SerializableException") != -1);
-    } catch (Throwable e) {
-      fail(e.getMessage());
-    }
+    String str = RPC.encodeResponseForFailure(
+        A.class.getMethod("method1", null), new SerializableException());
+    assertTrue(str.indexOf("SerializableException") != -1);
   }
 
   /**
@@ -232,16 +254,17 @@ public class RPCTest extends TestCase {
    * <li>Method is not specified to return the given type</li>
    * <li>Method is specified to return the given type</li>
    * </ol>
+   * 
+   * @throws SerializationException
+   * @throws NoSuchMethodException
+   * @throws SecurityException
    */
-  public void testEncodeResponseForSuccess() {
+  public void testEncodeResponseForSuccess() throws SerializationException,
+      SecurityException, NoSuchMethodException {
     Method A_method1 = null;
     Method A_method2 = null;
-    try {
-      A_method1 = A.class.getMethod("method1", null);
-      A_method2 = A.class.getMethod("method2", null);
-    } catch (Throwable e) {
-      fail(e.getMessage());
-    }
+    A_method1 = A.class.getMethod("method1", null);
+    A_method2 = A.class.getMethod("method2", null);
 
     // Case 1
     try {
@@ -249,36 +272,21 @@ public class RPCTest extends TestCase {
       fail("Expected NullPointerException");
     } catch (NullPointerException e) {
       // expected to get here
-    } catch (Throwable e) {
-      fail(e.getMessage());
     }
 
     // Case 2
-    try {
-      RPC.encodeResponseForSuccess(A_method1, null);
-    } catch (NullPointerException e) {
-      // expected to get here
-    } catch (Throwable e) {
-      fail(e.getMessage());
-    }
+    RPC.encodeResponseForSuccess(A_method1, null);
 
     // Case 3
     try {
       RPC.encodeResponseForSuccess(A_method2, new SerializableException());
+      fail("Expected IllegalArgumentException");
     } catch (IllegalArgumentException e) {
       // expected to get here
-    } catch (Throwable e) {
-      e.printStackTrace();
-      fail(e.getMessage());
     }
 
     // Case 4
-    try {
-      RPC.encodeResponseForSuccess(A_method2, new Integer(1));
-    } catch (Throwable e) {
-      e.printStackTrace();
-      fail(e.getMessage());
-    }
+    RPC.encodeResponseForSuccess(A_method2, new Integer(1));
   }
 
   /**
@@ -295,18 +303,17 @@ public class RPCTest extends TestCase {
    * 
    * @throws NoSuchMethodException
    * @throws SecurityException
+   * @throws SerializationException
    * 
    */
   public void testInvokeAndEncodeResponse() throws SecurityException,
-      NoSuchMethodException {
+      NoSuchMethodException, SerializationException {
     // Case 1
     try {
       RPC.invokeAndEncodeResponse(null, null, null);
+      fail("Expected NullPointerException");
     } catch (NullPointerException e) {
       // expected to get here
-    } catch (Throwable e) {
-      e.printStackTrace();
-      fail(e.getMessage());
     }
 
     Method A_method1 = A.class.getMethod("method1", null);
@@ -317,11 +324,9 @@ public class RPCTest extends TestCase {
         public void method1() {
         }
       }, A_method1, null);
+      fail("Expected a SecurityException");
     } catch (SecurityException e) {
       // expected to get here
-    } catch (Throwable e) {
-      e.printStackTrace();
-      fail(e.getMessage());
     }
 
     // Case 3
@@ -338,11 +343,9 @@ public class RPCTest extends TestCase {
           return 0;
         }
       }, A_method1, new Integer[] {new Integer(1)});
+      fail("Expected a SecurityException");
     } catch (SecurityException e) {
       // expected to get here
-    } catch (Throwable e) {
-      e.printStackTrace();
-      fail(e.getMessage());
     }
 
     // Case 4
@@ -360,30 +363,24 @@ public class RPCTest extends TestCase {
           return 0;
         }
       }, A_method1, null);
+      fail("Expected an UnexpectedException");
     } catch (UnexpectedException e) {
       // expected to get here
-    } catch (Throwable e) {
-      e.printStackTrace();
-      fail(e.getMessage());
     }
 
     // Case 5
-    try {
-      RPC.invokeAndEncodeResponse(new A() {
-        public void method1() throws SerializableException {
-          throw new SerializableException();
-        }
+    RPC.invokeAndEncodeResponse(new A() {
+      public void method1() throws SerializableException {
+        throw new SerializableException();
+      }
 
-        public int method2() {
-          return 0;
-        }
+      public int method2() {
+        return 0;
+      }
 
-        public int method3(int val) {
-          return 0;
-        }
-      }, A_method1, null);
-    } catch (Throwable e) {
-      fail(e.getMessage());
-    }
+      public int method3(int val) {
+        return 0;
+      }
+    }, A_method1, null);
   }
 }

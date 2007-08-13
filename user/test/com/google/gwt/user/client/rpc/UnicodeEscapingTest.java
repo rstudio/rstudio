@@ -52,7 +52,7 @@ public class UnicodeEscapingTest extends GWTTestCase {
     getService().getStringContainingCharacterRange(0, CHARACTER_RANGE_SIZE,
         new AsyncCallback() {
           public void onFailure(Throwable caught) {
-            fail(caught.toString());
+            TestSetValidator.rethrowException(caught);
           }
 
           public void onSuccess(Object result) {

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -66,8 +67,10 @@ public interface CollectionsTestServiceAsync {
   void echo(Short[] value, AsyncCallback callback);
 
   void echo(String[] value, AsyncCallback callback);
-  
+
   void echo(String[][] value, AsyncCallback callback);
 
   void echo(Vector value, AsyncCallback callback);
+
+  void getArraysAsList(List value, AsyncCallback callback);
 }

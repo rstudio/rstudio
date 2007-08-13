@@ -18,8 +18,7 @@ package com.google.gwt.user.server.rpc;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.SerializationException;
-import com.google.gwt.user.server.rpc.impl.ServerSerializableTypeOracle;
-import com.google.gwt.user.server.rpc.impl.ServerSerializableTypeOracleImpl;
+import com.google.gwt.user.server.rpc.impl.LegacySerializationPolicy;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamWriter;
 
@@ -57,18 +56,13 @@ public final class RPC {
   private static final Map PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS = new HashMap();
 
   /**
-   * Oracle used in stream construction. Encapsulates a set of static,
-   * synchronized caches.
-   */
-  private static ServerSerializableTypeOracle serializableTypeOracle;
-
-  /**
    * Static map of classes to sets of interfaces (e.g. classes). Optimizes
    * lookup of interfaces for security.
    */
   private static Map/* <Class, Set<String> > */serviceToImplementedInterfacesMap;
 
   private static final HashMap TYPE_NAMES;
+
   static {
     PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS.put(Boolean.class, Boolean.TYPE);
     PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS.put(Byte.class, Byte.TYPE);
@@ -89,9 +83,6 @@ public final class RPC {
     TYPE_NAMES.put("I", int.class);
     TYPE_NAMES.put("J", long.class);
     TYPE_NAMES.put("S", short.class);
-
-    serializableTypeOracle = new ServerSerializableTypeOracleImpl(
-        getPackagePaths());
 
     serviceToImplementedInterfacesMap = new HashMap();
   }
@@ -170,6 +161,63 @@ public final class RPC {
    *           </ul>
    */
   public static RPCRequest decodeRequest(String encodedRequest, Class type) {
+    return decodeRequest(encodedRequest, type, null);
+  }
+
+  /**
+   * Returns an {@link RPCRequest} that is built by decoding the contents of an
+   * encoded RPC request and optionally validating that type can handle the
+   * request. If the type parameter is not <code>null</code>, the
+   * implementation checks that the type is assignable to the
+   * {@link RemoteService} interface requested in the encoded request string.
+   * 
+   * <p>
+   * If the serializationPolicyProvider parameter is not <code>null</code>, it is
+   * asked for a {@link SerializationPolicy} to use to restrict the set of types
+   * that can be decoded from the request. If this parameter is
+   * <code>null</code>, then only subtypes of
+   * {@link com.google.gwt.user.client.rpc.IsSerializable IsSerializable} or
+   * types which have custom field serializers can be decoded.
+   * </p>
+   * 
+   * <p>
+   * Invoking this method with <code>null</code> for the type parameter,
+   * <code>decodeRequest(encodedRequest, null)</code>, is equivalent to
+   * calling <code>decodeRequest(encodedRequest)</code>.
+   * </p>
+   * 
+   * @param encodedRequest a string that encodes the {@link RemoteService}
+   *          interface, the service method, and the arguments to pass to the
+   *          service method
+   * @param type if not <code>null</code>, the implementation checks that the
+   *          type is assignable to the {@link RemoteService} interface encoded
+   *          in the encoded request string.
+   * @param serializationPolicyProvider if not <code>null</code>, the
+   *          implementation asks this provider for a
+   *          {@link SerializationPolicy} which will be used to restrict the set
+   *          of types that can be decoded from this request
+   * @return an {@link RPCRequest} instance
+   * 
+   * @throws NullPointerException if the encodedRequest is <code>null</code>
+   * @throws IllegalArgumentException if the encodedRequest is an empty string
+   * @throws IncompatibleRemoteServiceException if any of the following
+   *           conditions apply:
+   *           <ul>
+   *           <li>if the types in the encoded request cannot be deserialized</li>
+   *           <li>if the {@link ClassLoader} acquired from
+   *           <code>Thread.currentThread().getContextClassLoader()</code>
+   *           cannot load the service interface or any of the types specified
+   *           in the encodedRequest</li>
+   *           <li>the requested interface is not assignable to
+   *           {@link RemoteService}</li>
+   *           <li>the service method requested in the encodedRequest is not a
+   *           member of the requested service interface</li>
+   *           <li>the type parameter is not <code>null</code> and is not
+   *           assignable to the requested {@link RemoteService} interface
+   *           </ul>
+   */
+  public static RPCRequest decodeRequest(String encodedRequest, Class type,
+      SerializationPolicyProvider serializationPolicyProvider) {
     if (encodedRequest == null) {
       throw new NullPointerException("encodedRequest cannot be null");
     }
@@ -182,9 +230,10 @@ public final class RPC {
 
     try {
       ServerSerializationStreamReader streamReader = new ServerSerializationStreamReader(
-          serializableTypeOracle, classLoader);
+          classLoader, serializationPolicyProvider);
       streamReader.prepareToRead(encodedRequest);
 
+      // Read the name of the RemoteService interface
       String serviceIntfName = streamReader.readString();
 
       if (type != null) {
@@ -197,6 +246,7 @@ public final class RPC {
         }
       }
 
+      SerializationPolicy serializationPolicy = streamReader.getSerializationPolicy();
       Class serviceIntf;
       try {
         serviceIntf = getClassFromSerializedName(serviceIntfName, classLoader);
@@ -243,7 +293,7 @@ public final class RPC {
         parameterValues[i] = streamReader.deserializeValue(parameterTypes[i]);
       }
 
-      return new RPCRequest(method, parameterValues);
+      return new RPCRequest(method, parameterValues, serializationPolicy);
 
     } catch (SerializationException ex) {
       throw new IncompatibleRemoteServiceException(ex.getMessage(), ex);
@@ -255,7 +305,7 @@ public final class RPC {
    * <code>null</code>, it is an error if the exception is not in the
    * method's list of checked exceptions.
    * 
-   * @param serviceMethod the method that threw the exception, maybe
+   * @param serviceMethod the method that threw the exception, may be
    *          <code>null</code>
    * @param cause the {@link Throwable} that was thrown
    * @return a string that encodes the exception
@@ -267,8 +317,44 @@ public final class RPC {
    */
   public static String encodeResponseForFailure(Method serviceMethod,
       Throwable cause) throws SerializationException {
+    return encodeResponseForFailure(serviceMethod, cause,
+        getDefaultSerializationPolicy());
+  }
+
+  /**
+   * Returns a string that encodes an exception. If method is not
+   * <code>null</code>, it is an error if the exception is not in the
+   * method's list of checked exceptions.
+   * 
+   * <p>
+   * If the serializationPolicy parameter is not <code>null</code>, it is used to
+   * determine what types can be encoded as part of this response. If this
+   * parameter is <code>null</code>, then only subtypes of
+   * {@link com.google.gwt.user.client.rpc.IsSerializable IsSerializable} or
+   * types which have custom field serializers may be encoded.
+   * </p>
+   * 
+   * @param serviceMethod the method that threw the exception, may be
+   *          <code>null</code>
+   * @param cause the {@link Throwable} that was thrown
+   * @param serializationPolicy determines the serialization policy to be used
+   * @return a string that encodes the exception
+   * 
+   * @throws NullPointerException if the the cause or the serializationPolicy
+   *           are <code>null</code>
+   * @throws SerializationException if the result cannot be serialized
+   * @throws UnexpectedException if the result was an unexpected exception (a
+   *           checked exception not declared in the serviceMethod's signature)
+   */
+  public static String encodeResponseForFailure(Method serviceMethod,
+      Throwable cause, SerializationPolicy serializationPolicy)
+      throws SerializationException {
     if (cause == null) {
       throw new NullPointerException("cause cannot be null");
+    }
+
+    if (serializationPolicy == null) {
+      throw new NullPointerException("serializationPolicy");
     }
 
     if (serviceMethod != null && !RPC.isExpectedException(serviceMethod, cause)) {
@@ -277,7 +363,7 @@ public final class RPC {
           + "' threw an unexpected exception: " + cause.toString(), cause);
     }
 
-    return encodeResponse(cause.getClass(), cause, true);
+    return encodeResponse(cause.getClass(), cause, true, serializationPolicy);
   }
 
   /**
@@ -296,8 +382,43 @@ public final class RPC {
    */
   public static String encodeResponseForSuccess(Method serviceMethod,
       Object object) throws SerializationException {
+    return encodeResponseForSuccess(serviceMethod, object,
+        getDefaultSerializationPolicy());
+  }
+
+  /**
+   * Returns a string that encodes the object. It is an error to try to encode
+   * an object that is not assignable to the service method's return type.
+   * 
+   * <p>
+   * If the serializationPolicy parameter is not <code>null</code>, it is used to
+   * determine what types can be encoded as part of this response. If this
+   * parameter is <code>null</code>, then only subtypes of
+   * {@link com.google.gwt.user.client.rpc.IsSerializable IsSerializable} or
+   * types which have custom field serializers may be encoded.
+   * </p>
+   * 
+   * @param serviceMethod the method whose result we are encoding
+   * @param object the instance that we wish to encode
+   * @param serializationPolicy determines the serialization policy to be used
+   * @return a string that encodes the object, if the object is compatible with
+   *         the service method's declared return type
+   * 
+   * @throws IllegalArgumentException if the result is not assignable to the
+   *           service method's return type
+   * @throws NullPointerException if the serviceMethod or the
+   *           serializationPolicy are <code>null</code>
+   * @throws SerializationException if the result cannot be serialized
+   */
+  public static String encodeResponseForSuccess(Method serviceMethod,
+      Object object, SerializationPolicy serializationPolicy)
+      throws SerializationException {
     if (serviceMethod == null) {
       throw new NullPointerException("serviceMethod cannot be null");
+    }
+
+    if (serializationPolicy == null) {
+      throw new NullPointerException("serializationPolicy");
     }
 
     Class methodReturnType = serviceMethod.getReturnType();
@@ -318,7 +439,16 @@ public final class RPC {
       }
     }
 
-    return encodeResponse(methodReturnType, object, false);
+    return encodeResponse(methodReturnType, object, false, serializationPolicy);
+  }
+
+  /**
+   * Returns a default serialization policy.
+   * 
+   * @return the default serialization policy.
+   */
+  public static SerializationPolicy getDefaultSerializationPolicy() {
+    return LegacySerializationPolicy.getInstance();
   }
 
   /**
@@ -345,16 +475,60 @@ public final class RPC {
    */
   public static String invokeAndEncodeResponse(Object target,
       Method serviceMethod, Object[] args) throws SerializationException {
+    return invokeAndEncodeResponse(target, serviceMethod, args,
+        getDefaultSerializationPolicy());
+  }
 
+  /**
+   * Returns a string that encodes the result of calling a service method, which
+   * could be the value returned by the method or an exception thrown by it.
+   * 
+   * <p>
+   * If the serializationPolicy parameter is not <code>null</code>, it is used to
+   * determine what types can be encoded as part of this response. If this
+   * parameter is <code>null</code>, then only subtypes of
+   * {@link com.google.gwt.user.client.rpc.IsSerializable IsSerializable} or
+   * types which have custom field serializers may be encoded.
+   * </p>
+   * 
+   * <p>
+   * This method does no security checking; security checking must be done on
+   * the method prior to this invocation.
+   * </p>
+   * 
+   * @param target instance on which to invoke the serviceMethod
+   * @param serviceMethod the method to invoke
+   * @param args arguments used for the method invocation
+   * @param serializationPolicy determines the serialization policy to be used
+   * @return a string which encodes either the method's return or a checked
+   *         exception thrown by the method
+   * 
+   * @throws NullPointerException if the serviceMethod or the
+   *           serializationPolicy are <code>null</code>
+   * @throws SecurityException if the method cannot be accessed or if the number
+   *           or type of actual and formal arguments differ
+   * @throws SerializationException if an object could not be serialized by the
+   *           stream
+   * @throws UnexpectedException if the serviceMethod throws a checked exception
+   *           that is not declared in its signature
+   */
+  public static String invokeAndEncodeResponse(Object target,
+      Method serviceMethod, Object[] args,
+      SerializationPolicy serializationPolicy) throws SerializationException {
     if (serviceMethod == null) {
-      throw new NullPointerException("serviceMethod cannot be null");
+      throw new NullPointerException("serviceMethod");
+    }
+
+    if (serializationPolicy == null) {
+      throw new NullPointerException("serializationPolicy");
     }
 
     String responsePayload;
     try {
       Object result = serviceMethod.invoke(target, args);
 
-      responsePayload = encodeResponseForSuccess(serviceMethod, result);
+      responsePayload = encodeResponseForSuccess(serviceMethod, result,
+          serializationPolicy);
     } catch (IllegalAccessException e) {
       SecurityException securityException = new SecurityException(
           formatIllegalAccessErrorMessage(target, serviceMethod));
@@ -370,7 +544,8 @@ public final class RPC {
       //
       Throwable cause = e.getCause();
 
-      responsePayload = encodeResponseForFailure(serviceMethod, cause);
+      responsePayload = encodeResponseForFailure(serviceMethod, cause,
+          serializationPolicy);
     }
 
     return responsePayload;
@@ -380,7 +555,6 @@ public final class RPC {
    * Returns a string that encodes the results of an RPC call. Private overload
    * that takes a flag signaling the preamble of the response payload.
    * 
-   * @param serviceMethod the method whose return object we are encoding
    * @param object the object that we wish to send back to the client
    * @param wasThrown if true, the object being returned was an exception thrown
    *          by the service method; if false, it was the result of the service
@@ -389,10 +563,11 @@ public final class RPC {
    * @throws SerializationException if the object cannot be serialized
    */
   private static String encodeResponse(Class responseClass, Object object,
-      boolean wasThrown) throws SerializationException {
+      boolean wasThrown, SerializationPolicy serializationPolicy)
+      throws SerializationException {
 
     ServerSerializationStreamWriter stream = new ServerSerializationStreamWriter(
-        serializableTypeOracle);
+        serializationPolicy);
 
     stream.prepareToWrite();
     if (responseClass != void.class) {
@@ -504,19 +679,6 @@ public final class RPC {
     }
 
     return Class.forName(serializedName, false, classLoader);
-  }
-
-  /**
-   * Obtain the special package-prefixes we use to check for custom serializers
-   * that would like to live in a package that they cannot. For example,
-   * "java.util.ArrayList" is in a sealed package, so instead we use this prefix
-   * to check for a custom serializer in
-   * "com.google.gwt.user.client.rpc.core.java.util.ArrayList". Right now, it's
-   * hard-coded because we don't have a pressing need for this mechanism to be
-   * extensible, but it is imaginable, which is why it's implemented this way.
-   */
-  private static String[] getPackagePaths() {
-    return new String[] {"com.google.gwt.user.client.rpc.core"};
   }
 
   /**

@@ -22,7 +22,9 @@ import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.util.Util;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,17 +32,29 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.zip.CRC32;
 
 final class SerializableTypeOracleImpl implements SerializableTypeOracle {
 
   private static final String DEFAULT_BUILTIN_CUSTOM_SERIALIZER_PACKAGE_NAME = "com.google.gwt.user.client.rpc.core.java.lang";
+
   private static final Comparator FIELD_COMPARATOR = new Comparator() {
     public int compare(Object o1, Object o2) {
       JField f1 = (JField) o1;
       JField f2 = (JField) o2;
 
       return f1.getName().compareTo(f2.getName());
+    }
+  };
+
+  private static final Comparator TYPE_COMPARATOR = new Comparator() {
+    public int compare(Object o1, Object o2) {
+      JType t1 = (JType) o1;
+      JType t2 = (JType) o2;
+
+      return t1.getParameterizedQualifiedSourceName().compareTo(
+          t2.getParameterizedQualifiedSourceName());
     }
   };
   private static final String GENERATED_FIELD_SERIALIZER_SUFFIX = "_FieldSerializer";
@@ -62,17 +76,18 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Throwable");
   }
 
-  private final JType[] serializableTypes;
   private final Set /* <JType> */serializableTypesSet;
   private final TypeOracle typeOracle;
+  private final Set /* <JType> */possiblyInstantiatedTypes;
 
   public SerializableTypeOracleImpl(TypeOracle typeOracle,
-      JType[] serializableTypes) {
+      JType[] serializableTypes, Set possiblyInstantiatedTypes) {
 
-    this.serializableTypes = serializableTypes;
-    serializableTypesSet = new HashSet();
+    serializableTypesSet = new TreeSet(TYPE_COMPARATOR);
     serializableTypesSet.addAll(Arrays.asList(serializableTypes));
     this.typeOracle = typeOracle;
+
+    this.possiblyInstantiatedTypes = possiblyInstantiatedTypes;
   }
 
   public String getFieldSerializerName(JType type) {
@@ -125,13 +140,18 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
    * 
    */
   public JType[] getSerializableTypes() {
-    return serializableTypes;
+    return (JType[]) serializableTypesSet.toArray(new JType[serializableTypesSet.size()]);
   }
 
   public String getSerializationSignature(JType type) {
     CRC32 crc = new CRC32();
 
-    generateSerializationSignature(type, crc);
+    try {
+      generateSerializationSignature(type, crc);
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(
+          "Could not compute the serialization signature", e);
+    }
 
     return Long.toString(crc.getValue());
   }
@@ -232,6 +252,10 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     return serializableTypesSet.contains(type);
   }
 
+  public boolean maybeInstantiated(JType type) {
+    return possiblyInstantiatedTypes.contains(type);
+  }
+
   private boolean excludeImplementationFromSerializationSignature(
       JType instanceType) {
     if (TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.contains(instanceType.getQualifiedSourceName())) {
@@ -241,7 +265,8 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     return false;
   }
 
-  private void generateSerializationSignature(JType type, CRC32 crc) {
+  private void generateSerializationSignature(JType type, CRC32 crc)
+      throws UnsupportedEncodingException {
     JParameterizedType parameterizedType = type.isParameterized();
     if (parameterizedType != null) {
       generateSerializationSignature(parameterizedType.getRawType(), crc);
@@ -250,7 +275,7 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     }
 
     String serializedTypeName = getSerializedTypeName(type);
-    crc.update(serializedTypeName.getBytes());
+    crc.update(serializedTypeName.getBytes(Util.DEFAULT_ENCODING));
 
     if (excludeImplementationFromSerializationSignature(type)) {
       return;
@@ -269,8 +294,9 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
         JField field = fields[i];
         assert (field != null);
 
-        crc.update(field.getName().getBytes());
-        crc.update(getSerializedTypeName(field.getType()).getBytes());
+        crc.update(field.getName().getBytes(Util.DEFAULT_ENCODING));
+        crc.update(getSerializedTypeName(field.getType()).getBytes(
+            Util.DEFAULT_ENCODING));
       }
 
       JClassType superClass = isClassOrInterface.getSuperclass();

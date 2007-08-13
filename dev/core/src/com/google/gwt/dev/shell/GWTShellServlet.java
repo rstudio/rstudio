@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -82,7 +83,7 @@ public class GWTShellServlet extends HttpServlet {
 
   private final Map loadedModulesByName = new HashMap();
 
-  private final Map loadedServletsByClassName = new HashMap();
+  private final Map loadedServletsByModuleAndClassName = new HashMap();
 
   private final Map mimeTypes = new HashMap();
 
@@ -171,6 +172,7 @@ public class GWTShellServlet extends HttpServlet {
     }
 
     String servletClassName = null;
+    ModuleDef moduleDef = null;
 
     try {
       // Attempt to split the URL into module/path, which we'll use to see
@@ -182,7 +184,7 @@ public class GWTShellServlet extends HttpServlet {
       // we're only looking for servlet invocations, which can only happen
       // when we have *already* loaded the destination module to serve up the
       // client code in the first place.
-      ModuleDef moduleDef = (ModuleDef) loadedModulesByName.get(parts.moduleName);
+      moduleDef = (ModuleDef) loadedModulesByName.get(parts.moduleName);
       if (moduleDef != null) {
         // Okay, we know this module. Do we know this servlet path?
         // It is right to prepend the slash because (1) ModuleDefSchema requires
@@ -204,7 +206,7 @@ public class GWTShellServlet extends HttpServlet {
       // Try to map a bare path that isn't preceded by the module name.
       // This is no longer the recommended practice, so we warn.
       String path = request.getPathInfo();
-      ModuleDef moduleDef = (ModuleDef) modulesByServletPath.get(path);
+      moduleDef = (ModuleDef) modulesByServletPath.get(path);
       if (moduleDef != null) {
         // See if there is a servlet we can delegate to for the given url.
         servletClassName = moduleDef.findServletForPath(path);
@@ -235,7 +237,8 @@ public class GWTShellServlet extends HttpServlet {
 
     // Load/get the servlet if we found one.
     if (servletClassName != null) {
-      HttpServlet delegatee = tryGetOrLoadServlet(logger, servletClassName);
+      HttpServlet delegatee = tryGetOrLoadServlet(logger, moduleDef,
+          servletClassName);
       if (delegatee == null) {
         logger.log(TreeLogger.ERROR, "Unable to dispatch request", null);
         sendErrorResponse(response,
@@ -853,9 +856,11 @@ public class GWTShellServlet extends HttpServlet {
     }
   }
 
-  private HttpServlet tryGetOrLoadServlet(TreeLogger logger, String className) {
-    synchronized (loadedServletsByClassName) {
-      HttpServlet servlet = (HttpServlet) loadedServletsByClassName.get(className);
+  private HttpServlet tryGetOrLoadServlet(TreeLogger logger,
+      ModuleDef moduleDef, String className) {
+    synchronized (loadedServletsByModuleAndClassName) {
+      String moduleAndClassName = moduleDef.getName() + "/" + className;
+      HttpServlet servlet = (HttpServlet) loadedServletsByModuleAndClassName.get(moduleAndClassName);
       if (servlet != null) {
         // Found it.
         //
@@ -879,9 +884,18 @@ public class GWTShellServlet extends HttpServlet {
         //
         servlet = (HttpServlet) newInstance;
 
-        servlet.init(getServletConfig());
+        // We create proxies for ServletContext and ServletConfig to enable
+        // RemoteServiceServlets to load public and generated resources via
+        // ServeletContext.getResourceAsStream()
+        //
+        ServletContext context = new HostedModeServletContextProxy(
+            getServletContext(), moduleDef, getOutputDir());
+        ServletConfig config = new HostedModeServletConfigProxy(
+            getServletConfig(), context);
 
-        loadedServletsByClassName.put(className, servlet);
+        servlet.init(config);
+
+        loadedServletsByModuleAndClassName.put(moduleAndClassName, servlet);
         return servlet;
       } catch (ClassNotFoundException e) {
         caught = e;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,9 @@ package com.google.gwt.user.server.rpc.impl;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.impl.AbstractSerializationStreamReader;
+import com.google.gwt.user.server.rpc.RPC;
+import com.google.gwt.user.server.rpc.SerializationPolicy;
+import com.google.gwt.user.server.rpc.SerializationPolicyProvider;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -35,19 +38,20 @@ public final class ServerSerializationStreamReader extends
 
   private final ClassLoader classLoader;
 
-  private ServerSerializableTypeOracle serializableTypeOracle;
-
   private String[] stringTable;
 
-  private ArrayList tokenList = new ArrayList();
+  private final ArrayList tokenList = new ArrayList();
+
+  private SerializationPolicy serializationPolicy = RPC.getDefaultSerializationPolicy();
 
   private int tokenListIndex;
 
-  public ServerSerializationStreamReader(
-      ServerSerializableTypeOracle serializableTypeOracle,
-      ClassLoader classLoader) {
+  private final SerializationPolicyProvider serializationPolicyProvider;
+
+  public ServerSerializationStreamReader(ClassLoader classLoader,
+      SerializationPolicyProvider serializationPolicyProvider) {
     this.classLoader = classLoader;
-    this.serializableTypeOracle = serializableTypeOracle;
+    this.serializationPolicyProvider = serializationPolicyProvider;
   }
 
   public Object deserializeValue(Class type) throws SerializationException {
@@ -74,6 +78,10 @@ public final class ServerSerializationStreamReader extends
     return readObject();
   }
 
+  public SerializationPolicy getSerializationPolicy() {
+    return serializationPolicy;
+  }
+
   public void prepareToRead(String encodedTokens) throws SerializationException {
     tokenList.clear();
     tokenListIndex = 0;
@@ -91,6 +99,22 @@ public final class ServerSerializationStreamReader extends
     // Read the type name table
     //
     deserializeStringTable();
+
+    // If this stream encodes resource file information, read it and get a
+    // SerializationPolicy
+    if (hasSerializationPolicyInfo()) {
+      String moduleBaseURL = readString();
+      String strongName = readString();
+      if (serializationPolicyProvider != null) {
+        serializationPolicy = serializationPolicyProvider.getSerializationPolicy(
+            moduleBaseURL, strongName);
+
+        if (serializationPolicy == null) {
+          throw new NullPointerException(
+              "serializationPolicyProvider.getSerializationPolicy()");
+        }
+      }
+    }
   }
 
   public boolean readBoolean() {
@@ -126,27 +150,26 @@ public final class ServerSerializationStreamReader extends
     return Short.parseShort(extract());
   }
 
-  public String readString() throws SerializationException {
+  public String readString() {
     return getString(readInt());
   }
 
   protected Object deserialize(String typeSignature)
       throws SerializationException {
     Object instance = null;
-    SerializedInstanceReference serializedInstRef = serializableTypeOracle.decodeSerializedInstanceReference(typeSignature);
+    SerializedInstanceReference serializedInstRef = SerializabilityUtil.decodeSerializedInstanceReference(typeSignature);
 
     try {
       Class instanceClass = Class.forName(serializedInstRef.getName(), false,
           classLoader);
 
-      if (!serializableTypeOracle.isSerializable(instanceClass)) {
-        throw new SerializationException("Class '" + instanceClass.getName()
-            + "' is not serializable");
-      }
+      assert (serializationPolicy != null);
+
+      serializationPolicy.validateDeserialize(instanceClass);
 
       validateTypeVersions(instanceClass, serializedInstRef);
 
-      Class customSerializer = serializableTypeOracle.hasCustomFieldSerializer(instanceClass);
+      Class customSerializer = SerializabilityUtil.hasCustomFieldSerializer(instanceClass);
 
       instance = instantiate(customSerializer, instanceClass);
 
@@ -224,7 +247,7 @@ public final class ServerSerializationStreamReader extends
       Object instance) throws SerializationException, IllegalAccessException,
       NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
     Field[] declFields = instanceClass.getDeclaredFields();
-    Field[] serializableFields = serializableTypeOracle.applyFieldSerializationPolicy(declFields);
+    Field[] serializableFields = SerializabilityUtil.applyFieldSerializationPolicy(declFields);
 
     for (int index = 0; index < serializableFields.length; ++index) {
       Field declField = serializableFields[index];
@@ -249,9 +272,8 @@ public final class ServerSerializationStreamReader extends
     }
 
     Class superClass = instanceClass.getSuperclass();
-    if (superClass != null && serializableTypeOracle.isSerializable(superClass)) {
-      deserializeImpl(
-          serializableTypeOracle.hasCustomFieldSerializer(superClass),
+    if (serializationPolicy.shouldDeserializeFields(superClass)) {
+      deserializeImpl(SerializabilityUtil.hasCustomFieldSerializer(superClass),
           superClass, instance);
     }
   }
@@ -295,7 +317,7 @@ public final class ServerSerializationStreamReader extends
       return;
     }
 
-    String serverTypeSignature = serializableTypeOracle.getSerializationSignature(instanceClass);
+    String serverTypeSignature = SerializabilityUtil.getSerializationSignature(instanceClass);
 
     if (!clientTypeSignature.equals(serverTypeSignature)) {
       throw new SerializationException("Invalid type signature for "

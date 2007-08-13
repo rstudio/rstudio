@@ -18,6 +18,7 @@ package com.google.gwt.user.server.rpc.impl;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.client.rpc.impl.AbstractSerializationStreamWriter;
+import com.google.gwt.user.server.rpc.SerializationPolicy;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -120,8 +121,7 @@ public final class ServerSerializationStreamWriter extends
    * character escape sequence. This is necessary if the raw character could be
    * consumed and/or interpreted as a special character when the JSON encoded
    * response is evaluated. For example, 0x2028 and 0x2029 are alternate line
-   * endings for JS per ECMA-232, which are respected by Firefox and
-   * Mozilla.
+   * endings for JS per ECMA-232, which are respected by Firefox and Mozilla.
    * 
    * @param ch character to check
    * @return <code>true</code> if the character requires the \\uXXXX unicode
@@ -211,8 +211,6 @@ public final class ServerSerializationStreamWriter extends
 
   private IdentityHashMap objectMap = new IdentityHashMap();
 
-  private ServerSerializableTypeOracle serializableTypeOracle;
-
   private HashMap stringMap = new HashMap();
 
   private ArrayList stringTable = new ArrayList();
@@ -221,9 +219,11 @@ public final class ServerSerializationStreamWriter extends
 
   private int tokenListCharCount;
 
+  private final SerializationPolicy serializationPolicy;
+
   public ServerSerializationStreamWriter(
-      ServerSerializableTypeOracle serializableTypeOracle) {
-    this.serializableTypeOracle = serializableTypeOracle;
+      SerializationPolicy serializationPolicy) {
+    this.serializationPolicy = serializationPolicy;
   }
 
   public void prepareToWrite() {
@@ -313,9 +313,9 @@ public final class ServerSerializationStreamWriter extends
 
   protected String getObjectTypeSignature(Object instance) {
     if (shouldEnforceTypeVersioning()) {
-      return serializableTypeOracle.encodeSerializedInstanceReference(instance.getClass());
+      return SerializabilityUtil.encodeSerializedInstanceReference(instance.getClass());
     } else {
-      return serializableTypeOracle.getSerializedTypeName(instance.getClass());
+      return SerializabilityUtil.getSerializedTypeName(instance.getClass());
     }
   }
 
@@ -325,7 +325,12 @@ public final class ServerSerializationStreamWriter extends
 
   protected void serialize(Object instance, String typeSignature)
       throws SerializationException {
-    serializeImpl(instance, instance.getClass());
+    assert (instance != null);
+
+    Class clazz = instance.getClass();
+    serializationPolicy.validateSerialize(clazz);
+
+    serializeImpl(instance, clazz);
   }
 
   private void serializeClass(Object instance, Class instanceClass)
@@ -333,7 +338,7 @@ public final class ServerSerializationStreamWriter extends
     assert (instance != null);
 
     Field[] declFields = instanceClass.getDeclaredFields();
-    Field[] serializableFields = serializableTypeOracle.applyFieldSerializationPolicy(declFields);
+    Field[] serializableFields = SerializabilityUtil.applyFieldSerializationPolicy(declFields);
     for (int index = 0; index < serializableFields.length; ++index) {
       Field declField = serializableFields[index];
       assert (declField != null);
@@ -365,17 +370,16 @@ public final class ServerSerializationStreamWriter extends
     }
 
     Class superClass = instanceClass.getSuperclass();
-    if (superClass != null && serializableTypeOracle.isSerializable(superClass)) {
+    if (serializationPolicy.shouldSerializeFields(superClass)) {
       serializeImpl(instance, superClass);
     }
   }
 
   private void serializeImpl(Object instance, Class instanceClass)
       throws SerializationException {
-
     assert (instance != null);
 
-    Class customSerializer = serializableTypeOracle.hasCustomFieldSerializer(instanceClass);
+    Class customSerializer = SerializabilityUtil.hasCustomFieldSerializer(instanceClass);
     if (customSerializer != null) {
       serializeWithCustomSerializer(customSerializer, instance, instanceClass);
     } else {
@@ -432,7 +436,7 @@ public final class ServerSerializationStreamWriter extends
     buffer.append(",");
     buffer.append(getFlags());
     buffer.append(",");
-    buffer.append(SERIALIZATION_STREAM_VERSION);
+    buffer.append(getVersion());
   }
 
   private void writePayload(StringBuffer buffer) {

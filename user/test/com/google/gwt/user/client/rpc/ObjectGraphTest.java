@@ -36,7 +36,7 @@ public class ObjectGraphTest extends GWTTestCase {
     service.echo_AcyclicGraph(TestSetFactory.createAcyclicGraph(),
         new AsyncCallback() {
           public void onFailure(Throwable caught) {
-            fail(caught.toString());
+            TestSetValidator.rethrowException(caught);
           }
 
           public void onSuccess(Object result) {
@@ -54,7 +54,7 @@ public class ObjectGraphTest extends GWTTestCase {
     service.echo_ComplexCyclicGraph(TestSetFactory.createComplexCyclicGraph(),
         new AsyncCallback() {
           public void onFailure(Throwable caught) {
-            fail(caught.toString());
+            TestSetValidator.rethrowException(caught);
           }
 
           public void onSuccess(Object result) {
@@ -72,7 +72,7 @@ public class ObjectGraphTest extends GWTTestCase {
     final SerializableDoublyLinkedNode node = TestSetFactory.createComplexCyclicGraph();
     service.echo_ComplexCyclicGraph(node, node, new AsyncCallback() {
       public void onFailure(Throwable caught) {
-        fail(caught.toString());
+        TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
@@ -90,7 +90,7 @@ public class ObjectGraphTest extends GWTTestCase {
     service.echo_TrivialCyclicGraph(TestSetFactory.createTrivialCyclicGraph(),
         new AsyncCallback() {
           public void onFailure(Throwable caught) {
-            fail(caught.toString());
+            TestSetValidator.rethrowException(caught);
           }
 
           public void onSuccess(Object result) {

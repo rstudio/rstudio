@@ -190,6 +190,11 @@ public class SerializableTypeOracleBuilder {
     private final JClassType manualSerializer;
 
     /**
+     * <code>true</code> if this type might be instantiated.
+     */
+    private boolean maybeInstantiated;
+
+    /**
      * <code>true</code> if the type is automatically or manually serializable
      * and the corresponding checks succeed.
      */
@@ -298,6 +303,15 @@ public class SerializableTypeOracleBuilder {
     }
 
     /**
+     * Returns <code>true</code> if this type might be instantiated.
+     * 
+     * @return <code>true</code> if this type might be instantiated
+     */
+    public boolean maybeInstantiated() {
+      return maybeInstantiated;
+    }
+
+    /**
      * Returns <code>true</code> if this type needs to be rechecked. Only type
      * roots types have their subtypes analyzed. However it is possible that
      * this type was previously checked as the super type of a root type in
@@ -352,6 +366,10 @@ public class SerializableTypeOracleBuilder {
       serializable = false;
 
       directlyImplementsMarker = null;
+    }
+
+    public void setMaybeInstantiated(boolean maybeInstantiated) {
+      this.maybeInstantiated = maybeInstantiated;
     }
 
     public void setSerializable(boolean serializable) {
@@ -702,10 +720,12 @@ public class SerializableTypeOracleBuilder {
       // String is always serializable
       MetaTypeInfo stringMti = getMetaTypeInfo(stringClass);
       stringMti.setSerializable(true);
+      stringMti.setMaybeInstantiated(true);
 
       // IncompatibleRemoteServiceException is always serializable
       MetaTypeInfo incompatibleRemoteServiceExceptionMti = getMetaTypeInfo(typeOracle.getType(IncompatibleRemoteServiceException.class.getName()));
       incompatibleRemoteServiceExceptionMti.setSerializable(true);
+      incompatibleRemoteServiceExceptionMti.setMaybeInstantiated(true);
     } catch (NotFoundException e) {
       rootLogger.log(TreeLogger.ERROR, null, e);
       throw new UnableToCompleteException();
@@ -744,6 +764,7 @@ public class SerializableTypeOracleBuilder {
       throw new UnableToCompleteException();
     }
 
+    Set possiblyInstantiatedTypes = new HashSet();
     List serializableTypesList = new ArrayList();
     Iterator iterTypes = typeToMetaTypeInfo.values().iterator();
     while (iterTypes.hasNext()) {
@@ -751,6 +772,9 @@ public class SerializableTypeOracleBuilder {
       JType type = mti.getType();
 
       if (mti.isSerializable() && type.isInterface() == null) {
+        if (mti.maybeInstantiated()) {
+          possiblyInstantiatedTypes.add(type);
+        }
         serializableTypesList.add(type);
       }
     }
@@ -768,7 +792,8 @@ public class SerializableTypeOracleBuilder {
 
     logSerializableTypes(logger, serializableTypes);
 
-    return new SerializableTypeOracleImpl(typeOracle, serializableTypes);
+    return new SerializableTypeOracleImpl(typeOracle, serializableTypes,
+        possiblyInstantiatedTypes);
   }
 
   /**
@@ -856,6 +881,8 @@ public class SerializableTypeOracleBuilder {
           return;
         }
 
+        // TODO: revisit this check; we probably want to field serialize a type
+        // that is not default constructable, for the sake of subclasses.
         if (type.isClass() != null && !type.isAbstract()
             && !type.isDefaultInstantiable()) {
           markAsUnserializableAndLog(
@@ -881,19 +908,27 @@ public class SerializableTypeOracleBuilder {
     }
 
     if (checkSubtypes) {
+      if (!type.isAbstract()
+          && (type.isDefaultInstantiable() || mti.qualifiesForManualSerialization())) {
+        mti.setMaybeInstantiated(true);
+      }
+
       JClassType[] subtypes = type.getSubtypes();
       if (subtypes.length > 0) {
         TreeLogger localLogger = logger.branch(TreeLogger.DEBUG,
             "Analyzing subclasses:", null);
 
         for (int i = 0; i < subtypes.length; ++i) {
-          JClassType subtype = subtypes[i];
-          MetaTypeInfo smti = getMetaTypeInfo(subtype);
+          JClassType subType = subtypes[i];
+          MetaTypeInfo smti = getMetaTypeInfo(subType);
           if (smti.qualifiesForSerialization()) {
-            checkType(localLogger, subtype, false);
+            checkType(localLogger, subType, false);
+            if (!subType.isAbstract() && subType.isDefaultInstantiable()) {
+              smti.setMaybeInstantiated(true);
+            }
           } else {
             localLogger.branch(TreeLogger.DEBUG, "Not analyzing subclass '"
-                + subtype.getParameterizedQualifiedSourceName()
+                + subType.getParameterizedQualifiedSourceName()
                 + "' because it is not assignable to '"
                 + IsSerializable.class.getName() + "' or '"
                 + Serializable.class.getName()
@@ -1145,7 +1180,8 @@ public class SerializableTypeOracleBuilder {
         JType leafType = isArray.getLeafType();
         if (leafType.isPrimitive() != null) {
           serializableTypes.add(isArray);
-          getMetaTypeInfo(isArray).setSerializable(true);
+          mti.setSerializable(true);
+          mti.setMaybeInstantiated(true);
         } else {
           List leafTypes = getSerializableTypesAssignableTo(leafType);
           List covariantLeafTypes = getAllTypesBetweenRootTypeAndSerializableLeaves(
@@ -1157,7 +1193,10 @@ public class SerializableTypeOracleBuilder {
             JArrayType covariantArray = getArrayType(typeOracle,
                 isArray.getRank(), clazz);
             serializableTypes.add(covariantArray);
-            getMetaTypeInfo(covariantArray).setSerializable(true);
+
+            MetaTypeInfo cmti = getMetaTypeInfo(covariantArray);
+            cmti.setSerializable(true);
+            cmti.setMaybeInstantiated(true);
           }
         }
       } else if (isParameterized != null) {
@@ -1258,19 +1297,19 @@ public class SerializableTypeOracleBuilder {
   }
 
   private void markAsUnserializableAndLog(TreeLogger logger,
-      TreeLogger.Type logType, String logMessage, MetaTypeInfo mti) {
-    mti.setState(SerializableTypeOracleBuilder.CHECK_FAILED);
-    mti.setSerializable(false);
-    mti.addSerializationIssue(logType, logMessage);
-    logger.branch(logType, logMessage, null);
-  }
-
-  private void markAsUnserializableAndLog(TreeLogger logger,
       TreeLogger.Type logType, List failures, MetaTypeInfo mti) {
     Iterator iter = failures.iterator();
     while (iter.hasNext()) {
       markAsUnserializableAndLog(logger, logType, (String) iter.next(), mti);
     }
+  }
+
+  private void markAsUnserializableAndLog(TreeLogger logger,
+      TreeLogger.Type logType, String logMessage, MetaTypeInfo mti) {
+    mti.setState(SerializableTypeOracleBuilder.CHECK_FAILED);
+    mti.setSerializable(false);
+    mti.addSerializationIssue(logType, logMessage);
+    logger.branch(logType, logMessage, null);
   }
 
   private void validateRemoteService(TreeLogger logger, JClassType remoteService) {

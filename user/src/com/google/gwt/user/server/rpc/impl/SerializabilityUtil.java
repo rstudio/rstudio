@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,9 +15,7 @@
  */
 package com.google.gwt.user.server.rpc.impl;
 
-import com.google.gwt.user.client.rpc.IsSerializable;
-
-import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -30,12 +28,12 @@ import java.util.Set;
 import java.util.zip.CRC32;
 
 /**
- * This class defines an implementation of a serializable type oracle that can
- * be used by the rpc servlet.
+ * Serialization utility class used by the server-side RPC code.
  */
-public class ServerSerializableTypeOracleImpl implements
-    ServerSerializableTypeOracle {
+public class SerializabilityUtil {
 
+  public static final String DEFAULT_ENCODING = "UTF-8";
+  
   /**
    * A permanent cache of all computed CRCs on classes. This is safe to do
    * because a Class is guaranteed not to change within the lifetime of a
@@ -51,7 +49,10 @@ public class ServerSerializableTypeOracleImpl implements
    */
   private static final Map classCustomSerializerCache = new HashMap();
 
+  private static final String JRE_SERIALIZER_PACKAGE = "com.google.gwt.user.client.rpc.core";
+
   private static final Map SERIALIZED_PRIMITIVE_TYPE_NAMES = new HashMap();
+
   private static final Set TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES = new HashSet();
 
   static {
@@ -79,44 +80,7 @@ public class ServerSerializableTypeOracleImpl implements
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Throwable.class);
   }
 
-  private static boolean containsCachedSerializerForClass(Class instanceType) {
-    synchronized (classCustomSerializerCache) {
-      return classCustomSerializerCache.containsKey(instanceType);
-    }
-  }
-
-  private static String getCachedCRCForClass(Class instanceType) {
-    synchronized (classCRC32Cache) {
-      return (String) classCRC32Cache.get(instanceType);
-    }
-  }
-
-  private static Class getCachedSerializerForClass(Class instanceType) {
-    synchronized (classCustomSerializerCache) {
-      return (Class) classCustomSerializerCache.get(instanceType);
-    }
-  }
-
-  private static void putCachedCRCForClass(Class instanceType, String crc32) {
-    synchronized (classCRC32Cache) {
-      classCRC32Cache.put(instanceType, crc32);
-    }
-  }
-
-  private static void putCachedSerializerForClass(Class instanceType,
-      Class customFieldSerializer) {
-    synchronized (classCustomSerializerCache) {
-      classCustomSerializerCache.put(instanceType, customFieldSerializer);
-    }
-  }
-
-  private String[] packagePaths;
-
-  public ServerSerializableTypeOracleImpl(String[] packagePaths) {
-    this.packagePaths = packagePaths;
-  }
-
-  public Field[] applyFieldSerializationPolicy(Field[] fields) {
+  public static Field[] applyFieldSerializationPolicy(Field[] fields) {
     ArrayList fieldList = new ArrayList();
     for (int index = 0; index < fields.length; ++index) {
       Field field = fields[index];
@@ -148,7 +112,7 @@ public class ServerSerializableTypeOracleImpl implements
     return fieldSubset;
   }
 
-  public SerializedInstanceReference decodeSerializedInstanceReference(
+  public static SerializedInstanceReference decodeSerializedInstanceReference(
       String encodedSerializedInstanceReference) {
     final String[] components = encodedSerializedInstanceReference.split(SerializedInstanceReference.SERIALIZED_REFERENCE_SEPARATOR);
     return new SerializedInstanceReference() {
@@ -162,24 +126,29 @@ public class ServerSerializableTypeOracleImpl implements
     };
   }
 
-  public String encodeSerializedInstanceReference(Class instanceType) {
+  public static String encodeSerializedInstanceReference(Class instanceType) {
     return instanceType.getName()
         + SerializedInstanceReference.SERIALIZED_REFERENCE_SEPARATOR
         + getSerializationSignature(instanceType);
   }
 
-  public String getSerializationSignature(Class instanceType) {
+  public static String getSerializationSignature(Class instanceType) {
     String result = getCachedCRCForClass(instanceType);
     if (result == null) {
       CRC32 crc = new CRC32();
-      generateSerializationSignature(instanceType, crc);
+      try {
+        generateSerializationSignature(instanceType, crc);
+      } catch (UnsupportedEncodingException e) {
+        throw new RuntimeException(
+            "Could not compute the serialization signature", e);
+      }
       result = Long.toString(crc.getValue());
       putCachedCRCForClass(instanceType, result);
     }
     return result;
   }
 
-  public String getSerializedTypeName(Class instanceType) {
+  public static String getSerializedTypeName(Class instanceType) {
     if (instanceType.isPrimitive()) {
       return (String) SERIALIZED_PRIMITIVE_TYPE_NAMES.get(instanceType.getName());
     }
@@ -190,7 +159,7 @@ public class ServerSerializableTypeOracleImpl implements
   /**
    * This method treats arrays in a special way.
    */
-  public Class hasCustomFieldSerializer(Class instanceType) {
+  public static Class hasCustomFieldSerializer(Class instanceType) {
     assert (instanceType != null);
     Class result = getCachedSerializerForClass(instanceType);
     if (result != null) {
@@ -207,24 +176,10 @@ public class ServerSerializableTypeOracleImpl implements
     return result;
   }
 
-  public boolean isSerializable(Class instanceType) {
-    if (instanceType.isArray()) {
-      return isSerializable(instanceType.getComponentType());
-    }
-    if (instanceType.isPrimitive()) {
-      return true;
-    }
-    if (IsSerializable.class.isAssignableFrom(instanceType) ||
-        Serializable.class.isAssignableFrom(instanceType)) {
-      return true;
-    }
-    return hasCustomFieldSerializer(instanceType) != null;
-  }
-
   /**
    * This method treats arrays in a special way.
    */
-  private Class computeHasCustomFieldSerializer(Class instanceType) {
+  private static Class computeHasCustomFieldSerializer(Class instanceType) {
     assert (instanceType != null);
 
     String qualifiedTypeName;
@@ -244,26 +199,31 @@ public class ServerSerializableTypeOracleImpl implements
       qualifiedTypeName = instanceType.getName();
     }
 
-    Class customSerializer = getCustomFieldSerializer(qualifiedTypeName
-        + "_CustomFieldSerializer");
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    String simpleSerializerName = qualifiedTypeName + "_CustomFieldSerializer";
+    Class customSerializer = getCustomFieldSerializer(classLoader,
+        simpleSerializerName);
     if (customSerializer != null) {
       return customSerializer;
     }
 
     // Try with the regular name
-    String simpleSerializerName = qualifiedTypeName + "_CustomFieldSerializer";
-    for (int i = 0; i < packagePaths.length; ++i) {
-      Class customSerializerClass = getCustomFieldSerializer(packagePaths[i]
-          + "." + simpleSerializerName);
-      if (customSerializerClass != null) {
-        return customSerializerClass;
-      }
+    Class customSerializerClass = getCustomFieldSerializer(classLoader,
+        JRE_SERIALIZER_PACKAGE + "." + simpleSerializerName);
+    if (customSerializerClass != null) {
+      return customSerializerClass;
     }
 
     return null;
   }
 
-  private boolean excludeImplementationFromSerializationSignature(
+  private static boolean containsCachedSerializerForClass(Class instanceType) {
+    synchronized (classCustomSerializerCache) {
+      return classCustomSerializerCache.containsKey(instanceType);
+    }
+  }
+
+  private static boolean excludeImplementationFromSerializationSignature(
       Class instanceType) {
     if (TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.contains(instanceType)) {
       return true;
@@ -271,8 +231,10 @@ public class ServerSerializableTypeOracleImpl implements
     return false;
   }
 
-  private void generateSerializationSignature(Class instanceType, CRC32 crc) {
-    crc.update(getSerializedTypeName(instanceType).getBytes());
+  private static void generateSerializationSignature(Class instanceType,
+      CRC32 crc) throws UnsupportedEncodingException {
+    crc.update(getSerializedTypeName(instanceType).getBytes(
+        DEFAULT_ENCODING));
 
     if (excludeImplementationFromSerializationSignature(instanceType)) {
       return;
@@ -289,8 +251,9 @@ public class ServerSerializableTypeOracleImpl implements
         Field field = fields[i];
         assert (field != null);
 
-        crc.update(field.getName().getBytes());
-        crc.update(getSerializedTypeName(field.getType()).getBytes());
+        crc.update(field.getName().getBytes(DEFAULT_ENCODING));
+        crc.update(getSerializedTypeName(field.getType()).getBytes(
+            DEFAULT_ENCODING));
       }
 
       Class superClass = instanceType.getSuperclass();
@@ -300,18 +263,39 @@ public class ServerSerializableTypeOracleImpl implements
     }
   }
 
-  private Class getCustomFieldSerializer(String qualifiedSerialzierName) {
-    Class customSerializerClass;
+  private static String getCachedCRCForClass(Class instanceType) {
+    synchronized (classCRC32Cache) {
+      return (String) classCRC32Cache.get(instanceType);
+    }
+  }
+
+  private static Class getCachedSerializerForClass(Class instanceType) {
+    synchronized (classCustomSerializerCache) {
+      return (Class) classCustomSerializerCache.get(instanceType);
+    }
+  }
+
+  private static Class getCustomFieldSerializer(ClassLoader classLoader,
+      String qualifiedSerialzierName) {
     try {
-      customSerializerClass = Class.forName(qualifiedSerialzierName, false,
-          this.getClass().getClassLoader());
+      Class customSerializerClass = Class.forName(qualifiedSerialzierName,
+          false, classLoader);
       return customSerializerClass;
     } catch (ClassNotFoundException e) {
       return null;
     }
   }
 
-  private String[] getPackagePaths() {
-    return packagePaths;
+  private static void putCachedCRCForClass(Class instanceType, String crc32) {
+    synchronized (classCRC32Cache) {
+      classCRC32Cache.put(instanceType, crc32);
+    }
+  }
+
+  private static void putCachedSerializerForClass(Class instanceType,
+      Class customFieldSerializer) {
+    synchronized (classCustomSerializerCache) {
+      classCustomSerializerCache.put(instanceType, customFieldSerializer);
+    }
   }
 }

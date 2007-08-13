@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -94,7 +95,7 @@ public interface CollectionsTestService extends RemoteService {
   Short[] echo(Short[] value) throws CollectionsTestServiceException;
 
   String[] echo(String[] value) throws CollectionsTestServiceException;
-  
+
   String[][] echo(String[][] value) throws CollectionsTestServiceException;
 
   /**
@@ -102,4 +103,13 @@ public interface CollectionsTestService extends RemoteService {
    * @gwt.typeArgs <com.google.gwt.user.client.rpc.IsSerializable>
    */
   Vector echo(Vector value) throws CollectionsTestServiceException;
+
+  /**
+   * This method is used to test that trying to return Arrays.asList will result
+   * in an InvocationException on the client.
+   * 
+   * @gwt.typeArgs value <java.lang.Byte>
+   * @gwt.typeArgs <java.lang.Byte>
+   */
+  List getArraysAsList(List value);
 }
