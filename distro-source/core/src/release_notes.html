@@ -93,13 +93,22 @@
           href="http://code.google.com/p/google-web-toolkit/issues/detail?id=1130">#1130</a>, <a
           href="http://code.google.com/p/google-web-toolkit/issues/detail?id=1214">#1214</a>, <a
           href="http://code.google.com/p/google-web-toolkit/issues/detail?id=1276">#1276</a>)</li>
-        <li>New RPC warnings
+        <li>New <a href="doc/html/com.google.gwt.doc.DeveloperGuide.RemoteProcedureCalls.html">RPC</a> warnings
           <ul>
             <li>Warn if a non-checked exception is used in the throws clause of a RemoteService method.</li>
             <li>Warn if no concrete, serializable subclasses can be found for a given type declared in a
             RemoteService interface.</li>
           </ul>
         </li>
+        <li><a href="doc/html/com.google.gwt.doc.DeveloperGuide.RemoteProcedureCalls.html">RPC</a> now generates a serialization
+        policy file during compilation.  The serializable policy file contains a white list of allowed types which may be
+        serialized.  Its name is a strong hash name followed by <code>.gwt.rpc</code>.  This file must be deployed to your web
+        server as a public resource, accessible from a 
+        <a href="doc/html/com.google.gwt.user.server.rpc.RemoteServiceServlet.html">RemoteServiceServlet</a>
+        via <code>ServletContext.getResource()</code>.  If
+        it is not deployed properly, RPC will run in 1.3.3 compatibility mode and refuse to serialize types implementing
+        <a href="doc/html/java.io.Serializable.html">Serializable</a>. (<a
+          href="http://code.google.com/p/google-web-toolkit/issues/detail?id=1297">#1297</a>)</li>
         <li><a href="doc/html/com.google.gwt.user.client.ui.Panel.html#adopt(com.google.gwt.user.client.ui.Widget,%20com.google.gwt.user.client.Element)">Panel.adopt(Widget, Element)</a>
         and
         <a href="doc/html/com.google.gwt.user.client.ui.Panel.html#disown(com.google.gwt.user.client.ui.Widget)">Panel.disown(Widget)</a>
