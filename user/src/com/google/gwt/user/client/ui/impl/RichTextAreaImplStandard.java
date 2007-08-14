@@ -57,6 +57,20 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     return beforeInitPlaceholder == null ? getTextImpl() : DOM.getInnerText(beforeInitPlaceholder);
   }
 
+  public native void initElement()  /*-{
+    // Most browsers don't like setting designMode until slightly _after_
+    // the iframe becomes attached to the DOM. Any non-zero timeout will do
+    // just fine.
+    var _this = this;
+    setTimeout(function() {
+      // Turn on design mode.
+      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.designMode = 'On';
+
+      // Send notification that the iframe has reached design mode.
+      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitialized()();
+    }, 1);
+  }-*/;
+
   public void insertHorizontalRule() {
     execCommand("InsertHorizontalRule", null);
   }
@@ -210,20 +224,6 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     beforeInitPlaceholder = DOM.createDiv();
     DOM.setInnerHTML(beforeInitPlaceholder, html);
   }
-
-  public native void initElement()  /*-{
-    // Most browsers don't like setting designMode until slightly _after_
-    // the iframe becomes attached to the DOM. Any non-zero timeout will do
-    // just fine.
-    var _this = this;
-    setTimeout(function() {
-      // Turn on design mode.
-      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.designMode = 'On';
-
-      // Send notification that the iframe has reached design mode.
-      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitialized()();
-    }, 1);
-  }-*/;
 
   protected native String getHTMLImpl() /*-{
     return this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerHTML;
