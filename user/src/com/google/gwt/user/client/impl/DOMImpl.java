@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.impl;
 
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
@@ -271,19 +270,17 @@ public abstract class DOMImpl {
       int index);
 
   /**
-   * @see DOM#insertListItem(Element, String, String, int)
+   * @see com.google.gwt.user.client.DOM#insertListItem(Element, String, String, int)
    */
-  public void insertListItem(Element select, String item, String value,
-      int index) {
-    Element option = DOM.createElement("OPTION");
-    DOM.setInnerText(option, item);
-    DOM.setElementProperty(option, "value", value);
-    if (index == -1) {
-      DOM.appendChild(select, option);
+  public native void insertListItem(Element select, String item, String value,
+      int index)/*-{
+    var option = new Option(item, value);
+    if (index == -1 || index > select.options.length - 1) {
+      select.add(option, null);
     } else {
-      DOM.insertChild(select, option, index);
+      select.add(option, select.options[index]);      
     }
-  }
+  }-*/;
 
   public abstract boolean isOrHasChild(Element parent, Element child);
 

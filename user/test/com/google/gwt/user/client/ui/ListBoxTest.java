@@ -26,6 +26,73 @@ public class ListBoxTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
+  public void testClear() {
+    ListBox lb = new ListBox();
+    lb.addItem("a");
+    lb.addItem("b");
+    lb.addItem("c");
+    lb.clear();
+    assertEquals(0, lb.getItemCount());
+  }
+
+  public void testInsert() {
+
+    // Insert in the middle
+    {
+      ListBox lb = new ListBox();
+      lb.addItem("a");
+      lb.addItem("c");
+      lb.insertItem("b", 1);
+      assertEquals("a", lb.getItemText(0));
+      assertEquals("b", lb.getItemText(1));
+      assertEquals("c", lb.getItemText(2));
+    }
+
+    // Insert at the front
+    {
+      ListBox lb = new ListBox();
+      lb.addItem("b");
+      lb.addItem("c");
+      lb.insertItem("a", 0);
+      assertEquals("a", lb.getItemText(0));
+      assertEquals("b", lb.getItemText(1));
+      assertEquals("c", lb.getItemText(2));
+    }
+
+    // Insert at the end by using a negative index
+    {
+      ListBox lb = new ListBox();
+      lb.addItem("a");
+      lb.addItem("b");
+      lb.insertItem("c", -1);
+      assertEquals("a", lb.getItemText(0));
+      assertEquals("b", lb.getItemText(1));
+      assertEquals("c", lb.getItemText(2));
+    }
+
+    // Insert at the end by using an index greater than the length
+    // of the list
+    {
+      ListBox lb = new ListBox();
+      lb.addItem("a");
+      lb.addItem("b");
+      lb.insertItem("c", 2);
+      assertEquals("a", lb.getItemText(0));
+      assertEquals("b", lb.getItemText(1));
+      assertEquals("c", lb.getItemText(2));
+    }
+  }
+
+  public void testRemove() {
+    ListBox lb = new ListBox();
+    lb.addItem("a");
+    lb.addItem("b");
+    lb.addItem("c");
+    lb.removeItem(1);
+    assertEquals("a", lb.getItemText(0));
+    assertEquals("c", lb.getItemText(1));
+  }
+
   public void testSelected() {
     ListBox lb = new ListBox();
     lb.clear();
@@ -61,6 +128,17 @@ public class ListBoxTest extends GWTTestCase {
       for (int j = 0; j < box.getItemCount(); j++) {
         assertTrue(box.isItemSelected(j));
       }
+
+      // Setting the selected index should de-select all other items, except
+      // the item at the index.
+      box.setSelectedIndex(1);
+      assertFalse(box.isItemSelected(0));
+      assertTrue(box.isItemSelected(1));
+
+      // Make sure that setting the selected index to -1 de-selects the
+      // selected item.
+      box.setSelectedIndex(-1);
+      assertFalse(box.isItemSelected(1));
     }
   }
 

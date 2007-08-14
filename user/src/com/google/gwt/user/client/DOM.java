@@ -260,6 +260,7 @@ public class DOM {
   /**
    * Creates an HTML SELECT element.
    *
+   * @param multiple true if multiple selection of options is allowed
    * @return the newly-created element
    */
   public static Element createSelect(boolean multiple) {
@@ -885,7 +886,9 @@ public class DOM {
 
   /**
    * Creates an <code>&lt;option&gt;</code> element and inserts it as a child
-   * of the specified <code>&lt;select&gt;</code> element.
+   * of the specified <code>&lt;select&gt;</code> element. If the index is
+   * less than zero, or greater than or equal to the length of the list, then
+   * the option element will be appended to the end of the list.
    * 
    * @param select the <code>&lt;select&gt;</code> element
    * @param item the text of the new item; cannot be <code>null</code>
@@ -1182,7 +1185,7 @@ public class DOM {
    */
   public static int windowGetClientHeight() {
     return impl.windowGetClientHeight();
-  };
+  }
 
   /**
    * Gets the width of the browser window's client area excluding the

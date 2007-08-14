@@ -102,6 +102,19 @@ class DOMImplSafari extends DOMImplStandard {
     return top;
   }-*/;
 
+  public native void insertListItem(Element select, String text, String value,
+      int index) /*-{
+    // We can't use the 'options' array due to a bug in Safari.
+    // Read the comment above com.google.gwt.user.client.ui.ListBox.ImplSafari
+    // for more information.
+    var newOption = new Option(text, value);
+    if (index == -1 || index > select.children.length - 1) {
+      select.appendChild(newOption);
+    } else{
+      select.insertBefore(newOption, select.children[index]);
+    }
+  }-*/;
+
   /**
    * Gets the height of the browser window's client area excluding the
    * scroll bar.

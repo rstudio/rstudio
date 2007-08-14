@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.core.client.GWT;
 
 /**
  * A widget that presents a list of choices to the user, either as a list box or
@@ -40,7 +41,96 @@ import com.google.gwt.user.client.Event;
 public class ListBox extends FocusWidget implements SourcesChangeEvents,
     HasName {
 
+  /**
+   * ListBox implementation for all browsers except Safari. This implementation
+   * relies on the JavaScript Select object and its 'options' array.
+   */
+  private static class Impl {
+
+    public native void clear(Element select) /*-{
+      select.options.length = 0;
+    }-*/;
+
+    public native int getItemCount(Element select) /*-{
+      return select.options.length;
+    }-*/;
+
+    public native String getItemText(Element select, int index) /*-{
+      return select.options[index].text;
+    }-*/;
+
+    public native String getItemValue(Element select, int index) /*-{
+      return select.options[index].value;
+    }-*/;
+
+    public native boolean isItemSelected(Element select, int index) /*-{
+      return select.options[index].selected;
+    }-*/;
+
+    public native void removeItem(Element select, int index) /*-{
+      select.options[index] = null;
+    }-*/;
+
+    public native void setItemSelected(Element select, int index,
+                                       boolean selected) /*-{
+      select.options[index].selected = selected;
+    }-*/;
+
+    public native void setValue(Element select, int index, String value) /*-{
+      select.options[index].value = value;
+    }-*/;
+  }
+
+  /**
+   * ListBox implementation for Safari. The 'options' array cannot be used
+   * due to a bug in the version of WebKit that ships with GWT
+   * (http://bugs.webkit.org/show_bug.cgi?id=10472).
+   * The 'children' array, which is common for all DOM elements in Safari,
+   * does not suffer from the same problem. Ideally, the 'children'
+   * array should be used in all of the traversal methods in the DOM classes.
+   * Unfortunately, due to a bug in Safari 2
+   * (http://bugs.webkit.org/show_bug.cgi?id=3330), this will not work.
+   * However, this bug does not cause problems in the case of <SELECT>
+   * elements, because their descendent elements are only one level deep.
+   */
+  private static class ImplSafari extends Impl {
+
+    public native void clear(Element select) /*-{
+      select.innerText = '';
+    }-*/;
+
+    public native int getItemCount(Element select) /*-{
+      return select.children.length;
+    }-*/;
+
+    public native String getItemText(Element select, int index) /*-{
+      return select.children[index].text;
+    }-*/;
+
+    public native String getItemValue(Element select, int index) /*-{
+      return select.children[index].value;
+    }-*/;
+
+    public native boolean isItemSelected(Element select, int index) /*-{
+      return select.children[index].selected;
+    }-*/;
+
+    public native void removeItem(Element select, int index) /*-{
+      select.removeChild(select.children[index]);
+    }-*/;
+
+    public native void setItemSelected(Element select, int index,
+                                       boolean selected) /*-{
+      select.children[index].selected = selected;
+    }-*/;
+
+    public native void setValue(Element select, int index, String value) /*-{
+      select.children[index].value = value;
+    }-*/;
+  }
+
   private static final int INSERT_AT_END = -1;
+  private static final Impl impl = (Impl) GWT.create(Impl.class);
   private ChangeListenerCollection changeListeners;
 
   /**
@@ -97,10 +187,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * Removes all items from the list box.
    */
   public void clear() {
-    Element h = getElement();
-    while (DOM.getChildCount(h) > 0) {
-      DOM.removeChild(h, DOM.getChild(h, 0));
-    }
+    impl.clear(getElement());
   }
 
   /**
@@ -109,7 +196,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * @return the number of items
    */
   public int getItemCount() {
-    return DOM.getChildCount(getElement());
+    return impl.getItemCount(getElement());
   }
 
   /**
@@ -117,10 +204,11 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * 
    * @param index the index of the item whose text is to be retrieved
    * @return the text associated with the item
+   * @throws IndexOutOfBoundsException if the index is out of range
    */
   public String getItemText(int index) {
-    Element child = DOM.getChild(getElement(), index);
-    return DOM.getInnerText(child);
+    checkIndex(index);
+    return impl.getItemText(getElement(), index);
   }
 
   public String getName() {
@@ -147,9 +235,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    */
   public String getValue(int index) {
     checkIndex(index);
-
-    Element option = DOM.getChild(getElement(), index);
-    return DOM.getElementProperty(option, "value");
+    return impl.getItemValue(getElement(), index);
   }
 
   /**
@@ -178,7 +264,9 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
 
   /**
    * Inserts an item into the list box, specifying an initial value for the
-   * item.
+   * item. If the index is less than zero, or greater than or equal to
+   * the length of the list, then the item will be appended to the end of
+   * the list.
    * 
    * @param item the text of the item to be inserted
    * @param value the item's value, to be submitted if it is part of a
@@ -194,12 +282,11 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * 
    * @param index the index of the item to be tested
    * @return <code>true</code> if the item is selected
+   * @throws IndexOutOfBoundsException if the index is out of range
    */
   public boolean isItemSelected(int index) {
     checkIndex(index);
-
-    Element option = DOM.getChild(getElement(), index);
-    return DOM.getElementPropertyBoolean(option, "selected");
+    return impl.isItemSelected(getElement(), index);
   }
 
   /**
@@ -231,10 +318,11 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * Removes the item at the specified index.
    * 
    * @param index the index of the item to be removed
+   * @throws IndexOutOfBoundsException if the index is out of range
    */
   public void removeItem(int index) {
-    Element child = DOM.getChild(getElement(), index);
-    DOM.removeChild(getElement(), child);
+    checkIndex(index);
+    impl.removeItem(getElement(), index);
   }
 
   /**
@@ -247,12 +335,11 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * 
    * @param index the index of the item to be selected or unselected
    * @param selected <code>true</code> to select the item
+   * @throws IndexOutOfBoundsException if the index is out of range
    */
   public void setItemSelected(int index, boolean selected) {
     checkIndex(index);
-
-    Element option = DOM.getChild(getElement(), index);
-    DOM.setElementPropertyBoolean(option, "selected", selected);
+    impl.setItemSelected(getElement(), index, selected);
   }
 
   /**
@@ -311,9 +398,8 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * @throws IndexOutOfBoundsException if the index is out of range
    */
   public void setValue(int index, String value) {
-    checkIndex(index);
-    Element option = DOM.getChild(getElement(), index);
-    DOM.setElementProperty(option, "value", value);
+    checkIndex(index);   
+    impl.setValue(getElement(), index, value);
   }
 
   /**
@@ -327,8 +413,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   private void checkIndex(int index) {
-    Element elem = getElement();
-    if ((index < 0) || (index >= DOM.getChildCount(elem))) {
+    if (index < 0 || index >= getItemCount()) {
       throw new IndexOutOfBoundsException();
     }
   }

@@ -31,4 +31,5 @@
    <inherits name="com.google.gwt.user.ClippedImage"/>
    <inherits name="com.google.gwt.user.RichText"/>
    <inherits name="com.google.gwt.user.SplitPanel"/>
+   <inherits name="com.google.gwt.user.ListBox" />
 </module>
