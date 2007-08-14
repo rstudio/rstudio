@@ -353,7 +353,13 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         if (mouseListeners != null) {
           mouseListeners.fireMouseEvent(this, event);
         }
-        elementClicked(root, DOM.eventGetTarget(event));
+
+        // Currently, the way we're using image bundles causes extraneous events
+        // to be sunk on individual items' open/close images. This leads to an
+        // extra event reaching the Tree, which we will ignore here.
+        if (DOM.eventGetCurrentTarget(event).equals(getElement())) {
+          elementClicked(root, DOM.eventGetTarget(event));
+        }
         break;
       }
 
