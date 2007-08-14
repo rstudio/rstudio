@@ -22,9 +22,8 @@ import com.google.gwt.dev.util.Util;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.security.MessageDigest;
@@ -134,13 +133,7 @@ class ImageBundleBuilder {
     g2d.dispose();
 
     // Compute the strong name as the hex version of the hash.
-    byte[] hash = md5.digest();
-    char[] strongName = new char[2 * hash.length];
-    int j = 0;
-    for (int i = 0; i < hash.length; i++) {
-      strongName[j++] = Util.HEX_CHARS[(hash[i] & 0xF0) >> 4];
-      strongName[j++] = Util.HEX_CHARS[hash[i] & 0x0F];
-    }
+    String strongName = Util.toHexString(md5.digest());
 
     // Only PNG is supported right now, but still we introduce a variable to
     // anticipate an update when the best output file type is inferred.
@@ -148,7 +141,7 @@ class ImageBundleBuilder {
 
     // Compute the file name. The '.cache' part indicates that it can be
     // permanently cached.
-    String bundleFileName = new String(strongName) + ".cache." + bundleFileType;
+    String bundleFileName = strongName + ".cache." + bundleFileType;
 
     OutputStream outStream = context.tryCreateResource(logger, bundleFileName);
 
@@ -202,17 +195,11 @@ class ImageBundleBuilder {
       }
 
       // Assimilate this file's bytes into the MD5.
-      InputStream is = imageUrl.openStream();
-      BufferedInputStream bis = new BufferedInputStream(is);
-      byte imgByte;
-      while ((imgByte = (byte) bis.read()) != -1) {
-        md5.update(imgByte);
-      }
-      is.close();
-
-      // Load the image from the URL instead of the stream (with the assumption
-      // that having the URL provides a tiny bit more context to the parser).
-      image = ImageIO.read(imageUrl);
+      byte[] imgBytes = Util.readURLAsBytes(imageUrl);
+      md5.update(imgBytes);
+      
+      // Load the image
+      image = ImageIO.read(new ByteArrayInputStream(imgBytes));
       if (image == null) {
         logger.log(TreeLogger.ERROR, "Unrecognized image file format", null);
         throw new UnableToCompleteException();

@@ -16,10 +16,9 @@
 package com.google.gwt.core.ext.typeinfo;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.util.Util;
 
 import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -34,38 +33,6 @@ import java.util.TreeMap;
  * Type representing a Java class or interface type.
  */
 public class JClassType extends JType implements HasMetaData {
-  private static final char[] HEX_CHARS = new char[] {
-      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
-      'E', 'F'};
-
-  /**
-   * Computes the MD5 hash for the specified byte array.
-   * 
-   * @return a big fat string encoding of the MD5 for the content, suitably
-   *         formatted for use as a file name
-   */
-  private static String computeStrongName(byte[] content) {
-    MessageDigest md5;
-    try {
-      md5 = MessageDigest.getInstance("MD5");
-    } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException("Error initializing MD5", e);
-    }
-    for (int i = 0; i < content.length; i++) {
-      md5.update(content[i]);
-    }
-    byte[] hash = md5.digest();
-    // Hex version of the hash.
-    //        
-    char[] name = new char[2 * hash.length];
-    int j = 0;
-    for (int i = 0; i < hash.length; i++) {
-      name[j++] = HEX_CHARS[(hash[i] & 0xF0) >> 4];
-      name[j++] = HEX_CHARS[hash[i] & 0x0F];
-    }
-    return new String(name);
-  }
-
   private final Set allSubtypes = new HashSet();
 
   private final int bodyEnd;
@@ -373,7 +340,7 @@ public class JClassType extends JType implements HasMetaData {
       int length = declEnd - declStart + 1;
       String s = new String(source, declStart, length);
       try {
-        lazyHash = computeStrongName(s.getBytes("UTF-8"));
+        lazyHash = Util.computeStrongName(s.getBytes(Util.DEFAULT_ENCODING));
       } catch (UnsupportedEncodingException e) {
         // Details, details...
         throw new UnableToCompleteException();

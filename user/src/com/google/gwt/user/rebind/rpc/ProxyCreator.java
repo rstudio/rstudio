@@ -49,8 +49,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 /**
  * Creates a client-side proxy for a
@@ -59,6 +57,7 @@ import java.security.NoSuchAlgorithmException;
  */
 class ProxyCreator {
   private static final String ENTRY_POINT_TAG = "gwt.defaultEntryPoint";
+
   private static final String PROXY_SUFFIX = "_Proxy";
 
   /*
@@ -546,10 +545,8 @@ class ProxyCreator {
       pw.close();
 
       byte[] serializationPolicyFileContents = baos.toByteArray();
-      MessageDigest md5 = MessageDigest.getInstance("MD5");
-      md5.update(serializationPolicyFileContents);
+      String serializationPolicyName = Util.computeStrongName(serializationPolicyFileContents);
 
-      String serializationPolicyName = Util.toHexString(md5.digest());
       String serializationPolicyFileName = SerializationPolicyLoader.getSerializationPolicyFileName(serializationPolicyName);
       OutputStream os = ctx.tryCreateResource(logger,
           serializationPolicyFileName);
@@ -564,9 +561,6 @@ class ProxyCreator {
       }
 
       return serializationPolicyName;
-    } catch (NoSuchAlgorithmException e) {
-      logger.log(TreeLogger.ERROR, "Error initializing MD5", e);
-      throw new UnableToCompleteException();
     } catch (UnsupportedEncodingException e) {
       logger.log(TreeLogger.ERROR,
           SerializationPolicyLoader.SERIALIZATION_POLICY_FILE_ENCODING

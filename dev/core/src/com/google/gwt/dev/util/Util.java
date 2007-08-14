@@ -130,22 +130,8 @@ public final class Util {
       throw new RuntimeException("Error initializing MD5", e);
     }
 
-    for (int i = 0; i < content.length; i++) {
-      md5.update(content[i]);
-    }
-
-    byte[] hash = md5.digest();
-
-    // Hex version of the hash.
-    //        
-    char[] name = new char[2 * hash.length];
-    int j = 0;
-    for (int i = 0; i < hash.length; i++) {
-      name[j++] = HEX_CHARS[(hash[i] & 0xF0) >> 4];
-      name[j++] = HEX_CHARS[hash[i] & 0x0F];
-    }
-
-    return new String(name);
+    md5.update(content);
+    return toHexString(md5.digest());
   }
 
   public static boolean copy(TreeLogger logger, File in, File out)
@@ -343,7 +329,7 @@ public final class Util {
   }
 
   /**
-   * This method invokes an inaccessable method in another class.
+   * This method invokes an inaccessible method in another class.
    * 
    * @param targetClass the class owning the method
    * @param methodName the name of the method
@@ -636,6 +622,30 @@ public final class Util {
       return line;
     } catch (IOException e) {
       return null;
+    }
+  }
+
+  /**
+   * @return null if the file could not be read
+   */
+  public static byte[] readURLAsBytes(URL url) {
+    // ENH: add a weak cache that has an additional check against the file date
+    InputStream input = null;
+    try {
+      URLConnection connection = url.openConnection();
+      connection.setUseCaches(false);
+      input = connection.getInputStream();
+      int contentLength = connection.getContentLength();
+      if (contentLength < 0) {
+        return null;
+      }
+      byte[] data = new byte[contentLength];
+      input.read(data);
+      return data;
+    } catch (IOException e) {
+      return null;
+    } finally {
+      Utility.close(input);
     }
   }
 
