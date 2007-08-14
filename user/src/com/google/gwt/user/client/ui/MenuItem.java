@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,8 @@ import com.google.gwt.user.client.DOM;
  * cascading sub-menu.
  */
 public class MenuItem extends UIObject implements HasHTML {
+
+  private static final String DEPENDENT_STYLENAME_SELECTED_ITEM = "selected";
 
   private Command command;
   private MenuBar parentMenu, subMenu;
@@ -75,7 +77,7 @@ public class MenuItem extends UIObject implements HasHTML {
     setSubMenu(subMenu);
   }
 
-  private MenuItem(String text, boolean asHTML) {
+  MenuItem(String text, boolean asHTML) {
     setElement(DOM.createTD());
     setSelectionStyle(false);
 
@@ -154,9 +156,9 @@ public class MenuItem extends UIObject implements HasHTML {
 
   void setSelectionStyle(boolean selected) {
     if (selected) {
-      addStyleName("gwt-MenuItem-selected");
+      addStyleDependentName(DEPENDENT_STYLENAME_SELECTED_ITEM);
     } else {
-      removeStyleName("gwt-MenuItem-selected");
+      removeStyleDependentName(DEPENDENT_STYLENAME_SELECTED_ITEM);
     }
   }
 }

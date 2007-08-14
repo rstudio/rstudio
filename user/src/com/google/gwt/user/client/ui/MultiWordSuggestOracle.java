@@ -65,8 +65,8 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
    * Suggestion class for {@link MultiWordSuggestOracle}.
    */
   public static class MultiWordSuggestion implements Suggestion, IsSerializable {
-    private String value;
     private String displayString;
+    private String replacementString;
 
     /**
      * Constructor used by RPC.
@@ -77,11 +77,12 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
     /**
      * Constructor for <code>MultiWordSuggestion</code>.
      * 
-     * @param value the value
+     * @param replacementString the string to enter into the SuggestBox's
+     *                          text box if the suggestion is chosen
      * @param displayString the display string
      */
-    public MultiWordSuggestion(String value, String displayString) {
-      this.value = value;
+    public MultiWordSuggestion(String replacementString, String displayString) {
+      this.replacementString = replacementString;
       this.displayString = displayString;
     }
 
@@ -89,8 +90,8 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
       return displayString;
     }
 
-    public Object getValue() {
-      return value;
+    public String getReplacementString() {
+      return replacementString;
     }
   }
 

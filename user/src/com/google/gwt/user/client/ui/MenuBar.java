@@ -22,6 +22,7 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A standard menu bar widget. A menu bar can contain any number of menu items,
@@ -256,6 +257,30 @@ public class MenuBar extends Widget implements PopupListener {
     this.autoOpen = autoOpen;
   }
 
+  /**
+   * Returns a list containing the <code>MenuItem</code> objects in the menu bar.
+   * If there are no items in the menu bar, then an empty <code>List</code>
+   * object will be returned.
+   *
+   * @return  a list containing the <code>MenuItem</code> objects in the menu
+   *          bar
+   */
+  protected List getItems() {
+    return this.items;
+  }
+
+  /**
+   * Returns the <code>MenuItem</code> that is currently selected (highlighted)
+   * by the user. If none of the items in the menu are currently selected, then
+   * <code>null</code> will be returned.
+   *
+   * @return the <code>MenuItem</code> that is currently selected, or
+   *         <code>null</code> if no items are currently selected 
+   */
+  protected MenuItem getSelectedItem() {
+    return this.selectedItem;
+  }
+
   protected void onDetach() {
     // When the menu is detached, make sure to close all of its children.
     if (popup != null) {
@@ -388,6 +413,22 @@ public class MenuBar extends Widget implements PopupListener {
     }
   }
 
+  void selectItem(MenuItem item) {
+    if (item == selectedItem) {
+      return;
+    }
+
+    if (selectedItem != null) {
+      selectedItem.setSelectionStyle(false);
+    }
+
+    if (item != null) {
+      item.setSelectionStyle(true);
+    }
+
+    selectedItem = item;
+  }
+
   /**
    * Closes this menu (if it is a popup).
    */
@@ -435,21 +476,5 @@ public class MenuBar extends Widget implements PopupListener {
     if (items.size() > 0) {
       selectItem((MenuItem) items.get(0));
     }
-  }
-
-  private void selectItem(MenuItem item) {
-    if (item == selectedItem) {
-      return;
-    }
-
-    if (selectedItem != null) {
-      selectedItem.setSelectionStyle(false);
-    }
-
-    if (item != null) {
-      item.setSelectionStyle(true);
-    }
-
-    selectedItem = item;
   }
 }

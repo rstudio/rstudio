@@ -279,7 +279,7 @@ public abstract class UIObject {
    * <p>
    * The most important use for this method is to add a special kind of
    * secondary style name called a <i>dependent style name</i>. To add a
-   * dependent style name, use {@link #setStyleDependentName(String)}, which
+   * dependent style name, use {@link #addStyleDependentName(String)}, which
    * will prefix the 'style' argument with the result of
    * {@link #getStylePrimaryName()} (followed by a '-'). For example, suppose
    * the primary style name is <code>gwt-TextBox</code>. If the following

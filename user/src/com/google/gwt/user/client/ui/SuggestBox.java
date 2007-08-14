@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,10 +18,15 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.user.client.ui.SuggestOracle.Callback;
 import com.google.gwt.user.client.ui.SuggestOracle.Request;
 import com.google.gwt.user.client.ui.SuggestOracle.Response;
-import com.google.gwt.user.client.ui.impl.ItemPickerDropDownImpl;
-import com.google.gwt.user.client.ui.impl.SuggestPickerImpl;
+import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.DOM;
 
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A {@link SuggestBox} is a text box or text area which displays a
@@ -51,7 +56,20 @@ import java.util.Collection;
  * oracle will configure the suggestions with the "Cat" and "Canary"
  * suggestions. Specifically, whenever the user types a key into the text
  * widget, the value is submitted to the <code>MultiWordSuggestOracle</code>.
- * 
+ *
+ * <p>
+ * Note that there is no method to retrieve the "currently selected suggestion"
+ * in a SuggestBox, because there are points in time where the currently
+ * selected suggestion is not defined. For example, if the user types in some
+ * text that does not match any of the SuggestBox's suggestions, then the
+ * SuggestBox will not have a currently selected suggestion. It is more useful
+ * to know when a suggestion has been chosen from the SuggestBox's list of
+ * suggestions. A SuggestBox fires
+ * {@link SuggestionEvent SuggestionEvents} whenever a suggestion is chosen, and
+ * handlers for these events can be added using the 
+ * {@link #addEventHandler(SuggestionHandler)} method.
+ * </p>
+ *
  * <p>
  * <img class='gallery' src='SuggestBox.png'/>
  * </p>
@@ -70,24 +88,217 @@ import java.util.Collection;
  */
 public final class SuggestBox extends Composite implements HasText, HasFocus,
     SourcesClickEvents, SourcesFocusEvents, SourcesChangeEvents,
-    SourcesKeyboardEvents {
+    SourcesKeyboardEvents, FiresSuggestionEvents {
+
+  /**
+   * The SuggestionMenu class is used for the display and selection of
+   * suggestions in the SuggestBox widget. SuggestionMenu differs from
+   * MenuBar in that it always has a vertical orientation, and it
+   * has no submenus. It also allows for programmatic selection of items in
+   * the menu, and programmatically performing the action associated with the
+   * selected item. In the MenuBar class, items cannot be selected
+   * programatically - they can only be selected when the user places the
+   * mouse over a particlar item. Additional methods in SuggestionMenu provide
+   * information about the number of items in the menu, and the index of the
+   * currently selected item.
+   */
+  private static class SuggestionMenu extends MenuBar {
+
+    public SuggestionMenu(boolean vertical) {
+      super(vertical);
+      // Make sure that CSS styles specified for the default Menu classes
+      // do not affect this menu
+      setStyleName("");
+    }
+
+    public void doSelectedItemAction() {
+      // In order to perform the action of the item that is currently
+      // selected, the menu must be showing.
+      MenuItem selectedItem = getSelectedItem();
+      if (selectedItem != null) {
+        doItemAction(selectedItem, true);
+      }
+    }
+
+    public int getNumItems() {
+      return getItems().size();
+    }
+
+    /**
+     * Returns the index of the menu item that is currently selected.
+     */
+    public int getSelectedItemIndex() {
+      // The index of the currently selected item can only be
+      // obtained if the menu is showing.
+      MenuItem selectedItem = getSelectedItem();
+      if (selectedItem != null) {
+        return getItems().indexOf(selectedItem);
+      }
+      return -1;
+    }
+
+    /**
+     * Selects the item at the specified index in the menu. Selecting the item
+     * does not perform the item's associated action; it only changes the style
+     * of the item and updates the value of SuggestionMenu.selectedItem.
+     */
+    public void selectItem(int index) {
+      List items = getItems();
+      if (index > -1 && index < items.size()) {
+        itemOver((SuggestionMenuItem) items.get(index));
+      }
+    }
+  }
+
+  /**
+   * Class for menu items in a SuggestionMenu. A SuggestionMenuItem differs
+   * from a MenuItem in that each item is backed by a Suggestion object.
+   * The text of each menu item is derived from the display string of a
+   * Suggestion object, and each item stores a reference to its Suggestion
+   * object.
+   */
+  private static class SuggestionMenuItem extends MenuItem {
+
+    private static final String STYLENAME_DEFAULT = "item";
+
+    private Suggestion suggestion;
+
+    public SuggestionMenuItem(Suggestion suggestion, boolean asHTML) {
+      super(suggestion.getDisplayString(), asHTML);
+      // Each suggestion should be placed in a single row in the suggestion
+      // menu. If the window is resized and the suggestion cannot fit on a
+      // single row, it should be clipped (instead of wrapping around and
+      // taking up a second row).
+      DOM.setStyleAttribute(getElement(), "whiteSpace", "nowrap");
+      setStyleName(STYLENAME_DEFAULT);
+      setSuggestion(suggestion);
+    }
+
+    public Suggestion getSuggestion() {
+      return suggestion;
+    }
+
+    public void setSuggestion(Suggestion suggestion) {
+      this.suggestion = suggestion;
+    }
+  }
+
+  /**
+   * A PopupPanel with a SuggestionMenu as its widget. The SuggestionMenu is
+   * placed in a PopupPanel so that it can be displayed at various positions
+   * around the SuggestBox's text field. Moreover, the SuggestionMenu
+   * needs to appear on top of any other widgets on the page, and the PopupPanel
+   * provides this behavior.
+   *
+   * A non-static member class is used because the popup uses the SuggestBox's
+   * SuggestionMenu as its widget, and the position of the SuggestBox's TextBox
+   * is needed in order to correctly position the popup.
+   */
+  private class SuggestionPopup extends PopupPanel {
+
+    private static final String STYLENAME_DEFAULT = "gwt-SuggestBoxPopup";
+
+    public SuggestionPopup() {
+      super(true);
+      setWidget(suggestionMenu);
+      setStyleName(STYLENAME_DEFAULT);
+    }
+
+    /**
+     * The default position of the SuggestPopup is directly below the
+     * SuggestBox's text box, with its left edge aligned with the left edge of
+     * the text box. Depending on the width and height of the popup and the
+     * distance from the text box to the bottom and right edges of the window,
+     * the popup may be displayed directly above the text box, and/or its right
+     * edge may be aligned with the right edge of the text box.
+     */
+    public void showAlignedPopup() {
+   
+    // Set the position of the popup right before it is shown.
+    setPopupPositionAndShow(new PositionCallback() {
+      public void setPosition(int offsetWidth, int offsetHeight) {
+        // Calculate left position for the popup.
+
+        int left = box.getAbsoluteLeft();
+        int offsetWidthDiff = offsetWidth - box.getOffsetWidth();
+
+        // If the suggestion popup is not as wide as the text box, always align
+        // to the left edge of the text box. Otherwise, figure out whether to
+        // left-align or right-align the popup.
+        if (offsetWidthDiff > 0) {
+          // Make sure scrolling is taken into account, since box.getAbsoluteLeft()
+          // takes scrolling into account.
+          int windowRight = Window.getClientWidth() + Window.getScrollLeft();
+          int windowLeft = Window.getScrollLeft();
+
+          // Distance from the left edge of the text box to the right edge of the
+          // window
+          int distanceToWindowRight = windowRight - left;
+
+          // Distance from the left edge of the text box to the left edge of the
+          // window
+          int distanceFromWindowLeft = left - windowLeft;
+
+          // If there is not enough space for the popup's width overflow to the
+          // right of the text box and there IS enough space for the popup's
+          // width overflow to the left of the text box, then right-align
+          // the popup. However, if there is not enough space on either side,
+          // then stick with left-alignment.
+          if (distanceToWindowRight < offsetWidth &&
+              distanceFromWindowLeft >= (offsetWidth - box.getOffsetWidth())) {
+            // Align with the right edge of the text box.
+            left -= offsetWidthDiff;
+          }
+        }
+
+        // Calculate top position for the popup
+
+        int top = box.getAbsoluteTop();
+
+        // Make sure scrolling is taken into account, since box.getAbsoluteTop()
+        // takes scrolling into account.
+        int windowTop = Window.getScrollTop();
+        int windowBottom = Window.getScrollTop() + Window.getClientHeight();
+
+        // Distance from the top edge of the window to the top edge of the text box
+        int distanceFromWindowTop = top - windowTop;
+
+        // Distance from the bottom edge of the window to the bottom edge of the
+        // text box
+        int distanceToWindowBottom = windowBottom - (top + box.getOffsetHeight());
+
+        // If there is not enough space for the popup's height below the text box
+        // and there IS enough space for the popup's height above the text box,
+        // then then position the popup above the text box. However, if there is
+        // not enough space on either side, then stick with displaying the popup
+        // below the text box.
+        if (distanceToWindowBottom < offsetHeight &&
+            distanceFromWindowTop >= offsetHeight) {
+          top -= offsetHeight;
+        } else {
+          // Position above the text box
+          top += box.getOffsetHeight();
+        }
+
+        setPopupPosition(left, top);
+      }
+    });
+    }
+  }
 
   private static final String STYLENAME_DEFAULT = "gwt-SuggestBox";
 
   private int limit = 20;
-  private int selectStart;
-  private int selectEnd;
   private SuggestOracle oracle;
-  private char[] separators;
-  private String currentValue;
-  private final PopupPanel popup;
-  private final SuggestPickerImpl picker;
+  private String currentText;
+  private final SuggestionMenu suggestionMenu;
+  private final SuggestionPopup suggestionPopup;
   private final TextBoxBase box;
+  private ArrayList suggestionHandlers = null;
   private DelegatingClickListenerCollection clickListeners;
   private DelegatingChangeListenerCollection changeListeners;
   private DelegatingFocusListenerCollection focusListeners;
   private DelegatingKeyboardListenerCollection keyboardListeners;
-  private String separatorPadding = "";
 
   private final Callback callBack = new Callback() {
     public void onSuggestionsReady(Request request, Response response) {
@@ -125,14 +336,23 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
   public SuggestBox(SuggestOracle oracle, TextBoxBase box) {
     this.box = box;
     initWidget(box);
-    this.picker = new SuggestPickerImpl(oracle.isDisplayStringHTML());
-    this.popup = new ItemPickerDropDownImpl(this, picker);
-    addPopupChangeListener();
+
+    // suggestionMenu must be created before suggestionPopup, because
+    // suggestionMenu is suggestionPopup's widget
+    suggestionMenu = new SuggestionMenu(true);
+    suggestionPopup = new SuggestionPopup();
+    
     addKeyboardSupport();
     setOracle(oracle);
     setStyleName(STYLENAME_DEFAULT);
   }
 
+  /**
+   * Adds a listener to recieve change events on the SuggestBox's text box.
+   * The source Widget for these events will be the SuggestBox.
+   *
+   * @param listener the listener interface to add
+   */
   public final void addChangeListener(ChangeListener listener) {
     if (changeListeners == null) {
       changeListeners = new DelegatingChangeListenerCollection(this, box);
@@ -140,6 +360,12 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
     changeListeners.add(listener);
   }
 
+  /**
+   * Adds a listener to recieve click events on the SuggestBox's text box.
+   * The source Widget for these events will be the SuggestBox.
+   *
+   * @param listener the listener interface to add
+   */
   public final void addClickListener(ClickListener listener) {
     if (clickListeners == null) {
       clickListeners = new DelegatingClickListenerCollection(this, box);
@@ -147,6 +373,19 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
     clickListeners.add(listener);
   }
 
+  public final void addEventHandler(SuggestionHandler handler) {
+    if (suggestionHandlers == null) {
+      suggestionHandlers = new ArrayList();
+    }
+    suggestionHandlers.add(handler);
+  }
+
+  /**
+   * Adds a listener to recieve focus events on the SuggestBox's text box.
+   * The source Widget for these events will be the SuggestBox.
+   *
+   * @param listener the listener interface to add
+   */
   public final void addFocusListener(FocusListener listener) {
     if (focusListeners == null) {
       focusListeners = new DelegatingFocusListenerCollection(this, box);
@@ -154,6 +393,12 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
     focusListeners.add(listener);
   }
 
+  /**
+   * Adds a listener to recieve keyboard events on the SuggestBox's text box.
+   * The source Widget for these events will be the SuggestBox.
+   *
+   * @param listener the listener interface to add
+   */
   public final void addKeyboardListener(KeyboardListener listener) {
     if (keyboardListeners == null) {
       keyboardListeners = new DelegatingKeyboardListenerCollection(this, box);
@@ -190,8 +435,8 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   public final void removeChangeListener(ChangeListener listener) {
-    if (clickListeners != null) {
-      clickListeners.remove(listener);
+    if (changeListeners != null) {
+      changeListeners.remove(listener);
     }
   }
 
@@ -199,6 +444,13 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
     if (clickListeners != null) {
       clickListeners.remove(listener);
     }
+  }
+
+  public final void removeEventHandler(SuggestionHandler handler) {
+    if (suggestionHandlers == null) {
+      return;
+    }
+    suggestionHandlers.remove(handler);
   }
 
   public final void removeFocusListener(FocusListener listener) {
@@ -231,6 +483,16 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
     this.limit = limit;
   }
 
+  /**
+   * Sets the style name of the suggestion popup.
+   *
+   * @param style the new primary style name
+   * @see UIObject#setStyleName(String)
+   */
+  public final void setPopupStyleName(String style) {
+    suggestionPopup.setStyleName(style);
+  }
+  
   public final void setTabIndex(int index) {
     box.setTabIndex(index);
   }
@@ -246,38 +508,65 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
    */
   private void showSuggestions(Collection suggestions) {
     if (suggestions.size() > 0) {
-      picker.setItems(suggestions);
-      popup.show();
+
+      /* Hide the popup before we manipulate the menu within it. If we do not
+         do this, some browsers will redraw the popup as items are removed
+         and added to the menu.
+
+         As an optimization, setVisible(false) is used in place of the hide()
+         method. hide() removes the popup from the DOM, whereas setVisible(false)
+         does not. Since the popup is going to be shown again as soon as the menu
+         is rebuilt, it makes more sense to leave the popup attached to the DOM.
+
+         Notice that setVisible(true) is never called. This is because the call
+         to showAlignedPopup() will cause show() to be called, which in turn
+         calls setVisible(true). */
+      suggestionPopup.setVisible(false);
+      
+      suggestionMenu.clearItems();
+
+      Iterator suggestionsIter = suggestions.iterator();
+
+      while (suggestionsIter.hasNext()) {
+        Suggestion curSuggestion = (Suggestion) suggestionsIter.next();
+        final SuggestionMenuItem menuItem =
+            new SuggestionMenuItem(curSuggestion, oracle.isDisplayStringHTML());
+        menuItem.setCommand(new Command() {
+          public void execute() {
+            SuggestBox.this.setNewSelection(menuItem);
+          }
+        });
+
+        suggestionMenu.addItem(menuItem);
+      }
+
+      // Select the first item in the suggestion menu.
+      suggestionMenu.selectItem(0);
+
+      suggestionPopup.showAlignedPopup();
     } else {
-      popup.hide();
+      suggestionPopup.hide();
     }
   }
 
   private void addKeyboardSupport() {
     box.addKeyboardListener(new KeyboardListenerAdapter() {
-      private boolean pendingCancel;
 
       public void onKeyDown(Widget sender, char keyCode, int modifiers) {
-        pendingCancel = picker.delegateKeyDown(keyCode);
-      }
-
-      public void onKeyPress(Widget sender, char keyCode, int modifiers) {
-        if (pendingCancel) {
-          // IE does not allow cancel key on key down, so we have delayed the
-          // cancellation of the key until the associated key press.
-          box.cancelKey();
-          pendingCancel = false;
-        } else if (popup.isAttached()) {
-          if (separators != null && isSeparator(keyCode)) {
-            // onKeyDown/onKeyUps's keyCode for ',' comes back '1/4', so unlike
-            // navigation, we use key press events to determine when the user
-            // wants to simulate clicking on the popup.
-            picker.commitSelection();
-
-            // The separator will be added after the popup is activated, so the
-            // popup will have already added a new separator. Therefore, the
-            // original separator should not be added as well.
-            box.cancelKey();
+        // Make sure that the menu is actually showing. These keystrokes
+        // are only relevant when choosing a suggestion.
+        if (suggestionPopup.isAttached()) {
+          switch (keyCode) {
+            case KeyboardListener.KEY_DOWN:
+              suggestionMenu.selectItem(suggestionMenu.getSelectedItemIndex() + 1);
+              break;
+            case KeyboardListener.KEY_UP:
+              suggestionMenu.selectItem(suggestionMenu.getSelectedItemIndex() - 1);
+              break;
+            case KeyboardListener.KEY_ENTER:
+            case KeyboardListener.KEY_TAB:
+              suggestionMenu.doSelectedItemAction();
+              break;
           }
         }
       }
@@ -287,115 +576,43 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
         refreshSuggestions();
       }
 
-      /**
-       * In the presence of separators, returns the active search selection.
-       */
-      private String getActiveSelection(String text) {
-        selectEnd = box.getCursorPos();
-
-        // Find the last instance of a separator.
-        selectStart = -1;
-        for (int i = 0; i < separators.length; i++) {
-          selectStart = Math.max(
-              text.lastIndexOf(separators[i], selectEnd - 1), selectStart);
-        }
-        ++selectStart;
-
-        return text.substring(selectStart, selectEnd).trim();
-      }
-
       private void refreshSuggestions() {
         // Get the raw text.
         String text = box.getText();
-        if (text.equals(currentValue)) {
+        if (text.equals(currentText)) {
           return;
         } else {
-          currentValue = text;
+          currentText = text;
         }
 
-        // Find selection to replace.
-        String selection;
-        if (separators == null) {
-          selection = text;
+        if (text.length() == 0) {
+          // Optimization to avoid calling showSuggestions with an empty
+          // string
+          suggestionPopup.hide();
+          suggestionMenu.clearItems();
         } else {
-          selection = getActiveSelection(text);
-        }
-        // If we have no text, let's not show the suggestions.
-        if (selection.length() == 0) {
-          popup.hide();
-        } else {
-          showSuggestions(selection);
+          showSuggestions(text);
         }
       }
     });
   }
 
-  /**
-   * Adds a standard popup listener to the suggest box's popup.
-   */
-  private void addPopupChangeListener() {
-    picker.addChangeListener(new ChangeListener() {
-      public void onChange(Widget sender) {
-        if (separators != null) {
-          onChangeWithSeparators();
-        } else {
-          currentValue = picker.getSelectedValue().toString();
-          box.setText(currentValue);
-        }
-        if (changeListeners != null) {
-          changeListeners.fireChange(SuggestBox.this);
-        }
-      }
-
-      private void onChangeWithSeparators() {
-        String newValue = (String) picker.getSelectedValue();
-
-        StringBuffer accum = new StringBuffer();
-        String text = box.getText();
-
-        // Add all text up to the selection start.
-        accum.append(text.substring(0, selectStart));
-
-        // Add one space if not at start.
-        if (selectStart > 0) {
-          accum.append(separatorPadding);
-        }
-        // Add the new value.
-        accum.append(newValue);
-
-        // Find correct cursor position.
-        int savedCursorPos = accum.length();
-
-        // Add all text after the selection end
-        String ender = text.substring(selectEnd).trim();
-        if (ender.length() == 0 || !isSeparator(ender.charAt(0))) {
-          // Add a separator if the first char of the ender is not already a
-          // separator.
-          accum.append(separators[0]).append(separatorPadding);
-          savedCursorPos = accum.length();
-        }
-        accum.append(ender);
-
-        // Set the text and cursor pos to correct location.
-        String replacement = accum.toString();
-        currentValue = replacement.trim();
-        box.setText(replacement);
-        box.setCursorPos(savedCursorPos);
-      }
-    });
-  }
-
-  /**
-   * Convenience method for identifying if a character is a separator.
-   */
-  private boolean isSeparator(char candidate) {
-    // An int map would be very handy right here...
-    for (int i = 0; i < separators.length; i++) {
-      if (candidate == separators[i]) {
-        return true;
+  private void fireSuggestionEvent(Suggestion selectedSuggestion) {
+    if (suggestionHandlers != null) {
+      SuggestionEvent event = new SuggestionEvent(this, selectedSuggestion);
+      for (Iterator it = suggestionHandlers.iterator(); it.hasNext();) {
+        SuggestionHandler handler = (SuggestionHandler) it.next();
+        handler.onSuggestionSelected(event);
       }
     }
-    return false;
+  }
+
+  private void setNewSelection(SuggestionMenuItem menuItem) {
+    Suggestion curSuggestion = menuItem.getSuggestion();
+    currentText = curSuggestion.getReplacementString();
+    box.setText(currentText);
+    suggestionPopup.hide();
+    fireSuggestionEvent(curSuggestion);    
   }
 
   /**
