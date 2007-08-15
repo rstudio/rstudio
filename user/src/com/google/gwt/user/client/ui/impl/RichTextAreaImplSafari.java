@@ -71,7 +71,6 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
     int number = fontSize.getNumber();
     if ((number >= 0) && (number <= 7)) {
       execCommand("FontSize", sizeNumberCSSValues[number]);
-      return;
     }
   }
 

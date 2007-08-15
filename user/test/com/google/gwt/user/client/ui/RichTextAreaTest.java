@@ -28,6 +28,20 @@ public class RichTextAreaTest extends GWTTestCase {
   }
 
   /**
+   * Test that removing and re-adding an RTA doesn't destroy its contents (Only
+   * IE actually preserves dynamically-created iframe contents across DOM
+   * removal/re-adding).
+   */
+  public void testAddEditRemoveAdd() {
+    final RichTextArea area = new RichTextArea();
+    RootPanel.get().add(area);
+    area.setHTML("foo");
+    RootPanel.get().remove(area);
+    RootPanel.get().add(area);
+    assertEquals("foo", area.getHTML());
+  }
+
+  /**
    * Test that a delayed set of HTML is reflected. Some platforms have timing
    * subtleties that need to be tested.
    */

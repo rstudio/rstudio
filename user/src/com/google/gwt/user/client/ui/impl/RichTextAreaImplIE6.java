@@ -23,14 +23,6 @@ import com.google.gwt.user.client.Element;
  */
 public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
 
-  private static native String getText(Element elem) /*-{
-    return elem.contentWindow.document.body.innerText;
-  }-*/;
-
-  private static native void setText(Element elem, String text) /*-{
-    elem.contentWindow.document.body.innerText = text;
-  }-*/;
-
   public Element createElement() {
     Element elem = super.createElement();
     DOM.setElementProperty(elem, "src", "javascript:''");
@@ -49,9 +41,10 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     }, 1);
   }-*/;
 
-  protected String getTextImpl() {
-    return getText(elem);
-  }
+  protected native String getTextImpl() /*-{
+    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
+    return elem.contentWindow.document.body.innerText;
+  }-*/;
 
   protected native void hookEvents() /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
@@ -80,9 +73,10 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     elem.contentWindow.onblur = handler;
   }-*/;
 
-  protected void setTextImpl(String text) {
-    setText(elem, text);
-  }
+  protected native void setTextImpl(String text) /*-{
+    var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
+    elem.contentWindow.document.body.innerText = text;
+  }-*/;
 
   protected native void unhookEvents() /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;

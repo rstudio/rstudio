@@ -311,6 +311,8 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     wnd.removeEventListener('blur', elem.__gwt_blurHandler, true);
 
     elem.__gwt_handler = null;
+    elem.__gwt_focusHandler = null;
+    elem.__gwt_blurHandler = null;
   }-*/;
 
   void execCommand(String cmd, String param) {

@@ -31,11 +31,15 @@ public class RichTextAreaImplMozilla extends RichTextAreaImplStandard {
       // designMode, so let's avoid doing it more than once.
       iframe.onload = null;
 
-      // Turn on design mode.
-      iframe.contentWindow.document.designMode = 'On';
+      // Yet another timeout -- old versions of Gecko don't like enabling
+      // design mode immediately on load.
+      $wnd.setTimeout(function() {
+        // Turn on design mode.
+        iframe.contentWindow.document.designMode = 'On';
 
-      // Send notification that the iframe has reached design mode.
-      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitialized()();
+        // Send notification that the iframe has reached design mode.
+        _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitialized()();
+      }, 1);
     };
   }-*/;
 
