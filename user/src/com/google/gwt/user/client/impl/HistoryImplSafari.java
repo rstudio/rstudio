@@ -15,57 +15,73 @@
  */
 package com.google.gwt.user.client.impl;
 
-import com.google.gwt.user.client.Element;
-
 /**
  * Safari implementation of
- * {@link com.google.gwt.user.client.impl.HistoryImplFrame}.
+ * {@link com.google.gwt.user.client.impl.HistoryImplStandard}.
  */
-class HistoryImplSafari extends HistoryImplFrame {
+class HistoryImplSafari extends HistoryImplStandard {
 
-  protected native String getTokenElementContent(Element tokenElement) /*-{
-    return tokenElement.value;
+  private static boolean isOldSafari = detectOldSafari();
+
+  private static native boolean detectOldSafari() /*-{
+    var exp = /WebKit\/([\d]+)/;
+    var result = exp.exec(navigator.userAgent);
+    if (result) {
+      // The standard history implementation works fine on WebKit >= 522
+      // (Safari 3 beta).
+      if (parseInt(result[1]) >= 522) {
+        return false;
+      }
+    }
+
+    return true;
   }-*/;
 
-  protected native void initHistoryToken() /*-{
+  public boolean init() {
+    if (isOldSafari) {
+      initImpl();
+      return true;
+    }
+
+    return super.init();
+  }
+
+  public void newItem(String historyToken) {
+    if (isOldSafari) {
+      newItemImpl(historyToken);
+      return;
+    }
+
+    super.newItem(historyToken);
+  }
+
+  private native void initImpl() /*-{
+    $wnd.__gwt_historyToken = '';
+
     // Get the initial token from the url's hash component.
     var hash = $wnd.location.hash;
     if (hash.length > 0)
       $wnd.__gwt_historyToken = decodeURIComponent(hash.substring(1));
-    else
-      $wnd.__gwt_historyToken = '';
+
+    @com.google.gwt.user.client.impl.HistoryImpl::onHistoryChanged(Ljava/lang/String;)($wnd.__gwt_historyToken);
   }-*/;
 
-  protected native void injectGlobalHandler() /*-{
-    $wnd.__gwt_onHistoryLoad = function(token) {
-      token = decodeURIComponent(token);
+  private native void newItemImpl(String historyToken) /*-{
+    // Use a bizarre meta refresh trick to update the url's hash, without
+    // creating a history entry.
+    var meta = $doc.createElement('meta');
+    meta.setAttribute('http-equiv','refresh');
 
-      // Change the URL and notify the application that its history frame
-      // is changing.
-      if (token != $wnd.__gwt_historyToken) {
-        $wnd.__gwt_historyToken = token;
+    var newUrl = $wnd.location.href.split('#')[0] + '#' + encodeURIComponent(historyToken);
+    meta.setAttribute('content','0.01;url=' + newUrl);
 
-// TODO(jgw): can't actually do this on Safari without screwing everything up.
-//        $wnd.location.hash = encodeURIComponent(token);
+    $doc.body.appendChild(meta);
+    window.setTimeout(function() {
+      $doc.body.removeChild(meta);
+    }, 1);
 
-        // Fire the event.
-        @com.google.gwt.user.client.impl.HistoryImpl::onHistoryChanged(Ljava/lang/String;)(token);
-      }
-    };
-  }-*/;
-
-  protected native void newItemImpl(Element historyFrame, String historyToken,
-      boolean forceAdd) /*-{
-    // Ignore 'forceAdd'. It's only needed on IE.
-
-    // The history frame's contentWindow can be null when backing into an
-    // application. For some reason, the history frame will finish loading
-    // *after* the application itself, which is a bit of a race condition.
-    if (historyFrame.contentWindow) {
-      historyToken = historyToken || "";
-
-      var base = @com.google.gwt.core.client.GWT::getModuleBaseURL()();
-      historyFrame.contentWindow.location.href = base + 'history.html?' + historyToken;
-    }
+    // Update the global history token and fire the history event.
+    $wnd.__gwt_historyToken = historyToken;
+    @com.google.gwt.user.client.impl.HistoryImpl::onHistoryChanged(Ljava/lang/String;)($wnd.__gwt_historyToken);
   }-*/;
 }
