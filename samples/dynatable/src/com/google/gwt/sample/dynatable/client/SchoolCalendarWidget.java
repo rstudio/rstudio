@@ -73,22 +73,7 @@ public class SchoolCalendarWidget extends Composite {
         }
       }
 
-      // Decide where to get the data.
-      // This is very unusual. Normally, you'd set the service entry point
-      // only once. But since this demo runs without servlet support, we
-      // play a game with URLs to fetch canned RPC responses from static files.
-      // So, as you might guess, this is really fragile: changing the number
-      // of visible rows in the table will cause different batch sizes, and
-      // the URL naming trick below will *definitely* break.
-      //
-      if (USE_STATIC_RPC_ANSWERS) {
-        ServiceDefTarget target = (ServiceDefTarget) calService;
-        String staticResponseURL = GWT.getModuleBaseURL();
-        staticResponseURL += "calendar" + startRow + ".txt";
-        target.setServiceEntryPoint(staticResponseURL);
-      }
-
-      // Actually fetch the data remotely.
+      // Fetch the data remotely.
       //
       calService.getPeople(startRow, maxRows, new AsyncCallback() {
         public void onFailure(Throwable caught) {
@@ -119,8 +104,6 @@ public class SchoolCalendarWidget extends Composite {
       acceptor.accept(startRow, rows);
     }
   }
-
-  private static final boolean USE_STATIC_RPC_ANSWERS = true;
 
   private final CalendarProvider calProvider = new CalendarProvider();
 
