@@ -236,7 +236,7 @@ package com.google.gwt.user.client.ui;
  *
  * <p>
  * Internet Explorer specifies that files which require a plugin for viewing
- * must be cached by the brower. That way, the plugin can read the cached file
+ * must be cached by the browser. That way, the plugin can read the cached file
  * from the disk. Whenever the composite image is protected by a security
  * constraint, the web application server sets caching headers on the response
  * to prevent the browser from caching the image (see the previous section for
