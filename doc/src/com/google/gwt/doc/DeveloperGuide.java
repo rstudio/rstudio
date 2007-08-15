@@ -37,6 +37,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+import com.google.gwt.i18n.client.Localizable;
 
 import java.util.List;
 import java.util.Map;
@@ -1633,6 +1634,10 @@ public class DeveloperGuide {
      */
     public static class ImageBundles {
 
+      // TODO: Document the practice of composing several unrelated image
+      // into a single bundle, and using this bundle in subsytems that would
+      // otherwise create their own (i.e. Tree, DisclosurePanel).
+
       /**
        * To define an image bundle, the user needs to extend the
        * {@link com.google.gwt.user.client.ui.ImageBundle ImageBundle}
@@ -1762,119 +1767,48 @@ public class DeveloperGuide {
            */
           public AbstractImagePrototype saveFileIcon();
         }
-
       }
 
       /**
        * Sometimes applications need different images depending on the locale
        * that the user is in. When using image bundles, this means that we need
        * different image bundles for different locales. Although image bundles
-       * and localization are orthognal concepts, they can work together by
+       * and localization are orthogonal concepts, they can work together by
        * having locale-specific factories create instances of image bundles.
        * 
        * <p>
        * The best way to explain this technique is with an example. Suppose that
        * we define the following <code>ImageBundle</code> for use by a mail
        * application:
-       * 
-       * <pre class="code">
-       * public interface MailImageBundle extends ImageBundle {
-       * 
-       *  /**
-       *   * The default 'Help' icon if no locale-specific image is specified.
-       *   * Will match 'help_icon.png', 'help_icon.gif', or 'help_icon.jpg' in
-       *   * the same package as this type.
-       *   *&#47;
-       *  public AbstractImagePrototype help_icon();
-       * 
-       *  /**
-       *   * The default 'Compose New Message' icon if no locale-specific 
-       *   * image is specified.
-       *   * @gwt.resource compose_new_message_icon.gif
-       *   *&#47;
-       *  public AbstractImagePrototype composeNewMessageIcon();
-       * }
-       * </pre>
-       * 
        * </p>
+       * 
+       * {@example MailImageBundle}
+       *
        * Suppose the application has to handle both English and French users. We
        * define English and French variations of each image in
        * <code>MailImageBundle</code> by creating locale-specific image
        * bundles that extend <code>MailImageBundle</code>:
-       * 
-       * <pre class="code">
-       * public interface MailImageBundle_en extends MailImageBundle {
-       * 
-       *  /**
-       *   * The English version of the 'Compose New Message' icon.
-       *   * Since we are not overriding the help_icon() method, this bundle
-       *   * uses the inherited method from MailImageBundle.
-       *   * @gwt.resource compose_new_message_icon_en.gif
-       *   *&#47;
-       *  public AbstractImagePrototype composeNewMessageIcon();
-       * }
-       * 
-       * public interface MailimageBundle_fr extends MailImageBundle {
-       * 
-       *  /**
-       *   * The French version of the 'Help' icon.
-       *   * @gwt.resource help_icon_fr.gif
-       *   *&#47;
-       *  public AbstractImagePrototype help_icon();
-       * 
-       *  /**
-       *   * The French version of the 'Compose New Message' icon.
-       *   * @gwt.resource compose_new_message_icon_fr.gif
-       *   *&#47;
-       *  public AbstractImagePrototype composeNewMessageIcon();
-       * }
-       * </pre>
-       * 
+       *
+       * {@example MailImageBundle_en}
+       *
+       * {@example MailImageBundle_fr}
+       *
        * The final step is to create a mechanism for choosing the correct image
        * bundle based on the user's locale. By extending
        * {@link com.google.gwt.i18n.client.Localizable Localizable}, we can
        * create a locale-sensitive factory that will return new instances of
        * <code>MailImageBundle</code> that match the factory's locale:
-       * 
-       * <pre class="code">
-       * public interface MailImageBundleFactory extends Localizable {
-       * 
-       *    public MailImageBundle createImageBundle();
-       * }
-       * 
-       * public class MailImageBundleFactory_en extends MailImageBundleFactory {
-       * 
-       *    public MailImageBundle createImageBundle() {
-       *        return (MailImageBundle) GWT.create(MailImageBundle_en.class);
-       *    }
-       * }
-       * 
-       * public class MailImageBundleFactory_fr extends MailImageBundleFactory {
-       * 
-       *    public MailImageBundle createImageBundle() {
-       *        return (MailImageBundle) GWT.create(MailImageBundle_fr.class);
-       *    }
-       * }
-       * </pre>
-       * 
+       *
+       * {@example MailImageBundleFactory}
+       *
+       * {@example MailImageBundleFactory_en}
+       *
+       * {@example MailImageBundleFactory_fr}
+       *
        * The application code that utilizes a locale-sensitive image bundle
        * would look something like this:
-       * 
-       * <pre class="code">
-       * // Create a locale-sensitive MailImageBundleFactory
-       * MailImageBundleFactory mailImageBundleFactory = (MailImageBundleFactory) GWT
-       *        .create(MailImageBundleFactory.class);
-       * 
-       * // This will return a locale-sensitive MailImageBundle, since we are using
-       * // a locale-sensitive factory to create it.
-       * MailImageBundle mailImageBundle = mailImageBundleFactory.createImageBundle();
-       * 
-       * // Get the image prototype for the icon that we are interested in.
-       * AbstractImagePrototype helpIconProto = mailImageBundle.help_icon();
-       * 
-       * // Create an Image object from the prototype and add it to a panel.
-       * panel.add(helpIconProto.createImage());
-       * </pre>
+       *
+       * {@example #useLocalizedImageBundle()}
        * 
        * @title Image Bundles and Localization
        * @synopsis Create locale-sensitive image bundles by using GWT's
@@ -1884,6 +1818,107 @@ public class DeveloperGuide {
        * 
        */
       public static class InteractionWithLocalization {
+
+        public void useLocalizedImageBundle() {
+          // Create a locale-sensitive MailImageBundleFactory
+          MailImageBundleFactory mailImageBundleFactory = (MailImageBundleFactory) GWT
+              .create(MailImageBundleFactory.class);
+
+          // This will return a locale-sensitive MailImageBundle, since we are using
+          // a locale-sensitive factory to create it.
+          MailImageBundle mailImageBundle = mailImageBundleFactory.createImageBundle();
+
+          // Get the image prototype for the icon that we are interested in.
+          AbstractImagePrototype helpIconProto = mailImageBundle.help_icon();
+
+          // Create an Image object from the prototype and add it to a panel.
+          HorizontalPanel panel = new HorizontalPanel();
+          panel.add(helpIconProto.createImage());
+        }
+
+        /**
+         * @skip
+         */
+        public interface MailImageBundle extends ImageBundle {
+
+          /**
+           * The default 'Compose New Message' icon if no locale-specific
+           * image is specified.
+           *
+           * @gwt.resource compose_new_message_icon.gif
+           */
+          public AbstractImagePrototype composeNewMessageIcon();
+
+          /**
+           * The default 'Help' icon if no locale-specific image is specified.
+           * Will match 'help_icon.png', 'help_icon.gif', or 'help_icon.jpg' in
+           * the same package as this type.
+           */
+          public AbstractImagePrototype help_icon();
+        }
+
+        /**
+         * @skip
+         */
+        public interface MailImageBundle_en extends MailImageBundle {
+
+          /**
+           * The English version of the 'Compose New Message' icon.
+           * Since we are not overriding the help_icon() method, this bundle
+           * uses the inherited method from MailImageBundle.
+           *
+           * @gwt.resource compose_new_message_icon_en.gif
+           */
+          public AbstractImagePrototype composeNewMessageIcon();
+        }
+
+        /**
+         * @skip
+         */
+        public interface MailImageBundle_fr extends MailImageBundle {
+
+          /**
+           * The French version of the 'Compose New Message' icon.
+           *
+           * @gwt.resource compose_new_message_icon_fr.gif
+           */
+          public AbstractImagePrototype composeNewMessageIcon();
+
+          /**
+           * The French version of the 'Help' icon.
+           *
+           * @gwt.resource help_icon_fr.gif
+           */
+          public AbstractImagePrototype help_icon();
+        }
+
+        /**
+         * @skip
+         */
+        public interface MailImageBundleFactory extends Localizable {
+
+          public MailImageBundle createImageBundle();
+        }
+
+        /**
+         * @skip
+         */
+        public class MailImageBundleFactory_en implements MailImageBundleFactory {
+
+          public MailImageBundle createImageBundle() {
+            return (MailImageBundle) GWT.create(MailImageBundle_en.class);
+          }
+        }
+
+        /**
+         * @skip
+         */
+        public class MailImageBundleFactory_fr implements MailImageBundleFactory {
+
+          public MailImageBundle createImageBundle() {
+            return (MailImageBundle) GWT.create(MailImageBundle_fr.class);
+          }
+        }
       }
     }
   }
