@@ -130,7 +130,7 @@ function __MODULE_FUNC__() {
         var loc = $doc.location;
         var href = loc.href;
         base = getDirectoryOfFile(href.substr(0, href.length
-        	- loc.hash.length));
+            - loc.hash.length));
       }
     } else if ((base.match(/^\w+:\/\//))) {
       // If the URL is obviously absolute, do nothing.
@@ -346,10 +346,15 @@ function __MODULE_FUNC__() {
       scriptInjected = true;
       var iframe = $doc.createElement('iframe');
       iframe.id = "__MODULE_NAME__";
-      iframe.src = base + strongName;
       iframe.style.cssText = "position:absolute;width:0;height:0;border:none";
       // Due to an IE6/7 refresh quirk, this must be an appendChild.
       $doc.body.appendChild(iframe);
+      
+      /* 
+       * The src has to be set after the iframe is attached to the DOM to avoid
+       * refresh quirks in Safari.
+       */
+      iframe.src = base + strongName;
     }
   }
 
