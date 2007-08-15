@@ -3476,7 +3476,7 @@ public class DeveloperGuide {
    * All content is Copyright Google Inc. Most web page content is licensed
    * under the Creative Commons Attribution 2.5 License, as noted on those
    * pages. The Google Web Toolkit source code is licensed under terms available
-   * <a href="ttp://code.google.com/webtoolkit/terms.html">here</a>.
+   * <a href="http://code.google.com/webtoolkit/terms.html">here</a>.
    * 
    * <p>
    * <i>Java</i> is a trademark of Sun Microsystems, Inc. in the United States

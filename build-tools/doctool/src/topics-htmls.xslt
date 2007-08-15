@@ -54,7 +54,7 @@ the License.
           </li>
           <li>
             <a
-              href="http://code.google.com/webtoolkit/gettingstarted.html">
+              href="./gettingstarted.html">
               <xsl:text>Getting Started Guide</xsl:text>
             </a>
           </li>
@@ -148,21 +148,16 @@ the License.
       </div>
 
       <div id="search">
-        <form action="http://www.google.com/search" method="get">
-          <div>
-            <input name="domains" value="code.google.com" type="hidden" />
-            <input name="sitesearch" value="code.google.com"
-              type="hidden" />
-            <div class="header">Search this site:</div>
-            <div class="input">
-              <input name="q" size="10" />
-            </div>
-            <div class="button">
-              <input value="Search" type="submit" />
-            </div>
-          </div>
+        <form id="searchbox_015986126177484454297:pfmwlvdl42y" action="http://www.google.com/cse">
+          <input type="hidden" name="cx" value="015986126177484454297:pfmwlvdl42y" />
+          <input type="hidden" name="cof" value="FORID:0" />
+          <div class="header">Search Google Code:</div>
+          <input name="q" type="text" size="20" />
+          <input type="submit" name="sa" value="Search" /><br/>
         </form>
+        <script type="text/javascript" src="http://google.com/coop/cse/brand?form=searchbox_015986126177484454297:pfmwlvdl42y"></script>
       </div>
+      
     </div>
   </xsl:template>
 

@@ -189,7 +189,7 @@
 			<sequential>
 				<java classpathref="DOC_PATH" classname="com.google.doctool.DocTool" fork="yes" failonerror="true">
 					<arg value="-html" />
-					<arg value="Google Web Toolkit (Beta)" />
+					<arg value="Google Web Toolkit" />
 					<arg value="gwt-doc" />
 					<arg value="gwt-user" />
 					<arg value="gwt-lang" />
@@ -202,6 +202,20 @@
 				<mkdir dir="${project.build}/css" />
 				<copy todir="${project.build}/css">
 					<fileset dir="src" includes="*.css" />
+				</copy>
+				
+				<!-- Manually copy handwritten HTML and apply the version/build number -->
+				<copy todir="${project.build}/html">
+					<fileset dir="src" includes="gettingstarted.html"/>
+					<filterset>
+						<filter token="GWT_VERSION" value="${gwt.version}" />
+					</filterset>
+				</copy>
+
+				<!-- Manually copy any other static resources (e.g. images) needed by handwritten HTML -->
+				<copy todir="${project.build}/html">
+					<fileset dir="src" includes="kitchensink-*.jpg"/>
+					<fileset dir="src" includes="myapplication-*.jpg"/>
 				</copy>
 			</sequential>
 		</outofdate>
@@ -256,4 +270,3 @@
 
 	<target name="build" depends="html, javadoc" />
 </project>
-

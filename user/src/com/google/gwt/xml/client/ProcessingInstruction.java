@@ -16,9 +16,8 @@
 package com.google.gwt.xml.client;
 
 /**
- * This interface documents the ProcessingInstruction node type. An example is
- * 
- * <pre><?target some data?></pre>.
+ * This interface documents the ProcessingInstruction node type. For example,
+ * <pre>&lt;?xml-stylesheet href="mystyle.css" type="text/css"?&gt;</pre>
  */
 public interface ProcessingInstruction extends Node {
   /**

@@ -75,7 +75,7 @@ package com.google.gwt.junit.client;
  * reporting.</p>
  *
  * <ul>
- * <li>&#64;gwt.benchmark.category - The class name of the {@link Category} the
+ * <li><code>&#64;gwt.benchmark.category</code> - The class name of the {@link Category} the
  * benchmark belongs to. This property may also be set at the
  * {@link com.google.gwt.junit.client.Benchmark} class level.</li>
  * </ul>

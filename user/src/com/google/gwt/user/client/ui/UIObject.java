@@ -334,12 +334,12 @@ public abstract class UIObject {
    * 
    * <pre class="code">
    * .my-TextThingy {
-   *   font-size: 12pt;
+   *   font-size: 20pt;
    * }
    * 
    * .my-TextThingy-readonly {
-   *   background-color: lightgrey;
-   *   border: none;
+   *   background-color: red;
+   *   border: 2px solid yellow;
    * }</pre>
    * 
    * <p>
