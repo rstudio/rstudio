@@ -36,9 +36,21 @@ public class RichTextAreaTest extends GWTTestCase {
     final RichTextArea area = new RichTextArea();
     RootPanel.get().add(area);
     area.setHTML("foo");
-    RootPanel.get().remove(area);
-    RootPanel.get().add(area);
-    assertEquals("foo", area.getHTML());
+
+    // This has to be done on a timer because the rta can take some time to
+    // finish initializing (on some browsers).
+    this.delayTestFinish(1000);
+    new Timer() {
+      public void run() {
+        RootPanel.get().remove(area);
+        RootPanel.get().add(area);
+
+        // It's ok (and important) to check the HTML immediately after re-adding
+        // the rta.
+        assertEquals("foo", area.getHTML());
+        finishTest();
+      }
+    }.schedule(500);
   }
 
   /**
