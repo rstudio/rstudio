@@ -26,13 +26,13 @@ import com.google.gwt.user.client.rpc.RemoteService;
  */
 public interface AbstractSerializableTypes extends RemoteService { 
   /**
-   * Regular interface
+   * Regular interface.
    */
   interface IFoo extends IsSerializable {
   }
   
   /**
-   * Abstract class
+   * Abstract class.
    */
   abstract class AbstractClass implements IsSerializable {
   }

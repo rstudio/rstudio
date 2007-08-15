@@ -51,7 +51,7 @@ public interface CovariantArrays {
   }
 
   /**
-   * Not auto serializable due to bad field
+   * Not auto serializable due to bad field.
    */
   class C extends B {
     Object field;

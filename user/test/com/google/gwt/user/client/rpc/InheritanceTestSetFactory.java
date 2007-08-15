@@ -40,14 +40,24 @@ public class InheritanceTestSetFactory {
   }
 
   /**
+   * This class is here to make the code generator think that there is at least
+   * one serializable subclass of the AnonymousClassInterface.
+   */
+  public static class AnonymousClassInterfaceImplementor implements
+      AnonymousClassInterface {
+    public void foo() {
+    }
+  }
+
+  /**
    * TODO: document me.
    */
   public static class Circle extends Shape {
     private String name;
 
     public native void doStuff() /*-{
-     alert("foo");
-     }-*/;
+      alert("foo");
+    }-*/;
   }
 
   /**
@@ -79,15 +89,6 @@ public class InheritanceTestSetFactory {
   }
 
   /**
-   * This class is here to make the code generator think that there is atleast
-   * on serializable subclass of the AnonymousClassInterface
-   */
-  public static class MyClass implements AnonymousClassInterface {
-    public void foo() {
-    }
-  }
-
-  /**
    * Used to test <a
    * href="http://code.google.com/p/google-web-toolkit/issues/detail?id=1163">Issue
    * 1163</a>.
@@ -102,6 +103,14 @@ public class InheritanceTestSetFactory {
    */
   public static interface MySerializableInterfaceSubtype extends
       MySerializableInterface {
+  }
+
+  /**
+   * This class is here to make the code generator think that there is at least
+   * one serializable subclass of the MySerializableInterfaceSubtype.
+   */
+  public static class MySerializableInterfaceSubtypeImplementor implements
+      MySerializableInterfaceSubtype {
   }
 
   /**

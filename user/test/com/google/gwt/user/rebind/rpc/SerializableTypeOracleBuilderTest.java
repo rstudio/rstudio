@@ -228,11 +228,12 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    * Tests that a method signature which has no serializable types will result
    * in a failure.
    */
-  public void testNoSerializableTypes() throws NotFoundException {
+  public void testNoSerializableTypes() throws NotFoundException,
+      UnableToCompleteException {
+    JClassType testServiceClass = typeOracle.getType(NoSerializableTypes.class.getName());
+    SerializableTypeOracleBuilder stob = new SerializableTypeOracleBuilder(
+        logger, typeOracle);
     try {
-      JClassType testServiceClass = typeOracle.getType(NoSerializableTypes.class.getName());
-      SerializableTypeOracleBuilder stob = new SerializableTypeOracleBuilder(
-          logger, typeOracle);
       stob.build(propertyOracle, testServiceClass);
       fail("Should have thrown an UnableToCompleteException");
     } catch (UnableToCompleteException ex) {
@@ -267,11 +268,12 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   /**
    * Tests that a method signature which only has Object in its signature fails.
    */
-  public void testObjectArrayInMethodSignature() throws NotFoundException {
+  public void testObjectArrayInMethodSignature() throws NotFoundException,
+      UnableToCompleteException {
     JClassType testServiceClass = typeOracle.getType(ObjectArrayInMethodSignature.class.getName());
-    SerializableTypeOracleBuilder stob;
+    SerializableTypeOracleBuilder stob = new SerializableTypeOracleBuilder(
+        logger, typeOracle);
     try {
-      stob = new SerializableTypeOracleBuilder(logger, typeOracle);
       stob.build(propertyOracle, testServiceClass);
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
@@ -282,11 +284,12 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   /**
    * Tests that a method signature which only has Object in its signature fails.
    */
-  public void testObjectInMethodSignature() throws NotFoundException {
+  public void testObjectInMethodSignature() throws NotFoundException,
+      UnableToCompleteException {
     JClassType testServiceClass = typeOracle.getType(ObjectInMethodSignature.class.getName());
-    SerializableTypeOracleBuilder stob;
+    SerializableTypeOracleBuilder stob = new SerializableTypeOracleBuilder(
+        logger, typeOracle);
     try {
-      stob = new SerializableTypeOracleBuilder(logger, typeOracle);
       stob.build(propertyOracle, testServiceClass);
       fail("Expected UnableToCompleteException");
     } catch (UnableToCompleteException e) {
@@ -296,7 +299,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
   /**
    * Tests that a method signature which only has abstract serializable types
-   * does not fail.
+   * fails.
    */
   public void testOnlyAbstractSerializableTypes()
       throws UnableToCompleteException, NotFoundException {
@@ -304,12 +307,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     JClassType testServiceClass = typeOracle.getType(AbstractSerializableTypes.class.getName());
     SerializableTypeOracleBuilder stob = new SerializableTypeOracleBuilder(
         logger, typeOracle);
-    SerializableTypeOracle sto = stob.build(propertyOracle, testServiceClass);
-    TypeInfo[] expected = new TypeInfo[] {
-        new TypeInfo(IncompatibleRemoteServiceException.class.getName(), true),
-        new TypeInfo(AbstractSerializableTypes.AbstractClass.class.getName(),
-            false), new TypeInfo(String.class.getName(), true)};
-
-    validateSTO(sto, expected);
+    try {
+      stob.build(propertyOracle, testServiceClass);
+      fail("Expected UnableToCompleteException");
+    } catch (UnableToCompleteException e) {
+      // Should get here
+    }
   }
 }
