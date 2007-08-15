@@ -2,16 +2,16 @@ body {
   background-color: white;
   color: black;
   font-family: Helvetica, Arial, sans-serif;
-	font-size: 10pt;
+  font-size: 10pt;
   margin: 0px 20px 20px 20px;
 }
 
 h2 {
-	font-weight: normal;
+  font-weight: normal;
 }
 
 table {
-	font-size: 100%;
+  font-size: 100%;
 }
 
 code {
@@ -114,7 +114,7 @@ a:visited {
 }
 
 .gwt-TabPanel {
-	margin-top: 4px;
+  margin-top: 4px;
 }
 
 .gwt-TabPanelBottom {
@@ -160,11 +160,11 @@ a:visited {
 }
 
 .gwt-TextBox-readonly {
-	color: #888;
+  color: #888;
 }
 
 .gwt-Tree {
-	background: white;
+  background: white;
 }
 
 .gwt-Tree .gwt-TreeItem {
@@ -319,12 +319,12 @@ a:visited {
 }
 
 .gwt-HorizontalSplitPanel {
-	border: 8px solid #C3D9FF;
+  border: 8px solid #C3D9FF;
 }
 
-.gwt-HorizontalSplitPanel .splitter {
-	background-color: #C3D9FF;
-	cursor: move;
+.gwt-HorizontalSplitPanel .hsplitter {
+  background-color: #C3D9FF;
+  cursor: move;
 }
 
 .gwt-HorizontalSplitPanel .left {
@@ -335,22 +335,22 @@ a:visited {
 }
 
 .gwt-VerticalSplitPanel .splitter {
-	background-color: #C3D9FF;
-	height: 8px;
-	cursor: move;
+  background-color: #C3D9FF;
+  height: 8px;
+  cursor: move;
 }
 
 .gwt-SuggestBoxPopup {
-	border: 2px solid #C3D9FF;
+  border: 2px solid #C3D9FF;
 }
 
 .gwt-SuggestBoxPopup .item {
-	padding: 2px;
+  padding: 2px;
 }
 
 .gwt-SuggestBoxPopup .item-selected {
-	background-color: #C3D9FF;
-	padding: 2px;
+  background-color: #C3D9FF;
+  padding: 2px;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -360,7 +360,7 @@ a:visited {
 }
 
 .ks-Info {
-	color: white;
+  color: white;
   padding: 20px 10px 20px 40px;
   margin-bottom: 10px;
 }
@@ -369,32 +369,32 @@ a:visited {
 }
 
 .ks-List .gwt-Image {
-	position: relative;
-	top: 8px;
+  position: relative;
+  top: 8px;
 }
 
 .ks-List .ks-SinkItem a {
-	text-decoration: none;
-	color: white;
+  text-decoration: none;
+  color: white;
 }
 
 .ks-List .ks-SinkItem-selected a {
-	text-decoration: none;
-	color: white;
+  text-decoration: none;
+  color: white;
 }
 
 .ks-List .ks-FirstSinkItem a {
-	text-decoration: none;
-	color: white;
+  text-decoration: none;
+  color: white;
 }
 
 .ks-List .ks-FirstSinkItem-selected a {
-	text-decoration: none;
-	color: white;
+  text-decoration: none;
+  color: white;
 }
 
 .ks-List .ks-SinkItem {
-	background: #c6cab7;
+  background: #c6cab7;
   padding: 4px;
   padding-left: 16px;
   padding-right: 16px;
@@ -405,7 +405,7 @@ a:visited {
 }
 
 .ks-List .ks-SinkItem-selected {
-	background: #c6cab7;
+  background: #c6cab7;
   padding: 4px;
   padding-left: 16px;
   padding-right: 16px;
@@ -414,7 +414,7 @@ a:visited {
 }
 
 .ks-List .ks-FirstSinkItem {
-	background: #c6cab7 url(images/corner.gif) no-repeat top left;
+  background: #c6cab7 url(images/corner.gif) no-repeat top left;
   padding: 4px;
   padding-left: 16px;
   padding-right: 16px;
@@ -425,7 +425,7 @@ a:visited {
 }
 
 .ks-List .ks-FirstSinkItem-selected {
-	background: #c3d9ff url(images/corner.gif) no-repeat top left;
+  background: #c3d9ff url(images/corner.gif) no-repeat top left;
   padding: 4px;
   padding-left: 16px;
   padding-right: 16px;

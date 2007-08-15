@@ -28,11 +28,20 @@ import java.util.Iterator;
 abstract class SplitPanel extends Panel {
 
   /**
+   * Sets an elements positioning to absolute.
+   * 
+   * @param elem the element
+   */
+  static void addAbsolutePositoning(Element elem) {
+    DOM.setStyleAttribute(elem, "position", "absolute");
+  }
+
+  /**
    * Adds clipping to an element.
    * 
    * @param elem the element
    */
-  static final void addElementClipping(final Element elem) {
+  static final void addClipping(final Element elem) {
     DOM.setStyleAttribute(elem, "overflow", "hidden");
   }
 
@@ -41,19 +50,74 @@ abstract class SplitPanel extends Panel {
    * 
    * @param elem the element
    */
-  static final void addElementScrolling(final Element elem) {
+  static final void addScrolling(final Element elem) {
     DOM.setStyleAttribute(elem, "overflow", "auto");
   }
 
   /**
-   * Adds zero or none css values for padding, margin and border to prevent
-   * stylesheet overrides. Returns the element for convienence to support
+   * Sizes and element to consume the full area of its parent using the CSS
+   * properties left, right, top, and bottom. This method is used for all
+   * browsers except IE6/7.
+   * 
+   * @param elem the element
+   */
+  static final void expandToFitParentUsingCssOffsets(Element elem) {
+    final String zeroSize = "0px";
+
+    addAbsolutePositoning(elem);
+    setLeft(elem, zeroSize);
+    setRight(elem, zeroSize);
+    setTop(elem, zeroSize);
+    setBottom(elem, zeroSize);
+  }
+
+  /**
+   * Sizes an element to consume the full areas of its parent using 100% width
+   * and height. This method is used on IE6/7 where CSS offsets don't work
+   * reliably.
+   * 
+   * @param elem the element
+   */
+  static final void expandToFitParentUsingPercentages(Element elem) {
+    final String zeroSize = "0px";
+    final String fullSize = "100%";
+
+    addAbsolutePositoning(elem);
+    setTop(elem, zeroSize);
+    setLeft(elem, zeroSize);
+    setWidth(elem, fullSize);
+    setHeight(elem, fullSize);
+  }
+
+  /**
+   * Returns the offsetHeight element property.
+   * 
+   * @param elem the element
+   * @return the offsetHeight property
+   */
+  static final int getOffsetHeight(Element elem) {
+    return DOM.getElementPropertyInt(elem, "offsetHeight");
+  }
+
+  /**
+   * Returns the offsetWidth element property.
+   * 
+   * @param elem the element
+   * @return the offsetWidth property
+   */
+  static final int getOffsetWidth(Element elem) {
+    return DOM.getElementPropertyInt(elem, "offsetWidth");
+  }
+
+  /**
+   * Adds zero or none CSS values for padding, margin and border to prevent
+   * stylesheet overrides. Returns the element for convenience to support
    * builder pattern.
    * 
    * @param elem the element
    * @return the element
    */
-  static final Element preventElementBoxStyles(final Element elem) {
+  static final Element preventBoxStyles(final Element elem) {
     DOM.setIntStyleAttribute(elem, "padding", 0);
     DOM.setIntStyleAttribute(elem, "margin", 0);
     DOM.setStyleAttribute(elem, "border", "none");
@@ -61,12 +125,13 @@ abstract class SplitPanel extends Panel {
   }
 
   /**
-   * Adds zero size padding to an element.
+   * Convenience method to set bottom offset of an element.
    * 
-   * @param elem the element.
+   * @param elem the element
+   * @param size a CSS length value for bottom
    */
-  static final void preventElementPadding(final Element elem) {
-    DOM.setStyleAttribute(elem, "padding", "0");
+  static void setBottom(Element elem, String size) {
+    DOM.setStyleAttribute(elem, "bottom", size);
   }
 
   /**
@@ -75,9 +140,58 @@ abstract class SplitPanel extends Panel {
    * @param elem the element
    * @param className the class name
    */
-  static final void setElementClassname(final Element elem,
-      final String className) {
+  static final void setClassname(final Element elem, final String className) {
     DOM.setElementProperty(elem, "className", className);
+  }
+
+  /**
+   * Convenience method to set the height of an element.
+   * 
+   * @param elem the element
+   * @param height a CSS length value for the height
+   */
+  static final void setHeight(Element elem, String height) {
+    DOM.setStyleAttribute(elem, "height", height);
+  }
+
+  /**
+   * Convenience method to set the left offset of an element.
+   * 
+   * @param elem the element
+   * @param height a CSS length value for left
+   */
+  static final void setLeft(Element elem, String left) {
+    DOM.setStyleAttribute(elem, "left", left);
+  }
+
+  /**
+   * Convenience method to set the right offset of an element.
+   * 
+   * @param elem the element
+   * @param height a CSS length value for right
+   */
+  static final void setRight(Element elem, String right) {
+    DOM.setStyleAttribute(elem, "right", right);
+  }
+
+  /**
+   * Convenience method to set the top offset of an element.
+   * 
+   * @param elem the element
+   * @param height a CSS length value for top
+   */
+  static final void setTop(Element elem, String top) {
+    DOM.setStyleAttribute(elem, "top", top);
+  }
+
+  /**
+   * Convenience method to set the width of an element.
+   * 
+   * @param elem the element
+   * @param height a CSS length value for the width
+   */
+  static final void setWidth(Element elem, String width) {
+    DOM.setStyleAttribute(elem, "width", width);
   }
 
   // The enclosed widgets.
@@ -181,7 +295,7 @@ abstract class SplitPanel extends Panel {
    * Moves the position of the splitter.
    * 
    * @param size the new size of the left region in CSS units (e.g. "10px",
-   *          "1em")
+   *            "1em")
    */
   public abstract void setSplitPosition(String size);
 

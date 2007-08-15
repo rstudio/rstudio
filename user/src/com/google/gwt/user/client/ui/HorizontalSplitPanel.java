@@ -20,6 +20,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.Timer;
 
 /**
  * A panel that arranges two widgets in a single horizontal row and allows the
@@ -34,8 +35,6 @@ import com.google.gwt.user.client.Element;
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-HorizontalSplitPanel { the panel itself }</li>
- * <li>.gwt-HorizontalSplitPanel left { the left container }</li>
- * <li>.gwt-HorizontalSplitPanel right { the right container }</li>
  * <li>.gwt-HorizontalSplitPanel hsplitter { the splitter }</li>
  * </ul>
  */
@@ -45,40 +44,84 @@ public final class HorizontalSplitPanel extends SplitPanel {
    * The standard implementation for horizontal split panels.
    */
   private static class Impl {
-    private static void snapToAllEdges(Element elem) {
-      enableAbsolutePositon(elem);
-      DOM.setStyleAttribute(elem, "left", "0");
-      DOM.setStyleAttribute(elem, "right", "0");
-      DOM.setStyleAttribute(elem, "top", "0");
-      DOM.setStyleAttribute(elem, "bottom", "0");
+    private static void expandToFitParentHorizontally(Element elem) {
+      addAbsolutePositoning(elem);
+      final String zeroSize = "0px";
+      setTop(elem, zeroSize);
+      setBottom(elem, zeroSize);
     }
 
-    private static void snapToTopAndBottomEdges(Element elem) {
-      enableAbsolutePositon(elem);
-      DOM.setStyleAttribute(elem, "top", "0");
-      DOM.setStyleAttribute(elem, "bottom", "0");
-    }
+    protected HorizontalSplitPanel panel;
 
     public void init(HorizontalSplitPanel panel) {
+      this.panel = panel;
+
       DOM.setStyleAttribute(panel.getElement(), "position", "relative");
-      snapToAllEdges(panel.rootWrapper);
-      snapToAllEdges(panel.getElement(LEFT));
-      snapToAllEdges(panel.getElement(RIGHT));
 
-      snapToTopAndBottomEdges(panel.leftWrapper);
-      snapToTopAndBottomEdges(panel.rightWrapper);
-      snapToTopAndBottomEdges(panel.getSplitElement());
+      final Element rightElem = panel.getElement(RIGHT);
 
-      // This ensures that any overflow is hidden on the right side of the
-      // panel. This can happen when the right side panel is smaller than
-      // the borders on its child.
-      addElementClipping(panel.rightWrapper);
+      expandToFitParentHorizontally(panel.getElement(LEFT));
+      expandToFitParentHorizontally(rightElem);
+      expandToFitParentHorizontally(panel.getSplitElement());
+
+      expandToFitParentUsingCssOffsets(panel.container);
+
+      // Snap the right wrapper to the right side.
+      setRight(rightElem, "0px");
     }
 
-    public void onAttach(HorizontalSplitPanel panel) {
+    public void onAttach() {
     }
 
-    public void onDetach(HorizontalSplitPanel panel) {
+    public void onDetach() {
+    }
+
+    public void onSplitResize(int px) {
+      setSplitPosition(px);
+    }
+
+    public void setSplitPosition(int px) {
+      final Element splitElem = panel.getSplitElement();
+
+      final int rootElemWidth = getOffsetWidth(panel.container);
+      final int splitElemWidth = getOffsetWidth(splitElem);
+
+      // This represents an invalid state where layout is incomplete. This
+      // typically happens before DOM attachment, but I leave it here as a
+      // precaution because negative width/height style attributes produce
+      // errors on IE.
+      if (rootElemWidth < splitElemWidth) {
+        return;
+      }
+
+      // Compute the new right side width.
+      int newRightWidth = rootElemWidth - px - splitElemWidth;
+
+      // Constrain the dragging to the physical size of the panel.
+      if (px < 0) {
+        px = 0;
+        newRightWidth = rootElemWidth - splitElemWidth;
+      } else if (newRightWidth < 0) {
+        px = rootElemWidth - splitElemWidth;
+        newRightWidth = 0;
+      }
+
+      final Element rightElem = panel.getElement(RIGHT);
+
+      // Set the width of the left side.
+      setWidth(panel.getElement(LEFT), px + "px");
+
+      // Move the splitter to the right edge of the left element.
+      setLeft(splitElem, px + "px");
+
+      // Move the right element to the right of the splitter.
+      setLeft(rightElem, (px + splitElemWidth) + "px");
+
+      updateRightWidth(rightElem, newRightWidth);
+    }
+
+    public void updateRightWidth(Element rightElem, int newRightWidth) {
+      // Update is handled by CSS.
     }
   }
 
@@ -86,112 +129,110 @@ public final class HorizontalSplitPanel extends SplitPanel {
    * The IE6 implementation for horizontal split panels.
    */
   private static class ImplIE6 extends Impl {
-    private static final String FULLSIZE = "100%";
 
-    private static native void addResizeListener(HorizontalSplitPanel panel) /*-{
-      var root = panel.@com.google.gwt.user.client.ui.HorizontalSplitPanel::rootWrapper;
-      root.onresize = function() {
-        @com.google.gwt.user.client.ui.HorizontalSplitPanel$ImplIE6::onResize(Lcom/google/gwt/user/client/ui/HorizontalSplitPanel;)(panel);
-      };
-    }-*/;
+    private boolean isResizeInProgress = false;
 
-    private static void onResize(HorizontalSplitPanel panel) {
-      final String height = getOffsetHeight(panel.rootWrapper) + "px";
-      setHeight(panel.rightWrapper, height);
-      setHeight(panel.getSplitElement(), height);
-      setHeight(panel.leftWrapper, height);
-    }
-
-    private static void snapToAllEdges(Element elem) {
-      enableAbsolutePositon(elem);
-      setWidth(elem, FULLSIZE);
-      setHeight(elem, FULLSIZE);
-    }
-
-    private static void snapToTopAndBottomEdges(Element elem) {
-      enableAbsolutePositon(elem);
-      setHeight(elem, FULLSIZE);
-    }
+    private int splitPosition = 0;
 
     public void init(HorizontalSplitPanel panel) {
+      this.panel = panel;
+
       final Element elem = panel.getElement();
       // Prevents inherited text-align settings from interfering with the
       // panel's layout.
       DOM.setStyleAttribute(elem, "textAlign", "left");
       DOM.setStyleAttribute(elem, "position", "relative");
 
-      enableAbsolutePositon(panel.rightWrapper);
-      enableAbsolutePositon(panel.leftWrapper);
+      /*
+       * Technically, these are snapped to the top and bottom, but IE doesn't
+       * provide a reliable way to make that happen, so a resize listener is
+       * wired up to control the height of these elements.
+       */
+      addAbsolutePositoning(panel.getElement(LEFT));
+      addAbsolutePositoning(panel.getElement(RIGHT));
+      addAbsolutePositoning(panel.getSplitElement());
 
-      snapToAllEdges(panel.rootWrapper);
-      snapToAllEdges(panel.getElement(LEFT));
-      snapToAllEdges(panel.getElement(RIGHT));
-      snapToTopAndBottomEdges(panel.getSplitElement());
+      expandToFitParentUsingPercentages(panel.container);
     }
 
-    public void onAttach(HorizontalSplitPanel panel) {
-      addResizeListener(panel);
-      onResize(panel);
+    public void onAttach() {
+      addResizeListener(panel.container);
+      onResize();
     }
 
-    public void onDetach(HorizontalSplitPanel panel) {
-      DOM.setElementAttribute(panel.rootWrapper, "onresize", null);
+    public void onDetach() {
+      DOM.setElementAttribute(panel.container, "onresize", null);
+    }
+
+    public void onSplitResize(int px) {
+      final int resizeUpdatePeriod = 20; // ms
+      if (!isResizeInProgress) {
+        isResizeInProgress = true;
+        new Timer() {
+          public void run() {
+            setSplitPosition(splitPosition);
+            isResizeInProgress = false;
+          }
+        }.schedule(resizeUpdatePeriod);
+      }
+      splitPosition = px;
+    }
+
+    public void updateRightWidth(Element rightElem, int newRightWidth) {
+      setWidth(rightElem, newRightWidth + "px");
+    }
+
+    private native void addResizeListener(Element container) /*-{
+      var self = this;
+      container.onresize = function() {
+        self.@com.google.gwt.user.client.ui.HorizontalSplitPanel$ImplIE6::onResize()();
+      };
+    }-*/;
+
+    private void onResize() {
+      final Element leftElem = panel.getElement(LEFT);
+      final Element rightElem = panel.getElement(RIGHT);
+
+      final String height = getOffsetHeight(panel.container) + "px";
+      setHeight(rightElem, height);
+      setHeight(panel.getSplitElement(), height);
+      setHeight(leftElem, height);
+      setSplitPosition(getOffsetWidth(leftElem));
     }
   }
 
   /**
-   * Constants to provide more readable calls to {@link #getElement()} and
+   * The Safari implementation which owes its existence entirely to a single
+   * WebKit bug: http://bugs.webkit.org/show_bug.cgi?id=9137.
+   */
+  private static class ImplSafari extends Impl {
+    public void init(HorizontalSplitPanel panel) {
+      this.panel = panel;
+      final String fullSize = "100%";
+      super.init(panel);
+      setHeight(panel.container, fullSize);
+      setHeight(panel.getElement(LEFT), fullSize);
+      setHeight(panel.getElement(RIGHT), fullSize);
+      setHeight(panel.getSplitElement(), fullSize);
+    }
+  }
+
+  /**
+   * Constant makes for readable calls to {@link #getElement(int)} and
    * {@link #getWidget(int)}.
    */
   private static final int LEFT = 0;
 
+  /**
+   * Constant makes for readable calls to {@link #getElement(int)} and
+   * {@link #getWidget(int)}.
+   */
   private static final int RIGHT = 1;
 
-  private static final Impl impl = (Impl) GWT.create(Impl.class);
+  // A style-free element to serve as the root container.
+  private final Element container;
 
-  private static void enableAbsolutePositon(Element elem) {
-    DOM.setStyleAttribute(elem, "position", "absolute");
-  }
-
-  private static final int getClientWidth(final Element elem) {
-    return DOM.getElementPropertyInt(elem, "clientWidth");
-  }
-
-  private static final int getOffsetHeight(Element elem) {
-    return DOM.getElementPropertyInt(elem, "offsetHeight");
-  }
-
-  private static final int getOffsetWidth(final Element elem) {
-    return DOM.getElementPropertyInt(elem, "offsetWidth");
-  }
-
-  private static final void setHeight(Element elem, String size) {
-    DOM.setStyleAttribute(elem, "height", size);
-  }
-
-  private static final void setLeft(Element elem, String size) {
-    DOM.setStyleAttribute(elem, "left", size);
-  }
-
-  private static final void setWidth(Element elem, String size) {
-    DOM.setStyleAttribute(elem, "width", size);
-  }
-
-  /**
-   * DOM elements needed to support splitter dragging. The underlying DOM
-   * structure is:
-   * 
-   * <pre>
-   *   div
-   *     div (rootWrapper)
-   *       div (leftWrapper)
-   *         div (getElement(LEFT))
-   *       div (getSplitElement())
-   *       div (rightWrapper)
-   *         div (getElement(RIGHT))
-   * </pre>
-   */
-  private final Element rootWrapper, leftWrapper, rightWrapper;
+  private final Impl impl = (Impl) GWT.create(Impl.class);
 
   /**
    * If the split position is set while the split panel is not attached, save it
@@ -203,17 +244,21 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
   private int initialLeftWidth;
 
+  public HorizontalSplitPanel() {
+    this(
+        (HorizontalSplitPanelImages) GWT.create(HorizontalSplitPanelImages.class));
+  }
+
   /**
    * Creates an empty horizontal split panel.
    */
-  public HorizontalSplitPanel() {
-    super(DOM.createDiv(), DOM.createDiv(), DOM.createDiv(), DOM.createDiv());
+  public HorizontalSplitPanel(HorizontalSplitPanelImages images) {
+    super(DOM.createDiv(), DOM.createDiv(), preventBoxStyles(DOM.createDiv()),
+        preventBoxStyles(DOM.createDiv()));
 
-    rootWrapper = preventElementBoxStyles(DOM.createDiv());
-    leftWrapper = preventElementBoxStyles(DOM.createDiv());
-    rightWrapper = preventElementBoxStyles(DOM.createDiv());
+    container = preventBoxStyles(DOM.createDiv());
 
-    buildDOM();
+    buildDOM(images.horizontalSplitPanelThumb());
 
     setStyleName("gwt-HorizontalSplitPanel");
 
@@ -263,21 +308,16 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
   public final void setSplitPosition(String pos) {
     lastSplitPosition = pos;
-    final Element leftElem = leftWrapper;
+    final Element leftElem = getElement(LEFT);
     setWidth(leftElem, pos);
-    setSplitPosition(getOffsetWidth(leftElem));
-  }
-
-  public void setWidth(String width) {
-    super.setWidth(width);
-    setSplitPosition(getOffsetWidth(leftWrapper));
+    impl.setSplitPosition(getOffsetWidth(leftElem));
   }
 
   protected void onLoad() {
-    // If the split position has been changed while detached, apply the change
-    impl.onAttach(this);
+    impl.onAttach();
 
     /*
+     * If the split position has been changed while detached, apply the change.
      * Set the position realizing that it might not work until after layout
      * runs. This first call is simply to try to avoid a jitter effect if
      * possible.
@@ -291,81 +331,40 @@ public final class HorizontalSplitPanel extends SplitPanel {
   }
 
   protected void onUnload() {
-    impl.onDetach(this);
+    impl.onDetach();
   }
 
   final void onSplitterResize(int x, int y) {
-    // Move the split position by the appropriate offset.
-    setSplitPosition(initialLeftWidth + x - initialThumbPos);
+    impl.onSplitResize(initialLeftWidth + x - initialThumbPos);
   }
 
   final void onSplitterResizeStarted(int x, int y) {
     initialThumbPos = x;
-    initialLeftWidth = getClientWidth(leftWrapper);
+    initialLeftWidth = getOffsetWidth(getElement(LEFT));
   }
 
-  private void buildDOM() {
+  private void buildDOM(AbstractImagePrototype thumbImage) {
     final Element leftDiv = getElement(LEFT);
     final Element rightDiv = getElement(RIGHT);
     final Element splitDiv = getSplitElement();
 
-    DOM.appendChild(getElement(), rootWrapper);
+    DOM.appendChild(getElement(), container);
 
-    DOM.appendChild(rootWrapper, leftWrapper);
-    DOM.appendChild(rootWrapper, splitDiv);
-    DOM.appendChild(rootWrapper, rightWrapper);
+    DOM.appendChild(container, leftDiv);
+    DOM.appendChild(container, splitDiv);
+    DOM.appendChild(container, rightDiv);
 
-    DOM.appendChild(leftWrapper, leftDiv);
-    DOM.appendChild(rightWrapper, rightDiv);
+    /*
+     * Sadly, this is the only way I've found to get vertical centering in this
+     * case. The usually CSS hacks (display: table-cell, vertical-align: middle)
+     * don't work in an absolute positioned DIV.
+     */
+    DOM.setInnerHTML(splitDiv,
+        "<table class='hsplitter' height='100%' cellpadding='0' "
+            + "cellspacing='0'><tr><td align='center' valign='middle'>"
+            + thumbImage.getHTML());
 
-    DOM.setInnerHTML(splitDiv, "&nbsp;");
-
-    addElementScrolling(leftDiv);
-    addElementScrolling(rightDiv);
-
-    setElementClassname(leftDiv, "left");
-    setElementClassname(splitDiv, "hsplitter");
-    setElementClassname(rightDiv, "right");
-  }
-
-  private final void setSplitPosition(int px) {
-    final Element splitElem = getSplitElement();
-
-    final int rootElemWidth = getOffsetWidth(rootWrapper);
-    final int splitElemWidth = getOffsetWidth(splitElem);
-
-    // This represents an invalid state where layout is incomplete. This
-    // typically happens before DOM attachment, but I leave it here as a
-    // precaution because negative width/height style attributes produce
-    // errors on IE.
-    if (rootElemWidth < splitElemWidth) {
-      return;
-    }
-
-    // Compute the new right side width.
-    int newRightWidth = rootElemWidth - px - splitElemWidth;
-
-    // Constrain the dragging to the physical size of the panel.
-    if (px < 0) {
-      px = 0;
-      newRightWidth = rootElemWidth - splitElemWidth;
-    } else if (newRightWidth < 0) {
-      px = rootElemWidth - splitElemWidth;
-      newRightWidth = 0;
-    }
-
-    final Element rightElem = rightWrapper;
-
-    // Set the width of the left side.
-    setWidth(leftWrapper, px + "px");
-
-    // Move the splitter to the right edge of the left element.
-    setLeft(splitElem, px + "px");
-
-    // Move the right element to the right of the splitter.
-    setLeft(rightElem, (px + splitElemWidth) + "px");
-
-    // Update the right element's width.
-    setWidth(rightElem, newRightWidth + "px");
+    addScrolling(leftDiv);
+    addScrolling(rightDiv);
   }
 }

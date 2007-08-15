@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,76 +20,221 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.Timer;
 
 /**
  * A panel that arranges two widgets in a single vertical column and allows the
  * user to interactively change the proportion of the height dedicated to each
  * of the two widgets. Widgets contained within a
  * <code>VerticalSplitterPanel</code> will be automatically decorated with
- * scrollbars when neccessary.
- *
+ * scrollbars when necessary.
+ * 
  * <p>
  * <img class='gallery' src='VerticalSplitPanel.png'/>
  * </p>
- *
+ * 
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-VerticalSplitPanel { the panel itself }</li>
- * <li>.gwt-VerticalSplitPanel top { the top container }</li>
- * <li>.gwt-VerticalSplitPanel bottom { the bottom container }</li>
  * <li>.gwt-VerticalSplitPanel vsplitter { the splitter }</li>
  * </ul>
  */
 public final class VerticalSplitPanel extends SplitPanel {
 
   /**
-   * Provides different implementations for retrieving an element's height. The
-   * default binding is based on DOM1 clientHeight.
+   * Provides a base implementation for splitter layout that relies on CSS
+   * positioned layout.
    */
   private static class Impl {
-    /**
-     * Gets an element's height.
-     *
-     * @param elem an element
-     * @return the height of the element
-     */
-    protected int getElementHeight(Element elem) {
-      return DOM.getElementPropertyInt(elem, "clientHeight");
+    private static void expandToFitParentHorizontally(Element elem) {
+      addAbsolutePositoning(elem);
+      DOM.setStyleAttribute(elem, "left", "0");
+      DOM.setStyleAttribute(elem, "right", "0");
+    }
+
+    protected VerticalSplitPanel panel;
+
+    public void init(VerticalSplitPanel panel) {
+      this.panel = panel;
+
+      DOM.setStyleAttribute(panel.getElement(), "position", "relative");
+
+      final Element topElem = panel.getElement(TOP);
+      final Element bottomElem = panel.getElement(BOTTOM);
+
+      expandToFitParentHorizontally(topElem);
+      expandToFitParentHorizontally(bottomElem);
+      expandToFitParentHorizontally(panel.getSplitElement());
+
+      expandToFitParentUsingCssOffsets(panel.container);
+
+      // Snap the bottom wrapper to the bottom side.
+      DOM.setStyleAttribute(bottomElem, "bottom", "0");
+    }
+
+    public void onAttach() {
+    }
+
+    public void onDetach() {
+    }
+
+    public void onSplitterResize(int px) {
+      setSplitPosition(px);
+    }
+
+    public void setSplitPosition(int px) {
+      final Element splitElem = panel.getSplitElement();
+
+      final int rootElemHeight = getOffsetHeight(panel.container);
+      final int splitElemHeight = getOffsetHeight(splitElem);
+
+      if (rootElemHeight < splitElemHeight) {
+        return;
+      }
+
+      int newBottomHeight = rootElemHeight - px - splitElemHeight;
+      if (px < 0) {
+        px = 0;
+        newBottomHeight = rootElemHeight - splitElemHeight;
+      } else if (newBottomHeight < 0) {
+        px = rootElemHeight - splitElemHeight;
+        newBottomHeight = 0;
+      }
+
+      updateElements(panel.getElement(TOP), splitElem,
+          panel.getElement(BOTTOM), px, px + splitElemHeight, newBottomHeight);
+    }
+
+    protected void updateElements(Element topElem, Element splitElem,
+        Element bottomElem, int topHeight, int bottomTop, int bottomHeight) {
+      setHeight(topElem, topHeight + "px");
+
+      setTop(splitElem, topHeight + "px");
+
+      setTop(bottomElem, bottomTop + "px");
+
+      // bottom's height is handled by CSS.
     }
   }
 
   /**
-   * Provides an implementation for IE6 based on Element.getBoundingClientRect.
+   * Provides an implementation for IE6/7 that relies on 100% length in CSS.
    */
   private static class ImplIE6 extends Impl {
-    protected native int getElementHeight(Element elem) /*-{
-      var box = elem.getBoundingClientRect();
-      return box.bottom - box.top;
-    }-*/;
+
+    private static void expandToFitParentHorizontally(Element elem) {
+      addAbsolutePositoning(elem);
+      setLeft(elem, "0");
+      setWidth(elem, "100%");
+    }
+
+    private boolean isResizeInProgress = false;
+
+    private int splitPosition;
+
+    private boolean isTopHidden = false, isBottomHidden = false;
+
+    public void init(VerticalSplitPanel panel) {
+      this.panel = panel;
+
+      final Element elem = panel.getElement();
+
+      // Prevents inherited text-align settings from interfering with the
+      // panel's layout.
+      DOM.setStyleAttribute(elem, "textAlign", "left");
+      DOM.setStyleAttribute(elem, "position", "relative");
+
+      final Element topElem = panel.getElement(TOP);
+      final Element bottomElem = panel.getElement(BOTTOM);
+
+      expandToFitParentHorizontally(topElem);
+      expandToFitParentHorizontally(bottomElem);
+      expandToFitParentHorizontally(panel.getSplitElement());
+
+      expandToFitParentUsingPercentages(panel.container);
+    }
+
+    public void onAttach() {
+      addResizeListener(panel.container);
+      onResize();
+    }
+
+    public void onDetach() {
+      DOM.setElementProperty(panel.container, "onresize", null);
+    }
+
+    public void onSplitterResize(int px) {
+      /*
+       * IE6/7 has event priority issues that will prevent the repaints from
+       * happening quickly enough causing the interaction to seem unresponsive.
+       * The following is simply a poor man's mouse event coalescing.
+       */
+      final int resizeUpdatePeriod = 20; // ms
+      if (!isResizeInProgress) {
+        isResizeInProgress = true;
+        new Timer() {
+          public void run() {
+            setSplitPosition(splitPosition);
+            isResizeInProgress = false;
+          }
+        }.schedule(resizeUpdatePeriod);
+      }
+      splitPosition = px;
+    }
+
+    protected void updateElements(Element topElem, Element splitElem,
+        Element bottomElem, int topHeight, int bottomTop, int bottomHeight) {
+      /*
+       * IE6/7 has a quirk where a zero height element with non-zero height
+       * children will expand larger than 100%. To prevent this, the width is
+       * explicitly set to zero when height is zero.
+       */
+      if (topHeight == 0) {
+        setWidth(topElem, "0px");
+        isTopHidden = true;
+      } else if (isTopHidden) {
+        setWidth(topElem, "100%");
+        isTopHidden = false;
+      }
+
+      if (bottomHeight == 0) {
+        setWidth(bottomElem, "0px");
+        isBottomHidden = true;
+      } else if (isBottomHidden) {
+        setWidth(bottomElem, "100%");
+        isBottomHidden = false;
+      }
+
+      super.updateElements(topElem, splitElem, bottomElem, topHeight,
+          bottomTop, bottomHeight);
+
+      // IE6/7 cannot update properly with CSS alone.
+      setHeight(bottomElem, bottomHeight + "px");
+    }
+
+    private native void addResizeListener(Element container) /*-{
+         var self = this;
+         container.onresize = function() {
+           self.@com.google.gwt.user.client.ui.VerticalSplitPanel$ImplIE6::onResize()();
+         };
+      }-*/;
+
+    private void onResize() {
+      setSplitPosition(getOffsetHeight(panel.getElement(TOP)));
+    }
   }
 
+  /**
+   * Constant makes for readable calls to {@link #getElement(int)} and
+   * {@link #getWidget(int)}.
+   */
   private static final int TOP = 0;
 
+  /**
+   * Constant makes for readable calls to {@link #getElement(int)} and
+   * {@link #getWidget(int)}.
+   */
   private static final int BOTTOM = 1;
-
-  private static final Impl impl = (Impl) GWT.create(Impl.class);
-
-  private static int getOffsetTop(Element elem) {
-    return DOM.getElementPropertyInt(elem, "offsetTop");
-  }
-
-  private static Element lockStyles(final Element elem) {
-    DOM.setIntStyleAttribute(elem, "height", 0);
-    return preventElementBoxStyles(elem);
-  }
-
-  private static void setHeight(Element elem, int px) {
-    DOM.setStyleAttribute(elem, "height", Math.max(0, px) + "px");
-  }
-
-  // Element is added below bottom container element to make it possible to
-  // infer the bottom element's height.
-  private final Element probeElem;
 
   // Captures the height of the top container when drag resizing starts.
   private int initialTopHeight = 0;
@@ -97,51 +242,38 @@ public final class VerticalSplitPanel extends SplitPanel {
   // Captures the offset of a user's mouse pointer during drag resizing.
   private int initialThumbPos = 0;
 
+  // A style-free element to serve as the root container.
+  private final Element container;
+
+  private final Impl impl = (Impl) GWT.create(Impl.class);
+
+  private String lastSplitPosition;
+
+  public VerticalSplitPanel() {
+    this((VerticalSplitPanelImages) GWT.create(VerticalSplitPanelImages.class));
+  }
+
   /**
    * Creates an empty vertical split panel.
    */
-  public VerticalSplitPanel() {
-    super(DOM.createDiv(), DOM.createDiv(), DOM.createDiv(), DOM.createDiv());
+  public VerticalSplitPanel(VerticalSplitPanelImages images) {
+    super(DOM.createDiv(), DOM.createDiv(), preventBoxStyles(DOM.createDiv()),
+        preventBoxStyles(DOM.createDiv()));
 
-    final Element thisElem = getElement();
-    final Element splitElem = getSplitElement();
-    final Element topElem = getElement(TOP);
-    final Element bottomElem = getElement(BOTTOM);
-    probeElem = lockStyles(DOM.createDiv());
+    container = preventBoxStyles(DOM.createDiv());
 
-    DOM.appendChild(thisElem, topElem);
-    DOM.appendChild(thisElem, splitElem);
-    DOM.appendChild(thisElem, bottomElem);
-    DOM.appendChild(thisElem, probeElem);
-
-    addElementClipping(thisElem);
-    addElementScrolling(topElem);
-    addElementScrolling(bottomElem);
-
-    // Prevent padding on container elements.
-    preventElementPadding(thisElem);
-    preventElementPadding(topElem);
-    preventElementPadding(bottomElem);
-
-    setElementClassname(topElem, "top");
-    setElementClassname(splitElem, "vsplitter");
-    setElementClassname(bottomElem, "bottom");
+    buildDOM(images.verticalSplitPanelThumb());
 
     setStyleName("gwt-VerticalSplitPanel");
 
-    // Must wait on layout to do the initial layout.
-    DeferredCommand.addCommand(new Command() {
-      public void execute() {
-        updateBottomHeight();
-      }
-    });
+    impl.init(this);
 
     setSplitPosition("50%");
   }
 
   /**
    * Gets the widget in the bottom of the panel.
-   *
+   * 
    * @return the widget, <code>null</code> if there is not one
    */
   public final Widget getBottomWidget() {
@@ -150,7 +282,7 @@ public final class VerticalSplitPanel extends SplitPanel {
 
   /**
    * Gets the widget in the top of the panel.
-   *
+   * 
    * @return the widget, <code>null</code> if there is not one
    */
   public final Widget getTopWidget() {
@@ -159,7 +291,7 @@ public final class VerticalSplitPanel extends SplitPanel {
 
   /**
    * Sets the widget in the bottom of the panel.
-   *
+   * 
    * @param w the widget
    */
   public final void setBottomWidget(Widget w) {
@@ -168,101 +300,71 @@ public final class VerticalSplitPanel extends SplitPanel {
 
   public void setHeight(String height) {
     super.setHeight(height);
-    updateBottomHeight();
   }
 
-  public final void setSplitPosition(String size) {
-    DOM.setStyleAttribute(getElement(TOP), "height", size);
-    updateBottomHeight();
+  public final void setSplitPosition(String pos) {
+    lastSplitPosition = pos;
+    final Element topElem = getElement(TOP);
+    setHeight(topElem, pos);
+    impl.setSplitPosition(getOffsetHeight(topElem));
   }
 
   /**
    * Sets the widget in the top of the panel.
-   *
+   * 
    * @param w the widget
    */
   public final void setTopWidget(Widget w) {
     setWidget(TOP, w);
   }
 
+  protected void onLoad() {
+    impl.onAttach();
+
+    /*
+     * Set the position realizing it might not work until after layout runs.
+     * This first call is simply to try to avoid a jitter effect if possible.
+     */
+    setSplitPosition(lastSplitPosition);
+    DeferredCommand.addCommand(new Command() {
+      public void execute() {
+        setSplitPosition(lastSplitPosition);
+      }
+    });
+  }
+
+  protected void onUnload() {
+    impl.onDetach();
+  }
+
   final void onSplitterResize(int x, int y) {
-    /*
-     * When dragging starts we record the thumb position and the current height
-     * of the top div. On each subsequent resize event, we compute how far the
-     * thumb has moved and adjust the top and bottom div by that offset.
-     */
-    final Element topElem = getElement(TOP);
-    final Element botElem = getElement(BOTTOM);
-
-    // Compute what the new top height should be.
-    final int newTopHeight = initialTopHeight + (y - initialThumbPos);
-    final int newBotHeight = impl.getElementHeight(botElem)
-        + impl.getElementHeight(topElem) - newTopHeight;
-
-    /*
-     * NOTE: The bottom must be adjusted before the top due to FF bug which
-     * leaves scrollbar artifacts in the overflow region.
-     * https://bugzilla.mozilla.org/show_bug.cgi?id=368190
-     */
-    if (newBotHeight < 0) {
-      setHeight(botElem, 0);
-      setHeight(topElem, newTopHeight + newBotHeight);
-    } else {
-      setHeight(botElem, newBotHeight);
-      setHeight(topElem, newTopHeight);
-    }
-
-    updateBottomHeight();
+    impl.onSplitterResize(initialTopHeight + y - initialThumbPos);
   }
 
   final void onSplitterResizeStarted(int x, int y) {
     initialThumbPos = y;
-    initialTopHeight = impl.getElementHeight(getElement(TOP));
+    initialTopHeight = getOffsetHeight(getElement(TOP));
   }
 
-  /**
-   * Updates to the height on the bottom div so that it remains within the outer
-   * container.
-   */
-  private void updateBottomHeight() {
-    final Element thisElem = getElement();
-    final Element bottomElem = getElement(BOTTOM);
+  private void buildDOM(AbstractImagePrototype thumb) {
+    final Element topDiv = getElement(TOP);
+    final Element bottomDiv = getElement(BOTTOM);
+    final Element splitDiv = getSplitElement();
+
+    DOM.appendChild(getElement(), container);
+
+    DOM.appendChild(container, topDiv);
+    DOM.appendChild(container, splitDiv);
+    DOM.appendChild(container, bottomDiv);
 
     /*
-     * This is the definitive check that tells us how far (in pixels) the height
-     * of the bottom div must change. We do this by comparing the clientHeight
-     * of the root div with the offsetTop of a probe div under the bottom div.
+     * The style name is placed on the table rather than splitElem to allow the
+     * splitter to be styled without interfering with layout.
      */
-    final int adjust = impl.getElementHeight(thisElem)
-        - (getOffsetTop(probeElem) - getOffsetTop(thisElem));
+    DOM.setInnerHTML(splitDiv, "<div class='vsplitter' "
+        + "style='text-align:center;'>" + thumb.getHTML() + "</div>");
 
-    /*
-     * In the case where the user is dragging the splitter, resizeTopBy should
-     * generally guess the right adjustment based on how far the top div was
-     * adjusted. So for the most common case, we find we do not need adjustment
-     * and exit here.
-     */
-    if (adjust == 0) {
-      return;
-    }
-
-    /*
-     * We don't know what margins and borders are in play on the bottom div, so
-     * we naively guess they are all zero, which would mean that the CSS height
-     * property will be equal to the clientHeight attribute. After we set the
-     * height in css, we take the difference between what we set and the
-     * reported clientHeight. If that is non-zero, it tells us how much to
-     * accomodate for margin, border and what not.
-     */
-    final int curHeight = impl.getElementHeight(bottomElem);
-    final int newHeight = curHeight + adjust;
-    setHeight(bottomElem, newHeight);
-    final int error = impl.getElementHeight(bottomElem) - newHeight;
-
-    if (error == 0) {
-      return;
-    }
-
-    setHeight(bottomElem, newHeight - error);
+    addScrolling(topDiv);
+    addScrolling(bottomDiv);
   }
 }
