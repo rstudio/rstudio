@@ -27,23 +27,50 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
       "medium", "xx-small", "x-small", "small", "medium", "large", "x-large",
       "xx-large"};
 
-  public Element createElement() {
-    Element elem = super.createElement();
+  private static int webKitVersion = getWebKitVersion();
 
-    // Use this opportunity to check if this version of Safari has full rich
-    // text support or not.
-    capabilityTest(elem);
-    return elem;
+  /**
+   * WebKit v420 began suppporting full rich text editing.
+   */
+  private static boolean extendedEditingSupported = (webKitVersion >= 420);
+
+  /**
+   * WebKit v420 changed BackColor to HiliteColor.
+   */
+  private static boolean useHiliteColor = (webKitVersion >= 420);
+
+  /**
+   * WebKit version up to *and including* 420 require CSS font-size values
+   * (e.g. 'medium', 'x-large') rather than size numbers. All subsequent
+   * versions use size numbers like other browsers.
+   */
+  private static boolean oldSchoolSizeValues = (webKitVersion <= 420);
+
+  private static native int getWebKitVersion() /*-{
+    var exp = / AppleWebKit\/([\d]+)/;
+    var result = exp.exec(navigator.userAgent);
+    if (result) {
+      var version = parseInt(result[1]);
+      if (version) {
+        return version;
+      }
+    }
+
+    // Intentionally conservative fallback.
+    return 0;
+  }-*/;;
+
+  public Element createElement() {
+    return super.createElement();
   }
 
   public native boolean isBold() /*-{
     return !!this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.__gwt_isBold;
   }-*/;
 
-  public native boolean isExtendedEditingSupported() /*-{
-    // __gwt_fullSupport is set in testCapability().
-    return this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.__gwt_fullSupport;
-  }-*/;
+  public boolean isExtendedEditingSupported() {
+    return extendedEditingSupported;
+  }
 
   public native boolean isItalic() /*-{
     return !!this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.__gwt_isItalic;
@@ -52,6 +79,14 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
   public native boolean isUnderlined() /*-{
     return !!this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.__gwt_isUnderlined;
   }-*/;
+
+  public void setBackColor(String color) {
+    if (useHiliteColor) {
+      execCommand("HiliteColor", color);
+    } else {
+      super.setBackColor(color);
+    }
+  }
 
   public native void setFocus(boolean focused) /*-{
     // Safari needs the *iframe* focused, not its window.
@@ -67,10 +102,15 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
   }-*/;
 
   public void setFontSize(FontSize fontSize) {
-    // Safari only accepts css-style 'small, medium, large, etc' values.
-    int number = fontSize.getNumber();
-    if ((number >= 0) && (number <= 7)) {
-      execCommand("FontSize", sizeNumberCSSValues[number]);
+    if (oldSchoolSizeValues) {
+      // Safari2 only accepts css-style 'small, medium, large, etc' values.
+      // Setting these doesn't seem to hurt Safari3.
+      int number = fontSize.getNumber();
+      if ((number >= 0) && (number <= 7)) {
+        execCommand("FontSize", sizeNumberCSSValues[number]);
+      }
+    } else {
+      super.setFontSize(fontSize);
     }
   }
 
@@ -171,9 +211,5 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
 
     elem.onfocus = null;
     elem.onblur = null;
-  }-*/;
-
-  private native void capabilityTest(Element elem) /*-{
-    elem.__gwt_fullSupport = $doc.queryCommandSupported('insertimage');
   }-*/;
 }
