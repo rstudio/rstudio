@@ -24,6 +24,8 @@ import com.google.gwt.user.client.Event;
  */
 class DOMImplIE6 extends DOMImpl {
 
+  private static Element currentEventTarget;
+
   private static native int getBodyClientLeft() /*-{
     // Standard mode uses $doc.documentElement.clientLeft
     // Quirks mode uses $doc.body.clientLeft
@@ -68,6 +70,10 @@ class DOMImplIE6 extends DOMImpl {
   public native int eventGetClientY(Event evt) /*-{
     return evt.clientY -
         @com.google.gwt.user.client.impl.DOMImplIE6::getBodyClientTop()();
+  }-*/;
+
+  public native Element eventGetCurrentTarget(Event evt) /*-{
+    return @com.google.gwt.user.client.impl.DOMImplIE6::currentEventTarget;
   }-*/;
 
   public native Element eventGetFromElement(Event evt) /*-{
@@ -171,10 +177,19 @@ class DOMImplIE6 extends DOMImpl {
   
     // Set up event dispatchers.
     $wnd.__dispatchEvent = function() {
+      // IE doesn't define event.currentTarget, so we squirrel it away here. It
+      // also seems that IE won't allow you to add expandos to the event object,
+      // so we have to store it in a global. This is ok because only one event
+      // can actually be dispatched at a time.
+      var oldEventTarget = @com.google.gwt.user.client.impl.DOMImplIE6::currentEventTarget;
+      @com.google.gwt.user.client.impl.DOMImplIE6::currentEventTarget = this;
+
       if ($wnd.event.returnValue == null) {
         $wnd.event.returnValue = true;
-        if (!@com.google.gwt.user.client.DOM::previewEvent(Lcom/google/gwt/user/client/Event;)($wnd.event))
+        if (!@com.google.gwt.user.client.DOM::previewEvent(Lcom/google/gwt/user/client/Event;)($wnd.event)) {
+          @com.google.gwt.user.client.impl.DOMImplIE6::currentEventTarget = oldEventTarget;
           return;
+        }
       }
 
       var listener, curElem = this;
@@ -183,6 +198,8 @@ class DOMImplIE6 extends DOMImpl {
 
       if (listener)
         @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)($wnd.event, curElem, listener);
+
+      @com.google.gwt.user.client.impl.DOMImplIE6::currentEventTarget = oldEventTarget;
     };
 
     $wnd.__dispatchDblClickEvent = function() {
