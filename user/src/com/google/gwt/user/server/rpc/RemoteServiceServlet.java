@@ -265,6 +265,9 @@ public class RemoteServiceServlet extends HttpServlet implements
       return RPC.invokeAndEncodeResponse(this, rpcRequest.getMethod(),
           rpcRequest.getParameters(), rpcRequest.getSerializationPolicy());
     } catch (IncompatibleRemoteServiceException ex) {
+      getServletContext().log(
+          "An IncompatibleRemoteServiceException was thrown while processing this call.",
+          ex);
       return RPC.encodeResponseForFailure(null, ex);
     }
   }
