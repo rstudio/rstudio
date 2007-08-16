@@ -24,7 +24,7 @@ class HistoryImplSafari extends HistoryImplStandard {
   private static boolean isOldSafari = detectOldSafari();
 
   private static native boolean detectOldSafari() /*-{
-    var exp = /WebKit\/([\d]+)/;
+    var exp = / AppleWebKit\/([\d]+)/;
     var result = exp.exec(navigator.userAgent);
     if (result) {
       // The standard history implementation works fine on WebKit >= 522
@@ -32,6 +32,12 @@ class HistoryImplSafari extends HistoryImplStandard {
       if (parseInt(result[1]) >= 522) {
         return false;
       }
+    }
+
+    // The standard history implementation works just fine on the iPhone, which
+    // unfortunately reports itself as WebKit/420+.
+    if (navigator.userAgent.indexOf('iPhone') != -1) {
+      return false;
     }
 
     return true;
