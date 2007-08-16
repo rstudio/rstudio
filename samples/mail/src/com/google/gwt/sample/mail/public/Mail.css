@@ -2,111 +2,105 @@ body, html {
   height: 100%;
 }
 body {
-	background: #fff;
-	color: black;
-	font-family: Helvetica, Arial, sans-serif;
-	font-size: small;
-	margin: 8px;
-	margin-top: 3px;
+  background: #fff;
+  color: black;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: small;
+  margin: 8px;
+  margin-top: 3px;
 }
 
-a {	
-	color: #000;
+a { 
+  color: #000;
 }
 
 a:visited {
-	color: #000; 
+  color: #000; 
 }
 
 .gwt-DialogBox {
-	background-color: white;
-	border-left: 1px solid #666;
-	border-right: 1px solid #666;
-	border-bottom: 1px solid #666;
+  background-color: white;
+  border-left: 1px solid #666;
+  border-right: 1px solid #666;
+  border-bottom: 1px solid #666;
 }
 
 .gwt-DialogBox .Caption {
-	background: url(gradient.gif) repeat-x top left;
-	font-weight: bold;
-	cursor: default;
-	padding: 5px 10px;
-	border-bottom: 1px solid #666;
-	border-top: 1px solid #666;
-	text-align: left;
+  background: url(gradient.gif) repeat-x top left;
+  font-weight: bold;
+  cursor: default;
+  padding: 5px 10px;
+  border-bottom: 1px solid #666;
+  border-top: 1px solid #666;
+  text-align: left;
 }
 
 .gwt-DialogBox td {
-	text-align: right;
+  text-align: right;
 }
 
 .gwt-DialogBox .gwt-Button {
-	margin: 10px;
+  margin: 10px;
 }
 
 .gwt-MenuBar {
-	background: #c3d9ff;
-	cursor: default;
+  background: #c3d9ff;
+  cursor: default;
 }
 
 .gwt-MenuItem {
-	font-size: 80%;
-	margin: 1px;
-	cursor: default;
+  font-size: 80%;
+  margin: 1px;
+  cursor: default;
 }
 
 .gwt-MenuItem-selected {
-	background: #e8eef7;
+  background: #e8eef7;
 }
 
 .gwt-Tree {
 }
 
 .gwt-Tree .gwt-TreeItem span * {
-	margin: 0 4px;
+  margin: 0 4px;
 }
 
 .gwt-Tree .gwt-TreeItem {
-	font-size: 80%;
-	cursor: default;
+  font-size: 80%;
+  cursor: default;
 }
 
 .gwt-Tree .gwt-TreeItem span {
-	padding: 2px 0;
+  padding: 2px 0;
 }
 
 .gwt-Tree .gwt-TreeItem-selected span {
-	background: #ccc;
+  background: #ccc;
 }
 
 .gwt-StackPanel {
-	background: #fff;
-	width: 15em;
-	border-bottom: 1px solid #666;
-}
-
-.gwt-StackPanel .gwt-StackPanelItem .left {
-	width: 20px;
-	padding: 4px;
-	background: url(lcorner.gif) no-repeat top left;
+  background: #fff;
+  width: 15em;
+  border-bottom: 1px solid #666;
 }
 
 .gwt-StackPanel .gwt-StackPanelItem {
-	cursor: pointer;
-	cursor: hand;
+  cursor: pointer;
+  cursor: hand;
 }
 
 .gwt-StackPanel .gwt-StackPanelItem-selected {
-	border-bottom: 1px solid #666;
+  border-bottom: 1px solid #666;
 }
 
 .gwt-StackPanel .lcaption {
-	width: 32px;
-	padding: 0 0 4px 5px;
+  width: 32px;
+  padding: 0 0 4px 5px;
 }
 
 .gwt-StackPanel .rcaption {
-	padding: 0 0 4px 5px;
-}	
+  padding: 0 0 4px 5px;
+} 
 
 .gwt-StackPanel .box-20 {
   text-align: right;
@@ -119,32 +113,36 @@ a:visited {
 
 .is-top .box-00, .is-top .box-20,
 .is-beneath-selected .box-00, .is-beneath-selected .box-20 {
-	background-color: #fff;
+  background-color: #fff;
 }
 
 .box-10 {
-	font-size: 2px;
-	border-top: 1px solid #666;
-	background-color: #deefe1;
+  font-size: 2px;
+  border-top: 1px solid #666;
+  background-color: #deefe1;
+}
+/* CSS3 hack to target Opera8+ */
+@media all and (min-width: 0px) {
+    body .box-10 { line-height: 0px; }
 }
 
 .box-01, .box-11, .box-21 {
-	background: url(gradient.gif) repeat-x top left;
+  background: url(gradient.gif) repeat-x top left;
 }
 
 .box-01, .box-00 {
-	font-size: 2px;
+  font-size: 2px;
   border-left: 1px solid #666;
 }
 
 .box-21, .box-20 {
-	font-size: 2px;
+  font-size: 2px;
   border-right: 1px solid #666;
 }
 
 .is-top .box-00, .is-top .box-20 {
-	border-right: none;
-	border-left: none;
+  border-right: none;
+  border-left: none;
 }
 
 .gwt-StackPanel .gwt-StackPanelItem table {
@@ -152,48 +150,48 @@ a:visited {
 }
 
 .mail-TopPanel {
-	height: 60px;
+  height: 60px;
 }
 
 .mail-TopPanel table {
-	font-size: 80%;
+  font-size: 80%;
 }
 
 .mail-TopPanel .gwt-Image {
-	margin-left: 10px;
-	position: absolute;
+  margin-left: 10px;
+  position: absolute;
 }
 
 .mail-TopPanelLinks {
-	font-size: 80%;
+  font-size: 80%;
 }
 
 .mail-AboutText {
-	width: 24em;
-	font-size: 80%;
-	padding: 10px;
-	text-align: left;
+  width: 24em;
+  font-size: 80%;
+  padding: 10px;
+  text-align: left;
 }
 
 .mail-Contacts td, .mail-Tasks td {
-	padding: 4px 0 0 0;
+  padding: 4px 0 0 0;
 }
 
 .mail-Contacts table {
-	font-size: 80%;
+  font-size: 80%;
 }
 
 .mail-Tasks table {
-	font-size: 80%;
+  font-size: 80%;
 }
 
 .mail-List {
-	border-left: 1px solid #666;
-	border-right: 1px solid #666;
-	border-bottom: 1px solid #666;
-	font-size: 80%;
-	cursor: pointer;
-	cursor: hand;
+  border-left: 1px solid #666;
+  border-right: 1px solid #666;
+  border-bottom: 1px solid #666;
+  font-size: 80%;
+  cursor: pointer;
+  cursor: hand;
 }
 
 .mail-List td {
@@ -203,117 +201,117 @@ a:visited {
 }
 
 .mail-ListHeader td {
-	border-top: none;
+  border-top: none;
 }
 
 .mail-ListHeader {
-	background: #c1eec8 url(gradient.gif) repeat-x 0px 0px;
-	font-weight: bold;
+  background: #c1eec8 url(gradient.gif) repeat-x 0px 0px;
+  font-weight: bold;
 }
 
 .mail-ListHeader .mail-ListNavBar .gwt-HTML {
-	font-weight: bold;
+  font-weight: bold;
 }
 
 .mail-ListHeader td {
-	padding: 2px 0 2px 10px;
-	border-top: 1px solid #666;
-	border-bottom: 1px solid #666;
+  padding: 2px 0 2px 10px;
+  border-top: 1px solid #666;
+  border-bottom: 1px solid #666;
 }
 
 .mail-ListNavBar table {
-	font-size: 80%;
+  font-size: 80%;
 }
 
 .mail-ListNavBar td {
-	border: none;
+  border: none;
 }
 
 .mail-ListNavBar a {
-	margin: 0 8px;
+  margin: 0 8px;
 }
 
 .mail-SelectedRow td {
-	border-bottom: 1px solid #666;
-	border-top: 1px solid #666;
+  border-bottom: 1px solid #666;
+  border-top: 1px solid #666;
 }
 
 .mail-SelectedRow {
-	background: #eee;
+  background: #eee;
 }
 
 .mail-Toolbar .gwt-Image {
 }
 
 .mail-ToolButton {
-	font-size: 80%;
-	width: 10em;
+  font-size: 80%;
+  width: 10em;
 }
 
 .mail-Detail {
-	border: 1px solid #666;
-	margin-top: 4px;
+  border: 1px solid #666;
+  margin-top: 4px;
 }
 
 .mail-DetailHeader {
-	background: #eee;
-	border-bottom: 1px solid #666;
-	padding: 6px 4px;
+  background: #eee;
+  border-bottom: 1px solid #666;
+  padding: 6px 4px;
 }
 
 .mail-DetailHeader td {
-	padding: 0;
+  padding: 0;
 }
 
 .mail-DetailInner {
-	background-color: white;
-	font-size: 80%;
+  background-color: white;
+  font-size: 80%;
 }
 
 .mail-DetailSubject {
-	padding: 2px 10px;
-	font-weight: bold;
+  padding: 2px 10px;
+  font-weight: bold;
 }
 
 .mail-DetailSender {
-	font-size: 80%;
-	padding: 2px 10px;
+  font-size: 80%;
+  padding: 2px 10px;
 }
 
 .mail-DetailRecipient {
-	font-size: 80%;
-	padding: 2px 10px;
+  font-size: 80%;
+  padding: 2px 10px;
 }
 
 .mail-DetailBody {
-	line-height: 150%;
-	padding: 20px 40px 20px 10px;
-	font-family: 'Times New Roman', Times, serif;
+  line-height: 150%;
+  padding: 20px 40px 20px 10px;
+  font-family: 'Times New Roman', Times, serif;
 }
 
 .mail-ContactPopup {
-	background: #fff;
-	border: 1px solid #666;
-	padding: 4px;
+  background: #fff;
+  border: 1px solid #666;
+  padding: 4px;
 }
 
 .mail-ContactPopupName {
-	font-size: 80%;
-	font-weight: bold;
+  font-size: 80%;
+  font-weight: bold;
 }
 
 .mail-ContactPopupEmail {
-	font-size: 80%;
-	font-style: italic;
+  font-size: 80%;
+  font-style: italic;
 }
 
 .mail-StackContent {
-	height: 100%;
-	padding: 0 0.5em;
-	border-left: 1px solid #666;
-	border-right: 1px solid #666;
+  height: 100%;
+  padding: 0 0.5em;
+  border-left: 1px solid #666;
+  border-right: 1px solid #666;
 }
 
 .mail-Contacts {
-	border-bottom: none;
+  border-bottom: none;
 }
