@@ -69,3 +69,17 @@ body {
 	width: 4em;
 	margin: 8px 4px 8px 4px;
 }
+
+.DynaTable-ErrorDialog {
+  border: 2px outset;
+  background-color: white;
+  width: 50%;
+}
+
+.DynaTable-ErrorDialog .Caption {
+  background-color: #C3D9FF;
+  padding: 3px;
+  margin: 2px;
+  font-weight: bold;
+  cursor: default;
+}

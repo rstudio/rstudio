@@ -16,14 +16,17 @@
 package com.google.gwt.sample.dynatable.client;
 
 import com.google.gwt.sample.dynatable.client.DynaTableDataProvider.RowDataAcceptor;
+import com.google.gwt.user.client.rpc.InvocationException;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -32,12 +35,40 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class DynaTableWidget extends Composite {
 
+  /**
+   * A dialog box for displaying an error.
+   */
+  private static class ErrorDialog extends DialogBox implements ClickListener {
+    private HTML body = new HTML("");
+
+    public ErrorDialog() {
+      setStylePrimaryName("DynaTable-ErrorDialog");
+      Button closeButton = new Button("Close", this);
+      VerticalPanel panel = new VerticalPanel();
+      panel.setSpacing(4);
+      panel.add(body);
+      panel.add(closeButton);
+      panel.setCellHorizontalAlignment(closeButton, VerticalPanel.ALIGN_RIGHT);
+      setWidget(panel);
+    }
+
+    public String getBody() {
+      return body.getHTML();
+    }
+
+    public void onClick(Widget sender) {
+      hide();
+    }
+
+    public void setBody(String html) {
+      body.setHTML(html);
+    }
+  }
+
   private class NavBar extends Composite implements ClickListener {
 
     public final DockPanel bar = new DockPanel();
-
     public final Button gotoFirst = new Button("&lt;&lt;", this);
-
     public final Button gotoNext = new Button("&gt;", this);
     public final Button gotoPrev = new Button("&lt;", this);
     public final HTML status = new HTML();
@@ -112,7 +143,6 @@ public class DynaTableWidget extends Composite {
       }
 
       // Synchronize the nav buttons.
-      //
       navbar.gotoNext.setEnabled(!isLastPage);
       navbar.gotoFirst.setEnabled(startRow > 0);
       navbar.gotoPrev.setEnabled(startRow > 0);
@@ -123,25 +153,46 @@ public class DynaTableWidget extends Composite {
     }
 
     public void failed(Throwable caught) {
-      String msg = "Failed to access data";
-      if (caught != null) {
-        msg += ": " + caught.getMessage();
+      setStatusText("Error");
+      if (errorDialog == null) {
+        errorDialog = new ErrorDialog();
       }
-      setStatusText(msg);
+      if (caught instanceof InvocationException) {
+        errorDialog.setText("An RPC server could not be reached");
+        errorDialog.setBody(NO_CONNECTION_MESSAGE);
+      } else {
+        errorDialog.setText("Unexcepted Error processing remote call");
+        errorDialog.setBody(caught.getMessage());
+      }
+      errorDialog.center();
     }
   }
 
+  private static final String NO_CONNECTION_MESSAGE = "<p>The DynaTable example uses a <a href=\"http://code.google.com/"
+      + "webtoolkit/documentation/com.google.gwt.doc.DeveloperGuide."
+      + "RemoteProcedureCalls.html\" target=\"_blank\">Remote Procedure Call</a> "
+      + "(RPC) to request data from the server.  In order for the RPC to "
+      + "successfully return data, the server component must be available.</p>"
+      + "<p>If you are running this demo from compiled code, the server "
+      + "component may not be available to respond to the RPC requests from "
+      + "DynaTable.  Try running DynaTable in hosted mode to see the demo "
+      + "in action.</p> "
+      + "<p>Click on the Remote Procedure Call link above for more information "
+      + "on GWT's RPC infrastructure.";
+
   private final RowDataAcceptor acceptor = new RowDataAcceptorImpl();
 
+  private final Grid grid = new Grid();
+
   private final NavBar navbar = new NavBar();
+
+  private ErrorDialog errorDialog = null;
 
   private final DockPanel outer = new DockPanel();
 
   private final DynaTableDataProvider provider;
 
   private int startRow = 0;
-
-  private final Grid grid = new Grid();
 
   public DynaTableWidget(DynaTableDataProvider provider, String[] columns,
       String[] columnStyles, int rowCount) {
