@@ -87,9 +87,13 @@ public class CastNormalizer {
       classes.add(null);
       jsonObjects.add(new JsonObject(program));
 
-      // Do java.lang.String first to reserve typeId 1 for the mashup case.
+      /*
+       * Do String first to reserve typeIds 1 and 2 for Object and String,
+       * respectively. This ensures consistent modification of String's
+       * prototype.
+       */
       computeSourceClass(program.getTypeJavaLangString());
-      assert (classes.size() == 2);
+      assert (classes.size() == 3);
 
       /*
        * Compute the list of classes than can successfully satisfy cast
@@ -219,9 +223,11 @@ public class CastNormalizer {
 
       /*
        * Weird: JavaScriptObjects MUST have a typeId, the implementation of
-       * Cast.wrapJSO depends on it.
+       * Cast.wrapJSO depends on it. Object must also have a typeId, to force
+       * String to have an id of 2.
        */
-      if (yesSet == null && !program.isJavaScriptObject(type)) {
+      if (yesSet == null && !program.isJavaScriptObject(type)
+          && (type != program.getTypeJavaLangObject())) {
         return; // won't satisfy anything
       }
 
