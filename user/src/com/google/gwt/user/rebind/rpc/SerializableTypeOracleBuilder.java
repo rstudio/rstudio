@@ -990,10 +990,6 @@ public class SerializableTypeOracleBuilder {
           isSpeculative)) {
         tic.setInstantiable(true);
         anySubtypes = true;
-
-        if (!rawTypeOk) {
-          checkForUnparameterizedType(logger, classType);
-        }
       }
 
       // Speculatively check all subtypes.
@@ -1011,7 +1007,16 @@ public class SerializableTypeOracleBuilder {
         }
       }
 
-      if (!anySubtypes && !isSpeculative) {
+      if (anySubtypes) {
+        if (!rawTypeOk) {
+          /*
+           * There is at least one instantiable type and raw types are
+           * not allowed; check if this type is an unparameterized type.
+           */
+          checkForUnparameterizedType(logger, classType);
+        }
+      } else if (!isSpeculative) {
+        // No instantiable types were found
         logger.log(
             getLogLevel(isSpeculative),
             "Type '"
