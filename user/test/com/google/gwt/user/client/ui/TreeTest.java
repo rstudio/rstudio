@@ -37,7 +37,7 @@ public class TreeTest extends GWTTestCase {
   }
 
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAttachDetachOrder(new Tree(), new Adder());
+    HasWidgetsTester.testAll(new Tree(), new Adder());
   }
 
   public void testClear() {

@@ -88,13 +88,14 @@ public class VerticalPanel extends CellPanel implements HasAlignment {
   }
 
   public boolean remove(Widget w) {
-    // Get the TR to be removed, before calling super.remove(), because
-    // super.remove() will detach the child widget's element from its parent.
+    /*
+     * Get the TR to be removed before calling super.remove() because
+     * super.remove() will detach the child widget's element from its parent.
+     */
     Element td = DOM.getParent(w.getElement());
-    Element tr = DOM.getParent(td);
     boolean removed = super.remove(w);
     if (removed) {
-      DOM.removeChild(getBody(), tr);
+      DOM.removeChild(getBody(), DOM.getParent(td));
     }
     return removed;
   }

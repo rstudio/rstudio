@@ -34,7 +34,7 @@ public class FormPanelTest extends GWTTestCase {
   }
 
   public void testAttachDetachOrder(HasWidgets container, WidgetAdder adder) {
-    HasWidgetsTester.testAttachDetachOrder(new FormPanel());
+    HasWidgetsTester.testAll(new FormPanel());
   }
 
   public void testCancelSubmit() {

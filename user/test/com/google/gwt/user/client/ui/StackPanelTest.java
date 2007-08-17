@@ -46,7 +46,7 @@ public class StackPanelTest extends GWTTestCase {
   }
 
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAttachDetachOrder(new StackPanel(), new Adder());
+    HasWidgetsTester.testAll(new StackPanel(), new Adder());
   }
 
   /**

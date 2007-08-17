@@ -35,7 +35,7 @@ public class SplitPanelTest extends GWTTestCase {
   }
 
   public void testHorizontalAttachDetachOrder() {
-    HasWidgetsTester.testAttachDetachOrder(new HorizontalSplitPanel());
+    HasWidgetsTester.testAll(new HorizontalSplitPanel());
   }
 
   /**
@@ -81,7 +81,7 @@ public class SplitPanelTest extends GWTTestCase {
   }
 
   public void testVerticalAttachDetachOrder() {
-    HasWidgetsTester.testAttachDetachOrder(new VerticalSplitPanel());
+    HasWidgetsTester.testAll(new VerticalSplitPanel());
   }
 
   /**

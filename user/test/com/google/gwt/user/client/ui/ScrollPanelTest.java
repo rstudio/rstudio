@@ -27,6 +27,6 @@ public class ScrollPanelTest extends GWTTestCase {
   }
 
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAttachDetachOrder(new ScrollPanel());
+    HasWidgetsTester.testAll(new ScrollPanel());
   }
 }

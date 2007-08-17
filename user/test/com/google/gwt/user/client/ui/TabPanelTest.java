@@ -35,7 +35,7 @@ public class TabPanelTest extends GWTTestCase {
   }
 
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAttachDetachOrder(new TabPanel(), new Adder());
+    HasWidgetsTester.testAll(new TabPanel(), new Adder());
   }
   
   public void testInsertMultipleTimes() {

@@ -27,6 +27,6 @@ public class FocusPanelTest extends GWTTestCase {
   }
 
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAttachDetachOrder(new FocusPanel());
+    HasWidgetsTester.testAll(new FocusPanel());
   }
 }

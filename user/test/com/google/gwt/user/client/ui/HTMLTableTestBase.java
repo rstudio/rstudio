@@ -59,7 +59,7 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
   public abstract HTMLTable getTable(int row, int column);
 
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAttachDetachOrder(getTable(1, 1), new Adder());
+    HasWidgetsTester.testAll(getTable(1, 1), new Adder());
   }
 
   public void testBoundsOnEmptyTable() {

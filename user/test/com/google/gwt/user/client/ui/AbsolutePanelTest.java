@@ -28,7 +28,7 @@ public class AbsolutePanelTest extends GWTTestCase {
   }
 
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAttachDetachOrder(new AbsolutePanel());
+    HasWidgetsTester.testAll(new AbsolutePanel());
   }
 
   public void testPositioning() {

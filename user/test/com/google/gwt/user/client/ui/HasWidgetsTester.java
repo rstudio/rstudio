@@ -59,15 +59,53 @@ public abstract class HasWidgetsTester {
       // of the body element.
       Assert.assertTrue(isAttached());
       Assert.assertTrue(DOM.isOrHasChild(RootPanel.getBodyElement(),
-        getElement()));
+          getElement()));
     }
 
     protected void onUnload() {
       // During onUnload, everything must *still* be attached.
       Assert.assertTrue(isAttached());
       Assert.assertTrue(DOM.isOrHasChild(RootPanel.getBodyElement(),
-        getElement()));
+          getElement()));
     }
+  }
+
+  /**
+   * Runs all tests for {@link HasWidgets}. It is recommended that tests call
+   * this method or {@link #testAll(HasWidgets, WidgetAdder} so that future
+   * tests are automatically included.
+   * 
+   * @param container
+   */
+  static void testAll(HasWidgets container) {
+    testAll(container, new DefaultWidgetAdder());
+  }
+
+  /**
+   * Runs all tests for {@link HasWidgets}. It is recommended that tests call
+   * this method or {@link #testAll(HasWidgets, WidgetAdder)} so that future
+   * tests are automatically included.
+   * 
+   * @param container
+   * @param adder
+   */
+  static void testAll(HasWidgets container, WidgetAdder adder) {
+    testAttachDetachOrder(container, adder);
+    testRemovalOfNonExistantChild(container);
+  }
+
+  /**
+   * Tests attach and detach order, assuming that the container's
+   * {@link HasWidgets#add(Widget)} method does not throw
+   * {@link UnsupportedOperationException}.
+   * 
+   * @param test
+   * @param container
+   * @see #testAttachDetachOrder(TestCase, HasWidgets,
+   *      com.google.gwt.user.client.ui.HasWidgetsTester.WidgetAdder)
+   */
+  static void testAttachDetachOrder(HasWidgets container) {
+    testAttachDetachOrder(container, new DefaultWidgetAdder());
   }
 
   /**
@@ -89,21 +127,18 @@ public abstract class HasWidgetsTester {
 
     // After removal, the widget should be detached.
     Assert.assertFalse(widget.isAttached());
-    Assert.assertFalse(DOM.isOrHasChild(RootPanel.getBodyElement(), widget
-      .getElement()));
+    Assert.assertFalse(DOM.isOrHasChild(RootPanel.getBodyElement(),
+        widget.getElement()));
   }
 
   /**
-   * Tests attach and detach order, assuming that the container's
-   * {@link HasWidgets#add(Widget)} method does not throw
-   * {@link UnsupportedOperationException}.
+   * Tests to ensure that {@link HasWidgets#remove(Widget)} is resilient to
+   * being called with a widget that is not present as a child in the container.
    * 
-   * @param test
    * @param container
-   * @see #testAttachDetachOrder(TestCase, HasWidgets,
-   *      com.google.gwt.user.client.ui.HasWidgetsTester.WidgetAdder)
    */
-  static void testAttachDetachOrder(HasWidgets container) {
-    testAttachDetachOrder(container, new DefaultWidgetAdder());
+  static void testRemovalOfNonExistantChild(HasWidgets container) {
+    TestWidget widget = new TestWidget();
+    container.remove(widget);
   }
 }

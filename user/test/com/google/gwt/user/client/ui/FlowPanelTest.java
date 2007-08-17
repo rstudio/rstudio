@@ -27,6 +27,6 @@ public class FlowPanelTest extends GWTTestCase {
   }
 
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAttachDetachOrder(new FlowPanel());
+    HasWidgetsTester.testAll(new FlowPanel());
   }
 }

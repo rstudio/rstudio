@@ -29,7 +29,7 @@ public class HorizontalPanelTest extends GWTTestCase {
   }
 
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAttachDetachOrder(new HorizontalPanel());
+    HasWidgetsTester.testAll(new HorizontalPanel());
   }
 
   public void testInsertMultipleTimes() {

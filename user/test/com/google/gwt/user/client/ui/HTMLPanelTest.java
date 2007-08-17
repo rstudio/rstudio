@@ -34,6 +34,6 @@ public class HTMLPanelTest extends GWTTestCase {
 
   public void testAttachDetachOrder() {
     HTMLPanel p = new HTMLPanel("<div id='w00t'></div>");
-    HasWidgetsTester.testAttachDetachOrder(p, new Adder());
+    HasWidgetsTester.testAll(p, new Adder());
   }
 }
