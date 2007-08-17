@@ -66,7 +66,7 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
 
   public String getHTML(String url, int left, int top, int width, int height) {
     String clipperStyle = "overflow: hidden; width: " + width + "px; height: "
-        + height + "px; padding: 0px";
+        + height + "px; padding: 0px; zoom: 1";
 
     String imgStyle = "filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='"
         + url
