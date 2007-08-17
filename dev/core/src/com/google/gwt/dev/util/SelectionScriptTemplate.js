@@ -345,6 +345,8 @@ function __MODULE_FUNC__() {
     if (!scriptInjected && $doc.body) {
       scriptInjected = true;
       var iframe = $doc.createElement('iframe');
+      // Prevents mixed mode security in IE6/7.
+      iframe.src = "javascript:''";
       iframe.id = "__MODULE_NAME__";
       iframe.style.cssText = "position:absolute;width:0;height:0;border:none";
       // Due to an IE6/7 refresh quirk, this must be an appendChild.
