@@ -31,15 +31,19 @@ public class RichTextAreaImplMozilla extends RichTextAreaImplStandard {
       // designMode, so let's avoid doing it more than once.
       iframe.onload = null;
 
-      // Yet another timeout -- old versions of Gecko don't like enabling
-      // design mode immediately on load.
-      $wnd.setTimeout(function() {
-        // Turn on design mode.
-        iframe.contentWindow.document.designMode = 'On';
+      // Send notification that the iframe has finished loading.
+      _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitialized()();
 
-        // Send notification that the iframe has reached design mode.
-        _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitialized()();
-      }, 1);
+      // Don't set designMode until the RTA actually gets focused. This is
+      // necessary because editing won't work on Mozilla if the iframe is
+      // *hidden, but attached*. Waiting for focus gets around this issue.
+      //
+      // Note: This onfocus will not conflict with the addEventListener('focus',
+      // ...) // in RichTextAreaImplStandard.
+      iframe.contentWindow.onfocus = function() {
+        iframe.contentWindow.onfocus = null;
+        iframe.contentWindow.document.designMode = 'On';
+      };
     };
   }-*/;
 
