@@ -174,8 +174,28 @@ class ImageBundleBuilder {
         throw new UnableToCompleteException();
       }
 
+      BufferedImage image;
       // Load the image
-      BufferedImage image = ImageIO.read(imageUrl);
+      try {
+        image = ImageIO.read(imageUrl);
+      } catch (IllegalArgumentException iex) {
+        if (imageName.toLowerCase().endsWith("png") &&
+            iex.getMessage() != null &&
+            iex.getStackTrace()[0].getClassName().equals("javax.imageio.ImageTypeSpecifier$Indexed")) {
+          logger.log(TreeLogger.ERROR,
+              "Unable to read image. The image may not be in valid PNG format. "
+                  + "This problem may also be due to a bug in versions of the "
+                  + "JRE prior to 1.6. See "
+                  + "http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=5098176 "
+                  + "for more information. If this bug is the cause of the "
+                  + "error, try resaving the image using a different image "
+                  + "program, or upgrade to a newer JRE.", null);
+          throw new UnableToCompleteException();
+        } else {
+          throw iex;
+        }
+      }
+
       if (image == null) {
         logger.log(TreeLogger.ERROR, "Unrecognized image file format", null);
         throw new UnableToCompleteException();
