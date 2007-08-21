@@ -394,9 +394,9 @@ public abstract class AbstractCompiler {
         CompilerOptions.IGNORE);
     settings.put(CompilerOptions.OPTION_LocalVariableAttribute,
         CompilerOptions.GENERATE);
-    settings.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_1_4);
+    settings.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_1_5);
     settings.put(CompilerOptions.OPTION_TargetPlatform,
-        CompilerOptions.VERSION_1_4);
+        CompilerOptions.VERSION_1_5);
 
     // This is needed by TypeOracleBuilder to parse metadata.
     settings.put(CompilerOptions.OPTION_DocCommentSupport,

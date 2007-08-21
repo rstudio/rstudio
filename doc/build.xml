@@ -250,7 +250,7 @@
 				<java classpathref="DOC_PATH" classname="com.google.doctool.custom.GWTJavaDoclet" fork="yes" failonerror="true">
 					<arg value="-quiet" />
 					<arg value="-source" />
-					<arg value="1.4" />
+					<arg value="1.5" />
 					<arg value="-encoding"/>
 					<arg value="UTF-8"/>
 					<arg value="-d" />
