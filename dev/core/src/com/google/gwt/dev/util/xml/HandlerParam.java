@@ -104,13 +104,9 @@ public final class HandlerParam {
       caught = e;
     }
 
-    // IllegalStateException has no (String, Throwable) constructor in 1.4,
-    // which forces us to use this incantation. See the top of
-    // {@link java.lang.Throwable} for details.
-    //
-    throw (IllegalStateException) new IllegalStateException(
+    throw new IllegalStateException(
         "Unable to get attribute default value from meta field '"
-            + metaField.getName() + "'").initCause(caught);
+            + metaField.getName() + "'", caught);
   }
 
   public String getNormalizedName() {

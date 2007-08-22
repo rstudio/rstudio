@@ -227,12 +227,6 @@ public abstract class AbstractCompiler {
           msg = error.toString();
           msg = msg.substring(msg.indexOf(' '));
 
-          if (error.getID() >= IProblem.InvalidUsageOfTypeParameters
-              && error.getID() <= IProblem.InvalidUsageOfAnnotationDeclarations) {
-            // this error involves 5.0 compliance, use a custom message
-            msg = "GWT does not yet support the Java 5.0 language enhancements; only 1.4 compatible source may be used";
-          }
-
           // Append 'Line #: msg' to the error message.
           //
           StringBuffer msgBuf = new StringBuffer();
