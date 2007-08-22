@@ -254,7 +254,7 @@ public class Booklet {
   }
 
   private void emitJRELink(ClassDoc enclosing, Doc doc) {
-    String jreLink = "http://java.sun.com/j2se/1.4.2/docs/api/";
+    String jreLink = "http://java.sun.com/j2se/1.5.0/docs/api/";
     if (doc instanceof ClassDoc) {
       ClassDoc classDoc = (ClassDoc) doc;
       String pkg = classDoc.containingPackage().name();

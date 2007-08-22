@@ -598,7 +598,7 @@ public class DocTool {
 
     // For now, harded-coded, but could be passed through
     args.add("-source");
-    args.add("1.4");
+    args.add("1.5");
 
     // The doclet
     args.add("-doclet");
