@@ -27,7 +27,7 @@ public final class Array {
    * Construct a new array of the exact same type as a given array, specifying
    * the desired length of the new array.
    */
-  public static native Object[] clonify(Object[] a, int length) /*-{
+  public static native <T> T[] clonify(T[] a, int length) /*-{
     // Use JSNI magic to effect a castless type change.
     return @com.google.gwt.lang.Array::clonify(Lcom/google/gwt/lang/Array;I)(a, length);
   }-*/;
@@ -76,6 +76,7 @@ public final class Array {
     return array[index] = value;
   }-*/;
 
+  @SuppressWarnings("unused") // called by JSNI
   private static Array clonify(Array a, int length) {
     return new Array(length, a.typeId, a.queryId, a.typeName);
   }
