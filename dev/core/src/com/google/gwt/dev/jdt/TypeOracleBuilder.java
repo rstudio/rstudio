@@ -55,10 +55,12 @@ import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
 import org.eclipse.jdt.internal.compiler.lookup.LocalTypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
+import org.eclipse.jdt.internal.compiler.lookup.TypeVariableBinding;
 
 import java.io.BufferedReader;
 import java.io.CharArrayReader;
@@ -810,6 +812,17 @@ public class TypeOracleBuilder {
       }
     }
 
+    // Check for parameterized.
+    if (binding instanceof ParameterizedTypeBinding) {
+      ParameterizedTypeBinding ptBinding = (ParameterizedTypeBinding) binding;
+      return resolveType(logger, ptBinding.erasure());
+    }
+    
+    if (binding instanceof TypeVariableBinding) {
+      TypeVariableBinding tvBinding = (TypeVariableBinding) binding;
+      return resolveType(logger, tvBinding.erasure());
+    }
+    
     // Log other cases we know about that don't make sense.
     //
     if (binding instanceof BinaryTypeBinding) {
