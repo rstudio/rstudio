@@ -24,6 +24,10 @@ import com.google.gwt.dev.jjs.ast.JType;
 import org.eclipse.jdt.internal.compiler.lookup.ArrayBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BaseTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
+import org.eclipse.jdt.internal.compiler.lookup.ParameterizedFieldBinding;
+import org.eclipse.jdt.internal.compiler.lookup.ParameterizedMethodBinding;
+import org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.TypeVariableBinding;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -48,6 +52,19 @@ public class TypeMap {
   }
 
   public JNode get(Binding binding) {
+    if (binding instanceof TypeVariableBinding) {
+      TypeVariableBinding tvb = (TypeVariableBinding) binding;
+      binding = tvb.erasure();
+    } else if (binding instanceof ParameterizedTypeBinding) {
+      ParameterizedTypeBinding ptb = (ParameterizedTypeBinding) binding;
+      binding = ptb.erasure();
+    } else if (binding instanceof ParameterizedMethodBinding) {
+      ParameterizedMethodBinding pmb = (ParameterizedMethodBinding) binding;
+      binding = pmb.original();
+    } else if (binding instanceof ParameterizedFieldBinding) {
+      ParameterizedFieldBinding pfb = (ParameterizedFieldBinding) binding;
+      binding = pfb.original();
+    }
     JNode result = internalGet(binding);
     if (result == null) {
       InternalCompilerException ice = new InternalCompilerException(

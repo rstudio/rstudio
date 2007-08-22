@@ -154,6 +154,7 @@ import org.eclipse.jdt.internal.compiler.lookup.LocalVariableBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodScope;
 import org.eclipse.jdt.internal.compiler.lookup.NestedTypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
@@ -563,7 +564,7 @@ public class GenerateJavaAST {
 
     JExpression processExpression(AllocationExpression x) {
       SourceInfo info = makeSourceInfo(x);
-      SourceTypeBinding typeBinding = (SourceTypeBinding) x.resolvedType;
+      SourceTypeBinding typeBinding = erasure(x.resolvedType);
       if (typeBinding.constantPoolName() == null) {
         /*
          * Weird case: if JDT determines that this local class is totally
@@ -620,7 +621,7 @@ public class GenerateJavaAST {
       // Synthetic args for inner classes
       ReferenceBinding targetBinding = b.declaringClass;
       if (targetBinding.isNestedType() && !targetBinding.isStatic()) {
-        NestedTypeBinding nestedBinding = (NestedTypeBinding) targetBinding;
+        NestedTypeBinding nestedBinding = (NestedTypeBinding) erasure(targetBinding);
         // Synthetic this args for inner classes
         if (nestedBinding.enclosingInstances != null) {
           for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
@@ -901,7 +902,8 @@ public class GenerateJavaAST {
       SourceInfo info = makeSourceInfo(x);
       JType type = (JType) typeMap.get(x.resolvedType);
       JMethod method = (JMethod) typeMap.get(x.binding);
-      assert (type == method.getType());
+      // TODO
+      //assert (type == method.getType());
 
       JExpression qualifier;
       if (x.receiver instanceof ThisReference) {
@@ -1809,6 +1811,13 @@ public class GenerateJavaAST {
         return null;
       }
       return createVariableRef(info, variable);
+    }
+
+    private SourceTypeBinding erasure(TypeBinding typeBinding) {
+      if (typeBinding instanceof ParameterizedTypeBinding) {
+        typeBinding = ((ParameterizedTypeBinding)typeBinding).erasure();
+      }
+      return (SourceTypeBinding)typeBinding;
     }
 
     /**
