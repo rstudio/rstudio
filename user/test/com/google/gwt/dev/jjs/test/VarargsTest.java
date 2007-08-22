@@ -1,0 +1,53 @@
+/*
+ * Copyright 2007 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package com.google.gwt.dev.jjs.test;
+
+import com.google.gwt.junit.client.GWTTestCase;
+
+import java.util.Arrays;
+
+/**
+ * Tests the new JDK 1.5 varargs functionality.
+ *
+ */
+public class VarargsTest extends GWTTestCase {
+
+  public String getModuleName() {
+    return "com.google.gwt.dev.jjs.CompilerSuite";
+  }
+
+  public void testVararg() {
+    String[] strings = new String[] { "1", "2", "3" };
+    String[] results = vararg( "1", "2", "3" );
+    assertTrue(Arrays.equals(results, strings));
+  }
+
+  public void testVarargBoxing() {
+    int[] ints = new int[] { 1, 2, 3 };
+    int[] results = varargUnboxed( 1, 2, 3 );
+    assertTrue(Arrays.equals(results, ints));
+    int[] results2 = varargUnboxed( new Integer(1), 2, new Integer(3) );
+    assertTrue(Arrays.equals(ints, results2));
+  }
+
+  private String[] vararg(String... args) {
+    return args;
+  }
+
+  private int[] varargUnboxed(int... args) {
+    return args;
+  }
+}
