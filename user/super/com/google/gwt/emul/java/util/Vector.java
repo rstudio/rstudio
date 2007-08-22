@@ -16,15 +16,15 @@
 package java.util;
 
 /**
- * To keep performance characteristics in line with Java community expectations, 
+ * To keep performance characteristics in line with Java community expectations,
  * <code>Vector</code> is a wrapper around <code>ArrayList</code>.
  * 
  * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/Vector.html
  * 
  * @param <E> element type.
  */
-public class Vector<E> extends AbstractList<E> implements List<E>, RandomAccess,
-    Cloneable {
+public class Vector<E> extends AbstractList<E> implements List<E>,
+    RandomAccess, Cloneable {
 
   private transient ArrayList<E> arrayList;
 
@@ -37,14 +37,14 @@ public class Vector<E> extends AbstractList<E> implements List<E>, RandomAccess,
     addAll(c);
   }
 
- /**
-   * There is no speed advantage to pre-allocating array sizes in JavaScript,
-   * so the <code>intialCapacity</code> parameter is ignored. This constructor is
-   * only present for compatibility with JDK 1.4's API.
+  /**
+   * There is no speed advantage to pre-allocating array sizes in JavaScript, so
+   * the <code>intialCapacity</code> parameter is ignored. This constructor is
+   * only present for compatibility with JDK 1.5's API.
    */
   public Vector(int initialCapacity) {
     arrayList = new ArrayList<E>(initialCapacity);
-  } 
+  }
 
   public boolean add(E o) {
     return arrayList.add(o);
@@ -89,8 +89,8 @@ public class Vector<E> extends AbstractList<E> implements List<E>, RandomAccess,
     while (++i < n) {
       objs[i] = get(i);
     }
-  } 
-  
+  }
+
   public E elementAt(int index) {
     return get(index);
   }
@@ -99,9 +99,12 @@ public class Vector<E> extends AbstractList<E> implements List<E>, RandomAccess,
     // TODO(jat): implement
     return null;
   }
-  
-  public void ensureCapacity(int minCapacity) {
-    // TODO(jat): implement
+
+  /**
+   * There is no speed advantage to pre-allocating array sizes in JavaScript.
+   * This method is only present for compatibility with the JRE.
+   */
+  public void ensureCapacity(int ignoredCapacity) {
   }
 
   public E firstElement() {
@@ -132,7 +135,7 @@ public class Vector<E> extends AbstractList<E> implements List<E>, RandomAccess,
     return arrayList.iterator();
   }
 
-  public Object lastElement() {
+  public E lastElement() {
     if (isEmpty()) {
       throw new IndexOutOfBoundsException("last");
     } else {
@@ -202,7 +205,7 @@ public class Vector<E> extends AbstractList<E> implements List<E>, RandomAccess,
   }
 
   /**
-   * Currenty ignored.
+   * Currently ignored.
    */
   public void trimToSize() {
     arrayList.trimToSize();

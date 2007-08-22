@@ -24,7 +24,7 @@ package com.google.gwt.i18n.client;
  * generated subclass that is implemented using message templates from a
  * property file selected based on locale. Message templates are based on a
  * subset of the format used by <a
- * href="http://java.sun.com/j2se/1.4.2/docs/api/java/text/MessageFormat.html"><code>MessageFormat</code></a>.
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/text/MessageFormat.html"><code>MessageFormat</code></a>.
  * 
  * <p>
  * Locale is specified at run time using a meta tag or query string as described

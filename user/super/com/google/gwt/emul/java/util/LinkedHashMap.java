@@ -45,7 +45,7 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V>,
   public LinkedHashMap(int ignored, float alsoIgnored) {
     super(ignored, alsoIgnored);
     // TODO(jat): implement
-    throw new UnsupportedOperationException("LinkedHashMap not supported");  
+    throw new UnsupportedOperationException("LinkedHashMap not supported");
   }
 
   /**
@@ -60,7 +60,7 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V>,
   public void clear() {
     // TODO(jat): implement
   }
-  
+
   @Override
   public Object clone() {
     // TODO(jat): implement
@@ -72,16 +72,16 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V>,
     // TODO(jat): implement
     return null;
   }
-  
+
   @Override
   public V remove(Object key) {
     // TODO(jat): implement
     return null;
   }
 
-  protected boolean removeEldestEntry(Map.Entry<K,V> eldest) {
+  protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
     // TODO(jat): implement
     return false;
   }
-  
+
 }

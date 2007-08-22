@@ -17,7 +17,7 @@ package java.util;
 
 /**
  * Implements a set using a TreeMap.
- *
+ * 
  * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/TreeSet.html
  * 
  * @param <E> element type.
@@ -33,17 +33,17 @@ public class TreeSet<E> extends AbstractSet<E> implements SortedSet<E> {
     // TODO(jat): implement
     throw new UnsupportedOperationException("TreeSet not implemented");
   }
-  
+
   public TreeSet(Comparator<? super E> c) {
     // TODO(jat): implement
     throw new UnsupportedOperationException("TreeSet not implemented");
   }
-  
+
   public TreeSet(SortedSet<E> s) {
     // TODO(jat): implement
     throw new UnsupportedOperationException("TreeSet not implemented");
   }
-  
+
   public Comparator<? super E> comparator() {
     // TODO(jat): implement
     return null;

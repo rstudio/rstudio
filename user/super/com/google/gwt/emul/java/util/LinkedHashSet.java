@@ -18,7 +18,7 @@ package java.util;
 /**
  * Hash table and linked-list implementation of the Set interface with
  * predictable iteration order.
- *
+ * 
  * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/LinkedHashSet.html
  * 
  * @param <E> element type.
@@ -26,14 +26,14 @@ package java.util;
 public class LinkedHashSet<E> extends HashSet<E> implements Set<E>, Cloneable {
 
   public LinkedHashSet() {
-    super(new LinkedHashMap<E,Object>(16, .75f));
+    super(new LinkedHashMap<E, Object>(16, .75f));
   }
 
   /**
    * @param c
    */
   public LinkedHashSet(Collection<? extends E> c) {
-    super(new LinkedHashMap<E,Object>(16, .75f));
+    super(new LinkedHashMap<E, Object>(16, .75f));
     addAll(c);
   }
 
@@ -41,7 +41,7 @@ public class LinkedHashSet<E> extends HashSet<E> implements Set<E>, Cloneable {
    * @param initialCapacity
    */
   public LinkedHashSet(int initialCapacity) {
-    super(new LinkedHashMap<E,Object>(initialCapacity, .75f));
+    super(new LinkedHashMap<E, Object>(initialCapacity, .75f));
   }
 
   /**
@@ -49,7 +49,7 @@ public class LinkedHashSet<E> extends HashSet<E> implements Set<E>, Cloneable {
    * @param loadFactor
    */
   public LinkedHashSet(int initialCapacity, float loadFactor) {
-    super(new LinkedHashMap<E,Object>(initialCapacity, loadFactor));
+    super(new LinkedHashMap<E, Object>(initialCapacity, loadFactor));
   }
-  
+
 }

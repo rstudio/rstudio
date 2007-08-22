@@ -22,13 +22,16 @@ package java.util;
  */
 public class Collections {
 
-  public static final Set EMPTY_SET = new HashSet();
-  public static final Map EMPTY_MAP = new HashMap();
-  public static final List EMPTY_LIST = new ArrayList();
+  public static final Set<?> EMPTY_SET = new HashSet<Object>();
+  public static final Map<?, ?> EMPTY_MAP = new HashMap<Object, Object>();
+  public static final List<?> EMPTY_LIST = new ArrayList<Object>();
 
   public static <T> boolean addAll(Collection<? super T> c, T... a) {
-    // TODO(jat): implement
-    throw new UnsupportedOperationException("addAll not implemented");
+    boolean result = false;
+    for (T e : a) {
+      result |= c.add(e);
+    }
+    return result;
   }
 
   /**
@@ -109,70 +112,71 @@ public class Collections {
 
   /*
    * These methods are commented out because they cannot currently be
-   * implemented in GWT.  The signatures are included in case that changes.
+   * implemented in GWT. The signatures are included in case that changes.
    */
-//  public static <E> Collection<E> checkedCollection(Collection<E> c, Class<E> type) {
-//    // FUTURE: implement
-//    return null;
-//  }
-//  
-//  static <E> List<E> checkedList(List<E> list, Class<E> type) {
-//    // FUTURE: implement
-//    return null;
-//  }
-//
-//  public static <K,V> Map<K,V> checkedMap(Map<K,V> list, Class<K> keyType,
-//      Class<V> valueType) {
-//    // FUTURE: implement
-//    return null;
-//  }
-//
-//  public static <E> Set<E> checkedSet(Set<E> list, Class<E> type) {
-//    // FUTURE: implement
-//    return null;
-//  }
-//
-//  public static <K,V> SortedMap<K,V> checkedSortedMap(SortedMap<K,V> m,
-//      Class<K> keyType, Class<V> valueType) {
-//    // FUTURE: implement
-//    return null;
-//  }
-//
-//  public static <E> SortedSet<E> checkedSortedSet(SortedSet<E> list, Class<E> type) {
-//    // FUTURE: implement
-//    return null;
-//  }
-
+  // public static <E> Collection<E> checkedCollection(Collection<E> c, Class<E>
+  // type) {
+  // // FUTURE: implement
+  // return null;
+  // }
+  //  
+  // static <E> List<E> checkedList(List<E> list, Class<E> type) {
+  // // FUTURE: implement
+  // return null;
+  // }
+  //
+  // public static <K,V> Map<K,V> checkedMap(Map<K,V> list, Class<K> keyType,
+  // Class<V> valueType) {
+  // // FUTURE: implement
+  // return null;
+  // }
+  //
+  // public static <E> Set<E> checkedSet(Set<E> list, Class<E> type) {
+  // // FUTURE: implement
+  // return null;
+  // }
+  //
+  // public static <K,V> SortedMap<K,V> checkedSortedMap(SortedMap<K,V> m,
+  // Class<K> keyType, Class<V> valueType) {
+  // // FUTURE: implement
+  // return null;
+  // }
+  //
+  // public static <E> SortedSet<E> checkedSortedSet(SortedSet<E> list, Class<E>
+  // type) {
+  // // FUTURE: implement
+  // return null;
+  // }
   public static <T> void copy(List<? super T> dest, List<? extends T> src) {
     // TODO(jat): implement
     throw new UnsupportedOperationException("copy not implemented");
   }
-  
+
   public static boolean disjoint(Collection<?> c1, Collection<?> c2) {
     // TODO(jat): implement
-    throw new UnsupportedOperationException("disJoint not implemented");
- }
-  
+    throw new UnsupportedOperationException("disjoint not implemented");
+  }
+
   @SuppressWarnings("unchecked")
   public static <T> List<T> emptyList() {
-    return (List<T>)EMPTY_LIST; // suppress unchecked warning
+    return (List<T>) EMPTY_LIST; // suppress unchecked warning
   }
-  
+
   @SuppressWarnings("unchecked")
-  public static <K,V> Map<K,V> emptyMap() {
-    return (Map<K,V>)EMPTY_MAP; // suppress unchecked warning
+  public static <K, V> Map<K, V> emptyMap() {
+    return (Map<K, V>) EMPTY_MAP; // suppress unchecked warning
   }
-  
+
   @SuppressWarnings("unchecked")
   public static <T> Set<T> emptySet() {
-    return (Set<T>)EMPTY_SET; // suppress unchecked warning
+    return (Set<T>) EMPTY_SET; // suppress unchecked warning
   }
-  
+
   public static <T> Enumeration<T> enumeration(Collection<T> c) {
     // TODO(jat): implement
     throw new UnsupportedOperationException("enumeration not implemented");
   }
-  
+
   public static <T> void reverse(List<T> l) {
     int lastPos = l.size() - 1;
     for (int i = 0; i < l.size() / 2; i++) {
@@ -243,5 +247,5 @@ public class Collections {
       target.set(i, (T) x[i]); // suppress unchecked
     }
   }
-  
+
 }

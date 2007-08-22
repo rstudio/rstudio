@@ -18,7 +18,7 @@ package java.util;
 /**
  * Represents a date and time.
  */
-public class Date implements Cloneable, Comparable {
+public class Date implements Cloneable, Comparable<Date> {
   /**
    * Used only by toString().
    */
@@ -102,10 +102,6 @@ public class Date implements Cloneable, Comparable {
     } else {
       return 0;
     }
-  }
-
-  public int compareTo(Object other) {
-    return compareTo((Date) other);
   }
 
   /**

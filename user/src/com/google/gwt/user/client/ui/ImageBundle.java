@@ -36,7 +36,7 @@ package com.google.gwt.user.client.ui;
  * image name contains '/' characters, it is assumed to be the name of a
  * resource on the classpath, formatted as would be expected by
  * <code>
- *  <a href="http://java.sun.com/j2se/1.4.2/docs/api/java/lang/ClassLoader.html#getResource(java.lang.String)">ClassLoader.getResource(String)</a>.
+ *  <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/ClassLoader.html#getResource(java.lang.String)">ClassLoader.getResource(String)</a>.
  * </code>
  * Otherwise, the image must be located in the same package as the user-defined
  * image bundle.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@ package java.util;
 
 /**
  * See <a
- * href="http://java.sun.com/j2se/1.4.2/docs/api/java/util/EmptyStackException.html">the
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/EmptyStackException.html">the
  * official Java API doc</a> for details.
  */
 public class EmptyStackException extends RuntimeException {

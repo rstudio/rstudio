@@ -23,17 +23,17 @@ package java.util;
  * @param <K> key type.
  * @param <V> value type.
  */
-public interface SortedMap<K,V> extends Map<K,V> {
+public interface SortedMap<K, V> extends Map<K, V> {
 
   public Comparator<? super K> comparator();
-  
+
   public K firstKey();
-  
-  public SortedMap<K,V> headMap(K toKey);
-  
+
+  public SortedMap<K, V> headMap(K toKey);
+
   public K lastKey();
-  
-  public SortedMap<K,V> subMap(K fromKey, K toKey);
-  
-  public SortedMap<K,V> tailMap(K fromKey);
+
+  public SortedMap<K, V> subMap(K fromKey, K toKey);
+
+  public SortedMap<K, V> tailMap(K fromKey);
 }

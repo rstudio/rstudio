@@ -17,7 +17,7 @@ package java.util;
 
 /**
  * Skeletal implementation of the List interface.
- *
+ * 
  * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractSequentialList.html
  * 
  * @param <E> element type.
@@ -43,7 +43,7 @@ public abstract class AbstractSequentialList<E> extends AbstractList<E> {
     }
     return modified;
   }
-  
+
   @Override
   public E get(int index) {
     ListIterator<E> iter = listIterator(index);
@@ -65,7 +65,7 @@ public abstract class AbstractSequentialList<E> extends AbstractList<E> {
     E old;
     try {
       old = iter.next();
-    } catch(NoSuchElementException e) {
+    } catch (NoSuchElementException e) {
       throw new IndexOutOfBoundsException("Can't remove element " + index);
     }
     iter.remove();
@@ -77,12 +77,12 @@ public abstract class AbstractSequentialList<E> extends AbstractList<E> {
     try {
       E old = iter.next();
       iter.set(element);
-      return old;      
+      return old;
     } catch (NoSuchElementException e) {
       throw new IndexOutOfBoundsException("Can't set element " + index);
     }
   }
-  
+
   @Override
   public abstract int size();
 

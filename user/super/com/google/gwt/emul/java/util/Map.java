@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,21 +21,21 @@ package java.util;
  * @param <K> key type.
  * @param <V> value type.
  */
-public interface Map<K,V> {
+public interface Map<K, V> {
 
   /**
    * Represents an individual map entry.
    */
-  public interface Entry<EK,EV> {
+  public interface Entry<K, V> {
     boolean equals(Object o);
 
-    EK getKey();
+    K getKey();
 
-    EV getValue();
+    V getValue();
 
     int hashCode();
 
-    EV setValue(EV value);
+    V setValue(V value);
   }
 
   void clear();
@@ -44,7 +44,7 @@ public interface Map<K,V> {
 
   boolean containsValue(Object value);
 
-  Set<Entry<K,V>> entrySet();
+  Set<Entry<K, V>> entrySet();
 
   boolean equals(Object o);
 
@@ -58,7 +58,7 @@ public interface Map<K,V> {
 
   V put(K key, V value);
 
-  <OK extends K,OV extends V> void putAll(Map<OK,OV> t);
+  void putAll(Map<? extends K, ? extends V> t);
 
   V remove(Object key);
 

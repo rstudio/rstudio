@@ -345,12 +345,12 @@ public class Arrays {
     return b.toString();
   }
   
-  static void unsafeSort(Object[] x, Comparator s) {
+  static void unsafeSort(Object[] x, Comparator<?> s) {
     nativeSort(x, x.length, s != null ? s : Comparators.natural());  
   }
 
   private static native void nativeSort(Object[] array, int size,
-      Comparator compare) /*-{ 
+      Comparator<?> compare) /*-{ 
     if (size == 0) {
       return;
     }

@@ -25,7 +25,7 @@ import com.google.gwt.core.client.JavaScriptObject;
  * @param <K> key type
  * @param <V> value type
  */
-public class HashMap<K,V> extends AbstractMap<K,V> {
+public class HashMap<K, V> extends AbstractMap<K, V> {
   /*
    * Implementation notes:
    * 
@@ -43,13 +43,13 @@ public class HashMap<K,V> extends AbstractMap<K,V> {
   /**
    * Implementation of <code>HashMap</code> entry.
    */
-  private static class EntryImpl<K,V> implements Map.Entry<K,V> {
+  private static class EntryImpl<K, V> implements Map.Entry<K, V> {
 
     /**
      * Helper method for constructing Map.Entry objects from JSNI code.
      */
-    static <K,V> Map.Entry<K,V> create(K key, V value) {
-      return new EntryImpl<K,V>(key, value);
+    static <K, V> Map.Entry<K, V> create(K key, V value) {
+      return new EntryImpl<K, V>(key, value);
     }
 
     private K key;
@@ -66,7 +66,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> {
 
     public boolean equals(Object other) {
       if (other instanceof Map.Entry) {
-        Map.Entry entry = (Map.Entry) other;
+        Map.Entry<?, ?> entry = (Map.Entry<?, ?>) other;
         if (equalsWithNullCheck(key, entry.getKey())
             && equalsWithNullCheck(value, entry.getValue())) {
           return true;
@@ -109,7 +109,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> {
     }
   }
 
-  private final class EntrySet extends AbstractSet<Entry<K,V>> {
+  private final class EntrySet extends AbstractSet<Entry<K, V>> {
 
     public void clear() {
       HashMap.this.clear();
@@ -117,7 +117,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> {
 
     public boolean contains(Object o) {
       if (o instanceof Map.Entry) {
-        Map.Entry entry = (Map.Entry) o;
+        Map.Entry<?, ?> entry = (Map.Entry<?, ?>) o;
         Object key = entry.getKey();
         if (HashMap.this.containsKey(key)) {
           Object value = HashMap.this.get(key);
@@ -127,13 +127,13 @@ public class HashMap<K,V> extends AbstractMap<K,V> {
       return false;
     }
 
-    public Iterator<Entry<K,V>> iterator() {
+    public Iterator<Entry<K, V>> iterator() {
       return new EntrySetIterator();
     }
 
     public boolean remove(Object entry) {
       if (contains(entry)) {
-        Object key = ((Map.Entry) entry).getKey();
+        Object key = ((Map.Entry<?, ?>) entry).getKey();
         HashMap.this.remove(key);
         return true;
       }
@@ -148,17 +148,17 @@ public class HashMap<K,V> extends AbstractMap<K,V> {
   /**
    * Iterator for <code>EntrySetImpl</code>.
    */
-  private final class EntrySetIterator implements Iterator<Entry<K,V>> {
-    private final Iterator<Map.Entry<K,V>> iter;
-    private Map.Entry<K,V> last = null;
+  private final class EntrySetIterator implements Iterator<Entry<K, V>> {
+    private final Iterator<Map.Entry<K, V>> iter;
+    private Map.Entry<K, V> last = null;
 
     /**
      * Constructor for <code>EntrySetIterator</code>.
      */
     public EntrySetIterator() {
-      List<Map.Entry<K,V>> list = new ArrayList<Map.Entry<K,V>>();
+      List<Map.Entry<K, V>> list = new ArrayList<Map.Entry<K, V>>();
       if (nullSlot != UNDEFINED) {
-        EntryImpl<K, V> entryImpl = new EntryImpl<K,V>(null, nullSlot);
+        EntryImpl<K, V> entryImpl = new EntryImpl<K, V>(null, nullSlot);
         list.add(entryImpl);
       }
       addAllStringEntries(stringMap, list);
@@ -170,7 +170,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> {
       return iter.hasNext();
     }
 
-    public Map.Entry<K,V> next() {
+    public Map.Entry<K, V> next() {
       return last = iter.next();
     }
 
@@ -192,7 +192,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> {
   private static final Object UNDEFINED = createUndefinedValue();
 
   private static native void addAllHashEntries(JavaScriptObject hashCodeMap,
-      Collection dest) /*-{
+      Collection<?> dest) /*-{
     for (var hashCode in hashCodeMap) {
       // sanity check that it's really an integer
       if (hashCode == parseInt(hashCode)) {
@@ -205,7 +205,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> {
   }-*/;
   
   private static native void addAllStringEntries(JavaScriptObject stringMap,
-      Collection dest) /*-{
+      Collection<?> dest) /*-{
     for (var key in stringMap) {
       // only keys that start with a colon ':' count
       if (key.charCodeAt(0) == 58) {
@@ -398,7 +398,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> {
    * This is the slot that holds the value associated with the "null" key.
    * 
    * TODO(jat): reconsider this implementation -- this can hold values that
-   * aren't of type V, such as UNDEFINED (which is an Object).  We should
+   * aren't of type V, such as UNDEFINED (which is an Object). We should
    * reimplement this in a more typesafe manner.
    */
   private transient V nullSlot;
@@ -430,7 +430,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> {
     }
   }
 
-  public HashMap(Map<? extends K,? extends V> toBeCopied) {
+  public HashMap(Map<? extends K, ? extends V> toBeCopied) {
     this.putAll(toBeCopied);
   }
 
@@ -439,7 +439,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> {
   }
 
   public Object clone() {
-    return new HashMap<K,V>(this);
+    return new HashMap<K, V>(this);
   }
 
   public boolean containsKey(Object key) {
@@ -463,7 +463,7 @@ public class HashMap<K,V> extends AbstractMap<K,V> {
     return false;
   }
 
-  public Set<Map.Entry<K,V>> entrySet() {
+  public Set<Map.Entry<K, V>> entrySet() {
     return new EntrySet();
   }
 
@@ -501,10 +501,10 @@ public class HashMap<K,V> extends AbstractMap<K,V> {
     }
   }
 
-  public <OK extends K,OV extends V> void putAll(Map<OK,OV> otherMap) {
-    Iterator<Map.Entry<OK,OV>> iter = otherMap.entrySet().iterator();
+  public void putAll(Map<? extends K, ? extends V> otherMap) {
+    Iterator<? extends Map.Entry<? extends K, ? extends V>> iter = otherMap.entrySet().iterator();
     while (iter.hasNext()) {
-      Map.Entry<OK,OV> entry = iter.next();
+      Map.Entry<? extends K, ? extends V> entry = iter.next();
       put(entry.getKey(), entry.getValue());
     }
   }

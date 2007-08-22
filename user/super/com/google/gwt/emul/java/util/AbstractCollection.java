@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,7 +48,7 @@ public abstract class AbstractCollection<E> implements Collection<E> {
   }
 
   public boolean contains(Object o) {
-    Iterator iter = advanceToFind(iterator(), o);
+    Iterator<E> iter = advanceToFind(iterator(), o);
     return iter == null ? false : true;
   }
 
@@ -127,7 +127,7 @@ public abstract class AbstractCollection<E> implements Collection<E> {
     StringBuffer sb = new StringBuffer();
     String comma = null;
     sb.append("[");
-    Iterator iter = iterator();
+    Iterator<E> iter = iterator();
     while (iter.hasNext()) {
       if (comma != null) {
         sb.append(comma);

@@ -19,63 +19,63 @@ package java.util;
  * Linked list implementation.
  * 
  * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/LinkedList.html
- *
+ * 
  * @param <E> element type.
  */
-public class LinkedList<E> extends AbstractSequentialList<E>
-    implements List<E>, Queue<E>, Cloneable {
+public class LinkedList<E> extends AbstractSequentialList<E> implements
+    List<E>, Queue<E>, Cloneable {
 
   public LinkedList() {
     // TODO(jat): implement
     throw new UnsupportedOperationException("LinkedList unsupported");
   }
-  
+
   public LinkedList(Collection<? extends E> c) {
     this();
     addAll(c);
   }
-  
+
   public boolean add(E o) {
     // TODO(jat): implement
     return false;
   }
-  
+
   public boolean addAll(Collection<? extends E> c) {
     // TODO(jat): implement
     return false;
   }
-  
+
   public void addFirst(E o) {
     // TODO(jat): implement
   }
-  
+
   public void addLast(E o) {
     // TODO(jat): implement
   }
-  
+
   public void clear() {
     // TODO(jat): implement
   }
-  
+
   public Object clone() {
     // TODO(jat): implement
     return null;
   }
-  
+
   public boolean contains(Object o) {
     // TODO(jat): implement
     return false;
   }
-  
+
   public E element() {
     return getFirst();
   }
-  
+
   public E getFirst() {
     // TODO(jat): implement
     return null;
   }
-  
+
   public E getLast() {
     // TODO(jat): implement
     return null;
@@ -85,22 +85,22 @@ public class LinkedList<E> extends AbstractSequentialList<E>
     // TODO(jat): implement
     return 0;
   }
-  
+
   public int lastIndexOf(Object o) {
     // TODO(jat): implement
     return 0;
   }
-  
+
   @Override
   public ListIterator<E> listIterator(int index) {
     // TODO(jat): implement
     return null;
   }
-  
+
   public boolean offer(E o) {
     return add(o);
   }
-  
+
   public E peek() {
     if (size() == 0) {
       return null;
@@ -108,7 +108,7 @@ public class LinkedList<E> extends AbstractSequentialList<E>
       return getFirst();
     }
   }
-  
+
   public E poll() {
     if (size() == 0) {
       return null;
@@ -125,12 +125,12 @@ public class LinkedList<E> extends AbstractSequentialList<E>
     // TODO(jat): implement
     return null;
   }
-  
+
   public E removeLast() {
     // TODO(jat): implement
     return null;
   }
-  
+
   @Override
   public int size() {
     // TODO(jat): implement

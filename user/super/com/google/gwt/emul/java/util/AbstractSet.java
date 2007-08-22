@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,8 +20,8 @@ package java.util;
  * 
  * @param <E> the element type.
  */
-public abstract class AbstractSet<E> extends AbstractCollection<E>
-    implements Set<E> {
+public abstract class AbstractSet<E> extends AbstractCollection<E> implements
+    Set<E> {
 
   public boolean equals(Object o) {
     if (o == this) {
@@ -32,13 +32,13 @@ public abstract class AbstractSet<E> extends AbstractCollection<E>
       return false;
     }
 
-    Set other = (Set) o;
+    Set<?> other = (Set<?>) o;
 
     if (other.size() != size()) {
       return false;
     }
 
-    for (Iterator iter = other.iterator(); iter.hasNext();) {
+    for (Iterator<?> iter = other.iterator(); iter.hasNext();) {
       Object otherItem = iter.next();
       if (!contains(otherItem)) {
         return false;
@@ -49,9 +49,9 @@ public abstract class AbstractSet<E> extends AbstractCollection<E>
 
   public int hashCode() {
     int hashCode = 0;
-    for (Iterator iter = iterator(); iter.hasNext();) {
+    for (Iterator<E> iter = iterator(); iter.hasNext();) {
       // Sets can have null members
-      Object next = iter.next();
+      E next = iter.next();
       if (next != null) {
         hashCode += next.hashCode();
       }
@@ -64,8 +64,8 @@ public abstract class AbstractSet<E> extends AbstractCollection<E>
     if (size < c.size()) {
       // If the member of 'this' is in 'c', remove it from 'this'.
       //
-      for (Iterator iter = iterator(); iter.hasNext();) {
-        Object o = iter.next();
+      for (Iterator<E> iter = iterator(); iter.hasNext();) {
+        E o = iter.next();
         if (c.contains(o)) {
           iter.remove();
         }
@@ -73,7 +73,7 @@ public abstract class AbstractSet<E> extends AbstractCollection<E>
     } else {
       // Remove every member of 'c' from 'this'.
       //
-      for (Iterator iter = c.iterator(); iter.hasNext();) {
+      for (Iterator<?> iter = c.iterator(); iter.hasNext();) {
         Object o = iter.next();
         remove(o);
       }

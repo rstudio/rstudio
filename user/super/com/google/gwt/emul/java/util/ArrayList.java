@@ -19,25 +19,25 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.lang.Array;
 
 /**
- * See Sun's JDK 1.4 documentation for documentation.
+ * See Sun's JDK 1.5 documentation for documentation.
  * 
  * <p>
- * This implementation differs from JDK 1.4 <code>ArrayList</code> in terms of
+ * This implementation differs from JDK 1.5 <code>ArrayList</code> in terms of
  * capacity management. There is no speed advantage to pre-allocating array
  * sizes in JavaScript, so this implementation does not include any of the
  * capacity and "growth increment" concepts in the standard ArrayList class.
- * Although <code>ArrayList(int)</code> accepts a value for the intitial
+ * Although <code>ArrayList(int)</code> accepts a value for the initial
  * capacity of the array, this constructor simply delegates to
  * <code>ArrayList()</code>. It is only present for compatibility with JDK
- * 1.4's API.
+ * 1.5's API.
  * </p>
  * 
  * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/ArrayList.html
  * 
  * @param <E> the element type.
  */
-public class ArrayList<E> extends AbstractList<E> implements List<E>, Cloneable,
-    RandomAccess {
+public class ArrayList<E> extends AbstractList<E> implements List<E>,
+    Cloneable, RandomAccess {
 
   private static native void addImpl(JavaScriptObject array, int index,
       Object o) /*-{
@@ -82,21 +82,18 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, Cloneable,
   public ArrayList() {
   }
 
-  public ArrayList(Collection c) {
+  public ArrayList(Collection<? extends E> c) {
     addAll(c);
   }
 
   /**
-   * There is no speed advantage to pre-allocating array sizes in JavaScript, so
-   * the <code>intialCapacity</code> parameter is ignored. This constructor is
-   * only present for compatibility with JDK 1.4's API.
+   * There is no speed advantage to pre-allocating array sizes in JavaScript.
+   * This constructor is only present for compatibility with the JRE.
    */
-  public ArrayList(int initialCapacity) {
-    // initialCapacity is ignored in JS implementation; this constructor is
-    // present for JDK 1.4 compatibility
+  public ArrayList(int ignoredInitialCapacity) {
   }
 
-  public void add(int index, Object o) {
+  public void add(int index, E o) {
     if (index < 0 || index > size) {
       indexOutOfBounds(index);
     }
@@ -104,13 +101,13 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, Cloneable,
     ++size;
   }
 
-  public boolean add(Object o) {
+  public boolean add(E o) {
     setImpl(array, size++, o);
     return true;
   }
 
-  public boolean addAll(Collection c) {
-    Iterator iter = c.iterator();
+  public boolean addAll(Collection<? extends E> c) {
+    Iterator<? extends E> iter = c.iterator();
     boolean changed = iter.hasNext();
     while (iter.hasNext()) {
       setImpl(array, size++, iter.next());
@@ -123,7 +120,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, Cloneable,
   }
 
   public Object clone() {
-    return new ArrayList(this);
+    return new ArrayList<E>(this);
   }
 
   public boolean contains(Object o) {
@@ -197,7 +194,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>, Cloneable,
   }
 
   /**
-   * Currenty ignored.
+   * Currently ignored.
    */
   public void trimToSize() {
     // TODO(jat): implement

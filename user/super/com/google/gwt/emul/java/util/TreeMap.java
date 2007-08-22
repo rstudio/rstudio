@@ -16,11 +16,11 @@
 package java.util;
 
 /**
- * Sorted map implementation, guarantees log(n) complexity for containsKey,
- * get, put, and remove.
+ * Sorted map implementation, guarantees log(n) complexity for containsKey, get,
+ * put, and remove.
  * 
  * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/TreeMap.html
- *
+ * 
  * @param <K> key type.
  * @param <V> value type.
  */
@@ -36,21 +36,21 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
     throw new UnsupportedOperationException("TreeMap not implemented");
   }
 
-  public TreeMap(Map<? extends K,? extends V> m) {
+  public TreeMap(Map<? extends K, ? extends V> m) {
     this();
     putAll(m);
   }
 
-  public TreeMap(SortedMap<? extends K,? extends V> m) {
+  public TreeMap(SortedMap<? extends K, ? extends V> m) {
     // TODO(jat): optimize
-    this((Map<? extends K,? extends V>) m);
+    this((Map<? extends K, ? extends V>) m);
   }
 
   @Override
   public void clear() {
     // TODO(jat): implement
   }
-  
+
   public Comparator<? super K> comparator() {
     // TODO(jat): implement
     return null;
@@ -61,7 +61,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
     // TODO(jat): implement
     return false;
   }
-  
+
   @Override
   public Set<Map.Entry<K, V>> entrySet() {
     // TODO(jat): implement
@@ -78,7 +78,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
     // TODO(jat): implement
     return null;
   }
-  
+
   public SortedMap<K, V> headMap(K toKey) {
     // TODO(jat): implement
     return null;
@@ -93,17 +93,17 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
     // TODO(jat): implement
     return null;
   }
-  
+
   public V remove(Object key) {
     // TODO(jat): implement
     return null;
   }
-  
+
   public int size() {
     // TODO(jat): implement
     return 0;
   }
-  
+
   public SortedMap<K, V> subMap(K fromKey, K toKey) {
     // TODO(jat): implement
     return null;

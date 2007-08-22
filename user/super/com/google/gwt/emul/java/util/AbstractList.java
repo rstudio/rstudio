@@ -20,8 +20,8 @@ package java.util;
  * 
  * @param <E> the element type.
  */
-public abstract class AbstractList<E> extends AbstractCollection<E>
-    implements List<E> {
+public abstract class AbstractList<E> extends AbstractCollection<E> implements
+    List<E> {
 
   private class IteratorImpl implements Iterator<E> {
     /*
@@ -139,16 +139,16 @@ public abstract class AbstractList<E> extends AbstractCollection<E>
       return false;
     }
 
-    List other = (List) o;
+    List<?> other = (List<?>) o;
     if (size() != other.size()) {
       return false;
     }
 
-    Iterator iter = iterator();
-    Iterator iterOther = other.iterator();
+    Iterator<E> iter = iterator();
+    Iterator<?> iterOther = other.iterator();
 
     while (iter.hasNext()) {
-      Object elem = iter.next();
+      E elem = iter.next();
       Object elemOther = iterOther.next();
 
       if (!(elem == null ? elemOther == null : elem.equals(elemOther))) {
@@ -164,9 +164,9 @@ public abstract class AbstractList<E> extends AbstractCollection<E>
   public int hashCode() {
     int k = 1;
     final int coeff = 31;
-    Iterator iter = iterator();
+    Iterator<E> iter = iterator();
     while (iter.hasNext()) {
-      Object obj = iter.next();
+      E obj = iter.next();
       k = coeff * k + (obj == null ? 0 : obj.hashCode());
     }
     return k;

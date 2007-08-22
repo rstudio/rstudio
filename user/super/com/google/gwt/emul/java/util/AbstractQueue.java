@@ -17,11 +17,11 @@ package java.util;
 
 /**
  * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractQueue.html
- *
+ * 
  * @param <E> element type.
  */
-public abstract class AbstractQueue<E> extends AbstractCollection<E>
-    implements Queue<E> {
+public abstract class AbstractQueue<E> extends AbstractCollection<E> implements
+    Queue<E> {
 
   // Should not be instantiated directly.
   protected AbstractQueue() {
@@ -44,7 +44,7 @@ public abstract class AbstractQueue<E> extends AbstractCollection<E>
     }
     return modified;
   }
-  
+
   public void clear() {
     while (poll() != null) {
       // empty loop
@@ -72,5 +72,5 @@ public abstract class AbstractQueue<E> extends AbstractCollection<E>
     }
     return e;
   }
-  
+
 }

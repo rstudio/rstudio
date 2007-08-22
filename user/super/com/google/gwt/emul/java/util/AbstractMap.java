@@ -23,10 +23,9 @@ package java.util;
  * @param <K> the key type.
  * @param <V> the value type.
  */
-public abstract class AbstractMap<K,V> implements Map<K,V> {
+public abstract class AbstractMap<K, V> implements Map<K, V> {
 
-  private static final String MSG_CANNOT_MODIFY =
-    "This map implementation does not support modification";
+  private static final String MSG_CANNOT_MODIFY = "This map implementation does not support modification";
 
   public void clear() {
     entrySet().clear();
@@ -35,10 +34,10 @@ public abstract class AbstractMap<K,V> implements Map<K,V> {
   public boolean containsKey(Object key) {
     return implFindEntry(key, false) != null;
   }
-  
+
   public boolean containsValue(Object value) {
-    for (Iterator<Entry<K,V>> iter = entrySet().iterator(); iter.hasNext();) {
-      Entry<K,V> entry = iter.next();
+    for (Iterator<Entry<K, V>> iter = entrySet().iterator(); iter.hasNext();) {
+      Entry<K, V> entry = iter.next();
       V v = entry.getValue();
       if (value == null ? v == null : value.equals(v)) {
         return true;
@@ -47,7 +46,7 @@ public abstract class AbstractMap<K,V> implements Map<K,V> {
     return false;
   }
 
-  public abstract Set<Entry<K,V>> entrySet();
+  public abstract Set<Entry<K, V>> entrySet();
 
   public boolean equals(Object obj) {
     if (obj == this) {
@@ -56,15 +55,15 @@ public abstract class AbstractMap<K,V> implements Map<K,V> {
     if (!(obj instanceof Map)) {
       return false;
     }
-    Map otherMap = ((Map) obj);
-    Set keys = keySet();
-    Set otherKeys = otherMap.keySet();
+    Map<?, ?> otherMap = (Map<?, ?>) obj;
+    Set<K> keys = keySet();
+    Set<?> otherKeys = otherMap.keySet();
     if (!keys.equals(otherKeys)) {
       return false;
     }
-    for (Iterator iter = keys.iterator(); iter.hasNext();) {
-      Object key = iter.next();
-      Object value = get(key);
+    for (Iterator<K> iter = keys.iterator(); iter.hasNext();) {
+      K key = iter.next();
+      V value = get(key);
       Object otherValue = otherMap.get(key);
       if (value == null ? otherValue != null : !value.equals(otherValue)) {
         return false;
@@ -74,14 +73,14 @@ public abstract class AbstractMap<K,V> implements Map<K,V> {
   }
 
   public V get(Object key) {
-    Map.Entry<K,V> entry = implFindEntry(key, false);
+    Map.Entry<K, V> entry = implFindEntry(key, false);
     return (entry == null ? null : entry.getValue());
   }
 
   public int hashCode() {
     int hashCode = 0;
-    for (Iterator iter = entrySet().iterator(); iter.hasNext();) {
-      Map.Entry entry = (Map.Entry) iter.next();
+    for (Iterator<Entry<K, V>> iter = entrySet().iterator(); iter.hasNext();) {
+      Entry<K, V> entry = iter.next();
       hashCode += entry.hashCode();
     }
     return hashCode;
@@ -92,21 +91,21 @@ public abstract class AbstractMap<K,V> implements Map<K,V> {
   }
 
   public Set<K> keySet() {
-    final Set<Entry<K,V>> entrySet = entrySet();
+    final Set<Entry<K, V>> entrySet = entrySet();
     return new AbstractSet<K>() {
       public boolean contains(Object key) {
         return containsKey(key);
       }
 
       public Iterator<K> iterator() {
-        final Iterator<Entry<K,V>> outerIter = entrySet.iterator();
+        final Iterator<Entry<K, V>> outerIter = entrySet.iterator();
         return new Iterator<K>() {
           public boolean hasNext() {
             return outerIter.hasNext();
           }
 
           public K next() {
-            Map.Entry<K,V> entry = outerIter.next();
+            Map.Entry<K, V> entry = outerIter.next();
             return entry.getKey();
           }
 
@@ -126,16 +125,15 @@ public abstract class AbstractMap<K,V> implements Map<K,V> {
     throw new UnsupportedOperationException(MSG_CANNOT_MODIFY);
   }
 
-  public <OK extends K,OV extends V> void putAll(Map<OK,OV> t) {
-    for (Iterator<Entry<OK,OV>> iter
-        = t.entrySet().iterator(); iter.hasNext();) {
-      Entry<OK,OV> e = iter.next();
+  public void putAll(Map<? extends K, ? extends V> t) {
+    for (Iterator<? extends Entry<? extends K, ? extends V>> iter = t.entrySet().iterator(); iter.hasNext();) {
+      Entry<? extends K, ? extends V> e = iter.next();
       put(e.getKey(), e.getValue());
     }
   }
 
   public V remove(Object key) {
-    Map.Entry<K,V> entry = implFindEntry(key, true);
+    Map.Entry<K, V> entry = implFindEntry(key, true);
     return (entry == null ? null : entry.getValue());
   }
 
@@ -146,8 +144,8 @@ public abstract class AbstractMap<K,V> implements Map<K,V> {
   public String toString() {
     String s = "{";
     boolean comma = false;
-    for (Iterator iter = entrySet().iterator(); iter.hasNext();) {
-      Map.Entry entry = (Map.Entry) iter.next();
+    for (Iterator<Entry<K, V>> iter = entrySet().iterator(); iter.hasNext();) {
+      Entry<K, V> entry = iter.next();
       if (comma) {
         s += ", ";
       } else {
@@ -161,14 +159,14 @@ public abstract class AbstractMap<K,V> implements Map<K,V> {
   }
 
   public Collection<V> values() {
-    final Set<Entry<K,V>> entrySet = entrySet();
+    final Set<Entry<K, V>> entrySet = entrySet();
     return new AbstractCollection<V>() {
       public boolean contains(Object value) {
         return containsValue(value);
       }
 
       public Iterator<V> iterator() {
-        final Iterator<Entry<K,V>> outerIter = entrySet.iterator();
+        final Iterator<Entry<K, V>> outerIter = entrySet.iterator();
         return new Iterator<V>() {
           public boolean hasNext() {
             return outerIter.hasNext();
@@ -191,14 +189,9 @@ public abstract class AbstractMap<K,V> implements Map<K,V> {
     };
   }
 
-  protected Object clone() throws CloneNotSupportedException {
-    // TODO(jat): implement
-    throw new CloneNotSupportedException("clone not supported");
-  }
-
-  private Entry<K,V> implFindEntry(Object key, boolean remove) {
-    for (Iterator<Entry<K,V>> iter = entrySet().iterator(); iter.hasNext();) {
-      Entry<K,V> entry = iter.next();
+  private Entry<K, V> implFindEntry(Object key, boolean remove) {
+    for (Iterator<Entry<K, V>> iter = entrySet().iterator(); iter.hasNext();) {
+      Entry<K, V> entry = iter.next();
       K k = entry.getKey();
       if (key == null ? k == null : key.equals(k)) {
         if (remove) {

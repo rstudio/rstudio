@@ -17,7 +17,7 @@ package java.util;
 
 /**
  * Map using reference equality on keys.
- *
+ * 
  * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/IdentityHashMap.html
  * 
  * @param <K> key type
@@ -35,7 +35,7 @@ public class IdentityHashMap<K, V> extends AbstractMap<K, V> implements
     throw new UnsupportedOperationException("IdentityHashMap not implemented");
   }
 
-  public IdentityHashMap(Map<? extends K,? extends V> map) {
+  public IdentityHashMap(Map<? extends K, ? extends V> map) {
     this(map.size());
     putAll(map);
   }
@@ -51,13 +51,13 @@ public class IdentityHashMap<K, V> extends AbstractMap<K, V> implements
     // TODO(jat): implement
     return null;
   }
-  
+
   @Override
   public V put(K key, V value) {
     // TODO(jat): implement
     return null;
   }
-  
+
   @Override
   public V remove(Object key) {
     // TODO(jat): implement
