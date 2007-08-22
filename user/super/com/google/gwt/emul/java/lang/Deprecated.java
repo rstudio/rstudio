@@ -13,21 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package java.util;
+package java.lang;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
- * See <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Iterator.html">the
- * official Java API doc</a> for details.
+ * Indicates that a method definition is intended to override a declaration
+ * from a superclass.
  * 
- * @param <E> element type
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Override.html
  */
-public interface Iterator<E> {
-
-  boolean hasNext();
-
-  E next();
-
-  void remove();
-
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Deprecated {
 }

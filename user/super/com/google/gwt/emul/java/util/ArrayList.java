@@ -31,11 +31,16 @@ import com.google.gwt.lang.Array;
  * <code>ArrayList()</code>. It is only present for compatibility with JDK
  * 1.4's API.
  * </p>
+ * 
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/ArrayList.html
+ * 
+ * @param <E> the element type.
  */
-public class ArrayList extends AbstractList implements List, Cloneable,
+public class ArrayList<E> extends AbstractList<E> implements List<E>, Cloneable,
     RandomAccess {
 
-  private static native void addImpl(JavaScriptObject array, int index, Object o) /*-{
+  private static native void addImpl(JavaScriptObject array, int index,
+      Object o) /*-{
     array.splice(index, 0, o);
   }-*/;
 
@@ -43,7 +48,7 @@ public class ArrayList extends AbstractList implements List, Cloneable,
     return a == b || (a != null && a.equals(b));
   }
 
-  private static native Object getImpl(JavaScriptObject array, int index) /*-{
+  private static native <E> E getImpl(JavaScriptObject array, int index) /*-{
     return array[index];
   }-*/;
 
@@ -52,7 +57,7 @@ public class ArrayList extends AbstractList implements List, Cloneable,
     array.splice(index, count);
   }-*/;
 
-  private static native void setImpl(JavaScriptObject array, int index, Object o) /*-{
+  private static native <E> void setImpl(JavaScriptObject array, int index, E o) /*-{
     array[index] = o;
   }-*/;
 
@@ -125,7 +130,7 @@ public class ArrayList extends AbstractList implements List, Cloneable,
     return (indexOf(o) != -1);
   }
 
-  public Object get(int index) {
+  public E get(int index) {
     if (index < 0 || index >= size) {
       indexOutOfBounds(index);
     }
@@ -144,8 +149,8 @@ public class ArrayList extends AbstractList implements List, Cloneable,
     return lastIndexOf(o, size() - 1);
   }
 
-  public Object remove(int index) {
-    Object previous = get(index);
+  public E remove(int index) {
+    E previous = get(index);
     removeRangeImpl(array, index, 1);
     --size;
     return previous;
@@ -160,8 +165,8 @@ public class ArrayList extends AbstractList implements List, Cloneable,
     return true;
   }
 
-  public Object set(int index, Object o) {
-    Object previous = get(index);
+  public E set(int index, E o) {
+    E previous = get(index);
     setImpl(array, index, o);
     return previous;
   }
@@ -170,10 +175,15 @@ public class ArrayList extends AbstractList implements List, Cloneable,
     return size;
   }
 
+  public List<E> subList(int fromIndex, int toIndex) {
+    // TODO(jat): implement
+    throw new UnsupportedOperationException("subList not implemented");
+  }
+
   /*
    * Faster than the iterator-based implementation in AbstractCollection.
    */
-  public Object[] toArray(Object[] a) {
+  public <T> T[] toArray(T[] a) {
     if (a.length < size) {
       a = Array.clonify(a, size);
     }
@@ -184,6 +194,13 @@ public class ArrayList extends AbstractList implements List, Cloneable,
       a[size] = null;
     }
     return a;
+  }
+
+  /**
+   * Currenty ignored.
+   */
+  public void trimToSize() {
+    // TODO(jat): implement
   }
 
   protected int indexOf(Object o, int index) {

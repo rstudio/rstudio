@@ -17,30 +17,44 @@ package java.util;
 
 /**
  * Implements a set in terms of a hash table.
+ * 
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/HashSet.html
+ * 
+ * @param <E> element type.
  */
-public class HashSet extends AbstractSet implements Set, Cloneable {
+public class HashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable {
 
-  private transient HashMap map;
+  private transient HashMap<E, Object> map;
 
   public HashSet() {
-    map = new HashMap();
+    map = new HashMap<E, Object>();
   }
 
-  public HashSet(Collection c) {
-    map = new HashMap(c.size());
+  public HashSet(Collection<? extends E> c) {
+    map = new HashMap<E, Object>(c.size());
     addAll(c);
   }
 
   public HashSet(int initialCapacity) {
-    map = new HashMap(initialCapacity);
+    map = new HashMap<E, Object>(initialCapacity);
   }
 
   public HashSet(int initialCapacity, float loadFactor) {
-    map = new HashMap(initialCapacity, loadFactor);
+    map = new HashMap<E, Object>(initialCapacity, loadFactor);
   }
 
-  public boolean add(Object o) {
-    Object old = map.put(o, Boolean.valueOf(true));
+  /**
+   * Protected constructor to specify the underlying map. This is used by
+   * LinkedHashSet.
+   * 
+   * @param map underlying map to use.
+   */
+  protected HashSet(HashMap<E, Object> map) {
+    this.map = map;
+  }
+
+  public boolean add(E o) {
+    Object old = map.put(o, this);
     return (old == null);
   }
 
@@ -49,7 +63,7 @@ public class HashSet extends AbstractSet implements Set, Cloneable {
   }
 
   public Object clone() {
-    return new HashSet(this);
+    return new HashSet<E>(this);
   }
 
   public boolean contains(Object o) {
@@ -60,7 +74,7 @@ public class HashSet extends AbstractSet implements Set, Cloneable {
     return map.isEmpty();
   }
 
-  public Iterator iterator() {
+  public Iterator<E> iterator() {
     return map.keySet().iterator();
   }
 

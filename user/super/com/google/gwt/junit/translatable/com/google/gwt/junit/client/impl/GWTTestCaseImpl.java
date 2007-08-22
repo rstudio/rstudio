@@ -146,7 +146,7 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
   /**
    * The collected checkpoint messages.
    */
-  private List checkPoints;
+  private List<String> checkPoints;
 
   /**
    * Handles all RPC responses.
@@ -204,7 +204,7 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
    */
   public void addCheckpoint(String msg) {
     if (checkPoints == null) {
-      checkPoints = new ArrayList();
+      checkPoints = new ArrayList<String>();
     }
     checkPoints.add(msg);
   }
@@ -309,7 +309,7 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
    * @param ex The results of this test.
    */
   private void reportResultsAndRunNextMethod(Throwable ex) {
-    List trials = results.getTrials();
+    List<Trial> trials = results.getTrials();
 
     if (serverless) {
       // That's it, we're done

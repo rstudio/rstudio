@@ -17,26 +17,30 @@ package java.util;
 
 /**
  * Represents a sequence of objects.
+ * 
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/List.html
+ * 
+ * @param <E> element type
  */
-public interface List extends Collection {
+public interface List<E> extends Collection<E> {
 
-  void add(int index, Object element);
+  void add(int index, E element);
 
-  boolean add(Object o);
+  boolean add(E o);
 
-  boolean addAll(Collection c);
+  boolean addAll(Collection<? extends E> c);
 
-  boolean addAll(int index, Collection c);
+  boolean addAll(int index, Collection<? extends E> c);
 
   void clear();
 
   boolean contains(Object o);
 
-  boolean containsAll(Collection c);
+  boolean containsAll(Collection<?> c);
 
   boolean equals(Object o);
 
-  Object get(int index);
+  E get(int index);
 
   int hashCode();
 
@@ -44,26 +48,30 @@ public interface List extends Collection {
 
   boolean isEmpty();
 
-  Iterator iterator();
+  Iterator<E> iterator();
 
   int lastIndexOf(Object o);
 
-  ListIterator listIterator();
+  ListIterator<E> listIterator();
 
-  ListIterator listIterator(int from);
+  ListIterator<E> listIterator(int from);
 
-  Object remove(int index);
+  E remove(int index);
 
   boolean remove(Object o);
 
-  boolean removeAll(Collection c);
+  boolean removeAll(Collection<?> c);
 
-  boolean retainAll(Collection c);
+  boolean retainAll(Collection<?> c);
 
-  Object set(int index, Object element);
+  E set(int index, E element);
 
   int size();
+  
+  List<E> subList(int fromIndex, int toIndex);
 
   Object[] toArray();
+  
+  <T> T[] toArray(T[] array);
 
 }

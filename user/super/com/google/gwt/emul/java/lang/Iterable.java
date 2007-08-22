@@ -13,21 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package java.util;
+package java.lang;
+
+import java.util.Iterator;
 
 /**
- * See <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Iterator.html">the
- * official Java API doc</a> for details.
+ * Allows an instance of a class implementing this interface to be used in
+ * the foreach statement.
  * 
- * @param <E> element type
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Iterable.html
+ *
+ * @param <T> type of returned iterator
  */
-public interface Iterator<E> {
-
-  boolean hasNext();
-
-  E next();
-
-  void remove();
-
+public interface Iterable<T> {
+  Iterator<T> iterator();
 }

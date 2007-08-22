@@ -16,18 +16,31 @@
 package java.util;
 
 /**
- * See <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Iterator.html">the
- * official Java API doc</a> for details.
+ * Abstract parent of classes mapping keys to values.
  * 
- * @param <E> element type
+ * @deprecated use @see{java.util.Map} instead.
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/Dictionary.html
+ *
+ * @param <K> key type.
+ * @param <V> value type.
  */
-public interface Iterator<E> {
+@Deprecated
+public abstract class Dictionary<K, V> {
 
-  boolean hasNext();
-
-  E next();
-
-  void remove();
-
+  public Dictionary() {
+  }
+  
+  public abstract Enumeration<V> elements();
+  
+  public abstract V get(Object key);
+  
+  public abstract boolean isEmpty();
+  
+  public abstract Enumeration<K> keys();
+  
+  public abstract V put(K key, V value);
+  
+  public abstract V remove(Object key);
+  
+  public abstract int size();
 }

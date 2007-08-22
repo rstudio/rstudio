@@ -17,8 +17,11 @@ package java.util;
 
 /**
  * Abstract base class for set implementations.
+ * 
+ * @param <E> the element type.
  */
-public abstract class AbstractSet extends AbstractCollection implements Set {
+public abstract class AbstractSet<E> extends AbstractCollection<E>
+    implements Set<E> {
 
   public boolean equals(Object o) {
     if (o == this) {
@@ -56,7 +59,7 @@ public abstract class AbstractSet extends AbstractCollection implements Set {
     return hashCode;
   }
 
-  public boolean removeAll(Collection c) {
+  public boolean removeAll(Collection<?> c) {
     int size = size();
     if (size < c.size()) {
       // If the member of 'this' is in 'c', remove it from 'this'.

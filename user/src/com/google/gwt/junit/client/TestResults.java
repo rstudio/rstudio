@@ -54,10 +54,10 @@ public class TestResults implements IsSerializable {
   /**
    * @gwt.typeArgs <com.google.gwt.junit.client.Trial>
    */
-  List/*<Trial>*/ trials;
+  List<Trial> trials;
 
   public TestResults() {
-    trials = new ArrayList();
+    trials = new ArrayList<Trial>();
   }
 
   public String getAgent() {
@@ -72,7 +72,7 @@ public class TestResults implements IsSerializable {
     return sourceRef;
   }
 
-  public List getTrials() {
+  public List<Trial> getTrials() {
     return trials;
   }
 
@@ -88,7 +88,7 @@ public class TestResults implements IsSerializable {
     this.sourceRef = sourceRef;
   }
 
-  public void setTrials(List trials) {
+  public void setTrials(List<Trial> trials) {
     this.trials = trials;
   }
 

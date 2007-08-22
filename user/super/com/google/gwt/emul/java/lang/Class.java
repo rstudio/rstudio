@@ -18,8 +18,10 @@ package java.lang;
 /**
  * Generally unsupported. This class is provided so that the GWT compiler can choke
  * down class literal references.
+ * 
+ * @param <T> the type of the object
  */
-public class Class {
+public class Class<T> {
 
   /**
    * Not instantiable.

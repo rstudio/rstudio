@@ -17,22 +17,25 @@ package java.util;
 
 /**
  * Abstract interface for maps.
+ * 
+ * @param <K> key type.
+ * @param <V> value type.
  */
-public interface Map {
+public interface Map<K,V> {
 
   /**
    * Represents an individual map entry.
    */
-  public static interface Entry {
+  public interface Entry<EK,EV> {
     boolean equals(Object o);
 
-    Object getKey();
+    EK getKey();
 
-    Object getValue();
+    EV getValue();
 
     int hashCode();
 
-    Object setValue(Object value);
+    EV setValue(EV value);
   }
 
   void clear();
@@ -41,25 +44,25 @@ public interface Map {
 
   boolean containsValue(Object value);
 
-  Set entrySet();
+  Set<Entry<K,V>> entrySet();
 
   boolean equals(Object o);
 
-  Object get(Object key);
+  V get(Object key);
 
   int hashCode();
 
   boolean isEmpty();
 
-  Set keySet();
+  Set<K> keySet();
 
-  Object put(Object key, Object value);
+  V put(K key, V value);
 
-  void putAll(Map t);
+  <OK extends K,OV extends V> void putAll(Map<OK,OV> t);
 
-  Object remove(Object key);
+  V remove(Object key);
 
   int size();
 
-  Collection values();
+  Collection<V> values();
 }

@@ -17,11 +17,15 @@ package java.util;
 
 /**
  * Maintains a last-in, first-out collection of objects.
+ * 
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/Stack.html
+ * 
+ * @param <E> element type.
  */
-public class Stack extends Vector {
+public class Stack<E> extends Vector<E> {
 
   public Object clone() {
-    Stack s = new Stack();
+    Stack<E> s = new Stack<E>();
     s.addAll(this);
     return s;
   }
@@ -30,7 +34,7 @@ public class Stack extends Vector {
     return isEmpty();
   }
 
-  public Object peek() {
+  public E peek() {
     int sz = size();
     if (sz > 0) {
       return get(sz - 1);
@@ -39,7 +43,7 @@ public class Stack extends Vector {
     }
   }
 
-  public Object pop() {
+  public E pop() {
     int sz = size();
     if (sz > 0) {
       return remove(sz - 1);
@@ -48,7 +52,7 @@ public class Stack extends Vector {
     }
   }
 
-  public Object push(Object o) {
+  public E push(E o) {
     add(o);
     return o;
   }

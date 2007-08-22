@@ -13,21 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package java.util;
+package java.lang.annotation;
 
 /**
- * See <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Iterator.html">the
- * official Java API doc</a> for details.
- * 
- * @param <E> element type
+ * Base interface for all annotation types.
+ *
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/lang/annotation/Annotation.html
  */
-public interface Iterator<E> {
-
-  boolean hasNext();
-
-  E next();
-
-  void remove();
-
+public interface Annotation {
+  
+  public Class<? extends Annotation> annotationType();
+  
+  public boolean equals(Object obj);
+  
+  public int hashCode();
+  
+  public String toString();
 }

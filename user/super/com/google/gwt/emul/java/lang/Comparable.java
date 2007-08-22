@@ -17,7 +17,11 @@ package java.lang;
 
 /**
  * An interface used a basis for implementing custom ordering.
+ * 
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Comparable.html
+ * 
+ * @param <T> the type to compare to.
  */
-public interface Comparable {
-  int compareTo(Object other);
+public interface Comparable<T> {
+  int compareTo(T other);
 }

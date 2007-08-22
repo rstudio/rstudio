@@ -17,10 +17,13 @@ package java.util;
 
 /**
  * Abstract base class for list implementations.
+ * 
+ * @param <E> the element type.
  */
-public abstract class AbstractList extends AbstractCollection implements List {
+public abstract class AbstractList<E> extends AbstractCollection<E>
+    implements List<E> {
 
-  private class IteratorImpl implements Iterator {
+  private class IteratorImpl implements Iterator<E> {
     /*
      * i is the index of the item that will be returned on the next call to
      * next() last is the index of the item that was returned on the previous
@@ -33,7 +36,7 @@ public abstract class AbstractList extends AbstractCollection implements List {
       return i < AbstractList.this.size();
     }
 
-    public Object next() {
+    public E next() {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
@@ -54,7 +57,7 @@ public abstract class AbstractList extends AbstractCollection implements List {
    * Implementation of <code>ListIterator</code> for abstract lists.
    */
   private final class ListIteratorImpl extends IteratorImpl implements
-      ListIterator {
+      ListIterator<E> {
     /*
      * i is the index of the item that will be returned on the next call to
      * next() last is the index of the item that was returned on the previous
@@ -73,7 +76,7 @@ public abstract class AbstractList extends AbstractCollection implements List {
       i = start;
     }
 
-    public void add(Object o) {
+    public void add(E o) {
       AbstractList.this.add(i++, o);
       last = -1;
     }
@@ -86,7 +89,7 @@ public abstract class AbstractList extends AbstractCollection implements List {
       return i;
     }
 
-    public Object previous() {
+    public E previous() {
       if (!hasPrevious()) {
         throw new NoSuchElementException();
       }
@@ -97,7 +100,7 @@ public abstract class AbstractList extends AbstractCollection implements List {
       return i - 1;
     }
 
-    public void set(Object o) {
+    public void set(E o) {
       if (last == -1) {
         throw new IllegalStateException();
       }
@@ -105,17 +108,17 @@ public abstract class AbstractList extends AbstractCollection implements List {
     }
   }
 
-  public void add(int index, Object element) {
+  public void add(int index, E element) {
     throw new UnsupportedOperationException("add");
   }
 
-  public boolean add(Object obj) {
+  public boolean add(E obj) {
     add(size(), obj);
     return true;
   }
 
-  public boolean addAll(int index, Collection c) {
-    Iterator iter = c.iterator();
+  public boolean addAll(int index, Collection<? extends E> c) {
+    Iterator<? extends E> iter = c.iterator();
     while (iter.hasNext()) {
       add(index, iter.next());
       ++index;
@@ -156,7 +159,7 @@ public abstract class AbstractList extends AbstractCollection implements List {
     return true;
   }
 
-  public abstract Object get(int index);
+  public abstract E get(int index);
 
   public int hashCode() {
     int k = 1;
@@ -178,7 +181,7 @@ public abstract class AbstractList extends AbstractCollection implements List {
     return -1;
   }
 
-  public Iterator iterator() {
+  public Iterator<E> iterator() {
     return new IteratorImpl();
   }
 
@@ -191,19 +194,19 @@ public abstract class AbstractList extends AbstractCollection implements List {
     return -1;
   }
 
-  public ListIterator listIterator() {
+  public ListIterator<E> listIterator() {
     return new ListIteratorImpl();
   }
 
-  public ListIterator listIterator(int from) {
+  public ListIterator<E> listIterator(int from) {
     return new ListIteratorImpl(from);
   }
 
-  public Object remove(int index) {
+  public E remove(int index) {
     throw new UnsupportedOperationException("remove");
   }
 
-  public Object set(int index, Object element) {
+  public E set(int index, E o) {
     throw new UnsupportedOperationException("set");
   }
 
@@ -216,7 +219,7 @@ public abstract class AbstractList extends AbstractCollection implements List {
   }
 
   protected void removeRange(int fromIndex, int endIndex) {
-    ListIterator iter = listIterator(fromIndex);
+    ListIterator<E> iter = listIterator(fromIndex);
     for (int i = fromIndex; i < endIndex; ++i) {
       iter.next();
       iter.remove();

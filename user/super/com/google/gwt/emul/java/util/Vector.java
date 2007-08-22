@@ -17,19 +17,23 @@ package java.util;
 
 /**
  * To keep performance characteristics in line with Java community expectations, 
- * <code>Vector</code> is a wrapper around <code>ArrayList</code>.  
+ * <code>Vector</code> is a wrapper around <code>ArrayList</code>.
+ * 
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/Vector.html
+ * 
+ * @param <E> element type.
  */
-public class Vector extends AbstractList implements List, RandomAccess,
+public class Vector<E> extends AbstractList<E> implements List<E>, RandomAccess,
     Cloneable {
 
-  private transient ArrayList arrayList;
+  private transient ArrayList<E> arrayList;
 
   public Vector() {
-    arrayList = new ArrayList();
+    arrayList = new ArrayList<E>();
   }
 
-  public Vector(Collection c) {
-    arrayList = new ArrayList();
+  public Vector(Collection<? extends E> c) {
+    arrayList = new ArrayList<E>();
     addAll(c);
   }
 
@@ -39,26 +43,26 @@ public class Vector extends AbstractList implements List, RandomAccess,
    * only present for compatibility with JDK 1.4's API.
    */
   public Vector(int initialCapacity) {
-    arrayList = new ArrayList(initialCapacity);
+    arrayList = new ArrayList<E>(initialCapacity);
   } 
 
-  public void add(int index, Object o) {
-    arrayList.add(index, o);
-  }
-
-  public boolean add(Object o) {
+  public boolean add(E o) {
     return arrayList.add(o);
   }
 
-  public boolean addAll(Collection c) {
+  public void add(int index, E o) {
+    arrayList.add(index, o);
+  }
+
+  public boolean addAll(Collection<? extends E> c) {
     return arrayList.addAll(c);
   }
 
-  public boolean addAll(int index, Collection c) {
+  public boolean addAll(int index, Collection<? extends E> c) {
     return arrayList.addAll(index, c);
   }
 
-  public void addElement(Object o) {
+  public void addElement(E o) {
     add(o);
   }
 
@@ -67,11 +71,16 @@ public class Vector extends AbstractList implements List, RandomAccess,
   }
 
   public Object clone() {
-    return new Vector(this);
+    return new Vector<E>(this);
   }
 
   public boolean contains(Object elem) {
     return arrayList.contains(elem);
+  }
+
+  public boolean containsAll(Collection<?> c) {
+    // TODO(jat): implement
+    throw new UnsupportedOperationException("containsAll not implemented");
   }
 
   public void copyInto(Object[] objs) {
@@ -82,15 +91,24 @@ public class Vector extends AbstractList implements List, RandomAccess,
     }
   } 
   
-  public Object elementAt(int index) {
+  public E elementAt(int index) {
     return get(index);
   }
 
-  public Object firstElement() {
+  public Enumeration<E> elements() {
+    // TODO(jat): implement
+    return null;
+  }
+  
+  public void ensureCapacity(int minCapacity) {
+    // TODO(jat): implement
+  }
+
+  public E firstElement() {
     return get(0);
   }
 
-  public Object get(int index) {
+  public E get(int index) {
     return arrayList.get(index);
   }
 
@@ -102,7 +120,7 @@ public class Vector extends AbstractList implements List, RandomAccess,
     return arrayList.indexOf(elem, index);
   }
 
-  public void insertElementAt(Object o, int index) {
+  public void insertElementAt(E o, int index) {
     add(index, o);
   }
 
@@ -110,7 +128,7 @@ public class Vector extends AbstractList implements List, RandomAccess,
     return (arrayList.size() == 0);
   }
 
-  public Iterator iterator() {
+  public Iterator<E> iterator() {
     return arrayList.iterator();
   }
 
@@ -130,8 +148,13 @@ public class Vector extends AbstractList implements List, RandomAccess,
     return arrayList.lastIndexOf(o, index);
   }
 
-  public Object remove(int index) {
+  public E remove(int index) {
     return arrayList.remove(index);
+  }
+
+  public boolean removeAll(Collection<?> c) {
+    // TODO(jat): implement
+    throw new UnsupportedOperationException("removeAll not implemented");
   }
 
   public void removeAllElements() {
@@ -146,11 +169,11 @@ public class Vector extends AbstractList implements List, RandomAccess,
     remove(index);
   }
 
-  public Object set(int index, Object elem) {
+  public E set(int index, E elem) {
     return arrayList.set(index, elem);
   }
 
-  public void setElementAt(Object o, int index) {
+  public void setElementAt(E o, int index) {
     set(index, o);
   }
 
@@ -162,8 +185,27 @@ public class Vector extends AbstractList implements List, RandomAccess,
     return arrayList.size();
   }
 
+  public List<E> subList(int fromIndex, int toIndex) {
+    return arrayList.subList(fromIndex, toIndex);
+  }
+
   public Object[] toArray() {
     return arrayList.toArray();
+  }
+
+  public <T> T[] toArray(T[] a) {
+    return arrayList.toArray(a);
+  }
+
+  public String toString() {
+    return arrayList.toString();
+  }
+
+  /**
+   * Currenty ignored.
+   */
+  public void trimToSize() {
+    arrayList.trimToSize();
   }
 
   protected void removeRange(int fromIndex, int endIndex) {

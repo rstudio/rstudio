@@ -17,12 +17,19 @@ package java.util;
 
 /**
  * Utility methods that operate on collections.
+ * 
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/Collections.html
  */
 public class Collections {
 
   public static final Set EMPTY_SET = new HashSet();
   public static final Map EMPTY_MAP = new HashMap();
   public static final List EMPTY_LIST = new ArrayList();
+
+  public static <T> boolean addAll(Collection<? super T> c, T... a) {
+    // TODO(jat): implement
+    throw new UnsupportedOperationException("addAll not implemented");
+  }
 
   /**
    * Perform a binary search on a sorted List, using natural ordering.
@@ -42,8 +49,9 @@ public class Collections {
    * @throws ClassCastException if <code>key</code> is not comparable to
    *           <code>sortedList</code>'s elements.
    */
-  public static int binarySearch(final List sortedList, final Object key) {
-    return binarySearch(sortedList, key, Comparators.natural());
+  public static <T> int binarySearch(
+      final List<? extends Comparable<? super T>> sortedList, final T key) {
+    return binarySearch(sortedList, key, null);
   }
 
   /**
@@ -68,20 +76,22 @@ public class Collections {
    *           <code>sortedList</code>'s elements cannot be compared by
    *           <code>comparator</code>.
    */
-  public static int binarySearch(final List sortedList, final Object key,
-      Comparator comparator) {
+  public static <T> int binarySearch(final List<? extends T> sortedList,
+      final T key, Comparator<? super T> comparator) {
     /*
      * TODO: This doesn't implement the "iterator-based binary search" described
      * in the JDK docs for non-RandomAccess Lists. Until GWT provides a
      * LinkedList, this shouldn't be an issue.
      */
-    comparator = comparator != null ? comparator : Comparators.natural();
+    if (comparator == null) {
+      comparator = Comparators.natural();
+    }
     int low = 0;
     int high = sortedList.size() - 1;
 
     while (low <= high) {
       final int mid = low + ((high - low) / 2);
-      final Object midVal = sortedList.get(mid);
+      final T midVal = sortedList.get(mid);
       final int compareResult = comparator.compare(midVal, key);
 
       if (compareResult < 0) {
@@ -97,35 +107,141 @@ public class Collections {
     return -low - 1;
   }
 
-  public static void reverse(List l) {
+  /*
+   * These methods are commented out because they cannot currently be
+   * implemented in GWT.  The signatures are included in case that changes.
+   */
+//  public static <E> Collection<E> checkedCollection(Collection<E> c, Class<E> type) {
+//    // FUTURE: implement
+//    return null;
+//  }
+//  
+//  static <E> List<E> checkedList(List<E> list, Class<E> type) {
+//    // FUTURE: implement
+//    return null;
+//  }
+//
+//  public static <K,V> Map<K,V> checkedMap(Map<K,V> list, Class<K> keyType,
+//      Class<V> valueType) {
+//    // FUTURE: implement
+//    return null;
+//  }
+//
+//  public static <E> Set<E> checkedSet(Set<E> list, Class<E> type) {
+//    // FUTURE: implement
+//    return null;
+//  }
+//
+//  public static <K,V> SortedMap<K,V> checkedSortedMap(SortedMap<K,V> m,
+//      Class<K> keyType, Class<V> valueType) {
+//    // FUTURE: implement
+//    return null;
+//  }
+//
+//  public static <E> SortedSet<E> checkedSortedSet(SortedSet<E> list, Class<E> type) {
+//    // FUTURE: implement
+//    return null;
+//  }
+
+  public static <T> void copy(List<? super T> dest, List<? extends T> src) {
+    // TODO(jat): implement
+    throw new UnsupportedOperationException("copy not implemented");
+  }
+  
+  public static boolean disjoint(Collection<?> c1, Collection<?> c2) {
+    // TODO(jat): implement
+    throw new UnsupportedOperationException("disJoint not implemented");
+ }
+  
+  @SuppressWarnings("unchecked")
+  public static <T> List<T> emptyList() {
+    return (List<T>)EMPTY_LIST; // suppress unchecked warning
+  }
+  
+  @SuppressWarnings("unchecked")
+  public static <K,V> Map<K,V> emptyMap() {
+    return (Map<K,V>)EMPTY_MAP; // suppress unchecked warning
+  }
+  
+  @SuppressWarnings("unchecked")
+  public static <T> Set<T> emptySet() {
+    return (Set<T>)EMPTY_SET; // suppress unchecked warning
+  }
+  
+  public static <T> Enumeration<T> enumeration(Collection<T> c) {
+    // TODO(jat): implement
+    throw new UnsupportedOperationException("enumeration not implemented");
+  }
+  
+  public static <T> void reverse(List<T> l) {
     int lastPos = l.size() - 1;
     for (int i = 0; i < l.size() / 2; i++) {
-      Object element = l.get(i);
+      T element = l.get(i);
       int swapPos = lastPos - i;
       assert (swapPos > i);
-      Object swappedWith = l.get(swapPos);
+      T swappedWith = l.get(swapPos);
       l.set(i, swappedWith);
       l.set(swapPos, element);
     }
   }
 
-  public static void sort(List target) {
+  public static <T> void sort(List<T> target) {
     Object[] x = target.toArray();
     Arrays.sort(x);
     replaceContents(target, x);
   }
 
-  public static void sort(List target, Comparator y) {
+  public static <T> void sort(List<T> target, Comparator<? super T> c) {
     Object[] x = target.toArray();
-    Arrays.sort(x, y);
+    Arrays.unsafeSort(x, c);
     replaceContents(target, x);
   }
 
-  private static void replaceContents(List target, Object[] x) {
+  public static <T> Collection<T> unmodifiableCollection(
+      Collection<? extends T> c) {
+    throw new UnsupportedOperationException(
+        "unmodifiableCollection not implemented");
+  }
+
+  public static <T> List<T> unmodifiableList(List<? extends T> list) {
+    throw new UnsupportedOperationException("unmodifiableList not implemented");
+  }
+
+  public static <K, V> Map<K, V> unmodifiableMap(
+      Map<? extends K, ? extends V> map) {
+    throw new UnsupportedOperationException("unmodifiableMap not implemented");
+  }
+
+  public static <T> Set<T> unmodifiableSet(Set<? extends T> set) {
+    throw new UnsupportedOperationException("unmodifiableSet not implemented");
+  }
+
+  public static <K, V> SortedMap<K, V> unmodifiableSortedMap(
+      SortedMap<? extends K, ? extends V> map) {
+    throw new UnsupportedOperationException(
+        "unmodifiableSortedMap not implemented");
+  }
+
+  public static <T> SortedSet<T> unmodifiableSortedSet(
+      SortedSet<? extends T> set) {
+    throw new UnsupportedOperationException(
+        "unmodifiableSortedSet not implemented");
+  }
+
+  /**
+   * Replace contents of a list from an array.
+   * 
+   * @param <T> element type
+   * @param target list to replace contents from an array
+   * @param x an array of only T instances
+   */
+  @SuppressWarnings("unchecked")
+  private static <T> void replaceContents(List<T> target, Object[] x) {
     int size = target.size();
     assert (x.length == size);
     for (int i = 0; i < size; i++) {
-      target.set(i, x[i]);
+      target.set(i, (T) x[i]); // suppress unchecked
     }
   }
+  
 }

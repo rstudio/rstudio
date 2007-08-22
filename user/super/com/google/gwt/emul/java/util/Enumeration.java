@@ -16,18 +16,15 @@
 package java.util;
 
 /**
- * See <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Iterator.html">the
- * official Java API doc</a> for details.
+ * An interface to generate a series of elements, one at a time.
  * 
- * @param <E> element type
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/Enumeration.html
+ * 
+ * @param <E> the type being enumerated.
  */
-public interface Iterator<E> {
+public interface Enumeration<E> {
 
-  boolean hasNext();
-
-  E next();
-
-  void remove();
-
+  boolean hasMoreElements();
+  
+  E nextElement();
 }

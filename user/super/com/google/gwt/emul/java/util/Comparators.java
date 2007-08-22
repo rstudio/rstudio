@@ -21,30 +21,33 @@ class Comparators {
    * having a directly accessible field, a function is used in anticipation of
    * generics support.  This class exists so Arrays and Collections can share
    * the natural comparator without having to know internals of each other.
+   * 
+   * This class is package protected since it is not in the JRE.
    */
   
   /**
    * Compares two Objects according to their <i>natural ordering</i>.
    * @see java.lang.Comparable
    */
+  @SuppressWarnings("unchecked")
   private static final Comparator NATURAL = new Comparator() {
     public int compare(Object o1, Object o2) {
-      return ((Comparable) o1).compareTo(o2);
+      return ((Comparable) o1).compareTo(o2); // suppress unchecked warning
     }
   };
 
   /**
    * Returns the natural Comparator.
-   * TODO: generics support
-   *  
+   *
    * @return the natural Comparator
    */
-  public static /*<T>*/ Comparator/*<T>*/ natural() {
+  @SuppressWarnings("unchecked")
+  public static <T> Comparator<T> natural() {
     /*
      * Code for generics support is commented.  Example calling code, which
      * should be moved into the Javadoc comment when generics are added:
      *   <code>Comparator&lt;String&gt; = Comparators.natural();</code>
      */
-    return /*(Comparator<T>)*/ NATURAL;
+    return (Comparator<T>) NATURAL; // suppress unchecked warning
   }
 }

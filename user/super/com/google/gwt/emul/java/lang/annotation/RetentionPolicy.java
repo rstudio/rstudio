@@ -13,21 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package java.util;
+package java.lang.annotation;
 
 /**
- * See <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Iterator.html">the
- * official Java API doc</a> for details.
+ * Enumerates annotation retention policies.
  * 
- * @param <E> element type
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/lang/annotation/RetentionPolicy.html
  */
-public interface Iterator<E> {
-
-  boolean hasNext();
-
-  E next();
-
-  void remove();
-
+public enum RetentionPolicy {
+  CLASS,
+  RUNTIME,
+  SOURCE,
 }

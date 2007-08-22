@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,42 +16,23 @@
 package java.util;
 
 /**
- * Represents a set of unique objects.
+ * A map known to be in ascending order.
  * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/Set.html
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/SortedSet.html
  * 
  * @param <E> element type.
  */
-public interface Set<E> extends Collection<E> {
+public interface SortedSet<E> extends Set<E> {
 
-  boolean add(E o);
-
-  boolean addAll(Collection<? extends E> c);
-
-  void clear();
-
-  boolean contains(Object o);
-
-  boolean containsAll(Collection<?> c);
-
-  boolean equals(Object o);
-
-  int hashCode();
-
-  boolean isEmpty();
-
-  Iterator<E> iterator();
-
-  boolean remove(Object o);
-
-  boolean removeAll(Collection<?> c);
-
-  boolean retainAll(Collection<?> c);
-
-  int size();
-
-  Object[] toArray();
+  public Comparator<? super E> comparator();
   
-  <T> T[] toArray(T[] a);
-
+  public E first();
+  
+  public SortedSet<E> headSet(E toElement);
+  
+  public E last();
+  
+  public SortedSet<E> subSet(E fromElement, E toElement);
+  
+  public SortedSet<E> tailSet(E fromElement);
 }

@@ -13,21 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package java.util;
+package java.lang.annotation;
 
 /**
- * See <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Iterator.html">the
- * official Java API doc</a> for details.
- * 
- * @param <E> element type
+ * Annotation which indicates an annotation type is automatically inherited.
+ *
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/lang/annotation/Inherited.html
  */
-public interface Iterator<E> {
-
-  boolean hasNext();
-
-  E next();
-
-  void remove();
-
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.ANNOTATION_TYPE)
+public @interface Inherited {
 }

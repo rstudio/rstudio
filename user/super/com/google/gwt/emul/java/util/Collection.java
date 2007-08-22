@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,18 +17,21 @@ package java.util;
 
 /**
  * General-purpose interface for storing collections of objects.
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/Collection.html
+ * 
+ * @param <E> element type
  */
-public interface Collection {
+public interface Collection<E> extends Iterable<E> {
 
-  boolean add(Object o);
+  boolean add(E o);
 
-  boolean addAll(Collection c);
+  boolean addAll(Collection<? extends E> c);
 
   void clear();
 
   boolean contains(Object o);
 
-  boolean containsAll(Collection c);
+  boolean containsAll(Collection<?> c);
 
   boolean equals(Object o);
 
@@ -36,17 +39,17 @@ public interface Collection {
 
   boolean isEmpty();
 
-  Iterator iterator();
+  Iterator<E> iterator();
 
   boolean remove(Object o);
 
-  boolean removeAll(Collection c);
+  boolean removeAll(Collection<?> c);
 
-  boolean retainAll(Collection c);
+  boolean retainAll(Collection<?> c);
 
   int size();
 
   Object[] toArray();
 
-  Object[] toArray(Object[] a);
+  <T> T[] toArray(T[] a);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,15 @@ package java.util;
 
 /**
  * An interface used a basis for implementing custom ordering.
+ * 
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/Comparator.html
+ * 
+ * @param <T> the type to be compared.
  */
-public interface Comparator {
+public interface Comparator<T> {
 
   boolean equals(Object other);
 
-  int compare(Object a, Object b);
+  int compare(T a, T b);
 
 }

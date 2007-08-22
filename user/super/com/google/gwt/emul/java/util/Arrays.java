@@ -18,11 +18,13 @@ package java.util;
 
 /**
  * Utility methods related to native arrays.
+ * 
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/Arrays.html
  */
 public class Arrays {
 
-  public static List asList(Object[] array) {
-    List accum = new ArrayList();
+  public static <T> List<T> asList(T... array) {
+    List<T> accum = new ArrayList<T>();
     for (int i = 0; i < array.length; i++) {
       accum.add(array[i]);
     }
@@ -243,46 +245,6 @@ public class Arrays {
   }
 
   /**
-   * Perform a binary search on a sorted object array, using a user-specified
-   * comparison function.
-   * 
-   * @param sortedArray object array to search
-   * @param key value to search for
-   * @param comparator comparision function, <code>null</code> indicates
-   *   <i>natural ordering</i> should be used.
-   * @return the index of an element with a matching value, or a negative
-   *   number which is the index of the next larger value (or just past
-   *   the end of the array if the searched value is larger than all elements
-   *   in the array) minus 1 (to ensure error returns are negative)
-   * @throws ClassCastException if <code>key</code> and
-   *   <code>sortedArray</code>'s elements cannot be compared by
-   *   <code>comparator</code>.
-   */
-  public static int binarySearch(final Object[] sortedArray, final Object key,
-      Comparator comparator) {
-    comparator = comparator != null ? comparator : Comparators.natural();
-    int low = 0;
-    int high = sortedArray.length - 1;
-
-    while (low <= high) {
-      final int mid = low + ((high - low) / 2);
-      final Object midVal = sortedArray[mid];
-      final int compareResult = comparator.compare(midVal, key);
-
-      if (compareResult < 0) {
-        low = mid + 1;
-      } else if (compareResult > 0) {
-        high = mid - 1;
-      } else {
-        // key found
-        return mid;
-      }
-    }
-    // key not found.
-    return -low - 1; 
-  }
-
-  /**
    * Perform a binary search on a sorted short array.
    * 
    * @param sortedArray short array to search
@@ -313,34 +275,79 @@ public class Arrays {
     return -low - 1; 
   }
 
+  /**
+   * Perform a binary search on a sorted object array, using a user-specified
+   * comparison function.
+   * 
+   * @param sortedArray object array to search
+   * @param key value to search for
+   * @param comparator comparision function, <code>null</code> indicates
+   *   <i>natural ordering</i> should be used.
+   * @return the index of an element with a matching value, or a negative
+   *   number which is the index of the next larger value (or just past
+   *   the end of the array if the searched value is larger than all elements
+   *   in the array) minus 1 (to ensure error returns are negative)
+   * @throws ClassCastException if <code>key</code> and
+   *   <code>sortedArray</code>'s elements cannot be compared by
+   *   <code>comparator</code>.
+   */
+  public static <T> int binarySearch(final T[] sortedArray, final T key,
+      Comparator<? super T> comparator) {
+    if (comparator == null) {
+      comparator = Comparators.natural();
+    }
+    int low = 0;
+    int high = sortedArray.length - 1;
+
+    while (low <= high) {
+      final int mid = low + ((high - low) / 2);
+      final T midVal = sortedArray[mid];
+      final int compareResult = comparator.compare(midVal, key);
+
+      if (compareResult < 0) {
+        low = mid + 1;
+      } else if (compareResult > 0) {
+        high = mid - 1;
+      } else {
+        // key found
+        return mid;
+      }
+    }
+    // key not found.
+    return -low - 1; 
+  }
+
   public static void sort(Object[] x) {
     nativeSort(x, x.length, Comparators.natural());
   }
 
-  public static void sort(Object[] x, Comparator s) {
+  public static <T> void sort(T[] x, Comparator<? super T> s) {
     nativeSort(x, x.length, s != null ? s : Comparators.natural());
   }
 
-  // FUTURE: 5.0 support
-  // public static String toString(Object[] x) {
-  // if (x == null) {
-  // return "null";
-  // }
-  //
-  // StringBuffer b = new StringBuffer("[");
-  // for (int i = 0; i < x.length; i++) {
-  // if (i != 0) {
-  // b.append(", ");
-  // }
-  // if (x[i] == null) {
-  // b.append("null");
-  // } else {
-  // b.append(x[i].toString());
-  // }
-  // }
-  // b.append("]");
-  // return b.toString();
-  // }
+  public static String toString(Object[] x) {
+    if (x == null) {
+      return "null";
+    }
+
+    StringBuffer b = new StringBuffer("[");
+    for (int i = 0; i < x.length; i++) {
+      if (i != 0) {
+        b.append(", ");
+      }
+      if (x[i] == null) {
+        b.append("null");
+      } else {
+        b.append(x[i].toString());
+      }
+    }
+    b.append("]");
+    return b.toString();
+  }
+  
+  static void unsafeSort(Object[] x, Comparator s) {
+    nativeSort(x, x.length, s != null ? s : Comparators.natural());  
+  }
 
   private static native void nativeSort(Object[] array, int size,
       Comparator compare) /*-{ 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,17 @@
 package java.util;
 
 /**
- * See Sun's JDK 1.4 Javadoc for documentation.
+ * Skeletal implementation for Map implementations.
+ * 
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractMap.html
+ * 
+ * @param <K> the key type.
+ * @param <V> the value type.
  */
-public abstract class AbstractMap implements Map {
+public abstract class AbstractMap<K,V> implements Map<K,V> {
 
-  private static final String MSG_CANNOT_MODIFY = "This map implementation does not support modification";
+  private static final String MSG_CANNOT_MODIFY =
+    "This map implementation does not support modification";
 
   public void clear() {
     entrySet().clear();
@@ -29,11 +35,11 @@ public abstract class AbstractMap implements Map {
   public boolean containsKey(Object key) {
     return implFindEntry(key, false) != null;
   }
-
+  
   public boolean containsValue(Object value) {
-    for (Iterator iter = entrySet().iterator(); iter.hasNext();) {
-      Map.Entry entry = (Map.Entry) iter.next();
-      Object v = entry.getValue();
+    for (Iterator<Entry<K,V>> iter = entrySet().iterator(); iter.hasNext();) {
+      Entry<K,V> entry = iter.next();
+      V v = entry.getValue();
       if (value == null ? v == null : value.equals(v)) {
         return true;
       }
@@ -41,7 +47,7 @@ public abstract class AbstractMap implements Map {
     return false;
   }
 
-  public abstract Set entrySet();
+  public abstract Set<Entry<K,V>> entrySet();
 
   public boolean equals(Object obj) {
     if (obj == this) {
@@ -67,8 +73,8 @@ public abstract class AbstractMap implements Map {
     return true;
   }
 
-  public Object get(Object key) {
-    Map.Entry entry = implFindEntry(key, false);
+  public V get(Object key) {
+    Map.Entry<K,V> entry = implFindEntry(key, false);
     return (entry == null ? null : entry.getValue());
   }
 
@@ -85,22 +91,22 @@ public abstract class AbstractMap implements Map {
     return size() == 0;
   }
 
-  public Set keySet() {
-    final Set entrySet = entrySet();
-    return new AbstractSet() {
+  public Set<K> keySet() {
+    final Set<Entry<K,V>> entrySet = entrySet();
+    return new AbstractSet<K>() {
       public boolean contains(Object key) {
         return containsKey(key);
       }
 
-      public Iterator iterator() {
-        final Iterator outerIter = entrySet.iterator();
-        return new Iterator() {
+      public Iterator<K> iterator() {
+        final Iterator<Entry<K,V>> outerIter = entrySet.iterator();
+        return new Iterator<K>() {
           public boolean hasNext() {
             return outerIter.hasNext();
           }
 
-          public Object next() {
-            Map.Entry entry = (Entry) outerIter.next();
+          public K next() {
+            Map.Entry<K,V> entry = outerIter.next();
             return entry.getKey();
           }
 
@@ -116,19 +122,20 @@ public abstract class AbstractMap implements Map {
     };
   }
 
-  public Object put(Object key, Object value) {
+  public V put(K key, V value) {
     throw new UnsupportedOperationException(MSG_CANNOT_MODIFY);
   }
 
-  public void putAll(Map t) {
-    for (Iterator iter = t.entrySet().iterator(); iter.hasNext();) {
-      Map.Entry e = (Map.Entry) iter.next();
+  public <OK extends K,OV extends V> void putAll(Map<OK,OV> t) {
+    for (Iterator<Entry<OK,OV>> iter
+        = t.entrySet().iterator(); iter.hasNext();) {
+      Entry<OK,OV> e = iter.next();
       put(e.getKey(), e.getValue());
     }
   }
 
-  public Object remove(Object key) {
-    Map.Entry entry = implFindEntry(key, true);
+  public V remove(Object key) {
+    Map.Entry<K,V> entry = implFindEntry(key, true);
     return (entry == null ? null : entry.getValue());
   }
 
@@ -153,22 +160,22 @@ public abstract class AbstractMap implements Map {
     return s + "}";
   }
 
-  public Collection values() {
-    final Set entrySet = entrySet();
-    return new AbstractCollection() {
+  public Collection<V> values() {
+    final Set<Entry<K,V>> entrySet = entrySet();
+    return new AbstractCollection<V>() {
       public boolean contains(Object value) {
         return containsValue(value);
       }
 
-      public Iterator iterator() {
-        final Iterator outerIter = entrySet.iterator();
-        return new Iterator() {
+      public Iterator<V> iterator() {
+        final Iterator<Entry<K,V>> outerIter = entrySet.iterator();
+        return new Iterator<V>() {
           public boolean hasNext() {
             return outerIter.hasNext();
           }
 
-          public Object next() {
-            Object value = ((Entry) outerIter.next()).getValue();
+          public V next() {
+            V value = outerIter.next().getValue();
             return value;
           }
 
@@ -184,10 +191,15 @@ public abstract class AbstractMap implements Map {
     };
   }
 
-  private Map.Entry implFindEntry(Object key, boolean remove) {
-    for (Iterator iter = entrySet().iterator(); iter.hasNext();) {
-      Map.Entry entry = (Map.Entry) iter.next();
-      Object k = entry.getKey();
+  protected Object clone() throws CloneNotSupportedException {
+    // TODO(jat): implement
+    throw new CloneNotSupportedException("clone not supported");
+  }
+
+  private Entry<K,V> implFindEntry(Object key, boolean remove) {
+    for (Iterator<Entry<K,V>> iter = entrySet().iterator(); iter.hasNext();) {
+      Entry<K,V> entry = iter.next();
+      K k = entry.getKey();
       if (key == null ? k == null : key.equals(k)) {
         if (remove) {
           iter.remove();

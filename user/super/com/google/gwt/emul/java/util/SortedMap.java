@@ -16,18 +16,24 @@
 package java.util;
 
 /**
- * See <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Iterator.html">the
- * official Java API doc</a> for details.
+ * A map known to be in ascending order.
  * 
- * @param <E> element type
+ * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/SortedMap.html
+ * 
+ * @param <K> key type.
+ * @param <V> value type.
  */
-public interface Iterator<E> {
+public interface SortedMap<K,V> extends Map<K,V> {
 
-  boolean hasNext();
-
-  E next();
-
-  void remove();
-
+  public Comparator<? super K> comparator();
+  
+  public K firstKey();
+  
+  public SortedMap<K,V> headMap(K toKey);
+  
+  public K lastKey();
+  
+  public SortedMap<K,V> subMap(K fromKey, K toKey);
+  
+  public SortedMap<K,V> tailMap(K fromKey);
 }

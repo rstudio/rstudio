@@ -19,15 +19,17 @@ import com.google.gwt.lang.Array;
 
 /**
  * Abstract base class for collection implementations.
+ * 
+ * @param <E> the element type.
  */
-public abstract class AbstractCollection implements Collection {
+public abstract class AbstractCollection<E> implements Collection<E> {
 
-  public boolean add(Object o) {
+  public boolean add(E o) {
     throw new UnsupportedOperationException("add");
   }
 
-  public boolean addAll(Collection c) {
-    Iterator iter = c.iterator();
+  public boolean addAll(Collection<? extends E> c) {
+    Iterator<? extends E> iter = c.iterator();
     boolean changed = false;
     while (iter.hasNext()) {
       if (add(iter.next())) {
@@ -38,7 +40,7 @@ public abstract class AbstractCollection implements Collection {
   }
 
   public void clear() {
-    Iterator iter = iterator();
+    Iterator<E> iter = iterator();
     while (iter.hasNext()) {
       iter.next();
       iter.remove();
@@ -50,8 +52,8 @@ public abstract class AbstractCollection implements Collection {
     return iter == null ? false : true;
   }
 
-  public boolean containsAll(Collection c) {
-    Iterator iter = c.iterator();
+  public boolean containsAll(Collection<?> c) {
+    Iterator<?> iter = c.iterator();
     while (iter.hasNext()) {
       if (!contains(iter.next())) {
         return false;
@@ -64,10 +66,10 @@ public abstract class AbstractCollection implements Collection {
     return size() == 0;
   }
 
-  public abstract Iterator iterator();
+  public abstract Iterator<E> iterator();
 
   public boolean remove(Object o) {
-    Iterator iter = advanceToFind(iterator(), o);
+    Iterator<E> iter = advanceToFind(iterator(), o);
     if (iter != null) {
       iter.remove();
       return true;
@@ -76,8 +78,8 @@ public abstract class AbstractCollection implements Collection {
     }
   }
 
-  public boolean removeAll(Collection c) {
-    Iterator iter = c.iterator();
+  public boolean removeAll(Collection<?> c) {
+    Iterator<?> iter = c.iterator();
     boolean changed = false;
     while (iter.hasNext()) {
       if (remove(iter.next())) {
@@ -87,8 +89,8 @@ public abstract class AbstractCollection implements Collection {
     return changed;
   }
 
-  public boolean retainAll(Collection c) {
-    Iterator iter = iterator();
+  public boolean retainAll(Collection<?> c) {
+    Iterator<?> iter = iterator();
     boolean changed = false;
     while (iter.hasNext()) {
       if (!c.contains(iter.next())) {
@@ -105,14 +107,15 @@ public abstract class AbstractCollection implements Collection {
     return toArray(new Object[size()]);
   }
 
-  public Object[] toArray(Object[] a) {
+  public <T> T[] toArray(T[] a) {
     int size = size();
     if (a.length < size) {
       a = Array.clonify(a, size);
     }
-    int i = 0;
-    for (Iterator it = iterator(); it.hasNext(); ) {
-      a[i++] = it.next();
+    Object[] result = a;
+    Iterator<E> it = iterator();
+    for (int i = 0; i < size; ++i) {
+      result[i++] = it.next();
     }
     if (a.length > size) {
       a[size] = null;
@@ -137,9 +140,9 @@ public abstract class AbstractCollection implements Collection {
     return sb.toString();
   }
 
-  private Iterator advanceToFind(Iterator iter, Object o) {
+  private <T> Iterator<T> advanceToFind(Iterator<T> iter, Object o) {
     while (iter.hasNext()) {
-      Object t = iter.next();
+      T t = iter.next();
       if (o == null ? t == null : o.equals(t)) {
         return iter;
       }
