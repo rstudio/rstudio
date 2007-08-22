@@ -15,8 +15,6 @@
  */
 package java.lang.annotation;
 
-import java.lang.reflect.Method;
-
 /**
  * Indicates an attempt to access an element of an annotation that has changed
  * since it was compiled or serialized.
@@ -24,22 +22,4 @@ import java.lang.reflect.Method;
  * @link http://java.sun.com/j2se/1.5.0/docs/api/java/lang/annotation/AnnotationTypeMismatchException.html
  */
 public class AnnotationTypeMismatchException extends RuntimeException {
-
-  private Method element;
-  private String foundType;
-  
-  public AnnotationTypeMismatchException(Method element, String foundType) {
-    super("Annotation mismatch: found type " + foundType + " on " + element);
-    this.element = element;
-    this.foundType = foundType;
-  }
-
-  public Method element() {
-    return element;
-  }
-  
-  public String foundType() {
-    return foundType;
-  }
-
 }
