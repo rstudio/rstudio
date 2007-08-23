@@ -878,7 +878,7 @@ public class Booklet {
 
     // Check for HTML links
     if (seeTag.text().startsWith("<")) {
-      text(seeTag.text());
+      // TODO: ignore for now
       return;
     }
     // Ordered: most-specific to least-specific
