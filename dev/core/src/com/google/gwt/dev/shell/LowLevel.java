@@ -37,7 +37,7 @@ public class LowLevel {
   /**
    * Clobbers a field on an object to which we do not have access.
    */
-  public static void clobberFieldObjectValue(Class victimClass,
+  public static void clobberFieldObjectValue(Class<?> victimClass,
       Object victimObject, String fieldName, Object value) {
     Throwable rethrow = null;
     try {
@@ -151,7 +151,7 @@ public class LowLevel {
   /**
    * Snatches a field from an object to which we do not have access.
    */
-  public static Object snatchFieldObjectValue(Class victimClass,
+  public static Object snatchFieldObjectValue(Class<?> victimClass,
       Object victimObject, String fieldName) {
     Throwable rethrow = null;
     try {
@@ -190,8 +190,9 @@ public class LowLevel {
   private static native int _newGlobalRefInt(Object o);
 
   private static native Object _objFromGlobalRefInt(int globalRef);
+
   // CHECKSTYLE_NAMING_ON
-  
+
   /**
    * This class is not instantiable.
    */

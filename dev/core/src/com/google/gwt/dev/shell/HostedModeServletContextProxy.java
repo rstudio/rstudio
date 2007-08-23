@@ -59,7 +59,7 @@ class HostedModeServletContextProxy implements ServletContext {
    * @return
    * @see javax.servlet.ServletContext#getAttributeNames()
    */
-  public Enumeration getAttributeNames() {
+  public Enumeration<String> getAttributeNames() {
     return context.getAttributeNames();
   }
 
@@ -85,7 +85,7 @@ class HostedModeServletContextProxy implements ServletContext {
    * @return
    * @see javax.servlet.ServletContext#getInitParameterNames()
    */
-  public Enumeration getInitParameterNames() {
+  public Enumeration<?> getInitParameterNames() {
     return context.getInitParameterNames();
   }
 
@@ -156,7 +156,7 @@ class HostedModeServletContextProxy implements ServletContext {
     if (url == null) {
       File requestedFile = new File(outputDir, path);
       if (requestedFile.exists()) {
-        url = requestedFile.toURL();
+        url = requestedFile.toURI().toURL();
       }
     }
 
@@ -190,7 +190,7 @@ class HostedModeServletContextProxy implements ServletContext {
    * @return
    * @see javax.servlet.ServletContext#getResourcePaths(java.lang.String)
    */
-  public Set getResourcePaths(String path) {
+  public Set<String> getResourcePaths(String path) {
     return context.getResourcePaths(path);
   }
 
@@ -209,6 +209,7 @@ class HostedModeServletContextProxy implements ServletContext {
    * @deprecated
    * @see javax.servlet.ServletContext#getServlet(java.lang.String)
    */
+  @Deprecated
   public Servlet getServlet(String arg0) throws ServletException {
     return context.getServlet(arg0);
   }
@@ -226,7 +227,8 @@ class HostedModeServletContextProxy implements ServletContext {
    * @deprecated
    * @see javax.servlet.ServletContext#getServletNames()
    */
-  public Enumeration getServletNames() {
+  @Deprecated
+  public Enumeration<String> getServletNames() {
     return context.getServletNames();
   }
 
@@ -235,7 +237,8 @@ class HostedModeServletContextProxy implements ServletContext {
    * @deprecated
    * @see javax.servlet.ServletContext#getServlets()
    */
-  public Enumeration getServlets() {
+  @Deprecated
+  public Enumeration<Servlet> getServlets() {
     return context.getServlets();
   }
 
@@ -246,6 +249,7 @@ class HostedModeServletContextProxy implements ServletContext {
    * @see javax.servlet.ServletContext#log(java.lang.Exception,
    *      java.lang.String)
    */
+  @Deprecated
   public void log(Exception arg0, String arg1) {
     context.log(arg0, arg1);
   }
@@ -261,8 +265,7 @@ class HostedModeServletContextProxy implements ServletContext {
   /**
    * @param arg0
    * @param arg1
-   * @see javax.servlet.ServletContext#log(java.lang.String,
-   *      java.lang.Throwable)
+   * @see javax.servlet.ServletContext#log(java.lang.String,java.lang.Throwable)
    */
   public void log(String arg0, Throwable arg1) {
     context.log(arg0, arg1);
@@ -279,8 +282,7 @@ class HostedModeServletContextProxy implements ServletContext {
   /**
    * @param arg0
    * @param arg1
-   * @see javax.servlet.ServletContext#setAttribute(java.lang.String,
-   *      java.lang.Object)
+   * @see javax.servlet.ServletContext#setAttribute(java.lang.String,java.lang.Object)
    */
   public void setAttribute(String arg0, Object arg1) {
     context.setAttribute(arg0, arg1);

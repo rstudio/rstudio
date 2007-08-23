@@ -49,12 +49,12 @@ public final class CompilingClassLoader extends ClassLoader {
     /**
      * Class identifier to DispatchClassInfo mapping.
      */
-    private final ArrayList classIdToClassInfo = new ArrayList();
+    private final ArrayList<DispatchClassInfo> classIdToClassInfo = new ArrayList<DispatchClassInfo>();
 
     /**
      * Binary or source class name to DispatchClassInfo map.
      */
-    private final Map classNameToClassInfo = new HashMap();
+    private final Map<String, DispatchClassInfo> classNameToClassInfo = new HashMap<String, DispatchClassInfo>();
 
     /**
      * Clears out the contents of this oracle.
@@ -73,7 +73,7 @@ public final class CompilingClassLoader extends ClassLoader {
     public synchronized DispatchClassInfo getClassInfoByDispId(int dispId) {
       int classId = extractClassIdFromDispId(dispId);
 
-      return (DispatchClassInfo) classIdToClassInfo.get(classId);
+      return classIdToClassInfo.get(classId);
     }
 
     /**
@@ -141,7 +141,7 @@ public final class CompilingClassLoader extends ClassLoader {
      * @return {@link java.lang.Class} instance or null if the given binary
      *         class name could not be found
      */
-    private Class getClassFromBinaryName(String binaryClassName) {
+    private Class<?> getClassFromBinaryName(String binaryClassName) {
       try {
         return Class.forName(binaryClassName, true, CompilingClassLoader.this);
       } catch (ClassNotFoundException e) {
@@ -156,7 +156,7 @@ public final class CompilingClassLoader extends ClassLoader {
      * @param className binary or source name
      * @return {@link java.lang.Class} instance, if found, or null
      */
-    private Class getClassFromBinaryOrSourceName(String className) {
+    private Class<?> getClassFromBinaryOrSourceName(String className) {
       // Try the type oracle first
       JClassType type = typeOracle.findType(className.replace('$', '.'));
       if (type != null) {
@@ -181,13 +181,13 @@ public final class CompilingClassLoader extends ClassLoader {
      */
     private DispatchClassInfo getClassInfoFromClassName(String className) {
 
-      DispatchClassInfo dispClassInfo = (DispatchClassInfo) classNameToClassInfo.get(className);
+      DispatchClassInfo dispClassInfo = classNameToClassInfo.get(className);
       if (dispClassInfo != null) {
         // return the cached value
         return dispClassInfo;
       }
 
-      Class cls = getClassFromBinaryOrSourceName(className);
+      Class<?> cls = getClassFromBinaryOrSourceName(className);
       if (cls == null) {
         /*
          * default to return null; mask the specific error and let the caller
@@ -196,16 +196,14 @@ public final class CompilingClassLoader extends ClassLoader {
         return null;
       }
 
-      if (dispClassInfo == null) {
-        /*
-         * we need to create a new DispatchClassInfo since we have never seen
-         * this class before under any source or binary class name
-         */
-        int classId = classIdToClassInfo.size();
+      /*
+       * we need to create a new DispatchClassInfo since we have never seen this
+       * class before under any source or binary class name
+       */
+      int classId = classIdToClassInfo.size();
 
-        dispClassInfo = new DispatchClassInfo(cls, classId);
-        classIdToClassInfo.add(dispClassInfo);
-      }
+      dispClassInfo = new DispatchClassInfo(cls, classId);
+      classIdToClassInfo.add(dispClassInfo);
 
       /*
        * Whether we created a new DispatchClassInfo or not, we need to add a
@@ -234,7 +232,7 @@ public final class CompilingClassLoader extends ClassLoader {
 
   private final TreeLogger logger;
 
-  private final Map methodToDispatch = new HashMap();
+  private final Map<Method, Object> methodToDispatch = new HashMap<Method, Object>();
 
   private final TypeOracle typeOracle;
 
@@ -253,7 +251,7 @@ public final class CompilingClassLoader extends ClassLoader {
     // It is referenced only from generated code and GWT.create.
     //
     for (int i = 0; i < CacheManager.BOOTSTRAP_CLASSES.length; i++) {
-      Class clazz = CacheManager.BOOTSTRAP_CLASSES[i];
+      Class<?> clazz = CacheManager.BOOTSTRAP_CLASSES[i];
       String className = clazz.getName();
       try {
         String path = clazz.getName().replace('.', '/').concat(".class");
@@ -311,7 +309,8 @@ public final class CompilingClassLoader extends ClassLoader {
     }
   }
 
-  protected synchronized Class findClass(String className)
+  @Override
+  protected synchronized Class<?> findClass(String className)
       throws ClassNotFoundException {
     if (className == null) {
       throw new ClassNotFoundException("null class name",

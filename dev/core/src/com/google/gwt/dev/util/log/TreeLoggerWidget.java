@@ -72,6 +72,7 @@ public class TreeLoggerWidget extends Composite implements TreeListener,
     tree.addSelectionListener(this);
     tree.setFocus();
     tree.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (e.keyCode == 'c' && e.stateMask == SWT.CTRL) {
           // Copy subtree to clipboard.

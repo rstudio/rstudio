@@ -76,7 +76,7 @@ public class JsniInjector {
   /**
    * A chunk of replacement text and where to put it.
    */
-  private static class Replacement implements Comparable {
+  private static class Replacement implements Comparable<Replacement> {
     public final int end;
 
     public final int start;
@@ -89,8 +89,7 @@ public class JsniInjector {
       this.text = text;
     }
 
-    public int compareTo(Object o) {
-      Replacement other = (Replacement) o;
+    public int compareTo(Replacement other) {
       if (start < other.start) {
         assert (end <= other.start) : "Overlapping changes not supported";
         return -1;
@@ -107,7 +106,7 @@ public class JsniInjector {
 
   private CoreTypes coreTypes;
 
-  private final Map parsedJsByMethod = new IdentityHashMap();
+  private final Map<JMethod, JsBlock> parsedJsByMethod = new IdentityHashMap<JMethod, JsBlock>();
 
   public JsniInjector(TypeOracle oracle) {
     this.oracle = oracle;
@@ -128,14 +127,14 @@ public class JsniInjector {
     // Analyze the source and build a list of changes.
     //
     char[] source = cup.getSource();
-    List changes = new ArrayList();
+    List<Replacement> changes = new ArrayList<Replacement>();
     rewriteCompilationUnit(logger, source, changes, cup);
 
     // Sort and apply the changes.
     //
     int n = changes.size();
     if (n > 0) {
-      Replacement[] repls = (Replacement[]) changes.toArray(new Replacement[n]);
+      Replacement[] repls = changes.toArray(new Replacement[n]);
       Arrays.sort(repls);
       StringCopier copier = new StringCopier(source);
       for (int i = 0; i < n; ++i) {
@@ -170,7 +169,7 @@ public class JsniInjector {
     for (int i = 0; i < methods.length; ++i) {
       JMethod method = methods[i];
 
-      JsBlock jsniBody = (JsBlock) parsedJsByMethod.get(method);
+      JsBlock jsniBody = parsedJsByMethod.get(method);
       if (jsniBody == null) {
         // Not a JSNI method.
         //
@@ -313,8 +312,8 @@ public class JsniInjector {
     JType[] throwTypes = method.getThrows();
     for (int i = 0; i < throwTypes.length; ++i) {
       String typeName = throwTypes[i].getQualifiedSourceName();
-      sb.append("if (__gwt_exception instanceof " + typeName + ") throw (" + typeName
-          + ") __gwt_exception;");
+      sb.append("if (__gwt_exception instanceof " + typeName + ") throw ("
+          + typeName + ") __gwt_exception;");
     }
     sb.append("throw new java.lang.RuntimeException(\"Undeclared checked exception thrown out of JavaScript; web mode behavior may differ.\", __gwt_exception);");
     sb.append("}");
@@ -361,7 +360,7 @@ public class JsniInjector {
   }
 
   private void rewriteCompilationUnit(TreeLogger logger, char[] source,
-      List changes, CompilationUnitProvider cup)
+      List<Replacement> changes, CompilationUnitProvider cup)
       throws UnableToCompleteException {
 
     // Hit all the types in the compilation unit.
@@ -373,14 +372,15 @@ public class JsniInjector {
     }
   }
 
-  private void rewriteType(TreeLogger logger, char[] source, List changes,
-      JClassType type) throws UnableToCompleteException {
+  private void rewriteType(TreeLogger logger, char[] source,
+      List<Replacement> changes, JClassType type)
+      throws UnableToCompleteException {
 
     String loc = type.getCompilationUnit().getLocation();
 
     // Examine each method for JSNIness.
     //
-    List patchedMethods = new ArrayList();
+    List<JMethod> patchedMethods = new ArrayList<JMethod>();
     JMethod[] methods = type.getMethods();
     for (int i = 0; i < methods.length; i++) {
       JMethod method = methods[i];
@@ -427,7 +427,7 @@ public class JsniInjector {
 
     if (!patchedMethods.isEmpty()) {
       JMethod[] patched = new JMethod[patchedMethods.size()];
-      patched = (JMethod[]) patchedMethods.toArray(patched);
+      patched = patchedMethods.toArray(patched);
 
       TreeLogger branch = logger.branch(TreeLogger.SPAM, "Patched methods in '"
           + type.getQualifiedSourceName() + "'", null);

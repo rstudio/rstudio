@@ -35,7 +35,7 @@ import java.util.Map;
  */
 public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
-  private static Map byteCodeCompilersByModule = new HashMap();
+  private static Map<ModuleDef, ByteCodeCompiler> byteCodeCompilersByModule = new HashMap<ModuleDef, ByteCodeCompiler>();
 
   protected final File genDir;
 
@@ -130,7 +130,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
   ByteCodeCompiler getOrCreateByteCodeCompiler(SourceOracle srcOracle) {
     ByteCodeCompiler compiler;
     synchronized (byteCodeCompilersByModule) {
-      compiler = (ByteCodeCompiler) byteCodeCompilersByModule.get(module);
+      compiler = byteCodeCompilersByModule.get(module);
       if (compiler == null) {
         compiler = new ByteCodeCompiler(srcOracle, module.getCacheManager());
         if (ModuleDefLoader.getEnableCachingModules()) {

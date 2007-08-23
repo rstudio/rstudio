@@ -75,9 +75,9 @@ public final class Util {
       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
       'E', 'F'};
 
-  public static void addAll(Collection c, Object[] a) {
-    for (int i = 0; i < a.length; i++) {
-      c.add(a[i]);
+  public static <T> void addAll(Collection<T> c, T[] a) {
+    for (T val : a) {
+      c.add(val);
     }
   }
 
@@ -89,16 +89,15 @@ public final class Util {
     return t;
   }
 
-  public static Object[] append(Object[] xs, Object x) {
+  public static <T> T[] append(T[] xs, T x) {
     int n = xs.length;
-    Object[] t = (Object[]) Array.newInstance(xs.getClass().getComponentType(),
-        n + 1);
+    T[] t = (T[]) Array.newInstance(xs.getClass().getComponentType(), n + 1);
     System.arraycopy(xs, 0, t, 0, n);
     t[n] = x;
     return t;
   }
 
-  public static Object[] append(Object[] appendToThis, Object[] these) {
+  public static <T> T[] append(T[] appendToThis, T[] these) {
     if (appendToThis == null) {
       throw new NullPointerException("attempt to append to a null array");
     }
@@ -107,10 +106,10 @@ public final class Util {
       throw new NullPointerException("attempt to append a null array");
     }
 
-    Object[] result;
+    T[] result;
     int newSize = appendToThis.length + these.length;
-    Class componentType = appendToThis.getClass().getComponentType();
-    result = (Object[]) Array.newInstance(componentType, newSize);
+    Class<?> componentType = appendToThis.getClass().getComponentType();
+    result = (T[]) Array.newInstance(componentType, newSize);
     System.arraycopy(appendToThis, 0, result, 0, appendToThis.length);
     System.arraycopy(these, 0, result, appendToThis.length, these.length);
     return result;
@@ -294,7 +293,7 @@ public final class Util {
    * @param cls A class whose name you want.
    * @return The base name for the specified class.
    */
-  public static String getClassName(Class cls) {
+  public static String getClassName(Class<?> cls) {
     return getClassName(cls.getName());
   }
 
@@ -337,8 +336,8 @@ public final class Util {
    * @param target the receiver of the method call
    * @param arguments the parameters to the method call
    */
-  public static void invokeInaccessableMethod(Class targetClass,
-      String methodName, Class[] argumentTypes, TypeOracle target,
+  public static void invokeInaccessableMethod(Class<?> targetClass,
+      String methodName, Class<?>[] argumentTypes, TypeOracle target,
       Object[] arguments) {
     String failedReflectErrMsg = "The definition of " + targetClass.getName()
         + "." + methodName + " has changed in an " + "incompatible way.";
@@ -566,7 +565,6 @@ public final class Util {
       fileReader = new InputStreamReader(new FileInputStream(file),
           DEFAULT_ENCODING);
       int length = (int) file.length();
-      char[] data = new char[length];
       if (length < 0) {
         return null;
       }
@@ -592,7 +590,7 @@ public final class Util {
 
   public static String readFileAsString(File file) {
     try {
-      URL toURL = file.toURL();
+      URL toURL = file.toURI().toURL();
       char[] buf = readURLAsChars(toURL);
       if (buf == null) {
         return null;
@@ -721,7 +719,7 @@ public final class Util {
     return new File(file.getParentFile(), name);
   }
 
-  public static Object[] removeNulls(Object[] a) {
+  public static <T> T[] removeNulls(T[] a) {
     int n = a.length;
     for (int i = 0; i < a.length; i++) {
       if (a[i] == null) {
@@ -729,8 +727,8 @@ public final class Util {
       }
     }
 
-    Class componentType = a.getClass().getComponentType();
-    Object[] t = (Object[]) Array.newInstance(componentType, n);
+    Class<?> componentType = a.getClass().getComponentType();
+    T[] t = (T[]) Array.newInstance(componentType, n);
     int out = 0;
     for (int in = 0; in < t.length; in++) {
       if (a[in] != null) {
@@ -753,13 +751,17 @@ public final class Util {
   }
 
   /**
-   * Creates an array from a collection of the speciifed component type and
+   * Creates an array from a collection of the specified component type and
    * size. You can definitely downcast the result to T[] if T is the specified
    * component type.
+   * 
+   * Class<? super T> is used to allow creation of generic types, such as
+   * Map.Entry<K,V> since we can only pass in Map.Entry.class.
    */
-  public static Object[] toArray(Class componentType, Collection coll) {
+  public static <T> T[] toArray(Class<? super T> componentType,
+      Collection<? extends T> coll) {
     int n = coll.size();
-    Object[] a = (Object[]) Array.newInstance(componentType, n);
+    T[] a = (T[]) Array.newInstance(componentType, n);
     return coll.toArray(a);
   }
 
@@ -767,11 +769,12 @@ public final class Util {
    * Like {@link #toArray(Class, Collection)}, but the option of having the
    * array reversed.
    */
-  public static Object[] toArrayReversed(Class componentType, Collection coll) {
+  public static <T> T[] toArrayReversed(Class<? super T> componentType,
+      Collection<? extends T> coll) {
     int n = coll.size();
-    Object[] a = (Object[]) Array.newInstance(componentType, n);
+    T[] a = (T[]) Array.newInstance(componentType, n);
     int i = n - 1;
-    for (Iterator iter = coll.iterator(); iter.hasNext(); --i) {
+    for (Iterator<? extends T> iter = coll.iterator(); iter.hasNext(); --i) {
       a[i] = iter.next();
     }
     return a;
@@ -792,15 +795,15 @@ public final class Util {
       hexString[j++] = Util.HEX_CHARS[(bytes[i] & 0xF0) >> 4];
       hexString[j++] = Util.HEX_CHARS[bytes[i] & 0x0F];
     }
-    
+
     return new String(hexString);
   }
 
   /**
    * Creates a string array from the contents of a collection.
    */
-  public static String[] toStringArray(Collection coll) {
-    return (String[]) toArray(String.class, coll);
+  public static String[] toStringArray(Collection<String> coll) {
+    return toArray(String.class, coll);
   }
 
   public static URL toURL(File f) {

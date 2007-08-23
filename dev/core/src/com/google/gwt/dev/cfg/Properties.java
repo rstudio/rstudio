@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class Properties {
 
-  private final Map map = new HashMap();
+  private final Map<String, Property> map = new HashMap<String, Property>();
 
   private Property[] propertiesLazyArray;
 
@@ -49,10 +49,10 @@ public class Properties {
   }
 
   public Property find(String name) {
-    return (Property) map.get(name);
+    return map.get(name);
   }
 
-  public Iterator iterator() {
+  public Iterator<Property> iterator() {
     return map.values().iterator();
   }
 
@@ -61,9 +61,9 @@ public class Properties {
    */
   public Property[] toArray() {
     if (propertiesLazyArray == null) {
-      Collection properties = map.values();
+      Collection<Property> properties = map.values();
       int n = properties.size();
-      propertiesLazyArray = (Property[]) properties.toArray(new Property[n]);
+      propertiesLazyArray = properties.toArray(new Property[n]);
       Arrays.sort(propertiesLazyArray);
     }
     return propertiesLazyArray;

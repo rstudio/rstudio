@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,12 +36,12 @@ public interface TreeLogger {
      * ERROR, WARN, etc run their constructors before instances can
      * self-initialize.
      */
-    private static Map labelMap;
+    private static Map<String, Type> labelMap;
     private static Type[] typeList;
 
     static {
       // ensure the standard types are actually registered
-      Type type = ERROR;
+      ERROR.toString();
     }
 
     /**
@@ -50,7 +50,7 @@ public interface TreeLogger {
      * @return an array of severity types
      */
     public static Type[] instances() {
-      return (Type[]) typeList.clone();
+      return typeList.clone();
     }
 
     /**
@@ -61,7 +61,7 @@ public interface TreeLogger {
      *         <code>null</code> if no such type exists
      */
     public static Type valueOf(String label) {
-      return (Type) labelMap.get(label.toUpperCase());
+      return labelMap.get(label.toUpperCase());
     }
 
     private final String label;
@@ -73,7 +73,7 @@ public interface TreeLogger {
      */
     private Type(boolean needsAttention, String name, int priority) {
       if (labelMap == null) {
-        labelMap = new HashMap();
+        labelMap = new HashMap<String, Type>();
       }
       if (typeList == null) {
         typeList = new Type[TYPES_COUNT];
@@ -118,6 +118,7 @@ public interface TreeLogger {
       return needsAttention;
     }
 
+    @Override
     public String toString() {
       return label;
     }

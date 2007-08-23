@@ -29,11 +29,17 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class PlatformSpecific {
 
+  /**
+   * All of these classes must extend BrowserWidget.
+   */
   private static final String[] browserClassNames = new String[] {
       "com.google.gwt.dev.shell.ie.BrowserWidgetIE6",
       "com.google.gwt.dev.shell.moz.BrowserWidgetMoz",
       "com.google.gwt.dev.shell.mac.BrowserWidgetSaf"};
 
+  /**
+   * All of these classes must extend CheckForUpdates.
+   */
   private static final String[] updaterClassNames = new String[] {
       "com.google.gwt.dev.shell.ie.CheckForUpdatesIE6",
       "com.google.gwt.dev.shell.moz.CheckForUpdatesMoz",
@@ -45,13 +51,12 @@ public class PlatformSpecific {
     Throwable caught = null;
     try {
       for (int i = 0; i < browserClassNames.length; i++) {
-        Class clazz = null;
+        Class<BrowserWidget> clazz = null;
         try {
-          clazz = Class.forName(browserClassNames[i]);
-          Constructor ctor = clazz.getDeclaredConstructor(new Class[] {
+          clazz = (Class<BrowserWidget>) Class.forName(browserClassNames[i]);
+          Constructor<BrowserWidget> ctor = clazz.getDeclaredConstructor(new Class[] {
               Shell.class, BrowserWidgetHost.class});
-          BrowserWidget bw = (BrowserWidget) ctor.newInstance(new Object[] {
-              parent, host});
+          BrowserWidget bw = ctor.newInstance(new Object[] {parent, host});
           return bw;
         } catch (ClassNotFoundException e) {
           caught = e;
@@ -84,9 +89,9 @@ public class PlatformSpecific {
     try {
       for (int i = 0; i < updaterClassNames.length; i++) {
         try {
-          Class clazz = Class.forName(updaterClassNames[i]);
-          Constructor ctor = clazz.getDeclaredConstructor(new Class[] {});
-          CheckForUpdates checker = (CheckForUpdates) ctor.newInstance(new Object[] {});
+          Class<CheckForUpdates> clazz = (Class<CheckForUpdates>) Class.forName(updaterClassNames[i]);
+          Constructor<CheckForUpdates> ctor = clazz.getDeclaredConstructor(new Class[] {});
+          CheckForUpdates checker = ctor.newInstance(new Object[] {});
           return checker;
         } catch (ClassNotFoundException e) {
           // keep trying

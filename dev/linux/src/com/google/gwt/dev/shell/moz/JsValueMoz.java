@@ -38,10 +38,10 @@ public class JsValueMoz extends JsValue {
    * <code>true</code>.
    */
   private static class DebugLogging {
-    private Map alreadyCleanedJsRootedValues = Collections.synchronizedMap(new HashMap());
+    private Map<Integer, Throwable> alreadyCleanedJsRootedValues = Collections.synchronizedMap(new HashMap<Integer, Throwable>());
     private int maxActive = 0;
     private int numActive = 0;
-    private Map seenJsRootedValues = Collections.synchronizedMap(new HashMap());
+    private Map<Integer, Throwable> seenJsRootedValues = Collections.synchronizedMap(new HashMap<Integer, Throwable>());
     private int totAlloc = 0;
 
     /**
@@ -58,7 +58,7 @@ public class JsValueMoz extends JsValue {
     public void createInstance(int jsRootedValue) {
       Integer jsrv = new Integer(jsRootedValue);
       if (seenJsRootedValues.containsKey(jsrv)) {
-        Throwable t = (Throwable) seenJsRootedValues.get(jsrv);
+        Throwable t = seenJsRootedValues.get(jsrv);
         String msg = hexString(jsRootedValue);
         System.err.println(msg + ", original caller stacktrace:");
         t.printStackTrace();
@@ -97,7 +97,7 @@ public class JsValueMoz extends JsValue {
             + ", not active");
       }
       if (alreadyCleanedJsRootedValues.containsKey(jsrv)) {
-        Throwable t = (Throwable) seenJsRootedValues.get(jsrv);
+        Throwable t = seenJsRootedValues.get(jsrv);
         String msg = "Already cleaned 0x" + hexString(jsRootedValue);
         System.err.println(msg + ", original allocator stacktrace:");
         t.printStackTrace();
@@ -275,6 +275,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#getBoolean()
    */
+  @Override
   public boolean getBoolean() {
     return _getBoolean(jsRootedValue);
   }
@@ -284,6 +285,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#getInt()
    */
+  @Override
   public int getInt() {
     return _getInt(jsRootedValue);
   }
@@ -300,6 +302,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#getNumber()
    */
+  @Override
   public double getNumber() {
     return _getNumber(jsRootedValue);
   }
@@ -309,6 +312,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#getString()
    */
+  @Override
   public String getString() {
     return _getString(jsRootedValue);
   }
@@ -318,6 +322,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#getTypeString()
    */
+  @Override
   public String getTypeString() {
     return _getTypeString(jsRootedValue);
   }
@@ -327,6 +332,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#getWrappedJavaObject()
    */
+  @Override
   public Object getWrappedJavaObject() {
     DispatchObject obj = _getWrappedJavaObject(jsRootedValue);
     return obj.getTarget();
@@ -337,6 +343,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#isBoolean()
    */
+  @Override
   public boolean isBoolean() {
     return _isBoolean(jsRootedValue);
   }
@@ -346,6 +353,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#isInt()
    */
+  @Override
   public boolean isInt() {
     return _isInt(jsRootedValue);
   }
@@ -355,6 +363,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#isJavaScriptObject()
    */
+  @Override
   public boolean isJavaScriptObject() {
     return _isJavaScriptObject(jsRootedValue);
   }
@@ -364,6 +373,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#isNull()
    */
+  @Override
   public boolean isNull() {
     return _isNull(jsRootedValue);
   }
@@ -373,6 +383,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#isNumber()
    */
+  @Override
   public boolean isNumber() {
     return _isNumber(jsRootedValue);
   }
@@ -382,6 +393,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#isString()
    */
+  @Override
   public boolean isString() {
     // String objects are acceptable for String value returns
     return _isString(jsRootedValue) || _isJavaScriptString(jsRootedValue);
@@ -392,6 +404,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#isUndefined()
    */
+  @Override
   public boolean isUndefined() {
     return _isUndefined(jsRootedValue);
   }
@@ -401,6 +414,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#isWrappedJavaObject()
    */
+  @Override
   public boolean isWrappedJavaObject() {
     return _isWrappedJavaObject(jsRootedValue);
   }
@@ -410,6 +424,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#setBoolean(boolean)
    */
+  @Override
   public void setBoolean(boolean val) {
     _setBoolean(jsRootedValue, val);
   }
@@ -421,6 +436,7 @@ public class JsValueMoz extends JsValue {
    * 
    * TODO(jat): remove this method
    */
+  @Override
   public void setByte(byte val) {
     _setInt(jsRootedValue, val);
   }
@@ -432,6 +448,7 @@ public class JsValueMoz extends JsValue {
    * 
    * TODO(jat): remove this method
    */
+  @Override
   public void setChar(char val) {
     _setInt(jsRootedValue, val);
   }
@@ -441,6 +458,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#setDouble(double)
    */
+  @Override
   public void setDouble(double val) {
     _setDouble(jsRootedValue, val);
   }
@@ -450,6 +468,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#setInt(int)
    */
+  @Override
   public void setInt(int val) {
     _setInt(jsRootedValue, val);
   }
@@ -459,6 +478,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#setNull()
    */
+  @Override
   public void setNull() {
     _setNull(jsRootedValue);
   }
@@ -470,6 +490,7 @@ public class JsValueMoz extends JsValue {
    * 
    * TODO(jat): remove this method
    */
+  @Override
   public void setShort(short val) {
     _setInt(jsRootedValue, val);
   }
@@ -479,6 +500,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#setString(java.lang.String)
    */
+  @Override
   public void setString(String val) {
     _setString(jsRootedValue, val);
   }
@@ -488,6 +510,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#setUndefined()
    */
+  @Override
   public void setUndefined() {
     _setUndefined(jsRootedValue);
   }
@@ -497,6 +520,7 @@ public class JsValueMoz extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#setValue(com.google.gwt.dev.shell.JsValue)
    */
+  @Override
   public void setValue(JsValue other) {
     _setJsRootedValue(jsRootedValue, ((JsValueMoz) other).jsRootedValue);
   }
@@ -518,6 +542,7 @@ public class JsValueMoz extends JsValue {
    * @see com.google.gwt.dev.shell.JsValue#setWrappedJavaObject(com.google.gwt.dev.shell.CompilingClassLoader,
    *      java.lang.Object)
    */
+  @Override
   public void setWrappedJavaObject(CompilingClassLoader cl, Object val) {
     if (val == null) {
       setNull();
@@ -535,6 +560,7 @@ public class JsValueMoz extends JsValue {
   /**
    * Create a cleanup object that will free the underlying JsRootedValue object.
    */
+  @Override
   protected JsCleanup createCleanupObject() {
     JsCleanup cleanup = new JsCleanupMoz(jsRootedValue);
     if (debugFlag) {

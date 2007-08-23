@@ -528,14 +528,13 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   public V remove(Object key) {
     V previous;
     if (key instanceof String) {
       previous = removeStringValue(stringMap, (String) key);
     } else if (key == null) {
       previous = nullSlot;
-      nullSlot = (V) UNDEFINED; // unchecked warning suppressed
+      nullSlot = (V) UNDEFINED;
     } else {
       previous = removeHashValue(hashCodeMap, key, key.hashCode());
     }
@@ -552,11 +551,10 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
     return size;
   }
 
-  @SuppressWarnings("unchecked")
   private void clearImpl() {
     hashCodeMap = JavaScriptObject.createArray();
     stringMap = JavaScriptObject.createObject();
-    nullSlot = (V) UNDEFINED; // unchecked warning suppressed
+    nullSlot = (V) UNDEFINED;
     size = 0;
   }
 

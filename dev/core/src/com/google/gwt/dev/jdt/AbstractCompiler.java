@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,7 +41,6 @@ import org.eclipse.jdt.internal.compiler.problem.DefaultProblemFactory;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -60,21 +59,24 @@ public abstract class AbstractCompiler {
    */
   private class CompilerImpl extends Compiler {
 
+    // TODO: is this used anywhere?
     public HashSet resolved = new HashSet();
 
-    private Set cuds;
+    private Set<CompilationUnitDeclaration> cuds;
 
     public CompilerImpl(INameEnvironment environment,
-        IErrorHandlingPolicy policy, Map settings,
+        IErrorHandlingPolicy policy, Map<String, String> settings,
         ICompilerRequestor requestor, IProblemFactory problemFactory) {
       super(environment, policy, settings, requestor, problemFactory);
     }
 
+    @Override
     public void compile(ICompilationUnit[] sourceUnits) {
       super.compile(sourceUnits);
       cuds = null;
     }
 
+    @Override
     public void process(CompilationUnitDeclaration cud, int index) {
       // super.process(cud, index);
       {
@@ -147,7 +149,7 @@ public abstract class AbstractCompiler {
         // winding its back to ask for the compilation unit from the source
         // oracle.
         //
-        ReferenceBinding type = resolvePossiblyNestedType(typeName);
+        resolvePossiblyNestedType(typeName);
       }
 
       // Optionally remember this cud.
@@ -157,7 +159,8 @@ public abstract class AbstractCompiler {
       }
     }
 
-    private void compile(ICompilationUnit[] units, Set cuds) {
+    private void compile(ICompilationUnit[] units,
+        Set<CompilationUnitDeclaration> cuds) {
       this.cuds = cuds;
       compile(units);
     }
@@ -266,7 +269,7 @@ public abstract class AbstractCompiler {
       // CompilationUnitDeclarations than needed.
       String qname = CharOperation.toString(compoundTypeName);
       if (nameEnvironmentAnswerForTypeName.containsKey(qname)) {
-        return (NameEnvironmentAnswer) (nameEnvironmentAnswerForTypeName.get(qname));
+        return (nameEnvironmentAnswerForTypeName.get(qname));
       }
       TreeLogger logger = threadLogger.branch(TreeLogger.SPAM,
           "Compiler is asking about '" + qname + "'", null);
@@ -353,15 +356,15 @@ public abstract class AbstractCompiler {
 
   private final boolean doGenerateBytes;
 
-  private final Set knownPackages = new HashSet();
+  private final Set<String> knownPackages = new HashSet<String>();
 
-  private final Map nameEnvironmentAnswerForTypeName = new HashMap();
+  private final Map<String, NameEnvironmentAnswer> nameEnvironmentAnswerForTypeName = new HashMap<String, NameEnvironmentAnswer>();
 
   private final SourceOracle sourceOracle;
 
   private final ThreadLocalTreeLoggerProxy threadLogger = new ThreadLocalTreeLoggerProxy();
 
-  private final Map unitsByTypeName = new HashMap();
+  private final Map<String, ICompilationUnit> unitsByTypeName = new HashMap<String, ICompilationUnit>();
 
   protected AbstractCompiler(SourceOracle sourceOracle, boolean doGenerateBytes) {
     this.sourceOracle = sourceOracle;
@@ -372,7 +375,7 @@ public abstract class AbstractCompiler {
     IErrorHandlingPolicy pol = DefaultErrorHandlingPolicies.proceedWithAllProblems();
     IProblemFactory probFact = new DefaultProblemFactory(Locale.getDefault());
     ICompilerRequestor req = new ICompilerRequestorImpl();
-    Map settings = new HashMap();
+    Map<String, String> settings = new HashMap<String, String>();
     settings.put(CompilerOptions.OPTION_LineNumberAttribute,
         CompilerOptions.GENERATE);
     settings.put(CompilerOptions.OPTION_SourceFileAttribute,
@@ -400,7 +403,8 @@ public abstract class AbstractCompiler {
     compiler = new CompilerImpl(env, pol, settings, req, probFact);
   }
 
-  public void invalidateUnitsInFiles(Set fileNames, Set typeNames) {
+  public void invalidateUnitsInFiles(Set<String> fileNames,
+      Set<String> typeNames) {
     // StandardSourceOracle has its own cache that needs to be cleared
     // out. Short of modifying the interface SourceOracle to have an
     // invalidateCups, this check is needed.
@@ -408,8 +412,7 @@ public abstract class AbstractCompiler {
       StandardSourceOracle sso = (StandardSourceOracle) sourceOracle;
       sso.invalidateCups(typeNames);
     }
-    for (Iterator iter = typeNames.iterator(); iter.hasNext();) {
-      String qname = (String) iter.next();
+    for (String qname : typeNames) {
       unitsByTypeName.remove(qname);
       nameEnvironmentAnswerForTypeName.remove(qname);
     }
@@ -421,11 +424,11 @@ public abstract class AbstractCompiler {
     // pulled in while procssing compilation units. See CompilerImpl.process().
     //
     threadLogger.set(logger);
-    Set cuds = new HashSet();
+    Set<CompilationUnitDeclaration> cuds = new HashSet<CompilationUnitDeclaration>();
     compiler.compile(units, cuds);
     int size = cuds.size();
     CompilationUnitDeclaration[] cudArray = new CompilationUnitDeclaration[size];
-    return (CompilationUnitDeclaration[]) cuds.toArray(cudArray);
+    return cuds.toArray(cudArray);
   }
 
   protected void doAcceptResult(CompilationResult result) {
@@ -467,7 +470,7 @@ public abstract class AbstractCompiler {
 
     // Check the cache.
     //
-    ICompilationUnit unit = (ICompilationUnit) unitsByTypeName.get(top);
+    ICompilationUnit unit = unitsByTypeName.get(top);
     if (unit != null) {
       return unit;
     }

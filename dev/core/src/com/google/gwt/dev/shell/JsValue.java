@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.shell;
 
-import java.util.Iterator;
 import java.util.Vector;
 
 /**
@@ -23,11 +22,11 @@ import java.util.Vector;
  * 
  * Note that in general the various get*() methods will return
  * platform-independent values only if the corresponding is*() method returns
- * true.  In some cases, an IllegalStateException may be thrown if the
- * JavaScript value is not of the appropriate type or bogus values may be
- * returned.  Note that getString will try very hard to return a reasonable
- * result for any value, but it is intended only for human consumption and the
- * exact format for anything besides a string value cannot be relied upon.
+ * true. In some cases, an IllegalStateException may be thrown if the JavaScript
+ * value is not of the appropriate type or bogus values may be returned. Note
+ * that getString will try very hard to return a reasonable result for any
+ * value, but it is intended only for human consumption and the exact format for
+ * anything besides a string value cannot be relied upon.
  */
 public abstract class JsValue {
 
@@ -46,7 +45,7 @@ public abstract class JsValue {
   /**
    * A queue of JsCleanup objects ready to be released by the main thread.
    */
-  private static Vector toBeReleased = new Vector();
+  private static Vector<JsCleanup> toBeReleased = new Vector<JsCleanup>();
 
   private static final Object toBeReleasedLock = new Object();
 
@@ -56,13 +55,12 @@ public abstract class JsValue {
    */
   public static void mainThreadCleanup() {
     checkThread();
-    Vector temp;
+    Vector<JsCleanup> temp;
     synchronized (toBeReleasedLock) {
       temp = toBeReleased;
-      toBeReleased = new Vector();
+      toBeReleased = new Vector<JsCleanup>();
     }
-    for (Iterator iter = temp.iterator(); iter.hasNext();) {
-      JsCleanup cleanup = (JsCleanup) iter.next();
+    for (JsCleanup cleanup : temp) {
       cleanup.doCleanup();
     }
     temp.clear();
@@ -91,42 +89,41 @@ public abstract class JsValue {
   }
 
   /**
-   * Get the value of the object as a boolean.  May attempt to convert the
-   * value to a boolean if it is not a boolean.
+   * Get the value of the object as a boolean. May attempt to convert the value
+   * to a boolean if it is not a boolean.
    * 
    * @return the value of the underlying object as a boolean
    */
   public abstract boolean getBoolean();
 
   /**
-   * Get the value of the object as an integer. May attempt to convert the
-   * value to an integer if it is not an integer.
+   * Get the value of the object as an integer. May attempt to convert the value
+   * to an integer if it is not an integer.
    * 
    * @return the value of the underlying object as an int
    */
   public abstract int getInt();
 
   /**
-   * Get the value of the object as a double. May attempt to convert the
-   * value to a double if it is not a double.
+   * Get the value of the object as a double. May attempt to convert the value
+   * to a double if it is not a double.
    * 
    * @return the value of the underlying object as a double
    */
   public abstract double getNumber();
 
   /**
-   * Get the value of the object as a string.  Tries very hard to return a
-   * reasonable value for any underyling type, but this should only be used
-   * for human consumption as the exact format is not reliable across platforms. 
+   * Get the value of the object as a string. Tries very hard to return a
+   * reasonable value for any underyling type, but this should only be used for
+   * human consumption as the exact format is not reliable across platforms.
    * 
    * @return the value of the underlying object as a string
    */
   public abstract String getString();
 
   /**
-   * Returns a human-readable string describing the type of the JS object.
-   * This is intended only for human consumption and may vary across
-   * platforms.
+   * Returns a human-readable string describing the type of the JS object. This
+   * is intended only for human consumption and may vary across platforms.
    */
   public abstract String getTypeString();
 
@@ -272,6 +269,7 @@ public abstract class JsValue {
   /**
    * Produce a string representation of the JsValue.
    */
+  @Override
   public String toString() {
     if (isUndefined()) {
       return "void";
@@ -306,6 +304,7 @@ public abstract class JsValue {
    * resource is freed. A helper object is used to avoid issues with
    * resurrecting this object.
    */
+  @Override
   protected final void finalize() throws Throwable {
     queueCleanup(createCleanupObject());
   }

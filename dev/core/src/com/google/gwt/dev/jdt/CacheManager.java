@@ -63,10 +63,10 @@ public class CacheManager {
    * Maps SourceTypeBindings to their associated types.
    */
   static class Mapper {
-    private final Map map = new IdentityHashMap();
+    private final Map<SourceTypeBinding, JClassType> map = new IdentityHashMap<SourceTypeBinding, JClassType>();
 
     public JClassType get(SourceTypeBinding binding) {
-      JClassType type = (JClassType) map.get(binding);
+      JClassType type = map.get(binding);
       return type;
     }
 
@@ -84,7 +84,7 @@ public class CacheManager {
    * This class is a very simple multi-valued map.
    */
   private static class Dependencies {
-    private Map map = new HashMap();
+    private Map<String, HashSet<String>> map = new HashMap<String, HashSet<String>>();
 
     /**
      * This method adds <code>item</code> to the list stored under
@@ -95,7 +95,7 @@ public class CacheManager {
      */
     private void add(String dependerFilename, String dependeeFilename) {
       if (!map.containsKey(dependeeFilename)) {
-        map.put(dependeeFilename, new HashSet());
+        map.put(dependeeFilename, new HashSet<String>());
       }
 
       get(dependeeFilename).add(dependerFilename);
@@ -107,25 +107,21 @@ public class CacheManager {
      * @param key the key used to access the list.
      * @return the list stored under <code>key</code>
      */
-    private Set get(String filename) {
-      return (Set) map.get(filename);
+    private Set<String> get(String filename) {
+      return map.get(filename);
     }
 
-    private void remove(String filename) {
-      map.remove(filename);
-    }
-
-    private Set transitiveClosure(final String filename) {
+    private Set<String> transitiveClosure(final String filename) {
       String current = filename;
-      TreeSet queue = new TreeSet();
-      Set finished = new HashSet();
+      TreeSet<String> queue = new TreeSet<String>();
+      Set<String> finished = new HashSet<String>();
       queue.add(filename);
       while (true) {
         finished.add(current);
-        Set children = get(current);
+        Set<String> children = get(current);
         if (children != null) {
-          for (Iterator iter = children.iterator(); iter.hasNext();) {
-            String child = (String) iter.next();
+          for (Iterator<String> iter = children.iterator(); iter.hasNext();) {
+            String child = iter.next();
             if (!finished.contains(child)) {
               queue.add(child);
             }
@@ -134,7 +130,7 @@ public class CacheManager {
         if (queue.size() == 0) {
           return finished;
         } else {
-          current = (String) queue.first();
+          current = queue.first();
           queue.remove(current);
         }
       }
@@ -159,17 +155,20 @@ public class CacheManager {
       this.dependencies = dependencies;
     }
 
+    @Override
     public void endVisit(FieldDeclaration fieldDeclaration,
         final MethodScope scope) {
       extractDependenciesFromTypeArgs(fieldDeclaration.javadoc,
-          scope.referenceContext(), true);
+          scope.referenceContext());
     }
 
+    @Override
     public void endVisit(MethodDeclaration methodDeclaration, ClassScope scope) {
       extractDependenciesFromTypeArgs(methodDeclaration.javadoc,
-          scope.referenceContext(), false);
+          scope.referenceContext());
     }
 
+    @Override
     protected void onTypeRef(SourceTypeBinding referencedType,
         CompilationUnitDeclaration unitOfReferrer) {
       // If the referenced type belongs to a compilation unit that
@@ -201,7 +200,7 @@ public class CacheManager {
      * @param isField true if the javadoc is associated with a field
      */
     private void extractDependenciesFromTypeArgs(Javadoc javadoc,
-        final ReferenceContext scope, final boolean isField) {
+        final ReferenceContext scope) {
       if (javadoc == null) {
         return;
       }
@@ -220,7 +219,7 @@ public class CacheManager {
             return;
           }
 
-          Set typeNames = new HashSet();
+          Set<String> typeNames = new HashSet<String>();
 
           /*
            * if the first element starts with a "<" then we assume that no
@@ -233,9 +232,9 @@ public class CacheManager {
 
           extractTypeNamesFromTypeArg(combine(values, startIndex), typeNames);
 
-          Iterator it = typeNames.iterator();
+          Iterator<String> it = typeNames.iterator();
           while (it.hasNext()) {
-            String typeName = (String) it.next();
+            String typeName = it.next();
 
             try {
               ICompilationUnit compilationUnit = astCompiler.getCompilationUnitForType(
@@ -269,7 +268,8 @@ public class CacheManager {
      * @param typeArg a string containing the type args as the user entered them
      * @param typeNames the set of type names referenced in the typeArgs string
      */
-    private void extractTypeNamesFromTypeArg(String typeArg, Set typeNames) {
+    private void extractTypeNamesFromTypeArg(String typeArg,
+        Set<String> typeNames) {
       // Remove all whitespace
       typeArg.replaceAll("\\\\s", "");
 
@@ -288,9 +288,9 @@ public class CacheManager {
    * Caches information using a directory, with an in memory cache to prevent
    * unneeded disk access.
    */
-  private static class DiskCache extends AbstractMap {
+  private static class DiskCache extends AbstractMap<String, Object> {
 
-    private class FileEntry implements Map.Entry {
+    private class FileEntry implements Map.Entry<String, Object> {
 
       private File file;
 
@@ -298,16 +298,16 @@ public class CacheManager {
         this.file = file;
       }
 
-      private FileEntry(Object name) {
-        this(new File(directory, possiblyAddTmpExtension(name)));
+      private FileEntry(String className) {
+        this(new File(directory, possiblyAddTmpExtension(className)));
       }
 
-      private FileEntry(Object name, Object o) {
-        this(new File(directory, possiblyAddTmpExtension(name)));
+      private FileEntry(String className, Object o) {
+        this(new File(directory, possiblyAddTmpExtension(className)));
         setValue(o);
       }
 
-      public Object getKey() {
+      public String getKey() {
         return possiblyRemoveTmpExtension(file.getName());
       }
 
@@ -356,7 +356,7 @@ public class CacheManager {
       }
     }
 
-    private final Map cache = new HashMap();
+    private final Map<String, Object> cache = new HashMap<String, Object>();
 
     // May be set to null after the fact if the cache directory becomes
     // unusable.
@@ -371,25 +371,29 @@ public class CacheManager {
       }
     }
 
+    @Override
     public void clear() {
       cache.clear();
       if (directory != null) {
-        for (Iterator iter = keySet().iterator(); iter.hasNext();) {
+        for (Iterator<String> iter = keySet().iterator(); iter.hasNext();) {
           iter.remove();
         }
       }
     }
 
-    public Set entrySet() {
-      Set out = new HashSet() {
+    @Override
+    public Set<Entry<String, Object>> entrySet() {
+      Set<Entry<String, Object>> out = new HashSet<Entry<String, Object>>() {
+        @Override
         public boolean remove(Object o) {
-          boolean removed = (DiskCache.this.remove(((Entry) o).getKey())) != null;
+          Entry<String, Object> entry = (Entry<String, Object>) o;
+          boolean removed = (DiskCache.this.remove(entry.getKey())) != null;
           super.remove(o);
           return removed;
         }
       };
       out.addAll(cache.entrySet());
-      // No directory means no persistance.
+      // No directory means no persistence.
       if (directory != null) {
         possiblyCreateCacheDirectory();
         // Add files not yet loaded into this cache.
@@ -403,7 +407,7 @@ public class CacheManager {
       return out;
     }
 
-    public Object get(Object key) {
+    public Object get(String key) {
       if (cache.containsKey(key)) {
         return cache.get(key);
       }
@@ -415,8 +419,10 @@ public class CacheManager {
       return value;
     }
 
-    public Set keySet() {
-      Set out = new HashSet() {
+    @Override
+    public Set<String> keySet() {
+      Set<String> out = new HashSet<String>() {
+        @Override
         public boolean remove(Object o) {
           boolean removed = (DiskCache.this.remove(o)) != null;
           super.remove(o);
@@ -424,7 +430,7 @@ public class CacheManager {
         }
       };
       out.addAll(cache.keySet());
-      // No directory means no persistance.
+      // No directory means no persistence.
       if (directory != null) {
         possiblyCreateCacheDirectory();
         // Add files not yet loaded into this cache.
@@ -436,29 +442,32 @@ public class CacheManager {
       return out;
     }
 
-    public Object put(Object key, Object value) {
+    @Override
+    public Object put(String key, Object value) {
       return put(key, value, true);
     }
 
+    @Override
     public Object remove(Object key) {
-      Object out = get(key);
-      // No directory means no persistance.
+      String fileName = (String) key;
+      Object out = get(fileName);
+      // No directory means no persistence.
       if (directory != null) {
         possiblyCreateCacheDirectory();
-        FileEntry e = new FileEntry(key);
+        FileEntry e = new FileEntry(fileName);
         e.remove();
       }
       cache.remove(key);
       return out;
     }
 
-    private long lastModified(Object key) {
+    private long lastModified(String className) {
       if (directory == null) {
         // we have no file on disk to refer to, so should return the same result
         // as if the file did not exist -- namely 0.
         return 0;
       }
-      return new FileEntry(key).lastModified();
+      return new FileEntry(className).lastModified();
     }
 
     /**
@@ -482,7 +491,7 @@ public class CacheManager {
       }
     }
 
-    private Object put(Object key, Object value, boolean persist) {
+    private Object put(String key, Object value, boolean persist) {
       Object out = get(key);
 
       // We use toString to match the string value in FileEntry.
@@ -502,17 +511,17 @@ public class CacheManager {
    * The set of all classes whose bytecode needs to exist as bootstrap bytecode
    * to be taken as given by the bytecode compiler.
    */
-  public static final Class[] BOOTSTRAP_CLASSES = new Class[] {
+  public static final Class<?>[] BOOTSTRAP_CLASSES = new Class<?>[] {
       JavaScriptHost.class, ShellJavaScriptHost.class, ShellGWT.class};
 
   /**
    * The set of bootstrap classes, which are marked transient, but are
    * nevertheless not recompiled each time, as they are bootstrap classes.
    */
-  private static final Set TRANSIENT_CLASS_NAMES;
+  private static final Set<String> TRANSIENT_CLASS_NAMES;
 
   static {
-    TRANSIENT_CLASS_NAMES = new HashSet(BOOTSTRAP_CLASSES.length + 3);
+    TRANSIENT_CLASS_NAMES = new HashSet<String>(BOOTSTRAP_CLASSES.length + 3);
     for (int i = 0; i < BOOTSTRAP_CLASSES.length; i++) {
       TRANSIENT_CLASS_NAMES.add(BOOTSTRAP_CLASSES[i].getName());
     }
@@ -543,7 +552,7 @@ public class CacheManager {
     return className;
   }
 
-  private final Set addedCups = new HashSet();
+  private final Set<CompilationUnitProvider> addedCups = new HashSet<CompilationUnitProvider>();
 
   private final AstCompiler astCompiler;
 
@@ -551,11 +560,11 @@ public class CacheManager {
 
   private final File cacheDir;
 
-  private final Set changedFiles;
+  private final Set<String> changedFiles;
 
-  private final Map cudsByFileName;
+  private final Map<String, CompilationUnitDeclaration> cudsByFileName;
 
-  private final Map cupsByLocation = new HashMap();
+  private final Map<String, CompilationUnitProvider> cupsByLocation = new HashMap<String, CompilationUnitProvider>();
 
   private boolean firstTime = true;
 
@@ -566,19 +575,19 @@ public class CacheManager {
    * TODO: This seems like it should be a Set of CUPs rather than a set of CUP
    * locations.
    */
-  private final Set generatedCupLocations = new HashSet();
+  private final Set<String> generatedCupLocations = new HashSet<String>();
 
   private final Mapper identityMapper = new Mapper();
 
-  private final Set invalidatedTypes = new HashSet();
+  private final Set<String> invalidatedTypes = new HashSet<String>();
 
   private final TypeOracle oracle;
 
-  private final Map timesByLocation = new HashMap();
+  private final Map<String, Long> timesByLocation = new HashMap<String, Long>();
 
   private boolean typeOracleBuilderFirstTime = true;
 
-  private final Map unitsByCup = new HashMap();
+  private final Map<String, ICompilationUnitAdapter> unitsByCup = new HashMap<String, ICompilationUnitAdapter>();
 
   /**
    * Creates a new <code>CacheManager</code>, creating a new
@@ -602,8 +611,8 @@ public class CacheManager {
     } else {
       this.oracle = oracle;
     }
-    changedFiles = new HashSet();
-    cudsByFileName = new HashMap();
+    changedFiles = new HashSet<String>();
+    cudsByFileName = new HashMap<String, CompilationUnitDeclaration>();
     if (cacheDir != null) {
       this.cacheDir = new File(cacheDir);
       this.cacheDir.mkdirs();
@@ -628,8 +637,9 @@ public class CacheManager {
 
   /**
    * Adds the specified {@link CompilationUnitProvider} to the set of CUPs
-   * generated by {@link com.google.gwt.core.ext.Generator Generator}s. Generated
-   * <code>CompilationUnitProviders</code> are not cached across reloads.
+   * generated by {@link com.google.gwt.core.ext.Generator Generator}s.
+   * Generated <code>CompilationUnitProviders</code> are not cached across
+   * reloads.
    */
   public void addGeneratedCup(CompilationUnitProvider generatedCup) {
     assert (generatedCup != null);
@@ -651,8 +661,8 @@ public class CacheManager {
    * account input that may have changed since the last reload.
    */
   public void invalidateVolatileFiles() {
-    for (Iterator iter = addedCups.iterator(); iter.hasNext();) {
-      CompilationUnitProvider cup = (CompilationUnitProvider) iter.next();
+    for (Iterator<CompilationUnitProvider> iter = addedCups.iterator(); iter.hasNext();) {
+      CompilationUnitProvider cup = iter.next();
       if (isGeneratedCup(cup)) {
         iter.remove();
       }
@@ -670,7 +680,7 @@ public class CacheManager {
   boolean acceptIntoCache(TreeLogger logger, String binaryTypeName,
       ByteCode byteCode) {
     synchronized (byteCodeCache) {
-      if (getByteCode(logger, binaryTypeName) == null) {
+      if (getByteCode(binaryTypeName) == null) {
         byteCodeCache.put(binaryTypeName, byteCode, (!byteCode.isTransient()));
         logger.log(TreeLogger.SPAM, "Cached bytecode for " + binaryTypeName,
             null);
@@ -718,14 +728,13 @@ public class CacheManager {
 
     // Find references to type in units that aren't any longer valid.
     //
-    for (Iterator iter = cudsByFileName.values().iterator(); iter.hasNext();) {
-      CompilationUnitDeclaration cud = (CompilationUnitDeclaration) iter.next();
+    for (CompilationUnitDeclaration cud : cudsByFileName.values()) {
       cud.traverse(trv, cud.scope);
     }
 
-    Set toTraverse = new HashSet(changedFiles);
-    for (Iterator iter = toTraverse.iterator(); iter.hasNext();) {
-      String fileName = (String) iter.next();
+    Set<String> toTraverse = new HashSet<String>(changedFiles);
+    for (Iterator<String> iter = toTraverse.iterator(); iter.hasNext();) {
+      String fileName = iter.next();
       changedFiles.addAll(dependencies.transitiveClosure(fileName));
     }
   }
@@ -734,10 +743,10 @@ public class CacheManager {
     if (!unitsByCup.containsKey(cup.getLocation())) {
       unitsByCup.put(cup.getLocation(), new ICompilationUnitAdapter(cup));
     }
-    return (ICompilationUnit) unitsByCup.get(cup.getLocation());
+    return unitsByCup.get(cup.getLocation());
   }
 
-  Set getAddedCups() {
+  Set<CompilationUnitProvider> getAddedCups() {
     return addedCups;
   }
 
@@ -747,9 +756,9 @@ public class CacheManager {
 
   /**
    * Gets the bytecode from the cache, rejecting it if an incompatible change
-   * occured since it was cached.
+   * occurred since it was cached.
    */
-  ByteCode getByteCode(TreeLogger logger, String binaryTypeName) {
+  ByteCode getByteCode(String binaryTypeName) {
     synchronized (byteCodeCache) {
       ByteCode byteCode = (ByteCode) byteCodeCache.get(binaryTypeName);
       // we do not want bytecode created with a different classpath or os or
@@ -772,23 +781,23 @@ public class CacheManager {
     }
   }
 
-  Set getChangedFiles() {
+  Set<String> getChangedFiles() {
     return changedFiles;
   }
 
-  Map getCudsByFileName() {
+  Map<String, CompilationUnitDeclaration> getCudsByFileName() {
     return cudsByFileName;
   }
 
   CompilationUnitProvider getCup(CompilationUnitProvider cup) {
-    return (CompilationUnitProvider) getCupsByLocation().get(cup.getLocation());
+    return getCupsByLocation().get(cup.getLocation());
   }
 
   Object getCupLastUpdateTime(CompilationUnitProvider cup) {
     return getTimesByLocation().get(cup.getLocation());
   }
 
-  Map getCupsByLocation() {
+  Map<String, CompilationUnitProvider> getCupsByLocation() {
     return cupsByLocation;
   }
 
@@ -796,7 +805,7 @@ public class CacheManager {
     return identityMapper;
   }
 
-  Map getTimesByLocation() {
+  Map<String, Long> getTimesByLocation() {
     return timesByLocation;
   }
 
@@ -821,10 +830,9 @@ public class CacheManager {
       changedFiles.addAll(generatedCupLocations);
       addDependentsToChangedFiles();
 
-      for (Iterator iter = changedFiles.iterator(); iter.hasNext();) {
-        String location = (String) iter.next();
-        CompilationUnitProvider cup = (CompilationUnitProvider) getCupsByLocation().get(
-            location);
+      for (Iterator<String> iter = changedFiles.iterator(); iter.hasNext();) {
+        String location = iter.next();
+        CompilationUnitProvider cup = getCupsByLocation().get(location);
         unitsByCup.remove(location);
         Util.invokeInaccessableMethod(TypeOracle.class,
             "invalidateTypesInCompilationUnit",
@@ -864,7 +872,7 @@ public class CacheManager {
 
   boolean removeFromCache(TreeLogger logger, String binaryTypeName) {
     synchronized (byteCodeCache) {
-      if (getByteCode(logger, binaryTypeName) == null) {
+      if (getByteCode(binaryTypeName) == null) {
         logger.log(TreeLogger.SPAM, "Bytecode for " + binaryTypeName
             + " was not cached, so not removing", null);
         return false;
@@ -889,9 +897,9 @@ public class CacheManager {
       return;
     }
     if (isFirstTime()) {
-      Set classNames = byteCodeCache.keySet();
-      for (Iterator iter = classNames.iterator(); iter.hasNext();) {
-        Object className = iter.next();
+      Set<String> classNames = byteCodeCache.keySet();
+      for (Iterator<String> iter = classNames.iterator(); iter.hasNext();) {
+        String className = iter.next();
         ByteCode byteCode = ((ByteCode) (byteCodeCache.get(className)));
         if (byteCode == null) {
           iter.remove();
@@ -901,30 +909,28 @@ public class CacheManager {
         if (TRANSIENT_CLASS_NAMES.contains(qname)) {
           continue;
         }
-        if (byteCode != null) {
-          String location = byteCode.getLocation();
-          if (byteCode.isTransient()) {
-            // GWT transient classes; no need to test.
-            // Either standardGeneratorContext created it
-            // in which case we already know it is invalid
-            // or its something like GWT and it lives.
-            continue;
-          }
-          String fileName = Util.findFileName(location);
-          CompilationUnitDeclaration compilationUnitDeclaration = ((CompilationUnitDeclaration) cudsByFileName.get(location));
-          if (compilationUnitDeclaration == null) {
-            changedFiles.add(location);
-            continue;
-          }
-          long srcLastModified = Long.MAX_VALUE;
-          File srcLocation = new File(fileName);
-          if (srcLocation.exists()) {
-            srcLastModified = srcLocation.lastModified();
-          }
-          long byteCodeLastModified = byteCodeCache.lastModified(className);
-          if (srcLastModified >= byteCodeLastModified) {
-            changedFiles.add(location);
-          }
+        String location = byteCode.getLocation();
+        if (byteCode.isTransient()) {
+          // GWT transient classes; no need to test.
+          // Either standardGeneratorContext created it
+          // in which case we already know it is invalid
+          // or its something like GWT and it lives.
+          continue;
+        }
+        String fileName = Util.findFileName(location);
+        CompilationUnitDeclaration compilationUnitDeclaration = cudsByFileName.get(location);
+        if (compilationUnitDeclaration == null) {
+          changedFiles.add(location);
+          continue;
+        }
+        long srcLastModified = Long.MAX_VALUE;
+        File srcLocation = new File(fileName);
+        if (srcLocation.exists()) {
+          srcLastModified = srcLocation.lastModified();
+        }
+        long byteCodeLastModified = byteCodeCache.lastModified(className);
+        if (srcLastModified >= byteCodeLastModified) {
+          changedFiles.add(location);
         }
       }
       addDependentsToChangedFiles();
@@ -956,18 +962,17 @@ public class CacheManager {
    */
   private void invalidateChangedFiles(TreeLogger logger,
       AbstractCompiler compiler) {
-    Set invalidTypes = new HashSet();
+    Set<String> invalidTypes = new HashSet<String>();
     if (logger.isLoggable(TreeLogger.TRACE)) {
       TreeLogger branch = logger.branch(TreeLogger.TRACE,
           "The following compilation units have changed since "
               + "the last compilation to bytecode", null);
-      for (Iterator iter = changedFiles.iterator(); iter.hasNext();) {
-        String filename = (String) iter.next();
+      for (Iterator<String> iter = changedFiles.iterator(); iter.hasNext();) {
+        String filename = iter.next();
         branch.log(TreeLogger.TRACE, filename, null);
       }
     }
-    for (Iterator iter = byteCodeCache.keySet().iterator(); iter.hasNext();) {
-      Object key = iter.next();
+    for (String key : byteCodeCache.keySet()) {
       ByteCode byteCode = ((ByteCode) (byteCodeCache.get(key)));
       if (byteCode != null) {
         String location = byteCode.getLocation();

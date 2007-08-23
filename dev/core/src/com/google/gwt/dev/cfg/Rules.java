@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,13 +23,13 @@ import java.util.LinkedList;
  */
 public class Rules {
 
-  private final LinkedList list = new LinkedList();
+  private final LinkedList<Rule> list = new LinkedList<Rule>();
 
   public boolean isEmpty() {
     return list.isEmpty();
   }
 
-  public Iterator iterator() {
+  public Iterator<Rule> iterator() {
     return list.iterator();
   }
 

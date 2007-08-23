@@ -62,6 +62,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
    * 
    * @see com.google.gwt.dev.shell.ModuleSpace#dispose()
    */
+  @Override
   public void dispose() {
     SwtGeckoGlue.releaseInt(window);
     super.dispose();
@@ -76,7 +77,8 @@ public class ModuleSpaceMoz extends ModuleSpace {
    * @param args the arguments to be passed
    * @return the return value as a Object.
    */
-  protected JsValue doInvoke(String name, Object jthis, Class[] types,
+  @Override
+  protected JsValue doInvoke(String name, Object jthis, Class<?>[] types,
       Object[] args) {
 
     JsValueMoz jsthis = new JsValueMoz();
@@ -97,6 +99,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
     return returnVal;
   }
 
+  @Override
   protected Object getStaticDispatcher() {
     return new GeckoDispatchAdapter(getIsolatedClassLoader());
   }

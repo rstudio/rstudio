@@ -45,23 +45,23 @@ public class JavaScriptHost {
    * Invoke a native JavaScript function that returns a boolean value.
    */
   public static boolean invokeNativeBoolean(String name, Object jthis,
-      Class[] types, Object[] args) throws Throwable {
+      Class<?>[] types, Object[] args) throws Throwable {
     return sHost.invokeNativeBoolean(name, jthis, types, args);
   }
 
   /**
    * Invoke a native JavaScript function that returns a byte value.
    */
-  public static byte invokeNativeByte(String name, Object jthis, Class[] types,
-      Object[] args) throws Throwable {
+  public static byte invokeNativeByte(String name, Object jthis,
+      Class<?>[] types, Object[] args) throws Throwable {
     return sHost.invokeNativeByte(name, jthis, types, args);
   }
 
   /**
    * Invoke a native JavaScript function that returns a character value.
    */
-  public static char invokeNativeChar(String name, Object jthis, Class[] types,
-      Object[] args) throws Throwable {
+  public static char invokeNativeChar(String name, Object jthis,
+      Class<?>[] types, Object[] args) throws Throwable {
     return sHost.invokeNativeChar(name, jthis, types, args);
   }
 
@@ -69,7 +69,7 @@ public class JavaScriptHost {
    * Invoke a native JavaScript function that returns a double value.
    */
   public static double invokeNativeDouble(String name, Object jthis,
-      Class[] types, Object[] args) throws Throwable {
+      Class<?>[] types, Object[] args) throws Throwable {
     return sHost.invokeNativeDouble(name, jthis, types, args);
   }
 
@@ -77,7 +77,7 @@ public class JavaScriptHost {
    * Invoke a native JavaScript function that returns a float value.
    */
   public static float invokeNativeFloat(String name, Object jthis,
-      Class[] types, Object[] args) throws Throwable {
+      Class<?>[] types, Object[] args) throws Throwable {
     return sHost.invokeNativeFloat(name, jthis, types, args);
   }
 
@@ -85,23 +85,23 @@ public class JavaScriptHost {
    * Invoke a native JavaScript function that returns a handle value.
    */
   public static Object invokeNativeHandle(String name, Object jthis,
-      Class returnType, Class[] types, Object[] args) throws Throwable {
+      Class<?> returnType, Class<?>[] types, Object[] args) throws Throwable {
     return sHost.invokeNativeHandle(name, jthis, returnType, types, args);
   }
 
   /**
    * Invoke a native JavaScript function that returns an integer value.
    */
-  public static int invokeNativeInt(String name, Object jthis, Class[] types,
-      Object[] args) throws Throwable {
+  public static int invokeNativeInt(String name, Object jthis,
+      Class<?>[] types, Object[] args) throws Throwable {
     return sHost.invokeNativeInt(name, jthis, types, args);
   }
 
   /**
    * Invoke a native JavaScript function that returns a long value.
    */
-  public static long invokeNativeLong(String name, Object jthis, Class[] types,
-      Object[] args) throws Throwable {
+  public static long invokeNativeLong(String name, Object jthis,
+      Class<?>[] types, Object[] args) throws Throwable {
     return sHost.invokeNativeLong(name, jthis, types, args);
   }
 
@@ -109,7 +109,7 @@ public class JavaScriptHost {
    * Invoke a native JavaScript function that returns an object value.
    */
   public static Object invokeNativeObject(String name, Object jthis,
-      Class[] types, Object[] args) throws Throwable {
+      Class<?>[] types, Object[] args) throws Throwable {
     return sHost.invokeNativeObject(name, jthis, types, args);
   }
 
@@ -117,7 +117,7 @@ public class JavaScriptHost {
    * Invoke a native JavaScript function that returns a short value.
    */
   public static short invokeNativeShort(String name, Object jthis,
-      Class[] types, Object[] args) throws Throwable {
+      Class<?>[] types, Object[] args) throws Throwable {
     return sHost.invokeNativeShort(name, jthis, types, args);
   }
 
@@ -125,15 +125,15 @@ public class JavaScriptHost {
    * Invoke a native JavaScript function that returns a string value.
    */
   public static String invokeNativeString(String name, Object jthis,
-      Class[] types, Object[] args) throws Throwable {
+      Class<?>[] types, Object[] args) throws Throwable {
     return sHost.invokeNativeString(name, jthis, types, args);
   }
 
   /**
    * Invoke a native JavaScript function that returns no value.
    */
-  public static void invokeNativeVoid(String name, Object jthis, Class[] types,
-      Object[] args) throws Throwable {
+  public static void invokeNativeVoid(String name, Object jthis,
+      Class<?>[] types, Object[] args) throws Throwable {
     sHost.invokeNativeVoid(name, jthis, types, args);
   }
 
@@ -147,7 +147,7 @@ public class JavaScriptHost {
   /**
    * Resolves a deferred binding request and create the requested object.
    */
-  public static Object rebindAndCreate(Class requestedClass) {
+  public static Object rebindAndCreate(Class<?> requestedClass) {
     String className = requestedClass.getName();
     try {
       return sHost.rebindAndCreate(className);

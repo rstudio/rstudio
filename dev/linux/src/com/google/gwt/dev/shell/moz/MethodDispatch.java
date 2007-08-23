@@ -18,6 +18,7 @@ package com.google.gwt.dev.shell.moz;
 import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.shell.JsValue;
 import com.google.gwt.dev.shell.JsValueGlue;
+import com.google.gwt.dev.shell.ModuleSpace;
 import com.google.gwt.dev.shell.moz.LowLevelMoz.DispatchMethod;
 
 import java.lang.reflect.InvocationTargetException;
@@ -58,7 +59,7 @@ class MethodDispatch implements DispatchMethod {
       jsargs[i] = new JsValueMoz(jsargsInt[i]);
     }
     JsValue returnValue = new JsValueMoz(returnValueInt);
-    Class[] paramTypes = method.getParameterTypes();
+    Class<?>[] paramTypes = method.getParameterTypes();
     int argc = paramTypes.length;
     Object args[] = new Object[argc];
     // too many arguments are ok: the extra will be silently ignored
@@ -88,7 +89,7 @@ class MethodDispatch implements DispatchMethod {
       Throwable t = e.getTargetException();
       // TODO(jat): if this was originally JavaScript exception, re-throw the
       // original exception rather than just a null.
-      ModuleSpaceMoz.setThrownJavaException(t);
+      ModuleSpace.setThrownJavaException(t);
       LowLevelMoz.raiseJavaScriptException();
     } catch (IllegalArgumentException e) {
       // TODO(jat): log to treelogger instead? If so, how do I get to it?

@@ -107,7 +107,7 @@ public class TypeOracleBuilder {
     }
     BufferedReader reader = new BufferedReader(new CharArrayReader(comment));
     String activeTag = null;
-    final List tagValues = new ArrayList();
+    final List<String> tagValues = new ArrayList<String>();
     try {
       String line = reader.readLine();
       boolean firstLine = true;
@@ -177,20 +177,21 @@ public class TypeOracleBuilder {
   }
 
   private static void finishTag(HasMetaData hasMetaData, String tagName,
-      List tagValues) {
+      List<String> tagValues) {
     // Add the values even if the list is empty, because the presence of the
     // tag itself might be important.
     // 
-    String[] values = (String[]) tagValues.toArray(Empty.STRINGS);
+    String[] values = tagValues.toArray(Empty.STRINGS);
     hasMetaData.addMetaData(tagName, values);
     tagValues.clear();
   }
 
   private static void removeInfectedUnits(final TreeLogger logger,
-      final Map cudsByFileName) {
+      final Map<String, CompilationUnitDeclaration> cudsByFileName) {
 
-    final Set pendingRemovals = new HashSet();
+    final Set<String> pendingRemovals = new HashSet<String>();
     TypeRefVisitor trv = new TypeRefVisitor() {
+      @Override
       protected void onTypeRef(SourceTypeBinding referencedType,
           CompilationUnitDeclaration unitOfReferrer) {
         // If the referenced type belongs to a compilation unit that is
@@ -198,7 +199,7 @@ public class TypeOracleBuilder {
         // is referenced must also be removed.
         //
         String referencedFn = String.valueOf(referencedType.getFileName());
-        CompilationUnitDeclaration referencedCud = (CompilationUnitDeclaration) cudsByFileName.get(referencedFn);
+        CompilationUnitDeclaration referencedCud = cudsByFileName.get(referencedFn);
         if (referencedCud == null) {
           // This is a referenced to a bad or non-existent unit.
           // So, remove the referrer's unit if it hasn't been already.
@@ -221,8 +222,8 @@ public class TypeOracleBuilder {
     do {
       // Perform any pending removals.
       //
-      for (Iterator iter = pendingRemovals.iterator(); iter.hasNext();) {
-        String fnToRemove = (String) iter.next();
+      for (Iterator<String> iter = pendingRemovals.iterator(); iter.hasNext();) {
+        String fnToRemove = iter.next();
         Object removed = cudsByFileName.remove(fnToRemove);
         assert (removed != null);
       }
@@ -233,20 +234,20 @@ public class TypeOracleBuilder {
 
       // Find references to type in units that aren't valid.
       //
-      for (Iterator iter = cudsByFileName.values().iterator(); iter.hasNext();) {
-        CompilationUnitDeclaration cud = (CompilationUnitDeclaration) iter.next();
+      for (Iterator<CompilationUnitDeclaration> iter = cudsByFileName.values().iterator(); iter.hasNext();) {
+        CompilationUnitDeclaration cud = iter.next();
         cud.traverse(trv, cud.scope);
       }
     } while (!pendingRemovals.isEmpty());
   }
 
   private static void removeUnitsWithErrors(TreeLogger logger,
-      Map cudsByFileName) {
+      Map<String, CompilationUnitDeclaration> cudsByFileName) {
     // Start by removing units with a known problem.
     //
     boolean anyRemoved = false;
-    for (Iterator iter = cudsByFileName.values().iterator(); iter.hasNext();) {
-      CompilationUnitDeclaration cud = (CompilationUnitDeclaration) iter.next();
+    for (Iterator<CompilationUnitDeclaration> iter = cudsByFileName.values().iterator(); iter.hasNext();) {
+      CompilationUnitDeclaration cud = iter.next();
       CompilationResult result = cud.compilationResult;
       IProblem[] errors = result.getErrors();
       if (errors != null && errors.length > 0) {
@@ -309,12 +310,12 @@ public class TypeOracleBuilder {
 
   public TypeOracle build(final TreeLogger logger)
       throws UnableToCompleteException {
-    Set addedCups = cacheManager.getAddedCups();
+    Set<CompilationUnitProvider> addedCups = cacheManager.getAddedCups();
     TypeOracle oracle = cacheManager.getTypeOracle();
     // Make a copy that we can sort.
     //
-    for (Iterator iter = addedCups.iterator(); iter.hasNext();) {
-      CompilationUnitProvider cup = (CompilationUnitProvider) iter.next();
+    for (Iterator<CompilationUnitProvider> iter = addedCups.iterator(); iter.hasNext();) {
+      CompilationUnitProvider cup = iter.next();
       String location = cup.getLocation();
       if (!((location.indexOf("http://") != -1) || (location.indexOf("ftp://") != -1))) {
         location = Util.findFileName(location);
@@ -329,7 +330,7 @@ public class TypeOracleBuilder {
         }
       }
     }
-    CompilationUnitProvider[] cups = (CompilationUnitProvider[]) Util.toArray(
+    CompilationUnitProvider[] cups = Util.toArray(
         CompilationUnitProvider.class, addedCups);
     Arrays.sort(cups, CompilationUnitProvider.LOCATION_COMPARATOR);
 
@@ -358,7 +359,7 @@ public class TypeOracleBuilder {
 
     // Build a list that makes it easy to remove problems.
     //
-    final Map cudsByFileName = new HashMap();
+    final Map<String, CompilationUnitDeclaration> cudsByFileName = new HashMap<String, CompilationUnitDeclaration>();
     for (int i = 0; i < cuds.length; i++) {
       CompilationUnitDeclaration cud = cuds[i];
       char[] location = cud.getFileName();
@@ -372,8 +373,8 @@ public class TypeOracleBuilder {
 
     // Also remove any compilation units that we've seen before.
     //
-    for (Iterator iter = cudsByFileName.values().iterator(); iter.hasNext();) {
-      CompilationUnitDeclaration cud = (CompilationUnitDeclaration) iter.next();
+    for (Iterator<CompilationUnitDeclaration> iter = cudsByFileName.values().iterator(); iter.hasNext();) {
+      CompilationUnitDeclaration cud = iter.next();
       // If we've seen this compilation unit before, the type oracle will
       // tell us about it and so we don't assimilate it again.
       //
@@ -391,22 +392,25 @@ public class TypeOracleBuilder {
     // Perform a shallow pass to establish identity for new types.
     //
     final CacheManager.Mapper identityMapper = cacheManager.getIdentityMapper();
-    for (Iterator iter = cudsByFileName.values().iterator(); iter.hasNext();) {
-      CompilationUnitDeclaration cud = (CompilationUnitDeclaration) iter.next();
+    for (Iterator<CompilationUnitDeclaration> iter = cudsByFileName.values().iterator(); iter.hasNext();) {
+      CompilationUnitDeclaration cud = iter.next();
 
       cud.traverse(new ASTVisitor() {
+        @Override
         public boolean visit(TypeDeclaration typeDecl, BlockScope scope) {
           JClassType enclosingType = identityMapper.get((SourceTypeBinding) typeDecl.binding.enclosingType());
           processType(typeDecl, enclosingType, true);
           return true;
         }
 
+        @Override
         public boolean visit(TypeDeclaration typeDecl, ClassScope scope) {
           JClassType enclosingType = identityMapper.get((SourceTypeBinding) typeDecl.binding.enclosingType());
           processType(typeDecl, enclosingType, false);
           return true;
         }
 
+        @Override
         public boolean visit(TypeDeclaration typeDecl,
             CompilationUnitScope scope) {
           processType(typeDecl, null, false);
@@ -417,8 +421,8 @@ public class TypeOracleBuilder {
 
     // Perform a deep pass to resolve all types in terms of our types.
     //
-    for (Iterator iter = cudsByFileName.values().iterator(); iter.hasNext();) {
-      CompilationUnitDeclaration cud = (CompilationUnitDeclaration) iter.next();
+    for (Iterator<CompilationUnitDeclaration> iter = cudsByFileName.values().iterator(); iter.hasNext();) {
+      CompilationUnitDeclaration cud = iter.next();
       String loc = String.valueOf(cud.getFileName());
       String processing = "Processing types in compilation unit: " + loc;
       final TreeLogger cudLogger = logger.branch(TreeLogger.SPAM, processing,
@@ -426,6 +430,7 @@ public class TypeOracleBuilder {
       final char[] source = cud.compilationResult.compilationUnit.getContents();
 
       cud.traverse(new ASTVisitor() {
+        @Override
         public boolean visit(TypeDeclaration typeDecl, BlockScope scope) {
           if (!resolveTypeDeclaration(cudLogger, source, typeDecl)) {
             String name = String.valueOf(typeDecl.binding.readableName());
@@ -435,6 +440,7 @@ public class TypeOracleBuilder {
           return true;
         }
 
+        @Override
         public boolean visit(TypeDeclaration typeDecl, ClassScope scope) {
           if (!resolveTypeDeclaration(cudLogger, source, typeDecl)) {
             String name = String.valueOf(typeDecl.binding.readableName());
@@ -444,6 +450,7 @@ public class TypeOracleBuilder {
           return true;
         }
 
+        @Override
         public boolean visit(TypeDeclaration typeDecl,
             CompilationUnitScope scope) {
           if (!resolveTypeDeclaration(cudLogger, source, typeDecl)) {
@@ -817,12 +824,12 @@ public class TypeOracleBuilder {
       ParameterizedTypeBinding ptBinding = (ParameterizedTypeBinding) binding;
       return resolveType(logger, ptBinding.erasure());
     }
-    
+
     if (binding instanceof TypeVariableBinding) {
       TypeVariableBinding tvBinding = (TypeVariableBinding) binding;
       return resolveType(logger, tvBinding.erasure());
     }
-    
+
     // Log other cases we know about that don't make sense.
     //
     if (binding instanceof BinaryTypeBinding) {

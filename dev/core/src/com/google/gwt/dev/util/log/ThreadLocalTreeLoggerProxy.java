@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,7 @@ import com.google.gwt.core.ext.TreeLogger;
  */
 public final class ThreadLocalTreeLoggerProxy implements TreeLogger {
 
-  private static final ThreadLocal perThreadLogger = new ThreadLocal();
+  private static final ThreadLocal<TreeLogger> perThreadLogger = new ThreadLocal<TreeLogger>();
 
   public ThreadLocalTreeLoggerProxy() {
     this(null);
@@ -41,7 +41,7 @@ public final class ThreadLocalTreeLoggerProxy implements TreeLogger {
    * Otherwise, the log entry is discarded and <code>this</code> is returned.
    */
   public TreeLogger branch(Type type, String msg, Throwable caught) {
-    TreeLogger logger = (TreeLogger) perThreadLogger.get();
+    TreeLogger logger = perThreadLogger.get();
     if (logger != null) {
       return logger.branch(type, msg, caught);
     } else {
@@ -56,7 +56,7 @@ public final class ThreadLocalTreeLoggerProxy implements TreeLogger {
    *         returns <code>false</code> otherwise
    */
   public boolean isLoggable(Type type) {
-    TreeLogger logger = (TreeLogger) perThreadLogger.get();
+    TreeLogger logger = perThreadLogger.get();
     if (logger != null) {
       return logger.isLoggable(type);
     } else {
@@ -69,7 +69,7 @@ public final class ThreadLocalTreeLoggerProxy implements TreeLogger {
    * the log entry is discarded.
    */
   public void log(Type type, String msg, Throwable caught) {
-    TreeLogger logger = (TreeLogger) perThreadLogger.get();
+    TreeLogger logger = perThreadLogger.get();
     if (logger != null) {
       logger.log(type, msg, caught);
     }

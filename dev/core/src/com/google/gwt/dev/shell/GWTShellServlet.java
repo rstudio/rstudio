@@ -33,7 +33,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import javax.servlet.ServletConfig;
@@ -81,13 +80,13 @@ public class GWTShellServlet extends HttpServlet {
 
   private static final String XHTML_MIME_TYPE = "application/xhtml+xml";
 
-  private final Map loadedModulesByName = new HashMap();
+  private final Map<String, ModuleDef> loadedModulesByName = new HashMap<String, ModuleDef>();
 
-  private final Map loadedServletsByModuleAndClassName = new HashMap();
+  private final Map<String, HttpServlet> loadedServletsByModuleAndClassName = new HashMap<String, HttpServlet>();
 
-  private final Map mimeTypes = new HashMap();
+  private final Map<String, String> mimeTypes = new HashMap<String, String>();
 
-  private final Map modulesByServletPath = new HashMap();
+  private final Map<String, ModuleDef> modulesByServletPath = new HashMap<String, ModuleDef>();
 
   private int nextRequestId;
 
@@ -101,11 +100,13 @@ public class GWTShellServlet extends HttpServlet {
     initMimeTypes();
   }
 
+  @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     processFileRequest(request, response);
   }
 
+  @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     processFileRequest(request, response);
@@ -158,6 +159,7 @@ public class GWTShellServlet extends HttpServlet {
     }
   }
 
+  @Override
   protected void service(HttpServletRequest request,
       HttpServletResponse response) throws ServletException, IOException {
 
@@ -184,7 +186,7 @@ public class GWTShellServlet extends HttpServlet {
       // we're only looking for servlet invocations, which can only happen
       // when we have *already* loaded the destination module to serve up the
       // client code in the first place.
-      moduleDef = (ModuleDef) loadedModulesByName.get(parts.moduleName);
+      moduleDef = loadedModulesByName.get(parts.moduleName);
       if (moduleDef != null) {
         // Okay, we know this module. Do we know this servlet path?
         // It is right to prepend the slash because (1) ModuleDefSchema requires
@@ -206,7 +208,7 @@ public class GWTShellServlet extends HttpServlet {
       // Try to map a bare path that isn't preceded by the module name.
       // This is no longer the recommended practice, so we warn.
       String path = request.getPathInfo();
-      moduleDef = (ModuleDef) modulesByServletPath.get(path);
+      moduleDef = modulesByServletPath.get(path);
       if (moduleDef != null) {
         // See if there is a servlet we can delegate to for the given url.
         servletClassName = moduleDef.findServletForPath(path);
@@ -335,11 +337,9 @@ public class GWTShellServlet extends HttpServlet {
     writer.println(".nocache.js'></script>");
 
     // Create a property for each query param.
-    //
-    Map params = request.getParameterMap();
-    for (Iterator iter = params.entrySet().iterator(); iter.hasNext();) {
-      Map.Entry entry = (Map.Entry) iter.next();
-      String[] values = (String[]) entry.getValue();
+    Map<String, String[]> params = request.getParameterMap();
+    for (Map.Entry<String, String[]> entry : params.entrySet()) {
+      String[] values = entry.getValue();
       if (values.length > 0) {
         writer.print("<meta name='gwt:property' content='");
         writer.print(entry.getKey());
@@ -398,7 +398,7 @@ public class GWTShellServlet extends HttpServlet {
         File requestedFile = new File(moduleDir, partialPath);
         if (requestedFile.exists()) {
           try {
-            foundResource = requestedFile.toURL();
+            foundResource = requestedFile.toURI().toURL();
           } catch (MalformedURLException e) {
             // ignore since it was speculative anyway
           }
@@ -544,7 +544,7 @@ public class GWTShellServlet extends HttpServlet {
   private ModuleDef getModuleDef(TreeLogger logger, String moduleName)
       throws UnableToCompleteException {
     synchronized (loadedModulesByName) {
-      ModuleDef moduleDef = (ModuleDef) loadedModulesByName.get(moduleName);
+      ModuleDef moduleDef = loadedModulesByName.get(moduleName);
       if (moduleDef == null) {
         moduleDef = ModuleDefLoader.loadFromClassPath(logger, moduleName);
         loadedModulesByName.put(moduleName, moduleDef);
@@ -557,8 +557,8 @@ public class GWTShellServlet extends HttpServlet {
         // getModuleBaseURL().
         String[] servletPaths = moduleDef.getServletPaths();
         for (int i = 0; i < servletPaths.length; i++) {
-          ModuleDef oldDef = (ModuleDef) modulesByServletPath.put(
-              servletPaths[i], moduleDef);
+          ModuleDef oldDef = modulesByServletPath.put(servletPaths[i],
+              moduleDef);
           if (oldDef != null) {
             logger.log(TreeLogger.WARN, "Undefined behavior: Servlet path "
                 + servletPaths[i] + " conflicts in modules "
@@ -585,7 +585,7 @@ public class GWTShellServlet extends HttpServlet {
     int dot = fullPath.lastIndexOf('.');
     if (dot != -1) {
       String ext = fullPath.substring(dot + 1);
-      String mimeType = (String) mimeTypes.get(ext);
+      String mimeType = mimeTypes.get(ext);
       if (mimeType != null) {
         return mimeType;
       }
@@ -860,7 +860,7 @@ public class GWTShellServlet extends HttpServlet {
       ModuleDef moduleDef, String className) {
     synchronized (loadedServletsByModuleAndClassName) {
       String moduleAndClassName = moduleDef.getName() + "/" + className;
-      HttpServlet servlet = (HttpServlet) loadedServletsByModuleAndClassName.get(moduleAndClassName);
+      HttpServlet servlet = loadedServletsByModuleAndClassName.get(moduleAndClassName);
       if (servlet != null) {
         // Found it.
         //
@@ -871,7 +871,7 @@ public class GWTShellServlet extends HttpServlet {
       //
       Throwable caught = null;
       try {
-        Class servletClass = Class.forName(className);
+        Class<?> servletClass = Class.forName(className);
         Object newInstance = servletClass.newInstance();
         if (!(newInstance instanceof HttpServlet)) {
           logger.log(TreeLogger.ERROR,

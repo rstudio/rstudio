@@ -76,7 +76,6 @@ public final class Array {
     return array[index] = value;
   }-*/;
 
-  @SuppressWarnings("unused") // called by JSNI
   private static Array clonify(Array a, int length) {
     return new Array(length, a.typeId, a.queryId, a.typeName);
   }

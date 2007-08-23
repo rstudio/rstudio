@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,12 +55,10 @@ public class ModuleDef {
     }
   };
 
-  private static final Comparator REV_NAME_CMP = new Comparator() {
-    public int compare(Object o1, Object o2) {
-      Map.Entry entry1 = (Entry) o1;
-      Map.Entry entry2 = (Entry) o2;
-      String key1 = (String) entry1.getKey();
-      String key2 = (String) entry2.getKey();
+  private static final Comparator<Map.Entry<String, ?>> REV_NAME_CMP = new Comparator<Map.Entry<String, ?>>() {
+    public int compare(Map.Entry<String, ?> entry1, Map.Entry<String, ?> entry2) {
+      String key1 = entry1.getKey();
+      String key2 = entry2.getKey();
       // intentionally reversed
       return key2.compareTo(key1);
     }
@@ -77,18 +75,18 @@ public class ModuleDef {
     return true;
   }
 
-  private final ArrayList allCups = new ArrayList();
+  private final ArrayList<URLCompilationUnitProvider> allCups = new ArrayList<URLCompilationUnitProvider>();
 
-  private final Set alreadySeenFiles = new HashSet();
+  private final Set<String> alreadySeenFiles = new HashSet<String>();
 
   private final CacheManager cacheManager = new CacheManager(".gwt-cache",
       new TypeOracle());
 
   private CompilationUnitProvider[] cups = new CompilationUnitProvider[0];
 
-  private final List entryPointTypeNames = new ArrayList();
+  private final List<String> entryPointTypeNames = new ArrayList<String>();
 
-  private final Set gwtXmlFiles = new HashSet();
+  private final Set<File> gwtXmlFiles = new HashSet<File>();
 
   private FileOracle lazyPublicOracle;
 
@@ -108,7 +106,7 @@ public class ModuleDef {
 
   private final Scripts scripts = new Scripts();
 
-  private final Map servletClassNamesByPath = new HashMap();
+  private final Map<String, String> servletClassNamesByPath = new HashMap<String, String>();
 
   private final FileOracleFactory sourcePathEntries = new FileOracleFactory();
 
@@ -189,11 +187,11 @@ public class ModuleDef {
   public synchronized String findServletForPath(String actual) {
     // Walk in backwards sorted order to find the longest path match first.
     //
-    Set entrySet = servletClassNamesByPath.entrySet();
-    Map.Entry[] entries = (Entry[]) Util.toArray(Map.Entry.class, entrySet);
+    Set<Entry<String, String>> entrySet = servletClassNamesByPath.entrySet();
+    Entry<String, String>[] entries = Util.toArray(Entry.class, entrySet);
     Arrays.sort(entries, REV_NAME_CMP);
     for (int i = 0, n = entries.length; i < n; ++i) {
-      String mapping = (String) entries[i].getKey();
+      String mapping = entries[i].getKey();
       /*
        * Ensure that URLs that match the servlet mapping, including those that
        * have additional path_info, get routed to the correct servlet.
@@ -201,7 +199,7 @@ public class ModuleDef {
        * See "Inside Servlets", Second Edition, pg. 208
        */
       if (actual.equals(mapping) || actual.startsWith(mapping + "/")) {
-        return (String) entries[i].getValue();
+        return entries[i].getValue();
       }
     }
     return null;
@@ -221,7 +219,7 @@ public class ModuleDef {
 
   public synchronized String[] getEntryPointTypeNames() {
     final int n = entryPointTypeNames.size();
-    return (String[]) entryPointTypeNames.toArray(new String[n]);
+    return entryPointTypeNames.toArray(new String[n]);
   }
 
   public synchronized String getFunctionName() {
@@ -254,7 +252,7 @@ public class ModuleDef {
   }
 
   public synchronized String[] getServletPaths() {
-    return (String[]) servletClassNamesByPath.keySet().toArray(Empty.STRINGS);
+    return servletClassNamesByPath.keySet().toArray(Empty.STRINGS);
   }
 
   /**
@@ -328,8 +326,8 @@ public class ModuleDef {
   }
 
   public boolean isGwtXmlFileStale() {
-    for (Iterator iter = gwtXmlFiles.iterator(); iter.hasNext();) {
-      File xmlFile = (File) iter.next();
+    for (Iterator<File> iter = gwtXmlFiles.iterator(); iter.hasNext();) {
+      File xmlFile = iter.next();
       if ((!xmlFile.exists())
           || (xmlFile.lastModified() > moduleDefCreationTime)) {
         return true;
@@ -371,8 +369,8 @@ public class ModuleDef {
   synchronized void normalize(TreeLogger logger) {
     // Normalize property providers.
     //
-    for (Iterator iter = getProperties().iterator(); iter.hasNext();) {
-      Property prop = (Property) iter.next();
+    for (Iterator<Property> iter = getProperties().iterator(); iter.hasNext();) {
+      Property prop = iter.next();
       if (prop.getActiveValue() == null) {
         // If there are more than one possible values, then create a provider.
         // Otherwise, pretend the one value is an active value.
@@ -402,11 +400,11 @@ public class ModuleDef {
     } else {
       // Create the CUPs
       String[] allFiles = lazySourceOracle.getAllFiles();
-      Set files = new HashSet();
+      Set<String> files = new HashSet<String>();
       files.addAll(Arrays.asList(allFiles));
       files.removeAll(alreadySeenFiles);
-      for (Iterator iter = files.iterator(); iter.hasNext();) {
-        String fileName = (String) iter.next();
+      for (Iterator<String> iter = files.iterator(); iter.hasNext();) {
+        String fileName = iter.next();
         int pos = fileName.lastIndexOf('/');
         String packageName;
         if (pos >= 0) {
@@ -419,7 +417,7 @@ public class ModuleDef {
         allCups.add(new URLCompilationUnitProvider(url, packageName));
       }
       alreadySeenFiles.addAll(files);
-      this.cups = (CompilationUnitProvider[]) allCups.toArray(this.cups);
+      this.cups = allCups.toArray(this.cups);
     }
 
     // Create the public path.

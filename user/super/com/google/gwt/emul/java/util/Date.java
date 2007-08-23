@@ -60,7 +60,6 @@ public class Date implements Cloneable, Comparable<Date> {
    *  Return the names for the days of the week as specified by the Date
    *  specification.
    */
-  @SuppressWarnings("unused") // called by JSNI
   private static String dayToString(int day) {
     return DAYS[day];
   }
@@ -69,7 +68,6 @@ public class Date implements Cloneable, Comparable<Date> {
    *  Return the names for the months of the year as specified by the Date
    *  specification.
    */
-  @SuppressWarnings("unused") // called by JSNI
   private static String monthToString(int month) {
     return MONTHS[month];
   }
@@ -78,7 +76,6 @@ public class Date implements Cloneable, Comparable<Date> {
    *  Ensure a number is displayed with two digits.
    *  @return A two-character representation of the number.
    */
-  @SuppressWarnings("unused") // called by JSNI
   private static String padTwo(int number) {
     if (number < 10) {
       return "0" + number;

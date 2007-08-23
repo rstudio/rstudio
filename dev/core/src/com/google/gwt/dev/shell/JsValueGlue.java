@@ -38,7 +38,7 @@ public class JsValueGlue {
    * @param type The subclass of JavaScriptObject to create
    * @return the constructed JavaScriptObject
    */
-  public static Object createJavaScriptObject(JsValue value, Class type) {
+  public static Object createJavaScriptObject(JsValue value, Class<?> type) {
     try {
       // checkThread();
       if (!value.isJavaScriptObject()) {
@@ -47,14 +47,14 @@ public class JsValueGlue {
       }
 
       /* find the JavaScriptObject type, while verifying this is a subclass */
-      Class jsoType = getJavaScriptObjectSuperclass(type);
+      Class<?> jsoType = getJavaScriptObjectSuperclass(type);
       if (jsoType == null) {
         throw new RuntimeException("Requested type " + type.getName()
             + " not a subclass of JavaScriptObject");
       }
 
       /* create the object using the default constructor */
-      Constructor ctor = type.getDeclaredConstructor(new Class[] {});
+      Constructor<?> ctor = type.getDeclaredConstructor(new Class[] {});
       ctor.setAccessible(true);
       Object jso = ctor.newInstance(new Object[] {});
 
@@ -91,7 +91,7 @@ public class JsValueGlue {
    * @throws HostedModeException if the JavaScript object is not assignable to
    *           the supplied type.
    */
-  public static Object get(JsValue value, Class type, String msgPrefix) {
+  public static Object get(JsValue value, Class<?> type, String msgPrefix) {
     double doubleVal;
     if (value.isNull()) {
       return null;
@@ -100,7 +100,7 @@ public class JsValueGlue {
       // undefined is never legal to return from JavaScript into Java
       throw new HostedModeException(msgPrefix
           + ": JavaScript undefined, expected " + type.getName());
-   }
+    }
     if (value.isWrappedJavaObject()) {
       Object origObject = value.getWrappedJavaObject();
       if (!type.isAssignableFrom(origObject.getClass())) {
@@ -150,22 +150,22 @@ public class JsValueGlue {
               + value.getTypeString() + ", expected float");
         }
         doubleVal = value.getNumber();
-        
+
         // Check for small changes near MIN_VALUE and replace with the
         // actual endpoint value, in case it is being used as a sentinel
-        // value.  This test works by the subtraction result rounding off to
+        // value. This test works by the subtraction result rounding off to
         // zero if the delta is not representable in a float.
         // TODO(jat): add similar test for MAX_VALUE if we have a JS
         // platform that munges the value while converting to/from strings.
-        if ((float)(doubleVal - Float.MIN_VALUE) == 0.0f) {
+        if ((float) (doubleVal - Float.MIN_VALUE) == 0.0f) {
           doubleVal = Float.MIN_VALUE;
         }
-        
-        float floatVal = (float)doubleVal;
+
+        float floatVal = (float) doubleVal;
         if (Float.isInfinite(floatVal) && !Double.isInfinite(doubleVal)) {
           // in this case we had overflow from the double value which was
           // outside the range of supported float values, and the cast
-          // converted it to infinity.  Since this lost data, we treat this
+          // converted it to infinity. Since this lost data, we treat this
           // as an error in hosted mode.
           throw new HostedModeException(msgPrefix + ": JS value " + doubleVal
               + " out of range for a float");
@@ -185,15 +185,15 @@ public class JsValueGlue {
         }
         doubleVal = value.getNumber();
         if (doubleVal < Long.MIN_VALUE || doubleVal > Long.MAX_VALUE) {
-          throw new HostedModeException(msgPrefix + ": JS double value " + doubleVal
-              + " out of range for a long");
+          throw new HostedModeException(msgPrefix + ": JS double value "
+              + doubleVal + " out of range for a long");
         }
         // TODO(jat): can this actually detect loss of precision?
         long longVal = (long) doubleVal;
         if (doubleVal != longVal) {
           // TODO(jat): should this be an error or exception?
-          ModuleSpace.getLogger().log(TreeLogger.WARN, msgPrefix
-              + ": Loss of precision converting double to long", null);
+          ModuleSpace.getLogger().log(TreeLogger.WARN,
+              msgPrefix + ": Loss of precision converting double to long", null);
         }
         return new Long(longVal);
 
@@ -239,7 +239,7 @@ public class JsValueGlue {
        * verify that jso is assignable to
        * com.google.gwt.core.client.JavaScriptObject
        */
-      Class type = getJavaScriptObjectSuperclass(jso.getClass());
+      Class<?> type = getJavaScriptObjectSuperclass(jso.getClass());
 
       if (type == null) {
         throw new HostedModeException(
@@ -265,7 +265,7 @@ public class JsValueGlue {
    * @param type static type of the object
    * @param obj the object to store in the JS value
    */
-  public static void set(JsValue value, CompilingClassLoader cl, Class type,
+  public static void set(JsValue value, CompilingClassLoader cl, Class<?> type,
       Object obj) {
     if (obj == null) {
       value.setNull();
@@ -297,7 +297,7 @@ public class JsValueGlue {
     } else {
       // not a boxed primitive
       try {
-        Class jso = Class.forName(JSO_CLASS, true, cl);
+        Class<?> jso = Class.forName(JSO_CLASS, true, cl);
         if (jso.isAssignableFrom(type) && jso.isAssignableFrom(obj.getClass())) {
           JsValue jsObject = getUnderlyingObject(obj);
           value.setValue(jsObject);
@@ -310,9 +310,9 @@ public class JsValueGlue {
 
       // Fallthrough case: Object.
       if (!type.isAssignableFrom(obj.getClass())) {
-          throw new HostedModeException("object is of type "
-              + obj.getClass().getName() + ", expected " + type.getName());
-        }
+        throw new HostedModeException("object is of type "
+            + obj.getClass().getName() + ", expected " + type.getName());
+      }
       value.setWrappedJavaObject(cl, obj);
     }
   }
@@ -334,8 +334,8 @@ public class JsValueGlue {
       }
       intVal = (int) doubleVal;
       if (intVal != doubleVal) {
-        ModuleSpace.getLogger().log(TreeLogger.WARN, msgPrefix
-            + ": Rounding double to int for " + typeName, null);
+        ModuleSpace.getLogger().log(TreeLogger.WARN,
+            msgPrefix + ": Rounding double to int for " + typeName, null);
       }
     } else {
       throw new HostedModeException(msgPrefix + ": JS value of type "
@@ -354,7 +354,7 @@ public class JsValueGlue {
    * @return the JavaScriptObject class object if it is a subclass, or null if
    *         not.
    */
-  private static Class getJavaScriptObjectSuperclass(Class type) {
+  private static Class<?> getJavaScriptObjectSuperclass(Class<?> type) {
     while (type != null && !type.getName().equals(JSO_CLASS)) {
       type = type.getSuperclass();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,16 +24,17 @@ import java.util.Comparator;
  */
 public interface CompilationUnitProvider {
 
-  Comparator LOCATION_COMPARATOR = new Comparator() {
-    public int compare(Object o1, Object o2) {
-      String loc1 = ((CompilationUnitProvider) o1).getLocation();
-      String loc2 = ((CompilationUnitProvider) o2).getLocation();
+  Comparator<CompilationUnitProvider> LOCATION_COMPARATOR = new Comparator<CompilationUnitProvider>() {
+    public int compare(CompilationUnitProvider cups1,
+        CompilationUnitProvider cups2) {
+      String loc1 = cups1.getLocation();
+      String loc2 = cups2.getLocation();
       return loc1.compareTo(loc2);
     }
   };
 
   long getLastModified() throws UnableToCompleteException;
-  
+
   String getLocation();
 
   String getPackageName();

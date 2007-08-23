@@ -30,10 +30,9 @@ class Comparators {
    * 
    * @see java.lang.Comparable
    */
-  @SuppressWarnings("unchecked")
-  private static final Comparator NATURAL = new Comparator() {
+  private static final Comparator<?> NATURAL = new Comparator<?>() {
     public int compare(Object o1, Object o2) {
-      return ((Comparable) o1).compareTo(o2); // suppress unchecked warning
+      return ((Comparable<?>) o1).compareTo(o2);
     }
   };
 
@@ -42,13 +41,12 @@ class Comparators {
    * 
    * @return the natural Comparator
    */
-  @SuppressWarnings("unchecked")
   public static <T> Comparator<T> natural() {
     /*
      * Code for generics support is commented. Example calling code, which
      * should be moved into the Javadoc comment when generics are added: <code>Comparator&lt;String&gt; =
      * Comparators.natural();</code>
      */
-    return NATURAL; // suppress unchecked warning
+    return NATURAL;
   }
 }

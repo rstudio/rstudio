@@ -88,6 +88,7 @@ public class StandardGeneratorContext implements GeneratorContext {
       caw = null;
     }
 
+    @Override
     public char[] getSource() {
       if (source == null) {
         throw new IllegalStateException("source not committed");
@@ -97,8 +98,8 @@ public class StandardGeneratorContext implements GeneratorContext {
   }
 
   /**
-   * {@link CompilationUnitProvider} used to represent generated source code 
-   * which is stored on disk.  This class is only used if the -gen flag is
+   * {@link CompilationUnitProvider} used to represent generated source code
+   * which is stored on disk. This class is only used if the -gen flag is
    * specified.
    */
   private static final class GeneratedCUP extends URLCompilationUnitProvider {
@@ -106,12 +107,14 @@ public class StandardGeneratorContext implements GeneratorContext {
       super(url, name);
     }
 
+    @Override
     public long getLastModified() throws UnableToCompleteException {
       // Make it seem really old so it won't cause recompiles.
       //
       return 0L;
     }
-    
+
+    @Override
     public boolean isTransient() {
       return true;
     }
@@ -179,21 +182,21 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   private final CacheManager cacheManager;
 
-  private final Set committedGeneratedCups = new HashSet();
+  private final Set<GeneratedCompilationUnitProvider> committedGeneratedCups = new HashSet<GeneratedCompilationUnitProvider>();
 
   private final File genDir;
 
-  private final Set generatedTypeNames = new HashSet();
+  private final Set<String> generatedTypeNames = new HashSet<String>();
 
   private final File outDir;
 
-  private final Map pendingResourcesByOutputStream = new IdentityHashMap();
+  private final Map<OutputStream, PendingResource> pendingResourcesByOutputStream = new IdentityHashMap<OutputStream, PendingResource>();
 
   private final PropertyOracle propOracle;
 
   private final TypeOracle typeOracle;
 
-  private final Map uncommittedGeneratedCupsByPrintWriter = new IdentityHashMap();
+  private final Map<PrintWriter, GeneratedCompilationUnitProvider> uncommittedGeneratedCupsByPrintWriter = new IdentityHashMap<PrintWriter, GeneratedCompilationUnitProvider>();
 
   /**
    * Normally, the compiler host would be aware of the same types that are
@@ -213,7 +216,7 @@ public class StandardGeneratorContext implements GeneratorContext {
    * Commits a pending generated type.
    */
   public final void commit(TreeLogger logger, PrintWriter pw) {
-    GeneratedCompilationUnitProvider gcup = (GeneratedCompilationUnitProvider) uncommittedGeneratedCupsByPrintWriter.get(pw);
+    GeneratedCompilationUnitProvider gcup = uncommittedGeneratedCupsByPrintWriter.get(pw);
     if (gcup != null) {
       gcup.commit();
       uncommittedGeneratedCupsByPrintWriter.remove(pw);
@@ -228,7 +231,7 @@ public class StandardGeneratorContext implements GeneratorContext {
       throws UnableToCompleteException {
 
     // Find the pending resource using its output stream as a key.
-    PendingResource pendingResource = (PendingResource) pendingResourcesByOutputStream.get(os);
+    PendingResource pendingResource = pendingResourcesByOutputStream.get(os);
     if (pendingResource != null) {
       // Actually write the bytes to disk.
       pendingResource.commit(logger);
@@ -258,7 +261,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     abortUncommittedResources(logger);
 
     // Process pending generated types.
-    List genTypeNames = new ArrayList();
+    List<String> genTypeNames = new ArrayList<String>();
 
     try {
       TreeLogger branch;
@@ -276,28 +279,28 @@ public class StandardGeneratorContext implements GeneratorContext {
 
         assert (cacheManager.getTypeOracle() == typeOracle);
         TypeOracleBuilder builder = new TypeOracleBuilder(cacheManager);
-        for (Iterator iter = committedGeneratedCups.iterator(); iter.hasNext();) {
-          GeneratedCompilationUnitProvider gcup = (GeneratedCompilationUnitProvider) iter.next();
+        for (Iterator<GeneratedCompilationUnitProvider> iter = committedGeneratedCups.iterator(); iter.hasNext();) {
+          GeneratedCompilationUnitProvider gcup = iter.next();
           String typeName = gcup.getTypeName();
           String genTypeName = gcup.getPackageName() + "." + typeName;
           genTypeNames.add(genTypeName);
           CompilationUnitProvider cup = writeSource(logger, gcup, typeName);
           builder.addCompilationUnit(cup);
           cacheManager.addGeneratedCup(cup);
-          
+
           if (subBranch != null) {
             subBranch.log(TreeLogger.DEBUG, cup.getLocation(), null);
           }
         }
-        
+
         builder.build(branch);
       }
 
       // Return the generated types.
       JClassType[] genTypes = new JClassType[genTypeNames.size()];
       int next = 0;
-      for (Iterator iter = genTypeNames.iterator(); iter.hasNext();) {
-        String genTypeName = (String) iter.next();
+      for (Iterator<String> iter = genTypeNames.iterator(); iter.hasNext();) {
+        String genTypeName = iter.next();
         try {
           genTypes[next++] = typeOracle.getType(genTypeName);
         } catch (NotFoundException e) {
@@ -314,8 +317,8 @@ public class StandardGeneratorContext implements GeneratorContext {
         String msg = "For the following type(s), generated source was never committed (did you forget to call commit()?)";
         logger = logger.branch(TreeLogger.WARN, msg, null);
 
-        for (Iterator iter = uncommittedGeneratedCupsByPrintWriter.values().iterator(); iter.hasNext();) {
-          StaticCompilationUnitProvider cup = (StaticCompilationUnitProvider) iter.next();
+        for (Iterator<GeneratedCompilationUnitProvider> iter = uncommittedGeneratedCupsByPrintWriter.values().iterator(); iter.hasNext();) {
+          StaticCompilationUnitProvider cup = iter.next();
           String typeName = cup.getPackageName() + "." + cup.getTypeName();
           logger.log(TreeLogger.WARN, typeName, null);
         }
@@ -406,8 +409,8 @@ public class StandardGeneratorContext implements GeneratorContext {
     File pendingFile = new File(outDir, name);
 
     // See if this file is already pending.
-    for (Iterator iter = pendingResourcesByOutputStream.values().iterator(); iter.hasNext();) {
-      PendingResource pendingResource = (PendingResource) iter.next();
+    for (Iterator<PendingResource> iter = pendingResourcesByOutputStream.values().iterator(); iter.hasNext();) {
+      PendingResource pendingResource = iter.next();
       if (pendingResource.isSamePath(logger, pendingFile)) {
         // It is already pending.
         logger.log(TreeLogger.WARN, "The file is already a pending resource",
@@ -443,8 +446,8 @@ public class StandardGeneratorContext implements GeneratorContext {
         null);
 
     try {
-      for (Iterator iter = pendingResourcesByOutputStream.values().iterator(); iter.hasNext();) {
-        PendingResource pendingResource = (PendingResource) iter.next();
+      for (Iterator<PendingResource> iter = pendingResourcesByOutputStream.values().iterator(); iter.hasNext();) {
+        PendingResource pendingResource = iter.next();
         logger.log(TreeLogger.WARN,
             pendingResource.getFile().getAbsolutePath(), null);
       }
@@ -484,7 +487,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     // Update the location of the cup
     Throwable caught = null;
     try {
-      URL fileURL = srcFile.toURL();
+      URL fileURL = srcFile.toURI().toURL();
       URLCompilationUnitProvider fileBaseCup = new GeneratedCUP(fileURL,
           cup.getPackageName());
       return fileBaseCup;

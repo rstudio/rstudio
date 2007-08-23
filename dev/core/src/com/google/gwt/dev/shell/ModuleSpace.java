@@ -30,19 +30,19 @@ import java.lang.reflect.Modifier;
  */
 public abstract class ModuleSpace implements ShellJavaScriptHost {
 
-  private static ThreadLocal sCaughtJavaExceptionObject = new ThreadLocal();
+  private static ThreadLocal<Throwable> sCaughtJavaExceptionObject = new ThreadLocal<Throwable>();
 
-  private static ThreadLocal sLastThrownJavaException = new ThreadLocal();
+  private static ThreadLocal<Throwable> sLastThrownJavaException = new ThreadLocal<Throwable>();
 
-  private static ThreadLocal sThrownJavaExceptionObject = new ThreadLocal();
+  private static ThreadLocal<Throwable> sThrownJavaExceptionObject = new ThreadLocal<Throwable>();
 
   /**
    * Logger is thread local.
    */
-  private static ThreadLocal threadLocalLogger = new ThreadLocal();
+  private static ThreadLocal<TreeLogger> threadLocalLogger = new ThreadLocal<TreeLogger>();
 
   public static void setThrownJavaException(Throwable t) {
-    Throwable was = (Throwable) sLastThrownJavaException.get();
+    Throwable was = sLastThrownJavaException.get();
     if (was != t) {
       // avoid logging the same exception twice
       getLogger().log(TreeLogger.WARN, "Exception thrown into JavaScript", t);
@@ -55,10 +55,10 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       String name, String desc) {
     Exception caught;
     try {
-      Class javaScriptExceptionClass = Class.forName(
+      Class<?> javaScriptExceptionClass = Class.forName(
           "com.google.gwt.core.client.JavaScriptException", true, cl);
-      Class string = String.class;
-      Constructor ctor = javaScriptExceptionClass.getDeclaredConstructor(new Class[] {
+      Class<?> string = String.class;
+      Constructor<?> ctor = javaScriptExceptionClass.getDeclaredConstructor(new Class<?>[] {
           string, string});
       return (RuntimeException) ctor.newInstance(new Object[] {name, desc});
     } catch (InstantiationException e) {
@@ -80,7 +80,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   protected static TreeLogger getLogger() {
-    return (TreeLogger) threadLocalLogger.get();
+    return threadLocalLogger.get();
   }
 
   /**
@@ -98,8 +98,8 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     Throwable caught;
     try {
       final String jsHostClassName = JavaScriptHost.class.getName();
-      Class jsHostClass = Class.forName(jsHostClassName, true, cl);
-      final Class[] paramTypes = new Class[] {ShellJavaScriptHost.class};
+      Class<?> jsHostClass = Class.forName(jsHostClassName, true, cl);
+      final Class<?>[] paramTypes = new Class[] {ShellJavaScriptHost.class};
       Method setHostMethod = jsHostClass.getMethod("setHost", paramTypes);
       setHostMethod.invoke(jsHostClass, new Object[] {moduleSpace});
       return;
@@ -146,7 +146,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   public void exceptionCaught(int number, String name, String message) {
-    Throwable thrown = (Throwable) sThrownJavaExceptionObject.get();
+    Throwable thrown = sThrownJavaExceptionObject.get();
 
     if (thrown != null) {
       // See if the caught exception was thrown by us
@@ -160,7 +160,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     sCaughtJavaExceptionObject.set(createJavaScriptException(
         getIsolatedClassLoader(), name, message));
   }
-  
+
   /**
    * Get the unique key for this module.
    * 
@@ -179,15 +179,15 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     return moduleName;
   }
 
-  public boolean invokeNativeBoolean(String name, Object jthis, Class[] types,
-      Object[] args) throws Throwable {
+  public boolean invokeNativeBoolean(String name, Object jthis,
+      Class<?>[] types, Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     Boolean value = (Boolean) JsValueGlue.get(result, Boolean.class,
         "invokeNativeBoolean(" + name + ")");
     return value.booleanValue();
   }
 
-  public byte invokeNativeByte(String name, Object jthis, Class[] types,
+  public byte invokeNativeByte(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     Byte value = (Byte) JsValueGlue.get(result, Byte.class, "invokeNativeByte("
@@ -195,7 +195,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     return value.byteValue();
   }
 
-  public char invokeNativeChar(String name, Object jthis, Class[] types,
+  public char invokeNativeChar(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     Character value = (Character) JsValueGlue.get(result, Character.class,
@@ -203,7 +203,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     return value.charValue();
   }
 
-  public double invokeNativeDouble(String name, Object jthis, Class[] types,
+  public double invokeNativeDouble(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     Double value = (Double) JsValueGlue.get(result, Double.class,
@@ -211,7 +211,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     return value.doubleValue();
   }
 
-  public float invokeNativeFloat(String name, Object jthis, Class[] types,
+  public float invokeNativeFloat(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     Float value = (Float) JsValueGlue.get(result, Float.class,
@@ -219,15 +219,15 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     return value.floatValue();
   }
 
-  public Object invokeNativeHandle(String name, Object jthis, Class returnType,
-      Class[] types, Object[] args) throws Throwable {
+  public Object invokeNativeHandle(String name, Object jthis,
+      Class<?> returnType, Class<?>[] types, Object[] args) throws Throwable {
 
     JsValue result = invokeNative(name, jthis, types, args);
     return JsValueGlue.get(result, returnType, "invokeNativeHandle(" + name
         + ")");
   }
 
-  public int invokeNativeInt(String name, Object jthis, Class[] types,
+  public int invokeNativeInt(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     Integer value = (Integer) JsValueGlue.get(result, Integer.class,
@@ -235,7 +235,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     return value.intValue();
   }
 
-  public long invokeNativeLong(String name, Object jthis, Class[] types,
+  public long invokeNativeLong(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     Long value = (Long) JsValueGlue.get(result, Long.class, "invokeNativeLong("
@@ -243,14 +243,14 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     return value.longValue();
   }
 
-  public Object invokeNativeObject(String name, Object jthis, Class[] types,
+  public Object invokeNativeObject(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     return JsValueGlue.get(result, Object.class, "invokeNativeObject(" + name
         + ")");
   }
 
-  public short invokeNativeShort(String name, Object jthis, Class[] types,
+  public short invokeNativeShort(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     Short value = (Short) JsValueGlue.get(result, Short.class,
@@ -258,14 +258,14 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     return value.shortValue();
   }
 
-  public String invokeNativeString(String name, Object jthis, Class[] types,
+  public String invokeNativeString(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     return (String) JsValueGlue.get(result, String.class, "invokeNativeString("
         + name + ")");
   }
 
-  public void invokeNativeVoid(String name, Object jthis, Class[] types,
+  public void invokeNativeVoid(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     if (!result.isUndefined()) {
@@ -322,10 +322,10 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       if (entryPoints.length > 0) {
         for (int i = 0; i < entryPoints.length; i++) {
           entryPointTypeName = entryPoints[i];
-          Class clazz = loadClassFromSourceName(entryPointTypeName);
+          Class<?> clazz = loadClassFromSourceName(entryPointTypeName);
           Method onModuleLoad = null;
           try {
-            onModuleLoad = clazz.getMethod("onModuleLoad", null);
+            onModuleLoad = clazz.getMethod("onModuleLoad");
             if (!Modifier.isStatic(onModuleLoad.getModifiers())) {
               // it's non-static, so we need to rebind the class
               onModuleLoad = null;
@@ -336,10 +336,10 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
           Object module = null;
           if (onModuleLoad == null) {
             module = rebindAndCreate(entryPointTypeName);
-            onModuleLoad = module.getClass().getMethod("onModuleLoad", null);
+            onModuleLoad = module.getClass().getMethod("onModuleLoad");
           }
           onModuleLoad.setAccessible(true);
-          onModuleLoad.invoke(module, null);
+          onModuleLoad.invoke(module);
         }
       } else {
         logger.log(
@@ -378,14 +378,14 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       //
       String sourceName = requestedClassName.replace('$', '.');
       resultName = rebind(sourceName);
-      Class resolvedClass = loadClassFromSourceName(resultName);
+      Class<?> resolvedClass = loadClassFromSourceName(resultName);
       if (Modifier.isAbstract(resolvedClass.getModifiers())) {
         msg = "Deferred binding result type '" + resultName
             + "' should not be abstract";
       } else {
-        Constructor ctor = resolvedClass.getDeclaredConstructor(null);
+        Constructor<?> ctor = resolvedClass.getDeclaredConstructor();
         ctor.setAccessible(true);
-        return ctor.newInstance(null);
+        return ctor.newInstance();
       }
     } catch (ClassNotFoundException e) {
       msg = "Could not load deferred binding result type '" + resultName + "'";
@@ -440,8 +440,8 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
    * @param args the arguments to be passed
    * @return the return value as a Variant.
    */
-  protected abstract JsValue doInvoke(String name, Object jthis, Class[] types,
-      Object[] args) throws Throwable;
+  protected abstract JsValue doInvoke(String name, Object jthis,
+      Class<?>[] types, Object[] args) throws Throwable;
 
   protected CompilingClassLoader getIsolatedClassLoader() {
     return host.getClassLoader();
@@ -462,12 +462,12 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
    * @return the return value as a Variant.
    */
   protected final JsValue invokeNative(String name, Object jthis,
-      Class[] types, Object[] args) throws Throwable {
+      Class<?>[] types, Object[] args) throws Throwable {
     // Whenever a native method is invoked, release any enqueued cleanup objects
     JsValue.mainThreadCleanup();
     JsValue result = doInvoke(name, jthis, types, args);
     // Is an exception active?
-    Throwable thrown = (Throwable) sCaughtJavaExceptionObject.get();
+    Throwable thrown = sCaughtJavaExceptionObject.get();
     if (thrown == null) {
       return result;
     }
@@ -515,7 +515,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   /**
    * Handles loading a class that might be nested given a source type name.
    */
-  private Class loadClassFromSourceName(String sourceName)
+  private Class<?> loadClassFromSourceName(String sourceName)
       throws ClassNotFoundException {
     String toTry = sourceName;
     while (true) {

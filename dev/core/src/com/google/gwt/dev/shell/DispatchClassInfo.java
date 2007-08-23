@@ -27,15 +27,15 @@ import java.util.HashMap;
  */
 public class DispatchClassInfo {
 
-  private Class cls;
+  private Class<?> cls;
 
   private final int clsId;
 
-  private ArrayList memberById;
+  private ArrayList<Member> memberById;
 
-  private HashMap memberIdByName;
+  private HashMap<String, Integer> memberIdByName;
 
-  public DispatchClassInfo(Class cls, int classId) {
+  public DispatchClassInfo(Class<?> cls, int classId) {
     this.cls = cls;
     clsId = classId;
   }
@@ -47,13 +47,13 @@ public class DispatchClassInfo {
   public Member getMember(int id) {
     lazyInitTargetMembers();
     id &= 0xffff;
-    return (Member) memberById.get(id);
+    return memberById.get(id);
   }
 
   public int getMemberId(String mangledMemberName) {
     lazyInitTargetMembers();
 
-    Integer id = (Integer) memberIdByName.get(mangledMemberName);
+    Integer id = memberIdByName.get(mangledMemberName);
     if (id == null) {
       return -1;
     }
@@ -77,9 +77,9 @@ public class DispatchClassInfo {
     StringBuffer sb = new StringBuffer();
     sb.append(name);
     sb.append("(");
-    Class[] paramTypes = method.getParameterTypes();
+    Class<?>[] paramTypes = method.getParameterTypes();
     for (int i = 0; i < paramTypes.length; ++i) {
-      Class type = paramTypes[i];
+      Class<?> type = paramTypes[i];
       String typeSig = getTypeSig(type);
       sb.append(typeSig);
     }
@@ -89,7 +89,10 @@ public class DispatchClassInfo {
     return mangledName;
   }
 
-  private String getTypeSig(Class type) {
+  /*
+   * TODO(jat): generics?
+   */
+  private String getTypeSig(Class<?> type) {
     if (type.isArray()) {
       return "[" + getTypeSig(type.getComponentType());
     }
@@ -126,16 +129,16 @@ public class DispatchClassInfo {
 
   private void lazyInitTargetMembers() {
     if (memberById == null) {
-      memberById = new ArrayList();
+      memberById = new ArrayList<Member>();
       memberById.add(null); // 0 is reserved; it's magic on Win32
-      memberIdByName = new HashMap();
+      memberIdByName = new HashMap<String, Integer>();
       lazyInitTargetMembersUsingReflectionHelper(cls);
     }
   }
 
-  private void lazyInitTargetMembersUsingReflectionHelper(Class targetClass) {
+  private void lazyInitTargetMembersUsingReflectionHelper(Class<?> targetClass) {
     // Start by analyzing the superclass recursively.
-    Class superclass = targetClass.getSuperclass();
+    Class<?> superclass = targetClass.getSuperclass();
     if (superclass != null) {
       lazyInitTargetMembersUsingReflectionHelper(superclass);
     }

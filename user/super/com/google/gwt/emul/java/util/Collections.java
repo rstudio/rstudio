@@ -104,7 +104,7 @@ public class Collections {
    *         of the array if the searched value is larger than all elements in
    *         the array) minus 1 (to ensure error returns are negative)
    * @throws ClassCastException if <code>key</code> is not comparable to
-   *             <code>sortedList</code>'s elements.
+   *           <code>sortedList</code>'s elements.
    */
   public static <T> int binarySearch(
       final List<? extends Comparable<? super T>> sortedList, final T key) {
@@ -161,14 +161,14 @@ public class Collections {
    * @param sortedList List to search
    * @param key value to search for
    * @param comparator comparision function, <code>null</code> indicates
-   *            <i>natural ordering</i> should be used.
+   *          <i>natural ordering</i> should be used.
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
    *         of the array if the searched value is larger than all elements in
    *         the array) minus 1 (to ensure error returns are negative)
    * @throws ClassCastException if <code>key</code> and
-   *             <code>sortedList</code>'s elements cannot be compared by
-   *             <code>comparator</code>.
+   *           <code>sortedList</code>'s elements cannot be compared by
+   *           <code>comparator</code>.
    */
   public static <T> int binarySearch(final List<? extends T> sortedList,
       final T key, Comparator<? super T> comparator) {
@@ -211,19 +211,16 @@ public class Collections {
     throw new UnsupportedOperationException("disjoint not implemented");
   }
 
-  @SuppressWarnings("unchecked")
   public static <T> List<T> emptyList() {
-    return (List<T>) EMPTY_LIST; // suppress unchecked warning
+    return (List<T>) EMPTY_LIST;
   }
 
-  @SuppressWarnings("unchecked")
   public static <K, V> Map<K, V> emptyMap() {
-    return (Map<K, V>) EMPTY_MAP; // suppress unchecked warning
+    return (Map<K, V>) EMPTY_MAP;
   }
 
-  @SuppressWarnings("unchecked")
   public static <T> Set<T> emptySet() {
-    return (Set<T>) EMPTY_SET; // suppress unchecked warning
+    return (Set<T>) EMPTY_SET;
   }
 
   public static <T> Enumeration<T> enumeration(Collection<T> c) {
@@ -443,7 +440,7 @@ public class Collections {
         return list.toArray();
       }
 
-      public <OT> OT [] toArray(OT[] array) {
+      public <OT> OT[] toArray(OT[] array) {
         return list.toArray(array);
       }
     };
@@ -477,12 +474,11 @@ public class Collections {
    * @param target list to replace contents from an array
    * @param x an Object array which can contain only T instances
    */
-  @SuppressWarnings("unchecked")
   private static <T> void replaceContents(List<T> target, Object[] x) {
     int size = target.size();
     assert (x.length == size);
     for (int i = 0; i < size; i++) {
-      target.set(i, (T) x[i]); // suppress unchecked
+      target.set(i, (T) x[i]);
     }
   }
 

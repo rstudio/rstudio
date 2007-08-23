@@ -30,7 +30,7 @@ import java.util.Map;
  */
 public class ModuleSpacePropertyOracle implements PropertyOracle {
 
-  private final Map prevAnswers = new HashMap();
+  private final Map<String, String> prevAnswers = new HashMap<String, String>();
 
   private final Properties props;
 
@@ -63,7 +63,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
     // cause exceptions to be thrown to make sure we are consistent even
     // in throwing exceptions for the same property.
     if (prevAnswers.containsKey(propertyName)) {
-      return (String) prevAnswers.get(propertyName);
+      return prevAnswers.get(propertyName);
     } else {
       String value = computePropertyValue(logger, propertyName, prop);
       prevAnswers.put(propertyName, value);

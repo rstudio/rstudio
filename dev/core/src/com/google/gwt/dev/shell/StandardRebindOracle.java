@@ -46,9 +46,9 @@ public class StandardRebindOracle implements RebindOracle {
 
     private final StandardGeneratorContext genCtx;
 
-    private final Set usedRules = new HashSet();
+    private final Set<Rule> usedRules = new HashSet<Rule>();
 
-    private final List usedTypeNames = new ArrayList();
+    private final List<String> usedTypeNames = new ArrayList<String>();
 
     public Rebinder(TypeOracle typeOracle, PropertyOracle propOracle) {
       genCtx = new StandardGeneratorContext(typeOracle, propOracle, genDir,
@@ -78,7 +78,7 @@ public class StandardRebindOracle implements RebindOracle {
       if (usedTypeNames.contains(typeName)) {
         // Found a cycle.
         //
-        String[] cycle = (String[]) Util.toArray(String.class, usedTypeNames);
+        String[] cycle = Util.toArray(String.class, usedTypeNames);
         Messages.UNABLE_TO_REBIND_DUE_TO_CYCLE_IN_RULES.log(logger, cycle, null);
         throw new UnableToCompleteException();
       }
@@ -95,8 +95,8 @@ public class StandardRebindOracle implements RebindOracle {
         return null;
       }
 
-      for (Iterator iter = rules.iterator(); iter.hasNext();) {
-        Rule rule = (Rule) iter.next();
+      for (Iterator<Rule> iter = rules.iterator(); iter.hasNext();) {
+        Rule rule = iter.next();
 
         // Branch the logger.
         //

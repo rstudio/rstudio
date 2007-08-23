@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +32,7 @@ import java.util.TreeMap;
  * Type representing a Java class or interface type.
  */
 public class JClassType extends JType implements HasMetaData {
-  private final Set allSubtypes = new HashSet();
+  private final Set<JClassType> allSubtypes = new HashSet<JClassType>();
 
   private final int bodyEnd;
 
@@ -41,7 +40,7 @@ public class JClassType extends JType implements HasMetaData {
 
   private JMethod[] cachedOverridableMethods;
 
-  private final List constructors = new ArrayList();
+  private final List<JConstructor> constructors = new ArrayList<JConstructor>();
 
   private final CompilationUnitProvider cup;
 
@@ -53,9 +52,9 @@ public class JClassType extends JType implements HasMetaData {
 
   private final JClassType enclosingType;
 
-  private final Map fields = new HashMap();
+  private final Map<String, JField> fields = new HashMap<String, JField>();
 
-  private final List interfaces = new ArrayList();
+  private final List<JClassType> interfaces = new ArrayList<JClassType>();
 
   private final boolean isInterface;
 
@@ -67,7 +66,7 @@ public class JClassType extends JType implements HasMetaData {
 
   private final HasMetaData metaData = new MetaData();
 
-  private final Map methods = new HashMap();
+  private final Map<String, List<JMethod>> methods = new HashMap<String, List<JMethod>>();
 
   private int modifierBits;
 
@@ -75,7 +74,7 @@ public class JClassType extends JType implements HasMetaData {
 
   private final String nestedName;
 
-  private final Map nestedTypes = new HashMap();
+  private final Map<String, JClassType> nestedTypes = new HashMap<String, JClassType>();
 
   private final TypeOracle oracle;
 
@@ -145,7 +144,7 @@ public class JClassType extends JType implements HasMetaData {
   }
 
   public JField findField(String name) {
-    return (JField) fields.get(name);
+    return fields.get(name);
   }
 
   public JMethod findMethod(String name, JType[] paramTypes) {
@@ -186,7 +185,7 @@ public class JClassType extends JType implements HasMetaData {
   }
 
   public JConstructor[] getConstructors() {
-    return (JConstructor[]) constructors.toArray(TypeOracle.NO_JCTORS);
+    return constructors.toArray(TypeOracle.NO_JCTORS);
   }
 
   public JClassType getEnclosingType() {
@@ -200,13 +199,14 @@ public class JClassType extends JType implements HasMetaData {
   }
 
   public JField[] getFields() {
-    return (JField[]) fields.values().toArray(TypeOracle.NO_JFIELDS);
+    return fields.values().toArray(TypeOracle.NO_JFIELDS);
   }
 
   public JClassType[] getImplementedInterfaces() {
-    return (JClassType[]) interfaces.toArray(TypeOracle.NO_JCLASSES);
+    return interfaces.toArray(TypeOracle.NO_JCLASSES);
   }
 
+  @Override
   public String getJNISignature() {
     String typeName = nestedName.replace('.', '$');
     String packageName = getPackage().getName().replace('.', '/');
@@ -238,12 +238,11 @@ public class JClassType extends JType implements HasMetaData {
    * superinterfaces).
    */
   public JMethod[] getMethods() {
-    List resultMethods = new ArrayList();
-    for (Iterator iter = methods.values().iterator(); iter.hasNext();) {
-      List overloads = (List) iter.next();
+    List<JMethod> resultMethods = new ArrayList<JMethod>();
+    for (List<JMethod> overloads : methods.values()) {
       resultMethods.addAll(overloads);
     }
-    return (JMethod[]) resultMethods.toArray(TypeOracle.NO_JMETHODS);
+    return resultMethods.toArray(TypeOracle.NO_JMETHODS);
   }
 
   public String getName() {
@@ -259,7 +258,7 @@ public class JClassType extends JType implements HasMetaData {
   }
 
   public JClassType[] getNestedTypes() {
-    return (JClassType[]) nestedTypes.values().toArray(TypeOracle.NO_JCLASSES);
+    return nestedTypes.values().toArray(TypeOracle.NO_JCLASSES);
   }
 
   public TypeOracle getOracle() {
@@ -267,9 +266,9 @@ public class JClassType extends JType implements HasMetaData {
   }
 
   public JMethod[] getOverloads(String name) {
-    List resultMethods = (List) methods.get(name);
+    List<?> resultMethods = methods.get(name);
     if (resultMethods != null) {
-      return (JMethod[]) resultMethods.toArray(TypeOracle.NO_JMETHODS);
+      return resultMethods.toArray(TypeOracle.NO_JMETHODS);
     } else {
       return TypeOracle.NO_JMETHODS;
     }
@@ -294,14 +293,14 @@ public class JClassType extends JType implements HasMetaData {
    */
   public JMethod[] getOverridableMethods() {
     if (cachedOverridableMethods == null) {
-      Map methodsBySignature = new TreeMap();
+      Map<String, JMethod> methodsBySignature = new TreeMap<String, JMethod>();
       getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
       if (isClass() != null) {
         getOverridableMethodsOnSuperclassesAndThisClass(methodsBySignature);
       }
       int size = methodsBySignature.size();
-      Collection leafMethods = methodsBySignature.values();
-      cachedOverridableMethods = (JMethod[]) leafMethods.toArray(new JMethod[size]);
+      Collection<JMethod> leafMethods = methodsBySignature.values();
+      cachedOverridableMethods = leafMethods.toArray(new JMethod[size]);
     }
     return cachedOverridableMethods;
   }
@@ -310,6 +309,7 @@ public class JClassType extends JType implements HasMetaData {
     return declaringPackage;
   }
 
+  @Override
   public String getQualifiedSourceName() {
     if (lazyQualifiedName == null) {
       JPackage pkg = getPackage();
@@ -322,12 +322,13 @@ public class JClassType extends JType implements HasMetaData {
     return lazyQualifiedName;
   }
 
+  @Override
   public String getSimpleSourceName() {
     return name;
   }
 
   public JClassType[] getSubtypes() {
-    return (JClassType[]) allSubtypes.toArray(TypeOracle.NO_JCLASSES);
+    return allSubtypes.toArray(TypeOracle.NO_JCLASSES);
   }
 
   public JClassType getSuperclass() {
@@ -353,6 +354,7 @@ public class JClassType extends JType implements HasMetaData {
     return 0 != (modifierBits & TypeOracle.MOD_ABSTRACT);
   }
 
+  @Override
   public JArrayType isArray() {
     // intentional null
     return null;
@@ -378,6 +380,7 @@ public class JClassType extends JType implements HasMetaData {
     return possibleSupertype.isAssignableFrom(this);
   }
 
+  @Override
   public JClassType isClass() {
     return isInterface ? null : this;
   }
@@ -408,6 +411,7 @@ public class JClassType extends JType implements HasMetaData {
     return false;
   }
 
+  @Override
   public JClassType isInterface() {
     return isInterface ? this : null;
   }
@@ -432,11 +436,13 @@ public class JClassType extends JType implements HasMetaData {
     return enclosingType != null;
   }
 
+  @Override
   public JParameterizedType isParameterized() {
     // intentional null
     return null;
   }
 
+  @Override
   public JPrimitiveType isPrimitive() {
     // intentional null
     return null;
@@ -464,6 +470,7 @@ public class JClassType extends JType implements HasMetaData {
     this.superclass = type;
   }
 
+  @Override
   public String toString() {
     if (isInterface) {
       return "interface " + getQualifiedSourceName();
@@ -488,20 +495,20 @@ public class JClassType extends JType implements HasMetaData {
 
   void addMethod(JMethod method) {
     String methodName = method.getName();
-    List overloads = (List) methods.get(methodName);
+    List<JMethod> overloads = methods.get(methodName);
     if (overloads == null) {
-      overloads = new ArrayList();
+      overloads = new ArrayList<JMethod>();
       methods.put(methodName, overloads);
     }
     overloads.add(method);
   }
 
   void addNestedType(JClassType type) {
-    Object existing = nestedTypes.put(type.getSimpleSourceName(), type);
+    nestedTypes.put(type.getSimpleSourceName(), type);
   }
 
   JClassType findNestedTypeImpl(String[] typeName, int index) {
-    JClassType found = (JClassType) nestedTypes.get(typeName[index]);
+    JClassType found = nestedTypes.get(typeName[index]);
     if (found == null) {
       return null;
     } else if (index < typeName.length - 1) {
@@ -541,7 +548,7 @@ public class JClassType extends JType implements HasMetaData {
   }
 
   private void getOverridableMethodsOnSuperclassesAndThisClass(
-      Map methodsBySignature) {
+      Map<String, JMethod> methodsBySignature) {
     assert (isClass() != null);
 
     // Recurse first so that more derived methods will clobber less derived
@@ -576,7 +583,7 @@ public class JClassType extends JType implements HasMetaData {
    * @param methodsBySignature
    */
   private void getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
-      Map methodsBySignature) {
+      Map<String, JMethod> methodsBySignature) {
     // Recurse first so that more derived methods will clobber less derived
     // methods.
     JClassType[] superIntfs = getImplementedInterfaces();
@@ -596,7 +603,7 @@ public class JClassType extends JType implements HasMetaData {
       JMethod method = declaredMethods[i];
 
       String sig = computeInternalSignature(method);
-      JMethod existing = (JMethod) methodsBySignature.get(sig);
+      JMethod existing = methodsBySignature.get(sig);
       if (existing != null) {
         JClassType existingType = existing.getEnclosingType();
         JClassType thisType = method.getEnclosingType();
@@ -625,7 +632,7 @@ public class JClassType extends JType implements HasMetaData {
       superclass.acceptSubtype(me);
     }
     for (int i = 0, n = interfaces.size(); i < n; ++i) {
-      JClassType intf = (JClassType) interfaces.get(i);
+      JClassType intf = interfaces.get(i);
       intf.acceptSubtype(me);
     }
   }
@@ -638,7 +645,7 @@ public class JClassType extends JType implements HasMetaData {
     }
 
     for (int i = 0, n = interfaces.size(); i < n; ++i) {
-      JClassType intf = (JClassType) interfaces.get(i);
+      JClassType intf = interfaces.get(i);
 
       intf.removeSubtype(me);
     }

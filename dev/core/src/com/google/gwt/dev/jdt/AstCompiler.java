@@ -44,9 +44,9 @@ public class AstCompiler extends AbstractCompiler {
    */
   private class CompilationUnitDeclarationCache {
 
-    private final Map lastModified = new HashMap();
+    private final Map<String, Long> lastModified = new HashMap<String, Long>();
 
-    private final Map map = new HashMap();
+    private final Map<String, ArrayList<CompilationUnitDeclaration>> map = new HashMap<String, ArrayList<CompilationUnitDeclaration>>();
 
     public void remove(String newLoc) {
       map.remove(newLoc);
@@ -58,7 +58,7 @@ public class AstCompiler extends AbstractCompiler {
         lastModified.put(location, new Long(file.lastModified()));
       }
       if (!map.containsKey(location)) {
-        map.put(location, new ArrayList());
+        map.put(location, new ArrayList<CompilationUnitDeclaration>());
       }
       get(location).add(item);
     }
@@ -67,27 +67,27 @@ public class AstCompiler extends AbstractCompiler {
       return map.containsKey(location);
     }
 
-    private List get(Object key) {
-      return (List) map.get(key);
+    private List<CompilationUnitDeclaration> get(Object key) {
+      return map.get(key);
     }
 
     private CompilationUnitDeclaration[] getDeclarations() {
-      Set outSet = new HashSet();
-      for (Iterator iter = map.values().iterator(); iter.hasNext();) {
-        List element = (List) iter.next();
+      Set<CompilationUnitDeclaration> outSet = new HashSet<CompilationUnitDeclaration>();
+      for (Iterator<ArrayList<CompilationUnitDeclaration>> iter = map.values().iterator(); iter.hasNext();) {
+        List<CompilationUnitDeclaration> element = iter.next();
         outSet.addAll(element);
       }
       CompilationUnitDeclaration[] out = new CompilationUnitDeclaration[outSet.size()];
       int i = 0;
-      for (Iterator iter = outSet.iterator(); iter.hasNext();) {
-        CompilationUnitDeclaration element = (CompilationUnitDeclaration) iter.next();
+      for (Iterator<CompilationUnitDeclaration> iter = outSet.iterator(); iter.hasNext();) {
+        CompilationUnitDeclaration element = iter.next();
         out[i] = element;
         i++;
       }
       return out;
     }
 
-    private void removeAll(Collection c) {
+    private void removeAll(Collection<String> c) {
       map.keySet().removeAll(c);
     }
   }
@@ -100,11 +100,11 @@ public class AstCompiler extends AbstractCompiler {
 
   public CompilationUnitDeclaration[] getCompilationUnitDeclarations(
       TreeLogger logger, ICompilationUnit[] units) {
-    List allUnits = Arrays.asList(units);
-    List newUnits = new ArrayList();
+    List<ICompilationUnit> allUnits = Arrays.asList(units);
+    List<ICompilationUnitAdapter> newUnits = new ArrayList<ICompilationUnitAdapter>();
 
     // Check for newer units that need to be processed.
-    for (Iterator iter = allUnits.iterator(); iter.hasNext();) {
+    for (Iterator<ICompilationUnit> iter = allUnits.iterator(); iter.hasNext();) {
       ICompilationUnitAdapter adapter = (ICompilationUnitAdapter) iter.next();
       CompilationUnitProvider cup = adapter.getCompilationUnitProvider();
       String location = cup.getLocation();
@@ -125,7 +125,8 @@ public class AstCompiler extends AbstractCompiler {
     return cachedResults.getDeclarations();
   }
 
-  public void invalidateChangedFiles(Set changedFiles, Set typeNames) {
+  public void invalidateChangedFiles(Set<String> changedFiles,
+      Set<String> typeNames) {
     cachedResults.removeAll(changedFiles);
     invalidateUnitsInFiles(changedFiles, typeNames);
   }

@@ -178,7 +178,6 @@ public abstract class Number {
    *  @param s the unparseable string
    *  @throws NumberFormatException every time
    */
-  @SuppressWarnings("unused") // called by JSNI
   private static void throwNumberFormatException(String s)
       throws NumberFormatException {
     throw new NumberFormatException("Could not parse " + s);

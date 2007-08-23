@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,7 +55,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -115,11 +114,9 @@ public abstract class BrowserWidget extends Composite {
         browser.stop();
       } else if (evt.widget == openWebModeButton) {
         // first, compile
-        Set keySet = new HashSet();
-        for (Iterator iter = loadedModules.entrySet().iterator();
-            iter.hasNext(); ) {
-          ModuleSpace module
-              = (ModuleSpace) ((Map.Entry) iter.next()).getValue();
+        Set<String> keySet = new HashSet<String>();
+        for (Map.Entry<?,ModuleSpace> entry : loadedModules.entrySet()) {
+          ModuleSpace module = entry.getValue();
           keySet.add(module.getModuleName());
         }
         String[] moduleNames = Util.toStringArray(keySet);
@@ -218,7 +215,7 @@ public abstract class BrowserWidget extends Composite {
 
   private final BrowserWidgetHost host;
 
-  private final Map loadedModules = new HashMap();
+  private final Map<Object, ModuleSpace> loadedModules = new HashMap<Object, ModuleSpace>();
 
   private Text location;
 
@@ -340,14 +337,13 @@ public abstract class BrowserWidget extends Composite {
     if (key == null) {
       // BEGIN BACKWARD COMPATIBILITY
       // remove all modules
-      for (Iterator iter = loadedModules.entrySet().iterator();
-          iter.hasNext(); ) {
-        unloadModule((ModuleSpace) ((Map.Entry) iter.next()).getValue());
+      for (Map.Entry<?,ModuleSpace> entry : loadedModules.entrySet()) {
+        unloadModule(entry.getValue());
       }
       loadedModules.clear();
       // END BACKWARD COMPATIBILITY
     } else {
-      ModuleSpace moduleSpace = (ModuleSpace) loadedModules.get(key);
+      ModuleSpace moduleSpace = loadedModules.get(key);
       if (moduleSpace == null) {
         throw new HostedModeException("Can't find frame window for " + key);
       }
@@ -416,6 +412,7 @@ public abstract class BrowserWidget extends Composite {
     });
 
     goButton.addSelectionListener(new SelectionAdapter() {
+      @Override
       public void widgetSelected(SelectionEvent e) {
         go(location.getText());
       }

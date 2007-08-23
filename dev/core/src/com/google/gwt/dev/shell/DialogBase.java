@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,6 +46,7 @@ public abstract class DialogBase extends Dialog implements DisposeListener {
         setGridData(okButton, 1, 1, FILL, FILL, false, false);
         okButton.setText("    OK    ");
         okButton.addSelectionListener(new SelectionAdapter() {
+          @Override
           public void widgetSelected(SelectionEvent e) {
             clickOkButton();
           }
@@ -57,6 +58,7 @@ public abstract class DialogBase extends Dialog implements DisposeListener {
         setGridData(cancelButton, 1, 1, FILL, FILL, false, false);
         cancelButton.setText("Cancel");
         cancelButton.addSelectionListener(new SelectionAdapter() {
+          @Override
           public void widgetSelected(SelectionEvent e) {
             clickCancelButton();
           }
@@ -179,6 +181,7 @@ public abstract class DialogBase extends Dialog implements DisposeListener {
     return !cancelled;
   }
 
+  @Override
   public void setText(String string) {
     super.setText(string);
     shell.setText(string);

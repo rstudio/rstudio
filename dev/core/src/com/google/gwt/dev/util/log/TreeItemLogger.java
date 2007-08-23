@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -62,6 +62,7 @@ public final class TreeItemLogger extends AbstractTreeLogger {
       this.caught = caught;
     }
 
+    @Override
     public String toString() {
       String s = "";
       s += "[logger " + logger.toString();
@@ -222,7 +223,7 @@ public final class TreeItemLogger extends AbstractTreeLogger {
          * loop stores the ancestors and the second loop will set the expanded
          * attribute on from the top level ancestor down to this child.
          */
-        Stack parents = new Stack();
+        Stack<TreeItem> parents = new Stack<TreeItem>();
 
         boolean propagateColor = true;
         TreeItem parent = child.getParentItem();
@@ -242,7 +243,7 @@ public final class TreeItemLogger extends AbstractTreeLogger {
         }
 
         while (!parents.isEmpty()) {
-          parent = (TreeItem) parents.pop();
+          parent = parents.pop();
           parent.setExpanded(true);
         }
       }
@@ -255,7 +256,7 @@ public final class TreeItemLogger extends AbstractTreeLogger {
    * provides tree-wide shared objects such as log item images.
    */
   private static class PendingUpdates {
-    private List updates = new LinkedList();
+    private List<LogEvent> updates = new LinkedList<LogEvent>();
 
     private final Object updatesLock = new Object();
 
@@ -274,7 +275,7 @@ public final class TreeItemLogger extends AbstractTreeLogger {
       // Move the list to flush into a local copy then release the udpate
       // lock so log events can keep coming in while we flush.
       //
-      List toFlush = null;
+      List<LogEvent> toFlush = null;
       synchronized (updatesLock) {
         if (updates.isEmpty()) {
           // Nothing to do.
@@ -282,11 +283,11 @@ public final class TreeItemLogger extends AbstractTreeLogger {
           return false;
         }
         toFlush = updates;
-        updates = new LinkedList();
+        updates = new LinkedList<LogEvent>();
       }
 
-      for (Iterator iter = toFlush.iterator(); iter.hasNext();) {
-        LogEvent update = (LogEvent) iter.next();
+      for (Iterator<LogEvent> iter = toFlush.iterator(); iter.hasNext();) {
+        LogEvent update = iter.next();
         // Loggers can be die while flushing, so we have to be sure never
         // to try to flush an entry to a dead logger.
         //
@@ -366,10 +367,12 @@ public final class TreeItemLogger extends AbstractTreeLogger {
     return sharedPendingUpdates.uiFlush(tree);
   }
 
+  @Override
   protected AbstractTreeLogger doBranch() {
     return new TreeItemLogger(sharedPendingUpdates);
   }
 
+  @Override
   protected void doCommitBranch(AbstractTreeLogger childBeingCommitted,
       Type type, String msg, Throwable caught) {
     if (isLoggerDead()) {
@@ -381,6 +384,7 @@ public final class TreeItemLogger extends AbstractTreeLogger {
         commitChild.getBranchedIndex(), type, msg, caught));
   }
 
+  @Override
   protected void doLog(int index, TreeLogger.Type type, String msg,
       Throwable caught) {
     if (isLoggerDead()) {

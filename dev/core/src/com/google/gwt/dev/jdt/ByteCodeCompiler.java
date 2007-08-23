@@ -168,6 +168,6 @@ public class ByteCodeCompiler extends AbstractCompiler {
    */
   protected ByteCode doGetByteCodeFromCache(TreeLogger logger,
       String binaryTypeName) {
-    return cacheManager.getByteCode(logger, binaryTypeName);
+    return cacheManager.getByteCode(binaryTypeName);
   }
 }

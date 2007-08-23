@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,12 +31,12 @@ public class BrowserWidgetHostChecker {
   /**
    * The set of always allowed URLs, which are immune to blacklisting.
    */
-  private static final Set alwaysValidHttpHosts = new HashSet();
+  private static final Set<String> alwaysValidHttpHosts = new HashSet<String>();
 
   /**
    * The set of blacklisted URLs.
    */
-  private static final Set invalidHttpHosts = new HashSet();
+  private static final Set<String> invalidHttpHosts = new HashSet<String>();
 
   private static String oldBlackList = null;
 
@@ -45,7 +45,7 @@ public class BrowserWidgetHostChecker {
   /**
    * The set of whitelisted URLs.
    */
-  private static final Set validHttpHosts = new HashSet();
+  private static final Set<String> validHttpHosts = new HashSet<String>();
 
   static {
     alwaysValidHttpHosts.add("^https?://localhost");
@@ -89,9 +89,9 @@ public class BrowserWidgetHostChecker {
    * @param hosts the set of regexes to be checked against
    * @return true if the host matches
    */
-  public static String checkHost(String hostUnderConsideration, Set hosts) {
+  public static String checkHost(String hostUnderConsideration, Set<String> hosts) {
     hostUnderConsideration = hostUnderConsideration.toLowerCase();
-    for (Iterator i = hosts.iterator(); i.hasNext();) {
+    for (Iterator<String> i = hosts.iterator(); i.hasNext();) {
       String rule = i.next().toString().toLowerCase();
       // match on lowercased regex
       if (hostUnderConsideration.matches(".*" + rule + ".*")) {
@@ -129,10 +129,10 @@ public class BrowserWidgetHostChecker {
    * @param hosts the set of regexes that match hosts
    * @return the list of regexes as a String
    */
-  public static String formatRules(Set hosts) {
+  public static String formatRules(Set<String> hosts) {
     StringBuffer out = new StringBuffer();
-    for (Iterator i = hosts.iterator(); i.hasNext();) {
-      String rule = (String) i.next();
+    for (Iterator<String> i = hosts.iterator(); i.hasNext();) {
+      String rule = i.next();
       out.append(rule);
       out.append(" ");
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,6 +58,7 @@ public class ShellMainWindow extends Composite implements DisposeListener,
       newWindow = newItem("new-window.gif", "&Hosted Browser",
           "Opens a new hosted mode browser window for debugging");
       newWindow.addSelectionListener(new SelectionAdapter() {
+        @Override
         public void widgetSelected(SelectionEvent event) {
           String startupUrl = serverWindow.normalizeURL("/");
           try {
@@ -75,6 +76,7 @@ public class ShellMainWindow extends Composite implements DisposeListener,
       collapseAll = newItem("collapse.gif", "&Collapse All",
           "Collapses all log entries");
       collapseAll.addSelectionListener(new SelectionAdapter() {
+        @Override
         public void widgetSelected(SelectionEvent e) {
           logPane.collapseAll();
         }
@@ -83,6 +85,7 @@ public class ShellMainWindow extends Composite implements DisposeListener,
       expandAll = newItem("expand.gif", "&Expand All",
           "Expands all log entries");
       expandAll.addSelectionListener(new SelectionAdapter() {
+        @Override
         public void widgetSelected(SelectionEvent e) {
           logPane.expandAll();
         }
@@ -91,6 +94,7 @@ public class ShellMainWindow extends Composite implements DisposeListener,
       clearLog = newItem("clear-log.gif", "Clear &Log",
           "Removes all log entries");
       clearLog.addSelectionListener(new SelectionAdapter() {
+        @Override
         public void widgetSelected(SelectionEvent e) {
           logPane.removeAll();
         }
@@ -100,6 +104,7 @@ public class ShellMainWindow extends Composite implements DisposeListener,
 
       about = newItem("about.gif", "    &About    ", "About...");
       about.addSelectionListener(new SelectionAdapter() {
+        @Override
         public void widgetSelected(SelectionEvent e) {
           String aboutHtml = Util.getFileFromInstallPath("about.html");
           if (aboutHtml != null) {
@@ -228,6 +233,7 @@ public class ShellMainWindow extends Composite implements DisposeListener,
           // Run the update checker on a background thread.
           //
           Thread checkerThread = new Thread() {
+            @Override
             public void run() {
               updateChecker.check(callback);
             }

@@ -17,7 +17,6 @@ package com.google.gwt.dev.shell.moz;
 
 import com.google.gwt.dev.shell.LowLevel;
 
-import java.util.Iterator;
 import java.util.Vector;
 
 /**
@@ -77,8 +76,7 @@ public class LowLevelMoz {
     boolean gwtOnLoad(int scriptGlobalObject, String moduleName);
   }
 
-  private static int invokeCount = 0;
-  private static Vector sExternalFactories = new Vector();
+  private static Vector<ExternalFactory> sExternalFactories = new Vector<ExternalFactory>();
   private static boolean sInitialized = false;
 
   /**
@@ -170,8 +168,7 @@ public class LowLevelMoz {
    * @return a new ExternalObject
    */
   protected static ExternalObject createExternalObjectForDOMWindow(int domWindow) {
-    for (Iterator iter = sExternalFactories.iterator(); iter.hasNext();) {
-      ExternalFactory fac = (ExternalFactory) iter.next();
+    for (ExternalFactory fac : sExternalFactories) {
       if (fac.matchesDOMWindow(domWindow)) {
         return fac.createExternalObject();
       }
