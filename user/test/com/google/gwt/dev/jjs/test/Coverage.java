@@ -76,23 +76,25 @@ public class Coverage extends CoverageSuper {
           super.foo();
           int x = z;
         }
+
         // JDT bug? This works in 5.0 but not in 1.4
         // TODO: will javac compile it?
-        // class NamedLocalSub extends NamedLocal {
-        // public void foo() {
-        // Main.this.getNext();
-        // Inner.this.foo();
-        // NamedLocal.this.foo();
-        // super.foo();
-        // int x = z;
-        // }
-        // }
+        class NamedLocalSub extends NamedLocal {
+          public void foo() {
+            Inner.this.foo();
+            Inner.this.foo();
+            NamedLocal.this.foo();
+            super.foo();
+            int x = z;
+          }
+        }
       }
       testEmptyStatement();
 
       // new NamedLocal().new NamedLocalSub().foo();
       new InnerSub().new InnerSubSub().fda();
       new SecondMain().new FunkyInner();
+      new NamedLocal().new NamedLocalSub().foo();
     }
 
     private void testAllocationExpression() {
