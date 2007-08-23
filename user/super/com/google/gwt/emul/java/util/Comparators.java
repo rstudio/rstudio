@@ -17,10 +17,9 @@ package java.util;
 
 class Comparators {
   /*
-   * This is a utility class that provides a default Comparator. Instead of
-   * having a directly accessible field, a function is used in anticipation of
-   * generics support. This class exists so Arrays and Collections can share the
-   * natural comparator without having to know internals of each other.
+   * This is a utility class that provides a default Comparator. This class
+   * exists so Arrays and Collections can share the natural comparator without
+   * having to know internals of each other.
    * 
    * This class is package protected since it is not in the JRE.
    */
@@ -30,9 +29,9 @@ class Comparators {
    * 
    * @see java.lang.Comparable
    */
-  private static final Comparator<?> NATURAL = new Comparator<?>() {
+  private static final Comparator NATURAL = new Comparator() {
     public int compare(Object o1, Object o2) {
-      return ((Comparable<?>) o1).compareTo(o2);
+      return ((Comparable) o1).compareTo(o2);
     }
   };
 
@@ -47,6 +46,6 @@ class Comparators {
      * should be moved into the Javadoc comment when generics are added: <code>Comparator&lt;String&gt; =
      * Comparators.natural();</code>
      */
-    return NATURAL;
+    return (Comparator<T>) NATURAL;
   }
 }
