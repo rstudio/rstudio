@@ -353,7 +353,7 @@ public final class Util {
     } catch (IllegalAccessException e) {
       throw new RuntimeException(failedReflectErrMsg, e);
     } catch (InvocationTargetException e) {
-      throw new RuntimeException(failedReflectErrMsg, e);
+      throw new RuntimeException(e.getTargetException());
     }
   }
 
