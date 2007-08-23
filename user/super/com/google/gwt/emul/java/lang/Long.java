@@ -18,7 +18,7 @@ package java.lang;
 /**
  * Wraps a primitive <code>long</code> as an object.
  */
-public final class Long extends Number implements Comparable {
+public final class Long extends Number implements Comparable<Long> {
   public static final long MIN_VALUE = 0x8000000000000000L;
   public static final long MAX_VALUE = 0x7fffffffffffffffL;
 
@@ -83,6 +83,7 @@ public final class Long extends Number implements Comparable {
     value = parseLong(s);
   }
 
+  @Override
   public byte byteValue() {
     return (byte) value;
   }
@@ -97,38 +98,42 @@ public final class Long extends Number implements Comparable {
     }
   }
 
-  public int compareTo(Object o) {
-    return compareTo((Long) o);
-  }
-
+  @Override
   public double doubleValue() {
     return value;
   }
 
+  @Override
   public boolean equals(Object o) {
     return (o instanceof Long) && (((Long) o).value == value);
   }
 
+  @Override
   public float floatValue() {
     return value;
   }
 
+  @Override
   public int hashCode() {
     return (int) value;
   }
 
+  @Override
   public int intValue() {
     return (int) value;
   }
 
+  @Override
   public long longValue() {
     return value;
   }
 
+  @Override
   public short shortValue() {
     return (short) value;
   }
 
+  @Override
   public String toString() {
     return toString(value);
   }

@@ -16,11 +16,11 @@
 package java.util;
 
 /**
- * Skeletal implementation of the Queue interface.
+ * Skeletal implementation of the Queue interface. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractQueue.html">[Sun
+ * docs]</a>
  * 
  * @param <E> element type.
- * 
- * @see <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractQueue.html">Sun Documentation</a>
  */
 public abstract class AbstractQueue<E> extends AbstractCollection<E> implements
     Queue<E> {
@@ -29,6 +29,7 @@ public abstract class AbstractQueue<E> extends AbstractCollection<E> implements
   protected AbstractQueue() {
   }
 
+  @Override
   public boolean add(E o) {
     if (offer(o)) {
       return true;
@@ -36,6 +37,7 @@ public abstract class AbstractQueue<E> extends AbstractCollection<E> implements
     throw new IllegalStateException("Unable to add element to queue");
   }
 
+  @Override
   public boolean addAll(Collection<? extends E> c) {
     if (c == this) {
       throw new IllegalArgumentException("Can't add a queue to itself");
@@ -47,6 +49,7 @@ public abstract class AbstractQueue<E> extends AbstractCollection<E> implements
     return modified;
   }
 
+  @Override
   public void clear() {
     while (poll() != null) {
       // empty loop

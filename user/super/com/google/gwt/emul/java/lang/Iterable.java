@@ -18,11 +18,11 @@ package java.lang;
 import java.util.Iterator;
 
 /**
- * Allows an instance of a class implementing this interface to be used in
- * the foreach statement.
+ * Allows an instance of a class implementing this interface to be used in the
+ * foreach statement. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Iterable.html">[Sun
+ * docs]</a>
  * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Iterable.html
- *
  * @param <T> type of returned iterator
  */
 public interface Iterable<T> {

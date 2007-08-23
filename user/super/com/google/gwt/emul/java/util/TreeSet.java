@@ -16,9 +16,9 @@
 package java.util;
 
 /**
- * Implements a set using a TreeMap.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/TreeSet.html
+ * Implements a set using a TreeMap. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/TreeSet.html">[Sun
+ * docs]</a>
  * 
  * @param <E> element type.
  */

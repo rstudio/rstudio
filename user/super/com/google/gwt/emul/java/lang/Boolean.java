@@ -18,7 +18,7 @@ package java.lang;
 /**
  * Wraps native <code>boolean</code> as an object.
  */
-public final class Boolean {
+public final class Boolean implements Comparable<Boolean> {
 
   // CHECKSTYLE_OFF: These have to be created somewhere.
   public static Boolean FALSE = new Boolean(false);
@@ -56,10 +56,20 @@ public final class Boolean {
     return value;
   }
 
+  public int compareTo(Boolean other) {
+    if (!value) {
+      return other.value ? -1 : 0;
+    } else {
+      return other.value ? 0 : 1;
+    }
+  }
+
+  @Override
   public boolean equals(Object o) {
     return (o instanceof Boolean) && (((Boolean) o).value == value);
   }
 
+  @Override
   public int hashCode() {
     // The Java API doc defines these magic numbers.
     final int hashCodeForTrue = 1231;
@@ -67,6 +77,7 @@ public final class Boolean {
     return value ? hashCodeForTrue : hashCodeForFalse;
   }
 
+  @Override
   public String toString() {
     return value ? "true" : "false";
   }

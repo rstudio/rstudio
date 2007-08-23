@@ -16,9 +16,9 @@
 package java.util;
 
 /**
- * Skeletal implementation of the List interface.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractSequentialList.html
+ * Skeletal implementation of the List interface. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractSequentialList.html">[Sun
+ * docs]</a>
  * 
  * @param <E> element type.
  */
@@ -28,11 +28,13 @@ public abstract class AbstractSequentialList<E> extends AbstractList<E> {
   protected AbstractSequentialList() {
   }
 
+  @Override
   public void add(int index, E element) {
     ListIterator<E> iter = listIterator(index);
     iter.add(element);
   }
 
+  @Override
   public boolean addAll(int index, Collection<? extends E> c) {
     boolean modified = false;
     ListIterator<E> iter = listIterator(index);
@@ -54,12 +56,15 @@ public abstract class AbstractSequentialList<E> extends AbstractList<E> {
     }
   }
 
+  @Override
   public Iterator<E> iterator() {
     return listIterator();
   }
 
+  @Override
   public abstract ListIterator<E> listIterator(int index);
 
+  @Override
   public E remove(int index) {
     ListIterator<E> iter = listIterator(index);
     E old;
@@ -72,6 +77,7 @@ public abstract class AbstractSequentialList<E> extends AbstractList<E> {
     return old;
   }
 
+  @Override
   public E set(int index, E element) {
     ListIterator<E> iter = listIterator(index);
     try {

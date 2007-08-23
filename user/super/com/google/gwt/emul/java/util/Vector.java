@@ -17,9 +17,9 @@ package java.util;
 
 /**
  * To keep performance characteristics in line with Java community expectations,
- * <code>Vector</code> is a wrapper around <code>ArrayList</code>.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/Vector.html
+ * <code>Vector</code> is a wrapper around <code>ArrayList</code>. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Vector.html">[Sun
+ * docs]</a>
  * 
  * @param <E> element type.
  */
@@ -46,18 +46,22 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
     arrayList = new ArrayList<E>(initialCapacity);
   }
 
+  @Override
   public boolean add(E o) {
     return arrayList.add(o);
   }
 
+  @Override
   public void add(int index, E o) {
     arrayList.add(index, o);
   }
 
+  @Override
   public boolean addAll(Collection<? extends E> c) {
     return arrayList.addAll(c);
   }
 
+  @Override
   public boolean addAll(int index, Collection<? extends E> c) {
     return arrayList.addAll(index, c);
   }
@@ -66,6 +70,7 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
     add(o);
   }
 
+  @Override
   public void clear() {
     arrayList.clear();
   }
@@ -74,10 +79,12 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
     return new Vector<E>(this);
   }
 
+  @Override
   public boolean contains(Object elem) {
     return arrayList.contains(elem);
   }
 
+  @Override
   public boolean containsAll(Collection<?> c) {
     // TODO(jat): implement
     throw new UnsupportedOperationException("containsAll not implemented");
@@ -111,10 +118,12 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
     return get(0);
   }
 
+  @Override
   public E get(int index) {
     return arrayList.get(index);
   }
 
+  @Override
   public int indexOf(Object elem) {
     return arrayList.indexOf(elem);
   }
@@ -127,10 +136,12 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
     add(index, o);
   }
 
+  @Override
   public boolean isEmpty() {
     return (arrayList.size() == 0);
   }
 
+  @Override
   public Iterator<E> iterator() {
     return arrayList.iterator();
   }
@@ -143,6 +154,7 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
     }
   }
 
+  @Override
   public int lastIndexOf(Object o) {
     return arrayList.lastIndexOf(o);
   }
@@ -151,10 +163,12 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
     return arrayList.lastIndexOf(o, index);
   }
 
+  @Override
   public E remove(int index) {
     return arrayList.remove(index);
   }
 
+  @Override
   public boolean removeAll(Collection<?> c) {
     // TODO(jat): implement
     throw new UnsupportedOperationException("removeAll not implemented");
@@ -172,6 +186,7 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
     remove(index);
   }
 
+  @Override
   public E set(int index, E elem) {
     return arrayList.set(index, elem);
   }
@@ -184,6 +199,7 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
     arrayList.setSize(size);
   }
 
+  @Override
   public int size() {
     return arrayList.size();
   }
@@ -192,14 +208,17 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
     return arrayList.subList(fromIndex, toIndex);
   }
 
+  @Override
   public Object[] toArray() {
     return arrayList.toArray();
   }
 
-  public <T> T[] toArray(T[] a) {
+  @Override
+  public/* <T> T */Object[] toArray(/* T */Object[] a) {
     return arrayList.toArray(a);
   }
 
+  @Override
   public String toString() {
     return arrayList.toString();
   }
@@ -211,6 +230,7 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
     arrayList.trimToSize();
   }
 
+  @Override
   protected void removeRange(int fromIndex, int endIndex) {
     arrayList.removeRange(fromIndex, endIndex);
   }

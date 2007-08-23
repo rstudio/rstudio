@@ -21,9 +21,7 @@ import java.lang.annotation.RetentionPolicy;
 
 /**
  * Indicates that a method definition is intended to override a declaration
- * from a superclass.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Override.html
+ * from a superclass. <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Override.html">[Sun docs]</a>
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

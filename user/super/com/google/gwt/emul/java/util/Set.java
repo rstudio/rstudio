@@ -16,9 +16,8 @@
 package java.util;
 
 /**
- * Represents a set of unique objects.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/Set.html
+ * Represents a set of unique objects. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Set.html">[Sun docs]</a>
  * 
  * @param <E> element type.
  */
@@ -52,6 +51,6 @@ public interface Set<E> extends Collection<E> {
 
   Object[] toArray();
 
-  <T> T[] toArray(T[] a);
+  /* <T> T */Object[] toArray(/* T */Object[] a);
 
 }

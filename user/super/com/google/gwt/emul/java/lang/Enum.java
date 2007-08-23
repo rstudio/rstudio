@@ -48,6 +48,7 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
     return this.ordinal - other.ordinal;
   }
 
+  @Override
   public final boolean equals(Object other) {
     return this == other;
   }
@@ -56,6 +57,7 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
   // throw new UnsupportedOperationException("not yet implemented.");
   // }
 
+  @Override
   public final int hashCode() {
     return System.identityHashCode(this);
   }
@@ -68,6 +70,7 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
     return ordinal;
   }
 
+  @Override
   public String toString() {
     return name;
   }

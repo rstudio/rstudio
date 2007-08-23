@@ -16,9 +16,9 @@
 package java.util;
 
 /**
- * Map using reference equality on keys.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/IdentityHashMap.html
+ * Map using reference equality on keys. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/IdentityHashMap.html">[Sun
+ * docs]</a>
  * 
  * @param <K> key type
  * @param <V> value type

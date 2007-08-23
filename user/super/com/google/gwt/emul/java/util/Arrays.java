@@ -17,9 +17,9 @@
 package java.util;
 
 /**
- * Utility methods related to native arrays.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/Arrays.html
+ * Utility methods related to native arrays. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Arrays.html">[Sun
+ * docs]</a>
  */
 public class Arrays {
 
@@ -36,10 +36,10 @@ public class Arrays {
    * 
    * @param sortedArray byte array to search
    * @param key value to search for
-   * @return the index of an element with a matching value, or a negative
-   *   number which is the index of the next larger value (or just past
-   *   the end of the array if the searched value is larger than all elements
-   *   in the array) minus 1 (to ensure error returns are negative)
+   * @return the index of an element with a matching value, or a negative number
+   *         which is the index of the next larger value (or just past the end
+   *         of the array if the searched value is larger than all elements in
+   *         the array) minus 1 (to ensure error returns are negative)
    */
   public static int binarySearch(final byte[] sortedArray, final byte key) {
     int low = 0;
@@ -59,18 +59,18 @@ public class Arrays {
       }
     }
     // key not found.
-    return -low - 1; 
+    return -low - 1;
   }
 
   /**
    * Perform a binary search on a sorted char array.
-   *
+   * 
    * @param a char array to search
    * @param key value to search for
-   * @return the index of an element with a matching value, or a negative
-   *   number which is the index of the next larger value (or just past
-   *   the end of the array if the searched value is larger than all elements
-   *   in the array) minus 1 (to ensure error returns are negative)
+   * @return the index of an element with a matching value, or a negative number
+   *         which is the index of the next larger value (or just past the end
+   *         of the array if the searched value is larger than all elements in
+   *         the array) minus 1 (to ensure error returns are negative)
    */
   public static int binarySearch(final char[] a, final char key) {
     int low = 0;
@@ -90,7 +90,7 @@ public class Arrays {
       }
     }
     // key not found.
-    return -low - 1; 
+    return -low - 1;
   }
 
   /**
@@ -98,10 +98,10 @@ public class Arrays {
    * 
    * @param sortedArray double array to search
    * @param key value to search for
-   * @return the index of an element with a matching value, or a negative
-   *   number which is the index of the next larger value (or just past
-   *   the end of the array if the searched value is larger than all elements
-   *   in the array) minus 1 (to ensure error returns are negative)
+   * @return the index of an element with a matching value, or a negative number
+   *         which is the index of the next larger value (or just past the end
+   *         of the array if the searched value is larger than all elements in
+   *         the array) minus 1 (to ensure error returns are negative)
    */
   public static int binarySearch(final double[] sortedArray, final double key) {
     int low = 0;
@@ -121,23 +121,23 @@ public class Arrays {
       }
     }
     // key not found.
-    return -low - 1; 
+    return -low - 1;
   }
 
   /**
    * Perform a binary search on a sorted float array.
    * 
-   * Note that some underlying JavaScript interpreters do not actually
-   * implement floats (using double instead), so you may get slightly
-   * different behavior regarding values that are very close (or equal)
-   * since conversion errors to/from double may change the values slightly. 
+   * Note that some underlying JavaScript interpreters do not actually implement
+   * floats (using double instead), so you may get slightly different behavior
+   * regarding values that are very close (or equal) since conversion errors
+   * to/from double may change the values slightly.
    * 
    * @param sortedArray float array to search
    * @param key value to search for
-   * @return the index of an element with a matching value, or a negative
-   *   number which is the index of the next larger value (or just past
-   *   the end of the array if the searched value is larger than all elements
-   *   in the array) minus 1 (to ensure error returns are negative)
+   * @return the index of an element with a matching value, or a negative number
+   *         which is the index of the next larger value (or just past the end
+   *         of the array if the searched value is larger than all elements in
+   *         the array) minus 1 (to ensure error returns are negative)
    */
   public static int binarySearch(final float[] sortedArray, final float key) {
     int low = 0;
@@ -165,10 +165,10 @@ public class Arrays {
    * 
    * @param sortedArray int array to search
    * @param key value to search for
-   * @return the index of an element with a matching value, or a negative
-   *   number which is the index of the next larger value (or just past
-   *   the end of the array if the searched value is larger than all elements
-   *   in the array) minus 1 (to ensure error returns are negative)
+   * @return the index of an element with a matching value, or a negative number
+   *         which is the index of the next larger value (or just past the end
+   *         of the array if the searched value is larger than all elements in
+   *         the array) minus 1 (to ensure error returns are negative)
    */
   public static int binarySearch(final int[] sortedArray, final int key) {
     int low = 0;
@@ -188,24 +188,24 @@ public class Arrays {
       }
     }
     // key not found.
-    return -low - 1; 
+    return -low - 1;
   }
 
   /**
    * Perform a binary search on a sorted long array.
    * 
-   * Note that most underlying JavaScript interpreters do not actually
-   * implement longs, so the values must be stored in doubles instead.
-   * This means that certain legal values cannot be represented, and
-   * comparison of two unequal long values may result in unexpected
-   * results if they are not also representable as doubles. 
+   * Note that most underlying JavaScript interpreters do not actually implement
+   * longs, so the values must be stored in doubles instead. This means that
+   * certain legal values cannot be represented, and comparison of two unequal
+   * long values may result in unexpected results if they are not also
+   * representable as doubles.
    * 
    * @param sortedArray long array to search
    * @param key value to search for
-   * @return the index of an element with a matching value, or a negative
-   *   number which is the index of the next larger value (or just past
-   *   the end of the array if the searched value is larger than all elements
-   *   in the array) minus 1 (to ensure error returns are negative)
+   * @return the index of an element with a matching value, or a negative number
+   *         which is the index of the next larger value (or just past the end
+   *         of the array if the searched value is larger than all elements in
+   *         the array) minus 1 (to ensure error returns are negative)
    */
   public static int binarySearch(final long[] sortedArray, final long key) {
     int low = 0;
@@ -225,20 +225,20 @@ public class Arrays {
       }
     }
     // key not found.
-    return -low - 1; 
+    return -low - 1;
   }
 
   /**
    * Perform a binary search on a sorted object array, using natural ordering.
-   *
+   * 
    * @param sortedArray object array to search
    * @param key value to search for
-   * @return the index of an element with a matching value, or a negative
-   *   number which is the index of the next larger value (or just past
-   *   the end of the array if the searched value is larger than all elements
-   *   in the array) minus 1 (to ensure error returns are negative)
+   * @return the index of an element with a matching value, or a negative number
+   *         which is the index of the next larger value (or just past the end
+   *         of the array if the searched value is larger than all elements in
+   *         the array) minus 1 (to ensure error returns are negative)
    * @throws ClassCastException if <code>key</code> is not comparable to
-   *   <code>sortedArray</code>'s elements.
+   *             <code>sortedArray</code>'s elements.
    */
   public static int binarySearch(final Object[] sortedArray, final Object key) {
     return binarySearch(sortedArray, key, Comparators.natural());
@@ -249,10 +249,10 @@ public class Arrays {
    * 
    * @param sortedArray short array to search
    * @param key value to search for
-   * @return the index of an element with a matching value, or a negative
-   *   number which is the index of the next larger value (or just past
-   *   the end of the array if the searched value is larger than all elements
-   *   in the array) minus 1 (to ensure error returns are negative)
+   * @return the index of an element with a matching value, or a negative number
+   *         which is the index of the next larger value (or just past the end
+   *         of the array if the searched value is larger than all elements in
+   *         the array) minus 1 (to ensure error returns are negative)
    */
   public static int binarySearch(final short[] sortedArray, final short key) {
     int low = 0;
@@ -272,7 +272,7 @@ public class Arrays {
       }
     }
     // key not found.
-    return -low - 1; 
+    return -low - 1;
   }
 
   /**
@@ -282,14 +282,14 @@ public class Arrays {
    * @param sortedArray object array to search
    * @param key value to search for
    * @param comparator comparision function, <code>null</code> indicates
-   *   <i>natural ordering</i> should be used.
-   * @return the index of an element with a matching value, or a negative
-   *   number which is the index of the next larger value (or just past
-   *   the end of the array if the searched value is larger than all elements
-   *   in the array) minus 1 (to ensure error returns are negative)
+   *            <i>natural ordering</i> should be used.
+   * @return the index of an element with a matching value, or a negative number
+   *         which is the index of the next larger value (or just past the end
+   *         of the array if the searched value is larger than all elements in
+   *         the array) minus 1 (to ensure error returns are negative)
    * @throws ClassCastException if <code>key</code> and
-   *   <code>sortedArray</code>'s elements cannot be compared by
-   *   <code>comparator</code>.
+   *             <code>sortedArray</code>'s elements cannot be compared by
+   *             <code>comparator</code>.
    */
   public static <T> int binarySearch(final T[] sortedArray, final T key,
       Comparator<? super T> comparator) {
@@ -314,7 +314,7 @@ public class Arrays {
       }
     }
     // key not found.
-    return -low - 1; 
+    return -low - 1;
   }
 
   public static void sort(Object[] x) {
@@ -344,9 +344,9 @@ public class Arrays {
     b.append("]");
     return b.toString();
   }
-  
+
   static void unsafeSort(Object[] x, Comparator<?> s) {
-    nativeSort(x, x.length, s != null ? s : Comparators.natural());  
+    nativeSort(x, x.length, s != null ? s : Comparators.natural());
   }
 
   private static native void nativeSort(Object[] array, int size,
@@ -359,7 +359,7 @@ public class Arrays {
     for(var i = 0; i < size; ++i){
       v[i] = array[i];
     }
-   
+  
     if(compare != null) {
       var f = function(a,b) {
         var c = compare.@java.util.Comparator::compare(Ljava/lang/Object;Ljava/lang/Object;)(a,b);

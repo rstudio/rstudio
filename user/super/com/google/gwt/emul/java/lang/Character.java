@@ -18,7 +18,7 @@ package java.lang;
 /**
  * Wraps a native <code>char</code> as an object.
  */
-public final class Character {
+public final class Character implements Comparable<Character> {
 
   public static final int MIN_RADIX = 2;
   public static final int MAX_RADIX = 36;
@@ -133,18 +133,17 @@ public final class Character {
     }
   }
 
-  public int compareTo(Object o) {
-    return compareTo((Character) o);
-  }
-
+  @Override
   public boolean equals(Object o) {
     return (o instanceof Character) && (((Character) o).value == value);
   }
 
+  @Override
   public int hashCode() {
     return value;
   }
 
+  @Override
   public String toString() {
     return String.valueOf(value);
   }

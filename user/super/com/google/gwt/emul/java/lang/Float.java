@@ -18,7 +18,7 @@ package java.lang;
 /**
  * Wraps a primitve <code>float</code> as an object.
  */
-public final class Float extends Number implements Comparable {
+public final class Float extends Number implements Comparable<Float> {
   public static final float MAX_VALUE = 3.4028235e+38f;
   public static final float MIN_VALUE = 1.4e-45f;
   public static final float NaN = 0f / 0f;
@@ -65,6 +65,7 @@ public final class Float extends Number implements Comparable {
     value = parseFloat(s);
   }
 
+  @Override
   public byte byteValue() {
     return (byte) value;
   }
@@ -79,18 +80,17 @@ public final class Float extends Number implements Comparable {
     }
   }
 
-  public int compareTo(Object o) {
-    return compareTo((Float) o);
-  }
-
+  @Override
   public double doubleValue() {
     return value;
   }
 
+  @Override
   public boolean equals(Object o) {
     return (o instanceof Float) && (((Float) o).value == value);
   }
 
+  @Override
   public float floatValue() {
     return value;
   }
@@ -104,10 +104,12 @@ public final class Float extends Number implements Comparable {
    * float, which may lead to poor performance for certain value sets if Floats
    * are used as keys in a {@link java.util.HashMap}.
    */
+  @Override
   public int hashCode() {
     return (int) value;
   }
 
+  @Override
   public int intValue() {
     return (int) value;
   }
@@ -120,14 +122,17 @@ public final class Float extends Number implements Comparable {
     return isNaN(value);
   }
 
+  @Override
   public long longValue() {
     return (long) value;
   }
 
+  @Override
   public short shortValue() {
     return (short) value;
   }
 
+  @Override
   public String toString() {
     return toString(value);
   }

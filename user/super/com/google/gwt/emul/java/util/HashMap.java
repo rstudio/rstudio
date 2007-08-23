@@ -18,9 +18,9 @@ package java.util;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
- * Implementation of Map interface based on a hash table.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/HashMap.html
+ * Implementation of Map interface based on a hash table. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/HashMap.html">[Sun
+ * docs]</a>
  * 
  * @param <K> key type
  * @param <V> value type
@@ -64,6 +64,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
       this.value = value;
     }
 
+    @Override
     public boolean equals(Object other) {
       if (other instanceof Map.Entry) {
         Map.Entry<?, ?> entry = (Map.Entry<?, ?>) other;
@@ -86,6 +87,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
     /**
      * Calculate the hash code using Sun's specified algorithm.
      */
+    @Override
     public int hashCode() {
       int keyHash = 0;
       int valueHash = 0;
@@ -104,6 +106,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
       return old;
     }
 
+    @Override
     public String toString() {
       return getKey() + "=" + getValue();
     }
@@ -111,10 +114,12 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
 
   private final class EntrySet extends AbstractSet<Entry<K, V>> {
 
+    @Override
     public void clear() {
       HashMap.this.clear();
     }
 
+    @Override
     public boolean contains(Object o) {
       if (o instanceof Map.Entry) {
         Map.Entry<?, ?> entry = (Map.Entry<?, ?>) o;
@@ -127,10 +132,12 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
       return false;
     }
 
+    @Override
     public Iterator<Entry<K, V>> iterator() {
       return new EntrySetIterator();
     }
 
+    @Override
     public boolean remove(Object entry) {
       if (contains(entry)) {
         Object key = ((Map.Entry<?, ?>) entry).getKey();
@@ -140,6 +147,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
       return false;
     }
 
+    @Override
     public int size() {
       return HashMap.this.size();
     }
@@ -203,7 +211,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
       }
     }
   }-*/;
-  
+
   private static native void addAllStringEntries(JavaScriptObject stringMap,
       Collection<?> dest) /*-{
     for (var key in stringMap) {
@@ -220,7 +228,8 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
    * Returns true if hashCodeMap contains any Map.Entry whose value is Object
    * equal to <code>value</code>.
    */
-  private static native boolean containsHashValue(JavaScriptObject hashCodeMap, Object value) /*-{
+  private static native boolean containsHashValue(JavaScriptObject hashCodeMap,
+      Object value) /*-{
     for (var hashCode in hashCodeMap) {
       // sanity check that it's really one of ours
       if (hashCode == parseInt(hashCode)) {
@@ -236,12 +245,13 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
     }
     return false;
   }-*/;
-  
+
   /**
    * Returns true if stringMap contains any key whose value is Object equal to
    * <code>value</code>.
    */
-  private static native boolean containsStringValue(JavaScriptObject stringMap, Object value) /*-{
+  private static native boolean containsStringValue(JavaScriptObject stringMap,
+      Object value) /*-{
     for (var key in stringMap) {
       // only keys that start with a colon ':' count
       if (key.charCodeAt(0) == 58) {
@@ -281,7 +291,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
    * <code>hashCode</code>; or <code>null</code> if no such Map.Entry
    * exists at the specified hashCode.
    */
-  private static native <K,V> V getHashValue(JavaScriptObject hashCodeMap,
+  private static native <K, V> V getHashValue(JavaScriptObject hashCodeMap,
       K key, int hashCode) /*-{
     var array = hashCodeMap[hashCode];
     if (array) {
@@ -310,7 +320,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
    * the value previously at that key. Returns <code>undefined</code> if the
    * specified key did not exist.
    */
-  private static native <K,V> V putHashValue(JavaScriptObject hashCodeMap,
+  private static native <K, V> V putHashValue(JavaScriptObject hashCodeMap,
       K key, V value, int hashCode) /*-{
     var array = hashCodeMap[hashCode];
     if (array) {
@@ -354,7 +364,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
    * @param <K> key type
    * @param <V> value type
    */
-  private static native <K,V> V removeHashValue(JavaScriptObject hashCodeMap,
+  private static native <K, V> V removeHashValue(JavaScriptObject hashCodeMap,
       K key, int hashCode) /*-{
     var array = hashCodeMap[hashCode];
     if (array) {
@@ -375,7 +385,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
     }
     // intentionally return undefined
   }-*/;
-  
+
   /**
    * Removes the specified key from the stringMap and returns the value that was
    * previously there. Returns <code>undefined</code> if the specified key
@@ -399,7 +409,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
    * 
    * TODO(jat): reconsider this implementation -- this can hold values that
    * aren't of type V, such as UNDEFINED (which is an Object). We should
-   * reimplement this in a more typesafe manner.
+   * reimplement this in a more type-safe manner.
    */
   private transient V nullSlot;
 
@@ -434,6 +444,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
     this.putAll(toBeCopied);
   }
 
+  @Override
   public void clear() {
     clearImpl();
   }
@@ -442,6 +453,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
     return new HashMap<K, V>(this);
   }
 
+  @Override
   public boolean containsKey(Object key) {
     if (key instanceof String) {
       return getStringValue(stringMap, (String) key) != UNDEFINED;
@@ -452,6 +464,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
     }
   }
 
+  @Override
   public boolean containsValue(Object value) {
     if (nullSlot != UNDEFINED && equalsWithNullCheck(nullSlot, value)) {
       return true;
@@ -463,10 +476,12 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
     return false;
   }
 
+  @Override
   public Set<Map.Entry<K, V>> entrySet() {
     return new EntrySet();
   }
 
+  @Override
   public V get(Object key) {
     V result;
     if (key instanceof String) {
@@ -479,10 +494,12 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
     return (result == UNDEFINED) ? null : result;
   }
 
+  @Override
   public boolean isEmpty() {
     return size() == 0;
   }
 
+  @Override
   public V put(K key, V value) {
     V previous;
     if (key instanceof String) {
@@ -501,6 +518,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
     }
   }
 
+  @Override
   public void putAll(Map<? extends K, ? extends V> otherMap) {
     Iterator<? extends Map.Entry<? extends K, ? extends V>> iter = otherMap.entrySet().iterator();
     while (iter.hasNext()) {
@@ -509,6 +527,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
     }
   }
 
+  @Override
   @SuppressWarnings("unchecked")
   public V remove(Object key) {
     V previous;
@@ -528,6 +547,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
     }
   }
 
+  @Override
   public int size() {
     return size;
   }

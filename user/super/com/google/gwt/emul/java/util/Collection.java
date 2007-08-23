@@ -16,9 +16,9 @@
 package java.util;
 
 /**
- * General-purpose interface for storing collections of objects.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/Collection.html
+ * General-purpose interface for storing collections of objects. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Collection.html">[Sun
+ * docs]</a>
  * 
  * @param <E> element type
  */
@@ -52,5 +52,5 @@ public interface Collection<E> extends Iterable<E> {
 
   Object[] toArray();
 
-  <T> T[] toArray(T[] a);
+  /* <T> T */Object[] toArray(/* T */Object[] a);
 }

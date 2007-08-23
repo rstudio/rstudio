@@ -17,9 +17,9 @@ package java.util;
 
 /**
  * Hash table and linked-list implementation of the Set interface with
- * predictable iteration order.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/LinkedHashSet.html
+ * predictable iteration order. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/LinkedHashSet.html">[Sun
+ * docs]</a>
  * 
  * @param <E> element type.
  */

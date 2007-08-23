@@ -16,12 +16,12 @@
 package java.util;
 
 /**
- * Skeletal implementation of the Map interface.
+ * Skeletal implementation of the Map interface. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractMap.html">[Sun
+ * docs]</a>
  * 
  * @param <K> the key type.
  * @param <V> the value type.
- * 
- * @see <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractMap.html">Sun Documentation</a>
  */
 public abstract class AbstractMap<K, V> implements Map<K, V> {
 
@@ -48,6 +48,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
 
   public abstract Set<Entry<K, V>> entrySet();
 
+  @Override
   public boolean equals(Object obj) {
     if (obj == this) {
       return true;
@@ -77,6 +78,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
     return (entry == null ? null : entry.getValue());
   }
 
+  @Override
   public int hashCode() {
     int hashCode = 0;
     for (Iterator<Entry<K, V>> iter = entrySet().iterator(); iter.hasNext();) {
@@ -93,10 +95,12 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
   public Set<K> keySet() {
     final Set<Entry<K, V>> entrySet = entrySet();
     return new AbstractSet<K>() {
+      @Override
       public boolean contains(Object key) {
         return containsKey(key);
       }
 
+      @Override
       public Iterator<K> iterator() {
         final Iterator<Entry<K, V>> outerIter = entrySet.iterator();
         return new Iterator<K>() {
@@ -115,6 +119,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
         };
       }
 
+      @Override
       public int size() {
         return entrySet.size();
       }
@@ -141,6 +146,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
     return entrySet().size();
   }
 
+  @Override
   public String toString() {
     String s = "{";
     boolean comma = false;
@@ -161,10 +167,12 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
   public Collection<V> values() {
     final Set<Entry<K, V>> entrySet = entrySet();
     return new AbstractCollection<V>() {
+      @Override
       public boolean contains(Object value) {
         return containsValue(value);
       }
 
+      @Override
       public Iterator<V> iterator() {
         final Iterator<Entry<K, V>> outerIter = entrySet.iterator();
         return new Iterator<V>() {
@@ -183,6 +191,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
         };
       }
 
+      @Override
       public int size() {
         return entrySet.size();
       }

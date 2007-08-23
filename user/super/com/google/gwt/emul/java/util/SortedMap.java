@@ -16,9 +16,9 @@
 package java.util;
 
 /**
- * A map known to be in ascending order.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/SortedMap.html
+ * A map with ordering. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/SortedMap.html">[Sun
+ * docs]</a>
  * 
  * @param <K> key type.
  * @param <V> value type.

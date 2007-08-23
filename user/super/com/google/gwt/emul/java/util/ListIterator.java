@@ -19,13 +19,14 @@ package java.util;
 /**
  * Uses Java 1.5 ListIterator for documentation. The methods hasNext, next, and
  * remove are repeated to allow the specialized ListIterator documentation to be
- * associated with them.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/ListIterator.html
+ * associated with them. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/ListIterator.html">[Sun
+ * docs]</a>
  * 
  * @param <E> element type.
  */
 public interface ListIterator<E> extends Iterator<E> {
+
   void add(E o);
 
   boolean hasNext();

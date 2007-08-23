@@ -124,6 +124,7 @@ public class Throwable {
     this.stackTrace = copy;
   }
 
+  @Override
   public String toString() {
     String className = GWT.getTypeName(this);
     String msg = getMessage();

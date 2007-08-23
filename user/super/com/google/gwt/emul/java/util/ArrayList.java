@@ -19,7 +19,9 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.lang.Array;
 
 /**
- * Resizeable array implementation of the List interface.
+ * Resizeable array implementation of the List interface. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/ArrayList.html">[Sun
+ * docs]</a>
  * 
  * <p>
  * This implementation differs from JDK 1.5 <code>ArrayList</code> in terms of
@@ -33,14 +35,11 @@ import com.google.gwt.lang.Array;
  * </p>
  * 
  * @param <E> the element type.
- *
- * @see <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/ArrayList.html">Sun Documentation</a>
  */
 public class ArrayList<E> extends AbstractList<E> implements List<E>,
     Cloneable, RandomAccess {
 
-  private static native void addImpl(JavaScriptObject array, int index,
-      Object o) /*-{
+  private static native void addImpl(JavaScriptObject array, int index, Object o) /*-{
     array.splice(index, 0, o);
   }-*/;
 
@@ -93,6 +92,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   public ArrayList(int ignoredInitialCapacity) {
   }
 
+  @Override
   public void add(int index, E o) {
     if (index < 0 || index > size) {
       indexOutOfBounds(index);
@@ -101,11 +101,13 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     ++size;
   }
 
+  @Override
   public boolean add(E o) {
     setImpl(array, size++, o);
     return true;
   }
 
+  @Override
   public boolean addAll(Collection<? extends E> c) {
     Iterator<? extends E> iter = c.iterator();
     boolean changed = iter.hasNext();
@@ -115,6 +117,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     return changed;
   }
 
+  @Override
   public void clear() {
     clearImpl();
   }
@@ -123,10 +126,12 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     return new ArrayList<E>(this);
   }
 
+  @Override
   public boolean contains(Object o) {
     return (indexOf(o) != -1);
   }
 
+  @Override
   public E get(int index) {
     if (index < 0 || index >= size) {
       indexOutOfBounds(index);
@@ -134,18 +139,22 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     return getImpl(array, index);
   }
 
+  @Override
   public int indexOf(Object o) {
     return indexOf(o, 0);
   }
 
+  @Override
   public boolean isEmpty() {
     return size == 0;
   }
 
+  @Override
   public int lastIndexOf(Object o) {
     return lastIndexOf(o, size() - 1);
   }
 
+  @Override
   public E remove(int index) {
     E previous = get(index);
     removeRangeImpl(array, index, 1);
@@ -153,6 +162,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     return previous;
   }
 
+  @Override
   public boolean remove(Object o) {
     int i = indexOf(o);
     if (i == -1) {
@@ -162,12 +172,14 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     return true;
   }
 
+  @Override
   public E set(int index, E o) {
     E previous = get(index);
     setImpl(array, index, o);
     return previous;
   }
 
+  @Override
   public int size() {
     return size;
   }
@@ -180,7 +192,8 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   /*
    * Faster than the iterator-based implementation in AbstractCollection.
    */
-  public <T> T[] toArray(T[] a) {
+  @Override
+  public/* <T> T */Object[] toArray(/* T */Object[] a) {
     if (a.length < size) {
       a = Array.clonify(a, size);
     }
@@ -224,6 +237,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     return -1;
   }
 
+  @Override
   protected void removeRange(int fromIndex, int endIndex) {
     if (fromIndex < 0 || fromIndex >= size) {
       indexOutOfBounds(fromIndex);

@@ -16,9 +16,9 @@
 package java.util;
 
 /**
- * Linked list implementation.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/LinkedList.html
+ * Linked list implementation. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/LinkedList.html">[Sun
+ * docs]</a>
  * 
  * @param <E> element type.
  */
@@ -35,11 +35,13 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
     addAll(c);
   }
 
+  @Override
   public boolean add(E o) {
     // TODO(jat): implement
     return false;
   }
 
+  @Override
   public boolean addAll(Collection<? extends E> c) {
     // TODO(jat): implement
     return false;
@@ -53,6 +55,7 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
     // TODO(jat): implement
   }
 
+  @Override
   public void clear() {
     // TODO(jat): implement
   }
@@ -62,6 +65,7 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
     return null;
   }
 
+  @Override
   public boolean contains(Object o) {
     // TODO(jat): implement
     return false;
@@ -81,11 +85,13 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
     return null;
   }
 
+  @Override
   public int indexOf(Object o) {
     // TODO(jat): implement
     return 0;
   }
 
+  @Override
   public int lastIndexOf(Object o) {
     // TODO(jat): implement
     return 0;
@@ -142,12 +148,14 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
     return null;
   }
 
+  @Override
   public Object[] toArray() {
     // TODO(jat): implement
     return null;
   }
 
-  public <T> T[] toArray(T[] a) {
+  @Override
+  public/* <T> T */Object[] toArray(/* T */Object[] a) {
     // TODO(jat): implement
     return null;
   }

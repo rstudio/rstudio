@@ -16,9 +16,9 @@
 package java.util;
 
 /**
- * A collection designed for holding elements prior to processing.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/Queue.html
+ * A collection designed for holding elements prior to processing. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Queue.html">[Sun
+ * docs]</a>
  * 
  * @param <E> element type.
  */

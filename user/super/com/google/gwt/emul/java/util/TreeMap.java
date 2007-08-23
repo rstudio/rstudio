@@ -17,9 +17,9 @@ package java.util;
 
 /**
  * Sorted map implementation, guarantees log(n) complexity for containsKey, get,
- * put, and remove.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/TreeMap.html
+ * put, and remove. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/TreeMap.html">[Sun
+ * docs]</a>
  * 
  * @param <K> key type.
  * @param <V> value type.
@@ -89,16 +89,19 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
     return null;
   }
 
+  @Override
   public V put(K key, V value) {
     // TODO(jat): implement
     return null;
   }
 
+  @Override
   public V remove(Object key) {
     // TODO(jat): implement
     return null;
   }
 
+  @Override
   public int size() {
     // TODO(jat): implement
     return 0;

@@ -16,14 +16,15 @@
 package java.util;
 
 /**
- * Maintains a last-in, first-out collection of objects.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/Stack.html
+ * Maintains a last-in, first-out collection of objects. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Stack.html">[Sun
+ * docs]</a>
  * 
  * @param <E> element type.
  */
 public class Stack<E> extends Vector<E> {
 
+  @Override
   public Object clone() {
     Stack<E> s = new Stack<E>();
     s.addAll(this);

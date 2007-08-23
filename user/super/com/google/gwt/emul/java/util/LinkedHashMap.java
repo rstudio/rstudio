@@ -17,9 +17,9 @@ package java.util;
 
 /**
  * Hash table implementation of the Map interface with predictable iteration
- * order.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/LinkedHashMap.html
+ * order. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/LinkedHashMap.html">[Sun
+ * docs]</a>
  * 
  * @param <K> key type.
  * @param <V> value type.

@@ -18,11 +18,12 @@ package java.util;
 import com.google.gwt.lang.Array;
 
 /**
- * Skeletal implementation of the Collection interface.
+ * Skeletal implementation of the Collection interface. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractCollection.html">[Sun
+ * docs]</a>
  * 
  * @param <E> the element type.
  * 
- * @see <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractCollection.html">Sun Documentation</a>
  */
 public abstract class AbstractCollection<E> implements Collection<E> {
 
@@ -109,7 +110,7 @@ public abstract class AbstractCollection<E> implements Collection<E> {
     return toArray(new Object[size()]);
   }
 
-  public <T> T[] toArray(T[] a) {
+  public/* <T> T[] */Object[] toArray(/* T */Object[] a) {
     int size = size();
     if (a.length < size) {
       a = Array.clonify(a, size);
@@ -125,6 +126,7 @@ public abstract class AbstractCollection<E> implements Collection<E> {
     return a;
   }
 
+  @Override
   public String toString() {
     StringBuffer sb = new StringBuffer();
     String comma = null;

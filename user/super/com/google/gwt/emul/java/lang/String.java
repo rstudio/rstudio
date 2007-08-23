@@ -27,7 +27,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 /**
  * Intrinsic string class.
  */
-public final class String implements Comparable, CharSequence {
+public final class String implements Comparable<String>, CharSequence {
 
   // CHECKSTYLE_OFF: This class has special needs.
 
@@ -151,15 +151,6 @@ public final class String implements Comparable, CharSequence {
     return this.charCodeAt(index);
   }-*/;
 
-  public int compareTo(Object other) {
-    if (other instanceof String) {
-      return this.compareTo((String) other);
-    } else {
-      throw new ClassCastException("Cannot compare " + other + " with String '"
-          + this + "'");
-    }
-  }
-
   public int compareTo(String other) {
     int thisLength = this.length();
     int otherLength = other.length();
@@ -183,6 +174,7 @@ public final class String implements Comparable, CharSequence {
        && (this.lastIndexOf(suffix) == (this.length - suffix.length));
   }-*/;
 
+  @Override
   public boolean equals(Object other) {
     if (!(other instanceof String))
       return false;
@@ -195,6 +187,7 @@ public final class String implements Comparable, CharSequence {
     return (this == other) || (this.toLowerCase() == other.toLowerCase());
   }-*/;
 
+  @Override
   public native int hashCode() /*-{
     var hashCache = @java.lang.String::hashCache;
     if (!hashCache) {
@@ -406,6 +399,7 @@ public final class String implements Comparable, CharSequence {
     return this.toLowerCase();
   }-*/;
 
+  @Override
   public String toString() {
     return this;
   }

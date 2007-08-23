@@ -18,7 +18,7 @@ package java.lang;
 /**
  * Wraps native <code>byte</code> as an object.
  */
-public final class Byte extends Number implements Comparable {
+public final class Byte extends Number implements Comparable<Byte> {
   public static final byte MIN_VALUE = (byte) 0x80;
   public static final byte MAX_VALUE = (byte) 0x7F;
 
@@ -58,6 +58,7 @@ public final class Byte extends Number implements Comparable {
     value = parseByte(s);
   }
 
+  @Override
   public byte byteValue() {
     return value;
   }
@@ -72,38 +73,42 @@ public final class Byte extends Number implements Comparable {
     }
   }
 
-  public int compareTo(Object o) {
-    return compareTo((Byte) o);
-  }
-
+  @Override
   public double doubleValue() {
     return value;
   }
 
+  @Override
   public boolean equals(Object o) {
     return (o instanceof Byte) && (((Byte) o).value == value);
   }
 
+  @Override
   public float floatValue() {
     return value;
   }
 
+  @Override
   public int hashCode() {
     return value;
   }
 
+  @Override
   public int intValue() {
     return value;
   }
 
+  @Override
   public long longValue() {
     return value;
   }
 
+  @Override
   public short shortValue() {
     return value;
   }
 
+  @Override
   public String toString() {
     return toString(value);
   }

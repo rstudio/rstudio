@@ -18,7 +18,7 @@ package java.lang;
 /**
  * Wraps a primitive <code>double</code> as an object.
  */
-public final class Double extends Number implements Comparable {
+public final class Double extends Number implements Comparable<Double> {
   public static final double MAX_VALUE = 1.7976931348623157e+308;
   public static final double MIN_VALUE = 4.9e-324;
   public static final double NaN = 0d / 0d;
@@ -65,6 +65,7 @@ public final class Double extends Number implements Comparable {
     value = parseDouble(s);
   }
 
+  @Override
   public byte byteValue() {
     return (byte) value;
   }
@@ -79,18 +80,17 @@ public final class Double extends Number implements Comparable {
     }
   }
 
-  public int compareTo(Object o) {
-    return compareTo((Double) o);
-  }
-
+  @Override
   public double doubleValue() {
     return value;
   }
 
+  @Override
   public boolean equals(Object o) {
     return (o instanceof Double) && (((Double) o).value == value);
   }
 
+  @Override
   public float floatValue() {
     return (float) value;
   }
@@ -104,10 +104,12 @@ public final class Double extends Number implements Comparable {
    * which may lead to poor performance for certain value sets if Doubles are
    * used as keys in a {@link java.util.HashMap}.
    */
+  @Override
   public int hashCode() {
     return (int) value;
   }
 
+  @Override
   public int intValue() {
     return (int) value;
   }
@@ -120,14 +122,17 @@ public final class Double extends Number implements Comparable {
     return isNaN(value);
   }
 
+  @Override
   public long longValue() {
     return (long) value;
   }
 
+  @Override
   public short shortValue() {
     return (short) value;
   }
 
+  @Override
   public String toString() {
     return toString(value);
   }

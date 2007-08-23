@@ -16,11 +16,11 @@
 package java.util;
 
 /**
- * A set known to be in ascending order.
+ * A set known to be in ascending order. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/SortedSet.html">[Sun
+ * docs]</a>
  * 
  * @param <E> element type.
- * 
- * @see <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/SortedSet.html">Sun documentation</a>
  */
 public interface SortedSet<E> extends Set<E> {
 

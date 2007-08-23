@@ -16,15 +16,16 @@
 package java.util;
 
 /**
- * Skeletal implementation of the Set interface.
+ * Skeletal implementation of the Set interface. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractSet.html">[Sun
+ * docs]</a>
  * 
  * @param <E> the element type.
- * 
- * @see <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractSet.html">Sun Documentation</a>
  */
 public abstract class AbstractSet<E> extends AbstractCollection<E> implements
     Set<E> {
 
+  @Override
   public boolean equals(Object o) {
     if (o == this) {
       return true;
@@ -49,6 +50,7 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements
     return true;
   }
 
+  @Override
   public int hashCode() {
     int hashCode = 0;
     for (Iterator<E> iter = iterator(); iter.hasNext();) {
@@ -61,6 +63,7 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements
     return hashCode;
   }
 
+  @Override
   public boolean removeAll(Collection<?> c) {
     int size = size();
     if (size < c.size()) {

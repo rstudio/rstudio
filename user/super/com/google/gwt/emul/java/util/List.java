@@ -16,17 +16,16 @@
 package java.util;
 
 /**
- * Represents a sequence of objects.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/List.html
+ * Represents a sequence of objects. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/List.html">[Sun docs]</a>
  * 
  * @param <E> element type
  */
 public interface List<E> extends Collection<E> {
 
-  void add(int index, E element);
-
   boolean add(E o);
+
+  void add(int index, E element);
 
   boolean addAll(Collection<? extends E> c);
 
@@ -72,6 +71,6 @@ public interface List<E> extends Collection<E> {
 
   Object[] toArray();
 
-  <T> T[] toArray(T[] array);
+  /* <T> T */Object[] toArray(/* T */Object[] array);
 
 }

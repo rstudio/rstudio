@@ -16,9 +16,9 @@
 package java.lang;
 
 /**
- * An interface used a basis for implementing custom ordering.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Comparable.html
+ * An interface used a basis for implementing custom ordering. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Comparable.html">[Sun
+ * docs]</a>
  * 
  * @param <T> the type to compare to.
  */

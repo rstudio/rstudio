@@ -16,16 +16,16 @@
 package java.util;
 
 /**
- * An unbounded priority queue based on a priority heap.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/PriorityQueue.html
+ * An unbounded priority queue based on a priority heap. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/PriorityQueue.html">[Sun
+ * docs]</a>
  * 
  * @param <E> element type.
  */
 public class PriorityQueue<E> extends AbstractQueue<E> {
 
   /**
-   * A heap held in an array. heap[0] is the root of the heap (the largest
+   * A heap held in an array. heap[0] is the root of the heap (the smallest
    * element), the subtrees of node i are 2*i+1 (left) and 2*i+2 (right). Node i
    * is a leaf node if 2*i>=n. Node i's parent, if i>0, is floor((i-1)/2).
    */
@@ -75,8 +75,8 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
     while (node > 0) {
       int childNode = node;
       node = (node - 1) / 2; // get parent of current node
-      if (cmp.compare(heap.get(node), heap.get(childNode)) >= 0) {
-        // parent is larger, so we have a valid heap
+      if (cmp.compare(heap.get(node), heap.get(childNode)) <= 0) {
+        // parent is smaller, so we have a valid heap
         heap.set(childNode, e);
         return true;
       }
@@ -111,6 +111,11 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
     return heap.size();
   }
 
+  /**
+   * Make the subtree rooted at <code>node</code> a valid heap. O(n) time
+   * 
+   * @param node
+   */
   protected void makeHeap(int node) {
     int n = heap.size();
     if (2 * node >= n) {
@@ -123,8 +128,9 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
   }
 
   /**
-   * Merge two subheaps into a single heap. PRECONDITION: both children of
-   * <code>node</code> are heaps
+   * Merge two subheaps into a single heap. O(log n) time
+   * 
+   * PRECONDITION: both children of <code>node</code> are heaps
    * 
    * @param node the parent of the two subtrees to merge
    */
@@ -134,8 +140,8 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
     while (node * 2 < n) {
       int childNode = 2 * node + 1; // start with left child
       if ((childNode + 1 < n)
-          && (cmp.compare(heap.get(childNode + 1), heap.get(childNode)) > 1)) {
-        childNode++; // select right child instead
+          && (cmp.compare(heap.get(childNode + 1), heap.get(childNode)) < 0)) {
+        childNode++; // right child is smaller, go down that path
       }
       heap.set(node, heap.get(childNode));
       node = childNode;

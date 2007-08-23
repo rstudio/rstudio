@@ -21,10 +21,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates that a method definition is intended to override a declaration
- * from a superclass.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Override.html
+ * Indicates that a method definition is intended to override a declaration from
+ * a superclass. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Override.html">[Sun
+ * docs]</a>
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.SOURCE)

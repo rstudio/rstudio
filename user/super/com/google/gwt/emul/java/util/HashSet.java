@@ -16,9 +16,9 @@
 package java.util;
 
 /**
- * Implements a set in terms of a hash table.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/HashSet.html
+ * Implements a set in terms of a hash table. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/HashSet.html">[Sun
+ * docs]</a>
  * 
  * @param <E> element type.
  */
@@ -53,11 +53,13 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable {
     this.map = map;
   }
 
+  @Override
   public boolean add(E o) {
     Object old = map.put(o, this);
     return (old == null);
   }
 
+  @Override
   public void clear() {
     map.clear();
   }
@@ -66,26 +68,32 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable {
     return new HashSet<E>(this);
   }
 
+  @Override
   public boolean contains(Object o) {
     return map.containsKey(o);
   }
 
+  @Override
   public boolean isEmpty() {
     return map.isEmpty();
   }
 
+  @Override
   public Iterator<E> iterator() {
     return map.keySet().iterator();
   }
 
+  @Override
   public boolean remove(Object o) {
     return (map.remove(o) != null);
   }
 
+  @Override
   public int size() {
     return map.size();
   }
 
+  @Override
   public String toString() {
     return map.keySet().toString();
   }

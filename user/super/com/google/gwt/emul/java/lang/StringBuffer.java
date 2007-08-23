@@ -238,6 +238,7 @@ public final class StringBuffer implements CharSequence {
     return toString().substring(begin, end);
   }
 
+  @Override
   public native String toString() /*-{
     this.@java.lang.StringBuffer::normalize()();
     return this.js[0];

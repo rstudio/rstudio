@@ -56,6 +56,37 @@ public class Date implements Cloneable, Comparable<Date> {
     return Date.UTC(year + 1900, month, date, hrs, min, sec);
   }-*/;
 
+  /**
+   *  Return the names for the days of the week as specified by the Date
+   *  specification.
+   */
+  @SuppressWarnings("unused") // called by JSNI
+  private static String dayToString(int day) {
+    return DAYS[day];
+  }
+
+  /**
+   *  Return the names for the months of the year as specified by the Date
+   *  specification.
+   */
+  @SuppressWarnings("unused") // called by JSNI
+  private static String monthToString(int month) {
+    return MONTHS[month];
+  }
+
+  /**
+   *  Ensure a number is displayed with two digits.
+   *  @return A two-character representation of the number.
+   */
+  @SuppressWarnings("unused") // called by JSNI
+  private static String padTwo(int number) {
+    if (number < 10) {
+      return "0" + number;
+    } else {
+      return String.valueOf(number);
+    }
+  }
+
   public Date() {
     init();
   }
@@ -104,37 +135,7 @@ public class Date implements Cloneable, Comparable<Date> {
     }
   }
 
-  /**
-   *  Return the names for the days of the week as specified by the Date
-   *  specification.
-   */
-  @SuppressWarnings("unused") // called by JSNI
-  private static String dayToString(int day) {
-    return DAYS[day];
-  }
-
-  /**
-   *  Return the names for the months of the year as specified by the Date
-   *  specification.
-   */
-  @SuppressWarnings("unused") // called by JSNI
-  private static String monthToString(int month) {
-    return MONTHS[month];
-  }
-
-  /**
-   *  Ensure a number is displayed with two digits.
-   *  @return A two-character representation of the number.
-   */
-  @SuppressWarnings("unused") // called by JSNI
-  private static String padTwo(int number) {
-    if (number < 10) {
-      return "0" + number;
-    } else {
-      return String.valueOf(number);
-    }
-  }
-
+  @Override
   public boolean equals(Object obj) {
     return ((obj instanceof Date) && (getTime() == ((Date) obj).getTime()));
   }
@@ -175,6 +176,7 @@ public class Date implements Cloneable, Comparable<Date> {
     return this.jsdate.getFullYear()-1900;
   }-*/;
 
+  @Override
   public int hashCode() {
     return (int) (this.getTime() ^ (this.getTime() >>> 32));
   }
@@ -230,6 +232,7 @@ public class Date implements Cloneable, Comparable<Date> {
     return this.jsdate.toLocaleString();
   }-*/;
 
+  @Override
   public native String toString() /*-{
     var d = this.jsdate;
     var padTwo = @java.util.Date::padTwo(I);

@@ -16,11 +16,11 @@
 package java.util;
 
 /**
- * Skeletal implementation of the List interface.
+ * Skeletal implementation of the List interface. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractList.html">[Sun
+ * docs]</a>
  * 
  * @param <E> the element type.
- * 
- * @see <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractList.html">Sun Documentation</a>
  */
 public abstract class AbstractList<E> extends AbstractCollection<E> implements
     List<E> {
@@ -110,13 +110,14 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
     }
   }
 
-  public void add(int index, E element) {
-    throw new UnsupportedOperationException("add");
-  }
-
+  @Override
   public boolean add(E obj) {
     add(size(), obj);
     return true;
+  }
+
+  public void add(int index, E element) {
+    throw new UnsupportedOperationException("add");
   }
 
   public boolean addAll(int index, Collection<? extends E> c) {
@@ -128,10 +129,12 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
     return !c.isEmpty();
   }
 
+  @Override
   public void clear() {
     removeRange(0, size());
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o == this) {
       return true;
@@ -163,6 +166,7 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
 
   public abstract E get(int index);
 
+  @Override
   public int hashCode() {
     int k = 1;
     final int coeff = 31;
@@ -183,6 +187,7 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
     return -1;
   }
 
+  @Override
   public Iterator<E> iterator() {
     return new IteratorImpl();
   }

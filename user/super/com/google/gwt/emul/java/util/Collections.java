@@ -16,19 +16,18 @@
 package java.util;
 
 /**
- * Utility methods that operate on collections.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/Collections.html
+ * Utility methods that operate on collections. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Collections.html">[Sun
+ * docs]</a>
  */
 public class Collections {
 
   /**
    * Used to implement iterators on unmodifiable lists.
-   *
+   * 
    * @param <E> element type.
    */
-  private static class UnmodifiableListIterator<E>
-      implements ListIterator<E> {
+  private static class UnmodifiableListIterator<E> implements ListIterator<E> {
 
     final ListIterator<? extends E> it;
 
@@ -75,6 +74,7 @@ public class Collections {
           "UnmodifiableListIterator: set not permitted");
     }
   }
+
   public static final Set<?> EMPTY_SET = new HashSet<Object>();
   public static final Map<?, ?> EMPTY_MAP = new HashMap<Object, Object>();
 
@@ -104,7 +104,7 @@ public class Collections {
    *         of the array if the searched value is larger than all elements in
    *         the array) minus 1 (to ensure error returns are negative)
    * @throws ClassCastException if <code>key</code> is not comparable to
-   *           <code>sortedList</code>'s elements.
+   *             <code>sortedList</code>'s elements.
    */
   public static <T> int binarySearch(
       final List<? extends Comparable<? super T>> sortedList, final T key) {
@@ -148,7 +148,6 @@ public class Collections {
   // // FUTURE: implement
   // return null;
   // }
-
   /**
    * Perform a binary search on a sorted List, using a user-specified comparison
    * function.
@@ -162,14 +161,14 @@ public class Collections {
    * @param sortedList List to search
    * @param key value to search for
    * @param comparator comparision function, <code>null</code> indicates
-   *          <i>natural ordering</i> should be used.
+   *            <i>natural ordering</i> should be used.
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
    *         of the array if the searched value is larger than all elements in
    *         the array) minus 1 (to ensure error returns are negative)
    * @throws ClassCastException if <code>key</code> and
-   *           <code>sortedList</code>'s elements cannot be compared by
-   *           <code>comparator</code>.
+   *             <code>sortedList</code>'s elements cannot be compared by
+   *             <code>comparator</code>.
    */
   public static <T> int binarySearch(final List<? extends T> sortedList,
       final T key, Comparator<? super T> comparator) {
@@ -280,7 +279,7 @@ public class Collections {
 
       public void clear() {
         throw new UnsupportedOperationException(
-           "unmodifiableCollection: clear not permitted");
+            "unmodifiableCollection: clear not permitted");
       }
 
       public boolean contains(Object o) {
@@ -309,7 +308,7 @@ public class Collections {
 
           public void remove() {
             throw new UnsupportedOperationException(
-              "unmodifiableCollection.iterator: remove not permitted");
+                "unmodifiableCollection.iterator: remove not permitted");
           }
         };
       }
@@ -337,7 +336,7 @@ public class Collections {
         return coll.toArray();
       }
 
-      public <OT> OT[] toArray(OT[] a) {
+      public/* <OT> OT */Object[] toArray(/* OT */Object[] a) {
         return coll.toArray(a);
       }
     };
@@ -444,7 +443,7 @@ public class Collections {
         return list.toArray();
       }
 
-      public <OT> OT[] toArray(OT[] array) {
+      public/* <OT> OT */Object[] toArray(/* OT */Object[] array) {
         return list.toArray(array);
       }
     };
@@ -473,7 +472,7 @@ public class Collections {
 
   /**
    * Replace contents of a list from an array.
-   *
+   * 
    * @param <T> element type
    * @param target list to replace contents from an array
    * @param x an Object array which can contain only T instances
