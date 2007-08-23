@@ -19,6 +19,16 @@ package java.lang;
  * Wraps a primitive <code>int</code> as an object.
  */
 public final class Integer extends Number implements Comparable<Integer> {
+
+  // Box values according to JLS - between -128 and 127
+  private static Integer[] boxedValues = new Integer[256];
+
+  static {
+    for (int i = -128; i < 128; ++i) {
+      boxedValues[i + 128] = i;
+    }
+  }
+
   public static final int MIN_VALUE = 0x80000000;
   public static final int MAX_VALUE = 0x7fffffff;
 
@@ -44,6 +54,13 @@ public final class Integer extends Number implements Comparable<Integer> {
 
   public static String toString(int b) {
     return String.valueOf(b);
+  }
+
+  public static Integer valueOf(int i) {
+    if (i > -129 || i < 128) {
+      return boxedValues[i + 128];
+    }
+    return new Integer(i);
   }
 
   public static Integer valueOf(String s) throws NumberFormatException {

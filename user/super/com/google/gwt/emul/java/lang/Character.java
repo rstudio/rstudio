@@ -20,6 +20,15 @@ package java.lang;
  */
 public final class Character implements Comparable<Character> {
 
+  // Box values according to JLS - from \u0000 to \u007f
+  private static Character[] boxedValues = new Character[128];
+
+  static {
+    for (int i = 0; i < 128; ++i) {
+      boxedValues[i] = (char)i;
+    }
+  }
+
   public static final int MIN_RADIX = 2;
   public static final int MAX_RADIX = 36;
 
@@ -112,6 +121,13 @@ public final class Character implements Comparable<Character> {
   public static native char toUpperCase(char c) /*-{
     return String.fromCharCode(c).toUpperCase().charCodeAt(0);
   }-*/;
+
+  public static Character valueOf(char c) {
+    if (c < 128) {
+      return boxedValues[c];
+    }
+    return new Character(c);
+  }
 
   private final transient char value;
 

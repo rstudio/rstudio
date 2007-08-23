@@ -19,6 +19,16 @@ package java.lang;
  * Wraps native <code>byte</code> as an object.
  */
 public final class Byte extends Number implements Comparable<Byte> {
+
+  // Box all values according to JLS
+  private static Byte[] boxedValues = new Byte[256];
+
+  static {
+    for (byte b = -128; b < 128; ++b) {
+      boxedValues[b + 128] = b;
+    }
+  }
+
   public static final byte MIN_VALUE = (byte) 0x80;
   public static final byte MAX_VALUE = (byte) 0x7F;
 
@@ -38,6 +48,10 @@ public final class Byte extends Number implements Comparable<Byte> {
 
   public static String toString(byte b) {
     return String.valueOf(b);
+  }
+
+  public static Byte valueOf(byte b) {
+    return boxedValues[b];
   }
 
   public static Byte valueOf(String s) throws NumberFormatException {

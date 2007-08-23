@@ -19,6 +19,16 @@ package java.lang;
  * Wraps a primitive <code>short</code> as an object.
  */
 public final class Short extends Number implements Comparable<Short> {
+
+  // Box values according to JLS - between -128 and 127
+  private static Short[] boxedValues = new Short[256];
+
+  static {
+    for (short i = -128; i < 128; ++i) {
+      boxedValues[i + 128] = i;
+    }
+  }
+
   public static final short MIN_VALUE = (short) 0x8000;
   public static final short MAX_VALUE = (short) 0x7fff;
 
@@ -37,6 +47,13 @@ public final class Short extends Number implements Comparable<Short> {
 
   public static String toString(short b) {
     return String.valueOf(b);
+  }
+
+  public static Short valueOf(short s) {
+    if (s > -129 || s < 128) {
+      return boxedValues[s + 128];
+    }
+    return new Short(s);
   }
 
   public static Short valueOf(String s) throws NumberFormatException {
