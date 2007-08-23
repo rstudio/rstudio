@@ -193,7 +193,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
    * Faster than the iterator-based implementation in AbstractCollection.
    */
   @Override
-  public/* <T> T */Object[] toArray(/* T */Object[] a) {
+  public <T> T[] toArray(T[] a) {
     if (a.length < size) {
       a = Array.clonify(a, size);
     }

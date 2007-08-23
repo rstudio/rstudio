@@ -71,6 +71,6 @@ public interface List<E> extends Collection<E> {
 
   Object[] toArray();
 
-  /* <T> T */Object[] toArray(/* T */Object[] array);
+  <T> T[] toArray(T[] array);
 
 }

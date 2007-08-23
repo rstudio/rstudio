@@ -110,7 +110,7 @@ public abstract class AbstractCollection<E> implements Collection<E> {
     return toArray(new Object[size()]);
   }
 
-  public/* <T> T[] */Object[] toArray(/* T */Object[] a) {
+  public <T> T[] toArray(T[] a) {
     int size = size();
     if (a.length < size) {
       a = Array.clonify(a, size);

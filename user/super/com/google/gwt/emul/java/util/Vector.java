@@ -214,7 +214,7 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
   }
 
   @Override
-  public/* <T> T */Object[] toArray(/* T */Object[] a) {
+  public <T> T[] toArray(T[] a) {
     return arrayList.toArray(a);
   }
 

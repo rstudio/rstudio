@@ -155,7 +155,7 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
   }
 
   @Override
-  public/* <T> T */Object[] toArray(/* T */Object[] a) {
+  public <T> T[] toArray(T[] a) {
     // TODO(jat): implement
     return null;
   }

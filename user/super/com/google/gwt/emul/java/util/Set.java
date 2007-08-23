@@ -51,6 +51,6 @@ public interface Set<E> extends Collection<E> {
 
   Object[] toArray();
 
-  /* <T> T */Object[] toArray(/* T */Object[] a);
+  <T> T[] toArray(T[] a);
 
 }

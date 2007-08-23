@@ -336,7 +336,7 @@ public class Collections {
         return coll.toArray();
       }
 
-      public/* <OT> OT */Object[] toArray(/* OT */Object[] a) {
+      public <OT> OT[] toArray(OT[] a) {
         return coll.toArray(a);
       }
     };
@@ -443,7 +443,7 @@ public class Collections {
         return list.toArray();
       }
 
-      public/* <OT> OT */Object[] toArray(/* OT */Object[] array) {
+      public <OT> OT [] toArray(OT[] array) {
         return list.toArray(array);
       }
     };
