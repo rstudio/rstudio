@@ -16,12 +16,10 @@
 package java.lang.annotation;
 
 /**
- * Enumerates annotation retention policies.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/lang/annotation/RetentionPolicy.html
+ * Enumerates annotation retention policies <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/annotation/RetentionPolicy.html">[Sun
+ * docs]</a>.
  */
 public enum RetentionPolicy {
-  CLASS,
-  RUNTIME,
-  SOURCE,
+  CLASS, RUNTIME, SOURCE,
 }

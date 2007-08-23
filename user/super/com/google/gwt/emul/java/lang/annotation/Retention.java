@@ -16,13 +16,13 @@
 package java.lang.annotation;
 
 /**
- * Annotation which indicates how long annotations should be retained.
- *
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/lang/annotation/Retention.html
+ * Annotation which indicates how long annotations should be retained <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/annotation/Retention.html">[Sun
+ * doc]</a>.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.ANNOTATION_TYPE)
 public @interface Retention {
-   public RetentionPolicy value();
+  public RetentionPolicy value();
 }

@@ -16,17 +16,16 @@
 package java.lang.annotation;
 
 /**
- * Base interface for all annotation types.
- *
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/lang/annotation/Annotation.html
+ * Base interface for all annotation types <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/annotation/Annotation.html">[Sun docs]</a>.
  */
 public interface Annotation {
-  
+
   public Class<? extends Annotation> annotationType();
-  
+
   public boolean equals(Object obj);
-  
+
   public int hashCode();
-  
+
   public String toString();
 }

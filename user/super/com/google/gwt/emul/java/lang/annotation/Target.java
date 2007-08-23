@@ -17,13 +17,13 @@ package java.lang.annotation;
 
 /**
  * Annotation which indicates the kinds of program element to which an
- * annotation type is applicable.
- *
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/lang/annotation/Target.html
+ * annotation type is applicable <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/annotation/Target.html">[Sun
+ * docs]</a>.
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.ANNOTATION_TYPE)
 public @interface Target {
-   public ElementType[] value();
+  public ElementType[] value();
 }

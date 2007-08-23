@@ -17,9 +17,9 @@ package java.lang.annotation;
 
 /**
  * Indicates an attempt to access an element of an annotation that was added
- * since it was compiled or serialized.
- *
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/lang/annotation/IncompleteAnnotationException.html
+ * since it was compiled or serialized <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/annotation/IncompleteAnnotationException.html">[Sun
+ * docs]</a>.
  */
 public class IncompleteAnnotationException extends RuntimeException {
 
@@ -33,11 +33,11 @@ public class IncompleteAnnotationException extends RuntimeException {
     this.annotationType = annotationType;
     this.elementName = elementName;
   }
-  
+
   public Class<? extends Annotation> annotationType() {
     return annotationType;
   }
-  
+
   public String elementName() {
     return elementName;
   }
