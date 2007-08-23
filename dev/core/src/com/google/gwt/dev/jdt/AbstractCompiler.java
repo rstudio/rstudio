@@ -388,6 +388,7 @@ public abstract class AbstractCompiler {
         CompilerOptions.IGNORE);
     settings.put(CompilerOptions.OPTION_LocalVariableAttribute,
         CompilerOptions.GENERATE);
+    settings.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_1_5);
     settings.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_1_5);
     settings.put(CompilerOptions.OPTION_TargetPlatform,
         CompilerOptions.VERSION_1_5);
