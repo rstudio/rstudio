@@ -37,15 +37,14 @@ class Comparators {
 
   /**
    * Returns the natural Comparator.
+   * <p>
+   * Example:
+   * 
+   * <pre>Comparator&lt;String&gt; compareString = Comparators.natural()</pre>
    * 
    * @return the natural Comparator
    */
   public static <T> Comparator<T> natural() {
-    /*
-     * Code for generics support is commented. Example calling code, which
-     * should be moved into the Javadoc comment when generics are added: <code>Comparator&lt;String&gt; =
-     * Comparators.natural();</code>
-     */
     return (Comparator<T>) NATURAL;
   }
 }
