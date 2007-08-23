@@ -20,20 +20,20 @@ package java.lang;
  */
 public final class Character implements Comparable<Character> {
 
-  // Box values according to JLS - from \u0000 to \u007f
-  private static Character[] boxedValues = new Character[128];
-
-  static {
-    for (int i = 0; i < 128; ++i) {
-      boxedValues[i] = (char)i;
-    }
-  }
-
   public static final int MIN_RADIX = 2;
   public static final int MAX_RADIX = 36;
 
   public static final char MIN_VALUE = '\u0000';
   public static final char MAX_VALUE = '\uFFFF';
+
+  // Box values according to JLS - from \u0000 to \u007f
+  private static Character[] boxedValues = new Character[128];
+
+  static {
+    for (int i = 0; i < 128; ++i) {
+      boxedValues[i] = (char) i;
+    }
+  }
 
   public static int digit(char c, int radix) {
     if (radix < MIN_RADIX || radix > MAX_RADIX) {

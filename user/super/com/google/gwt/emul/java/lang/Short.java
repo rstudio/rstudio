@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,20 +20,19 @@ package java.lang;
  */
 public final class Short extends Number implements Comparable<Short> {
 
+  public static final short MIN_VALUE = (short) 0x8000;
+  public static final short MAX_VALUE = (short) 0x7fff;
+
   // Box values according to JLS - between -128 and 127
   private static Short[] boxedValues = new Short[256];
-
   static {
     for (short i = -128; i < 128; ++i) {
       boxedValues[i + 128] = i;
     }
   }
 
-  public static final short MIN_VALUE = (short) 0x8000;
-  public static final short MAX_VALUE = (short) 0x7fff;
-
   public static Short decode(String s) throws NumberFormatException {
-    return new Short((short)__decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
+    return new Short((short) __decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
   }
 
   public static short parseShort(String s) throws NumberFormatException {
@@ -42,7 +41,7 @@ public final class Short extends Number implements Comparable<Short> {
 
   public static short parseShort(String s, int radix)
       throws NumberFormatException {
-    return (short)__parseAndValidateLong(s, radix, MIN_VALUE, MAX_VALUE);
+    return (short) __parseAndValidateLong(s, radix, MIN_VALUE, MAX_VALUE);
   }
 
   public static String toString(short b) {

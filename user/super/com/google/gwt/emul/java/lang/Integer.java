@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,20 +20,19 @@ package java.lang;
  */
 public final class Integer extends Number implements Comparable<Integer> {
 
+  public static final int MIN_VALUE = 0x80000000;
+  public static final int MAX_VALUE = 0x7fffffff;
+
   // Box values according to JLS - between -128 and 127
   private static Integer[] boxedValues = new Integer[256];
-
   static {
     for (int i = -128; i < 128; ++i) {
       boxedValues[i + 128] = i;
     }
   }
 
-  public static final int MIN_VALUE = 0x80000000;
-  public static final int MAX_VALUE = 0x7fffffff;
-
   public static Integer decode(String s) throws NumberFormatException {
-    return new Integer((int)__decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
+    return new Integer((int) __decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
   }
 
   public static int parseInt(String s) throws NumberFormatException {
@@ -41,7 +40,7 @@ public final class Integer extends Number implements Comparable<Integer> {
   }
 
   public static int parseInt(String s, int radix) throws NumberFormatException {
-    return (int)__parseAndValidateLong(s, radix, MIN_VALUE, MAX_VALUE);
+    return (int) __parseAndValidateLong(s, radix, MIN_VALUE, MAX_VALUE);
   }
 
   public static String toBinaryString(int x) {

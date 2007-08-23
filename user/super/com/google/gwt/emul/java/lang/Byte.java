@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,20 +20,19 @@ package java.lang;
  */
 public final class Byte extends Number implements Comparable<Byte> {
 
+  public static final byte MIN_VALUE = (byte) 0x80;
+  public static final byte MAX_VALUE = (byte) 0x7F;
+
   // Box all values according to JLS
   private static Byte[] boxedValues = new Byte[256];
-
   static {
     for (byte b = -128; b < 128; ++b) {
       boxedValues[b + 128] = b;
     }
   }
 
-  public static final byte MIN_VALUE = (byte) 0x80;
-  public static final byte MAX_VALUE = (byte) 0x7F;
-
   public static Byte decode(String s) throws NumberFormatException {
-    return new Byte((byte)__decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
+    return new Byte((byte) __decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
   }
 
   public static byte parseByte(String s) throws NumberFormatException {
@@ -43,7 +42,7 @@ public final class Byte extends Number implements Comparable<Byte> {
 
   public static byte parseByte(String s, int radix)
       throws NumberFormatException {
-    return (byte)__parseAndValidateLong(s, radix, MIN_VALUE, MAX_VALUE);
+    return (byte) __parseAndValidateLong(s, radix, MIN_VALUE, MAX_VALUE);
   }
 
   public static String toString(byte b) {
@@ -51,7 +50,7 @@ public final class Byte extends Number implements Comparable<Byte> {
   }
 
   public static Byte valueOf(byte b) {
-    return boxedValues[b +128];
+    return boxedValues[b + 128];
   }
 
   public static Byte valueOf(String s) throws NumberFormatException {
