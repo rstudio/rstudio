@@ -317,6 +317,184 @@ public class Arrays {
     return -low - 1;
   }
 
+  public static boolean equals(Object[] array1, Object[] array2) {
+    if (array1 == array2) {
+      return true;
+    }
+
+    if (array1 == null || array2 == null) {
+      return false;
+    }
+
+    if (array1.length != array2.length) {
+      return false;
+    }
+
+    for (int i = 0; i < array1.length; ++i) {
+      Object val1 = array1[i];
+      Object val2 = array2[i];
+      if (!val1.equals(val2)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  public static boolean equals(byte[] array1, byte[] array2) {
+    if (array1 == array2) {
+      return true;
+    }
+
+    if (array1 == null || array2 == null) {
+      return false;
+    }
+
+    if (array1.length != array2.length) {
+      return false;
+    }
+
+    for (int i = 0; i < array1.length; ++i) {
+      if (array1[i] != array2[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  public static boolean equals(char[] array1, char[] array2) {
+    if (array1 == array2) {
+      return true;
+    }
+
+    if (array1 == null || array2 == null) {
+      return false;
+    }
+
+    if (array1.length != array2.length) {
+      return false;
+    }
+
+    for (int i = 0; i < array1.length; ++i) {
+      if (array1[i] != array2[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  public static boolean equals(short[] array1, short[] array2) {
+    if (array1 == array2) {
+      return true;
+    }
+
+    if (array1 == null || array2 == null) {
+      return false;
+    }
+
+    if (array1.length != array2.length) {
+      return false;
+    }
+
+    for (int i = 0; i < array1.length; ++i) {
+      if (array1[i] != array2[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  public static boolean equals(int[] array1, int[] array2) {
+    if (array1 == array2) {
+      return true;
+    }
+
+    if (array1 == null || array2 == null) {
+      return false;
+    }
+
+    if (array1.length != array2.length) {
+      return false;
+    }
+
+    for (int i = 0; i < array1.length; ++i) {
+      if (array1[i] != array2[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  public static boolean equals(long[] array1, long[] array2) {
+    if (array1 == array2) {
+      return true;
+    }
+
+    if (array1 == null || array2 == null) {
+      return false;
+    }
+
+    if (array1.length != array2.length) {
+      return false;
+    }
+
+    for (int i = 0; i < array1.length; ++i) {
+      if (array1[i] != array2[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  public static boolean equals(float[] array1, float[] array2) {
+    if (array1 == array2) {
+      return true;
+    }
+
+    if (array1 == null || array2 == null) {
+      return false;
+    }
+
+    if (array1.length != array2.length) {
+      return false;
+    }
+
+    for (int i = 0; i < array1.length; ++i) {
+      if (array1[i] != array2[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  public static boolean equals(double[] array1, double[] array2) {
+    if (array1 == array2) {
+      return true;
+    }
+
+    if (array1 == null || array2 == null) {
+      return false;
+    }
+
+    if (array1.length != array2.length) {
+      return false;
+    }
+
+    for (int i = 0; i < array1.length; ++i) {
+      if (array1[i] != array2[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   public static void sort(Object[] x) {
     nativeSort(x, x.length, Comparators.natural());
   }
