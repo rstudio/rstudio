@@ -37,7 +37,7 @@ public class JsonArray extends JExpression {
 
   public JType getType() {
     // If JavaScriptObject type is not available, just return the Object type
-    JClassType jsoType = program.getSpecialJavaScriptObject();
+    JClassType jsoType = program.getJavaScriptObject();
     return (jsoType != null) ? jsoType : program.getTypeJavaLangObject();
   }
 

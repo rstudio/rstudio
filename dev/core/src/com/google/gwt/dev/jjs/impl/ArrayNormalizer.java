@@ -184,9 +184,9 @@ public class ArrayNormalizer {
 
   private ArrayNormalizer(JProgram program) {
     this.program = program;
-    setCheckMethod = program.getSpecialMethod("Array.setCheck");
-    initDims = program.getSpecialMethod("Array.initDims");
-    initValues = program.getSpecialMethod("Array.initValues");
+    setCheckMethod = program.getIndexedMethod("Array.setCheck");
+    initDims = program.getIndexedMethod("Array.initDims");
+    initValues = program.getIndexedMethod("Array.initValues");
   }
 
   private void execImpl() {

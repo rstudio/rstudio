@@ -111,6 +111,7 @@ import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.FieldReference;
 import org.eclipse.jdt.internal.compiler.ast.ForStatement;
+import org.eclipse.jdt.internal.compiler.ast.ForeachStatement;
 import org.eclipse.jdt.internal.compiler.ast.IfStatement;
 import org.eclipse.jdt.internal.compiler.ast.Initializer;
 import org.eclipse.jdt.internal.compiler.ast.InstanceOfExpression;
@@ -263,6 +264,10 @@ public class GenerateJavaAST {
      * output JavaScript.
      */
     public void processType(TypeDeclaration x) {
+      if (x.binding.isEnum() || x.binding.isAnnotationType()) {
+        // TODO
+        return;
+      }
       currentClass = (JReferenceType) typeMap.get(x.binding);
       try {
         currentClassScope = x.scope;
@@ -878,7 +883,7 @@ public class GenerateJavaAST {
       JField field;
       if (fieldBinding.declaringClass == null) {
         // probably array.length
-        field = program.getSpecialField("Array.length");
+        field = program.getIndexedField("Array.length");
         if (!field.getName().equals(String.valueOf(fieldBinding.name))) {
           throw new InternalCompilerException("Error matching fieldBinding.");
         }
@@ -903,7 +908,7 @@ public class GenerateJavaAST {
       JType type = (JType) typeMap.get(x.resolvedType);
       JMethod method = (JMethod) typeMap.get(x.binding);
       // TODO
-      //assert (type == method.getType());
+      // assert (type == method.getType());
 
       JExpression qualifier;
       if (x.receiver instanceof ThisReference) {
@@ -1090,7 +1095,7 @@ public class GenerateJavaAST {
           JField field;
           if (fieldBinding.declaringClass == null) {
             // probably array.length
-            field = program.getSpecialField("Array.length");
+            field = program.getIndexedField("Array.length");
             if (!field.getName().equals(String.valueOf(fieldBinding.name))) {
               throw new InternalCompilerException(
                   "Error matching fieldBinding.");
@@ -1344,11 +1349,6 @@ public class GenerateJavaAST {
       return new JAssertStatement(program, info, expr, arg);
     }
 
-    // // 5.0
-    // JStatement processStatement(ForeachStatement x) {
-    // return null;
-    // }
-
     JBlock processStatement(Block x) {
       if (x == null) {
         return null;
@@ -1395,6 +1395,115 @@ public class GenerateJavaAST {
 
     JStatement processStatement(EmptyStatement x) {
       return null;
+    }
+
+    JStatement processStatement(ForeachStatement x) {
+      SourceInfo info = makeSourceInfo(x);
+      if (x.collection.resolvedType.isArrayType()) {
+        /**
+         * <pre>
+         * for (T[] i$array = collection, int i$index = 0, int i$max = i$array.length;
+         *     i$index < i$max; ++i$index) {
+         *   T elementVar = i$array[i$index];
+         *   // user action
+         * }
+         * </pre>
+         */
+        JLocal elementVar = (JLocal) typeMap.get(x.elementVariable.binding);
+        String elementVarName = elementVar.getName();
+        JLocal arrayVar = createSyntheticLocal(info, elementVarName + "$array",
+            (JType) typeMap.get(x.collection.resolvedType));
+        JLocal indexVar = createSyntheticLocal(info, elementVarName + "$index",
+            program.getTypePrimitiveInt());
+        JLocal maxVar = createSyntheticLocal(info, elementVarName + "$max",
+            program.getTypePrimitiveInt());
+
+        List<JStatement> initializers = new ArrayList<JStatement>(3);
+        // T[] i$array = arr
+        initializers.add(createLocalDeclaration(info, arrayVar,
+            dispProcessExpression(x.collection)));
+        // int i$index = 0
+        initializers.add(createLocalDeclaration(info, indexVar,
+            program.getLiteralInt(0)));
+        // int i$max = i$array.length
+        initializers.add(createLocalDeclaration(info, maxVar, new JFieldRef(
+            program, info, createVariableRef(info, arrayVar),
+            program.getIndexedField("Array.length"), currentClass)));
+
+        // i$index < i$max
+        JExpression condition = new JBinaryOperation(program, info,
+            program.getTypePrimitiveBoolean(), JBinaryOperator.LT,
+            createVariableRef(info, indexVar), createVariableRef(info, maxVar));
+
+        // ++i$index
+        List<JStatement> increments = new ArrayList<JStatement>(1);
+        increments.add(new JPrefixOperation(program, info, JUnaryOperator.INC,
+            createVariableRef(info, indexVar)).makeStatement());
+
+        JBlock body;
+        JStatement action = dispProcessStatement(x.action);
+        if (action instanceof JBlock) {
+          body = (JBlock) action;
+        } else {
+          body = new JBlock(program, info);
+          body.statements.add(action);
+        }
+
+        // T elementVar = i$array[i$index];
+        JLocalDeclarationStatement elementDecl = (JLocalDeclarationStatement) processStatement(x.elementVariable);
+        assert (elementDecl.initializer == null);
+        elementDecl.initializer = new JArrayRef(program, info,
+            createVariableRef(info, arrayVar),
+            createVariableRef(info, indexVar));
+        body.statements.add(0, elementDecl);
+
+        return new JForStatement(program, info, initializers, condition,
+            increments, body);
+      } else {
+        /**
+         * <pre>
+         * for (Iterator<T> i$iterator = collection.iterator(); i$iterator.hasNext(); ) {
+         *   T elementVar = i$iterator.next();
+         *   // user action
+         * }
+         * </pre>
+         */
+        JLocal elementVar = (JLocal) typeMap.get(x.elementVariable.binding);
+        String elementVarName = elementVar.getName();
+        JLocal iteratorVar = createSyntheticLocal(info, elementVarName
+            + "$iterator", (JType) typeMap.get(x.collection.resolvedType));
+
+        List<JStatement> initializers = new ArrayList<JStatement>(1);
+        // Iterator<T> i$iterator = collection.iterator()
+        initializers.add(createLocalDeclaration(info, iteratorVar,
+            new JMethodCall(program, info, dispProcessExpression(x.collection),
+                program.getIndexedMethod("Iterable.iterator"))));
+
+        // i$iterator.hasNext()
+        JExpression condition = new JMethodCall(program, info,
+            createVariableRef(info, iteratorVar),
+            program.getIndexedMethod("Iterator.hasNext"));
+
+        JBlock body;
+        JStatement action = dispProcessStatement(x.action);
+        if (action instanceof JBlock) {
+          body = (JBlock) action;
+        } else {
+          body = new JBlock(program, info);
+          body.statements.add(action);
+        }
+
+        // T elementVar = i$array[i$index];
+        JLocalDeclarationStatement elementDecl = (JLocalDeclarationStatement) processStatement(x.elementVariable);
+        assert (elementDecl.initializer == null);
+        elementDecl.initializer = new JMethodCall(program, info,
+            createVariableRef(info, iteratorVar),
+            program.getIndexedMethod("Iterator.next"));
+        body.statements.add(0, elementDecl);
+
+        return new JForStatement(program, info, initializers, condition,
+            Collections.emptyList(), body);
+      }
     }
 
     JStatement processStatement(ForStatement x) {
@@ -1680,6 +1789,12 @@ public class GenerateJavaAST {
       return true;
     }
 
+    private JLocalDeclarationStatement createLocalDeclaration(SourceInfo info,
+        JLocal arrayVar, JExpression value) {
+      return new JLocalDeclarationStatement(program, info, new JLocalRef(
+          program, info, arrayVar), value);
+    }
+
     /**
      * Helper to create a qualified "this" ref (really a synthetic this field
      * access) of the appropriate type. Always use this method instead of
@@ -1692,6 +1807,11 @@ public class GenerateJavaAST {
       List/* <JExpression> */list = new ArrayList();
       addAllOuterThisRefsPlusSuperChain(list, expr, (JClassType) currentClass);
       return createThisRef(targetType, list);
+    }
+
+    private JLocal createSyntheticLocal(SourceInfo info, String name, JType type) {
+      return program.createLocal(info, name.toCharArray(), type, false,
+          currentMethodBody);
     }
 
     /**
@@ -1815,9 +1935,9 @@ public class GenerateJavaAST {
 
     private SourceTypeBinding erasure(TypeBinding typeBinding) {
       if (typeBinding instanceof ParameterizedTypeBinding) {
-        typeBinding = ((ParameterizedTypeBinding)typeBinding).erasure();
+        typeBinding = ((ParameterizedTypeBinding) typeBinding).erasure();
       }
-      return (SourceTypeBinding)typeBinding;
+      return (SourceTypeBinding) typeBinding;
     }
 
     /**

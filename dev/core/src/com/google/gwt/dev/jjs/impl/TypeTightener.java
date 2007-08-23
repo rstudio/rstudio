@@ -534,7 +534,7 @@ public class TypeTightener {
     // @Override
     public boolean visit(JClassType x, Context ctx) {
       // don't mess with classes used in code gen
-      if (program.specialTypes.contains(x)) {
+      if (program.codeGenTypes.contains(x)) {
         return false;
       }
       return true;

@@ -237,11 +237,14 @@ public class JavaToJavaScriptCompiler {
     // Add intrinsics needed for code generation.
     //
     int k = entryPts.length;
-    String[] seedTypeNames = new String[k + 3];
+    String[] seedTypeNames = new String[k + 6];
     System.arraycopy(entryPts, 0, seedTypeNames, 0, k);
     seedTypeNames[k++] = "com.google.gwt.lang.Array";
     seedTypeNames[k++] = "com.google.gwt.lang.Cast";
     seedTypeNames[k++] = "com.google.gwt.lang.Exceptions";
+    seedTypeNames[k++] = "java.lang.Object";
+    seedTypeNames[k++] = "java.lang.String";
+    seedTypeNames[k++] = "java.lang.Iterable";
 
     // Compile the source and get the compiler so we can get the parse tree
     //

@@ -481,6 +481,10 @@ public class BuildTypeMap {
       currentSeparatorPositions = compResult.lineSeparatorPositions;
       currentFileName = String.valueOf(compResult.fileName);
       SourceTypeBinding binding = typeDeclaration.binding;
+      if (binding.isEnum() || binding.isAnnotationType()) {
+        // TODO
+        return false;
+      }
       if (binding.constantPoolName() == null) {
         /*
          * Weird case: if JDT determines that this local class is totally
@@ -632,6 +636,9 @@ public class BuildTypeMap {
               binding.isFinal());
         } else if (binding.isInterface()) {
           newType = program.createInterface(info, name);
+        } else if (binding.isEnum() || binding.isAnnotationType()) {
+          // TODO
+          return false;
         } else {
           assert (false);
           return false;

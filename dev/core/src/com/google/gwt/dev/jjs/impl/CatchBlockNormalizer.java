@@ -66,7 +66,7 @@ public class CatchBlockNormalizer {
       JLocalRef exRef = new JLocalRef(program, catchInfo, exObj);
       JBlock newCatchBlock = new JBlock(program, catchInfo);
       // $e = Exceptions.caught($e)
-      JMethod caughtMethod = program.getSpecialMethod("Exceptions.caught");
+      JMethod caughtMethod = program.getIndexedMethod("Exceptions.caught");
       JMethodCall call = new JMethodCall(program, catchInfo, null, caughtMethod);
       call.getArgs().add(exRef);
       JExpressionStatement asg = program.createAssignmentStmt(catchInfo, exRef,

@@ -1373,7 +1373,7 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateToStringAlias(JClassType x, JsStatements globalStmts) {
-      JMethod toStringMeth = program.getSpecialMethod("Object.toString");
+      JMethod toStringMeth = program.getIndexedMethod("Object.toString");
       if (x.methods.contains(toStringMeth)) {
         // _.toString = function(){return this.java_lang_Object_toString();}
 
@@ -1403,7 +1403,7 @@ public class GenerateJavaScriptAST {
     private void generateTypeId(JClassType x, JsStatements globalStmts) {
       int typeId = program.getTypeId(x);
       if (typeId >= 0) {
-        JField typeIdField = program.getSpecialField("Object.typeId");
+        JField typeIdField = program.getIndexedField("Object.typeId");
         JsName typeIdName = getName(typeIdField);
         if (typeIdName == null) {
           // Was pruned; this compilation must have no dynamic casts.
@@ -1418,7 +1418,7 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateTypeName(JClassType x, JsStatements globalStmts) {
-      JField typeNameField = program.getSpecialField("Object.typeName");
+      JField typeNameField = program.getIndexedField("Object.typeName");
       JsName typeNameName = getName(typeNameField);
       if (typeNameName == null) {
         // Was pruned; this compilation must not use GWT.getTypeName().
@@ -1446,10 +1446,10 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateTypeTable(JsVars vars) {
-      JField typeIdArray = program.getSpecialField("Cast.typeIdArray");
+      JField typeIdArray = program.getIndexedField("Cast.typeIdArray");
       JsName typeIdArrayName = getName(typeIdArray);
       if (typeIdArrayName == null) {
-        // Was pruned; this compilation must not use GWT.getTypeName().
+        // Was pruned; this compilation must have no dynamic casts.
         return;
       }
       JsArrayLiteral arrayLit = new JsArrayLiteral();

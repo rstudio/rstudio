@@ -54,16 +54,16 @@ public class TypeMap {
   public JNode get(Binding binding) {
     if (binding instanceof TypeVariableBinding) {
       TypeVariableBinding tvb = (TypeVariableBinding) binding;
-      binding = tvb.erasure();
+      return get(tvb.erasure());
     } else if (binding instanceof ParameterizedTypeBinding) {
       ParameterizedTypeBinding ptb = (ParameterizedTypeBinding) binding;
-      binding = ptb.erasure();
+      return get(ptb.erasure());
     } else if (binding instanceof ParameterizedMethodBinding) {
       ParameterizedMethodBinding pmb = (ParameterizedMethodBinding) binding;
-      binding = pmb.original();
+      return get(pmb.original());
     } else if (binding instanceof ParameterizedFieldBinding) {
       ParameterizedFieldBinding pfb = (ParameterizedFieldBinding) binding;
-      binding = pfb.original();
+      return get(pfb.original());
     }
     JNode result = internalGet(binding);
     if (result == null) {

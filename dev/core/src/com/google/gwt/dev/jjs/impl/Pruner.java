@@ -213,7 +213,7 @@ public class Pruner {
        */
       JMethod staticImplFor = program.staticImplFor(method);
       if (staticImplFor != null && referencedNonTypes.contains(staticImplFor)) {
-        if (noSpecialTypes) {
+        if (saveCodeGenTypes) {
           return true;
         }
       }
@@ -338,7 +338,7 @@ public class Pruner {
        * Unless those transforms have already been performed, we must rescue all
        * contained methods for later user.
        */
-      if (noSpecialTypes && program.specialTypes.contains(type)) {
+      if (saveCodeGenTypes && program.codeGenTypes.contains(type)) {
         for (int i = 0; i < type.methods.size(); ++i) {
           JMethod it = (JMethod) type.methods.get(i);
           rescue(it);
@@ -442,7 +442,7 @@ public class Pruner {
       }
 
       // also rescue and instantiate the "base" array type
-      rescue(program.getSpecialArray(), true, true);
+      rescue(program.getIndexedType("Array"), true, true);
       return true;
     }
 
@@ -503,7 +503,7 @@ public class Pruner {
       if (type instanceof JReferenceType) {
         JReferenceType refType = (JReferenceType) type;
         if (program.typeOracle.canTriviallyCast(refType,
-            program.getSpecialJavaScriptObject())) {
+            program.getJavaScriptObject())) {
           rescue(refType, true, true);
         }
       }
@@ -567,7 +567,7 @@ public class Pruner {
          * Any reference types (except String, which works by default) that take
          * part in a concat must rescue java.lang.Object.toString().
          */
-        JMethod toStringMethod = program.getSpecialMethod("Object.toString");
+        JMethod toStringMethod = program.getIndexedMethod("Object.toString");
         rescue(toStringMethod);
       } else if (type == charType) {
         /*
@@ -647,27 +647,25 @@ public class Pruner {
     return new Pruner(program, noSpecialTypes).execImpl();
   }
 
-  private final boolean noSpecialTypes;
+  private final boolean saveCodeGenTypes;
   private final JProgram program;
   private final Set/* <JNode> */referencedNonTypes = new HashSet/* <JNode> */();
   private final Set/* <JReferenceType> */referencedTypes = new HashSet/* <JReferenceType> */();
   private JMethod stringValueOfChar = null;
 
-  private Pruner(JProgram program, boolean noSpecialTypes) {
+  private Pruner(JProgram program, boolean saveCodeGenTypes) {
     this.program = program;
-    this.noSpecialTypes = noSpecialTypes;
+    this.saveCodeGenTypes = saveCodeGenTypes;
   }
 
   private boolean execImpl() {
     boolean madeChanges = false;
     while (true) {
       RescueVisitor rescuer = new RescueVisitor();
-      for (int i = 0; i < program.specialTypes.size(); ++i) {
-        JReferenceType type = (JReferenceType) program.specialTypes.get(i);
-        rescuer.rescue(type, true, noSpecialTypes);
+      for (JReferenceType type : program.codeGenTypes) {
+        rescuer.rescue(type, true, saveCodeGenTypes);
       }
-      for (int i = 0; i < program.entryMethods.size(); ++i) {
-        JMethod method = (JMethod) program.entryMethods.get(i);
+      for (JMethod method : program.entryMethods) {
         rescuer.rescue(method);
       }
 

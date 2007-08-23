@@ -23,24 +23,46 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.js.JClassSeed;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
+import com.google.gwt.dev.jjs.ast.js.JsonObject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Root for the AST representing an entire Java program.
  */
 public class JProgram extends JNode {
 
+  private static final Set<String> CODEGEN_TYPES_SET = new HashSet<String>(
+      Arrays.asList(new String[] {
+          "com.google.gwt.lang.Array", "com.google.gwt.lang.Cast",
+          "com.google.gwt.lang.Exceptions",}));
+
+  private static final Set<String> INDEX_TYPES_SET = new HashSet<String>(
+      Arrays.asList(new String[] {
+          "java.lang.Object", "java.lang.String", "java.lang.Class",
+          "java.lang.Iterable", "java.util.Iterator",
+          "com.google.gwt.core.client.JavaScriptObject",}));
+
   private static final int IS_ARRAY = 2;
+
   private static final int IS_CLASS = 3;
+
   private static final int IS_INTERFACE = 1;
+
   private static final int IS_NULL = 0;
+
+  static {
+    INDEX_TYPES_SET.addAll(CODEGEN_TYPES_SET);
+  }
 
   public static boolean methodsDoMatch(JMethod method1, JMethod method2) {
     // static methods cannot match each other
@@ -54,8 +76,8 @@ public class JProgram extends JNode {
     }
 
     // original parameter types must be identical
-    List/* <JType> */params1 = method1.getOriginalParamTypes();
-    List/* <JType> */params2 = method2.getOriginalParamTypes();
+    List<JType> params1 = method1.getOriginalParamTypes();
+    List<JType> params2 = method2.getOriginalParamTypes();
     int params1size = params1.size();
     if (params1size != params2.size()) {
       return false;
@@ -81,37 +103,34 @@ public class JProgram extends JNode {
     return result.toString();
   }
 
-  public final List/* <JMethod> */entryMethods = new ArrayList/* <JMethod> */();
+  public final List<JClassType> codeGenTypes = new ArrayList<JClassType>();
 
-  public final Map/* <String, HasEnclosingType> */jsniMap = new HashMap/*
-                                                                         * <String,
-                                                                         * HasEnclosingType>
-                                                                         */();
+  public final List<JMethod> entryMethods = new ArrayList<JMethod>();
 
-  public final List/* <JClassType> */specialTypes = new ArrayList/* <JClassType> */();
+  public final Map<String, HasEnclosingType> jsniMap = new HashMap<String, HasEnclosingType>();
 
   public final JTypeOracle typeOracle = new JTypeOracle(this);
 
-  private final List/* <JArrayType> */allArrayTypes = new ArrayList/* <JArrayType> */();
+  private final List<JArrayType> allArrayTypes = new ArrayList<JArrayType>();
 
-  private final List/* <JReferenceType> */allTypes = new ArrayList/* <JReferenceType> */();
+  private final List<JReferenceType> allTypes = new ArrayList<JReferenceType>();
 
   /**
    * Each entry is a HashMap(JType => JArrayType), arranged such that the number
    * of dimensions is that index (plus one) at which the JArrayTypes having that
    * number of dimensions resides.
    */
-  private final ArrayList/* <HashMap<JType, JArrayType>> */dimensions = new ArrayList/*
-                                                                                       * <HashMap<JType,
-                                                                                       * JArrayType>>
-                                                                                       */();
+  private final ArrayList<HashMap<JType, JArrayType>> dimensions = new ArrayList<HashMap<JType, JArrayType>>();
 
-  private final Map/* <JMethod, JMethod> */instanceToStaticMap = new IdentityHashMap/*
-                                                                                     * <JMethod,
-                                                                                     * JMethod>
-                                                                                     */();
+  private final Map<String, JField> indexedFields = new HashMap<String, JField>();
 
-  private List/* <JsonObject> */jsonTypeTable;
+  private final Map<String, JMethod> indexedMethods = new HashMap<String, JMethod>();
+
+  private final Map<String, JReferenceType> indexedTypes = new HashMap<String, JReferenceType>();
+
+  private final Map<JMethod, JMethod> instanceToStaticMap = new IdentityHashMap<JMethod, JMethod>();
+
+  private List<JsonObject> jsonTypeTable;
 
   private final JAbsentArrayDimension literalAbsentArrayDim = new JAbsentArrayDimension(
       this);
@@ -134,26 +153,13 @@ public class JProgram extends JNode {
 
   private JMethod nullMethod;
 
-  private Map/* <JReferenceType, Integer> */queryIds;
+  private Map<JReferenceType, Integer> queryIds;
 
   private JMethod rebindCreateMethod;
 
   private final RebindOracle rebindOracle;
 
-  private final Map/* <String, JField> */specialFields = new HashMap/*
-                                                                     * <String,
-                                                                     * JField>
-                                                                     */();
-
-  private final Map/* <String, JMethod> */specialMethods = new HashMap/*
-                                                                       * <String,
-                                                                       * JMethod>
-                                                                       */();
-
-  private final Map/* <JMethod, JMethod> */staticToInstanceMap = new IdentityHashMap/*
-                                                                                     * <JMethod,
-                                                                                     * JMethod>
-                                                                                     */();
+  private final Map<JMethod, JMethod> staticToInstanceMap = new IdentityHashMap<JMethod, JMethod>();
 
   private final JPrimitiveType typeBoolean = new JPrimitiveType(this,
       "boolean", "Z", literalFalse);
@@ -172,10 +178,7 @@ public class JProgram extends JNode {
   private final JPrimitiveType typeFloat = new JPrimitiveType(this, "float",
       "F", getLiteralFloat(0));
 
-  private Map/* <JClassType, Integer> */typeIdMap = new HashMap/*
-                                                                 * <JClassType,
-                                                                 * Integer>
-                                                                 */();
+  private Map<JClassType, Integer> typeIdMap = new HashMap<JClassType, Integer>();
 
   private final JPrimitiveType typeInt = new JPrimitiveType(this, "int", "I",
       literalIntZero);
@@ -185,21 +188,12 @@ public class JProgram extends JNode {
   private final JPrimitiveType typeLong = new JPrimitiveType(this, "long", "J",
       getLiteralLong(0));
 
-  private final Map/* <String, JReferenceType> */typeNameMap = new HashMap/*
-                                                                           * <String,
-                                                                           * JReferenceType>
-                                                                           */();
+  private final Map<String, JReferenceType> typeNameMap = new HashMap<String, JReferenceType>();
 
   private final JNullType typeNull = new JNullType(this);
 
   private final JPrimitiveType typeShort = new JPrimitiveType(this, "short",
       "S", literalIntZero);
-
-  private JClassType typeSpecialArray;
-
-  private JClassType typeSpecialCast;
-
-  private JClassType typeSpecialExceptions;
 
   private JClassType typeSpecialJavaScriptObject;
 
@@ -238,24 +232,20 @@ public class JProgram extends JNode {
     allTypes.add(x);
     putIntoTypeMap(sname, x);
 
-    if (sname.equals("java.lang.Object")) {
-      typeJavaLangObject = x;
-      specialTypes.add(x);
-    } else if (sname.equals("java.lang.String")) {
-      typeString = x;
-    } else if (sname.equals("java.lang.Class")) {
-      typeClass = x;
-    } else if (sname.equals("com.google.gwt.core.client.JavaScriptObject")) {
-      typeSpecialJavaScriptObject = x;
-    } else if (sname.equals("com.google.gwt.lang.Array")) {
-      typeSpecialArray = x;
-      specialTypes.add(x);
-    } else if (sname.equals("com.google.gwt.lang.Cast")) {
-      typeSpecialCast = x;
-      specialTypes.add(x);
-    } else if (sname.equals("com.google.gwt.lang.Exceptions")) {
-      typeSpecialExceptions = x;
-      specialTypes.add(x);
+    if (CODEGEN_TYPES_SET.contains(sname)) {
+      codeGenTypes.add(x);
+    }
+    if (INDEX_TYPES_SET.contains(sname)) {
+      indexedTypes.put(x.getShortName(), x);
+      if (sname.equals("java.lang.Object")) {
+        typeJavaLangObject = x;
+      } else if (sname.equals("java.lang.String")) {
+        typeString = x;
+      } else if (sname.equals("java.lang.Class")) {
+        typeClass = x;
+      } else if (sname.equals("com.google.gwt.core.client.JavaScriptObject")) {
+        typeSpecialJavaScriptObject = x;
+      }
     }
 
     return x;
@@ -269,12 +259,11 @@ public class JProgram extends JNode {
     assert (type != null);
 
     /*
-     * MAGIC: special fields are filled in during code gen, don't bother
-     * synthesizing dummy initializations.
+     * MAGIC: filled in during code gen, don't bother synthesizing dummy
+     * initializations.
      */
-    boolean isSpecialField = specialTypes.contains(enclosingType);
-
-    if (isSpecialField) {
+    if (codeGenTypes.contains(enclosingType)
+        || enclosingType == typeJavaLangObject) {
       hasInitializer = true;
     }
 
@@ -282,8 +271,8 @@ public class JProgram extends JNode {
     JField x = new JField(this, info, sname, enclosingType, type, isStatic,
         isFinal, hasInitializer);
 
-    if (isSpecialField) {
-      specialFields.put(enclosingType.getShortName() + '.' + sname, x);
+    if (indexedTypes.containsValue(enclosingType)) {
+      indexedFields.put(enclosingType.getShortName() + '.' + sname, x);
     }
 
     enclosingType.fields.add(x);
@@ -297,6 +286,10 @@ public class JProgram extends JNode {
 
     allTypes.add(x);
     putIntoTypeMap(sname, x);
+
+    if (INDEX_TYPES_SET.contains(sname)) {
+      indexedTypes.put(x.getShortName(), x);
+    }
 
     return x;
   }
@@ -323,8 +316,8 @@ public class JProgram extends JNode {
     assert (!isAbstract || !isNative);
 
     String sname = String.valueOf(name);
-    JMethod x = new JMethod(this, info, sname, enclosingType, returnType, isAbstract,
-        isStatic, isFinal, isPrivate);
+    JMethod x = new JMethod(this, info, sname, enclosingType, returnType,
+        isAbstract, isStatic, isFinal, isPrivate);
     if (isNative) {
       x.setBody(new JsniMethodBody(this, info));
     } else if (!isAbstract) {
@@ -335,8 +328,8 @@ public class JProgram extends JNode {
         && enclosingType.getName().equals(
             FindDeferredBindingSitesVisitor.REBIND_MAGIC_CLASS)) {
       rebindCreateMethod = x;
-    } else if (!isPrivate && specialTypes.contains(enclosingType)) {
-      specialMethods.put(enclosingType.getShortName() + '.' + sname, x);
+    } else if (!isPrivate && indexedTypes.containsValue(enclosingType)) {
+      indexedMethods.put(enclosingType.getShortName() + '.' + sname, x);
     }
 
     if (enclosingType != null) {
@@ -360,22 +353,22 @@ public class JProgram extends JNode {
     return x;
   }
 
-  public JReferenceType generalizeTypes(Collection/* <JReferenceType> */types) {
+  public JReferenceType generalizeTypes(Collection<JReferenceType> types) {
     assert (types != null);
     assert (!types.isEmpty());
-    Iterator/* <JReferenceType> */it = types.iterator();
-    JReferenceType curType = (JReferenceType) it.next();
+    Iterator<JReferenceType> it = types.iterator();
+    JReferenceType curType = it.next();
     while (it.hasNext()) {
-      curType = generalizeTypes(curType, (JReferenceType) it.next());
+      curType = generalizeTypes(curType, it.next());
     }
     return curType;
   }
 
-  public List/* <JArrayType> */getAllArrayTypes() {
+  public List<JArrayType> getAllArrayTypes() {
     return allArrayTypes;
   }
 
-  public List/* <JReferenceType> */getDeclaredTypes() {
+  public List<JReferenceType> getDeclaredTypes() {
     return allTypes;
   }
 
@@ -385,10 +378,26 @@ public class JProgram extends JNode {
 
   public JReferenceType getFromTypeMap(String qualifiedBinaryOrSourceName) {
     String srcTypeName = qualifiedBinaryOrSourceName.replace('$', '.');
-    return (JReferenceType) typeNameMap.get(srcTypeName);
+    return typeNameMap.get(srcTypeName);
   }
 
-  public List/* <JsonObject> */getJsonTypeTable() {
+  public JField getIndexedField(String string) {
+    return indexedFields.get(string);
+  }
+
+  public JMethod getIndexedMethod(String string) {
+    return indexedMethods.get(string);
+  }
+
+  public JReferenceType getIndexedType(String string) {
+    return indexedTypes.get(string);
+  }
+
+  public JClassType getJavaScriptObject() {
+    return typeSpecialJavaScriptObject;
+  }
+
+  public List<JsonObject> getJsonTypeTable() {
     return jsonTypeTable;
   }
 
@@ -467,14 +476,14 @@ public class JProgram extends JNode {
 
   public JMethod getNullMethod() {
     if (nullMethod == null) {
-      nullMethod = new JMethod(this, null, "nullMethod", null, typeNull,
-          false, false, true, true);
+      nullMethod = new JMethod(this, null, "nullMethod", null, typeNull, false,
+          false, true, true);
     }
     return nullMethod;
   }
 
   public int getQueryId(JReferenceType elementType) {
-    Integer integer = (Integer) queryIds.get(elementType);
+    Integer integer = queryIds.get(elementType);
     if (integer == null) {
       return 0;
     }
@@ -486,50 +495,26 @@ public class JProgram extends JNode {
     return rebindCreateMethod;
   }
 
-  public JClassType getSpecialArray() {
-    return typeSpecialArray;
-  }
-
-  public JClassType getSpecialCast() {
-    return typeSpecialCast;
-  }
-
-  public JClassType getSpecialExceptions() {
-    return typeSpecialExceptions;
-  }
-
-  public JField getSpecialField(String string) {
-    return (JField) specialFields.get(string);
-  }
-
-  public JClassType getSpecialJavaScriptObject() {
-    return typeSpecialJavaScriptObject;
-  }
-
-  public JMethod getSpecialMethod(String string) {
-    return (JMethod) specialMethods.get(string);
-  }
-
   public JMethod getStaticImpl(JMethod method) {
-    return (JMethod) instanceToStaticMap.get(method);
+    return instanceToStaticMap.get(method);
   }
 
   public JArrayType getTypeArray(JType leafType, int dimensions) {
-    HashMap/* <JType, JArrayType> */typeToArrayType;
+    HashMap<JType, JArrayType> typeToArrayType;
 
     // Create typeToArrayType maps for index slots that don't exist yet.
     //
     for (int i = this.dimensions.size(); i < dimensions; ++i) {
-      typeToArrayType = new HashMap();
+      typeToArrayType = new HashMap<JType, JArrayType>();
       this.dimensions.add(typeToArrayType);
     }
 
     // Get the map for array having this number of dimensions (biased by one
     // since we don't store non-arrays in there -- thus index 0 => 1 dim).
     //
-    typeToArrayType = (HashMap) this.dimensions.get(dimensions - 1);
+    typeToArrayType = this.dimensions.get(dimensions - 1);
 
-    JArrayType arrayType = (JArrayType) typeToArrayType.get(leafType);
+    JArrayType arrayType = typeToArrayType.get(leafType);
     if (arrayType == null) {
       arrayType = new JArrayType(this, leafType, dimensions);
       arrayType.extnds = typeJavaLangObject;
@@ -548,7 +533,7 @@ public class JProgram extends JNode {
   }
 
   public int getTypeId(JClassType classType) {
-    Integer integer = (Integer) typeIdMap.get(classType);
+    Integer integer = typeIdMap.get(classType);
     if (integer == null) {
       return 0;
     }
@@ -608,8 +593,8 @@ public class JProgram extends JNode {
     return typeVoid;
   }
 
-  public void initTypeInfo(List/* <JClassType> */classes,
-      List/* <JsonObject> */jsonObjects) {
+  public void initTypeInfo(List<JClassType> classes,
+      List<JsonObject> jsonObjects) {
     for (int i = 0, c = classes.size(); i < c; ++i) {
       typeIdMap.put(classes.get(i), new Integer(i));
     }
@@ -662,7 +647,7 @@ public class JProgram extends JNode {
     return (JClassType) result;
   }
 
-  public void recordQueryIds(Map/* <JReferenceType, Integer> */queryIds) {
+  public void recordQueryIds(Map<JReferenceType, Integer> queryIds) {
     this.queryIds = queryIds;
   }
 
@@ -672,7 +657,7 @@ public class JProgram extends JNode {
    * returns <code>null</code>.
    */
   public JMethod staticImplFor(JMethod method) {
-    return (JMethod) staticToInstanceMap.get(method);
+    return staticToInstanceMap.get(method);
   }
 
   public JReferenceType strongerType(JReferenceType type1, JReferenceType type2) {
@@ -688,7 +673,7 @@ public class JProgram extends JNode {
       return type2;
     }
 
-    // canot determine a strong type, just return the first one (this makes two
+    // cannot determine a strong type, just return the first one (this makes two
     // "unrelated" interfaces work correctly in TypeTightener
     return type1;
   }

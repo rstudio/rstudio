@@ -325,7 +325,7 @@ public class CastNormalizer {
       if (expr.getType() == charType) {
         // Replace the character with a call to Cast.charToString()
         if (stringValueOfChar == null) {
-          stringValueOfChar = program.getSpecialMethod("Cast.charToString");
+          stringValueOfChar = program.getIndexedMethod("Cast.charToString");
           assert (stringValueOfChar != null);
         }
         JMethodCall call = new JMethodCall(program, expr.getSourceInfo(), null,
@@ -375,7 +375,7 @@ public class CastNormalizer {
          * globally uninstantiable. We handle this cast by throwing a
          * ClassCastException, unless the argument is null.
          */
-        JMethod method = program.getSpecialMethod("Cast.throwClassCastExceptionUnlessNull");
+        JMethod method = program.getIndexedMethod("Cast.throwClassCastExceptionUnlessNull");
         /*
          * Override the type of the magic method with the null type.
          */
@@ -395,7 +395,7 @@ public class CastNormalizer {
            * function's prototype directly onto the target object as expandos.
            * See com.google.gwt.lang.Cast.wrapJSO().
            */
-          JMethod wrap = program.getSpecialMethod("Cast.wrapJSO");
+          JMethod wrap = program.getIndexedMethod("Cast.wrapJSO");
           // override the type of the called method with the JSO's type
           JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
               wrap, argType);
@@ -411,7 +411,7 @@ public class CastNormalizer {
           // just remove the cast
           replaceExpr = curExpr;
         } else {
-          JMethod method = program.getSpecialMethod("Cast.dynamicCast");
+          JMethod method = program.getIndexedMethod("Cast.dynamicCast");
           // override the type of the called method with the target cast type
           JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
               method, toType);
@@ -468,7 +468,7 @@ public class CastNormalizer {
           // Replace the expression with a call to the narrow or round method
           String methodName = "Cast." + (narrow ? "narrow_" : "round_")
               + toType.getName();
-          JMethod castMethod = program.getSpecialMethod(methodName);
+          JMethod castMethod = program.getIndexedMethod(methodName);
           JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
               castMethod);
           call.getArgs().add(x.getExpr());
@@ -494,7 +494,7 @@ public class CastNormalizer {
             x.getExpr(), nullLit);
         ctx.replaceMe(eq);
       } else {
-        JMethod method = program.getSpecialMethod("Cast.instanceOf");
+        JMethod method = program.getIndexedMethod("Cast.instanceOf");
         JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
             method);
         Integer boxedInt = (Integer) queryIds.get(x.getTestType());
