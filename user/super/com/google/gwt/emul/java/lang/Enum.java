@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,52 +15,56 @@
  */
 package java.lang;
 
+import com.google.gwt.core.client.GWT;
+
 import java.io.Serializable;
 
 /**
  * The first-class representation of an enumeration.
+ * 
+ * @param <E>
  */
-public abstract class Enum<E extends Enum<E>>
-    implements Comparable<E>, Serializable {
+public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
+    Serializable {
 
-  public static <T extends Enum<T>> T valueOf(Class<T> enumType, String name) {
-    throw new UnsupportedOperationException("not yet implemented.");
-  }
+  // public static <T extends Enum<T>> T valueOf(Class<T> enumType, String name)
+  // {
+  // throw new UnsupportedOperationException("not yet implemented.");
+  // }
 
-  private String name;
+  private final String name;
 
-  private int ordinal;
+  private final int ordinal;
 
   protected Enum(String name, int ordinal) {
     this.name = name;
     this.ordinal = ordinal;
   }
 
-  public int compareTo(E o) {
-    throw new UnsupportedOperationException("not yet implemented.");
+  public final int compareTo(E other) {
+    if (GWT.getTypeName(this) != GWT.getTypeName(other)) {
+      throw new ClassCastException();
+    }
+    return this.ordinal - other.ordinal;
   }
 
-  public boolean equals(Object other) {
-    throw new UnsupportedOperationException("not yet implemented.");
+  public final boolean equals(Object other) {
+    return this == other;
   }
 
-  public Class<E> getDeclaringClass() {
-    throw new UnsupportedOperationException("not yet implemented.");
+  // public final Class<E> getDeclaringClass() {
+  // throw new UnsupportedOperationException("not yet implemented.");
+  // }
+
+  public final int hashCode() {
+    return System.identityHashCode(this);
   }
 
-  public int hashCode() {
-    // TODO(tobyr) - consider rewriting this in terms of System.identityHashCode
-    int result;
-    result = (name != null ? name.hashCode() : 0);
-    result = 31 * result + ordinal;
-    return result;
-  }
-
-  public String name() {
+  public final String name() {
     return name;
   }
 
-  public int ordinal() {
+  public final int ordinal() {
     return ordinal;
   }
 
@@ -68,10 +72,4 @@ public abstract class Enum<E extends Enum<E>>
     return name;
   }
 
-  protected Object clone() throws CloneNotSupportedException {
-    throw new CloneNotSupportedException("Enums can not be cloned.");
-  }
-
-  protected void finalize() {
-  }
 }
