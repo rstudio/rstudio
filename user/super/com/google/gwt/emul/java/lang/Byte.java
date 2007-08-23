@@ -51,7 +51,7 @@ public final class Byte extends Number implements Comparable<Byte> {
   }
 
   public static Byte valueOf(byte b) {
-    return boxedValues[b];
+    return boxedValues[b +128];
   }
 
   public static Byte valueOf(String s) throws NumberFormatException {
