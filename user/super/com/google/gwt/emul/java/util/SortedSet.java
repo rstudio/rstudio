@@ -16,11 +16,11 @@
 package java.util;
 
 /**
- * A map known to be in ascending order.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/SortedSet.html
+ * A set known to be in ascending order.
  * 
  * @param <E> element type.
+ * 
+ * @see <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/SortedSet.html">Sun documentation</a>
  */
 public interface SortedSet<E> extends Set<E> {
 

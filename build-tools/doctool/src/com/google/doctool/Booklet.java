@@ -876,6 +876,11 @@ public class Booklet {
     MemberDoc md = null;
     String title = null;
 
+    // Check for HTML links
+    if (seeTag.text().startsWith("<")) {
+      text(seeTag.text());
+      return;
+    }
     // Ordered: most-specific to least-specific
     if (null != (md = seeTag.referencedMember())) {
       ref = getId(md);

@@ -16,9 +16,11 @@
 package java.util;
 
 /**
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractQueue.html
+ * Skeletal implementation of the Queue interface.
  * 
  * @param <E> element type.
+ * 
+ * @see <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractQueue.html">Sun Documentation</a>
  */
 public abstract class AbstractQueue<E> extends AbstractCollection<E> implements
     Queue<E> {

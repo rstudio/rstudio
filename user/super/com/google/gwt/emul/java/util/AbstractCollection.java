@@ -18,9 +18,11 @@ package java.util;
 import com.google.gwt.lang.Array;
 
 /**
- * Abstract base class for collection implementations.
+ * Skeletal implementation of the Collection interface.
  * 
  * @param <E> the element type.
+ * 
+ * @see <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractCollection.html">Sun Documentation</a>
  */
 public abstract class AbstractCollection<E> implements Collection<E> {
 

@@ -19,7 +19,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.lang.Array;
 
 /**
- * See Sun's JDK 1.5 documentation for documentation.
+ * Resizeable array implementation of the List interface.
  * 
  * <p>
  * This implementation differs from JDK 1.5 <code>ArrayList</code> in terms of
@@ -32,9 +32,9 @@ import com.google.gwt.lang.Array;
  * 1.5's API.
  * </p>
  * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/ArrayList.html
- * 
  * @param <E> the element type.
+ *
+ * @see <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/ArrayList.html">Sun Documentation</a>
  */
 public class ArrayList<E> extends AbstractList<E> implements List<E>,
     Cloneable, RandomAccess {

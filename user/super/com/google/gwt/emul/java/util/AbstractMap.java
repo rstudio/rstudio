@@ -16,12 +16,12 @@
 package java.util;
 
 /**
- * Skeletal implementation for Map implementations.
- * 
- * @link http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractMap.html
+ * Skeletal implementation of the Map interface.
  * 
  * @param <K> the key type.
  * @param <V> the value type.
+ * 
+ * @see <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/AbstractMap.html">Sun Documentation</a>
  */
 public abstract class AbstractMap<K, V> implements Map<K, V> {
 

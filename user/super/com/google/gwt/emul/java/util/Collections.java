@@ -22,8 +22,62 @@ package java.util;
  */
 public class Collections {
 
+  /**
+   * Used to implement iterators on unmodifiable lists.
+   *
+   * @param <E> element type.
+   */
+  private static class UnmodifiableListIterator<E>
+      implements ListIterator<E> {
+
+    final ListIterator<? extends E> it;
+
+    public UnmodifiableListIterator(ListIterator<? extends E> it) {
+      this.it = it;
+    }
+
+    public void add(E o) {
+      throw new UnsupportedOperationException(
+          "UnmodifiableListIterator: add not permitted");
+    }
+
+    public boolean hasNext() {
+      return it.hasNext();
+    }
+
+    public boolean hasPrevious() {
+      return it.hasPrevious();
+    }
+
+    public E next() {
+      return it.next();
+    }
+
+    public int nextIndex() {
+      return it.nextIndex();
+    }
+
+    public E previous() {
+      return it.previous();
+    }
+
+    public int previousIndex() {
+      return it.previousIndex();
+    }
+
+    public void remove() {
+      throw new UnsupportedOperationException(
+          "UnmodifiableListIterator: remove not permitted");
+    }
+
+    public void set(E o) {
+      throw new UnsupportedOperationException(
+          "UnmodifiableListIterator: set not permitted");
+    }
+  }
   public static final Set<?> EMPTY_SET = new HashSet<Object>();
   public static final Map<?, ?> EMPTY_MAP = new HashMap<Object, Object>();
+
   public static final List<?> EMPTY_LIST = new ArrayList<Object>();
 
   public static <T> boolean addAll(Collection<? super T> c, T... a) {
@@ -56,6 +110,44 @@ public class Collections {
       final List<? extends Comparable<? super T>> sortedList, final T key) {
     return binarySearch(sortedList, key, null);
   }
+
+  /*
+   * These methods are commented out because they cannot currently be
+   * implemented in GWT. The signatures are included in case that changes.
+   */
+  // public static <E> Collection<E> checkedCollection(Collection<E> c, Class<E>
+  // type) {
+  // // FUTURE: implement
+  // return null;
+  // }
+  //  
+  // static <E> List<E> checkedList(List<E> list, Class<E> type) {
+  // // FUTURE: implement
+  // return null;
+  // }
+  //
+  // public static <K,V> Map<K,V> checkedMap(Map<K,V> list, Class<K> keyType,
+  // Class<V> valueType) {
+  // // FUTURE: implement
+  // return null;
+  // }
+  //
+  // public static <E> Set<E> checkedSet(Set<E> list, Class<E> type) {
+  // // FUTURE: implement
+  // return null;
+  // }
+  //
+  // public static <K,V> SortedMap<K,V> checkedSortedMap(SortedMap<K,V> m,
+  // Class<K> keyType, Class<V> valueType) {
+  // // FUTURE: implement
+  // return null;
+  // }
+  //
+  // public static <E> SortedSet<E> checkedSortedSet(SortedSet<E> list, Class<E>
+  // type) {
+  // // FUTURE: implement
+  // return null;
+  // }
 
   /**
    * Perform a binary search on a sorted List, using a user-specified comparison
@@ -110,46 +202,9 @@ public class Collections {
     return -low - 1;
   }
 
-  /*
-   * These methods are commented out because they cannot currently be
-   * implemented in GWT. The signatures are included in case that changes.
-   */
-  // public static <E> Collection<E> checkedCollection(Collection<E> c, Class<E>
-  // type) {
-  // // FUTURE: implement
-  // return null;
-  // }
-  //  
-  // static <E> List<E> checkedList(List<E> list, Class<E> type) {
-  // // FUTURE: implement
-  // return null;
-  // }
-  //
-  // public static <K,V> Map<K,V> checkedMap(Map<K,V> list, Class<K> keyType,
-  // Class<V> valueType) {
-  // // FUTURE: implement
-  // return null;
-  // }
-  //
-  // public static <E> Set<E> checkedSet(Set<E> list, Class<E> type) {
-  // // FUTURE: implement
-  // return null;
-  // }
-  //
-  // public static <K,V> SortedMap<K,V> checkedSortedMap(SortedMap<K,V> m,
-  // Class<K> keyType, Class<V> valueType) {
-  // // FUTURE: implement
-  // return null;
-  // }
-  //
-  // public static <E> SortedSet<E> checkedSortedSet(SortedSet<E> list, Class<E>
-  // type) {
-  // // FUTURE: implement
-  // return null;
-  // }
   public static <T> void copy(List<? super T> dest, List<? extends T> src) {
-    // TODO(jat): implement
-    throw new UnsupportedOperationException("copy not implemented");
+    // TODO(jat): optimize
+    dest.addAll(src);
   }
 
   public static boolean disjoint(Collection<?> c1, Collection<?> c2) {
@@ -173,8 +228,16 @@ public class Collections {
   }
 
   public static <T> Enumeration<T> enumeration(Collection<T> c) {
-    // TODO(jat): implement
-    throw new UnsupportedOperationException("enumeration not implemented");
+    final Iterator<T> it = c.iterator();
+    return new Enumeration<T>() {
+      public boolean hasMoreElements() {
+        return it.hasNext();
+      }
+
+      public T nextElement() {
+        return it.next();
+      }
+    };
   }
 
   public static <T> void reverse(List<T> l) {
@@ -202,13 +265,189 @@ public class Collections {
   }
 
   public static <T> Collection<T> unmodifiableCollection(
-      Collection<? extends T> c) {
-    throw new UnsupportedOperationException(
-        "unmodifiableCollection not implemented");
-  }
+      final Collection<? extends T> coll) {
+    return new Collection<T>() {
 
-  public static <T> List<T> unmodifiableList(List<? extends T> list) {
-    throw new UnsupportedOperationException("unmodifiableList not implemented");
+      public boolean add(T o) {
+        throw new UnsupportedOperationException(
+            "unmodifiableCollection: add not permitted");
+      }
+
+      public boolean addAll(Collection<? extends T> c) {
+        throw new UnsupportedOperationException(
+            "unmodifiableCollection: addAll not permitted");
+      }
+
+      public void clear() {
+        throw new UnsupportedOperationException(
+           "unmodifiableCollection: clear not permitted");
+      }
+
+      public boolean contains(Object o) {
+        return coll.contains(o);
+      }
+
+      public boolean containsAll(Collection<?> c) {
+        return coll.containsAll(c);
+      }
+
+      public boolean isEmpty() {
+        return coll.isEmpty();
+      }
+
+      public Iterator<T> iterator() {
+        final Iterator<? extends T> it = coll.iterator();
+        return new Iterator<T>() {
+
+          public boolean hasNext() {
+            return it.hasNext();
+          }
+
+          public T next() {
+            return it.next();
+          }
+
+          public void remove() {
+            throw new UnsupportedOperationException(
+              "unmodifiableCollection.iterator: remove not permitted");
+          }
+        };
+      }
+
+      public boolean remove(Object o) {
+        throw new UnsupportedOperationException(
+            "unmodifiableCollection: remove not permitted");
+      }
+
+      public boolean removeAll(Collection<?> c) {
+        throw new UnsupportedOperationException(
+            "unmodifiableCollection: removeAll not permitted");
+      }
+
+      public boolean retainAll(Collection<?> c) {
+        throw new UnsupportedOperationException(
+            "unmodifiableCollection: retainAll not permitted");
+      }
+
+      public int size() {
+        return coll.size();
+      }
+
+      public Object[] toArray() {
+        return coll.toArray();
+      }
+
+      public <OT> OT[] toArray(OT[] a) {
+        return coll.toArray(a);
+      }
+    };
+  };
+
+  public static <T> List<T> unmodifiableList(final List<? extends T> list) {
+    return new List<T>() {
+      public void add(int index, T element) {
+        throw new UnsupportedOperationException(
+            "unmodifiableList: add not permitted");
+      }
+
+      public boolean add(T o) {
+        throw new UnsupportedOperationException(
+            "unmodifiableList: add not permitted");
+      }
+
+      public boolean addAll(Collection<? extends T> c) {
+        throw new UnsupportedOperationException(
+            "unmodifiableList: addAll not permitted");
+      }
+
+      public boolean addAll(int index, Collection<? extends T> c) {
+        throw new UnsupportedOperationException(
+            "unmodifiableList: addAll not permitted");
+      }
+
+      public void clear() {
+        throw new UnsupportedOperationException(
+            "unmodifiableList: clear not permitted");
+      }
+
+      public boolean contains(Object o) {
+        return list.contains(o);
+      }
+
+      public boolean containsAll(Collection<?> c) {
+        return list.containsAll(c);
+      }
+
+      public T get(int index) {
+        return list.get(index);
+      }
+
+      public int indexOf(Object o) {
+        return list.indexOf(o);
+      }
+
+      public boolean isEmpty() {
+        return list.isEmpty();
+      }
+
+      public Iterator<T> iterator() {
+        return listIterator();
+      }
+
+      public int lastIndexOf(Object o) {
+        return list.lastIndexOf(o);
+      }
+
+      public ListIterator<T> listIterator() {
+        return new UnmodifiableListIterator<T>(list.listIterator());
+      }
+
+      public ListIterator<T> listIterator(int from) {
+        return new UnmodifiableListIterator<T>(list.listIterator(from));
+      }
+
+      public T remove(int index) {
+        throw new UnsupportedOperationException(
+            "unmodifiableList: remove not permitted");
+      }
+
+      public boolean remove(Object o) {
+        throw new UnsupportedOperationException(
+            "unmodifiableList: remove not permitted");
+      }
+
+      public boolean removeAll(Collection<?> c) {
+        throw new UnsupportedOperationException(
+            "unmodifiableList: removeAll not permitted");
+      }
+
+      public boolean retainAll(Collection<?> c) {
+        throw new UnsupportedOperationException(
+            "unmodifiableList: retainAll not permitted");
+      }
+
+      public T set(int index, T element) {
+        throw new UnsupportedOperationException(
+            "unmodifiableList: set not permitted");
+      }
+
+      public int size() {
+        return list.size();
+      }
+
+      public List<T> subList(int fromIndex, int toIndex) {
+        throw new UnsupportedOperationException(
+            "unmodifiableList: subList not permitted");
+      }
+
+      public Object[] toArray() {
+        return list.toArray();
+      }
+
+      public <OT> OT[] toArray(OT[] array) {
+        return list.toArray(array);
+      }
+    };
   }
 
   public static <K, V> Map<K, V> unmodifiableMap(
@@ -234,10 +473,10 @@ public class Collections {
 
   /**
    * Replace contents of a list from an array.
-   * 
+   *
    * @param <T> element type
    * @param target list to replace contents from an array
-   * @param x an array of only T instances
+   * @param x an Object array which can contain only T instances
    */
   @SuppressWarnings("unchecked")
   private static <T> void replaceContents(List<T> target, Object[] x) {
