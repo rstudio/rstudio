@@ -75,10 +75,9 @@ public class Collections {
     }
   }
 
-  public static final Set<?> EMPTY_SET = new HashSet<Object>();
-  public static final Map<?, ?> EMPTY_MAP = new HashMap<Object, Object>();
-
-  public static final List<?> EMPTY_LIST = new ArrayList<Object>();
+  public static final Set<?> EMPTY_SET = unmodifiableSet(new HashSet<Object>());
+  public static final Map<?, ?> EMPTY_MAP = unmodifiableMap(new HashMap<Object, Object>());
+  public static final List<?> EMPTY_LIST = unmodifiableList(new ArrayList<Object>());
 
   public static <T> boolean addAll(Collection<? super T> c, T... a) {
     boolean result = false;
@@ -447,12 +446,136 @@ public class Collections {
   }
 
   public static <K, V> Map<K, V> unmodifiableMap(
-      Map<? extends K, ? extends V> map) {
-    throw new UnsupportedOperationException("unmodifiableMap not implemented");
+      final Map<? extends K, ? extends V> map) {
+    return new Map<K,V>() {
+
+      public void clear() {
+        throw new UnsupportedOperationException(
+            "unmodifiableMap: clear not permitted");
+      }
+
+      public boolean containsKey(Object key) {
+        return map.containsKey(key);
+      }
+
+      public boolean containsValue(Object value) {
+        return map.containsValue(value);
+      }
+
+      public Set<Map.Entry<K,V>> entrySet() {
+        Set<? extends Map.Entry<? extends K,? extends V>> entrySet = map.entrySet();
+        return (Set<Map.Entry<K,V>>)entrySet;
+      }
+
+      public V get(Object key) {
+        return map.get(key);
+      }
+
+      public boolean isEmpty() {
+        return map.isEmpty();
+      }
+
+      public Set<K> keySet() {
+        return (Set<K>)map.keySet();
+      }
+
+      public V put(K key, V value) {
+        throw new UnsupportedOperationException(
+            "unmodifiableMap: put not permitted");
+      }
+
+      public void putAll(Map<? extends K, ? extends V> t) {
+        throw new UnsupportedOperationException(
+            "unmodifiableMap: putAll not permitted");
+      }
+
+      public V remove(Object key) {
+        throw new UnsupportedOperationException(
+            "unmodifiableMap: remove not permitted");
+      }
+
+      public int size() {
+        return map.size();
+      }
+
+      public Collection<V> values() {
+        return (Collection<V>)map.values();
+      }
+      
+    };
   }
 
-  public static <T> Set<T> unmodifiableSet(Set<? extends T> set) {
-    throw new UnsupportedOperationException("unmodifiableSet not implemented");
+  public static <T> Set<T> unmodifiableSet(final Set<? extends T> set) {
+    return new Set<T>() {
+
+      public boolean add(T o) {
+        throw new UnsupportedOperationException("unmodifiableSet: add not permitted");
+      }
+
+      public boolean addAll(Collection<? extends T> c) {
+        throw new UnsupportedOperationException("unmodifiableSet: addAll not permitted");
+      }
+
+      public void clear() {
+        throw new UnsupportedOperationException("unmodifiableSet: clear not permitted");
+      }
+
+      public boolean contains(Object o) {
+        return set.contains(o);
+      }
+
+      public boolean containsAll(Collection<?> c) {
+        return set.containsAll(c);
+      }
+
+      public boolean isEmpty() {
+        return set.isEmpty();
+      }
+
+      public Iterator<T> iterator() {
+        final Iterator<? extends T> it = set.iterator();
+        return new Iterator<T>() {
+
+          public boolean hasNext() {
+            return it.hasNext();
+          }
+
+          public T next() {
+            return it.next();
+          }
+
+          public void remove() {
+            throw new UnsupportedOperationException(
+                "unmodifiableCollection.iterator: remove not permitted");
+          }
+        };
+      }
+
+      public boolean remove(Object o) {
+        throw new UnsupportedOperationException("unmodifiableSet: remove not permitted");
+      }
+
+      public boolean removeAll(Collection<?> c) {
+        throw new UnsupportedOperationException("unmodifiableSet: removeAll not permitted");
+      }
+
+      public boolean retainAll(Collection<?> c) {
+        throw new UnsupportedOperationException("unmodifiableSet: retainAll not permitted");
+      }
+
+      public int size() {
+        return set.size();
+      }
+
+      public Object[] toArray() {
+        return set.toArray();
+      }
+
+      public <OT> OT[] toArray(OT[] a) {
+        return set.toArray(a);
+      }
+      
+    };
   }
 
   public static <K, V> SortedMap<K, V> unmodifiableSortedMap(
