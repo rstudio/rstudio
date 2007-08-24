@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,15 +37,18 @@ public abstract class ResourceFactory {
       this.path = path;
     }
 
+    @Override
     public AbstractPathTree getChild(int i) {
       throw new UnsupportedOperationException(
           "Simple paths have no children, therefore cannot get child: " + i);
     }
 
+    @Override
     public String getPath() {
       return path;
     }
 
+    @Override
     public int numChildren() {
       return 0;
     }
@@ -60,21 +63,24 @@ public abstract class ResourceFactory {
   }
 
   private static class ClassPathTree extends AbstractPathTree {
-    Class javaInterface;
+    Class<?> javaInterface;
 
-    ClassPathTree(Class javaInterface) {
+    ClassPathTree(Class<?> javaInterface) {
       this.javaInterface = javaInterface;
     }
 
+    @Override
     AbstractPathTree getChild(int i) {
       // we expect to do this at most once, so no caching is used.
       return new ClassPathTree(javaInterface.getInterfaces()[i]);
     }
 
+    @Override
     String getPath() {
       return javaInterface.getName();
     }
 
+    @Override
     int numChildren() {
       return javaInterface.getInterfaces().length;
     }
@@ -87,6 +93,7 @@ public abstract class ResourceFactory {
       this.javaInterface = javaInterface;
     }
 
+    @Override
     AbstractPathTree getChild(int i) {
       // we expect to do this at most once, so no caching is used.
       return new JClassTypePathTree(javaInterface.getImplementedInterfaces()[i]);
@@ -98,12 +105,14 @@ public abstract class ResourceFactory {
      * 
      * @see com.google.gwt.i18n.rebind.util.ResourceFactory.AbstractPathTree#getPath()
      */
+    @Override
     String getPath() {
       String name = getResourceName(javaInterface);
       String packageName = javaInterface.getPackage().getName();
       return packageName + "." + name;
     }
 
+    @Override
     int numChildren() {
       return javaInterface.getImplementedInterfaces().length;
     }
@@ -111,18 +120,20 @@ public abstract class ResourceFactory {
 
   public static final AbstractResource NOT_FOUND = new AbstractResource() {
 
-    void addToKeySet(Set s) {
+    @Override
+    void addToKeySet(Set<String> s) {
       throw new IllegalStateException("Not found resource");
     }
 
+    @Override
     Object handleGetObject(String key) {
       throw new IllegalStateException("Not found resource");
     }
   };
 
-  private static Map cache = new HashMap();
+  private static Map<String, AbstractResource> cache = new HashMap<String, AbstractResource>();
 
-  private static List loaders = new ArrayList();
+  private static List<LocalizedPropertiesResource.Factory> loaders = new ArrayList<LocalizedPropertiesResource.Factory>();
   static {
     loaders.add(new LocalizedPropertiesResource.Factory());
   }
@@ -141,7 +152,7 @@ public abstract class ResourceFactory {
    * @param locale locale
    * @return the resource
    */
-  public static AbstractResource getBundle(Class javaInterface, Locale locale) {
+  public static AbstractResource getBundle(Class<?> javaInterface, Locale locale) {
     if (javaInterface.isInterface() == false) {
       throw new IllegalArgumentException(javaInterface
           + " should be an interface.");
@@ -181,11 +192,11 @@ public abstract class ResourceFactory {
     return name;
   }
 
-  private static List findAlternativeParents(
+  private static List<AbstractResource> findAlternativeParents(
       ResourceFactory.AbstractPathTree tree, Locale locale) {
-    List altParents = null;
+    List<AbstractResource> altParents = null;
     if (tree != null) {
-      altParents = new ArrayList();
+      altParents = new ArrayList<AbstractResource>();
       for (int i = 0; i < tree.numChildren(); i++) {
         ResourceFactory.AbstractPathTree child = tree.getChild(i);
         AbstractResource altParent = getBundleAux(child, locale, false);
@@ -230,7 +241,7 @@ public abstract class ResourceFactory {
     if (locale != null) {
       localizedPath = targetPath + "_" + locale;
     }
-    AbstractResource result = (AbstractResource) cache.get(localizedPath);
+    AbstractResource result = cache.get(localizedPath);
     if (result != null) {
       if (result == NOT_FOUND) {
         return null;
@@ -240,11 +251,11 @@ public abstract class ResourceFactory {
     }
     String partualPath = localizedPath.replace('.', '/');
     AbstractResource parent = findPrimaryParent(tree, locale);
-    List altParents = findAlternativeParents(tree, locale);
+    List<AbstractResource> altParents = findAlternativeParents(tree, locale);
 
     AbstractResource found = null;
     for (int i = 0; i < loaders.size(); i++) {
-      ResourceFactory element = (ResourceFactory) loaders.get(i);
+      ResourceFactory element = loaders.get(i);
       String path = partualPath + "." + element.getExt();
       InputStream m = loader.getResourceAsStream(path);
       if (m != null) {
@@ -253,7 +264,7 @@ public abstract class ResourceFactory {
         found.setPrimaryParent(parent);
         found.setLocale(locale);
         for (int j = 0; j < altParents.size(); j++) {
-          AbstractResource altParent = (AbstractResource) altParents.get(j);
+          AbstractResource altParent = altParents.get(j);
           found.addAlternativeParent(altParent);
         }
         found.checkKeys();

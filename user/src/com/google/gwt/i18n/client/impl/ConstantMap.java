@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,36 +30,36 @@ import java.util.Set;
  * specific, no elements are every removed from them and all elements are added
  * before the first user operation.
  */
-public class ConstantMap extends HashMap {
+public class ConstantMap extends HashMap<String, String> {
 
-  private static class DummyMapEntry implements Map.Entry {
-    private final Object key;
+  private static class DummyMapEntry implements Map.Entry<String, String> {
+    private final String key;
 
-    private final Object value;
+    private final String value;
 
-    DummyMapEntry(Object key, Object value) {
+    DummyMapEntry(String key, String value) {
       this.key = key;
       this.value = value;
     }
 
-    public Object getKey() {
+    public String getKey() {
       return key;
     }
 
-    public Object getValue() {
+    public String getValue() {
       return value;
     }
 
-    public Object setValue(Object arg0) {
+    public String setValue(String arg0) {
       throw new UnsupportedOperationException();
     }
   }
 
-  private class OrderedConstantSet extends ArrayList implements Set {
-    private class ImmutableIterator implements Iterator {
-      private final Iterator base;
+  private class OrderedConstantSet<T> extends ArrayList<T> implements Set<T> {
+    private class ImmutableIterator implements Iterator<T> {
+      private final Iterator<T> base;
 
-      ImmutableIterator(Iterator base) {
+      ImmutableIterator(Iterator<T> base) {
         this.base = base;
       }
 
@@ -67,7 +67,7 @@ public class ConstantMap extends HashMap {
         return base.hasNext();
       }
 
-      public Object next() {
+      public T next() {
         return base.next();
       }
 
@@ -76,43 +76,49 @@ public class ConstantMap extends HashMap {
       }
     }
 
+    @Override
     public void clear() {
       throw new UnsupportedOperationException("Immutable set");
     }
 
-    public Iterator iterator() {
-      Iterator base = super.iterator();
+    @Override
+    public Iterator<T> iterator() {
+      Iterator<T> base = super.iterator();
       return new ImmutableIterator(base);
     }
   }
 
-  private OrderedConstantSet entries;
+  private OrderedConstantSet<Map.Entry<String, String>> entries;
 
-  private final OrderedConstantSet keys = new OrderedConstantSet();
+  private final OrderedConstantSet<String> keys = new OrderedConstantSet<String>();
 
-  private OrderedConstantSet values;
+  private OrderedConstantSet<String> values;
 
+  @Override
   public void clear() {
     throw unsupported("clear");
   }
 
-  public Set entrySet() {
+  @Override
+  public Set<Map.Entry<String, String>> entrySet() {
     if (entries == null) {
-      entries = new OrderedConstantSet();
+      entries = new OrderedConstantSet<Map.Entry<String, String>>();
       for (int i = 0; i < keys.size(); i++) {
-        Object key = keys.get(i);
-        Object value = get(key);
+        String key = keys.get(i);
+        String value = get(key);
         entries.add(new DummyMapEntry(key, value));
       }
     }
     return entries;
   }
 
-  public Set keySet() {
+  @Override
+  public Set<String> keySet() {
     return keys;
   }
 
-  public Object put(Object key, Object value) {
+  @Override
+  public String put(String key, String value) {
     // We may want to find a more efficient implementation later.
     boolean exists = keys.contains(key);
     if (!exists) {
@@ -121,13 +127,15 @@ public class ConstantMap extends HashMap {
     return super.put(key, value);
   }
 
-  public Object remove(Object key) {
+  @Override
+  public String remove(Object key) {
     throw unsupported("remove");
   }
 
-  public Collection values() {
+  @Override
+  public Collection<String> values() {
     if (values == null) {
-      values = new OrderedConstantSet();
+      values = new OrderedConstantSet<String>();
       for (int i = 0; i < keys.size(); i++) {
         Object element = keys.get(i);
         values.add(this.get(element));

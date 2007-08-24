@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,26 +36,31 @@ class SimpleValueMethodCreator extends AbstractLocalizableMethodCreator {
   }
 
   static final AbstractValueCreator DOUBLE = new AbstractValueCreator() {
+    @Override
     String getValue(String stringVal) {
       return Double.parseDouble(stringVal) + "";
     }
   };
   static final AbstractValueCreator FLOAT = new AbstractValueCreator() {
+    @Override
     String getValue(String stringVal) {
       return Float.parseFloat(stringVal) + "f";
     }
   };
   static final AbstractValueCreator INT = new AbstractValueCreator() {
+    @Override
     String getValue(String stringVal) {
       return Integer.parseInt(stringVal) + "";
     }
   };
   static final AbstractValueCreator STRING = new AbstractValueCreator() {
+    @Override
     String getValue(String stringVal) {
       return wrap(stringVal);
     }
   };
   static final AbstractValueCreator BOOLEAN = new AbstractValueCreator() {
+    @Override
     String getValue(String stringVal) {
       if ("true".equals(stringVal)) {
         return "true";
@@ -81,6 +86,7 @@ class SimpleValueMethodCreator extends AbstractLocalizableMethodCreator {
     this.valueCreator = valueCreator;
   }
 
+  @Override
   public void createMethodFor(TreeLogger logger, JMethod targetMethod,
       String value) throws UnableToCompleteException {
     try {

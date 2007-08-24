@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,6 +43,7 @@ class LookupMethodCreator extends AbstractMethodCreator {
     this.returnType = returnType;
   }
 
+  @Override
   public void createMethodFor(TreeLogger logger, JMethod targetMethod,
       String value) {
     createMethodFor(targetMethod);
@@ -74,9 +75,8 @@ class LookupMethodCreator extends AbstractMethodCreator {
       }
     }
     String format = "throw new java.util.MissingResourceException(\"Cannot find constant ''\" + {0} + \"''; expecting a method name\", \"{1}\", {0});";
-    String[] throwArgs = {
-        "arg0", this.currentCreator.getTarget().getQualifiedSourceName()};
-    String result = MessageFormat.format(format, throwArgs);
+    String result = MessageFormat.format(format, "arg0",
+        this.currentCreator.getTarget().getQualifiedSourceName());
     println(result);
   }
 

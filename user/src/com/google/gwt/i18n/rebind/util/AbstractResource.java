@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@ package com.google.gwt.i18n.rebind.util;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
@@ -46,9 +45,9 @@ public abstract class AbstractResource {
    */
   public static final int REPORT_KEYS_THRESHOLD = 30;
 
-  private final List alternativeParents = new ArrayList();
+  private final List<AbstractResource> alternativeParents = new ArrayList<AbstractResource>();
 
-  private Set keySet;
+  private Set<String> keySet;
 
   private Locale locale;
 
@@ -70,7 +69,7 @@ public abstract class AbstractResource {
     Object s = getObjectAux(key, true);
     if (s == null) {
       String msg = "Cannot find '" + key + "' in " + this;
-      Set keys = this.keySet();
+      Set<String> keys = this.keySet();
       if (keys.size() < REPORT_KEYS_THRESHOLD) {
         msg = msg + ", keys found:\n\t" + keys;
       }
@@ -91,21 +90,22 @@ public abstract class AbstractResource {
    * 
    * @return keys
    */
-  public Set keySet() {
+  public Set<String> keySet() {
     if (keySet == null) {
-      keySet = new HashSet();
+      keySet = new HashSet<String>();
       addToKeySet(keySet);
       if (primaryParent != null) {
         primaryParent.addToKeySet(keySet);
       }
       for (int i = 0; i < alternativeParents.size(); i++) {
-        AbstractResource element = (AbstractResource) alternativeParents.get(i);
+        AbstractResource element = alternativeParents.get(i);
         keySet.addAll(element.keySet());
       }
     }
     return keySet;
   }
 
+  @Override
   public String toString() {
     return "resource for " + path;
   }
@@ -127,7 +127,7 @@ public abstract class AbstractResource {
     }
   }
 
-  abstract void addToKeySet(Set s);
+  abstract void addToKeySet(Set<String> s);
 
   void checkKeys() {
     // If I don't have a parent, then I am a default node so do not need to
@@ -135,12 +135,10 @@ public abstract class AbstractResource {
     if (primaryParent == null) {
       return;
     }
-    Iterator keys = this.keySet().iterator();
-    while (keys.hasNext()) {
-      String key = (String) keys.next();
+    for (String key : keySet() ) {
       if (primaryParent.getObjectAux(key, true) == null) {
         for (int i = 0; i < alternativeParents.size(); i++) {
-          AbstractResource alt = (AbstractResource) alternativeParents.get(i);
+          AbstractResource alt = alternativeParents.get(i);
           if (alt.getObjectAux(key, true) != null) {
             break;
           }
@@ -168,7 +166,7 @@ public abstract class AbstractResource {
         && (useAlternativeParents)) {
       for (int i = 0; (i < alternativeParents.size()) && (s == null); i++) {
         // Alternate parents may look at their alternative parents.
-        AbstractResource altParent = (AbstractResource) alternativeParents.get(i);
+        AbstractResource altParent = alternativeParents.get(i);
         s = altParent.getObjectAux(key, true);
       }
     }
@@ -218,7 +216,7 @@ public abstract class AbstractResource {
     for (int i = 0; i < alternativeParents.size(); i++) {
       newLine(indent, buf);
       buf.append("Alternate Parent: ");
-      AbstractResource element = (AbstractResource) alternativeParents.get(i);
+      AbstractResource element = alternativeParents.get(i);
       element.toVerboseStringAux(indent + 1, buf);
     }
   }

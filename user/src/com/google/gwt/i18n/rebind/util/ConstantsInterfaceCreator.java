@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,6 +14,8 @@
  * the License.
  */
 package com.google.gwt.i18n.rebind.util;
+
+import com.google.gwt.i18n.client.Constants;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,16 +36,19 @@ public class ConstantsInterfaceCreator extends
    * @throws IOException
    */
   public ConstantsInterfaceCreator(String className, String packageName,
-      File resourceBundle, File targetLocation, Class interfaceClass)
+      File resourceBundle, File targetLocation,
+      Class<?extends Constants> interfaceClass)
       throws IOException {
     super(className, packageName, resourceBundle, targetLocation,
       interfaceClass);
   }
 
+  @Override
   protected void genMethodArgs(String defaultValue) {
     // no arguments
   }
 
+  @Override
   protected String javaDocComment(String path) {
     return "Interface to represent the constants contained in resource  bundle:\n\t'"
       + path + "'.";

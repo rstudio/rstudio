@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -80,6 +80,7 @@ class ConstantsImplCreator extends AbstractLocalizableImplCreator {
     }
   }
 
+  @Override
   protected void classEpilog() {
     if (isNeedCache()) {
       getWriter().println(
@@ -91,6 +92,7 @@ class ConstantsImplCreator extends AbstractLocalizableImplCreator {
    * Create the method body associated with the given method. Arguments are
    * arg0...argN.
    */
+  @Override
   protected void emitMethodBody(TreeLogger logger, JMethod method)
       throws UnableToCompleteException {
     checkConstantMethod(logger, method);

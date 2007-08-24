@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,6 +41,7 @@ public final class I18NCreator extends ToolBase {
    */
   protected class ArgHandlerClassName extends ArgHandlerExtra {
 
+    @Override
     public boolean addExtraArg(String arg) {
       if (fullInterfaceName != null) {
         System.err.println("Too many arguments.");
@@ -74,14 +75,17 @@ public final class I18NCreator extends ToolBase {
       return true;
     }
 
+    @Override
     public String getPurpose() {
       return "The fully qualified name of the interface to create";
     }
 
+    @Override
     public String[] getTagArgs() {
       return new String[] {"interfaceName"};
     }
 
+    @Override
     public boolean isRequired() {
       return true;
     }
@@ -161,7 +165,7 @@ public final class I18NCreator extends ToolBase {
 
     // Create a map of replacements
     //
-    Map replacements = new HashMap();
+    Map<String, String> replacements = new HashMap<String, String>();
     replacements.put("@className", fullInterfaceName);
     replacements.put("@shortClassName", interfaceName);
     replacements.put("@gwtUserPath", basePathEnv + gwtUserPath);
@@ -237,10 +241,12 @@ public final class I18NCreator extends ToolBase {
   protected I18NCreator() {
 
     registerHandler(new ArgHandlerEclipse() {
+      @Override
       public String getPurpose() {
         return "Creates a i18n update launch config for the named eclipse project";
       }
 
+      @Override
       public boolean setString(String str) {
         eclipse = str;
         return true;
@@ -249,6 +255,7 @@ public final class I18NCreator extends ToolBase {
 
     registerHandler(new ArgHandlerOutDir() {
 
+      @Override
       public void setDir(File dir) {
         outDir = dir;
       }
@@ -256,6 +263,7 @@ public final class I18NCreator extends ToolBase {
 
     registerHandler(new ArgHandlerOverwrite() {
 
+      @Override
       public boolean setFlag() {
         if (ignore) {
           System.err.println("-overwrite cannot be used with -ignore.");
@@ -268,15 +276,18 @@ public final class I18NCreator extends ToolBase {
 
     registerHandler(new ArgHandlerFlag() {
 
+      @Override
       public String getPurpose() {
         return "Create scripts for a Messages interface "
             + "rather than a Constants one";
       }
 
+      @Override
       public String getTag() {
         return "-createMessages";
       }
 
+      @Override
       public boolean setFlag() {
         createMessagesInterface = true;
         return true;
@@ -285,6 +296,7 @@ public final class I18NCreator extends ToolBase {
 
     registerHandler(new ArgHandlerIgnore() {
 
+      @Override
       public boolean setFlag() {
         if (overwrite) {
           System.err.println("-ignore cannot be used with -overwrite.");

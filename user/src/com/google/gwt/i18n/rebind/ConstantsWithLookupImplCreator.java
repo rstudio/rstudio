@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,8 @@ import java.util.Map;
 class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
   final JMethod[] allInterfaceMethods;
 
-  private final Map namesToMethodCreators = new HashMap();
+  private final Map<String, AbstractMethodCreator> namesToMethodCreators =
+    new HashMap<String, AbstractMethodCreator>();
 
   ConstantsWithLookupImplCreator(TreeLogger logger, SourceWriter writer,
       JClassType localizableClass, AbstractResource messageBindings,
@@ -45,10 +46,12 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
       JType booleanType = oracle.parse(boolean.class.getName());
       LookupMethodCreator booleanMethod = new LookupMethodCreator(this,
           booleanType) {
+        @Override
         public void printReturnTarget() {
           println("return target.booleanValue();");
         }
 
+        @Override
         public String returnTemplate() {
           return "boolean answer = {0}();\n cache.put(\"{0}\",new Boolean(answer));return answer;";
         }
@@ -59,10 +62,12 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
       JType doubleType = oracle.parse(double.class.getName());
       LookupMethodCreator doubleMethod = new LookupMethodCreator(this,
           doubleType) {
+        @Override
         public void printReturnTarget() {
           println("return target.doubleValue();");
         }
 
+        @Override
         public String returnTemplate() {
           return "double answer = {0}();\n cache.put(\"{0}\",new Double(answer));return answer;";
         }
@@ -72,10 +77,12 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
       // Int
       JType intType = oracle.parse(int.class.getName());
       LookupMethodCreator intMethod = new LookupMethodCreator(this, intType) {
+        @Override
         public void printReturnTarget() {
           println("return target.intValue();");
         }
 
+        @Override
         public String returnTemplate() {
           return "int answer = {0}();\n cache.put(\"{0}\",new Integer(answer));return answer;";
         }
@@ -86,11 +93,13 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
       // Float
       JType floatType = oracle.parse(float.class.getName());
       LookupMethodCreator floatMethod = new LookupMethodCreator(this, floatType) {
+        @Override
         public String returnTemplate() {
           String val = "float v ={0}(); cache.put(\"{0}\", new Float(v));return v;";
           return val;
         }
 
+        @Override
         protected void printReturnTarget() {
           println("return target.floatValue();");
         }
@@ -106,6 +115,7 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
       JType stringType = oracle.parse(String.class.getName());
       LookupMethodCreator stringMethod = new LookupMethodCreator(this,
           stringType) {
+        @Override
         public String returnTemplate() {
           return "String answer = {0}();\n cache.put(\"{0}\",answer);return answer;";
         }
@@ -128,12 +138,13 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
    * Create the method body associated with the given method. Arguments are
    * arg0...argN.
    */
+  @Override
   protected void emitMethodBody(TreeLogger logger, JMethod method)
       throws UnableToCompleteException {
     checkMethod(logger, method);
     if (method.getParameters().length == 1) {
       String name = method.getName();
-      AbstractMethodCreator c = (AbstractMethodCreator) namesToMethodCreators.get(name);
+      AbstractMethodCreator c = namesToMethodCreators.get(name);
       if (c != null) {
         c.createMethodFor(logger, method, null);
         return;

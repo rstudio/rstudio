@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,10 +28,10 @@ import java.util.Map;
  * Links classes with their localized counterparts.
  */
 class LocalizableLinkageCreator extends AbstractSourceCreator {
-  private static Map findDerivedClasses(TreeLogger logger, JClassType baseClass)
-      throws UnableToCompleteException {
+  private static Map<String, JClassType> findDerivedClasses(TreeLogger logger,
+      JClassType baseClass) throws UnableToCompleteException {
     // Construct valid set of candidates for this type.
-    Map matchingClasses = new HashMap();
+    Map<String, JClassType> matchingClasses = new HashMap<String, JClassType>();
     // Add base class if possible.
     if (baseClass.isInterface() == null && baseClass.isAbstract() == false) {
       matchingClasses.put(LocalizableGenerator.DEFAULT_TOKEN, baseClass);
@@ -56,7 +56,8 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
               || localeIndex == name.length() - 1;
           if (isDefault) {
             // Don't override base as default if present.
-            JClassType defaultClass = (JClassType) matchingClasses.get(LocalizableGenerator.DEFAULT_TOKEN);
+            JClassType defaultClass = 
+              matchingClasses.get(LocalizableGenerator.DEFAULT_TOKEN);
             if (defaultClass != null) {
               throw error(logger, defaultClass + " and " + baseName
                   + " are both potencial default classes for " + baseClass);
@@ -67,7 +68,7 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
             // Don't allow a locale to be ambiguous. Very similar to default
             // case, different error message.
             String localeSubString = name.substring(localeIndex + 1);
-            JClassType dopClass = (JClassType) matchingClasses.get(localeSubString);
+            JClassType dopClass = matchingClasses.get(localeSubString);
             if (dopClass != null) {
               throw error(logger, dopClass.getQualifiedSourceName() + " and "
                   + subType.getQualifiedSourceName()
@@ -86,7 +87,7 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
    * Map to cache linkages of implementation classes and interfaces.
    */
   // Change back to ReferenceMap once apache collections is in.
-  private final Map implCache = new HashMap();
+  private final Map<String, String> implCache = new HashMap<String, String>();
 
   /**
    * * Finds associated implementation in the current locale. Here are the rules
@@ -108,7 +109,7 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
      * Try to find implementation class, as the current class is not a Constant
      * or Message.
      */
-    String className = (String) implCache.get(baseName + locale);
+    String className = implCache.get(baseName + locale);
     if (className != null) {
       return className;
     }
@@ -117,7 +118,8 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
       throw error(logger, "Cannot have a '_' in the base localizable class "
           + baseClass);
     }
-    Map matchingClasses = findDerivedClasses(logger, baseClass);
+    Map<String, JClassType> matchingClasses =
+      findDerivedClasses(logger, baseClass);
     // Now that we have all matches, find best class
     String localeSuffix;
     JClassType result = null;
@@ -128,7 +130,7 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
     }
     while (true) {
       // Check for current result.
-      result = (JClassType) matchingClasses.get(localeSuffix);
+      result = matchingClasses.get(localeSuffix);
       if (result != null) {
         break;
       }

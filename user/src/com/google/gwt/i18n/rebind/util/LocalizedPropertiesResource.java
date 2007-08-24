@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,10 +29,12 @@ import java.util.Set;
 class LocalizedPropertiesResource extends AbstractResource {
 
   static class Factory extends ResourceFactory {
+    @Override
     public String getExt() {
       return "properties";
     }
 
+    @Override
     public AbstractResource load(InputStream m) {
       LocalizedPropertiesResource bundle = new LocalizedPropertiesResource(m);
       return bundle;
@@ -50,14 +52,18 @@ class LocalizedPropertiesResource extends AbstractResource {
     }
   }
 
-  public void addToKeySet(Set s) {
-    s.addAll(props.getPropertyMap().keySet());
+  @SuppressWarnings({"unchecked", "cast"})
+  @Override
+  public void addToKeySet(Set<String> s) {
+    s.addAll((Set<String>) (props.getPropertyMap().keySet()));
   }
 
+  @Override
   public Object handleGetObject(String key) {
     return props.getProperty(key);
   }
 
+  @Override
   public String toString() {
     return getPath();
   }

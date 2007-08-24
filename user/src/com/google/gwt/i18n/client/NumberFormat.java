@@ -467,8 +467,8 @@ public class NumberFormat {
     this.pattern = pattern;
     this.currencyCode = currencyCode;
 
-    Map currencyMap = currencyCodeMapConstants.currencyMap();
-    currencySymbol = (String) currencyMap.get(currencyCode);
+    Map<String, String> currencyMap = currencyCodeMapConstants.currencyMap();
+    currencySymbol = currencyMap.get(currencyCode);
 
     parsePattern(this.pattern);
   }

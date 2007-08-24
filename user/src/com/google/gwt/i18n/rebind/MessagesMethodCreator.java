@@ -38,6 +38,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
     super(classCreator);
   }
 
+  @Override
   public void createMethodFor(TreeLogger logger, JMethod m, String template)
       throws UnableToCompleteException {
     int numParams = m.getParameters().length;

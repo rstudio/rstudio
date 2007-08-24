@@ -431,7 +431,7 @@ public class DateTimeFormat {
       cachedMediumDateFormat = new DateTimeFormat(pattern);
     }
     return cachedMediumDateFormat;
-  };
+  }
 
   public static DateTimeFormat getMediumDateTimeFormat() {
     if (cachedMediumDateTimeFormat == null) {
@@ -475,11 +475,11 @@ public class DateTimeFormat {
     return cachedShortTimeFormat;
   }
 
-  private final ArrayList patternParts = new ArrayList();
+  private final ArrayList<PatternPart> patternParts = new ArrayList<PatternPart>();
 
   private final DateTimeConstants dateTimeConstants;
 
-  private final String pattern;;
+  private final String pattern;
 
   /**
    * Constructs a format object using the specified pattern and the date time
@@ -489,7 +489,7 @@ public class DateTimeFormat {
    */
   protected DateTimeFormat(String pattern) {
     this(pattern, defaultDateTimeConstants);
-  };
+  }
 
   /**
    * Constructs a format object using the specified pattern and user-supplied
@@ -508,7 +508,7 @@ public class DateTimeFormat {
      * here to fail fast in case the pattern itself is malformed.
      */
     parsePattern(pattern);
-  };
+  }
 
   /**
    * Format a date object.
@@ -574,11 +574,11 @@ public class DateTimeFormat {
     }
 
     return toAppendTo.toString();
-  };
+  }
 
   public String getPattern() {
     return pattern;
-  };
+  }
 
   /**
    * Parses text to produce a {@link Date} value. An
@@ -625,7 +625,7 @@ public class DateTimeFormat {
     int abutPass = 0;
 
     for (int i = 0; i < patternParts.size(); ++i) {
-      PatternPart part = (PatternPart) patternParts.get(i);
+      PatternPart part = patternParts.get(i);
 
       if (part.count > 0) {
         if (abutPat < 0 && part.abutStart) {
@@ -699,7 +699,7 @@ public class DateTimeFormat {
 
     // Return progress.
     return parsePos[0] - start;
-  };
+  }
 
   /**
    * Method append current content in buf as pattern part if there is any, and
@@ -713,7 +713,7 @@ public class DateTimeFormat {
       patternParts.add((new PatternPart(buf.toString(), count)));
       buf.setLength(0);
     }
-  };
+  }
 
   /**
    * Generate GMT timezone string for given date.
@@ -734,7 +734,7 @@ public class DateTimeFormat {
     zeroPaddingNumber(buf, value / MINUTES_PER_HOUR, 2);
     buf.append(':');
     zeroPaddingNumber(buf, value % MINUTES_PER_HOUR, 2);
-  };
+  }
 
   /**
    * Formats (0..11) Hours field according to pattern specified.
@@ -747,7 +747,7 @@ public class DateTimeFormat {
   private void format0To11Hours(StringBuffer buf, int count, Date date) {
     int value = date.getHours() % 12;
     zeroPaddingNumber(buf, value, count);
-  };
+  }
 
   /**
    * Formats (0..23) Hours field according to pattern specified.
@@ -760,7 +760,7 @@ public class DateTimeFormat {
   private void format0To23Hours(StringBuffer buf, int count, Date date) {
     int value = date.getHours();
     zeroPaddingNumber(buf, value, count);
-  };
+  }
 
   /**
    * Formats (1..12) Hours field according to pattern specified.
@@ -777,7 +777,7 @@ public class DateTimeFormat {
     } else {
       zeroPaddingNumber(buf, value, count);
     }
-  };
+  }
 
   /**
    * Formats (1..24) Hours field according to pattern specified.
@@ -810,7 +810,7 @@ public class DateTimeFormat {
     } else {
       buf.append(dateTimeConstants.ampms()[0]);
     }
-  };
+  }
 
   /**
    * Formats Date field according to pattern specified.
@@ -823,7 +823,7 @@ public class DateTimeFormat {
   private void formatDate(StringBuffer buf, int count, Date date) {
     int value = date.getDate();
     zeroPaddingNumber(buf, value, count);
-  };
+  }
 
   /**
    * Formats Day of week field according to pattern specified.
@@ -1081,12 +1081,12 @@ public class DateTimeFormat {
 
     int len = patternParts.size();
     for (int i = 0; i < len; i++) {
-      if (isNumeric((PatternPart) patternParts.get(i))) {
+      if (isNumeric(patternParts.get(i))) {
         // If next part is not following abut sequence, and isNumeric.
         if (!abut && i + 1 < len
-            && isNumeric((PatternPart) patternParts.get(i + 1))) {
+            && isNumeric(patternParts.get(i + 1))) {
           abut = true;
-          ((PatternPart) patternParts.get(i)).abutStart = true;
+          patternParts.get(i).abutStart = true;
         }
       } else {
         abut = false;
@@ -1406,6 +1406,7 @@ public class DateTimeFormat {
    * 
    * @return <code>true</code> if parsing successful
    */
+  @SuppressWarnings("fallthrough")
   private boolean subParse(String text, int[] pos, PatternPart part,
       int digitCount, DateRecord cal) {
 
@@ -1664,7 +1665,7 @@ public class DateTimeFormat {
     }
     cal.setYear(value);
     return true;
-  };
+  }
 
   /**
    * Formats a number with the specified minimum number of digits, using zero to

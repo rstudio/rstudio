@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@ package com.google.gwt.i18n.rebind.util;
 
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.i18n.client.Localizable;
 import com.google.gwt.i18n.tools.I18NSync;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
@@ -46,8 +47,9 @@ import java.util.regex.Pattern;
  */
 public abstract class AbstractLocalizableInterfaceCreator {
   private static class RenameDuplicates extends ResourceKeyFormatter {
-    private Set methodNames = new HashSet();
+    private Set<String> methodNames = new HashSet<String>();
 
+    @Override
     public String format(String key) {
       if (methodNames.contains(key)) {
         key += "_dup";
@@ -60,6 +62,7 @@ public abstract class AbstractLocalizableInterfaceCreator {
   }
 
   private static class ReplaceBadChars extends ResourceKeyFormatter {
+    @Override
     public String format(String key) {
       return DEFAULT_CHARS.matcher(key).replaceAll("_");
     }
@@ -76,7 +79,8 @@ public abstract class AbstractLocalizableInterfaceCreator {
    */
   protected SourceWriter composer;
 
-  private List formatters = new ArrayList();
+  private List<ResourceKeyFormatter> formatters = 
+    new ArrayList<ResourceKeyFormatter>();
 
   private File resourceFile;
 
@@ -95,7 +99,7 @@ public abstract class AbstractLocalizableInterfaceCreator {
    */
   public AbstractLocalizableInterfaceCreator(String className,
       String packageName, File resourceBundle, File targetLocation,
-      Class interfaceClass) throws IOException {
+      Class<? extends Localizable> interfaceClass) throws IOException {
     setup(packageName, className, resourceBundle, targetLocation,
         interfaceClass);
   }
@@ -153,7 +157,9 @@ public abstract class AbstractLocalizableInterfaceCreator {
     LocalizedProperties p = new LocalizedProperties();
     p.load(propStream, Util.DEFAULT_ENCODING);
     addFormatters();
-    Iterator elements = p.getPropertyMap().entrySet().iterator();
+    @SuppressWarnings("unchecked")
+    Iterator<Entry<String, String>> elements =
+      p.getPropertyMap().entrySet().iterator();
     if (elements.hasNext() == false) {
       throw new IllegalStateException(
           "File '"
@@ -161,8 +167,8 @@ public abstract class AbstractLocalizableInterfaceCreator {
               + "' cannot be used to generate message classes, as it has no key/value pairs defined.");
     }
     while (elements.hasNext()) {
-      Entry s = (Entry) elements.next();
-      genSimpleMethodDecl((String) s.getKey(), (String) s.getValue());
+      Entry<String, String> s = elements.next();
+      genSimpleMethodDecl(s.getKey(), s.getValue());
     }
     composer.commit(new PrintWriterTreeLogger());
   }
@@ -177,7 +183,7 @@ public abstract class AbstractLocalizableInterfaceCreator {
 
   private String formatKey(String key) {
     for (int i = 0; i < formatters.size(); i++) {
-      ResourceKeyFormatter formatter = (ResourceKeyFormatter) formatters.get(i);
+      ResourceKeyFormatter formatter = formatters.get(i);
       key = formatter.format(key);
     }
     if (Util.isValidJavaIdent(key) == false) {
@@ -203,7 +209,8 @@ public abstract class AbstractLocalizableInterfaceCreator {
   }
 
   private void setup(String packageName, String className, File resourceBundle,
-      File targetLocation, Class interfaceClass) throws IOException {
+      File targetLocation, Class<? extends Localizable> interfaceClass)
+      throws IOException {
     ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
         packageName, className);
     factory.makeInterface();

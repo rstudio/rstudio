@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,6 +39,7 @@ public class I18NSync extends ToolBase {
 
   private class classNameArgHandler extends ArgHandlerExtra {
 
+    @Override
     public boolean addExtraArg(String str) {
       if (classNameArg != null) {
         System.err.println("Too many arguments.");
@@ -59,19 +60,23 @@ public class I18NSync extends ToolBase {
       return true;
     }
 
+    @Override
     public String[] getDefaultArgs() {
       return null;
     }
 
+    @Override
     public String getPurpose() {
       return "Identifies the Constants/Messages class to be created.  For example com.google.sample.i18n.client.Colors";
     }
 
+    @Override
     public String[] getTagArgs() {
       String[] interfaceArg = {"name of the Constants/Messages interface to create"};
       return interfaceArg;
     }
 
+    @Override
     public boolean isRequired() {
       return true;
     }
@@ -79,27 +84,33 @@ public class I18NSync extends ToolBase {
 
   private class outDirHandler extends ArgHandlerString {
 
+    @Override
     public String[] getDefaultArgs() {
       return null;
     }
 
+    @Override
     public String getPurpose() {
       return "Java source directory, defaults to the resource's class path.";
     }
 
+    @Override
     public String getTag() {
       return "-out";
     }
 
+    @Override
     public String[] getTagArgs() {
       String[] resourceArgs = {"fileName"};
       return resourceArgs;
     }
 
+    @Override
     public boolean isRequired() {
       return false;
     }
 
+    @Override
     public boolean setString(String str) {
 
       // We wish to use the same sets of checks for validity whether the user
@@ -132,7 +143,7 @@ public class I18NSync extends ToolBase {
    */
   public static void createConstantsInterfaceFromClassName(String className,
       File outDir) throws IOException {
-    createLocalizableInterfaceFromClassName(className, outDir, Constants.class);
+    createConstantsInterfaceFromClassName(className, outDir, Constants.class);
   }
 
   /**
@@ -144,7 +155,7 @@ public class I18NSync extends ToolBase {
    */
   public static void createConstantsWithLookupInterfaceFromClassName(
       String className) throws IOException {
-    createLocalizableInterfaceFromClassName(className, null,
+    createConstantsInterfaceFromClassName(className, null,
         ConstantsWithLookup.class);
   }
 
@@ -158,7 +169,7 @@ public class I18NSync extends ToolBase {
    */
   public static void createConstantsWithLookupInterfaceFromClassName(
       String className, File outDir) throws IOException {
-    createLocalizableInterfaceFromClassName(className, outDir,
+    createConstantsInterfaceFromClassName(className, outDir,
         ConstantsWithLookup.class);
   }
 
@@ -171,7 +182,7 @@ public class I18NSync extends ToolBase {
    */
   public static void createMessagesInterfaceFromClassName(String className)
       throws IOException {
-    createLocalizableInterfaceFromClassName(className, null, Messages.class);
+    createMessagesInterfaceFromClassName(className, null, Messages.class);
   }
 
   /**
@@ -184,7 +195,7 @@ public class I18NSync extends ToolBase {
    */
   public static void createMessagesInterfaceFromClassName(String className,
       File outDir) throws IOException {
-    createLocalizableInterfaceFromClassName(className, outDir, Messages.class);
+    createMessagesInterfaceFromClassName(className, outDir, Messages.class);
   }
 
   /**
@@ -233,9 +244,9 @@ public class I18NSync extends ToolBase {
     }
   }
 
-  private static void createLocalizableInterfaceFromClassName(String className,
-      File sourceDir, Class interfaceClass) throws FileNotFoundException,
-      IOException {
+  private static void createConstantsInterfaceFromClassName(String className,
+      File sourceDir, Class<? extends Constants> interfaceClass)
+      throws FileNotFoundException, IOException {
     File resource = urlToResourceFile(className);
     File source;
     if (sourceDir == null) {
@@ -254,14 +265,34 @@ public class I18NSync extends ToolBase {
     int classDiv = className.lastIndexOf(".");
     String packageName = className.substring(0, classDiv);
     String name = className.substring(classDiv + 1);
-    AbstractLocalizableInterfaceCreator creator;
-    if (interfaceClass.equals(Messages.class)) {
-      creator = new MessagesInterfaceCreator(name, packageName, resource,
-          source);
+    AbstractLocalizableInterfaceCreator creator = new ConstantsInterfaceCreator(
+        name, packageName, resource, source, interfaceClass);
+    creator.generate();
+  }
+
+  private static void createMessagesInterfaceFromClassName(String className,
+      File sourceDir, Class<? extends Messages> interfaceClass)
+      throws FileNotFoundException, IOException {
+    File resource = urlToResourceFile(className);
+    File source;
+    if (sourceDir == null) {
+      source = synthesizeSourceFile(resource);
     } else {
-      creator = new ConstantsInterfaceCreator(name, packageName, resource,
-          source, interfaceClass);
+      checkValidSourceDir(sourceDir);
+      String sourcePath = className.replace('.', File.separatorChar);
+      sourcePath = sourceDir.getCanonicalFile() + File.separator + sourcePath
+          + ".java";
+      source = new File(sourcePath);
     }
+    // Need both source path and class name for this check
+    checkValidJavaSourceOutputFile(source);
+    checkValidResourceInputFile(resource);
+
+    int classDiv = className.lastIndexOf(".");
+    String packageName = className.substring(0, classDiv);
+    String name = className.substring(classDiv + 1);
+    AbstractLocalizableInterfaceCreator creator = new MessagesInterfaceCreator(
+        name, packageName, resource, source);
     creator.generate();
   }
 
@@ -306,14 +337,17 @@ public class I18NSync extends ToolBase {
     registerHandler(new outDirHandler());
     registerHandler(new ArgHandlerFlag() {
 
+      @Override
       public String getPurpose() {
         return "create Messages interface rather than Constants interface.";
       }
 
+      @Override
       public String getTag() {
         return "-createMessages";
       }
 
+      @Override
       public boolean setFlag() {
         createMessagesArg = true;
         return true;
@@ -328,13 +362,13 @@ public class I18NSync extends ToolBase {
    */
   protected boolean run() {
     try {
-      Class createMe;
       if (createMessagesArg) {
-        createMe = Messages.class;
+        createMessagesInterfaceFromClassName(classNameArg, outDirArg,
+            Messages.class);
       } else {
-        createMe = Constants.class;
+        createConstantsInterfaceFromClassName(classNameArg, outDirArg,
+            Constants.class);
       }
-      createLocalizableInterfaceFromClassName(classNameArg, outDirArg, createMe);
       return true;
     } catch (Throwable e) {
       System.err.println(e.getMessage());

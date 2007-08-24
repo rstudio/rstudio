@@ -155,6 +155,7 @@ abstract class AbstractLocalizableImplCreator extends
     return messageBindings;
   }
 
+  @Override
   protected String branchMessage() {
     return "Processing " + this.getTarget();
   }
@@ -177,7 +178,7 @@ abstract class AbstractLocalizableImplCreator extends
     } catch (MissingResourceException e) {
       String s = "Could not find requested resource key '" + key + "'";
       TreeLogger child = logger.branch(TreeLogger.ERROR, s, null);
-      Set keys = messageBindings.keySet();
+      Set<String> keys = messageBindings.keySet();
       if (keys.size() < AbstractResource.REPORT_KEYS_THRESHOLD) {
         String keyString = "Keys found: " + keys;
         throw error(child, keyString);

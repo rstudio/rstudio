@@ -75,7 +75,8 @@ import java.util.Set;
  */
 public final class Dictionary {
 
-  private static Map cache = new HashMap();
+  private static Map<String, Dictionary> cache =
+    new HashMap<String, Dictionary>();
   private static final int MAX_KEYS_TO_SHOW = 20;
 
   /**
@@ -87,7 +88,7 @@ public final class Dictionary {
    * @throws MissingResourceException
    */
   public static Dictionary getDictionary(String name) {
-    Dictionary target = (Dictionary) cache.get(name);
+    Dictionary target = cache.get(name);
     if (target == null) {
       target = new Dictionary(name);
       cache.put(name, target);
@@ -150,12 +151,13 @@ public final class Dictionary {
    * 
    * @return the Dictionary set
    */
-  public Set keySet() {
-    HashSet s = new HashSet();
+  public Set<String> keySet() {
+    HashSet<String> s = new HashSet<String>();
     addKeys(s);
     return s;
   }
 
+  @Override
   public String toString() {
     return label;
   }
@@ -165,14 +167,14 @@ public final class Dictionary {
    * 
    * @return the values
    */
-  public Collection values() {
-    ArrayList s = new ArrayList();
+  public Collection<String> values() {
+    ArrayList<String> s = new ArrayList<String>();
     addValues(s);
     return s;
   }
 
   void resourceError(String key) {
-    Collection s = this.keySet();
+    Collection<String> s = this.keySet();
     String error = "Cannot find '" + key + "' in " + this;
     if (s.size() < MAX_KEYS_TO_SHOW) {
       error += "\n keys found: " + s;
@@ -180,16 +182,16 @@ public final class Dictionary {
     throw new MissingResourceException(error, this.toString(), key);
   }
 
-  private native void addKeys(HashSet s) /*-{
+  private native void addKeys(HashSet<String> s) /*-{
     for (x in this.@com.google.gwt.i18n.client.Dictionary::dict) {
-      s.@java.util.HashSet::add(Ljava/lang/Object;)(x);
+      s.@java.util.HashSet::add(Ljava/lang/String;)(x);
     }
   }-*/;
 
-  private native void addValues(ArrayList s) /*-{
+  private native void addValues(ArrayList<String> s) /*-{
     for (x in this.@com.google.gwt.i18n.client.Dictionary::dict) {
       var value = this.@com.google.gwt.i18n.client.Dictionary::get(Ljava/lang/String;)(x);
-      s.@java.util.ArrayList::add(Ljava/lang/Object;)(value);
+      s.@java.util.ArrayList::add(Ljava/lang/String;)(value);
     }
   }-*/;
 

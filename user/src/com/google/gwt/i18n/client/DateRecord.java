@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -69,7 +69,7 @@ class DateRecord extends Date {
     milliseconds = -1;
     dayOfWeek = -1;
     tzOffset = Integer.MIN_VALUE;
-  };
+  }
 
   /**
    * calcDate uses all the field available so far to fill a Date object. For
@@ -231,6 +231,7 @@ class DateRecord extends Date {
    * 
    * @param hours hour value.
    */
+  @Override
   public void setHours(int hours) {
     this.hours = hours;
   }
@@ -249,6 +250,7 @@ class DateRecord extends Date {
    * 
    * @param minutes minute value.
    */
+  @Override
   public void setMinutes(int minutes) {
     this.minutes = minutes;
   }
@@ -258,6 +260,7 @@ class DateRecord extends Date {
    * 
    * @param month month value.
    */
+  @Override
   public void setMonth(int month) {
     this.month = month;
   }
@@ -267,6 +270,7 @@ class DateRecord extends Date {
    * 
    * @param seconds second value.
    */
+  @Override
   public void setSeconds(int seconds) {
     this.seconds = seconds;
   }
@@ -285,6 +289,7 @@ class DateRecord extends Date {
    * 
    * @param value year value.
    */
+  @Override
   public void setYear(int value) {
     this.year = value;
   }
