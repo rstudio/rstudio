@@ -35,6 +35,13 @@ public final class Float extends Number implements Comparable<Float> {
     }
   }
 
+  /**
+   * @skip Here for shared implementation with Arrays.hashCode
+   */
+  public static int hashCode(float f) {
+    return (int) f;
+  }
+
   public static native boolean isInfinite(float x) /*-{
     return !isFinite(x);
   }-*/;
@@ -106,7 +113,7 @@ public final class Float extends Number implements Comparable<Float> {
    */
   @Override
   public int hashCode() {
-    return (int) value;
+    return hashCode(value);
   }
 
   @Override

@@ -26,6 +26,13 @@ public final class Long extends Number implements Comparable<Long> {
     return new Long(__decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
   }
 
+  /**
+   * @skip Here for shared implementation with Arrays.hashCode
+   */
+  public static int hashCode(long l) {
+    return (int) l;
+  }
+
   public static long parseLong(String s) throws NumberFormatException {
     return parseLong(s, 10);
   }
@@ -115,7 +122,7 @@ public final class Long extends Number implements Comparable<Long> {
 
   @Override
   public int hashCode() {
-    return (int) value;
+    return hashCode(value);
   }
 
   @Override

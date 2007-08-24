@@ -73,6 +73,15 @@ public final class Character implements Comparable<Character> {
     }
   }
 
+  /**
+   * @skip
+   *
+   * Here for shared implementation with Arrays.hashCode
+   */
+  public static int hashCode(char c) {
+    return c;
+  }
+
   public static native boolean isDigit(char c) /*-{
     return (null != String.fromCharCode(c).match(/\d/));
   }-*/;
@@ -156,7 +165,7 @@ public final class Character implements Comparable<Character> {
 
   @Override
   public int hashCode() {
-    return value;
+    return hashCode(value);
   }
 
   @Override

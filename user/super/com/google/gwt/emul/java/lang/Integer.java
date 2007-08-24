@@ -35,6 +35,15 @@ public final class Integer extends Number implements Comparable<Integer> {
     return new Integer((int) __decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
   }
 
+  /**
+   * @skip
+   *
+   * Here for shared implementation with Arrays.hashCode
+   */
+  public static int hashCode(int i) {
+    return i;
+  }
+
   public static int parseInt(String s) throws NumberFormatException {
     return parseInt(s, 10);
   }
@@ -113,7 +122,7 @@ public final class Integer extends Number implements Comparable<Integer> {
 
   @Override
   public int hashCode() {
-    return value;
+    return hashCode(value);
   }
 
   @Override

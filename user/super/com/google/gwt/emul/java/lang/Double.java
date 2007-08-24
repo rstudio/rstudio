@@ -35,6 +35,13 @@ public final class Double extends Number implements Comparable<Double> {
     }
   }
 
+  /**
+   * @skip Here for shared implementation with Arrays.hashCode
+   */
+  public static int hashCode(double d) {
+    return (int) d;
+  }
+
   public static native boolean isInfinite(double x) /*-{
     return !isFinite(x);
   }-*/;
@@ -106,7 +113,7 @@ public final class Double extends Number implements Comparable<Double> {
    */
   @Override
   public int hashCode() {
-    return (int) value;
+    return hashCode(value);
   }
 
   @Override

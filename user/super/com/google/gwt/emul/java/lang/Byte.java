@@ -35,6 +35,15 @@ public final class Byte extends Number implements Comparable<Byte> {
     return new Byte((byte) __decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
   }
 
+  /**
+   * @skip
+   *
+   * Here for shared implementation with Arrays.hashCode
+   */
+  public static int hashCode(byte b) {
+    return b;
+  }
+
   public static byte parseByte(String s) throws NumberFormatException {
     final int baseTen = 10;
     return parseByte(s, baseTen);
@@ -103,7 +112,7 @@ public final class Byte extends Number implements Comparable<Byte> {
 
   @Override
   public int hashCode() {
-    return value;
+    return hashCode(value);
   }
 
   @Override

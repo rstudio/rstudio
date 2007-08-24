@@ -35,6 +35,13 @@ public final class Short extends Number implements Comparable<Short> {
     return new Short((short) __decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
   }
 
+  /**
+   * @skip Here for shared implementation with Arrays.hashCode
+   */
+  public static int hashCode(short s) {
+    return s;
+  }
+
   public static short parseShort(String s) throws NumberFormatException {
     return parseShort(s, 10);
   }
@@ -105,7 +112,7 @@ public final class Short extends Number implements Comparable<Short> {
 
   @Override
   public int hashCode() {
-    return value;
+    return hashCode(value);
   }
 
   @Override
