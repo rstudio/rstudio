@@ -75,9 +75,15 @@ public class Collections {
     }
   }
 
-  public static final Set<?> EMPTY_SET = unmodifiableSet(new HashSet<Object>());
-  public static final Map<?, ?> EMPTY_MAP = unmodifiableMap(new HashMap<Object, Object>());
   public static final List<?> EMPTY_LIST = unmodifiableList(new ArrayList<Object>());
+  public static final Map<?, ?> EMPTY_MAP = unmodifiableMap(new HashMap<Object, Object>());
+  public static final Set<?> EMPTY_SET = unmodifiableSet(new HashSet<Object>());
+
+  private static Comparator<Comparable<Object>> reverseComparator = new Comparator<Comparable<Object>>() {
+    public int compare(Comparable<Object> o1, Comparable<Object> o2) {
+      return o2.compareTo(o1);
+    }
+  };
 
   public static <T> boolean addAll(Collection<? super T> c, T... a) {
     boolean result = false;
@@ -206,18 +212,35 @@ public class Collections {
   }
 
   public static boolean disjoint(Collection<?> c1, Collection<?> c2) {
-    // TODO(jat): implement
-    throw new UnsupportedOperationException("disjoint not implemented");
+    Collection<?> iterating = c1;
+    Collection<?> testing = c2;
+
+    // See if one of these objects possibly implements a fast contains.
+    if ((c1 instanceof Set) && !(c2 instanceof Set)) {
+      iterating = c2;
+      testing = c1;
+    }
+
+    for (Object o : iterating) {
+      if (testing.contains(o)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
+  @SuppressWarnings("unchecked")
   public static <T> List<T> emptyList() {
     return (List<T>) EMPTY_LIST;
   }
 
+  @SuppressWarnings("unchecked")
   public static <K, V> Map<K, V> emptyMap() {
     return (Map<K, V>) EMPTY_MAP;
   }
 
+  @SuppressWarnings("unchecked")
   public static <T> Set<T> emptySet() {
     return (Set<T>) EMPTY_SET;
   }
@@ -235,16 +258,131 @@ public class Collections {
     };
   }
 
-  public static <T> void reverse(List<T> l) {
-    int lastPos = l.size() - 1;
-    for (int i = 0; i < l.size() / 2; i++) {
-      T element = l.get(i);
-      int swapPos = lastPos - i;
-      assert (swapPos > i);
-      T swappedWith = l.get(swapPos);
-      l.set(i, swappedWith);
-      l.set(swapPos, element);
+  public static <T> void fill(List<? super T> list, T obj) {
+    for (ListIterator<? super T> it = list.listIterator(); it.hasNext();) {
+      it.set(obj);
     }
+  }
+
+  public static int frequency(Collection<?> c, Object o) {
+    int count = 0;
+    for (Object e : c) {
+      if (o == null ? e == null : o.equals(e)) {
+        ++count;
+      }
+    }
+    return count;
+  }
+
+  public static <T extends Object & Comparable<? super T>> T max(
+      Collection<? extends T> coll) {
+    return max(coll, null);
+  }
+
+  public static <T> T max(Collection<? extends T> coll,
+      Comparator<? super T> comp) {
+
+    if (comp == null) {
+      comp = Comparators.natural();
+    }
+
+    Iterator<? extends T> it = coll.iterator();
+
+    // Will throw NoSuchElementException if coll is empty.
+    T max = it.next();
+
+    while (it.hasNext()) {
+      T t = it.next();
+      if (comp.compare(t, max) > 0) {
+        max = t;
+      }
+    }
+
+    return max;
+  }
+
+  public static <T extends Object & Comparable<? super T>> T min(
+      Collection<? extends T> coll) {
+    return min(coll, null);
+  }
+
+  public static <T> T min(Collection<? extends T> coll,
+      Comparator<? super T> comp) {
+    return max(coll, reverseOrder(comp));
+  }
+
+  public static <T> List<T> nCopies(int n, T o) {
+    ArrayList<T> list = new ArrayList<T>();
+    for (int i = 0; i < n; ++i) {
+      list.add(o);
+    }
+    return unmodifiableList(list);
+  }
+
+  public static <T> boolean replaceAll(List<T> list, T oldVal, T newVal) {
+    boolean modified = false;
+    for (ListIterator<T> it = list.listIterator(); it.hasNext();) {
+      T t = it.next();
+      if (t == null ? oldVal == null : t.equals(oldVal)) {
+        it.set(newVal);
+        modified = true;
+      }
+    }
+    return modified;
+  }
+
+  public static <T> void reverse(List<T> l) {
+    if (l instanceof RandomAccess) {
+      for (int iFront = 0, iBack = l.size() - 1; iFront < iBack; ++iFront, --iBack) {
+        Collections.swap(l, iFront, iBack);
+      }
+    } else {
+      ListIterator<T> head = l.listIterator();
+      ListIterator<T> tail = l.listIterator(l.size());
+      while (head.nextIndex() < tail.previousIndex()) {
+        T headElem = head.next();
+        T tailElem = tail.previous();
+        head.set(tailElem);
+        tail.set(headElem);
+      }
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <T> Comparator<T> reverseOrder() {
+    return (Comparator<T>) reverseComparator;
+  }
+
+  public static <T> Comparator<T> reverseOrder(final Comparator<T> cmp) {
+    if (cmp == null) {
+      return reverseOrder();
+    }
+    return new Comparator<T>() {
+      public int compare(T t1, T t2) {
+        return cmp.compare(t2, t1);
+      }
+    };
+  }
+
+  // TODO(tobyr) Is it worth creating custom singleton sets, lists, and maps?
+  // More efficient at runtime, but more code bloat to download
+
+  public static <T> Set<T> singleton(T o) {
+    HashSet<T> set = new HashSet<T>(1);
+    set.add(o);
+    return unmodifiableSet(set);
+  }
+
+  public static <T> List<T> singletonList(T o) {
+    List<T> list = new ArrayList<T>(1);
+    list.add(o);
+    return unmodifiableList(list);
+  }
+
+  public static <K, V> Map<K, V> singletonMap(K key, V value) {
+    Map<K, V> map = new HashMap<K, V>(1);
+    map.put(key, value);
+    return unmodifiableMap(map);
   }
 
   public static <T> void sort(List<T> target) {
@@ -257,6 +395,10 @@ public class Collections {
     Object[] x = target.toArray();
     Arrays.unsafeSort(x, c);
     replaceContents(target, x);
+  }
+
+  public static void swap(List<?> list, int i, int j) {
+    swapImpl(list, i, j);
   }
 
   public static <T> Collection<T> unmodifiableCollection(
@@ -336,7 +478,7 @@ public class Collections {
         return coll.toArray(a);
       }
     };
-  };
+  }
 
   public static <T> List<T> unmodifiableList(final List<? extends T> list) {
     return new List<T>() {
@@ -443,11 +585,11 @@ public class Collections {
         return list.toArray(array);
       }
     };
-  }
+  };
 
   public static <K, V> Map<K, V> unmodifiableMap(
       final Map<? extends K, ? extends V> map) {
-    return new Map<K,V>() {
+    return new Map<K, V>() {
 
       public void clear() {
         throw new UnsupportedOperationException(
@@ -462,9 +604,9 @@ public class Collections {
         return map.containsValue(value);
       }
 
-      public Set<Map.Entry<K,V>> entrySet() {
-        Set<? extends Map.Entry<? extends K,? extends V>> entrySet = map.entrySet();
-        return (Set<Map.Entry<K,V>>)entrySet;
+      public Set<Map.Entry<K, V>> entrySet() {
+        Set<? extends Map.Entry<? extends K, ? extends V>> entrySet = map.entrySet();
+        return (Set<Map.Entry<K, V>>) entrySet;
       }
 
       public V get(Object key) {
@@ -476,7 +618,7 @@ public class Collections {
       }
 
       public Set<K> keySet() {
-        return (Set<K>)map.keySet();
+        return (Set<K>) map.keySet();
       }
 
       public V put(K key, V value) {
@@ -499,9 +641,9 @@ public class Collections {
       }
 
       public Collection<V> values() {
-        return (Collection<V>)map.values();
+        return (Collection<V>) map.values();
       }
-      
+
     };
   }
 
@@ -509,15 +651,18 @@ public class Collections {
     return new Set<T>() {
 
       public boolean add(T o) {
-        throw new UnsupportedOperationException("unmodifiableSet: add not permitted");
+        throw new UnsupportedOperationException(
+            "unmodifiableSet: add not permitted");
       }
 
       public boolean addAll(Collection<? extends T> c) {
-        throw new UnsupportedOperationException("unmodifiableSet: addAll not permitted");
+        throw new UnsupportedOperationException(
+            "unmodifiableSet: addAll not permitted");
       }
 
       public void clear() {
-        throw new UnsupportedOperationException("unmodifiableSet: clear not permitted");
+        throw new UnsupportedOperationException(
+            "unmodifiableSet: clear not permitted");
       }
 
       public boolean contains(Object o) {
@@ -552,15 +697,18 @@ public class Collections {
       }
 
       public boolean remove(Object o) {
-        throw new UnsupportedOperationException("unmodifiableSet: remove not permitted");
+        throw new UnsupportedOperationException(
+            "unmodifiableSet: remove not permitted");
       }
 
       public boolean removeAll(Collection<?> c) {
-        throw new UnsupportedOperationException("unmodifiableSet: removeAll not permitted");
+        throw new UnsupportedOperationException(
+            "unmodifiableSet: removeAll not permitted");
       }
 
       public boolean retainAll(Collection<?> c) {
-        throw new UnsupportedOperationException("unmodifiableSet: retainAll not permitted");
+        throw new UnsupportedOperationException(
+            "unmodifiableSet: retainAll not permitted");
       }
 
       public int size() {
@@ -574,7 +722,7 @@ public class Collections {
       public <OT> OT[] toArray(OT[] a) {
         return set.toArray(a);
       }
-      
+
     };
   }
 
@@ -597,6 +745,7 @@ public class Collections {
    * @param target list to replace contents from an array
    * @param x an Object array which can contain only T instances
    */
+  @SuppressWarnings("unchecked")
   private static <T> void replaceContents(List<T> target, Object[] x) {
     int size = target.size();
     assert (x.length == size);
@@ -605,4 +754,9 @@ public class Collections {
     }
   }
 
+  private static <T> void swapImpl(List<T> list, int i, int j) {
+    T t = list.get(i);
+    list.set(i, list.get(j));
+    list.set(j, t);
+  }
 }
