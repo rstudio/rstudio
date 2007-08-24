@@ -25,6 +25,7 @@ import com.google.gwt.user.client.Element;
  */
 public class FocusImplSafari extends FocusImplOld {
   
+  @Override
   public native void blur(Element elem) /*-{
     // Attempts to blur elements from within an event callback will generally
     // be unsuccessful, so we invoke blur() from outside of the callback.
@@ -33,6 +34,7 @@ public class FocusImplSafari extends FocusImplOld {
     }, 0);
   }-*/;
 
+  @Override
   public native void focus(Element elem) /*-{
     // Attempts to focus elements from within an event callback will generally
     // be unsuccessful, so we invoke focus() from outside of the callback.
@@ -41,6 +43,7 @@ public class FocusImplSafari extends FocusImplOld {
     }, 0);
   }-*/;
 
+  @Override
   protected native Element createHiddenInput() /*-{
     var input = $doc.createElement('input');
     input.type = 'text';
@@ -53,6 +56,7 @@ public class FocusImplSafari extends FocusImplOld {
     return input;
   }-*/;
 
+  @Override
   protected native JavaScriptObject createMouseHandler() /*-{
     return function() {
       // This function is called directly as an event handler, so 'this' is

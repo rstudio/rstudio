@@ -291,6 +291,7 @@ public class RichTextArea extends FocusWidget implements HasHTML,
       return number;
     }
     
+    @Override
     public String toString() {
       return Integer.toString(number);
     }
@@ -323,12 +324,13 @@ public class RichTextArea extends FocusWidget implements HasHTML,
       this.tag = tag;
     }
 
+    @Override
     public String toString() {
       return "Justify " + tag;
     }
   }
 
-  private RichTextAreaImpl impl = (RichTextAreaImpl) GWT.create(RichTextAreaImpl.class);
+  private RichTextAreaImpl impl = GWT.create(RichTextAreaImpl.class);
   private MouseListenerCollection mouseListeners;
 
   /**
@@ -379,6 +381,7 @@ public class RichTextArea extends FocusWidget implements HasHTML,
     return impl.getText();
   }
 
+  @Override
   public void onBrowserEvent(Event event) {
     switch (DOM.eventGetType(event)) {
       case Event.ONMOUSEDOWN:
@@ -403,6 +406,7 @@ public class RichTextArea extends FocusWidget implements HasHTML,
     }
   }
 
+  @Override
   public void setFocus(boolean focused) {
     // There are different problems on each browser when you try to focus an
     // unattached rich text iframe, so just cut it off early.
@@ -419,11 +423,13 @@ public class RichTextArea extends FocusWidget implements HasHTML,
     impl.setText(text);
   }
 
+  @Override
   protected void onAttach() {
     super.onAttach();
     impl.initElement();
   }
 
+  @Override
   protected void onDetach() {
     super.onDetach();
     impl.uninitElement();

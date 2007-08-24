@@ -69,21 +69,25 @@ public class TabPanel extends Composite implements TabListener,
       this.tabBar = tabBar;
     }
 
+    @Override
     public void add(Widget w) {
       throw new UnsupportedOperationException(
           "Use TabPanel.add() to alter the DeckPanel");
     }
 
+    @Override
     public void clear() {
       throw new UnsupportedOperationException(
           "Use TabPanel.clear() to alter the DeckPanel");
     }
 
+    @Override
     public void insert(Widget w, int beforeIndex) {
       throw new UnsupportedOperationException(
           "Use TabPanel.insert() to alter the DeckPanel");
     }
 
+    @Override
     public boolean remove(Widget w) {
       // Removal of items from the TabBar is delegated to the DeckPanel
       // to ensure consistency
@@ -135,16 +139,19 @@ public class TabPanel extends Composite implements TabListener,
    * external callers from modifying the state of the TabBar.
    */
   private static class UnmodifiableTabBar extends TabBar {
+    @Override
     public void insertTab(String text, boolean asHTML, int beforeIndex) {
       throw new UnsupportedOperationException(
           "Use TabPanel.insert() to alter the TabBar");
     }
 
+    @Override
     public void insertTab(Widget widget, int beforeIndex) {
       throw new UnsupportedOperationException(
           "Use TabPanel.insert() to alter the TabBar");
     }
 
+    @Override
     public void removeTab(int index) {
       // It's possible for removeTab() to function correctly, but it's
       // preferable to have only TabbedDeckPanel.remove() be operable,
@@ -313,7 +320,7 @@ public class TabPanel extends Composite implements TabListener,
     insert(widget, tabText, false, beforeIndex);
   }
 
-  public Iterator iterator() {
+  public Iterator<Widget> iterator() {
     // The Iterator returned by DeckPanel supports removal and will invoke
     // TabbedDeckPanel.remove(), which is an active function.
     return deck.iterator();

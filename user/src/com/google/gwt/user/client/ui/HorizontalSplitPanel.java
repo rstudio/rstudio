@@ -134,6 +134,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
 
     private int splitPosition = 0;
 
+    @Override
     public void init(HorizontalSplitPanel panel) {
       this.panel = panel;
 
@@ -155,20 +156,24 @@ public final class HorizontalSplitPanel extends SplitPanel {
       expandToFitParentUsingPercentages(panel.container);
     }
 
+    @Override
     public void onAttach() {
       addResizeListener(panel.container);
       onResize();
     }
 
+    @Override
     public void onDetach() {
       DOM.setElementAttribute(panel.container, "onresize", null);
     }
 
+    @Override
     public void onSplitResize(int px) {
       final int resizeUpdatePeriod = 20; // ms
       if (!isResizeInProgress) {
         isResizeInProgress = true;
         new Timer() {
+          @Override
           public void run() {
             setSplitPosition(splitPosition);
             isResizeInProgress = false;
@@ -178,6 +183,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
       splitPosition = px;
     }
 
+    @Override
     public void updateRightWidth(Element rightElem, int newRightWidth) {
       setWidth(rightElem, newRightWidth + "px");
     }
@@ -206,6 +212,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
    * WebKit bug: http://bugs.webkit.org/show_bug.cgi?id=9137.
    */
   private static class ImplSafari extends Impl {
+    @Override
     public void init(HorizontalSplitPanel panel) {
       this.panel = panel;
       final String fullSize = "100%";
@@ -232,7 +239,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
   // A style-free element to serve as the root container.
   private final Element container;
 
-  private final Impl impl = (Impl) GWT.create(Impl.class);
+  private final Impl impl = GWT.create(Impl.class);
 
   /**
    * If the split position is set while the split panel is not attached, save it
@@ -245,8 +252,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
   private int initialLeftWidth;
 
   public HorizontalSplitPanel() {
-    this(
-        (HorizontalSplitPanelImages) GWT.create(HorizontalSplitPanelImages.class));
+    this(GWT.<HorizontalSplitPanelImages>create(HorizontalSplitPanelImages.class));
   }
 
   /**
@@ -306,6 +312,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
     setWidget(RIGHT, w);
   }
 
+  @Override
   public final void setSplitPosition(String pos) {
     lastSplitPosition = pos;
     final Element leftElem = getElement(LEFT);
@@ -313,6 +320,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
     impl.setSplitPosition(getOffsetWidth(leftElem));
   }
 
+  @Override
   protected void onLoad() {
     impl.onAttach();
 
@@ -330,14 +338,17 @@ public final class HorizontalSplitPanel extends SplitPanel {
     });
   }
 
+  @Override
   protected void onUnload() {
     impl.onDetach();
   }
 
+  @Override
   final void onSplitterResize(int x, int y) {
     impl.onSplitResize(initialLeftWidth + x - initialThumbPos);
   }
 
+  @Override
   final void onSplitterResizeStarted(int x, int y) {
     initialThumbPos = x;
     initialLeftWidth = getOffsetWidth(getElement(LEFT));

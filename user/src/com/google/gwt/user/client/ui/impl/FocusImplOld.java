@@ -32,10 +32,12 @@ public class FocusImplOld extends FocusImpl {
   JavaScriptObject focusHandler = createFocusHandler();
   JavaScriptObject mouseHandler = createMouseHandler();
 
+  @Override
   public native void blur(Element elem) /*-{
     elem.firstChild.blur();
   }-*/;
 
+  @Override
   public native Element createFocusable() /*-{
     // Use the infamous 'hidden input' trick to make a div effectively
     // focusable.
@@ -70,18 +72,22 @@ public class FocusImplOld extends FocusImpl {
     return div;
   }-*/;
 
+  @Override
   public native void focus(Element elem) /*-{
     elem.firstChild.focus();
   }-*/;
 
+  @Override
   public native int getTabIndex(Element elem) /*-{
     return elem.firstChild.tabIndex;
   }-*/;
 
+  @Override
   public native void setAccessKey(Element elem, char key) /*-{
     elem.firstChild.accessKey = key;
   }-*/;
 
+  @Override
   public native void setTabIndex(Element elem, int index) /*-{
     elem.firstChild.tabIndex = index;
   }-*/;

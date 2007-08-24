@@ -42,6 +42,7 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
     injectGlobalHandler();
   }
 
+  @Override
   public void adjust(Element clipper, String url, int left, int top, int width,
       int height) {
 
@@ -64,6 +65,7 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
     DOM.setElementPropertyInt(img, "height", imgHeight);
   }
 
+  @Override
   public String getHTML(String url, int left, int top, int width, int height) {
     String clipperStyle = "overflow: hidden; width: " + width + "px; height: "
         + height + "px; padding: 0px; zoom: 1";

@@ -38,6 +38,7 @@ class DOMImplIE6 extends DOMImpl {
     return $doc.documentElement.clientTop || $doc.body.clientTop;
   }-*/;
 
+  @Override
   public native boolean compare(Element elem1, Element elem2) /*-{
     if (!elem1 && !elem2)
       return true;
@@ -46,6 +47,7 @@ class DOMImplIE6 extends DOMImpl {
     return (elem1.uniqueID == elem2.uniqueID);
   }-*/;
 
+  @Override
   public native Element createInputRadioElement(String name) /*-{
     return $doc.createElement("<INPUT type='RADIO' name='" + name + "'>");
   }-*/;
@@ -57,50 +59,61 @@ class DOMImplIE6 extends DOMImpl {
    * Although this bug is fixed in IE7, this DOMImpl specialization is used
    * for both IE6 and IE7, but it should be harmless.
    */
+  @Override
   public native Element createSelectElement(boolean multiple) /*-{
     var html = multiple ? "<SELECT MULTIPLE>" : "<SELECT>"; 
     return $doc.createElement(html);
   }-*/;
   
+  @Override
   public native int eventGetClientX(Event evt) /*-{
     return evt.clientX -
         @com.google.gwt.user.client.impl.DOMImplIE6::getBodyClientLeft()();
   }-*/;
 
+  @Override
   public native int eventGetClientY(Event evt) /*-{
     return evt.clientY -
         @com.google.gwt.user.client.impl.DOMImplIE6::getBodyClientTop()();
   }-*/;
 
+  @Override
   public native Element eventGetCurrentTarget(Event evt) /*-{
     return @com.google.gwt.user.client.impl.DOMImplIE6::currentEventTarget;
   }-*/;
 
+  @Override
   public native Element eventGetFromElement(Event evt) /*-{
     return evt.fromElement ? evt.fromElement : null;
   }-*/;
 
+  @Override
   public native int eventGetMouseWheelVelocityY(Event evt) /*-{
     return Math.round(-evt.wheelDelta / 40) || -1;
   }-*/;
 
+  @Override
   public native Element eventGetTarget(Event evt) /*-{
     return evt.srcElement || null;
   }-*/;
 
+  @Override
   public native Element eventGetToElement(Event evt) /*-{
     return evt.toElement || null;
   }-*/;
 
+  @Override
   public native void eventPreventDefault(Event evt) /*-{
     evt.returnValue = false;
   }-*/;
 
+  @Override
   public native String eventToString(Event evt) /*-{
     if (evt.toString) return evt.toString();
       return "[object Event]";
   }-*/;
 
+  @Override
   public native int getAbsoluteLeft(Element elem) /*-{
     // Standard mode || Quirks mode.
     var scrollLeft = $doc.documentElement.scrollLeft || $doc.body.scrollLeft;
@@ -108,6 +121,7 @@ class DOMImplIE6 extends DOMImpl {
         - @com.google.gwt.user.client.impl.DOMImplIE6::getBodyClientLeft()();
   }-*/;
 
+  @Override
   public native int getAbsoluteTop(Element elem) /*-{
     // Standard mode || Quirks mode.
     var scrollTop = $doc.documentElement.scrollTop || $doc.body.scrollTop;
@@ -115,15 +129,18 @@ class DOMImplIE6 extends DOMImpl {
         - @com.google.gwt.user.client.impl.DOMImplIE6::getBodyClientTop()();
    }-*/;
 
+  @Override
   public native Element getChild(Element elem, int index) /*-{
     var child = elem.children[index];
     return child || null;
   }-*/;
 
+  @Override
   public native int getChildCount(Element elem) /*-{
     return elem.children.length;
   }-*/;
 
+  @Override
   public native int getChildIndex(Element parent, Element child) /*-{
     var count = parent.children.length;
     for (var i = 0; i < count; ++i) {
@@ -133,6 +150,7 @@ class DOMImplIE6 extends DOMImpl {
     return -1;
   }-*/;
 
+  @Override
   public native Element getFirstChild(Element elem) /*-{
     var child = elem.firstChild;
     return child || null;
@@ -142,20 +160,24 @@ class DOMImplIE6 extends DOMImpl {
    * The src may not be set yet because of funky logic in setImgSrc(). See
    * setImgSrc().
    */
+  @Override
   public String getImgSrc(Element img) {
     return ImageSrcIE6.getImgSrc(img);
   }
 
+  @Override
   public native String getInnerText(Element elem) /*-{
     var ret = elem.innerText;
     return (ret == null) ? null : ret;
   }-*/;
 
+  @Override
   public native Element getNextSibling(Element elem) /*-{
     var sib = elem.nextSibling;
     return sib || null;
   }-*/;
 
+  @Override
   public native Element getParent(Element elem) /*-{
     var parent = elem.parentElement;
     return parent || null;
@@ -165,6 +187,7 @@ class DOMImplIE6 extends DOMImpl {
     return elem.src;
   }-*/;
 
+  @Override
   public native void init() /*-{
     // Fix IE background image refresh bug, present through IE6
     // see http://www.mister-pixel.com/#Content__state=is_that_simple
@@ -222,6 +245,7 @@ class DOMImplIE6 extends DOMImpl {
     $doc.body.ondblclick    = $wnd.__dispatchEvent;
   }-*/;
 
+  @Override
   public native void insertChild(Element parent, Element child, int index) /*-{
     if (index >= parent.children.length)
       parent.appendChild(child);
@@ -229,6 +253,7 @@ class DOMImplIE6 extends DOMImpl {
       parent.insertBefore(child, parent.children[index]);
   }-*/;
 
+  @Override
   public native void insertListItem(Element select, String text, String value,
       int index) /*-{
     // When we try to pass the populated option into this method, IE
@@ -241,6 +266,7 @@ class DOMImplIE6 extends DOMImpl {
     }
   }-*/;
 
+  @Override
   public native boolean isOrHasChild(Element parent, Element child) /*-{
     while (child) {
       if (parent.uniqueID == child.uniqueID)
@@ -250,10 +276,12 @@ class DOMImplIE6 extends DOMImpl {
     return false;
   }-*/;
 
+  @Override
   public native void releaseCapture(Element elem) /*-{
     elem.releaseCapture();
   }-*/;
 
+  @Override
   public native void setCapture(Element elem) /*-{
     elem.setCapture();
   }-*/;
@@ -265,16 +293,19 @@ class DOMImplIE6 extends DOMImpl {
    * requests for the same URL don't actually get their source set until the
    * original load is complete.
    */
+  @Override
   public void setImgSrc(Element img, String src) {
     ImageSrcIE6.setImgSrc(img, src);
   }
 
+  @Override
   public native void setInnerText(Element elem, String text) /*-{
     if (!text)
       text = '';
     elem.innerText = text;
   }-*/;
 
+  @Override
   public native void sinkEvents(Element elem, int bits) /*-{
     elem.__eventBits = bits;
 

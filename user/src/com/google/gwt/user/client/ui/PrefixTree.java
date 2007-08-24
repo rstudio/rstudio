@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,7 @@ import java.util.NoSuchElementException;
  * A prefix tree (aka trie).
  *
  */
-class PrefixTree extends AbstractCollection {
+class PrefixTree extends AbstractCollection<String> {
 
   /**
    * Iterates over the structure of a PrefixTree. No concurrency checks are
@@ -39,7 +39,7 @@ class PrefixTree extends AbstractCollection {
    * This Iterator implementation is iterative and uses an internal stack object
    * to avoid call-stack limitations and invocation overhead.
    */
-  private static class PrefixTreeIterator implements Iterator {
+  private static class PrefixTreeIterator implements Iterator<String> {
 
     private JavaScriptObject stack;
 
@@ -61,8 +61,8 @@ class PrefixTree extends AbstractCollection {
     /**
      * {@inheritDoc} Wraps the native implementation with some sanity checking.
      */
-    public Object next() {
-      final Object toReturn = nextImpl(false);
+    public String next() {
+      final String toReturn = nextImpl(false);
 
       // A null response indicates that there was no data to be had.
       if (toReturn == null) {
@@ -128,7 +128,7 @@ class PrefixTree extends AbstractCollection {
      *          value that next() would return if it were called
      * @return The next object, or null if there is an error
      */
-    private native Object nextImpl(boolean peek) /*-{
+    private native String nextImpl(boolean peek) /*-{
       var stack = this.@com.google.gwt.user.client.ui.PrefixTree$PrefixTreeIterator::stack;
       var safe = @com.google.gwt.user.client.ui.PrefixTree::safe(Ljava/lang/String;)
       var unsafe = @com.google.gwt.user.client.ui.PrefixTree::unsafe(Ljava/lang/String;)
@@ -242,7 +242,7 @@ class PrefixTree extends AbstractCollection {
    *
    * @param source Initialize from another collection
    */
-  public PrefixTree(Collection source) {
+  public PrefixTree(Collection<String> source) {
     this(2, source);
   }
 
@@ -263,29 +263,12 @@ class PrefixTree extends AbstractCollection {
    *          searches, at a cost of setup time.
    * @param source Initialize from another collection
    */
-  public PrefixTree(final int prefixLength, final Collection source) {
+  public PrefixTree(final int prefixLength, final Collection<String> source) {
     this.prefixLength = prefixLength;
     clear();
 
     if (source != null) {
       addAll(source);
-    }
-  }
-
-  /**
-   * Adds an object to the PrefixTree.
-   *
-   * @param o The object to add
-   * @throws UnsupportedOperationException if the object is not a String
-   *  @return <code>true</code> if the string was added, <code>false</code>
-   *          otherwise
-   */
-  public boolean add(Object o) throws UnsupportedOperationException {
-    if (o instanceof String) {
-      return add((String) o);
-    } else {
-      throw new UnsupportedOperationException(
-          "Cannot add non-Strings to PrefixTree");
     }
   }
 
@@ -296,6 +279,7 @@ class PrefixTree extends AbstractCollection {
    * @return <code>true</code> if the string was added, <code>false</code>
    *         otherwise
    */
+  @Override
   public native boolean add(String s) /*-{
     var suffixes =
         this.@com.google.gwt.user.client.ui.PrefixTree::suffixes;
@@ -349,12 +333,14 @@ class PrefixTree extends AbstractCollection {
   /**
    * Initialize native state.
    */
+  @Override
   public native void clear() /*-{
     this.@com.google.gwt.user.client.ui.PrefixTree::size = 0;
     this.@com.google.gwt.user.client.ui.PrefixTree::subtrees = {};
     this.@com.google.gwt.user.client.ui.PrefixTree::suffixes = {};
   }-*/;
 
+  @Override
   public boolean contains(Object o) {
     if (o instanceof String) {
       return contains((String) o);
@@ -379,15 +365,16 @@ class PrefixTree extends AbstractCollection {
    * @param limit The desired number of results to retrieve
    * @return A List of suggestions
    */
-  public List/* <String> */getSuggestions(String search, int limit) {
-    final List toReturn = new ArrayList();
+  public List<String> getSuggestions(String search, int limit) {
+    final List<String> toReturn = new ArrayList<String>();
     if ((search != null) && (limit > 0)) {
       suggestImpl(search, "", toReturn, limit);
     }
     return toReturn;
   }
 
-  public Iterator iterator() {
+  @Override
+  public Iterator<String> iterator() {
     return new PrefixTreeIterator(this);
   }
 
@@ -396,12 +383,13 @@ class PrefixTree extends AbstractCollection {
    * 
    * @return the size of the prefix tree
    */
+  @Override
   public int size() {
     return size;
   }
 
   protected native void suggestImpl(String search, String prefix,
-      Collection output, int limit) /*-{
+      Collection<String> output, int limit) /*-{
     var suffixes =
         this.@com.google.gwt.user.client.ui.PrefixTree::suffixes;
     var subtrees =
@@ -473,9 +461,9 @@ class PrefixTree extends AbstractCollection {
    * @param output the collection into which the prefixes will be dumped
    * @param prefix the prefix to filter with
    */
-  private void dump(Collection output, String prefix) {
-    for (final Iterator i = iterator(); i.hasNext();) {
-      output.add(prefix + (String) i.next());
+  private void dump(Collection<String> output, String prefix) {
+    for (String s : this) {
+      output.add(prefix + s);
     }
   }
 }

@@ -34,21 +34,22 @@ import java.util.Set;
  * that could be added to a JavaScript object as keys are valid.
  */
 
-class FastStringMap extends AbstractMap {
-  private static class ImplMapEntry implements Map.Entry {
+class FastStringMap<T> extends AbstractMap<String, T> {
+  private static class ImplMapEntry<T> implements Map.Entry<String, T> {
 
-    private Object key;
+    private String key;
 
-    private Object value;
+    private T value;
 
-    ImplMapEntry(String key, Object value) {
+    ImplMapEntry(String key, T value) {
       this.key = key;
       this.value = value;
     }
 
+    @Override
     public boolean equals(Object a) {
       if (a instanceof Map.Entry) {
-        Map.Entry s = (Map.Entry) a;
+        Map.Entry<?, ?> s = (Map.Entry<?, ?>) a;
         if (equalsWithNullCheck(key, s.getKey())
             && equalsWithNullCheck(value, s.getValue())) {
           return true;
@@ -58,14 +59,15 @@ class FastStringMap extends AbstractMap {
     }
 
     // strip prefix from key
-    public Object getKey() {
+    public String getKey() {
       return key;
     }
 
-    public Object getValue() {
+    public T getValue() {
       return value;
     }
 
+    @Override
     public int hashCode() {
       int keyHash = 0;
       int valueHash = 0;
@@ -78,8 +80,8 @@ class FastStringMap extends AbstractMap {
       return keyHash ^ valueHash;
     }
 
-    public Object setValue(Object object) {
-      Object old = value;
+    public T setValue(T object) {
+      T old = value;
       value = object;
       return old;
     }
@@ -105,23 +107,28 @@ class FastStringMap extends AbstractMap {
     init();
   }
 
+  @Override
   public void clear() {
     init();
   }
 
+  @Override
   public boolean containsKey(Object key) {
     return containsKey(keyMustBeString(key), map);
   }
 
+  @Override
   public boolean containsValue(Object arg0) {
     return values().contains(arg0);
   }
 
-  public Set entrySet() {
-    return new AbstractSet() {
+  @Override
+  public Set<Map.Entry<String, T>> entrySet() {
+    return new AbstractSet<Map.Entry<String, T>>() {
 
+      @Override
       public boolean contains(Object key) {
-        Map.Entry s = (Map.Entry) key;
+        Map.Entry<?, ?> s = (Map.Entry<?, ?>) key;
         Object value = get(s.getKey());
         if (value == null) {
           return value == s.getValue();
@@ -130,18 +137,19 @@ class FastStringMap extends AbstractMap {
         }
       }
 
-      public Iterator iterator() {
+      @Override
+      public Iterator<Map.Entry<String, T>> iterator() {
 
-        Iterator custom = new Iterator() {
-          Iterator keys = keySet().iterator();
+        Iterator<Map.Entry<String, T>> custom = new Iterator<Map.Entry<String, T>>() {
+          Iterator<String> keys = keySet().iterator();
 
           public boolean hasNext() {
             return keys.hasNext();
           }
 
-          public Object next() {
-            String key = (String) keys.next();
-            return new ImplMapEntry(key, get(key));
+          public Map.Entry<String, T> next() {
+            String key = keys.next();
+            return new ImplMapEntry<T>(key, get(key));
           }
 
           public void remove() {
@@ -151,6 +159,7 @@ class FastStringMap extends AbstractMap {
         return custom;
       }
 
+      @Override
       public int size() {
         return FastStringMap.this.size();
       }
@@ -158,64 +167,68 @@ class FastStringMap extends AbstractMap {
     };
   }
 
-  public Object get(Object key) {
+  @Override
+  public T get(Object key) {
     return get(keyMustBeString(key));
   }
 
   // Prepend ':' to avoid conflicts with built-in Object properties.
-  public native Object get(String key) /*-{
+  public native T get(String key) /*-{
     var value
         = this.@com.google.gwt.user.client.ui.FastStringMap::map[':' + key];
     return (value == null) ? null : value;
   }-*/;
 
+  @Override
   public boolean isEmpty() {
     return size() == 0;
   }
 
-  public Set keySet() {
-    return new AbstractSet() {
+  @Override
+  public Set<String> keySet() {
+    return new AbstractSet<String>() {
+      @Override
       public boolean contains(Object key) {
         return containsKey(key);
       }
 
-      public Iterator iterator() {
-        List l = new ArrayList();
+      @Override
+      public Iterator<String> iterator() {
+        List<String> l = new ArrayList<String>();
         addAllKeysFromJavascriptObject(l, map);
         return l.iterator();
       }
 
+      @Override
       public int size() {
         return FastStringMap.this.size();
       }
     };
   }
 
-  public Object put(Object key, Object widget) {
-    return put(keyMustBeString(key), widget);
-  }
-
   // Prepend ':' to avoid conflicts with built-in Object properties.
-  public native Object put(String key, Object widget) /*-{
+  @Override
+  public native T put(String key, T widget) /*-{
     var previous
         = this.@com.google.gwt.user.client.ui.FastStringMap::map[':' + key];
     this.@com.google.gwt.user.client.ui.FastStringMap::map[':' + key] = widget;
     return (previous == null) ? null : previous;
   }-*/;
 
-  public void putAll(Map arg0) {
-    Iterator iter = arg0.entrySet().iterator();
-    while (iter.hasNext()) {
-      Map.Entry entry = (Entry) iter.next();
+  @Override
+  public void putAll(Map<? extends String, ? extends T> arg0) {
+    for (Map.Entry<? extends String, ? extends T> entry : arg0.entrySet()) {
       put(entry.getKey(), entry.getValue());
     }
   }
 
-  public Object remove(Object key) {
+  @Override
+  public T remove(Object key) {
     return remove(keyMustBeString(key));
   }
 
   // only count keys with ':' prefix
+  @Override
   public native int size() /*-{
     var value = this.@com.google.gwt.user.client.ui.FastStringMap::map;
     var count = 0;
@@ -225,14 +238,15 @@ class FastStringMap extends AbstractMap {
     return count;
   }-*/;
 
-  public Collection values() {
-    List values = new ArrayList();
+  @Override
+  public Collection<T> values() {
+    List<T> values = new ArrayList<T>();
     addAllValuesFromJavascriptObject(values, map);
     return values;
   }
 
   // only count keys with ':' prefix
-  private native void addAllKeysFromJavascriptObject(Collection s,
+  private native void addAllKeysFromJavascriptObject(Collection<String> s,
       JavaScriptObject javaScriptObject) /*-{
     for(var key in javaScriptObject) {
       if (key.charAt(0) != ':') continue;
@@ -241,7 +255,7 @@ class FastStringMap extends AbstractMap {
   }-*/;
 
   // only count keys with ':' prefix
-  private native void addAllValuesFromJavascriptObject(Collection s,
+  private native void addAllValuesFromJavascriptObject(Collection<T> s,
       JavaScriptObject javaScriptObject) /*-{
     for(var key in javaScriptObject) {
       if (key.charAt(0) != ':') continue;
@@ -269,7 +283,7 @@ class FastStringMap extends AbstractMap {
   }
 
   // Prepend ':' to avoid conflicts with built-in Object properties.
-  private native Object remove(String key) /*-{
+  private native T remove(String key) /*-{
     var previous
         = this.@com.google.gwt.user.client.ui.FastStringMap::map[':' + key];
     delete this.@com.google.gwt.user.client.ui.FastStringMap::map[':' + key];

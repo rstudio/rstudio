@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,7 @@ import java.util.ArrayList;
  */
 public abstract class Timer {
 
-  private static ArrayList timers = new ArrayList();
+  private static ArrayList<Timer> timers = new ArrayList<Timer>();
 
   static {
     hookWindowClosing();
@@ -69,7 +69,7 @@ public abstract class Timer {
         // that no leftover timers can cause memory leaks by leaving links from
         // the window's timeout closures back into Java objects.
         while (timers.size() > 0) {
-          ((Timer) timers.get(0)).cancel();
+          timers.get(0).cancel();
         }
       }
 

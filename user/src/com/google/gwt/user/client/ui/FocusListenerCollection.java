@@ -19,7 +19,6 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * A helper class for implementers of the
@@ -27,7 +26,7 @@ import java.util.Iterator;
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.FocusListener}.
  */
-public class FocusListenerCollection extends ArrayList {
+public class FocusListenerCollection extends ArrayList<FocusListener> {
 
   /**
    * Fires a focus event to all listeners.
@@ -35,8 +34,7 @@ public class FocusListenerCollection extends ArrayList {
    * @param sender the widget sending the event.
    */
   public void fireFocus(Widget sender) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      FocusListener listener = (FocusListener) it.next();
+    for (FocusListener listener : this) {
       listener.onFocus(sender);
     }
   }
@@ -65,8 +63,7 @@ public class FocusListenerCollection extends ArrayList {
    * @param sender the widget sending the event.
    */
   public void fireLostFocus(Widget sender) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      FocusListener listener = (FocusListener) it.next();
+    for (FocusListener listener : this) {
       listener.onLostFocus(sender);
     }
   }

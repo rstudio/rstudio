@@ -19,7 +19,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * This class provides access to the browser window's methods, properties, and
@@ -27,8 +26,8 @@ import java.util.Iterator;
  */
 public class Window {
 
-  private static ArrayList closingListeners = new ArrayList();
-  private static ArrayList resizeListeners = new ArrayList();
+  private static ArrayList<WindowCloseListener> closingListeners = new ArrayList<WindowCloseListener>();
+  private static ArrayList<WindowResizeListener> resizeListeners = new ArrayList<WindowResizeListener>();
 
   static {
     init();
@@ -234,8 +233,7 @@ public class Window {
   }
 
   private static void fireClosedImpl() {
-    for (Iterator it = closingListeners.iterator(); it.hasNext();) {
-      WindowCloseListener listener = (WindowCloseListener) it.next();
+    for (WindowCloseListener listener : closingListeners) {
       listener.onWindowClosed();
     }
   }
@@ -251,9 +249,7 @@ public class Window {
 
   private static String fireClosingImpl() {
     String ret = null;
-    for (Iterator it = closingListeners.iterator(); it.hasNext();) {
-      WindowCloseListener listener = (WindowCloseListener) it.next();
-
+    for (WindowCloseListener listener : closingListeners) {
       // If any listener wants to suppress the window closing event, then do so.
       String msg = listener.onWindowClosing();
       if (ret == null) {
@@ -273,8 +269,7 @@ public class Window {
   }
 
   private static void fireResizedImpl() {
-    for (Iterator it = resizeListeners.iterator(); it.hasNext();) {
-      WindowResizeListener listener = (WindowResizeListener) it.next();
+    for (WindowResizeListener listener : resizeListeners) {
       listener.onWindowResized(getClientWidth(), getClientHeight());
     }
   }

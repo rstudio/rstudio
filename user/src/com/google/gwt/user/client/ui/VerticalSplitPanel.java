@@ -134,6 +134,7 @@ public final class VerticalSplitPanel extends SplitPanel {
 
     private boolean isTopHidden = false, isBottomHidden = false;
 
+    @Override
     public void init(VerticalSplitPanel panel) {
       this.panel = panel;
 
@@ -154,15 +155,18 @@ public final class VerticalSplitPanel extends SplitPanel {
       expandToFitParentUsingPercentages(panel.container);
     }
 
+    @Override
     public void onAttach() {
       addResizeListener(panel.container);
       onResize();
     }
 
+    @Override
     public void onDetach() {
       DOM.setElementProperty(panel.container, "onresize", null);
     }
 
+    @Override
     public void onSplitterResize(int px) {
       /*
        * IE6/7 has event priority issues that will prevent the repaints from
@@ -173,6 +177,7 @@ public final class VerticalSplitPanel extends SplitPanel {
       if (!isResizeInProgress) {
         isResizeInProgress = true;
         new Timer() {
+          @Override
           public void run() {
             setSplitPosition(splitPosition);
             isResizeInProgress = false;
@@ -182,6 +187,7 @@ public final class VerticalSplitPanel extends SplitPanel {
       splitPosition = px;
     }
 
+    @Override
     protected void updateElements(Element topElem, Element splitElem,
         Element bottomElem, int topHeight, int bottomTop, int bottomHeight) {
       /*
@@ -245,12 +251,12 @@ public final class VerticalSplitPanel extends SplitPanel {
   // A style-free element to serve as the root container.
   private final Element container;
 
-  private final Impl impl = (Impl) GWT.create(Impl.class);
+  private final Impl impl = GWT.create(Impl.class);
 
   private String lastSplitPosition;
 
   public VerticalSplitPanel() {
-    this((VerticalSplitPanelImages) GWT.create(VerticalSplitPanelImages.class));
+    this(GWT.<VerticalSplitPanelImages>create(VerticalSplitPanelImages.class));
   }
 
   /**
@@ -298,10 +304,12 @@ public final class VerticalSplitPanel extends SplitPanel {
     setWidget(BOTTOM, w);
   }
 
+  @Override
   public void setHeight(String height) {
     super.setHeight(height);
   }
 
+  @Override
   public final void setSplitPosition(String pos) {
     lastSplitPosition = pos;
     final Element topElem = getElement(TOP);
@@ -318,6 +326,7 @@ public final class VerticalSplitPanel extends SplitPanel {
     setWidget(TOP, w);
   }
 
+  @Override
   protected void onLoad() {
     impl.onAttach();
 
@@ -333,14 +342,17 @@ public final class VerticalSplitPanel extends SplitPanel {
     });
   }
 
+  @Override
   protected void onUnload() {
     impl.onDetach();
   }
 
+  @Override
   final void onSplitterResize(int x, int y) {
     impl.onSplitterResize(initialTopHeight + y - initialThumbPos);
   }
 
+  @Override
   final void onSplitterResizeStarted(int x, int y) {
     initialThumbPos = y;
     initialTopHeight = getOffsetHeight(getElement(TOP));

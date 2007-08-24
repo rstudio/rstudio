@@ -102,6 +102,7 @@ public class Label extends Widget implements SourcesClickEvents,
     return !DOM.getStyleAttribute(getElement(), "whiteSpace").equals("nowrap");
   }
 
+  @Override
   public void onBrowserEvent(Event event) {
     switch (DOM.eventGetType(event)) {
       case Event.ONCLICK:

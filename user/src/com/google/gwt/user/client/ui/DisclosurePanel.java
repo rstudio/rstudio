@@ -66,6 +66,7 @@ public final class DisclosurePanel extends Composite implements
       setStyleName(STYLENAME_HEADER);
     }
 
+    @Override
     public final void onBrowserEvent(Event event) {
       // no need to call super.
       switch (DOM.eventGetType(event)) {
@@ -162,7 +163,7 @@ public final class DisclosurePanel extends Composite implements
   private static final String STYLENAME_CONTENT = "content";
 
   private static DisclosurePanelImages createDefaultImages() {
-    return (DisclosurePanelImages) GWT.create(DisclosurePanelImages.class);
+    return GWT.create(DisclosurePanelImages.class);
   }
 
   /**
@@ -188,7 +189,7 @@ public final class DisclosurePanel extends Composite implements
    * null until #{@link #addEventHandler(DisclosureHandler)} is called (lazily
    * initialized).
    */
-  private ArrayList /* <DisclosureHandler> */handlers;
+  private ArrayList<DisclosureHandler> handlers;
   
   /**
    * Creates an empty DisclosurePanel that is initially closed.
@@ -272,7 +273,7 @@ public final class DisclosurePanel extends Composite implements
    */
   public final void addEventHandler(DisclosureHandler handler) {
     if (handlers == null) {
-      handlers = new ArrayList();
+      handlers = new ArrayList<DisclosureHandler>();
     }
     handlers.add(handler);
   }
@@ -320,7 +321,7 @@ public final class DisclosurePanel extends Composite implements
     return isOpen;
   }
 
-  public Iterator iterator() {
+  public Iterator<Widget> iterator() {
     return WidgetIterators.createWidgetIterator(this,
         new Widget[] {getContent()});
   }
@@ -398,8 +399,7 @@ public final class DisclosurePanel extends Composite implements
     }
 
     DisclosureEvent event = new DisclosureEvent(this);
-    for (Iterator it = handlers.iterator(); it.hasNext();) {
-      DisclosureHandler handler = (DisclosureHandler) it.next();
+    for (DisclosureHandler handler : handlers) {
       if (isOpen) {
         handler.onOpen(event);
       } else {

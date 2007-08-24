@@ -49,7 +49,7 @@ class CommandExecutor {
    * A circular iterator used by this class. This iterator will wrap back to
    * zero when it hits the end of the commands.
    */
-  private class CircularIterator implements Iterator {
+  private class CircularIterator implements Iterator<Object> {
     /**
      * Index of the element where this iterator should wrap back to the
      * beginning of the collection.
@@ -167,6 +167,7 @@ class CommandExecutor {
    * warnings.
    */
   private final Timer cancellationTimer = new Timer() {
+    @Override
     public void run() {
       if (!isExecuting()) {
         /*
@@ -184,7 +185,7 @@ class CommandExecutor {
   /**
    * Commands that need to be executed.
    */
-  private final List commands = new ArrayList();
+  private final List<Object> commands = new ArrayList<Object>();
 
   /**
    * Set to <code>true</code> when we are actively dispatching commands.
@@ -195,6 +196,7 @@ class CommandExecutor {
    * Timer used to drive the dispatching of commands in the background.
    */
   private final Timer executionTimer = new Timer() {
+    @Override
     public void run() {
       assert (!isExecuting());
 
@@ -355,7 +357,7 @@ class CommandExecutor {
   /**
    * This method is for testing only.
    */
-  List getPendingCommands() {
+  List<Object> getPendingCommands() {
     return commands;
   }
 

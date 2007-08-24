@@ -42,6 +42,7 @@ public class MouseWheelVelocity {
     vY = DOM.eventGetMouseWheelVelocityY(e);
   }
 
+  @Override
   public boolean equals(Object o) {
     if (o instanceof MouseWheelVelocity) {
       MouseWheelVelocity v = (MouseWheelVelocity) o;
@@ -61,6 +62,7 @@ public class MouseWheelVelocity {
     return vY;
   }
 
+  @Override
   public int hashCode() {
     return getDeltaY();
   }
@@ -87,6 +89,7 @@ public class MouseWheelVelocity {
     return getDeltaY() > 0;
   }
 
+  @Override
   public String toString() {
     return "<" + getDeltaY() + ">";
   }

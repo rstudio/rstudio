@@ -15,17 +15,16 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.SuggestOracle.Callback;
 import com.google.gwt.user.client.ui.SuggestOracle.Request;
 import com.google.gwt.user.client.ui.SuggestOracle.Response;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.DOM;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -143,9 +142,9 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
      * of the item and updates the value of SuggestionMenu.selectedItem.
      */
     public void selectItem(int index) {
-      List items = getItems();
+      List<MenuItem> items = getItems();
       if (index > -1 && index < items.size()) {
-        itemOver((SuggestionMenuItem) items.get(index));
+        itemOver(items.get(index));
       }
     }
   }
@@ -294,7 +293,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
   private final SuggestionMenu suggestionMenu;
   private final SuggestionPopup suggestionPopup;
   private final TextBoxBase box;
-  private ArrayList suggestionHandlers = null;
+  private ArrayList<SuggestionHandler> suggestionHandlers = null;
   private DelegatingClickListenerCollection clickListeners;
   private DelegatingChangeListenerCollection changeListeners;
   private DelegatingFocusListenerCollection focusListeners;
@@ -375,7 +374,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
 
   public final void addEventHandler(SuggestionHandler handler) {
     if (suggestionHandlers == null) {
-      suggestionHandlers = new ArrayList();
+      suggestionHandlers = new ArrayList<SuggestionHandler>();
     }
     suggestionHandlers.add(handler);
   }
@@ -506,7 +505,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
    * 
    * @param suggestions suggestions to show
    */
-  private void showSuggestions(Collection suggestions) {
+  private void showSuggestions(Collection<? extends Suggestion> suggestions) {
     if (suggestions.size() > 0) {
 
       /* Hide the popup before we manipulate the menu within it. If we do not
@@ -525,10 +524,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
       
       suggestionMenu.clearItems();
 
-      Iterator suggestionsIter = suggestions.iterator();
-
-      while (suggestionsIter.hasNext()) {
-        Suggestion curSuggestion = (Suggestion) suggestionsIter.next();
+      for (Suggestion curSuggestion : suggestions) {
         final SuggestionMenuItem menuItem =
             new SuggestionMenuItem(curSuggestion, oracle.isDisplayStringHTML());
         menuItem.setCommand(new Command() {
@@ -552,6 +548,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
   private void addKeyboardSupport() {
     box.addKeyboardListener(new KeyboardListenerAdapter() {
 
+      @Override
       public void onKeyDown(Widget sender, char keyCode, int modifiers) {
         // Make sure that the menu is actually showing. These keystrokes
         // are only relevant when choosing a suggestion.
@@ -571,6 +568,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
         }
       }
 
+      @Override
       public void onKeyUp(Widget sender, char keyCode, int modifiers) {
         // After every user key input, refresh the popup's suggestions.
         refreshSuggestions();
@@ -600,8 +598,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
   private void fireSuggestionEvent(Suggestion selectedSuggestion) {
     if (suggestionHandlers != null) {
       SuggestionEvent event = new SuggestionEvent(this, selectedSuggestion);
-      for (Iterator it = suggestionHandlers.iterator(); it.hasNext();) {
-        SuggestionHandler handler = (SuggestionHandler) it.next();
+      for (SuggestionHandler handler : suggestionHandlers) {
         handler.onSuggestionSelected(event);
       }
     }

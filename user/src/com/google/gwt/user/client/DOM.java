@@ -34,11 +34,11 @@ public class DOM {
   private static DOMImpl impl;
   private static Element sCaptureElem;
 
-  //<BrowserEventPreview>
-  private static ArrayList sEventPreviewStack = new ArrayList();
+  // <BrowserEventPreview>
+  private static ArrayList<EventPreview> sEventPreviewStack = new ArrayList<EventPreview>();
 
   static {
-    impl = (DOMImpl) GWT.create(DOMImpl.class);
+    impl = GWT.create(DOMImpl.class);
     impl.init();
   }
 
@@ -635,6 +635,7 @@ public class DOM {
    * @deprecated Use the more appropriately named
    * {@link #getElementProperty(Element, String)} instead.
    */
+  @Deprecated
   public static String getAttribute(Element elem, String attr) {
     return getElementProperty(elem, attr);
   }
@@ -648,6 +649,7 @@ public class DOM {
    * @deprecated Use the more appropriately named
    * {@link #getElementPropertyBoolean(Element, String)} instead.
    */
+  @Deprecated
   public static boolean getBooleanAttribute(Element elem, String attr) {
     return getElementPropertyBoolean(elem, attr);
   }
@@ -812,6 +814,7 @@ public class DOM {
    * @deprecated Use the more appropriately named
    * {@link #getElementPropertyInt(Element, String)} instead.
    */
+  @Deprecated
   public static int getIntAttribute(Element elem, String attr) {
     return getElementPropertyInt(elem, attr);
   }
@@ -985,6 +988,7 @@ public class DOM {
    * @deprecated Use the more appropriately named
    * {@link #setElementProperty(Element, String, String)} instead.
    */
+  @Deprecated
   public static void setAttribute(Element elem, String attr, String value) {
     setElementProperty(elem, attr, value);
   }
@@ -998,6 +1002,7 @@ public class DOM {
    * @deprecated Use the more appropriately named
    * {@link #setElementPropertyBoolean(Element, String, boolean)} instead.
    */
+  @Deprecated
   public static void setBooleanAttribute(Element elem, String attr,
       boolean value) {
     setElementPropertyBoolean(elem, attr, value);
@@ -1114,6 +1119,7 @@ public class DOM {
    * @deprecated Use the more appropriately named
    * {@link #setElementPropertyInt(Element, String, int)} instead.
    */
+  @Deprecated
   public static void setIntAttribute(Element elem, String attr, int value) {
     setElementPropertyInt(elem, attr, value);
   }
@@ -1226,7 +1232,7 @@ public class DOM {
     boolean ret = true;
     if (sEventPreviewStack.size() > 0) {
       EventPreview preview =
-        (EventPreview) sEventPreviewStack.get(sEventPreviewStack.size() - 1);
+        sEventPreviewStack.get(sEventPreviewStack.size() - 1);
       if (!(ret = preview.onEventPreview(evt))) {
         // If the preview cancels the event, stop it from bubbling and
         // performing its default action.

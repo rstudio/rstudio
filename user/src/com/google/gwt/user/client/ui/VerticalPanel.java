@@ -44,6 +44,7 @@ public class VerticalPanel extends CellPanel implements HasAlignment {
    * 
    * @param w the widget to be added
    */
+  @Override
   public void add(Widget w) {
     Element tr = DOM.createTR();
     Element td = createAlignedTd();
@@ -87,6 +88,7 @@ public class VerticalPanel extends CellPanel implements HasAlignment {
     super.insert(w, td, beforeIndex, false);
   }
 
+  @Override
   public boolean remove(Widget w) {
     /*
      * Get the TR to be removed before calling super.remove() because

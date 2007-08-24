@@ -163,6 +163,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
     return ((LayoutData) w.getLayoutData()).direction;
   }
 
+  @Override
   public boolean remove(Widget w) {
     boolean removed = super.remove(w);
     if (removed) {
@@ -175,6 +176,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
     return removed;
   }
 
+  @Override
   public void setCellHeight(Widget w, String height) {
     LayoutData data = (LayoutData) w.getLayoutData();
     data.height = height;
@@ -183,6 +185,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
     }
   }
 
+  @Override
   public void setCellHorizontalAlignment(Widget w,
       HorizontalAlignmentConstant align) {
     LayoutData data = (LayoutData) w.getLayoutData();
@@ -192,6 +195,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
     }
   }
 
+  @Override
   public void setCellVerticalAlignment(Widget w, VerticalAlignmentConstant align) {
     LayoutData data = (LayoutData) w.getLayoutData();
     data.vAlign = align.getVerticalAlignString();
@@ -200,6 +204,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
     }
   }
 
+  @Override
   public void setCellWidth(Widget w, String width) {
     LayoutData data = (LayoutData) w.getLayoutData();
     data.width = width;
@@ -239,8 +244,8 @@ public class DockPanel extends CellPanel implements HasAlignment {
     }
 
     int rowCount = 1, colCount = 1;
-    for (Iterator it = getChildren().iterator(); it.hasNext();) {
-      Widget child = (Widget) it.next();
+    for (Iterator<Widget> it = getChildren().iterator(); it.hasNext();) {
+      Widget child = it.next();
       DockLayoutConstant dir = ((LayoutData) child.getLayoutData()).direction;
       if ((dir == NORTH) || (dir == SOUTH)) {
         ++rowCount;
@@ -260,8 +265,8 @@ public class DockPanel extends CellPanel implements HasAlignment {
     int northRow = 0, southRow = rowCount - 1;
     Element centerTd = null;
 
-    for (Iterator it = getChildren().iterator(); it.hasNext();) {
-      Widget child = (Widget) it.next();
+    for (Iterator<Widget> it = getChildren().iterator(); it.hasNext();) {
+      Widget child = it.next();
       LayoutData layout = (LayoutData) child.getLayoutData();
 
       Element td = DOM.createTD();

@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class TreeItem extends UIObject implements HasHTML {
 
-  private ArrayList children = new ArrayList();
+  private ArrayList<TreeItem> children = new ArrayList<TreeItem>();
   private Element itemTable, contentElem, childSpanElem;
   private final Image statusImage = new Image();
   private boolean open;
@@ -165,7 +165,7 @@ public class TreeItem extends UIObject implements HasHTML {
       return null;
     }
 
-    return (TreeItem) children.get(index);
+    return children.get(index);
   }
 
   /**
@@ -412,15 +412,15 @@ public class TreeItem extends UIObject implements HasHTML {
     }
   }
 
-  void addTreeItems(List accum) {
+  void addTreeItems(List<TreeItem> accum) {
     for (int i = 0; i < children.size(); i++) {
-      TreeItem item = (TreeItem) children.get(i);
+      TreeItem item = children.get(i);
       accum.add(item);
       item.addTreeItems(accum);
     }
   }
 
-  ArrayList getChildren() {
+  ArrayList<TreeItem> getChildren() {
     return children;
   }
 
@@ -471,7 +471,7 @@ public class TreeItem extends UIObject implements HasHTML {
 
     tree = newTree;
     for (int i = 0, n = children.size(); i < n; ++i) {
-      ((TreeItem) children.get(i)).setTree(newTree);
+      children.get(i).setTree(newTree);
     }
     updateState();
 
@@ -511,7 +511,7 @@ public class TreeItem extends UIObject implements HasHTML {
   void updateStateRecursive() {
     updateState();
     for (int i = 0, n = children.size(); i < n; ++i) {
-      ((TreeItem) children.get(i)).updateStateRecursive();
+      children.get(i).updateStateRecursive();
     }
   }
 }

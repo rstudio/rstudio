@@ -19,14 +19,13 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * A helper class for implementers of the SourcesKeyboardEvents interface. This
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.KeyboardListener}.
  */
-public class KeyboardListenerCollection extends ArrayList {
+public class KeyboardListenerCollection extends ArrayList<KeyboardListener> {
 
   /**
    * Gets the keyboard modifiers associated with a DOMEvent.
@@ -78,8 +77,7 @@ public class KeyboardListenerCollection extends ArrayList {
    *          {@link KeyboardListener#MODIFIER_ALT}.
    */
   public void fireKeyDown(Widget sender, char keyCode, int modifiers) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      KeyboardListener listener = (KeyboardListener) it.next();
+    for (KeyboardListener listener : this) {
       listener.onKeyDown(sender, keyCode, modifiers);
     }
   }
@@ -96,8 +94,7 @@ public class KeyboardListenerCollection extends ArrayList {
    *          {@link KeyboardListener#MODIFIER_ALT}.
    */
   public void fireKeyPress(Widget sender, char key, int modifiers) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      KeyboardListener listener = (KeyboardListener) it.next();
+    for (KeyboardListener listener : this) {
       listener.onKeyPress(sender, key, modifiers);
     }
   }
@@ -114,8 +111,7 @@ public class KeyboardListenerCollection extends ArrayList {
    *          {@link KeyboardListener#MODIFIER_ALT}.
    */
   public void fireKeyUp(Widget sender, char keyCode, int modifiers) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      KeyboardListener listener = (KeyboardListener) it.next();
+    for (KeyboardListener listener : this) {
       listener.onKeyUp(sender, keyCode, modifiers);
     }
   }

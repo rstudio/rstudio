@@ -64,6 +64,7 @@ public class AbsolutePanel extends ComplexPanel {
    * 
    * @param w the child widget to be added
    */
+  @Override
   public void add(Widget w) {
     super.add(w, getElement());
   }
@@ -119,6 +120,7 @@ public class AbsolutePanel extends ComplexPanel {
    * positioning changes to the widget that were done by the panel are undone
    * when the widget is disowned from the panel.
    */
+  @Override
   public boolean remove(Widget w) {
     boolean removed = super.remove(w);
     if (removed) {

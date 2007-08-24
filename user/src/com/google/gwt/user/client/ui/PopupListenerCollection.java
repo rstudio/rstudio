@@ -16,14 +16,13 @@
 package com.google.gwt.user.client.ui;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * A helper class for implementers of the SourcesPopupEvents interface. This
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.PopupListener}.
  */
-public class PopupListenerCollection extends ArrayList {
+public class PopupListenerCollection extends ArrayList<PopupListener> {
 
   /**
    * Fires a popup closed event to all listeners.
@@ -33,8 +32,7 @@ public class PopupListenerCollection extends ArrayList {
    *          closed; <code>false</code> if it was closed programmatically.
    */
   public void firePopupClosed(PopupPanel sender, boolean autoClosed) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      PopupListener listener = (PopupListener) it.next();
+    for (PopupListener listener : this) {
       listener.onPopupClosed(sender, autoClosed);
     }
   }

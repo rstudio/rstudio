@@ -20,12 +20,14 @@ package com.google.gwt.user.client.ui.impl;
  */
 public class RichTextAreaImplOpera extends RichTextAreaImplStandard {
 
+  @Override
   public void setBackColor(String color) {
     // Opera uses 'BackColor' for the *entire area's* background. 'HiliteColor'
     // does what we actually want.
     execCommand("HiliteColor", color);
   }
 
+  @Override
   public native void setFocus(boolean focused) /*-{
     // Opera needs the *iframe* focused, not its window.
     if (focused) {

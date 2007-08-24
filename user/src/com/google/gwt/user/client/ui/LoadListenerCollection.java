@@ -16,14 +16,13 @@
 package com.google.gwt.user.client.ui;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * A helper class for implementers of the SourcesLoadEvents interface. This
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.LoadListener}.
  */
-public class LoadListenerCollection extends ArrayList {
+public class LoadListenerCollection extends ArrayList<LoadListener> {
 
   /**
    * Fires an error event to all listeners.
@@ -31,8 +30,7 @@ public class LoadListenerCollection extends ArrayList {
    * @param sender the widget sending the event.
    */
   public void fireError(Widget sender) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      LoadListener listener = (LoadListener) it.next();
+    for (LoadListener listener : this) {
       listener.onError(sender);
     }
   }
@@ -43,8 +41,7 @@ public class LoadListenerCollection extends ArrayList {
    * @param sender the widget sending the event.
    */
   public void fireLoad(Widget sender) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      LoadListener listener = (LoadListener) it.next();
+    for (LoadListener listener : this) {
       listener.onLoad(sender);
     }
   }

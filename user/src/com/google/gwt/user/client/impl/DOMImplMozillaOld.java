@@ -26,6 +26,7 @@ import com.google.gwt.user.client.Element;
  */
 public class DOMImplMozillaOld extends DOMImplMozilla {
   
+  @Override
   public native int getAbsoluteLeft(Element elem) /*-{
     var style = $doc.defaultView.getComputedStyle(elem, null);
     var left = $doc.getBoxObjectFor(elem).x - Math.round(
@@ -45,6 +46,7 @@ public class DOMImplMozillaOld extends DOMImplMozilla {
     return left + $doc.body.scrollLeft + $doc.documentElement.scrollLeft;  
   }-*/;
 
+  @Override
   public native int getAbsoluteTop(Element elem) /*-{
     var style = $doc.defaultView.getComputedStyle(elem, null);
     var top = $doc.getBoxObjectFor(elem).y - Math.round(

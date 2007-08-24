@@ -16,14 +16,13 @@
 package com.google.gwt.user.client.ui;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * A helper class for implementers of the SourcesClickEvents interface. This
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.ClickListener}.
  */
-public class ClickListenerCollection extends ArrayList {
+public class ClickListenerCollection extends ArrayList<ClickListener> {
 
   /**
    * Fires a click event to all listeners.
@@ -31,8 +30,7 @@ public class ClickListenerCollection extends ArrayList {
    * @param sender the widget sending the event.
    */
   public void fireClick(Widget sender) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      ClickListener listener = (ClickListener) it.next();
+    for (ClickListener listener : this) {
       listener.onClick(sender);
     }
   }

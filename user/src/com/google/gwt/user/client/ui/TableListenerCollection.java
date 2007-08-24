@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.ui;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * A helper class for implementers of the
@@ -24,7 +23,7 @@ import java.util.Iterator;
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.TableListener}.
  */
-public class TableListenerCollection extends ArrayList {
+public class TableListenerCollection extends ArrayList<TableListener> {
 
   /**
    * Fires a cellClicked event to all listeners.
@@ -34,8 +33,7 @@ public class TableListenerCollection extends ArrayList {
    * @param cell the index of the cell being clicked
    */
   public void fireCellClicked(SourcesTableEvents sender, int row, int cell) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      TableListener listener = (TableListener) it.next();
+    for (TableListener listener : this) {
       listener.onCellClicked(sender, row, cell);
     }
   }

@@ -98,6 +98,7 @@ public class DialogBox extends PopupPanel implements HasHTML, MouseListener {
     return caption.getText();
   }
 
+  @Override
   public boolean onEventPreview(Event event) {
     // We need to preventDefault() on mouseDown events (outside of the
     // DialogBox content) to keep text from being selected when it
@@ -137,6 +138,7 @@ public class DialogBox extends PopupPanel implements HasHTML, MouseListener {
     DOM.releaseCapture(caption.getElement());
   }
 
+  @Override
   public boolean remove(Widget w) {
     if (child != w) {
       return false;
@@ -154,6 +156,7 @@ public class DialogBox extends PopupPanel implements HasHTML, MouseListener {
     caption.setText(text);
   }
 
+  @Override
   public void setWidget(Widget w) {
     // If there is already a widget, remove it.
     if (child != null) {
@@ -173,6 +176,7 @@ public class DialogBox extends PopupPanel implements HasHTML, MouseListener {
    * 
    * @Override
    */
+  @Override
   public void setWidth(String width) {
     super.setWidth(width);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -120,16 +120,19 @@ public class ToggleButton extends CustomButton {
     super(upText, downText);
   }
 
+  @Override
   public boolean isDown() {
     // Changes access to public.
     return super.isDown();
   }
   
+  @Override
   public void setDown(boolean down) {
     // Changes access to public.
     super.setDown(down);
   }
   
+  @Override
   protected void onClick() {
     toggleDown();
     super.onClick();

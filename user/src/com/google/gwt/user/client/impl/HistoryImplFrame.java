@@ -41,6 +41,7 @@ abstract class HistoryImplFrame extends HistoryImpl {
 
   private Element historyFrame;
 
+  @Override
   public boolean init() {
     historyFrame = findHistoryFrame();
     if (historyFrame == null) {
@@ -62,6 +63,7 @@ abstract class HistoryImplFrame extends HistoryImpl {
     return true;
   }
 
+  @Override
   public void newItem(String historyToken) {
     newItemImpl(historyFrame, historyToken, false);
   }

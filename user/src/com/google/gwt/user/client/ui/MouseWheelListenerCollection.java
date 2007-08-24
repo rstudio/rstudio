@@ -19,14 +19,13 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * A helper class for implementers of the SourcesMouseWheelEvents interface.
  * This subclass of {@link ArrayList} assumes that all objects added to it will
  * be of type {@link com.google.gwt.user.client.ui.MouseWheelListener}.
  */
-public class MouseWheelListenerCollection extends ArrayList {
+public class MouseWheelListenerCollection extends ArrayList<MouseWheelListener> {
 
   /**
    * Fires a mouse wheel event to all listeners.
@@ -35,9 +34,7 @@ public class MouseWheelListenerCollection extends ArrayList {
    * @param velocity the velocity information for the event
    */
   public void fireMouseWheel(Widget sender, MouseWheelVelocity velocity) {
-
-    for (Iterator it = iterator(); it.hasNext();) {
-      MouseWheelListener listener = (MouseWheelListener) it.next();
+    for (MouseWheelListener listener : this) {
       listener.onMouseWheel(sender, velocity);
     }
   }
@@ -51,7 +48,6 @@ public class MouseWheelListenerCollection extends ArrayList {
   public void fireMouseWheelEvent(Widget sender, Event event) {
     if (DOM.eventGetType(event) == Event.ONMOUSEWHEEL) {
       MouseWheelVelocity velocity = new MouseWheelVelocity(event);
-
       fireMouseWheel(sender, velocity);
     }
   }

@@ -67,7 +67,7 @@ public class TextBoxBase extends FocusWidget implements SourcesKeyboardEvents,
   public static final TextAlignConstant ALIGN_RIGHT = new TextAlignConstant(
       "right");
 
-  private static TextBoxImpl impl = (TextBoxImpl) GWT.create(TextBoxImpl.class);
+  private static TextBoxImpl impl = GWT.create(TextBoxImpl.class);
 
   private ChangeListenerCollection changeListeners;
   private ClickListenerCollection clickListeners;
@@ -92,6 +92,7 @@ public class TextBoxBase extends FocusWidget implements SourcesKeyboardEvents,
     changeListeners.add(listener);
   }
 
+  @Override
   public void addClickListener(ClickListener listener) {
     if (clickListeners == null) {
       clickListeners = new ClickListenerCollection();
@@ -99,6 +100,7 @@ public class TextBoxBase extends FocusWidget implements SourcesKeyboardEvents,
     clickListeners.add(listener);
   }
 
+  @Override
   public void addKeyboardListener(KeyboardListener listener) {
     if (keyboardListeners == null) {
       keyboardListeners = new KeyboardListenerCollection();
@@ -164,6 +166,7 @@ public class TextBoxBase extends FocusWidget implements SourcesKeyboardEvents,
     return DOM.getElementPropertyBoolean(getElement(), "readOnly");
   }
 
+  @Override
   public void onBrowserEvent(Event event) {
     // Call the superclass' implementation first (because FocusWidget fires
     // some events itself).
@@ -195,12 +198,14 @@ public class TextBoxBase extends FocusWidget implements SourcesKeyboardEvents,
     }
   }
 
+  @Override
   public void removeClickListener(ClickListener listener) {
     if (clickListeners != null) {
       clickListeners.remove(listener);
     }
   }
 
+  @Override
   public void removeKeyboardListener(KeyboardListener listener) {
     if (keyboardListeners != null) {
       keyboardListeners.remove(listener);

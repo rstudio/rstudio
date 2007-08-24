@@ -21,14 +21,13 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * A helper class for implementers of the SourcesMouseEvents interface. This
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.MouseListener}.
  */
-public class MouseListenerCollection extends ArrayList {
+public class MouseListenerCollection extends ArrayList<MouseListener> {
 
   /**
    * Fires a mouse down event to all listeners.
@@ -38,8 +37,7 @@ public class MouseListenerCollection extends ArrayList {
    * @param y the y coordinate of the mouse
    */
   public void fireMouseDown(Widget sender, int x, int y) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      MouseListener listener = (MouseListener) it.next();
+    for (MouseListener listener : this) {
       listener.onMouseDown(sender, x, y);
     }
   }
@@ -50,8 +48,7 @@ public class MouseListenerCollection extends ArrayList {
    * @param sender the widget sending the event
    */
   public void fireMouseEnter(Widget sender) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      MouseListener listener = (MouseListener) it.next();
+    for (MouseListener listener : this) {
       listener.onMouseEnter(sender);
     }
   }
@@ -108,8 +105,7 @@ public class MouseListenerCollection extends ArrayList {
    * @param sender the widget sending the event
    */
   public void fireMouseLeave(Widget sender) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      MouseListener listener = (MouseListener) it.next();
+    for (MouseListener listener : this) {
       listener.onMouseLeave(sender);
     }
   }
@@ -122,8 +118,7 @@ public class MouseListenerCollection extends ArrayList {
    * @param y the y coordinate of the mouse
    */
   public void fireMouseMove(Widget sender, int x, int y) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      MouseListener listener = (MouseListener) it.next();
+    for (MouseListener listener : this) {
       listener.onMouseMove(sender, x, y);
     }
   }
@@ -136,8 +131,7 @@ public class MouseListenerCollection extends ArrayList {
    * @param y the y coordinate of the mouse
    */
   public void fireMouseUp(Widget sender, int x, int y) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      MouseListener listener = (MouseListener) it.next();
+    for (MouseListener listener : this) {
       listener.onMouseUp(sender, x, y);
     }
   }

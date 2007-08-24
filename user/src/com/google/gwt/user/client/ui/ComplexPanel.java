@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,7 +39,7 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel {
     return getChildren().indexOf(child);
   }
 
-  public Iterator iterator() {
+  public Iterator<Widget> iterator() {
     return getChildren().iterator();
   }
 
@@ -47,6 +47,7 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel {
     return remove(getWidget(index));
   }
 
+  @Override
   public boolean remove(Widget w) {
     // Validate.
     if (w.getParent() != this) {
@@ -152,6 +153,7 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel {
    * 
    * @deprecated Use {@link #insert(Widget, Element, int, boolean)}.
    */
+  @Deprecated
   protected void insert(Widget child, Element container, int beforeIndex) {
     if (container == null) {
       throw new NullPointerException("container may not be null");

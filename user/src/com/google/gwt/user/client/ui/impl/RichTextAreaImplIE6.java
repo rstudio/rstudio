@@ -23,12 +23,14 @@ import com.google.gwt.user.client.Element;
  */
 public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
 
+  @Override
   public Element createElement() {
     Element elem = super.createElement();
     DOM.setElementProperty(elem, "src", "javascript:''");
     return elem;
   }
 
+  @Override
   public native void initElement() /*-{
     var _this = this;
     window.setTimeout(function() {
@@ -41,11 +43,13 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     }, 1);
   }-*/;
 
+  @Override
   protected native String getTextImpl() /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     return elem.contentWindow.document.body.innerText;
   }-*/;
 
+  @Override
   protected native void hookEvents() /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     var body = elem.contentWindow.document.body;
@@ -73,11 +77,13 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     elem.contentWindow.onblur = handler;
   }-*/;
 
+  @Override
   protected native void setTextImpl(String text) /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     elem.contentWindow.document.body.innerText = text;
   }-*/;
 
+  @Override
   protected native void unhookEvents() /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     var body = elem.contentWindow.document.body;
@@ -100,6 +106,7 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     }
   }-*/;
   
+  @Override
   boolean isRichEditingActive(Element elem) {
     return true;
   }

@@ -23,6 +23,7 @@ import com.google.gwt.user.client.Event;
  */
 public class DOMImplOpera extends DOMImplStandard {
 
+  @Override
   public native int eventGetButton(Event evt) /*-{
     // Opera and IE disagree on what the button codes for left button should be.
     // Translating to match IE standard.
@@ -34,10 +35,12 @@ public class DOMImplOpera extends DOMImplStandard {
     }
   }-*/;
 
+  @Override
   public native int eventGetMouseWheelVelocityY(Event evt) /*-{
     return evt.detail * 4 || -1;
   }-*/;
 
+  @Override
   public native int getAbsoluteLeft(Element elem) /*-{
     var left = 0;
     var curr = elem.parentNode;
@@ -60,6 +63,7 @@ public class DOMImplOpera extends DOMImplStandard {
     return left;
   }-*/;
 
+  @Override
   public native int getAbsoluteTop(Element elem) /*-{
     var top = 0;
 

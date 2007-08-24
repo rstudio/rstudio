@@ -16,14 +16,13 @@
 package com.google.gwt.user.client.ui;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * A helper class for implementers of the SourcesChangeEvents interface. This
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.ChangeListener}.
  */
-public class ChangeListenerCollection extends ArrayList {
+public class ChangeListenerCollection extends ArrayList<ChangeListener> {
 
   /**
    * Fires a change event to all listeners.
@@ -31,8 +30,7 @@ public class ChangeListenerCollection extends ArrayList {
    * @param sender the widget sending the event.
    */
   public void fireChange(Widget sender) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      ChangeListener listener = (ChangeListener) it.next();
+    for (ChangeListener listener : this) {
       listener.onChange(sender);
     }
   }

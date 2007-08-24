@@ -91,6 +91,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
     return !DOM.getElementPropertyBoolean(getElement(), "disabled");
   }
 
+  @Override
   public void onBrowserEvent(Event event) {
     switch (DOM.eventGetType(event)) {
       case Event.ONCLICK:
@@ -160,6 +161,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
     impl.setTabIndex(getElement(), index);
   }
 
+  @Override
   protected void setElement(Element elem) {
     super.setElement(elem);
     sinkEvents(Event.ONCLICK | Event.FOCUSEVENTS | Event.KEYEVENTS);

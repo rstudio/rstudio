@@ -48,7 +48,7 @@ import java.util.List;
 public class MenuBar extends Widget implements PopupListener {
 
   private Element body;
-  private ArrayList items = new ArrayList();
+  private ArrayList<MenuItem> items = new ArrayList<MenuItem>();
   private MenuBar parentMenu;
   private PopupPanel popup;
   private MenuItem selectedItem;
@@ -189,6 +189,7 @@ public class MenuBar extends Widget implements PopupListener {
     return autoOpen;
   }
 
+  @Override
   public void onBrowserEvent(Event event) {
     super.onBrowserEvent(event);
 
@@ -265,7 +266,7 @@ public class MenuBar extends Widget implements PopupListener {
    * @return  a list containing the <code>MenuItem</code> objects in the menu
    *          bar
    */
-  protected List getItems() {
+  protected List<MenuItem> getItems() {
     return this.items;
   }
 
@@ -281,6 +282,7 @@ public class MenuBar extends Widget implements PopupListener {
     return this.selectedItem;
   }
 
+  @Override
   protected void onDetach() {
     // When the menu is detached, make sure to close all of its children.
     if (popup != null) {
@@ -355,6 +357,7 @@ public class MenuBar extends Widget implements PopupListener {
         item.getSubMenu().onShow();
       }
 
+      @Override
       public boolean onEventPreview(Event event) {
         // Hook the popup panel's event preview. We use this to keep it from
         // auto-hiding when the parent menu is clicked.
@@ -440,7 +443,7 @@ public class MenuBar extends Widget implements PopupListener {
 
   private MenuItem findItem(Element hItem) {
     for (int i = 0; i < items.size(); ++i) {
-      MenuItem item = (MenuItem) items.get(i);
+      MenuItem item = items.get(i);
       if (DOM.isOrHasChild(item.getElement(), hItem)) {
         return item;
       }
@@ -474,7 +477,7 @@ public class MenuBar extends Widget implements PopupListener {
   private void onShow() {
     // Select the first item when a menu is shown.
     if (items.size() > 0) {
-      selectItem((MenuItem) items.get(0));
+      selectItem(items.get(0));
     }
   }
 }

@@ -54,10 +54,12 @@ public class TextArea extends TextBoxBase {
     return DOM.getElementPropertyInt(getElement(), "cols");
   }
 
+  @Override
   public int getCursorPos() {
     return getImpl().getTextAreaCursorPos(getElement());
   }
 
+  @Override
   public int getSelectionLength() {
     return getImpl().getSelectionLength(getElement());
   }

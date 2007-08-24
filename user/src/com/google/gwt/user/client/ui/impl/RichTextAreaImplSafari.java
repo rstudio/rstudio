@@ -60,26 +60,32 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
     return 0;
   }-*/;;
 
+  @Override
   public Element createElement() {
     return super.createElement();
   }
 
+  @Override
   public native boolean isBold() /*-{
     return !!this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.__gwt_isBold;
   }-*/;
 
+  @Override
   public boolean isExtendedEditingSupported() {
     return extendedEditingSupported;
   }
 
+  @Override
   public native boolean isItalic() /*-{
     return !!this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.__gwt_isItalic;
   }-*/;
 
+  @Override
   public native boolean isUnderlined() /*-{
     return !!this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.__gwt_isUnderlined;
   }-*/;
 
+  @Override
   public void setBackColor(String color) {
     if (useHiliteColor) {
       execCommand("HiliteColor", color);
@@ -88,6 +94,7 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
     }
   }
 
+  @Override
   public native void setFocus(boolean focused) /*-{
     // Safari needs the *iframe* focused, not its window.
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
@@ -101,6 +108,7 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
     }
   }-*/;
 
+  @Override
   public void setFontSize(FontSize fontSize) {
     if (oldSchoolSizeValues) {
       // Safari2 only accepts css-style 'small, medium, large, etc' values.
@@ -114,10 +122,12 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
     }
   }
 
+  @Override
   protected native String getTextImpl() /*-{
     return this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerText;
   }-*/;
 
+  @Override
   protected native void hookEvents() /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     var wnd = elem.contentWindow;
@@ -188,10 +198,12 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
     };
   }-*/;
 
+  @Override
   protected native void setTextImpl(String text) /*-{
     this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.innerText = text;
   }-*/;
 
+  @Override
   protected native void unhookEvents() /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     var wnd = elem.contentWindow;

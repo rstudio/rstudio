@@ -223,6 +223,7 @@ abstract class SplitPanel extends Panel {
     sinkEvents(Event.MOUSEEVENTS);
   }
 
+  @Override
   public void add(Widget w) {
     if (getWidget(0) == null) {
       setWidget(0, w);
@@ -244,10 +245,11 @@ abstract class SplitPanel extends Panel {
     return isResizing;
   }
 
-  public Iterator iterator() {
+  public Iterator<Widget> iterator() {
     return WidgetIterators.createWidgetIterator(this, widgets);
   }
 
+  @Override
   public void onBrowserEvent(Event event) {
     switch (DOM.eventGetType(event)) {
 
@@ -280,6 +282,7 @@ abstract class SplitPanel extends Panel {
     }
   }
 
+  @Override
   public boolean remove(Widget widget) {
     if (widgets[0] == widget) {
       setWidget(0, null);

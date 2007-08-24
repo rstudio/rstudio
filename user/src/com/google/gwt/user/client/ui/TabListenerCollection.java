@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.ui;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * A helper class for implementers of the
@@ -24,7 +23,7 @@ import java.util.Iterator;
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.TabListener}.
  */
-public class TabListenerCollection extends ArrayList {
+public class TabListenerCollection extends ArrayList<TabListener> {
 
   /**
    * Fires a beforeTabSelected event to all listeners.
@@ -33,8 +32,7 @@ public class TabListenerCollection extends ArrayList {
    * @param tabIndex the index of the tab being selected
    */
   public boolean fireBeforeTabSelected(SourcesTabEvents sender, int tabIndex) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      TabListener listener = (TabListener) it.next();
+    for (TabListener listener : this) {
       if (!listener.onBeforeTabSelected(sender, tabIndex)) {
         return false;
       }
@@ -49,8 +47,7 @@ public class TabListenerCollection extends ArrayList {
    * @param tabIndex the index of the tab being selected
    */
   public void fireTabSelected(SourcesTabEvents sender, int tabIndex) {
-    for (Iterator it = iterator(); it.hasNext();) {
-      TabListener listener = (TabListener) it.next();
+    for (TabListener listener : this) {
       listener.onTabSelected(sender, tabIndex);
     }
   }

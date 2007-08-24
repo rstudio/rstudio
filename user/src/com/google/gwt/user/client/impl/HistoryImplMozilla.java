@@ -20,6 +20,7 @@ package com.google.gwt.user.client.impl;
  */
 class HistoryImplMozilla extends HistoryImplStandard {
  
+  @Override
   public native void newItem(String historyToken) /*-{
 
     // When the historyToken is blank or null, we are not able to set

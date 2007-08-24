@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,6 +40,7 @@ public abstract class Composite extends Widget {
   /**
    * This override checks to ensure {@link #initWidget(Widget)} has been called.
    */
+  @Override
   public Element getElement() {
     if (widget == null) {
       throw new IllegalStateException("initWidget() was never called in "
@@ -48,6 +49,7 @@ public abstract class Composite extends Widget {
     return super.getElement();
   }
 
+  @Override
   public boolean isAttached() {
     if (widget != null) {
       return widget.isAttached();
@@ -93,11 +95,13 @@ public abstract class Composite extends Widget {
     widget.setParent(this);
   }
 
+  @Override
   protected void onAttach() {
     widget.onAttach();
     onLoad();
   }
 
+  @Override
   protected void onDetach() {
     try {
       onUnload();
@@ -116,6 +120,7 @@ public abstract class Composite extends Widget {
    * @deprecated this method is deprecated, and will be removed (use
    *             {@link #initWidget(Widget)} instead)
    */
+  @Deprecated
   protected void setWidget(Widget widget) {
     initWidget(widget);
   }

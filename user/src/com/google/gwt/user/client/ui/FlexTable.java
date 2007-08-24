@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -124,6 +124,7 @@ public class FlexTable extends HTMLTable {
    * @return the number of cells present
    * @throws IndexOutOfBoundsException
    */
+  @Override
   public int getCellCount(int row) {
     checkRowBounds(row);
     return super.getDOMCellCount(getBodyElement(), row);
@@ -145,6 +146,7 @@ public class FlexTable extends HTMLTable {
    * 
    * @return number of rows
    */
+  @Override
   public int getRowCount() {
     return getDOMRowCount();
   }
@@ -155,6 +157,7 @@ public class FlexTable extends HTMLTable {
    * @param beforeRow the cell's row
    * @param beforeColumn the cell's column
    */
+  @Override
   public void insertCell(int beforeRow, int beforeColumn) {
     super.insertCell(beforeRow, beforeColumn);
   }
@@ -164,6 +167,7 @@ public class FlexTable extends HTMLTable {
    * 
    * @param beforeRow the row to insert
    */
+  @Override
   public int insertRow(int beforeRow) {
     return super.insertRow(beforeRow);
   }
@@ -171,6 +175,7 @@ public class FlexTable extends HTMLTable {
   /**
    * @see com.google.gwt.user.client.ui.HTMLTable#removeCell(int, int)
    */
+  @Override
   public void removeCell(int row, int col) {
     super.removeCell(row, col);
   }
@@ -189,6 +194,7 @@ public class FlexTable extends HTMLTable {
     }
   }
 
+  @Override
   public void removeRow(int row) {
     super.removeRow(row);
   }
@@ -200,6 +206,7 @@ public class FlexTable extends HTMLTable {
    * @param column the column to prepare.
    * @throws IndexOutOfBoundsException if the row is negative
    */
+  @Override
   protected void prepareCell(int row, int column) {
     prepareRow(row);
     if (column < 0) {
@@ -221,6 +228,7 @@ public class FlexTable extends HTMLTable {
    * @param row The row to prepare.
    * @throws IndexOutOfBoundsException if the row is negative
    */
+  @Override
   protected void prepareRow(int row) {
     if (row < 0) {
       throw new IndexOutOfBoundsException(

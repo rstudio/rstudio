@@ -109,35 +109,43 @@ public class Image extends Widget implements SourcesClickEvents,
       setUrl(image, url);
     }
 
+    @Override
     public int getHeight(Image image) {
       return DOM.getElementPropertyInt(image.getElement(), "height");
     }
 
+    @Override
     public int getOriginLeft() {
       return 0;
     }
 
+    @Override
     public int getOriginTop() {
       return 0;
     }
 
+    @Override
     public String getUrl(Image image) {
       return DOM.getImgSrc(image.getElement());
     }
 
+    @Override
     public int getWidth(Image image) {
       return DOM.getElementPropertyInt(image.getElement(), "width");
     }
 
+    @Override
     public void setUrl(Image image, String url) {
       DOM.setImgSrc(image.getElement(), url);
     }
 
+    @Override
     public void setUrlAndVisibleRect(Image image, String url, int left,
         int top, int width, int height) {
       image.changeState(new ClippedState(image, url, left, top, width, height));
     }
 
+    @Override
     public void setVisibleRect(Image image, int left, int top, int width,
         int height) {
       image.changeState(new ClippedState(image, getUrl(image), left, top,
@@ -145,6 +153,7 @@ public class Image extends Widget implements SourcesClickEvents,
     }
 
     // This method is used only by unit tests.
+    @Override
     protected String getStateName() {
       return "unclipped";
     }
@@ -155,7 +164,7 @@ public class Image extends Widget implements SourcesClickEvents,
    */
   private static class ClippedState extends State {
 
-    private static final ClippedImageImpl impl = (ClippedImageImpl) GWT.create(ClippedImageImpl.class);
+    private static final ClippedImageImpl impl = GWT.create(ClippedImageImpl.class);
 
     private int left = 0;
     private int top = 0;
@@ -198,30 +207,37 @@ public class Image extends Widget implements SourcesClickEvents,
       });
     }
 
+    @Override
     public int getHeight(Image image) {
       return height;
     }
 
+    @Override
     public int getOriginLeft() {
       return left;
     }
 
+    @Override
     public int getOriginTop() {
       return top;
     }
 
+    @Override
     public String getUrl(Image image) {
       return url;
     }
 
+    @Override
     public int getWidth(Image image) {
       return width;
     }
 
+    @Override
     public void setUrl(Image image, String url) {
       image.changeState(new UnclippedState(image, url));
     }
 
+    @Override
     public void setUrlAndVisibleRect(Image image, String url, int left,
         int top, int width, int height) {
       if (!this.url.equals(url) || this.left != left || this.top != top
@@ -238,6 +254,7 @@ public class Image extends Widget implements SourcesClickEvents,
       }
     }
 
+    @Override
     public void setVisibleRect(Image image, int left, int top, int width,
         int height) {
       /*
@@ -259,6 +276,7 @@ public class Image extends Widget implements SourcesClickEvents,
     }
 
     /* This method is used only by unit tests */
+    @Override
     protected String getStateName() {
       return "clipped";
     }
@@ -269,7 +287,7 @@ public class Image extends Widget implements SourcesClickEvents,
    * the prefetched image objects, they can get garbage collected, which
    * sometimes keeps them from getting fully fetched.
    */
-  private static HashMap prefetchImages = new HashMap();
+  private static HashMap<String, Element> prefetchImages = new HashMap<String, Element>();
 
   /**
    * Causes the browser to pre-fetch the image at a given URL.
@@ -418,6 +436,7 @@ public class Image extends Widget implements SourcesClickEvents,
     return state.getWidth(this);
   }
 
+  @Override
   public void onBrowserEvent(Event event) {
     switch (DOM.eventGetType(event)) {
       case Event.ONCLICK: {

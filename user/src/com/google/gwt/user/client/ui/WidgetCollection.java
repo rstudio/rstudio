@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,7 @@ import java.util.NoSuchElementException;
  */
 public class WidgetCollection {
 
-  private class WidgetIterator implements Iterator {
+  private class WidgetIterator implements Iterator<Widget> {
 
     private int index = -1;
 
@@ -41,7 +41,7 @@ public class WidgetCollection {
       return index < (size - 1);
     }
 
-    public Object next() {
+    public Widget next() {
       if (index >= size) {
         throw new NoSuchElementException();
       }
@@ -162,7 +162,7 @@ public class WidgetCollection {
    * 
    * @return an iterator
    */
-  public Iterator iterator() {
+  public Iterator<Widget> iterator() {
     return new WidgetIterator();
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -68,7 +68,7 @@ public abstract class Panel extends Widget implements HasWidgets {
   }
 
   public void clear() {
-    Iterator it = iterator();
+    Iterator<Widget> it = iterator();
     while (it.hasNext()) {
       it.next();
       it.remove();
@@ -125,6 +125,7 @@ public abstract class Panel extends Widget implements HasWidgets {
    * 
    * @deprecated Use {@link #adopt(Widget)}.
    */
+  @Deprecated
   protected void adopt(Widget w, Element container) {
     // Remove the widget from its current parent, if any.
     w.removeFromParent();
@@ -142,6 +143,7 @@ public abstract class Panel extends Widget implements HasWidgets {
    * 
    * @deprecated Use {@link #orphan(Widget)}.
    */
+  @Deprecated
   protected void disown(Widget w) {
     // Only disown it if it's actually contained in this panel.
     if (w.getParent() != this) {
@@ -155,18 +157,20 @@ public abstract class Panel extends Widget implements HasWidgets {
     DOM.removeChild(DOM.getParent(elem), elem);
   }
 
+  @Override
   protected void doAttachChildren() {
     // Ensure that all child widgets are attached.
-    for (Iterator it = iterator(); it.hasNext();) {
-      Widget child = (Widget) it.next();
+    for (Iterator<Widget> it = iterator(); it.hasNext();) {
+      Widget child = it.next();
       child.onAttach();
     }
   }
 
+  @Override
   protected void doDetachChildren() {
     // Ensure that all child widgets are detached.
-    for (Iterator it = iterator(); it.hasNext();) {
-      Widget child = (Widget) it.next();
+    for (Iterator<Widget> it = iterator(); it.hasNext();) {
+      Widget child = it.next();
       child.onDetach();
     }
   }
@@ -177,6 +181,7 @@ public abstract class Panel extends Widget implements HasWidgets {
    * 
    * @see Widget#onLoad()
    */
+  @Override
   protected void onLoad() {
   }
 
@@ -186,6 +191,7 @@ public abstract class Panel extends Widget implements HasWidgets {
    * 
    * @see Widget#onLoad()
    */
+  @Override
   protected void onUnload() {
   }
 

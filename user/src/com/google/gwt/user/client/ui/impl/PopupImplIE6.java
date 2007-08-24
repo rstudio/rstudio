@@ -23,6 +23,7 @@ import com.google.gwt.user.client.Element;
  */
 public class PopupImplIE6 extends PopupImpl {
 
+  @Override
   public native void onHide(Element popup) /*-{
     var frame = popup.__frame;
     frame.parentElement.removeChild(frame);
@@ -30,6 +31,7 @@ public class PopupImplIE6 extends PopupImpl {
     frame.__popup = null;
   }-*/;
 
+  @Override
   public native void onShow(Element popup) /*-{
     // TODO: make this more Java and less JSNI?
     var frame = $doc.createElement('iframe');
@@ -68,6 +70,7 @@ public class PopupImplIE6 extends PopupImpl {
     popup.parentElement.insertBefore(frame, popup);
   }-*/;
   
+  @Override
   public native void setVisible(Element popup, boolean visible) /*-{
     if (popup.__frame) {
       popup.__frame.style.visibility = visible ? 'visible' : 'hidden';

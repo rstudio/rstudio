@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -86,6 +86,7 @@ public class CheckBox extends ButtonBase implements HasName {
     DOM.setElementProperty(labelElem, "htmlFor", uid);
   }
 
+  @Override
   public String getHTML() {
     return DOM.getInnerHTML(labelElem);
   }
@@ -94,10 +95,12 @@ public class CheckBox extends ButtonBase implements HasName {
     return DOM.getElementProperty(inputElem, "name");
   }
 
+  @Override
   public int getTabIndex() {
     return getFocusImpl().getTabIndex(inputElem);
   }
 
+  @Override
   public String getText() {
     return DOM.getInnerText(labelElem);
   }
@@ -112,10 +115,12 @@ public class CheckBox extends ButtonBase implements HasName {
     return DOM.getElementPropertyBoolean(inputElem, propName);
   }
 
+  @Override
   public boolean isEnabled() {
     return !DOM.getElementPropertyBoolean(inputElem, "disabled");
   }
 
+  @Override
   public void setAccessKey(char key) {
     DOM.setElementProperty(inputElem, "accessKey", "" + key);
   }
@@ -130,10 +135,12 @@ public class CheckBox extends ButtonBase implements HasName {
     DOM.setElementPropertyBoolean(inputElem, "defaultChecked", checked);
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     DOM.setElementPropertyBoolean(inputElem, "disabled", !enabled);
   }
 
+  @Override
   public void setFocus(boolean focused) {
     if (focused) {
       getFocusImpl().focus(inputElem);
@@ -142,6 +149,7 @@ public class CheckBox extends ButtonBase implements HasName {
     }
   }
 
+  @Override
   public void setHTML(String html) {
     DOM.setInnerHTML(labelElem, html);
   }
@@ -150,10 +158,12 @@ public class CheckBox extends ButtonBase implements HasName {
     DOM.setElementProperty(inputElem, "name", name);
   }
 
+  @Override
   public void setTabIndex(int index) {
     getFocusImpl().setTabIndex(inputElem, index);
   }
 
+  @Override
   public void setText(String text) {
     DOM.setInnerText(labelElem, text);
   }
@@ -163,6 +173,7 @@ public class CheckBox extends ButtonBase implements HasName {
    * onAttach needs special handling for the CheckBox case. Must still call
    * {@link Widget#onAttach()} to preserve the <code>onAttach</code> contract.
    */
+  @Override
   protected void onLoad() {
     // Sets the event listener on the inputElem, as in this case that's the
     // element we want so input on.
@@ -174,6 +185,7 @@ public class CheckBox extends ButtonBase implements HasName {
    * document. Overridden because of IE bug that throws away checked state and
    * in order to clear the event listener off of the <code>inputElem</code>.
    */
+  @Override
   protected void onUnload() {
     // Clear out the inputElem's event listener (breaking the circular
     // reference between it and the widget).

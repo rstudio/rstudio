@@ -592,6 +592,7 @@ public abstract class UIObject {
    * 
    * @return a string representation of the object
    */
+  @Override
   public String toString() {
     if (element == null) {
       return "(null handle)";

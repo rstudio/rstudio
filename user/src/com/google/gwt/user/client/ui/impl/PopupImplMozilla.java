@@ -57,6 +57,7 @@ public class PopupImplMozilla extends PopupImpl {
     return false;
   }-*/;
 
+  @Override
   public Element createElement() {
     final Element outerElem = DOM.createDiv();
 
@@ -92,6 +93,7 @@ public class PopupImplMozilla extends PopupImpl {
     return outerElem;
   }
 
+  @Override
   public Element getContainerElement(Element outerElem) {
     return isMac ? DOM.getFirstChild(outerElem) : outerElem;
   }

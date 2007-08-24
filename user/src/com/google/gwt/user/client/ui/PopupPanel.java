@@ -53,7 +53,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
      * before the PopupPanel is shown. The offsetWidth and offsetHeight values
      * of the PopupPanel are made available to allow for positioning based on
      * its size.
-     *
+     * 
      * @param offsetWidth the offsetWidth of the PopupPanel
      * @param offsetHeight the offsetHeight of the PopupPanel
      * @see PopupPanel#setPopupPositionAndShow(PositionCallback)
@@ -61,7 +61,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     public void setPosition(int offsetWidth, int offsetHeight);
   }
 
-  private static final PopupImpl impl = (PopupImpl) GWT.create(PopupImpl.class);
+  private static final PopupImpl impl = GWT.create(PopupImpl.class);
 
   private boolean autoHide, modal, showing;
 
@@ -72,10 +72,10 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   // the left style attribute in pixels
   private int leftPosition = -1;
-  
+
   // The top style attribute in pixels
-  private int topPosition = -1; 
-  
+  private int topPosition = -1;
+
   private PopupListenerCollection popupListeners;
 
   /**
@@ -88,7 +88,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     // Default position of popup should be in the upper-left corner of the
     // window. By setting a default position, the popup will not appear in
     // an undefined location if it is shown before its position is set.
-    setPopupPosition(0,0);
+    setPopupPosition(0, 0);
   }
 
   /**
@@ -124,7 +124,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   /**
    * Centers the popup in the browser window and shows it. If the popup was
-   * already showing, then the popup is centered. 
+   * already showing, then the popup is centered.
    */
   public void center() {
     boolean initiallyShowing = showing;
@@ -144,24 +144,27 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-    * Gets the panel's offset height in pixels. Calls to {@link #setHeight(String)}
-    * before the panel's child widget is set will not influence the offset height.
-    *
-    * @return the object's offset height
-    */
-   public int getOffsetHeight() {
-     return super.getOffsetHeight();
-   }
+   * Gets the panel's offset height in pixels. Calls to
+   * {@link #setHeight(String)} before the panel's child widget is set will not
+   * influence the offset height.
+   * 
+   * @return the object's offset height
+   */
+  @Override
+  public int getOffsetHeight() {
+    return super.getOffsetHeight();
+  }
 
-   /**
-    * Gets the panel's offset width in pixels. Calls to {@link #setWidth(String)}
-    * before the panel's child widget is set will not influence the offset width.
-    *
-    * @return the object's offset width
-    */
-   public int getOffsetWidth() {
-     return super.getOffsetWidth();
-   }
+  /**
+   * Gets the panel's offset width in pixels. Calls to {@link #setWidth(String)}
+   * before the panel's child widget is set will not influence the offset width.
+   * 
+   * @return the object's offset width
+   */
+  @Override
+  public int getOffsetWidth() {
+    return super.getOffsetWidth();
+  }
 
   /**
    * Gets the popup's left position relative to the browser's client area.
@@ -181,6 +184,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     return DOM.getElementPropertyInt(getElement(), "offsetTop");
   }
 
+  @Override
   public String getTitle() {
     return DOM.getElementProperty(getContainerElement(), "title");
   }
@@ -204,12 +208,12 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
         return allow && (eventTargetsPopup || !modal);
       }
       case Event.ONKEYUP: {
-        boolean allow =  onKeyUpPreview((char) DOM.eventGetKeyCode(event),
+        boolean allow = onKeyUpPreview((char) DOM.eventGetKeyCode(event),
             KeyboardListenerCollection.getKeyboardModifiers(event));
         return allow && (eventTargetsPopup || !modal);
       }
       case Event.ONKEYPRESS: {
-        boolean allow =  onKeyPressPreview((char) DOM.eventGetKeyCode(event),
+        boolean allow = onKeyPressPreview((char) DOM.eventGetKeyCode(event),
             KeyboardListenerCollection.getKeyboardModifiers(event));
         return allow && (eventTargetsPopup || !modal);
       }
@@ -294,11 +298,12 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   /**
    * Sets the height of the panel's child widget. If the panel's child widget
-   * has not been set, the height passed in will be cached and used to set
-   * the height immediately after the child widget is set.
-   *
+   * has not been set, the height passed in will be cached and used to set the
+   * height immediately after the child widget is set.
+   * 
    * @param height the object's new height, in CSS units (e.g. "10px", "1em")
    */
+  @Override
   public void setHeight(String height) {
     desiredHeight = height;
     maybeUpdateSize();
@@ -340,13 +345,12 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Sets the popup's position using a {@link PositionCallback}, and shows
-   * the popup. The callback allows positioning to be performed based on
-   * the offsetWidth and offsetHeight of the popup, which are normally
-   * not available until the popup is showing. By positioning the popup
-   * before it is shown, the the popup will not jump from its original
-   * position to the new position.
-   *
+   * Sets the popup's position using a {@link PositionCallback}, and shows the
+   * popup. The callback allows positioning to be performed based on the
+   * offsetWidth and offsetHeight of the popup, which are normally not available
+   * until the popup is showing. By positioning the popup before it is shown,
+   * the the popup will not jump from its original position to the new position.
+   * 
    * @param callback the callback to set the position of the popup
    * @see PositionCallback#setPosition(int offsetWidth, int offsetHeight)
    */
@@ -357,6 +361,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     setVisible(true);
   }
 
+  @Override
   public void setTitle(String title) {
     Element containerElement = getContainerElement();
     if (title == null || title.length() == 0) {
@@ -372,6 +377,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param visible <code>true</code> to show the object, <code>false</code>
    *          to hide it
    */
+  @Override
   public void setVisible(boolean visible) {
     // We use visibility here instead of UIObject's default of display
     // Because the panel is absolutely positioned, this will not create
@@ -385,18 +391,20 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     impl.setVisible(getElement(), visible);
   }
 
+  @Override
   public void setWidget(Widget w) {
     super.setWidget(w);
     maybeUpdateSize();
   }
 
   /**
-   * Sets the width of the panel's child widget. If the panel's child widget
-   * has not been set, the width passed in will be cached and used to set
-   * the width immediately after the child widget is set.
-   *
+   * Sets the width of the panel's child widget. If the panel's child widget has
+   * not been set, the width passed in will be cached and used to set the width
+   * immediately after the child widget is set.
+   * 
    * @param width the object's new width, in CSS units (e.g. "10px", "1em")
    */
+  @Override
   public void setWidth(String width) {
     desiredWidth = width;
     maybeUpdateSize();
@@ -428,10 +436,12 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     impl.onShow(getElement());
   }
 
+  @Override
   protected Element getContainerElement() {
     return impl.getContainerElement(getElement());
   }
 
+  @Override
   protected Element getStyleElement() {
     return impl.getContainerElement(getElement());
   }
@@ -441,6 +451,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * document. To receive notification before the PopupPanel is removed from the
    * document, override the {@link Widget#onUnload()} method instead.
    */
+  @Override
   protected void onDetach() {
     DOM.removeEventPreview(this);
     super.onDetach();

@@ -23,6 +23,7 @@ import com.google.gwt.user.client.Element;
  */
 public class FocusImplIE6 extends FocusImpl {
 
+  @Override
   public native void focus(Element elem) /*-{
     try {
       elem.focus();

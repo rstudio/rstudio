@@ -62,6 +62,7 @@ public class StackPanel extends ComplexPanel {
    * 
    * @param w the widget to be added
    */
+  @Override
   public void add(Widget w) {
     insert(w, getWidgetCount());
   }
@@ -152,6 +153,7 @@ public class StackPanel extends ComplexPanel {
     }
   }
 
+  @Override
   public void onBrowserEvent(Event event) {
     if (DOM.eventGetType(event) == Event.ONCLICK) {
       Element target = DOM.eventGetTarget(event);
@@ -162,10 +164,12 @@ public class StackPanel extends ComplexPanel {
     }
   }
 
+  @Override
   public boolean remove(int index) {
     return remove(getWidget(index), index);
   }
 
+  @Override
   public boolean remove(Widget child) {
     return remove(child, getWidgetIndex(child));
   }

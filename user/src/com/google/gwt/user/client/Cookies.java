@@ -30,7 +30,7 @@ public class Cookies {
   /**
    * Cached copy of cookies.
    */
-  static HashMap cachedCookies = null;
+  static HashMap<String, String> cachedCookies = null;
 
   /**
    * Raw cookie string stored to allow cached cookies to be invalidated on
@@ -46,8 +46,8 @@ public class Cookies {
    * @return the cookie's value, or <code>null</code> if the cookie doesn't exist
    */
   public static String getCookie(String name) {
-    Map cookiesMap = ensureCookies();
-    return (String) cookiesMap.get(name);
+    Map<String, String> cookiesMap = ensureCookies();
+    return cookiesMap.get(name);
   }
 
   /**
@@ -55,7 +55,7 @@ public class Cookies {
    * 
    * @return the names of all cookies
    */
-  public static Collection getCookieNames() {
+  public static Collection<String> getCookieNames() {
     return ensureCookies().keySet();
   }
 
@@ -105,7 +105,7 @@ public class Cookies {
     setCookieImpl(name, value, (expires == null) ? 0 : expires.getTime(), domain, path, secure);
   }
 
-  static native void loadCookies(HashMap m) /*-{
+  static native void loadCookies(HashMap<String, String> m) /*-{
     var docCookie = $doc.cookie;
     if (docCookie && docCookie != '') {
       var crumbs = docCookie.split('; ');
@@ -126,9 +126,9 @@ public class Cookies {
     }
   }-*/;
 
-  private static HashMap ensureCookies() {
+  private static HashMap<String, String> ensureCookies() {
     if (cachedCookies == null || needsRefresh()) {
-      cachedCookies = new HashMap();
+      cachedCookies = new HashMap<String, String>();
       loadCookies(cachedCookies);
     }
     return cachedCookies;

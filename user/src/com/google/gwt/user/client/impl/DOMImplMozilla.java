@@ -26,6 +26,7 @@ import com.google.gwt.user.client.Event;
  */
 class DOMImplMozilla extends DOMImplStandard {
 
+  @Override
   public native boolean compare(Element elem1, Element elem2) /*-{
     if (!elem1 && !elem2) {
       return true;
@@ -35,6 +36,7 @@ class DOMImplMozilla extends DOMImplStandard {
     return (elem1.isSameNode(elem2));
   }-*/;
 
+  @Override
   public native int eventGetButton(Event evt) /*-{
     // Mozilla and IE disagree on what the button codes for buttons should be.
     // Translating to match IE standard.
@@ -47,10 +49,12 @@ class DOMImplMozilla extends DOMImplStandard {
     return button || -1;
  }-*/;
 
+  @Override
   public native int eventGetMouseWheelVelocityY(Event evt) /*-{
     return evt.detail || -1;
   }-*/;
 
+  @Override
   public native int getAbsoluteLeft(Element elem) /*-{
     // We cannot use DOMImpl here because offsetLeft/Top return erroneous
     // values when overflow is not visible.  We have to difference screenX
@@ -61,6 +65,7 @@ class DOMImplMozilla extends DOMImplStandard {
         - $doc.getBoxObjectFor($doc.documentElement).screenX;
   }-*/;
 
+  @Override
   public native int getAbsoluteTop(Element elem) /*-{
     // We cannot use DOMImpl here because offsetLeft/Top return erroneous
     // values when overflow is not visible.  We have to difference screenY
@@ -71,6 +76,7 @@ class DOMImplMozilla extends DOMImplStandard {
         - $doc.getBoxObjectFor($doc.documentElement).screenY;
   }-*/;
   
+  @Override
   public native int getChildIndex(Element parent, Element toFind) /*-{
     var count = 0, child = parent.firstChild;
     while (child) {
@@ -85,11 +91,13 @@ class DOMImplMozilla extends DOMImplStandard {
     return -1;
   }-*/;
 
+  @Override
   public void init() {
     super.init();
     initMozilla();
   }
 
+  @Override
   public native boolean isOrHasChild(Element parent, Element child) /*-{
     while (child) {
       if (parent.isSameNode(child)) {
@@ -112,12 +120,14 @@ class DOMImplMozilla extends DOMImplStandard {
     return false;
   }-*/;
 
+  @Override
   public native void releaseCapture(Element elem) /*-{
     if (elem.isSameNode($wnd.__captureElem)) {
       $wnd.__captureElem = null;
     }
   }-*/;
 
+  @Override
   public void sinkEvents(Element elem, int bits) {
     super.sinkEvents(elem, bits);
     sinkEventsMozilla(elem, bits);
@@ -129,6 +139,7 @@ class DOMImplMozilla extends DOMImplStandard {
     }
   }-*/;
 
+  @Override
   public native String toString(Element elem) /*-{
     // Basic idea is to use the innerHTML property by copying the node into a
     // div and getting the innerHTML

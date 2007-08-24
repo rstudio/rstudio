@@ -35,6 +35,7 @@ public class DeferredCommand {
    * 
    * @deprecated As of release 1.4, replaced by {@link #addCommand(Command)}
    */
+  @Deprecated
   public static void add(Command cmd) {
     commandExecutor.submit(cmd);
   }

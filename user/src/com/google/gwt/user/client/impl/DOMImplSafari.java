@@ -22,20 +22,24 @@ import com.google.gwt.user.client.Event;
  * Safari implementation of {@link com.google.gwt.user.client.impl.DOMImpl}.
  */
 class DOMImplSafari extends DOMImplStandard {
+  @Override
   public native int eventGetClientX(Event evt) /*-{
     // In Safari2: clientX is wrong and pageX is returned instead.
     return evt.pageX - $doc.body.scrollLeft || -1;
   }-*/;
 
+  @Override
   public native int eventGetClientY(Event evt) /*-{
     // In Safari2: clientY is wrong and pageY is returned instead.
     return evt.pageY - $doc.body.scrollTop || -1;
   }-*/;
 
+  @Override
   public native int eventGetMouseWheelVelocityY(Event evt) /*-{
     return Math.round(-evt.wheelDelta / 40) || -1;
   }-*/;
 
+  @Override
   public native int getAbsoluteLeft(Element elem) /*-{
     // Unattached elements and elements (or their ancestors) with style
     // 'display: none' have no offsetLeft.
@@ -69,6 +73,7 @@ class DOMImplSafari extends DOMImplStandard {
     return left;
   }-*/;
 
+  @Override
   public native int getAbsoluteTop(Element elem) /*-{
     // Unattached elements and elements (or their ancestors) with style
     // 'display: none' have no offsetTop.
@@ -102,6 +107,7 @@ class DOMImplSafari extends DOMImplStandard {
     return top;
   }-*/;
 
+  @Override
   public native void insertListItem(Element select, String text, String value,
       int index) /*-{
     // We can't use the 'options' array due to a bug in Safari.
@@ -121,6 +127,7 @@ class DOMImplSafari extends DOMImplStandard {
    * 
    * @return the window's client height
    */
+  @Override
   public native int windowGetClientHeight() /*-{
     return $wnd.innerHeight;
   }-*/;
@@ -131,6 +138,7 @@ class DOMImplSafari extends DOMImplStandard {
    * 
    * @return the window's client width
    */
+  @Override
   public native int windowGetClientWidth() /*-{
     return $wnd.innerWidth;
   }-*/;

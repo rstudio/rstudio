@@ -26,7 +26,7 @@ import com.google.gwt.core.client.GWT;
  */
 public class ClippedImagePrototype extends AbstractImagePrototype {
 
-  private static final ClippedImageImpl impl = (ClippedImageImpl) GWT.create(ClippedImageImpl.class);
+  private static final ClippedImageImpl impl = GWT.create(ClippedImageImpl.class);
 
   private int left = 0;
   private int top = 0;
@@ -43,14 +43,17 @@ public class ClippedImagePrototype extends AbstractImagePrototype {
     this.height = height;
   }
 
+  @Override
   public void applyTo(Image image) {
     image.setUrlAndVisibleRect(url, left, top, width, height);
   }
 
+  @Override
   public Image createImage() {
     return new Image(url, left, top, width, height);
   }
 
+  @Override
   public String getHTML() {
     return impl.getHTML(url, left, top, width, height);
   }

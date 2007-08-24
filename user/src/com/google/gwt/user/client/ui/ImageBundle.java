@@ -114,7 +114,7 @@ package com.google.gwt.user.client.ui;
  *  // Create a new instance of MyImageBundle using GWT.create.
  *  // This only needs to be done once - a reference to myImageBundle can
  *  // be kept for use by other parts of the application.
- *  MyImageBundle myImageBundle = (MyImageBundle) GWT.create(MyImageBundle.class);
+ *  MyImageBundle myImageBundle = GWT.create(MyImageBundle.class);
  *
  *  // Retrieve the image prototypes from myImageBundle.
  *  AbstractImagePrototype submitButtonImgPrototype = myImageBundle.btn_submit_icon();

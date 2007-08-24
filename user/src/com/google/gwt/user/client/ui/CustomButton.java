@@ -172,6 +172,7 @@ public abstract class CustomButton extends ButtonBase implements
       updateButtonFace();
     }
 
+    @Override
     public final String toString() {
       return this.getName();
     }
@@ -456,10 +457,12 @@ public abstract class CustomButton extends ButtonBase implements
    * 
    * @return current face's html
    */
+  @Override
   public String getHTML() {
     return getCurrentFace().getHTML();
   }
 
+  @Override
   public int getTabIndex() {
     return FocusPanel.impl.getTabIndex(getElement());
   }
@@ -469,6 +472,7 @@ public abstract class CustomButton extends ButtonBase implements
    * 
    * @return current face's text
    */
+  @Override
   public String getText() {
     return getCurrentFace().getText();
   }
@@ -506,6 +510,7 @@ public abstract class CustomButton extends ButtonBase implements
     return upHovering;
   }
 
+  @Override
   public void onBrowserEvent(Event event) {
     // Should not act on button if disabled.
     if (isEnabled() == false) {
@@ -598,6 +603,7 @@ public abstract class CustomButton extends ButtonBase implements
     }
   }
 
+  @Override
   public void setAccessKey(char key) {
     FocusPanel.impl.setAccessKey(getElement(), key);
   }
@@ -608,6 +614,7 @@ public abstract class CustomButton extends ButtonBase implements
    * @param enabled <code>true</code> to enable the button, <code>false</code>
    *          to disable it
    */
+  @Override
   public final void setEnabled(boolean enabled) {
     if (isEnabled() != enabled) {
       toggleDisabled();
@@ -618,6 +625,7 @@ public abstract class CustomButton extends ButtonBase implements
     }
   }
 
+  @Override
   public void setFocus(boolean focused) {
     if (focused) {
       FocusPanel.impl.focus(getElement());
@@ -631,10 +639,12 @@ public abstract class CustomButton extends ButtonBase implements
    * 
    * @param html html to set
    */
+  @Override
   public void setHTML(String html) {
     getCurrentFace().setHTML(html);
   }
 
+  @Override
   public void setTabIndex(int index) {
     FocusPanel.impl.setTabIndex(getElement(), index);
   }
@@ -644,6 +654,7 @@ public abstract class CustomButton extends ButtonBase implements
    * 
    * @param text text to set
    */
+  @Override
   public void setText(String text) {
     getCurrentFace().setText(text);
   }
@@ -661,6 +672,7 @@ public abstract class CustomButton extends ButtonBase implements
    * Overridden on attach to ensure that a button face has been chosen before
    * the button is displayed.
    */
+  @Override
   protected void onAttach() {
     finishSetup();
     super.onAttach();
@@ -697,6 +709,7 @@ public abstract class CustomButton extends ButtonBase implements
   protected void onClickStart() {
   }
 
+  @Override
   protected void onDetach() {
     super.onDetach();
     cleanupCaptureState();
@@ -796,10 +809,12 @@ public abstract class CustomButton extends ButtonBase implements
   private Face createFace(Face delegateTo, final String name, final int faceID) {
     return new Face(delegateTo) {
 
+      @Override
       public String getName() {
         return name;
       }
 
+      @Override
       int getFaceID() {
         return faceID;
       }

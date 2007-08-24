@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,7 @@ import com.google.gwt.user.client.impl.HTTPRequestImpl;
  */
 public class HTTPRequest {
 
-  private static final HTTPRequestImpl httpRequest = (HTTPRequestImpl) GWT.create(HTTPRequestImpl.class);
+  private static final HTTPRequestImpl httpRequest = GWT.create(HTTPRequestImpl.class);
 
   /**
    * Makes an asynchronous HTTP GET to a remote server.
@@ -49,7 +49,7 @@ public class HTTPRequest {
   public static boolean asyncGet(String user, String pwd, String url,
       ResponseTextHandler handler) {
     return httpRequest.asyncGet(user, pwd, url, handler);
-  };
+  }
 
   /**
    * Makes an asynchronous HTTP POST to a remote server.
@@ -77,5 +77,5 @@ public class HTTPRequest {
   public static boolean asyncPost(String user, String pwd, String url,
       String postData, ResponseTextHandler handler) {
     return httpRequest.asyncPost(user, pwd, url, postData, handler);
-  };
+  }
 }

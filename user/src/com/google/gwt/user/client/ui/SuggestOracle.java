@@ -151,7 +151,7 @@ public abstract class SuggestOracle {
     /**
      * @gwt.typeArgs <com.google.gwt.user.client.ui.SuggestOracle.Suggestion>
      */
-    private Collection suggestions;
+    private Collection<? extends Suggestion> suggestions;
 
     /**
      * Constructor for {@link Response}.
@@ -165,7 +165,7 @@ public abstract class SuggestOracle {
      * @param suggestions each element of suggestions must implement the
      *          {@link Suggestion} interface
      */
-    public Response(Collection suggestions) {
+    public Response(Collection<? extends Suggestion> suggestions) {
       setSuggestions(suggestions);
     }
 
@@ -175,7 +175,7 @@ public abstract class SuggestOracle {
      * 
      * @return the collection of suggestions
      */
-    public Collection getSuggestions() {
+    public Collection<? extends Suggestion> getSuggestions() {
       return this.suggestions;
     }
 
@@ -185,7 +185,7 @@ public abstract class SuggestOracle {
      * 
      * @param suggestions the suggestions
      */
-    public void setSuggestions(Collection suggestions) {
+    public void setSuggestions(Collection<? extends Suggestion> suggestions) {
       this.suggestions = suggestions;
     }
   }

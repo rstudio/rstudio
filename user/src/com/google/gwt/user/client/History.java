@@ -20,7 +20,6 @@ import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.user.client.impl.HistoryImpl;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * This class allows you to interact with the browser's history stack. Each
@@ -43,11 +42,11 @@ import java.util.Iterator;
  */
 public class History {
 
-  private static ArrayList historyListeners = new ArrayList();
+  private static ArrayList<HistoryListener> historyListeners = new ArrayList<HistoryListener>();
   private static HistoryImpl impl;
 
   static {
-    impl = (HistoryImpl) GWT.create(HistoryImpl.class);
+    impl = GWT.create(HistoryImpl.class);
     if (!impl.init()) {
       // Set impl to null as a flag to no-op future calls.
       impl = null;
@@ -140,8 +139,7 @@ public class History {
   }
 
   private static void fireHistoryChangedImpl(String historyToken) {
-    for (Iterator it = historyListeners.iterator(); it.hasNext();) {
-      HistoryListener listener = (HistoryListener) it.next();
+    for (HistoryListener listener : historyListeners) {
       listener.onHistoryChanged(historyToken);
     }
   }

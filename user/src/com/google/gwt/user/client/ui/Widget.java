@@ -175,6 +175,7 @@ public class Widget extends UIObject implements EventListener {
    * 
    * @param elem the object's new element
    */
+  @Override
   protected void setElement(Element elem) {
     if (isAttached()) {
       // Remove old event listener to avoid leaking. onDetach will not do this

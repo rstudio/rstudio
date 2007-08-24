@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -92,6 +92,7 @@ public class Grid extends HTMLTable {
    * @param column the cell's column
    * @throws IndexOutOfBoundsException
    */
+  @Override
   public boolean clearCell(int row, int column) {
     Element td = getCellFormatter().getElement(row, column);
     boolean b = super.internalClearCell(td, false);
@@ -103,6 +104,7 @@ public class Grid extends HTMLTable {
    * Return number of columns. For grid, row argument is ignored as all grids
    * are rectangular.
    */
+  @Override
   public int getCellCount(int row) {
     return numColumns;
   }
@@ -119,6 +121,7 @@ public class Grid extends HTMLTable {
   /**
    * Return number of rows.
    */
+  @Override
   public int getRowCount() {
     return numRows;
   }
@@ -196,6 +199,7 @@ public class Grid extends HTMLTable {
   /**
    * Creates a new, empty cell.
    */
+  @Override
   protected Element createCell() {
     Element td = super.createCell();
 
@@ -212,6 +216,7 @@ public class Grid extends HTMLTable {
    * @param column the cell's column
    * @throws IndexOutOfBoundsException
    */
+  @Override
   protected void prepareCell(int row, int column) {
     // Ensure that the indices are not negative.
     prepareRow(row);
@@ -232,6 +237,7 @@ public class Grid extends HTMLTable {
    * @param column The column index to be checked
    * @throws IndexOutOfBoundsException if the column is negative
    */
+  @Override
   protected void prepareColumn(int column) {
     // Ensure that the indices are not negative.
     if (column < 0) {
@@ -255,6 +261,7 @@ public class Grid extends HTMLTable {
    * @param row The row index to be checked
    * @throws IndexOutOfBoundsException if the row is negative
    */
+  @Override
   protected void prepareRow(int row) {
     // Ensure that the indices are not negative.
     if (row < 0) {

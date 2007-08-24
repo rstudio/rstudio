@@ -42,9 +42,9 @@ class WidgetIterators {
    * @param contained the array of widgets
    * @return the iterator
    */
-  static final Iterator createWidgetIterator(final HasWidgets container,
+  static final Iterator<Widget> createWidgetIterator(final HasWidgets container,
       final Widget[] contained) {
-    return new Iterator() {
+    return new Iterator<Widget>() {
       int index = -1, last = -1;
       boolean widgetsWasCopied = false;
       Widget[] widgets = contained;
@@ -67,7 +67,7 @@ class WidgetIterators {
         return (index < contained.length);
       }
 
-      public Object next() {
+      public Widget next() {
         if (!hasNext()) {
           throw new NoSuchElementException();
         }

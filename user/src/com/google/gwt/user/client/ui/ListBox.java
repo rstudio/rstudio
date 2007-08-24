@@ -95,42 +95,50 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    */
   private static class ImplSafari extends Impl {
 
+    @Override
     public native void clear(Element select) /*-{
       select.innerText = '';
     }-*/;
 
+    @Override
     public native int getItemCount(Element select) /*-{
       return select.children.length;
     }-*/;
 
+    @Override
     public native String getItemText(Element select, int index) /*-{
       return select.children[index].text;
     }-*/;
 
+    @Override
     public native String getItemValue(Element select, int index) /*-{
       return select.children[index].value;
     }-*/;
 
+    @Override
     public native boolean isItemSelected(Element select, int index) /*-{
       return select.children[index].selected;
     }-*/;
 
+    @Override
     public native void removeItem(Element select, int index) /*-{
       select.removeChild(select.children[index]);
     }-*/;
 
+    @Override
     public native void setItemSelected(Element select, int index,
                                        boolean selected) /*-{
       select.children[index].selected = selected;
     }-*/;
 
+    @Override
     public native void setValue(Element select, int index, String value) /*-{
       select.children[index].value = value;
     }-*/;
   }
 
   private static final int INSERT_AT_END = -1;
-  private static final Impl impl = (Impl) GWT.create(Impl.class);
+  private static final Impl impl = GWT.create(Impl.class);
   private ChangeListenerCollection changeListeners;
 
   /**
@@ -298,6 +306,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
     return DOM.getElementPropertyBoolean(getElement(), "multiple");
   }
 
+  @Override
   public void onBrowserEvent(Event event) {
     if (DOM.eventGetType(event) == Event.ONCHANGE) {
       if (changeListeners != null) {

@@ -22,8 +22,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The default {@link com.google.gwt.user.client.ui.SuggestOracle}. The default
@@ -73,12 +73,12 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
      */
     public MultiWordSuggestion() {
     }
-    
+
     /**
      * Constructor for <code>MultiWordSuggestion</code>.
      * 
-     * @param replacementString the string to enter into the SuggestBox's
-     *                          text box if the suggestion is chosen
+     * @param replacementString the string to enter into the SuggestBox's text
+     *          box if the suggestion is chosen
      * @param displayString the display string
      */
     public MultiWordSuggestion(String replacementString, String displayString) {
@@ -113,12 +113,12 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
   /**
    * Associates individual words with candidates.
    */
-  private HashMap toCandidates = new HashMap();
+  private HashMap<String, Set<String>> toCandidates = new HashMap<String, Set<String>>();
 
   /**
    * Associates candidates with their formatted suggestions.
    */
-  private HashMap toRealSuggestions = new HashMap();
+  private HashMap<String, String> toRealSuggestions = new HashMap<String, String>();
 
   /**
    * The whitespace masks used to prevent matching and replacing of the given
@@ -127,8 +127,8 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
   private char[] whitespaceChars;
 
   /**
-   * Constructor for <code>MultiWordSuggestOracle</code>. This uses a space as
-   * the whitespace character.
+   * Constructor for <code>MultiWordSuggestOracle</code>. This uses a space
+   * as the whitespace character.
    * 
    * @see #MultiWordSuggestOracle(String)
    */
@@ -171,9 +171,9 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
     for (int i = 0; i < words.length; i++) {
       String word = words[i];
       tree.add(word);
-      HashSet l = (HashSet) toCandidates.get(word);
+      Set<String> l = toCandidates.get(word);
       if (l == null) {
-        l = new HashSet();
+        l = new HashSet<String>();
         toCandidates.put(word, l);
       }
       l.add(candidate);
@@ -185,10 +185,9 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
    * 
    * @param collection the collection
    */
-  public void addAll(Collection collection) {
-    Iterator suggestions = collection.iterator();
-    while (suggestions.hasNext()) {
-      add((String) suggestions.next());
+  public void addAll(Collection<String> collection) {
+    for (String suggestion : collection) {
+      add(suggestion);
     }
   }
 
@@ -201,13 +200,15 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
     toRealSuggestions.clear();
   }
 
+  @Override
   public boolean isDisplayStringHTML() {
     return true;
   }
 
+  @Override
   public void requestSuggestions(Request request, Callback callback) {
-    final List suggestions = computeItemsFor(request.getQuery(), request
-      .getLimit());
+    final List<MultiWordSuggestion> suggestions = computeItemsFor(
+        request.getQuery(), request.getLimit());
     Response response = new Response(suggestions);
     callback.onSuggestionsReady(request, response);
   }
@@ -225,11 +226,11 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
    * @param limit limit
    * @return matching suggestions
    */
-  private List computeItemsFor(String query, int limit) {
+  private List<MultiWordSuggestion> computeItemsFor(String query, int limit) {
     query = normalizeSearch(query);
 
     // Get candidates from search words.
-    List candidates = createCandidatesFromSearch(query, limit);
+    List<String> candidates = createCandidatesFromSearch(query, limit);
 
     // Convert candidates to suggestions.
     return convertToFormattedSuggestions(query, candidates);
@@ -243,15 +244,16 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
    * @param candidates candidates
    * @return real suggestions
    */
-  private List convertToFormattedSuggestions(String query, List candidates) {
-    List suggestions = new ArrayList();
+  private List<MultiWordSuggestion> convertToFormattedSuggestions(String query,
+      List<String> candidates) {
+    List<MultiWordSuggestion> suggestions = new ArrayList<MultiWordSuggestion>();
 
     for (int i = 0; i < candidates.size(); i++) {
-      String candidate = (String) candidates.get(i);
+      String candidate = candidates.get(i);
       int index = 0;
       int cursor = 0;
       // Use real suggestion for assembly.
-      String formattedSuggestion = (String) toRealSuggestions.get(candidate);
+      String formattedSuggestion = toRealSuggestions.get(candidate);
 
       // Create strong search string.
       StringBuffer accum = new StringBuffer();
@@ -263,13 +265,12 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
         }
         int endIndex = index + query.length();
         if (index == 0 || (WHITESPACE_CHAR == candidate.charAt(index - 1))) {
-          String part1 = escapeText(formattedSuggestion
-            .substring(cursor, index));
+          String part1 = escapeText(formattedSuggestion.substring(cursor, index));
           String part2 = escapeText(formattedSuggestion.substring(index,
-            endIndex));
+              endIndex));
           cursor = endIndex;
           accum.append(part1).append("<strong>").append(part2).append(
-            "</strong>");
+              "</strong>");
         }
         index = endIndex;
       }
@@ -283,7 +284,7 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
       String end = escapeText(formattedSuggestion.substring(cursor));
       accum.append(end);
       MultiWordSuggestion suggestion = new MultiWordSuggestion(
-        formattedSuggestion, accum.toString());
+          formattedSuggestion, accum.toString());
       suggestions.add(suggestion);
     }
     return suggestions;
@@ -292,8 +293,8 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
   /**
    * Find the sorted list of candidates that are matches for the given query.
    */
-  private List createCandidatesFromSearch(String query, int limit) {
-    ArrayList candidates = new ArrayList();
+  private List<String> createCandidatesFromSearch(String query, int limit) {
+    ArrayList<String> candidates = new ArrayList<String>();
 
     if (query.length() == 0) {
       return candidates;
@@ -301,7 +302,7 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
 
     // Find all words to search for.
     String[] searchWords = query.split(WHITESPACE_STRING);
-    HashSet candidateSet = null;
+    HashSet<String> candidateSet = null;
     for (int i = 0; i < searchWords.length; i++) {
       String word = searchWords[i];
 
@@ -312,7 +313,7 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
 
       // Find the set of candidates that are associated with all the
       // searchWords.
-      HashSet thisWordChoices = createCandidatesFromWord(word);
+      HashSet<String> thisWordChoices = createCandidatesFromWord(word);
       if (candidateSet == null) {
         candidateSet = thisWordChoices;
       } else {
@@ -339,18 +340,18 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
 
   /**
    * Creates a set of potential candidates that match the given query.
-   *
+   * 
    * @param query query string
    * @return possible candidates
    */
-  private HashSet createCandidatesFromWord(String query) {
-    HashSet candidateSet = new HashSet();
-    List words = tree.getSuggestions(query, Integer.MAX_VALUE);
+  private HashSet<String> createCandidatesFromWord(String query) {
+    HashSet<String> candidateSet = new HashSet<String>();
+    List<String> words = tree.getSuggestions(query, Integer.MAX_VALUE);
     if (words != null) {
       // Find all candidates that contain the given word the search is a
       // subset of.
       for (int i = 0; i < words.size(); i++) {
-        Collection belongsTo = (Collection) toCandidates.get(words.get(i));
+        Collection<String> belongsTo = toCandidates.get(words.get(i));
         if (belongsTo != null) {
           candidateSet.addAll(belongsTo);
         }
@@ -370,7 +371,7 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
 
     // Remove all excess whitespace from the search string.
     search = search.replaceAll(NORMALIZE_TO_SINGLE_WHITE_SPACE,
-      WHITESPACE_STRING);
+        WHITESPACE_STRING);
 
     return search.trim();
   }
@@ -391,7 +392,7 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
       for (int i = 0; i < whitespaceChars.length; i++) {
         char ignore = whitespaceChars[i];
         formattedSuggestion = formattedSuggestion.replace(ignore,
-          WHITESPACE_CHAR);
+            WHITESPACE_CHAR);
       }
     }
     return formattedSuggestion;

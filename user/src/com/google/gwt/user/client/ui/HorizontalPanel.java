@@ -48,6 +48,7 @@ public class HorizontalPanel extends CellPanel implements HasAlignment {
    * 
    * @param w the widget to be added
    */
+  @Override
   public void add(Widget w) {
     Element td = createAlignedTd();
     DOM.appendChild(tableRow, td);
@@ -87,6 +88,7 @@ public class HorizontalPanel extends CellPanel implements HasAlignment {
     super.insert(w, td, beforeIndex, false);
   }
 
+  @Override
   public boolean remove(Widget w) {
     // Get the TD to be removed, before calling super.remove(), because
     // super.remove() will detach the child widget's element from its parent.

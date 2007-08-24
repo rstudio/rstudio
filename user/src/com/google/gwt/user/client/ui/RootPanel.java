@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,6 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.WindowCloseListener;
 
 import java.util.HashMap;
-import java.util.Iterator;
 
 /**
  * The panel to which all other widgets must ultimately be added. RootPanels are
@@ -34,7 +33,7 @@ import java.util.Iterator;
  */
 public class RootPanel extends AbsolutePanel {
 
-  private static HashMap rootPanels = new HashMap();
+  private static HashMap<String, RootPanel> rootPanels = new HashMap<String, RootPanel>();
 
   /**
    * Gets the default root panel. This panel wraps body of the browser's
@@ -58,7 +57,7 @@ public class RootPanel extends AbsolutePanel {
    */
   public static RootPanel get(String id) {
     // See if this RootPanel is already created.
-    RootPanel gwt = (RootPanel) rootPanels.get(id);
+    RootPanel gwt = rootPanels.get(id);
     if (gwt != null) {
       return gwt;
     }
@@ -95,8 +94,7 @@ public class RootPanel extends AbsolutePanel {
         // When the window is closing, detach all root panels. This will cause
         // all of their children's event listeners to be unhooked, which will
         // avoid potential memory leaks.
-        for (Iterator it = rootPanels.values().iterator(); it.hasNext();) {
-          RootPanel gwt = (RootPanel) it.next();
+        for (RootPanel gwt : rootPanels.values()) {
           if (gwt.isAttached()) {
             gwt.onDetach();
           }

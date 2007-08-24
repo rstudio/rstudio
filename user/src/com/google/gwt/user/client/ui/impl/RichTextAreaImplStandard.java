@@ -33,6 +33,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
    */
   private Element beforeInitPlaceholder = DOM.createDiv();
 
+  @Override
   public native Element createElement() /*-{
     return $doc.createElement('iframe');
   }-*/;
@@ -49,14 +50,17 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     return queryCommandValue("ForeColor");
   }
 
+  @Override
   public final String getHTML() {
     return beforeInitPlaceholder == null ? getHTMLImpl() : DOM.getInnerHTML(beforeInitPlaceholder);
   }
 
+  @Override
   public final String getText() {
     return beforeInitPlaceholder == null ? getTextImpl() : DOM.getInnerText(beforeInitPlaceholder);
   }
 
+  @Override
   public native void initElement()  /*-{
     // Most browsers don't like setting designMode until slightly _after_
     // the iframe becomes attached to the DOM. Any non-zero timeout will do
@@ -87,6 +91,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     execCommand("InsertUnorderedList", null);
   }
 
+  @Override
   public boolean isBasicEditingSupported() {
     return true;
   }
@@ -95,6 +100,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     return queryCommandState("Bold");
   }
 
+  @Override
   public boolean isExtendedEditingSupported() {
     return true;
   }
@@ -143,6 +149,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     execCommand("BackColor", color);
   }
 
+  @Override
   public native void setFocus(boolean focused) /*-{
     if (focused) {
       this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.focus();
@@ -163,6 +170,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     execCommand("ForeColor", color);
   }
 
+  @Override
   public final void setHTML(String html) {
     if (beforeInitPlaceholder == null) {
       setHTMLImpl(html);
@@ -181,6 +189,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     }
   }
 
+  @Override
   public final void setText(String text) {
     if (beforeInitPlaceholder == null) {
       setTextImpl(text);
@@ -213,6 +222,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     execCommand("Underline", "False");
   }
 
+  @Override
   public void uninitElement() {
     // Unhook all custom event handlers when the element is detached.
     unhookEvents();
@@ -233,6 +243,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     return this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.body.textContent;
   }-*/;
 
+  @Override
   protected native void hookEvents() /*-{
     var elem = this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
     var wnd = elem.contentWindow;
@@ -275,6 +286,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     wnd.addEventListener('blur', elem.__gwt_blurHandler, true);
   }-*/;
 
+  @Override
   protected void onElementInitialized() {
     super.onElementInitialized();
 

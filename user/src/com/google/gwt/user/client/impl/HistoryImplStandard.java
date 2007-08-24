@@ -20,6 +20,7 @@ package com.google.gwt.user.client.impl;
  */
 class HistoryImplStandard extends HistoryImpl {
 
+  @Override
   public native boolean init() /*-{
     $wnd.__gwt_historyToken = '';
 
@@ -48,6 +49,7 @@ class HistoryImplStandard extends HistoryImpl {
     return true;
   }-*/;
 
+  @Override
   public native void newItem(String historyToken) /*-{
     if (historyToken == null) {
       historyToken = "";

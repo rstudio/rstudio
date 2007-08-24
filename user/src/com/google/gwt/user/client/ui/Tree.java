@@ -67,16 +67,19 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         imageUrl = url;
       }
 
+      @Override
       public void applyTo(Image image) {
         image.setUrl(baseUrl + imageUrl);
       }
 
+      @Override
       public Image createImage() {
         // NOTE: This class is only used internally and, therefore only needs
         // to support applyTo(Image).
         throw new UnsupportedOperationException("createImage is unsupported.");
       }
 
+      @Override
       public String getHTML() {
         // NOTE: This class is only used internally and, therefore only needs
         // to support applyTo(Image).
@@ -110,7 +113,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   /**
    * Map of TreeItem.widget -> TreeItem.
    */
-  private final Map childWidgets = new HashMap();
+  private final Map<Widget, TreeItem> childWidgets = new HashMap<Widget, TreeItem>();
   private TreeItem curSelection;
   private final Element focusable;
   private FocusListenerCollection focusListeners;
@@ -130,7 +133,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    * Constructs an empty tree.
    */
   public Tree() {
-    this((TreeImages) GWT.create(TreeImages.class));
+    this(GWT.<TreeImages>create(TreeImages.class));
   }
 
   /**
@@ -154,6 +157,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     // The 'root' item is invisible and serves only as a container
     // for all top-level items.
     root = new TreeItem() {
+      @Override
       public void addItem(TreeItem item) {
         // If this element already belongs to a tree or tree item, remove it.
         if ((item.getParentItem() != null) || (item.getTree() != null)) {
@@ -171,6 +175,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         DOM.setIntStyleAttribute(item.getElement(), "marginLeft", 0);
       }
 
+      @Override
       public void removeItem(TreeItem item) {
         if (!getChildren().contains(item)) {
           return;
@@ -292,6 +297,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    *             and manageable way to supply a set of images to be used within
    *             a tree.
    */
+  @Deprecated
   public String getImageBase() {
     return (images instanceof ImagesFromImageBase)
         ? ((ImagesFromImageBase) images).getBaseUrl() : GWT.getModuleBaseURL();
@@ -329,12 +335,13 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return FocusPanel.impl.getTabIndex(focusable);
   }
 
-  public Iterator iterator() {
+  public Iterator<Widget> iterator() {
     final Widget[] widgets = new Widget[childWidgets.size()];
     childWidgets.keySet().toArray(widgets);
     return WidgetIterators.createWidgetIterator(this, widgets);
   }
 
+  @Override
   public void onBrowserEvent(Event event) {
     int eventType = DOM.eventGetType(event);
     switch (eventType) {
@@ -466,7 +473,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
           // If we got here because of a key tab, then we need to make sure the
           // current tree item is selected.
           if (DOM.eventGetKeyCode(event) == KeyboardListener.KEY_TAB) {
-            ArrayList chain = new ArrayList();
+            ArrayList<Element> chain = new ArrayList<Element>();
             collectElementChain(chain, getElement(), DOM.eventGetTarget(event));
             TreeItem item = findItemByChain(chain, 0, root);
             if (item != getSelectedItem()) {
@@ -491,7 +498,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   public boolean remove(Widget w) {
     // Validate.
-    TreeItem item = (TreeItem) childWidgets.get(w);
+    TreeItem item = childWidgets.get(w);
     if (item == null) {
       return false;
     }
@@ -559,6 +566,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    *             and manageable way to supply a set of images to be used within
    *             a tree.
    */
+  @Deprecated
   public void setImageBase(String baseUrl) {
     images = new ImagesFromImageBase(baseUrl);
     root.updateStateRecursive();
@@ -601,25 +609,27 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   /**
    * Iterator of tree items.
    */
-  public Iterator treeItemIterator() {
-    List accum = new ArrayList();
+  public Iterator<TreeItem> treeItemIterator() {
+    List<TreeItem> accum = new ArrayList<TreeItem>();
     root.addTreeItems(accum);
     return accum.iterator();
   }
 
+  @Override
   protected void doAttachChildren() {
     // Ensure that all child widgets are attached.
-    for (Iterator it = iterator(); it.hasNext();) {
-      Widget child = (Widget) it.next();
+    for (Iterator<Widget> it = iterator(); it.hasNext();) {
+      Widget child = it.next();
       child.onAttach();
     }
     DOM.setEventListener(focusable, this);
   }
 
+  @Override
   protected void doDetachChildren() {
     // Ensure that all child widgets are detached.
-    for (Iterator it = iterator(); it.hasNext();) {
-      Widget child = (Widget) it.next();
+    for (Iterator<Widget> it = iterator(); it.hasNext();) {
+      Widget child = it.next();
       child.onDetach();
     }
     DOM.setEventListener(focusable, null);
@@ -638,6 +648,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return true;
   }
 
+  @Override
   protected void onLoad() {
     root.updateStateRecursive();
   }
@@ -657,7 +668,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   /*
    * This method exists solely to support unit tests.
    */
-  Map getChildWidgets() {
+  Map<Widget, TreeItem> getChildWidgets() {
     return childWidgets;
   }
 
@@ -679,7 +690,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   /**
    * Collects parents going up the element tree, terminated at the tree root.
    */
-  private void collectElementChain(ArrayList chain, Element hRoot, Element hElem) {
+  private void collectElementChain(ArrayList<Element> chain, Element hRoot, Element hElem) {
     if ((hElem == null) || DOM.compare(hElem, hRoot)) {
       return;
     }
@@ -689,7 +700,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   private boolean elementClicked(TreeItem root, Element hElem) {
-    ArrayList chain = new ArrayList();
+    ArrayList<Element> chain = new ArrayList<Element>();
     collectElementChain(chain, getElement(), hElem);
 
     TreeItem item = findItemByChain(chain, 0, root);
@@ -713,12 +724,12 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return findDeepestOpenChild(item.getChild(item.getChildCount() - 1));
   }
 
-  private TreeItem findItemByChain(ArrayList chain, int idx, TreeItem root) {
+  private TreeItem findItemByChain(ArrayList<Element> chain, int idx, TreeItem root) {
     if (idx == chain.size()) {
       return root;
     }
 
-    Element hCurElem = (Element) chain.get(idx);
+    Element hCurElem = chain.get(idx);
     for (int i = 0, n = root.getChildCount(); i < n; ++i) {
       TreeItem child = root.getChild(i);
       if (DOM.compare(child.getElement(), hCurElem)) {

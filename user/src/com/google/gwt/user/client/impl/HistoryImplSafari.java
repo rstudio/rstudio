@@ -43,6 +43,7 @@ class HistoryImplSafari extends HistoryImplStandard {
     return true;
   }-*/;
 
+  @Override
   public boolean init() {
     if (isOldSafari) {
       initImpl();
@@ -52,6 +53,7 @@ class HistoryImplSafari extends HistoryImplStandard {
     return super.init();
   }
 
+  @Override
   public void newItem(String historyToken) {
     if (isOldSafari) {
       newItemImpl(historyToken);

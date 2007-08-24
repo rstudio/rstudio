@@ -65,6 +65,7 @@ class HistoryImplIE6 extends HistoryImplFrame {
     urlChecker();
   }-*/;
 
+  @Override
   public boolean init() {
     if (!super.init()) {
       return false;
@@ -73,10 +74,12 @@ class HistoryImplIE6 extends HistoryImplFrame {
     return true;
   }
 
+  @Override
   protected native String getTokenElementContent(Element tokenElement) /*-{
     return tokenElement.innerText;
   }-*/;
 
+  @Override
   protected native void initHistoryToken() /*-{
     // Get the initial token from the url's hash component.
     var hash = $wnd.location.hash;
@@ -96,6 +99,7 @@ class HistoryImplIE6 extends HistoryImplFrame {
     $wnd.__gwt_historyToken = '';
   }-*/;
 
+  @Override
   protected native void injectGlobalHandler() /*-{
     $wnd.__gwt_onHistoryLoad = function(token) {
       // Change the URL and notify the application that its history frame
@@ -108,6 +112,7 @@ class HistoryImplIE6 extends HistoryImplFrame {
     };
   }-*/;
 
+  @Override
   protected native void newItemImpl(Element historyFrame, String historyToken, boolean forceAdd) /*-{
     historyToken = @com.google.gwt.user.client.impl.HistoryImplIE6::escapeHtml(Ljava/lang/String;)(historyToken || "");
     if (forceAdd || ($wnd.__gwt_historyToken != historyToken)) {

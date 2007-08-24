@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import com.google.gwt.user.client.Element;
  */
 public class TextBoxImplIE6 extends TextBoxImpl {
 
+  @Override
   public native int getCursorPos(Element elem) /*-{
     try {
       var tr = elem.document.selection.createRange();
@@ -35,6 +36,7 @@ public class TextBoxImplIE6 extends TextBoxImpl {
     }
   }-*/;
 
+  @Override
   public native int getSelectionLength(Element elem) /*-{
     try {
       var tr = elem.document.selection.createRange();
@@ -47,6 +49,7 @@ public class TextBoxImplIE6 extends TextBoxImpl {
     }
   }-*/;
 
+  @Override
   public native int getTextAreaCursorPos(Element elem) /*-{
     try {
       var tr = elem.document.selection.createRange();
@@ -60,6 +63,7 @@ public class TextBoxImplIE6 extends TextBoxImpl {
     }
   }-*/;
 
+  @Override
   public native void setSelectionRange(Element elem, int pos, int length) /*-{
     try {
       var tr = elem.createTextRange();

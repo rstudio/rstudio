@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,6 +50,7 @@ public class SimplePanel extends Panel {
    * 
    * @param w the child widget to be added
    */
+  @Override
   public void add(Widget w) {
     // Can't add() more than one widget to a SimplePanel.
     if (getWidget() != null) {
@@ -68,10 +69,10 @@ public class SimplePanel extends Panel {
     return widget;
   }
 
-  public Iterator iterator() {
+  public Iterator<Widget> iterator() {
     // Return a simple iterator that enumerates the 0 or 1 elements in this
     // panel.
-    return new Iterator() {
+    return new Iterator<Widget>() {
       boolean hasElement = widget != null;
       Widget returned = null;
 
@@ -79,7 +80,7 @@ public class SimplePanel extends Panel {
         return hasElement;
       }
 
-      public Object next() {
+      public Widget next() {
         if (!hasElement || (widget == null)) {
           throw new NoSuchElementException();
         }
@@ -95,6 +96,7 @@ public class SimplePanel extends Panel {
     };
   }
 
+  @Override
   public boolean remove(Widget w) {
     // Validate.
     if (widget != w) {

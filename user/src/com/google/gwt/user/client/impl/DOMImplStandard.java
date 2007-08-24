@@ -25,10 +25,12 @@ import com.google.gwt.user.client.Event;
  */
 abstract class DOMImplStandard extends DOMImpl {
 
+  @Override
   public native boolean compare(Element elem1, Element elem2) /*-{
     return (elem1 == elem2);
   }-*/;
 
+  @Override
   public native Element createInputRadioElement(String name) /*-{
     var elem = $doc.createElement("INPUT");
     elem.type = 'radio';
@@ -36,28 +38,34 @@ abstract class DOMImplStandard extends DOMImpl {
     return elem;
   }-*/;
 
+  @Override
   public native Element eventGetFromElement(Event evt) /*-{
     // Standard browsers use relatedTarget rather than fromElement.
     return evt.relatedTarget ? evt.relatedTarget : null;
   }-*/;
 
+  @Override
   public native Element eventGetTarget(Event evt) /*-{
     return evt.target || null;
   }-*/;
 
+  @Override
   public native Element eventGetToElement(Event evt) /*-{
     // Standard browsers use relatedTarget rather than toElement.
     return evt.relatedTarget || null;
   }-*/;
 
+  @Override
   public native void eventPreventDefault(Event evt) /*-{
     evt.preventDefault();
   }-*/;
 
+  @Override
   public native String eventToString(Event evt) /*-{
     return evt.toString();
   }-*/;
 
+  @Override
   public native Element getChild(Element elem, int index) /*-{
     var count = 0, child = elem.firstChild;
     while (child) {
@@ -73,6 +81,7 @@ abstract class DOMImplStandard extends DOMImpl {
     return null;
   }-*/;
 
+  @Override
   public native int getChildCount(Element elem) /*-{
     var count = 0, child = elem.firstChild;
     while (child) {
@@ -83,6 +92,7 @@ abstract class DOMImplStandard extends DOMImpl {
     return count;
   }-*/;
 
+  @Override
   public native int getChildIndex(Element parent, Element toFind) /*-{
     var count = 0, child = parent.firstChild;
     while (child) {
@@ -96,6 +106,7 @@ abstract class DOMImplStandard extends DOMImpl {
     return -1;
   }-*/;
 
+  @Override
   public native Element getFirstChild(Element elem) /*-{
     var child = elem.firstChild;
     while (child && child.nodeType != 1)
@@ -103,6 +114,7 @@ abstract class DOMImplStandard extends DOMImpl {
     return child || null;
   }-*/;
 
+  @Override
   public native Element getNextSibling(Element elem) /*-{
     var sib = elem.nextSibling;
     while (sib && sib.nodeType != 1)
@@ -110,6 +122,7 @@ abstract class DOMImplStandard extends DOMImpl {
     return sib || null;
   }-*/;
 
+  @Override
   public native Element getParent(Element elem) /*-{
     var parent = elem.parentNode;
     if(parent == null) {
@@ -124,6 +137,7 @@ abstract class DOMImplStandard extends DOMImpl {
     return elem.src;
   }-*/;
 
+  @Override
   public native void init() /*-{
     // Set up capture event dispatchers.
     $wnd.__dispatchCapturedMouseEvent = function(evt) {
@@ -171,6 +185,7 @@ abstract class DOMImplStandard extends DOMImpl {
     $wnd.__captureElem = null;
   }-*/;
 
+  @Override
   public native void insertChild(Element parent, Element toAdd, int index) /*-{
     var count = 0, child = parent.firstChild, before = null;
     while (child) {
@@ -187,6 +202,7 @@ abstract class DOMImplStandard extends DOMImpl {
     parent.insertBefore(toAdd, before);
   }-*/;
 
+  @Override
   public native boolean isOrHasChild(Element parent, Element child) /*-{
     while (child) {
       if (parent == child) {
@@ -200,15 +216,18 @@ abstract class DOMImplStandard extends DOMImpl {
     return false;
   }-*/;
 
+  @Override
   public native void releaseCapture(Element elem) /*-{
     if (elem == $wnd.__captureElem)
       $wnd.__captureElem = null;
   }-*/;
 
+  @Override
   public native void setCapture(Element elem) /*-{
     $wnd.__captureElem = elem;
   }-*/;
 
+  @Override
   public native void sinkEvents(Element elem, int bits) /*-{
     elem.__eventBits = bits;
 

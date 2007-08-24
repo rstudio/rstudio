@@ -20,6 +20,7 @@ package com.google.gwt.user.client.ui.impl;
  */
 public class RichTextAreaImplMozilla extends RichTextAreaImplStandard {
 
+  @Override
   public native void initElement() /*-{
     // Mozilla doesn't allow designMode to be set reliably until the iframe is
     // fully loaded.
@@ -47,6 +48,7 @@ public class RichTextAreaImplMozilla extends RichTextAreaImplStandard {
     };
   }-*/;
 
+  @Override
   public void setBackColor(String color) {
     // Gecko uses 'BackColor' for the *entire area's* background. 'HiliteColor'
     // does what we actually want.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.ui;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 /**
  * Helper class for widgets that accept
@@ -24,7 +23,7 @@ import java.util.Iterator;
  * subclass of ArrayList assumes that all items added to it will be of type
  * {@link com.google.gwt.user.client.ui.FormHandler}.
  */
-public class FormHandlerCollection extends ArrayList {
+public class FormHandlerCollection extends ArrayList<FormHandler> {
 
   /**
    * Fires a {@link FormHandler#onSubmitComplete(FormSubmitCompleteEvent)} on
@@ -35,9 +34,7 @@ public class FormHandlerCollection extends ArrayList {
    */
   public void fireOnComplete(Object sender, String results) {
     FormSubmitCompleteEvent event = new FormSubmitCompleteEvent(sender, results);
-
-    for (Iterator it = iterator(); it.hasNext();) {
-      FormHandler handler = (FormHandler) it.next();
+    for (FormHandler handler : this) {
       handler.onSubmitComplete(event);
     }
   }
@@ -51,12 +48,9 @@ public class FormHandlerCollection extends ArrayList {
    */
   public boolean fireOnSubmit(Object sender) {
     FormSubmitEvent event = new FormSubmitEvent(sender);
-
-    for (Iterator it = iterator(); it.hasNext();) {
-      FormHandler handler = (FormHandler) it.next();
+    for (FormHandler handler : this) {
       handler.onSubmit(event);
     }
-
     return event.isCancelled();
   }
 }

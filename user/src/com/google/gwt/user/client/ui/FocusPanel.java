@@ -84,6 +84,7 @@ public class FocusPanel extends SimplePanel implements HasFocus,
     return impl.getTabIndex(getElement());
   }
 
+  @Override
   public void onBrowserEvent(Event event) {
     switch (DOM.eventGetType(event)) {
       case Event.ONCLICK:

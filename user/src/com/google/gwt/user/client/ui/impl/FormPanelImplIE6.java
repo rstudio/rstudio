@@ -22,6 +22,7 @@ import com.google.gwt.user.client.Element;
  */
 public class FormPanelImplIE6 extends FormPanelImpl {
 
+  @Override
   public native void hookEvents(Element iframe, Element form, FormPanelImplHost listener) /*-{
     if (iframe) {
       iframe.onreadystatechange = function() {
@@ -47,6 +48,7 @@ public class FormPanelImplIE6 extends FormPanelImpl {
     };
   }-*/;
 
+  @Override
   public native void unhookEvents(Element iframe, Element form) /*-{
     if (iframe)
       iframe.onreadystatechange = null;

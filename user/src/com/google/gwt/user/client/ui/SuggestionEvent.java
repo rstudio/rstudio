@@ -52,6 +52,7 @@ public class SuggestionEvent extends EventObject {
    * @return the string representation of this event object containing the
    *         source SuggestBox and the selected Suggestion
    */
+  @Override
   public String toString() {
     return "[source=" + getSource() +
         ", selectedSuggestion=" + getSelectedSuggestion() + "]";

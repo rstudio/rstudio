@@ -46,6 +46,7 @@ public class DeckPanel extends ComplexPanel {
    * 
    * @param w the widget to be added
    */
+  @Override
   public void add(Widget w) {
     super.add(w, getElement());
     initChildWidget(w);
@@ -73,6 +74,7 @@ public class DeckPanel extends ComplexPanel {
     initChildWidget(w);
   }
 
+  @Override
   public boolean remove(Widget w) {
     boolean removed = super.remove(w);
     if (removed) {

@@ -616,21 +616,21 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     }
 
     private static native void clearWidgetIndex(Element elem) /*-{
-     elem["__widgetID"] = null;
-     }-*/;
+      elem["__widgetID"] = null;
+    }-*/;
 
     private static native int getWidgetIndex(Element elem) /*-{
-     var index = elem["__widgetID"];
-     return (index == null) ? -1 : index;
-     }-*/;
+      var index = elem["__widgetID"];
+      return (index == null) ? -1 : index;
+    }-*/;
 
     private static native void setWidgetIndex(Element elem, int index) /*-{
-     elem["__widgetID"] = index;
-     }-*/;
+      elem["__widgetID"] = index;
+    }-*/;
 
     private FreeNode freeList = null;
 
-    private final ArrayList widgetList = new ArrayList();
+    private final ArrayList<Widget> widgetList = new ArrayList<Widget>();
 
     /**
      * Returns the widget associated with the given element.
@@ -643,7 +643,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
       if (index < 0) {
         return null;
       }
-      return (Widget) widgetList.get(index);
+      return widgetList.get(index);
     }
 
     /**
@@ -679,9 +679,9 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * 
      * @return the iterator
      */
-    public Iterator widgetIterator() {
+    public Iterator<Widget> widgetIterator() {
       // TODO: look at using the WidgetIterators class!
-      return new Iterator() {
+      return new Iterator<Widget>() {
         int lastIndex = -1;
         int nextIndex = -1;
         {
@@ -692,11 +692,11 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
           return nextIndex < widgetList.size();
         }
 
-        public Object next() {
+        public Widget next() {
           if (!hasNext()) {
             throw new NoSuchElementException();
           }
-          Object result = widgetList.get(nextIndex);
+          Widget result = widgetList.get(nextIndex);
           lastIndex = nextIndex;
           findNext();
           return result;
@@ -706,7 +706,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
           if (lastIndex < 0) {
             throw new IllegalStateException();
           }
-          Widget w = (Widget) widgetList.get(lastIndex);
+          Widget w = widgetList.get(lastIndex);
           assert (w.getParent() instanceof HTMLTable);
           w.removeFromParent();
           lastIndex = -1;
@@ -788,6 +788,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    * Removes all widgets from this table, but does not remove other HTML or text
    * contents of cells.
    */
+  @Override
   public void clear() {
     for (int row = 0; row < getRowCount(); ++row) {
       for (int col = 0; col < getCellCount(row); ++col) {
@@ -937,7 +938,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    * 
    * @return the iterator
    */
-  public Iterator iterator() {
+  public Iterator<Widget> iterator() {
     return widgetMap.widgetIterator();
   }
 
@@ -946,6 +947,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    * 
    * @param event the generated event
    */
+  @Override
   public void onBrowserEvent(Event event) {
     switch (DOM.eventGetType(event)) {
       case Event.ONCLICK: {
@@ -976,6 +978,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    * @param widget widget to remove
    * @return was the widget removed from the table.
    */
+  @Override
   public boolean remove(Widget widget) {
     // Validate.
     if (widget.getParent() != this) {
