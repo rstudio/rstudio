@@ -739,7 +739,7 @@ public class Arrays {
     }
     int hashCode = 1;
     for (int i = 0, n = a.length; i < n; ++i) {
-      hashCode = (31 * hashCode + (Boolean.valueOf(a[i]).hashCode()) | 0;
+      hashCode = (31 * hashCode + (Boolean.valueOf(a[i]).hashCode())) | 0;
     }
 
     return hashCode;
