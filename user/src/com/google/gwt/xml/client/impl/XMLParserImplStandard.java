@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,20 +29,24 @@ class XMLParserImplStandard extends XMLParserImpl {
 
   protected final JavaScriptObject domParser = createDOMParser();
 
+  @Override
   protected native JavaScriptObject createDocumentImpl() /*-{
     return document.implementation.createDocument("", "", null);
   }-*/;
 
+  @Override
   protected native JavaScriptObject getElementByIdImpl(
       JavaScriptObject document, String id) /*-{
     return document.getElementById(id);
   }-*/;
 
+  @Override
   protected native JavaScriptObject getElementsByTagNameImpl(
       JavaScriptObject o, String tagName) /*-{
     return o.getElementsByTagNameNS("*",tagName);
   }-*/;
 
+  @Override
   protected String getPrefixImpl(JavaScriptObject jsObject) {
     String fullName = XMLParserImpl.getNodeName(jsObject);
     if (fullName != null && fullName.indexOf(":") != -1) {
@@ -51,12 +55,14 @@ class XMLParserImplStandard extends XMLParserImpl {
     return null;
   }
 
+  @Override
   protected native JavaScriptObject importNodeImpl(JavaScriptObject jsObject,
       JavaScriptObject importedNode, boolean deep) /*-{
     var out = jsObject.importNode(importedNode, deep);
     return (out == null) ? null : out;
   }-*/;
 
+  @Override
   protected native JavaScriptObject parseImpl(String contents) /*-{
     var domParser = this.@com.google.gwt.xml.client.impl.XMLParserImplStandard::domParser;
     var result = domParser.parseFromString(contents,"text/xml");

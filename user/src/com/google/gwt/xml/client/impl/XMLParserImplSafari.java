@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import com.google.gwt.core.client.JavaScriptObject;
  */
 class XMLParserImplSafari extends XMLParserImplStandard {
 
+  @Override
   protected native JavaScriptObject getElementsByTagNameImpl(JavaScriptObject o,
       String tagName) /*-{
     return o.getElementsByTagName(tagName);
@@ -42,6 +43,7 @@ class XMLParserImplSafari extends XMLParserImplStandard {
    * @return parsed JavaScript object
    * @see com.google.gwt.xml.client.impl.XMLParserImpl#parseImpl(java.lang.String)
    */
+  @Override
   protected native JavaScriptObject parseImpl(String contents) /*-{
     var domParser =
       this.@com.google.gwt.xml.client.impl.XMLParserImplStandard::domParser;

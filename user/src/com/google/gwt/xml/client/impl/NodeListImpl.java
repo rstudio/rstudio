@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,6 +44,7 @@ class NodeListImpl extends DOMItem implements NodeList {
     return NodeImpl.build(XMLParserImpl.item(this.getJsObject(), index));
   }
 
+  @Override
   public String toString() {
     StringBuffer b = new StringBuffer();
     for (int i = 0; i < getLength(); i++) {

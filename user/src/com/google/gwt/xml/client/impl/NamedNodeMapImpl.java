@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,6 +36,7 @@ class NamedNodeMapImpl extends NodeListImpl implements NamedNodeMap {
    * @return the number of nodes in this object.
    * @see com.google.gwt.xml.client.impl.NodeListImpl#getLength()
    */
+  @Override
   public int getLength() {
     return super.getLength();
   }
@@ -50,6 +51,7 @@ class NamedNodeMapImpl extends NodeListImpl implements NamedNodeMap {
     return NodeImpl.build(XMLParserImpl.getNamedItem(this.getJsObject(), name));
   }
 
+  @Override
   public Node item(int index) {
     return super.item(index);
   }

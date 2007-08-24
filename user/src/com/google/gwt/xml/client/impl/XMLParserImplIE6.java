@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import com.google.gwt.core.client.JavaScriptObject;
  */
 class XMLParserImplIE6 extends XMLParserImpl {
 
+  @Override
   protected native JavaScriptObject createDocumentImpl() /*-{
     var doc = new ActiveXObject("MSXML2.DOMDocument");
     doc.preserveWhiteSpace = true;
@@ -30,21 +31,25 @@ class XMLParserImplIE6 extends XMLParserImpl {
     return doc;
   }-*/;
 
+  @Override
   protected native JavaScriptObject getElementByIdImpl(JavaScriptObject o,
       String elementId) /*-{
     var out = o.nodeFromID(elementId);
     return (out == null) ? null : out;
   }-*/;
 
+  @Override
   protected native JavaScriptObject getElementsByTagNameImpl(JavaScriptObject o,
       String tagName) /*-{
     return o.selectNodes(".//*[local-name()='" + tagName + "']");
   }-*/;
 
+  @Override
   protected native String getPrefixImpl(JavaScriptObject jsObject) /*-{
     return jsObject.prefix;
   }-*/;
 
+  @Override
   protected native JavaScriptObject importNodeImpl(JavaScriptObject o,
       JavaScriptObject importedNode, boolean deep) /*-{
     // IE6 does not seem to need or want nodes to be imported
@@ -53,6 +58,7 @@ class XMLParserImplIE6 extends XMLParserImpl {
     return importedNode;
   }-*/;
   
+  @Override
   protected native JavaScriptObject parseImpl(String contents) /*-{
     var doc = this.@com.google.gwt.xml.client.impl.XMLParserImplIE6::createDocumentImpl()();
     if(!doc.loadXML(contents)) {

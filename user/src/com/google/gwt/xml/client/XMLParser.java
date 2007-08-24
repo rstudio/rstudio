@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package com.google.gwt.xml.client;
 import com.google.gwt.xml.client.impl.XMLParserImpl;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -83,7 +82,7 @@ public class XMLParser {
     }
     if (n.hasChildNodes()) {
       int length = n.getChildNodes().getLength();
-      List toBeProcessed = new ArrayList();
+      List<Node> toBeProcessed = new ArrayList<Node>();
       // We collect all the nodes to iterate as the child nodes will change 
       // upon removal
       for (int i = 0; i < length; i++) {
@@ -91,8 +90,7 @@ public class XMLParser {
       }
       // This changes the child nodes, but the iterator of nodes never changes
       // meaning that this is safe
-      for (Iterator iter = toBeProcessed.iterator(); iter.hasNext();) {
-        Node childNode = (Node) iter.next();
+      for (Node childNode : toBeProcessed) {
         removeWhitespaceInner(childNode, n);
       }
     }
