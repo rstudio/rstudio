@@ -55,6 +55,7 @@ public class AboutDialog extends DialogBox {
     setWidget(outer);
   }
 
+  @Override
   public boolean onKeyDownPreview(char key, int modifiers) {
     // Use the popup's key preview hooks to close the dialog when either
     // enter or escape is pressed.

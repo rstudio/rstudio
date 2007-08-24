@@ -51,6 +51,7 @@ public class Shortcuts extends Composite {
   private int nextHeaderIndex = 0;
   
   private StackPanel stackPanel = new StackPanel() {
+    @Override
     public void onBrowserEvent(Event event) {
       int oldIndex = getSelectedIndex();
       super.onBrowserEvent(event);
@@ -75,6 +76,7 @@ public class Shortcuts extends Composite {
     initWidget(stackPanel);
   }
   
+  @Override
   protected void onLoad() {
     // Show the mailboxes group by default.
     stackPanel.showStack(0);

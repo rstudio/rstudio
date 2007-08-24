@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -59,7 +59,7 @@ public class SchoolCalendarServiceImpl extends RemoteServiceServlet implements
 
   private static final int STUDENTS_PER_PROF = 5;
 
-  private final List people = new ArrayList();
+  private final List<Person> people = new ArrayList<Person>();
 
   private final Random rnd = new Random(3);
 
@@ -83,7 +83,7 @@ public class SchoolCalendarServiceImpl extends RemoteServiceServlet implements
     int resultCount = end - start;
     Person[] results = new Person[resultCount];
     for (int from = start, to = 0; to < resultCount; ++from, ++to) {
-      results[to] = (Person) people.get(from);
+      results[to] = people.get(from);
     }
 
     return results;
@@ -94,6 +94,7 @@ public class SchoolCalendarServiceImpl extends RemoteServiceServlet implements
    * to do, but it allows us to create a static file version of the response
    * without deploying a servlet.
    */
+  @Override
   protected void onAfterResponseSerialized(String serializedResponse) {
     System.out.println(serializedResponse);
   }

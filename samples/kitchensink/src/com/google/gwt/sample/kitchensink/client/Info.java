@@ -34,6 +34,7 @@ public class Info extends Sink {
         + "as well.  Finally, notice that you can right-click a tab and 'open "
         + "in new window' (or middle-click for a new tab in Firefox).</p></p>") {
 
+      @Override
       public Sink createInstance() {
         return new Info();
       }
@@ -44,6 +45,7 @@ public class Info extends Sink {
     initWidget(new Label());
   }
 
+  @Override
   public void onShow() {
   }
 }

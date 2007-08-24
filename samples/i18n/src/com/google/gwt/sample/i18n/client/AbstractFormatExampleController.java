@@ -23,7 +23,6 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -42,7 +41,8 @@ public abstract class AbstractFormatExampleController {
   private String prevPattern;
   private String prevInput;
 
-  protected AbstractFormatExampleController(String defaultText, Map patterns) {
+  protected AbstractFormatExampleController(String defaultText,
+      Map<String, String> patterns) {
     initWidgetsForPattern(patterns);
     initWidgetsForInput();
     txtInput.setText(defaultText);
@@ -64,14 +64,16 @@ public abstract class AbstractFormatExampleController {
 
   private void initWidgetsForInput() {
     txtInput.addKeyboardListener(new KeyboardListenerAdapter() {
+      @Override
       public void onKeyUp(Widget sender, char keyCode, int modifiers) {
         tryToParseInput(false);
       }
     });
   }
 
-  private void initWidgetsForPattern(Map patternMap) {
+  private void initWidgetsForPattern(Map<String, String> patternMap) {
     txtCurrentPattern.addKeyboardListener(new KeyboardListenerAdapter() {
+      @Override
       public void onKeyUp(Widget sender, char keyCode, int modifiers) {
         String pattern = txtCurrentPattern.getText();
 
@@ -81,10 +83,9 @@ public abstract class AbstractFormatExampleController {
     });
 
     // Load pattern choices.
-    for (Iterator iter = patternMap.entrySet().iterator(); iter.hasNext();) {
-      Map.Entry entry = (Map.Entry) iter.next();
-      String patternKey = (String) entry.getKey();
-      String caption = (String) entry.getValue();
+    for (Map.Entry<String, String> entry : patternMap.entrySet()) {
+      String patternKey = entry.getKey();
+      String caption = entry.getValue();
 
       lstSamplePatterns.addItem(caption, patternKey);
     }

@@ -38,7 +38,7 @@ public class Mail implements EntryPoint, WindowResizeListener {
    * Instantiate an application-level image bundle. This object will provide
    * programmatic access to all the images needed by widgets.
    */
-  private static final Images images = (Images) GWT.create(Images.class);
+  private static final Images images = GWT.create(Images.class);
 
   /**
    * An aggragate image bundle that pulls together all the images for this

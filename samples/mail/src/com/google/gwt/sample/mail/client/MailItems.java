@@ -215,7 +215,7 @@ public class MailItems {
 
   private static int senderIdx = 0, emailIdx = 0, subjectIdx = 0,
       fragmentIdx = 0;
-  private static ArrayList items = new ArrayList();
+  private static ArrayList<MailItem> items = new ArrayList<MailItem>();
 
   static {
     for (int i = 0; i < NUM_ITEMS; ++i) {
@@ -227,7 +227,7 @@ public class MailItems {
     if (index >= items.size()) {
       return null;
     }
-    return (MailItem) items.get(index);
+    return items.get(index);
   }
 
   public static int getMailItemCount() {

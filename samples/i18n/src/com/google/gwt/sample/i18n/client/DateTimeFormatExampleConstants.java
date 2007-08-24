@@ -22,5 +22,5 @@ import java.util.Map;
  */
 public interface DateTimeFormatExampleConstants extends
     AbstractFormatExampleConstants {
-  Map dateTimeFormatPatterns();
+  Map<String, String> dateTimeFormatPatterns();
 }

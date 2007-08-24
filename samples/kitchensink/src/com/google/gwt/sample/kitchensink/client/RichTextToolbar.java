@@ -310,8 +310,8 @@ public class RichTextToolbar extends Composite {
       RichTextArea.FontSize.LARGE, RichTextArea.FontSize.X_LARGE,
       RichTextArea.FontSize.XX_LARGE};
 
-  private Images images = (Images) GWT.create(Images.class);
-  private Strings strings = (Strings) GWT.create(Strings.class);
+  private Images images = GWT.create(Images.class);
+  private Strings strings = GWT.create(Strings.class);
   private EventListener listener = new EventListener();
 
   private RichTextArea richText;

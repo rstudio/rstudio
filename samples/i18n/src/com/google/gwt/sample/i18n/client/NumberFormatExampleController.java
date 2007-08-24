@@ -38,6 +38,7 @@ public class NumberFormatExampleController extends
     return constants;
   }
 
+  @Override
   protected String doGetPattern(String patternKey) {
     if ("currency".equals(patternKey)) {
       return NumberFormat.getCurrencyFormat().getPattern();
@@ -59,10 +60,12 @@ public class NumberFormatExampleController extends
         + "'");
   }
 
+  @Override
   protected void doParseAndRememberPattern(String pattern) {
     activeFormat = NumberFormat.getFormat(pattern);
   }
 
+  @Override
   protected void doParseInput(String toParse, HasText output, HasText error) {
     if (!"".equals(toParse)) {
       try {

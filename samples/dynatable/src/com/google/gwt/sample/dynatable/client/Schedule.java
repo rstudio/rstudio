@@ -18,7 +18,6 @@ package com.google.gwt.sample.dynatable.client;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -30,7 +29,7 @@ public class Schedule implements IsSerializable {
   /**
    * @gwt.typeArgs <com.google.gwt.sample.dynatable.client.TimeSlot>
    */
-  private List timeSlots = new ArrayList();
+  private List<TimeSlot> timeSlots = new ArrayList<TimeSlot>();
 
   public Schedule() {
   }
@@ -41,8 +40,7 @@ public class Schedule implements IsSerializable {
 
   public String getDescription(boolean[] daysFilter) {
     String s = null;
-    for (Iterator iter = timeSlots.iterator(); iter.hasNext();) {
-      TimeSlot timeSlot = (TimeSlot) iter.next();
+    for (TimeSlot timeSlot : timeSlots) {
       if (daysFilter[timeSlot.getDayOfWeek()]) {
         if (s == null) {
           s = timeSlot.getDescription();
@@ -59,6 +57,7 @@ public class Schedule implements IsSerializable {
     }
   }
 
+  @Override
   public String toString() {
     return getDescription(null);
   }

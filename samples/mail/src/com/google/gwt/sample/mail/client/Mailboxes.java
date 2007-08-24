@@ -70,7 +70,7 @@ public class Mailboxes extends Composite {
 
   /**
    * A helper method to simplify adding tree items that have attached images.
-   * {@link #addImageItem(TreeItem, String) code}
+   * {@link #addImageItem(TreeItem, String, AbstractImagePrototype) code}
    * 
    * @param root the tree item to which the new item will be added.
    * @param title the text associated with this item.
@@ -85,7 +85,7 @@ public class Mailboxes extends Composite {
   /**
    * Generates HTML for a tree item with an attached icon.
    * 
-   * @param imageUrl the url of the icon image
+   * @param imageProto the image prototype to use
    * @param title the title of the item
    * @return the resultant HTML
    */

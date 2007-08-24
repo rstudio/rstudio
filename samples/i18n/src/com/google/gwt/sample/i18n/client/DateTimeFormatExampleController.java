@@ -41,6 +41,7 @@ public class DateTimeFormatExampleController extends
     return constants;
   }
 
+  @Override
   protected String doGetPattern(String patternKey) {
     // Date + Time
     if ("fullDateTime".equals(patternKey)) {
@@ -97,10 +98,12 @@ public class DateTimeFormatExampleController extends
         + "'");
   }
 
+  @Override
   protected void doParseAndRememberPattern(String pattern) {
     activeFormat = DateTimeFormat.getFormat(pattern);
   }
 
+  @Override
   protected void doParseInput(String toParse, HasText output, HasText error) {
     error.setText("");
     if (!"".equals(toParse)) {

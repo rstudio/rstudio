@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,7 @@ import com.google.gwt.user.client.rpc.IsSerializable;
  * Hold relevant data for a time slot. This class is intended to be serialized
  * as part of RPC calls.
  */
-public class TimeSlot implements IsSerializable, Comparable {
+public class TimeSlot implements IsSerializable, Comparable<TimeSlot> {
 
   private static final transient String[] DAYS = new String[] {
       "Sun", "Mon", "Tues", "Wed", "Thurs", "Fri", "Sat"};
@@ -41,16 +41,15 @@ public class TimeSlot implements IsSerializable, Comparable {
     this.endMinutes = endMinutes;
   }
 
-  public int compareTo(Object o) {
-    TimeSlot other = (TimeSlot) o;
-    if (zeroBasedDayOfWeek < other.zeroBasedDayOfWeek) {
+  public int compareTo(TimeSlot o) {
+    if (zeroBasedDayOfWeek < o.zeroBasedDayOfWeek) {
       return -1;
-    } else if (zeroBasedDayOfWeek > other.zeroBasedDayOfWeek) {
+    } else if (zeroBasedDayOfWeek > o.zeroBasedDayOfWeek) {
       return 1;
     } else {
-      if (startMinutes < other.startMinutes) {
+      if (startMinutes < o.startMinutes) {
         return -1;
-      } else if (startMinutes > other.startMinutes) {
+      } else if (startMinutes > o.startMinutes) {
         return 1;
       }
     }

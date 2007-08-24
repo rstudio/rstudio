@@ -22,10 +22,10 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * Demonstrates how to use {@link Messages}.
+ * Demonstrates how to use {@link com.google.gwt.i18n.client.Messages}.
  */
 public class MessagesExampleController {
-  private static final ErrorMessages ERRORS = (ErrorMessages) GWT.create(ErrorMessages.class);
+  private static final ErrorMessages ERRORS = GWT.create(ErrorMessages.class);
 
   public final TextBox txtArg1 = new TextBox();
   public final TextBox txtArg2 = new TextBox();
@@ -45,6 +45,7 @@ public class MessagesExampleController {
     lblMessageTemplate.setText(messageTemplate);
 
     KeyboardListenerAdapter listener = new KeyboardListenerAdapter() {
+      @Override
       public void onKeyUp(Widget sender, char keyCode, int modifiers) {
         maybeRefreshFormattedMessage();
       }

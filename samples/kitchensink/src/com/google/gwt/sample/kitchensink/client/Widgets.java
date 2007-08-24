@@ -38,10 +38,12 @@ public class Widgets extends Sink implements Command {
       "toolkit.</p><p>Below, you can see various kinds of buttons, check boxes, " +
       "radio buttons, and menus.</p>") {
 
+      @Override
       public Sink createInstance() {
         return new Widgets(images);
       }
 
+      @Override
       public String getColor() {
         return "#bf2a2a";
       }
@@ -134,6 +136,7 @@ public class Widgets extends Sink implements Command {
     Window.alert("Thank you for selecting a menu item.");
   }
 
+  @Override
   public void onShow() {
   }
 }

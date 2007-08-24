@@ -45,10 +45,12 @@ public class Text extends Sink {
             + "all major browsers, and will fall back gracefully to the level of "
             + "functionality supported on each.</p>") {
 
+      @Override
       public Sink createInstance() {
         return new Text();
       }
 
+      @Override
       public String getColor() {
         return "#2fba10";
       }
@@ -89,6 +91,7 @@ public class Text extends Sink {
     hp.setWidth("100%");
   }
 
+  @Override
   public void onShow() {
   }
 
@@ -121,6 +124,7 @@ public class Text extends Sink {
   
       p.add(echo);
       textBox.addKeyboardListener(new KeyboardListenerAdapter() {
+        @Override
         public void onKeyUp(Widget sender, char keyCode, int modifiers) {
           updateText(textBox, echo);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,6 @@ import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.RootPanel;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -50,16 +49,14 @@ public class SimpleRPC implements EntryPoint {
   }
 
   /**
-   * Creates a single call to <code>getMultipleStrings</code>. The
-   * <code>getMultipleStrings</code> methods uses gwt.typeArgs to specify the type
-   * of its map.
+   * Creates a single call to <code>getMultipleStrings</code>.
    */
   private void callGetMultipleStrings(final Panel root,
       SimpleRPCServiceAsync simpleRPCService) {
-    AsyncCallback getMultipleStringsCallback = createGetMultipleStringsCallback(root);
+    AsyncCallback<Map<Integer, String>> getMultipleStringsCallback = createGetMultipleStringsCallback(root);
 
     // Should print a table of key value pairs.
-    List indexes = new ArrayList();
+    List<Integer> indexes = new ArrayList<Integer>();
     indexes.add(new Integer(0));
     indexes.add(new Integer(2));
     simpleRPCService.getMultipleStrings(indexes, getMultipleStringsCallback);
@@ -75,7 +72,7 @@ public class SimpleRPC implements EntryPoint {
   private void callGetString(final Panel root,
       SimpleRPCServiceAsync simpleRPCService) {
     // Create a callback to use.
-    AsyncCallback singleGetStringCallback = createGetStringCallback(root);
+    AsyncCallback<String> singleGetStringCallback = createGetStringCallback(root);
 
     // Should print 'Hello World'.
     simpleRPCService.getString(0, singleGetStringCallback);
@@ -92,25 +89,23 @@ public class SimpleRPC implements EntryPoint {
    * RPC call. The same callback can be used for many RPC calls or customized
    * for a single one.
    */
-  private AsyncCallback createGetMultipleStringsCallback(final Panel root) {
-    return new AsyncCallback() {
+  private AsyncCallback<Map<Integer, String>> createGetMultipleStringsCallback(
+      final Panel root) {
+    return new AsyncCallback<Map<Integer, String>>() {
 
       public void onFailure(Throwable caught) {
         Window.alert("error: " + caught);
       }
 
-      public void onSuccess(Object result) {
-        Map m = (Map) result;
+      public void onSuccess(Map<Integer, String> result) {
         FlexTable t = new FlexTable();
         t.setBorderWidth(2);
         t.setHTML(0, 0, "<b>Map Key</b>");
         t.setHTML(0, 1, "<b>Map Value</b>");
         int index = 1;
-        Iterator iter = m.entrySet().iterator();
-        while (iter.hasNext()) {
-          Entry element = (Entry) iter.next();
-          Integer key = (Integer) element.getKey();
-          String value = (String) element.getValue();
+        for (Entry<Integer, String> element : result.entrySet()) {
+          Integer key = element.getKey();
+          String value = element.getValue();
           t.setText(index, 0, key.toString());
           t.setText(index, 1, value);
           ++index;
@@ -126,14 +121,14 @@ public class SimpleRPC implements EntryPoint {
    * The same callback can be used for many RPC calls or customized for a single
    * one.
    */
-  private AsyncCallback createGetStringCallback(final Panel root) {
-    return new AsyncCallback() {
+  private AsyncCallback<String> createGetStringCallback(final Panel root) {
+    return new AsyncCallback<String>() {
       public void onFailure(Throwable caught) {
         root.add(new HTML("<h3>Result (on failure) </h3>"));
         root.add(new HTML("<i>" + caught.getMessage() + "</i>"));
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(String result) {
         root.add(new HTML("<h3>Result (on success) </h3>" + result));
       }
     };
@@ -147,7 +142,7 @@ public class SimpleRPC implements EntryPoint {
    * the asynchronous interface automatically.
    */
   private SimpleRPCServiceAsync createSimpleRPCServiceAsync() {
-    SimpleRPCServiceAsync simpleRPCService = (SimpleRPCServiceAsync) GWT.create(SimpleRPCService.class);
+    SimpleRPCServiceAsync simpleRPCService = GWT.create(SimpleRPCService.class);
     setServiceURL(simpleRPCService);
     return simpleRPCService;
   }

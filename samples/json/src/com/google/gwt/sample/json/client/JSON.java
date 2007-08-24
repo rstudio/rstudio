@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,6 @@ import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
 
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -119,9 +118,8 @@ public class JSON {
         addChildren(child, jsonArray.get(i));
       }
     } else if ((jsonObject = jsonValue.isObject()) != null) {
-      Set keys = jsonObject.keySet();
-      for (Iterator iter = keys.iterator(); iter.hasNext();) {
-        String key = (String) iter.next();
+      Set<String> keys = jsonObject.keySet();
+      for (String key : keys) {
         TreeItem child = treeItem.addItem(getChildText(key));
         addChildren(child, jsonObject.get(key));
       }

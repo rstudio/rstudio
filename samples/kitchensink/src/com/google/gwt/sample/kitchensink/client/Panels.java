@@ -45,10 +45,12 @@ public class Panels extends Sink {
             + "you can tweak things at a low level using the "
             + "<code>DOM</code> class.</p>") {
 
+      @Override
       public Sink createInstance() {
         return new Panels(images);
       }
 
+      @Override
       public String getColor() {
         return "#fe9915";
       }
@@ -148,6 +150,7 @@ public class Panels extends Sink {
     hSplit.setSize("100%", "450px");
   }
 
+  @Override
   public void onShow() {
   }
 

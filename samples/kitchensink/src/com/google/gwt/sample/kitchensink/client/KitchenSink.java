@@ -30,7 +30,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
  */
 public class KitchenSink implements EntryPoint, HistoryListener {
 
-  private static final Sink.Images images = (Sink.Images) GWT.create(Sink.Images.class);
+  private static final Sink.Images images = GWT.create(Sink.Images.class);
 
   protected SinkList list = new SinkList(images);
   private SinkInfo curInfo;

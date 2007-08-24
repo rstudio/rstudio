@@ -23,6 +23,6 @@ import java.util.Map;
 public interface NumberFormatExampleConstants extends
     AbstractFormatExampleConstants {
 
-  Map numberFormatPatterns();
+  Map<String, String> numberFormatPatterns();
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -75,17 +75,16 @@ public class SchoolCalendarWidget extends Composite {
 
       // Fetch the data remotely.
       //
-      calService.getPeople(startRow, maxRows, new AsyncCallback() {
+      calService.getPeople(startRow, maxRows, new AsyncCallback<Person[]>() {
         public void onFailure(Throwable caught) {
           acceptor.failed(caught);
         }
 
-        public void onSuccess(Object result) {
-          Person[] people = (Person[]) result;
+        public void onSuccess(Person[] result) {
           lastStartRow = startRow;
           lastMaxRows = maxRows;
-          lastPeople = people;
-          pushResults(acceptor, startRow, people);
+          lastPeople = result;
+          pushResults(acceptor, startRow, result);
         }
 
       });
@@ -125,6 +124,7 @@ public class SchoolCalendarWidget extends Composite {
     return daysFilter[day];
   }
 
+  @Override
   protected void onLoad() {
     dynaTable.refresh();
   }

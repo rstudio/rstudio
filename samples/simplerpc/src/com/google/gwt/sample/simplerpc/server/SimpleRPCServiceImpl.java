@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,15 +37,13 @@ public class SimpleRPCServiceImpl extends RemoteServiceServlet implements
       "Hello World", "Bonjour monde", "Hola Español"};
 
   /**
-   * Gets a map of strings associated with the given indexes. The gwt.typeArgs
-   * on <code>SimpleRPCService</code> constrain the map to be of type
-   * <code>Integer,String</code> and the argument list to be of type
-   * <code> Integer</code>.
+   * Gets a map of strings associated with the given indexes.
    */
-  public Map getMultipleStrings(List indexes) throws SimpleRPCException {
-    Map accum = new HashMap();
+  public Map<Integer, String> getMultipleStrings(List<Integer> indexes)
+      throws SimpleRPCException {
+    Map<Integer, String> accum = new HashMap<Integer, String>();
     for (int i = 0; i < indexes.size(); i++) {
-      Integer key = (Integer) indexes.get(i);
+      Integer key = indexes.get(i);
       String value = getString(key.intValue());
       accum.put(key, value);
     }

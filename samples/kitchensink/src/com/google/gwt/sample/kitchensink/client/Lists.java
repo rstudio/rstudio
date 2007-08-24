@@ -122,6 +122,7 @@ public class Lists extends Sink implements ChangeListener, TreeListener {
         "the more advanced suggestion combo-box and trees.</p><p>Try typing " +
         "some text in the SuggestBox below to see what happens!</p>") {
 
+      @Override
       public Sink createInstance() {
         return new Lists(images);
       }
@@ -188,6 +189,7 @@ public class Lists extends Sink implements ChangeListener, TreeListener {
     }
   }
 
+  @Override
   public void onShow() {
   }
 

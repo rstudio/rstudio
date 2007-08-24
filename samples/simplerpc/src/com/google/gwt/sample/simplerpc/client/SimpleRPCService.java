@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,20 +34,14 @@ public interface SimpleRPCService extends RemoteService {
   String getString(int index) throws SimpleRPCException;
 
   /**
-   * Given a list of indexes, returns a map of indexes --> string values. Uses
-   * gwt.typeArgs to specify the type of both the requested list and returned
-   * map.
-   * <p>
-   * Note that if the gwt.typeArgs annotation were not included the RPC system
-   * may not be able to determine the types being returned and therefore runtime
-   * errors may result.
-   * </p>
+   * Given a list of indexes, returns a map of indexes --> string values.
    * 
    * @gwt.typeArgs indexes <java.lang.Integer>
-   * @gwt.typeArgs <java.lang.String>
-   * 
+   * @gwt.typeArgs <java.lang.String> 
+   *
    * @param indexes indexes to be mapped
    * @return map of indexes --> string values
    */
-  Map getMultipleStrings(List indexes) throws SimpleRPCException;
+  Map<Integer, String> getMultipleStrings(List<Integer> indexes)
+      throws SimpleRPCException;
 }

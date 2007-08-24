@@ -89,10 +89,12 @@ public class Popups extends Sink implements ClickListener {
             + "dialog box over it (this obscure corner case often renders incorrectly "
             + "on some browsers).</p>") {
 
+      @Override
       public Sink createInstance() {
         return new Popups();
       }
 
+      @Override
       public String getColor() {
         return "#bf2a2a";
       }
@@ -131,6 +133,7 @@ public class Popups extends Sink implements ClickListener {
     }
   }
 
+  @Override
   public void onShow() {
   }
 }

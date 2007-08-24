@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package com.google.gwt.sample.simplerpc.client;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Async class associated with SimpleRPCService.
@@ -27,10 +28,11 @@ public interface SimpleRPCServiceAsync {
   /**
    * Async version of <code>getString</code>.
    */
-  void getString(int index, AsyncCallback callback);
+  void getString(int index, AsyncCallback<String> callback);
 
   /**
    * Async version of <code>getMultipleStrings</code>.
    */
-  void getMultipleStrings(List indexes, AsyncCallback callback);
+  void getMultipleStrings(List<Integer> indexes,
+      AsyncCallback<Map<Integer, String>> callback);
 }

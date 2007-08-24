@@ -23,12 +23,12 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.MissingResourceException;
 
 /**
- * Demonstrates {@link ConstantsWithLookup}.
+ * Demonstrates {@link com.google.gwt.i18n.client.ConstantsWithLookup}.
  */
 public class ConstantsWithLookupExampleController {
 
   private static final String DEFAULT_INPUT = "red";
-  private static final ColorConstants COLORS = (ColorConstants) GWT.create(ColorConstants.class);
+  private static final ColorConstants COLORS = GWT.create(ColorConstants.class);
 
   public final TextBox txtInput = new TextBox();
   public final TextBox txtResult = new TextBox();
@@ -43,6 +43,7 @@ public class ConstantsWithLookupExampleController {
     txtResult.setReadOnly(true);
 
     txtInput.addKeyboardListener(new KeyboardListenerAdapter() {
+      @Override
       public void onKeyUp(Widget sender, char keyCode, int modifiers) {
         maybeRefreshLookup(constants);
       }

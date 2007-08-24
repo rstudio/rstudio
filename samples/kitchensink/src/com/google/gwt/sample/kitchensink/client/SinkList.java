@@ -41,6 +41,7 @@ public class SinkList extends Composite {
       sinkEvents(Event.MOUSEEVENTS);
     }
 
+    @Override
     public void onBrowserEvent(Event event) {
       switch (DOM.eventGetType(event)) {
         case Event.ONMOUSEOVER:
@@ -57,7 +58,7 @@ public class SinkList extends Composite {
   }
 
   private HorizontalPanel list = new HorizontalPanel();
-  private ArrayList sinks = new ArrayList();
+  private ArrayList<SinkInfo> sinks = new ArrayList<SinkInfo>();
 
   private int selectedSink = -1;
 
@@ -81,7 +82,7 @@ public class SinkList extends Composite {
 
   public SinkInfo find(String sinkName) {
     for (int i = 0; i < sinks.size(); ++i) {
-      SinkInfo info = (SinkInfo) sinks.get(i);
+      SinkInfo info = sinks.get(i);
       if (info.getName().equals(sinkName)) {
         return info;
       }
@@ -96,7 +97,7 @@ public class SinkList extends Composite {
     }
 
     for (int i = 0; i < sinks.size(); ++i) {
-      SinkInfo info = (SinkInfo) sinks.get(i);
+      SinkInfo info = sinks.get(i);
       if (info.getName().equals(name)) {
         selectedSink = i;
         styleSink(selectedSink, true);
@@ -108,7 +109,7 @@ public class SinkList extends Composite {
   private void colorSink(int index, boolean on) {
     String color = "";
     if (on) {
-      color = ((SinkInfo) sinks.get(index)).getColor();
+      color = sinks.get(index).getColor();
     }
 
     Widget w = list.getWidget(index + 1);

@@ -43,13 +43,13 @@ public class I18N implements EntryPoint {
    */
   public void onModuleLoad() {
     // An example that demonstrates NumberFormat.
-    NumberFormatExampleConstants numberFormatConstants = (NumberFormatExampleConstants) GWT.create(NumberFormatExampleConstants.class);
+    NumberFormatExampleConstants numberFormatConstants = GWT.create(NumberFormatExampleConstants.class);
     NumberFormatExampleController numberFormatController = new NumberFormatExampleController(
         numberFormatConstants);
     initNumberFormatExample(numberFormatController);
 
     // An example that demonstrates DateTimeFormat.
-    DateTimeFormatExampleConstants dateTimeFormatConstants = (DateTimeFormatExampleConstants) GWT.create(DateTimeFormatExampleConstants.class);
+    DateTimeFormatExampleConstants dateTimeFormatConstants = GWT.create(DateTimeFormatExampleConstants.class);
     DateTimeFormatExampleController dateTimeFormatController = new DateTimeFormatExampleController(
         dateTimeFormatConstants);
     initDateTimeFormatExample(dateTimeFormatController);
@@ -58,13 +58,13 @@ public class I18N implements EntryPoint {
     initConstantsExample();
 
     // An example that demonstrates ConstantsWithLookup.
-    ConstantsWithLookupExampleConstants constantsWithLookupConstants = (ConstantsWithLookupExampleConstants) GWT.create(ConstantsWithLookupExampleConstants.class);
+    ConstantsWithLookupExampleConstants constantsWithLookupConstants = GWT.create(ConstantsWithLookupExampleConstants.class);
     ConstantsWithLookupExampleController constantsWithLookupController = new ConstantsWithLookupExampleController(
         constantsWithLookupConstants);
     initConstantsWithLookupExample(constantsWithLookupController);
 
     // An example that demonstrates Messages.
-    MessagesExampleConstants messagesExampleConstants = (MessagesExampleConstants) GWT.create(MessagesExampleConstants.class);
+    MessagesExampleConstants messagesExampleConstants = GWT.create(MessagesExampleConstants.class);
     MessagesExampleController messagesController = new MessagesExampleController(
         messagesExampleConstants);
     initMessagesExample(messagesController);
@@ -95,11 +95,10 @@ public class I18N implements EntryPoint {
   }
 
   private void initConstantsExample() {
-    ConstantsExampleConstants constants = (ConstantsExampleConstants) GWT.create(ConstantsExampleConstants.class);
+    ConstantsExampleConstants constants = GWT.create(ConstantsExampleConstants.class);
     ListBox colorChoices = new ListBox();
 
-    for (Iterator iter = constants.colorMap().values().iterator(); iter.hasNext();) {
-      String color = (String) iter.next();
+    for (String color : constants.colorMap().values()) {
       colorChoices.addItem(color);
     }
 
@@ -146,9 +145,9 @@ public class I18N implements EntryPoint {
     bindElement("dictionaryExample", t);
 
     Dictionary userInfo = Dictionary.getDictionary("userInfo");
-    Iterator s = userInfo.keySet().iterator();
+    Iterator<String> s = userInfo.keySet().iterator();
     for (int i = 0; s.hasNext(); i++) {
-      String key = (String) s.next();
+      String key = s.next();
       t.setText(0, i, key);
       t.setText(1, i, userInfo.get(key));
     }
