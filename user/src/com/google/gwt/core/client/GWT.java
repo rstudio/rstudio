@@ -56,7 +56,7 @@ public final class GWT {
    *          instantiated
    * @return the new instance, which must be typecast to the requested class.
    */
-  public static Object create(Class classLiteral) {
+  public static <T> T create(Class<?> classLiteral) {
     /*
      * In web mode, the compiler directly replaces calls to this method with a
      * new Object() type expression of the correct rebound type.

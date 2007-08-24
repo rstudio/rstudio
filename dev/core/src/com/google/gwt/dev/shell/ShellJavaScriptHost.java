@@ -124,6 +124,6 @@ public interface ShellJavaScriptHost {
   /**
    * Resolves a deferred binding request and create the requested object.
    */
-  abstract Object rebindAndCreate(String requestedTypeName)
+  abstract <T> T rebindAndCreate(String requestedTypeName)
       throws UnableToCompleteException;
 }

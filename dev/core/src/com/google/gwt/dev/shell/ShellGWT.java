@@ -20,7 +20,7 @@ package com.google.gwt.dev.shell;
  */
 public class ShellGWT {
 
-  public static Object create(Class<?> classLiteral) {
+  public static <T> T create(Class<?> classLiteral) {
     return JavaScriptHost.rebindAndCreate(classLiteral);
   }
 

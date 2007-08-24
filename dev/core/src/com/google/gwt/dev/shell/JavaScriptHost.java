@@ -147,7 +147,7 @@ public class JavaScriptHost {
   /**
    * Resolves a deferred binding request and create the requested object.
    */
-  public static Object rebindAndCreate(Class<?> requestedClass) {
+  public static <T> T rebindAndCreate(Class<?> requestedClass) {
     String className = requestedClass.getName();
     try {
       return sHost.rebindAndCreate(className);

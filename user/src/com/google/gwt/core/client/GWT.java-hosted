@@ -42,7 +42,7 @@ public final class GWT {
     sUncaughtExceptionHandler = handler;
   }
 
-  public static Object create(Class classLiteral) {
+  public static <T> T create(Class<?> classLiteral) {
     // deferred binding at runtime
     return ShellGWT.create(classLiteral);
   }
