@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class Compilations {
 
-  private final List list = new ArrayList();
+  private final List<Compilation> list = new ArrayList<Compilation>();
 
   public void add(Compilation compilation) {
     list.add(compilation);
@@ -48,7 +48,7 @@ public class Compilations {
 
     // Clone the list so that we can easily whittle it down.
     //
-    List candidates = new ArrayList(list);
+    List<Compilation> candidates = new ArrayList<Compilation>(list);
 
     // First, the entry points must all be present and map the same way in the
     // correct compilation.
@@ -61,8 +61,8 @@ public class Compilations {
 
     // For the remaining compilations, all recorded rebinds must still match.
     //
-    for (Iterator iter = candidates.iterator(); iter.hasNext();) {
-      Compilation c = (Compilation) iter.next();
+    for (Iterator<Compilation> iter = candidates.iterator(); iter.hasNext();) {
+      Compilation c = iter.next();
       String[] cachedIns = c.getRebindInputs();
       for (int i = 0; i < cachedIns.length; i++) {
         String cachedIn = cachedIns[i];
@@ -84,7 +84,7 @@ public class Compilations {
     } else if (candidates.size() == 1) {
       // Found the perfect match.
       //
-      return (Compilation) candidates.get(0);
+      return candidates.get(0);
     } else {
       // Unexpected situation that means something really weird happened.
       //
@@ -94,13 +94,14 @@ public class Compilations {
     }
   }
 
-  public Iterator iterator() {
+  public Iterator<Compilation> iterator() {
     return list.iterator();
   }
 
-  private void removeMismatches(List candidates, String in, String out) {
-    for (Iterator iter = candidates.iterator(); iter.hasNext();) {
-      Compilation c = (Compilation) iter.next();
+  private void removeMismatches(List<Compilation> candidates, String in,
+      String out) {
+    for (Iterator<Compilation> iter = candidates.iterator(); iter.hasNext();) {
+      Compilation c = iter.next();
       String cachedOut = c.getRebindOutput(in);
       if (!out.equals(cachedOut)) {
         iter.remove();

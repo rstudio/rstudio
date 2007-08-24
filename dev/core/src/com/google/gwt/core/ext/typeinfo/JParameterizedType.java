@@ -16,7 +16,6 @@
 package com.google.gwt.core.ext.typeinfo;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -26,7 +25,7 @@ public class JParameterizedType extends JType {
 
   private final JClassType parameterized;
 
-  private final List typeArgs = new ArrayList();
+  private final List<JType> typeArgs = new ArrayList<JType>();
 
   JParameterizedType(JClassType parameterized) {
     this.parameterized = parameterized;
@@ -50,13 +49,13 @@ public class JParameterizedType extends JType {
     return parameterized.getQualifiedSourceName();
   }
 
+  @Override
   public String getParameterizedQualifiedSourceName() {
     StringBuffer sb = new StringBuffer();
     sb.append(parameterized.getQualifiedSourceName());
     sb.append('<');
     boolean needComma = false;
-    for (Iterator iter = typeArgs.iterator(); iter.hasNext();) {
-      JType typeArg = (JType) iter.next();
+    for (JType typeArg : typeArgs) {
       if (needComma) {
         sb.append(", ");
       } else {

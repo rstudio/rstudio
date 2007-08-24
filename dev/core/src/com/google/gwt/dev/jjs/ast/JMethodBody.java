@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class JMethodBody extends JAbstractMethodBody {
 
-  public final ArrayList/* <JLocal> */locals = new ArrayList/* <JLocal> */();
+  public final ArrayList <JLocal>locals = new ArrayList<JLocal>();
   private JBlock body;
 
   public JMethodBody(JProgram program, SourceInfo info) {
@@ -33,10 +33,11 @@ public class JMethodBody extends JAbstractMethodBody {
     body = new JBlock(program, info);
   }
 
-  public List getStatements() {
+  public List<JStatement> getStatements() {
     return body.statements;
   }
 
+  @Override
   public boolean isNative() {
     return false;
   }

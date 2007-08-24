@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class JBlock extends JStatement {
 
-  public List/* <JStatement> */statements = new ArrayList/* <JStatement> */();
+  public List<JStatement> statements = new ArrayList<JStatement>();
 
   public JBlock(JProgram program, SourceInfo info) {
     super(program, info);

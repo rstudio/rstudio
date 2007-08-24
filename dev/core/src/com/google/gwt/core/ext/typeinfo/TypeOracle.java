@@ -90,7 +90,7 @@ public class TypeOracle {
   }
 
   static String[] modifierBitsToNames(int bits) {
-    List strings = new ArrayList();
+    List<String> strings = new ArrayList<String>();
 
     // The order is based on the order in which we want them to appear.
     //
@@ -142,7 +142,8 @@ public class TypeOracle {
    * @param invalidTypes set of type known to be invalid
    * @return true if the type has been invalidated
    */
-  private static boolean isInvalidatedTypeRecursive(JType type, Set invalidTypes) {
+  private static boolean isInvalidatedTypeRecursive(JType type,
+      Set<JType> invalidTypes) {
     if (type instanceof JParameterizedType) {
       JParameterizedType parameterizedType = (JParameterizedType) type;
       if (isInvalidatedTypeRecursive(parameterizedType.getRawType(),
@@ -165,17 +166,17 @@ public class TypeOracle {
     }
   }
 
-  private final Map arrayTypes = new IdentityHashMap();
+  private final Map<JType, JArrayType> arrayTypes = new IdentityHashMap<JType, JArrayType>();
 
   private JClassType javaLangObject;
 
-  private final Map packages = new HashMap();
+  private final Map<String, JPackage> packages = new HashMap<String, JPackage>();
 
-  private final Map parameterizedTypes = new HashMap();
+  private final Map<String, JParameterizedType> parameterizedTypes = new HashMap<String, JParameterizedType>();
 
   private int reloadCount = 0;
 
-  private final Map typesByCup = new IdentityHashMap();
+  private final Map<CompilationUnitProvider, JClassType[]> typesByCup = new IdentityHashMap<CompilationUnitProvider, JClassType[]>();
 
   public TypeOracle() {
     // Always create the default package.
@@ -247,7 +248,7 @@ public class TypeOracle {
    * calls to this method with the same argument return the same object.
    * 
    * @param componentType the component type of the array, which can itself be
-   *          an array type
+   *            an array type
    * @return a type object representing an array of the component type
    */
   public JArrayType getArrayType(JType componentType) {
@@ -317,8 +318,8 @@ public class TypeOracle {
    * the same arguments return the same object.
    * 
    * @param rawType the raw type of the array, which must be a class or
-   *          interface type and cannot be a primitive, array, or another
-   *          parameterized type
+   *            interface type and cannot be a primitive, array, or another
+   *            parameterized type
    * @param typeArgs the type arguments bound to the specified raw type
    * @return a type object representing this particular binding of type
    *         arguments to the specified raw type
@@ -380,7 +381,7 @@ public class TypeOracle {
    * @return an array of types, possibly of zero length
    */
   public JClassType[] getTypes() {
-    Set allTypes = new HashSet();
+    Set<JType> allTypes = new HashSet<JType>();
     JPackage[] pkgs = getPackages();
     for (int i = 0; i < pkgs.length; i++) {
       JPackage pkg = pkgs[i];
@@ -390,11 +391,11 @@ public class TypeOracle {
         buildAllTypesImpl(allTypes, type);
       }
     }
-    return (JClassType[]) allTypes.toArray(NO_JCLASSES);
+    return allTypes.toArray(NO_JCLASSES);
   }
 
   public JClassType[] getTypesInCompilationUnit(CompilationUnitProvider cup) {
-    JClassType[] types = (JClassType[]) typesByCup.get(cup);
+    JClassType[] types = typesByCup.get(cup);
     if (types != null) {
       return types;
     } else {
@@ -439,10 +440,10 @@ public class TypeOracle {
    * pleasing" order rather than a computationally reliable order.
    */
   public void sort(JClassType[] types) {
-    Arrays.sort(types, new Comparator() {
-      public int compare(Object type1, Object type2) {
-        String name1 = ((JClassType) type1).getQualifiedSourceName();
-        String name2 = ((JClassType) type2).getQualifiedSourceName();
+    Arrays.sort(types, new Comparator<JClassType>() {
+      public int compare(JClassType type1, JClassType type2) {
+        String name1 = type1.getQualifiedSourceName();
+        String name2 = type2.getQualifiedSourceName();
         return name1.compareTo(name2);
       }
     });
@@ -454,8 +455,8 @@ public class TypeOracle {
    * pleasing" order rather than a computationally reliable order.
    */
   public void sort(JConstructor[] ctors) {
-    Arrays.sort(ctors, new Comparator() {
-      public int compare(Object o1, Object o2) {
+    Arrays.sort(ctors, new Comparator<JConstructor>() {
+      public int compare(JConstructor o1, JConstructor o2) {
         // Nothing for now; could enhance to sort based on parameter list
         return 0;
       }
@@ -468,10 +469,10 @@ public class TypeOracle {
    * pleasing" order rather than a computationally reliable order.
    */
   public void sort(JField[] fields) {
-    Arrays.sort(fields, new Comparator() {
-      public int compare(Object o1, Object o2) {
-        final JField f1 = ((JField) o1);
-        final JField f2 = ((JField) o2);
+    Arrays.sort(fields, new Comparator<JField>() {
+      public int compare(JField o1, JField o2) {
+        final JField f1 = o1;
+        final JField f2 = o2;
         String name1 = f1.getName();
         String name2 = f2.getName();
         return name1.compareTo(name2);
@@ -485,10 +486,10 @@ public class TypeOracle {
    * pleasing" order rather than a computationally reliable order.
    */
   public void sort(JMethod[] methods) {
-    Arrays.sort(methods, new Comparator() {
-      public int compare(Object o1, Object o2) {
-        final JMethod m1 = ((JMethod) o1);
-        final JMethod m2 = ((JMethod) o2);
+    Arrays.sort(methods, new Comparator<JMethod>() {
+      public int compare(JMethod o1, JMethod o2) {
+        final JMethod m1 = o1;
+        final JMethod m2 = o2;
         String name1 = m1.getName();
         String name2 = m2.getName();
         return name1.compareTo(name2);
@@ -507,8 +508,8 @@ public class TypeOracle {
    * @param cup compilation unit whose types will be invalidated
    */
   void invalidateTypesInCompilationUnit(CompilationUnitProvider cup) {
-    Set invalidTypes = new HashSet();
-    JClassType[] types = (JClassType[]) typesByCup.get(cup);
+    Set<JType> invalidTypes = new HashSet<JType>();
+    JClassType[] types = typesByCup.get(cup);
     if (types == null) {
       return;
     }
@@ -528,7 +529,7 @@ public class TypeOracle {
   }
 
   void recordTypeInCompilationUnit(CompilationUnitProvider cup, JClassType type) {
-    JClassType[] types = (JClassType[]) typesByCup.get(cup);
+    JClassType[] types = typesByCup.get(cup);
     if (types == null) {
       types = new JClassType[] {type};
     } else {
@@ -561,7 +562,7 @@ public class TypeOracle {
     consumeTypeArgMetaData(logger);
   }
 
-  private void buildAllTypesImpl(Set allTypes, JClassType type) {
+  private void buildAllTypesImpl(Set<JType> allTypes, JClassType type) {
     boolean didAdd = allTypes.add(type);
     assert (didAdd);
     JClassType[] nestedTypes = type.getNestedTypes();
@@ -656,7 +657,7 @@ public class TypeOracle {
         // Okay, parse each one and correlate it to a part of the decl.
         //
         boolean returnTypeHandled = false;
-        Set paramsAlreadySet = new HashSet();
+        Set<JParameter> paramsAlreadySet = new HashSet<JParameter>();
         for (int j = 0; j < tokensArray.length; j++) {
           String[] tokens = tokensArray[j];
           // It is either referring to the return type or a parameter type.
@@ -790,8 +791,9 @@ public class TypeOracle {
     throw new NotFoundException(type);
   }
 
-  private void parseTypeArgComponent(List typeArgList, String typeArgComponent)
-      throws NotFoundException, ParseException, BadTypeArgsException {
+  private void parseTypeArgComponent(List<JType> typeArgList,
+      String typeArgComponent) throws NotFoundException, ParseException,
+      BadTypeArgsException {
     JType typeArg = parseImpl(typeArgComponent);
     if (typeArg.isPrimitive() != null) {
       // Cannot be primitive.
@@ -810,7 +812,7 @@ public class TypeOracle {
    */
   private JType[] parseTypeArgContents(String typeArgContents)
       throws ParseException, NotFoundException, BadTypeArgsException {
-    List typeArgList = new ArrayList();
+    List<JType> typeArgList = new ArrayList<JType>();
 
     int start = 0;
     for (int offset = 0, length = typeArgContents.length(); offset < length; ++offset) {
@@ -818,12 +820,12 @@ public class TypeOracle {
       switch (ch) {
         case '<':
           // scan for closing '>' while ignoring commas
-          for (int depth = 1; depth > 0; ) {
+          for (int depth = 1; depth > 0;) {
             if (++offset == length) {
               throw new ParseException(
-              "Mismatched brackets; expected '<' to match subsequent '>'");
+                  "Mismatched brackets; expected '<' to match subsequent '>'");
             }
-            
+
             char ich = typeArgContents.charAt(offset);
             if (ich == '<') {
               ++depth;
@@ -847,7 +849,7 @@ public class TypeOracle {
     String typeArgComponent = typeArgContents.substring(start);
     parseTypeArgComponent(typeArgList, typeArgComponent);
 
-    JType[] typeArgs = (JType[]) typeArgList.toArray(new JType[typeArgList.size()]);
+    JType[] typeArgs = typeArgList.toArray(new JType[typeArgList.size()]);
     return typeArgs;
   }
 
@@ -872,7 +874,7 @@ public class TypeOracle {
    * 
    * @param invalidTypes set of types that have been invalidated.
    */
-  private void removeInvalidatedArrayTypes(Set invalidTypes) {
+  private void removeInvalidatedArrayTypes(Set<JType> invalidTypes) {
     arrayTypes.keySet().removeAll(invalidTypes);
   }
 
@@ -882,11 +884,11 @@ public class TypeOracle {
    * 
    * @param invalidTypes set of types known to have been invalidated
    */
-  private void removeInvalidatedParameterizedTypes(Set invalidTypes) {
-    Iterator iter = parameterizedTypes.values().iterator();
+  private void removeInvalidatedParameterizedTypes(Set<JType> invalidTypes) {
+    Iterator<JParameterizedType> iter = parameterizedTypes.values().iterator();
 
     while (iter.hasNext()) {
-      JType type = (JType) iter.next();
+      JType type = iter.next();
 
       if (isInvalidatedTypeRecursive(type, invalidTypes)) {
         iter.remove();
@@ -899,8 +901,8 @@ public class TypeOracle {
    * 
    * @param invalidTypes set of types to remove
    */
-  private void removeTypes(Set invalidTypes) {
-    Iterator iter = invalidTypes.iterator();
+  private void removeTypes(Set<JType> invalidTypes) {
+    Iterator<JType> iter = invalidTypes.iterator();
 
     while (iter.hasNext()) {
       JClassType classType = (JClassType) iter.next();

@@ -69,7 +69,7 @@ public class StandardGeneratorContextTest extends TestCase {
    * Stores the File objects to delete in the order they were created. Delete
    * them in reverse order.
    */
-  private final List toDelete = new ArrayList();
+  private final List<File> toDelete = new ArrayList<File>();
   private final TypeOracle mockTypeOracle = new MockTypeOracle();
   private final PropertyOracle mockPropOracle = new MockPropertyOracle();
   private final File tempGenDir;
@@ -290,7 +290,7 @@ public class StandardGeneratorContextTest extends TestCase {
 
   protected void tearDown() throws Exception {
     for (int i = toDelete.size() - 1; i >= 0; --i) {
-      File f = (File) toDelete.get(i);
+      File f = toDelete.get(i);
       assertTrue(f.delete());
     }
   }

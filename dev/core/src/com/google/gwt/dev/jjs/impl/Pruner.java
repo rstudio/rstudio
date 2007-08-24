@@ -34,6 +34,7 @@ import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
+import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
@@ -239,13 +240,13 @@ public class Pruner {
    */
   private class RescueVisitor extends JVisitor {
 
-    private final Set/* <JReferenceType> */instantiatedTypes = new HashSet/* <JReferenceType> */();
+    private final Set<JReferenceType> instantiatedTypes = new HashSet<JReferenceType>();
 
     public void commitInstantiatedTypes() {
       program.typeOracle.setInstantiatedTypes(instantiatedTypes);
     }
 
-    // @Override
+    @Override
     public boolean visit(JArrayType type, Context ctx) {
       assert (referencedTypes.contains(type));
       boolean isInstantiated = instantiatedTypes.contains(type);
@@ -467,22 +468,22 @@ public class Pruner {
       return visit((JFieldRef) x, ctx);
     }
 
-    // @Override
+    @Override
     public boolean visit(JsniMethodRef x, Context ctx) {
       /*
        * SPECIAL: each argument of the call passes a value from JavaScript into
        * Java.
        */
-      ArrayList params = x.getTarget().params;
+      ArrayList<JParameter> params = x.getTarget().params;
       for (int i = 0, c = params.size(); i < c; ++i) {
-        JParameter param = (JParameter) params.get(i);
+        JParameter param = params.get(i);
         maybeRescueJavaScriptObjectPassingIntoJava(param.getType());
       }
       // JsniMethodRef rescues as JMethodCall
       return visit((JMethodCall) x, ctx);
     }
 
-    // @Override
+    @Override
     public boolean visit(JStringLiteral literal, Context ctx) {
       // rescue and instantiate java.lang.String
       rescue(program.getTypeJavaLangString(), true, true);
@@ -577,7 +578,7 @@ public class Pruner {
           for (int i = 0; i < stringType.methods.size(); ++i) {
             JMethod meth = (JMethod) stringType.methods.get(i);
             if (meth.getName().equals("valueOf")) {
-              List params = meth.getOriginalParamTypes();
+              List<JType> params = meth.getOriginalParamTypes();
               if (params.size() == 1) {
                 if (params.get(0) == charType) {
                   stringValueOfChar = meth;
@@ -649,8 +650,8 @@ public class Pruner {
 
   private final boolean saveCodeGenTypes;
   private final JProgram program;
-  private final Set/* <JNode> */referencedNonTypes = new HashSet/* <JNode> */();
-  private final Set/* <JReferenceType> */referencedTypes = new HashSet/* <JReferenceType> */();
+  private final Set<JNode> referencedNonTypes = new HashSet<JNode>();
+  private final Set<JReferenceType> referencedTypes = new HashSet<JReferenceType>();
   private JMethod stringValueOfChar = null;
 
   private Pruner(JProgram program, boolean saveCodeGenTypes) {

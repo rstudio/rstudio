@@ -53,7 +53,6 @@ import org.eclipse.swt.widgets.Shell;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -264,10 +263,10 @@ public class GWTShell extends ToolBase {
     Display.setAppName("GWT");
   }
 
-  public static String checkHost(String hostUnderConsideration, Set hosts) {
+  public static String checkHost(String hostUnderConsideration,
+      Set<String> hosts) {
     hostUnderConsideration = hostUnderConsideration.toLowerCase();
-    for (Iterator i = hosts.iterator(); i.hasNext();) {
-      String rule = i.next().toString().toLowerCase();
+    for (String rule : hosts) {
       // match on lowercased regex
       if (hostUnderConsideration.matches(".*" + rule + ".*")) {
         return rule;
@@ -283,10 +282,9 @@ public class GWTShell extends ToolBase {
     return "^" + raw.replaceAll("[.]", "[.]");
   }
 
-  public static String formatRules(Set invalidHttpHosts) {
+  public static String formatRules(Set<String> invalidHttpHosts) {
     StringBuffer out = new StringBuffer();
-    for (Iterator i = invalidHttpHosts.iterator(); i.hasNext();) {
-      String rule = (String) i.next();
+    for (String rule : invalidHttpHosts) {
       out.append(rule);
       out.append(" ");
     }
@@ -337,9 +335,9 @@ public class GWTShell extends ToolBase {
 
   private boolean runTomcat = true;
 
-  private final List browserShells = new ArrayList();
+  private final List<Shell> browserShells = new ArrayList<Shell>();
 
-  private final List startupUrls = new ArrayList();
+  private final List<String> startupUrls = new ArrayList<String>();
 
   private File genDir;
 
@@ -459,8 +457,8 @@ public class GWTShell extends ToolBase {
       //
       String startupURL = "";
       try {
-        for (Iterator iter = startupUrls.iterator(); iter.hasNext();) {
-          startupURL = normalizeURL((String) iter.next());
+        for (String prenormalized : startupUrls) {
+          startupURL = normalizeURL(prenormalized);
           logger.log(TreeLogger.TRACE, "Starting URL: " + startupURL, null);
           BrowserWidget bw = openNewBrowserWindow();
           bw.go(startupURL);
@@ -486,7 +484,8 @@ public class GWTShell extends ToolBase {
 
     int prt = getPort();
     if (prt != 80 && prt != 0) {
-      // CHECKSTYLE_OFF: Not really an assembled error message, so no space after ':'.
+      // CHECKSTYLE_OFF: Not really an assembled error message, so no space
+      // after ':'.
       return "http://localhost:" + prt + "/" + unknownUrlText;
       // CHECKSTYLE_ON
     } else {
@@ -746,7 +745,7 @@ public class GWTShell extends ToolBase {
         return false;
       }
 
-      // Record what port Tomcat is actually running on. 
+      // Record what port Tomcat is actually running on.
       port = EmbeddedTomcatServer.getPort();
     }
 

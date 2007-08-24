@@ -59,17 +59,16 @@ public class CastNormalizer {
 
   private class AssignTypeIdsVisitor extends JVisitor {
 
-    Set/* <JClassType> */alreadyRan = new HashSet/* <JClassType> */();
-    private Map/* <JReferenceType, Set<JReferenceType>> */queriedTypes = new IdentityHashMap();
+    Set<JClassType> alreadyRan = new HashSet<JClassType>();
+    private Map<JReferenceType, Set<JReferenceType>> queriedTypes = new IdentityHashMap<JReferenceType, Set<JReferenceType>>();
     private int nextQueryId = 1; // 0 is reserved
-    private final List/* <JArrayType> */instantiatedArrayTypes = new ArrayList/* <JArrayType> */();
-    private List/* <JClassType> */classes = new ArrayList/* <JClassType> */();
-    private List/* <JsonObject> */jsonObjects = new ArrayList/* <JsonObject> */();
+    private final List<JArrayType> instantiatedArrayTypes = new ArrayList<JArrayType>();
+    private List<JClassType> classes = new ArrayList<JClassType>();
+    private List<JsonObject> jsonObjects = new ArrayList<JsonObject>();
 
     {
       JTypeOracle typeOracle = program.typeOracle;
-      for (Iterator it = program.getAllArrayTypes().iterator(); it.hasNext();) {
-        JArrayType arrayType = (JArrayType) it.next();
+      for (JArrayType arrayType : program.getAllArrayTypes()) {
         if (typeOracle.isInstantiatedType(arrayType)) {
           instantiatedArrayTypes.add(arrayType);
         }
@@ -100,15 +99,13 @@ public class CastNormalizer {
        * requests, along with the set of types they can be successfully cast to.
        * Do it in super type order.
        */
-      for (Iterator it = program.getDeclaredTypes().iterator(); it.hasNext();) {
-        JReferenceType type = (JReferenceType) it.next();
+      for (JReferenceType type : program.getDeclaredTypes()) {
         if (type instanceof JClassType) {
           computeSourceClass((JClassType) type);
         }
       }
 
-      for (Iterator it = program.getAllArrayTypes().iterator(); it.hasNext();) {
-        JArrayType type = (JArrayType) it.next();
+      for (JArrayType type : program.getAllArrayTypes()) {
         computeSourceClass(type);
       }
 
@@ -121,7 +118,7 @@ public class CastNormalizer {
      * If this expression could possibly generate an ArrayStoreException, we
      * must record a query on the element type being assigned to.
      */
-    // @Override
+    @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
       if (x.getOp() == JBinaryOperator.ASG && x.getLhs() instanceof JArrayRef) {
 
@@ -154,8 +151,8 @@ public class CastNormalizer {
         JType rhsType = x.getRhs().getType();
         assert (rhsType instanceof JReferenceType);
         JReferenceType refRhsType = (JReferenceType) rhsType;
-        for (Iterator it = instantiatedArrayTypes.iterator(); it.hasNext();) {
-          JArrayType arrayType = (JArrayType) it.next();
+
+        for (JArrayType arrayType : instantiatedArrayTypes) {
           if (typeOracle.canTheoreticallyCast(arrayType, lhsArrayType)) {
             JType itElementType = arrayType.getElementType();
             if (itElementType instanceof JReferenceType) {
@@ -166,14 +163,14 @@ public class CastNormalizer {
       }
     }
 
-    // @Override
+    @Override
     public void endVisit(JCastOperation x, Context ctx) {
       if (x.getCastType() != program.getTypeNull()) {
         recordCast(x.getCastType(), x.getExpr());
       }
     }
 
-    // @Override
+    @Override
     public void endVisit(JInstanceOf x, Context ctx) {
       assert (x.getTestType() != program.getTypeNull());
       recordCast(x.getTestType(), x.getExpr());
@@ -203,16 +200,19 @@ public class CastNormalizer {
       }
 
       // Find all possible query types which I can satisfy
-      Set/* <JReferenceType> */yesSet = null;
-      for (Iterator iter = queriedTypes.keySet().iterator(); iter.hasNext();) {
-        JReferenceType qType = (JReferenceType) iter.next();
-        Set/* <JReferenceType> */querySet = (Set) queriedTypes.get(qType);
+      Set<JReferenceType> yesSet = null;
+      for (Iterator<JReferenceType> iter = queriedTypes.keySet().iterator(); iter.hasNext();) {
+
+        JReferenceType qType = iter.next();
+        Set<JReferenceType> querySet = queriedTypes.get(qType);
         if (program.typeOracle.canTriviallyCast(type, qType)) {
-          for (Iterator it = querySet.iterator(); it.hasNext();) {
-            JReferenceType argType = (JReferenceType) it.next();
+
+          for (Iterator<JReferenceType> it = querySet.iterator(); it.hasNext();) {
+
+            JReferenceType argType = it.next();
             if (program.typeOracle.canTriviallyCast(type, argType)) {
               if (yesSet == null) {
-                yesSet = new HashSet/* <JReferenceType> */();
+                yesSet = new HashSet<JReferenceType>();
               }
               yesSet.add(qType);
               break;
@@ -234,9 +234,8 @@ public class CastNormalizer {
       // use an array to sort my yes set
       JReferenceType[] yesArray = new JReferenceType[nextQueryId];
       if (yesSet != null) {
-        for (Iterator it = yesSet.iterator(); it.hasNext();) {
-          JReferenceType yesType = (JReferenceType) it.next();
-          Integer boxedInt = (Integer) queryIds.get(yesType);
+        for (JReferenceType yesType : yesSet) {
+          Integer boxedInt = queryIds.get(yesType);
           yesArray[boxedInt.intValue()] = yesType;
         }
       }
@@ -276,10 +275,10 @@ public class CastNormalizer {
     private void recordCastInternal(JReferenceType targetType,
         JReferenceType rhsType) {
       JReferenceType toType = targetType;
-      Set/* <JReferenceType> */querySet = (Set) queriedTypes.get(toType);
+      Set<JReferenceType> querySet = queriedTypes.get(toType);
       if (querySet == null) {
         queryIds.put(toType, new Integer(nextQueryId++));
-        querySet = new HashSet/* <JReferenceType> */();
+        querySet = new HashSet<JReferenceType>();
         queriedTypes.put(toType, querySet);
       }
       querySet.add(rhsType);
@@ -294,7 +293,7 @@ public class CastNormalizer {
 
     private JMethod stringValueOfChar = null;
 
-    // @Override
+    @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
       if (x.getType() != program.getTypeJavaLangString()) {
         return;
@@ -343,7 +342,7 @@ public class CastNormalizer {
    */
   private class DivVisitor extends JModVisitor {
 
-    // @Override
+    @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
       JType type = x.getType();
       if (x.getOp() == JBinaryOperator.DIV
@@ -363,7 +362,7 @@ public class CastNormalizer {
    */
   private class ReplaceTypeChecksVisitor extends JModVisitor {
 
-    // @Override
+    @Override
     public void endVisit(JCastOperation x, Context ctx) {
       JExpression replaceExpr;
       JType toType = x.getCastType();
@@ -415,7 +414,7 @@ public class CastNormalizer {
           // override the type of the called method with the target cast type
           JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
               method, toType);
-          Integer boxedInt = (Integer) queryIds.get(refType);
+          Integer boxedInt = queryIds.get(refType);
           JIntLiteral qId = program.getLiteralInt(boxedInt.intValue());
           call.getArgs().add(curExpr);
           call.getArgs().add(qId);
@@ -481,7 +480,7 @@ public class CastNormalizer {
       ctx.replaceMe(replaceExpr);
     }
 
-    // @Override
+    @Override
     public void endVisit(JInstanceOf x, Context ctx) {
       JType argType = x.getExpr().getType();
       if (argType instanceof JClassType
@@ -497,7 +496,7 @@ public class CastNormalizer {
         JMethod method = program.getIndexedMethod("Cast.instanceOf");
         JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
             method);
-        Integer boxedInt = (Integer) queryIds.get(x.getTestType());
+        Integer boxedInt = queryIds.get(x.getTestType());
         JIntLiteral qId = program.getLiteralInt(boxedInt.intValue());
         call.getArgs().add(x.getExpr());
         call.getArgs().add(qId);
@@ -510,7 +509,7 @@ public class CastNormalizer {
     new CastNormalizer(program).execImpl();
   }
 
-  private Map/* <JReferenceType, Integer> */queryIds = new IdentityHashMap();
+  private Map<JReferenceType, Integer> queryIds = new IdentityHashMap<JReferenceType, Integer>();
 
   private final JProgram program;
 

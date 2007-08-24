@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,8 +53,8 @@ public class PropertyPermutations {
    * each string in the array corresponds to the property at the same index in
    * the array returned from {@link #getOrderedProperties()}.
    */
-  public Iterator iterator() {
-    return new Iterator() {
+  public Iterator<String[]> iterator() {
+    return new Iterator<String[]>() {
 
       private int iterPermIndex;
 
@@ -62,7 +62,7 @@ public class PropertyPermutations {
         return iterPermIndex < values.length;
       }
 
-      public Object next() {
+      public String[] next() {
         if (!hasNext()) {
           throw new NoSuchElementException();
         }

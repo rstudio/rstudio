@@ -1,4 +1,18 @@
-// Copyright 2006 Google Inc. All Rights Reserved.
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.jdt.test;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -29,7 +43,7 @@ public class ByteCodeCompilerTest extends TestCase {
     private abstract class TestCup implements CompilationUnitProvider {
 
       public TestCup(String packageName, String onlyTypeName) {
-        this(packageName, new String[]{onlyTypeName});
+        this(packageName, new String[] {onlyTypeName});
       }
 
       public TestCup(String packageName, String[] typeNames) {
@@ -75,7 +89,7 @@ public class ByteCodeCompilerTest extends TestCase {
 
     public final CompilationUnitProvider findCompilationUnit(TreeLogger logger,
         String typeName) {
-      return (CompilationUnitProvider) cupsByTypeName.get(typeName);
+      return cupsByTypeName.get(typeName);
     }
 
     public final boolean isPackage(String possiblePackageName) {
@@ -108,41 +122,41 @@ public class ByteCodeCompilerTest extends TestCase {
     }
 
     {
-      pkgNames = new HashSet();
-      cupsByTypeName = new HashMap();
+      pkgNames = new HashSet<String>();
+      cupsByTypeName = new HashMap<String, CompilationUnitProvider>();
     }
 
-    final CompilationUnitProvider CU_AB =
-        new TestCup("test", new String[]{"A", "A.B"}) {
-          public char[] getSource() {
-            StringBuffer sb = new StringBuffer();
-            sb.append("package test;\n");
-            sb.append("public class A {\n");
-            sb.append("  public static class B extends A { }\n");
-            sb.append("}\n");
-            return sb.toString().toCharArray();
-          }
-        };
+    final CompilationUnitProvider CU_AB = new TestCup("test", new String[] {
+        "A", "A.B"}) {
+      public char[] getSource() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("package test;\n");
+        sb.append("public class A {\n");
+        sb.append("  public static class B extends A { }\n");
+        sb.append("}\n");
+        return sb.toString().toCharArray();
+      }
+    };
 
-    final CompilationUnitProvider CU_C =
-        new TestCup("test", new String[]{"C", "C.Message"}) {
-          public char[] getSource() {
-            StringBuffer sb = new StringBuffer();
-            sb.append("package test;\n");
-            sb.append("import com.google.gwt.core.client.GWT;\n");
-            sb.append("public class C {\n");
-            sb.append("  public static String getMessage() {\n");
-            sb.append("    return ((Message)GWT.create(Message.class)).f();\n");
-            sb.append("  }\n");
-            sb.append("  public static class Message {\n");
-            sb.append("    public String f() {\n");
-            sb.append("      return \"C.Message\";\n");
-            sb.append("    }\n");
-            sb.append("  }\n");
-            sb.append("}\n");
-            return sb.toString().toCharArray();
-          }
-        };
+    final CompilationUnitProvider CU_C = new TestCup("test", new String[] {
+        "C", "C.Message"}) {
+      public char[] getSource() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("package test;\n");
+        sb.append("import com.google.gwt.core.client.GWT;\n");
+        sb.append("public class C {\n");
+        sb.append("  public static String getMessage() {\n");
+        sb.append("    return ((Message)GWT.create(Message.class)).f();\n");
+        sb.append("  }\n");
+        sb.append("  public static class Message {\n");
+        sb.append("    public String f() {\n");
+        sb.append("      return \"C.Message\";\n");
+        sb.append("    }\n");
+        sb.append("  }\n");
+        sb.append("}\n");
+        return sb.toString().toCharArray();
+      }
+    };
 
     final CompilationUnitProvider CU_CLASS = new TestCup("java.lang", "Class") {
 
@@ -158,34 +172,33 @@ public class ByteCodeCompilerTest extends TestCase {
      * This one is different because D is not public and it lives in the default
      * package.
      */
-    final CompilationUnitProvider CU_DE =
-        new TestCup("", new String[]{"D", "D.E"}) {
-          public char[] getSource() {
-            StringBuffer sb = new StringBuffer();
-            sb.append("class D extends test.C.Message {\n");
-            sb.append("  public static class E extends D {\n");
-            sb.append("    public String getMessage() {\n");
-            sb.append("      return \"D.E.Message\";\n");
-            sb.append("    }\n");
-            sb.append("  }\n");
-            sb.append("}\n");
-            return sb.toString().toCharArray();
-          }
-        };
+    final CompilationUnitProvider CU_DE = new TestCup("", new String[] {
+        "D", "D.E"}) {
+      public char[] getSource() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("class D extends test.C.Message {\n");
+        sb.append("  public static class E extends D {\n");
+        sb.append("    public String getMessage() {\n");
+        sb.append("      return \"D.E.Message\";\n");
+        sb.append("    }\n");
+        sb.append("  }\n");
+        sb.append("}\n");
+        return sb.toString().toCharArray();
+      }
+    };
 
-    final CompilationUnitProvider CU_GWT =
-        new TestCup("com.google.gwt.core.client", "GWT") {
+    final CompilationUnitProvider CU_GWT = new TestCup(
+        "com.google.gwt.core.client", "GWT") {
 
-          public char[] getSource() {
-            StringBuffer sb = new StringBuffer();
-            sb.append("package com.google.gwt.core.client;\n");
-            sb.append("public final class GWT {\n");
-            sb
-              .append("  public static Object create(Class classLiteral) { return null; }\n");
-            sb.append("}\n");
-            return sb.toString().toCharArray();
-          }
-        };
+      public char[] getSource() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("package com.google.gwt.core.client;\n");
+        sb.append("public final class GWT {\n");
+        sb.append("  public static Object create(Class classLiteral) { return null; }\n");
+        sb.append("}\n");
+        return sb.toString().toCharArray();
+      }
+    };
 
     final CompilationUnitProvider CU_MAIN = new TestCup("test", "Main") {
 
@@ -211,19 +224,18 @@ public class ByteCodeCompilerTest extends TestCase {
       }
     };
 
-    final CompilationUnitProvider CU_STRING =
-        new TestCup("java.lang", "String") {
+    final CompilationUnitProvider CU_STRING = new TestCup("java.lang", "String") {
 
-          public char[] getSource() {
-            StringBuffer sb = new StringBuffer();
-            sb.append("package java.lang;\n");
-            sb.append("public class String { }\n");
-            return sb.toString().toCharArray();
-          }
-        };
+      public char[] getSource() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("package java.lang;\n");
+        sb.append("public class String { }\n");
+        return sb.toString().toCharArray();
+      }
+    };
 
-    private final Map cupsByTypeName;
-    private final Set pkgNames;
+    private final Map<String, CompilationUnitProvider> cupsByTypeName;
+    private final Set<String> pkgNames;
   }
 
   private static void scanAndCompile(TreeLogger logger)
@@ -242,8 +254,7 @@ public class ByteCodeCompilerTest extends TestCase {
           String typeName) {
         // ONLY LOOK FOR TOP-LEVEL TYPES.
         //
-        CompilationUnitProvider cup =
-            (CompilationUnitProvider) cups.get(typeName);
+        CompilationUnitProvider cup = cups.get(typeName);
         if (cup == null) {
           String path = typeName.replace('.', '/') + ".java";
           URL url = fo.find(path);
@@ -285,7 +296,7 @@ public class ByteCodeCompilerTest extends TestCase {
         return maxDotIndex;
       }
 
-      private Map cups = new HashMap();
+      private Map<String, CompilationUnitProvider> cups = new HashMap<String, CompilationUnitProvider>();
     };
 
     ByteCodeCompiler cs = new ByteCodeCompiler(host);
@@ -295,8 +306,8 @@ public class ByteCodeCompilerTest extends TestCase {
       long before = System.currentTimeMillis();
 
       for (int j = 0; j < allJava.length; j++) {
-        String typeName =
-            allJava[j].substring(0, allJava[j].length() - 5).replace('/', '.');
+        String typeName = allJava[j].substring(0, allJava[j].length() - 5).replace(
+            '/', '.');
         cs.getClassBytes(logger, typeName);
       }
 

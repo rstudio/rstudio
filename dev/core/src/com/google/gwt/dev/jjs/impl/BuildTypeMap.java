@@ -123,7 +123,8 @@ public class BuildTypeMap {
     private final JsParser jsParser = new JsParser();
     private final JsProgram jsProgram;
     private JProgram program;
-    private ArrayList/* <TypeDeclaration> */typeDecls = new ArrayList/* <TypeDeclaration> */();
+    private ArrayList<TypeDeclaration> typeDecls =
+      new ArrayList<TypeDeclaration>();
 
     private final TypeMap typeMap;
 
@@ -163,6 +164,7 @@ public class BuildTypeMap {
      * {@link GenerateJavaAST.JavaASTGenerationVisitor#processConstructor(ConstructorDeclaration)}
      * for details.
      */
+    @Override
     public boolean visit(ConstructorDeclaration ctorDecl, ClassScope scope) {
       try {
         MethodBinding b = ctorDecl.binding;
@@ -183,7 +185,7 @@ public class BuildTypeMap {
         if (declaringClass.isNestedType() && !declaringClass.isStatic()) {
           // add synthetic args for outer this and locals
           NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
-          Set alreadyNamedVariables = new HashSet();
+          Set<String> alreadyNamedVariables = new HashSet<String>();
           if (nestedBinding.enclosingInstances != null) {
             for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
               SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
@@ -218,6 +220,7 @@ public class BuildTypeMap {
       }
     }
 
+    @Override
     public boolean visit(FieldDeclaration fieldDeclaration, MethodScope scope) {
       try {
         FieldBinding b = fieldDeclaration.binding;
@@ -231,6 +234,7 @@ public class BuildTypeMap {
       }
     }
 
+    @Override
     public boolean visit(LocalDeclaration localDeclaration, BlockScope scope) {
       try {
         LocalVariableBinding b = localDeclaration.binding;
@@ -246,6 +250,7 @@ public class BuildTypeMap {
       }
     }
 
+    @Override
     public boolean visit(MethodDeclaration methodDeclaration, ClassScope scope) {
       try {
         MethodBinding b = methodDeclaration.binding;
@@ -299,7 +304,7 @@ public class BuildTypeMap {
           String syntheticFnHeader = "function (";
           boolean first = true;
           for (int i = 0; i < newMethod.params.size(); ++i) {
-            JParameter param = (JParameter) newMethod.params.get(i);
+            JParameter param = newMethod.params.get(i);
             if (first) {
               first = false;
             } else {
@@ -364,14 +369,17 @@ public class BuildTypeMap {
       }
     }
 
+    @Override
     public boolean visit(TypeDeclaration localTypeDeclaration, BlockScope scope) {
       return process(localTypeDeclaration);
     }
 
+    @Override
     public boolean visit(TypeDeclaration memberTypeDeclaration, ClassScope scope) {
       return process(memberTypeDeclaration);
     }
 
+    @Override
     public boolean visit(TypeDeclaration typeDeclaration,
         CompilationUnitScope scope) {
       return process(typeDeclaration);
@@ -423,11 +431,11 @@ public class BuildTypeMap {
         JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.classScope().referenceContext.binding);
         if (methodScope.isStatic) {
           // clinit
-          method = (JMethod) enclosingType.methods.get(0);
+          method = enclosingType.methods.get(0);
         } else {
           // init
           assert (enclosingType instanceof JClassType);
-          method = (JMethod) enclosingType.methods.get(1);
+          method = enclosingType.methods.get(1);
         }
       } else {
         AbstractMethodDeclaration referenceMethod = methodScope.referenceMethod();
@@ -592,15 +600,18 @@ public class BuildTypeMap {
       program = this.typeMap.getProgram();
     }
 
+    @Override
     public boolean visit(TypeDeclaration localTypeDeclaration, BlockScope scope) {
       assert (localTypeDeclaration.kind() != IGenericType.INTERFACE_DECL);
       return process(localTypeDeclaration);
     }
 
+    @Override
     public boolean visit(TypeDeclaration memberTypeDeclaration, ClassScope scope) {
       return process(memberTypeDeclaration);
     }
 
+    @Override
     public boolean visit(TypeDeclaration typeDeclaration,
         CompilationUnitScope scope) {
       return process(typeDeclaration);

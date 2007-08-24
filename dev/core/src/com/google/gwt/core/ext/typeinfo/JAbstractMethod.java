@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 package com.google.gwt.core.ext.typeinfo;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -38,9 +37,9 @@ public abstract class JAbstractMethod implements HasMetaData {
 
   private final String name;
 
-  private final List params = new ArrayList();
+  private final List<JParameter> params = new ArrayList<JParameter>();
 
-  private final List thrownTypes = new ArrayList();
+  private final List<JType> thrownTypes = new ArrayList<JType>();
 
   // Only the builder can construct
   JAbstractMethod(String name, int declStart, int declEnd, int bodyStart,
@@ -65,8 +64,7 @@ public abstract class JAbstractMethod implements HasMetaData {
   }
 
   public JParameter findParameter(String name) {
-    for (Iterator iter = params.iterator(); iter.hasNext();) {
-      JParameter param = (JParameter) iter.next();
+    for (JParameter param : params) {
       if (param.getName().equals(name)) {
         return param;
       }
@@ -108,13 +106,13 @@ public abstract class JAbstractMethod implements HasMetaData {
   }
 
   public JParameter[] getParameters() {
-    return (JParameter[]) params.toArray(TypeOracle.NO_JPARAMS);
+    return params.toArray(TypeOracle.NO_JPARAMS);
   }
 
   public abstract String getReadableDeclaration();
 
   public JType[] getThrows() {
-    return (JType[]) thrownTypes.toArray(TypeOracle.NO_JTYPES);
+    return thrownTypes.toArray(TypeOracle.NO_JTYPES);
   }
 
   public abstract JConstructor isConstructor();
@@ -122,24 +120,29 @@ public abstract class JAbstractMethod implements HasMetaData {
   public boolean isDefaultAccess() {
     return 0 == (modifierBits & (TypeOracle.MOD_PUBLIC | TypeOracle.MOD_PRIVATE | TypeOracle.MOD_PROTECTED));
   }
+
   public abstract JMethod isMethod();
+
   public boolean isPrivate() {
     return 0 != (modifierBits & TypeOracle.MOD_PRIVATE);
   }
+
   public boolean isProtected() {
     return 0 != (modifierBits & TypeOracle.MOD_PROTECTED);
   }
+
   public boolean isPublic() {
     return 0 != (modifierBits & TypeOracle.MOD_PUBLIC);
   }
+
   protected int getModifierBits() {
     return modifierBits;
   }
+
   protected void toStringParamsAndThrows(StringBuffer sb) {
     sb.append("(");
     boolean needComma = false;
-    for (Iterator iter = params.iterator(); iter.hasNext();) {
-      JParameter param = (JParameter) iter.next();
+    for (JParameter param : params) {
       if (needComma) {
         sb.append(", ");
       } else {
@@ -154,8 +157,7 @@ public abstract class JAbstractMethod implements HasMetaData {
     if (!thrownTypes.isEmpty()) {
       sb.append(" throws ");
       needComma = false;
-      for (Iterator iter = thrownTypes.iterator(); iter.hasNext();) {
-        JClassType thrownType = (JClassType) iter.next();
+      for (JType thrownType : thrownTypes) {
         if (needComma) {
           sb.append(", ");
         } else {
@@ -165,16 +167,18 @@ public abstract class JAbstractMethod implements HasMetaData {
       }
     }
   }
+
   void addParameter(JParameter param) {
     params.add(param);
   }
+
   boolean hasParamTypes(JType[] paramTypes) {
     if (params.size() != paramTypes.length) {
       return false;
     }
 
     for (int i = 0; i < paramTypes.length; i++) {
-      JParameter candidate = (JParameter) params.get(i);
+      JParameter candidate = params.get(i);
       // Identity tests are ok since identity is durable within an oracle.
       //
       if (candidate.getType() != paramTypes[i]) {

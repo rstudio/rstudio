@@ -47,7 +47,7 @@ public class ForLoop implements Statements {
    * @param test The textual test {@link Expression}.
    * @param step The textual step {@link Expression}. May be <code>null</code>.
    * @param statements The {@link Statements} for the body of the loop. May be
-   *          <code>null</code>.
+   *            <code>null</code>.
    */
   public ForLoop(String initializer, String test, String step,
       Statements statements) {
@@ -61,7 +61,7 @@ public class ForLoop implements Statements {
     }
   }
 
-  public List getStatements() {
+  public List<Statements> getStatements() {
     return body.getStatements();
   }
 

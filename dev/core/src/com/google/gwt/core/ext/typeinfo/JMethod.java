@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,10 +31,12 @@ public class JMethod extends JAbstractMethod {
     enclosingType.addMethod(this);
   }
 
+  @Override
   public JClassType getEnclosingType() {
     return enclosingType;
   }
 
+  @Override
   public String getReadableDeclaration() {
     return getReadableDeclaration(getModifierBits());
   }
@@ -68,6 +70,7 @@ public class JMethod extends JAbstractMethod {
     return 0 != (getModifierBits() & TypeOracle.MOD_ABSTRACT);
   }
 
+  @Override
   public JConstructor isConstructor() {
     return null;
   }
@@ -76,6 +79,7 @@ public class JMethod extends JAbstractMethod {
     return 0 != (getModifierBits() & TypeOracle.MOD_FINAL);
   }
 
+  @Override
   public JMethod isMethod() {
     return this;
   }
@@ -92,6 +96,7 @@ public class JMethod extends JAbstractMethod {
     returnType = type;
   }
 
+  @Override
   public String toString() {
     return getReadableDeclaration();
   }

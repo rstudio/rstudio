@@ -27,6 +27,7 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
@@ -57,13 +58,14 @@ public class MethodInliner {
 
     private boolean didChange = false;
 
+    @Override
     public boolean didChange() {
       return didChange;
     }
 
-    // @Override
+    @Override
     public void endVisit(JMultiExpression x, Context ctx) {
-      ArrayList exprs = x.exprs;
+      ArrayList<JExpression> exprs = x.exprs;
 
       /*
        * Add the contents of all nested multis into the top multi, in place. We
@@ -71,7 +73,7 @@ public class MethodInliner {
        * okay as the children will already be flattened.
        */
       for (int i = 0; i < exprs.size(); ++i) {
-        JExpression expr = (JExpression) exprs.get(i);
+        JExpression expr = exprs.get(i);
         if (expr instanceof JMultiExpression) {
           JMultiExpression sub = (JMultiExpression) expr;
           exprs.addAll(i + 1, sub.exprs);
@@ -80,8 +82,8 @@ public class MethodInliner {
       }
 
       // now remove the old multis
-      for (Iterator it = exprs.iterator(); it.hasNext();) {
-        JExpression expr = (JExpression) it.next();
+      for (Iterator<JExpression> it = exprs.iterator(); it.hasNext();) {
+        JExpression expr = it.next();
         if (expr instanceof JMultiExpression) {
           it.remove();
           didChange = true;
@@ -97,13 +99,14 @@ public class MethodInliner {
      * Resets with each new visitor, which is good since things that couldn't be
      * inlined before might become inlineable.
      */
-    Set/* <JMethod> */cannotInline = new HashSet/* <JMethod> */();
+    Set<JMethod> cannotInline = new HashSet<JMethod>();
 
+    @Override
     public void endVisit(JMethod x, Context ctx) {
       currentMethod = null;
     }
 
-    // @Override
+    @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
 
@@ -117,13 +120,13 @@ public class MethodInliner {
       }
 
       JMethodBody body = (JMethodBody) method.getBody();
-      List/* <JStatement> */stmts = body.getStatements();
+      List<JStatement> stmts = body.getStatements();
       boolean possibleToInline = false;
       if (stmts.isEmpty()) {
         tryInlineEmptyMethodCall(x, ctx);
         possibleToInline = true;
       } else if (stmts.size() == 1) {
-        JStatement stmt = (JStatement) stmts.get(0);
+        JStatement stmt = stmts.get(0);
         if (stmt instanceof JReturnStatement) {
           possibleToInline = tryInlineExpression(x, ctx,
               ((JReturnStatement) stmt).getExpr());
@@ -138,6 +141,7 @@ public class MethodInliner {
       }
     }
 
+    @Override
     public boolean visit(JMethod x, Context ctx) {
       currentMethod = x;
       return true;
@@ -159,8 +163,8 @@ public class MethodInliner {
      * then recursively determine that the qualifier is inlinable.
      */
     private JExpression canInlineExpression(SourceInfo info,
-        JExpression targetExpr, List/* <JParameter> */params, ArrayList args,
-        int[] magicArg) {
+        JExpression targetExpr, List<JParameter> params,
+        ArrayList<JExpression> args, int[] magicArg) {
       if (targetExpr instanceof JLiteral) {
         // just reference the same JLiteral
         /*
@@ -175,7 +179,7 @@ public class MethodInliner {
         int i = params.indexOf(((JParameterRef) targetExpr).getTarget());
         assert (i >= 0);
         magicArg[0] = i;
-        return (JExpression) args.get(i);
+        return args.get(i);
       } else if (targetExpr instanceof JFieldRef) {
         JFieldRef oldFieldRef = (JFieldRef) targetExpr;
         JField field = oldFieldRef.getField();
@@ -206,7 +210,8 @@ public class MethodInliner {
     private boolean checkClinitViolation(JMethodCall x,
         JExpression resultExpression) {
       JReferenceType targetEnclosingType = x.getTarget().getEnclosingType();
-      if (!program.typeOracle.checkClinit(currentMethod.getEnclosingType(), targetEnclosingType)) {
+      if (!program.typeOracle.checkClinit(currentMethod.getEnclosingType(),
+          targetEnclosingType)) {
         // Access from this class to the target class won't trigger a clinit
         return false;
       }
@@ -253,7 +258,7 @@ public class MethodInliner {
         multi.exprs.add(x.getInstance());
       }
       for (int i = 0, c = x.getArgs().size(); i < c; ++i) {
-        if (((JExpression) x.getArgs().get(i)).hasSideEffects()) {
+        if (x.getArgs().get(i).hasSideEffects()) {
           multi.exprs.add(x.getArgs().get(i));
         }
       }
@@ -265,8 +270,8 @@ public class MethodInliner {
      */
     private boolean tryInlineExpression(JMethodCall x, Context ctx,
         JExpression targetExpr) {
-      List/* <JParameter> */params = x.getTarget().params;
-      ArrayList args = x.getArgs();
+      List<JParameter> params = x.getTarget().params;
+      ArrayList<JExpression> args = x.getArgs();
 
       // the expression returned by the inlined method, if any
       JExpression resultExpression;
@@ -304,7 +309,7 @@ public class MethodInliner {
 
       // Now evaluate any side-effect args that aren't the magic arg.
       for (int i = 0; i < params.size(); ++i) {
-        if (((JExpression) args.get(i)).hasSideEffects()) {
+        if (args.get(i).hasSideEffects()) {
           if (i < iMagicArg) {
             // evaluate this arg inside of the multi
             multi.exprs.add(args.get(i));
@@ -338,10 +343,10 @@ public class MethodInliner {
    */
   public class ReduceMultiVisitor extends JModVisitor {
 
-    // @Override
+    @Override
     public void endVisit(JBlock x, Context ctx) {
-      for (Iterator it = x.statements.iterator(); it.hasNext();) {
-        JStatement stmt = (JStatement) it.next();
+      for (Iterator<JStatement> it = x.statements.iterator(); it.hasNext();) {
+        JStatement stmt = it.next();
         // If we're a JExprStmt with no side effects, just remove me
         if (stmt instanceof JExpressionStatement) {
           JExpression expr = ((JExpressionStatement) stmt).getExpr();
@@ -353,9 +358,9 @@ public class MethodInliner {
       }
     }
 
-    // @Override
+    @Override
     public void endVisit(JMultiExpression x, Context ctx) {
-      ArrayList exprs = x.exprs;
+      ArrayList<JExpression> exprs = x.exprs;
 
       final int c = exprs.size();
       if (c == 0) {
@@ -364,19 +369,19 @@ public class MethodInliner {
 
       int countSideEffectsBeforeLast = 0;
       for (int i = 0; i < c - 1; ++i) {
-        JExpression expr = (JExpression) exprs.get(i);
+        JExpression expr = exprs.get(i);
         if (expr.hasSideEffects()) {
           ++countSideEffectsBeforeLast;
         }
       }
 
       if (countSideEffectsBeforeLast == 0) {
-        ctx.replaceMe((JExpression) x.exprs.get(c - 1));
+        ctx.replaceMe(x.exprs.get(c - 1));
       } else {
         JMultiExpression newMulti = new JMultiExpression(program,
             x.getSourceInfo());
         for (int i = 0; i < c - 1; ++i) {
-          JExpression expr = (JExpression) exprs.get(i);
+          JExpression expr = exprs.get(i);
           if (expr.hasSideEffects()) {
             newMulti.exprs.add(expr);
           }

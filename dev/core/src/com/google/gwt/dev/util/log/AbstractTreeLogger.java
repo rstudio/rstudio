@@ -50,7 +50,7 @@ public abstract class AbstractTreeLogger implements TreeLogger {
     StringBuffer message = new StringBuffer();
     Throwable currentCause = e;
     String causedBy = "";
-    HashSet seenCauses = new HashSet();
+    HashSet<Throwable> seenCauses = new HashSet<Throwable>();
     while (currentCause != null && !seenCauses.contains(currentCause)) {
       seenCauses.add(currentCause);
 
@@ -74,7 +74,7 @@ public abstract class AbstractTreeLogger implements TreeLogger {
 
   private static StackTraceElement[] findMeaningfulStackTraceElements(
       StackTraceElement[] elems) {
-    ArrayList goodElems = new ArrayList();
+    ArrayList<StackTraceElement> goodElems = new ArrayList<StackTraceElement>();
     StackTraceElement prevElem = null;
     for (int i = 0; i < elems.length; i++) {
       StackTraceElement elem = elems[i];
@@ -91,7 +91,7 @@ public abstract class AbstractTreeLogger implements TreeLogger {
       }
     }
     if (goodElems.size() > 0) {
-      return (StackTraceElement[]) goodElems.toArray(new StackTraceElement[goodElems.size()]);
+      return goodElems.toArray(new StackTraceElement[goodElems.size()]);
     } else {
       return null;
     }
@@ -213,8 +213,8 @@ public abstract class AbstractTreeLogger implements TreeLogger {
 
   /**
    * @param type the log type representing the most detailed level of logging
-   *          that the caller is interested in, or <code>null</code> to choose
-   *          the default level.
+   *            that the caller is interested in, or <code>null</code> to
+   *            choose the default level.
    */
   public final synchronized void setMaxDetail(TreeLogger.Type type) {
     if (type == null) {
@@ -223,6 +223,7 @@ public abstract class AbstractTreeLogger implements TreeLogger {
     logLevel = type;
   }
 
+  @Override
   public String toString() {
     return getLoggerId();
   }

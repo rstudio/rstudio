@@ -29,7 +29,7 @@ import java.util.ArrayList;
  */
 public class JMultiExpression extends JExpression {
 
-  public ArrayList exprs = new ArrayList();
+  public ArrayList<JExpression> exprs = new ArrayList<JExpression>();
 
   public JMultiExpression(JProgram program, SourceInfo info) {
     super(program, info);
@@ -40,13 +40,14 @@ public class JMultiExpression extends JExpression {
     if (c == 0) {
       return program.getTypeVoid();
     } else {
-      return ((JExpression) exprs.get(c - 1)).getType();
+      return exprs.get(c - 1).getType();
     }
   }
 
+  @Override
   public boolean hasSideEffects() {
     for (int i = 0; i < exprs.size(); ++i) {
-      JExpression expr = (JExpression) exprs.get(i);
+      JExpression expr = exprs.get(i);
       if (expr.hasSideEffects()) {
         return true;
       }

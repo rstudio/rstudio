@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ public class JPackage {
 
   private final String name;
 
-  private final Map types = new HashMap();
+  private final Map<String, JClassType> types = new HashMap<String, JClassType>();
 
   JPackage(String name) {
     this.name = name;
@@ -53,7 +53,7 @@ public class JPackage {
   }
 
   public JClassType[] getTypes() {
-    return (JClassType[]) types.values().toArray(TypeOracle.NO_JCLASSES);
+    return types.values().toArray(TypeOracle.NO_JCLASSES);
   }
 
   public boolean isDefault() {
@@ -69,7 +69,7 @@ public class JPackage {
   }
 
   JClassType findTypeImpl(String[] typeName, int index) {
-    JClassType found = (JClassType) types.get(typeName[index]);
+    JClassType found = types.get(typeName[index]);
     if (found == null) {
       return null;
     } else if (index < typeName.length - 1) {

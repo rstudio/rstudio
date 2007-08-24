@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,10 +33,10 @@ public class JPrimitiveType extends JType {
   public static final JPrimitiveType SHORT = create("short", "S");
   public static final JPrimitiveType VOID = create("void", "V");
 
-  private static Map map;
+  private static Map<String, JPrimitiveType> map;
 
   public static JPrimitiveType valueOf(String typeName) {
-    return (JPrimitiveType) getMap().get(typeName);
+    return getMap().get(typeName);
   }
 
   private static JPrimitiveType create(String name, String jni) {
@@ -46,9 +46,9 @@ public class JPrimitiveType extends JType {
     return type;
   }
 
-  private static Map getMap() {
+  private static Map<String, JPrimitiveType> getMap() {
     if (map == null) {
-      map = new HashMap();
+      map = new HashMap<String, JPrimitiveType>();
     }
     return map;
   }
@@ -62,38 +62,46 @@ public class JPrimitiveType extends JType {
     this.jni = jni;
   }
 
+  @Override
   public String getJNISignature() {
     return jni;
   }
 
+  @Override
   public String getQualifiedSourceName() {
     return name;
   }
 
+  @Override
   public String getSimpleSourceName() {
     return name;
   }
 
+  @Override
   public JArrayType isArray() {
     // intentional null
     return null;
   }
 
+  @Override
   public JClassType isClass() {
     // intentional null
     return null;
   }
 
+  @Override
   public JClassType isInterface() {
     // intentional null
     return null;
   }
 
+  @Override
   public JParameterizedType isParameterized() {
     // intentional null
     return null;
   }
 
+  @Override
   public JPrimitiveType isPrimitive() {
     return this;
   }

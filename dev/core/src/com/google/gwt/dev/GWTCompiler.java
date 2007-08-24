@@ -80,19 +80,23 @@ public class GWTCompiler extends ToolBase {
 
   private class ArgHandlerModuleName extends ArgHandlerExtra {
 
+    @Override
     public boolean addExtraArg(String arg) {
       setModuleName(arg);
       return true;
     }
 
+    @Override
     public String getPurpose() {
       return "Specifies the name of the module to compile";
     }
 
+    @Override
     public String[] getTagArgs() {
       return new String[] {"module"};
     }
 
+    @Override
     public boolean isRequired() {
       return true;
     }
@@ -105,7 +109,7 @@ public class GWTCompiler extends ToolBase {
    */
   private class CompilationRebindOracle extends StandardRebindOracle {
 
-    private final Map cache = new HashMap();
+    private final Map<String, String> cache = new HashMap<String, String>();
 
     private Compilation compilation;
 
@@ -118,9 +122,10 @@ public class GWTCompiler extends ToolBase {
      * the cache key for a compilation. Note that the cache gets invalidated if
      * the propOracle changes state.
      */
+    @Override
     public String rebind(TreeLogger logger, String in)
         throws UnableToCompleteException {
-      String out = (String) cache.get(in);
+      String out = cache.get(in);
       if (out == null) {
         // Actually do the work, then cache it.
         //
@@ -134,10 +139,9 @@ public class GWTCompiler extends ToolBase {
       }
 
       if (compilation != null && compilation.recordDecision(in, out)) {
-        List genTypes = (List) generatedTypesByResultTypeName.get(out);
+        List<JClassType> genTypes = generatedTypesByResultTypeName.get(out);
         if (genTypes != null) {
-          for (Iterator iter = genTypes.iterator(); iter.hasNext();) {
-            JClassType genType = (JClassType) iter.next();
+          for (JClassType genType : genTypes) {
             String sourceHash = genType.getTypeHash();
             String genTypeName = genType.getQualifiedSourceName();
             compilation.recordGeneratedTypeHash(genTypeName, sourceHash);
@@ -162,8 +166,9 @@ public class GWTCompiler extends ToolBase {
       /**
        * Record generated types.
        */
+      @Override
       protected void onGeneratedTypes(String result, JClassType[] genTypes) {
-        List list = new ArrayList();
+        List<JClassType> list = new ArrayList<JClassType>();
         Util.addAll(list, genTypes);
         Object existing = generatedTypesByResultTypeName.put(result, list);
         assert (existing == null) : "Internal error: redundant notification of generated types";
@@ -177,11 +182,11 @@ public class GWTCompiler extends ToolBase {
           + requestTypeName + "'";
       logger = logger.branch(TreeLogger.DEBUG, msg, null);
 
-      Set answers = new HashSet();
+      Set<String> answers = new HashSet<String>();
 
       Property[] orderedProps = perms.getOrderedProperties();
-      for (Iterator iter = perms.iterator(); iter.hasNext();) {
-        String[] orderedPropValues = (String[]) iter.next();
+      for (Iterator<String[]> iter = perms.iterator(); iter.hasNext();) {
+        String[] orderedPropValues = iter.next();
 
         // Create a snapshot of the property values by setting their values
         // in the property oracle. Because my rebindOracle uses the shared
@@ -195,7 +200,7 @@ public class GWTCompiler extends ToolBase {
         String resultTypeName = rebindOracle.rebind(logger, requestTypeName);
         answers.add(resultTypeName);
       }
-      return (String[]) Util.toArray(String.class, answers);
+      return Util.toArray(String.class, answers);
     }
   }
 
@@ -227,7 +232,7 @@ public class GWTCompiler extends ToolBase {
 
   private File genDir;
 
-  private Map generatedTypesByResultTypeName = new HashMap();
+  private Map<String, List<JClassType>> generatedTypesByResultTypeName = new HashMap<String, List<JClassType>>();
 
   private JavaToJavaScriptCompiler jjs;
 
@@ -265,24 +270,28 @@ public class GWTCompiler extends ToolBase {
 
   public GWTCompiler(CacheManager cacheManager) {
     registerHandler(new ArgHandlerLogLevel() {
+      @Override
       public void setLogLevel(Type level) {
         logLevel = level;
       }
     });
 
     registerHandler(new ArgHandlerGenDir() {
+      @Override
       public void setDir(File dir) {
         genDir = dir;
       }
     });
 
     registerHandler(new ArgHandlerOutDir() {
+      @Override
       public void setDir(File dir) {
         outDir = dir;
       }
     });
 
     registerHandler(new ArgHandlerTreeLoggerFlag() {
+      @Override
       public boolean setFlag() {
         useGuiLogger = true;
         return true;
@@ -292,14 +301,17 @@ public class GWTCompiler extends ToolBase {
     registerHandler(new ArgHandlerModuleName());
 
     registerHandler(new ArgHandlerScriptStyle() {
+      @Override
       public void setStyleDetailed() {
         GWTCompiler.this.setStyleDetailed();
       }
 
+      @Override
       public void setStyleObfuscated() {
         GWTCompiler.this.setStyleObfuscated();
       }
 
+      @Override
       public void setStylePretty() {
         GWTCompiler.this.setStylePretty();
       }
@@ -406,8 +418,9 @@ public class GWTCompiler extends ToolBase {
     SelectionScriptGenerator selGen = new SelectionScriptGenerator(module,
         orderedProps);
     int permNumber = 1;
-    for (Iterator iter = perms.iterator(); iter.hasNext(); ++permNumber) {
-      String[] orderedPropValues = (String[]) iter.next();
+    for (Iterator<String[]> iter = perms.iterator(); iter.hasNext(); ++permNumber) {
+
+      String[] orderedPropValues = iter.next();
       String strongName = realizePermutation(logger, orderedProps,
           orderedPropValues, permNumber);
       selGen.recordSelection(orderedPropValues, strongName);

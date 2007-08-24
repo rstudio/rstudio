@@ -33,10 +33,12 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
    * EXHAUSTIVE list, that is, if C overrides B overrides A, then C's overrides
    * list will contain both A and B.
    */
-  public final List/* <JMethod> */overrides = new ArrayList/* <JMethod> */();
+  public final List<JMethod> overrides = new ArrayList<JMethod>();
 
-  public final ArrayList/* <JParameter> */params = new ArrayList/* <JParameter> */();
-  public final ArrayList/* <JClassType> */thrownExceptions = new ArrayList/* <JClassType> */();
+  public final ArrayList<JParameter> params =
+    new ArrayList<JParameter>();
+  public final ArrayList<JClassType> thrownExceptions =
+    new ArrayList<JClassType>();
   private JAbstractMethodBody body = null;
   private final JReferenceType enclosingType;
   private final boolean isAbstract;
@@ -44,7 +46,7 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
   private final boolean isPrivate;
   private final boolean isStatic;
   private final String name;
-  private ArrayList/* <JType> */originalParamTypes;
+  private ArrayList<JType> originalParamTypes;
   private JType returnType;
 
   /**
@@ -67,9 +69,9 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     if (originalParamTypes != null) {
       throw new InternalCompilerException("Param types already frozen");
     }
-    originalParamTypes = new ArrayList/* <JType> */();
+    originalParamTypes = new ArrayList<JType>();
     for (int i = 0; i < params.size(); ++i) {
-      JParameter param = (JParameter) params.get(i);
+      JParameter param = params.get(i);
       originalParamTypes.add(param.getType());
     }
   }
@@ -86,7 +88,7 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     return name;
   }
 
-  public List/* <JType> */getOriginalParamTypes() {
+  public List<JType> getOriginalParamTypes() {
     if (originalParamTypes == null) {
       return null;
     }

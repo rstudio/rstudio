@@ -26,19 +26,21 @@ import java.util.List;
 public abstract class JReferenceType extends JType implements CanBeAbstract,
     CanBeFinal {
 
-  public List/* <JField> */fields = new ArrayList/* <JField> */();
-  public List/* <JMethod> */methods = new ArrayList/* <JMethod> */();
+  public List<JField> fields = new ArrayList<JField>();
+  public List<JMethod> methods = new ArrayList<JMethod>();
   public JClassType extnds;
-  public List/* <JInterfaceType> */implments = new ArrayList/* <JInterfaceType> */();
+  public List<JInterfaceType> implments = new ArrayList<JInterfaceType>();
 
   public JReferenceType(JProgram program, SourceInfo info, String name) {
     super(program, info, name, program.getLiteralNull());
   }
 
+  @Override
   public String getJavahSignatureName() {
     return "L" + name.replaceAll("_", "_1").replace('.', '_') + "_2";
   }
 
+  @Override
   public String getJsniSignatureName() {
     return "L" + name.replace('.', '/') + ';';
   }

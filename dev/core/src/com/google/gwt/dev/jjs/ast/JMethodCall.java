@@ -24,7 +24,7 @@ import java.util.ArrayList;
  */
 public class JMethodCall extends JExpression {
 
-  private ArrayList args = new ArrayList();
+  private ArrayList<JExpression> args = new ArrayList<JExpression>();
   private JExpression instance;
   private final JMethod method;
   private final JType overrideReturnType;
@@ -73,7 +73,7 @@ public class JMethodCall extends JExpression {
     return !staticDispatchOnly && !method.isFinal() && !method.isStatic();
   }
 
-  public ArrayList getArgs() {
+  public ArrayList<JExpression> getArgs() {
     return args;
   }
 
@@ -93,6 +93,7 @@ public class JMethodCall extends JExpression {
     }
   }
 
+  @Override
   public boolean hasSideEffects() {
     // TODO(later): optimize? Be sure to check for clinit when we do.
     return true;
