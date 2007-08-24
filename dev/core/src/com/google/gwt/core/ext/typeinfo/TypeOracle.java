@@ -130,7 +130,7 @@ public class TypeOracle {
       strings.add("volatile");
     }
 
-    return (String[]) strings.toArray(NO_STRINGS);
+    return strings.toArray(NO_STRINGS);
   }
 
   /**
@@ -143,7 +143,7 @@ public class TypeOracle {
    * @return true if the type has been invalidated
    */
   private static boolean isInvalidatedTypeRecursive(JType type,
-      Set<JType> invalidTypes) {
+      Set<JClassType> invalidTypes) {
     if (type instanceof JParameterizedType) {
       JParameterizedType parameterizedType = (JParameterizedType) type;
       if (isInvalidatedTypeRecursive(parameterizedType.getRawType(),
@@ -191,7 +191,7 @@ public class TypeOracle {
    * @return <code>null</code> if the package could not be found
    */
   public JPackage findPackage(String pkgName) {
-    return (JPackage) packages.get(pkgName);
+    return packages.get(pkgName);
   }
 
   /**
@@ -252,7 +252,7 @@ public class TypeOracle {
    * @return a type object representing an array of the component type
    */
   public JArrayType getArrayType(JType componentType) {
-    JArrayType arrayType = (JArrayType) arrayTypes.get(componentType);
+    JArrayType arrayType = arrayTypes.get(componentType);
     if (arrayType == null) {
       arrayType = new JArrayType(componentType);
       arrayTypes.put(componentType, arrayType);
@@ -280,7 +280,7 @@ public class TypeOracle {
       getOrCreatePackage(name.substring(0, i));
     }
 
-    JPackage pkg = (JPackage) packages.get(name);
+    JPackage pkg = packages.get(name);
     if (pkg == null) {
       pkg = new JPackage(name);
       packages.put(name, pkg);
@@ -308,7 +308,7 @@ public class TypeOracle {
    * @return an array of packages, possibly of zero-length
    */
   public JPackage[] getPackages() {
-    return (JPackage[]) packages.values().toArray(NO_JPACKAGES);
+    return packages.values().toArray(NO_JPACKAGES);
   }
 
   /**
@@ -332,7 +332,7 @@ public class TypeOracle {
       parameterized.addTypeArg(typeArgs[i]);
     }
     String sig = parameterized.getParameterizedQualifiedSourceName();
-    JParameterizedType existing = (JParameterizedType) parameterizedTypes.get(sig);
+    JParameterizedType existing = parameterizedTypes.get(sig);
     if (existing == null) {
       parameterizedTypes.put(sig, parameterized);
       existing = parameterized;
@@ -381,7 +381,7 @@ public class TypeOracle {
    * @return an array of types, possibly of zero length
    */
   public JClassType[] getTypes() {
-    Set<JType> allTypes = new HashSet<JType>();
+    Set<JClassType> allTypes = new HashSet<JClassType>();
     JPackage[] pkgs = getPackages();
     for (int i = 0; i < pkgs.length; i++) {
       JPackage pkg = pkgs[i];
@@ -470,9 +470,7 @@ public class TypeOracle {
    */
   public void sort(JField[] fields) {
     Arrays.sort(fields, new Comparator<JField>() {
-      public int compare(JField o1, JField o2) {
-        final JField f1 = o1;
-        final JField f2 = o2;
+      public int compare(JField f1, JField f2) {
         String name1 = f1.getName();
         String name2 = f2.getName();
         return name1.compareTo(name2);
@@ -487,9 +485,7 @@ public class TypeOracle {
    */
   public void sort(JMethod[] methods) {
     Arrays.sort(methods, new Comparator<JMethod>() {
-      public int compare(JMethod o1, JMethod o2) {
-        final JMethod m1 = o1;
-        final JMethod m2 = o2;
+      public int compare(JMethod m1, JMethod m2) {
         String name1 = m1.getName();
         String name2 = m2.getName();
         return name1.compareTo(name2);
@@ -508,7 +504,7 @@ public class TypeOracle {
    * @param cup compilation unit whose types will be invalidated
    */
   void invalidateTypesInCompilationUnit(CompilationUnitProvider cup) {
-    Set<JType> invalidTypes = new HashSet<JType>();
+    Set<JClassType> invalidTypes = new HashSet<JClassType>();
     JClassType[] types = typesByCup.get(cup);
     if (types == null) {
       return;
@@ -562,7 +558,7 @@ public class TypeOracle {
     consumeTypeArgMetaData(logger);
   }
 
-  private void buildAllTypesImpl(Set<JType> allTypes, JClassType type) {
+  private void buildAllTypesImpl(Set<JClassType> allTypes, JClassType type) {
     boolean didAdd = allTypes.add(type);
     assert (didAdd);
     JClassType[] nestedTypes = type.getNestedTypes();
@@ -874,7 +870,7 @@ public class TypeOracle {
    * 
    * @param invalidTypes set of types that have been invalidated.
    */
-  private void removeInvalidatedArrayTypes(Set<JType> invalidTypes) {
+  private void removeInvalidatedArrayTypes(Set<JClassType> invalidTypes) {
     arrayTypes.keySet().removeAll(invalidTypes);
   }
 
@@ -884,7 +880,7 @@ public class TypeOracle {
    * 
    * @param invalidTypes set of types known to have been invalidated
    */
-  private void removeInvalidatedParameterizedTypes(Set<JType> invalidTypes) {
+  private void removeInvalidatedParameterizedTypes(Set<JClassType> invalidTypes) {
     Iterator<JParameterizedType> iter = parameterizedTypes.values().iterator();
 
     while (iter.hasNext()) {
@@ -901,11 +897,11 @@ public class TypeOracle {
    * 
    * @param invalidTypes set of types to remove
    */
-  private void removeTypes(Set<JType> invalidTypes) {
-    Iterator<JType> iter = invalidTypes.iterator();
+  private void removeTypes(Set<JClassType> invalidTypes) {
+    Iterator<JClassType> iter = invalidTypes.iterator();
 
     while (iter.hasNext()) {
-      JClassType classType = (JClassType) iter.next();
+      JClassType classType = iter.next();
       JPackage pkg = classType.getPackage();
       if (pkg != null) {
         pkg.remove(classType);

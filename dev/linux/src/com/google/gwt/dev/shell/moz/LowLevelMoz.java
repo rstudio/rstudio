@@ -220,6 +220,7 @@ public class LowLevelMoz {
    * @param jsthis the JS object with the named method
    * @param jsargs an array of arguments to the method
    */
+  @SuppressWarnings("unused") // kept for future debugging purposes
   private static void printInvocationParams(String methodName,
       JsValueMoz jsthis, JsValueMoz[] jsargs) {
     System.out.println("LowLevelMoz.invoke:");

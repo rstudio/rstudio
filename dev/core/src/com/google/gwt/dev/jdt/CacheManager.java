@@ -35,6 +35,7 @@ import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.eclipse.jdt.internal.compiler.impl.ReferenceContext;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.MethodScope;
+import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 
 import java.io.File;
@@ -63,14 +64,14 @@ public class CacheManager {
    * Maps SourceTypeBindings to their associated types.
    */
   static class Mapper {
-    private final Map<SourceTypeBinding, JClassType> map = new IdentityHashMap<SourceTypeBinding, JClassType>();
+    private final Map<ReferenceBinding, JClassType> map = new IdentityHashMap<ReferenceBinding, JClassType>();
 
-    public JClassType get(SourceTypeBinding binding) {
-      JClassType type = map.get(binding);
+    public JClassType get(ReferenceBinding referenceBinding) {
+      JClassType type = map.get(referenceBinding);
       return type;
     }
 
-    public void put(SourceTypeBinding binding, JClassType type) {
+    public void put(ReferenceBinding binding, JClassType type) {
       boolean firstPut = (null == map.put(binding, type));
       assert (firstPut);
     }
@@ -809,8 +810,8 @@ public class CacheManager {
     return timesByLocation;
   }
 
-  JType getTypeForBinding(SourceTypeBinding sourceTypeBinding) {
-    return identityMapper.get(sourceTypeBinding);
+  JType getTypeForBinding(ReferenceBinding referenceBinding) {
+    return identityMapper.get(referenceBinding);
   }
 
   /**

@@ -295,7 +295,7 @@ public class HostedTest extends GWTTestCase {
       }-*/;
 
       native String b() /*-{
-        return this.@com.google.gwt.dev.jjs.test.HostedTest$2$Foo::a()();
+        return this.@com.google.gwt.dev.jjs.test.HostedTest$2Foo::a()();
       }-*/;
 
       String c() {
@@ -314,7 +314,7 @@ public class HostedTest extends GWTTestCase {
       }-*/;
 
       native String b() /*-{
-        return this.@com.google.gwt.dev.jjs.test.HostedTest$2$Foo::a()();
+        return this.@com.google.gwt.dev.jjs.test.HostedTest$2Foo::a()();
       }-*/;
 
       native String c() /*-{

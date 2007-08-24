@@ -29,9 +29,9 @@ class Comparators {
    * 
    * @see java.lang.Comparable
    */
-  private static final Comparator NATURAL = new Comparator() {
+  private static final Comparator<Object> NATURAL = new Comparator<Object>() {
     public int compare(Object o1, Object o2) {
-      return ((Comparable) o1).compareTo(o2);
+      return ((Comparable<Object>) o1).compareTo(o2);
     }
   };
 

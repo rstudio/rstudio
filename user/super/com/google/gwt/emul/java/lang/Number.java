@@ -18,7 +18,7 @@ package java.lang;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
- * Abstract base class for numberic wrapper classes.
+ * Abstract base class for numeric wrapper classes.
  */
 public abstract class Number {
 

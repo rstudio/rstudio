@@ -56,6 +56,7 @@ import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
 import org.eclipse.jdt.internal.compiler.lookup.LocalTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.RawTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
@@ -398,14 +399,14 @@ public class TypeOracleBuilder {
       cud.traverse(new ASTVisitor() {
         @Override
         public boolean visit(TypeDeclaration typeDecl, BlockScope scope) {
-          JClassType enclosingType = identityMapper.get((SourceTypeBinding) typeDecl.binding.enclosingType());
+          JClassType enclosingType = identityMapper.get(typeDecl.binding.enclosingType());
           processType(typeDecl, enclosingType, true);
           return true;
         }
 
         @Override
         public boolean visit(TypeDeclaration typeDecl, ClassScope scope) {
-          JClassType enclosingType = identityMapper.get((SourceTypeBinding) typeDecl.binding.enclosingType());
+          JClassType enclosingType = identityMapper.get(typeDecl.binding.enclosingType());
           processType(typeDecl, enclosingType, false);
           return true;
         }
@@ -773,15 +774,22 @@ public class TypeOracleBuilder {
       }
     }
 
-    // Check for a user-defined type.
-    //
-    if (binding instanceof SourceTypeBinding) {
-      SourceTypeBinding sourceTypeBinding = (SourceTypeBinding) binding;
+    /*
+     * Check for a user-defined type, which may be either a SourceTypeBinding or
+     * a RawTypeBinding. Both of these are subclasses of ReferenceBinding and
+     * all the functionality we need is on ReferenceBinding, so we cast it to
+     * that and deal with them in common code.
+     * 
+     * TODO: do we need to do anything more with raw types?
+     */
+    if (binding instanceof SourceTypeBinding
+        || binding instanceof RawTypeBinding) {
+      ReferenceBinding referenceBinding = (ReferenceBinding) binding;
 
       // First check the type oracle to prefer type identity with the type
       // oracle we're assimilating into.
       //
-      String typeName = String.valueOf(sourceTypeBinding.readableName());
+      String typeName = String.valueOf(referenceBinding.readableName());
       JType resolvedType = oracle.findType(typeName);
       if (resolvedType != null) {
         return resolvedType;
@@ -789,7 +797,7 @@ public class TypeOracleBuilder {
 
       // Otherwise, it should be something we've mapped during this build.
       //
-      resolvedType = cacheManager.getTypeForBinding(sourceTypeBinding);
+      resolvedType = cacheManager.getTypeForBinding(referenceBinding);
       if (resolvedType != null) {
         return resolvedType;
       }

@@ -60,6 +60,7 @@ public class JPackage {
     return "".equals(name);
   }
 
+  @Override
   public String toString() {
     return "package " + name;
   }
@@ -80,7 +81,7 @@ public class JPackage {
   }
 
   void remove(JClassType type) {
-    Object removed = types.remove(type.getSimpleSourceName());
+    types.remove(type.getSimpleSourceName());
     // JDT will occasionally remove non-existent items, such as packages.
   }
 }
