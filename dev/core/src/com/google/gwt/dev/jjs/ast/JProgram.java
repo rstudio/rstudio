@@ -49,7 +49,7 @@ public class JProgram extends JNode {
   private static final Set<String> INDEX_TYPES_SET = new HashSet<String>(
       Arrays.asList(new String[] {
           "java.lang.Object", "java.lang.String", "java.lang.Class",
-          "java.lang.Iterable", "java.util.Iterator",
+          "java.lang.Enum", "java.lang.Iterable", "java.util.Iterator",
           "com.google.gwt.core.client.JavaScriptObject",}));
 
   private static final int IS_ARRAY = 2;
@@ -251,6 +251,35 @@ public class JProgram extends JNode {
     return x;
   }
 
+  public JEnumType createEnum(SourceInfo info, char[][] name) {
+    String sname = dotify(name);
+    JEnumType x = new JEnumType(this, info, sname);
+
+    allTypes.add(x);
+    putIntoTypeMap(sname, x);
+
+    return x;
+  }
+
+  public JField createEnumField(SourceInfo info, char[] name,
+      JEnumType enclosingType, JClassType type, int ordinal) {
+    assert (name != null);
+    assert (type != null);
+    assert (ordinal >= 0);
+
+    String sname = String.valueOf(name);
+    JEnumField x = new JEnumField(this, info, sname, ordinal, enclosingType, type);
+    List<JEnumField> enumList = enclosingType.enumList;
+    while (ordinal >= enumList.size()) {
+      enumList.add(null);
+    }
+
+    enumList.set(ordinal, x);
+
+    enclosingType.fields.add(x);
+    return x;
+  }
+
   public JField createField(SourceInfo info, char[] name,
       JReferenceType enclosingType, JType type, boolean isStatic,
       boolean isFinal, boolean hasInitializer) {
@@ -276,7 +305,6 @@ public class JProgram extends JNode {
     }
 
     enclosingType.fields.add(x);
-
     return x;
   }
 
@@ -304,7 +332,6 @@ public class JProgram extends JNode {
         enclosingMethodBody);
 
     enclosingMethodBody.locals.add(x);
-
     return x;
   }
 
@@ -349,7 +376,6 @@ public class JProgram extends JNode {
         isFinal, enclosingMethod);
 
     enclosingMethod.params.add(x);
-
     return x;
   }
 

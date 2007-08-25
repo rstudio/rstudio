@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JEnumField;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
@@ -372,6 +373,10 @@ public class Pruner {
       // rescue the enclosing types for any static fields that make it here.
       if (target.isStatic()) {
         rescue(target.getEnclosingType(), true, false);
+      }
+      // TODO: HACK
+      if (target instanceof JEnumField) {
+        rescue(((JEnumField) target).getEnclosingType(), true, true);
       }
       rescue(target);
       return true;

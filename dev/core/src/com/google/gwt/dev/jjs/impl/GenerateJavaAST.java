@@ -36,6 +36,7 @@ import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
+import com.google.gwt.dev.jjs.ast.JEnumField;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
@@ -1376,7 +1377,15 @@ public class GenerateJavaAST {
     JStatement processStatement(CaseStatement x) {
       SourceInfo info = makeSourceInfo(x);
       JExpression expression = dispProcessExpression(x.constantExpression);
-      return new JCaseStatement(program, info, (JLiteral) expression);
+      if (x.isEnumConstant) {
+        // TODO: propagate enum information?
+        JFieldRef fieldRef = (JFieldRef) expression;
+        JEnumField field = (JEnumField) fieldRef.getField();
+        return new JCaseStatement(program, info,
+            program.getLiteralInt(field.ordinal()));
+      } else {
+        return new JCaseStatement(program, info, (JLiteral) expression);
+      }
     }
 
     JStatement processStatement(ContinueStatement x) {
@@ -1577,13 +1586,17 @@ public class GenerateJavaAST {
     JStatement processStatement(SwitchStatement x) {
       SourceInfo info = makeSourceInfo(x);
       JExpression expression = dispProcessExpression(x.expression);
+      if (expression.getType() instanceof JClassType) {
+        // Must be an enum; synthesize a call to ordinal().
+        expression = new JMethodCall(program, info, expression,
+            program.getIndexedMethod("Enum.ordinal"));
+      }
       JBlock block = new JBlock(program, info);
       block.statements = processStatements(x.statements);
       return new JSwitchStatement(program, info, expression, block);
     }
 
     JStatement processStatement(SynchronizedStatement x) {
-      SourceInfo info = makeSourceInfo(x);
       JBlock block = (JBlock) dispProcessStatement(x.block);
       JExpression expr = dispProcessExpression(x.expression);
       block.statements.add(0, expr.makeStatement());

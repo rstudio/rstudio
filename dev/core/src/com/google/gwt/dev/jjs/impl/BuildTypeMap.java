@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JEnumType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
@@ -26,6 +27,7 @@ import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
+import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.js.JsParser;
@@ -60,12 +62,15 @@ import org.eclipse.jdt.internal.compiler.lookup.NestedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
+import org.eclipse.jdt.internal.compiler.lookup.SyntheticMethodBinding;
+import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.problem.ProblemHandler;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -123,8 +128,7 @@ public class BuildTypeMap {
     private final JsParser jsParser = new JsParser();
     private final JsProgram jsProgram;
     private JProgram program;
-    private ArrayList<TypeDeclaration> typeDecls =
-      new ArrayList<TypeDeclaration>();
+    private List<TypeDeclaration> typeDecls = new ArrayList<TypeDeclaration>();
 
     private final TypeMap typeMap;
 
@@ -135,9 +139,10 @@ public class BuildTypeMap {
     }
 
     public TypeDeclaration[] getTypeDeclarataions() {
-      return (TypeDeclaration[]) typeDecls.toArray(new TypeDeclaration[typeDecls.size()]);
+      return typeDecls.toArray(new TypeDeclaration[typeDecls.size()]);
     }
 
+    @Override
     public boolean visit(Argument argument, BlockScope scope) {
       try {
         if (scope == scope.methodScope()) {
@@ -174,7 +179,7 @@ public class BuildTypeMap {
         JMethod newMethod = program.createMethod(info, name.toCharArray(),
             enclosingType, enclosingType, false, false, true, b.isPrivate(),
             false);
-        mapThrownExceptions(newMethod, ctorDecl);
+        mapThrownExceptions(newMethod, b);
 
         // user args
         mapParameters(newMethod, ctorDecl);
@@ -255,112 +260,12 @@ public class BuildTypeMap {
       try {
         MethodBinding b = methodDeclaration.binding;
         SourceInfo info = makeSourceInfo(methodDeclaration);
-        JType returnType = (JType) typeMap.get(methodDeclaration.returnType.resolvedType);
         JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.enclosingSourceType());
-        JMethod newMethod = program.createMethod(info,
-            methodDeclaration.selector, enclosingType, returnType,
-            b.isAbstract(), b.isStatic(), b.isFinal(), b.isPrivate(),
-            b.isNative());
-
-        mapThrownExceptions(newMethod, methodDeclaration);
+        JMethod newMethod = processMethodBinding(b, enclosingType, info);
         mapParameters(newMethod, methodDeclaration);
-        typeMap.put(b, newMethod);
 
         if (newMethod.isNative()) {
-          // Handle JSNI block
-          char[] source = methodDeclaration.compilationResult().getCompilationUnit().getContents();
-          String jsniCode = String.valueOf(source, methodDeclaration.bodyStart,
-              methodDeclaration.bodyEnd - methodDeclaration.bodyStart + 1);
-          int startPos = jsniCode.indexOf("/*-{");
-          int endPos = jsniCode.lastIndexOf("}-*/");
-          if (startPos < 0 && endPos < 0) {
-            GenerateJavaAST.reportJsniError(
-                info,
-                methodDeclaration,
-                "Native methods require a JavaScript implementation enclosed with /*-{ and }-*/");
-            return true;
-          }
-          if (startPos < 0) {
-            GenerateJavaAST.reportJsniError(info, methodDeclaration,
-                "Unable to find start of native block; begin your JavaScript block with: /*-{");
-            return true;
-          }
-          if (endPos < 0) {
-            GenerateJavaAST.reportJsniError(
-                info,
-                methodDeclaration,
-                "Unable to find end of native block; terminate your JavaScript block with: }-*/");
-            return true;
-          }
-
-          startPos += 3; // move up to open brace
-          endPos += 1; // move past close brace
-
-          jsniCode = jsniCode.substring(startPos, endPos);
-
-          // Here we parse it as an anonymous function, but we will give it a
-          // name later when we generate the JavaScript during code generation.
-          //
-          String syntheticFnHeader = "function (";
-          boolean first = true;
-          for (int i = 0; i < newMethod.params.size(); ++i) {
-            JParameter param = newMethod.params.get(i);
-            if (first) {
-              first = false;
-            } else {
-              syntheticFnHeader += ',';
-            }
-            syntheticFnHeader += param.getName();
-          }
-          syntheticFnHeader += ')';
-          StringReader sr = new StringReader(syntheticFnHeader + '\n'
-              + jsniCode);
-          try {
-            // start at -1 to avoid counting our synthetic header
-            // TODO: get the character position start correct
-            JsStatements result = jsParser.parse(jsProgram.getScope(), sr, -1);
-            JsExprStmt jsExprStmt = (JsExprStmt) result.get(0);
-            JsFunction jsFunction = (JsFunction) jsExprStmt.getExpression();
-            ((JsniMethodBody) newMethod.getBody()).setFunc(jsFunction);
-          } catch (IOException e) {
-            throw new InternalCompilerException(
-                "Internal error parsing JSNI in method '" + newMethod
-                    + "' in type '" + enclosingType.getName() + "'", e);
-          } catch (JsParserException e) {
-            /*
-             * count the number of characters to the problem (from the start of
-             * the JSNI code)
-             */
-            SourceDetail detail = e.getSourceDetail();
-            int line = detail.getLine();
-            char[] chars = jsniCode.toCharArray();
-            int i = 0, n = chars.length;
-            while (line > 0) {
-              // CHECKSTYLE_OFF
-              switch (chars[i]) {
-                case '\r':
-                  // if skip an extra character if this is a CR/LF
-                  if (i + 1 < n && chars[i + 1] == '\n') {
-                    ++i;
-                  }
-                  // intentional fall-through
-                case '\n':
-                  --line;
-                  // intentional fall-through
-                default:
-                  ++i;
-              }
-              // CHECKSTYLE_ON
-            }
-
-            // TODO: check this
-            // Map into the original source stream;
-            i += startPos + detail.getLineOffset();
-            info = new SourceInfo(i, i, info.getStartLine() + detail.getLine(),
-                info.getFileName());
-            GenerateJavaAST.reportJsniError(info, methodDeclaration,
-                e.getMessage());
-          }
+          processNativeMethod(methodDeclaration, info, enclosingType, newMethod);
         }
 
         return true;
@@ -388,8 +293,14 @@ public class BuildTypeMap {
     private JField createField(SourceInfo info, FieldBinding binding,
         JReferenceType enclosingType, boolean hasInitializer) {
       JType type = (JType) typeMap.get(binding.type);
-      JField field = program.createField(info, binding.name, enclosingType,
-          type, binding.isStatic(), binding.isFinal(), hasInitializer);
+      JField field;
+      if (binding.declaringClass.isEnum()) {
+        field = program.createEnumField(info, binding.name,
+            (JEnumType) enclosingType, (JClassType) type, binding.original().id);
+      } else {
+        field = program.createField(info, binding.name, enclosingType, type,
+            binding.isStatic(), binding.isFinal(), hasInitializer);
+      }
       typeMap.put(binding, field);
       return field;
     }
@@ -463,8 +374,7 @@ public class BuildTypeMap {
       method.freezeParamTypes();
     }
 
-    private void mapThrownExceptions(JMethod method, AbstractMethodDeclaration x) {
-      MethodBinding b = x.binding;
+    private void mapThrownExceptions(JMethod method, MethodBinding b) {
       if (b.thrownExceptions != null) {
         for (int i = 0; i < b.thrownExceptions.length; ++i) {
           ReferenceBinding refBinding = b.thrownExceptions[i];
@@ -489,7 +399,7 @@ public class BuildTypeMap {
       currentSeparatorPositions = compResult.lineSeparatorPositions;
       currentFileName = String.valueOf(compResult.fileName);
       SourceTypeBinding binding = typeDeclaration.binding;
-      if (binding.isEnum() || binding.isAnnotationType()) {
+      if (binding.isAnnotationType()) {
         // TODO
         return false;
       }
@@ -525,7 +435,8 @@ public class BuildTypeMap {
 
         ReferenceBinding superClassBinding = binding.superclass();
         if (superClassBinding != null) {
-          assert (binding.superclass().isClass());
+          // TODO: handle separately?
+          assert (binding.superclass().isClass() || binding.superclass().isEnum());
           JClassType superClass = (JClassType) typeMap.get(superClassBinding);
           type.extnds = superClass;
         }
@@ -538,12 +449,149 @@ public class BuildTypeMap {
           type.implments.add(superInterface);
         }
         typeDecls.add(typeDeclaration);
+        if (binding.isEnum()) {
+          processEnum(binding, type);
+        }
         return true;
       } catch (InternalCompilerException ice) {
         ice.addNode(type);
         throw ice;
       } catch (Throwable e) {
         throw new InternalCompilerException(type, "Error building type map", e);
+      }
+    }
+
+    private void processEnum(SourceTypeBinding binding, JReferenceType type) {
+      // Visit the synthetic values() and valueOf() methods.
+      for (MethodBinding methodBinding : binding.methods) {
+        if (methodBinding instanceof SyntheticMethodBinding) {
+          JMethod newMethod = processMethodBinding(methodBinding, type, null);
+          TypeBinding[] parameters = methodBinding.parameters;
+          if (parameters.length == 0) {
+            assert newMethod.getName().equals("values");
+            // TODO: hack
+            JMethodBody body = (JMethodBody) newMethod.getBody();
+            body.getStatements().add(new JReturnStatement(program, null, program.getLiteralNull()));
+          } else if (parameters.length == 1) {
+            assert newMethod.getName().equals("valueOf");
+            assert typeMap.get(parameters[0]) == program.getTypeJavaLangString();
+            program.createParameter(null, "name".toCharArray(),
+                program.getTypeJavaLangString(), true, newMethod);
+            // TODO: hack
+            JMethodBody body = (JMethodBody) newMethod.getBody();
+            body.getStatements().add(new JReturnStatement(program, null, program.getLiteralNull()));
+          } else {
+            assert false;
+          }
+        }
+      }
+    }
+
+    private JMethod processMethodBinding(MethodBinding b,
+        JReferenceType enclosingType, SourceInfo info) {
+      JType returnType = (JType) typeMap.get(b.returnType);
+      JMethod newMethod = program.createMethod(info, b.selector, enclosingType,
+          returnType, b.isAbstract(), b.isStatic(), b.isFinal(), b.isPrivate(),
+          b.isNative());
+
+      mapThrownExceptions(newMethod, b);
+      typeMap.put(b, newMethod);
+      return newMethod;
+    }
+
+    private void processNativeMethod(MethodDeclaration methodDeclaration,
+        SourceInfo info, JReferenceType enclosingType, JMethod newMethod) {
+      // Handle JSNI block
+      char[] source = methodDeclaration.compilationResult().getCompilationUnit().getContents();
+      String jsniCode = String.valueOf(source, methodDeclaration.bodyStart,
+          methodDeclaration.bodyEnd - methodDeclaration.bodyStart + 1);
+      int startPos = jsniCode.indexOf("/*-{");
+      int endPos = jsniCode.lastIndexOf("}-*/");
+      if (startPos < 0 && endPos < 0) {
+        GenerateJavaAST.reportJsniError(
+            info,
+            methodDeclaration,
+            "Native methods require a JavaScript implementation enclosed with /*-{ and }-*/");
+        return;
+      }
+      if (startPos < 0) {
+        GenerateJavaAST.reportJsniError(info, methodDeclaration,
+            "Unable to find start of native block; begin your JavaScript block with: /*-{");
+        return;
+      }
+      if (endPos < 0) {
+        GenerateJavaAST.reportJsniError(
+            info,
+            methodDeclaration,
+            "Unable to find end of native block; terminate your JavaScript block with: }-*/");
+        return;
+      }
+
+      startPos += 3; // move up to open brace
+      endPos += 1; // move past close brace
+
+      jsniCode = jsniCode.substring(startPos, endPos);
+
+      // Here we parse it as an anonymous function, but we will give it a
+      // name later when we generate the JavaScript during code generation.
+      //
+      String syntheticFnHeader = "function (";
+      boolean first = true;
+      for (int i = 0; i < newMethod.params.size(); ++i) {
+        JParameter param = (JParameter) newMethod.params.get(i);
+        if (first) {
+          first = false;
+        } else {
+          syntheticFnHeader += ',';
+        }
+        syntheticFnHeader += param.getName();
+      }
+      syntheticFnHeader += ')';
+      StringReader sr = new StringReader(syntheticFnHeader + '\n' + jsniCode);
+      try {
+        // start at -1 to avoid counting our synthetic header
+        // TODO: get the character position start correct
+        JsStatements result = jsParser.parse(jsProgram.getScope(), sr, -1);
+        JsExprStmt jsExprStmt = (JsExprStmt) result.get(0);
+        JsFunction jsFunction = (JsFunction) jsExprStmt.getExpression();
+        ((JsniMethodBody) newMethod.getBody()).setFunc(jsFunction);
+      } catch (IOException e) {
+        throw new InternalCompilerException(
+            "Internal error parsing JSNI in method '" + newMethod
+                + "' in type '" + enclosingType.getName() + "'", e);
+      } catch (JsParserException e) {
+        /*
+         * count the number of characters to the problem (from the start of the
+         * JSNI code)
+         */
+        SourceDetail detail = e.getSourceDetail();
+        int line = detail.getLine();
+        char[] chars = jsniCode.toCharArray();
+        int i = 0, n = chars.length;
+        while (line > 0) {
+          // CHECKSTYLE_OFF
+          switch (chars[i]) {
+            case '\r':
+              // if skip an extra character if this is a CR/LF
+              if (i + 1 < n && chars[i + 1] == '\n') {
+                ++i;
+              }
+              // intentional fall-through
+            case '\n':
+              --line;
+              // intentional fall-through
+            default:
+              ++i;
+          }
+          // CHECKSTYLE_ON
+        }
+
+        // TODO: check this
+        // Map into the original source stream;
+        i += startPos + detail.getLineOffset();
+        info = new SourceInfo(i, i, info.getStartLine() + detail.getLine(),
+            info.getFileName());
+        GenerateJavaAST.reportJsniError(info, methodDeclaration, e.getMessage());
       }
     }
 
@@ -647,7 +695,9 @@ public class BuildTypeMap {
               binding.isFinal());
         } else if (binding.isInterface()) {
           newType = program.createInterface(info, name);
-        } else if (binding.isEnum() || binding.isAnnotationType()) {
+        } else if (binding.isEnum()) {
+          newType = program.createEnum(info, name);
+        } else if (binding.isAnnotationType()) {
           // TODO
           return false;
         } else {
