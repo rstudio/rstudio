@@ -150,7 +150,7 @@ public class JavaScriptHost {
   public static <T> T rebindAndCreate(Class<?> requestedClass) {
     String className = requestedClass.getName();
     try {
-      return sHost.rebindAndCreate(className);
+      return sHost.<T>rebindAndCreate(className);
     } catch (Throwable e) {
       String msg = "Deferred binding failed for '" + className
           + "' (did you forget to inherit a required module?)";

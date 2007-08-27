@@ -21,7 +21,7 @@ package com.google.gwt.dev.shell;
 public class ShellGWT {
 
   public static <T> T create(Class<?> classLiteral) {
-    return JavaScriptHost.rebindAndCreate(classLiteral);
+    return JavaScriptHost.<T>rebindAndCreate(classLiteral);
   }
 
   public static String getTypeName(Object o) {
