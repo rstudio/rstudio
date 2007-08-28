@@ -56,13 +56,23 @@ Third, within a category/visibility combination, members should be sorted
 alphabetically.
 
 --------------- Checkstyle ----------------
+Checkstyle is used to enforce good programming style.
 
-1. Checkstyle is used to enforce good programming style. The Eclipse Checkstyle
-plugin can be found at:
+1. Install Checkstyle
+
+The Eclipse Checkstyle plugin can be found at:
 
    http://eclipse-cs.sourceforge.net/
  
-2. Importing the GWT Checkstyle configuration:
+2. Enable Custom GWT Checkstyle checks:
+
+Copy "settings/code-style/gwt-customchecks.jar" into:
+ <eclipse>/plugins/com.atlassw.tools.eclipse.checkstyle_x.x.x/extension-libraries
+
+Restart Eclipse.
+("gwt-customchecks.jar" is also built from source into build/lib during a full build)
+
+3. Import GWT Checks:
 
 Window->Preferences->Checkstyle->New...
 Set the Type to "External Configuration File"
@@ -71,19 +81,8 @@ Set the location to "settings/code-style/gwt-checkstyle.xml".
 Suggested: Check "Protect Checkstyle configuration file".
 Click "Ok".
 
-3. Repeat step 2, except 
+4. Import GWT Checks for Tests
+
+Repeat step 2, except:
 Set the Name to "GWT Checks for Tests" (important)
 Set the location to "settings/code-style/gwt-checkstyle-tests.xml".
-
-4. Enabled Custom GWT Checkstyle checks:
-
-Copy "settings/code-style/gwt-customchecks.jar" into:
- <eclipse>/plugins/com.atlassw.tools.eclipse.checkstyle_x.x.x/extension-libraries
-
-("gwt-customchecks.jar" is also built from source into build/lib during a full build)
-
-5. Enable Checkstyle for each project: 
-
-Package Explorer->Project Name->Preferences->Checkstyle
-Check Checkstyle active for this project, the rest of the configuration should
-be already loaded.
