@@ -534,6 +534,14 @@ public class Node implements Cloneable {
         throw new UnsupportedOperationException(this + " is not a string node");
     }
 
+    /**
+     * Not usefully implemented.
+     */
+    public final int hashCode() {
+        assert false : "hashCode not designed";
+        return 42; // any arbitrary constant will do
+    }
+
     public boolean equals(Object o) {
         if (!(o instanceof Node)) { return false; }
         return hasLineno()
