@@ -24,7 +24,7 @@ import com.google.gwt.dev.js.JsParserException.SourceDetail;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsStatements;
+import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.xml.AttributeConverter;
@@ -35,6 +35,7 @@ import java.io.StringReader;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -738,7 +739,7 @@ public class ModuleDefSchema extends Schema {
       throws UnableToCompleteException {
     script = "function() { " + script + "}";
     StringReader r = new StringReader(script);
-    JsStatements stmts;
+    List<JsStatement> stmts;
     try {
       stmts = jsParser.parse(jsPgm.getScope(), r, startLineNumber);
     } catch (IOException e) {

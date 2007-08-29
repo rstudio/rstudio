@@ -19,9 +19,10 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
 import com.google.gwt.dev.js.ast.JsContext;
+import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsStatements;
+import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitor;
 
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
@@ -31,6 +32,7 @@ import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -38,11 +40,11 @@ import java.util.Set;
  */
 public class FindJsniRefVisitor extends ASTVisitor {
 
-  private final Set/* <String> */jsniClasses;
+  private final Set<String> jsniClasses;
   private final JsParser jsParser = new JsParser();
   private final JsProgram jsProgram = new JsProgram();
 
-  public FindJsniRefVisitor(Set/* <String> */jsniClasses) {
+  public FindJsniRefVisitor(Set<String> jsniClasses) {
     this.jsniClasses = jsniClasses;
   }
 
@@ -83,16 +85,16 @@ public class FindJsniRefVisitor extends ASTVisitor {
     StringReader sr = new StringReader(syntheticFnHeader + '\n' + jsniCode);
     try {
       // start at -1 to avoid counting our synthetic header
-      JsStatements result = jsParser.parse(jsProgram.getScope(), sr, -1);
+      List<JsStatement> result = jsParser.parse(jsProgram.getScope(), sr, -1);
       new JsVisitor() {
-        public void endVisit(JsNameRef x, JsContext ctx) {
+        public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
           String ident = x.getIdent();
           if (ident.charAt(0) == '@') {
             String className = ident.substring(1, ident.indexOf(':'));
             jsniClasses.add(className);
           }
         }
-      }.accept(result);
+      }.acceptList(result);
     } catch (IOException e) {
       throw new InternalCompilerException(
           "Internal error searching for JSNI references", e);

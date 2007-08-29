@@ -21,10 +21,11 @@ import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsStatements;
+import com.google.gwt.dev.js.ast.JsStatement;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.List;
 
 /**
  * A property provider that reports property values specified literally in a
@@ -52,7 +53,7 @@ public class DefaultPropertyProvider extends PropertyProvider {
       JsProgram jsPgm = new JsProgram();
       JsParser jsParser = new JsParser();
       StringReader r = new StringReader(jsniSrc);
-      JsStatements stmts = jsParser.parse(jsPgm.getScope(), r, 1);
+      List<JsStatement> stmts = jsParser.parse(jsPgm.getScope(), r, 1);
       JsFunction fn = (JsFunction) ((JsExprStmt) stmts.get(0)).getExpression();
       return fn.getBody();
     } catch (IOException e) {

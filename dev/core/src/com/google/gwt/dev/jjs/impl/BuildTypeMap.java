@@ -36,7 +36,7 @@ import com.google.gwt.dev.js.JsParserException.SourceDetail;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsStatements;
+import com.google.gwt.dev.js.ast.JsStatement;
 
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
@@ -551,7 +551,7 @@ public class BuildTypeMap {
       try {
         // start at -1 to avoid counting our synthetic header
         // TODO: get the character position start correct
-        JsStatements result = jsParser.parse(jsProgram.getScope(), sr, -1);
+        List<JsStatement> result = jsParser.parse(jsProgram.getScope(), sr, -1);
         JsExprStmt jsExprStmt = (JsExprStmt) result.get(0);
         JsFunction jsFunction = (JsFunction) jsExprStmt.getExpression();
         ((JsniMethodBody) newMethod.getBody()).setFunc(jsFunction);
