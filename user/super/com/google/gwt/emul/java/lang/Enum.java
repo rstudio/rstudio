@@ -15,8 +15,6 @@
  */
 package java.lang;
 
-import com.google.gwt.core.client.GWT;
-
 import java.io.Serializable;
 
 /**
@@ -42,9 +40,10 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
   }
 
   public final int compareTo(E other) {
-    if (GWT.getTypeName(this) != GWT.getTypeName(other)) {
-      throw new ClassCastException();
-    }
+    // TODO: will a bridge method do the cast for us?
+    // if (GWT.getTypeName(this) != GWT.getTypeName(other)) {
+    // throw new ClassCastException();
+    // }
     return this.ordinal - other.ordinal;
   }
 
