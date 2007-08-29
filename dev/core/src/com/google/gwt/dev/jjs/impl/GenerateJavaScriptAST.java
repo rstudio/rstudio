@@ -1533,6 +1533,7 @@ public class GenerateJavaScriptAST {
         if (item != null) {
           list.add(item);
         }
+        --count;
       }
       Collections.reverse(list);
       return list;
@@ -1546,6 +1547,7 @@ public class GenerateJavaScriptAST {
         if (item != null) {
           list.add(item);
         }
+        --count;
       }
       Collections.reverse(list);
       collection.addAll(list);
