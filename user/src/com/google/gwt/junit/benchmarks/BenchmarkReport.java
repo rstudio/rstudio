@@ -171,8 +171,8 @@ public class BenchmarkReport {
       if (!classSources.containsKey(clazz)) {
         char[] sourceContents = null;
         File sourceFile = findSourceFile(clazz);
-        if ( sourceFile != null ) {
-          Util.readFileAsChars(sourceFile);
+        if (sourceFile != null) {
+          sourceContents = Util.readFileAsChars(sourceFile);
           classSources.put(clazz, sourceContents);
         }
 

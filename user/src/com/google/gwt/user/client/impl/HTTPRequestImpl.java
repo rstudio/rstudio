@@ -69,7 +69,7 @@ public class HTTPRequestImpl {
       xmlHttp.onreadystatechange = function() {
         if (xmlHttp.readyState == 4) {
           xmlHttp.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
-          handler.@com.google.gwt.user.client.ResponseTextHandler::onCompletion(Ljava/lang/String;)(xmlHttp.responseText);
+          handler.@com.google.gwt.user.client.ResponseTextHandler::onCompletion(Ljava/lang/String;)(xmlHttp.responseText || "");
         }
       };
       xmlHttp.send('');
@@ -89,7 +89,7 @@ public class HTTPRequestImpl {
       xmlHttp.onreadystatechange = function() {
         if (xmlHttp.readyState == 4) {
           xmlHttp.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
-          handler.@com.google.gwt.user.client.ResponseTextHandler::onCompletion(Ljava/lang/String;)(xmlHttp.responseText);
+          handler.@com.google.gwt.user.client.ResponseTextHandler::onCompletion(Ljava/lang/String;)(xmlHttp.responseText || "");
         }
       };
       xmlHttp.send(postData);

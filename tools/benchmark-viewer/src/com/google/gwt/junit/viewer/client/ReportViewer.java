@@ -18,6 +18,8 @@ package com.google.gwt.junit.viewer.client;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.ui.Button;
@@ -218,8 +220,17 @@ public class ReportViewer implements EntryPoint {
         benchmarkTable.setCellPadding(5);
         benchmarkTable.setText(0, 0, benchmark.getName());
         // benchmarkTable.setText(0, 1, benchmark.getDescription());
-        benchmarkTable.setWidget(1, 0, new HTML("<pre>"
-            + benchmark.getSourceCode() + "</pre>"));
+        String codeHtml;
+        String sourceText = benchmark.getSourceCode();
+        if (sourceText != null) {
+          Element tempElem = DOM.createDiv();
+          DOM.setInnerText(tempElem, sourceText);
+          String escapedCodeHtml = DOM.getInnerHTML(tempElem);
+          codeHtml = "<pre>" + escapedCodeHtml + "</pre>";
+        } else {
+          codeHtml = "<i>(source not available)</i>";
+        }
+        benchmarkTable.setWidget(1, 0, new HTML(codeHtml));
         benchmarkTable.getFlexCellFormatter().setStyleName(0, 0,
             "benchmark-name");
         // benchmarkTable.getFlexCellFormatter().setStyleName( 0, 1,

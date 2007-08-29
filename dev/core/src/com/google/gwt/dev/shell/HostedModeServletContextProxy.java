@@ -148,13 +148,17 @@ class HostedModeServletContextProxy implements ServletContext {
    * @see javax.servlet.ServletContext#getResource(java.lang.String)
    */
   public URL getResource(String path) throws MalformedURLException {
-    if (path.startsWith("/")) {
-      path = path.substring(1);
+    String moduleContext = "/" + moduleDef.getName() + "/";
+    if (!path.startsWith(moduleContext)) {
+      // This path is in a different context; just return null
+      return null;
     }
-
-    URL url = moduleDef.findPublicFile(path);
+    
+    // Try to get the resource from the application's public path
+    URL url = moduleDef.findPublicFile(path.substring(moduleContext.length()));
     if (url == null) {
-      File requestedFile = new File(outputDir, path);
+      // Otherwise try the path but rooted in the output directory
+      File requestedFile = new File(outputDir, path.substring(1));
       if (requestedFile.exists()) {
         url = requestedFile.toURI().toURL();
       }

@@ -29,6 +29,8 @@
       <h1>Google Web Toolkit Release Notes</h1>
       <ul>
 		    <li><a href="#Release_Notes_Current">@GWT_VERSION@</a></li>
+		    <li><a href="#Release_Notes_1_4_60">1.4.60</a></li>
+		    <li><a href="#Release_Notes_1_4_59">1.4.59 (RC2)</a></li>
 		    <li><a href="#Release_Notes_1_4_10">1.4.10 (RC)</a></li>
 		    <li><a href="#Release_Notes_1_3_3">1.3.3</a></li>
 		    <li><a href="#Release_Notes_1_3_1">1.3.1 (RC)</a></li>
@@ -42,6 +44,28 @@
       <hr/>
       <a name="Release_Notes_Current"></a>
       <h2>Release Notes for @GWT_VERSION@</h2>
+      <p>
+      <i>(placeholder for 1.5)</i>
+      </p>
+
+      <hr/>
+      <a name="Release_Notes_1_4_60"></a>
+      <h2>Release Notes for 1.4.60</h2>
+      <p>
+      This release has only a couple of minor changes from <a href="#Release_Notes_1_4_59">1.4.59</a>.
+      </p>
+      <ul>
+      <li>Fixed a bug in the benchmarking that prevented source code from showing up in reports.</li>
+      <li>Fixed a bug in the hosted mode servlet context emulation where getResource() would fail to
+      find a file in a module's public path.</li>
+      <li>Compiler output files of the form <code><i>module</i>.cache.html</code> used to contain html
+      intended as a helpful note to a developer.  This message has now been removed because screen
+      readers and some browsers would display this content to end users.</li>
+      </ul>
+
+      <hr/>
+      <a name="Release_Notes_1_4_59"></a>
+      <h2>Release Notes for 1.4.59 (RC2)</h2>
       <p>
       This release includes numerous bugfixes and a few important changes.  If you are upgrading from GWT 1.3.3, you
       are strongly encouraged to read the <a href="#Release_Notes_1_4_10">release notes for 1.4.10</a> first.

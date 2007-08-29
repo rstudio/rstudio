@@ -474,15 +474,6 @@ public class GWTCompiler extends ToolBase {
     out.print("<body>");
     out.newlineOpt();
 
-    // A nice message in case someone opens the file directly.
-    //
-    out.print("<font face='arial' size='-1'>This script is part of module</font>");
-    out.newlineOpt();
-    out.print("<code>");
-    out.print(module.getName());
-    out.print("</code>");
-    out.newlineOpt();
-
     // Begin a script block inside the body. It's commented out so that the
     // browser won't mistake strings containing "<script>" for actual script.
     out.print("<script><!--");
