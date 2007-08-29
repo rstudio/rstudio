@@ -15,14 +15,17 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Implemented by nodes that will visit child nodes.
  */
+@SuppressWarnings("unused")
 public class JsVisitor {
 
   protected static final JsContext UNMODIFIABLE_CONTEXT = new JsContext() {
@@ -35,11 +38,11 @@ public class JsVisitor {
       return false;
     }
 
-    public void insertAfter(JsNode node) {
+    public void insertAfter(JsVisitable node) {
       throw new UnsupportedOperationException();
     }
 
-    public void insertBefore(JsNode node) {
+    public void insertBefore(JsVisitable node) {
       throw new UnsupportedOperationException();
     }
 
@@ -47,29 +50,21 @@ public class JsVisitor {
       throw new UnsupportedOperationException();
     }
 
-    public void replaceMe(JsNode node) {
+    public void replaceMe(JsVisitable node) {
       throw new UnsupportedOperationException();
     }
-
   };
 
-  public final void accept(JsCollection collection) {
-    doAccept(collection);
-  }
-
-  public final JsExpression accept(JsExpression node) {
-    return (JsExpression) doAccept(node);
-  }
-
-  public final JsNode accept(JsNode node) {
+  public final <T extends JsVisitable> T accept(T node) {
     return doAccept(node);
   }
 
-  public final JsStatement accept(JsStatement node) {
-    return (JsStatement) doAccept(node);
+  public final <T extends JsVisitable<T>> void acceptList(List<T> collection) {
+    doAcceptList(collection);
   }
 
-  public final void acceptWithInsertRemove(JsCollection collection) {
+  public final <T extends JsVisitable<T>> void acceptWithInsertRemove(
+      List<T> collection) {
     doAcceptWithInsertRemove(collection);
   }
 
@@ -77,322 +72,322 @@ public class JsVisitor {
     throw new UnsupportedOperationException();
   }
 
-  public void endVisit(JsArrayAccess x, JsContext ctx) {
+  public void endVisit(JsArrayAccess x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsArrayLiteral x, JsContext ctx) {
+  public void endVisit(JsArrayLiteral x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsBinaryOperation x, JsContext ctx) {
+  public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsBlock x, JsContext ctx) {
+  public void endVisit(JsBlock x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsBooleanLiteral x, JsContext ctx) {
+  public void endVisit(JsBooleanLiteral x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsBreak x, JsContext ctx) {
+  public void endVisit(JsBreak x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsCase x, JsContext ctx) {
+  public void endVisit(JsCase x, JsContext<JsSwitchMember> ctx) {
   }
 
-  public void endVisit(JsCatch x, JsContext ctx) {
+  public void endVisit(JsCatch x, JsContext<JsCatch> ctx) {
   }
 
-  public void endVisit(JsConditional x, JsContext ctx) {
+  public void endVisit(JsConditional x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsContinue x, JsContext ctx) {
+  public void endVisit(JsContinue x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsDebugger x, JsContext ctx) {
+  public void endVisit(JsDebugger x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsDecimalLiteral x, JsContext ctx) {
+  public void endVisit(JsDecimalLiteral x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsDefault x, JsContext ctx) {
+  public void endVisit(JsDefault x, JsContext<JsSwitchMember> ctx) {
   }
 
-  public void endVisit(JsDoWhile x, JsContext ctx) {
+  public void endVisit(JsDoWhile x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsEmpty x, JsContext ctx) {
+  public void endVisit(JsEmpty x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsExprStmt x, JsContext ctx) {
+  public void endVisit(JsExprStmt x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsFor x, JsContext ctx) {
+  public void endVisit(JsFor x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsForIn x, JsContext ctx) {
+  public void endVisit(JsForIn x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsFunction x, JsContext ctx) {
+  public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsIf x, JsContext ctx) {
+  public void endVisit(JsIf x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsIntegralLiteral x, JsContext ctx) {
+  public void endVisit(JsIntegralLiteral x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsInvocation x, JsContext ctx) {
+  public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsLabel x, JsContext ctx) {
+  public void endVisit(JsLabel x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsNameRef x, JsContext ctx) {
+  public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsNew x, JsContext ctx) {
+  public void endVisit(JsNew x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsNullLiteral x, JsContext ctx) {
+  public void endVisit(JsNullLiteral x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsObjectLiteral x, JsContext ctx) {
+  public void endVisit(JsObjectLiteral x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsParameter x, JsContext ctx) {
+  public void endVisit(JsParameter x, JsContext<JsParameter> ctx) {
   }
 
-  public void endVisit(JsPostfixOperation x, JsContext ctx) {
+  public void endVisit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsPrefixOperation x, JsContext ctx) {
+  public void endVisit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsProgram x, JsContext ctx) {
+  public void endVisit(JsProgram x, JsContext<JsProgram> ctx) {
   }
 
-  public void endVisit(JsPropertyInitializer x, JsContext ctx) {
+  public void endVisit(JsPropertyInitializer x,
+      JsContext<JsPropertyInitializer> ctx) {
   }
 
-  public void endVisit(JsRegExp x, JsContext ctx) {
+  public void endVisit(JsRegExp x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsReturn x, JsContext ctx) {
+  public void endVisit(JsReturn x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsStringLiteral x, JsContext ctx) {
+  public void endVisit(JsStringLiteral x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsSwitch x, JsContext ctx) {
+  public void endVisit(JsSwitch x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsThisRef x, JsContext ctx) {
+  public void endVisit(JsThisRef x, JsContext<JsExpression> ctx) {
   }
 
-  public void endVisit(JsThrow x, JsContext ctx) {
+  public void endVisit(JsThrow x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsTry x, JsContext ctx) {
+  public void endVisit(JsTry x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsVar x, JsContext ctx) {
+  public void endVisit(JsVar x, JsContext<JsVar> ctx) {
   }
 
-  public void endVisit(JsVars x, JsContext ctx) {
+  public void endVisit(JsVars x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsWhile x, JsContext ctx) {
+  public void endVisit(JsWhile x, JsContext<JsStatement> ctx) {
   }
 
-  public boolean visit(JsArrayAccess x, JsContext ctx) {
+  public boolean visit(JsArrayAccess x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsArrayLiteral x, JsContext ctx) {
+  public boolean visit(JsArrayLiteral x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsBinaryOperation x, JsContext ctx) {
+  public boolean visit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsBlock x, JsContext ctx) {
+  public boolean visit(JsBlock x, JsContext<JsStatement> ctx) {
     return true;
   }
 
-  public boolean visit(JsBooleanLiteral x, JsContext ctx) {
+  public boolean visit(JsBooleanLiteral x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsBreak x, JsContext ctx) {
+  public boolean visit(JsBreak x, JsContext<JsStatement> ctx) {
     return true;
   }
 
-  public boolean visit(JsCase x, JsContext ctx) {
+  public boolean visit(JsCase x, JsContext<JsSwitchMember> ctx) {
     return true;
   }
 
-  public boolean visit(JsCatch x, JsContext ctx) {
+  public boolean visit(JsCatch x, JsContext<JsCatch> ctx) {
     return true;
   }
 
-  public boolean visit(JsConditional x, JsContext ctx) {
+  public boolean visit(JsConditional x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsContinue x, JsContext ctx) {
+  public boolean visit(JsContinue x, JsContext<JsStatement> ctx) {
     return true;
   }
 
-  public boolean visit(JsDebugger x, JsContext ctx) {
+  public boolean visit(JsDebugger x, JsContext<JsStatement> ctx) {
     return true;
   }
 
-  public boolean visit(JsDecimalLiteral x, JsContext ctx) {
+  public boolean visit(JsDecimalLiteral x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsDefault x, JsContext ctx) {
+  public boolean visit(JsDefault x, JsContext<JsSwitchMember> ctx) {
     return true;
   }
 
-  public boolean visit(JsDoWhile x, JsContext ctx) {
+  public boolean visit(JsDoWhile x, JsContext<JsStatement> ctx) {
     return true;
   }
 
-  public boolean visit(JsEmpty x, JsContext ctx) {
+  public boolean visit(JsEmpty x, JsContext<JsStatement> ctx) {
     return true;
   }
 
-  public boolean visit(JsExprStmt x, JsContext ctx) {
+  public boolean visit(JsExprStmt x, JsContext<JsStatement> ctx) {
     return true;
   }
 
-  public boolean visit(JsFor x, JsContext ctx) {
+  public boolean visit(JsFor x, JsContext<JsStatement> ctx) {
     return true;
   }
 
-  public boolean visit(JsForIn x, JsContext ctx) {
+  public boolean visit(JsForIn x, JsContext<JsStatement> ctx) {
     return true;
   }
 
-  public boolean visit(JsFunction x, JsContext ctx) {
+  public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsIf x, JsContext ctx) {
+  public boolean visit(JsIf x, JsContext<JsStatement> ctx) {
     return true;
   }
 
-  public boolean visit(JsIntegralLiteral x, JsContext ctx) {
+  public boolean visit(JsIntegralLiteral x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsInvocation x, JsContext ctx) {
+  public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsLabel x, JsContext ctx) {
+  public boolean visit(JsLabel x, JsContext<JsStatement> ctx) {
     return true;
   }
 
-  public boolean visit(JsNameRef x, JsContext ctx) {
+  public boolean visit(JsNameRef x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsNew x, JsContext ctx) {
+  public boolean visit(JsNew x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsNullLiteral x, JsContext ctx) {
+  public boolean visit(JsNullLiteral x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsObjectLiteral x, JsContext ctx) {
+  public boolean visit(JsObjectLiteral x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsParameter x, JsContext ctx) {
+  public boolean visit(JsParameter x, JsContext<JsParameter> ctx) {
     return true;
   }
 
-  public boolean visit(JsParameters x, JsContext ctx) {
+  public boolean visit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsPostfixOperation x, JsContext ctx) {
+  public boolean visit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsPrefixOperation x, JsContext ctx) {
+  public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {
     return true;
   }
 
-  public boolean visit(JsProgram x, JsContext ctx) {
+  public boolean visit(JsPropertyInitializer x,
+      JsContext<JsPropertyInitializer> ctx) {
     return true;
   }
 
-  public boolean visit(JsPropertyInitializer x, JsContext ctx) {
+  public boolean visit(JsRegExp x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsRegExp x, JsContext ctx) {
+  public boolean visit(JsReturn x, JsContext<JsStatement> ctx) {
     return true;
   }
 
-  public boolean visit(JsReturn x, JsContext ctx) {
+  public boolean visit(JsStringLiteral x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsStringLiteral x, JsContext ctx) {
+  public boolean visit(JsSwitch x, JsContext<JsStatement> ctx) {
     return true;
   }
 
-  public boolean visit(JsSwitch x, JsContext ctx) {
+  public boolean visit(JsThisRef x, JsContext<JsExpression> ctx) {
     return true;
   }
 
-  public boolean visit(JsThisRef x, JsContext ctx) {
+  public boolean visit(JsThrow x, JsContext<JsStatement> ctx) {
     return true;
   }
 
-  public boolean visit(JsThrow x, JsContext ctx) {
+  public boolean visit(JsTry x, JsContext<JsStatement> ctx) {
     return true;
   }
 
-  public boolean visit(JsTry x, JsContext ctx) {
+  public boolean visit(JsVar x, JsContext<JsVar> ctx) {
     return true;
   }
 
-  public boolean visit(JsVar x, JsContext ctx) {
+  public boolean visit(JsVars x, JsContext<JsStatement> ctx) {
     return true;
   }
 
-  public boolean visit(JsVars x, JsContext ctx) {
+  public boolean visit(JsWhile x, JsContext<JsStatement> ctx) {
     return true;
   }
 
-  public boolean visit(JsWhile x, JsContext ctx) {
-    return true;
-  }
-
-  protected void doAccept(JsCollection collection) {
-    for (Iterator it = collection.iterator(); it.hasNext();) {
-      doTraverse((JsNode) it.next(), UNMODIFIABLE_CONTEXT);
-    }
-  }
-
-  protected JsNode doAccept(JsNode node) {
-    doTraverse(node, UNMODIFIABLE_CONTEXT);
+  protected <T extends JsVisitable<T>> T doAccept(T node) {
+    doTraverse(node, (JsContext<T>) UNMODIFIABLE_CONTEXT);
     return node;
   }
 
-  protected void doAcceptWithInsertRemove(JsCollection collection) {
-    for (Iterator it = collection.iterator(); it.hasNext();) {
-      doTraverse((JsNode) it.next(), UNMODIFIABLE_CONTEXT);
+  protected <T extends JsVisitable<T>> void doAcceptList(List<T> collection) {
+    for (Iterator<T> it = collection.iterator(); it.hasNext();) {
+      doTraverse(it.next(), (JsContext<T>) UNMODIFIABLE_CONTEXT);
     }
   }
 
-  protected final void doTraverse(JsNode node, JsContext ctx) {
+  protected <T extends JsVisitable<T>> void doAcceptWithInsertRemove(
+      List<T> collection) {
+    for (Iterator<T> it = collection.iterator(); it.hasNext();) {
+      doTraverse(it.next(), (JsContext<T>) UNMODIFIABLE_CONTEXT);
+    }
+  }
+
+  protected final <T extends JsVisitable<T>> void doTraverse(T node,
+      JsContext<T> ctx) {
     try {
       node.traverse(this, ctx);
     } catch (Throwable e) {
@@ -400,14 +395,15 @@ public class JsVisitor {
     }
   }
 
-  private InternalCompilerException translateException(JsNode node, Throwable e) {
+  private <T extends JsVisitable<T>> InternalCompilerException translateException(
+      T node, Throwable e) {
     InternalCompilerException ice;
     if (e instanceof InternalCompilerException) {
       ice = (InternalCompilerException) e;
     } else {
       ice = new InternalCompilerException("Unexpected error during visit.", e);
     }
-    ice.addNode(node);
+    ice.addNode((HasSourceInfo) node);
     return ice;
   }
 }

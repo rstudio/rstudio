@@ -33,6 +33,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.js.ast.JsContext;
+import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
@@ -82,12 +83,12 @@ public class MakeCallsStatic {
       }
 
       // @Override
-      public void endVisit(JsThisRef x, JsContext ctx) {
+      public void endVisit(JsThisRef x, JsContext<JsExpression> ctx) {
         ctx.replaceMe(thisParam.makeRef());
       }
 
       // @Override
-      public boolean visit(JsFunction x, JsContext ctx) {
+      public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
         // Don't recurse into nested functions!
         return false;
       }

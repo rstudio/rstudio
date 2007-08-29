@@ -15,21 +15,24 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Represents a JavaScript expression for array literals.
  */
 public final class JsArrayLiteral extends JsExpression {
 
-  private final JsExpressions exprs = new JsExpressions();
+  private final List<JsExpression> exprs = new ArrayList<JsExpression>();
 
   public JsArrayLiteral() {
   }
 
-  public JsExpressions getExpressions() {
+  public List<JsExpression> getExpressions() {
     return exprs;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
     if (v.visit(this, ctx)) {
       v.acceptWithInsertRemove(exprs);
     }

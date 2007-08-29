@@ -18,7 +18,7 @@ package com.google.gwt.dev.js.ast;
 /**
  * Used in object literals to specify property values by name.
  */
-public class JsPropertyInitializer extends JsNode {
+public class JsPropertyInitializer extends JsNode<JsPropertyInitializer> {
 
   private JsExpression labelExpr;
 
@@ -48,7 +48,7 @@ public class JsPropertyInitializer extends JsNode {
     this.valueExpr = valueExpr;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsPropertyInitializer> ctx) {
     if (v.visit(this, ctx)) {
       labelExpr = v.accept(labelExpr);
       valueExpr = v.accept(valueExpr);

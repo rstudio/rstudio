@@ -23,8 +23,11 @@ import com.google.gwt.dev.util.DefaultTextOutput;
 
 /**
  * Base class for all JS AST elements.
+ * 
+ * @param <T>
  */
-public abstract class JsNode implements JsVisitable, HasSourceInfo {
+public abstract class JsNode<T extends JsVisitable<T>> implements JsVisitable<T>,
+    HasSourceInfo {
 
   public SourceInfo getSourceInfo() {
     // TODO: make this real
@@ -40,6 +43,7 @@ public abstract class JsNode implements JsVisitable, HasSourceInfo {
   }
 
   // Causes source generation to delegate to the one visitor
+  @Override
   public final String toString() {
     DefaultTextOutput out = new DefaultTextOutput(false);
     JsToStringGenerationVisitor v = new JsToStringGenerationVisitor(out);

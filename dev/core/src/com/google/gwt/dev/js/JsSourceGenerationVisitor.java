@@ -18,6 +18,7 @@ package com.google.gwt.dev.js;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.util.TextOutput;
 
 /**
@@ -29,12 +30,12 @@ public class JsSourceGenerationVisitor extends JsToStringGenerationVisitor {
     super(out);
   }
 
-  public boolean visit(JsProgram x, JsContext ctx) {
+  public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {
     // Descend naturally.
     return true;
   }
 
-  public boolean visit(JsBlock x, JsContext ctx) {
+  public boolean visit(JsBlock x, JsContext<JsStatement> ctx) {
     printJsBlockOptionalTruncate(x, false);
     return false;
   }

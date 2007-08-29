@@ -20,6 +20,7 @@ package com.google.gwt.dev.js.ast;
  */
 public class JsGlobalBlock extends JsBlock {
 
+  @Override
   public boolean isGlobalBlock() {
     return true;
   }

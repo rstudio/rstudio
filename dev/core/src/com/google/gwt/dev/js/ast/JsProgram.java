@@ -22,11 +22,11 @@ import java.util.Map;
 /**
  * A JavaScript program.
  */
-public final class JsProgram extends JsNode {
+public final class JsProgram extends JsNode<JsProgram> {
 
   private final JsStatement debuggerStmt = new JsDebugger();
 
-  private final Map decimalLiteralMap = new HashMap();
+  private final Map<String, JsDecimalLiteral> decimalLiteralMap = new HashMap<String, JsDecimalLiteral>();
 
   private final JsEmpty emptyStmt = new JsEmpty();
 
@@ -34,7 +34,7 @@ public final class JsProgram extends JsNode {
 
   private final JsGlobalBlock globalBlock;
 
-  private final Map integralLiteralMap = new HashMap();
+  private final Map<BigInteger, JsIntegralLiteral> integralLiteralMap = new HashMap<BigInteger, JsIntegralLiteral>();
 
   private final JsNullLiteral nullLiteral = new JsNullLiteral();
 
@@ -42,7 +42,7 @@ public final class JsProgram extends JsNode {
 
   private final JsRootScope rootScope;
 
-  private final Map stringLiteralMap = new HashMap();
+  private final Map<String, JsStringLiteral> stringLiteralMap = new HashMap<String, JsStringLiteral>();
 
   private final JsScope topScope;
 
@@ -69,7 +69,7 @@ public final class JsProgram extends JsNode {
   }
 
   public JsDecimalLiteral getDecimalLiteral(String value) {
-    JsDecimalLiteral lit = (JsDecimalLiteral) decimalLiteralMap.get(value);
+    JsDecimalLiteral lit = decimalLiteralMap.get(value);
     if (lit == null) {
       lit = new JsDecimalLiteral(value);
       decimalLiteralMap.put(value, lit);
@@ -93,7 +93,7 @@ public final class JsProgram extends JsNode {
   }
 
   public JsIntegralLiteral getIntegralLiteral(BigInteger value) {
-    JsIntegralLiteral lit = (JsIntegralLiteral) integralLiteralMap.get(value);
+    JsIntegralLiteral lit = integralLiteralMap.get(value);
     if (lit == null) {
       lit = new JsIntegralLiteral(value);
       integralLiteralMap.put(value, lit);
@@ -127,7 +127,7 @@ public final class JsProgram extends JsNode {
   }
 
   public JsStringLiteral getStringLiteral(String value) {
-    JsStringLiteral lit = (JsStringLiteral) stringLiteralMap.get(value);
+    JsStringLiteral lit = stringLiteralMap.get(value);
     if (lit == null) {
       lit = new JsStringLiteral(value);
       stringLiteralMap.put(value, lit);
@@ -139,7 +139,7 @@ public final class JsProgram extends JsNode {
     return trueLiteral;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsProgram> ctx) {
     if (v.visit(this, ctx)) {
       v.accept(globalBlock);
     }

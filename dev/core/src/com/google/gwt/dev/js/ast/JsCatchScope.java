@@ -31,25 +31,28 @@ public class JsCatchScope extends JsScope {
     this.name = new JsName(ident, ident);
   }
 
+  @Override
   public JsName declareName(String ident) {
     // Declare into parent scope!
     return getParent().declareName(ident);
   }
 
+  @Override
   public JsName declareName(String ident, String shortIdent) {
     // Declare into parent scope!
     return getParent().declareName(ident, shortIdent);
   }
 
-  public Iterator getAllNames() {
-    return new Iterator() {
+  @Override
+  public Iterator<JsName> getAllNames() {
+    return new Iterator<JsName>() {
       private boolean didIterate = false;
 
       public boolean hasNext() {
         return !didIterate;
       }
 
-      public Object next() {
+      public JsName next() {
         if (didIterate) {
           throw new NoSuchElementException();
         }
@@ -64,11 +67,13 @@ public class JsCatchScope extends JsScope {
     };
   }
 
+  @Override
   protected JsName doCreateName(String ident, String shortIdent) {
     throw new UnsupportedOperationException(
         "Cannot create a name in a catch scope");
   }
 
+  @Override
   protected JsName findExistingNameNoRecurse(String ident) {
     if (name.getIdent().equals(ident)) {
       return name;

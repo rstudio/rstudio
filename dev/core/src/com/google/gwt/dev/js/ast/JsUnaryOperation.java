@@ -45,7 +45,7 @@ public abstract class JsUnaryOperation extends JsExpression {
     this.arg = arg;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
     arg = v.accept(arg);
   }
 }

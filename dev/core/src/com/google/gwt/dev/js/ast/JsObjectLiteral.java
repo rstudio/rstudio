@@ -15,21 +15,24 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A JavaScript object literal.
  */
 public class JsObjectLiteral extends JsExpression {
 
-  private final JsPropertyInitializers props = new JsPropertyInitializers();
+  private final List<JsPropertyInitializer> props = new ArrayList<JsPropertyInitializer>();
 
   public JsObjectLiteral() {
   }
 
-  public JsPropertyInitializers getPropertyInitializers() {
+  public List<JsPropertyInitializer> getPropertyInitializers() {
     return props;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
     if (v.visit(this, ctx)) {
       v.acceptWithInsertRemove(props);
     }

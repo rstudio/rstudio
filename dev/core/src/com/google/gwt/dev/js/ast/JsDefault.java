@@ -23,7 +23,7 @@ public final class JsDefault extends JsSwitchMember {
   public JsDefault() {
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsSwitchMember> ctx) {
     if (v.visit(this, ctx)) {
       v.acceptWithInsertRemove(stmts);
     }

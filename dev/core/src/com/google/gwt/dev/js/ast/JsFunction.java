@@ -15,13 +15,16 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Represents a JavaScript function expression.
  */
 public class JsFunction extends JsExpression implements HasName {
 
   protected JsBlock body;
-  protected final JsParameters params = new JsParameters();
+  protected final List<JsParameter> params = new ArrayList<JsParameter>();
   protected final JsScope scope;
   private JsName name;
 
@@ -51,7 +54,7 @@ public class JsFunction extends JsExpression implements HasName {
     return name;
   }
 
-  public JsParameters getParameters() {
+  public List<JsParameter> getParameters() {
     return params;
   }
 
@@ -67,10 +70,10 @@ public class JsFunction extends JsExpression implements HasName {
     this.name = name;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
     if (v.visit(this, ctx)) {
       v.acceptWithInsertRemove(params);
-      body = (JsBlock) v.accept(body);
+      body = v.accept(body);
     }
     v.endVisit(this, ctx);
   }

@@ -24,7 +24,7 @@ public class JsEmpty extends JsStatement {
   JsEmpty() {
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
     v.visit(this, ctx);
     v.endVisit(this, ctx);
   }

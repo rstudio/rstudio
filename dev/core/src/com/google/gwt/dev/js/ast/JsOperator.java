@@ -67,6 +67,7 @@ public abstract class JsOperator {
     return (mask & PREFIX) != 0;
   }
 
+  @Override
   public String toString() {
     return symbol;
   }

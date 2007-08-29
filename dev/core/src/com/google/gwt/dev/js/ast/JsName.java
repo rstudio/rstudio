@@ -25,7 +25,6 @@ public class JsName {
   private String shortIdent;
 
   /**
-   * @param scope the scope in which this name is defined
    * @param ident the unmangled ident to use for this name
    */
   JsName(String ident, String shortIdent) {
@@ -58,6 +57,7 @@ public class JsName {
     this.shortIdent = shortIdent;
   }
 
+  @Override
   public String toString() {
     return ident;
   }

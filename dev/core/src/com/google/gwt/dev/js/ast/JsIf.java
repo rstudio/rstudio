@@ -53,7 +53,7 @@ public final class JsIf extends JsStatement {
     this.thenStmt = thenStmt;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
     if (v.visit(this, ctx)) {
       ifExpr = v.accept(ifExpr);
       thenStmt = v.accept(thenStmt);

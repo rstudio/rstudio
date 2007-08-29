@@ -20,6 +20,7 @@ import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
+import com.google.gwt.dev.jjs.ast.JAbstractMethodBody;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JAssertStatement;
@@ -90,7 +91,6 @@ import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsBreak;
 import com.google.gwt.dev.js.ast.JsCase;
 import com.google.gwt.dev.js.ast.JsCatch;
-import com.google.gwt.dev.js.ast.JsCollection;
 import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsContinue;
@@ -111,7 +111,6 @@ import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
-import com.google.gwt.dev.js.ast.JsParameters;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
@@ -119,7 +118,6 @@ import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsReturn;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsStatement;
-import com.google.gwt.dev.js.ast.JsStatements;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsSwitch;
 import com.google.gwt.dev.js.ast.JsSwitchMember;
@@ -129,6 +127,7 @@ import com.google.gwt.dev.js.ast.JsTry;
 import com.google.gwt.dev.js.ast.JsUnaryOperation;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsVars;
+import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
@@ -154,14 +153,14 @@ public class GenerateJavaScriptAST {
 
   private class CreateNamesAndScopesVisitor extends JVisitor {
 
-    private final Stack/* <JsScope> */scopeStack = new Stack();
+    private final Stack<JsScope> scopeStack = new Stack<JsScope>();
 
-    // @Override
+    @Override
     public void endVisit(JClassType x, Context ctx) {
       pop();
     }
 
-    // @Override
+    @Override
     public void endVisit(JField x, Context ctx) {
       String name = x.getName();
       String mangleName = mangleName(x);
@@ -179,12 +178,12 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    // @Override
+    @Override
     public void endVisit(JInterfaceType x, Context ctx) {
       pop();
     }
 
-    // @Override
+    @Override
     public void endVisit(JLabel x, Context ctx) {
       if (getName(x) != null) {
         return;
@@ -192,7 +191,7 @@ public class GenerateJavaScriptAST {
       names.put(x, peek().declareName(x.getName()));
     }
 
-    // @Override
+    @Override
     public void endVisit(JLocal x, Context ctx) {
       // locals can conflict, that's okay just reuse the same variable
       JsScope scope = peek();
@@ -200,17 +199,17 @@ public class GenerateJavaScriptAST {
       names.put(x, jsName);
     }
 
-    // @Override
+    @Override
     public void endVisit(JMethod x, Context ctx) {
       pop();
     }
 
-    // @Override
+    @Override
     public void endVisit(JParameter x, Context ctx) {
       names.put(x, peek().declareName(x.getName()));
     }
 
-    // @Override
+    @Override
     public void endVisit(JProgram x, Context ctx) {
       /*
        * put the null method and field into objectScope since they can be
@@ -221,7 +220,6 @@ public class GenerateJavaScriptAST {
           objectScope.declareName(nullMethod.getName()));
       JField nullField = x.getNullField();
       JsName nullFieldName = objectScope.declareName(nullField.getName());
-      polymorphicNames.put(nullField, nullFieldName);
       names.put(nullField, nullFieldName);
 
       /*
@@ -231,10 +229,10 @@ public class GenerateJavaScriptAST {
       names.put(nullMethod, nullMethodName);
     }
 
-    // @Override
+    @Override
     public boolean visit(JClassType x, Context ctx) {
       // have I already been visited as a super type?
-      JsScope myScope = (JsScope) classScopes.get(x);
+      JsScope myScope = classScopes.get(x);
       if (myScope != null) {
         push(myScope);
         return false;
@@ -247,12 +245,12 @@ public class GenerateJavaScriptAST {
       if (x.extnds == null) {
         myScope = objectScope;
       } else {
-        JsScope parentScope = (JsScope) classScopes.get(x.extnds);
+        JsScope parentScope = classScopes.get(x.extnds);
         // Run my superclass first!
         if (parentScope == null) {
           accept(x.extnds);
         }
-        parentScope = (JsScope) classScopes.get(x.extnds);
+        parentScope = classScopes.get(x.extnds);
         assert (parentScope != null);
         /*
          * WEIRD: we wedge the global interface scope in between object and all
@@ -280,14 +278,14 @@ public class GenerateJavaScriptAST {
       return true;
     }
 
-    // @Override
+    @Override
     public boolean visit(JInterfaceType x, Context ctx) {
       // interfaces have no name at run time
       push(interfaceScope);
       return true;
     }
 
-    // @Override
+    @Override
     public boolean visit(JMethod x, Context ctx) {
       // my polymorphic name
       String name = x.getName();
@@ -336,6 +334,7 @@ public class GenerateJavaScriptAST {
       return true;
     }
 
+    @Override
     public boolean visit(JTryStatement x, Context ctx) {
       accept(x.getTryBlock());
 
@@ -362,7 +361,7 @@ public class GenerateJavaScriptAST {
     }
 
     private JsScope peek() {
-      return (JsScope) scopeStack.peek();
+      return scopeStack.peek();
     }
 
     private void pop() {
@@ -376,13 +375,13 @@ public class GenerateJavaScriptAST {
 
   private class GenerateJavaScriptVisitor extends JVisitor {
 
-    private final Set/* <JClassType> */alreadyRan = new HashSet/* <JClassType> */();
+    private final Set<JClassType> alreadyRan = new HashSet<JClassType>();
 
     private JMethod currentMethod = null;
 
     private final JsName globalTemp = topScope.declareName("_");
 
-    private final Stack/* <JsNode> */nodeStack = new Stack/* <JsNode> */();
+    private final Stack<JsVisitable> nodeStack = new Stack<JsVisitable>();
 
     private final JsName prototype = objectScope.declareName("prototype");
 
@@ -391,12 +390,12 @@ public class GenerateJavaScriptAST {
       prototype.setObfuscatable(false);
     }
 
-    // @Override
+    @Override
     public void endVisit(JAbsentArrayDimension x, Context ctx) {
       throw new InternalCompilerException("Should not get here.");
     }
 
-    // @Override
+    @Override
     public void endVisit(JArrayRef x, Context ctx) {
       JsArrayAccess jsArrayAccess = new JsArrayAccess();
       jsArrayAccess.setIndexExpr((JsExpression) pop());
@@ -404,12 +403,12 @@ public class GenerateJavaScriptAST {
       push(jsArrayAccess);
     }
 
-    // @Override
+    @Override
     public void endVisit(JAssertStatement x, Context ctx) {
       throw new InternalCompilerException("Should not get here.");
     }
 
-    // @Override
+    @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
       JsExpression rhs = (JsExpression) pop(); // rhs
       JsExpression lhs = (JsExpression) pop(); // lhs
@@ -432,14 +431,14 @@ public class GenerateJavaScriptAST {
       push(new JsBinaryOperation(myOp, lhs, rhs));
     }
 
-    // @Override
+    @Override
     public void endVisit(JBlock x, Context ctx) {
       JsBlock jsBlock = new JsBlock();
-      JsStatements stmts = jsBlock.getStatements();
+      List<JsStatement> stmts = jsBlock.getStatements();
       popList(stmts, x.statements.size()); // stmts
-      Iterator iterator = stmts.iterator();
+      Iterator<JsStatement> iterator = stmts.iterator();
       while (iterator.hasNext()) {
-        JsStatement stmt = (JsStatement) iterator.next();
+        JsStatement stmt = iterator.next();
         if (stmt == jsProgram.getEmptyStmt()) {
           iterator.remove();
         }
@@ -447,13 +446,13 @@ public class GenerateJavaScriptAST {
       push(jsBlock);
     }
 
-    // @Override
+    @Override
     public void endVisit(JBooleanLiteral x, Context ctx) {
       push(x.getValue() ? jsProgram.getTrueLiteral()
           : jsProgram.getFalseLiteral());
     }
 
-    // @Override
+    @Override
     public void endVisit(JBreakStatement x, Context ctx) {
       JsNameRef labelRef = null;
       if (x.getLabel() != null) {
@@ -463,7 +462,7 @@ public class GenerateJavaScriptAST {
       push(new JsBreak(labelRef));
     }
 
-    // @Override
+    @Override
     public void endVisit(JCaseStatement x, Context ctx) {
       if (x.getExpr() == null) {
         push(new JsDefault());
@@ -474,17 +473,17 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    // @Override
+    @Override
     public void endVisit(JCastOperation x, Context ctx) {
       throw new InternalCompilerException("Should not get here.");
     }
 
-    // @Override
+    @Override
     public void endVisit(JCharLiteral x, Context ctx) {
       push(jsProgram.getIntegralLiteral(BigInteger.valueOf(x.getValue())));
     }
 
-    // @Override
+    @Override
     public void endVisit(JClassLiteral x, Context ctx) {
       // My seed function name
       String nameString = x.getRefType().getJavahSignatureName() + "_classlit";
@@ -493,12 +492,12 @@ public class GenerateJavaScriptAST {
       push(classLit.makeRef());
     }
 
-    // @Override
+    @Override
     public void endVisit(JClassSeed x, Context ctx) {
       push(getName(x.getRefType()).makeRef());
     }
 
-    // @Override
+    @Override
     public void endVisit(JClassType x, Context ctx) {
       if (alreadyRan.contains(x)) {
         return;
@@ -506,20 +505,20 @@ public class GenerateJavaScriptAST {
 
       alreadyRan.add(x);
 
-      List/* <JsFunction> */jsFuncs = popList(x.methods.size()); // methods
-      List/* <JsStatement> */jsFields = popList(x.fields.size()); // fields
+      List<JsFunction> jsFuncs = popList(x.methods.size()); // methods
+      List<JsNode<?>> jsFields = popList(x.fields.size()); // fields
 
       if (typeOracle.hasClinit(x)) {
-        handleClinit((JsFunction) jsFuncs.get(0));
+        handleClinit(jsFuncs.get(0));
       } else {
         jsFuncs.set(0, null);
       }
 
-      JsStatements globalStmts = jsProgram.getGlobalBlock().getStatements();
+      List<JsStatement> globalStmts = jsProgram.getGlobalBlock().getStatements();
 
       // declare all methods into the global scope
       for (int i = 0; i < jsFuncs.size(); ++i) {
-        JsFunction func = (JsFunction) jsFuncs.get(i);
+        JsFunction func = jsFuncs.get(i);
         if (func != null) {
           globalStmts.add(func.makeStmt());
         }
@@ -532,12 +531,12 @@ public class GenerateJavaScriptAST {
       // setup fields
       JsVars vars = new JsVars();
       for (int i = 0; i < jsFields.size(); ++i) {
-        JsNode node = (JsNode) jsFields.get(i);
+        JsNode<?> node = jsFields.get(i);
         if (node instanceof JsVar) {
           vars.add((JsVar) node);
         } else {
           assert (node instanceof JsStatement);
-          JsStatement stmt = (JsStatement) jsFields.get(i);
+          JsStatement stmt = (JsStatement)jsFields.get(i);
           globalStmts.add(stmt);
         }
       }
@@ -546,7 +545,7 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    // @Override
+    @Override
     public void endVisit(JConditional x, Context ctx) {
       JsExpression elseExpr = (JsExpression) pop(); // elseExpr
       JsExpression thenExpr = (JsExpression) pop(); // thenExpr
@@ -554,7 +553,7 @@ public class GenerateJavaScriptAST {
       push(new JsConditional(ifTest, thenExpr, elseExpr));
     }
 
-    // @Override
+    @Override
     public void endVisit(JContinueStatement x, Context ctx) {
       JsNameRef labelRef = null;
       if (x.getLabel() != null) {
@@ -564,7 +563,7 @@ public class GenerateJavaScriptAST {
       push(new JsContinue(labelRef));
     }
 
-    // @Override
+    @Override
     public void endVisit(JDoStatement x, Context ctx) {
       JsDoWhile stmt = new JsDoWhile();
       if (x.getBody() != null) {
@@ -576,18 +575,18 @@ public class GenerateJavaScriptAST {
       push(stmt);
     }
 
-    // @Override
+    @Override
     public void endVisit(JDoubleLiteral x, Context ctx) {
       push(jsProgram.getDecimalLiteral(String.valueOf(x.getValue())));
     }
 
-    // @Override
+    @Override
     public void endVisit(JExpressionStatement x, Context ctx) {
       JsExpression expr = (JsExpression) pop(); // expr
       push(expr.makeStmt());
     }
 
-    // @Override
+    @Override
     public void endVisit(JField x, Context ctx) {
       // if we need an initial value, create an assignment
       if (x.constInitializer != null) {
@@ -621,7 +620,7 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    // @Override
+    @Override
     public void endVisit(JFieldRef x, Context ctx) {
       JField field = x.getField();
       JsName jsFieldName = getName(field);
@@ -654,12 +653,12 @@ public class GenerateJavaScriptAST {
       push(curExpr);
     }
 
-    // @Override
+    @Override
     public void endVisit(JFloatLiteral x, Context ctx) {
       push(jsProgram.getDecimalLiteral(String.valueOf(x.getValue())));
     }
 
-    // @Override
+    @Override
     public void endVisit(JForStatement x, Context ctx) {
       JsFor jsFor = new JsFor();
 
@@ -673,9 +672,9 @@ public class GenerateJavaScriptAST {
       // increments
       {
         JsExpression incrExpr = null;
-        List/* <JsExprStmt> */exprStmts = popList(x.getIncrements().size());
+        List<JsExprStmt> exprStmts = popList(x.getIncrements().size());
         for (int i = 0; i < exprStmts.size(); ++i) {
-          JsExprStmt exprStmt = (JsExprStmt) exprStmts.get(i);
+          JsExprStmt exprStmt = exprStmts.get(i);
           incrExpr = createCommaExpression(incrExpr, exprStmt.getExpression());
         }
         jsFor.setIncrExpr(incrExpr);
@@ -688,9 +687,9 @@ public class GenerateJavaScriptAST {
 
       // initializers
       JsExpression initExpr = null;
-      List/* <JsExprStmt> */initStmts = popList(x.getInitializers().size());
+      List<JsExprStmt> initStmts = popList(x.getInitializers().size());
       for (int i = 0; i < initStmts.size(); ++i) {
-        JsExprStmt initStmt = (JsExprStmt) initStmts.get(i);
+        JsExprStmt initStmt = initStmts.get(i);
         if (initStmt != null) {
           initExpr = createCommaExpression(initExpr, initStmt.getExpression());
         }
@@ -700,7 +699,7 @@ public class GenerateJavaScriptAST {
       push(jsFor);
     }
 
-    // @Override
+    @Override
     public void endVisit(JIfStatement x, Context ctx) {
       JsIf stmt = new JsIf();
 
@@ -718,20 +717,19 @@ public class GenerateJavaScriptAST {
       push(stmt);
     }
 
-    // @Override
+    @Override
     public void endVisit(JInstanceOf x, Context ctx) {
       throw new InternalCompilerException("Should not get here.");
     }
 
-    // @Override
+    @Override
     public void endVisit(JInterfaceType x, Context ctx) {
-      List/* <JsFunction> */jsFuncs = popList(x.methods.size()); // methods
-      List/* <JsStatement> */jsFields = popList(x.fields.size()); // fields
-
-      JsStatements globalStmts = jsProgram.getGlobalBlock().getStatements();
+      List<JsFunction> jsFuncs = popList(x.methods.size()); // methods
+      List<JsVar> jsFields = popList(x.fields.size()); // fields
+      List<JsStatement> globalStmts = jsProgram.getGlobalBlock().getStatements();
 
       if (typeOracle.hasClinit(x)) {
-        JsFunction clinitFunc = (JsFunction) jsFuncs.get(0);
+        JsFunction clinitFunc = jsFuncs.get(0);
         handleClinit(clinitFunc);
         globalStmts.add(clinitFunc.makeStmt());
       }
@@ -739,26 +737,24 @@ public class GenerateJavaScriptAST {
       // setup fields
       JsVars vars = new JsVars();
       for (int i = 0; i < jsFields.size(); ++i) {
-        JsNode node = (JsNode) jsFields.get(i);
-        assert (node instanceof JsVar);
-        vars.add((JsVar) node);
+        vars.add(jsFields.get(i));
       }
       if (!vars.isEmpty()) {
         globalStmts.add(vars);
       }
     }
 
-    // @Override
+    @Override
     public void endVisit(JIntLiteral x, Context ctx) {
       push(jsProgram.getIntegralLiteral(BigInteger.valueOf(x.getValue())));
     }
 
-    // @Override
+    @Override
     public void endVisit(JLabel x, Context ctx) {
       push(new JsLabel(getName(x)));
     }
 
-    // @Override
+    @Override
     public void endVisit(JLabeledStatement x, Context ctx) {
       JsStatement body = (JsStatement) pop(); // body
       JsLabel label = (JsLabel) pop(); // label
@@ -766,12 +762,12 @@ public class GenerateJavaScriptAST {
       push(label);
     }
 
-    // @Override
+    @Override
     public void endVisit(JLocal x, Context ctx) {
       push(getName(x).makeRef());
     }
 
-    // @Override
+    @Override
     public void endVisit(JLocalDeclarationStatement x, Context ctx) {
 
       if (x.getInitializer() == null) {
@@ -793,17 +789,17 @@ public class GenerateJavaScriptAST {
       push(binOp.makeStmt());
     }
 
-    // @Override
+    @Override
     public void endVisit(JLocalRef x, Context ctx) {
       push(getName(x.getTarget()).makeRef());
     }
 
-    // @Override
+    @Override
     public void endVisit(JLongLiteral x, Context ctx) {
       push(jsProgram.getIntegralLiteral(BigInteger.valueOf(x.getValue())));
     }
 
-    // @Override
+    @Override
     public void endVisit(JMethod x, Context ctx) {
       if (x.isAbstract()) {
         push(null);
@@ -811,15 +807,15 @@ public class GenerateJavaScriptAST {
       }
 
       JsFunction jsFunc = (JsFunction) pop(); // body
-      List/* <JsParameter> */params = popList(x.params.size()); // params
+      List<JsParameter> params = popList(x.params.size()); // params
 
       if (!x.isNative()) {
         // Setup params on the generated function. A native method already got
         // its jsParams set in BuildTypeMap.
         // TODO: Do we really need to do that in BuildTypeMap?
-        JsParameters jsParams = jsFunc.getParameters();
+        List<JsParameter> jsParams = jsFunc.getParameters();
         for (int i = 0; i < params.size(); ++i) {
-          JsParameter param = (JsParameter) params.get(i);
+          JsParameter param = params.get(i);
           jsParams.add(param);
         }
       }
@@ -833,13 +829,13 @@ public class GenerateJavaScriptAST {
       currentMethod = null;
     }
 
-    // @Override
+    @Override
     public void endVisit(JMethodBody x, Context ctx) {
 
       JsBlock body = (JsBlock) pop();
-      List/* <JsNameRef> */locals = popList(x.locals.size()); // locals
+      List<JsNameRef> locals = popList(x.locals.size()); // locals
 
-      JsFunction jsFunc = (JsFunction) methodBodyMap.get(x);
+      JsFunction jsFunc = methodBodyMap.get(x);
       jsFunc.setBody(body); // body
 
       /*
@@ -855,9 +851,9 @@ public class GenerateJavaScriptAST {
        * the same-named local var twice.
        */
       JsVars vars = new JsVars();
-      Set alreadySeen = new HashSet();
+      Set<String> alreadySeen = new HashSet<String>();
       for (int i = 0; i < locals.size(); ++i) {
-        JsName name = (JsName) names.get(x.locals.get(i));
+        JsName name = names.get(x.locals.get(i));
         String ident = name.getIdent();
         if (!alreadySeen.contains(ident)) {
           alreadySeen.add(ident);
@@ -872,7 +868,7 @@ public class GenerateJavaScriptAST {
       push(jsFunc);
     }
 
-    // @Override
+    @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
       JsInvocation jsInvocation = new JsInvocation();
@@ -912,23 +908,23 @@ public class GenerateJavaScriptAST {
       push(createCommaExpression(unnecessaryQualifier, jsInvocation));
     }
 
-    // @Override
+    @Override
     public void endVisit(JMultiExpression x, Context ctx) {
-      List/* <JsExpression> */exprs = popList(x.exprs.size());
+      List<JsExpression> exprs = popList(x.exprs.size());
       JsExpression cur = null;
       for (int i = 0; i < exprs.size(); ++i) {
-        JsExpression next = (JsExpression) exprs.get(i);
+        JsExpression next = exprs.get(i);
         cur = createCommaExpression(cur, next);
       }
       push(cur);
     }
 
-    // @Override
+    @Override
     public void endVisit(JNewArray x, Context ctx) {
       throw new InternalCompilerException("Should not get here.");
     }
 
-    // @Override
+    @Override
     public void endVisit(JNewInstance x, Context ctx) {
       JsNew newOp = new JsNew();
       JsNameRef nameRef = getName(x.getType()).makeRef();
@@ -936,45 +932,45 @@ public class GenerateJavaScriptAST {
       push(newOp);
     }
 
-    // @Override
+    @Override
     public void endVisit(JNullLiteral x, Context ctx) {
       push(jsProgram.getNullLiteral());
     }
 
-    // @Override
+    @Override
     public void endVisit(JParameter x, Context ctx) {
       push(new JsParameter(getName(x)));
     }
 
-    // @Override
+    @Override
     public void endVisit(JParameterRef x, Context ctx) {
       push(getName(x.getTarget()).makeRef());
     }
 
-    // @Override
+    @Override
     public void endVisit(JPostfixOperation x, Context ctx) {
       JsUnaryOperation op = new JsPostfixOperation(
           JavaToJsOperatorMap.get(x.getOp()), ((JsExpression) pop())); // arg
       push(op);
     }
 
-    // @Override
+    @Override
     public void endVisit(JPrefixOperation x, Context ctx) {
       JsUnaryOperation op = new JsPrefixOperation(
           JavaToJsOperatorMap.get(x.getOp()), ((JsExpression) pop())); // arg
       push(op);
     }
 
-    // @Override
+    @Override
     public void endVisit(JProgram x, Context ctx) {
-      JsStatements globalStmts = jsProgram.getGlobalBlock().getStatements();
+      List<JsStatement> globalStmts = jsProgram.getGlobalBlock().getStatements();
 
       // types don't push
 
       // Generate entry methods
-      List/* <JsFunction> */entryFuncs = popList(x.entryMethods.size()); // entryMethods
+      List<JsFunction> entryFuncs = popList(x.entryMethods.size()); // entryMethods
       for (int i = 0; i < entryFuncs.size(); ++i) {
-        JsFunction func = (JsFunction) entryFuncs.get(i);
+        JsFunction func = entryFuncs.get(i);
         if (func != null) {
           globalStmts.add(func.makeStmt());
         }
@@ -991,7 +987,7 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    // @Override
+    @Override
     public void endVisit(JReturnStatement x, Context ctx) {
       if (x.getExpr() != null) {
         push(new JsReturn((JsExpression) pop())); // expr
@@ -1000,17 +996,18 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    // @Override
+    @Override
     public void endVisit(JsniMethodBody x, Context ctx) {
       JsFunction jsFunc = x.getFunc();
 
       // replace all JSNI idents with a real JsName now that we know it
       new JsModVisitor() {
-        // @Override
-        public void endVisit(JsNameRef x, JsContext ctx) {
+
+        @Override
+        public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
           String ident = x.getIdent();
           if (ident.charAt(0) == '@') {
-            HasEnclosingType node = (HasEnclosingType) program.jsniMap.get(ident);
+            HasEnclosingType node = program.jsniMap.get(ident);
             assert (node != null);
             if (node instanceof JField) {
               JField field = (JField) node;
@@ -1047,43 +1044,43 @@ public class GenerateJavaScriptAST {
       push(jsFunc);
     }
 
-    // @Override
+    @Override
     public void endVisit(JsonArray x, Context ctx) {
       JsArrayLiteral jsArrayLiteral = new JsArrayLiteral();
       popList(jsArrayLiteral.getExpressions(), x.exprs.size());
       push(jsArrayLiteral);
     }
 
-    // @Override
+    @Override
     public void endVisit(JsonObject x, Context ctx) {
       JsObjectLiteral jsObjectLiteral = new JsObjectLiteral();
       popList(jsObjectLiteral.getPropertyInitializers(), x.propInits.size());
       push(jsObjectLiteral);
     }
 
-    // @Override
+    @Override
     public void endVisit(JsonPropInit init, Context ctx) {
       JsExpression valueExpr = (JsExpression) pop();
       JsExpression labelExpr = (JsExpression) pop();
       push(new JsPropertyInitializer(labelExpr, valueExpr));
     }
 
-    // @Override
+    @Override
     public void endVisit(JStringLiteral x, Context ctx) {
       push(jsProgram.getStringLiteral(x.getValue()));
     }
 
-    // @Override
+    @Override
     public void endVisit(JThisRef x, Context ctx) {
       push(new JsThisRef());
     }
 
-    // @Override
+    @Override
     public void endVisit(JThrowStatement x, Context ctx) {
       push(new JsThrow((JsExpression) pop())); // expr
     }
 
-    // @Override
+    @Override
     public void endVisit(JTryStatement x, Context ctx) {
       JsTry jsTry = new JsTry();
 
@@ -1099,7 +1096,7 @@ public class GenerateJavaScriptAST {
       if (size == 1) {
         JsBlock catchBlock = (JsBlock) pop(); // catchBlocks
         pop(); // catchArgs
-        JsCatch jsCatch = (JsCatch) catchMap.get(x.getCatchBlocks().get(0));
+        JsCatch jsCatch = catchMap.get(x.getCatchBlocks().get(0));
         jsCatch.setBody(catchBlock);
         jsTry.getCatches().add(jsCatch);
       }
@@ -1109,7 +1106,7 @@ public class GenerateJavaScriptAST {
       push(jsTry);
     }
 
-    // @Override
+    @Override
     public void endVisit(JWhileStatement x, Context ctx) {
       JsWhile stmt = new JsWhile();
       if (x.getBody() != null) {
@@ -1121,7 +1118,7 @@ public class GenerateJavaScriptAST {
       push(stmt);
     }
 
-    // @Override
+    @Override
     public boolean visit(JClassType x, Context ctx) {
       if (alreadyRan.contains(x)) {
         return false;
@@ -1136,7 +1133,7 @@ public class GenerateJavaScriptAST {
       return true;
     }
 
-    // @Override
+    @Override
     public boolean visit(JMethod x, Context ctx) {
       if (x.isAbstract()) {
         return false;
@@ -1145,9 +1142,9 @@ public class GenerateJavaScriptAST {
       return true;
     }
 
-    // @Override
+    @Override
     public boolean visit(JProgram x, Context ctx) {
-      JsStatements globalStatements = jsProgram.getGlobalBlock().getStatements();
+      List<JsStatement> globalStatements = jsProgram.getGlobalBlock().getStatements();
 
       // declare some global vars
       JsVars vars = new JsVars();
@@ -1161,6 +1158,7 @@ public class GenerateJavaScriptAST {
       return true;
     }
 
+    @Override
     public boolean visit(JSwitchStatement x, Context ctx) {
       /*
        * What a pain.. JSwitchStatement and JsSwitch are modeled completely
@@ -1170,11 +1168,11 @@ public class GenerateJavaScriptAST {
       accept(x.getExpr());
       jsSwitch.setExpr((JsExpression) pop()); // expr
 
-      List/* <JStatement> */bodyStmts = x.getBody().statements;
+      List<JStatement> bodyStmts = x.getBody().statements;
       if (bodyStmts.size() > 0) {
-        JsStatements curStatements = null;
+        List<JsStatement> curStatements = null;
         for (int i = 0; i < bodyStmts.size(); ++i) {
-          JStatement stmt = (JStatement) bodyStmts.get(i);
+          JStatement stmt = bodyStmts.get(i);
           accept(stmt);
           if (stmt instanceof JCaseStatement) {
             // create a new switch member
@@ -1216,9 +1214,9 @@ public class GenerateJavaScriptAST {
        * Class literals are useless right now, just use String literals and the
        * Object methods will basically work.
        */
-      for (Iterator itType = classLits.keySet().iterator(); itType.hasNext();) {
-        JType type = (JType) itType.next();
-        JsName jsName = (JsName) classLits.get(type);
+      for (Object element : classLits.keySet()) {
+        JType type = (JType) element;
+        JsName jsName = classLits.get(type);
         String string;
         if (type instanceof JArrayType) {
           string = "class " + type.getJsniSignatureName().replace('/', '.');
@@ -1236,7 +1234,7 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    private void generateClassSetup(JClassType x, JsStatements globalStmts) {
+    private void generateClassSetup(JClassType x, List<JsStatement> globalStmts) {
       generateSeedFuncAndPrototype(x, globalStmts);
       generateVTables(x, globalStmts);
 
@@ -1249,7 +1247,8 @@ public class GenerateJavaScriptAST {
       generateTypeId(x, globalStmts);
     }
 
-    private void generateGwtOnLoad(List entryFuncs, JsStatements globalStmts) {
+    private void generateGwtOnLoad(List<JsFunction> entryFuncs,
+        List<JsStatement> globalStmts) {
       /**
        * <pre>
        * function gwtOnLoad(errFn, modName, modBase){
@@ -1275,7 +1274,7 @@ public class GenerateJavaScriptAST {
       JsBlock body = new JsBlock();
       gwtOnLoad.setBody(body);
       JsScope fnScope = gwtOnLoad.getScope();
-      JsParameters params = gwtOnLoad.getParameters();
+      List<JsParameter> params = gwtOnLoad.getParameters();
       JsName errFn = fnScope.declareName("errFn");
       JsName modName = fnScope.declareName("modName");
       JsName modBase = fnScope.declareName("modBase");
@@ -1298,7 +1297,7 @@ public class GenerateJavaScriptAST {
       jsIf.setElseStmt(callBlock);
       jsTry.setTryBlock(callBlock);
       for (int i = 0; i < entryFuncs.size(); ++i) {
-        JsFunction func = (JsFunction) entryFuncs.get(i);
+        JsFunction func = entryFuncs.get(i);
         if (func != null) {
           JsInvocation call = new JsInvocation();
           call.setQualifier(func.getName().makeRef());
@@ -1315,7 +1314,7 @@ public class GenerateJavaScriptAST {
       errCall.getArguments().add(modName.makeRef());
     }
 
-    private void generateNullFunc(JsStatements globalStatements) {
+    private void generateNullFunc(List<JsStatement> globalStatements) {
       // handle null method
       JsFunction nullFunc = new JsFunction(topScope, nullMethodName);
       nullFunc.setBody(new JsBlock());
@@ -1323,10 +1322,9 @@ public class GenerateJavaScriptAST {
     }
 
     private void generatePackageNames(JsVars vars) {
-      for (Iterator it = packageNames.entrySet().iterator(); it.hasNext();) {
-        Map.Entry entry = (Entry) it.next();
-        String packageName = (String) entry.getKey();
-        JsName name = (JsName) entry.getValue();
+      for (Entry<String, JsName> entry : packageNames.entrySet()) {
+        String packageName = entry.getKey();
+        JsName name = entry.getValue();
         JsVar jsVar = new JsVar(name);
         jsVar.setInitExpr(jsProgram.getStringLiteral(packageName));
         vars.add(jsVar);
@@ -1334,7 +1332,7 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateSeedFuncAndPrototype(JClassType x,
-        JsStatements globalStmts) {
+        List<JsStatement> globalStmts) {
       if (x != program.getTypeJavaLangString()) {
         JsName seedFuncName = getName(x);
 
@@ -1372,7 +1370,8 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    private void generateToStringAlias(JClassType x, JsStatements globalStmts) {
+    private void generateToStringAlias(JClassType x,
+        List<JsStatement> globalStmts) {
       JMethod toStringMeth = program.getIndexedMethod("Object.toString");
       if (x.methods.contains(toStringMeth)) {
         // _.toString = function(){return this.java_lang_Object_toString();}
@@ -1400,7 +1399,7 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    private void generateTypeId(JClassType x, JsStatements globalStmts) {
+    private void generateTypeId(JClassType x, List<JsStatement> globalStmts) {
       int typeId = program.getTypeId(x);
       if (typeId >= 0) {
         JField typeIdField = program.getIndexedField("Object.typeId");
@@ -1417,7 +1416,7 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    private void generateTypeName(JClassType x, JsStatements globalStmts) {
+    private void generateTypeName(JClassType x, List<JsStatement> globalStmts) {
       JField typeNameField = program.getIndexedField("Object.typeName");
       JsName typeNameName = getName(typeNameField);
       if (typeNameName == null) {
@@ -1434,7 +1433,7 @@ public class GenerateJavaScriptAST {
       JsExpression rhs;
       if (packageName.length() > 0) {
         // use "com.example.foo." + "Foo"
-        JsNameRef packageRef = ((JsName) packageNames.get(packageName)).makeRef();
+        JsNameRef packageRef = (packageNames.get(packageName)).makeRef();
         rhs = new JsBinaryOperation(JsBinaryOperator.ADD, packageRef,
             jsProgram.getStringLiteral(className));
       } else {
@@ -1454,7 +1453,7 @@ public class GenerateJavaScriptAST {
       }
       JsArrayLiteral arrayLit = new JsArrayLiteral();
       for (int i = 0; i < program.getJsonTypeTable().size(); ++i) {
-        JsonObject jsonObject = (JsonObject) program.getJsonTypeTable().get(i);
+        JsonObject jsonObject = program.getJsonTypeTable().get(i);
         accept(jsonObject);
         arrayLit.getExpressions().add((JsExpression) pop());
       }
@@ -1463,9 +1462,9 @@ public class GenerateJavaScriptAST {
       vars.add(var);
     }
 
-    private void generateVTables(JClassType x, JsStatements globalStmts) {
+    private void generateVTables(JClassType x, List<JsStatement> globalStmts) {
       for (int i = 0; i < x.methods.size(); ++i) {
-        JMethod method = (JMethod) x.methods.get(i);
+        JMethod method = x.methods.get(i);
         if (!method.isStatic() && !method.isAbstract()) {
           JsNameRef lhs = getPolyName(method).makeRef();
           lhs.setQualifier(globalTemp.makeRef());
@@ -1477,7 +1476,7 @@ public class GenerateJavaScriptAST {
     }
 
     private void handleClinit(JsFunction clinitFunc) {
-      JsStatements statements = clinitFunc.getBody().getStatements();
+      List<JsStatement> statements = clinitFunc.getBody().getStatements();
       // self-assign to the null method immediately (to prevent reentrancy)
       JsExpression asg = createAssignment(clinitFunc.getName().makeRef(),
           nullMethodName.makeRef());
@@ -1495,7 +1494,7 @@ public class GenerateJavaScriptAST {
         return null;
       }
 
-      JMethod clinitMethod = (JMethod) enclosingType.methods.get(0);
+      JMethod clinitMethod = enclosingType.methods.get(0);
       JsInvocation jsInvocation = new JsInvocation();
       jsInvocation.setQualifier(getName(clinitMethod).makeRef());
       return jsInvocation;
@@ -1517,54 +1516,49 @@ public class GenerateJavaScriptAST {
         return null;
       }
 
-      JMethod clinitMethod = (JMethod) enclosingType.methods.get(0);
+      JMethod clinitMethod = enclosingType.methods.get(0);
       JsInvocation jsInvocation = new JsInvocation();
       jsInvocation.setQualifier(getName(clinitMethod).makeRef());
       return jsInvocation;
     }
 
-    private JsNode pop() {
-      return (JsNode) nodeStack.pop();
+    private <T extends JsVisitable> T pop() {
+      return (T) nodeStack.pop();
     }
 
-    private/* <T extends JsNode> */List/* <T> */popList(int count) {
-      JsNode[] array = new JsNode[count];
+    private <T extends JsVisitable> List<T> popList(int count) {
+      List<T> list = new ArrayList<T>();
       while (count > 0) {
-        array[--count] = pop();
-      }
-
-      List/* <T> */list = new ArrayList/* <T> */();
-      for (int i = 0; i < array.length; i++) {
-        JsNode item = array[i];
+        T item = pop();
         if (item != null) {
-          list.add(/* (T) */item);
+          list.add(item);
         }
       }
+      Collections.reverse(list);
       return list;
     }
 
-    private void popList(JsCollection collection, int count) {
-      JsNode[] array = new JsNode[count];
+    private <T extends JsVisitable<T>> void popList(List<T> collection,
+        int count) {
+      List<T> list = new ArrayList<T>();
       while (count > 0) {
-        array[--count] = pop();
-      }
-
-      for (int i = 0; i < array.length; i++) {
-        JsNode item = array[i];
+        T item = pop();
         if (item != null) {
-          collection.addNode(item);
+          list.add(item);
         }
       }
+      Collections.reverse(list);
+      collection.addAll(list);
     }
 
-    private void push(JsNode node) {
+    private <T extends JsVisitable> void push(T node) {
       nodeStack.push(node);
     }
   }
 
   private static class JavaToJsOperatorMap {
-    private static final Map/* <JBinaryOperator, JsBinaryOperator> */bOpMap = new IdentityHashMap();
-    private static final Map/* <JUnaryOperator, JsUnaryOperator> */uOpMap = new IdentityHashMap();
+    private static final Map<JBinaryOperator, JsBinaryOperator> bOpMap = new IdentityHashMap<JBinaryOperator, JsBinaryOperator>();
+    private static final Map<JUnaryOperator, JsUnaryOperator> uOpMap = new IdentityHashMap<JUnaryOperator, JsUnaryOperator>();
 
     static {
       bOpMap.put(JBinaryOperator.MUL, JsBinaryOperator.MUL);
@@ -1607,11 +1601,11 @@ public class GenerateJavaScriptAST {
     }
 
     public static JsBinaryOperator get(JBinaryOperator op) {
-      return (JsBinaryOperator) bOpMap.get(op);
+      return bOpMap.get(op);
     }
 
     public static JsUnaryOperator get(JUnaryOperator op) {
-      return (JsUnaryOperator) uOpMap.get(op);
+      return uOpMap.get(op);
     }
   }
 
@@ -1619,27 +1613,31 @@ public class GenerateJavaScriptAST {
 
     private final HasNameSort hasNameSort = new HasNameSort();
 
+    @Override
     public void endVisit(JClassType x, Context ctx) {
       Collections.sort(x.fields, hasNameSort);
 
       // Sort the methods manually to avoid sorting clinit out of place!
-      List methods = x.methods;
-      Object a[] = methods.toArray();
+      List<JMethod> methods = x.methods;
+      JMethod a[] = methods.toArray(new JMethod[methods.size()]);
       Arrays.sort(a, 1, a.length, hasNameSort);
       for (int i = 1; i < a.length; i++) {
         methods.set(i, a[i]);
       }
     }
 
+    @Override
     public void endVisit(JInterfaceType x, Context ctx) {
       Collections.sort(x.fields, hasNameSort);
       Collections.sort(x.methods, hasNameSort);
     }
 
+    @Override
     public void endVisit(JMethodBody x, Context ctx) {
       Collections.sort(x.locals, hasNameSort);
     }
 
+    @Override
     public void endVisit(JProgram x, Context ctx) {
       Collections.sort(x.entryMethods, hasNameSort);
       Collections.sort(x.getDeclaredTypes(), hasNameSort);
@@ -1663,9 +1661,9 @@ public class GenerateJavaScriptAST {
     return fullName.substring(0, pos + 1);
   }
 
-  private final Map/* <JBlock, JsCatch> */catchMap = new IdentityHashMap();
-  private final Map/* <JType, JsName> */classLits = new IdentityHashMap();
-  private final Map/* <JClassType, JsScope> */classScopes = new IdentityHashMap();
+  private final Map<JBlock, JsCatch> catchMap = new IdentityHashMap<JBlock, JsCatch>();
+  private final Map<JType, JsName> classLits = new IdentityHashMap<JType, JsName>();
+  private final Map<JClassType, JsScope> classScopes = new IdentityHashMap<JClassType, JsScope>();
 
   /**
    * Contains JsNames for all interface methods. A special scope is needed so
@@ -1675,8 +1673,8 @@ public class GenerateJavaScriptAST {
   private final JsScope interfaceScope;
 
   private final JsProgram jsProgram;
-  private final Map/* <JMethodBody, JsFunction> */methodBodyMap = new IdentityHashMap();
-  private final Map/* <HasName, JsName> */names = new IdentityHashMap();
+  private final Map<JAbstractMethodBody, JsFunction> methodBodyMap = new IdentityHashMap<JAbstractMethodBody, JsFunction>();
+  private final Map<HasName, JsName> names = new IdentityHashMap<HasName, JsName>();
   private JsName nullMethodName;
 
   /**
@@ -1684,11 +1682,11 @@ public class GenerateJavaScriptAST {
    * and toString. All other class scopes have this scope as an ultimate parent.
    */
   private final JsScope objectScope;
-  private final Map/* <String, JsName> */packageNames = new TreeMap();
-  private final Map/* <JMethod, JsName> */polymorphicNames = new IdentityHashMap();
+  private final Map<String, JsName> packageNames = new TreeMap<String, JsName>();
+  private final Map<JMethod, JsName> polymorphicNames = new IdentityHashMap<JMethod, JsName>();
   private final JProgram program;
 
-  private final Map/* <String, String> */specialObfuscatedIdents = new HashMap();
+  private final Map<String, String> specialObfuscatedIdents = new HashMap<String, String>();
 
   /**
    * Contains JsNames for all globals, such as static fields and methods.
@@ -1724,8 +1722,8 @@ public class GenerateJavaScriptAST {
     if (x.getEnclosingType() == typeJavaLangObject) {
       return true;
     }
-    for (Iterator it = x.overrides.iterator(); it.hasNext();) {
-      JMethod override = (JMethod) it.next();
+    for (Object element : x.overrides) {
+      JMethod override = (JMethod) element;
       if (override.getEnclosingType() == typeJavaLangObject) {
         return true;
       }
@@ -1751,7 +1749,7 @@ public class GenerateJavaScriptAST {
     String s = getNameString(x.getEnclosingType()) + '_' + getNameString(x)
         + "__";
     for (int i = 0; i < x.getOriginalParamTypes().size(); ++i) {
-      JType type = (JType) x.getOriginalParamTypes().get(i);
+      JType type = x.getOriginalParamTypes().get(i);
       s += type.getJavahSignatureName();
     }
     return s;
@@ -1759,7 +1757,7 @@ public class GenerateJavaScriptAST {
 
   String mangleNameForObject(HasName x) {
     if (obfuscate) {
-      return (String) specialObfuscatedIdents.get(x.getName());
+      return specialObfuscatedIdents.get(x.getName());
     } else if (prettyNames) {
       return x.getName() + "$";
     } else {
@@ -1770,7 +1768,7 @@ public class GenerateJavaScriptAST {
   String mangleNameForPoly(JMethod x) {
     String s = getNameString(x) + "__";
     for (int i = 0; i < x.getOriginalParamTypes().size(); ++i) {
-      JType type = (JType) x.getOriginalParamTypes().get(i);
+      JType type = x.getOriginalParamTypes().get(i);
       s += type.getJavahSignatureName();
     }
     return s;
@@ -1786,11 +1784,11 @@ public class GenerateJavaScriptAST {
   }
 
   private JsName getName(HasName x) {
-    return (JsName) names.get(x);
+    return names.get(x);
   }
 
-  private JsName getPolyName(HasName x) {
-    return (JsName) polymorphicNames.get(x);
+  private JsName getPolyName(JMethod x) {
+    return polymorphicNames.get(x);
   }
 
 }

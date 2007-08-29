@@ -20,7 +20,7 @@ package com.google.gwt.dev.js.ast;
  */
 public class JsDebugger extends JsStatement {
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
     v.visit(this, ctx);
     v.endVisit(this, ctx);
   }

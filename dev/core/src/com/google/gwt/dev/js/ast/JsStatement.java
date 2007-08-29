@@ -18,5 +18,5 @@ package com.google.gwt.dev.js.ast;
 /**
  * Abstract base class for JavaScript statement objects.
  */
-public abstract class JsStatement extends JsNode {
+public abstract class JsStatement extends JsNode<JsStatement> {
 }

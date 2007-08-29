@@ -48,7 +48,7 @@ public class JsWhile extends JsStatement {
     this.condition = condition;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
     if (v.visit(this, ctx)) {
       condition = v.accept(condition);
       body = v.accept(body);

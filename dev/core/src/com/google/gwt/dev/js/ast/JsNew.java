@@ -15,19 +15,22 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Represents the JavaScript new expression.
  */
 public final class JsNew extends JsExpression implements HasArguments {
 
-  private final JsExpressions args = new JsExpressions();
+  private final List<JsExpression> args = new ArrayList<JsExpression>();
 
   private JsExpression ctorExpr;
 
   public JsNew() {
   }
 
-  public JsExpressions getArguments() {
+  public List<JsExpression> getArguments() {
     return args;
   }
 
@@ -39,10 +42,10 @@ public final class JsNew extends JsExpression implements HasArguments {
     this.ctorExpr = ctorExpr;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
     if (v.visit(this, ctx)) {
       ctorExpr = v.accept(ctorExpr);
-      v.accept(args);
+      v.acceptList(args);
     }
     v.endVisit(this, ctx);
   }

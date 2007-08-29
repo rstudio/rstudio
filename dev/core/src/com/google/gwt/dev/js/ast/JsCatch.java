@@ -18,7 +18,7 @@ package com.google.gwt.dev.js.ast;
 /**
  * Represents a JavaScript catch clause.
  */
-public class JsCatch extends JsNode implements HasCondition {
+public class JsCatch extends JsNode<JsCatch> implements HasCondition {
 
   protected final JsCatchScope scope;
 
@@ -58,12 +58,12 @@ public class JsCatch extends JsNode implements HasCondition {
     this.condition = condition;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsCatch> ctx) {
     if (v.visit(this, ctx)) {
       if (condition != null) {
         condition = v.accept(condition);
       }
-      body = (JsBlock) v.accept(body);
+      body = v.accept(body);
     }
     v.endVisit(this, ctx);
   }

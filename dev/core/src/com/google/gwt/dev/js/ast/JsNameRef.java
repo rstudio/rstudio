@@ -44,6 +44,7 @@ public final class JsNameRef extends JsExpression /*implements HasName*/ {
     return (name == null) ? ident : name.getShortIdent();
   }
 
+  @Override
   public boolean isLeaf() {
     if (qualifier == null) {
       return true;
@@ -65,7 +66,7 @@ public final class JsNameRef extends JsExpression /*implements HasName*/ {
     this.qualifier = qualifier;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
     if (v.visit(this, ctx)) {
       if (qualifier != null) {
         qualifier = v.accept(qualifier);

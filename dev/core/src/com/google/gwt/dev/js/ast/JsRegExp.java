@@ -43,7 +43,7 @@ public class JsRegExp extends JsExpression {
     this.pattern = re;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
     v.visit(this, ctx);
     v.endVisit(this, ctx);
   }

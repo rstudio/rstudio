@@ -99,6 +99,7 @@ public final class JsBinaryOperator extends JsOperator {
     return (getPrecedence() == ASG.getPrecedence());
   }
 
+  @Override
   public boolean isKeyword() {
     return this == INSTANCEOF || this == INOP;
   }

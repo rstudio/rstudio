@@ -30,7 +30,7 @@ public final class JsExprStmt extends JsStatement {
     return expr;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
     if (v.visit(this, ctx)) {
       expr = v.accept(expr);
     }

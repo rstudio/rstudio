@@ -15,11 +15,13 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import java.util.List;
+
 /**
  * Implemented by JavaScript objects that accept arguments.
  */
 public interface HasArguments {
 
-  JsExpressions getArguments();
+  List<JsExpression> getArguments();
   
 }

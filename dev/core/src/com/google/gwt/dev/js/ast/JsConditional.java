@@ -60,7 +60,7 @@ public final class JsConditional extends JsExpression {
     this.thenExpr = thenExpr;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
     if (v.visit(this, ctx)) {
       testExpr = v.accept(testExpr);
       thenExpr = v.accept(thenExpr);

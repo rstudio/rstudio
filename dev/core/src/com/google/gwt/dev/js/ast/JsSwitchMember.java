@@ -15,14 +15,17 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A member/case in a JavaScript switch object.
  */
-public abstract class JsSwitchMember extends JsNode {
+public abstract class JsSwitchMember extends JsNode<JsSwitchMember> {
 
-  protected final JsStatements stmts = new JsStatements();
+  protected final List<JsStatement> stmts = new ArrayList<JsStatement>();
 
-  public JsStatements getStmts() {
+  public List<JsStatement> getStmts() {
     return stmts;
   }
 

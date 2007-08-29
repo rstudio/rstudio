@@ -99,13 +99,13 @@ public class JsObfuscateNamer {
     int mySiblingsMaxId = maxChildId;
 
     /*
-     * Visit my children first. Reset maxChildId so  that my children will get
-     * a clean slate: I do not communicate to my children.
+     * Visit my children first. Reset maxChildId so that my children will get a
+     * clean slate: I do not communicate to my children.
      */
     maxChildId = 0;
-    List children = scope.getChildren();
-    for (Iterator it = children.iterator(); it.hasNext();) {
-      visit((JsScope) it.next());
+    List<JsScope> children = scope.getChildren();
+    for (Iterator<JsScope> it = children.iterator(); it.hasNext();) {
+      visit(it.next());
     }
     // maxChildId is now the max of all of my children's ids
 
@@ -116,8 +116,8 @@ public class JsObfuscateNamer {
 
     // Visit my idents.
     int curId = maxChildId;
-    for (Iterator it = scope.getAllNames(); it.hasNext();) {
-      JsName name = (JsName) it.next();
+    for (Iterator<JsName> it = scope.getAllNames(); it.hasNext();) {
+      JsName name = it.next();
       if (!name.isObfuscatable()) {
         // Unobfuscatable names become themselves.
         name.setShortIdent(name.getIdent());

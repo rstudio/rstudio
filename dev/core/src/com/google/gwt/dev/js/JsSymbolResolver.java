@@ -17,6 +17,7 @@ package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.js.ast.JsCatch;
 import com.google.gwt.dev.js.ast.JsContext;
+import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
@@ -36,17 +37,20 @@ public class JsSymbolResolver {
    */
   private class JsResolveSymbolsVisitor extends JsVisitor {
 
-    private final Stack scopeStack = new Stack();
+    private final Stack<JsScope> scopeStack = new Stack<JsScope>();
 
-    public void endVisit(JsCatch x, JsContext ctx) {
+    @Override
+    public void endVisit(JsCatch x, JsContext<JsCatch> ctx) {
       popScope();
     }
 
-    public void endVisit(JsFunction x, JsContext ctx) {
+    @Override
+    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
       popScope();
     }
 
-    public void endVisit(JsNameRef x, JsContext ctx) {
+    @Override
+    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
       if (x.isResolved()) {
         return;
       }
@@ -71,27 +75,31 @@ public class JsSymbolResolver {
       x.resolve(name);
     }
 
-    public void endVisit(JsProgram x, JsContext ctx) {
+    @Override
+    public void endVisit(JsProgram x, JsContext<JsProgram> ctx) {
       popScope();
     }
 
-    public boolean visit(JsCatch x, JsContext ctx) {
+    @Override
+    public boolean visit(JsCatch x, JsContext<JsCatch> ctx) {
       pushScope(x.getScope());
       return true;
     }
 
-    public boolean visit(JsFunction x, JsContext ctx) {
+    @Override
+    public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
       pushScope(x.getScope());
       return true;
     }
 
-    public boolean visit(JsProgram x, JsContext ctx) {
+    @Override
+    public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {
       pushScope(x.getScope());
       return true;
     }
 
     private JsScope getScope() {
-      return (JsScope) scopeStack.peek();
+      return scopeStack.peek();
     }
 
     private void popScope() {

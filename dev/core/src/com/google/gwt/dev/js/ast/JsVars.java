@@ -15,7 +15,9 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * A JavaScript <code>var</code> statement.
@@ -25,7 +27,7 @@ public class JsVars extends JsStatement {
   /**
    * A var declared using the JavaScript <code>var</code> statement.
    */
-  public static class JsVar extends JsNode implements HasName {
+  public static class JsVar extends JsNode<JsVar> implements HasName {
 
     private JsExpression initExpr;
 
@@ -47,7 +49,7 @@ public class JsVars extends JsStatement {
       this.initExpr = initExpr;
     }
 
-    public void traverse(JsVisitor v, JsContext ctx) {
+    public void traverse(JsVisitor v, JsContext<JsVar> ctx) {
       if (v.visit(this, ctx)) {
         if (initExpr != null) {
           initExpr = v.accept(initExpr);
@@ -57,26 +59,7 @@ public class JsVars extends JsStatement {
     }
   }
 
-  private static class JsVarCollection extends JsCollection {
-    
-    public void add(JsVar expr) {
-      super.addNode(expr);
-    }
-
-    public void add(int index, JsVar expr) {
-      super.addNode(index, expr);
-    }
-
-    public JsVar get(int i) {
-      return (JsVar) super.getNode(i);
-    }
-
-    public void set(int i, JsVar expr) {
-      super.setNode(i, expr);
-    }
-  }
-  
-  private final JsVarCollection vars = new JsVarCollection();
+  private final List<JsVar> vars = new ArrayList<JsVar>();
 
   public JsVars() {
   }
@@ -90,11 +73,11 @@ public class JsVars extends JsStatement {
   }
 
   // Iterator returns JsVar objects
-  public Iterator iterator() {
+  public Iterator<JsVar> iterator() {
     return vars.iterator();
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
     if (v.visit(this, ctx)) {
       v.acceptWithInsertRemove(vars);
     }

@@ -23,11 +23,12 @@ public final class JsThisRef extends JsExpression {
   public JsThisRef() {
   }
 
+  @Override
   public boolean isLeaf() {
     return true;
   }
   
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
     v.visit(this, ctx);
     v.endVisit(this, ctx);
   }

@@ -17,44 +17,16 @@ package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A visitor for iterating through and modifying an AST.
  */
 public class JsModVisitor extends JsVisitor {
 
-  private interface ContextFactory {
-    JsContext create();
-  }
-
-  private class ContextPool extends ArrayList {
-
-    private ContextFactory factory;
-    private int pos = 0;
-
-    public ContextPool(ContextFactory factory) {
-      this.factory = factory;
-    }
-
-    public void release(JsContext ctx) {
-      if (get(--pos) != ctx) {
-        throw new InternalCompilerException(
-            "Tried to release the wrong context");
-      }
-    }
-
-    public JsContext take() {
-      if (pos == size()) {
-        add(factory.create());
-      }
-      return (JsContext) get(pos++);
-    }
-  }
-
-  private class ListContext implements JsContext {
+  private class ListContext<T extends JsVisitable<T>> implements JsContext<T> {
+    private List<T> collection;
     private int index;
-    private JsCollection collection;
     private boolean removed;
     private boolean replaced;
 
@@ -66,43 +38,36 @@ public class JsModVisitor extends JsVisitor {
       return true;
     }
 
-    public void insertAfter(JsNode node) {
+    public void insertAfter(T node) {
       checkRemoved();
-      collection.addNode(index + 1, node);
+      collection.add(index + 1, node);
       didChange = true;
     }
 
-    public void insertBefore(JsNode node) {
+    public void insertBefore(T node) {
       checkRemoved();
-      collection.addNode(index++, node);
+      collection.add(index++, node);
       didChange = true;
     }
 
     public void removeMe() {
       checkState();
-      collection.removeNode(index--);
+      collection.remove(index--);
       didChange = removed = true;
     }
 
-    public void replaceMe(JsNode node) {
+    public void replaceMe(T node) {
       checkState();
-      checkReplacement(collection.getNode(index), node);
-      collection.setNode(index, node);
+      checkReplacement(collection.get(index), node);
+      collection.set(index, node);
       didChange = replaced = true;
     }
 
-    protected void doReplace(Class targetClass, JsNode x) {
-      checkState();
-      checkReplacement(collection.getNode(index), x);
-      collection.setNode(index, x);
-      didChange = replaced = true;
-    }
-
-    protected void traverse(JsCollection collection) {
+    protected void traverse(List<T> collection) {
       this.collection = collection;
       for (index = 0; index < collection.size(); ++index) {
         removed = replaced = false;
-        doTraverse(collection.getNode(index), this);
+        doTraverse(collection.get(index), this);
       }
     }
 
@@ -120,8 +85,8 @@ public class JsModVisitor extends JsVisitor {
     }
   }
 
-  private class NodeContext implements JsContext {
-    private JsNode node;
+  private class NodeContext<T extends JsVisitable<T>> implements JsContext<T> {
+    private T node;
     private boolean replaced;
 
     public boolean canInsert() {
@@ -132,11 +97,11 @@ public class JsModVisitor extends JsVisitor {
       return false;
     }
 
-    public void insertAfter(JsNode node) {
+    public void insertAfter(T node) {
       throw new UnsupportedOperationException();
     }
 
-    public void insertBefore(JsNode node) {
+    public void insertBefore(T node) {
       throw new UnsupportedOperationException();
     }
 
@@ -144,7 +109,7 @@ public class JsModVisitor extends JsVisitor {
       throw new UnsupportedOperationException();
     }
 
-    public void replaceMe(JsNode node) {
+    public void replaceMe(T node) {
       if (replaced) {
         throw new InternalCompilerException("Node was already replaced");
       }
@@ -153,7 +118,7 @@ public class JsModVisitor extends JsVisitor {
       didChange = replaced = true;
     }
 
-    protected JsNode traverse(JsNode node) {
+    protected T traverse(T node) {
       this.node = node;
       replaced = false;
       doTraverse(node, this);
@@ -161,7 +126,8 @@ public class JsModVisitor extends JsVisitor {
     }
   }
 
-  protected static void checkReplacement(JsNode origNode, JsNode newNode) {
+  protected static <T extends JsVisitable<T>> void checkReplacement(T origNode,
+      T newNode) {
     if (newNode == null) {
       throw new InternalCompilerException("Cannot replace with null");
     }
@@ -173,51 +139,27 @@ public class JsModVisitor extends JsVisitor {
 
   protected boolean didChange = false;
 
-  private final ContextPool listContextPool = new ContextPool(
-      new ContextFactory() {
-        public JsContext create() {
-          return new ListContext();
-        }
-      });
-
-  private final ContextPool nodeContextPool = new ContextPool(
-      new ContextFactory() {
-        public JsContext create() {
-          return new NodeContext();
-        }
-      });
-
+  @Override
   public boolean didChange() {
     return didChange;
   }
 
-  protected JsNode doAccept(JsNode node) {
-    NodeContext ctx = (NodeContext) nodeContextPool.take();
-    try {
-      return ctx.traverse(node);
-    } finally {
-      nodeContextPool.release(ctx);
+  @Override
+  protected <T extends JsVisitable<T>> T doAccept(T node) {
+    return new NodeContext<T>().traverse(node);
+  }
+
+  @Override
+  protected <T extends JsVisitable<T>> void doAcceptList(List<T> collection) {
+    for (int i = 0, c = collection.size(); i < c; ++i) {
+      collection.set(i, new NodeContext<T>().traverse(collection.get(i)));
     }
   }
 
-  protected void doAccept(JsCollection collection) {
-    NodeContext ctx = (NodeContext) nodeContextPool.take();
-    try {
-      for (int i = 0, c = collection.size(); i < c; ++i) {
-        collection.setNode(i, ctx.traverse(collection.getNode(i)));
-      }
-    } finally {
-      nodeContextPool.release(ctx);
-    }
-  }
-
-  protected void doAcceptWithInsertRemove(JsCollection collection) {
-    ListContext ctx = (ListContext) listContextPool.take();
-    try {
-      ctx.traverse(collection);
-    } finally {
-      listContextPool.release(ctx);
-    }
+  @Override
+  protected <T extends JsVisitable<T>> void doAcceptWithInsertRemove(
+      List<T> collection) {
+    new ListContext<T>().traverse(collection);
   }
 
 }

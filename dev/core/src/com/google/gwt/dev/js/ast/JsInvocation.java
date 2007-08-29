@@ -15,19 +15,22 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Reprents a JavaScript invocation.
+ * Represents a JavaScript invocation.
  */
 public final class JsInvocation extends JsExpression implements HasArguments {
 
-  private final JsExpressions args = new JsExpressions();
+  private final List<JsExpression> args = new ArrayList<JsExpression>();
 
   private JsExpression qualifier;
 
   public JsInvocation() {
   }
 
-  public JsExpressions getArguments() {
+  public List<JsExpression> getArguments() {
     return args;
   }
 
@@ -39,10 +42,10 @@ public final class JsInvocation extends JsExpression implements HasArguments {
     this.qualifier = qualifier;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
     if (v.visit(this, ctx)) {
       qualifier = v.accept(qualifier);
-      v.accept(args);
+      v.acceptList(args);
     }
     v.endVisit(this, ctx);
   }

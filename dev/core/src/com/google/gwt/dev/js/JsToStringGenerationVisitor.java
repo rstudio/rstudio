@@ -57,6 +57,7 @@ import com.google.gwt.dev.js.ast.JsReturn;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsSwitch;
+import com.google.gwt.dev.js.ast.JsSwitchMember;
 import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.js.ast.JsThrow;
 import com.google.gwt.dev.js.ast.JsTry;
@@ -80,7 +81,6 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   private static final char[] CHARS_CONTINUE = "continue".toCharArray();
   private static final char[] CHARS_DEBUGGER = "debugger".toCharArray();
   private static final char[] CHARS_DEFAULT = "default".toCharArray();
-  private static final char[] CHARS_DELETE = "delete".toCharArray();
   private static final char[] CHARS_DO = "do".toCharArray();
   private static final char[] CHARS_ELSE = "else".toCharArray();
   private static final char[] CHARS_FALSE = "false".toCharArray();
@@ -115,7 +115,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     this.p = out;
   }
 
-  public boolean visit(JsArrayAccess x, JsContext ctx) {
+  @Override
+  public boolean visit(JsArrayAccess x, JsContext<JsExpression> ctx) {
     JsExpression arrayExpr = x.getArrayExpr();
     _parenPush(x, arrayExpr, false);
     accept(arrayExpr);
@@ -126,11 +127,12 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsArrayLiteral x, JsContext ctx) {
+  @Override
+  public boolean visit(JsArrayLiteral x, JsContext<JsExpression> ctx) {
     _lsquare();
     boolean sep = false;
-    for (Iterator iter = x.getExpressions().iterator(); iter.hasNext();) {
-      JsExpression arg = (JsExpression) iter.next();
+    for (Object element : x.getExpressions()) {
+      JsExpression arg = (JsExpression) element;
       sep = _sepCommaOptSpace(sep);
       _parenPushIfCommaExpr(arg);
       accept(arg);
@@ -140,7 +142,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsBinaryOperation x, JsContext ctx) {
+  @Override
+  public boolean visit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
     JsBinaryOperator op = x.getOperator();
     JsExpression arg1 = x.getArg1();
     _parenPush(x, arg1, !op.isLeftAssociative());
@@ -166,12 +169,14 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsBlock x, JsContext ctx) {
+  @Override
+  public boolean visit(JsBlock x, JsContext<JsStatement> ctx) {
     printJsBlockOptionalTruncate(x, true);
     return false;
   }
 
-  public boolean visit(JsBooleanLiteral x, JsContext ctx) {
+  @Override
+  public boolean visit(JsBooleanLiteral x, JsContext<JsExpression> ctx) {
     if (x.getValue()) {
       _true();
     } else {
@@ -180,7 +185,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsBreak x, JsContext ctx) {
+  @Override
+  public boolean visit(JsBreak x, JsContext<JsStatement> ctx) {
     _break();
 
     JsNameRef label = x.getLabel();
@@ -192,7 +198,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsCase x, JsContext ctx) {
+  @Override
+  public boolean visit(JsCase x, JsContext<JsSwitchMember> ctx) {
     _case();
     _space();
     accept(x.getCaseExpr());
@@ -200,8 +207,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     _newlineOpt();
 
     indent();
-    for (Iterator iter = x.getStmts().iterator(); iter.hasNext();) {
-      JsStatement stmt = (JsStatement) iter.next();
+    for (Object element : x.getStmts()) {
+      JsStatement stmt = (JsStatement) element;
       needSemi = true;
       accept(stmt);
       if (needSemi) {
@@ -214,7 +221,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsCatch x, JsContext ctx) {
+  @Override
+  public boolean visit(JsCatch x, JsContext<JsCatch> ctx) {
     _spaceOpt();
     _catch();
     _spaceOpt();
@@ -238,7 +246,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsConditional x, JsContext ctx) {
+  @Override
+  public boolean visit(JsConditional x, JsContext<JsExpression> ctx) {
     // right associative
     {
       JsExpression testExpression = x.getTestExpression();
@@ -263,7 +272,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsContinue x, JsContext ctx) {
+  @Override
+  public boolean visit(JsContinue x, JsContext<JsStatement> ctx) {
     _continue();
 
     JsNameRef label = x.getLabel();
@@ -275,12 +285,14 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsDebugger x, JsContext ctx) {
+  @Override
+  public boolean visit(JsDebugger x, JsContext<JsStatement> ctx) {
     _debugger();
     return false;
   }
 
-  public boolean visit(JsDecimalLiteral x, JsContext ctx) {
+  @Override
+  public boolean visit(JsDecimalLiteral x, JsContext<JsExpression> ctx) {
     String s = x.getValue();
     // TODO: optimize this to only the cases that need it
     if (s.startsWith("-")) {
@@ -290,13 +302,14 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsDefault x, JsContext ctx) {
+  @Override
+  public boolean visit(JsDefault x, JsContext<JsSwitchMember> ctx) {
     _default();
     _colon();
 
     indent();
-    for (Iterator iter = x.getStmts().iterator(); iter.hasNext();) {
-      JsStatement stmt = (JsStatement) iter.next();
+    for (Object element : x.getStmts()) {
+      JsStatement stmt = (JsStatement) element;
       needSemi = true;
       accept(stmt);
       if (needSemi) {
@@ -309,7 +322,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsDoWhile x, JsContext ctx) {
+  @Override
+  public boolean visit(JsDoWhile x, JsContext<JsStatement> ctx) {
     _do();
     _nestedPush(x.getBody(), true);
     accept(x.getBody());
@@ -329,17 +343,20 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsEmpty x, JsContext ctx) {
+  @Override
+  public boolean visit(JsEmpty x, JsContext<JsStatement> ctx) {
     return false;
   }
 
-  public boolean visit(JsExprStmt x, JsContext ctx) {
+  @Override
+  public boolean visit(JsExprStmt x, JsContext<JsStatement> ctx) {
     final JsExpression expr = x.getExpression();
     accept(expr);
     return false;
   }
 
-  public boolean visit(JsFor x, JsContext ctx) {
+  @Override
+  public boolean visit(JsFor x, JsContext<JsStatement> ctx) {
     _for();
     _spaceOpt();
     _lparen();
@@ -377,7 +394,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsForIn x, JsContext ctx) {
+  @Override
+  public boolean visit(JsForIn x, JsContext<JsStatement> ctx) {
     _for();
     _spaceOpt();
     _lparen();
@@ -415,7 +433,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   // stmts...
   // }
   //
-  public boolean visit(JsFunction x, JsContext ctx) {
+  @Override
+  public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
     _function();
 
     // Functions can be anonymous.
@@ -427,8 +446,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
     _lparen();
     boolean sep = false;
-    for (Iterator iter = x.getParameters().iterator(); iter.hasNext();) {
-      JsParameter param = (JsParameter) iter.next();
+    for (Object element : x.getParameters()) {
+      JsParameter param = (JsParameter) element;
       sep = _sepCommaOptSpace(sep);
       accept(param);
     }
@@ -439,7 +458,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsIf x, JsContext ctx) {
+  @Override
+  public boolean visit(JsIf x, JsContext<JsStatement> ctx) {
     _if();
     _spaceOpt();
     _lparen();
@@ -473,7 +493,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsIntegralLiteral x, JsContext ctx) {
+  @Override
+  public boolean visit(JsIntegralLiteral x, JsContext<JsExpression> ctx) {
     String s = x.getValue().toString();
     boolean needParens = s.startsWith("-");
     if (needParens) {
@@ -486,13 +507,14 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsInvocation x, JsContext ctx) {
+  @Override
+  public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
     accept(x.getQualifier());
 
     _lparen();
     boolean sep = false;
-    for (Iterator iter = x.getArguments().iterator(); iter.hasNext();) {
-      JsExpression arg = (JsExpression) iter.next();
+    for (Object element : x.getArguments()) {
+      JsExpression arg = (JsExpression) element;
       sep = _sepCommaOptSpace(sep);
       _parenPushIfCommaExpr(arg);
       accept(arg);
@@ -502,7 +524,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsLabel x, JsContext ctx) {
+  @Override
+  public boolean visit(JsLabel x, JsContext<JsStatement> ctx) {
     _nameOf(x);
     _colon();
     _spaceOpt();
@@ -510,7 +533,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsNameRef x, JsContext ctx) {
+  @Override
+  public boolean visit(JsNameRef x, JsContext<JsExpression> ctx) {
     JsExpression q = x.getQualifier();
     if (q != null) {
       _parenPush(x, q, false);
@@ -522,7 +546,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsNew x, JsContext ctx) {
+  @Override
+  public boolean visit(JsNew x, JsContext<JsExpression> ctx) {
     _new();
     _space();
 
@@ -533,8 +558,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
     _lparen();
     boolean sep = false;
-    for (Iterator iter = x.getArguments().iterator(); iter.hasNext();) {
-      JsExpression arg = (JsExpression) iter.next();
+    for (Object element : x.getArguments()) {
+      JsExpression arg = (JsExpression) element;
       sep = _sepCommaOptSpace(sep);
       _parenPushIfCommaExpr(arg);
       accept(arg);
@@ -545,17 +570,19 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsNullLiteral x, JsContext ctx) {
+  @Override
+  public boolean visit(JsNullLiteral x, JsContext<JsExpression> ctx) {
     _null();
     return false;
   }
 
-  public boolean visit(JsObjectLiteral x, JsContext ctx) {
+  @Override
+  public boolean visit(JsObjectLiteral x, JsContext<JsExpression> ctx) {
     _lbrace();
     boolean sep = false;
-    for (Iterator iter = x.getPropertyInitializers().iterator(); iter.hasNext();) {
+    for (Object element : x.getPropertyInitializers()) {
       sep = _sepCommaOptSpace(sep);
-      JsPropertyInitializer propInit = (JsPropertyInitializer) iter.next();
+      JsPropertyInitializer propInit = (JsPropertyInitializer) element;
       JsExpression labelExpr = propInit.getLabelExpr();
       _parenPushIfConditional(labelExpr);
       accept(labelExpr);
@@ -570,12 +597,14 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsParameter x, JsContext ctx) {
+  @Override
+  public boolean visit(JsParameter x, JsContext<JsParameter> ctx) {
     _nameOf(x);
     return false;
   }
 
-  public boolean visit(JsPostfixOperation x, JsContext ctx) {
+  @Override
+  public boolean visit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
     JsUnaryOperator op = x.getOperator();
     JsExpression arg = x.getArg();
     // unary operators always associate correctly (I think)
@@ -586,7 +615,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsPrefixOperation x, JsContext ctx) {
+  @Override
+  public boolean visit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
     JsUnaryOperator op = x.getOperator();
     p.print(op.getSymbol());
     if (op.isKeyword()) {
@@ -600,19 +630,22 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsProgram x, JsContext ctx) {
+  @Override
+  public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {
     p.print("<JsProgram>");
     return false;
   }
 
-  public boolean visit(JsPropertyInitializer x, JsContext ctx) {
+  @Override
+  public boolean visit(JsPropertyInitializer x, JsContext<JsPropertyInitializer> ctx) {
     // Since there are separators, we actually print the property init
     // in visit(JsObjectLiteral).
     //
     return false;
   }
 
-  public boolean visit(JsRegExp x, JsContext ctx) {
+  @Override
+  public boolean visit(JsRegExp x, JsContext<JsExpression> ctx) {
     _slash();
     p.print(x.getPattern());
     _slash();
@@ -623,7 +656,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsReturn x, JsContext ctx) {
+  @Override
+  public boolean visit(JsReturn x, JsContext<JsStatement> ctx) {
     _return();
     JsExpression expr = x.getExpr();
     if (expr != null) {
@@ -633,12 +667,14 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsStringLiteral x, JsContext ctx) {
+  @Override
+  public boolean visit(JsStringLiteral x, JsContext<JsExpression> ctx) {
     printStringLiteral(x.getValue());
     return false;
   }
 
-  public boolean visit(JsSwitch x, JsContext ctx) {
+  @Override
+  public boolean visit(JsSwitch x, JsContext<JsStatement> ctx) {
     _switch();
     _spaceOpt();
     _lparen();
@@ -646,29 +682,32 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     _rparen();
     _spaceOpt();
     _blockOpen();
-    accept(x.getCases());
+    acceptList(x.getCases());
     _blockClose();
     return false;
   }
 
-  public boolean visit(JsThisRef x, JsContext ctx) {
+  @Override
+  public boolean visit(JsThisRef x, JsContext<JsExpression> ctx) {
     _this();
     return false;
   }
 
-  public boolean visit(JsThrow x, JsContext ctx) {
+  @Override
+  public boolean visit(JsThrow x, JsContext<JsStatement> ctx) {
     _throw();
     _space();
     accept(x.getExpr());
     return false;
   }
 
-  public boolean visit(JsTry x, JsContext ctx) {
+  @Override
+  public boolean visit(JsTry x, JsContext<JsStatement> ctx) {
     _try();
     _spaceOpt();
     accept(x.getTryBlock());
 
-    accept(x.getCatches());
+    acceptList(x.getCatches());
 
     JsBlock finallyBlock = x.getFinallyBlock();
     if (finallyBlock != null) {
@@ -681,7 +720,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsVar x, JsContext ctx) {
+  @Override
+  public boolean visit(JsVar x, JsContext<JsVar> ctx) {
     _nameOf(x);
     JsExpression initExpr = x.getInitExpr();
     if (initExpr != null) {
@@ -695,19 +735,21 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return false;
   }
 
-  public boolean visit(JsVars x, JsContext ctx) {
+  @Override
+  public boolean visit(JsVars x, JsContext<JsStatement> ctx) {
     _var();
     _space();
     boolean sep = false;
-    for (Iterator iter = x.iterator(); iter.hasNext();) {
+    for (Iterator<JsVar> iter = x.iterator(); iter.hasNext();) {
       sep = _sepCommaOptSpace(sep);
-      JsVars.JsVar var = (JsVars.JsVar) iter.next();
+      JsVars.JsVar var = iter.next();
       accept(var);
     }
     return false;
   }
 
-  public boolean visit(JsWhile x, JsContext ctx) {
+  @Override
+  public boolean visit(JsWhile x, JsContext<JsStatement> ctx) {
     _while();
     _spaceOpt();
     _lparen();
@@ -738,13 +780,13 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     }
 
     int count = 0;
-    for (Iterator iter = x.getStatements().iterator(); iter.hasNext(); ++count) {
+    for (Iterator<JsStatement> iter = x.getStatements().iterator(); iter.hasNext(); ++count) {
       if (truncate && count > JSBLOCK_LINES_TO_PRINT) {
         p.print("[...]");
         _newlineOpt();
         break;
       }
-      JsStatement stmt = (JsStatement) iter.next();
+      JsStatement stmt = iter.next();
       needSemi = true;
       accept(stmt);
       if (needSemi) {
@@ -815,10 +857,6 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
   private void _default() {
     p.print(CHARS_DEFAULT);
-  }
-
-  private void _delete() {
-    p.print(CHARS_DELETE);
   }
 
   private void _do() {
@@ -1068,9 +1106,9 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
   /**
    * Escapes any closing XML tags embedded in <code>str</code>, which could
-   * potentially cause a parse failure in a browser, for example, embedding
-   * a closing <code>&lt;script&gt;</code> tag.
-   *
+   * potentially cause a parse failure in a browser, for example, embedding a
+   * closing <code>&lt;script&gt;</code> tag.
+   * 
    * @param str an unescaped literal; May be null
    */
   private void escapeClosingTags(StringBuffer str) {

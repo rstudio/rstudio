@@ -32,11 +32,12 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsStatements;
+import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.shell.JavaScriptHost;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.List;
 
 /**
  * Helper methods working with JSNI.
@@ -97,7 +98,8 @@ public class Jsni {
       this.out = out;
     }
 
-    public boolean visit(JsNameRef x, JsContext ctx) {
+    @Override
+    public boolean visit(JsNameRef x, JsContext<JsExpression> ctx) {
       String ident = x.getIdent();
       if (ident.startsWith("@")) {
         JsExpression q = x.getQualifier();
@@ -266,7 +268,7 @@ public class Jsni {
    * The output has quotes and slashes escaped so that the result can be part of
    * a legal Java source code string literal.
    */
-  public static String generateEscapedJavaScriptForHostedMode(JsNode node) {
+  public static String generateEscapedJavaScriptForHostedMode(JsNode<?> node) {
     String source = generateJavaScriptForHostedMode(node);
     StringBuffer body = new StringBuffer(source.length());
     body.append(source);
@@ -312,7 +314,7 @@ public class Jsni {
     StringReader r = new StringReader(js);
 
     try {
-      JsStatements stmts = jsParser.parse(jsPgm.getScope(), r, startLine);
+      List<JsStatement> stmts = jsParser.parse(jsPgm.getScope(), r, startLine);
 
       // Rip the body out of the parsed function and attach the JavaScript
       // AST to the method.
@@ -379,7 +381,7 @@ public class Jsni {
    * Returns a string representing the source output of the JsNode, where all
    * JSNI idents have been replaced with legal JavaScript for hosted mode.
    */
-  private static String generateJavaScriptForHostedMode(JsNode node) {
+  private static String generateJavaScriptForHostedMode(JsNode<?> node) {
     DefaultTextOutput out = new DefaultTextOutput(false);
     JsSourceGenWithJsniIdentFixup vi = new JsSourceGenWithJsniIdentFixup(out);
     vi.accept(node);

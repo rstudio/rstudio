@@ -29,10 +29,12 @@ public final class JsRootScope extends JsScope {
     ctorAddKnownGlobalSymbols();
   }
 
+  @Override
   public JsProgram getProgram() {
     return program;
   }
 
+  @Override
   protected JsName doCreateName(String ident, String shortIdent) {
     JsName name = super.doCreateName(ident, shortIdent);
     name.setObfuscatable(false);

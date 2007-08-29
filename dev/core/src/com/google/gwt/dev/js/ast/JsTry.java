@@ -15,12 +15,15 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A JavaScript <code>try</code> statement.
  */
 public class JsTry extends JsStatement {
 
-  private final JsCatches catches = new JsCatches();
+  private final List<JsCatch> catches = new ArrayList<JsCatch>();
 
   private JsBlock finallyBlock;
 
@@ -29,7 +32,7 @@ public class JsTry extends JsStatement {
   public JsTry() {
   }
 
-  public JsCatches getCatches() {
+  public List<JsCatch> getCatches() {
     return catches;
   }
 
@@ -49,12 +52,12 @@ public class JsTry extends JsStatement {
     tryBlock = block;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
     if (v.visit(this, ctx)) {
-      tryBlock = (JsBlock) v.accept(tryBlock);
+      tryBlock = v.accept(tryBlock);
       v.acceptWithInsertRemove(catches);
       if (finallyBlock != null) {
-        finallyBlock = (JsBlock) v.accept(finallyBlock);
+        finallyBlock = v.accept(finallyBlock);
       }
     }
     v.endVisit(this, ctx);

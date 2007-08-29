@@ -15,17 +15,20 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Represents a JavaScript block statement.
  */
 public class JsBlock extends JsStatement {
 
-  private final JsStatements stmts = new JsStatements();
+  private final List<JsStatement> stmts = new ArrayList<JsStatement>();
 
   public JsBlock() {
   }
 
-  public JsStatements getStatements() {
+  public List<JsStatement> getStatements() {
     return stmts;
   }
 
@@ -33,7 +36,7 @@ public class JsBlock extends JsStatement {
     return false;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
     if (v.visit(this, ctx)) {
       v.acceptWithInsertRemove(stmts);
     }

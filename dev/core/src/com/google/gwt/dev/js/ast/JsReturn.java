@@ -37,7 +37,7 @@ public final class JsReturn extends JsStatement {
     this.expr = expr;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
     if (v.visit(this, ctx)) {
       if (expr != null) {
         expr = v.accept(expr);

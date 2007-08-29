@@ -41,6 +41,7 @@ public final class JsUnaryOperator extends JsOperator {
     super(symbol, precedence, mask);
   }
 
+  @Override
   public boolean isKeyword() {
     return this == DELETE || this == TYPEOF || this == VOID;
   }

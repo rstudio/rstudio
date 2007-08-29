@@ -22,10 +22,8 @@ import java.util.Comparator;
 /**
  * Comparator for <code>HasName</code> instances.
  */
-public class HasNameSort implements Comparator {
-  public int compare(Object o1, Object o2) {
-    HasName h1 = (HasName) o1;
-    HasName h2 = (HasName) o2;
+public class HasNameSort implements Comparator<HasName> {
+  public int compare(HasName h1, HasName h2) {
     return h1.getName().compareTo(h2.getName());
   }
 }

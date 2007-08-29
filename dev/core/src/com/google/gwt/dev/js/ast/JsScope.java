@@ -25,7 +25,7 @@ import java.util.TreeMap;
 
 /**
  * A scope is a factory for creating and allocating
- * {@link com.google.gwt.compiler.jjs.jsc.JsName}s. A JavaScript AST is built
+ * {@link com.google.gwt.dev.js.ast.JsName}s. A JavaScript AST is built
  * in terms of abstract name objects without worrying about obfuscation,
  * keyword/identifier blacklisting, and so on.
  * 
@@ -43,7 +43,7 @@ import java.util.TreeMap;
  * identifiers for names. Specifically, names in child scopes are chosen such
  * that they do not conflict with names in their parent scopes. The ultimate
  * parent is usually the global scope (see
- * {@link com.google.gwt.compiler.jjs.jsc.JsProgram#getGlobalScope()}), but
+ * {@link com.google.gwt.dev.js.ast.JsProgram#getGlobalScope()}), but
  * parentless scopes are useful for managing names that are always accessed with
  * a qualifier and could therefore never be confused with the global scope
  * heirarchy.
@@ -60,9 +60,9 @@ public class JsScope {
     return ident;
   }
 
-  private final List/* <JsScope> */children = new ArrayList();
+  private final List<JsScope> children = new ArrayList<JsScope>();
   private final String description;
-  private final Map/* <String, JsName> */names = new TreeMap();
+  private final Map<String, JsName> names = new TreeMap<String, JsName>();
   private final JsScope parent;
 
   /**
@@ -158,14 +158,14 @@ public class JsScope {
   /**
    * Returns an iterator for all the names defined by this scope.
    */
-  public Iterator getAllNames() {
+  public Iterator<JsName> getAllNames() {
     return names.values().iterator();
   }
 
   /**
    * Returns a list of this scope's child scopes.
    */
-  public final List getChildren() {
+  public final List<JsScope> getChildren() {
     return children;
   }
 
@@ -185,6 +185,7 @@ public class JsScope {
     return parent.getProgram();
   }
 
+  @Override
   public final String toString() {
     if (parent != null) {
       return description + "->" + parent;
@@ -209,7 +210,7 @@ public class JsScope {
    * @return <code>null</code> if the identifier has no associated name
    */
   protected JsName findExistingNameNoRecurse(String ident) {
-    return (JsName) names.get(ident);
+    return names.get(ident);
   }
 
 }

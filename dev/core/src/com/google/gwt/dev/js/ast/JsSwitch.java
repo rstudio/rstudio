@@ -15,19 +15,22 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A JavaScript switch statement.
  */
 public class JsSwitch extends JsStatement {
 
-  private final JsSwitchMembers cases = new JsSwitchMembers();
+  private final List<JsSwitchMember> cases = new ArrayList<JsSwitchMember>();
 
   private JsExpression expr;
 
   public JsSwitch() {
   }
 
-  public JsSwitchMembers getCases() {
+  public List<JsSwitchMember> getCases() {
     return cases;
   }
 
@@ -39,7 +42,7 @@ public class JsSwitch extends JsStatement {
     this.expr = expr;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
     if (v.visit(this, ctx)) {
       expr = v.accept(expr);
       v.acceptWithInsertRemove(cases);

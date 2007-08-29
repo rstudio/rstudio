@@ -51,8 +51,10 @@ import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsRegExp;
 import com.google.gwt.dev.js.ast.JsReturn;
+import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsSwitch;
+import com.google.gwt.dev.js.ast.JsSwitchMember;
 import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.js.ast.JsThrow;
 import com.google.gwt.dev.js.ast.JsTry;
@@ -96,194 +98,237 @@ class JsPrecedenceVisitor extends JsVisitor {
   private JsPrecedenceVisitor() {
   }
 
-  public boolean visit(JsArrayAccess x, JsContext ctx) {
+  @Override
+  public boolean visit(JsArrayAccess x, JsContext<JsExpression> ctx) {
     answer = 15;
     return false;
   }
 
-  public boolean visit(JsArrayLiteral x, JsContext ctx) {
+  @Override
+  public boolean visit(JsArrayLiteral x, JsContext<JsExpression> ctx) {
     answer = 16; // primary
     return false;
   }
 
-  public boolean visit(JsBinaryOperation x, JsContext ctx) {
+  @Override
+  public boolean visit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
     answer = x.getOperator().getPrecedence();
     return false;
   }
 
-  public boolean visit(JsBlock x, JsContext ctx) {
+  @Override
+  public boolean visit(JsBlock x, JsContext<JsStatement> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsBooleanLiteral x, JsContext ctx) {
+  @Override
+  public boolean visit(JsBooleanLiteral x, JsContext<JsExpression> ctx) {
     answer = 16; // primary
     return false;
   }
 
-  public boolean visit(JsBreak x, JsContext ctx) {
+  @Override
+  public boolean visit(JsBreak x, JsContext<JsStatement> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsCase x, JsContext ctx) {
+  @Override
+  public boolean visit(JsCase x, JsContext<JsSwitchMember> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsCatch x, JsContext ctx) {
+  @Override
+  public boolean visit(JsCatch x, JsContext<JsCatch> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsConditional x, JsContext ctx) {
+  @Override
+  public boolean visit(JsConditional x, JsContext<JsExpression> ctx) {
     answer = 3;
     return false;
   }
 
-  public boolean visit(JsContinue x, JsContext ctx) {
+  @Override
+  public boolean visit(JsContinue x, JsContext<JsStatement> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsDebugger x, JsContext ctx) {
+  @Override
+  public boolean visit(JsDebugger x, JsContext<JsStatement> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsDecimalLiteral x, JsContext ctx) {
+  @Override
+  public boolean visit(JsDecimalLiteral x, JsContext<JsExpression> ctx) {
     answer = 16; // primary
     return false;
   }
 
-  public boolean visit(JsDefault x, JsContext ctx) {
+  @Override
+  public boolean visit(JsDefault x, JsContext<JsSwitchMember> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsDoWhile x, JsContext ctx) {
+  @Override
+  public boolean visit(JsDoWhile x, JsContext<JsStatement> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsEmpty x, JsContext ctx) {
+  @Override
+  public boolean visit(JsEmpty x, JsContext<JsStatement> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsExprStmt x, JsContext ctx) {
+  @Override
+  public boolean visit(JsExprStmt x, JsContext<JsStatement> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsFor x, JsContext ctx) {
+  @Override
+  public boolean visit(JsFor x, JsContext<JsStatement> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsForIn x, JsContext ctx) {
+  @Override
+  public boolean visit(JsForIn x, JsContext<JsStatement> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsFunction x, JsContext ctx) {
+  @Override
+  public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
     answer = 16; // primary
     return false;
   }
 
-  public boolean visit(JsIf x, JsContext ctx) {
+  @Override
+  public boolean visit(JsIf x, JsContext<JsStatement> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsIntegralLiteral x, JsContext ctx) {
+  @Override
+  public boolean visit(JsIntegralLiteral x, JsContext<JsExpression> ctx) {
     answer = 16; // primary
     return false;
   }
 
-  public boolean visit(JsInvocation x, JsContext ctx) {
+  @Override
+  public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
     answer = 15;
     return false;
   }
 
-  public boolean visit(JsLabel x, JsContext ctx) {
+  @Override
+  public boolean visit(JsLabel x, JsContext<JsStatement> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsNameRef x, JsContext ctx) {
+  @Override
+  public boolean visit(JsNameRef x, JsContext<JsExpression> ctx) {
     if (x.isLeaf()) {
       answer = 16; // primary
-    } else { 
+    } else {
       answer = 15; // property access
     }
     return false;
   }
 
-  public boolean visit(JsNew x, JsContext ctx) {
+  @Override
+  public boolean visit(JsNew x, JsContext<JsExpression> ctx) {
     answer = 15;
     return false;
   }
 
-  public boolean visit(JsNullLiteral x, JsContext ctx) {
+  @Override
+  public boolean visit(JsNullLiteral x, JsContext<JsExpression> ctx) {
     answer = 16; // primary
     return false;
   }
 
-  public boolean visit(JsObjectLiteral x, JsContext ctx) {
+  @Override
+  public boolean visit(JsObjectLiteral x, JsContext<JsExpression> ctx) {
     answer = 16; // primary
     return false;
   }
 
-  public boolean visit(JsParameter x, JsContext ctx) {
+  @Override
+  public boolean visit(JsParameter x, JsContext<JsParameter> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsPostfixOperation x, JsContext ctx) {
+  @Override
+  public boolean visit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
     answer = x.getOperator().getPrecedence();
     return false;
   }
 
-  public boolean visit(JsPrefixOperation x, JsContext ctx) {
+  @Override
+  public boolean visit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
     answer = x.getOperator().getPrecedence();
     return false;
   }
 
-  public boolean visit(JsProgram x, JsContext ctx) {
+  @Override
+  public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsPropertyInitializer x, JsContext ctx) {
+  @Override
+  public boolean visit(JsPropertyInitializer x,
+      JsContext<JsPropertyInitializer> ctx) {
     answer = 16; // primary
     return false;
   }
 
-  public boolean visit(JsRegExp x, JsContext ctx) {
+  @Override
+  public boolean visit(JsRegExp x, JsContext<JsExpression> ctx) {
     answer = 16; // primary
     return false;
   }
 
-  public boolean visit(JsReturn x, JsContext ctx) {
+  @Override
+  public boolean visit(JsReturn x, JsContext<JsStatement> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsStringLiteral x, JsContext ctx) {
+  @Override
+  public boolean visit(JsStringLiteral x, JsContext<JsExpression> ctx) {
     answer = 16; // primary
     return false;
   }
 
-  public boolean visit(JsSwitch x, JsContext ctx) {
+  @Override
+  public boolean visit(JsSwitch x, JsContext<JsStatement> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsThisRef x, JsContext ctx) {
+  @Override
+  public boolean visit(JsThisRef x, JsContext<JsExpression> ctx) {
     answer = 16; // primary
     return false;
   }
 
-  public boolean visit(JsThrow x, JsContext ctx) {
+  @Override
+  public boolean visit(JsThrow x, JsContext<JsStatement> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsTry x, JsContext ctx) {
+  @Override
+  public boolean visit(JsTry x, JsContext<JsStatement> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsVar x, JsContext ctx) {
+  @Override
+  public boolean visit(JsVar x, JsContext<JsVar> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsVars x, JsContext ctx) {
+  @Override
+  public boolean visit(JsVars x, JsContext<JsStatement> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 
-  public boolean visit(JsWhile x, JsContext ctx) {
+  @Override
+  public boolean visit(JsWhile x, JsContext<JsStatement> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
 

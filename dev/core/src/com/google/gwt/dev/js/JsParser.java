@@ -29,7 +29,6 @@ import com.google.gwt.dev.js.ast.JsContinue;
 import com.google.gwt.dev.js.ast.JsDefault;
 import com.google.gwt.dev.js.ast.JsDoWhile;
 import com.google.gwt.dev.js.ast.JsExpression;
-import com.google.gwt.dev.js.ast.JsExpressions;
 import com.google.gwt.dev.js.ast.JsFor;
 import com.google.gwt.dev.js.ast.JsForIn;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -50,7 +49,6 @@ import com.google.gwt.dev.js.ast.JsRegExp;
 import com.google.gwt.dev.js.ast.JsReturn;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsStatement;
-import com.google.gwt.dev.js.ast.JsStatements;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsSwitch;
 import com.google.gwt.dev.js.ast.JsThisRef;
@@ -70,7 +68,9 @@ import com.google.gwt.dev.js.rhino.TokenStream;
 import java.io.IOException;
 import java.io.Reader;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Stack;
 
 /**
@@ -79,7 +79,7 @@ import java.util.Stack;
 public class JsParser {
 
   private JsProgram program;
-  private final Stack scopeStack = new Stack();
+  private final Stack<JsScope> scopeStack = new Stack<JsScope>();
 
   public JsParser() {
     // Create a custom error handler so that we can throw our own exceptions.
@@ -103,7 +103,7 @@ public class JsParser {
     });
   }
 
-  public JsStatements parse(JsScope scope, Reader r, int startLine)
+  public List<JsStatement> parse(JsScope scope, Reader r, int startLine)
       throws IOException, JsParserException {
     try {
       // Parse using the Rhino parser.
@@ -116,7 +116,7 @@ public class JsParser {
       //
       program = scope.getProgram();
       pushScope(scope);
-      JsStatements stmts = mapStatements(topNode);
+      List<JsStatement> stmts = mapStatements(topNode);
       popScope();
 
       return stmts;
@@ -127,26 +127,27 @@ public class JsParser {
 
   public void parseInto(JsScope scope, JsBlock block, Reader r, int startLine)
       throws IOException, JsParserException {
-    JsStatements childStmts = parse(scope, r, startLine);
-    JsStatements parentStmts = block.getStatements();
-    for (Iterator iter = childStmts.iterator(); iter.hasNext();) {
-      parentStmts.add((JsStatement) iter.next());
+    List<JsStatement> childStmts = parse(scope, r, startLine);
+    List<JsStatement> parentStmts = block.getStatements();
+    for (Iterator<JsStatement> iter = childStmts.iterator(); iter.hasNext();) {
+      parentStmts.add(iter.next());
     }
   }
 
   private JsParserException createParserException(String msg, Node offender) {
+    // TODO: get source info
+    offender.getLineno();
     return new JsParserException(msg);
   }
 
   private JsScope getScope() {
-    return (JsScope) scopeStack.peek();
+    return scopeStack.peek();
   }
 
-  private JsNode map(Node node) throws JsParserException {
+  private JsNode<?> map(Node node) throws JsParserException {
 
     switch (node.getType()) {
-      case TokenStream.SCRIPT:
-      {
+      case TokenStream.SCRIPT: {
         JsBlock block = new JsBlock();
         mapStatements(block.getStatements(), node);
         return block;
@@ -334,7 +335,7 @@ public class JsParser {
    */
   private JsNameRef mapAsPropertyNameRef(Node nameRefNode)
       throws JsParserException {
-    JsNode unknown = map(nameRefNode);
+    JsNode<?> unknown = map(nameRefNode);
     // This is weird, but for "a.b", the rhino AST calls "b" a string literal.
     // However, since we know it's for a PROPGET, we can unstringliteralize it.
     //
@@ -429,7 +430,7 @@ public class JsParser {
 
     // Iterate over and map the arguments.
     //
-    JsExpressions args = invocation.getArguments();
+    List<JsExpression> args = invocation.getArguments();
     from = from.getNext();
     while (from != null) {
       to = mapExpression(from);
@@ -470,7 +471,7 @@ public class JsParser {
     return program.getDebuggerStmt();
   }
 
-  private JsNode mapDeleteProp(Node node) throws JsParserException {
+  private JsExpression mapDeleteProp(Node node) throws JsParserException {
     Node from = node.getFirstChild();
     JsExpression to = mapExpression(from);
     if (to instanceof JsNameRef) {
@@ -549,7 +550,7 @@ public class JsParser {
   }
 
   private JsExpression mapExpression(Node exprNode) throws JsParserException {
-    JsNode unknown = map(exprNode);
+    JsNode<?> unknown = map(exprNode);
     if (unknown instanceof JsExpression) {
       return (JsExpression) unknown;
     } else {
@@ -610,7 +611,7 @@ public class JsParser {
 
       // The first item is either an expression or a JsVars.
       //
-      JsNode initThingy = map(fromInit);
+      JsNode<?> initThingy = map(fromInit);
       if (initThingy != null) {
         if (initThingy instanceof JsVars) {
           toFor.setInitVars((JsVars) initThingy);
@@ -778,7 +779,7 @@ public class JsParser {
 
     // Iterate over and map the arguments.
     //
-    JsExpressions args = newExpr.getArguments();
+    List<JsExpression> args = newExpr.getArguments();
     Node fromArg = fromCtorExpr.getNext();
     while (fromArg != null) {
       args.add(mapExpression(fromArg));
@@ -830,7 +831,7 @@ public class JsParser {
 
   private JsExpression mapOptionalExpression(Node exprNode)
       throws JsParserException {
-    JsNode unknown = map(exprNode);
+    JsNode<?> unknown = map(exprNode);
     if (unknown != null) {
       if (unknown instanceof JsExpression) {
         return (JsExpression) unknown;
@@ -874,7 +875,7 @@ public class JsParser {
     }
   }
 
-  private JsNode mapRegExp(Node regExpNode) {
+  private JsNode<?> mapRegExp(Node regExpNode) {
     JsRegExp toRegExp = new JsRegExp();
 
     Node fromPattern = regExpNode.getFirstChild();
@@ -970,7 +971,7 @@ public class JsParser {
   }
 
   private JsStatement mapStatement(Node nodeStmt) throws JsParserException {
-    JsNode unknown = map(nodeStmt);
+    JsNode<?> unknown = map(nodeStmt);
     if (unknown != null) {
       if (unknown instanceof JsStatement) {
         return (JsStatement) unknown;
@@ -986,7 +987,7 @@ public class JsParser {
     }
   }
 
-  private void mapStatements(JsStatements stmts, Node nodeStmts)
+  private void mapStatements(List<JsStatement> stmts, Node nodeStmts)
       throws JsParserException {
     Node curr = nodeStmts.getFirstChild();
     while (curr != null) {
@@ -1001,8 +1002,9 @@ public class JsParser {
     }
   }
 
-  private JsStatements mapStatements(Node nodeStmts) throws JsParserException {
-    JsStatements stmts = new JsStatements();
+  private List<JsStatement> mapStatements(Node nodeStmts)
+      throws JsParserException {
+    List<JsStatement> stmts = new ArrayList<JsStatement>();
     mapStatements(stmts, nodeStmts);
     return stmts;
   }
@@ -1178,7 +1180,7 @@ public class JsParser {
     return toVars;
   }
 
-  private JsNode mapWithStatement(Node withNode) throws JsParserException {
+  private JsNode<?> mapWithStatement(Node withNode) throws JsParserException {
     // The "with" statement is unsupported because it introduces ambiguity
     // related to whether or not a name is obfuscatable that we cannot resolve
     // statically. This is modified in our copy of the Rhino Parser to provide

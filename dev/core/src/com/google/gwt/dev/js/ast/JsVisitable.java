@@ -17,8 +17,10 @@ package com.google.gwt.dev.js.ast;
 
 /**
  * Abstracts the idea that a class can be traversed.
+ * 
+ * @param <T>
  */
-public interface JsVisitable {
+public interface JsVisitable<T extends JsVisitable<T>> {
 
   /**
    * Causes this object to have the visitor visit itself and its children.
@@ -26,5 +28,5 @@ public interface JsVisitable {
    * @param visitor the visitor that should traverse this node
    * @param ctx the context of an existing traversal
    */
-  void traverse(JsVisitor visitor, JsContext ctx);
+  void traverse(JsVisitor visitor, JsContext<T> ctx);
 }

@@ -42,15 +42,15 @@ public class JsNormalizer {
    */
   private class JsNormalizing extends JsModVisitor {
 
-    public void endVisit(JsBinaryOperation x, JsContext ctx) {
+    public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
       maybeShuffleModifyingBinary(x, ctx);
     }
 
-    public void endVisit(JsPostfixOperation x, JsContext ctx) {
+    public void endVisit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
       maybeShuffleModifyingUnary(x, ctx);
     }
 
-    public void endVisit(JsPrefixOperation x, JsContext ctx) {
+    public void endVisit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
       maybeShuffleModifyingUnary(x, ctx);
     }
 
@@ -59,10 +59,10 @@ public class JsNormalizer {
      * operation as the argument to a modifying operation, which is illegal.
      * Juggle things to put the operator inside of the comma expression.
      */
-    private void maybeShuffleModifyingBinary(JsBinaryOperation x, JsContext ctx) {
+    private void maybeShuffleModifyingBinary(JsBinaryOperation x,
+        JsContext<JsExpression> ctx) {
       JsBinaryOperator myOp = x.getOperator();
       JsExpression lhs = x.getArg1();
-      JsExpression rhs = x.getArg2();
 
       if (myOp.isAssignment() && (lhs instanceof JsBinaryOperation)) {
         // Find the rightmost comma operation
@@ -85,7 +85,8 @@ public class JsNormalizer {
      * operation as the argument to a modifying operation, which is illegal.
      * Juggle things to put the operator inside of the comma expression.
      */
-    private void maybeShuffleModifyingUnary(JsUnaryOperation x, JsContext ctx) {
+    private void maybeShuffleModifyingUnary(JsUnaryOperation x,
+        JsContext<JsExpression> ctx) {
       JsUnaryOperator myOp = x.getOperator();
       JsExpression arg = x.getArg();
       if (myOp.isModifying() && (arg instanceof JsBinaryOperation)) {

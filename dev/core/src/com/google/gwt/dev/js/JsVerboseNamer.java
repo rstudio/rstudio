@@ -43,16 +43,16 @@ public class JsVerboseNamer {
     visit(program.getRootScope());
   }
 
-  private boolean isLegal(JsScope scope, String newIdent) {
+  private boolean isLegal(String newIdent) {
     // only keywords are forbidden
     return !JsKeywords.isKeyword(newIdent);
   }
 
   private void visit(JsScope scope) {
     // Visit children.
-    List children = scope.getChildren();
-    for (Iterator it = children.iterator(); it.hasNext();) {
-      visit((JsScope) it.next());
+    List<JsScope> children = scope.getChildren();
+    for (Iterator<JsScope> it = children.iterator(); it.hasNext();) {
+      visit(it.next());
     }
 
     JsRootScope rootScope = program.getRootScope();
@@ -61,8 +61,8 @@ public class JsVerboseNamer {
     }
 
     // Visit all my idents.
-    for (Iterator it = scope.getAllNames(); it.hasNext();) {
-      JsName name = (JsName) it.next();
+    for (Iterator<JsName> it = scope.getAllNames(); it.hasNext();) {
+      JsName name = it.next();
       if (!name.isObfuscatable()) {
         // Unobfuscatable names become themselves.
         name.setShortIdent(name.getIdent());
@@ -70,11 +70,11 @@ public class JsVerboseNamer {
       }
 
       String fullIdent = name.getIdent();
-      if (!isLegal(scope, fullIdent)) {
+      if (!isLegal(fullIdent)) {
         String checkIdent = fullIdent;
         for (int i = 0; true; ++i) {
           checkIdent = fullIdent + "_" + i;
-          if (isLegal(scope, checkIdent)) {
+          if (isLegal(checkIdent)) {
             break;
           }
         }

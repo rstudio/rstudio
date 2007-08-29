@@ -23,7 +23,7 @@ import java.util.Set;
  */
 public class JsKeywords {
 
-  private static Set sJavaScriptKeywords = new HashSet();
+  private static Set<String> sJavaScriptKeywords = new HashSet<String>();
 
   static {
     initJavaScriptKeywords();

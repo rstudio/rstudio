@@ -37,7 +37,7 @@ public class JsPrettyNamer {
   /**
    * Communicates to a parent scope all the idents used by all child scopes.
    */
-  private Set childIdents = null;
+  private Set<String> childIdents = null;
 
   private final JsProgram program;
 
@@ -49,7 +49,7 @@ public class JsPrettyNamer {
     visit(program.getRootScope());
   }
 
-  private boolean isLegal(JsScope scope, Set childIdents, String newIdent) {
+  private boolean isLegal(JsScope scope, Set<String> childIdents, String newIdent) {
     if (JsKeywords.isKeyword(newIdent)) {
       return false;
     }
@@ -67,16 +67,16 @@ public class JsPrettyNamer {
 
   private void visit(JsScope scope) {
     // Save off the childIdents which is currently being computed for my parent.
-    Set myChildIdents = childIdents;
+    Set<String> myChildIdents = childIdents;
 
     /*
      * Visit my children first. Reset childIdents so that my children will get a
      * clean slate: I do not communicate to my children.
      */
-    childIdents = new HashSet();
-    List children = scope.getChildren();
-    for (Iterator it = children.iterator(); it.hasNext();) {
-      visit((JsScope) it.next());
+    childIdents = new HashSet<String>();
+    List<JsScope> children = scope.getChildren();
+    for (Iterator<JsScope> it = children.iterator(); it.hasNext();) {
+      visit(it.next());
     }
 
     JsRootScope rootScope = program.getRootScope();
@@ -85,8 +85,8 @@ public class JsPrettyNamer {
     }
 
     // Visit all my idents.
-    for (Iterator it = scope.getAllNames(); it.hasNext();) {
-      JsName name = (JsName) it.next();
+    for (Iterator<JsName> it = scope.getAllNames(); it.hasNext();) {
+      JsName name = it.next();
       if (!name.isObfuscatable()) {
         // Unobfuscatable names become themselves.
         name.setShortIdent(name.getIdent());

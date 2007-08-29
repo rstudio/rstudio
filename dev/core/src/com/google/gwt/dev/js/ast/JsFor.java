@@ -81,14 +81,14 @@ public class JsFor extends JsStatement {
     this.initVars = initVars;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
     if (v.visit(this, ctx)) {
       assert (!(initExpr != null && initVars != null));
 
       if (initExpr != null) {
         initExpr = v.accept(initExpr);
       } else if (initVars != null) {
-        initVars = (JsVars) v.accept(initVars);
+        initVars = v.accept(initVars);
       }
 
       if (condition != null) {

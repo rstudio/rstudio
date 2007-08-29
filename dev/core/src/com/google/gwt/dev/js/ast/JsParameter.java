@@ -18,7 +18,7 @@ package com.google.gwt.dev.js.ast;
 /**
  * A JavaScript parameter.
  */
-public final class JsParameter extends JsNode implements HasName {
+public final class JsParameter extends JsNode<JsParameter> implements HasName {
 
   private final JsName name;
 
@@ -30,7 +30,7 @@ public final class JsParameter extends JsNode implements HasName {
     return name;
   }
 
-  public void traverse(JsVisitor v, JsContext ctx) {
+  public void traverse(JsVisitor v, JsContext<JsParameter> ctx) {
     v.visit(this, ctx);
     v.endVisit(this, ctx);
   }
