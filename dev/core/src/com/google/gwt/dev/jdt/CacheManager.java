@@ -272,7 +272,7 @@ public class CacheManager {
     private void extractTypeNamesFromTypeArg(String typeArg,
         Set<String> typeNames) {
       // Remove all whitespace
-      typeArg.replaceAll("\\\\s", "");
+      typeArg = typeArg.replaceAll("\\\\s", "");
 
       // Remove anything that is not a raw type name
       String[] typeArgs = typeArg.split("[\\[\\]<>,]");
