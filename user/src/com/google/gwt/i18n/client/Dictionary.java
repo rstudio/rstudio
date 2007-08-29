@@ -184,14 +184,14 @@ public final class Dictionary {
 
   private native void addKeys(HashSet<String> s) /*-{
     for (x in this.@com.google.gwt.i18n.client.Dictionary::dict) {
-      s.@java.util.HashSet::add(Ljava/lang/String;)(x);
+      s.@java.util.HashSet::add(Ljava/lang/Object;)(x);
     }
   }-*/;
 
   private native void addValues(ArrayList<String> s) /*-{
     for (x in this.@com.google.gwt.i18n.client.Dictionary::dict) {
       var value = this.@com.google.gwt.i18n.client.Dictionary::get(Ljava/lang/String;)(x);
-      s.@java.util.ArrayList::add(Ljava/lang/String;)(value);
+      s.@java.util.ArrayList::add(Ljava/lang/Object;)(value);
     }
   }-*/;
 
