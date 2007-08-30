@@ -81,8 +81,10 @@ package com.google.gwt.user.client.rpc;
  * </pre>
  * 
  * </p>
+ * 
+ * @param <T>
  */
-public interface AsyncCallback {
+public interface AsyncCallback<T> {
 
   /**
    * Called when an asynchronous call fails to complete normally.
@@ -108,5 +110,5 @@ public interface AsyncCallback {
    * the parameter will be the boxed version of the primitive (for example, an
    * <code>int</code> return type becomes an {@link Integer}.
    */
-  void onSuccess(Object result);
+  void onSuccess(T result);
 }

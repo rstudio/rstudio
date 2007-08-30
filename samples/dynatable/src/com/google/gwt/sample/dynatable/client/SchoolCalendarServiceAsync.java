@@ -19,7 +19,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 
 /**
  * The interface for the RPC server endpoint that provides school calendar
- * information for clients that will be calling aysychronously. 
+ * information for clients that will be calling asynchronously. 
  */
 public interface SchoolCalendarServiceAsync {
 

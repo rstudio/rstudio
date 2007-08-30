@@ -1787,22 +1787,6 @@ public class GenerateJavaAST {
       }
     }
 
-    private boolean areParametersIdentical(MethodBinding a, MethodBinding b) {
-      TypeBinding[] params1 = a.parameters;
-      TypeBinding[] params2 = b.parameters;
-      if (params1.length != params2.length) {
-        return false;
-      }
-
-      for (int i = 0; i < params1.length; ++i) {
-        if (params1[i] != params2[i]) {
-          return false;
-        }
-      }
-
-      return true;
-    }
-
     private JLocalDeclarationStatement createLocalDeclaration(SourceInfo info,
         JLocal arrayVar, JExpression value) {
       return new JLocalDeclarationStatement(program, info, new JLocalRef(
@@ -2160,14 +2144,12 @@ public class GenerateJavaAST {
 
       // See if this class has any uprefs, unless this class is myself
       if (binding.declaringClass != searchThisType) {
-        MethodBinding result = searchThisType.getExactMethod(binding.selector,
-            binding.parameters, null);
-
-        if (result != null) {
-          if (areParametersIdentical(binding, result)) {
-            JMethod upRef = (JMethod) typeMap.get(result);
+        for (MethodBinding tryMethod : searchThisType.getMethods(binding.selector)) {
+          if (binding.areParameterErasuresEqual(tryMethod)) {
+            JMethod upRef = (JMethod) typeMap.get(tryMethod);
             if (!method.overrides.contains(upRef)) {
               method.overrides.add(upRef);
+              break;
             }
           }
         }
