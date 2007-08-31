@@ -25,11 +25,6 @@ public final class Short extends Number implements Comparable<Short> {
 
   // Box values according to JLS - between -128 and 127
   private static Short[] boxedValues = new Short[256];
-  static {
-    for (short i = -128; i < 128; ++i) {
-      boxedValues[i + 128] = i;
-    }
-  }
 
   public static Short decode(String s) throws NumberFormatException {
     return new Short((short) __decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
@@ -57,7 +52,11 @@ public final class Short extends Number implements Comparable<Short> {
 
   public static Short valueOf(short s) {
     if (s > -129 || s < 128) {
-      return boxedValues[s + 128];
+      int rebase = s + 128;
+      if (boxedValues[rebase] == null) {
+        boxedValues[rebase] = new Short(s);
+      }
+      return boxedValues[rebase];
     }
     return new Short(s);
   }

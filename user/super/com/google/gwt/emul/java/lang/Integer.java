@@ -25,11 +25,6 @@ public final class Integer extends Number implements Comparable<Integer> {
 
   // Box values according to JLS - between -128 and 127
   private static Integer[] boxedValues = new Integer[256];
-  static {
-    for (int i = -128; i < 128; ++i) {
-      boxedValues[i + 128] = i;
-    }
-  }
 
   public static Integer decode(String s) throws NumberFormatException {
     return new Integer((int) __decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
@@ -66,7 +61,11 @@ public final class Integer extends Number implements Comparable<Integer> {
 
   public static Integer valueOf(int i) {
     if (i > -129 || i < 128) {
-      return boxedValues[i + 128];
+      int rebase = i + 128;
+      if (boxedValues[rebase] == null) {
+        boxedValues[rebase] = new Integer(i);
+      }
+      return boxedValues[rebase];
     }
     return new Integer(i);
   }

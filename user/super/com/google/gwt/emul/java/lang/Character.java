@@ -29,12 +29,6 @@ public final class Character implements Comparable<Character> {
   // Box values according to JLS - from \u0000 to \u007f
   private static Character[] boxedValues = new Character[128];
 
-  static {
-    for (int i = 0; i < 128; ++i) {
-      boxedValues[i] = (char) i;
-    }
-  }
-
   public static int digit(char c, int radix) {
     if (radix < MIN_RADIX || radix > MAX_RADIX) {
       return -1;
@@ -133,6 +127,9 @@ public final class Character implements Comparable<Character> {
 
   public static Character valueOf(char c) {
     if (c < 128) {
+      if (boxedValues[c] == null) {
+        boxedValues[c] = new Character(c);
+      }
       return boxedValues[c];
     }
     return new Character(c);

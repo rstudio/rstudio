@@ -25,11 +25,6 @@ public final class Byte extends Number implements Comparable<Byte> {
 
   // Box all values according to JLS
   private static Byte[] boxedValues = new Byte[256];
-  static {
-    for (byte b = -128; b < 128; ++b) {
-      boxedValues[b + 128] = b;
-    }
-  }
 
   public static Byte decode(String s) throws NumberFormatException {
     return new Byte((byte) __decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
@@ -59,7 +54,11 @@ public final class Byte extends Number implements Comparable<Byte> {
   }
 
   public static Byte valueOf(byte b) {
-    return boxedValues[b + 128];
+    int rebase = b + 128;
+    if (boxedValues[rebase] == null) {
+      boxedValues[rebase] = new Byte(b);
+    }
+    return boxedValues[rebase];
   }
 
   public static Byte valueOf(String s) throws NumberFormatException {
