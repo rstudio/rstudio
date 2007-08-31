@@ -119,19 +119,16 @@ public class JsniInjector {
         "Checking for JavaScript native methods", null);
 
     // Make sure the core types exist.
-    //
     if (coreTypes == null) {
       coreTypes = new CoreTypes(logger);
     }
 
     // Analyze the source and build a list of changes.
-    //
     char[] source = cup.getSource();
     List<Replacement> changes = new ArrayList<Replacement>();
     rewriteCompilationUnit(logger, source, changes, cup);
 
     // Sort and apply the changes.
-    //
     int n = changes.size();
     if (n > 0) {
       Replacement[] repls = changes.toArray(new Replacement[n]);
@@ -147,7 +144,6 @@ public class JsniInjector {
       return new CompilationUnitProviderWithAlternateSource(cup, results);
     } else {
       // No changes were made, so we return the original.
-      //
       logger.log(TreeLogger.SPAM, "No JavaScript native methods were found",
           null);
       return cup;
@@ -188,11 +184,12 @@ public class JsniInjector {
           + "((e && e.number) || 0, (e && e.name) || null , (e && e.message) || null);\\n"
           + "}\\n";
 
-      // Surround the original JS body statements with a try/catch so that
-      // we can map JavaScript exceptions back into Java.
-      // Note that the method body itself will print curly braces, so we don't
-      // need them around the try/catch.
-      //
+      /*
+       * Surround the original JS body statements with a try/catch so that we
+       * can map JavaScript exceptions back into Java. Note that the method body
+       * itself will print curly braces, so we don't need them around the
+       * try/catch.
+       */
       String js = jsTry + Jsni.generateEscapedJavaScriptForHostedMode(jsniBody)
           + jsCatch;
       String jsniSig = Jsni.getJsniSignature(method);
@@ -219,37 +216,24 @@ public class JsniInjector {
    *         JavaScriptHost.invokeNative*
    */
   private String genNonNativeVersionOfJsniMethod(JMethod method,
-      int expectedHeaderLines, int expectedBodyLines) {
+      int expectedBodyLines) {
     StringBuffer sb = new StringBuffer();
 
-    // Add extra lines at the start to match comments + declaration
-    //
-    for (int i = 0; i < expectedHeaderLines; ++i) {
-      sb.append('\n');
-    }
-
-    String methodDecl = method.getReadableDeclaration(false, true, false,
-        false, false);
-
-    sb.append(methodDecl + " {");
     // wrap the call in a try-catch block
-    sb.append("try {");
+    sb.append("{ try {");
 
     // Write the Java call to the property invoke method, adding
     // downcasts where necessary.
-    //
     JType returnType = method.getReturnType();
     boolean isJavaScriptObject = isJavaScriptObject(returnType);
     JPrimitiveType primType;
     if (isJavaScriptObject) {
       // Add a downcast from Handle to the originally-declared type.
-      //
       String returnTypeName = returnType.getQualifiedSourceName();
       sb.append("return (" + returnTypeName + ")" + Jsni.JAVASCRIPTHOST_NAME
           + ".invokeNativeHandle");
     } else if (null != (primType = returnType.isPrimitive())) {
       // Primitives have special overloads.
-      //
       char[] primTypeSuffix = primType.getSimpleSourceName().toCharArray();
       primTypeSuffix[0] = Character.toUpperCase(primTypeSuffix[0]);
       String invokeMethodName = "invokeNative" + String.valueOf(primTypeSuffix);
@@ -266,7 +250,6 @@ public class JsniInjector {
     } else {
       // Some reference type.
       // We need to add a downcast to the originally-declared type.
-      //
       String returnTypeName = returnType.getQualifiedSourceName();
       sb.append("return (");
       sb.append(returnTypeName);
@@ -276,7 +259,6 @@ public class JsniInjector {
     }
 
     // Write the argument list for the invoke call.
-    //
     sb.append("(\"@");
     String jsniSig = Jsni.getJsniSignature(method);
     sb.append(jsniSig);
@@ -288,7 +270,6 @@ public class JsniInjector {
 
     if (isJavaScriptObject) {
       // Handle-oriented calls also need the return type as an argument.
-      //
       String returnTypeName = returnType.getQualifiedSourceName();
       sb.append(returnTypeName);
       sb.append(".class, ");
@@ -296,13 +277,11 @@ public class JsniInjector {
 
     // Build an array of classes that tells the invoker how to adapt the
     // incoming arguments for calling into JavaScript.
-    //
     sb.append(Jsni.buildTypeList(method));
     sb.append(',');
 
     // Build an array containing the arguments based on the names of the
     // parameters.
-    //
     sb.append(Jsni.buildArgList(method));
     sb.append(");");
 
@@ -316,12 +295,11 @@ public class JsniInjector {
           + typeName + ") __gwt_exception;");
     }
     sb.append("throw new java.lang.RuntimeException(\"Undeclared checked exception thrown out of JavaScript; web mode behavior may differ.\", __gwt_exception);");
-    sb.append("}");
 
-    sb.append("}");
+    // Close try block and method body.
+    sb.append("} }");
 
     // Add extra lines at the end to match JSNI body.
-    //
     for (int i = 0; i < expectedBodyLines; ++i) {
       sb.append('\n');
     }
@@ -359,12 +337,32 @@ public class JsniInjector {
     }
   }
 
+  private void replaceNativeKeywords(char[] source, List<Replacement> changes,
+      int start, int end) {
+    String nativeKeyword = "native";
+    char[] whitespace = "      ".toCharArray();
+    assert (whitespace.length == nativeKeyword.length());
+    String header = String.valueOf(source, start, end - start);
+    for (int pos = header.indexOf(nativeKeyword); pos >= 0; pos = header.indexOf(
+        nativeKeyword, pos + 1)) {
+      if (pos > 0 && !Character.isWhitespace(header.charAt(pos - 1))) {
+        // not a keyword
+        continue;
+      }
+      if (pos + 6 < header.length()
+          && !Character.isWhitespace(header.charAt(pos + 6))) {
+        // not a keyword
+        continue;
+      }
+      changes.add(new Replacement(start + pos, start + pos + 6, whitespace));
+    }
+  }
+
   private void rewriteCompilationUnit(TreeLogger logger, char[] source,
       List<Replacement> changes, CompilationUnitProvider cup)
       throws UnableToCompleteException {
 
     // Hit all the types in the compilation unit.
-    //
     JClassType[] types = oracle.getTypesInCompilationUnit(cup);
     for (int i = 0; i < types.length; i++) {
       JClassType type = types[i];
@@ -379,7 +377,6 @@ public class JsniInjector {
     String loc = type.getCompilationUnit().getLocation();
 
     // Examine each method for JSNIness.
-    //
     List<JMethod> patchedMethods = new ArrayList<JMethod>();
     JMethod[] methods = type.getMethods();
     for (int i = 0; i < methods.length; i++) {
@@ -388,32 +385,30 @@ public class JsniInjector {
         Jsni.Interval interval = Jsni.findJsniSource(method);
         if (interval != null) {
           // The method itself needs to be replaced.
-          //
 
           // Parse it.
-          //
-          String js = new String(source, interval.start, interval.end
+          String js = String.valueOf(source, interval.start, interval.end
               - interval.start);
           int startLine = Jsni.countNewlines(source, 0, interval.start) + 1;
           JsBlock body = Jsni.parseAsFunctionBody(logger, js, loc, startLine);
 
           // Remember this as being a valid JSNI method.
-          //
           parsedJsByMethod.put(method, body);
 
-          // Replace the method.
-          final int declStart = method.getDeclStart();
-          final int declEnd = method.getDeclEnd();
-
-          int expectedHeaderLines = Jsni.countNewlines(source, declStart,
-              interval.start);
           int expectedBodyLines = Jsni.countNewlines(source, interval.start,
               interval.end);
-          String newDecl = genNonNativeVersionOfJsniMethod(method,
-              expectedHeaderLines, expectedBodyLines);
+          String newBody = genNonNativeVersionOfJsniMethod(method,
+              expectedBodyLines);
 
-          final char[] newSource = newDecl.toCharArray();
-          changes.add(new Replacement(declStart, declEnd, newSource));
+          char[] newSource = newBody.toCharArray();
+          int jsniCommentStart = interval.start
+              - Jsni.JSNI_BLOCK_START.length();
+          changes.add(new Replacement(jsniCommentStart,
+              method.getDeclEnd() + 1, newSource));
+
+          replaceNativeKeywords(source, changes, method.getDeclStart(),
+              jsniCommentStart);
+
           patchedMethods.add(method);
         } else {
           // report error
@@ -438,7 +433,6 @@ public class JsniInjector {
 
       // Insert an initializer block immediately after the opening brace of the
       // class.
-      //
       char[] block = genInitializerBlock(loc, source, patched);
 
       // If this is a non-static inner class, actually put the initializer block
