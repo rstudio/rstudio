@@ -15,8 +15,6 @@
  */
 package com.google.gwt.core.ext;
 
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * An interface used to log messages in deferred binding generators.
@@ -26,23 +24,44 @@ public interface TreeLogger {
   /**
    * A type-safe enum of all possible logging severity types.
    */
-  class Type {
-
-    private static final int TYPES_COUNT = 7;
+  @SuppressWarnings("hiding")
+  enum Type {
 
     /**
-     * MUST lazy-init (@link #instances}. Some compilers (javac) will cause
-     * Type's clinit to call TreeLogger's clinit <i>first</i>. This means
-     * ERROR, WARN, etc run their constructors before instances can
-     * self-initialize.
+     * Logs an error.
      */
-    private static Map<String, Type> labelMap;
-    private static Type[] typeList;
+    ERROR(true),
 
-    static {
-      // ensure the standard types are actually registered
-      ERROR.toString();
-    }
+    /**
+     * Logs a warning.
+     */
+    WARN(true),
+
+    /**
+     * Logs information.
+     */
+    INFO(false),
+
+    /**
+     * Logs information related to lower-level operation.
+     */
+    TRACE(false),
+
+    /**
+     * Logs detailed information that could be useful during debugging.
+     */
+    DEBUG(false),
+
+    /**
+     * Logs extremely verbose and detailed information that is typically useful
+     * only to product implementors.
+     */
+    SPAM(false),
+
+    /**
+     * Logs everything -- quite a bit of stuff.
+     */
+    ALL(false);
 
     /**
      * Gets all the possible severity types as an array.
@@ -50,41 +69,16 @@ public interface TreeLogger {
      * @return an array of severity types
      */
     public static Type[] instances() {
-      return typeList.clone();
+      return Type.values();
     }
 
-    /**
-     * Looks up a severity type by label.
-     * 
-     * @param label the label of the desired severity
-     * @return the severity type labelled <code>label</code>, or
-     *         <code>null</code> if no such type exists
-     */
-    public static Type valueOf(String label) {
-      return labelMap.get(label.toUpperCase());
-    }
-
-    private final String label;
     private final boolean needsAttention;
-    private final int priority;
 
     /**
      * Constructs a log type with an optional parent.
      */
-    private Type(boolean needsAttention, String name, int priority) {
-      if (labelMap == null) {
-        labelMap = new HashMap<String, Type>();
-      }
-      if (typeList == null) {
-        typeList = new Type[TYPES_COUNT];
-      }
-      Object existing = labelMap.put(name.toUpperCase(), this);
-      assert (existing == null);
-      assert (typeList[priority] == null);
-      typeList[priority] = this;
+    private Type(boolean needsAttention) {
       this.needsAttention = needsAttention;
-      this.label = name;
-      this.priority = priority;
     }
 
     /**
@@ -93,7 +87,7 @@ public interface TreeLogger {
      * @return the label
      */
     public String getLabel() {
-      return label;
+      return this.toString();
     }
 
     /**
@@ -104,7 +98,8 @@ public interface TreeLogger {
      * @return <code>true</code> if this log type is lower priority
      */
     public boolean isLowerPriorityThan(Type other) {
-      return this.priority > other.priority;
+      // Counterintuitive: higher number is lower priority.
+      return this.ordinal() > other.ordinal();
     }
 
     /**
@@ -117,48 +112,43 @@ public interface TreeLogger {
     public boolean needsAttention() {
       return needsAttention;
     }
-
-    @Override
-    public String toString() {
-      return label;
-    }
   }
 
   /**
    * Logs an error.
    */
-  Type ERROR = new Type(true, "ERROR", 0);
+  Type ERROR = Type.ERROR;
 
   /**
    * Logs a warning.
    */
-  Type WARN = new Type(true, "WARN", 1);
+  Type WARN = Type.WARN;
 
   /**
    * Logs information.
    */
-  Type INFO = new Type(false, "INFO", 2);
+  Type INFO = Type.INFO;
 
   /**
    * Logs information related to lower-level operation.
    */
-  Type TRACE = new Type(false, "TRACE", 3);
+  Type TRACE = Type.TRACE;
 
   /**
    * Logs detailed information that could be useful during debugging.
    */
-  Type DEBUG = new Type(false, "DEBUG", 4);
+  Type DEBUG = Type.DEBUG;
 
   /**
    * Logs extremely verbose and detailed information that is typically useful
    * only to product implementors.
    */
-  Type SPAM = new Type(false, "SPAM", 5);
+  Type SPAM = Type.SPAM;
 
   /**
    * Logs everything -- quite a bit of stuff.
    */
-  Type ALL = new Type(false, "ALL", 6);
+  Type ALL = Type.ALL;
 
   /**
    * A valid logger that ignores all messages. Occasionally useful when calling
