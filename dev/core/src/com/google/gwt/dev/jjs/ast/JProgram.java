@@ -49,8 +49,10 @@ public class JProgram extends JNode {
   private static final Set<String> INDEX_TYPES_SET = new HashSet<String>(
       Arrays.asList(new String[] {
           "java.lang.Object", "java.lang.String", "java.lang.Class",
-          "java.lang.Enum", "java.lang.Iterable", "java.util.Iterator",
-          "com.google.gwt.core.client.JavaScriptObject",}));
+          "java.lang.CharSequence", "java.lang.Comparable", "java.lang.Enum",
+          "java.lang.Iterable", "java.util.Iterator",
+          "com.google.gwt.core.client.JavaScriptObject",
+          "com.google.gwt.lang.Array"}));
 
   private static final int IS_ARRAY = 2;
 
@@ -268,7 +270,8 @@ public class JProgram extends JNode {
     assert (ordinal >= 0);
 
     String sname = String.valueOf(name);
-    JEnumField x = new JEnumField(this, info, sname, ordinal, enclosingType, type);
+    JEnumField x = new JEnumField(this, info, sname, ordinal, enclosingType,
+        type);
     List<JEnumField> enumList = enclosingType.enumList;
     while (ordinal >= enumList.size()) {
       enumList.add(null);

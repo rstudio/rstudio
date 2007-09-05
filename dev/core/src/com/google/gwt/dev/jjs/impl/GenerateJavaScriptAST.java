@@ -169,11 +169,11 @@ public class GenerateJavaScriptAST {
         names.put(x, topScope.declareName(mangleName, name));
       } else {
         JsName jsName;
-        if (belongsToObject(x)) {
-          jsName = peek().declareName(mangleNameForObject(x));
-          jsName.setObfuscatable(false);
-        } else if (x == arrayLengthField) {
+        if (x == arrayLengthField) {
           jsName = peek().declareName(name);
+          jsName.setObfuscatable(false);
+        } else if (belongsToSpecialObfuscatedType(x)) {
+          jsName = peek().declareName(mangleNameSpecialObfuscate(x));
           jsName.setObfuscatable(false);
         } else {
           jsName = peek().declareName(mangleName, name);
@@ -189,7 +189,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JLabel x, Context ctx) {
-      if (getName(x) != null) {
+      if (names.get(x) != null) {
         return;
       }
       names.put(x, peek().declareName(x.getName()));
@@ -294,11 +294,11 @@ public class GenerateJavaScriptAST {
       // my polymorphic name
       String name = x.getName();
       if (!x.isStatic()) {
-        if (getPolyName(x) == null) {
+        if (polymorphicNames.get(x) == null) {
           String mangleName = mangleNameForPoly(x);
           JsName polyName;
-          if (belongsToObject(x)) {
-            polyName = interfaceScope.declareName(mangleNameForObject(x));
+          if (belongsToSpecialObfuscatedType(x)) {
+            polyName = interfaceScope.declareName(mangleNameSpecialObfuscate(x));
             polyName.setObfuscatable(false);
           } else {
             polyName = interfaceScope.declareName(mangleName, name);
@@ -498,7 +498,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JClassSeed x, Context ctx) {
-      push(getName(x.getRefType()).makeRef());
+      push(names.get(x.getRefType()).makeRef());
     }
 
     @Override
@@ -604,7 +604,7 @@ public class GenerateJavaScriptAST {
         push(null);
       }
       JsExpression rhs = (JsExpression) pop();
-      JsName name = getName(x);
+      JsName name = names.get(x);
 
       if (x.isStatic()) {
         // setup a var for the static
@@ -627,7 +627,7 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JFieldRef x, Context ctx) {
       JField field = x.getField();
-      JsName jsFieldName = getName(field);
+      JsName jsFieldName = names.get(field);
       JsNameRef nameRef = jsFieldName.makeRef();
       JsExpression curExpr = nameRef;
 
@@ -755,7 +755,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JLabel x, Context ctx) {
-      push(new JsLabel(getName(x)));
+      push(new JsLabel(names.get(x)));
     }
 
     @Override
@@ -768,7 +768,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JLocal x, Context ctx) {
-      push(getName(x).makeRef());
+      push(names.get(x).makeRef());
     }
 
     @Override
@@ -795,7 +795,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JLocalRef x, Context ctx) {
-      push(getName(x.getTarget()).makeRef());
+      push(names.get(x.getTarget()).makeRef());
     }
 
     @Override
@@ -885,7 +885,7 @@ public class GenerateJavaScriptAST {
         if (x.getInstance() != null) {
           unnecessaryQualifier = (JsExpression) pop(); // instance
         }
-        qualifier = getName(method).makeRef();
+        qualifier = names.get(method).makeRef();
       } else {
         if (x.isStaticDispatchOnly()) {
           /*
@@ -900,11 +900,11 @@ public class GenerateJavaScriptAST {
           JsName callName = objectScope.declareName("call");
           callName.setObfuscatable(false);
           qualifier = callName.makeRef();
-          qualifier.setQualifier(getName(method).makeRef());
+          qualifier.setQualifier(names.get(method).makeRef());
           jsInvocation.getArguments().add(0, (JsExpression) pop()); // instance
         } else {
           // Dispatch polymorphically (normal case).
-          qualifier = getPolyName(method).makeRef();
+          qualifier = polymorphicNames.get(method).makeRef();
           qualifier.setQualifier((JsExpression) pop()); // instance
         }
       }
@@ -931,7 +931,7 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JNewInstance x, Context ctx) {
       JsNew newOp = new JsNew();
-      JsNameRef nameRef = getName(x.getType()).makeRef();
+      JsNameRef nameRef = names.get(x.getType()).makeRef();
       newOp.setConstructorExpression(nameRef);
       push(newOp);
     }
@@ -943,12 +943,12 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JParameter x, Context ctx) {
-      push(new JsParameter(getName(x)));
+      push(new JsParameter(names.get(x)));
     }
 
     @Override
     public void endVisit(JParameterRef x, Context ctx) {
-      push(getName(x.getTarget()).makeRef());
+      push(names.get(x.getTarget()).makeRef());
     }
 
     @Override
@@ -1015,7 +1015,7 @@ public class GenerateJavaScriptAST {
             assert (node != null);
             if (node instanceof JField) {
               JField field = (JField) node;
-              JsName jsName = getName(field);
+              JsName jsName = names.get(field);
               assert (jsName != null);
               x.resolve(jsName);
 
@@ -1028,11 +1028,11 @@ public class GenerateJavaScriptAST {
             } else {
               JMethod method = (JMethod) node;
               if (x.getQualifier() == null) {
-                JsName jsName = getName(method);
+                JsName jsName = names.get(method);
                 assert (jsName != null);
                 x.resolve(jsName);
               } else {
-                JsName jsName = getPolyName(method);
+                JsName jsName = polymorphicNames.get(method);
                 if (jsName == null) {
                   // this can occur when JSNI references an instance method on a
                   // type that was never actually instantiated.
@@ -1338,7 +1338,7 @@ public class GenerateJavaScriptAST {
     private void generateSeedFuncAndPrototype(JClassType x,
         List<JsStatement> globalStmts) {
       if (x != program.getTypeJavaLangString()) {
-        JsName seedFuncName = getName(x);
+        JsName seedFuncName = names.get(x);
 
         // seed function
         // function com_example_foo_Foo() { }
@@ -1354,7 +1354,7 @@ public class GenerateJavaScriptAST {
         JsExpression rhs;
         if (x.extnds != null) {
           JsNew newExpr = new JsNew();
-          newExpr.setConstructorExpression(getName(x.extnds).makeRef());
+          newExpr.setConstructorExpression(names.get(x.extnds).makeRef());
           rhs = newExpr;
         } else {
           rhs = new JsObjectLiteral();
@@ -1388,7 +1388,8 @@ public class GenerateJavaScriptAST {
 
         // rhs
         JsInvocation call = new JsInvocation();
-        JsNameRef toStringRef = new JsNameRef(getPolyName(toStringMeth));
+        JsNameRef toStringRef = new JsNameRef(
+            polymorphicNames.get(toStringMeth));
         toStringRef.setQualifier(new JsThisRef());
         call.setQualifier(toStringRef);
         JsReturn jsReturn = new JsReturn(call);
@@ -1407,7 +1408,7 @@ public class GenerateJavaScriptAST {
       int typeId = program.getTypeId(x);
       if (typeId >= 0) {
         JField typeIdField = program.getIndexedField("Object.typeId");
-        JsName typeIdName = getName(typeIdField);
+        JsName typeIdName = names.get(typeIdField);
         if (typeIdName == null) {
           // Was pruned; this compilation must have no dynamic casts.
           return;
@@ -1422,7 +1423,7 @@ public class GenerateJavaScriptAST {
 
     private void generateTypeName(JClassType x, List<JsStatement> globalStmts) {
       JField typeNameField = program.getIndexedField("Object.typeName");
-      JsName typeNameName = getName(typeNameField);
+      JsName typeNameName = names.get(typeNameField);
       if (typeNameName == null) {
         // Was pruned; this compilation must not use GWT.getTypeName().
         return;
@@ -1450,7 +1451,7 @@ public class GenerateJavaScriptAST {
 
     private void generateTypeTable(JsVars vars) {
       JField typeIdArray = program.getIndexedField("Cast.typeIdArray");
-      JsName typeIdArrayName = getName(typeIdArray);
+      JsName typeIdArrayName = names.get(typeIdArray);
       if (typeIdArrayName == null) {
         // Was pruned; this compilation must have no dynamic casts.
         return;
@@ -1470,9 +1471,9 @@ public class GenerateJavaScriptAST {
       for (int i = 0; i < x.methods.size(); ++i) {
         JMethod method = x.methods.get(i);
         if (!method.isStatic() && !method.isAbstract()) {
-          JsNameRef lhs = getPolyName(method).makeRef();
+          JsNameRef lhs = polymorphicNames.get(method).makeRef();
           lhs.setQualifier(globalTemp.makeRef());
-          JsNameRef rhs = getName(method).makeRef();
+          JsNameRef rhs = names.get(method).makeRef();
           JsExpression asg = createAssignment(lhs, rhs);
           globalStmts.add(new JsExprStmt(asg));
         }
@@ -1500,7 +1501,7 @@ public class GenerateJavaScriptAST {
 
       JMethod clinitMethod = enclosingType.methods.get(0);
       JsInvocation jsInvocation = new JsInvocation();
-      jsInvocation.setQualifier(getName(clinitMethod).makeRef());
+      jsInvocation.setQualifier(names.get(clinitMethod).makeRef());
       return jsInvocation;
     }
 
@@ -1522,7 +1523,7 @@ public class GenerateJavaScriptAST {
 
       JMethod clinitMethod = enclosingType.methods.get(0);
       JsInvocation jsInvocation = new JsInvocation();
-      jsInvocation.setQualifier(getName(clinitMethod).makeRef());
+      jsInvocation.setQualifier(names.get(clinitMethod).makeRef());
       return jsInvocation;
     }
 
@@ -1692,7 +1693,20 @@ public class GenerateJavaScriptAST {
   private final Map<JMethod, JsName> polymorphicNames = new IdentityHashMap<JMethod, JsName>();
   private final JProgram program;
 
+  /**
+   * All of the fields and polymorphic methods in String.
+   * 
+   * Because we modify String's prototype, all fields and polymorphic methods on
+   * String's super types need special handling.
+   */
   private final Map<String, String> specialObfuscatedIdents = new HashMap<String, String>();
+  /**
+   * All of the super types of String.
+   * 
+   * Because we modify String's prototype, all fields and polymorphic methods on
+   * String's super types need special handling.
+   */
+  private final Set<JReferenceType> specialObfuscatedTypes = new HashSet<JReferenceType>();
 
   /**
    * Contains JsNames for all globals, such as static fields and methods.
@@ -1714,31 +1728,50 @@ public class GenerateJavaScriptAST {
     this.obfuscate = obfuscate;
     this.prettyNames = prettyNames;
 
-    if (obfuscate) {
-      specialObfuscatedIdents.put("hashCode", "hC");
-      specialObfuscatedIdents.put("equals", "eQ");
-      specialObfuscatedIdents.put("toString", "tS");
-      specialObfuscatedIdents.put("typeId", "tI");
-      specialObfuscatedIdents.put("typeName", "tN");
-    }
+    /*
+     * Because we modify String's prototype, all fields and polymorphic methods
+     * on String's super types need special handling.
+     */
+    specialObfuscatedTypes.add(program.getIndexedType("Comparable"));
+    specialObfuscatedTypes.add(program.getIndexedType("Sequence"));
+    specialObfuscatedTypes.add(program.getTypeJavaLangObject());
+    specialObfuscatedTypes.add(program.getTypeJavaLangString());
+    specialObfuscatedTypes.add(program.getIndexedType("Array"));
+
+    // Object polymorphic
+    specialObfuscatedIdents.put("hashCode", "hC");
+    specialObfuscatedIdents.put("equals", "eQ");
+    specialObfuscatedIdents.put("toString", "tS");
+
+    // Object fields
+    specialObfuscatedIdents.put("typeId", "tI");
+    specialObfuscatedIdents.put("typeName", "tN");
+
+    // String polymorphic
+    specialObfuscatedIdents.put("charAt", "cA");
+    specialObfuscatedIdents.put("compareTo", "cT");
+    specialObfuscatedIdents.put("length", "lN");
+    specialObfuscatedIdents.put("subSequence", "sS");
+
+    // Array magic field
+    specialObfuscatedIdents.put("queryId", "qI");
   }
 
-  boolean belongsToObject(JMethod x) {
-    JClassType typeJavaLangObject = program.getTypeJavaLangObject();
-    if (x.getEnclosingType() == typeJavaLangObject) {
+  boolean belongsToSpecialObfuscatedType(JField x) {
+    return specialObfuscatedTypes.contains(x.getEnclosingType());
+  }
+
+  boolean belongsToSpecialObfuscatedType(JMethod x) {
+    if (specialObfuscatedTypes.contains(x.getEnclosingType())) {
       return true;
     }
     for (Object element : x.overrides) {
       JMethod override = (JMethod) element;
-      if (override.getEnclosingType() == typeJavaLangObject) {
+      if (specialObfuscatedTypes.contains(override.getEnclosingType())) {
         return true;
       }
     }
     return false;
-  }
-
-  boolean belongsToObject(JField x) {
-    return x.getEnclosingType() == program.getTypeJavaLangObject();
   }
 
   String getNameString(HasName hasName) {
@@ -1761,23 +1794,48 @@ public class GenerateJavaScriptAST {
     return s;
   }
 
-  String mangleNameForObject(HasName x) {
-    if (obfuscate) {
-      return specialObfuscatedIdents.get(x.getName());
-    } else if (prettyNames) {
-      return x.getName() + "$";
+  String mangleNameForPoly(JMethod x) {
+    if (x.overrides.isEmpty()) {
+      return mangleNameForPolyImpl(x);
     } else {
-      return "java_lang_Object_" + getNameString(x) + "$";
+      for (JMethod override : x.overrides) {
+        if (override.overrides.isEmpty()) {
+          return mangleNameForPolyImpl(override);
+        }
+      }
     }
+    throw new InternalCompilerException("Cycle in overrides???");
   }
 
-  String mangleNameForPoly(JMethod x) {
+  String mangleNameForPolyImpl(JMethod x) {
     String s = getNameString(x) + "__";
     for (int i = 0; i < x.getOriginalParamTypes().size(); ++i) {
       JType type = x.getOriginalParamTypes().get(i);
       s += type.getJavahSignatureName();
     }
     return s;
+  }
+
+  String mangleNameSpecialObfuscate(JField x) {
+    assert (specialObfuscatedIdents.containsKey(x.getName()));
+    if (obfuscate) {
+      return specialObfuscatedIdents.get(x.getName());
+    } else if (prettyNames) {
+      return x.getName() + "$";
+    } else {
+      return mangleName(x) + "$";
+    }
+  }
+
+  String mangleNameSpecialObfuscate(JMethod x) {
+    assert (specialObfuscatedIdents.containsKey(x.getName()));
+    if (obfuscate) {
+      return specialObfuscatedIdents.get(x.getName());
+    } else if (prettyNames) {
+      return x.getName() + "$";
+    } else {
+      return mangleNameForPoly(x) + "$";
+    }
   }
 
   private void execImpl() {
@@ -1787,14 +1845,6 @@ public class GenerateJavaScriptAST {
     creator.accept(program);
     GenerateJavaScriptVisitor generator = new GenerateJavaScriptVisitor();
     generator.accept(program);
-  }
-
-  private JsName getName(HasName x) {
-    return names.get(x);
-  }
-
-  private JsName getPolyName(JMethod x) {
-    return polymorphicNames.get(x);
   }
 
 }
