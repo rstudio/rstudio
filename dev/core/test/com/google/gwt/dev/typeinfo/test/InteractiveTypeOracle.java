@@ -58,24 +58,18 @@ public class InteractiveTypeOracle {
   }
 
   public static void main(String[] args) throws UnableToCompleteException {
-    AbstractTreeLogger logger = null;
+    AbstractTreeLogger logger = new PrintWriterTreeLogger();
 
     // See if we should create a gui logger.
+    // TODO: this was removed to avoid making an SWT dependency from test code
     //
-    for (int i = 0; i < args.length; i++) {
-      // TODO: this was removed to avoid making an SWT dependency from test code
-      // if ("-gui".equals(args[i])) {
-      // logger = TreeLoggerWidget.getAsDetachedWindow(
-      // "Interactive Type Oracle Log", 700, 600, true);
-      // break;
-      // }
-    }
-
-    if (logger == null) {
-      // Use console only.
-      //
-      logger = new PrintWriterTreeLogger();
-    }
+    // for (int i = 0; i < args.length; i++) {
+    // if ("-gui".equals(args[i])) {
+    // logger = TreeLoggerWidget.getAsDetachedWindow(
+    // "Interactive Type Oracle Log", 700, 600, true);
+    // break;
+    // }
+    // }
 
     String logLevel = System.getProperty("gwt.logLevel");
     if (logLevel != null) {

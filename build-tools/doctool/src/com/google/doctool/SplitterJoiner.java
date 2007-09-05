@@ -234,7 +234,7 @@ public class SplitterJoiner {
           //
           String outPath = line.substring(prefix.length()).trim();
           outFile = new File(outPath);
-          if (!outFile.isAbsolute() && inputFile != null) {
+          if (!outFile.isAbsolute()) {
             // Make the created file relative to the input file.
             //
             File absoluteParentDir = inputFile.getCanonicalFile().getParentFile();

@@ -1304,7 +1304,7 @@ public class GenerateJavaAST {
         // TODO: make this tighter when we have real source info
         // JSourceInfo info = translateInfo(nameRef.getInfo());
         String ident = nameRef.getIdent();
-        HasEnclosingType node = (HasEnclosingType) program.jsniMap.get(ident);
+        HasEnclosingType node = program.jsniMap.get(ident);
         if (node == null) {
           node = parseJsniRef(info, x, ident);
           if (node == null) {
@@ -1312,7 +1312,6 @@ public class GenerateJavaAST {
           }
           program.jsniMap.put(ident, node);
         }
-        assert (node != null);
         CanBeStatic canBeStatic = (CanBeStatic) node;
         HasName hasName = (HasName) node;
         boolean isField = node instanceof JField;

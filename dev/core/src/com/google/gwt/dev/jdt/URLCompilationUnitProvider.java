@@ -42,8 +42,6 @@ public class URLCompilationUnitProvider implements CompilationUnitProvider {
       if (!f.exists()) {
         f = null;
       }
-    } else {
-      f = null;
     }
     return f;
   }

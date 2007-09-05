@@ -903,7 +903,7 @@ public class Booklet {
     String label = seeTag.label();
 
     // If there is a label, use it.
-    if (label == null || (label != null && label.trim().length() == 0)) {
+    if (label == null || label.trim().length() == 0) {
 
       // If there isn't a label, see if the @see target has a @title.
       //
