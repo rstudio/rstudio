@@ -154,6 +154,7 @@ public class GenerateJavaScriptAST {
   private class CreateNamesAndScopesVisitor extends JVisitor {
 
     private final Stack<JsScope> scopeStack = new Stack<JsScope>();
+    private final JField arrayLengthField = program.getIndexedField("Array.length");
 
     @Override
     public void endVisit(JClassType x, Context ctx) {
@@ -170,6 +171,9 @@ public class GenerateJavaScriptAST {
         JsName jsName;
         if (belongsToObject(x)) {
           jsName = peek().declareName(mangleNameForObject(x));
+          jsName.setObfuscatable(false);
+        } else if (x == arrayLengthField) {
+          jsName = peek().declareName(name);
           jsName.setObfuscatable(false);
         } else {
           jsName = peek().declareName(mangleName, name);
@@ -536,7 +540,7 @@ public class GenerateJavaScriptAST {
           vars.add((JsVar) node);
         } else {
           assert (node instanceof JsStatement);
-          JsStatement stmt = (JsStatement)jsFields.get(i);
+          JsStatement stmt = (JsStatement) jsFields.get(i);
           globalStmts.add(stmt);
         }
       }

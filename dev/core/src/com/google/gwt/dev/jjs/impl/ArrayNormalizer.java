@@ -22,12 +22,14 @@ import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNullType;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
@@ -79,6 +81,8 @@ public class ArrayNormalizer {
 
       if (x.initializers != null) {
         processInitializers(x, ctx, type, litTypeName);
+      } else if (type.getDims() == 1) {
+        processDim(x, ctx, type, litTypeName);
       } else {
         processDims(x, ctx, type, litTypeName);
       }
@@ -96,6 +100,41 @@ public class ArrayNormalizer {
 
       leafName.getChars(0, leafLength, className, nDims);
       return className;
+    }
+
+    /**
+     * @see com.google.gwt.lang.Array regarding seed types
+     */
+    private JIntLiteral getSeedTypeLiteralFor(JType type) {
+      if (type instanceof JPrimitiveType) {
+        if (type == program.getTypePrimitiveBoolean()) {
+          // The boolean type, thus false (index 2)
+          return program.getLiteralInt(2);
+        } else {
+          // A numeric type, thus zero (index 1).
+          return program.getLiteralInt(1);
+        }
+      }
+      // An Object type, thus null (index 0).
+      return program.getLiteralInt(0);
+    }
+
+    private void processDim(JNewArray x, Context ctx, JArrayType arrayType,
+        JLiteral litTypeName) {
+      // override the type of the called method with the array's type
+      JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
+          initDim, arrayType);
+      JLiteral typeIdLit = program.getLiteralInt(program.getTypeId(arrayType));
+      JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(arrayType));
+      JType leafType = arrayType.getLeafType();
+      JExpression dim = (JExpression) x.dims.get(0);
+
+      call.getArgs().add(litTypeName);
+      call.getArgs().add(typeIdLit);
+      call.getArgs().add(queryIdLit);
+      call.getArgs().add(dim);
+      call.getArgs().add(getSeedTypeLiteralFor(leafType));
+      ctx.replaceMe(call);
     }
 
     private void processDims(JNewArray x, Context ctx, JArrayType arrayType,
@@ -141,7 +180,7 @@ public class ArrayNormalizer {
       call.getArgs().add(typeIdList);
       call.getArgs().add(queryIdList);
       call.getArgs().add(dimList);
-      call.getArgs().add(targetType.getDefaultValue());
+      call.getArgs().add(getSeedTypeLiteralFor(targetType));
       ctx.replaceMe(call);
     }
 
@@ -177,6 +216,7 @@ public class ArrayNormalizer {
     new ArrayNormalizer(program).execImpl();
   }
 
+  private final JMethod initDim;
   private final JMethod initDims;
   private final JMethod initValues;
   private final JProgram program;
@@ -185,6 +225,7 @@ public class ArrayNormalizer {
   private ArrayNormalizer(JProgram program) {
     this.program = program;
     setCheckMethod = program.getIndexedMethod("Array.setCheck");
+    initDim = program.getIndexedMethod("Array.initDim");
     initDims = program.getIndexedMethod("Array.initDims");
     initValues = program.getIndexedMethod("Array.initValues");
   }

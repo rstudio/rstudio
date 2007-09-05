@@ -446,9 +446,6 @@ public class Pruner {
         // just rescue my own specific type
         rescue(arrayType, true, true);
       }
-
-      // also rescue and instantiate the "base" array type
-      rescue(program.getIndexedType("Array"), true, true);
       return true;
     }
 
@@ -668,6 +665,8 @@ public class Pruner {
     boolean madeChanges = false;
     while (true) {
       RescueVisitor rescuer = new RescueVisitor();
+      // Always rescue and instantiate the "base" array type
+      rescuer.rescue(program.getIndexedType("Array"), true, true);
       for (JReferenceType type : program.codeGenTypes) {
         rescuer.rescue(type, true, saveCodeGenTypes);
       }

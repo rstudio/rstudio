@@ -15,7 +15,7 @@
  */
 package com.google.gwt.lang;
 
-// CHECKSTYLE_NAMING_OFF: Follows legacy naming pattern. Fix me.
+import com.google.gwt.core.client.JavaScriptObject;
 
 /**
  * This is a magic class the compiler uses as a base class for injected array
@@ -23,39 +23,88 @@ package com.google.gwt.lang;
  */
 public final class Array {
 
-  /**
-   * Construct a new array of the exact same type as a given array, specifying
-   * the desired length of the new array.
+  /*
+   * TODO: static init instead of lazy init when we can elide the clinit calls.
    */
-  public static native <T> T[] clonify(T[] a, int length) /*-{
-    // Use JSNI magic to effect a castless type change.
-    return @com.google.gwt.lang.Array::clonify(Lcom/google/gwt/lang/Array;I)(a, length);
-  }-*/;
+
+  static final int FALSE_SEED_TYPE = 2;
+
+  static final int NULL_SEED_TYPE = 0;
+
+  static final int ZERO_SEED_TYPE = 1;
 
   /**
-   * Creates an array like "new T[a][b][c][][]" by passing in javascript objects
-   * as follows: [a, b, c].
+   * Stores the prototype for java.lang.Object so that arrays can get their
+   * polymorphic methods via expando.
    */
-  public static Array initDims(String typeName, Object typeIdExprs,
-      Object queryIdExprs, Object dimExprs, Object defaultValue) {
-    // ASSERT: dimExprs.length > 0 or else code gen is broken
-    //
-    return initDims(typeName, typeIdExprs, queryIdExprs, dimExprs, 0,
-        getValueCount(dimExprs), defaultValue);
+  private static JavaScriptObject protoTypeObject;
+
+  /**
+   * Creates a new array of the exact same type as a given array but with the
+   * specified length.
+   */
+  public static <T> T[] clonify(T[] array, int length) {
+    Array a = asArrayType(array);
+    Array result = createFromSeed(NULL_SEED_TYPE, length);
+    initValues(a.typeName, a.typeId, a.queryId, result);
+    return asArray(result);
   }
 
   /**
-   * Creates an array like "new T[][]{a,b,c,d}" by passing in javascript objects
-   * as follows: [a,b,c,d].
+   * Creates an array like "new T[a][b][c][][]" by passing in a native JSON
+   * array, [a, b, c].
+   * 
+   * @param typeName the typeName of the array
+   * @param typeId the typeId of the array
+   * @param queryId the queryId of the array
+   * @param length the length of the array
+   * @param seedType the primitive type of the array; 0: null; 1: zero; 2: false
+   * @return the new array
+   */
+  public static Array initDim(String typeName, int typeId, int queryId,
+      int length, int seedType) {
+    Array result = createFromSeed(seedType, length);
+    initValues(typeName, typeId, queryId, result);
+    return result;
+  }
+
+  /**
+   * Creates an array like "new T[a][b][c][][]" by passing in a native JSON
+   * array, [a, b, c].
+   * 
+   * @param typeName the typeName of the array
+   * @param typeIdExprs the typeId at each dimension, from highest to lowest
+   * @param queryIdExprs the queryId at each dimension, from highest to lowest
+   * @param dimExprs the length at each dimension, from highest to lower
+   * @param seedType the primitive type of the array; 0: null; 1: zero; 2: false
+   * @return the new array
+   */
+  public static Array initDims(String typeName, int[] typeIdExprs,
+      int[] queryIdExprs, int[] dimExprs, int seedType) {
+    return initDims(typeName, typeIdExprs, queryIdExprs, dimExprs, 0,
+        dimExprs.length, seedType);
+  }
+
+  /**
+   * Creates an array like "new T[][]{a,b,c,d}" by passing in a native JSON
+   * array, [a, b, c, d].
+   * 
+   * @param typeName the typeName of the array
+   * @param typeId the typeId of the array
+   * @param queryId the queryId of the array
+   * @param array the JSON array that will be transformed into a GWT array
+   * @return values; having wrapped it for GWT
    */
   public static final Array initValues(String typeName, int typeId,
-      int queryId, Object values) {
-    int length = getValueCount(values);
-    Array result = new Array(length, typeId, queryId, typeName);
-    for (int i = 0; i < length; ++i) {
-      _set(result, i, getValue(values, i));
+      int queryId, Array array) {
+    if (protoTypeObject == null) {
+      protoTypeObject = getPrototype(new Object());
     }
-    return result;
+    wrapArray(array, protoTypeObject);
+    array.typeName = typeName;
+    array.typeId = typeId;
+    array.queryId = queryId;
+    return array;
   }
 
   /**
@@ -66,86 +115,90 @@ public final class Array {
         && !Cast.instanceOf(value, array.queryId)) {
       throw new ArrayStoreException();
     }
-    return _set(array, index, value);
+    return set(array, index, value);
+  }
+
+  /**
+   * Use JSNI to effect a castless type change.
+   */
+  private static native <T> T[] asArray(Array array) /*-{
+    return array;
+  }-*/;
+
+  /**
+   * Use JSNI to effect a castless type change.
+   */
+  private static native <T> Array asArrayType(T[] array) /*-{
+    return array;
+  }-*/;
+
+  /**
+   * Creates a primitive JSON array of a given seedType.
+   * 
+   * @param seedType the primitive type of the array; 0: null; 1: zero; 2: false
+   * @param length the requested length
+   * @see #NULL_ARRAY
+   * @see #ZERO_ARRAY
+   * @see #FALSE_ARRAY
+   * @return the new JSON array
+   */
+  private static native Array createFromSeed(int seedType, int length) /*-{
+    var seedArrays = [[null], [0], [false]];
+    var blankArray = seedArrays[seedType];
+
+    while (blankArray.length < length) {
+      // Doubles each iteration.
+      blankArray = blankArray.concat(blankArray);
+    }
+    
+    // Remove the excess.
+    blankArray.length = length;
+    return blankArray;
+  }-*/;
+
+  private static native JavaScriptObject getPrototype(Object object) /*-{
+    object.constructor.prototype;
+  }-*/;
+
+  private static Array initDims(String typeName, int[] typeIdExprs,
+      int[] queryIdExprs, int[] dimExprs, int index, int count, int seedType) {
+    int length = dimExprs[index];
+    if (length < 0) {
+      throw new NegativeArraySizeException();
+    }
+
+    boolean isLastDim = (index == (count - 1));
+
+    Array result = createFromSeed(isLastDim ? seedType : NULL_SEED_TYPE, length);
+    initValues(typeName, typeIdExprs[index], queryIdExprs[index], result);
+
+    if (!isLastDim) {
+      // Recurse to next dimension.
+      ++index;
+      typeName = typeName.substring(1);
+      for (int i = 0; i < length; ++i) {
+        set(result, i, initDims(typeName, typeIdExprs, queryIdExprs, dimExprs,
+            index, count, seedType));
+      }
+    }
+    return result;
   }
 
   /**
    * Sets a value in the array.
    */
-  private static native Object _set(Array array, int index, Object value) /*-{
+  private static native Object set(Array array, int index, Object value) /*-{
     return array[index] = value;
   }-*/;
 
-  private static Array clonify(Array a, int length) {
-    return new Array(length, a.typeId, a.queryId, a.typeName);
-  }
-
-  /**
-   * Gets an the first value from a JSON int array.
-   */
-  private static native int getIntValue(Object values, int index) /*-{
-    return values[index];
-  }-*/;
-
-  /**
-   * Gets a value from a JSON array.
-   */
-  private static native Object getValue(Object values, int index) /*-{
-    return values[index];
-  }-*/;
-
-  /**
-   * Gets the length of a JSON array.
-   */
-  private static native int getValueCount(Object values) /*-{
-    return values.length; 
-  }-*/;
-
-  /**
-   * Creates an array like "new T[a][b][c][][]" by passing in javascript objects
-   * as follows: [a,b,c].
-   */
-  private static Array initDims(String typeName, Object typeIdExprs,
-      Object queryIdExprs, Object dimExprs, int index, int count,
-      Object defaultValue) {
-    int length;
-    if ((length = getIntValue(dimExprs, index)) < 0) {
-      throw new NegativeArraySizeException();
+  private static native Array wrapArray(Array array, JavaScriptObject prototype) /*-{
+    for (var i in prototype) {
+      array[i] = prototype[i];
     }
+    return array;
+  }-*/;
 
-    Array result = new Array(length, getIntValue(typeIdExprs, index),
-        getIntValue(queryIdExprs, index), typeName);
+  public int length;
 
-    ++index;
-    if (index < count) {
-      typeName = typeName.substring(1);
-      for (int i = 0; i < length; ++i) {
-        _set(result, i, initDims(typeName, typeIdExprs, queryIdExprs, dimExprs,
-            index, count, defaultValue));
-      }
-    } else {
-      for (int i = 0; i < length; ++i) {
-        _set(result, i, defaultValue);
-      }
-    }
-
-    return result;
-  }
-
-  public final int length;
-
-  protected final int queryId;
-
-  public Array(int length, int typeId, int queryId, String typeName) {
-    this.length = length;
-    this.queryId = queryId;
-
-    /*
-     * These are inherited protected fields from GWT's Object emulation class.
-     */
-    this.typeName = typeName;
-    this.typeId = typeId;
-  }
+  protected int queryId;
 }
-
-// CHECKSTYLE_NAMING_ON
