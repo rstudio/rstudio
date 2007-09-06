@@ -29,89 +29,118 @@ import com.google.gwt.core.client.JavaScriptObject;
  */
 public final class String implements Comparable<String>, CharSequence {
 
-  // CHECKSTYLE_OFF: This class has special needs.
-
   /**
-   * accesses need to be prefixed with ':' to prevent conflict with built-in JavaScript properties.    
+   * Accesses need to be prefixed with ':' to prevent conflict with built-in
+   * JavaScript properties.
+   * 
    * @skip
    */
   static JavaScriptObject hashCache;
 
-  public static native String valueOf(boolean x) /*-{ return x ? "true" : "false"; }-*/;
+  public static String valueOf(boolean x) {
+    return "" + x;
+  };
 
-  public static native String valueOf(char x) /*-{ return String.fromCharCode(x); }-*/;
+  public static native String valueOf(char x) /*-{
+    return String.fromCharCode(x);
+  }-*/;
 
   public static String valueOf(char x[], int offset, int count) {
-    if (offset < 0) {
-      throw new StringIndexOutOfBoundsException(offset);
-    }
-    if (count < 0) {
-      throw new StringIndexOutOfBoundsException(count);
-    }
-    if (offset > x.length - count) {
-      throw new StringIndexOutOfBoundsException(offset + count);
-    }
-
-    String s = "";
-    int stop = offset + count;
-    while (offset < stop) {
-      s += Character.toString(x[offset++]);
-    }
-    return s;
+    int end = offset + count;
+    __checkBounds(x.length, offset, end);
+    return __valueOf(x, offset, end);
   }
 
-  public static String valueOf(char[] x) {
-    return valueOf(x, 0, x.length);
+  public static native String valueOf(char[] x) /*-{
+    // Trick: fromCharCode is a vararg method, so we can use apply() to pass the
+    // entire input in one shot.
+    return String.fromCharCode.apply(null, x);
+  }-*/;
+
+  public static String valueOf(double x) {
+    return "" + x;
+  }
+  
+  public static String valueOf(float x) {
+    return "" + x;
   }
 
-  public static native String valueOf(double x) /*-{ return "" + x; }-*/;
+  public static String valueOf(int x) {
+    return "" + x;
+  }
 
-  public static native String valueOf(float x) /*-{ return "" + x; }-*/;
-
-  public static native String valueOf(int x) /*-{ return "" + x; }-*/;
-
-  public static native String valueOf(long x) /*-{ return "" + x; }-*/;
+  public static String valueOf(long x) {
+    return "" + x;
+  }
 
   public static String valueOf(Object x) {
-    return x != null ? x.toString() : "null";
+    return "" + x;
   }
+
+  // CHECKSTYLE_OFF: This class has special needs.
 
   /**
    * @skip
    */
-  protected static String _String() {
+  static String _String() {
     return "";
   }
 
   /**
    * @skip
    */
-  protected static String _String(char value[]) {
+  static String _String(char value[]) {
     return valueOf(value);
   }
 
   /**
    * @skip
    */
-  protected static String _String(char value[], int offset, int count) {
+  static String _String(char value[], int offset, int count) {
     return valueOf(value, offset, count);
   }
 
   /**
    * @skip
    */
-  protected static String _String(String other) {
+  static String _String(String other) {
     return other;
   }
 
+  /**
+   * Checks that bounds are correct.
+   * 
+   * @param legalCount the end of the legal range
+   * @param start must be >= 0
+   * @param end must be <= legalCount and must be >= start
+   * @throw StringIndexOutOfBoundsException if the range is not legal
+   * @skip
+   */
+  static void __checkBounds(int legalCount, int start, int end) {
+    if (start < 0) {
+      throw new StringIndexOutOfBoundsException(start);
+    }
+    if (end < start) {
+      throw new StringIndexOutOfBoundsException(end - start);
+    }
+    if (end > legalCount) {
+      throw new StringIndexOutOfBoundsException(end);
+    }
+  }
+
+  /**
+   * @skip
+   */
   static String[] __createArray(int numElements) {
     return new String[numElements];
   }
 
-  /*
+  /**
    * This method converts Java-escaped dollar signs "\$" into JavaScript-escaped
    * dollar signs "$$", and removes all other lone backslashes, which serve as
    * escapes in Java but are passed through literally in JavaScript.
+   * 
+   * @skip
    */
   static String __translateReplaceString(String replaceStr) {
     int pos = 0;
@@ -131,20 +160,33 @@ public final class String implements Comparable<String>, CharSequence {
     return String(me) == other;
   }-*/;
 
+  private static native String __valueOf(char x[], int start, int end) /*-{
+    // Trick: fromCharCode is a vararg method, so we can use apply() to pass the
+    // entire input in one shot.
+    x = x.slice(start, end);
+    return String.fromCharCode.apply(null, x);
+  }-*/;
+
+  // CHECKSTYLE_ON
+
   public String() {
     // magic delegation to _String
+    _String();
   }
 
   public String(char value[]) {
     // magic delegation to _String
+    _String(value);
   }
 
   public String(char value[], int offset, int count) {
     // magic delegation to _String
+    _String(value, offset, count);
   }
 
   public String(String other) {
     // magic delegation to _String
+    _String(other);
   }
 
   public native char charAt(int index) /*-{ 
@@ -152,6 +194,9 @@ public final class String implements Comparable<String>, CharSequence {
   }-*/;
 
   public int compareTo(String other) {
+    if (__equals(this, other)) {
+      return 0;
+    }
     int thisLength = this.length();
     int otherLength = other.length();
     int length = Math.min(thisLength, otherLength);
@@ -176,8 +221,9 @@ public final class String implements Comparable<String>, CharSequence {
 
   @Override
   public boolean equals(Object other) {
-    if (!(other instanceof String))
+    if (!(other instanceof String)) {
       return false;
+    }
     return __equals(this, other);
   }
 
@@ -369,10 +415,11 @@ public final class String implements Comparable<String>, CharSequence {
   }
 
   public boolean startsWith(String prefix, int toffset) {
-    if (toffset < 0 || toffset >= length())
+    if (toffset < 0 || toffset >= length()) {
       return false;
-    else
+    } else {
       return indexOf(prefix, toffset) == toffset;
+    }
   }
 
   public CharSequence subSequence(int beginIndex, int endIndex) {
@@ -390,8 +437,9 @@ public final class String implements Comparable<String>, CharSequence {
   public char[] toCharArray() {
     int n = this.length();
     char[] charArr = new char[n];
-    for (int i = 0; i < n; ++i)
+    for (int i = 0; i < n; ++i) {
       charArr[i] = this.charAt(i);
+    }
     return charArr;
   }
 
@@ -414,5 +462,4 @@ public final class String implements Comparable<String>, CharSequence {
     return r2;
   }-*/;
 
-  // CHECKSTYLE_ON
 }
