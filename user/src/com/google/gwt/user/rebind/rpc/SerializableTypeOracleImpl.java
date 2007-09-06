@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.jdt.TypeOracleBuilder;
 import com.google.gwt.dev.util.Util;
 
 import java.io.UnsupportedEncodingException;
@@ -150,36 +151,7 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
   }
 
   public String getSerializedTypeName(JType type) {
-    JPrimitiveType primitiveType = type.isPrimitive();
-    if (primitiveType != null) {
-      return primitiveType.getJNISignature();
-    }
-
-    JArrayType arrayType = type.isArray();
-    if (arrayType != null) {
-      JType component = arrayType.getComponentType();
-      if (component.isClassOrInterface() != null) {
-        return "[L" + getSerializedTypeName(arrayType.getComponentType()) + ";";
-      } else {
-        return "[" + getSerializedTypeName(arrayType.getComponentType());
-      }
-    }
-
-    JParameterizedType parameterizedType = type.isParameterized();
-    if (parameterizedType != null) {
-      return getSerializedTypeName(parameterizedType.getRawType());
-    }
-
-    JClassType classType = type.isClassOrInterface();
-    assert (classType != null);
-
-    JClassType enclosingType = classType.getEnclosingType();
-    if (enclosingType != null) {
-      return getSerializedTypeName(enclosingType) + "$"
-          + classType.getSimpleSourceName();
-    }
-
-    return classType.getQualifiedSourceName();
+    return TypeOracleBuilder.computeBinaryClassName(type);
   }
 
   public String getTypeSerializerQualifiedName(JClassType serviceIntf) {
