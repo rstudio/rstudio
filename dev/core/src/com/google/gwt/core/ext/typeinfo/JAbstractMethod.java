@@ -15,13 +15,17 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Common superclass for {@link JMethod} and {@link JConstructor}.
  */
-public abstract class JAbstractMethod implements HasMetaData {
+public abstract class JAbstractMethod implements HasAnnotations, HasMetaData {
+
+  private final Annotations annotations = new Annotations();
 
   private int bodyEnd;
 
@@ -43,12 +47,13 @@ public abstract class JAbstractMethod implements HasMetaData {
 
   // Only the builder can construct
   JAbstractMethod(String name, int declStart, int declEnd, int bodyStart,
-      int bodyEnd) {
+      int bodyEnd, Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
     this.name = name;
     this.declStart = declStart;
     this.declEnd = declEnd;
     this.bodyStart = bodyStart;
     this.bodyEnd = bodyEnd;
+    annotations.addAnnotations(declaredAnnotations);
   }
 
   public void addMetaData(String tagName, String[] values) {
@@ -72,12 +77,24 @@ public abstract class JAbstractMethod implements HasMetaData {
     return null;
   }
 
+  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+    return annotations.getAnnotation(annotationClass);
+  }
+
+  public Annotation[] getAnnotations() {
+    return annotations.getAnnotations();
+  }
+
   public int getBodyEnd() {
     return bodyEnd;
   }
 
   public int getBodyStart() {
     return bodyStart;
+  }
+
+  public Annotation[] getDeclaredAnnotations() {
+    return annotations.getDeclaredAnnotations();
   }
 
   public int getDeclEnd() {
@@ -113,6 +130,14 @@ public abstract class JAbstractMethod implements HasMetaData {
 
   public JType[] getThrows() {
     return thrownTypes.toArray(TypeOracle.NO_JTYPES);
+  }
+
+  public JAnnotationMethod isAnnotationMethod() {
+    return null;
+  }
+
+  public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
+    return annotations.isAnnotationPresent(annotationClass);
   }
 
   public abstract JConstructor isConstructor();

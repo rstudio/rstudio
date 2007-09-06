@@ -15,6 +15,9 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import java.lang.annotation.Annotation;
+import java.util.Map;
+
 /**
  * Represents a method declaration.
  */
@@ -26,7 +29,13 @@ public class JMethod extends JAbstractMethod {
 
   public JMethod(JClassType enclosingType, String name, int declStart,
       int declEnd, int bodyStart, int bodyEnd) {
-    super(name, declStart, declEnd, bodyStart, bodyEnd);
+    this(enclosingType, name, declStart, declEnd, bodyStart, bodyEnd, null);
+  }
+
+  public JMethod(JClassType enclosingType, String name, int declStart,
+      int declEnd, int bodyStart, int bodyEnd,
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
+    super(name, declStart, declEnd, bodyStart, bodyEnd, declaredAnnotations);
     this.enclosingType = enclosingType;
     enclosingType.addMethod(this);
   }

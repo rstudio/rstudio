@@ -21,6 +21,8 @@ import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 
+import java.io.File;
+
 /**
  * Implements <code>ICompilationUnit</code> in terms of a
  * {@link CompilationUnitProvider}.
@@ -51,6 +53,20 @@ public class ICompilationUnitAdapter implements ICompilationUnit {
   }
 
   public char[] getMainTypeName() {
+    String mainTypeName = cup.getLocation();
+    int nameStart = mainTypeName.lastIndexOf(File.separatorChar);
+    if (nameStart != -1) {
+      mainTypeName = mainTypeName.substring(nameStart + 1);
+    }
+
+    /*
+     * This is required to resolve the package-info class.
+     */
+    int ext = mainTypeName.lastIndexOf(".java");
+    if (ext != -1) {
+      return mainTypeName.substring(0, ext).toCharArray();
+    }
+
     // seems to work just returning null
     return null;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,15 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import java.lang.annotation.Annotation;
+import java.util.Map;
+
 /**
  * Represents a parameter in a declaration.
  */
-public class JParameter implements HasMetaData {
+public class JParameter implements HasAnnotations, HasMetaData {
+
+  private final Annotations annotations = new Annotations();
 
   private final HasMetaData metaData = new MetaData();
 
@@ -29,15 +34,34 @@ public class JParameter implements HasMetaData {
   private final JAbstractMethod enclosingMethod;
 
   public JParameter(JAbstractMethod enclosingMethod, JType type, String name) {
+    this(enclosingMethod, type, name, null);
+  }
+
+  public JParameter(JAbstractMethod enclosingMethod, JType type, String name,
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
     this.enclosingMethod = enclosingMethod;
     this.type = type;
     this.name = name;
 
     enclosingMethod.addParameter(this);
+
+    annotations.addAnnotations(declaredAnnotations);
   }
 
   public void addMetaData(String tagName, String[] values) {
     metaData.addMetaData(tagName, values);
+  }
+
+  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+    return annotations.getAnnotation(annotationClass);
+  }
+
+  public Annotation[] getAnnotations() {
+    return annotations.getAnnotations();
+  }
+
+  public Annotation[] getDeclaredAnnotations() {
+    return annotations.getDeclaredAnnotations();
   }
 
   public JAbstractMethod getEnclosingMethod() {
@@ -58,6 +82,10 @@ public class JParameter implements HasMetaData {
 
   public JType getType() {
     return type;
+  }
+
+  public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
+    return annotations.isAnnotationPresent(annotationClass);
   }
 
   public String toString() {

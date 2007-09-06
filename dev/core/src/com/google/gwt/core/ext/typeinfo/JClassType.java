@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.Util;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -31,8 +32,11 @@ import java.util.TreeMap;
 /**
  * Type representing a Java class or interface type.
  */
-public class JClassType extends JType implements HasMetaData {
+public class JClassType extends JType implements HasAnnotations, HasMetaData {
+
   private final Set<JClassType> allSubtypes = new HashSet<JClassType>();
+
+  private final Annotations annotations = new Annotations();
 
   private final int bodyEnd;
 
@@ -119,6 +123,11 @@ public class JClassType extends JType implements HasMetaData {
     }
   }
 
+  public void addAnnotations(
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
+    annotations.addAnnotations(declaredAnnotations);
+  }
+
   public void addImplementedInterface(JClassType intf) {
     assert (intf != null);
     interfaces.add(intf);
@@ -163,6 +172,14 @@ public class JClassType extends JType implements HasMetaData {
     return findNestedTypeImpl(parts, 0);
   }
 
+  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+    return annotations.getAnnotation(annotationClass);
+  }
+
+  public Annotation[] getAnnotations() {
+    return annotations.getAnnotations();
+  }
+
   public int getBodyEnd() {
     return bodyEnd;
   }
@@ -186,6 +203,10 @@ public class JClassType extends JType implements HasMetaData {
 
   public JConstructor[] getConstructors() {
     return constructors.toArray(TypeOracle.NO_JCTORS);
+  }
+
+  public Annotation[] getDeclaredAnnotations() {
+    return annotations.getDeclaredAnnotations();
   }
 
   public JClassType getEnclosingType() {
@@ -354,6 +375,10 @@ public class JClassType extends JType implements HasMetaData {
     return 0 != (modifierBits & TypeOracle.MOD_ABSTRACT);
   }
 
+  public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
+    return annotations.isAnnotationPresent(annotationClass);
+  }
+
   @Override
   public JArrayType isArray() {
     // intentional null
@@ -468,6 +493,7 @@ public class JClassType extends JType implements HasMetaData {
     assert (type != null);
     assert (isInterface() == null);
     this.superclass = type;
+    annotations.setParent(type.annotations);
   }
 
   @Override

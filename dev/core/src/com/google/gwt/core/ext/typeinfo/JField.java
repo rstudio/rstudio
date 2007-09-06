@@ -15,10 +15,15 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import java.lang.annotation.Annotation;
+import java.util.Map;
+
 /**
  * Represents a field declaration.
  */
-public class JField implements HasMetaData {
+public class JField implements HasAnnotations, HasMetaData {
+
+  private final Annotations annotations = new Annotations();
 
   private final JClassType enclosingType;
 
@@ -31,11 +36,17 @@ public class JField implements HasMetaData {
   private JType type;
 
   public JField(JClassType enclosingType, String name) {
+    this(enclosingType, name, null);
+  }
+
+  public JField(JClassType enclosingType, String name,
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
     this.enclosingType = enclosingType;
     this.name = name;
 
     assert (enclosingType != null);
     enclosingType.addField(this);
+    annotations.addAnnotations(declaredAnnotations);
   }
 
   public void addMetaData(String tagName, String[] values) {
@@ -44,6 +55,18 @@ public class JField implements HasMetaData {
 
   public void addModifierBits(int modifierBits) {
     this.modifierBits |= modifierBits;
+  }
+
+  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+    return annotations.getAnnotation(annotationClass);
+  }
+
+  public Annotation[] getAnnotations() {
+    return annotations.getAnnotations();
+  }
+
+  public Annotation[] getDeclaredAnnotations() {
+    return annotations.getDeclaredAnnotations();
   }
 
   public JClassType getEnclosingType() {
@@ -66,6 +89,10 @@ public class JField implements HasMetaData {
   public JType getType() {
     assert (type != null);
     return type;
+  }
+
+  public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
+    return annotations.isAnnotationPresent(annotationClass);
   }
 
   public boolean isDefaultAccess() {

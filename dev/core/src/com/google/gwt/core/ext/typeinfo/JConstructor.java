@@ -15,6 +15,9 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import java.lang.annotation.Annotation;
+import java.util.Map;
+
 /**
  * Represents a constructor declaration.
  */
@@ -23,9 +26,15 @@ public class JConstructor extends JAbstractMethod {
 
   public JConstructor(JClassType enclosingType, String name, int declStart,
       int declEnd, int bodyStart, int bodyEnd) {
-    super(name, declStart, declEnd, bodyStart, bodyEnd);
+    this(enclosingType, name, declStart, declEnd, bodyStart, bodyEnd, null);
+  }
+
+  public JConstructor(JClassType enclosingType, String name, int declStart,
+      int declEnd, int bodyStart, int bodyEnd,
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
+    super(name, declStart, declEnd, bodyStart, bodyEnd, declaredAnnotations);
     this.enclosingType = enclosingType;
-    enclosingType.addConstructor(this);
+    enclosingType.addConstructor(this); 
   }
 
   public JClassType getEnclosingType() {

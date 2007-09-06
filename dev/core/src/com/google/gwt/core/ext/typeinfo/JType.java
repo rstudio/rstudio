@@ -33,6 +33,17 @@ public abstract class JType {
 
   public abstract String getSimpleSourceName();
 
+  /**
+   * Returns this instance if it is a annotation or <code>null</code> if it is
+   * not.
+   * 
+   * @return this instance if it is a annotation or <code>null</code> if it is
+   *         not
+   */
+  public JAnnotationType isAnnotation() {
+    return null;
+  }
+
   public abstract JArrayType isArray();
 
   public abstract JClassType isClass();

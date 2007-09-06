@@ -15,20 +15,28 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import java.lang.annotation.Annotation;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Represents a logical package.
  */
-public class JPackage {
+public class JPackage implements HasAnnotations {
 
   private final String name;
+
+  private final Annotations annotations = new Annotations();
 
   private final Map<String, JClassType> types = new HashMap<String, JClassType>();
 
   JPackage(String name) {
     this.name = name;
+  }
+
+  public void addAnnotations(
+      Map<Class<? extends Annotation>, Annotation> annotations) {
+    this.annotations.addAnnotations(annotations);
   }
 
   public JClassType findType(String typeName) {
@@ -38,6 +46,18 @@ public class JPackage {
 
   public JClassType findType(String[] typeName) {
     return findTypeImpl(typeName, 0);
+  }
+
+  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+    return annotations.getAnnotation(annotationClass);
+  }
+
+  public Annotation[] getAnnotations() {
+    return annotations.getAnnotations();
+  }
+
+  public Annotation[] getDeclaredAnnotations() {
+    return annotations.getDeclaredAnnotations();
   }
 
   public String getName() {
@@ -54,6 +74,10 @@ public class JPackage {
 
   public JClassType[] getTypes() {
     return types.values().toArray(TypeOracle.NO_JCLASSES);
+  }
+
+  public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
+    return annotations.isAnnotationPresent(annotationClass);
   }
 
   public boolean isDefault() {

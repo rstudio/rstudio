@@ -20,12 +20,16 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.core.ext.typeinfo.HasMetaData;
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
+import com.google.gwt.core.ext.typeinfo.JAnnotationMethod;
+import com.google.gwt.core.ext.typeinfo.JAnnotationType;
+import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JConstructor;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JParameter;
+import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
@@ -37,13 +41,31 @@ import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.Annotation;
+import org.eclipse.jdt.internal.compiler.ast.AnnotationMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
+import org.eclipse.jdt.internal.compiler.ast.ArrayInitializer;
+import org.eclipse.jdt.internal.compiler.ast.CharLiteral;
+import org.eclipse.jdt.internal.compiler.ast.ClassLiteralAccess;
 import org.eclipse.jdt.internal.compiler.ast.Clinit;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.DoubleLiteral;
+import org.eclipse.jdt.internal.compiler.ast.Expression;
+import org.eclipse.jdt.internal.compiler.ast.FalseLiteral;
 import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.FloatLiteral;
 import org.eclipse.jdt.internal.compiler.ast.Initializer;
+import org.eclipse.jdt.internal.compiler.ast.IntLiteral;
 import org.eclipse.jdt.internal.compiler.ast.Javadoc;
+import org.eclipse.jdt.internal.compiler.ast.LongLiteral;
+import org.eclipse.jdt.internal.compiler.ast.MagicLiteral;
+import org.eclipse.jdt.internal.compiler.ast.MemberValuePair;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.NullLiteral;
+import org.eclipse.jdt.internal.compiler.ast.NumberLiteral;
+import org.eclipse.jdt.internal.compiler.ast.QualifiedNameReference;
+import org.eclipse.jdt.internal.compiler.ast.StringLiteral;
+import org.eclipse.jdt.internal.compiler.ast.TrueLiteral;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeReference;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
@@ -54,6 +76,7 @@ import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
+import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.LocalTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.RawTypeBinding;
@@ -67,6 +90,7 @@ import java.io.BufferedReader;
 import java.io.CharArrayReader;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -96,6 +120,40 @@ import java.util.regex.Pattern;
 public class TypeOracleBuilder {
 
   private static final Pattern PATTERN_WHITESPACE = Pattern.compile("\\s");
+
+  public static String computeBinaryClassName(JType type) {
+    JPrimitiveType primitiveType = type.isPrimitive();
+    if (primitiveType != null) {
+      return primitiveType.getJNISignature();
+    }
+
+    JArrayType arrayType = type.isArray();
+    if (arrayType != null) {
+      JType component = arrayType.getComponentType();
+      if (component.isClassOrInterface() != null) {
+        return "[L" + computeBinaryClassName(arrayType.getComponentType())
+            + ";";
+      } else {
+        return "[" + computeBinaryClassName(arrayType.getComponentType());
+      }
+    }
+
+    JParameterizedType parameterizedType = type.isParameterized();
+    if (parameterizedType != null) {
+      return computeBinaryClassName(parameterizedType.getRawType());
+    }
+
+    JClassType classType = type.isClassOrInterface();
+    assert (classType != null);
+
+    JClassType enclosingType = classType.getEnclosingType();
+    if (enclosingType != null) {
+      return computeBinaryClassName(enclosingType) + "$"
+          + classType.getSimpleSourceName();
+    }
+
+    return classType.getQualifiedSourceName();
+  }
 
   static boolean parseMetaDataTags(char[] unitSource, HasMetaData hasMetaData,
       Javadoc javadoc) {
@@ -185,6 +243,38 @@ public class TypeOracleBuilder {
     String[] values = tagValues.toArray(Empty.STRINGS);
     hasMetaData.addMetaData(tagName, values);
     tagValues.clear();
+  }
+
+  private static String getMethodName(JClassType enclosingType,
+      AbstractMethodDeclaration jmethod) {
+    if (jmethod.isConstructor()) {
+      return String.valueOf(enclosingType.getSimpleSourceName());
+    } else {
+      return String.valueOf(jmethod.binding.selector);
+    }
+  }
+
+  private static boolean isAnnotation(TypeDeclaration typeDecl) {
+    if (typeDecl.kind() == IGenericType.ANNOTATION_TYPE_DECL) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if this name is the special package-info type
+   * name.
+   * 
+   * @return <code>true</code> if this name is the special package-info type
+   *         name
+   */
+  private static boolean isPackageInfoTypeName(String qname) {
+    return "package-info".equals(qname);
+  }
+
+  private static HashMap<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> newAnnotationMap() {
+    return new HashMap<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation>();
   }
 
   private static void removeInfectedUnits(final TreeLogger logger,
@@ -468,6 +558,165 @@ public class TypeOracleBuilder {
     return oracle;
   }
 
+  private Object evaluateAnnotationExpression(TreeLogger logger,
+      Expression expression) {
+    Annotation annotation = (Annotation) expression;
+
+    // Determine the annotation class
+    TypeBinding resolvedType = annotation.resolvedType;
+    Class<? extends java.lang.annotation.Annotation> clazz = (Class<? extends java.lang.annotation.Annotation>) getClassLiteral(
+        logger, resolvedType);
+    if (clazz == null) {
+      return null;
+    }
+
+    // Build the map of identifiers to values.
+    Map<String, Object> identifierToValue = new HashMap<String, Object>();
+    for (MemberValuePair mvp : annotation.memberValuePairs()) {
+      // Method name
+      String identifier = String.valueOf(mvp.name);
+
+      // Value
+      Expression expressionValue = mvp.value;
+      Object value = evaluateExpression(logger, expressionValue);
+      if (value == null) {
+        return null;
+      }
+
+      identifierToValue.put(identifier, value);
+    }
+
+    // Create the Annotation proxy
+    JClassType annotationType = (JClassType) resolveType(logger, resolvedType);
+    if (annotationType == null) {
+      return null;
+    }
+
+    return AnnotationProxyFactory.create(clazz, annotationType,
+        identifierToValue);
+  }
+
+  private Object evaluateArrayInitializerExpression(TreeLogger logger,
+      Expression expression) {
+    ArrayInitializer arrayInitializer = (ArrayInitializer) expression;
+    Class<?> leafComponentClass = getClassLiteral(logger,
+        arrayInitializer.binding.leafComponentType);
+    int[] dimensions = new int[arrayInitializer.binding.dimensions];
+
+    Expression[] initExpressions = arrayInitializer.expressions;
+    if (initExpressions != null) {
+      dimensions[0] = initExpressions.length;
+    }
+
+    Object array = Array.newInstance(leafComponentClass, dimensions);
+    boolean failed = false;
+    if (initExpressions != null) {
+      for (int i = 0; i < initExpressions.length; ++i) {
+        Expression arrayInitExp = initExpressions[i];
+        Object value = evaluateExpression(logger, arrayInitExp);
+        if (value != null) {
+          Array.set(array, i, value);
+        } else {
+          failed = true;
+          break;
+        }
+      }
+    }
+
+    if (!failed) {
+      return array;
+    }
+
+    return null;
+  }
+
+  private Object evaluateExpression(TreeLogger logger, Expression expression) {
+    if (expression instanceof MagicLiteral) {
+      if (expression instanceof FalseLiteral) {
+        return Boolean.FALSE;
+      } else if (expression instanceof NullLiteral) {
+        // null is not a valid annotation value; JLS Third Ed. Section 9.7
+      } else if (expression instanceof TrueLiteral) {
+        return Boolean.TRUE;
+      }
+    } else if (expression instanceof NumberLiteral) {
+      Object value = evaluateNumericExpression(expression);
+      if (value != null) {
+        return value;
+      }
+    } else if (expression instanceof StringLiteral) {
+      StringLiteral stringLiteral = (StringLiteral) expression;
+      return stringLiteral.constant.stringValue();
+    } else if (expression instanceof ClassLiteralAccess) {
+      ClassLiteralAccess classLiteral = (ClassLiteralAccess) expression;
+      Class<?> clazz = getClassLiteral(logger, classLiteral.resolvedType);
+      if (clazz != null) {
+        return clazz;
+      }
+    } else if (expression instanceof ArrayInitializer) {
+      Object value = evaluateArrayInitializerExpression(logger, expression);
+      if (value != null) {
+        return value;
+      }
+    } else if (expression instanceof QualifiedNameReference) {
+      QualifiedNameReference qualifiedNameRef = (QualifiedNameReference) expression;
+      Class clazz = getClassLiteral(logger, qualifiedNameRef.actualReceiverType);
+      assert (clazz.isEnum());
+      if (clazz != null) {
+        FieldBinding fieldBinding = qualifiedNameRef.fieldBinding();
+        String enumName = String.valueOf(fieldBinding.name);
+        return Enum.valueOf(clazz, enumName);
+      }
+    } else if (expression instanceof Annotation) {
+      Object annotationInstance = evaluateAnnotationExpression(logger,
+          expression);
+      if (annotationInstance != null) {
+        return annotationInstance;
+      }
+    }
+
+    assert (false);
+    return null;
+  }
+
+  private Object evaluateNumericExpression(Expression expression) {
+    if (expression instanceof CharLiteral) {
+      CharLiteral charLiteral = (CharLiteral) expression;
+      return Character.valueOf(charLiteral.constant.charValue());
+    } else if (expression instanceof DoubleLiteral) {
+      DoubleLiteral doubleLiteral = (DoubleLiteral) expression;
+      return Double.valueOf(doubleLiteral.constant.doubleValue());
+    } else if (expression instanceof FloatLiteral) {
+      FloatLiteral floatLiteral = (FloatLiteral) expression;
+      return Float.valueOf(floatLiteral.constant.floatValue());
+    } else if (expression instanceof IntLiteral) {
+      IntLiteral intLiteral = (IntLiteral) expression;
+      return Integer.valueOf(intLiteral.constant.intValue());
+    } else if (expression instanceof LongLiteral) {
+      LongLiteral longLiteral = (LongLiteral) expression;
+      return Long.valueOf(longLiteral.constant.longValue());
+    }
+
+    return null;
+  }
+
+  private Class<?> getClassLiteral(TreeLogger logger, TypeBinding resolvedType) {
+    JClassType annotationType = (JClassType) resolveType(logger, resolvedType);
+    if (annotationType == null) {
+      return null;
+    }
+
+    String className = computeBinaryClassName(annotationType);
+    try {
+      Class<?> clazz = Class.forName(className);
+      return clazz;
+    } catch (ClassNotFoundException e) {
+      logger.log(TreeLogger.ERROR, "", e);
+      // TODO(mmendez): how should we deal with this error?
+      return null;
+    }
+  }
+
   private CompilationUnitProvider getCup(TypeDeclaration typeDecl) {
     ICompilationUnit icu = typeDecl.compilationResult.compilationUnit;
     ICompilationUnitAdapter icua = (ICompilationUnitAdapter) icu;
@@ -539,6 +788,7 @@ public class TypeOracleBuilder {
     String jpkgName = getPackage(typeDecl);
     JPackage pkg = oracle.getOrCreatePackage(jpkgName);
     final boolean jclassIsIntf = isInterface(typeDecl);
+    boolean jclassIsAnnonation = isAnnotation(typeDecl);
     CompilationUnitProvider cup = getCup(typeDecl);
 
     int declStart = typeDecl.declarationSourceStart;
@@ -546,11 +796,50 @@ public class TypeOracleBuilder {
     int bodyStart = typeDecl.bodyStart;
     int bodyEnd = typeDecl.bodyEnd;
 
-    JClassType type = new JClassType(oracle, cup, pkg, enclosingType,
+    JClassType type;
+    if (jclassIsAnnonation) {
+      type = new JAnnotationType(oracle, cup, pkg, enclosingType,
+          isLocalType, jclassName, declStart, declEnd, bodyStart, bodyEnd,
+          jclassIsIntf);
+    } else {
+    type = new JClassType(oracle, cup, pkg, enclosingType,
         isLocalType, jclassName, declStart, declEnd, bodyStart, bodyEnd,
         jclassIsIntf);
+    }
 
     cacheManager.setTypeForBinding(binding, type);
+  }
+
+  private boolean resolveAnnotation(
+      TreeLogger logger,
+      Annotation jannotation,
+      Map<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> declaredAnnotations) {
+    // Determine the annotation class
+    TypeBinding resolvedType = jannotation.resolvedType;
+    Class<? extends java.lang.annotation.Annotation> clazz = (Class<? extends java.lang.annotation.Annotation>) getClassLiteral(
+        logger, resolvedType);
+    if (clazz == null) {
+      return false;
+    }
+
+    java.lang.annotation.Annotation annotation = (java.lang.annotation.Annotation) evaluateExpression(
+        logger, jannotation);
+    declaredAnnotations.put(clazz, annotation);
+    return (annotation != null) ? true : false;
+  }
+
+  private boolean resolveAnnotations(
+      TreeLogger logger,
+      Annotation[] annotations,
+      Map<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> declaredAnnotations) {
+    if (annotations != null) {
+      for (Annotation annotation : annotations) {
+        if (!resolveAnnotation(logger, annotation, declaredAnnotations)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   private boolean resolveField(TreeLogger logger, char[] unitSource,
@@ -562,8 +851,16 @@ public class TypeOracleBuilder {
       return true;
     }
 
+    // Resolve annotations
+    Map<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> declaredAnnotations = newAnnotationMap();
+    if (!resolveAnnotations(logger, jfield.annotations, declaredAnnotations)) {
+      // Failed to resolve.
+      //
+      return false;
+    }
+
     String name = String.valueOf(jfield.name);
-    JField field = new JField(enclosingType, name);
+    JField field = new JField(enclosingType, name, declaredAnnotations);
 
     // Get modifiers.
     //
@@ -607,7 +904,6 @@ public class TypeOracleBuilder {
 
   private boolean resolveMethod(TreeLogger logger, char[] unitSource,
       JClassType enclosingType, AbstractMethodDeclaration jmethod) {
-    JAbstractMethod method;
 
     if (jmethod instanceof Clinit) {
       // Pretend we didn't see this.
@@ -615,23 +911,40 @@ public class TypeOracleBuilder {
       return true;
     }
 
-    String name = null;
     int declStart = jmethod.declarationSourceStart;
     int declEnd = jmethod.declarationSourceEnd;
     int bodyStart = jmethod.bodyStart;
     int bodyEnd = jmethod.bodyEnd;
+    String name = getMethodName(enclosingType, jmethod);
 
-    if (jmethod.isConstructor()) {
-      name = String.valueOf(enclosingType.getSimpleSourceName());
-      method = new JConstructor(enclosingType, name, declStart, declEnd,
-          bodyStart, bodyEnd);
-    } else {
-      name = String.valueOf(jmethod.binding.selector);
-      method = new JMethod(enclosingType, name, declStart, declEnd, bodyStart,
-          bodyEnd);
-
-      // Set the return type.
+    // Resolve annotations
+    Map<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> declaredAnnotations = newAnnotationMap();
+    if (!resolveAnnotations(logger, jmethod.annotations, declaredAnnotations)) {
+      // Failed to resolve.
       //
+      return false;
+    }
+
+    JAbstractMethod method;
+    if (jmethod.isConstructor()) {
+      method = new JConstructor(enclosingType, name, declStart, declEnd,
+          bodyStart, bodyEnd, declaredAnnotations);
+    } else {
+      if (jmethod.isAnnotationMethod()) {
+        AnnotationMethodDeclaration annotationMethod = (AnnotationMethodDeclaration) jmethod;
+        Object defaultValue = null;
+        if (annotationMethod.defaultValue != null) {
+          defaultValue = evaluateExpression(logger,
+              annotationMethod.defaultValue);
+        }
+        method = new JAnnotationMethod(enclosingType, name, declStart, declEnd,
+            bodyStart, bodyEnd, defaultValue, declaredAnnotations);
+      } else {
+        method = new JMethod(enclosingType, name, declStart, declEnd,
+            bodyStart, bodyEnd, declaredAnnotations);
+      }
+
+      // Add the return type if necessary.
       TypeBinding jreturnType = ((MethodDeclaration) jmethod).returnType.resolvedType;
       JType returnType = resolveType(logger, jreturnType);
       if (returnType == null) {
@@ -689,6 +1002,32 @@ public class TypeOracleBuilder {
     return true;
   }
 
+  private boolean resolvePackage(TreeLogger logger,
+      TypeDeclaration jclass) {
+    SourceTypeBinding binding = jclass.binding;
+
+    TypeOracle oracle = cacheManager.getTypeOracle();
+    String packageName = String.valueOf(binding.fPackage.readableName());
+    JPackage pkg = oracle.getOrCreatePackage(packageName);
+    assert (pkg != null);
+
+    CompilationUnitScope cus = (CompilationUnitScope) jclass.scope.parent;
+    assert (cus != null);
+
+    // Resolve annotations
+    Map<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> declaredAnnotations = newAnnotationMap();
+    if (!resolveAnnotations(logger,
+        cus.referenceContext.currentPackage.annotations, declaredAnnotations)) {
+      // Failed to resolve.
+      //
+      return false;
+    }
+
+    pkg.addAnnotations(declaredAnnotations);
+
+    return true;
+  }
+
   private boolean resolveParameter(TreeLogger logger, JAbstractMethod method,
       Argument jparam) {
     TypeBinding jtype = jparam.binding.type;
@@ -699,8 +1038,17 @@ public class TypeOracleBuilder {
       return false;
     }
 
+    // Resolve annotations
+    Map<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> declaredAnnotations = newAnnotationMap();
+    if (!resolveAnnotations(logger, jparam.annotations, declaredAnnotations)) {
+      // Failed to resolve.
+      //
+      return false;
+    }
+
     String name = String.valueOf(jparam.name);
-    new JParameter(method, type, name);
+    new JParameter(method, type, name, declaredAnnotations);
+
     return true;
   }
 
@@ -846,7 +1194,8 @@ public class TypeOracleBuilder {
     }
 
     String name = String.valueOf(binding.readableName());
-    logger.log(TreeLogger.WARN, "Unable to resolve type: " + name, null);
+    logger.log(TreeLogger.WARN, "Unable to resolve type: " + name
+        + " binding: " + binding.getClass().getCanonicalName(), null);
     return null;
   }
 
@@ -864,6 +1213,12 @@ public class TypeOracleBuilder {
     String qname = String.valueOf(binding.qualifiedSourceName());
     logger.log(TreeLogger.SPAM, "Found type '" + qname + "'", null);
 
+    // Handle package-info classes.
+    if (isPackageInfoTypeName(qname)) {
+      return resolvePackage(logger, jclass);
+    }
+
+    // Just resolve the type.
     JClassType type = (JClassType) resolveType(logger, binding);
     if (type == null) {
       // Failed to resolve.
@@ -874,6 +1229,15 @@ public class TypeOracleBuilder {
     // Add modifiers.
     //
     type.addModifierBits(Shared.bindingToModifierBits(jclass.binding));
+
+    // Resolve annotations
+    Map<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> declaredAnnotations = newAnnotationMap();
+    if (!resolveAnnotations(logger, jclass.annotations, declaredAnnotations)) {
+      // Failed to resolve.
+      //
+      return false;
+    }
+    type.addAnnotations(declaredAnnotations);
 
     // Resolve superclass (for classes only).
     //
@@ -926,5 +1290,4 @@ public class TypeOracleBuilder {
 
     return true;
   }
-
 }
