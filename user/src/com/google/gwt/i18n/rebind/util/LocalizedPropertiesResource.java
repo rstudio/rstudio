@@ -52,10 +52,9 @@ class LocalizedPropertiesResource extends AbstractResource {
     }
   }
 
-  @SuppressWarnings({"unchecked", "cast"})
   @Override
   public void addToKeySet(Set<String> s) {
-    s.addAll((Set<String>) (props.getPropertyMap().keySet()));
+    s.addAll(props.getPropertyMap().keySet());
   }
 
   @Override

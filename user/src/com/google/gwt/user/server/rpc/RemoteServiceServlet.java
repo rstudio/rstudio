@@ -142,15 +142,15 @@ public class RemoteServiceServlet extends HttpServlet implements
     }
   }
 
-  private final ThreadLocal perThreadRequest = new ThreadLocal();
+  private final ThreadLocal<HttpServletRequest> perThreadRequest = new ThreadLocal<HttpServletRequest>();
 
-  private final ThreadLocal perThreadResponse = new ThreadLocal();
+  private final ThreadLocal<HttpServletResponse> perThreadResponse = new ThreadLocal<HttpServletResponse>();
 
   /**
    * A cache of moduleBaseURL and serialization policy strong name to
    * {@link SerializationPolicy}.
    */
-  private final Map /* <String, SerializationPolicy> */serializationPolicyCache = new HashMap();
+  private final Map<String, SerializationPolicy> serializationPolicyCache = new HashMap<String, SerializationPolicy>();
 
   /**
    * The default constructor.
@@ -165,6 +165,7 @@ public class RemoteServiceServlet extends HttpServlet implements
    * ServletContext, and returns a GENERIC_FAILURE_MSG response with status code
    * 500.
    */
+  @Override
   public final void doPost(HttpServletRequest request,
       HttpServletResponse response) {
     try {
@@ -401,7 +402,7 @@ public class RemoteServiceServlet extends HttpServlet implements
    * different request objects.
    */
   protected final HttpServletRequest getThreadLocalRequest() {
-    return (HttpServletRequest) perThreadRequest.get();
+    return perThreadRequest.get();
   }
 
   /**
@@ -410,7 +411,7 @@ public class RemoteServiceServlet extends HttpServlet implements
    * different response objects.
    */
   protected final HttpServletResponse getThreadLocalResponse() {
-    return (HttpServletResponse) perThreadResponse.get();
+    return perThreadResponse.get();
   }
 
   /**
@@ -453,8 +454,7 @@ public class RemoteServiceServlet extends HttpServlet implements
   private SerializationPolicy getCachedSerializationPolicy(
       String moduleBaseURL, String strongName) {
     synchronized (serializationPolicyCache) {
-      return (SerializationPolicy) serializationPolicyCache.get(moduleBaseURL
-          + strongName);
+      return serializationPolicyCache.get(moduleBaseURL + strongName);
     }
   }
 

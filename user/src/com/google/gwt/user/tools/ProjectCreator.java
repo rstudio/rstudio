@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -68,7 +68,7 @@ public final class ProjectCreator extends ToolBase {
 
     // Create a map of replacements.
     //
-    Map replacements = new HashMap();
+    Map<String, String> replacements = new HashMap<String, String>();
     replacements.put("@gwtUserPath", installPath + '/' + "gwt-user.jar");
 
     Utility.getDirectory(outDir, "src", true);
@@ -119,18 +119,22 @@ public final class ProjectCreator extends ToolBase {
 
     registerHandler(new ArgHandlerString() {
 
+      @Override
       public String getPurpose() {
         return "Generate an Ant buildfile to compile source (.ant.xml will be appended)";
       }
 
+      @Override
       public String getTag() {
         return "-ant";
       }
 
+      @Override
       public String[] getTagArgs() {
         return new String[] {"projectName"};
       }
 
+      @Override
       public boolean setString(String str) {
         ant = str;
         return true;
@@ -139,10 +143,12 @@ public final class ProjectCreator extends ToolBase {
     });
 
     registerHandler(new ArgHandlerEclipse() {
+      @Override
       public String getPurpose() {
         return "Generate an eclipse project";
       }
 
+      @Override
       public boolean setString(String str) {
         eclipse = str;
         return true;
@@ -150,12 +156,14 @@ public final class ProjectCreator extends ToolBase {
     });
 
     registerHandler(new ArgHandlerOutDir() {
+      @Override
       public void setDir(File dir) {
         outDir = dir;
       }
     });
 
     registerHandler(new ArgHandlerOverwrite() {
+      @Override
       public boolean setFlag() {
         if (ignore) {
           System.err.println("-overwrite cannot be used with -ignore.");
@@ -167,6 +175,7 @@ public final class ProjectCreator extends ToolBase {
     });
 
     registerHandler(new ArgHandlerIgnore() {
+      @Override
       public boolean setFlag() {
         if (overwrite) {
           System.err.println("-ignore cannot be used with -overwrite.");

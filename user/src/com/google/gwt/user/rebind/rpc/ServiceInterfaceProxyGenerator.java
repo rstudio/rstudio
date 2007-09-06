@@ -28,6 +28,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
  */
 public class ServiceInterfaceProxyGenerator extends Generator {
 
+  @Override
   public String generate(TreeLogger logger, GeneratorContext ctx,
       String requestedClass) throws UnableToCompleteException {
 

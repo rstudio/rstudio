@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -110,14 +110,17 @@ final class XMLHTTPRequest {
       final String name = unparsedHeader.substring(0, endOfNameIdx).trim();
       final String value = unparsedHeader.substring(endOfNameIdx + 1).trim();
       Header header = new Header() {
+        @Override
         public String getName() {
           return name;
         }
 
+        @Override
         public String getValue() {
           return value;
         }
 
+        @Override
         public String toString() {
           return name + " : " + value;
         }

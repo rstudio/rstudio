@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,14 +22,17 @@ import com.google.gwt.util.tools.ArgHandlerString;
  */
 public abstract class ArgHandlerEclipse extends ArgHandlerString {
 
+  @Override
   public String[] getDefaultArgs() {
     return null;
   }
 
+  @Override
   public String getTag() {
     return "-eclipse";
   }
 
+  @Override
   public String[] getTagArgs() {
     return new String[] {"projectName"};
   }

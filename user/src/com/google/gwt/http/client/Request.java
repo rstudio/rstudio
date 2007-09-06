@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,28 +42,34 @@ public class Request {
   private static Response createResponse(final JavaScriptObject xmlHttpRequest) {
     assert (XMLHTTPRequest.isResponseReady(xmlHttpRequest));
     Response response = new Response() {
+      @Override
       public String getHeader(String header) {
         StringValidator.throwIfEmptyOrNull("header", header);
 
         return XMLHTTPRequest.getResponseHeader(xmlHttpRequest, header);
       }
 
+      @Override
       public Header[] getHeaders() {
         return XMLHTTPRequest.getHeaders(xmlHttpRequest);
       }
 
+      @Override
       public String getHeadersAsString() {
         return XMLHTTPRequest.getAllResponseHeaders(xmlHttpRequest);
       }
 
+      @Override
       public int getStatusCode() {
         return XMLHTTPRequest.getStatusCode(xmlHttpRequest);
       }
 
+      @Override
       public String getStatusText() {
         return XMLHTTPRequest.getStatusText(xmlHttpRequest);
       }
 
+      @Override
       public String getText() {
         return XMLHTTPRequest.getResponseText(xmlHttpRequest);
       }
@@ -120,6 +126,7 @@ public class Request {
     if (timeoutMillis > 0) {
       // create and start a Timer
       timer = new Timer() {
+        @Override
         public void run() {
           fireOnTimeout(callback);
         }
@@ -203,6 +210,7 @@ public class Request {
    * 
    * NOTE: this method is called from JSNI
    */
+  @SuppressWarnings("unused")
   private void fireOnResponseReceived(RequestCallback callback) {
     UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
     if (handler != null) {

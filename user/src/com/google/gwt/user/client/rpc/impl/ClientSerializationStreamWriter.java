@@ -42,6 +42,7 @@ public final class ClientSerializationStreamWriter extends
   /*
    * Accessed from JSNI code, so ignore unused warning.
    */
+  @SuppressWarnings("unused")
   private JavaScriptObject objectMap;
 
   private final String serializationPolicyStrongName;
@@ -54,9 +55,10 @@ public final class ClientSerializationStreamWriter extends
    * 
    * Accessed from JSNI code, so ignore unused warning.
    */
+  @SuppressWarnings("unused")
   private JavaScriptObject stringMap;
 
-  private ArrayList stringTable = new ArrayList();
+  private ArrayList<String> stringTable = new ArrayList<String>();
 
   /**
    * Constructs a <code>ClientSerializationStreamWriter</code> that does not
@@ -105,6 +107,7 @@ public final class ClientSerializationStreamWriter extends
     }
   }
 
+  @Override
   public String toString() {
     StringBuffer buffer = new StringBuffer();
     writeHeader(buffer);
@@ -113,6 +116,7 @@ public final class ClientSerializationStreamWriter extends
     return buffer.toString();
   }
 
+  @Override
   protected int addString(String string) {
     if (string == null) {
       return 0;
@@ -132,14 +136,17 @@ public final class ClientSerializationStreamWriter extends
   /**
    * Appends a token to the end of the buffer.
    */
+  @Override
   protected void append(String token) {
     append(encodeBuffer, token);
   }
 
+  @Override
   protected int getIndexForObject(Object instance) {
     return getIntForInt(System.identityHashCode(instance));
   }
 
+  @Override
   protected String getObjectTypeSignature(Object o) {
     String typeName = GWT.getTypeName(o);
     String serializationSignature = serializer.getSerializationSignature(typeName);
@@ -149,10 +156,12 @@ public final class ClientSerializationStreamWriter extends
     return typeName;
   }
 
+  @Override
   protected void saveIndexForObject(Object instance) {
     setIntForInt(System.identityHashCode(instance), objectCount++);
   }
 
+  @Override
   protected void serialize(Object instance, String typeSignature)
       throws SerializationException {
     serializer.serialize(this, instance, typeSignature);
@@ -191,7 +200,7 @@ public final class ClientSerializationStreamWriter extends
     int stringTableSize = stringTable.size();
     append(buffer, String.valueOf(stringTableSize));
     for (int i = 0; i < stringTableSize; ++i) {
-      append(buffer, (String) stringTable.get(i));
+      append(buffer, stringTable.get(i));
     }
     return buffer;
   }

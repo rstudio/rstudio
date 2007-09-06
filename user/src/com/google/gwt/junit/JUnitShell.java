@@ -252,14 +252,17 @@ public class JUnitShell extends GWTShell {
 
     registerHandler(new ArgHandlerFlag() {
 
+      @Override
       public String getPurpose() {
         return "Causes your test to run in web (compiled) mode (defaults to hosted mode)";
       }
 
+      @Override
       public String getTag() {
         return "-web";
       }
 
+      @Override
       public boolean setFlag() {
         runStyle = new RunStyleLocalWeb(JUnitShell.this);
         return true;
@@ -269,22 +272,27 @@ public class JUnitShell extends GWTShell {
 
     registerHandler(new ArgHandlerString() {
 
+      @Override
       public String getPurpose() {
         return "Runs web mode via RMI to a BrowserManagerServer; e.g. rmi://localhost/ie6";
       }
 
+      @Override
       public String getTag() {
         return "-remoteweb";
       }
 
+      @Override
       public String[] getTagArgs() {
         return new String[] {"rmiUrl"};
       }
 
+      @Override
       public boolean isUndocumented() {
         return true;
       }
 
+      @Override
       public boolean setString(String str) {
         try {
           String[] urls = str.split(",");
@@ -306,14 +314,17 @@ public class JUnitShell extends GWTShell {
 
     registerHandler(new ArgHandlerFlag() {
 
+      @Override
       public String getPurpose() {
         return "Causes the log window and browser windows to be displayed; useful for debugging";
       }
 
+      @Override
       public String getTag() {
         return "-notHeadless";
       }
 
+      @Override
       public boolean setFlag() {
         setHeadless(false);
         return true;
@@ -329,6 +340,7 @@ public class JUnitShell extends GWTShell {
     }
   }
 
+  @Override
   public TreeLogger getTopLogger() {
     if (consoleLogger != null) {
       return consoleLogger;
@@ -337,6 +349,7 @@ public class JUnitShell extends GWTShell {
     }
   }
 
+  @Override
   protected String doGetDefaultLogLevel() {
     return "WARN";
   }
@@ -346,6 +359,7 @@ public class JUnitShell extends GWTShell {
    * points and adds an entry point for the class being tested. This test class
    * is then rebound to a generated subclass.
    */
+  @Override
   protected ModuleDef doLoadModule(TreeLogger logger, String moduleName)
       throws UnableToCompleteException {
 
@@ -363,18 +377,22 @@ public class JUnitShell extends GWTShell {
   /**
    * Never check for updates in JUnit mode.
    */
+  @Override
   protected boolean doShouldCheckForUpdates() {
     return false;
   }
 
+  @Override
   protected ArgHandlerPort getArgHandlerPort() {
     return new ArgHandlerPort() {
+      @Override
       public String[] getDefaultArgs() {
         return new String[] {"-port", "auto"};
       }
     };
   }
 
+  @Override
   protected void initializeLogger() {
     if (isHeadless()) {
       consoleLogger = new PrintWriterTreeLogger();
@@ -388,6 +406,7 @@ public class JUnitShell extends GWTShell {
    * Overrides {@link GWTShell#notDone()} to wait for the currently-running test
    * to complete.
    */
+  @Override
   protected boolean notDone() {
     if (!messageQueue.haveAllClientsRetrievedCurrentTest()
         && testBeginTimeout < System.currentTimeMillis()) {
@@ -446,7 +465,7 @@ public class JUnitShell extends GWTShell {
       return;
     }
 
-    List/* JUnitMessageQueue.TestResult */results
+    List<TestResults> results
         = messageQueue.getResults(testCaseClassName);
 
     if (results == null) {
@@ -455,9 +474,8 @@ public class JUnitShell extends GWTShell {
 
     boolean parallelTesting = numClients > 1;
 
-    for (int i = 0; i < results.size(); ++i) {
-      TestResults result = (TestResults) results.get(i);
-      Trial firstTrial = (Trial) result.getTrials().get(0);
+    for (TestResults result : results) {
+      Trial firstTrial = result.getTrials().get(0);
       Throwable exception = firstTrial.getException();
 
       // In the case that we're running multiple clients at once, we need to
@@ -493,7 +511,7 @@ public class JUnitShell extends GWTShell {
    * Synthesize command line arguments from a system property.
    */
   private String[] synthesizeArgs() {
-    ArrayList argList = new ArrayList();
+    ArrayList<String> argList = new ArrayList<String>();
 
     String args = System.getProperty(PROP_GWT_ARGS);
     if (args != null) {
@@ -507,6 +525,6 @@ public class JUnitShell extends GWTShell {
       }
     }
 
-    return (String[]) argList.toArray(new String[argList.size()]);
+    return argList.toArray(new String[argList.size()]);
   }
 }

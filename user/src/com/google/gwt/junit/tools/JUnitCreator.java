@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,6 +40,7 @@ public final class JUnitCreator extends ToolBase {
    */
   protected class ArgHandlerTestClass extends ArgHandlerExtra {
 
+    @Override
     public boolean addExtraArg(String arg) {
       if (fullClassName != null) {
         System.err.println("Too many arguments.");
@@ -73,14 +74,17 @@ public final class JUnitCreator extends ToolBase {
       return true;
     }
 
+    @Override
     public String getPurpose() {
       return "The fully-qualified name of the test class to create";
     }
 
+    @Override
     public String[] getTagArgs() {
       return new String[] {"className"};
     }
 
+    @Override
     public boolean isRequired() {
       return true;
     }
@@ -186,7 +190,7 @@ public final class JUnitCreator extends ToolBase {
 
     // Create a map of replacements
     //
-    Map replacements = new HashMap();
+    Map<String, String> replacements = new HashMap<String, String>();
     replacements.put("@className", className);
     replacements.put("@moduleName", moduleName);
     replacements.put("@clientPackage", clientPackageName);
@@ -271,26 +275,32 @@ public final class JUnitCreator extends ToolBase {
 
     registerHandler(new ArgHandlerString() {
 
+      @Override
       public String[] getDefaultArgs() {
         return null;
       }
 
+      @Override
       public String getPurpose() {
         return "Specify the path to your junit.jar (required)";
       }
 
+      @Override
       public String getTag() {
         return "-junit";
       }
 
+      @Override
       public String[] getTagArgs() {
         return new String[] {"pathToJUnitJar"};
       }
 
+      @Override
       public boolean isRequired() {
         return true;
       }
 
+      @Override
       public boolean setString(String str) {
         File f = new File(str);
         if (!f.exists() || !f.isFile()) {
@@ -304,26 +314,32 @@ public final class JUnitCreator extends ToolBase {
 
     registerHandler(new ArgHandlerString() {
 
+      @Override
       public String[] getDefaultArgs() {
         return null;
       }
 
+      @Override
       public String getPurpose() {
         return "Specify the name of the GWT module to use (required)";
       }
 
+      @Override
       public String getTag() {
         return "-module";
       }
 
+      @Override
       public String[] getTagArgs() {
         return new String[] {"moduleName"};
       }
 
+      @Override
       public boolean isRequired() {
         return true;
       }
 
+      @Override
       public boolean setString(String str) {
         moduleName = str;
         return true;
@@ -331,10 +347,12 @@ public final class JUnitCreator extends ToolBase {
     });
 
     registerHandler(new ArgHandlerEclipse() {
+      @Override
       public String getPurpose() {
         return "Creates a debug launch config for the named eclipse project";
       }
 
+      @Override
       public boolean setString(String str) {
         eclipse = str;
         return true;
@@ -343,6 +361,7 @@ public final class JUnitCreator extends ToolBase {
 
     registerHandler(new ArgHandlerOutDir() {
 
+      @Override
       public void setDir(File dir) {
         outDir = dir;
       }
@@ -350,6 +369,7 @@ public final class JUnitCreator extends ToolBase {
 
     registerHandler(new ArgHandlerOverwrite() {
 
+      @Override
       public boolean setFlag() {
         if (ignore) {
           System.err.println("-overwrite cannot be used with -ignore.");
@@ -362,6 +382,7 @@ public final class JUnitCreator extends ToolBase {
 
     registerHandler(new ArgHandlerIgnore() {
 
+      @Override
       public boolean setFlag() {
         if (overwrite) {
           System.err.println("-ignore cannot be used with -overwrite.");

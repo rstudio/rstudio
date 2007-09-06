@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
-import java.util.Iterator;
 import java.util.Vector;
 
 /**
@@ -28,7 +27,7 @@ import java.util.Vector;
 public final class Vector_CustomFieldSerializer {
 
   public static void deserialize(SerializationStreamReader streamReader,
-      Vector instance) throws SerializationException {
+      Vector<Object> instance) throws SerializationException {
     int size = streamReader.readInt();
     for (int i = 0; i < size; ++i) {
       Object obj = streamReader.readObject();
@@ -37,12 +36,10 @@ public final class Vector_CustomFieldSerializer {
   }
 
   public static void serialize(SerializationStreamWriter streamWriter,
-      Vector instance) throws SerializationException {
+      Vector<Object> instance) throws SerializationException {
     int size = instance.size();
     streamWriter.writeInt(size);
-    Iterator iter = instance.iterator();
-    while (iter.hasNext()) {
-      Object obj = iter.next();
+    for (Object obj : instance) {
       streamWriter.writeObject(obj);
     }
   }

@@ -62,6 +62,7 @@ class RunStyleRemoteWeb extends RunStyle {
     this.remoteTokens = new int[ browserManagers.length ];
   }
 
+  @Override
   public void maybeLaunchModule(String moduleName, boolean forceLaunch)
       throws UnableToCompleteException {
 
@@ -96,6 +97,7 @@ class RunStyleRemoteWeb extends RunStyle {
     }
   }
 
+  @Override
   public boolean wasInterrupted() {
     for ( int i = 0; i < remoteTokens.length; ++i ) {
       int remoteToken = remoteTokens[ i ];

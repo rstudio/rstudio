@@ -20,7 +20,7 @@ import java.util.List;
 
 /**
  * An implementation of {@link Statements} that is composed of a list of
- * {@link Statement}s.
+ * {@link Statements}.
  */
 public class StatementsList extends BaseNode implements Statements {
 

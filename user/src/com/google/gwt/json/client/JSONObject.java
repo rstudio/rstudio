@@ -26,7 +26,7 @@ import java.util.Set;
  */
 public class JSONObject extends JSONValue {
 
-  private static native void addAllKeysFromJavascriptObject(Set s,
+  private static native void addAllKeysFromJavascriptObject(Set<String> s,
       JavaScriptObject javaScriptObject) /*-{
     for(var key in javaScriptObject) {
       s.@java.util.Set::add(Ljava/lang/Object;)(key);
@@ -114,17 +114,18 @@ public class JSONObject extends JSONValue {
   /**
    * Returns <code>this</code>, as this is a JSONObject.
    */
+  @Override
   public JSONObject isObject() {
     return this;
-  };
+  }
 
   /**
    * Returns keys for which this JSONObject has associations.
    * 
    * @return array of keys for which there is a value
    */
-  public Set keySet() {
-    Set keySet = new HashSet();
+  public Set<String> keySet() {
+    Set<String> keySet = new HashSet<String>();
     addAllKeysFromJavascriptObject(keySet, frontStore);
     addAllKeysFromJavascriptObject(keySet, backStore);
     return keySet;
@@ -162,6 +163,7 @@ public class JSONObject extends JSONValue {
    * 
    * @return a JSON string representation of this JSONObject instance
    */
+  @Override
   public native String toString() /*-{
     for (var key in this.@com.google.gwt.json.client.JSONObject::backStore) {
       // Wrap everything in backStore so that frontStore is canonical.

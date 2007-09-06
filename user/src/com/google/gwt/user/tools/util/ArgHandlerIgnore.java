@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,10 +22,12 @@ import com.google.gwt.util.tools.ArgHandlerFlag;
  */
 public abstract class ArgHandlerIgnore extends ArgHandlerFlag {
 
+  @Override
   public String getPurpose() {
     return "Ignore any existing files; do not overwrite";
   }
 
+  @Override
   public String getTag() {
     return "-ignore";
   }

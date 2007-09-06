@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,10 +43,12 @@ public class SerializableException extends Exception implements IsSerializable {
    * 
    * @return always <code>null</code>
    */
+  @Override
   public Throwable getCause() {
     return null;
   }
 
+  @Override
   public String getMessage() {
     return msg;
   }
@@ -55,6 +57,7 @@ public class SerializableException extends Exception implements IsSerializable {
    * No effect; exception chaining is not currently supported for serialized
    * exceptions.
    */
+  @Override
   public Throwable initCause(Throwable cause) {
     // nothing
     return null;

@@ -40,7 +40,7 @@ public final class ServerSerializationStreamReader extends
 
   private String[] stringTable;
 
-  private final ArrayList tokenList = new ArrayList();
+  private final ArrayList<String> tokenList = new ArrayList<String>();
 
   private SerializationPolicy serializationPolicy = RPC.getDefaultSerializationPolicy();
 
@@ -54,23 +54,23 @@ public final class ServerSerializationStreamReader extends
     this.serializationPolicyProvider = serializationPolicyProvider;
   }
 
-  public Object deserializeValue(Class type) throws SerializationException {
+  public Object deserializeValue(Class<?> type) throws SerializationException {
     if (type == boolean.class) {
-      return Boolean.valueOf(readBoolean());
+      return readBoolean();
     } else if (type == byte.class) {
-      return new Byte(readByte());
+      return readByte();
     } else if (type == char.class) {
-      return new Character(readChar());
+      return readChar();
     } else if (type == double.class) {
-      return new Double(readDouble());
+      return readDouble();
     } else if (type == float.class) {
-      return new Float(readFloat());
+      return readFloat();
     } else if (type == int.class) {
-      return new Integer(readInt());
+      return readInt();
     } else if (type == long.class) {
-      return new Long(readLong());
+      return readLong();
     } else if (type == short.class) {
-      return new Short(readShort());
+      return readShort();
     } else if (type == String.class) {
       return readString();
     }
@@ -82,6 +82,7 @@ public final class ServerSerializationStreamReader extends
     return serializationPolicy;
   }
 
+  @Override
   public void prepareToRead(String encodedTokens) throws SerializationException {
     tokenList.clear();
     tokenListIndex = 0;
@@ -154,13 +155,14 @@ public final class ServerSerializationStreamReader extends
     return getString(readInt());
   }
 
+  @Override
   protected Object deserialize(String typeSignature)
       throws SerializationException {
     Object instance = null;
     SerializedInstanceReference serializedInstRef = SerializabilityUtil.decodeSerializedInstanceReference(typeSignature);
 
     try {
-      Class instanceClass = Class.forName(serializedInstRef.getName(), false,
+      Class<?> instanceClass = Class.forName(serializedInstRef.getName(), false,
           classLoader);
 
       assert (serializationPolicy != null);
@@ -169,7 +171,7 @@ public final class ServerSerializationStreamReader extends
 
       validateTypeVersions(instanceClass, serializedInstRef);
 
-      Class customSerializer = SerializabilityUtil.hasCustomFieldSerializer(instanceClass);
+      Class<?> customSerializer = SerializabilityUtil.hasCustomFieldSerializer(instanceClass);
 
       instance = instantiate(customSerializer, instanceClass);
 
@@ -199,6 +201,7 @@ public final class ServerSerializationStreamReader extends
     }
   }
 
+  @Override
   protected String getString(int index) {
     if (index == 0) {
       return null;
@@ -209,7 +212,7 @@ public final class ServerSerializationStreamReader extends
     return stringTable[index - 1];
   }
 
-  private void deserializeImpl(Class customSerializer, Class instanceClass,
+  private void deserializeImpl(Class<?> customSerializer, Class<?> instanceClass,
       Object instance) throws NoSuchMethodException, IllegalArgumentException,
       IllegalAccessException, InvocationTargetException,
       SerializationException, ClassNotFoundException {
@@ -229,28 +232,27 @@ public final class ServerSerializationStreamReader extends
     }
   }
 
-  private void deserializeWithCustomFieldDeserializer(Class customSerializer,
-      Class instanceClass, Object instance) throws ClassNotFoundException,
+  private void deserializeWithCustomFieldDeserializer(Class<?> customSerializer,
+      Class<?> instanceClass, Object instance) throws ClassNotFoundException,
       NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     if (instanceClass.isArray()) {
-      Class componentType = instanceClass.getComponentType();
+      Class<?> componentType = instanceClass.getComponentType();
       if (!componentType.isPrimitive()) {
         instanceClass = Class.forName("[Ljava.lang.Object;");
       }
     }
-    Method deserialize = customSerializer.getMethod("deserialize", new Class[] {
-        SerializationStreamReader.class, instanceClass});
-    deserialize.invoke(null, new Object[] {this, instance});
+    Method deserialize = customSerializer.getMethod("deserialize",
+        SerializationStreamReader.class, instanceClass);
+    deserialize.invoke(null, this, instance);
   }
 
-  private void deserializeWithDefaultFieldDeserializer(Class instanceClass,
+  private void deserializeWithDefaultFieldDeserializer(Class<?> instanceClass,
       Object instance) throws SerializationException, IllegalAccessException,
       NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
     Field[] declFields = instanceClass.getDeclaredFields();
     Field[] serializableFields = SerializabilityUtil.applyFieldSerializationPolicy(declFields);
 
-    for (int index = 0; index < serializableFields.length; ++index) {
-      Field declField = serializableFields[index];
+    for (Field declField : serializableFields) {
       assert (declField != null);
 
       Object value = deserializeValue(declField.getType());
@@ -271,7 +273,7 @@ public final class ServerSerializationStreamReader extends
       }
     }
 
-    Class superClass = instanceClass.getSuperclass();
+    Class<?> superClass = instanceClass.getSuperclass();
     if (serializationPolicy.shouldDeserializeFields(superClass)) {
       deserializeImpl(SerializabilityUtil.hasCustomFieldSerializer(superClass),
           superClass, instance);
@@ -279,17 +281,17 @@ public final class ServerSerializationStreamReader extends
   }
 
   private String extract() {
-    return (String) tokenList.get(tokenListIndex++);
+    return tokenList.get(tokenListIndex++);
   }
 
-  private Object instantiate(Class customSerializer, Class instanceClass)
+  private Object instantiate(Class<?> customSerializer, Class<?> instanceClass)
       throws InstantiationException, IllegalAccessException,
       IllegalArgumentException, InvocationTargetException {
     if (customSerializer != null) {
       try {
         Method instantiate = customSerializer.getMethod("instantiate",
-            new Class[] {SerializationStreamReader.class});
-        return instantiate.invoke(null, new Object[] {this});
+            SerializationStreamReader.class);
+        return instantiate.invoke(null, this);
       } catch (NoSuchMethodException e) {
         // purposely ignored
       }
@@ -297,14 +299,14 @@ public final class ServerSerializationStreamReader extends
 
     if (instanceClass.isArray()) {
       int length = readInt();
-      Class componentType = instanceClass.getComponentType();
+      Class<?> componentType = instanceClass.getComponentType();
       return Array.newInstance(componentType, length);
     } else {
       return instanceClass.newInstance();
     }
   }
 
-  private void validateTypeVersions(Class instanceClass,
+  private void validateTypeVersions(Class<?> instanceClass,
       SerializedInstanceReference serializedInstRef)
       throws SerializationException {
     String clientTypeSignature = serializedInstRef.getSignature();

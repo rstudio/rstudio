@@ -124,7 +124,7 @@ public final class GWT {
    */
   public static UncaughtExceptionHandler getUncaughtExceptionHandler() {
     return sUncaughtExceptionHandler;
-  };
+  }
 
   /**
    * Determines whether or not the running program is script or bytecode.
@@ -152,5 +152,5 @@ public final class GWT {
   public static void setUncaughtExceptionHandler(
       UncaughtExceptionHandler handler) {
     sUncaughtExceptionHandler = handler;
-  };
+  }
 }

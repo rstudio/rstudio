@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,7 @@ import java.util.ArrayList;
 public abstract class AbstractSerializationStreamReader extends
     AbstractSerializationStream implements SerializationStreamReader {
 
-  private ArrayList seenArray = new ArrayList();
+  private ArrayList<Object> seenArray = new ArrayList<Object>();
 
   public void prepareToRead(String encoded) throws SerializationException {
     seenArray.clear();

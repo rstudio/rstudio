@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,6 +40,7 @@ public final class ApplicationCreator extends ToolBase {
    */
   protected class ArgHandlerAppClass extends ArgHandlerExtra {
 
+    @Override
     public boolean addExtraArg(String arg) {
       if (fullClassName != null) {
         System.err.println("Too many arguments");
@@ -74,14 +75,17 @@ public final class ApplicationCreator extends ToolBase {
       return true;
     }
 
+    @Override
     public String getPurpose() {
       return "The fully-qualified name of the application class to create";
     }
 
+    @Override
     public String[] getTagArgs() {
       return new String[] {"className"};
     }
 
+    @Override
     public boolean isRequired() {
       return true;
     }
@@ -170,7 +174,7 @@ public final class ApplicationCreator extends ToolBase {
 
     // Create a map of replacements
     //
-    Map replacements = new HashMap();
+    Map<String, String> replacements = new HashMap<String, String>();
     replacements.put("@className", className);
     replacements.put("@moduleName", moduleName);
     replacements.put("@clientPackage", clientPackageName);
@@ -281,10 +285,12 @@ public final class ApplicationCreator extends ToolBase {
   protected ApplicationCreator() {
 
     registerHandler(new ArgHandlerEclipse() {
+      @Override
       public String getPurpose() {
         return "Creates a debug launch config for the named eclipse project";
       }
 
+      @Override
       public boolean setString(String str) {
         eclipse = str;
         return true;
@@ -292,12 +298,14 @@ public final class ApplicationCreator extends ToolBase {
     });
 
     registerHandler(new ArgHandlerOutDir() {
+      @Override
       public void setDir(File dir) {
         outDir = dir;
       }
     });
 
     registerHandler(new ArgHandlerOverwrite() {
+      @Override
       public boolean setFlag() {
         if (ignore) {
           System.err.println("-overwrite cannot be used with -ignore");
@@ -309,6 +317,7 @@ public final class ApplicationCreator extends ToolBase {
     });
 
     registerHandler(new ArgHandlerIgnore() {
+      @Override
       public boolean setFlag() {
         if (overwrite) {
           System.err.println("-ignore cannot be used with -overwrite");

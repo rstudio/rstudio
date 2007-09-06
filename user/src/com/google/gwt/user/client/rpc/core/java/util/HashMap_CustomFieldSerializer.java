@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,8 +20,6 @@ import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.Map.Entry;
 
 /**
@@ -30,7 +28,7 @@ import java.util.Map.Entry;
 public final class HashMap_CustomFieldSerializer {
 
   public static void deserialize(SerializationStreamReader streamReader,
-      HashMap instance) throws SerializationException {
+      HashMap<Object, Object> instance) throws SerializationException {
     int size = streamReader.readInt();
 
     for (int i = 0; i < size; ++i) {
@@ -42,16 +40,11 @@ public final class HashMap_CustomFieldSerializer {
   }
 
   public static void serialize(SerializationStreamWriter streamWriter,
-      HashMap instance) throws SerializationException {
+      HashMap<Object, Object> instance) throws SerializationException {
     int size = instance.size();
     streamWriter.writeInt(size);
 
-    Set entrySet = instance.entrySet();
-    Iterator iter = entrySet.iterator();
-
-    while (iter.hasNext()) {
-      Entry entry = (Entry) iter.next();
-
+    for (Entry<Object, Object> entry : instance.entrySet()) {
       streamWriter.writeObject(entry.getKey());
       streamWriter.writeObject(entry.getValue());
     }

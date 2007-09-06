@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -68,6 +68,7 @@ public class JSONArray extends JSONValue {
   /**
    * Returns <code>this</code>, as this is a JSONArray.
    */
+  @Override
   public JSONArray isArray() {
     return this;
   }
@@ -101,6 +102,7 @@ public class JSONArray extends JSONValue {
    * This method may take a long time to execute if the underlying array is
    * large.
    */
+  @Override
   public String toString() throws JSONException {
     StringBuffer sb = new StringBuffer();
     sb.append("[");

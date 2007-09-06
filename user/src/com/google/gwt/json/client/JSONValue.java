@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -89,5 +89,6 @@ public abstract class JSONValue {
    * Returns a JSON-encoded string for this entity. Use this method to create
    * JSON strings that can be sent from the client to a server.
    */
+  @Override
   public abstract String toString() throws JSONException;
 }

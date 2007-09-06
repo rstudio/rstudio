@@ -109,6 +109,7 @@ public abstract class GWTTestCase extends TestCase {
    * Stashes <code>result</code> so that it can be accessed during
    * {@link #runTest()}.
    */
+  @Override
   public final void run(TestResult result) {
     testResult = result;
     super.run(result);
@@ -190,6 +191,7 @@ public abstract class GWTTestCase extends TestCase {
   /**
    * Runs the test via the {@link JUnitShell} environment.
    */
+  @Override
   protected final void runTest() throws Throwable {
     JUnitShell.runTest(getModuleName(), this, testResult);
   }

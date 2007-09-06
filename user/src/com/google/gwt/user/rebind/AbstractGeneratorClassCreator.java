@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,12 +39,13 @@ public abstract class AbstractGeneratorClassCreator extends
    * @return interface methods.
    */
   public static JMethod[] getAllInterfaceMethods(JClassType type) {
-    Map methods = new HashMap();
+    Map<String, JMethod> methods = new HashMap<String, JMethod>();
     getAllInterfaceMethodsAux(type, methods);
-    return (JMethod[]) methods.values().toArray(new JMethod[methods.size()]);
+    return methods.values().toArray(new JMethod[methods.size()]);
   }
 
-  private static void getAllInterfaceMethodsAux(JClassType type, Map m) {
+  private static void getAllInterfaceMethodsAux(JClassType type,
+      Map<String, JMethod> m) {
     if (type.isInterface() != null) {
       JMethod[] methods = type.getMethods();
       for (int i = 0; i < methods.length; i++) {
@@ -75,7 +76,7 @@ public abstract class AbstractGeneratorClassCreator extends
    * List of registered method factories associated with <code>Constant</code>
    * method implementations.
    */
-  protected Map methodFactories = new HashMap();
+  protected Map<JType, AbstractMethodCreator> methodFactories = new HashMap<JType, AbstractMethodCreator>();
 
   /**
    * The interface the generator is conforming to.
@@ -167,13 +168,13 @@ public abstract class AbstractGeneratorClassCreator extends
   protected AbstractMethodCreator getMethodCreator(TreeLogger logger,
       JMethod method) throws UnableToCompleteException {
     JType type = method.getReturnType();
-    AbstractMethodCreator methodCreator = (AbstractMethodCreator) methodFactories.get(type);
+    AbstractMethodCreator methodCreator = methodFactories.get(type);
     if (methodCreator == null) {
       String msg = "No current method creator exists for " + method
           + " only methods with return types of ";
-      Iterator iter = this.methodFactories.keySet().iterator();
+      Iterator<JType> iter = this.methodFactories.keySet().iterator();
       while (iter.hasNext()) {
-        msg += ((JType) iter.next()).getSimpleSourceName();
+        msg += iter.next().getSimpleSourceName();
         if (iter.hasNext()) {
           msg += ", ";
         }

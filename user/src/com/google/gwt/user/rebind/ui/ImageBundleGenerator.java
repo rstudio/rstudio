@@ -29,7 +29,6 @@ import com.google.gwt.user.rebind.SourceWriter;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -61,6 +60,7 @@ public class ImageBundleGenerator extends Generator {
   public ImageBundleGenerator() {
   }
 
+  @Override
   public String generate(TreeLogger logger, GeneratorContext context,
       String typeName) throws UnableToCompleteException {
 
@@ -149,8 +149,7 @@ public class ImageBundleGenerator extends Generator {
       // Build a compound image from each individual image.
       ImageBundleBuilder bulder = new ImageBundleBuilder();
 
-      for (int i = 0; i < imageMethods.length; i++) {
-        JMethod method = imageMethods[i];
+      for (JMethod method : imageMethods) {
         String imageUrl = getImageUrlFromMetaDataOrMethodName(logger, method);
         assert (imageUrl != null);
         bulder.assimilate(logger, imageUrl);
@@ -167,8 +166,7 @@ public class ImageBundleGenerator extends Generator {
       sw.println("\";");
 
       // Generate an implementation of each method.
-      for (int i = 0; i < imageMethods.length; i++) {
-        JMethod method = imageMethods[i];
+      for (JMethod method : imageMethods) {
         generateImageMethod(logger, bulder, sw, method);
       }
 
@@ -278,11 +276,9 @@ public class ImageBundleGenerator extends Generator {
       throw new UnableToCompleteException();
     }
 
-    Map rejectedMethodsAndWhy = new HashMap();
+    Map<JMethod, String> rejectedMethodsAndWhy = new HashMap<JMethod, String>();
     JMethod[] leafMethods = userType.getOverridableMethods();
-    for (int i = 0; i < leafMethods.length; i++) {
-      JMethod method = leafMethods[i];
-
+    for (JMethod method : leafMethods) {
       if (method.getReturnType() != imageClass) {
         rejectedMethodsAndWhy.put(method, "Return type must be "
             + ABSTRACTIMAGEPROTOTYPE_QNAME);
@@ -306,10 +302,9 @@ public class ImageBundleGenerator extends Generator {
     if (!rejectedMethodsAndWhy.isEmpty()) {
       logger = logger.branch(TreeLogger.ERROR,
           "The following methods are invalid on an image bundle:", null);
-      for (Iterator iter = rejectedMethodsAndWhy.entrySet().iterator(); iter.hasNext();) {
-        Map.Entry entry = (Map.Entry) iter.next();
-        JMethod badMethod = (JMethod) entry.getKey();
-        String reason = (String) entry.getValue();
+      for (Map.Entry<JMethod, String> entry : rejectedMethodsAndWhy.entrySet()) {
+        JMethod badMethod = entry.getKey();
+        String reason = entry.getValue();
         TreeLogger branch = logger.branch(TreeLogger.ERROR,
             badMethod.getReadableDeclaration(), null);
         branch.log(TreeLogger.ERROR, reason, null);

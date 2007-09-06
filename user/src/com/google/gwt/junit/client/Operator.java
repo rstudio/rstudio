@@ -42,6 +42,7 @@ public final class Operator {
    *
    * @return a non-null {@link String}
    */
+  @Override
   public String toString() {
     return value;
   }

@@ -29,7 +29,6 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -64,7 +63,7 @@ class ImageBundleBuilder {
    */
   private static final String BUNDLE_FILE_TYPE = "png";
 
-  private final Map imageNameToImageRectMap = new HashMap();
+  private final Map<String, ImageRect> imageNameToImageRectMap = new HashMap<String, ImageRect>();
 
   /**
    * Assimilates the image associated with a particular image method into the
@@ -98,7 +97,7 @@ class ImageBundleBuilder {
   }
 
   public ImageRect getMapping(String imageName) {
-    return (ImageRect) imageNameToImageRectMap.get(imageName);
+    return imageNameToImageRectMap.get(imageName);
   }
 
   public String writeBundledImage(TreeLogger logger, GeneratorContext context)
@@ -179,10 +178,12 @@ class ImageBundleBuilder {
       try {
         image = ImageIO.read(imageUrl);
       } catch (IllegalArgumentException iex) {
-        if (imageName.toLowerCase().endsWith("png") &&
-            iex.getMessage() != null &&
-            iex.getStackTrace()[0].getClassName().equals("javax.imageio.ImageTypeSpecifier$Indexed")) {
-          logger.log(TreeLogger.ERROR,
+        if (imageName.toLowerCase().endsWith("png")
+            && iex.getMessage() != null
+            && iex.getStackTrace()[0].getClassName().equals(
+                "javax.imageio.ImageTypeSpecifier$Indexed")) {
+          logger.log(
+              TreeLogger.ERROR,
               "Unable to read image. The image may not be in valid PNG format. "
                   + "This problem may also be due to a bug in versions of the "
                   + "JRE prior to 1.6. See "
@@ -235,16 +236,15 @@ class ImageBundleBuilder {
 
     // Impose an ordering on the image rectangles, so that we construct
     // the bundled image in a deterministic way.
-    SortedMap sortedImageNameToImageRectMap = new TreeMap();
+    SortedMap<String, ImageRect> sortedImageNameToImageRectMap = new TreeMap<String, ImageRect>();
     sortedImageNameToImageRectMap.putAll(imageNameToImageRectMap);
-    Collection orderedImageRects = sortedImageNameToImageRectMap.values();
+    Collection<ImageRect> orderedImageRects = sortedImageNameToImageRectMap.values();
 
     // Determine how big the composited image should be by taking the
     // sum of the widths and the max of the heights.
     int nextLeft = 0;
     int maxHeight = 0;
-    for (Iterator iter = orderedImageRects.iterator(); iter.hasNext();) {
-      ImageRect imageRect = (ImageRect) iter.next();
+    for (ImageRect imageRect : orderedImageRects) {
       imageRect.left = nextLeft;
       nextLeft += imageRect.width;
       if (imageRect.height > maxHeight) {
@@ -257,8 +257,7 @@ class ImageBundleBuilder {
         BufferedImage.TYPE_INT_ARGB_PRE);
     Graphics2D g2d = bundledImage.createGraphics();
 
-    for (Iterator iter = orderedImageRects.iterator(); iter.hasNext();) {
-      ImageRect imageRect = (ImageRect) iter.next();
+    for (ImageRect imageRect : orderedImageRects) {
 
       // We do not need to pass in an ImageObserver, because we are working
       // with BufferedImages. ImageObservers only need to be used when

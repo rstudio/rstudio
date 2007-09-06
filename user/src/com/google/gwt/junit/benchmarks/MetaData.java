@@ -42,6 +42,7 @@ class MetaData {
     this.testDescription = testDescription;
   }
 
+  @Override
   public boolean equals(Object obj) {
     if (! (obj instanceof MetaData)) {
       return false;
@@ -76,6 +77,7 @@ class MetaData {
     return testName;
   }
 
+  @Override
   public int hashCode() {
     int result;
     result = (className != null ? className.hashCode() : 0);

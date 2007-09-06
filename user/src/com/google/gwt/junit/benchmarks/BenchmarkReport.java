@@ -39,7 +39,6 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -65,18 +64,15 @@ public class BenchmarkReport {
 
     private MetaData metaData;
 
-    private List/* <JUnitMessageQueue.TestResult> */results;
+    private List<TestResults> results;
 
     private TestCase test;
 
-    BenchmarkXml(TestCase test,
-        List/* <JUnitMessageQueue.TestResult> */results) {
+    BenchmarkXml(TestCase test, List<TestResults> results) {
       this.test = test;
       this.results = results;
-      Map/* <String,MetaData> */methodMetaData
-          = (Map/* <String,MetaData> */) testMetaData
-          .get(test.getClass().toString());
-      metaData = (MetaData) methodMetaData.get(test.getName());
+      Map<String, MetaData> methodMetaData = testMetaData.get(test.getClass().toString());
+      metaData = methodMetaData.get(test.getName());
     }
 
     Element toElement(Document doc) {
@@ -94,8 +90,7 @@ public class BenchmarkReport {
 
       // TODO(tobyr): create target_code element
 
-      for (Iterator it = results.iterator(); it.hasNext();) {
-        TestResults result = (TestResults) it.next();
+      for (TestResults result : results) {
         benchmark.appendChild(toElement(doc, result));
       }
 
@@ -107,10 +102,9 @@ public class BenchmarkReport {
       resultElement.setAttribute("host", result.getHost());
       resultElement.setAttribute("agent", result.getAgent());
 
-      List trials = result.getTrials();
+      List<Trial> trials = result.getTrials();
 
-      for (Iterator it = trials.iterator(); it.hasNext();) {
-        Trial trial = (Trial) it.next();
+      for (Trial trial : trials) {
         Element trialElement = toElement(doc, trial);
         resultElement.appendChild(trialElement);
       }
@@ -121,10 +115,9 @@ public class BenchmarkReport {
     private Element toElement(Document doc, Trial trial) {
       Element trialElement = doc.createElement("trial");
 
-      Map variables = trial.getVariables();
+      Map<String, String> variables = trial.getVariables();
 
-      for (Iterator it = variables.entrySet().iterator(); it.hasNext();) {
-        Map.Entry entry = (Map.Entry) it.next();
+      for (Map.Entry<String, String> entry : variables.entrySet()) {
         Object name = entry.getKey();
         Object value = entry.getValue();
         Element variableElement = doc.createElement("variable");
@@ -156,11 +149,11 @@ public class BenchmarkReport {
     /**
      * Maps classes to the contents of their source files.
      */
-    private Map/*<JClassType,String>*/ classSources = new HashMap();
+    private Map<JClassType, String> classSources = new HashMap<JClassType, String>();
 
     /**
      * Returns the source code for the method of the given name.
-     *
+     * 
      * @param method a not <code>null</code> method
      * @return <code>null</code> if the source code for the method can not be
      *         located
@@ -173,7 +166,7 @@ public class BenchmarkReport {
         File sourceFile = findSourceFile(clazz);
         if (sourceFile != null) {
           sourceContents = Util.readFileAsChars(sourceFile);
-          classSources.put(clazz, sourceContents);
+          classSources.put(clazz, new String(sourceContents));
         }
 
         if (sourceContents == null) {
@@ -183,8 +176,8 @@ public class BenchmarkReport {
           logger.log(TreeLogger.WARN, msg, null);
         } else {
           classSources.put(clazz, new String(sourceContents));
-          String msg = "BenchmarkReport read the contents of " + sourceFile
-              .getAbsolutePath();
+          String msg = "BenchmarkReport read the contents of "
+              + sourceFile.getAbsolutePath();
           TreeLogger branch = logger.branch(TreeLogger.DEBUG, msg, null);
           if (logger.isLoggable(TreeLogger.SPAM)) {
             branch.log(TreeLogger.SPAM, new String(sourceContents), null);
@@ -192,8 +185,8 @@ public class BenchmarkReport {
         }
       }
 
-      String source = (String) classSources.get(clazz);
-      
+      String source = classSources.get(clazz);
+
       if (source == null) {
         return source;
       }
@@ -216,8 +209,7 @@ public class BenchmarkReport {
    */
   private class ReportXml {
 
-    private Map/* <String,Element> */categoryElementMap
-        = new HashMap/* <String,Element> */();
+    private Map<String, Element> categoryElementMap = new HashMap<String, Element>();
 
     private Date date = new Date();
 
@@ -231,10 +223,9 @@ public class BenchmarkReport {
 
       // Add each test result into the report.
       // Add the category for the test result, if necessary.
-      for (Iterator it = testResults.entrySet().iterator(); it.hasNext();) {
-        Map.Entry entry = (Map.Entry) it.next();
-        TestCase test = (TestCase) entry.getKey();
-        List/*<JUnitMessageQueue.TestResult>*/results = (List) entry.getValue();
+      for (Map.Entry<TestCase, List<TestResults>> entry : testResults.entrySet()) {
+        TestCase test = entry.getKey();
+        List<TestResults> results = entry.getValue();
         BenchmarkXml xml = new BenchmarkXml(test, results);
         Element categoryElement = getCategoryElement(doc, report,
             xml.metaData.getCategory().getClassName());
@@ -250,12 +241,11 @@ public class BenchmarkReport {
      * @param doc The document to search
      * @param report The report to which the category belongs
      * @param name The name of the category
-     *
+     * 
      * @return The matching category element
      */
-    private Element getCategoryElement(Document doc, Element report,
-        String name) {
-      Element e = (Element) categoryElementMap.get(name);
+    private Element getCategoryElement(Document doc, Element report, String name) {
+      Element e = categoryElementMap.get(name);
 
       if (e != null) {
         return e;
@@ -263,7 +253,7 @@ public class BenchmarkReport {
 
       Element categoryElement = doc.createElement("category");
       categoryElementMap.put(name, categoryElement);
-      CategoryImpl category = (CategoryImpl) testCategories.get(name);
+      CategoryImpl category = testCategories.get(name);
       categoryElement.setAttribute("name", category.getName());
       categoryElement.setAttribute("description", category.getDescription());
 
@@ -275,8 +265,7 @@ public class BenchmarkReport {
 
   private static final String GWT_BENCHMARK_CATEGORY = "gwt.benchmark.category";
 
-  private static final String GWT_BENCHMARK_DESCRIPTION
-      = "gwt.benchmark.description";
+  private static final String GWT_BENCHMARK_DESCRIPTION = "gwt.benchmark.description";
 
   private static final String GWT_BENCHMARK_NAME = "gwt.benchmark.name";
 
@@ -327,12 +316,11 @@ public class BenchmarkReport {
 
   private Parser parser = new Parser();
 
-  private Map /*<String,Map<CategoryImpl>*/ testCategories = new HashMap();
+  private Map<String, CategoryImpl> testCategories = new HashMap<String, CategoryImpl>();
 
-  private Map /*<String,Map<String,MetaData>>*/ testMetaData = new HashMap();
+  private Map<String, Map<String, MetaData>> testMetaData = new HashMap<String, Map<String, MetaData>>();
 
-  private Map/*<TestCase,List<JUnitMessageQueue.TestResult>>*/ testResults
-      = new HashMap();
+  private Map<TestCase, List<TestResults>> testResults = new HashMap<TestCase, List<TestResults>>();
 
   private TypeOracle typeOracle;
 
@@ -343,11 +331,11 @@ public class BenchmarkReport {
   /**
    * Adds the Benchmark to the report. All of the metadata about the benchmark
    * (category, name, description, etc...) is recorded from the TypeOracle.
-   *
+   * 
    * @param benchmarkClass The benchmark class to record. Must not be
    * <code>null</code>.
-   * @param typeOracle The <code>TypeOracle<code> for the compilation session.
-   * Must not be <code>null</code>.  
+   * @param typeOracle The <code>TypeOracle</code> for the compilation session
+   * must not be <code>null</code>.
    */
   public void addBenchmark(JClassType benchmarkClass, TypeOracle typeOracle) {
 
@@ -355,26 +343,22 @@ public class BenchmarkReport {
     String categoryType = getSimpleMetaData(benchmarkClass,
         GWT_BENCHMARK_CATEGORY);
 
-    Map zeroArgMethods = BenchmarkGenerator
-        .getNotOverloadedTestMethods(benchmarkClass);
-    Map/* <String,JMethod> */parameterizedMethods = BenchmarkGenerator
-        .getParameterizedTestMethods(
-            benchmarkClass, TreeLogger.NULL);
-    List/* <JMethod> */testMethods = new ArrayList(
-        zeroArgMethods.size() + parameterizedMethods.size());
+    Map<String, JMethod> zeroArgMethods = BenchmarkGenerator.getNotOverloadedTestMethods(benchmarkClass);
+    Map<String, JMethod> parameterizedMethods = BenchmarkGenerator.getParameterizedTestMethods(
+        benchmarkClass, TreeLogger.NULL);
+    List<JMethod> testMethods = new ArrayList<JMethod>(zeroArgMethods.size()
+        + parameterizedMethods.size());
     testMethods.addAll(zeroArgMethods.values());
     testMethods.addAll(parameterizedMethods.values());
 
-    Map/*<String,MetaData>*/ metaDataMap = (Map) testMetaData
-        .get(benchmarkClass.toString());
+    Map<String, MetaData> metaDataMap = testMetaData.get(benchmarkClass.toString());
     if (metaDataMap == null) {
-      metaDataMap = new HashMap/* <String,MetaData> */();
+      metaDataMap = new HashMap<String, MetaData>();
       testMetaData.put(benchmarkClass.toString(), metaDataMap);
     }
 
     // Add all of the benchmark methods
-    for (int i = 0; i < testMethods.size(); ++i) {
-      JMethod method = (JMethod) testMethods.get(i);
+    for (JMethod method : testMethods) {
       String methodName = method.getName();
       String methodCategoryType = getSimpleMetaData(method,
           GWT_BENCHMARK_CATEGORY);
@@ -392,17 +376,15 @@ public class BenchmarkReport {
 
       MetaData metaData = new MetaData(benchmarkClass.toString(), methodName,
           (sourceBuffer != null) ? sourceBuffer.toString() : null,
-          methodCategory,
-          methodName, summary.toString());
+          methodCategory, methodName, summary.toString());
       metaDataMap.put(methodName, metaData);
     }
   }
 
   public void addBenchmarkResults(TestCase test, TestResults results) {
-    List/* <TestResults> */currentResults
-        = (List/* <TestResults> */) testResults.get(test);
+    List<TestResults> currentResults = testResults.get(test);
     if (currentResults == null) {
-      currentResults = new ArrayList/* <TestResults> */();
+      currentResults = new ArrayList<TestResults>();
       testResults.put(test, currentResults);
     }
     currentResults.add(results);
@@ -457,7 +439,7 @@ public class BenchmarkReport {
   }
 
   private CategoryImpl getCategory(String name) {
-    CategoryImpl c = (CategoryImpl) testCategories.get(name);
+    CategoryImpl c = testCategories.get(name);
 
     if (c != null) {
       return c;
@@ -485,9 +467,9 @@ public class BenchmarkReport {
    * Parses out the JavaDoc comment from a string of source code. Returns the
    * first sentence summary in <code>summary</code> and the body of the entire
    * comment (including the summary) in <code>comment</code>.
-   *
+   * 
    * @param sourceCode The source code of a function, including its comment.
-   * Modified to remove leading whitespace.
+   *          Modified to remove leading whitespace.
    * @param summary Modified to contain the first sentence of the comment.
    * @param comment Modified to contain the entire comment.
    */

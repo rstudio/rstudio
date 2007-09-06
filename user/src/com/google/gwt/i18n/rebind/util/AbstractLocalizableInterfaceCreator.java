@@ -157,7 +157,7 @@ public abstract class AbstractLocalizableInterfaceCreator {
     LocalizedProperties p = new LocalizedProperties();
     p.load(propStream, Util.DEFAULT_ENCODING);
     addFormatters();
-    @SuppressWarnings("unchecked")
+    // TODO: Look for a generic version of Tapestry's LocalizedProperties class
     Iterator<Entry<String, String>> elements =
       p.getPropertyMap().entrySet().iterator();
     if (elements.hasNext() == false) {
@@ -182,8 +182,7 @@ public abstract class AbstractLocalizableInterfaceCreator {
   }
 
   private String formatKey(String key) {
-    for (int i = 0; i < formatters.size(); i++) {
-      ResourceKeyFormatter formatter = formatters.get(i);
+    for (ResourceKeyFormatter formatter : formatters) {
       key = formatter.format(key);
     }
     if (Util.isValidJavaIdent(key) == false) {

@@ -72,7 +72,7 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
   /**
    * Simple helper method to set inaccessible fields via reflection.
    */
-  private static void setField(Class cls, String fieldName, Object obj,
+  private static void setField(Class<?> cls, String fieldName, Object obj,
       Object value) throws SecurityException, NoSuchFieldException,
       IllegalArgumentException, IllegalAccessException {
     Field fld = cls.getDeclaredField(fieldName);
@@ -93,9 +93,8 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
     results.setAgent(agent);
     String machine = request.getRemoteHost();
     results.setHost(machine);
-    List trials = results.getTrials();
-    for (int i = 0; i < trials.size(); ++i) {
-      Trial trial = (Trial) trials.get(i);
+    List<Trial> trials = results.getTrials();
+    for (Trial trial : trials) {
       ExceptionWrapper ew = trial.getExceptionWrapper();
       trial.setException(deserialize(ew));
     }
@@ -115,35 +114,35 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
     Throwable ex = null;
     Throwable cause = deserialize(ew.cause);
     try {
-      Class exClass = Class.forName(ew.typeName);
+      Class<?> exClass = Class.forName(ew.typeName);
       try {
         // try ExType(String, Throwable)
-        Constructor ctor = exClass.getDeclaredConstructor(new Class[]{
-            String.class, Throwable.class});
+        Constructor<?> ctor = exClass.getDeclaredConstructor(
+            String.class, Throwable.class);
         ctor.setAccessible(true);
-        ex = (Throwable) ctor.newInstance(new Object[]{ew.message, cause});
+        ex = (Throwable) ctor.newInstance(ew.message, cause);
       } catch (Throwable e) {
         // try ExType(String)
         try {
-          Constructor ctor = exClass
-              .getDeclaredConstructor(new Class[]{String.class});
+          Constructor<?> ctor = exClass
+              .getDeclaredConstructor(String.class);
           ctor.setAccessible(true);
-          ex = (Throwable) ctor.newInstance(new Object[]{ew.message});
+          ex = (Throwable) ctor.newInstance(ew.message);
           ex.initCause(cause);
         } catch (Throwable e2) {
           // try ExType(Throwable)
           try {
-            Constructor ctor = exClass
-                .getDeclaredConstructor(new Class[]{Throwable.class});
+            Constructor<?> ctor = exClass
+                .getDeclaredConstructor(Throwable.class);
             ctor.setAccessible(true);
-            ex = (Throwable) ctor.newInstance(new Object[]{cause});
+            ex = (Throwable) ctor.newInstance(cause);
             setField(Throwable.class, "detailMessage", ex, ew.message);
           } catch (Throwable e3) {
             // try ExType()
             try {
-              Constructor ctor = exClass.getDeclaredConstructor(null);
+              Constructor<?> ctor = exClass.getDeclaredConstructor();
               ctor.setAccessible(true);
-              ex = (Throwable) ctor.newInstance(null);
+              ex = (Throwable) ctor.newInstance((Object[]) null);
               ex.initCause(cause);
               setField(Throwable.class, "detailMessage", ex, ew.message);
             } catch (Throwable e4) {
@@ -177,21 +176,21 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
   private StackTraceElement deserialize(StackTraceWrapper stw) {
     StackTraceElement ste = null;
     Object[] args = new Object[]{
-        stw.className, stw.methodName, stw.fileName,
-        new Integer(stw.lineNumber)};
+        stw.className, stw.methodName, stw.fileName, stw.lineNumber};
     try {
       try {
         // Try the 4-arg ctor (JRE 1.5)
-        Constructor ctor = StackTraceElement.class
-            .getDeclaredConstructor(new Class[]{
-                String.class, String.class, String.class, int.class});
+        Constructor<StackTraceElement> ctor = StackTraceElement.class
+            .getDeclaredConstructor(
+                String.class, String.class, String.class, int.class);
         ctor.setAccessible(true);
-        ste = (StackTraceElement) ctor.newInstance(args);
+        ste = ctor.newInstance(args);
       } catch (NoSuchMethodException e) {
         // Okay, see if there's a zero-arg ctor we can use instead (JRE 1.4.2)
-        Constructor ctor = StackTraceElement.class.getDeclaredConstructor(null);
+        Constructor<StackTraceElement> ctor =
+            StackTraceElement.class.getDeclaredConstructor();
         ctor.setAccessible(true);
-        ste = (StackTraceElement) ctor.newInstance(null);
+        ste = ctor.newInstance((Object[]) null);
         setField(StackTraceElement.class, "declaringClass", ste, args[0]);
         setField(StackTraceElement.class, "methodName", ste, args[1]);
         setField(StackTraceElement.class, "fileName", ste, args[2]);

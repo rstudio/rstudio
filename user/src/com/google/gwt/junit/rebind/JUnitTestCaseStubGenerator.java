@@ -54,7 +54,7 @@ public class JUnitTestCaseStubGenerator extends Generator {
    * @param requestedClass
    */
   public static String[] getTestMethodNames(JClassType requestedClass) {
-    return (String[]) getAllMethods( requestedClass, new MethodFilter() {
+    return getAllMethods( requestedClass, new MethodFilter() {
       public boolean accept(JMethod method) {
         return isJUnitTestMethod(method,false);
       }
@@ -72,8 +72,8 @@ public class JUnitTestCaseStubGenerator extends Generator {
    * @param type The type to search. Must not be null
    * @return Map<String.List<JMethod>> The set of matching methods. Will not be null.
    */
-  static Map getAllMethods( JClassType type, MethodFilter filter ) {
-    Map methods = new HashMap/*<String,List<JMethod>>*/();
+  static Map<String,List<JMethod>> getAllMethods( JClassType type, MethodFilter filter ) {
+    Map<String,List<JMethod>> methods = new HashMap<String,List<JMethod>>();
     JClassType cls = type;
 
     while (cls != null) {
@@ -89,10 +89,10 @@ public class JUnitTestCaseStubGenerator extends Generator {
           continue;
         }
 
-        List list = (List)methods.get(declMethod.getName());
+        List<JMethod> list = methods.get(declMethod.getName());
 
         if (list == null) {
-          list = new ArrayList();
+          list = new ArrayList<JMethod>();
           methods.put(declMethod.getName(),list);
           list.add(declMethod);
           continue;
@@ -101,7 +101,7 @@ public class JUnitTestCaseStubGenerator extends Generator {
         JParameter[] declParams = declMethod.getParameters();
 
         for (int j = 0; j < list.size(); ++j) {
-          JMethod method = (JMethod)list.get(j);
+          JMethod method = list.get(j);
           JParameter[] parameters = method.getParameters();
           if ( ! equals( declParams, parameters )) {
             list.add(declMethod );
@@ -164,6 +164,7 @@ public class JUnitTestCaseStubGenerator extends Generator {
   /**
    * Create a new type that statisfies the rebind request.
    */
+  @Override
   public String generate(TreeLogger logger, GeneratorContext context,
       String typeName) throws UnableToCompleteException {
 
@@ -218,6 +219,7 @@ public class JUnitTestCaseStubGenerator extends Generator {
     return sourceWriter != null;
   }
 
+  @SuppressWarnings("unused")
   void writeSource() throws UnableToCompleteException {
     String[] testMethods = getTestMethodNames(requestedClass);
     writeGetNewTestCase(simpleStubClassName, sourceWriter);

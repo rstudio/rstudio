@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,7 +42,7 @@ public class ClassSourceFileComposerFactory {
      * This type is a interface.
      */
     public static final JavaSourceCategory INTERFACE;
-    static Map pool = new HashMap();
+    static Map<String, Enum> pool = new HashMap<String, Enum>();
 
     static {
       CLASS = new JavaSourceCategory("class");
@@ -64,9 +64,9 @@ public class ClassSourceFileComposerFactory {
 
   private String className;
 
-  private Set imports = new HashSet();
+  private Set<String> imports = new HashSet<String>();
 
-  private Set interfaceNames = new HashSet();
+  private Set<String> interfaceNames = new HashSet<String>();
 
   private String packageName;
 
@@ -129,7 +129,7 @@ public class ClassSourceFileComposerFactory {
   }
 
   public String[] getInterfaceNames() {
-    return (String[]) interfaceNames.toArray(new String[interfaceNames.size()]);
+    return interfaceNames.toArray(new String[interfaceNames.size()]);
   }
 
   public String getSuperclassName() {
@@ -157,6 +157,6 @@ public class ClassSourceFileComposerFactory {
   }
 
   private String[] getImports() {
-    return (String[]) imports.toArray(new String[imports.size()]);
+    return imports.toArray(new String[imports.size()]);
   }
 }

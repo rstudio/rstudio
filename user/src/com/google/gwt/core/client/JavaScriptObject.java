@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -74,8 +74,9 @@ public class JavaScriptObject {
    * the class.
    */
   protected JavaScriptObject() {
-  };
+  }
 
+  @Override
   public boolean equals(Object other) {
     if (!(other instanceof JavaScriptObject)) {
       return false;
@@ -83,10 +84,12 @@ public class JavaScriptObject {
     return equalsImpl(this, (JavaScriptObject) other);
   }
 
+  @Override
   public int hashCode() {
     return Impl.getHashCode(this);
   }
   
+  @Override
   public String toString() {
     /*
      * Hosted mode will marshal an explicit argument from a JavaScriptObject

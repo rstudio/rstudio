@@ -209,13 +209,13 @@ public final class ServerSerializationStreamWriter extends
 
   private int objectCount;
 
-  private IdentityHashMap objectMap = new IdentityHashMap();
+  private IdentityHashMap<Object, Integer> objectMap = new IdentityHashMap<Object, Integer>();
 
-  private HashMap stringMap = new HashMap();
+  private HashMap<String, Integer> stringMap = new HashMap<String, Integer>();
 
-  private ArrayList stringTable = new ArrayList();
+  private ArrayList<String> stringTable = new ArrayList<String>();
 
-  private ArrayList tokenList = new ArrayList();
+  private ArrayList<String> tokenList = new ArrayList<String>();
 
   private int tokenListCharCount;
 
@@ -235,7 +235,7 @@ public final class ServerSerializationStreamWriter extends
     stringTable.clear();
   }
 
-  public void serializeValue(Object value, Class type)
+  public void serializeValue(Object value, Class<?> type)
       throws SerializationException {
     if (type == boolean.class) {
       writeBoolean(((Boolean) value).booleanValue());
@@ -267,6 +267,7 @@ public final class ServerSerializationStreamWriter extends
    * NOTE: We build the array in reverse so the client can simply use the pop
    * function to remove the next item from the list.
    */
+  @Override
   public String toString() {
     // Build a JavaScript string (with escaping, of course).
     // We take a guess at how big to make to buffer to avoid numerous resizes.
@@ -281,21 +282,23 @@ public final class ServerSerializationStreamWriter extends
     return buffer.toString();
   }
 
+  @Override
   protected int addString(String string) {
     if (string == null) {
       return 0;
     }
-    Integer o = (Integer) stringMap.get(string);
+    Integer o = stringMap.get(string);
     if (o != null) {
-      return o.intValue();
+      return o;
     }
     stringTable.add(string);
     // index is 1-based
     int index = stringTable.size();
-    stringMap.put(string, new Integer(index));
+    stringMap.put(string, index);
     return index;
   }
 
+  @Override
   protected void append(String token) {
     tokenList.add(token);
     if (token != null) {
@@ -303,14 +306,16 @@ public final class ServerSerializationStreamWriter extends
     }
   }
 
+  @Override
   protected int getIndexForObject(Object instance) {
-    Integer o = (Integer) objectMap.get(instance);
+    Integer o = objectMap.get(instance);
     if (o != null) {
-      return o.intValue();
+      return o;
     }
     return -1;
   }
 
+  @Override
   protected String getObjectTypeSignature(Object instance) {
     if (shouldEnforceTypeVersioning()) {
       return SerializabilityUtil.encodeSerializedInstanceReference(instance.getClass());
@@ -319,28 +324,29 @@ public final class ServerSerializationStreamWriter extends
     }
   }
 
+  @Override
   protected void saveIndexForObject(Object instance) {
-    objectMap.put(instance, new Integer(objectCount++));
+    objectMap.put(instance, objectCount++);
   }
 
+  @Override
   protected void serialize(Object instance, String typeSignature)
       throws SerializationException {
     assert (instance != null);
 
-    Class clazz = instance.getClass();
+    Class<?> clazz = instance.getClass();
     serializationPolicy.validateSerialize(clazz);
 
     serializeImpl(instance, clazz);
   }
 
-  private void serializeClass(Object instance, Class instanceClass)
+  private void serializeClass(Object instance, Class<?> instanceClass)
       throws SerializationException {
     assert (instance != null);
 
     Field[] declFields = instanceClass.getDeclaredFields();
     Field[] serializableFields = SerializabilityUtil.applyFieldSerializationPolicy(declFields);
-    for (int index = 0; index < serializableFields.length; ++index) {
-      Field declField = serializableFields[index];
+    for (Field declField : serializableFields) {
       assert (declField != null);
 
       boolean isAccessible = declField.isAccessible();
@@ -369,17 +375,17 @@ public final class ServerSerializationStreamWriter extends
       }
     }
 
-    Class superClass = instanceClass.getSuperclass();
+    Class<?> superClass = instanceClass.getSuperclass();
     if (serializationPolicy.shouldSerializeFields(superClass)) {
       serializeImpl(instance, superClass);
     }
   }
 
-  private void serializeImpl(Object instance, Class instanceClass)
+  private void serializeImpl(Object instance, Class<?> instanceClass)
       throws SerializationException {
     assert (instance != null);
 
-    Class customSerializer = SerializabilityUtil.hasCustomFieldSerializer(instanceClass);
+    Class<?> customSerializer = SerializabilityUtil.hasCustomFieldSerializer(instanceClass);
     if (customSerializer != null) {
       serializeWithCustomSerializer(customSerializer, instance, instanceClass);
     } else {
@@ -391,22 +397,22 @@ public final class ServerSerializationStreamWriter extends
     }
   }
 
-  private void serializeWithCustomSerializer(Class customSerializer,
-      Object instance, Class instanceClass) throws SerializationException {
+  private void serializeWithCustomSerializer(Class<?> customSerializer,
+      Object instance, Class<?> instanceClass) throws SerializationException {
 
     Method serialize;
     try {
       if (instanceClass.isArray()) {
-        Class componentType = instanceClass.getComponentType();
+        Class<?> componentType = instanceClass.getComponentType();
         if (!componentType.isPrimitive()) {
           instanceClass = Class.forName("[Ljava.lang.Object;");
         }
       }
 
-      serialize = customSerializer.getMethod("serialize", new Class[] {
-          SerializationStreamWriter.class, instanceClass});
+      serialize = customSerializer.getMethod("serialize",
+          SerializationStreamWriter.class, instanceClass);
 
-      serialize.invoke(null, new Object[] {this, instance});
+      serialize.invoke(null, this, instance);
 
     } catch (SecurityException e) {
       throw new SerializationException(e);
@@ -441,7 +447,7 @@ public final class ServerSerializationStreamWriter extends
 
   private void writePayload(StringBuffer buffer) {
     for (int i = tokenList.size() - 1; i >= 0; --i) {
-      String token = (String) tokenList.get(i);
+      String token = tokenList.get(i);
       buffer.append(token);
       if (i > 0) {
         buffer.append(",");
@@ -458,7 +464,7 @@ public final class ServerSerializationStreamWriter extends
       if (i > 0) {
         buffer.append(",");
       }
-      buffer.append(escapeString((String) stringTable.get(i)));
+      buffer.append(escapeString(stringTable.get(i)));
     }
     buffer.append("]");
   }

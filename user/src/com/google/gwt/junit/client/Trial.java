@@ -42,7 +42,7 @@ public class Trial implements IsSerializable {
   /**
    * @gwt.typeArgs <java.lang.String,java.lang.String>
    */
-  Map/*<String,String>*/ variables;
+  Map<String, String> variables;
 
   /**
    * Creates a new Trial.
@@ -52,7 +52,7 @@ public class Trial implements IsSerializable {
    *                         test, or <code>null</code> if the last test
    *                         completed successfully.
    */
-  public Trial(Map/*<String,String>*/ variables, double runTimeMillis,
+  public Trial(Map<String, String> variables, double runTimeMillis,
       ExceptionWrapper exceptionWrapper) {
     this.variables = variables;
     this.runTimeMillis = runTimeMillis;
@@ -60,7 +60,7 @@ public class Trial implements IsSerializable {
   }
 
   public Trial() {
-    this.variables = new HashMap();
+    this.variables = new HashMap<String, String>();
   }
 
   public Throwable getException() {
@@ -79,7 +79,7 @@ public class Trial implements IsSerializable {
    * Returns the names and values of the variables used in the test. If there
    * were no variables, the map is empty.
    */
-  public Map getVariables() {
+  public Map<String, String> getVariables() {
     return variables;
   }
 
@@ -95,6 +95,7 @@ public class Trial implements IsSerializable {
     this.runTimeMillis = runTimeMillis;
   }
 
+  @Override
   public String toString() {
     return "variables: " + variables + ", exceptionWrapper: " + exceptionWrapper
         + ", runTimeMillis: " + runTimeMillis;

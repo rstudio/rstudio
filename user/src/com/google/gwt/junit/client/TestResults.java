@@ -92,6 +92,7 @@ public class TestResults implements IsSerializable {
     this.trials = trials;
   }
 
+  @Override
   public String toString() {
     return "trials: " + trials + ", sourceRef: " + sourceRef + ", agent: "
         + agent + ", host: " + host;

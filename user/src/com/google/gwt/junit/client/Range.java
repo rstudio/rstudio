@@ -26,7 +26,10 @@ import java.util.Iterator;
  * Range is unlikely to provide any extra semantics above what you would get
  * with java.util.Iterable, but it was introduced before GWT's JDK 1.5 support.
  *
+ * @param <T> the type that this range contains
+ * TODO: extends from java.util.Iterable
+ * TODO: Should iterator() return a RangeIterator<T>?
  */
-public interface Range {
-  Iterator iterator();
+public interface Range<T> {
+  Iterator<T> iterator();
 }

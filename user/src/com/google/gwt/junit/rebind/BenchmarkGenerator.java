@@ -29,7 +29,6 @@ import com.google.gwt.dev.generator.ast.StatementsList;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.util.Map;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.HashMap;
@@ -62,24 +61,24 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
    *
    * @return Map<String,JMethod>
    */
-  public static Map getNotOverloadedTestMethods(JClassType requestedClass) {
-    Map methods = getAllMethods(requestedClass, new MethodFilter() {
+  public static Map<String, JMethod> getNotOverloadedTestMethods(JClassType requestedClass) {
+    Map<String, List<JMethod>> methods =
+      getAllMethods(requestedClass, new MethodFilter() {
       public boolean accept(JMethod method) {
         return isJUnitTestMethod(method, true);
       }
     });
-
-    for (Iterator it = methods.entrySet().iterator(); it.hasNext();) {
-      Map.Entry entry = (Map.Entry) it.next();
-      List methodOverloads = (List) entry.getValue();
-      if (methodOverloads.size() > 1) {
-        it.remove();
-        continue;
+    
+    // Create a new map to store the methods
+    Map<String, JMethod> notOverloadedMethods = new HashMap<String, JMethod>();
+    for (Map.Entry<String, List<JMethod>> entry : methods.entrySet()) {
+      List<JMethod> methodOverloads = entry.getValue();
+      if (methodOverloads.size() <= 1) {
+        notOverloadedMethods.put(entry.getKey(), methodOverloads.get(0));
       }
-      entry.setValue(methodOverloads.get(0));
     }
 
-    return methods;
+    return notOverloadedMethods;
   }
 
   /**
@@ -88,33 +87,34 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
    *
    * @return Map<String,JMethod>
    */
-  public static Map getParameterizedTestMethods(JClassType requestedClass,
+  public static Map<String, JMethod> getParameterizedTestMethods(JClassType requestedClass,
       TreeLogger logger) {
 
-    Map testMethods = getAllMethods(requestedClass, new MethodFilter() {
+    Map<String, List<JMethod>> testMethods =
+      getAllMethods(requestedClass, new MethodFilter() {
       public boolean accept(JMethod method) {
         return isJUnitTestMethod(method, true);
       }
     });
 
+    // Create a new mapping to return
+    Map<String, JMethod> overloadedMethods = new HashMap<String, JMethod>();
+    
     // Remove all non-overloaded test methods
-    for (Iterator it = testMethods.entrySet().iterator(); it.hasNext();) {
-
-      Map.Entry entry = (Map.Entry) it.next();
-      String name = (String) entry.getKey();
-      List methods = (List) entry.getValue();
+    for (Map.Entry<String, List<JMethod>> entry : testMethods.entrySet()) {
+      String name = entry.getKey();
+      List<JMethod> methods = entry.getValue();
 
       if (methods.size() > 2) {
         String msg = requestedClass + "." + name
             + " has more than one overloaded version.\n" +
             "It will not be included in the test case execution.";
         logger.log(TreeLogger.WARN, msg, null);
-        it.remove();
         continue;
       }
 
       if (methods.size() == 1) {
-        JMethod method = (JMethod) methods.get(0);
+        JMethod method = methods.get(0);
         if (method.getParameters().length != 0) {
           /* User probably goofed - otherwise why create a test method with
            * arguments but not the corresponding no-argument version? Would be
@@ -127,12 +127,11 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
           logger.log(TreeLogger.WARN, msg, null);
         }
         // Only a zero-argument version, we don't need to process it.
-        it.remove();
         continue;
       }
 
-      JMethod method1 = (JMethod) methods.get(0);
-      JMethod method2 = (JMethod) methods.get(1);
+      JMethod method1 = methods.get(0);
+      JMethod method2 = methods.get(1);
       JMethod noArgMethod = null;
       JMethod overloadedMethod = null;
 
@@ -153,14 +152,13 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
             + " does not have a zero-argument overload.\n" +
             "It will not be included in the test case execution.";
         logger.log(TreeLogger.WARN, msg, null);
-        it.remove();
         continue;
       }
 
-      entry.setValue(overloadedMethod);
+      overloadedMethods.put(entry.getKey(), overloadedMethod);
     }
 
-    return testMethods;
+    return overloadedMethods;
   }
 
   private static JMethod getBeginMethod(JClassType type, String name) {
@@ -176,13 +174,13 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
   }
 
   private static JMethod getMethod(JClassType type, MethodFilter filter) {
-    Map map = getAllMethods(type, filter);
-    Set entrySet = map.entrySet();
+    Map<String, List<JMethod>> map = getAllMethods(type, filter);
+    Set<Map.Entry<String, List<JMethod>>> entrySet = map.entrySet();
     if (entrySet.size() == 0) {
       return null;
     }
-    List methods = (List) ((Map.Entry) entrySet.iterator().next()).getValue();
-    return (JMethod) methods.get(0);
+    List<JMethod> methods = entrySet.iterator().next().getValue();
+    return methods.get(0);
   }
 
   private static JMethod getMethod(JClassType type, final String name) {
@@ -193,6 +191,7 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
     });
   }
 
+  @Override
   public void writeSource() throws UnableToCompleteException {
     super.writeSource();
 
@@ -214,11 +213,11 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
   private Statements benchmark(Statements stmts, String timeMillisName,
       boolean generateEscape, Statements recordCode, Statements breakCode) {
     Statements benchmarkCode = new StatementsList();
-    List benchStatements = benchmarkCode.getStatements();
+    List<Statements> benchStatements = benchmarkCode.getStatements();
 
     ForLoop loop = new ForLoop("int numLoops = 1", "true", "");
     benchStatements.add(loop);
-    List loopStatements = loop.getStatements();
+    List<Statements> loopStatements = loop.getStatements();
 
     loopStatements
         .add(new Statement("long start = System.currentTimeMillis()"));
@@ -264,9 +263,10 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
    * variable.
    *
    * @return the generated code
+   * TODO: Is this used anywhere?
    */
-  private Statements executeForAllValues(JParameter[] methodParams, Map params,
-      Statements statements) {
+  private Statements executeForAllValues(JParameter[] methodParams,
+      Map<String, String> params, Statements statements) {
     Statements root = new StatementsList();
     Statements currentContext = root;
 
@@ -275,19 +275,19 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
     for (int i = 0; i < methodParams.length; ++i) {
       JParameter methodParam = methodParams[i];
       String paramName = methodParam.getName();
-      String paramValue = (String) params.get(paramName);
+      String paramValue = params.get(paramName);
+      String typeName = methodParam.getType().getQualifiedSourceName();
 
       String iteratorName = "it_" + paramName;
-      String initializer = "java.util.Iterator " + iteratorName + " = "
+      String initializer = "java.util.Iterator<" + typeName + "> " + iteratorName + " = "
           + paramValue + ".iterator()";
       ForLoop loop = new ForLoop(initializer, iteratorName + ".hasNext()", "");
       if (i == methodParams.length - 1) {
         loop.setLabel(ESCAPE_LOOP);
       }
       currentContext.getStatements().add(loop);
-      String typeName = methodParam.getType().getQualifiedSourceName();
-      loop.getStatements().add(new Statement(typeName + " " + paramName + " = ("
-          + typeName + ") " + iteratorName + ".next()"));
+      loop.getStatements().add(new Statement(typeName + " " + paramName + " = "
+          + iteratorName + ".next()"));
       currentContext = loop;
     }
 
@@ -297,9 +297,9 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
   }
 
   private Statements genBenchTarget(JMethod beginMethod, JMethod endMethod,
-      List paramNames, Statements test) {
+      List<String> paramNames, Statements test) {
     Statements statements = new StatementsList();
-    List statementsList = statements.getStatements();
+    List<Statements> statementsList = statements.getStatements();
 
     if (beginMethod != null) {
       statementsList.add(
@@ -384,9 +384,9 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
     writer.println();
   }
 
-  private Map/*<String,String>*/ getParamMetaData(JMethod method,
+  private Map<String,String> getParamMetaData(JMethod method,
       MutableBoolean isBounded) throws UnableToCompleteException {
-    Map/*<String,String>*/ params = new HashMap/*<String,String>*/();
+    Map<String,String> params = new HashMap<String,String>();
 
     String[][] allValues = method.getMetaData(BENCHMARK_PARAM_META);
 
@@ -429,7 +429,7 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
   private void implementParameterizedTestMethods() throws
       UnableToCompleteException {
 
-    Map/*<String,JMethod>*/ parameterizedMethods = getParameterizedTestMethods(
+    Map<String,JMethod> parameterizedMethods = getParameterizedTestMethods(
         getRequestedClass(), logger);
     SourceWriter sw = getSourceWriter();
     JClassType type = getRequestedClass();
@@ -438,11 +438,9 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
     //   a) overhead (setup + teardown + loop + function calls) and
     //   b) execution time
     // for all possible parameter values
-    for (Iterator it = parameterizedMethods.entrySet().iterator();
-        it.hasNext();) {
-      Map.Entry entry = (Map.Entry) it.next();
-      String name = (String) entry.getKey();
-      JMethod method = (JMethod) entry.getValue();
+    for (Map.Entry<String,JMethod> entry : parameterizedMethods.entrySet() ) {
+      String name = entry.getKey();
+      JMethod method = entry.getValue();
       JMethod beginMethod = getBeginMethod(type, name);
       JMethod endMethod = getEndMethod(type, name);
 
@@ -452,25 +450,25 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
       sw.println();
 
       MutableBoolean isBounded = new MutableBoolean();
-      Map params = getParamMetaData(method, isBounded);
+      Map<String, String> params = getParamMetaData(method, isBounded);
       validateParams(method, params);
 
       JParameter[] methodParams = method.getParameters();
-      List paramNames = new ArrayList(methodParams.length);
+      List<String> paramNames = new ArrayList<String>(methodParams.length);
       for (int i = 0; i < methodParams.length; ++i) {
         paramNames.add(methodParams[i].getName());
       }
 
-      List paramValues = new ArrayList(methodParams.length);
+      List<String> paramValues = new ArrayList<String>(methodParams.length);
       for (int i = 0; i < methodParams.length; ++i) {
         paramValues.add(params.get(methodParams[i].getName()));
       }
 
-      sw.print( "final java.util.List ranges = java.util.Arrays.asList( new com.google.gwt.junit.client.Range[] { " );
+      sw.print( "final java.util.List<Range<?>> ranges = java.util.Arrays.asList( new com.google.gwt.junit.client.Range<?>[] { " );
 
       for (int i = 0; i < paramNames.size(); ++i) {
-        String paramName = (String) paramNames.get(i);
-        sw.print( (String) params.get(paramName) );
+        String paramName = paramNames.get(i);
+        sw.print( params.get(paramName) );
         if (i != paramNames.size() - 1) {
           sw.print( ",");
         } else {
@@ -485,13 +483,13 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
           "  public boolean execute() {\n" +
           "    privateDelayTestFinish( 10000 );\n" +
           "    if ( permutationIt.hasNext() ) {\n" +
-          "      com.google.gwt.junit.client.impl.PermutationIterator.Permutation permutation = (com.google.gwt.junit.client.impl.PermutationIterator.Permutation) permutationIt.next();\n"
+          "      com.google.gwt.junit.client.impl.PermutationIterator.Permutation permutation = permutationIt.next();\n"
       );
 
       for (int i = 0; i < methodParams.length; ++i) {
         JParameter methodParam = methodParams[i];
         String typeName = methodParam.getType().getQualifiedSourceName();
-        String paramName = (String) paramNames.get(i);
+        String paramName = paramNames.get(i);
         sw.println( "      " + typeName + " " + paramName + " = (" +
                     typeName + ") permutation.getValues().get(" + i + ");");
       }
@@ -511,10 +509,9 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
           "com.google.gwt.junit.client.TestResults results = getTestResults();\n" +
           "com.google.gwt.junit.client.Trial trial = new com.google.gwt.junit.client.Trial();\n" +
           "trial.setRunTimeMillis( " + testTimingName + " - " + setupTimingName + " );\n" +
-          "java.util.Map variables = trial.getVariables();\n");
+          "java.util.Map<String, String> variables = trial.getVariables();\n");
 
-      for (int i = 0; i < paramNames.size(); ++i) {
-        String paramName = (String) paramNames.get(i);
+      for (String paramName : paramNames) {
         recordResultsCode.append("variables.put( \"")
             .append(paramName)
             .append("\", ")
@@ -558,14 +555,14 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
    * into a single function.
    */
   private void implementZeroArgTestMethods() {
-    Map zeroArgMethods = getNotOverloadedTestMethods(getRequestedClass());
+    Map<String, JMethod> zeroArgMethods =
+      getNotOverloadedTestMethods(getRequestedClass());
     SourceWriter sw = getSourceWriter();
     JClassType type = getRequestedClass();
 
-    for (Iterator it = zeroArgMethods.entrySet().iterator(); it.hasNext();) {
-      Map.Entry entry = (Map.Entry) it.next();
-      String name = (String) entry.getKey();
-      JMethod method = (JMethod) entry.getValue();
+    for (Map.Entry<String, JMethod> entry : zeroArgMethods.entrySet()) {
+      String name = entry.getKey();
+      JMethod method = entry.getValue();
       JMethod beginMethod = getBeginMethod(type, name);
       JMethod endMethod = getEndMethod(type, name);
 
@@ -579,14 +576,14 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
       sw.println("double " + testTimingName + " = 0;");
 
       Statements setupBench = genBenchTarget(beginMethod, endMethod,
-          Collections.EMPTY_LIST,
+          Collections.<String>emptyList(),
           new Statement(new MethodCall(EMPTY_FUNC, null)));
 
       StatementsList testStatements = new StatementsList();
       testStatements.getStatements().add(
           new Statement(new MethodCall("super." + method.getName(), null)));
       Statements testBench = genBenchTarget(beginMethod, endMethod,
-          Collections.EMPTY_LIST, testStatements);
+          Collections.<String>emptyList(), testStatements);
 
       String recordResultsCode =
           "com.google.gwt.junit.client.TestResults results = getTestResults();\n"  +
@@ -610,13 +607,12 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
     }
   }
 
-  private void validateParams(JMethod method, Map params)
+  private void validateParams(JMethod method, Map<String, String> params)
       throws UnableToCompleteException {
     JParameter[] methodParams = method.getParameters();
-    for (int i = 0; i < methodParams.length; ++i) {
-      JParameter methodParam = methodParams[i];
+    for (JParameter methodParam : methodParams) {
       String paramName = methodParam.getName();
-      String paramValue = (String) params.get(paramName);
+      String paramValue = params.get(paramName);
 
       if (paramValue == null) {
         String msg = "Could not find the meta data attribute "

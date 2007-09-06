@@ -66,7 +66,7 @@ public final class SerializationPolicyLoader {
       throw new NullPointerException("inputStream");
     }
 
-    Map /* <Class, Boolean> */whitelist = new HashMap();
+    Map<Class<?>, Boolean> whitelist = new HashMap<Class<?>, Boolean>();
 
     InputStreamReader isr = new InputStreamReader(inputStream,
         SERIALIZATION_POLICY_FILE_ENCODING);
@@ -91,7 +91,7 @@ public final class SerializationPolicyLoader {
         }
 
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        Class clazz = Class.forName(binaryTypeName, false, contextClassLoader);
+        Class<?> clazz = Class.forName(binaryTypeName, false, contextClassLoader);
         // TODO: Validate the instantiable string better.
         whitelist.put(clazz, Boolean.valueOf(instantiable));
       }

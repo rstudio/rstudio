@@ -37,7 +37,7 @@ public class WhileLoop implements Statements {
     this.test = test;
   }
 
-  public List getStatements() {
+  public List<Statements> getStatements() {
     return body.getStatements();
   }
 

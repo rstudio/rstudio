@@ -49,8 +49,7 @@ class RemoteServiceAsyncValidator {
     sb.append("Async {\n");
 
     JMethod[] methods = serviceIntf.getOverridableMethods();
-    for (int index = 0; index < methods.length; ++index) {
-      JMethod method = methods[index];
+    for (JMethod method : methods) {
       assert (method != null);
 
       sb.append("\tvoid ");
@@ -134,11 +133,10 @@ class RemoteServiceAsyncValidator {
             + " methods than the synchronous version", null);
         failed = true;
       } else {
-        Map asyncMethodMap = initializeAsyncMethodMap(asyncMethods);
-        for (int i = 0; i < syncMethods.length; ++i) {
-          JMethod syncMethod = syncMethods[i];
+        Map<String, JMethod> asyncMethodMap = initializeAsyncMethodMap(asyncMethods);
+        for (JMethod syncMethod : syncMethods) {
           String asyncSig = computeAsyncMethodSignature(syncMethod);
-          JMethod asyncMethod = (JMethod) asyncMethodMap.get(asyncSig);
+          JMethod asyncMethod = asyncMethodMap.get(asyncSig);
           if (asyncMethod == null) {
             branch.branch(TreeLogger.ERROR,
                 "Missing asynchronous version of the synchronous method '"
@@ -171,8 +169,7 @@ class RemoteServiceAsyncValidator {
     sb.setLength(0);
     sb.append(method.getName());
     JParameter[] params = method.getParameters();
-    for (int j = 0; j < params.length; j++) {
-      JParameter param = params[j];
+    for (JParameter param : params) {
       sb.append("/");
       sb.append(param.getType().getQualifiedSourceName());
     }
@@ -183,10 +180,9 @@ class RemoteServiceAsyncValidator {
    * Builds a map of asynchronous method internal signatures to the
    * corresponding asynchronous {@link JMethod}.
    */
-  private Map initializeAsyncMethodMap(JMethod[] asyncMethods) {
-    Map /* <String,JClassType> */sigs = new TreeMap();
-    for (int i = 0; i < asyncMethods.length; ++i) {
-      JMethod asyncMethod = asyncMethods[i];
+  private Map<String, JMethod> initializeAsyncMethodMap(JMethod[] asyncMethods) {
+    Map<String, JMethod> sigs = new TreeMap<String, JMethod>();
+    for (JMethod asyncMethod : asyncMethods) {
       sigs.put(computeInternalSignature(asyncMethod), asyncMethod);
     }
     return sigs;

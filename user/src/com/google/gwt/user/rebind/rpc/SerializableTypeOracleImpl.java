@@ -39,27 +39,21 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
 
   private static final String DEFAULT_BUILTIN_CUSTOM_SERIALIZER_PACKAGE_NAME = "com.google.gwt.user.client.rpc.core.java.lang";
 
-  private static final Comparator FIELD_COMPARATOR = new Comparator() {
-    public int compare(Object o1, Object o2) {
-      JField f1 = (JField) o1;
-      JField f2 = (JField) o2;
-
+  private static final Comparator<JField> FIELD_COMPARATOR = new Comparator<JField>() {
+    public int compare(JField f1, JField f2) {
       return f1.getName().compareTo(f2.getName());
     }
   };
 
-  private static final Comparator TYPE_COMPARATOR = new Comparator() {
-    public int compare(Object o1, Object o2) {
-      JType t1 = (JType) o1;
-      JType t2 = (JType) o2;
-
+  private static final Comparator<JType> TYPE_COMPARATOR = new Comparator<JType>() {
+    public int compare(JType t1, JType t2) {
       return t1.getParameterizedQualifiedSourceName().compareTo(
           t2.getParameterizedQualifiedSourceName());
     }
   };
   private static final String GENERATED_FIELD_SERIALIZER_SUFFIX = "_FieldSerializer";
   private static final String TYPE_SERIALIZER_SUFFIX = "_TypeSerializer";
-  private static final Set TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES = new HashSet();
+  private static final Set<String> TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES = new HashSet<String>();
 
   static {
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Boolean");
@@ -76,14 +70,14 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Throwable");
   }
 
-  private final Set /* <JType> */serializableTypesSet;
+  private final Set<JType> serializableTypesSet;
   private final TypeOracle typeOracle;
-  private final Set /* <JType> */possiblyInstantiatedTypes;
+  private final Set<JType> possiblyInstantiatedTypes;
 
   public SerializableTypeOracleImpl(TypeOracle typeOracle,
-      JType[] serializableTypes, Set possiblyInstantiatedTypes) {
+      JType[] serializableTypes, Set<JType> possiblyInstantiatedTypes) {
 
-    serializableTypesSet = new TreeSet(TYPE_COMPARATOR);
+    serializableTypesSet = new TreeSet<JType>(TYPE_COMPARATOR);
     serializableTypesSet.addAll(Arrays.asList(serializableTypes));
     this.typeOracle = typeOracle;
 
@@ -119,10 +113,9 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
    * Returns the fields which qualify for serialization.
    */
   public JField[] getSerializableFields(JClassType classType) {
-    List fields = new ArrayList();
+    List<JField> fields = new ArrayList<JField>();
     JField[] declFields = classType.getFields();
-    for (int iField = 0; iField < declFields.length; ++iField) {
-      JField field = declFields[iField];
+    for (JField field : declFields) {
       // TODO(mmendez): this is shared with the serializable type oracle
       // builder, join with that
       if (field.isStatic() || field.isTransient() || field.isFinal()) {
@@ -133,14 +126,14 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     }
 
     Collections.sort(fields, FIELD_COMPARATOR);
-    return (JField[]) fields.toArray(new JField[fields.size()]);
+    return fields.toArray(new JField[fields.size()]);
   }
 
   /**
    * 
    */
   public JType[] getSerializableTypes() {
-    return (JType[]) serializableTypesSet.toArray(new JType[serializableTypesSet.size()]);
+    return serializableTypesSet.toArray(new JType[serializableTypesSet.size()]);
   }
 
   public String getSerializationSignature(JType type) {
@@ -290,8 +283,7 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     } else if (type.isClassOrInterface() != null) {
       JClassType isClassOrInterface = type.isClassOrInterface();
       JField[] fields = getSerializableFields(isClassOrInterface);
-      for (int i = 0; i < fields.length; ++i) {
-        JField field = fields[i];
+      for (JField field : fields) {
         assert (field != null);
 
         crc.update(field.getName().getBytes(Util.DEFAULT_ENCODING));

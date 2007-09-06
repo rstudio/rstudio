@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,6 +40,7 @@ class RunStyleLocalHosted extends RunStyle {
     this.shell = shell;
   }
 
+  @Override
   public void maybeLaunchModule(String moduleName, boolean forceLaunch)
       throws UnableToCompleteException {
     if (forceLaunch) {

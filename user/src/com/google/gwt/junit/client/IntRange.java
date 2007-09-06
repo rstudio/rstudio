@@ -15,21 +15,19 @@
  */
 package com.google.gwt.junit.client;
 
-import java.util.Iterator;
-
 /**
  * A {@link com.google.gwt.junit.client.Range} that iterates over a start and
  * end value by a stepping function. Typically used by benchmarks to supply a
  * range of values over an integral parameter, such as size or length.
  *
  */
-public class IntRange implements Range {
+public class IntRange implements Range<Integer> {
 
   /**
    * Implementation of the Iterator.
    *
    */
-  private static class IntRangeIterator extends RangeIterator {
+  private static class IntRangeIterator extends RangeIterator<Integer> {
 
     int end;
 
@@ -55,10 +53,10 @@ public class IntRange implements Range {
       return value <= end;
     }
 
-    public Object next() {
+    public Integer next() {
       int currentValue = value;
       value = step();
-      return new Integer(currentValue);
+      return currentValue;
     }
 
     public int step() {
@@ -99,7 +97,7 @@ public class IntRange implements Range {
     }
   }
 
-  public Iterator iterator() {
+  public IntRangeIterator iterator() {
     return new IntRangeIterator(this);
   }
 }

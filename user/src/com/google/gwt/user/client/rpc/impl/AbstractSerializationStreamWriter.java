@@ -26,6 +26,7 @@ import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 public abstract class AbstractSerializationStreamWriter extends
     AbstractSerializationStream implements SerializationStreamWriter {
 
+  @Override
   public abstract String toString();
 
   public void writeBoolean(boolean fieldValue) {

@@ -30,7 +30,7 @@ public interface JUnitHostAsync {
    * @param callBack      The object that will receive the name of the next
    *                      method to run.
    */
-  void getFirstMethod(String testClassName, AsyncCallback callBack);
+  void getFirstMethod(String testClassName, AsyncCallback<String> callBack);
 
   /**
    * Reports results for the last method run and gets the name of next method to
@@ -41,5 +41,6 @@ public interface JUnitHostAsync {
    * @param callBack      The object that will receive the name of the next
    *                      method to run.
    */
-  void reportResultsAndGetNextMethod(String testClassName, TestResults results, AsyncCallback callBack);
+  void reportResultsAndGetNextMethod(String testClassName, TestResults results,
+      AsyncCallback<String> callBack);
 }

@@ -29,7 +29,7 @@ public abstract class SerializationPolicy {
    * @param clazz the class to test
    * @return <code>true</code> if the class' fields should be deserialized
    */
-  public abstract boolean shouldDeserializeFields(Class clazz);
+  public abstract boolean shouldDeserializeFields(Class<?> clazz);
 
   /**
    * Returns <code>true</code> if the class' fields should be serialized.
@@ -37,7 +37,7 @@ public abstract class SerializationPolicy {
    * @param clazz the class to test
    * @return <code>true</code> if the class' fields should be serialized
    */
-  public abstract boolean shouldSerializeFields(Class clazz);
+  public abstract boolean shouldSerializeFields(Class<?> clazz);
 
   /**
    * Validates that the specified class should be deserialized from a stream.
@@ -46,7 +46,7 @@ public abstract class SerializationPolicy {
    * @throws SerializationException if the class is not allowed to be
    *           deserialized
    */
-  public abstract void validateDeserialize(Class clazz)
+  public abstract void validateDeserialize(Class<?> clazz)
       throws SerializationException;
 
   /**
@@ -55,6 +55,6 @@ public abstract class SerializationPolicy {
    * @param clazz the class to validate
    * @throws SerializationException if the class is not allowed to be serialized
    */
-  public abstract void validateSerialize(Class clazz)
+  public abstract void validateSerialize(Class<?> clazz)
       throws SerializationException;
 }

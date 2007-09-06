@@ -27,7 +27,7 @@ public class Statement extends BaseNode implements Statements {
 
   private Expression expression;
 
-  private final List<Statement> list;
+  private final List<Statements> list;
 
   /**
    * Creates a new <code>Statement</code> from a {@link String} of code
@@ -38,7 +38,7 @@ public class Statement extends BaseNode implements Statements {
    */
   public Statement(String code) {
     this.code = code;
-    this.list = Arrays.asList(new Statement[] {this});
+    this.list = Arrays.asList((Statements)this);
   }
 
   /**
@@ -48,14 +48,14 @@ public class Statement extends BaseNode implements Statements {
    */
   public Statement(Expression expression) {
     this.expression = expression;
-    this.list = Arrays.asList(new Statement[] {this});
+    this.list = Arrays.asList((Statements)this);
   }
 
   /**
    * Returns this single <code>Statement</code> as a {@link java.util.List} of
    * {@link Statement}s of size, one.
    */
-  public List<? extends Statements> getStatements() {
+  public List<Statements> getStatements() {
     return list;
   }
 

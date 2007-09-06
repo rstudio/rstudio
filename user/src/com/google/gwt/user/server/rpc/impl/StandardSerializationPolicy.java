@@ -24,12 +24,12 @@ import java.util.Map;
  * Standard implementation of a {@link SerializationPolicy}.
  */
 public class StandardSerializationPolicy extends SerializationPolicy {
-  private final Map/* <Class,Boolean> */whitelist;
+  private final Map<Class<?>, Boolean> whitelist;
 
   /**
    * Constructs a {@link SerializationPolicy} from a {@link Map}.
    */
-  public StandardSerializationPolicy(Map/* <Class,Boolean> */whitelist) {
+  public StandardSerializationPolicy(Map<Class<?>, Boolean> whitelist) {
     if (whitelist == null) {
       throw new NullPointerException("whitelist");
     }
@@ -42,7 +42,8 @@ public class StandardSerializationPolicy extends SerializationPolicy {
    * 
    * @see com.google.gwt.user.server.rpc.SerializationPolicy#shouldDerializeFields(java.lang.String)
    */
-  public boolean shouldDeserializeFields(Class clazz) {
+  @Override
+  public boolean shouldDeserializeFields(Class<?> clazz) {
     return isFieldSerializable(clazz);
   }
 
@@ -51,7 +52,8 @@ public class StandardSerializationPolicy extends SerializationPolicy {
    * 
    * @see com.google.gwt.user.server.rpc.SerializationPolicy#shouldSerializeFields(java.lang.String)
    */
-  public boolean shouldSerializeFields(Class clazz) {
+  @Override
+  public boolean shouldSerializeFields(Class<?> clazz) {
     return isFieldSerializable(clazz);
   }
 
@@ -60,7 +62,8 @@ public class StandardSerializationPolicy extends SerializationPolicy {
    * 
    * @see com.google.gwt.user.server.rpc.SerializationPolicy#validateDeserialize(java.lang.String)
    */
-  public void validateDeserialize(Class clazz) throws SerializationException {
+  @Override
+  public void validateDeserialize(Class<?> clazz) throws SerializationException {
     if (!isInstantiable(clazz)) {
       throw new SerializationException(
           "Type '"
@@ -74,7 +77,8 @@ public class StandardSerializationPolicy extends SerializationPolicy {
    * 
    * @see com.google.gwt.user.server.rpc.SerializationPolicy#validateSerialize(java.lang.String)
    */
-  public void validateSerialize(Class clazz) throws SerializationException {
+  @Override
+  public void validateSerialize(Class<?> clazz) throws SerializationException {
     if (!isInstantiable(clazz)) {
       throw new SerializationException(
           "Type '"
@@ -86,7 +90,7 @@ public class StandardSerializationPolicy extends SerializationPolicy {
   /**
    * Field serializable types are primitives and types on the whitelist.
    */
-  private boolean isFieldSerializable(Class clazz) {
+  private boolean isFieldSerializable(Class<?> clazz) {
     if (clazz.isPrimitive()) {
       return true;
     }
@@ -97,11 +101,11 @@ public class StandardSerializationPolicy extends SerializationPolicy {
    * Instantiable types are primitives and types on the whitelist which can be
    * instantiated.
    */
-  private boolean isInstantiable(Class clazz) {
+  private boolean isInstantiable(Class<?> clazz) {
     if (clazz.isPrimitive()) {
       return true;
     }
-    Boolean instantiable = (Boolean) whitelist.get(clazz);
-    return (instantiable != null && instantiable.booleanValue());
+    Boolean instantiable = whitelist.get(clazz);
+    return (instantiable != null && instantiable);
   }
 }

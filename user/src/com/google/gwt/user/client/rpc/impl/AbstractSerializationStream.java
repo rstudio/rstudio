@@ -57,7 +57,7 @@ public abstract class AbstractSerializationStream {
 
   /**
    * Returns <code>true</code> if this stream encodes information which can be
-   * used to lookup a {@link SerializationPolicy}.
+   * used to lookup a {@link com.google.gwt.user.server.rpc.SerializationPolicy}.
    * 
    * @return <code>true</code> if this stream encodes information which can be
    *         used to lookup a <code>SerializationPolicy</code>

@@ -53,15 +53,15 @@ public final class RPC {
   /**
    * Maps primitive wrapper classes to their corresponding primitive class.
    */
-  private static final Map PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS = new HashMap();
+  private static final Map<Class<?>, Class<?>> PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS = new HashMap<Class<?>, Class<?>>();
 
   /**
    * Static map of classes to sets of interfaces (e.g. classes). Optimizes
    * lookup of interfaces for security.
    */
-  private static Map/* <Class, Set<String> > */serviceToImplementedInterfacesMap;
+  private static Map<Class<?>, Set<String>> serviceToImplementedInterfacesMap;
 
-  private static final HashMap TYPE_NAMES;
+  private static final HashMap<String, Class<?>> TYPE_NAMES;
 
   static {
     PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS.put(Boolean.class, Boolean.TYPE);
@@ -74,7 +74,7 @@ public final class RPC {
     PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS.put(Long.class, Long.TYPE);
     PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS.put(Short.class, Short.TYPE);
 
-    TYPE_NAMES = new HashMap();
+    TYPE_NAMES = new HashMap<String, Class<?>>();
     TYPE_NAMES.put("Z", boolean.class);
     TYPE_NAMES.put("B", byte.class);
     TYPE_NAMES.put("C", char.class);
@@ -84,7 +84,7 @@ public final class RPC {
     TYPE_NAMES.put("J", long.class);
     TYPE_NAMES.put("S", short.class);
 
-    serviceToImplementedInterfacesMap = new HashMap();
+    serviceToImplementedInterfacesMap = new HashMap<Class<?>, Set<String>>();
   }
 
   /**
@@ -160,7 +160,7 @@ public final class RPC {
    *           assignable to the requested {@link RemoteService} interface
    *           </ul>
    */
-  public static RPCRequest decodeRequest(String encodedRequest, Class type) {
+  public static RPCRequest decodeRequest(String encodedRequest, Class<? extends RemoteServiceServlet> type) {
     return decodeRequest(encodedRequest, type, null);
   }
 
@@ -172,9 +172,9 @@ public final class RPC {
    * {@link RemoteService} interface requested in the encoded request string.
    * 
    * <p>
-   * If the serializationPolicyProvider parameter is not <code>null</code>, it is
-   * asked for a {@link SerializationPolicy} to use to restrict the set of types
-   * that can be decoded from the request. If this parameter is
+   * If the serializationPolicyProvider parameter is not <code>null</code>,
+   * it is asked for a {@link SerializationPolicy} to use to restrict the set of
+   * types that can be decoded from the request. If this parameter is
    * <code>null</code>, then only subtypes of
    * {@link com.google.gwt.user.client.rpc.IsSerializable IsSerializable} or
    * types which have custom field serializers can be decoded.
@@ -216,7 +216,7 @@ public final class RPC {
    *           assignable to the requested {@link RemoteService} interface
    *           </ul>
    */
-  public static RPCRequest decodeRequest(String encodedRequest, Class type,
+  public static RPCRequest decodeRequest(String encodedRequest, Class<? extends RemoteServiceServlet> type,
       SerializationPolicyProvider serializationPolicyProvider) {
     if (encodedRequest == null) {
       throw new NullPointerException("encodedRequest cannot be null");
@@ -247,7 +247,7 @@ public final class RPC {
       }
 
       SerializationPolicy serializationPolicy = streamReader.getSerializationPolicy();
-      Class serviceIntf;
+      Class<?> serviceIntf;
       try {
         serviceIntf = getClassFromSerializedName(serviceIntfName, classLoader);
         if (!RemoteService.class.isAssignableFrom(serviceIntf)) {
@@ -266,7 +266,7 @@ public final class RPC {
       String serviceMethodName = streamReader.readString();
 
       int paramCount = streamReader.readInt();
-      Class[] parameterTypes = new Class[paramCount];
+      Class<?>[] parameterTypes = new Class[paramCount];
 
       for (int i = 0; i < parameterTypes.length; i++) {
         String paramClassName = streamReader.readString();
@@ -327,9 +327,9 @@ public final class RPC {
    * method's list of checked exceptions.
    * 
    * <p>
-   * If the serializationPolicy parameter is not <code>null</code>, it is used to
-   * determine what types can be encoded as part of this response. If this
-   * parameter is <code>null</code>, then only subtypes of
+   * If the serializationPolicy parameter is not <code>null</code>, it is
+   * used to determine what types can be encoded as part of this response. If
+   * this parameter is <code>null</code>, then only subtypes of
    * {@link com.google.gwt.user.client.rpc.IsSerializable IsSerializable} or
    * types which have custom field serializers may be encoded.
    * </p>
@@ -391,9 +391,9 @@ public final class RPC {
    * an object that is not assignable to the service method's return type.
    * 
    * <p>
-   * If the serializationPolicy parameter is not <code>null</code>, it is used to
-   * determine what types can be encoded as part of this response. If this
-   * parameter is <code>null</code>, then only subtypes of
+   * If the serializationPolicy parameter is not <code>null</code>, it is
+   * used to determine what types can be encoded as part of this response. If
+   * this parameter is <code>null</code>, then only subtypes of
    * {@link com.google.gwt.user.client.rpc.IsSerializable IsSerializable} or
    * types which have custom field serializers may be encoded.
    * </p>
@@ -421,9 +421,9 @@ public final class RPC {
       throw new NullPointerException("serializationPolicy");
     }
 
-    Class methodReturnType = serviceMethod.getReturnType();
+    Class<?> methodReturnType = serviceMethod.getReturnType();
     if (methodReturnType != void.class && object != null) {
-      Class actualReturnType;
+      Class<?> actualReturnType;
       if (methodReturnType.isPrimitive()) {
         actualReturnType = getPrimitiveClassFromWrapper(object.getClass());
       } else {
@@ -484,9 +484,9 @@ public final class RPC {
    * could be the value returned by the method or an exception thrown by it.
    * 
    * <p>
-   * If the serializationPolicy parameter is not <code>null</code>, it is used to
-   * determine what types can be encoded as part of this response. If this
-   * parameter is <code>null</code>, then only subtypes of
+   * If the serializationPolicy parameter is not <code>null</code>, it is
+   * used to determine what types can be encoded as part of this response. If
+   * this parameter is <code>null</code>, then only subtypes of
    * {@link com.google.gwt.user.client.rpc.IsSerializable IsSerializable} or
    * types which have custom field serializers may be encoded.
    * </p>
@@ -562,7 +562,7 @@ public final class RPC {
    * @return a string that encodes the response from a service method
    * @throws SerializationException if the object cannot be serialized
    */
-  private static String encodeResponse(Class responseClass, Object object,
+  private static String encodeResponse(Class<?> responseClass, Object object,
       boolean wasThrown, SerializationPolicy serializationPolicy)
       throws SerializationException {
 
@@ -581,13 +581,13 @@ public final class RPC {
   /**
    * Find the invoked method on either the specified interface or any super.
    */
-  private static Method findInterfaceMethod(Class intf, String methodName,
-      Class[] paramTypes, boolean includeInherited) {
+  private static Method findInterfaceMethod(Class<?> intf, String methodName,
+      Class<?>[] paramTypes, boolean includeInherited) {
     try {
       return intf.getDeclaredMethod(methodName, paramTypes);
     } catch (NoSuchMethodException e) {
       if (includeInherited) {
-        Class[] superintfs = intf.getInterfaces();
+        Class<?>[] superintfs = intf.getInterfaces();
         for (int i = 0; i < superintfs.length; i++) {
           Method method = findInterfaceMethod(superintfs[i], methodName,
               paramTypes, true);
@@ -641,8 +641,8 @@ public final class RPC {
     return sb.toString();
   }
 
-  private static String formatMethodNotFoundErrorMessage(Class serviceIntf,
-      String serviceMethodName, Class[] parameterTypes) {
+  private static String formatMethodNotFoundErrorMessage(Class<?> serviceIntf,
+      String serviceMethodName, Class<?>[] parameterTypes) {
     StringBuffer sb = new StringBuffer();
 
     sb.append("Could not locate requested method '");
@@ -671,11 +671,11 @@ public final class RPC {
    * @return Class instance for the given type name
    * @throws ClassNotFoundException if the named type was not found
    */
-  private static Class getClassFromSerializedName(String serializedName,
+  private static Class<?> getClassFromSerializedName(String serializedName,
       ClassLoader classLoader) throws ClassNotFoundException {
-    Object value = TYPE_NAMES.get(serializedName);
+    Class<?> value = TYPE_NAMES.get(serializedName);
     if (value != null) {
-      return (Class) value;
+      return value;
     }
 
     return Class.forName(serializedName, false, classLoader);
@@ -688,8 +688,8 @@ public final class RPC {
    * @param wrapperClass primitive wrapper class
    * @return primitive class
    */
-  private static Class getPrimitiveClassFromWrapper(Class wrapperClass) {
-    return (Class) PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS.get(wrapperClass);
+  private static Class<?> getPrimitiveClassFromWrapper(Class<?> wrapperClass) {
+    return PRIMITIVE_WRAPPER_CLASS_TO_PRIMITIVE_CLASS.get(wrapperClass);
   }
 
   /**
@@ -706,25 +706,24 @@ public final class RPC {
    * Used to determine whether the specified interface name is implemented by
    * the service class. This is done without loading the class (for security).
    */
-  private static boolean implementsInterface(Class service, String intfName) {
+  private static boolean implementsInterface(Class<?> service, String intfName) {
     synchronized (serviceToImplementedInterfacesMap) {
       // See if it's cached.
       //
-      Set/* <String> */interfaceSet = (Set) serviceToImplementedInterfacesMap.get(service);
+      Set<String> interfaceSet = serviceToImplementedInterfacesMap.get(service);
       if (interfaceSet != null) {
         if (interfaceSet.contains(intfName)) {
           return true;
         }
       } else {
-        interfaceSet = new HashSet/* <String> */();
+        interfaceSet = new HashSet<String>();
         serviceToImplementedInterfacesMap.put(service, interfaceSet);
       }
 
       if (!service.isInterface()) {
         while ((service != null) && !RemoteServiceServlet.class.equals(service)) {
-          Class[] intfs = service.getInterfaces();
-          for (int i = 0; i < intfs.length; i++) {
-            Class intf = intfs[i];
+          Class<?>[] intfs = service.getInterfaces();
+          for (Class<?> intf : intfs) {
             if (implementsInterfaceRecursive(intf, intfName)) {
               interfaceSet.add(intfName);
               return true;
@@ -750,7 +749,7 @@ public final class RPC {
   /**
    * Only called from implementsInterface().
    */
-  private static boolean implementsInterfaceRecursive(Class clazz,
+  private static boolean implementsInterfaceRecursive(Class<?> clazz,
       String intfName) {
     assert (clazz.isInterface());
 
@@ -759,9 +758,8 @@ public final class RPC {
     }
 
     // search implemented interfaces
-    Class[] intfs = clazz.getInterfaces();
-    for (int i = 0; i < intfs.length; i++) {
-      Class intf = intfs[i];
+    Class<?>[] intfs = clazz.getInterfaces();
+    for (Class<?> intf : intfs) {
       if (implementsInterfaceRecursive(intf, intfName)) {
         return true;
       }
@@ -786,17 +784,16 @@ public final class RPC {
     assert (serviceIntfMethod != null);
     assert (cause != null);
 
-    Class[] exceptionsThrown = serviceIntfMethod.getExceptionTypes();
+    Class<?>[] exceptionsThrown = serviceIntfMethod.getExceptionTypes();
     if (exceptionsThrown.length <= 0) {
       // The method is not specified to throw any exceptions
       //
       return false;
     }
 
-    Class causeType = cause.getClass();
+    Class<? extends Throwable> causeType = cause.getClass();
 
-    for (int index = 0; index < exceptionsThrown.length; ++index) {
-      Class exceptionThrown = exceptionsThrown[index];
+    for (Class<?> exceptionThrown : exceptionsThrown) {
       assert (exceptionThrown != null);
 
       if (exceptionThrown.isAssignableFrom(causeType)) {
@@ -812,7 +809,7 @@ public final class RPC {
    * {@link com.google.gwt.dev.util.TypeInfo#getSourceRepresentation(Class)} to
    * avoid runtime dependency on gwt-dev.
    */
-  private static String printTypeName(Class type) {
+  private static String printTypeName(Class<?> type) {
     // Primitives
     //
     if (type.equals(Integer.TYPE)) {
@@ -836,7 +833,7 @@ public final class RPC {
     // Arrays
     //
     if (type.isArray()) {
-      Class componentType = type.getComponentType();
+      Class<?> componentType = type.getComponentType();
       return printTypeName(componentType) + "[]";
     }
 

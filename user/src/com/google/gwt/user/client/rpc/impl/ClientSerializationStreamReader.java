@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,6 +44,7 @@ public final class ClientSerializationStreamReader extends
     this.serializer = serializer;
   }
 
+  @Override
   public void prepareToRead(String encoded) throws SerializationException {
     results = eval(encoded);
     index = getLength(results);
@@ -83,10 +84,11 @@ public final class ClientSerializationStreamReader extends
     return this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::results[--this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::index];
   }-*/;
 
-  public String readString() throws SerializationException {
+  public String readString() {
     return getString(readInt());
   }
 
+  @Override
   protected Object deserialize(String typeSignature)
       throws SerializationException {
     Object instance = serializer.instantiate(this, typeSignature);
@@ -95,6 +97,7 @@ public final class ClientSerializationStreamReader extends
     return instance;
   }
 
+  @Override
   protected native String getString(int index) /*-{ 
     // index is 1-based
     if (!index) {

@@ -45,7 +45,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -194,7 +193,7 @@ public class SerializableTypeOracleBuilder {
     /**
      * An issue that prevents a type from being serializable.
      */
-    private class SerializationIssue implements Comparable {
+    private class SerializationIssue implements Comparable<SerializationIssue> {
       public final boolean isSpeculative;
       public final String issueMessage;
 
@@ -203,8 +202,7 @@ public class SerializableTypeOracleBuilder {
         this.issueMessage = issueMessage;
       }
 
-      public int compareTo(Object obj) {
-        SerializationIssue other = (SerializationIssue) obj;
+      public int compareTo(SerializationIssue other) {
         if (isSpeculative == other.isSpeculative) {
           return issueMessage.compareTo(other.issueMessage);
         }
@@ -228,6 +226,7 @@ public class SerializableTypeOracleBuilder {
         this.state = state;
       }
 
+      @Override
       public String toString() {
         return state;
       }
@@ -264,7 +263,7 @@ public class SerializableTypeOracleBuilder {
      * List of serialization warnings or errors that prevent this type from
      * being serializable.
      */
-    private Set /* <SerializationIssue> */serializationIssues = new TreeSet/* <SerializationIssue> */();
+    private Set<SerializationIssue> serializationIssues = new TreeSet<SerializationIssue>();
 
     /**
      * The state that this type is currently in.
@@ -306,9 +305,7 @@ public class SerializableTypeOracleBuilder {
     }
 
     public void logReasonsForUnserializability(TreeLogger logger) {
-      Iterator iter = serializationIssues.iterator();
-      while (iter.hasNext()) {
-        SerializationIssue serializationIssue = (SerializationIssue) iter.next();
+      for (SerializationIssue serializationIssue : serializationIssues) {
         logger.branch(getLogLevel(serializationIssue.isSpeculative),
             serializationIssue.issueMessage, null);
       }
@@ -358,28 +355,27 @@ public class SerializableTypeOracleBuilder {
     return customSerializer;
   }
 
-  private static void addEdge(Map adjList, JClassType subclass, JClassType clazz) {
-    List edges = (List) adjList.get(subclass);
+  private static void addEdge(Map<JClassType, List<JClassType>> adjList,
+      JClassType subclass, JClassType clazz) {
+    List<JClassType> edges = adjList.get(subclass);
     if (edges == null) {
-      edges = new ArrayList();
+      edges = new ArrayList<JClassType>();
       adjList.put(subclass, edges);
     }
 
     edges.add(clazz);
   }
 
-  private static void depthFirstSearch(Set seen, Map adjList, JClassType type) {
+  private static void depthFirstSearch(Set<JClassType> seen,
+      Map<JClassType, List<JClassType>> adjList, JClassType type) {
     if (seen.contains(type)) {
       return;
     }
     seen.add(type);
 
-    List children = (List) adjList.get(type);
+    List<JClassType> children = adjList.get(type);
     if (children != null) {
-      Iterator it = children.iterator();
-      while (it.hasNext()) {
-        JClassType child = (JClassType) it.next();
-
+      for (JClassType child : children) {
         if (!seen.contains(child)) {
           depthFirstSearch(seen, adjList, child);
         }
@@ -398,11 +394,12 @@ public class SerializableTypeOracleBuilder {
    */
   private static boolean directlyImplementsInterface(JClassType type,
       JClassType intf) {
-    return directlyImplementsInterfaceRecursive(new HashSet(), type, intf);
+    return directlyImplementsInterfaceRecursive(new HashSet<JClassType>(),
+        type, intf);
   }
 
-  private static boolean directlyImplementsInterfaceRecursive(Set seen,
-      JClassType clazz, JClassType intf) {
+  private static boolean directlyImplementsInterfaceRecursive(
+      Set<JClassType> seen, JClassType clazz, JClassType intf) {
 
     if (clazz == intf) {
       return true;
@@ -410,9 +407,7 @@ public class SerializableTypeOracleBuilder {
 
     JClassType[] intfImpls = clazz.getImplementedInterfaces();
 
-    for (int i = 0; i < intfImpls.length; ++i) {
-      JClassType intfImpl = intfImpls[i];
-
+    for (JClassType intfImpl : intfImpls) {
       if (!seen.contains(intfImpl)) {
         seen.add(intfImpl);
 
@@ -433,19 +428,16 @@ public class SerializableTypeOracleBuilder {
    * @param leaves the set of serializable leaf types
    * @return all types on the path from the root type to the serializable leaves
    */
-  private static List getAllTypesBetweenRootTypeAndLeaves(JClassType root,
-      List leaves) {
-    Map adjList = getInvertedTypeHierarchy(root);
-    Set types = new HashSet();
+  private static List<JClassType> getAllTypesBetweenRootTypeAndLeaves(
+      JClassType root, List<JClassType> leaves) {
+    Map<JClassType, List<JClassType>> adjList = getInvertedTypeHierarchy(root);
+    Set<JClassType> types = new HashSet<JClassType>();
 
-    Iterator it = leaves.iterator();
-    while (it.hasNext()) {
-      JClassType type = (JClassType) it.next();
-
+    for (JClassType type : leaves) {
       depthFirstSearch(types, adjList, type);
     }
 
-    return Arrays.asList(types.toArray());
+    return Arrays.asList(types.toArray(new JClassType[0]));
   }
 
   private static JArrayType getArrayType(TypeOracle typeOracle, int rank,
@@ -466,13 +458,14 @@ public class SerializableTypeOracleBuilder {
    * Given a root type return an adjacency list that is the inverted type
    * hierarchy.
    */
-  private static Map getInvertedTypeHierarchy(JClassType root) {
-    Map adjList = new HashMap/* <JClassType, List<JClassType>> */();
-    Set seen = new HashSet /* <JClassType> */();
-    Stack queue = new Stack /* <JClassType> */();
+  private static Map<JClassType, List<JClassType>> getInvertedTypeHierarchy(
+      JClassType root) {
+    Map<JClassType, List<JClassType>> adjList = new HashMap<JClassType, List<JClassType>>();
+    Set<JClassType> seen = new HashSet<JClassType>();
+    Stack<JClassType> queue = new Stack<JClassType>();
     queue.push(root);
     while (!queue.isEmpty()) {
-      JClassType clazz = (JClassType) queue.pop();
+      JClassType clazz = queue.pop();
       JClassType[] subclasses = clazz.getSubtypes();
 
       if (seen.contains(clazz)) {
@@ -480,9 +473,7 @@ public class SerializableTypeOracleBuilder {
       }
       seen.add(clazz);
 
-      for (int i = 0; i < subclasses.length; ++i) {
-        JClassType subclass = subclasses[i];
-
+      for (JClassType subclass : subclasses) {
         if (clazz.isInterface() != null) {
           if (directlyImplementsInterface(subclass, clazz)) {
             addEdge(adjList, subclass, clazz);
@@ -566,12 +557,12 @@ public class SerializableTypeOracleBuilder {
   /**
    * Map of {@link JClassType} to {@link TypeInfo}.
    */
-  private final Map /* <JClassType, TypeInfo> */typeToTypeInfo = new HashMap();
+  private final Map<JClassType, TypeInfo> typeToTypeInfo = new HashMap<JClassType, TypeInfo>();
 
   /**
    * Map of {@link JType} to {@link TypeInfoComputed}.
    */
-  private final Map /* <JType, TypeInfoComputed> */typeToTypeInfoComputed = new HashMap();
+  private final Map<JType, TypeInfoComputed> typeToTypeInfoComputed = new HashMap<JType, TypeInfoComputed>();
 
   /**
    * Constructs a builder.
@@ -647,10 +638,9 @@ public class SerializableTypeOracleBuilder {
 
     // Compute covariant arrays.
     // Cache a list to prevent comodification.
-    List typeInfoComputed = new ArrayList(typeToTypeInfoComputed.values());
-    Iterator iterTypes = typeInfoComputed.iterator();
-    while (iterTypes.hasNext()) {
-      TypeInfoComputed tic = (TypeInfoComputed) iterTypes.next();
+    List<TypeInfoComputed> typeInfoComputed = new ArrayList<TypeInfoComputed>(
+        typeToTypeInfoComputed.values());
+    for (TypeInfoComputed tic : typeInfoComputed) {
       if (tic.isInstantiable()) {
         JArrayType arrayType = tic.getType().isArray();
         if (arrayType != null) {
@@ -658,18 +648,18 @@ public class SerializableTypeOracleBuilder {
           int rank = arrayType.getRank();
           JClassType classType = leafType.isClassOrInterface();
           if (classType != null) {
-            List instantiableSubTypes = new ArrayList();
+            List<JClassType> instantiableSubTypes = new ArrayList<JClassType>();
             JClassType[] subTypes = classType.getSubtypes();
             for (int i = 0; i < subTypes.length; ++i) {
               if (getTypeInfoComputed(subTypes[i]).isInstantiable()) {
                 instantiableSubTypes.add(subTypes[i]);
               }
             }
-            List covariantTypes = getAllTypesBetweenRootTypeAndLeaves(
+            List<JClassType> covariantTypes = getAllTypesBetweenRootTypeAndLeaves(
                 classType, instantiableSubTypes);
             for (int i = 0, c = covariantTypes.size(); i < c; ++i) {
               JArrayType covariantArray = getArrayType(typeOracle, rank,
-                  (JType) covariantTypes.get(i));
+                  covariantTypes.get(i));
               getTypeInfoComputed(covariantArray).setInstantiable(true);
             }
           }
@@ -677,11 +667,9 @@ public class SerializableTypeOracleBuilder {
       }
     }
 
-    Set possiblyInstantiatedTypes = new HashSet();
-    List serializableTypesList = new ArrayList();
-    iterTypes = typeToTypeInfoComputed.values().iterator();
-    while (iterTypes.hasNext()) {
-      TypeInfoComputed tic = (TypeInfoComputed) iterTypes.next();
+    Set<JType> possiblyInstantiatedTypes = new HashSet<JType>();
+    List<JType> serializableTypesList = new ArrayList<JType>();
+    for (TypeInfoComputed tic : typeToTypeInfoComputed.values()) {
       JType type = tic.getType();
       // Only record real types
       if (type.isParameterized() == null) {
@@ -697,10 +685,10 @@ public class SerializableTypeOracleBuilder {
     JType[] serializableTypes = new JType[serializableTypesList.size()];
     serializableTypesList.toArray(serializableTypes);
 
-    Arrays.sort(serializableTypes, new Comparator() {
-      public int compare(Object o1, Object o2) {
-        String n1 = ((JType) o1).getQualifiedSourceName();
-        String n2 = ((JType) o2).getQualifiedSourceName();
+    Arrays.sort(serializableTypes, new Comparator<JType>() {
+      public int compare(JType o1, JType o2) {
+        String n1 = o1.getQualifiedSourceName();
+        String n2 = o2.getQualifiedSourceName();
         return n1.compareTo(n2);
       }
     });
@@ -714,7 +702,7 @@ public class SerializableTypeOracleBuilder {
   /**
    * Consider any subtype of java.lang.Object which qualifies for serialization.
    * 
-   * @param localLogger
+   * @param logger
    */
   private void checkAllSubtypesOfObject(TreeLogger logger) {
     if (alreadyCheckedObject) {
@@ -731,8 +719,7 @@ public class SerializableTypeOracleBuilder {
     TreeLogger localLogger = logger.branch(TreeLogger.WARN,
         "Checking all subtypes of Object which qualify for serialization", null);
     JClassType[] allTypes = typeOracle.getJavaLangObject().getSubtypes();
-    for (int i = 0; i < allTypes.length; ++i) {
-      JClassType cls = allTypes[i];
+    for (JClassType cls : allTypes) {
       if (getTypeInfo(cls).isDeclaredSerializable()) {
         checkTypeInstantiable(localLogger, cls, true, true);
       }
@@ -755,7 +742,7 @@ public class SerializableTypeOracleBuilder {
     }
 
     if (typeInfo.isManuallySerializable()) {
-      List failures = CustomFieldSerializerValidator.validate(
+      List<String> failures = CustomFieldSerializerValidator.validate(
           streamReaderClass, streamWriterClass, typeInfo.getManualSerializer(),
           type);
       if (!failures.isEmpty()) {
@@ -849,9 +836,7 @@ public class SerializableTypeOracleBuilder {
       TreeLogger localLogger = logger.branch(TreeLogger.DEBUG,
           "Analyzing Fields:", null);
 
-      for (int i = 0; i < fields.length; ++i) {
-        JField field = fields[i];
-
+      for (JField field : fields) {
         if (field.isStatic() || field.isTransient()) {
           continue;
         }
@@ -915,14 +900,13 @@ public class SerializableTypeOracleBuilder {
 
     // TODO: consider looking up type hierarchy.
     JMethod[] methods = classOrInterface.getMethods();
-    for (int i = 0; i < methods.length; ++i) {
-      JMethod method = methods[i];
+    for (JMethod method : methods) {
       if (method.isNative()) {
         logger.branch(
             TreeLogger.WARN,
             MessageFormat.format(
                 "Method ''{0}'' is native, calling this method in server side code will result in an UnsatisfiedLinkError",
-                new String[] {method.toString()}), null);
+                method.toString()), null);
       }
     }
   }
@@ -998,8 +982,7 @@ public class SerializableTypeOracleBuilder {
         TreeLogger subLogger = localLogger.branch(TreeLogger.DEBUG,
             "Analyzing subclasses:", null);
 
-        for (int i = 0; i < subtypes.length; ++i) {
-          JClassType subType = subtypes[i];
+        for (JClassType subType : subtypes) {
           if (checkClassOrInterfaceInstantiable(subLogger, subType, true)) {
             getTypeInfoComputed(subType).setInstantiable(true);
             anySubtypes = true;
@@ -1010,8 +993,8 @@ public class SerializableTypeOracleBuilder {
       if (anySubtypes) {
         if (!rawTypeOk) {
           /*
-           * There is at least one instantiable type and raw types are
-           * not allowed; check if this type is an unparameterized type.
+           * There is at least one instantiable type and raw types are not
+           * allowed; check if this type is an unparameterized type.
            */
           checkForUnparameterizedType(logger, classType);
         }
@@ -1032,7 +1015,7 @@ public class SerializableTypeOracleBuilder {
   }
 
   private TypeInfo getTypeInfo(JClassType type) {
-    TypeInfo ti = (TypeInfo) typeToTypeInfo.get(type);
+    TypeInfo ti = typeToTypeInfo.get(type);
     if (ti == null) {
       ti = new TypeInfo(type);
       typeToTypeInfo.put(type, ti);
@@ -1041,7 +1024,7 @@ public class SerializableTypeOracleBuilder {
   }
 
   private TypeInfoComputed getTypeInfoComputed(JType type) {
-    TypeInfoComputed tic = (TypeInfoComputed) typeToTypeInfoComputed.get(type);
+    TypeInfoComputed tic = typeToTypeInfoComputed.get(type);
     if (tic == null) {
       tic = new TypeInfoComputed(type);
       typeToTypeInfoComputed.put(type, tic);
@@ -1077,11 +1060,9 @@ public class SerializableTypeOracleBuilder {
   }
 
   private void markAsUninstantiableAndLog(TreeLogger logger,
-      boolean isSpeculative, List es, TypeInfoComputed tic) {
-    Iterator iter = es.iterator();
-    while (iter.hasNext()) {
-      markAsUninstantiableAndLog(logger, isSpeculative, (String) iter.next(),
-          tic);
+      boolean isSpeculative, List<String> es, TypeInfoComputed tic) {
+    for (String s : es) {
+      markAsUninstantiableAndLog(logger, isSpeculative, s, tic);
     }
   }
 
@@ -1100,8 +1081,7 @@ public class SerializableTypeOracleBuilder {
         "Analyzing methods:", null);
 
     boolean allSucceeded = true;
-    for (int i = 0; i < methods.length; ++i) {
-      JMethod method = methods[i];
+    for (JMethod method : methods) {
       TreeLogger methodLogger = validationLogger.branch(TreeLogger.DEBUG,
           method.toString(), null);
       JType returnType = method.getReturnType();
@@ -1114,8 +1094,7 @@ public class SerializableTypeOracleBuilder {
       }
 
       JParameter[] params = method.getParameters();
-      for (int j = 0; j < params.length; ++j) {
-        JParameter param = params[j];
+      for (JParameter param : params) {
         TreeLogger paramLogger = methodLogger.branch(TreeLogger.DEBUG,
             "Parameter: " + param.toString(), null);
         JType paramType = param.getType();
@@ -1127,8 +1106,7 @@ public class SerializableTypeOracleBuilder {
       if (exs.length > 0) {
         TreeLogger throwsLogger = methodLogger.branch(TreeLogger.DEBUG,
             "Throws:", null);
-        for (int j = 0; j < exs.length; ++j) {
-          JType ex = exs[j];
+        for (JType ex : exs) {
           if (!exceptionClass.isAssignableFrom(ex.isClass())) {
             throwsLogger = throwsLogger.branch(
                 TreeLogger.WARN,

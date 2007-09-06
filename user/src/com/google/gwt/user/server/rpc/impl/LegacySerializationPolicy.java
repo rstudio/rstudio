@@ -54,7 +54,7 @@ public class LegacySerializationPolicy extends SerializationPolicy {
    * matching the client's expectations. Note that a type on this list may still
    * be serializable via a custom serializer.
    */
-  private static final Class[] JRE_BLACKLIST = {
+  private static final Class<?>[] JRE_BLACKLIST = {
       java.lang.ArrayStoreException.class, java.lang.AssertionError.class,
       java.lang.Boolean.class, java.lang.Byte.class, java.lang.Character.class,
       java.lang.Class.class, java.lang.ClassCastException.class,
@@ -75,9 +75,9 @@ public class LegacySerializationPolicy extends SerializationPolicy {
       java.util.HashMap.class, java.util.HashSet.class,
       java.util.MissingResourceException.class,
       java.util.NoSuchElementException.class, java.util.Stack.class,
-      java.util.TooManyListenersException.class, java.util.Vector.class,};
+      java.util.TooManyListenersException.class, java.util.Vector.class};
 
-  private static final Set JRE_BLACKSET = new HashSet(
+  private static final Set<Class<?>> JRE_BLACKSET = new HashSet<Class<?>>(
       Arrays.asList(JRE_BLACKLIST));
 
   private static final LegacySerializationPolicy sInstance = new LegacySerializationPolicy();
@@ -97,7 +97,8 @@ public class LegacySerializationPolicy extends SerializationPolicy {
    * 
    * @see com.google.gwt.user.server.rpc.SerializationPolicy#shouldDerializeFields(java.lang.String)
    */
-  public boolean shouldDeserializeFields(Class clazz) {
+  @Override
+  public boolean shouldDeserializeFields(Class<?> clazz) {
     return isFieldSerializable(clazz);
   }
 
@@ -106,7 +107,8 @@ public class LegacySerializationPolicy extends SerializationPolicy {
    * 
    * @see com.google.gwt.user.server.rpc.SerializationPolicy#shouldSerializeFields(java.lang.String)
    */
-  public boolean shouldSerializeFields(Class clazz) {
+  @Override
+  public boolean shouldSerializeFields(Class<?> clazz) {
     return isFieldSerializable(clazz);
   }
 
@@ -115,7 +117,8 @@ public class LegacySerializationPolicy extends SerializationPolicy {
    * 
    * @see com.google.gwt.user.server.rpc.SerializationPolicy#validateDeserialize(java.lang.String)
    */
-  public void validateDeserialize(Class clazz) throws SerializationException {
+  @Override
+  public void validateDeserialize(Class<?> clazz) throws SerializationException {
     if (!isInstantiable(clazz)) {
       throw new SerializationException(
           "Type '"
@@ -131,7 +134,8 @@ public class LegacySerializationPolicy extends SerializationPolicy {
    * 
    * @see com.google.gwt.user.server.rpc.SerializationPolicy#validateSerialize(java.lang.String)
    */
-  public void validateSerialize(Class clazz) throws SerializationException {
+  @Override
+  public void validateSerialize(Class<?> clazz) throws SerializationException {
     if (!isInstantiable(clazz)) {
       throw new SerializationException(
           "Type '"
@@ -147,7 +151,7 @@ public class LegacySerializationPolicy extends SerializationPolicy {
    * {@link Serializable}, types with custom serializers, and any arrays of
    * those types.
    */
-  private boolean isFieldSerializable(Class clazz) {
+  private boolean isFieldSerializable(Class<?> clazz) {
     if (isInstantiable(clazz)) {
       return true;
     }
@@ -163,7 +167,7 @@ public class LegacySerializationPolicy extends SerializationPolicy {
    * {@link Serializable} types cannot be instantiated or serialized directly
    * (only as super types of legacy serializable types).
    */
-  private boolean isInstantiable(Class clazz) {
+  private boolean isInstantiable(Class<?> clazz) {
     if (clazz.isPrimitive()) {
       return true;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,9 +20,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.impl.HTTPRequestImpl;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Builder for constructing {@link com.google.gwt.http.client.Request} objects.
@@ -56,6 +54,7 @@ public class RequestBuilder {
       this.name = name;
     }
 
+    @Override
     public String toString() {
       return name;
     }
@@ -77,7 +76,7 @@ public class RequestBuilder {
    * Map of header name to value that will be added to the JavaScript
    * XmlHttpRequest object before sending a request.
    */
-  private Map headers;
+  private Map<String, String> headers;
 
   /*
    * HTTP method to use when opening an JavaScript XmlHttpRequest object
@@ -208,7 +207,7 @@ public class RequestBuilder {
     StringValidator.throwIfEmptyOrNull("value", value);
 
     if (headers == null) {
-      headers = new HashMap();
+      headers = new HashMap<String, String>();
     }
 
     headers.put(header, value);
@@ -274,12 +273,9 @@ public class RequestBuilder {
   private void setHeaders(JavaScriptObject xmlHttpRequest)
       throws RequestException {
     if (headers != null && headers.size() > 0) {
-      Set entrySet = headers.entrySet();
-      Iterator iter = entrySet.iterator();
-      while (iter.hasNext()) {
-        Map.Entry header = (Map.Entry) iter.next();
+      for (Map.Entry<String, String> header : headers.entrySet()) {
         String errorMessage = XMLHTTPRequest.setRequestHeader(xmlHttpRequest,
-            (String) header.getKey(), (String) header.getValue());
+            header.getKey(), header.getValue());
         if (errorMessage != null) {
           throw new RequestException(errorMessage);
         }

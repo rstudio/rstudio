@@ -20,7 +20,6 @@ import com.google.gwt.junit.client.TestResults;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -46,7 +45,7 @@ public class JUnitMessageQueue {
    * Key = client-id (e.g. agent+host) Value = the index of the current
    * requested test
    */
-  private Map/* <String,Integer> */clientTestRequests = new HashMap/* <String,Integer> */();
+  private Map<String,Integer> clientTestRequests = new HashMap<String,Integer>();
 
   /**
    * The index of the current test being executed.
@@ -82,7 +81,7 @@ public class JUnitMessageQueue {
   /**
    * The results for the current test method.
    */
-  private List/* <TestResults> */testResults = new ArrayList/* <TestResults> */();
+  private List<TestResults> testResults = new ArrayList<TestResults>();
 
   /**
    * Creates a message queue with one client.
@@ -161,7 +160,7 @@ public class JUnitMessageQueue {
    * @return An getException thrown from a failed test, or <code>null</code>
    *         if the test completed without error.
    */
-  List/* <TestResults> */getResults(String testClassName) {
+  List<TestResults> getResults(String testClassName) {
     assert (testClassName.equals(testClass));
     return testResults;
   }
@@ -187,14 +186,13 @@ public class JUnitMessageQueue {
   boolean haveAllClientsRetrievedCurrentTest() {
     synchronized (readTestLock) {
       // If a client hasn't yet contacted, it will have no entry
-      Collection clientIndices = clientTestRequests.values();
+      Collection<Integer> clientIndices = clientTestRequests.values();
       if (clientIndices.size() < numClients) {
         return false;
       }
       // Every client must have been bumped PAST the current test index
-      for (Iterator it = clientIndices.iterator(); it.hasNext();) {
-        Integer value = (Integer) it.next();
-        if (value.intValue() <= currentTestIndex) {
+      for (Integer value : clientIndices) {
+        if (value <= currentTestIndex) {
           return false;
         }
       }
@@ -214,7 +212,7 @@ public class JUnitMessageQueue {
       testClass = testClassName;
       testMethod = testName;
       ++currentTestIndex;
-      testResults = new ArrayList/* <TestResults> */(numClients);
+      testResults = new ArrayList<TestResults>(numClients);
       readTestLock.notifyAll();
     }
   }
@@ -231,8 +229,8 @@ public class JUnitMessageQueue {
 
   // This method requires that readTestLock is being held for the duration.
   private void bumpClientTestRequest(String clientId) {
-    Integer index = (Integer) clientTestRequests.get(clientId);
-    clientTestRequests.put(clientId, new Integer(index.intValue() + 1));
+    Integer index = clientTestRequests.get(clientId);
+    clientTestRequests.put(clientId, index + 1);
   }
 
   // This method requires that readTestLock is being held for the duration.
@@ -241,11 +239,11 @@ public class JUnitMessageQueue {
       // the "null" test is always available for an old client
       return true;
     }
-    Integer index = (Integer) clientTestRequests.get(clientId);
+    Integer index = clientTestRequests.get(clientId);
     if (index == null) {
-      index = new Integer(0);
+      index = 0;
       clientTestRequests.put(clientId, index);
     }
-    return index.intValue() == currentTestIndex;
+    return index == currentTestIndex;
   }
 }

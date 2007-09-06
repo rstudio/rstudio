@@ -45,36 +45,36 @@ class CustomFieldSerializerValidator {
    * @return list of error messages, if any, associated with the custom field
    *         serializer
    */
-  public static List /* <String> */validate(JClassType streamReaderClass,
+  public static List<String> validate(JClassType streamReaderClass,
       JClassType streamWriterClass, JClassType serializer, JClassType serializee) {
-    List /* <String> */reasons = new ArrayList/* <String> */();
+    List<String> reasons = new ArrayList<String>();
 
     JMethod deserialize = serializer.findMethod("deserialize", new JType[] {
         streamReaderClass, serializee});
     if (!isValidCustomFieldSerializerMethod(deserialize, JPrimitiveType.VOID)) {
-      reasons.add(MessageFormat.format(NO_DESERIALIZE_METHOD, new String[] {
+      reasons.add(MessageFormat.format(NO_DESERIALIZE_METHOD,
           serializer.getQualifiedSourceName(),
           streamReaderClass.getQualifiedSourceName(),
-          serializee.getQualifiedSourceName()}));
+          serializee.getQualifiedSourceName()));
     }
 
     JMethod serialize = serializer.findMethod("serialize", new JType[] {
         streamWriterClass, serializee});
     if (!isValidCustomFieldSerializerMethod(serialize, JPrimitiveType.VOID)) {
-      reasons.add(MessageFormat.format(NO_SERIALIZE_METHOD, new String[] {
+      reasons.add(MessageFormat.format(NO_SERIALIZE_METHOD,
           serializer.getQualifiedSourceName(),
           streamWriterClass.getQualifiedSourceName(),
-          serializee.getQualifiedSourceName()}));
+          serializee.getQualifiedSourceName()));
     }
 
     if (!serializee.isAbstract() && !serializee.isDefaultInstantiable()) {
       JMethod instantiate = serializer.findMethod("instantiate",
           new JType[] {streamReaderClass});
       if (!isValidCustomFieldSerializerMethod(instantiate, serializee)) {
-        reasons.add(MessageFormat.format(NO_INSTANTIATE_METHOD, new String[] {
+        reasons.add(MessageFormat.format(NO_INSTANTIATE_METHOD,
             serializer.getQualifiedSourceName(),
             serializee.getQualifiedSourceName(),
-            streamReaderClass.getQualifiedSourceName()}));
+            streamReaderClass.getQualifiedSourceName()));
       }
     }
 

@@ -24,9 +24,9 @@ import java.util.List;
 public interface Statements extends Node {
 
   /**
-   * Returns a list of {@link Statement}s.
+   * Returns a list of {@link Statements}.
    *
-   * @return a non <code>null</code> list of {@link Statement}s.
+   * @return a non <code>null</code> list of {@link Statements}.
    */
-  public List getStatements();
+  public List<Statements> getStatements();
 }

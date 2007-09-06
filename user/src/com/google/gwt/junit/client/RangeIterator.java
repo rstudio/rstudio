@@ -20,8 +20,9 @@ import java.util.Iterator;
 /**
  * A base class useful for implementing Iterators for Ranges.
  *
+ * @param <T> the type that the Range contains
  */
-public abstract class RangeIterator implements Iterator {
+public abstract class RangeIterator<T> implements Iterator<T> {
   public void remove() {
     throw new UnsupportedOperationException();
   }

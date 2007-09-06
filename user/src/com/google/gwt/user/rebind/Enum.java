@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,15 +29,15 @@ class Enum {
    * @param pool pool to draw key from
    * @return associated <code>Enum</code>
    */
-  public static Enum require(String key, Map pool) {
-    Enum t = (Enum) pool.get(key);
+  public static Enum require(String key, Map<String, Enum> pool) {
+    Enum t = pool.get(key);
     if (t == null) {
       throw new IllegalArgumentException(key
           + " is not a valid Enum type. Current options are " + pool.keySet());
     }
     return t;
   }
-
+  
   /**
    * Associated key.
    */
@@ -49,7 +49,7 @@ class Enum {
    * @param key associated key
    * @param pool associated pool
    */
-  protected Enum(String key, Map pool) {
+  protected Enum(String key, Map<String, Enum> pool) {
     this.key = key;
     pool.put(key, this);
   }
@@ -57,6 +57,7 @@ class Enum {
   /**
    * @see java.lang.Object#toString()
    */
+  @Override
   public String toString() {
     return key;
   }

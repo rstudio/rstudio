@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -91,6 +91,7 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
       /*
        * @see java.lang.Runnable#run()
        */
+      @Override
       public void run() {
         synchronized (processByToken) {
           /*
@@ -109,7 +110,7 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
      * The key associated with <code>process</code> in
      * <code>processByToken</code>.
      */
-    private Object key;
+    private Integer key;
 
     /**
      * If non-null, the active TimerTask which will kill <code>process</code>
@@ -133,7 +134,7 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
      * @param initKeepAliveMs the initial time to wait before killing
      *          <code>process</code>
      */
-    ProcessManager(Object key, Process process, long initKeepAliveMs) {
+    ProcessManager(Integer key, Process process, long initKeepAliveMs) {
       this.process = process;
       this.key = key;
       schedule(initKeepAliveMs);
@@ -145,7 +146,7 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
      * <code>processByToken</code> to call this method.
      */
     public void doKill() {
-      Object removed = processByToken.remove(key);
+      ProcessManager removed = processByToken.remove(key);
       assert (removed == this);
       process.destroy();
       schedule(0);
@@ -257,7 +258,8 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
    * serves as a lock that must be held before any state-changing operations on
    * this class may be performed.
    */
-  private final Map processByToken = new HashMap();
+  private final Map<Integer, ProcessManager> processByToken =
+      new HashMap<Integer, ProcessManager>();
 
   /**
    * A single shared Timer used by all instances of
@@ -290,8 +292,7 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
       if (token < 0 || token >= nextToken) {
         throw new IllegalArgumentException();
       }
-      Integer intTok = new Integer(token);
-      ProcessManager process = (ProcessManager) processByToken.get(intTok);
+      ProcessManager process = processByToken.get(token);
       if (process != null) {
         if (process.keepAlive(keepAliveMs)) {
           // The process was successfully kept alive.
@@ -314,8 +315,7 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
       if (token < 0 || token >= nextToken) {
         throw new IllegalArgumentException();
       }
-      Integer intTok = new Integer(token);
-      ProcessManager process = (ProcessManager) processByToken.get(intTok);
+      ProcessManager process = processByToken.get(token);
       if (process != null) {
         process.doKill();
       }
@@ -335,9 +335,8 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
       Process child = Runtime.getRuntime().exec(new String[] {launchCmd, url});
       synchronized (processByToken) {
         int myToken = nextToken++;
-        Integer intTok = new Integer(myToken);
         // Adds self to processByToken.
-        new ProcessManager(intTok, child, keepAliveMs);
+        new ProcessManager(myToken, child, keepAliveMs);
         return myToken;
       }
     } catch (IOException e) {
