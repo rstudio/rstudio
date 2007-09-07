@@ -56,7 +56,7 @@ public class JsVisitor {
   };
 
   public final <T extends JsVisitable> T accept(T node) {
-    return doAccept(node);
+    return (T) doAccept(node);
   }
 
   public final <T extends JsVisitable<T>> void acceptList(List<T> collection) {

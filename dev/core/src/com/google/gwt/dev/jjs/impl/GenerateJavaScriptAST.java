@@ -510,7 +510,7 @@ public class GenerateJavaScriptAST {
       alreadyRan.add(x);
 
       List<JsFunction> jsFuncs = popList(x.methods.size()); // methods
-      List<JsNode<?>> jsFields = popList(x.fields.size()); // fields
+      List<JsNode> jsFields = popList(x.fields.size()); // fields
 
       if (typeOracle.hasClinit(x)) {
         handleClinit(jsFuncs.get(0));
@@ -535,7 +535,7 @@ public class GenerateJavaScriptAST {
       // setup fields
       JsVars vars = new JsVars();
       for (int i = 0; i < jsFields.size(); ++i) {
-        JsNode<?> node = jsFields.get(i);
+        JsNode node = jsFields.get(i);
         if (node instanceof JsVar) {
           vars.add((JsVar) node);
         } else {
@@ -1534,7 +1534,7 @@ public class GenerateJavaScriptAST {
     private <T extends JsVisitable> List<T> popList(int count) {
       List<T> list = new ArrayList<T>();
       while (count > 0) {
-        T item = pop();
+        T item = this.<T>pop();
         if (item != null) {
           list.add(item);
         }
@@ -1548,7 +1548,7 @@ public class GenerateJavaScriptAST {
         int count) {
       List<T> list = new ArrayList<T>();
       while (count > 0) {
-        T item = pop();
+        T item = this.<T>pop();
         if (item != null) {
           list.add(item);
         }

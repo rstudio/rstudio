@@ -160,7 +160,7 @@ public final class RPC {
    *           assignable to the requested {@link RemoteService} interface
    *           </ul>
    */
-  public static RPCRequest decodeRequest(String encodedRequest, Class<? extends RemoteServiceServlet> type) {
+  public static RPCRequest decodeRequest(String encodedRequest, Class type) {
     return decodeRequest(encodedRequest, type, null);
   }
 
@@ -216,7 +216,7 @@ public final class RPC {
    *           assignable to the requested {@link RemoteService} interface
    *           </ul>
    */
-  public static RPCRequest decodeRequest(String encodedRequest, Class<? extends RemoteServiceServlet> type,
+  public static RPCRequest decodeRequest(String encodedRequest, Class type,
       SerializationPolicyProvider serializationPolicyProvider) {
     if (encodedRequest == null) {
       throw new NullPointerException("encodedRequest cannot be null");

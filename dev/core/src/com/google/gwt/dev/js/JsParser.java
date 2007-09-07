@@ -335,7 +335,7 @@ public class JsParser {
    */
   private JsNameRef mapAsPropertyNameRef(Node nameRefNode)
       throws JsParserException {
-    JsNode<?> unknown = map(nameRefNode);
+    JsNode unknown = map(nameRefNode);
     // This is weird, but for "a.b", the rhino AST calls "b" a string literal.
     // However, since we know it's for a PROPGET, we can unstringliteralize it.
     //
@@ -550,7 +550,7 @@ public class JsParser {
   }
 
   private JsExpression mapExpression(Node exprNode) throws JsParserException {
-    JsNode<?> unknown = map(exprNode);
+    JsNode unknown = map(exprNode);
     if (unknown instanceof JsExpression) {
       return (JsExpression) unknown;
     } else {
@@ -611,7 +611,7 @@ public class JsParser {
 
       // The first item is either an expression or a JsVars.
       //
-      JsNode<?> initThingy = map(fromInit);
+      JsNode initThingy = map(fromInit);
       if (initThingy != null) {
         if (initThingy instanceof JsVars) {
           toFor.setInitVars((JsVars) initThingy);
@@ -831,7 +831,7 @@ public class JsParser {
 
   private JsExpression mapOptionalExpression(Node exprNode)
       throws JsParserException {
-    JsNode<?> unknown = map(exprNode);
+    JsNode unknown = map(exprNode);
     if (unknown != null) {
       if (unknown instanceof JsExpression) {
         return (JsExpression) unknown;
@@ -971,7 +971,7 @@ public class JsParser {
   }
 
   private JsStatement mapStatement(Node nodeStmt) throws JsParserException {
-    JsNode<?> unknown = map(nodeStmt);
+    JsNode unknown = map(nodeStmt);
     if (unknown != null) {
       if (unknown instanceof JsStatement) {
         return (JsStatement) unknown;
