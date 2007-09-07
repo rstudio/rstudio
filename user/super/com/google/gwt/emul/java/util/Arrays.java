@@ -402,7 +402,7 @@ public class Arrays {
       int hash;
 
       if (obj instanceof Object[]) {
-        hash = deepHashCode((Object[]) a);
+        hash = deepHashCode((Object[]) obj);
       } else if (obj instanceof boolean[]) {
         hash = hashCode((boolean[]) obj);
       } else if (obj instanceof byte[]) {
