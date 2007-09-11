@@ -16,8 +16,8 @@
 package java.lang;
 
 /**
- * Generally unsupported. This class is provided so that the GWT compiler can choke
- * down class literal references.
+ * Generally unsupported. This class is provided so that the GWT compiler can
+ * choke down class literal references.
  * 
  * @param <T> the type of the object
  */
@@ -29,5 +29,10 @@ public class Class<T> {
    * @skip
    */
   private Class() {
+  }
+
+  public T[] getEnumConstants() {
+    throw new UnsupportedOperationException(
+      "Class.getEnumConstants() not yet implemented");
   }
 }
