@@ -26,6 +26,17 @@ public final class Integer extends Number implements Comparable<Integer> {
   // Box values according to JLS - between -128 and 127
   private static Integer[] boxedValues = new Integer[256];
 
+  public static int bitCount(int x) {
+    // Courtesy the University of Kentucky
+    // http://aggregate.org/MAGIC/#Population%20Count%20(Ones%20Count)
+    x -= ((x >> 1) & 0x55555555);
+    x = (((x >> 2) & 0x33333333) + (x & 0x33333333));
+    x = (((x >> 4) + x) & 0x0f0f0f0f);
+    x += (x >> 8);
+    x += (x >> 16);
+    return x & 0x0000003f;
+  }
+
   public static Integer decode(String s) throws NumberFormatException {
     return new Integer((int) __decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
   }

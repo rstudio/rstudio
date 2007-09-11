@@ -39,79 +39,6 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
    * have the same hash, each value in hashCodeMap is actually an array
    * containing all entries whose keys share the same hash.
    */
-
-  /**
-   * Implementation of <code>HashMap</code> entry.
-   */
-  private static class EntryImpl<K, V> implements Map.Entry<K, V> {
-
-    /**
-     * Helper method for constructing Map.Entry objects from JSNI code.
-     */
-    static <K, V> Map.Entry<K, V> create(K key, V value) {
-      return new EntryImpl<K, V>(key, value);
-    }
-
-    private K key;
-
-    private V value;
-
-    /**
-     * Constructor for <code>EntryImpl</code>.
-     */
-    public EntryImpl(K key, V value) {
-      this.key = key;
-      this.value = value;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-      if (other instanceof Map.Entry) {
-        Map.Entry<?, ?> entry = (Map.Entry<?, ?>) other;
-        if (equalsWithNullCheck(key, entry.getKey())
-            && equalsWithNullCheck(value, entry.getValue())) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    public K getKey() {
-      return key;
-    }
-
-    public V getValue() {
-      return value;
-    }
-
-    /**
-     * Calculate the hash code using Sun's specified algorithm.
-     */
-    @Override
-    public int hashCode() {
-      int keyHash = 0;
-      int valueHash = 0;
-      if (key != null) {
-        keyHash = key.hashCode();
-      }
-      if (value != null) {
-        valueHash = value.hashCode();
-      }
-      return keyHash ^ valueHash;
-    }
-
-    public V setValue(V object) {
-      V old = value;
-      value = object;
-      return old;
-    }
-
-    @Override
-    public String toString() {
-      return getKey() + "=" + getValue();
-    }
-  }
-
   private final class EntrySet extends AbstractSet<Entry<K, V>> {
 
     @Override
@@ -126,7 +53,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
         Object key = entry.getKey();
         if (HashMap.this.containsKey(key)) {
           Object value = HashMap.this.get(key);
-          return equalsWithNullCheck(entry.getValue(), value);
+          return Utility.equalsWithNullCheck(entry.getValue(), value);
         }
       }
       return false;
@@ -166,7 +93,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
     public EntrySetIterator() {
       List<Map.Entry<K, V>> list = new ArrayList<Map.Entry<K, V>>();
       if (nullSlot != UNDEFINED) {
-        EntryImpl<K, V> entryImpl = new EntryImpl<K, V>(null, nullSlot);
+        MapEntryImpl<K, V> entryImpl = new MapEntryImpl<K, V>(null, nullSlot);
         list.add(entryImpl);
       }
       addAllStringEntries(stringMap, list);
@@ -218,7 +145,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
       // only keys that start with a colon ':' count
       if (key.charCodeAt(0) == 58) {
         var value = stringMap[key];
-        var entry = @java.util.HashMap$EntryImpl::create(Ljava/lang/Object;Ljava/lang/Object;)(key.substring(1), value);
+        var entry = @java.util.MapEntryImpl::create(Ljava/lang/Object;Ljava/lang/Object;)(key.substring(1), value);
         dest.@java.util.Collection::add(Ljava/lang/Object;)(entry);
       }
     }
@@ -237,7 +164,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
         for (var i = 0, c = array.length; i < c; ++i) {
           var entry = array[i];
           var entryValue = entry.@java.util.Map$Entry::getValue()();
-          if (@java.util.HashMap::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(value, entryValue)) {
+          if (@java.util.Utility::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(value, entryValue)) {
             return true;
           }
         }
@@ -256,7 +183,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
       // only keys that start with a colon ':' count
       if (key.charCodeAt(0) == 58) {
         var entryValue = stringMap[key];
-        if (@java.util.HashMap::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(value, entryValue)) {
+        if (@java.util.Utility::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(value, entryValue)) {
           return true;
         }
       }
@@ -271,19 +198,6 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
   private static native JavaScriptObject createUndefinedValue() /*-{
     // intentionally return undefined
   }-*/;
-
-  /**
-   * Checks for equality of Objects, null-sensitive.
-   */
-  private static boolean equalsWithNullCheck(Object a, Object b) {
-    if (a == b) {
-      return true;
-    } else if (a == null) {
-      return false;
-    } else {
-      return a.equals(b);
-    }
-  }
 
   /**
    * Returns the Map.Entry whose key is equal to <code>key</code>, provided
@@ -337,7 +251,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
     } else {
       array = hashCodeMap[hashCode] = [];
     }
-    var entry = @java.util.HashMap$EntryImpl::create(Ljava/lang/Object;Ljava/lang/Object;)(key, value);
+    var entry = @java.util.MapEntryImpl::create(Ljava/lang/Object;Ljava/lang/Object;)(key, value);
     array.push(entry);
     // intentionally return undefined
   }-*/;
@@ -466,7 +380,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
 
   @Override
   public boolean containsValue(Object value) {
-    if (nullSlot != UNDEFINED && equalsWithNullCheck(nullSlot, value)) {
+    if (nullSlot != UNDEFINED && Utility.equalsWithNullCheck(nullSlot, value)) {
       return true;
     } else if (containsStringValue(stringMap, value)) {
       return true;
