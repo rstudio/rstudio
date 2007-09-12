@@ -21,7 +21,7 @@ package java.util;
  *
  * @param <E> enumeration type
  */
-public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
+public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> { 
 
   /**
    * An implementation of EnumSet that works for Enums with arbitrarily large
