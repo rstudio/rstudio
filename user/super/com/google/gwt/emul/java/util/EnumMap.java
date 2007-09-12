@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,13 +16,46 @@
 package java.util;
 
 /**
- * A {@link java.util.Map} of {@link Enum}s. <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/EnumMap.html">[Sun
+ * A {@link java.util.Map} of {@link Enum}s. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/EnumMap.html">[Sun
  * docs]</a>
- *
+ * 
  * @param <K> key type
  * @param <V> value type
  */
-public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V> { 
+public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V> {
+
+  private class EntrySet extends AbstractSet<Entry<K, V>> {
+
+    public Iterator<Map.Entry<K, V>> iterator() {
+      return new Iterator<Entry<K, V>>() {
+        Iterator<K> it = keySet.iterator();
+
+        K key;
+
+        public boolean hasNext() {
+          return it.hasNext();
+        }
+
+        public Entry<K, V> next() {
+          key = it.next();
+          return new MapEntryImpl<K, V>(key, values.get(key.ordinal()));
+        }
+
+        public void remove() {
+          if (key == null) {
+            throw new IllegalStateException("No current value");
+          }
+          EnumMap.this.remove(key);
+          key = null;
+        }
+      };
+    }
+
+    public int size() {
+      return keySet.size();
+    }
+  }
 
   K[] allEnums;
 
@@ -116,42 +149,10 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V> {
     return keySet.size();
   }
 
-  private class EntrySet extends AbstractSet<Entry<K, V>> {
-
-    public Iterator<Map.Entry<K, V>> iterator() {
-      return new Iterator<Entry<K, V>>() {
-        Iterator<K> it = keySet.iterator();
-
-        K key;
-
-        public boolean hasNext() {
-          return it.hasNext();
-        }
-
-        public Entry<K, V> next() {
-          key = it.next();
-          return new MapEntryImpl<K, V>(key, values.get(key.ordinal()));
-        }
-
-        public void remove() {
-          if (key == null) {
-            throw new IllegalStateException("No current value");
-          }
-          EnumMap.this.remove(key);
-          key = null;
-        }
-      };
-    }
-
-    public int size() {
-      return keySet.size();
-    }
-  }
-
   /**
-   * Returns <code>key</code> as <code>K</code>. Doesn't actually perform any
-   * runtime checks. Should only be called when you are sure <code>key</code> is
-   * of type <code>K</code>.
+   * Returns <code>key</code> as <code>K</code>. Doesn't actually perform
+   * any runtime checks. Should only be called when you are sure
+   * <code>key</code> is of type <code>K</code>.
    */
   @SuppressWarnings("unchecked")
   private K asKey(Object key) {

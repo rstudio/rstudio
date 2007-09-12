@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,17 +16,18 @@
 package java.util;
 
 /**
- * A {@link java.util.Set} of {@link Enum}s. <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/EnumSet.html">[Sun
+ * A {@link java.util.Set} of {@link Enum}s. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/EnumSet.html">[Sun
  * docs]</a>
- *
+ * 
  * @param <E> enumeration type
  */
-public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> { 
+public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
 
   /**
    * An implementation of EnumSet that works for Enums with arbitrarily large
    * numbers of values.
-   *
+   * 
    * TODO(tobyr) Consider implementing this like SimpleEnumSet, but backed by
    * int[]'s instead of ints.
    */
@@ -34,11 +35,7 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
 
     HashSet<E> set = new HashSet<E>();
 
-    private E[] allEnums;  // Must not be modified
-
-    LargeEnumSet(E[] allValues) {
-      this.allEnums = allValues;
-    }
+    private E[] allEnums; // Must not be modified
 
     LargeEnumSet(E first, E... rest) {
       allEnums = getEnums(first.getDeclaringClass());
@@ -46,6 +43,10 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
       for (E e : rest) {
         add(e);
       }
+    }
+
+    LargeEnumSet(E[] allValues) {
+      this.allEnums = allValues;
     }
 
     @Override
@@ -106,7 +107,7 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
    * A fast implementation of EnumSet for enums with less than 32 values. A Java
    * EnumSet can support 63 bits easily with a primitive long, but JavaScript
    * generally represents long values as floating point numbers.
-   *
+   * 
    * LargeEnumSet is used to support enums with > 31 values using a map-backed
    * implementation.
    */
@@ -160,15 +161,11 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
       return new SimpleEnumSet<E>(enumClass);
     }
 
-    private int enumValues;
-
     private E[] allEnums;
 
     private Class<E> declaringClass;
 
-    // For use only by clone
-    private SimpleEnumSet() {
-    }
+    private int enumValues;
 
     SimpleEnumSet(Class<E> enumClass) {
       declaringClass = enumClass;
@@ -190,6 +187,10 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
       for (E e : enums) {
         add(e);
       }
+    }
+
+    // For use only by clone
+    private SimpleEnumSet() {
     }
 
     @Override
@@ -263,7 +264,8 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
     }
 
     /**
-     * Returns <code>obj</code> as an E if it is an E. Otherwise, returns null.
+     * Returns <code>obj</code> as an E if it is an E. Otherwise, returns
+     * null.
      */
     @SuppressWarnings("unchecked")
     private E asE(Object obj) {
