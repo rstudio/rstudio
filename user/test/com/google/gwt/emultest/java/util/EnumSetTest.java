@@ -28,6 +28,82 @@ import java.util.EnumSet;
  */
 public class EnumSetTest extends GWTTestCase {
 
+  enum FalseEnum {
+
+    Zero,
+    One, }
+
+  // Falls into SimpleEnumSet
+  enum Number {
+
+    Zero,
+    One,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
+    Ten,
+    Eleven,
+    Twelve,
+    Thirteen,
+    Fourteen,
+    Fifteen,
+    Sixteen,
+    Seventeen,
+    Eighteen,
+    Nineteen,
+    Twenty,
+    TwentyOne,
+    TwentyTwo,
+    TwentyThree,
+    TwentyFour,
+    TwentyFive,
+    TwentySix,
+    TwentySeven,
+    TwentyEight,
+    TwentyNine,
+    Thirty, }
+
+  // Requires LargeEnumSet
+  enum Number2 {
+
+    Zero,
+    One,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
+    Ten,
+    Eleven,
+    Twelve,
+    Thirteen,
+    Fourteen,
+    Fifteen,
+    Sixteen,
+    Seventeen,
+    Eighteen,
+    Nineteen,
+    Twenty,
+    TwentyOne,
+    TwentyTwo,
+    TwentyThree,
+    TwentyFour,
+    TwentyFive,
+    TwentySix,
+    TwentySeven,
+    TwentyEight,
+    TwentyNine,
+    Thirty,
+    ThirtyOne, }
+
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
@@ -154,80 +230,4 @@ public class EnumSetTest extends GWTTestCase {
     assertTrue("EnumSet should test for correct type on remove",
         numbers.contains(enums[1]));
   }
-
-  enum FalseEnum {
-
-    Zero,
-    One, }
-
-  // Falls into SimpleEnumSet
-  enum Number {
-
-    Zero,
-    One,
-    Two,
-    Three,
-    Four,
-    Five,
-    Six,
-    Seven,
-    Eight,
-    Nine,
-    Ten,
-    Eleven,
-    Twelve,
-    Thirteen,
-    Fourteen,
-    Fifteen,
-    Sixteen,
-    Seventeen,
-    Eighteen,
-    Nineteen,
-    Twenty,
-    TwentyOne,
-    TwentyTwo,
-    TwentyThree,
-    TwentyFour,
-    TwentyFive,
-    TwentySix,
-    TwentySeven,
-    TwentyEight,
-    TwentyNine,
-    Thirty, }
-
-  // Requires LargeEnumSet
-  enum Number2 {
-
-    Zero,
-    One,
-    Two,
-    Three,
-    Four,
-    Five,
-    Six,
-    Seven,
-    Eight,
-    Nine,
-    Ten,
-    Eleven,
-    Twelve,
-    Thirteen,
-    Fourteen,
-    Fifteen,
-    Sixteen,
-    Seventeen,
-    Eighteen,
-    Nineteen,
-    Twenty,
-    TwentyOne,
-    TwentyTwo,
-    TwentyThree,
-    TwentyFour,
-    TwentyFive,
-    TwentySix,
-    TwentySeven,
-    TwentyEight,
-    TwentyNine,
-    Thirty,
-    ThirtyOne, }
 }

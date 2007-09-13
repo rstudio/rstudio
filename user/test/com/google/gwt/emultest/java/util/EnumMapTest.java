@@ -31,6 +31,41 @@ import java.util.EnumMap;
  */
 public class EnumMapTest extends GWTTestCase {
 
+  enum Number {
+
+    Zero,
+    One,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
+    Ten,
+    Eleven,
+    Twelve,
+    Thirteen,
+    Fourteen,
+    Fifteen,
+    Sixteen,
+    Seventeen,
+    Eighteen,
+    Nineteen,
+    Twenty,
+    TwentyOne,
+    TwentyTwo,
+    TwentyThree,
+    TwentyFour,
+    TwentyFive,
+    TwentySix,
+    TwentySeven,
+    TwentyEight,
+    TwentyNine,
+    Thirty,
+  }
+
   private static <E extends Enum<E>> void enumTests(Class<E> e) {
     E[] enums = e.getEnumConstants();
 
@@ -157,40 +192,5 @@ public class EnumMapTest extends GWTTestCase {
       assertTrue("EnumMap must maintain Enums in order", lastOrdinal < newOrdinal);
       lastOrdinal = newOrdinal;
     }
-  }
-
-  enum Number {
-
-    Zero,
-    One,
-    Two,
-    Three,
-    Four,
-    Five,
-    Six,
-    Seven,
-    Eight,
-    Nine,
-    Ten,
-    Eleven,
-    Twelve,
-    Thirteen,
-    Fourteen,
-    Fifteen,
-    Sixteen,
-    Seventeen,
-    Eighteen,
-    Nineteen,
-    Twenty,
-    TwentyOne,
-    TwentyTwo,
-    TwentyThree,
-    TwentyFour,
-    TwentyFive,
-    TwentySix,
-    TwentySeven,
-    TwentyEight,
-    TwentyNine,
-    Thirty,
   }
 }
