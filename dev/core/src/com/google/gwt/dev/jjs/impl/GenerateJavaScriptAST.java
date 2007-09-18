@@ -1742,6 +1742,7 @@ public class GenerateJavaScriptAST {
     specialObfuscatedIdents.put("hashCode", "hC");
     specialObfuscatedIdents.put("equals", "eQ");
     specialObfuscatedIdents.put("toString", "tS");
+    specialObfuscatedIdents.put("finalize", "fZ");
 
     // Object fields
     specialObfuscatedIdents.put("typeId", "tI");
