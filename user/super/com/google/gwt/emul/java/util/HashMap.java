@@ -409,11 +409,6 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
   }
 
   @Override
-  public boolean isEmpty() {
-    return size() == 0;
-  }
-
-  @Override
   public V put(K key, V value) {
     V previous;
     if (key instanceof String) {
@@ -429,15 +424,6 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
       return null;
     } else {
       return previous;
-    }
-  }
-
-  @Override
-  public void putAll(Map<? extends K, ? extends V> otherMap) {
-    Iterator<? extends Map.Entry<? extends K, ? extends V>> iter = otherMap.entrySet().iterator();
-    while (iter.hasNext()) {
-      Map.Entry<? extends K, ? extends V> entry = iter.next();
-      put(entry.getKey(), entry.getValue());
     }
   }
 
