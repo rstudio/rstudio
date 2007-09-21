@@ -52,8 +52,9 @@
 			<zipfileset src="${gwt.tools.lib}/tomcat/tomcat-http11-1.0.jar" />
 			<zipfileset src="${gwt.tools.lib}/tomcat/tomcat-jk2-2.1.jar" />
 			<zipfileset src="${gwt.tools.lib}/tomcat/tomcat-util-5.1.jar" />
-			<zipfileset src="${gwt.tools.lib}/xerces/xerces-2.0.2.jar" />
-			<zipfileset src="${gwt.tools.lib}/xerces/xml-apis-2.0.2.jar" />
+			<zipfileset src="${gwt.tools.lib}/xerces/xerces-2_9_1/xercesImpl.jar" />
+			<zipfileset src="${gwt.tools.lib}/xerces/xerces-2_9_1/xml-apis.jar" />
+			<zipfileset src="${gwt.tools.lib}/xerces/xerces-2_9_1/serializer.jar" />
 		</gwt.jar>
 	</target>
 

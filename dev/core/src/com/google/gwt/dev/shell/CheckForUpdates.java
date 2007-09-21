@@ -398,7 +398,7 @@ public abstract class CheckForUpdates {
         response = httpGetNonNative(fullUserAgent, url);
       }
 
-      if (response == null) {
+      if (response == null || response.length == 0) {
         // Problem. Quietly fail.
         //
         if (DEBUG_VERSION_CHECK) {
