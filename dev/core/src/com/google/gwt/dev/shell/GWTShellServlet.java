@@ -21,6 +21,7 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.util.HttpHeaders;
 import com.google.gwt.dev.util.SelectionScriptGenerator;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.ServletContextTreeLogger;
 
 import java.io.File;
@@ -324,7 +325,7 @@ public class GWTShellServlet extends HttpServlet {
       getModuleDef(logger, parts.moduleName);
     } catch (UnableToCompleteException e) {
       sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND,
-          "Unable to find/load module '" + parts.moduleName
+          "Unable to find/load module '" + Util.escapeXml(parts.moduleName)
               + "' (see server log for details)");
       return;
     }

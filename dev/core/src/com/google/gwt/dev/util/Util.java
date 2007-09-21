@@ -991,7 +991,7 @@ public final class Util {
   /**
    * Escapes '&', '<', '>', '"', and '\'' to their XML entity equivalents.
    */
-  private static String escapeXml(String unescaped) {
+  public static String escapeXml(String unescaped) {
     String escaped = unescaped.replaceAll("\\&", "&amp;");
     escaped = escaped.replaceAll("\\<", "&lt;");
     escaped = escaped.replaceAll("\\>", "&gt;");
