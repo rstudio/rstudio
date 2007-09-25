@@ -66,22 +66,27 @@ public class GWTShell extends ToolBase {
    */
   protected class ArgHandlerBlacklist extends ArgHandlerString {
 
+    @Override
     public String[] getDefaultArgs() {
       return new String[] {"-blacklist", ""};
     }
 
+    @Override
     public String getPurpose() {
       return "Prevents the user browsing URLs that match the specified regexes (comma or space separated)";
     }
 
+    @Override
     public String getTag() {
       return "-blacklist";
     }
 
+    @Override
     public String[] getTagArgs() {
       return new String[] {"blacklist-string"};
     }
 
+    @Override
     public boolean setString(String blacklistStr) {
       return BrowserWidgetHostChecker.blacklistRegexes(blacklistStr);
     }
@@ -91,14 +96,17 @@ public class GWTShell extends ToolBase {
    * handles the -noserver command line flag.
    */
   protected class ArgHandlerNoServerFlag extends ArgHandlerFlag {
+    @Override
     public String getPurpose() {
       return "Prevents the embedded Tomcat server from running, even if a port is specified";
     }
 
+    @Override
     public String getTag() {
       return "-noserver";
     }
 
+    @Override
     public boolean setFlag() {
       runTomcat = false;
       return true;
@@ -110,22 +118,27 @@ public class GWTShell extends ToolBase {
    */
   protected class ArgHandlerPort extends ArgHandlerString {
 
+    @Override
     public String[] getDefaultArgs() {
       return new String[] {"-port", "8888"};
     }
 
+    @Override
     public String getPurpose() {
       return "Runs an embedded Tomcat instance on the specified port (defaults to 8888)";
     }
 
+    @Override
     public String getTag() {
       return "-port";
     }
 
+    @Override
     public String[] getTagArgs() {
       return new String[] {"port-number | \"auto\""};
     }
 
+    @Override
     public boolean setString(String value) {
       if (value.equals("auto")) {
         port = 0;
@@ -143,19 +156,43 @@ public class GWTShell extends ToolBase {
   }
 
   /**
+   * handles the -saveJsni command line flag.
+   */
+  protected class ArgHandlerSaveJsni extends ArgHandlerFlag {
+    @Override
+    public String getPurpose() {
+      return "Save generated JSNI source in the supplied gen directory (if any)";
+    }
+
+    @Override
+    public String getTag() {
+      return "-saveJsni";
+    }
+
+    @Override
+    public boolean setFlag() {
+      saveJsni = true;
+      return true;
+    }
+  }
+
+  /**
    * Handles the list of startup urls that can be passed on the command line.
    */
   protected class ArgHandlerStartupURLs extends ArgHandlerExtra {
 
+    @Override
     public boolean addExtraArg(String arg) {
       addStartupURL(arg);
       return true;
     }
 
+    @Override
     public String getPurpose() {
       return "Automatically launches the specified URL";
     }
 
+    @Override
     public String[] getTagArgs() {
       return new String[] {"url"};
     }
@@ -166,22 +203,27 @@ public class GWTShell extends ToolBase {
    */
   protected class ArgHandlerWhitelist extends ArgHandlerString {
 
+    @Override
     public String[] getDefaultArgs() {
       return new String[] {"-whitelist", ""};
     }
 
+    @Override
     public String getPurpose() {
       return "Allows the user to browse URLs that match the specified regexes (comma or space separated)";
     }
 
+    @Override
     public String getTag() {
       return "-whitelist";
     }
 
+    @Override
     public String[] getTagArgs() {
       return new String[] {"whitelist-string"};
     }
 
+    @Override
     public boolean setString(String whitelistStr) {
       return BrowserWidgetHostChecker.whitelistRegexes(whitelistStr);
     }
@@ -331,13 +373,7 @@ public class GWTShell extends ToolBase {
 
   private BrowserWidgetHostImpl browserHost = new BrowserWidgetHostImpl();
 
-  private ShellMainWindow mainWnd;
-
-  private boolean runTomcat = true;
-
   private final List<Shell> browserShells = new ArrayList<Shell>();
-
-  private final List<String> startupUrls = new ArrayList<String>();
 
   private File genDir;
 
@@ -345,13 +381,21 @@ public class GWTShell extends ToolBase {
 
   private TreeLogger.Type logLevel;
 
+  private ShellMainWindow mainWnd;
+
   private boolean obfuscate;
 
   private int port;
 
   private boolean prettyNames;
 
+  private boolean runTomcat = true;
+
+  private boolean saveJsni = false;
+
   private boolean started;
+
+  private final List<String> startupUrls = new ArrayList<String>();
 
   public GWTShell() {
     this(false, false);
@@ -364,45 +408,55 @@ public class GWTShell extends ToolBase {
       registerHandler(new ArgHandlerNoServerFlag());
     }
 
+    registerHandler(new ArgHandlerSaveJsni());
     registerHandler(new ArgHandlerWhitelist());
     registerHandler(new ArgHandlerBlacklist());
 
     registerHandler(new ArgHandlerLogLevel() {
+      @Override
       public String[] getDefaultArgs() {
         return new String[] {getTag(), doGetDefaultLogLevel()};
       }
 
+      @Override
       public void setLogLevel(Type level) {
         logLevel = level;
       }
     });
 
     registerHandler(new ArgHandlerGenDir() {
+      @Override
       public void setDir(File dir) {
         genDir = dir;
       }
     });
+
+    registerHandler(new ArgHandlerSaveJsni());
 
     if (!noURLs) {
       registerHandler(new ArgHandlerStartupURLs());
     }
 
     registerHandler(new ArgHandlerOutDir() {
+      @Override
       public void setDir(File dir) {
         outDir = dir;
       }
     });
 
     registerHandler(new ArgHandlerScriptStyle() {
+      @Override
       public void setStyleDetailed() {
         obfuscate = false;
         prettyNames = false;
       }
 
+      @Override
       public void setStyleObfuscated() {
         obfuscate = true;
       }
 
+      @Override
       public void setStylePretty() {
         obfuscate = false;
         prettyNames = true;
@@ -416,7 +470,7 @@ public class GWTShell extends ToolBase {
 
   public void closeAllBrowserWindows() {
     while (!browserShells.isEmpty()) {
-      ((Shell) browserShells.get(0)).dispose();
+      browserShells.get(0).dispose();
     }
   }
 
@@ -612,7 +666,7 @@ public class GWTShell extends ToolBase {
       TreeLogger logger, TypeOracle typeOracle, ModuleDef moduleDef,
       File genDir, File outDir) {
     return new ShellModuleSpaceHost(logger, typeOracle, moduleDef, genDir,
-        outDir);
+        outDir, saveJsni);
   }
 
   /**

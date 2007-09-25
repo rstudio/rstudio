@@ -191,7 +191,7 @@ public class Jsni {
       }
 
       JType type = params[i].getType();
-      String typeName = type.getQualifiedSourceName();
+      String typeName = type.getErasedType().getQualifiedSourceName();
       sb.append(typeName);
       sb.append(".class");
     }

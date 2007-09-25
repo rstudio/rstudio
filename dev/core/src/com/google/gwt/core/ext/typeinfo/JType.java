@@ -19,6 +19,9 @@ package com.google.gwt.core.ext.typeinfo;
  * Abstract superclass for types.
  */
 public abstract class JType {
+
+  public abstract JType getErasedType();
+
   public abstract String getJNISignature();
 
   public JType getLeafType() {
@@ -61,4 +64,7 @@ public abstract class JType {
   public abstract JParameterizedType isParameterized();
 
   public abstract JPrimitiveType isPrimitive();
+
+  public abstract JRawType isRawType();
+
 }

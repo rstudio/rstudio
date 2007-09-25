@@ -15,10 +15,15 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import com.google.gwt.core.ext.UnableToCompleteException;
+
+import java.lang.annotation.Annotation;
+import java.util.Map;
+
 /**
  * Type representing a Java array.
  */
-public class JArrayType extends JType {
+public class JArrayType extends JClassType {
 
   private JType componentType;
 
@@ -26,12 +31,124 @@ public class JArrayType extends JType {
 
   private String lazySimpleName;
 
-  JArrayType(JType componentType) {
+  private final TypeOracle oracle;
+
+  JArrayType(JType componentType, TypeOracle oracle) {
     this.componentType = componentType;
+    this.oracle = oracle;
+  }
+
+  @Override
+  public void addImplementedInterface(JClassType intf) {
+    throw new UnsupportedOperationException("modifying a "
+        + getClass().getSimpleName());
+  }
+
+  @Override
+  public void addMetaData(String tagName, String[] values) {
+    throw new UnsupportedOperationException("modifying a "
+        + getClass().getSimpleName());
+  }
+
+  @Override
+  public void addModifierBits(int bits) {
+    throw new UnsupportedOperationException("modifying a "
+        + getClass().getSimpleName());
+  }
+
+  @Override
+  public JConstructor findConstructor(JType[] paramTypes) {
+    return null;
+  }
+
+  @Override
+  public JField findField(String name) {
+    // TODO length
+    return null;
+  }
+
+  @Override
+  public JMethod findMethod(String name, JType[] paramTypes) {
+    // TODO Object
+    return null;
+  }
+
+  @Override
+  public JClassType findNestedType(String typeName) {
+    return null;
+  }
+
+  @Override
+  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+    return null;
+  }
+
+  @Override
+  public Annotation[] getAnnotations() {
+    return TypeOracle.NO_ANNOTATIONS;
+  }
+
+  @Override
+  public int getBodyEnd() {
+    return 0;
+  }
+
+  @Override
+  public int getBodyStart() {
+    return 0;
+  }
+
+  @Override
+  public CompilationUnitProvider getCompilationUnit() {
+    return null;
   }
 
   public JType getComponentType() {
     return componentType;
+  }
+
+  @Override
+  public JConstructor getConstructor(JType[] paramTypes)
+      throws NotFoundException {
+    return null;
+  }
+
+  @Override
+  public JConstructor[] getConstructors() {
+    return null;
+  }
+
+  @Override
+  public Annotation[] getDeclaredAnnotations() {
+    return TypeOracle.NO_ANNOTATIONS;
+  }
+
+  @Override
+  public JClassType getEnclosingType() {
+    return null;
+  }
+
+  @Override
+  public JClassType getErasedType() {
+    // TODO array of component type
+    return this;
+  }
+
+  @Override
+  public JField getField(String name) {
+    // TODO length
+    return null;
+  }
+
+  @Override
+  public JField[] getFields() {
+    // TODO length
+    return null;
+  }
+
+  @Override
+  public JClassType[] getImplementedInterfaces() {
+    return TypeOracle.NO_JCLASSES;
   }
 
   public String getJNISignature() {
@@ -40,6 +157,68 @@ public class JArrayType extends JType {
 
   public JType getLeafType() {
     return componentType.getLeafType();
+  }
+
+  @Override
+  public String[][] getMetaData(String tagName) {
+    return TypeOracle.NO_STRING_ARR_ARR;
+  }
+
+  @Override
+  public String[] getMetaDataTags() {
+    return TypeOracle.NO_STRINGS;
+  }
+
+  @Override
+  public JMethod getMethod(String name, JType[] paramTypes)
+      throws NotFoundException {
+    // TODO Object
+    return null;
+  }
+
+  @Override
+  public JMethod[] getMethods() {
+    // TODO Object
+    return null;
+  }
+
+  @Override
+  public String getName() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public JClassType getNestedType(String typeName) throws NotFoundException {
+    throw new NotFoundException();
+  }
+
+  @Override
+  public JClassType[] getNestedTypes() {
+    return TypeOracle.NO_JCLASSES;
+  }
+
+  @Override
+  public TypeOracle getOracle() {
+    return oracle;
+  }
+
+  @Override
+  public JMethod[] getOverloads(String name) {
+    // TODO Object
+    return null;
+  }
+
+  @Override
+  public JMethod[] getOverridableMethods() {
+    // TODO Object
+    return null;
+  }
+
+  @Override
+  public JPackage getPackage() {
+    // TODO
+    return null;
   }
 
   public String getParameterizedQualifiedSourceName() {
@@ -69,8 +248,48 @@ public class JArrayType extends JType {
     return lazySimpleName;
   }
 
+  @Override
+  public JClassType[] getSubtypes() {
+    // TODO
+    return TypeOracle.NO_JCLASSES;
+  }
+
+  @Override
+  public JClassType getSuperclass() {
+    // TODO Object?
+    return null;
+  }
+
+  @Override
+  public String getTypeHash() throws UnableToCompleteException {
+    // TODO
+    return null;
+  }
+
+  @Override
+  public boolean isAbstract() {
+    return false;
+  }
+
+  @Override
+  public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
+    return false;
+  }
+
   public JArrayType isArray() {
     return this;
+  }
+
+  @Override
+  public boolean isAssignableFrom(JClassType possibleSubtype) {
+    // TODO
+    return false;
+  }
+
+  @Override
+  public boolean isAssignableTo(JClassType possibleSupertype) {
+    // TODO
+    return false;
   }
 
   public JClassType isClass() {
@@ -78,9 +297,29 @@ public class JArrayType extends JType {
     return null;
   }
 
+  @Override
+  public boolean isDefaultInstantiable() {
+    return true;
+  }
+
+  @Override
+  public JGenericType isGenericType() {
+    return null;
+  }
+
   public JClassType isInterface() {
     // intentional null
     return null;
+  }
+
+  @Override
+  public boolean isLocalType() {
+    return false;
+  }
+
+  @Override
+  public boolean isMemberType() {
+    return false;
   }
 
   public JParameterizedType isParameterized() {
@@ -93,6 +332,31 @@ public class JArrayType extends JType {
     return null;
   }
 
+  @Override
+  public boolean isPrivate() {
+    return false;
+  }
+
+  @Override
+  public boolean isProtected() {
+    return false;
+  }
+
+  @Override
+  public boolean isPublic() {
+    return true;
+  }
+
+  @Override
+  public JRawType isRawType() {
+    return null;
+  }
+
+  @Override
+  public boolean isStatic() {
+    return true;
+  }
+
   public void setLeafType(JType type) {
     JArrayType componentTypeIsArray = componentType.isArray();
     if (componentTypeIsArray != null) {
@@ -102,7 +366,79 @@ public class JArrayType extends JType {
     }
   }
 
+  @Override
+  public void setSuperclass(JClassType type) {
+  }
+
   public String toString() {
     return getQualifiedSourceName();
+  }
+
+  @Override
+  protected void acceptSubtype(JClassType me) {
+    throw new UnsupportedOperationException("modifying a "
+        + getClass().getSimpleName());
+  }
+
+  @Override
+  protected int getModifierBits() {
+    return 0;
+  }
+
+  @Override
+  protected void getOverridableMethodsOnSuperclassesAndThisClass(
+      Map<String, JMethod> methodsBySignature) {
+    // TODO Object
+  }
+
+  @Override
+  protected void getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
+      Map<String, JMethod> methodsBySignature) {
+    // TODO Object
+  }
+
+  @Override
+  protected void notifySuperTypesOf(JClassType me) {
+  }
+
+  @Override
+  protected void removeSubtype(JClassType me) {
+  }
+
+  @Override
+  void addConstructor(JConstructor ctor) {
+    throw new UnsupportedOperationException("modifying a "
+        + getClass().getSimpleName());
+  }
+
+  @Override
+  void addField(JField field) {
+    throw new UnsupportedOperationException("modifying a "
+        + getClass().getSimpleName());
+  }
+
+  @Override
+  void addMethod(JMethod method) {
+    throw new UnsupportedOperationException("modifying a "
+        + getClass().getSimpleName());
+  }
+
+  @Override
+  void addNestedType(JClassType type) {
+    throw new UnsupportedOperationException("modifying a "
+        + getClass().getSimpleName());
+  }
+
+  @Override
+  JClassType findNestedTypeImpl(String[] typeName, int index) {
+    return null;
+  }
+
+  @Override
+  void notifySuperTypes() {
+  }
+
+  @Override
+  void removeFromSupertypes() {
   }
 }

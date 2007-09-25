@@ -16,284 +16,81 @@
 package com.google.gwt.core.ext.typeinfo;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.util.Util;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
 
 /**
  * Type representing a Java class or interface type.
  */
-public class JClassType extends JType implements HasAnnotations, HasMetaData {
+public abstract class JClassType extends JType implements HasAnnotations,
+    HasMetaData {
 
-  private final Set<JClassType> allSubtypes = new HashSet<JClassType>();
+  public abstract void addImplementedInterface(JClassType intf);
 
-  private final Annotations annotations = new Annotations();
+  public abstract void addMetaData(String tagName, String[] values);
 
-  private final int bodyEnd;
+  public abstract void addModifierBits(int bits);
 
-  private final int bodyStart;
+  public abstract JConstructor findConstructor(JType[] paramTypes);
 
-  private JMethod[] cachedOverridableMethods;
+  public abstract JField findField(String name);
 
-  private final List<JConstructor> constructors = new ArrayList<JConstructor>();
+  public abstract JMethod findMethod(String name, JType[] paramTypes);
 
-  private final CompilationUnitProvider cup;
+  public abstract JClassType findNestedType(String typeName);
 
-  private final JPackage declaringPackage;
+  public abstract <T extends Annotation> T getAnnotation(
+      Class<T> annotationClass);
 
-  private final int declEnd;
+  public abstract Annotation[] getAnnotations();
 
-  private final int declStart;
+  public abstract int getBodyEnd();
 
-  private final JClassType enclosingType;
+  public abstract int getBodyStart();
 
-  private final Map<String, JField> fields = new HashMap<String, JField>();
+  public abstract CompilationUnitProvider getCompilationUnit();
 
-  private final List<JClassType> interfaces = new ArrayList<JClassType>();
+  public abstract JConstructor getConstructor(JType[] paramTypes)
+      throws NotFoundException;
 
-  private final boolean isInterface;
+  public abstract JConstructor[] getConstructors();
 
-  private final boolean isLocalType;
+  public abstract Annotation[] getDeclaredAnnotations();
 
-  private String lazyHash;
+  public abstract JClassType getEnclosingType();
 
-  private String lazyQualifiedName;
+  public abstract JClassType getErasedType();
 
-  private final HasMetaData metaData = new MetaData();
+  public abstract JField getField(String name);
 
-  private final Map<String, List<JMethod>> methods = new HashMap<String, List<JMethod>>();
+  public abstract JField[] getFields();
 
-  private int modifierBits;
+  public abstract JClassType[] getImplementedInterfaces();
 
-  private final String name;
+  public abstract String[][] getMetaData(String tagName);
 
-  private final String nestedName;
+  public abstract String[] getMetaDataTags();
 
-  private final Map<String, JClassType> nestedTypes = new HashMap<String, JClassType>();
-
-  private final TypeOracle oracle;
-
-  private JClassType superclass;
-
-  public JClassType(TypeOracle oracle, CompilationUnitProvider cup,
-      JPackage declaringPackage, JClassType enclosingType, boolean isLocalType,
-      String name, int declStart, int declEnd, int bodyStart, int bodyEnd,
-      boolean isInterface) {
-    oracle.recordTypeInCompilationUnit(cup, this);
-    this.oracle = oracle;
-    this.cup = cup;
-    this.declaringPackage = declaringPackage;
-    this.enclosingType = enclosingType;
-    this.isLocalType = isLocalType;
-    this.name = name;
-    this.declStart = declStart;
-    this.declEnd = declEnd;
-    this.bodyStart = bodyStart;
-    this.bodyEnd = bodyEnd;
-    this.isInterface = isInterface;
-    if (enclosingType == null) {
-      // Add myself to my package.
-      //
-      declaringPackage.addType(this);
-      // The nested name of a top-level class is its simple name.
-      //
-      nestedName = name;
-    } else {
-      // Add myself to my enclosing type.
-      //
-      enclosingType.addNestedType(this);
-      // Compute my "nested name".
-      //
-      JClassType enclosing = enclosingType;
-      String nn = name;
-      do {
-        nn = enclosing.getSimpleSourceName() + "." + nn;
-        enclosing = enclosing.getEnclosingType();
-      } while (enclosing != null);
-      nestedName = nn;
-    }
-  }
-
-  public void addAnnotations(
-      Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
-    annotations.addAnnotations(declaredAnnotations);
-  }
-
-  public void addImplementedInterface(JClassType intf) {
-    assert (intf != null);
-    interfaces.add(intf);
-  }
-
-  public void addMetaData(String tagName, String[] values) {
-    metaData.addMetaData(tagName, values);
-  }
-
-  public void addModifierBits(int bits) {
-    modifierBits |= bits;
-  }
-
-  public JConstructor findConstructor(JType[] paramTypes) {
-    JConstructor[] ctors = getConstructors();
-    for (int i = 0; i < ctors.length; i++) {
-      JConstructor candidate = ctors[i];
-      if (candidate.hasParamTypes(paramTypes)) {
-        return candidate;
-      }
-    }
-    return null;
-  }
-
-  public JField findField(String name) {
-    return fields.get(name);
-  }
-
-  public JMethod findMethod(String name, JType[] paramTypes) {
-    JMethod[] overloads = getOverloads(name);
-    for (int i = 0; i < overloads.length; i++) {
-      JMethod candidate = overloads[i];
-      if (candidate.hasParamTypes(paramTypes)) {
-        return candidate;
-      }
-    }
-    return null;
-  }
-
-  public JClassType findNestedType(String typeName) {
-    String[] parts = typeName.split("\\.");
-    return findNestedTypeImpl(parts, 0);
-  }
-
-  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    return annotations.getAnnotation(annotationClass);
-  }
-
-  public Annotation[] getAnnotations() {
-    return annotations.getAnnotations();
-  }
-
-  public int getBodyEnd() {
-    return bodyEnd;
-  }
-
-  public int getBodyStart() {
-    return bodyStart;
-  }
-
-  public CompilationUnitProvider getCompilationUnit() {
-    return cup;
-  }
-
-  public JConstructor getConstructor(JType[] paramTypes)
-      throws NotFoundException {
-    JConstructor result = findConstructor(paramTypes);
-    if (result == null) {
-      throw new NotFoundException();
-    }
-    return result;
-  }
-
-  public JConstructor[] getConstructors() {
-    return constructors.toArray(TypeOracle.NO_JCTORS);
-  }
-
-  public Annotation[] getDeclaredAnnotations() {
-    return annotations.getDeclaredAnnotations();
-  }
-
-  public JClassType getEnclosingType() {
-    return enclosingType;
-  }
-
-  public JField getField(String name) {
-    JField field = findField(name);
-    assert (field != null);
-    return field;
-  }
-
-  public JField[] getFields() {
-    return fields.values().toArray(TypeOracle.NO_JFIELDS);
-  }
-
-  public JClassType[] getImplementedInterfaces() {
-    return interfaces.toArray(TypeOracle.NO_JCLASSES);
-  }
-
-  @Override
-  public String getJNISignature() {
-    String typeName = nestedName.replace('.', '$');
-    String packageName = getPackage().getName().replace('.', '/');
-    if (packageName.length() > 0) {
-      packageName += "/";
-    }
-    return "L" + packageName + typeName + ";";
-  }
-
-  public String[][] getMetaData(String tagName) {
-    return metaData.getMetaData(tagName);
-  }
-
-  public String[] getMetaDataTags() {
-    return metaData.getMetaDataTags();
-  }
-
-  public JMethod getMethod(String name, JType[] paramTypes)
-      throws NotFoundException {
-    JMethod result = findMethod(name, paramTypes);
-    if (result == null) {
-      throw new NotFoundException();
-    }
-    return result;
-  }
+  public abstract JMethod getMethod(String name, JType[] paramTypes)
+      throws NotFoundException;
 
   /*
    * Returns the declared methods of this class (not any superclasses or
    * superinterfaces).
    */
-  public JMethod[] getMethods() {
-    List<JMethod> resultMethods = new ArrayList<JMethod>();
-    for (List<JMethod> overloads : methods.values()) {
-      resultMethods.addAll(overloads);
-    }
-    return resultMethods.toArray(TypeOracle.NO_JMETHODS);
-  }
+  public abstract JMethod[] getMethods();
 
-  public String getName() {
-    return nestedName;
-  }
+  public abstract String getName();
 
-  public JClassType getNestedType(String typeName) throws NotFoundException {
-    JClassType result = findNestedType(typeName);
-    if (result == null) {
-      throw new NotFoundException();
-    }
-    return result;
-  }
+  public abstract JClassType getNestedType(String typeName)
+      throws NotFoundException;
 
-  public JClassType[] getNestedTypes() {
-    return nestedTypes.values().toArray(TypeOracle.NO_JCLASSES);
-  }
+  public abstract JClassType[] getNestedTypes();
 
-  public TypeOracle getOracle() {
-    return oracle;
-  }
+  public abstract TypeOracle getOracle();
 
-  public JMethod[] getOverloads(String name) {
-    List<?> resultMethods = methods.get(name);
-    if (resultMethods != null) {
-      return resultMethods.toArray(TypeOracle.NO_JMETHODS);
-    } else {
-      return TypeOracle.NO_JMETHODS;
-    }
-  }
+  public abstract JMethod[] getOverloads(String name);
 
   /**
    * Iterates over the most-derived declaration of each unique overridable
@@ -312,103 +109,24 @@ public class JClassType extends JType implements HasAnnotations, HasMetaData {
    * @return an array of {@link JMethod} objects representing overridable
    *         methods
    */
-  public JMethod[] getOverridableMethods() {
-    if (cachedOverridableMethods == null) {
-      Map<String, JMethod> methodsBySignature = new TreeMap<String, JMethod>();
-      getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
-      if (isClass() != null) {
-        getOverridableMethodsOnSuperclassesAndThisClass(methodsBySignature);
-      }
-      int size = methodsBySignature.size();
-      Collection<JMethod> leafMethods = methodsBySignature.values();
-      cachedOverridableMethods = leafMethods.toArray(new JMethod[size]);
-    }
-    return cachedOverridableMethods;
-  }
+  public abstract JMethod[] getOverridableMethods();
 
-  public JPackage getPackage() {
-    return declaringPackage;
-  }
+  public abstract JPackage getPackage();
 
-  @Override
-  public String getQualifiedSourceName() {
-    if (lazyQualifiedName == null) {
-      JPackage pkg = getPackage();
-      if (!pkg.isDefault()) {
-        lazyQualifiedName = pkg.getName() + "." + makeCompoundName(this);
-      } else {
-        lazyQualifiedName = makeCompoundName(this);
-      }
-    }
-    return lazyQualifiedName;
-  }
+  public abstract JClassType[] getSubtypes();
 
-  @Override
-  public String getSimpleSourceName() {
-    return name;
-  }
+  public abstract JClassType getSuperclass();
 
-  public JClassType[] getSubtypes() {
-    return allSubtypes.toArray(TypeOracle.NO_JCLASSES);
-  }
+  public abstract String getTypeHash() throws UnableToCompleteException;
 
-  public JClassType getSuperclass() {
-    return superclass;
-  }
+  public abstract boolean isAbstract();
 
-  public String getTypeHash() throws UnableToCompleteException {
-    if (lazyHash == null) {
-      char[] source = cup.getSource();
-      int length = declEnd - declStart + 1;
-      String s = new String(source, declStart, length);
-      try {
-        lazyHash = Util.computeStrongName(s.getBytes(Util.DEFAULT_ENCODING));
-      } catch (UnsupportedEncodingException e) {
-        // Details, details...
-        throw new UnableToCompleteException();
-      }
-    }
-    return lazyHash;
-  }
+  public abstract boolean isAnnotationPresent(
+      Class<? extends Annotation> annotationClass);
 
-  public boolean isAbstract() {
-    return 0 != (modifierBits & TypeOracle.MOD_ABSTRACT);
-  }
+  public abstract boolean isAssignableFrom(JClassType possibleSubtype);
 
-  public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
-    return annotations.isAnnotationPresent(annotationClass);
-  }
-
-  @Override
-  public JArrayType isArray() {
-    // intentional null
-    return null;
-  }
-
-  public boolean isAssignableFrom(JClassType possibleSubtype) {
-    if (possibleSubtype == this) {
-      return true;
-    }
-    if (allSubtypes.contains(possibleSubtype)) {
-      return true;
-    } else if (this == getOracle().getJavaLangObject()) {
-      // This case handles the odd "every interface is an Object"
-      // but doesn't actually have Object as a superclass.
-      //
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  public boolean isAssignableTo(JClassType possibleSupertype) {
-    return possibleSupertype.isAssignableFrom(this);
-  }
-
-  @Override
-  public JClassType isClass() {
-    return isInterface ? null : this;
-  }
+  public abstract boolean isAssignableTo(JClassType possibleSupertype);
 
   /**
    * Determines if the class can be constructed using a simple <code>new</code>
@@ -422,24 +140,12 @@ public class JClassType extends JType implements HasAnnotations, HasMetaData {
    * @return <code>true</code> if the type is default instantiable, or
    *         <code>false</code> otherwise
    */
-  public boolean isDefaultInstantiable() {
-    if (isInterface() != null) {
-      return false;
-    }
-    if (constructors.isEmpty()) {
-      return true;
-    }
-    JConstructor ctor = findConstructor(TypeOracle.NO_JTYPES);
-    if (ctor != null) {
-      return true;
-    }
-    return false;
-  }
+  public abstract boolean isDefaultInstantiable();
+
+  public abstract JGenericType isGenericType();
 
   @Override
-  public JClassType isInterface() {
-    return isInterface ? this : null;
-  }
+  public abstract JClassType isInterface();
 
   /**
    * Tests if this type is a local type (within a method).
@@ -447,9 +153,7 @@ public class JClassType extends JType implements HasAnnotations, HasMetaData {
    * @return true if this type is a local type, whether it is named or
    *         anonymous.
    */
-  public boolean isLocalType() {
-    return isLocalType;
-  }
+  public abstract boolean isLocalType();
 
   /**
    * Tests if this type is contained within another type.
@@ -457,148 +161,29 @@ public class JClassType extends JType implements HasAnnotations, HasMetaData {
    * @return true if this type has an enclosing type, false if this type is a
    *         top-level type
    */
-  public boolean isMemberType() {
-    return enclosingType != null;
-  }
+  public abstract boolean isMemberType();
 
-  @Override
-  public JParameterizedType isParameterized() {
-    // intentional null
-    return null;
-  }
+  public abstract boolean isPrivate();
 
-  @Override
-  public JPrimitiveType isPrimitive() {
-    // intentional null
-    return null;
-  }
+  public abstract boolean isProtected();
 
-  public boolean isPrivate() {
-    return 0 != (modifierBits & TypeOracle.MOD_PRIVATE);
-  }
+  public abstract boolean isPublic();
 
-  public boolean isProtected() {
-    return 0 != (modifierBits & TypeOracle.MOD_PROTECTED);
-  }
+  public abstract boolean isStatic();
 
-  public boolean isPublic() {
-    return 0 != (modifierBits & TypeOracle.MOD_PUBLIC);
-  }
-
-  public boolean isStatic() {
-    return 0 != (modifierBits & TypeOracle.MOD_STATIC);
-  }
-
-  public void setSuperclass(JClassType type) {
-    assert (type != null);
-    assert (isInterface() == null);
-    this.superclass = type;
-    annotations.setParent(type.annotations);
-  }
+  public abstract void setSuperclass(JClassType type);
 
   @Override
   public String toString() {
-    if (isInterface) {
-      return "interface " + getQualifiedSourceName();
-    } else {
-      return "class " + getQualifiedSourceName();
-    }
+    return this.getQualifiedSourceName();
   }
 
-  protected int getModifierBits() {
-    return modifierBits;
-  }
+  protected abstract void acceptSubtype(JClassType me);
 
-  void addConstructor(JConstructor ctor) {
-    assert (!constructors.contains(ctor));
-    constructors.add(ctor);
-  }
+  protected abstract int getModifierBits();
 
-  void addField(JField field) {
-    Object existing = fields.put(field.getName(), field);
-    assert (existing == null);
-  }
-
-  void addMethod(JMethod method) {
-    String methodName = method.getName();
-    List<JMethod> overloads = methods.get(methodName);
-    if (overloads == null) {
-      overloads = new ArrayList<JMethod>();
-      methods.put(methodName, overloads);
-    }
-    overloads.add(method);
-  }
-
-  void addNestedType(JClassType type) {
-    nestedTypes.put(type.getSimpleSourceName(), type);
-  }
-
-  JClassType findNestedTypeImpl(String[] typeName, int index) {
-    JClassType found = nestedTypes.get(typeName[index]);
-    if (found == null) {
-      return null;
-    } else if (index < typeName.length - 1) {
-      return found.findNestedTypeImpl(typeName, index + 1);
-    } else {
-      return found;
-    }
-  }
-
-  void notifySuperTypes() {
-    notifySuperTypesOf(this);
-  }
-
-  /**
-   * Removes references to this instance from all of its super types.
-   */
-  void removeFromSupertypes() {
-    removeSubtype(this);
-  }
-
-  private void acceptSubtype(JClassType me) {
-    allSubtypes.add(me);
-    notifySuperTypesOf(me);
-  }
-
-  private String computeInternalSignature(JMethod method) {
-    StringBuffer sb = new StringBuffer();
-    sb.setLength(0);
-    sb.append(method.getName());
-    JParameter[] params = method.getParameters();
-    for (int j = 0; j < params.length; j++) {
-      JParameter param = params[j];
-      sb.append("/");
-      sb.append(param.getType().getQualifiedSourceName());
-    }
-    return sb.toString();
-  }
-
-  private void getOverridableMethodsOnSuperclassesAndThisClass(
-      Map<String, JMethod> methodsBySignature) {
-    assert (isClass() != null);
-
-    // Recurse first so that more derived methods will clobber less derived
-    // methods.
-    JClassType superClass = getSuperclass();
-    if (superClass != null) {
-      superClass.getOverridableMethodsOnSuperclassesAndThisClass(methodsBySignature);
-    }
-
-    JMethod[] declaredMethods = getMethods();
-    for (int i = 0; i < declaredMethods.length; i++) {
-      JMethod method = declaredMethods[i];
-
-      // Ensure that this method is overridable.
-      if (method.isFinal() || method.isPrivate()) {
-        // We cannot override this method, so skip it.
-        continue;
-      }
-
-      // We can override this method, so record it.
-      String sig = computeInternalSignature(method);
-      methodsBySignature.put(sig, method);
-    }
-  }
+  protected abstract void getOverridableMethodsOnSuperclassesAndThisClass(
+      Map<String, JMethod> methodsBySignature);
 
   /**
    * Gets the methods declared in interfaces that this type extends. If this
@@ -608,72 +193,40 @@ public class JClassType extends JType implements HasAnnotations, HasMetaData {
    * 
    * @param methodsBySignature
    */
-  private void getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
-      Map<String, JMethod> methodsBySignature) {
-    // Recurse first so that more derived methods will clobber less derived
-    // methods.
-    JClassType[] superIntfs = getImplementedInterfaces();
-    for (int i = 0; i < superIntfs.length; i++) {
-      JClassType superIntf = superIntfs[i];
-      superIntf.getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
-    }
+  protected abstract void getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
+      Map<String, JMethod> methodsBySignature);
 
-    if (isInterface() == null) {
-      // This is not an interface, so we're done after having visited its
-      // implemented interfaces.
-      return;
-    }
-
-    JMethod[] declaredMethods = getMethods();
-    for (int i = 0; i < declaredMethods.length; i++) {
-      JMethod method = declaredMethods[i];
-
-      String sig = computeInternalSignature(method);
-      JMethod existing = methodsBySignature.get(sig);
-      if (existing != null) {
-        JClassType existingType = existing.getEnclosingType();
-        JClassType thisType = method.getEnclosingType();
-        if (thisType.isAssignableFrom(existingType)) {
-          // The existing method is in a more-derived type, so don't replace it.
-          continue;
-        }
-      }
-      methodsBySignature.put(sig, method);
-    }
-  }
-
-  private String makeCompoundName(JClassType type) {
-    if (type.enclosingType == null) {
-      return type.name;
+  protected final String makeCompoundName(JClassType type) {
+    if (type.getEnclosingType() == null) {
+      return type.getSimpleSourceName();
     } else {
-      return makeCompoundName(type.enclosingType) + "." + type.name;
+      return makeCompoundName(type.getEnclosingType()) + "."
+          + type.getSimpleSourceName();
     }
   }
 
   /**
    * Tells this type's superclasses and superinterfaces about it.
    */
-  private void notifySuperTypesOf(JClassType me) {
-    if (superclass != null) {
-      superclass.acceptSubtype(me);
-    }
-    for (int i = 0, n = interfaces.size(); i < n; ++i) {
-      JClassType intf = interfaces.get(i);
-      intf.acceptSubtype(me);
-    }
-  }
+  protected abstract void notifySuperTypesOf(JClassType me);
 
-  private void removeSubtype(JClassType me) {
-    allSubtypes.remove(me);
+  protected abstract void removeSubtype(JClassType me);
 
-    if (superclass != null) {
-      superclass.removeSubtype(me);
-    }
+  abstract void addConstructor(JConstructor ctor);
 
-    for (int i = 0, n = interfaces.size(); i < n; ++i) {
-      JClassType intf = interfaces.get(i);
+  abstract void addField(JField field);
 
-      intf.removeSubtype(me);
-    }
-  }
+  abstract void addMethod(JMethod method);
+
+  abstract void addNestedType(JClassType type);
+
+  abstract JClassType findNestedTypeImpl(String[] typeName, int index);
+
+  abstract void notifySuperTypes();
+
+  /**
+   * Removes references to this instance from all of its super types.
+   */
+  abstract void removeFromSupertypes();
+
 }

@@ -19,7 +19,8 @@ package java.util;
 import com.google.gwt.core.client.GWT;
 
 /**
- * Utility methods related to native arrays. <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Arrays.html">[Sun
+ * Utility methods related to native arrays. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Arrays.html">[Sun
  * docs]</a>
  */
 public class Arrays {
@@ -34,9 +35,9 @@ public class Arrays {
 
   /**
    * Perform a binary search on a sorted byte array.
-   *
+   * 
    * @param sortedArray byte array to search
-   * @param key         value to search for
+   * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
    *         of the array if the searched value is larger than all elements in
@@ -65,8 +66,8 @@ public class Arrays {
 
   /**
    * Perform a binary search on a sorted char array.
-   *
-   * @param a   char array to search
+   * 
+   * @param a char array to search
    * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
@@ -96,9 +97,9 @@ public class Arrays {
 
   /**
    * Perform a binary search on a sorted double array.
-   *
+   * 
    * @param sortedArray double array to search
-   * @param key         value to search for
+   * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
    *         of the array if the searched value is larger than all elements in
@@ -127,14 +128,14 @@ public class Arrays {
 
   /**
    * Perform a binary search on a sorted float array.
-   *
+   * 
    * Note that some underlying JavaScript interpreters do not actually implement
    * floats (using double instead), so you may get slightly different behavior
    * regarding values that are very close (or equal) since conversion errors
    * to/from double may change the values slightly.
-   *
+   * 
    * @param sortedArray float array to search
-   * @param key         value to search for
+   * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
    *         of the array if the searched value is larger than all elements in
@@ -163,9 +164,9 @@ public class Arrays {
 
   /**
    * Perform a binary search on a sorted int array.
-   *
+   * 
    * @param sortedArray int array to search
-   * @param key         value to search for
+   * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
    *         of the array if the searched value is larger than all elements in
@@ -194,15 +195,15 @@ public class Arrays {
 
   /**
    * Perform a binary search on a sorted long array.
-   *
+   * 
    * Note that most underlying JavaScript interpreters do not actually implement
    * longs, so the values must be stored in doubles instead. This means that
    * certain legal values cannot be represented, and comparison of two unequal
    * long values may result in unexpected results if they are not also
    * representable as doubles.
-   *
+   * 
    * @param sortedArray long array to search
-   * @param key         value to search for
+   * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
    *         of the array if the searched value is larger than all elements in
@@ -231,15 +232,15 @@ public class Arrays {
 
   /**
    * Perform a binary search on a sorted object array, using natural ordering.
-   *
+   * 
    * @param sortedArray object array to search
-   * @param key         value to search for
+   * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
    *         of the array if the searched value is larger than all elements in
    *         the array) minus 1 (to ensure error returns are negative)
    * @throws ClassCastException if <code>key</code> is not comparable to
-   *                            <code>sortedArray</code>'s elements.
+   *           <code>sortedArray</code>'s elements.
    */
   public static int binarySearch(final Object[] sortedArray, final Object key) {
     return binarySearch(sortedArray, key, Comparators.natural());
@@ -247,9 +248,9 @@ public class Arrays {
 
   /**
    * Perform a binary search on a sorted short array.
-   *
+   * 
    * @param sortedArray short array to search
-   * @param key         value to search for
+   * @param key value to search for
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
    *         of the array if the searched value is larger than all elements in
@@ -279,17 +280,18 @@ public class Arrays {
   /**
    * Perform a binary search on a sorted object array, using a user-specified
    * comparison function.
-   *
+   * 
    * @param sortedArray object array to search
-   * @param key         value to search for
-   * @param comparator  comparision function, <code>null</code> indicates
-   *                    <i>natural ordering</i> should be used.
+   * @param key value to search for
+   * @param comparator comparision function, <code>null</code> indicates
+   *          <i>natural ordering</i> should be used.
    * @return the index of an element with a matching value, or a negative number
    *         which is the index of the next larger value (or just past the end
    *         of the array if the searched value is larger than all elements in
    *         the array) minus 1 (to ensure error returns are negative)
-   * @throws ClassCastException if <code>key</code> and <code>sortedArray</code>'s
-   *                            elements cannot be compared by <code>comparator</code>.
+   * @throws ClassCastException if <code>key</code> and
+   *           <code>sortedArray</code>'s elements cannot be compared by
+   *           <code>comparator</code>.
    */
   public static <T> int binarySearch(final T[] sortedArray, final T key,
       Comparator<? super T> comparator) {
@@ -434,30 +436,6 @@ public class Arrays {
     return deepToString(a, new HashSet<Object[]>());
   }
 
-  public static boolean equals(Object[] array1, Object[] array2) {
-    if (array1 == array2) {
-      return true;
-    }
-
-    if (array1 == null || array2 == null) {
-      return false;
-    }
-
-    if (array1.length != array2.length) {
-      return false;
-    }
-
-    for (int i = 0; i < array1.length; ++i) {
-      Object val1 = array1[i];
-      Object val2 = array2[i];
-      if (!val1.equals(val2)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   public static boolean equals(boolean[] array1, boolean[] array2) {
     if (array1 == array2) {
       return true;
@@ -524,7 +502,29 @@ public class Arrays {
     return true;
   }
 
-  public static boolean equals(short[] array1, short[] array2) {
+  public static boolean equals(double[] array1, double[] array2) {
+    if (array1 == array2) {
+      return true;
+    }
+
+    if (array1 == null || array2 == null) {
+      return false;
+    }
+
+    if (array1.length != array2.length) {
+      return false;
+    }
+
+    for (int i = 0; i < array1.length; ++i) {
+      if (array1[i] != array2[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  public static boolean equals(float[] array1, float[] array2) {
     if (array1 == array2) {
       return true;
     }
@@ -590,7 +590,7 @@ public class Arrays {
     return true;
   }
 
-  public static boolean equals(float[] array1, float[] array2) {
+  public static boolean equals(Object[] array1, Object[] array2) {
     if (array1 == array2) {
       return true;
     }
@@ -604,7 +604,9 @@ public class Arrays {
     }
 
     for (int i = 0; i < array1.length; ++i) {
-      if (array1[i] != array2[i]) {
+      Object val1 = array1[i];
+      Object val2 = array2[i];
+      if (!val1.equals(val2)) {
         return false;
       }
     }
@@ -612,7 +614,7 @@ public class Arrays {
     return true;
   }
 
-  public static boolean equals(double[] array1, double[] array2) {
+  public static boolean equals(short[] array1, short[] array2) {
     if (array1 == array2) {
       return true;
     }
@@ -638,8 +640,7 @@ public class Arrays {
     fill(a, 0, a.length, val);
   }
 
-  public static void fill(boolean[] a, int fromIndex, int toIndex,
-      boolean val) {
+  public static void fill(boolean[] a, int fromIndex, int toIndex, boolean val) {
     for (int i = fromIndex; i < toIndex; ++i) {
       a[i] = val;
     }
@@ -649,8 +650,7 @@ public class Arrays {
     fill(a, 0, a.length, val);
   }
 
-  public static void fill(byte[] a, int fromIndex, int toIndex,
-      byte val) {
+  public static void fill(byte[] a, int fromIndex, int toIndex, byte val) {
     for (int i = fromIndex; i < toIndex; ++i) {
       a[i] = val;
     }
@@ -660,52 +660,7 @@ public class Arrays {
     fill(a, 0, a.length, val);
   }
 
-  public static void fill(char[] a, int fromIndex, int toIndex,
-      char val) {
-    for (int i = fromIndex; i < toIndex; ++i) {
-      a[i] = val;
-    }
-  }
-
-  public static void fill(short[] a, short val) {
-    fill(a, 0, a.length, val);
-  }
-
-  public static void fill(short[] a, int fromIndex, int toIndex,
-      short val) {
-    for (int i = fromIndex; i < toIndex; ++i) {
-      a[i] = val;
-    }
-  }
-
-  public static void fill(int[] a, int val) {
-    fill(a, 0, a.length, val);
-  }
-
-  public static void fill(int[] a, int fromIndex, int toIndex,
-      int val) {
-    for (int i = fromIndex; i < toIndex; ++i) {
-      a[i] = val;
-    }
-  }
-
-  public static void fill(long[] a, long val) {
-    fill(a, 0, a.length, val);
-  }
-
-  public static void fill(long[] a, int fromIndex, int toIndex,
-      long val) {
-    for (int i = fromIndex; i < toIndex; ++i) {
-      a[i] = val;
-    }
-  }
-
-  public static void fill(float[] a, float val) {
-    fill(a, 0, a.length, val);
-  }
-
-  public static void fill(float[] a, int fromIndex, int toIndex,
-      float val) {
+  public static void fill(char[] a, int fromIndex, int toIndex, char val) {
     for (int i = fromIndex; i < toIndex; ++i) {
       a[i] = val;
     }
@@ -715,8 +670,43 @@ public class Arrays {
     fill(a, 0, a.length, val);
   }
 
-  public static void fill(double[] a, int fromIndex, int toIndex,
-      double val) {
+  public static void fill(double[] a, int fromIndex, int toIndex, double val) {
+    for (int i = fromIndex; i < toIndex; ++i) {
+      a[i] = val;
+    }
+  }
+
+  public static void fill(float[] a, float val) {
+    fill(a, 0, a.length, val);
+  }
+
+  public static void fill(float[] a, int fromIndex, int toIndex, float val) {
+    for (int i = fromIndex; i < toIndex; ++i) {
+      a[i] = val;
+    }
+  }
+
+  public static void fill(int[] a, int val) {
+    fill(a, 0, a.length, val);
+  }
+
+  public static void fill(int[] a, int fromIndex, int toIndex, int val) {
+    for (int i = fromIndex; i < toIndex; ++i) {
+      a[i] = val;
+    }
+  }
+
+  public static void fill(long[] a, int fromIndex, int toIndex, long val) {
+    for (int i = fromIndex; i < toIndex; ++i) {
+      a[i] = val;
+    }
+  }
+
+  public static void fill(long[] a, long val) {
+    fill(a, 0, a.length, val);
+  }
+
+  public static void fill(Object[] a, int fromIndex, int toIndex, Object val) {
     for (int i = fromIndex; i < toIndex; ++i) {
       a[i] = val;
     }
@@ -726,11 +716,14 @@ public class Arrays {
     fill(a, 0, a.length, val);
   }
 
-  public static void fill(Object[] a, int fromIndex, int toIndex,
-      Object val) {
+  public static void fill(short[] a, int fromIndex, int toIndex, short val) {
     for (int i = fromIndex; i < toIndex; ++i) {
       a[i] = val;
     }
+  }
+
+  public static void fill(short[] a, short val) {
+    fill(a, 0, a.length, val);
   }
 
   public static int hashCode(boolean[] a) {
@@ -769,13 +762,25 @@ public class Arrays {
     return hashCode;
   }
 
-  public static int hashCode(short[] a) {
+  public static int hashCode(double[] a) {
     if (a == null) {
       return 0;
     }
     int hashCode = 1;
     for (int i = 0, n = a.length; i < n; ++i) {
-      hashCode = (31 * hashCode + Short.hashCode(a[i])) | 0;
+      hashCode = (31 * hashCode + Double.hashCode(a[i])) | 0;
+    }
+
+    return hashCode;
+  }
+
+  public static int hashCode(float[] a) {
+    if (a == null) {
+      return 0;
+    }
+    int hashCode = 1;
+    for (int i = 0, n = a.length; i < n; ++i) {
+      hashCode = (31 * hashCode + Float.hashCode(a[i])) | 0;
     }
 
     return hashCode;
@@ -805,30 +810,6 @@ public class Arrays {
     return hashCode;
   }
 
-  public static int hashCode(float[] a) {
-    if (a == null) {
-      return 0;
-    }
-    int hashCode = 1;
-    for (int i = 0, n = a.length; i < n; ++i) {
-      hashCode = (31 * hashCode + Float.hashCode(a[i])) | 0;
-    }
-
-    return hashCode;
-  }
-
-  public static int hashCode(double[] a) {
-    if (a == null) {
-      return 0;
-    }
-    int hashCode = 1;
-    for (int i = 0, n = a.length; i < n; ++i) {
-      hashCode = (31 * hashCode + Double.hashCode(a[i])) | 0;
-    }
-
-    return hashCode;
-  }
-
   public static int hashCode(Object[] a) {
     if (a == null) {
       return 0;
@@ -836,6 +817,18 @@ public class Arrays {
     int hashCode = 1;
     for (int i = 0, n = a.length; i < n; ++i) {
       hashCode = (31 * hashCode + a[i].hashCode()) | 0;
+    }
+
+    return hashCode;
+  }
+
+  public static int hashCode(short[] a) {
+    if (a == null) {
+      return 0;
+    }
+    int hashCode = 1;
+    for (int i = 0, n = a.length; i < n; ++i) {
+      hashCode = (31 * hashCode + Short.hashCode(a[i])) | 0;
     }
 
     return hashCode;
@@ -859,11 +852,20 @@ public class Arrays {
     nativeSort(a, fromIndex, toIndex);
   }
 
-  public static void sort(short[] a) {
+  public static void sort(double[] a) {
     sort(a, 0, a.length);
   }
 
-  public static void sort(short[] a, int fromIndex, int toIndex) {
+  public static void sort(double[] a, int fromIndex, int toIndex) {
+    verifySortIndices(fromIndex, toIndex);
+    nativeSort(a, fromIndex, toIndex);
+  }
+
+  public static void sort(float[] a) {
+    sort(a, 0, a.length);
+  }
+
+  public static void sort(float[] a, int fromIndex, int toIndex) {
     verifySortIndices(fromIndex, toIndex);
     nativeSort(a, fromIndex, toIndex);
   }
@@ -886,30 +888,30 @@ public class Arrays {
     nativeSort(a, fromIndex, toIndex);
   }
 
-  public static void sort(float[] a) {
-    sort(a, 0, a.length);
-  }
-
-  public static void sort(float[] a, int fromIndex, int toIndex) {
-    verifySortIndices(fromIndex, toIndex);
-    nativeSort(a, fromIndex, toIndex);
-  }
-
-  public static void sort(double[] a) {
-    sort(a, 0, a.length);
-  }
-
-  public static void sort(double[] a, int fromIndex, int toIndex) {
-    verifySortIndices(fromIndex, toIndex);
-    nativeSort(a, fromIndex, toIndex);
-  }
-
   public static void sort(Object[] x) {
     nativeSort(x, x.length, Comparators.natural());
   }
 
+  public static void sort(Object[] a, int fromIndex, int toIndex) {
+    // TODO
+  }
+
+  public static void sort(short[] a) {
+    sort(a, 0, a.length);
+  }
+
+  public static void sort(short[] a, int fromIndex, int toIndex) {
+    verifySortIndices(fromIndex, toIndex);
+    nativeSort(a, fromIndex, toIndex);
+  }
+
   public static <T> void sort(T[] x, Comparator<? super T> s) {
     nativeSort(x, x.length, s != null ? s : Comparators.natural());
+  }
+
+  public static <T> void sort(T[] a, int fromIndex, int toIndex,
+      Comparator<? super T> c) {
+    // TODO
   }
 
   public static String toString(boolean[] a) {
@@ -960,7 +962,23 @@ public class Arrays {
     return b.toString();
   }
 
-  public static String toString(short[] a) {
+  public static String toString(double[] a) {
+    if (a == null) {
+      return "null";
+    }
+
+    StringBuffer b = new StringBuffer("[");
+    for (int i = 0; i < a.length; i++) {
+      if (i != 0) {
+        b.append(", ");
+      }
+      b.append(String.valueOf(a[i]));
+    }
+    b.append("]");
+    return b.toString();
+  }
+
+  public static String toString(float[] a) {
     if (a == null) {
       return "null";
     }
@@ -1008,44 +1026,28 @@ public class Arrays {
     return b.toString();
   }
 
-  public static String toString(float[] a) {
-    if (a == null) {
-      return "null";
-    }
-
-    StringBuffer b = new StringBuffer("[");
-    for (int i = 0; i < a.length; i++) {
-      if (i != 0) {
-        b.append(", ");
-      }
-      b.append(String.valueOf(a[i]));
-    }
-    b.append("]");
-    return b.toString();
-  }
-
-  public static String toString(double[] a) {
-    if (a == null) {
-      return "null";
-    }
-
-    StringBuffer b = new StringBuffer("[");
-    for (int i = 0; i < a.length; i++) {
-      if (i != 0) {
-        b.append(", ");
-      }
-      b.append(String.valueOf(a[i]));
-    }
-    b.append("]");
-    return b.toString();
-  }
-
   public static String toString(Object[] x) {
     if (x == null) {
       return "null";
     }
 
     return Arrays.asList(x).toString();
+  }
+
+  public static String toString(short[] a) {
+    if (a == null) {
+      return "null";
+    }
+
+    StringBuffer b = new StringBuffer("[");
+    for (int i = 0; i < a.length; i++) {
+      if (i != 0) {
+        b.append(", ");
+      }
+      b.append(String.valueOf(a[i]));
+    }
+    b.append("]");
+    return b.toString();
   }
 
   static void unsafeSort(Object[] x, Comparator<?> s) {
@@ -1076,7 +1078,7 @@ public class Arrays {
           if (arraysIveSeen.contains(obj)) {
             b.append("[...]");
           } else {
-            Object[] objArray = (Object[])obj;
+            Object[] objArray = (Object[]) obj;
             HashSet<Object[]> tempSet = new HashSet<Object[]>(arraysIveSeen);
             b.append(deepToString(objArray, tempSet));
           }
@@ -1107,133 +1109,130 @@ public class Arrays {
     return b.toString();
   }
 
-  private static native void nativeSort(byte[] array, int fromIndex,
-      int toIndex) /*-{
-    var v = new Array();
-    for(var i = fromIndex; i < toIndex; ++i){
-      v[i - fromIndex] = array[i];
-    }
+  private static native void nativeSort(byte[] array, int fromIndex, int toIndex) /*-{
+     var v = new Array();
+     for(var i = fromIndex; i < toIndex; ++i){
+       v[i - fromIndex] = array[i];
+     }
 
-    v.sort();
+     v.sort();
 
-    for(var i = fromIndex; i < toIndex; ++i){
-      array[i] = v[i - fromIndex];
-    }
-  }-*/;
+     for(var i = fromIndex; i < toIndex; ++i){
+       array[i] = v[i - fromIndex];
+     }
+   }-*/;
 
-  private static native void nativeSort(char[] array, int fromIndex,
-      int toIndex) /*-{
-    var v = new Array();
-    for(var i = fromIndex; i < toIndex; ++i){
-      v[i - fromIndex] = array[i];
-    }
+  private static native void nativeSort(char[] array, int fromIndex, int toIndex) /*-{
+     var v = new Array();
+     for(var i = fromIndex; i < toIndex; ++i){
+       v[i - fromIndex] = array[i];
+     }
 
-    v.sort();
+     v.sort();
 
-    for(var i = fromIndex; i < toIndex; ++i){
-      array[i] = v[i - fromIndex];
-    }
-  }-*/;
-
-  private static native void nativeSort(short[] array, int fromIndex,
-      int toIndex) /*-{
-    var v = new Array();
-    for(var i = fromIndex; i < toIndex; ++i){
-      v[i - fromIndex] = array[i];
-    }
-
-    v.sort();
-
-    for(var i = fromIndex; i < toIndex; ++i){
-      array[i] = v[i - fromIndex];
-    }
-  }-*/;
-
-  private static native void nativeSort(int[] array, int fromIndex, int toIndex) /*-{
-    var v = new Array();
-    for(var i = fromIndex; i < toIndex; ++i){
-      v[i - fromIndex] = array[i];
-    }
-
-    v.sort();
-
-    for(var i = fromIndex; i < toIndex; ++i){
-      array[i] = v[i - fromIndex];
-    }
-  }-*/;
-
-  private static native void nativeSort(long[] array, int fromIndex,
-      int toIndex) /*-{
-    var v = new Array();
-    for(var i = fromIndex; i < toIndex; ++i){
-      v[i - fromIndex] = array[i];
-    }
-
-    v.sort();
-
-    for(var i = fromIndex; i < toIndex; ++i){
-      array[i] = v[i - fromIndex];
-    }
-  }-*/;
-
-  private static native void nativeSort(float[] array, int fromIndex,
-      int toIndex) /*-{
-    var v = new Array();
-    for(var i = fromIndex; i < toIndex; ++i){
-      v[i - fromIndex] = array[i];
-    }
-
-    v.sort();
-
-    for(var i = fromIndex; i < toIndex; ++i){
-      array[i] = v[i - fromIndex];
-    }
-  }-*/;
+     for(var i = fromIndex; i < toIndex; ++i){
+       array[i] = v[i - fromIndex];
+     }
+   }-*/;
 
   private static native void nativeSort(double[] array, int fromIndex,
       int toIndex) /*-{
-    var v = new Array();
-    for(var i = fromIndex; i < toIndex; ++i){
-      v[i - fromIndex] = array[i];
-    }
+     var v = new Array();
+     for(var i = fromIndex; i < toIndex; ++i){
+       v[i - fromIndex] = array[i];
+     }
 
-    v.sort();
+     v.sort();
 
-    for(var i = fromIndex; i < toIndex; ++i){
-      array[i] = v[i - fromIndex];
-    }
-  }-*/;
+     for(var i = fromIndex; i < toIndex; ++i){
+       array[i] = v[i - fromIndex];
+     }
+   }-*/;
+
+  private static native void nativeSort(float[] array, int fromIndex,
+      int toIndex) /*-{
+     var v = new Array();
+     for(var i = fromIndex; i < toIndex; ++i){
+       v[i - fromIndex] = array[i];
+     }
+
+     v.sort();
+
+     for(var i = fromIndex; i < toIndex; ++i){
+       array[i] = v[i - fromIndex];
+     }
+   }-*/;
+
+  private static native void nativeSort(int[] array, int fromIndex, int toIndex) /*-{
+     var v = new Array();
+     for(var i = fromIndex; i < toIndex; ++i){
+       v[i - fromIndex] = array[i];
+     }
+
+     v.sort();
+
+     for(var i = fromIndex; i < toIndex; ++i){
+       array[i] = v[i - fromIndex];
+     }
+   }-*/;
+
+  private static native void nativeSort(long[] array, int fromIndex, int toIndex) /*-{
+     var v = new Array();
+     for(var i = fromIndex; i < toIndex; ++i){
+       v[i - fromIndex] = array[i];
+     }
+
+     v.sort();
+
+     for(var i = fromIndex; i < toIndex; ++i){
+       array[i] = v[i - fromIndex];
+     }
+   }-*/;
 
   private static native void nativeSort(Object[] array, int size,
       Comparator<?> compare) /*-{ 
-    if (size == 0) {
-      return;
-    }
+     if (size == 0) {
+       return;
+     }
+    
+     var v = new Array();
+     for(var i = 0; i < size; ++i){
+       v[i] = array[i];
+     }
    
-    var v = new Array();
-    for(var i = 0; i < size; ++i){
-      v[i] = array[i];
-    }
-  
-    if(compare != null) {
-      var f = function(a,b) {
-        var c = compare.@java.util.Comparator::compare(Ljava/lang/Object;Ljava/lang/Object;)(a,b);
-        return c;
-      }
-      v.sort(f);
-    } else {
-      v.sort();
-    }
+     if(compare != null) {
+       var f = function(a,b) {
+         var c = compare.@java.util.Comparator::compare(Ljava/lang/Object;Ljava/lang/Object;)(a,b);
+         return c;
+       }
+       v.sort(f);
+     } else {
+       v.sort();
+     }
 
-    for(var i = 0; i < size; ++i){
-      array[i] = v[i];
-    }
-  }-*/;
+     for(var i = 0; i < size; ++i){
+       array[i] = v[i];
+     }
+   }-*/;
+
+  private static native void nativeSort(short[] array, int fromIndex,
+      int toIndex) /*-{
+     var v = new Array();
+     for(var i = fromIndex; i < toIndex; ++i){
+       v[i - fromIndex] = array[i];
+     }
+
+     v.sort();
+
+     for(var i = fromIndex; i < toIndex; ++i){
+       array[i] = v[i - fromIndex];
+     }
+   }-*/;
 
   private static void verifySortIndices(int fromIndex, int toIndex) {
     if (fromIndex > toIndex) {
-      throw new IllegalArgumentException(
-          "fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
+      throw new IllegalArgumentException("fromIndex(" + fromIndex
+          + ") > toIndex(" + toIndex + ")");
     }
   }
 }

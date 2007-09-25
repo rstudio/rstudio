@@ -23,7 +23,8 @@ import java.util.Map;
 /**
  * Common superclass for {@link JMethod} and {@link JConstructor}.
  */
-public abstract class JAbstractMethod implements HasAnnotations, HasMetaData {
+public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
+    HasTypeParameters {
 
   private final Annotations annotations = new Annotations();
 
@@ -35,6 +36,8 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData {
 
   private final int declStart;
 
+  private boolean isVarArgs = false;
+
   private final HasMetaData metaData = new MetaData();
 
   private int modifierBits;
@@ -45,9 +48,12 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData {
 
   private final List<JType> thrownTypes = new ArrayList<JType>();
 
+  private final List<JTypeParameter> typeParams = new ArrayList<JTypeParameter>();
+
   // Only the builder can construct
   JAbstractMethod(String name, int declStart, int declEnd, int bodyStart,
-      int bodyEnd, Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
+      int bodyEnd,
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
     this.name = name;
     this.declStart = declStart;
     this.declEnd = declEnd;
@@ -132,6 +138,10 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData {
     return thrownTypes.toArray(TypeOracle.NO_JTYPES);
   }
 
+  public JTypeParameter[] getTypeParameters() {
+    return typeParams.toArray(new JTypeParameter[typeParams.size()]);
+  }
+
   public JAnnotationMethod isAnnotationMethod() {
     return null;
   }
@@ -160,20 +170,36 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData {
     return 0 != (modifierBits & TypeOracle.MOD_PUBLIC);
   }
 
+  public boolean isVarArgs() {
+    return isVarArgs;
+  }
+
+  public void setVarArgs() {
+    isVarArgs = true;
+  }
+
   protected int getModifierBits() {
     return modifierBits;
   }
 
-  protected void toStringParamsAndThrows(StringBuffer sb) {
+  protected void toStringParamsAndThrows(StringBuilder sb) {
     sb.append("(");
     boolean needComma = false;
-    for (JParameter param : params) {
+    for (int i = 0, c = params.size(); i < c; ++i) {
+      JParameter param = params.get(i);
       if (needComma) {
         sb.append(", ");
       } else {
         needComma = true;
       }
-      sb.append(param.getType().getParameterizedQualifiedSourceName());
+      if (isVarArgs() && i == c - 1) {
+        JArrayType arrayType = param.getType().isArray();
+        assert (arrayType != null);
+        sb.append(arrayType.getComponentType().getParameterizedQualifiedSourceName());
+        sb.append("...");
+      } else {
+        sb.append(param.getType().getParameterizedQualifiedSourceName());
+      }
       sb.append(" ");
       sb.append(param.getName());
     }
@@ -193,8 +219,27 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData {
     }
   }
 
+  protected void toStringTypeParams(StringBuilder sb) {
+    sb.append("<");
+    boolean needComma = false;
+    for (JTypeParameter typeParam : typeParams) {
+      if (needComma) {
+        sb.append(", ");
+      } else {
+        needComma = true;
+      }
+      sb.append(typeParam.getName());
+      sb.append(typeParam.getBounds().toString());
+    }
+    sb.append(">");
+  }
+
   void addParameter(JParameter param) {
     params.add(param);
+  }
+
+  void addTypeParameter(JTypeParameter typeParameter) {
+    typeParams.add(typeParameter);
   }
 
   boolean hasParamTypes(JType[] paramTypes) {

@@ -20,7 +20,7 @@ import java.util.Arrays;
 /**
  * Type representing an annotation type.
  */
-public class JAnnotationType extends JClassType {
+public class JAnnotationType extends JRealClassType {
 
   public JAnnotationType(TypeOracle oracle, CompilationUnitProvider cup,
       JPackage declaringPackage, JClassType enclosingType, boolean isLocalType,

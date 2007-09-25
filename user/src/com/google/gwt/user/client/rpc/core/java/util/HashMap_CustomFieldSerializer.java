@@ -20,6 +20,7 @@ import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
 import java.util.HashMap;
+import java.util.Set;
 import java.util.Map.Entry;
 
 /**
@@ -28,7 +29,7 @@ import java.util.Map.Entry;
 public final class HashMap_CustomFieldSerializer {
 
   public static void deserialize(SerializationStreamReader streamReader,
-      HashMap<Object, Object> instance) throws SerializationException {
+      HashMap instance) throws SerializationException {
     int size = streamReader.readInt();
 
     for (int i = 0; i < size; ++i) {
@@ -40,11 +41,11 @@ public final class HashMap_CustomFieldSerializer {
   }
 
   public static void serialize(SerializationStreamWriter streamWriter,
-      HashMap<Object, Object> instance) throws SerializationException {
+      HashMap instance) throws SerializationException {
     int size = instance.size();
     streamWriter.writeInt(size);
 
-    for (Entry<Object, Object> entry : instance.entrySet()) {
+    for (Entry entry : (Set<Entry>)instance.entrySet()) {
       streamWriter.writeObject(entry.getKey());
       streamWriter.writeObject(entry.getValue());
     }

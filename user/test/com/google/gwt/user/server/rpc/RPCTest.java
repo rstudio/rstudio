@@ -159,12 +159,12 @@ public class RPCTest extends TestCase {
     // Case 3
     RPCRequest request;
     request = RPC.decodeRequest(VALID_ENCODED_REQUEST, null);
-    assertEquals(A.class.getMethod("method2", null), request.getMethod());
+    assertEquals(A.class.getMethod("method2"), request.getMethod());
     assertTrue(request.getParameters().length == 0);
 
     // Case 4
     request = RPC.decodeRequest(VALID_ENCODED_REQUEST, A.class);
-    assertEquals(A.class.getMethod("method2", null), request.getMethod());
+    assertEquals(A.class.getMethod("method2"), request.getMethod());
     assertTrue(request.getParameters().length == 0);
 
     // Case 5
@@ -219,7 +219,7 @@ public class RPCTest extends TestCase {
     RPC.encodeResponseForFailure(null, new SerializableException());
 
     Method A_method1 = null;
-    A_method1 = A.class.getMethod("method1", null);
+    A_method1 = A.class.getMethod("method1");
 
     // Case 2
     try {
@@ -231,7 +231,7 @@ public class RPCTest extends TestCase {
 
     // Case 3
     try {
-      RPC.encodeResponseForFailure(A.class.getMethod("method1", null),
+      RPC.encodeResponseForFailure(A.class.getMethod("method1"),
           new IllegalArgumentException());
       fail("Expected UnexpectedException");
     } catch (UnexpectedException e) {
@@ -240,7 +240,7 @@ public class RPCTest extends TestCase {
 
     // Case 4
     String str = RPC.encodeResponseForFailure(
-        A.class.getMethod("method1", null), new SerializableException());
+        A.class.getMethod("method1"), new SerializableException());
     assertTrue(str.indexOf("SerializableException") != -1);
   }
 
@@ -263,8 +263,8 @@ public class RPCTest extends TestCase {
       SecurityException, NoSuchMethodException {
     Method A_method1 = null;
     Method A_method2 = null;
-    A_method1 = A.class.getMethod("method1", null);
-    A_method2 = A.class.getMethod("method2", null);
+    A_method1 = A.class.getMethod("method1");
+    A_method2 = A.class.getMethod("method2");
 
     // Case 1
     try {
@@ -316,7 +316,7 @@ public class RPCTest extends TestCase {
       // expected to get here
     }
 
-    Method A_method1 = A.class.getMethod("method1", null);
+    Method A_method1 = A.class.getMethod("method1");
 
     // Case 2
     try {

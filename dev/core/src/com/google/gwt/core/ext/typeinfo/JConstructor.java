@@ -34,7 +34,7 @@ public class JConstructor extends JAbstractMethod {
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
     super(name, declStart, declEnd, bodyStart, bodyEnd, declaredAnnotations);
     this.enclosingType = enclosingType;
-    enclosingType.addConstructor(this); 
+    enclosingType.addConstructor(this);
   }
 
   public JClassType getEnclosingType() {
@@ -43,9 +43,13 @@ public class JConstructor extends JAbstractMethod {
 
   public String getReadableDeclaration() {
     String[] names = TypeOracle.modifierBitsToNames(getModifierBits());
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     for (int i = 0; i < names.length; i++) {
       sb.append(names[i]);
+      sb.append(" ");
+    }
+    if (getTypeParameters().length > 0) {
+      toStringTypeParams(sb);
       sb.append(" ");
     }
     sb.append(getName());

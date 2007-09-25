@@ -18,6 +18,7 @@ package com.google.gwt.core.ext.typeinfo;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -70,6 +71,7 @@ public class TypeOracle {
   static final int MOD_TRANSIENT = 0x00000080;
   static final int MOD_VOLATILE = 0x00000100;
 
+  static final Annotation[] NO_ANNOTATIONS = new Annotation[0];
   static final JClassType[] NO_JCLASSES = new JClassType[0];
   static final JConstructor[] NO_JCTORS = new JConstructor[0];
   static final JField[] NO_JFIELDS = new JField[0];
@@ -146,7 +148,7 @@ public class TypeOracle {
       Set<JClassType> invalidTypes) {
     if (type instanceof JParameterizedType) {
       JParameterizedType parameterizedType = (JParameterizedType) type;
-      if (isInvalidatedTypeRecursive(parameterizedType.getRawType(),
+      if (isInvalidatedTypeRecursive(parameterizedType.getBaseType(),
           invalidTypes)) {
         return true;
       }
@@ -248,13 +250,13 @@ public class TypeOracle {
    * calls to this method with the same argument return the same object.
    * 
    * @param componentType the component type of the array, which can itself be
-   *            an array type
+   *          an array type
    * @return a type object representing an array of the component type
    */
   public JArrayType getArrayType(JType componentType) {
     JArrayType arrayType = arrayTypes.get(componentType);
     if (arrayType == null) {
-      arrayType = new JArrayType(componentType);
+      arrayType = new JArrayType(componentType, this);
       arrayTypes.put(componentType, arrayType);
     }
     return arrayType;
@@ -317,17 +319,16 @@ public class TypeOracle {
    * has a stable identity so as to guarantee that all calls to this method with
    * the same arguments return the same object.
    * 
-   * @param rawType the raw type of the array, which must be a class or
-   *            interface type and cannot be a primitive, array, or another
-   *            parameterized type
-   * @param typeArgs the type arguments bound to the specified raw type
+   * @param genericType a generic base class
+   * @param typeArgs the type arguments bound to the specified generic type
    * @return a type object representing this particular binding of type
-   *         arguments to the specified raw type
+   *         arguments to the specified generic
    */
-  public JType getParameterizedType(JClassType rawType, JType[] typeArgs) {
+  public JParameterizedType getParameterizedType(JGenericType genericType,
+      JClassType[] typeArgs) {
     // Uses the generated string signature to intern parameterized types.
     //
-    JParameterizedType parameterized = new JParameterizedType(rawType);
+    JParameterizedType parameterized = new JParameterizedType(genericType);
     for (int i = 0; i < typeArgs.length; i++) {
       parameterized.addTypeArg(typeArgs[i]);
     }
@@ -750,7 +751,7 @@ public class TypeOracle {
       String rawTypeName = type.substring(0, bracket);
       JType rawType = parseImpl(rawTypeName);
       if (rawType.isParameterized() != null) {
-        // The raw type cannot itself be parmeterized.
+        // The raw type cannot itself be parameterized.
         //
         throw new BadTypeArgsException(
             "Only non-parameterized classes and interface can be parameterized");
@@ -767,11 +768,12 @@ public class TypeOracle {
       // Resolve each type argument.
       //
       String typeArgContents = type.substring(bracket + 1, type.length() - 1);
-      JType[] typeArgs = parseTypeArgContents(typeArgContents);
+      JClassType[] typeArgs = parseTypeArgContents(typeArgContents);
 
       // Intern this type.
       //
-      return getParameterizedType(rawType.isClassOrInterface(), typeArgs);
+      return getParameterizedType(rawType.isClassOrInterface().isGenericType(),
+          typeArgs);
     }
 
     JType result = JPrimitiveType.valueOf(type);
@@ -787,7 +789,7 @@ public class TypeOracle {
     throw new NotFoundException(type);
   }
 
-  private void parseTypeArgComponent(List<JType> typeArgList,
+  private void parseTypeArgComponent(List<JClassType> typeArgList,
       String typeArgComponent) throws NotFoundException, ParseException,
       BadTypeArgsException {
     JType typeArg = parseImpl(typeArgComponent);
@@ -799,16 +801,16 @@ public class TypeOracle {
           + " cannot be used in this context");
     }
 
-    typeArgList.add(typeArg);
+    typeArgList.add((JClassType) typeArg);
   }
 
   /**
    * Returns an array of types specified inside of a gwt.typeArgs javadoc
    * annotation.
    */
-  private JType[] parseTypeArgContents(String typeArgContents)
+  private JClassType[] parseTypeArgContents(String typeArgContents)
       throws ParseException, NotFoundException, BadTypeArgsException {
-    List<JType> typeArgList = new ArrayList<JType>();
+    List<JClassType> typeArgList = new ArrayList<JClassType>();
 
     int start = 0;
     for (int offset = 0, length = typeArgContents.length(); offset < length; ++offset) {
@@ -845,7 +847,7 @@ public class TypeOracle {
     String typeArgComponent = typeArgContents.substring(start);
     parseTypeArgComponent(typeArgList, typeArgComponent);
 
-    JType[] typeArgs = typeArgList.toArray(new JType[typeArgList.size()]);
+    JClassType[] typeArgs = typeArgList.toArray(new JClassType[typeArgList.size()]);
     return typeArgs;
   }
 

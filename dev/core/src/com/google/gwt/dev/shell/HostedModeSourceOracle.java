@@ -23,6 +23,7 @@ import com.google.gwt.dev.jdt.StandardSourceOracle;
 import com.google.gwt.dev.jdt.StaticCompilationUnitProvider;
 import com.google.gwt.util.tools.Utility;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -32,10 +33,12 @@ import java.io.IOException;
 public class HostedModeSourceOracle extends StandardSourceOracle {
 
   private final JsniInjector injector;
+  private final File jsniSaveDirectory;
 
-  public HostedModeSourceOracle(TypeOracle typeOracle) {
+  public HostedModeSourceOracle(TypeOracle typeOracle, File jsniSaveDirectory) {
     super(typeOracle);
     this.injector = new JsniInjector(typeOracle);
+    this.jsniSaveDirectory = jsniSaveDirectory;
   }
 
   @Override
@@ -65,7 +68,8 @@ public class HostedModeSourceOracle extends StandardSourceOracle {
     // Otherwise, it's a regular translatable type, but we want to make sure
     // its JSNI stuff, if any, gets handled.
     //
-    CompilationUnitProvider jsnified = injector.inject(logger, existing);
+    CompilationUnitProvider jsnified = injector.inject(logger, existing,
+        jsniSaveDirectory);
     return jsnified;
   }
 }

@@ -112,9 +112,13 @@ public class JMethod extends JAbstractMethod {
 
   String getReadableDeclaration(int modifierBits) {
     String[] names = TypeOracle.modifierBitsToNames(modifierBits);
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     for (int i = 0; i < names.length; i++) {
       sb.append(names[i]);
+      sb.append(" ");
+    }
+    if (getTypeParameters().length > 0) {
+      toStringTypeParams(sb);
       sb.append(" ");
     }
     sb.append(returnType.getParameterizedQualifiedSourceName());

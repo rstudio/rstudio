@@ -27,7 +27,7 @@ import java.util.Vector;
 public final class Vector_CustomFieldSerializer {
 
   public static void deserialize(SerializationStreamReader streamReader,
-      Vector<Object> instance) throws SerializationException {
+      Vector instance) throws SerializationException {
     int size = streamReader.readInt();
     for (int i = 0; i < size; ++i) {
       Object obj = streamReader.readObject();
@@ -36,7 +36,7 @@ public final class Vector_CustomFieldSerializer {
   }
 
   public static void serialize(SerializationStreamWriter streamWriter,
-      Vector<Object> instance) throws SerializationException {
+      Vector instance) throws SerializationException {
     int size = instance.size();
     streamWriter.writeInt(size);
     for (Object obj : instance) {

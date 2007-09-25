@@ -27,7 +27,7 @@ import java.util.HashSet;
 public final class HashSet_CustomFieldSerializer {
 
   public static void deserialize(SerializationStreamReader streamReader,
-      HashSet<Object> instance) throws SerializationException {
+      HashSet instance) throws SerializationException {
     int size = streamReader.readInt();
     for (int i = 0; i < size; ++i) {
       instance.add(streamReader.readObject());
@@ -35,7 +35,7 @@ public final class HashSet_CustomFieldSerializer {
   }
 
   public static void serialize(SerializationStreamWriter streamWriter,
-      HashSet<Object> instance) throws SerializationException {
+      HashSet instance) throws SerializationException {
     streamWriter.writeInt(instance.size());
     for (Object obj : instance) {
       streamWriter.writeObject(obj);

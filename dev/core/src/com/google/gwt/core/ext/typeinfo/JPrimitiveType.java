@@ -63,6 +63,11 @@ public class JPrimitiveType extends JType {
   }
 
   @Override
+  public JType getErasedType() {
+    return this;
+  }
+  
+  @Override
   public String getJNISignature() {
     return jni;
   }
@@ -104,5 +109,11 @@ public class JPrimitiveType extends JType {
   @Override
   public JPrimitiveType isPrimitive() {
     return this;
+  }
+
+  @Override
+  public JRawType isRawType() {
+    // intentional null
+    return null;
   }
 }

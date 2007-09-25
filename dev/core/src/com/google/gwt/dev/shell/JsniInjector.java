@@ -29,7 +29,9 @@ import com.google.gwt.dev.jdt.CompilationUnitProviderWithAlternateSource;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.util.Jsni;
 import com.google.gwt.dev.util.StringCopier;
+import com.google.gwt.dev.util.Util;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
@@ -47,10 +49,10 @@ public class JsniInjector {
    * atomically.
    */
   private class CoreTypes {
-    static final String PKG_JSOBJECT = "com.google.gwt.core.client";
     static final String CLS_JSOBJECT = "JavaScriptObject";
-    static final String PKG_STRING = "java.lang";
     static final String CLS_STRING = "String";
+    static final String PKG_JSOBJECT = "com.google.gwt.core.client";
+    static final String PKG_STRING = "java.lang";
 
     public final JClassType javaLangString;
 
@@ -102,9 +104,9 @@ public class JsniInjector {
     }
   }
 
-  private final TypeOracle oracle;
-
   private CoreTypes coreTypes;
+
+  private final TypeOracle oracle;
 
   private final Map<JMethod, JsBlock> parsedJsByMethod = new IdentityHashMap<JMethod, JsBlock>();
 
@@ -113,7 +115,8 @@ public class JsniInjector {
   }
 
   public CompilationUnitProvider inject(TreeLogger logger,
-      CompilationUnitProvider cup) throws UnableToCompleteException {
+      CompilationUnitProvider cup, File jsniSaveDirectory)
+      throws UnableToCompleteException {
 
     logger = logger.branch(TreeLogger.SPAM,
         "Checking for JavaScript native methods", null);
@@ -126,7 +129,8 @@ public class JsniInjector {
     // Analyze the source and build a list of changes.
     char[] source = cup.getSource();
     List<Replacement> changes = new ArrayList<Replacement>();
-    rewriteCompilationUnit(logger, source, changes, cup);
+    rewriteCompilationUnit(logger, source, changes, cup,
+        jsniSaveDirectory != null);
 
     // Sort and apply the changes.
     int n = changes.size();
@@ -140,6 +144,17 @@ public class JsniInjector {
       }
 
       char[] results = copier.finish();
+
+      if (jsniSaveDirectory != null) {
+        String originalPath = cup.getLocation().replace(File.separatorChar, '/');
+        String suffix = cup.getPackageName().replace('.', '/');
+        int pos = originalPath.indexOf(suffix);
+        if (pos >= 0) {
+          String filePath = originalPath.substring(pos);
+          File out = new File(jsniSaveDirectory, filePath);
+          Util.writeCharsAsFile(logger, out, results);
+        }
+      }
 
       return new CompilationUnitProviderWithAlternateSource(cup, results);
     } else {
@@ -212,15 +227,28 @@ public class JsniInjector {
    * @param method
    * @param expectedHeaderLines
    * @param expectedBodyLines
+   * @param prettyPrint true if the output should be prettier
    * @return a String of the Java code to call a JSNI method, using
    *         JavaScriptHost.invokeNative*
    */
   private String genNonNativeVersionOfJsniMethod(JMethod method,
-      int expectedBodyLines) {
+      int expectedHeaderLines, int expectedBodyLines, boolean pretty) {
     StringBuffer sb = new StringBuffer();
+    String nl = pretty ? "\n " : "";
 
+    // Add extra lines at the start to match comments + declaration
+    if (!pretty) {
+      for (int i = 0; i < expectedHeaderLines; ++i) {
+        sb.append('\n');
+      }
+    }
+
+    String methodDecl = method.getReadableDeclaration(false, true, false,
+        false, false);
+
+    sb.append(methodDecl + " {" + nl);
     // wrap the call in a try-catch block
-    sb.append("{ try {");
+    sb.append("try {" + nl);
 
     // Write the Java call to the property invoke method, adding
     // downcasts where necessary.
@@ -229,7 +257,7 @@ public class JsniInjector {
     JPrimitiveType primType;
     if (isJavaScriptObject) {
       // Add a downcast from Handle to the originally-declared type.
-      String returnTypeName = returnType.getQualifiedSourceName();
+      String returnTypeName = returnType.getParameterizedQualifiedSourceName();
       sb.append("return (" + returnTypeName + ")" + Jsni.JAVASCRIPTHOST_NAME
           + ".invokeNativeHandle");
     } else if (null != (primType = returnType.isPrimitive())) {
@@ -250,7 +278,7 @@ public class JsniInjector {
     } else {
       // Some reference type.
       // We need to add a downcast to the originally-declared type.
-      String returnTypeName = returnType.getQualifiedSourceName();
+      String returnTypeName = returnType.getParameterizedQualifiedSourceName();
       sb.append("return (");
       sb.append(returnTypeName);
       sb.append(")");
@@ -270,7 +298,7 @@ public class JsniInjector {
 
     if (isJavaScriptObject) {
       // Handle-oriented calls also need the return type as an argument.
-      String returnTypeName = returnType.getQualifiedSourceName();
+      String returnTypeName = returnType.getErasedType().getQualifiedSourceName();
       sb.append(returnTypeName);
       sb.append(".class, ");
     }
@@ -283,25 +311,29 @@ public class JsniInjector {
     // Build an array containing the arguments based on the names of the
     // parameters.
     sb.append(Jsni.buildArgList(method));
-    sb.append(");");
+    sb.append(");" + nl);
 
     // Catch exceptions; rethrow if the exception is RTE or declared.
-    sb.append("} catch (java.lang.Throwable __gwt_exception) {");
-    sb.append("if (__gwt_exception instanceof java.lang.RuntimeException) throw (java.lang.RuntimeException) __gwt_exception;");
+    sb.append("} catch (java.lang.Throwable __gwt_exception) {" + nl);
+    sb.append("if (__gwt_exception instanceof java.lang.RuntimeException) throw (java.lang.RuntimeException) __gwt_exception;"
+        + nl);
     JType[] throwTypes = method.getThrows();
     for (int i = 0; i < throwTypes.length; ++i) {
       String typeName = throwTypes[i].getQualifiedSourceName();
       sb.append("if (__gwt_exception instanceof " + typeName + ") throw ("
-          + typeName + ") __gwt_exception;");
+          + typeName + ") __gwt_exception;" + nl);
     }
-    sb.append("throw new java.lang.RuntimeException(\"Undeclared checked exception thrown out of JavaScript; web mode behavior may differ.\", __gwt_exception);");
+    sb.append("throw new java.lang.RuntimeException(\"Undeclared checked exception thrown out of JavaScript; web mode behavior may differ.\", __gwt_exception);"
+        + nl);
+    sb.append("}" + nl);
 
-    // Close try block and method body.
-    sb.append("} }");
+    sb.append("}" + nl);
 
     // Add extra lines at the end to match JSNI body.
-    for (int i = 0; i < expectedBodyLines; ++i) {
-      sb.append('\n');
+    if (!pretty) {
+      for (int i = 0; i < expectedBodyLines; ++i) {
+        sb.append('\n');
+      }
     }
 
     return sb.toString();
@@ -337,41 +369,20 @@ public class JsniInjector {
     }
   }
 
-  private void replaceNativeKeywords(char[] source, List<Replacement> changes,
-      int start, int end) {
-    String nativeKeyword = "native";
-    char[] whitespace = "      ".toCharArray();
-    assert (whitespace.length == nativeKeyword.length());
-    String header = String.valueOf(source, start, end - start);
-    for (int pos = header.indexOf(nativeKeyword); pos >= 0; pos = header.indexOf(
-        nativeKeyword, pos + 1)) {
-      if (pos > 0 && !Character.isWhitespace(header.charAt(pos - 1))) {
-        // not a keyword
-        continue;
-      }
-      if (pos + 6 < header.length()
-          && !Character.isWhitespace(header.charAt(pos + 6))) {
-        // not a keyword
-        continue;
-      }
-      changes.add(new Replacement(start + pos, start + pos + 6, whitespace));
-    }
-  }
-
   private void rewriteCompilationUnit(TreeLogger logger, char[] source,
-      List<Replacement> changes, CompilationUnitProvider cup)
+      List<Replacement> changes, CompilationUnitProvider cup, boolean pretty)
       throws UnableToCompleteException {
 
     // Hit all the types in the compilation unit.
     JClassType[] types = oracle.getTypesInCompilationUnit(cup);
     for (int i = 0; i < types.length; i++) {
       JClassType type = types[i];
-      rewriteType(logger, source, changes, type);
+      rewriteType(logger, source, changes, type, pretty);
     }
   }
 
   private void rewriteType(TreeLogger logger, char[] source,
-      List<Replacement> changes, JClassType type)
+      List<Replacement> changes, JClassType type, boolean pretty)
       throws UnableToCompleteException {
 
     String loc = type.getCompilationUnit().getLocation();
@@ -395,20 +406,19 @@ public class JsniInjector {
           // Remember this as being a valid JSNI method.
           parsedJsByMethod.put(method, body);
 
+          // Replace the method.
+          final int declStart = method.getDeclStart();
+          final int declEnd = method.getDeclEnd();
+
+          int expectedHeaderLines = Jsni.countNewlines(source, declStart,
+              interval.start);
           int expectedBodyLines = Jsni.countNewlines(source, interval.start,
               interval.end);
-          String newBody = genNonNativeVersionOfJsniMethod(method,
-              expectedBodyLines);
+          String newDecl = genNonNativeVersionOfJsniMethod(method,
+              expectedHeaderLines, expectedBodyLines, pretty);
 
-          char[] newSource = newBody.toCharArray();
-          int jsniCommentStart = interval.start
-              - Jsni.JSNI_BLOCK_START.length();
-          changes.add(new Replacement(jsniCommentStart,
-              method.getDeclEnd() + 1, newSource));
-
-          replaceNativeKeywords(source, changes, method.getDeclStart(),
-              jsniCommentStart);
-
+          final char[] newSource = newDecl.toCharArray();
+          changes.add(new Replacement(declStart, declEnd, newSource));
           patchedMethods.add(method);
         } else {
           // report error

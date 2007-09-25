@@ -15,18 +15,13 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- * Represents a parameterized type in a declaration.
+ * 
  */
-public class JParameterizedType extends JDelegatingClassType {
+public class JRawType extends JDelegatingClassType {
 
-  private final List<JClassType> typeArgs = new ArrayList<JClassType>();
-
-  JParameterizedType(JGenericType baseType) {
-    super.setBaseType(baseType);
+  public JRawType(JGenericType genericType) {
+    super.setBaseType(genericType);
   }
 
   @Override
@@ -57,6 +52,10 @@ public class JParameterizedType extends JDelegatingClassType {
     return null;
   }
 
+  public JGenericType getGenericType() {
+    return getBaseType();
+  }
+
   @Override
   public JMethod getMethod(String name, JType[] paramTypes)
       throws NotFoundException {
@@ -70,54 +69,19 @@ public class JParameterizedType extends JDelegatingClassType {
     return null;
   }
 
-  /**
-   * @deprecated see {@link #getQualifiedSourceName()}
-   */
-  @Deprecated
-  public String getNonParameterizedQualifiedSourceName() {
+  @Override
+  public String getParameterizedQualifiedSourceName() {
     return getQualifiedSourceName();
   }
 
   @Override
-  public String getParameterizedQualifiedSourceName() {
-    StringBuffer sb = new StringBuffer();
-    sb.append(getQualifiedSourceName());
-
-    sb.append('<');
-    boolean needComma = false;
-    for (JType typeArg : typeArgs) {
-      if (needComma) {
-        sb.append(", ");
-      } else {
-        needComma = true;
-      }
-      sb.append(typeArg.getParameterizedQualifiedSourceName());
-    }
-    sb.append('>');
-    return sb.toString();
-  }
-
-  /**
-   * Everything is fully qualified and includes the &lt; and &gt; in the
-   * signature.
-   */
   public String getQualifiedSourceName() {
-    return getBaseType().getQualifiedSourceName();
+    return baseType.getQualifiedSourceName();
   }
 
-  public JClassType getRawType() {
-    return getBaseType().getRawType();
-  }
-
-  /**
-   * In this case, the raw type name.
-   */
+  @Override
   public String getSimpleSourceName() {
-    return getRawType().getSimpleSourceName();
-  }
-
-  public JClassType[] getTypeArgs() {
-    return typeArgs.toArray(TypeOracle.NO_JCLASSES);
+    return baseType.getSimpleSourceName();
   }
 
   @Override
@@ -127,17 +91,12 @@ public class JParameterizedType extends JDelegatingClassType {
 
   @Override
   public JParameterizedType isParameterized() {
-    return this;
+    return null;
   }
 
   @Override
   public JRawType isRawType() {
-    return null;
-  }
-
-  void addTypeArg(JClassType type) {
-    assert (type.isPrimitive() == null);
-    typeArgs.add(type);
+    return this;
   }
 
 }
