@@ -37,7 +37,7 @@ class SwtOleGlue {
    * here so that Handles can be manipulated properly.
    */
   public static Variant convertObjectToVariant(CompilingClassLoader cl,
-      Class type, Object o) {
+      Class<?> type, Object o) {
     if (type.equals(Variant.class)) {
       return (Variant) o;
     }
@@ -49,7 +49,7 @@ class SwtOleGlue {
   /**
    * Converts an array of variants to their equivalent java objects.
    */
-  public static Object[] convertVariantsToObjects(Class[] argTypes,
+  public static Object[] convertVariantsToObjects(Class<?>[] argTypes,
       Variant[] varArgs, String msgPrefix) {
     Object[] javaArgs = new Object[Math.min(varArgs.length, argTypes.length)];
     for (int i = 0; i < javaArgs.length; i++) {
@@ -91,7 +91,7 @@ class SwtOleGlue {
       size = 8192;
     }
     char[] buffer = new char[(size + 1) / 2];
-    COM.MoveMemory(buffer, pOleChar, size);
+    OS.MoveMemory(buffer, pOleChar, size);
 
     String s = new String(buffer);
     if (s.indexOf('\0') != -1) {
@@ -123,12 +123,14 @@ class SwtOleGlue {
         external.AddRef();
       }
 
+      @Override
       public int method15(int[] args) {
         // GetExternal() is method 15.
         //
         return GetExternal(args[0]);
       }
 
+      @Override
       public int method2(int[] args) {
         int result = super.method2(args);
         if (result == 0) {

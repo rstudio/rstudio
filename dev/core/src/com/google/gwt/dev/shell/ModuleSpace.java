@@ -182,7 +182,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public boolean invokeNativeBoolean(String name, Object jthis,
       Class<?>[] types, Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    Boolean value = (Boolean) JsValueGlue.get(result, Boolean.class,
+    Boolean value = JsValueGlue.get(result, Boolean.class,
         "invokeNativeBoolean(" + name + ")");
     return value.booleanValue();
   }
@@ -190,7 +190,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public byte invokeNativeByte(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    Byte value = (Byte) JsValueGlue.get(result, Byte.class, "invokeNativeByte("
+    Byte value = JsValueGlue.get(result, Byte.class, "invokeNativeByte("
         + name + ")");
     return value.byteValue();
   }
@@ -198,7 +198,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public char invokeNativeChar(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    Character value = (Character) JsValueGlue.get(result, Character.class,
+    Character value = JsValueGlue.get(result, Character.class,
         "invokeNativeCharacter(" + name + ")");
     return value.charValue();
   }
@@ -206,7 +206,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public double invokeNativeDouble(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    Double value = (Double) JsValueGlue.get(result, Double.class,
+    Double value = JsValueGlue.get(result, Double.class,
         "invokeNativeDouble(" + name + ")");
     return value.doubleValue();
   }
@@ -214,7 +214,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public float invokeNativeFloat(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    Float value = (Float) JsValueGlue.get(result, Float.class,
+    Float value = JsValueGlue.get(result, Float.class,
         "invokeNativeFloat(" + name + ")");
     return value.floatValue();
   }
@@ -230,7 +230,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public int invokeNativeInt(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    Integer value = (Integer) JsValueGlue.get(result, Integer.class,
+    Integer value = JsValueGlue.get(result, Integer.class,
         "invokeNativeInteger(" + name + ")");
     return value.intValue();
   }
@@ -238,7 +238,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public long invokeNativeLong(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    Long value = (Long) JsValueGlue.get(result, Long.class, "invokeNativeLong("
+    Long value = JsValueGlue.get(result, Long.class, "invokeNativeLong("
         + name + ")");
     return value.longValue();
   }
@@ -253,7 +253,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public short invokeNativeShort(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    Short value = (Short) JsValueGlue.get(result, Short.class,
+    Short value = JsValueGlue.get(result, Short.class,
         "invokeNativeShort(" + name + ")");
     return value.shortValue();
   }
@@ -261,7 +261,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public String invokeNativeString(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    return (String) JsValueGlue.get(result, String.class, "invokeNativeString("
+    return JsValueGlue.get(result, String.class, "invokeNativeString("
         + name + ")");
   }
 

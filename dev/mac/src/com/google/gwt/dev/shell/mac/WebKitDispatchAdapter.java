@@ -113,6 +113,7 @@ class WebKitDispatchAdapter implements DispatchObject {
     javaDispatch.setFieldValue(dispId, val);
   }
 
+  @Override
   public String toString() {
     return getTarget().toString();
   }

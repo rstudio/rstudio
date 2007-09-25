@@ -51,7 +51,7 @@ import java.lang.reflect.Method;
  * </p>
  * <ul>
  * <li>Only late-bound dispatch is supported</li>
- * <li>Named arguments are not supported (see {@link #GetIDsOfNames)).</li>
+ * <li>Named arguments are not supported (see {@link #GetIDsOfNames})).</li>
  * </ul>
  */
 class IDispatchProxy extends IDispatchImpl {
@@ -95,6 +95,7 @@ class IDispatchProxy extends IDispatchImpl {
    * Must be called when the object is no longer needed (to release the global
    * reference on the target object).
    */
+  @Override
   public void dispose() {
     // Release the global ref on myself.
     if (myGlobalRef != 0) {
@@ -116,6 +117,7 @@ class IDispatchProxy extends IDispatchImpl {
     return isDisposed;
   }
 
+  @Override
   protected void getIDsOfNames(String[] names, int[] ids)
       throws HResultException {
     ids[0] = classLoader.getDispId(names[0]);
@@ -124,6 +126,7 @@ class IDispatchProxy extends IDispatchImpl {
     }
   }
 
+  @Override
   protected Variant invoke(int dispId, int flags, Variant[] params)
       throws HResultException, InvocationTargetException {
     try {

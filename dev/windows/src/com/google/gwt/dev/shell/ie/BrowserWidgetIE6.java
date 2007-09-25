@@ -80,6 +80,7 @@ public class BrowserWidgetIE6 extends BrowserWidget {
       }
     }
 
+    @Override
     protected void getIDsOfNames(String[] names, int[] ids)
         throws HResultException {
 
@@ -109,6 +110,7 @@ public class BrowserWidgetIE6 extends BrowserWidget {
       doUnload(key);
     }
 
+    @Override
     protected Variant invoke(int dispId, int flags, Variant[] params)
         throws HResultException, InvocationTargetException {
 

@@ -42,7 +42,7 @@ import java.lang.reflect.Method;
  * </p>
  * <ul>
  * <li>Only late-bound dispatch is supported</li>
- * <li>Named arguments are not supported (see {@link #GetIDsOfNames)).</li>
+ * <li>Named arguments are not supported (see {@link #GetIDsOfNames})).</li>
  * </ul>
  */
 class MethodDispatch extends IDispatchImpl {
@@ -56,6 +56,7 @@ class MethodDispatch extends IDispatchImpl {
     this.method = method;
   }
 
+  @Override
   public String toString() {
     return "\nfunction  " + method.toString() + "(){\n    [native code]\n}\n";
   }
@@ -65,6 +66,7 @@ class MethodDispatch extends IDispatchImpl {
    * flags. So we start with ID 1 for toString. {@link IDispatchProxy} and
    * {@link BrowserWidgetIE6.External} should be fixed to do the same.
    */
+  @Override
   protected void getIDsOfNames(String[] names, int[] ids)
       throws HResultException {
     if (names[0].equalsIgnoreCase("toString")) {
@@ -72,13 +74,14 @@ class MethodDispatch extends IDispatchImpl {
     } else if (names[0].equalsIgnoreCase("call")) {
       ids[0] = 2;
     } else {
-      throw new HResultException(IDispatchProxy.DISP_E_UNKNOWNNAME);
+      throw new HResultException(IDispatchImpl.DISP_E_UNKNOWNNAME);
     }
   }
 
   /*
    * Handles all the things the browser can do to a function object.
    */
+  @Override
   protected Variant invoke(int id, int flags, Variant[] params)
       throws HResultException, InvocationTargetException {
     switch (id) {

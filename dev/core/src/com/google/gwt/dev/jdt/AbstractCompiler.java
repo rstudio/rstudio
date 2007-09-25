@@ -59,9 +59,6 @@ public abstract class AbstractCompiler {
    */
   private class CompilerImpl extends Compiler {
 
-    // TODO: is this used anywhere?
-    public HashSet resolved = new HashSet();
-
     private Set<CompilationUnitDeclaration> cuds;
 
     public CompilerImpl(INameEnvironment environment,

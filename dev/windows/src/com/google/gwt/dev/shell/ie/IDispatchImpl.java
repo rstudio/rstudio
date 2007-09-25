@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -152,7 +152,7 @@ abstract class IDispatchImpl extends COMObject {
     // Convert it to a variant (if the return type is void, return
     // a VT_EMPTY variant -- 'undefined' in JavaScript).
     //
-    Class returnType = method.getReturnType();
+    Class<?> returnType = method.getReturnType();
     if (returnType.equals(Void.TYPE)) {
       return new Variant();
     }
@@ -172,10 +172,12 @@ abstract class IDispatchImpl extends COMObject {
 
   // CHECKSTYLE_ON
 
+  @Override
   public int method0(int[] args) {
     return QueryInterface(args[0], args[1]);
   }
 
+  @Override
   public int method1(int[] args) {
     return AddRef();
   }
@@ -184,14 +186,17 @@ abstract class IDispatchImpl extends COMObject {
 
   // method4 GetTypeInfo - not implemented
 
+  @Override
   public int method2(int[] args) {
     return Release();
   }
 
+  @Override
   public int method5(int[] args) {
     return GetIDsOfNames(args[0], args[1], args[2], args[3], args[4]);
   }
 
+  @Override
   public int method6(int[] args) {
     return Invoke(args[0], args[1], args[2], args[3], args[4], args[5],
         args[6], args[7]);
@@ -206,18 +211,18 @@ abstract class IDispatchImpl extends COMObject {
     COM.MoveMemory(guid, riid, GUID.sizeof);
 
     if (COM.IsEqualGUID(guid, COM.IIDIUnknown)) {
-      COM.MoveMemory(ppvObject, new int[] {getAddress()}, 4);
+      OS.MoveMemory(ppvObject, new int[] {getAddress()}, 4);
       AddRef();
       return COM.S_OK;
     }
 
     if (COM.IsEqualGUID(guid, COM.IIDIDispatch)) {
-      COM.MoveMemory(ppvObject, new int[] {getAddress()}, 4);
+      OS.MoveMemory(ppvObject, new int[] {getAddress()}, 4);
       AddRef();
       return COM.S_OK;
     }
 
-    COM.MoveMemory(ppvObject, new int[] {0}, 4);
+    OS.MoveMemory(ppvObject, new int[] {0}, 4);
     return COM.E_NOINTERFACE;
   }
 

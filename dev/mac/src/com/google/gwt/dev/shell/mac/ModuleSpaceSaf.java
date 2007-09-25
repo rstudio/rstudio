@@ -54,6 +54,7 @@ public class ModuleSpaceSaf extends ModuleSpace {
         newScript, file, line);
   }
 
+  @Override
   public void dispose() {
     LowLevelSaf.gcUnlock(window, null);
     super.dispose();
@@ -68,7 +69,8 @@ public class ModuleSpaceSaf extends ModuleSpace {
    * @param args the arguments to be passed
    * @return the return value as a Object.
    */
-  protected JsValue doInvoke(String name, Object jthis, Class[] types,
+  @Override
+  protected JsValue doInvoke(String name, Object jthis, Class<?>[] types,
       Object[] args) {
     int jsthis = wrapObjectAsJSObject(jthis);
     int curExecState = LowLevelSaf.getExecState();
@@ -84,6 +86,7 @@ public class ModuleSpaceSaf extends ModuleSpace {
     return new JsValueSaf(result);
 }
 
+  @Override
   protected Object getStaticDispatcher() {
     return new WebKitDispatchAdapter(getIsolatedClassLoader());
   }

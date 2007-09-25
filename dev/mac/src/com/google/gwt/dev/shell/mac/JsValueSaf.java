@@ -85,11 +85,13 @@ public class JsValueSaf extends JsValue {
     init(jsval);
   }
 
+  @Override
   public boolean getBoolean() {
     int curExecState = LowLevelSaf.getExecState();
     return LowLevelSaf.coerceToBoolean(curExecState, jsval);
   }
 
+  @Override
   public int getInt() {
     int curExecState = LowLevelSaf.getExecState();
     return LowLevelSaf.coerceToInt(curExecState, jsval);
@@ -99,42 +101,51 @@ public class JsValueSaf extends JsValue {
     return jsval;
   }
 
+  @Override
   public double getNumber() {
     int curExecState = LowLevelSaf.getExecState();
     return LowLevelSaf.coerceToDouble(curExecState, jsval);
   }
 
+  @Override
   public String getString() {
     int curExecState = LowLevelSaf.getExecState();
     return LowLevelSaf.coerceToString(curExecState, jsval);
   }
 
+  @Override
   public String getTypeString() {
     return LowLevelSaf.getTypeString(jsval);
   }
 
+  @Override
   public Object getWrappedJavaObject() {
     DispatchObject obj = LowLevelSaf.unwrapDispatch(jsval);
     return obj.getTarget();
   }
 
+  @Override
   public boolean isBoolean() {
     return LowLevelSaf.isBoolean(jsval);
   }
 
+  @Override
   public boolean isInt() {
     // Safari doesn't have integers, so this is always false
     return false;
   }
 
+  @Override
   public boolean isJavaScriptObject() {
     return LowLevelSaf.isObject(jsval) && !LowLevelSaf.isWrappedDispatch(jsval);
   }
 
+  @Override
   public boolean isNull() {
     return LowLevelSaf.isNull(jsval);
   }
 
+  @Override
   public boolean isNumber() {
     return LowLevelSaf.isNumber(jsval);
   }
@@ -143,34 +154,42 @@ public class JsValueSaf extends JsValue {
     return LowLevelSaf.isObject(jsval);
   }
 
+  @Override
   public boolean isString() {
     return LowLevelSaf.isString(jsval);
   }
 
+  @Override
   public boolean isUndefined() {
     return LowLevelSaf.isUndefined(jsval);
   }
 
+  @Override
   public boolean isWrappedJavaObject() {
     return LowLevelSaf.isWrappedDispatch(jsval);
   }
 
+  @Override
   public void setBoolean(boolean val) {
     setJsVal(LowLevelSaf.convertBoolean(val));
   }
 
+  @Override
   public void setByte(byte val) {
     setJsVal(LowLevelSaf.convertDouble(val));
   }
 
+  @Override
   public void setChar(char val) {
     setJsVal(LowLevelSaf.convertDouble(val));
   }
 
+  @Override
   public void setDouble(double val) {
     setJsVal(LowLevelSaf.convertDouble(val));
   }
 
+  @Override
   public void setInt(int val) {
     setJsVal(LowLevelSaf.convertDouble(val));
   }
@@ -186,22 +205,27 @@ public class JsValueSaf extends JsValue {
     init(jsval);
   }
   
+  @Override
   public void setNull() {
     setJsVal(LowLevelSaf.jsNull());
   }
 
+  @Override
   public void setShort(short val) {
     setJsVal(LowLevelSaf.convertDouble(val));
   }
 
+  @Override
   public void setString(String val) {
     setJsVal(LowLevelSaf.convertString(val));
   }
 
+  @Override
   public void setUndefined() {
     setJsVal(LowLevelSaf.jsUndefined());
   }
 
+  @Override
   public void setValue(JsValue other) {
     int jsvalOther = ((JsValueSaf)other).jsval;
     /*
@@ -212,7 +236,8 @@ public class JsValueSaf extends JsValue {
     setJsVal(jsvalOther);
   }
 
-  public void setWrappedJavaObject(CompilingClassLoader cl, Object val) {
+  @Override
+  public <T> void setWrappedJavaObject(CompilingClassLoader cl, T val) {
     DispatchObject dispObj;
     if (val == null) {
       setNull();
@@ -225,6 +250,7 @@ public class JsValueSaf extends JsValue {
     setJsVal(LowLevelSaf.wrapDispatch(dispObj));
   }
 
+  @Override
   protected JsCleanup createCleanupObject() {
     return new JsCleanupSaf(jsval, creationStackTrace);
   }

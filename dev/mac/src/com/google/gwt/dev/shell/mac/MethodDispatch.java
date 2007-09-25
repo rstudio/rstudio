@@ -18,6 +18,7 @@ package com.google.gwt.dev.shell.mac;
 import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.shell.JsValue;
 import com.google.gwt.dev.shell.JsValueGlue;
+import com.google.gwt.dev.shell.ModuleSpace;
 import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchMethod;
 
 import java.lang.reflect.InvocationTargetException;
@@ -34,11 +35,7 @@ class MethodDispatch implements DispatchMethod {
 
   private final Method method;
 
-  // TODO(jat): remove these references
-  // private final int scriptObject;
-
   public MethodDispatch(CompilingClassLoader classLoader, Method method) {
-    // this.scriptObject = scriptObject;
     this.classLoader = classLoader;
     this.method = method;
   }
@@ -52,7 +49,7 @@ class MethodDispatch implements DispatchMethod {
     }
     JsValueSaf returnValue = new JsValueSaf();
     try {
-      Class[] paramTypes = method.getParameterTypes();
+      Class<?>[] paramTypes = method.getParameterTypes();
       int argc = paramTypes.length;
       Object args[] = new Object[argc];
       if (jsargs.length < argc) {
@@ -84,7 +81,7 @@ class MethodDispatch implements DispatchMethod {
         // If we get here, it means an exception is being thrown from
         // Java back into JavaScript
         Throwable t = e.getTargetException();
-        ModuleSpaceSaf.setThrownJavaException(t);
+        ModuleSpace.setThrownJavaException(t);
         LowLevelSaf.raiseJavaScriptException(execState, LowLevelSaf.jsNull());
         return LowLevelSaf.jsUndefined();
       }

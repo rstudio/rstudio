@@ -115,7 +115,7 @@ public abstract class BrowserWidget extends Composite {
       } else if (evt.widget == openWebModeButton) {
         // first, compile
         Set<String> keySet = new HashSet<String>();
-        for (Map.Entry<?,ModuleSpace> entry : loadedModules.entrySet()) {
+        for (Map.Entry<?, ModuleSpace> entry : loadedModules.entrySet()) {
           ModuleSpace module = entry.getValue();
           keySet.add(module.getModuleName());
         }
@@ -208,7 +208,7 @@ public abstract class BrowserWidget extends Composite {
   }
 
   protected Browser browser;
-  
+
   private Color bgColor = new Color(null, 239, 237, 216);
 
   private Button goButton;
@@ -237,7 +237,7 @@ public abstract class BrowserWidget extends Composite {
     Composite secondBar = buildLocationBar(this);
 
     browser = new Browser(this, SWT.NONE);
-    
+
     {
       statusBar = new Label(this, SWT.BORDER | SWT.SHADOW_IN);
       statusBar.setBackground(bgColor);
@@ -317,7 +317,7 @@ public abstract class BrowserWidget extends Composite {
 
     logger.log(TreeLogger.SPAM, "Loading module " + space.getModuleName()
         + " (id " + key.toString() + ")", null);
-    
+
     // Let the space do its thing.
     //
     space.onLoad(logger);
@@ -328,34 +328,34 @@ public abstract class BrowserWidget extends Composite {
   }
 
   /**
-   * Unload one or more modules.  If key is null, emulate old behavior
-   * by unloading all loaded modules.
+   * Unload one or more modules. If key is null, emulate old behavior by
+   * unloading all loaded modules.
    * 
-   * @param key unique key to identify module to unload or null for all 
+   * @param key unique key to identify module to unload or null for all
    */
   protected void doUnload(Object key) {
     if (key == null) {
       // BEGIN BACKWARD COMPATIBILITY
       // remove all modules
-      for (Map.Entry<?,ModuleSpace> entry : loadedModules.entrySet()) {
+      for (Map.Entry<?, ModuleSpace> entry : loadedModules.entrySet()) {
         unloadModule(entry.getValue());
       }
       loadedModules.clear();
       // END BACKWARD COMPATIBILITY
     } else {
       ModuleSpace moduleSpace = loadedModules.get(key);
-      if (moduleSpace == null) {
-        throw new HostedModeException("Can't find frame window for " + key);
+      if (moduleSpace != null) {
+        // If the module failed to load at all, it may not be in the map.
+        unloadModule(moduleSpace);
+        loadedModules.remove(key);
       }
-      unloadModule(moduleSpace);
-      loadedModules.remove(key);
     }
     if (loadedModules.isEmpty()) {
       if (!toolbar.openWebModeButton.isDisposed()) {
         // Disable the compile button.
         //
         toolbar.openWebModeButton.setEnabled(false);
-      }     
+      }
     }
   }
 
@@ -368,8 +368,8 @@ public abstract class BrowserWidget extends Composite {
     String moduleName = moduleSpace.getModuleName();
     Object key = moduleSpace.getKey();
     moduleSpace.dispose();
-    logger.log(TreeLogger.SPAM, "Unloading module " + moduleName
-        + " (id " + key.toString() + ")", null);
+    logger.log(TreeLogger.SPAM, "Unloading module " + moduleName + " (id "
+        + key.toString() + ")", null);
   }
 
   private Composite buildLocationBar(Composite parent) {

@@ -89,6 +89,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#getBoolean()
    */
+  @Override
   public boolean getBoolean() {
     return variant.getBoolean();
   }
@@ -98,6 +99,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#getInt()
    */
+  @Override
   public int getInt() {
     return variant.getInt();
   }
@@ -107,6 +109,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#getNumber()
    */
+  @Override
   public double getNumber() {
     return variant.getDouble();
   }
@@ -116,6 +119,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#getString()
    */
+  @Override
   public String getString() {
     return variant.getString();
   }
@@ -125,6 +129,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#getTypeString()
    */
+  @Override
   public String getTypeString() {
     switch (variant.getType()) {
       case COM.VT_BOOL:
@@ -164,6 +169,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#getWrappedJavaObject()
    */
+  @Override
   public Object getWrappedJavaObject() {
     return tryToUnwrapWrappedJavaObject();
   }
@@ -173,6 +179,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#isBoolean()
    */
+  @Override
   public boolean isBoolean() {
     return variant != null && variant.getType() == COM.VT_BOOL;
   }
@@ -182,6 +189,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#isInt()
    */
+  @Override
   public boolean isInt() {
     if (variant == null) {
       return false;
@@ -204,6 +212,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#isJavaScriptObject()
    */
+  @Override
   public boolean isJavaScriptObject() {
     if (variant == null) {
       return false;
@@ -219,6 +228,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#isNull()
    */
+  @Override
   public boolean isNull() {
     return variant != null && variant.getType() == COM.VT_NULL;
   }
@@ -228,6 +238,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#isNumber()
    */
+  @Override
   public boolean isNumber() {
     if (variant == null) {
       return false;
@@ -253,6 +264,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#isString()
    */
+  @Override
   public boolean isString() {
     if (variant == null) {
       return false;
@@ -294,6 +306,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#isUndefined()
    */
+  @Override
   public boolean isUndefined() {
     return variant == null || variant.getType() == COM.VT_EMPTY;
   }
@@ -303,6 +316,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#isWrappedJavaObject()
    */
+  @Override
   public boolean isWrappedJavaObject() {
     if (variant == null) {
       return false;
@@ -318,6 +332,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#setBoolean(boolean)
    */
+  @Override
   public void setBoolean(boolean val) {
     setVariant(new Variant(val));
   }
@@ -327,6 +342,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#setByte(byte)
    */
+  @Override
   public void setByte(byte val) {
     setVariant(new Variant(val));
   }
@@ -336,6 +352,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#setChar(char)
    */
+  @Override
   public void setChar(char val) {
     setVariant(new Variant(val));
   }
@@ -345,6 +362,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#setDouble(double)
    */
+  @Override
   public void setDouble(double val) {
     setVariant(new Variant(val));
   }
@@ -354,6 +372,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#setInt(int)
    */
+  @Override
   public void setInt(int val) {
     setVariant(new Variant(val));
   }
@@ -363,6 +382,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#setNull()
    */
+  @Override
   public void setNull() {
     setVariant(new Variant(0, COM.VT_NULL));
   }
@@ -372,6 +392,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#setShort(short)
    */
+  @Override
   public void setShort(short val) {
     setVariant(new Variant(val));
   }
@@ -381,6 +402,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#setString(java.lang.String)
    */
+  @Override
   public void setString(String val) {
     setVariant(new Variant(val));
   }
@@ -390,10 +412,12 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#setUndefined()
    */
+  @Override
   public void setUndefined() {
     setVariant(null);
   }
 
+  @Override
   public void setValue(JsValue other) {
     setVariant(maybeCopyVariant(((JsValueIE6) other).variant));
   }
@@ -404,7 +428,8 @@ public class JsValueIE6 extends JsValue {
    * @see com.google.gwt.dev.shell.JsValue#setWrappedJavaObject(com.google.gwt.dev.shell.CompilingClassLoader,
    *      java.lang.Object)
    */
-  public void setWrappedJavaObject(CompilingClassLoader cl, Object val) {
+  @Override
+  public <T> void setWrappedJavaObject(CompilingClassLoader cl, T val) {
     IDispatchImpl dispObj;
     if (val == null) {
       setNull();
@@ -424,6 +449,7 @@ public class JsValueIE6 extends JsValue {
    * 
    * @see com.google.gwt.dev.shell.JsValue#createCleanupObject()
    */
+  @Override
   protected JsCleanup createCleanupObject() {
     return new JsCleanupIE6(variant);
   }
@@ -440,7 +466,7 @@ public class JsValueIE6 extends JsValue {
     variant = val;
   }
   
-  private Object tryToUnwrapWrappedJavaObject() {
+  private <T> T tryToUnwrapWrappedJavaObject() {
     /*
      * This implementation copied from OleAutomation.invoke(). We used to have a
      * varArg.getAutomation().invoke() implementation, but it turns out the
@@ -467,7 +493,7 @@ public class JsValueIE6 extends JsValue {
       if (globalRef != 0) {
         // This is really a Java object being passed back via an IDispatchProxy.
         IDispatchProxy proxy = (IDispatchProxy) LowLevel.objFromGlobalRefInt(globalRef);
-        return proxy.getTarget();
+        return (T) proxy.getTarget();
       }
       return null;
     } finally {

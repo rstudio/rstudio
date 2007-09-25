@@ -51,17 +51,21 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
   private RebindOracle rebindOracle;
 
+  private final boolean saveJsni;
+
   private ModuleSpace space;
 
   /**
    * @param module the module associated with the hosted module space
+   * @param saveJsni
    */
   public ShellModuleSpaceHost(TreeLogger logger, TypeOracle typeOracle,
-      ModuleDef module, File genDir, File outDir) {
+      ModuleDef module, File genDir, File outDir, boolean saveJsni) {
     this.logger = logger;
     this.typeOracle = typeOracle;
     this.module = module;
     this.genDir = genDir;
+    this.saveJsni = saveJsni;
 
     // Combine the user's output dir with the module name to get the
     // module-specific output dir.
@@ -89,7 +93,8 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     // Create a host for the hosted mode compiler.
     // We add compilation units to it as deferred binding generators write them.
     //
-    SourceOracle srcOracle = new HostedModeSourceOracle(typeOracle);
+    SourceOracle srcOracle = new HostedModeSourceOracle(typeOracle, saveJsni
+        ? genDir : null);
 
     // Create or find the compiler to be used by the compiling class loader.
     //

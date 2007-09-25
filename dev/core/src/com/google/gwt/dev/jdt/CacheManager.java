@@ -940,7 +940,7 @@ public class CacheManager {
     invalidateChangedFiles(logger, compiler);
   }
 
-  void setTypeForBinding(SourceTypeBinding binding, JClassType type) {
+  void setTypeForBinding(ReferenceBinding binding, JClassType type) {
     identityMapper.put(binding, type);
   }
 

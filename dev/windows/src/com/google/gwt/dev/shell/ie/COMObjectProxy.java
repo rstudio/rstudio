@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -70,13 +70,13 @@ class COMObjectProxy extends COMObject {
     this.target = victim;
 
     // Get the COMObject ObjectMap so that we can hijack the target's slot.
-    Map objectMap = (Map) LowLevel.snatchFieldObjectValue(COMObject.class,
+    Map<Integer, COMObject> objectMap = (Map<Integer, COMObject>) LowLevel.snatchFieldObjectValue(COMObject.class,
         null, "ObjectMap");
     Integer ppVtableTarget = new Integer(target.getAddress());
 
     // First, make sure that the target is still actually in the map.
     // If it isn't still in there, then the caller is using me incorrectly.
-    Object currValue = objectMap.get(ppVtableTarget);
+    COMObject currValue = objectMap.get(ppVtableTarget);
     if (currValue != target) {
       throw new IllegalStateException("target object is not currently mapped");
     }
@@ -88,66 +88,82 @@ class COMObjectProxy extends COMObject {
     objectMap.put(ppVtableTarget, this);
   }
 
+  @Override
   public int method0(int[] args) {
     return target.method0(args);
   }
 
+  @Override
   public int method1(int[] args) {
     return target.method1(args);
   }
 
+  @Override
   public int method10(int[] args) {
     return target.method10(args);
   }
 
+  @Override
   public int method11(int[] args) {
     return target.method11(args);
   }
 
+  @Override
   public int method12(int[] args) {
     return target.method12(args);
   }
 
+  @Override
   public int method13(int[] args) {
     return target.method13(args);
   }
 
+  @Override
   public int method14(int[] args) {
     return target.method14(args);
   }
 
+  @Override
   public int method15(int[] args) {
     return target.method15(args);
   }
 
+  @Override
   public int method16(int[] args) {
     return target.method16(args);
   }
 
+  @Override
   public int method17(int[] args) {
     return target.method17(args);
   }
 
+  @Override
   public int method18(int[] args) {
     return target.method18(args);
   }
 
+  @Override
   public int method19(int[] args) {
     return target.method19(args);
   }
 
+  @Override
   public int method2(int[] args) {
     return target.method2(args);
   }
 
+  @Override
   public int method20(int[] args) {
     return target.method20(args);
   }
 
+  @Override
   public int method21(int[] args) {
     return target.method21(args);
   }
 
+  @Override
   public int method22(int[] args) {
     return target.method22(args);
   }

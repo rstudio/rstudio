@@ -64,7 +64,7 @@ public class LowLevelSaf {
 
   private static boolean sInitialized = false;
 
-  private static ThreadLocal stateStack = new ThreadLocal();
+  private static ThreadLocal<Stack<Integer>> stateStack = new ThreadLocal<Stack<Integer>>();
 
   public static boolean coerceToBoolean(int execState, int jsval) {
     boolean[] rval = new boolean[1];
@@ -230,11 +230,11 @@ public class LowLevelSaf {
   }
 
   public static int getExecState() {
-    Stack stack = (Stack) stateStack.get();
+    Stack<Integer> stack = stateStack.get();
     if (stack == null) {
       throw new RuntimeException("No thread local execState stack!");
     }
-    Integer top = (Integer) stack.peek();
+    Integer top = stack.peek();
     return top.intValue();
   }
 
@@ -392,20 +392,20 @@ public class LowLevelSaf {
   }
 
   public static void popExecState(int execState) {
-    Stack stack = (Stack) stateStack.get();
+    Stack<Integer> stack = stateStack.get();
     if (stack == null) {
       throw new RuntimeException("No thread local execState stack!");
     }
-    Integer old = (Integer) stack.pop();
+    Integer old = stack.pop();
     if (old.intValue() != execState) {
       throw new RuntimeException("The wrong execState was popped.");
     }
   }
 
   public static void pushExecState(int execState) {
-    Stack stack = (Stack) stateStack.get();
+    Stack<Integer> stack = stateStack.get();
     if (stack == null) {
-      stack = new Stack();
+      stack = new Stack<Integer>();
       stateStack.set(stack);
     }
     stack.push(new Integer(execState));
@@ -503,8 +503,8 @@ public class LowLevelSaf {
 
   private static native boolean _getGlobalExecState(int scriptObject, int[] rval);
 
-  private static native boolean _initNative(Class dispObjClass,
-      Class dispMethClass);
+  private static native boolean _initNative(Class<DispatchObject> dispObjClass,
+      Class<DispatchMethod> dispMethClass);
 
   private static native boolean _invoke(int execState, int scriptObject,
       String methodName, int jsthis, int jsargCount, int[] jsargs, int[] rval);

@@ -260,11 +260,12 @@ public abstract class JsValue {
    * Set the JS object to the supplied object, which will be wrapped in a
    * platform-dependent JavaScript class.
    * 
+   * @param <T> the type of the Java object to wrap
    * @param cl the classloader to create the wrapper object with
    * @param val the Java object to wrap
    * @throws HostedModeException
    */
-  public abstract void setWrappedJavaObject(CompilingClassLoader cl, Object val);
+  public abstract <T> void setWrappedJavaObject(CompilingClassLoader cl, T val);
 
   /**
    * Produce a string representation of the JsValue.

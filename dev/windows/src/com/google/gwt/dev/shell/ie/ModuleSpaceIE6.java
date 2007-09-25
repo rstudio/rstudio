@@ -113,6 +113,7 @@ public class ModuleSpaceIE6 extends ModuleSpace {
     }
   }
 
+  @Override
   public void dispose() {
     // Dispose everything else.
     if (window != null) {
@@ -130,7 +131,8 @@ public class ModuleSpaceIE6 extends ModuleSpace {
    * @param args the arguments to be passed
    * @return the return value as a Variant.
    */
-  protected JsValue doInvoke(String name, Object jthis, Class[] types,
+  @Override
+  protected JsValue doInvoke(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     Variant[] vArgs = null;
     try {
@@ -166,10 +168,12 @@ public class ModuleSpaceIE6 extends ModuleSpace {
     }
   }
   
+  @Override
   protected Object getStaticDispatcher() {
     return new IDispatchProxy(getIsolatedClassLoader());
   }
 
+  @Override
   protected boolean isExceptionSame(Throwable original, int number, String name, String message) {
     HResultException hre = new HResultException(original);
     return CODE(hre.getHResult()) == CODE(number) && hre.getMessage().equals(message);

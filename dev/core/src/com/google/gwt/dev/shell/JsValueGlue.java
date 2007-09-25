@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,7 +38,8 @@ public class JsValueGlue {
    * @param type The subclass of JavaScriptObject to create
    * @return the constructed JavaScriptObject
    */
-  public static Object createJavaScriptObject(JsValue value, Class<?> type) {
+  public static <T> T createJavaScriptObject(JsValue value,
+      Class<? extends T> type) {
     try {
       // checkThread();
       if (!value.isJavaScriptObject()) {
@@ -54,9 +55,9 @@ public class JsValueGlue {
       }
 
       /* create the object using the default constructor */
-      Constructor<?> ctor = type.getDeclaredConstructor(new Class[] {});
+      Constructor<? extends T> ctor = type.getDeclaredConstructor();
       ctor.setAccessible(true);
-      Object jso = ctor.newInstance(new Object[] {});
+      T jso = ctor.newInstance();
 
       /* set the hostedModeReference field to this JsValue using reflection */
       Field referenceField = jsoType.getDeclaredField("hostedModeReference");
@@ -91,7 +92,8 @@ public class JsValueGlue {
    * @throws HostedModeException if the JavaScript object is not assignable to
    *           the supplied type.
    */
-  public static Object get(JsValue value, Class<?> type, String msgPrefix) {
+  public static <T> T get(JsValue value, Class<? extends T> type,
+      String msgPrefix) {
     double doubleVal;
     if (value.isNull()) {
       return null;
@@ -102,7 +104,7 @@ public class JsValueGlue {
           + ": JavaScript undefined, expected " + type.getName());
     }
     if (value.isWrappedJavaObject()) {
-      Object origObject = value.getWrappedJavaObject();
+      T origObject = (T) value.getWrappedJavaObject();
       if (!type.isAssignableFrom(origObject.getClass())) {
         throw new HostedModeException(msgPrefix + ": Java object of type "
             + origObject.getClass().getName() + ", expected " + type.getName());
@@ -123,16 +125,16 @@ public class JsValueGlue {
           throw new HostedModeException(msgPrefix + ": JS value of type "
               + value.getTypeString() + ", expected boolean");
         }
-        return Boolean.valueOf(value.getBoolean());
+        return (T) Boolean.valueOf(value.getBoolean());
 
       case TypeInfo.TYPE_WRAP_BYTE:
       case TypeInfo.TYPE_PRIM_BYTE:
-        return new Byte((byte) getIntRange(value, Byte.MIN_VALUE,
+        return (T) new Byte((byte) getIntRange(value, Byte.MIN_VALUE,
             Byte.MAX_VALUE, "byte", msgPrefix));
 
       case TypeInfo.TYPE_WRAP_CHAR:
       case TypeInfo.TYPE_PRIM_CHAR:
-        return new Character((char) getIntRange(value, Character.MIN_VALUE,
+        return (T) new Character((char) getIntRange(value, Character.MIN_VALUE,
             Character.MAX_VALUE, "char", msgPrefix));
 
       case TypeInfo.TYPE_WRAP_DOUBLE:
@@ -141,7 +143,7 @@ public class JsValueGlue {
           throw new HostedModeException(msgPrefix + ": JS value of type "
               + value.getTypeString() + ", expected double");
         }
-        return new Double(value.getNumber());
+        return (T) new Double(value.getNumber());
 
       case TypeInfo.TYPE_WRAP_FLOAT:
       case TypeInfo.TYPE_PRIM_FLOAT:
@@ -170,11 +172,11 @@ public class JsValueGlue {
           throw new HostedModeException(msgPrefix + ": JS value " + doubleVal
               + " out of range for a float");
         }
-        return new Float(floatVal);
+        return (T) new Float(floatVal);
 
       case TypeInfo.TYPE_WRAP_INT:
       case TypeInfo.TYPE_PRIM_INT:
-        return new Integer(getIntRange(value, Integer.MIN_VALUE,
+        return (T) new Integer(getIntRange(value, Integer.MIN_VALUE,
             Integer.MAX_VALUE, "int", msgPrefix));
 
       case TypeInfo.TYPE_WRAP_LONG:
@@ -195,11 +197,11 @@ public class JsValueGlue {
           ModuleSpace.getLogger().log(TreeLogger.WARN,
               msgPrefix + ": Loss of precision converting double to long", null);
         }
-        return new Long(longVal);
+        return (T) new Long(longVal);
 
       case TypeInfo.TYPE_WRAP_SHORT:
       case TypeInfo.TYPE_PRIM_SHORT:
-        return new Short((short) getIntRange(value, Short.MIN_VALUE,
+        return (T) new Short((short) getIntRange(value, Short.MIN_VALUE,
             Short.MAX_VALUE, "short", msgPrefix));
 
       case TypeInfo.TYPE_WRAP_STRING:
@@ -207,11 +209,11 @@ public class JsValueGlue {
           throw new HostedModeException(msgPrefix + ": JS value of type "
               + value.getTypeString() + ", expected string");
         }
-        return value.getString();
+        return (T) value.getString();
 
       case TypeInfo.TYPE_USER:
         if (value.isString()) {
-          return value.getString();
+          return (T) value.getString();
         }
         // if it isn't a String, it's an error, break to error
         break;
@@ -265,8 +267,8 @@ public class JsValueGlue {
    * @param type static type of the object
    * @param obj the object to store in the JS value
    */
-  public static void set(JsValue value, CompilingClassLoader cl, Class<?> type,
-      Object obj) {
+  public static <T> void set(JsValue value, CompilingClassLoader cl,
+      Class<?> type, T obj) {
     if (obj == null) {
       value.setNull();
     } else if (type.equals(String.class)) {
