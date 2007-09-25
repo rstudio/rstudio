@@ -41,7 +41,7 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
   /**
    * A maximum timeout to wait for the test system to respond with the next
    * test. Practically speaking, the test system should respond nearly instantly
-   * if there are furthur tests to run.
+   * if there are further tests to run.
    */
   private static final int TIME_TO_WAIT_FOR_TESTNAME = 300000;
 
@@ -72,7 +72,7 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
   /**
    * Simple helper method to set inaccessible fields via reflection.
    */
-  private static void setField(Class<?> cls, String fieldName, Object obj,
+  private static <T> void setField(Class<T> cls, String fieldName, T obj,
       Object value) throws SecurityException, NoSuchFieldException,
       IllegalArgumentException, IllegalAccessException {
     Field fld = cls.getDeclaredField(fieldName);
@@ -117,23 +117,21 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
       Class<?> exClass = Class.forName(ew.typeName);
       try {
         // try ExType(String, Throwable)
-        Constructor<?> ctor = exClass.getDeclaredConstructor(
-            String.class, Throwable.class);
+        Constructor<?> ctor = exClass.getDeclaredConstructor(String.class,
+            Throwable.class);
         ctor.setAccessible(true);
         ex = (Throwable) ctor.newInstance(ew.message, cause);
       } catch (Throwable e) {
         // try ExType(String)
         try {
-          Constructor<?> ctor = exClass
-              .getDeclaredConstructor(String.class);
+          Constructor<?> ctor = exClass.getDeclaredConstructor(String.class);
           ctor.setAccessible(true);
           ex = (Throwable) ctor.newInstance(ew.message);
           ex.initCause(cause);
         } catch (Throwable e2) {
           // try ExType(Throwable)
           try {
-            Constructor<?> ctor = exClass
-                .getDeclaredConstructor(Throwable.class);
+            Constructor<?> ctor = exClass.getDeclaredConstructor(Throwable.class);
             ctor.setAccessible(true);
             ex = (Throwable) ctor.newInstance(cause);
             setField(Throwable.class, "detailMessage", ex, ew.message);
@@ -142,7 +140,7 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
             try {
               Constructor<?> ctor = exClass.getDeclaredConstructor();
               ctor.setAccessible(true);
-              ex = (Throwable) ctor.newInstance((Object[]) null);
+              ex = (Throwable) ctor.newInstance();
               ex.initCause(cause);
               setField(Throwable.class, "detailMessage", ex, ew.message);
             } catch (Throwable e4) {
@@ -157,9 +155,8 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
       }
 
     } catch (Throwable e) {
-      this.log(
-          "Failed to deserialize getException of type '" + ew.typeName + "'",
-          e);
+      this.log("Failed to deserialize getException of type '" + ew.typeName
+          + "'", e);
     }
 
     if (ex == null) {
@@ -175,22 +172,20 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
    */
   private StackTraceElement deserialize(StackTraceWrapper stw) {
     StackTraceElement ste = null;
-    Object[] args = new Object[]{
+    Object[] args = new Object[] {
         stw.className, stw.methodName, stw.fileName, stw.lineNumber};
     try {
       try {
         // Try the 4-arg ctor (JRE 1.5)
-        Constructor<StackTraceElement> ctor = StackTraceElement.class
-            .getDeclaredConstructor(
-                String.class, String.class, String.class, int.class);
+        Constructor<StackTraceElement> ctor = StackTraceElement.class.getDeclaredConstructor(
+            String.class, String.class, String.class, int.class);
         ctor.setAccessible(true);
         ste = ctor.newInstance(args);
       } catch (NoSuchMethodException e) {
         // Okay, see if there's a zero-arg ctor we can use instead (JRE 1.4.2)
-        Constructor<StackTraceElement> ctor =
-            StackTraceElement.class.getDeclaredConstructor();
+        Constructor<StackTraceElement> ctor = StackTraceElement.class.getDeclaredConstructor();
         ctor.setAccessible(true);
-        ste = ctor.newInstance((Object[]) null);
+        ste = ctor.newInstance();
         setField(StackTraceElement.class, "declaringClass", ste, args[0]);
         setField(StackTraceElement.class, "methodName", ste, args[1]);
         setField(StackTraceElement.class, "fileName", ste, args[2]);
