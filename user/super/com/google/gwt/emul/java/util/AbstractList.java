@@ -110,6 +110,9 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
     }
   }
 
+  protected AbstractList() {
+  }
+
   @Override
   public boolean add(E obj) {
     add(size(), obj);
@@ -215,6 +218,11 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
 
   public E set(int index, E o) {
     throw new UnsupportedOperationException("set");
+  }
+
+  public List<E> subList(int fromIndex, int toIndex) {
+    // TODO Implement me.
+    throw new UnsupportedOperationException("subList");
   }
 
   /**

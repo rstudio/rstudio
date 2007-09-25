@@ -27,6 +27,9 @@ import com.google.gwt.lang.Array;
  */
 public abstract class AbstractCollection<E> implements Collection<E> {
 
+  protected AbstractCollection() {
+  }
+
   public boolean add(E o) {
     throw new UnsupportedOperationException("add");
   }

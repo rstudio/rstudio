@@ -33,8 +33,8 @@ public class FastStringMapTest extends GWTTestCase {
   /**
    * These is an example of two correctly formatted java API specification.
    */
-  public static Map makeEmptyMap() {
-    return new FastStringMap();
+  public static Map<String, String> makeEmptyMap() {
+    return new FastStringMap<String>();
   }
 
   public String getModuleName() {
@@ -51,30 +51,30 @@ public class FastStringMapTest extends GWTTestCase {
    * properties.
    */
   public void testJSOCollision() {
-    Map map = makeEmptyMap();
+    Map<String, String> map = makeEmptyMap();
     assertEquals(0, map.size());
     map.put("k1", "v1");
     assertEquals(1, map.size());
-    assertEquals("v1", (String) map.get("k1"));
+    assertEquals("v1", map.get("k1"));
     map.put("toString", "toStringVal");
     assertEquals(2, map.size());
-    assertEquals("toStringVal", (String) map.get("toString"));
+    assertEquals("toStringVal", map.get("toString"));
     map.put("watch", "watchVal");
-    Set keys = map.keySet();
+    Set<String> keys = map.keySet();
     assertEquals(3, keys.size());
     map.put("__proto__", "__proto__Val");
     assertEquals(4 ,map.size());
-    assertEquals("__proto__Val", (String)map.get("__proto__"));
+    assertEquals("__proto__Val", map.get("__proto__"));
     map.put("k1", "v1b");
     keys = map.keySet();
     assertEquals(4, keys.size());
-    Collection values = map.values();
+    Collection<String> values = map.values();
     assertEquals(4, values.size());
     map.put("k2", "v1b");
     values = map.values();
     assertEquals(5, values.size());
     map.put("","empty");
-    assertEquals("empty", (String) map.get(""));  
+    assertEquals("empty", map.get(""));  
     map.remove("k2");
     assertEquals(5, values.size());
   }

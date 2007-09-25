@@ -27,6 +27,9 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
 
   private static final String MSG_CANNOT_MODIFY = "This map implementation does not support modification";
 
+  protected AbstractMap() {
+  }
+
   public void clear() {
     entrySet().clear();
   }
