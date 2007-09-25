@@ -212,7 +212,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
       for (var i = 0, c = array.length; i < c; ++i) {
         var entry = array[i];
         var entryKey = entry.@java.util.Map$Entry::getKey()();
-        if (@java.util.HashMap::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
+        if (@java.util.Utility::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
           return entry.@java.util.Map$Entry::getValue()();
         }
       }
@@ -241,7 +241,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
       for (var i = 0, c = array.length; i < c; ++i) {
         var entry = array[i];
         var entryKey = entry.@java.util.Map$Entry::getKey()();
-        if (@java.util.HashMap::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
+        if (@java.util.Utility::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
           // Found an exact match, just update the existing entry
           var previous = entry.@java.util.Map$Entry::getValue()();
           entry.@java.util.Map$Entry::setValue(Ljava/lang/Object;)(value);
@@ -285,7 +285,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
       for (var i = 0, c = array.length; i < c; ++i) {
         var entry = array[i];
         var entryKey = entry.@java.util.Map$Entry::getKey()();
-        if (@java.util.HashMap::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
+        if (@java.util.Utility::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
           if (array.length == 1) {
             // remove the whole array
             delete hashCodeMap[hashCode];
