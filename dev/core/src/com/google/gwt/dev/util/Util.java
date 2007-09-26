@@ -244,6 +244,18 @@ public final class Util {
   }
 
   /**
+   * Escapes '&', '<', '>', '"', and '\'' to their XML entity equivalents.
+   */
+  public static String escapeXml(String unescaped) {
+    String escaped = unescaped.replaceAll("\\&", "&amp;");
+    escaped = escaped.replaceAll("\\<", "&lt;");
+    escaped = escaped.replaceAll("\\>", "&gt;");
+    escaped = escaped.replaceAll("\\\"", "&quot;");
+    escaped = escaped.replaceAll("\\'", "&apos;");
+    return escaped;
+  }
+
+  /**
    * Converts a URL "jar:file:aaa.jar!bbb" to the filename "aaa.jar". This also
    * does URLDecoding if needed.
    * 
@@ -986,18 +998,6 @@ public final class Util {
       Utility.close(stream);
     }
     return true;
-  }
-
-  /**
-   * Escapes '&', '<', '>', '"', and '\'' to their XML entity equivalents.
-   */
-  public static String escapeXml(String unescaped) {
-    String escaped = unescaped.replaceAll("\\&", "&amp;");
-    escaped = escaped.replaceAll("\\<", "&lt;");
-    escaped = escaped.replaceAll("\\>", "&gt;");
-    escaped = escaped.replaceAll("\\\"", "&quot;");
-    escaped = escaped.replaceAll("\\'", "&apos;");
-    return escaped;
   }
 
   private static void writeAttribute(PrintWriter w, Attr attr, int depth)

@@ -67,10 +67,23 @@ public class JGenericType extends JRealClassType implements HasTypeParameters {
   public JTypeParameter[] getTypeParameters() {
     return typeParams.toArray(new JTypeParameter[typeParams.size()]);
   }
-  
+
+  @Override
+  public boolean isDefaultInstantiable() {
+    /*
+     * By definition, you cannot instantiate a generic type, only a
+     * parameterized type or a raw type?
+     */
+    return false;
+  }
+
   @Override
   public JGenericType isGenericType() {
     return this;
+  }
+
+  protected boolean isDefaultInstantiableIfParameterized() {
+    return super.isDefaultInstantiable();
   }
 
   void addTypeParameter(JTypeParameter typeParameter) {

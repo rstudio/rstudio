@@ -17,28 +17,40 @@ package com.google.gwt.core.ext.typeinfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a parameterized type in a declaration.
  */
 public class JParameterizedType extends JDelegatingClassType {
 
+  private final Members members = new Members(this);
+
   private final List<JClassType> typeArgs = new ArrayList<JClassType>();
 
   JParameterizedType(JGenericType baseType) {
     super.setBaseType(baseType);
+    // TODO: type substitutions setting up fields/methods!
+  }
+
+  @Override
+  public JConstructor findConstructor(JType[] paramTypes) {
+    return members.findConstructor(paramTypes);
   }
 
   @Override
   public JField findField(String name) {
-    // TODO Auto-generated method stub
-    return null;
+    return members.findField(name);
   }
 
   @Override
   public JMethod findMethod(String name, JType[] paramTypes) {
-    // TODO Auto-generated method stub
-    return null;
+    return members.findMethod(name, paramTypes);
+  }
+
+  @Override
+  public JClassType findNestedType(String typeName) {
+    return members.findNestedType(typeName);
   }
 
   public JGenericType getBaseType() {
@@ -46,28 +58,45 @@ public class JParameterizedType extends JDelegatingClassType {
   }
 
   @Override
+  public JConstructor getConstructor(JType[] paramTypes)
+      throws NotFoundException {
+    return members.getConstructor(paramTypes);
+  }
+
+  @Override
+  public JConstructor[] getConstructors() {
+    return members.getConstructors();
+  }
+
+  @Override
   public JField getField(String name) {
-    // TODO Auto-generated method stub
-    return null;
+    return members.getField(name);
   }
 
   @Override
   public JField[] getFields() {
-    // TODO Auto-generated method stub
-    return null;
+    return members.getFields();
   }
 
   @Override
   public JMethod getMethod(String name, JType[] paramTypes)
       throws NotFoundException {
-    // TODO Auto-generated method stub
-    return null;
+    return members.getMethod(name, paramTypes);
   }
 
   @Override
   public JMethod[] getMethods() {
-    // TODO Auto-generated method stub
-    return null;
+    return members.getMethods();
+  }
+
+  @Override
+  public JClassType getNestedType(String typeName) throws NotFoundException {
+    return members.getNestedType(typeName);
+  }
+
+  @Override
+  public JClassType[] getNestedTypes() {
+    return members.getNestedTypes();
   }
 
   /**
@@ -76,6 +105,16 @@ public class JParameterizedType extends JDelegatingClassType {
   @Deprecated
   public String getNonParameterizedQualifiedSourceName() {
     return getQualifiedSourceName();
+  }
+
+  @Override
+  public JMethod[] getOverloads(String name) {
+    return members.getOverloads(name);
+  }
+
+  @Override
+  public JMethod[] getOverridableMethods() {
+    return members.getOverridableMethods();
   }
 
   @Override
@@ -121,6 +160,11 @@ public class JParameterizedType extends JDelegatingClassType {
   }
 
   @Override
+  public boolean isDefaultInstantiable() {
+    return getBaseType().isDefaultInstantiableIfParameterized();
+  }
+
+  @Override
   public JGenericType isGenericType() {
     return null;
   }
@@ -133,6 +177,29 @@ public class JParameterizedType extends JDelegatingClassType {
   @Override
   public JRawType isRawType() {
     return null;
+  }
+
+  @Override
+  protected JClassType findNestedTypeImpl(String[] typeName, int index) {
+    return members.findNestedTypeImpl(typeName, index);
+  }
+
+  protected void getOverridableMethodsOnSuperclassesAndThisClass(
+      Map<String, JMethod> methodsBySignature) {
+    members.getOverridableMethodsOnSuperclassesAndThisClass(methodsBySignature);
+  }
+
+  /**
+   * Gets the methods declared in interfaces that this type extends. If this
+   * type is a class, its own methods are not added. If this type is an
+   * interface, its own methods are added. Used internally by
+   * {@link #getOverridableMethods()}.
+   * 
+   * @param methodsBySignature
+   */
+  protected void getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
+      Map<String, JMethod> methodsBySignature) {
+    members.getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
   }
 
   void addTypeArg(JClassType type) {

@@ -21,13 +21,10 @@ import com.google.gwt.dev.util.Util;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 /**
  * Type representing a Java class or interface type.
@@ -42,10 +39,6 @@ public class JRealClassType extends JClassType {
 
   private final int bodyStart;
 
-  private JMethod[] cachedOverridableMethods;
-
-  private final List<JConstructor> constructors = new ArrayList<JConstructor>();
-
   private final CompilationUnitProvider cup;
 
   private final JPackage declaringPackage;
@@ -55,8 +48,6 @@ public class JRealClassType extends JClassType {
   private final int declStart;
 
   private final JClassType enclosingType;
-
-  private final Map<String, JField> fields = new HashMap<String, JField>();
 
   private final List<JClassType> interfaces = new ArrayList<JClassType>();
 
@@ -68,17 +59,15 @@ public class JRealClassType extends JClassType {
 
   private String lazyQualifiedName;
 
-  private final HasMetaData metaData = new MetaData();
+  private final Members members = new Members(this);
 
-  private final Map<String, List<JMethod>> methods = new HashMap<String, List<JMethod>>();
+  private final HasMetaData metaData = new MetaData();
 
   private int modifierBits;
 
   private final String name;
 
   private final String nestedName;
-
-  private final Map<String, JClassType> nestedTypes = new HashMap<String, JClassType>();
 
   private final TypeOracle oracle;
 
@@ -141,35 +130,24 @@ public class JRealClassType extends JClassType {
     modifierBits |= bits;
   }
 
+  @Override
   public JConstructor findConstructor(JType[] paramTypes) {
-    JConstructor[] ctors = getConstructors();
-    for (int i = 0; i < ctors.length; i++) {
-      JConstructor candidate = ctors[i];
-      if (candidate.hasParamTypes(paramTypes)) {
-        return candidate;
-      }
-    }
-    return null;
+    return members.findConstructor(paramTypes);
   }
 
+  @Override
   public JField findField(String name) {
-    return fields.get(name);
+    return members.findField(name);
   }
 
+  @Override
   public JMethod findMethod(String name, JType[] paramTypes) {
-    JMethod[] overloads = getOverloads(name);
-    for (int i = 0; i < overloads.length; i++) {
-      JMethod candidate = overloads[i];
-      if (candidate.hasParamTypes(paramTypes)) {
-        return candidate;
-      }
-    }
-    return null;
+    return members.findMethod(name, paramTypes);
   }
 
+  @Override
   public JClassType findNestedType(String typeName) {
-    String[] parts = typeName.split("\\.");
-    return findNestedTypeImpl(parts, 0);
+    return members.findNestedType(typeName);
   }
 
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
@@ -192,17 +170,15 @@ public class JRealClassType extends JClassType {
     return cup;
   }
 
+  @Override
   public JConstructor getConstructor(JType[] paramTypes)
       throws NotFoundException {
-    JConstructor result = findConstructor(paramTypes);
-    if (result == null) {
-      throw new NotFoundException();
-    }
-    return result;
+    return members.getConstructor(paramTypes);
   }
 
+  @Override
   public JConstructor[] getConstructors() {
-    return constructors.toArray(TypeOracle.NO_JCTORS);
+    return members.getConstructors();
   }
 
   public Annotation[] getDeclaredAnnotations() {
@@ -218,14 +194,14 @@ public class JRealClassType extends JClassType {
     return this;
   }
 
+  @Override
   public JField getField(String name) {
-    JField field = findField(name);
-    assert (field != null);
-    return field;
+    return members.getField(name);
   }
 
+  @Override
   public JField[] getFields() {
-    return fields.values().toArray(TypeOracle.NO_JFIELDS);
+    return members.getFields();
   }
 
   public JClassType[] getImplementedInterfaces() {
@@ -250,85 +226,43 @@ public class JRealClassType extends JClassType {
     return metaData.getMetaDataTags();
   }
 
+  @Override
   public JMethod getMethod(String name, JType[] paramTypes)
       throws NotFoundException {
-    JMethod result = findMethod(name, paramTypes);
-    if (result == null) {
-      throw new NotFoundException();
-    }
-    return result;
+    return members.getMethod(name, paramTypes);
   }
 
-  /*
-   * Returns the declared methods of this class (not any superclasses or
-   * superinterfaces).
-   */
+  @Override
   public JMethod[] getMethods() {
-    List<JMethod> resultMethods = new ArrayList<JMethod>();
-    for (List<JMethod> overloads : methods.values()) {
-      resultMethods.addAll(overloads);
-    }
-    return resultMethods.toArray(TypeOracle.NO_JMETHODS);
+    return members.getMethods();
   }
 
   public String getName() {
     return nestedName;
   }
 
+  @Override
   public JClassType getNestedType(String typeName) throws NotFoundException {
-    JClassType result = findNestedType(typeName);
-    if (result == null) {
-      throw new NotFoundException();
-    }
-    return result;
+    return members.getNestedType(typeName);
   }
 
+  @Override
   public JClassType[] getNestedTypes() {
-    return nestedTypes.values().toArray(TypeOracle.NO_JCLASSES);
+    return members.getNestedTypes();
   }
 
   public TypeOracle getOracle() {
     return oracle;
   }
 
+  @Override
   public JMethod[] getOverloads(String name) {
-    List<?> resultMethods = methods.get(name);
-    if (resultMethods != null) {
-      return resultMethods.toArray(TypeOracle.NO_JMETHODS);
-    } else {
-      return TypeOracle.NO_JMETHODS;
-    }
+    return members.getOverloads(name);
   }
 
-  /**
-   * Iterates over the most-derived declaration of each unique overridable
-   * method available in the type hierarchy of the specified type, including
-   * those found in superclasses and superinterfaces. A method is overridable if
-   * it is not <code>final</code> and its accessibility is <code>public</code>,
-   * <code>protected</code>, or package protected.
-   * 
-   * Deferred binding generators often need to generate method implementations;
-   * this method offers a convenient way to find candidate methods to implement.
-   * 
-   * Note that the behavior does not match
-   * {@link Class#getMethod(String, Class[])}, which does not return the most
-   * derived method in some cases.
-   * 
-   * @return an array of {@link JMethod} objects representing overridable
-   *         methods
-   */
+  @Override
   public JMethod[] getOverridableMethods() {
-    if (cachedOverridableMethods == null) {
-      Map<String, JMethod> methodsBySignature = new TreeMap<String, JMethod>();
-      getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
-      if (isClass() != null) {
-        getOverridableMethodsOnSuperclassesAndThisClass(methodsBySignature);
-      }
-      int size = methodsBySignature.size();
-      Collection<JMethod> leafMethods = methodsBySignature.values();
-      cachedOverridableMethods = leafMethods.toArray(new JMethod[size]);
-    }
-    return cachedOverridableMethods;
+    return members.getOverridableMethods();
   }
 
   public JPackage getPackage() {
@@ -431,7 +365,7 @@ public class JRealClassType extends JClassType {
     if (isInterface() != null) {
       return false;
     }
-    if (constructors.isEmpty()) {
+    if (getConstructors().length == 0) {
       return true;
     }
     JConstructor ctor = findConstructor(TypeOracle.NO_JTYPES);
@@ -535,35 +469,38 @@ public class JRealClassType extends JClassType {
     notifySuperTypesOf(me);
   }
 
+  @Override
+  protected void addConstructor(JConstructor ctor) {
+    members.addConstructor(ctor);
+  }
+
+  @Override
+  protected void addField(JField field) {
+    members.addField(field);
+  }
+
+  @Override
+  protected void addMethod(JMethod method) {
+    members.addMethod(method);
+  }
+
+  @Override
+  protected void addNestedType(JClassType type) {
+    members.addNestedType(type);
+  }
+
+  @Override
+  protected JClassType findNestedTypeImpl(String[] typeName, int index) {
+    return members.findNestedTypeImpl(typeName, index);
+  }
+
   protected int getModifierBits() {
     return modifierBits;
   }
 
   protected void getOverridableMethodsOnSuperclassesAndThisClass(
       Map<String, JMethod> methodsBySignature) {
-    assert (isClass() != null);
-
-    // Recurse first so that more derived methods will clobber less derived
-    // methods.
-    JClassType superClass = getSuperclass();
-    if (superClass != null) {
-      superClass.getOverridableMethodsOnSuperclassesAndThisClass(methodsBySignature);
-    }
-
-    JMethod[] declaredMethods = getMethods();
-    for (int i = 0; i < declaredMethods.length; i++) {
-      JMethod method = declaredMethods[i];
-
-      // Ensure that this method is overridable.
-      if (method.isFinal() || method.isPrivate()) {
-        // We cannot override this method, so skip it.
-        continue;
-      }
-
-      // We can override this method, so record it.
-      String sig = computeInternalSignature(method);
-      methodsBySignature.put(sig, method);
-    }
+    members.getOverridableMethodsOnSuperclassesAndThisClass(methodsBySignature);
   }
 
   /**
@@ -576,36 +513,7 @@ public class JRealClassType extends JClassType {
    */
   protected void getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
       Map<String, JMethod> methodsBySignature) {
-    // Recurse first so that more derived methods will clobber less derived
-    // methods.
-    JClassType[] superIntfs = getImplementedInterfaces();
-    for (int i = 0; i < superIntfs.length; i++) {
-      JClassType superIntf = superIntfs[i];
-      superIntf.getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
-    }
-
-    if (isInterface() == null) {
-      // This is not an interface, so we're done after having visited its
-      // implemented interfaces.
-      return;
-    }
-
-    JMethod[] declaredMethods = getMethods();
-    for (int i = 0; i < declaredMethods.length; i++) {
-      JMethod method = declaredMethods[i];
-
-      String sig = computeInternalSignature(method);
-      JMethod existing = methodsBySignature.get(sig);
-      if (existing != null) {
-        JClassType existingType = existing.getEnclosingType();
-        JClassType thisType = method.getEnclosingType();
-        if (thisType.isAssignableFrom(existingType)) {
-          // The existing method is in a more-derived type, so don't replace it.
-          continue;
-        }
-      }
-      methodsBySignature.put(sig, method);
-    }
+    members.getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
   }
 
   /**
@@ -637,41 +545,6 @@ public class JRealClassType extends JClassType {
     }
   }
 
-  void addConstructor(JConstructor ctor) {
-    assert (!constructors.contains(ctor));
-    constructors.add(ctor);
-  }
-
-  void addField(JField field) {
-    Object existing = fields.put(field.getName(), field);
-    assert (existing == null);
-  }
-
-  void addMethod(JMethod method) {
-    String methodName = method.getName();
-    List<JMethod> overloads = methods.get(methodName);
-    if (overloads == null) {
-      overloads = new ArrayList<JMethod>();
-      methods.put(methodName, overloads);
-    }
-    overloads.add(method);
-  }
-
-  void addNestedType(JClassType type) {
-    nestedTypes.put(type.getSimpleSourceName(), type);
-  }
-
-  JClassType findNestedTypeImpl(String[] typeName, int index) {
-    JClassType found = nestedTypes.get(typeName[index]);
-    if (found == null) {
-      return null;
-    } else if (index < typeName.length - 1) {
-      return found.findNestedTypeImpl(typeName, index + 1);
-    } else {
-      return found;
-    }
-  }
-
   void notifySuperTypes() {
     notifySuperTypesOf(this);
   }
@@ -681,19 +554,6 @@ public class JRealClassType extends JClassType {
    */
   void removeFromSupertypes() {
     removeSubtype(this);
-  }
-
-  private String computeInternalSignature(JMethod method) {
-    StringBuffer sb = new StringBuffer();
-    sb.setLength(0);
-    sb.append(method.getName());
-    JParameter[] params = method.getParameters();
-    for (int j = 0; j < params.length; j++) {
-      JParameter param = params[j];
-      sb.append("/");
-      sb.append(param.getType().getQualifiedSourceName());
-    }
-    return sb.toString();
   }
 
 }

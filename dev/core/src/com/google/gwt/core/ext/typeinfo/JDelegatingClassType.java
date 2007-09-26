@@ -260,12 +260,20 @@ abstract class JDelegatingClassType extends JClassType {
 
   @Override
   public JClassType isClass() {
-    return baseType.isClass();
+    if (baseType.isClass() != null) {
+      return this;
+    } else {
+      return null;
+    }
   }
 
   @Override
   public JClassType isClassOrInterface() {
-    return baseType.isClassOrInterface();
+    if (baseType.isClassOrInterface() != null) {
+      return this;
+    } else {
+      return null;
+    }
   }
 
   @Override
@@ -275,7 +283,11 @@ abstract class JDelegatingClassType extends JClassType {
 
   @Override
   public JClassType isInterface() {
-    return baseType.isInterface();
+    if (baseType.isInterface() != null) {
+      return this;
+    } else {
+      return null;
+    }
   }
 
   @Override

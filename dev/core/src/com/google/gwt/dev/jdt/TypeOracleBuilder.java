@@ -1243,14 +1243,16 @@ public class TypeOracleBuilder {
       //
       String typeName = String.valueOf(referenceBinding.readableName());
       JType resolvedType = oracle.findType(typeName);
-      if (resolvedType != null) {
-        return resolvedType;
+      if (resolvedType == null) {
+        // Otherwise, it should be something we've mapped during this build.
+        resolvedType = cacheManager.getTypeForBinding(referenceBinding);
       }
-
-      // Otherwise, it should be something we've mapped during this build.
-      //
-      resolvedType = cacheManager.getTypeForBinding(referenceBinding);
       if (resolvedType != null) {
+        if (binding instanceof RawTypeBinding) {
+          // Use the raw type instead of the generic type.
+          JGenericType genericType = (JGenericType) resolvedType;
+          resolvedType = genericType.getRawType();
+        }
         return resolvedType;
       }
     }
