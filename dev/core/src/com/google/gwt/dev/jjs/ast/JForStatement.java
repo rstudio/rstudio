@@ -25,13 +25,13 @@ import java.util.List;
 public class JForStatement extends JStatement {
 
   private JStatement body;
-  private final List/* <JExpressionStatement> */increments;
-  private final List/* <JStatement> */initializers;
+  private final List<JExpressionStatement> increments;
+  private final List<JStatement> initializers;
   private JExpression testExpr;
 
   public JForStatement(JProgram program, SourceInfo info,
-      List/* <JStatement> */initializers, JExpression testExpr,
-      List/* <JExpressionStatement> */increments, JStatement body) {
+      List<JStatement> initializers, JExpression testExpr,
+      List<JExpressionStatement> increments, JStatement body) {
     super(program, info);
     this.initializers = initializers;
     this.testExpr = testExpr;
@@ -43,11 +43,11 @@ public class JForStatement extends JStatement {
     return body;
   }
 
-  public List/* <JExpressionStatement> */getIncrements() {
+  public List<JExpressionStatement> getIncrements() {
     return increments;
   }
 
-  public List/* <JStatement> */getInitializers() {
+  public List<JStatement> getInitializers() {
     return initializers;
   }
 

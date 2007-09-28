@@ -24,8 +24,8 @@ import java.util.ArrayList;
  */
 public class JNewArray extends JExpression implements HasSettableType {
 
-  public ArrayList dims = null;
-  public ArrayList initializers = null;
+  public ArrayList<JExpression> dims = null;
+  public ArrayList<JExpression> initializers = null;
   private JArrayType arrayType;
 
   public JNewArray(JProgram program, SourceInfo info, JArrayType arrayType) {
@@ -44,14 +44,14 @@ public class JNewArray extends JExpression implements HasSettableType {
   public boolean hasSideEffects() {
     if (initializers != null) {
       for (int i = 0, c = initializers.size(); i < c; ++i) {
-        if (((JExpression) initializers.get(i)).hasSideEffects()) {
+        if (initializers.get(i).hasSideEffects()) {
           return true;
         }
       }
     }
     if (dims != null) {
       for (int i = 0, c = dims.size(); i < c; ++i) {
-        if (((JExpression) dims.get(i)).hasSideEffects()) {
+        if (dims.get(i).hasSideEffects()) {
           return true;
         }
       }

@@ -471,7 +471,8 @@ public class BuildTypeMap {
             assert newMethod.getName().equals("values");
             // TODO: hack
             JMethodBody body = (JMethodBody) newMethod.getBody();
-            body.getStatements().add(new JReturnStatement(program, null, program.getLiteralNull()));
+            body.getStatements().add(
+                new JReturnStatement(program, null, program.getLiteralNull()));
           } else if (parameters.length == 1) {
             assert newMethod.getName().equals("valueOf");
             assert typeMap.get(parameters[0]) == program.getTypeJavaLangString();
@@ -479,7 +480,8 @@ public class BuildTypeMap {
                 program.getTypeJavaLangString(), true, newMethod);
             // TODO: hack
             JMethodBody body = (JMethodBody) newMethod.getBody();
-            body.getStatements().add(new JReturnStatement(program, null, program.getLiteralNull()));
+            body.getStatements().add(
+                new JReturnStatement(program, null, program.getLiteralNull()));
           } else {
             assert false;
           }
@@ -538,7 +540,7 @@ public class BuildTypeMap {
       String syntheticFnHeader = "function (";
       boolean first = true;
       for (int i = 0; i < newMethod.params.size(); ++i) {
-        JParameter param = (JParameter) newMethod.params.get(i);
+        JParameter param = newMethod.params.get(i);
         if (first) {
           first = false;
         } else {

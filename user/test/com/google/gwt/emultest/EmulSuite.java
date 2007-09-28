@@ -30,11 +30,10 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 /**
- * TODO: document me.
+ * Tests all classes in GWT JRE emulation library.
  */
 public class EmulSuite {
 
-  /** Note: due to compiler error, only can use one Test Case at a time */
   public static Test suite() {
     TestSuite suite = new TestSuite("Tests for com.google.gwt.emul.java");
 

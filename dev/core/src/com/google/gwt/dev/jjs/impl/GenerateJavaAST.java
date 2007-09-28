@@ -38,6 +38,7 @@ import com.google.gwt.dev.jjs.ast.JDoStatement;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JEnumField;
 import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JFloatLiteral;
@@ -62,6 +63,7 @@ import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
@@ -88,6 +90,7 @@ import com.google.gwt.dev.js.ast.JsVisitor;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.AND_AND_Expression;
+import org.eclipse.jdt.internal.compiler.ast.ASTNode;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.AllocationExpression;
 import org.eclipse.jdt.internal.compiler.ast.ArrayAllocationExpression;
@@ -162,6 +165,7 @@ import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 import org.eclipse.jdt.internal.compiler.lookup.VariableBinding;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.problem.ProblemHandler;
@@ -211,7 +215,7 @@ public class GenerateJavaAST {
       sb.append(method.getName());
       sb.append("(");
       for (int i = 0; i < method.getOriginalParamTypes().size(); ++i) {
-        JType type = (JType) method.getOriginalParamTypes().get(i);
+        JType type = method.getOriginalParamTypes().get(i);
         sb.append(type.getJsniSignatureName());
       }
       sb.append(")");
@@ -231,8 +235,6 @@ public class GenerateJavaAST {
       return ice;
     }
 
-    private Object[] args = new Object[1];
-
     private JReferenceType currentClass;
 
     private ClassScope currentClassScope;
@@ -247,9 +249,7 @@ public class GenerateJavaAST {
 
     private int[] currentSeparatorPositions;
 
-    private final Map/* <JMethod, Map<String, JLabel>> */labelMap = new IdentityHashMap();
-
-    private Class[] params = new Class[1];
+    private final Map<JMethod, Map<String, JLabel>> labelMap = new IdentityHashMap<JMethod, Map<String, JLabel>>();
 
     private final JProgram program;
 
@@ -261,8 +261,8 @@ public class GenerateJavaAST {
     }
 
     /**
-     * We emulate static initializers and intance initializers as methods. As in
-     * other cases, this gives us: simpler AST, easier to optimize, more like
+     * We emulate static initializers and instance initializers as methods. As
+     * in other cases, this gives us: simpler AST, easier to optimize, more like
      * output JavaScript.
      */
     public void processType(TypeDeclaration x) {
@@ -281,8 +281,8 @@ public class GenerateJavaAST {
          * this). Call super class $clinit; $clinit is always in position 0.
          */
         if (currentClass.extnds != null) {
-          JMethod myClinit = (JMethod) currentClass.methods.get(0);
-          JMethod superClinit = (JMethod) currentClass.extnds.methods.get(0);
+          JMethod myClinit = currentClass.methods.get(0);
+          JMethod superClinit = currentClass.extnds.methods.get(0);
           JMethodCall superClinitCall = new JMethodCall(program,
               myClinit.getSourceInfo(), null, superClinit);
           JMethodBody body = (JMethodBody) myClinit.getBody();
@@ -295,12 +295,12 @@ public class GenerateJavaAST {
             FieldDeclaration fieldDeclaration = x.fields[i];
             if (fieldDeclaration.isStatic()) {
               // clinit
-              currentMethod = (JMethod) currentClass.methods.get(0);
+              currentMethod = currentClass.methods.get(0);
               currentMethodBody = (JMethodBody) currentMethod.getBody();
               currentMethodScope = x.staticInitializerScope;
             } else {
               // init
-              currentMethod = (JMethod) currentClass.methods.get(1);
+              currentMethod = currentClass.methods.get(1);
               currentMethodBody = (JMethodBody) currentMethod.getBody();
               currentMethodScope = x.initializerScope;
             }
@@ -350,10 +350,8 @@ public class GenerateJavaAST {
       }
 
       try {
-        params[0] = child.getClass();
-        Method method = getClass().getDeclaredMethod(name, params);
-        args[0] = child;
-        return (JNode) method.invoke(this, args);
+        Method method = getClass().getDeclaredMethod(name, child.getClass());
+        return (JNode) method.invoke(this, child);
       } catch (Throwable e) {
         if (e instanceof InvocationTargetException) {
           e = ((InvocationTargetException) e).getTargetException();
@@ -372,11 +370,52 @@ public class GenerateJavaAST {
        * don't have to write processExpression methods for the numerous JDT
        * literal nodes because they ALWAYS have a constant value.
        */
+      JExpression result = null;
       if (x != null && x.constant != null
           && x.constant != Constant.NotAConstant) {
-        return (JExpression) dispatch("processConstant", x.constant);
+        result = (JExpression) dispatch("processConstant", x.constant);
       }
-      return (JExpression) dispatch("processExpression", x);
+
+      if (result == null) {
+        // The expression was not a constant, so use the general logic.
+        result = (JExpression) dispatch("processExpression", x);
+      }
+
+      // Check if we need to box the resulting expression.
+      if (x != null) {
+        if ((x.implicitConversion & TypeIds.BOXING) != 0) {
+          /*
+           * Beware! Passing in "primitiveTypeToBox" seems unnecessary, but it
+           * isn't. You cannot determine the true type to box directly by
+           * calling result.getType() in all cases because sometimes, such as
+           * when the expression is originally a int literal prefixed with a
+           * narrowing cast, the processExpression() calls returns JIntLiterals
+           * even when the actual type should be byte or short. So, unless you
+           * remember what the original expression type was, you'd incorrectly
+           * box a byte as an Integer.
+           */
+          JType primitiveTypeToBox = (JType) typeMap.get(x.resolvedType);
+
+          if (!(primitiveTypeToBox instanceof JPrimitiveType)) {
+            throw new InternalCompilerException(result,
+                "Attempt to box a non-primitive type: "
+                    + primitiveTypeToBox.getName(), null);
+          }
+
+          result = box(result, (JPrimitiveType) primitiveTypeToBox);
+        } else if ((x.implicitConversion & TypeIds.UNBOXING) != 0) {
+
+          JType typeToUnbox = (JType) typeMap.get(x.resolvedType);
+          if (!(typeToUnbox instanceof JClassType)) {
+            throw new InternalCompilerException(result,
+                "Attempt to unbox a non-class type: " + typeToUnbox.getName(),
+                null);
+          }
+
+          result = unbox(result, (JClassType) typeToUnbox);
+        }
+      }
+      return result;
     }
 
     /**
@@ -486,11 +525,11 @@ public class GenerateJavaAST {
         JClassType enclosingType = (JClassType) ctor.getEnclosingType();
 
         // Call clinit; $clinit is always in position 0.
-        JMethod clinitMethod = (JMethod) enclosingType.methods.get(0);
+        JMethod clinitMethod = enclosingType.methods.get(0);
         JMethodCall clinitCall = new JMethodCall(program, info, null,
             clinitMethod);
         JMethodBody body = (JMethodBody) ctor.getBody();
-        List statements = body.getStatements();
+        List<JStatement> statements = body.getStatements();
         statements.add(clinitCall.makeStatement());
 
         /*
@@ -501,12 +540,12 @@ public class GenerateJavaAST {
         if (!hasExplicitThis) {
           ReferenceBinding declaringClass = x.binding.declaringClass;
           if (declaringClass instanceof NestedTypeBinding) {
-            Iterator/* <JParameter> */paramIt = getSyntheticsIterator(ctor);
+            Iterator<JParameter> paramIt = getSyntheticsIterator(ctor);
             NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
             if (nestedBinding.enclosingInstances != null) {
               for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
                 SyntheticArgumentBinding arg = nestedBinding.enclosingInstances[i];
-                JParameter param = (JParameter) paramIt.next();
+                JParameter param = paramIt.next();
                 if (arg.matchingField != null) {
                   JField field = (JField) typeMap.get(arg);
                   statements.add(program.createAssignmentStmt(info,
@@ -519,7 +558,7 @@ public class GenerateJavaAST {
             if (nestedBinding.outerLocalVariables != null) {
               for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
                 SyntheticArgumentBinding arg = nestedBinding.outerLocalVariables[i];
-                JParameter param = (JParameter) paramIt.next();
+                JParameter param = paramIt.next();
                 JField field = (JField) typeMap.get(arg);
                 statements.add(program.createAssignmentStmt(info,
                     createVariableRef(info, field), createVariableRef(info,
@@ -542,7 +581,7 @@ public class GenerateJavaAST {
          */
         if (!hasExplicitThis) {
           // $init is always in position 1 (clinit is in 0)
-          JMethod initMethod = (JMethod) enclosingType.methods.get(1);
+          JMethod initMethod = enclosingType.methods.get(1);
           JMethodCall initCall = new JMethodCall(program, info, thisRef,
               initMethod);
           statements.add(initCall.makeStatement());
@@ -594,12 +633,12 @@ public class GenerateJavaAST {
         int ctorArgc = ctor.params.size();
         JMethod targetMethod = null;
         outer : for (int j = 0; j < javaLangString.methods.size(); ++j) {
-          JMethod method = (JMethod) javaLangString.methods.get(j);
+          JMethod method = javaLangString.methods.get(j);
           if (method.getName().equals("_String")
               && method.params.size() == ctorArgc) {
             for (int i = 0; i < ctorArgc; ++i) {
-              JParameter mparam = (JParameter) method.params.get(i);
-              JParameter cparam = (JParameter) ctor.params.get(i);
+              JParameter mparam = method.params.get(i);
+              JParameter cparam = ctor.params.get(i);
               if (mparam.getType() != cparam.getType()) {
                 continue outer;
               }
@@ -664,17 +703,15 @@ public class GenerateJavaAST {
       JNewArray newArray = new JNewArray(program, info, type);
 
       if (x.initializer != null) {
-        newArray.initializers = new ArrayList();
+        newArray.initializers = new ArrayList<JExpression>();
         if (x.initializer.expressions != null) {
-          for (int i = 0; i < x.initializer.expressions.length; i++) {
-            Expression expression = x.initializer.expressions[i];
+          for (Expression expression : x.initializer.expressions) {
             newArray.initializers.add(dispProcessExpression(expression));
           }
         }
       } else {
-        newArray.dims = new ArrayList();
-        for (int i = 0; i < x.dimensions.length; i++) {
-          Expression dimension = x.dimensions[i];
+        newArray.dims = new ArrayList<JExpression>();
+        for (Expression dimension : x.dimensions) {
           // can be null if index expression was empty
           if (dimension == null) {
             newArray.dims.add(program.getLiteralAbsentArrayDimension());
@@ -692,10 +729,9 @@ public class GenerateJavaAST {
       JArrayType type = (JArrayType) typeMap.get(x.resolvedType);
       JNewArray newArray = new JNewArray(program, info, type);
 
-      newArray.initializers = new ArrayList();
+      newArray.initializers = new ArrayList<JExpression>();
       if (x.expressions != null) {
-        for (int i = 0; i < x.expressions.length; i++) {
-          Expression expression = x.expressions[i];
+        for (Expression expression : x.expressions) {
           newArray.initializers.add(dispProcessExpression(expression));
         }
       }
@@ -720,7 +756,7 @@ public class GenerateJavaAST {
     JExpression processExpression(BinaryExpression x) {
       JBinaryOperator op;
 
-      int binOp = (x.bits & BinaryExpression.OperatorMASK) >> BinaryExpression.OperatorSHIFT;
+      int binOp = (x.bits & ASTNode.OperatorMASK) >> ASTNode.OperatorSHIFT;
       switch (binOp) {
         case BinaryExpression.LEFT_SHIFT:
           op = JBinaryOperator.SHL;
@@ -922,7 +958,7 @@ public class GenerateJavaAST {
           /*
            * In cases where JDT had to synthesize a this ref for us, it could
            * actually be the wrong type, if the target method is in an enclosing
-           * class. We have to sythensize our own ref of the correct type.
+           * class. We have to synthesize our own ref of the correct type.
            */
           qualifier = createThisRef(info, method.getEnclosingType());
         }
@@ -1032,7 +1068,7 @@ public class GenerateJavaAST {
       JNewInstance newInstance = new JNewInstance(program, info, enclosingType);
       JMethodCall call = new JMethodCall(program, info, newInstance, ctor);
       JExpression qualifier = dispProcessExpression(x.enclosingInstance);
-      List qualList = new ArrayList();
+      List<JExpression> qualList = new ArrayList<JExpression>();
       qualList.add(qualifier);
 
       /*
@@ -1096,8 +1132,7 @@ public class GenerateJavaAST {
        * otherBindings takes the current expression as a qualifier.
        */
       if (x.otherBindings != null) {
-        for (int i = 0; i < x.otherBindings.length; i++) {
-          FieldBinding fieldBinding = x.otherBindings[i];
+        for (FieldBinding fieldBinding : x.otherBindings) {
           JField field;
           if (fieldBinding.declaringClass == null) {
             // probably array.length
@@ -1207,6 +1242,20 @@ public class GenerateJavaAST {
       return preOp;
     }
 
+    List<JExpressionStatement> processExpressionStatements(
+        Statement[] statements) {
+      List<JExpressionStatement> jstatements = new ArrayList<JExpressionStatement>();
+      if (statements != null) {
+        for (int i = 0, n = statements.length; i < n; ++i) {
+          JStatement jstmt = dispProcessStatement(statements[i]);
+          if (jstmt != null) {
+            jstatements.add((JExpressionStatement) jstmt);
+          }
+        }
+      }
+      return jstatements;
+    }
+
     void processField(FieldDeclaration declaration) {
       JField field = (JField) typeMap.tryGet(declaration.binding);
       if (field == null) {
@@ -1291,7 +1340,7 @@ public class GenerateJavaAST {
       }
 
       // resolve jsni refs
-      final List/* <JsNameRef> */nameRefs = new ArrayList/* <JsNameRef> */();
+      final List<JsNameRef> nameRefs = new ArrayList<JsNameRef>();
       new JsVisitor() {
         // @Override
         public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
@@ -1303,7 +1352,7 @@ public class GenerateJavaAST {
       }.accept(func);
 
       for (int i = 0; i < nameRefs.size(); ++i) {
-        JsNameRef nameRef = (JsNameRef) nameRefs.get(i);
+        JsNameRef nameRef = nameRefs.get(i);
         SourceInfo info = nativeMethodBody.getSourceInfo();
         // TODO: make this tighter when we have real source info
         // JSourceInfo info = translateInfo(nameRef.getInfo());
@@ -1449,7 +1498,8 @@ public class GenerateJavaAST {
             createVariableRef(info, indexVar), createVariableRef(info, maxVar));
 
         // ++i$index
-        List<JStatement> increments = new ArrayList<JStatement>(1);
+        List<JExpressionStatement> increments = new ArrayList<JExpressionStatement>(
+            1);
         increments.add(new JPrefixOperation(program, info, JUnaryOperator.INC,
             createVariableRef(info, indexVar)).makeStatement());
 
@@ -1515,7 +1565,7 @@ public class GenerateJavaAST {
         body.statements.add(0, elementDecl);
 
         return new JForStatement(program, info, initializers, condition,
-            Collections.emptyList(), body);
+            Collections.<JExpressionStatement> emptyList(), body);
       }
     }
 
@@ -1525,9 +1575,9 @@ public class GenerateJavaAST {
       // If the condition is false, don't process the body
       boolean removeBody = isOptimizedFalse(x.condition);
 
-      List/* <? extends JStatement> */init = processStatements(x.initializations);
+      List<JStatement> init = processStatements(x.initializations);
       JExpression expr = dispProcessExpression(x.condition);
-      List/* <JExpressionStatement> */incr = processStatements(x.increments);
+      List<JExpressionStatement> incr = processExpressionStatements(x.increments);
       JStatement body = removeBody ? null : dispProcessStatement(x.action);
       return new JForStatement(program, info, init, expr, incr, body);
     }
@@ -1616,15 +1666,15 @@ public class GenerateJavaAST {
     JStatement processStatement(TryStatement x) {
       SourceInfo info = makeSourceInfo(x);
       JBlock tryBlock = (JBlock) dispProcessStatement(x.tryBlock);
-      List/* <JLocalRef> */catchArgs = new ArrayList/* <JLocalRef> */();
-      List/* <JBlock> */catchBlocks = new ArrayList/* <JBlock> */();
+      List<JLocalRef> catchArgs = new ArrayList<JLocalRef>();
+      List<JBlock> catchBlocks = new ArrayList<JBlock>();
       if (x.catchBlocks != null) {
         for (int i = 0, c = x.catchArguments.length; i < c; ++i) {
           JLocal local = (JLocal) typeMap.get(x.catchArguments[i].binding);
-          catchArgs.add(createVariableRef(info, local));
+          catchArgs.add((JLocalRef) createVariableRef(info, local));
         }
         for (int i = 0, c = x.catchBlocks.length; i < c; ++i) {
-          catchBlocks.add(dispProcessStatement(x.catchBlocks[i]));
+          catchBlocks.add((JBlock) dispProcessStatement(x.catchBlocks[i]));
         }
       }
       JBlock finallyBlock = (JBlock) dispProcessStatement(x.finallyBlock);
@@ -1650,8 +1700,8 @@ public class GenerateJavaAST {
       return stmt;
     }
 
-    List/* <? extends JStatement> */processStatements(Statement[] statements) {
-      List/* <JStatement> */jstatements = new ArrayList/* <JStatement> */();
+    List<JStatement> processStatements(Statement[] statements) {
+      List<JStatement> jstatements = new ArrayList<JStatement>();
       if (statements != null) {
         for (int i = 0, n = statements.length; i < n; ++i) {
           JStatement jstmt = dispProcessStatement(statements[i]);
@@ -1696,11 +1746,10 @@ public class GenerateJavaAST {
                * Unfortunately, my params might not work as-is, so we have to
                * check each one to see if any will make a suitable this ref.
                */
-              List/* <JExpression> */workList = new ArrayList/* <JExpression> */();
-              Iterator/* <JParameter> */paramIt = getSyntheticsIterator(currentMethod);
+              List<JExpression> workList = new ArrayList<JExpression>();
+              Iterator<JParameter> paramIt = getSyntheticsIterator(currentMethod);
               for (int i = 0; i < myBinding.enclosingInstances.length; ++i) {
-                workList.add(createVariableRef(info,
-                    (JParameter) paramIt.next()));
+                workList.add(createVariableRef(info, paramIt.next()));
               }
               call.getArgs().add(createThisRef(classType, workList));
             } else {
@@ -1753,18 +1802,16 @@ public class GenerateJavaAST {
       // All synthetics must be passed through to the target ctor
       ReferenceBinding declaringClass = x.binding.declaringClass;
       if (declaringClass instanceof NestedTypeBinding) {
-        Iterator/* <JParameter> */paramIt = getSyntheticsIterator(currentMethod);
+        Iterator<JParameter> paramIt = getSyntheticsIterator(currentMethod);
         NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
         if (nestedBinding.enclosingInstances != null) {
           for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
-            call.getArgs().add(
-                createVariableRef(info, (JParameter) paramIt.next()));
+            call.getArgs().add(createVariableRef(info, paramIt.next()));
           }
         }
         if (nestedBinding.outerLocalVariables != null) {
           for (int i = 0; i < nestedBinding.outerLocalVariables.length; ++i) {
-            call.getArgs().add(
-                createVariableRef(info, (JParameter) paramIt.next()));
+            call.getArgs().add(createVariableRef(info, paramIt.next()));
           }
         }
       }
@@ -1772,10 +1819,10 @@ public class GenerateJavaAST {
       return call;
     }
 
-    private void addAllOuterThisRefs(List list, JExpression expr,
-        JClassType classType) {
+    private void addAllOuterThisRefs(List<? super JFieldRef> list,
+        JExpression expr, JClassType classType) {
       if (classType.fields.size() > 0) {
-        JField field = (JField) classType.fields.get(0);
+        JField field = classType.fields.get(0);
         if (field.getName().startsWith("this$")) {
           list.add(new JFieldRef(program, expr.getSourceInfo(), expr, field,
               currentClass));
@@ -1783,11 +1830,52 @@ public class GenerateJavaAST {
       }
     }
 
-    private void addAllOuterThisRefsPlusSuperChain(List workList,
-        JExpression expr, JClassType classType) {
+    private void addAllOuterThisRefsPlusSuperChain(
+        List<? super JFieldRef> workList, JExpression expr, JClassType classType) {
       for (; classType != null; classType = classType.extnds) {
         addAllOuterThisRefs(workList, expr, classType);
       }
+    }
+
+    private JExpression box(JExpression toBox, JPrimitiveType primitiveType) {
+      // Find the wrapper type for this primitive type.
+      String wrapperTypeName = primitiveType.getWrapperTypeName();
+      JClassType wrapperType = (JClassType) program.getFromTypeMap(wrapperTypeName);
+      if (wrapperType == null) {
+        throw new InternalCompilerException(toBox, "Cannot find wrapper type '"
+            + wrapperTypeName + "' associated with primitive type '"
+            + primitiveType.getName() + "'", null);
+      }
+
+      // Find the correct valueOf() method.
+      JMethod valueOfMethod = null;
+      for (JMethod method : wrapperType.methods) {
+        if ("valueOf".equals(method.getName())) {
+          if (method.params.size() == 1) {
+            JParameter param = method.params.get(0);
+            if (param.getType() == primitiveType) {
+              // Found it.
+              valueOfMethod = method;
+              break;
+            }
+          }
+        }
+      }
+
+      if (valueOfMethod == null || !valueOfMethod.isStatic()
+          || valueOfMethod.getType() != wrapperType) {
+        throw new InternalCompilerException(toBox,
+            "Expected to find a method on '" + wrapperTypeName
+                + "' whose signature matches 'public static "
+                + wrapperType.getName() + " valueOf(" + primitiveType.getName()
+                + ")'", null);
+      }
+
+      // Create the boxing call.
+      JMethodCall call = new JMethodCall(program, toBox.getSourceInfo(), null,
+          valueOfMethod);
+      call.getArgs().add(toBox);
+      return call;
     }
 
     private JLocalDeclarationStatement createLocalDeclaration(SourceInfo info,
@@ -1805,7 +1893,7 @@ public class GenerateJavaAST {
         JClassType targetType) {
       assert (currentClass instanceof JClassType);
       JExpression expr = program.getExprThisRef(info, (JClassType) currentClass);
-      List/* <JExpression> */list = new ArrayList();
+      List<JExpression> list = new ArrayList<JExpression>();
       addAllOuterThisRefsPlusSuperChain(list, expr, (JClassType) currentClass);
       return createThisRef(targetType, list);
     }
@@ -1822,7 +1910,7 @@ public class GenerateJavaAST {
      * correct type, and we may need use one of its fields.
      */
     private JExpression createThisRef(JReferenceType qualType, JExpression expr) {
-      List/* <JExpression> */list = new ArrayList();
+      List<JExpression> list = new ArrayList<JExpression>();
       list.add(expr);
       return createThisRef(qualType, list);
     }
@@ -1847,11 +1935,11 @@ public class GenerateJavaAST {
      * type. We have observed this to be consistent with how Java handles it.
      */
     private JExpression createThisRef(JReferenceType qualType,
-        List/* <JExpression> */list) {
-      LinkedList/* <JExpression> */workList = new LinkedList/* <JExpression> */();
+        List<JExpression> list) {
+      LinkedList<JExpression> workList = new LinkedList<JExpression>();
       workList.addAll(list);
       while (!workList.isEmpty()) {
-        JExpression expr = (JExpression) workList.removeFirst();
+        JExpression expr = workList.removeFirst();
         JClassType classType = (JClassType) expr.getType();
         for (; classType != null; classType = classType.extnds) {
           // prefer myself or myself-as-supertype over any of my this$ fields
@@ -1951,12 +2039,12 @@ public class GenerateJavaAST {
         return null;
       }
       String sname = String.valueOf(name);
-      Map/* <String, JLabel> */lblMap = (Map) this.labelMap.get(enclosingMethod);
+      Map<String, JLabel> lblMap = this.labelMap.get(enclosingMethod);
       if (lblMap == null) {
-        lblMap = new HashMap();
+        lblMap = new HashMap<String, JLabel>();
         this.labelMap.put(enclosingMethod, lblMap);
       }
-      JLabel jlabel = (JLabel) lblMap.get(sname);
+      JLabel jlabel = lblMap.get(sname);
       if (jlabel == null) {
         jlabel = new JLabel(program, info, sname);
         lblMap.put(sname, jlabel);
@@ -1987,7 +2075,7 @@ public class GenerateJavaAST {
       if (parenPos < 0) {
         // look for a field
         for (int i = 0; i < type.fields.size(); ++i) {
-          JField field = (JField) type.fields.get(i);
+          JField field = type.fields.get(i);
           if (field.getName().equals(rhs)) {
             return field;
           }
@@ -2000,7 +2088,7 @@ public class GenerateJavaAST {
         String methodName = rhs.substring(0, parenPos);
         String almostMatches = null;
         for (int i = 0; i < type.methods.size(); ++i) {
-          JMethod method = (JMethod) type.methods.get(i);
+          JMethod method = type.methods.get(i);
           if (method.getName().equals(methodName)) {
             String jsniSig = getJsniSig(method);
             if (jsniSig.equals(rhs)) {
@@ -2054,7 +2142,7 @@ public class GenerateJavaAST {
             JType type = (JType) typeMap.get(varBinding.type);
             String name = String.valueOf(varBinding.name);
             for (int i = 0; i < currentMethod.params.size(); ++i) {
-              JParameter param = (JParameter) currentMethod.params.get(i);
+              JParameter param = currentMethod.params.get(i);
               if (type == param.getType() && name.equals(param.getName())) {
                 variable = param;
                 break;
@@ -2171,6 +2259,55 @@ public class GenerateJavaAST {
         }
       }
     }
+
+    private JExpression unbox(JExpression toUnbox, JClassType wrapperType) {
+      String wrapperTypeName = wrapperType.getName();
+      String primitiveName = null;
+      if ("java.lang.Integer".equals(wrapperTypeName)) {
+        primitiveName = "int";
+      } else if ("java.lang.Boolean".equals(wrapperTypeName)) {
+        primitiveName = "boolean";
+      } else if ("java.lang.Character".equals(wrapperTypeName)) {
+        primitiveName = "char";
+      } else if ("java.lang.Long".equals(wrapperTypeName)) {
+        primitiveName = "long";
+      } else if ("java.lang.Short".equals(wrapperTypeName)) {
+        primitiveName = "short";
+      } else if ("java.lang.Byte".equals(wrapperTypeName)) {
+        primitiveName = "byte";
+      } else if ("java.lang.Double".equals(wrapperTypeName)) {
+        primitiveName = "double";
+      } else if ("java.lang.Float".equals(wrapperTypeName)) {
+        primitiveName = "float";
+      } else {
+        throw new InternalCompilerException(toUnbox,
+            "Attempt to unbox unexpected type '" + wrapperTypeName + "'", null);
+      }
+
+      String valueMethodName = primitiveName + "Value";
+      JMethod valueMethod = null;
+      for (Object element : wrapperType.methods) {
+        JMethod method = (JMethod) element;
+        if (method.getName().equals(valueMethodName)) {
+          if (method.params.isEmpty()) {
+            // It's a match!
+            valueMethod = method;
+            break;
+          }
+        }
+      }
+
+      if (valueMethod == null) {
+        throw new InternalCompilerException(toUnbox,
+            "Expected to find a method on '" + wrapperTypeName
+                + "' whose signature matches 'public " + primitiveName + " "
+                + valueMethodName + "()'", null);
+      }
+
+      JMethodCall unboxCall = new JMethodCall(program, toUnbox.getSourceInfo(),
+          toUnbox, valueMethod);
+      return unboxCall;
+    }
   }
 
   /**
@@ -2205,8 +2342,8 @@ public class GenerateJavaAST {
    * Gets a JParameter iterator for a constructor method over its synthetic
    * parameters.
    */
-  private static Iterator getSyntheticsIterator(JMethod method) {
-    Iterator it = method.params.iterator();
+  private static Iterator<JParameter> getSyntheticsIterator(JMethod method) {
+    Iterator<JParameter> it = method.params.iterator();
     for (int i = 0, c = method.getOriginalParamTypes().size(); i < c; ++i) {
       it.next();
     }

@@ -30,9 +30,9 @@ import java.util.List;
  */
 public class JsniMethodBody extends JAbstractMethodBody {
 
-  public final List/* <JsniFieldRef> */jsniFieldRefs = new ArrayList/* <JsniFieldRef> */();
+  public final List<JsniFieldRef> jsniFieldRefs = new ArrayList<JsniFieldRef>();
 
-  public final List/* <JsniMethodRef> */jsniMethodRefs = new ArrayList/* <JsniMethodRef> */();
+  public final List<JsniMethodRef> jsniMethodRefs = new ArrayList<JsniMethodRef>();
 
   private JsFunction jsFunction = null;
 

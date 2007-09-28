@@ -40,7 +40,7 @@ public class TypeMap {
   /**
    * Maps Eclipse AST nodes to our JNodes.
    */
-  private final Map/* <Binding, JNode> */crossRefMap = new IdentityHashMap();
+  private final Map<Binding, JNode> crossRefMap = new IdentityHashMap<Binding, JNode>();
 
   /**
    * Centralizes creation and singleton management.
@@ -93,7 +93,7 @@ public class TypeMap {
   }
 
   private JNode internalGet(Binding binding) {
-    JNode cached = (JNode) crossRefMap.get(binding);
+    JNode cached = crossRefMap.get(binding);
     if (cached != null) {
       // Already seen this one.
       return cached;

@@ -24,14 +24,13 @@ import java.util.List;
  */
 public class JTryStatement extends JStatement {
 
-  private final List catchArgs;
-  private final List catchBlocks;
+  private final List<JLocalRef> catchArgs;
+  private final List<JBlock> catchBlocks;
   private final JBlock finallyBlock;
   private final JBlock tryBlock;
 
   public JTryStatement(JProgram program, SourceInfo info, JBlock tryBlock,
-      List/* <JLocalRef> */catchArgs, List/* <JBlock> */catchBlocks,
-      JBlock finallyBlock) {
+      List<JLocalRef> catchArgs, List<JBlock> catchBlocks, JBlock finallyBlock) {
     super(program, info);
     assert (catchArgs.size() == catchBlocks.size());
     this.tryBlock = tryBlock;
@@ -40,11 +39,11 @@ public class JTryStatement extends JStatement {
     this.finallyBlock = finallyBlock;
   }
 
-  public List getCatchArgs() {
+  public List<JLocalRef> getCatchArgs() {
     return catchArgs;
   }
 
-  public List/* <JBlock> */getCatchBlocks() {
+  public List<JBlock> getCatchBlocks() {
     return catchBlocks;
   }
 

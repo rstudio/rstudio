@@ -164,45 +164,45 @@ public class JProgram extends JNode {
   private final Map<JMethod, JMethod> staticToInstanceMap = new IdentityHashMap<JMethod, JMethod>();
 
   private final JPrimitiveType typeBoolean = new JPrimitiveType(this,
-      "boolean", "Z", literalFalse);
+      "boolean", "Z", "java.lang.Boolean", literalFalse);
 
   private final JPrimitiveType typeByte = new JPrimitiveType(this, "byte", "B",
-      literalIntZero);
+      "java.lang.Byte", literalIntZero);
 
   private final JPrimitiveType typeChar = new JPrimitiveType(this, "char", "C",
-      getLiteralChar((char) 0));
+      "java.lang.Character", getLiteralChar((char) 0));
 
   private JClassType typeClass;
 
   private final JPrimitiveType typeDouble = new JPrimitiveType(this, "double",
-      "D", getLiteralDouble(0));
+      "D", "java.lang.Double", getLiteralDouble(0));
 
   private final JPrimitiveType typeFloat = new JPrimitiveType(this, "float",
-      "F", getLiteralFloat(0));
+      "F", "java.lang.Float", getLiteralFloat(0));
 
   private Map<JClassType, Integer> typeIdMap = new HashMap<JClassType, Integer>();
 
   private final JPrimitiveType typeInt = new JPrimitiveType(this, "int", "I",
-      literalIntZero);
+      "java.lang.Integer", literalIntZero);
 
   private JClassType typeJavaLangObject;
 
   private final JPrimitiveType typeLong = new JPrimitiveType(this, "long", "J",
-      getLiteralLong(0));
+      "java.lang.Long", getLiteralLong(0));
 
   private final Map<String, JReferenceType> typeNameMap = new HashMap<String, JReferenceType>();
 
   private final JNullType typeNull = new JNullType(this);
 
   private final JPrimitiveType typeShort = new JPrimitiveType(this, "short",
-      "S", literalIntZero);
+      "S", "java.lang.Short", literalIntZero);
 
   private JClassType typeSpecialJavaScriptObject;
 
   private JClassType typeString;
 
   private final JPrimitiveType typeVoid = new JPrimitiveType(this, "void", "V",
-      null);
+      "java.lang.Void", null);
 
   public JProgram(TreeLogger logger, RebindOracle rebindOracle) {
     super(null, null);

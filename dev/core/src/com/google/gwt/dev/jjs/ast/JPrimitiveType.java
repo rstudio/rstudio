@@ -21,14 +21,16 @@ package com.google.gwt.dev.jjs.ast;
 public class JPrimitiveType extends JType {
 
   private final String signatureName;
+  private final String wrapperTypeName;
 
   /**
    * These are only supposed to be constructed by JProgram.
    */
   JPrimitiveType(JProgram program, String name, String signatureName,
-      JLiteral defaultValue) {
+      String wrapperTypeName, JLiteral defaultValue) {
     super(program, null, name, defaultValue);
     this.signatureName = signatureName;
+    this.wrapperTypeName = wrapperTypeName;
   }
 
   public String getJavahSignatureName() {
@@ -37,6 +39,10 @@ public class JPrimitiveType extends JType {
 
   public String getJsniSignatureName() {
     return signatureName;
+  }
+
+  public String getWrapperTypeName() {
+    return wrapperTypeName;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
