@@ -909,8 +909,6 @@ public class GenerateJavaAST {
       SourceInfo info = makeSourceInfo(x);
       JType type = (JType) typeMap.get(x.resolvedType);
       JMethod method = (JMethod) typeMap.get(x.binding);
-      // TODO
-      // assert (type == method.getType());
 
       JExpression qualifier;
       if (x.receiver instanceof ThisReference) {
@@ -949,7 +947,13 @@ public class GenerateJavaAST {
         }
       }
 
-      return call;
+      if (type != method.getType()) {
+        // Must be a generic; insert a cast operation.
+        JReferenceType toType = (JReferenceType) type;
+        return new JCastOperation(program, info, toType, call);
+      } else {
+        return call;
+      }
     }
 
     JExpression processExpression(NullLiteral x) {
