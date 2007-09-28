@@ -71,7 +71,7 @@ public final class Integer extends Number implements Comparable<Integer> {
   }
 
   public static Integer valueOf(int i) {
-    if (i > -129 || i < 128) {
+    if (i > -129 && i < 128) {
       int rebase = i + 128;
       if (boxedValues[rebase] == null) {
         boxedValues[rebase] = new Integer(i);

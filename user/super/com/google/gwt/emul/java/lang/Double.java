@@ -58,6 +58,10 @@ public final class Double extends Number implements Comparable<Double> {
     return String.valueOf(b);
   }
 
+  public static Double valueOf(double d) {
+    return new Double(d);
+  }
+
   public static Double valueOf(String s) throws NumberFormatException {
     return new Double(Double.parseDouble(s));
   }

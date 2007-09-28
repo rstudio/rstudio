@@ -51,7 +51,7 @@ public final class Short extends Number implements Comparable<Short> {
   }
 
   public static Short valueOf(short s) {
-    if (s > -129 || s < 128) {
+    if (s > -129 && s < 128) {
       int rebase = s + 128;
       if (boxedValues[rebase] == null) {
         boxedValues[rebase] = new Short(s);

@@ -51,11 +51,15 @@ public final class Float extends Number implements Comparable<Float> {
   }-*/;
 
   public static float parseFloat(String s) throws NumberFormatException {
-    return (float)__parseAndValidateDouble(s);
+    return (float) __parseAndValidateDouble(s);
   }
 
   public static String toString(float b) {
     return String.valueOf(b);
+  }
+
+  public static Float valueOf(float f) {
+    return new Float(f);
   }
 
   public static Float valueOf(String s) throws NumberFormatException {

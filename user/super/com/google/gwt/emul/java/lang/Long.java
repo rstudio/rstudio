@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,6 +21,9 @@ package java.lang;
 public final class Long extends Number implements Comparable<Long> {
   public static final long MIN_VALUE = 0x8000000000000000L;
   public static final long MAX_VALUE = 0x7fffffffffffffffL;
+
+  // Box values according to JLS - between -128 and 127
+  private static Long[] boxedValues = new Long[256];
 
   public static Long decode(String s) throws NumberFormatException {
     return new Long(__decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
@@ -70,6 +73,17 @@ public final class Long extends Number implements Comparable<Long> {
 
   public static String toString(long b) {
     return String.valueOf(b);
+  }
+
+  public static Long valueOf(long i) {
+    if (i > -129 && i < 128) {
+      int rebase = (int) i + 128;
+      if (boxedValues[rebase] == null) {
+        boxedValues[rebase] = new Long(i);
+      }
+      return boxedValues[rebase];
+    }
+    return new Long(i);
   }
 
   public static Long valueOf(String s) throws NumberFormatException {
