@@ -185,6 +185,8 @@ public class JProgram extends JNode {
   private final JPrimitiveType typeInt = new JPrimitiveType(this, "int", "I",
       "java.lang.Integer", literalIntZero);
 
+  private JClassType typeJavaLangEnum;
+
   private JClassType typeJavaLangObject;
 
   private final JPrimitiveType typeLong = new JPrimitiveType(this, "long", "J",
@@ -243,6 +245,8 @@ public class JProgram extends JNode {
         typeJavaLangObject = x;
       } else if (sname.equals("java.lang.String")) {
         typeString = x;
+      } else if (sname.equals("java.lang.Enum")) {
+        typeJavaLangEnum = x;
       } else if (sname.equals("java.lang.Class")) {
         typeClass = x;
       } else if (sname.equals("com.google.gwt.core.client.JavaScriptObject")) {
@@ -572,6 +576,10 @@ public class JProgram extends JNode {
 
   public JClassType getTypeJavaLangClass() {
     return typeClass;
+  }
+
+  public JClassType getTypeJavaLangEnum() {
+    return typeJavaLangEnum;
   }
 
   public JClassType getTypeJavaLangObject() {

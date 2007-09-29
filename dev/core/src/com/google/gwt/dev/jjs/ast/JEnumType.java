@@ -29,6 +29,7 @@ public class JEnumType extends JClassType {
 
   public JEnumType(JProgram program, SourceInfo info, String name) {
     super(program, info, name, false, false);
+    this.extnds = program.getTypeJavaLangEnum();
   }
 
   // TODO: implement traverse?

@@ -250,6 +250,11 @@ public class HostedTest extends GWTTestCase {
     assertEquals(s.length(), getStringLength(s));
     assertEquals(s + "me", getString(s));
   }
+  
+  @Override
+  public boolean catchExceptions() {
+    return false;
+  }
 
   public void testEnum() {
     TestEnum val = enumSimple(TestEnum.VAL2);
@@ -447,7 +452,7 @@ public class HostedTest extends GWTTestCase {
   }-*/;
 
   private native String enumName(TestEnum val) /*-{
-    return val.@com.google.gwt.dev.jjs.test.HostedTest.TestEnum::name()();
+    return val.@java.lang.Enum::name()();
   }-*/;
 
   private native TestEnum enumSimple(TestEnum val) /*-{
@@ -455,7 +460,7 @@ public class HostedTest extends GWTTestCase {
   }-*/;
 
   private native int enumValue(TestEnum val) /*-{
-    return val.@com.google.gwt.dev.jjs.test.HostedTest.TestEnum::ordinal()();
+    return val.@java.lang.Enum::ordinal()();
   }-*/;
 
   private native String fooCall(String s) /*-{
