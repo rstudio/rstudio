@@ -52,23 +52,42 @@ public class ICompilationUnitAdapter implements ICompilationUnit {
     return cup.getLocation().toCharArray();
   }
 
+  /**
+   * This method is supposed to return the simple class name for
+   * this compilation unit. Examples of simple class names would
+   * be "String", or "ArrayList". JDT allows this method to return
+   * null in the cases where this compilation unit is not a package-info
+   * class.
+   */
   public char[] getMainTypeName() {
+
+    // Note that cup.getLocation() can either return a path, a URL,
+    // or "transient source for ..."
     String mainTypeName = cup.getLocation();
-    int nameStart = mainTypeName.lastIndexOf(File.separatorChar);
-    if (nameStart != -1) {
-      mainTypeName = mainTypeName.substring(nameStart + 1);
-    }
 
-    /*
-     * This is required to resolve the package-info class.
-     */
+    // Let's check to see if we are dealing with a path to a java file,
+    // or something else
+
     int ext = mainTypeName.lastIndexOf(".java");
-    if (ext != -1) {
-      return mainTypeName.substring(0, ext).toCharArray();
+    if (ext == -1) {
+      // not a path to a java file, return null
+      return null;
     }
 
-    // seems to work just returning null
-    return null;
+    mainTypeName = mainTypeName.substring(0, ext);
+
+    int nameStart = mainTypeName.lastIndexOf(File.separatorChar);
+
+    // We're not dealing with a path, so check for the URL separator
+    if (nameStart == -1) {
+      nameStart = mainTypeName.lastIndexOf('/');
+    }
+
+    // If we do not find a separator, then this is a simple name. The
+    // substring call will act as a no-op.
+    mainTypeName = mainTypeName.substring(nameStart + 1);
+
+    return mainTypeName.toCharArray();
   }
 
   public char[][] getPackageName() {
