@@ -123,7 +123,8 @@ public abstract class AbstractGeneratorClassCreator extends
    * @param creator creator to register
    */
   public void register(JType returnType, AbstractMethodCreator creator) {
-    methodFactories.put(returnType, creator);
+    // TODO: Hacked to get the gwt-trunk for 1.5 building.
+    methodFactories.put(returnType.getErasedType(), creator);
   }
 
   /**
@@ -168,6 +169,10 @@ public abstract class AbstractGeneratorClassCreator extends
   protected AbstractMethodCreator getMethodCreator(TreeLogger logger,
       JMethod method) throws UnableToCompleteException {
     JType type = method.getReturnType();
+    
+    // TODO make the build work.  This is not correct.
+    type = type.getErasedType();
+    
     AbstractMethodCreator methodCreator = methodFactories.get(type);
     if (methodCreator == null) {
       String msg = "No current method creator exists for " + method
