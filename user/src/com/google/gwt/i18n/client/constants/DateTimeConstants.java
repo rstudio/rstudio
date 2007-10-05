@@ -30,6 +30,7 @@ public interface DateTimeConstants extends Constants {
   String[] dateFormats();
   String[] eraNames  ();
   String[] eras ();
+  String firstDayOfTheWeek();
   String[] months ();
   String[] narrowMonths ();
   String[] narrowWeekdays();
@@ -45,4 +46,5 @@ public interface DateTimeConstants extends Constants {
   String[] standaloneWeekdays();
   String[] timeFormats();
   String[] weekdays();
+  String[] weekendRange();
 }
