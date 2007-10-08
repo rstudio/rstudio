@@ -92,9 +92,9 @@ public class TypeSerializerCreator {
     if (srcWriter == null) {
       return typeSerializerName;
     }
-    
+
     createFieldSerializers(logger, context);
-    
+
     writeStaticFields();
 
     writeCreateMethods();
@@ -156,7 +156,6 @@ public class TypeSerializerCreator {
 
     JClassType customFieldSerializer = serializationOracle.hasCustomFieldSerializer(type);
     if (customFieldSerializer != null) {
-      customFieldSerializer.getQualifiedSourceName();
       return;
     }
 
