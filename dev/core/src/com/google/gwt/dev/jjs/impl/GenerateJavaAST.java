@@ -77,6 +77,7 @@ import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
+import com.google.gwt.dev.jjs.ast.JAbstractMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
@@ -503,6 +504,7 @@ public class GenerateJavaAST {
         SourceInfo info = ctor.getSourceInfo();
 
         currentMethod = ctor;
+        currentMethodBody = (JMethodBody) ctor.getBody();
         currentMethodScope = x.scope;
 
         JMethodCall superOrThisCall = null;
