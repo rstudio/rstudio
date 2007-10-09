@@ -16,10 +16,11 @@
 package com.google.gwt.emultest.java.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Arrays;
 
 /**
  * TODO: document me.
@@ -143,6 +144,16 @@ public class CollectionsTest extends EmulTestBase {
     Collections.sort(a, x);
     Object[] expected = {"c", "b", "a"};
     assertEquals(expected, a);
+  }
+  
+  public void testToArray() {
+    List<Integer> testList = createRandomList();
+    Integer[] testArray = new Integer[testList.size()];
+    testList.toArray(testArray);
+    for (int i = 0; i < testList.size(); ++i) {
+      Integer val = testList.get(i);
+      assertEquals(val, testArray[i]);
+    }
   }
 
 }

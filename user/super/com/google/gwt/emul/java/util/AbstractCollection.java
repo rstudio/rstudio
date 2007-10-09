@@ -121,7 +121,7 @@ public abstract class AbstractCollection<E> implements Collection<E> {
     Object[] result = a;
     Iterator<E> it = iterator();
     for (int i = 0; i < size; ++i) {
-      result[i++] = it.next();
+      result[i] = it.next();
     }
     if (a.length > size) {
       a[size] = null;
