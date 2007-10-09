@@ -171,6 +171,12 @@ public class StringTest extends GWTTestCase {
     assertFalse("8f", "abbbbcd".matches("a.*e"));
   }
 
+  public void testNull() {
+    assertNull(returnNull());
+    String a = returnNull() + returnNull();
+    assertEquals("nullnull", a);
+  }
+  
   /** tests replace */
   public void testReplace() {
     assertEquals("axax".replace('x', 'a'), "aaaa");
@@ -279,6 +285,10 @@ public class StringTest extends GWTTestCase {
     }
   }
 
+  private String returnNull() {
+    return null;
+  }
+  
   private String toS(char from) {
     return Character.toString(from);
   }
