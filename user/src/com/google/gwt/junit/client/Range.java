@@ -15,8 +15,6 @@
  */
 package com.google.gwt.junit.client;
 
-import java.util.Iterator;
-
 /**
  * A range of values for a Benchmark parameter.
  *
@@ -28,9 +26,7 @@ import java.util.Iterator;
  *
  * @param <T> the type that this range contains
  * 
- * TODO: extends from java.util.Iterable
  * TODO: Should iterator() return a RangeIterator&lt;T&gt;?
  */
-public interface Range<T> {
-  Iterator<T> iterator();
+public interface Range<T> extends Iterable<T> {
 }

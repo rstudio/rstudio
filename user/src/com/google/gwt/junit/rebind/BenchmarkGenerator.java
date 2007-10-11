@@ -464,7 +464,7 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
         paramValues.add(params.get(methodParams[i].getName()));
       }
 
-      sw.print( "final java.util.List<Range<?>> ranges = java.util.Arrays.asList( new com.google.gwt.junit.client.Range<?>[] { " );
+      sw.print( "final java.util.List<com.google.gwt.junit.client.Range/*<?>*/> ranges = java.util.Arrays.asList( new com.google.gwt.junit.client.Range/*<?>*/[] { " );
 
       for (int i = 0; i < paramNames.size(); ++i) {
         String paramName = paramNames.get(i);
