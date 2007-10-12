@@ -124,7 +124,7 @@ public class EnumMap<K extends Enum<K>, V> extends AbstractMap<K, V> {
       return super.equals(o);
     }
 
-    EnumMap enumMap = (EnumMap) o;
+    EnumMap<?,?> enumMap = (EnumMap<?,?>) o;
     return keySet.equals(enumMap.keySet()) && values.equals(enumMap.values());
   }
 
