@@ -79,37 +79,36 @@ final class Cast {
   }-*/;
 
   /**
-   * See JLS 5.1.3 for why we do a two-step cast. First we rount to int, then
+   * See JLS 5.1.3 for why we do a two-step cast. First we round to int, then
    * narrow to byte.
    */
   static byte round_byte(Object x) {
-    return narrow_byte(floatToInt(x));
+    return narrow_byte(round_int(x));
   }
 
   /**
-   * See JLS 5.1.3 for why we do a two-step cast. First we rount to int, then
+   * See JLS 5.1.3 for why we do a two-step cast. First we round to int, then
    * narrow to char.
    */
   static char round_char(Object x) {
-    return narrow_char(floatToInt(x));
+    return narrow_char(round_int(x));
   }
 
   /**
    * See JLS 5.1.3.
    */
   static native int round_int(Object x) /*-{
-    if (x > @java.lang.Integer::MAX_VALUE) return @java.lang.Integer::MAX_VALUE;
-    if (x < @java.lang.Integer::MIN_VALUE) return @java.lang.Integer::MIN_VALUE;
-    return x >= 0 ? Math.floor(x) : Math.ceil(x);
+    // TODO: reference java.lang.Integer::MAX_VALUE when we get clinits fixed
+    return ~~Math.max(Math.min(x, 2147483647), -2147483648);
   }-*/;
 
   /**
    * See JLS 5.1.3.
    */
   static native long round_long(Object x) /*-{
-    if (x > @java.lang.Long::MAX_VALUE) return @java.lang.Long::MAX_VALUE;
-    if (x < @java.lang.Long::MIN_VALUE) return @java.lang.Long::MIN_VALUE;
-    return x >= 0 ? Math.floor(x) : Math.ceil(x);
+    // TODO: reference java.lang.Long::MAX_VALUE when we get clinits fixed
+    x = Math.max(Math.min(x, 9223372036854775807), -9223372036854775808);
+    return (x >= 0) ? Math.floor(x) : Math.ceil(x);
   }-*/;
 
   /**
@@ -117,7 +116,7 @@ final class Cast {
    * narrow to short.
    */
   static short round_short(Object x) {
-    return narrow_short(floatToInt(x));
+    return narrow_short(round_int(x));
   }
 
   /**
@@ -160,15 +159,6 @@ final class Cast {
       jso.toString = oldToString;
     }
     return jso;
-  }-*/;
-
-  /**
-   * See JLS 5.1.3.
-   */
-  private static native Object floatToInt(Object x) /*-{
-    if (x > @java.lang.Integer::MAX_VALUE) return @java.lang.Integer::MAX_VALUE;
-    if (x < @java.lang.Integer::MIN_VALUE) return @java.lang.Integer::MIN_VALUE;
-    return x >= 0 ? Math.floor(x) : Math.ceil(x);
   }-*/;
 
 }
