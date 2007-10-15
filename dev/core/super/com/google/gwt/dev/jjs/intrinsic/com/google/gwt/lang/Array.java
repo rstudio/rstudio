@@ -40,6 +40,16 @@ public final class Array {
   private static JavaScriptObject protoTypeObject;
 
   /**
+   * Creates a copy of a subrange of the specified array.
+   */
+  public static <T> T[] cloneSubrange(T[] array, int fromIndex, int toIndex) {
+    Array a = asArrayType(array);
+    Array result = arraySlice(a, fromIndex, toIndex);
+    initValues(a.typeName, a.typeId, a.queryId, result);
+    return asArray(result);
+  }
+
+  /**
    * Creates a new array of the exact same type as a given array but with the
    * specified length.
    */
@@ -118,6 +128,10 @@ public final class Array {
     return set(array, index, value);
   }
 
+  private static native Array arraySlice(Array array, int fromIndex, int toIndex) /*-{
+    return array.slice(fromIndex, toIndex);
+  }-*/;
+  
   /**
    * Use JSNI to effect a castless type change.
    */

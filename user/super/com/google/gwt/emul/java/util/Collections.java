@@ -393,7 +393,7 @@ public class Collections {
 
   public static <T> void sort(List<T> target, Comparator<? super T> c) {
     Object[] x = target.toArray();
-    Arrays.unsafeSort(x, c);
+    Arrays.sort(x, (Comparator<Object>) c);
     replaceContents(target, x);
   }
 

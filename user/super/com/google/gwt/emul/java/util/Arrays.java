@@ -17,6 +17,8 @@
 package java.util;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.lang.Array;
 
 /**
  * Utility methods related to native arrays. <a
@@ -834,84 +836,99 @@ public class Arrays {
     return hashCode;
   }
 
-  public static void sort(byte[] a) {
-    sort(a, 0, a.length);
+  public static void sort(byte[] array) {
+    nativeNumberSort(array);
   }
 
-  public static void sort(byte[] a, int fromIndex, int toIndex) {
-    verifySortIndices(fromIndex, toIndex);
-    nativeSort(a, fromIndex, toIndex);
+  public static void sort(byte[] array, int fromIndex, int toIndex) {
+    verifySortIndices(fromIndex, toIndex, array.length);
+    nativeNumberSort(array, fromIndex, toIndex);
   }
 
-  public static void sort(char[] a) {
-    sort(a, 0, a.length);
+  public static void sort(double[] array) {
+    nativeNumberSort(array);
   }
 
-  public static void sort(char[] a, int fromIndex, int toIndex) {
-    verifySortIndices(fromIndex, toIndex);
-    nativeSort(a, fromIndex, toIndex);
+  public static void sort(double[] array, int fromIndex, int toIndex) {
+    verifySortIndices(fromIndex, toIndex, array.length);
+    nativeNumberSort(array, fromIndex, toIndex);
   }
 
-  public static void sort(double[] a) {
-    sort(a, 0, a.length);
+  public static void sort(float[] array) {
+    nativeNumberSort(array);
   }
 
-  public static void sort(double[] a, int fromIndex, int toIndex) {
-    verifySortIndices(fromIndex, toIndex);
-    nativeSort(a, fromIndex, toIndex);
+  public static void sort(float[] array, int fromIndex, int toIndex) {
+    verifySortIndices(fromIndex, toIndex, array.length);
+    nativeNumberSort(array, fromIndex, toIndex);
   }
 
-  public static void sort(float[] a) {
-    sort(a, 0, a.length);
+  public static void sort(int[] array) {
+    nativeNumberSort(array);
   }
 
-  public static void sort(float[] a, int fromIndex, int toIndex) {
-    verifySortIndices(fromIndex, toIndex);
-    nativeSort(a, fromIndex, toIndex);
+  public static void sort(int[] array, int fromIndex, int toIndex) {
+    verifySortIndices(fromIndex, toIndex, array.length);
+    nativeNumberSort(array, fromIndex, toIndex);
   }
 
-  public static void sort(int[] a) {
-    sort(a, 0, a.length);
+  public static void sort(long[] array) {
+    /*
+     * TODO: if we emulate long in JS rather than using a native primitive, we
+     * will need to change this.
+     */
+    nativeNumberSort(array);
   }
 
-  public static void sort(int[] a, int fromIndex, int toIndex) {
-    verifySortIndices(fromIndex, toIndex);
-    nativeSort(a, fromIndex, toIndex);
+  public static void sort(long[] array, int fromIndex, int toIndex) {
+    /*
+     * TODO: if we emulate long in JS rather than using a native primitive, we
+     * will need to change this.
+     */
+    verifySortIndices(fromIndex, toIndex, array.length);
+    nativeNumberSort(array, fromIndex, toIndex);
   }
 
-  public static void sort(long[] a) {
-    sort(a, 0, a.length);
+  public static void sort(Object[] array) {
+    // Commented out implementation that uses the native sort with a fixup.
+
+    // nativeObjSort(array, 0, array.length, getNativeComparator(array,
+    // Comparators.natural()));
+    mergeSort(array, 0, array.length, Comparators.natural());
   }
 
-  public static void sort(long[] a, int fromIndex, int toIndex) {
-    verifySortIndices(fromIndex, toIndex);
-    nativeSort(a, fromIndex, toIndex);
+  public static void sort(Object[] x, int fromIndex, int toIndex) {
+    // Commented out implementation that uses the native sort with a fixup.
+
+    // nativeObjSort(x, fromIndex, toIndex, getNativeComparator(x,
+    // Comparators.natural()));
+    mergeSort(x, fromIndex, toIndex, Comparators.natural());
   }
 
-  public static void sort(Object[] x) {
-    nativeSort(x, x.length, Comparators.natural());
+  public static void sort(short[] array) {
+    nativeNumberSort(array);
   }
 
-  public static void sort(Object[] a, int fromIndex, int toIndex) {
-    // TODO
+  public static void sort(short[] array, int fromIndex, int toIndex) {
+    verifySortIndices(fromIndex, toIndex, array.length);
+    nativeNumberSort(array, fromIndex, toIndex);
   }
 
-  public static void sort(short[] a) {
-    sort(a, 0, a.length);
+  public static <T> void sort(T[] x, Comparator<? super T> c) {
+    // Commented out implementation that uses the native sort with a fixup.
+
+    // nativeObjSort(x, 0, x.length, getNativeComparator(x, c != null ? c :
+    // Comparators.natural()));
+    mergeSort(x, 0, x.length, c != null ? c : Comparators.natural());
   }
 
-  public static void sort(short[] a, int fromIndex, int toIndex) {
-    verifySortIndices(fromIndex, toIndex);
-    nativeSort(a, fromIndex, toIndex);
-  }
+  public static <T> void sort(T[] x, int fromIndex, int toIndex, Comparator<? super T> c) {
+    // Commented out implementation that uses the native sort with a fixup.
 
-  public static <T> void sort(T[] x, Comparator<? super T> s) {
-    nativeSort(x, x.length, s != null ? s : Comparators.natural());
-  }
-
-  public static <T> void sort(T[] a, int fromIndex, int toIndex,
-      Comparator<? super T> c) {
-    // TODO
+    verifySortIndices(fromIndex, toIndex, x.length);
+    // nativeObjSort(x, fromIndex, toIndex, getNativeComparator(x, c != null ? c
+    // : Comparators.natural()));
+    mergeSort(x, fromIndex, toIndex, c != null ? c : Comparators.natural());
   }
 
   public static String toString(boolean[] a) {
@@ -1050,10 +1067,9 @@ public class Arrays {
     return b.toString();
   }
 
-  static void unsafeSort(Object[] x, Comparator<?> s) {
-    nativeSort(x, x.length, s != null ? s : Comparators.natural());
-  }
-
+  /**
+   * Recursive helper function for {@link deepToString(Object[])}.
+   */
   private static String deepToString(Object[] a, Set<Object[]> arraysIveSeen) {
     if (a == null) {
       return "null";
@@ -1109,130 +1125,216 @@ public class Arrays {
     return b.toString();
   }
 
-  private static native void nativeSort(byte[] array, int fromIndex, int toIndex) /*-{
-     var v = new Array();
-     for(var i = fromIndex; i < toIndex; ++i){
-       v[i - fromIndex] = array[i];
-     }
+  /**
+   * Return a JavaScript function object which will compare elements of the
+   * specified object array.
+   * 
+   * Note that this function isn't currently used but is kept because the native
+   * sort/fixup approach is faster everywhere but IE. In the future, we may
+   * choose to use deferred binding in the JRE to make those platforms faster.
+   * 
+   * @param array the array of objects to compare
+   * @param comp the Comparator to use to compare individual objects.
+   * @return a JavaScript function object taking indices into the array to
+   *         compare. Returns the result of the comparator, or the comparison of
+   *         the indices if the comparator indicates equality so the sort is
+   *         stable. The comparator has a property <code>swap</code> which is
+   *         true if any elements were discovered to be out of order.
+   */
+  @SuppressWarnings("unused") // see above
+  private static native JavaScriptObject getNativeComparator(Object array, Comparator<?> comp) /*-{
+    function compare(a,b) {
+      var elementCompare = comp.@java.util.Comparator::compare(Ljava/lang/Object;Ljava/lang/Object;)(array[a], array[b]);
+      var indexCompare = a - b;
+      // If elements compare equal, use the index comparison.
+      elementCompare = elementCompare || indexCompare;
+      // Keep track of having seen out-of-order elements.  Note that we don't
+      // have to worry about the sort algorithm comparing an element to itself
+      // since it can't be swapped anyway, so we can just check for less-than.
+      compare.swap = compare.swap || (elementCompare < 0 != indexCompare < 0);
+      return elementCompare;
+    }
+    compare.swap = false;
+    return compare;
+  }-*/;
 
-     v.sort();
+  /**
+   * Sort a small subsection of an array by insertion sort.
+   * 
+   * @param array array to sort
+   * @param low lower bound of range to sort
+   * @param high upper bound of range to sort
+   * @param comp comparator to use
+   */
+  private static void insertionSort(Object[] array, int low, int high, Comparator<Object> comp) {
+    for (int i = low + 1; i < high; ++i) {
+      for (int j = i; j > low && comp.compare(array[j - 1], array[j]) > 0; --j) {
+        Object t = array[j];
+        array[j] = array[j - 1];
+        array[j - 1] = t;
+      }
+    }
+  }
 
-     for(var i = fromIndex; i < toIndex; ++i){
-       array[i] = v[i - fromIndex];
-     }
-   }-*/;
+  /**
+   * Merge the two sorted subarrays (srcLow,srcMid] and (srcMid,srcHigh] into
+   * dest.
+   * 
+   * @param src source array for merge
+   * @param srcLow lower bound of bottom sorted half
+   * @param srcMid upper bound of bottom sorted half & lower bound of top sorted
+   *          half
+   * @param srcHigh upper bound of top sorted half
+   * @param dest destination array for merge
+   * @param destLow lower bound of destination
+   * @param destHigh upper bound of destination
+   * @param comp comparator to use
+   */
+  private static void merge(Object[] src, int srcLow, int srcMid, int srcHigh, Object[] dest,
+      int destLow, int destHigh, Comparator<Object> comp) {
+    // can't destroy srcMid because we need it as a bound on the lower half
+    int topIdx = srcMid;
+    while (destLow < destHigh) {
+      if (topIdx >= srcHigh || (srcLow < srcMid && comp.compare(src[srcLow], src[topIdx]) <= 0)) {
+        dest[destLow++] = src[srcLow++];
+      } else {
+        dest[destLow++] = src[topIdx++];
+      }
+    }
+  }
 
-  private static native void nativeSort(char[] array, int fromIndex, int toIndex) /*-{
-     var v = new Array();
-     for(var i = fromIndex; i < toIndex; ++i){
-       v[i - fromIndex] = array[i];
-     }
+  /**
+   * Performs a merge sort on the specified portion of an object array.
+   * 
+   * Uses O(n) temporary space to perform the merge, but is stable.
+   */
+  private static void mergeSort(Object[] x, int fromIndex, int toIndex, Comparator<?> comp) {
+    Object[] temp = Array.cloneSubrange(x, fromIndex, toIndex);
+    mergeSort(temp, x, fromIndex, toIndex, -fromIndex, (Comparator<Object>) comp);
+  }
 
-     v.sort();
+  /**
+   * Recursive helper function for
+   * {@link mergeSort(Object[],int,int,Comparator<?>)}.
+   * 
+   * @param temp temporary space, as large as the range of elements being sorted.  On
+   *   entry, temp should contain a copy of the sort range from array.
+   * @param array array to sort
+   * @param low lower bound of range to sort
+   * @param high upper bound of range to sort
+   * @param ofs offset to convert an array index into a temp index
+   * @param comp comparison function
+   */
+  private static void mergeSort(Object[] temp, Object[] array, int low, int high, int ofs,
+      Comparator<Object> comp) {
+    int length = high - low;
 
-     for(var i = fromIndex; i < toIndex; ++i){
-       array[i] = v[i - fromIndex];
-     }
-   }-*/;
+    // insertion sort for small arrays
+    if (length < 7) {
+      insertionSort(array, low, high, comp);
+      return;
+    }
 
-  private static native void nativeSort(double[] array, int fromIndex,
-      int toIndex) /*-{
-     var v = new Array();
-     for(var i = fromIndex; i < toIndex; ++i){
-       v[i - fromIndex] = array[i];
-     }
+    // recursively sort both halves, using the array as temp space
+    int tempLow = low + ofs;
+    int tempHigh = high + ofs;
+    int tempMid = tempLow + ((tempHigh - tempLow) / 2);
+    mergeSort(array, temp, tempLow, tempMid, -ofs, comp);
+    mergeSort(array, temp, tempMid, tempHigh, -ofs, comp);
 
-     v.sort();
+    // Skip merge if already in order - just copy from temp
+    if (comp.compare(temp[tempMid - 1], temp[tempMid]) <= 0) {
+      // TODO(jat): use System.arraycopy when that is implemented and more
+      // efficient than this
+      while (low < high) {
+        array[low++] = temp[tempLow++];
+      }
+      return;
+    }
 
-     for(var i = fromIndex; i < toIndex; ++i){
-       array[i] = v[i - fromIndex];
-     }
-   }-*/;
+    // merge sorted halves
+    merge(temp, tempLow, tempMid, tempHigh, array, low, high, comp);
+  }
 
-  private static native void nativeSort(float[] array, int fromIndex,
-      int toIndex) /*-{
-     var v = new Array();
-     for(var i = fromIndex; i < toIndex; ++i){
-       v[i - fromIndex] = array[i];
-     }
+  /**
+   * Sort an entire array of number primitives.
+   */
+  private static native void nativeNumberSort(Object array) /*-{
+    array.sort(function(a,b) { return a - b; });
+  }-*/;
 
-     v.sort();
+  /**
+   * Sort a subset of an array of number primitives.
+   */
+  private static native void nativeNumberSort(Object array, int fromIndex, int toIndex) /*-{
+    var temp = array.slice(fromIndex, toIndex);
+    temp.sort(function(a,b) { return a - b; });
+    var n = toIndex - fromIndex;
+    // Do the equivalent of array.splice(fromIndex, n, temp.slice(0, n)) except
+    // flattening the temp slice.
+    Array.prototype.splice.apply(array, [fromIndex, n].concat(temp.slice(0, n)));
+  }-*/;
 
-     for(var i = fromIndex; i < toIndex; ++i){
-       array[i] = v[i - fromIndex];
-     }
-   }-*/;
+  /**
+   * Sort a subset of an array with the specified comparison function. Note that
+   * the array is also referenced via closure in the comparison function.
+   * 
+   * This implementation sorts it using the native (unstable) sort using an
+   * index array and comparing the indices if they are otherwise equal, then
+   * making another pass through the array to put them into the proper order.
+   * This adds O(2*n) space for the index array and a temporary copy for
+   * re-ordering (one of which is required anyway since JavaScript can't sort
+   * subsets of an array), and the re-order pass takes O(n) time.
+   * 
+   * Note that this function isn't currently used but is kept because the native
+   * sort/fixup approach is faster everywhere but IE. In the future, we may
+   * choose to use deferred binding in the JRE to make those platforms faster.
+   * 
+   * @param array an array of either Java primitives or Object references
+   * @param fromIndex the start of the range to sort
+   * @param toIndex one past the end of the range to sort
+   * @param comp a JavaScript comparison function (which holds reference to the
+   *          array to sort), which will be passed indices into the array. The
+   *          comparison function must also have a property swap which is true
+   *          if any elements were out of order.
+   */
+  @SuppressWarnings("unused") // see above
+  private static native void nativeObjSort(Object array, int fromIndex, int toIndex,
+      JavaScriptObject comp) /*-{
+    var n = toIndex - fromIndex;
+    var indexArray = new Array(n);
+    var arrayIdx = fromIndex;
+    for (var i = 0; i < n; ++i) {
+      indexArray[i] = arrayIdx++;
+    }
+    indexArray.sort(comp);
+    if (comp.swap) { // only reorder elements if we made a swap
+      var temp = array.slice(fromIndex, toIndex);
+      arrayIdx = fromIndex;
+      for (var i = 0; i < n; ++i) {
+        array[arrayIdx++] = temp[indexArray[i] - fromIndex];
+      }
+    }
+  }-*/;
 
-  private static native void nativeSort(int[] array, int fromIndex, int toIndex) /*-{
-     var v = new Array();
-     for(var i = fromIndex; i < toIndex; ++i){
-       v[i - fromIndex] = array[i];
-     }
-
-     v.sort();
-
-     for(var i = fromIndex; i < toIndex; ++i){
-       array[i] = v[i - fromIndex];
-     }
-   }-*/;
-
-  private static native void nativeSort(long[] array, int fromIndex, int toIndex) /*-{
-     var v = new Array();
-     for(var i = fromIndex; i < toIndex; ++i){
-       v[i - fromIndex] = array[i];
-     }
-
-     v.sort();
-
-     for(var i = fromIndex; i < toIndex; ++i){
-       array[i] = v[i - fromIndex];
-     }
-   }-*/;
-
-  private static native void nativeSort(Object[] array, int size,
-      Comparator<?> compare) /*-{ 
-     if (size == 0) {
-       return;
-     }
-    
-     var v = new Array();
-     for(var i = 0; i < size; ++i){
-       v[i] = array[i];
-     }
-   
-     if(compare != null) {
-       var f = function(a,b) {
-         var c = compare.@java.util.Comparator::compare(Ljava/lang/Object;Ljava/lang/Object;)(a,b);
-         return c;
-       }
-       v.sort(f);
-     } else {
-       v.sort();
-     }
-
-     for(var i = 0; i < size; ++i){
-       array[i] = v[i];
-     }
-   }-*/;
-
-  private static native void nativeSort(short[] array, int fromIndex,
-      int toIndex) /*-{
-     var v = new Array();
-     for(var i = fromIndex; i < toIndex; ++i){
-       v[i - fromIndex] = array[i];
-     }
-
-     v.sort();
-
-     for(var i = fromIndex; i < toIndex; ++i){
-       array[i] = v[i - fromIndex];
-     }
-   }-*/;
-
-  private static void verifySortIndices(int fromIndex, int toIndex) {
+  /**
+   * Performs the checks specified by the JRE docs and throws appropriate
+   * exceptions.
+   * 
+   * @param fromIndex beginning of the range to sort
+   * @param toIndex past the end of the range to sort
+   * @param length size of the array to sort
+   * 
+   * @throws IllegalArgumentException if fromIndex > toIndex
+   * @throws ArrayIndexOutOfBoundsException if fromIndex < 0 or toIndex > length
+   */
+  private static void verifySortIndices(int fromIndex, int toIndex, int length) {
     if (fromIndex > toIndex) {
-      throw new IllegalArgumentException("fromIndex(" + fromIndex
-          + ") > toIndex(" + toIndex + ")");
+      throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
+    }
+    if (fromIndex < 0 || toIndex > length) {
+      throw new ArrayIndexOutOfBoundsException("fromIndex(" + fromIndex + ") or toIndex(" + toIndex
+          + ") out of bounds (0 - " + length + ")");
     }
   }
 }

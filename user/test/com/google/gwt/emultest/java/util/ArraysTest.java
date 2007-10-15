@@ -23,6 +23,36 @@ import java.util.List;
  * Tests {@link Arrays}.
  */
 public class ArraysTest extends EmulTestBase {
+  /**
+   * Helper class to use in sorted objects test.
+   */
+  private static class TestObject {
+    private static int count = 0;
+    private int value;
+    private int index;
+
+    public TestObject(int value) {
+      this.value = value;
+      index = count++;
+    }
+
+    public int getIndex() {
+      return index;
+    }
+
+    public int getValue() {
+      return value;
+    }
+
+    public void setIndex(int val) {
+      index = val;
+    }
+
+    public String toString() {
+      return value + "@" + index;
+    }
+  }
+
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
@@ -48,6 +78,7 @@ public class ArraysTest extends EmulTestBase {
   /**
    * Test Arrays.binarySearch(byte[], byte).
    * 
+   * <pre>
    * Verify the following cases:
    *   empty array
    *   odd numbers of elements
@@ -55,6 +86,7 @@ public class ArraysTest extends EmulTestBase {
    *   not found value larger than all elements
    *   not found value smaller than all elements
    *   negative values
+   * </pre>
    */
   public void testBinarySearchByte() {
     byte[] a1 = {};
@@ -71,18 +103,20 @@ public class ArraysTest extends EmulTestBase {
     ret = Arrays.binarySearch(a3, (byte) -80);
     assertEquals(-1, ret);
     ret = Arrays.binarySearch(a3, (byte) -71);
-    assertEquals(0, ret);    
+    assertEquals(0, ret);
   }
 
   /**
    * Test Arrays.binarySearch(char[], char).
    * 
+   * <pre>
    * Verify the following cases:
    *   empty array
    *   odd numbers of elements
    *   even numbers of elements
    *   not found value larger than all elements
    *   not found value smaller than all elements
+   * </pre>
    */
   public void testBinarySearchChar() {
     char[] a1 = {};
@@ -99,12 +133,13 @@ public class ArraysTest extends EmulTestBase {
     ret = Arrays.binarySearch(a3, (char) 0);
     assertEquals(-1, ret);
     ret = Arrays.binarySearch(a3, (char) 1);
-    assertEquals(0, ret);    
+    assertEquals(0, ret);
   }
 
   /**
    * Test Arrays.binarySearch(double[], double).
    * 
+   * <pre>
    * Verify the following cases:
    *   empty array
    *   odd numbers of elements
@@ -112,6 +147,7 @@ public class ArraysTest extends EmulTestBase {
    *   not found value larger than all elements
    *   not found value smaller than all elements
    *   negative values
+   * </pre>
    */
   public void testBinarySearchDouble() {
     double[] a1 = {};
@@ -128,12 +164,13 @@ public class ArraysTest extends EmulTestBase {
     ret = Arrays.binarySearch(a3, -80);
     assertEquals(-1, ret);
     ret = Arrays.binarySearch(a3, -71);
-    assertEquals(0, ret);    
+    assertEquals(0, ret);
   }
 
   /**
    * Test Arrays.binarySearch(float[], float).
    * 
+   * <pre>
    * Verify the following cases:
    *   empty array
    *   odd numbers of elements
@@ -141,6 +178,7 @@ public class ArraysTest extends EmulTestBase {
    *   not found value larger than all elements
    *   not found value smaller than all elements
    *   negative values
+   * </pre>
    */
   public void testBinarySearchFloat() {
     float[] a1 = {};
@@ -157,12 +195,13 @@ public class ArraysTest extends EmulTestBase {
     ret = Arrays.binarySearch(a3, -80);
     assertEquals(-1, ret);
     ret = Arrays.binarySearch(a3, -71);
-    assertEquals(0, ret);    
+    assertEquals(0, ret);
   }
 
   /**
    * Test Arrays.binarySearch(int[], int).
    * 
+   * <pre>
    * Verify the following cases:
    *   empty array
    *   odd numbers of elements
@@ -170,6 +209,7 @@ public class ArraysTest extends EmulTestBase {
    *   not found value larger than all elements
    *   not found value smaller than all elements
    *   negative values
+   * </pre>
    */
   public void testBinarySearchInt() {
     int[] a1 = {};
@@ -186,12 +226,13 @@ public class ArraysTest extends EmulTestBase {
     ret = Arrays.binarySearch(a3, -80);
     assertEquals(-1, ret);
     ret = Arrays.binarySearch(a3, -71);
-    assertEquals(0, ret);    
+    assertEquals(0, ret);
   }
 
   /**
    * Test Arrays.binarySearch(long[], long).
    * 
+   * <pre>
    * Verify the following cases:
    *   empty array
    *   odd numbers of elements
@@ -199,6 +240,7 @@ public class ArraysTest extends EmulTestBase {
    *   not found value larger than all elements
    *   not found value smaller than all elements
    *   negative values
+   * </pre>
    */
   public void testBinarySearchLong() {
     long[] a1 = {};
@@ -215,18 +257,20 @@ public class ArraysTest extends EmulTestBase {
     ret = Arrays.binarySearch(a3, -80L);
     assertEquals(-1, ret);
     ret = Arrays.binarySearch(a3, -71L);
-    assertEquals(0, ret);    
+    assertEquals(0, ret);
   }
 
   /**
    * Test Arrays.binarySearch(Object[], Object).
    * 
+   * <pre>
    * Verify the following cases:
    *   empty array
    *   odd numbers of elements
    *   even numbers of elements
    *   not found value larger than all elements
    *   not found value smaller than all elements
+   * </pre>
    */
   public void testBinarySearchObject() {
     Object[] a1 = {};
@@ -243,19 +287,21 @@ public class ArraysTest extends EmulTestBase {
     ret = Arrays.binarySearch(a3, "a");
     assertEquals(-1, ret);
     ret = Arrays.binarySearch(a3, "b");
-    assertEquals(0, ret);    
+    assertEquals(0, ret);
   }
 
   /**
    * Test Arrays.binarySearch(Object[], Object, Comparator).
    * 
+   * <pre>
    * Verify the following cases:
    *   empty array
    *   odd numbers of elements
    *   even numbers of elements
    *   not found value larger than all elements
    *   not found value smaller than all elements
-   *   null Comparator uses natural ordering
+   *   Comparator uses natural ordering as a default
+   * </pre>
    */
   public void testBinarySearchObjectComparator() {
     Comparator inverseSort = new Comparator() {
@@ -287,6 +333,7 @@ public class ArraysTest extends EmulTestBase {
   /**
    * Test Arrays.binarySearch(short[], short).
    * 
+   * <pre>
    * Verify the following cases:
    *   empty array
    *   odd numbers of elements
@@ -294,6 +341,7 @@ public class ArraysTest extends EmulTestBase {
    *   not found value larger than all elements
    *   not found value smaller than all elements
    *   negative values
+   * </pre>
    */
   public void testBinarySearchShort() {
     short[] a1 = {};
@@ -310,25 +358,62 @@ public class ArraysTest extends EmulTestBase {
     ret = Arrays.binarySearch(a3, (short) -80);
     assertEquals(-1, ret);
     ret = Arrays.binarySearch(a3, (short) -71);
-    assertEquals(0, ret);    
+    assertEquals(0, ret);
+  }
+
+  /**
+   * Verifies that values are sorted numerically rather than as strings.
+   */
+  public void testNumericSort() {
+    Integer[] x = new Integer[] {new Integer(3), new Integer(11), new Integer(2), new Integer(1)};
+    Arrays.sort(x);
+    assertEquals(2, x[1].intValue());
+    assertEquals(11, x[3].intValue());
+  }
+
+  /**
+   * Tests sorting primitives.
+   */
+  public void testPrimitiveSort() {
+    int[] x = new int[] {3, 11, 2, 1, 22, 3};
+    Arrays.sort(x);
+    assertEquals(1, x[0]);
+    assertEquals(2, x[1]);
+    assertEquals(3, x[2]);
+    assertEquals(3, x[3]);
+    assertEquals(11, x[4]);
+    assertEquals(22, x[5]);
+  }
+
+  /**
+   * Tests sorting a subrange of a primitive array.
+   */
+  public void testPrimitiveSubrangeSort() {
+    int[] x = new int[] {3, 11, 2, 1, 22, 3};
+    Arrays.sort(x, 1, 5);
+    assertEquals(3, x[0]);
+    assertEquals(1, x[1]);
+    assertEquals(2, x[2]);
+    assertEquals(11, x[3]);
+    assertEquals(22, x[4]);
+    assertEquals(3, x[5]);
   }
 
   /**
    * Tests simple use cases for {@link Arrays#sort(Object[])}.
    */
   public void testSimpleSort() {
-    // empty case
+    // empty array
     Object[] test = {};
     Arrays.sort(test);
     assertEquals(test.length, 0);
-    // single case
+    // array with one element
     Integer[] test2 = {new Integer(1)};
     Arrays.sort(test2);
     assertEquals(1, test2[0].intValue());
-    // multiple case with subclassing
+    // multiple elements
     Number[] test3 = {
-        new Integer(3), new Integer(0), new Integer(2), new Integer(4),
-        new Integer(1)};
+        new Integer(3), new Integer(0), new Integer(2), new Integer(4), new Integer(1)};
     Arrays.sort(test3);
     for (int i = 0; i < test3.length; i++) {
       assertEquals(i, test3[i].intValue());
@@ -346,9 +431,9 @@ public class ArraysTest extends EmulTestBase {
     assertEquals(hash, hash2);
     Object[] sorted = {"a", "b", "b", "c"};
     assertEquals(x, sorted);
-    Comparator t = new Comparator() {
+    Comparator<Object> t = new Comparator<Object>() {
       public int compare(Object o1, Object o2) {
-        return ((Comparable) o2).compareTo(o1);
+        return ((Comparable<Object>) o2).compareTo(o1);
       }
     };
     Arrays.sort(x, t);
@@ -357,4 +442,110 @@ public class ArraysTest extends EmulTestBase {
     Object[] reverseSorted = {"c", "b", "b", "a"};
     assertEquals(x, reverseSorted);
   }
+
+  /**
+   * Verifies that equal values retain their original order. This is done by
+   * trying all possible permutations of a small test array to make sure the
+   * sort algorithm properly handles any ordering.
+   * 
+   * The current test is 6 elements, so there are 6! = 720 possible orderings to
+   * test.
+   */
+  public void testStableSort() {
+    TestObject[] origData = new TestObject[] {
+        new TestObject(3), new TestObject(11), new TestObject(2), new TestObject(3),
+        new TestObject(1), new TestObject(3), new TestObject(22)};
+    int[] permutation = new int[origData.length];
+    while (validPermutation(permutation, origData.length)) {
+      TestObject[] permutedArray = getPermutation(origData, permutation);
+      Arrays.sort(permutedArray, new Comparator<TestObject>() {
+        public int compare(TestObject a, TestObject b) {
+          return a.getValue() - b.getValue();
+        }
+      });
+      for (int i = 1; i < permutedArray.length; ++i) {
+        if (permutedArray[i - 1].getValue() > permutedArray[i].getValue()
+            || (permutedArray[i - 1].getValue() == permutedArray[i].getValue() && permutedArray[i - 1].getIndex() > permutedArray[i].getIndex())) {
+          String msg = "Permutation " + Arrays.toString(permutation) + ": "
+              + Arrays.toString(permutedArray);
+          permutedArray = getPermutation(origData, permutation);
+          msg += " (orig: " + Arrays.toString(permutedArray) + ")";
+          fail(msg);
+        }
+      }
+      nextPermutation(permutation);
+    }
+  }
+
+  /**
+   * Returns a permuted array given the original array and a permutation. The
+   * permutation is an array of indices which select which possible source goes
+   * into the output slot of the same position. Note that previously used
+   * sources are not counted, so the first permutation of a three-element array
+   * [a,b,c] is [0,0,0], which maps to [a,b,c]. [1,0,0] maps to [b,a,c] since
+   * the range of index[1] is from 0-1 and excludes the value b since it has
+   * already been chosen. The permutation array may be shorter than the source
+   * array, in which case it is choosing any m elements out of n.
+   * 
+   * Thus the range of index i is 0 <= permutation[i] < n-i where n is the
+   * number of elements in the source array.
+   * 
+   * @param origData original array to permute
+   * @param permutation array of indices, as described above
+   * @return permuted array
+   */
+  private TestObject[] getPermutation(TestObject[] origData, int[] permutation) {
+    TestObject[] array = new TestObject[permutation.length];
+    for (int i = 0; i < permutation.length; ++i) {
+      int idx = permutation[i];
+      // adjust for source elements already used
+      for (int j = i; j-- > 0;) {
+        if (permutation[j] <= idx) {
+          idx++;
+        }
+      }
+      array[i] = origData[idx];
+      // update position in output array for stability test
+      array[i].setIndex(i);
+    }
+    return array;
+  }
+
+  /**
+   * Advance the permutation to the next value. It leaves the first index set to
+   * -1 if the range has been exceeded.
+   * 
+   * @param permutation array of indices -- see {@link getPermutation} for
+   *          details.
+   */
+  private void nextPermutation(int[] permutation) {
+    for (int i = 0; i < permutation.length; ++i) {
+      if (++permutation[i] < permutation.length - i) {
+        return;
+      }
+      permutation[i] = 0;
+    }
+    permutation[0] = -1;
+  }
+
+  /**
+   * Checks to see if this permutation is valid; ie, if all of the indices are
+   * between 0 and n-i (see {@link getPermutation} for details).
+   * 
+   * @param permutations array of indices
+   * @param n length of source array.
+   * @return true if the permutation is valid
+   */
+  private boolean validPermutation(int[] permutations, int n) {
+    if (permutations[0] < 0) {
+      return false;
+    }
+    for (int i = 0; i < permutations.length; ++i) {
+      if (permutations[i] >= n - i) {
+        return false;
+      }
+    }
+    return true;
+  }
+
 }
