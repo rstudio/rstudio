@@ -53,6 +53,7 @@ import com.google.gwt.dev.js.JsNormalizer;
 import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsPrettyNamer;
 import com.google.gwt.dev.js.JsSourceGenerationVisitor;
+import com.google.gwt.dev.js.JsStringInterner;
 import com.google.gwt.dev.js.JsSymbolResolver;
 import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.ast.JsProgram;
@@ -395,10 +396,13 @@ public class JavaToJavaScriptCompiler {
 
       // (10) Obfuscate
       if (obfuscate) {
+        JsStringInterner.exec(jsProgram);
         JsObfuscateNamer.exec(jsProgram);
       } else if (prettyNames) {
+        // We don't intern strings in pretty mode to improve readability
         JsPrettyNamer.exec(jsProgram);
       } else {
+        JsStringInterner.exec(jsProgram);
         JsVerboseNamer.exec(jsProgram);
       }
 
