@@ -81,6 +81,7 @@ public class Pruner {
    */
   private class CleanupRefsVisitor extends JModVisitor {
 
+    @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
       // The LHS of assignments may have been pruned.
       if (x.getOp() == JBinaryOperator.ASG) {
@@ -107,18 +108,19 @@ public class Pruner {
 
     private boolean didChange = false;
 
+    @Override
     public boolean didChange() {
       return didChange;
     }
 
-    // @Override
+    @Override
     public boolean visit(JClassType type, Context ctx) {
 
       assert (referencedTypes.contains(type));
       boolean isInstantiated = program.typeOracle.isInstantiatedType(type);
 
-      for (Iterator it = type.fields.iterator(); it.hasNext();) {
-        JField field = (JField) it.next();
+      for (Iterator<JField> it = type.fields.iterator(); it.hasNext();) {
+        JField field = it.next();
         if (!referencedNonTypes.contains(field)
             || pruneViaNoninstantiability(isInstantiated, field)) {
           it.remove();
@@ -126,8 +128,8 @@ public class Pruner {
         }
       }
 
-      for (Iterator it = type.methods.iterator(); it.hasNext();) {
-        JMethod method = (JMethod) it.next();
+      for (Iterator<JMethod> it = type.methods.iterator(); it.hasNext();) {
+        JMethod method = it.next();
         if (!methodIsReferenced(method)
             || pruneViaNoninstantiability(isInstantiated, method)) {
           it.remove();
@@ -140,13 +142,13 @@ public class Pruner {
       return false;
     }
 
-    // @Override
+    @Override
     public boolean visit(JInterfaceType type, Context ctx) {
       boolean isReferenced = referencedTypes.contains(type);
       boolean isInstantiated = program.typeOracle.isInstantiatedType(type);
 
-      for (Iterator it = type.fields.iterator(); it.hasNext();) {
-        JField field = (JField) it.next();
+      for (Iterator<JField> it = type.fields.iterator(); it.hasNext();) {
+        JField field = it.next();
         // all interface fields are static and final
         if (!isReferenced || !referencedNonTypes.contains(field)) {
           it.remove();
@@ -154,13 +156,13 @@ public class Pruner {
         }
       }
 
-      Iterator it = type.methods.iterator();
+      Iterator<JMethod> it = type.methods.iterator();
       if (it.hasNext()) {
         // start at index 1; never prune clinit directly out of the interface
         it.next();
       }
       while (it.hasNext()) {
-        JMethod method = (JMethod) it.next();
+        JMethod method = it.next();
         // all other interface methods are instance and abstract
         if (!isInstantiated || !methodIsReferenced(method)) {
           it.remove();
@@ -171,9 +173,10 @@ public class Pruner {
       return false;
     }
 
+    @Override
     public boolean visit(JMethodBody x, Context ctx) {
-      for (Iterator it = x.locals.iterator(); it.hasNext();) {
-        JLocal local = (JLocal) it.next();
+      for (Iterator<JLocal> it = x.locals.iterator(); it.hasNext();) {
+        JLocal local = it.next();
         if (!referencedNonTypes.contains(local)) {
           it.remove();
           didChange = true;
@@ -182,10 +185,10 @@ public class Pruner {
       return false;
     }
 
-    // @Override
+    @Override
     public boolean visit(JProgram program, Context ctx) {
-      for (Iterator it = program.getDeclaredTypes().iterator(); it.hasNext();) {
-        JReferenceType type = (JReferenceType) it.next();
+      for (Iterator<JReferenceType> it = program.getDeclaredTypes().iterator(); it.hasNext();) {
+        JReferenceType type = it.next();
         if (referencedTypes.contains(type)
             || program.typeOracle.isInstantiatedType(type)) {
           accept(type);
@@ -264,7 +267,7 @@ public class Pruner {
         }
 
         for (int i = 0; i < rLeafType.implments.size(); ++i) {
-          JInterfaceType intfType = (JInterfaceType) rLeafType.implments.get(i);
+          JInterfaceType intfType = rLeafType.implments.get(i);
           JArrayType intfArray = program.getTypeArray(intfType, dims);
           rescue(intfArray, true, isInstantiated);
         }
@@ -273,6 +276,7 @@ public class Pruner {
       return false;
     }
 
+    @Override
     public boolean visit(JBinaryOperation x, Context ctx) {
       // special string concat handling
       if (x.getOp() == JBinaryOperator.ADD
@@ -322,7 +326,7 @@ public class Pruner {
       return true;
     }
 
-    // @Override
+    @Override
     public boolean visit(JClassLiteral literal, Context ctx) {
       // rescue and instantiate java.lang.Class
       // JLS 12.4.1: do not rescue the target type
@@ -330,7 +334,7 @@ public class Pruner {
       return true;
     }
 
-    // @Override
+    @Override
     public boolean visit(JClassType type, Context ctx) {
       assert (referencedTypes.contains(type));
       boolean isInstantiated = instantiatedTypes.contains(type);
@@ -342,7 +346,7 @@ public class Pruner {
        */
       if (saveCodeGenTypes && program.codeGenTypes.contains(type)) {
         for (int i = 0; i < type.methods.size(); ++i) {
-          JMethod it = (JMethod) type.methods.get(i);
+          JMethod it = type.methods.get(i);
           rescue(it);
         }
       }
@@ -351,19 +355,19 @@ public class Pruner {
       rescue(type.extnds, true, isInstantiated);
 
       // Rescue my clinit (it won't ever be explicitly referenced
-      rescue((JMethod) type.methods.get(0));
+      rescue(type.methods.get(0));
 
       // JLS 12.4.1: don't rescue my super interfaces just because I'm rescued.
       // However, if I'm instantiated, let's mark them as instantiated.
       for (int i = 0; i < type.implments.size(); ++i) {
-        JInterfaceType intfType = (JInterfaceType) type.implments.get(i);
+        JInterfaceType intfType = type.implments.get(i);
         rescue(intfType, false, isInstantiated);
       }
 
       return false;
     }
 
-    // @Override
+    @Override
     public boolean visit(JFieldRef ref, Context ctx) {
       JField target = ref.getField();
 
@@ -382,41 +386,41 @@ public class Pruner {
       return true;
     }
 
-    // @Override
+    @Override
     public boolean visit(JInterfaceType type, Context ctx) {
       boolean isReferenced = referencedTypes.contains(type);
       boolean isInstantiated = instantiatedTypes.contains(type);
       assert (isReferenced || isInstantiated);
 
       // Rescue my clinit (it won't ever be explicitly referenced
-      rescue((JMethod) type.methods.get(0));
+      rescue(type.methods.get(0));
 
       // JLS 12.4.1: don't rescue my super interfaces just because I'm rescued.
       // However, if I'm instantiated, let's mark them as instantiated.
       if (isInstantiated) {
         for (int i = 0; i < type.implments.size(); ++i) {
-          JInterfaceType intfType = (JInterfaceType) type.implments.get(i);
+          JInterfaceType intfType = type.implments.get(i);
           rescue(intfType, false, true);
         }
       }
 
       // visit any field initializers
       for (int i = 0; i < type.fields.size(); ++i) {
-        JField it = (JField) type.fields.get(i);
+        JField it = type.fields.get(i);
         accept(it);
       }
 
       return false;
     }
 
-    // @Override
+    @Override
     public boolean visit(JLocalRef ref, Context ctx) {
       JLocal target = ref.getLocal();
       rescue(target);
       return true;
     }
 
-    // @Override
+    @Override
     public boolean visit(JMethodCall call, Context ctx) {
       JMethod target = call.getTarget();
       // JLS 12.4.1: references to static methods rescue the enclosing class
@@ -427,7 +431,7 @@ public class Pruner {
       return true;
     }
 
-    // @Override
+    @Override
     public boolean visit(JNewArray newArray, Context ctx) {
       // rescue and instantiate the array type
       JArrayType arrayType = newArray.getArrayType();
@@ -449,14 +453,14 @@ public class Pruner {
       return true;
     }
 
-    // @Override
+    @Override
     public boolean visit(JNewInstance newInstance, Context ctx) {
       // rescue and instantiate the target class!
       rescue(newInstance.getClassType(), true, true);
       return true;
     }
 
-    // @Override
+    @Override
     public boolean visit(JsniFieldRef x, Context ctx) {
       /*
        * SPECIAL: this could be an assignment that passes a value from
@@ -578,7 +582,7 @@ public class Pruner {
          */
         if (stringValueOfChar == null) {
           for (int i = 0; i < stringType.methods.size(); ++i) {
-            JMethod meth = (JMethod) stringType.methods.get(i);
+            JMethod meth = stringType.methods.get(i);
             if (meth.getName().equals("valueOf")) {
               List<JType> params = meth.getOriginalParamTypes();
               if (params.size() == 1) {
@@ -613,14 +617,14 @@ public class Pruner {
       return didRescue;
     }
 
-    // @Override
+    @Override
     public boolean visit(JMethod x, Context ctx) {
       if (referencedNonTypes.contains(x)) {
         return false;
       }
 
       for (int i = 0; i < x.overrides.size(); ++i) {
-        JMethod ref = (JMethod) x.overrides.get(i);
+        JMethod ref = x.overrides.get(i);
         if (referencedNonTypes.contains(ref)) {
           rescuer.rescue(x);
           didRescue = true;
@@ -639,7 +643,7 @@ public class Pruner {
       return false;
     }
 
-    // @Override
+    @Override
     public boolean visit(JProgram x, Context ctx) {
       didRescue = false;
       return true;

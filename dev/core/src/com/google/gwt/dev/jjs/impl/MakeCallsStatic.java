@@ -42,7 +42,6 @@ import com.google.gwt.dev.js.ast.JsThisRef;
 
 import java.util.HashSet;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -82,12 +81,12 @@ public class MakeCallsStatic {
         this.thisParam = thisParam;
       }
 
-      // @Override
+      @Override
       public void endVisit(JsThisRef x, JsContext<JsExpression> ctx) {
         ctx.replaceMe(thisParam.makeRef());
       }
 
-      // @Override
+      @Override
       public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
         // Don't recurse into nested functions!
         return false;
@@ -102,23 +101,23 @@ public class MakeCallsStatic {
     private class RewriteMethodBody extends JModVisitor {
 
       private final JParameter thisParam;
-      private final Map/* <JVariable, JVariable> */varMap;
+      private final Map<JParameter, JParameter> varMap;
 
       public RewriteMethodBody(JParameter thisParam,
-          Map/* <JVariable, JVariable> */varMap) {
+          Map<JParameter, JParameter> varMap) {
         this.thisParam = thisParam;
         this.varMap = varMap;
       }
 
-      // @Override
+      @Override
       public void endVisit(JParameterRef x, Context ctx) {
-        JParameter param = (JParameter) varMap.get(x.getTarget());
+        JParameter param = varMap.get(x.getTarget());
         JParameterRef paramRef = new JParameterRef(program, x.getSourceInfo(),
             param);
         ctx.replaceMe(paramRef);
       }
 
-      // @Override
+      @Override
       public void endVisit(JThisRef x, Context ctx) {
         JParameterRef paramRef = new JParameterRef(program, x.getSourceInfo(),
             thisParam);
@@ -126,7 +125,7 @@ public class MakeCallsStatic {
       }
     }
 
-    // @Override
+    @Override
     public boolean visit(JMethod x, Context ctx) {
       // Let's do it!
       JClassType enclosingType = (JClassType) x.getEnclosingType();
@@ -148,9 +147,9 @@ public class MakeCallsStatic {
       // Setup parameters; map from the old params to the new params
       JParameter thisParam = program.createParameter(null,
           "this$static".toCharArray(), enclosingType, true, newMethod);
-      Map/* <JVariable, JVariable> */varMap = new IdentityHashMap();
+      Map<JParameter, JParameter> varMap = new IdentityHashMap<JParameter, JParameter>();
       for (int i = 0; i < x.params.size(); ++i) {
-        JParameter oldVar = (JParameter) x.params.get(i);
+        JParameter oldVar = x.params.get(i);
         JParameter newVar = program.createParameter(oldVar.getSourceInfo(),
             oldVar.getName().toCharArray(), oldVar.getType(), oldVar.isFinal(),
             newMethod);
@@ -169,7 +168,7 @@ public class MakeCallsStatic {
           newMethod);
       newCall.getArgs().add(program.getExprThisRef(sourceInfo, enclosingType));
       for (int i = 0; i < x.params.size(); ++i) {
-        JParameter param = (JParameter) x.params.get(i);
+        JParameter param = x.params.get(i);
         newCall.getArgs().add(new JParameterRef(program, sourceInfo, param));
       }
       JStatement statement;
@@ -212,7 +211,7 @@ public class MakeCallsStatic {
    */
   private class FindStaticDispatchSitesVisitor extends JVisitor {
 
-    // @Override
+    @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
 
@@ -254,7 +253,7 @@ public class MakeCallsStatic {
      * instance methods, rewrite the call site to reference the newly-generated
      * static method instead.
      */
-    // @Override
+    @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod oldMethod = x.getTarget();
       JMethod newMethod = program.getStaticImpl(oldMethod);
@@ -280,7 +279,7 @@ public class MakeCallsStatic {
     return new MakeCallsStatic(program).execImpl();
   }
 
-  public Set toBeMadeStatic = new HashSet();
+  public Set<JMethod> toBeMadeStatic = new HashSet<JMethod>();
 
   private final JProgram program;
 
@@ -296,8 +295,7 @@ public class MakeCallsStatic {
     }
 
     CreateStaticImplsVisitor creator = new CreateStaticImplsVisitor();
-    for (Iterator it = toBeMadeStatic.iterator(); it.hasNext();) {
-      JMethod method = (JMethod) it.next();
+    for (JMethod method : toBeMadeStatic) {
       creator.accept(method);
     }
 

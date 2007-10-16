@@ -68,6 +68,7 @@ public class DeadCodeElimination {
     /**
      * Short circuit binary operations.
      */
+    @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
       JBinaryOperator op = x.getOp();
       JExpression lhs = x.getLhs();
@@ -144,6 +145,7 @@ public class DeadCodeElimination {
     /**
      * Prune empty blocks.
      */
+    @Override
     public void endVisit(JBlock x, Context ctx) {
       if (x.statements.size() == 0) {
         if (ctx.canRemove()) {
@@ -152,6 +154,7 @@ public class DeadCodeElimination {
       }
     }
 
+    @Override
     public void endVisit(JConditional x, Context ctx) {
       JExpression condExpr = x.getIfTest();
       JExpression thenExpr = x.getThenExpr();
@@ -202,6 +205,7 @@ public class DeadCodeElimination {
     /**
      * Convert do { } while (false); into a block.
      */
+    @Override
     public void endVisit(JDoStatement x, Context ctx) {
       JExpression expression = x.getTestExpr();
       if (expression instanceof JBooleanLiteral) {
@@ -219,6 +223,7 @@ public class DeadCodeElimination {
       }
     }
 
+    @Override
     public void endVisit(JExpressionStatement x, Context ctx) {
       if (!x.getExpr().hasSideEffects()) {
         removeMe(x, ctx);
@@ -228,6 +233,7 @@ public class DeadCodeElimination {
     /**
      * Prune for (X; false; Y) statements, but make sure X is run.
      */
+    @Override
     public void endVisit(JForStatement x, Context ctx) {
       JExpression expression = x.getTestExpr();
       if (expression instanceof JBooleanLiteral) {
@@ -245,6 +251,7 @@ public class DeadCodeElimination {
     /**
      * Simplify if statements.
      */
+    @Override
     public void endVisit(JIfStatement x, Context ctx) {
       JExpression expr = x.getIfExpr();
       JStatement thenStmt = x.getThenStmt();
@@ -270,6 +277,7 @@ public class DeadCodeElimination {
     /**
      * Resolve method calls that can be computed statically.
      */
+    @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
       if (method.getEnclosingType() == program.getTypeJavaLangString()) {
@@ -280,6 +288,7 @@ public class DeadCodeElimination {
     /**
      * Simplify the ! operator if possible.
      */
+    @Override
     public void endVisit(JPrefixOperation x, Context ctx) {
       if (x.getOp() == JUnaryOperator.NOT) {
         JExpression arg = x.getArg();
@@ -334,12 +343,15 @@ public class DeadCodeElimination {
      * try statements with no body. 3) Hoist up try statements with no catches
      * and an empty finally.
      */
+    @Override
     public void endVisit(JTryStatement x, Context ctx) {
       // 1) Remove catch blocks whose exception type is not instantiable.
-      List catchArgs = x.getCatchArgs();
-      List catchBlocks = x.getCatchBlocks();
-      for (Iterator itA = catchArgs.iterator(), itB = catchBlocks.iterator(); itA.hasNext();) {
-        JLocalRef localRef = (JLocalRef) itA.next();
+      List<JLocalRef> catchArgs = x.getCatchArgs();
+      List<JBlock> catchBlocks = x.getCatchBlocks();
+      Iterator<JLocalRef> itA = catchArgs.iterator();
+      Iterator<JBlock> itB = catchBlocks.iterator();
+      while (itA.hasNext()) {
+        JLocalRef localRef = itA.next();
         itB.next();
         JReferenceType type = (JReferenceType) localRef.getType();
         if (!program.typeOracle.isInstantiatedType(type)
@@ -374,6 +386,7 @@ public class DeadCodeElimination {
     /**
      * Prune while (false) statements.
      */
+    @Override
     public void endVisit(JWhileStatement x, Context ctx) {
       JExpression expression = x.getTestExpr();
       if (expression instanceof JBooleanLiteral) {
@@ -396,8 +409,8 @@ public class DeadCodeElimination {
       return (stmt instanceof JBlock && ((JBlock) stmt).statements.isEmpty());
     }
 
-    private Class mapType(JType type) {
-      return (Class) typeClassMap.get(type);
+    private Class<?> mapType(JType type) {
+      return typeClassMap.get(type);
     }
 
     private void removeMe(JStatement stmt, Context ctx) {
@@ -424,8 +437,7 @@ public class DeadCodeElimination {
       if (program.isStaticImpl(method)) {
         // is it static implementation for instance method?
         method = program.staticImplFor(method);
-        instance = tryTranslateLiteral((JExpression) x.getArgs().get(0),
-            String.class);
+        instance = tryTranslateLiteral(x.getArgs().get(0), String.class);
         skip = 1;
       } else {
         // instance may be null
@@ -436,17 +448,16 @@ public class DeadCodeElimination {
         return;
       }
 
-      List params = method.getOriginalParamTypes();
-      Class paramTypes[] = new Class[params.size()];
+      List<JType> params = method.getOriginalParamTypes();
+      Class<?> paramTypes[] = new Class<?>[params.size()];
       Object paramValues[] = new Object[params.size()];
-      ArrayList args = x.getArgs();
+      ArrayList<JExpression> args = x.getArgs();
       for (int i = 0; i != params.size(); ++i) {
-        paramTypes[i] = mapType((JType) params.get(i));
+        paramTypes[i] = mapType(params.get(i));
         if (paramTypes[i] == null) {
           return;
         }
-        paramValues[i] = tryTranslateLiteral((JExpression) args.get(i + skip),
-            paramTypes[i]);
+        paramValues[i] = tryTranslateLiteral(args.get(i + skip), paramTypes[i]);
         if (paramValues[i] == null) {
           return;
         }
@@ -466,16 +477,13 @@ public class DeadCodeElimination {
           ctx.replaceMe(program.getLiteralChar(((Character) result).charValue()));
         } else if (result instanceof Integer) {
           ctx.replaceMe(program.getLiteralInt(((Integer) result).intValue()));
-        } else {
-          boolean stopHere = true;
         }
       } catch (Exception e) {
         // If the call threw an exception, just don't optimize
-        boolean stopHere = true;
       }
     }
 
-    private Object tryTranslateLiteral(JExpression maybeLit, Class type) {
+    private Object tryTranslateLiteral(JExpression maybeLit, Class<?> type) {
       if (!(maybeLit instanceof JValueLiteral)) {
         return null;
       }
@@ -515,10 +523,12 @@ public class DeadCodeElimination {
   public static class FindBreakContinueStatementsVisitor extends JVisitor {
     private boolean hasBreakContinueStatements = false;
 
+    @Override
     public void endVisit(JBreakStatement x, Context ctx) {
       hasBreakContinueStatements = true;
     }
 
+    @Override
     public void endVisit(JContinueStatement x, Context ctx) {
       hasBreakContinueStatements = true;
     }
@@ -534,7 +544,7 @@ public class DeadCodeElimination {
 
   private final JProgram program;
 
-  private final Map typeClassMap = new IdentityHashMap();
+  private final Map<JType, Class<?>> typeClassMap = new IdentityHashMap<JType, Class<?>>();
 
   public DeadCodeElimination(JProgram program) {
     this.program = program;
