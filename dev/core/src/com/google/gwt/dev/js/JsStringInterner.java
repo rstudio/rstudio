@@ -23,6 +23,7 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsVars;
@@ -40,8 +41,6 @@ import java.util.TreeMap;
  * the intern pool.
  */
 public class JsStringInterner {
-
-  public static final String PREFIX = "$intern_";
 
   /**
    * Replaces JsStringLiterals with JsNameRefs, creating new JsName allocations
@@ -82,6 +81,43 @@ public class JsStringInterner {
     }
 
     /**
+     * Prevents 'fixing' an otherwise illegal operation.
+     */
+    @Override
+    public boolean visit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+      return !x.getOperator().isAssignment()
+          || !(x.getArg1() instanceof JsStringLiteral);
+    }
+
+    /**
+     * Prevents 'fixing' an otherwise illegal operation.
+     */
+    @Override
+    public boolean visit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
+      return !(x.getArg() instanceof JsStringLiteral);
+    }
+
+    /**
+     * Prevents 'fixing' an otherwise illegal operation.
+     */
+    @Override
+    public boolean visit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
+      return !(x.getArg() instanceof JsStringLiteral);
+    }
+
+    /**
+     * We ignore property initializer labels in object literals, but do process
+     * the expression. This is because the LHS is always treated as a string,
+     * and never evaluated as an expression.
+     */
+    @Override
+    public boolean visit(JsPropertyInitializer x,
+        JsContext<JsPropertyInitializer> ctx) {
+      x.setValueExpr(accept(x.getValueExpr()));
+      return false;
+    }
+
+    /**
      * Replace JsStringLiteral instances with JsNameRefs.
      */
     @Override
@@ -106,32 +142,9 @@ public class JsStringInterner {
     public boolean visit(JsVar x, JsContext<JsVar> ctx) {
       return !(x.getName().getIdent().startsWith(PREFIX));
     }
-
-    /**
-     * Prevents 'fixing' an otherwise illegal operation.
-     */
-    @Override
-    public boolean visit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
-      return !x.getOperator().isAssignment()
-          || !(x.getArg1() instanceof JsStringLiteral);
-    }
-
-    /**
-     * Prevents 'fixing' an otherwise illegal operation.
-     */
-    @Override
-    public boolean visit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
-      return !(x.getArg() instanceof JsStringLiteral);
-    }
-
-    /**
-     * Prevents 'fixing' an otherwise illegal operation.
-     */
-    @Override
-    public boolean visit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
-      return !(x.getArg() instanceof JsStringLiteral);
-    }
   }
+
+  public static final String PREFIX = "$intern_";
 
   public static boolean exec(JsProgram program) {
     StringVisitor v = new StringVisitor(program.getScope());
