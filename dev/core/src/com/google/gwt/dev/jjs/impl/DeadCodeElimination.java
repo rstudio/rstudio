@@ -28,6 +28,7 @@ import com.google.gwt.dev.jjs.ast.JDoStatement;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
+import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JForStatement;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
@@ -47,6 +48,7 @@ import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
+import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -282,6 +284,41 @@ public class DeadCodeElimination {
       JMethod method = x.getTarget();
       if (method.getEnclosingType() == program.getTypeJavaLangString()) {
         tryOptimizeStringCall(x, ctx, method);
+      }
+    }
+
+    /**
+     * Remove any parts of JMultiExpression that have no side-effect.
+     */
+    @Override
+    public void endVisit(JMultiExpression x, Context ctx) {
+      for (int i = 0; i < x.exprs.size() - 1; i++) {
+        JExpression expr = x.exprs.get(i);
+        if (!expr.hasSideEffects()) {
+          x.exprs.remove(i);
+          i--;
+          continue;
+        }
+
+        if (expr instanceof JFieldRef) {
+          JFieldRef fieldRef = (JFieldRef) expr;
+          JExpression instance = fieldRef.getInstance();
+          if (instance == null || !instance.hasSideEffects()) {
+            // If the instance doesn't have side-effects, but the field ref
+            // does, it's because a clinit() needs to happen.
+            JMethod clinit = fieldRef.getField().getEnclosingType().methods.get(0);
+            assert (clinit.getName().equals("$clinit"));
+
+            // Replace the field ref with a direct call to the clinit.
+            JMethodCall methodCall = new JMethodCall(program,
+                expr.getSourceInfo(), instance, clinit);
+            x.exprs.set(i, methodCall);
+          }
+        }
+      }
+
+      if (x.exprs.size() == 1) {
+        ctx.replaceMe(x.exprs.get(0));
       }
     }
 

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.ast.CanBeStatic;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JArrayType;
@@ -225,13 +226,9 @@ public class Pruner {
       return false;
     }
 
-    private boolean pruneViaNoninstantiability(boolean isInstantiated, JField it) {
-      return (!isInstantiated && !it.isStatic());
-    }
-
     private boolean pruneViaNoninstantiability(boolean isInstantiated,
-        JMethod it) {
-      return (!isInstantiated && (!it.isStatic() || program.isStaticImpl(it)));
+        CanBeStatic it) {
+      return (!isInstantiated && !it.isStatic());
     }
   }
 

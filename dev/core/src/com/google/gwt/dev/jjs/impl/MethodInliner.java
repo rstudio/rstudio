@@ -110,8 +110,14 @@ public class MethodInliner {
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
 
-      // The method call must be known statically
+      // The method call must be known statically.
       if (!method.isStatic() || method.isNative()) {
+        return;
+      }
+
+      // The target must not be a clinit method.
+      if (method.getEnclosingType() != null
+          && method.getEnclosingType().methods.get(0) == method) {
         return;
       }
 
