@@ -115,12 +115,6 @@ public class MethodInliner {
         return;
       }
 
-      // The target must not be a clinit method.
-      if (method.getEnclosingType() != null
-          && method.getEnclosingType().methods.get(0) == method) {
-        return;
-      }
-
       if (cannotInline.contains(method)) {
         return;
       }
@@ -128,6 +122,14 @@ public class MethodInliner {
       JMethodBody body = (JMethodBody) method.getBody();
       List<JStatement> stmts = body.getStatements();
       boolean possibleToInline = false;
+
+      // clinit() calls cannot be inlined unless they are empty
+      if (method.getEnclosingType() != null
+          && method.getEnclosingType().methods.get(0) == method
+          && !stmts.isEmpty()) {
+        return;
+      }
+
       if (stmts.isEmpty()) {
         tryInlineEmptyMethodCall(x, ctx);
         possibleToInline = true;
