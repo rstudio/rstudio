@@ -24,6 +24,7 @@ public final class JsParameter extends JsNode<JsParameter> implements HasName {
 
   public JsParameter(JsName name) {
     this.name = name;
+    name.setStaticRef(this);
   }
 
   public JsName getName() {

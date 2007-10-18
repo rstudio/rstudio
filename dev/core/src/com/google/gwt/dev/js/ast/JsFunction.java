@@ -27,20 +27,29 @@ public class JsFunction extends JsExpression implements HasName {
   protected final List<JsParameter> params = new ArrayList<JsParameter>();
   protected final JsScope scope;
   private JsName name;
+  private boolean fromJava;
 
   /**
    * Creates an anonymous function.
    */
   public JsFunction(JsScope parent) {
-    this(parent, null);
+    this(parent, null, false);
   }
 
   /**
-   * Creates an named function.
+   * Creates a function that is not derived from Java source.
    */
   public JsFunction(JsScope parent, JsName name) {
+    this(parent, name, false);
+  }
+
+  /**
+   * Creates a named function, possibly derived from Java source.
+   */
+  public JsFunction(JsScope parent, JsName name, boolean fromJava) {
     assert (parent != null);
-    this.name = name;
+    this.fromJava = fromJava;
+    setName(name);
     String scopeName = (name == null) ? "<anonymous>" : name.getIdent();
     scopeName = "function " + scopeName;
     this.scope = new JsScope(parent, scopeName);
@@ -62,12 +71,25 @@ public class JsFunction extends JsExpression implements HasName {
     return scope;
   }
 
+  public boolean isFromJava() {
+    return fromJava;
+  }
+
   public void setBody(JsBlock body) {
     this.body = body;
   }
 
+  public void setFromJava(boolean fromJava) {
+    this.fromJava = fromJava;
+  }
+
   public void setName(JsName name) {
     this.name = name;
+    if (name != null) {
+      if (isFromJava()) {
+        name.setStaticRef(this);
+      }
+    }
   }
 
   public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {

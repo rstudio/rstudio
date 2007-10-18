@@ -331,7 +331,7 @@ public class GenerateJavaScriptAST {
         jsFunction.setName(globalName);
       } else {
         // create a new peer JsFunction
-        jsFunction = new JsFunction(topScope, globalName);
+        jsFunction = new JsFunction(topScope, globalName, true);
         methodBodyMap.put(x.getBody(), jsFunction);
       }
       push(jsFunction.getScope());

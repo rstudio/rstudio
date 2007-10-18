@@ -198,7 +198,7 @@ public class JsScope {
    * Creates a new name in this scope.
    */
   protected JsName doCreateName(String ident, String shortIdent) {
-    JsName name = new JsName(ident, shortIdent);
+    JsName name = new JsName(this, ident, shortIdent);
     names.put(ident, name);
     return name;
   }

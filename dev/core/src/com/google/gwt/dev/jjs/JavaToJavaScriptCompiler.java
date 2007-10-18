@@ -49,12 +49,14 @@ import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.ReplaceRebinds;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
+import com.google.gwt.dev.js.JsDelegationRemover;
 import com.google.gwt.dev.js.JsNormalizer;
 import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsPrettyNamer;
 import com.google.gwt.dev.js.JsSourceGenerationVisitor;
 import com.google.gwt.dev.js.JsStringInterner;
 import com.google.gwt.dev.js.JsSymbolResolver;
+import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.DefaultTextOutput;
@@ -394,7 +396,16 @@ public class JavaToJavaScriptCompiler {
       // (9) Resolve all unresolved JsNameRefs
       JsSymbolResolver.exec(jsProgram);
 
-      // (10) Obfuscate
+      // (10) Apply optimizations to JavaScript AST
+      do {
+        didChange = false;
+        // Remove delegating/trampoline functions
+        didChange = JsDelegationRemover.exec(jsProgram) || didChange;
+        // Remove unused functions, possible
+        didChange = JsUnusedFunctionRemover.exec(jsProgram) || didChange;
+      } while (didChange);
+
+      // (11) Obfuscate
       if (obfuscate) {
         JsStringInterner.exec(jsProgram);
         JsObfuscateNamer.exec(jsProgram);

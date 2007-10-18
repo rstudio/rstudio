@@ -28,7 +28,7 @@ public class JsCatchScope extends JsScope {
 
   public JsCatchScope(JsScope parent, String ident) {
     super(parent, "Catch scope");
-    this.name = new JsName(ident, ident);
+    this.name = new JsName(this, ident, ident);
   }
 
   @Override

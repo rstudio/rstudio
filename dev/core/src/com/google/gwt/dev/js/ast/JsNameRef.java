@@ -18,7 +18,7 @@ package com.google.gwt.dev.js.ast;
 /**
  * Represents a JavaScript expression that references a name.
  */
-public final class JsNameRef extends JsExpression /*implements HasName*/ {
+public final class JsNameRef extends JsExpression implements HasName {
 
   private String ident;
   private JsName name;
@@ -34,6 +34,10 @@ public final class JsNameRef extends JsExpression /*implements HasName*/ {
 
   public String getIdent() {
     return (name == null) ? ident : name.getIdent();
+  }
+
+  public JsName getName() {
+    return name;
   }
 
   public JsExpression getQualifier() {

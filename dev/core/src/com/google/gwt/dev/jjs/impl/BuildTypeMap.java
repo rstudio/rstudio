@@ -556,6 +556,7 @@ public class BuildTypeMap {
         List<JsStatement> result = jsParser.parse(jsProgram.getScope(), sr, -1);
         JsExprStmt jsExprStmt = (JsExprStmt) result.get(0);
         JsFunction jsFunction = (JsFunction) jsExprStmt.getExpression();
+        jsFunction.setFromJava(true);
         ((JsniMethodBody) newMethod.getBody()).setFunc(jsFunction);
       } catch (IOException e) {
         throw new InternalCompilerException(

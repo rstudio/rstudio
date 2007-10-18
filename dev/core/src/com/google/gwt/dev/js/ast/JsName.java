@@ -20,17 +20,28 @@ package com.google.gwt.dev.js.ast;
  */
 public class JsName {
 
+  private final JsScope enclosing;
   private final String ident;
   private boolean isObfuscatable;
   private String shortIdent;
 
   /**
+   * A back-reference to the JsNode that the JsName refers to.
+   */
+  private JsNode staticRef;
+
+  /**
    * @param ident the unmangled ident to use for this name
    */
-  JsName(String ident, String shortIdent) {
+  JsName(JsScope enclosing, String ident, String shortIdent) {
+    this.enclosing = enclosing;
     this.ident = ident;
     this.shortIdent = shortIdent;
     this.isObfuscatable = true;
+  }
+
+  public JsScope getEnclosing() {
+    return enclosing;
   }
 
   public String getIdent() {
@@ -39,6 +50,10 @@ public class JsName {
 
   public String getShortIdent() {
     return shortIdent;
+  }
+
+  public JsNode getStaticRef() {
+    return staticRef;
   }
 
   public boolean isObfuscatable() {
@@ -55,6 +70,13 @@ public class JsName {
 
   public void setShortIdent(String shortIdent) {
     this.shortIdent = shortIdent;
+  }
+
+  /**
+   * Should never be called except on immutable stuff.
+   */
+  public void setStaticRef(JsNode node) {
+    this.staticRef = node;
   }
 
   @Override
