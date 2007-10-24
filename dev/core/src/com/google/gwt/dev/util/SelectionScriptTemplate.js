@@ -71,7 +71,7 @@ function __MODULE_FUNC__() {
   // the specified module to be cranked up.
   //
   function maybeStartModule() {
-    if (scriptsDone && loadDone && bodyDone) {
+    if (scriptsDone && loadDone) {
       var iframe = $doc.getElementById('__MODULE_NAME__');
       var frameWnd = iframe.contentWindow;
       // copy the init handlers function into the iframe
@@ -340,10 +340,10 @@ function __MODULE_FUNC__() {
     }
   }
 
-  var scriptInjected;
+  var frameInjected;
   function maybeInjectFrame() {
-    if (!scriptInjected && $doc.body) {
-      scriptInjected = true;
+    if (!frameInjected) {
+      frameInjected = true;
       var iframe = $doc.createElement('iframe');
       // Prevents mixed mode security in IE6/7.
       iframe.src = "javascript:''";
@@ -370,8 +370,8 @@ function __MODULE_FUNC__() {
 
   // Fallback. If onBodyDone() gets fired twice, it's not a big deal.
   var onBodyDoneTimerId = setInterval(function() {
-    maybeInjectFrame();
     if (/loaded|complete/.test($doc.readyState)) {
+      maybeInjectFrame();
       onBodyDone();
     }
   }, 50);
