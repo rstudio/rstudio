@@ -37,6 +37,7 @@ import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JEnumField;
+import com.google.gwt.dev.jjs.ast.JEnumType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -80,6 +81,7 @@ import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
+import com.google.gwt.dev.jjs.ast.js.JsonObject;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -260,14 +262,42 @@ public class GenerateJavaAST {
       program = this.typeMap.getProgram();
     }
 
+    public void processEnumType(JEnumType type) {
+      // Create a JSNI map for string-based lookup.
+      JField mapField = createEnumValueMap(type);
+
+      // Generate the synthetic values() and valueOf() methods.
+      for (JMethod method : type.methods) {
+        currentMethod = method;
+        if ("values".equals(method.getName())) {
+          if (method.params.size() != 0) {
+            continue;
+          }
+          currentMethodBody = (JMethodBody) method.getBody();
+          writeEnumValuesMethod(type);
+        } else if ("valueOf".equals(method.getName())) {
+          if (method.params.size() != 1) {
+            continue;
+          }
+          if (method.params.get(0).getType() != program.getTypeJavaLangString()) {
+            continue;
+          }
+          currentMethodBody = (JMethodBody) method.getBody();
+          writeEnumValueOfMethod(type, mapField);
+        }
+        currentMethodBody = null;
+        currentMethod = null;
+      }
+    }
+
     /**
      * We emulate static initializers and instance initializers as methods. As
      * in other cases, this gives us: simpler AST, easier to optimize, more like
      * output JavaScript.
      */
     public void processType(TypeDeclaration x) {
-      if (x.binding.isEnum() || x.binding.isAnnotationType()) {
-        // TODO
+      if (x.binding.isAnnotationType()) {
+        // Do not process.
         return;
       }
       currentClass = (JReferenceType) typeMap.get(x.binding);
@@ -329,6 +359,10 @@ public class GenerateJavaAST {
               processMethod(x.methods[i]);
             }
           }
+        }
+
+        if (x.binding.isEnum()) {
+          processEnumType((JEnumType) currentClass);
         }
 
         currentClassScope = null;
@@ -569,6 +603,17 @@ public class GenerateJavaAST {
           }
         }
 
+        // Enums: wire up synthetic name/ordinal params to the super method.
+        if (enclosingType instanceof JEnumType) {
+          assert (superOrThisCall != null);
+          JVariableRef enumNameRef = createVariableRef(
+              superOrThisCall.getSourceInfo(), ctor.params.get(0));
+          superOrThisCall.getArgs().add(0, enumNameRef);
+          JVariableRef enumOrdinalRef = createVariableRef(
+              superOrThisCall.getSourceInfo(), ctor.params.get(1));
+          superOrThisCall.getArgs().add(1, enumOrdinalRef);
+        }
+
         // optional this or super constructor call
         if (superOrThisCall != null) {
           statements.add(superOrThisCall.makeStatement());
@@ -656,6 +701,13 @@ public class GenerateJavaAST {
       } else {
         JNewInstance newInstance = new JNewInstance(program, info, newType);
         call = new JMethodCall(program, info, newInstance, ctor);
+      }
+
+      // Enums: hidden arguments for the name and id.
+      if (x.enumConstant != null) {
+        call.getArgs().add(program.getLiteralString(x.enumConstant.name));
+        call.getArgs().add(
+            program.getLiteralInt(x.enumConstant.binding.original().id));
       }
 
       // Plain old regular user arguments
@@ -1273,6 +1325,11 @@ public class GenerateJavaAST {
           initializer = dispProcessExpression(declaration.initialization);
         }
 
+        if (field instanceof JEnumField) {
+          // An enum field must be initialized!
+          assert (initializer instanceof JMethodCall);
+        }
+
         if (initializer instanceof JLiteral) {
           field.constInitializer = (JLiteral) initializer;
         } else if (initializer != null) {
@@ -1768,7 +1825,7 @@ public class GenerateJavaAST {
             String varName = String.valueOf(arg.name);
             JParameter param = null;
             for (int i = 0; i < currentMethod.params.size(); ++i) {
-              JParameter paramIt = (JParameter) currentMethod.params.get(i);
+              JParameter paramIt = currentMethod.params.get(i);
               if (varType == paramIt.getType()
                   && varName.equals(paramIt.getName())) {
                 param = paramIt;
@@ -1877,6 +1934,25 @@ public class GenerateJavaAST {
           valueOfMethod);
       call.getArgs().add(toBox);
       return call;
+    }
+
+    private JField createEnumValueMap(JEnumType type) {
+      JsonObject map = new JsonObject(program);
+      for (JEnumField field : type.enumList) {
+        // JSON maps require leading underscores to prevent collisions.
+        JStringLiteral key = program.getLiteralString("_" + field.getName());
+        JFieldRef value = new JFieldRef(program, null, null, field, type);
+        map.propInits.add(new JsonObject.JsonPropInit(program, key, value));
+      }
+      JField mapField = program.createField(null, "enum$map".toCharArray(),
+          type, map.getType(), true, true, true);
+
+      // Initialize in clinit.
+      JMethodBody clinitBody = (JMethodBody) type.methods.get(0).getBody();
+      JExpressionStatement assignment = program.createAssignmentStmt(null,
+          createVariableRef(null, mapField), map);
+      clinitBody.getStatements().add(assignment);
+      return mapField;
     }
 
     private JLocalDeclarationStatement createLocalDeclaration(SourceInfo info,
@@ -2308,6 +2384,32 @@ public class GenerateJavaAST {
       JMethodCall unboxCall = new JMethodCall(program, toUnbox.getSourceInfo(),
           toUnbox, valueMethod);
       return unboxCall;
+    }
+
+    private void writeEnumValueOfMethod(JEnumType type, JField mapField) {
+      // return Enum.valueOf(map, name);
+      JFieldRef mapRef = new JFieldRef(program, null, null, mapField, type);
+      JVariableRef nameRef = createVariableRef(null,
+          currentMethod.params.get(0));
+      JMethod delegateTo = program.getIndexedMethod("Enum.valueOf");
+      JMethodCall call = new JMethodCall(program, null, null, delegateTo);
+      call.getArgs().add(mapRef);
+      call.getArgs().add(nameRef);
+      currentMethodBody.getStatements().add(
+          new JReturnStatement(program, null, call));
+    }
+
+    private void writeEnumValuesMethod(JEnumType type) {
+      // return new E[]{A,B,C};
+      JNewArray newExpr = new JNewArray(program, null, program.getTypeArray(
+          type, 1));
+      newExpr.initializers = new ArrayList<JExpression>();
+      for (JEnumField field : type.enumList) {
+        JFieldRef fieldRef = new JFieldRef(program, null, null, field, type);
+        newExpr.initializers.add(fieldRef);
+      }
+      currentMethodBody.getStatements().add(
+          new JReturnStatement(program, null, newExpr));
     }
   }
 

@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast.js;
 
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -54,19 +55,20 @@ public class JsonObject extends JExpression {
     }
   }
 
-  public final List/* <JsonPropInit> */propInits = new ArrayList/* <JsonPropInit> */();
+  public final List<JsonPropInit> propInits = new ArrayList<JsonPropInit>();
 
   public JsonObject(JProgram program) {
     super(program, null);
   }
 
   public JType getType() {
-    return program.getTypeVoid();
+    // If JavaScriptObject type is not available, just return the Object type
+    JClassType jsoType = program.getJavaScriptObject();
+    return (jsoType != null) ? jsoType : program.getTypeJavaLangObject();
   }
 
   public boolean hasSideEffects() {
-    for (int i = 0, c = propInits.size(); i < c; ++i) {
-      JsonPropInit propInit = ((JsonPropInit) propInits.get(i));
+    for (JsonPropInit propInit : propInits) {
       if (propInit.labelExpr.hasSideEffects()
           || propInit.valueExpr.hasSideEffects()) {
         return true;

@@ -15,12 +15,28 @@
  */
 package java.lang;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 /**
  * The first-class representation of an enumeration.
  * 
  * @param <E>
  */
 public abstract class Enum<E extends Enum<E>> implements Comparable<E> {
+
+  protected static <T extends Enum<T>> T valueOf(JavaScriptObject map,
+      String name) {
+    T result = Enum.<T>valueOf0(map, "_" + name);
+    if (result == null) {
+      throw new IllegalArgumentException(name);
+    }
+    return result;
+  }
+
+  private static native <T extends Enum<T>> T valueOf0(JavaScriptObject map,
+      String name) /*-{
+    return map[name] || null;
+  }-*/;
 
   // public static <T extends Enum<T>> T valueOf(Class<T> enumType, String name)
   // {

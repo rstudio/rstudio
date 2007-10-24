@@ -23,7 +23,6 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
-import com.google.gwt.dev.jjs.ast.JEnumField;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
@@ -375,10 +374,6 @@ public class Pruner {
       if (target.isStatic()) {
         rescue(target.getEnclosingType(), true, false);
       }
-      // TODO: HACK
-      if (target instanceof JEnumField) {
-        rescue(((JEnumField) target).getEnclosingType(), true, true);
-      }
       rescue(target);
       return true;
     }
@@ -570,6 +565,9 @@ public class Pruner {
         /*
          * Any reference types (except String, which works by default) that take
          * part in a concat must rescue java.lang.Object.toString().
+         * 
+         * TODO: can we narrow the focus by walking up the type heirarchy or
+         * doing explicit toString calls?
          */
         JMethod toStringMethod = program.getIndexedMethod("Object.toString");
         rescue(toStringMethod);

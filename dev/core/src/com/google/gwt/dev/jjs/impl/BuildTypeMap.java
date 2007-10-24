@@ -27,7 +27,6 @@ import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
-import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.js.JsParser;
@@ -41,9 +40,11 @@ import com.google.gwt.dev.js.ast.JsStatement;
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.AllocationExpression;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.ConstructorDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.LocalDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
@@ -181,6 +182,14 @@ public class BuildTypeMap {
             false);
         mapThrownExceptions(newMethod, b);
 
+        // Enums have hidden arguments for name and value
+        if (enclosingType instanceof JEnumType) {
+          program.createParameter(info, "enum$name".toCharArray(),
+              program.getTypeJavaLangString(), true, newMethod);
+          program.createParameter(info, "enum$ordinal".toCharArray(),
+              program.getTypePrimitiveInt(), true, newMethod);
+        }
+
         // user args
         mapParameters(newMethod, ctorDecl);
         // original params are now frozen
@@ -231,8 +240,14 @@ public class BuildTypeMap {
         FieldBinding b = fieldDeclaration.binding;
         SourceInfo info = makeSourceInfo(fieldDeclaration);
         JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.enclosingSourceType());
-        createField(info, b, enclosingType,
-            fieldDeclaration.initialization != null);
+        Expression initialization = fieldDeclaration.initialization;
+        if (initialization != null
+            && initialization instanceof AllocationExpression
+            && ((AllocationExpression) initialization).enumConstant != null) {
+          createEnumField(info, b, enclosingType);
+        } else {
+          createField(info, b, enclosingType, initialization != null);
+        }
         return true;
       } catch (Throwable e) {
         throw translateException(fieldDeclaration, e);
@@ -290,17 +305,20 @@ public class BuildTypeMap {
       return process(typeDeclaration);
     }
 
+    private JField createEnumField(SourceInfo info, FieldBinding binding,
+        JReferenceType enclosingType) {
+      JType type = (JType) typeMap.get(binding.type);
+      JField field = program.createEnumField(info, binding.name,
+          (JEnumType) enclosingType, (JClassType) type, binding.original().id);
+      typeMap.put(binding, field);
+      return field;
+    }
+
     private JField createField(SourceInfo info, FieldBinding binding,
         JReferenceType enclosingType, boolean hasInitializer) {
       JType type = (JType) typeMap.get(binding.type);
-      JField field;
-      if (binding.declaringClass.isEnum()) {
-        field = program.createEnumField(info, binding.name,
-            (JEnumType) enclosingType, (JClassType) type, binding.original().id);
-      } else {
-        field = program.createField(info, binding.name, enclosingType, type,
-            binding.isStatic(), binding.isFinal(), hasInitializer);
-      }
+      JField field = program.createField(info, binding.name, enclosingType,
+          type, binding.isStatic(), binding.isFinal(), hasInitializer);
       typeMap.put(binding, field);
       return field;
     }
@@ -400,7 +418,7 @@ public class BuildTypeMap {
       currentFileName = String.valueOf(compResult.fileName);
       SourceTypeBinding binding = typeDeclaration.binding;
       if (binding.isAnnotationType()) {
-        // TODO
+        // Ignore these.
         return false;
       }
       if (binding.constantPoolName() == null) {
@@ -448,10 +466,12 @@ public class BuildTypeMap {
           JInterfaceType superInterface = (JInterfaceType) typeMap.get(superInterfaceBinding);
           type.implments.add(superInterface);
         }
-        typeDecls.add(typeDeclaration);
+
         if (binding.isEnum()) {
-          processEnum(binding, type);
+          processEnumType(binding, (JEnumType) type);
         }
+
+        typeDecls.add(typeDeclaration);
         return true;
       } catch (InternalCompilerException ice) {
         ice.addNode(type);
@@ -461,7 +481,7 @@ public class BuildTypeMap {
       }
     }
 
-    private void processEnum(SourceTypeBinding binding, JReferenceType type) {
+    private void processEnumType(SourceTypeBinding binding, JEnumType type) {
       // Visit the synthetic values() and valueOf() methods.
       for (MethodBinding methodBinding : binding.methods) {
         if (methodBinding instanceof SyntheticMethodBinding) {
@@ -469,22 +489,15 @@ public class BuildTypeMap {
           TypeBinding[] parameters = methodBinding.parameters;
           if (parameters.length == 0) {
             assert newMethod.getName().equals("values");
-            // TODO: hack
-            JMethodBody body = (JMethodBody) newMethod.getBody();
-            body.getStatements().add(
-                new JReturnStatement(program, null, program.getLiteralNull()));
           } else if (parameters.length == 1) {
             assert newMethod.getName().equals("valueOf");
             assert typeMap.get(parameters[0]) == program.getTypeJavaLangString();
             program.createParameter(null, "name".toCharArray(),
                 program.getTypeJavaLangString(), true, newMethod);
-            // TODO: hack
-            JMethodBody body = (JMethodBody) newMethod.getBody();
-            body.getStatements().add(
-                new JReturnStatement(program, null, program.getLiteralNull()));
           } else {
             assert false;
           }
+          newMethod.freezeParamTypes();
         }
       }
     }

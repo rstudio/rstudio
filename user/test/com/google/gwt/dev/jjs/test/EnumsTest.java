@@ -168,28 +168,46 @@ public class EnumsTest extends GWTTestCase {
     assertEquals(Basic.A, Basic.valueOf("A"));
     assertEquals(Basic.B, Basic.valueOf("B"));
     assertEquals(Basic.C, Basic.valueOf("C"));
+    try {
+      Basic.valueOf("D");
+      fail("Basic.valueOf(\"D\") -- expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+    }
 
     assertEquals(Complex.A, Complex.valueOf("A"));
     assertEquals(Complex.B, Complex.valueOf("B"));
     assertEquals(Complex.C, Complex.valueOf("C"));
+    try {
+      Complex.valueOf("D");
+      fail("Complex.valueOf(\"D\") -- expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+    }
 
     assertEquals(Subclassing.A, Subclassing.valueOf("A"));
     assertEquals(Subclassing.B, Subclassing.valueOf("B"));
     assertEquals(Subclassing.C, Subclassing.valueOf("C"));
+    try {
+      Subclassing.valueOf("D");
+      fail("Subclassing.valueOf(\"D\") -- expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+    }
   }
 
   public void testValues() {
     Basic[] simples = Basic.values();
+    assertEquals(3, simples.length);
     assertEquals(Basic.A, simples[0]);
     assertEquals(Basic.B, simples[1]);
     assertEquals(Basic.C, simples[2]);
 
     Complex[] complexes = Complex.values();
+    assertEquals(3, complexes.length);
     assertEquals(Complex.A, complexes[0]);
     assertEquals(Complex.B, complexes[1]);
     assertEquals(Complex.C, complexes[2]);
 
     Subclassing[] subs = Subclassing.values();
+    assertEquals(3, subs.length);
     assertEquals(Subclassing.A, subs[0]);
     assertEquals(Subclassing.B, subs[1]);
     assertEquals(Subclassing.C, subs[2]);
