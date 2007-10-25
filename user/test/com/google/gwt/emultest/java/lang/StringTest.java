@@ -176,7 +176,7 @@ public class StringTest extends GWTTestCase {
     String a = returnNull() + returnNull();
     assertEquals("nullnull", a);
   }
-  
+
   /** tests replace */
   public void testReplace() {
     assertEquals("axax".replace('x', 'a'), "aaaa");
@@ -252,10 +252,29 @@ public class StringTest extends GWTTestCase {
 
   /** tests trim */
   public void testTrim() {
-    assertEquals("abc", "   \t abc \n  ".trim());
-    assertEquals("abc", "abc".trim());
-    assertEquals("", "".trim());
-    assertEquals("", "   \t ".trim());
+    trimRightAssertEquals("abc", "   \t abc \n  ");
+    trimRightAssertEquals("abc", "abc".trim());
+    trimRightAssertSame("abc", "abc");
+    String s = '\23' + "hi";
+    trimRightAssertSame(s, s);
+    trimRightAssertEquals("abc", " abc".trim());
+    trimRightAssertEquals("abc", "abc ".trim());
+    trimRightAssertEquals("", "".trim());
+    trimRightAssertEquals("", "   \t ".trim());
+  }
+
+  /**
+   * Helper method for testTrim to avoid compiler optimizations.
+   */
+  public void trimRightAssertSame(String left, String right) {
+    assertSame(left, right.trim());
+  }
+
+  /**
+   * Helper method for testTrim to avoid compiler optimizations.
+   */
+  public void trimRightAssertEquals(String left, String right) {
+    assertEquals(left, right.trim());
   }
 
   /** tests toUpperCase */
@@ -288,7 +307,7 @@ public class StringTest extends GWTTestCase {
   private String returnNull() {
     return null;
   }
-  
+
   private String toS(char from) {
     return Character.toString(from);
   }

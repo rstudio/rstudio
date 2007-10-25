@@ -457,6 +457,9 @@ public final class String implements Comparable<String>, CharSequence {
   }-*/;
 
   public native String trim() /*-{
+    if(this.length == 0 || (this[0] > '\u0020' && this[this.length-1] > '\u0020')) {
+      return this;
+    }
     var r1 = this.replace(/^(\s*)/, '');
     var r2 = r1.replace(/\s*$/, '');
     return r2;
