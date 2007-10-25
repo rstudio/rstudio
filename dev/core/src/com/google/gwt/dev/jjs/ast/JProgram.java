@@ -298,8 +298,7 @@ public class JProgram extends JNode {
      * MAGIC: filled in during code gen, don't bother synthesizing dummy
      * initializations.
      */
-    if (codeGenTypes.contains(enclosingType)
-        || enclosingType == typeJavaLangObject) {
+    if (enclosingType == typeJavaLangObject) {
       hasInitializer = true;
     }
 

@@ -72,8 +72,8 @@ public class Coverage extends CoverageSuper {
       class NamedLocal extends Inner {
         public void foo() {
           Coverage.this.getNext();
-          Inner.this.foo();
-          super.foo();
+          Inner.this.bar();
+          super.bar();
           int x = z;
         }
 
@@ -81,8 +81,7 @@ public class Coverage extends CoverageSuper {
         // TODO: will javac compile it?
         class NamedLocalSub extends NamedLocal {
           public void foo() {
-            Inner.this.foo();
-            Inner.this.foo();
+            Inner.this.bar();
             NamedLocal.this.foo();
             super.foo();
             int x = z;
@@ -91,10 +90,12 @@ public class Coverage extends CoverageSuper {
       }
       testEmptyStatement();
 
-      // new NamedLocal().new NamedLocalSub().foo();
       new InnerSub().new InnerSubSub().fda();
       new SecondMain().new FunkyInner();
       new NamedLocal().new NamedLocalSub().foo();
+    }
+    
+    public void bar() {
     }
 
     private void testAllocationExpression() {
@@ -148,7 +149,7 @@ public class Coverage extends CoverageSuper {
     }
 
     /**
-     * TODO(later): implement asserts
+     * TODO(later): implement asserts.
      */
     private void testAssertStatement() {
       // i = 1;

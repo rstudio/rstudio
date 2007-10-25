@@ -15,8 +15,6 @@
  */
 package com.google.gwt.lang;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
 /**
  * This is a magic class the compiler uses as a base class for injected array
  * classes.
@@ -37,7 +35,7 @@ public final class Array {
    * Stores the prototype for java.lang.Object so that arrays can get their
    * polymorphic methods via expando.
    */
-  private static JavaScriptObject protoTypeObject;
+  private static Array protoTypeArray;
 
   /**
    * Creates a copy of a subrange of the specified array.
@@ -107,10 +105,10 @@ public final class Array {
    */
   public static final Array initValues(String typeName, int typeId,
       int queryId, Array array) {
-    if (protoTypeObject == null) {
-      protoTypeObject = getPrototype(new Object());
+    if (protoTypeArray == null) {
+      protoTypeArray = new Array();
     }
-    wrapArray(array, protoTypeObject);
+    wrapArray(array, protoTypeArray);
     array.typeName = typeName;
     array.typeId = typeId;
     array.queryId = queryId;
@@ -170,10 +168,6 @@ public final class Array {
     return blankArray;
   }-*/;
 
-  private static native JavaScriptObject getPrototype(Object object) /*-{
-    object.constructor.prototype;
-  }-*/;
-
   private static Array initDims(String typeName, int[] typeIdExprs,
       int[] queryIdExprs, int[] dimExprs, int index, int count, int seedType) {
     int length = dimExprs[index];
@@ -205,14 +199,24 @@ public final class Array {
     return array[index] = value;
   }-*/;
 
-  private static native Array wrapArray(Array array, JavaScriptObject prototype) /*-{
-    for (var i in prototype) {
-      array[i] = prototype[i];
+  private static native Array wrapArray(Array array, Array protoTypeArray) /*-{
+    for (var i in protoTypeArray) {
+      // Only copy non-null values over; this generally means only functions
+      // will get copied over, and not fields, which is fine because we will
+      // setup the fields manually and it's best if length doesn't get blown
+      // away.
+      var toCopy = protoTypeArray[i];
+      if (toCopy) {
+        array[i] = toCopy;
+      }
     }
     return array;
   }-*/;
 
-  public int length;
-
-  protected int queryId;
+  /*
+   * Explicitly initialize all fields to JS false values; see comment in
+   * wrapArray(Array, Array).
+   */
+  public int length = 0;
+  protected int queryId = 0;
 }

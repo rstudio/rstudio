@@ -1519,6 +1519,23 @@ public class GenerateJavaAST {
 
     JStatement processStatement(ForeachStatement x) {
       SourceInfo info = makeSourceInfo(x);
+
+      JBlock body;
+      JStatement action = dispProcessStatement(x.action);
+      if (action instanceof JBlock) {
+        body = (JBlock) action;
+      } else {
+        body = new JBlock(program, info);
+        body.statements.add(action);
+      }
+
+      JLocal elementVar = (JLocal) typeMap.get(x.elementVariable.binding);
+      String elementVarName = elementVar.getName();
+
+      JLocalDeclarationStatement elementDecl = (JLocalDeclarationStatement) processStatement(x.elementVariable);
+      assert (elementDecl.initializer == null);
+
+      JForStatement result;
       if (x.collection.resolvedType.isArrayType()) {
         /**
          * <pre>
@@ -1529,8 +1546,6 @@ public class GenerateJavaAST {
          * }
          * </pre>
          */
-        JLocal elementVar = (JLocal) typeMap.get(x.elementVariable.binding);
-        String elementVarName = elementVar.getName();
         JLocal arrayVar = createSyntheticLocal(info, elementVarName + "$array",
             (JType) typeMap.get(x.collection.resolvedType));
         JLocal indexVar = createSyntheticLocal(info, elementVarName + "$index",
@@ -1561,24 +1576,13 @@ public class GenerateJavaAST {
         increments.add(new JPrefixOperation(program, info, JUnaryOperator.INC,
             createVariableRef(info, indexVar)).makeStatement());
 
-        JBlock body;
-        JStatement action = dispProcessStatement(x.action);
-        if (action instanceof JBlock) {
-          body = (JBlock) action;
-        } else {
-          body = new JBlock(program, info);
-          body.statements.add(action);
-        }
-
         // T elementVar = i$array[i$index];
-        JLocalDeclarationStatement elementDecl = (JLocalDeclarationStatement) processStatement(x.elementVariable);
-        assert (elementDecl.initializer == null);
         elementDecl.initializer = new JArrayRef(program, info,
             createVariableRef(info, arrayVar),
             createVariableRef(info, indexVar));
         body.statements.add(0, elementDecl);
 
-        return new JForStatement(program, info, initializers, condition,
+        result = new JForStatement(program, info, initializers, condition,
             increments, body);
       } else {
         /**
@@ -1589,8 +1593,6 @@ public class GenerateJavaAST {
          * }
          * </pre>
          */
-        JLocal elementVar = (JLocal) typeMap.get(x.elementVariable.binding);
-        String elementVarName = elementVar.getName();
         JLocal iteratorVar = createSyntheticLocal(info, elementVarName
             + "$iterator", (JType) typeMap.get(x.collection.resolvedType));
 
@@ -1605,26 +1607,27 @@ public class GenerateJavaAST {
             createVariableRef(info, iteratorVar),
             program.getIndexedMethod("Iterator.hasNext"));
 
-        JBlock body;
-        JStatement action = dispProcessStatement(x.action);
-        if (action instanceof JBlock) {
-          body = (JBlock) action;
-        } else {
-          body = new JBlock(program, info);
-          body.statements.add(action);
-        }
-
         // T elementVar = i$array[i$index];
-        JLocalDeclarationStatement elementDecl = (JLocalDeclarationStatement) processStatement(x.elementVariable);
-        assert (elementDecl.initializer == null);
         elementDecl.initializer = new JMethodCall(program, info,
             createVariableRef(info, iteratorVar),
             program.getIndexedMethod("Iterator.next"));
         body.statements.add(0, elementDecl);
 
-        return new JForStatement(program, info, initializers, condition,
+        result = new JForStatement(program, info, initializers, condition,
             Collections.<JExpressionStatement> emptyList(), body);
       }
+
+      // May need to box or unbox the assignment.
+      if (x.elementVariableImplicitWidening != -1) {
+        if ((x.elementVariableImplicitWidening & TypeIds.BOXING) != 0) {
+          elementDecl.initializer = box(elementDecl.initializer,
+              (JClassType) elementVar.getType());
+        } else if ((x.elementVariableImplicitWidening & TypeIds.UNBOXING) != 0) {
+          elementDecl.initializer = unbox(elementDecl.initializer,
+              (JPrimitiveType) elementVar.getType());
+        }
+      }
+      return result;
     }
 
     JStatement processStatement(ForStatement x) {
@@ -1895,14 +1898,12 @@ public class GenerateJavaAST {
       }
     }
 
-    private JExpression box(JExpression toBox, JPrimitiveType primitiveType) {
-      // Find the wrapper type for this primitive type.
-      String wrapperTypeName = primitiveType.getWrapperTypeName();
-      JClassType wrapperType = (JClassType) program.getFromTypeMap(wrapperTypeName);
-      if (wrapperType == null) {
-        throw new InternalCompilerException(toBox, "Cannot find wrapper type '"
-            + wrapperTypeName + "' associated with primitive type '"
-            + primitiveType.getName() + "'", null);
+    private JExpression box(JExpression toBox, JClassType wrapperType) {
+      JPrimitiveType primitiveType = getPrimitiveTypeForWrapperType(wrapperType);
+      if (primitiveType == null) {
+        throw new InternalCompilerException(toBox,
+            "Failed to find primitive type for wrapper type '"
+                + wrapperType.getName() + "'", null);
       }
 
       // Find the correct valueOf() method.
@@ -1923,7 +1924,7 @@ public class GenerateJavaAST {
       if (valueOfMethod == null || !valueOfMethod.isStatic()
           || valueOfMethod.getType() != wrapperType) {
         throw new InternalCompilerException(toBox,
-            "Expected to find a method on '" + wrapperTypeName
+            "Expected to find a method on '" + wrapperType.getName()
                 + "' whose signature matches 'public static "
                 + wrapperType.getName() + " valueOf(" + primitiveType.getName()
                 + ")'", null);
@@ -1934,6 +1935,18 @@ public class GenerateJavaAST {
           valueOfMethod);
       call.getArgs().add(toBox);
       return call;
+    }
+
+    private JExpression box(JExpression toBox, JPrimitiveType primitiveType) {
+      // Find the wrapper type for this primitive type.
+      String wrapperTypeName = primitiveType.getWrapperTypeName();
+      JClassType wrapperType = (JClassType) program.getFromTypeMap(wrapperTypeName);
+      if (wrapperType == null) {
+        throw new InternalCompilerException(toBox, "Cannot find wrapper type '"
+            + wrapperTypeName + "' associated with primitive type '"
+            + primitiveType.getName() + "'", null);
+      }
+      return box(toBox, wrapperType);
     }
 
     private JField createEnumValueMap(JEnumType type) {
@@ -2127,6 +2140,29 @@ public class GenerateJavaAST {
         lblMap.put(sname, jlabel);
       }
       return jlabel;
+    }
+
+    private JPrimitiveType getPrimitiveTypeForWrapperType(JClassType wrapperType) {
+      String wrapperTypeName = wrapperType.getName();
+      if ("java.lang.Integer".equals(wrapperTypeName)) {
+        return program.getTypePrimitiveInt();
+      } else if ("java.lang.Boolean".equals(wrapperTypeName)) {
+        return program.getTypePrimitiveBoolean();
+      } else if ("java.lang.Character".equals(wrapperTypeName)) {
+        return program.getTypePrimitiveChar();
+      } else if ("java.lang.Long".equals(wrapperTypeName)) {
+        return program.getTypePrimitiveLong();
+      } else if ("java.lang.Short".equals(wrapperTypeName)) {
+        return program.getTypePrimitiveShort();
+      } else if ("java.lang.Byte".equals(wrapperTypeName)) {
+        return program.getTypePrimitiveByte();
+      } else if ("java.lang.Double".equals(wrapperTypeName)) {
+        return program.getTypePrimitiveDouble();
+      } else if ("java.lang.Float".equals(wrapperTypeName)) {
+        return program.getTypePrimitiveFloat();
+      } else {
+        return null;
+      }
     }
 
     private SourceInfo makeSourceInfo(Statement x) {
@@ -2338,30 +2374,14 @@ public class GenerateJavaAST {
     }
 
     private JExpression unbox(JExpression toUnbox, JClassType wrapperType) {
-      String wrapperTypeName = wrapperType.getName();
-      String primitiveName = null;
-      if ("java.lang.Integer".equals(wrapperTypeName)) {
-        primitiveName = "int";
-      } else if ("java.lang.Boolean".equals(wrapperTypeName)) {
-        primitiveName = "boolean";
-      } else if ("java.lang.Character".equals(wrapperTypeName)) {
-        primitiveName = "char";
-      } else if ("java.lang.Long".equals(wrapperTypeName)) {
-        primitiveName = "long";
-      } else if ("java.lang.Short".equals(wrapperTypeName)) {
-        primitiveName = "short";
-      } else if ("java.lang.Byte".equals(wrapperTypeName)) {
-        primitiveName = "byte";
-      } else if ("java.lang.Double".equals(wrapperTypeName)) {
-        primitiveName = "double";
-      } else if ("java.lang.Float".equals(wrapperTypeName)) {
-        primitiveName = "float";
-      } else {
+      JPrimitiveType primitiveType = getPrimitiveTypeForWrapperType(wrapperType);
+      if (primitiveType == null) {
         throw new InternalCompilerException(toUnbox,
-            "Attempt to unbox unexpected type '" + wrapperTypeName + "'", null);
+            "Attempt to unbox unexpected type '" + wrapperType.getName() + "'",
+            null);
       }
 
-      String valueMethodName = primitiveName + "Value";
+      String valueMethodName = primitiveType.getName() + "Value";
       JMethod valueMethod = null;
       for (Object element : wrapperType.methods) {
         JMethod method = (JMethod) element;
@@ -2376,14 +2396,26 @@ public class GenerateJavaAST {
 
       if (valueMethod == null) {
         throw new InternalCompilerException(toUnbox,
-            "Expected to find a method on '" + wrapperTypeName
-                + "' whose signature matches 'public " + primitiveName + " "
-                + valueMethodName + "()'", null);
+            "Expected to find a method on '" + wrapperType.getName()
+                + "' whose signature matches 'public "
+                + primitiveType.getName() + " " + valueMethodName + "()'", null);
       }
 
       JMethodCall unboxCall = new JMethodCall(program, toUnbox.getSourceInfo(),
           toUnbox, valueMethod);
       return unboxCall;
+    }
+
+    private JExpression unbox(JExpression toUnbox, JPrimitiveType primitiveType) {
+      String wrapperTypeName = primitiveType.getWrapperTypeName();
+      JClassType wrapperType = (JClassType) program.getFromTypeMap(wrapperTypeName);
+      if (wrapperType == null) {
+        throw new InternalCompilerException(toUnbox,
+            "Cannot find wrapper type '" + wrapperTypeName
+                + "' associated with primitive type '"
+                + primitiveType.getName() + "'", null);
+      }
+      return unbox(toUnbox, wrapperType);
     }
 
     private void writeEnumValueOfMethod(JEnumType type, JField mapField) {
