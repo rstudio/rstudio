@@ -94,7 +94,7 @@ public class Coverage extends CoverageSuper {
       new SecondMain().new FunkyInner();
       new NamedLocal().new NamedLocalSub().foo();
     }
-    
+
     public void bar() {
     }
 
@@ -324,13 +324,10 @@ public class Coverage extends CoverageSuper {
       assertTrue(i >= j);
     }
 
-    /**
-     * TODO(5.0) implement for each
-     */
     private void testForeachStatement() {
-      // for (int q : ia) {
-      // i = q;
-      // }
+      for (int q : ia) {
+        i = q;
+      }
     }
 
     private void testForStatement() {

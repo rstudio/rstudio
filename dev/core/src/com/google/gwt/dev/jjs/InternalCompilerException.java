@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,9 +65,9 @@ public class InternalCompilerException extends RuntimeException {
   /**
    * Tracks if there's a pending addNode() to avoid recursion sickness.
    */
-  private static final ThreadLocal pendingICE = new ThreadLocal();
+  private static final ThreadLocal<InternalCompilerException> pendingICE = new ThreadLocal<InternalCompilerException>();
 
-  private final List nodeTrace = new ArrayList();
+  private final List<NodeInfo> nodeTrace = new ArrayList<NodeInfo>();
 
   /**
    * Constructs a new exception with the specified node, message, and cause.
@@ -98,9 +97,9 @@ public class InternalCompilerException extends RuntimeException {
    * trace works.
    */
   public void addNode(HasSourceInfo node) {
-    InternalCompilerException other = (InternalCompilerException) pendingICE.get();
+    InternalCompilerException other = pendingICE.get();
     if (other != null) {
-      // Avoiding recursion sickness: Yet Another ICE must have occured while
+      // Avoiding recursion sickness: Yet Another ICE must have occurred while
       // generating info for a prior ICE. Just bail!
       return;
     }
@@ -140,7 +139,7 @@ public class InternalCompilerException extends RuntimeException {
    * list is the node that was most specifically being visited when the
    * exception was thrown.
    */
-  public List getNodeTrace() {
+  public List<NodeInfo> getNodeTrace() {
     return nodeTrace;
   }
 
