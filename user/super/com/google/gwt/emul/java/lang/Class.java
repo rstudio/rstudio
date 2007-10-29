@@ -21,18 +21,53 @@ package java.lang;
  * 
  * @param <T> the type of the object
  */
-public class Class<T> {
+public final class Class<T> {
+
+  private static final int PRIMITIVE = 0x00000001;
+  private static final int INTERFACE = 0x00000002;
+  private static final int ARRAY = 0x00000004;
+  private static final int ENUM = 0x00000008;
+
+  private final String typeName;
+  private final int modifiers;
 
   /**
-   * Not instantiable.
+   * Not publicly instantiable.
    * 
    * @skip
    */
-  private Class() {
+  Class(String typeName, int modifiers) {
+    this.typeName = typeName;
+    this.modifiers = modifiers;
   }
 
   public T[] getEnumConstants() {
-    throw new UnsupportedOperationException(
-      "Class.getEnumConstants() not yet implemented");
+    // TODO
+    return null;
+  }
+
+  public String getName() {
+    return typeName;
+  }
+
+  public boolean isArray() {
+    return (modifiers & ARRAY) != 0;
+  }
+
+  public boolean isEnum() {
+    return (modifiers & ENUM) != 0;
+  }
+
+  public boolean isInterface() {
+    return (modifiers & INTERFACE) != 0;
+  }
+
+  public boolean isPrimitive() {
+    return (modifiers & PRIMITIVE) != 0;
+  }
+
+  public String toString() {
+    return (isInterface() ? "interface " : (isPrimitive() ? "" : "class "))
+        + getName();
   }
 }

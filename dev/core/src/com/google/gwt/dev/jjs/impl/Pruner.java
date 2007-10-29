@@ -21,7 +21,6 @@ import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
-import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -319,14 +318,6 @@ public class Pruner {
           return false;
         }
       }
-      return true;
-    }
-
-    @Override
-    public boolean visit(JClassLiteral literal, Context ctx) {
-      // rescue and instantiate java.lang.Class
-      // JLS 12.4.1: do not rescue the target type
-      rescue(program.getTypeJavaLangClass(), true, true);
       return true;
     }
 

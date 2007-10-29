@@ -33,6 +33,7 @@ public class JMethodCall extends JExpression {
   public JMethodCall(JProgram program, SourceInfo info, JExpression instance,
       JMethod method) {
     super(program, info);
+    assert (method != null);
     assert (instance != null || method.isStatic());
     this.instance = instance;
     this.method = method;
@@ -41,7 +42,7 @@ public class JMethodCall extends JExpression {
   }
 
   /**
-   * Create a method call whose type is overriden to the specified type,
+   * Create a method call whose type is overridden to the specified type,
    * ignoring the return type of the target method. This constructor is used
    * during normalizing transformations to preserve type semantics when calling
    * externally-defined compiler implementation methods.

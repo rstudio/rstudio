@@ -117,6 +117,8 @@ public class JProgram extends JNode {
 
   private final List<JReferenceType> allTypes = new ArrayList<JReferenceType>();
 
+  private Map<JType, JClassLiteral> classLiterals = new HashMap<JType, JClassLiteral>();
+
   /**
    * Each entry is a HashMap(JType => JArrayType), arranged such that the number
    * of dimensions is that index (plus one) at which the JArrayTypes having that
@@ -447,8 +449,12 @@ public class JProgram extends JNode {
   }
 
   public JClassLiteral getLiteralClass(JType type) {
-    // could be interned
-    return new JClassLiteral(this, type);
+    JClassLiteral result = classLiterals.get(type);
+    if (result == null) {
+      result = new JClassLiteral(this, type);
+      classLiterals.put(type, result);
+    }
+    return result;
   }
 
   public JClassSeed getLiteralClassSeed(JClassType type) {

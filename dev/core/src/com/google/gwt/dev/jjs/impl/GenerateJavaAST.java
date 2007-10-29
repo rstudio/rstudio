@@ -31,6 +31,7 @@ import com.google.gwt.dev.jjs.ast.JBreakStatement;
 import com.google.gwt.dev.jjs.ast.JCaseStatement;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
+import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
@@ -47,6 +48,7 @@ import com.google.gwt.dev.jjs.ast.JForStatement;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
+import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLabel;
 import com.google.gwt.dev.jjs.ast.JLabeledStatement;
 import com.google.gwt.dev.jjs.ast.JLiteral;
@@ -359,6 +361,21 @@ public class GenerateJavaAST {
               processMethod(x.methods[i]);
             }
           }
+        }
+
+        // Write the body of the getClass() override.
+        if (currentClass instanceof JClassType
+            && currentClass != program.getTypeJavaLangObject()
+            && currentClass != program.getIndexedType("Array")) {
+          JMethod method = currentClass.methods.get(2);
+          assert ("getClass".equals(method.getName()));
+
+          tryFindUpRefs(method);
+
+          JMethodBody body = (JMethodBody) method.getBody();
+          JClassLiteral classLit = program.getLiteralClass(currentClass);
+          body.getStatements().add(
+              new JReturnStatement(program, null, classLit));
         }
 
         if (x.binding.isEnum()) {
@@ -2356,11 +2373,66 @@ public class GenerateJavaAST {
     }
 
     /**
+     * For a given method, try to find all methods that it overrides/implements.
+     * An experimental version that doesn't use JDT. Right now it's only used to
+     * resolve upRefs for Object.getClass(), which is synthetic on everything
+     * other than object.
+     */
+    private void tryFindUpRefs(JMethod method) {
+      if (method.getEnclosingType() != null) {
+        tryFindUpRefsRecursive(method, method.getEnclosingType());
+      }
+    }
+
+    /**
      * For a given method(and method binding), try to find all methods that it
      * overrides/implements.
      */
     private void tryFindUpRefs(JMethod method, MethodBinding binding) {
       tryFindUpRefsRecursive(method, binding, binding.declaringClass);
+    }
+
+    /**
+     * For a given method(and method binding), recursively try to find all
+     * methods that it overrides/implements.
+     */
+    private void tryFindUpRefsRecursive(JMethod method,
+        JReferenceType searchThisType) {
+
+      // See if this class has any uprefs, unless this class is myself
+      if (method.getEnclosingType() != searchThisType) {
+        outer : for (JMethod upRef : searchThisType.methods) {
+          if (upRef.isStatic()) {
+            continue;
+          }
+          if (!upRef.getName().equals(method.getName())) {
+            continue;
+          }
+          if (upRef.params.size() != method.params.size()) {
+            continue;
+          }
+          for (int i = 0, c = upRef.params.size(); i < c; ++i) {
+            if (upRef.params.get(i).getType() != method.params.get(i).getType()) {
+              continue outer;
+            }
+          }
+
+          if (!method.overrides.contains(upRef)) {
+            method.overrides.add(upRef);
+            break;
+          }
+        }
+      }
+
+      // recurse super class
+      if (searchThisType.extnds != null) {
+        tryFindUpRefsRecursive(method, searchThisType.extnds);
+      }
+
+      // recurse super interfaces
+      for (JInterfaceType intf : searchThisType.implments) {
+        tryFindUpRefsRecursive(method, intf);
+      }
     }
 
     /**

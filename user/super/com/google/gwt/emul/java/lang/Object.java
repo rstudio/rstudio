@@ -29,23 +29,25 @@ public class Object {
    */
   protected transient int typeId;
 
-  /**
-   * magic magic magic.
-   * 
-   * @skip
-   */
-  protected transient String typeName;
-
   public native boolean equals(Object other) /*-{
     return this === other;
   }-*/;
+
+  /*
+   * Magic; unlike the real JDT, we don't spec this method as final.  The
+   * compiler will generate a polymorphic override on every other class which
+   * will return the correct class object.
+   */
+  public Class<? extends Object> getClass() {
+    return Object.class;
+  }
 
   public int hashCode() {
     return System.identityHashCode(this);
   }
 
   public String toString() {
-    return typeName + "@" + hashCode();
+    return getClass().getName() + "@" + hashCode();
   }
 
   /**

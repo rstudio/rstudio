@@ -430,6 +430,17 @@ public class BuildTypeMap {
       }
       JReferenceType type = (JReferenceType) typeMap.get(binding);
       try {
+        // Create an override for getClass().
+        if (type instanceof JClassType
+            && type != program.getTypeJavaLangObject()
+            && type != program.getIndexedType("Array")) {
+          JMethod getClassMethod = program.createMethod(null,
+              "getClass".toCharArray(), type, program.getTypeJavaLangClass(),
+              false, false, false, false, false);
+          assert (type.methods.get(2) == getClassMethod);
+          getClassMethod.freezeParamTypes();
+        }
+
         if (binding.isNestedType() && !binding.isStatic()) {
           // add synthetic fields for outer this and locals
           assert (type instanceof JClassType);

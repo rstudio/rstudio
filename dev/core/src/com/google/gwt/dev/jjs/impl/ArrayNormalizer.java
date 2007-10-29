@@ -44,7 +44,7 @@ public class ArrayNormalizer {
 
   private class ArrayVisitor extends JModVisitor {
 
-    // @Override
+    @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
       if (x.getOp() == JBinaryOperator.ASG && x.getLhs() instanceof JArrayRef) {
         JArrayRef arrayRef = (JArrayRef) x.getLhs();
@@ -74,32 +74,17 @@ public class ArrayNormalizer {
       }
     }
 
-    // @Override
+    @Override
     public void endVisit(JNewArray x, Context ctx) {
       JArrayType type = x.getArrayType();
-      JLiteral litTypeName = program.getLiteralString(calcClassName(type));
 
       if (x.initializers != null) {
-        processInitializers(x, ctx, type, litTypeName);
+        processInitializers(x, ctx, type);
       } else if (type.getDims() == 1) {
-        processDim(x, ctx, type, litTypeName);
+        processDim(x, ctx, type);
       } else {
-        processDims(x, ctx, type, litTypeName);
+        processDims(x, ctx, type);
       }
-    }
-
-    private char[] calcClassName(JArrayType type) {
-      String leafName = type.getLeafType().getJsniSignatureName();
-      leafName = leafName.replace('/', '.');
-      int leafLength = leafName.length();
-      int nDims = type.getDims();
-      char[] className = new char[leafLength + nDims];
-      for (int i = 0; i < nDims; ++i) {
-        className[i] = '[';
-      }
-
-      leafName.getChars(0, leafLength, className, nDims);
-      return className;
     }
 
     /**
@@ -119,17 +104,17 @@ public class ArrayNormalizer {
       return program.getLiteralInt(0);
     }
 
-    private void processDim(JNewArray x, Context ctx, JArrayType arrayType,
-        JLiteral litTypeName) {
+    private void processDim(JNewArray x, Context ctx, JArrayType arrayType) {
       // override the type of the called method with the array's type
       JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
           initDim, arrayType);
+      JLiteral classLit = program.getLiteralClass(arrayType);
       JLiteral typeIdLit = program.getLiteralInt(program.getTypeId(arrayType));
       JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(arrayType));
       JType leafType = arrayType.getLeafType();
-      JExpression dim = (JExpression) x.dims.get(0);
+      JExpression dim = x.dims.get(0);
 
-      call.getArgs().add(litTypeName);
+      call.getArgs().add(classLit);
       call.getArgs().add(typeIdLit);
       call.getArgs().add(queryIdLit);
       call.getArgs().add(dim);
@@ -137,18 +122,18 @@ public class ArrayNormalizer {
       ctx.replaceMe(call);
     }
 
-    private void processDims(JNewArray x, Context ctx, JArrayType arrayType,
-        JLiteral litTypeName) {
+    private void processDims(JNewArray x, Context ctx, JArrayType arrayType) {
       // override the type of the called method with the array's type
       JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
           initDims, arrayType);
+      JsonArray classLitList = new JsonArray(program);
       JsonArray typeIdList = new JsonArray(program);
       JsonArray queryIdList = new JsonArray(program);
       JsonArray dimList = new JsonArray(program);
       JType leafType = arrayType.getLeafType();
       int outstandingDims = arrayType.getDims();
       for (int i = 0; i < x.dims.size(); ++i) {
-        JExpression dim = (JExpression) x.dims.get(i);
+        JExpression dim = x.dims.get(i);
         if (dim instanceof JAbsentArrayDimension) {
           break;
         }
@@ -165,10 +150,16 @@ public class ArrayNormalizer {
          * 
          */
         JArrayType cur = program.getTypeArray(leafType, outstandingDims--);
+
+        JLiteral classLit = program.getLiteralClass(cur);
+        classLitList.exprs.add(classLit);
+
         JLiteral typeIdLit = program.getLiteralInt(program.getTypeId(cur));
         typeIdList.exprs.add(typeIdLit);
+
         JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(cur));
         queryIdList.exprs.add(queryIdLit);
+
         dimList.exprs.add(dim);
       }
       JType targetType = leafType;
@@ -176,7 +167,7 @@ public class ArrayNormalizer {
         targetType = program.getTypeArray(targetType, outstandingDims);
       }
 
-      call.getArgs().add(litTypeName);
+      call.getArgs().add(classLitList);
       call.getArgs().add(typeIdList);
       call.getArgs().add(queryIdList);
       call.getArgs().add(dimList);
@@ -185,17 +176,18 @@ public class ArrayNormalizer {
     }
 
     private void processInitializers(JNewArray x, Context ctx,
-        JArrayType arrayType, JLiteral litTypeName) {
+        JArrayType arrayType) {
       // override the type of the called method with the array's type
       JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
           initValues, arrayType);
+      JLiteral classLit = program.getLiteralClass(arrayType);
       JLiteral typeIdLit = program.getLiteralInt(program.getTypeId(arrayType));
       JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(arrayType));
       JsonArray initList = new JsonArray(program);
       for (int i = 0; i < x.initializers.size(); ++i) {
         initList.exprs.add(x.initializers.get(i));
       }
-      call.getArgs().add(litTypeName);
+      call.getArgs().add(classLit);
       call.getArgs().add(typeIdLit);
       call.getArgs().add(queryIdLit);
       call.getArgs().add(initList);

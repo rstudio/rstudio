@@ -22,7 +22,6 @@ import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JAbstractMethodBody;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
-import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JAssertStatement;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
@@ -118,7 +117,6 @@ import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsReturn;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.js.ast.JsStatement;
-import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsSwitch;
 import com.google.gwt.dev.js.ast.JsSwitchMember;
 import com.google.gwt.dev.js.ast.JsThisRef;
@@ -143,8 +141,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
-import java.util.TreeMap;
-import java.util.Map.Entry;
 
 /**
  * Creates a JavaScript AST from a <code>JProgram</code> node.
@@ -267,16 +263,6 @@ public class GenerateJavaScriptAST {
         myScope = new JsScope(parentScope, "class " + x.getShortName());
       }
       classScopes.put(x, myScope);
-
-      // Make a name for my package if it doesn't already exist
-      String packageName = getPackageName(x.getName());
-      if (packageName != null && packageName.length() > 0) {
-        if (packageNames.get(packageName) == null) {
-          String ident = "package_" + packageName.replace('.', '_');
-          JsName jsName = topScope.declareName(ident);
-          packageNames.put(packageName, jsName);
-        }
-      }
 
       push(myScope);
       return true;
@@ -489,10 +475,13 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JClassLiteral x, Context ctx) {
+      JsExpression classObjectAllocation = pop(); // classObjectAllocation
+
       // My seed function name
       String nameString = x.getRefType().getJavahSignatureName() + "_classlit";
       JsName classLit = topScope.declareName(nameString);
       classLits.put(x.getRefType(), classLit);
+      classObjects.put(classLit, classObjectAllocation);
       push(classLit.makeRef());
     }
 
@@ -596,6 +585,9 @@ public class GenerateJavaScriptAST {
       if (x.constInitializer != null) {
         // setup the constant value
         accept(x.constInitializer);
+      } else if (x == program.getIndexedField("Cast.typeIdArray")) {
+        // magic: setup the type id table
+        push(generateTypeTable());
       } else if (!x.hasInitializer()) {
         // setup a default value
         accept(x.getType().getDefaultValue());
@@ -981,10 +973,17 @@ public class GenerateJavaScriptAST {
       }
 
       generateGwtOnLoad(entryFuncs, globalStmts);
+      generateNullFunc(globalStmts);
 
-      // a few more vars on the very end
+      // Add a few things onto the beginning.
+
+      // Reserve the "_" identifier.
       JsVars vars = new JsVars();
-      generateTypeTable(vars);
+      vars.add(new JsVar(globalTemp));
+      globalStmts.add(0, vars);
+
+      // Generate class objects.
+      vars = new JsVars();
       generateClassLiterals(vars);
       if (!vars.isEmpty()) {
         globalStmts.add(vars);
@@ -1147,22 +1146,6 @@ public class GenerateJavaScriptAST {
     }
 
     @Override
-    public boolean visit(JProgram x, Context ctx) {
-      List<JsStatement> globalStatements = jsProgram.getGlobalBlock().getStatements();
-
-      // declare some global vars
-      JsVars vars = new JsVars();
-
-      // reserve the "_" identifier
-      vars.add(new JsVar(globalTemp));
-      generatePackageNames(vars);
-      globalStatements.add(vars);
-
-      generateNullFunc(globalStatements);
-      return true;
-    }
-
-    @Override
     public boolean visit(JSwitchStatement x, Context ctx) {
       /*
        * What a pain.. JSwitchStatement and JsSwitch are modeled completely
@@ -1214,26 +1197,12 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateClassLiterals(JsVars vars) {
-      /*
-       * Class literals are useless right now, just use String literals and the
-       * Object methods will basically work.
-       */
       for (Object element : classLits.keySet()) {
         JType type = (JType) element;
         JsName jsName = classLits.get(type);
-        String string;
-        if (type instanceof JArrayType) {
-          string = "class " + type.getJsniSignatureName().replace('/', '.');
-        } else if (type instanceof JClassType) {
-          string = "class " + type.getName();
-        } else if (type instanceof JInterfaceType) {
-          string = "interface " + type.getName();
-        } else {
-          string = type.getName();
-        }
-        JsStringLiteral stringLiteral = jsProgram.getStringLiteral(string);
+        JsExpression classObjectAlloc = classObjects.get(jsName);
         JsVar var = new JsVar(jsName);
-        var.setInitExpr(stringLiteral);
+        var.setInitExpr(classObjectAlloc);
         vars.add(var);
       }
     }
@@ -1247,7 +1216,6 @@ public class GenerateJavaScriptAST {
         generateToStringAlias(x, globalStmts);
       }
 
-      generateTypeName(x, globalStmts);
       generateTypeId(x, globalStmts);
     }
 
@@ -1323,16 +1291,6 @@ public class GenerateJavaScriptAST {
       JsFunction nullFunc = new JsFunction(topScope, nullMethodName);
       nullFunc.setBody(new JsBlock());
       globalStatements.add(nullFunc.makeStmt());
-    }
-
-    private void generatePackageNames(JsVars vars) {
-      for (Entry<String, JsName> entry : packageNames.entrySet()) {
-        String packageName = entry.getKey();
-        JsName name = entry.getValue();
-        JsVar jsVar = new JsVar(name);
-        jsVar.setInitExpr(jsProgram.getStringLiteral(packageName));
-        vars.add(jsVar);
-      }
     }
 
     private void generateSeedFuncAndPrototype(JClassType x,
@@ -1421,50 +1379,14 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    private void generateTypeName(JClassType x, List<JsStatement> globalStmts) {
-      JField typeNameField = program.getIndexedField("Object.typeName");
-      JsName typeNameName = names.get(typeNameField);
-      if (typeNameName == null) {
-        // Was pruned; this compilation must not use GWT.getTypeName().
-        return;
-      }
-      JsNameRef lhs = typeNameName.makeRef();
-      lhs.setQualifier(globalTemp.makeRef());
-
-      // Split the full class name into package + class so package strings
-      // can be merged.
-      String className = getClassName(x.getName());
-      String packageName = getPackageName(x.getName());
-      JsExpression rhs;
-      if (packageName.length() > 0) {
-        // use "com.example.foo." + "Foo"
-        JsNameRef packageRef = (packageNames.get(packageName)).makeRef();
-        rhs = new JsBinaryOperation(JsBinaryOperator.ADD, packageRef,
-            jsProgram.getStringLiteral(className));
-      } else {
-        // no package name could be split, just use the full name
-        rhs = jsProgram.getStringLiteral(x.getName());
-      }
-      JsExpression asg = createAssignment(lhs, rhs);
-      globalStmts.add(new JsExprStmt(asg));
-    }
-
-    private void generateTypeTable(JsVars vars) {
-      JField typeIdArray = program.getIndexedField("Cast.typeIdArray");
-      JsName typeIdArrayName = names.get(typeIdArray);
-      if (typeIdArrayName == null) {
-        // Was pruned; this compilation must have no dynamic casts.
-        return;
-      }
+    private JsExpression generateTypeTable() {
       JsArrayLiteral arrayLit = new JsArrayLiteral();
       for (int i = 0; i < program.getJsonTypeTable().size(); ++i) {
         JsonObject jsonObject = program.getJsonTypeTable().get(i);
         accept(jsonObject);
         arrayLit.getExpressions().add((JsExpression) pop());
       }
-      JsVar var = new JsVar(typeIdArrayName);
-      var.setInitExpr(arrayLit);
-      vars.add(var);
+      return arrayLit;
     }
 
     private void generateVTables(JClassType x, List<JsStatement> globalStmts) {
@@ -1534,7 +1456,7 @@ public class GenerateJavaScriptAST {
     private <T extends JsVisitable> List<T> popList(int count) {
       List<T> list = new ArrayList<T>();
       while (count > 0) {
-        T item = this.<T>pop();
+        T item = this.<T> pop();
         if (item != null) {
           list.add(item);
         }
@@ -1548,7 +1470,7 @@ public class GenerateJavaScriptAST {
         int count) {
       List<T> list = new ArrayList<T>();
       while (count > 0) {
-        T item = this.<T>pop();
+        T item = this.<T> pop();
         if (item != null) {
           list.add(item);
         }
@@ -1658,18 +1580,9 @@ public class GenerateJavaScriptAST {
     generateJavaScriptAST.execImpl();
   }
 
-  private static String getClassName(String fullName) {
-    int pos = fullName.lastIndexOf(".");
-    return fullName.substring(pos + 1);
-  }
-
-  private static String getPackageName(String fullName) {
-    int pos = fullName.lastIndexOf(".");
-    return fullName.substring(0, pos + 1);
-  }
-
   private final Map<JBlock, JsCatch> catchMap = new IdentityHashMap<JBlock, JsCatch>();
   private final Map<JType, JsName> classLits = new IdentityHashMap<JType, JsName>();
+  private final Map<JsName, JsExpression> classObjects = new IdentityHashMap<JsName, JsExpression>();
   private final Map<JClassType, JsScope> classScopes = new IdentityHashMap<JClassType, JsScope>();
 
   /**
@@ -1689,7 +1602,6 @@ public class GenerateJavaScriptAST {
    * and toString. All other class scopes have this scope as an ultimate parent.
    */
   private final JsScope objectScope;
-  private final Map<String, JsName> packageNames = new TreeMap<String, JsName>();
   private final Map<JMethod, JsName> polymorphicNames = new IdentityHashMap<JMethod, JsName>();
   private final JProgram program;
 
@@ -1739,6 +1651,7 @@ public class GenerateJavaScriptAST {
     specialObfuscatedTypes.add(program.getIndexedType("Array"));
 
     // Object polymorphic
+    specialObfuscatedIdents.put("getClass", "gC");
     specialObfuscatedIdents.put("hashCode", "hC");
     specialObfuscatedIdents.put("equals", "eQ");
     specialObfuscatedIdents.put("toString", "tS");
@@ -1755,6 +1668,7 @@ public class GenerateJavaScriptAST {
     specialObfuscatedIdents.put("subSequence", "sS");
 
     // Array magic field
+    specialObfuscatedIdents.put("arrayClass", "aC");
     specialObfuscatedIdents.put("queryId", "qI");
   }
 

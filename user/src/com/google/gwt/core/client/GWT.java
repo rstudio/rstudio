@@ -23,7 +23,7 @@ package com.google.gwt.core.client;
 public final class GWT {
   /*
    * This is the web mode version of this class. Because it's so special,
-   * there's also a hosted mode version.  See GWT.java-hosted.
+   * there's also a hosted mode version. See GWT.java-hosted.
    */
 
   /**
@@ -107,9 +107,9 @@ public final class GWT {
    * @return the class name of the specified object, or <code>null</code> if
    *         <code>o</code> is <code>null</code>
    */
-  public static native String getTypeName(Object o) /*-{
-    return (o == null) ? null : o.@java.lang.Object::typeName;
-  }-*/;
+  public static String getTypeName(Object o) {
+    return (o == null) ? null : o.getClass().getName();
+  }
 
   /**
    * Returns the currently active uncaughtExceptionHandler. "Top level" methods

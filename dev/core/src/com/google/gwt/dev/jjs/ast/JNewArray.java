@@ -17,15 +17,15 @@ package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * New array expression.
  */
 public class JNewArray extends JExpression implements HasSettableType {
 
-  public ArrayList<JExpression> dims = null;
-  public ArrayList<JExpression> initializers = null;
+  public List<JExpression> dims = null;
+  public List<JExpression> initializers = null;
   private JArrayType arrayType;
 
   public JNewArray(JProgram program, SourceInfo info, JArrayType arrayType) {
@@ -70,10 +70,26 @@ public class JNewArray extends JExpression implements HasSettableType {
 
       if (dims != null) {
         visitor.accept(dims);
+
+        // Visit all the class literals that will eventually get generated.
+        JArrayType it = arrayType;
+        for (JExpression dim : dims) {
+          if (dim instanceof JAbsentArrayDimension) {
+            break;
+          }
+          visitor.accept(program.getLiteralClass(it));
+          if (it.getElementType() instanceof JArrayType) {
+            it = (JArrayType) it.getElementType();
+          } else {
+            break;
+          }
+        }
       }
 
       if (initializers != null) {
         visitor.accept(initializers);
+        // Visit the class literals that will eventually get generated.
+        visitor.accept(program.getLiteralClass(arrayType));
       }
     }
     visitor.endVisit(this, ctx);

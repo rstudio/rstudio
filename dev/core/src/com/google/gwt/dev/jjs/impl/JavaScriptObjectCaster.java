@@ -32,7 +32,7 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Synthesize casts for JavaScriptObject types in cases where dynamic type
@@ -47,7 +47,7 @@ public class JavaScriptObjectCaster {
 
     private JMethod currentMethod;
 
-    // @Override
+    @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
       if (x.isAssignment()) {
         JType lhsType = x.getLhs().getType();
@@ -67,7 +67,7 @@ public class JavaScriptObjectCaster {
       }
     }
 
-    // @Override
+    @Override
     public void endVisit(JConditional x, Context ctx) {
       JExpression newThen = checkAndReplaceJso(x.getThenExpr(), x.getType());
       JExpression newElse = checkAndReplaceJso(x.getElseExpr(), x.getType());
@@ -78,7 +78,7 @@ public class JavaScriptObjectCaster {
       }
     }
 
-    // @Override
+    @Override
     public void endVisit(JLocalDeclarationStatement x, Context ctx) {
       JExpression newInst = x.getInitializer();
       if (newInst != null) {
@@ -91,17 +91,17 @@ public class JavaScriptObjectCaster {
       }
     }
 
-    // @Override
+    @Override
     public void endVisit(JMethod x, Context ctx) {
       currentMethod = null;
     }
 
-    // @Override
+    @Override
     public void endVisit(JMethodCall x, Context ctx) {
       for (int i = 0; i < x.getTarget().params.size(); ++i) {
-        JParameter param = (JParameter) x.getTarget().params.get(i);
-        JExpression newArg = checkAndReplaceJso(
-            (JExpression) x.getArgs().get(i), param.getType());
+        JParameter param = x.getTarget().params.get(i);
+        JExpression newArg = checkAndReplaceJso(x.getArgs().get(i),
+            param.getType());
         x.getArgs().set(i, newArg);
       }
       if (!x.getTarget().isStatic()) {
@@ -117,13 +117,12 @@ public class JavaScriptObjectCaster {
       }
     }
 
-    // @Override
+    @Override
     public void endVisit(JNewArray x, Context ctx) {
-      JType leafType = x.getArrayType().getElementType();
-      ArrayList initializers = x.initializers;
+      List<JExpression> initializers = x.initializers;
       if (initializers != null) {
         for (int i = 0; i < initializers.size(); ++i) {
-          JExpression intializer = (JExpression) initializers.get(i);
+          JExpression intializer = initializers.get(i);
           JExpression newInitializer = checkAndReplaceJsoArrayStore(intializer,
               x.getArrayType().getLeafType());
           if (intializer != newInitializer) {
@@ -134,7 +133,7 @@ public class JavaScriptObjectCaster {
       }
     }
 
-    // @Override
+    @Override
     public void endVisit(JReturnStatement x, Context ctx) {
       if (x.getExpr() != null) {
         JExpression newExpr = checkAndReplaceJso(x.getExpr(),
@@ -147,7 +146,7 @@ public class JavaScriptObjectCaster {
       }
     }
 
-    // @Override
+    @Override
     public boolean visit(JMethod x, Context ctx) {
       currentMethod = x;
       return true;

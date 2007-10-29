@@ -23,13 +23,14 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A JSON-style list of JS expressions.
  */
 public class JsonArray extends JExpression {
 
-  public ArrayList exprs = new ArrayList();
+  public List<JExpression> exprs = new ArrayList<JExpression>();
 
   public JsonArray(JProgram program) {
     super(program, null);
@@ -43,7 +44,7 @@ public class JsonArray extends JExpression {
 
   public boolean hasSideEffects() {
     for (int i = 0, c = exprs.size(); i < c; ++i) {
-      if (((JExpression) exprs.get(i)).hasSideEffects()) {
+      if (exprs.get(i).hasSideEffects()) {
         return true;
       }
     }

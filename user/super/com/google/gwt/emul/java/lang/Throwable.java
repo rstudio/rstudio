@@ -104,7 +104,7 @@ public class Throwable {
       if (currentCause != this) {
         msg.append("Caused by: ");
       }
-      msg.append(currentCause.typeName);
+      msg.append(currentCause.getClass().getName());
       msg.append(": ");
       msg.append(causeMessage == null ? "(No exception detail)" : causeMessage);
       msg.append("\n");
