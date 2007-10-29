@@ -711,11 +711,7 @@ public class GenerateJavaAST {
       }
 
       // Plain old regular user arguments
-      if (x.arguments != null) {
-        for (int i = 0, n = x.arguments.length; i < n; ++i) {
-          call.getArgs().add(dispProcessExpression(x.arguments[i]));
-        }
-      }
+      addCallArgs(x.arguments, call, b);
 
       // Synthetic args for inner classes
       ReferenceBinding targetBinding = b.declaringClass;
@@ -1030,11 +1026,7 @@ public class GenerateJavaAST {
       }
 
       // The arguments come first...
-      if (x.arguments != null) {
-        for (int i = 0, n = x.arguments.length; i < n; ++i) {
-          call.getArgs().add(dispProcessExpression(x.arguments[i]));
-        }
-      }
+      addCallArgs(x.arguments, call, x.binding);
 
       if (type != method.getType()) {
         // Must be a generic; insert a cast operation.
@@ -1136,11 +1128,7 @@ public class GenerateJavaAST {
       }
 
       // Plain old regular arguments
-      if (x.arguments != null) {
-        for (int i = 0, n = x.arguments.length; i < n; ++i) {
-          call.getArgs().add(dispProcessExpression(x.arguments[i]));
-        }
-      }
+      addCallArgs(x.arguments, call, b);
 
       // Synthetic args for inner classes
       ReferenceBinding targetBinding = b.declaringClass;
@@ -1780,11 +1768,7 @@ public class GenerateJavaAST {
       JExpression trueQualifier = createThisRef(info, currentClass);
       JMethodCall call = new JMethodCall(program, info, trueQualifier, ctor);
 
-      if (x.arguments != null) {
-        for (int i = 0, n = x.arguments.length; i < n; ++i) {
-          call.getArgs().add(dispProcessExpression(x.arguments[i]));
-        }
-      }
+      addCallArgs(x.arguments, call, x.binding);
 
       // We have to find and pass through any synthetics our supertype needs
       ReferenceBinding superClass = x.binding.declaringClass;
@@ -1854,11 +1838,7 @@ public class GenerateJavaAST {
 
       assert (x.qualification == null);
 
-      if (x.arguments != null) {
-        for (int i = 0, n = x.arguments.length; i < n; ++i) {
-          call.getArgs().add(dispProcessExpression(x.arguments[i]));
-        }
-      }
+      addCallArgs(x.arguments, call, x.binding);
 
       // All synthetics must be passed through to the target ctor
       ReferenceBinding declaringClass = x.binding.declaringClass;
@@ -1895,6 +1875,50 @@ public class GenerateJavaAST {
         List<? super JFieldRef> workList, JExpression expr, JClassType classType) {
       for (; classType != null; classType = classType.extnds) {
         addAllOuterThisRefs(workList, expr, classType);
+      }
+    }
+
+    private void addCallArgs(Expression[] args, JMethodCall call,
+        MethodBinding binding) {
+      if (args != null) {
+        TypeBinding[] params = binding.parameters;
+        int n = params.length;
+
+        if (binding.isVarargs()) {
+          // Do everything but the last arg.
+          --n;
+        }
+
+        for (int i = 0; i < n; ++i) {
+          call.getArgs().add(dispProcessExpression(args[i]));
+        }
+
+        if (binding.isVarargs()) {
+          // Handle the last arg.
+          JArrayType type = (JArrayType) typeMap.get(params[n]);
+
+          // See if there is only one arg and it's an array of the correct dims.
+          if (args.length == n + 1) {
+            JType lastArgType = (JType) typeMap.get(args[n].resolvedType);
+            if (lastArgType instanceof JArrayType) {
+              JArrayType lastArgArrayType = (JArrayType) lastArgType;
+              if (lastArgArrayType.getDims() == type.getDims()) {
+                // Looks like it's already an array.
+                call.getArgs().add(dispProcessExpression(args[n]));
+                return;
+              }
+            }
+          }
+
+          // Fall through: must synthesize a new array allocation.
+          SourceInfo info = makeSourceInfo(args[n]);
+          JNewArray newArray = new JNewArray(program, info, type);
+          newArray.initializers = new ArrayList<JExpression>();
+          for (int i = n; i < args.length; ++i) {
+            newArray.initializers.add(dispProcessExpression(args[i]));
+          }
+          call.getArgs().add(newArray);
+        }
       }
     }
 
