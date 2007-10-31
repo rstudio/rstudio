@@ -38,6 +38,7 @@ public class ClassObjectTest extends GWTTestCase {
 
   public void testArray() {
     Object o = new Foo[3];
+    assertEquals(Foo[].class, o.getClass());
     assertEquals("[Lcom.google.gwt.dev.jjs.test.ClassObjectTest$Foo;",
         o.getClass().getName());
     assertEquals("class [Lcom.google.gwt.dev.jjs.test.ClassObjectTest$Foo;",
@@ -46,6 +47,10 @@ public class ClassObjectTest extends GWTTestCase {
     assertFalse(o.getClass().isEnum());
     assertFalse(o.getClass().isInterface());
     assertFalse(o.getClass().isPrimitive());
+
+    Foo[][] f = new Foo[3][3];
+    assertEquals(Foo[][].class, f.getClass());
+    assertEquals(Foo[].class, f[0].getClass());
   }
 
   public void testClass() {
