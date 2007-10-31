@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.jjs.test.AutoboxTest;
 import com.google.gwt.dev.jjs.test.ClassCastTestCase;
+import com.google.gwt.dev.jjs.test.ClassObjectTest;
 import com.google.gwt.dev.jjs.test.CompilerTest;
 import com.google.gwt.dev.jjs.test.Coverage;
 import com.google.gwt.dev.jjs.test.EnhancedForLoopTest;
@@ -47,6 +48,7 @@ public class CompilerSuite {
     // $JUnit-BEGIN$
     suite.addTestSuite(AutoboxTest.class);
     suite.addTestSuite(ClassCastTestCase.class);
+    suite.addTestSuite(ClassObjectTest.class);
     suite.addTestSuite(CompilerTest.class);
     suite.addTestSuite(Coverage.class);
     suite.addTestSuite(EnhancedForLoopTest.class);
