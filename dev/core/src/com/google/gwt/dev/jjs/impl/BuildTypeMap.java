@@ -31,9 +31,12 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
+import com.google.gwt.dev.js.JsAbstractSymbolResolver;
 import com.google.gwt.dev.js.JsParserException.SourceDetail;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsFunction;
+import com.google.gwt.dev.js.ast.JsName;
+import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 
@@ -582,6 +585,11 @@ public class BuildTypeMap {
         JsFunction jsFunction = (JsFunction) jsExprStmt.getExpression();
         jsFunction.setFromJava(true);
         ((JsniMethodBody) newMethod.getBody()).setFunc(jsFunction);
+
+        // Ensure that we've resolved the parameter and local references within
+        // the JSNI method for later pruning.
+        JsParameterResolver localResolver = new JsParameterResolver(jsFunction);
+        localResolver.accept(jsFunction);
       } catch (IOException e) {
         throw new InternalCompilerException(
             "Internal error parsing JSNI in method '" + newMethod
@@ -752,6 +760,31 @@ public class BuildTypeMap {
         return true;
       } catch (Throwable e) {
         throw translateException(typeDeclaration, e);
+      }
+    }
+  }
+
+  /**
+   * Resolves the scope of JS identifiers solely within the scope of a method.
+   */
+  private static class JsParameterResolver extends JsAbstractSymbolResolver {
+    private final JsFunction jsFunction;
+
+    public JsParameterResolver(JsFunction jsFunction) {
+      this.jsFunction = jsFunction;
+    }
+
+    @Override
+    public void resolve(JsNameRef x) {
+      // Only resolve unqualified names
+      if (x.getQualifier() == null) {
+        JsName name = getScope().findExistingName(x.getIdent());
+
+        // Ensure that we're resolving a name from the function's parameters
+        if (name != null
+            && jsFunction.getParameters().contains(name.getStaticRef())) {
+          x.resolve(name);
+        }
       }
     }
   }

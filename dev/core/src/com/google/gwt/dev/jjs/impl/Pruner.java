@@ -46,23 +46,33 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
+import com.google.gwt.dev.js.ast.JsContext;
+import com.google.gwt.dev.js.ast.JsExpression;
+import com.google.gwt.dev.js.ast.JsFunction;
+import com.google.gwt.dev.js.ast.JsName;
+import com.google.gwt.dev.js.ast.JsNameRef;
+import com.google.gwt.dev.js.ast.JsVisitor;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
- * Remove globally unreferenced classes, interfaces, methods, and fields from
- * the AST. This algorithm is based on having known "entry points" into the
- * application which serve as the root(s) from which reachability is determined
- * and everything else is rescued. Pruner determines reachability at a global
- * level based on method calls and new operations; it does not perform any local
- * code flow analysis. But, a local code flow optimization pass that can
- * eliminate method calls would allow Pruner to prune additional nodes.
+ * Remove globally unreferenced classes, interfaces, methods, parameters, and
+ * fields from the AST. This algorithm is based on having known "entry points"
+ * into the application which serve as the root(s) from which reachability is
+ * determined and everything else is rescued. Pruner determines reachability at
+ * a global level based on method calls and new operations; it does not perform
+ * any local code flow analysis. But, a local code flow optimization pass that
+ * can eliminate method calls would allow Pruner to prune additional nodes.
  * 
  * Note: references to pruned types may still exist in the tree after this pass
  * runs, however, it should only be in contexts that do not rely on any code
@@ -70,13 +80,13 @@ import java.util.Set;
  * a pruned type, or to try to cast to a pruned type. These will cause natural
  * failures at run time; or later optimizations might be able to hard-code
  * failures at compile time.
+ * 
+ * Note: this class is limited to pruning parameters of static methods only.
  */
 public class Pruner {
 
   /**
-   * Remove assignments to pruned fields and locals.
-   * 
-   * TODO(later): prune params too
+   * Remove assignments to pruned fields, locals and params.
    */
   private class CleanupRefsVisitor extends JModVisitor {
 
@@ -88,13 +98,66 @@ public class Pruner {
         if (lhs.hasSideEffects()) {
           return;
         }
-        if (lhs instanceof JFieldRef || lhs instanceof JLocalRef) {
+        if (lhs instanceof JFieldRef || lhs instanceof JLocalRef
+            || lhs instanceof JParameterRef) {
           JVariable var = ((JVariableRef) lhs).getTarget();
           if (!referencedNonTypes.contains(var)) {
             // Just replace with my RHS
             ctx.replaceMe(x.getRhs());
           }
         }
+      }
+    }
+
+    @Override
+    public void endVisit(JMethodCall x, Context ctx) {
+      JMethod method = x.getTarget();
+
+      // Did we prune the parameters of the method we're calling?
+      if (removedMethodParamsMap.containsKey(method)) {
+        // This must be a static method
+        assert method.isStatic();
+        assert x.getInstance() == null;
+
+        JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(), null,
+            method);
+
+        JMultiExpression currentMulti = null;
+
+        ArrayList<JParameter> removedParams = removedMethodParamsMap.get(method);
+
+        for (int i = 0; i < x.getArgs().size(); i++) {
+          JParameter param = removedParams.get(i);
+          JExpression arg = x.getArgs().get(i);
+
+          if (referencedNonTypes.contains(param)) {
+            // We rescued this parameter
+
+            // Do we need to add the multi we've been building?
+            if (currentMulti == null) {
+              newCall.getArgs().add(arg);
+            } else {
+              currentMulti.exprs.add(arg);
+              newCall.getArgs().add(currentMulti);
+              currentMulti = null;
+            }
+          } else if (arg.hasSideEffects()) {
+            // We didn't rescue this parameter and it has side-effects. Add it
+            // to a new multi
+            if (currentMulti == null) {
+              currentMulti = new JMultiExpression(program, x.getSourceInfo());
+            }
+            currentMulti.exprs.add(arg);
+          }
+        }
+
+        // We have orphaned parameters - add them on the end, wrapped in the
+        // multi (JS ignores extra parameters)
+        if (currentMulti != null) {
+          newCall.getArgs().add(currentMulti);
+        }
+
+        ctx.replaceMe(newCall);
       }
     }
   }
@@ -170,6 +233,51 @@ public class Pruner {
       }
 
       return false;
+    }
+
+    @Override
+    public boolean visit(JMethod x, Context ctx) {
+      if (x.isStatic()) {
+        /*
+         * Don't prune parameters on unreferenced methods. The methods might not
+         * be reachable through the current method traversal routines, but might
+         * be used or checked elsewhere.
+         * 
+         * Basically, if we never actually checked if the method parameters were
+         * used or not, don't prune them. Doing so would leave a number of
+         * dangling JParameterRefs that blow up in later optimizations.
+         */
+        if (!referencedNonTypes.contains(x)) {
+          return true;
+        }
+
+        JsFunction func = x.isNative()
+            ? ((JsniMethodBody) x.getBody()).getFunc() : null;
+
+        ArrayList<JParameter> removedParams = new ArrayList<JParameter>(
+            x.params);
+
+        for (int i = 0; i < x.params.size(); i++) {
+          JParameter param = x.params.get(i);
+
+          if (!referencedNonTypes.contains(param)) {
+            x.params.remove(i);
+
+            didChange = true;
+
+            removedMethodParamsMap.put(x, removedParams);
+
+            // Remove the associated JSNI parameter
+            if (func != null) {
+              func.getParameters().remove(i);
+            }
+
+            i--;
+          }
+        }
+      }
+
+      return true;
     }
 
     @Override
@@ -287,6 +395,9 @@ public class Pruner {
         } else if (lhs instanceof JLocalRef) {
           // locals are ok to skip
           doSkip = true;
+        } else if (lhs instanceof JParameterRef) {
+          // parameters are ok to skip
+          doSkip = true;
         } else if (lhs instanceof JFieldRef) {
           JFieldRef fieldRef = (JFieldRef) lhs;
           /*
@@ -303,13 +414,6 @@ public class Pruner {
           } else if (instance instanceof JThisRef) {
             // a this ref cannot be null
             doSkip = true;
-          } else if (instance instanceof JParameterRef) {
-            JParameter param = ((JParameterRef) instance).getParameter();
-            JMethod enclosingMethod = param.getEnclosingMethod();
-            if (program.isStaticImpl(enclosingMethod)
-                && enclosingMethod.params.get(0) == param) {
-              doSkip = true;
-            }
           }
         }
 
@@ -404,6 +508,33 @@ public class Pruner {
     }
 
     @Override
+    public boolean visit(final JMethod x, Context ctx) {
+      if (x.isNative()) {
+        // Manually rescue native parameter references
+        final JsniMethodBody body = (JsniMethodBody) x.getBody();
+        final JsFunction func = body.getFunc();
+
+        new JsVisitor() {
+          @Override
+          public void endVisit(JsNameRef nameRef, JsContext<JsExpression> ctx) {
+            JsName ident = nameRef.getName();
+
+            if (ident != null) {
+              // If we're referencing a parameter, rescue the associated
+              // JParameter
+              int index = func.getParameters().indexOf(ident.getStaticRef());
+              if (index != -1) {
+                rescue(x.params.get(index));
+              }
+            }
+          }
+        }.accept(func);
+      }
+
+      return true;
+    }
+
+    @Override
     public boolean visit(JMethodCall call, Context ctx) {
       JMethod target = call.getTarget();
       // JLS 12.4.1: references to static methods rescue the enclosing class
@@ -444,6 +575,13 @@ public class Pruner {
     }
 
     @Override
+    public boolean visit(JParameterRef x, Context ctx) {
+      // rescue the parameter for future pruning purposes
+      rescue(x.getParameter());
+      return true;
+    }
+
+    @Override
     public boolean visit(JsniFieldRef x, Context ctx) {
       /*
        * SPECIAL: this could be an assignment that passes a value from
@@ -467,6 +605,18 @@ public class Pruner {
       for (int i = 0, c = params.size(); i < c; ++i) {
         JParameter param = params.get(i);
         maybeRescueJavaScriptObjectPassingIntoJava(param.getType());
+
+        /*
+         * Because we're not currently tracking methods through JSNI, we need to
+         * assume that it's not safe to prune parameters of a method referenced
+         * as such.
+         * 
+         * A better solution would be to perform basic escape analysis to ensure
+         * that the function reference never escapes, or at minimum, ensure that
+         * the method is immediately called after retrieving the method
+         * reference.
+         */
+        rescue(param);
       }
       // JsniMethodRef rescues as JMethodCall
       return visit((JMethodCall) x, ctx);
@@ -640,10 +790,11 @@ public class Pruner {
     return new Pruner(program, noSpecialTypes).execImpl();
   }
 
-  private final boolean saveCodeGenTypes;
   private final JProgram program;
   private final Set<JNode> referencedNonTypes = new HashSet<JNode>();
   private final Set<JReferenceType> referencedTypes = new HashSet<JReferenceType>();
+  private final Map<JMethod, ArrayList<JParameter>> removedMethodParamsMap = new HashMap<JMethod, ArrayList<JParameter>>();
+  private final boolean saveCodeGenTypes;
   private JMethod stringValueOfChar = null;
 
   private Pruner(JProgram program, boolean saveCodeGenTypes) {
@@ -681,6 +832,7 @@ public class Pruner {
 
       referencedTypes.clear();
       referencedNonTypes.clear();
+      removedMethodParamsMap.clear();
       madeChanges = true;
     }
     return madeChanges;

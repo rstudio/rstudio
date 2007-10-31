@@ -15,17 +15,9 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.dev.js.ast.JsCatch;
-import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsExpression;
-import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsScope;
-import com.google.gwt.dev.js.ast.JsVisitor;
-
-import java.util.Stack;
 
 /**
  * Resolves any unresolved JsNameRefs.
@@ -35,26 +27,10 @@ public class JsSymbolResolver {
   /**
    * Resolves any unresolved JsNameRefs.
    */
-  private class JsResolveSymbolsVisitor extends JsVisitor {
-
-    private final Stack<JsScope> scopeStack = new Stack<JsScope>();
+  private class JsResolveSymbolsVisitor extends JsAbstractSymbolResolver {
 
     @Override
-    public void endVisit(JsCatch x, JsContext<JsCatch> ctx) {
-      popScope();
-    }
-
-    @Override
-    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
-      popScope();
-    }
-
-    @Override
-    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
-      if (x.isResolved()) {
-        return;
-      }
-
+    protected void resolve(JsNameRef x) {
       JsName name;
       String ident = x.getIdent();
       if (x.getQualifier() == null) {
@@ -73,41 +49,6 @@ public class JsSymbolResolver {
         }
       }
       x.resolve(name);
-    }
-
-    @Override
-    public void endVisit(JsProgram x, JsContext<JsProgram> ctx) {
-      popScope();
-    }
-
-    @Override
-    public boolean visit(JsCatch x, JsContext<JsCatch> ctx) {
-      pushScope(x.getScope());
-      return true;
-    }
-
-    @Override
-    public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
-      pushScope(x.getScope());
-      return true;
-    }
-
-    @Override
-    public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {
-      pushScope(x.getScope());
-      return true;
-    }
-
-    private JsScope getScope() {
-      return scopeStack.peek();
-    }
-
-    private void popScope() {
-      scopeStack.pop();
-    }
-
-    private void pushScope(JsScope scope) {
-      scopeStack.push(scope);
     }
   }
 
