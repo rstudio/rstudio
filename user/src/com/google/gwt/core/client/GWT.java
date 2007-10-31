@@ -100,13 +100,9 @@ public final class GWT {
   }
 
   /**
-   * Gets the class name of the specified object, as would be returned by
-   * <code>o.getClass().getName()</code>.
-   * 
-   * @param o the object whose class name is being sought, or <code>null</code>
-   * @return the class name of the specified object, or <code>null</code> if
-   *         <code>o</code> is <code>null</code>
+   * @deprecated Use {@link Object#getClass()}, {@link Class#getName()}.
    */
+  @Deprecated
   public static String getTypeName(Object o) {
     return (o == null) ? null : o.getClass().getName();
   }

@@ -16,7 +16,6 @@
 
 package java.util;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.lang.Array;
 
@@ -338,11 +337,17 @@ public class Arrays {
 
       Object obj1 = a1[i];
       Object obj2 = a2[i];
-      if (obj1 == obj2 || obj1.equals(obj2)) {
+      if (obj1 == obj2) {
         continue;
       }
-      String class1 = GWT.getTypeName(obj1);
-      String class2 = GWT.getTypeName(obj2);
+      if (obj1 == null || obj2 == null) {
+        return false;
+      }
+      if (obj1.equals(obj2)) {
+        continue;
+      }
+      String class1 = obj1.getClass().getName();
+      String class2 = obj2.getClass().getName();
 
       // We have to test and see if these are two arrays of the same type,
       // then see what types of arrays they are and dispatch to the
@@ -1087,9 +1092,9 @@ public class Arrays {
         b.append(", ");
       }
       Object obj = a[i];
-
-      if (GWT.getTypeName(obj).startsWith("[")) {
-
+      if (obj == null) {
+        b.append("null");
+      } else if (obj.getClass().getName().startsWith("[")) {
         if (obj instanceof Object[]) {
           if (arraysIveSeen.contains(obj)) {
             b.append("[...]");
@@ -1116,7 +1121,7 @@ public class Arrays {
           b.append(toString((double[]) obj));
         }
 
-        assert false : "Unexpected array type: " + GWT.getTypeName(obj);
+        assert false : "Unexpected array type: " + obj.getClass().getName();
       } else {
         b.append(String.valueOf(obj));
       }

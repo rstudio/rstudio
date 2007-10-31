@@ -15,7 +15,6 @@
  */
 package com.google.gwt.junit.client.impl;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 /**
@@ -56,7 +55,7 @@ public final class ExceptionWrapper implements IsSerializable {
    * @param e the {@link Throwable} to wrap.
    */
   public ExceptionWrapper(Throwable e) {
-    typeName = GWT.getTypeName(e);
+    typeName = e.getClass().getName();
     message = e.getMessage();
     stackTrace = StackTraceWrapper.wrapStackTrace(e.getStackTrace());
     Throwable ecause = e.getCause();

@@ -15,8 +15,6 @@
  */
 package org.apache.commons.collections;
 
-import com.google.gwt.core.client.GWT;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -98,7 +96,7 @@ public abstract class TestComparator extends TestObject {
     public String getCanonicalComparatorName(Object object) {
         StringBuffer retval = new StringBuffer();
         retval.append("data/test/");
-        String colName = GWT.getTypeName(object);
+        String colName = object.getClass().getName();
         colName = colName.substring(colName.lastIndexOf(".")+1,colName.length());
         retval.append(colName);
         retval.append(".version");

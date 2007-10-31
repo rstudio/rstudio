@@ -15,11 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
-import com.google.gwt.user.client.Element;
 
 /**
  * The base class for the majority of user-interface objects. Widget adds
@@ -228,7 +227,7 @@ public class Widget extends UIObject implements EventListener {
     if (parent == null) {
       if (oldParent != null && oldParent.isAttached()) {
         onDetach();
-        assert !isAttached() : "Failure of " + GWT.getTypeName(this)
+        assert !isAttached() : "Failure of " + this.getClass().getName()
             + " to call super.onDetach()";
       }
       this.parent = null;
@@ -240,7 +239,7 @@ public class Widget extends UIObject implements EventListener {
       this.parent = parent;
       if (parent.isAttached()) {
         onAttach();
-        assert isAttached() : "Failure of " + GWT.getTypeName(this)
+        assert isAttached() : "Failure of " + this.getClass().getName()
             + " to call super.onAttach()";
       }
     }

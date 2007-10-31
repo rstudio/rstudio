@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Element;
 
 /**
@@ -44,7 +43,7 @@ public abstract class Composite extends Widget {
   public Element getElement() {
     if (widget == null) {
       throw new IllegalStateException("initWidget() was never called in "
-          + GWT.getTypeName(this));
+          + this.getClass().getName());
     }
     return super.getElement();
   }

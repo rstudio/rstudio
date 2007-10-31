@@ -15,8 +15,6 @@
  */
 package java.lang;
 
-import com.google.gwt.core.client.GWT;
-
 import java.io.PrintStream;
 
 /**
@@ -126,7 +124,7 @@ public class Throwable {
 
   @Override
   public String toString() {
-    String className = GWT.getTypeName(this);
+    String className = this.getClass().getName();
     String msg = getMessage();
     if (msg != null) {
       return className + ": " + msg;

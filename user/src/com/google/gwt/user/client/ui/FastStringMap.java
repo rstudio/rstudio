@@ -16,7 +16,6 @@
 
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 
 import java.util.AbstractMap;
@@ -277,7 +276,7 @@ class FastStringMap<T> extends AbstractMap<String, T> {
     if (key instanceof String) {
       return (String) key;
     } else {
-      throw new IllegalArgumentException(GWT.getTypeName(this)
+      throw new IllegalArgumentException(this.getClass().getName()
           + " can only have Strings as keys, not" + key);
     }
   }

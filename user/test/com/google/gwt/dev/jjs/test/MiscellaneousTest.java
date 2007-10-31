@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.test;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -115,8 +114,8 @@ public class MiscellaneousTest extends GWTTestCase {
       // thwart optimizer
       Object f1 = noOptimizeFalse() ? (Object) new PolyA()
           : (Object) new IFoo[1];
-      assertTrue(GWT.getTypeName(f1).equals(
-          "[Lcom.google.gwt.dev.jjs.test.MiscellaneousTest$IFoo;"));
+      assertEquals("[Lcom.google.gwt.dev.jjs.test.MiscellaneousTest$IFoo;",
+          f1.getClass().getName());
       assertFalse(f1 instanceof PolyA[][]);
       assertFalse(f1 instanceof IFoo[][]);
       assertFalse(f1 instanceof PolyA[]);
@@ -137,7 +136,7 @@ public class MiscellaneousTest extends GWTTestCase {
       Object a1 = noOptimizeFalse() ? (Object) new PolyA()
           : (Object) new PolyA[1];
       assertEquals("[Lcom.google.gwt.dev.jjs.test.MiscellaneousTest$PolyA;",
-          GWT.getTypeName(a1));
+          a1.getClass().getName());
       assertFalse(a1 instanceof PolyA[][]);
       assertFalse(a1 instanceof IFoo[][]);
       assertTrue(a1 instanceof PolyA[]);
@@ -157,7 +156,7 @@ public class MiscellaneousTest extends GWTTestCase {
       Object f2 = noOptimizeFalse() ? (Object) new PolyA()
           : (Object) new IFoo[1][];
       assertEquals("[[Lcom.google.gwt.dev.jjs.test.MiscellaneousTest$IFoo;",
-          GWT.getTypeName(f2));
+          f2.getClass().getName());
       assertFalse(f2 instanceof PolyA[][]);
       assertTrue(f2 instanceof IFoo[][]);
       assertFalse(f2 instanceof PolyA[]);
@@ -177,7 +176,7 @@ public class MiscellaneousTest extends GWTTestCase {
       Object a2 = noOptimizeFalse() ? (Object) new PolyA()
           : (Object) new PolyA[1][];
       assertEquals("[[Lcom.google.gwt.dev.jjs.test.MiscellaneousTest$PolyA;",
-          GWT.getTypeName(a2));
+          a2.getClass().getName());
       assertTrue(a2 instanceof PolyA[][]);
       assertTrue(a2 instanceof IFoo[][]);
       assertFalse(a2 instanceof PolyA[]);
@@ -195,14 +194,14 @@ public class MiscellaneousTest extends GWTTestCase {
 
   public void testArrays() {
     int[] c = new int[] {1, 2};
-    assertEquals("[I", GWT.getTypeName(c));
+    assertEquals("[I", c.getClass().getName());
     int[][] d = new int[][] { {1, 2}, {3, 4}};
-    assertEquals("[[I", GWT.getTypeName(d));
-    assertEquals("[I", GWT.getTypeName(d[1]));
+    assertEquals("[[I", d.getClass().getName());
+    assertEquals("[I", d[1].getClass().getName());
     int[][][] e = new int[][][] { { {1, 2}, {3, 4}}, { {5, 6}, {7, 8}}};
-    assertEquals("[[[I", GWT.getTypeName(e));
-    assertEquals("[[I", GWT.getTypeName(e[1]));
-    assertEquals("[I", GWT.getTypeName(e[1][1]));
+    assertEquals("[[[I", e.getClass().getName());
+    assertEquals("[[I", e[1].getClass().getName());
+    assertEquals("[I", e[1][1].getClass().getName());
     assertEquals(2, c[1]);
     assertEquals(3, d[1][0]);
     assertEquals(8, e[1][1][1]);

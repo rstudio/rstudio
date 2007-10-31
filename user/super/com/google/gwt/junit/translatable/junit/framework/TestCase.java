@@ -15,8 +15,6 @@
  */
 package junit.framework;
 
-import com.google.gwt.core.client.GWT;
-
 /**
  * Translatable version of JUnit's <code>TestCase</code>.
  */
@@ -50,7 +48,7 @@ public class TestCase extends Assert implements Test {
   }
 
   public String toString() {
-    return getName() + "(" + GWT.getTypeName(this) + ")";
+    return getName() + "(" + this.getClass().getName() + ")";
   }
 
   /**

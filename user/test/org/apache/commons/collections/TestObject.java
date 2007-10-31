@@ -15,7 +15,6 @@
  */
 package org.apache.commons.collections;
   
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.emultest.java.util.EmulTestBase;
 
 /**
@@ -85,7 +84,7 @@ public abstract class TestObject extends EmulTestBase {
     public String getCanonicalEmptyCollectionName(Object object) {
         StringBuffer retval = new StringBuffer();
         retval.append("data/test/");
-        String colName = GWT.getTypeName(object);
+        String colName = object.getClass().getName();
         
         colName = colName.substring(colName.lastIndexOf(".")+1,colName.length());
         retval.append(colName);
@@ -98,7 +97,7 @@ public abstract class TestObject extends EmulTestBase {
     public String getCanonicalFullCollectionName(Object object) {
         StringBuffer retval = new StringBuffer();
         retval.append("data/test/");
-        String colName = GWT.getTypeName(object);
+        String colName = object.getClass().getName();
         colName = colName.substring(colName.lastIndexOf(".")+1,colName.length());
         retval.append(colName);
         retval.append(".fullCollection.version");

@@ -15,10 +15,6 @@
  */
 package org.apache.commons.collections;
 
-import com.google.gwt.core.client.GWT;
-
-
-
 /**
 * Class LocalTestNode
 *
@@ -102,8 +98,8 @@ class LocalTestNode implements Comparable {
         }
 
          
-        if(!(GWT.getTypeName(o).equals(GWT.getTypeName(o)))){
-        	return false;
+        if(!(getClass().getName().equals(o.getClass().getName()))){
+            return false;
         }
         LocalTestNode node = (LocalTestNode) o;
 

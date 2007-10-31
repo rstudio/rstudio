@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.rpc.impl;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.rpc.SerializationException;
 
@@ -81,7 +80,7 @@ public final class ClientSerializationStreamWriter extends
    * @param serializer the {@link Serializer} to use
    * @param moduleBaseURL the location of the module
    * @param serializationPolicyStrongName the strong name of serialization
-   *            policy
+   *          policy
    */
   public ClientSerializationStreamWriter(Serializer serializer,
       String moduleBaseURL, String serializationPolicyStrongName) {
@@ -148,7 +147,7 @@ public final class ClientSerializationStreamWriter extends
 
   @Override
   protected String getObjectTypeSignature(Object o) {
-    String typeName = GWT.getTypeName(o);
+    String typeName = o.getClass().getName();
     String serializationSignature = serializer.getSerializationSignature(typeName);
     if (serializationSignature != null) {
       typeName += "/" + serializationSignature;

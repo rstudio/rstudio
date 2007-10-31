@@ -196,7 +196,7 @@ public class CollectionsTest extends GWTTestCase {
 
     service.getArraysAsList(expected, new AsyncCallback() {
       public void onFailure(Throwable caught) {
-        assertTrue(GWT.getTypeName(caught)
+        assertTrue(caught.getClass().getName()
             + " should have been an InvocationException",
             caught instanceof InvocationException);
         finishTest();

@@ -15,8 +15,6 @@
  */
 package java.lang;
 
-import com.google.gwt.core.client.GWT;
-
 import java.io.PrintStream;
 
 /**
@@ -38,12 +36,15 @@ public final class System {
    */
   public static final PrintStream out = new PrintStream(null);
 
-  public static void arraycopy(Object src, int srcOfs, Object dest, int destOfs, int len) {
+  public static void arraycopy(Object src, int srcOfs, Object dest,
+      int destOfs, int len) {
     if (src == null || dest == null) {
       throw new NullPointerException();
     }
-    String srcTypeName = GWT.getTypeName(src); 
-    String destTypeName = GWT.getTypeName(dest);
+    
+    // TODO: use Class objects when Class.getComponentType() is supported.
+    String srcTypeName = src.getClass().getName();
+    String destTypeName = dest.getClass().getName();
     if (srcTypeName.charAt(0) != '[' || destTypeName.charAt(0) != '[') {
       throw new ArrayStoreException("Must be array types");
     }
@@ -52,16 +53,17 @@ public final class System {
     }
     int srclen = getArrayLength(src);
     int destlen = getArrayLength(dest);
-    if (srcOfs < 0 || destOfs < 0 || len < 0 || srcOfs + len > srclen || destOfs + len > destlen) {
+    if (srcOfs < 0 || destOfs < 0 || len < 0 || srcOfs + len > srclen
+        || destOfs + len > destlen) {
       throw new IndexOutOfBoundsException();
     }
     /*
-     * If the arrays are not references or if they are exactly the same type,
-     * we can copy them in native code for speed.  Otherwise, we have to copy
-     * them in Java so we get appropriate errors.
-     */ 
-    if ((srcTypeName.charAt(1) == 'L' || srcTypeName.charAt(1) == '[') &&
-        !srcTypeName.equals(destTypeName)) {
+     * If the arrays are not references or if they are exactly the same type, we
+     * can copy them in native code for speed. Otherwise, we have to copy them
+     * in Java so we get appropriate errors.
+     */
+    if ((srcTypeName.charAt(1) == 'L' || srcTypeName.charAt(1) == '[')
+        && !srcTypeName.equals(destTypeName)) {
       // copy in Java to make sure we get ArrayStoreExceptions if the values
       // aren't compatible
       Object[] srcArray = (Object[]) src;
@@ -70,11 +72,11 @@ public final class System {
         // TODO(jat): how does backward copies handle failures in the middle?
         // copy backwards to avoid destructive copies
         srcOfs += len;
-        for (int destEnd = destOfs + len; destEnd-- > destOfs; ) {
+        for (int destEnd = destOfs + len; destEnd-- > destOfs;) {
           destArray[destEnd] = srcArray[--srcOfs];
         }
       } else {
-        for (int destEnd = destOfs + len; destOfs < destEnd; ) {
+        for (int destEnd = destOfs + len; destOfs < destEnd;) {
           destArray[destOfs++] = srcArray[srcOfs++];
         }
       }
