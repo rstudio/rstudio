@@ -20,14 +20,14 @@ import com.google.gwt.junit.client.GWTTestCase;
 
 import junit.framework.Assert;
 
-//CHECKSTYLE_OFF
+// CHECKSTYLE_OFF
 
 /**
- * TODO: doc me 
+ * TODO: doc me
  */
 public class CompilerTest extends GWTTestCase {
 
-  private abstract static  class Apple implements Fruit {
+  private abstract static class Apple implements Fruit {
   }
 
   private static interface Fruit {
@@ -112,7 +112,7 @@ public class CompilerTest extends GWTTestCase {
 
   private static class SideEffectCauser7Super {
     public static boolean SHOULD_BE_TRUE = false;
-    
+
     static {
       SHOULD_BE_TRUE = true;
     }
@@ -301,7 +301,7 @@ public class CompilerTest extends GWTTestCase {
 
     boolean c = true;
     int val = 0;
-    for ( val = 1; c = false; ++val ) {
+    for (val = 1; c = false; ++val) {
     }
     assertFalse(c);
 
@@ -309,12 +309,12 @@ public class CompilerTest extends GWTTestCase {
     while (d = false) {
     }
     assertFalse(d);
-    
+
     boolean e = true;
     if (true | (e = false)) {
     }
     assertFalse(e);
-   }
+  }
 
   public void testDeadTypes() {
     if (false) {
@@ -584,20 +584,20 @@ public class CompilerTest extends GWTTestCase {
   public void testNotOptimizations() {
     assertFalse(!true);
     assertTrue(!false);
-    
+
     assertTrue(!(noOptimizeTrue() == noOptimizeFalse()));
     assertFalse(!(noOptimizeTrue() != noOptimizeFalse()));
-    
+
     assertFalse(!(3 < 4));
     assertFalse(!(3 <= 4));
     assertTrue(!(3 > 4));
     assertTrue(!(3 >= 4));
-    
+
     assertTrue(!(4 < 3));
     assertTrue(!(4 <= 3));
     assertFalse(!(4 > 3));
     assertFalse(!(4 >= 3));
-    
+
     assertTrue(!!noOptimizeTrue());
     assertFalse(!!noOptimizeFalse());
   }
@@ -686,7 +686,7 @@ public class CompilerTest extends GWTTestCase {
     assertTrue("Hello, AJAX".equals("Hello, AJAX"));
     assertTrue("Hello, AJAX".equalsIgnoreCase("HELLO, ajax"));
     assertEquals("hello, ajax", "Hello, AJAX".toLowerCase());
-    
+
     assertEquals("foobar", "foo" + barShouldInline());
     assertEquals("1bar", 1 + barShouldInline());
     assertEquals("fbar", 'f' + barShouldInline());
@@ -707,6 +707,110 @@ public class CompilerTest extends GWTTestCase {
         int test; // used to cause an ICE
         break;
     }
+  }
+
+  /**
+   * Tests cases where the compiler will convert to a simple if or block.
+   */
+  public void testSwitchStatementConversions() {
+    int i = 1;
+
+    switch (i) {
+      case 1:
+        i = 2;
+    }
+    assertEquals(2, i);
+
+    switch (i) {
+      case 1:
+        i = 3;
+    }
+    assertEquals(2, i);
+
+    switch (i) {
+      default:
+        i = 3;
+    }
+    assertEquals(3, i);
+  }
+
+  public void testSwitchStatementFallthroughs() {
+    int i = 1;
+    switch (i) {
+      case 1:
+        i = 2;
+      case 2:
+        break;
+      case 3:
+        fail("Shouldn't get here");
+    }
+    assertEquals(2, i);
+
+    switch (i) {
+      case 1:
+        break;
+      case 2:
+        i = 3;
+        break;
+      case 3:
+        break;
+      case 4:
+        fail("Shouldn't get here");
+        break;
+    }
+    assertEquals(3, i);
+  }
+
+  public void testSwitchStatementWithUsefulDefault() {
+    switch (1) {
+      case 1:
+      case 2:
+      case 3: {
+        break;
+      }
+      case 4:
+      case 5:
+      case 6:
+      default:
+        fail("Shouldn't get here");
+        break;
+    }
+  }
+
+  public void testSwitchStatementWithUselessCases() {
+    switch (1) {
+      case 1:
+      case 2:
+      case 3: {
+        break;
+      }
+      case 4:
+      case 5:
+      case 6:
+      default:
+        break;
+    }
+  }
+
+  public void testSwitchStatementWontRemoveExpression() {
+    class Foo {
+      boolean setFlag;
+
+      int setFlag() {
+        setFlag = true;
+        return 3;
+      }
+    }
+
+    Foo foo = new Foo();
+    switch (foo.setFlag()) {
+      case 3:
+        break;
+    }
+
+    // Make sure that compiler didn't optimize away the switch statement's
+    // expression
+    assertTrue(foo.setFlag);
   }
 
   public void testUnaryPlus() {

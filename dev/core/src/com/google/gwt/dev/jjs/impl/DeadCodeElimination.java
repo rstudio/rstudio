@@ -21,6 +21,7 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JBreakStatement;
+import com.google.gwt.dev.jjs.ast.JCaseStatement;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
@@ -42,6 +43,7 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
+import com.google.gwt.dev.jjs.ast.JSwitchStatement;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
@@ -376,6 +378,17 @@ public class DeadCodeElimination {
     }
 
     /**
+     * Optimize switch statements.
+     */
+    public void endVisit(JSwitchStatement x, Context ctx) {
+      if (hasNoDefaultCase(x)) {
+        removeEmptyCases(x);
+      }
+      removeDoubleBreaks(x);
+      tryRemoveSwitch(x, ctx);
+    }
+
+    /**
      * 1) Remove catch blocks whose exception type is not instantiable. 2) Prune
      * try statements with no body. 3) Hoist up try statements with no catches
      * and an empty finally.
@@ -436,6 +449,29 @@ public class DeadCodeElimination {
       }
     }
 
+    private boolean hasNoDefaultCase(JSwitchStatement x) {
+      JBlock body = x.getBody();
+      boolean inDefault = false;
+      for (JStatement statement : body.statements) {
+        if (statement instanceof JCaseStatement) {
+          JCaseStatement caseStmt = (JCaseStatement) statement;
+          if (caseStmt.getExpr() == null) {
+            inDefault = true;
+          }
+        } else if (isUnconditionalBreak(statement)) {
+          inDefault = false;
+        } else {
+          // We have some code to execute other than a break.
+          if (inDefault) {
+            // We have a default case with real code.
+            return false;
+          }
+        }
+      }
+      // We found no default case that wasn't empty.
+      return true;
+    }
+
     /**
      * TODO: if the AST were normalized, we wouldn't need this.
      */
@@ -446,8 +482,74 @@ public class DeadCodeElimination {
       return (stmt instanceof JBlock && ((JBlock) stmt).statements.isEmpty());
     }
 
+    private boolean isUnconditionalBreak(JStatement statement) {
+      if (statement instanceof JBreakStatement) {
+        return true;
+      } else if (statement instanceof JBlock) {
+        JBlock block = (JBlock) statement;
+        List<JStatement> blockStmts = block.statements;
+        return blockStmts.size() > 0 && isUnconditionalBreak(blockStmts.get(0));
+      } else {
+        return false;
+      }
+    }
+
     private Class<?> mapType(JType type) {
       return typeClassMap.get(type);
+    }
+
+    /**
+     * Removes any break statements that appear one after another.
+     */
+    private void removeDoubleBreaks(JSwitchStatement x) {
+      JBlock body = x.getBody();
+      boolean lastWasBreak = true;
+      for (Iterator<JStatement> it = body.statements.iterator(); it.hasNext();) {
+        JStatement statement = it.next();
+        boolean isBreak = isUnconditionalBreak(statement);
+        if (isBreak && lastWasBreak) {
+          it.remove();
+        }
+        lastWasBreak = isBreak;
+      }
+
+      // Remove a trailing break statement from a case block
+      if (lastWasBreak && body.statements.size() > 0) {
+        body.statements.remove(body.statements.size() - 1);
+      }
+    }
+
+    /**
+     * A switch with no default case can have its empty cases pruned.
+     */
+    private void removeEmptyCases(JSwitchStatement x) {
+      JBlock body = x.getBody();
+      List<JStatement> noOpCaseStatements = new ArrayList<JStatement>();
+      List<JStatement> potentialNoOpCaseStatements = new ArrayList<JStatement>();
+      /*
+       * A case statement has no effect if there is no code between it and
+       * either an unconditional break or the end of the switch.
+       */
+      for (JStatement statement : body.statements) {
+        if (statement instanceof JCaseStatement) {
+          potentialNoOpCaseStatements.add(statement);
+        } else if (isUnconditionalBreak(statement)) {
+          // If we have any potential no-ops, they now become real no-ops.
+          noOpCaseStatements.addAll(potentialNoOpCaseStatements);
+          potentialNoOpCaseStatements.clear();
+        } else {
+          // Any other kind of statement makes these case statements are useful.
+          potentialNoOpCaseStatements.clear();
+        }
+      }
+      // None of the remaining case statements have any effect
+      noOpCaseStatements.addAll(potentialNoOpCaseStatements);
+
+      if (noOpCaseStatements.size() > 0) {
+        for (JStatement statement : noOpCaseStatements) {
+          body.statements.remove(statement);
+        }
+      }
     }
 
     private void removeMe(JStatement stmt, Context ctx) {
@@ -520,6 +622,61 @@ public class DeadCodeElimination {
       }
     }
 
+    private void tryRemoveSwitch(JSwitchStatement x, Context ctx) {
+      JBlock body = x.getBody();
+      if (body.statements.size() == 0) {
+        // Empty switch; just run the switch condition.
+        ctx.replaceMe(x.getExpr().makeStatement());
+      } else if (body.statements.size() == 2) {
+        /*
+         * If there are only two statements, we know it's a case statement and
+         * something with an effect.
+         * 
+         * TODO: make this more sophisticated; what we should really care about
+         * is how many case statements it contains, not how many statements:
+         * 
+         * switch(i) { default: a(); b(); c(); }
+         * 
+         * becomes { a(); b(); c(); }
+         * 
+         * switch(i) { case 1: a(); b(); c(); }
+         * 
+         * becomes if (i == 1) { a(); b(); c(); }
+         * 
+         * switch(i) { case 1: a(); b(); break; default: c(); d(); }
+         * 
+         * becomes if (i == 1) { a(); b(); } else { c(); d(); }
+         */
+        JCaseStatement caseStatement = (JCaseStatement) body.statements.get(0);
+        JStatement statement = body.statements.get(1);
+
+        FindBreakContinueStatementsVisitor visitor = new FindBreakContinueStatementsVisitor();
+        visitor.accept(statement);
+        if (visitor.hasBreakContinueStatements()) {
+          // Cannot optimize.
+          return;
+        }
+
+        if (caseStatement.getExpr() != null) {
+          // Create an if statement equivalent to the single-case switch.
+          JBinaryOperation compareOperation = new JBinaryOperation(program,
+              x.getSourceInfo(), program.getTypePrimitiveBoolean(),
+              JBinaryOperator.EQ, x.getExpr(), caseStatement.getExpr());
+          JBlock block = new JBlock(program, x.getSourceInfo());
+          block.statements.add(statement);
+          JIfStatement ifStatement = new JIfStatement(program,
+              x.getSourceInfo(), compareOperation, block, null);
+          ctx.replaceMe(ifStatement);
+        } else {
+          // All we have is a default case; convert to a JBlock.
+          JBlock block = new JBlock(program, x.getSourceInfo());
+          block.statements.add(x.getExpr().makeStatement());
+          block.statements.add(statement);
+          ctx.replaceMe(block);
+        }
+      }
+    }
+
     private Object tryTranslateLiteral(JExpression maybeLit, Class<?> type) {
       if (!(maybeLit instanceof JValueLiteral)) {
         return null;
@@ -556,6 +713,10 @@ public class DeadCodeElimination {
   /**
    * Examines code to find out whether it contains any break or continue
    * statements.
+   * 
+   * TODO: We could be more sophisticated with this. A nested while loop with an
+   * unlabeled break should not cause this visitor to return false. Nor should a
+   * labeled break break to another context.
    */
   public static class FindBreakContinueStatementsVisitor extends JVisitor {
     private boolean hasBreakContinueStatements = false;
