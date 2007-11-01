@@ -46,7 +46,7 @@ import java.util.TreeMap;
  * {@link com.google.gwt.dev.js.ast.JsProgram#getGlobalScope()}), but
  * parentless scopes are useful for managing names that are always accessed with
  * a qualifier and could therefore never be confused with the global scope
- * heirarchy.
+ * hierarchy.
  */
 public class JsScope {
 

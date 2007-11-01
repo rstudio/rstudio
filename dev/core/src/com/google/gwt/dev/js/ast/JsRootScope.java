@@ -42,13 +42,12 @@ public final class JsRootScope extends JsScope {
   }
 
   private void ctorAddKnownGlobalSymbols() {
-    // HACK: debugger is modelled as an ident even though it's really a keyword
     String[] commonBuiltins = new String[] {
         "ActiveXObject", "Array", "Boolean", "Date", "Debug", "Enumerator",
         "Error", "Function", "Global", "Image", "Math", "Number", "Object",
         "RegExp", "String", "VBArray", "window", "document", "event",
         "arguments", "call", "toString", "$wnd", "$doc", "$moduleName",
-        "$moduleBase", "debugger", "undefined"};
+        "$moduleBase", "undefined", "getClass"};
 
     for (int i = 0; i < commonBuiltins.length; i++) {
       String ident = commonBuiltins[i];
