@@ -28,6 +28,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.Map;
 
 /**
  * For internal use only. Used for server call serialization. This class is
@@ -35,6 +37,187 @@ import java.util.ArrayList;
  */
 public final class ServerSerializationStreamReader extends
     AbstractSerializationStreamReader {
+
+  /**
+   * Enumeration used to provided typed instance readers.
+   */
+  private enum ValueReader {
+    BOOLEAN {
+      @Override
+      Object readValue(ServerSerializationStreamReader stream) {
+        return stream.readBoolean();
+      }
+    },
+    BYTE {
+      @Override
+      Object readValue(ServerSerializationStreamReader stream) {
+        return stream.readByte();
+      }
+    },
+    CHAR {
+      @Override
+      Object readValue(ServerSerializationStreamReader stream) {
+        return stream.readChar();
+      }
+    },
+    DOUBLE {
+      @Override
+      Object readValue(ServerSerializationStreamReader stream) {
+        return stream.readDouble();
+      }
+    },
+    FLOAT {
+      @Override
+      Object readValue(ServerSerializationStreamReader stream) {
+        return stream.readFloat();
+      }
+    },
+    INT {
+      @Override
+      Object readValue(ServerSerializationStreamReader stream) {
+        return stream.readInt();
+      }
+    },
+    LONG {
+      @Override
+      Object readValue(ServerSerializationStreamReader stream) {
+        return stream.readLong();
+      }
+    },
+    OBJECT {
+      @Override
+      Object readValue(ServerSerializationStreamReader stream)
+          throws SerializationException {
+        return stream.readObject();
+      }
+    },
+    SHORT {
+      @Override
+      Object readValue(ServerSerializationStreamReader stream) {
+        return stream.readShort();
+      }
+    },
+    STRING {
+      @Override
+      Object readValue(ServerSerializationStreamReader stream) {
+        return stream.readString();
+      }
+    };
+
+    abstract Object readValue(ServerSerializationStreamReader stream)
+        throws SerializationException;
+  }
+
+  /**
+   * Enumeration used to provided typed instance readers for vectors.
+   */
+  private enum VectorReader {
+    BOOLEAN_VECTOR {
+      @Override
+      void read(ServerSerializationStreamReader stream, Object instance) {
+        boolean[] vector = (boolean[]) instance;
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          vector[i] = stream.readBoolean();
+        }
+      }
+    },
+    BYTE_VECTOR {
+      @Override
+      void read(ServerSerializationStreamReader stream, Object instance) {
+        byte[] vector = (byte[]) instance;
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          vector[i] = stream.readByte();
+        }
+      }
+    },
+    CHAR_VECTOR {
+      @Override
+      void read(ServerSerializationStreamReader stream, Object instance) {
+        char[] vector = (char[]) instance;
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          vector[i] = stream.readChar();
+        }
+      }
+    },
+    DOUBLE_VECTOR {
+      @Override
+      void read(ServerSerializationStreamReader stream, Object instance) {
+        double[] vector = (double[]) instance;
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          vector[i] = stream.readDouble();
+        }
+      }
+    },
+    FLOAT_VECTOR {
+      @Override
+      void read(ServerSerializationStreamReader stream, Object instance) {
+        float[] vector = (float[]) instance;
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          vector[i] = stream.readFloat();
+        }
+      }
+    },
+
+    INT_VECTOR {
+      @Override
+      void read(ServerSerializationStreamReader stream, Object instance) {
+        int[] vector = (int[]) instance;
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          vector[i] = stream.readInt();
+        }
+      }
+    },
+    LONG_VECTOR {
+      @Override
+      void read(ServerSerializationStreamReader stream, Object instance) {
+        long[] vector = (long[]) instance;
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          vector[i] = stream.readLong();
+        }
+      }
+    },
+    OBJECT_VECTOR {
+      @Override
+      void read(ServerSerializationStreamReader stream, Object instance)
+          throws SerializationException {
+        Object[] vector = (Object[]) instance;
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          vector[i] = stream.readObject();
+        }
+      }
+    },
+    SHORT_VECTOR {
+      @Override
+      void read(ServerSerializationStreamReader stream, Object instance) {
+        short[] vector = (short[]) instance;
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          vector[i] = stream.readShort();
+        }
+      }
+    },
+    STRING_VECTOR {
+      @Override
+      void read(ServerSerializationStreamReader stream, Object instance) {
+        String[] vector = (String[]) instance;
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          vector[i] = stream.readString();
+        }
+      }
+    };
+
+    abstract void read(ServerSerializationStreamReader stream, Object instance)
+        throws SerializationException;
+  }
+
+  /**
+   * Map of {@link Class} objects to {@link ValueReader}s.
+   */
+  private static final Map<Class<?>, ValueReader> CLASS_TO_VALUE_READER = new IdentityHashMap<Class<?>, ValueReader>();
+
+  /**
+   * Map of {@link Class} objects to {@link VectorReader}s.
+   */
+  private static final Map<Class<?>, VectorReader> CLASS_TO_VECTOR_READER = new IdentityHashMap<Class<?>, VectorReader>();
 
   private final ClassLoader classLoader;
 
@@ -47,6 +230,29 @@ public final class ServerSerializationStreamReader extends
   private int tokenListIndex;
 
   private final SerializationPolicyProvider serializationPolicyProvider;
+  {
+    CLASS_TO_VECTOR_READER.put(boolean[].class, VectorReader.BOOLEAN_VECTOR);
+    CLASS_TO_VECTOR_READER.put(byte[].class, VectorReader.BYTE_VECTOR);
+    CLASS_TO_VECTOR_READER.put(char[].class, VectorReader.CHAR_VECTOR);
+    CLASS_TO_VECTOR_READER.put(double[].class, VectorReader.DOUBLE_VECTOR);
+    CLASS_TO_VECTOR_READER.put(float[].class, VectorReader.FLOAT_VECTOR);
+    CLASS_TO_VECTOR_READER.put(int[].class, VectorReader.INT_VECTOR);
+    CLASS_TO_VECTOR_READER.put(long[].class, VectorReader.LONG_VECTOR);
+    CLASS_TO_VECTOR_READER.put(Object[].class, VectorReader.OBJECT_VECTOR);
+    CLASS_TO_VECTOR_READER.put(short[].class, VectorReader.SHORT_VECTOR);
+    CLASS_TO_VECTOR_READER.put(String[].class, VectorReader.STRING_VECTOR);
+
+    CLASS_TO_VALUE_READER.put(boolean.class, ValueReader.BOOLEAN);
+    CLASS_TO_VALUE_READER.put(byte.class, ValueReader.BYTE);
+    CLASS_TO_VALUE_READER.put(char.class, ValueReader.CHAR);
+    CLASS_TO_VALUE_READER.put(double.class, ValueReader.DOUBLE);
+    CLASS_TO_VALUE_READER.put(float.class, ValueReader.FLOAT);
+    CLASS_TO_VALUE_READER.put(int.class, ValueReader.INT);
+    CLASS_TO_VALUE_READER.put(long.class, ValueReader.LONG);
+    CLASS_TO_VALUE_READER.put(Object.class, ValueReader.OBJECT);
+    CLASS_TO_VALUE_READER.put(short.class, ValueReader.SHORT);
+    CLASS_TO_VALUE_READER.put(String.class, ValueReader.STRING);
+  }
 
   public ServerSerializationStreamReader(ClassLoader classLoader,
       SerializationPolicyProvider serializationPolicyProvider) {
@@ -55,27 +261,13 @@ public final class ServerSerializationStreamReader extends
   }
 
   public Object deserializeValue(Class<?> type) throws SerializationException {
-    if (type == boolean.class) {
-      return readBoolean();
-    } else if (type == byte.class) {
-      return readByte();
-    } else if (type == char.class) {
-      return readChar();
-    } else if (type == double.class) {
-      return readDouble();
-    } else if (type == float.class) {
-      return readFloat();
-    } else if (type == int.class) {
-      return readInt();
-    } else if (type == long.class) {
-      return readLong();
-    } else if (type == short.class) {
-      return readShort();
-    } else if (type == String.class) {
-      return readString();
+    ValueReader valueReader = CLASS_TO_VALUE_READER.get(type);
+    if (valueReader != null) {
+      return valueReader.readValue(this);
+    } else {
+      // Arrays of primitive or reference types need to go through readObject.
+      return ValueReader.OBJECT.readValue(this);
     }
-
-    return readObject();
   }
 
   public SerializationPolicy getSerializationPolicy() {
@@ -162,8 +354,8 @@ public final class ServerSerializationStreamReader extends
     SerializedInstanceReference serializedInstRef = SerializabilityUtil.decodeSerializedInstanceReference(typeSignature);
 
     try {
-      Class<?> instanceClass = Class.forName(serializedInstRef.getName(), false,
-          classLoader);
+      Class<?> instanceClass = Class.forName(serializedInstRef.getName(),
+          false, classLoader);
 
       assert (serializationPolicy != null);
 
@@ -212,45 +404,30 @@ public final class ServerSerializationStreamReader extends
     return stringTable[index - 1];
   }
 
-  private void deserializeImpl(Class<?> customSerializer, Class<?> instanceClass,
-      Object instance) throws NoSuchMethodException, IllegalArgumentException,
-      IllegalAccessException, InvocationTargetException,
-      SerializationException, ClassNotFoundException {
-    if (customSerializer != null) {
-      deserializeWithCustomFieldDeserializer(customSerializer, instanceClass,
-          instance);
+  /**
+   * Deserialize an instance that is an array. Will default to deserializing as
+   * an Object vector if the instance is not a primitive vector.
+   * 
+   * @param instanceClass
+   * @param instance
+   * @throws SerializationException
+   */
+  private void deserializeArray(Class<?> instanceClass, Object instance)
+      throws SerializationException {
+    assert (instanceClass.isArray());
+
+    VectorReader instanceReader = CLASS_TO_VECTOR_READER.get(instanceClass);
+    if (instanceReader != null) {
+      instanceReader.read(this, instance);
     } else {
-      deserializeWithDefaultFieldDeserializer(instanceClass, instance);
+      VectorReader.OBJECT_VECTOR.read(this, instance);
     }
   }
 
-  private void deserializeStringTable() {
-    int typeNameCount = readInt();
-    stringTable = new String[typeNameCount];
-    for (int typeNameIndex = 0; typeNameIndex < typeNameCount; ++typeNameIndex) {
-      stringTable[typeNameIndex] = extract();
-    }
-  }
-
-  private void deserializeWithCustomFieldDeserializer(Class<?> customSerializer,
-      Class<?> instanceClass, Object instance) throws ClassNotFoundException,
-      NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-    if (instanceClass.isArray()) {
-      Class<?> componentType = instanceClass.getComponentType();
-      if (!componentType.isPrimitive()) {
-        instanceClass = Class.forName("[Ljava.lang.Object;");
-      }
-    }
-    Method deserialize = customSerializer.getMethod("deserialize",
-        SerializationStreamReader.class, instanceClass);
-    deserialize.invoke(null, this, instance);
-  }
-
-  private void deserializeWithDefaultFieldDeserializer(Class<?> instanceClass,
-      Object instance) throws SerializationException, IllegalAccessException,
+  private void deserializeClass(Class<?> instanceClass, Object instance)
+      throws SerializationException, IllegalAccessException,
       NoSuchMethodException, InvocationTargetException, ClassNotFoundException {
-    Field[] declFields = instanceClass.getDeclaredFields();
-    Field[] serializableFields = SerializabilityUtil.applyFieldSerializationPolicy(declFields);
+    Field[] serializableFields = SerializabilityUtil.applyFieldSerializationPolicy(instanceClass);
 
     for (Field declField : serializableFields) {
       assert (declField != null);
@@ -278,6 +455,40 @@ public final class ServerSerializationStreamReader extends
       deserializeImpl(SerializabilityUtil.hasCustomFieldSerializer(superClass),
           superClass, instance);
     }
+  }
+
+  private void deserializeImpl(Class<?> customSerializer,
+      Class<?> instanceClass, Object instance) throws NoSuchMethodException,
+      IllegalArgumentException, IllegalAccessException,
+      InvocationTargetException, SerializationException, ClassNotFoundException {
+
+    if (customSerializer != null) {
+      deserializeWithCustomFieldDeserializer(customSerializer, instanceClass,
+          instance);
+    } else if (instanceClass.isArray()) {
+      deserializeArray(instanceClass, instance);
+    } else {
+      deserializeClass(instanceClass, instance);
+    }
+  }
+
+  private void deserializeStringTable() {
+    int typeNameCount = readInt();
+    stringTable = new String[typeNameCount];
+    for (int typeNameIndex = 0; typeNameIndex < typeNameCount; ++typeNameIndex) {
+      stringTable[typeNameIndex] = extract();
+    }
+  }
+
+  private void deserializeWithCustomFieldDeserializer(
+      Class<?> customSerializer, Class<?> instanceClass, Object instance)
+      throws NoSuchMethodException, IllegalAccessException,
+      InvocationTargetException {
+    assert (!instanceClass.isArray());
+
+    Method deserialize = customSerializer.getMethod("deserialize",
+        SerializationStreamReader.class, instanceClass);
+    deserialize.invoke(null, this, instance);
   }
 
   private String extract() {

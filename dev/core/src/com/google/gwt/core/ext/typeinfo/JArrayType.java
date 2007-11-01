@@ -143,7 +143,7 @@ public class JArrayType extends JClassType {
   @Override
   public JField[] getFields() {
     // TODO length
-    return null;
+    return TypeOracle.NO_JFIELDS;
   }
 
   @Override

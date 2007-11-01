@@ -58,7 +58,10 @@ class ClassSourceFileComposer implements SourceWriter {
           + targetClassShortName);
     }
     // Inlined header to only have one method with a huge number of methods.
-    println("package " + targetPackageName + ";");
+    if (targetPackageName.length() > 0) {
+      println("package " + targetPackageName + ";");
+    }
+    
     println();
     if (imports != null && imports.length > 0) {
       for (int i = 0, n = imports.length; i < n; ++i) {

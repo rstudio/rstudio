@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
-import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jdt.TypeOracleBuilder;
@@ -37,8 +36,6 @@ import java.util.TreeSet;
 import java.util.zip.CRC32;
 
 final class SerializableTypeOracleImpl implements SerializableTypeOracle {
-
-  private static final String DEFAULT_BUILTIN_CUSTOM_SERIALIZER_PACKAGE_NAME = "com.google.gwt.user.client.rpc.core.java.lang";
 
   private static final Comparator<JField> FIELD_COMPARATOR = new Comparator<JField>() {
     public int compare(JField f1, JField f2) {
@@ -95,18 +92,20 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
       return customSerializer.getQualifiedSourceName();
     }
 
-    JClassType classType = type.isClassOrInterface();
-    if (classType != null) {
-      String[] name = Shared.synthesizeTopLevelClassName(classType,
-          GENERATED_FIELD_SERIALIZER_SUFFIX);
-      if (name[0].length() > 0) {
-        return name[0] + "." + name[1];
-      } else {
-        return name[1];
+    assert (type.isClassOrInterface() != null || type.isArray() != null);
+    JClassType classType = (JClassType) type;
+    String[] name = Shared.synthesizeTopLevelClassName(classType,
+        GENERATED_FIELD_SERIALIZER_SUFFIX);
+    if (name[0].length() > 0) {
+      String serializerName = name[0] + "." + name[1];
+      if (name[0].startsWith("java.")) {
+        serializerName = "com.google.gwt.user.client.rpc.core."
+            + serializerName;
       }
+
+      return serializerName;
     } else {
-      // TODO(mmendez): is this branch ever needed; if not, tighten param type
-      return type.getQualifiedSourceName() + GENERATED_FIELD_SERIALIZER_SUFFIX;
+      return name[1];
     }
   }
 
@@ -114,8 +113,11 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
    * Returns the fields which qualify for serialization.
    */
   public JField[] getSerializableFields(JClassType classType) {
+    assert (classType != null);
+
     List<JField> fields = new ArrayList<JField>();
     JField[] declFields = classType.getFields();
+    assert (declFields != null);
     for (JField field : declFields) {
       // TODO(mmendez): this is shared with the serializable type oracle
       // builder, join with that
@@ -181,33 +183,8 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
   }
 
   public JClassType hasCustomFieldSerializer(JType type) {
-    JClassType customSerializer = SerializableTypeOracleBuilder.findCustomFieldSerializer(
-        typeOracle, type);
-    if (customSerializer != null) {
-      return customSerializer;
-    }
-
-    if (!isSerializable(type)) {
-      return null;
-    }
-
-    JArrayType arrayType = type.isArray();
-    if (arrayType == null) {
-      return null;
-    }
-
-    JType componentType = arrayType.getComponentType();
-    JPrimitiveType primitiveType = componentType.isPrimitive();
-    String qualifiedSerializerName = DEFAULT_BUILTIN_CUSTOM_SERIALIZER_PACKAGE_NAME
-        + ".";
-    if (primitiveType != null) {
-      qualifiedSerializerName += primitiveType.getSimpleSourceName();
-    } else {
-      qualifiedSerializerName += typeOracle.getJavaLangObject().getSimpleSourceName();
-    }
-    qualifiedSerializerName += "_Array_CustomFieldSerializer";
-
-    return typeOracle.findType(qualifiedSerializerName);
+    return SerializableTypeOracleBuilder.findCustomFieldSerializer(typeOracle,
+        type);
   }
 
   /**

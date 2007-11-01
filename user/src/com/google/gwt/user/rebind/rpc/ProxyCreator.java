@@ -137,7 +137,7 @@ class ProxyCreator {
    */
   protected final void generateDecodeCall(SourceWriter w, JType type) {
     w.print("streamReader.");
-    w.print("read" + Shared.getCallSuffix(type) + "()");
+    w.print(Shared.getStreamReadMethodNameFor(type) + "()");
   }
 
   /*
@@ -147,7 +147,7 @@ class ProxyCreator {
   protected void generateEncodeCall(SourceWriter w, JParameter parameter) {
     JType paramType = parameter.getType();
     w.print("streamWriter.");
-    w.print("write" + Shared.getCallSuffix(paramType));
+    w.print(Shared.getStreamWriteMethodNameFor(paramType));
     w.println("(" + parameter.getName() + ");");
   }
 

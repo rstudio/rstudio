@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package com.google.gwt.user.rebind.rpc;
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
@@ -26,12 +27,12 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import java.util.Locale;
 
 class Shared {
-
   /**
    * Property used to control whether or not the RPC system will enforce the
    * versioning scheme or not.
    */
-  static final String RPC_PROP_ENFORCE_TYPE_VERSIONING = "gwt.enforceRPCTypeVersioning";
+  static final String RPC_PROP_ENFORCE_TYPE_VERSIONING =
+      "gwt.enforceRPCTypeVersioning";
 
   /**
    * Capitalizes a name.
@@ -43,52 +44,24 @@ class Shared {
     return name.substring(0, 1).toUpperCase(Locale.US) + name.substring(1);
   }
 
-  /**
-   * Gets the suffix needed to make a call for a particular type. For example,
-   * the <code>int</code> class needs methods named "readInt" and "writeInt".
-   * 
-   * @param type the type in question
-   * @return the suffix of the method to call
-   */
-  static String getCallSuffix(JType type) {
-    JParameterizedType isParameterized = type.isParameterized();
-    if (isParameterized != null) {
-      return getCallSuffix(isParameterized.getRawType());
-    } else if (type.isPrimitive() != null) {
-      if (type == JPrimitiveType.BOOLEAN) {
-        return "Boolean";
-      } else if (type == JPrimitiveType.BYTE) {
-        return "Byte";
-      } else if (type == JPrimitiveType.CHAR) {
-        return "Char";
-      } else if (type == JPrimitiveType.DOUBLE) {
-        return "Double";
-      } else if (type == JPrimitiveType.FLOAT) {
-        return "Float";
-      } else if (type == JPrimitiveType.INT) {
-        return "Int";
-      } else if (type == JPrimitiveType.LONG) {
-        return "Long";
-      } else if (type == JPrimitiveType.SHORT) {
-        return "Short";
-      } else {
-        return null;
-      }
-    } else if (type.getQualifiedSourceName().equals("java.lang.String")) {
-      return "String";
-    } else {
-      return "Object";
-    }
+  static String getStreamReadMethodNameFor(JType type) {
+    return "read" + getCallSuffix(type);
+  }
+
+  static String getStreamWriteMethodNameFor(JType type) {
+    return "write" + getCallSuffix(type);
   }
 
   /**
    * Returns <code>true</code> if the generated code should enforce type
    * versioning.
    */
-  static boolean shouldEnforceTypeVersioning(TreeLogger logger, PropertyOracle propertyOracle) {
+  static boolean shouldEnforceTypeVersioning(TreeLogger logger,
+      PropertyOracle propertyOracle) {
     try {
-      String propVal = propertyOracle.getPropertyValue(logger,
-          RPC_PROP_ENFORCE_TYPE_VERSIONING);
+      String propVal =
+          propertyOracle.getPropertyValue(logger,
+              RPC_PROP_ENFORCE_TYPE_VERSIONING);
       if (propVal.equals("false")) {
         return false;
       }
@@ -123,7 +96,24 @@ class Shared {
     // Gets the basic name of the type. If it's a nested type, the type name
     // will contains dots.
     //
-    String className = type.getName();
+    String className;
+    String packageName;
+
+    JType leafType = type.getLeafType();
+    if (leafType.isPrimitive() != null) {
+      className = leafType.getSimpleSourceName();
+      packageName = "";
+    } else {
+      JClassType classOrInterface = leafType.isClassOrInterface();
+      assert (classOrInterface != null);
+      className = classOrInterface.getName();
+      packageName = classOrInterface.getPackage().getName();
+    }
+
+    JArrayType isArray = type.isArray();
+    if (isArray != null) {
+      className += "_Array_Rank_" + isArray.getRank();
+    }
 
     // Add the meaningful suffix.
     //
@@ -133,7 +123,6 @@ class Shared {
     //
     className = className.replace('.', '_');
 
-    String packageName = type.getPackage().getName();
     return new String[]{packageName, className};
   }
 
@@ -150,5 +139,43 @@ class Shared {
     return type.isPrimitive() == null
       && !type.getQualifiedSourceName().equals("java.lang.String")
       && !type.getQualifiedSourceName().equals("java.lang.Object");
+  }
+
+  /**
+   * Gets the suffix needed to make a call for a particular type. For example,
+   * the <code>int</code> class needs methods named "readInt" and "writeInt".
+   * 
+   * @param type the type in question
+   * @return the suffix of the method to call
+   */
+  private static String getCallSuffix(JType type) {
+    JParameterizedType isParameterized = type.isParameterized();
+    if (isParameterized != null) {
+      return getCallSuffix(isParameterized.getRawType());
+    } else if (type.isPrimitive() != null) {
+      if (type == JPrimitiveType.BOOLEAN) {
+        return "Boolean";
+      } else if (type == JPrimitiveType.BYTE) {
+        return "Byte";
+      } else if (type == JPrimitiveType.CHAR) {
+        return "Char";
+      } else if (type == JPrimitiveType.DOUBLE) {
+        return "Double";
+      } else if (type == JPrimitiveType.FLOAT) {
+        return "Float";
+      } else if (type == JPrimitiveType.INT) {
+        return "Int";
+      } else if (type == JPrimitiveType.LONG) {
+        return "Long";
+      } else if (type == JPrimitiveType.SHORT) {
+        return "Short";
+      } else {
+        return null;
+      }
+    } else if (type.getQualifiedSourceName().equals("java.lang.String")) {
+      return "String";
+    } else {
+      return "Object";
+    }
   }
 }

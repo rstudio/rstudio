@@ -19,12 +19,10 @@ package com.google.gwt.user.rebind.rpc;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
-import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.user.client.rpc.SerializationException;
@@ -120,25 +118,6 @@ public class TypeSerializerCreator {
     return typeSerializerName;
   }
 
-  private String buildArrayInstantiationExpression(JArrayType array) {
-    String expression = "[rank]";
-    JType componentType = array.getComponentType();
-    while (true) {
-      array = componentType.isArray();
-      if (array == null) {
-        break;
-      }
-
-      expression += "[0]";
-
-      componentType = array.getComponentType();
-    }
-
-    expression = componentType.getQualifiedSourceName() + expression;
-
-    return expression;
-  }
-
   /*
    * Create a field serializer for a type if it does not have a custom
    * serializer.
@@ -162,14 +141,13 @@ public class TypeSerializerCreator {
     /*
      * Only a JClassType can reach this point in the code. JPrimitives have been
      * removed because their serialization is built in, interfaces have been
-     * removed because they are not an instantiable type, JArrays have custom
-     * field serializers, and parameterized types have been broken down into
-     * their raw types.
+     * removed because they are not an instantiable type and parameterized types
+     * have been broken down into their raw types.
      */
-    assert (type.isClass() != null);
+    assert (type.isClass() != null || type.isArray() != null);
 
     FieldSerializerCreator creator = new FieldSerializerCreator(
-        serializationOracle, type.isClass());
+        serializationOracle, (JClassType) type);
     creator.realize(logger, ctx);
   }
 
@@ -187,25 +165,8 @@ public class TypeSerializerCreator {
     }
   }
 
-  private JMethod getCustomInstantiateMethod(JType type) {
-    JClassType serializer = serializationOracle.hasCustomFieldSerializer(type);
-    if (serializer == null) {
-      return null;
-    }
-
-    JMethod instantiate = serializer.findMethod(
-        "instantiate",
-        new JType[] {typeOracle.findType(SerializationStreamReader.class.getName())});
-    return instantiate;
-  }
-
-  private String getInstantiationMethodName(JType type) {
-    JArrayType arrayType = type.isArray();
-    if (arrayType != null) {
-      JType leafType = arrayType.getLeafType();
-      return "create_" + leafType.getQualifiedSourceName().replace('.', '_')
-          + "_Array_Rank_" + arrayType.getRank();
-    }
+  private String getCreateMethodName(JType type) {
+    assert (type.isArray() == null);
 
     return "create_"
         + serializationOracle.getFieldSerializerName(type).replace('.', '_');
@@ -257,38 +218,40 @@ public class TypeSerializerCreator {
   }
 
   /**
-   * Given a type determine what JSNI signature to use in the serialize or
-   * deserialize method of a custom serializer.
+   * Return <code>true</code> if this type is concrete and has a custom field
+   * serializer that does not declare an instantiate method.
    * 
    * @param type
+   * @return
    */
-  private String normalizeJSNIInstanceSerializationMethodSignature(JType type) {
-    String jsniSignature;
-    JArrayType arrayType = type.isArray();
-
-    if (arrayType != null) {
-      JType componentType = arrayType.getComponentType();
-      JPrimitiveType primitiveType = componentType.isPrimitive();
-      if (primitiveType != null) {
-        jsniSignature = "[" + primitiveType.getJNISignature();
-      } else {
-        jsniSignature = "[" + "Ljava/lang/Object;";
-      }
-    } else {
-      jsniSignature = type.getJNISignature();
+  private boolean needsCreateMethod(JType type) {
+    // If this type is abstract it will not be serialized into the stream
+    //
+    if (isAbstractType(type)) {
+      return false;
     }
 
-    return jsniSignature;
+    if (type.isArray() != null) {
+      return false;
+    }
+
+    JClassType customSerializer = serializationOracle.hasCustomFieldSerializer(type);
+    if (customSerializer == null) {
+      return false;
+    }
+
+    JMethod customInstantiate = customSerializer.findMethod(
+        "instantiate",
+        new JType[] {typeOracle.findType(SerializationStreamReader.class.getName())});
+    if (customInstantiate != null) {
+      return false;
+    }
+
+    return true;
   }
 
   private boolean shouldEnforceTypeVersioning() {
     return enforceTypeVersioning;
-  }
-
-  private void writeArrayInstantiationMethod(JArrayType array) {
-    srcWriter.println("int rank = streamReader.readInt();");
-    srcWriter.println("return new " + buildArrayInstantiationExpression(array)
-        + ";");
   }
 
   private void writeCreateMethodMapMethod() {
@@ -322,30 +285,26 @@ public class TypeSerializerCreator {
         srcWriter.println("[");
         {
           srcWriter.indent();
+
+          String serializerName = serializationOracle.getFieldSerializerName(type);
           {
             // First the initialization method
-            JMethod instantiationMethod = getCustomInstantiateMethod(type);
-            srcWriter.print("function(x){ return ");
-            if (instantiationMethod != null) {
-              srcWriter.print("@"
-                  + instantiationMethod.getEnclosingType().getQualifiedSourceName());
+            srcWriter.print("function(x){ return @");
+            if (needsCreateMethod(type)) {
+              srcWriter.print(serializationOracle.getTypeSerializerQualifiedName(getServiceInterface()));
               srcWriter.print("::");
-              srcWriter.print(instantiationMethod.getName());
+              srcWriter.print(getCreateMethodName(type));
             } else {
-              srcWriter.print("@"
-                  + serializationOracle.getTypeSerializerQualifiedName(getServiceInterface()));
-              srcWriter.print("::");
-              srcWriter.print(getInstantiationMethodName(type));
+              srcWriter.print(serializerName);
+              srcWriter.print("::instantiate");
             }
-            srcWriter.print("(L"
+            srcWriter.println("(L"
                 + SerializationStreamReader.class.getName().replace('.', '/')
-                + ";)");
-            srcWriter.print("(x);}");
-            srcWriter.println(",");
+                + ";)(x);},");
           }
 
-          String jsniSignature = normalizeJSNIInstanceSerializationMethodSignature(type);
-          String serializerName = serializationOracle.getFieldSerializerName(type);
+          String jsniSignature = type.getJNISignature();
+
           {
             // Now the deserialization method
             srcWriter.print("function(x,y){");
@@ -384,36 +343,25 @@ public class TypeSerializerCreator {
       JType type = types[typeIndex];
       assert (serializationOracle.isSerializable(type));
 
-      // If this type is abstract it will not be serialized into the stream
-      //
-      if (isAbstractType(type)) {
+      if (!needsCreateMethod(type)) {
         continue;
       }
 
-      JMethod customInstantiate = getCustomInstantiateMethod(type);
-      if (customInstantiate != null) {
-        continue;
-      }
-
+      /*
+       * Only classes with custom field serializers that do no declare
+       * instantiate methods get here
+       */
       srcWriter.print("private static ");
       srcWriter.print(type.getQualifiedSourceName());
       srcWriter.print(" ");
-      srcWriter.print(getInstantiationMethodName(type));
+      srcWriter.print(getCreateMethodName(type));
       srcWriter.println("(SerializationStreamReader streamReader) throws SerializationException {");
       srcWriter.indent();
-
-      JArrayType array = type.isArray();
-      if (array != null) {
-        writeArrayInstantiationMethod(array);
-      } else {
-        srcWriter.print("return new ");
-        srcWriter.print(type.getQualifiedSourceName());
-        srcWriter.println("();");
-      }
-
+      srcWriter.print("return new ");
+      srcWriter.print(type.getQualifiedSourceName());
+      srcWriter.println("();");
       srcWriter.outdent();
       srcWriter.println("}");
-
       srcWriter.println();
     }
   }

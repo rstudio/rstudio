@@ -27,6 +27,7 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.Map;
 
 /**
  * For internal use only. Used for server call serialization. This class is
@@ -34,6 +35,186 @@ import java.util.IdentityHashMap;
  */
 public final class ServerSerializationStreamWriter extends
     AbstractSerializationStreamWriter {
+
+  /**
+   * Enumeration used to provided typed instance writers.
+   */
+  private enum ValueWriter {
+    BOOLEAN {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        stream.writeBoolean(((Boolean) instance).booleanValue());
+      }
+    },
+    BYTE {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        stream.writeByte(((Byte) instance).byteValue());
+      }
+    },
+    CHAR {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        stream.writeChar(((Character) instance).charValue());
+      }
+    },
+    DOUBLE {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        stream.writeDouble(((Double) instance).doubleValue());
+      }
+    },
+    FLOAT {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        stream.writeFloat(((Float) instance).floatValue());
+      }
+    },
+    INT {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        stream.writeInt(((Integer) instance).intValue());
+      }
+    },
+    LONG {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        stream.writeLong(((Long) instance).longValue());
+      }
+    },
+    OBJECT {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance)
+          throws SerializationException {
+        stream.writeObject(instance);
+      }
+    },
+    SHORT {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        stream.writeShort(((Short) instance).shortValue());
+      }
+    },
+    STRING {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        stream.writeString((String) instance);
+      }
+    };
+
+    abstract void write(ServerSerializationStreamWriter stream, Object instance)
+        throws SerializationException;
+  }
+
+  /**
+   * Enumeration used to provided typed vector writers.
+   */
+  private enum VectorWriter {
+    BOOLEAN_VECTOR {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        boolean[] vector = (boolean[]) instance;
+        stream.writeInt(vector.length);
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          stream.writeBoolean(vector[i]);
+        }
+      }
+    },
+    BYTE_VECTOR {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        byte[] vector = (byte[]) instance;
+        stream.writeInt(vector.length);
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          stream.writeByte(vector[i]);
+        }
+      }
+    },
+    CHAR_VECTOR {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        char[] vector = (char[]) instance;
+        stream.writeInt(vector.length);
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          stream.writeChar(vector[i]);
+        }
+      }
+    },
+    DOUBLE_VECTOR {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        double[] vector = (double[]) instance;
+        stream.writeInt(vector.length);
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          stream.writeDouble(vector[i]);
+        }
+      }
+    },
+    FLOAT_VECTOR {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        float[] vector = (float[]) instance;
+        stream.writeInt(vector.length);
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          stream.writeFloat(vector[i]);
+        }
+      }
+    },
+    INT_VECTOR {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        int[] vector = (int[]) instance;
+        stream.writeInt(vector.length);
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          stream.writeInt(vector[i]);
+        }
+      }
+    },
+    LONG_VECTOR {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        long[] vector = (long[]) instance;
+        stream.writeInt(vector.length);
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          stream.writeLong(vector[i]);
+        }
+      }
+    },
+    OBJECT_VECTOR {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance)
+          throws SerializationException {
+        Object[] vector = (Object[]) instance;
+        stream.writeInt(vector.length);
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          stream.writeObject(vector[i]);
+        }
+      }
+    },
+    SHORT_VECTOR {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        short[] vector = (short[]) instance;
+        stream.writeInt(vector.length);
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          stream.writeShort(vector[i]);
+        }
+      }
+    },
+    STRING_VECTOR {
+      @Override
+      void write(ServerSerializationStreamWriter stream, Object instance) {
+        String[] vector = (String[]) instance;
+        stream.writeInt(vector.length);
+        for (int i = 0, n = vector.length; i < n; ++i) {
+          stream.writeString(vector[i]);
+        }
+      }
+    };
+
+    abstract void write(ServerSerializationStreamWriter stream, Object instance)
+        throws SerializationException;
+  }
 
   private static final char NON_BREAKING_HYPHEN = '\u2011';
 
@@ -68,6 +249,16 @@ public final class ServerSerializationStreamWriter extends
       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
       'E', 'F'};
 
+  /**
+   * Map of {@link Class} objects to {@link ValueWriter}s.
+   */
+  private static final Map<Class<?>, ValueWriter> CLASS_TO_VALUE_WRITER = new IdentityHashMap<Class<?>, ValueWriter>();
+
+  /**
+   * Map of {@link Class} vector objects to {@link VectorWriter}s.
+   */
+  private static final Map<Class<?>, VectorWriter> CLASS_TO_VECTOR_WRITER = new IdentityHashMap<Class<?>, VectorWriter>();
+
   static {
     /*
      * NOTE: The JS VM in IE6 & IE7 do not interpret \v correctly. They convert
@@ -82,6 +273,28 @@ public final class ServerSerializationStreamWriter extends
     JS_CHARS_ESCAPED['\r'] = 'r';
     JS_CHARS_ESCAPED[JS_ESCAPE_CHAR] = JS_ESCAPE_CHAR;
     JS_CHARS_ESCAPED[JS_QUOTE_CHAR] = JS_QUOTE_CHAR;
+
+    CLASS_TO_VECTOR_WRITER.put(boolean[].class, VectorWriter.BOOLEAN_VECTOR);
+    CLASS_TO_VECTOR_WRITER.put(byte[].class, VectorWriter.BYTE_VECTOR);
+    CLASS_TO_VECTOR_WRITER.put(char[].class, VectorWriter.CHAR_VECTOR);
+    CLASS_TO_VECTOR_WRITER.put(double[].class, VectorWriter.DOUBLE_VECTOR);
+    CLASS_TO_VECTOR_WRITER.put(float[].class, VectorWriter.FLOAT_VECTOR);
+    CLASS_TO_VECTOR_WRITER.put(int[].class, VectorWriter.INT_VECTOR);
+    CLASS_TO_VECTOR_WRITER.put(long[].class, VectorWriter.LONG_VECTOR);
+    CLASS_TO_VECTOR_WRITER.put(Object[].class, VectorWriter.OBJECT_VECTOR);
+    CLASS_TO_VECTOR_WRITER.put(short[].class, VectorWriter.SHORT_VECTOR);
+    CLASS_TO_VECTOR_WRITER.put(String[].class, VectorWriter.STRING_VECTOR);
+
+    CLASS_TO_VALUE_WRITER.put(boolean.class, ValueWriter.BOOLEAN);
+    CLASS_TO_VALUE_WRITER.put(byte.class, ValueWriter.BYTE);
+    CLASS_TO_VALUE_WRITER.put(char.class, ValueWriter.CHAR);
+    CLASS_TO_VALUE_WRITER.put(double.class, ValueWriter.DOUBLE);
+    CLASS_TO_VALUE_WRITER.put(float.class, ValueWriter.FLOAT);
+    CLASS_TO_VALUE_WRITER.put(int.class, ValueWriter.INT);
+    CLASS_TO_VALUE_WRITER.put(long.class, ValueWriter.LONG);
+    CLASS_TO_VALUE_WRITER.put(Object.class, ValueWriter.OBJECT);
+    CLASS_TO_VALUE_WRITER.put(short.class, ValueWriter.SHORT);
+    CLASS_TO_VALUE_WRITER.put(String.class, ValueWriter.STRING);
   }
 
   /**
@@ -168,7 +381,7 @@ public final class ServerSerializationStreamWriter extends
       case Character.SPACE_SEPARATOR:
       case Character.CONTROL:
 
-      // Minimal
+        // Minimal
       case Character.LINE_SEPARATOR:
       case Character.FORMAT:
       case Character.PARAGRAPH_SEPARATOR:
@@ -221,8 +434,7 @@ public final class ServerSerializationStreamWriter extends
 
   private final SerializationPolicy serializationPolicy;
 
-  public ServerSerializationStreamWriter(
-      SerializationPolicy serializationPolicy) {
+  public ServerSerializationStreamWriter(SerializationPolicy serializationPolicy) {
     this.serializationPolicy = serializationPolicy;
   }
 
@@ -237,26 +449,12 @@ public final class ServerSerializationStreamWriter extends
 
   public void serializeValue(Object value, Class<?> type)
       throws SerializationException {
-    if (type == boolean.class) {
-      writeBoolean(((Boolean) value).booleanValue());
-    } else if (type == byte.class) {
-      writeByte(((Byte) value).byteValue());
-    } else if (type == char.class) {
-      writeChar(((Character) value).charValue());
-    } else if (type == double.class) {
-      writeDouble(((Double) value).doubleValue());
-    } else if (type == float.class) {
-      writeFloat(((Float) value).floatValue());
-    } else if (type == int.class) {
-      writeInt(((Integer) value).intValue());
-    } else if (type == long.class) {
-      writeLong(((Long) value).longValue());
-    } else if (type == short.class) {
-      writeShort(((Short) value).shortValue());
-    } else if (type == String.class) {
-      writeString((String) value);
+    ValueWriter valueWriter = CLASS_TO_VALUE_WRITER.get(type);
+    if (valueWriter != null) {
+      valueWriter.write(this, value);
     } else {
-      writeObject(value);
+      // Arrays of primitive or reference types need to go through writeObject.
+      ValueWriter.OBJECT.write(this, value);
     }
   }
 
@@ -340,12 +538,32 @@ public final class ServerSerializationStreamWriter extends
     serializeImpl(instance, clazz);
   }
 
+  /**
+   * Serialize an instance that is an array. Will default to serializing the
+   * instance as an Object vector if the instance is not a vector of primitives,
+   * Strings or Object.
+   * 
+   * @param instanceClass
+   * @param instance
+   * @throws SerializationException
+   */
+  private void serializeArray(Class<?> instanceClass, Object instance)
+      throws SerializationException {
+    assert (instanceClass.isArray());
+
+    VectorWriter instanceWriter = CLASS_TO_VECTOR_WRITER.get(instanceClass);
+    if (instanceWriter != null) {
+      instanceWriter.write(this, instance);
+    } else {
+      VectorWriter.OBJECT_VECTOR.write(this, instance);
+    }
+  }
+
   private void serializeClass(Object instance, Class<?> instanceClass)
       throws SerializationException {
     assert (instance != null);
 
-    Field[] declFields = instanceClass.getDeclaredFields();
-    Field[] serializableFields = SerializabilityUtil.applyFieldSerializationPolicy(declFields);
+    Field[] serializableFields = SerializabilityUtil.applyFieldSerializationPolicy(instanceClass);
     for (Field declField : serializableFields) {
       assert (declField != null);
 
@@ -387,12 +605,12 @@ public final class ServerSerializationStreamWriter extends
 
     Class<?> customSerializer = SerializabilityUtil.hasCustomFieldSerializer(instanceClass);
     if (customSerializer != null) {
+      // Use custom field serializer
       serializeWithCustomSerializer(customSerializer, instance, instanceClass);
+    } else if (instanceClass.isArray()) {
+      serializeArray(instanceClass, instance);
     } else {
-      // Arrays are serialized using custom serializers so we should never get
-      // here for array types.
-      //
-      assert (!instanceClass.isArray());
+      // Regular class instance
       serializeClass(instance, instanceClass);
     }
   }
@@ -402,12 +620,7 @@ public final class ServerSerializationStreamWriter extends
 
     Method serialize;
     try {
-      if (instanceClass.isArray()) {
-        Class<?> componentType = instanceClass.getComponentType();
-        if (!componentType.isPrimitive()) {
-          instanceClass = Class.forName("[Ljava.lang.Object;");
-        }
-      }
+      assert (!instanceClass.isArray());
 
       serialize = customSerializer.getMethod("serialize",
           SerializationStreamWriter.class, instanceClass);
@@ -427,9 +640,6 @@ public final class ServerSerializationStreamWriter extends
       throw new SerializationException(e);
 
     } catch (InvocationTargetException e) {
-      throw new SerializationException(e);
-
-    } catch (ClassNotFoundException e) {
       throw new SerializationException(e);
     }
   }
