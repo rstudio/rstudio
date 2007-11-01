@@ -42,6 +42,10 @@ public class CompilationUnitProviderWithAlternateSource implements
     return cup.getLocation();
   }
 
+  public String getMainTypeName() {
+    return cup.getMainTypeName();
+  }
+
   public String getPackageName() {
     return cup.getPackageName();
   }

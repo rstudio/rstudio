@@ -58,6 +58,8 @@ public class URLCompilationUnitProvider implements CompilationUnitProvider {
 
   private final URL url;
 
+  private final String mainTypeName;
+
   public URLCompilationUnitProvider(URL url, String packageName) {
     assert (url != null);
     assert (packageName != null);
@@ -65,11 +67,21 @@ public class URLCompilationUnitProvider implements CompilationUnitProvider {
 
     // Files are faster to work with, so use file if available.
     this.file = trySimplify(url);
+    String simpleTypeName;
     if (file == null) {
       this.location = url.toExternalForm();
+      simpleTypeName = new File(url.getPath()).getName();
     } else {
       this.location = this.file.getAbsolutePath();
+      simpleTypeName = this.file.getName();
     }
+
+    int i = simpleTypeName.lastIndexOf(".java");
+    if (i != -1) {
+      simpleTypeName = simpleTypeName.substring(0, i);
+    }
+    mainTypeName = simpleTypeName;
+
     this.packageName = packageName;
   }
 
@@ -92,6 +104,10 @@ public class URLCompilationUnitProvider implements CompilationUnitProvider {
 
   public String getLocation() {
     return location;
+  }
+
+  public String getMainTypeName() {
+    return mainTypeName;
   }
 
   public String getPackageName() {
@@ -121,6 +137,7 @@ public class URLCompilationUnitProvider implements CompilationUnitProvider {
     return false;
   }
 
+  @Override
   public String toString() {
     return location;
   }

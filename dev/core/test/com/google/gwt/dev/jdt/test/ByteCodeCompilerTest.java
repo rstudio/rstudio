@@ -69,6 +69,10 @@ public class ByteCodeCompilerTest extends TestCase {
         return "transient source for " + packageName + "." + firstTypeName;
       }
 
+      public String getMainTypeName() {
+        return null;
+      }
+
       public String getPackageName() {
         return packageName;
       }

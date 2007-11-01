@@ -53,6 +53,10 @@ public class StaticCompilationUnitProvider implements CompilationUnitProvider {
     return "transient source for " + packageName + "." + simpleTypeName;
   }
 
+  public String getMainTypeName() {
+    return getTypeName();
+  }
+
   public String getPackageName() {
     return packageName;
   }

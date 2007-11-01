@@ -39,6 +39,10 @@ import java.util.Map;
 public class TypeOracleBuilderTest extends TestCase {
 
   private static abstract class TestCup implements CompilationUnitProvider {
+    private final String packageName;
+
+    private final String[] typeNames;
+
     public TestCup(String packageName, String onlyTypeName) {
       this(packageName, new String[] {onlyTypeName});
     }
@@ -63,6 +67,10 @@ public class TypeOracleBuilderTest extends TestCase {
           + this.typeNames[0];
     }
 
+    public String getMainTypeName() {
+      return null;
+    }
+
     public String getPackageName() {
       return packageName;
     }
@@ -70,13 +78,9 @@ public class TypeOracleBuilderTest extends TestCase {
     public String[] getTypeNames() {
       return typeNames;
     }
-
     public boolean isTransient() {
       return true;
     }
-
-    private final String packageName;
-    private final String[] typeNames;
   }
 
   private static Map<String, TestCup> publicTypeNameToTestCupMap = new HashMap<String, TestCup>();
@@ -106,159 +110,6 @@ public class TypeOracleBuilderTest extends TestCase {
   private static void register(String simpleTypeName, TestCup cup) {
     String qName = cup.getPackageName() + "." + simpleTypeName;
     publicTypeNameToTestCupMap.put(qName, cup);
-  }
-
-  public void checkTypes(JClassType[] types) throws NotFoundException {
-    for (int i = 0; i < types.length; i++) {
-      JClassType type = types[i];
-      check(type);
-
-      JClassType[] nestedTypes = type.getNestedTypes();
-      checkTypes(nestedTypes);
-    }
-  }
-
-  public void testAssimilation() throws UnableToCompleteException {
-    TypeOracle typeOracle0 = new TypeOracle();
-    TreeLogger logger = createTreeLogger();
-
-    // Build onto an empty type oracle.
-    //
-    TypeOracleBuilder builder1 = new TypeOracleBuilder(typeOracle0);
-    builder1.addCompilationUnit(CU_Object);
-    builder1.addCompilationUnit(CU_BeforeAssimilate);
-    TypeOracle typeOracle1 = builder1.build(logger);
-    assertSame(typeOracle0, typeOracle1);
-    assertEquals(2, typeOracle1.getTypes().length);
-    JClassType before = typeOracle1.findType("test.assim.BeforeAssimilate");
-
-    // Build onto an existing type oracle.
-    //
-    TypeOracleBuilder builder2 = new TypeOracleBuilder(typeOracle1);
-    builder2.addCompilationUnit(CU_AfterAssimilate);
-    TypeOracle typeOracle2 = builder2.build(logger);
-    assertSame(typeOracle1, typeOracle2);
-    assertEquals(3, typeOracle2.getTypes().length);
-
-    // Make sure identities remained intact across the assimilation.
-    //
-    JClassType after = typeOracle2.findType("test.assim.AfterAssimilate");
-
-    assertSame(before, after.getSuperclass());
-  }
-
-  public void testBindToTypeScope() throws TypeOracleException,
-      UnableToCompleteException {
-    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
-    tiob.addCompilationUnit(CU_Object);
-    tiob.addCompilationUnit(CU_BindToTypeScope);
-    TypeOracle tio = tiob.build(createTreeLogger());
-    JClassType[] types = tio.getTypes();
-    assertEquals(4, types.length);
-    checkTypes(types);
-  }
-
-  public void testDefaultClass() throws TypeOracleException,
-      UnableToCompleteException {
-    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
-    tiob.addCompilationUnit(CU_Object);
-    tiob.addCompilationUnit(CU_DefaultClass);
-    TypeOracle tio = tiob.build(createTreeLogger());
-    JClassType[] types = tio.getTypes();
-    assertEquals(2, types.length);
-    checkTypes(types);
-  }
-
-  public void testFieldsAndTypes() throws TypeOracleException,
-      UnableToCompleteException {
-    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
-    tiob.addCompilationUnit(CU_Object);
-    tiob.addCompilationUnit(CU_FieldsAndTypes);
-    TypeOracle tio = tiob.build(createTreeLogger());
-    JClassType[] types = tio.getTypes();
-    assertEquals(3, types.length);
-    checkTypes(types);
-  }
-
-  public void testMetaData() throws TypeOracleException,
-      UnableToCompleteException {
-    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
-    tiob.addCompilationUnit(CU_Object);
-    tiob.addCompilationUnit(CU_MetaData);
-    TypeOracle tio = tiob.build(createTreeLogger());
-    JClassType[] types = tio.getTypes();
-    assertEquals(2, types.length);
-    checkTypes(types);
-  }
-
-  public void testMethodsAndParams() throws TypeOracleException,
-      UnableToCompleteException {
-    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
-    tiob.addCompilationUnit(CU_Object);
-    tiob.addCompilationUnit(CU_Throwable);
-    tiob.addCompilationUnit(CU_MethodsAndParams);
-    TypeOracle tio = tiob.build(createTreeLogger());
-    JClassType[] types = tio.getTypes();
-    assertEquals(3, types.length);
-    checkTypes(types);
-  }
-
-  public void testOuterInner() throws TypeOracleException,
-      UnableToCompleteException {
-    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
-    tiob.addCompilationUnit(CU_Object);
-    tiob.addCompilationUnit(CU_OuterInner);
-    TypeOracle tio = tiob.build(createTreeLogger());
-    JClassType[] types = tio.getTypes();
-    assertEquals(3, types.length);
-    checkTypes(types);
-  }
-
-  public void testSyntaxErrors() throws TypeOracleException,
-      UnableToCompleteException {
-    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
-    tiob.addCompilationUnit(CU_Object);
-    tiob.addCompilationUnit(CU_HasSyntaxErrors);
-    TypeOracle tio = tiob.build(createTreeLogger());
-    JClassType[] types = tio.getTypes();
-    // Only java.lang.Object should remain.
-    //
-    assertEquals(1, types.length);
-    assertEquals("java.lang.Object", types[0].getQualifiedSourceName());
-    checkTypes(types);
-  }
-
-  public void testUnresolvedSymbls() throws TypeOracleException,
-      UnableToCompleteException {
-    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
-    tiob.addCompilationUnit(CU_Object);
-    tiob.addCompilationUnit(CU_HasUnresolvedSymbols);
-    tiob.addCompilationUnit(CU_RefsInfectedCompilationUnit);
-    TypeOracle tio = tiob.build(createTreeLogger());
-    JClassType[] types = tio.getTypes();
-    // Only java.lang.Object should remain.
-    //
-    assertEquals(1, types.length);
-    assertEquals("java.lang.Object", types[0].getQualifiedSourceName());
-    checkTypes(types);
-  }
-
-  /**
-   * Tweak this if you want to see the log output.
-   */
-  private TreeLogger createTreeLogger() {
-    boolean reallyLog = false;
-    if (reallyLog) {
-      AbstractTreeLogger logger = new PrintWriterTreeLogger();
-      logger.setMaxDetail(TreeLogger.ALL);
-      return logger;
-    } else {
-      return TreeLogger.NULL;
-    }
-  }
-
-  private TypeOracleBuilder createTypeInfoOracleBuilder() {
-    return new TypeOracleBuilder();
   }
 
   protected TestCup CU_AfterAssimilate = new TestCup("test.assim",
@@ -765,4 +616,157 @@ public class TypeOracleBuilderTest extends TestCase {
       return sb.toString().toCharArray();
     }
   };
+
+  public void checkTypes(JClassType[] types) throws NotFoundException {
+    for (int i = 0; i < types.length; i++) {
+      JClassType type = types[i];
+      check(type);
+
+      JClassType[] nestedTypes = type.getNestedTypes();
+      checkTypes(nestedTypes);
+    }
+  }
+
+  public void testAssimilation() throws UnableToCompleteException {
+    TypeOracle typeOracle0 = new TypeOracle();
+    TreeLogger logger = createTreeLogger();
+
+    // Build onto an empty type oracle.
+    //
+    TypeOracleBuilder builder1 = new TypeOracleBuilder(typeOracle0);
+    builder1.addCompilationUnit(CU_Object);
+    builder1.addCompilationUnit(CU_BeforeAssimilate);
+    TypeOracle typeOracle1 = builder1.build(logger);
+    assertSame(typeOracle0, typeOracle1);
+    assertEquals(2, typeOracle1.getTypes().length);
+    JClassType before = typeOracle1.findType("test.assim.BeforeAssimilate");
+
+    // Build onto an existing type oracle.
+    //
+    TypeOracleBuilder builder2 = new TypeOracleBuilder(typeOracle1);
+    builder2.addCompilationUnit(CU_AfterAssimilate);
+    TypeOracle typeOracle2 = builder2.build(logger);
+    assertSame(typeOracle1, typeOracle2);
+    assertEquals(3, typeOracle2.getTypes().length);
+
+    // Make sure identities remained intact across the assimilation.
+    //
+    JClassType after = typeOracle2.findType("test.assim.AfterAssimilate");
+
+    assertSame(before, after.getSuperclass());
+  }
+
+  public void testBindToTypeScope() throws TypeOracleException,
+      UnableToCompleteException {
+    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
+    tiob.addCompilationUnit(CU_Object);
+    tiob.addCompilationUnit(CU_BindToTypeScope);
+    TypeOracle tio = tiob.build(createTreeLogger());
+    JClassType[] types = tio.getTypes();
+    assertEquals(4, types.length);
+    checkTypes(types);
+  }
+
+  public void testDefaultClass() throws TypeOracleException,
+      UnableToCompleteException {
+    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
+    tiob.addCompilationUnit(CU_Object);
+    tiob.addCompilationUnit(CU_DefaultClass);
+    TypeOracle tio = tiob.build(createTreeLogger());
+    JClassType[] types = tio.getTypes();
+    assertEquals(2, types.length);
+    checkTypes(types);
+  }
+
+  public void testFieldsAndTypes() throws TypeOracleException,
+      UnableToCompleteException {
+    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
+    tiob.addCompilationUnit(CU_Object);
+    tiob.addCompilationUnit(CU_FieldsAndTypes);
+    TypeOracle tio = tiob.build(createTreeLogger());
+    JClassType[] types = tio.getTypes();
+    assertEquals(3, types.length);
+    checkTypes(types);
+  }
+
+  public void testMetaData() throws TypeOracleException,
+      UnableToCompleteException {
+    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
+    tiob.addCompilationUnit(CU_Object);
+    tiob.addCompilationUnit(CU_MetaData);
+    TypeOracle tio = tiob.build(createTreeLogger());
+    JClassType[] types = tio.getTypes();
+    assertEquals(2, types.length);
+    checkTypes(types);
+  }
+
+  public void testMethodsAndParams() throws TypeOracleException,
+      UnableToCompleteException {
+    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
+    tiob.addCompilationUnit(CU_Object);
+    tiob.addCompilationUnit(CU_Throwable);
+    tiob.addCompilationUnit(CU_MethodsAndParams);
+    TypeOracle tio = tiob.build(createTreeLogger());
+    JClassType[] types = tio.getTypes();
+    assertEquals(3, types.length);
+    checkTypes(types);
+  }
+
+  public void testOuterInner() throws TypeOracleException,
+      UnableToCompleteException {
+    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
+    tiob.addCompilationUnit(CU_Object);
+    tiob.addCompilationUnit(CU_OuterInner);
+    TypeOracle tio = tiob.build(createTreeLogger());
+    JClassType[] types = tio.getTypes();
+    assertEquals(3, types.length);
+    checkTypes(types);
+  }
+
+  public void testSyntaxErrors() throws TypeOracleException,
+      UnableToCompleteException {
+    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
+    tiob.addCompilationUnit(CU_Object);
+    tiob.addCompilationUnit(CU_HasSyntaxErrors);
+    TypeOracle tio = tiob.build(createTreeLogger());
+    JClassType[] types = tio.getTypes();
+    // Only java.lang.Object should remain.
+    //
+    assertEquals(1, types.length);
+    assertEquals("java.lang.Object", types[0].getQualifiedSourceName());
+    checkTypes(types);
+  }
+
+  public void testUnresolvedSymbls() throws TypeOracleException,
+      UnableToCompleteException {
+    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
+    tiob.addCompilationUnit(CU_Object);
+    tiob.addCompilationUnit(CU_HasUnresolvedSymbols);
+    tiob.addCompilationUnit(CU_RefsInfectedCompilationUnit);
+    TypeOracle tio = tiob.build(createTreeLogger());
+    JClassType[] types = tio.getTypes();
+    // Only java.lang.Object should remain.
+    //
+    assertEquals(1, types.length);
+    assertEquals("java.lang.Object", types[0].getQualifiedSourceName());
+    checkTypes(types);
+  }
+
+  /**
+   * Tweak this if you want to see the log output.
+   */
+  private TreeLogger createTreeLogger() {
+    boolean reallyLog = false;
+    if (reallyLog) {
+      AbstractTreeLogger logger = new PrintWriterTreeLogger();
+      logger.setMaxDetail(TreeLogger.ALL);
+      return logger;
+    } else {
+      return TreeLogger.NULL;
+    }
+  }
+
+  private TypeOracleBuilder createTypeInfoOracleBuilder() {
+    return new TypeOracleBuilder();
+  }
 }

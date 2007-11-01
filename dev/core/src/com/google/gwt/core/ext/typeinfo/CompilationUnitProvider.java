@@ -37,6 +37,8 @@ public interface CompilationUnitProvider {
 
   String getLocation();
 
+  String getMainTypeName();
+
   String getPackageName();
 
   char[] getSource() throws UnableToCompleteException;
