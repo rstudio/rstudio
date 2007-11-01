@@ -58,30 +58,32 @@ public class MethodCallTest extends GWTTestCase {
       int i242, int i243, int i244, int i245, int i246, int i247, int i248,
       int i249, int i250, int i251, int i252, int i253, int i254) {
     return i0 + i1 + i2 + i3 + i4 + i5 + i6 + i7 + i8 + i9 + i10 + i11 + i12
-      + i13 + i14 + i15 + i16 + i17 + i18 + i19 + i20 + i21 + i22 + i23 + i24
-      + i25 + i26 + i27 + i28 + i29 + i30 + i31 + i32 + i33 + i34 + i35 + i36
-      + i37 + i38 + i39 + i40 + i41 + i42 + i43 + i44 + i45 + i46 + i47 + i48
-      + i49 + i50 + i51 + i52 + i53 + i54 + i55 + i56 + i57 + i58 + i59 + i60
-      + i61 + i62 + i63 + i64 + i65 + i66 + i67 + i68 + i69 + i70 + i71 + i72
-      + i73 + i74 + i75 + i76 + i77 + i78 + i79 + i80 + i81 + i82 + i83 + i84
-      + i85 + i86 + i87 + i88 + i89 + i90 + i91 + i92 + i93 + i94 + i95 + i96
-      + i97 + i98 + i99 + i100 + i101 + i102 + i103 + i104 + i105 + i106 + i107
-      + i108 + i109 + i110 + i111 + i112 + i113 + i114 + i115 + i116 + i117
-      + i118 + i119 + i120 + i121 + i122 + i123 + i124 + i125 + i126 + i127
-      + i128 + i129 + i130 + i131 + i132 + i133 + i134 + i135 + i136 + i137
-      + i138 + i139 + i140 + i141 + i142 + i143 + i144 + i145 + i146 + i147
-      + i148 + i149 + i150 + i151 + i152 + i153 + i154 + i155 + i156 + i157
-      + i158 + i159 + i160 + i161 + i162 + i163 + i164 + i165 + i166 + i167
-      + i168 + i169 + i170 + i171 + i172 + i173 + i174 + i175 + i176 + i177
-      + i178 + i179 + i180 + i181 + i182 + i183 + i184 + i185 + i186 + i187
-      + i188 + i189 + i190 + i191 + i192 + i193 + i194 + i195 + i196 + i197
-      + i198 + i199 + i200 + i201 + i202 + i203 + i204 + i205 + i206 + i207
-      + i208 + i209 + i210 + i211 + i212 + i213 + i214 + i215 + i216 + i217
-      + i218 + i219 + i220 + i221 + i222 + i223 + i224 + i225 + i226 + i227
-      + i228 + i229 + i230 + i231 + i232 + i233 + i234 + i235 + i236 + i237
-      + i238 + i239 + i240 + i241 + i242 + i243 + i244 + i245 + i246 + i247
-      + i248 + i249 + i250 + i251 + i252 + i253 + i254;
+        + i13 + i14 + i15 + i16 + i17 + i18 + i19 + i20 + i21 + i22 + i23 + i24
+        + i25 + i26 + i27 + i28 + i29 + i30 + i31 + i32 + i33 + i34 + i35 + i36
+        + i37 + i38 + i39 + i40 + i41 + i42 + i43 + i44 + i45 + i46 + i47 + i48
+        + i49 + i50 + i51 + i52 + i53 + i54 + i55 + i56 + i57 + i58 + i59 + i60
+        + i61 + i62 + i63 + i64 + i65 + i66 + i67 + i68 + i69 + i70 + i71 + i72
+        + i73 + i74 + i75 + i76 + i77 + i78 + i79 + i80 + i81 + i82 + i83 + i84
+        + i85 + i86 + i87 + i88 + i89 + i90 + i91 + i92 + i93 + i94 + i95 + i96
+        + i97 + i98 + i99 + i100 + i101 + i102 + i103 + i104 + i105 + i106
+        + i107 + i108 + i109 + i110 + i111 + i112 + i113 + i114 + i115 + i116
+        + i117 + i118 + i119 + i120 + i121 + i122 + i123 + i124 + i125 + i126
+        + i127 + i128 + i129 + i130 + i131 + i132 + i133 + i134 + i135 + i136
+        + i137 + i138 + i139 + i140 + i141 + i142 + i143 + i144 + i145 + i146
+        + i147 + i148 + i149 + i150 + i151 + i152 + i153 + i154 + i155 + i156
+        + i157 + i158 + i159 + i160 + i161 + i162 + i163 + i164 + i165 + i166
+        + i167 + i168 + i169 + i170 + i171 + i172 + i173 + i174 + i175 + i176
+        + i177 + i178 + i179 + i180 + i181 + i182 + i183 + i184 + i185 + i186
+        + i187 + i188 + i189 + i190 + i191 + i192 + i193 + i194 + i195 + i196
+        + i197 + i198 + i199 + i200 + i201 + i202 + i203 + i204 + i205 + i206
+        + i207 + i208 + i209 + i210 + i211 + i212 + i213 + i214 + i215 + i216
+        + i217 + i218 + i219 + i220 + i221 + i222 + i223 + i224 + i225 + i226
+        + i227 + i228 + i229 + i230 + i231 + i232 + i233 + i234 + i235 + i236
+        + i237 + i238 + i239 + i240 + i241 + i242 + i243 + i244 + i245 + i246
+        + i247 + i248 + i249 + i250 + i251 + i252 + i253 + i254;
   }
+
+  private int value;
 
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
@@ -89,26 +91,145 @@ public class MethodCallTest extends GWTTestCase {
 
   public void testManyArgs() {
     assertEquals(32385, manyArgs(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-      32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
-      50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67,
-      68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85,
-      86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102,
-      103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
-      117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130,
-      131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144,
-      145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158,
-      159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172,
-      173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186,
-      187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200,
-      201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214,
-      215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228,
-      229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242,
-      243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254));
+        14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+        32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+        50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67,
+        68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85,
+        86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102,
+        103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116,
+        117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130,
+        131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144,
+        145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158,
+        159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172,
+        173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186,
+        187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200,
+        201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214,
+        215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228,
+        229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242,
+        243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254));
   }
 
   public void testRecursion() {
     assertEquals(20100, recursiveSum(200));
+  }
+
+  public void testSideEffectsAlwaysExecute() {
+    // Ensure that side-effects always execute
+    value = 1;
+    conditional(value++);
+    assertEquals(2, value);
+
+    int localValue = 1;
+    conditional(localValue++);
+    assertEquals(2, localValue);
+  }
+
+  public void testSideEffectsBeforeCallee() {
+    // Ensure that call-site side-effects happen before callee side-effects
+    value = 10;
+    int result = checkSideEffectBeforeCallee(value = 0);
+    assertEquals(0, result);
+  }
+
+  public void testSideEffectsInFields() {
+    // Ensure that call-site side-effects happen before callee side-effects
+    value = 10;
+    int result = add(++value, ++value);
+    assertEquals(23, result);
+  }
+
+  public void testSideEffectsInWrongOrder() {
+    // Ensure that side-effects are processed in the correct order
+    value = 10;
+    value = checkOrder(value, ++value);
+    assertEquals(11010, value);
+
+    int localValue = 20;
+    localValue = checkOrder(localValue, ++localValue);
+    assertEquals(21020, localValue);
+  }
+
+  public void testSideEffectsVersusExceptions1() {
+    // Ensure that side-effects always happen before the exception
+    int value = 10;
+    try {
+      // Use the return value so it doesn't get pruned
+      assertEquals(0, addCorrectOrder(++value, throwRuntimeException()));
+      fail();
+    } catch (RuntimeException e) {
+      assertNotNull(e);
+      assertEquals(11, value);
+    }
+
+    try {
+      // Use the return value so it doesn't get pruned
+      assertEquals(0, addReverseOrder(++value, throwRuntimeException()));
+      fail();
+    } catch (RuntimeException e) {
+      assertNotNull(e);
+      assertEquals(12, value);
+    }
+  }
+
+  public void testSideEffectsVersusExceptions2() {
+    // Ensure that the exception always happens before the side-effects
+    int value = 10;
+
+    try {
+      // Use the return value so it doesn't get pruned
+      assertEquals(0, addCorrectOrder(throwRuntimeException(), ++value));
+      fail();
+    } catch (RuntimeException e) {
+      assertNotNull(e);
+      assertEquals(10, value);
+    }
+
+    try {
+      // Use the return value so it doesn't get pruned
+      assertEquals(0, addReverseOrder(throwRuntimeException(), ++value));
+      fail();
+    } catch (RuntimeException e) {
+      assertNotNull(e);
+      assertEquals(10, value);
+    }
+  }
+
+  public void testSideEffectsVersusExceptions3() {
+    // Ensure that the exception always happens before the side-effects
+    int value = 10;
+
+    try {
+      // Use the return value so it doesn't get pruned
+      assertEquals(0, throwExceptionAndReturn(++value));
+      fail();
+    } catch (RuntimeException e) {
+      assertNotNull(e);
+      assertEquals(11, value);
+    }
+  }
+
+  private int add(int i, int j) {
+    return (value = 0) + i + j;
+  }
+
+  private int addCorrectOrder(int i, int j) {
+    return i + j;
+  }
+
+  private int addReverseOrder(int i, int j) {
+    return j + i;
+  }
+
+  private int checkOrder(int x, int y) {
+    return y * 1000 + x;
+  }
+
+  private int checkSideEffectBeforeCallee(int i) {
+    return value + i;
+  }
+
+  private int conditional(int i) {
+    return (this.value != Integer.MAX_VALUE) ? 0 : i;
   }
 
   private int recursiveSum(int x) {
@@ -117,5 +238,13 @@ public class MethodCallTest extends GWTTestCase {
     } else {
       return x + recursiveSum(x - 1);
     }
+  }
+
+  private int throwExceptionAndReturn(int i) {
+    return throwRuntimeException() + i;
+  }
+
+  private int throwRuntimeException() {
+    throw new RuntimeException();
   }
 }
