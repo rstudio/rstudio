@@ -22,6 +22,9 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class MethodCallTest extends GWTTestCase {
 
+  private static final class MyException extends RuntimeException {
+  }
+
   private static int manyArgs(int i0, int i1, int i2, int i3, int i4, int i5,
       int i6, int i7, int i8, int i9, int i10, int i11, int i12, int i13,
       int i14, int i15, int i16, int i17, int i18, int i19, int i20, int i21,
@@ -113,33 +116,67 @@ public class MethodCallTest extends GWTTestCase {
     assertEquals(20100, recursiveSum(200));
   }
 
-  public void testSideEffectsAlwaysExecute() {
-    // Ensure that side-effects always execute
+  /**
+   * Ensure that side-effects always execute.
+   */
+  public void testSideEffectsAlwaysExecute1() {
     value = 1;
-    conditional(value++);
+    assertEquals(0, conditional1(value++));
     assertEquals(2, value);
 
     int localValue = 1;
-    conditional(localValue++);
+    assertEquals(0, conditional1(localValue++));
     assertEquals(2, localValue);
   }
 
+  /**
+   * Ensure that side-effects always execute.
+   */
+  public void testSideEffectsAlwaysExecute2() {
+    value = 1;
+    assertEquals(false, conditional2(value++));
+    assertEquals(2, value);
+
+    int localValue = 1;
+    assertEquals(false, conditional2(localValue++));
+    assertEquals(2, localValue);
+  }
+
+  /**
+   * Ensure that side-effects always execute.
+   */
+  public void testSideEffectsAlwaysExecute3() {
+    value = 1;
+    assertEquals(true, conditional3(value++));
+    assertEquals(2, value);
+
+    int localValue = 1;
+    assertEquals(true, conditional3(localValue++));
+    assertEquals(2, localValue);
+  }
+
+  /**
+   * Ensure that call-site side-effects happen before callee side-effects.
+   */
   public void testSideEffectsBeforeCallee() {
-    // Ensure that call-site side-effects happen before callee side-effects
     value = 10;
     int result = checkSideEffectBeforeCallee(value = 0);
     assertEquals(0, result);
   }
 
+  /**
+   * Ensure that call-site side-effects happen before callee side-effects.
+   */
   public void testSideEffectsInFields() {
-    // Ensure that call-site side-effects happen before callee side-effects
     value = 10;
     int result = add(++value, ++value);
     assertEquals(23, result);
   }
 
+  /**
+   * Ensure that side-effects are processed in the correct order.
+   */
   public void testSideEffectsInWrongOrder() {
-    // Ensure that side-effects are processed in the correct order
     value = 10;
     value = checkOrder(value, ++value);
     assertEquals(11010, value);
@@ -149,61 +186,67 @@ public class MethodCallTest extends GWTTestCase {
     assertEquals(21020, localValue);
   }
 
+  /**
+   * Ensure that side-effects always happen before the exception.
+   */
   public void testSideEffectsVersusExceptions1() {
-    // Ensure that side-effects always happen before the exception
     int value = 10;
     try {
       // Use the return value so it doesn't get pruned
-      assertEquals(0, addCorrectOrder(++value, throwRuntimeException()));
+      assertEquals(0, addCorrectOrder(++value, throwMyException()));
       fail();
-    } catch (RuntimeException e) {
-      assertNotNull(e);
+    } catch (MyException e) {
+      // expected
       assertEquals(11, value);
     }
 
     try {
       // Use the return value so it doesn't get pruned
-      assertEquals(0, addReverseOrder(++value, throwRuntimeException()));
+      assertEquals(0, addReverseOrder(++value, throwMyException()));
       fail();
-    } catch (RuntimeException e) {
-      assertNotNull(e);
+    } catch (MyException e) {
+      // expected
       assertEquals(12, value);
     }
   }
 
+  /**
+   * Ensure that the exception always happens before the side-effects.
+   */
   public void testSideEffectsVersusExceptions2() {
-    // Ensure that the exception always happens before the side-effects
     int value = 10;
 
     try {
       // Use the return value so it doesn't get pruned
-      assertEquals(0, addCorrectOrder(throwRuntimeException(), ++value));
+      assertEquals(0, addCorrectOrder(throwMyException(), ++value));
       fail();
-    } catch (RuntimeException e) {
-      assertNotNull(e);
+    } catch (MyException e) {
+      // expected
       assertEquals(10, value);
     }
 
+    // Use the return value so it doesn't get pruned
     try {
-      // Use the return value so it doesn't get pruned
-      assertEquals(0, addReverseOrder(throwRuntimeException(), ++value));
+      assertEquals(0, addReverseOrder(throwMyException(), ++value));
       fail();
-    } catch (RuntimeException e) {
-      assertNotNull(e);
+    } catch (MyException e) {
+      // expected
       assertEquals(10, value);
     }
   }
 
+  /**
+   * Ensure that the exception always happens before the side-effects.
+   */
   public void testSideEffectsVersusExceptions3() {
-    // Ensure that the exception always happens before the side-effects
     int value = 10;
 
     try {
       // Use the return value so it doesn't get pruned
       assertEquals(0, throwExceptionAndReturn(++value));
       fail();
-    } catch (RuntimeException e) {
-      assertNotNull(e);
+    } catch (MyException e) {
+      // expected
       assertEquals(11, value);
     }
   }
@@ -228,8 +271,16 @@ public class MethodCallTest extends GWTTestCase {
     return value + i;
   }
 
-  private int conditional(int i) {
+  private int conditional1(int i) {
     return (this.value != Integer.MAX_VALUE) ? 0 : i;
+  }
+
+  private boolean conditional2(int i) {
+    return (this.value == Integer.MAX_VALUE) && (i == 1);
+  }
+
+  private boolean conditional3(int i) {
+    return (this.value != Integer.MAX_VALUE) || (i == 1);
   }
 
   private int recursiveSum(int x) {
@@ -241,10 +292,10 @@ public class MethodCallTest extends GWTTestCase {
   }
 
   private int throwExceptionAndReturn(int i) {
-    return throwRuntimeException() + i;
+    return throwMyException() + i;
   }
 
-  private int throwRuntimeException() {
-    throw new RuntimeException();
+  private int throwMyException() {
+    throw new MyException();
   }
 }
