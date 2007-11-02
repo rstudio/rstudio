@@ -117,10 +117,9 @@ public class Pruner {
       if (removedMethodParamsMap.containsKey(method)) {
         // This must be a static method
         assert method.isStatic();
-        assert x.getInstance() == null;
 
-        JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(), null,
-            method);
+        JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
+            x.getInstance(), method);
 
         JMultiExpression currentMulti = null;
 
