@@ -92,6 +92,54 @@ public class MethodCallTest extends GWTTestCase {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
 
+  /**
+   * Ensure that call-site side-effects happen before expressions in the callee
+   * are evaluated.
+   */
+  public void testArgumentEffectPreceedsCalleeEffect() {
+    value = 10;
+    int result = doubleValueAndAdd(value += 2);
+    assertEquals(24, value);
+    assertEquals(36, result);
+  }
+
+  /**
+   * Ensure that call-site side-effects happen before expressions in the callee
+   * are evaluated.
+   */
+  public void testArgumentEffectPreceedsCalleeValue() {
+    value = 0;
+    int result = addToValue(value = 10);
+    assertEquals(10, value);
+    assertEquals(20, result);
+  }
+
+  /**
+   * Ensure that side-effects are processed in the correct order.
+   */
+  public void testArgumentsEvalInCorrectOrder() {
+    value = 10;
+    int result = checkOrder(value, ++value);
+    assertEquals(11, value);
+    assertEquals(11010, result);
+
+    int localValue = 20;
+    result = checkOrder(localValue, ++localValue);
+    assertEquals(21, localValue);
+    assertEquals(21020, result);
+  }
+
+  /**
+   * Ensure that call-site evaluation happens before effects in the callee
+   * occur.
+   */
+  public void testArgumentValuePreceedsCalleeEffect() {
+    value = 10;
+    int result = resetValueAndAdd(value);
+    assertEquals(0, value);
+    assertEquals(10, result);
+  }
+
   public void testManyArgs() {
     assertEquals(32385, manyArgs(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
         14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
@@ -158,32 +206,10 @@ public class MethodCallTest extends GWTTestCase {
   /**
    * Ensure that call-site side-effects happen before callee side-effects.
    */
-  public void testSideEffectsBeforeCallee() {
-    value = 10;
-    int result = checkSideEffectBeforeCallee(value = 0);
-    assertEquals(0, result);
-  }
-
-  /**
-   * Ensure that call-site side-effects happen before callee side-effects.
-   */
   public void testSideEffectsInFields() {
     value = 10;
     int result = add(++value, ++value);
     assertEquals(23, result);
-  }
-
-  /**
-   * Ensure that side-effects are processed in the correct order.
-   */
-  public void testSideEffectsInWrongOrder() {
-    value = 10;
-    value = checkOrder(value, ++value);
-    assertEquals(11010, value);
-
-    int localValue = 20;
-    localValue = checkOrder(localValue, ++localValue);
-    assertEquals(21020, localValue);
   }
 
   /**
@@ -263,12 +289,12 @@ public class MethodCallTest extends GWTTestCase {
     return j + i;
   }
 
-  private int checkOrder(int x, int y) {
-    return y * 1000 + x;
+  private int addToValue(int i) {
+    return value + i;
   }
 
-  private int checkSideEffectBeforeCallee(int i) {
-    return value + i;
+  private int checkOrder(int x, int y) {
+    return y * 1000 + x;
   }
 
   private int conditional1(int i) {
@@ -283,12 +309,20 @@ public class MethodCallTest extends GWTTestCase {
     return (this.value != Integer.MAX_VALUE) || (i == 1);
   }
 
+  private int doubleValueAndAdd(int i) {
+    return (value *= 2) + i;
+  }
+
   private int recursiveSum(int x) {
     if (x == 0) {
       return 0;
     } else {
       return x + recursiveSum(x - 1);
     }
+  }
+
+  private int resetValueAndAdd(int i) {
+    return (value = 0) + i;
   }
 
   private int throwExceptionAndReturn(int i) {
