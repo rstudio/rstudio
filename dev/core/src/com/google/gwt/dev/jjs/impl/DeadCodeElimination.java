@@ -38,6 +38,7 @@ import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
@@ -68,6 +69,11 @@ public class DeadCodeElimination {
    * Eliminates dead or unreachable code when possible.
    */
   public class DeadCodeVisitor extends JModVisitor {
+
+    /**
+     * An expression whose result does not matter.
+     */
+    private JExpression ignoringExpressionOutput;
 
     /**
      * Short circuit binary operations.
@@ -294,10 +300,22 @@ public class DeadCodeElimination {
      */
     @Override
     public void endVisit(JMultiExpression x, Context ctx) {
-      for (int i = 0; i < x.exprs.size() - 1; i++) {
+      /*
+       * If we're ignoring the output of this expression, we don't need to
+       * maintain the final multi value.
+       */
+      for (int i = 0; i < numRemovableExpressions(x); i++) {
         JExpression expr = x.exprs.get(i);
         if (!expr.hasSideEffects()) {
           x.exprs.remove(i);
+          i--;
+          continue;
+        }
+
+        // Remove nested JMultiExpressions
+        if (expr instanceof JMultiExpression) {
+          x.exprs.remove(i);
+          x.exprs.addAll(i, ((JMultiExpression) expr).exprs);
           i--;
           continue;
         }
@@ -449,6 +467,12 @@ public class DeadCodeElimination {
       }
     }
 
+    @Override
+    public boolean visit(JExpressionStatement x, Context ctx) {
+      ignoringExpressionOutput = x.getExpr();
+      return true;
+    }
+
     private boolean hasNoDefaultCase(JSwitchStatement x) {
       JBlock body = x.getBody();
       boolean inDefault = false;
@@ -496,6 +520,16 @@ public class DeadCodeElimination {
 
     private Class<?> mapType(JType type) {
       return typeClassMap.get(type);
+    }
+
+    private int numRemovableExpressions(JMultiExpression x) {
+      if (x == ignoringExpressionOutput) {
+        // All expressions can be removed.
+        return x.exprs.size();
+      } else {
+        // The last expression cannot be removed.
+        return x.exprs.size() - 1;
+      }
     }
 
     /**
@@ -737,7 +771,11 @@ public class DeadCodeElimination {
   }
 
   public static boolean exec(JProgram program) {
-    return new DeadCodeElimination(program).execImpl();
+    return new DeadCodeElimination(program).execImpl(program);
+  }
+
+  public static boolean exec(JProgram program, JNode node) {
+    return new DeadCodeElimination(program).execImpl(node);
   }
 
   private final JProgram program;
@@ -758,11 +796,11 @@ public class DeadCodeElimination {
     typeClassMap.put(program.getTypePrimitiveShort(), short.class);
   }
 
-  private boolean execImpl() {
+  private boolean execImpl(JNode node) {
     boolean madeChanges = false;
     while (true) {
       DeadCodeVisitor deadCodeVisitor = new DeadCodeVisitor();
-      deadCodeVisitor.accept(program);
+      deadCodeVisitor.accept(node);
       if (!deadCodeVisitor.didChange()) {
         break;
       }
