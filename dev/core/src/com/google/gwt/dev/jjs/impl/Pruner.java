@@ -250,6 +250,21 @@ public class Pruner {
           return true;
         }
 
+        /*
+         * We cannot prune parameters from staticImpls that still have a live
+         * instance method, because doing so would screw up any subsequent
+         * devirtualizations. If the instance method has been pruned, then it's
+         * okay. Also, it's okay on the final pass since no more
+         * devirtualizations will occur.
+         */
+        JMethod staticImplFor = program.staticImplFor(x);
+        // Unless the instance method has already been pruned, of course.
+        if (saveCodeGenTypes && staticImplFor != null
+            && staticImplFor.getEnclosingType().methods.contains(staticImplFor)) {
+          // instance method is still live
+          return true;
+        }
+
         JsFunction func = x.isNative()
             ? ((JsniMethodBody) x.getBody()).getFunc() : null;
 
