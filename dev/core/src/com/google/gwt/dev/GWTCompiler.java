@@ -463,6 +463,8 @@ public class GWTCompiler extends ToolBase {
     //
     out.print("<head><script>");
     out.newlineOpt();
+    out.print("var $gwt_version = \"" + About.GWT_VERSION_NUM + "\";");
+    out.newlineOpt();
     out.print("var $wnd = parent;");
     out.newlineOpt();
     out.print("var $doc = $wnd.document;");
@@ -504,6 +506,8 @@ public class GWTCompiler extends ToolBase {
 
     // Setup the well-known variables.
     //
+    out.print("var $gwt_version = \"" + About.GWT_VERSION_NUM + "\";");
+    out.newlineOpt();
     out.print("var $wnd = window;");
     out.newlineOpt();
     out.print("var $doc = $wnd.document;");
