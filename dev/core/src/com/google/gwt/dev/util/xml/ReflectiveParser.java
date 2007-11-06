@@ -65,6 +65,21 @@ public final class ReflectiveParser {
       //
       Schema schemaLevel = getTopSchemaLevel();
 
+      if (schemaLevel == null) {
+        // It is legitimate to run out of schemaLevels if there is an empty node
+        // in the XML. Otherwise, it indicates that the user has specified
+        // extra stuff in the body of the XML tag that we don't understand.
+        //
+        for (int i = 0; i < length; i++) {
+          if (!Character.isWhitespace(ch[i + start])) {
+            throw new SAXException("Unexpected XML data found: "
+                + String.valueOf(ch, start, length));
+          }
+        }
+        // This is okay. Nothing special to do.
+        //
+        return;
+      }
       // Find the precomputed handler class info.
       //
       Class slc = schemaLevel.getClass();
