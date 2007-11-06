@@ -43,7 +43,6 @@ import com.google.gwt.dev.jjs.ast.js.JsonObject.JsonPropInit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -201,15 +200,16 @@ public class CastNormalizer {
 
       // Find all possible query types which I can satisfy
       Set<JReferenceType> yesSet = null;
-      for (Iterator<JReferenceType> iter = queriedTypes.keySet().iterator(); iter.hasNext();) {
 
-        JReferenceType qType = iter.next();
+      // NOTE: non-deterministic iteration over HashSet and HashMap. This is
+      // okay here because we're just adding things to another HashSet.
+      for (JReferenceType qType : queriedTypes.keySet()) {
+
         Set<JReferenceType> querySet = queriedTypes.get(qType);
         if (program.typeOracle.canTriviallyCast(type, qType)) {
 
-          for (Iterator<JReferenceType> it = querySet.iterator(); it.hasNext();) {
+          for (JReferenceType argType : querySet) {
 
-            JReferenceType argType = it.next();
             if (program.typeOracle.canTriviallyCast(type, argType)) {
               if (yesSet == null) {
                 yesSet = new HashSet<JReferenceType>();

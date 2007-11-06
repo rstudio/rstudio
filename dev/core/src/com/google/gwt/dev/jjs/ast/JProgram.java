@@ -28,6 +28,7 @@ import com.google.gwt.dev.jjs.ast.js.JsonObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -35,6 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Root for the AST representing an entire Java program.
@@ -113,7 +115,19 @@ public class JProgram extends JNode {
 
   public final JTypeOracle typeOracle = new JTypeOracle(this);
 
-  private final List<JArrayType> allArrayTypes = new ArrayList<JArrayType>();
+  /**
+   * Sorted to avoid nondeterministic iteration.
+   */
+  private final Set<JArrayType> allArrayTypes = new TreeSet<JArrayType>(
+      new Comparator<JArrayType>() {
+        public int compare(JArrayType o1, JArrayType o2) {
+          int comp = o1.getDims() - o2.getDims();
+          if (comp != 0) {
+            return comp;
+          }
+          return o1.getName().compareTo(o2.getName());
+        }
+      });
 
   private final List<JReferenceType> allTypes = new ArrayList<JReferenceType>();
 
@@ -398,7 +412,11 @@ public class JProgram extends JNode {
     return curType;
   }
 
-  public List<JArrayType> getAllArrayTypes() {
+  /**
+   * Returns a sorted set of array types, so the returned set can be iterated
+   * over without introducing nondeterminism.
+   */
+  public Set<JArrayType> getAllArrayTypes() {
     return allArrayTypes;
   }
 

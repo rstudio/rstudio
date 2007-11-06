@@ -68,7 +68,6 @@ import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -142,7 +141,7 @@ public class JavaToJavaScriptCompiler {
           // Find the appropriate (noArg) constructor
           JMethod noArgCtor = null;
           for (int j = 0; j < mainClass.methods.size(); ++j) {
-            JMethod ctor = (JMethod) mainClass.methods.get(j);
+            JMethod ctor = mainClass.methods.get(j);
             if (ctor.getName().equals(mainClass.getShortName())) {
               if (ctor.params.size() == 0) {
                 noArgCtor = ctor;
@@ -177,7 +176,7 @@ public class JavaToJavaScriptCompiler {
 
   private static JMethod findMainMethod(JReferenceType referenceType) {
     for (int j = 0; j < referenceType.methods.size(); ++j) {
-      JMethod method = (JMethod) referenceType.methods.get(j);
+      JMethod method = referenceType.methods.get(j);
       if (method.getName().equals("onModuleLoad")) {
         if (method.params.size() == 0) {
           return method;
@@ -202,7 +201,7 @@ public class JavaToJavaScriptCompiler {
   private long lastModified;
   private final boolean obfuscate;
   private final boolean prettyNames;
-  private final Set/* <IProblem> */problemSet = new HashSet/* <IProblem> */();
+  private final Set<IProblem> problemSet = new HashSet<IProblem>();
 
   public JavaToJavaScriptCompiler(final TreeLogger logger,
       final WebModeCompilerFrontEnd compiler, final String[] declEntryPts)
@@ -230,9 +229,9 @@ public class JavaToJavaScriptCompiler {
     // Find all the possible rebound entry points.
     //
     RebindPermutationOracle rpo = compiler.getRebindPermutationOracle();
-    Set allEntryPoints = new HashSet();
-    for (int i = 0; i < declEntryPts.length; i++) {
-      String[] all = rpo.getAllPossibleRebindAnswers(logger, declEntryPts[i]);
+    Set<String> allEntryPoints = new HashSet<String>();
+    for (String element : declEntryPts) {
+      String[] all = rpo.getAllPossibleRebindAnswers(logger, element);
       Util.addAll(allEntryPoints, all);
     }
     String[] entryPts = Util.toStringArray(allEntryPoints);
@@ -262,8 +261,7 @@ public class JavaToJavaScriptCompiler {
     //
     lastModified = 0;
     CompilationUnitProvider newestCup = null;
-    for (int i = 0; i < goldenCuds.length; i++) {
-      CompilationUnitDeclaration cud = goldenCuds[i];
+    for (CompilationUnitDeclaration cud : goldenCuds) {
       ICompilationUnitAdapter icua = (ICompilationUnitAdapter) cud.compilationResult.compilationUnit;
       CompilationUnitProvider cup = icua.getCompilationUnitProvider();
       long cupLastModified = cup.getLastModified();
@@ -427,9 +425,8 @@ public class JavaToJavaScriptCompiler {
     } catch (InternalCompilerException e) {
       TreeLogger topBranch = logger.branch(TreeLogger.ERROR,
           "An internal compiler exception occurred", e);
-      List nodeTrace = e.getNodeTrace();
-      for (Iterator it = nodeTrace.iterator(); it.hasNext();) {
-        NodeInfo nodeInfo = (NodeInfo) it.next();
+      List<NodeInfo> nodeTrace = e.getNodeTrace();
+      for (NodeInfo nodeInfo : nodeTrace) {
         SourceInfo info = nodeInfo.getSourceInfo();
         String msg;
         if (info != null) {
@@ -470,8 +467,7 @@ public class JavaToJavaScriptCompiler {
     if (goldenCuds.length == 0) {
       compilationFailed = true;
     }
-    for (int iCud = 0; iCud < goldenCuds.length; iCud++) {
-      CompilationUnitDeclaration cud = goldenCuds[iCud];
+    for (CompilationUnitDeclaration cud : goldenCuds) {
       CompilationResult result = cud.compilationResult();
       if (result.hasErrors()) {
         compilationFailed = true;
@@ -482,8 +478,7 @@ public class JavaToJavaScriptCompiler {
         TreeLogger branch = logger.branch(TreeLogger.ERROR, "Errors in "
             + String.valueOf(result.getFileName()), null);
         IProblem[] errors = result.getErrors();
-        for (int i = 0; i < errors.length; i++) {
-          IProblem problem = errors[i];
+        for (IProblem problem : errors) {
           if (problemSet.contains(problem)) {
             continue;
           }

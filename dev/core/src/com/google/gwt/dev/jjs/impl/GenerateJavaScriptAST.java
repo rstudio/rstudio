@@ -141,6 +141,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.TreeMap;
 
 /**
  * Creates a JavaScript AST from a <code>JProgram</code> node.
@@ -1581,7 +1582,13 @@ public class GenerateJavaScriptAST {
   }
 
   private final Map<JBlock, JsCatch> catchMap = new IdentityHashMap<JBlock, JsCatch>();
-  private final Map<JType, JsName> classLits = new IdentityHashMap<JType, JsName>();
+
+  /**
+   * Sorted to avoid nondeterministic iteration.
+   */
+  private final Map<JType, JsName> classLits = new TreeMap<JType, JsName>(
+      new HasNameSort());
+
   private final Map<JsName, JsExpression> classObjects = new IdentityHashMap<JsName, JsExpression>();
   private final Map<JClassType, JsScope> classScopes = new IdentityHashMap<JClassType, JsScope>();
 
