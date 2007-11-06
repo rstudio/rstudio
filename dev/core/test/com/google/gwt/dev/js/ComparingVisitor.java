@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.dev.js.FlatteningVisitor.TreeNode;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
@@ -40,6 +41,7 @@ import com.google.gwt.dev.js.ast.JsIf;
 import com.google.gwt.dev.js.ast.JsIntegralLiteral;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsLabel;
+import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
@@ -59,279 +61,330 @@ import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.js.ast.JsThrow;
 import com.google.gwt.dev.js.ast.JsTry;
 import com.google.gwt.dev.js.ast.JsVars;
+import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
-/**
- * Precedence indices from "JavaScript - The Definitive Guide" 4th Edition (page
- * 57)
- * 
- * Precedence 17 is for indivisible primaries that either don't have children,
- * or provide their own delimiters.
- * 
- * Precedence 16 is for really important things that have their own AST classes.
- * 
- * Precedence 15 is for the new construct.
- * 
- * Precedence 14 is for unary operators.
- * 
- * Precedences 12 through 4 are for non-assigning binary operators.
- * 
- * Precedence 3 is for the tertiary conditional.
- * 
- * Precedence 2 is for assignments.
- * 
- * Precedence 1 is for comma operations.
- */
-class JsPrecedenceVisitor extends JsVisitor {
+import junit.framework.Assert;
+import junit.framework.TestCase;
 
-  public static int exec(JsExpression expression) {
-    JsPrecedenceVisitor visitor = new JsPrecedenceVisitor();
-    visitor.accept(expression);
-    if (visitor.answer < 0) {
-      throw new RuntimeException("Precedence must be >= 0!");
-    }
-    return visitor.answer;
+import java.util.List;
+
+public class ComparingVisitor extends JsVisitor {
+
+  public static void exec(List<JsStatement> expected, List<JsStatement> actual) {
+    TreeNode expectedTree = FlatteningVisitor.exec(expected);
+    TreeNode actualTree = FlatteningVisitor.exec(actual);
+    compare(expectedTree, actualTree);
   }
 
-  private int answer = -1;
+  private static void compare(JsVisitable<?> expected, JsVisitable<?> actual) {
+    if (expected == actual) {
+      return;
+    }
+    Assert.assertNotNull(expected);
+    Assert.assertNotNull(actual);
+    ComparingVisitor visitor = new ComparingVisitor(expected);
+    visitor.accept(actual);
+  }
 
-  private JsPrecedenceVisitor() {
+  private static void compare(TreeNode expected, TreeNode actual) {
+    compare(expected.node, actual.node);
+    List<TreeNode> expectedChildren = expected.children;
+    List<TreeNode> actualChildren = actual.children;
+    Assert.assertEquals(expectedChildren.size(), actualChildren.size());
+    for (int i = 0; i < expectedChildren.size(); i++) {
+      compare(expectedChildren.get(i), actualChildren.get(i));
+    }
+  }
+
+  private final JsVisitable<?> other;
+
+  private ComparingVisitor(JsVisitable<?> other) {
+    this.other = other;
   }
 
   @Override
   public boolean visit(JsArrayAccess x, JsContext<JsExpression> ctx) {
-    answer = 16;
+    Assert.assertTrue(other instanceof JsArrayAccess);
     return false;
   }
 
   @Override
   public boolean visit(JsArrayLiteral x, JsContext<JsExpression> ctx) {
-    answer = 17; // primary
+    Assert.assertTrue(other instanceof JsArrayLiteral);
     return false;
   }
 
   @Override
   public boolean visit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
-    answer = x.getOperator().getPrecedence();
+    Assert.assertTrue(other instanceof JsBinaryOperation);
+    Assert.assertEquals(((JsBinaryOperation) other).getOperator().getSymbol(),
+        x.getOperator().getSymbol());
     return false;
   }
 
   @Override
   public boolean visit(JsBlock x, JsContext<JsStatement> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsBlock);
+    Assert.assertEquals(((JsBlock) other).isGlobalBlock(), x.isGlobalBlock());
+    return false;
   }
 
   @Override
   public boolean visit(JsBooleanLiteral x, JsContext<JsExpression> ctx) {
-    answer = 17; // primary
+    Assert.assertTrue(other instanceof JsBooleanLiteral);
+    Assert.assertEquals(((JsBooleanLiteral) other).getValue(), x.getValue());
     return false;
   }
 
   @Override
   public boolean visit(JsBreak x, JsContext<JsStatement> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsBreak);
+    Assert.assertEquals(((JsBreak) other).getLabel().getIdent(),
+        x.getLabel().getIdent());
+    return false;
   }
 
   @Override
   public boolean visit(JsCase x, JsContext<JsSwitchMember> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsCase);
+    return false;
   }
 
   @Override
   public boolean visit(JsCatch x, JsContext<JsCatch> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsCatch);
+    Assert.assertEquals(((JsCatch) other).getParameter().getName().getIdent(),
+        x.getParameter().getName().getIdent());
+    return false;
   }
 
   @Override
   public boolean visit(JsConditional x, JsContext<JsExpression> ctx) {
-    answer = 3;
+    Assert.assertTrue(other instanceof JsConditional);
     return false;
   }
 
   @Override
   public boolean visit(JsContinue x, JsContext<JsStatement> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsContinue);
+    Assert.assertEquals(((JsContinue) other).getLabel().getIdent(),
+        x.getLabel().getIdent());
+    return false;
   }
 
   @Override
   public boolean visit(JsDebugger x, JsContext<JsStatement> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsDebugger);
+    return false;
   }
 
   @Override
   public boolean visit(JsDecimalLiteral x, JsContext<JsExpression> ctx) {
-    answer = 17; // primary
+    Assert.assertTrue(other instanceof JsDecimalLiteral);
+    Assert.assertEquals(((JsDecimalLiteral) other).getValue(), x.getValue());
     return false;
   }
 
   @Override
   public boolean visit(JsDefault x, JsContext<JsSwitchMember> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsDefault);
+    return false;
   }
 
   @Override
   public boolean visit(JsDoWhile x, JsContext<JsStatement> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsDoWhile);
+    return false;
   }
 
   @Override
   public boolean visit(JsEmpty x, JsContext<JsStatement> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsEmpty);
+    return false;
   }
 
   @Override
   public boolean visit(JsExprStmt x, JsContext<JsStatement> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsExprStmt);
+    return false;
   }
 
   @Override
   public boolean visit(JsFor x, JsContext<JsStatement> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsFor);
+    return false;
   }
 
   @Override
   public boolean visit(JsForIn x, JsContext<JsStatement> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsForIn);
+    return false;
   }
 
   @Override
   public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
-    answer = 17; // primary
-    return false;
-  }
-
-  @Override
-  public boolean visit(JsIf x, JsContext<JsStatement> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
-  }
-
-  @Override
-  public boolean visit(JsIntegralLiteral x, JsContext<JsExpression> ctx) {
-    answer = 17; // primary
-    return false;
-  }
-
-  @Override
-  public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
-    answer = 16;
-    return false;
-  }
-
-  @Override
-  public boolean visit(JsLabel x, JsContext<JsStatement> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
-  }
-
-  @Override
-  public boolean visit(JsNameRef x, JsContext<JsExpression> ctx) {
-    if (x.isLeaf()) {
-      answer = 17; // primary
-    } else {
-      answer = 16; // property access
+    Assert.assertTrue(other instanceof JsFunction);
+    JsFunction otherFunc = (JsFunction) other;
+    JsName otherName = otherFunc.getName();
+    JsName name = x.getName();
+    if (name != otherName) {
+      Assert.assertEquals(otherName.getIdent(), name.getIdent());
     }
     return false;
   }
 
   @Override
+  public boolean visit(JsIf x, JsContext<JsStatement> ctx) {
+    Assert.assertTrue(other instanceof JsIf);
+    return false;
+  }
+
+  @Override
+  public boolean visit(JsIntegralLiteral x, JsContext<JsExpression> ctx) {
+    Assert.assertTrue(other instanceof JsIntegralLiteral);
+    Assert.assertEquals(((JsIntegralLiteral) other).getValue(), x.getValue());
+    return false;
+  }
+
+  @Override
+  public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
+    Assert.assertTrue(other instanceof JsInvocation);
+    return false;
+  }
+
+  @Override
+  public boolean visit(JsLabel x, JsContext<JsStatement> ctx) {
+    Assert.assertTrue(other instanceof JsLabel);
+    Assert.assertEquals(((JsLabel) other).getName().getIdent(),
+        x.getName().getIdent());
+    return false;
+  }
+
+  @Override
+  public boolean visit(JsNameRef x, JsContext<JsExpression> ctx) {
+    Assert.assertTrue(other instanceof JsNameRef);
+    Assert.assertEquals(((JsNameRef) other).getIdent(), x.getIdent());
+    return false;
+  }
+
+  @Override
   public boolean visit(JsNew x, JsContext<JsExpression> ctx) {
-    answer = 15;
+    Assert.assertTrue(other instanceof JsNew);
     return false;
   }
 
   @Override
   public boolean visit(JsNullLiteral x, JsContext<JsExpression> ctx) {
-    answer = 17; // primary
+    Assert.assertTrue(other instanceof JsNullLiteral);
     return false;
   }
 
   @Override
   public boolean visit(JsObjectLiteral x, JsContext<JsExpression> ctx) {
-    answer = 17; // primary
+    Assert.assertTrue(other instanceof JsObjectLiteral);
     return false;
   }
 
   @Override
   public boolean visit(JsParameter x, JsContext<JsParameter> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsParameter);
+    Assert.assertEquals(((JsParameter) other).getName().getIdent(),
+        x.getName().getIdent());
+    return false;
   }
 
   @Override
   public boolean visit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
-    answer = x.getOperator().getPrecedence();
+    Assert.assertTrue(other instanceof JsPostfixOperation);
+    Assert.assertEquals(((JsPostfixOperation) other).getOperator().getSymbol(),
+        x.getOperator().getSymbol());
     return false;
   }
 
   @Override
   public boolean visit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
-    answer = x.getOperator().getPrecedence();
+    Assert.assertTrue(other instanceof JsPrefixOperation);
+    Assert.assertEquals(((JsPrefixOperation) other).getOperator().getSymbol(),
+        x.getOperator().getSymbol());
     return false;
   }
 
   @Override
   public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsProgram);
+    return false;
   }
 
   @Override
   public boolean visit(JsPropertyInitializer x,
       JsContext<JsPropertyInitializer> ctx) {
-    answer = 17; // primary
+    Assert.assertTrue(other instanceof JsPropertyInitializer);
     return false;
   }
 
   @Override
   public boolean visit(JsRegExp x, JsContext<JsExpression> ctx) {
-    answer = 17; // primary
+    Assert.assertTrue(other instanceof JsRegExp);
+    Assert.assertEquals(((JsRegExp) other).getFlags(), x.getFlags());
+    Assert.assertEquals(((JsRegExp) other).getPattern(), x.getPattern());
     return false;
   }
 
   @Override
   public boolean visit(JsReturn x, JsContext<JsStatement> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsReturn);
+    return false;
   }
 
   @Override
   public boolean visit(JsStringLiteral x, JsContext<JsExpression> ctx) {
-    answer = 17; // primary
+    Assert.assertTrue(other instanceof JsStringLiteral);
+    Assert.assertEquals(((JsStringLiteral) other).getValue(), x.getValue());
     return false;
   }
 
   @Override
   public boolean visit(JsSwitch x, JsContext<JsStatement> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsSwitch);
+    return false;
   }
 
   @Override
   public boolean visit(JsThisRef x, JsContext<JsExpression> ctx) {
-    answer = 17; // primary
+    Assert.assertTrue(other instanceof JsThisRef);
     return false;
   }
 
   @Override
   public boolean visit(JsThrow x, JsContext<JsStatement> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsThrow);
+    return false;
   }
 
   @Override
   public boolean visit(JsTry x, JsContext<JsStatement> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    Assert.assertTrue(other instanceof JsTry);
+    return false;
   }
 
   @Override
   public boolean visit(JsVar x, JsContext<JsVar> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    TestCase.assertTrue(other instanceof JsVar);
+    TestCase.assertEquals(((JsVar) other).getName().getIdent(),
+        x.getName().getIdent());
+    return false;
   }
 
-  @Override
   public boolean visit(JsVars x, JsContext<JsStatement> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    TestCase.assertTrue(other instanceof JsVars);
+    return false;
   }
 
-  @Override
   public boolean visit(JsWhile x, JsContext<JsStatement> ctx) {
-    throw new RuntimeException("Only expressions have precedence.");
+    TestCase.assertTrue(other instanceof JsWhile);
+    return false;
   }
-
 }

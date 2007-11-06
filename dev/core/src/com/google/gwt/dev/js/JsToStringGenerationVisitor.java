@@ -47,6 +47,7 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
+import com.google.gwt.dev.js.ast.JsOperator;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
@@ -69,6 +70,7 @@ import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.util.TextOutput;
 
 import java.util.Iterator;
+import java.util.regex.Pattern;
 
 /**
  * Produces text output from a JavaScript AST.
@@ -107,6 +109,14 @@ public class JsToStringGenerationVisitor extends JsVisitor {
    * How many lines of code to print inside of a JsBlock when printing terse.
    */
   private static final int JSBLOCK_LINES_TO_PRINT = 3;
+
+  /**
+   * A variable name is valid if it contains only letters, numbers, _, $ and
+   * does not begin with a number. There are actually other valid variable
+   * names, such as ones that contain escaped Unicode characters, but we
+   * surround those names with quotes in property initializers to be safe.
+   */
+  private static final Pattern VALID_NAME_PATTERN = Pattern.compile("[a-zA-Z_$][\\w$]*");
 
   protected boolean needSemi = true;
   private final TextOutput p;
@@ -148,8 +158,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     JsExpression arg1 = x.getArg1();
     _parenPush(x, arg1, !op.isLeftAssociative());
     accept(arg1);
-    boolean needSpace = op.isKeyword() || arg1 instanceof JsPostfixOperation;
-    if (needSpace) {
+    if (op.isKeyword()) {
       _parenPopOrSpace(x, arg1, !op.isLeftAssociative());
     } else {
       _parenPop(x, arg1, !op.isLeftAssociative());
@@ -157,8 +166,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     }
     p.print(op.getSymbol());
     JsExpression arg2 = x.getArg2();
-    needSpace = op.isKeyword() || arg2 instanceof JsPrefixOperation;
-    if (needSpace) {
+    if (_spaceCalc(op, arg2)) {
       _parenPushOrSpace(x, arg2, op.isLeftAssociative());
     } else {
       _spaceOpt();
@@ -251,16 +259,16 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     // right associative
     {
       JsExpression testExpression = x.getTestExpression();
-      _parenPush(x, testExpression, true);
+      _parenPush(x, testExpression, false);
       accept(testExpression);
-      _parenPop(x, testExpression, true);
+      _parenPop(x, testExpression, false);
     }
     _questionMark();
     {
       JsExpression thenExpression = x.getThenExpression();
-      _parenPush(x, thenExpression, true);
+      _parenPush(x, thenExpression, false);
       accept(thenExpression);
-      _parenPop(x, thenExpression, true);
+      _parenPop(x, thenExpression, false);
     }
     _colon();
     {
@@ -350,8 +358,15 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
   @Override
   public boolean visit(JsExprStmt x, JsContext<JsStatement> ctx) {
-    final JsExpression expr = x.getExpression();
+    boolean surroundWithParentheses = JsFirstExpressionVisitor.exec(x);
+    if (surroundWithParentheses) {
+      _lparen();
+    }
+    JsExpression expr = x.getExpression();
     accept(expr);
+    if (surroundWithParentheses) {
+      _rparen();
+    }
     return false;
   }
 
@@ -552,9 +567,14 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     _space();
 
     JsExpression ctorExpr = x.getConstructorExpression();
-    _parenPush(x, ctorExpr, true);
+    boolean needsParens = JsConstructExpressionVisitor.exec(ctorExpr);
+    if (needsParens) {
+      _lparen();
+    }
     accept(ctorExpr);
-    _parenPop(x, ctorExpr, true);
+    if (needsParens) {
+      _rparen();
+    }
 
     _lparen();
     boolean sep = false;
@@ -584,9 +604,14 @@ public class JsToStringGenerationVisitor extends JsVisitor {
       sep = _sepCommaOptSpace(sep);
       JsPropertyInitializer propInit = (JsPropertyInitializer) element;
       JsExpression labelExpr = propInit.getLabelExpr();
-      _parenPushIfConditional(labelExpr);
-      accept(labelExpr);
-      _parenPopIfConditional(labelExpr);
+      // labels can be either string, integral, or decimal literals
+      if (labelExpr instanceof JsStringLiteral
+          && VALID_NAME_PATTERN.matcher(
+              ((JsStringLiteral) labelExpr).getValue()).matches()) {
+        p.print(((JsStringLiteral) labelExpr).getValue());
+      } else {
+        accept(labelExpr);
+      }
       _colon();
       JsExpression valueExpr = propInit.getValueExpr();
       _parenPushIfConditional(valueExpr);
@@ -608,9 +633,9 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     JsUnaryOperator op = x.getOperator();
     JsExpression arg = x.getArg();
     // unary operators always associate correctly (I think)
-    _parenPush(x, arg, true);
+    _parenPush(x, arg, false);
     accept(arg);
-    _parenPop(x, arg, true);
+    _parenPop(x, arg, false);
     p.print(op.getSymbol());
     return false;
   }
@@ -619,14 +644,14 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   public boolean visit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
     JsUnaryOperator op = x.getOperator();
     p.print(op.getSymbol());
-    if (op.isKeyword()) {
+    JsExpression arg = x.getArg();
+    if (_spaceCalc(op, arg)) {
       _space();
     }
-    JsExpression arg = x.getArg();
     // unary operators always associate correctly (I think)
-    _parenPush(x, arg, true);
+    _parenPush(x, arg, false);
     accept(arg);
-    _parenPop(x, arg, true);
+    _parenPop(x, arg, false);
     return false;
   }
 
@@ -637,7 +662,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsPropertyInitializer x, JsContext<JsPropertyInitializer> ctx) {
+  public boolean visit(JsPropertyInitializer x,
+      JsContext<JsPropertyInitializer> ctx) {
     // Since there are separators, we actually print the property init
     // in visit(JsObjectLiteral).
     //
@@ -1068,6 +1094,19 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
   private void _space() {
     p.print(' ');
+  }
+
+  private boolean _spaceCalc(JsOperator op, JsExpression arg) {
+    if (op.isKeyword()) {
+      return true;
+    }
+    if (arg instanceof JsPrefixOperation) {
+      JsOperator op2 = ((JsPrefixOperation) arg).getOperator();
+      return (op == JsBinaryOperator.SUB || op == JsUnaryOperator.NEG)
+          && (op2 == JsUnaryOperator.DEC || op2 == JsUnaryOperator.NEG)
+          || (op == JsBinaryOperator.ADD && op2 == JsUnaryOperator.INC);
+    }
+    return false;
   }
 
   private void _spaceOpt() {
