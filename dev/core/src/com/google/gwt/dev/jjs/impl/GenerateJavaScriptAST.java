@@ -26,38 +26,31 @@ import com.google.gwt.dev.jjs.ast.JAssertStatement;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JBlock;
-import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JBreakStatement;
 import com.google.gwt.dev.jjs.ast.JCaseStatement;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
-import com.google.gwt.dev.jjs.ast.JCharLiteral;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
-import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
-import com.google.gwt.dev.jjs.ast.JFloatLiteral;
 import com.google.gwt.dev.jjs.ast.JForStatement;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
-import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLabel;
 import com.google.gwt.dev.jjs.ast.JLabeledStatement;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
-import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
-import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
@@ -66,7 +59,6 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
-import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JSwitchStatement;
 import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JThrowStatement;
@@ -125,12 +117,10 @@ import com.google.gwt.dev.js.ast.JsTry;
 import com.google.gwt.dev.js.ast.JsUnaryOperation;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsVars;
-import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -364,7 +354,7 @@ public class GenerateJavaScriptAST {
     }
   }
 
-  private class GenerateJavaScriptVisitor extends JVisitor {
+  private class GenerateJavaScriptVisitor extends GenerateJavaScriptLiterals {
 
     private final Set<JClassType> alreadyRan = new HashSet<JClassType>();
 
@@ -372,13 +362,15 @@ public class GenerateJavaScriptAST {
 
     private final JsName globalTemp = topScope.declareName("_");
 
-    private final Stack<JsVisitable> nodeStack = new Stack<JsVisitable>();
-
     private final JsName prototype = objectScope.declareName("prototype");
 
     {
       globalTemp.setObfuscatable(false);
       prototype.setObfuscatable(false);
+    }
+
+    public GenerateJavaScriptVisitor() {
+      super(jsProgram);
     }
 
     @Override
@@ -438,12 +430,6 @@ public class GenerateJavaScriptAST {
     }
 
     @Override
-    public void endVisit(JBooleanLiteral x, Context ctx) {
-      push(x.getValue() ? jsProgram.getTrueLiteral()
-          : jsProgram.getFalseLiteral());
-    }
-
-    @Override
     public void endVisit(JBreakStatement x, Context ctx) {
       JsNameRef labelRef = null;
       if (x.getLabel() != null) {
@@ -467,11 +453,6 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
       throw new InternalCompilerException("Should not get here.");
-    }
-
-    @Override
-    public void endVisit(JCharLiteral x, Context ctx) {
-      push(jsProgram.getIntegralLiteral(BigInteger.valueOf(x.getValue())));
     }
 
     @Override
@@ -570,11 +551,6 @@ public class GenerateJavaScriptAST {
     }
 
     @Override
-    public void endVisit(JDoubleLiteral x, Context ctx) {
-      push(jsProgram.getDecimalLiteral(String.valueOf(x.getValue())));
-    }
-
-    @Override
     public void endVisit(JExpressionStatement x, Context ctx) {
       JsExpression expr = (JsExpression) pop(); // expr
       push(expr.makeStmt());
@@ -648,11 +624,6 @@ public class GenerateJavaScriptAST {
       }
 
       push(curExpr);
-    }
-
-    @Override
-    public void endVisit(JFloatLiteral x, Context ctx) {
-      push(jsProgram.getDecimalLiteral(String.valueOf(x.getValue())));
     }
 
     @Override
@@ -742,11 +713,6 @@ public class GenerateJavaScriptAST {
     }
 
     @Override
-    public void endVisit(JIntLiteral x, Context ctx) {
-      push(jsProgram.getIntegralLiteral(BigInteger.valueOf(x.getValue())));
-    }
-
-    @Override
     public void endVisit(JLabel x, Context ctx) {
       push(new JsLabel(names.get(x)));
     }
@@ -789,11 +755,6 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JLocalRef x, Context ctx) {
       push(names.get(x.getTarget()).makeRef());
-    }
-
-    @Override
-    public void endVisit(JLongLiteral x, Context ctx) {
-      push(jsProgram.getIntegralLiteral(BigInteger.valueOf(x.getValue())));
     }
 
     @Override
@@ -930,11 +891,6 @@ public class GenerateJavaScriptAST {
     }
 
     @Override
-    public void endVisit(JNullLiteral x, Context ctx) {
-      push(jsProgram.getNullLiteral());
-    }
-
-    @Override
     public void endVisit(JParameter x, Context ctx) {
       push(new JsParameter(names.get(x)));
     }
@@ -1067,11 +1023,6 @@ public class GenerateJavaScriptAST {
       JsExpression valueExpr = (JsExpression) pop();
       JsExpression labelExpr = (JsExpression) pop();
       push(new JsPropertyInitializer(labelExpr, valueExpr));
-    }
-
-    @Override
-    public void endVisit(JStringLiteral x, Context ctx) {
-      push(jsProgram.getStringLiteral(x.getValue()));
     }
 
     @Override
@@ -1448,41 +1399,6 @@ public class GenerateJavaScriptAST {
       JsInvocation jsInvocation = new JsInvocation();
       jsInvocation.setQualifier(names.get(clinitMethod).makeRef());
       return jsInvocation;
-    }
-
-    private <T extends JsVisitable> T pop() {
-      return (T) nodeStack.pop();
-    }
-
-    private <T extends JsVisitable> List<T> popList(int count) {
-      List<T> list = new ArrayList<T>();
-      while (count > 0) {
-        T item = this.<T> pop();
-        if (item != null) {
-          list.add(item);
-        }
-        --count;
-      }
-      Collections.reverse(list);
-      return list;
-    }
-
-    private <T extends JsVisitable<T>> void popList(List<T> collection,
-        int count) {
-      List<T> list = new ArrayList<T>();
-      while (count > 0) {
-        T item = this.<T> pop();
-        if (item != null) {
-          list.add(item);
-        }
-        --count;
-      }
-      Collections.reverse(list);
-      collection.addAll(list);
-    }
-
-    private <T extends JsVisitable> void push(T node) {
-      nodeStack.push(node);
     }
   }
 
