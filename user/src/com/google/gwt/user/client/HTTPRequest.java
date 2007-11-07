@@ -21,7 +21,11 @@ import com.google.gwt.user.client.impl.HTTPRequestImpl;
 /**
  * This class allows you to make asynchronous HTTP requests to the originating
  * server.
+ * 
+ * @deprecated As of GWT 1.5, replaced by
+ *             {@link com.google.gwt.http.client.RequestBuilder RequestBuilder}.
  */
+@Deprecated
 public class HTTPRequest {
 
   private static final HTTPRequestImpl httpRequest = GWT.create(HTTPRequestImpl.class);

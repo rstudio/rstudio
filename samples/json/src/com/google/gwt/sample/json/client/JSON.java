@@ -15,14 +15,17 @@
  */
 package com.google.gwt.sample.json.client;
 
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONException;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
-import com.google.gwt.user.client.HTTPRequest;
-import com.google.gwt.user.client.ResponseTextHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
@@ -49,15 +52,21 @@ public class JSON {
    * object.
    * 
    */
-  private class JSONResponseTextHandler implements ResponseTextHandler {
-    public void onCompletion(String responseText) {
+  private class JSONResponseTextHandler implements RequestCallback {
+    public void onError(Request request, Throwable exception) {
+      displayRequestError(exception.toString());
+      resetSearchButtonCaption();
+    }
+
+    public void onResponseReceived(Request request, Response response) {
+      String responseText = response.getText();
       try {
         JSONValue jsonValue = JSONParser.parse(responseText);
         displayJSONObject(jsonValue);
       } catch (JSONException e) {
-        displayError(responseText);
+        displayParseError(responseText);
       }
-      searchButton.setText(SEARCH_BUTTON_DEFAULT_TEXT);
+      resetSearchButtonCaption();
     }
   }
 
@@ -89,6 +98,12 @@ public class JSON {
    * Text displayed on the fetch button when we are waiting for a JSON reply.
    */
   private static final String SEARCH_BUTTON_WAITING_TEXT = "Waiting for JSON Response...";
+
+  /*
+   * RequestBuilder used to issue HTTP GET requests.
+   */
+  private final RequestBuilder requestBuilder = new RequestBuilder(
+      RequestBuilder.GET, DEFAULT_SEARCH_URL);
 
   private Tree jsonTree = new Tree();
 
@@ -132,11 +147,11 @@ public class JSON {
     }
   }
 
-  private void displayError(String responseText) {
+  private void displayError(String errorType, String errorMessage) {
     jsonTree.removeItems();
     jsonTree.setVisible(true);
-    TreeItem treeItem = jsonTree.addItem("Failed to parse JSON response");
-    treeItem.addItem(responseText);
+    TreeItem treeItem = jsonTree.addItem(errorType);
+    treeItem.addItem(errorMessage);
     treeItem.setStyleName("JSON-JSONResponseObject");
     treeItem.setState(true);
   }
@@ -153,15 +168,28 @@ public class JSON {
     treeItem.setState(true);
   }
 
+  private void displayParseError(String responseText) {
+    displayError("Failed to parse JSON response", responseText);
+  }
+
+  private void displayRequestError(String message) {
+    displayError("Request failed.", message);
+  }
+
+  private void displaySendError(String message) {
+    displayError("Failed to send the request.", message);
+  }
+
   /*
    * Fetch the requested URL.
    */
   private void doFetchURL() {
     searchButton.setText(SEARCH_BUTTON_WAITING_TEXT);
-    if (!HTTPRequest.asyncGet(DEFAULT_SEARCH_URL, new JSONResponseTextHandler())) {
-      // Reset the caption.
-      //
-      searchButton.setText(SEARCH_BUTTON_DEFAULT_TEXT);
+    try {
+      requestBuilder.sendRequest(null, new JSONResponseTextHandler());
+    } catch (RequestException ex) {
+      displaySendError(ex.toString());
+      resetSearchButtonCaption();
     }
   }
 
@@ -203,5 +231,9 @@ public class JSON {
     //
     searchButtonSlot.add(searchButton);
     treeViewSlot.add(jsonTree);
+  }
+
+  private void resetSearchButtonCaption() {
+    searchButton.setText(SEARCH_BUTTON_DEFAULT_TEXT);
   }
 }
