@@ -25,5 +25,9 @@ public abstract class JStatement extends JNode {
   public JStatement(JProgram program, SourceInfo info) {
     super(program, info);
   }
+  
+  public boolean unconditionalControlBreak() {
+    return false;
+  }
 
 }

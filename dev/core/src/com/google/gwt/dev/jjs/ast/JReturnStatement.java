@@ -42,4 +42,8 @@ public class JReturnStatement extends JStatement {
     visitor.endVisit(this, ctx);
   }
 
+  @Override
+  public boolean unconditionalControlBreak() {
+    return true;
+  }
 }

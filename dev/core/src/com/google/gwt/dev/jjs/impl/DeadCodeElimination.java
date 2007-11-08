@@ -33,6 +33,7 @@ import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JForStatement;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
+import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -55,10 +56,12 @@ import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Attempts to remove dead code.
@@ -74,6 +77,8 @@ public class DeadCodeElimination {
      * An expression whose result does not matter.
      */
     private JExpression ignoringExpressionOutput;
+
+    private Set<JBlock> switchBlocks = new HashSet<JBlock>();
 
     /**
      * Short circuit binary operations.
@@ -153,14 +158,49 @@ public class DeadCodeElimination {
     }
 
     /**
-     * Prune empty blocks.
+     * Prune dead statements and empty blocks.
      */
     @Override
     public void endVisit(JBlock x, Context ctx) {
-      if (x.statements.size() == 0) {
-        if (ctx.canRemove()) {
-          ctx.removeMe();
+      // Switch blocks require special optimization code
+      if (switchBlocks.contains(x)) {
+        return;
+      }
+
+      /*
+       * Remove any dead statements after an abrupt change in code flow and
+       * promote safe statements within nested blocks to this block.
+       */
+      for (int i = 0; i < x.statements.size(); i++) {
+        JStatement stmt = x.statements.get(i);
+
+        if (stmt instanceof JBlock) {
+          /*
+           * Promote a sub-block's children to the current block, unless the
+           * sub-block contains local declarations as children.
+           */
+          JBlock block = (JBlock) stmt;
+          if (canPromoteBlock(block)) {
+            x.statements.remove(i);
+            x.statements.addAll(i, block.statements);
+            i--;
+            didChange = true;
+            continue;
+          }
         }
+
+        if (stmt.unconditionalControlBreak()) {
+          // Abrupt change in flow, chop the remaining items from this block
+          for (int j = i + 1; j < x.statements.size();) {
+            x.statements.remove(j);
+            didChange = true;
+          }
+        }
+      }
+
+      if (ctx.canRemove() && x.statements.size() == 0) {
+        // Remove blocks with no effect
+        ctx.removeMe();
       }
     }
 
@@ -399,6 +439,8 @@ public class DeadCodeElimination {
      * Optimize switch statements.
      */
     public void endVisit(JSwitchStatement x, Context ctx) {
+      switchBlocks.remove(x.getBody());
+
       if (hasNoDefaultCase(x)) {
         removeEmptyCases(x);
       }
@@ -470,6 +512,25 @@ public class DeadCodeElimination {
     @Override
     public boolean visit(JExpressionStatement x, Context ctx) {
       ignoringExpressionOutput = x.getExpr();
+      return true;
+    }
+
+    @Override
+    public boolean visit(JSwitchStatement x, Context ctx) {
+      switchBlocks.add(x.getBody());
+      return true;
+    }
+
+    /**
+     * Returns true if a block can be merged into its parent block. This is true
+     * when the block contains no local declarations.
+     */
+    private boolean canPromoteBlock(JBlock block) {
+      for (JStatement nestedStmt : block.statements) {
+        if (nestedStmt instanceof JLocalDeclarationStatement) {
+          return false;
+        }
+      }
       return true;
     }
 

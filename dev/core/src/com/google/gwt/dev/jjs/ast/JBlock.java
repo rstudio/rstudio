@@ -38,4 +38,13 @@ public class JBlock extends JStatement {
     visitor.endVisit(this, ctx);
   }
 
+  @Override
+  public boolean unconditionalControlBreak() {
+    for (JStatement stmt : statements) {
+      if (stmt.unconditionalControlBreak()) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

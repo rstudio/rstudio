@@ -41,4 +41,11 @@ public class JBreakStatement extends JStatement {
     }
     visitor.endVisit(this, ctx);
   }
+
+  @Override
+  public boolean unconditionalControlBreak() {
+    // It's only an unconditional break if the label is null, because a label
+    // can label the break statement itself!  We could handle this case.
+    return label == null;
+  }
 }
