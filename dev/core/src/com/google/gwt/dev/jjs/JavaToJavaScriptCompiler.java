@@ -49,7 +49,7 @@ import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.ReplaceRebinds;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
-import com.google.gwt.dev.js.JsDelegationRemover;
+import com.google.gwt.dev.js.JsInliner;
 import com.google.gwt.dev.js.JsNormalizer;
 import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsPrettyNamer;
@@ -397,8 +397,8 @@ public class JavaToJavaScriptCompiler {
       // (10) Apply optimizations to JavaScript AST
       do {
         didChange = false;
-        // Remove delegating/trampoline functions
-        didChange = JsDelegationRemover.exec(jsProgram) || didChange;
+        // Inline JavaScript function invocations
+        didChange = JsInliner.exec(jsProgram) || didChange;
         // Remove unused functions, possible
         didChange = JsUnusedFunctionRemover.exec(jsProgram) || didChange;
       } while (didChange);

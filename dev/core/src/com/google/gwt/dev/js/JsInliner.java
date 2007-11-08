@@ -65,9 +65,9 @@ import java.util.Set;
 import java.util.Stack;
 
 /**
- * Collapses delegating method calls.
+ * Perform inlining optimizations on the JavaScript AST.
  */
-public class JsDelegationRemover {
+public class JsInliner {
   /**
    * This is used to clean up duplication invocations of a clinit. Whenever
    * there is a possible branch in program flow, the remover will create a new
@@ -954,6 +954,6 @@ public class JsDelegationRemover {
   /**
    * Utility class.
    */
-  private JsDelegationRemover() {
+  private JsInliner() {
   }
 }

@@ -80,7 +80,7 @@ public class JsUnusedFunctionRemover {
 
       if (toRemove.containsKey(name)) {
         // Removing a static initializer indicates a problem in
-        // JsDelegationRemover.
+        // JsInliner.
         if (name.getIdent().equals("$clinit")) {
           throw new InternalCompilerException("Tried to remove clinit "
               + name.getStaticRef().toSource());

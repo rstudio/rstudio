@@ -44,7 +44,7 @@ import java.util.Stack;
 
 /**
  * A utility class to clone JsExpression AST members for use by
- * {@link JsDelegationRemover}. <b>Not all expressions are necessarily
+ * {@link JsInliner}. <b>Not all expressions are necessarily
  * implemented</b>, only those that are safe to hoist into outer call sites.
  */
 final class JsHoister {
