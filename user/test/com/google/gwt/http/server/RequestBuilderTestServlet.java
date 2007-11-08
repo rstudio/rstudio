@@ -18,13 +18,13 @@ package com.google.gwt.http.server;
 import java.io.BufferedReader;
 import java.io.IOException;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * TODO: document me.
+ * Servlet component of the
+ * {@link com.google.gwt.http.client.RequestBuilderTest RequestBuilderTest}.
  */
 public class RequestBuilderTestServlet extends HttpServlet {
 
@@ -32,13 +32,15 @@ public class RequestBuilderTestServlet extends HttpServlet {
     return "/com.google.gwt.http.RequestBuilderTest/testRequestBuilder/";
   }
 
+  @Override
   protected void doDelete(HttpServletRequest request,
-      HttpServletResponse response) throws ServletException, IOException {
+      HttpServletResponse response) {
     response.setStatus(HttpServletResponse.SC_OK);
   }
 
+  @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException, IOException {
+      throws IOException {
     String method = request.getMethod();
     String pathInfo = request.getPathInfo();
     if (pathInfo.equals(getPathInfoBase() + "setRequestHeader")) {
@@ -76,25 +78,24 @@ public class RequestBuilderTestServlet extends HttpServlet {
     }
   }
 
-  protected void doHead(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException, IOException {
+  @Override
+  protected void doHead(HttpServletRequest request, HttpServletResponse response) {
     response.setStatus(HttpServletResponse.SC_OK);
   }
 
-  protected void doPost(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException, IOException {
-    BufferedReader reader = request.getReader();
-    String content = reader.readLine();
-    response.getWriter().print("POST");
-    if (content.equals("method=test+request")) {
+  @Override
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    String parameter = request.getParameter("method");
+    if ("test request".equals(parameter)) {
       response.setStatus(HttpServletResponse.SC_OK);
     } else {
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
     }
   }
 
+  @Override
   protected void doPut(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException, IOException {
+      throws IOException {
     BufferedReader reader = request.getReader();
     String content = reader.readLine();
     if (content.equals("<html><body>Put Me</body></html>")) {
@@ -103,6 +104,4 @@ public class RequestBuilderTestServlet extends HttpServlet {
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
     }
   }
-
-  private int count;
 }

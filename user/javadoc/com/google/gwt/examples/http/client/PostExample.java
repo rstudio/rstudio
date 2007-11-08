@@ -12,6 +12,7 @@ public class PostExample {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.POST, url);
 
     try {
+      builder.setHeader("Content-Type", "application/x-www-form-urlencoded");
       Request response = builder.sendRequest(postData, new RequestCallback() {
 
         public void onError(Request request, Throwable exception) {

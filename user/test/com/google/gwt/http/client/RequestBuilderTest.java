@@ -19,7 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * HTTPRequestBuilder tests.
+ * Test cases for the {@link RequestBuilder} class.
  */
 public class RequestBuilderTest extends GWTTestCase {
   private static final int TEST_FINISH_DELAY = 10000;
@@ -28,6 +28,7 @@ public class RequestBuilderTest extends GWTTestCase {
     return GWT.getModuleBaseURL() + "testRequestBuilder/";
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.http.RequestBuilderTest";
   }
@@ -57,8 +58,7 @@ public class RequestBuilderTest extends GWTTestCase {
    */
   public void testRequestBuilderStringString() throws RequestException {
     try {
-      new RequestBuilder((RequestBuilder.Method) null,
-          null);
+      new RequestBuilder((RequestBuilder.Method) null, null);
       fail("NullPointerException should have been thrown for construction with null method.");
     } catch (NullPointerException ex) {
       // purposely ignored
@@ -110,7 +110,7 @@ public class RequestBuilderTest extends GWTTestCase {
       MyRequestBuilder(String httpMethod, String url) {
         super(httpMethod, url);
       }
-    };
+    }
 
     new MyRequestBuilder("HEAD", "FOO");
     // should reach here without any exceptions being thrown
@@ -146,6 +146,7 @@ public class RequestBuilderTest extends GWTTestCase {
 
     RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
         getTestBaseURL() + "sendRequest_POST");
+    builder.setHeader("Content-Type", "application/x-www-form-urlencoded");
     builder.sendRequest("method=test+request", new RequestCallback() {
       public void onError(Request request, Throwable exception) {
         fail("HTTPRequest timed out");
