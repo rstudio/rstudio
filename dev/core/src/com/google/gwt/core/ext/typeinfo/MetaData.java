@@ -24,6 +24,23 @@ import java.util.Set;
 
 class MetaData implements HasMetaData {
 
+  /**
+   * Copy metadata from one metadata container to another. Perhaps overly
+   * paranoid but HasMetaData elements are mutable.
+   * 
+   * @param dest
+   * @param src
+   */
+  static void copy(HasMetaData dest, HasMetaData src) {
+    String[] tagNames = src.getMetaDataTags();
+    for (String tagName : tagNames) {
+      String[][] tagValueSets = src.getMetaData(tagName);
+      for (String[] tagValues : tagValueSets) {
+        dest.addMetaData(tagName, tagValues);
+      }
+    }
+  }
+
   private final Map<String, List<String[]>> tagNameToStringArrayList = new HashMap<String, List<String[]>>();
 
   public void addMetaData(String tagName, String[] values) {
@@ -83,4 +100,5 @@ class MetaData implements HasMetaData {
     }
     return sb.toString();
   }
+
 }

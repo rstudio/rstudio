@@ -15,21 +15,12 @@
  */
 package com.google.gwt.core.ext.typeinfo.test;
 
+import java.io.Serializable;
+
 /**
- * Test a non-generic class that extends a parameterized type.
+ * Used to test wildcard card expansion when looking for List<Integer>
+ * subtypes.
  */
-public class NonGenericSubclass extends GenericClass<Integer> {
-  /**
-   * @param t
-   */
-  public NonGenericSubclass(Integer t) {
-    super(t);
-  }
-  
-  
-  /**
-   * Tests overloading of generic methods. 
-   */
-  public void setT(Integer t) {
-  }
+public class MyCustomList<T extends Serializable & Comparable<T>, U> extends
+    MyList<U> {
 }

@@ -186,6 +186,7 @@ class AnnotationProxyFactory {
       // See if the value was explicitly declared
       Object value = identifierToValue.get(name);
       if (value != null) {
+        assert (method.getReturnType().isAssignableFrom(value.getClass()));
         return value;
       }
 
@@ -195,6 +196,11 @@ class AnnotationProxyFactory {
         JAnnotationMethod annotationMethod = jMethod.isAnnotationMethod();
         assert (annotationMethod != null);
         return annotationMethod.getDefaultValue();
+      }
+
+      if (method.getDeclaringClass() == Annotation.class
+          && "annotationType".equals(method.getName())) {
+        return annotationClass;
       }
 
       /*

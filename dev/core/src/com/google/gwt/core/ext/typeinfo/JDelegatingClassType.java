@@ -26,7 +26,7 @@ import java.util.Map;
  */
 abstract class JDelegatingClassType extends JClassType {
 
-  protected JClassType baseType;
+  private JClassType baseType;
 
   JDelegatingClassType() {
   }
@@ -84,6 +84,10 @@ abstract class JDelegatingClassType extends JClassType {
     return baseType.getAnnotations();
   }
 
+  public JClassType getBaseType() {
+    return baseType;
+  }
+
   @Override
   public int getBodyEnd() {
     return baseType.getBodyEnd();
@@ -123,9 +127,12 @@ abstract class JDelegatingClassType extends JClassType {
 
   @Override
   public JClassType getEnclosingType() {
+    // TODO this can be wrong if the enclosing type is a parameterized type. For
+    // example, if a generic class has a non-static generic inner class.
     return baseType.getEnclosingType();
   }
 
+  @Override
   public JClassType getErasedType() {
     return baseType.getErasedType();
   }
@@ -220,9 +227,6 @@ abstract class JDelegatingClassType extends JClassType {
     return baseType.getSuperclass();
   }
 
-  /**
-   * TODO: What is this???
-   */
   @Override
   public String getTypeHash() throws UnableToCompleteException {
     return baseType.getTypeHash();
@@ -279,6 +283,11 @@ abstract class JDelegatingClassType extends JClassType {
   @Override
   public boolean isDefaultInstantiable() {
     return baseType.isDefaultInstantiable();
+  }
+
+  @Override
+  public final JEnumType isEnum() {
+    return null;
   }
 
   @Override
@@ -410,5 +419,4 @@ abstract class JDelegatingClassType extends JClassType {
   final void setBaseType(JClassType baseType) {
     this.baseType = baseType;
   }
-
 }

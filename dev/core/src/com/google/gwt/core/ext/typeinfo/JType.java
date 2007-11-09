@@ -59,6 +59,15 @@ public abstract class JType {
     return isInterface();
   }
 
+  /**
+   * Returns this instance if it is an enumeration or <code>null</code> if it
+   * is not.
+   * 
+   * @return this instance if it is an enumeration or <code>null</code> if it
+   *         is not
+   */
+  public abstract JEnumType isEnum();
+
   public abstract JClassType isInterface();
 
   public abstract JParameterizedType isParameterized();
@@ -67,4 +76,19 @@ public abstract class JType {
 
   public abstract JRawType isRawType();
 
+  public JTypeParameter isTypeParameter() {
+    return null;
+  }
+
+  public abstract JWildcardType isWildcard();
+
+  /**
+   * Returns either the substitution of this type based on the parameterized
+   * type or this instance.
+   * 
+   * @param parameterizedType
+   * @return either the substitution of this type based on the parameterized
+   *         type or this instance
+   */
+  abstract JType getSubstitutedType(JParameterizedType parameterizedType);
 }

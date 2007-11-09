@@ -37,10 +37,17 @@ public class JConstructor extends JAbstractMethod {
     enclosingType.addConstructor(this);
   }
 
+  JConstructor(JClassType enclosingType, JConstructor ctor) {
+    super(ctor);
+    this.enclosingType = enclosingType;
+  }
+
+  @Override
   public JClassType getEnclosingType() {
     return enclosingType;
   }
 
+  @Override
   public String getReadableDeclaration() {
     String[] names = TypeOracle.modifierBitsToNames(getModifierBits());
     StringBuilder sb = new StringBuilder();
@@ -57,14 +64,17 @@ public class JConstructor extends JAbstractMethod {
     return sb.toString();
   }
 
+  @Override
   public JConstructor isConstructor() {
     return this;
   }
 
+  @Override
   public JMethod isMethod() {
     return null;
   }
 
+  @Override
   public String toString() {
     return getReadableDeclaration();
   }

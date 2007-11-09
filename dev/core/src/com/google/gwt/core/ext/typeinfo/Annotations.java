@@ -42,6 +42,23 @@ class Annotations implements HasAnnotations {
    */
   private Annotations parent;
 
+  Annotations() {
+  }
+  
+  Annotations(Annotations otherAnnotations) {
+    if (otherAnnotations != null) {
+      Annotation[] otherDeclaredAnnotations = otherAnnotations.getDeclaredAnnotations();
+      for (Annotation otherDeclaredAnnotation : otherDeclaredAnnotations) {
+        addAnnotation(otherDeclaredAnnotation.annotationType(),
+            otherDeclaredAnnotation);
+      }
+    }
+  }
+
+  Annotations(Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
+    this.declaredAnnotations.putAll(declaredAnnotations);
+  }
+
   public void addAnnotations(
       Map<Class<? extends Annotation>, Annotation> annotations) {
     if (annotations != null) {
@@ -92,11 +109,12 @@ class Annotations implements HasAnnotations {
       lazyAnnotations = new HashMap<Class<? extends Annotation>, Annotation>();
       parent.initializeAnnotations();
       for (Entry<Class<? extends Annotation>, Annotation> entry : parent.lazyAnnotations.entrySet()) {
-        if (entry.getValue().annotationType().isAnnotationPresent(Inherited.class)) {
+        if (entry.getValue().annotationType().isAnnotationPresent(
+            Inherited.class)) {
           lazyAnnotations.put(entry.getKey(), entry.getValue());
         }
       }
-      
+
       lazyAnnotations.putAll(declaredAnnotations);
     } else {
       lazyAnnotations = declaredAnnotations;

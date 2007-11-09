@@ -66,7 +66,7 @@ public class JPrimitiveType extends JType {
   public JType getErasedType() {
     return this;
   }
-  
+
   @Override
   public String getJNISignature() {
     return jni;
@@ -95,6 +95,11 @@ public class JPrimitiveType extends JType {
   }
 
   @Override
+  public JEnumType isEnum() {
+    return null;
+  }
+
+  @Override
   public JClassType isInterface() {
     // intentional null
     return null;
@@ -115,5 +120,15 @@ public class JPrimitiveType extends JType {
   public JRawType isRawType() {
     // intentional null
     return null;
+  }
+
+  @Override
+  public JWildcardType isWildcard() {
+    return null;
+  }
+
+  @Override
+  JPrimitiveType getSubstitutedType(JParameterizedType parameterizedType) {
+    return this;
   }
 }

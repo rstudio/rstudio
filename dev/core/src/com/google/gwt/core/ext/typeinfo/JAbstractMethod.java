@@ -26,7 +26,7 @@ import java.util.Map;
 public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
     HasTypeParameters {
 
-  private final Annotations annotations = new Annotations();
+  private final Annotations annotations;
 
   private int bodyEnd;
 
@@ -59,7 +59,24 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
     this.declEnd = declEnd;
     this.bodyStart = bodyStart;
     this.bodyEnd = bodyEnd;
+    annotations = new Annotations();
     annotations.addAnnotations(declaredAnnotations);
+  }
+
+  /**
+   * @param enclosingType
+   * @param ctor
+   */
+  JAbstractMethod(JAbstractMethod srcMethod) {
+    this.annotations = new Annotations(srcMethod.annotations);
+    this.bodyEnd = srcMethod.bodyEnd;
+    this.bodyStart = srcMethod.bodyStart;
+    this.declEnd = srcMethod.declEnd;
+    this.declStart = srcMethod.declStart;
+    this.isVarArgs = srcMethod.isVarArgs;
+    MetaData.copy(this, srcMethod.metaData);
+    this.modifierBits = srcMethod.modifierBits;
+    this.name = srcMethod.name;
   }
 
   public void addMetaData(String tagName, String[] values) {

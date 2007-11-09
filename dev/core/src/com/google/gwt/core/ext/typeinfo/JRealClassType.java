@@ -59,7 +59,7 @@ public class JRealClassType extends JClassType {
 
   private String lazyQualifiedName;
 
-  private final Members members = new Members(this);
+  private final AbstractMembers members = new Members(this);
 
   private final HasMetaData metaData = new MetaData();
 
@@ -376,6 +376,11 @@ public class JRealClassType extends JClassType {
   }
 
   @Override
+  public JEnumType isEnum() {
+    return null;
+  }
+
+  @Override
   public JGenericType isGenericType() {
     return null;
   }
@@ -439,13 +444,19 @@ public class JRealClassType extends JClassType {
     return 0 != (modifierBits & TypeOracle.MOD_STATIC);
   }
 
+  @Override
+  public JWildcardType isWildcard() {
+    return null;
+  }
+
+  @Override
   public void setSuperclass(JClassType type) {
     assert (type != null);
     assert (isInterface() == null);
     this.superclass = type;
     JRealClassType realSuperType;
     if (type.isParameterized() != null) {
-      realSuperType = type.isParameterized().getBaseType();
+      realSuperType = (JRealClassType) type.isParameterized().getBaseType();
     } else if (type.isRawType() != null) {
       realSuperType = type.isRawType().getGenericType();
     } else {
@@ -545,6 +556,11 @@ public class JRealClassType extends JClassType {
     }
   }
 
+  @Override
+  JRealClassType getSubstitutedType(JParameterizedType parameterizedType) {
+    return this;
+  }
+
   void notifySuperTypes() {
     notifySuperTypesOf(this);
   }
@@ -555,5 +571,4 @@ public class JRealClassType extends JClassType {
   void removeFromSupertypes() {
     removeSubtype(this);
   }
-
 }

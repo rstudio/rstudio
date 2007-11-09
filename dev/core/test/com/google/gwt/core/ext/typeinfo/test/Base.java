@@ -15,21 +15,22 @@
  */
 package com.google.gwt.core.ext.typeinfo.test;
 
+import java.io.Serializable;
+
 /**
- * Test a non-generic class that extends a parameterized type.
+ * Class used to test
+ * {@link com.google.gwt.core.ext.typeinfo.JClassType#getOverridableMethods()}.
  */
-public class NonGenericSubclass extends GenericClass<Integer> {
-  /**
-   * @param t
-   */
-  public NonGenericSubclass(Integer t) {
-    super(t);
+public class Base<T> {
+  void m(T t) {
+    System.out.println("Base<T>.m(T)");
   }
-  
-  
-  /**
-   * Tests overloading of generic methods. 
-   */
-  public void setT(Integer t) {
+
+  <N extends Number> void m(N n) {
+    System.out.println("Base<T>.m(N)");
+  }
+
+  static <N extends Serializable> void serialize(N n) {
+    System.out.println("Base<T>.<N extends Serializable>.serialize(N)");
   }
 }

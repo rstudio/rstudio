@@ -23,7 +23,7 @@ import java.util.Map;
  */
 public class JParameter implements HasAnnotations, HasMetaData {
 
-  private final Annotations annotations = new Annotations();
+  private final Annotations annotations;
 
   private final HasMetaData metaData = new MetaData();
 
@@ -45,7 +45,16 @@ public class JParameter implements HasAnnotations, HasMetaData {
 
     enclosingMethod.addParameter(this);
 
+    annotations = new Annotations();
     annotations.addAnnotations(declaredAnnotations);
+  }
+
+  JParameter(JAbstractMethod enclosingMethod, JParameter srcParam) {
+    this.enclosingMethod = enclosingMethod;
+    this.type = srcParam.type;
+    this.name = srcParam.name;
+    this.annotations = new Annotations(srcParam.annotations);
+    MetaData.copy(this, srcParam);
   }
 
   public void addMetaData(String tagName, String[] values) {

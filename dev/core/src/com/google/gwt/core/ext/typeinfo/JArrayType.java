@@ -24,6 +24,7 @@ import java.util.Map;
  * Type representing a Java array.
  */
 public class JArrayType extends JClassType {
+  private static final JArrayType[] NO_JARRAYS = new JArrayType[0];
 
   private JType componentType;
 
@@ -63,14 +64,12 @@ public class JArrayType extends JClassType {
 
   @Override
   public JField findField(String name) {
-    // TODO length
     return null;
   }
 
   @Override
   public JMethod findMethod(String name, JType[] paramTypes) {
-    // TODO Object
-    return null;
+    return getOracle().getJavaLangObject().findMethod(name, paramTypes);
   }
 
   @Override
@@ -110,12 +109,12 @@ public class JArrayType extends JClassType {
   @Override
   public JConstructor getConstructor(JType[] paramTypes)
       throws NotFoundException {
-    return null;
+    throw new NotFoundException();
   }
 
   @Override
   public JConstructor[] getConstructors() {
-    return null;
+    return TypeOracle.NO_JCTORS;
   }
 
   @Override
@@ -130,19 +129,16 @@ public class JArrayType extends JClassType {
 
   @Override
   public JClassType getErasedType() {
-    // TODO array of component type
-    return this;
+    return getOracle().getArrayType(getComponentType().getErasedType());
   }
 
   @Override
   public JField getField(String name) {
-    // TODO length
     return null;
   }
 
   @Override
   public JField[] getFields() {
-    // TODO length
     return TypeOracle.NO_JFIELDS;
   }
 
@@ -151,10 +147,12 @@ public class JArrayType extends JClassType {
     return TypeOracle.NO_JCLASSES;
   }
 
+  @Override
   public String getJNISignature() {
     return "[" + componentType.getJNISignature();
   }
 
+  @Override
   public JType getLeafType() {
     return componentType.getLeafType();
   }
@@ -172,20 +170,17 @@ public class JArrayType extends JClassType {
   @Override
   public JMethod getMethod(String name, JType[] paramTypes)
       throws NotFoundException {
-    // TODO Object
-    return null;
+    return getOracle().getJavaLangObject().getMethod(name, paramTypes);
   }
 
   @Override
   public JMethod[] getMethods() {
-    // TODO Object
-    return null;
+    return getOracle().getJavaLangObject().getMethods();
   }
 
   @Override
   public String getName() {
-    // TODO Auto-generated method stub
-    return null;
+    return getSimpleSourceName();
   }
 
   @Override
@@ -205,26 +200,32 @@ public class JArrayType extends JClassType {
 
   @Override
   public JMethod[] getOverloads(String name) {
-    // TODO Object
-    return null;
+    return getOracle().getJavaLangObject().getOverloads(name);
   }
 
   @Override
   public JMethod[] getOverridableMethods() {
-    // TODO Object
-    return null;
+    return getOracle().getJavaLangObject().getOverridableMethods();
   }
 
   @Override
   public JPackage getPackage() {
-    // TODO
-    return null;
+    JType leafType = getLeafType();
+    if (leafType.isPrimitive() != null) {
+      // TODO: is there a default package?
+      return null;
+    }
+
+    JClassType leafClass = (JClassType) leafType;
+    return leafClass.getPackage();
   }
 
+  @Override
   public String getParameterizedQualifiedSourceName() {
     return getComponentType().getParameterizedQualifiedSourceName() + "[]";
   }
 
+  @Override
   public String getQualifiedSourceName() {
     if (lazyQualifiedName == null) {
       lazyQualifiedName = getComponentType().getQualifiedSourceName() + "[]";
@@ -241,6 +242,7 @@ public class JArrayType extends JClassType {
     return 1;
   }
 
+  @Override
   public String getSimpleSourceName() {
     if (lazySimpleName == null) {
       lazySimpleName = getComponentType().getSimpleSourceName() + "[]";
@@ -249,21 +251,64 @@ public class JArrayType extends JClassType {
   }
 
   @Override
-  public JClassType[] getSubtypes() {
-    // TODO
-    return TypeOracle.NO_JCLASSES;
+  public JArrayType[] getSubtypes() {
+    if (getComponentType().isPrimitive() != null) {
+      return NO_JARRAYS;
+    }
+
+    JClassType componentClass = (JClassType) getComponentType();
+    JClassType[] componentSubtypes = componentClass.getSubtypes();
+    JArrayType[] arraySubtypes = new JArrayType[componentSubtypes.length];
+    for (int i = 0; i < componentSubtypes.length; ++i) {
+      arraySubtypes[i] = getOracle().getArrayType(componentSubtypes[i]);
+    }
+
+    return arraySubtypes;
   }
 
   @Override
   public JClassType getSuperclass() {
-    // TODO Object?
-    return null;
+    JType compType = getComponentType();
+    JClassType javaLangObject = getOracle().getJavaLangObject();
+    if (compType.isPrimitive() != null) {
+      // Super of primitive[] is object
+      return javaLangObject;
+    }
+
+    JArrayType arrayComponent = compType.isArray();
+    if (arrayComponent != null) {
+      // Superclass of multi-dimensional array is superclass of component
+      return getOracle().getArrayType(arrayComponent.getSuperclass());
+    }
+
+    JClassType type = compType.isClassOrInterface();
+    if (type == javaLangObject) {
+      // Superclass of Object[] is Object
+      return javaLangObject;
+    }
+
+    JClassType superType = type.getSuperclass();
+    if (superType == null) {
+      // Superclass of interface[] is Object[]
+      assert (type.isInterface() == null);
+      superType = javaLangObject;
+    }
+
+    return getOracle().getArrayType(superType);
   }
 
   @Override
   public String getTypeHash() throws UnableToCompleteException {
-    // TODO
-    return null;
+    JType leafType = getLeafType();
+    JClassType leafClassType = leafType.isClassOrInterface();
+    if (leafClassType != null) {
+      return leafClassType.getTypeHash();
+    }
+
+    // Arrays of primitive types should have a stable hash
+    assert (leafType.isPrimitive() != null);
+
+    return leafType.getQualifiedSourceName();
   }
 
   @Override
@@ -276,22 +321,51 @@ public class JArrayType extends JClassType {
     return false;
   }
 
+  @Override
   public JArrayType isArray() {
     return this;
   }
 
   @Override
   public boolean isAssignableFrom(JClassType possibleSubtype) {
-    // TODO
-    return false;
+    if (this == possibleSubtype) {
+      // type is assignable to itself
+      return true;
+    }
+
+    JArrayType possibleSubtypeArray = possibleSubtype.isArray();
+    if (possibleSubtypeArray == null) {
+      // possible subtype must be an array to be assignable
+      return false;
+    }
+
+    JType thisComponentType = getComponentType();
+    JType otherComponentType = possibleSubtypeArray.getComponentType();
+
+    if (thisComponentType.isPrimitive() != null
+        || otherComponentType.isPrimitive() != null) {
+      /*
+       * Since this was not equal to the possible subtype, we know that either
+       * the dimensions are off or the component types are off
+       */
+      return false;
+    }
+
+    assert (thisComponentType instanceof JClassType);
+    assert (otherComponentType instanceof JClassType);
+
+    JClassType thisComponentClassType = (JClassType) thisComponentType;
+    JClassType otherComponentClassType = (JClassType) otherComponentType;
+
+    return thisComponentClassType.isAssignableFrom(otherComponentClassType);
   }
 
   @Override
   public boolean isAssignableTo(JClassType possibleSupertype) {
-    // TODO
-    return false;
+    return possibleSupertype.isAssignableFrom(this);
   }
 
+  @Override
   public JClassType isClass() {
     // intentional null
     return null;
@@ -303,10 +377,16 @@ public class JArrayType extends JClassType {
   }
 
   @Override
+  public JEnumType isEnum() {
+    return null;
+  }
+
+  @Override
   public JGenericType isGenericType() {
     return null;
   }
 
+  @Override
   public JClassType isInterface() {
     // intentional null
     return null;
@@ -322,11 +402,13 @@ public class JArrayType extends JClassType {
     return false;
   }
 
+  @Override
   public JParameterizedType isParameterized() {
     // intentional null
     return null;
   }
 
+  @Override
   public JPrimitiveType isPrimitive() {
     // intentional null
     return null;
@@ -357,6 +439,11 @@ public class JArrayType extends JClassType {
     return true;
   }
 
+  @Override
+  public JWildcardType isWildcard() {
+    return null;
+  }
+
   public void setLeafType(JType type) {
     JArrayType componentTypeIsArray = componentType.isArray();
     if (componentTypeIsArray != null) {
@@ -370,6 +457,7 @@ public class JArrayType extends JClassType {
   public void setSuperclass(JClassType type) {
   }
 
+  @Override
   public String toString() {
     return getQualifiedSourceName();
   }
@@ -388,13 +476,15 @@ public class JArrayType extends JClassType {
   @Override
   protected void getOverridableMethodsOnSuperclassesAndThisClass(
       Map<String, JMethod> methodsBySignature) {
-    // TODO Object
+    getOracle().getJavaLangObject().getOverridableMethodsOnSuperclassesAndThisClass(
+        methodsBySignature);
   }
 
   @Override
   protected void getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
       Map<String, JMethod> methodsBySignature) {
-    // TODO Object
+    getOracle().getJavaLangObject().getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
+        methodsBySignature);
   }
 
   @Override
@@ -432,6 +522,12 @@ public class JArrayType extends JClassType {
   @Override
   JClassType findNestedTypeImpl(String[] typeName, int index) {
     return null;
+  }
+
+  @Override
+  JArrayType getSubstitutedType(JParameterizedType parameterizedType) {
+    return oracle.getArrayType(getComponentType().getSubstitutedType(
+        parameterizedType));
   }
 
   @Override

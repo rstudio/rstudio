@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jdt.StaticCompilationUnitProvider;
 import com.google.gwt.dev.jdt.TypeOracleBuilder;
 import com.google.gwt.dev.jdt.URLCompilationUnitProvider;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import junit.framework.TestCase;
 
@@ -33,11 +34,18 @@ import java.net.URL;
  * Tests related to JClassType. See individual test methods to details.
  */
 public class JClassTypeTest extends TestCase {
+  private final boolean logToConsole = false;
+  private final ModuleContext moduleContext = new ModuleContext(logToConsole
+      ? new PrintWriterTreeLogger() : TreeLogger.NULL,
+      "com.google.gwt.core.ext.typeinfo.TypeOracleTest");
 
-  public void testGetOverridableMethods() throws UnableToCompleteException,
-      TypeOracleException {
+  public JClassTypeTest() throws UnableToCompleteException {
+  }
+
+  public void testGetOverridableMethods() throws TypeOracleException {
     TreeLogger logger = TreeLogger.NULL;
-    TypeOracle typeOracle = buildOracleFromTestPackage(logger);
+    TypeOracle typeOracle = moduleContext.getOracle();
+    // TypeOracle typeOracle = buildOracleFromTestPackage(logger);
 
     String[] noParams = new String[0];
     String[] intObjectParams = new String[] {"int", "java.lang.Object"};
@@ -224,7 +232,7 @@ public class JClassTypeTest extends TestCase {
       // No files found.
       return;
     }
-    
+
     for (int i = 0; i < files.length; i++) {
       File file = files[i];
       if (file.isFile()) {
@@ -300,55 +308,5 @@ public class JClassTypeTest extends TestCase {
         // Good. We didn't want to find it and didn't.
       }
     }
-  }
-
-  /**
-   * Looks in the package containing this class and uses it as an anchor for
-   * including all the classes under the "test" subpackage.
-   * 
-   * TODO: This is not generalized yet, but it could be made reusable and put
-   * into TypeOracleBuilder.
-   * 
-   * @return
-   * @throws URISyntaxException
-   * @throws UnableToCompleteException
-   * @throws MalformedURLException
-   */
-  private TypeOracle buildOracleFromTestPackage(TreeLogger logger)
-      throws UnableToCompleteException {
-    Throwable caught;
-    try {
-      // Find the source path using this class as an anchor.
-      String className = getClass().getName();
-      String resName = className.replace('.', '/') + ".java";
-      URL location = getClass().getClassLoader().getResource(resName);
-      assertNotNull("Ensure that source is in classpath for: " + resName,
-          location);
-      String absPath = new File(new URI(location.toString())).getAbsolutePath();
-      int sourcePathEntryLen = absPath.length() - resName.length();
-      File sourcePathEntry = new File(absPath.substring(0, sourcePathEntryLen));
-
-      // Determine the starting package name.
-      int lastDot = className.lastIndexOf('.');
-      String pkgName = (lastDot < 0 ? "test" : className.substring(0, lastDot)
-          + ".test");
-
-      // Create the builder to be filled in.
-      TypeOracleBuilder builder = new TypeOracleBuilder();
-
-      // Add java.lang.Object.
-      builder.addCompilationUnit(new StaticCompilationUnitProvider("java.lang",
-          "Object", "package java.lang; public class Object { }".toCharArray()));
-
-      // Recursively walk the directories.
-      addCompilationUnitsInPath(builder, sourcePathEntry, pkgName);
-      return builder.build(logger);
-    } catch (URISyntaxException e) {
-      caught = e;
-    } catch (MalformedURLException e) {
-      caught = e;
-    }
-    logger.log(TreeLogger.ERROR, "Failed to build type oracle", caught);
-    throw new UnableToCompleteException();
   }
 }

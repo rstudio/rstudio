@@ -40,6 +40,12 @@ public class JMethod extends JAbstractMethod {
     enclosingType.addMethod(this);
   }
 
+  JMethod(JClassType enclosingType, JMethod srcMethod) {
+    super(srcMethod);
+    this.enclosingType = enclosingType;
+    this.returnType = srcMethod.returnType;
+  }
+
   @Override
   public JClassType getEnclosingType() {
     return enclosingType;

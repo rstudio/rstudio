@@ -41,7 +41,14 @@ public class JGenericType extends JRealClassType implements HasTypeParameters {
   @Override
   public String getParameterizedQualifiedSourceName() {
     StringBuffer sb = new StringBuffer();
-    sb.append(getQualifiedSourceName());
+
+    if (getEnclosingType() != null) {
+      sb.append(getEnclosingType().getParameterizedQualifiedSourceName());
+      sb.append(".");
+      sb.append(getSimpleSourceName());
+    } else {
+      sb.append(getQualifiedSourceName());
+    }    
 
     sb.append('<');
     boolean needComma = false;
@@ -59,8 +66,9 @@ public class JGenericType extends JRealClassType implements HasTypeParameters {
 
   public JRawType getRawType() {
     if (lazyRawType == null) {
-      lazyRawType = new JRawType(this);
+      lazyRawType = new JRawType(this, getEnclosingType());
     }
+
     return lazyRawType;
   }
 
@@ -69,21 +77,17 @@ public class JGenericType extends JRealClassType implements HasTypeParameters {
   }
 
   @Override
-  public boolean isDefaultInstantiable() {
-    /*
-     * By definition, you cannot instantiate a generic type, only a
-     * parameterized type or a raw type?
-     */
-    return false;
-  }
-
-  @Override
   public JGenericType isGenericType() {
     return this;
   }
 
-  protected boolean isDefaultInstantiableIfParameterized() {
-    return super.isDefaultInstantiable();
+  @Override
+  public String toString() {
+    if (isInterface() != null) {
+      return "interface " + getParameterizedQualifiedSourceName();
+    }
+
+    return "class " + getParameterizedQualifiedSourceName();
   }
 
   void addTypeParameter(JTypeParameter typeParameter) {

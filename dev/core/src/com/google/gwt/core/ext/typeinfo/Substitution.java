@@ -13,23 +13,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.core.ext.typeinfo.test;
+
+package com.google.gwt.core.ext.typeinfo;
 
 /**
- * Test a non-generic class that extends a parameterized type.
+ * Interface used to perform type parameter substitutions or raw type
+ * substitutions.
  */
-public class NonGenericSubclass extends GenericClass<Integer> {
-  /**
-   * @param t
-   */
-  public NonGenericSubclass(Integer t) {
-    super(t);
-  }
-  
-  
-  /**
-   * Tests overloading of generic methods. 
-   */
-  public void setT(Integer t) {
-  }
+interface Substitution {
+  JType getSubstitution(JType type);
 }

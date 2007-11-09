@@ -16,20 +16,7 @@
 package com.google.gwt.core.ext.typeinfo.test;
 
 /**
- * Test a non-generic class that extends a parameterized type.
+ * Used for testing parameterized subtypes.
  */
-public class NonGenericSubclass extends GenericClass<Integer> {
-  /**
-   * @param t
-   */
-  public NonGenericSubclass(Integer t) {
-    super(t);
-  }
-  
-  
-  /**
-   * Tests overloading of generic methods. 
-   */
-  public void setT(Integer t) {
-  }
+public class MyList<T> {
 }

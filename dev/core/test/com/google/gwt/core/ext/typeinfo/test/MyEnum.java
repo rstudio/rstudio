@@ -16,20 +16,41 @@
 package com.google.gwt.core.ext.typeinfo.test;
 
 /**
- * Test a non-generic class that extends a parameterized type.
+ * Enumerated type used in the
+ * {@link com.google.gwt.core.ext.typeinfo.JEnumTypeTest}.
+ * 
+ * NOTE: do not reorder the enumerated values
  */
-public class NonGenericSubclass extends GenericClass<Integer> {
-  /**
-   * @param t
-   */
-  public NonGenericSubclass(Integer t) {
-    super(t);
-  }
+public enum MyEnum {
+  @Deprecated
+  VAL0(-1) {
+    @Override
+    public int getId() {
+      return instanceField;
+    }
+  },
   
-  
-  /**
-   * Tests overloading of generic methods. 
-   */
-  public void setT(Integer t) {
+  VAL1(-2) {
+    @Override
+    public int getId() {
+      return instanceField;
+    }
+  },
+
+  VAL2(-3) {
+    @Override
+    public int getId() {
+      return instanceField;
+    }
+  };
+
+  MyEnum(int instanceField) {
+    this.instanceField = instanceField;
   }
+
+  public final int instanceField;
+
+  public static final MyEnum e = VAL2;
+
+  public abstract int getId();
 }

@@ -23,7 +23,7 @@ import java.util.Map;
  */
 public class JField implements HasAnnotations, HasMetaData {
 
-  private final Annotations annotations = new Annotations();
+  private final Annotations annotations;
 
   private final JClassType enclosingType;
 
@@ -41,12 +41,22 @@ public class JField implements HasAnnotations, HasMetaData {
 
   public JField(JClassType enclosingType, String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
+    assert (enclosingType != null);
     this.enclosingType = enclosingType;
     this.name = name;
-
-    assert (enclosingType != null);
-    enclosingType.addField(this);
+    this.enclosingType.addField(this);
+    annotations =  new Annotations();
     annotations.addAnnotations(declaredAnnotations);
+  }
+
+  JField(JClassType enclosingType, JField srcField) {
+    this.annotations = new Annotations(srcField.annotations);
+    this.enclosingType = enclosingType;
+    this.modifierBits = srcField.modifierBits;
+    this.name = srcField.name;
+    this.type = srcField.type;
+
+    MetaData.copy(this, srcField);
   }
 
   public void addMetaData(String tagName, String[] values) {
@@ -97,6 +107,10 @@ public class JField implements HasAnnotations, HasMetaData {
 
   public boolean isDefaultAccess() {
     return 0 == (modifierBits & (TypeOracle.MOD_PUBLIC | TypeOracle.MOD_PRIVATE | TypeOracle.MOD_PROTECTED));
+  }
+
+  public JEnumConstant isEnumConstant() {
+    return null;
   }
 
   public boolean isFinal() {

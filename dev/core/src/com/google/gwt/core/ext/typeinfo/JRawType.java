@@ -15,18 +15,46 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents a raw type; that is a generic type with no type arguments.
  */
 public class JRawType extends JDelegatingClassType {
+  private static final Substitution ERASURE_SUBSTITUTION = new Substitution() {
+    public JType getSubstitution(JType type) {
+      return type.getErasedType();
+    }
+  };
 
-  private final Members members = new Members(this);
+  private static JClassType normalizeType(JClassType type) {
+    JRawType isRawType = type.isRawType();
+    if (isRawType != null) {
+      return isRawType.getGenericType();
+    }
 
-  public JRawType(JGenericType genericType) {
+    JParameterizedType isParameterized = type.isParameterized();
+    if (isParameterized != null) {
+      return isParameterized.getBaseType();
+    }
+
+    return type;
+  }
+
+  private final JClassType enclosingType;
+
+  private List<JClassType> interfaces;
+
+  private final AbstractMembers members;
+
+  public JRawType(JGenericType genericType, JClassType enclosingType) {
     super.setBaseType(genericType);
-    // TODO: type substitutions setting up fields/methods!
+    this.enclosingType = enclosingType;
+
+    // NOTE: this instance is not considered a nested type of the enclosing type
+
+    members = new DelegateMembers(this, getBaseType(), ERASURE_SUBSTITUTION);
   }
 
   @Override
@@ -49,8 +77,11 @@ public class JRawType extends JDelegatingClassType {
     return members.findNestedType(typeName);
   }
 
+  @Override
   public JGenericType getBaseType() {
-    return (JGenericType) baseType;
+    JGenericType genericType = super.getBaseType().isGenericType();
+    assert (genericType != null);
+    return genericType;
   }
 
   @Override
@@ -76,6 +107,19 @@ public class JRawType extends JDelegatingClassType {
 
   public JGenericType getGenericType() {
     return getBaseType();
+  }
+
+  @Override
+  public JClassType[] getImplementedInterfaces() {
+    if (interfaces == null) {
+      interfaces = new ArrayList<JClassType>();
+      JClassType[] intfs = getBaseType().getImplementedInterfaces();
+      for (JClassType intf : intfs) {
+        JClassType newIntf = intf.getErasedType();
+        interfaces.add(newIntf);
+      }
+    }
+    return interfaces.toArray(TypeOracle.NO_JCLASSES);
   }
 
   @Override
@@ -116,12 +160,12 @@ public class JRawType extends JDelegatingClassType {
 
   @Override
   public String getQualifiedSourceName() {
-    return baseType.getQualifiedSourceName();
+    return getBaseType().getQualifiedSourceName();
   }
 
   @Override
   public String getSimpleSourceName() {
-    return baseType.getSimpleSourceName();
+    return getBaseType().getSimpleSourceName();
   }
 
   @Override
@@ -141,8 +185,25 @@ public class JRawType extends JDelegatingClassType {
   }
 
   @Override
-  public boolean isDefaultInstantiable() {
-    return getBaseType().isDefaultInstantiableIfParameterized();
+  public JClassType getSuperclass() {
+    JClassType baseSuper = getBaseType().getSuperclass();
+    if (baseSuper == null) {
+      return null;
+    }
+
+    return baseSuper.getErasedType();
+  }
+
+  @Override
+  public boolean isAssignableFrom(JClassType possibleSubtype) {
+    JClassType type = normalizeType(possibleSubtype);
+    return getBaseType().isAssignableFrom(type);
+  }
+
+  @Override
+  public boolean isAssignableTo(JClassType possibleSupertype) {
+    JClassType type = normalizeType(possibleSupertype);
+    return getBaseType().isAssignableTo(type);
   }
 
   @Override
@@ -161,25 +222,15 @@ public class JRawType extends JDelegatingClassType {
   }
 
   @Override
-  protected JClassType findNestedTypeImpl(String[] typeName, int index) {
-    return members.findNestedTypeImpl(typeName, index);
+  public JWildcardType isWildcard() {
+    return null;
   }
 
-  protected void getOverridableMethodsOnSuperclassesAndThisClass(
-      Map<String, JMethod> methodsBySignature) {
-    members.getOverridableMethodsOnSuperclassesAndThisClass(methodsBySignature);
-  }
-
-  /**
-   * Gets the methods declared in interfaces that this type extends. If this
-   * type is a class, its own methods are not added. If this type is an
-   * interface, its own methods are added. Used internally by
-   * {@link #getOverridableMethods()}.
-   * 
-   * @param methodsBySignature
-   */
-  protected void getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
-      Map<String, JMethod> methodsBySignature) {
-    members.getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(methodsBySignature);
+  @Override
+  JRawType getSubstitutedType(JParameterizedType parameterizedType) {
+    /*
+     * Raw types do not participate in substitution.
+     */
+    return this;
   }
 }

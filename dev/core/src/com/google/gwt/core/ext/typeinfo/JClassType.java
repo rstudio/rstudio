@@ -222,11 +222,13 @@ public abstract class JClassType extends JType implements HasAnnotations,
 
   abstract JClassType findNestedTypeImpl(String[] typeName, int index);
 
+  @Override
+  abstract JClassType getSubstitutedType(JParameterizedType parameterizedType);
+
   abstract void notifySuperTypes();
 
   /**
    * Removes references to this instance from all of its super types.
    */
   abstract void removeFromSupertypes();
-
 }

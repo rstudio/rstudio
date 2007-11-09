@@ -16,36 +16,81 @@
 package com.google.gwt.core.ext.typeinfo;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
- * 
+ * Represents a bound for a {@link JTypeParameter} or a {@link JWildcardType}.
  */
-public class JBound {
+public abstract class JBound {
+  /**
+   * Types which make up this bound.
+   */
+  private final List<JClassType> bounds = new ArrayList<JClassType>();
 
-  private final JClassType firstBound;
-  private final List<JClassType> lowerBounds = new ArrayList<JClassType>();
-  private final List<JClassType> upperBounds = new ArrayList<JClassType>();
-
-  public JBound(JClassType firstBound) {
-    this.firstBound = firstBound;
+  JBound(JClassType[] bounds) {
+    this.bounds.addAll(Arrays.asList(bounds));
   }
 
-  public void addLowerBound(JClassType bound) {
-    lowerBounds.add(bound);
-  }
-
-  public void addUpperBound(JClassType bound) {
-    upperBounds.add(bound);
+  public JClassType[] getBounds() {
+    return bounds.toArray(TypeOracle.NO_JCLASSES);
   }
 
   public JClassType getFirstBound() {
-    return firstBound;
+    assert (!bounds.isEmpty());
+
+    return bounds.get(0);
   }
+
+  public String getQualifiedSourceName() {
+    return toString(true);
+  }
+
+  public String getSimpleSourceName() {
+    return toString(false);
+  }
+
+  public abstract JLowerBound isLowerBound();
+
+  public abstract JUpperBound isUpperBound();
 
   @Override
   public String toString() {
-    return " extends " + firstBound.getParameterizedQualifiedSourceName();
+    return getQualifiedSourceName();
   }
-  
+
+  abstract JClassType[] getSubtypes();
+
+  abstract boolean isAssignableFrom(JBound possibleSubWildcard);
+
+  private String toString(boolean useQualifiedNames) {
+    StringBuffer sb = new StringBuffer();
+
+    if (isUpperBound() != null) {
+      sb.append(" extends ");
+    } else {
+      sb.append(" super ");
+    }
+
+    boolean needsAmpersand = false;
+    for (JClassType bound : bounds) {
+
+      if (needsAmpersand) {
+        sb.append(" & ");
+      } else {
+        needsAmpersand = true;
+      }
+
+      String name;
+      if (useQualifiedNames) {
+        name = bound.getParameterizedQualifiedSourceName();
+      } else {
+        name = bound.getSimpleSourceName();
+      }
+
+      sb.append(name);
+    }
+
+    return sb.toString();
+  }
 }

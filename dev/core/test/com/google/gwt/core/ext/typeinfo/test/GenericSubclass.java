@@ -16,13 +16,18 @@
 package com.google.gwt.core.ext.typeinfo.test;
 
 /**
- *
+ * Test a generic class that extends a generic class.
  */
 public class GenericSubclass<U> extends GenericClass<U> {
-  // Explore what JDT does when there is a parameterized type
   GenericClass<Integer> child;
-  
+
   public GenericSubclass(U t) {
     super(t);
   }
+
+  // TODO: This triggers a name clash problem with JDT 3.1 but not with JDT
+  // 3.3.0 or with javac 1.5.06.
+  // public void setT(Object t) {
+  // // this should override GenericClass<U>.setT(T t);
+  // }
 }

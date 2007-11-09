@@ -53,14 +53,12 @@ import java.util.Set;
  * </p>
  */
 public class TypeOracle {
-
   /**
    * A reserved metadata tag to indicates that a field type, method return type
    * or method parameter type is intended to be parameterized. Note that
    * constructor type parameters are not supported at present.
    */
   public static final String TAG_TYPEARGS = "gwt.typeArgs";
-
   static final int MOD_ABSTRACT = 0x00000001;
   static final int MOD_FINAL = 0x00000002;
   static final int MOD_NATIVE = 0x00000004;
@@ -69,8 +67,8 @@ public class TypeOracle {
   static final int MOD_PUBLIC = 0x00000020;
   static final int MOD_STATIC = 0x00000040;
   static final int MOD_TRANSIENT = 0x00000080;
-  static final int MOD_VOLATILE = 0x00000100;
 
+  static final int MOD_VOLATILE = 0x00000100;
   static final Annotation[] NO_ANNOTATIONS = new Annotation[0];
   static final JClassType[] NO_JCLASSES = new JClassType[0];
   static final JConstructor[] NO_JCTORS = new JConstructor[0];
@@ -174,11 +172,13 @@ public class TypeOracle {
 
   private final Map<String, JPackage> packages = new HashMap<String, JPackage>();
 
-  private final Map<String, JParameterizedType> parameterizedTypes = new HashMap<String, JParameterizedType>();
+  private final Map<String, List<JParameterizedType>> parameterizedTypes = new HashMap<String, List<JParameterizedType>>();
 
   private int reloadCount = 0;
 
   private final Map<CompilationUnitProvider, JClassType[]> typesByCup = new IdentityHashMap<CompilationUnitProvider, JClassType[]>();
+
+  private final Map<String, List<JWildcardType>> wildcardTypes = new HashMap<String, List<JWildcardType>>();
 
   public TypeOracle() {
     // Always create the default package.
@@ -320,25 +320,65 @@ public class TypeOracle {
    * the same arguments return the same object.
    * 
    * @param genericType a generic base class
+   * @param enclosingType
+   * @param typeArgs the type arguments bound to the specified generic type
+   * @return a type object representing this particular binding of type
+   *         arguments to the specified generic
+   */
+  public JParameterizedType getParameterizedType(JGenericType genericType,
+      JClassType enclosingType, JClassType[] typeArgs) {
+
+    if (genericType.isMemberType()) {
+      if (genericType.getEnclosingType().isGenericType() != null
+          && enclosingType.isParameterized() == null
+          && enclosingType.isRawType() == null) {
+        throw new IllegalArgumentException(
+            "enclosingType needs to be a parameterized type or a raw type");
+      }
+    }
+
+    // TODO: validate that the type arguments satisfy the generic type parameter
+    // bounds if any were specified
+
+    // Uses the generated string signature to intern parameterized types.
+    //
+    JParameterizedType parameterized = new JParameterizedType(genericType,
+        enclosingType, typeArgs);
+
+    // TODO: parameterized qualified source name does not account for the type
+    // args of the enclosing type
+    String sig = parameterized.getParameterizedQualifiedSourceName();
+    List<JParameterizedType> candidates = parameterizedTypes.get(sig);
+    if (candidates == null) {
+      candidates = new ArrayList<JParameterizedType>();
+      parameterizedTypes.put(sig, candidates);
+    } else {
+      for (JParameterizedType candidate : candidates) {
+        if (candidate.hasTypeArgs(typeArgs)) {
+          return candidate;
+        }
+      }
+    }
+
+    candidates.add(parameterized);
+
+    return parameterized;
+  }
+
+  /**
+   * Gets the parameterized type object that represents the combination of a
+   * specified raw type and a set of type arguments. The returned type always
+   * has a stable identity so as to guarantee that all calls to this method with
+   * the same arguments return the same object.
+   * 
+   * @param genericType a generic base class
    * @param typeArgs the type arguments bound to the specified generic type
    * @return a type object representing this particular binding of type
    *         arguments to the specified generic
    */
   public JParameterizedType getParameterizedType(JGenericType genericType,
       JClassType[] typeArgs) {
-    // Uses the generated string signature to intern parameterized types.
-    //
-    JParameterizedType parameterized = new JParameterizedType(genericType);
-    for (int i = 0; i < typeArgs.length; i++) {
-      parameterized.addTypeArg(typeArgs[i]);
-    }
-    String sig = parameterized.getParameterizedQualifiedSourceName();
-    JParameterizedType existing = parameterizedTypes.get(sig);
-    if (existing == null) {
-      parameterizedTypes.put(sig, parameterized);
-      existing = parameterized;
-    }
-    return existing;
+    return getParameterizedType(genericType, null, typeArgs);
   }
 
   public long getReloadCount() {
@@ -402,6 +442,26 @@ public class TypeOracle {
     } else {
       return NO_JCLASSES;
     }
+  }
+
+  public JWildcardType getWildcardType(JBound bounds) {
+    JWildcardType wildcardType = new JWildcardType(bounds);
+    String sig = wildcardType.getQualifiedSourceName();
+    List<JWildcardType> candidates = wildcardTypes.get(sig);
+    if (candidates == null) {
+      candidates = new ArrayList<JWildcardType>();
+      wildcardTypes.put(sig, candidates);
+    } else {
+      for (JWildcardType candidate : candidates) {
+        if (candidate.hasBounds(bounds)) {
+          return candidate;
+        }
+      }
+    }
+
+    candidates.add(wildcardType);
+
+    return wildcardType;
   }
 
   /**
@@ -500,7 +560,7 @@ public class TypeOracle {
 
   /**
    * Note, this method is called reflectively from the
-   * {@link CacheManager#invalidateOnRefresh(TypeOracle)}
+   * {@link CacheManager#invalidateOnRefresh(TypeOracle)}.
    * 
    * @param cup compilation unit whose types will be invalidated
    */
@@ -878,18 +938,21 @@ public class TypeOracle {
 
   /**
    * Remove any parameterized type that was invalidated because either its raw
-   * type or any one of its type arguements was invalidated.
+   * type or any one of its type arguments was invalidated.
    * 
    * @param invalidTypes set of types known to have been invalidated
    */
   private void removeInvalidatedParameterizedTypes(Set<JClassType> invalidTypes) {
-    Iterator<JParameterizedType> iter = parameterizedTypes.values().iterator();
+    Iterator<List<JParameterizedType>> listIterator = parameterizedTypes.values().iterator();
 
-    while (iter.hasNext()) {
-      JType type = iter.next();
-
-      if (isInvalidatedTypeRecursive(type, invalidTypes)) {
-        iter.remove();
+    while (listIterator.hasNext()) {
+      List<JParameterizedType> list = listIterator.next();
+      Iterator<JParameterizedType> typeIterator = list.iterator();
+      while (typeIterator.hasNext()) {
+        JType type = typeIterator.next();
+        if (isInvalidatedTypeRecursive(type, invalidTypes)) {
+          typeIterator.remove();
+        }
       }
     }
   }

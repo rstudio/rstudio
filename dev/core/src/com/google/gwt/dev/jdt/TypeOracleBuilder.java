@@ -26,8 +26,11 @@ import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JBound;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JConstructor;
+import com.google.gwt.core.ext.typeinfo.JEnumConstant;
+import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JGenericType;
+import com.google.gwt.core.ext.typeinfo.JLowerBound;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JParameter;
@@ -36,8 +39,9 @@ import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.JTypeParameter;
-import com.google.gwt.core.ext.typeinfo.JWildcardType;
+import com.google.gwt.core.ext.typeinfo.JUpperBound;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.jdt.CacheManager.Mapper;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Util;
 
@@ -46,6 +50,7 @@ import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.AbstractVariableDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.ast.AnnotationMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
@@ -68,9 +73,8 @@ import org.eclipse.jdt.internal.compiler.ast.MemberValuePair;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.NullLiteral;
 import org.eclipse.jdt.internal.compiler.ast.NumberLiteral;
-import org.eclipse.jdt.internal.compiler.ast.ParameterizedQualifiedTypeReference;
-import org.eclipse.jdt.internal.compiler.ast.ParameterizedSingleTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.QualifiedNameReference;
+import org.eclipse.jdt.internal.compiler.ast.SingleMemberAnnotation;
 import org.eclipse.jdt.internal.compiler.ast.StringLiteral;
 import org.eclipse.jdt.internal.compiler.ast.TrueLiteral;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
@@ -101,6 +105,7 @@ import java.io.CharArrayReader;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -112,7 +117,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Builds a {@link com.google.gwt.dev.typeinfo.TypeOracle} from a set of
+ * Builds a {@link com.google.gwt.core.ext.typeinfo.TypeOracle} from a set of
  * compilation units.
  * <p>
  * For example,
@@ -128,7 +133,7 @@ import java.util.regex.Pattern;
  * </pre>
  */
 public class TypeOracleBuilder {
-
+  private static final JClassType[] NO_JCLASSES = new JClassType[0];
   private static final Pattern PATTERN_WHITESPACE = Pattern.compile("\\s");
 
   public static String computeBinaryClassName(JType type) {
@@ -283,6 +288,22 @@ public class TypeOracleBuilder {
     return "package-info".equals(qname);
   }
 
+  private static boolean maybeGeneric(TypeDeclaration typeDecl) {
+    if (typeDecl.typeParameters != null) {
+      // Definitely generic since it has type parameters
+      return true;
+    }
+
+    if (!typeDecl.binding.isStatic() && typeDecl.enclosingType != null) {
+      // Consider typeDecl to be generic if it is not static and its enclosing
+      // type is generic
+      return maybeGeneric(typeDecl.enclosingType);
+    }
+
+    return false;
+  }
+
+  // TODO: move into the Annotations class or create an AnnotationsUtil class?
   private static HashMap<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> newAnnotationMap() {
     return new HashMap<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation>();
   }
@@ -498,46 +519,6 @@ public class TypeOracleBuilder {
 
       cud.traverse(new ASTVisitor() {
         @Override
-        public boolean visit(
-            ParameterizedQualifiedTypeReference parameterizedQualifiedTypeReference,
-            BlockScope scope) {
-          ParameterizedTypeBinding jparameterizedType = (ParameterizedTypeBinding) parameterizedQualifiedTypeReference.resolvedType;
-          processParameterizedType(jparameterizedType);
-          return true; // do nothing by default, keep traversing
-        }
-
-        @Override
-        public boolean visit(
-            ParameterizedQualifiedTypeReference parameterizedQualifiedTypeReference,
-            ClassScope scope) {
-          ParameterizedTypeBinding jparameterizedType = (ParameterizedTypeBinding) parameterizedQualifiedTypeReference.resolvedType;
-          processParameterizedType(jparameterizedType);
-          return true; // do nothing by default, keep traversing
-        }
-
-        @Override
-        public boolean visit(
-            ParameterizedSingleTypeReference parameterizedSingleTypeReference,
-            BlockScope scope) {
-          if (parameterizedSingleTypeReference.resolvedType instanceof ParameterizedTypeBinding) {
-            ParameterizedTypeBinding jparameterizedType = (ParameterizedTypeBinding) parameterizedSingleTypeReference.resolvedType;
-            processParameterizedType(jparameterizedType);
-          } else if (parameterizedSingleTypeReference.resolvedType instanceof SourceTypeBinding) {
-            // nothing to do
-          } else {
-            assert false;
-          }
-          return true; // do nothing by default, keep traversing
-        }
-
-        @Override
-        public boolean visit(
-            ParameterizedSingleTypeReference parameterizedSingleTypeReference,
-            ClassScope scope) {
-          return true; // do nothing by default, keep traversing
-        }
-
-        @Override
         public boolean visit(TypeDeclaration typeDecl, BlockScope scope) {
           JClassType enclosingType = identityMapper.get(typeDecl.binding.enclosingType());
           processType(typeDecl, enclosingType, true);
@@ -609,20 +590,37 @@ public class TypeOracleBuilder {
     return oracle;
   }
 
-  private JBound createTypeVariableBounds(TreeLogger logger,
+  private JUpperBound createTypeVariableBounds(TreeLogger logger,
       TypeVariableBinding tvBinding) {
-    TypeBinding firstBound = tvBinding.firstBound;
-    if (firstBound == null) {
-      firstBound = tvBinding.superclass;
+    TypeBinding jfirstBound = tvBinding.firstBound;
+    if (jfirstBound == null) {
+      // No bounds were specified, so we default to Object
+      JClassType upperBound = (JClassType) resolveType(logger,
+          tvBinding.superclass);
+      /*
+       * Can't test for equality with TypeOracle.getJavaLangObject() since it
+       * may not be initialized at this point
+       */
+      assert (Object.class.getName().equals(upperBound.getQualifiedSourceName()));
+      return new JUpperBound(upperBound);
     }
-    JClassType firstBoundType = (JClassType) resolveType(logger, firstBound);
-    JBound bounds = new JBound(firstBoundType);
-    for (ReferenceBinding ref : tvBinding.superInterfaces()) {
-      JClassType bound = (JClassType) resolveType(logger, ref);
-      assert (bound.isInterface() != null);
-      bounds.addUpperBound(bound);
+
+    List<JClassType> bounds = new ArrayList<JClassType>();
+    JClassType firstBound = (JClassType) resolveType(logger, jfirstBound);
+    if (firstBound.isClass() != null) {
+      bounds.add(firstBound);
     }
-    return bounds;
+
+    ReferenceBinding[] jsuperInterfaces = tvBinding.superInterfaces();
+    for (ReferenceBinding jsuperInterface : jsuperInterfaces) {
+      JClassType superInterface = (JClassType) resolveType(logger,
+          jsuperInterface);
+      assert (superInterface != null);
+      assert (superInterface.isInterface() != null);
+      bounds.add(superInterface);
+    }
+
+    return new JUpperBound(bounds.toArray(NO_JCLASSES));
   }
 
   private Object evaluateAnnotationExpression(TreeLogger logger,
@@ -647,6 +645,26 @@ public class TypeOracleBuilder {
       Expression expressionValue = mvp.value;
       Object value = evaluateExpression(logger, expressionValue);
       if (value == null) {
+        return null;
+      }
+
+      try {
+        Method method = clazz.getMethod(identifier, new Class[0]);
+        Class<?> expectedClass = method.getReturnType();
+        Class<? extends Object> actualClass = value.getClass();
+        if (expectedClass.isArray() && !actualClass.isArray()) {
+          /*
+           * JSL3 Section 9.7 single element annotations can skip the curly
+           * braces; means we do not get an array
+           */
+          assert (expression instanceof SingleMemberAnnotation);
+          Object array = Array.newInstance(expectedClass.getComponentType(), 1);
+          Array.set(array, 0, value);
+          value = array;
+        }
+      } catch (SecurityException e) {
+        return null;
+      } catch (NoSuchMethodException e) {
         return null;
       }
 
@@ -796,6 +814,11 @@ public class TypeOracleBuilder {
   }
 
   private String getQualifiedName(ReferenceBinding binding) {
+    if (binding.isMemberType()) {
+      return String.valueOf(CharOperation.concat(
+          binding.enclosingType().readableName(), binding.sourceName, '.'));
+    }
+
     return CharOperation.toString(binding.compoundName);
   }
 
@@ -809,15 +832,6 @@ public class TypeOracleBuilder {
     } else {
       return false;
     }
-  }
-
-  /**
-   * Maps a ParameterizedTypeBinding into a JParameterizedType.
-   */
-  private void processParameterizedType(ParameterizedTypeBinding binding) {
-    TypeOracle oracle = cacheManager.getTypeOracle();
-    // TODO Get the JParameterized type for the current binding, fill it out
-    // as you would a JClassType.
   }
 
   /**
@@ -838,7 +852,7 @@ public class TypeOracleBuilder {
        */
       return;
     }
-
+ 
     String qname;
     String jclassName;
     if (binding instanceof LocalTypeBinding) {
@@ -854,10 +868,10 @@ public class TypeOracleBuilder {
       qname = getQualifiedName(binding);
       jclassName = getSimpleName(typeDecl);
     }
+
     if (oracle.findType(qname) != null) {
-      // The oracle already knew about this type.
-      // Don't re-add it.
-      //
+      // TODO: gname of generic types includes the type arguments, I think that
+      // this would cause inner classes to not be found. 
       return;
     }
 
@@ -876,21 +890,16 @@ public class TypeOracleBuilder {
     if (jclassIsAnnonation) {
       type = new JAnnotationType(oracle, cup, pkg, enclosingType, isLocalType,
           jclassName, declStart, declEnd, bodyStart, bodyEnd, jclassIsIntf);
-    } else if (typeDecl.typeParameters != null
-        && typeDecl.typeParameters.length > 0) {
+    } else if (maybeGeneric(typeDecl)) {
       type = new JGenericType(oracle, cup, pkg, enclosingType, isLocalType,
           jclassName, declStart, declEnd, bodyStart, bodyEnd, jclassIsIntf);
-      for (TypeParameter jtypeParameter : typeDecl.typeParameters) {
-        JTypeParameter typeParameter = new JTypeParameter(
-            String.valueOf(jtypeParameter.name), (JGenericType) type);
-        cacheManager.setTypeForBinding(jtypeParameter.binding, typeParameter);
-      }
+    } else if (binding.isEnum()) {
+      type = new JEnumType(oracle, cup, pkg, enclosingType, isLocalType,
+          jclassName, declStart, declEnd, bodyStart, bodyEnd, jclassIsIntf);
     } else {
       type = new JRealClassType(oracle, cup, pkg, enclosingType, isLocalType,
           jclassName, declStart, declEnd, bodyStart, bodyEnd, jclassIsIntf);
     }
-
-    // TODO: enums?
 
     cacheManager.setTypeForBinding(binding, type);
   }
@@ -945,7 +954,14 @@ public class TypeOracleBuilder {
     }
 
     String name = String.valueOf(jfield.name);
-    JField field = new JField(enclosingType, name, declaredAnnotations);
+    JField field;
+    if (jfield.getKind() == AbstractVariableDeclaration.ENUM_CONSTANT) {
+      assert (enclosingType.isEnum() != null);
+      field = new JEnumConstant(enclosingType, name, declaredAnnotations,
+          jfield.binding.original().id);
+    } else {
+      field = new JField(enclosingType, name, declaredAnnotations);
+    }
 
     // Get modifiers.
     //
@@ -1014,6 +1030,12 @@ public class TypeOracleBuilder {
     if (jmethod.isConstructor()) {
       method = new JConstructor(enclosingType, name, declStart, declEnd,
           bodyStart, bodyEnd, declaredAnnotations);
+
+      // Resolve the type parameters, since they may be used as the return type,
+      // etc.
+      if (!resolveTypeParameters(logger, method, jmethod.typeParameters())) {
+        return false;
+      }
     } else {
       if (jmethod.isAnnotationMethod()) {
         AnnotationMethodDeclaration annotationMethod = (AnnotationMethodDeclaration) jmethod;
@@ -1029,25 +1051,12 @@ public class TypeOracleBuilder {
             bodyStart, bodyEnd, declaredAnnotations);
       }
 
-      // Add declared type parameters.
-      if (jmethod.typeParameters() != null) {
-        for (TypeParameter jtypeParameter : jmethod.typeParameters()) {
-          JTypeParameter typeParameter = new JTypeParameter(
-              String.valueOf(jtypeParameter.name), method);
-          cacheManager.getIdentityMapper().put(jtypeParameter.binding,
-              typeParameter);
-        }
-        JTypeParameter[] typeParameters = method.getTypeParameters();
-        for (TypeParameter jtypeParameter : jmethod.typeParameters()) {
-          JTypeParameter typeParameter = (JTypeParameter) cacheManager.getIdentityMapper().get(
-              jtypeParameter.binding);
-          JBound bounds = createTypeVariableBounds(logger,
-              jtypeParameter.binding);
-          typeParameter.setBounds(bounds);
-        }
+      // Resolve the type parameters, since they may be used as the return type,
+      // etc.
+      if (!resolveTypeParameters(logger, method, jmethod.typeParameters())) {
+        return false;
       }
 
-      // Add the return type if necessary.
       TypeBinding jreturnType = ((MethodDeclaration) jmethod).returnType.resolvedType;
       JType returnType = resolveType(logger, jreturnType);
       if (returnType == null) {
@@ -1241,12 +1250,13 @@ public class TypeOracleBuilder {
       // First check the type oracle to prefer type identity with the type
       // oracle we're assimilating into.
       //
-      String typeName = String.valueOf(referenceBinding.readableName());
+      String typeName = getQualifiedName(referenceBinding);
       JType resolvedType = oracle.findType(typeName);
       if (resolvedType == null) {
         // Otherwise, it should be something we've mapped during this build.
         resolvedType = cacheManager.getTypeForBinding(referenceBinding);
       }
+
       if (resolvedType != null) {
         if (binding instanceof RawTypeBinding) {
           // Use the raw type instead of the generic type.
@@ -1284,78 +1294,104 @@ public class TypeOracleBuilder {
     // Check for parameterized.
     if (binding instanceof ParameterizedTypeBinding) {
       ParameterizedTypeBinding ptBinding = (ParameterizedTypeBinding) binding;
-      JClassType[] typeArguments = new JClassType[ptBinding.arguments.length];
+
+      /*
+       * NOTE: it is possible for ParameterizedTypeBinding.arguments to be null.
+       * This can happen if a generic class has a non-static, non-generic, inner
+       * class that references a TypeParameter from its enclosing generic type.
+       * You would think that typeVariables() would do the right thing but it
+       * does not.
+       */
+      TypeBinding[] arguments = ptBinding.arguments;
+      int nArguments = arguments != null ? arguments.length : 0;
+      JClassType[] typeArguments = new JClassType[nArguments];
+      boolean failed = false;
       for (int i = 0; i < typeArguments.length; ++i) {
-        typeArguments[i] = (JClassType) resolveType(logger,
-            ptBinding.arguments[i]);
+        typeArguments[i] = (JClassType) resolveType(logger, arguments[i]);
+        if (typeArguments[i] == null) {
+          failed = true;
+        }
       }
 
-      JGenericType baseType = (JGenericType) resolveType(logger, ptBinding.type);
-      return oracle.getParameterizedType(baseType, typeArguments);
+      JClassType enclosingType = null;
+      if (ptBinding.enclosingType() != null) {
+        enclosingType = (JClassType) resolveType(logger,
+            ptBinding.enclosingType());
+        if (enclosingType == null) {
+          failed = true;
+        }
+      }
+
+      /*
+       * NOTE: In the case where a generic type has a nested, non-static,
+       * non-generic type. The type for the binding will not be a generic type.
+       */
+      JType resolveType = resolveType(logger, ptBinding.type);
+      if (resolveType == null) {
+        failed = true;
+      }
+
+      if (!failed) {
+        JEnumType enumType = resolveType.isEnum();
+        if (enumType != null) {
+          /*
+           * An enumerated type that is nested within a generic type is referenced
+           * via a parameterized type by JDT. In this case we just return the
+           * enumerated type and don't treat it as a parameterized type since
+           * enumerations cannot be parameterized and are implicitly static.
+           */
+          return enumType;
+        }
+        
+        JGenericType genericType = (JGenericType) resolveType;
+        return oracle.getParameterizedType(genericType, enclosingType,
+            typeArguments);
+      } else {
+        // Fall-through to failure
+      }
     }
 
     if (binding instanceof TypeVariableBinding) {
       TypeVariableBinding tvBinding = (TypeVariableBinding) binding;
       JTypeParameter typeParameter = (JTypeParameter) cacheManager.getTypeForBinding(tvBinding);
       assert (typeParameter != null);
-
-      if (typeParameter.getBounds() == null) {
-        // Setup a dummy bound to prevent recursion
-        typeParameter.setBounds(new JBound(null));
-        JBound bounds = createTypeVariableBounds(logger, tvBinding);
-        typeParameter.setBounds(bounds);
-      }
       return typeParameter;
     }
 
     if (binding instanceof WildcardBinding) {
       WildcardBinding wcBinding = (WildcardBinding) binding;
+
+      assert (wcBinding.otherBounds == null);
+
       JBound bounds;
       switch (wcBinding.boundKind) {
         case Wildcard.EXTENDS: {
-          JClassType firstBoundType = (JClassType) resolveType(logger,
+          assert (wcBinding.bound != null);
+          JClassType upperBound = (JClassType) resolveType(logger,
               wcBinding.bound);
-          bounds = new JBound(firstBoundType);
-          if (wcBinding.otherBounds != null) {
-            for (TypeBinding bound : wcBinding.otherBounds) {
-              JClassType boundType = (JClassType) resolveType(logger, bound);
-              bounds.addUpperBound(boundType);
-            }
-          }
+          bounds = new JUpperBound(new JClassType[] {upperBound});
         }
           break;
         case Wildcard.SUPER: {
-          // TODO: verify
-          JClassType firstBoundType = (JClassType) resolveType(logger,
-              wcBinding.erasure());
-          assert (firstBoundType.getQualifiedSourceName().equals("java.lang.Object"));
-          bounds = new JBound(firstBoundType);
-
           assert (wcBinding.bound != null);
-          JClassType boundType = (JClassType) resolveType(logger,
+          JClassType lowerBound = (JClassType) resolveType(logger,
               wcBinding.bound);
-          bounds.addLowerBound(boundType);
-          if (wcBinding.otherBounds != null) {
-            for (TypeBinding bound : wcBinding.otherBounds) {
-              boundType = (JClassType) resolveType(logger, bound);
-              bounds.addLowerBound(boundType);
-            }
-          }
+          bounds = new JLowerBound(new JClassType[] {lowerBound});
         }
           break;
         case Wildcard.UNBOUND: {
-          JClassType firstBoundType = (JClassType) resolveType(logger,
+          JClassType upperBound = (JClassType) resolveType(logger,
               wcBinding.erasure());
-          assert (firstBoundType.getQualifiedSourceName().equals("java.lang.Object"));
-          bounds = new JBound(firstBoundType);
+          bounds = new JUpperBound(new JClassType[] {upperBound});
+          assert (bounds.getFirstBound().getQualifiedSourceName().equals("java.lang.Object"));
         }
           break;
         default:
           assert false : "WildcardBinding of unknown boundKind???";
           return null;
       }
-      JWildcardType wcType = new JWildcardType(bounds);
-      return wcType;
+
+      return oracle.getWildcardType(bounds);
     }
 
     // Log other cases we know about that don't make sense.
@@ -1411,9 +1447,11 @@ public class TypeOracleBuilder {
     }
     type.addAnnotations(declaredAnnotations);
 
-    // Resolve type parameters
-    List<JTypeParameter> typeParameters = new ArrayList<JTypeParameter>();
-    if (!resolveTypeParameters(logger, jclass.typeParameters, typeParameters)) {
+    // Resolve type parameters for generic types
+    JGenericType genericType = type.isGenericType();
+    if (genericType != null
+        && !resolveTypeParameters(logger, type.isGenericType(),
+            jclass.typeParameters)) {
       // Failed to resolve
       return false;
     }
@@ -1471,18 +1509,49 @@ public class TypeOracleBuilder {
   }
 
   private boolean resolveTypeParameter(TreeLogger logger,
-      TypeParameter jtypeParameter, List<JTypeParameter> typeParameters) {
-    JTypeParameter typeParameter = (JTypeParameter) cacheManager.getIdentityMapper().get(
-        jtypeParameter.binding);
-    typeParameters.add(typeParameter);
+      JAbstractMethod method, TypeParameter jtypeParameter, int ordinal) {
+    JTypeParameter typeParameter = new JTypeParameter(
+        String.valueOf(jtypeParameter.name), method, ordinal);
+    return resolveTypeParameter(logger, jtypeParameter.binding, typeParameter);
+  }
+
+  private boolean resolveTypeParameter(TreeLogger logger,
+      JGenericType genericType, TypeParameter jtypeParameter, int ordinal) {
+    JTypeParameter typeParameter = new JTypeParameter(
+        String.valueOf(jtypeParameter.name), genericType, ordinal);
+    return resolveTypeParameter(logger, jtypeParameter.binding, typeParameter);
+  }
+
+  private boolean resolveTypeParameter(TreeLogger logger,
+      TypeVariableBinding binding, JTypeParameter typeParameter) {
+    Mapper identityMapper = cacheManager.getIdentityMapper();
+    assert (identityMapper.get(binding) == null);
+
+    identityMapper.put(binding, typeParameter);
+
+    JBound bounds = createTypeVariableBounds(logger, binding);
+    typeParameter.setBounds(bounds);
+
     return true;
   }
 
   private boolean resolveTypeParameters(TreeLogger logger,
-      TypeParameter[] jtypeParameters, List<JTypeParameter> typeParameters) {
+      JAbstractMethod method, TypeParameter[] jtypeParameters) {
     if (jtypeParameters != null) {
       for (int i = 0; i < jtypeParameters.length; ++i) {
-        if (!resolveTypeParameter(logger, jtypeParameters[i], typeParameters)) {
+        if (!resolveTypeParameter(logger, method, jtypeParameters[i], i)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private boolean resolveTypeParameters(TreeLogger logger,
+      JGenericType genericType, TypeParameter[] jtypeParameters) {
+    if (jtypeParameters != null) {
+      for (int i = 0; i < jtypeParameters.length; ++i) {
+        if (!resolveTypeParameter(logger, genericType, jtypeParameters[i], i)) {
           return false;
         }
       }
