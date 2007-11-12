@@ -17,7 +17,7 @@
 <!-- This module is typically inherited via com.google.gwt.user.User        -->
 <!--                                                                        -->
 <module>
-	<inherits name="com.google.gwt.user.HTTPRequest"/>
+	<inherits name="com.google.gwt.http.HTTP"/>  
 	
 	<!-- 
 		Declare a property to determine whether or not RPC type versioning 
