@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -266,14 +266,14 @@ public abstract class DOMImpl {
     parent.insertBefore(child, before);
   }-*/;
 
-  public abstract void insertChild(Element parent, Element child,
-      int index);
+  public abstract void insertChild(Element parent, Element child, int index);
 
   /**
-   * @see com.google.gwt.user.client.DOM#insertListItem(Element, String, String, int)
+   * @see com.google.gwt.user.client.DOM#insertListItem(Element, String, String,
+   *      int)
    */
   public native void insertListItem(Element select, String item, String value,
-      int index)/*-{
+      int index) /*-{
     var option = new Option(item, value);
     if (index == -1 || index > select.options.length - 1) {
       select.add(option, null);
@@ -354,8 +354,7 @@ public abstract class DOMImpl {
     elem[prop] = value;
   }-*/;
 
-  public native void setEventListener(Element elem,
-      EventListener listener) /*-{
+  public native void setEventListener(Element elem, EventListener listener) /*-{
     elem.__listener = listener;
   }-*/;
 
@@ -393,8 +392,7 @@ public abstract class DOMImpl {
     option.text = text;
   }-*/;
 
-  public native void setStyleAttribute(Element elem, String attr,
-      String value) /*-{
+  public native void setStyleAttribute(Element elem, String attr, String value) /*-{
     elem.style[attr] = value;
   }-*/;
 
@@ -405,8 +403,8 @@ public abstract class DOMImpl {
   }-*/;
 
   /**
-   * Gets the height of the browser window's client area excluding the
-   * scroll bar.
+   * Gets the height of the browser window's client area excluding the scroll
+   * bar.
    * 
    * @return the window's client height
    */
@@ -415,8 +413,8 @@ public abstract class DOMImpl {
   }-*/;
 
   /**
-   * Gets the width of the browser window's client area excluding the
-   * vertical scroll bar.
+   * Gets the width of the browser window's client area excluding the vertical
+   * scroll bar.
    * 
    * @return the window's client width
    */

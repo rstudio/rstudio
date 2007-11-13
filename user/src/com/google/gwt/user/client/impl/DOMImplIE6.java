@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -54,17 +54,17 @@ class DOMImplIE6 extends DOMImpl {
 
   /**
    * Supports creating a select control with the multiple attribute to work
-   * around a bug in IE6 where changing the multiple attribute in a
-   * setAttribute call can cause subsequent setSelected calls to misbehave.
-   * Although this bug is fixed in IE7, this DOMImpl specialization is used
-   * for both IE6 and IE7, but it should be harmless.
+   * around a bug in IE6 where changing the multiple attribute in a setAttribute
+   * call can cause subsequent setSelected calls to misbehave. Although this bug
+   * is fixed in IE7, this DOMImpl specialization is used for both IE6 and IE7,
+   * but it should be harmless.
    */
   @Override
   public native Element createSelectElement(boolean multiple) /*-{
     var html = multiple ? "<SELECT MULTIPLE>" : "<SELECT>"; 
     return $doc.createElement(html);
   }-*/;
-  
+
   @Override
   public native int eventGetClientX(Event evt) /*-{
     return evt.clientX -
