@@ -103,4 +103,20 @@ public interface TestMessages extends com.google.gwt.i18n.client.Messages {
    * @gwt.key args1
    */
   String args1(String arg0);
+
+  /**
+   * Translated "{quoted}".
+   * 
+   * @return translated "{quoted}"
+   * @gwt.key quotedBraces
+   */
+  String quotedBraces();
+
+  /**
+   * Translated "".
+   * 
+   * @return translated ""
+   * @gwt.key empty
+   */
+  String empty();
 }

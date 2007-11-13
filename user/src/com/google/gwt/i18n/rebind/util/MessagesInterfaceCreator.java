@@ -37,11 +37,25 @@ public class MessagesInterfaceCreator extends
    * @throws ParseException
    */
   public static int numberOfMessageArgs(String template) throws ParseException {
-    // As parse, unlike format, cannot deal with single quotes, we can escape
-    // them instead. If sub-formats are supported in the future, this code will
-    // have to change.
-    String escapedDefault = template.replaceAll("'", "x");
-    int numArgs = new MessageFormat(escapedDefault).parse(escapedDefault).length;
+    /*
+     * As parse, unlike format, cannot deal with single quotes, we have to remove
+     * them. First, we remove doubled quotes (which go into the output as single
+     * quotes.  Then, we remove any quoted strings.
+     *
+     * If sub-formats are supported in the future, this code will
+     * have to change.
+     */
+    // strip doubled single-quotes
+    template = template.replace("''", "");
+    
+    // delete quoted sections
+    template = template.replaceAll("'[^']+'", "");
+    
+    if (template.length() == 0) {
+      // special case empty strings since MessageFormat.parse chokes on them.
+      return 0;
+    }
+    int numArgs = new MessageFormat(template).parse(template).length;
     return numArgs;
   }
 

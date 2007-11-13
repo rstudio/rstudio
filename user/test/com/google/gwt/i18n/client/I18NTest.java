@@ -464,6 +464,8 @@ public class I18NTest extends GWTTestCase {
         s.testLotsOfUsageOfArgs("a", "b"));
     assertEquals("\"~\" ~~ \"~~~~ \"\"", s.testWithXs());
     assertEquals("お好你好好", s.unicode("好", "好"));
+    assertEquals("", s.empty());
+    assertEquals("{quoted}", s.quotedBraces());
   }
 
   public void testTypedMessages() {
