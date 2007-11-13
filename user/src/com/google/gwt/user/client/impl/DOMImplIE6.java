@@ -330,4 +330,17 @@ class DOMImplIE6 extends DOMImpl {
     elem.onerror       = (bits & 0x10000) ? $wnd.__dispatchEvent : null;
     elem.onmousewheel  = (bits & 0x20000) ? $wnd.__dispatchEvent : null;
   }-*/;
+
+  @Override
+  public native int windowGetClientHeight() /*-{
+    // IE standard mode || IE quirks mode.
+    return $doc.documentElement.clientHeight || $doc.body.clientHeight; 
+  }-*/;
+
+  @Override
+  public native int windowGetClientWidth() /*-{
+    // IE standard mode || IE quirks mode.
+    return $doc.documentElement.clientWidth || $doc.body.clientWidth;
+  }-*/;
+
 }

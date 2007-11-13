@@ -408,9 +408,7 @@ public abstract class DOMImpl {
    * 
    * @return the window's client height
    */
-  public native int windowGetClientHeight() /*-{
-    return $doc.body.clientHeight; 
-  }-*/;
+  public abstract int windowGetClientHeight();
 
   /**
    * Gets the width of the browser window's client area excluding the vertical
@@ -418,7 +416,5 @@ public abstract class DOMImpl {
    * 
    * @return the window's client width
    */
-  public native int windowGetClientWidth() /*-{
-    return $doc.body.clientWidth; 
-  }-*/;
+  public abstract int windowGetClientWidth();
 }

@@ -151,6 +151,28 @@ class DOMImplMozilla extends DOMImplStandard {
     return outer;
   }-*/;
 
+  @Override
+  public native int windowGetClientHeight() /*-{
+    // Standards mode: 
+    //    doc.body.clientHeight --> client height with scrollbars.
+    //    doc.documentElement.clientHeight --> client height without scrollbars.
+    // Quirks mode:
+    //    doc.body.clientHeight --> client height without scrollbars.
+    //    doc.documentElement.clientHeight --> document height.
+    // So, must switch value on compatMode.
+  return ($doc.compatMode == 'BackCompat')?
+    $doc.body.clientHeight:
+    $doc.documentElement.clientHeight;
+  }-*/;
+
+  @Override
+  public native int windowGetClientWidth() /*-{
+    // See comment for windowGetClientHeight. 
+    return ($doc.compatMode == 'BackCompat')?
+      $doc.body.clientWidth:
+      $doc.documentElement.clientWidth;
+  }-*/;
+
   protected native void initMozilla() /*-{
     $wnd.addEventListener(
       'mouseout',
@@ -177,4 +199,5 @@ class DOMImplMozilla extends DOMImplStandard {
     $wnd.addEventListener('DOMMouseScroll', $wnd.__dispatchCapturedMouseEvent,
       true);
   }-*/;
+
 }
