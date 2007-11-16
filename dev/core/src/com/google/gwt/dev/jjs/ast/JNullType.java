@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.InternalCompilerException;
+
 /**
  * Java null reference type.
  */
@@ -22,6 +24,11 @@ public class JNullType extends JReferenceType {
 
   public JNullType(JProgram program) {
     super(program, null, "<null>");
+  }
+
+  @Override
+  public String getClassLiteralFactoryMethod() {
+    throw new InternalCompilerException("Cannot get class literal for null type");
   }
 
   public String getJavahSignatureName() {

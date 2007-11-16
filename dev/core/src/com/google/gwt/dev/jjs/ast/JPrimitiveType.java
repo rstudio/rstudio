@@ -33,6 +33,11 @@ public class JPrimitiveType extends JType {
     this.wrapperTypeName = wrapperTypeName;
   }
 
+  @Override
+  public String getClassLiteralFactoryMethod() {
+    return "Class.createForPrimitive";
+  }
+
   public String getJavahSignatureName() {
     return signatureName;
   }

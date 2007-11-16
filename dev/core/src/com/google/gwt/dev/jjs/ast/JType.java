@@ -32,6 +32,8 @@ public abstract class JType extends JNode implements HasName {
     this.defaultValue = defaultValue;
   }
 
+  public abstract String getClassLiteralFactoryMethod();
+
   public JLiteral getDefaultValue() {
     return defaultValue;
   }

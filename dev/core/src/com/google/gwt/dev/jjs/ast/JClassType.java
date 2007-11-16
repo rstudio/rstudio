@@ -32,6 +32,11 @@ public class JClassType extends JReferenceType implements CanBeSetFinal {
     this.isFinal = isFinal;
   }
 
+  @Override
+  public String getClassLiteralFactoryMethod() {
+    return "Class.createForClass";
+  }
+
   public boolean isAbstract() {
     return isAbstract;
   }

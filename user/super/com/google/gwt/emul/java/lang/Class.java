@@ -28,17 +28,80 @@ public final class Class<T> {
   private static final int ARRAY = 0x00000004;
   private static final int ENUM = 0x00000008;
 
-  private final String typeName;
-  private final int modifiers;
+  /**
+   * Create a Class object for an array.
+   * 
+   * @skip
+   */
+  static Class<?> createForArray(String packageName, String className) {
+    // Initialize here to avoid method inliner
+    Class<?> clazz = new Class();
+    clazz.typeName = packageName + className;
+    clazz.modifiers = ARRAY;
+    return clazz;
+  }
+
+  /**
+   * Create a Class object for a class.
+   * 
+   * @skip
+   */
+  static Class<?> createForClass(String packageName, String className) {
+    // Initialize here to avoid method inliner
+    Class<?> clazz = new Class<Object>();
+    clazz.typeName = packageName + className;
+    return clazz;
+  }
+
+  /**
+   * Create a Class object for an enum.
+   * 
+   * @skip
+   */
+  static Class<?> createForEnum(String packageName, String className) {
+    // Initialize here to avoid method inliner
+    Class<?> clazz = new Class<Object>();
+    clazz.typeName = packageName + className;
+    clazz.modifiers = ENUM;
+    return clazz;
+  }
+
+  /**
+   * Create a Class object for an interface.
+   * 
+   * @skip
+   */
+  static Class<?> createForInterface(String packageName, String className) {
+    // Initialize here to avoid method inliner
+    Class<?> clazz = new Class<Object>();
+    clazz.typeName = packageName + className;
+    clazz.modifiers = INTERFACE;
+    return clazz;
+  }
+
+  /**
+   * Create a Class object for a primitive.
+   * 
+   * @skip
+   */
+  static Class<?> createForPrimitive(String packageName, String className) {
+    // Initialize here to avoid method inliner
+    Class<?> clazz = new Class<Object>();
+    clazz.typeName = packageName + className;
+    clazz.modifiers = PRIMITIVE;
+    return clazz;
+  }
+
+  private int modifiers;
+
+  private String typeName;
 
   /**
    * Not publicly instantiable.
    * 
    * @skip
    */
-  Class(String typeName, int modifiers) {
-    this.typeName = typeName;
-    this.modifiers = modifiers;
+  private Class() {
   }
 
   public T[] getEnumConstants() {

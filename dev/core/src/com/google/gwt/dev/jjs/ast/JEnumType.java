@@ -34,4 +34,8 @@ public class JEnumType extends JClassType {
 
   // TODO: implement traverse?
 
+  @Override
+  public String getClassLiteralFactoryMethod() {
+    return "Class.createForEnum";
+  }
 }

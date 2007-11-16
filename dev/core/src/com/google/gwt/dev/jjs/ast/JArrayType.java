@@ -40,6 +40,11 @@ public class JArrayType extends JClassType {
     this.dims = dims;
   }
 
+  @Override
+  public String getClassLiteralFactoryMethod() {
+    return "Class.createForArray";
+  }
+
   public int getDims() {
     return dims;
   }

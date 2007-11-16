@@ -26,6 +26,11 @@ public class JInterfaceType extends JReferenceType {
     super(program, info, name);
   }
 
+  @Override
+  public String getClassLiteralFactoryMethod() {
+    return "Class.createForInterface";
+  }
+
   public boolean isAbstract() {
     return true;
   }
