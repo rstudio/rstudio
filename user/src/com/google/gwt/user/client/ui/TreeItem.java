@@ -435,19 +435,7 @@ public class TreeItem extends UIObject implements HasHTML {
   Element getImageElement() {
     return statusImage.getElement();
   }
-
-  int getTreeTop() {
-    TreeItem item = this;
-    int ret = 0;
-
-    while (item != null) {
-      ret += DOM.getElementPropertyInt(item.getElement(), "offsetTop");
-      item = item.getParentItem();
-    }
-
-    return ret;
-  }
-
+ 
   void setParentItem(TreeItem parent) {
     this.parent = parent;
   }
