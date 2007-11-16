@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.ast.CanBeAbstract;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
@@ -102,8 +103,9 @@ public class TypeTightener {
         if (!instance.hasSideEffects()) {
           instance = program.getLiteralNull();
         }
-        JArrayRef arrayRef = new JArrayRef(program, x.getSourceInfo(),
-            instance, program.getLiteralInt(0));
+        JArrayRef arrayRef =
+            new JArrayRef(program, x.getSourceInfo(), instance, program
+                .getLiteralInt(0));
         ctx.replaceMe(arrayRef);
       }
     }
@@ -116,16 +118,18 @@ public class TypeTightener {
         // this doesn't really belong here, but while we're here let's remove
         // non-side-effect qualifiers to statics
         if (!instance.hasSideEffects()) {
-          JFieldRef fieldRef = new JFieldRef(program, x.getSourceInfo(), null,
-              x.getField(), x.getEnclosingType());
+          JFieldRef fieldRef =
+              new JFieldRef(program, x.getSourceInfo(), null, x.getField(), x
+                  .getEnclosingType());
           ctx.replaceMe(fieldRef);
         }
       } else if (!isStatic && instance.getType() == typeNull) {
         if (!instance.hasSideEffects()) {
           instance = program.getLiteralNull();
         }
-        JFieldRef fieldRef = new JFieldRef(program, x.getSourceInfo(),
-            instance, program.getNullField(), null);
+        JFieldRef fieldRef =
+            new JFieldRef(program, x.getSourceInfo(), instance, program
+                .getNullField(), null);
         ctx.replaceMe(fieldRef);
       }
     }
@@ -140,8 +144,8 @@ public class TypeTightener {
         // this doesn't really belong here, but while we're here let's remove
         // non-side-effect qualifiers to statics
         if (!instance.hasSideEffects()) {
-          JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
-              null, x.getTarget());
+          JMethodCall newCall =
+              new JMethodCall(program, x.getSourceInfo(), null, x.getTarget());
           newCall.getArgs().addAll(x.getArgs());
           ctx.replaceMe(newCall);
         }
@@ -150,8 +154,9 @@ public class TypeTightener {
         if (!instance.hasSideEffects()) {
           instance = program.getLiteralNull();
         }
-        JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
-            instance, program.getNullMethod());
+        JMethodCall newCall =
+            new JMethodCall(program, x.getSourceInfo(), instance, program
+                .getNullMethod());
         ctx.replaceMe(newCall);
       } else if (isStaticImpl && x.getArgs().size() > 0
           && x.getArgs().get(0).getType() == typeNull) {
@@ -160,8 +165,9 @@ public class TypeTightener {
         if (!instance.hasSideEffects()) {
           instance = program.getLiteralNull();
         }
-        JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
-            instance, program.getNullMethod());
+        JMethodCall newCall =
+            new JMethodCall(program, x.getSourceInfo(), instance, program
+                .getNullMethod());
         ctx.replaceMe(newCall);
       }
     }
@@ -226,7 +232,8 @@ public class TypeTightener {
       for (JMethod method : x.overrides) {
         addOverrider(method, x);
       }
-      JMethod[] allVirtualOverrides = program.typeOracle.getAllVirtualOverrides(x);
+      JMethod[] allVirtualOverrides =
+          program.typeOracle.getAllVirtualOverrides(x);
       for (JMethod method : allVirtualOverrides) {
         addOverrider(method, x);
       }
@@ -404,9 +411,19 @@ public class TypeTightener {
         ctx.replaceMe(x.getExpr());
       } else if (triviallyFalse) {
         // replace with a magic NULL cast
-        JCastOperation newOp = new JCastOperation(program, x.getSourceInfo(),
-            program.getTypeNull(), x.getExpr());
+        JCastOperation newOp =
+            new JCastOperation(program, x.getSourceInfo(), program
+                .getTypeNull(), x.getExpr());
         ctx.replaceMe(newOp);
+      } else {
+        // If possible, try to use a narrower cast
+        JClassType concreteType = getSingleConcreteType(toType);
+        if (concreteType != null) {
+          JCastOperation newOp =
+              new JCastOperation(program, x.getSourceInfo(), concreteType, x
+                  .getExpr());
+          ctx.replaceMe(newOp);
+        }
       }
     }
 
@@ -444,13 +461,23 @@ public class TypeTightener {
       if (triviallyTrue) {
         // replace with a simple null test
         JNullLiteral nullLit = program.getLiteralNull();
-        JBinaryOperation neq = new JBinaryOperation(program, x.getSourceInfo(),
-            program.getTypePrimitiveBoolean(), JBinaryOperator.NEQ,
-            x.getExpr(), nullLit);
+        JBinaryOperation neq =
+            new JBinaryOperation(program, x.getSourceInfo(), program
+                .getTypePrimitiveBoolean(), JBinaryOperator.NEQ, x.getExpr(),
+                nullLit);
         ctx.replaceMe(neq);
       } else if (triviallyFalse) {
         // replace with a false literal
         ctx.replaceMe(program.getLiteralBoolean(false));
+      } else {
+        // If possible, try to use a narrower cast
+        JClassType concreteType = getSingleConcreteType(toType);
+        if (concreteType != null) {
+          JInstanceOf newOp =
+              new JInstanceOf(program, x.getSourceInfo(), concreteType, x
+                  .getExpr());
+          ctx.replaceMe(newOp);
+        }
       }
     }
 
@@ -464,11 +491,15 @@ public class TypeTightener {
      */
     @Override
     public void endVisit(JMethod x, Context ctx) {
+      JClassType concreteType = getSingleConcreteType(x.getType());
+      if (concreteType != null) {
+        x.setType(concreteType);
+        myDidChange = true;
+      }
+
       /*
-       * Explicitly NOT visiting native methods since we can't infer type
-       * information.
-       * 
-       * TODO(later): can we figure out simple pass-through info?
+       * The only information that we can infer about native methods is if they
+       * are declared to return a leaf type.
        */
       if (x.isNative()) {
         return;
@@ -521,6 +552,23 @@ public class TypeTightener {
       }
     }
 
+    /**
+     * Tighten the target method from the abstract base method to the final
+     * implementation.
+     */
+    @Override
+    public void endVisit(JMethodCall x, Context ctx) {
+      JMethod concreteMethod = getSingleConcreteMethod(x.getTarget());
+      if (concreteMethod != null) {
+        JMethodCall newCall =
+            new JMethodCall(program, x.getSourceInfo(), x.getInstance(),
+                concreteMethod);
+        newCall.getArgs().addAll(x.getArgs());
+
+        ctx.replaceMe(newCall);
+      }
+    }
+
     @Override
     public void endVisit(JParameter x, Context ctx) {
       tighten(x);
@@ -537,12 +585,38 @@ public class TypeTightener {
 
     public boolean visit(JMethod x, Context ctx) {
       /*
-       * Explicitly NOT visiting native methods since we can't infer type
-       * information.
-       * 
-       * TODO(later): can we figure out simple pass-through info?
+       * Explicitly NOT visiting native methods since we can't infer further
+       * type information.
        */
       return !x.isNative();
+    }
+
+    /**
+     * Find a replacement method. If the original method is abstract, this will
+     * return the leaf, final implementation of the method. If the method is
+     * already concrete, but enclosed by an abstract type, the overriding method
+     * from the leaf concrete type will be returned.
+     */
+    private JMethod getSingleConcreteMethod(JMethod method) {
+      if (getSingleConcreteType(method.getEnclosingType()) != null) {
+        return getSingleConcrete(method, overriders);
+      } else {
+        return null;
+      }
+    }
+
+    /**
+     * Given an abstract type, return the single concrete implementation of that
+     * type.
+     */
+    private JClassType getSingleConcreteType(JType type) {
+       if (type instanceof JReferenceType) {
+        JReferenceType refType = (JReferenceType) type;
+        if (refType.isAbstract()) {
+          return getSingleConcrete((JReferenceType) type, implementors);
+        }
+      }
+      return null;
     }
 
     /**
@@ -555,6 +629,14 @@ public class TypeTightener {
       JReferenceType refType = (JReferenceType) x.getType();
 
       if (refType == typeNull) {
+        return;
+      }
+
+      // tighten based on leaf types
+      JClassType leafType = getSingleConcreteType(refType);
+      if (leafType != null) {
+        x.setType(leafType);
+        myDidChange = true;
         return;
       }
 
@@ -627,12 +709,48 @@ public class TypeTightener {
     set.add(value);
   }
 
-  private final Map<JVariable, Set<JExpression>> assignments = new IdentityHashMap<JVariable, Set<JExpression>>();
-  private final Map<JReferenceType, Set<JClassType>> implementors = new IdentityHashMap<JReferenceType, Set<JClassType>>();
-  private final Map<JMethod, Set<JMethod>> overriders = new IdentityHashMap<JMethod, Set<JMethod>>();
-  private final Map<JParameter, Set<JParameter>> paramUpRefs = new IdentityHashMap<JParameter, Set<JParameter>>();
+  /**
+   * Find exactly one concrete element for a key in a Map of Sets. If there are
+   * none or more than one concrete element, return <code>null</code>.
+   */
+  private static <B, T extends CanBeAbstract> T getSingleConcrete(B x,
+      Map<? super B, Set<T>> map) {
+
+    Set<T> set = map.get(x);
+    // No set, then no concrete version
+    if (set == null) {
+      return null;
+    }
+
+    T toReturn = null;
+    for (T elt : set) {
+      if (elt.isAbstract()) {
+        continue;
+      }
+
+      // If we already have previously seen a concrete element, fail
+      if (toReturn != null) {
+        return null;
+      } else {
+        toReturn = elt;
+      }
+    }
+
+    return toReturn;
+  }
+
+  private final Map<JVariable, Set<JExpression>> assignments =
+      new IdentityHashMap<JVariable, Set<JExpression>>();
+  private final Map<JReferenceType, Set<JClassType>> implementors =
+      new IdentityHashMap<JReferenceType, Set<JClassType>>();
+  private final Map<JMethod, Set<JMethod>> overriders =
+      new IdentityHashMap<JMethod, Set<JMethod>>();
+  private final Map<JParameter, Set<JParameter>> paramUpRefs =
+      new IdentityHashMap<JParameter, Set<JParameter>>();
   private final JProgram program;
-  private final Map<JMethod, Set<JExpression>> returns = new IdentityHashMap<JMethod, Set<JExpression>>();
+  private final Map<JMethod, Set<JExpression>> returns =
+      new IdentityHashMap<JMethod, Set<JExpression>>();
+
   private final JNullType typeNull;
 
   private TypeTightener(JProgram program) {
@@ -663,5 +781,4 @@ public class TypeTightener {
     }
     return madeChanges;
   }
-
 }
