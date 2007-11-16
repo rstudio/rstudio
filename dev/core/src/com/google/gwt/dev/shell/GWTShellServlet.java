@@ -352,7 +352,7 @@ public class GWTShellServlet extends HttpServlet {
 
     writer.println("</head><body>");
     writer.println("<iframe src=\"javascript:''\" id='__gwt_historyFrame' "
-        + "style='width:0;height:0;border:0'></iframe>");
+        + "style='position:absolute;width:0;height:0;border:0'></iframe>");
     writer.println("</body></html>");
 
     // Done.

@@ -309,7 +309,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     // most browsers.
     Element dummy = DOM.createDiv();
     DOM.setInnerHTML(dummy, "<iframe name='" + frameName
-        + "' style='width:0;height:0;border:0'>");
+        + "' style='position:absolute;width:0;height:0;border:0'>");
 
     iframe = DOM.getFirstChild(dummy);
   }
