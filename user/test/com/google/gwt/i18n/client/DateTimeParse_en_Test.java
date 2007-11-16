@@ -435,10 +435,12 @@ public class DateTimeParse_en_Test extends GWTTestCase {
   public void testPartialParsing() {
     // Only specify a date
     DateTimeFormat fmt = DateTimeFormat.getFormat("MM-dd-yyyy");
-    Date dateOnly = fmt.parse("05-06-1987");
+    Date dateActual = new Date(87, 10, 22);
+    Date dateOnly = fmt.parse("11-22-1987");
     assertEquals(dateOnly.getHours(), 0);
     assertEquals(dateOnly.getMinutes(), 0);
     assertEquals(dateOnly.getSeconds(), 0);
+    assertEquals(dateOnly.getTime(), dateActual.getTime());
 
     // Only specify a time, should use current date
     fmt = DateTimeFormat.getFormat("hha");

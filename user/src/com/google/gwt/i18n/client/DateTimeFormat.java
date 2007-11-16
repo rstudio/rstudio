@@ -591,10 +591,9 @@ public class DateTimeFormat {
    *           into a number
    */
   public Date parse(String text) {
-    Date date = new Date();
-    date.setHours(0);
-    date.setMinutes(0);
-    date.setSeconds(0);
+    Date curDate = new Date();
+    Date date = new Date(curDate.getYear(), curDate.getMonth(), 
+        curDate.getDate());
     int charsConsumed = parse(text, 0, date);
     if (charsConsumed == 0 || charsConsumed < text.length()) {
       throw new IllegalArgumentException(text);
