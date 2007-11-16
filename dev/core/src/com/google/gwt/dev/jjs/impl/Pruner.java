@@ -86,7 +86,8 @@ import java.util.Set;
 public class Pruner {
 
   /**
-   * Remove assignments to pruned fields, locals and params.
+   * Remove assignments to pruned fields, locals and params. Also nullify the
+   * return type of methods declared to return a globally uninstantiable type.
    */
   private class CleanupRefsVisitor extends JModVisitor {
 
@@ -157,6 +158,16 @@ public class Pruner {
         }
 
         ctx.replaceMe(newCall);
+      }
+    }
+
+    @Override
+    public void endVisit(JMethod x, Context ctx) {
+      JType type = x.getType();
+      if (type instanceof JReferenceType) {
+        if (!program.typeOracle.isInstantiatedType((JReferenceType) type)) {
+          x.setType(program.getTypeNull());
+        }
       }
     }
   }
