@@ -274,7 +274,7 @@ public abstract class DOMImpl {
    */
   public native void insertListItem(Element select, String item, String value,
       int index) /*-{
-    var option = new Option(item, value);
+    var option = new $wnd.Option(item, value);
     if (index == -1 || index > select.options.length - 1) {
       select.add(option, null);
     } else {
