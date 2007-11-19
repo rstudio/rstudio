@@ -138,9 +138,7 @@ class ProxyCreator {
 
     generateProxyFields(srcWriter, sto, serializationPolicyStrongName);
 
-    String typeSerializerName = sto.getTypeSerializerQualifiedName(serviceIntf);
-    generateProxyContructor(srcWriter, sto, serializationPolicyStrongName,
-        typeSerializerName);
+    generateProxyContructor(srcWriter);
 
     generateProxyMethods(srcWriter, sto, syncMethToAsyncMethMap);
 
@@ -154,16 +152,13 @@ class ProxyCreator {
    * using the default address for the
    * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService}.
    */
-  private void generateProxyContructor(SourceWriter srcWriter,
-      SerializableTypeOracle serializableTypeOracle,
-      String serializationPolicyStrongName, String typeSerializerName) {
+  private void generateProxyContructor(SourceWriter srcWriter) {
     srcWriter.println("public " + getProxySimpleName() + "() {");
     srcWriter.indent();
     srcWriter.println("super(GWT.getModuleBaseURL(),");
     srcWriter.indent();
     srcWriter.println(getDefaultServiceDefName() + ",");
     srcWriter.println("SERIALIZATION_POLICY, ");
-    srcWriter.println("REMOTE_SERVICE_INTERFACE_NAME, ");
     srcWriter.println("SERIALIZER);");
     srcWriter.outdent();
     srcWriter.outdent();
@@ -244,7 +239,8 @@ class ProxyCreator {
     w.print(" ");
     String streamWriterName = nameFactory.createName("streamWriter");
     w.println(streamWriterName + " = createStreamWriter();");
-    w.println("// createStreamWriter() prepared the stream and wrote the name of RemoteService");
+    w.println("// createStreamWriter() prepared the stream");
+    w.println(streamWriterName + ".writeString(REMOTE_SERVICE_INTERFACE_NAME);");
     if (needsTryCatchBlock) {
       w.println("try {");
       w.indent();

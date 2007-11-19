@@ -19,7 +19,10 @@ import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
+import com.google.gwt.user.client.rpc.InvocationException;
 import com.google.gwt.user.client.rpc.SerializationException;
+import com.google.gwt.user.client.rpc.SerializationStreamFactory;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 
 /**
@@ -128,47 +131,6 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
   }
 
   /**
-   * Returns a string that encodes the result of a method invocation.
-   * Effectively, this just removes any headers from the encoded response.
-   * 
-   * @param encodedResponse
-   * @return string that encodes the result of a method invocation
-   */
-  static String getEncodedInstance(String encodedResponse) {
-    assert (!isInvocationException(encodedResponse));
-    return encodedResponse.substring(4);
-  }
-
-  private static boolean isInvocationException(String encodedResponse) {
-    return !isThrownException(encodedResponse)
-        && !isReturnValue(encodedResponse);
-  }
-
-  /**
-   * Return <code>true</code> if the encoded response contains a value
-   * returned by the method invocation.
-   * 
-   * @param encodedResponse
-   * @return <code>true</code> if the encoded response contains a value
-   *         returned by the method invocation
-   */
-  private static boolean isReturnValue(String encodedResponse) {
-    return encodedResponse.startsWith("//OK");
-  }
-
-  /**
-   * Return <code>true</code> if the encoded response contains a checked
-   * exception that was thrown by the method invocation.
-   * 
-   * @param encodedResponse
-   * @return <code>true</code> if the encoded response contains a checked
-   *         exception that was thrown by the method invocation
-   */
-  private static boolean isThrownException(String encodedResponse) {
-    return encodedResponse.startsWith("//EX");
-  }
-
-  /**
    * {@link AsyncCallback} to notify or success or failure.
    */
   private final AsyncCallback<T> callback;
@@ -180,18 +142,18 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
   private final ResponseReader responseReader;
 
   /**
-   * {@link Serializer} instance used by the
-   * {@link ClientSerializationStreamReader} for serialization.
+   * {@link SerializationStreamFactory} for creating
+   * {@link SerializationStreamReader}s.
    */
-  private final Serializer serializer;
+  private final SerializationStreamFactory streamFactory;
 
-  public RequestCallbackAdapter(Serializer serializer,
+  public RequestCallbackAdapter(SerializationStreamFactory streamFactory,
       AsyncCallback<T> callback, ResponseReader responseReader) {
-    assert (serializer != null);
+    assert (streamFactory != null);
     assert (callback != null);
     assert (responseReader != null);
 
-    this.serializer = serializer;
+    this.streamFactory = streamFactory;
     this.callback = callback;
     this.responseReader = responseReader;
   }
@@ -202,25 +164,20 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
 
   @SuppressWarnings("unchecked")
   public void onResponseReceived(Request request, Response response) {
-    final ClientSerializationStreamReader streamReader = new ClientSerializationStreamReader(
-        serializer);
     T result = null;
     Throwable caught = null;
-    String encodedResponse = response.getText();
     try {
-      if (isReturnValue(encodedResponse)) {
-        streamReader.prepareToRead(getEncodedInstance(encodedResponse));
-        result = (T) responseReader.read(streamReader);
-      } else if (isThrownException(encodedResponse)) {
-        streamReader.prepareToRead(getEncodedInstance(encodedResponse));
-        caught = (Throwable) streamReader.readObject();
+      String encodedResponse = response.getText();
+
+      if (RemoteServiceProxy.isReturnValue(encodedResponse)) {
+        result = (T) responseReader.read(streamFactory.createStreamReader(encodedResponse));
+      } else if (RemoteServiceProxy.isThrownException(encodedResponse)) {
+        caught = (Throwable) streamFactory.createStreamReader(encodedResponse).readObject();
       } else {
-        assert (isInvocationException(encodedResponse));
-        caught = new com.google.gwt.user.client.rpc.InvocationException(
-            encodedResponse);
+        caught = new InvocationException(encodedResponse);
       }
     } catch (com.google.gwt.user.client.rpc.SerializationException e) {
-      caught = new com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException();
+      caught = new IncompatibleRemoteServiceException();
     } catch (Throwable e) {
       caught = e;
     }

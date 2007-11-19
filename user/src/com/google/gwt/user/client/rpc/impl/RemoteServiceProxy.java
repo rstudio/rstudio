@@ -21,6 +21,7 @@ import com.google.gwt.http.client.RequestException;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.InvocationException;
 import com.google.gwt.user.client.rpc.SerializationException;
+import com.google.gwt.user.client.rpc.SerializationStreamFactory;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader;
 
@@ -30,16 +31,51 @@ import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader
  * 
  * For internal use only.
  */
-public abstract class RemoteServiceProxy implements ServiceDefTarget {
+public abstract class RemoteServiceProxy implements SerializationStreamFactory,
+    ServiceDefTarget {
+  /**
+   * Return <code>true</code> if the encoded response contains a value
+   * returned by the method invocation.
+   * 
+   * @param encodedResponse
+   * @return <code>true</code> if the encoded response contains a value
+   *         returned by the method invocation
+   */
+  static boolean isReturnValue(String encodedResponse) {
+    return encodedResponse.startsWith("//OK");
+  }
+
+  /**
+   * Return <code>true</code> if the encoded response contains a checked
+   * exception that was thrown by the method invocation.
+   * 
+   * @param encodedResponse
+   * @return <code>true</code> if the encoded response contains a checked
+   *         exception that was thrown by the method invocation
+   */
+  static boolean isThrownException(String encodedResponse) {
+    return encodedResponse.startsWith("//EX");
+  }
+
+  /**
+   * Returns a string that encodes the result of a method invocation.
+   * Effectively, this just removes any headers from the encoded response.
+   * 
+   * @param encodedResponse
+   * @return string that encodes the result of a method invocation
+   */
+  private static String getEncodedInstance(String encodedResponse) {
+    if (isReturnValue(encodedResponse) || isThrownException(encodedResponse)) {
+      return encodedResponse.substring(4);
+    }
+
+    return encodedResponse;
+  }
+
   /**
    * The module base URL as specified during construction.
    */
   private final String moduleBaseURL;
-
-  /**
-   * The name of the remote service interface that we will invoke methods on.
-   */
-  private final String remoteServiceIntfName;
 
   /**
    * URL of the
@@ -59,10 +95,8 @@ public abstract class RemoteServiceProxy implements ServiceDefTarget {
   private final Serializer serializer;
 
   protected RemoteServiceProxy(String moduleBaseURL, String remoteServiceURL,
-      String serializationPolicyName, String remoteServiceInfName,
-      Serializer serializer) {
+      String serializationPolicyName, Serializer serializer) {
     this.moduleBaseURL = moduleBaseURL;
-    this.remoteServiceIntfName = remoteServiceInfName;
     this.remoteServiceURL = remoteServiceURL;
     this.serializer = serializer;
     this.serializationPolicyName = serializationPolicyName;
@@ -81,8 +115,8 @@ public abstract class RemoteServiceProxy implements ServiceDefTarget {
   public ClientSerializationStreamReader createStreamReader(String encoded)
       throws SerializationException {
     ClientSerializationStreamReader clientSerializationStreamReader = new ClientSerializationStreamReader(
-        getSerializer());
-    clientSerializationStreamReader.prepareToRead(RequestCallbackAdapter.getEncodedInstance(encoded));
+        serializer);
+    clientSerializationStreamReader.prepareToRead(getEncodedInstance(encoded));
     return clientSerializationStreamReader;
   }
 
@@ -101,9 +135,8 @@ public abstract class RemoteServiceProxy implements ServiceDefTarget {
    */
   public ClientSerializationStreamWriter createStreamWriter() {
     ClientSerializationStreamWriter clientSerializationStreamWriter = new ClientSerializationStreamWriter(
-        getSerializer(), getModuleBaseURL(), getSerializationPolicyName());
+        serializer, moduleBaseURL, serializationPolicyName);
     clientSerializationStreamWriter.prepareToWrite();
-    clientSerializationStreamWriter.writeString(remoteServiceIntfName);
     return clientSerializationStreamWriter;
   }
 
@@ -141,7 +174,7 @@ public abstract class RemoteServiceProxy implements ServiceDefTarget {
     }
 
     RequestCallbackAdapter<T> responseHandler = new RequestCallbackAdapter<T>(
-        getSerializer(), callback, responseReader);
+        this, callback, responseReader);
     RequestBuilder rb = new RequestBuilder(RequestBuilder.POST,
         getServiceEntryPoint());
     try {
@@ -154,32 +187,5 @@ public abstract class RemoteServiceProxy implements ServiceDefTarget {
     }
 
     return null;
-  }
-
-  /**
-   * Returns the this proxy's module base URL.
-   * 
-   * @return this proxy's module base URL
-   */
-  protected String getModuleBaseURL() {
-    return moduleBaseURL;
-  }
-
-  /**
-   * Returns the name of the serialization policy.
-   * 
-   * @return name of the serialization policy
-   */
-  protected String getSerializationPolicyName() {
-    return serializationPolicyName;
-  }
-
-  /**
-   * Returns the {@link Serializer} instance used by this client proxy.
-   * 
-   * @return {@link Serializer} instance used by this client proxy
-   */
-  protected Serializer getSerializer() {
-    return serializer;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,15 @@
 package com.google.gwt.user.client.rpc;
 
 /**
- * An interface for writing values from a stream.
+ * An interface for writing values into a stream.
  */
 public interface SerializationStreamWriter {
+  /**
+   * Serializes the contents of this stream into a string.
+   * 
+   * @return a string that is the serialization of the contents of this stream
+   */
+  String toString();
 
   void writeBoolean(boolean value) throws SerializationException;
 
@@ -39,5 +45,4 @@ public interface SerializationStreamWriter {
   void writeShort(short value) throws SerializationException;
 
   void writeString(String value) throws SerializationException;
-
 }
