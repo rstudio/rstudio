@@ -18,7 +18,6 @@ package com.google.gwt.user.server.rpc;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.SerializationException;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -26,10 +25,8 @@ import java.net.URL;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -41,106 +38,6 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class RemoteServiceServlet extends HttpServlet implements
     SerializationPolicyProvider {
-  /*
-   * These members are used to get and set the different HttpServletResponse and
-   * HttpServletRequest headers.
-   */
-  private static final String ACCEPT_ENCODING = "Accept-Encoding";
-
-  private static final String CHARSET_UTF8 = "UTF-8";
-  private static final String CONTENT_ENCODING = "Content-Encoding";
-  private static final String CONTENT_ENCODING_GZIP = "gzip";
-
-  private static final String CONTENT_TYPE_TEXT_PLAIN_UTF8 = "text/plain; charset=utf-8";
-  private static final String GENERIC_FAILURE_MSG = "The call failed on the server; see server log for details";
-  /**
-   * Controls the compression threshold at and below which no compression will
-   * take place.
-   */
-  private static final int UNCOMPRESSED_BYTE_SIZE_LIMIT = 256;
-
-  /**
-   * Return true if the response object accepts Gzip encoding. This is done by
-   * checking that the accept-encoding header specifies gzip as a supported
-   * encoding.
-   */
-  private static boolean acceptsGzipEncoding(HttpServletRequest request) {
-    assert (request != null);
-
-    String acceptEncoding = request.getHeader(ACCEPT_ENCODING);
-    if (null == acceptEncoding) {
-      return false;
-    }
-
-    return (acceptEncoding.indexOf(CONTENT_ENCODING_GZIP) != -1);
-  }
-
-  /**
-   * This method attempts to estimate the number of bytes that a string will
-   * consume when it is sent out as part of an HttpServletResponse. This really
-   * a hack since we are assuming that every character will consume two bytes
-   * upon transmission. This is definitely not true since some characters
-   * actually consume more than two bytes and some consume less. This is even
-   * less accurate if the string is converted to UTF8. However, it does save us
-   * from converting every string that we plan on sending back to UTF8 just to
-   * determine that we should not compress it.
-   */
-  private static int estimateByteSize(final String buffer) {
-    return (buffer.length() * 2);
-  }
-
-  /**
-   * Read the payload as UTF-8 from the request stream.
-   */
-  private static String readPayloadAsUtf8(HttpServletRequest request)
-      throws IOException, ServletException {
-    int contentLength = request.getContentLength();
-    if (contentLength == -1) {
-      // Content length must be known.
-      throw new ServletException("Content-Length must be specified");
-    }
-
-    String contentType = request.getContentType();
-    boolean contentTypeIsOkay = false;
-    // Content-Type must be specified.
-    if (contentType != null) {
-      // The type must be plain text.
-      if (contentType.startsWith("text/plain")) {
-        // And it must be UTF-8 encoded (or unspecified, in which case we assume
-        // that it's either UTF-8 or ASCII).
-        if (contentType.indexOf("charset=") == -1) {
-          contentTypeIsOkay = true;
-        } else if (contentType.indexOf("charset=utf-8") != -1) {
-          contentTypeIsOkay = true;
-        }
-      }
-    }
-    if (!contentTypeIsOkay) {
-      throw new ServletException(
-          "Content-Type must be 'text/plain' with 'charset=utf-8' (or unspecified charset)");
-    }
-    InputStream in = request.getInputStream();
-    try {
-      byte[] payload = new byte[contentLength];
-      int offset = 0;
-      int len = contentLength;
-      int byteCount;
-      while (offset < contentLength) {
-        byteCount = in.read(payload, offset, len);
-        if (byteCount == -1) {
-          throw new ServletException("Client did not send " + contentLength
-              + " bytes as expected");
-        }
-        offset += byteCount;
-        len -= byteCount;
-      }
-      return new String(payload, "UTF-8");
-    } finally {
-      if (in != null) {
-        in.close();
-      }
-    }
-  }
 
   private final ThreadLocal<HttpServletRequest> perThreadRequest = new ThreadLocal<HttpServletRequest>();
 
@@ -176,7 +73,7 @@ public class RemoteServiceServlet extends HttpServlet implements
 
       // Read the request fully.
       //
-      String requestPayload = readPayloadAsUtf8(request);
+      String requestPayload = RPCServletUtils.readContentAsUtf8(request);
 
       // Let subclasses see the serialized request.
       //
@@ -389,11 +286,8 @@ public class RemoteServiceServlet extends HttpServlet implements
    */
   protected void doUnexpectedFailure(Throwable e) {
     ServletContext servletContext = getServletContext();
-    servletContext.log("Exception while dispatching incoming RPC call", e);
-
-    // Send GENERIC_FAILURE_MSG with 500 status.
-    //
-    respondWithFailure(getThreadLocalResponse());
+    RPCServletUtils.writeResponseForUnexpectedFailure(servletContext,
+        getThreadLocalResponse(), e);
   }
 
   /**
@@ -448,7 +342,7 @@ public class RemoteServiceServlet extends HttpServlet implements
    */
   protected boolean shouldCompressResponse(HttpServletRequest request,
       HttpServletResponse response, String responsePayload) {
-    return estimateByteSize(responsePayload) > UNCOMPRESSED_BYTE_SIZE_LIMIT;
+    return RPCServletUtils.exceedsUncompressedContentLengthLimit(responsePayload);
   }
 
   private SerializationPolicy getCachedSerializationPolicy(
@@ -466,70 +360,12 @@ public class RemoteServiceServlet extends HttpServlet implements
     }
   }
 
-  /**
-   * Called when the machinery of this class itself has a problem, rather than
-   * the invoked third-party method. It writes a simple 500 message back to the
-   * client.
-   */
-  private void respondWithFailure(HttpServletResponse response) {
-    try {
-      response.setContentType("text/plain");
-      response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-      response.getWriter().write(GENERIC_FAILURE_MSG);
-    } catch (IOException e) {
-      getServletContext().log(
-          "respondWithFailure failed while sending the previous failure to the client",
-          e);
-    }
-  }
-
-  /**
-   * Write the response payload to the response stream.
-   */
   private void writeResponse(HttpServletRequest request,
       HttpServletResponse response, String responsePayload) throws IOException {
+    boolean gzipEncode = RPCServletUtils.acceptsGzipEncoding(request)
+        && shouldCompressResponse(request, response, responsePayload);
 
-    byte[] reply = responsePayload.getBytes(CHARSET_UTF8);
-    String contentType = CONTENT_TYPE_TEXT_PLAIN_UTF8;
-
-    if (acceptsGzipEncoding(request)
-        && shouldCompressResponse(request, response, responsePayload)) {
-      // Compress the reply and adjust headers.
-      //
-      ByteArrayOutputStream output = null;
-      GZIPOutputStream gzipOutputStream = null;
-      Throwable caught = null;
-      try {
-        output = new ByteArrayOutputStream(reply.length);
-        gzipOutputStream = new GZIPOutputStream(output);
-        gzipOutputStream.write(reply);
-        gzipOutputStream.finish();
-        gzipOutputStream.flush();
-        response.setHeader(CONTENT_ENCODING, CONTENT_ENCODING_GZIP);
-        reply = output.toByteArray();
-      } catch (IOException e) {
-        caught = e;
-      } finally {
-        if (null != gzipOutputStream) {
-          gzipOutputStream.close();
-        }
-        if (null != output) {
-          output.close();
-        }
-      }
-
-      if (caught != null) {
-        getServletContext().log("Unable to compress response", caught);
-        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        return;
-      }
-    }
-
-    // Send the reply.
-    //
-    response.setContentLength(reply.length);
-    response.setContentType(contentType);
-    response.setStatus(HttpServletResponse.SC_OK);
-    response.getOutputStream().write(reply);
+    RPCServletUtils.writeResponse(getServletContext(), response,
+        responsePayload, gzipEncode);
   }
 }
