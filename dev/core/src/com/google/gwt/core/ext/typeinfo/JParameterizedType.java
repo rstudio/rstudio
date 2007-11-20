@@ -27,16 +27,40 @@ import java.util.Set;
  * Represents a parameterized type in a declaration.
  */
 public class JParameterizedType extends JDelegatingClassType {
+  private static boolean areTypeArgsAssignableFrom(JClassType[] myTypeArgs,
+      JClassType[] otherTypeArgs) {
+    assert (myTypeArgs.length <= otherTypeArgs.length);
+
+    for (int i = 0; i < myTypeArgs.length; ++i) {
+      JClassType myTypeArg = myTypeArgs[i];
+      JClassType otherTypeArg = otherTypeArgs[i];
+
+      if (myTypeArg.isWildcard() == null) {
+        // myTypeArg needs to be a wildcard or we cannot be assignable.
+        return false;
+      }
+
+      if (!myTypeArg.isAssignableFrom(otherTypeArg)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   /**
    * Create a parameterized type along with any necessary enclosing
    * parameterized types. Enclosing parameterized types are necessary when the
    * base type is a non-static member and the enclosing type is also generic.
    */
   private static JParameterizedType createParameterizedTypeRecursive(
-      JGenericType baseType, Map<JClassType, JClassType> substitutionMap) {
-    JClassType enclosingType = null;
+      JGenericType baseType, Map<JTypeParameter, JClassType> substitutionMap) {
+    JClassType enclosingType = baseType.getEnclosingType();
     if (baseType.isMemberType() && !baseType.isStatic()) {
-      JGenericType isGenericEnclosingType = baseType.getEnclosingType().isGenericType();
+      // This base type is a non-static generic type so we build the necessary
+      // enclosing parameterized type and update the enclosing type to be 
+      // a parameterized type.
+      JGenericType isGenericEnclosingType = enclosingType.isGenericType();
       if (isGenericEnclosingType != null) {
         enclosingType = createParameterizedTypeRecursive(
             isGenericEnclosingType, substitutionMap);
@@ -58,7 +82,6 @@ public class JParameterizedType extends JDelegatingClassType {
       newTypeArgs[i] = newTypeArg;
     }
 
-    // TODO: this is wrong if the generic type is a non-static inner class.
     JParameterizedType parameterizedType = oracle.getParameterizedType(
         baseType, enclosingType, newTypeArgs);
     return parameterizedType;
@@ -78,7 +101,7 @@ public class JParameterizedType extends JDelegatingClassType {
    * This map records the JClassType that should be used in place of a given
    * {@link JTypeParameter}.
    */
-  private final Map<JTypeParameter, JClassType> substitutionMap = new IdentityHashMap<JTypeParameter, JClassType>();
+  private Map<JTypeParameter, JClassType> lazySubstitutionMap;
 
   public JParameterizedType(JGenericType baseType, JClassType enclosingType,
       JClassType[] typeArgs) {
@@ -98,8 +121,6 @@ public class JParameterizedType extends JDelegatingClassType {
     List<JClassType> typeArgsList = Arrays.asList(typeArgs);
     this.typeArgs.addAll(typeArgsList);
     assert (typeArgsList.indexOf(null) == -1);
-
-    initializeTypeParameterSubstitutionMap();
 
     // NOTE: Can't perform substitutions until we are done building
   }
@@ -280,14 +301,16 @@ public class JParameterizedType extends JDelegatingClassType {
     // type
     JClassType[] genericSubtypes = getBaseType().getSubtypes();
     for (JClassType subtype : genericSubtypes) {
-      Set<JClassType> typeHierarchy = getFlattenedTypeHierarchy(subtype);
-
       // Could be a subtype depending on how it is substituted
-      Map<JClassType, JClassType> substitutions = new IdentityHashMap<JClassType, JClassType>();
-      if (isSubtype(subtype, typeHierarchy, substitutions, true)) {
+      Map<JTypeParameter, JClassType> substitutions = findSubtypeSubstitution(subtype);
+      if (substitutions != null) {
         JGenericType genericType = subtype.isGenericType();
         if (genericType != null) {
           subtype = createParameterizedTypeRecursive(genericType, substitutions);
+        } else {
+          // If this is not a generic type then there should not be any
+          // substitution.
+          assert (substitutions.isEmpty());
         }
 
         subtypeList.add(subtype);
@@ -307,7 +330,6 @@ public class JParameterizedType extends JDelegatingClassType {
       JGenericType baseType = getBaseType();
       JClassType superclass = baseType.getSuperclass();
       assert (superclass != null);
-
       lazySuperclass = superclass.getSubstitutedType(this);
     }
 
@@ -319,23 +341,54 @@ public class JParameterizedType extends JDelegatingClassType {
   }
 
   @Override
-  public boolean isAssignableFrom(JClassType possibleSubtype) {
-    if (possibleSubtype == this) {
+  public boolean isAssignableFrom(JClassType otherType) {
+    Set<JClassType> typeHierarchy = getFlattenedSuperTypeHierarchy(otherType);
+    if (typeHierarchy.contains(this)) {
+      // Done, appear explicitly in the supertype hierarchy
       return true;
     }
 
-    JRawType possibleRawSubtype = possibleSubtype.isRawType();
-    if (possibleRawSubtype != null) {
-      return getBaseType().isAssignableFrom(possibleRawSubtype.getBaseType());
+    // Check for implicit subtype
+    for (JClassType type : typeHierarchy) {
+      JGenericType isGeneric = type.isGenericType();
+      if (isGeneric != null) {
+        // TODO: Do we want to treat a generic type as a raw type?
+        type = isGeneric.getRawType();
+      }
+
+      JParameterizedType isParameterized = type.isParameterized();
+      if (isParameterized != null
+          && isParameterized.getBaseType() == getBaseType()) {
+        // parameters are not exact, need to test type arguments
+        assert (isParameterized != this);
+
+        return areTypeArgsAssignableFrom(this.getTypeArgs(),
+            isParameterized.getTypeArgs());
+      }
+
+      JRawType isRaw = type.isRawType();
+      if (isRaw != null && isRaw.getBaseType() == getBaseType()) {
+        // Parameterized types are assignable from their raw types
+        return true;
+      }
+
+      JWildcardType isWildcard = type.isWildcard();
+      if (isWildcard != null && isWildcard.isAssignableTo(this)) {
+        return true;
+      }
     }
 
-    Set<JClassType> typeHierarchy = getFlattenedTypeHierarchy(possibleSubtype);
-    return isSubtype(possibleSubtype, typeHierarchy,
-        new IdentityHashMap<JClassType, JClassType>(), false);
+    return false;
   }
 
   @Override
   public boolean isAssignableTo(JClassType possibleSupertype) {
+    JGenericType genericPossibleSupertype = possibleSupertype.isGenericType();
+    if (genericPossibleSupertype != null) {
+      // Checks for assignability to the generic type's raw type
+      return genericPossibleSupertype.getRawType().isAssignableFrom(this);
+    }
+
     return possibleSupertype.isAssignableFrom(this);
   }
 
@@ -401,6 +454,8 @@ public class JParameterizedType extends JDelegatingClassType {
 
   @Override
   JClassType getSubstitutedType(JParameterizedType parameterizedType) {
+    maybeInitializeTypeParameterSubstitutionMap();
+
     if (this == parameterizedType) {
       return this;
     }
@@ -420,7 +475,9 @@ public class JParameterizedType extends JDelegatingClassType {
    * {@link JTypeParameter} is returned.
    */
   JClassType getTypeParameterSubstitution(JTypeParameter typeParameter) {
-    JClassType substitute = substitutionMap.get(typeParameter);
+    maybeInitializeTypeParameterSubstitutionMap();
+
+    JClassType substitute = lazySubstitutionMap.get(typeParameter);
     if (substitute != null) {
       return substitute;
     }
@@ -446,9 +503,16 @@ public class JParameterizedType extends JDelegatingClassType {
 
   /**
    * Initialize a map of substitutions for {@link JTypeParameter}s to
-   * corresponding {@link JClassType}s.
+   * corresponding {@link JClassType}s. This can only be initialized after the
+   * {@link com.google.gwt.dev.jdt.TypeOracleBuilder TypeOracleBuilder} has
+   * fully resolved all of the {@link JClassType}s.
    */
-  void initializeTypeParameterSubstitutionMap() {
+  void maybeInitializeTypeParameterSubstitutionMap() {
+    if (lazySubstitutionMap != null) {
+      return;
+    }
+    lazySubstitutionMap = new IdentityHashMap<JTypeParameter, JClassType>();
+
     JParameterizedType currentParameterizedType = this;
 
     while (currentParameterizedType != null) {
@@ -457,7 +521,7 @@ public class JParameterizedType extends JDelegatingClassType {
       JClassType[] typeArguments = currentParameterizedType.getTypeArgs();
 
       for (JTypeParameter typeParameter : typeParameters) {
-        substitutionMap.put(typeParameter,
+        lazySubstitutionMap.put(typeParameter,
             typeArguments[typeParameter.getOrdinal()]);
       }
 
@@ -475,15 +539,85 @@ public class JParameterizedType extends JDelegatingClassType {
   }
 
   /**
-   * Returns the flattened view of the type hierarchy.
+   * Returns a map of substitutions that will make the subtype a proper subtype
+   * of this parameterized type. The map maybe empty in the case that it is
+   * already an exact subtype.
    */
-  private Set<JClassType> getFlattenedTypeHierarchy(JClassType type) {
+  private Map<JTypeParameter, JClassType> findSubtypeSubstitution(
+      JClassType subtype) {
+    Map<JTypeParameter, JClassType> substitutions = new IdentityHashMap<JTypeParameter, JClassType>();
+
+    // Get the supertype hierarchy. If this JParameterizedType exists
+    // exactly in this set we are done.
+    Set<JClassType> supertypeHierarchy = getFlattenedSuperTypeHierarchy(subtype);
+    if (supertypeHierarchy.contains(this)) {
+      return substitutions;
+    }
+
+    /*
+     * Try to find a parameterized supertype whose base type is the same as our
+     * own. Because that parameterized supertype might be made into ourself via
+     * substitution.
+     */
+    for (JClassType candidate : supertypeHierarchy) {
+      JParameterizedType parameterizedCandidate = candidate.isParameterized();
+      if (parameterizedCandidate == null) {
+        // If not parameterized then there is no substitution possible.
+        continue;
+      }
+
+      if (parameterizedCandidate.getBaseType() != getBaseType()) {
+        // This candidate be parameterized to us.
+        continue;
+      }
+
+      /*
+       * We have a parameterization of our base type. Now we need to see if it
+       * is possible to parameterize subtype such that candidate becomes
+       * equivalent to us.
+       */
+      JClassType[] candidateTypeArgs = parameterizedCandidate.getTypeArgs();
+      JClassType[] myTypeArgs = getTypeArgs();
+      for (int i = 0; i < myTypeArgs.length; ++i) {
+        JClassType otherTypeArg = candidateTypeArgs[i];
+        JClassType myTypeArg = myTypeArgs[i];
+
+        if (myTypeArg == otherTypeArg) {
+          // There are identical so there is no substitution that is needed.
+          continue;
+        }
+
+        JTypeParameter otherTypeParameter = otherTypeArg.isTypeParameter();
+        if (otherTypeParameter == null) {
+          // Not a type parameter and not equal so no substitution can make it
+          // equal.
+          return null;
+        }
+
+        if (!otherTypeParameter.isAssignableFrom(myTypeArg)) {
+          // Make sure that my type argument can be substituted for this type
+          // parameter.
+          return null;
+        }
+
+        substitutions.put(otherTypeParameter, myTypeArg);
+      }
+    }
+
+    // Legal substitution can be made and is record in substitutions.
+    return substitutions;
+  }
+
+  /**
+   * Returns the flattened view of the supertype hierarchy.
+   */
+  private Set<JClassType> getFlattenedSuperTypeHierarchy(JClassType type) {
     Set<JClassType> typesSeen = new HashSet<JClassType>();
-    getFlattenedTypeHierarchyRecursive(type, typesSeen);
+    getFlattenedSuperTypeHierarchyRecursive(type, typesSeen);
     return typesSeen;
   }
 
-  private void getFlattenedTypeHierarchyRecursive(JClassType type,
+  private void getFlattenedSuperTypeHierarchyRecursive(JClassType type,
       Set<JClassType> typesSeen) {
     if (typesSeen.contains(type)) {
       return;
@@ -493,79 +627,13 @@ public class JParameterizedType extends JDelegatingClassType {
     // Superclass
     JClassType superclass = type.getSuperclass();
     if (superclass != null) {
-      getFlattenedTypeHierarchyRecursive(superclass, typesSeen);
+      getFlattenedSuperTypeHierarchyRecursive(superclass, typesSeen);
     }
 
     // Check the interfaces
     JClassType[] intfs = type.getImplementedInterfaces();
     for (JClassType intf : intfs) {
-      getFlattenedTypeHierarchyRecursive(intf, typesSeen);
+      getFlattenedSuperTypeHierarchyRecursive(intf, typesSeen);
     }
-  }
-
-  /**
-   * Look at the type hierarchy and see if we can find a parameterized type that
-   * has the same base type as this instance. If we find one then we check to
-   * see if the type arguments are compatible. If they are, then we record what
-   * the typeArgument needs to be replaced with in order to make it a proper
-   * subtype of this parameterized type.
-   */
-  private boolean isSubtype(JClassType subtype, Set<JClassType> typeHierarchy,
-      Map<JClassType, JClassType> substitutions, boolean lookForSubstitutions) {
-    if (typeHierarchy.contains(this)) {
-      return true;
-    }
-
-    for (JClassType type : typeHierarchy) {
-      JParameterizedType parameterizedType = type.isParameterized();
-      if (parameterizedType == null) {
-        continue;
-      }
-
-      if (parameterizedType.getBaseType() != getBaseType()) {
-        continue;
-      }
-
-      // Check the type arguments to see if they are compatible.
-      JClassType[] otherTypeArgs = parameterizedType.getTypeArgs();
-      JClassType[] myTypeArgs = getTypeArgs();
-      boolean validSubstitution = true;
-      for (int i = 0; i < myTypeArgs.length; ++i) {
-        JClassType otherTypeArg = otherTypeArgs[i];
-        JClassType myTypeArg = myTypeArgs[i];
-
-        validSubstitution = myTypeArg == otherTypeArg;
-        if (!validSubstitution) {
-          if (lookForSubstitutions) {
-            // Make sure that the other type argument is assignable from mine
-            validSubstitution = otherTypeArg.isAssignableFrom(myTypeArg);
-          } else {
-            // Looking for strict subtypes; only wildcards allow a non-exact
-            // match
-            JWildcardType isWildcard = myTypeArg.isWildcard();
-            if (isWildcard != null) {
-              validSubstitution = myTypeArg.isAssignableFrom(otherTypeArg);
-            }
-          }
-        }
-
-        if (!validSubstitution) {
-          break;
-        }
-
-        substitutions.put(otherTypeArg, myTypeArg);
-      }
-
-      if (validSubstitution) {
-        /*
-         * At this point we know that the type can be a subtype and we know the
-         * substitution to apply.
-         */
-        return true;
-      }
-    }
-
-    // Can't be a subtype regardless of substitution.
-    return false;
   }
 }

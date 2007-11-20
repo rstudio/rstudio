@@ -324,17 +324,36 @@ public class TypeOracle {
    * @param typeArgs the type arguments bound to the specified generic type
    * @return a type object representing this particular binding of type
    *         arguments to the specified generic
+   * @throws IllegalArgumentException if the parameterization of a non-static
+   *           member type does not specify an enclosing type or if not enough
+   *           arguments were specified to parameterize the generic type
+   * @throws NullPointerException if genericType is <code>null</code>
    */
   public JParameterizedType getParameterizedType(JGenericType genericType,
       JClassType enclosingType, JClassType[] typeArgs) {
+    if (genericType == null) {
+      throw new NullPointerException("genericType");
+    }
 
-    if (genericType.isMemberType()) {
+    if (genericType.isMemberType() && !genericType.isStatic()) {
       if (genericType.getEnclosingType().isGenericType() != null
           && enclosingType.isParameterized() == null
           && enclosingType.isRawType() == null) {
         throw new IllegalArgumentException(
             "enclosingType needs to be a parameterized type or a raw type");
       }
+    }
+
+    JTypeParameter[] typeParameters = genericType.getTypeParameters();
+    if (typeArgs.length < typeParameters.length) {
+      throw new IllegalArgumentException(
+          "Not enough type arguments were specified to parameterize '"
+              + genericType.getParameterizedQualifiedSourceName() + "'");
+    } else {
+      /*
+       * TODO: Should WARN if we specify too many type arguments but we have no
+       * logger.
+       */
     }
 
     // TODO: validate that the type arguments satisfy the generic type parameter
@@ -375,6 +394,10 @@ public class TypeOracle {
    * @param typeArgs the type arguments bound to the specified generic type
    * @return a type object representing this particular binding of type
    *         arguments to the specified generic
+   * @throws IllegalArgumentException if the generic type is a non-static member
+   *           type or if not enough arguments were specified to parameterize
+   *           the generic type
+   * @throws NullPointerException if genericType is <code>null</code>
    */
   public JParameterizedType getParameterizedType(JGenericType genericType,
       JClassType[] typeArgs) {
@@ -823,6 +846,11 @@ public class TypeOracle {
             "Only classes and interface can be parameterized, so "
                 + rawType.getQualifiedSourceName()
                 + " cannot be used in this context");
+      } else if (rawType.isGenericType() == null) {
+        throw new BadTypeArgsException(
+            "'"
+                + rawType.getQualifiedSourceName()
+                + "' is not a generic type; only generic types can be parameterized");
       }
 
       // Resolve each type argument.
@@ -832,8 +860,7 @@ public class TypeOracle {
 
       // Intern this type.
       //
-      return getParameterizedType(rawType.isClassOrInterface().isGenericType(),
-          typeArgs);
+      return getParameterizedType(rawType.isGenericType(), typeArgs);
     }
 
     JType result = JPrimitiveType.valueOf(type);
@@ -846,7 +873,8 @@ public class TypeOracle {
       return result;
     }
 
-    throw new NotFoundException(type);
+    throw new NotFoundException("Unable to recognize '" + type
+        + "' as a type name (is it fully qualified?)");
   }
 
   private void parseTypeArgComponent(List<JClassType> typeArgList,
@@ -856,9 +884,10 @@ public class TypeOracle {
     if (typeArg.isPrimitive() != null) {
       // Cannot be primitive.
       //
-      throw new BadTypeArgsException("Type arguments cannot be primitive, so "
-          + typeArg.getQualifiedSourceName()
-          + " cannot be used in this context");
+      throw new BadTypeArgsException(
+          "Type arguments cannot be primitives, so '"
+              + typeArg.getQualifiedSourceName()
+              + "' cannot be used in this context");
     }
 
     typeArgList.add((JClassType) typeArg);
@@ -918,10 +947,11 @@ public class TypeOracle {
     JType parameterizedType;
     try {
       parameterizedType = parse(toParse);
+    } catch (IllegalArgumentException e) {
+      logger.log(TreeLogger.WARN, e.getMessage(), e);
+      throw new UnableToCompleteException();
     } catch (TypeOracleException e) {
-      String msg = "Unable to recognize '" + toParse
-          + "' as a type name (is it fully qualified?)";
-      logger.log(TreeLogger.WARN, msg, null);
+      logger.log(TreeLogger.WARN, e.getMessage(), e);
       throw new UnableToCompleteException();
     }
     return parameterizedType;

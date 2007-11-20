@@ -100,6 +100,11 @@ public class JPrimitiveType extends JType {
   }
 
   @Override
+  public JGenericType isGenericType() {
+    return null;
+  }
+
+  @Override
   public JClassType isInterface() {
     // intentional null
     return null;

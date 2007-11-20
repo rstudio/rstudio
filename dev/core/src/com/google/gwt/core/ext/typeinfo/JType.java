@@ -68,12 +68,16 @@ public abstract class JType {
    */
   public abstract JEnumType isEnum();
 
+  // TODO: Rename this to isGeneric
+  public abstract JGenericType isGenericType();
+  
   public abstract JClassType isInterface();
 
   public abstract JParameterizedType isParameterized();
 
   public abstract JPrimitiveType isPrimitive();
 
+  // TODO: Rename this to isRaw
   public abstract JRawType isRawType();
 
   public JTypeParameter isTypeParameter() {

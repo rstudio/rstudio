@@ -91,6 +91,13 @@ public class JWildcardType extends JDelegatingClassType implements HasBounds {
   }
 
   @Override
+  public boolean isAssignableTo(JClassType otherType) {
+    // TODO: This need to handle all possible subtypes of JClassType that could
+    // reach here...
+    return super.isAssignableTo(otherType);
+  }
+
+  @Override
   public JGenericType isGenericType() {
     return null;
   }
