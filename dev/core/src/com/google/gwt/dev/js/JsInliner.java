@@ -126,8 +126,7 @@ public class JsInliner {
      */
     @Override
     public boolean visit(JsBlock x, JsContext<JsStatement> ctx) {
-      (new DuplicateClinitRemover(called)).acceptWithInsertRemove(x
-          .getStatements());
+      (new DuplicateClinitRemover(called)).acceptWithInsertRemove(x.getStatements());
       return false;
     }
 
@@ -242,8 +241,8 @@ public class JsInliner {
       // We don't care about the left-hand expression, because it is guaranteed
       // to be evaluated.
       boolean rightStrict = refersToRequiredName(x.getArg2());
-      boolean conditionalEvaluation =
-          JsBinaryOperator.AND.equals(op) || JsBinaryOperator.OR.equals(op);
+      boolean conditionalEvaluation = JsBinaryOperator.AND.equals(op)
+          || JsBinaryOperator.OR.equals(op);
 
       if (rightStrict && conditionalEvaluation) {
         maintainsOrder = false;
@@ -436,9 +435,8 @@ public class JsInliner {
 
       // Assemble the (clinit(), hoisted) expression.
       if (statements.size() == 2) {
-        replacement =
-            new JsBinaryOperation(JsBinaryOperator.COMMA, ((JsExprStmt) clinit)
-                .getExpression(), replacement);
+        replacement = new JsBinaryOperation(JsBinaryOperator.COMMA,
+            ((JsExprStmt) clinit).getExpression(), replacement);
       }
 
       // Replace the original invocation with the inlined statement
@@ -460,8 +458,7 @@ public class JsInliner {
      * Set up a map of parameter names back to the expressions that will be
      * passed in from the outer call site.
      */
-    final Map<JsName, JsExpression> paramsToArgsMap =
-        new HashMap<JsName, JsExpression>();
+    final Map<JsName, JsExpression> paramsToArgsMap = new HashMap<JsName, JsExpression>();
 
     /**
      * Constructor.
@@ -721,10 +718,10 @@ public class JsInliner {
    * A List of expression types that are known to never be affected by
    * side-effects. Used by {@link #alwaysFlexible(JsExpression)}.
    */
-  private static final List<Class<?>> ALWAYS_FLEXIBLE =
-      Arrays.asList(new Class<?>[] {JsBooleanLiteral.class,
-          JsDecimalLiteral.class, JsIntegralLiteral.class, JsNullLiteral.class,
-          JsRegExp.class, JsStringLiteral.class, JsThisRef.class});
+  private static final List<Class<?>> ALWAYS_FLEXIBLE = Arrays.asList(new Class<?>[] {
+      JsBooleanLiteral.class, JsDecimalLiteral.class, JsIntegralLiteral.class,
+      JsNullLiteral.class, JsRegExp.class, JsStringLiteral.class,
+      JsThisRef.class});
 
   /**
    * Static entry point used by JavaToJavaScriptCompiler.
@@ -858,9 +855,8 @@ public class JsInliner {
      * of an unqualified variable reference in a JSNI block that happened to
      * conflict with a Java-derived identifier.
      */
-    StableNameChecker detector =
-        new StableNameChecker(caller.getScope(), callee.getScope(),
-            parameterNames);
+    StableNameChecker detector = new StableNameChecker(caller.getScope(),
+        callee.getScope(), parameterNames);
     detector.accept(toInline);
     if (!detector.isStable()) {
       return false;
@@ -907,8 +903,8 @@ public class JsInliner {
        * order.
        */
       if (requiredOrder.size() > 0) {
-        EvaluationOrderVisitor orderVisitor =
-            new EvaluationOrderVisitor(requiredOrder);
+        EvaluationOrderVisitor orderVisitor = new EvaluationOrderVisitor(
+            requiredOrder);
         orderVisitor.accept(toInline);
         if (!orderVisitor.maintainsOrder()) {
           return false;
