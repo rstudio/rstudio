@@ -37,6 +37,7 @@ import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
+import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
@@ -88,32 +89,64 @@ public class JsInliner {
      */
     private final Set<JsName> called;
 
-    public DuplicateClinitRemover() {
+    private final JsProgram program;
+
+    public DuplicateClinitRemover(JsProgram program) {
+      this.program = program;
       called = new HashSet<JsName>();
     }
 
-    public DuplicateClinitRemover(Set<JsName> alreadyCalled) {
+    public DuplicateClinitRemover(JsProgram program, Set<JsName> alreadyCalled) {
+      this.program = program;
       called = new HashSet<JsName>(alreadyCalled);
     }
 
+    /**
+     * Look for comma expressions that contain duplicate clinit calls and handle
+     * the conditional-evaluation case of logical and/or operations.
+     */
     @Override
     public boolean visit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
-      if ((x.getOperator() == JsBinaryOperator.COMMA)
-          && (x.getArg1() instanceof JsInvocation)) {
+      if (x.getOperator() == JsBinaryOperator.COMMA) {
 
-        JsName clinit = getClinitFromInvocation((JsInvocation) x.getArg1());
-        if ((clinit != null) && called.contains(clinit)) {
+        boolean left = isDuplicateClinit(x.getArg1());
+        boolean right = isDuplicateClinit(x.getArg2());
 
-          // Replace the binary operation with the RHS
-          ctx.replaceMe(x.getArg2());
+        if (left && right) {
+          /*
+           * (clinit(), clinit()) --> delete or null.
+           * 
+           * This construct is very unlikely since the InliningVisitor builds
+           * the comma expressions in a right-nested manner.
+           */
+          if (ctx.canRemove()) {
+            ctx.removeMe();
+            return false;
+          } else {
+            // The return value from a clinit is never used
+            ctx.replaceMe(program.getNullLiteral());
+            return false;
+          }
 
-          // Manually call accept on the RHS to eliminate nested comma
-          // expressions.
-          accept(x.getArg2());
+        } else if (left) {
+          // (clinit(), xyz) --> xyz
+          // This is the common case
+          ctx.replaceMe(accept(x.getArg2()));
+          return false;
 
-          // Don't continue traversing the original binary operation
+        } else if (right) {
+          // (xyz, clinit()) --> xyz
+          // Possible if a clinit() were the last element
+          ctx.replaceMe(accept(x.getArg1()));
           return false;
         }
+
+      } else if (x.getOperator().equals(JsBinaryOperator.AND)
+          || x.getOperator().equals(JsBinaryOperator.OR)) {
+        x.setArg1(accept(x.getArg1()));
+        // Possibility of conditional evaluation of second parameter
+        x.setArg2(branch(x.getArg2()));
+        return false;
       }
 
       return true;
@@ -126,73 +159,90 @@ public class JsInliner {
      */
     @Override
     public boolean visit(JsBlock x, JsContext<JsStatement> ctx) {
-      (new DuplicateClinitRemover(called)).acceptWithInsertRemove(x.getStatements());
+      branch(x.getStatements());
       return false;
     }
 
     @Override
     public boolean visit(JsCase x, JsContext<JsSwitchMember> ctx) {
-      accept(x.getCaseExpr());
-      (new DuplicateClinitRemover(called)).acceptWithInsertRemove(x.getStmts());
+      x.setCaseExpr(accept(x.getCaseExpr()));
+      branch(x.getStmts());
       return false;
     }
 
     @Override
     public boolean visit(JsConditional x, JsContext<JsExpression> ctx) {
-      accept(x.getTestExpression());
-      (new DuplicateClinitRemover(called)).accept(x.getThenExpression());
-      (new DuplicateClinitRemover(called)).accept(x.getElseExpression());
+      x.setTestExpression(accept(x.getTestExpression()));
+      x.setThenExpression(branch(x.getThenExpression()));
+      x.setElseExpression(branch(x.getElseExpression()));
       return false;
     }
 
     @Override
     public boolean visit(JsDefault x, JsContext<JsSwitchMember> ctx) {
-      (new DuplicateClinitRemover(called)).acceptWithInsertRemove(x.getStmts());
+      branch(x.getStmts());
       return false;
+    }
+
+    @Override
+    public boolean visit(JsExprStmt x, JsContext<JsStatement> ctx) {
+      if (isDuplicateClinit(x.getExpression())) {
+        if (ctx.canRemove()) {
+          ctx.removeMe();
+        } else {
+          ctx.replaceMe(program.getEmptyStmt());
+        }
+        return false;
+
+      } else {
+        return true;
+      }
     }
 
     @Override
     public boolean visit(JsFor x, JsContext<JsStatement> ctx) {
       // The JsFor may have an expression xor a variable declaration.
       if (x.getInitExpr() != null) {
-        accept(x.getInitExpr());
+        x.setInitExpr(accept(x.getInitExpr()));
       } else if (x.getInitVars() != null) {
-        accept(x.getInitVars());
+        x.setInitVars(accept(x.getInitVars()));
       }
 
       // The condition is optional
       if (x.getCondition() != null) {
-        accept(x.getCondition());
+        x.setCondition(accept(x.getCondition()));
       }
 
-      // We don't check the increment expression because even if it exists, it
-      // is not guaranteed to be called at all
+      // The increment expression is optional
+      if (x.getIncrExpr() != null) {
+        x.setIncrExpr(branch(x.getIncrExpr()));
+      }
 
       // The body is not guaranteed to be a JsBlock
-      (new DuplicateClinitRemover(called)).accept(x.getBody());
+      x.setBody(branch(x.getBody()));
       return false;
     }
 
     @Override
     public boolean visit(JsForIn x, JsContext<JsStatement> ctx) {
       if (x.getIterExpr() != null) {
-        accept(x.getIterExpr());
+        x.setIterExpr(accept(x.getIterExpr()));
       }
 
-      accept(x.getObjExpr());
+      x.setObjExpr(accept(x.getObjExpr()));
 
       // The body is not guaranteed to be a JsBlock
-      (new DuplicateClinitRemover(called)).accept(x.getBody());
+      x.setBody(branch(x.getBody()));
       return false;
     }
 
     @Override
     public boolean visit(JsIf x, JsContext<JsStatement> ctx) {
-      accept(x.getIfExpr());
+      x.setIfExpr(accept(x.getIfExpr()));
 
-      (new DuplicateClinitRemover(called)).accept(x.getThenStmt());
+      x.setThenStmt(branch(x.getThenStmt()));
       if (x.getElseStmt() != null) {
-        (new DuplicateClinitRemover(called)).accept(x.getElseStmt());
+        x.setElseStmt(branch(x.getElseStmt()));
       }
 
       return false;
@@ -212,11 +262,39 @@ public class JsInliner {
 
     @Override
     public boolean visit(JsWhile x, JsContext<JsStatement> ctx) {
-      accept(x.getCondition());
+      x.setCondition(accept(x.getCondition()));
 
       // The body is not guaranteed to be a JsBlock
-      (new DuplicateClinitRemover(called)).accept(x.getBody());
+      x.setBody(branch(x.getBody()));
       return false;
+    }
+
+    private <T extends JsNode<T>> void branch(List<T> x) {
+      DuplicateClinitRemover dup = new DuplicateClinitRemover(program, called);
+      dup.acceptWithInsertRemove(x);
+      didChange |= dup.didChange();
+    }
+
+    private <T extends JsNode<T>> T branch(T x) {
+      DuplicateClinitRemover dup = new DuplicateClinitRemover(program, called);
+      T toReturn = dup.accept(x);
+
+      if ((toReturn != x) && !dup.didChange()) {
+        throw new InternalCompilerException(
+            "node replacement should imply didChange()");
+      }
+
+      didChange |= dup.didChange();
+      return toReturn;
+    }
+
+    private boolean isDuplicateClinit(JsExpression x) {
+      if (!(x instanceof JsInvocation)) {
+        return false;
+      }
+
+      JsName clinit = getClinitFromInvocation((JsInvocation) x);
+      return (clinit != null && called.contains(clinit));
     }
   }
 
@@ -730,7 +808,7 @@ public class JsInliner {
     InliningVisitor v = new InliningVisitor();
     v.accept(program);
 
-    DuplicateClinitRemover r = new DuplicateClinitRemover();
+    DuplicateClinitRemover r = new DuplicateClinitRemover(program);
     r.accept(program);
 
     return v.didChange() || r.didChange();
