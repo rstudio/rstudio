@@ -124,9 +124,31 @@ public class EnumMapTest extends GWTTestCase {
     Set<Map.Entry<E, Integer>> mapEntrySet = numberMap.entrySet();
     assertEquals(mapEntrySet, numbersEntrySet);
 
-    Map.Entry<E, Integer> entry = numbers.entrySet().iterator().next();
+    final Map.Entry<E, Integer> entry = numbers.entrySet().iterator().next();
+    /*
+     * Copy entry because it is no longer valid after
+     * numbersEntrySet.remove(entry).
+     */
+    Map.Entry<E, Integer> entryCopy = new Map.Entry<E, Integer>() {
+      E key = entry.getKey();
+      Integer value = entry.getValue();
+      
+      public E getKey() {
+        return key;
+      }
+
+      public Integer getValue() {
+        return value;
+      }
+
+      public Integer setValue(Integer value) {
+        Integer oldValue = this.value;
+        this.value = value;
+        return oldValue;
+      }
+    };
     numbersEntrySet.remove(entry);
-    mapEntrySet.remove(entry);
+    mapEntrySet.remove(entryCopy);
     assertEquals(mapEntrySet, numbersEntrySet);
     assertEquals(numberMap, numbers);
 
