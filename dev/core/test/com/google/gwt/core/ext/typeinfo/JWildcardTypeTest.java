@@ -29,7 +29,7 @@ import java.util.Set;
 /**
  * Test for {@link JWildcardType}.
  */
-public class JWildcardTypeTest extends JDelegatingClassTypeTest {
+public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
   private final boolean logToConsole = false;
   private final ModuleContext moduleContext = new ModuleContext(logToConsole
       ? new PrintWriterTreeLogger() : TreeLogger.NULL,
@@ -84,7 +84,7 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTest {
         oracle.getType(Number.class.getName())));
     JClassType[] subtypes = lowerBoundWildcard.getSubtypes();
     assertEquals(0, subtypes.length);
-//    assertEquals(oracle.getJavaLangObject(), subtypes[0]);
+    // assertEquals(oracle.getJavaLangObject(), subtypes[0]);
   }
 
   public void testGetSubtypes_UpperBound() throws NotFoundException {
@@ -97,10 +97,10 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTest {
         oracle.getType(CB.class.getName()), oracle.getType(CC.class.getName())};
     Set<JClassType> expectedSet = new HashSet<JClassType>();
     expectedSet.addAll(Arrays.asList(expected));
-    
+
     JClassType[] actual = upperBoundWildcard.getSubtypes();
     assertEquals(expectedSet.size(), actual.length);
-    
+
     for (int i = 0; i < actual.length; ++i) {
       expectedSet.remove(actual[i]);
     }
@@ -136,8 +136,7 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTest {
    * Tests that <? extends Number> is assignable from <? extends Integer> and
    * that the reverse is not <code>true</code>.
    */
-  public void testIsAssignableFrom_Extends_Object_From_Super_Object()
-      throws NotFoundException {
+  public void testIsAssignableFrom_Extends_Object_From_Super_Object() {
     TypeOracle oracle = moduleContext.getOracle();
 
     JClassType javaLangObject = oracle.getJavaLangObject();
@@ -223,11 +222,10 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTest {
       }
     };
   }
-  
+
   public void testGetMethods() throws NotFoundException {
     super.testGetMethods();
   }
-
 
   @Override
   protected JWildcardType getTestType() throws NotFoundException {

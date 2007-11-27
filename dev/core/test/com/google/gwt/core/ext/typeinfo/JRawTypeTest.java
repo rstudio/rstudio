@@ -27,7 +27,7 @@ import java.util.ArrayList;
 /**
  * Test for {@link JRawType}.
  */
-public class JRawTypeTest extends JDelegatingClassTypeTest {
+public class JRawTypeTest extends JDelegatingClassTypeTestBase {
   private final boolean logToConsole = false;
 
   private final ModuleContext moduleContext = new ModuleContext(logToConsole
@@ -41,10 +41,12 @@ public class JRawTypeTest extends JDelegatingClassTypeTest {
   public void testFindNestedType() {
     // TODO Auto-generated method stub
   }
+
   @Override
   public void testGetEnclosingType() {
     // TODO Auto-generated method stub
   }
+
   @Override
   public void testGetNestedType() {
     // TODO Auto-generated method stub
@@ -66,14 +68,13 @@ public class JRawTypeTest extends JDelegatingClassTypeTest {
     JClassType testType = oracle.getType(MyList.class.getName());
     JGenericType genericTestType = testType.isGenericType();
     assertNotNull(genericTestType);
-    
+
     JRawType rawTestType = genericTestType.getRawType();
     JClassType[] expectedTypes = new JClassType[] {
-      oracle.getType(MyCustomList.class.getName()).isGenericType().getRawType(),
-      oracle.getType(MyIntegerList.class.getName())
-    };
+        oracle.getType(MyCustomList.class.getName()).isGenericType().getRawType(),
+        oracle.getType(MyIntegerList.class.getName())};
     JClassType[] actualSubtypes = rawTestType.getSubtypes();
-   
+
     validateEquals(oracle, expectedTypes, actualSubtypes);
   }
 

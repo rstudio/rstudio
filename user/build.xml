@@ -94,6 +94,12 @@
 				junit.framework.AssertionFailedError:  expected=225 actual=207
 		-->
 		<exclude name="com/google/gwt/user/client/ui/AbsolutePanelTest.class" />
+
+		<!--
+			No compiler support yet; waiting on Class.getEnumConstants()
+		-->
+		<exclude name="com/google/gwt/emultest/java/util/EnumMapTest.class" />
+		<exclude name="com/google/gwt/emultest/java/util/EnumSetTest.class" />
 	</fileset>
 
 	<!-- Platform shouldn't matter here, just picking one -->

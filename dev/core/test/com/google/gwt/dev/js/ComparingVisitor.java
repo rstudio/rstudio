@@ -99,7 +99,11 @@ public class ComparingVisitor extends JsVisitor {
     }
   }
 
-  private final JsVisitable<?> other;
+  /**
+   * We use a raw type here because Sun's javac will barf all over the casts and
+   * instanceof tests we do all throughout this file.
+   */
+  private final JsVisitable other;
 
   private ComparingVisitor(JsVisitable<?> other) {
     this.other = other;

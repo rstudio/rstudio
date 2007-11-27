@@ -55,7 +55,7 @@ public class JGenericTypeTest extends TestCase {
   public void testGetRawType() throws NotFoundException {
     JGenericType genericClass = getTestType();
 
-    JDelegatingClassTypeTest.validateTypeSubstitution(genericClass,
+    JDelegatingClassTypeTestBase.validateTypeSubstitution(genericClass,
         genericClass.getRawType(), new Substitution() {
           public JType getSubstitution(JType type) {
             return type.getErasedType();

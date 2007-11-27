@@ -18,7 +18,6 @@ package com.google.gwt.core.ext.typeinfo;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.test.GenericClass;
-import com.google.gwt.core.ext.typeinfo.test.GenericSubclass;
 import com.google.gwt.core.ext.typeinfo.test.MyCustomList;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
@@ -27,7 +26,7 @@ import java.util.Arrays;
 /**
  * Tests for {@link JTypeParameter}.
  */
-public class JTypeParameterTest extends JDelegatingClassTypeTest {
+public class JTypeParameterTest extends JDelegatingClassTypeTestBase {
   private final boolean logToConsole = false;
   private final ModuleContext moduleContext = new ModuleContext(logToConsole
       ? new PrintWriterTreeLogger() : TreeLogger.NULL,

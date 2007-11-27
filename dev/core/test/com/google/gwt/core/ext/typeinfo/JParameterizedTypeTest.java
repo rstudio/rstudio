@@ -36,7 +36,7 @@ import java.util.Set;
 /**
  * Test for {@link JParameterizedType}.
  */
-public class JParameterizedTypeTest extends JDelegatingClassTypeTest {
+public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
   /**
    * Helper for verifying parameterized substitutions.
    */
@@ -208,9 +208,8 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTest {
                 oracle.getType(Serializable.class.getName()))), integerType});
     JClassType[] expected = {
         oracle.getType(MyIntegerList.class.getName()),
-        parameterizedMyCustomList
-    };
-    
+        parameterizedMyCustomList};
+
     validateEquals(oracle, expected, actualSubtypes);
   }
 

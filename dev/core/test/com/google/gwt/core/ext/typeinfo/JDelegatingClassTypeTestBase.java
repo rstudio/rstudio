@@ -23,7 +23,7 @@ import java.util.Arrays;
 /**
  * Base test cases for all {@link JDelegatingClassType}s.
  */
-public abstract class JDelegatingClassTypeTest extends TestCase {
+public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   protected static void assertArraysEqual(Object[] expected, Object[] actual) {
     assertTrue("Expected: \n" + Arrays.toString(expected) + ",\n Actual: \n"
@@ -398,7 +398,7 @@ public abstract class JDelegatingClassTypeTest extends TestCase {
   public void testGetConstructor() throws NotFoundException {
     JDelegatingClassType testType = getTestType();
     JClassType baseType = testType.getBaseType();
-    JConstructor[] constructors = baseType.getConstructors();
+    baseType.getConstructors();
   }
 
   /**
