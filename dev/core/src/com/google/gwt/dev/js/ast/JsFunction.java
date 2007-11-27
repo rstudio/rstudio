@@ -28,6 +28,7 @@ public class JsFunction extends JsExpression implements HasName {
   protected final JsScope scope;
   private JsName name;
   private boolean fromJava;
+  private boolean executeOnce;
 
   /**
    * Creates an anonymous function.
@@ -59,6 +60,15 @@ public class JsFunction extends JsExpression implements HasName {
     return body;
   }
 
+  /**
+   * If true, this indicates that only the first invocation of the function will
+   * have any effects. Subsequent invocations may be considered to be no-op
+   * calls whose return value is ignored.
+   */
+  public boolean getExecuteOnce() {
+    return executeOnce;
+  }
+
   public JsName getName() {
     return name;
   }
@@ -77,6 +87,10 @@ public class JsFunction extends JsExpression implements HasName {
 
   public void setBody(JsBlock body) {
     this.body = body;
+  }
+
+  public void setExecuteOnce(boolean executeOnce) {
+    this.executeOnce = executeOnce;
   }
 
   public void setFromJava(boolean fromJava) {

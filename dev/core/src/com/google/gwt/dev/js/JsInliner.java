@@ -16,6 +16,8 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.js.ast.JsArrayAccess;
+import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsBlock;
@@ -39,6 +41,7 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
+import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
@@ -52,6 +55,7 @@ import com.google.gwt.dev.js.ast.JsSwitchMember;
 import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.js.ast.JsThrow;
 import com.google.gwt.dev.js.ast.JsUnaryOperation;
+import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
 
@@ -60,7 +64,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
@@ -69,48 +75,213 @@ import java.util.Stack;
  * Perform inlining optimizations on the JavaScript AST.
  */
 public class JsInliner {
+
   /**
-   * This is used to clean up duplication invocations of a clinit. Whenever
-   * there is a possible branch in program flow, the remover will create a new
-   * instance of itself to handle the possible outcomes.
+   * Make comma binary operations left-nested since commas are naturally
+   * left-associative. We will define the comma-normal form such that a comma
+   * expression should never have a comma expression as its RHS. This has a nice
+   * side-effect of minimizing the number of generated parentheses.
    * 
-   * We don't look at combining the clinits that are called in all branch
-   * choices. This will not produce the most efficient elimination of clinit
-   * calls, but it handles the general case and is simple to verify.
+   * <pre>
+   * (X, b) is unchanged
+   * (X, (b, c) becomes ((X, b), c)
+   * (X, ((b, c), d)) becomes (((X, b), c), d)
+   * </pre>
    */
-  private static class DuplicateClinitRemover extends JsModVisitor {
+  private static class CommaNormalizer extends JsModVisitor {
+
+    /**
+     * Returns an expression as a JsBinaryOperation if it is a comma expression.
+     */
+    private static JsBinaryOperation isComma(JsExpression x) {
+      if (!(x instanceof JsBinaryOperation)) {
+        return null;
+      }
+      JsBinaryOperation op = (JsBinaryOperation) x;
+
+      return op.getOperator().equals(JsBinaryOperator.COMMA) ? op : null;
+    }
+
+    @Override
+    public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+      if (isComma(x) == null) {
+        return;
+      }
+
+      JsBinaryOperation toUpdate = isComma(x.getArg2());
+      if (toUpdate == null) {
+        return;
+      }
+
+      // Find the left-most, nested comma expression
+      while (isComma(toUpdate.getArg1()) != null) {
+        toUpdate = (JsBinaryOperation) toUpdate.getArg1();
+      }
+
+      /*
+       * Create a new comma expression with the original LHS and the LHS of the
+       * nested comma expression.
+       */
+      JsBinaryOperation newOp = new JsBinaryOperation(JsBinaryOperator.COMMA);
+      newOp.setArg1(x.getArg1());
+      newOp.setArg2(toUpdate.getArg1());
+
+      // Set the LHS of the nested comma expression to the new comma expression
+      toUpdate.setArg1(newOp);
+
+      // Replace the original node with its updated RHS
+      ctx.replaceMe(x.getArg2());
+    }
+  }
+
+  /**
+   * Provides a relative metric by which the syntactic complexity of a
+   * JsExpression can be gauged.
+   */
+  private static class ComplexityEstimator extends JsVisitor {
+    /**
+     * The current measure of complexity. This measures the number of
+     * expressions that have been encountered by the visitor.
+     */
+    private int complexity = 0;
+
+    @Override
+    public void endVisit(JsArrayAccess x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsArrayLiteral x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsBooleanLiteral x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsConditional x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsDecimalLiteral x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsIntegralLiteral x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsNew x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsNullLiteral x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsObjectLiteral x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsRegExp x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsStringLiteral x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsThisRef x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    public int getComplexity() {
+      return complexity;
+    }
+  }
+
+  /**
+   * This is used to clean up duplication invocations of functions that should
+   * only be executed once, such as clinit functions. Whenever there is a
+   * possible branch in program flow, the remover will create a new instance of
+   * itself to handle the possible branches.
+   * 
+   * We don't look at combining branch choices. This will not produce the most
+   * efficient elimination of duplicated calls, but it handles the general case
+   * and is simple to verify.
+   */
+  private static class DuplicateXORemover extends JsModVisitor {
     /*
      * TODO: Most of the special casing below can be removed if complex
      * statements always use blocks, rather than plain statements.
      */
 
     /**
-     * Retains the names of the clinit functions that we know have been called.
+     * Retains the names of the functions that we know have been called.
      */
     private final Set<JsName> called;
-
     private final JsProgram program;
 
-    public DuplicateClinitRemover(JsProgram program) {
+    public DuplicateXORemover(JsProgram program) {
       this.program = program;
       called = new HashSet<JsName>();
     }
 
-    public DuplicateClinitRemover(JsProgram program, Set<JsName> alreadyCalled) {
+    public DuplicateXORemover(JsProgram program, Set<JsName> alreadyCalled) {
       this.program = program;
       called = new HashSet<JsName>(alreadyCalled);
     }
 
     /**
-     * Look for comma expressions that contain duplicate clinit calls and handle
-     * the conditional-evaluation case of logical and/or operations.
+     * Look for comma expressions that contain duplicate calls and handle the
+     * conditional-evaluation case of logical and/or operations.
      */
     @Override
     public boolean visit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
       if (x.getOperator() == JsBinaryOperator.COMMA) {
 
-        boolean left = isDuplicateClinit(x.getArg1());
-        boolean right = isDuplicateClinit(x.getArg2());
+        boolean left = isDuplicateCall(x.getArg1());
+        boolean right = isDuplicateCall(x.getArg2());
 
         if (left && right) {
           /*
@@ -123,7 +294,7 @@ public class JsInliner {
             ctx.removeMe();
             return false;
           } else {
-            // The return value from a clinit is never used
+            // The return value from an XO function is never used
             ctx.replaceMe(program.getNullLiteral());
             return false;
           }
@@ -186,7 +357,7 @@ public class JsInliner {
 
     @Override
     public boolean visit(JsExprStmt x, JsContext<JsStatement> ctx) {
-      if (isDuplicateClinit(x.getExpression())) {
+      if (isDuplicateCall(x.getExpression())) {
         if (ctx.canRemove()) {
           ctx.removeMe();
         } else {
@@ -249,11 +420,11 @@ public class JsInliner {
     }
 
     /**
-     * Possibly record that we've seen a clinit in the current context.
+     * Possibly record that we've seen a call in the current context.
      */
     @Override
     public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
-      JsName name = getClinitFromInvocation(x);
+      JsName name = isExecuteOnce(x);
       if (name != null) {
         called.add(name);
       }
@@ -270,13 +441,13 @@ public class JsInliner {
     }
 
     private <T extends JsNode<T>> void branch(List<T> x) {
-      DuplicateClinitRemover dup = new DuplicateClinitRemover(program, called);
+      DuplicateXORemover dup = new DuplicateXORemover(program, called);
       dup.acceptWithInsertRemove(x);
       didChange |= dup.didChange();
     }
 
     private <T extends JsNode<T>> T branch(T x) {
-      DuplicateClinitRemover dup = new DuplicateClinitRemover(program, called);
+      DuplicateXORemover dup = new DuplicateXORemover(program, called);
       T toReturn = dup.accept(x);
 
       if ((toReturn != x) && !dup.didChange()) {
@@ -288,13 +459,13 @@ public class JsInliner {
       return toReturn;
     }
 
-    private boolean isDuplicateClinit(JsExpression x) {
+    private boolean isDuplicateCall(JsExpression x) {
       if (!(x instanceof JsInvocation)) {
         return false;
       }
 
-      JsName clinit = getClinitFromInvocation((JsInvocation) x);
-      return (clinit != null && called.contains(clinit));
+      JsName name = isExecuteOnce((JsInvocation) x);
+      return (name != null && called.contains(name));
     }
   }
 
@@ -316,8 +487,10 @@ public class JsInliner {
     public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
       JsBinaryOperator op = x.getOperator();
 
-      // We don't care about the left-hand expression, because it is guaranteed
-      // to be evaluated.
+      /*
+       * We don't care about the left-hand expression, because it is guaranteed
+       * to be evaluated.
+       */
       boolean rightStrict = refersToRequiredName(x.getArg2());
       boolean conditionalEvaluation = JsBinaryOperator.AND.equals(op)
           || JsBinaryOperator.OR.equals(op);
@@ -362,7 +535,12 @@ public class JsInliner {
      */
     @Override
     public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
-      if (unevaluated.size() > 0) {
+      /*
+       * The check for isExecuteOnce() is potentially incorrect here, however
+       * the original Java semantics of the clinit would have made the code
+       * incorrect anyway.
+       */
+      if ((isExecuteOnce(x) == null) && unevaluated.size() > 0) {
         maintainsOrder = false;
       }
     }
@@ -425,11 +603,109 @@ public class JsInliner {
   }
 
   /**
-   * This class looks for function invocations that can be inlined and perform
-   * the replacement.
+   * This class looks for function invocations that can be inlined and performs
+   * the replacement by replacing the JsInvocation with a comma expression
+   * consisting of the expressions evaluated by the target function. A second
+   * step may convert the expressions in the comma expression back to multiple
+   * statements if the context of the invocation would allow this.
    */
   private static class InliningVisitor extends JsModVisitor {
-    final Stack<JsFunction> functionStack = new Stack<JsFunction>();
+    private final Stack<JsFunction> functionStack = new Stack<JsFunction>();
+    private final Set<JsFunction> blacklist = new HashSet<JsFunction>();
+    private final JsProgram program;
+
+    public InliningVisitor(JsProgram program) {
+      this.program = program;
+    }
+
+    /**
+     * Add to the list of JsFunctions that should not be inlined, regardless of
+     * whether or not they would normally be inlinable.
+     */
+    public void blacklist(Collection<JsFunction> functions) {
+      blacklist.addAll(functions);
+    }
+
+    /**
+     * This normalizes the comma expressions into multiple statements and
+     * removes statements with no side-effects.
+     */
+    @Override
+    public void endVisit(JsExprStmt x, JsContext<JsStatement> ctx) {
+      JsExpression e = x.getExpression();
+
+      // We will occasionally create JsExprStmts that have no side-effects.
+      if (ctx.canRemove() && !hasSideEffects(x)) {
+        ctx.removeMe();
+        return;
+      }
+
+      List<JsExprStmt> statements = new ArrayList<JsExprStmt>();
+
+      /*
+       * Assemble the expressions back into a list of JsExprStmts. We will
+       * iteratively disassemble the nested comma expressions, stopping when the
+       * LHS is not a comma expression.
+       */
+      while (e instanceof JsBinaryOperation) {
+        JsBinaryOperation op = (JsBinaryOperation) e;
+
+        if (!op.getOperator().equals(JsBinaryOperator.COMMA)) {
+          break;
+        }
+
+        /*
+         * We can ignore intermediate expressions as long as they have no
+         * side-effects.
+         */
+        if (hasSideEffects(op.getArg2())) {
+          statements.add(0, new JsExprStmt(op.getArg2()));
+        }
+
+        e = op.getArg1();
+      }
+
+      /*
+       * We know the return value from the original invocation was ignored, so
+       * it may be possible to ignore the final expressions as long as it has no
+       * side-effects.
+       */
+      if (hasSideEffects(e)) {
+        statements.add(0, new JsExprStmt(e));
+      }
+
+      if (statements.size() == 0) {
+        // The expression contained no side effects at all.
+        if (ctx.canRemove()) {
+          ctx.removeMe();
+        } else {
+          ctx.replaceMe(program.getEmptyStmt());
+        }
+
+      } else if (x.getExpression() != statements.get(0).getExpression()) {
+        // Something has changed
+
+        if (!ctx.canInsert()) {
+          /*
+           * This indicates that the function was attached to a clause of a
+           * control function and not into an existing block. We'll replace the
+           * single JsExprStmt with a JsBlock that contains all of the
+           * statements.
+           */
+          JsBlock b = new JsBlock();
+          b.getStatements().addAll(statements);
+          ctx.replaceMe(b);
+          return;
+
+        } else {
+          // Insert the new statements into the original context
+          for (JsStatement s : statements) {
+            ctx.insertBefore(s);
+          }
+          ctx.removeMe();
+        }
+      }
+    }
 
     @Override
     public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
@@ -440,12 +716,6 @@ public class JsInliner {
 
     @Override
     public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
-      // Start by determining what is being invoked.
-      if (!(x.getQualifier() instanceof JsNameRef)) {
-        return;
-      }
-      JsNameRef ref = (JsNameRef) x.getQualifier();
-
       /*
        * We only want to look at invocations of things that we statically know
        * to be functions. Otherwise, we can't know what statements the
@@ -453,72 +723,103 @@ public class JsInliner {
        * when trying operate on references to external functions, or functions
        * as arguments to another function.
        */
-      if (!(ref.getName().getStaticRef() instanceof JsFunction)) {
+      JsFunction f = isFunction(x.getQualifier());
+      if (f == null) {
         return;
       }
 
-      JsFunction f = (JsFunction) ref.getName().getStaticRef();
+      // Don't inline blacklisted functions
+      if (blacklist.contains(f)) {
+        return;
+      }
+
       List<JsStatement> statements = f.getBody().getStatements();
-      JsStatement clinit;
-      JsStatement toHoist;
+      List<JsExpression> hoisted = new ArrayList<JsExpression>(
+          statements.size());
 
-      if (statements.size() == 1) {
-        // The simple case.
-        clinit = null;
-        toHoist = statements.get(0);
-
-      } else if (statements.size() == 2) {
+      for (JsStatement statement : statements) {
         /*
-         * In the case of DOM, or similarly-structured classes that use a static
-         * "impl" field, we need to account for the static initializer. What
-         * we'll do is to create a JS comma expression to encapsulate the
-         * invocation of the static initializer as well as the delegated
-         * function. As a subsequent optimization, we can go through all
-         * functions and look for repeated invocations of a clinit, removing the
-         * JsBinaryOperation and replacing it with its rhs.
+         * Create replacement expressions to use in place of the original
+         * statements. It is important that the replacement is newly-minted and
+         * therefore not referenced by any other AST nodes. Consider the case of
+         * a common, delegating function. If the hoisted expressions were not
+         * distinct objects, it would not be possible to substitute different
+         * JsNameRefs at different call sites.
          */
-        clinit = statements.get(0);
-        toHoist = statements.get(1);
-        if (!isStaticInitializer(clinit)) {
+        JsExpression h = hoistedExpression(statement);
+        if (h == null) {
           return;
         }
 
-      } else {
-        // The expression is too complicated for this optimization
-        return;
+        hoisted.add(h);
+
+        if (hoistedExpressionTerminal(statement)) {
+          break;
+        }
       }
 
       /*
-       * Create a replacement expression to use in place of the invocation. It
-       * is important that the replacement is newly-minted and therefore not
-       * referenced by any other AST nodes. Consider the case of a common,
-       * delegating function. If the hoisted expressions were not distinct
-       * objects, it would not be possible to substitute different JsNameRefs at
-       * different call sites.
+       * Determine the expressions that will be used to construct the
+       * replacement expression.
        */
-      JsExpression replacement = hoistedExpression(toHoist);
-      if (replacement == null) {
-        return;
+      JsExpression op;
+
+      if (hoisted.size() == 0) {
+        /*
+         * There are no expressions evaluated in the target function, so we'll
+         * try to replace the invocation with nothing. The null literal may be
+         * reclaimed during the JsExprStmt cleanup pass.
+         */
+        op = program.getNullLiteral();
+
+      } else {
+        /*
+         * Build up the new comma expression from right-to-left; building the
+         * rightmost comma expressions first. Bootstrapping with i.previous()
+         * ensures that this logic will function correctly in the case of a
+         * single expression.
+         */
+        ListIterator<JsExpression> i = hoisted.listIterator(hoisted.size());
+        op = i.previous();
+        while (i.hasPrevious()) {
+          JsBinaryOperation outerOp = new JsBinaryOperation(
+              JsBinaryOperator.COMMA);
+          outerOp.setArg1(i.previous());
+          outerOp.setArg2(op);
+          op = outerOp;
+        }
       }
 
-      // Confirm that the statement conforms to the desired pattern
-      if (!isInlinableStatement(functionStack.peek(), x.getArguments(), f,
-          toHoist)) {
+      // Confirm that the expression conforms to the desired heuristics
+      if (!isInlinable(functionStack.peek(), x, f, op)) {
         return;
       }
 
       // Perform the name replacement
       NameRefReplacerVisitor v = new NameRefReplacerVisitor(x, f);
-      replacement = v.accept(replacement);
+      op = v.accept(op);
 
-      // Assemble the (clinit(), hoisted) expression.
-      if (statements.size() == 2) {
-        replacement = new JsBinaryOperation(JsBinaryOperator.COMMA,
-            ((JsExprStmt) clinit).getExpression(), replacement);
+      // Normalize any nested comma expressions that we may have generated.
+      op = (new CommaNormalizer()).accept(op);
+
+      /*
+       * Compare the relative complexity of the original invocation versus the
+       * inlined form.
+       */
+      int originalComplexity = complexity(x);
+      int inlinedComplexity = complexity(op);
+      if (((float) inlinedComplexity / originalComplexity) > MAX_COMPLEXITY_INCREASE) {
+        return;
       }
 
-      // Replace the original invocation with the inlined statement
-      ctx.replaceMe(replacement);
+      /*
+       * See if any further inlining can be performed in the current context. By
+       * attempting to maximize the level of inlining now, we can reduce the
+       * total number of passes required to finalize the AST.
+       */
+      op = accept(op);
+
+      ctx.replaceMe(op);
     }
 
     @Override
@@ -657,6 +958,105 @@ public class JsInliner {
   }
 
   /**
+   * Collect self-recursive functions. This visitor does not look for
+   * mutually-recursive functions because inlining one of the functions into the
+   * other would make the single resultant function self-recursive and not
+   * eligible for inlining in a subsequent pass.
+   */
+  private static class RecursionCollector extends JsVisitor {
+    private final Stack<JsFunction> functionStack = new Stack<JsFunction>();
+    private final Set<JsFunction> recursive = new HashSet<JsFunction>();
+
+    @Override
+    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+      if (!functionStack.pop().equals(x)) {
+        throw new InternalCompilerException("Unexpected function popped");
+      }
+    }
+
+    @Override
+    public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+      /*
+       * Because functions can encapsulate other functions, we look at the
+       * entire stack and not just the top element. This would prevent inlining
+       * 
+       * function a() { function b() { a(); } b(); }
+       * 
+       * in the case that we generally allow nested functions to be inlinable.
+       */
+      JsFunction f = isFunction(x.getQualifier());
+      if (functionStack.contains(f)) {
+        recursive.add(f);
+      }
+    }
+
+    public Set<JsFunction> getRecursive() {
+      return recursive;
+    }
+
+    @Override
+    public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
+      functionStack.push(x);
+      return true;
+    }
+  }
+
+  /**
+   * Determine which functions should not be inlined because they are redefined
+   * during program execution. This would violate the assumption that the
+   * statements to be executed by any given function invocation are stable over
+   * the lifetime of the program.
+   */
+  private static class RedefinedFunctionCollector extends JsVisitor {
+    private final Set<JsFunction> redefined = new HashSet<JsFunction>();
+    private final Map<JsName, JsFunction> nameMap = new IdentityHashMap<JsName, JsFunction>();
+
+    /**
+     * Look for assignments to JsNames whose static references are JsFunctions.
+     */
+    @Override
+    public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
+
+      if (!x.getOperator().equals(JsBinaryOperator.ASG)) {
+        return;
+      }
+
+      JsFunction f = isFunction(x.getArg1());
+      if (f != null) {
+        redefined.add(f);
+      }
+    }
+
+    /**
+     * Look for the case where a function is declared with the same name as an
+     * existing function.
+     */
+    @Override
+    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+      JsName name = x.getName();
+
+      if (name == null) {
+        // Ignore anonymous functions
+        return;
+
+      } else if (nameMap.containsKey(name)) {
+        /*
+         * We have to add the current function as well as the original
+         * JsFunction that was declared to use that name.
+         */
+        redefined.add(nameMap.get(name));
+        redefined.add(x);
+      } else {
+        nameMap.put(name, x);
+      }
+    }
+
+    public Collection<JsFunction> getRedefined() {
+      return redefined;
+    }
+  }
+
+  /**
    * Given a collection of JsNames, determine if an AST node refers to any of
    * those names.
    */
@@ -698,6 +1098,14 @@ public class JsInliner {
     @Override
     public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
       hasSideEffects |= (x.getOperator().isAssignment());
+    }
+
+    @Override
+    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+      /*
+       * Declaring a named function implicitly has an assignment side-effect.
+       */
+      hasSideEffects |= x.getName() != null;
     }
 
     @Override
@@ -763,13 +1171,17 @@ public class JsInliner {
 
     @Override
     public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
-      // We can ignore qualified reference, since their scope is always that
-      // of the qualifier.
+      /*
+       * We can ignore qualified reference, since their scope is always that of
+       * the qualifier.
+       */
       if (x.getQualifier() != null) {
         return;
       }
 
-      // Attempt to resolve the ident in both scopes
+      /*
+       * Attempt to resolve the ident in both scopes
+       */
       JsName callerName = callerScope.findExistingName(x.getIdent());
       JsName calleeName = calleeScope.findExistingName(x.getIdent());
 
@@ -793,6 +1205,15 @@ public class JsInliner {
   }
 
   /**
+   * When attempting to inline an invocation, this constant determines the
+   * maximum allowable ratio of potential inlined complexity to initial
+   * complexity. This acts as a brake on very large expansions from bloating the
+   * the generated output. Increasing this number will allow larger sections of
+   * code to be inlined, but at a cost of larger JS output.
+   */
+  private static final int MAX_COMPLEXITY_INCREASE = 10;
+
+  /**
    * A List of expression types that are known to never be affected by
    * side-effects. Used by {@link #alwaysFlexible(JsExpression)}.
    */
@@ -805,10 +1226,18 @@ public class JsInliner {
    * Static entry point used by JavaToJavaScriptCompiler.
    */
   public static boolean exec(JsProgram program) {
-    InliningVisitor v = new InliningVisitor();
+    RedefinedFunctionCollector d = new RedefinedFunctionCollector();
+    d.accept(program);
+
+    RecursionCollector rc = new RecursionCollector();
+    rc.accept(program);
+
+    InliningVisitor v = new InliningVisitor(program);
+    v.blacklist(d.getRedefined());
+    v.blacklist(rc.getRecursive());
     v.accept(program);
 
-    DuplicateClinitRemover r = new DuplicateClinitRemover(program);
+    DuplicateXORemover r = new DuplicateXORemover(program);
     r.accept(program);
 
     return v.didChange() || r.didChange();
@@ -826,21 +1255,10 @@ public class JsInliner {
     }
   }
 
-  /**
-   * Given a JsInvocation, determine if it is invoking a class's static
-   * initializer. This just looks for an invocation of a function whose short
-   * identifier is "$clinit". Not fancy, but it works.
-   */
-  private static JsName getClinitFromInvocation(JsInvocation invocation) {
-    if (invocation.getQualifier() instanceof JsNameRef) {
-      JsNameRef nameRef = (JsNameRef) invocation.getQualifier();
-      JsName name = nameRef.getName();
-      if (name.getShortIdent().equals("$clinit")) {
-        return name;
-      }
-    }
-
-    return null;
+  private static int complexity(JsNode<?> toEstimate) {
+    ComplexityEstimator e = new ComplexityEstimator();
+    e.accept(toEstimate);
+    return e.getComplexity();
   }
 
   /**
@@ -850,7 +1268,7 @@ public class JsInliner {
    * that refer to function parameters.
    */
   private static boolean hasCommonIdents(List<JsExpression> arguments,
-      JsStatement toInline, Collection<String> parameterIdents) {
+      JsNode<?> toInline, Collection<String> parameterIdents) {
 
     // This is a fire-twice loop
     boolean checkQualified = false;
@@ -882,6 +1300,24 @@ public class JsInliner {
   }
 
   /**
+   * Determine whether or not an AST node has side effects.
+   */
+  private static boolean hasSideEffects(JsVisitable<?> e) {
+    SideEffectsVisitor v = new SideEffectsVisitor();
+    v.accept(e);
+    return v.hasSideEffects();
+  }
+
+  /**
+   * Determine whether or not a list of AST nodes have side effects.
+   */
+  private static <T extends JsVisitable<T>> boolean hasSideEffects(List<T> list) {
+    SideEffectsVisitor v = new SideEffectsVisitor();
+    v.acceptList(list);
+    return v.hasSideEffects();
+  }
+
+  /**
    * Given a delegated JsStatement, construct an expression to hoist into the
    * outer caller. This does not perform any name replacement, but simply
    * constructs a mutable copy of the expression that can be manipulated
@@ -898,6 +1334,7 @@ public class JsInliner {
       expression = ret.getExpr();
 
     } else {
+      // TODO If additional statements are supported, update hETerminal()
       return null;
     }
 
@@ -905,10 +1342,50 @@ public class JsInliner {
   }
 
   /**
+   * This is used in combination with {@link #hoistedExpression(JsStatement)} to
+   * indicate if a given statement would terminate the list of hoisted
+   * expressions.
+   */
+  private static boolean hoistedExpressionTerminal(JsStatement statement) {
+    // TODO keep this in synch with hoistedExpression
+    return statement instanceof JsReturn;
+  }
+
+  /**
+   * Given a JsInvocation, determine if it is invoking a JsFunction that is
+   * specified to be executed only once during the program's lifetime.
+   */
+  private static JsName isExecuteOnce(JsInvocation invocation) {
+    JsFunction f = isFunction(invocation.getQualifier());
+    if (f != null && f.getExecuteOnce()) {
+      return f.getName();
+    }
+    return null;
+  }
+
+  /**
+   * Given an expression, determine if it it is a JsNameRef that refers to a
+   * statically-defined JsFunction.
+   */
+  private static JsFunction isFunction(JsExpression e) {
+    if (e instanceof JsNameRef) {
+      JsNameRef ref = (JsNameRef) e;
+      JsNode staticRef = ref.getName().getStaticRef();
+      if (staticRef instanceof JsFunction) {
+        return (JsFunction) staticRef;
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Determine if a statement can be inlined into a call site.
    */
-  private static boolean isInlinableStatement(JsFunction caller,
-      List<JsExpression> arguments, JsFunction callee, JsStatement toInline) {
+  private static boolean isInlinable(JsFunction caller,
+      JsInvocation invocation, JsFunction callee, JsNode<?> toInline) {
+    List<JsExpression> arguments = invocation.getArguments();
+
     /*
      * This will happen with varargs-style JavaScript functions that rely on the
      * "arguments" array. The reference to arguments would be detected in
@@ -956,11 +1433,7 @@ public class JsInliner {
      * effects. This will determine how aggressively the parameters may be
      * reordered.
      */
-    SideEffectsVisitor sideEffects = new SideEffectsVisitor();
-    sideEffects.acceptList(arguments);
-    boolean maintainOrder = sideEffects.hasSideEffects();
-
-    if (maintainOrder) {
+    if (hasSideEffects(arguments)) {
       /*
        * Determine the order in which the parameters must be evaluated. This
        * will vary between call sites, based on whether or not the invocation's
@@ -999,30 +1472,6 @@ public class JsInliner {
 
     // Hooray!
     return true;
-  }
-
-  /**
-   * Determines if a statement is an invocation of a static initializer.
-   */
-  private static boolean isStaticInitializer(JsStatement statement) {
-    if (!(statement instanceof JsExprStmt)) {
-      return false;
-    }
-
-    JsExprStmt exprStmt = (JsExprStmt) statement;
-    JsExpression expression = exprStmt.getExpression();
-
-    if (!(expression instanceof JsInvocation)) {
-      return false;
-    }
-
-    JsInvocation invocation = (JsInvocation) expression;
-
-    if (!(invocation.getQualifier() instanceof JsNameRef)) {
-      return false;
-    }
-
-    return getClinitFromInvocation(invocation) != null;
   }
 
   /**

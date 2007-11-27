@@ -1355,6 +1355,7 @@ public class GenerateJavaScriptAST {
     }
 
     private void handleClinit(JsFunction clinitFunc) {
+      clinitFunc.setExecuteOnce(true);
       List<JsStatement> statements = clinitFunc.getBody().getStatements();
       // self-assign to the null method immediately (to prevent reentrancy)
       JsExpression asg = createAssignment(clinitFunc.getName().makeRef(),
