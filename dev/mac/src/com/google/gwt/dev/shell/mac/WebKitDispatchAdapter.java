@@ -78,8 +78,7 @@ class WebKitDispatchAdapter implements DispatchObject {
       return jsval;
     } else {
       Method method = javaDispatch.getMethod(dispId);
-      DispatchMethod dispMethod;
-      dispMethod = (DispatchMethod) classLoader.getMethodDispatch(method);
+      DispatchMethod dispMethod = (DispatchMethod) classLoader.getMethodDispatch(method);
       if (dispMethod == null) {
         dispMethod = new MethodDispatch(classLoader, method);
         classLoader.putMethodDispatch(method, dispMethod);

@@ -62,11 +62,12 @@ class GeckoDispatchAdapter implements DispatchObject {
   }
 
   /**
-   * Retrieve a field and store in the passed JsValue.
-   * This function is called exclusively from native code.
+   * Retrieve a field and store in the passed JsValue. This function is called
+   * exclusively from native code.
    * 
    * @param name name of the field to retrieve
-   * @param jsValue a reference to the JsValue object to receive the value of the field
+   * @param jsValue a reference to the JsValue object to receive the value of
+   *          the field
    */
   public void getField(String name, int jsRootedValue) {
     JsValueMoz jsValue = new JsValueMoz(jsRootedValue);
@@ -84,8 +85,7 @@ class GeckoDispatchAdapter implements DispatchObject {
       return;
     } else {
       Method method = javaDispatch.getMethod(dispId);
-      DispatchMethod dispMethod;
-      dispMethod = (DispatchMethod) classLoader.getMethodDispatch(method);
+      DispatchMethod dispMethod = (DispatchMethod) classLoader.getMethodDispatch(method);
       if (dispMethod == null) {
         dispMethod = new MethodDispatch(classLoader, method);
         classLoader.putMethodDispatch(method, dispMethod);

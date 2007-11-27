@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.shell.ie;
 
+import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.shell.JsValue;
 import com.google.gwt.dev.shell.ModuleSpace;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
@@ -77,6 +78,7 @@ public class ModuleSpaceIE6 extends ModuleSpace {
   private static int CODE(int hresult) {
     return hresult & 0xFFFF;
   }
+
   // CHECKSTYLE_ON
 
   private final OleAutomation window;
@@ -136,17 +138,19 @@ public class ModuleSpaceIE6 extends ModuleSpace {
       Object[] args) throws Throwable {
     Variant[] vArgs = null;
     try {
+      CompilingClassLoader isolatedClassLoader = getIsolatedClassLoader();
+
       // Build the argument list, including 'jthis'.
       //
       int len = args.length;
       vArgs = new Variant[len + 1];
-      JsValueIE6 jsValue = new JsValueIE6();
-      jsValue.setWrappedJavaObject(getIsolatedClassLoader(), jthis);
-      vArgs[0] = jsValue.getVariant();
+      Class<?> jthisType = (jthis == null) ? Object.class : jthis.getClass();
+      vArgs[0] = SwtOleGlue.convertObjectToVariant(isolatedClassLoader,
+          jthisType, jthis);
 
       for (int i = 0; i < len; ++i) {
-        vArgs[i + 1] = SwtOleGlue.convertObjectToVariant(
-            getIsolatedClassLoader(), types[i], args[i]);
+        vArgs[i + 1] = SwtOleGlue.convertObjectToVariant(isolatedClassLoader,
+            types[i], args[i]);
       }
 
       Variant result = doInvokeOnWindow(window, name, vArgs);
@@ -167,16 +171,18 @@ public class ModuleSpaceIE6 extends ModuleSpace {
       }
     }
   }
-  
+
   @Override
   protected Object getStaticDispatcher() {
     return new IDispatchProxy(getIsolatedClassLoader());
   }
 
   @Override
-  protected boolean isExceptionSame(Throwable original, int number, String name, String message) {
+  protected boolean isExceptionSame(Throwable original, int number,
+      String name, String message) {
     HResultException hre = new HResultException(original);
-    return CODE(hre.getHResult()) == CODE(number) && hre.getMessage().equals(message);
+    return CODE(hre.getHResult()) == CODE(number)
+        && hre.getMessage().equals(message);
   }
 
   private Variant execute(String code) {

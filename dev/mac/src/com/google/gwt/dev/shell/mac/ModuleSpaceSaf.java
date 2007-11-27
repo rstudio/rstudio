@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.shell.mac;
 
+import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.shell.JsValue;
 import com.google.gwt.dev.shell.JsValueGlue;
 import com.google.gwt.dev.shell.ModuleSpace;
@@ -72,19 +73,25 @@ public class ModuleSpaceSaf extends ModuleSpace {
   @Override
   protected JsValue doInvoke(String name, Object jthis, Class<?>[] types,
       Object[] args) {
-    int jsthis = wrapObjectAsJSObject(jthis);
-    int curExecState = LowLevelSaf.getExecState();
+    CompilingClassLoader isolatedClassLoader = getIsolatedClassLoader();
+
+    JsValueSaf jsValueThis = new JsValueSaf();
+    Class<?> jthisType = (jthis == null) ? Object.class : jthis.getClass();
+    JsValueGlue.set(jsValueThis, isolatedClassLoader, jthisType, jthis);
+    int jsthis = jsValueThis.getJsValue();
+
     int argc = args.length;
     int argv[] = new int[argc];
     for (int i = 0; i < argc; ++i) {
       JsValueSaf jsValue = new JsValueSaf();
-      JsValueGlue.set(jsValue, getIsolatedClassLoader(), types[i], args[i]);
+      JsValueGlue.set(jsValue, isolatedClassLoader, types[i], args[i]);
       argv[i] = jsValue.getJsValue();
     }
 
+    int curExecState = LowLevelSaf.getExecState();
     int result = LowLevelSaf.invoke(curExecState, window, name, jsthis, argv);
     return new JsValueSaf(result);
-}
+  }
 
   @Override
   protected Object getStaticDispatcher() {
@@ -104,5 +111,4 @@ public class ModuleSpaceSaf extends ModuleSpace {
     }
     return LowLevelSaf.wrapDispatch(dispObj);
   }
-
 }

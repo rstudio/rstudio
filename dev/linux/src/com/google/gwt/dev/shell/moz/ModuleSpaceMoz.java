@@ -80,10 +80,11 @@ public class ModuleSpaceMoz extends ModuleSpace {
   @Override
   protected JsValue doInvoke(String name, Object jthis, Class<?>[] types,
       Object[] args) {
+    CompilingClassLoader isolatedClassLoader = getIsolatedClassLoader();
 
     JsValueMoz jsthis = new JsValueMoz();
-    CompilingClassLoader isolatedClassLoader = getIsolatedClassLoader();
-    jsthis.setWrappedJavaObject(isolatedClassLoader, jthis);
+    Class<?> jthisType = (jthis == null) ? Object.class : jthis.getClass();
+    JsValueGlue.set(jsthis, isolatedClassLoader, jthisType, jthis);
 
     int argc = args.length;
     JsValueMoz argv[] = new JsValueMoz[argc];

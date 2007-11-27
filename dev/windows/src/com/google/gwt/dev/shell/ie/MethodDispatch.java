@@ -19,6 +19,7 @@ import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.shell.JsValueGlue;
 
 import org.eclipse.swt.internal.ole.win32.COM;
+import org.eclipse.swt.internal.ole.win32.IDispatch;
 import org.eclipse.swt.ole.win32.Variant;
 
 import java.lang.reflect.InvocationTargetException;
@@ -73,6 +74,8 @@ class MethodDispatch extends IDispatchImpl {
       ids[0] = 1;
     } else if (names[0].equalsIgnoreCase("call")) {
       ids[0] = 2;
+    } else if (names[0].equalsIgnoreCase("apply")) {
+      ids[0] = 3;
     } else {
       throw new HResultException(IDispatchImpl.DISP_E_UNKNOWNNAME);
     }
@@ -86,6 +89,7 @@ class MethodDispatch extends IDispatchImpl {
       throws HResultException, InvocationTargetException {
     switch (id) {
       case 0:
+        // An implicit access.
         if ((flags & COM.DISPATCH_METHOD) != 0) {
           // implicit call -- "m()"
           return callMethod(classLoader, null, params, method);
@@ -95,14 +99,34 @@ class MethodDispatch extends IDispatchImpl {
         }
         break;
       case 1:
-        // "m.toString()"
-        if ((flags & (COM.DISPATCH_METHOD | COM.DISPATCH_PROPERTYGET)) != 0) {
+        // toString
+        if ((flags & COM.DISPATCH_METHOD) != 0) {
+          // "m.toString()"
           return new Variant(toString());
+        } else if ((flags & COM.DISPATCH_PROPERTYGET) != 0) {
+          // "m.toString"
+          Method toStringMethod;
+          try {
+            toStringMethod = Object.class.getDeclaredMethod("toString");
+          } catch (Throwable e) {
+            throw new RuntimeException(
+                "Failed to get Object.toString() method", e);
+          }
+          IDispatchImpl dispMethod = (IDispatchImpl) classLoader.getMethodDispatch(toStringMethod);
+          if (dispMethod == null) {
+            dispMethod = new MethodDispatch(classLoader, toStringMethod);
+            classLoader.putMethodDispatch(toStringMethod, dispMethod);
+          }
+          IDispatch disp = new IDispatch(dispMethod.getAddress());
+          disp.AddRef();
+          return new Variant(disp);
         }
         break;
       case 2:
-        // "m.call(thisObj, arg)"
+        // call
         if ((flags & COM.DISPATCH_METHOD) != 0) {
+          // "m.call(thisObj, arg)"
+
           /*
            * First param must be a this object of the correct type (for instance
            * methods). If method is static, it can be null.
@@ -112,7 +136,14 @@ class MethodDispatch extends IDispatchImpl {
           Variant[] otherParams = new Variant[params.length - 1];
           System.arraycopy(params, 1, otherParams, 0, otherParams.length);
           return callMethod(classLoader, jthis, otherParams, method);
+        } else if ((flags & COM.DISPATCH_PROPERTYGET) != 0) {
+          // "m.call"
+          // TODO: not supported
         }
+        break;
+      case 3:
+        // apply
+        // TODO: not supported
         break;
       case IDispatchProxy.DISPID_MAGIC_GETGLOBALREF:
         // We are NOT in fact a "wrapped Java Object", but we don't want to

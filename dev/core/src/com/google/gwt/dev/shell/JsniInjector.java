@@ -129,8 +129,7 @@ public class JsniInjector {
     // Analyze the source and build a list of changes.
     char[] source = cup.getSource();
     List<Replacement> changes = new ArrayList<Replacement>();
-    rewriteCompilationUnit(logger, source, changes, cup,
-        jsniSaveDirectory != null);
+    rewriteCompilationUnit(logger, source, changes, cup, false);
 
     // Sort and apply the changes.
     int n = changes.size();

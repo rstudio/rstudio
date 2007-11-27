@@ -153,8 +153,12 @@ class IDispatchProxy extends IDispatchImpl {
             return callMethod(classLoader, getTarget(), params, method);
           } else if (flags == COM.DISPATCH_PROPERTYGET) {
             // The function is being accessed as a property.
-            IDispatchImpl funcObj = new MethodDispatch(classLoader, method);
-            IDispatch disp = new IDispatch(funcObj.getAddress());
+            IDispatchImpl dispMethod = (IDispatchImpl) classLoader.getMethodDispatch(method);
+            if (dispMethod == null) {
+              dispMethod = new MethodDispatch(classLoader, method);
+              classLoader.putMethodDispatch(method, dispMethod);
+            }
+            IDispatch disp = new IDispatch(dispMethod.getAddress());
             disp.AddRef();
             return new Variant(disp);
           }

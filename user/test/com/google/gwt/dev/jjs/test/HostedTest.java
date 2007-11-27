@@ -29,10 +29,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-//CHECKSTYLE_NAMING_OFF
-
 /**
- * TODO: document me.
+ * Tests several tricky aspects of hosted mode.
  */
 public class HostedTest extends GWTTestCase {
 
@@ -40,17 +38,15 @@ public class HostedTest extends GWTTestCase {
    * Tests that we can use a source level name for a nested type instead of the
    * binary name.
    */
-  protected static class A {
-    
-    /**
-     * TODO: document me.
-     */
-    public static class B {
+  static class A {
+
+    static class B {
       int b = 1;
+
       public native int getUsingBinaryRef() /*-{
-      return this.@com.google.gwt.dev.jjs.test.HostedTest$A$B::b;
-    }-*/;
-      
+        return this.@com.google.gwt.dev.jjs.test.HostedTest$A$B::b;
+      }-*/;
+
       public native int getUsingSourceRef() /*-{
         return this.@com.google.gwt.dev.jjs.test.HostedTest.A.B::b;
       }-*/;
@@ -58,7 +54,6 @@ public class HostedTest extends GWTTestCase {
   }
 
   private static class GenericListTest extends AbstractList<Object> {
-
     @Override
     public Object get(int index) {
       return this;
