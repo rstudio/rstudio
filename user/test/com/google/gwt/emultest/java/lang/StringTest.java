@@ -255,7 +255,7 @@ public class StringTest extends GWTTestCase {
     trimRightAssertEquals("abc", "   \t abc \n  ");
     trimRightAssertEquals("abc", "abc".trim());
     trimRightAssertSame("abc", "abc");
-    String s = '\23' + "hi";
+    String s = '\u0023' + "hi";
     trimRightAssertSame(s, s);
     trimRightAssertEquals("abc", " abc".trim());
     trimRightAssertEquals("abc", "abc ".trim());
