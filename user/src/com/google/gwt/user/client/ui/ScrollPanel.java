@@ -32,6 +32,9 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents {
   public ScrollPanel() {
     setAlwaysShowScrollBars(false);
     sinkEvents(Event.ONSCROLL);
+    
+    // Prevent IE standard mode bug when a AbsolutePanel is contained. 
+    DOM.setStyleAttribute(getElement(), "position", "relative");
   }
 
   /**
