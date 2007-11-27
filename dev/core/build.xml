@@ -143,6 +143,10 @@
 				<pathelement location="${javac.out}" />
 				<pathelement location="${alldeps.jar}" />
 				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+				<!-- Pull in gwt-dev and gwt-user sources for .gwt.xml files -->
+				<pathelement location="${gwt.root}/user/src/" />
+				<pathelement location="${gwt.root}/user/super/" />
+				<pathelement location="${gwt.root}/dev/core/super" />
 			</classpath>
 	
 			<formatter type="plain" />
