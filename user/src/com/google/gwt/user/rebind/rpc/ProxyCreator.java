@@ -265,13 +265,14 @@ class ProxyCreator {
           + "\");");
     }
 
-    // Encode the arguments.
+    // Encode all of the arguments to the asynchronous method, but exclude the 
+    // last argument which is the callback instance.
     //
-    for (JParameter param : syncParams) {
-      JType paramType = param.getType();
+    for (int i = 0; i < asyncParams.length - 1; ++i) {
+      JParameter asyncParam = asyncParams[i];
       w.print(streamWriterName + ".");
-      w.print(Shared.getStreamWriteMethodNameFor(paramType));
-      w.println("(" + param.getName() + ");");
+      w.print(Shared.getStreamWriteMethodNameFor(asyncParam.getType()));
+      w.println("(" + asyncParam.getName() + ");");
     }
 
     JParameter callbackParam = asyncParams[asyncParams.length - 1];
