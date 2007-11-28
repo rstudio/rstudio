@@ -19,8 +19,6 @@ import com.google.gwt.i18n.rebind.util.AbstractResource;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 import com.google.gwt.user.rebind.AbstractMethodCreator;
 
-import java.util.Locale;
-
 /**
  * A <code>AbstractMethodCreator</code> specialized for
  * <code>ConstantsImplCreator</code>.
@@ -48,8 +46,8 @@ abstract class AbstractLocalizableMethodCreator extends AbstractMethodCreator {
    * 
    * @return the locale
    */
-  protected Locale getLocale() {
-    return getResources().getLocale();
+  protected String getLocaleName() {
+    return getResources().getLocaleName();
   }
 
   /**

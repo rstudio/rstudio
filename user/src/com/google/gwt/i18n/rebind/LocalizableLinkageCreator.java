@@ -19,9 +19,9 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.user.rebind.AbstractSourceCreator;
+import com.google.gwt.i18n.rebind.util.ResourceFactory;
 
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -34,7 +34,7 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
     Map<String, JClassType> matchingClasses = new HashMap<String, JClassType>();
     // Add base class if possible.
     if (baseClass.isInterface() == null && baseClass.isAbstract() == false) {
-      matchingClasses.put(LocalizableGenerator.DEFAULT_TOKEN, baseClass);
+      matchingClasses.put(ResourceFactory.DEFAULT_TOKEN, baseClass);
     }
     String baseName = baseClass.getSimpleSourceName();
 
@@ -45,7 +45,7 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
       if ((subType.isInterface() == null) && (subType.isAbstract() == false)) {
         String name = subType.getSimpleSourceName();
         // Strip locale from type,
-        int localeIndex = name.indexOf("_");
+        int localeIndex = name.indexOf(ResourceFactory.LOCALE_SEPARATOR);
         String subTypeBaseName = name;
         if (localeIndex != -1) {
           subTypeBaseName = name.substring(0, localeIndex);
@@ -53,16 +53,17 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
         boolean matches = subTypeBaseName.equals(baseName);
         if (matches) {
           boolean isDefault = localeIndex == -1
-              || localeIndex == name.length() - 1;
+              || localeIndex == name.length() - 1
+              || ResourceFactory.DEFAULT_TOKEN.equals(name.substring(localeIndex + 1));
           if (isDefault) {
             // Don't override base as default if present.
             JClassType defaultClass = 
-              matchingClasses.get(LocalizableGenerator.DEFAULT_TOKEN);
+              matchingClasses.get(ResourceFactory.DEFAULT_TOKEN);
             if (defaultClass != null) {
               throw error(logger, defaultClass + " and " + baseName
-                  + " are both potencial default classes for " + baseClass);
+                  + " are both potential default classes for " + baseClass);
             } else {
-              matchingClasses.put(LocalizableGenerator.DEFAULT_TOKEN, subType);
+              matchingClasses.put(ResourceFactory.DEFAULT_TOKEN, subType);
             }
           } else {
             // Don't allow a locale to be ambiguous. Very similar to default
@@ -102,7 +103,7 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
    * @throws UnableToCompleteException
    */
   String linkWithImplClass(TreeLogger logger, JClassType baseClass,
-      Locale locale) throws UnableToCompleteException {
+      String locale) throws UnableToCompleteException {
 
     String baseName = baseClass.getQualifiedSourceName();
     /**
@@ -114,39 +115,28 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
       return className;
     }
 
-    if (baseClass.getName().indexOf("_") == 0) {
-      throw error(logger, "Cannot have a '_' in the base localizable class "
-          + baseClass);
+    if (baseClass.getName().indexOf(ResourceFactory.LOCALE_SEPARATOR) != -1) {
+      throw error(logger, "Cannot have a " + ResourceFactory.LOCALE_SEPARATOR
+          + " in the base localizable class " + baseClass);
     }
     Map<String, JClassType> matchingClasses =
       findDerivedClasses(logger, baseClass);
     // Now that we have all matches, find best class
-    String localeSuffix;
-    JClassType result = null;
-    if (locale == null) {
-      localeSuffix = LocalizableGenerator.DEFAULT_TOKEN;
-    } else {
-      localeSuffix = locale.toString();
-    }
+    String localeSuffix = locale;
+    JClassType result = null;  
     while (true) {
       // Check for current result.
       result = matchingClasses.get(localeSuffix);
       if (result != null) {
         break;
       }
-      // Now set up next option.
-      int strip = localeSuffix.lastIndexOf("_");
-      if (localeSuffix == LocalizableGenerator.DEFAULT_TOKEN) {
-        // We already shot our wad, no classes matched.
+      if (localeSuffix.equals(ResourceFactory.DEFAULT_TOKEN)) {
+        // No classes matched.
         throw error(logger, "Cannot find a class to bind to argument type "
             + baseClass.getQualifiedSourceName());
-      } else if (strip == -1) {
-        // Try default.
-        localeSuffix = LocalizableGenerator.DEFAULT_TOKEN;
-      } else {
-        // Try language specific locale.
-        localeSuffix = localeSuffix.substring(0, strip);
       }
+      
+      localeSuffix = ResourceFactory.getParentLocaleName(localeSuffix);
     }
     implCache.put(baseName + locale, className);
     return result.getQualifiedSourceName();

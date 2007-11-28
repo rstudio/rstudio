@@ -18,7 +18,6 @@ package com.google.gwt.i18n.rebind.util;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.Set;
 
@@ -49,7 +48,7 @@ public abstract class AbstractResource {
 
   private Set<String> keySet;
 
-  private Locale locale;
+  private String localeName;
 
   private String path;
 
@@ -58,8 +57,8 @@ public abstract class AbstractResource {
   /**
    * @see java.util.ResourceBundle#getLocale()
    */
-  public Locale getLocale() {
-    return locale;
+  public String getLocaleName() {
+    return localeName;
   }
 
   /**
@@ -183,8 +182,8 @@ public abstract class AbstractResource {
 
   abstract Object handleGetObject(String key);
 
-  void setLocale(Locale locale) {
-    this.locale = locale;
+  void setLocaleName(String locale) {
+    this.localeName = locale;
   }
 
   void setPath(String path) {

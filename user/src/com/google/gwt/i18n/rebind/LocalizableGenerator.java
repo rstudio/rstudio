@@ -29,8 +29,6 @@ import com.google.gwt.i18n.client.ConstantsWithLookup;
 import com.google.gwt.i18n.client.Messages;
 import com.google.gwt.i18n.rebind.util.ResourceFactory;
 
-import java.util.Locale;
-
 /**
  * Generator used to bind classes extending the <code>Localizable</code> and
  * <code>Constants</code> interfaces.
@@ -45,10 +43,6 @@ public class LocalizableGenerator extends Generator {
 
   static final String CONSTANTS_WITH_LOOKUP_NAME = ConstantsWithLookup.class.getName();
 
-  /**
-   * Represents default locale.
-   */
-  static final String DEFAULT_TOKEN = "default";
   static final String MESSAGES_NAME = Messages.class.getName();
   private static long lastReloadCount = -1;
   /**
@@ -79,34 +73,27 @@ public class LocalizableGenerator extends Generator {
 
     // Get the current locale and interface type.
     PropertyOracle propertyOracle = context.getPropertyOracle();
-    Locale locale;
+    String locale;
     try {
-      String localeID = propertyOracle.getPropertyValue(logger, PROP_LOCALE);
-      if ("default".equals(localeID)) {
-        locale = null;
-      } else {
-        String[] localeChunks = localeID.split("_");
-        if (localeChunks.length > 0) {
-          if (!localeChunks[0].equals(localeChunks[0].toLowerCase())) {
-            logger.log(TreeLogger.ERROR, localeID
-                + "'s language code should be lower case", null);
-            throw new UnableToCompleteException();
-          }
-        }
-        if (localeChunks.length == 1) {
-          locale = new Locale(localeChunks[0]);
-        } else if (localeChunks.length == 2) {
-          // Ignore the localized locale string if present, just use language
-          // and country.
-          locale = new Locale(localeChunks[0], localeChunks[1]);
-        } else if (localeChunks.length == 3) {
-          locale = new Locale(localeChunks[0], localeChunks[1], localeChunks[2]);
-        } else {
-          logger.log(TreeLogger.ERROR, localeID
-              + " is not a correctly formatted locale", null);
-          throw new UnableToCompleteException();
-        }
-      }
+      // Look at the code for the "locale" property provider in
+      // I18N.gwt.xml to see the possible values for the locale
+      // property. Basically,
+      //
+      // 1) If the locale is specified by the user using a request parameter
+      //    or a meta tag, AND
+      // 2) The locale matches or is a parent of one of the locales
+      //    exposed in the application's gwt.xml file, THEN
+      //
+      // the value returned by getPropertyValue() will be:
+      //
+      // a) the locale specified by the user, OR
+      // b) the parent locale, if an exact match between the user-specified
+      //    locale and the exposed locales cannot be found
+      //
+      // If the locale is not specified by the user as a request parameter
+      // or via a meta tag, or if the locale is formatted incorrectly,
+      // getPropertyValue() will return "default".
+      locale = propertyOracle.getPropertyValue(logger, PROP_LOCALE);   
     } catch (BadPropertyValueException e) {
       logger.log(TreeLogger.ERROR, "Could not parse specified locale", e);
       throw new UnableToCompleteException();

@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.Set;
@@ -118,6 +117,12 @@ public abstract class ResourceFactory {
     }
   }
 
+  /**
+   * Represents default locale.
+   */
+  public static final String DEFAULT_TOKEN = "default";
+  public static final char LOCALE_SEPARATOR = '_';
+
   public static final AbstractResource NOT_FOUND = new AbstractResource() {
 
     @Override
@@ -149,10 +154,10 @@ public abstract class ResourceFactory {
    * Gets the resource associated with the given interface.
    * 
    * @param javaInterface interface
-   * @param locale locale
+   * @param locale locale name
    * @return the resource
    */
-  public static AbstractResource getBundle(Class<?> javaInterface, Locale locale) {
+  public static AbstractResource getBundle(Class<?> javaInterface, String locale) {
     if (javaInterface.isInterface() == false) {
       throw new IllegalArgumentException(javaInterface
           + " should be an interface.");
@@ -165,11 +170,11 @@ public abstract class ResourceFactory {
    * Gets the resource associated with the given interface.
    * 
    * @param javaInterface interface
-   * @param locale locale
+   * @param locale locale name
    * @return the resource
    */
   public static AbstractResource getBundle(JClassType javaInterface,
-      Locale locale) {
+      String locale) {
     return getBundleAux(new JClassTypePathTree(javaInterface), locale, true);
   }
 
@@ -177,11 +182,35 @@ public abstract class ResourceFactory {
    * Gets the resource associated with the given path.
    * 
    * @param path the path
-   * @param locale locale
+   * @param locale locale name
    * @return the resource
    */
-  public static AbstractResource getBundle(String path, Locale locale) {
+  public static AbstractResource getBundle(String path, String locale) {
     return getBundleAux(new SimplePathTree(path), locale, true);
+  }
+
+  /**
+   * Given a locale name, derives the parent's locale name. For example, if
+   * the locale name is "en_US", the parent locale name would be "en". If the
+   * locale name is that of a top level locale (i.e. no '_' characters, such
+   * as "fr"), then the the parent locale name is that of the default locale.
+   * If the locale name is null, the empty string, or is already that of the
+   * default locale, then null is returned.
+   *
+   * @param localeName the locale name
+   * @return the parent's locale name
+   */
+  public static String getParentLocaleName(String localeName) {
+    if (localeName == null ||
+        localeName.length() == 0 ||
+        localeName.equals(DEFAULT_TOKEN)) {
+      return null;
+    }
+    int pos = localeName.lastIndexOf(LOCALE_SEPARATOR);
+    if (pos != -1) {
+      return localeName.substring(0, pos);
+    }
+    return DEFAULT_TOKEN;
   }
 
   public static String getResourceName(JClassType targetClass) {
@@ -193,7 +222,7 @@ public abstract class ResourceFactory {
   }
 
   private static List<AbstractResource> findAlternativeParents(
-      ResourceFactory.AbstractPathTree tree, Locale locale) {
+      ResourceFactory.AbstractPathTree tree, String locale) {
     List<AbstractResource> altParents = null;
     if (tree != null) {
       altParents = new ArrayList<AbstractResource>();
@@ -209,37 +238,35 @@ public abstract class ResourceFactory {
   }
 
   private static AbstractResource findPrimaryParent(
-      ResourceFactory.AbstractPathTree tree, Locale locale) {
-    // Create bundle
-    AbstractResource parent = null;
+      ResourceFactory.AbstractPathTree tree, String locale) {
 
     // If we are not in the default case, calculate parent
-    if (locale != null) {
-      if (!("".equals(locale.getVariant()))) {
-        // parents, by default, share the list of alternativePaths;
-        parent = getBundleAux(tree, new Locale(locale.getLanguage(),
-            locale.getCountry()), false);
-      } else if (!"".equals(locale.getCountry())) {
-        parent = getBundleAux(tree, new Locale(locale.getLanguage()), false);
-      }
-
-      // If either no country was defined or no bundle was found, use null
-      // locale instead.
-      if (parent == null) {
-        parent = getBundleAux(tree, null, false);
-      }
+    if (!DEFAULT_TOKEN.equals(locale)) {
+      return getBundleAux(tree, getParentLocaleName(locale), false);
     }
-    return parent;
+    return null;
   }
 
   private static AbstractResource getBundleAux(
-      ResourceFactory.AbstractPathTree tree, Locale locale, boolean required) {
+      ResourceFactory.AbstractPathTree tree, String locale, boolean required) {
     String targetPath = tree.getPath();
     ClassLoader loader = AbstractResource.class.getClassLoader();
+
+    if (locale == null || locale.length() == 0) {
+      // This should never happen, since the only legitimate user of this
+      // method traces back to AbstractLocalizableImplCreator. The locale
+      // that is passed in from AbstractLocalizableImplCreator is produced
+      // by the I18N property provider, which guarantees that the locale
+      // will not be of zero length or null. However, we add this check
+      // in here in the event that a future user of ResourceFactory does
+      // not obey this constraint.
+      locale = DEFAULT_TOKEN;
+    }
+
     // Calculate baseName
     String localizedPath = targetPath;
-    if (locale != null) {
-      localizedPath = targetPath + "_" + locale;
+    if (!DEFAULT_TOKEN.equals(locale)) {
+      localizedPath = targetPath + LOCALE_SEPARATOR + locale;
     }
     AbstractResource result = cache.get(localizedPath);
     if (result != null) {
@@ -262,7 +289,7 @@ public abstract class ResourceFactory {
         found = element.load(m);
         found.setPath(partualPath);
         found.setPrimaryParent(parent);
-        found.setLocale(locale);
+        found.setLocaleName(locale);
         for (int j = 0; j < altParents.size(); j++) {
           AbstractResource altParent = altParents.get(j);
           found.addAlternativeParent(altParent);
@@ -277,15 +304,21 @@ public abstract class ResourceFactory {
       } else {
         found = NOT_FOUND;
       }
-      found = parent;
     }
 
     cache.put(localizedPath, found);
-    if (found == null && required) {
-      throw new MissingResourceException(
+
+    if (found == NOT_FOUND) {
+      if (required) {
+        throw new MissingResourceException(
           "Could not find any resource associated with " + tree.getPath(),
-          null, null);
+            null, null);
+      } else {
+        return null;
+      }
     }
+
+    // At this point, found cannot be equal to null or NOT_FOUND
     return found;
   }
 

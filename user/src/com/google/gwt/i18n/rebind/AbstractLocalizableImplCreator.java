@@ -30,7 +30,6 @@ import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
-import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.Set;
 
@@ -42,7 +41,7 @@ abstract class AbstractLocalizableImplCreator extends
     AbstractGeneratorClassCreator {
 
   static String generateConstantOrMessageClass(TreeLogger logger,
-      GeneratorContext context, Locale locale, JClassType targetClass)
+      GeneratorContext context, String locale, JClassType targetClass)
       throws UnableToCompleteException {
     TypeOracle oracle = context.getTypeOracle();
     JClassType constantsClass;
@@ -96,9 +95,9 @@ abstract class AbstractLocalizableImplCreator extends
 
     // generated implementations for interface X will be named X_, X_en,
     // X_en_CA, etc.
-    String realLocale = "_";
-    if (resource.getLocale() != null) {
-      realLocale += resource.getLocale();
+    String realLocale = String.valueOf(ResourceFactory.LOCALE_SEPARATOR);
+    if (!ResourceFactory.DEFAULT_TOKEN.equals(resource.getLocaleName())) {
+      realLocale += resource.getLocaleName();
     }
     // Use _ rather than "." in class name, cannot use $
     String resourceName = targetClass.getName().replace('.', '_');
@@ -186,15 +185,8 @@ abstract class AbstractLocalizableImplCreator extends
         throw new UnableToCompleteException();
       }
     }
-    String localeString;
-    if (messageBindings.getLocale() == null
-        || messageBindings.getLocale().toString().equals("")) {
-      localeString = "default";
-    } else {
-      localeString = messageBindings.getLocale().toString();
-    }
-    String info = "When locale is '" + localeString + "', property '" + key
-        + "' has the value '" + value + "'";
+    String info = "When locale is '" + messageBindings.getLocaleName()
+        + "', property '" + key + "' has the value '" + value + "'";
     TreeLogger branch = logger.branch(TreeLogger.TRACE, info, null);
     methodCreator.createMethodFor(branch, method, value);
   }

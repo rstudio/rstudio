@@ -26,22 +26,23 @@ import java.io.CharArrayWriter;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.util.Locale;
 
 /**
  * TODO: document me.
  */
 public class AbstractResourceTest extends TestCase {
-  static Locale pigLatin = new Locale("piglatin");
   public static final String UNICODE = "Îñţérñåţîöñåļîžåţîöñ";
+  private static final String LOCALE_NAME_PIGLATIN = "piglatin";
+  private static final String LOCALE_NAME_PIGLATIN_UK = "piglatin_UK";
 
   public void testBundle() {
     // simple test
     String s = Colors.class.getName();
     AbstractResource resource = ResourceFactory.getBundle(s, null);
     assertNotNull(resource);
-    AbstractResource pigLatinResource = ResourceFactory.getBundle(s, pigLatin);
-    assertEquals(pigLatin, pigLatinResource.getLocale());
+    AbstractResource pigLatinResource =
+        ResourceFactory.getBundle(s, LOCALE_NAME_PIGLATIN);
+    assertEquals(LOCALE_NAME_PIGLATIN, pigLatinResource.getLocaleName());
     assertNotNull(pigLatinResource);
     assertEquals("ueblay", pigLatinResource.getString("blue"));
     assertEquals("ĝréý", pigLatinResource.getString("grey"));
@@ -50,8 +51,8 @@ public class AbstractResourceTest extends TestCase {
   public void testInheritence() {
     ResourceFactory.clearCache();
     AbstractResource resource = ResourceFactory.getBundle(
-      ColorsAndShapes.class, pigLatin);
-    assertEquals(pigLatin, resource.getLocale());
+      ColorsAndShapes.class, LOCALE_NAME_PIGLATIN);
+    assertEquals(LOCALE_NAME_PIGLATIN, resource.getLocaleName());
     assertEquals("ueblay", resource.getString("blue"));
     assertEquals("ĝréý", resource.getString("grey"));
   }
@@ -68,7 +69,7 @@ public class AbstractResourceTest extends TestCase {
 
   public void testDoubleInherits() {
     AbstractResource resource = ResourceFactory.getBundle(
-      ColorsAndShapesAndConcepts.class, new Locale("piglatin", "UK"));
+      ColorsAndShapesAndConcepts.class, LOCALE_NAME_PIGLATIN_UK);
     String s = resource.getString("internationalization");
     assertEquals("Îñţérñåţîöñåļîžåţîöñ", s);
     assertTrue(resource.keySet().size() > 5);
