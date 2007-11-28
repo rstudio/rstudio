@@ -20,7 +20,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 /**
  * TODO: document me.
  */
-public class ClassCastTestCase extends GWTTestCase {
+public class ClassCastTest extends GWTTestCase {
 
   static class Apple extends Food implements CanEatRaw {
   }

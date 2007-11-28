@@ -20,7 +20,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 /**
  * TODO: document me.
  */
-public class TestBlankInterface extends GWTTestCase implements
+public class BlankInterfaceTest extends GWTTestCase implements
     NoMethodsOrFields {
 
   public String getModuleName() {

@@ -30,41 +30,41 @@ public class DateTimeFormat_de_Test extends GWTTestCase {
   }
 
   public void test_EEEEMMMddyy() {
-    Date date = getUTCDate(2006 - 1900, 6, 27, 13, 10, 10);
+    Date date = getDateFromUTC(2006 - 1900, 6, 27, 13, 10, 10);
     assertEquals("Donnerstag,Juli 27, 2006", format("EEEE,MMMM dd, yyyy", date));
   }
 
   public void test_EEEMMMddyy() {
-    Date date = getUTCDate(2006 - 1900, 6, 27, 13, 10, 10);
+    Date date = getDateFromUTC(2006 - 1900, 6, 27, 13, 10, 10);
     assertEquals("Do, Jul 27, 06", format("EEE, MMM d, yy", date));
   }
 
   public void test_HHmmss() {
-    Date date = getUTCDate(2006 - 1900, 6, 27, 13, 10, 10);
+    Date date = getDateFromUTC(2006 - 1900, 6, 27, 13, 10, 10);
     assertEquals("13:10:10", format("HH:mm:ss", date));
   }
 
   public void test_hhmmssa() {
-    Date date = getUTCDate(2006 - 1900, 6, 27, 13, 10, 10);
+    Date date = getDateFromUTC(2006 - 1900, 6, 27, 13, 10, 10);
     assertEquals("1:10:10 nachm.", format("h:mm:ss a", date));
   }
 
   public void test_MMddyyyyHHmmssZ() {
-    Date date = getUTCDate(2006 - 1900, 6, 27, 13, 10, 10);
+    Date date = getDateFromUTC(2006 - 1900, 6, 27, 13, 10, 10);
     String tz = getTimezoneString(date, false);
     String actual = format("MM/dd/yyyy HH:mm:ss Z", date);
     assertEquals("07/27/2006 13:10:10 " + tz, actual);
   }
 
   public void test_MMddyyyyHHmmsszzz() {
-    Date date = getUTCDate(2006 - 1900, 6, 27, 13, 10, 10);
+    Date date = getDateFromUTC(2006 - 1900, 6, 27, 13, 10, 10);
     String tz = getTimezoneString(date);
     String actual = format("MM/dd/yyyy HH:mm:ss zzz", date);
     assertEquals("07/27/2006 13:10:10 GMT" + tz, actual);
   }
 
   public void test_predefinedFormat() {
-    Date date = getUTCDate(2006 - 1900, 7, 4, 13, 49, 24);
+    Date date = getDateFromUTC(2006 - 1900, 7, 4, 13, 49, 24);
     String tz = getTimezoneString(date);
 
     String fullDateFormat = DateTimeFormat.getFullDateFormat().format(date);
@@ -107,40 +107,40 @@ public class DateTimeFormat_de_Test extends GWTTestCase {
   public void test_QQQQyy() {
     Date date;
 
-    date = getUTCDate(2006 - 1900, 0, 27, 13, 10, 10);
+    date = getDateFromUTC(2006 - 1900, 0, 27, 13, 10, 10);
     assertEquals("1. Quartal 06", format("QQQQ yy", date));
 
-    date = getUTCDate(2006 - 1900, 1, 27, 13, 10, 10);
+    date = getDateFromUTC(2006 - 1900, 1, 27, 13, 10, 10);
     assertEquals("1. Quartal 06", format("QQQQ yy", date));
 
-    date = getUTCDate(2006 - 1900, 2, 27, 13, 10, 10);
+    date = getDateFromUTC(2006 - 1900, 2, 27, 13, 10, 10);
     assertEquals("1. Quartal 06", format("QQQQ yy", date));
 
-    date = getUTCDate(2006 - 1900, 3, 27, 13, 10, 10);
+    date = getDateFromUTC(2006 - 1900, 3, 27, 13, 10, 10);
     assertEquals("2. Quartal 06", format("QQQQ yy", date));
 
-    date = getUTCDate(2006 - 1900, 4, 27, 13, 10, 10);
+    date = getDateFromUTC(2006 - 1900, 4, 27, 13, 10, 10);
     assertEquals("2. Quartal 06", format("QQQQ yy", date));
 
-    date = getUTCDate(2006 - 1900, 5, 27, 13, 10, 10);
+    date = getDateFromUTC(2006 - 1900, 5, 27, 13, 10, 10);
     assertEquals("2. Quartal 06", format("QQQQ yy", date));
 
-    date = getUTCDate(2006 - 1900, 6, 27, 13, 10, 10);
+    date = getDateFromUTC(2006 - 1900, 6, 27, 13, 10, 10);
     assertEquals("3. Quartal 06", format("QQQQ yy", date));
 
-    date = getUTCDate(2006 - 1900, 7, 27, 13, 10, 10);
+    date = getDateFromUTC(2006 - 1900, 7, 27, 13, 10, 10);
     assertEquals("3. Quartal 06", format("QQQQ yy", date));
 
-    date = getUTCDate(2006 - 1900, 8, 27, 13, 10, 10);
+    date = getDateFromUTC(2006 - 1900, 8, 27, 13, 10, 10);
     assertEquals("3. Quartal 06", format("QQQQ yy", date));
 
-    date = getUTCDate(2006 - 1900, 9, 27, 13, 10, 10);
+    date = getDateFromUTC(2006 - 1900, 9, 27, 13, 10, 10);
     assertEquals("4. Quartal 06", format("QQQQ yy", date));
 
-    date = getUTCDate(2006 - 1900, 10, 27, 13, 10, 10);
+    date = getDateFromUTC(2006 - 1900, 10, 27, 13, 10, 10);
     assertEquals("4. Quartal 06", format("QQQQ yy", date));
 
-    date = getUTCDate(2006 - 1900, 11, 27, 13, 10, 10);
+    date = getDateFromUTC(2006 - 1900, 11, 27, 13, 10, 10);
     assertEquals("4. Quartal 06", format("QQQQ yy", date));
   }
 
@@ -218,7 +218,7 @@ public class DateTimeFormat_de_Test extends GWTTestCase {
   }
 
   public void test_yyyyMMddG() {
-    Date date = getUTCDate(2006 - 1900, 6, 27, 13, 10, 10);
+    Date date = getDateFromUTC(2006 - 1900, 6, 27, 13, 10, 10);
     String tz = getTimezoneString(date);
 
     String expected = "2006.07.27 n. Chr. at 13:10:10 GMT" + tz;
@@ -227,7 +227,7 @@ public class DateTimeFormat_de_Test extends GWTTestCase {
   }
 
   public void test_yyyyyMMMMM() {
-    Date date = getUTCDate(2006 - 1900, 6, 27, 13, 10, 10);
+    Date date = getDateFromUTC(2006 - 1900, 6, 27, 13, 10, 10);
     assertEquals("2006.J.27 n. Chr. 01:10 nachm.", format(
         "yyyyy.MMMMM.dd GGG hh:mm aaa", date));
   }
@@ -253,12 +253,12 @@ public class DateTimeFormat_de_Test extends GWTTestCase {
     return tzOffsetStr;
   }
 
-  private Date getUTCDate(int year, int month, int day, int hrs, int mins,
+  private Date getDateFromUTC(int year, int month, int day, int hrs, int mins,
       int secs) {
-    long localTzOffset = new Date().getTimezoneOffset();
+    long localTzOffset = new Date(year, month, day, hrs, mins, secs).getTimezoneOffset();
     long utc = Date.UTC(year, month, day, hrs, mins, secs);
     long localTzOffsetMillis = localTzOffset * 60 * 1000;
-    utc += localTzOffsetMillis;
-    return new Date(utc);
+    long localTime = utc + localTzOffsetMillis;
+    return new Date(localTime);
   }
 }

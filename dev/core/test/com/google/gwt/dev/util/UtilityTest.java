@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import java.net.URL;
 
 /** Pure junit test of Utility functionality*/
-public class TestUtility extends TestCase{
+public class UtilityTest extends TestCase{
   
   
   

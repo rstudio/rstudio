@@ -22,7 +22,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  * possible in the Java to JavaScript compiler. This test is not at all intended
  * to execute correctly.
  */
-public class Coverage extends CoverageSuper {
+public class CoverageTest extends CoverageBase {
 
   /**
    * TODO: document me.
@@ -50,28 +50,28 @@ public class Coverage extends CoverageSuper {
           x = z;
           this.x = z;
           Inner.this.x = z;
-          next = Coverage.this.next;
+          next = CoverageTest.this.next;
           next.foo();
-          Coverage.this.next.foo();
-          Coverage.this.x = z;
-          Coverage.super.x = z; // inexpressible in Java without name mangling
+          CoverageTest.this.next.foo();
+          CoverageTest.this.x = z;
+          CoverageTest.super.x = z; // inexpressible in Java without name mangling
         }
 
         public void foo() {
           x = z;
           this.x = z;
           Inner.this.x = z;
-          next = Coverage.this.next;
+          next = CoverageTest.this.next;
           next.foo();
-          Coverage.this.next.foo();
-          Coverage.this.x = z;
-          Coverage.super.x = z; // inexpressible in Java without name mangling
+          CoverageTest.this.next.foo();
+          CoverageTest.this.x = z;
+          CoverageTest.super.x = z; // inexpressible in Java without name mangling
         }
       };
 
       class NamedLocal extends Inner {
         public void foo() {
-          Coverage.this.getNext();
+          CoverageTest.this.getNext();
           Inner.this.bar();
           super.bar();
           int x = z;
@@ -257,7 +257,7 @@ public class Coverage extends CoverageSuper {
     private void testClassLiteralAccess() {
       // ClassLiteralAccess
       o = Super.class;
-      assertEquals("class com.google.gwt.dev.jjs.test.Coverage$Super",
+      assertEquals("class com.google.gwt.dev.jjs.test.CoverageTest$Super",
           o.toString());
     }
 
@@ -358,8 +358,8 @@ public class Coverage extends CoverageSuper {
 
     private void testInstanceOfExpression() {
       // InstanceOfExpression
-      Object o = Coverage.this;
-      assertTrue(o instanceof CoverageSuper);
+      Object o = CoverageTest.this;
+      assertTrue(o instanceof CoverageBase);
     }
 
     private void testLiterals() {
@@ -419,28 +419,28 @@ public class Coverage extends CoverageSuper {
     private void testQualifiedAllocationExpression() {
       // QualifiedAllocationExpression
       o = new Inner();
-      o = Coverage.this.new Inner();
-      o = new Coverage().new Inner();
+      o = CoverageTest.this.new Inner();
+      o = new CoverageTest().new Inner();
     }
 
     private void testQualifiedNameReference() {
       // QualifiedNameReference
       // TODO: fields????
-      Coverage m = new Coverage();
+      CoverageTest m = new CoverageTest();
       ia = new int[2];
       assertEquals("1", 2, ia.length);
       assertEquals("2", 2, m.j);
       assertEquals("3", 4, m.y);
-      assertEquals("4", 2, new Coverage().j);
-      assertEquals("5", 4, new Coverage().y);
+      assertEquals("4", 2, new CoverageTest().j);
+      assertEquals("5", 4, new CoverageTest().y);
       assertEquals("6", 2, m.next.j);
       assertEquals("7", 4, m.next.y);
-      assertEquals("8", 2, new Coverage().next.j);
-      assertEquals("9", 4, new Coverage().next.y);
+      assertEquals("8", 2, new CoverageTest().next.j);
+      assertEquals("9", 4, new CoverageTest().next.y);
       assertEquals("A", 2, m.getNext().j);
       assertEquals("B", 4, m.getNext().y);
-      assertEquals("C", 2, new Coverage().getNext().j);
-      assertEquals("D", 4, new Coverage().getNext().y);
+      assertEquals("C", 2, new CoverageTest().getNext().j);
+      assertEquals("D", 4, new CoverageTest().getNext().y);
     }
 
     private void testReferenceCalls() {
@@ -450,21 +450,21 @@ public class Coverage extends CoverageSuper {
       foo();
       this.foo();
       other.foo();
-      Coverage.this.foo();
+      CoverageTest.this.foo();
       super.foo();
       Inner.super.foo();
-      Coverage.super.foo();
+      CoverageTest.super.foo();
 
       sfoo();
       this.sfoo();
-      Coverage.sfoo();
+      CoverageTest.sfoo();
       Inner.sfoo();
       Super.sfoo();
       other.sfoo();
-      Coverage.this.sfoo();
+      CoverageTest.this.sfoo();
       super.sfoo();
       Inner.super.sfoo();
-      Coverage.super.sfoo();
+      CoverageTest.super.sfoo();
     }
 
     private Inner testReferences() {
@@ -476,7 +476,7 @@ public class Coverage extends CoverageSuper {
       assertEquals(12, i);
       i = this.i + this.j + this.x + this.y;
       assertEquals(21, i);
-      i = Coverage.i + Coverage.j;
+      i = CoverageTest.i + CoverageTest.j;
       assertEquals(8, i);
       i = Inner.i + Inner.j;
       assertEquals(10, i);
@@ -486,14 +486,14 @@ public class Coverage extends CoverageSuper {
       assertEquals(21, i);
       i = Inner.this.i + Inner.this.j + Inner.this.x + Inner.this.y;
       assertEquals(30, i);
-      i = Coverage.this.i + Coverage.this.j + Coverage.this.x + Coverage.this.y;
+      i = CoverageTest.this.i + CoverageTest.this.j + CoverageTest.this.x + CoverageTest.this.y;
       assertEquals(15, i);
       i = super.i + super.j + super.x + super.y;
       assertEquals(25, i);
       i = Inner.super.i + Inner.super.j + Inner.super.x + Inner.super.y;
       assertEquals(35, i);
-      i = Coverage.super.i + Coverage.super.j + Coverage.super.x
-          + Coverage.super.y;
+      i = CoverageTest.super.i + CoverageTest.super.j + CoverageTest.super.x
+          + CoverageTest.super.y;
       assertEquals(10, i);
       return other;
     }
@@ -630,14 +630,14 @@ public class Coverage extends CoverageSuper {
     private int asdfasdfasdf = 3;
 
     InnerSub() {
-      new Coverage().super();
+      new CoverageTest().super();
     }
   }
 
   private static class SecondMain {
     private class FunkyInner extends Inner {
       FunkyInner() {
-        new Coverage().super();
+        new CoverageTest().super();
       }
     }
   }
@@ -662,7 +662,7 @@ public class Coverage extends CoverageSuper {
 
   public static String s = "foo";
 
-  public static Coverage singleton;
+  public static CoverageTest singleton;
 
   public static boolean z;
 
@@ -683,13 +683,13 @@ public class Coverage extends CoverageSuper {
 
   public final Inner inner = new Inner();
 
-  public Coverage next;
+  public CoverageTest next;
 
   public int x = 3;
 
   public final int y = 4;
 
-  public Coverage() {
+  public CoverageTest() {
     if (singleton == null) {
       singleton = this;
     }
@@ -703,7 +703,7 @@ public class Coverage extends CoverageSuper {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
 
-  public Coverage getNext() {
+  public CoverageTest getNext() {
     return next;
   }
 
@@ -849,7 +849,7 @@ public class Coverage extends CoverageSuper {
 
 }
 
-abstract class CoverageSuper extends GWTTestCase {
+abstract class CoverageBase extends GWTTestCase {
 
   public static int i = 1;
   public static final int j = 2;

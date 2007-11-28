@@ -2,7 +2,7 @@ package com.google.gwt.dev.shell;
 
 import junit.framework.TestCase;
 
-public class TestCheckForUpdates extends TestCase {
+public class CheckForUpdatesTest extends TestCase {
 
   /*
    * Test method for

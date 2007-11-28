@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * TODO: document me.
  */
-public class ConstantMapTest extends TestMap {
+public class ConstantMapTest extends MapTestBase {
 
   protected Map makeEmptyMap() {
     return new ConstantMap();

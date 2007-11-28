@@ -106,7 +106,7 @@ import java.util.Set;
  * @author Paul Jack
  * @version $Id: TestMap.java,v 1.20.2.1 2004/05/22 12:14:05 scolebourne Exp $
  */
-public abstract class TestMap extends TestCase {
+public abstract class MapTestBase extends TestCase {
 
   // These instance variables are initialized with the reset method.
   // Tests for map methods that alter the map (put, putAll, remove)
@@ -712,20 +712,20 @@ public abstract class TestMap extends TestCase {
     }
 
     protected void resetFull() {
-      TestMap.this.resetFull();
+      MapTestBase.this.resetFull();
       collection = map.entrySet();
-      TestMapEntrySet.this.confirmed = TestMap.this.confirmed.entrySet();
+      TestMapEntrySet.this.confirmed = MapTestBase.this.confirmed.entrySet();
     }
 
     protected void resetEmpty() {
-      TestMap.this.resetEmpty();
+      MapTestBase.this.resetEmpty();
       collection = map.entrySet();
-      TestMapEntrySet.this.confirmed = TestMap.this.confirmed.entrySet();
+      TestMapEntrySet.this.confirmed = MapTestBase.this.confirmed.entrySet();
     }
 
     protected void verify() {
       super.verify();
-      TestMap.this.verify();
+      MapTestBase.this.verify();
     }
   }
 
@@ -759,20 +759,20 @@ public abstract class TestMap extends TestCase {
     }
 
     protected void resetEmpty() {
-      TestMap.this.resetEmpty();
+      MapTestBase.this.resetEmpty();
       collection = map.keySet();
-      TestMapKeySet.this.confirmed = TestMap.this.confirmed.keySet();
+      TestMapKeySet.this.confirmed = MapTestBase.this.confirmed.keySet();
     }
 
     protected void resetFull() {
-      TestMap.this.resetFull();
+      MapTestBase.this.resetFull();
       collection = map.keySet();
-      TestMapKeySet.this.confirmed = TestMap.this.confirmed.keySet();
+      TestMapKeySet.this.confirmed = MapTestBase.this.confirmed.keySet();
     }
 
     protected void verify() {
       super.verify();
-      TestMap.this.verify();
+      MapTestBase.this.verify();
     }
   }
 
@@ -822,20 +822,20 @@ public abstract class TestMap extends TestCase {
     }
 
     protected void resetFull() {
-      TestMap.this.resetFull();
+      MapTestBase.this.resetFull();
       collection = map.values();
-      TestMapValues.this.confirmed = TestMap.this.confirmed.values();
+      TestMapValues.this.confirmed = MapTestBase.this.confirmed.values();
     }
 
     protected void resetEmpty() {
-      TestMap.this.resetEmpty();
+      MapTestBase.this.resetEmpty();
       collection = map.values();
-      TestMapValues.this.confirmed = TestMap.this.confirmed.values();
+      TestMapValues.this.confirmed = MapTestBase.this.confirmed.values();
     }
 
     protected void verify() {
       super.verify();
-      TestMap.this.verify();
+      MapTestBase.this.verify();
     }
 
     // TODO: should test that a remove on the values collection view

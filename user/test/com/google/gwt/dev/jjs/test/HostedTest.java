@@ -53,7 +53,7 @@ public class HostedTest extends GWTTestCase {
     }
   }
 
-  private static class GenericListTest extends AbstractList<Object> {
+  private static class TestGenericList extends AbstractList<Object> {
     @Override
     public Object get(int index) {
       return this;
@@ -302,8 +302,8 @@ public class HostedTest extends GWTTestCase {
     assertTrue(obj instanceof String);
     assertEquals("foo", obj);
     obj = genericSubtype("test");
-    List<Object> list2 = genericSubtype(new GenericListTest());
-    assertTrue(list2 instanceof GenericListTest);
+    List<Object> list2 = genericSubtype(new TestGenericList());
+    assertTrue(list2 instanceof TestGenericList);
     assertEquals(42, list2.size());
     assertEquals(list2, list2.get(0));
     String[] array = new String[] { "foo", "bar" };

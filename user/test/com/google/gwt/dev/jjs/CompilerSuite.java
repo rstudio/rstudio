@@ -16,10 +16,11 @@
 package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.jjs.test.AutoboxTest;
-import com.google.gwt.dev.jjs.test.ClassCastTestCase;
+import com.google.gwt.dev.jjs.test.BlankInterfaceTest;
+import com.google.gwt.dev.jjs.test.ClassCastTest;
 import com.google.gwt.dev.jjs.test.ClassObjectTest;
 import com.google.gwt.dev.jjs.test.CompilerTest;
-import com.google.gwt.dev.jjs.test.Coverage;
+import com.google.gwt.dev.jjs.test.CoverageTest;
 import com.google.gwt.dev.jjs.test.EnhancedForLoopTest;
 import com.google.gwt.dev.jjs.test.EnumsTest;
 import com.google.gwt.dev.jjs.test.HostedTest;
@@ -31,7 +32,6 @@ import com.google.gwt.dev.jjs.test.MethodCallTest;
 import com.google.gwt.dev.jjs.test.MethodInterfaceTest;
 import com.google.gwt.dev.jjs.test.MiscellaneousTest;
 import com.google.gwt.dev.jjs.test.NativeLongTest;
-import com.google.gwt.dev.jjs.test.TestBlankInterface;
 import com.google.gwt.dev.jjs.test.VarargsTest;
 
 import junit.framework.Test;
@@ -47,10 +47,10 @@ public class CompilerSuite {
 
     // $JUnit-BEGIN$
     suite.addTestSuite(AutoboxTest.class);
-    suite.addTestSuite(ClassCastTestCase.class);
+    suite.addTestSuite(ClassCastTest.class);
     suite.addTestSuite(ClassObjectTest.class);
     suite.addTestSuite(CompilerTest.class);
-    suite.addTestSuite(Coverage.class);
+    suite.addTestSuite(CoverageTest.class);
     suite.addTestSuite(EnhancedForLoopTest.class);
     suite.addTestSuite(EnumsTest.class);
     suite.addTestSuite(HostedTest.class);
@@ -62,7 +62,7 @@ public class CompilerSuite {
     suite.addTestSuite(MethodInterfaceTest.class);
     suite.addTestSuite(MiscellaneousTest.class);
     suite.addTestSuite(NativeLongTest.class);
-    suite.addTestSuite(TestBlankInterface.class);
+    suite.addTestSuite(BlankInterfaceTest.class);
     suite.addTestSuite(VarargsTest.class);
     // $JUnit-END$
 
