@@ -32,6 +32,7 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -98,20 +99,35 @@ public class JavaScriptObjectCaster {
 
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
-      for (int i = 0; i < x.getTarget().params.size(); ++i) {
-        JParameter param = x.getTarget().params.get(i);
-        JExpression newArg = checkAndReplaceJso(x.getArgs().get(i),
-            param.getType());
-        x.getArgs().set(i, newArg);
+      // Check implicit assignments from argument and instance passing.
+
+      ArrayList<JExpression> args = x.getArgs();
+      JMethod target = x.getTarget();
+      /*
+       * Check arguments for calls to non-native methods. Do not check native
+       * invocations because we're losing all static type information anyway.
+       */
+      if (!target.isNative()) {
+        for (int i = 0; i < target.params.size(); ++i) {
+          JParameter param = target.params.get(i);
+          JExpression arg = args.get(i);
+          JExpression newArg = checkAndReplaceJso(arg, param.getType());
+          this.didChange |= (newArg != arg);
+          args.set(i, newArg);
+        }
       }
-      if (!x.getTarget().isStatic()) {
-        // for polymorphic calls, force wrapping
+
+      /*
+       * Virtual calls *require* wrapping to dispatch correctly. This should be
+       * a rare case since most call should get statically resolved already.
+       */
+      if (!target.isStatic()) {
         JExpression newInst = checkAndReplaceJso(x.getInstance(),
             program.getTypeJavaLangObject());
         if (newInst != x.getInstance()) {
           JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
-              newInst, x.getTarget(), x.isStaticDispatchOnly());
-          newCall.getArgs().addAll(x.getArgs());
+              newInst, target, x.isStaticDispatchOnly());
+          newCall.getArgs().addAll(args);
           ctx.replaceMe(newCall);
         }
       }
