@@ -151,6 +151,14 @@ public class Window {
   }-*/;
 
   /**
+   * Prints the document in the window, as if the user had issued a "Print"
+   * command.
+   */
+  public static native void print() /*-{
+    $wnd.print();
+  }-*/;
+  
+  /**
    * Displays a request for information in a modal dialog box, along with the
    * standard 'OK' and 'Cancel' buttons.
    * 
@@ -197,6 +205,16 @@ public class Window {
     $doc.body.style.margin = size;
   }-*/;
 
+  /**
+   * Sets the status text for the window. Calling this method in Firefox
+   * has no effect.
+   * 
+   * @param status the new message to display.
+   */
+  public static native void setStatus(String status) /*-{
+    $wnd.status = status;
+  }-*/;
+  
   /**
    * Sets the browser window's title.
    * 
