@@ -26,12 +26,9 @@ import java.util.ArrayList;
  */
 public class Window {
 
-  private static ArrayList<WindowCloseListener> closingListeners = new ArrayList<WindowCloseListener>();
-  private static ArrayList<WindowResizeListener> resizeListeners = new ArrayList<WindowResizeListener>();
-
-  static {
-    init();
-  }
+  private static boolean handlersAreInitialized;
+  private static ArrayList<WindowCloseListener> closingListeners;
+  private static ArrayList<WindowResizeListener> resizeListeners;
 
   /**
    * Adds a listener to receive window closing events.
@@ -39,6 +36,10 @@ public class Window {
    * @param listener the listener to be informed when the window is closing
    */
   public static void addWindowCloseListener(WindowCloseListener listener) {
+    maybeInitializeHandlers();
+    if (closingListeners == null) {
+      closingListeners = new ArrayList<WindowCloseListener>();
+    }
     closingListeners.add(listener);
   }
 
@@ -48,6 +49,10 @@ public class Window {
    * @param listener the listener to be informed when the window is resized
    */
   public static void addWindowResizeListener(WindowResizeListener listener) {
+    maybeInitializeHandlers();
+    if (resizeListeners == null) {
+      resizeListeners = new ArrayList<WindowResizeListener>();
+    }
     resizeListeners.add(listener);
   }
 
@@ -164,7 +169,9 @@ public class Window {
    * @param listener the listener to be removed
    */
   public static void removeWindowCloseListener(WindowCloseListener listener) {
-    closingListeners.remove(listener);
+    if (closingListeners != null) {
+      closingListeners.remove(listener);
+    }
   }
 
   /**
@@ -173,7 +180,9 @@ public class Window {
    * @param listener the listener to be removed
    */
   public static void removeWindowResizeListener(WindowResizeListener listener) {
-    resizeListeners.remove(listener);
+    if (resizeListeners != null) {
+      resizeListeners.remove(listener);
+    }
   }
 
   /**
@@ -233,8 +242,10 @@ public class Window {
   }
 
   private static void fireClosedImpl() {
-    for (WindowCloseListener listener : closingListeners) {
-      listener.onWindowClosed();
+    if (closingListeners != null) {
+      for (WindowCloseListener listener : closingListeners) {
+        listener.onWindowClosed();
+      }
     }
   }
 
@@ -249,11 +260,13 @@ public class Window {
 
   private static String fireClosingImpl() {
     String ret = null;
-    for (WindowCloseListener listener : closingListeners) {
-      // If any listener wants to suppress the window closing event, then do so.
-      String msg = listener.onWindowClosing();
-      if (ret == null) {
-        ret = msg;
+    if (closingListeners != null) {
+      for (WindowCloseListener listener : closingListeners) {
+        // If any listener wants to suppress the window closing event, then do so.
+        String msg = listener.onWindowClosing();
+        if (ret == null) {
+          ret = msg;
+        }
       }
     }
 
@@ -269,8 +282,10 @@ public class Window {
   }
 
   private static void fireResizedImpl() {
-    for (WindowResizeListener listener : resizeListeners) {
-      listener.onWindowResized(getClientWidth(), getClientHeight());
+    if (resizeListeners != null) {
+      for (WindowResizeListener listener : resizeListeners) {
+        listener.onWindowResized(getClientWidth(), getClientHeight());
+      }
     }
   }
 
@@ -291,6 +306,13 @@ public class Window {
       }
     );
   }-*/;
+  
+  private static void maybeInitializeHandlers() {
+    if (!handlersAreInitialized) {
+      init();
+      handlersAreInitialized = true;
+    }
+  }
 
   private Window() {
   }

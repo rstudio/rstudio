@@ -34,14 +34,18 @@ class ImageSrcIE6 {
    * loading, it will be removed from this map.
    */
   private static JavaScriptObject srcImgMap;
-
+  
+  static {
+    executeBackgroundImageCacheCommand();
+  }
+  
   /**
    * Returns the src of the image, or the pending src if the image is pending. 
    */
   public static native String getImgSrc(Element img) /*-{
     return img.__pendingSrc || img.src;
   }-*/;
-  
+
   /**
    * Sets the src of the image, queuing up with other requests for the same
    * URL if necessary.
@@ -146,6 +150,17 @@ class ImageSrcIE6 {
       img.onabort = _onabort;
       img.__cleanup = img.__pendingSrc = img.__kids = null;
       delete srcImgMap[src];
+    }
+  }-*/;
+
+  private static native void executeBackgroundImageCacheCommand() /*-{
+    // Fix IE background image refresh bug, present through IE6
+    // see http://www.mister-pixel.com/#Content__state=is_that_simple
+    // this only works with IE6 SP1+
+    try {
+      $doc.execCommand("BackgroundImageCache", false, true);
+    } catch (e) {
+      // ignore error on other browsers
     }
   }-*/;
 

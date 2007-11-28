@@ -138,7 +138,56 @@ abstract class DOMImplStandard extends DOMImpl {
   }-*/;
 
   @Override
-  public native void init() /*-{
+  public native void insertChild(Element parent, Element toAdd, int index) /*-{
+    var count = 0, child = parent.firstChild, before = null;
+    while (child) {
+      if (child.nodeType == 1) {
+        if (count == index) {
+          before = child;
+          break;
+        }
+        ++count;
+      }
+      child = child.nextSibling;
+    }
+
+    parent.insertBefore(toAdd, before);
+  }-*/;
+
+  @Override
+  public native boolean isOrHasChild(Element parent, Element child) /*-{
+    while (child) {
+      if (parent == child) {
+        return true;
+      }
+      child = child.parentNode;
+      if (child && (child.nodeType != 1)) {
+        child = null;
+      }
+    }
+    return false;
+  }-*/;
+
+  @Override
+  public void releaseCapture(Element elem) {
+    maybeInitializeEventSystem();
+    releaseCaptureImpl(elem);
+  }
+
+  @Override
+  public void setCapture(Element elem) {
+    maybeInitializeEventSystem();
+    setCaptureImpl(elem);
+  }
+ 
+  @Override
+  public void sinkEvents(Element elem, int bits) {
+    maybeInitializeEventSystem();
+    sinkEventsImpl(elem, bits);
+  }
+  
+  @Override
+  protected native void initEventSystem() /*-{
     // Set up capture event dispatchers.
     $wnd.__dispatchCapturedMouseEvent = function(evt) {
       if ($wnd.__dispatchCapturedEvent(evt)) {
@@ -184,51 +233,17 @@ abstract class DOMImplStandard extends DOMImpl {
 
     $wnd.__captureElem = null;
   }-*/;
-
-  @Override
-  public native void insertChild(Element parent, Element toAdd, int index) /*-{
-    var count = 0, child = parent.firstChild, before = null;
-    while (child) {
-      if (child.nodeType == 1) {
-        if (count == index) {
-          before = child;
-          break;
-        }
-        ++count;
-      }
-      child = child.nextSibling;
-    }
-
-    parent.insertBefore(toAdd, before);
-  }-*/;
-
-  @Override
-  public native boolean isOrHasChild(Element parent, Element child) /*-{
-    while (child) {
-      if (parent == child) {
-        return true;
-      }
-      child = child.parentNode;
-      if (child && (child.nodeType != 1)) {
-        child = null;
-      }
-    }
-    return false;
-  }-*/;
-
-  @Override
-  public native void releaseCapture(Element elem) /*-{
+  
+  private native void releaseCaptureImpl(Element elem) /*-{
     if (elem == $wnd.__captureElem)
       $wnd.__captureElem = null;
   }-*/;
 
-  @Override
-  public native void setCapture(Element elem) /*-{
+  private native void setCaptureImpl(Element elem) /*-{
     $wnd.__captureElem = elem;
   }-*/;
 
-  @Override
-  public native void sinkEvents(Element elem, int bits) /*-{
+  private native void sinkEventsImpl(Element elem, int bits) /*-{
     elem.__eventBits = bits;
 
     elem.onclick       = (bits & 0x00001) ? $wnd.__dispatchEvent : null;

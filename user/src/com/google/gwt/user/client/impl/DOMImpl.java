@@ -24,6 +24,8 @@ import com.google.gwt.user.client.EventListener;
  */
 public abstract class DOMImpl {
 
+  protected static boolean eventSystemIsInitialized;
+  
   public native void appendChild(Element parent, Element child) /*-{
     parent.appendChild(child);
   }-*/;
@@ -191,8 +193,7 @@ public abstract class DOMImpl {
   }-*/;
 
   public native Element getElementById(String id) /*-{
-    var elem = $doc.getElementById(id);
-    return elem || null;
+    return $doc.getElementById(id) || null;
   }-*/;
 
   public native String getElementProperty(Element elem, String prop) /*-{
@@ -205,11 +206,7 @@ public abstract class DOMImpl {
   }-*/;
 
   public native int getElementPropertyInt(Element elem, String prop) /*-{
-    var i = parseInt(elem[prop]);
-    if (!i) {
-      return 0;
-    }
-    return i;
+    return parseInt(elem[prop]) || 0;
   }-*/;
 
   public native int getEventsSunk(Element elem) /*-{
@@ -244,11 +241,7 @@ public abstract class DOMImpl {
   }-*/;
 
   public native int getIntStyleAttribute(Element elem, String attr) /*-{
-    var i = parseInt(elem.style[attr]);
-    if (!i) {
-      return 0;
-    }
-    return i;
+    return parseInt(elem.style[attr]) || 0;
   }-*/;
 
   public abstract Element getNextSibling(Element elem);
@@ -259,8 +252,6 @@ public abstract class DOMImpl {
     var ret = elem.style[attr];
     return (ret == null) ? null : ret;
   }-*/;
-
-  public abstract void init();
 
   public native void insertBefore(Element parent, Element child, Element before) /*-{
     parent.insertBefore(child, before);
@@ -417,4 +408,19 @@ public abstract class DOMImpl {
    * @return the window's client width
    */
   public abstract int windowGetClientWidth();
+
+  /**
+   * Initializes the event dispatch system.
+   */
+  protected abstract void initEventSystem();
+  
+  /**
+   * Initialize the event system if it has not already been initialized.
+   */
+  protected void maybeInitializeEventSystem() {
+    if (!eventSystemIsInitialized) {
+      initEventSystem();
+      eventSystemIsInitialized = true;
+    }
+  }
 }

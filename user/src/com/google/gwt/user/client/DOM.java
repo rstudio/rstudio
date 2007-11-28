@@ -31,16 +31,11 @@ public class DOM {
 
   // The current event being fired
   private static Event currentEvent = null;
-  private static DOMImpl impl;
+  private static final DOMImpl impl = GWT.create(DOMImpl.class);
   private static Element sCaptureElem;
 
   // <BrowserEventPreview>
-  private static ArrayList<EventPreview> sEventPreviewStack = new ArrayList<EventPreview>();
-
-  static {
-    impl = GWT.create(DOMImpl.class);
-    impl.init();
-  }
+  private static ArrayList<EventPreview> sEventPreviewStack;
 
   /**
    * Adds an event preview to the preview stack. As long as this preview remains
@@ -54,6 +49,9 @@ public class DOM {
   public static void addEventPreview(EventPreview preview) {
     // Add the event preview to the stack. It will automatically
     // begin receiving events.
+    if (sEventPreviewStack == null) {
+      sEventPreviewStack = new ArrayList<EventPreview>();
+    }
     sEventPreviewStack.add(preview);
   }
 
@@ -960,7 +958,9 @@ public class DOM {
     // Remove the event preview from the stack. If it was on top,
     // any preview underneath it will automatically begin to
     // receive events.
-    sEventPreviewStack.remove(preview);
+    if (sEventPreviewStack != null) {
+      sEventPreviewStack.remove(preview);
+    }
   }
 
   /**
@@ -1230,7 +1230,7 @@ public class DOM {
   static boolean previewEvent(Event evt) {
     // If event previews are present, redirect events to the topmost of them.
     boolean ret = true;
-    if (sEventPreviewStack.size() > 0) {
+    if (sEventPreviewStack != null && sEventPreviewStack.size() > 0) {
       EventPreview preview =
         sEventPreviewStack.get(sEventPreviewStack.size() - 1);
       if (!(ret = preview.onEventPreview(evt))) {

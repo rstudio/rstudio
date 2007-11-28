@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -92,12 +92,6 @@ class DOMImplMozilla extends DOMImplStandard {
   }-*/;
 
   @Override
-  public void init() {
-    super.init();
-    initMozilla();
-  }
-
-  @Override
   public native boolean isOrHasChild(Element parent, Element child) /*-{
     while (child) {
       if (parent.isSameNode(child)) {
@@ -121,11 +115,10 @@ class DOMImplMozilla extends DOMImplStandard {
   }-*/;
 
   @Override
-  public native void releaseCapture(Element elem) /*-{
-    if (elem.isSameNode($wnd.__captureElem)) {
-      $wnd.__captureElem = null;
-    }
-  }-*/;
+  public void releaseCapture(Element elem) {
+    maybeInitializeEventSystem();
+    releaseCaptureImpl(elem);
+  }
 
   @Override
   public void sinkEvents(Element elem, int bits) {
@@ -160,9 +153,9 @@ class DOMImplMozilla extends DOMImplStandard {
     //    doc.body.clientHeight --> client height without scrollbars.
     //    doc.documentElement.clientHeight --> document height.
     // So, must switch value on compatMode.
-  return ($doc.compatMode == 'BackCompat')?
-    $doc.body.clientHeight:
-    $doc.documentElement.clientHeight;
+    return ($doc.compatMode == 'BackCompat')?
+      $doc.body.clientHeight:
+      $doc.documentElement.clientHeight;
   }-*/;
 
   @Override
@@ -173,7 +166,13 @@ class DOMImplMozilla extends DOMImplStandard {
       $doc.documentElement.clientWidth;
   }-*/;
 
-  protected native void initMozilla() /*-{
+  @Override
+  protected void initEventSystem() {
+    super.initEventSystem();
+    initSyntheticMouseUpEvents();
+  }
+
+  private native void initSyntheticMouseUpEvents() /*-{
     $wnd.addEventListener(
       'mouseout',
       function(evt) {
@@ -200,4 +199,9 @@ class DOMImplMozilla extends DOMImplStandard {
       true);
   }-*/;
 
+  private native void releaseCaptureImpl(Element elem) /*-{
+    if (elem.isSameNode($wnd.__captureElem)) {
+      $wnd.__captureElem = null;
+    }
+  }-*/;
 }

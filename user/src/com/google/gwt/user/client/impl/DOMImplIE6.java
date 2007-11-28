@@ -173,8 +173,7 @@ class DOMImplIE6 extends DOMImpl {
 
   @Override
   public native Element getNextSibling(Element elem) /*-{
-    var sib = elem.nextSibling;
-    return sib || null;
+    return elem.nextSibling || null;
   }-*/;
 
   @Override
@@ -188,16 +187,7 @@ class DOMImplIE6 extends DOMImpl {
   }-*/;
 
   @Override
-  public native void init() /*-{
-    // Fix IE background image refresh bug, present through IE6
-    // see http://www.mister-pixel.com/#Content__state=is_that_simple
-    // this only works with IE6 SP1+
-    try {
-      $doc.execCommand("BackgroundImageCache", false, true);
-    } catch (e) {
-      // ignore error on other browsers
-    }
-  
+  public native void initEventSystem() /*-{
     // Set up event dispatchers.
     $wnd.__dispatchEvent = function() {
       // IE doesn't define event.currentTarget, so we squirrel it away here. It
@@ -277,14 +267,16 @@ class DOMImplIE6 extends DOMImpl {
   }-*/;
 
   @Override
-  public native void releaseCapture(Element elem) /*-{
-    elem.releaseCapture();
-  }-*/;
+  public void releaseCapture(Element elem) {
+    maybeInitializeEventSystem();
+    releaseCaptureImpl(elem);
+  }
 
   @Override
-  public native void setCapture(Element elem) /*-{
-    elem.setCapture();
-  }-*/;
+  public void setCapture(Element elem) {
+    maybeInitializeEventSystem();
+    setCaptureImpl(elem);
+  }
 
   /**
    * Works around an IE problem where multiple images trying to load at the same
@@ -297,16 +289,39 @@ class DOMImplIE6 extends DOMImpl {
   public void setImgSrc(Element img, String src) {
     ImageSrcIE6.setImgSrc(img, src);
   }
-
+  
   @Override
   public native void setInnerText(Element elem, String text) /*-{
-    if (!text)
-      text = '';
-    elem.innerText = text;
+    elem.innerText = text || '';
   }-*/;
 
   @Override
-  public native void sinkEvents(Element elem, int bits) /*-{
+  public void sinkEvents(Element elem, int bits) {
+    maybeInitializeEventSystem();
+    sinkEventsImpl(elem, bits);
+  }
+
+  @Override
+  public native int windowGetClientHeight() /*-{
+    // IE standard mode || IE quirks mode.
+    return $doc.documentElement.clientHeight || $doc.body.clientHeight; 
+  }-*/;
+ 
+  @Override
+  public native int windowGetClientWidth() /*-{
+    // IE standard mode || IE quirks mode.
+    return $doc.documentElement.clientWidth || $doc.body.clientWidth;
+  }-*/;
+  
+  private native void releaseCaptureImpl(Element elem) /*-{
+    elem.releaseCapture();
+  }-*/;
+
+  private native void setCaptureImpl(Element elem) /*-{
+    elem.setCapture();
+  }-*/;
+
+  private native void sinkEventsImpl(Element elem, int bits) /*-{
     elem.__eventBits = bits;
 
     elem.onclick       = (bits & 0x00001) ? $wnd.__dispatchEvent : null;
@@ -329,18 +344,6 @@ class DOMImplIE6 extends DOMImpl {
     elem.onload        = (bits & 0x08000) ? $wnd.__dispatchEvent : null;
     elem.onerror       = (bits & 0x10000) ? $wnd.__dispatchEvent : null;
     elem.onmousewheel  = (bits & 0x20000) ? $wnd.__dispatchEvent : null;
-  }-*/;
-
-  @Override
-  public native int windowGetClientHeight() /*-{
-    // IE standard mode || IE quirks mode.
-    return $doc.documentElement.clientHeight || $doc.body.clientHeight; 
-  }-*/;
-
-  @Override
-  public native int windowGetClientWidth() /*-{
-    // IE standard mode || IE quirks mode.
-    return $doc.documentElement.clientWidth || $doc.body.clientWidth;
   }-*/;
 
 }
