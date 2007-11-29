@@ -577,8 +577,8 @@ public class JsInliner {
    * configured to collect idents from qualified xor unqualified JsNameRefs.
    */
   private static class IdentCollector extends JsVisitor {
-    private final Set<String> idents = new HashSet<String>();
     private final boolean collectQualified;
+    private final Set<String> idents = new HashSet<String>();
 
     public IdentCollector(boolean collectQualified) {
       this.collectQualified = collectQualified;
@@ -610,8 +610,8 @@ public class JsInliner {
    * statements if the context of the invocation would allow this.
    */
   private static class InliningVisitor extends JsModVisitor {
-    private final Stack<JsFunction> functionStack = new Stack<JsFunction>();
     private final Set<JsFunction> blacklist = new HashSet<JsFunction>();
+    private final Stack<JsFunction> functionStack = new Stack<JsFunction>();
     private final JsProgram program;
 
     public InliningVisitor(JsProgram program) {
@@ -737,6 +737,7 @@ public class JsInliner {
       List<JsExpression> hoisted = new ArrayList<JsExpression>(
           statements.size());
 
+      boolean sawReturnStatement = false;
       for (JsStatement statement : statements) {
         /*
          * Create replacement expressions to use in place of the original
@@ -753,41 +754,37 @@ public class JsInliner {
 
         hoisted.add(h);
 
-        if (hoistedExpressionTerminal(statement)) {
+        if (isReturnStatement(statement)) {
+          sawReturnStatement = true;
           break;
         }
       }
 
       /*
-       * Determine the expressions that will be used to construct the
-       * replacement expression.
+       * If the inlined method has no return statement, synthesize an undefined
+       * reference. It will be reclaimed if the method call is from a
+       * JsExprStmt.
        */
-      JsExpression op;
+      if (!sawReturnStatement) {
+        hoisted.add(program.getUndefinedLiteral());
+      }
 
-      if (hoisted.size() == 0) {
-        /*
-         * There are no expressions evaluated in the target function, so we'll
-         * try to replace the invocation with nothing. The null literal may be
-         * reclaimed during the JsExprStmt cleanup pass.
-         */
-        op = program.getNullLiteral();
+      assert (hoisted.size() > 0);
 
-      } else {
-        /*
-         * Build up the new comma expression from right-to-left; building the
-         * rightmost comma expressions first. Bootstrapping with i.previous()
-         * ensures that this logic will function correctly in the case of a
-         * single expression.
-         */
-        ListIterator<JsExpression> i = hoisted.listIterator(hoisted.size());
-        op = i.previous();
-        while (i.hasPrevious()) {
-          JsBinaryOperation outerOp = new JsBinaryOperation(
-              JsBinaryOperator.COMMA);
-          outerOp.setArg1(i.previous());
-          outerOp.setArg2(op);
-          op = outerOp;
-        }
+      /*
+       * Build up the new comma expression from right-to-left; building the
+       * rightmost comma expressions first. Bootstrapping with i.previous()
+       * ensures that this logic will function correctly in the case of a single
+       * expression.
+       */
+      ListIterator<JsExpression> i = hoisted.listIterator(hoisted.size());
+      JsExpression op = i.previous();
+      while (i.hasPrevious()) {
+        JsBinaryOperation outerOp = new JsBinaryOperation(
+            JsBinaryOperator.COMMA);
+        outerOp.setArg1(i.previous());
+        outerOp.setArg2(op);
+        op = outerOp;
       }
 
       // Confirm that the expression conforms to the desired heuristics
@@ -890,8 +887,8 @@ public class JsInliner {
    * Generally speaking, we disallow the use of parameters as lvalues.
    */
   private static class ParameterUsageVisitor extends JsVisitor {
-    private final Set<JsName> parameterNames;
     private boolean lvalue = false;
+    private final Set<JsName> parameterNames;
 
     public ParameterUsageVisitor(Set<JsName> parameterNames) {
       this.parameterNames = parameterNames;
@@ -1008,8 +1005,8 @@ public class JsInliner {
    * the lifetime of the program.
    */
   private static class RedefinedFunctionCollector extends JsVisitor {
-    private final Set<JsFunction> redefined = new HashSet<JsFunction>();
     private final Map<JsName, JsFunction> nameMap = new IdentityHashMap<JsName, JsFunction>();
+    private final Set<JsFunction> redefined = new HashSet<JsFunction>();
 
     /**
      * Look for assignments to JsNames whose static references are JsFunctions.
@@ -1157,8 +1154,8 @@ public class JsInliner {
    * identifiers to resolve to different values.
    */
   private static class StableNameChecker extends JsVisitor {
-    private final JsScope callerScope;
     private final JsScope calleeScope;
+    private final JsScope callerScope;
     private final Collection<JsName> parameterNames;
     private boolean stable = true;
 
@@ -1205,15 +1202,6 @@ public class JsInliner {
   }
 
   /**
-   * When attempting to inline an invocation, this constant determines the
-   * maximum allowable ratio of potential inlined complexity to initial
-   * complexity. This acts as a brake on very large expansions from bloating the
-   * the generated output. Increasing this number will allow larger sections of
-   * code to be inlined, but at a cost of larger JS output.
-   */
-  private static final int MAX_COMPLEXITY_INCREASE = 10;
-
-  /**
    * A List of expression types that are known to never be affected by
    * side-effects. Used by {@link #alwaysFlexible(JsExpression)}.
    */
@@ -1221,6 +1209,15 @@ public class JsInliner {
       JsBooleanLiteral.class, JsDecimalLiteral.class, JsIntegralLiteral.class,
       JsNullLiteral.class, JsRegExp.class, JsStringLiteral.class,
       JsThisRef.class});
+
+  /**
+   * When attempting to inline an invocation, this constant determines the
+   * maximum allowable ratio of potential inlined complexity to initial
+   * complexity. This acts as a brake on very large expansions from bloating the
+   * the generated output. Increasing this number will allow larger sections of
+   * code to be inlined, but at a cost of larger JS output.
+   */
+  private static final int MAX_COMPLEXITY_INCREASE = 5;
 
   /**
    * Static entry point used by JavaToJavaScriptCompiler.
@@ -1328,27 +1325,14 @@ public class JsInliner {
     if (statement instanceof JsExprStmt) {
       JsExprStmt exprStmt = (JsExprStmt) statement;
       expression = exprStmt.getExpression();
-
     } else if (statement instanceof JsReturn) {
       JsReturn ret = (JsReturn) statement;
       expression = ret.getExpr();
-
     } else {
-      // TODO If additional statements are supported, update hETerminal()
       return null;
     }
 
     return JsHoister.hoist(expression);
-  }
-
-  /**
-   * This is used in combination with {@link #hoistedExpression(JsStatement)} to
-   * indicate if a given statement would terminate the list of hoisted
-   * expressions.
-   */
-  private static boolean hoistedExpressionTerminal(JsStatement statement) {
-    // TODO keep this in synch with hoistedExpression
-    return statement instanceof JsReturn;
   }
 
   /**
@@ -1472,6 +1456,15 @@ public class JsInliner {
 
     // Hooray!
     return true;
+  }
+
+  /**
+   * This is used in combination with {@link #hoistedExpression(JsStatement)} to
+   * indicate if a given statement would terminate the list of hoisted
+   * expressions.
+   */
+  private static boolean isReturnStatement(JsStatement statement) {
+    return statement instanceof JsReturn;
   }
 
   /**

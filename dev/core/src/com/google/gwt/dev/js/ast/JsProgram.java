@@ -139,6 +139,10 @@ public final class JsProgram extends JsNode<JsProgram> {
     return trueLiteral;
   }
 
+  public JsNameRef getUndefinedLiteral() {
+    return rootScope.findExistingName("undefined").makeRef();
+  }
+
   public void traverse(JsVisitor v, JsContext<JsProgram> ctx) {
     if (v.visit(this, ctx)) {
       v.accept(globalBlock);
