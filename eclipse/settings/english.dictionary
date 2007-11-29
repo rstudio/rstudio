@@ -47266,3 +47266,6 @@ mozilla
 fulfill
 deserialization
 deserialized
+inlinable
+inline
+callee
