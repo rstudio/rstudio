@@ -293,10 +293,10 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
   }
 
   /**
-   * Returns the Map.Entry whose key is equal to <code>key</code>, provided
-   * that <code>key</code>'s hash code is Object equal to
-   * <code>hashCode</code>; or <code>null</code> if no such Map.Entry
-   * exists at the specified hashCode.
+   * Returns the Map.Entry whose key is Object equal to <code>key</code>,
+   * provided that <code>key</code>'s hash code is <code>hashCode</code>;
+   * or <code>null</code> if no such Map.Entry exists at the specified
+   * hashCode.
    */
   private native V getHashValue(Object key, int hashCode) /*-{
     var array = this.@java.util.HashMap::hashCodeMap[hashCode];
@@ -321,8 +321,9 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
   }-*/;
   
   /**
-   * Returns true if the given key exists in the hashCodeMap, provided that
-   * <code>key</code>'s hash code is Object equal to <code>hashCode</code>.
+   * Returns true if the a key exists in the hashCodeMap that is Object equal to
+   * <code>key</code>, provided that <code>key</code>'s hash code is
+   * <code>hashCode</code>.
    */
   private native boolean hasHashValue(Object key, int hashCode) /*-{
     var array = this.@java.util.HashMap::hashCodeMap[hashCode];
@@ -396,7 +397,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
   }-*/;
 
   /**
-   * Removes the pair whose key is equal to <code>key</code> from
+   * Removes the pair whose key is Object equal to <code>key</code> from
    * <code>hashCodeMap</code>, provided that <code>key</code>'s hash code
    * is <code>hashCode</code>. Returns the value that was associated with the
    * removed key, or null if no such key existed.
