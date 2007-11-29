@@ -16,7 +16,7 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.google.gwt.dev.GWTCompiler"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-out www&#13;&#10;com.google.gwt.sample.hello.Hello/Hello.html"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-out www&#13;&#10;com.google.gwt.sample.hello.Hello"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Hello"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-ea&#13;&#10;-server&#13;&#10;-Dgwt.devjar=C:\gwt\trunk\build\staging\gwt-windows-0.0.0\gwt-dev-windows.jar&#13;&#10;-Xcheck:jni"/>
 </launchConfiguration>
