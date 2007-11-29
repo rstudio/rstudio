@@ -92,7 +92,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
      */
     public EntrySetIterator() {
       List<Map.Entry<K, V>> list = new ArrayList<Map.Entry<K, V>>();
-      if (nullSlot != UNDEFINED) {
+      if (nullSlotLive) {
         MapEntryImpl<K, V> entryImpl = new MapEntryImpl<K, V>(null, nullSlot);
         list.add(entryImpl);
       }
@@ -119,12 +119,6 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
       }
     }
   }
-
-  /**
-   * Contains JS <code>undefined</code>. This is technically a violation of
-   * the JSNI contract, so we have to be very careful with this.
-   */
-  private static final Object UNDEFINED = createUndefinedValue();
 
   private static native void addAllHashEntries(JavaScriptObject hashCodeMap,
       Collection<?> dest) /*-{
@@ -192,140 +186,16 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
   }-*/;
 
   /**
-   * Returns <code>undefined</code>. This is technically a violation of the
-   * JSNI contract, so we have to be very careful how we use the result.
-   */
-  private static native JavaScriptObject createUndefinedValue() /*-{
-    // intentionally return undefined
-  }-*/;
-
-  /**
-   * Returns the Map.Entry whose key is equal to <code>key</code>, provided
-   * that <code>key</code>'s hash code is Object equal to
-   * <code>hashCode</code>; or <code>null</code> if no such Map.Entry
-   * exists at the specified hashCode.
-   */
-  private static native <K, V> V getHashValue(JavaScriptObject hashCodeMap,
-      K key, int hashCode) /*-{
-    var array = hashCodeMap[hashCode];
-    if (array) {
-      for (var i = 0, c = array.length; i < c; ++i) {
-        var entry = array[i];
-        var entryKey = entry.@java.util.Map$Entry::getKey()();
-        if (@java.util.Utility::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
-          return entry.@java.util.Map$Entry::getValue()();
-        }
-      }
-    }
-    // intentionally return undefined
-  }-*/;
-
-  /**
-   * Returns the value for the given key in the stringMap. Returns
-   * <code>undefined</code> if the specified key does not exist.
-   */
-  private static native <V> V getStringValue(JavaScriptObject stringMap,
-      String key) /*-{
-    return stringMap[':' + key];
-  }-*/;
-
-  /**
-   * Sets the specified key to the specified value in the hashCodeMap. Returns
-   * the value previously at that key. Returns <code>undefined</code> if the
-   * specified key did not exist.
-   */
-  private static native <K, V> V putHashValue(JavaScriptObject hashCodeMap,
-      K key, V value, int hashCode) /*-{
-    var array = hashCodeMap[hashCode];
-    if (array) {
-      for (var i = 0, c = array.length; i < c; ++i) {
-        var entry = array[i];
-        var entryKey = entry.@java.util.Map$Entry::getKey()();
-        if (@java.util.Utility::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
-          // Found an exact match, just update the existing entry
-          var previous = entry.@java.util.Map$Entry::getValue()();
-          entry.@java.util.Map$Entry::setValue(Ljava/lang/Object;)(value);
-          return previous;
-        }
-      }
-    } else {
-      array = hashCodeMap[hashCode] = [];
-    }
-    var entry = @java.util.MapEntryImpl::create(Ljava/lang/Object;Ljava/lang/Object;)(key, value);
-    array.push(entry);
-    // intentionally return undefined
-  }-*/;
-
-  /**
-   * Sets the specified key to the specified value in the stringMap. Returns the
-   * value previously at that key. Returns <code>undefined</code> if the
-   * specified key did not exist.
-   */
-  private static native <V> V putStringValue(JavaScriptObject stringMap,
-      String key, V value) /*-{
-    key = ':' + key;
-    var result = stringMap[key] 
-    stringMap[key] = value;
-    return result;
-  }-*/;
-
-  /**
-   * Removes the pair whose key is equal to <code>key</code> from
-   * <code>hashCodeMap</code>, provided that <code>key</code>'s hash code
-   * is <code>hashCode</code>. Returns the value that was associated with the
-   * removed key, or undefined if no such key existed.
-   * 
-   * @param <K> key type
-   * @param <V> value type
-   */
-  private static native <K, V> V removeHashValue(JavaScriptObject hashCodeMap,
-      K key, int hashCode) /*-{
-    var array = hashCodeMap[hashCode];
-    if (array) {
-      for (var i = 0, c = array.length; i < c; ++i) {
-        var entry = array[i];
-        var entryKey = entry.@java.util.Map$Entry::getKey()();
-        if (@java.util.Utility::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
-          if (array.length == 1) {
-            // remove the whole array
-            delete hashCodeMap[hashCode];
-          } else {
-            // splice out the entry we're removing
-            array.splice(i, 1);
-          }
-          return entry.@java.util.Map$Entry::getValue()();
-        }
-      }
-    }
-    // intentionally return undefined
-  }-*/;
-
-  /**
-   * Removes the specified key from the stringMap and returns the value that was
-   * previously there. Returns <code>undefined</code> if the specified key
-   * does not exist.
-   */
-  private static native <V> V removeStringValue(JavaScriptObject stringMap,
-      String key) /*-{
-    key = ':' + key;
-    var result = stringMap[key];
-    delete stringMap[key];
-    return result;
-  }-*/;
-
-  /**
    * A map of integral hashCodes onto entries.
    */
   private transient JavaScriptObject hashCodeMap;
 
   /**
    * This is the slot that holds the value associated with the "null" key.
-   * 
-   * TODO(jat): reconsider this implementation -- this can hold values that
-   * aren't of type V, such as UNDEFINED (which is an Object). We should
-   * reimplement this in a more type-safe manner.
    */
   private transient V nullSlot;
+
+  private transient boolean nullSlotLive;
 
   private int size;
 
@@ -369,18 +239,13 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
 
   @Override
   public boolean containsKey(Object key) {
-    if (key instanceof String) {
-      return getStringValue(stringMap, (String) key) != UNDEFINED;
-    } else if (key == null) {
-      return nullSlot != UNDEFINED;
-    } else {
-      return getHashValue(hashCodeMap, key, key.hashCode()) != UNDEFINED;
-    }
+    return (key == null) ? nullSlotLive : (!(key instanceof String) ? hasHashValue(
+        key, key.hashCode()) : hasStringValue((String) key));
   }
 
   @Override
   public boolean containsValue(Object value) {
-    if (nullSlot != UNDEFINED && Utility.equalsWithNullCheck(nullSlot, value)) {
+    if (nullSlotLive && Utility.equalsWithNullCheck(nullSlot, value)) {
       return true;
     } else if (containsStringValue(stringMap, value)) {
       return true;
@@ -397,53 +262,21 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
 
   @Override
   public V get(Object key) {
-    V result;
-    if (key instanceof String) {
-      result = getStringValue(stringMap, (String) key);
-    } else if (key == null) {
-      result = nullSlot;
-    } else {
-      result = getHashValue(hashCodeMap, key, key.hashCode());
-    }
-    return (result == UNDEFINED) ? null : result;
+    return (key == null) ? nullSlot : (!(key instanceof String) ? getHashValue(
+        key, key.hashCode()) : getStringValue((String) key));
   }
 
   @Override
   public V put(K key, V value) {
-    V previous;
-    if (key instanceof String) {
-      previous = putStringValue(stringMap, (String) key, value);
-    } else if (key == null) {
-      previous = nullSlot;
-      nullSlot = value;
-    } else {
-      previous = putHashValue(hashCodeMap, key, value, key.hashCode());
-    }
-    if (previous == UNDEFINED) {
-      ++size;
-      return null;
-    } else {
-      return previous;
-    }
+    return (key == null) ? putNullSlot(value) : (!(key instanceof String)
+        ? putHashValue(key, value, key.hashCode()) : putStringValue(
+            (String) key, value));
   }
 
   @Override
   public V remove(Object key) {
-    V previous;
-    if (key instanceof String) {
-      previous = removeStringValue(stringMap, (String) key);
-    } else if (key == null) {
-      previous = nullSlot;
-      nullSlot = (V) UNDEFINED;
-    } else {
-      previous = removeHashValue(hashCodeMap, key, key.hashCode());
-    }
-    if (previous == UNDEFINED) {
-      return null;
-    } else {
-      --size;
-      return previous;
-    }
+    return (key == null) ? removeNullSlot() : (!(key instanceof String) ? removeHashValue(
+        key, key.hashCode()) : removeStringValue((String) key));
   }
 
   @Override
@@ -454,8 +287,163 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
   private void clearImpl() {
     hashCodeMap = JavaScriptObject.createArray();
     stringMap = JavaScriptObject.createObject();
-    nullSlot = (V) UNDEFINED;
+    nullSlotLive = false;
+    nullSlot = null;
     size = 0;
   }
 
+  /**
+   * Returns the Map.Entry whose key is equal to <code>key</code>, provided
+   * that <code>key</code>'s hash code is Object equal to
+   * <code>hashCode</code>; or <code>null</code> if no such Map.Entry
+   * exists at the specified hashCode.
+   */
+  private native V getHashValue(Object key, int hashCode) /*-{
+    var array = this.@java.util.HashMap::hashCodeMap[hashCode];
+    if (array) {
+      for (var i = 0, c = array.length; i < c; ++i) {
+        var entry = array[i];
+        var entryKey = entry.@java.util.Map$Entry::getKey()();
+        if (@java.util.Utility::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
+          return entry.@java.util.Map$Entry::getValue()();
+        }
+      }
+    }
+    return null;
+  }-*/;
+
+  /**
+   * Returns the value for the given key in the stringMap. Returns
+   * <code>null</code> if the specified key does not exist.
+   */
+  private native V getStringValue(String key) /*-{
+    return (_ = this.@java.util.HashMap::stringMap[':' + key]) == null ? null : _ ;
+  }-*/;
+  
+  /**
+   * Returns true if the given key exists in the hashCodeMap, provided that
+   * <code>key</code>'s hash code is Object equal to <code>hashCode</code>.
+   */
+  private native boolean hasHashValue(Object key, int hashCode) /*-{
+    var array = this.@java.util.HashMap::hashCodeMap[hashCode];
+    if (array) {
+      for (var i = 0, c = array.length; i < c; ++i) {
+        var entry = array[i];
+        var entryKey = entry.@java.util.Map$Entry::getKey()();
+        if (@java.util.Utility::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }-*/;
+
+  /**
+   * Returns true if the given key exists in the stringMap.
+   */
+  private native boolean hasStringValue(String key) /*-{
+    return this.@java.util.HashMap::stringMap[':' + key] !== undefined ;
+  }-*/;
+  
+  /**
+   * Sets the specified key to the specified value in the hashCodeMap. Returns
+   * the value previously at that key. Returns <code>null</code> if the
+   * specified key did not exist.
+   */
+  private native V putHashValue(K key, V value, int hashCode) /*-{
+    var array = this.@java.util.HashMap::hashCodeMap[hashCode];
+    if (array) {
+      for (var i = 0, c = array.length; i < c; ++i) {
+        var entry = array[i];
+        var entryKey = entry.@java.util.Map$Entry::getKey()();
+        if (@java.util.Utility::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
+          // Found an exact match, just update the existing entry
+          var previous = entry.@java.util.Map$Entry::getValue()();
+          entry.@java.util.Map$Entry::setValue(Ljava/lang/Object;)(value);
+          return previous;
+        }
+      }
+    } else {
+      array = this.@java.util.HashMap::hashCodeMap[hashCode] = [];
+    }
+    var entry = @java.util.MapEntryImpl::create(Ljava/lang/Object;Ljava/lang/Object;)(key, value);
+    array.push(entry);
+    ++this.@java.util.HashMap::size;
+    return null;
+  }-*/;
+
+  private V putNullSlot(V value) {
+    V result = nullSlot;
+    nullSlot = value;
+    if (!nullSlotLive) {
+      nullSlotLive = true;
+      ++size;
+    }
+    return result;
+  }
+
+  /**
+   * Sets the specified key to the specified value in the stringMap. Returns the
+   * value previously at that key. Returns <code>null</code> if the specified
+   * key did not exist.
+   */
+  private native V putStringValue(String key, V value) /*-{
+    key = ':' + key;
+    var result = this.@java.util.HashMap::stringMap[key];
+    this.@java.util.HashMap::stringMap[key] = value;
+    return (result === undefined) ? 
+      (++this.@java.util.HashMap::size, null) : result;
+  }-*/;
+
+  /**
+   * Removes the pair whose key is equal to <code>key</code> from
+   * <code>hashCodeMap</code>, provided that <code>key</code>'s hash code
+   * is <code>hashCode</code>. Returns the value that was associated with the
+   * removed key, or null if no such key existed.
+   */
+  private native V removeHashValue(Object key, int hashCode) /*-{
+    var array = this.@java.util.HashMap::hashCodeMap[hashCode];
+    if (array) {
+      for (var i = 0, c = array.length; i < c; ++i) {
+        var entry = array[i];
+        var entryKey = entry.@java.util.Map$Entry::getKey()();
+        if (@java.util.Utility::equalsWithNullCheck(Ljava/lang/Object;Ljava/lang/Object;)(key, entryKey)) {
+          if (array.length == 1) {
+            // remove the whole array
+            delete this.@java.util.HashMap::hashCodeMap[hashCode];
+          } else {
+            // splice out the entry we're removing
+            array.splice(i, 1);
+          }
+          --this.@java.util.HashMap::size;
+          return entry.@java.util.Map$Entry::getValue()();
+        }
+      }
+    }
+    return null;
+  }-*/;
+
+  private V removeNullSlot() {
+    V result = nullSlot;
+    nullSlot = null;
+    if (nullSlotLive) {
+      nullSlotLive = false;
+      --size;
+    }
+    return result;
+  }
+
+  /**
+   * Removes the specified key from the stringMap and returns the value that was
+   * previously there. Returns <code>null</code> if the specified key
+   * does not exist.
+   */
+  private native V removeStringValue(String key) /*-{
+    key = ':' + key;
+    var result = this.@java.util.HashMap::stringMap[key];
+    return (result === undefined) ? null :
+      (--this.@java.util.HashMap::size,
+       delete this.@java.util.HashMap::stringMap[key],
+       result);
+  }-*/;
 }
