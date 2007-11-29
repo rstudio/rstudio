@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * A JavaScript <code>var</code> statement.
  */
-public class JsVars extends JsStatement {
+public class JsVars extends JsStatement implements Iterable<JsVars.JsVar> {
 
   /**
    * A var declared using the JavaScript <code>var</code> statement.

@@ -770,9 +770,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     _var();
     _space();
     boolean sep = false;
-    for (Iterator<JsVar> iter = x.iterator(); iter.hasNext();) {
+    for (JsVar var : x) {
       sep = _sepCommaOptSpace(sep);
-      JsVars.JsVar var = iter.next();
       accept(var);
     }
     return false;
