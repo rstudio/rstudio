@@ -71,6 +71,7 @@ import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.jjs.ast.js.JClassSeed;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
 import com.google.gwt.dev.jjs.ast.js.JsonObject.JsonPropInit;
@@ -140,8 +141,8 @@ public class GenerateJavaScriptAST {
 
   private class CreateNamesAndScopesVisitor extends JVisitor {
 
-    private final Stack<JsScope> scopeStack = new Stack<JsScope>();
     private final JField arrayLengthField = program.getIndexedField("Array.length");
+    private final Stack<JsScope> scopeStack = new Stack<JsScope>();
 
     @Override
     public void endVisit(JClassType x, Context ctx) {
@@ -319,11 +320,11 @@ public class GenerateJavaScriptAST {
     public boolean visit(JTryStatement x, Context ctx) {
       accept(x.getTryBlock());
 
-      List catchArgs = x.getCatchArgs();
-      List catchBlocks = x.getCatchBlocks();
+      List<JLocalRef> catchArgs = x.getCatchArgs();
+      List<JBlock> catchBlocks = x.getCatchBlocks();
       for (int i = 0, c = catchArgs.size(); i < c; ++i) {
-        JLocalRef arg = (JLocalRef) catchArgs.get(i);
-        JBlock catchBlock = (JBlock) catchBlocks.get(i);
+        JLocalRef arg = catchArgs.get(i);
+        JBlock catchBlock = catchBlocks.get(i);
         JsCatch jsCatch = new JsCatch(peek(), arg.getTarget().getName());
         JsParameter jsParam = jsCatch.getParameter();
         names.put(arg.getTarget(), jsParam.getName());
@@ -1381,14 +1382,14 @@ public class GenerateJavaScriptAST {
     }
 
     private JsInvocation maybeCreateClinitCall(JMethod x) {
-      if (!x.isStatic()) {
+      if (!crossClassTargets.contains(x)) {
+        return null;
+      }
+      if (!x.isStatic() || program.isStaticImpl(x)) {
         return null;
       }
       JReferenceType enclosingType = x.getEnclosingType();
       if (!typeOracle.hasClinit(enclosingType)) {
-        return null;
-      }
-      if (program.isStaticImpl(x)) {
         return null;
       }
       // avoid recursion sickness
@@ -1456,6 +1457,36 @@ public class GenerateJavaScriptAST {
     }
   }
 
+  private class RecordCrossClassCalls extends JVisitor {
+
+    private JMethod currentMethod;
+
+    @Override
+    public void endVisit(JMethod x, Context ctx) {
+      currentMethod = null;
+    }
+
+    @Override
+    public void endVisit(JMethodCall x, Context ctx) {
+      JReferenceType sourceType = currentMethod.getEnclosingType();
+      JReferenceType targetType = x.getTarget().getEnclosingType();
+      if (typeOracle.checkClinit(sourceType, targetType)) {
+        crossClassTargets.add(x.getTarget());
+      }
+    }
+
+    @Override
+    public void endVisit(JsniMethodRef x, Context ctx) {
+      endVisit((JMethodCall) x, ctx);
+    }
+    
+    @Override
+    public boolean visit(JMethod x, Context ctx) {
+      currentMethod = x;
+      return true;
+    }
+  }
+
   private class SortVisitor extends JVisitor {
 
     private final HasNameSort hasNameSort = new HasNameSort();
@@ -1510,6 +1541,12 @@ public class GenerateJavaScriptAST {
   private final Map<JClassType, JsScope> classScopes = new IdentityHashMap<JClassType, JsScope>();
 
   /**
+   * A list of methods that are called from another class (ie might need to
+   * clinit).
+   */
+  private Set<JMethod> crossClassTargets = new HashSet<JMethod>();
+
+  /**
    * Contains JsNames for all interface methods. A special scope is needed so
    * that independent classes will obfuscate their interface implementation
    * methods the same way.
@@ -1536,6 +1573,7 @@ public class GenerateJavaScriptAST {
    * String's super types need special handling.
    */
   private final Map<String, String> specialObfuscatedIdents = new HashMap<String, String>();
+
   /**
    * All of the super types of String.
    * 
@@ -1680,6 +1718,8 @@ public class GenerateJavaScriptAST {
   private void execImpl() {
     SortVisitor sorter = new SortVisitor();
     sorter.accept(program);
+    RecordCrossClassCalls recorder = new RecordCrossClassCalls();
+    recorder.accept(program);
     CreateNamesAndScopesVisitor creator = new CreateNamesAndScopesVisitor();
     creator.accept(program);
     GenerateJavaScriptVisitor generator = new GenerateJavaScriptVisitor();
