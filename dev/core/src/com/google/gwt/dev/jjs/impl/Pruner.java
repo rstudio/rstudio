@@ -21,12 +21,14 @@ import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
+import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
+import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
@@ -111,6 +113,35 @@ public class Pruner {
     }
 
     @Override
+    public void endVisit(JMethod x, Context ctx) {
+      JType type = x.getType();
+      if (type instanceof JReferenceType) {
+        if (!program.typeOracle.isInstantiatedType((JReferenceType) type)) {
+          x.setType(program.getTypeNull());
+        }
+      }
+    }
+
+    public void endVisit(JLocalDeclarationStatement x, Context ctx) {
+      // The variable may have been pruned.
+      if (!referencedNonTypes.contains(x.getLocalRef().getTarget())) {
+        // If there is an initializer, just replace with that.
+        if (x.getInitializer() != null) {
+          ctx.replaceMe(x.getInitializer().makeStatement());
+        } else {
+          // No initializer, prune this entirely.
+          if (ctx.canRemove()) {
+            // Just remove it if we can.
+            ctx.removeMe();
+          } else {
+            // Replace with empty block.
+            ctx.replaceMe(new JBlock(program, x.getSourceInfo()));
+          }
+        }
+      }
+    }
+
+    @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
 
@@ -158,16 +189,6 @@ public class Pruner {
         }
 
         ctx.replaceMe(newCall);
-      }
-    }
-
-    @Override
-    public void endVisit(JMethod x, Context ctx) {
-      JType type = x.getType();
-      if (type instanceof JReferenceType) {
-        if (!program.typeOracle.isInstantiatedType((JReferenceType) type)) {
-          x.setType(program.getTypeNull());
-        }
       }
     }
   }
@@ -282,22 +303,17 @@ public class Pruner {
         ArrayList<JParameter> removedParams = new ArrayList<JParameter>(
             x.params);
 
-        for (int i = 0; i < x.params.size(); i++) {
+        for (int i = 0; i < x.params.size(); ++i) {
           JParameter param = x.params.get(i);
-
           if (!referencedNonTypes.contains(param)) {
             x.params.remove(i);
-
             didChange = true;
-
             removedMethodParamsMap.put(x, removedParams);
-
             // Remove the associated JSNI parameter
             if (func != null) {
               func.getParameters().remove(i);
             }
-
-            i--;
+            --i;
           }
         }
       }
@@ -522,6 +538,17 @@ public class Pruner {
         accept(it);
       }
 
+      return false;
+    }
+
+    public boolean visit(JLocalDeclarationStatement x, Context ctx) {
+      /*
+       * A declaration by itself doesn't rescue a local (even if it has an
+       * initializer). Writes don't count, only reads.
+       */
+      if (x.getInitializer() != null) {
+        accept(x.getInitializer());
+      }
       return false;
     }
 
