@@ -386,6 +386,10 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   /**
    * Sets the currently selected index.
    * 
+   * After calling this method, only the specified item in the list will
+   * remain selected.  For a ListBox with multiple selection enabled, see
+   * {@link #setItemSelected(int, boolean)} to select multiple items at a time.
+   * 
    * <p>
    * Note that setting the selected index programmatically does <em>not</em>
    * cause the {@link ChangeListener#onChange(Widget)} event to be fired.
