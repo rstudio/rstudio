@@ -852,7 +852,7 @@ public class TypeOracleBuilder {
        */
       return;
     }
- 
+
     String qname;
     String jclassName;
     if (binding instanceof LocalTypeBinding) {
@@ -871,7 +871,7 @@ public class TypeOracleBuilder {
 
     if (oracle.findType(qname) != null) {
       // TODO: gname of generic types includes the type arguments, I think that
-      // this would cause inner classes to not be found. 
+      // this would cause inner classes to not be found.
       return;
     }
 
@@ -1332,20 +1332,18 @@ public class TypeOracleBuilder {
       }
 
       if (!failed) {
-        JEnumType enumType = resolveType.isEnum();
-        if (enumType != null) {
+        if (resolveType.isGenericType() != null) {
+          return oracle.getParameterizedType(resolveType.isGenericType(),
+              enclosingType, typeArguments);
+        } else {
           /*
-           * An enumerated type that is nested within a generic type is referenced
+           * A static type (enum or class) that does not declare any type
+           * parameters that is nested within a generic type might be referenced
            * via a parameterized type by JDT. In this case we just return the
-           * enumerated type and don't treat it as a parameterized type since
-           * enumerations cannot be parameterized and are implicitly static.
+           * type and don't treat it as a parameterized.
            */
-          return enumType;
+          return resolveType;
         }
-        
-        JGenericType genericType = (JGenericType) resolveType;
-        return oracle.getParameterizedType(genericType, enclosingType,
-            typeArguments);
       } else {
         // Fall-through to failure
       }
