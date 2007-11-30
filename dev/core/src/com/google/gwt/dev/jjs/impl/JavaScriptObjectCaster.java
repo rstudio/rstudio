@@ -103,18 +103,14 @@ public class JavaScriptObjectCaster {
 
       ArrayList<JExpression> args = x.getArgs();
       JMethod target = x.getTarget();
-      /*
-       * Check arguments for calls to non-native methods. Do not check native
-       * invocations because we're losing all static type information anyway.
-       */
-      if (!target.isNative()) {
-        for (int i = 0; i < target.params.size(); ++i) {
-          JParameter param = target.params.get(i);
-          JExpression arg = args.get(i);
-          JExpression newArg = checkAndReplaceJso(arg, param.getType());
-          this.didChange |= (newArg != arg);
-          args.set(i, newArg);
-        }
+
+      for (int i = 0; i < target.params.size(); ++i) {
+        JParameter param = target.params.get(i);
+        JExpression arg = args.get(i);
+        JExpression newArg = checkAndReplaceJso(arg, param.getType(),
+            target.isNative());
+        this.didChange |= (newArg != arg);
+        args.set(i, newArg);
       }
 
       /*
@@ -168,10 +164,15 @@ public class JavaScriptObjectCaster {
       return true;
     }
 
+    private JExpression checkAndReplaceJso(JExpression arg, JType targetType) {
+      return checkAndReplaceJso(arg, targetType, false);
+    }
+
     /**
      * Wraps a JSO-typed argument if the target type is a different type.
      */
-    private JExpression checkAndReplaceJso(JExpression arg, JType targetType) {
+    private JExpression checkAndReplaceJso(JExpression arg, JType targetType,
+        boolean nowrapJso) {
       JType argType = arg.getType();
       if (argType == targetType) {
         return arg;
@@ -180,6 +181,15 @@ public class JavaScriptObjectCaster {
         return arg;
       }
       if (!program.isJavaScriptObject(argType)) {
+        return arg;
+      }
+      /*
+       * Special case: when calling a native method, only force a wrapping if
+       * the type is explicitly Object. As long as the target type is a JSO
+       * subclass, don't bother wrapping since we're losing type information
+       * anyway.
+       */
+      if (nowrapJso && program.isJavaScriptObject(targetType)) {
         return arg;
       }
       // Synthesize a cast to the arg type to force a wrap
