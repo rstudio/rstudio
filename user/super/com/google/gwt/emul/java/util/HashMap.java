@@ -343,7 +343,7 @@ public class HashMap<K, V> extends AbstractMap<K, V> {
    * Returns true if the given key exists in the stringMap.
    */
   private native boolean hasStringValue(String key) /*-{
-    return this.@java.util.HashMap::stringMap[':' + key] !== undefined ;
+    return (':' + key) in this.@java.util.HashMap::stringMap;
   }-*/;
   
   /**
