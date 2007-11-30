@@ -47,18 +47,45 @@ public class JUpperBound extends JBound {
   }
 
   @Override
-  boolean isAssignableFrom(JBound possibleSubWildcard) {
-    JClassType firstBound = getFirstBound();
+  boolean isAssignableFrom(JClassType otherType) {
+    JWildcardType wildcard = otherType.isWildcard();
+    if (wildcard != null) {
+      if (wildcard.getBounds().isLowerBound() != null) {
+        /*
+         * Upper bounds can be assigned from lower bounds if both of their
+         * bounding types are Object.
+         */
+        JClassType firstBound = getFirstBound();
+        JClassType javaLangObject = firstBound.getOracle().getJavaLangObject();
+        return firstBound == javaLangObject && wildcard.getFirstBound() == javaLangObject;
+      }
 
-    JUpperBound upperBound = possibleSubWildcard.isUpperBound();
-    if (upperBound != null) {
-      // Upper bound
-      return firstBound.isAssignableFrom(upperBound.getFirstBound());
+      return getFirstBound().isAssignableFrom(wildcard.getFirstBound());
+    } else {
+      /*
+       * This bound can be assigned from another type if each of the bounding
+       * types is assignable from the other type.
+       */
+      JClassType[] bounds = getBounds();
+      for (JClassType bound : bounds) {
+        if (!bound.isAssignableFrom(otherType)) {
+          return false;
+        }
+      }
     }
-
-    // Lower bound
-    JClassType javaLangObject = firstBound.getOracle().getJavaLangObject();
-    return firstBound == javaLangObject
-        && possibleSubWildcard.getFirstBound() == javaLangObject;
+    
+    return true;
+  }
+  
+  @Override 
+  boolean isAssignableTo(JClassType otherType) {
+    JClassType[] bounds = getBounds();
+    for (JClassType bound : bounds) {
+      if (bound.isAssignableTo(otherType)) {
+        return true;
+      }
+    }
+    
+    return false;
   }
 }

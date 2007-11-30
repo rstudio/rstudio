@@ -28,20 +28,6 @@ public class JRawType extends JDelegatingClassType {
     }
   };
 
-  private static JClassType normalizeType(JClassType type) {
-    JRawType isRawType = type.isRawType();
-    if (isRawType != null) {
-      return isRawType.getGenericType();
-    }
-
-    JParameterizedType isParameterized = type.isParameterized();
-    if (isParameterized != null) {
-      return isParameterized.getBaseType();
-    }
-
-    return type;
-  }
-
   private final JClassType enclosingType;
 
   private List<JClassType> interfaces;
@@ -195,15 +181,17 @@ public class JRawType extends JDelegatingClassType {
   }
 
   @Override
-  public boolean isAssignableFrom(JClassType possibleSubtype) {
-    JClassType type = normalizeType(possibleSubtype);
-    return getBaseType().isAssignableFrom(type);
+  public boolean isAssignableFrom(JClassType otherType) {
+    otherType = maybeGetGenericBaseType(otherType);
+    
+    return getBaseType().isAssignableFrom(otherType);
   }
 
   @Override
-  public boolean isAssignableTo(JClassType possibleSupertype) {
-    JClassType type = normalizeType(possibleSupertype);
-    return getBaseType().isAssignableTo(type);
+  public boolean isAssignableTo(JClassType otherType) {
+    otherType = maybeGetGenericBaseType(otherType);
+    
+    return getBaseType().isAssignableTo(otherType);
   }
 
   @Override

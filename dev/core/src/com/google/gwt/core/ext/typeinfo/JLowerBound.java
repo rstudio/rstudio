@@ -49,12 +49,38 @@ public class JLowerBound extends JBound {
   }
 
   @Override
-  boolean isAssignableFrom(JBound possibleSubWildcard) {
-    JLowerBound lowerBound = possibleSubWildcard.isLowerBound();
-    if (lowerBound != null) {
-      return lowerBound.getFirstBound().isAssignableFrom(getFirstBound());
+  boolean isAssignableFrom(JClassType otherType) {
+    JWildcardType wildcard = otherType.isWildcard();
+    if (wildcard != null) {
+      JBound otherBounds = wildcard.getBounds();
+      if (otherBounds.isUpperBound() != null) {
+        // A lower bound cannot be assigned from an upper bound wildcard type.
+        return false;
+      }
+
+      otherType = otherBounds.getFirstBound();
     }
 
-    return false;
+    /*
+     * Only check the first bound since a lower bound cannot specify multiple
+     * types.
+     */
+    return getFirstBound().isAssignableTo(otherType);
+  }
+
+  @Override
+  boolean isAssignableTo(JClassType otherType) {
+    JWildcardType wildcard = otherType.isWildcard();
+    if (wildcard != null) {
+      JBound otherBounds = wildcard.getBounds();
+      if (otherBounds.isUpperBound() != null) {
+        // A lower bound cannot be assigned from an upper bound wildcard type.
+        return false;
+      }
+
+      otherType = otherBounds.getFirstBound();
+    }
+
+    return getFirstBound().isAssignableFrom(otherType);
   }
 }

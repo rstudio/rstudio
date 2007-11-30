@@ -239,7 +239,10 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     JParameterizedType numUpperBoundList = oracle.getParameterizedType(
         genericList, new JClassType[] {numUpperBoundWildcard});
     assertTrue(unboundList.isAssignableFrom(numUpperBoundList));
+    assertFalse(unboundList.isAssignableTo(numUpperBoundList));
+
     assertFalse(numUpperBoundList.isAssignableFrom(unboundList));
+    assertTrue(numUpperBoundList.isAssignableTo(unboundList));
 
     // List<? extends Number> should be assignable from List<? extends Integer>
     JWildcardType intUpperBoundWildcard = oracle.getWildcardType(new JUpperBound(
@@ -248,7 +251,10 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     JParameterizedType intUpperBoundList = oracle.getParameterizedType(
         genericList, new JClassType[] {intUpperBoundWildcard});
     assertTrue(numUpperBoundList.isAssignableFrom(intUpperBoundList));
+    assertFalse(numUpperBoundList.isAssignableTo(intUpperBoundList));
+
     assertFalse(intUpperBoundList.isAssignableFrom(numUpperBoundList));
+    assertTrue(intUpperBoundList.isAssignableTo(numUpperBoundList));
 
     // List<? super Integer> should be assignable from List<? super Number>
     JWildcardType numLowerBoundWildcard = oracle.getWildcardType(new JLowerBound(
@@ -262,16 +268,9 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
         genericList, new JClassType[] {intLowerBoundWildcard});
 
     assertTrue(intLowerBoundList.isAssignableFrom(numLowerBoundList));
+    assertFalse(intLowerBoundList.isAssignableTo(numLowerBoundList));
     assertFalse(numLowerBoundList.isAssignableFrom(intLowerBoundList));
-  }
-
-  /**
-   * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JParameterizedType#isAssignableTo(JClassType)}.
-   */
-  @Override
-  public void testIsAssignableTo() {
-    // TODO:
+    assertTrue(numLowerBoundList.isAssignableTo(intLowerBoundList));
   }
 
   public void testOverridableMethods_Base() throws NotFoundException {
@@ -396,5 +395,10 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     }
 
     assertTrue(expectedMethods.isEmpty());
+  }
+
+  @Override
+  public void testIsAssignableTo() throws NotFoundException {
+    // This is covered as part of testIsAssignableFrom
   }
 }

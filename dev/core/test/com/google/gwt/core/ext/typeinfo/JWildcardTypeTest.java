@@ -57,6 +57,10 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     // Wildcard do not have nested types...
   }
 
+  public void testGetMethods() throws NotFoundException {
+    super.testGetMethods();
+  }
+
   @Override
   public void testGetNestedType() {
     // No nested types
@@ -167,7 +171,9 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     JWildcardType integerWildcard = oracle.getWildcardType(integerBound);
 
     assertFalse(numberWildcard.isAssignableFrom(integerWildcard));
+    assertTrue(numberWildcard.isAssignableTo(integerWildcard));
     assertTrue(integerWildcard.isAssignableFrom(numberWildcard));
+    assertFalse(integerWildcard.isAssignableTo(numberWildcard));
   }
 
   /**
@@ -186,12 +192,13 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     JWildcardType numberWildcard = oracle.getWildcardType(numberBound);
     JWildcardType integerWildcard = oracle.getWildcardType(integerBound);
 
-    assertFalse(numberWildcard.isAssignableTo(integerWildcard));
-    assertTrue(integerWildcard.isAssignableTo(numberWildcard));
+    assertTrue(numberWildcard.isAssignableTo(integerWildcard));
+    assertFalse(integerWildcard.isAssignableTo(numberWildcard));
   }
 
   @Override
   public void testIsAssignableTo() {
+    // NOTE These cases were tested as part of testIsAssignableFrom.
   }
 
   /**
@@ -214,6 +221,26 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     assertFalse(numberWildcard.isAssignableTo(integerWildcard));
   }
 
+  /**
+   * Tests that <? super Number> is assignable to <? super Integer> and that
+   * the reverse is not <code>true</code>.
+   */
+  public void testIsAssignableTo_Super_Number_To_Super_Integer()
+      throws NotFoundException {
+    TypeOracle oracle = moduleContext.getOracle();
+    JClassType numberType = oracle.getType(Number.class.getName());
+    JClassType integerType = oracle.getType(Integer.class.getName());
+
+    JLowerBound numberBound = new JLowerBound(numberType);
+    JLowerBound integerBound = new JLowerBound(integerType);
+
+    JWildcardType numberWildcard = oracle.getWildcardType(numberBound);
+    JWildcardType integerWildcard = oracle.getWildcardType(integerBound);
+
+    assertFalse(integerWildcard.isAssignableTo(numberWildcard));
+    assertTrue(numberWildcard.isAssignableTo(integerWildcard));
+  }
+
   @Override
   protected Substitution getSubstitution() {
     return new Substitution() {
@@ -221,10 +248,6 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
         return type;
       }
     };
-  }
-
-  public void testGetMethods() throws NotFoundException {
-    super.testGetMethods();
   }
 
   @Override

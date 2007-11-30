@@ -324,11 +324,14 @@ public class JRealClassType extends JClassType {
     return null;
   }
 
-  public boolean isAssignableFrom(JClassType possibleSubtype) {
-    if (possibleSubtype == this) {
+  @Override
+  public boolean isAssignableFrom(JClassType otherType) {
+    if (otherType == this) {
       return true;
     }
-    if (allSubtypes.contains(possibleSubtype)) {
+        
+    if (allSubtypes.contains(otherType)) {
+      // JGenericTypes should appear in the allSubtypes hierarchy - do nothing
       return true;
     } else if (this == getOracle().getJavaLangObject()) {
       // This case handles the odd "every interface is an Object"
@@ -336,6 +339,28 @@ public class JRealClassType extends JClassType {
       //
       return true;
     } else {
+      if (otherType.isTypeParameter() != null) {
+        return otherType.isAssignableTo(this);
+      }
+      
+      if (otherType.isWildcard() != null) {
+        return otherType.isAssignableTo(this);
+      }
+
+      if (otherType.isGenericType() != null) {
+        return otherType.isAssignableTo(this);
+      }
+      
+      if (otherType.isRawType() != null) {
+        return otherType.isAssignableTo(this);
+      }
+      
+      if (otherType.isParameterized() != null) {
+        return otherType.isAssignableTo(this);
+      }
+
+      // At this point we should only have JArrayTypes or JRealClassTypes from
+      // which we are not assignable.
       return false;
     }
   }

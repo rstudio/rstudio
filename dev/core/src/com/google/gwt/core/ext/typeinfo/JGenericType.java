@@ -17,12 +17,36 @@ package com.google.gwt.core.ext.typeinfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 
  */
 public class JGenericType extends JRealClassType implements HasTypeParameters {
+  /**
+   * Returns <code>true</code> if lhsType is assignable to rhsType.
+   */
+  private static boolean isAssignable(JClassType lhsType, JClassType rhsType) {
+    if (lhsType == rhsType) {
+      return true;
+    }
+
+    Set<JClassType> supertypes = getFlattenedSuperTypeHierarchy(rhsType);
+    for (JClassType supertype : supertypes) {
+      if (supertype.isParameterized() == null) {
+        continue;
+      }
+
+      if (supertype.isParameterized().getBaseType() == lhsType) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   private JRawType lazyRawType = null;
+
   private final List<JTypeParameter> typeParams = new ArrayList<JTypeParameter>();
 
   public JGenericType(TypeOracle oracle, CompilationUnitProvider cup,
@@ -48,7 +72,7 @@ public class JGenericType extends JRealClassType implements HasTypeParameters {
       sb.append(getSimpleSourceName());
     } else {
       sb.append(getQualifiedSourceName());
-    }    
+    }
 
     sb.append('<');
     boolean needComma = false;
@@ -74,6 +98,20 @@ public class JGenericType extends JRealClassType implements HasTypeParameters {
 
   public JTypeParameter[] getTypeParameters() {
     return typeParams.toArray(new JTypeParameter[typeParams.size()]);
+  }
+
+  @Override
+  public boolean isAssignableFrom(JClassType otherType) {
+    otherType = maybeGetGenericBaseType(otherType);
+
+    return isAssignable(this, otherType);
+  }
+
+  @Override
+  public boolean isAssignableTo(JClassType otherType) {
+    otherType = maybeGetGenericBaseType(otherType);
+
+    return isAssignable(otherType, this);
   }
 
   @Override

@@ -21,7 +21,13 @@ import com.google.gwt.core.ext.typeinfo.test.GenericClass;
 import com.google.gwt.core.ext.typeinfo.test.MyCustomList;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Tests for {@link JTypeParameter}.
@@ -80,28 +86,34 @@ public class JTypeParameterTest extends JDelegatingClassTypeTestBase {
         testType.getFirstBound().getOverridableMethods()));
   }
 
+  /*
+   * Checks that all non-local subtypes of the type parameter,
+   * T extends Serializable & Comparable<T> are actually assignable to 
+   * Serializable and the properly parameterized version of Comparable<T>.
+   */
   @Override
   public void testGetSubtypes() throws NotFoundException {
+    
     TypeOracle oracle = moduleContext.getOracle();
     JClassType testType = oracle.getType(MyCustomList.class.getName());
     JGenericType genericType = testType.isGenericType();
     JTypeParameter[] typeParameters = genericType.getTypeParameters();
     JTypeParameter typeParameter = typeParameters[0];
 
-    JClassType[] expected = new JClassType[] {
-    /*
-     * TODO: Re-eneable this once java.io.Serializable is added to the JRE
-     * 
-     * emulation classes oracle.getType(Integer.class.getName()),
-     * oracle.getType(Float.class.getName()),
-     * oracle.getType(Short.class.getName()),
-     * oracle.getType(Double.class.getName()),
-     * oracle.getType(Number.class.getName()),
-     * oracle.getType(Long.class.getName()),
-     * oracle.getType(Byte.class.getName()),
-     */
-    };
-    validateEquals(oracle, expected, typeParameter.getSubtypes());
+    JClassType serializableType = oracle.getType(Serializable.class.getCanonicalName());
+    JGenericType comparableType = (JGenericType) oracle.getType(Comparable.class.getCanonicalName());
+    JClassType[] computedSubtypes = typeParameter.getSubtypes();
+    
+    for (JClassType computedSubtype : computedSubtypes) {
+      JParameterizedType parameterizedComparableType = oracle.getParameterizedType(
+          comparableType, new JClassType[] {computedSubtype});
+      if (computedSubtype.isLocalType()) {
+        // Ignore local types.
+        continue;
+      }
+      assertTrue(computedSubtype.isAssignableTo(serializableType));
+      assertTrue(computedSubtype.isAssignableTo(parameterizedComparableType));
+    }
   }
 
   @Override

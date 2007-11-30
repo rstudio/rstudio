@@ -61,8 +61,10 @@ public abstract class JBound {
 
   abstract JClassType[] getSubtypes();
 
-  abstract boolean isAssignableFrom(JBound possibleSubWildcard);
-
+  abstract boolean isAssignableFrom(JClassType otherType);
+  
+  abstract boolean isAssignableTo(JClassType otherType);
+  
   private String toString(boolean useQualifiedNames) {
     StringBuffer sb = new StringBuffer();
 

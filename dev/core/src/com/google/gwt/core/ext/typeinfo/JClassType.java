@@ -18,7 +18,9 @@ package com.google.gwt.core.ext.typeinfo;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
 import java.lang.annotation.Annotation;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Type representing a Java class or interface type.
@@ -26,6 +28,51 @@ import java.util.Map;
 public abstract class JClassType extends JType implements HasAnnotations,
     HasMetaData {
 
+  /**
+   * Returns all of the superclasses and superinterfaces for a given type
+   * including the type itself.
+   */
+  protected static Set<JClassType> getFlattenedSuperTypeHierarchy(
+      JClassType type) {
+    Set<JClassType> typesSeen = new HashSet<JClassType>();
+    getFlattenedSuperTypeHierarchyRecursive(type, typesSeen);
+    return typesSeen;
+  }
+
+  /**
+   * Returns the {@link JGenericType} base type if the otherType is raw or
+   * parameterized type.
+   */
+  protected static JClassType maybeGetGenericBaseType(JClassType otherType) {
+    if (otherType.isParameterized() != null) {
+      return otherType.isParameterized().getBaseType();
+    } else if (otherType.isRawType() != null) {
+      return otherType.isRawType().getGenericType();
+    }
+     
+    return otherType;
+  }
+
+  private static void getFlattenedSuperTypeHierarchyRecursive(JClassType type,
+      Set<JClassType> typesSeen) {
+    if (typesSeen.contains(type)) {
+      return;
+    }
+    typesSeen.add(type);
+
+    // Superclass
+    JClassType superclass = type.getSuperclass();
+    if (superclass != null) {
+      getFlattenedSuperTypeHierarchyRecursive(superclass, typesSeen);
+    }
+
+    // Check the interfaces
+    JClassType[] intfs = type.getImplementedInterfaces();
+    for (JClassType intf : intfs) {
+      getFlattenedSuperTypeHierarchyRecursive(intf, typesSeen);
+    }
+  }
+  
   public abstract void addImplementedInterface(JClassType intf);
 
   public abstract void addMetaData(String tagName, String[] values);

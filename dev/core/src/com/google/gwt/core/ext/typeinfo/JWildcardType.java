@@ -81,20 +81,21 @@ public class JWildcardType extends JDelegatingClassType implements HasBounds {
   }
 
   @Override
-  public boolean isAssignableFrom(JClassType possibleSubtype) {
-    JWildcardType possibleSubWildcard = possibleSubtype.isWildcard();
-    if (possibleSubWildcard != null) {
-      return getBounds().isAssignableFrom(possibleSubWildcard.getBounds());
+  public boolean isAssignableFrom(JClassType otherType) {
+    if (otherType == this) {
+      return true;
     }
-
-    return getBaseType().isAssignableFrom(possibleSubtype);
+    
+    return getBounds().isAssignableFrom(otherType);
   }
 
   @Override
   public boolean isAssignableTo(JClassType otherType) {
-    // TODO: This need to handle all possible subtypes of JClassType that could
-    // reach here...
-    return super.isAssignableTo(otherType);
+    if (otherType == this) {
+      return true;
+    }
+    
+    return getBounds().isAssignableTo(otherType);
   }
 
   @Override

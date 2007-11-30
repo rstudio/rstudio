@@ -113,26 +113,41 @@ public class JTypeParameter extends JDelegatingClassType implements HasBounds {
   public JClassType[] getSubtypes() {
     JClassType[] subtypes = super.getSubtypes();
     List<JClassType> intersectionTypes = new ArrayList<JClassType>();
+    
+    if (getFirstBound().isInterface() == null && isAssignableFrom(getFirstBound())) {
+      // Include the first bound as a subtype if it is not an interface and it
+      // is assignable to all of our bounds.
+      intersectionTypes.add(getFirstBound());
+    }
+    
     for (JClassType subtype : subtypes) {
       if (isAssignableFrom(subtype)) {
         intersectionTypes.add(subtype);
       }
     }
+    
+    // Only types that intersect with all our bounds make it here. 
     return intersectionTypes.toArray(TypeOracle.NO_JCLASSES);
   }
 
   @Override
-  public boolean isAssignableFrom(JClassType possibleSubtype) {
-    // TODO: Should this compute an intersection?
-    return getFirstBound().isAssignableFrom(possibleSubtype);
+  public boolean isAssignableFrom(JClassType otherType) {
+    if (otherType == this) {
+      return true;
+    }
+    
+    return getBounds().isAssignableFrom(otherType);
   }
 
   @Override
-  public boolean isAssignableTo(JClassType possibleSupertype) {
-    // TODO: Should this compute an intersection?
-    return getFirstBound().isAssignableTo(possibleSupertype);
+  public boolean isAssignableTo(JClassType otherType) {
+    if (otherType == this) {
+      return true;
+    }
+    
+    return getBounds().isAssignableTo(otherType);
   }
-
+  
   @Override
   public JGenericType isGenericType() {
     return null;
