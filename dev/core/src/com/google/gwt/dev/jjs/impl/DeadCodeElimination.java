@@ -329,9 +329,15 @@ public class DeadCodeElimination {
      */
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
-      JMethod method = x.getTarget();
-      if (method.getEnclosingType() == program.getTypeJavaLangString()) {
-        tryOptimizeStringCall(x, ctx, method);
+      JMethod target = x.getTarget();
+      JReferenceType targetType = target.getEnclosingType();
+      if (targetType == program.getTypeJavaLangString()) {
+        tryOptimizeStringCall(x, ctx, target);
+      } else if (program.isClinit(target)) {
+        // Eliminate the call if the target is now empty.
+        if (!program.typeOracle.hasClinit(targetType)) {
+          ctx.replaceMe(program.getLiteralNull());
+        }
       }
     }
 

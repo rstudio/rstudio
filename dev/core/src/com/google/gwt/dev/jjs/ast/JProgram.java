@@ -661,6 +661,11 @@ public class JProgram extends JNode {
     this.jsonTypeTable = jsonObjects;
   }
 
+  public boolean isClinit(JMethod method) {
+    JReferenceType enclosingType = method.getEnclosingType();
+    return (enclosingType != null) && (method == enclosingType.methods.get(0));
+  }
+
   public boolean isJavaScriptObject(JType type) {
     if (type instanceof JClassType) {
       return typeOracle.canTriviallyCast((JClassType) type,
