@@ -15,6 +15,8 @@
  */
 package java.util;
 
+import java.io.Serializable;
+
 /**
  * Implements a set in terms of a hash table. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/HashSet.html">[Sun
@@ -22,7 +24,8 @@ package java.util;
  * 
  * @param <E> element type.
  */
-public class HashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable {
+public class HashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable,
+    Serializable {
 
   private transient HashMap<E, Object> map;
 

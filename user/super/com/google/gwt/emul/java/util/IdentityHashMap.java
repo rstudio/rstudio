@@ -15,6 +15,8 @@
  */
 package java.util;
 
+import java.io.Serializable;
+
 /**
  * Map using reference equality on keys. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/IdentityHashMap.html">[Sun
@@ -24,7 +26,7 @@ package java.util;
  * @param <V> value type
  */
 public class IdentityHashMap<K, V> extends AbstractMap<K, V> implements
-    Map<K, V>, Cloneable {
+    Map<K, V>, Cloneable, Serializable {
 
   public IdentityHashMap() {
     this(10);

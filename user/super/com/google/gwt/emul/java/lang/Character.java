@@ -15,10 +15,12 @@
  */
 package java.lang;
 
+import java.io.Serializable;
+
 /**
  * Wraps a native <code>char</code> as an object.
  */
-public final class Character implements Comparable<Character> {
+public final class Character implements Comparable<Character>, Serializable {
 
   public static final int MIN_RADIX = 2;
   public static final int MAX_RADIX = 36;

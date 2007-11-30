@@ -15,10 +15,12 @@
  */
 package java.lang;
 
+import java.io.Serializable;
+
 /**
  * Wraps native <code>boolean</code> as an object.
  */
-public final class Boolean implements Comparable<Boolean> {
+public final class Boolean implements Comparable<Boolean>, Serializable {
 
   // CHECKSTYLE_OFF: These have to be created somewhere.
   public static Boolean FALSE = new Boolean(false);

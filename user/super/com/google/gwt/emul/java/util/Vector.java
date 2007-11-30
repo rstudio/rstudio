@@ -15,6 +15,8 @@
  */
 package java.util;
 
+import java.io.Serializable;
+
 /**
  * To keep performance characteristics in line with Java community expectations,
  * <code>Vector</code> is a wrapper around <code>ArrayList</code>. <a
@@ -24,7 +26,7 @@ package java.util;
  * @param <E> element type.
  */
 public class Vector<E> extends AbstractList<E> implements List<E>,
-    RandomAccess, Cloneable {
+    RandomAccess, Cloneable, Serializable {
 
   private transient ArrayList<E> arrayList;
 

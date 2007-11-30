@@ -17,12 +17,15 @@ package java.lang;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+import java.io.Serializable;
+
 /**
  * The first-class representation of an enumeration.
  * 
  * @param <E>
  */
-public abstract class Enum<E extends Enum<E>> implements Comparable<E> {
+public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
+    Serializable {
 
   protected static <T extends Enum<T>> T valueOf(JavaScriptObject map,
       String name) {

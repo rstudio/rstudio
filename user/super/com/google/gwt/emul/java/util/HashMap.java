@@ -17,6 +17,8 @@ package java.util;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+import java.io.Serializable;
+
 /**
  * Implementation of Map interface based on a hash table. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/HashMap.html">[Sun
@@ -25,7 +27,7 @@ import com.google.gwt.core.client.JavaScriptObject;
  * @param <K> key type
  * @param <V> value type
  */
-public class HashMap<K, V> extends AbstractMap<K, V> {
+public class HashMap<K, V> extends AbstractMap<K, V> implements Serializable {
   /*
    * Implementation notes:
    * 

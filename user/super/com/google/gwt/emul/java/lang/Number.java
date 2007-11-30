@@ -17,10 +17,12 @@ package java.lang;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+import java.io.Serializable;
+
 /**
  * Abstract base class for numeric wrapper classes.
  */
-public abstract class Number {
+public abstract class Number implements Serializable {
 
   /**
    *  Stores a regular expression object to verify format of float values.

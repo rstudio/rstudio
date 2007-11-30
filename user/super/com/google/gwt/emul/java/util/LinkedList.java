@@ -15,6 +15,8 @@
  */
 package java.util;
 
+import java.io.Serializable;
+
 /**
  * Linked list implementation. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/LinkedList.html">[Sun
@@ -23,7 +25,7 @@ package java.util;
  * @param <E> element type.
  */
 public class LinkedList<E> extends AbstractSequentialList<E> implements
-    List<E>, Queue<E>, Cloneable {
+    List<E>, Queue<E>, Cloneable, Serializable {
 
   public LinkedList() {
     // TODO(jat): implement

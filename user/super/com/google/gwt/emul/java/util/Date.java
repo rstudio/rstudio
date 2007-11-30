@@ -15,10 +15,12 @@
  */
 package java.util;
 
+import java.io.Serializable;
+
 /**
  * Represents a date and time.
  */
-public class Date implements Cloneable, Comparable<Date> {
+public class Date implements Cloneable, Comparable<Date>, Serializable {
   /**
    * Used only by toString().
    */

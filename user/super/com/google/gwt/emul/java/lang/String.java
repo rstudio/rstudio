@@ -24,10 +24,13 @@ package java.lang;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+import java.io.Serializable;
+
 /**
  * Intrinsic string class.
  */
-public final class String implements Comparable<String>, CharSequence {
+public final class String implements Comparable<String>, CharSequence, 
+    Serializable {
 
   /**
    * Accesses need to be prefixed with ':' to prevent conflict with built-in

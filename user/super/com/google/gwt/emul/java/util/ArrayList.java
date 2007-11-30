@@ -18,6 +18,8 @@ package java.util;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.lang.Array;
 
+import java.io.Serializable;
+
 /**
  * Resizeable array implementation of the List interface. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/ArrayList.html">[Sun
@@ -37,7 +39,7 @@ import com.google.gwt.lang.Array;
  * @param <E> the element type.
  */
 public class ArrayList<E> extends AbstractList<E> implements List<E>,
-    Cloneable, RandomAccess {
+    Cloneable, RandomAccess, Serializable {
 
   private static native void addImpl(JavaScriptObject array, int index, Object o) /*-{
     array.splice(index, 0, o);
