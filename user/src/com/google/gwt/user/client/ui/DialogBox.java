@@ -20,7 +20,9 @@ import com.google.gwt.user.client.Event;
 
 /**
  * A form of popup that has a caption area at the top and can be dragged by the
- * user.
+ * user. Unlike a PopupPanel, calls to {@link #setWidth(String)} and
+ * {@link #setHeight(String)} will set the width and height of the dialog box
+ * itself, even if a widget has not been added as yet.
  * <p>
  * <img class='gallery' src='DialogBox.png'/>
  * </p>
@@ -97,6 +99,11 @@ public class DialogBox extends PopupPanel implements HasHTML, MouseListener {
   public String getText() {
     return caption.getText();
   }
+  
+  @Override
+  public Widget getWidget() {
+    return child;
+  }
 
   @Override
   public boolean onEventPreview(Event event) {
@@ -169,21 +176,5 @@ public class DialogBox extends PopupPanel implements HasHTML, MouseListener {
     }
 
     child = w;
-  }
-
-  /**
-   * Override, so that interior panel reflows to match parent's new width.
-   * 
-   * @Override
-   */
-  @Override
-  public void setWidth(String width) {
-    super.setWidth(width);
-
-    // note that you CANNOT call panel.setWidth("100%") until parent's width
-    // has been explicitly set, b/c until then parent's width is unconstrained
-    // and setting panel's width to 100% will flow parent to 100% of browser
-    // (i.e. can't do this in constructor)
-    panel.setWidth("100%");
   }
 }

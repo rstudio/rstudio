@@ -300,6 +300,13 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * Sets the height of the panel's child widget. If the panel's child widget
    * has not been set, the height passed in will be cached and used to set the
    * height immediately after the child widget is set.
+   *
+   * <p>
+   * Note that subclasses may have a different behavior. A subclass may decide
+   * not to change the height of the child widget. It may instead decide to
+   * change the height of an internal panel widget, which contains the child
+   * widget.
+   * </p>
    * 
    * @param height the object's new height, in CSS units (e.g. "10px", "1em")
    */
@@ -401,6 +408,13 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * Sets the width of the panel's child widget. If the panel's child widget has
    * not been set, the width passed in will be cached and used to set the width
    * immediately after the child widget is set.
+   *
+   * <p>
+   * Note that subclasses may have a different behavior. A subclass may decide
+   * not to change the width of the child widget. It may instead decide to
+   * change the width of an internal panel widget, which contains the child
+   * widget.
+   * </p>
    * 
    * @param width the object's new width, in CSS units (e.g. "10px", "1em")
    */
@@ -488,7 +502,15 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * any child put into the popup will be given that size.
    */
   private void maybeUpdateSize() {
-    Widget w = getWidget();
+    // For subclasses of PopupPanel, we want the default behavior of setWidth
+    // and setHeight to change the dimensions of PopupPanel's child widget.
+    // We do this because PopupPanel's child widget is the first widget in
+    // the hierarchy which provides structure to the panel. DialogBox is
+    // an example of this. We want to set the dimensions on DialogBox's
+    // FlexTable, which is PopupPanel's child widget. However, it is not
+    // DialogBox's child widget. To make sure that we are actually getting
+    // PopupPanel's child widget, we have to use super.getWidget().
+    Widget w = super.getWidget();
     if (w != null) {
       if (desiredHeight != null) {
         w.setHeight(desiredHeight);
