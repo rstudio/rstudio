@@ -91,6 +91,7 @@ import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
 import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.LocalTypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.RawTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
@@ -288,16 +289,37 @@ public class TypeOracleBuilder {
     return "package-info".equals(qname);
   }
 
-  private static boolean maybeGeneric(TypeDeclaration typeDecl) {
-    if (typeDecl.typeParameters != null) {
-      // Definitely generic since it has type parameters
-      return true;
+  private static boolean maybeGeneric(TypeDeclaration typeDecl,
+      JClassType enclosingType) {
+
+    if (enclosingType != null && enclosingType.isGenericType() != null) {
+      if (!typeDecl.binding.isStatic()) {
+        /*
+         * This non-static, inner class can reference the type parameters of its
+         * enclosing generic type, so we will treat it as a generic type. 
+         */
+        return true;
+      }
     }
 
-    if (!typeDecl.binding.isStatic() && typeDecl.enclosingType != null) {
-      // Consider typeDecl to be generic if it is not static and its enclosing
-      // type is generic
-      return maybeGeneric(typeDecl.enclosingType);
+    if (typeDecl.binding.isLocalType()) {
+      LocalTypeBinding localTypeBinding = (LocalTypeBinding) typeDecl.binding;
+      MethodBinding enclosingMethod = localTypeBinding.enclosingMethod;
+      if (enclosingMethod != null) {
+        if (enclosingMethod.typeVariables != null
+            && enclosingMethod.typeVariables.length != 0) {
+          /*
+           * This local type can reference the type parameters of its enclosing
+           * method, so we will treat is as a generic type.
+           */
+          return true;
+        }
+      }
+    }
+
+    if (typeDecl.typeParameters != null) {
+      // Definitely generic since it has type parameters.
+      return true;
     }
 
     return false;
@@ -890,7 +912,7 @@ public class TypeOracleBuilder {
     if (jclassIsAnnonation) {
       type = new JAnnotationType(oracle, cup, pkg, enclosingType, isLocalType,
           jclassName, declStart, declEnd, bodyStart, bodyEnd, jclassIsIntf);
-    } else if (maybeGeneric(typeDecl)) {
+    } else if (maybeGeneric(typeDecl, enclosingType)) {
       type = new JGenericType(oracle, cup, pkg, enclosingType, isLocalType,
           jclassName, declStart, declEnd, bodyStart, bodyEnd, jclassIsIntf);
     } else if (binding.isEnum()) {
