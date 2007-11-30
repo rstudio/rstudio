@@ -322,9 +322,6 @@ public class JavaToJavaScriptCompiler {
         AssertionRemover.exec(jprogram);
       }
 
-      // Compute which classes have clinits
-      jprogram.typeOracle.computeAfterAST();
-
       // Fix up GWT.create() into new operations
       ReplaceRebinds.exec(jprogram);
 
@@ -335,6 +332,9 @@ public class JavaToJavaScriptCompiler {
       // (4) Optimize the normalized Java AST
       boolean didChange;
       do {
+        // Recompute clinits each time, they can become empty.
+        jprogram.typeOracle.recomputeClinits();
+
         didChange = false;
         // Remove unreferenced types, fields, methods, [params, locals]
         didChange = Pruner.exec(jprogram, true) || didChange;
@@ -360,11 +360,6 @@ public class JavaToJavaScriptCompiler {
         // inlining
         didChange = MethodInliner.exec(jprogram) || didChange;
 
-        if (didChange) {
-          // recompute clinits; some may now be empty
-          jprogram.typeOracle.recomputeClinits();
-        }
-
         // prove that any types that have been culled from the main tree are
         // unreferenced due to type tightening?
       } while (didChange);
@@ -386,6 +381,7 @@ public class JavaToJavaScriptCompiler {
       Pruner.exec(jprogram, false);
 
       // (7) Generate a JavaScript code DOM from the Java type declarations
+      jprogram.typeOracle.recomputeClinits();
       GenerateJavaScriptAST.exec(jprogram, jsProgram, obfuscate, prettyNames);
 
       // (8) Fix invalid constructs created during JS AST gen

@@ -193,10 +193,6 @@ public class JTypeOracle {
     return true;
   }
 
-  public void computeAfterAST() {
-    recomputeClinits();
-  }
-
   public void computeBeforeAST() {
     javaLangObject = program.getTypeJavaLangObject();
     superClassMap.clear();
