@@ -349,6 +349,8 @@ public abstract class AbstractCompiler {
     }
   }
 
+  protected final ThreadLocalTreeLoggerProxy threadLogger = new ThreadLocalTreeLoggerProxy();
+
   private final CompilerImpl compiler;
 
   private final boolean doGenerateBytes;
@@ -358,8 +360,6 @@ public abstract class AbstractCompiler {
   private final Map<String, NameEnvironmentAnswer> nameEnvironmentAnswerForTypeName = new HashMap<String, NameEnvironmentAnswer>();
 
   private final SourceOracle sourceOracle;
-
-  private final ThreadLocalTreeLoggerProxy threadLogger = new ThreadLocalTreeLoggerProxy();
 
   private final Map<String, ICompilationUnit> unitsByTypeName = new HashMap<String, ICompilationUnit>();
 
@@ -420,12 +420,16 @@ public abstract class AbstractCompiler {
     // Any additional compilation units that are found to be needed will be
     // pulled in while procssing compilation units. See CompilerImpl.process().
     //
-    threadLogger.set(logger);
-    Set<CompilationUnitDeclaration> cuds = new HashSet<CompilationUnitDeclaration>();
-    compiler.compile(units, cuds);
-    int size = cuds.size();
-    CompilationUnitDeclaration[] cudArray = new CompilationUnitDeclaration[size];
-    return cuds.toArray(cudArray);
+    TreeLogger oldLogger = threadLogger.push(logger);
+    try {
+      Set<CompilationUnitDeclaration> cuds = new HashSet<CompilationUnitDeclaration>();
+      compiler.compile(units, cuds);
+      int size = cuds.size();
+      CompilationUnitDeclaration[] cudArray = new CompilationUnitDeclaration[size];
+      return cuds.toArray(cudArray);
+    } finally {
+      threadLogger.pop(oldLogger);
+    }
   }
 
   protected void doAcceptResult(CompilationResult result) {
@@ -516,10 +520,6 @@ public abstract class AbstractCompiler {
 
   protected ReferenceBinding resolvePossiblyNestedType(String typeName) {
     return compiler.resolvePossiblyNestedType(typeName);
-  }
-
-  protected void setLogger(TreeLogger logger) {
-    threadLogger.set(logger);
   }
 
   SourceOracle getSourceOracle() {

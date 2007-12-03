@@ -103,7 +103,7 @@ public class WebModeCompilerFrontEnd extends AstCompiler {
 
       try {
         String[] resultTypes = rebindPermOracle.getAllPossibleRebindAnswers(
-            getLogger(), reqType);
+            logger, reqType);
         // Check that each result is instantiable.
         for (int i = 0; i < resultTypes.length; ++i) {
           String typeName = resultTypes[i];

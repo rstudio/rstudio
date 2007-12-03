@@ -33,7 +33,7 @@ public final class ThreadLocalTreeLoggerProxy implements TreeLogger {
   }
 
   public ThreadLocalTreeLoggerProxy(TreeLogger logger) {
-    set(logger);
+    push(logger);
   }
 
   /**
@@ -75,10 +75,16 @@ public final class ThreadLocalTreeLoggerProxy implements TreeLogger {
     }
   }
 
+  public void pop(TreeLogger oldLogger) {
+    perThreadLogger.set(oldLogger);
+  }
+
   /**
    * Sets the logger to which calls are redirected for the current thread.
    */
-  public void set(TreeLogger logger) {
+  public TreeLogger push(TreeLogger logger) {
+    TreeLogger old = perThreadLogger.get();
     perThreadLogger.set(logger);
+    return old;
   }
 }

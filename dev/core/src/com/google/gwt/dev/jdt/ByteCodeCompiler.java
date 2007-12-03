@@ -71,32 +71,37 @@ public class ByteCodeCompiler extends AbstractCompiler {
     //
     String msg = "Getting bytecode for '" + binaryTypeName + "'";
     logger = logger.branch(TreeLogger.SPAM, msg, null);
-    setLogger(logger);
 
-    // Check the bytecode cache in case we've already compiled it.
-    //
-    ByteCode byteCode = doGetByteCodeFromCache(logger, binaryTypeName);
-    if (byteCode != null) {
-      // We have it already.
+    TreeLogger oldLogger = threadLogger.push(logger);
+    try {
+
+      // Check the bytecode cache in case we've already compiled it.
       //
-      return byteCode.getBytes();
-    }
+      ByteCode byteCode = doGetByteCodeFromCache(logger, binaryTypeName);
+      if (byteCode != null) {
+        // We have it already.
+        //
+        return byteCode.getBytes();
+      }
 
-    // Need to compile it. It could be the case that we have tried before and
-    // failed, but on the off chance that it's been fixed since then, we adopt
-    // a policy of always trying to recompile if we don't have it cached.
-    //
-    ICompilationUnit start = getCompilationUnitForType(logger, binaryTypeName);
-    compile(logger, new ICompilationUnit[] {start});
+      // Need to compile it. It could be the case that we have tried before and
+      // failed, but on the off chance that it's been fixed since then, we adopt
+      // a policy of always trying to recompile if we don't have it cached.
+      //
+      ICompilationUnit start = getCompilationUnitForType(logger, binaryTypeName);
+      compile(logger, new ICompilationUnit[] {start});
 
-    // Check the cache again. If it's there now, we succeeded.
-    // If it isn't there now, we've already logged the error.
-    //
-    byteCode = doGetByteCodeFromCache(logger, binaryTypeName);
-    if (byteCode != null) {
-      return byteCode.getBytes();
-    } else {
-      throw new UnableToCompleteException();
+      // Check the cache again. If it's there now, we succeeded.
+      // If it isn't there now, we've already logged the error.
+      //
+      byteCode = doGetByteCodeFromCache(logger, binaryTypeName);
+      if (byteCode != null) {
+        return byteCode.getBytes();
+      } else {
+        throw new UnableToCompleteException();
+      }
+    } finally {
+      threadLogger.pop(oldLogger);
     }
   }
 
