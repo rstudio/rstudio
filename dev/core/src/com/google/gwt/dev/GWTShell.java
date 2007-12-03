@@ -34,6 +34,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
+import com.google.gwt.util.tools.ArgHandlerDisableAggressiveOptimization;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerOutDir;
@@ -371,6 +372,8 @@ public class GWTShell extends ToolBase {
 
   protected File outDir;
 
+  private boolean aggressivelyOptimize = true;
+
   private BrowserWidgetHostImpl browserHost = new BrowserWidgetHostImpl();
 
   private final List<Shell> browserShells = new ArrayList<Shell>();
@@ -460,6 +463,14 @@ public class GWTShell extends ToolBase {
       public void setStylePretty() {
         obfuscate = false;
         prettyNames = true;
+      }
+    });
+
+    registerHandler(new ArgHandlerDisableAggressiveOptimization() {
+      @Override
+      public boolean setFlag() {
+        GWTShell.this.setAggressivelyOptimize(false);
+        return true;
       }
     });
   }
@@ -609,6 +620,10 @@ public class GWTShell extends ToolBase {
     }
   }
 
+  public void setAggressivelyOptimize(boolean optimize) {
+    this.aggressivelyOptimize = optimize;
+  }
+
   public void setGenDir(File genDir) {
     this.genDir = genDir;
   }
@@ -637,6 +652,7 @@ public class GWTShell extends ToolBase {
   protected void compile(TreeLogger logger, ModuleDef moduleDef)
       throws UnableToCompleteException {
     GWTCompiler compiler = new GWTCompiler(moduleDef.getCacheManager());
+    compiler.setAggressivelyOptimize(aggressivelyOptimize);
     compiler.setGenDir(genDir);
     compiler.setOutDir(outDir);
     compiler.setModuleName(moduleDef.getName());

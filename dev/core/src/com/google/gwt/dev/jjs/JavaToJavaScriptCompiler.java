@@ -196,6 +196,7 @@ public class JavaToJavaScriptCompiler {
     return null;
   }
 
+  private final boolean aggressivelyOptimize;
   private final String[] declEntryPoints;
   private final CompilationUnitDeclaration[] goldenCuds;
   private long lastModified;
@@ -206,16 +207,21 @@ public class JavaToJavaScriptCompiler {
   public JavaToJavaScriptCompiler(final TreeLogger logger,
       final WebModeCompilerFrontEnd compiler, final String[] declEntryPts)
       throws UnableToCompleteException {
-    this(logger, compiler, declEntryPts, true, false);
+    this(logger, compiler, declEntryPts, true, false, true);
   }
 
   public JavaToJavaScriptCompiler(final TreeLogger logger,
       final WebModeCompilerFrontEnd compiler, final String[] declEntryPts,
-      boolean obfuscate, boolean prettyNames) throws UnableToCompleteException {
+      boolean obfuscate, boolean prettyNames, boolean aggressivelyOptimize)
+      throws UnableToCompleteException {
 
     if (declEntryPts.length == 0) {
       throw new IllegalArgumentException("entry point(s) required");
     }
+
+    // Should we attempt to inline Java and JavaScript methods?
+    //
+    this.aggressivelyOptimize = aggressivelyOptimize;
 
     // Remember these for subsequent compiles.
     //
@@ -357,9 +363,10 @@ public class JavaToJavaScriptCompiler {
         // dead code removal??
         didChange = DeadCodeElimination.exec(jprogram) || didChange;
 
-        // inlining
-        didChange = MethodInliner.exec(jprogram) || didChange;
-
+        if (aggressivelyOptimize) {
+          // inlining
+          didChange = MethodInliner.exec(jprogram) || didChange;
+        }
         // prove that any types that have been culled from the main tree are
         // unreferenced due to type tightening?
       } while (didChange);
@@ -391,13 +398,16 @@ public class JavaToJavaScriptCompiler {
       JsSymbolResolver.exec(jsProgram);
 
       // (10) Apply optimizations to JavaScript AST
-      do {
-        didChange = false;
-        // Inline JavaScript function invocations
-        didChange = JsInliner.exec(jsProgram) || didChange;
-        // Remove unused functions, possible
-        didChange = JsUnusedFunctionRemover.exec(jsProgram) || didChange;
-      } while (didChange);
+      if (aggressivelyOptimize) {
+        do {
+          didChange = false;
+          // Inline JavaScript function invocations
+          didChange = aggressivelyOptimize && JsInliner.exec(jsProgram)
+              || didChange;
+          // Remove unused functions, possible
+          didChange = JsUnusedFunctionRemover.exec(jsProgram) || didChange;
+        } while (didChange);
+      }
 
       // (11) Obfuscate
       if (obfuscate) {

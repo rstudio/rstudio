@@ -47,6 +47,7 @@ import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.DetachedTreeLoggerWindow;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.dev.util.xml.ReflectiveParser;
+import com.google.gwt.util.tools.ArgHandlerDisableAggressiveOptimization;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerOutDir;
 import com.google.gwt.util.tools.ToolBase;
@@ -234,6 +235,8 @@ public class GWTCompiler extends ToolBase {
 
   private Map<String, List<JClassType>> generatedTypesByResultTypeName = new HashMap<String, List<JClassType>>();
 
+  private boolean aggressivelyOptimize = true;
+
   private JavaToJavaScriptCompiler jjs;
 
   private Type logLevel;
@@ -316,6 +319,14 @@ public class GWTCompiler extends ToolBase {
         GWTCompiler.this.setStylePretty();
       }
     });
+
+    registerHandler(new ArgHandlerDisableAggressiveOptimization() {
+      @Override
+      public boolean setFlag() {
+        GWTCompiler.this.setAggressivelyOptimize(false);
+        return true;
+      }
+    });
     this.cacheManager = cacheManager;
   }
 
@@ -339,7 +350,7 @@ public class GWTCompiler extends ToolBase {
     WebModeCompilerFrontEnd frontEnd = new WebModeCompilerFrontEnd(
         sourceOracle, rebindPermOracle);
     jjs = new JavaToJavaScriptCompiler(logger, frontEnd, declEntryPts,
-        obfuscate, prettyNames);
+        obfuscate, prettyNames, aggressivelyOptimize);
     initCompilations(logger);
 
     // Compile for every permutation of properties.
@@ -371,6 +382,10 @@ public class GWTCompiler extends ToolBase {
 
   public boolean getUseGuiLogger() {
     return useGuiLogger;
+  }
+
+  public void setAggressivelyOptimize(boolean aggressive) {
+    aggressivelyOptimize = aggressive;
   }
 
   public void setGenDir(File dir) {
