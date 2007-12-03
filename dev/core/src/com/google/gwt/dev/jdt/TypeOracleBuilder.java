@@ -756,7 +756,7 @@ public class TypeOracleBuilder {
       return stringLiteral.constant.stringValue();
     } else if (expression instanceof ClassLiteralAccess) {
       ClassLiteralAccess classLiteral = (ClassLiteralAccess) expression;
-      Class<?> clazz = getClassLiteral(logger, classLiteral.resolvedType);
+      Class<?> clazz = getClassLiteral(logger, classLiteral.targetType);
       if (clazz != null) {
         return clazz;
       }

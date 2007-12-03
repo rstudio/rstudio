@@ -30,6 +30,7 @@ public class TypeOracleSuite extends TestSuite {
     suite.addTestSuite(JRawTypeTest.class);
     suite.addTestSuite(JTypeParameterTest.class);
     suite.addTestSuite(JWildcardTypeTest.class);
+    suite.addTestSuite(TypeOracleAnnotationSupportTest.class);
     return suite;
   }
 }

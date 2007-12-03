@@ -18,6 +18,7 @@ package com.google.gwt.core.ext.typeinfo;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.test.AnnotatedClass;
+import com.google.gwt.core.ext.typeinfo.test.ClassLiteralReferenceAnnotation;
 import com.google.gwt.core.ext.typeinfo.test.TestAnnotation;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
@@ -80,7 +81,10 @@ public class TypeOracleAnnotationSupportTest extends TestCase {
     TestAnnotation realAnnotation = AnnotatedClass.class.getAnnotation(TestAnnotation.class);
     validateAnnotation(annotatedClass, "Class", "Foo", realAnnotation);
 
-    assertEquals(1, annotatedClass.getAnnotations().length);
+    ClassLiteralReferenceAnnotation classReferenceAnnotation = annotatedClass.getAnnotation(ClassLiteralReferenceAnnotation.class);
+    assertEquals(ClassLiteralReferenceAnnotation.Foo.class, classReferenceAnnotation.value());
+    
+    assertEquals(2, annotatedClass.getAnnotations().length);
   }
 
   /**

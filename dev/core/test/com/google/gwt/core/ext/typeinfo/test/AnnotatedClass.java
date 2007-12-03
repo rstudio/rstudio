@@ -15,11 +15,14 @@
  */
 package com.google.gwt.core.ext.typeinfo.test;
 
+import com.google.gwt.core.ext.typeinfo.test.ClassLiteralReferenceAnnotation.Foo;
+
 /**
  * Used to test that a
  * {@link com.google.gwt.core.ext.typeinfo.TypeOracle TypeOracle} will correctly
  * report the presence of annotations on the different annotatable elements.
  */
+@ClassLiteralReferenceAnnotation(Foo.class)
 @TestAnnotation(value = "Class", nestedAnnotation = @NestedAnnotation("Foo"))
 public class AnnotatedClass {
   @TestAnnotation("Field")
