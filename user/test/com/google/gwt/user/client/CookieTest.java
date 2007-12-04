@@ -17,6 +17,7 @@ package com.google.gwt.user.client;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
+import java.util.Collection;
 import java.util.Date;
 
 /**
@@ -53,6 +54,8 @@ public class CookieTest extends GWTTestCase {
     assertEquals(Cookies.getCookie("notpresent"), null);
   }
   
+  
+  
   /*
    * Test that the cookie will expire correctly after a set amount of time,
    * but does not expire before that time. 
@@ -85,5 +88,50 @@ public class CookieTest extends GWTTestCase {
     };
     timer.schedule(5010);
     delayTestFinish(6 * 1000);
+  }
+  
+  /**
+   * Test that removing cookies works correctly.
+   */
+  public void testRemoveCookie() {
+    // First clear all cookies
+    clearCookies();
+    
+    // Set a few cookies
+    Cookies.setCookie("test1", "value1");
+    Cookies.setCookie("test2", "value2");
+    Cookies.setCookie("test3", "value3");
+    Collection<String> cookies = Cookies.getCookieNames();
+    assertEquals(3, cookies.size());
+    
+    // Remove a cookie
+    Cookies.removeCookie("test2");
+    assertEquals("value1", Cookies.getCookie("test1"));
+    assertEquals(null, Cookies.getCookie("test2"));
+    assertEquals("value3", Cookies.getCookie("test3"));
+
+    // Remove another cookie
+    Cookies.removeCookie("test1");
+    assertEquals(null, Cookies.getCookie("test1"));
+    assertEquals(null, Cookies.getCookie("test2"));
+    assertEquals("value3", Cookies.getCookie("test3"));
+
+    // Remove last cookie
+    Cookies.removeCookie("test3");
+    assertEquals(null, Cookies.getCookie("test1"));
+    assertEquals(null, Cookies.getCookie("test2"));
+    assertEquals(null, Cookies.getCookie("test3"));
+    cookies = Cookies.getCookieNames();
+    assertEquals(0, cookies.size());
+  }
+  
+  /**
+   * Clear out all existing cookies.
+   */
+  private void clearCookies() { 
+    Collection<String> cookies = Cookies.getCookieNames();
+    for (String cookie : cookies) {
+      Cookies.removeCookie(cookie);
+    }
   }
 }

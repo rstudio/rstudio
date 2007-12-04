@@ -65,7 +65,7 @@ public class Cookies {
    * @param name the name of the cookie to be removed
    */
   public static native void removeCookie(String name) /*-{
-    $doc.cookie = name + "='';expires='Fri, 02-Jan-1970 00:00:00 GMT'"; 
+    $doc.cookie = name + "=;expires=Fri, 02-Jan-1970 00:00:00 GMT"; 
   }-*/;
 
   /**
@@ -138,7 +138,7 @@ public class Cookies {
     var docCookie = $doc.cookie;
         
     // Check to see if cached cookies need to be invalidated.
-    if (docCookie != '' && docCookie != @com.google.gwt.user.client.Cookies::rawCookies) {  
+    if (docCookie != @com.google.gwt.user.client.Cookies::rawCookies) {  
       @com.google.gwt.user.client.Cookies::rawCookies = docCookie;
       return true;
     } else {
