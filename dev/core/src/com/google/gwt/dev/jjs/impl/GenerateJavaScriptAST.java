@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JAbstractMethodBody;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
+import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JAssertStatement;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
@@ -1150,14 +1151,41 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateClassLiterals(JsVars vars) {
+      Set<JType> alreadyGenerated = new HashSet<JType>();
       for (Object element : classLits.keySet()) {
         JType type = (JType) element;
-        JsName jsName = classLits.get(type);
-        JsExpression classObjectAlloc = classObjects.get(jsName);
-        JsVar var = new JsVar(jsName);
-        var.setInitExpr(classObjectAlloc);
-        vars.add(var);
+        generateClassLiteralsRecursive(alreadyGenerated, type, vars);
       }
+    }
+
+    private void generateClassLiteralsRecursive(Set<JType> alreadyGenerated,
+        JType type, JsVars vars) {
+      if (alreadyGenerated.contains(type)) {
+        return;
+      }
+      alreadyGenerated.add(type);
+
+      if (type instanceof JClassType && !(type instanceof JArrayType)) {
+        /*
+         * If this type is a regular class or an enum, then ensure that its 
+         * superclasses' class literal is generated before its own.
+         * 
+         * NOTE: JInterfaceTypes can have their JReferenceType.extnds member
+         * set to its first implemented interface.  JArrayTypes always have
+         * Object as their superclass so there is no need to explicitly set it
+         * here.
+         */
+        JClassType classType = (JClassType) type;
+        if (classType.extnds != null) {
+          generateClassLiteralsRecursive(alreadyGenerated, classType.extnds, vars);
+        }
+      }
+
+      JsName jsName = classLits.get(type);
+      JsExpression classObjectAlloc = classObjects.get(jsName);
+      JsVar var = new JsVar(jsName);
+      var.setInitExpr(classObjectAlloc);
+      vars.add(var);
     }
 
     private void generateClassSetup(JClassType x, List<JsStatement> globalStmts) {

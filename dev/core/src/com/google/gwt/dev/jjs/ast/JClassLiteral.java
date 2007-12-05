@@ -55,10 +55,32 @@ public class JClassLiteral extends JLiteral {
     JMethod method = program.getIndexedMethod(type.getClassLiteralFactoryMethod());
     assert method != null;
     
-    JMethodCall call = new JMethodCall(program, null, null,
-        method);
+    JMethodCall call = new JMethodCall(program, null, null, method);
     call.getArgs().add(program.getLiteralString(getPackageName(typeName)));
     call.getArgs().add(program.getLiteralString(getClassName(typeName)));
+    
+    if (type instanceof JClassType && !(type instanceof JArrayType)) {
+      /*
+       * For non-array classes and enums, determine the class literal of the 
+       * supertype, if there is one.  Arrays are excluded because they always
+       * have Object as their superclass.
+       */
+      assert (type instanceof JClassType);
+      JClassType classType = (JClassType) type;
+
+      JLiteral superclassLiteral;
+      
+      if (classType.extnds != null) {
+        superclassLiteral = program.getLiteralClass(classType.extnds);
+      } else {
+        superclassLiteral = program.getLiteralNull();
+      }
+      
+      call.getArgs().add(superclassLiteral);
+    } else {
+      assert (type instanceof JArrayType || type instanceof JInterfaceType || 
+          type instanceof JPrimitiveType);
+    }
 
     classObjectAllocation = call;
   }

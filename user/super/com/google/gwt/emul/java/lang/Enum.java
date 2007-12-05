@@ -69,8 +69,10 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
   }
 
   public final Class<E> getDeclaringClass() {
-    throw new UnsupportedOperationException(
-        "Enum.getDeclaringClass() not yet implemented");
+    Class clazz = getClass();
+    Class superclass = clazz.getSuperclass();
+    
+    return (superclass == Enum.class) ? clazz : superclass;
   }
 
   @Override

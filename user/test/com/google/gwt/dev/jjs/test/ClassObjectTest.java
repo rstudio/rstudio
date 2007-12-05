@@ -39,6 +39,7 @@ public class ClassObjectTest extends GWTTestCase {
   public void testArray() {
     Object o = new Foo[3];
     assertEquals(Foo[].class, o.getClass());
+    assertEquals(Object.class, o.getClass().getSuperclass());
     assertEquals("[Lcom.google.gwt.dev.jjs.test.ClassObjectTest$Foo;",
         o.getClass().getName());
     assertEquals("class [Lcom.google.gwt.dev.jjs.test.ClassObjectTest$Foo;",
@@ -56,6 +57,7 @@ public class ClassObjectTest extends GWTTestCase {
   public void testClass() {
     Object o = new Foo();
     assertEquals(Foo.class, o.getClass());
+    assertEquals(Object.class, o.getClass().getSuperclass());
     assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$Foo",
         Foo.class.getName());
     assertEquals("class com.google.gwt.dev.jjs.test.ClassObjectTest$Foo",
@@ -69,6 +71,7 @@ public class ClassObjectTest extends GWTTestCase {
   public void testEnum() {
     Object o = Bar.BAR;
     assertEquals(Bar.class, o.getClass());
+    assertEquals(Enum.class, o.getClass().getSuperclass());
     assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$Bar",
         o.getClass().getName());
     assertEquals("class com.google.gwt.dev.jjs.test.ClassObjectTest$Bar",
@@ -80,6 +83,7 @@ public class ClassObjectTest extends GWTTestCase {
   }
 
   public void testInterface() {
+    assertNull(IFoo.class.getSuperclass());
     assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$IFoo",
         IFoo.class.getName());
     assertEquals("interface com.google.gwt.dev.jjs.test.ClassObjectTest$IFoo",
@@ -91,6 +95,7 @@ public class ClassObjectTest extends GWTTestCase {
   }
 
   public void testPrimitive() {
+    assertNull(int.class.getSuperclass());
     assertEquals("int", int.class.getName());
     assertEquals("int", int.class.toString());
     assertFalse(int.class.isArray());

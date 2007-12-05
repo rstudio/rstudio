@@ -87,6 +87,12 @@ public class EnumsTest extends GWTTestCase {
     assertEquals("Z", Complex.C.value);
   }
 
+  public void testGetDeclaringClass() {
+    assertEquals(Basic.class, Basic.A.getDeclaringClass());
+    assertEquals(Complex.class, Complex.A.getDeclaringClass());
+    assertEquals(Subclassing.class, Subclassing.A.getDeclaringClass());
+  }
+  
   public void testMethod() {
     assertEquals("X", Complex.A.value());
     assertEquals("Y", Complex.B.value());

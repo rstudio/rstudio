@@ -38,6 +38,7 @@ public final class Class<T> {
     Class<?> clazz = new Class();
     clazz.typeName = packageName + className;
     clazz.modifiers = ARRAY;
+    clazz.superclass = Object.class;
     return clazz;
   }
 
@@ -46,10 +47,11 @@ public final class Class<T> {
    * 
    * @skip
    */
-  static Class<?> createForClass(String packageName, String className) {
+  static Class<?> createForClass(String packageName, String className, Class<?> superclass) {
     // Initialize here to avoid method inliner
     Class<?> clazz = new Class<Object>();
     clazz.typeName = packageName + className;
+    clazz.superclass = superclass;
     return clazz;
   }
 
@@ -58,11 +60,12 @@ public final class Class<T> {
    * 
    * @skip
    */
-  static Class<?> createForEnum(String packageName, String className) {
+  static Class<?> createForEnum(String packageName, String className, Class<?> superclass) {
     // Initialize here to avoid method inliner
     Class<?> clazz = new Class<Object>();
     clazz.typeName = packageName + className;
     clazz.modifiers = ENUM;
+    clazz.superclass = superclass;
     return clazz;
   }
 
@@ -96,6 +99,8 @@ public final class Class<T> {
 
   private String typeName;
 
+  private Class<?> superclass;
+  
   /**
    * Not publicly instantiable.
    * 
@@ -113,6 +118,10 @@ public final class Class<T> {
     return typeName;
   }
 
+  public Class<? super T> getSuperclass() {
+    return (Class<? super T>) superclass;
+  }
+  
   public boolean isArray() {
     return (modifiers & ARRAY) != 0;
   }
