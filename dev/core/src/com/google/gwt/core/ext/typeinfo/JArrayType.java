@@ -268,33 +268,7 @@ public class JArrayType extends JClassType {
 
   @Override
   public JClassType getSuperclass() {
-    JType compType = getComponentType();
-    JClassType javaLangObject = getOracle().getJavaLangObject();
-    if (compType.isPrimitive() != null) {
-      // Super of primitive[] is object
-      return javaLangObject;
-    }
-
-    JArrayType arrayComponent = compType.isArray();
-    if (arrayComponent != null) {
-      // Superclass of multi-dimensional array is superclass of component
-      return getOracle().getArrayType(arrayComponent.getSuperclass());
-    }
-
-    JClassType type = compType.isClassOrInterface();
-    if (type == javaLangObject) {
-      // Superclass of Object[] is Object
-      return javaLangObject;
-    }
-
-    JClassType superType = type.getSuperclass();
-    if (superType == null) {
-      // Superclass of interface[] is Object[]
-      assert (type.isInterface() == null);
-      superType = javaLangObject;
-    }
-
-    return getOracle().getArrayType(superType);
+    return getOracle().getJavaLangObject();
   }
 
   @Override

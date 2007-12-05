@@ -80,23 +80,12 @@ public class JArrayTypeTest extends TestCase {
     TypeOracle oracle = moduleContext.getOracle();
     JArrayType intVector = getIntVector(oracle);
     JArrayType intArray = getIntArray(oracle);
-    JArrayType objVector = getObjectVector(oracle);
-    JArrayType objArray = getObjectArray(oracle);
 
-    // Check that superclass of int[][] is Object[]
-    assertEquals(objVector, intArray.getSuperclass());
+    // Check that superclass of int[][] is Object
+    assertEquals(oracle.getJavaLangObject(), intArray.getSuperclass());
 
     // Check that superclass of int[] is Object
     assertEquals(oracle.getJavaLangObject(), intVector.getSuperclass());
-
-    // CA
-    JClassType caType = oracle.getType(CA.class.getCanonicalName());
-
-    // CA[]
-    JArrayType caVector = oracle.getArrayType(caType);
-
-    // CA[][]
-    JArrayType caArray = oracle.getArrayType(caVector);
 
     // CB
     JClassType cbType = oracle.getType(CB.class.getCanonicalName());
@@ -106,22 +95,14 @@ public class JArrayTypeTest extends TestCase {
 
     // CB[][]
     JArrayType cbArray = oracle.getArrayType(cbVector);
+    assertEquals(oracle.getJavaLangObject(), cbArray.getSuperclass());
 
-    // Check that CB[][] has a supertype of CA[][]
-    JClassType cbArraySuper = cbArray.getSuperclass();
-    assertEquals(caArray, cbArraySuper);
-
-    // Check that CA[][] has a supertype of Object[][]
-    JClassType cbArraySuperSuper = cbArraySuper.getSuperclass();
-    assertEquals(objArray, cbArraySuperSuper);
-
-    // Check that Object[][] has supertype of Object[]
-    JClassType cbArraySuperSuperSuper = cbArraySuperSuper.getSuperclass();
-    assertEquals(objVector, cbArraySuperSuperSuper);
+    // Check that CA[][] has a supertype of Object
+    assertEquals(oracle.getJavaLangObject(), cbArray.getSuperclass());
 
     // Check that Object[] has supertype of Object
-    JClassType cbArraySuperSuperSuperSuper = cbArraySuperSuperSuper.getSuperclass();
-    assertEquals(oracle.getJavaLangObject(), cbArraySuperSuperSuperSuper);
+    JArrayType objVector = getObjectVector(oracle);
+    assertEquals(oracle.getJavaLangObject(), objVector.getSuperclass());
   }
 
   public void testIsAssignableFrom() throws NotFoundException {
