@@ -467,6 +467,8 @@ public final class ServerSerializationStreamReader extends
           instance);
     } else if (instanceClass.isArray()) {
       deserializeArray(instanceClass, instance);
+    } else if (instanceClass.isEnum()) {
+      // Enums are deserialized when they are instantiated
     } else {
       deserializeClass(instanceClass, instance);
     }
@@ -512,6 +514,11 @@ public final class ServerSerializationStreamReader extends
       int length = readInt();
       Class<?> componentType = instanceClass.getComponentType();
       return Array.newInstance(componentType, length);
+    } else if (instanceClass.isEnum()) {
+      Enum[] enumConstants = (Enum[]) instanceClass.getEnumConstants();
+      int ordinal = readInt();
+      assert (ordinal >= 0 && ordinal < enumConstants.length);
+      return enumConstants[ordinal];
     } else {
       return instanceClass.newInstance();
     }

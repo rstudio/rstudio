@@ -147,7 +147,15 @@ public final class ClientSerializationStreamWriter extends
 
   @Override
   protected String getObjectTypeSignature(Object o) {
-    String typeName = o.getClass().getName();
+    Class<?> clazz = o.getClass();
+
+    if (o instanceof Enum) {
+      Enum<?> e = (Enum<?>) o;
+      clazz = e.getDeclaringClass();
+    }
+
+    String typeName = clazz.getName();
+    
     String serializationSignature = serializer.getSerializationSignature(typeName);
     if (serializationSignature != null) {
       typeName += "/" + serializationSignature;

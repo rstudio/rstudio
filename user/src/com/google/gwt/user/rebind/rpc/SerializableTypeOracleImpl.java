@@ -68,14 +68,14 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add("java.lang.Throwable");
   }
 
-  private final Set<JType> serializableTypesSet;
+  private final Set<JClassType> serializableTypesSet;
   private final TypeOracle typeOracle;
-  private final Set<JType> possiblyInstantiatedTypes;
+  private final Set<JClassType> possiblyInstantiatedTypes;
 
   public SerializableTypeOracleImpl(TypeOracle typeOracle,
-      JType[] serializableTypes, Set<JType> possiblyInstantiatedTypes) {
+      JClassType[] serializableTypes, Set<JClassType> possiblyInstantiatedTypes) {
 
-    serializableTypesSet = new TreeSet<JType>(TYPE_COMPARATOR);
+    serializableTypesSet = new TreeSet<JClassType>(TYPE_COMPARATOR);
     serializableTypesSet.addAll(Arrays.asList(serializableTypes));
     this.typeOracle = typeOracle;
 

@@ -204,19 +204,6 @@ public class TypeSerializerCreator {
     return composerFactory.createSourceWriter(ctx, printWriter);
   }
 
-  private boolean isAbstractType(JType type) {
-    JClassType classType = type.isClassOrInterface();
-    if (classType != null) {
-      if (classType.isAbstract()) {
-        return true;
-      }
-    }
-
-    // Primitives, arrays, and non-abstract classes fall-through to here.
-    //
-    return false;
-  }
-
   /**
    * Return <code>true</code> if this type is concrete and has a custom field
    * serializer that does not declare an instantiate method.
@@ -227,7 +214,7 @@ public class TypeSerializerCreator {
   private boolean needsCreateMethod(JType type) {
     // If this type is abstract it will not be serialized into the stream
     //
-    if (isAbstractType(type)) {
+    if (!serializationOracle.maybeInstantiated(type)) {
       return false;
     }
 
@@ -263,7 +250,7 @@ public class TypeSerializerCreator {
       boolean needComma = false;
       for (int index = 0; index < types.length; ++index) {
         JType type = types[index];
-        if (isAbstractType(type)) {
+        if (!serializationOracle.maybeInstantiated(type)) {
           continue;
         }
 
@@ -375,7 +362,7 @@ public class TypeSerializerCreator {
       boolean needComma = false;
       for (int index = 0; index < types.length; ++index) {
         JType type = types[index];
-        if (isAbstractType(type)) {
+        if (!serializationOracle.maybeInstantiated(type)) {
           continue;
         }
         if (needComma) {

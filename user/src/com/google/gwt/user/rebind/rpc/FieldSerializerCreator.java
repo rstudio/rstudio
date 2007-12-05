@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.user.client.rpc.SerializationException;
@@ -274,12 +275,23 @@ public class FieldSerializerCreator {
     JArrayType isArray = serializableClass.isArray();
     if (isArray != null) {
       writeArrayDeserializationStatements(isArray);
+    } else if (serializableClass.isEnum() != null) {
+      writeEnumDeserializationStatements(serializableClass.isEnum());
     } else {
       writeClassDeserializationStatements();
     }
     sourceWriter.outdent();
     sourceWriter.println("}");
     sourceWriter.println();
+  }
+
+  private void writeEnumDeserializationStatements(JEnumType enumType) {
+    sourceWriter.println("// Enum deserialization is handled via the instantiate method");
+  }
+
+  private void writeEnumSerializationStatements(JEnumType enumType) {
+    sourceWriter.println("assert (instance != null);");
+    sourceWriter.println("streamWriter.writeInt(instance.ordinal());");
   }
 
   /**
@@ -357,12 +369,13 @@ public class FieldSerializerCreator {
   }
 
   private void writeInstatiateMethod() {
-    if (serializableClass.isAbstract()) {
+    if (!serializationOracle.maybeInstantiated(serializableClass)) {
       return;
     }
 
     sourceWriter.print("public static ");
-    sourceWriter.print(serializableClass.getQualifiedSourceName());
+    String qualifiedSourceName = serializableClass.getQualifiedSourceName();
+    sourceWriter.print(qualifiedSourceName);
     sourceWriter.print(" instantiate(");
     sourceWriter.print(SerializationStreamReader.class.getName());
     sourceWriter.println(" streamReader) throws "
@@ -374,9 +387,14 @@ public class FieldSerializerCreator {
       sourceWriter.println("int rank = streamReader.readInt();");
       sourceWriter.println("return "
           + createArrayInstantiationExpression(isArray) + ";");
+    } else if (serializableClass.isEnum() != null) {
+      sourceWriter.println("int ordinal = streamReader.readInt();");
+      sourceWriter.println(qualifiedSourceName + "[] values = "
+          + qualifiedSourceName + ".values();");
+      sourceWriter.println("assert (ordinal >= 0 && ordinal < values.length);");
+      sourceWriter.println("return values[ordinal];");
     } else {
-      sourceWriter.println("return new "
-          + serializableClass.getQualifiedSourceName() + "();");
+      sourceWriter.println("return new " + qualifiedSourceName + "();");
     }
 
     sourceWriter.outdent();
@@ -396,6 +414,8 @@ public class FieldSerializerCreator {
     JArrayType isArray = serializableClass.isArray();
     if (isArray != null) {
       writeArraySerializationStatements(isArray);
+    } else if (serializableClass.isEnum() != null) {
+      writeEnumSerializationStatements(serializableClass.isEnum());
     } else {
       writeClassSerializationStatements();
     }

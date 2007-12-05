@@ -330,6 +330,22 @@ public final class ServerSerializationStreamWriter extends
   }
 
   /**
+   * Returns the {@link Class} instance to use for serialization.  Enumerations 
+   * are serialized as their declaring class while all others are serialized 
+   * using their true class instance.
+   */
+  private static Class<?> getClassForSerialization(Object instance) {
+    assert (instance != null);
+    
+    if (instance instanceof Enum) {
+      Enum<?> e = (Enum<?>) instance;
+      return e.getDeclaringClass();
+    } else {
+      return instance.getClass();
+    }
+  }
+
+  /**
    * Returns <code>true</code> if the character requires the \\uXXXX unicode
    * character escape sequence. This is necessary if the raw character could be
    * consumed and/or interpreted as a special character when the JSON encoded
@@ -515,10 +531,13 @@ public final class ServerSerializationStreamWriter extends
 
   @Override
   protected String getObjectTypeSignature(Object instance) {
+    assert (instance != null);
+    
+    Class<?> clazz = getClassForSerialization(instance);
     if (shouldEnforceTypeVersioning()) {
-      return SerializabilityUtil.encodeSerializedInstanceReference(instance.getClass());
+      return SerializabilityUtil.encodeSerializedInstanceReference(clazz);
     } else {
-      return SerializabilityUtil.getSerializedTypeName(instance.getClass());
+      return SerializabilityUtil.getSerializedTypeName(clazz);
     }
   }
 
@@ -532,7 +551,8 @@ public final class ServerSerializationStreamWriter extends
       throws SerializationException {
     assert (instance != null);
 
-    Class<?> clazz = instance.getClass();
+    Class<?> clazz = getClassForSerialization(instance);
+
     serializationPolicy.validateSerialize(clazz);
 
     serializeImpl(instance, clazz);
@@ -609,6 +629,8 @@ public final class ServerSerializationStreamWriter extends
       serializeWithCustomSerializer(customSerializer, instance, instanceClass);
     } else if (instanceClass.isArray()) {
       serializeArray(instanceClass, instance);
+    } else if (instanceClass.isEnum()) {
+      writeInt(((Enum<?>) instance).ordinal());
     } else {
       // Regular class instance
       serializeClass(instance, instanceClass);
