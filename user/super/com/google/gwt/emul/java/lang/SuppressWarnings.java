@@ -21,9 +21,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates that a method definition is intended to override a declaration from
- * a superclass. <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Override.html">[Sun
+ * Indicates that the named compiler warnings should be suppressed in the
+ * annotated element (and in all program elements contained in the annotated
+ * element). <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/SuppressWarnings.html">[Sun
  * docs]</a>
  */
 @Target( {
