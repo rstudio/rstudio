@@ -23,6 +23,8 @@
     class='com.google.gwt.user.server.rpc.CollectionsTestServiceImpl' />
   <servlet path='/customfieldserializers'
     class='com.google.gwt.user.server.rpc.CustomFieldSerializerTestServiceImpl' />
+  <servlet path='/enums'
+    class='com.google.gwt.user.server.rpc.EnumsTestServiceImpl' />
   <servlet path='/inheritance'
     class='com.google.gwt.user.server.rpc.InheritanceTestServiceImpl' />
   <servlet path='/objectgraphs'
