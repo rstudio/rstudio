@@ -835,13 +835,27 @@ public class TypeOracleBuilder {
     return String.valueOf(CharOperation.concatWith(pkgParts, '.'));
   }
 
+  /** 
+   * Returns the qualified name of the binding, excluding any type parameter
+   * information.
+   */
   private String getQualifiedName(ReferenceBinding binding) {
-    if (binding.isMemberType()) {
-      return String.valueOf(CharOperation.concat(
-          binding.enclosingType().readableName(), binding.sourceName, '.'));
+    String qualifiedName = CharOperation.toString(binding.compoundName);
+    if (binding instanceof LocalTypeBinding) {
+       // The real name of a local type is its constant pool name.
+      qualifiedName = CharOperation.charToString(binding.constantPoolName());
+      qualifiedName = qualifiedName.replace('/', '.');
+    } else {
+      /*
+       * All other types have their fully qualified name as part of its compound
+       * name.
+       */
+      qualifiedName = CharOperation.toString(binding.compoundName);
     }
-
-    return CharOperation.toString(binding.compoundName);
+   
+    qualifiedName = qualifiedName.replace('$', '.');
+    
+    return qualifiedName;
   }
 
   private String getSimpleName(TypeDeclaration typeDecl) {
@@ -875,25 +889,15 @@ public class TypeOracleBuilder {
       return;
     }
 
-    String qname;
+    String qname = getQualifiedName(binding);
     String jclassName;
     if (binding instanceof LocalTypeBinding) {
-      char[] localName = binding.constantPoolName();
-      for (int i = 0, c = localName.length; i < c; ++i) {
-        if (localName[i] == '/' || localName[i] == '$') {
-          localName[i] = '.';
-        }
-      }
-      qname = String.valueOf(localName);
       jclassName = qname.substring(qname.lastIndexOf('.') + 1);
     } else {
-      qname = getQualifiedName(binding);
       jclassName = getSimpleName(typeDecl);
     }
 
     if (oracle.findType(qname) != null) {
-      // TODO: gname of generic types includes the type arguments, I think that
-      // this would cause inner classes to not be found.
       return;
     }
 
