@@ -618,9 +618,9 @@ public class JsToStringGenerationVisitor extends JsVisitor {
       }
       _colon();
       JsExpression valueExpr = propInit.getValueExpr();
-      _parenPushIfConditional(valueExpr);
+      _parenPushIfCommaExpr(valueExpr);
       accept(valueExpr);
-      _parenPopIfConditional(valueExpr);
+      _parenPopIfCommaExpr(valueExpr);
     }
     _rbrace();
     return false;
@@ -1003,14 +1003,6 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     return doPop;
   }
 
-  private boolean _parenPopIfConditional(JsExpression x) {
-    boolean doPop = x instanceof JsConditional;
-    if (doPop) {
-      _rparen();
-    }
-    return doPop;
-  }
-
   private boolean _parenPopOrSpace(JsExpression parent, JsExpression child,
       boolean wrongAssoc) {
     boolean doPop = _parenCalc(parent, child, wrongAssoc);
@@ -1034,14 +1026,6 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   private boolean _parenPushIfCommaExpr(JsExpression x) {
     boolean doPush = x instanceof JsBinaryOperation
         && ((JsBinaryOperation) x).getOperator() == JsBinaryOperator.COMMA;
-    if (doPush) {
-      _lparen();
-    }
-    return doPush;
-  }
-
-  private boolean _parenPushIfConditional(JsExpression x) {
-    boolean doPush = x instanceof JsConditional;
     if (doPush) {
       _lparen();
     }

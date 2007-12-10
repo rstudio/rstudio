@@ -43,6 +43,10 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
     doTest("[1,2,3,4][2]");
   }
 
+  public void testArrayLiteralParentheses() throws Exception {
+    doTest("var x = [a, (b, c), d]");
+  }
+
   public void testComplexConstruction() throws Exception {
     doTest("(new (new (a(({a : 'b', c : 'd'}),[1,2,3,x,y,z]))())())()");
   }
@@ -80,11 +84,19 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
     doTest("({ 'property' : 'value'})");
   }
 
+  public void testObjectLiteralConditional() throws Exception {
+    doTest("var x = {a : ((b(), c) ? d : e)}");
+  }
+
   public void testObjectLiteralDeclaration() throws Exception {
     // quotes are necessary around some property variables
     doTest("var x = {'abc\\'' : 'value'}");
     doTest("var x = {\"a.1\" : 'value'}");
     doTest("var x = {\"\\'\\\"\" : 'value'}");
+  }
+
+  public void testObjectLiteralParentheses() throws Exception {
+    doTest("var x = {a : (c, d), b : 3}");
   }
 
   public void testUnaryOperations() throws Exception {

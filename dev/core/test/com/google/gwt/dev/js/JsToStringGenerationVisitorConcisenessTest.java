@@ -50,6 +50,16 @@ public class JsToStringGenerationVisitorConcisenessTest extends TestCase {
     assertEquals("var x=y++-z", parse("var x = (y++) - z"));
   }
 
+  public void testObjectLiteralAssignment() throws Exception {
+    assertEquals("var x={a:b=2,c:d}", parse("var x = {a : (b = 2), c : d}"));
+  }
+
+  public void testObjectLiteralConditional() throws Exception {
+    // the parentheses are not required around the conditional
+    assertEquals("var x={a:b?c:d,e:f}",
+        parse("var x = {a : (b ? c : d), e : f}"));
+  }
+
   public void testObjectLiteralDeclarationConcise() throws Exception {
     // quotes are not necessary around many property variables in object
     // literals
