@@ -22,6 +22,7 @@ public final class Byte extends Number implements Comparable<Byte> {
 
   public static final byte MIN_VALUE = (byte) 0x80;
   public static final byte MAX_VALUE = (byte) 0x7F;
+  public static final int SIZE = 8;
 
   // Box all values according to JLS
   private static Byte[] boxedValues = new Byte[256];
@@ -32,7 +33,7 @@ public final class Byte extends Number implements Comparable<Byte> {
 
   /**
    * @skip
-   *
+   * 
    * Here for shared implementation with Arrays.hashCode
    */
   public static int hashCode(byte b) {

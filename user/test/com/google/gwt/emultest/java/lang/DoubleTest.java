@@ -19,7 +19,7 @@ package com.google.gwt.emultest.java.lang;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * TODO: document me.
+ * Unit tests for the emulated-in-Javascript Double/double autoboxed types.
  */
 public class DoubleTest extends GWTTestCase {
 
@@ -57,6 +57,9 @@ public class DoubleTest extends GWTTestCase {
     assertTrue(Double.NEGATIVE_INFINITY < Double.POSITIVE_INFINITY);
     assertTrue(Double.MIN_VALUE < Double.MAX_VALUE);
     assertFalse(Double.NaN == Double.NaN);
+    assertEquals(64, Double.SIZE);
+    // jdk1.6  assertEquals(Math.getExponent(Double.MAX_VALUE), Double.MAX_EXPONENT);
+    // jdk1.6  assertEquals(Math.getExponent(Double.MIN_NORMAL), Double.MIN_EXPONENT);
   }
 
   public void testParse() {

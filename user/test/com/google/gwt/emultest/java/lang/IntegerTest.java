@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -18,22 +18,13 @@ package com.google.gwt.emultest.java.lang;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * TODO: document me.
+ * Unit tests for the Javascript emulation of the Integer/int autoboxed
+ * fundamental type.
  */
 public class IntegerTest extends GWTTestCase {
 
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
-  }
-
-  public void testConstructor() {
-    assertEquals(12345, new Integer(12345).intValue());
-    assertEquals(12345, new Integer("12345").intValue());
-  }
-
-  public void testToString() {
-    assertEquals("12345", new Integer(12345).toString());
-    assertEquals("-12345", new Integer("-12345").toString());
   }
 
   public void testBadStrings() {
@@ -57,34 +48,49 @@ public class IntegerTest extends GWTTestCase {
     } catch (NumberFormatException e) {
       // Expected behavior
     }
-    
+
     try {
       Integer.parseInt(String.valueOf(Long.MAX_VALUE));
       fail("parseInt should reject numbers greater than the range of int");
     } catch (NumberFormatException e) {
       // Expected behavior
     }
-    
+
     try {
       Integer.parseInt(String.valueOf(Long.MIN_VALUE));
       fail("parseInt should reject numbers less than the range of int");
     } catch (NumberFormatException e) {
       // Expected behavior
     }
-    
+
     try {
-      Integer.parseInt(String.valueOf((long)Integer.MAX_VALUE + 1));
+      Integer.parseInt(String.valueOf((long) Integer.MAX_VALUE + 1));
       fail("parseInt should reject numbers greater than the range of int");
     } catch (NumberFormatException e) {
       // Expected behavior
     }
-    
+
     try {
-      Integer.parseInt(String.valueOf((long)Integer.MIN_VALUE - 1));
+      Integer.parseInt(String.valueOf((long) Integer.MIN_VALUE - 1));
       fail("parseInt should reject numbers less than the range of int");
     } catch (NumberFormatException e) {
       // Expected behavior
     }
+  }
+
+  public void testBinaryString() {
+    assertEquals("11000000111001", Integer.toBinaryString(12345));
+    assertEquals("0", Integer.toBinaryString(0));
+    assertEquals("11111111111111111100111111000111",
+        Integer.toBinaryString(-12345));
+  }
+
+  public void testBitCount() {
+    assertEquals(0, Integer.bitCount(0));
+    assertEquals(1, Integer.bitCount(1));
+    assertEquals(32, Integer.bitCount(-1));
+    assertEquals(31, Integer.bitCount(Integer.MAX_VALUE));
+    assertEquals(1, Integer.bitCount(Integer.MIN_VALUE));
   }
 
   public void testCompareTo() {
@@ -93,16 +99,22 @@ public class IntegerTest extends GWTTestCase {
     assertEquals(0, new Integer("12345").compareTo(new Integer(12345)));
   }
 
-  public void testEquals() {
-    assertFalse(new Integer(12345).equals(new Integer(12346)));
-    assertEquals(new Integer("12345"), new Integer(12345));
+  public void testConstants() {
+    assertEquals(32, Integer.SIZE);
+    assertEquals(0x7fffffff, Integer.MAX_VALUE);
+    assertEquals(0x80000000, Integer.MIN_VALUE);
+  }
+
+  public void testConstructor() {
+    assertEquals(12345, new Integer(12345).intValue());
+    assertEquals(12345, new Integer("12345").intValue());
   }
 
   public void testDecode() {
-    assertEquals(Integer.MAX_VALUE,
-        Integer.decode(String.valueOf(Integer.MAX_VALUE)).intValue());
-    assertEquals(Integer.MIN_VALUE,
-        Integer.decode(String.valueOf(Integer.MIN_VALUE)).intValue());
+    assertEquals(Integer.MAX_VALUE, Integer.decode(
+        String.valueOf(Integer.MAX_VALUE)).intValue());
+    assertEquals(Integer.MIN_VALUE, Integer.decode(
+        String.valueOf(Integer.MIN_VALUE)).intValue());
     assertEquals(12345, Integer.decode("12345").intValue());
     assertEquals(31, Integer.decode("0x1f").intValue());
     assertEquals(-31, Integer.decode("-0X1F").intValue());
@@ -116,8 +128,104 @@ public class IntegerTest extends GWTTestCase {
     }
   }
 
+  public void testEquals() {
+    assertFalse(new Integer(12345).equals(new Integer(12346)));
+    assertEquals(new Integer("12345"), new Integer(12345));
+  }
+
   public void testHashCode() {
     assertEquals(1234, new Integer(1234).hashCode());
+  }
+
+  public void testHexString() {
+    assertEquals("3039", Integer.toHexString(12345));
+    assertEquals("0", Integer.toHexString(0));
+    assertEquals("ffffcfc7", Integer.toHexString(-12345));
+  }
+
+  public void testHighestOneBit() {
+    assertEquals(0, Integer.highestOneBit(0));
+    assertEquals(Integer.MIN_VALUE, Integer.highestOneBit(-1));
+    assertEquals(Integer.MIN_VALUE, Integer.highestOneBit(-256));
+    assertEquals(1, Integer.highestOneBit(1));
+    assertEquals(0x80, Integer.highestOneBit(0x80));
+    assertEquals(0x40000000, Integer.highestOneBit(Integer.MAX_VALUE));
+  }
+
+  public void testLowestOneBit() {
+    assertEquals(0, Integer.lowestOneBit(0));
+    assertEquals(1, Integer.lowestOneBit(-1));
+    assertEquals(0x100, Integer.lowestOneBit(-256));
+    assertEquals(1, Integer.lowestOneBit(1));
+    assertEquals(0x80, Integer.lowestOneBit(0x80));
+    assertEquals(0x80000000, Integer.lowestOneBit(Integer.MIN_VALUE));
+  }
+
+  public void testNumberOfLeadingZeros() {
+    assertEquals(32, Integer.numberOfLeadingZeros(0));
+    assertEquals(31, Integer.numberOfLeadingZeros(1));
+    assertEquals(0, Integer.numberOfLeadingZeros(-1));
+    assertEquals(16, Integer.numberOfLeadingZeros(0x8000));
+    assertEquals(1, Integer.numberOfLeadingZeros(Integer.MAX_VALUE));
+    assertEquals(0, Integer.numberOfLeadingZeros(Integer.MIN_VALUE));
+    assertEquals(0, Integer.numberOfLeadingZeros(-0x8000));
+  }
+
+  public void testNumberOfTrailingZeros() {
+    assertEquals(32, Integer.numberOfTrailingZeros(0));
+    assertEquals(0, Integer.numberOfTrailingZeros(1));
+    assertEquals(0, Integer.numberOfTrailingZeros(-1));
+    assertEquals(15, Integer.numberOfTrailingZeros(0x8000));
+    assertEquals(0, Integer.numberOfTrailingZeros(Integer.MAX_VALUE));
+    assertEquals(31, Integer.numberOfTrailingZeros(Integer.MIN_VALUE));
+    assertEquals(4, Integer.numberOfTrailingZeros(-0x7ff0));
+  }
+
+  public void testReverse() {
+    assertEquals(0, Integer.reverse(0));
+    assertEquals(-1, Integer.reverse(-1));
+    assertEquals(Integer.MIN_VALUE, Integer.reverse(1));
+    assertEquals(1, Integer.reverse(Integer.MIN_VALUE));
+    assertEquals(0xaaaaaaaa, Integer.reverse(0x55555555));
+  }
+
+  public void testReverseBytes() {
+  }
+
+  public void testRotateLeft() {
+    assertEquals(0, Integer.rotateLeft(0, 4));
+    assertEquals(0x2, Integer.rotateLeft(1, 1));
+    assertEquals(0x10, Integer.rotateLeft(1, 4));
+    assertEquals(-1, Integer.rotateLeft(-1, 4));
+    assertEquals(Integer.MIN_VALUE, Integer.rotateLeft(0x40000000, 1));
+    assertEquals(1, Integer.rotateLeft(Integer.MIN_VALUE, 1));
+  }
+
+  public void testRotateRight() {
+    assertEquals(0, Integer.rotateRight(0, 4));
+    assertEquals(Integer.MIN_VALUE, Integer.rotateRight(1, 1));
+    assertEquals(0x10000000, Integer.rotateRight(1, 4));
+    assertEquals(-1, Integer.rotateRight(-1, 4));
+  }
+
+  public void testSignum() {
+    assertEquals(0, Integer.signum(0));
+    assertEquals(1, Integer.signum(1));
+    assertEquals(-1, Integer.signum(-1));
+    assertEquals(1, Integer.signum(Integer.MAX_VALUE));
+    assertEquals(-1, Integer.signum(Integer.MIN_VALUE));
+  }
+
+  public void testStaticValueOf() {
+    assertEquals(Integer.MIN_VALUE,
+        Integer.valueOf(Integer.MIN_VALUE).intValue());
+    assertEquals(Integer.MAX_VALUE,
+        Integer.valueOf(Integer.MAX_VALUE).intValue());
+  }
+
+  public void testToString() {
+    assertEquals("12345", new Integer(12345).toString());
+    assertEquals("-12345", new Integer("-12345").toString());
   }
 
   public void testValueOf() {
@@ -127,30 +235,20 @@ public class IntegerTest extends GWTTestCase {
     assertEquals(1865, Integer.parseInt("12345", 6));
   }
 
-  public void testHexString() {
-    assertEquals("3039", Integer.toHexString(12345));
-    assertEquals("0", Integer.toHexString(0));
-    assertEquals("ffffcfc7", Integer.toHexString(-12345));
-  }
-
-  public void testBinaryString() {
-    assertEquals("11000000111001", Integer.toBinaryString(12345));
-    assertEquals("0", Integer.toBinaryString(0));
-    assertEquals("11111111111111111100111111000111", Integer.toBinaryString(-12345));
-  }
-
   public void testXValue() {
-    assertEquals("short",(short) 12345, new Integer(12345).shortValue());
+    assertEquals("short", (short) 12345, new Integer(12345).shortValue());
     assertEquals("long", 1234567890L, new Integer(1234567890).longValue());
-    assertEquals("double", 12345d, new Integer(12345).doubleValue(),0.001);
-    assertEquals("float",12345f, new Integer(12345).floatValue(),0.01);
+    assertEquals("double", 12345d, new Integer(12345).doubleValue(), 0.001);
+    assertEquals("float", 12345f, new Integer(12345).floatValue(), 0.01);
     assertEquals("byte", (byte) 123, new Integer(123).byteValue());
-    assertEquals("integer",123, new Integer(123).intValue());
-    assertEquals("short overflow", (short) 10713, new Integer(1234512345).shortValue());
-    assertEquals("double2", 1234512345d, new Integer(1234512345).doubleValue(), 0.001);
+    assertEquals("integer", 123, new Integer(123).intValue());
+    assertEquals("short overflow", (short) 10713,
+        new Integer(1234512345).shortValue());
+    assertEquals("double2", 1234512345d, new Integer(1234512345).doubleValue(),
+        0.001);
     // Invalid test right now; we don't coerce to single precision
-    // assertEquals("float2",1234512345f, new Integer(1234512345).floatValue(),0.001);
-    assertEquals("byte overflow",(byte) -13, new Integer(123123).byteValue());
+    // assertEquals("float2",1234512345f, new
+    // Integer(1234512345).floatValue(),0.001);
+    assertEquals("byte overflow", (byte) -13, new Integer(123123).byteValue());
   }
-
 }

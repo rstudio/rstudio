@@ -19,7 +19,8 @@ package com.google.gwt.emultest.java.lang;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * TODO: document me.
+ * Unit tests for the Javascript emulation of the Float/float autoboxed 
+ * fundamental type.
  */
 public class FloatTest extends GWTTestCase {
 
@@ -57,6 +58,9 @@ public class FloatTest extends GWTTestCase {
     assertTrue(Float.NEGATIVE_INFINITY < Float.POSITIVE_INFINITY);
     assertTrue(Float.MIN_VALUE < Float.MAX_VALUE);
     assertFalse(Float.NaN == Float.NaN);
+    assertEquals(Float.SIZE, 32);
+    // jdk1.6 assertEquals(Float.MIN_EXPONENT, Math.getExponent(Float.MIN_NORMAL));
+    // jdk1.6 assertEquals(Float.MAX_EXPONENT, Math.getExponent(Float.MAX_VALUE));
   }
 
   public void testParse() {

@@ -28,6 +28,13 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
 
   // CHECKSTYLE_ON
 
+  public static Boolean parseString(String s) {
+    if (s != null && s.equalsIgnoreCase("true")) {
+      return TRUE;
+    }
+    return FALSE;
+  }
+
   public static String toString(boolean x) {
     return String.valueOf(x);
   }

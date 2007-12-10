@@ -21,9 +21,13 @@ package java.lang;
 public final class Float extends Number implements Comparable<Float> {
   public static final float MAX_VALUE = 3.4028235e+38f;
   public static final float MIN_VALUE = 1.4e-45f;
+  public static final float MAX_EXPONENT = 127;
+  public static final float MIN_EXPONENT = -126;
+  public static final float MIN_NORMAL = 1.1754943508222875E-38f;
   public static final float NaN = 0f / 0f;
   public static final float NEGATIVE_INFINITY = -1f / 0f;
   public static final float POSITIVE_INFINITY = 1f / 0f;
+  public static final int SIZE = 32;
 
   public static int compare(float x, float y) {
     if (x < y) {

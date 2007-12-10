@@ -22,6 +22,7 @@ public final class Integer extends Number implements Comparable<Integer> {
 
   public static final int MIN_VALUE = 0x80000000;
   public static final int MAX_VALUE = 0x7fffffff;
+  public static final int SIZE = 32;
 
   // Box values according to JLS - between -128 and 127
   private static Integer[] boxedValues = new Integer[256];
@@ -43,11 +44,59 @@ public final class Integer extends Number implements Comparable<Integer> {
 
   /**
    * @skip
-   *
+   * 
    * Here for shared implementation with Arrays.hashCode
    */
   public static int hashCode(int i) {
     return i;
+  }
+
+  public static int highestOneBit(int i) {
+    if (i < 0) {
+      return MIN_VALUE;
+    } else {
+      int rtn;
+      for (rtn = 0x40000000; (rtn >> 1) > i; rtn = rtn >> 1) {
+        // loop down until smaller
+      }
+      return rtn;
+    }
+  }
+
+  public static int lowestOneBit(int i) {
+    if (i == 0) {
+      return 32;
+    } else {
+      int r = 1;
+      while ((r & i) != 0) {
+        r = r * 2;
+      }
+      return r;
+    }
+  }
+
+  public static int numberOfLeadingZeros(int i) {
+    if (i < 0) {
+      return 0;
+    } else if (i == 0) {
+      return SIZE;
+    } else {
+      return SIZE - 1 - (int) Math.floor(Math.log(i) / Math.log(2.0d));
+    }
+  }
+
+  public static int numberOfTrailingZeros(int i) {
+    if (i < 0) {
+      return 0;
+    } else if (i == 0) {
+      return SIZE;
+    } else {
+      int rtn = 0;
+      for (int r = 1; (r & i) != 0; r = r * 2) {
+        rtn++;
+      }
+      return rtn;
+    }
   }
 
   public static int parseInt(String s) throws NumberFormatException {
@@ -56,6 +105,49 @@ public final class Integer extends Number implements Comparable<Integer> {
 
   public static int parseInt(String s, int radix) throws NumberFormatException {
     return (int) __parseAndValidateLong(s, radix, MIN_VALUE, MAX_VALUE);
+  }
+
+  public static int reverse(int i) {
+    int acc = 0;
+    int front = 0x80000000;
+    int back = 1;
+    int swing = 31;
+    while (swing > 15) {
+      acc = acc | ((i & front) >> swing) | ((i & back) << swing);
+      swing--;
+      front = front >> 1;
+      back = back << 1;
+    }
+    return acc;
+  }
+
+  public static int reverseBytes(int i) {
+    return ((i & 0xff) << 24) | ((i & 0xff00) << 8) | ((i & 0xff0000) >> 8)
+        | ((i & 0xff000000) >> 24);
+  }
+
+  public static int rotateLeft(int i, int distance) {
+    while (distance-- > 0) {
+      i = i << 1 | ((i < 0) ? 1 : 0);
+    }
+    return i;
+  }
+
+  public static int rotateRight(int i, int distance) {
+    while (distance-- > 0) {
+      i = ((i & 1) == 0 ? 0 : 0x80000000) | i >> 1;
+    }
+    return i;
+  }
+
+  public static int signum(int i) {
+    if (i == 0) {
+      return 0;
+    } else if (i < 0) {
+      return -1;
+    } else {
+      return 1;
+    }
   }
 
   public static String toBinaryString(int x) {
