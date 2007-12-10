@@ -48,12 +48,11 @@ import java.util.Map.Entry;
  * XML for unit tests.
  */
 public class ModuleDef {
-
-  private static final FileFilter JAVA_ACCEPTOR = new FileFilter() {
-    public boolean accept(String name) {
-      return name.endsWith(".java");
-    }
-  };
+  /**
+   * Default to recursive inclusion of java files if no explicit include
+   * directives are specified.
+   */
+  private static final String[] DEFAULT_SOURCE_FILE_INCLUDES_LIST = new String[] {"**/*.java"};
 
   private static final Comparator<Map.Entry<String, ?>> REV_NAME_CMP = new Comparator<Map.Entry<String, ?>>() {
     public int compare(Map.Entry<String, ?> entry1, Map.Entry<String, ?> entry2) {
@@ -132,23 +131,8 @@ public class ModuleDef {
       throw new IllegalStateException("Already normalized");
     }
 
-    /*
-     * Hijack Ant's ZipScanner to handle inclusions/exclusions exactly as Ant
-     * does. We're only using its pattern-matching capabilities; the code path
-     * I'm using never tries to hit the filesystem in Ant 1.6.5.
-     */
-    final ZipScanner scanner = new ZipScanner();
-    if (includeList.length > 0) {
-      scanner.setIncludes(includeList);
-    }
-    if (excludeList.length > 0) {
-      scanner.setExcludes(excludeList);
-    }
-    if (defaultExcludes) {
-      scanner.addDefaultExcludes();
-    }
-    scanner.setCaseSensitive(caseSensitive);
-    scanner.init();
+    final ZipScanner scanner = getScanner(includeList, excludeList,
+        defaultExcludes, caseSensitive);
 
     // index from this package down
     publicPathEntries.addRootPackage(publicPackage, new FileFilter() {
@@ -158,22 +142,47 @@ public class ModuleDef {
     });
   }
 
-  public synchronized void addSourcePackage(String sourcePackage) {
-    if (lazySourceOracle != null) {
-      throw new IllegalStateException("Already normalized");
-    }
-
-    // index from from the base package
-    sourcePathEntries.addPackage(sourcePackage, JAVA_ACCEPTOR);
+  public void addSourcePackage(String sourcePackage, String[] includeList,
+      String[] excludeList, boolean defaultExcludes, boolean caseSensitive) {
+    addSourcePackageImpl(sourcePackage, includeList, excludeList,
+        defaultExcludes, caseSensitive, false);
   }
 
-  public synchronized void addSuperSourcePackage(String superSourcePackage) {
+  public void addSourcePackageImpl(String sourcePackage, String[] includeList,
+      String[] excludeList, boolean defaultExcludes, boolean caseSensitive,
+      boolean isSuperSource) {
     if (lazySourceOracle != null) {
       throw new IllegalStateException("Already normalized");
     }
 
-    // index from this package down
-    sourcePathEntries.addRootPackage(superSourcePackage, JAVA_ACCEPTOR);
+    if (includeList.length == 0) {
+      /*
+       * If no includes list was provided then, use the default.
+       */
+      includeList = DEFAULT_SOURCE_FILE_INCLUDES_LIST;
+    }
+
+    final ZipScanner scanner = getScanner(includeList, excludeList,
+        defaultExcludes, caseSensitive);
+
+    final FileFilter sourceFileFilter = new FileFilter() {
+      public boolean accept(String name) {
+        return scanner.match(name);
+      }
+    };
+
+    if (isSuperSource) {
+      sourcePathEntries.addRootPackage(sourcePackage, sourceFileFilter);
+    } else {
+      sourcePathEntries.addPackage(sourcePackage, sourceFileFilter);
+    }
+  }
+
+  public void addSuperSourcePackage(String superSourcePackage,
+      String[] includeList, String[] excludeList, boolean defaultExcludes,
+      boolean caseSensitive) {
+    addSourcePackageImpl(superSourcePackage, includeList, excludeList,
+        defaultExcludes, caseSensitive, true);
   }
 
   public void clearEntryPoints() {
@@ -360,6 +369,19 @@ public class ModuleDef {
   }
 
   /**
+   * Returns the URL for a source file if it is found; <code>false</code>
+   * otherwise.
+   * 
+   * NOTE: this method is for testing only.
+   * 
+   * @param partialPath
+   * @return
+   */
+  synchronized URL findSourceFile(String partialPath) {
+    return lazySourceOracle.find(partialPath);
+  }
+
+  /**
    * The final method to call when everything is setup. Before calling this
    * method, several of the getter methods may not be called. After calling this
    * method, the add methods may not be called.
@@ -424,6 +446,29 @@ public class ModuleDef {
     //
     branch = Messages.PUBLIC_PATH_LOCATIONS.branch(logger, null);
     lazyPublicOracle = publicPathEntries.create(branch);
+  }
+
+  private ZipScanner getScanner(String[] includeList, String[] excludeList,
+      boolean defaultExcludes, boolean caseSensitive) {
+    /*
+     * Hijack Ant's ZipScanner to handle inclusions/exclusions exactly as Ant
+     * does. We're only using its pattern-matching capabilities; the code path
+     * I'm using never tries to hit the filesystem in Ant 1.6.5.
+     */
+    ZipScanner scanner = new ZipScanner();
+    if (includeList.length > 0) {
+      scanner.setIncludes(includeList);
+    }
+    if (excludeList.length > 0) {
+      scanner.setExcludes(excludeList);
+    }
+    if (defaultExcludes) {
+      scanner.addDefaultExcludes();
+    }
+    scanner.setCaseSensitive(caseSensitive);
+    scanner.init();
+
+    return scanner;
   }
 
 }

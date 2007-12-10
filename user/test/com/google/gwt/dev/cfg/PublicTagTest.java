@@ -32,7 +32,7 @@ import java.io.File;
 public class PublicTagTest extends TestCase {
 
   /**
-   * Provides a convienent interface to the {@link GWTCompiler}. This test
+   * Provides a convenient interface to the {@link GWTCompiler}. This test
    * cannot simply call {@link GWTCompiler#main(String[])} since it always
    * terminates with a call to {@link System#exit(int)}.
    */
@@ -68,14 +68,15 @@ public class PublicTagTest extends TestCase {
     String moduleName = PublicTagTest.class.getName();
 
     // Find our module output directory and delete it
-    File moduleDir = new File(curDir, moduleName);
+    File moduleDir = new File(curDir, "www/" + moduleName);
     if (moduleDir.exists()) {
       Util.recursiveDelete(moduleDir, false);
     }
     assertFalse(moduleDir.exists());
 
     // Compile the dummy app; suppress output to stdout
-    Compiler.compile(new String[] {moduleName, "-logLevel", "ERROR"});
+    Compiler.compile(new String[] {
+        moduleName, "-logLevel", "ERROR", "-out", "www"});
 
     // Check the output folder
     assertTrue(new File(moduleDir, "good0.html").exists());

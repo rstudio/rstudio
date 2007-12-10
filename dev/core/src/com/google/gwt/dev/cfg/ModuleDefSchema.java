@@ -86,9 +86,25 @@ public class ModuleDefSchema extends Schema {
 
     protected final String __source_1_path = "";
 
+    protected final String __source_2_includes = "";
+
+    protected final String __source_3_excludes = "";
+
+    protected final String __source_4_defaultexcludes = "yes";
+
+    protected final String __source_5_casesensitive = "true";
+
     protected final String __stylesheet_1_src = null;
 
     protected final String __super_source_1_path = "";
+
+    protected final String __super_source_2_includes = "";
+
+    protected final String __super_source_3_excludes = "";
+
+    protected final String __super_source_4_defaultexcludes = "yes";
+
+    protected final String __super_source_5_casesensitive = "true";
 
     private Schema fChild;
 
@@ -178,18 +194,16 @@ public class ModuleDefSchema extends Schema {
       IncludeExcludeSchema childSchema = ((IncludeExcludeSchema) fChild);
       foundAnyPublic = true;
 
-      Set includeSet = childSchema.getIncludes();
+      Set<String> includeSet = childSchema.getIncludes();
       addDelimitedStringToSet(includes, "[ ,]", includeSet);
-      String[] includeList = (String[]) includeSet.toArray(new String[includeSet.size()]);
+      String[] includeList = includeSet.toArray(new String[includeSet.size()]);
 
-      Set excludeSet = childSchema.getExcludes();
+      Set<String> excludeSet = childSchema.getExcludes();
       addDelimitedStringToSet(excludes, "[ ,]", excludeSet);
-      String[] excludeList = (String[]) excludeSet.toArray(new String[excludeSet.size()]);
+      String[] excludeList = excludeSet.toArray(new String[excludeSet.size()]);
 
-      boolean doDefaultExcludes = "yes".equalsIgnoreCase(defaultExcludes)
-          || "true".equalsIgnoreCase(defaultExcludes);
-      boolean doCaseSensitive = "yes".equalsIgnoreCase(caseSensitive)
-          || "true".equalsIgnoreCase(caseSensitive);
+      boolean doDefaultExcludes = toPrimitiveBoolean(defaultExcludes);
+      boolean doCaseSensitive = toPrimitiveBoolean(caseSensitive);
 
       addPublicPackage(modulePackageAsPath, path, includeList, excludeList,
           doDefaultExcludes, doCaseSensitive);
@@ -258,13 +272,15 @@ public class ModuleDefSchema extends Schema {
      * Indicates which subdirectories contain translatable source without
      * necessarily adding a sourcepath entry.
      */
-    protected Schema __source_begin(String path) {
-      foundExplicitSourceOrSuperSource = true;
+    protected Schema __source_begin(String path, String includes,
+        String excludes, String defaultExcludes, String caseSensitive) {
+      return fChild = new IncludeExcludeSchema();
+    }
 
-      // Build a new path entry rooted at the classpath base.
-      //
-      addSourcePackage(modulePackageAsPath, path, false);
-      return null;
+    protected void __source_end(String path, String includes, String excludes,
+        String defaultExcludes, String caseSensitive) {
+      addSourcePackage(path, includes, excludes, defaultExcludes,
+          caseSensitive, false);
     }
 
     /**
@@ -280,17 +296,19 @@ public class ModuleDefSchema extends Schema {
      * Like adding a translatable source package, but such that it uses the
      * module's package itself as its sourcepath root entry.
      */
-    protected Schema __super_source_begin(String path) {
-      foundExplicitSourceOrSuperSource = true;
+    protected Schema __super_source_begin(String path, String includes,
+        String excludes, String defaultExcludes, String caseSensitive) {
+      return fChild = new IncludeExcludeSchema();
+    }
 
-      // Build a new path entry rooted at this module's dir.
-      //
-      addSourcePackage(modulePackageAsPath, path, true);
-      return null;
+    protected void __super_source_end(String path, String includes,
+        String excludes, String defaultExcludes, String caseSensitive) {
+      addSourcePackage(path, includes, excludes, defaultExcludes,
+          caseSensitive, true);
     }
 
     private void addDelimitedStringToSet(String delimited, String delimiter,
-        Set toSet) {
+        Set<String> toSet) {
       if (delimited.length() > 0) {
         String[] split = delimited.split(delimiter);
         for (int i = 0; i < split.length; ++i) {
@@ -325,8 +343,30 @@ public class ModuleDefSchema extends Schema {
           defaultExcludes, caseSensitive);
     }
 
-    private void addSourcePackage(String parentDir, String relDir,
+    private void addSourcePackage(String relDir, String includes,
+        String excludes, String defaultExcludes, String caseSensitive,
         boolean isSuperSource) {
+      IncludeExcludeSchema childSchema = ((IncludeExcludeSchema) fChild);
+      foundExplicitSourceOrSuperSource = true;
+
+      Set<String> includeSet = childSchema.getIncludes();
+      addDelimitedStringToSet(includes, "[ ,]", includeSet);
+      String[] includeList = includeSet.toArray(new String[includeSet.size()]);
+
+      Set<String> excludeSet = childSchema.getExcludes();
+      addDelimitedStringToSet(excludes, "[ ,]", excludeSet);
+      String[] excludeList = excludeSet.toArray(new String[excludeSet.size()]);
+
+      boolean doDefaultExcludes = toPrimitiveBoolean(defaultExcludes);
+      boolean doCaseSensitive = toPrimitiveBoolean(caseSensitive);
+
+      addSourcePackage(modulePackageAsPath, relDir, includeList, excludeList,
+          doDefaultExcludes, doCaseSensitive, isSuperSource);
+    }
+
+    private void addSourcePackage(String modulePackagePath, String relDir,
+        String[] includeList, String[] excludeList, boolean defaultExcludes,
+        boolean caseSensitive, boolean isSuperSource) {
       String normChildDir = normalizePathEntry(relDir);
       if (normChildDir.startsWith("/")) {
         logger.log(TreeLogger.WARN, "Non-relative source package: "
@@ -344,11 +384,26 @@ public class ModuleDefSchema extends Schema {
         return;
       }
 
-      String fullDir = parentDir + normChildDir;
+      String fullPackagePath = modulePackagePath + normChildDir;
+
       if (isSuperSource) {
-        moduleDef.addSuperSourcePackage(fullDir);
+        /*
+         * Super source does not include the module package path as part of the
+         * logical class names.
+         */
+        moduleDef.addSuperSourcePackage(fullPackagePath, includeList,
+            excludeList, defaultExcludes, caseSensitive);
       } else {
-        moduleDef.addSourcePackage(fullDir);
+        /*
+         * Add the full package path to the include and exclude lists since the
+         * logical name of classes on the source path includes the package path
+         * but the include and exclude lists do not.
+         */
+        addPrefix(includeList, fullPackagePath);
+        addPrefix(excludeList, fullPackagePath);
+
+        moduleDef.addSourcePackage(fullPackagePath, includeList, excludeList,
+            defaultExcludes, caseSensitive);
       }
     }
 
@@ -442,15 +497,15 @@ public class ModuleDefSchema extends Schema {
 
     protected final String __include_1_name = null;
 
-    private final Set excludes = new HashSet();
+    private final Set<String> excludes = new HashSet<String>();
 
-    private final Set includes = new HashSet();
+    private final Set<String> includes = new HashSet<String>();
 
-    public Set getExcludes() {
+    public Set<String> getExcludes() {
       return excludes;
     }
 
-    public Set getIncludes() {
+    public Set<String> getIncludes() {
       return includes;
     }
 
@@ -671,6 +726,20 @@ public class ModuleDefSchema extends Schema {
 
   private static final Map singletonsByName = new HashMap();
 
+  private static void addPrefix(String[] strings, String prefix) {
+    for (int i = 0; i < strings.length; ++i) {
+      strings[i] = prefix + strings[i];
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if the string equals "true" or "yes" using a
+   * case insensitive comparison.
+   */
+  private static boolean toPrimitiveBoolean(String s) {
+    return "yes".equalsIgnoreCase(s) || "true".equalsIgnoreCase(s);
+  }
+
   private final BodySchema bodySchema;
 
   private boolean foundAnyPublic;
@@ -678,7 +747,6 @@ public class ModuleDefSchema extends Schema {
   private boolean foundExplicitSourceOrSuperSource;
 
   private final ObjAttrCvt genAttrCvt = new ObjAttrCvt(Generator.class);
-
   private final JsParser jsParser = new JsParser();
   private final JsProgram jsPgm = new JsProgram();
   private final ModuleDefLoader loader;
@@ -716,7 +784,8 @@ public class ModuleDefSchema extends Schema {
     // Maybe infer source and public.
     //
     if (!foundExplicitSourceOrSuperSource) {
-      bodySchema.addSourcePackage(modulePackageAsPath, "client", false);
+      bodySchema.addSourcePackage(modulePackageAsPath, "client", Empty.STRINGS,
+          Empty.STRINGS, true, true, false);
     }
 
     if (!foundAnyPublic) {
