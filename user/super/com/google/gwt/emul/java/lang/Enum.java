@@ -29,7 +29,7 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
 
   protected static <T extends Enum<T>> T valueOf(JavaScriptObject map,
       String name) {
-    T result = Enum.<T>valueOf0(map, "_" + name);
+    T result = Enum.<T> valueOf0(map, "_" + name);
     if (result == null) {
       throw new IllegalArgumentException(name);
     }
@@ -40,11 +40,6 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
       String name) /*-{
     return map[name] || null;
   }-*/;
-
-  // public static <T extends Enum<T>> T valueOf(Class<T> enumType, String name)
-  // {
-  // throw new UnsupportedOperationException("not yet implemented.");
-  // }
 
   private final String name;
 
@@ -68,10 +63,11 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
     return this == other;
   }
 
+  @SuppressWarnings("unchecked")
   public final Class<E> getDeclaringClass() {
     Class clazz = getClass();
     Class superclass = clazz.getSuperclass();
-    
+
     return (superclass == Enum.class) ? clazz : superclass;
   }
 

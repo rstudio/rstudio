@@ -1167,17 +1167,17 @@ public class GenerateJavaScriptAST {
 
       if (type instanceof JClassType && !(type instanceof JArrayType)) {
         /*
-         * If this type is a regular class or an enum, then ensure that its 
-         * superclasses' class literal is generated before its own.
+         * If this type is a regular class or an enum, then ensure that its
+         * superclass's class literal is generated before its own.
          * 
-         * NOTE: JInterfaceTypes can have their JReferenceType.extnds member
-         * set to its first implemented interface.  JArrayTypes always have
-         * Object as their superclass so there is no need to explicitly set it
-         * here.
+         * NOTE: JInterfaceTypes can have their JReferenceType.extnds member set
+         * to its first implemented interface. JArrayTypes always have Object as
+         * their superclass so there is no need to explicitly set it here.
          */
         JClassType classType = (JClassType) type;
         if (classType.extnds != null) {
-          generateClassLiteralsRecursive(alreadyGenerated, classType.extnds, vars);
+          generateClassLiteralsRecursive(alreadyGenerated, classType.extnds,
+              vars);
         }
       }
 
@@ -1507,7 +1507,7 @@ public class GenerateJavaScriptAST {
     public void endVisit(JsniMethodRef x, Context ctx) {
       endVisit((JMethodCall) x, ctx);
     }
-    
+
     @Override
     public boolean visit(JMethod x, Context ctx) {
       currentMethod = x;

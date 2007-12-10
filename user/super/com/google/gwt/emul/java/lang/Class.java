@@ -33,9 +33,9 @@ public final class Class<T> {
    * 
    * @skip
    */
-  static Class<?> createForArray(String packageName, String className) {
+  static <T> Class<T> createForArray(String packageName, String className) {
     // Initialize here to avoid method inliner
-    Class<?> clazz = new Class();
+    Class<T> clazz = new Class<T>();
     clazz.typeName = packageName + className;
     clazz.modifiers = ARRAY;
     clazz.superclass = Object.class;
@@ -47,9 +47,10 @@ public final class Class<T> {
    * 
    * @skip
    */
-  static Class<?> createForClass(String packageName, String className, Class<?> superclass) {
+  static <T> Class<T> createForClass(String packageName, String className,
+      Class<? super T> superclass) {
     // Initialize here to avoid method inliner
-    Class<?> clazz = new Class<Object>();
+    Class<T> clazz = new Class<T>();
     clazz.typeName = packageName + className;
     clazz.superclass = superclass;
     return clazz;
@@ -60,9 +61,10 @@ public final class Class<T> {
    * 
    * @skip
    */
-  static Class<?> createForEnum(String packageName, String className, Class<?> superclass) {
+  static <T> Class<T> createForEnum(String packageName, String className,
+      Class<? super T> superclass) {
     // Initialize here to avoid method inliner
-    Class<?> clazz = new Class<Object>();
+    Class<T> clazz = new Class<T>();
     clazz.typeName = packageName + className;
     clazz.modifiers = ENUM;
     clazz.superclass = superclass;
@@ -74,9 +76,9 @@ public final class Class<T> {
    * 
    * @skip
    */
-  static Class<?> createForInterface(String packageName, String className) {
+  static <T> Class<T> createForInterface(String packageName, String className) {
     // Initialize here to avoid method inliner
-    Class<?> clazz = new Class<Object>();
+    Class<T> clazz = new Class<T>();
     clazz.typeName = packageName + className;
     clazz.modifiers = INTERFACE;
     return clazz;
@@ -99,8 +101,8 @@ public final class Class<T> {
 
   private String typeName;
 
-  private Class<?> superclass;
-  
+  private Class<? super T> superclass;
+
   /**
    * Not publicly instantiable.
    * 
@@ -119,9 +121,9 @@ public final class Class<T> {
   }
 
   public Class<? super T> getSuperclass() {
-    return (Class<? super T>) superclass;
+    return superclass;
   }
-  
+
   public boolean isArray() {
     return (modifiers & ARRAY) != 0;
   }
