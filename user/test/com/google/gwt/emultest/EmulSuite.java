@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,7 +20,6 @@ import com.google.gwt.emultest.java.lang.ByteTest;
 import com.google.gwt.emultest.java.lang.CharacterTest;
 import com.google.gwt.emultest.java.lang.DoubleTest;
 import com.google.gwt.emultest.java.lang.IntegerTest;
-import com.google.gwt.emultest.java.lang.LongTest;
 import com.google.gwt.emultest.java.lang.ObjectTest;
 import com.google.gwt.emultest.java.lang.ShortTest;
 import com.google.gwt.emultest.java.lang.StringBufferTest;
@@ -53,7 +52,7 @@ public class EmulSuite {
     suite.addTestSuite(CharacterTest.class);
     suite.addTestSuite(StackTest.class);
     suite.addTestSuite(IntegerTest.class);
-    suite.addTestSuite(LongTest.class);
+    // suite.addTestSuite(LongTest.class);
     suite.addTestSuite(DoubleTest.class);
     suite.addTestSuite(DateTest.class);
     suite.addTestSuite(HashSetTest.class);
