@@ -188,9 +188,9 @@ public class BuildTypeMap {
         // Enums have hidden arguments for name and value
         if (enclosingType instanceof JEnumType) {
           program.createParameter(info, "enum$name".toCharArray(),
-              program.getTypeJavaLangString(), true, newMethod);
+              program.getTypeJavaLangString(), true, false, newMethod);
           program.createParameter(info, "enum$ordinal".toCharArray(),
-              program.getTypePrimitiveInt(), true, newMethod);
+              program.getTypePrimitiveInt(), true, false, newMethod);
         }
 
         // user args
@@ -343,7 +343,7 @@ public class BuildTypeMap {
       JType type = (JType) typeMap.get(binding.type);
       SourceInfo info = makeSourceInfo(binding.declaration);
       JParameter param = program.createParameter(info, binding.name, type,
-          binding.isFinal(), enclosingMethod);
+          binding.isFinal(), false, enclosingMethod);
       typeMap.put(binding, param);
       return param;
     }
@@ -352,7 +352,7 @@ public class BuildTypeMap {
         String argName, JMethod enclosingMethod) {
       JType type = (JType) typeMap.get(arg.type);
       JParameter param = program.createParameter(null, argName.toCharArray(),
-          type, true, enclosingMethod);
+          type, true, false, enclosingMethod);
       return param;
     }
 
@@ -507,7 +507,7 @@ public class BuildTypeMap {
             assert newMethod.getName().equals("valueOf");
             assert typeMap.get(parameters[0]) == program.getTypeJavaLangString();
             program.createParameter(null, "name".toCharArray(),
-                program.getTypeJavaLangString(), true, newMethod);
+                program.getTypeJavaLangString(), true, false, newMethod);
           } else {
             assert false;
           }

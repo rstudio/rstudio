@@ -158,7 +158,8 @@ public class TypeTightener {
             new JMethodCall(program, x.getSourceInfo(), instance, program
                 .getNullMethod());
         ctx.replaceMe(newCall);
-      } else if (isStaticImpl && x.getArgs().size() > 0
+      } else if (isStaticImpl && method.params.size() > 0
+          && method.params.get(0).isThis() && x.getArgs().size() > 0
           && x.getArgs().get(0).getType() == typeNull) {
         // bind null instance calls to the null method for static impls
         instance = x.getArgs().get(0);

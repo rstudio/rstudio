@@ -389,13 +389,13 @@ public class JProgram extends JNode {
   }
 
   public JParameter createParameter(SourceInfo info, char[] name, JType type,
-      boolean isFinal, JMethod enclosingMethod) {
+      boolean isFinal, boolean isThis, JMethod enclosingMethod) {
     assert (name != null);
     assert (type != null);
     assert (enclosingMethod != null);
 
     JParameter x = new JParameter(this, info, String.valueOf(name), type,
-        isFinal, enclosingMethod);
+        isFinal, isThis, enclosingMethod);
 
     enclosingMethod.params.add(x);
     return x;

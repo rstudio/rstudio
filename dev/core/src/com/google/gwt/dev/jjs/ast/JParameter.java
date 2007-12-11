@@ -23,15 +23,25 @@ import com.google.gwt.dev.jjs.SourceInfo;
 public class JParameter extends JVariable implements HasEnclosingMethod {
 
   private final JMethod enclosingMethod;
+  private final boolean isThis;
 
   JParameter(JProgram program, SourceInfo info, String name, JType type,
-      boolean isFinal, JMethod enclosingMethod) {
+      boolean isFinal, boolean isThis, JMethod enclosingMethod) {
     super(program, info, name, type, isFinal);
     this.enclosingMethod = enclosingMethod;
+    this.isThis = isThis;
   }
 
   public JMethod getEnclosingMethod() {
     return enclosingMethod;
+  }
+
+  /**
+   * Returns <code>true</code> if this parameter is the this parameter of a
+   * static impl method.
+   */
+  public boolean isThis() {
+    return isThis;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
