@@ -210,15 +210,18 @@ public class CheckBox extends ButtonBase implements HasName {
     setChecked(false);
     DOM.setElementProperty(inputElem, "id", "");
     DOM.setElementProperty(inputElem, "accessKey", "");
+    DOM.setEventListener(inputElem, null);
     
-    // Quickly do the actual replace
+    // Quickly do the physical replace
     DOM.removeChild(getElement(), inputElem);
     DOM.insertChild(getElement(), elem, 0);
+
+    // Sink events on the new element
+    DOM.sinkEvents(elem, DOM.getEventsSunk(inputElem));
+    DOM.sinkEvents(inputElem, 0);
     inputElem = elem;
 
     // Setup the new element
-    DOM.sinkEvents(inputElem, DOM.getEventsSunk(this.getElement()));
-    DOM.setEventListener(inputElem, this);
     DOM.setElementProperty(inputElem, "id", uid);
     if (accessKey != "") {
       DOM.setElementProperty(inputElem, "accessKey", accessKey);
@@ -226,5 +229,10 @@ public class CheckBox extends ButtonBase implements HasName {
     setTabIndex(tabIndex);
     setChecked(checked);
     setEnabled(enabled);
+
+    // Set the event listener
+    if (isAttached()) {
+      DOM.setEventListener(inputElem, this);
+    }
   }
 }
