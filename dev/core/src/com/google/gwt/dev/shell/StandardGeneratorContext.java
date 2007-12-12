@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.cfg.PublicOracle;
 import com.google.gwt.dev.jdt.CacheManager;
 import com.google.gwt.dev.jdt.StaticCompilationUnitProvider;
 import com.google.gwt.dev.jdt.TypeOracleBuilder;
@@ -32,7 +33,6 @@ import com.google.gwt.dev.util.Util;
 import java.io.ByteArrayOutputStream;
 import java.io.CharArrayWriter;
 import java.io.File;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
@@ -125,22 +125,18 @@ public class StandardGeneratorContext implements GeneratorContext {
    */
   private static class PendingResource {
 
-    private final File pendingFile;
     private final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    private final String partialPath;
+    private final File pendingFile;
 
-    public PendingResource(File pendingFile) {
-      this.pendingFile = pendingFile;
+    public PendingResource(File outDir, String partialPath) {
+      this.partialPath = partialPath;
+      this.pendingFile = new File(outDir, partialPath);
     }
 
     public void commit(TreeLogger logger) throws UnableToCompleteException {
       logger = logger.branch(TreeLogger.TRACE, "Writing generated resource '"
           + pendingFile.getAbsolutePath() + "'", null);
-
-      if (pendingFile.exists()) {
-        logger.log(TreeLogger.ERROR,
-            "The destination file already exists; aborting the commit", null);
-        throw new UnableToCompleteException();
-      }
 
       Util.writeBytesToFile(logger, pendingFile, baos.toByteArray());
     }
@@ -153,30 +149,8 @@ public class StandardGeneratorContext implements GeneratorContext {
       return baos;
     }
 
-    public boolean isSamePath(TreeLogger logger, File other) {
-      File failedFile = null;
-      try {
-        /*
-         * We try to convert both files to their canonical form. Either one
-         * might throw an exception, so we keep track of the one being converted
-         * so that we can say which one failed in the case of an error.
-         */
-        failedFile = pendingFile;
-        File thisFile = pendingFile.getCanonicalFile();
-        failedFile = pendingFile;
-        File thatFile = other.getCanonicalFile();
-
-        if (thisFile.equals(thatFile)) {
-          return true;
-        } else {
-          return false;
-        }
-      } catch (IOException e) {
-        logger.log(TreeLogger.ERROR,
-            "Unable to determine canonical path of pending resource '"
-                + failedFile.toString() + "'", e);
-      }
-      return false;
+    public String getPartialPath() {
+      return partialPath;
     }
   }
 
@@ -194,6 +168,8 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   private final PropertyOracle propOracle;
 
+  private final PublicOracle publicOracle;
+
   private final TypeOracle typeOracle;
 
   private final Map<PrintWriter, GeneratedCompilationUnitProvider> uncommittedGeneratedCupsByPrintWriter = new IdentityHashMap<PrintWriter, GeneratedCompilationUnitProvider>();
@@ -203,10 +179,11 @@ public class StandardGeneratorContext implements GeneratorContext {
    * available in the supplied type oracle although it isn't strictly required.
    */
   public StandardGeneratorContext(TypeOracle typeOracle,
-      PropertyOracle propOracle, File genDir, File outDir,
-      CacheManager cacheManager) {
-    this.propOracle = propOracle;
+      PropertyOracle propOracle, PublicOracle publicOracle, File genDir,
+      File outDir, CacheManager cacheManager) {
     this.typeOracle = typeOracle;
+    this.propOracle = propOracle;
+    this.publicOracle = publicOracle;
     this.genDir = genDir;
     this.outDir = outDir;
     this.cacheManager = cacheManager;
@@ -235,6 +212,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     if (pendingResource != null) {
       // Actually write the bytes to disk.
       pendingResource.commit(logger);
+      cacheManager.addGeneratedResource(pendingResource.getPartialPath());
 
       // The resource is now no longer pending, so remove it from the map.
       // If the commit above throws an exception, it's okay to leave the entry
@@ -373,21 +351,21 @@ public class StandardGeneratorContext implements GeneratorContext {
     return gcup.pw;
   }
 
-  public OutputStream tryCreateResource(TreeLogger logger, String name)
+  public OutputStream tryCreateResource(TreeLogger logger, String partialPath)
       throws UnableToCompleteException {
 
     logger = logger.branch(TreeLogger.DEBUG,
-        "Preparing pending output resource '" + name + "'", null);
+        "Preparing pending output resource '" + partialPath + "'", null);
 
     // Disallow null or empty names.
-    if (name == null || name.trim().equals("")) {
+    if (partialPath == null || partialPath.trim().equals("")) {
       logger.log(TreeLogger.ERROR,
           "The resource name must be a non-empty string", null);
       throw new UnableToCompleteException();
     }
 
     // Disallow absolute paths.
-    File f = new File(name);
+    File f = new File(partialPath);
     if (f.isAbsolute()) {
       logger.log(
           TreeLogger.ERROR,
@@ -397,7 +375,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
 
     // Disallow backslashes (to promote consistency in calling code).
-    if (name.indexOf('\\') >= 0) {
+    if (partialPath.indexOf('\\') >= 0) {
       logger.log(
           TreeLogger.ERROR,
           "Resource paths must contain forward slashes (not backslashes) to denote subdirectories",
@@ -405,28 +383,31 @@ public class StandardGeneratorContext implements GeneratorContext {
       throw new UnableToCompleteException();
     }
 
-    // Compute the final path.
-    File pendingFile = new File(outDir, name);
+    // Check for public path collision.
+    if (publicOracle.findPublicFile(partialPath) != null) {
+      logger.log(TreeLogger.WARN, "Cannot create resource '" + partialPath
+          + "' because it already exists on the public path", null);
+      return null;
+    }
 
-    // See if this file is already pending.
+    // See if the file is already committed.
+    if (cacheManager.hasGeneratedResource(partialPath)) {
+      return null;
+    }
+
+    // See if the file is pending.
     for (Iterator<PendingResource> iter = pendingResourcesByOutputStream.values().iterator(); iter.hasNext();) {
       PendingResource pendingResource = iter.next();
-      if (pendingResource.isSamePath(logger, pendingFile)) {
+      if (pendingResource.getPartialPath().equals(partialPath)) {
         // It is already pending.
-        logger.log(TreeLogger.WARN, "The file is already a pending resource",
-            null);
+        logger.log(TreeLogger.WARN, "The file '" + partialPath
+            + "' is already a pending resource", null);
         return null;
       }
     }
 
-    // If this file already exists, we won't overwrite it.
-    if (pendingFile.exists()) {
-      logger.log(TreeLogger.TRACE, "File already exists", null);
-      return null;
-    }
-
     // Record that this file is pending.
-    PendingResource pendingResource = new PendingResource(pendingFile);
+    PendingResource pendingResource = new PendingResource(outDir, partialPath);
     OutputStream os = pendingResource.getOutputStream();
     pendingResourcesByOutputStream.put(os, pendingResource);
 

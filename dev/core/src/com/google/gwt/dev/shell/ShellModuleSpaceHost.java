@@ -109,8 +109,8 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     // It has to wait until now because we need to inject javascript.
     //
     Rules rules = module.getRules();
-    rebindOracle = new StandardRebindOracle(typeOracle, propOracle, rules,
-        genDir, outDir, module.getCacheManager());
+    rebindOracle = new StandardRebindOracle(typeOracle, propOracle, module,
+        rules, genDir, outDir, module.getCacheManager());
 
     // Create a completely isolated class loader which owns all classes
     // associated with a particular module. This effectively builds a

@@ -578,6 +578,8 @@ public class CacheManager {
    */
   private final Set<String> generatedCupLocations = new HashSet<String>();
 
+  private final Set<String> generatedResources = new HashSet<String>();
+
   private final Mapper identityMapper = new Mapper();
 
   private final Set<String> invalidatedTypes = new HashSet<String>();
@@ -648,12 +650,20 @@ public class CacheManager {
     generatedCupLocations.add(generatedCup.getLocation());
   }
 
+  public void addGeneratedResource(String partialPath) {
+    generatedResources.add(partialPath);
+  }
+
   /**
    * This method returns the <code>TypeOracle</code> associated with this
    * <code>CacheManager</code>.
    */
   public TypeOracle getTypeOracle() {
     return oracle;
+  }
+
+  public boolean hasGeneratedResource(String partialPath) {
+    return generatedResources.contains(partialPath);
   }
 
   /**
@@ -668,6 +678,7 @@ public class CacheManager {
         iter.remove();
       }
     }
+    generatedResources.clear();
   }
 
   /**

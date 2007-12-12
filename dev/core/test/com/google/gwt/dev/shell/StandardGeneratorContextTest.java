@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.cfg.PublicOracle;
 import com.google.gwt.dev.jdt.CacheManager;
 import com.google.gwt.dev.util.Util;
 
@@ -29,6 +30,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -46,6 +50,25 @@ public class StandardGeneratorContextTest extends TestCase {
         throws BadPropertyValueException {
       return "";
     }
+  }
+
+  private static class MockPublicOracle implements PublicOracle {
+
+    public URL findPublicFile(String partialPath) {
+      if ("onPublicPath.txt".equals(partialPath)) {
+        try {
+          return new File("").toURL();
+        } catch (MalformedURLException e) {
+          throw new RuntimeException(e);
+        }
+      }
+      return null;
+    }
+
+    public String[] getAllPublicFiles() {
+      return new String[] {"onPublicPath.txt"};
+    }
+
   }
 
   private static class MockTreeLogger implements TreeLogger {
@@ -72,6 +95,7 @@ public class StandardGeneratorContextTest extends TestCase {
   private final List<File> toDelete = new ArrayList<File>();
   private final TypeOracle mockTypeOracle = new MockTypeOracle();
   private final PropertyOracle mockPropOracle = new MockPropertyOracle();
+  private final PublicOracle mockPublicOracle = new MockPublicOracle();
   private final File tempGenDir;
   private final File tempOutDir;
   private final CacheManager mockCacheManager = new MockCacheManager();
@@ -83,7 +107,7 @@ public class StandardGeneratorContextTest extends TestCase {
     tempGenDir = createTempDir("gwt-gen-");
     tempOutDir = createTempDir("gwt-out-");
     genCtx = new StandardGeneratorContext(mockTypeOracle, mockPropOracle,
-        tempGenDir, tempOutDir, mockCacheManager);
+        mockPublicOracle, tempGenDir, tempOutDir, mockCacheManager);
   }
 
   public void testTryCreateResource_badFileName() {
@@ -204,6 +228,21 @@ public class StandardGeneratorContextTest extends TestCase {
     assertNull(os2);
   }
 
+  public void testTryCreateResource_duplicateCreationAfterCommit()
+      throws UnableToCompleteException, UnsupportedEncodingException,
+      IOException {
+    String path = createTempOutFilename();
+    OutputStream os1 = genCtx.tryCreateResource(mockLogger, path);
+    os1.write("going to call commit twice after this...".getBytes(Util.DEFAULT_ENCODING));
+    genCtx.commitResource(mockLogger, os1);
+    File createdFile = new File(tempOutDir, path);
+    assertTrue(createdFile.exists());
+    rememberToDelete(createdFile);
+
+    OutputStream os2 = genCtx.tryCreateResource(mockLogger, path);
+    assertNull(os2);
+  }
+
   public void testTryCreateResource_finishCalledTwice()
       throws UnableToCompleteException, IOException {
     // Borrow impl.
@@ -231,61 +270,23 @@ public class StandardGeneratorContextTest extends TestCase {
   }
 
   /**
-   * Tests that tryCreateResource() throws an exception when commit() is called
-   * if the output exists. This situation should only happen if the file is
-   * created externally between the time tryCreateResource() is called and
-   * commit() is called. In the normal case of an existing file,
-   * tryCreateResource() would return <code>null</code> so there would be
-   * nothing to commit.
+   * Tests that tryCreateResource() returns <code>null</code> when the
+   * specified file is already on the public path.
    * 
    * @throws UnableToCompleteException
    * @throws IOException
    */
-  public void testTryCreateResource_outputFileConflictAtCommit()
-      throws UnableToCompleteException, IOException {
-    String path = createTempOutFilename();
-
-    OutputStream os = genCtx.tryCreateResource(mockLogger, path);
-    assertNotNull(
-        "This test requires that the file being created does not already exist at this point",
+  public void testTryCreateResource_outputFileOnPublicPath()
+      throws UnableToCompleteException {
+    OutputStream os = genCtx.tryCreateResource(mockLogger, "onPublicPath.txt");
+    assertNull(
+        "tryCreateResource() should return null when the target file is already on the public path",
         os);
-    byte[] arrayWritten = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    os.write(arrayWritten);
-    try {
-      // Manually create the file that would normally be created by commit().
-      File existingFile = new File(tempOutDir, path);
-      Util.writeStringAsFile(existingFile, "please don't clobber me");
-      assertTrue(existingFile.exists());
-      rememberToDelete(existingFile);
-
-      genCtx.commitResource(mockLogger, os);
-      fail("The previous statement should have caused an exception since writing the resource must have failed");
-    } catch (UnableToCompleteException e) {
-      // Success.
-    }
   }
 
-  /**
-   * Tests that tryCreateResource() returns <code>null</code> when the
-   * specified file already exists.
-   * 
-   * @throws UnableToCompleteException
-   * @throws IOException
-   */
-  public void testTryCreateResource_outputFileConflictAtCreation()
-      throws UnableToCompleteException, IOException {
-    String path = createTempOutFilename();
-
-    // Manually create the file that would normally be created by commit().
-    File existingFile = new File(tempOutDir, path);
-    Util.writeStringAsFile(existingFile, "please don't clobber me");
-    assertTrue(existingFile.exists());
-    rememberToDelete(existingFile);
-
-    OutputStream os = genCtx.tryCreateResource(mockLogger, path);
-    assertNull(
-        "tryCreateResource() should return null when the target file already exists",
-        os);
+  @Override
+  protected void setUp() throws Exception {
+    mockCacheManager.invalidateVolatileFiles();
   }
 
   protected void tearDown() throws Exception {
@@ -297,7 +298,6 @@ public class StandardGeneratorContextTest extends TestCase {
 
   private File createTempDir(String prefix) {
     String baseTempPath = System.getProperty("java.io.tmpdir");
-    File baseTempDir = new File(baseTempPath);
     File newTempDir;
     do {
       newTempDir = new File(baseTempPath, prefix + System.currentTimeMillis());

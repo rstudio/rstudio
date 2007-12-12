@@ -47,7 +47,7 @@ import java.util.Map.Entry;
  * Represents a module specification. In principle, this could be built without
  * XML for unit tests.
  */
-public class ModuleDef {
+public class ModuleDef implements PublicOracle {
   /**
    * Default to recursive inclusion of java files if no explicit include
    * directives are specified.
