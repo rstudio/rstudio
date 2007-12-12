@@ -1649,7 +1649,6 @@ public class GenerateJavaScriptAST {
 
     // Object fields
     specialObfuscatedIdents.put("typeId", "tI");
-    specialObfuscatedIdents.put("typeName", "tN");
 
     // String polymorphic
     specialObfuscatedIdents.put("charAt", "cA");

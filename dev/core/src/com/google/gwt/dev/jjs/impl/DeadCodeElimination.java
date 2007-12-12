@@ -671,6 +671,17 @@ public class DeadCodeElimination {
       if (method.getType() == program.getTypeVoid()) {
         return;
       }
+      
+      if (method.getOriginalParamTypes().size() != method.params.size()) {
+        // One or more parameters were pruned, abort.
+        return;
+      }
+      
+      if (method.getName().endsWith("hashCode")) {
+        // This cannot be computed at compile time because our implementation
+        // differs from the JRE.
+        return;
+      }
 
       int skip = 0;
       Object instance;

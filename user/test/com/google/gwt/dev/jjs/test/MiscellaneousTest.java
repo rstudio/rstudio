@@ -61,7 +61,7 @@ public class MiscellaneousTest extends GWTTestCase {
     }
 
     private static native void clinitInNative() /*-{
-    }-*/;
+                }-*/;
 
     private int foo() {
       this.toString();
@@ -70,8 +70,8 @@ public class MiscellaneousTest extends GWTTestCase {
   }
 
   public static native boolean noOptimizeFalse() /*-{
-    return false;
-  }-*/;
+        return false;
+      }-*/;
 
   private static void assertAllCanStore(Object[] dest, Object[] src) {
     for (int i = 0; i < src.length; ++i) {
@@ -90,20 +90,20 @@ public class MiscellaneousTest extends GWTTestCase {
   }
 
   private static native void clinitFromNative() /*-{
-    @com.google.gwt.dev.jjs.test.MiscellaneousTest$HasClinit::i = 5;
-  }-*/;
+        @com.google.gwt.dev.jjs.test.MiscellaneousTest$HasClinit::i = 5;
+      }-*/;
 
   private static native Foo getFoo() /*-{
-    return {};
-  }-*/;
+        return {};
+      }-*/;
 
   private static native JavaScriptObject getJso() /*-{
-    return {toString:function(){return 'jso';}}; 
-  }-*/;
+        return {toString:function(){return 'jso';}}; 
+      }-*/;
 
   private static native void throwNativeException() /*-{
-    var a; a.asdf();
-  }-*/;
+        var a; a.asdf();
+      }-*/;
 
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
@@ -343,6 +343,37 @@ public class MiscellaneousTest extends GWTTestCase {
         "blahcom.google.gwt.dev.jjs.test.MiscellaneousTestabctruefalsenullc27",
         ("blah" + this + String.valueOf(new char[] {'a', 'b', 'c'}) + true
             + false + null + 'c' + 27));
+  }
+
+  /**
+   * Ensures that polymorphic dispatch to String works correctly.
+   */
+  @SuppressWarnings("unchecked")
+  public void testStringPrototype() {
+    Object s = noOptimizeFalse() ? new Object() : "Hello, World!";
+    assertEquals(String.class, s.getClass());
+    assertEquals("Hello, World!".hashCode(), s.hashCode());
+    assertTrue(s.equals("Hello, World!"));
+    assertTrue("Hello, World!".equals(s));
+    assertFalse(s.equals(""));
+    assertFalse("".equals(s));
+    assertEquals("Hello, World!", s.toString());
+    assertTrue(s instanceof String);
+
+    Comparable b = noOptimizeFalse() ? new Integer(1) : "Hello, World!";
+    assertTrue(((Comparable) "Hello, World!").compareTo(b) == 0);
+    assertTrue(b.compareTo("Hello, World!") == 0);
+    assertTrue(((Comparable) "A").compareTo(b) < 0);
+    assertTrue(b.compareTo("A") > 0);
+    assertTrue(((Comparable) "Z").compareTo(b) > 0);
+    assertTrue(b.compareTo("Z") < 0);
+    assertTrue(b instanceof String);
+
+    CharSequence c = noOptimizeFalse() ? new StringBuffer() : "Hello, World!";
+    assertEquals('e', c.charAt(1));
+    assertEquals(13, c.length());
+    assertEquals("ello", c.subSequence(1, 5));
+    assertTrue(c instanceof String);
   }
 
   public String toString() {
