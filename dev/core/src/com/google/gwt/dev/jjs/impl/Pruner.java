@@ -146,35 +146,35 @@ public class Pruner {
       JMethod method = x.getTarget();
 
       // Did we prune the parameters of the method we're calling?
-      if (removedMethodParamsMap.containsKey(method)) {
+      if (methodToOriginalParamsMap.containsKey(method)) {
         // This must be a static method
         assert method.isStatic();
 
         JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
             x.getInstance(), method);
 
+        ArrayList<JExpression> args = x.getArgs();
+        ArrayList<JParameter> originalParams = methodToOriginalParamsMap.get(method);
+
         JMultiExpression currentMulti = null;
+        for (int i = 0, c = args.size(); i < c; ++i) {
+          JExpression arg = args.get(i);
+          JParameter param = null;
+          if (i < originalParams.size()) {
+            param = originalParams.get(i);
+          }
 
-        ArrayList<JParameter> removedParams = removedMethodParamsMap.get(method);
-
-        for (int i = 0; i < x.getArgs().size(); i++) {
-          JParameter param = removedParams.get(i);
-          JExpression arg = x.getArgs().get(i);
-
-          if (referencedNonTypes.contains(param)) {
-            // We rescued this parameter
-
-            // Do we need to add the multi we've been building?
-            if (currentMulti == null) {
-              newCall.getArgs().add(arg);
-            } else {
+          if (param != null && referencedNonTypes.contains(param)) {
+            // If there is an existing multi, terminate it.
+            if (currentMulti != null) {
               currentMulti.exprs.add(arg);
               newCall.getArgs().add(currentMulti);
               currentMulti = null;
+            } else {
+              newCall.getArgs().add(arg);
             }
           } else if (arg.hasSideEffects()) {
-            // We didn't rescue this parameter and it has side-effects. Add it
-            // to a new multi
+            // The argument is only needed for side effects, add it to a multi.
             if (currentMulti == null) {
               currentMulti = new JMultiExpression(program, x.getSourceInfo());
             }
@@ -182,8 +182,7 @@ public class Pruner {
           }
         }
 
-        // We have orphaned parameters - add them on the end, wrapped in the
-        // multi (JS ignores extra parameters)
+        // Add any orphaned parameters on the end. Extra params are OK.
         if (currentMulti != null) {
           newCall.getArgs().add(currentMulti);
         }
@@ -300,7 +299,7 @@ public class Pruner {
         JsFunction func = x.isNative()
             ? ((JsniMethodBody) x.getBody()).getFunc() : null;
 
-        ArrayList<JParameter> removedParams = new ArrayList<JParameter>(
+        ArrayList<JParameter> originalParams = new ArrayList<JParameter>(
             x.params);
 
         for (int i = 0; i < x.params.size(); ++i) {
@@ -308,12 +307,12 @@ public class Pruner {
           if (!referencedNonTypes.contains(param)) {
             x.params.remove(i);
             didChange = true;
-            removedMethodParamsMap.put(x, removedParams);
             // Remove the associated JSNI parameter
             if (func != null) {
               func.getParameters().remove(i);
             }
             --i;
+            methodToOriginalParamsMap.put(x, originalParams);
           }
         }
       }
@@ -845,7 +844,7 @@ public class Pruner {
   private final JProgram program;
   private final Set<JNode> referencedNonTypes = new HashSet<JNode>();
   private final Set<JReferenceType> referencedTypes = new HashSet<JReferenceType>();
-  private final Map<JMethod, ArrayList<JParameter>> removedMethodParamsMap = new HashMap<JMethod, ArrayList<JParameter>>();
+  private final Map<JMethod, ArrayList<JParameter>> methodToOriginalParamsMap = new HashMap<JMethod, ArrayList<JParameter>>();
   private final boolean saveCodeGenTypes;
   private JMethod stringValueOfChar = null;
 
@@ -884,7 +883,7 @@ public class Pruner {
 
       referencedTypes.clear();
       referencedNonTypes.clear();
-      removedMethodParamsMap.clear();
+      methodToOriginalParamsMap.clear();
       madeChanges = true;
     }
     return madeChanges;
