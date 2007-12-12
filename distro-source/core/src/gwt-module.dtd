@@ -23,26 +23,39 @@
 	name CDATA #REQUIRED
 >
 <!-- Specify the source path, relative to the classpath location of the module descriptor -->
-<!ELEMENT source EMPTY>
+<!ELEMENT source (include | exclude)*>
 <!ATTLIST source
 	path CDATA #REQUIRED
+		includes CDATA #IMPLIED
+		excludes CDATA #IMPLIED
+		defaultexclude (yes | no) "yes"
+		casesensitive (true | false) "true"
 >
 <!-- Specify the public resource path, relative to the classpath location of the module descriptor -->
 <!ELEMENT public (include | exclude)*>
 <!ATTLIST public
 	path CDATA #REQUIRED
-        includes CDATA #IMPLIED
-        excludes CDATA #IMPLIED
-        defaultexclude (yes | no) "yes"
-        casesensitive (true | false) "true"
+		includes CDATA #IMPLIED
+		excludes CDATA #IMPLIED
+		defaultexclude (yes | no) "yes"
+		casesensitive (true | false) "true"
+>
+<!-- Specify a source path that rebases subpackages into the root namespace -->
+<!ELEMENT super-source (include | exclude)*>
+<!ATTLIST super-source
+	path CDATA #REQUIRED
+		includes CDATA #IMPLIED
+		excludes CDATA #IMPLIED
+		defaultexclude (yes | no) "yes"
+		casesensitive (true | false) "true"
 >
 <!ELEMENT include EMPTY>
 <!ATTLIST include
-        name CDATA #REQUIRED
+	name CDATA #REQUIRED
 >
 <!ELEMENT exclude EMPTY>
 <!ATTLIST exclude
-        name CDATA #REQUIRED
+	name CDATA #REQUIRED
 >
 
 <!-- Define a module entry point -->
@@ -63,8 +76,8 @@
 <!-- Map a named servlet class to a module-relative path in hosted mode -->
 <!ELEMENT servlet EMPTY>
 <!ATTLIST servlet 
-    path CDATA #REQUIRED
-    class CDATA #REQUIRED
+	path CDATA #REQUIRED
+	class CDATA #REQUIRED
 >
 
 <!--                 ^^^ Commonly-used elements ^^^                -->
@@ -127,5 +140,3 @@
 <!ELEMENT any (%predicates;)*>
 <!-- Predicate that NANDs all child conditions -->
 <!ELEMENT none (%predicates;)*>
-<!-- Used internally by GWT system modules to rebase packages into the root namespace -->
-<!ELEMENT super-source EMPTY>
