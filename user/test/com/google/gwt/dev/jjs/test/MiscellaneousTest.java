@@ -61,7 +61,7 @@ public class MiscellaneousTest extends GWTTestCase {
     }
 
     private static native void clinitInNative() /*-{
-                }-*/;
+    }-*/;
 
     private int foo() {
       this.toString();
@@ -70,8 +70,8 @@ public class MiscellaneousTest extends GWTTestCase {
   }
 
   public static native boolean noOptimizeFalse() /*-{
-        return false;
-      }-*/;
+    return false;
+  }-*/;
 
   private static void assertAllCanStore(Object[] dest, Object[] src) {
     for (int i = 0; i < src.length; ++i) {
@@ -90,20 +90,20 @@ public class MiscellaneousTest extends GWTTestCase {
   }
 
   private static native void clinitFromNative() /*-{
-        @com.google.gwt.dev.jjs.test.MiscellaneousTest$HasClinit::i = 5;
-      }-*/;
+    @com.google.gwt.dev.jjs.test.MiscellaneousTest$HasClinit::i = 5;
+  }-*/;
 
   private static native Foo getFoo() /*-{
-        return {};
-      }-*/;
+    return {};
+  }-*/;
 
   private static native JavaScriptObject getJso() /*-{
-        return {toString:function(){return 'jso';}}; 
-      }-*/;
+    return {toString:function(){return 'jso';}}; 
+  }-*/;
 
   private static native void throwNativeException() /*-{
-        var a; a.asdf();
-      }-*/;
+    var a; a.asdf();
+  }-*/;
 
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
