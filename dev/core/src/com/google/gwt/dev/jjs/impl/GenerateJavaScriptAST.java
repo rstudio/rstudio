@@ -1635,7 +1635,7 @@ public class GenerateJavaScriptAST {
      * on String's super types need special handling.
      */
     specialObfuscatedTypes.add(program.getIndexedType("Comparable"));
-    specialObfuscatedTypes.add(program.getIndexedType("Sequence"));
+    specialObfuscatedTypes.add(program.getIndexedType("CharSequence"));
     specialObfuscatedTypes.add(program.getTypeJavaLangObject());
     specialObfuscatedTypes.add(program.getTypeJavaLangString());
     specialObfuscatedTypes.add(program.getIndexedType("Array"));
