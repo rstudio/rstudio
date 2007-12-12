@@ -70,6 +70,7 @@ import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Compiles the Java <code>JProgram</code> representation into its
@@ -203,17 +204,18 @@ public class JavaToJavaScriptCompiler {
   private final boolean obfuscate;
   private final boolean prettyNames;
   private final Set<IProblem> problemSet = new HashSet<IProblem>();
+  private boolean validateOnly;
 
-  public JavaToJavaScriptCompiler(final TreeLogger logger,
-      final WebModeCompilerFrontEnd compiler, final String[] declEntryPts)
+  public JavaToJavaScriptCompiler(TreeLogger logger,
+      WebModeCompilerFrontEnd compiler, String[] declEntryPts)
       throws UnableToCompleteException {
-    this(logger, compiler, declEntryPts, true, false, true);
+    this(logger, compiler, declEntryPts, true, false, true, false);
   }
 
-  public JavaToJavaScriptCompiler(final TreeLogger logger,
-      final WebModeCompilerFrontEnd compiler, final String[] declEntryPts,
-      boolean obfuscate, boolean prettyNames, boolean aggressivelyOptimize)
-      throws UnableToCompleteException {
+  public JavaToJavaScriptCompiler(TreeLogger logger,
+      WebModeCompilerFrontEnd compiler, String[] declEntryPts,
+      boolean obfuscate, boolean prettyNames, boolean aggressivelyOptimize,
+      boolean validateOnly) throws UnableToCompleteException {
 
     if (declEntryPts.length == 0) {
       throw new IllegalArgumentException("entry point(s) required");
@@ -231,32 +233,28 @@ public class JavaToJavaScriptCompiler {
     //
     this.obfuscate = obfuscate;
     this.prettyNames = prettyNames;
+    this.validateOnly = validateOnly;
 
-    // Find all the possible rebound entry points.
-    //
-    RebindPermutationOracle rpo = compiler.getRebindPermutationOracle();
-    Set<String> allEntryPoints = new HashSet<String>();
-    for (String element : declEntryPts) {
-      String[] all = rpo.getAllPossibleRebindAnswers(logger, element);
-      Util.addAll(allEntryPoints, all);
+    if (!validateOnly) {
+      // Find all the possible rebound entry points.
+      RebindPermutationOracle rpo = compiler.getRebindPermutationOracle();
+      Set<String> allEntryPoints = new TreeSet<String>();
+      for (String element : declEntryPts) {
+        String[] all = rpo.getAllPossibleRebindAnswers(logger, element);
+        Util.addAll(allEntryPoints, all);
+      }
+      allEntryPoints.add("com.google.gwt.lang.Array");
+      allEntryPoints.add("com.google.gwt.lang.Cast");
+      allEntryPoints.add("com.google.gwt.lang.Exceptions");
+      allEntryPoints.add("java.lang.Object");
+      allEntryPoints.add("java.lang.String");
+      allEntryPoints.add("java.lang.Iterable");
+      declEntryPts = allEntryPoints.toArray(new String[0]);
     }
-    String[] entryPts = Util.toStringArray(allEntryPoints);
-
-    // Add intrinsics needed for code generation.
-    //
-    int k = entryPts.length;
-    String[] seedTypeNames = new String[k + 6];
-    System.arraycopy(entryPts, 0, seedTypeNames, 0, k);
-    seedTypeNames[k++] = "com.google.gwt.lang.Array";
-    seedTypeNames[k++] = "com.google.gwt.lang.Cast";
-    seedTypeNames[k++] = "com.google.gwt.lang.Exceptions";
-    seedTypeNames[k++] = "java.lang.Object";
-    seedTypeNames[k++] = "java.lang.String";
-    seedTypeNames[k++] = "java.lang.Iterable";
 
     // Compile the source and get the compiler so we can get the parse tree
     //
-    goldenCuds = compiler.getCompilationUnitDeclarations(logger, seedTypeNames);
+    goldenCuds = compiler.getCompilationUnitDeclarations(logger, declEntryPts);
 
     // Check for compilation problems. We don't log here because any problems
     // found here will have already been logged by AbstractCompiler.
@@ -330,6 +328,11 @@ public class JavaToJavaScriptCompiler {
 
       // Fix up GWT.create() into new operations
       ReplaceRebinds.exec(jprogram);
+
+      if (validateOnly) {
+        // That's it, we're done.
+        return null;
+      }
 
       // Rebind each entry point.
       //

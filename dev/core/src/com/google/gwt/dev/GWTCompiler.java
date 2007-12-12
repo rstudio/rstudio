@@ -18,6 +18,7 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.Compilation;
@@ -49,6 +50,7 @@ import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.dev.util.xml.ReflectiveParser;
 import com.google.gwt.util.tools.ArgHandlerDisableAggressiveOptimization;
 import com.google.gwt.util.tools.ArgHandlerExtra;
+import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerOutDir;
 import com.google.gwt.util.tools.ToolBase;
 import com.google.gwt.util.tools.Utility;
@@ -99,6 +101,25 @@ public class GWTCompiler extends ToolBase {
 
     @Override
     public boolean isRequired() {
+      return true;
+    }
+  }
+
+  /**
+   * Argument handler for making the compiler run in "validation" mode.
+   */
+  private class ArgHandlerValidateOnlyFlag extends ArgHandlerFlag {
+
+    public String getPurpose() {
+      return "Validate all source code, but do not compile";
+    }
+
+    public String getTag() {
+      return "-validateOnly";
+    }
+
+    public boolean setFlag() {
+      validateOnly = true;
       return true;
     }
   }
@@ -225,6 +246,17 @@ public class GWTCompiler extends ToolBase {
     System.exit(1);
   }
 
+  /**
+   * Returns the fully-qualified main type name of a compilation unit.
+   */
+  private static String makeTypeName(CompilationUnitProvider cup) {
+    if (cup.getPackageName().length() > 0) {
+      return cup.getPackageName() + "." + cup.getMainTypeName();
+    } else {
+      return cup.getMainTypeName();
+    }
+  }
+
   private final CacheManager cacheManager;
 
   private Compilations compilations = new Compilations();
@@ -266,6 +298,8 @@ public class GWTCompiler extends ToolBase {
   private TypeOracle typeOracle;
 
   private boolean useGuiLogger;
+
+  private boolean validateOnly = false;
 
   public GWTCompiler() {
     this(null);
@@ -327,6 +361,9 @@ public class GWTCompiler extends ToolBase {
         return true;
       }
     });
+
+    registerHandler(new ArgHandlerValidateOnlyFlag());
+
     this.cacheManager = cacheManager;
   }
 
@@ -343,19 +380,42 @@ public class GWTCompiler extends ToolBase {
     rules = module.getRules();
     typeOracle = module.getTypeOracle(logger);
     sourceOracle = new StandardSourceOracle(typeOracle);
-    declEntryPts = module.getEntryPointTypeNames();
+    if (validateOnly) {
+      // Pretend that every single compilation unit is an entry point.
+      CompilationUnitProvider[] compilationUnits = module.getCompilationUnits();
+      declEntryPts = new String[compilationUnits.length];
+      for (int i = 0; i < compilationUnits.length; ++i) {
+        CompilationUnitProvider cup = compilationUnits[i];
+        declEntryPts[i] = makeTypeName(cup);
+      }
+    } else {
+      // Use the real entry points.
+      declEntryPts = module.getEntryPointTypeNames();
+    }
     rebindPermOracle = new DistillerRebindPermutationOracle();
     properties = module.getProperties();
     perms = new PropertyPermutations(properties);
     WebModeCompilerFrontEnd frontEnd = new WebModeCompilerFrontEnd(
         sourceOracle, rebindPermOracle);
     jjs = new JavaToJavaScriptCompiler(logger, frontEnd, declEntryPts,
-        obfuscate, prettyNames, aggressivelyOptimize);
-    initCompilations(logger);
+        obfuscate, prettyNames, aggressivelyOptimize, validateOnly);
+
+    if (!validateOnly) {
+      /*
+       * See what permutations already exist on disk and are up to date. Skip
+       * this for validation mode since we want to recompile everything.
+       */
+      initCompilations(logger);
+    }
 
     // Compile for every permutation of properties.
     //
     SelectionScriptGenerator selGen = compilePermutations(logger);
+
+    if (validateOnly) {
+      logger.log(TreeLogger.INFO, "Validation succeeded", null);
+      return;
+    }
 
     // Generate a selection script to pick the right permutation.
     //
@@ -418,8 +478,11 @@ public class GWTCompiler extends ToolBase {
     prettyNames = true;
   }
 
+  /**
+   * Ensure the module has at least one entry point (except in validation mode).
+   */
   private void checkModule(TreeLogger logger) throws UnableToCompleteException {
-    if (module.getEntryPointTypeNames().length == 0) {
+    if (!validateOnly && module.getEntryPointTypeNames().length == 0) {
       logger.log(TreeLogger.ERROR, "Module has no entry points defined", null);
       throw new UnableToCompleteException();
     }
@@ -427,8 +490,11 @@ public class GWTCompiler extends ToolBase {
 
   private SelectionScriptGenerator compilePermutations(TreeLogger logger)
       throws UnableToCompleteException {
-    logger = logger.branch(TreeLogger.INFO, "Output will be written into "
-        + outDir, null);
+    if (validateOnly) {
+      logger = logger.branch(TreeLogger.INFO, "Validating compilation", null);
+    } else {
+      logger = logger.branch(TreeLogger.INFO, "Compiling into " + outDir, null);
+    }
     Property[] orderedProps = perms.getOrderedProperties();
     SelectionScriptGenerator selGen = new SelectionScriptGenerator(module,
         orderedProps);
@@ -718,6 +784,11 @@ public class GWTCompiler extends ToolBase {
     // Create JavaScript.
     //
     String js = jjs.compile(logger, rebindOracle);
+    if (validateOnly) {
+      // We're done, there's no actual script to write.
+      assert (js == null);
+      return null;
+    }
 
     // Create a wrapper and an unambiguous name for the file.
     //
