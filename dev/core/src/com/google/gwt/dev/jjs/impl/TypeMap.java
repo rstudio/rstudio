@@ -28,6 +28,7 @@ import org.eclipse.jdt.internal.compiler.lookup.ParameterizedFieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ParameterizedMethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeVariableBinding;
+import org.eclipse.jdt.internal.compiler.lookup.WildcardBinding;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -64,6 +65,9 @@ public class TypeMap {
     } else if (binding instanceof ParameterizedFieldBinding) {
       ParameterizedFieldBinding pfb = (ParameterizedFieldBinding) binding;
       return get(pfb.original());
+    } else if (binding instanceof WildcardBinding) {
+      WildcardBinding wcb = (WildcardBinding) binding;
+      return get(wcb.erasure());
     }
     JNode result = internalGet(binding);
     if (result == null) {
