@@ -35,6 +35,8 @@ import com.google.gwt.dev.jdt.CacheManager;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.StandardSourceOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
+import com.google.gwt.dev.jjs.JJSOptions;
+import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.shell.StandardRebindOracle;
 import com.google.gwt.dev.util.DefaultTextOutput;
@@ -119,7 +121,7 @@ public class GWTCompiler extends ToolBase {
     }
 
     public boolean setFlag() {
-      validateOnly = true;
+      jjsOptions.setValidateOnly(true);
       return true;
     }
   }
@@ -267,9 +269,9 @@ public class GWTCompiler extends ToolBase {
 
   private Map<String, List<JClassType>> generatedTypesByResultTypeName = new HashMap<String, List<JClassType>>();
 
-  private boolean aggressivelyOptimize = true;
-
   private JavaToJavaScriptCompiler jjs;
+
+  private JJSOptions jjsOptions = new JJSOptions();
 
   private Type logLevel;
 
@@ -277,13 +279,9 @@ public class GWTCompiler extends ToolBase {
 
   private String moduleName;
 
-  private boolean obfuscate;
-
   private File outDir;
 
   private PropertyPermutations perms;
-
-  private boolean prettyNames;
 
   private Properties properties;
 
@@ -298,8 +296,6 @@ public class GWTCompiler extends ToolBase {
   private TypeOracle typeOracle;
 
   private boolean useGuiLogger;
-
-  private boolean validateOnly = false;
 
   public GWTCompiler() {
     this(null);
@@ -337,22 +333,7 @@ public class GWTCompiler extends ToolBase {
 
     registerHandler(new ArgHandlerModuleName());
 
-    registerHandler(new ArgHandlerScriptStyle() {
-      @Override
-      public void setStyleDetailed() {
-        GWTCompiler.this.setStyleDetailed();
-      }
-
-      @Override
-      public void setStyleObfuscated() {
-        GWTCompiler.this.setStyleObfuscated();
-      }
-
-      @Override
-      public void setStylePretty() {
-        GWTCompiler.this.setStylePretty();
-      }
-    });
+    registerHandler(new ArgHandlerScriptStyle(jjsOptions));
 
     registerHandler(new ArgHandlerDisableAggressiveOptimization() {
       @Override
@@ -380,7 +361,7 @@ public class GWTCompiler extends ToolBase {
     rules = module.getRules();
     typeOracle = module.getTypeOracle(logger);
     sourceOracle = new StandardSourceOracle(typeOracle);
-    if (validateOnly) {
+    if (jjsOptions.isValidateOnly()) {
       // Pretend that every single compilation unit is an entry point.
       CompilationUnitProvider[] compilationUnits = module.getCompilationUnits();
       declEntryPts = new String[compilationUnits.length];
@@ -398,9 +379,9 @@ public class GWTCompiler extends ToolBase {
     WebModeCompilerFrontEnd frontEnd = new WebModeCompilerFrontEnd(
         sourceOracle, rebindPermOracle);
     jjs = new JavaToJavaScriptCompiler(logger, frontEnd, declEntryPts,
-        obfuscate, prettyNames, aggressivelyOptimize, validateOnly);
+        jjsOptions);
 
-    if (!validateOnly) {
+    if (!jjsOptions.isValidateOnly()) {
       /*
        * See what permutations already exist on disk and are up to date. Skip
        * this for validation mode since we want to recompile everything.
@@ -412,7 +393,7 @@ public class GWTCompiler extends ToolBase {
     //
     SelectionScriptGenerator selGen = compilePermutations(logger);
 
-    if (validateOnly) {
+    if (jjsOptions.isValidateOnly()) {
       logger.log(TreeLogger.INFO, "Validation succeeded", null);
       return;
     }
@@ -445,7 +426,11 @@ public class GWTCompiler extends ToolBase {
   }
 
   public void setAggressivelyOptimize(boolean aggressive) {
-    aggressivelyOptimize = aggressive;
+    jjsOptions.setAggressivelyOptimize(aggressive);
+  }
+
+  public void setCompilerOptions(JJSOptions options) {
+    jjsOptions.copyFrom(options);
   }
 
   public void setGenDir(File dir) {
@@ -465,24 +450,23 @@ public class GWTCompiler extends ToolBase {
   }
 
   public void setStyleDetailed() {
-    obfuscate = false;
-    prettyNames = false;
+    jjsOptions.setOutput(JsOutputOption.DETAILED);
   }
 
   public void setStyleObfuscated() {
-    obfuscate = true;
+    jjsOptions.setOutput(JsOutputOption.OBFUSCATED);
   }
 
   public void setStylePretty() {
-    obfuscate = false;
-    prettyNames = true;
+    jjsOptions.setOutput(JsOutputOption.PRETTY);
   }
 
   /**
    * Ensure the module has at least one entry point (except in validation mode).
    */
   private void checkModule(TreeLogger logger) throws UnableToCompleteException {
-    if (!validateOnly && module.getEntryPointTypeNames().length == 0) {
+    if (!jjsOptions.isValidateOnly()
+        && module.getEntryPointTypeNames().length == 0) {
       logger.log(TreeLogger.ERROR, "Module has no entry points defined", null);
       throw new UnableToCompleteException();
     }
@@ -490,7 +474,7 @@ public class GWTCompiler extends ToolBase {
 
   private SelectionScriptGenerator compilePermutations(TreeLogger logger)
       throws UnableToCompleteException {
-    if (validateOnly) {
+    if (jjsOptions.isValidateOnly()) {
       logger = logger.branch(TreeLogger.INFO, "Validating compilation", null);
     } else {
       logger = logger.branch(TreeLogger.INFO, "Compiling into " + outDir, null);
@@ -504,7 +488,9 @@ public class GWTCompiler extends ToolBase {
       String[] orderedPropValues = iter.next();
       String strongName = realizePermutation(logger, orderedProps,
           orderedPropValues, permNumber);
-      selGen.recordSelection(orderedPropValues, strongName);
+      if (!jjsOptions.isValidateOnly()) {
+        selGen.recordSelection(orderedPropValues, strongName);
+      }
     }
     return selGen;
   }
@@ -536,7 +522,8 @@ public class GWTCompiler extends ToolBase {
   }
 
   private String getHtmlPrefix() {
-    DefaultTextOutput out = new DefaultTextOutput(obfuscate);
+    DefaultTextOutput out = new DefaultTextOutput(
+        jjsOptions.getOutput().shouldMinimize());
     out.print("<html>");
     out.newlineOpt();
 
@@ -565,7 +552,8 @@ public class GWTCompiler extends ToolBase {
   }
 
   private String getHtmlSuffix() {
-    DefaultTextOutput out = new DefaultTextOutput(obfuscate);
+    DefaultTextOutput out = new DefaultTextOutput(
+        jjsOptions.getOutput().shouldMinimize());
     String moduleFunction = module.getName().replace('.', '_');
 
     // Generate the call to tell the bootstrap code that we're ready to go.
@@ -580,7 +568,8 @@ public class GWTCompiler extends ToolBase {
   }
 
   private String getJsPrefix() {
-    DefaultTextOutput out = new DefaultTextOutput(obfuscate);
+    DefaultTextOutput out = new DefaultTextOutput(
+        jjsOptions.getOutput().shouldMinimize());
 
     out.print("(function(){");
     out.newlineOpt();
@@ -600,7 +589,8 @@ public class GWTCompiler extends ToolBase {
   }
 
   private String getJsSuffix() {
-    DefaultTextOutput out = new DefaultTextOutput(obfuscate);
+    DefaultTextOutput out = new DefaultTextOutput(
+        jjsOptions.getOutput().shouldMinimize());
     String moduleFunction = module.getName().replace('.', '_');
 
     // Generate the call to tell the bootstrap code that we're ready to go.
@@ -784,7 +774,7 @@ public class GWTCompiler extends ToolBase {
     // Create JavaScript.
     //
     String js = jjs.compile(logger, rebindOracle);
-    if (validateOnly) {
+    if (jjsOptions.isValidateOnly()) {
       // We're done, there's no actual script to write.
       assert (js == null);
       return null;
@@ -989,7 +979,8 @@ public class GWTCompiler extends ToolBase {
   private void writeSelectionScripts(TreeLogger logger,
       SelectionScriptGenerator selGen) {
     {
-      String html = selGen.generateSelectionScript(obfuscate, false);
+      String html = selGen.generateSelectionScript(
+          jjsOptions.getOutput().shouldMinimize(), false);
       String fn = module.getName() + ".nocache.js";
       File selectionFile = new File(outDir, fn);
       Util.writeStringAsFile(selectionFile, html);
@@ -998,7 +989,8 @@ public class GWTCompiler extends ToolBase {
       logger.log(TreeLogger.TRACE, msg, null);
     }
     {
-      String html = selGen.generateSelectionScript(obfuscate, true);
+      String html = selGen.generateSelectionScript(
+          jjsOptions.getOutput().shouldMinimize(), true);
       String fn = module.getName() + "-xs.nocache.js";
       File selectionFile = new File(outDir, fn);
       Util.writeStringAsFile(selectionFile, html);

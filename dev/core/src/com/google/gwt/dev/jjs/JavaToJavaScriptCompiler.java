@@ -197,45 +197,33 @@ public class JavaToJavaScriptCompiler {
     return null;
   }
 
-  private final boolean aggressivelyOptimize;
   private final String[] declEntryPoints;
   private final CompilationUnitDeclaration[] goldenCuds;
   private long lastModified;
-  private final boolean obfuscate;
-  private final boolean prettyNames;
+  private final JJSOptions options;
   private final Set<IProblem> problemSet = new HashSet<IProblem>();
-  private boolean validateOnly;
 
   public JavaToJavaScriptCompiler(TreeLogger logger,
       WebModeCompilerFrontEnd compiler, String[] declEntryPts)
       throws UnableToCompleteException {
-    this(logger, compiler, declEntryPts, true, false, true, false);
+    this(logger, compiler, declEntryPts, new JJSOptions());
   }
 
   public JavaToJavaScriptCompiler(TreeLogger logger,
       WebModeCompilerFrontEnd compiler, String[] declEntryPts,
-      boolean obfuscate, boolean prettyNames, boolean aggressivelyOptimize,
-      boolean validateOnly) throws UnableToCompleteException {
+      JJSOptions compilerOptions) throws UnableToCompleteException {
 
     if (declEntryPts.length == 0) {
       throw new IllegalArgumentException("entry point(s) required");
     }
 
-    // Should we attempt to inline Java and JavaScript methods?
-    //
-    this.aggressivelyOptimize = aggressivelyOptimize;
+    this.options = new JJSOptions(compilerOptions);
 
     // Remember these for subsequent compiles.
     //
     this.declEntryPoints = declEntryPts;
 
-    // Should we obfuscate or, if not, use pretty names?
-    //
-    this.obfuscate = obfuscate;
-    this.prettyNames = prettyNames;
-    this.validateOnly = validateOnly;
-
-    if (!validateOnly) {
+    if (!options.isValidateOnly()) {
       // Find all the possible rebound entry points.
       RebindPermutationOracle rpo = compiler.getRebindPermutationOracle();
       Set<String> allEntryPoints = new TreeSet<String>();
@@ -329,7 +317,7 @@ public class JavaToJavaScriptCompiler {
       // Fix up GWT.create() into new operations
       ReplaceRebinds.exec(jprogram);
 
-      if (validateOnly) {
+      if (options.isValidateOnly()) {
         // That's it, we're done.
         return null;
       }
@@ -366,7 +354,7 @@ public class JavaToJavaScriptCompiler {
         // dead code removal??
         didChange = DeadCodeElimination.exec(jprogram) || didChange;
 
-        if (aggressivelyOptimize) {
+        if (options.isAggressivelyOptimize()) {
           // inlining
           didChange = MethodInliner.exec(jprogram) || didChange;
         }
@@ -392,7 +380,7 @@ public class JavaToJavaScriptCompiler {
 
       // (7) Generate a JavaScript code DOM from the Java type declarations
       jprogram.typeOracle.recomputeClinits();
-      GenerateJavaScriptAST.exec(jprogram, jsProgram, obfuscate, prettyNames);
+      GenerateJavaScriptAST.exec(jprogram, jsProgram, options.getOutput());
 
       // (8) Fix invalid constructs created during JS AST gen
       JsNormalizer.exec(jsProgram);
@@ -401,30 +389,37 @@ public class JavaToJavaScriptCompiler {
       JsSymbolResolver.exec(jsProgram);
 
       // (10) Apply optimizations to JavaScript AST
-      if (aggressivelyOptimize) {
+      if (options.isAggressivelyOptimize()) {
         do {
           didChange = false;
           // Inline JavaScript function invocations
-          didChange = aggressivelyOptimize && JsInliner.exec(jsProgram)
-              || didChange;
+          didChange = options.isAggressivelyOptimize()
+              && JsInliner.exec(jsProgram) || didChange;
           // Remove unused functions, possible
           didChange = JsUnusedFunctionRemover.exec(jsProgram) || didChange;
         } while (didChange);
       }
 
       // (11) Obfuscate
-      if (obfuscate) {
-        JsStringInterner.exec(jsProgram);
-        JsObfuscateNamer.exec(jsProgram);
-      } else if (prettyNames) {
-        // We don't intern strings in pretty mode to improve readability
-        JsPrettyNamer.exec(jsProgram);
-      } else {
-        JsStringInterner.exec(jsProgram);
-        JsVerboseNamer.exec(jsProgram);
+      switch (options.getOutput()) {
+        case OBFUSCATED:
+          JsStringInterner.exec(jsProgram);
+          JsObfuscateNamer.exec(jsProgram);
+          break;
+        case PRETTY:
+          // We don't intern strings in pretty mode to improve readability
+          JsPrettyNamer.exec(jsProgram);
+          break;
+        case DETAILED:
+          JsStringInterner.exec(jsProgram);
+          JsVerboseNamer.exec(jsProgram);
+          break;
+        default:
+          throw new InternalCompilerException("Unknown output mode");
       }
 
-      DefaultTextOutput out = new DefaultTextOutput(obfuscate);
+      DefaultTextOutput out = new DefaultTextOutput(
+          options.getOutput().shouldMinimize());
       JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
       v.accept(jsProgram);
       return out.toString();

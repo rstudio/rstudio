@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.HasName;
@@ -1550,10 +1551,9 @@ public class GenerateJavaScriptAST {
     }
   }
 
-  public static void exec(JProgram program, JsProgram jsProgram,
-      boolean obfuscate, boolean prettyNames) {
+  public static void exec(JProgram program, JsProgram jsProgram, JsOutputOption output) {
     GenerateJavaScriptAST generateJavaScriptAST = new GenerateJavaScriptAST(
-        program, jsProgram, obfuscate, prettyNames);
+        program, jsProgram, output);
     generateJavaScriptAST.execImpl();
   }
 
@@ -1616,19 +1616,17 @@ public class GenerateJavaScriptAST {
   private final JsScope topScope;
 
   private final JTypeOracle typeOracle;
-  private final boolean obfuscate;
-  private final boolean prettyNames;
+  private final JsOutputOption output;
 
   private GenerateJavaScriptAST(JProgram program, JsProgram jsProgram,
-      boolean obfuscate, boolean prettyNames) {
+      JsOutputOption output) {
     this.program = program;
     typeOracle = program.typeOracle;
     this.jsProgram = jsProgram;
     topScope = jsProgram.getScope();
     objectScope = jsProgram.getObjectScope();
     interfaceScope = new JsScope(objectScope, "Interfaces");
-    this.obfuscate = obfuscate;
-    this.prettyNames = prettyNames;
+    this.output = output;
 
     /*
      * Because we modify String's prototype, all fields and polymorphic methods
@@ -1722,24 +1720,28 @@ public class GenerateJavaScriptAST {
 
   String mangleNameSpecialObfuscate(JField x) {
     assert (specialObfuscatedIdents.containsKey(x.getName()));
-    if (obfuscate) {
-      return specialObfuscatedIdents.get(x.getName());
-    } else if (prettyNames) {
-      return x.getName() + "$";
-    } else {
-      return mangleName(x) + "$";
+    switch (output) {
+      case OBFUSCATED:
+        return specialObfuscatedIdents.get(x.getName());
+      case PRETTY:
+        return x.getName() + "$";
+      case DETAILED:
+        return mangleName(x) + "$";
     }
+    throw new InternalCompilerException("Unknown output mode");
   }
 
   String mangleNameSpecialObfuscate(JMethod x) {
     assert (specialObfuscatedIdents.containsKey(x.getName()));
-    if (obfuscate) {
-      return specialObfuscatedIdents.get(x.getName());
-    } else if (prettyNames) {
-      return x.getName() + "$";
-    } else {
-      return mangleNameForPoly(x) + "$";
+    switch (output) {
+      case OBFUSCATED:
+        return specialObfuscatedIdents.get(x.getName());
+      case PRETTY:
+        return x.getName() + "$";
+      case DETAILED:
+        return mangleNameForPoly(x) + "$";
     }
+    throw new InternalCompilerException("Unknown output mode");
   }
 
   private void execImpl() {

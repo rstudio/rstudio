@@ -15,15 +15,23 @@
  */
 package com.google.gwt.dev.util.arg;
 
+import com.google.gwt.dev.jjs.JJSOptions;
+import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.util.tools.ArgHandler;
 
 /**
  * Argument handler for processing the script style flag.
  */
-public abstract class ArgHandlerScriptStyle extends ArgHandler {
+public final class ArgHandlerScriptStyle extends ArgHandler {
+
+  private final JJSOptions optionsToModify;
+
+  public ArgHandlerScriptStyle(JJSOptions optionsToModify) {
+    this.optionsToModify = optionsToModify;
+  }
 
   public String[] getDefaultArgs() {
-    return new String[]{"-style", "obfuscate"};
+    return new String[] {"-style", "obfuscate"};
   }
 
   public String getPurpose() {
@@ -35,20 +43,20 @@ public abstract class ArgHandlerScriptStyle extends ArgHandler {
   }
 
   public String[] getTagArgs() {
-    return new String[]{"style"};
+    return new String[] {"style"};
   }
 
   public int handle(String[] args, int startIndex) {
     if (startIndex + 1 < args.length) {
       String style = args[startIndex + 1].toLowerCase();
       if (style.startsWith("obf")) {
-        setStyleObfuscated();
+        optionsToModify.setOutput(JsOutputOption.OBFUSCATED);
         return 1;
       } else if ("pretty".equals(style)) {
-        setStylePretty();
+        optionsToModify.setOutput(JsOutputOption.PRETTY);
         return 1;
       } else if ("detailed".equals(style)) {
-        setStyleDetailed();
+        optionsToModify.setOutput(JsOutputOption.DETAILED);
         return 1;
       }
     }
@@ -57,10 +65,4 @@ public abstract class ArgHandlerScriptStyle extends ArgHandler {
     System.err.println("  OBF, PRETTY, or DETAILED");
     return -1;
   }
-
-  public abstract void setStyleDetailed();
-
-  public abstract void setStyleObfuscated();
-
-  public abstract void setStylePretty();
 }

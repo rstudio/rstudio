@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.shell.BrowserWidget;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
 import com.google.gwt.dev.shell.BrowserWidgetHostChecker;
@@ -372,8 +373,6 @@ public class GWTShell extends ToolBase {
 
   protected File outDir;
 
-  private boolean aggressivelyOptimize = true;
-
   private BrowserWidgetHostImpl browserHost = new BrowserWidgetHostImpl();
 
   private final List<Shell> browserShells = new ArrayList<Shell>();
@@ -382,15 +381,13 @@ public class GWTShell extends ToolBase {
 
   private boolean headlessMode = false;
 
+  private final JJSOptions jjsOptions = new JJSOptions();
+
   private TreeLogger.Type logLevel;
 
   private ShellMainWindow mainWnd;
 
-  private boolean obfuscate;
-
   private int port;
-
-  private boolean prettyNames;
 
   private boolean runTomcat = true;
 
@@ -447,29 +444,12 @@ public class GWTShell extends ToolBase {
       }
     });
 
-    registerHandler(new ArgHandlerScriptStyle() {
-      @Override
-      public void setStyleDetailed() {
-        obfuscate = false;
-        prettyNames = false;
-      }
-
-      @Override
-      public void setStyleObfuscated() {
-        obfuscate = true;
-      }
-
-      @Override
-      public void setStylePretty() {
-        obfuscate = false;
-        prettyNames = true;
-      }
-    });
+    registerHandler(new ArgHandlerScriptStyle(jjsOptions));
 
     registerHandler(new ArgHandlerDisableAggressiveOptimization() {
       @Override
       public boolean setFlag() {
-        GWTShell.this.setAggressivelyOptimize(false);
+        jjsOptions.setAggressivelyOptimize(false);
         return true;
       }
     });
@@ -620,8 +600,8 @@ public class GWTShell extends ToolBase {
     }
   }
 
-  public void setAggressivelyOptimize(boolean optimize) {
-    this.aggressivelyOptimize = optimize;
+  public void setCompilerOptions(JJSOptions options) {
+    jjsOptions.copyFrom(options);
   }
 
   public void setGenDir(File genDir) {
@@ -652,18 +632,11 @@ public class GWTShell extends ToolBase {
   protected void compile(TreeLogger logger, ModuleDef moduleDef)
       throws UnableToCompleteException {
     GWTCompiler compiler = new GWTCompiler(moduleDef.getCacheManager());
-    compiler.setAggressivelyOptimize(aggressivelyOptimize);
+    compiler.setCompilerOptions(jjsOptions);
     compiler.setGenDir(genDir);
     compiler.setOutDir(outDir);
     compiler.setModuleName(moduleDef.getName());
     compiler.setLogLevel(logLevel);
-    if (obfuscate) {
-      compiler.setStyleObfuscated();
-    } else if (prettyNames) {
-      compiler.setStylePretty();
-    } else {
-      compiler.setStyleDetailed();
-    }
     compiler.distill(logger, moduleDef);
   }
 
