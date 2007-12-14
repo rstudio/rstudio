@@ -206,9 +206,7 @@ public class TypeTightener {
     public void endVisit(JClassType x, Context ctx) {
       for (JClassType cur = x; cur != null; cur = cur.extnds) {
         addImplementor(cur, x);
-        for (JInterfaceType implment : cur.implments) {
-          addImplementor(implment, x);
-        }
+        addInterfacesImplementorRecursive(cur, x);
       }
     }
 
@@ -297,52 +295,66 @@ public class TypeTightener {
     public boolean visit(JMethod x, Context ctx) {
       currentMethod = x;
 
-      List<JMethod> overrides = x.overrides;
-      JMethod[] virtualOverrides = program.typeOracle.getAllVirtualOverrides(x);
-
-      /*
-       * Special case: also add upRefs from a staticImpl's params to the params
-       * of the instance method it is implementing. Most of the time, this would
-       * happen naturally since the instance method delegates to the static.
-       * However, in cases where the static has been inlined into the instance
-       * method, future optimization could tighten an instance call into a
-       * static call at some other call site, and fail to inline. If we allowed
-       * a staticImpl param to be tighter than its instance param, badness would
-       * ensue.
-       */
-      JMethod staticImplFor = program.staticImplFor(x);
-      // Unless the instance method has already been pruned, of course.
-      if (staticImplFor != null
-          && !staticImplFor.getEnclosingType().methods.contains(staticImplFor)) {
-        staticImplFor = null;
-      }
-
-      if (overrides.isEmpty() && virtualOverrides.length == 0
-          && staticImplFor == null) {
-        return true;
-      }
-
-      for (int j = 0, c = x.params.size(); j < c; ++j) {
-        JParameter param = x.params.get(j);
-        Set<JParameter> set = paramUpRefs.get(param);
-        if (set == null) {
-          set = new HashSet<JParameter>();
-          paramUpRefs.put(param, set);
+      if (!x.isStatic()) {
+        /*
+         * Add an assignment to each parameter from that same parameter in every
+         * method this method overrides.
+         */
+        List<JMethod> overrides = x.overrides;
+        JMethod[] virtualOverrides = program.typeOracle.getAllVirtualOverrides(x);
+        if (overrides.isEmpty() && virtualOverrides.length == 0) {
+          return true;
         }
-        for (int i = 0; i < overrides.size(); ++i) {
-          JMethod baseMethod = overrides.get(i);
-          JParameter baseParam = baseMethod.params.get(j);
-          set.add(baseParam);
+        for (int j = 0, c = x.params.size(); j < c; ++j) {
+          JParameter param = x.params.get(j);
+          Set<JParameter> set = paramUpRefs.get(param);
+          if (set == null) {
+            set = new HashSet<JParameter>();
+            paramUpRefs.put(param, set);
+          }
+          for (JMethod baseMethod : overrides) {
+            JParameter baseParam = baseMethod.params.get(j);
+            set.add(baseParam);
+          }
+          for (JMethod baseMethod : virtualOverrides) {
+            JParameter baseParam = baseMethod.params.get(j);
+            set.add(baseParam);
+          }
         }
-        for (int i = 0; i < virtualOverrides.length; ++i) {
-          JMethod baseMethod = virtualOverrides[i];
-          JParameter baseParam = baseMethod.params.get(j);
-          set.add(baseParam);
+      } else if (program.isStaticImpl(x)) {
+        /*
+         * Special case: also add upRefs from a staticImpl's params to the
+         * params of the instance method it is implementing. Most of the time,
+         * this would happen naturally since the instance method delegates to
+         * the static. However, in cases where the static has been inlined into
+         * the instance method, future optimization could tighten an instance
+         * call into a static call at some other call site, and fail to inline.
+         * If we allowed a staticImpl param to be tighter than its instance
+         * param, badness would ensue.
+         */
+        JMethod staticImplFor = program.staticImplFor(x);
+        if (staticImplFor == null
+            || !staticImplFor.getEnclosingType().methods.contains(staticImplFor)) {
+          // The instance method has already been pruned.
+          return true;
         }
-        if (staticImplFor != null && j > 1) {
-          // static impls have an extra first "this" arg
-          JParameter baseParam = staticImplFor.params.get(j - 1);
-          set.add(baseParam);
+        assert (x.params.size() == staticImplFor.params.size() + 1);
+        for (int j = 0, c = x.params.size(); j < c; ++j) {
+          JParameter param = x.params.get(j);
+          Set<JParameter> set = paramUpRefs.get(param);
+          if (set == null) {
+            set = new HashSet<JParameter>();
+            paramUpRefs.put(param, set);
+          }
+          if (j == 0) {
+            // Fake an assignment-to-self to prevent tightening; consider this
+            // an implicit assignment from a this reference of the looser type.
+            assert (param.isThis());
+            set.add(param);
+          } else {
+            JParameter baseParam = staticImplFor.params.get(j - 1);
+            set.add(baseParam);
+          }
         }
       }
 
@@ -355,6 +367,14 @@ public class TypeTightener {
 
     private void addImplementor(JReferenceType target, JClassType implementor) {
       add(target, implementor, implementors);
+    }
+
+    private void addInterfacesImplementorRecursive(JReferenceType target,
+        JClassType implementor) {
+      for (JInterfaceType implment : target.implments) {
+        addImplementor(implment, implementor);
+        addInterfacesImplementorRecursive(implment, implementor);
+      }
     }
 
     private void addOverrider(JMethod target, JMethod overrider) {
