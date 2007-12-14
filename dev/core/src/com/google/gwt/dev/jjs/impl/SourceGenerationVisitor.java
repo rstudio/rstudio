@@ -56,7 +56,7 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
     super(textOutput);
   }
 
-  // @Override
+  @Override
   public boolean visit(JClassType x, Context ctx) {
     // All classes are deemed "static" so the monolithic compile results can be
     // copy/pasted into a single enclosing class.
@@ -67,13 +67,13 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
     openBlock();
 
     for (int i = 0; i < x.fields.size(); ++i) {
-      JField it = (JField) x.fields.get(i);
+      JField it = x.fields.get(i);
       accept(it);
       newline();
       newline();
     }
     for (int i = 0; i < x.methods.size(); ++i) {
-      JMethod it = (JMethod) x.methods.get(i);
+      JMethod it = x.methods.get(i);
       if (!isEmptyInitializer(it)) {
         accept(it);
         newline();
@@ -85,6 +85,7 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
     return false;
   }
 
+  @Override
   public boolean visit(JField x, Context ctx) {
     super.visit(x, ctx);
 
@@ -96,20 +97,20 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JInterfaceType x, Context ctx) {
     super.visit(x, ctx);
 
     openBlock();
 
     for (int i = 0; i < x.fields.size(); ++i) {
-      JField field = (JField) x.fields.get(i);
+      JField field = x.fields.get(i);
       accept(field);
       newline();
       newline();
     }
     for (int i = 0; i < x.methods.size(); ++i) {
-      JMethod method = (JMethod) x.methods.get(i);
+      JMethod method = x.methods.get(i);
       accept(method);
       newline();
       newline();
@@ -119,13 +120,7 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
     return false;
   }
 
-  // @Override
-  public boolean visit(JMethodBody x, Context ctx) {
-    // actually visit my block
-    return true;
-  }
-
-  // @Override
+  @Override
   public boolean visit(JProgram x, Context ctx) {
     for (int i = 0; i < x.entryMethods.size(); ++i) {
       JMethod method = x.entryMethods.get(i);
@@ -142,7 +137,7 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JsniMethodBody x, Context ctx) {
     print("/*-");
     String jsniCode = x.getFunc().getBody().toString();
@@ -158,18 +153,23 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   protected void printMemberFinalFlag(CanBeFinal x) {
     // suppress final flags
   }
 
-  // @Override
+  @Override
   protected void printTypeName(JType type) {
     if (type instanceof JNullType) {
       print("Object");
     } else {
       super.printTypeName(type);
     }
+  }
+
+  @Override
+  protected boolean shouldPrintMethodBody() {
+    return true;
   }
 
 }

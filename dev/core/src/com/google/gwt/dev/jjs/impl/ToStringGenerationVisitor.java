@@ -56,7 +56,6 @@ import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
@@ -151,13 +150,13 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     super(textOutput);
   }
 
-  // @Override
+  @Override
   public boolean visit(JAbsentArrayDimension x, Context ctx) {
     // nothing to print, parent prints []
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JArrayRef x, Context ctx) {
     JExpression instance = x.getInstance();
     parenPush(x, instance);
@@ -169,7 +168,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JArrayType x, Context ctx) {
     accept(x.getLeafType());
     for (int i = 0, c = x.getDims(); i < c; ++i) {
@@ -178,7 +177,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JAssertStatement x, Context ctx) {
     print(CHARS_ASSERT);
     accept(x.getTestExpr());
@@ -189,7 +188,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JBinaryOperation x, Context ctx) {
     // TODO(later): associativity
     JExpression arg1 = x.getLhs();
@@ -209,11 +208,11 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JBlock x, Context ctx) {
     openBlock();
     for (int i = 0; i < x.statements.size(); ++i) {
-      JStatement statement = (JStatement) x.statements.get(i);
+      JStatement statement = x.statements.get(i);
       needSemi = true;
       accept(statement);
       if (needSemi) {
@@ -226,13 +225,13 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JBooleanLiteral x, Context ctx) {
     printBooleanLiteral(x.getValue());
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JBreakStatement x, Context ctx) {
     print(CHARS_BREAK);
     if (x.getLabel() != null) {
@@ -242,7 +241,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JCaseStatement x, Context ctx) {
     if (x.getExpr() != null) {
       print(CHARS_CASE);
@@ -256,7 +255,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JCastOperation x, Context ctx) {
     lparen();
     printType(x);
@@ -270,20 +269,20 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JCharLiteral x, Context ctx) {
     printCharLiteral(x.getValue());
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JClassLiteral x, Context ctx) {
     printTypeName(x.getRefType());
     print(CHARS_DOTCLASS);
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JClassType x, Context ctx) {
     printAbstractFlag(x);
     printFinalFlag(x);
@@ -302,7 +301,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
         if (i > 0) {
           print(CHARS_COMMA);
         }
-        printTypeName((JType) x.implments.get(i));
+        printTypeName(x.implments.get(i));
       }
       space();
     }
@@ -310,7 +309,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JConditional x, Context ctx) {
     // TODO(later): associativity
     JExpression ifTest = x.getIfTest();
@@ -335,7 +334,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JContinueStatement x, Context ctx) {
     print(CHARS_CONTINUE);
     if (x.getLabel() != null) {
@@ -345,7 +344,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JDoStatement x, Context ctx) {
     print(CHARS_DO);
     if (x.getBody() != null) {
@@ -367,19 +366,19 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JDoubleLiteral x, Context ctx) {
     printDoubleLiteral(x.getValue());
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JExpressionStatement x, Context ctx) {
     accept(x.getExpr());
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JField x, Context ctx) {
     // Due to our wacky construction model, only constant fields may be final
     // when generating source
@@ -396,7 +395,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JFieldRef x, Context ctx) {
     JExpression instance = x.getInstance();
     if (instance != null) {
@@ -411,26 +410,26 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JFloatLiteral x, Context ctx) {
     printFloatLiteral(x.getValue());
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JForStatement x, Context ctx) {
     print(CHARS_FOR);
     lparen();
 
-    Iterator/* <JStatement> */iter = x.getInitializers().iterator();
+    Iterator<JStatement> iter = x.getInitializers().iterator();
     if (iter.hasNext()) {
-      JStatement stmt = (JStatement) iter.next();
+      JStatement stmt = iter.next();
       accept(stmt);
     }
     suppressType = true;
     while (iter.hasNext()) {
       print(CHARS_COMMA);
-      JStatement stmt = (JStatement) iter.next();
+      JStatement stmt = iter.next();
       accept(stmt);
     }
     suppressType = false;
@@ -454,7 +453,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JIfStatement x, Context ctx) {
     print(CHARS_IF);
     lparen();
@@ -491,7 +490,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JInstanceOf x, Context ctx) {
     JExpression expr = x.getExpr();
     parenPush(x, expr);
@@ -502,7 +501,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JInterfaceType x, Context ctx) {
     print(CHARS_INTERFACE);
     printTypeName(x);
@@ -514,7 +513,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
         if (i > 0) {
           print(CHARS_COMMA);
         }
-        printTypeName((JType) x.implments.get(i));
+        printTypeName(x.implments.get(i));
       }
       space();
     }
@@ -522,19 +521,19 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JIntLiteral x, Context ctx) {
     print(Integer.toString(x.getValue()).toCharArray());
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JLabel x, Context ctx) {
     printName(x);
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JLabeledStatement x, Context ctx) {
     accept(x.getLabel());
     print(" : ");
@@ -542,7 +541,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JLocal x, Context ctx) {
     printFinalFlag(x);
     printType(x);
@@ -551,7 +550,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JLocalDeclarationStatement x, Context ctx) {
     if (!suppressType) {
       accept(x.getLocalRef().getTarget());
@@ -566,49 +565,46 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JLocalRef x, Context ctx) {
     printName(x.getLocal());
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JLongLiteral x, Context ctx) {
     printLongLiteral(x.getValue());
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JMethod x, Context ctx) {
     // special: transcribe clinit and init as if they were initializer blocks
     if (isInitializer(x)) {
       if (x.isStatic()) {
         print(CHARS_STATIC);
       }
-      accept(x.getBody());
+      if (shouldPrintMethodBody()) {
+        accept(x.getBody());
+      } else {
+        print("{ ... }");
+        newlineOpt();
+      }
     } else {
       printMethodHeader(x);
-      if (x.isAbstract()) {
-        semi();
-      } else {
+      if (shouldPrintMethodBody() && !x.isAbstract()) {
         space();
         accept(x.getBody());
+      } else {
+        semi();
+        newlineOpt();
       }
     }
 
     return false;
   }
 
-  // @Override
-  public boolean visit(JMethodBody x, Context ctx) {
-    print("{");
-    // don't visit my block
-    newline();
-    print("}");
-    return false;
-  }
-
-  // @Override
+  @Override
   public boolean visit(JMethodCall x, Context ctx) {
     JExpression instance = x.getInstance();
     JMethod target = x.getTarget();
@@ -631,7 +627,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JMultiExpression x, Context ctx) {
     lparen();
     visitCollectionWithCommas(x.exprs.iterator());
@@ -639,7 +635,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JNewArray x, Context ctx) {
     print(CHARS_NEW);
     printTypeName(x.getArrayType().getLeafType());
@@ -649,7 +645,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
       print('}');
     } else {
       for (int i = 0; i < x.dims.size(); ++i) {
-        JExpression expr = (JExpression) x.dims.get(i);
+        JExpression expr = x.dims.get(i);
         print('[');
         accept(expr);
         print(']');
@@ -658,7 +654,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JNewInstance x, Context ctx) {
     print(CHARS_NEW);
     printType(x);
@@ -667,19 +663,19 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JNullLiteral x, Context ctx) {
     print(CHARS_NULL);
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JNullType x, Context ctx) {
     printTypeName(x);
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JParameter x, Context ctx) {
     printType(x);
     space();
@@ -687,13 +683,13 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JParameterRef x, Context ctx) {
     printName(x.getTarget());
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JPostfixOperation x, Context ctx) {
     // TODO(later): associativity
     JExpression arg = x.getArg();
@@ -704,7 +700,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JPrefixOperation x, Context ctx) {
     // TODO(later): associativity
     print(x.getOp().getSymbol());
@@ -715,19 +711,19 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JPrimitiveType x, Context ctx) {
     printTypeName(x);
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JProgram x, Context ctx) {
     print("<JProgram>");
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JReturnStatement x, Context ctx) {
     print(CHARS_RETURN);
     if (x.getExpr() != null) {
@@ -737,12 +733,12 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JsniFieldRef x, Context ctx) {
     return visit(x.getField(), ctx);
   }
 
-  // @Override
+  @Override
   public boolean visit(JsniMethodBody x, Context ctx) {
     print("/*-{");
     // don't visit my block
@@ -751,13 +747,14 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     semi();
     return false;
   }
-  // @Override
+
+  @Override
   public boolean visit(JsniMethodRef x, Context ctx) {
     printMethodHeader(x.getTarget());
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JsonArray x, Context ctx) {
     print('[');
     visitCollectionWithCommas(x.exprs.iterator());
@@ -765,7 +762,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JsonObject x, Context ctx) {
     print('{');
     visitCollectionWithCommas(x.propInits.iterator());
@@ -773,7 +770,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JsonPropInit x, Context ctx) {
     accept(x.labelExpr);
     print(':');
@@ -781,13 +778,13 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JStringLiteral x, Context ctx) {
     printStringLiteral(x.getValue());
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JSwitchStatement x, Context ctx) {
     print(CHARS_SWITCH);
     lparen();
@@ -800,13 +797,13 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JThisRef x, Context ctx) {
     print(CHARS_THIS);
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JThrowStatement x, Context ctx) {
     print(CHARS_THROW);
     if (x.getExpr() != null) {
@@ -816,18 +813,18 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JTryStatement x, Context ctx) {
     print(CHARS_TRY);
     accept(x.getTryBlock());
     for (int i = 0, c = x.getCatchArgs().size(); i < c; ++i) {
       print(CHARS_CATCH);
       lparen();
-      JLocalRef localRef = (JLocalRef) x.getCatchArgs().get(i);
+      JLocalRef localRef = x.getCatchArgs().get(i);
       accept(localRef.getTarget());
       rparen();
       space();
-      JBlock block = (JBlock) x.getCatchBlocks().get(i);
+      JBlock block = x.getCatchBlocks().get(i);
       accept(block);
     }
     if (x.getFinallyBlock() != null) {
@@ -837,7 +834,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JWhileStatement x, Context ctx) {
     print(CHARS_WHILE);
     lparen();
@@ -1026,13 +1023,13 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
 
     if (x.thrownExceptions.size() > 0) {
       print(CHARS_THROWS);
-      Iterator/* <JClassType> */iter = x.thrownExceptions.iterator();
+      Iterator<JClassType> iter = x.thrownExceptions.iterator();
       if (iter.hasNext()) {
-        printTypeName((JType) iter.next());
+        printTypeName(iter.next());
       }
       while (iter.hasNext()) {
         print(CHARS_COMMA);
-        printTypeName((JType) iter.next());
+        printTypeName(iter.next());
       }
     }
   }
@@ -1088,19 +1085,21 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     print(';');
   }
 
+  protected boolean shouldPrintMethodBody() {
+    return false;
+  }
+
   protected void space() {
     print(' ');
   }
 
-  protected void visitCollectionWithCommas(Iterator/* <? extends JNode> */iter) {
+  protected void visitCollectionWithCommas(Iterator<? extends JNode> iter) {
     if (iter.hasNext()) {
-      JNode node = (JNode) iter.next();
-      accept(node);
+      accept(iter.next());
     }
     while (iter.hasNext()) {
       print(CHARS_COMMA);
-      JNode node = (JNode) iter.next();
-      accept(node);
+      accept(iter.next());
     }
   }
 
