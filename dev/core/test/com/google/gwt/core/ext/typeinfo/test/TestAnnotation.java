@@ -42,5 +42,34 @@ public @interface TestAnnotation {
    */
   NestedAnnotation nestedAnnotation() default @NestedAnnotation("Not assigned");
 
-  int x = 0;
+  /**
+   * Used to test initialization using conditional statements.
+   */
+  boolean useMinLong = true;
+
+  /**
+   * Used to test initialization using SingleNameReferences.
+   */
+  String defaultStringValue = "Hello There";
+  
+  /**
+   * Tests default values using conditional statements.
+   */
+  long longValue() default useMinLong ? Long.MIN_VALUE : Long.MAX_VALUE;
+
+  /**
+   * Tests array default values.
+   */
+  int[] intArrayValue() default {1,2,3};
+
+  /**
+   * Tests default value initialization via a QualifiedNameReference.
+   */
+  String stringValue() default TestAnnotation.defaultStringValue;
+  
+  /**
+   * Tests default value initialization of class literals. 
+   */
+  Class<?> classLiteral() default Object.class;
 }
+

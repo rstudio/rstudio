@@ -55,25 +55,21 @@ import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.ast.AnnotationMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
 import org.eclipse.jdt.internal.compiler.ast.ArrayInitializer;
-import org.eclipse.jdt.internal.compiler.ast.CharLiteral;
 import org.eclipse.jdt.internal.compiler.ast.ClassLiteralAccess;
 import org.eclipse.jdt.internal.compiler.ast.Clinit;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.DoubleLiteral;
+import org.eclipse.jdt.internal.compiler.ast.ConditionalExpression;
 import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.FalseLiteral;
 import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.FloatLiteral;
 import org.eclipse.jdt.internal.compiler.ast.Initializer;
-import org.eclipse.jdt.internal.compiler.ast.IntLiteral;
 import org.eclipse.jdt.internal.compiler.ast.Javadoc;
-import org.eclipse.jdt.internal.compiler.ast.LongLiteral;
 import org.eclipse.jdt.internal.compiler.ast.MagicLiteral;
 import org.eclipse.jdt.internal.compiler.ast.MemberValuePair;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.NameReference;
 import org.eclipse.jdt.internal.compiler.ast.NullLiteral;
 import org.eclipse.jdt.internal.compiler.ast.NumberLiteral;
-import org.eclipse.jdt.internal.compiler.ast.QualifiedNameReference;
 import org.eclipse.jdt.internal.compiler.ast.SingleMemberAnnotation;
 import org.eclipse.jdt.internal.compiler.ast.StringLiteral;
 import org.eclipse.jdt.internal.compiler.ast.TrueLiteral;
@@ -83,13 +79,13 @@ import org.eclipse.jdt.internal.compiler.ast.TypeReference;
 import org.eclipse.jdt.internal.compiler.ast.Wildcard;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.eclipse.jdt.internal.compiler.env.IGenericType;
+import org.eclipse.jdt.internal.compiler.impl.Constant;
 import org.eclipse.jdt.internal.compiler.lookup.ArrayBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BaseTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
-import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.LocalTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding;
@@ -261,6 +257,39 @@ public class TypeOracleBuilder {
     tagValues.clear();
   }
 
+  /**
+   * Returns the value associated with a JDT constant.
+   */
+  private static Object getConstantValue(Constant constant) {
+    switch (constant.typeID()) {
+      case TypeIds.T_char:
+        return constant.charValue();
+      case TypeIds.T_byte:
+        return constant.byteValue();
+      case TypeIds.T_short:
+        return constant.shortValue();
+      case TypeIds.T_boolean:
+        return constant.booleanValue();
+      case TypeIds.T_long:
+        return constant.longValue();
+      case TypeIds.T_double:
+        return constant.doubleValue();
+      case TypeIds.T_float:
+        return constant.floatValue();
+      case TypeIds.T_int:
+        return constant.intValue();
+      case TypeIds.T_JavaLangString:
+        return constant.stringValue();
+      case TypeIds.T_null:
+        return null;
+      default:
+        break;
+    }
+
+    assert false : "Unknown constant type";
+    return null;
+  }
+
   private static String getMethodName(JClassType enclosingType,
       AbstractMethodDeclaration jmethod) {
     if (jmethod.isConstructor()) {
@@ -268,6 +297,13 @@ public class TypeOracleBuilder {
     } else {
       return String.valueOf(jmethod.binding.selector);
     }
+  }
+
+  /**
+   * Returns the number associated with a JDT numeric literal.
+   */
+  private static Object getNumericLiteralValue(NumberLiteral expression) {
+    return getConstantValue(expression.constant);
   }
 
   private static boolean isAnnotation(TypeDeclaration typeDecl) {
@@ -612,40 +648,7 @@ public class TypeOracleBuilder {
     return oracle;
   }
 
-  private JUpperBound createTypeVariableBounds(TreeLogger logger,
-      TypeVariableBinding tvBinding) {
-    TypeBinding jfirstBound = tvBinding.firstBound;
-    if (jfirstBound == null) {
-      // No bounds were specified, so we default to Object
-      JClassType upperBound = (JClassType) resolveType(logger,
-          tvBinding.superclass);
-      /*
-       * Can't test for equality with TypeOracle.getJavaLangObject() since it
-       * may not be initialized at this point
-       */
-      assert (Object.class.getName().equals(upperBound.getQualifiedSourceName()));
-      return new JUpperBound(upperBound);
-    }
-
-    List<JClassType> bounds = new ArrayList<JClassType>();
-    JClassType firstBound = (JClassType) resolveType(logger, jfirstBound);
-    if (firstBound.isClass() != null) {
-      bounds.add(firstBound);
-    }
-
-    ReferenceBinding[] jsuperInterfaces = tvBinding.superInterfaces();
-    for (ReferenceBinding jsuperInterface : jsuperInterfaces) {
-      JClassType superInterface = (JClassType) resolveType(logger,
-          jsuperInterface);
-      assert (superInterface != null);
-      assert (superInterface.isInterface() != null);
-      bounds.add(superInterface);
-    }
-
-    return new JUpperBound(bounds.toArray(NO_JCLASSES));
-  }
-
-  private Object evaluateAnnotationExpression(TreeLogger logger,
+  private Object createAnnotationInstance(TreeLogger logger,
       Expression expression) {
     Annotation annotation = (Annotation) expression;
 
@@ -665,7 +668,7 @@ public class TypeOracleBuilder {
 
       // Value
       Expression expressionValue = mvp.value;
-      Object value = evaluateExpression(logger, expressionValue);
+      Object value = evaluateConstantExpression(logger, expressionValue);
       if (value == null) {
         return null;
       }
@@ -703,11 +706,14 @@ public class TypeOracleBuilder {
         identifierToValue);
   }
 
-  private Object evaluateArrayInitializerExpression(TreeLogger logger,
-      Expression expression) {
-    ArrayInitializer arrayInitializer = (ArrayInitializer) expression;
+  private Object createArrayConstant(TreeLogger logger,
+      ArrayInitializer arrayInitializer) {
     Class<?> leafComponentClass = getClassLiteral(logger,
         arrayInitializer.binding.leafComponentType);
+    if (leafComponentClass == null) {
+      return null;
+    }
+
     int[] dimensions = new int[arrayInitializer.binding.dimensions];
 
     Expression[] initExpressions = arrayInitializer.expressions;
@@ -720,7 +726,7 @@ public class TypeOracleBuilder {
     if (initExpressions != null) {
       for (int i = 0; i < initExpressions.length; ++i) {
         Expression arrayInitExp = initExpressions[i];
-        Object value = evaluateExpression(logger, arrayInitExp);
+        Object value = evaluateConstantExpression(logger, arrayInitExp);
         if (value != null) {
           Array.set(array, i, value);
         } else {
@@ -737,7 +743,41 @@ public class TypeOracleBuilder {
     return null;
   }
 
-  private Object evaluateExpression(TreeLogger logger, Expression expression) {
+  private JUpperBound createTypeVariableBounds(TreeLogger logger,
+      TypeVariableBinding tvBinding) {
+    TypeBinding jfirstBound = tvBinding.firstBound;
+    if (jfirstBound == null) {
+      // No bounds were specified, so we default to Object
+      JClassType upperBound = (JClassType) resolveType(logger,
+          tvBinding.superclass);
+      /*
+       * Can't test for equality with TypeOracle.getJavaLangObject() since it
+       * may not be initialized at this point
+       */
+      assert (Object.class.getName().equals(upperBound.getQualifiedSourceName()));
+      return new JUpperBound(upperBound);
+    }
+
+    List<JClassType> bounds = new ArrayList<JClassType>();
+    JClassType firstBound = (JClassType) resolveType(logger, jfirstBound);
+    if (firstBound.isClass() != null) {
+      bounds.add(firstBound);
+    }
+
+    ReferenceBinding[] jsuperInterfaces = tvBinding.superInterfaces();
+    for (ReferenceBinding jsuperInterface : jsuperInterfaces) {
+      JClassType superInterface = (JClassType) resolveType(logger,
+          jsuperInterface);
+      assert (superInterface != null);
+      assert (superInterface.isInterface() != null);
+      bounds.add(superInterface);
+    }
+
+    return new JUpperBound(bounds.toArray(NO_JCLASSES));
+  }
+
+  private Object evaluateConstantExpression(TreeLogger logger, 
+      Expression expression) {
     if (expression instanceof MagicLiteral) {
       if (expression instanceof FalseLiteral) {
         return Boolean.FALSE;
@@ -747,7 +787,7 @@ public class TypeOracleBuilder {
         return Boolean.TRUE;
       }
     } else if (expression instanceof NumberLiteral) {
-      Object value = evaluateNumericExpression(expression);
+      Object value = getNumericLiteralValue((NumberLiteral) expression);
       if (value != null) {
         return value;
       }
@@ -761,67 +801,90 @@ public class TypeOracleBuilder {
         return clazz;
       }
     } else if (expression instanceof ArrayInitializer) {
-      Object value = evaluateArrayInitializerExpression(logger, expression);
+      Object value = createArrayConstant(logger, (ArrayInitializer) expression);
       if (value != null) {
         return value;
       }
-    } else if (expression instanceof QualifiedNameReference) {
-      QualifiedNameReference qualifiedNameRef = (QualifiedNameReference) expression;
-      Class clazz = getClassLiteral(logger, qualifiedNameRef.actualReceiverType);
-      assert (clazz.isEnum());
-      if (clazz != null) {
-        FieldBinding fieldBinding = qualifiedNameRef.fieldBinding();
-        String enumName = String.valueOf(fieldBinding.name);
-        return Enum.valueOf(clazz, enumName);
+    } else if (expression instanceof NameReference) {
+      /*
+       * This name reference can only be to something that is a constant value,
+       * or an enumerated type since annotation values must be constants.
+       */
+      NameReference nameRef = (NameReference) expression;
+      
+      if (nameRef.constant != Constant.NotAConstant) {
+        return getConstantValue(nameRef.constant);
+      } else {
+        Class clazz = getClassLiteral(logger,
+            nameRef.actualReceiverType);
+        if (clazz.isEnum()) {
+          String enumName = String.valueOf(nameRef.fieldBinding().name);
+          return Enum.valueOf(clazz, enumName);
+        } else {
+          /* 
+           * If this is not an enumeration, then fall through to failure case 
+           * below.
+           */
+        }
       }
     } else if (expression instanceof Annotation) {
-      Object annotationInstance = evaluateAnnotationExpression(logger,
+      Object annotationInstance = createAnnotationInstance(logger,
           expression);
       if (annotationInstance != null) {
         return annotationInstance;
       }
+    } else if (expression instanceof ConditionalExpression) {
+      ConditionalExpression condExpression = (ConditionalExpression) expression;
+      assert (condExpression.constant != Constant.NotAConstant);
+
+      return getConstantValue(condExpression.constant);
     }
 
     assert (false);
     return null;
   }
-
-  private Object evaluateNumericExpression(Expression expression) {
-    if (expression instanceof CharLiteral) {
-      CharLiteral charLiteral = (CharLiteral) expression;
-      return Character.valueOf(charLiteral.constant.charValue());
-    } else if (expression instanceof DoubleLiteral) {
-      DoubleLiteral doubleLiteral = (DoubleLiteral) expression;
-      return Double.valueOf(doubleLiteral.constant.doubleValue());
-    } else if (expression instanceof FloatLiteral) {
-      FloatLiteral floatLiteral = (FloatLiteral) expression;
-      return Float.valueOf(floatLiteral.constant.floatValue());
-    } else if (expression instanceof IntLiteral) {
-      IntLiteral intLiteral = (IntLiteral) expression;
-      return Integer.valueOf(intLiteral.constant.intValue());
-    } else if (expression instanceof LongLiteral) {
-      LongLiteral longLiteral = (LongLiteral) expression;
-      return Long.valueOf(longLiteral.constant.longValue());
+ 
+  private Class<?> getClassLiteral(TreeLogger logger, TypeBinding resolvedType) {
+    JType type = resolveType(logger, resolvedType);
+    if (type == null) {
+      return null;
     }
 
-    return null;
+    if (type.isPrimitive() != null) {
+      return getClassLiteralForPrimitive(type.isPrimitive());
+    } else {
+      try {
+        String className = computeBinaryClassName(type);
+        Class<?> clazz = Class.forName(className);
+        return clazz;
+      } catch (ClassNotFoundException e) {
+        logger.log(TreeLogger.ERROR, "", e);
+        return null;
+      }
+    }
   }
 
-  private Class<?> getClassLiteral(TreeLogger logger, TypeBinding resolvedType) {
-    JClassType annotationType = (JClassType) resolveType(logger, resolvedType);
-    if (annotationType == null) {
-      return null;
+  private Class<?> getClassLiteralForPrimitive(JPrimitiveType type) {
+    if (type == JPrimitiveType.BOOLEAN) {
+      return boolean.class;
+    } else if (type == JPrimitiveType.BYTE) {
+      return byte.class;
+    } else if (type == JPrimitiveType.CHAR) {
+      return char.class;
+    } else if (type == JPrimitiveType.DOUBLE) {
+      return double.class;
+    } else if (type == JPrimitiveType.FLOAT) {
+      return float.class;
+    } else if (type == JPrimitiveType.INT) {
+      return int.class;
+    } else if (type == JPrimitiveType.LONG) {
+      return long.class;
+    } else if (type == JPrimitiveType.SHORT) {
+      return short.class;
     }
 
-    String className = computeBinaryClassName(annotationType);
-    try {
-      Class<?> clazz = Class.forName(className);
-      return clazz;
-    } catch (ClassNotFoundException e) {
-      logger.log(TreeLogger.ERROR, "", e);
-      // TODO(mmendez): how should we deal with this error?
-      return null;
-    }
+    assert (false);
+    return null;
   }
 
   private CompilationUnitProvider getCup(TypeDeclaration typeDecl) {
@@ -835,14 +898,14 @@ public class TypeOracleBuilder {
     return String.valueOf(CharOperation.concatWith(pkgParts, '.'));
   }
 
-  /** 
+  /**
    * Returns the qualified name of the binding, excluding any type parameter
    * information.
    */
   private String getQualifiedName(ReferenceBinding binding) {
     String qualifiedName = CharOperation.toString(binding.compoundName);
     if (binding instanceof LocalTypeBinding) {
-       // The real name of a local type is its constant pool name.
+      // The real name of a local type is its constant pool name.
       qualifiedName = CharOperation.charToString(binding.constantPoolName());
       qualifiedName = qualifiedName.replace('/', '.');
     } else {
@@ -942,8 +1005,12 @@ public class TypeOracleBuilder {
       return false;
     }
 
-    java.lang.annotation.Annotation annotation = (java.lang.annotation.Annotation) evaluateExpression(
+    java.lang.annotation.Annotation annotation = (java.lang.annotation.Annotation) createAnnotationInstance(
         logger, jannotation);
+    if (annotation == null) {
+      return false;
+    }
+
     declaredAnnotations.put(clazz, annotation);
     return (annotation != null) ? true : false;
   }
@@ -1067,7 +1134,7 @@ public class TypeOracleBuilder {
         AnnotationMethodDeclaration annotationMethod = (AnnotationMethodDeclaration) jmethod;
         Object defaultValue = null;
         if (annotationMethod.defaultValue != null) {
-          defaultValue = evaluateExpression(logger,
+          defaultValue = evaluateConstantExpression(logger,
               annotationMethod.defaultValue);
         }
         method = new JAnnotationMethod(enclosingType, name, declStart, declEnd,

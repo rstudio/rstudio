@@ -59,6 +59,19 @@ public class TypeOracleAnnotationSupportTest extends TestCase {
     assertEquals(testAnnotationValue, testAnnotation.value());
     assertEquals(nestedAnnotationValue,
         testAnnotation.nestedAnnotation().value());
+
+    // Tests default values using conditional statements.
+    assertEquals(realAnnotation.longValue(), testAnnotation.longValue());
+
+    // Tests default value of array type.
+    assertEquals(realAnnotation.intArrayValue().length, 
+        testAnnotation.intArrayValue().length);
+
+    // Tests default value which is a field reference.
+    assertEquals(realAnnotation.stringValue(), testAnnotation.stringValue());
+
+    // Tests default value that is a class literal.
+    assertEquals(realAnnotation.classLiteral(), testAnnotation.classLiteral());
   }
 
   private final TreeLogger logger = TreeLogger.NULL;
