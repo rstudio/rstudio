@@ -17,6 +17,7 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.cfg.ModuleDef;
 
 /**
  * Interface that unifies access to the <code>BrowserWidget</code>,
@@ -24,6 +25,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
  */
 public interface BrowserWidgetHost {
   void compile(String[] modules) throws UnableToCompleteException;
+
+  void compile(ModuleDef module) throws UnableToCompleteException;
 
   // Factor this out if BrowserWidget becomes decoupled from hosted mode
   ModuleSpaceHost createModuleSpaceHost(BrowserWidget widget, String moduleName)

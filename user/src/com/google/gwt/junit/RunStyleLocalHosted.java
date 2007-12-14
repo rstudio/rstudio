@@ -48,6 +48,13 @@ class RunStyleLocalHosted extends RunStyle {
     }
   }
 
+  protected BrowserWidget getBrowserWindow() throws UnableToCompleteException {
+    if (browserWindow == null) {
+      browserWindow = shell.openNewBrowserWindow();
+    }
+    return browserWindow;
+  }
+
   /**
    * Launches a URL in the browser window.
    * 
@@ -55,9 +62,6 @@ class RunStyleLocalHosted extends RunStyle {
    * @throws UnableToCompleteException
    */
   protected void launchUrl(String url) throws UnableToCompleteException {
-    if (browserWindow == null) {
-      browserWindow = shell.openNewBrowserWindow();
-    }
-    browserWindow.go(url);
+    getBrowserWindow().go(url);
   }
 }

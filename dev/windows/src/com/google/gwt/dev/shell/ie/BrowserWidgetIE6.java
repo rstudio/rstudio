@@ -233,4 +233,10 @@ public class BrowserWidgetIE6 extends BrowserWidget {
     //
     LowLevelIE6.init();
   }
+
+  @Override
+  public String getUserAgent() {
+    // See UserAgent.gwt.xml
+    return "ie6";
+  }
 }

@@ -177,4 +177,9 @@ public class BrowserWidgetSaf extends BrowserWidget {
     });
   }
 
+  @Override
+  public String getUserAgent() {
+    // See UserAgent.gwt.xml
+    return "safari";
+  }
 }

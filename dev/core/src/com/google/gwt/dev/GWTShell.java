@@ -235,11 +235,15 @@ public class GWTShell extends ToolBase {
     public BrowserWidgetHostImpl() {
     }
 
+    public void compile(ModuleDef moduleDef) throws UnableToCompleteException {
+      GWTShell.this.compile(getLogger(), moduleDef);
+    }
+
     public void compile(String[] moduleNames) throws UnableToCompleteException {
       for (int i = 0; i < moduleNames.length; i++) {
         String moduleName = moduleNames[i];
         ModuleDef moduleDef = loadModule(moduleName, getLogger());
-        GWTShell.this.compile(getLogger(), moduleDef);
+        compile(moduleDef);
       }
     }
 

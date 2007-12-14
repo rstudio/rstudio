@@ -279,6 +279,8 @@ public abstract class BrowserWidget extends Composite {
     return host;
   }
 
+  public abstract String getUserAgent();
+
   /**
    * Go to a given url, possibly rewriting it if it can be served from any
    * project's public directory.

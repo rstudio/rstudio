@@ -21,6 +21,8 @@ import com.google.gwt.dev.BootStrapPlatform;
 import com.google.gwt.dev.GWTShell;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.cfg.Properties;
+import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.junit.benchmarks.BenchmarkReport;
@@ -422,10 +424,19 @@ public class JUnitShell extends GWTShell {
     return !runStyle.wasInterrupted();
   }
 
-  void compileForWebMode(String moduleName) throws UnableToCompleteException {
+  void compileForWebMode(String moduleName, String userAgentString)
+      throws UnableToCompleteException {
+    ModuleDef module = doLoadModule(getTopLogger(), moduleName);
+    if (userAgentString != null) {
+      Properties props = module.getProperties();
+      Property userAgent = props.find("user.agent");
+      if (userAgent != null) {
+        userAgent.setActiveValue(userAgentString);
+      }
+    }
     BrowserWidgetHost browserHost = getBrowserHost();
     assert (browserHost != null);
-    browserHost.compile(new String[] {moduleName});
+    browserHost.compile(module);
   }
 
   /**

@@ -67,7 +67,7 @@ class RunStyleRemoteWeb extends RunStyle {
       throws UnableToCompleteException {
 
     if (forceLaunch || !running) {
-      shell.compileForWebMode(moduleName);
+      shell.compileForWebMode(moduleName, null);
       String localhost;
 
       try {

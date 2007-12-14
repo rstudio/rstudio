@@ -16,6 +16,7 @@
 package com.google.gwt.junit;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.shell.BrowserWidget;
 
 /**
  * Runs locally in web mode.
@@ -38,7 +39,8 @@ class RunStyleLocalWeb extends RunStyleLocalHosted {
   public void maybeLaunchModule(String moduleName, boolean forceLaunch)
       throws UnableToCompleteException {
     if (forceLaunch) {
-      shell.compileForWebMode(moduleName);
+      BrowserWidget browserWindow = getBrowserWindow();
+      shell.compileForWebMode(moduleName, browserWindow.getUserAgent());
       launchUrl(moduleName + "/?" + PROP_GWT_HYBRID_MODE);
     }
   }

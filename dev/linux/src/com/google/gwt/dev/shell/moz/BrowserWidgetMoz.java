@@ -123,4 +123,9 @@ public class BrowserWidgetMoz extends BrowserWidget {
     });
   }
 
+  @Override
+  public String getUserAgent() {
+    // OLD Mozilla. See UserAgent.gwt.xml
+    return "gecko";
+  }
 }
