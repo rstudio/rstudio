@@ -103,9 +103,8 @@ public class TypeTightener {
         if (!instance.hasSideEffects()) {
           instance = program.getLiteralNull();
         }
-        JArrayRef arrayRef =
-            new JArrayRef(program, x.getSourceInfo(), instance, program
-                .getLiteralInt(0));
+        JArrayRef arrayRef = new JArrayRef(program, x.getSourceInfo(),
+            instance, program.getLiteralInt(0));
         ctx.replaceMe(arrayRef);
       }
     }
@@ -118,18 +117,16 @@ public class TypeTightener {
         // this doesn't really belong here, but while we're here let's remove
         // non-side-effect qualifiers to statics
         if (!instance.hasSideEffects()) {
-          JFieldRef fieldRef =
-              new JFieldRef(program, x.getSourceInfo(), null, x.getField(), x
-                  .getEnclosingType());
+          JFieldRef fieldRef = new JFieldRef(program, x.getSourceInfo(), null,
+              x.getField(), x.getEnclosingType());
           ctx.replaceMe(fieldRef);
         }
       } else if (!isStatic && instance.getType() == typeNull) {
         if (!instance.hasSideEffects()) {
           instance = program.getLiteralNull();
         }
-        JFieldRef fieldRef =
-            new JFieldRef(program, x.getSourceInfo(), instance, program
-                .getNullField(), null);
+        JFieldRef fieldRef = new JFieldRef(program, x.getSourceInfo(),
+            instance, program.getNullField(), null);
         ctx.replaceMe(fieldRef);
       }
     }
@@ -144,8 +141,8 @@ public class TypeTightener {
         // this doesn't really belong here, but while we're here let's remove
         // non-side-effect qualifiers to statics
         if (!instance.hasSideEffects()) {
-          JMethodCall newCall =
-              new JMethodCall(program, x.getSourceInfo(), null, x.getTarget());
+          JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
+              null, x.getTarget());
           newCall.getArgs().addAll(x.getArgs());
           ctx.replaceMe(newCall);
         }
@@ -154,9 +151,8 @@ public class TypeTightener {
         if (!instance.hasSideEffects()) {
           instance = program.getLiteralNull();
         }
-        JMethodCall newCall =
-            new JMethodCall(program, x.getSourceInfo(), instance, program
-                .getNullMethod());
+        JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
+            instance, program.getNullMethod());
         ctx.replaceMe(newCall);
       } else if (isStaticImpl && method.params.size() > 0
           && method.params.get(0).isThis() && x.getArgs().size() > 0
@@ -166,9 +162,8 @@ public class TypeTightener {
         if (!instance.hasSideEffects()) {
           instance = program.getLiteralNull();
         }
-        JMethodCall newCall =
-            new JMethodCall(program, x.getSourceInfo(), instance, program
-                .getNullMethod());
+        JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
+            instance, program.getNullMethod());
         ctx.replaceMe(newCall);
       }
     }
@@ -228,12 +223,7 @@ public class TypeTightener {
 
     @Override
     public void endVisit(JMethod x, Context ctx) {
-      for (JMethod method : x.overrides) {
-        addOverrider(method, x);
-      }
-      JMethod[] allVirtualOverrides =
-          program.typeOracle.getAllVirtualOverrides(x);
-      for (JMethod method : allVirtualOverrides) {
+      for (JMethod method : program.typeOracle.getAllOverrides(x)) {
         addOverrider(method, x);
       }
       currentMethod = null;
@@ -300,9 +290,8 @@ public class TypeTightener {
          * Add an assignment to each parameter from that same parameter in every
          * method this method overrides.
          */
-        List<JMethod> overrides = x.overrides;
-        JMethod[] virtualOverrides = program.typeOracle.getAllVirtualOverrides(x);
-        if (overrides.isEmpty() && virtualOverrides.length == 0) {
+        Set<JMethod> overrides = program.typeOracle.getAllOverrides(x);
+        if (overrides.isEmpty()) {
           return true;
         }
         for (int j = 0, c = x.params.size(); j < c; ++j) {
@@ -313,10 +302,6 @@ public class TypeTightener {
             paramUpRefs.put(param, set);
           }
           for (JMethod baseMethod : overrides) {
-            JParameter baseParam = baseMethod.params.get(j);
-            set.add(baseParam);
-          }
-          for (JMethod baseMethod : virtualOverrides) {
             JParameter baseParam = baseMethod.params.get(j);
             set.add(baseParam);
           }
@@ -432,17 +417,15 @@ public class TypeTightener {
         ctx.replaceMe(x.getExpr());
       } else if (triviallyFalse) {
         // replace with a magic NULL cast
-        JCastOperation newOp =
-            new JCastOperation(program, x.getSourceInfo(), program
-                .getTypeNull(), x.getExpr());
+        JCastOperation newOp = new JCastOperation(program, x.getSourceInfo(),
+            program.getTypeNull(), x.getExpr());
         ctx.replaceMe(newOp);
       } else {
         // If possible, try to use a narrower cast
         JClassType concreteType = getSingleConcreteType(toType);
         if (concreteType != null) {
-          JCastOperation newOp =
-              new JCastOperation(program, x.getSourceInfo(), concreteType, x
-                  .getExpr());
+          JCastOperation newOp = new JCastOperation(program, x.getSourceInfo(),
+              concreteType, x.getExpr());
           ctx.replaceMe(newOp);
         }
       }
@@ -482,10 +465,9 @@ public class TypeTightener {
       if (triviallyTrue) {
         // replace with a simple null test
         JNullLiteral nullLit = program.getLiteralNull();
-        JBinaryOperation neq =
-            new JBinaryOperation(program, x.getSourceInfo(), program
-                .getTypePrimitiveBoolean(), JBinaryOperator.NEQ, x.getExpr(),
-                nullLit);
+        JBinaryOperation neq = new JBinaryOperation(program, x.getSourceInfo(),
+            program.getTypePrimitiveBoolean(), JBinaryOperator.NEQ,
+            x.getExpr(), nullLit);
         ctx.replaceMe(neq);
       } else if (triviallyFalse) {
         // replace with a false literal
@@ -494,9 +476,8 @@ public class TypeTightener {
         // If possible, try to use a narrower cast
         JClassType concreteType = getSingleConcreteType(toType);
         if (concreteType != null) {
-          JInstanceOf newOp =
-              new JInstanceOf(program, x.getSourceInfo(), concreteType, x
-                  .getExpr());
+          JInstanceOf newOp = new JInstanceOf(program, x.getSourceInfo(),
+              concreteType, x.getExpr());
           ctx.replaceMe(newOp);
         }
       }
@@ -581,9 +562,8 @@ public class TypeTightener {
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod concreteMethod = getSingleConcreteMethod(x.getTarget());
       if (concreteMethod != null) {
-        JMethodCall newCall =
-            new JMethodCall(program, x.getSourceInfo(), x.getInstance(),
-                concreteMethod);
+        JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
+            x.getInstance(), concreteMethod);
         newCall.getArgs().addAll(x.getArgs());
 
         ctx.replaceMe(newCall);
@@ -631,7 +611,7 @@ public class TypeTightener {
      * type.
      */
     private JClassType getSingleConcreteType(JType type) {
-       if (type instanceof JReferenceType) {
+      if (type instanceof JReferenceType) {
         JReferenceType refType = (JReferenceType) type;
         if (refType.isAbstract()) {
           return getSingleConcrete((JReferenceType) type, implementors);
@@ -760,17 +740,12 @@ public class TypeTightener {
     return toReturn;
   }
 
-  private final Map<JVariable, Set<JExpression>> assignments =
-      new IdentityHashMap<JVariable, Set<JExpression>>();
-  private final Map<JReferenceType, Set<JClassType>> implementors =
-      new IdentityHashMap<JReferenceType, Set<JClassType>>();
-  private final Map<JMethod, Set<JMethod>> overriders =
-      new IdentityHashMap<JMethod, Set<JMethod>>();
-  private final Map<JParameter, Set<JParameter>> paramUpRefs =
-      new IdentityHashMap<JParameter, Set<JParameter>>();
+  private final Map<JVariable, Set<JExpression>> assignments = new IdentityHashMap<JVariable, Set<JExpression>>();
+  private final Map<JReferenceType, Set<JClassType>> implementors = new IdentityHashMap<JReferenceType, Set<JClassType>>();
+  private final Map<JMethod, Set<JMethod>> overriders = new IdentityHashMap<JMethod, Set<JMethod>>();
+  private final Map<JParameter, Set<JParameter>> paramUpRefs = new IdentityHashMap<JParameter, Set<JParameter>>();
   private final JProgram program;
-  private final Map<JMethod, Set<JExpression>> returns =
-      new IdentityHashMap<JMethod, Set<JExpression>>();
+  private final Map<JMethod, Set<JExpression>> returns = new IdentityHashMap<JMethod, Set<JExpression>>();
 
   private final JNullType typeNull;
 

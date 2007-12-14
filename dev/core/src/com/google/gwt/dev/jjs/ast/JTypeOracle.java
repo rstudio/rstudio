@@ -238,17 +238,38 @@ public class JTypeOracle {
     return getOrCreate(superInterfaceMap, type).contains(qType);
   }
 
-  public JMethod[] getAllVirtualOverrides(JMethod method) {
+  /**
+   * References to any methods which this method implementation might override
+   * or implement in any instantiable class.
+   */
+  public Set<JMethod> getAllOverrides(JMethod method) {
     Set<JMethod> results = new HashSet<JMethod>();
-    Map<JClassType, Set<JMethod>> overrideMap = getOrCreateMap(virtualUpRefMap,
-        method);
-    for (JClassType classType : overrideMap.keySet()) {
-      if (instantiatedTypes.contains(classType)) {
-        Set<JMethod> set = overrideMap.get(classType);
-        results.addAll(set);
-      }
-    }
-    return results.toArray(new JMethod[results.size()]);
+    getAllRealOverrides(method, results);
+    getAllVirtualOverrides(method, results);
+    return results;
+  }
+
+  /**
+   * References to any methods which this method directly overrides. This should
+   * be an EXHAUSTIVE list, that is, if C overrides B overrides A, then C's
+   * overrides list will contain both A and B.
+   */
+  public Set<JMethod> getAllRealOverrides(JMethod method) {
+    Set<JMethod> results = new HashSet<JMethod>();
+    getAllRealOverrides(method, results);
+    return results;
+  }
+
+  /**
+   * References to any methods which this method does not directly override
+   * within the class in which it is declared; however, some instantiable
+   * subclass will cause the implementation of this method to effectively
+   * override methods with identical signatures declared in unrelated classes.
+   */
+  public Set<JMethod> getAllVirtualOverrides(JMethod method) {
+    Set<JMethod> results = new HashSet<JMethod>();
+    getAllVirtualOverrides(method, results);
+    return results;
   }
 
   public Set<JReferenceType> getInstantiatedTypes() {
@@ -425,6 +446,25 @@ public class JTypeOracle {
             continue outer;
           }
         }
+      }
+    }
+  }
+
+  private void getAllRealOverrides(JMethod method, Set<JMethod> results) {
+    for (JMethod possibleOverride : method.overrides) {
+      // if (instantiatedTypes.contains(possibleOverride.getEnclosingType())) {
+      results.add(possibleOverride);
+      // }
+    }
+  }
+
+  private void getAllVirtualOverrides(JMethod method, Set<JMethod> results) {
+    Map<JClassType, Set<JMethod>> overrideMap = getOrCreateMap(virtualUpRefMap,
+        method);
+    for (JClassType classType : overrideMap.keySet()) {
+      if (instantiatedTypes.contains(classType)) {
+        Set<JMethod> set = overrideMap.get(classType);
+        results.addAll(set);
       }
     }
   }

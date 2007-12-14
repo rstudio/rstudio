@@ -810,18 +810,8 @@ public class Pruner {
         return false;
       }
 
-      for (int i = 0; i < x.overrides.size(); ++i) {
-        JMethod ref = x.overrides.get(i);
-        if (referencedNonTypes.contains(ref)) {
-          rescuer.rescue(x);
-          didRescue = true;
-          return false;
-        }
-      }
-      JMethod[] virtualOverrides = program.typeOracle.getAllVirtualOverrides(x);
-      for (int i = 0; i < virtualOverrides.length; ++i) {
-        JMethod ref = virtualOverrides[i];
-        if (referencedNonTypes.contains(ref)) {
+      for (JMethod override : program.typeOracle.getAllOverrides(x)) {
+        if (referencedNonTypes.contains(override)) {
           rescuer.rescue(x);
           didRescue = true;
           return false;
