@@ -31,6 +31,7 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JThisRef;
+import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 
 import java.util.ArrayList;
@@ -68,30 +69,6 @@ public class MethodInliner {
     public boolean visit(JThisRef x, Context ctx) {
       throw new InternalCompilerException("Should not encounter a JThisRef "
           + "within a static method");
-    }
-  }
-
-  /**
-   * Replace parameters inside an inlined expression with arguments to the
-   * inlined method.
-   */
-  private class ParameterReplacer extends JModVisitor {
-    private final JMethodCall methodCall;
-
-    public ParameterReplacer(JMethodCall methodCall) {
-      this.methodCall = methodCall;
-    }
-
-    @Override
-    public void endVisit(JParameterRef x, Context ctx) {
-      int paramIndex = methodCall.getTarget().params.indexOf(x.getParameter());
-      assert paramIndex != -1;
-
-      // Replace with a cloned call argument.
-      CloneExpressionVisitor cloner = new CloneExpressionVisitor(program);
-      JExpression arg = methodCall.getArgs().get(paramIndex);
-      JExpression clone = cloner.cloneExpression(arg);
-      ctx.replaceMe(clone);
     }
   }
 
@@ -313,6 +290,15 @@ public class MethodInliner {
         return false;
       }
 
+      // Make sure the expression we're about to inline doesn't include a call
+      // to the target method!
+      RecursionCheckVisitor recursionCheckVisitor = new RecursionCheckVisitor(
+          x.getTarget());
+      recursionCheckVisitor.accept(targetExpr);
+      if (recursionCheckVisitor.isRecursive()) {
+        return false;
+      }
+
       /*
        * After this point, it's possible that the method might be inlinable at
        * some call sites, depending on its arguments. From here on return 'true'
@@ -443,6 +429,49 @@ public class MethodInliner {
       }
 
       super.endVisit(x, ctx);
+    }
+  }
+
+  /**
+   * Replace parameters inside an inlined expression with arguments to the
+   * inlined method.
+   */
+  private class ParameterReplacer extends JModVisitor {
+    private final JMethodCall methodCall;
+
+    public ParameterReplacer(JMethodCall methodCall) {
+      this.methodCall = methodCall;
+    }
+
+    @Override
+    public void endVisit(JParameterRef x, Context ctx) {
+      int paramIndex = methodCall.getTarget().params.indexOf(x.getParameter());
+      assert paramIndex != -1;
+
+      // Replace with a cloned call argument.
+      CloneExpressionVisitor cloner = new CloneExpressionVisitor(program);
+      JExpression arg = methodCall.getArgs().get(paramIndex);
+      JExpression clone = cloner.cloneExpression(arg);
+      ctx.replaceMe(clone);
+    }
+  }
+
+  private static class RecursionCheckVisitor extends JVisitor {
+    private boolean isRecursive = false;
+    private JMethod method;
+
+    public RecursionCheckVisitor(JMethod method) {
+      this.method = method;
+    }
+
+    public void endVisit(JMethodCall x, Context ctx) {
+      if (x.getTarget() == method) {
+        isRecursive = true;
+      }
+    }
+
+    public boolean isRecursive() {
+      return isRecursive;
     }
   }
 
