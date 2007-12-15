@@ -151,12 +151,12 @@ final class Cast {
     // jso's typeId is undefined, because (undefined < positive int).
 
     if (jso && !(jso.@java.lang.Object::typeId >= _.@java.lang.Object::typeId)) {
-      // don't clobber toString
-      var oldToString = jso.toString;
       for (var i in _) {
-        jso[i] = _[i];
+        // don't clobber toString
+        if (i != 'toString' ) {
+          jso[i] = _[i];
+        }
       }
-      jso.toString = oldToString;
     }
     return jso;
   }-*/;
