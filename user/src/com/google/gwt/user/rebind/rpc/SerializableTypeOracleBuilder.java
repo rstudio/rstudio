@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.rebind.rpc;
 
-import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -548,12 +547,6 @@ public class SerializableTypeOracleBuilder {
    */
   private final JClassType streamWriterClass;
 
-  /**
-   * If <code>true</code> we will not warn if a serializable type contains a
-   * non-static final field. We warn because these fields are not serialized.
-   */
-  private boolean suppressNonStaticFinalFieldWarnings;
-
   private final TypeOracle typeOracle;
 
   /**
@@ -611,8 +604,6 @@ public class SerializableTypeOracleBuilder {
    */
   public SerializableTypeOracle build(PropertyOracle propertyOracle,
       JClassType remoteService) throws UnableToCompleteException {
-
-    initializeProperties(rootLogger, propertyOracle);
 
     try {
       // String is always instantiable.
@@ -883,10 +874,8 @@ public class SerializableTypeOracleBuilder {
         }
 
         if (field.isFinal()) {
-          if (!suppressNonStaticFinalFieldWarnings) {
-            localLogger.branch(TreeLogger.WARN, "Field '" + field.toString()
-                + "' will not be serialized because it is final", null);
-          }
+          localLogger.branch(TreeLogger.DEBUG, "Field '" + field.toString()
+              + "' will not be serialized because it is final", null);
           continue;
         }
 
@@ -1105,21 +1094,6 @@ public class SerializableTypeOracleBuilder {
       typeToTypeInfoComputed.put(type, tic);
     }
     return tic;
-  }
-
-  private void initializeProperties(TreeLogger logger,
-      PropertyOracle propertyOracle) {
-    suppressNonStaticFinalFieldWarnings = false;
-    try {
-      String propVal = propertyOracle.getPropertyValue(logger,
-          "gwt.suppressNonStaticFinalFieldWarnings");
-      if (propVal.equals("true")) {
-        suppressNonStaticFinalFieldWarnings = true;
-      }
-    } catch (BadPropertyValueException e) {
-      // Purposely ignored, because we do want to warn if non-static, final
-      // are part of a serializable type
-    }
   }
 
   /**
