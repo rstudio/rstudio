@@ -27,6 +27,7 @@ import com.google.gwt.user.client.Element;
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-CheckBox { }</li>
+ * <li>.gwt-CheckBox-disabled { Applied when Checkbox is disabled }</li>
  * </ul>
  * <p>
  * <h3>Example</h3>
@@ -138,6 +139,11 @@ public class CheckBox extends ButtonBase implements HasName {
   @Override
   public void setEnabled(boolean enabled) {
     DOM.setElementPropertyBoolean(inputElem, "disabled", !enabled);
+    if (enabled) {
+      removeStyleDependentName("disabled");
+    } else {
+      addStyleDependentName("disabled");
+    }
   }
 
   @Override
