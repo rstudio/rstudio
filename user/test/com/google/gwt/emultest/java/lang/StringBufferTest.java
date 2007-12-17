@@ -24,7 +24,7 @@ public class StringBufferTest extends GWTTestCase {
 
   /**
    * This method gets the module name.
-   *
+   * 
    * @return the module name.
    * @see com.google.gwt.junit.client.GWTTestCase#getModuleName()
    */

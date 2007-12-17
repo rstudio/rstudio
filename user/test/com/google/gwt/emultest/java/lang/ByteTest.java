@@ -26,17 +26,17 @@ public class ByteTest extends GWTTestCase {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
+  public void testConstants() {
+    assertEquals(-128, Byte.MIN_VALUE);
+    assertEquals(127, Byte.MAX_VALUE);
+    assertEquals(8, Byte.SIZE);
+  }
+
   public void testStatics() {
     // test the new 1.5 statics... older stuff "assumed to work"
     assertEquals(0, Byte.valueOf((byte) 0).intValue());
     assertEquals(127, Byte.valueOf((byte) 127).intValue());
     assertEquals(-128, Byte.valueOf((byte) -128).intValue());
     assertEquals(-1, Byte.valueOf((byte) 255).intValue());
-  }
-
-  public void testConstants() {
-    assertEquals(-128, Byte.MIN_VALUE);
-    assertEquals(127, Byte.MAX_VALUE);
-    assertEquals(8, Byte.SIZE);
   }
 }

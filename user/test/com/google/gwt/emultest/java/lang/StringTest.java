@@ -27,12 +27,10 @@ public class StringTest extends GWTTestCase {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
-  /** tests charAt() */
   public void testCharAt() {
     assertEquals("abc".charAt(1), 'b');
   }
 
-  /** tests concat */
   public void testConcat() {
     assertEquals("abcdef", "abc" + "def");
     assertEquals("abcdef", "abc".concat("def"));
@@ -47,7 +45,6 @@ public class StringTest extends GWTTestCase {
     assertEquals("abcd", s);
   }
 
-  /** Tests string creation and equality */
   public void testContructor() {
     char[] chars = {'a', 'b', 'c', 'd', 'e', 'f'};
     String constant = "abcdef";
@@ -60,7 +57,6 @@ public class StringTest extends GWTTestCase {
     assertEquals(new String(new char[] {}), "");
   }
 
-  /** tests endsWith */
   public void testEndsWith() {
     String haystack = "abcdefghi";
     assertTrue("a", haystack.endsWith("defghi"));
@@ -88,18 +84,6 @@ public class StringTest extends GWTTestCase {
     assertTrue("AbC".equalsIgnoreCase("aBC"));
     assertTrue("".equalsIgnoreCase(""));
     assertFalse("".equalsIgnoreCase(null));
-  }
-
-  /** tests indexOf */
-  public void testIndexOf() {
-    String haystack = "abcdefghi";
-    assertEquals(haystack.indexOf("q"), -1);
-    assertEquals(haystack.indexOf('q'), -1);
-    assertEquals(haystack.indexOf("a"), 0);
-    assertEquals(haystack.indexOf('a'), 0);
-    assertEquals(haystack.indexOf('a', 1), -1);
-    assertEquals(haystack.indexOf("bc"), 1);
-    assertEquals(haystack.indexOf(""), 0);
   }
 
   /**
@@ -136,7 +120,17 @@ public class StringTest extends GWTTestCase {
     }
   }
 
-  /** tests lastIndexOf */
+  public void testIndexOf() {
+    String haystack = "abcdefghi";
+    assertEquals(haystack.indexOf("q"), -1);
+    assertEquals(haystack.indexOf('q'), -1);
+    assertEquals(haystack.indexOf("a"), 0);
+    assertEquals(haystack.indexOf('a'), 0);
+    assertEquals(haystack.indexOf('a', 1), -1);
+    assertEquals(haystack.indexOf("bc"), 1);
+    assertEquals(haystack.indexOf(""), 0);
+  }
+
   public void testLastIndexOf() {
     String x = "abcdeabcdef";
     assertEquals(9, x.lastIndexOf("e"));
@@ -153,7 +147,6 @@ public class StringTest extends GWTTestCase {
     assertEquals(1 << 16, str.length());
   }
 
-  /** tests toLowerCase */
   public void testLowerCase() {
     assertEquals("abc", "AbC".toLowerCase());
     assertEquals("abc", "abc".toLowerCase());
@@ -177,7 +170,6 @@ public class StringTest extends GWTTestCase {
     assertEquals("nullnull", a);
   }
 
-  /** tests replace */
   public void testReplace() {
     assertEquals("axax".replace('x', 'a'), "aaaa");
     assertEquals("aaaa".replace('x', 'a'), "aaaa");
@@ -191,7 +183,6 @@ public class StringTest extends GWTTestCase {
     }
   }
 
-  /** tests replaceAll */
   public void testReplaceAll() {
     assertEquals("abcdef", "xxxxabcxxdexf".replaceAll("x*", ""));
     assertEquals("1\\1abc123\\123de1234\\1234f", "1abc123de1234f".replaceAll(
@@ -202,7 +193,6 @@ public class StringTest extends GWTTestCase {
     assertEquals("$$x$", "x".replaceAll("(x)", "\\$\\$$1\\$"));
   }
 
-  /** tests split */
   public void testSplit() {
     compareList("fullSplit", new String[] {"abc", "", "", "de", "f"},
         "abcxxxdexfxx".split("x"));
@@ -225,7 +215,6 @@ public class StringTest extends GWTTestCase {
         "boo", "and", "foo"});
   }
 
-  /** tests startsWith */
   public void testStartsWith() {
     String haystack = "abcdefghi";
     assertTrue(haystack.startsWith("abc"));
@@ -241,7 +230,6 @@ public class StringTest extends GWTTestCase {
     assertEquals("bcdef", "abcdef".substring(1));
   }
 
-  /** tests toCharArray */
   public void testToCharArray() {
     char[] a1 = "abc".toCharArray();
     char[] a2 = new char[] {'a', 'b', 'c'};
@@ -250,7 +238,6 @@ public class StringTest extends GWTTestCase {
     }
   }
 
-  /** tests trim */
   public void testTrim() {
     trimRightAssertEquals("abc", "   \t abc \n  ");
     trimRightAssertEquals("abc", "abc".trim());
@@ -263,21 +250,6 @@ public class StringTest extends GWTTestCase {
     trimRightAssertEquals("", "   \t ".trim());
   }
 
-  /**
-   * Helper method for testTrim to avoid compiler optimizations.
-   */
-  public void trimRightAssertSame(String left, String right) {
-    assertSame(left, right.trim());
-  }
-
-  /**
-   * Helper method for testTrim to avoid compiler optimizations.
-   */
-  public void trimRightAssertEquals(String left, String right) {
-    assertEquals(left, right.trim());
-  }
-
-  /** tests toUpperCase */
   public void testUpperCase() {
     assertEquals("abc", "AbC".toLowerCase());
     assertEquals("abc", "abc".toLowerCase());
@@ -295,6 +267,20 @@ public class StringTest extends GWTTestCase {
         4));
     assertEquals(C.FALSE_STRING, String.valueOf(C.FALSE_VALUE));
     assertEquals(C.TRUE_STRING, String.valueOf(C.TRUE_VALUE));
+  }
+
+  /**
+   * Helper method for testTrim to avoid compiler optimizations.
+   */
+  public void trimRightAssertEquals(String left, String right) {
+    assertEquals(left, right.trim());
+  }
+
+  /**
+   * Helper method for testTrim to avoid compiler optimizations.
+   */
+  public void trimRightAssertSame(String left, String right) {
+    assertSame(left, right.trim());
   }
 
   private void compareList(String category, String[] desired, String[] got) {

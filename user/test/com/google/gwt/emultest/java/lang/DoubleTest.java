@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -58,8 +58,10 @@ public class DoubleTest extends GWTTestCase {
     assertTrue(Double.MIN_VALUE < Double.MAX_VALUE);
     assertFalse(Double.NaN == Double.NaN);
     assertEquals(64, Double.SIZE);
-    // jdk1.6  assertEquals(Math.getExponent(Double.MAX_VALUE), Double.MAX_EXPONENT);
-    // jdk1.6  assertEquals(Math.getExponent(Double.MIN_NORMAL), Double.MIN_EXPONENT);
+    // jdk1.6 assertEquals(Math.getExponent(Double.MAX_VALUE),
+    // Double.MAX_EXPONENT);
+    // jdk1.6 assertEquals(Math.getExponent(Double.MIN_NORMAL),
+    // Double.MIN_EXPONENT);
   }
 
   public void testParse() {
@@ -70,9 +72,11 @@ public class DoubleTest extends GWTTestCase {
     assertTrue(2.98e8 == Double.parseDouble("2.98e8"));
     assertTrue(-2.98e-8 == Double.parseDouble("-2.98e-8"));
     assertTrue(+2.98E+8 == Double.parseDouble("+2.98E+8"));
-    assertTrue("Can't parse MIN_VALUE",
-      Double.MIN_VALUE == Double.parseDouble(String.valueOf(Double.MIN_VALUE)));
-    assertTrue("Can't parse MAX_VALUE",
-      Double.MAX_VALUE == Double.parseDouble(String.valueOf(Double.MAX_VALUE)));
+    assertTrue(
+        "Can't parse MIN_VALUE",
+        Double.MIN_VALUE == Double.parseDouble(String.valueOf(Double.MIN_VALUE)));
+    assertTrue(
+        "Can't parse MAX_VALUE",
+        Double.MAX_VALUE == Double.parseDouble(String.valueOf(Double.MAX_VALUE)));
   }
 }
