@@ -54,9 +54,11 @@ public final class Integer extends Number implements Comparable<Integer> {
   public static int highestOneBit(int i) {
     if (i < 0) {
       return MIN_VALUE;
+    } else if (i == 0) {
+      return 0;
     } else {
       int rtn;
-      for (rtn = 0x40000000; (rtn >> 1) > i; rtn = rtn >> 1) {
+      for (rtn = 0x40000000; (rtn & i) == 0; rtn = rtn >> 1) {
         // loop down until smaller
       }
       return rtn;
@@ -65,10 +67,12 @@ public final class Integer extends Number implements Comparable<Integer> {
 
   public static int lowestOneBit(int i) {
     if (i == 0) {
-      return 32;
+      return 0;
+    } else if (i == Integer.MIN_VALUE) {
+      return 0x80000000;
     } else {
       int r = 1;
-      while ((r & i) != 0) {
+      while ((r & i) == 0) {
         r = r * 2;
       }
       return r;
@@ -86,13 +90,11 @@ public final class Integer extends Number implements Comparable<Integer> {
   }
 
   public static int numberOfTrailingZeros(int i) {
-    if (i < 0) {
-      return 0;
-    } else if (i == 0) {
-      return SIZE;
+    if (i == 0) {
+      return 32;
     } else {
       int rtn = 0;
-      for (int r = 1; (r & i) != 0; r = r * 2) {
+      for (int r = 1; (r & i) == 0; r = r * 2) {
         rtn++;
       }
       return rtn;
@@ -108,15 +110,19 @@ public final class Integer extends Number implements Comparable<Integer> {
   }
 
   public static int reverse(int i) {
-    int acc = 0;
+    int ui = i & 0x7fffffff; // avoid sign extension
+    int acc = 0;  
     int front = 0x80000000;
     int back = 1;
     int swing = 31;
-    while (swing > 15) {
-      acc = acc | ((i & front) >> swing) | ((i & back) << swing);
-      swing--;
+    while (swing > 0) {
+      acc = acc | ((ui & front) >> swing) | ((ui & back) << swing);
+      swing -= 2;
       front = front >> 1;
       back = back << 1;
+    }
+    if (i < 0) {
+      acc = acc | 0x1; // restore the real value of 0x80000000
     }
     return acc;
   }
@@ -134,10 +140,17 @@ public final class Integer extends Number implements Comparable<Integer> {
   }
 
   public static int rotateRight(int i, int distance) {
+    int ui = i & 0x7fffffff; // avoid sign extension
+    int carry = (i < 0) ? 0x40000000 : 0; // 0x80000000 rightshifted 1
     while (distance-- > 0) {
-      i = ((i & 1) == 0 ? 0 : 0x80000000) | i >> 1;
+      int nextcarry = ui & 1;
+      ui = carry | (ui >> 1);
+      carry = (nextcarry == 0) ? 0 : 0x40000000;
     }
-    return i;
+    if (carry != 0) {
+      ui = ui | 0x80000000;
+    }
+    return ui;
   }
 
   public static int signum(int i) {

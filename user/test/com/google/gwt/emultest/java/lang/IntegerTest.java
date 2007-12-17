@@ -137,12 +137,6 @@ public class IntegerTest extends GWTTestCase {
     assertEquals(1234, new Integer(1234).hashCode());
   }
 
-  public void testHexString() {
-    assertEquals("3039", Integer.toHexString(12345));
-    assertEquals("0", Integer.toHexString(0));
-    assertEquals("ffffcfc7", Integer.toHexString(-12345));
-  }
-
   public void testHighestOneBit() {
     assertEquals(0, Integer.highestOneBit(0));
     assertEquals(Integer.MIN_VALUE, Integer.highestOneBit(-1));
@@ -190,6 +184,10 @@ public class IntegerTest extends GWTTestCase {
   }
 
   public void testReverseBytes() {
+    assertEquals(0, Integer.reverseBytes(0));
+    // two-complement bugs?
+    assertEquals(0x84218421, Integer.reverseBytes(0x21842184));
+    assertEquals(0x12481248, Integer.reverseBytes(0x48124812));
   }
 
   public void testRotateLeft() {
@@ -221,6 +219,10 @@ public class IntegerTest extends GWTTestCase {
         Integer.valueOf(Integer.MIN_VALUE).intValue());
     assertEquals(Integer.MAX_VALUE,
         Integer.valueOf(Integer.MAX_VALUE).intValue());
+  }
+
+  public void testToHexString() {
+    // TODO: not implemented in our JRE
   }
 
   public void testToString() {
