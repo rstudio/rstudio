@@ -29,7 +29,7 @@ import java.util.Vector;
  * TODO: document me.
  */
 public class CollectionsTest extends GWTTestCase {
-  private static final int TEST_DELAY = 5000;
+  private static final int TEST_DELAY = 10000;
 
   private CollectionsTestServiceAsync collectionsTestService;
 
