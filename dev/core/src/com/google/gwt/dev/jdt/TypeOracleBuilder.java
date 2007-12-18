@@ -654,11 +654,12 @@ public class TypeOracleBuilder {
 
     // Determine the annotation class
     TypeBinding resolvedType = annotation.resolvedType;
-    Class<? extends java.lang.annotation.Annotation> clazz = (Class<? extends java.lang.annotation.Annotation>) getClassLiteral(
-        logger, resolvedType);
-    if (clazz == null) {
+    Class<?> classLiteral = getClassLiteral(logger, resolvedType);
+    if (classLiteral == null) {
       return null;
     }
+
+    Class<? extends java.lang.annotation.Annotation> clazz = classLiteral.asSubclass(java.lang.annotation.Annotation.class);
 
     // Build the map of identifiers to values.
     Map<String, Object> identifierToValue = new HashMap<String, Object>();
