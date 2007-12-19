@@ -30,8 +30,11 @@ import com.google.gwt.user.client.Event;
  * <li>.gwt-TabBar .gwt-TabBarFirst { the left edge of the bar }</li>
  * <li>.gwt-TabBar .gwt-TabBarRest { the right edge of the bar }</li>
  * <li>.gwt-TabBar .gwt-TabBarItem { unselected tabs }</li>
+ * <li>.gwt-TabBar .gwt-TabBarItem-wrapper { table cell around tab }</li>
  * <li>.gwt-TabBar .gwt-TabBarItem-selected { additional style for selected
  * tabs } </li>
+ * <li>.gwt-TabBar .gwt-TabBarItem-wrapper-selected { table cell around
+ * selected tab }</li>
  * </ul>
  * <p>
  * <h3>Example</h3>
@@ -192,6 +195,8 @@ public class TabBar extends Composite implements SourcesTabEvents,
     item.addClickListener(this);
     item.setStyleName(STYLENAME_DEFAULT);
     panel.insert(item, beforeIndex + 1);
+    setStyleName(DOM.getParent(item.getElement()), STYLENAME_DEFAULT
+        + "-wrapper", true);
   }
 
   /**
@@ -216,6 +221,8 @@ public class TabBar extends Composite implements SourcesTabEvents,
     ClickDecoratorPanel decWidget = new ClickDecoratorPanel(widget, this);
     decWidget.addStyleName(STYLENAME_DEFAULT);
     panel.insert(decWidget, beforeIndex + 1);
+    setStyleName(DOM.getParent(decWidget.getElement()), STYLENAME_DEFAULT
+        + "-wrapper", true);
   }
 
   public void onClick(Widget sender) {
@@ -298,8 +305,12 @@ public class TabBar extends Composite implements SourcesTabEvents,
     if (item != null) {
       if (selected) {
         item.addStyleName("gwt-TabBarItem-selected");
+        setStyleName(DOM.getParent(item.getElement()),
+            "gwt-TabBarItem-wrapper-selected", true);
       } else {
         item.removeStyleName("gwt-TabBarItem-selected");
+        setStyleName(DOM.getParent(item.getElement()),
+            "gwt-TabBarItem-wrapper-selected", false);
       }
     }
   }
