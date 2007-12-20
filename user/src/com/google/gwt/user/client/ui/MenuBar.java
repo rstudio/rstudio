@@ -36,8 +36,9 @@ import java.util.List;
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-MenuBar { the menu bar itself }</li>
- * <li>.gwt-MenuBar-horizontal { applied to horizontal menu bars }</li>
- * <li>.gwt-MenuBar-vertical { applied to vertical menu bars }</li>
+ * <li>.gwt-MenuBar-horizontal { dependent style applied to horizontal menu
+ * bars }</li>
+ * <li>.gwt-MenuBar-vertical { dependent style applied to vertical menu bars }</li>
  * <li>.gwt-MenuBar .gwt-MenuItem { menu items }</li>
  * <li>.gwt-MenuBar .gwt-MenuItem-selected { selected menu items }</li>
  * </ul>
@@ -90,9 +91,9 @@ public class MenuBar extends Widget implements PopupListener {
     sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT);
     setStyleName("gwt-MenuBar");
     if (vertical) {
-      addStyleName("gwt-MenuBar-vertical");
+      addStyleDependentName("vertical");
     } else {
-      addStyleName("gwt-MenuBar-horizontal");
+      addStyleDependentName("horizontal");
     }
   }
 
@@ -266,24 +267,24 @@ public class MenuBar extends Widget implements PopupListener {
   }
 
   /**
-   * Returns a list containing the <code>MenuItem</code> objects in the menu bar.
-   * If there are no items in the menu bar, then an empty <code>List</code>
+   * Returns a list containing the <code>MenuItem</code> objects in the menu
+   * bar. If there are no items in the menu bar, then an empty <code>List</code>
    * object will be returned.
-   *
-   * @return  a list containing the <code>MenuItem</code> objects in the menu
-   *          bar
+   * 
+   * @return a list containing the <code>MenuItem</code> objects in the menu
+   *         bar
    */
   protected List<MenuItem> getItems() {
     return this.items;
   }
 
   /**
-   * Returns the <code>MenuItem</code> that is currently selected (highlighted)
-   * by the user. If none of the items in the menu are currently selected, then
-   * <code>null</code> will be returned.
-   *
+   * Returns the <code>MenuItem</code> that is currently selected
+   * (highlighted) by the user. If none of the items in the menu are currently
+   * selected, then <code>null</code> will be returned.
+   * 
    * @return the <code>MenuItem</code> that is currently selected, or
-   *         <code>null</code> if no items are currently selected 
+   *         <code>null</code> if no items are currently selected
    */
   protected MenuItem getSelectedItem() {
     return this.selectedItem;
@@ -386,7 +387,8 @@ public class MenuBar extends Widget implements PopupListener {
     popup.addPopupListener(this);
 
     if (vertical) {
-      popup.setPopupPosition(this.getAbsoluteLeft() + this.getOffsetWidth() - 1,
+      popup.setPopupPosition(
+          this.getAbsoluteLeft() + this.getOffsetWidth() - 1,
           item.getAbsoluteTop());
     } else {
       popup.setPopupPosition(item.getAbsoluteLeft(), this.getAbsoluteTop()
