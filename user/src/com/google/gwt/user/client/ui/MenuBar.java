@@ -36,8 +36,8 @@ import java.util.List;
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-MenuBar { the menu bar itself }</li>
- * <li>.gwt-MenuBar-Horizontal { applied to horizontal menu bars }</li>
- * <li>.gwt-MenuBar-Vertical { applied to vertical menu bars }</li>
+ * <li>.gwt-MenuBar-horizontal { applied to horizontal menu bars }</li>
+ * <li>.gwt-MenuBar-vertical { applied to vertical menu bars }</li>
  * <li>.gwt-MenuBar .gwt-MenuItem { menu items }</li>
  * <li>.gwt-MenuBar .gwt-MenuItem-selected { selected menu items }</li>
  * </ul>
@@ -90,9 +90,9 @@ public class MenuBar extends Widget implements PopupListener {
     sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT);
     setStyleName("gwt-MenuBar");
     if (vertical) {
-      addStyleName("gwt-MenuBar-Vertical");
+      addStyleName("gwt-MenuBar-vertical");
     } else {
-      addStyleName("gwt-MenuBar-Horizontal");
+      addStyleName("gwt-MenuBar-horizontal");
     }
   }
 
