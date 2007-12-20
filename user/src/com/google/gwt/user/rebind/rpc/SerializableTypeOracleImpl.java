@@ -26,13 +26,11 @@ import com.google.gwt.dev.util.Util;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.zip.CRC32;
 
 final class SerializableTypeOracleImpl implements SerializableTypeOracle {
@@ -43,12 +41,6 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
     }
   };
 
-  private static final Comparator<JType> TYPE_COMPARATOR = new Comparator<JType>() {
-    public int compare(JType t1, JType t2) {
-      return t1.getParameterizedQualifiedSourceName().compareTo(
-          t2.getParameterizedQualifiedSourceName());
-    }
-  };
   private static final String GENERATED_FIELD_SERIALIZER_SUFFIX = "_FieldSerializer";
   private static final String TYPE_SERIALIZER_SUFFIX = "_TypeSerializer";
   private static final Set<String> TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES = new HashSet<String>();
@@ -73,10 +65,9 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
   private final Set<JClassType> possiblyInstantiatedTypes;
 
   public SerializableTypeOracleImpl(TypeOracle typeOracle,
-      JClassType[] serializableTypes, Set<JClassType> possiblyInstantiatedTypes) {
+      Set<JClassType> serializableTypes, Set<JClassType> possiblyInstantiatedTypes) {
 
-    serializableTypesSet = new TreeSet<JClassType>(TYPE_COMPARATOR);
-    serializableTypesSet.addAll(Arrays.asList(serializableTypes));
+    serializableTypesSet = serializableTypes;
     this.typeOracle = typeOracle;
 
     this.possiblyInstantiatedTypes = possiblyInstantiatedTypes;

@@ -330,6 +330,16 @@ public class SerializableTypeOracleBuilder {
   }
 
   /**
+   * Compares {@link JClassType}s according to their qualified source names.
+   */
+  private static final Comparator<JClassType> JCLASS_TYPE_COMPARATOR = new Comparator<JClassType>() {
+    public int compare(JClassType t1, JClassType t2) {
+      return t1.getQualifiedSourceName().compareTo(
+          t2.getQualifiedSourceName());
+    }
+  };
+
+  /**
    * Finds the custom field serializer for a given type.
    * 
    * @param typeOracle
@@ -496,14 +506,15 @@ public class SerializableTypeOracleBuilder {
     return isSpeculative ? TreeLogger.WARN : TreeLogger.ERROR;
   }
 
-  private static void logSerializableTypes(TreeLogger logger, JType[] types) {
+  private static void logSerializableTypes(TreeLogger logger,
+      Set<JClassType> fieldSerializableTypes) {
     TreeLogger localLogger = logger.branch(TreeLogger.DEBUG, "Identified "
-        + types.length + " serializable type"
-        + ((types.length == 1) ? "" : "s"), null);
+        + fieldSerializableTypes.size() + " serializable type"
+        + ((fieldSerializableTypes.size() == 1) ? "" : "s"), null);
 
-    for (int i = 0; i < types.length; ++i) {
+    for (JClassType fieldSerializableType : fieldSerializableTypes) {
       localLogger.branch(TreeLogger.DEBUG,
-          types[i].getParameterizedQualifiedSourceName(), null);
+          fieldSerializableType.getParameterizedQualifiedSourceName(), null);
     }
   }
 
@@ -660,8 +671,12 @@ public class SerializableTypeOracleBuilder {
       }
     }
 
-    Set<JClassType> possiblyInstantiatedTypes = new HashSet<JClassType>();
-    List<JClassType> serializableTypesList = new ArrayList<JClassType>();
+    Set<JClassType> possiblyInstantiatedTypes = new TreeSet<JClassType>(
+        JCLASS_TYPE_COMPARATOR);
+
+    Set<JClassType> fieldSerializableTypes = new TreeSet<JClassType>(
+        JCLASS_TYPE_COMPARATOR);
+
     for (TypeInfoComputed tic : typeToTypeInfoComputed.values()) {
       JClassType type = tic.getType();
 
@@ -678,6 +693,8 @@ public class SerializableTypeOracleBuilder {
       // Only record real types
       if (type.isParameterized() != null) {
         type = type.isParameterized().getRawType();
+      } else if (type.isGenericType() != null) {
+        type = type.isGenericType().getRawType();
       }
 
       if (tic.isInstantiable()) {
@@ -685,24 +702,13 @@ public class SerializableTypeOracleBuilder {
       }
 
       if (tic.isFieldSerializable()) {
-        serializableTypesList.add(type);
+        fieldSerializableTypes.add(type);
       }
     }
 
-    JClassType[] serializableTypes = new JClassType[serializableTypesList.size()];
-    serializableTypesList.toArray(serializableTypes);
+    logSerializableTypes(logger, fieldSerializableTypes);
 
-    Arrays.sort(serializableTypes, new Comparator<JType>() {
-      public int compare(JType o1, JType o2) {
-        String n1 = o1.getQualifiedSourceName();
-        String n2 = o2.getQualifiedSourceName();
-        return n1.compareTo(n2);
-      }
-    });
-
-    logSerializableTypes(logger, serializableTypes);
-
-    return new SerializableTypeOracleImpl(typeOracle, serializableTypes,
+    return new SerializableTypeOracleImpl(typeOracle, fieldSerializableTypes,
         possiblyInstantiatedTypes);
   }
 
@@ -947,10 +953,6 @@ public class SerializableTypeOracleBuilder {
     assert (type instanceof JClassType);
 
     JClassType classType = (JClassType) type;
-    if (classType.isGenericType() != null) {
-      // Treat generic types as raw types.
-      classType = classType.isGenericType().getRawType();
-    }
 
     TreeLogger localLogger = logger.branch(TreeLogger.DEBUG,
         classType.getParameterizedQualifiedSourceName(), null);
