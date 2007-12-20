@@ -24,6 +24,9 @@ import java.util.List;
  * Java enum type reference expression.
  */
 public class JEnumType extends JClassType {
+  /*
+   * TODO: implement traverse?
+   */
 
   public final List<JEnumField> enumList = new ArrayList<JEnumField>();
 
@@ -32,10 +35,13 @@ public class JEnumType extends JClassType {
     this.extnds = program.getTypeJavaLangEnum();
   }
 
-  // TODO: implement traverse?
-
   @Override
   public String getClassLiteralFactoryMethod() {
     return "Class.createForEnum";
+  }
+
+  @Override
+  public JEnumType isEnumOrSubclass() {
+    return this;
   }
 }

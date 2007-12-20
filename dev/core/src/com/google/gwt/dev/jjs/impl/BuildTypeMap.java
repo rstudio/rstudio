@@ -186,7 +186,7 @@ public class BuildTypeMap {
         mapThrownExceptions(newMethod, b);
 
         // Enums have hidden arguments for name and value
-        if (enclosingType instanceof JEnumType) {
+        if (enclosingType.isEnumOrSubclass() != null) {
           program.createParameter(info, "enum$name".toCharArray(),
               program.getTypeJavaLangString(), true, false, newMethod);
           program.createParameter(info, "enum$ordinal".toCharArray(),
@@ -481,7 +481,7 @@ public class BuildTypeMap {
           type.implments.add(superInterface);
         }
 
-        if (binding.isEnum()) {
+        if (type instanceof JEnumType) {
           processEnumType(binding, (JEnumType) type);
         }
 
@@ -731,7 +731,12 @@ public class BuildTypeMap {
         } else if (binding.isInterface()) {
           newType = program.createInterface(info, name);
         } else if (binding.isEnum()) {
-          newType = program.createEnum(info, name);
+          if (binding.isAnonymousType()) {
+            // Don't model an enum subclass as a JEnumType.
+            newType = program.createClass(info, name, false, true);
+          } else {
+            newType = program.createEnum(info, name);
+          }
         } else if (binding.isAnnotationType()) {
           // TODO
           return false;

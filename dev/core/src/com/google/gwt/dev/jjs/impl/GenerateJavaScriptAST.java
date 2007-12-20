@@ -960,51 +960,10 @@ public class GenerateJavaScriptAST {
     }
 
     @Override
-    public void endVisit(JsniMethodBody x, Context ctx) {
-      JsFunction jsFunc = x.getFunc();
-
-      // replace all JSNI idents with a real JsName now that we know it
-      new JsModVisitor() {
-
-        @Override
-        public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
-          String ident = x.getIdent();
-          if (ident.charAt(0) == '@') {
-            HasEnclosingType node = program.jsniMap.get(ident);
-            assert (node != null);
-            if (node instanceof JField) {
-              JField field = (JField) node;
-              JsName jsName = names.get(field);
-              assert (jsName != null);
-              x.resolve(jsName);
-
-              // See if we need to add a clinit call to a static field ref
-              JsInvocation clinitCall = maybeCreateClinitCall(field);
-              if (clinitCall != null) {
-                JsExpression commaExpr = createCommaExpression(clinitCall, x);
-                ctx.replaceMe(commaExpr);
-              }
-            } else {
-              JMethod method = (JMethod) node;
-              if (x.getQualifier() == null) {
-                JsName jsName = names.get(method);
-                assert (jsName != null);
-                x.resolve(jsName);
-              } else {
-                JsName jsName = polymorphicNames.get(method);
-                if (jsName == null) {
-                  // this can occur when JSNI references an instance method on a
-                  // type that was never actually instantiated.
-                  jsName = nullMethodName;
-                }
-                x.resolve(jsName);
-              }
-            }
-          }
-        }
-      }.accept(jsFunc);
-
-      push(jsFunc);
+    public void endVisit(JsniMethodRef x, Context ctx) {
+      JMethod method = x.getTarget();
+      JsNameRef nameRef = names.get(method).makeRef();
+      push(nameRef);
     }
 
     @Override
@@ -1098,6 +1057,57 @@ public class GenerateJavaScriptAST {
       }
       currentMethod = x;
       return true;
+    }
+
+    @Override
+    public boolean visit(JsniMethodBody x, Context ctx) {
+      JsFunction jsFunc = x.getFunc();
+
+      // replace all JSNI idents with a real JsName now that we know it
+      new JsModVisitor() {
+
+        @Override
+        public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+          String ident = x.getIdent();
+          if (ident.charAt(0) == '@') {
+            HasEnclosingType node = program.jsniMap.get(ident);
+            assert (node != null);
+            if (node instanceof JField) {
+              JField field = (JField) node;
+              JsName jsName = names.get(field);
+              assert (jsName != null);
+              x.resolve(jsName);
+
+              // See if we need to add a clinit call to a static field ref
+              JsInvocation clinitCall = maybeCreateClinitCall(field);
+              if (clinitCall != null) {
+                JsExpression commaExpr = createCommaExpression(clinitCall, x);
+                ctx.replaceMe(commaExpr);
+              }
+            } else {
+              JMethod method = (JMethod) node;
+              if (x.getQualifier() == null) {
+                JsName jsName = names.get(method);
+                assert (jsName != null);
+                x.resolve(jsName);
+              } else {
+                JsName jsName = polymorphicNames.get(method);
+                if (jsName == null) {
+                  // this can occur when JSNI references an instance method on a
+                  // type that was never actually instantiated.
+                  jsName = nullMethodName;
+                }
+                x.resolve(jsName);
+              }
+            }
+          }
+        }
+      }.accept(jsFunc);
+
+      push(jsFunc);
+
+      // Do NOT visit JsniMethodRefs/JsniFieldRefs.
+      return false;
     }
 
     @Override

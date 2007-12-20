@@ -534,7 +534,7 @@ public class GenerateJavaAST {
               new JReturnStatement(program, null, classLit));
         }
 
-        if (x.binding.isEnum()) {
+        if (currentClass instanceof JEnumType) {
           processEnumType((JEnumType) currentClass);
         }
 
@@ -777,7 +777,7 @@ public class GenerateJavaAST {
         }
 
         // Enums: wire up synthetic name/ordinal params to the super method.
-        if (enclosingType instanceof JEnumType) {
+        if (enclosingType.isEnumOrSubclass() != null) {
           assert (superOrThisCall != null);
           JVariableRef enumNameRef = createVariableRef(
               superOrThisCall.getSourceInfo(), ctor.params.get(0));

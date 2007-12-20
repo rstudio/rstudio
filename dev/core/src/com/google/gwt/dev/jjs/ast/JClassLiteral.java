@@ -15,6 +15,9 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
+
 /**
  * Java class literal expression.
  */
@@ -77,6 +80,26 @@ public class JClassLiteral extends JLiteral {
       }
 
       call.getArgs().add(superclassLiteral);
+
+      if (classType instanceof JEnumType) {
+        JEnumType enumType = (JEnumType) classType;
+        JMethod valuesMethod = null;
+        for (JMethod methodIt : enumType.methods) {
+          if ("values".equals(methodIt.getName())) {
+            if (methodIt.params.size() != 0) {
+              continue;
+            }
+            valuesMethod = methodIt;
+          }
+        }
+        if (valuesMethod == null) {
+          throw new InternalCompilerException(
+              "Could not find enum values() method");
+        }
+        JsniMethodRef jsniMethodRef = new JsniMethodRef(program.program, null,
+            valuesMethod);
+        call.getArgs().add(jsniMethodRef);
+      }
     } else {
       assert (type instanceof JArrayType || type instanceof JInterfaceType || type instanceof JPrimitiveType);
     }

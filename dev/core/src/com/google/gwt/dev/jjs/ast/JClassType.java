@@ -41,6 +41,13 @@ public class JClassType extends JReferenceType implements CanBeSetFinal {
     return isAbstract;
   }
 
+  public JEnumType isEnumOrSubclass() {
+    if (extnds != null) {
+      return extnds.isEnumOrSubclass();
+    }
+    return null;
+  }
+
   public boolean isFinal() {
     return isFinal;
   }

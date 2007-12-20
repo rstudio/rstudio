@@ -15,6 +15,8 @@
  */
 package java.lang;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 /**
  * Generally unsupported. This class is provided so that the GWT compiler can
  * choke down class literal references.
@@ -62,12 +64,13 @@ public final class Class<T> {
    * @skip
    */
   static <T> Class<T> createForEnum(String packageName, String className,
-      Class<? super T> superclass) {
+      Class<? super T> superclass, JavaScriptObject enumConstantsFunc) {
     // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
     clazz.typeName = packageName + className;
     clazz.modifiers = ENUM;
     clazz.superclass = superclass;
+    clazz.enumConstantsFunc = enumConstantsFunc;
     return clazz;
   }
 
@@ -97,6 +100,9 @@ public final class Class<T> {
     return clazz;
   }
 
+  @SuppressWarnings("unused")
+  private JavaScriptObject enumConstantsFunc;
+
   private int modifiers;
 
   private String typeName;
@@ -111,10 +117,10 @@ public final class Class<T> {
   private Class() {
   }
 
-  public T[] getEnumConstants() {
-    // TODO
-    return null;
-  }
+  public native T[] getEnumConstants() /*-{
+    return this.@java.lang.Class::enumConstantsFunc
+        && (this.@java.lang.Class::enumConstantsFunc)();
+  }-*/;
 
   public String getName() {
     return typeName;

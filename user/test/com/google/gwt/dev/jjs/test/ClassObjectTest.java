@@ -23,13 +23,25 @@ import com.google.gwt.junit.client.GWTTestCase;
 public class ClassObjectTest extends GWTTestCase {
 
   private static enum Bar {
-    BAR;
+    BAR, BAZ {
+      @Override
+      public String toString() {
+        return "BAZ!";
+      }
+    };
   }
 
   private static class Foo implements IFoo {
   }
 
   private static interface IFoo {
+  }
+
+  private static void assertArrayEquals(Object[] expected, Object[] actual) {
+    assertEquals(expected.length, actual.length);
+    for (int i = 0; i < expected.length; ++i) {
+      assertEquals(expected[i], actual[i]);
+    }
   }
 
   public String getModuleName() {
@@ -48,6 +60,7 @@ public class ClassObjectTest extends GWTTestCase {
     assertFalse(o.getClass().isEnum());
     assertFalse(o.getClass().isInterface());
     assertFalse(o.getClass().isPrimitive());
+    assertNull(o.getClass().getEnumConstants());
 
     Foo[][] f = new Foo[3][3];
     assertEquals(Foo[][].class, f.getClass());
@@ -66,6 +79,7 @@ public class ClassObjectTest extends GWTTestCase {
     assertFalse(Foo.class.isEnum());
     assertFalse(Foo.class.isInterface());
     assertFalse(Foo.class.isPrimitive());
+    assertNull(o.getClass().getEnumConstants());
   }
 
   public void testEnum() {
@@ -80,6 +94,24 @@ public class ClassObjectTest extends GWTTestCase {
     assertTrue(o.getClass().isEnum());
     assertFalse(o.getClass().isInterface());
     assertFalse(o.getClass().isPrimitive());
+    assertArrayEquals(Bar.values(), o.getClass().getEnumConstants());
+  }
+
+  public void testEnumSubclass() {
+    Object o = Bar.BAZ;
+    assertNotSame(Bar.class, o.getClass());
+    assertEquals(Bar.class, o.getClass().getSuperclass());
+    /*
+     * TODO: implement
+     */
+    // assertEquals(Bar.class, o.getClass().getDeclaringClass());
+    assertTrue(o.getClass().getName().endsWith("$1"));
+    assertTrue(o.getClass().toString().endsWith("$1"));
+    assertFalse(o.getClass().isArray());
+    assertFalse(o.getClass().isEnum());
+    assertFalse(o.getClass().isInterface());
+    assertFalse(o.getClass().isPrimitive());
+    assertNull(o.getClass().getEnumConstants());
   }
 
   public void testInterface() {
@@ -92,6 +124,7 @@ public class ClassObjectTest extends GWTTestCase {
     assertFalse(IFoo.class.isEnum());
     assertTrue(IFoo.class.isInterface());
     assertFalse(IFoo.class.isPrimitive());
+    assertNull(IFoo.class.getEnumConstants());
   }
 
   public void testPrimitive() {
@@ -102,6 +135,7 @@ public class ClassObjectTest extends GWTTestCase {
     assertFalse(int.class.isEnum());
     assertFalse(int.class.isInterface());
     assertTrue(int.class.isPrimitive());
+    assertNull(int.class.getEnumConstants());
   }
 
 }
