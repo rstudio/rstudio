@@ -24,11 +24,9 @@ import java.io.PrintStream;
  */
 public class Throwable {
 
-  private static final StackTraceElement[] NO_STACK_TRACE = new StackTraceElement[0];
-
   private Throwable cause;
   private String message;
-  private StackTraceElement[] stackTrace = NO_STACK_TRACE;
+  private StackTraceElement[] stackTrace;
 
   public Throwable() {
   }
@@ -76,6 +74,9 @@ public class Throwable {
    * @return the current stack trace
    */
   public StackTraceElement[] getStackTrace() {
+    if (stackTrace == null) {
+      return new StackTraceElement[0];
+    }
     return stackTrace;
   }
 
