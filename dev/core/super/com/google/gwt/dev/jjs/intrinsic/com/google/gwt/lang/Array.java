@@ -32,8 +32,8 @@ public final class Array {
   static final int ZERO_SEED_TYPE = 1;
 
   /**
-   * Stores the prototype for java.lang.Object so that arrays can get their
-   * polymorphic methods via expando.
+   * Stores the prototype Array so that arrays can get their polymorphic methods
+   * via expando.
    */
   private static Array protoTypeArray;
 
@@ -155,17 +155,13 @@ public final class Array {
    * @return the new JSON array
    */
   private static native Array createFromSeed(int seedType, int length) /*-{
-    var seedArrays = [[null], [0], [false]];
-    var blankArray = seedArrays[seedType];
-
-    while (blankArray.length < length) {
-      // Doubles each iteration.
-      blankArray = blankArray.concat(blankArray);
+    var seedArray = [null, 0, false];
+    var value = seedArray[seedType];
+    var array = new Array(length);
+    for (var i = 0; i < length; ++i) {
+      array[i] = value;
     }
-    
-    // Remove the excess.
-    blankArray.length = length;
-    return blankArray;
+    return array;
   }-*/;
 
   private static Array initDims(Class arrayClasses[], int[] typeIdExprs,
