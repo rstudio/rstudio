@@ -695,9 +695,10 @@ public class SerializableTypeOracleBuilder {
         type = type.isParameterized().getRawType();
       } else if (type.isGenericType() != null) {
         type = type.isGenericType().getRawType();
-        assert (type == type.getErasedType());
       }
 
+      assert (type == type.getErasedType());
+      
       if (tic.isInstantiable()) {
         possiblyInstantiatedTypes.add(type);
       }
