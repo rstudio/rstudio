@@ -367,6 +367,8 @@ public class GenerateJavaScriptAST {
 
     private final JsName prototype = objectScope.declareName("prototype");
 
+    private Map<JClassType, JsFunction> clinitMap = new HashMap<JClassType, JsFunction>();
+
     {
       globalTemp.setObfuscatable(false);
       prototype.setObfuscatable(false);
@@ -487,7 +489,10 @@ public class GenerateJavaScriptAST {
       List<JsNode> jsFields = popList(x.fields.size()); // fields
 
       if (typeOracle.hasClinit(x)) {
-        handleClinit(jsFuncs.get(0));
+        JsFunction superClinit = clinitMap.get(x.extnds);
+        JsFunction myClinit = jsFuncs.get(0);
+        handleClinit(myClinit, superClinit);
+        clinitMap.put(x, myClinit);
       } else {
         jsFuncs.set(0, null);
       }
@@ -701,7 +706,7 @@ public class GenerateJavaScriptAST {
 
       if (typeOracle.hasClinit(x)) {
         JsFunction clinitFunc = jsFuncs.get(0);
-        handleClinit(clinitFunc);
+        handleClinit(clinitFunc, null);
         globalStmts.add(clinitFunc.makeStmt());
       }
 
@@ -1394,8 +1399,9 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    private void handleClinit(JsFunction clinitFunc) {
+    private void handleClinit(JsFunction clinitFunc, JsFunction superClinit) {
       clinitFunc.setExecuteOnce(true);
+      clinitFunc.setImpliedExecute(superClinit);
       List<JsStatement> statements = clinitFunc.getBody().getStatements();
       // self-assign to the null method immediately (to prevent reentrancy)
       JsExpression asg = createAssignment(clinitFunc.getName().makeRef(),
@@ -1561,7 +1567,8 @@ public class GenerateJavaScriptAST {
     }
   }
 
-  public static void exec(JProgram program, JsProgram jsProgram, JsOutputOption output) {
+  public static void exec(JProgram program, JsProgram jsProgram,
+      JsOutputOption output) {
     GenerateJavaScriptAST generateJavaScriptAST = new GenerateJavaScriptAST(
         program, jsProgram, output);
     generateJavaScriptAST.execImpl();

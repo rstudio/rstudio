@@ -26,9 +26,10 @@ public class JsFunction extends JsExpression implements HasName {
   protected JsBlock body;
   protected final List<JsParameter> params = new ArrayList<JsParameter>();
   protected final JsScope scope;
-  private JsName name;
-  private boolean fromJava;
   private boolean executeOnce;
+  private boolean fromJava;
+  private JsFunction impliedExecute;
+  private JsName name;
 
   /**
    * Creates an anonymous function.
@@ -69,6 +70,10 @@ public class JsFunction extends JsExpression implements HasName {
     return executeOnce;
   }
 
+  public JsFunction getImpliedExecute() {
+    return impliedExecute;
+  }
+
   public JsName getName() {
     return name;
   }
@@ -95,6 +100,10 @@ public class JsFunction extends JsExpression implements HasName {
 
   public void setFromJava(boolean fromJava) {
     this.fromJava = fromJava;
+  }
+
+  public void setImpliedExecute(JsFunction impliedExecute) {
+    this.impliedExecute = impliedExecute;
   }
 
   public void setName(JsName name) {

@@ -257,19 +257,19 @@ public class JsInliner {
      */
 
     /**
-     * Retains the names of the functions that we know have been called.
+     * Retains the the functions that we know have been called.
      */
-    private final Set<JsName> called;
+    private final Set<JsFunction> called;
     private final JsProgram program;
 
     public DuplicateXORemover(JsProgram program) {
       this.program = program;
-      called = new HashSet<JsName>();
+      called = new HashSet<JsFunction>();
     }
 
-    public DuplicateXORemover(JsProgram program, Set<JsName> alreadyCalled) {
+    public DuplicateXORemover(JsProgram program, Set<JsFunction> alreadyCalled) {
       this.program = program;
-      called = new HashSet<JsName>(alreadyCalled);
+      called = new HashSet<JsFunction>(alreadyCalled);
     }
 
     /**
@@ -424,9 +424,10 @@ public class JsInliner {
      */
     @Override
     public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
-      JsName name = isExecuteOnce(x);
-      if (name != null) {
-        called.add(name);
+      JsFunction func = isExecuteOnce(x);
+      while (func != null) {
+        called.add(func);
+        func = func.getImpliedExecute();
       }
       return true;
     }
@@ -464,8 +465,8 @@ public class JsInliner {
         return false;
       }
 
-      JsName name = isExecuteOnce((JsInvocation) x);
-      return (name != null && called.contains(name));
+      JsFunction func = isExecuteOnce((JsInvocation) x);
+      return (func != null && called.contains(func));
     }
   }
 
@@ -1339,10 +1340,10 @@ public class JsInliner {
    * Given a JsInvocation, determine if it is invoking a JsFunction that is
    * specified to be executed only once during the program's lifetime.
    */
-  private static JsName isExecuteOnce(JsInvocation invocation) {
+  private static JsFunction isExecuteOnce(JsInvocation invocation) {
     JsFunction f = isFunction(invocation.getQualifier());
     if (f != null && f.getExecuteOnce()) {
-      return f.getName();
+      return f;
     }
     return null;
   }
