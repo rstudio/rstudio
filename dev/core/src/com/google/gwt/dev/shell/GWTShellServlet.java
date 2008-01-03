@@ -377,7 +377,7 @@ public class GWTShellServlet extends HttpServlet {
 
     // Create a logger branch for this request.
     String msg = "The development shell servlet received a request for '"
-        + partialPath + "' in module '" + moduleName + "' ";
+        + partialPath + "' in module '" + moduleName + ".gwt.xml' ";
     logger = logger.branch(TreeLogger.TRACE, msg, null);
 
     // Handle auto-generation of resources.
@@ -406,7 +406,9 @@ public class GWTShellServlet extends HttpServlet {
         }
 
         if (foundResource == null) {
-          msg = "Resource not found: " + partialPath;
+          msg = "Resource not found: " + partialPath + "\n"
+              + "(Could a file be missing from the public path or a <servlet> "
+              + "tag misconfigured in module " + moduleName + ".gwt.xml ?)";
           logger.log(TreeLogger.WARN, msg, null);
           throw new UnableToCompleteException();
         }
