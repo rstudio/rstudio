@@ -30,6 +30,10 @@ import com.google.gwt.user.client.Event;
  * <li>.gwt-StackPanel { the panel itself }</li>
  * <li>.gwt-StackPanel .gwt-StackPanelItem { unselected items }</li>
  * <li>.gwt-StackPanel .gwt-StackPanelItem-selected { selected items }</li>
+ * <li>.gwt-StackPanel .gwt-StackPanelContent { the wrapper around the contents
+ * of the item }</li>
+
+
  * </ul>
  * <p>
  * <h3>Example</h3>
@@ -132,6 +136,7 @@ public class StackPanel extends ComplexPanel {
     DOM.setElementProperty(tdh, "height", "1px");
 
     // body styling
+    setStyleName(tdb, "gwt-StackPanelContent", true);
     DOM.setElementProperty(tdb, "height", "100%");
     DOM.setElementProperty(tdb, "vAlign", "top");
 
