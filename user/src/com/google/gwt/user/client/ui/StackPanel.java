@@ -32,8 +32,6 @@ import com.google.gwt.user.client.Event;
  * <li>.gwt-StackPanel .gwt-StackPanelItem-selected { selected items }</li>
  * <li>.gwt-StackPanel .gwt-StackPanelContent { the wrapper around the contents
  * of the item }</li>
-
-
  * </ul>
  * <p>
  * <h3>Example</h3>
