@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,6 +29,45 @@ final class Exceptions {
     return new JavaScriptException(javaScriptExceptionName(e),
         javaScriptExceptionDescription(e));
   }
+
+  static boolean throwAssertionError() {
+    throw new AssertionError();
+  }
+
+  /*
+   * We use nonstandard naming here so it's easy for the compiler to map to
+   * method names based on primitive type name.
+   */
+  // CHECKSTYLE_OFF
+  static boolean throwAssertionError_boolean(boolean message) {
+    throw new AssertionError(message);
+  }
+
+  static boolean throwAssertionError_char(char message) {
+    throw new AssertionError(message);
+  }
+
+  static boolean throwAssertionError_double(double message) {
+    throw new AssertionError(message);
+  }
+
+  static boolean throwAssertionError_float(float message) {
+    throw new AssertionError(message);
+  }
+
+  static boolean throwAssertionError_int(int message) {
+    throw new AssertionError(message);
+  }
+
+  static boolean throwAssertionError_long(long message) {
+    throw new AssertionError(message);
+  }
+
+  static boolean throwAssertionError_Object(Object message) {
+    throw new AssertionError(message);
+  }
+
+  // CHECKSTYLE_ON
 
   /**
    * Returns the description of an unexpected JavaScript exception (not a normal
