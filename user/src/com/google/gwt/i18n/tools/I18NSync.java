@@ -17,11 +17,13 @@ package com.google.gwt.i18n.tools;
 
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.i18n.client.ConstantsWithLookup;
+import com.google.gwt.i18n.client.Localizable;
 import com.google.gwt.i18n.client.Messages;
 import com.google.gwt.i18n.rebind.LocalizableGenerator;
 import com.google.gwt.i18n.rebind.util.AbstractLocalizableInterfaceCreator;
 import com.google.gwt.i18n.rebind.util.ConstantsInterfaceCreator;
 import com.google.gwt.i18n.rebind.util.MessagesInterfaceCreator;
+import com.google.gwt.util.tools.ArgHandler;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
@@ -31,6 +33,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLDecoder;
 
 /**
  * Common public access point for localization support methods.
@@ -164,13 +167,39 @@ public class I18NSync extends ToolBase {
    * The resource file needed to create the class must be on your class path.
    * 
    * @param className the name of the Constants class to be created
-   * @param outDir source dir root
+   * @param sourceDir source dir root
    * @throws IOException
    */
   public static void createConstantsWithLookupInterfaceFromClassName(
-      String className, File outDir) throws IOException {
-    createConstantsInterfaceFromClassName(className, outDir,
+      String className, File sourceDir) throws IOException {
+    createConstantsInterfaceFromClassName(className, sourceDir,
         ConstantsWithLookup.class);
+  }
+
+  /**
+   * Creates one of a Messages, ConstantsWithLookup, or Constants subclass.
+   *
+   * @param className Name of the subclass to be created
+   * @param sourceDir source directory root
+   * @param interfaceType What kind of base class to use
+   * @throws IOException
+   */
+  public static void createInterfaceFromClassName(String className,
+      File sourceDir, Class<? extends Localizable> interfaceType)
+      throws IOException {
+    if (interfaceType == Messages.class) {
+      createMessagesInterfaceFromClassName(className, sourceDir);
+    } else {
+      if (!Constants.class.isAssignableFrom(interfaceType)) {
+        throw new RuntimeException(
+            "Internal Error: Unable to create i18n class derived from " +
+            interfaceType.getName());
+      }
+      // The compiler whines about this cast, but the isAssignableFrom()
+      // check above should insure that interfaceType is compatible.
+      createConstantsInterfaceFromClassName(className, sourceDir,
+          (Class<? extends Constants>) interfaceType);
+    }
   }
 
   /**
@@ -182,26 +211,46 @@ public class I18NSync extends ToolBase {
    */
   public static void createMessagesInterfaceFromClassName(String className)
       throws IOException {
-    createMessagesInterfaceFromClassName(className, null, Messages.class);
+    createMessagesInterfaceFromClassName(className, null);
   }
-
+  
   /**
    * Creates a <code>Messages</code> interface from a class name. The resource
    * file needed to create the class must be on your class path.
    * 
    * @param className the name of the Constants class to be created
-   * @param outDir source dir root
+   * @param sourceDir source directory root
    * @throws IOException
    */
   public static void createMessagesInterfaceFromClassName(String className,
-      File outDir) throws IOException {
-    createMessagesInterfaceFromClassName(className, outDir, Messages.class);
+      File sourceDir) throws IOException {
+    File resource = urlToResourceFile(className);
+    File source;
+    if (sourceDir == null) {
+      source = synthesizeSourceFile(resource);
+    } else {
+      checkValidSourceDir(sourceDir);
+      String sourcePath = className.replace('.', File.separatorChar);
+      sourcePath = sourceDir.getCanonicalFile() + File.separator + sourcePath
+          + ".java";
+      source = new File(sourcePath);
+    }
+    // Need both source path and class name for this check
+    checkValidJavaSourceOutputFile(source);
+    checkValidResourceInputFile(resource);
+
+    int classDiv = className.lastIndexOf(".");
+    String packageName = className.substring(0, classDiv);
+    String name = className.substring(classDiv + 1);
+    AbstractLocalizableInterfaceCreator creator = new MessagesInterfaceCreator(
+        name, packageName, resource, source);
+    creator.generate();
   }
 
   /**
    * Creates Messages and Constants java source files.
    * 
-   * @param args arguements for generation
+   * @param args arguments for generation
    */
   public static void main(String[] args) {
     I18NSync creator = new I18NSync();
@@ -246,7 +295,7 @@ public class I18NSync extends ToolBase {
 
   private static void createConstantsInterfaceFromClassName(String className,
       File sourceDir, Class<? extends Constants> interfaceClass)
-      throws FileNotFoundException, IOException {
+      throws IOException {
     File resource = urlToResourceFile(className);
     File source;
     if (sourceDir == null) {
@@ -270,32 +319,6 @@ public class I18NSync extends ToolBase {
     creator.generate();
   }
 
-  private static void createMessagesInterfaceFromClassName(String className,
-      File sourceDir, Class<? extends Messages> interfaceClass)
-      throws FileNotFoundException, IOException {
-    File resource = urlToResourceFile(className);
-    File source;
-    if (sourceDir == null) {
-      source = synthesizeSourceFile(resource);
-    } else {
-      checkValidSourceDir(sourceDir);
-      String sourcePath = className.replace('.', File.separatorChar);
-      sourcePath = sourceDir.getCanonicalFile() + File.separator + sourcePath
-          + ".java";
-      source = new File(sourcePath);
-    }
-    // Need both source path and class name for this check
-    checkValidJavaSourceOutputFile(source);
-    checkValidResourceInputFile(resource);
-
-    int classDiv = className.lastIndexOf(".");
-    String packageName = className.substring(0, classDiv);
-    String name = className.substring(classDiv + 1);
-    AbstractLocalizableInterfaceCreator creator = new MessagesInterfaceCreator(
-        name, packageName, resource, source);
-    creator.generate();
-  }
-
   private static File synthesizeSourceFile(File resource) {
     String javaPath = resource.getName();
     javaPath = javaPath.substring(0, javaPath.lastIndexOf("."));
@@ -306,7 +329,7 @@ public class I18NSync extends ToolBase {
   }
 
   private static File urlToResourceFile(String className)
-      throws FileNotFoundException, IOException {
+      throws IOException {
     if (className.endsWith(".java") || className.endsWith(".properties")
         || className.endsWith(".class")
         || className.indexOf(File.separator) > 0) {
@@ -322,37 +345,20 @@ public class I18NSync extends ToolBase {
           + resourcePath + " matching '" + className
           + "' did you remember to add it to your classpath?");
     }
-    File resourceFile = new File(r.getFile());
+    File resourceFile = new File(URLDecoder.decode(r.getPath(), "utf-8"));
     return resourceFile;
   }
 
+  private ArgHandlerValueChooser chooser;
   private String classNameArg;
-
-  private boolean createMessagesArg = false;
-
   private File outDirArg;
 
   private I18NSync() {
     registerHandler(new classNameArgHandler());
     registerHandler(new outDirHandler());
-    registerHandler(new ArgHandlerFlag() {
-
-      @Override
-      public String getPurpose() {
-        return "create Messages interface rather than Constants interface.";
-      }
-
-      @Override
-      public String getTag() {
-        return "-createMessages";
-      }
-
-      @Override
-      public boolean setFlag() {
-        createMessagesArg = true;
-        return true;
-      }
-    });
+    chooser = new ArgHandlerValueChooser();
+    registerHandler(chooser.getConstantsWithLookupArgHandler());
+    registerHandler(chooser.getMessagesArgHandler());
   }
 
   /**
@@ -362,17 +368,106 @@ public class I18NSync extends ToolBase {
    */
   protected boolean run() {
     try {
-      if (createMessagesArg) {
-        createMessagesInterfaceFromClassName(classNameArg, outDirArg,
-            Messages.class);
-      } else {
-        createConstantsInterfaceFromClassName(classNameArg, outDirArg,
-            Constants.class);
-      }
+      createInterfaceFromClassName(classNameArg, outDirArg,
+          chooser.getArgValue());
       return true;
     } catch (Throwable e) {
       System.err.println(e.getMessage());
       return false;
     }
+  }
+}
+
+/**
+ * This class holds the '-createConstantsWithLookup' and '-createMessages'
+ * ArgHandler classes.  It is shared by both I18NSync and I18NCreator classes.
+ *        
+ * To use this class, call the getConstantsWithLookupArgHandler()
+ * and getMessagesArgHandler() methods and add the returned ArgHandler 
+ * instances to a ToolBase registerHandler() method.  When parsing the arguments
+ * is complete, you can retrieve the selected type by calling getArgValue().
+ */
+class ArgHandlerValueChooser {
+
+  private  Class<? extends Localizable> argValue = Constants.class;
+  private ArgHandler cwlArgHandler;
+  private ArgHandler messagesArgHandler;
+
+  /**
+   * Returns one on "Messages.class", "ConstantsWithLookup.class", or
+   * "Constants.class" depending on which argument handlers fired.
+   *
+   * @return A class literal, returns "Constants.class" by default.
+   */
+  Class<? extends Localizable> getArgValue() {
+    return argValue;
+  }
+
+  /**
+   * Retrieve the argument handler for -createConstantsWithLookup.
+   * 
+   * @return a flag argument handler
+   */
+   ArgHandler getConstantsWithLookupArgHandler() {
+    if (cwlArgHandler == null) {
+      cwlArgHandler = new ArgHandlerFlag() {
+
+        @Override
+        public String getPurpose() {
+          return "Create scripts for a ConstantsWithLookup interface "
+              + "rather than a Constants one";
+        }
+
+        @Override
+        public String getTag() {
+          return "-createConstantsWithLookup";
+        }
+
+        @Override
+        public boolean setFlag() {
+          if (argValue == Messages.class) {
+            System.err.println("-createMessages cannot be used with -createConstantsWithLookup");
+            return false;
+          }
+          argValue = ConstantsWithLookup.class;
+          return true;
+        }
+      };
+    }
+    return cwlArgHandler;
+  }
+
+  /**
+   * Retrieves the -createMessages argument handler.
+   * 
+   * @return a flag argument handler
+   */
+  ArgHandler getMessagesArgHandler() {
+    if (messagesArgHandler == null) {
+      messagesArgHandler = new ArgHandlerFlag() {
+
+        @Override
+        public String getPurpose() {
+          return "Create scripts for a Messages interface "
+              + "rather than a Constants one";
+        }
+
+        @Override
+        public String getTag() {
+          return "-createMessages";
+        }
+
+        @Override
+        public boolean setFlag() {
+          if (argValue == ConstantsWithLookup.class) {
+            System.err.println("-createMessages cannot be used with -createConstantsWithLookup");
+            return false;
+          }
+          argValue = Messages.class;
+          return true;
+        }
+      };
+    }
+    return messagesArgHandler;
   }
 }

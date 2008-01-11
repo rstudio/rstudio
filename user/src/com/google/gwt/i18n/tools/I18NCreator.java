@@ -15,11 +15,14 @@
  */
 package com.google.gwt.i18n.tools;
 
+import com.google.gwt.i18n.client.Constants;
+import com.google.gwt.i18n.client.ConstantsWithLookup;
+import com.google.gwt.i18n.client.Localizable;
+import com.google.gwt.i18n.client.Messages;
 import com.google.gwt.user.tools.util.ArgHandlerEclipse;
 import com.google.gwt.user.tools.util.ArgHandlerIgnore;
 import com.google.gwt.user.tools.util.ArgHandlerOverwrite;
 import com.google.gwt.util.tools.ArgHandlerExtra;
-import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerOutDir;
 import com.google.gwt.util.tools.ToolBase;
 import com.google.gwt.util.tools.Utility;
@@ -82,7 +85,9 @@ public final class I18NCreator extends ToolBase {
 
     @Override
     public String[] getTagArgs() {
-      return new String[] {"interfaceName"};
+      return new String[] {
+        "interfaceName"
+      };
     }
 
     @Override
@@ -117,11 +122,13 @@ public final class I18NCreator extends ToolBase {
    * @param eclipse The name of a project to attach a .launch config to
    * @param overwrite Overwrite an existing files if they exist.
    * @param ignore Ignore existing files if they exist.
+   * @param interfaceToCreate the class instance to create - Constants,
+   *          ConstantsWithLookup, or Messages
    * @throws IOException
    */
   static void createLocalizable(String fullInterfaceName, File outDir,
-      String eclipse, boolean createMessagesInterface, boolean overwrite,
-      boolean ignore) throws IOException {
+      String eclipse, boolean overwrite, boolean ignore,
+      Class<? extends Localizable> interfaceToCreate) throws IOException {
 
     // Figure out the installation directory
     String installPath = Utility.getInstallPath();
@@ -172,30 +179,36 @@ public final class I18NCreator extends ToolBase {
     replacements.put("@gwtDevPath", basePathEnv + gwtDevPath);
     replacements.put("@compileClass", "com.google.gwt.dev.GWTCompiler");
     replacements.put("@i18nClass", "com.google.gwt.i18n.tools.I18NSync");
-    if (createMessagesInterface) {
+
+    // Add command line arguments to create
+    // Messages/Constants/ConstantsWithLookup code.
+    String templateData = null;
+
+    if (Messages.class == interfaceToCreate) {
       replacements.put("@createMessages", "-createMessages");
+      templateData = Utility.getFileFromClassPath(PACKAGE_PATH
+          + "i18nMessages.propertiessrc");
     } else {
-      replacements.put("@createMessages", "");
+      if (ConstantsWithLookup.class == interfaceToCreate) {
+        replacements.put("@createMessages", "-createConstantsWithLookup");
+      } else if (Constants.class == interfaceToCreate) {
+        replacements.put("@createMessages", "");
+      } else {
+        throw new RuntimeException(
+            "Internal Error: Unable to create i18n class derived from "
+                + interfaceToCreate.getName());
+      }
+      // This same template works for both Constants and ConstantsWithLookup
+      // classes
+      templateData = Utility.getFileFromClassPath(PACKAGE_PATH
+          + "i18nConstants.propertiessrc");
     }
 
-    if (createMessagesInterface) {
-      // Create a skeleton i18n messages properties class
-      File i18nMessageProperties = Utility.createNormalFile(clientDir,
-          interfaceName + ".properties", overwrite, ignore);
-      if (i18nMessageProperties != null) {
-        String out = Utility.getFileFromClassPath(PACKAGE_PATH
-            + "i18nMessages.propertiessrc");
-        Utility.writeTemplateFile(i18nMessageProperties, out, replacements);
-      }
-    } else {
-      // Create a skeleton i18n constants properties class
-      File i18nConstantProperties = Utility.createNormalFile(clientDir,
-          interfaceName + ".properties", overwrite, ignore);
-      if (i18nConstantProperties != null) {
-        String out = Utility.getFileFromClassPath(PACKAGE_PATH
-            + "i18nConstants.propertiessrc");
-        Utility.writeTemplateFile(i18nConstantProperties, out, replacements);
-      }
+    // Populate the file from the template
+    File i18nPropertiesFile = Utility.createNormalFile(clientDir, interfaceName
+        + ".properties", overwrite, ignore);
+    if (i18nPropertiesFile != null && templateData != null) {
+      Utility.writeTemplateFile(i18nPropertiesFile, templateData, replacements);
     }
 
     if (eclipse != null) {
@@ -229,10 +242,8 @@ public final class I18NCreator extends ToolBase {
     }
   }
 
-  private boolean createMessagesInterface = false;
-
+  private ArgHandlerValueChooser chooser;
   private String eclipse = null;
-
   private String fullInterfaceName = null;
   private boolean ignore = false;
   private File outDir;
@@ -273,26 +284,9 @@ public final class I18NCreator extends ToolBase {
         return true;
       }
     });
-
-    registerHandler(new ArgHandlerFlag() {
-
-      @Override
-      public String getPurpose() {
-        return "Create scripts for a Messages interface "
-            + "rather than a Constants one";
-      }
-
-      @Override
-      public String getTag() {
-        return "-createMessages";
-      }
-
-      @Override
-      public boolean setFlag() {
-        createMessagesInterface = true;
-        return true;
-      }
-    });
+    chooser = new ArgHandlerValueChooser();
+    registerHandler(chooser.getConstantsWithLookupArgHandler());
+    registerHandler(chooser.getMessagesArgHandler());
 
     registerHandler(new ArgHandlerIgnore() {
 
@@ -312,8 +306,8 @@ public final class I18NCreator extends ToolBase {
 
   protected boolean run() {
     try {
-      createLocalizable(fullInterfaceName, outDir, eclipse,
-          createMessagesInterface, overwrite, ignore);
+      createLocalizable(fullInterfaceName, outDir, eclipse, overwrite, ignore,
+          chooser.getArgValue());
       return true;
     } catch (IOException e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());

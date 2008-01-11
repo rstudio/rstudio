@@ -37,7 +37,7 @@ public class ConstantsInterfaceCreator extends
    */
   public ConstantsInterfaceCreator(String className, String packageName,
       File resourceBundle, File targetLocation,
-      Class<?extends Constants> interfaceClass)
+      Class<? extends Constants> interfaceClass)
       throws IOException {
     super(className, packageName, resourceBundle, targetLocation,
       interfaceClass);
