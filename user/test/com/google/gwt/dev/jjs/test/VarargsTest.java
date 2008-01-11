@@ -1,12 +1,12 @@
 /*
- * Copyright 2007 Google Inc.
- *
+ * Copyright 2008 Google Inc.
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -21,7 +21,6 @@ import java.util.Arrays;
 
 /**
  * Tests the new JDK 1.5 varargs functionality.
- *
  */
 public class VarargsTest extends GWTTestCase {
 
@@ -30,17 +29,25 @@ public class VarargsTest extends GWTTestCase {
   }
 
   public void testVararg() {
-    String[] strings = new String[] { "1", "2", "3" };
-    String[] results = vararg( "1", "2", "3" );
-    assertTrue(Arrays.equals(results, strings));
+    String[] expected = new String[] {"1", "2", "3"};
+    String[] actual = vararg("1", "2", "3");
+    assertTrue(Arrays.equals(expected, actual));
+
+    expected = new String[] {};
+    actual = vararg();
+    assertTrue(Arrays.equals(expected, actual));
   }
 
   public void testVarargBoxing() {
-    int[] ints = new int[] { 1, 2, 3 };
-    int[] results = varargUnboxed( 1, 2, 3 );
-    assertTrue(Arrays.equals(results, ints));
-    int[] results2 = varargUnboxed( new Integer(1), 2, new Integer(3) );
-    assertTrue(Arrays.equals(ints, results2));
+    int[] expected = new int[] {1, 2, 3};
+    int[] actual = varargUnboxed(1, 2, 3);
+    assertTrue(Arrays.equals(expected, actual));
+    actual = varargUnboxed(new Integer(1), 2, new Integer(3));
+    assertTrue(Arrays.equals(expected, actual));
+
+    expected = new int[] {};
+    actual = varargUnboxed();
+    assertTrue(Arrays.equals(expected, actual));
   }
 
   private String[] vararg(String... args) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -2000,45 +2000,53 @@ public class GenerateJavaAST {
 
     private void addCallArgs(Expression[] args, JMethodCall call,
         MethodBinding binding) {
-      if (args != null) {
-        TypeBinding[] params = binding.parameters;
-        int n = params.length;
+      if (args == null) {
+        args = new Expression[0];
+      }
 
-        if (binding.isVarargs()) {
-          // Do everything but the last arg.
-          --n;
-        }
+      TypeBinding[] params = binding.parameters;
+      int n = params.length;
 
-        for (int i = 0; i < n; ++i) {
-          call.getArgs().add(dispProcessExpression(args[i]));
-        }
+      if (binding.isVarargs()) {
+        // Do everything but the last arg.
+        --n;
+      }
 
-        if (binding.isVarargs()) {
-          // Handle the last arg.
-          JArrayType type = (JArrayType) typeMap.get(params[n]);
+      if (args.length < n) {
+        // Hackish, the super call to Enum() won't have enough parameters.
+        assert (call.getTarget().getName().equals("Enum"));
+        return;
+      }
 
-          // See if there is only one arg and it's an array of the correct dims.
-          if (args.length == n + 1) {
-            JType lastArgType = (JType) typeMap.get(args[n].resolvedType);
-            if (lastArgType instanceof JArrayType) {
-              JArrayType lastArgArrayType = (JArrayType) lastArgType;
-              if (lastArgArrayType.getDims() == type.getDims()) {
-                // Looks like it's already an array.
-                call.getArgs().add(dispProcessExpression(args[n]));
-                return;
-              }
+      ArrayList<JExpression> callArgs = call.getArgs();
+
+      for (int i = 0; i < n; ++i) {
+        callArgs.add(dispProcessExpression(args[i]));
+      }
+
+      if (binding.isVarargs()) {
+        // Handle the last arg.
+        JArrayType type = (JArrayType) typeMap.get(params[n]);
+
+        // See if there is only one arg and it's an array of the correct dims.
+        if (args.length == n + 1) {
+          JType lastArgType = (JType) typeMap.get(args[n].resolvedType);
+          if (lastArgType instanceof JArrayType) {
+            JArrayType lastArgArrayType = (JArrayType) lastArgType;
+            if (lastArgArrayType.getDims() == type.getDims()) {
+              // Looks like it's already an array.
+              callArgs.add(dispProcessExpression(args[n]));
+              return;
             }
           }
-
-          // Fall through: must synthesize a new array allocation.
-          SourceInfo info = makeSourceInfo(args[n]);
-          JNewArray newArray = new JNewArray(program, info, type);
-          newArray.initializers = new ArrayList<JExpression>();
-          for (int i = n; i < args.length; ++i) {
-            newArray.initializers.add(dispProcessExpression(args[i]));
-          }
-          call.getArgs().add(newArray);
         }
+
+        JNewArray newArray = new JNewArray(program, call.getSourceInfo(), type);
+        newArray.initializers = new ArrayList<JExpression>();
+        for (int i = n; i < args.length; ++i) {
+          newArray.initializers.add(dispProcessExpression(args[i]));
+        }
+        callArgs.add(newArray);
       }
     }
 
