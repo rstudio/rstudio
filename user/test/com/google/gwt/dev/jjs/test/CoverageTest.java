@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,7 +54,7 @@ public class CoverageTest extends CoverageBase {
           next.foo();
           CoverageTest.this.next.foo();
           CoverageTest.this.x = z;
-          CoverageTest.super.x = z; // inexpressible in Java without name mangling
+          CoverageTest.super.x = z;
         }
 
         public void foo() {
@@ -65,7 +65,7 @@ public class CoverageTest extends CoverageBase {
           next.foo();
           CoverageTest.this.next.foo();
           CoverageTest.this.x = z;
-          CoverageTest.super.x = z; // inexpressible in Java without name mangling
+          CoverageTest.super.x = z;
         }
       };
 
@@ -148,22 +148,85 @@ public class CoverageTest extends CoverageBase {
       ia[0] = i;
     }
 
-    /**
-     * TODO(later): implement asserts.
-     */
     private void testAssertStatement() {
-      // i = 1;
-      // try {
-      // assert i == 2;
-      // fail();
-      // } catch (AssertionError e) {
-      // }
-      // try {
-      // assert i == 3 : "foo";
-      // fail();
-      // } catch (AssertionError e) {
-      // assertEquals("foo", e.getMessage());
-      // }
+      // AssertStatement
+
+      // See if assertions are even enabled.
+      try {
+        assert false;
+        // Assertions are not on, early out.
+        return;
+      } catch (AssertionError e) {
+        // Assertions are on, run the test.
+      }
+
+      i = 1;
+      try {
+        assert i == 2;
+        fail();
+      } catch (AssertionError e) {
+      }
+
+      try {
+        assert i == 3 : true;
+        fail();
+      } catch (AssertionError e) {
+        assertEquals("true", e.getMessage());
+      }
+
+      try {
+        assert i == 3 : 'c';
+        fail();
+      } catch (AssertionError e) {
+        assertEquals("c", e.getMessage());
+      }
+
+      try {
+        assert i == 3 : 1.1;
+        fail();
+      } catch (AssertionError e) {
+        assertEquals("1.1", e.getMessage());
+      }
+
+      try {
+        assert i == 3 : 1.2f;
+        fail();
+      } catch (AssertionError e) {
+        assertEquals("1.2", e.getMessage());
+      }
+
+      try {
+        assert i == 3 : 5;
+        fail();
+      } catch (AssertionError e) {
+        assertEquals("5", e.getMessage());
+      }
+
+      try {
+        assert i == 3 : 6L;
+        fail();
+      } catch (AssertionError e) {
+        assertEquals("6", e.getMessage());
+      }
+
+      try {
+        assert i == 3 : "foo";
+        fail();
+      } catch (AssertionError e) {
+        assertEquals("foo", e.getMessage());
+      }
+
+      try {
+        assert i == 3 : new Object() {
+          @Override
+          public String toString() {
+            return "bar";
+          }
+        };
+        fail();
+      } catch (AssertionError e) {
+        assertEquals("bar", e.getMessage());
+      }
     }
 
     private void testAssignment() {
@@ -486,7 +549,8 @@ public class CoverageTest extends CoverageBase {
       assertEquals(21, i);
       i = Inner.this.i + Inner.this.j + Inner.this.x + Inner.this.y;
       assertEquals(30, i);
-      i = CoverageTest.this.i + CoverageTest.this.j + CoverageTest.this.x + CoverageTest.this.y;
+      i = CoverageTest.this.i + CoverageTest.this.j + CoverageTest.this.x
+          + CoverageTest.this.y;
       assertEquals(15, i);
       i = super.i + super.j + super.x + super.y;
       assertEquals(25, i);

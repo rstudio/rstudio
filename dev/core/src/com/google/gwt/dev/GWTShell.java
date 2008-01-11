@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,6 +36,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.util.tools.ArgHandlerDisableAggressiveOptimization;
+import com.google.gwt.util.tools.ArgHandlerEnableAssertions;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerOutDir;
@@ -449,6 +450,8 @@ public class GWTShell extends ToolBase {
     });
 
     registerHandler(new ArgHandlerScriptStyle(jjsOptions));
+
+    registerHandler(new ArgHandlerEnableAssertions(jjsOptions));
 
     registerHandler(new ArgHandlerDisableAggressiveOptimization() {
       @Override

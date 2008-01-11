@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,20 +23,19 @@ public class AssertionError extends Error {
   public AssertionError() {
   }
 
-  private AssertionError(String message) {
-    super(message);
-  }
-
-  public AssertionError(Object message) {
-    super(String.valueOf(message), message instanceof Throwable
-      ? (Throwable) message : null);
-  }
-
   public AssertionError(boolean message) {
     this(String.valueOf(message));
   }
 
   public AssertionError(char message) {
+    this(String.valueOf(message));
+  }
+
+  public AssertionError(double message) {
+    this(String.valueOf(message));
+  }
+
+  public AssertionError(float message) {
     this(String.valueOf(message));
   }
 
@@ -48,11 +47,12 @@ public class AssertionError extends Error {
     this(String.valueOf(message));
   }
 
-  public AssertionError(float message) {
-    this(String.valueOf(message));
+  public AssertionError(Object message) {
+    super(String.valueOf(message), message instanceof Throwable
+      ? (Throwable) message : null);
   }
 
-  public AssertionError(double message) {
-    this(String.valueOf(message));
+  private AssertionError(String message) {
+    super(message);
   }
 }

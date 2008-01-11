@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ package com.google.gwt.dev.jjs;
 public class JJSOptions {
 
   private boolean aggressivelyOptimize = true;
+  private boolean enableAssertions = false;
   private JsOutputOption output = JsOutputOption.OBFUSCATED;
   private boolean validateOnly = false;
 
@@ -33,6 +34,7 @@ public class JJSOptions {
 
   public void copyFrom(JJSOptions other) {
     this.aggressivelyOptimize = other.aggressivelyOptimize;
+    this.enableAssertions = other.enableAssertions;
     this.output = other.output;
     this.validateOnly = other.validateOnly;
   }
@@ -52,6 +54,13 @@ public class JJSOptions {
   }
 
   /**
+   * Returns true if the compiler should generate code to check assertions.
+   */
+  public boolean isEnableAssertions() {
+    return enableAssertions;
+  }
+
+  /**
    * Returns true if the compiler should run in validation mode, not producing
    * any output.
    */
@@ -64,6 +73,13 @@ public class JJSOptions {
    */
   public void setAggressivelyOptimize(boolean aggressivelyOptimize) {
     this.aggressivelyOptimize = aggressivelyOptimize;
+  }
+
+  /**
+   * Sets whether or not the compiler should generate code to check assertions.
+   */
+  public void setEnableAssertions(boolean enableAssertions) {
+    this.enableAssertions = enableAssertions;
   }
 
   /**

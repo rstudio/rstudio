@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,8 +36,8 @@ import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.StandardSourceOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
 import com.google.gwt.dev.jjs.JJSOptions;
-import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
+import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.shell.StandardRebindOracle;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.SelectionScriptGenerator;
@@ -51,6 +51,7 @@ import com.google.gwt.dev.util.log.DetachedTreeLoggerWindow;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.dev.util.xml.ReflectiveParser;
 import com.google.gwt.util.tools.ArgHandlerDisableAggressiveOptimization;
+import com.google.gwt.util.tools.ArgHandlerEnableAssertions;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerOutDir;
@@ -334,6 +335,8 @@ public class GWTCompiler extends ToolBase {
     registerHandler(new ArgHandlerModuleName());
 
     registerHandler(new ArgHandlerScriptStyle(jjsOptions));
+
+    registerHandler(new ArgHandlerEnableAssertions(jjsOptions));
 
     registerHandler(new ArgHandlerDisableAggressiveOptimization() {
       @Override

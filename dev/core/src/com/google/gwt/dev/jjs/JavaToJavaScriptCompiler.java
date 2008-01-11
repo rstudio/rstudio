@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,7 @@ import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
+import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.BuildTypeMap;
 import com.google.gwt.dev.jjs.impl.CastNormalizer;
@@ -307,9 +308,14 @@ public class JavaToJavaScriptCompiler {
       // 
       checkForErrors(logger, true);
 
-      // TODO: figure out how to have a debug mode.
-      boolean isDebugEnabled = false;
-      if (!isDebugEnabled) {
+      /*
+       * TODO: if we defer this until later, we could maybe use the results of
+       * the assertions to enable more optimizations.
+       */
+      if (options.isEnableAssertions()) {
+        // Turn into assertion checking calls.
+        AssertionNormalizer.exec(jprogram);
+      } else {
         // Remove all assert statements.
         AssertionRemover.exec(jprogram);
       }
@@ -365,9 +371,6 @@ public class JavaToJavaScriptCompiler {
       // (5) "Normalize" the high-level Java tree into a lower-level tree more
       // suited for JavaScript code generation. Don't go reordering these
       // willy-nilly because there are some subtle interdependencies.
-      if (isDebugEnabled) {
-        // AssertionNormalizer.exec(jprogram);
-      }
       CatchBlockNormalizer.exec(jprogram);
       CompoundAssignmentNormalizer.exec(jprogram);
       JavaScriptObjectCaster.exec(jprogram);

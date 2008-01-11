@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,7 +30,7 @@ public class AssertionRemover {
   /**
    * Removes all asserts.
    */
-  public class AssertVisitor extends JModVisitor {
+  private class AssertRemoveVisitor extends JModVisitor {
 
     public void endVisit(JAssertStatement x, Context ctx) {
       removeMe(x, ctx);
@@ -57,7 +57,7 @@ public class AssertionRemover {
   }
 
   private void execImpl() {
-    AssertVisitor assertVisitor = new AssertVisitor();
-    assertVisitor.accept(program);
+    AssertRemoveVisitor assertRemover = new AssertRemoveVisitor();
+    assertRemover.accept(program);
   }
 }
