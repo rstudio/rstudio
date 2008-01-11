@@ -332,7 +332,7 @@ public class TypeOracleBuilder {
       if (!typeDecl.binding.isStatic()) {
         /*
          * This non-static, inner class can reference the type parameters of its
-         * enclosing generic type, so we will treat it as a generic type. 
+         * enclosing generic type, so we will treat it as a generic type.
          */
         return true;
       }
@@ -777,7 +777,7 @@ public class TypeOracleBuilder {
     return new JUpperBound(bounds.toArray(NO_JCLASSES));
   }
 
-  private Object evaluateConstantExpression(TreeLogger logger, 
+  private Object evaluateConstantExpression(TreeLogger logger,
       Expression expression) {
     if (expression instanceof MagicLiteral) {
       if (expression instanceof FalseLiteral) {
@@ -812,25 +812,23 @@ public class TypeOracleBuilder {
        * or an enumerated type since annotation values must be constants.
        */
       NameReference nameRef = (NameReference) expression;
-      
+
       if (nameRef.constant != Constant.NotAConstant) {
         return getConstantValue(nameRef.constant);
       } else {
-        Class clazz = getClassLiteral(logger,
-            nameRef.actualReceiverType);
+        Class clazz = getClassLiteral(logger, nameRef.actualReceiverType);
         if (clazz.isEnum()) {
           String enumName = String.valueOf(nameRef.fieldBinding().name);
           return Enum.valueOf(clazz, enumName);
         } else {
-          /* 
-           * If this is not an enumeration, then fall through to failure case 
+          /*
+           * If this is not an enumeration, then fall through to failure case
            * below.
            */
         }
       }
     } else if (expression instanceof Annotation) {
-      Object annotationInstance = createAnnotationInstance(logger,
-          expression);
+      Object annotationInstance = createAnnotationInstance(logger, expression);
       if (annotationInstance != null) {
         return annotationInstance;
       }
@@ -844,7 +842,7 @@ public class TypeOracleBuilder {
     assert (false);
     return null;
   }
- 
+
   private Class<?> getClassLiteral(TreeLogger logger, TypeBinding resolvedType) {
     JType type = resolveType(logger, resolvedType);
     if (type == null) {
@@ -916,9 +914,9 @@ public class TypeOracleBuilder {
        */
       qualifiedName = CharOperation.toString(binding.compoundName);
     }
-   
+
     qualifiedName = qualifiedName.replace('$', '.');
-    
+
     return qualifiedName;
   }
 
