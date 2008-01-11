@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
 import com.google.gwt.dev.js.JsSourceGenerationVisitor;
+import com.google.gwt.dev.js.JsStringInterner;
 import com.google.gwt.dev.js.JsSymbolResolver;
 import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.ast.JsName;
@@ -211,6 +212,7 @@ public class SelectionScriptGenerator {
         parser.parseInto(topScope, jsProgram.getGlobalBlock(), r, 1);
         JsSymbolResolver.exec(jsProgram);
         if (obfuscate) {
+          JsStringInterner.exec(jsProgram);
           JsObfuscateNamer.exec(jsProgram);
         } else {
           JsVerboseNamer.exec(jsProgram);
