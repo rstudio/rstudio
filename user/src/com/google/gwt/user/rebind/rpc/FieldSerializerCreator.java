@@ -369,7 +369,16 @@ public class FieldSerializerCreator {
   }
 
   private void writeInstatiateMethod() {
-    if (!serializationOracle.maybeInstantiated(serializableClass)) {
+    if (serializableClass.isAbstract()) {
+      /*
+       * Field serializers are shared by all of the RemoteService proxies in a
+       * compilation. Therefore, we have to generate an instantiate method even
+       * if the type is not instantiable relative to the RemoteService which
+       * caused this field serializer to be created. If the type is not
+       * instantiable relative to any of the RemoteService proxies, dead code
+       * optimizations will cause the method to be removed from the compiled
+       * output.
+       */
       return;
     }
 
