@@ -78,7 +78,7 @@ class CustomFieldSerializerValidator {
           serializee.getQualifiedSourceName()));
     }
 
-    if (!Shared.isDefaultInstantiable(serializee)) {
+    if (!serializee.isDefaultInstantiable() && !serializee.isAbstract()) {
       if (!hasInstantiationMethod(streamReaderClass, serializer, serializee)) {
         // Not default instantiable and no instantiate method was found.
         reasons.add(MessageFormat.format(NO_INSTANTIATE_METHOD,

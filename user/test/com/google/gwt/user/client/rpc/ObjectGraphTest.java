@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package com.google.gwt.user.client.rpc;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
+import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
 
 /**
  * TODO: document me.
@@ -78,6 +79,24 @@ public class ObjectGraphTest extends GWTTestCase {
       public void onSuccess(Object result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.isValidComplexCyclicGraph((SerializableDoublyLinkedNode) result));
+        finishTest();
+      }
+    });
+  }
+  
+  public void testPrivateNoArg() {
+    delayTestFinish(TEST_DELAY);
+
+    ObjectGraphTestServiceAsync service = getServiceAsync();
+    final SerializablePrivateNoArg node = TestSetFactory.createPrivateNoArg();
+    service.echo_PrivateNoArg(node, new AsyncCallback() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(Object result) {
+        assertNotNull(result);
+        assertTrue(TestSetValidator.isValid((SerializablePrivateNoArg) result));
         finishTest();
       }
     });

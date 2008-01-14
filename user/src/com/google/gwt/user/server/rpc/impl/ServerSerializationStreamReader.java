@@ -23,6 +23,7 @@ import com.google.gwt.user.server.rpc.SerializationPolicy;
 import com.google.gwt.user.server.rpc.SerializationPolicyProvider;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -499,7 +500,8 @@ public final class ServerSerializationStreamReader extends
 
   private Object instantiate(Class<?> customSerializer, Class<?> instanceClass)
       throws InstantiationException, IllegalAccessException,
-      IllegalArgumentException, InvocationTargetException {
+      IllegalArgumentException, InvocationTargetException,
+      NoSuchMethodException {
     if (customSerializer != null) {
       try {
         Method instantiate = customSerializer.getMethod("instantiate",
@@ -520,7 +522,9 @@ public final class ServerSerializationStreamReader extends
       assert (ordinal >= 0 && ordinal < enumConstants.length);
       return enumConstants[ordinal];
     } else {
-      return instanceClass.newInstance();
+      Constructor<?> constructor = instanceClass.getDeclaredConstructor();
+      constructor.setAccessible(true);
+      return constructor.newInstance();
     }
   }
 

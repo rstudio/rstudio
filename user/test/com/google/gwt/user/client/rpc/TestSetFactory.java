@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -167,6 +167,24 @@ public class TestSetFactory {
   }
 
   /**
+   * Tests that classes with a private no-arg constructor can be serialized.
+   */
+  public static class SerializablePrivateNoArg implements IsSerializable {
+    private int value;
+
+    private SerializablePrivateNoArg() {
+    }
+
+    public SerializablePrivateNoArg(int value) {
+      this.value = value;
+    }
+
+    public int getValue() {
+      return value;
+    }
+  }
+
+  /**
    * TODO: document me.
    */
   public static class SerializableSet extends HashSet implements IsSerializable {
@@ -293,6 +311,10 @@ public class TestSetFactory {
     return new short[] {
         Short.MAX_VALUE, Short.MIN_VALUE, Short.MAX_VALUE, Short.MIN_VALUE};
   }
+  
+  public static SerializablePrivateNoArg createPrivateNoArg() {
+    return new SerializablePrivateNoArg(1);
+  }
 
   public static Short[] createShortArray() {
     return new Short[] {
@@ -305,8 +327,9 @@ public class TestSetFactory {
    * to make sure they are handled properly.
    */
   public static String[] createStringArray() {
-    return new String[] {null, "", "one", "two", "toString", "watch",
-        "prototype", "eval", "valueOf", "constructor", "__proto__" };
+    return new String[] {
+        null, "", "one", "two", "toString", "watch", "prototype", "eval",
+        "valueOf", "constructor", "__proto__"};
   }
 
   public static Vector createVector() {

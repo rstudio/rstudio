@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package com.google.gwt.user.server.rpc;
 import com.google.gwt.user.client.rpc.ObjectGraphTestService;
 import com.google.gwt.user.client.rpc.TestSetValidator;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
+import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
 
 /**
  * TODO: document me.
@@ -50,6 +51,15 @@ public class ObjectGraphTestServiceImpl extends RemoteServiceServlet implements
     }
 
     return root;
+  }
+
+  public SerializablePrivateNoArg echo_PrivateNoArg(
+      SerializablePrivateNoArg node) {
+    if (!TestSetValidator.isValid(node)) {
+      throw new RuntimeException();
+    }
+
+    return node;
   }
 
   public SerializableDoublyLinkedNode echo_ComplexCyclicGraph(

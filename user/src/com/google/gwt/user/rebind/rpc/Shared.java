@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JConstructor;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
@@ -51,33 +50,6 @@ class Shared {
 
   static String getStreamWriteMethodNameFor(JType type) {
     return "write" + getCallSuffix(type);
-  }
-
-  /**
-   * Returns <code>true</code> if the type is a non-abstract class that either
-   * has no constructors or it has a non-private, no argument constructor.
-   * 
-   * @param type
-   * @return <code>true</code> if the type is a non-abstract class that either
-   *         has no constructors or it has a non-private, no argument
-   *         constructor
-   */
-  static boolean isDefaultInstantiable(JClassType type) {
-    if (type.isInterface() != null || type.isAbstract()) {
-      return false;
-    }
-
-    boolean isDefaultInstantiable = false;
-    if (type.getConstructors().length == 0) {
-      isDefaultInstantiable = true;
-    } else {
-      JConstructor ctor = type.findConstructor(new JType[0]);
-      if (ctor != null && !ctor.isPrivate()) {
-        isDefaultInstantiable = true;
-      }
-    }
-
-    return isDefaultInstantiable;
   }
 
   /**

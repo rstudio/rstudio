@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -828,11 +828,11 @@ public class SerializableTypeOracleBuilder {
         return false;
       }
 
-      if (!Shared.isDefaultInstantiable(type)) {
+      if (!type.isDefaultInstantiable()) {
         // Warn and return false.
         logger.log(
             TreeLogger.WARN,
-            "Was not default instantiable (it must have a zero-argument, non-private constructor or no constructors at all)",
+            "Was not default instantiable (it must have a zero-argument constructor or no constructors at all)",
             null);
         return false;
       }

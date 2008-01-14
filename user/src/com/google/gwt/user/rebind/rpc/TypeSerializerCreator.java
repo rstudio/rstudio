@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -338,17 +338,17 @@ public class TypeSerializerCreator {
        * Only classes with custom field serializers that do no declare
        * instantiate methods get here
        */
-      srcWriter.print("private static ");
+      srcWriter.print("private static native ");
       srcWriter.print(type.getQualifiedSourceName());
       srcWriter.print(" ");
       srcWriter.print(getCreateMethodName(type));
-      srcWriter.println("(SerializationStreamReader streamReader) throws SerializationException {");
+      srcWriter.println("(SerializationStreamReader streamReader) throws SerializationException /*-{");
       srcWriter.indent();
-      srcWriter.print("return new ");
+      srcWriter.print("return @");
       srcWriter.print(type.getQualifiedSourceName());
-      srcWriter.println("();");
+      srcWriter.println("::new()();");
       srcWriter.outdent();
-      srcWriter.println("}");
+      srcWriter.println("}-*/;");
       srcWriter.println();
     }
   }
