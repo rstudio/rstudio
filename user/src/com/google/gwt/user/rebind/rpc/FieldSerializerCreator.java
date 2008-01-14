@@ -369,7 +369,7 @@ public class FieldSerializerCreator {
   }
 
   private void writeInstatiateMethod() {
-    if (serializableClass.isAbstract()) {
+    if (serializableClass.isAbstract() && serializableClass.isEnum() == null) {
       /*
        * Field serializers are shared by all of the RemoteService proxies in a
        * compilation. Therefore, we have to generate an instantiate method even
@@ -378,6 +378,10 @@ public class FieldSerializerCreator {
        * instantiable relative to any of the RemoteService proxies, dead code
        * optimizations will cause the method to be removed from the compiled
        * output.
+       * 
+       * Enumerated types require an instantiate method even if they are 
+       * abstract.  You will have an abstract enum in cases where the enum type
+       * is sub-classed.
        */
       return;
     }
