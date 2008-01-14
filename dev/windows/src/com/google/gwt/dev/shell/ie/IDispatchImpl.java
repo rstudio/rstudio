@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 package com.google.gwt.dev.shell.ie;
 
 import com.google.gwt.dev.shell.CompilingClassLoader;
+import com.google.gwt.dev.shell.MethodAdaptor;
 import com.google.gwt.dev.shell.ModuleSpace;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 
@@ -28,7 +29,6 @@ import org.eclipse.swt.ole.win32.OleAutomation;
 import org.eclipse.swt.ole.win32.Variant;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 
 /**
@@ -113,8 +113,8 @@ abstract class IDispatchImpl extends COMObject {
   protected static final int DISP_E_UNKNOWNNAME = 0x80020006;
 
   protected static Variant callMethod(CompilingClassLoader cl, Object jthis,
-      Variant[] params, Method method) throws InvocationTargetException,
-      HResultException {
+      Variant[] params, MethodAdaptor method) throws InstantiationException,
+      InvocationTargetException, HResultException {
     // TODO: make sure we have enough args! It's okay if there are too many.
     Object[] javaParams = SwtOleGlue.convertVariantsToObjects(
         method.getParameterTypes(), params, "Calling method '"
@@ -245,7 +245,8 @@ abstract class IDispatchImpl extends COMObject {
    * Override this method to implement Invoke().
    */
   protected abstract Variant invoke(int dispId, int flags, Variant[] params)
-      throws HResultException, InvocationTargetException;
+      throws HResultException, InstantiationException,
+      InvocationTargetException;
 
   private Variant[] extractVariantArrayFromDispParamsPtr(int pDispParams) {
     DISPPARAMS dispParams = new DISPPARAMS();

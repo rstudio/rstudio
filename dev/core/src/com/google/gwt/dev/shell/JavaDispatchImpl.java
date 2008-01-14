@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.shell;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
@@ -83,8 +84,15 @@ public class JavaDispatchImpl implements JavaDispatch {
    * @param dispId the unique number of a method
    * @return the method
    */
-  public Method getMethod(int dispId) {
-    return (Method) getMember(dispId);
+  public MethodAdaptor getMethod(int dispId) {
+    Member m = getMember(dispId);
+    if (m instanceof Method) {
+      return new MethodAdaptor((Method) m);
+    } else if (m instanceof Constructor) {
+      return new MethodAdaptor((Constructor<?>) m);
+    } else {
+      throw new RuntimeException();
+    }
   }
 
   public Object getTarget() {
@@ -112,7 +120,8 @@ public class JavaDispatchImpl implements JavaDispatch {
       return false;
     }
 
-    return getMember(dispId) instanceof Method;
+    Member m = getMember(dispId);
+    return (m instanceof Method) || (m instanceof Constructor);
   }
 
   /**

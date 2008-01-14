@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.shell;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
@@ -67,17 +68,24 @@ public class DispatchClassInfo {
     memberIdByName.put(sig, new Integer(index));
   }
 
-  /**
-   * @see com.google.gwt.server.magic.js.MethodInfo for the corresponding
-   *      algorithm written in terms of the QDox model.
-   */
-  private String getJsniSignature(Method method) {
-    String name = method.getName();
+  private String getJsniSignature(Member member) {
+    String name;
+    Class<?>[] paramTypes;
+
+    if (member instanceof Method) {
+      name = member.getName();
+      paramTypes = ((Method) member).getParameterTypes();
+    } else if (member instanceof Constructor) {
+      name = "new";
+      paramTypes = ((Constructor<?>) member).getParameterTypes();
+    } else {
+      throw new RuntimeException("Unexpected member type "
+          + member.getClass().getName());
+    }
 
     StringBuffer sb = new StringBuffer();
     sb.append(name);
     sb.append("(");
-    Class<?>[] paramTypes = method.getParameterTypes();
     for (int i = 0; i < paramTypes.length; ++i) {
       Class<?> type = paramTypes[i];
       String typeSig = getTypeSig(type);
@@ -132,15 +140,25 @@ public class DispatchClassInfo {
       memberById = new ArrayList<Member>();
       memberById.add(null); // 0 is reserved; it's magic on Win32
       memberIdByName = new HashMap<String, Integer>();
-      lazyInitTargetMembersUsingReflectionHelper(cls);
+      lazyInitTargetMembersUsingReflectionHelper(cls, true);
     }
   }
 
-  private void lazyInitTargetMembersUsingReflectionHelper(Class<?> targetClass) {
+  private void lazyInitTargetMembersUsingReflectionHelper(Class<?> targetClass,
+      boolean addConstructors) {
     // Start by analyzing the superclass recursively.
     Class<?> superclass = targetClass.getSuperclass();
     if (superclass != null) {
-      lazyInitTargetMembersUsingReflectionHelper(superclass);
+      lazyInitTargetMembersUsingReflectionHelper(superclass, false);
+    }
+
+    if (addConstructors) {
+      Constructor<?>[] constructors = targetClass.getDeclaredConstructors();
+      for (Constructor<?> c : constructors) {
+        c.setAccessible(true);
+        String sig = getJsniSignature(c);
+        addMember(c, sig);
+      }
     }
 
     /*

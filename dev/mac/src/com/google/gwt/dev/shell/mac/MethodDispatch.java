@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,12 +18,11 @@ package com.google.gwt.dev.shell.mac;
 import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.shell.JsValue;
 import com.google.gwt.dev.shell.JsValueGlue;
+import com.google.gwt.dev.shell.MethodAdaptor;
 import com.google.gwt.dev.shell.ModuleSpace;
 import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchMethod;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 
 /**
  * Wraps an arbitrary Java Method as a Dispatchable component. The class was
@@ -33,9 +32,9 @@ class MethodDispatch implements DispatchMethod {
 
   private final CompilingClassLoader classLoader;
 
-  private final Method method;
+  private final MethodAdaptor method;
 
-  public MethodDispatch(CompilingClassLoader classLoader, Method method) {
+  public MethodDispatch(CompilingClassLoader classLoader, MethodAdaptor method) {
     this.classLoader = classLoader;
     this.method = method;
   }
@@ -59,8 +58,9 @@ class MethodDispatch implements DispatchMethod {
         throw new RuntimeException("Too many arguments to " + method);
       }
       Object jthis = null;
-      if ((method.getModifiers() & Modifier.STATIC) == 0) {
-        jthis = JsValueGlue.get(jsthis, method.getDeclaringClass(), "invoke this");
+      if (method.needsThis()) {
+        jthis = JsValueGlue.get(jsthis, method.getDeclaringClass(),
+            "invoke this");
       }
       for (int i = 0; i < argc; ++i) {
         args[i] = JsValueGlue.get(jsargs[i], paramTypes[i], "invoke args");
@@ -77,6 +77,12 @@ class MethodDispatch implements DispatchMethod {
         JsValueGlue.set(returnValue, classLoader, method.getReturnType(),
             result);
         return returnValue.getJsValue();
+      } catch (InstantiationException e) {
+        // If we get here, it means an exception is being thrown from
+        // Java back into JavaScript
+        ModuleSpace.setThrownJavaException(e.getCause());
+        LowLevelSaf.raiseJavaScriptException(execState, LowLevelSaf.jsNull());
+        return LowLevelSaf.jsUndefined();
       } catch (InvocationTargetException e) {
         // If we get here, it means an exception is being thrown from
         // Java back into JavaScript

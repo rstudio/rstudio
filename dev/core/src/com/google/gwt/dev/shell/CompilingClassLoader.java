@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import com.google.gwt.util.tools.Utility;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -232,7 +231,7 @@ public final class CompilingClassLoader extends ClassLoader {
 
   private final TreeLogger logger;
 
-  private final Map<Method, Object> methodToDispatch = new HashMap<Method, Object>();
+  private final Map<MethodAdaptor, Object> methodToDispatch = new HashMap<MethodAdaptor, Object>();
 
   private final TypeOracle typeOracle;
 
@@ -297,13 +296,13 @@ public final class CompilingClassLoader extends ClassLoader {
     return dispClassInfoOracle.getDispId(jsniMemberRef);
   }
 
-  public Object getMethodDispatch(Method method) {
+  public Object getMethodDispatch(MethodAdaptor method) {
     synchronized (methodToDispatch) {
       return methodToDispatch.get(method);
     }
   }
 
-  public void putMethodDispatch(Method method, Object methodDispatch) {
+  public void putMethodDispatch(MethodAdaptor method, Object methodDispatch) {
     synchronized (methodToDispatch) {
       methodToDispatch.put(method, methodDispatch);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import com.google.gwt.dev.jjs.test.EnumsTest;
 import com.google.gwt.dev.jjs.test.HostedTest;
 import com.google.gwt.dev.jjs.test.InnerClassTest;
 import com.google.gwt.dev.jjs.test.InnerOuterSuperTest;
+import com.google.gwt.dev.jjs.test.JsniConstructorTest;
 import com.google.gwt.dev.jjs.test.MemberShadowingTest;
 import com.google.gwt.dev.jjs.test.MethodBindTest;
 import com.google.gwt.dev.jjs.test.MethodCallTest;
@@ -56,6 +57,7 @@ public class CompilerSuite {
     suite.addTestSuite(HostedTest.class);
     suite.addTestSuite(InnerClassTest.class);
     suite.addTestSuite(InnerOuterSuperTest.class);
+    suite.addTestSuite(JsniConstructorTest.class);
     suite.addTestSuite(MemberShadowingTest.class);
     suite.addTestSuite(MethodBindTest.class);
     suite.addTestSuite(MethodCallTest.class);

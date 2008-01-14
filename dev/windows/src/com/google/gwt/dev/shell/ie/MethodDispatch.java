@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,13 +17,13 @@ package com.google.gwt.dev.shell.ie;
 
 import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.shell.JsValueGlue;
+import com.google.gwt.dev.shell.MethodAdaptor;
 
 import org.eclipse.swt.internal.ole.win32.COM;
 import org.eclipse.swt.internal.ole.win32.IDispatch;
 import org.eclipse.swt.ole.win32.Variant;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 /**
  * Wraps an arbitrary Java Method as an Automation-compatible server. The class
@@ -50,9 +50,9 @@ class MethodDispatch extends IDispatchImpl {
 
   private final CompilingClassLoader classLoader;
 
-  private final Method method;
+  private final MethodAdaptor method;
 
-  public MethodDispatch(CompilingClassLoader classLoader, Method method) {
+  public MethodDispatch(CompilingClassLoader classLoader, MethodAdaptor method) {
     this.classLoader = classLoader;
     this.method = method;
   }
@@ -86,7 +86,8 @@ class MethodDispatch extends IDispatchImpl {
    */
   @Override
   protected Variant invoke(int id, int flags, Variant[] params)
-      throws HResultException, InvocationTargetException {
+      throws HResultException, InstantiationException,
+      InvocationTargetException {
     switch (id) {
       case 0:
         // An implicit access.
@@ -105,9 +106,10 @@ class MethodDispatch extends IDispatchImpl {
           return new Variant(toString());
         } else if ((flags & COM.DISPATCH_PROPERTYGET) != 0) {
           // "m.toString"
-          Method toStringMethod;
+          MethodAdaptor toStringMethod;
           try {
-            toStringMethod = Object.class.getDeclaredMethod("toString");
+            toStringMethod = new MethodAdaptor(
+                Object.class.getDeclaredMethod("toString"));
           } catch (Throwable e) {
             throw new RuntimeException(
                 "Failed to get Object.toString() method", e);

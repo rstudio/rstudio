@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,6 +20,7 @@ import com.google.gwt.dev.shell.JavaDispatch;
 import com.google.gwt.dev.shell.JavaDispatchImpl;
 import com.google.gwt.dev.shell.JsValueGlue;
 import com.google.gwt.dev.shell.LowLevel;
+import com.google.gwt.dev.shell.MethodAdaptor;
 
 import org.eclipse.swt.internal.ole.win32.COM;
 import org.eclipse.swt.internal.ole.win32.IDispatch;
@@ -27,7 +28,6 @@ import org.eclipse.swt.ole.win32.Variant;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 /**
  * Wraps an arbitrary Java Object as an Automation-compatible server. The class
@@ -128,7 +128,8 @@ class IDispatchProxy extends IDispatchImpl {
 
   @Override
   protected Variant invoke(int dispId, int flags, Variant[] params)
-      throws HResultException, InvocationTargetException {
+      throws HResultException, InstantiationException,
+      InvocationTargetException {
     try {
       // Whatever the caller asks for, try to find it via reflection.
       //
@@ -147,7 +148,7 @@ class IDispatchProxy extends IDispatchImpl {
 
       } else if (dispId > 0) {
         if (javaDispatch.isMethod(dispId)) {
-          Method method = javaDispatch.getMethod(dispId);
+          MethodAdaptor method = javaDispatch.getMethod(dispId);
           if ((flags & COM.DISPATCH_METHOD) != 0) {
             // This is a method call.
             return callMethod(classLoader, getTarget(), params, method);

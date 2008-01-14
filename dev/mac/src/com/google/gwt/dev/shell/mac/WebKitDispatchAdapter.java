@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,11 +20,11 @@ import com.google.gwt.dev.shell.JavaDispatch;
 import com.google.gwt.dev.shell.JavaDispatchImpl;
 import com.google.gwt.dev.shell.JsValue;
 import com.google.gwt.dev.shell.JsValueGlue;
+import com.google.gwt.dev.shell.MethodAdaptor;
 import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchMethod;
 import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchObject;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
 /**
  * Wraps an arbitrary Java Object as a Dispatch component. The class was
@@ -77,7 +77,7 @@ class WebKitDispatchAdapter implements DispatchObject {
       int jsval = jsValue.getJsValue();
       return jsval;
     } else {
-      Method method = javaDispatch.getMethod(dispId);
+      MethodAdaptor method = javaDispatch.getMethod(dispId);
       DispatchMethod dispMethod = (DispatchMethod) classLoader.getMethodDispatch(method);
       if (dispMethod == null) {
         dispMethod = new MethodDispatch(classLoader, method);

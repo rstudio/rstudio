@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package com.google.gwt.dev.shell.ie;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.shell.BrowserWidget;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
+import com.google.gwt.dev.shell.MethodAdaptor;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
 
 import org.eclipse.swt.SWTException;
@@ -136,7 +137,8 @@ public class BrowserWidgetIE6 extends BrowserWidget {
           try {
             Method gwtOnLoadMethod = getClass().getMethod("gwtOnLoad",
                 new Class[] {IDispatch.class, String.class});
-            IDispatchImpl funcObj = new MethodDispatch(null, gwtOnLoadMethod);
+            MethodAdaptor methodAdaptor = new MethodAdaptor(gwtOnLoadMethod);
+            IDispatchImpl funcObj = new MethodDispatch(null, methodAdaptor);
             IDispatch disp = new IDispatch(funcObj.getAddress());
             disp.AddRef();
             return new Variant(disp);

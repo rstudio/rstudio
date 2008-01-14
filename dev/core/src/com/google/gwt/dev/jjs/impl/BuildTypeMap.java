@@ -19,19 +19,25 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JEnumType;
+import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
+import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JParameter;
+import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
+import com.google.gwt.dev.jjs.ast.JReturnStatement;
+import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
+import com.google.gwt.dev.js.JsAbstractSymbolResolver;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
-import com.google.gwt.dev.js.JsAbstractSymbolResolver;
 import com.google.gwt.dev.js.JsParserException.SourceDetail;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsFunction;
@@ -74,6 +80,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -231,6 +238,17 @@ public class BuildTypeMap {
         }
 
         typeMap.put(b, newMethod);
+
+        // Now let's implicitly create a static function called 'new' that will
+        // allow construction from JSNI methods
+        if (!enclosingType.isAbstract()) {
+          ReferenceBinding enclosingBinding = ctorDecl.binding.declaringClass.enclosingType();
+          JReferenceType outerType = enclosingBinding == null ? null
+              : (JReferenceType) typeMap.get(enclosingBinding);
+          createSyntheticConstructor(newMethod,
+              ctorDecl.binding.declaringClass.isStatic(), outerType);
+        }
+
         return true;
       } catch (Throwable e) {
         throw translateException(ctorDecl, e);
@@ -354,6 +372,79 @@ public class BuildTypeMap {
       JParameter param = program.createParameter(null, argName.toCharArray(),
           type, true, false, enclosingMethod);
       return param;
+    }
+
+    /**
+     * Create a method that invokes the specified constructor. This is done as
+     * an aid to JSNI users to be able to invoke a Java constructor via a method
+     * named ::new.
+     * 
+     * @param constructor the constructor to invoke
+     * @param staticClass indicates if the class being constructed is static
+     * @param enclosingType the type that encloses the type that is to be
+     *          constructed. This may be <code>null</code> if the class is a
+     *          top-level type.
+     */
+    private JMethod createSyntheticConstructor(JMethod constructor,
+        boolean staticClass, JReferenceType enclosingType) {
+      JClassType type = (JClassType) constructor.getEnclosingType();
+
+      // Define the method
+      JMethod synthetic = program.createMethod(null, "new".toCharArray(), type,
+          type, false, true, true, false, false);
+
+      // new Foo() : Create the instance
+      JNewInstance newInstance = new JNewInstance(program, null, type);
+
+      // (new Foo()).Foo() : Invoke the constructor method on the instance
+      JMethodCall call = new JMethodCall(program, null, newInstance,
+          constructor);
+      List<JExpression> args = call.getArgs();
+
+      /*
+       * If the type isn't static, make the first parameter a reference to the
+       * instance of the enclosing class. It's the first instance to allow the
+       * JSNI qualifier to be moved without affecting evaluation order.
+       */
+      JParameter enclosingInstance = null;
+      if (!staticClass) {
+        enclosingInstance = program.createParameter(null,
+            "this$outer".toCharArray(), enclosingType, false, false, synthetic);
+      }
+
+      /*
+       * In one pass, add the parameters to the synthetic constructor and
+       * arguments to the method call.
+       */
+      for (Iterator<JParameter> i = constructor.params.iterator(); i.hasNext();) {
+        JParameter param = i.next();
+        /*
+         * This supports x.new Inner() by passing the enclosing instance
+         * implicitly as the last argument to the constructor.
+         */
+        if (enclosingInstance != null && !i.hasNext()) {
+          args.add(new JParameterRef(program, null, enclosingInstance));
+        } else {
+          JParameter syntheticParam = program.createParameter(null,
+              param.getName().toCharArray(), param.getType(), param.isFinal(),
+              param.isThis(), synthetic);
+          args.add(new JParameterRef(program, null, syntheticParam));
+        }
+      }
+
+      // Lock the method.
+      synthetic.freezeParamTypes();
+
+      // return (new Foo()).Foo() : The only statement in the function
+      JReturnStatement ret = new JReturnStatement(program, null, call);
+
+      // Add the return statement to the method body
+      JMethodBody body = (JMethodBody) synthetic.getBody();
+      List<JStatement> statements = body.getStatements();
+      statements.add(ret);
+
+      // Done
+      return synthetic;
     }
 
     private JMethodBody findEnclosingMethod(BlockScope scope) {
@@ -820,5 +911,4 @@ public class BuildTypeMap {
       unitDecls[i].traverse(v1, unitDecls[i].scope);
     }
   }
-
 }
