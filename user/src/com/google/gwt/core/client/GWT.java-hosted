@@ -33,28 +33,9 @@ public final class GWT {
     }
   };
 
-  public static UncaughtExceptionHandler getUncaughtExceptionHandler() {
-    return sUncaughtExceptionHandler;
-  }
-
-  public static void setUncaughtExceptionHandler(
-      UncaughtExceptionHandler handler) {
-    sUncaughtExceptionHandler = handler;
-  }
-
   public static <T> T create(Class<?> classLiteral) {
     // deferred binding at runtime
     return ShellGWT.create(classLiteral);
-  }
-
-  public static String getTypeName(Object o) {
-    // uses reflection in hosted mode
-    return ShellGWT.getTypeName(o);
-  }
-
-  public static boolean isScript() {
-    // false in hosted mode
-    return false;
   }
 
   public static String getHostPageBaseURL() {
@@ -69,8 +50,27 @@ public final class GWT {
     return Impl.getModuleName();
   }
 
+  public static String getTypeName(Object o) {
+    // uses reflection in hosted mode
+    return ShellGWT.getTypeName(o);
+  }
+
+  public static UncaughtExceptionHandler getUncaughtExceptionHandler() {
+    return sUncaughtExceptionHandler;
+  }
+
+  public static boolean isScript() {
+    // false in hosted mode
+    return false;
+  }
+
   public static void log(String message, Throwable e) {
     // logs to the shell logger in hosted mode
     ShellGWT.log(message, e);
+  }
+
+  public static void setUncaughtExceptionHandler(
+      UncaughtExceptionHandler handler) {
+    sUncaughtExceptionHandler = handler;
   }
 }
