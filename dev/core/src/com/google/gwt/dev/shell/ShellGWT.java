@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.shell;
 
+import com.google.gwt.dev.About;
+
 /**
  * This class is the hosted-mode peer for {@link com.google.gwt.core.client.GWT}.
  */
@@ -27,6 +29,10 @@ public class ShellGWT {
   public static String getTypeName(Object o) {
     return o != null ? o.getClass().getName() : null;
   }
+
+  public static String getVersion() {
+    return About.GWT_VERSION_NUM;
+  };
 
   public static void log(String message, Throwable e) {
     JavaScriptHost.log(message, e);

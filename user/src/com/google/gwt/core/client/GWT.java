@@ -23,7 +23,8 @@ package com.google.gwt.core.client;
 public final class GWT {
   /*
    * This is the web mode version of this class. Because it's so special,
-   * there's also a hosted mode version. See GWT.java-hosted.
+   * there's also a hosted mode version. See GWT.java-hosted. Do NOT change the
+   * public API of this class without also updating GWT.java-hosted!
    */
 
   /**
@@ -121,6 +122,10 @@ public final class GWT {
   public static UncaughtExceptionHandler getUncaughtExceptionHandler() {
     return sUncaughtExceptionHandler;
   }
+
+  public static native String getVersion() /*-{
+    return $gwt_version;
+  }-*/;
 
   /**
    * Determines whether or not the running program is script or bytecode.

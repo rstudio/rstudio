@@ -59,6 +59,10 @@ public final class GWT {
     return sUncaughtExceptionHandler;
   }
 
+  public static String getVersion() {
+    return ShellGWT.getVersion();
+  };
+
   public static boolean isScript() {
     // false in hosted mode
     return false;
