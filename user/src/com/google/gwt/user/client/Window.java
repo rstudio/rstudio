@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,8 +17,11 @@ package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.http.client.URL;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class provides access to the browser window's methods, properties, and
@@ -26,7 +29,150 @@ import java.util.ArrayList;
  */
 public class Window {
 
+  /**
+   * This class provides access to the browser's location's object. The location
+   * object contains information about the current URL and methods to manipulate
+   * it. <code>Location</code> is a very simple wrapper, so not all browser quirks are hidden from
+   * the user.
+   * 
+   */
+  public static class Location {
+    private static Map<String, String> paramMap;
+
+    /**
+     * Assigns the window to a new URL. All GWT state will be lost.
+     * 
+     * @param newURL the new URL
+     */
+    public static native void assign(String newURL) /*-{
+      $wnd.location.assign(newURL);
+    }-*/;
+
+    /**
+     * Gets the string to the right of the URL's hash.
+     * 
+     * @return the string to the right of the URL's hash.
+     */
+
+    public static native String getHash() /*-{
+      return $wnd.location.hash;
+    }-*/;
+
+    /**
+     * Gets the URL's host and port name.
+     * 
+     * @return the host and port name
+     */
+    public static native String getHost() /*-{
+      return $wnd.location.host;
+    }-*/;
+
+    /**
+     * Gets the URL's host name.
+     * 
+     * @return the host name
+     */
+    public static native String getHostName() /*-{
+      return $wnd.location.hostname;
+    }-*/;
+
+    /**
+     * Gets the entire URL.
+     * 
+     * @return the URL
+     */
+    public static native String getHref() /*-{
+      return $wnd.location.href;
+    }-*/;
+
+    /**
+     * Gets the URL's parameter of the specified name.
+     * 
+     * @param name the name of the URL's parameter
+     * @return the value of the URL's parameter
+     */
+    public static String getParameter(String name) {
+      return ensureParameterMap().get(name);
+    }
+
+    /**
+     * Gets the path to the URL.
+     * 
+     * @return the path to the URL.
+     */
+    public static native String getPath() /*-{
+      return $wnd.location.pathname;
+    }-*/;
+
+    /**
+     * Gets the URL's port.
+     * 
+     * @return the URL's port
+     */
+    public static native String getPort() /*-{
+      return $wnd.location.port;
+    }-*/;
+
+    /**
+     * Gets the URL's protocol.
+     * 
+     * @return the URL's protocol.
+     */
+    public static native String getProtocol() /*-{
+      return $wnd.location.protocol;
+    }-*/;
+
+    /**
+     * Gets the URL's query string.
+     * 
+     * @return the URL's query string
+     */
+    public static native String getQueryString() /*-{
+      return $wnd.location.search;
+    }-*/;
+
+    /**
+     * Reloads the current browser window. All GWT state will be lost.
+     */
+    public static native void reload() /*-{
+      $wnd.location.reload();
+    }-*/;
+
+    /**
+     * Replaces the current URL with a new one. All GWT state will be lost. In
+     * the browser's history, the current URL will be replaced by the new URL.
+     * 
+     * @param newURL the new URL
+     */
+    public static native void replace(String newURL) /*-{
+      $wnd.location.replace(newURL);
+    }-*/;
+
+    private static Map<String, String> ensureParameterMap() {
+      if (paramMap == null) {
+        paramMap = new HashMap<String, String>();
+        String queryString = getQueryString();
+        if (queryString != null && queryString.length() > 1) {
+          String qs = queryString.substring(1);
+          for (String kvPair : qs.split("&")) {
+            String[] kv = kvPair.split("=");
+            if (kv.length > 1) {
+              paramMap.put(kv[0], URL.decode(kv[1]));
+            } else {
+              paramMap.put(kv[0], "");
+            }
+          }
+        }
+      }
+      return paramMap;
+    }
+
+    private Location() {
+    }
+  }
+
   private static boolean handlersAreInitialized;
+
   private static ArrayList<WindowCloseListener> closingListeners;
   private static ArrayList<WindowResizeListener> resizeListeners;
 
@@ -89,8 +235,8 @@ public class Window {
   }-*/;
 
   /**
-   * Gets the height of the browser window's client area excluding the
-   * scroll bar.
+   * Gets the height of the browser window's client area excluding the scroll
+   * bar.
    * 
    * @return the window's client height
    */
@@ -99,15 +245,15 @@ public class Window {
   }
 
   /**
-   * Gets the width of the browser window's client area excluding the
-   * vertical scroll bar.
+   * Gets the width of the browser window's client area excluding the vertical
+   * scroll bar.
    * 
    * @return the window's client width
    */
   public static int getClientWidth() {
     return DOM.windowGetClientWidth();
   }
- 
+
   /**
    * Gets the window's scroll left.
    * 
@@ -157,7 +303,7 @@ public class Window {
   public static native void print() /*-{
     $wnd.print();
   }-*/;
-  
+
   /**
    * Displays a request for information in a modal dialog box, along with the
    * standard 'OK' and 'Cancel' buttons.
@@ -206,15 +352,15 @@ public class Window {
   }-*/;
 
   /**
-   * Sets the status text for the window. Calling this method in Firefox
-   * has no effect.
+   * Sets the status text for the window. Calling this method in Firefox has no
+   * effect.
    * 
    * @param status the new message to display.
    */
   public static native void setStatus(String status) /*-{
     $wnd.status = status;
   }-*/;
-  
+
   /**
    * Sets the browser window's title.
    * 
@@ -280,7 +426,8 @@ public class Window {
     String ret = null;
     if (closingListeners != null) {
       for (WindowCloseListener listener : closingListeners) {
-        // If any listener wants to suppress the window closing event, then do so.
+        // If any listener wants to suppress the window closing event, then do
+        // so.
         String msg = listener.onWindowClosing();
         if (ret == null) {
           ret = msg;
@@ -324,7 +471,7 @@ public class Window {
       }
     );
   }-*/;
-  
+
   private static void maybeInitializeHandlers() {
     if (!handlersAreInitialized) {
       init();

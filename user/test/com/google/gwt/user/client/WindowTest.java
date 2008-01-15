@@ -28,17 +28,37 @@ public class WindowTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
+  public void testLocation() {
+    // testing reload, replace, and assign seemed to hang our junit harness. Therefore
+    // only testing subset of Location that is testable.
+
+    // As we have no control over these values we cannot assert much about them.
+    String hash = Window.Location.getHash();
+    String host = Window.Location.getHost();
+    String hostName = Window.Location.getHostName();
+    String href = Window.Location.getHref();
+    assertNull(Window.Location.getParameter("fuzzy bunny"));
+    String path = Window.Location.getPath();
+    String port = Window.Location.getPort();
+    String protocol = Window.Location.getProtocol();
+    String query = Window.Location.getQueryString();
+
+    // Check that the sum is equal to its parts.
+    assertEquals(host, hostName + ":" + port);
+    assertEquals(href, protocol + "//" + host + path + query + hash);
+  }
+
   /**
-   * Tests the ability of the Window to get the client size correctly
-   * with and without visible scroll bars.
+   * Tests the ability of the Window to get the client size correctly with and
+   * without visible scroll bars.
    */
   public void testGetClientSize() {
     // Get the dimensions without any scroll bars
     Window.enableScrolling(false);
     final int oldClientHeight = Window.getClientHeight();
     final int oldClientWidth = Window.getClientWidth();
-    assertTrue( oldClientHeight > 0 );
-    assertTrue( oldClientWidth > 0 );
+    assertTrue(oldClientHeight > 0);
+    assertTrue(oldClientWidth > 0);
 
     // Compare to the dimensions with scroll bars
     Window.enableScrolling(true);
@@ -48,9 +68,9 @@ public class WindowTest extends GWTTestCase {
     DeferredCommand.addCommand(new Command() {
       public void execute() {
         int newClientHeight = Window.getClientHeight();
-        int newClientWidth  = Window.getClientWidth();
-        assertTrue( newClientHeight < oldClientHeight );
-        assertTrue( newClientWidth < oldClientWidth );
+        int newClientWidth = Window.getClientWidth();
+        assertTrue(newClientHeight < oldClientHeight);
+        assertTrue(newClientWidth < oldClientWidth);
         finishTest();
       }
     });
