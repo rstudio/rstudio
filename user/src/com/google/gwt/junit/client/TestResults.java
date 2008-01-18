@@ -1,12 +1,12 @@
 /*
- * Copyright 2007 Google Inc.
- *
+ * Copyright 2008 Google Inc.
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,7 +25,7 @@ import java.util.ArrayList;
  * is constructed transparently within a benchmark and reported back to the
  * JUnit RPC server, JUnitHost. It's then shared (via JUnitMessageQueue) with
  * JUnitShell and aggregated in BenchmarkReport with other TestResults.
- *
+ * 
  * @skip
  * @see com.google.gwt.junit.client.impl.JUnitHost
  * @see com.google.gwt.junit.JUnitMessageQueue
@@ -34,27 +34,24 @@ import java.util.ArrayList;
  */
 public class TestResults implements IsSerializable {
 
-  // Computed at the server, via http header
-  String agent;
+  // Computed at the server, via HTTP header.
+  private String agent;
 
-  String host;
+  private String host;
 
   /**
    * The URL of the document on the browser (document.location). This is used to
    * locate the *cache.html document containing the generated JavaScript for the
    * test. In the case of hosted mode, this points (uselessly) to the nocache
    * file, because there is no generated JavaScript.
-   *
+   * 
    * Apparently, we can't get this value on the server-side because of the goofy
    * way HTTP_REFERER is set by different browser implementations of
    * XMLHttpRequest.
    */
-  String sourceRef;
+  private String sourceRef;
 
-  /**
-   * @gwt.typeArgs <com.google.gwt.junit.client.Trial>
-   */
-  List<Trial> trials;
+  private List<Trial> trials;
 
   public TestResults() {
     trials = new ArrayList<Trial>();
