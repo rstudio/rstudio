@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Test the {@link SerializationPolicyLoader} class.
@@ -71,6 +73,17 @@ public class SerializationPolicyLoaderTest extends TestCase {
     } catch (ClassNotFoundException e) {
       // expected to get here
     }
+    
+    // Test loading without collecting ClassNotFoundExceptions.
+    is.reset();
+    SerializationPolicyLoader.loadFromStream(is, null);
+
+    // Test loading and collecting ClassNotFoundExceptions.
+    List<ClassNotFoundException> classNotFoundExceptions = new ArrayList<ClassNotFoundException>();
+    is.reset();
+    SerializationPolicyLoader.loadFromStream(is, classNotFoundExceptions);
+    assertEquals(1, classNotFoundExceptions.size());
+    assertNotNull(classNotFoundExceptions.get(0));
   }
 
   /**

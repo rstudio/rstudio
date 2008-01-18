@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -59,9 +61,40 @@ public final class SerializationPolicyLoader {
    * @throws ParseException if the input stream is not properly formatted
    * @throws ClassNotFoundException if a class specified in the serialization
    *           policy cannot be loaded
+   * 
+   * @deprecated see {@link #loadFromStream(InputStream, List)}
    */
+  @Deprecated
   public static SerializationPolicy loadFromStream(InputStream inputStream)
       throws IOException, ParseException, ClassNotFoundException {
+    List<ClassNotFoundException> classNotFoundExceptions = new ArrayList<ClassNotFoundException>();
+    SerializationPolicy serializationPolicy = loadFromStream(inputStream,
+        classNotFoundExceptions);
+    if (!classNotFoundExceptions.isEmpty()) {
+      // Just report the first failure.
+      throw classNotFoundExceptions.get(0);
+    }
+
+    return serializationPolicy;
+  }
+
+  /**
+   * Loads a SerializationPolicy from an input stream and optionally record any
+   * {@link ClassNotFoundException}s.
+   * 
+   * @param inputStream stream to load the SerializationPolicy from.
+   * @param classNotFoundExceptions if not <code>null</code>, all of the
+   *          {@link ClassNotFoundException}s thrown while loading this
+   *          serialization policy will be added to this list
+   * @return a {@link SerializationPolicy} loaded from the input stream.
+   * 
+   * @throws IOException if an error occurs while reading the stream
+   * @throws ParseException if the input stream is not properly formatted
+   */
+  public static SerializationPolicy loadFromStream(InputStream inputStream,
+      List<ClassNotFoundException> classNotFoundExceptions) throws IOException,
+      ParseException {
+
     if (inputStream == null) {
       throw new NullPointerException("inputStream");
     }
@@ -91,9 +124,19 @@ public final class SerializationPolicyLoader {
         }
 
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        Class<?> clazz = Class.forName(binaryTypeName, false, contextClassLoader);
-        // TODO: Validate the instantiable string better.
-        whitelist.put(clazz, Boolean.valueOf(instantiable));
+
+        try {
+          Class<?> clazz = Class.forName(binaryTypeName, false, 
+              contextClassLoader);
+          // TODO: Validate the instantiable string better.
+          whitelist.put(clazz, Boolean.valueOf(instantiable));
+        } catch (ClassNotFoundException ex) {
+          // Ignore the error, but add it to the list of errors if one was
+          // provided.
+          if (classNotFoundExceptions != null) {
+            classNotFoundExceptions.add(ex);
+          }
+        }
       }
 
       line = br.readLine();

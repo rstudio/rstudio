@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -228,17 +228,11 @@ public class RemoteServiceServlet extends HttpServlet implements
       try {
         if (is != null) {
           try {
-            serializationPolicy = SerializationPolicyLoader.loadFromStream(is);
+            serializationPolicy = SerializationPolicyLoader.loadFromStream(is, null);
           } catch (ParseException e) {
             getServletContext().log(
                 "ERROR: Failed to parse the policy file '"
                     + serializationPolicyFilePath + "'", e);
-          } catch (ClassNotFoundException e) {
-            getServletContext().log(
-                "ERROR: Could not find class '" + e.getMessage()
-                    + "' listed in the serialization policy file '"
-                    + serializationPolicyFilePath + "'"
-                    + "; your server's classpath may be misconfigured", e);
           } catch (IOException e) {
             getServletContext().log(
                 "ERROR: Could not read the policy file '"

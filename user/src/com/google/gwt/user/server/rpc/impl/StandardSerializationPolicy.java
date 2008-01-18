@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -68,7 +68,7 @@ public class StandardSerializationPolicy extends SerializationPolicy {
       throw new SerializationException(
           "Type '"
               + clazz.getName()
-              + "' was not included in the set of types which can be deserialized by this SerializationPolicy. For security purposes, this type will not be deserialized.");
+              + "' was not included in the set of types which can be deserialized by this SerializationPolicy or its Class object could not be loaded. For security purposes, this type will not be deserialized.");
     }
   }
 
@@ -83,7 +83,7 @@ public class StandardSerializationPolicy extends SerializationPolicy {
       throw new SerializationException(
           "Type '"
               + clazz.getName()
-              + "' was not included in the set of types which can be serialized by this SerializationPolicy. For security purposes, this type will not be serialized.");
+              + "' was not included in the set of types which can be serialized by this SerializationPolicy or its Class object could not be loaded. For security purposes, this type will not be serialized.");
     }
   }
 
