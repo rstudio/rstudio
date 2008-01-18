@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -71,22 +70,6 @@ public class AstCompiler extends AbstractCompiler {
       return map.get(key);
     }
 
-    private CompilationUnitDeclaration[] getDeclarations() {
-      Set<CompilationUnitDeclaration> outSet = new HashSet<CompilationUnitDeclaration>();
-      for (Iterator<ArrayList<CompilationUnitDeclaration>> iter = map.values().iterator(); iter.hasNext();) {
-        List<CompilationUnitDeclaration> element = iter.next();
-        outSet.addAll(element);
-      }
-      CompilationUnitDeclaration[] out = new CompilationUnitDeclaration[outSet.size()];
-      int i = 0;
-      for (Iterator<CompilationUnitDeclaration> iter = outSet.iterator(); iter.hasNext();) {
-        CompilationUnitDeclaration element = iter.next();
-        out[i] = element;
-        i++;
-      }
-      return out;
-    }
-
     private void removeAll(Collection<String> c) {
       map.keySet().removeAll(c);
     }
@@ -98,7 +81,7 @@ public class AstCompiler extends AbstractCompiler {
     super(sourceOracle, false);
   }
 
-  public CompilationUnitDeclaration[] getCompilationUnitDeclarations(
+  public CompilationUnitDeclaration[] getChangedCompilationUnitDeclarations(
       TreeLogger logger, ICompilationUnit[] units) {
     List<ICompilationUnit> allUnits = Arrays.asList(units);
     List<ICompilationUnitAdapter> newUnits = new ArrayList<ICompilationUnitAdapter>();
@@ -117,12 +100,16 @@ public class AstCompiler extends AbstractCompiler {
     CompilationUnitDeclaration[] newCuds = compile(logger, toBeProcessed);
 
     // Put new cuds into cache.
+    List<CompilationUnitDeclaration> cudResults = new ArrayList<CompilationUnitDeclaration>();
     for (int i = 0; i < newCuds.length; i++) {
-      String newLoc = String.valueOf(newCuds[i].getFileName());
+      CompilationUnitDeclaration newCud = newCuds[i];
+      String newLoc = String.valueOf(newCud.getFileName());
       cachedResults.remove(newLoc);
-      cachedResults.add(newLoc, newCuds[i]);
+      cachedResults.add(newLoc, newCud);
+      cudResults.add(newCud);
     }
-    return cachedResults.getDeclarations();
+
+    return cudResults.toArray(new CompilationUnitDeclaration[] {});
   }
 
   public void invalidateChangedFiles(Set<String> changedFiles,

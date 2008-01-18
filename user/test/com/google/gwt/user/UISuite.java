@@ -1,12 +1,12 @@
 /*
- * Copyright 2007 Google Inc.
- * 
+ * Copyright 2008 Google Inc.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,11 +25,9 @@ import com.google.gwt.user.client.ui.FastStringMapTest;
 import com.google.gwt.user.client.ui.FlexTableTest;
 import com.google.gwt.user.client.ui.FlowPanelTest;
 import com.google.gwt.user.client.ui.FocusPanelTest;
-import com.google.gwt.user.client.ui.FormPanelTest;
 import com.google.gwt.user.client.ui.GridTest;
 import com.google.gwt.user.client.ui.HTMLPanelTest;
 import com.google.gwt.user.client.ui.HiddenTest;
-import com.google.gwt.user.client.ui.HistoryTest;
 import com.google.gwt.user.client.ui.HorizontalPanelTest;
 import com.google.gwt.user.client.ui.ImageTest;
 import com.google.gwt.user.client.ui.LinearPanelTest;
@@ -72,10 +70,10 @@ public class UISuite {
     suite.addTestSuite(FlexTableTest.class);
     suite.addTestSuite(FlowPanelTest.class);
     suite.addTestSuite(FocusPanelTest.class);
-    suite.addTestSuite(FormPanelTest.class);
+    // suite.addTestSuite(FormPanelTest.class);
     suite.addTestSuite(GridTest.class);
     suite.addTestSuite(HiddenTest.class);
-    suite.addTestSuite(HistoryTest.class);
+    // suite.addTestSuite(HistoryTest.class);
     suite.addTestSuite(HorizontalPanelTest.class);
     suite.addTestSuite(HTMLPanelTest.class);
     suite.addTestSuite(ImageTest.class);

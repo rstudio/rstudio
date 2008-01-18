@@ -35,6 +35,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
+import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.util.tools.ArgHandlerDisableAggressiveOptimization;
 import com.google.gwt.util.tools.ArgHandlerEnableAssertions;
 import com.google.gwt.util.tools.ArgHandlerExtra;
@@ -291,7 +292,7 @@ public class GWTShell extends ToolBase {
 
     /**
      * Load a module.
-     * 
+     *
      * @param moduleName name of the module to load
      * @param logger TreeLogger to use
      * @return the loaded module
@@ -788,8 +789,11 @@ public class GWTShell extends ToolBase {
       //
       final int serverPort = getPort();
 
+      PerfLogger.start("GWTShell.startup (Tomcat launch)");
       String whyFailed = EmbeddedTomcatServer.start(getTopLogger(), serverPort,
           outDir);
+      PerfLogger.end();
+
       if (whyFailed != null) {
         System.err.println(whyFailed);
         return false;

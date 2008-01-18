@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.dev.util.Empty;
+import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.log.ThreadLocalTreeLoggerProxy;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -52,6 +53,22 @@ import java.util.Set;
 public abstract class AbstractCompiler {
 
   /**
+   * A policy that can be set to affect which
+   * {@link org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration
+   * CompilationUnitDeclarations} the compiler processes.
+   */
+  public interface CachePolicy {
+
+    /**
+     * Return true if <code>cud</code> should be processed, otherwise false.
+     *
+     * @param cud a not <code>null</code> unit
+     * @return true iff <code>cud</code> should be fully processed
+     */
+    public boolean shouldProcess(CompilationUnitDeclaration cud);
+  }
+
+  /**
    * Adapted to hook the processing of compilation unit declarations so as to be
    * able to add additional compilation units based on the results of
    * previously-compiled ones. Examples of cases where this is useful include
@@ -60,6 +77,7 @@ public abstract class AbstractCompiler {
   private class CompilerImpl extends Compiler {
 
     private Set<CompilationUnitDeclaration> cuds;
+    private long jdtProcessNanos;
 
     public CompilerImpl(INameEnvironment environment,
         IErrorHandlingPolicy policy, Map<String, String> settings,
@@ -69,13 +87,27 @@ public abstract class AbstractCompiler {
 
     @Override
     public void compile(ICompilationUnit[] sourceUnits) {
+      jdtProcessNanos = 0;
       super.compile(sourceUnits);
+      PerfLogger.log(
+          "AbstractCompiler.compile, time spent in JDT process callback: "
+              + (jdtProcessNanos / 1000000) + "ms");
       cuds = null;
     }
 
     @Override
     public void process(CompilationUnitDeclaration cud, int index) {
-      // super.process(cud, index);
+
+      long processBeginNanos = System.nanoTime();
+
+      if (!cachePolicy.shouldProcess(cud)) {
+        jdtProcessNanos += System.nanoTime() - processBeginNanos;
+        return;
+      }
+
+      // The following block of code is a copy of super.process(cud, index),
+      // with the modification that cud.generateCode is conditionally called
+      // based on doGenerateBytes
       {
         this.parser.getMethodBodies(cud);
 
@@ -154,6 +186,8 @@ public abstract class AbstractCompiler {
       if (cuds != null) {
         cuds.add(cud);
       }
+
+      jdtProcessNanos += System.nanoTime() - processBeginNanos;
     }
 
     private void compile(ICompilationUnit[] units,
@@ -310,8 +344,8 @@ public abstract class AbstractCompiler {
       try {
         cup = sourceOracle.findCompilationUnit(logger, qname);
         if (cup != null) {
-          logger.log(TreeLogger.SPAM, "Found type in compilation unit: "
-              + cup.getLocation(), null);
+          logger.log(TreeLogger.SPAM,
+              "Found type in compilation unit: " + cup.getLocation(), null);
           ICompilationUnitAdapter unit = new ICompilationUnitAdapter(cup);
           NameEnvironmentAnswer out = new NameEnvironmentAnswer(unit, null);
           nameEnvironmentAnswerForTypeName.put(qname, out);
@@ -349,7 +383,16 @@ public abstract class AbstractCompiler {
     }
   }
 
-  protected final ThreadLocalTreeLoggerProxy threadLogger = new ThreadLocalTreeLoggerProxy();
+  private static final CachePolicy DEFAULT_POLICY = new CachePolicy() {
+    public boolean shouldProcess(CompilationUnitDeclaration cud) {
+      return true;
+    }
+  };
+
+  protected final ThreadLocalTreeLoggerProxy threadLogger
+      = new ThreadLocalTreeLoggerProxy();
+
+  private CachePolicy cachePolicy = DEFAULT_POLICY;
 
   private final CompilerImpl compiler;
 
@@ -357,19 +400,23 @@ public abstract class AbstractCompiler {
 
   private final Set<String> knownPackages = new HashSet<String>();
 
-  private final Map<String, NameEnvironmentAnswer> nameEnvironmentAnswerForTypeName = new HashMap<String, NameEnvironmentAnswer>();
+  private final Map<String, NameEnvironmentAnswer> nameEnvironmentAnswerForTypeName
+      = new HashMap<String, NameEnvironmentAnswer>();
 
   private final SourceOracle sourceOracle;
 
-  private final Map<String, ICompilationUnit> unitsByTypeName = new HashMap<String, ICompilationUnit>();
+  private final Map<String, ICompilationUnit> unitsByTypeName
+      = new HashMap<String, ICompilationUnit>();
 
-  protected AbstractCompiler(SourceOracle sourceOracle, boolean doGenerateBytes) {
+  protected AbstractCompiler(SourceOracle sourceOracle,
+      boolean doGenerateBytes) {
     this.sourceOracle = sourceOracle;
     this.doGenerateBytes = doGenerateBytes;
     rememberPackage("");
 
     INameEnvironment env = new INameEnvironmentImpl();
-    IErrorHandlingPolicy pol = DefaultErrorHandlingPolicies.proceedWithAllProblems();
+    IErrorHandlingPolicy pol = DefaultErrorHandlingPolicies
+        .proceedWithAllProblems();
     IProblemFactory probFact = new DefaultProblemFactory(Locale.getDefault());
     ICompilerRequestor req = new ICompilerRequestorImpl();
     Map<String, String> settings = new HashMap<String, String>();
@@ -384,20 +431,25 @@ public abstract class AbstractCompiler {
      */
     settings.put(CompilerOptions.OPTION_PreserveUnusedLocal,
         CompilerOptions.PRESERVE);
-    settings.put(CompilerOptions.OPTION_ReportDeprecation,
-        CompilerOptions.IGNORE);
+    settings
+        .put(CompilerOptions.OPTION_ReportDeprecation, CompilerOptions.IGNORE);
     settings.put(CompilerOptions.OPTION_LocalVariableAttribute,
         CompilerOptions.GENERATE);
-    settings.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_1_5);
+    settings
+        .put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_1_5);
     settings.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_1_5);
     settings.put(CompilerOptions.OPTION_TargetPlatform,
         CompilerOptions.VERSION_1_5);
 
     // This is needed by TypeOracleBuilder to parse metadata.
-    settings.put(CompilerOptions.OPTION_DocCommentSupport,
-        CompilerOptions.ENABLED);
+    settings
+        .put(CompilerOptions.OPTION_DocCommentSupport, CompilerOptions.ENABLED);
 
     compiler = new CompilerImpl(env, pol, settings, req, probFact);
+  }
+
+  public CachePolicy getCachePolicy() {
+    return cachePolicy;
   }
 
   public void invalidateUnitsInFiles(Set<String> fileNames,
@@ -415,6 +467,10 @@ public abstract class AbstractCompiler {
     }
   }
 
+  public void setCachePolicy(CachePolicy policy) {
+    this.cachePolicy = policy;
+  }
+
   protected final CompilationUnitDeclaration[] compile(TreeLogger logger,
       ICompilationUnit[] units) {
     // Any additional compilation units that are found to be needed will be
@@ -422,10 +478,12 @@ public abstract class AbstractCompiler {
     //
     TreeLogger oldLogger = threadLogger.push(logger);
     try {
-      Set<CompilationUnitDeclaration> cuds = new HashSet<CompilationUnitDeclaration>();
+      Set<CompilationUnitDeclaration> cuds
+          = new HashSet<CompilationUnitDeclaration>();
       compiler.compile(units, cuds);
       int size = cuds.size();
-      CompilationUnitDeclaration[] cudArray = new CompilationUnitDeclaration[size];
+      CompilationUnitDeclaration[] cudArray
+          = new CompilationUnitDeclaration[size];
       return cuds.toArray(cudArray);
     } finally {
       threadLogger.pop(oldLogger);

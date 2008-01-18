@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,6 +44,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jdt.CacheManager.Mapper;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.PerfLogger;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.core.compiler.IProblem;
@@ -490,6 +491,8 @@ public class TypeOracleBuilder {
 
   public TypeOracle build(final TreeLogger logger)
       throws UnableToCompleteException {
+    PerfLogger.start("TypeOracleBuilder.build");
+
     Set<CompilationUnitProvider> addedCups = cacheManager.getAddedCups();
     TypeOracle oracle = cacheManager.getTypeOracle();
     // Make a copy that we can sort.
@@ -533,9 +536,11 @@ public class TypeOracleBuilder {
       Util.logMissingTypeErrorWithHints(logger, "java.lang.Object");
       throw new UnableToCompleteException();
     }
-    cacheManager.invalidateOnRefresh(oracle);
-    CompilationUnitDeclaration[] cuds = cacheManager.getAstCompiler().getCompilationUnitDeclarations(
+    
+    PerfLogger.start("TypeOracleBuilder.build (compile)");
+    CompilationUnitDeclaration[] cuds = cacheManager.getAstCompiler().getChangedCompilationUnitDeclarations(
         logger, units);
+    PerfLogger.end();
 
     // Build a list that makes it easy to remove problems.
     //
@@ -550,24 +555,6 @@ public class TypeOracleBuilder {
     // Remove bad cuds and all the other cuds that are affected.
     //
     removeUnitsWithErrors(logger, cudsByFileName);
-
-    // Also remove any compilation units that we've seen before.
-    //
-    for (Iterator<CompilationUnitDeclaration> iter = cudsByFileName.values().iterator(); iter.hasNext();) {
-      CompilationUnitDeclaration cud = iter.next();
-      // If we've seen this compilation unit before, the type oracle will
-      // tell us about it and so we don't assimilate it again.
-      //
-      ICompilationUnit unit = cud.compilationResult.compilationUnit;
-      ICompilationUnitAdapter adapter = ((ICompilationUnitAdapter) unit);
-      CompilationUnitProvider cup = adapter.getCompilationUnitProvider();
-      JClassType[] seen = oracle.getTypesInCompilationUnit(cup);
-      if (seen.length > 0) {
-        // This compilation unit has already been assimilated.
-        //
-        iter.remove();
-      }
-    }
 
     // Perform a shallow pass to establish identity for new types.
     //
@@ -645,6 +632,9 @@ public class TypeOracleBuilder {
     }
     Util.invokeInaccessableMethod(TypeOracle.class, "refresh",
         new Class[] {TreeLogger.class}, oracle, new Object[] {logger});
+
+    PerfLogger.end();
+
     return oracle;
   }
 

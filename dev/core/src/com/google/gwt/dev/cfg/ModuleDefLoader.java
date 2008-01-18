@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -66,6 +66,11 @@ public class ModuleDefLoader {
     return enableCachingModules;
   }
 
+  public static ModuleDef loadFromClassPath(TreeLogger logger, String moduleName)
+      throws UnableToCompleteException {
+    return loadFromClassPath(logger, moduleName, true);
+  }
+
   /**
    * Loads a new module from the class path.
    * 
@@ -74,8 +79,8 @@ public class ModuleDefLoader {
    * @return The loaded module.
    * @throws UnableToCompleteException
    */
-  public static ModuleDef loadFromClassPath(TreeLogger logger, String moduleName)
-      throws UnableToCompleteException {
+  public static ModuleDef loadFromClassPath(TreeLogger logger,
+      String moduleName, boolean refresh) throws UnableToCompleteException {
     ModuleDef moduleDef = (ModuleDef) loadedModules.get(moduleName);
     if (moduleDef == null || moduleDef.isGwtXmlFileStale()) {
       moduleDef = new ModuleDefLoader().load(logger, moduleName);
@@ -83,7 +88,9 @@ public class ModuleDefLoader {
         loadedModules.put(moduleName, moduleDef);
       }
     } else {
-      moduleDef.refresh(logger);
+      if (refresh) {
+        moduleDef.refresh(logger);
+      }
     }
     return moduleDef;
   }

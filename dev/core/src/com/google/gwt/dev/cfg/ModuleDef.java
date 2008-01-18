@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.FileOracle;
 import com.google.gwt.dev.util.FileOracleFactory;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.FileOracleFactory.FileFilter;
 
 import org.apache.tools.ant.types.ZipScanner;
@@ -274,63 +275,8 @@ public class ModuleDef implements PublicOracle {
   public synchronized TypeOracle getTypeOracle(TreeLogger logger)
       throws UnableToCompleteException {
     if (lazyTypeOracle == null) {
-
-      // Refresh the type oracle.
-      //
-      try {
-        String msg = "Analyzing source in module '" + name + "'";
-        TreeLogger branch = logger.branch(TreeLogger.TRACE, msg, null);
-        long before = System.currentTimeMillis();
-        TypeOracleBuilder builder = new TypeOracleBuilder(getCacheManager());
-        CompilationUnitProvider[] currentCups = getCompilationUnits();
-        Arrays.sort(currentCups, CompilationUnitProvider.LOCATION_COMPARATOR);
-
-        TreeLogger subBranch = null;
-        if (branch.isLoggable(TreeLogger.DEBUG)) {
-          subBranch = branch.branch(TreeLogger.DEBUG,
-              "Adding compilation units...", null);
-        }
-
-        for (int i = 0; i < currentCups.length; i++) {
-          CompilationUnitProvider cup = currentCups[i];
-          if (subBranch != null) {
-            subBranch.log(TreeLogger.DEBUG, cup.getLocation(), null);
-          }
-          builder.addCompilationUnit(currentCups[i]);
-        }
-        lazyTypeOracle = builder.build(branch);
-        long after = System.currentTimeMillis();
-        branch.log(TreeLogger.TRACE, "Finished in " + (after - before) + " ms",
-            null);
-      } catch (UnableToCompleteException e) {
-        logger.log(TreeLogger.ERROR, "Failed to complete analysis", null);
-        throw new UnableToCompleteException();
-      }
-
-      // Sanity check the seed types and don't even start it they're missing.
-      //
-      boolean seedTypesMissing = false;
-      if (lazyTypeOracle.findType("java.lang.Object") == null) {
-        Util.logMissingTypeErrorWithHints(logger, "java.lang.Object");
-        seedTypesMissing = true;
-      } else {
-        TreeLogger branch = logger.branch(TreeLogger.TRACE,
-            "Finding entry point classes", null);
-        String[] typeNames = getEntryPointTypeNames();
-        for (int i = 0; i < typeNames.length; i++) {
-          String typeName = typeNames[i];
-          if (lazyTypeOracle.findType(typeName) == null) {
-            Util.logMissingTypeErrorWithHints(branch, typeName);
-            seedTypesMissing = true;
-          }
-        }
-      }
-
-      if (seedTypesMissing) {
-        throw new UnableToCompleteException();
-      }
+      lazyTypeOracle = createTypeOracle(logger);
     }
-
     return lazyTypeOracle;
   }
 
@@ -359,13 +305,13 @@ public class ModuleDef implements PublicOracle {
 
   public synchronized void refresh(TreeLogger logger)
       throws UnableToCompleteException {
-
+    PerfLogger.start("ModuleDef.refresh");
     cacheManager.invalidateVolatileFiles();
-    lazyTypeOracle = null;
     normalize(logger);
-    getTypeOracle(logger);
+    lazyTypeOracle = createTypeOracle(logger);
     Util.invokeInaccessableMethod(TypeOracle.class, "incrementReloadCount",
         new Class[] {}, lazyTypeOracle, new Object[] {});
+    PerfLogger.end();
   }
 
   /**
@@ -389,6 +335,8 @@ public class ModuleDef implements PublicOracle {
    * @param logger Logs the activity.
    */
   synchronized void normalize(TreeLogger logger) {
+    PerfLogger.start("ModuleDef.normalize");
+
     // Normalize property providers.
     //
     for (Iterator<Property> iter = getProperties().iterator(); iter.hasNext();) {
@@ -446,6 +394,74 @@ public class ModuleDef implements PublicOracle {
     //
     branch = Messages.PUBLIC_PATH_LOCATIONS.branch(logger, null);
     lazyPublicOracle = publicPathEntries.create(branch);
+
+    PerfLogger.end();
+  }
+
+  private TypeOracle createTypeOracle(TreeLogger logger)
+      throws UnableToCompleteException {
+
+    TypeOracle newTypeOracle = null;
+
+    try {
+      String msg = "Analyzing source in module '" + name + "'";
+      TreeLogger branch = logger.branch(TreeLogger.TRACE, msg, null);
+      long before = System.currentTimeMillis();
+      TypeOracleBuilder builder = new TypeOracleBuilder(getCacheManager());
+      CompilationUnitProvider[] currentCups = getCompilationUnits();
+      Arrays.sort(currentCups, CompilationUnitProvider.LOCATION_COMPARATOR);
+
+      TreeLogger subBranch = null;
+      if (branch.isLoggable(TreeLogger.DEBUG)) {
+        subBranch = branch
+            .branch(TreeLogger.DEBUG, "Adding compilation units...", null);
+      }
+
+      for (int i = 0; i < currentCups.length; i++) {
+        CompilationUnitProvider cup = currentCups[i];
+        if (subBranch != null) {
+          subBranch.log(TreeLogger.DEBUG, cup.getLocation(), null);
+        }
+        builder.addCompilationUnit(currentCups[i]);
+      }
+
+      if (lazyTypeOracle != null) {
+        cacheManager.invalidateOnRefresh(lazyTypeOracle);
+      }
+
+      newTypeOracle = builder.build(branch);
+      long after = System.currentTimeMillis();
+      branch.log(TreeLogger.TRACE, "Finished in " + (after - before) + " ms",
+          null);
+    } catch (UnableToCompleteException e) {
+      logger.log(TreeLogger.ERROR, "Failed to complete analysis", null);
+      throw new UnableToCompleteException();
+    }
+
+    // Sanity check the seed types and don't even start it they're missing.
+    //
+    boolean seedTypesMissing = false;
+    if (newTypeOracle.findType("java.lang.Object") == null) {
+      Util.logMissingTypeErrorWithHints(logger, "java.lang.Object");
+      seedTypesMissing = true;
+    } else {
+      TreeLogger branch = logger
+          .branch(TreeLogger.TRACE, "Finding entry point classes", null);
+      String[] typeNames = getEntryPointTypeNames();
+      for (int i = 0; i < typeNames.length; i++) {
+        String typeName = typeNames[i];
+        if (newTypeOracle.findType(typeName) == null) {
+          Util.logMissingTypeErrorWithHints(branch, typeName);
+          seedTypesMissing = true;
+        }
+      }
+    }
+
+    if (seedTypesMissing) {
+      throw new UnableToCompleteException();
+    }
+
+    return newTypeOracle;
   }
 
   private ZipScanner getScanner(String[] includeList, String[] excludeList,

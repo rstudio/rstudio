@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import com.google.gwt.dev.shell.JavaScriptHost;
 import com.google.gwt.dev.shell.ShellGWT;
 import com.google.gwt.dev.shell.ShellJavaScriptHost;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.PerfLogger;
 
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
@@ -588,8 +589,6 @@ public class CacheManager {
 
   private final Map<String, Long> timesByLocation = new HashMap<String, Long>();
 
-  private boolean typeOracleBuilderFirstTime = true;
-
   private final Map<String, ICompilationUnitAdapter> unitsByCup = new HashMap<String, ICompilationUnitAdapter>();
 
   /**
@@ -626,6 +625,16 @@ public class CacheManager {
     }
     SourceOracleOnTypeOracle sooto = new SourceOracleOnTypeOracle(this.oracle);
     astCompiler = new AstCompiler(sooto);
+
+    astCompiler.setCachePolicy(new AstCompiler.CachePolicy() {
+      public boolean shouldProcess(CompilationUnitDeclaration cud) {
+        ICompilationUnit unit = cud.compilationResult.compilationUnit;
+        ICompilationUnitAdapter adapter = ((ICompilationUnitAdapter) unit);
+        CompilationUnitProvider cup = adapter.getCompilationUnitProvider();
+        return getTypeOracle()
+            .findType(cup.getPackageName(), cup.getMainTypeName()) == null;
+      }
+    });
   }
 
   /**
@@ -664,6 +673,32 @@ public class CacheManager {
 
   public boolean hasGeneratedResource(String partialPath) {
     return generatedResources.contains(partialPath);
+  }
+
+  /**
+   * This removes all state changed since the last time the typeOracle was run.
+   *
+   * @param typeOracle
+   */
+  public void invalidateOnRefresh(TypeOracle typeOracle) {
+
+    // If a class is changed, the set of classes in the transitive closure
+    // of "refers to" must be marked changed as well.
+    // The initial change set is computed in addCompilationUnit.
+
+    changedFiles.addAll(generatedCupLocations);
+    addDependentsToChangedFiles();
+
+    for (Iterator<String> iter = changedFiles.iterator(); iter.hasNext();) {
+      String location = iter.next();
+      CompilationUnitProvider cup = getCupsByLocation().get(location);
+      unitsByCup.remove(location);
+      Util.invokeInaccessableMethod(TypeOracle.class,
+          "invalidateTypesInCompilationUnit",
+          new Class[]{CompilationUnitProvider.class}, typeOracle,
+          new Object[]{cup});
+    }
+    astCompiler.invalidateChangedFiles(changedFiles, invalidatedTypes);
   }
 
   /**
@@ -826,38 +861,6 @@ public class CacheManager {
   }
 
   /**
-   * This removes all state changed since the last time the typeOracle was run.
-   * Since the typeOracle information is not cached on disk, this is not needed
-   * the first time.
-   * 
-   * @param typeOracle
-   */
-  void invalidateOnRefresh(TypeOracle typeOracle) {
-    // If a class is changed, the set of classes in the transitive closure
-    // of "refers to" must be marked changed as well.
-    // The initial change set is computed in addCompilationUnit.
-    // For the first time we do not do this because the compiler
-    // has no cached info.
-    if (!isTypeOracleBuilderFirstTime()) {
-      changedFiles.addAll(generatedCupLocations);
-      addDependentsToChangedFiles();
-
-      for (Iterator<String> iter = changedFiles.iterator(); iter.hasNext();) {
-        String location = iter.next();
-        CompilationUnitProvider cup = getCupsByLocation().get(location);
-        unitsByCup.remove(location);
-        Util.invokeInaccessableMethod(TypeOracle.class,
-            "invalidateTypesInCompilationUnit",
-            new Class[] {CompilationUnitProvider.class}, typeOracle,
-            new Object[] {cup});
-      }
-      astCompiler.invalidateChangedFiles(changedFiles, invalidatedTypes);
-    } else {
-      becomeTypeOracleNotFirstTime();
-    }
-  }
-
-  /**
    * Was this cup, last modified at time lastModified modified since it was last
    * processed by the system?
    */
@@ -904,6 +907,8 @@ public class CacheManager {
    * bytecode cache.
    */
   void removeStaleByteCode(TreeLogger logger, AbstractCompiler compiler) {
+    PerfLogger.start("CacheManager.removeStaleByteCode");
+
     if (cacheDir == null) {
       byteCodeCache.clear();
       return;
@@ -949,6 +954,7 @@ public class CacheManager {
     }
     becomeNotFirstTime();
     invalidateChangedFiles(logger, compiler);
+    PerfLogger.end();
   }
 
   void setTypeForBinding(ReferenceBinding binding, JClassType type) {
@@ -957,10 +963,6 @@ public class CacheManager {
 
   private void becomeNotFirstTime() {
     firstTime = false;
-  }
-
-  private void becomeTypeOracleNotFirstTime() {
-    typeOracleBuilderFirstTime = false;
   }
 
   /**
@@ -1005,9 +1007,5 @@ public class CacheManager {
 
   private boolean isGeneratedCup(CompilationUnitProvider cup) {
     return generatedCupLocations.contains(cup.getLocation());
-  }
-
-  private boolean isTypeOracleBuilderFirstTime() {
-    return typeOracleBuilderFirstTime;
   }
 }
