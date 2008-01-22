@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,12 +37,11 @@ import java.util.HashMap;
  * This class generates a stub class for classes that derive from GWTTestCase.
  * This stub class provides the necessary bridge between our Hosted or Hybrid
  * mode classes and the JUnit system.
- *
  */
 public class JUnitTestCaseStubGenerator extends Generator {
 
   interface MethodFilter {
-    public boolean accept( JMethod method );
+    public boolean accept(JMethod method);
   }
 
   private static final String GWT_TESTCASE_CLASS_NAME = "com.google.gwt.junit.client.GWTTestCase";
@@ -50,30 +49,33 @@ public class JUnitTestCaseStubGenerator extends Generator {
   /**
    * Returns the method names for the set of methods that are strictly JUnit
    * test methods (have no arguments).
-   *
+   * 
    * @param requestedClass
    */
   public static String[] getTestMethodNames(JClassType requestedClass) {
-    return getAllMethods( requestedClass, new MethodFilter() {
+    return getAllMethods(requestedClass, new MethodFilter() {
       public boolean accept(JMethod method) {
-        return isJUnitTestMethod(method,false);
+        return isJUnitTestMethod(method, false);
       }
-    } ).keySet().toArray( new String[] {} );
+    }).keySet().toArray(new String[] {});
   }
 
   /**
    * Like JClassType.getMethod( String name ), except:
-   *
-   *  <li>it accepts a filter</li>
-   *  <li>it searches the inheritance hierarchy (includes subclasses)</li>
-   *
-   * For methods which are overriden, only the most derived implementations are included.
-   *
+   * 
+   * <li>it accepts a filter</li>
+   * <li>it searches the inheritance hierarchy (includes subclasses)</li>
+   * 
+   * For methods which are overriden, only the most derived implementations are
+   * included.
+   * 
    * @param type The type to search. Must not be null
-   * @return Map<String.List<JMethod>> The set of matching methods. Will not be null.
+   * @return Map<String.List<JMethod>> The set of matching methods. Will not
+   *         be null.
    */
-  static Map<String,List<JMethod>> getAllMethods( JClassType type, MethodFilter filter ) {
-    Map<String,List<JMethod>> methods = new HashMap<String,List<JMethod>>();
+  static Map<String, List<JMethod>> getAllMethods(JClassType type,
+      MethodFilter filter) {
+    Map<String, List<JMethod>> methods = new HashMap<String, List<JMethod>>();
     JClassType cls = type;
 
     while (cls != null) {
@@ -85,7 +87,7 @@ public class JUnitTestCaseStubGenerator extends Generator {
 
         JMethod declMethod = clsDeclMethods[i];
 
-        if ( ! filter.accept(declMethod) ) {
+        if (!filter.accept(declMethod)) {
           continue;
         }
 
@@ -93,7 +95,7 @@ public class JUnitTestCaseStubGenerator extends Generator {
 
         if (list == null) {
           list = new ArrayList<JMethod>();
-          methods.put(declMethod.getName(),list);
+          methods.put(declMethod.getName(), list);
           list.add(declMethod);
           continue;
         }
@@ -103,8 +105,8 @@ public class JUnitTestCaseStubGenerator extends Generator {
         for (int j = 0; j < list.size(); ++j) {
           JMethod method = list.get(j);
           JParameter[] parameters = method.getParameters();
-          if ( ! equals( declParams, parameters )) {
-            list.add(declMethod );
+          if (!equals(declParams, parameters)) {
+            list.add(declMethod);
           }
         }
       }
@@ -119,7 +121,6 @@ public class JUnitTestCaseStubGenerator extends Generator {
    * The criteria are that the method's name begin with "test" and have public
    * access. The method may be static. You must choose to include or exclude
    * methods which have arguments.
-   *
    */
   static boolean isJUnitTestMethod(JMethod method, boolean acceptArgs) {
     if (!method.getName().startsWith("test")) {
@@ -130,50 +131,51 @@ public class JUnitTestCaseStubGenerator extends Generator {
       return false;
     }
 
-    return acceptArgs || method.getParameters().length == 0 && ! acceptArgs;
+    return acceptArgs || method.getParameters().length == 0 && !acceptArgs;
   }
 
   /**
-   * Returns true iff the two sets of parameters are of the same lengths and types.
-   *
+   * Returns true IFF the two sets of parameters are of the same lengths and
+   * types.
+   * 
    * @param params1 must not be null
    * @param params2 must not be null
    */
-  private static boolean equals( JParameter[] params1, JParameter[] params2 ) {
-    if ( params1.length != params2.length ) {
+  private static boolean equals(JParameter[] params1, JParameter[] params2) {
+    if (params1.length != params2.length) {
       return false;
     }
-    for ( int i = 0; i < params1.length; ++i ) {
-      if ( params1[ i ].getType() != params2[ i ].getType() ) {
+    for (int i = 0; i < params1.length; ++i) {
+      if (params1[i].getType() != params2[i].getType()) {
         return false;
       }
     }
     return true;
   }
 
+  TreeLogger logger;
+  String packageName;
   String qualifiedStubClassName;
   String simpleStubClassName;
   String typeName;
-  TreeLogger logger;
-  String packageName;
 
   private JClassType requestedClass;
   private SourceWriter sourceWriter;
   private TypeOracle typeOracle;
 
   /**
-   * Create a new type that statisfies the rebind request.
+   * Create a new type that satisfies the rebind request.
    */
   @Override
   public String generate(TreeLogger logger, GeneratorContext context,
       String typeName) throws UnableToCompleteException {
 
-    if ( ! init( logger, context, typeName ) ) {
+    if (!init(logger, context, typeName)) {
       return qualifiedStubClassName;
     }
 
     writeSource();
-    sourceWriter.commit( logger );
+    sourceWriter.commit(logger);
 
     return qualifiedStubClassName;
   }
@@ -190,8 +192,8 @@ public class JUnitTestCaseStubGenerator extends Generator {
     return typeOracle;
   }
 
-  boolean init(TreeLogger logger, GeneratorContext context,String typeName) throws
-      UnableToCompleteException {
+  boolean init(TreeLogger logger, GeneratorContext context, String typeName)
+      throws UnableToCompleteException {
 
     this.typeName = typeName;
     this.logger = logger;
@@ -201,8 +203,11 @@ public class JUnitTestCaseStubGenerator extends Generator {
     try {
       requestedClass = typeOracle.getType(typeName);
     } catch (NotFoundException e) {
-      logger.log(TreeLogger.ERROR, "Could not find type '" + typeName
-          + "'; please see the log, as this usually indicates a previous error ",
+      logger.log(
+          TreeLogger.ERROR,
+          "Could not find type '"
+              + typeName
+              + "'; please see the log, as this usually indicates a previous error ",
           e);
       throw new UnableToCompleteException();
     }
@@ -243,7 +248,7 @@ public class JUnitTestCaseStubGenerator extends Generator {
     }
 
     ClassSourceFileComposerFactory composerFactory = new ClassSourceFileComposerFactory(
-      packageName, className);
+        packageName, className);
 
     composerFactory.setSuperclass(superclassName);
 
@@ -276,7 +281,7 @@ public class JUnitTestCaseStubGenerator extends Generator {
   private void writeGetNewTestCase(String stubClassName, SourceWriter sw) {
     sw.println();
     sw.println("public final " + GWT_TESTCASE_CLASS_NAME
-      + " getNewTestCase() {");
+        + " getNewTestCase() {");
     sw.indent();
     sw.println("return new " + stubClassName + "();");
     sw.outdent();
