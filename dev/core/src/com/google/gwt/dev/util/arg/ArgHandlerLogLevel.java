@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.util.tools.ArgHandler;
 
