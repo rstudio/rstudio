@@ -17,6 +17,7 @@ package com.google.gwt.junit;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.BootStrapPlatform;
 import com.google.gwt.dev.GWTShell;
 import com.google.gwt.dev.cfg.ModuleDef;
@@ -352,8 +353,8 @@ public class JUnitShell extends GWTShell {
   }
 
   @Override
-  protected String doGetDefaultLogLevel() {
-    return "WARN";
+  protected Type doGetDefaultLogLevel() {
+    return Type.WARN;
   }
 
   /**

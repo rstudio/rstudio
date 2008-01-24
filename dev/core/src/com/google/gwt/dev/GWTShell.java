@@ -292,7 +292,7 @@ public class GWTShell extends ToolBase {
 
     /**
      * Load a module.
-     *
+     * 
      * @param moduleName name of the module to load
      * @param logger TreeLogger to use
      * @return the loaded module
@@ -420,8 +420,8 @@ public class GWTShell extends ToolBase {
 
     registerHandler(new ArgHandlerLogLevel() {
       @Override
-      public String[] getDefaultArgs() {
-        return new String[] {getTag(), doGetDefaultLogLevel()};
+      protected Type getDefaultLogLevel() {
+        return doGetDefaultLogLevel();
       }
 
       @Override
@@ -670,8 +670,8 @@ public class GWTShell extends ToolBase {
    * Can be override to change the default log level in subclasses. JUnit does
    * this for example.
    */
-  protected String doGetDefaultLogLevel() {
-    return "INFO";
+  protected Type doGetDefaultLogLevel() {
+    return Type.INFO;
   }
 
   /**
