@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -195,7 +195,9 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
 
     @Override
     public boolean add(E o) {
-      // Throws NullPointerException according to spec
+      if (o == null) {
+        throw new NullPointerException("Can't add null to an EnumSet");
+      }
       int value = 1 << o.ordinal();
       boolean exists = (enumValues & value) != 0;
       enumValues |= value;
