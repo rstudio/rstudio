@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -109,6 +109,16 @@ public class CollectionsTest extends EmulTestBase {
         new String[]{"a", "b", "c", "d", "e"}));
     ret = Collections.binarySearch(a4, "d", null); // should not NPE
     assertEquals(3, ret);
+  }
+
+  public void testFill() {
+    List a = createSortedList();
+    Collections.fill(a, null);
+    assertEquals(new Object[a.size()], a);
+
+    List b = createRandomList();
+    Collections.fill(b, null);
+    assertEquals(new Object[b.size()], b);
   }
 
   public void testReverse() {
