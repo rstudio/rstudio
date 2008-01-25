@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,6 +48,20 @@ public class StaticPropertyOracle implements PropertyOracle {
         } else {
           throw new BadPropertyValueException(propertyName, value);
         }
+      }
+    }
+
+    // Didn't find it.
+    //
+    throw new BadPropertyValueException(propertyName);
+  }
+
+  public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
+      throws BadPropertyValueException {
+    for (int i = 0; i < currentProps.length; i++) {
+      Property prop = currentProps[i];
+      if (prop.getName().equals(propertyName)) {
+        return prop.getKnownValues();
       }
     }
 

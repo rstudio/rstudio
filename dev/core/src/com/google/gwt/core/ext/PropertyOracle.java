@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,5 +30,17 @@ public interface PropertyOracle {
    * @return a value for the property
    */
   String getPropertyValue(TreeLogger logger, String propertyName)
+      throws BadPropertyValueException;
+
+  /**
+   * Attempts to get a named deferred binding property and returns the list of
+   * possible values. Throws <code>BadPropertyValueException</code> if the
+   * property is undefined.
+   * 
+   * @param logger the current logger
+   * @param propertyName the name of the property
+   * @return the possible values for the property
+   */
+  String[] getPropertyValueSet(TreeLogger logger, String propertyName)
       throws BadPropertyValueException;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -82,6 +82,10 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       // Could mock "gwt.enforceRPCTypeVersioning" etc here
       return "";
     }
+
+    public String[] getPropertyValueSet(TreeLogger logger, String propertyName) {
+      return new String[] {};
+    }
   }
 
   /**
@@ -112,14 +116,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   }
 
   private static void sort(TypeInfo[] typeInfos) {
-    Arrays.sort(typeInfos, new Comparator() {
-      public int compare(Object o1, Object o2) {
-        if (o1 == o2) {
+    Arrays.sort(typeInfos, new Comparator<TypeInfo>() {
+      public int compare(TypeInfo ti1, TypeInfo ti2) {
+        if (ti1 == ti2) {
           return 0;
         }
-
-        TypeInfo ti1 = (TypeInfo) o1;
-        TypeInfo ti2 = (TypeInfo) o2;
 
         return ti1.sourceName.compareTo(ti2.sourceName);
       }

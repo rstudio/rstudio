@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,6 +49,11 @@ public class StandardGeneratorContextTest extends TestCase {
     public String getPropertyValue(TreeLogger logger, String propertyName)
         throws BadPropertyValueException {
       return "";
+    }
+
+    public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
+        throws BadPropertyValueException {
+      return new String[] {};
     }
   }
 
@@ -289,6 +294,7 @@ public class StandardGeneratorContextTest extends TestCase {
     mockCacheManager.invalidateVolatileFiles();
   }
 
+  @Override
   protected void tearDown() throws Exception {
     for (int i = toDelete.size() - 1; i >= 0; --i) {
       File f = toDelete.get(i);

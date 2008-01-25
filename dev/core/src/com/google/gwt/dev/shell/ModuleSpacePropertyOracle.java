@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,16 +46,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
    */
   public String getPropertyValue(TreeLogger logger, String propertyName)
       throws BadPropertyValueException {
-    if (propertyName == null) {
-      throw new NullPointerException("propertyName");
-    }
-
-    Property prop = props.find(propertyName);
-    if (prop == null) {
-      // Don't know this property; that's not good.
-      //
-      throw new BadPropertyValueException(propertyName);
-    }
+    Property prop = getProperty(propertyName);
 
     // Check if this property has already been queried for; if so, return
     // the same answer. This is necessary to match web mode behavior since
@@ -69,6 +60,15 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
       prevAnswers.put(propertyName, value);
       return value;
     }
+  }
+
+  /**
+   * Returns the list of possible values for a property.
+   */
+  public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
+      throws BadPropertyValueException {
+    Property prop = getProperty(propertyName);
+    return prop.getKnownValues();
   }
 
   /**
@@ -113,5 +113,25 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
       // have been reported to the JS bad property value handler function.
       throw new BadPropertyValueException(propertyName, value);
     }
+  }
+
+  /**
+   * Returns a Property given its name, handling error conditions.
+   * 
+   * @throws BadPropertyValueException
+   */
+  private Property getProperty(String propertyName)
+      throws BadPropertyValueException {
+    if (propertyName == null) {
+      throw new NullPointerException("propertyName");
+    }
+
+    Property prop = props.find(propertyName);
+    if (prop == null) {
+      // Don't know this property; that's not good.
+      //
+      throw new BadPropertyValueException(propertyName);
+    }
+    return prop;
   }
 }
