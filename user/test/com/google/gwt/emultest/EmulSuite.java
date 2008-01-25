@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,13 +19,21 @@ import com.google.gwt.emultest.java.lang.BooleanTest;
 import com.google.gwt.emultest.java.lang.ByteTest;
 import com.google.gwt.emultest.java.lang.CharacterTest;
 import com.google.gwt.emultest.java.lang.DoubleTest;
+import com.google.gwt.emultest.java.lang.FloatTest;
 import com.google.gwt.emultest.java.lang.IntegerTest;
 import com.google.gwt.emultest.java.lang.ObjectTest;
 import com.google.gwt.emultest.java.lang.ShortTest;
 import com.google.gwt.emultest.java.lang.StringBufferTest;
 import com.google.gwt.emultest.java.lang.StringTest;
+import com.google.gwt.emultest.java.lang.SystemTest;
+import com.google.gwt.emultest.java.util.ApacheMapTest;
+import com.google.gwt.emultest.java.util.ArrayListTest;
 import com.google.gwt.emultest.java.util.ArraysTest;
+import com.google.gwt.emultest.java.util.CollectionsTest;
+import com.google.gwt.emultest.java.util.ComparatorTest;
 import com.google.gwt.emultest.java.util.DateTest;
+import com.google.gwt.emultest.java.util.EnumMapTest;
+import com.google.gwt.emultest.java.util.EnumSetTest;
 import com.google.gwt.emultest.java.util.HashMapTest;
 import com.google.gwt.emultest.java.util.HashSetTest;
 import com.google.gwt.emultest.java.util.StackTest;
@@ -43,21 +51,29 @@ public class EmulSuite {
     TestSuite suite = new TestSuite("Tests for com.google.gwt.emul.java");
 
     // $JUnit-BEGIN$
-    suite.addTestSuite(ArraysTest.class);
     suite.addTestSuite(BooleanTest.class);
     suite.addTestSuite(ByteTest.class);
-    suite.addTestSuite(HashMapTest.class);
-    suite.addTestSuite(StringBufferTest.class);
-    suite.addTestSuite(StringTest.class);
     suite.addTestSuite(CharacterTest.class);
-    suite.addTestSuite(StackTest.class);
-    suite.addTestSuite(IntegerTest.class);
-    // suite.addTestSuite(LongTest.class);
     suite.addTestSuite(DoubleTest.class);
-    suite.addTestSuite(DateTest.class);
-    suite.addTestSuite(HashSetTest.class);
+    suite.addTestSuite(FloatTest.class);
+    suite.addTestSuite(IntegerTest.class);
     suite.addTestSuite(ObjectTest.class);
     suite.addTestSuite(ShortTest.class);
+    suite.addTestSuite(StringBufferTest.class);
+    suite.addTestSuite(StringTest.class);
+    suite.addTestSuite(SystemTest.class);
+
+    suite.addTestSuite(ApacheMapTest.class);
+    suite.addTestSuite(ArrayListTest.class);
+    suite.addTestSuite(ArraysTest.class);
+    suite.addTestSuite(CollectionsTest.class);
+    suite.addTestSuite(ComparatorTest.class);
+    suite.addTestSuite(DateTest.class);
+    suite.addTestSuite(EnumMapTest.class);
+    suite.addTestSuite(EnumSetTest.class);
+    suite.addTestSuite(HashMapTest.class);
+    suite.addTestSuite(HashSetTest.class);
+    suite.addTestSuite(StackTest.class);
     // $JUnit-END$
 
     return suite;
