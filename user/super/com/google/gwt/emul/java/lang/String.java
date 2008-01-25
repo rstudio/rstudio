@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -83,34 +83,6 @@ public final class String implements Comparable<String>, CharSequence,
   // CHECKSTYLE_OFF: This class has special needs.
 
   /**
-   * @skip
-   */
-  static String _String() {
-    return "";
-  }
-
-  /**
-   * @skip
-   */
-  static String _String(char value[]) {
-    return valueOf(value);
-  }
-
-  /**
-   * @skip
-   */
-  static String _String(char value[], int offset, int count) {
-    return valueOf(value, offset, count);
-  }
-
-  /**
-   * @skip
-   */
-  static String _String(String other) {
-    return other;
-  }
-
-  /**
    * Checks that bounds are correct.
    * 
    * @param legalCount the end of the legal range
@@ -156,6 +128,34 @@ public final class String implements Comparable<String>, CharSequence,
       }
     }
     return replaceStr;
+  }
+
+  /**
+   * @skip
+   */
+  static String _String() {
+    return "";
+  }
+
+  /**
+   * @skip
+   */
+  static String _String(char value[]) {
+    return valueOf(value);
+  }
+
+  /**
+   * @skip
+   */
+  static String _String(char value[], int offset, int count) {
+    return valueOf(value, offset, count);
+  }
+
+  /**
+   * @skip
+   */
+  static String _String(String other) {
+    return other;
   }
 
   private static native boolean __equals(String me, Object other) /*-{
@@ -216,6 +216,10 @@ public final class String implements Comparable<String>, CharSequence,
   public native String concat(String str) /*-{
     return this + str;
   }-*/;
+
+  public boolean contains(CharSequence s) {
+    return indexOf(s.toString()) != -1;
+  }
 
   public native boolean endsWith(String suffix) /*-{
     return (this.lastIndexOf(suffix) != -1)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,7 +45,7 @@ public class StringTest extends GWTTestCase {
     assertEquals("abcd", s);
   }
 
-  public void testContructor() {
+  public void testConstructor() {
     char[] chars = {'a', 'b', 'c', 'd', 'e', 'f'};
     String constant = "abcdef";
     String shortString = "cde";
@@ -55,6 +55,24 @@ public class StringTest extends GWTTestCase {
     assertEquals(new String(""), "");
     assertEquals(new String(new String(new String(new String("")))), "");
     assertEquals(new String(new char[] {}), "");
+  }
+
+  public void testContains() {
+    // at the beginning
+    assertTrue("abcdef".contains("ab"));
+    assertTrue("abcdef".contains(new StringBuffer("ab")));
+    // at the end
+    assertTrue("abcdef".contains("ef"));
+    assertTrue("abcdef".contains(new StringBuffer("ef")));
+    // in the middle
+    assertTrue("abcdef".contains("cd"));
+    assertTrue("abcdef".contains(new StringBuffer("cd")));
+    // the same
+    assertTrue("abcdef".contains("abcdef"));
+    assertTrue("abcdef".contains(new StringBuffer("abcdef")));
+    // not present
+    assertFalse("abcdef".contains("z"));
+    assertFalse("abcdef".contains(new StringBuffer("z")));
   }
 
   public void testEndsWith() {
