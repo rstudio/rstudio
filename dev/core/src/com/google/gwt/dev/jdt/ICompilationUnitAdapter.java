@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,15 +53,16 @@ public class ICompilationUnitAdapter implements ICompilationUnit {
   /**
    * This method is supposed to return the simple class name for this
    * compilation unit. Examples of simple class names would be "String", or
-   * "ArrayList". JDT allows this method to return null in the cases where this
-   * compilation unit is not a package-info class.
+   * "ArrayList". 
+   * 
+   * <p>Although JDT allows this method to return null in the cases 
+   * where this compilation unit is not a package-info class, JDT never 
+   * constructs a CUP with a null main type, and we should never do so 
+   * either.</p>
    */
   public char[] getMainTypeName() {
     String typeName = cup.getMainTypeName();
-    if (typeName != null) {
-      return typeName.toCharArray();
-    }
-    return null;
+    return typeName.toCharArray();
   }
 
   public char[][] getPackageName() {

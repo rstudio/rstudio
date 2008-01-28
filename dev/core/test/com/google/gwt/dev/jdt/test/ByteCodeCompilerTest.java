@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,11 +42,16 @@ public class ByteCodeCompilerTest extends TestCase {
 
     private abstract class TestCup implements CompilationUnitProvider {
 
-      public TestCup(String packageName, String onlyTypeName) {
-        this(packageName, new String[] {onlyTypeName});
-      }
-
-      public TestCup(String packageName, String[] typeNames) {
+      /**
+       * Creates a new {@code TestCup} with several types. The first type in 
+       * {@code typeNames} is considered to be the main type.
+       *
+       * @param packageName the package for the types in this {@code TestCup}
+       * @param typeNames the types for this {@code TestCup}. Must have
+       * at least one type. The first type is considered to be the main type
+       * for this {@code TestCup}. 
+       */
+      public TestCup(String packageName, String... typeNames) {
         this.packageName = packageName;
         registerPackage(packageName);
         for (int i = 0; i < typeNames.length; i++) {
@@ -70,7 +75,7 @@ public class ByteCodeCompilerTest extends TestCase {
       }
 
       public String getMainTypeName() {
-        return null;
+        return firstTypeName;
       }
 
       public String getPackageName() {
@@ -130,8 +135,7 @@ public class ByteCodeCompilerTest extends TestCase {
       cupsByTypeName = new HashMap<String, CompilationUnitProvider>();
     }
 
-    final CompilationUnitProvider CU_AB = new TestCup("test", new String[] {
-        "A", "A.B"}) {
+    final CompilationUnitProvider CU_AB = new TestCup("test", "A", "A.B") {
       public char[] getSource() {
         StringBuffer sb = new StringBuffer();
         sb.append("package test;\n");
@@ -142,8 +146,7 @@ public class ByteCodeCompilerTest extends TestCase {
       }
     };
 
-    final CompilationUnitProvider CU_C = new TestCup("test", new String[] {
-        "C", "C.Message"}) {
+    final CompilationUnitProvider CU_C = new TestCup("test", "C", "C.Message") {
       public char[] getSource() {
         StringBuffer sb = new StringBuffer();
         sb.append("package test;\n");
@@ -176,8 +179,7 @@ public class ByteCodeCompilerTest extends TestCase {
      * This one is different because D is not public and it lives in the default
      * package.
      */
-    final CompilationUnitProvider CU_DE = new TestCup("", new String[] {
-        "D", "D.E"}) {
+    final CompilationUnitProvider CU_DE = new TestCup("", "D", "D.E") {
       public char[] getSource() {
         StringBuffer sb = new StringBuffer();
         sb.append("class D extends test.C.Message {\n");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,13 +43,19 @@ public class TypeOracleBuilderTest extends TestCase {
 
     private final String[] typeNames;
 
-    public TestCup(String packageName, String onlyTypeName) {
-      this(packageName, new String[] {onlyTypeName});
-    }
-
-    public TestCup(String packageName, String[] typeNames) {
+    /**
+     * Creates a new {@code TestCup} with several types. The first type in 
+     * {@code typeNames} is considered to be the main type.
+     *
+     * @param packageName the package for the types in this {@code TestCup}
+     * @param typeNames the types for this {@code TestCup}. Must have
+     * at least one type. The first type is considered to be the main type
+     * for this {@code TestCup}. 
+     */
+    public TestCup(String packageName, String... typeNames) {
       this.packageName = packageName;
       this.typeNames = typeNames;
+      assert typeNames != null && typeNames.length > 0;
       for (int i = 0; i < typeNames.length; i++) {
         String typeName = typeNames[i];
         register(typeName, this);
@@ -68,7 +74,7 @@ public class TypeOracleBuilderTest extends TestCase {
     }
 
     public String getMainTypeName() {
-      return null;
+      return typeNames[0];
     }
 
     public String getPackageName() {
@@ -113,7 +119,7 @@ public class TypeOracleBuilderTest extends TestCase {
   }
 
   protected TestCup CU_AfterAssimilate = new TestCup("test.assim",
-      new String[] {"AfterAssimilate"}) {
+      "AfterAssimilate") {
     public void check(JClassType type) {
       // Don't need to check the type itself.
     }
@@ -126,8 +132,8 @@ public class TypeOracleBuilderTest extends TestCase {
     }
   };
 
-  protected TestCup CU_Assignable = new TestCup("test.sub", new String[] {
-      "BaseInterface", "DerivedInterface", "Derived", "Derived.Nested"}) {
+  protected TestCup CU_Assignable = new TestCup("test.sub", "Derived",
+      "BaseInterface", "DerivedInterface", "Derived.Nested") {
     public void check(JClassType type) {
       if ("Derived".equals(type.getSimpleSourceName()))
         checkDerived(type);
@@ -158,7 +164,7 @@ public class TypeOracleBuilderTest extends TestCase {
   };
 
   protected TestCup CU_BeforeAssimilate = new TestCup("test.assim",
-      new String[] {"BeforeAssimilate"}) {
+      "BeforeAssimilate") {
     public void check(JClassType type) {
       // Don't need to check the type itself.
     }
@@ -171,9 +177,8 @@ public class TypeOracleBuilderTest extends TestCase {
     }
   };
 
-  protected TestCup CU_BindToTypeScope = new TestCup("test", new String[] {
-      "BindToTypeScope", "BindToTypeScope.Object",
-      "BindToTypeScope.DerivedObject"}) {
+  protected TestCup CU_BindToTypeScope = new TestCup("test", "BindToTypeScope",
+      "BindToTypeScope.Object", "BindToTypeScope.DerivedObject") {
 
     public void check(JClassType type) throws NotFoundException {
       if ("BindToTypeScope".equals(type.getSimpleSourceName()))
@@ -242,8 +247,8 @@ public class TypeOracleBuilderTest extends TestCase {
     }
   };
 
-  protected TestCup CU_FieldsAndTypes = new TestCup("test", new String[] {
-      "Fields", "SomeType"}) {
+  protected TestCup CU_FieldsAndTypes = new TestCup("test", "Fields",
+      "SomeType") {
     public void check(JClassType type) throws NotFoundException {
       if ("Fields".equals(type.getSimpleSourceName())) {
         assertEquals("test.Fields", type.getQualifiedSourceName());
@@ -354,8 +359,8 @@ public class TypeOracleBuilderTest extends TestCase {
     }
   };
 
-  protected TestCup CU_HasSyntaxErrors = new TestCup("test", new String[] {
-      "HasSyntaxErrors", "NoSyntaxErrors"}) {
+  protected TestCup CU_HasSyntaxErrors = new TestCup("test", "HasSyntaxErrors",
+      "NoSyntaxErrors") {
     public void check(JClassType classInfo) {
       fail("This class should have been removed");
     }
@@ -363,14 +368,14 @@ public class TypeOracleBuilderTest extends TestCase {
     public char[] getSource() {
       StringBuffer sb = new StringBuffer();
       sb.append("package test;\n");
-      sb.append("public class NoSyntaxErrors { }\n");
+      sb.append("class NoSyntaxErrors { }\n");
       sb.append("public class HasSyntaxErrors { a syntax error }\n");
       return sb.toString().toCharArray();
     }
   };
 
-  protected TestCup CU_HasUnresolvedSymbols = new TestCup("test", new String[] {
-      "Invalid", "Valid"}) {
+  protected TestCup CU_HasUnresolvedSymbols = new TestCup("test", "Invalid",
+      "Valid") {
     public void check(JClassType classInfo) {
       fail("Both classes should have been removed");
     }
@@ -379,7 +384,7 @@ public class TypeOracleBuilderTest extends TestCase {
       StringBuffer sb = new StringBuffer();
       sb.append("package test;\n");
       sb.append("public class Invalid extends NoSuchClass { }\n");
-      sb.append("public class Valid extends Object { }\n");
+      sb.append("class Valid extends Object { }\n");
       return sb.toString().toCharArray();
     }
   };
@@ -552,8 +557,8 @@ public class TypeOracleBuilderTest extends TestCase {
     }
   };
 
-  protected TestCup CU_OuterInner = new TestCup("test", new String[] {
-      "Outer", "Outer.Inner"}) {
+  protected TestCup CU_OuterInner = new TestCup("test", "Outer",
+      "Outer.Inner") {
 
     public void check(JClassType type) {
       final String name = type.getSimpleSourceName();
@@ -590,7 +595,7 @@ public class TypeOracleBuilderTest extends TestCase {
   };
 
   protected TestCup CU_RefsInfectedCompilationUnit = new TestCup("test",
-      new String[] {"RefsInfectedCompilationUnit"}) {
+      "RefsInfectedCompilationUnit") {
     public void check(JClassType classInfo) {
       fail("This class should should have been removed because it refers to a class in another compilation unit that had problems");
     }
