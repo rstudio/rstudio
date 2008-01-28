@@ -26,13 +26,16 @@ public class JConstructor extends JAbstractMethod {
 
   public JConstructor(JClassType enclosingType, String name, int declStart,
       int declEnd, int bodyStart, int bodyEnd) {
-    this(enclosingType, name, declStart, declEnd, bodyStart, bodyEnd, null);
+    this(enclosingType, name, declStart, declEnd, bodyStart, bodyEnd, null, null);
   }
 
   public JConstructor(JClassType enclosingType, String name, int declStart,
       int declEnd, int bodyStart, int bodyEnd,
-      Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
-    super(name, declStart, declEnd, bodyStart, bodyEnd, declaredAnnotations);
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
+      JTypeParameter[] jtypeParameters) {
+    super(name, declStart, declEnd, bodyStart, bodyEnd, declaredAnnotations, 
+        jtypeParameters);
+    
     this.enclosingType = enclosingType;
     enclosingType.addConstructor(this);
   }

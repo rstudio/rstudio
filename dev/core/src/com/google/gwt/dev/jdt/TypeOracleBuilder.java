@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.core.ext.typeinfo.HasMetaData;
+import com.google.gwt.core.ext.typeinfo.HasTypeParameters;
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
 import com.google.gwt.core.ext.typeinfo.JAnnotationMethod;
 import com.google.gwt.core.ext.typeinfo.JAnnotationType;
@@ -734,37 +735,86 @@ public class TypeOracleBuilder {
     return null;
   }
 
-  private JUpperBound createTypeVariableBounds(TreeLogger logger,
+  private JUpperBound createTypeParameterBounds(TreeLogger logger,
       TypeVariableBinding tvBinding) {
-    TypeBinding jfirstBound = tvBinding.firstBound;
-    if (jfirstBound == null) {
-      // No bounds were specified, so we default to Object
-      JClassType upperBound = (JClassType) resolveType(logger,
+    TypeBinding firstBound = tvBinding.firstBound;
+    if (firstBound == null) {
+      // No bounds were specified, so we default to Object. We assume that the
+      // superclass field of a TypeVariableBinding object is a Binding
+      // for a java.lang.Object, and we use this binding to find the
+      // JClassType for java.lang.Object. To be sure that our assumption
+      // about the superclass field is valid, we perform a runtime check
+      // against the name of the resolved type.
+      
+      // You may wonder why we have to go this roundabout way to find a 
+      // JClassType for java.lang.Object. The reason is that the TypeOracle
+      // has not been constructed as yet, so we cannot simply call
+      // TypeOracle.getJavaLangObject().
+      JClassType jupperBound = (JClassType) resolveType(logger,
           tvBinding.superclass);
-      /*
-       * Can't test for equality with TypeOracle.getJavaLangObject() since it
-       * may not be initialized at this point
-       */
-      assert (Object.class.getName().equals(upperBound.getQualifiedSourceName()));
-      return new JUpperBound(upperBound);
+            
+      if (Object.class.getName().equals(jupperBound.getQualifiedSourceName())) {
+        return new JUpperBound(jupperBound);  
+      } else {
+        return null;
+      }      
     }
 
     List<JClassType> bounds = new ArrayList<JClassType>();
-    JClassType firstBound = (JClassType) resolveType(logger, jfirstBound);
-    if (firstBound.isClass() != null) {
-      bounds.add(firstBound);
+    JClassType jfirstBound = (JClassType) resolveType(logger, firstBound);
+    
+    if (jfirstBound == null) {
+      return null;
+    }
+    
+    if (jfirstBound.isClass() != null) {
+      bounds.add(jfirstBound);
     }
 
-    ReferenceBinding[] jsuperInterfaces = tvBinding.superInterfaces();
-    for (ReferenceBinding jsuperInterface : jsuperInterfaces) {
-      JClassType superInterface = (JClassType) resolveType(logger,
-          jsuperInterface);
-      assert (superInterface != null);
-      assert (superInterface.isInterface() != null);
-      bounds.add(superInterface);
+    ReferenceBinding[] superInterfaces = tvBinding.superInterfaces();
+    for (ReferenceBinding superInterface : superInterfaces) {
+      JClassType jsuperInterface = (JClassType) resolveType(logger,
+          superInterface);
+      
+      if (jsuperInterface == null || jsuperInterface.isInterface() == null) {
+        return null;
+      }
+      bounds.add(jsuperInterface);
     }
 
     return new JUpperBound(bounds.toArray(NO_JCLASSES));
+  }
+
+  /**
+   * Declares TypeParameters declared on a JGenericType or a JAbstractMethod
+   * by mapping the TypeParameters into JTypeParameters.
+   * <p/>
+   * This mapping has to be done on the first pass through the AST in order
+   * to handle declarations of the form:
+   * <<C exends GenericClass<T>, T extends SimpleClass>
+   * <p/>
+   * JDT already knows that GenericClass<T> is a parameterized type with a type
+   * argument of <T extends SimpleClass>. Therefore, in order to resolve
+   * GenericClass<T>, we must have knowledge of <T extends SimpleClass>.
+   * <p/>
+   * By calling this method on the first pass through the AST, a
+   * JTypeParameter for <T extends SimpleClass> will be created.
+   */
+  private JTypeParameter[] declareTypeParameters(TypeParameter[] typeParameters) {
+    if (typeParameters == null || typeParameters.length == 0) {
+      return null;
+    }
+    
+    JTypeParameter[] jtypeParamArray = new JTypeParameter[typeParameters.length];
+    Mapper identityMapper = cacheManager.getIdentityMapper();
+    
+    for (int i = 0; i < typeParameters.length; i++) {
+      TypeParameter typeParam = typeParameters[i];
+      jtypeParamArray[i] = new JTypeParameter(String.valueOf(typeParam.name), i);      
+      identityMapper.put(typeParam.binding,  jtypeParamArray[i]);
+    }
+    
+    return jtypeParamArray;
   }
 
   private Object evaluateConstantExpression(TreeLogger logger,
@@ -923,9 +973,12 @@ public class TypeOracleBuilder {
   }
 
   /**
-   * Maps a TypeDeclaration into a JClassType.
+   * Maps a TypeDeclaration into a JClassType. If the TypeDeclaration has
+   * TypeParameters (i.e, it is a generic type or method), then the
+   * TypeParameters are mapped into JTypeParameters by
+   * {@link TypeOracleBuilder#declareTypeParameters(org.eclipse.jdt.internal.compiler.ast.TypeParameter[])}  
    */
-  private void processType(TypeDeclaration typeDecl, JClassType enclosingType,
+  private void processType(TypeDeclaration typeDecl, JClassType jenclosingType,
       boolean isLocalType) {
     TypeOracle oracle = cacheManager.getTypeOracle();
 
@@ -942,11 +995,11 @@ public class TypeOracleBuilder {
     }
 
     String qname = getQualifiedName(binding);
-    String jclassName;
+    String className;
     if (binding instanceof LocalTypeBinding) {
-      jclassName = qname.substring(qname.lastIndexOf('.') + 1);
+      className = qname.substring(qname.lastIndexOf('.') + 1);
     } else {
-      jclassName = getSimpleName(typeDecl);
+      className = getSimpleName(typeDecl);
     }
 
     if (oracle.findType(qname) != null) {
@@ -964,22 +1017,29 @@ public class TypeOracleBuilder {
     int bodyStart = typeDecl.bodyStart;
     int bodyEnd = typeDecl.bodyEnd;
 
-    JRealClassType type;
+    JRealClassType jrealClassType;
     if (jclassIsAnnonation) {
-      type = new JAnnotationType(oracle, cup, pkg, enclosingType, isLocalType,
-          jclassName, declStart, declEnd, bodyStart, bodyEnd, jclassIsIntf);
-    } else if (maybeGeneric(typeDecl, enclosingType)) {
-      type = new JGenericType(oracle, cup, pkg, enclosingType, isLocalType,
-          jclassName, declStart, declEnd, bodyStart, bodyEnd, jclassIsIntf);
+      jrealClassType = new JAnnotationType(oracle, cup, pkg, jenclosingType, isLocalType,
+          className, declStart, declEnd, bodyStart, bodyEnd, jclassIsIntf);
+    } else if (maybeGeneric(typeDecl, jenclosingType)) {     
+      // Go through and create declarations for each of the type parameters on
+      // the generic class or method
+      JTypeParameter[] jtypeParameters = 
+          declareTypeParameters(typeDecl.typeParameters);
+      
+      JGenericType jgenericType = new JGenericType(oracle, cup, pkg, jenclosingType, isLocalType,
+                className, declStart, declEnd, bodyStart, bodyEnd, jclassIsIntf, jtypeParameters);            
+      
+      jrealClassType = jgenericType;
     } else if (binding.isEnum()) {
-      type = new JEnumType(oracle, cup, pkg, enclosingType, isLocalType,
-          jclassName, declStart, declEnd, bodyStart, bodyEnd, jclassIsIntf);
+      jrealClassType = new JEnumType(oracle, cup, pkg, jenclosingType, isLocalType,
+          className, declStart, declEnd, bodyStart, bodyEnd, jclassIsIntf);
     } else {
-      type = new JRealClassType(oracle, cup, pkg, enclosingType, isLocalType,
-          jclassName, declStart, declEnd, bodyStart, bodyEnd, jclassIsIntf);
+      jrealClassType = new JRealClassType(oracle, cup, pkg, jenclosingType, isLocalType,
+          className, declStart, declEnd, bodyStart, bodyEnd, jclassIsIntf);
     }
 
-    cacheManager.setTypeForBinding(binding, type);
+    cacheManager.setTypeForBinding(binding, jrealClassType);
   }
 
   private boolean resolveAnnotation(
@@ -1017,6 +1077,33 @@ public class TypeOracleBuilder {
     }
     return true;
   }
+
+  private boolean resolveBoundForTypeParameter(TreeLogger logger,
+      HasTypeParameters genericElement, TypeParameter typeParameter,
+      int ordinal) {
+    JBound jbounds = createTypeParameterBounds(logger, typeParameter.binding);
+    
+    if (jbounds == null) {
+      return false;
+    }
+    
+    genericElement.getTypeParameters()[ordinal].setBounds(jbounds);
+
+    return true;
+  }
+
+  private boolean resolveBoundsForTypeParameters(TreeLogger logger,
+       HasTypeParameters genericElement, TypeParameter[] typeParameters) {
+     if (typeParameters != null) {
+       for (int i = 0; i < typeParameters.length; ++i) {
+         if (!resolveBoundForTypeParameter(logger,
+             genericElement, typeParameters[i], i)) {
+           return false;
+         }
+       }
+     }
+     return true;
+   }
 
   private boolean resolveField(TreeLogger logger, char[] unitSource,
       JClassType enclosingType, FieldDeclaration jfield) {
@@ -1109,13 +1196,17 @@ public class TypeOracleBuilder {
     }
 
     JAbstractMethod method;
-    if (jmethod.isConstructor()) {
-      method = new JConstructor(enclosingType, name, declStart, declEnd,
-          bodyStart, bodyEnd, declaredAnnotations);
-
-      // Resolve the type parameters, since they may be used as the return type,
-      // etc.
-      if (!resolveTypeParameters(logger, method, jmethod.typeParameters())) {
+   
+    // Declare the type parameters. We will pass them into the constructors for
+    // JConstructor/JMethod/JAnnotatedMethod. Then, we'll do a second pass to
+    // resolve the bounds on each JTypeParameter object.
+    JTypeParameter[] jtypeParameters = declareTypeParameters(jmethod.typeParameters());
+    
+    if (jmethod.isConstructor()) {       
+       method = new JConstructor(enclosingType, name, declStart, declEnd,
+          bodyStart, bodyEnd, declaredAnnotations, jtypeParameters);
+      // Do a second pass to resolve the bounds on each JTypeParameter.
+      if (!resolveBoundsForTypeParameters(logger, method, jmethod.typeParameters())) {
         return false;
       }
     } else {
@@ -1130,12 +1221,13 @@ public class TypeOracleBuilder {
             bodyStart, bodyEnd, defaultValue, declaredAnnotations);
       } else {
         method = new JMethod(enclosingType, name, declStart, declEnd,
-            bodyStart, bodyEnd, declaredAnnotations);
+            bodyStart, bodyEnd, declaredAnnotations, jtypeParameters);
       }
 
-      // Resolve the type parameters, since they may be used as the return type,
-      // etc.
-      if (!resolveTypeParameters(logger, method, jmethod.typeParameters())) {
+      // Do a second pass to resolve the bounds on each JTypeParameter.
+      // The type parameters must be resolved at this point, because they may
+      // be used in the resolution of the method's return type.
+      if (!resolveBoundsForTypeParameters(logger, method, jmethod.typeParameters())) {
         return false;
       }
 
@@ -1488,8 +1580,8 @@ public class TypeOracleBuilder {
   }
 
   private boolean resolveTypeDeclaration(TreeLogger logger, char[] unitSource,
-      TypeDeclaration jclass) {
-    SourceTypeBinding binding = jclass.binding;
+      TypeDeclaration clazz) {
+    SourceTypeBinding binding = clazz.binding;
     if (binding.constantPoolName() == null) {
       /*
        * Weird case: if JDT determines that this local class is totally
@@ -1503,12 +1595,12 @@ public class TypeOracleBuilder {
 
     // Handle package-info classes.
     if (isPackageInfoTypeName(qname)) {
-      return resolvePackage(logger, jclass);
+      return resolvePackage(logger, clazz);
     }
 
     // Just resolve the type.
-    JRealClassType type = (JRealClassType) resolveType(logger, binding);
-    if (type == null) {
+    JRealClassType jtype = (JRealClassType) resolveType(logger, binding);
+    if (jtype == null) {
       // Failed to resolve.
       //
       return false;
@@ -1516,36 +1608,38 @@ public class TypeOracleBuilder {
 
     // Add modifiers.
     //
-    type.addModifierBits(Shared.bindingToModifierBits(jclass.binding));
+    jtype.addModifierBits(Shared.bindingToModifierBits(clazz.binding));
 
     // Resolve annotations
     Map<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> declaredAnnotations = newAnnotationMap();
-    if (!resolveAnnotations(logger, jclass.annotations, declaredAnnotations)) {
+    if (!resolveAnnotations(logger, clazz.annotations, declaredAnnotations)) {
       // Failed to resolve.
       //
       return false;
     }
-    type.addAnnotations(declaredAnnotations);
+    jtype.addAnnotations(declaredAnnotations);
 
-    // Resolve type parameters for generic types
-    JGenericType genericType = type.isGenericType();
-    if (genericType != null
-        && !resolveTypeParameters(logger, type.isGenericType(),
-            jclass.typeParameters)) {
+    // Resolve bounds for type parameters on generic types. Note that this
+    // step does not apply to type parameters on generic methods; that
+    // occurs during the method resolution stage. 
+    JGenericType jGenericType = jtype.isGenericType();
+    if (jGenericType != null
+        && !resolveBoundsForTypeParameters(logger, jtype.isGenericType(),
+            clazz.typeParameters)) {
       // Failed to resolve
       return false;
     }
 
     // Resolve superclass (for classes only).
     //
-    if (type.isInterface() == null) {
+    if (jtype.isInterface() == null) {
       ReferenceBinding superclassRef = binding.superclass;
       if (superclassRef != null) {
-        JClassType superclass = (JClassType) resolveType(logger, superclassRef);
-        if (superclass == null) {
+        JClassType jsuperClass = (JClassType) resolveType(logger, superclassRef);
+        if (jsuperClass == null) {
           return false;
         }
-        type.setSuperclass(superclass);
+        jtype.setSuperclass(jsuperClass);
       }
     }
 
@@ -1554,88 +1648,46 @@ public class TypeOracleBuilder {
     ReferenceBinding[] superintfRefs = binding.superInterfaces;
     for (int i = 0; i < superintfRefs.length; i++) {
       ReferenceBinding superintfRef = superintfRefs[i];
-      JClassType intf = (JClassType) resolveType(logger, superintfRef);
-      if (intf == null) {
+      JClassType jinterface = (JClassType) resolveType(logger, superintfRef);
+      if (jinterface == null) {
         // Failed to resolve.
         //
         return false;
       }
-      type.addImplementedInterface(intf);
+      jtype.addImplementedInterface(jinterface);
     }
 
     // Resolve fields.
     //
-    FieldDeclaration[] jfields = jclass.fields;
-    if (!resolveFields(logger, unitSource, type, jfields)) {
+    FieldDeclaration[] fields = clazz.fields;
+    if (!resolveFields(logger, unitSource, jtype, fields)) {
       return false;
     }
 
-    // Resolve methods.
-    //
-    AbstractMethodDeclaration[] jmethods = jclass.methods;
-    if (!resolveMethods(logger, unitSource, type, jmethods)) {
+    // Resolve methods. This also involves the declaration of type
+    // variables on generic methods, and the resolution of the bounds
+    // on these type variables.
+
+    // One would think that it would be better to perform the declaration
+    // of type variables on methods at the time when we are processing
+    // all of the classes. Unfortunately, when we are processing classes,
+    // we do not have enough information about their methods to analyze
+    // their type variables. Hence, the type variable declaration and
+    // bounds resolution for generic methods must happen after the resolution
+    // of methods is complete.
+    AbstractMethodDeclaration[] methods = clazz.methods;
+    if (!resolveMethods(logger, unitSource, jtype, methods)) {
       return false;
     }
 
     // Get tags.
     //
-    if (jclass.javadoc != null) {
-      if (!parseMetaDataTags(unitSource, type, jclass.javadoc)) {
+    if (clazz.javadoc != null) {
+      if (!parseMetaDataTags(unitSource, jtype, clazz.javadoc)) {
         return false;
       }
     }
 
-    return true;
-  }
-
-  private boolean resolveTypeParameter(TreeLogger logger,
-      JAbstractMethod method, TypeParameter jtypeParameter, int ordinal) {
-    JTypeParameter typeParameter = new JTypeParameter(
-        String.valueOf(jtypeParameter.name), method, ordinal);
-    return resolveTypeParameter(logger, jtypeParameter.binding, typeParameter);
-  }
-
-  private boolean resolveTypeParameter(TreeLogger logger,
-      JGenericType genericType, TypeParameter jtypeParameter, int ordinal) {
-    JTypeParameter typeParameter = new JTypeParameter(
-        String.valueOf(jtypeParameter.name), genericType, ordinal);
-    return resolveTypeParameter(logger, jtypeParameter.binding, typeParameter);
-  }
-
-  private boolean resolveTypeParameter(TreeLogger logger,
-      TypeVariableBinding binding, JTypeParameter typeParameter) {
-    Mapper identityMapper = cacheManager.getIdentityMapper();
-    assert (identityMapper.get(binding) == null);
-
-    identityMapper.put(binding, typeParameter);
-
-    JBound bounds = createTypeVariableBounds(logger, binding);
-    typeParameter.setBounds(bounds);
-
-    return true;
-  }
-
-  private boolean resolveTypeParameters(TreeLogger logger,
-      JAbstractMethod method, TypeParameter[] jtypeParameters) {
-    if (jtypeParameters != null) {
-      for (int i = 0; i < jtypeParameters.length; ++i) {
-        if (!resolveTypeParameter(logger, method, jtypeParameters[i], i)) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  private boolean resolveTypeParameters(TreeLogger logger,
-      JGenericType genericType, TypeParameter[] jtypeParameters) {
-    if (jtypeParameters != null) {
-      for (int i = 0; i < jtypeParameters.length; ++i) {
-        if (!resolveTypeParameter(logger, genericType, jtypeParameters[i], i)) {
-          return false;
-        }
-      }
-    }
     return true;
   }
 }

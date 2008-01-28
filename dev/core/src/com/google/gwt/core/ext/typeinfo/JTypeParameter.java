@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,27 +23,12 @@ import java.util.List;
  */
 public class JTypeParameter extends JDelegatingClassType implements HasBounds {
   private JBound bounds;
-  private final JGenericType declaringClass;
-  private final JAbstractMethod declaringMethod;
   private final int ordinal;
   private final String typeName;
 
-  public JTypeParameter(String typeName, JAbstractMethod declaringMethod,
-      int ordinal) {
+  public JTypeParameter(String typeName, int ordinal) {
     this.typeName = typeName;
-    this.declaringMethod = declaringMethod;
-    this.declaringClass = null;
     this.ordinal = ordinal;
-    declaringMethod.addTypeParameter(this);
-  }
-
-  public JTypeParameter(String typeName, JGenericType declaringClass,
-      int ordinal) {
-    this.typeName = typeName;
-    this.declaringClass = declaringClass;
-    this.declaringMethod = null;
-    this.ordinal = ordinal;
-    declaringClass.addTypeParameter(this);
   }
 
   @Override
@@ -60,8 +45,10 @@ public class JTypeParameter extends JDelegatingClassType implements HasBounds {
     return bounds;
   }
 
-  public JRealClassType getDeclaringClass() {
-    return declaringClass;
+  @Override
+  public JClassType getEnclosingType() {
+    // Type parameters do not have an enclosing type.
+    return null;
   }
 
   @Override

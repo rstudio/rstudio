@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ public class TypeOracleSuite extends TestSuite {
     TestSuite suite = new TestSuite("Test suite for TypeOracle");
     suite.addTestSuite(AnnotationsTest.class);
     suite.addTestSuite(JArrayTypeTest.class);
+    suite.addTestSuite(JAbstractMethodTest.class);
     suite.addTestSuite(JClassTypeTest.class);
     suite.addTestSuite(JEnumTypeTest.class);
     suite.addTestSuite(JGenericTypeTest.class);

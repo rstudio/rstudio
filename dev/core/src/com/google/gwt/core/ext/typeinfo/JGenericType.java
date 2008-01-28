@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,9 +52,15 @@ public class JGenericType extends JRealClassType implements HasTypeParameters {
   public JGenericType(TypeOracle oracle, CompilationUnitProvider cup,
       JPackage declaringPackage, JClassType enclosingType, boolean isLocalType,
       String name, int declStart, int declEnd, int bodyStart, int bodyEnd,
-      boolean isInterface) {
+      boolean isInterface, JTypeParameter[] jtypeParameters) {
     super(oracle, cup, declaringPackage, enclosingType, isLocalType, name,
         declStart, declEnd, bodyStart, bodyEnd, isInterface);
+    
+     if (jtypeParameters != null) {
+      for (JTypeParameter jtypeParameter : jtypeParameters) {
+        addTypeParameter(jtypeParameter);            
+      }
+    }
   }
 
   @Override
@@ -128,7 +134,7 @@ public class JGenericType extends JRealClassType implements HasTypeParameters {
     return "class " + getParameterizedQualifiedSourceName();
   }
 
-  void addTypeParameter(JTypeParameter typeParameter) {
+  private void addTypeParameter(JTypeParameter typeParameter) {
     typeParams.add(typeParameter);
   }
 }

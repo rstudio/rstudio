@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,7 +53,8 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
   // Only the builder can construct
   JAbstractMethod(String name, int declStart, int declEnd, int bodyStart,
       int bodyEnd,
-      Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
+      Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
+      JTypeParameter[] jtypeParameters) {
     this.name = name;
     this.declStart = declStart;
     this.declEnd = declEnd;
@@ -61,12 +62,14 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
     this.bodyEnd = bodyEnd;
     annotations = new Annotations();
     annotations.addAnnotations(declaredAnnotations);
+    
+    if (jtypeParameters != null) {
+      for (JTypeParameter jtypeParameter : jtypeParameters) {
+        addTypeParameter(jtypeParameter);            
+      }
+    }
   }
 
-  /**
-   * @param enclosingType
-   * @param ctor
-   */
   JAbstractMethod(JAbstractMethod srcMethod) {
     this.annotations = new Annotations(srcMethod.annotations);
     this.bodyEnd = srcMethod.bodyEnd;
@@ -255,10 +258,6 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
     params.add(param);
   }
 
-  void addTypeParameter(JTypeParameter typeParameter) {
-    typeParams.add(typeParameter);
-  }
-
   boolean hasParamTypes(JType[] paramTypes) {
     if (params.size() != paramTypes.length) {
       return false;
@@ -274,4 +273,8 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
     }
     return true;
   }
+  
+  private void addTypeParameter(JTypeParameter typeParameter) {
+    typeParams.add(typeParameter);
+  }      
 }

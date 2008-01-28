@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,12 +22,7 @@ import com.google.gwt.core.ext.typeinfo.test.MyCustomList;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Tests for {@link JTypeParameter}.
@@ -56,9 +51,7 @@ public class JTypeParameterTest extends JDelegatingClassTypeTestBase {
   @Override
   public void testGetEnclosingType() throws NotFoundException {
     JTypeParameter testType = getTestType();
-    assertEquals(
-        moduleContext.getOracle().getType(GenericClass.class.getName()),
-        testType.getDeclaringClass());
+    assertNull(testType.getEnclosingType());
   }
 
   @Override
