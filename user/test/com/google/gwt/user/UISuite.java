@@ -32,6 +32,7 @@ import com.google.gwt.user.client.ui.HorizontalPanelTest;
 import com.google.gwt.user.client.ui.ImageTest;
 import com.google.gwt.user.client.ui.LinearPanelTest;
 import com.google.gwt.user.client.ui.ListBoxTest;
+import com.google.gwt.user.client.ui.MenuBarTest;
 import com.google.gwt.user.client.ui.NamedFrameTest;
 import com.google.gwt.user.client.ui.PanelTest;
 import com.google.gwt.user.client.ui.PopupTest;
@@ -79,6 +80,7 @@ public class UISuite {
     suite.addTestSuite(ImageTest.class);
     suite.addTestSuite(LinearPanelTest.class);
     suite.addTestSuite(ListBoxTest.class);
+    suite.addTestSuite(MenuBarTest.class);
     suite.addTestSuite(NamedFrameTest.class);
     suite.addTestSuite(PanelTest.class);
     suite.addTestSuite(PopupTest.class);

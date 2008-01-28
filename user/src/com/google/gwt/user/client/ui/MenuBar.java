@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,6 +41,10 @@ import java.util.List;
  * <li>.gwt-MenuBar-vertical { dependent style applied to vertical menu bars }</li>
  * <li>.gwt-MenuBar .gwt-MenuItem { menu items }</li>
  * <li>.gwt-MenuBar .gwt-MenuItem-selected { selected menu items }</li>
+ * <li>.gwt-MenuBar .gwt-MenuItemSeparator { section breaks between menu items }
+ * </li>
+ * <li>.gwt-MenuBar .gwt-MenuItemSeparator .content { inner component of
+ * section separators } </li>
  * </ul>
  * 
  * <p>
@@ -50,8 +54,17 @@ import java.util.List;
  */
 public class MenuBar extends Widget implements PopupListener {
 
-  private Element body;
+  /**
+   * List of all {@link MenuItem}s and {@link MenuItemSeparator}s.
+   */
+  private ArrayList<UIObject> allItems = new ArrayList<UIObject>();
+
+  /**
+   * List of {@link MenuItem}s, not including {@link MenuItemSeparator}s.
+   */
   private ArrayList<MenuItem> items = new ArrayList<MenuItem>();
+
+  private Element body;
   private MenuBar parentMenu;
   private PopupPanel popup;
   private MenuItem selectedItem;
@@ -101,21 +114,15 @@ public class MenuBar extends Widget implements PopupListener {
    * Adds a menu item to the bar.
    * 
    * @param item the item to be added
+   * @return the {@link MenuItem} object
    */
-  public void addItem(MenuItem item) {
-    Element tr;
-    if (vertical) {
-      tr = DOM.createTR();
-      DOM.appendChild(body, tr);
-    } else {
-      tr = DOM.getChild(body, 0);
-    }
-
-    DOM.appendChild(tr, item.getElement());
-
+  public MenuItem addItem(MenuItem item) {
+    addItemElement(item.getElement());
     item.setParentMenu(this);
     item.setSelectionStyle(false);
     items.add(item);
+    allItems.add(item);
+    return item;
   }
 
   /**
@@ -128,9 +135,7 @@ public class MenuBar extends Widget implements PopupListener {
    * @return the {@link MenuItem} object created
    */
   public MenuItem addItem(String text, boolean asHTML, Command cmd) {
-    MenuItem item = new MenuItem(text, asHTML, cmd);
-    addItem(item);
-    return item;
+    return addItem(new MenuItem(text, asHTML, cmd));
   }
 
   /**
@@ -143,9 +148,7 @@ public class MenuBar extends Widget implements PopupListener {
    * @return the {@link MenuItem} object created
    */
   public MenuItem addItem(String text, boolean asHTML, MenuBar popup) {
-    MenuItem item = new MenuItem(text, asHTML, popup);
-    addItem(item);
-    return item;
+    return addItem(new MenuItem(text, asHTML, popup));
   }
 
   /**
@@ -157,9 +160,7 @@ public class MenuBar extends Widget implements PopupListener {
    * @return the {@link MenuItem} object created
    */
   public MenuItem addItem(String text, Command cmd) {
-    MenuItem item = new MenuItem(text, cmd);
-    addItem(item);
-    return item;
+    return addItem(new MenuItem(text, cmd));
   }
 
   /**
@@ -171,9 +172,31 @@ public class MenuBar extends Widget implements PopupListener {
    * @return the {@link MenuItem} object created
    */
   public MenuItem addItem(String text, MenuBar popup) {
-    MenuItem item = new MenuItem(text, popup);
-    addItem(item);
-    return item;
+    return addItem(new MenuItem(text, popup));
+  }
+
+  /**
+   * Adds a thin line to the {@link MenuBar} to separate sections of
+   * {@link MenuItem}s.
+   * 
+   * @return the {@link MenuItemSeparator} object created
+   */
+  public MenuItemSeparator addSeparator() {
+    return addSeparator(new MenuItemSeparator());
+  }
+
+  /**
+   * Adds a thin line to the {@link MenuBar} to separate sections of
+   * {@link MenuItem}s.
+   * 
+   * @param separator the {@link MenuItemSeparator} to be added
+   * @return the {@link MenuItemSeparator} object
+   */
+  public MenuItemSeparator addSeparator(MenuItemSeparator separator) {
+    addItemElement(separator.getElement());
+    separator.setParentMenu(this);
+    allItems.add(separator);
+    return separator;
   }
 
   /**
@@ -184,7 +207,19 @@ public class MenuBar extends Widget implements PopupListener {
     while (DOM.getChildCount(container) > 0) {
       DOM.removeChild(container, DOM.getChild(container, 0));
     }
+
+    // Set the parent of all items to null
+    for (UIObject item : allItems) {
+      if (item instanceof MenuItemSeparator) {
+        ((MenuItemSeparator) item).setParentMenu(null);
+      } else {
+        ((MenuItem) item).setParentMenu(null);
+      }
+    }
+
+    // Clear out all of the items and separators
     items.clear();
+    allItems.clear();
   }
 
   /**
@@ -246,14 +281,21 @@ public class MenuBar extends Widget implements PopupListener {
    * @param item the item to be removed
    */
   public void removeItem(MenuItem item) {
-    int idx = items.indexOf(item);
-    if (idx == -1) {
-      return;
+    if (removeItemElement(item)) {
+      items.remove(item);
+      item.setParentMenu(null);
     }
+  }
 
-    Element container = getItemContainerElement();
-    DOM.removeChild(container, DOM.getChild(container, idx));
-    items.remove(idx);
+  /**
+   * Removes the specified {@link MenuItemSeparator} from the bar.
+   * 
+   * @param separator the separator to be removed
+   */
+  public void removeSeparator(MenuItemSeparator separator) {
+    if (removeItemElement(separator)) {
+      separator.setParentMenu(null);
+    }
   }
 
   /**
@@ -442,6 +484,23 @@ public class MenuBar extends Widget implements PopupListener {
   }
 
   /**
+   * Physically add the td element of a {@link MenuItem} or
+   * {@link MenuItemSeparator} to this {@link MenuBar}.
+   * 
+   * @param tdElem the td element to be added
+   */
+  private void addItemElement(Element tdElem) {
+    Element tr;
+    if (vertical) {
+      tr = DOM.createTR();
+      DOM.appendChild(body, tr);
+    } else {
+      tr = DOM.getChild(body, 0);
+    }
+    DOM.appendChild(tr, tdElem);
+  }
+
+  /**
    * Closes this menu (if it is a popup).
    */
   private void close() {
@@ -488,5 +547,24 @@ public class MenuBar extends Widget implements PopupListener {
     if (items.size() > 0) {
       selectItem(items.get(0));
     }
+  }
+
+  /**
+   * Removes the specified item from the {@link MenuBar} and the physical DOM
+   * structure.
+   * 
+   * @param item the item to be removed
+   * @return true if the item was removed
+   */
+  private boolean removeItemElement(UIObject item) {
+    int idx = allItems.indexOf(item);
+    if (idx == -1) {
+      return false;
+    }
+
+    Element container = getItemContainerElement();
+    DOM.removeChild(container, DOM.getChild(container, idx));
+    allItems.remove(idx);
+    return true;
   }
 }
