@@ -13,19 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.client;
+package com.google.gwt.emultest.java.util;
+
+import java.util.List;
+import java.util.Vector;
 
 /**
- * A range of values for a Benchmark parameter.
- *
- * A Range produces an Iterator that contains all of the values that a Benchmark
- * parameter should be tested over.
- *
- * Range is unlikely to provide any extra semantics above what you would get
- * with java.util.Iterable, but it was introduced before GWT's JDK 1.5 support.
- *
- * @param <T> the type that this range contains
- * 
+ * A {@link ListBenchmark} for {@link Vector Vectors}.
  */
-public interface Range<T> extends Iterable<T> {
+public class VectorBenchmark extends ListBenchmark {
+
+  protected List<String> newList() {
+    return new Vector<String>();
+  }
 }

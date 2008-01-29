@@ -15,26 +15,14 @@
  */
 package com.google.gwt.examples.benchmarks;
 
-import com.google.gwt.junit.client.Category;
 import com.google.gwt.junit.client.Benchmark;
 
 /**
  * Provides profile statistics on allocation times for different kinds of
  * objects.
  *
- * @gwt.benchmark.category com.google.gwt.user.client.ui.AllocBenchmark.AllocCategory
- *
  */
 public class AllocBenchmark extends Benchmark {
-
-  /**
-   * @gwt.benchmark.name Allocation Benchmarks
-   * @gwt.benchmark.description A series of benchmarks that tests the impact of
-   * different kinds of allocations.
-   *
-   */
-  class AllocCategory implements Category {
-  }
 
   private static final int numAllocs = 1000;
 

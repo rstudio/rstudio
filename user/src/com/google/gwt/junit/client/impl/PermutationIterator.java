@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,32 +15,29 @@
  */
 package com.google.gwt.junit.client.impl;
 
-import com.google.gwt.junit.client.Range;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * Iterates over all the possible permutations available in a list of
- * {@link com.google.gwt.junit.client.Range}s.
- * 
- * <p>
- * The simplest way to iterate over the permutations of multiple iterators is in
- * a nested for loop. The PermutationIterator turns that for loop inside out
- * into a single iterator, which enables you to access each permutation in a
- * piecemeal fashion.
- * </p>
+ * Iterates over all the possible permutations available in a list of {@link
+ * Iterable Iterables}.
+ *
+ * <p> The simplest way to iterate over the permutations of multiple iterators
+ * is in a nested for loop. The PermutationIterator turns that for loop inside
+ * out into a single iterator, which enables you to access each permutation in a
+ * piecemeal fashion. </p>
  */
-public class PermutationIterator implements
-    Iterator<PermutationIterator.Permutation> {
+public class PermutationIterator
+    implements Iterator<PermutationIterator.Permutation> {
 
   /**
    * A single permutation of all the iterators. Contains the current value of
    * each iterator for the permutation.
    */
   public static class Permutation {
+
     private List<Object> values;
 
     public Permutation(List<?> values) {
@@ -57,45 +54,27 @@ public class PermutationIterator implements
     }
   }
 
-  /**
-   * A Range implemented using a list of data.
-   * 
-   * @param <T> the type of data in the range.
-   */
-  private static class ListRange<T> implements Range<T> {
-    private List<T> list;
-
-    public ListRange(List<T> list) {
-      this.list = list;
-    }
-
-    public Iterator<T> iterator() {
-      return list.iterator();
-    }
-  }
-
   public static void main(String[] args) {
-    List<Range<String>> ranges = new ArrayList<Range<String>>(3);
-    ranges.add(new ListRange<String>(
-        Arrays.asList("a", "b", "c")));
-    ranges.add(new ListRange<String>(
-        Arrays.asList("1", "2", "3")));
-    ranges.add(new ListRange<String>(Arrays.asList(
-        "alpha", "beta", "gamma", "delta")));
+    List<Iterable<String>> iterables = new ArrayList<Iterable<String>>(3);
+    iterables.add(Arrays.asList("a", "b", "c"));
+    iterables.add(Arrays.asList("1", "2", "3"));
+    iterables.add(Arrays.asList("alpha", "beta", "gamma", "delta"));
 
     System.out.println("Testing normal iteration.");
-    for (Iterator<Permutation> it = new PermutationIterator(ranges); it.hasNext();) {
+    for (Iterator<Permutation> it = new PermutationIterator(iterables);
+        it.hasNext();) {
       Permutation p = it.next();
       System.out.println(p);
     }
 
     System.out.println("\nTesting skipping iteration.");
 
-    Iterator<String> skipIterator = Arrays.asList(
-        "alpha", "beta", "gamma", "delta").iterator();
+    Iterator<String> skipIterator = Arrays
+        .asList("alpha", "beta", "gamma", "delta").iterator();
     boolean skipped = true;
     String skipValue = null;
-    for (PermutationIterator it = new PermutationIterator(ranges); it.hasNext();) {
+    for (PermutationIterator it = new PermutationIterator(iterables);
+        it.hasNext();) {
       Permutation p = it.next();
 
       if (skipped) {
@@ -132,9 +111,9 @@ public class PermutationIterator implements
   private boolean maybeHaveMore = true;
 
   /**
-   * The ranges to permutate.
+   * The {@code Iterables} to permute.
    */
-  private List<? extends Range<?>> ranges;
+  private List<? extends Iterable<?>> iterables;
 
   /**
    * Did we just skip a range? If so, the values List already contains the
@@ -149,22 +128,21 @@ public class PermutationIterator implements
 
   /**
    * Constructs a new PermutationIterator that provides the values for each
-   * possible permutation of <code>ranges</code>.
-   * 
-   * @param ranges non-null. Each {@link com.google.gwt.junit.client.Range} must
-   * have at least one element. ranges.size() must be > 1
-   * 
-   * TODO(tobyr) Consider if empty Ranges ever make sense in the context of
-   * permutations.
-   * 
+   * possible permutation of <code>iterables</code>.
+   *
+   * @param iterables non-null. Each {@link Iterable} must have at least one
+   * element. iterables.size() must be > 1
+   *
+   * TODO(tobyr) Consider if empty Iterables ever make sense in
+   * the context of permutations.
    */
-  public PermutationIterator(List<? extends Range<?>> ranges) {
-    this.ranges = ranges;
+  public PermutationIterator(List<? extends Iterable<?>> iterables) {
+    this.iterables = iterables;
 
     iterators = new ArrayList<Iterator<?>>();
 
-    for (Range<?> r : ranges) {
-      iterators.add(r.iterator());
+    for (Iterable<?> iterable : iterables) {
+      iterators.add(iterable.iterator());
     }
 
     values = new ArrayList<Object>();
@@ -173,7 +151,7 @@ public class PermutationIterator implements
   /**
    * Returns a new <code>Permutation</code> containing the values of the next
    * permutation.
-   * 
+   *
    * @return a non-null <code>Permutation</code>
    */
   public boolean hasNext() {
@@ -185,7 +163,8 @@ public class PermutationIterator implements
     // Walk the iterators from bottom to top checking to see if any still have
     // any available values
 
-    for (int currentIterator = iterators.size() - 1; currentIterator >= 0; --currentIterator) {
+    for (int currentIterator = iterators.size() - 1; currentIterator >= 0;
+        --currentIterator) {
       Iterator<?> it = iterators.get(currentIterator);
       if (it.hasNext()) {
         return true;
@@ -216,13 +195,14 @@ public class PermutationIterator implements
     // Walk through the iterators from bottom to top, finding the first one
     // which has a value available. Increment it, reset all of the subsequent
     // iterators, and then return the current permutation.
-    for (int currentIteratorIndex = iterators.size() - 1; currentIteratorIndex >= 0; --currentIteratorIndex) {
+    for (int currentIteratorIndex = iterators.size() - 1;
+        currentIteratorIndex >= 0; --currentIteratorIndex) {
       Iterator<?> it = iterators.get(currentIteratorIndex);
       if (it.hasNext()) {
         values.set(currentIteratorIndex, it.next());
         for (int i = currentIteratorIndex + 1; i < iterators.size(); ++i) {
-          Range<?> resetRange = ranges.get(i);
-          Iterator<?> resetIterator = resetRange.iterator();
+          Iterable<?> resetIterable = iterables.get(i);
+          Iterator<?> resetIterator = resetIterable.iterator();
           iterators.set(i, resetIterator);
           values.set(i, resetIterator.next());
         }
@@ -240,24 +220,23 @@ public class PermutationIterator implements
   }
 
   /**
-   * Skips the remaining set of values in the bottom
-   * {@link com.google.gwt.junit.client.Range}. This method affects the results
-   * of both hasNext() and next().
-   * 
+   * Skips the remaining set of values in the bottom {@code Iterable}. This
+   * method affects the results of both hasNext() and next().
    */
   public void skipCurrentRange() {
 
     rangeSkipped = true;
 
-    for ( int currentIteratorIndex = iterators.size() - 2; currentIteratorIndex >= 0; --currentIteratorIndex ) {
-      Iterator<?> it = iterators.get( currentIteratorIndex );
-      if ( it.hasNext() ) {
-        values.set( currentIteratorIndex, it.next() );
-        for ( int i = currentIteratorIndex + 1; i < iterators.size(); ++i ) {
-          Range<?> resetRange = ranges.get( i );
-          Iterator<?> resetIterator = resetRange.iterator();
-          iterators.set( i, resetIterator );
-          values.set( i, resetIterator.next() );
+    for (int currentIteratorIndex = iterators.size() - 2;
+        currentIteratorIndex >= 0; --currentIteratorIndex) {
+      Iterator<?> it = iterators.get(currentIteratorIndex);
+      if (it.hasNext()) {
+        values.set(currentIteratorIndex, it.next());
+        for (int i = currentIteratorIndex + 1; i < iterators.size(); ++i) {
+          Iterable<?> resetIterable = iterables.get(i);
+          Iterator<?> resetIterator = resetIterable.iterator();
+          iterators.set(i, resetIterator);
+          values.set(i, resetIterator.next());
         }
         return;
       }

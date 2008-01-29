@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,71 +17,56 @@ package com.google.gwt.junit.client;
 
 /**
  * A type of {@link com.google.gwt.junit.client.GWTTestCase} which specifically
- * records performance results. {@link com.google.gwt.junit.client.Benchmark}s
- * have additional functionality above and beyond GWT's JUnit support for
- * standard <code>TestCases</code>.
+ * records performance results. {@code Benchmarks} have additional functionality
+ * above and beyond GWT's JUnit support for standard <code>TestCases</code>.
  *
- * <ul>
- * <li>In a single <code>JUnit</code> run, the results of all executed
+ * <h2>Reporting</h2>
+ * <p>
+ * In a single <code>JUnit</code> run, the results of all executed
  * benchmarks are collected and stored in an XML report viewable with the
- * <code>benchmarkViewer</code>.</li>
+ * <code>benchmarkViewer</code>.
+ * </p><br>
  *
- * <li>GWT automatically removes jitter from your benchmark methods by running
- * them for a minimum period of time (150ms). GWT also optionally limits your
- * benchmark execution to a maximum period of time (1000ms).</li>
+ * <h2>Permutations</h2>
+ * <p>GWT supports test methods that have parameters. GWT will execute each
+ * benchmark method multiple times in order to exhaustively test all the 
+ * possible combinations of parameter values. All of your test method parameters 
+ * must be annotated with a {@code Range} annotation such as 
+ * {@link com.google.gwt.junit.client.annotations.RangeField RangeField}
+ * or {@link com.google.gwt.junit.client.annotations.RangeEnum RangeEnum}.
  *
- * <li>GWT supports "begin" and "end" test methods that separate setup and
- * teardown costs from the actual work being benchmarked. Simply name your
- * functions "begin[TestMethodName]" and "end[TestMethodName]" and they will
- * be executed before and after every execution of your test method. The
- * timings of these setup methods are not included in the test results.</li>
+ * For example,
  *
- * <li>GWT supports test methods that have parameters. GWT will execute each
- * benchmark method multiple times in order to exhaustively test all the possible
- * combinations of parameter values. For each parameter that your test method
- * accepts, it should document it with the annotation,
- * <code>&#64;gwt.benchmark.param</code>.
- *
- * <p>The syntax for gwt.benchmark.param is
- * <code>&lt;param name&gt; = &lt;Iterable&gt;</code>. For example,
- *
- * <pre>
- * &#64;gwt.benchmark.param where = java.util.Arrays.asList(
- *   new Position[] { Position.BEGIN, Position.END, Position.VARIED } )
- * &#64;gwt.benchmark.param size -limit = insertRemoveRange
- * public void testArrayListRemoves(Position where, Integer size) { ... }
- * </pre></p>
- *
- * <p>In this example, the annotated function is executed with all the possible
- * permutations of <code>Position = (BEGIN, END, and VARIED)</code> and
- * <code>insertRemoveRange = IntRange( 64, Integer.MAX_VALUE, "*", 2 )</code>.
+ * <code><pre> 
+ * public void testArrayListRemoves(
+ *   &#64;RangeEnum(Position.class) Position where, 
+ *   &#64;RangeField("insertRemoveRange") Integer size) { ... 
+ * }
+ * </pre></code>
  * </p>
+ * 
+ * <h2>Timing</h2>
+ * <ul>
+ * <li>GWT automatically removes jitter from your benchmark methods by running
+ * them for a minimum period of time (150ms).</li>
  *
- * <p>This particular example also demonstrates how GWT can automatically limit
- * the number of executions of your test. Your final parameter (in this example,
- * size) can optionally be decorated with -limit to indicate to GWT that
- * it should stop executing additional permutations of the test when the
- * execution time becomes too long (over 1000ms). So, in this example,
- * for each value of <code>Position</code>, <code>testArrayListRemoves</code>
- * will be executed for increasing values of <code>size</code> (beginning with
- * 64 and increasing in steps of 2), until either it reaches
- * <code>Integer.MAX_VALUE</code> or the execution time for the last
- * permutation is > 1000ms.</p>
+ * <li>GWT supports {@link com.google.gwt.junit.client.annotations.IterationTimeLimit
+ * time limits} on the maximum duration of each permutation of a benchmark 
+ * method. With this feature, you can supply very high upper bounds on your 
+ * ranges (such as Integer.MAX_VALUE), which future-proofs your benchmarks
+ * against faster hardware.
+ * </li>
+ *
+ * <li>GWT supports {@link com.google.gwt.junit.client.annotations.Setup Setup} 
+ * and {@link com.google.gwt.junit.client.annotations.Teardown Teardown} methods
+ * which separate test overhead from the actual work being benchmarked. The 
+ * timings of these lifecycle methods are excluded from test results.
  * </li>
  * </ul>
  *
- * <p>{@link Benchmark}s support the following annotations on each test method
- * in order to decorate each test with additional information useful for
- * reporting.</p>
- *
- * <ul>
- * <li><code>&#64;gwt.benchmark.category</code> - The class name of the {@link Category} the
- * benchmark belongs to. This property may also be set at the
- * {@link com.google.gwt.junit.client.Benchmark} class level.</li>
- * </ul>
- *
- * <p>Please note that {@link Benchmark}s do not currently support asynchronous
- * testing mode. Calling
+ * <h2>Notes</h2>
+ * <p>Please note that {@code Benchmarks} do not currently support 
+ * asynchronous testing mode. Calling
  * {@link com.google.gwt.junit.client.GWTTestCase#delayTestFinish(int)}
  * or {@link com.google.gwt.junit.client.GWTTestCase#finishTest()} will result
  * in an UnsupportedOperationException.</p>
@@ -96,12 +81,12 @@ package com.google.gwt.junit.client;
  * {@example com.google.gwt.examples.benchmarks.AllocBenchmark}
  *
  * <h3>An advanced benchmark example</h3>
- * {@link com.google.gwt.examples.benchmarks.ArrayListAndVectorBenchmark} is a more
- * sophisticated example of benchmarking. It demonstrates the use of "begin"
- * and "end" test methods, parameterized test methods, and automatic
- * test execution limits.
+ * {@link com.google.gwt.examples.benchmarks.ArrayListBenchmark} is a 
+ * more sophisticated example of benchmarking. It demonstrates the use of 
+ * {@code Setup} and {@code Teardown} test methods, parameterized test methods,
+ *  and time limits.
  *
- * {@example com.google.gwt.examples.benchmarks.ArrayListAndVectorBenchmark}
+ * {@example com.google.gwt.examples.benchmarks.ArrayListBenchmark}
  */
 public abstract class Benchmark extends GWTTestCase {
 

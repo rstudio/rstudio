@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,9 +20,11 @@ import com.google.gwt.core.ext.typeinfo.HasMetaData;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.core.ext.typeinfo.HasAnnotations;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.junit.client.TestResults;
 import com.google.gwt.junit.client.Trial;
+import com.google.gwt.junit.client.Benchmark;
 import com.google.gwt.junit.rebind.BenchmarkGenerator;
 import com.google.gwt.util.tools.Utility;
 
@@ -312,6 +314,8 @@ public class BenchmarkReport {
     return resultString.equals("") ? null : resultString;
   }
 
+  private TreeLogger deprecationBranch;
+
   private TreeLogger logger;
 
   private Parser parser = new Parser();
@@ -326,6 +330,10 @@ public class BenchmarkReport {
 
   public BenchmarkReport(TreeLogger logger) {
     this.logger = logger;
+    deprecationBranch = logger.branch(TreeLogger.INFO,
+        "Scanning Benchmarks for deprecated annotations; "
+            + "Please see " + Benchmark.class.getName()
+            + " for more information.", null);
   }
 
   /**
@@ -340,8 +348,7 @@ public class BenchmarkReport {
   public void addBenchmark(JClassType benchmarkClass, TypeOracle typeOracle) {
 
     this.typeOracle = typeOracle;
-    String categoryType = getSimpleMetaData(benchmarkClass,
-        GWT_BENCHMARK_CATEGORY);
+    String categoryType = getBenchmarkCategory(benchmarkClass);
 
     Map<String, JMethod> zeroArgMethods = BenchmarkGenerator.getNotOverloadedTestMethods(benchmarkClass);
     Map<String, JMethod> parameterizedMethods = BenchmarkGenerator.getParameterizedTestMethods(
@@ -360,8 +367,7 @@ public class BenchmarkReport {
     // Add all of the benchmark methods
     for (JMethod method : testMethods) {
       String methodName = method.getName();
-      String methodCategoryType = getSimpleMetaData(method,
-          GWT_BENCHMARK_CATEGORY);
+      String methodCategoryType = getBenchmarkCategory(method);
       if (methodCategoryType == null) {
         methodCategoryType = categoryType;
       }
@@ -438,6 +444,16 @@ public class BenchmarkReport {
     // docOut.close();
   }
 
+  private <T extends HasMetaData & HasAnnotations> String getBenchmarkCategory(
+      T element) {
+    String category = getSimpleMetaData(element, GWT_BENCHMARK_CATEGORY);
+    if (category != null) {
+      deprecationBranch.log(TreeLogger.WARN, GWT_BENCHMARK_CATEGORY + " has " 
+          + "been deprecated with no replacement.", null);
+    }
+    return category;
+  }
+
   private CategoryImpl getCategory(String name) {
     CategoryImpl c = testCategories.get(name);
 
@@ -445,22 +461,37 @@ public class BenchmarkReport {
       return c;
     }
 
-    String categoryName = "";
-    String categoryDescription = "";
-
-    if (name != null) {
-      JClassType categoryType = typeOracle.findType(name);
-
-      if (categoryType != null) {
-        categoryName = getSimpleMetaData(categoryType, GWT_BENCHMARK_NAME);
-        categoryDescription = getSimpleMetaData(categoryType,
-            GWT_BENCHMARK_DESCRIPTION);
-      }
-    }
-
-    c = new CategoryImpl(name, categoryName, categoryDescription);
+    c = getCategoryMetaData(name); 
     testCategories.put(name, c);
     return c;
+  }
+
+  private CategoryImpl getCategoryMetaData(String typeName) {
+    if (typeName == null) {
+      return new CategoryImpl(null, "", "");
+    }
+
+    JClassType categoryType = typeOracle.findType(typeName);
+
+    if (categoryType == null) {
+      return new CategoryImpl(typeName, "", "");
+    }
+
+    String categoryName = getSimpleMetaData(categoryType, GWT_BENCHMARK_NAME);
+    String categoryDescription = getSimpleMetaData(categoryType,
+        GWT_BENCHMARK_DESCRIPTION);
+
+    if (categoryName != null || categoryDescription != null) {
+      deprecationBranch.log(TreeLogger.WARN, GWT_BENCHMARK_NAME + " and " + 
+          GWT_BENCHMARK_DESCRIPTION + " have been deprecated with no " 
+          + "replacement", null);
+    }
+
+    categoryName = categoryName == null ? "" : categoryName;
+    categoryDescription = categoryDescription == null ? "" : categoryDescription;
+    
+    return new CategoryImpl(typeName, categoryName,
+        categoryDescription);
   }
 
   /**
