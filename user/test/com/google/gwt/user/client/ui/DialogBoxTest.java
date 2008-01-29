@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,7 @@ public class DialogBoxTest extends PopupTest {
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
-  
+
   /**
    * Test the accessors.
    */
@@ -39,5 +39,32 @@ public class DialogBoxTest extends PopupTest {
     // Set widget to null
     box1.setWidget(null);
     assertNull(box1.getWidget());
+  }
+
+  /**
+   * Test getters and setters for the caption.
+   */
+  public void testCaption() {
+    DialogBox dialogBox = new DialogBox();
+
+    // Set the caption as text
+    dialogBox.setText("text");
+    assertEquals("text", dialogBox.getText());
+    dialogBox.setText("<b>text</b>");
+    assertEquals("<b>text</b>", dialogBox.getText());
+
+    // Set the caption as html
+    dialogBox.setHTML("text");
+    assertEquals("text", dialogBox.getText());
+    assertEquals("text", dialogBox.getHTML());
+    dialogBox.setHTML("<b>text</b>");
+    assertEquals("text", dialogBox.getText());
+    assertEquals("<b>text</b>", dialogBox.getHTML());
+
+    // Set the caption as caption
+    dialogBox.setCaptionText("<b>text</b>");
+    assertEquals("<b>text</b>", dialogBox.getText());
+    dialogBox.setCaptionHTML("<b>text</b>");
+    assertEquals("text", dialogBox.getText());
   }
 }

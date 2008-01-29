@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,7 +36,8 @@ import com.google.gwt.user.client.Event;
  * {@example com.google.gwt.examples.DialogBoxExample}
  * </p>
  */
-public class DialogBox extends PopupPanel implements HasHTML, MouseListener {
+public class DialogBox extends PopupPanel implements HasHTML, HasText,
+    MouseListener {
 
   private HTML caption = new HTML();
   private Widget child;
@@ -99,7 +100,7 @@ public class DialogBox extends PopupPanel implements HasHTML, MouseListener {
   public String getText() {
     return caption.getText();
   }
-  
+
   @Override
   public Widget getWidget() {
     return child;
@@ -155,10 +156,44 @@ public class DialogBox extends PopupPanel implements HasHTML, MouseListener {
     return true;
   }
 
+  /**
+   * Sets the html inside the caption.
+   * 
+   * @param html the caption html
+   */
+  public void setCaptionHTML(String html) {
+    setHTML(html);
+  }
+
+  /**
+   * Sets the text inside the caption.
+   * 
+   * @param text the caption text
+   */
+  public void setCaptionText(String text) {
+    setText(text);
+  }
+
+  /**
+   * Sets the html string inside the caption.
+   * 
+   * Use {@link #setWidget(Widget)} to set the contents inside the
+   * {@link DialogBox}.
+   * 
+   * @param html the object's new HTML
+   */
   public void setHTML(String html) {
     caption.setHTML(html);
   }
 
+  /**
+   * Sets the text inside the caption.
+   * 
+   * Use {@link #setWidget(Widget)} to set the contents inside the
+   * {@link DialogBox}.
+   * 
+   * @param text the object's new text
+   */
   public void setText(String text) {
     caption.setText(text);
   }
