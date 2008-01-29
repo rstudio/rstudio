@@ -44,7 +44,8 @@ public final class Array {
     Array a = asArrayType(array);
     Array result = arraySlice(a, fromIndex, toIndex);
     initValues(a.getClass(), a.typeId, a.queryId, result);
-    return asArray(result);
+    // implicit type arg not inferred (as of JDK 1.5.0_07)
+    return Array.<T>asArray(result);
   }
 
   /**
@@ -55,7 +56,8 @@ public final class Array {
     Array a = asArrayType(array);
     Array result = createFromSeed(NULL_SEED_TYPE, length);
     initValues(a.getClass(), a.typeId, a.queryId, result);
-    return asArray(result);
+    // implicit type arg not inferred (as of JDK 1.5.0_07)
+    return Array.<T>asArray(result);
   }
 
   /**
@@ -149,9 +151,9 @@ public final class Array {
    * 
    * @param seedType the primitive type of the array; 0: null; 1: zero; 2: false
    * @param length the requested length
-   * @see #NULL_ARRAY
-   * @see #ZERO_ARRAY
-   * @see #FALSE_ARRAY
+   * @see #NULL_SEED_TYPE
+   * @see #ZERO_SEED_TYPE
+   * @see #FALSE_SEED_TYPE
    * @return the new JSON array
    */
   private static native Array createFromSeed(int seedType, int length) /*-{

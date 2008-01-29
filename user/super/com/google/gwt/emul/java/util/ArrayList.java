@@ -138,7 +138,8 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     if (index < 0 || index >= size) {
       indexOutOfBounds(index);
     }
-    return getImpl(array, index);
+    // implicit type arg not inferred (as of JDK 1.5.0_07)
+    return ArrayList.<E>getImpl(array, index);
   }
 
   @Override
@@ -201,7 +202,8 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
       a = Array.clonify(a, size);
     }
     for (int i = 0; i < size; ++i) {
-      a[i] = getImpl(array, i);
+      // implicit type arg not inferred (as of JDK 1.5.0_07)
+      a[i] = ArrayList.<T>getImpl(array, i);
     }
     if (a.length > size) {
       a[size] = null;
