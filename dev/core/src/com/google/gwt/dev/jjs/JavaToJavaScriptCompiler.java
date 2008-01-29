@@ -302,7 +302,8 @@ public class JavaToJavaScriptCompiler {
       //
 
       // Create the tree from JDT
-      GenerateJavaAST.exec(allTypeDeclarations, typeMap, jprogram, jsProgram);
+      GenerateJavaAST.exec(allTypeDeclarations, typeMap, jprogram, jsProgram,
+          options.isEnableAssertions());
 
       // GenerateJavaAST can uncover semantic JSNI errors; report & abort
       // 

@@ -151,13 +151,9 @@ public class CoverageTest extends CoverageBase {
     private void testAssertStatement() {
       // AssertStatement
 
-      // See if assertions are even enabled.
-      try {
-        assert false;
-        // Assertions are not on, early out.
+      // Only test asserts if they're enabled
+      if (! CoverageTest.class.desiredAssertionStatus()) {
         return;
-      } catch (AssertionError e) {
-        // Assertions are on, run the test.
       }
 
       i = 1;

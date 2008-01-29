@@ -67,6 +67,16 @@ public class ClassObjectTest extends GWTTestCase {
     assertEquals(Foo[].class, f[0].getClass());
   }
 
+  public void testAssertionStatus() {
+    boolean assertionStatus = ClassObjectTest.class.desiredAssertionStatus(); 
+    try {
+      assert false;
+      assertFalse(assertionStatus);
+    } catch (AssertionError e) {
+      assertTrue(assertionStatus);        
+    }
+  }
+  
   public void testClass() {
     Object o = new Foo();
     assertEquals(Foo.class, o.getClass());

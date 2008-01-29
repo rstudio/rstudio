@@ -404,6 +404,8 @@ public class GenerateJavaAST {
     private MethodScope currentMethodScope;
 
     private int[] currentSeparatorPositions;
+    
+    private boolean enableAsserts;
 
     private final JsProgram jsProgram;
 
@@ -414,10 +416,11 @@ public class GenerateJavaAST {
     private final TypeMap typeMap;
 
     public JavaASTGenerationVisitor(TypeMap typeMap, JProgram program,
-        JsProgram jsProgram) {
+        JsProgram jsProgram, boolean enableAsserts) {
       this.typeMap = typeMap;
       this.program = program;
       this.jsProgram = jsProgram;
+      this.enableAsserts = enableAsserts;
     }
 
     public void processEnumType(JEnumType type) {
@@ -532,6 +535,24 @@ public class GenerateJavaAST {
           JClassLiteral classLit = program.getLiteralClass(currentClass);
           body.getStatements().add(
               new JReturnStatement(program, null, classLit));
+        }
+
+        // Implement Class.desiredAssertionStatus
+        if (currentClass == program.getTypeJavaLangClass()) {
+          JMethod method =
+              program.getIndexedMethod("Class.desiredAssertionStatus");
+          assert method != null;
+          JMethodBody body = (JMethodBody) method.getBody();
+          List<JStatement> statements = body.getStatements();
+
+          // There must always be at least 1 statement, because the method 
+          // has a non-void return type.
+          assert statements.size() > 0;
+
+          SourceInfo info = statements.get(0).getSourceInfo();
+          statements.clear();
+          statements.add(new JReturnStatement(program, info,
+              program.getLiteralBoolean(enableAsserts)));
         }
 
         if (currentClass instanceof JEnumType) {
@@ -2603,9 +2624,9 @@ public class GenerateJavaAST {
    * a JProgram structure.
    */
   public static void exec(TypeDeclaration[] types, TypeMap typeMap,
-      JProgram jprogram, JsProgram jsProgram) {
+      JProgram jprogram, JsProgram jsProgram, boolean enableAsserts) {
     JavaASTGenerationVisitor v = new JavaASTGenerationVisitor(typeMap,
-        jprogram, jsProgram);
+        jprogram, jsProgram, enableAsserts);
     for (int i = 0; i < types.length; ++i) {
       v.processType(types[i]);
     }

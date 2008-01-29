@@ -117,6 +117,12 @@ public final class Class<T> {
   private Class() {
   }
 
+  public boolean desiredAssertionStatus() {
+    // This body is ignored by the JJS compiler and a new one is 
+    // synthesized at compile-time based on the actual compilation arguments.  
+    return false;
+  }
+
   public native T[] getEnumConstants() /*-{
     return this.@java.lang.Class::enumConstantsFunc
         && (this.@java.lang.Class::enumConstantsFunc)();
