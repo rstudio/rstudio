@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,7 @@ public interface Moods extends Constants {
    * @gwt.key 123
    * @return 'happy'
    */
-  public String getHappy();
+  String getHappy();
 
   /**
    * Convenience method to get all key/value pairs associated with the mood
@@ -36,7 +36,7 @@ public interface Moods extends Constants {
    * @gwt.key moods
    * @return returnType of moods
    */
-  public Map moodMap();
+  Map moodMap();
 
   /**
    * Gets the keys associated with moods. However note that this will not
@@ -45,5 +45,5 @@ public interface Moods extends Constants {
    * @gwt.key moods
    * @return array of moods
    */
-  public String[] moodArray();
+  String[] moodArray();
 }

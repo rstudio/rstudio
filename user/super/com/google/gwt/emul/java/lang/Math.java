@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -54,7 +54,7 @@ public final class Math {
     return Math.atan(x);
   }-*/;
 
-  public static native double atan2 (double y, double x) /*-{
+  public static native double atan2(double y, double x) /*-{
     return Math.atan2(y,x);
   }-*/;
 
@@ -67,7 +67,7 @@ public final class Math {
     return Math.ceil(x);
   }-*/;
 
-  public static double copySign (double magnitude, double sign) {
+  public static double copySign(double magnitude, double sign) {
     if (sign < 0) {
       return (magnitude < 0) ? magnitude : -magnitude;
     } else {
@@ -75,8 +75,8 @@ public final class Math {
     }
   }
 
-  public static float copySign (float magnitude, float sign) {
-    return (float)(copySign((double)magnitude, (double)sign));
+  public static float copySign(float magnitude, float sign) {
+    return (float) (copySign((double) magnitude, (double) sign));
   }
 
   public static native double cos(double x) /*-{
@@ -91,7 +91,7 @@ public final class Math {
     return Math.exp(x);
   }-*/;
 
-  public static double expm1 (double d) {
+  public static double expm1(double d) {
     if (d == 0.0 || Double.isNaN(d)) {
       return d; // "a zero with same sign as argument", arg is zero, so...
     } else if (!Double.isInfinite(d)) {
@@ -128,7 +128,7 @@ public final class Math {
     return Math.log(x);
   }-*/;
 
-  public static double log10 (double x) {
+  public static double log10(double x) {
     return Math.log(x) / Math.log(10);
   }
 
@@ -189,7 +189,7 @@ public final class Math {
     return Math.random();
   }-*/;
 
-  public static double rint (double d) {
+  public static double rint(double d) {
     if (Double.isNaN(d)) {
       return d;
     } else if (Double.isInfinite(d)) {
@@ -197,7 +197,7 @@ public final class Math {
     } else if (d == 0.0d) {
       return d;
     } else {
-      return (double)(round(d));
+      return round(d);
     }
   };
 
@@ -209,7 +209,7 @@ public final class Math {
     return Math.round(x);
   }-*/;
 
-  public static double scalb (double d, int scaleFactor) {
+  public static double scalb(double d, int scaleFactor) {
     if (scaleFactor > 0) {
       return d * (1 << scaleFactor);
     } else if (scaleFactor == 0) {
@@ -219,7 +219,7 @@ public final class Math {
     }
   }
 
-  public static float scalb (float f, int scaleFactor) {
+  public static float scalb(float f, int scaleFactor) {
     if (scaleFactor > 0) {
       return f * (1 << scaleFactor);
     } else if (scaleFactor == 0) {
@@ -229,7 +229,7 @@ public final class Math {
     }
   }
 
-  public static double signum (double d) {
+  public static double signum(double d) {
     if (d > 0.0d) {
       return 1.0d;
     } else if (d < 0.0d) {
@@ -239,7 +239,7 @@ public final class Math {
     }
   }
 
-  public static float signum (float f) {
+  public static float signum(float f) {
     if (f > 0.0f) {
       return 1.0f;
     } else if (f < 0.0f) {
@@ -248,6 +248,7 @@ public final class Math {
       return 0.0f;
     }
   }
+
   public static native double sin(double x) /*-{
     return Math.sin(x);
   }-*/;

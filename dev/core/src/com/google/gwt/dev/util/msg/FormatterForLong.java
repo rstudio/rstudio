@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,7 @@ package com.google.gwt.dev.util.msg;
 public final class FormatterForLong extends Formatter {
 
   public String format(Object toFormat) {
-    return ((Long)toFormat).toString();
+    return ((Long) toFormat).toString();
   }
 
 }

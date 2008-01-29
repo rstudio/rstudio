@@ -293,7 +293,7 @@ public class DocTool {
     this.packages = packages;
     this.imagePath = imagePath;
     this.title = title;
-    this.htmlFileBases = (String[]) htmlFileBases.clone();
+    this.htmlFileBases = htmlFileBases.clone();
   }
 
   public boolean copyFile(File in, File out) {

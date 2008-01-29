@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,15 +25,15 @@ package java.util;
  */
 public interface SortedMap<K, V> extends Map<K, V> {
 
-  public Comparator<? super K> comparator();
+  Comparator<? super K> comparator();
 
-  public K firstKey();
+  K firstKey();
 
-  public SortedMap<K, V> headMap(K toKey);
+  SortedMap<K, V> headMap(K toKey);
 
-  public K lastKey();
+  K lastKey();
 
-  public SortedMap<K, V> subMap(K fromKey, K toKey);
+  SortedMap<K, V> subMap(K fromKey, K toKey);
 
-  public SortedMap<K, V> tailMap(K fromKey);
+  SortedMap<K, V> tailMap(K fromKey);
 }

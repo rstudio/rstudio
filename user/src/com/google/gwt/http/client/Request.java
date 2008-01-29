@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -260,7 +260,7 @@ public class Request {
    * 
    * NOTE: this method is called from JSNI
    */
-  private final void fireOnTimeout(RequestCallback callback) {
+  private void fireOnTimeout(RequestCallback callback) {
     if (xmlHttpRequest == null) {
       // the request has been received at this point
       return;

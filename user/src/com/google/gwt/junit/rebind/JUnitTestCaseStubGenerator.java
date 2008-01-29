@@ -41,7 +41,7 @@ import java.util.HashMap;
 public class JUnitTestCaseStubGenerator extends Generator {
 
   interface MethodFilter {
-    public boolean accept(JMethod method);
+    boolean accept(JMethod method);
   }
 
   private static final String GWT_TESTCASE_CLASS_NAME = "com.google.gwt.junit.client.GWTTestCase";

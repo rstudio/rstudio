@@ -105,8 +105,8 @@ public final class Array {
    * @param array the JSON array that will be transformed into a GWT array
    * @return values; having wrapped it for GWT
    */
-  public static final Array initValues(Class arrayClass, int typeId,
-      int queryId, Array array) {
+  public static Array initValues(Class arrayClass, int typeId, int queryId,
+      Array array) {
     if (protoTypeArray == null) {
       protoTypeArray = new Array();
     }

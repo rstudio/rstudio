@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.i18n.client;
 
 import com.google.gwt.core.client.GWT;
@@ -34,8 +33,8 @@ public class I18N2Test extends GWTTestCase {
     assertEquals("zh_spacer", test.zh_spacer());
     assertEquals("zh_spacer", test.getString("zh_spacer"));
     assertEquals("logger_org_hibernate_jdbc", test.logger_org_hibernate_jdbc());
-    assertEquals("logger_org_hibernate_jdbc", test
-      .getString("logger_org_hibernate_jdbc"));
+    assertEquals("logger_org_hibernate_jdbc",
+        test.getString("logger_org_hibernate_jdbc"));
     assertEquals("cell_2_5", test.cell_2_5());
     assertEquals("cell_2_5", test.getString("cell_2_5"));
     assertEquals("_level", test._level());
@@ -43,20 +42,19 @@ public class I18N2Test extends GWTTestCase {
     assertEquals("__s", test.__s());
     assertEquals("__s", test.getString("__s"));
     assertEquals(
-      "________________________________________________________________", test
-        .________________________________________________________________());
+        "________________________________________________________________",
+        test.________________________________________________________________());
     assertEquals(
-      "________________________________________________________________",
-      test
-        .getString("________________________________________________________________"));
+        "________________________________________________________________",
+        test.getString("________________________________________________________________"));
     assertEquals("_", test._());
     assertEquals("_", test.getString("_"));
     assertEquals("maven_jdiff_old_tag", test.maven_jdiff_old_tag());
     assertEquals("maven_jdiff_old_tag", test.getString("maven_jdiff_old_tag"));
-    assertEquals("maven_checkstyle_properties", test
-      .maven_checkstyle_properties());
-    assertEquals("maven_checkstyle_properties", test
-      .getString("maven_checkstyle_properties"));
+    assertEquals("maven_checkstyle_properties",
+        test.maven_checkstyle_properties());
+    assertEquals("maven_checkstyle_properties",
+        test.getString("maven_checkstyle_properties"));
     assertEquals("_1_2_3_4", test._1_2_3_4());
     assertEquals("_1_2_3_4", test.getString("_1_2_3_4"));
     assertEquals("entity_160", test.entity_160());
@@ -65,10 +63,10 @@ public class I18N2Test extends GWTTestCase {
     assertEquals("a__b", test.getString("a__b"));
     assertEquals("AWT_f5", test.AWT_f5());
     assertEquals("AWT_f5", test.getString("AWT_f5"));
-    assertEquals("Cursor_MoveDrop_32x32_File", test
-      .Cursor_MoveDrop_32x32_File());
-    assertEquals("Cursor_MoveDrop_32x32_File", test
-      .getString("Cursor_MoveDrop_32x32_File"));
+    assertEquals("Cursor_MoveDrop_32x32_File",
+        test.Cursor_MoveDrop_32x32_File());
+    assertEquals("Cursor_MoveDrop_32x32_File",
+        test.getString("Cursor_MoveDrop_32x32_File"));
     assertEquals("_c_____", test._c_____());
     assertEquals("_c_____", test.getString("_c_____"));
     assertEquals("__s_dup", test.__s_dup());

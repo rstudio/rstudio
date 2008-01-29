@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,7 @@ public final class FormatterForStringArray extends Formatter {
 
   public String format(Object toFormat) {
     StringBuffer sb = new StringBuffer();
-    String[] ss = (String[])toFormat;
+    String[] ss = (String[]) toFormat;
     for (int i = 0, n = ss.length; i < n; ++i) {
       if (i > 0) {
         sb.append(", ");

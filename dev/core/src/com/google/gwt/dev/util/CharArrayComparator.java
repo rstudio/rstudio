@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,39 +18,36 @@ package com.google.gwt.dev.util;
 import java.util.Comparator;
 
 /**
- * Performs a case-sensitive comparision of char arrays.
+ * Performs a case-sensitive comparison of char arrays.
  */
-public class CharArrayComparator implements Comparator {
-    
-    public static final CharArrayComparator INSTANCE = new CharArrayComparator();
+public class CharArrayComparator implements Comparator<char[]> {
 
-    public int compare(Object o1, Object o2) {
-        char[] a = (char[])o1;
-        char[] b = (char[])o2;
-        
-        int ai = 0;
-        int bi = 0;
+  public static final CharArrayComparator INSTANCE = new CharArrayComparator();
 
-        for (; ai < a.length && bi < b.length; ++ai, ++bi) {
-            int c = a[ai] - b[bi];
-            if (c != 0) {
-                return c;
-            }
-        }
+  public int compare(char[] a, char[] b) {
+    int ai = 0;
+    int bi = 0;
 
-        if (ai == a.length && bi < b.length) {
-            // a is shorter
-            return -1;
-        }
-
-        if (ai < a.length && bi == b.length) {
-            // b is shorter
-            return 1;
-        }
-        
-        // they are equal
-        //
-        return 0;
+    for (; ai < a.length && bi < b.length; ++ai, ++bi) {
+      int c = a[ai] - b[bi];
+      if (c != 0) {
+        return c;
+      }
     }
+
+    if (ai == a.length && bi < b.length) {
+      // a is shorter
+      return -1;
+    }
+
+    if (ai < a.length && bi == b.length) {
+      // b is shorter
+      return 1;
+    }
+
+    // they are equal
+    //
+    return 0;
+  }
 
 }

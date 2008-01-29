@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -134,7 +134,7 @@ public abstract class AbstractResource {
     if (primaryParent == null) {
       return;
     }
-    for (String key : keySet() ) {
+    for (String key : keySet()) {
       if (primaryParent.getObjectAux(key, true) == null) {
         for (int i = 0; i < alternativeParents.size(); i++) {
           AbstractResource alt = alternativeParents.get(i);

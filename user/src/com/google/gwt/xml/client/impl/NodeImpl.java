@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -78,7 +78,7 @@ class NodeImpl extends DOMItem implements Node {
     try {
       final JavaScriptObject newChildJs = ((DOMItem) newChild).getJsObject();
       final JavaScriptObject appendChildResults = XMLParserImpl.appendChild(
-        this.getJsObject(), newChildJs);
+          this.getJsObject(), newChildJs);
       return NodeImpl.build(appendChildResults);
     } catch (JavaScriptException e) {
       throw new DOMNodeException(DOMException.INVALID_MODIFICATION_ERR, e, this);
@@ -134,8 +134,7 @@ class NodeImpl extends DOMItem implements Node {
   }
 
   public Document getOwnerDocument() {
-    return (Document) NodeImpl.build(XMLParserImpl.getOwnerDocument(this
-      .getJsObject()));
+    return (Document) NodeImpl.build(XMLParserImpl.getOwnerDocument(this.getJsObject()));
   }
 
   public Node getParentNode() {
@@ -184,7 +183,7 @@ class NodeImpl extends DOMItem implements Node {
         refChildJs = null;
       }
       final JavaScriptObject insertBeforeResults = XMLParserImpl.insertBefore(
-        this.getJsObject(), newChildJs, refChildJs);
+          this.getJsObject(), newChildJs, refChildJs);
       return NodeImpl.build(insertBeforeResults);
     } catch (JavaScriptException e) {
       throw new DOMNodeException(DOMException.INVALID_MODIFICATION_ERR, e, this);
@@ -207,7 +206,7 @@ class NodeImpl extends DOMItem implements Node {
     try {
       final JavaScriptObject oldChildJs = ((DOMItem) oldChild).getJsObject();
       final JavaScriptObject removeChildResults = XMLParserImpl.removeChild(
-        this.getJsObject(), oldChildJs);
+          this.getJsObject(), oldChildJs);
       return NodeImpl.build(removeChildResults);
     } catch (JavaScriptException e) {
       throw new DOMNodeException(DOMException.INVALID_MODIFICATION_ERR, e, this);
@@ -223,7 +222,7 @@ class NodeImpl extends DOMItem implements Node {
       final JavaScriptObject newChildJs = ((DOMItem) newChild).getJsObject();
       final JavaScriptObject oldChildJs = ((DOMItem) oldChild).getJsObject();
       final JavaScriptObject replaceChildResults = XMLParserImpl.replaceChild(
-        this.getJsObject(), newChildJs, oldChildJs);
+          this.getJsObject(), newChildJs, oldChildJs);
       return NodeImpl.build(replaceChildResults);
     } catch (JavaScriptException e) {
       throw new DOMNodeException(DOMException.INVALID_MODIFICATION_ERR, e, this);

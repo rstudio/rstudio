@@ -368,7 +368,7 @@ public class JSONTest extends GWTTestCase {
     JSONString str = new JSONString("s" + i);
     array.set(0, str);
     obj.put("string" + i, str);
-    JSONNumber num = new JSONNumber(((double) i) + 0.1);
+    JSONNumber num = new JSONNumber(i + 0.1);
     array.set(1, num);
     obj.put("Number" + i, num);
     JSONBoolean b = JSONBoolean.getInstance((i % 2) == 0);

@@ -367,8 +367,8 @@ public class JUnitShell extends GWTShell {
       throws UnableToCompleteException {
 
     // We don't refresh modules while running unit tests
-    ModuleDef module = ModuleDefLoader
-        .loadFromClassPath(logger, moduleName, false);
+    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName,
+        false);
 
     // Tweak the module for JUnit support
     //
@@ -479,8 +479,7 @@ public class JUnitShell extends GWTShell {
       return;
     }
 
-    List<TestResults> results
-        = messageQueue.getResults(testCaseClassName);
+    List<TestResults> results = messageQueue.getResults(testCaseClassName);
 
     if (results == null) {
       return;

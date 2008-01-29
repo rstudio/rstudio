@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,7 +34,7 @@ public interface Attr extends Node  {
    * 
    * @return the name of this <code>Attr</code>
    */  
-  public String getName();
+  String getName();
 
   /**
    * This method determines whether the value of this <code>Attr</code> was 
@@ -43,12 +43,12 @@ public interface Attr extends Node  {
    * @return <code>true</code> if the value of this <code>Attr</code> was 
    * specified locally.
    */  
-  public boolean getSpecified();
+  boolean getSpecified();
 
   /**
    * This method retrieves the value. 
    * 
    * @return the value of this <code>Attr</code>
    */  
-  public String getValue();
+  String getValue();
 }

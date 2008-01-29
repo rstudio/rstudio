@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -67,12 +67,12 @@ public class Inners {
    * Test Extension of Inner Inner.
    */
   public interface ExtendsInnerInner extends InnerClass.InnerInner {
-    public String extendsInnerInner();
+    String extendsInnerInner();
   }
 
   /** Test inner localizable. */
   public interface LocalizableSimpleInner extends Localizable {
-    public String getLocalizableInner();
+    String getLocalizableInner();
   }
 
   /**
@@ -94,10 +94,10 @@ public class Inners {
      * Test inner or constant.
      */
     public interface IsInner extends Constants {
-      public int isInner();
+      int isInner();
     }
 
-    public String hasInner();
+    String hasInner();
   }
 
   /**
@@ -122,12 +122,12 @@ public class Inners {
      * couple of message cases to sanity check.
      */
     public static interface InnerInnerMessages extends Messages {
-      public String innerClassMessages(String a);
+      String innerClassMessages(String a);
     }
 
     /** Test inner interface of inner interface. */
     public interface InnerInner extends Outer {
-      public float innerInner();
+      float innerInner();
     }
 
     /**
@@ -160,18 +160,18 @@ public class Inners {
 
         /** Test protected extension. */
         interface ExtendProtectedInner extends ProtectedInner {
-          public String extendProtectedInner();
+          String extendProtectedInner();
         }
 
         /** Test maps in extension. */
-        public Map extendsAnotherInner();
+        Map extendsAnotherInner();
       }
 
       /**
        * Checks inner inner and across packages.
        */
       public interface InnerInnerInner extends TestConstants {
-        public String[] innerInnerInner();
+        String[] innerInnerInner();
       }
 
       /**
@@ -180,21 +180,21 @@ public class Inners {
        */
       public static interface InnerInnerInnerMessages extends
           InnerInnerMessages {
-        public String innerClassMessages(String a);
+        String innerClassMessages(String a);
       }
     }
   }
 
   /** Tests Simple Constant inheritance. */
   public interface SimpleInner extends TestConstants {
-    public String simpleInner();
+    String simpleInner();
   }
 
   /**
    * Boolean return from protected inner.
    */
   protected interface ProtectedInner extends TestConstants {
-    public boolean protectedInner();
+    boolean protectedInner();
   }
 
   /**
@@ -208,5 +208,5 @@ public class Inners {
 
 /** Used to test extension from package protected file. */
 interface Outer extends Constants {
-  public String outer();
+  String outer();
 }

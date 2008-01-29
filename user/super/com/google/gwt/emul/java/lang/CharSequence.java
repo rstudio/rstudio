@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,14 @@
 package java.lang;
 
 /**
- * Abstracts the notion of a sequence of characters.  
+ * Abstracts the notion of a sequence of characters.
  */
 public interface CharSequence {
-  char charAt(int index) ;
-  int length() ;
-  CharSequence subSequence(int start, int end) ;
-  String toString() ;
+  char charAt(int index);
+
+  int length();
+
+  CharSequence subSequence(int start, int end);
+
+  String toString();
 }

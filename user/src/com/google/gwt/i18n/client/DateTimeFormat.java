@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -198,9 +198,9 @@ import java.util.Date;
  * 
  * <h3>Parsing Dates and Times</h3>
  * <p>
- * This implementation could parse partial date/time. Current date will be
- * used to fill in the unavailable date part.  00:00:00 will be used to
- * fill in the time part.
+ * This implementation could parse partial date/time. Current date will be used
+ * to fill in the unavailable date part. 00:00:00 will be used to fill in the
+ * time part.
  * </p>
  * 
  * <p>
@@ -592,7 +592,7 @@ public class DateTimeFormat {
    */
   public Date parse(String text) {
     Date curDate = new Date();
-    Date date = new Date(curDate.getYear(), curDate.getMonth(), 
+    Date date = new Date(curDate.getYear(), curDate.getMonth(),
         curDate.getDate());
     int charsConsumed = parse(text, 0, date);
     if (charsConsumed == 0 || charsConsumed < text.length()) {
@@ -1082,8 +1082,7 @@ public class DateTimeFormat {
     for (int i = 0; i < len; i++) {
       if (isNumeric(patternParts.get(i))) {
         // If next part is not following abut sequence, and isNumeric.
-        if (!abut && i + 1 < len
-            && isNumeric(patternParts.get(i + 1))) {
+        if (!abut && i + 1 < len && isNumeric(patternParts.get(i + 1))) {
           abut = true;
           patternParts.get(i).abutStart = true;
         }
@@ -1099,7 +1098,7 @@ public class DateTimeFormat {
    * @param part pattern part to be examined
    * @return <code>true</code> if the pattern part is numberic field
    */
-  private final boolean isNumeric(PatternPart part) {
+  private boolean isNumeric(PatternPart part) {
     if (part.count <= 0) {
       return false;
     }

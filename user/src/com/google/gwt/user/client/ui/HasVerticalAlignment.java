@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,19 +44,19 @@ public interface HasVerticalAlignment {
   /**
    * Specifies that the widget's contents should be aligned to the bottom.
    */
-  public static final VerticalAlignmentConstant ALIGN_BOTTOM = new VerticalAlignmentConstant(
+  VerticalAlignmentConstant ALIGN_BOTTOM = new VerticalAlignmentConstant(
     "bottom");
 
   /**
    * Specifies that the widget's contents should be aligned in the middle.
    */
-  public static final VerticalAlignmentConstant ALIGN_MIDDLE = new VerticalAlignmentConstant(
+  VerticalAlignmentConstant ALIGN_MIDDLE = new VerticalAlignmentConstant(
     "middle");
 
   /**
    * Specifies that the widget's contents should be aligned to the top.
    */
-  public static final VerticalAlignmentConstant ALIGN_TOP = new VerticalAlignmentConstant(
+  VerticalAlignmentConstant ALIGN_TOP = new VerticalAlignmentConstant(
     "top");
 
   /**
@@ -64,7 +64,7 @@ public interface HasVerticalAlignment {
    * 
    * @return the current vertical alignment.
    */
-  public VerticalAlignmentConstant getVerticalAlignment();
+  VerticalAlignmentConstant getVerticalAlignment();
 
   /**
    * Sets the vertical alignment.
@@ -74,5 +74,5 @@ public interface HasVerticalAlignment {
    *          {@link HasVerticalAlignment#ALIGN_MIDDLE}, or
    *          {@link HasVerticalAlignment#ALIGN_BOTTOM}).
    */
-  public void setVerticalAlignment(VerticalAlignmentConstant align);
+  void setVerticalAlignment(VerticalAlignmentConstant align);
 }

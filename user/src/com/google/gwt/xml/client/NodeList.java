@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ public interface NodeList  {
    * 
    * @return the number of nodes in this <code>NodeList</code> object.
    */  
-  public int getLength();
+  int getLength();
   
   /**
    * This method gets the item in the position denoted by <code>index</code>.
@@ -33,6 +33,6 @@ public interface NodeList  {
    * @param index - the index to be retrieved
    * @return the item at this index
    */
-  public Node item(int index);
+  Node item(int index);
 
 }

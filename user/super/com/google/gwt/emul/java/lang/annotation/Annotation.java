@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,15 +17,16 @@ package java.lang.annotation;
 
 /**
  * Base interface for all annotation types <a
- * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/annotation/Annotation.html">[Sun docs]</a>.
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/annotation/Annotation.html">[Sun
+ * docs]</a>.
  */
 public interface Annotation {
 
-  public Class<? extends Annotation> annotationType();
+  Class<? extends Annotation> annotationType();
 
-  public boolean equals(Object obj);
+  boolean equals(Object obj);
 
-  public int hashCode();
+  int hashCode();
 
-  public String toString();
+  String toString();
 }

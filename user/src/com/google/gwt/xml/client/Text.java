@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,6 @@ public interface Text extends CharacterData  {
    * @param offset how far from the beginning to start splitting
    * @return new <code>Text</code> node containing the data after <code>offset</code>
    */  
-  public Text splitText(int offset);
+  Text splitText(int offset);
 
 }

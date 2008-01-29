@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,7 @@ public interface NamedNodeMap {
    * 
    * @return the number of items in this <code>NamedNodeMap</code>
    */
-  public int getLength();
+  int getLength();
 
   /**
    * This method gets the item having the given name.
@@ -37,7 +37,7 @@ public interface NamedNodeMap {
    * @param name - the name used to look up the item
    * @return the item retrieved
    */
-  public Node getNamedItem(String name);
+  Node getNamedItem(String name);
 
   /**
    * This method gets the item at the index position.
@@ -45,5 +45,5 @@ public interface NamedNodeMap {
    * @param index - the index to retrieve the item from
    * @return the item retrieved
    */
-  public Node item(int index);
+  Node item(int index);
 }

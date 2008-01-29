@@ -63,11 +63,11 @@ public abstract class AbstractCompiler {
 
     /**
      * Return true if <code>cud</code> should be processed, otherwise false.
-     *
+     * 
      * @param cud a not <code>null</code> unit
      * @return true iff <code>cud</code> should be fully processed
      */
-    public boolean shouldProcess(CompilationUnitDeclaration cud);
+    boolean shouldProcess(CompilationUnitDeclaration cud);
   }
 
   /**
@@ -91,9 +91,8 @@ public abstract class AbstractCompiler {
     public void compile(ICompilationUnit[] sourceUnits) {
       jdtProcessNanos = 0;
       super.compile(sourceUnits);
-      PerfLogger.log(
-          "AbstractCompiler.compile, time spent in JDT process callback: "
-              + (jdtProcessNanos / 1000000) + "ms");
+      PerfLogger.log("AbstractCompiler.compile, time spent in JDT process callback: "
+          + (jdtProcessNanos / 1000000) + "ms");
       cuds = null;
     }
 
@@ -347,8 +346,8 @@ public abstract class AbstractCompiler {
       try {
         cup = sourceOracle.findCompilationUnit(logger, qname);
         if (cup != null) {
-          logger.log(TreeLogger.SPAM,
-              "Found type in compilation unit: " + cup.getLocation(), null);
+          logger.log(TreeLogger.SPAM, "Found type in compilation unit: "
+              + cup.getLocation(), null);
           ICompilationUnitAdapter unit = new ICompilationUnitAdapter(cup);
           NameEnvironmentAnswer out = new NameEnvironmentAnswer(unit, null);
           nameEnvironmentAnswerForTypeName.put(qname, out);
@@ -423,8 +422,7 @@ public abstract class AbstractCompiler {
     }
   };
 
-  protected final ThreadLocalTreeLoggerProxy threadLogger
-      = new ThreadLocalTreeLoggerProxy();
+  protected final ThreadLocalTreeLoggerProxy threadLogger = new ThreadLocalTreeLoggerProxy();
 
   private CachePolicy cachePolicy = DEFAULT_POLICY;
 
@@ -434,23 +432,19 @@ public abstract class AbstractCompiler {
 
   private final Set<String> knownPackages = new HashSet<String>();
 
-  private final Map<String, NameEnvironmentAnswer> nameEnvironmentAnswerForTypeName
-      = new HashMap<String, NameEnvironmentAnswer>();
+  private final Map<String, NameEnvironmentAnswer> nameEnvironmentAnswerForTypeName = new HashMap<String, NameEnvironmentAnswer>();
 
   private final SourceOracle sourceOracle;
 
-  private final Map<String, ICompilationUnit> unitsByTypeName
-      = new HashMap<String, ICompilationUnit>();
+  private final Map<String, ICompilationUnit> unitsByTypeName = new HashMap<String, ICompilationUnit>();
 
-  protected AbstractCompiler(SourceOracle sourceOracle,
-      boolean doGenerateBytes) {
+  protected AbstractCompiler(SourceOracle sourceOracle, boolean doGenerateBytes) {
     this.sourceOracle = sourceOracle;
     this.doGenerateBytes = doGenerateBytes;
     rememberPackage("");
 
     INameEnvironment env = new INameEnvironmentImpl();
-    IErrorHandlingPolicy pol = DefaultErrorHandlingPolicies
-        .proceedWithAllProblems();
+    IErrorHandlingPolicy pol = DefaultErrorHandlingPolicies.proceedWithAllProblems();
     IProblemFactory probFact = new DefaultProblemFactory(Locale.getDefault());
     ICompilerRequestor req = new ICompilerRequestorImpl();
     Map<String, String> settings = new HashMap<String, String>();
@@ -465,19 +459,18 @@ public abstract class AbstractCompiler {
      */
     settings.put(CompilerOptions.OPTION_PreserveUnusedLocal,
         CompilerOptions.PRESERVE);
-    settings
-        .put(CompilerOptions.OPTION_ReportDeprecation, CompilerOptions.IGNORE);
+    settings.put(CompilerOptions.OPTION_ReportDeprecation,
+        CompilerOptions.IGNORE);
     settings.put(CompilerOptions.OPTION_LocalVariableAttribute,
         CompilerOptions.GENERATE);
-    settings
-        .put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_1_5);
+    settings.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_1_5);
     settings.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_1_5);
     settings.put(CompilerOptions.OPTION_TargetPlatform,
         CompilerOptions.VERSION_1_5);
 
     // This is needed by TypeOracleBuilder to parse metadata.
-    settings
-        .put(CompilerOptions.OPTION_DocCommentSupport, CompilerOptions.ENABLED);
+    settings.put(CompilerOptions.OPTION_DocCommentSupport,
+        CompilerOptions.ENABLED);
 
     compiler = new CompilerImpl(env, pol, settings, req, probFact);
   }
@@ -512,12 +505,10 @@ public abstract class AbstractCompiler {
     //
     TreeLogger oldLogger = threadLogger.push(logger);
     try {
-      Set<CompilationUnitDeclaration> cuds
-          = new HashSet<CompilationUnitDeclaration>();
+      Set<CompilationUnitDeclaration> cuds = new HashSet<CompilationUnitDeclaration>();
       compiler.compile(units, cuds);
       int size = cuds.size();
-      CompilationUnitDeclaration[] cudArray
-          = new CompilationUnitDeclaration[size];
+      CompilationUnitDeclaration[] cudArray = new CompilationUnitDeclaration[size];
       return cuds.toArray(cudArray);
     } finally {
       threadLogger.pop(oldLogger);

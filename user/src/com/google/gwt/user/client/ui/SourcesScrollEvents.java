@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,12 +26,12 @@ public interface SourcesScrollEvents {
    * 
    * @param listener the listener interface to add.
    */
-  public void addScrollListener(ScrollListener listener);
+  void addScrollListener(ScrollListener listener);
 
   /**
    * Removes a previously added scroll listener.
    * 
    * @param listener the listener interface to remove.
    */
-  public void removeScrollListener(ScrollListener listener);
+  void removeScrollListener(ScrollListener listener);
 }

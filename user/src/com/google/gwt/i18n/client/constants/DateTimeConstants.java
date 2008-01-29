@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,33 +18,52 @@ package com.google.gwt.i18n.client.constants;
 import com.google.gwt.i18n.client.Constants;
 
 /**
- * DateTimeConstants class encapsulate a collection of DateTime formatting 
+ * DateTimeConstants class encapsulate a collection of DateTime formatting
  * symbols for use with DateTime format and parse services. This class extends
- * GWT's Constants class. The actual symbol collections are defined in a set
- * of property files named like "DateTimeConstants_xx.properties". GWT will 
- * will perform late binding to the property file that specific to user's 
- * locale. 
+ * GWT's Constants class. The actual symbol collections are defined in a set of
+ * property files named like "DateTimeConstants_xx.properties". GWT will will
+ * perform late binding to the property file that specific to user's locale.
  */
 public interface DateTimeConstants extends Constants {
   String[] ampms();
+
   String[] dateFormats();
-  String[] eraNames  ();
-  String[] eras ();
+
+  String[] eraNames();
+
+  String[] eras();
+
   String firstDayOfTheWeek();
-  String[] months ();
-  String[] narrowMonths ();
+
+  String[] months();
+
+  String[] narrowMonths();
+
   String[] narrowWeekdays();
-  String[] quarters ();
+
+  String[] quarters();
+
   String[] shortMonths();
+
   String[] shortQuarters();
+
   String[] shortWeekdays();
-  String[] standaloneMonths(); 
+
+  String[] standaloneMonths();
+
   String[] standaloneNarrowMonths();
+
   String[] standaloneNarrowWeekdays();
+
   String[] standaloneShortMonths();
-  String[] standaloneShortWeekdays ();
+
+  String[] standaloneShortWeekdays();
+
   String[] standaloneWeekdays();
+
   String[] timeFormats();
+
   String[] weekdays();
+
   String[] weekendRange();
 }

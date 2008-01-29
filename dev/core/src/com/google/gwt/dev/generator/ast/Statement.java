@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,7 +38,7 @@ public class Statement extends BaseNode implements Statements {
    */
   public Statement(String code) {
     this.code = code;
-    this.list = Arrays.asList((Statements)this);
+    this.list = Arrays.asList((Statements) this);
   }
 
   /**
@@ -48,7 +48,7 @@ public class Statement extends BaseNode implements Statements {
    */
   public Statement(Expression expression) {
     this.expression = expression;
-    this.list = Arrays.asList((Statements)this);
+    this.list = Arrays.asList((Statements) this);
   }
 
   /**

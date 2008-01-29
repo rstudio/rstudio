@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,8 +44,8 @@ class ElementImpl extends NodeImpl implements Element {
    * in XMLParserImpl.
    */
   public Attr getAttributeNode(String tagName) {
-    return (Attr) NodeImpl.build(XMLParserImpl.getAttributeNode(this
-      .getJsObject(), tagName));
+    return (Attr) NodeImpl.build(XMLParserImpl.getAttributeNode(
+        this.getJsObject(), tagName));
   }
 
   /**
@@ -53,8 +53,8 @@ class ElementImpl extends NodeImpl implements Element {
    * <code>getElementsByTagName</code> in XMLParserImpl.
    */
   public NodeList getElementsByTagName(String tagName) {
-    return new NodeListImpl(XMLParserImpl.getElementsByTagName(this
-      .getJsObject(), tagName));
+    return new NodeListImpl(XMLParserImpl.getElementsByTagName(
+        this.getJsObject(), tagName));
   }
 
   /**
@@ -98,10 +98,10 @@ class ElementImpl extends NodeImpl implements Element {
   }
 
   /**
-   * This method returns the string representation of this 
+   * This method returns the string representation of this
    * <code>ElementImpl</code>.
-   * @return the string representation of this 
-   * <code>ElementImpl</code>.
+   * 
+   * @return the string representation of this <code>ElementImpl</code>.
    * @see java.lang.Object#toString()
    */
   @Override

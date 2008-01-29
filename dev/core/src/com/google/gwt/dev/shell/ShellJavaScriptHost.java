@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,94 +36,94 @@ public interface ShellJavaScriptHost {
    * @param paramNames parameter names
    * @param js the script body
    */
-  abstract void createNative(String file, int line, String name,
-      String[] paramNames, String js);
+  void createNative(String file, int line, String name, String[] paramNames,
+      String js);
 
   /**
    * Call this when a JavaScript exception is caught.
    */
-  abstract void exceptionCaught(int number, String name, String description);
+  void exceptionCaught(int number, String name, String description);
 
   /**
    * Invoke a native JavaScript function that returns a boolean value.
    */
-  abstract boolean invokeNativeBoolean(String name, Object jthis,
-      Class<?>[] types, Object[] args) throws Throwable;
+  boolean invokeNativeBoolean(String name, Object jthis, Class<?>[] types,
+      Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns a byte value.
    */
-  abstract byte invokeNativeByte(String name, Object jthis, Class<?>[] types,
+  byte invokeNativeByte(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns a character value.
    */
-  abstract char invokeNativeChar(String name, Object jthis, Class<?>[] types,
+  char invokeNativeChar(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns a double value.
    */
-  abstract double invokeNativeDouble(String name, Object jthis,
-      Class<?>[] types, Object[] args) throws Throwable;
+  double invokeNativeDouble(String name, Object jthis, Class<?>[] types,
+      Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns a float value.
    */
-  abstract float invokeNativeFloat(String name, Object jthis, Class<?>[] types,
+  float invokeNativeFloat(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns a handle value.
    */
-  abstract Object invokeNativeHandle(String name, Object jthis,
-      Class<?> returnType, Class<?>[] types, Object[] args) throws Throwable;
+  Object invokeNativeHandle(String name, Object jthis, Class<?> returnType,
+      Class<?>[] types, Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns an integer value.
    */
-  abstract int invokeNativeInt(String name, Object jthis, Class<?>[] types,
-      Object[] args) throws Throwable;
+  int invokeNativeInt(String name, Object jthis, Class<?>[] types, Object[] args)
+      throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns a long value.
    */
-  abstract long invokeNativeLong(String name, Object jthis, Class<?>[] types,
+  long invokeNativeLong(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns an object value.
    */
-  abstract Object invokeNativeObject(String name, Object jthis,
-      Class<?>[] types, Object[] args) throws Throwable;
+  Object invokeNativeObject(String name, Object jthis, Class<?>[] types,
+      Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns a short value.
    */
-  abstract short invokeNativeShort(String name, Object jthis, Class<?>[] types,
+  short invokeNativeShort(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns a string value.
    */
-  abstract String invokeNativeString(String name, Object jthis,
-      Class<?>[] types, Object[] args) throws Throwable;
+  String invokeNativeString(String name, Object jthis, Class<?>[] types,
+      Object[] args) throws Throwable;
 
   /**
    * Invoke a native JavaScript function that returns no value.
    */
-  abstract void invokeNativeVoid(String name, Object jthis, Class<?>[] types,
+  void invokeNativeVoid(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable;
 
   /**
    * Logs to the dev shell logger.
    */
-  abstract void log(String message, Throwable e);
+  void log(String message, Throwable e);
 
   /**
    * Resolves a deferred binding request and create the requested object.
    */
-  abstract <T> T rebindAndCreate(String requestedTypeName)
+  <T> T rebindAndCreate(String requestedTypeName)
       throws UnableToCompleteException;
 }

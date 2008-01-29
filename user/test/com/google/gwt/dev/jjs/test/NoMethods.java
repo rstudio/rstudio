@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,9 +19,8 @@ package com.google.gwt.dev.jjs.test;
  * TODO: document me.
  */
 public interface NoMethods {
-  public static final String const1 = "Spam";
-  public static final int const2 = 4;
-  public static final double const3 = 4.5d;
-  public static final char [] const4 = new char [] {'a','b','d'}; 
-  
+  String const1 = "Spam";
+  int const2 = 4;
+  double const3 = 4.5d;
+  char[] const4 = new char[] {'a', 'b', 'd'};
 }

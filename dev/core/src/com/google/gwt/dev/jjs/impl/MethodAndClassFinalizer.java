@@ -28,7 +28,7 @@ import java.util.Set;
 
 /**
  * Finds all methods and classes are effectively final. That is, methods that
- * are never overriden and classes that are never subclassed. Mark all such
+ * are never overridden and classes that are never subclassed. Mark all such
  * methods and classes as final, since it helps us optimize.
  */
 public class MethodAndClassFinalizer {
@@ -47,33 +47,37 @@ public class MethodAndClassFinalizer {
 
     private boolean didChange = false;
 
+    @Override
     public boolean didChange() {
       return didChange;
     }
 
     // @Override
+    @Override
     public boolean visit(JClassType x, Context ctx) {
       if (!x.isFinal() && !isSubclassed.contains(x)) {
         x.setFinal(true);
         didChange = true;
       }
       for (int i = 0; i < x.methods.size(); ++i) {
-        JMethod method = (JMethod) x.methods.get(i);
+        JMethod method = x.methods.get(i);
         accept(method);
       }
       return false;
     }
 
     // @Override
+    @Override
     public boolean visit(JInterfaceType x, Context ctx) {
       for (int i = 0; i < x.methods.size(); ++i) {
-        JMethod method = (JMethod) x.methods.get(i);
+        JMethod method = x.methods.get(i);
         accept(method);
       }
       return false;
     }
 
     // @Override
+    @Override
     public boolean visit(JMethod x, Context ctx) {
       if (!x.isFinal() && !isOverriden.contains(x)) {
         x.setFinal(true);
@@ -88,40 +92,44 @@ public class MethodAndClassFinalizer {
   private class MarkVisitor extends JVisitor {
 
     // @Override
+    @Override
     public boolean visit(JClassType x, Context ctx) {
       if (x.extnds != null) {
         isSubclassed.add(x.extnds);
       }
 
       for (int i = 0; i < x.methods.size(); ++i) {
-        JMethod method = (JMethod) x.methods.get(i);
+        JMethod method = x.methods.get(i);
         accept(method);
       }
       return false;
     }
 
     // @Override
+    @Override
     public boolean visit(JInterfaceType x, Context ctx) {
       for (int i = 0; i < x.methods.size(); ++i) {
-        JMethod method = (JMethod) x.methods.get(i);
+        JMethod method = x.methods.get(i);
         accept(method);
       }
       return false;
     }
 
     // @Override
+    @Override
     public boolean visit(JMethod x, Context ctx) {
       for (int i = 0; i < x.overrides.size(); ++i) {
-        JMethod it = (JMethod) x.overrides.get(i);
+        JMethod it = x.overrides.get(i);
         isOverriden.add(it);
       }
       return false;
     }
 
     // @Override
+    @Override
     public boolean visit(JProgram x, Context ctx) {
       for (int i = 0; i < x.getDeclaredTypes().size(); ++i) {
-        JReferenceType type = (JReferenceType) x.getDeclaredTypes().get(i);
+        JReferenceType type = x.getDeclaredTypes().get(i);
         accept(type);
       }
       return false;
@@ -132,9 +140,9 @@ public class MethodAndClassFinalizer {
     return new MethodAndClassFinalizer().execImpl(program);
   }
 
-  private final Set/* <JMethod> */isOverriden = new HashSet/* <JMethod> */();
+  private final Set<JMethod> isOverriden = new HashSet<JMethod>();
 
-  private final Set/* <JClassType> */isSubclassed = new HashSet/* <JClassType> */();
+  private final Set<JClassType> isSubclassed = new HashSet<JClassType>();
 
   private MethodAndClassFinalizer() {
   }

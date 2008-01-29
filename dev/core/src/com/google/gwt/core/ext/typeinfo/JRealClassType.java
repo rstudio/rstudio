@@ -481,7 +481,7 @@ public class JRealClassType extends JClassType {
     this.superclass = type;
     JRealClassType realSuperType;
     if (type.isParameterized() != null) {
-      realSuperType = (JRealClassType) type.isParameterized().getBaseType();
+      realSuperType = type.isParameterized().getBaseType();
     } else if (type.isRawType() != null) {
       realSuperType = type.isRawType().getGenericType();
     } else {

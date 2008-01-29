@@ -1,12 +1,12 @@
 /*
- * Copyright 2007 Google Inc.
- *
+ * Copyright 2008 Google Inc.
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,8 +25,8 @@ public final class Long extends Number implements Comparable<Long> {
 
   // Box values according to JLS - between -128 and 127
   private static Long[] boxedValues = new Long[256];
-  
-  public static int bitCount (long i) {
+
+  public static int bitCount(long i) {
     int cnt = 0;
     for (long q = MIN_VALUE; q > 0; q = q >> 1) {
       if ((q & i) != 0) {
@@ -47,10 +47,10 @@ public final class Long extends Number implements Comparable<Long> {
     return (int) l;
   }
 
-  public static long highestOneBit (long i) {
+  public static long highestOneBit(long i) {
     if (i < 0) {
       return MIN_VALUE;
-   } else {
+    } else {
       long rtn;
       for (rtn = 0x4000000000000000L; (rtn >> 1) > i; rtn = rtn >> 1) {
         // loop down until smaller
@@ -59,7 +59,7 @@ public final class Long extends Number implements Comparable<Long> {
     }
   }
 
-  public static long lowestOneBit (long i) {
+  public static long lowestOneBit(long i) {
     if (i == 0) {
       return SIZE;
     } else {
@@ -77,7 +77,7 @@ public final class Long extends Number implements Comparable<Long> {
     } else if (i == 0) {
       return SIZE;
     } else {
-      return SIZE - 1 - (int)Math.floor(Math.log((double)i) / Math.log(2.0d));
+      return SIZE - 1 - (int) Math.floor(Math.log(i) / Math.log(2.0d));
     }
   }
 
@@ -104,7 +104,7 @@ public final class Long extends Number implements Comparable<Long> {
     return __parseAndValidateLong(s, radix, MIN_VALUE, MAX_VALUE);
   }
 
-  public static long reverse (long i) {
+  public static long reverse(long i) {
     long acc = 0;
     long front = MIN_VALUE;
     int back = 1;
@@ -118,32 +118,32 @@ public final class Long extends Number implements Comparable<Long> {
     return acc;
   }
 
-  public static long reverseBytes (long i) {
+  public static long reverseBytes(long i) {
     return ((i & 0xffL) << 56) | ((i & 0xff00L) << 40)
-      | ((i & 0xff0000L) << 24) | ((i & 0xff000000L) << 8)
-      | ((i & 0xff00000000L) >> 8) | ((i & 0xff0000000000L) >> 24)
-      | ((i & 0xff000000000000L) >> 40) | ((i & 0xff00000000000000L) >> 56);
+        | ((i & 0xff0000L) << 24) | ((i & 0xff000000L) << 8)
+        | ((i & 0xff00000000L) >> 8) | ((i & 0xff0000000000L) >> 24)
+        | ((i & 0xff000000000000L) >> 40) | ((i & 0xff00000000000000L) >> 56);
   }
 
-  public static long rotateLeft (long i, int distance) {
+  public static long rotateLeft(long i, int distance) {
     while (distance-- > 0) {
       i = i << 1 | ((i < 0) ? 1 : 0);
     }
     return i;
   }
 
-  public static long rotateRight (long i, int distance) {
+  public static long rotateRight(long i, int distance) {
     while (distance-- > 0) {
       i = ((i & 1) == 0 ? 0 : 0x80000000) | i >> 1;
     }
     return i;
   }
 
-  public static int signum (long i) {
+  public static int signum(long i) {
     if (i == 0) {
       return 0;
     } else if (i < 0) {
-     return -1;
+      return -1;
     } else {
       return 1;
     }
@@ -179,7 +179,7 @@ public final class Long extends Number implements Comparable<Long> {
     return String.valueOf(b);
   }
 
-  public static Long valueOf (long i) {
+  public static Long valueOf(long i) {
     if (i > -129 && i < 128) {
       int rebase = (int) i + 128;
       if (boxedValues[rebase] == null) {

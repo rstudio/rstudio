@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,19 +25,19 @@ public interface ProcessingInstruction extends Node {
    * 
    * @return the data of this <code>ProcessingInstruction</code>
    */
-  public String getData();
+  String getData();
 
   /**
    * This method retrieves the target.
    * 
    * @return the target of this <code>ProcessingInstruction</code>
    */
-  public String getTarget();
+  String getTarget();
 
   /**
    * This method sets the data to <code>data</code>.
    * 
    * @param data the new data
    */
-  public void setData(String data);
+  void setData(String data);
 }

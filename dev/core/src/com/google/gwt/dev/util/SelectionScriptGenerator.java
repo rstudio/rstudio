@@ -177,7 +177,7 @@ public class SelectionScriptGenerator {
     this.scripts = moduleDef.getScripts();
     this.styles = moduleDef.getStyles();
     this.moduleProps = moduleDef.getProperties();
-    this.orderedProps = (Property[]) props.clone();
+    this.orderedProps = props.clone();
   }
 
   /**

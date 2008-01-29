@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,15 +24,15 @@ package java.util;
  */
 public interface SortedSet<E> extends Set<E> {
 
-  public Comparator<? super E> comparator();
+  Comparator<? super E> comparator();
 
-  public E first();
+  E first();
 
-  public SortedSet<E> headSet(E toElement);
+  SortedSet<E> headSet(E toElement);
 
-  public E last();
+  E last();
 
-  public SortedSet<E> subSet(E fromElement, E toElement);
+  SortedSet<E> subSet(E fromElement, E toElement);
 
-  public SortedSet<E> tailSet(E fromElement);
+  SortedSet<E> tailSet(E fromElement);
 }

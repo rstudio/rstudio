@@ -201,6 +201,21 @@ A more lenient set of style checks for test cases, needed because test often nee
             <property name="severity" value="ignore"/>
             <property name="format" value="^[a-z_][a-zA-Z0-9_]*$"/>
         </module>
+        <module name="WhitespaceAfter">
+            <property name="tokens" value="TYPECAST"/>
+        </module>
+        <module name="TypecastParenPad">
+            <property name="severity" value="error"/>
+            <property name="tokens" value="RPAREN,TYPECAST"/>
+        </module>
+        <module name="ParenPad"/>
+        <module name="MethodParamPad"/>
+        <module name="NoWhitespaceBefore">
+            <property name="severity" value="error"/>
+            <property name="tokens" value="SEMI,DOT,POST_DEC,POST_INC"/>
+        </module>
+        <module name="RedundantModifier"/>
+        <module name="EqualsHashCode"/>
     </module>
     <module name="PackageHtml">
         <property name="severity" value="ignore"/>

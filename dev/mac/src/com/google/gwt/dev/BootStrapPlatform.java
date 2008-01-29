@@ -72,7 +72,7 @@ public class BootStrapPlatform {
    * </p>
    */
   public static void maybeInitializeAWT() {
-    final Toolkit toolkit = Toolkit.getDefaultToolkit();
+    Toolkit.getDefaultToolkit();
   }
 
   /**

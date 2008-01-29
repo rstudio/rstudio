@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,21 +21,20 @@ import com.google.gwt.junit.client.GWTTestCase;
  * Tests keyboard events in the {@link DelegatingKeyboardListenerCollection}
  * class.
  */
-public class DelegatingKeyboardListenerCollectionTest extends
-    GWTTestCase implements KeyboardListener {
- 
+public class DelegatingKeyboardListenerCollectionTest extends GWTTestCase
+    implements KeyboardListener {
+
   /**
-   * A {@link Widget} that uses the
-   * {@link DelegatingKeyboardListenerCollection} to save its list
-   * of keyboard events.
+   * A {@link Widget} that uses the {@link DelegatingKeyboardListenerCollection}
+   * to save its list of keyboard events.
    */
   public class DelegatingWidget extends Widget {
     // The delegating collection of keyboard listeners
     private DelegatingKeyboardListenerCollection keyboardListeners;
-    
+
     // The owner of all events
-    private Widget eventOwner; 
-    
+    private Widget eventOwner;
+
     /**
      * Adds a listener interface to receive keyboard events.
      * 
@@ -44,11 +43,12 @@ public class DelegatingKeyboardListenerCollectionTest extends
     public void addKeyboardListener(KeyboardListener listener) {
       if (keyboardListeners == null) {
         this.eventOwner = new Widget();
-        keyboardListeners = new DelegatingKeyboardListenerCollection(this.eventOwner, new TextBox());
+        keyboardListeners = new DelegatingKeyboardListenerCollection(
+            this.eventOwner, new TextBox());
       }
       keyboardListeners.add(listener);
     }
-    
+
     /**
      * Get the event owner.
      * 
@@ -63,10 +63,10 @@ public class DelegatingKeyboardListenerCollectionTest extends
      * 
      * @return the keyboardListener
      */
-    public DelegatingKeyboardListenerCollection getKeyboardListeners() { 
+    public DelegatingKeyboardListenerCollection getKeyboardListeners() {
       return this.keyboardListeners;
     }
-    
+
     /**
      * Removes a previously added listener interface.
      * 
@@ -76,23 +76,23 @@ public class DelegatingKeyboardListenerCollectionTest extends
       /*
        * This method is not used in the test or in the
        * DelegatingKeyboardListenerCollection constructor
-       */  
+       */
     }
   }
-   
+
   // The owner of the events
   private DelegatingWidget delegatingWidget;
-  
+
   // A bit used to verify that some event handler was called
   private boolean eventHandled;
-  
+
   // The name of the last event fired
-  private String lastEventName;  
- 
+  private String lastEventName;
+
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
-  
+
   /**
    * Handle the key down event from the ownerOfEvents.
    * 
@@ -137,18 +137,18 @@ public class DelegatingKeyboardListenerCollectionTest extends
   public void onKeyUp(Widget sender, char keyCode, int modifiers) {
     this.handleKeyEvent(sender, "onKeyUp");
   }
-    
+
   /**
-   * Tests that the key event handlers re-fire the correct key events to
-   * the correct owner.  The owner of the events is a {@link TextBox}, which
-   * implements {@link SourcesKeyboardEvents} and allows us to check that
-   * the owner is correctly re-firing the events. 
+   * Tests that the key event handlers re-fire the correct key events to the
+   * correct owner. The owner of the events is a {@link TextBox}, which
+   * implements {@link SourcesKeyboardEvents} and allows us to check that the
+   * owner is correctly re-firing the events.
    */
   public void testKeyEvents() {
     // Create a keyboard event listener with a DeletagingWidgetknown owner
     this.delegatingWidget = new DelegatingWidget();
     this.delegatingWidget.addKeyboardListener(this);
-   
+
     // Fire events from through delegate, which should set the correct owner
     this.fireKeyEvent("onKeyDown");
     this.fireKeyEvent("onKeyUp");
@@ -156,22 +156,24 @@ public class DelegatingKeyboardListenerCollectionTest extends
   }
 
   /**
-   * This helper method simulates the firing of an event by the delegating widget,
-   * with a generic Widget as the source.
+   * This helper method simulates the firing of an event by the delegating
+   * widget, with a generic Widget as the source.
    * 
    * @param eventName the name of the event to fire
    */
   private void fireKeyEvent(String eventName) {
     this.lastEventName = eventName; // Set the name of this event
-    this.eventHandled = false;      // Mark that we haven't handled it yet
-    
+    this.eventHandled = false; // Mark that we haven't handled it yet
+
     // Fire the actual event through the delegate
-    if ( eventName.compareTo("onKeyDown") == 0 ) {
-      this.delegatingWidget.getKeyboardListeners().onKeyDown(new Widget(), 'a', 0);
-    } else if ( eventName.compareTo("onKeyUp") == 0 ) {
+    if (eventName.compareTo("onKeyDown") == 0) {
+      this.delegatingWidget.getKeyboardListeners().onKeyDown(new Widget(), 'a',
+          0);
+    } else if (eventName.compareTo("onKeyUp") == 0) {
       this.delegatingWidget.getKeyboardListeners().onKeyUp(new Widget(), 'a', 0);
-    } else if ( eventName.compareTo("onKeyPress") == 0 ) {
-      this.delegatingWidget.getKeyboardListeners().onKeyPress(new Widget(), 'a', 0);
+    } else if (eventName.compareTo("onKeyPress") == 0) {
+      this.delegatingWidget.getKeyboardListeners().onKeyPress(new Widget(),
+          'a', 0);
     } else {
       fail("The event " + eventName + " is not supported");
     }
@@ -179,10 +181,10 @@ public class DelegatingKeyboardListenerCollectionTest extends
     // Verify that the event was handled
     assertTrue(this.eventHandled);
   }
-  
+
   /**
-   * Handle an event from the ownerOfEvents by verifying the the
-   * event the the source are correct.
+   * Handle an event from the ownerOfEvents by verifying the the event the the
+   * source are correct.
    * 
    * @param sender the Widget that fired the event
    * @param eventName the name of the event

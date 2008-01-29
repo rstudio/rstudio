@@ -177,7 +177,7 @@ public final class HandlerMethod {
     this.method = method;
     this.methodType = type;
     this.arbitraryChildren = arbitraryChildren;
-    this.handlerParams = (HandlerParam[]) hpa.clone();
+    this.handlerParams = hpa.clone();
 
     this.method.setAccessible(true);
   }

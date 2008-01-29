@@ -177,6 +177,26 @@ Description:
             <property name="message" value="No one line javadoc comments"/>
             <property name="illegalPattern" value="true"/>
         </module>
+        <module name="NoWhitespaceAfter">
+            <property name="severity" value="error"/>
+            <property name="allowLineBreaks" value="false"/>
+            <property name="tokens" value="BNOT,DEC,DOT,INC,LNOT,UNARY_MINUS,UNARY_PLUS"/>
+        </module>
+        <module name="WhitespaceAfter">
+            <property name="tokens" value="TYPECAST"/>
+        </module>
+        <module name="TypecastParenPad">
+            <property name="severity" value="error"/>
+            <property name="tokens" value="RPAREN,TYPECAST"/>
+        </module>
+        <module name="ParenPad"/>
+        <module name="MethodParamPad"/>
+        <module name="NoWhitespaceBefore">
+            <property name="severity" value="error"/>
+            <property name="tokens" value="SEMI,DOT,POST_DEC,POST_INC"/>
+        </module>
+        <module name="RedundantModifier"/>
+        <module name="EqualsHashCode"/>
     </module>
     <module name="PackageHtml">
         <property name="severity" value="ignore"/>

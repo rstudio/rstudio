@@ -23,14 +23,16 @@ import java.util.Arrays;
 /**
  * Iterates over all the possible permutations available in a list of {@link
  * Iterable Iterables}.
- *
- * <p> The simplest way to iterate over the permutations of multiple iterators
- * is in a nested for loop. The PermutationIterator turns that for loop inside
- * out into a single iterator, which enables you to access each permutation in a
- * piecemeal fashion. </p>
+ * 
+ * <p>
+ * The simplest way to iterate over the permutations of multiple iterators is in
+ * a nested for loop. The PermutationIterator turns that for loop inside out
+ * into a single iterator, which enables you to access each permutation in a
+ * piecemeal fashion.
+ * </p>
  */
-public class PermutationIterator
-    implements Iterator<PermutationIterator.Permutation> {
+public class PermutationIterator implements
+    Iterator<PermutationIterator.Permutation> {
 
   /**
    * A single permutation of all the iterators. Contains the current value of
@@ -61,20 +63,18 @@ public class PermutationIterator
     iterables.add(Arrays.asList("alpha", "beta", "gamma", "delta"));
 
     System.out.println("Testing normal iteration.");
-    for (Iterator<Permutation> it = new PermutationIterator(iterables);
-        it.hasNext();) {
+    for (Iterator<Permutation> it = new PermutationIterator(iterables); it.hasNext();) {
       Permutation p = it.next();
       System.out.println(p);
     }
 
     System.out.println("\nTesting skipping iteration.");
 
-    Iterator<String> skipIterator = Arrays
-        .asList("alpha", "beta", "gamma", "delta").iterator();
+    Iterator<String> skipIterator = Arrays.asList("alpha", "beta", "gamma",
+        "delta").iterator();
     boolean skipped = true;
     String skipValue = null;
-    for (PermutationIterator it = new PermutationIterator(iterables);
-        it.hasNext();) {
+    for (PermutationIterator it = new PermutationIterator(iterables); it.hasNext();) {
       Permutation p = it.next();
 
       if (skipped) {
@@ -129,12 +129,12 @@ public class PermutationIterator
   /**
    * Constructs a new PermutationIterator that provides the values for each
    * possible permutation of <code>iterables</code>.
-   *
+   * 
    * @param iterables non-null. Each {@link Iterable} must have at least one
-   * element. iterables.size() must be > 1
-   *
-   * TODO(tobyr) Consider if empty Iterables ever make sense in
-   * the context of permutations.
+   *          element. iterables.size() must be > 1
+   * 
+   * TODO(tobyr) Consider if empty Iterables ever make sense in the context of
+   * permutations.
    */
   public PermutationIterator(List<? extends Iterable<?>> iterables) {
     this.iterables = iterables;
@@ -151,7 +151,7 @@ public class PermutationIterator
   /**
    * Returns a new <code>Permutation</code> containing the values of the next
    * permutation.
-   *
+   * 
    * @return a non-null <code>Permutation</code>
    */
   public boolean hasNext() {
@@ -163,8 +163,7 @@ public class PermutationIterator
     // Walk the iterators from bottom to top checking to see if any still have
     // any available values
 
-    for (int currentIterator = iterators.size() - 1; currentIterator >= 0;
-        --currentIterator) {
+    for (int currentIterator = iterators.size() - 1; currentIterator >= 0; --currentIterator) {
       Iterator<?> it = iterators.get(currentIterator);
       if (it.hasNext()) {
         return true;
@@ -195,8 +194,7 @@ public class PermutationIterator
     // Walk through the iterators from bottom to top, finding the first one
     // which has a value available. Increment it, reset all of the subsequent
     // iterators, and then return the current permutation.
-    for (int currentIteratorIndex = iterators.size() - 1;
-        currentIteratorIndex >= 0; --currentIteratorIndex) {
+    for (int currentIteratorIndex = iterators.size() - 1; currentIteratorIndex >= 0; --currentIteratorIndex) {
       Iterator<?> it = iterators.get(currentIteratorIndex);
       if (it.hasNext()) {
         values.set(currentIteratorIndex, it.next());
@@ -227,8 +225,7 @@ public class PermutationIterator
 
     rangeSkipped = true;
 
-    for (int currentIteratorIndex = iterators.size() - 2;
-        currentIteratorIndex >= 0; --currentIteratorIndex) {
+    for (int currentIteratorIndex = iterators.size() - 2; currentIteratorIndex >= 0; --currentIteratorIndex) {
       Iterator<?> it = iterators.get(currentIteratorIndex);
       if (it.hasNext()) {
         values.set(currentIteratorIndex, it.next());

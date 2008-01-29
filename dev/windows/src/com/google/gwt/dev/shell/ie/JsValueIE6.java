@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -289,7 +289,7 @@ public class JsValueIE6 extends JsValue {
       /*
        * If the return type of the valueOf method is string, we assume it is a
        * String wrapper object.
-       */ 
+       */
       return result.getType() == COM.VT_BSTR;
     } finally {
       if (auto != null) {
@@ -435,7 +435,7 @@ public class JsValueIE6 extends JsValue {
       setNull();
       return;
     } else if (val instanceof IDispatchImpl) {
-      dispObj = (IDispatchImpl)val;
+      dispObj = (IDispatchImpl) val;
     } else {
       dispObj = new IDispatchProxy(cl, val);
     }
@@ -465,7 +465,7 @@ public class JsValueIE6 extends JsValue {
     }
     variant = val;
   }
-  
+
   private <T> T tryToUnwrapWrappedJavaObject() {
     /*
      * This implementation copied from OleAutomation.invoke(). We used to have a

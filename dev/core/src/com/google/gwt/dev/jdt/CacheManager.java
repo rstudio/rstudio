@@ -631,8 +631,8 @@ public class CacheManager {
         ICompilationUnit unit = cud.compilationResult.compilationUnit;
         ICompilationUnitAdapter adapter = ((ICompilationUnitAdapter) unit);
         CompilationUnitProvider cup = adapter.getCompilationUnitProvider();
-        return getTypeOracle()
-            .findType(cup.getPackageName(), cup.getMainTypeName()) == null;
+        return getTypeOracle().findType(cup.getPackageName(),
+            cup.getMainTypeName()) == null;
       }
     });
   }
@@ -677,7 +677,7 @@ public class CacheManager {
 
   /**
    * This removes all state changed since the last time the typeOracle was run.
-   *
+   * 
    * @param typeOracle
    */
   public void invalidateOnRefresh(TypeOracle typeOracle) {
@@ -695,8 +695,8 @@ public class CacheManager {
       unitsByCup.remove(location);
       Util.invokeInaccessableMethod(TypeOracle.class,
           "invalidateTypesInCompilationUnit",
-          new Class[]{CompilationUnitProvider.class}, typeOracle,
-          new Object[]{cup});
+          new Class[] {CompilationUnitProvider.class}, typeOracle,
+          new Object[] {cup});
     }
     astCompiler.invalidateChangedFiles(changedFiles, invalidatedTypes);
   }

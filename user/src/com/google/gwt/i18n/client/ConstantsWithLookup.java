@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,7 +57,7 @@ public interface ConstantsWithLookup extends Constants {
    * @param methodName method name
    * @return boolean returned by method
    */
-  public boolean getBoolean(String methodName);
+  boolean getBoolean(String methodName);
 
   /**
    * Look up <code>double</code> by method name.
@@ -65,7 +65,7 @@ public interface ConstantsWithLookup extends Constants {
    * @param methodName method name
    * @return double returned by method
    */
-  public double getDouble(String methodName);
+  double getDouble(String methodName);
 
   /**
    * Look up <code>float</code> by method name.
@@ -73,7 +73,7 @@ public interface ConstantsWithLookup extends Constants {
    * @param methodName method name
    * @return float returned by method
    */
-  public float getFloat(String methodName);
+  float getFloat(String methodName);
 
   /**
    * Look up <code>int</code> by method name.
@@ -81,7 +81,7 @@ public interface ConstantsWithLookup extends Constants {
    * @param methodName method name
    * @return int returned by method
    */
-  public int getInt(String methodName);
+  int getInt(String methodName);
 
   /**
    * Look up <code>Map</code> by method name.
@@ -89,7 +89,7 @@ public interface ConstantsWithLookup extends Constants {
    * @param methodName method name
    * @return Map returned by method
    */
-  public Map<String, String> getMap(String methodName);
+  Map<String, String> getMap(String methodName);
 
   /**
    * Look up <code>String</code> by method name.
@@ -97,7 +97,7 @@ public interface ConstantsWithLookup extends Constants {
    * @param methodName method name
    * @return String returned by method
    */
-  public String getString(String methodName);
+  String getString(String methodName);
 
   /**
    * Look up <code>String[]</code> by method name.
@@ -105,5 +105,5 @@ public interface ConstantsWithLookup extends Constants {
    * @param methodName method name
    * @return String[] returned by method
    */
-  public String[] getStringArray(String methodName);
+  String[] getStringArray(String methodName);
 }

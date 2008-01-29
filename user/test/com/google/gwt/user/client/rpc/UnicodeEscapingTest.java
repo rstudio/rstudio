@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Test which verifies that we properly escape JSON strings sent back from the 
+ * Test which verifies that we properly escape JSON strings sent back from the
  * server.
  */
 public class UnicodeEscapingTest extends GWTTestCase {
@@ -59,14 +59,14 @@ public class UnicodeEscapingTest extends GWTTestCase {
             String str = (String) result;
 
             assertTrue("expected: " + Integer.toString(CHARACTER_RANGE_SIZE)
-                + " actual: " + str.length()
-                + " for character range [" + Integer.toString(start) + ", "
+                + " actual: " + str.length() + " for character range ["
+                + Integer.toString(start) + ", "
                 + Integer.toString(start + CHARACTER_RANGE_SIZE) + ")",
                 CHARACTER_RANGE_SIZE == str.length());
 
             char[] chars = str.toCharArray();
             for (int i = 0; i < CHARACTER_RANGE_SIZE; ++i) {
-              assertEquals( i + start, chars[i]);
+              assertEquals(i + start, chars[i]);
             }
 
             start += CHARACTER_RANGE_SIZE;

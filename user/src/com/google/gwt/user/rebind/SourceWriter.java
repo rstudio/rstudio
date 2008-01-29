@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,24 +25,24 @@ public interface SourceWriter {
   /**
    * Begin emitting a JavaDoc comment.
    */
-  public void beginJavaDocComment();
+  void beginJavaDocComment();
 
-  public abstract void commit(TreeLogger logger);
+  void commit(TreeLogger logger);
 
   /**
    * End emitting a JavaDoc comment.
    */
-  public void endJavaDocComment();
+  void endJavaDocComment();
 
-  public abstract void indent();
+  void indent();
 
-  public abstract void indentln(String s);
+  void indentln(String s);
 
-  public abstract void outdent();
+  void outdent();
 
-  public abstract void print(String s);
+  void print(String s);
 
-  public abstract void println();
+  void println();
 
-  public abstract void println(String s);
+  void println(String s);
 }

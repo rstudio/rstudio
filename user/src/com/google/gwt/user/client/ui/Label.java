@@ -1,12 +1,12 @@
 /*
- * Copyright 2007 Google Inc.
- *
+ * Copyright 2008 Google Inc.
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,19 +20,20 @@ import com.google.gwt.user.client.Event;
 
 /**
  * A widget that contains arbitrary text, <i>not</i> interpreted as HTML.
- *
+ * 
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-Label { }</li>
  * </ul>
- *
+ * 
  * <p>
- * <h3>Example</h3> {@example com.google.gwt.examples.HTMLExample}
+ * <h3>Example</h3>
+ * {@example com.google.gwt.examples.HTMLExample}
  * </p>
  */
 public class Label extends Widget implements SourcesClickEvents,
-    SourcesMouseEvents, SourcesMouseWheelEvents,
-    HasHorizontalAlignment, HasText, HasWordWrap {
+    SourcesMouseEvents, SourcesMouseWheelEvents, HasHorizontalAlignment,
+    HasText, HasWordWrap {
 
   private ClickListenerCollection clickListeners;
   private HorizontalAlignmentConstant horzAlign;
@@ -50,7 +51,7 @@ public class Label extends Widget implements SourcesClickEvents,
 
   /**
    * Creates a label with the specified text.
-   *
+   * 
    * @param text the new label's text
    */
   public Label(String text) {
@@ -60,7 +61,7 @@ public class Label extends Widget implements SourcesClickEvents,
 
   /**
    * Creates a label with the specified text.
-   *
+   * 
    * @param text the new label's text
    * @param wordWrap <code>false</code> to disable word wrapping
    */
@@ -149,8 +150,7 @@ public class Label extends Widget implements SourcesClickEvents,
 
   public void setHorizontalAlignment(HorizontalAlignmentConstant align) {
     horzAlign = align;
-    DOM
-      .setStyleAttribute(getElement(), "textAlign", align.getTextAlignString());
+    DOM.setStyleAttribute(getElement(), "textAlign", align.getTextAlignString());
   }
 
   public void setText(String text) {
@@ -159,6 +159,6 @@ public class Label extends Widget implements SourcesClickEvents,
 
   public void setWordWrap(boolean wrap) {
     DOM.setStyleAttribute(getElement(), "whiteSpace", wrap ? "normal"
-      : "nowrap");
+        : "nowrap");
   }
 }

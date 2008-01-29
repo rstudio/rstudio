@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -32,8 +32,9 @@ import java.util.Arrays;
  */
 public abstract class ListBenchmark extends Benchmark {
 
-  /* TODO(tobyr) Add more tests such as iteration, non-sequential 
-   * random access, and sublists.
+  /*
+   * TODO(tobyr) Add more tests such as iteration, non-sequential random access,
+   * and sublists.
    */
 
   private static final int PRIME = 3001;
@@ -43,18 +44,16 @@ public abstract class ListBenchmark extends Benchmark {
    */
   protected enum Position {
 
-    BEGIN("at the beginning"),
-    EXPLICIT_END("explicitly at the end"),
-    IMPLICIT_END("implicitly at the end"),
-    VARIED("in varied locations");
+    BEGIN("at the beginning"), EXPLICIT_END("explicitly at the end"), IMPLICIT_END(
+        "implicitly at the end"), VARIED("in varied locations");
 
     private String label;
 
     /**
      * Constructor for <code>Position</code>.
-     *
+     * 
      * @param label a not <code>null</code> label describing this
-     * <code>Position</code>.
+     *          <code>Position</code>.
      */
     Position(String label) {
       this.label = label;
@@ -62,7 +61,7 @@ public abstract class ListBenchmark extends Benchmark {
 
     /**
      * Returns the textual description for the position.
-     *
+     * 
      * @return a not <code>null</code> description.
      */
     public String toString() {
@@ -70,8 +69,8 @@ public abstract class ListBenchmark extends Benchmark {
     }
   }
 
-  protected final List<Position> explicitPositions = Arrays
-      .asList(Position.BEGIN, Position.EXPLICIT_END, Position.VARIED);
+  protected final List<Position> explicitPositions = Arrays.asList(
+      Position.BEGIN, Position.EXPLICIT_END, Position.VARIED);
 
   protected final IntRange insertRemoveRange = new IntRange(64,
       Integer.MAX_VALUE, Operator.MULTIPLY, 2);
@@ -89,11 +88,12 @@ public abstract class ListBenchmark extends Benchmark {
 
   /**
    * Appends <code>size</code> items to an empty {@code List}.
-   *
+   * 
    * @param size the size of the {@code List}
    */
   @Setup("beginListAdds")
-  public void testListAdds(@RangeField("baseRange") Integer size) {
+  public void testListAdds(@RangeField("baseRange")
+  Integer size) {
     int num = size.intValue();
     for (int i = 0; i < num; i++) {
       list.add("hello");
@@ -107,11 +107,12 @@ public abstract class ListBenchmark extends Benchmark {
   /**
    * Performs <code>size</code> gets on a {@code List} of size,
    * <code>size</code>.
-   *
+   * 
    * @param size the size of the {@code List}
    */
   @Setup("beginListGets")
-  public void testListGets(@RangeField("baseRange") Integer size) {
+  public void testListGets(@RangeField("baseRange")
+  Integer size) {
     int num = size.intValue();
     for (int i = 0; i < num; i++) {
       list.get(i);
@@ -123,17 +124,17 @@ public abstract class ListBenchmark extends Benchmark {
   }
 
   /**
-   * Performs <code>size</code> inserts at position, <code>where</code>, on an
-   * empty <code>List</code>.
-   *
+   * Performs <code>size</code> inserts at position, <code>where</code>, on
+   * an empty <code>List</code>.
+   * 
    * @param where Where the inserts happen
    * @param size The size of the <code>List</code>
-   *
+   * 
    */
   @Setup("beginListInserts")
-  public void testListInserts(
-      @RangeEnum(Position.class)Position where,
-      @RangeField("insertRemoveRange")Integer size) {
+  public void testListInserts(@RangeEnum(Position.class)
+  Position where, @RangeField("insertRemoveRange")
+  Integer size) {
     insertIntoCollection(size, where, list);
   }
 
@@ -142,16 +143,16 @@ public abstract class ListBenchmark extends Benchmark {
   }
 
   /**
-   * Performs <code>size</code> removes at position, <code>where</code>, on an
-   * ArrayList of size, <code>size</code>.
-   *
+   * Performs <code>size</code> removes at position, <code>where</code>, on
+   * an ArrayList of size, <code>size</code>.
+   * 
    * @param where Where the inserts happen
    * @param size The size of the <code>List</code>
    */
   @Setup("beginListRemoves")
-  public void testListRemoves(
-      @RangeField("explicitPositions")Position where,
-      @RangeField("insertRemoveRange")Integer size) {
+  public void testListRemoves(@RangeField("explicitPositions")
+  Position where, @RangeField("insertRemoveRange")
+  Integer size) {
     removeFromCollection(size, where, list);
   }
 
@@ -161,7 +162,7 @@ public abstract class ListBenchmark extends Benchmark {
 
   /**
    * Creates a new empty List.
-   *
+   * 
    * @return a not <code>null</code>, empty List
    */
   protected abstract List<String> newList();
@@ -189,8 +190,7 @@ public abstract class ListBenchmark extends Benchmark {
     testListAdds(size);
   }
 
-  private void insertIntoCollection(Integer size, Position where,
-      List<String> l) {
+  private void insertIntoCollection(Integer size, Position where, List<String> l) {
     int num = size.intValue();
     for (int i = 0; i < num; i++) {
       if (where == Position.IMPLICIT_END) {
@@ -207,9 +207,8 @@ public abstract class ListBenchmark extends Benchmark {
     }
   }
 
-  private int removeFromCollection(Integer size, Position where,
-      List<String> l) {
-    int num = size.intValue();    
+  private int removeFromCollection(Integer size, Position where, List<String> l) {
+    int num = size.intValue();
     for (int i = 0; i < num; i++) {
       if (where == Position.IMPLICIT_END) {
         throw new RuntimeException("cannot remove from the end implicitly");

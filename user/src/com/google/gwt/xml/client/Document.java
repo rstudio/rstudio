@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,7 @@ public interface Document extends Node {
    * @param data the data of the new <code>CDATASection</code>
    * @return the newly created <code>CDATASection</code>
    */
-  public CDATASection createCDATASection(String data);
+  CDATASection createCDATASection(String data);
 
   /**
    * This method creates a new <code>Comment</code>.
@@ -41,14 +41,14 @@ public interface Document extends Node {
    * @param data the data of the new <code>Comment</code>
    * @return the newly created <code>Comment</code>
    */
-  public Comment createComment(String data);
+  Comment createComment(String data);
 
   /**
    * This method creates a new <code>DocumentFragment</code>.
    * 
    * @return the newly created <code>DocumentFragment</code>
    */
-  public DocumentFragment createDocumentFragment();
+  DocumentFragment createDocumentFragment();
 
   /**
    * This method creates a new <code>Element</code>.
@@ -56,7 +56,7 @@ public interface Document extends Node {
    * @param tagName the tag name of the new <code>Element</code>
    * @return the newly created <code>Element</code>
    */
-  public Element createElement(String tagName);
+  Element createElement(String tagName);
 
   /**
    * This method creates a new <code>ProcessingInstruction</code>.
@@ -65,8 +65,7 @@ public interface Document extends Node {
    * @param data the data of the new <code>ProcessingInstruction</code>
    * @return the newly created <code>ProcessingInstruction</code>
    */
-  public ProcessingInstruction createProcessingInstruction(String target,
-      String data);
+  ProcessingInstruction createProcessingInstruction(String target, String data);
 
   /**
    * This method creates a new <code>Text</code>.
@@ -74,7 +73,7 @@ public interface Document extends Node {
    * @param data the data of the new <code>Text</code>
    * @return the newly created <code>Text</code>
    */
-  public Text createTextNode(String data);
+  Text createTextNode(String data);
 
   /**
    * This method retrieves the document element. Each document has at most one
@@ -83,7 +82,7 @@ public interface Document extends Node {
    * 
    * @return the document element of this <code>Document</code>
    */
-  public Element getDocumentElement();
+  Element getDocumentElement();
 
   /**
    * This method retrieves the unique descendent elements which has an id of
@@ -94,7 +93,7 @@ public interface Document extends Node {
    * @return the <code>Element</code> which has an id of
    *         <code>elementId</code> and belongs to this <code>Document</code>
    */
-  public Element getElementById(String elementId);
+  Element getElementById(String elementId);
 
   /**
    * This method retrieves any descendent elements which have a tag name of
@@ -103,7 +102,7 @@ public interface Document extends Node {
    * @return the <code>NodeList</code> of elements which has a tag name of
    *         <code>tagname</code> and belong to this <code>Document</code>
    */
-  public NodeList getElementsByTagName(String tagname);
+  NodeList getElementsByTagName(String tagname);
 
   /**
    * This method imports a node into the current <code>Document</code>.
@@ -111,5 +110,5 @@ public interface Document extends Node {
    * @param deep whether to recurse to children
    * @return the node <code>Node</code> imported
    */
-  public Node importNode(Node importedNode, boolean deep);
+  Node importNode(Node importedNode, boolean deep);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ public interface HasFocus extends SourcesFocusEvents, SourcesKeyboardEvents {
    * 
    * @return the widget's tab index
    */
-  public int getTabIndex();
+  int getTabIndex();
 
   /**
    * Sets the widget's 'access key'. This key is used (in conjunction with a
@@ -33,7 +33,7 @@ public interface HasFocus extends SourcesFocusEvents, SourcesKeyboardEvents {
    * 
    * @param key the widget's access key
    */
-  public void setAccessKey(char key);
+  void setAccessKey(char key);
 
   /**
    * Explicitly focus/unfocus this widget. Only one widget can have focus at a
@@ -41,7 +41,7 @@ public interface HasFocus extends SourcesFocusEvents, SourcesKeyboardEvents {
    * 
    * @param focused whether this widget should take focus or release it
    */
-  public void setFocus(boolean focused);
+  void setFocus(boolean focused);
 
   /**
    * Sets the widget's position in the tab index. If more than one widget has
@@ -51,5 +51,5 @@ public interface HasFocus extends SourcesFocusEvents, SourcesKeyboardEvents {
    * 
    * @param index the widget's tab index
    */
-  public void setTabIndex(int index);
+  void setTabIndex(int index);
 }

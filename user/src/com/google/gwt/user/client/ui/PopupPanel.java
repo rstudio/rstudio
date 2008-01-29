@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -58,7 +58,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
      * @param offsetHeight the offsetHeight of the PopupPanel
      * @see PopupPanel#setPopupPositionAndShow(PositionCallback)
      */
-    public void setPosition(int offsetWidth, int offsetHeight);
+    void setPosition(int offsetWidth, int offsetHeight);
   }
 
   private static final PopupImpl impl = GWT.create(PopupImpl.class);

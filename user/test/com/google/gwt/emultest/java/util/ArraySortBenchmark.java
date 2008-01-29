@@ -1,12 +1,12 @@
 /*
- * Copyright 2007 Google Inc.
- *  
+ * Copyright 2008 Google Inc.
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -31,18 +31,19 @@ public class ArraySortBenchmark extends Benchmark {
     private int value;
     @SuppressWarnings("unused")
     private int index;
-    
+
     public TestObject(int value, int index) {
       this.value = value;
       this.index = index;
     }
-    
+
     public int compareTo(TestObject o) {
       return value - o.value;
     }
   }
+
   public final static int SUBARRAY_SKIP = 2;
-  
+
   public final static int MAX_ARRAY_SIZE = 8192;
 
   // protected since the generated code is a subclass
@@ -53,14 +54,15 @@ public class ArraySortBenchmark extends Benchmark {
   protected byte[] byteArray;
   protected int[] intArray;
   protected TestObject[] objectArray;
-  
-  final IntRange sizeRange = new IntRange(128, MAX_ARRAY_SIZE, Operator.ADD, 256);
+
+  final IntRange sizeRange = new IntRange(128, MAX_ARRAY_SIZE, Operator.ADD,
+      256);
 
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
-  public void beginByteArray( Integer size ) {
+  public void beginByteArray(Integer size) {
     byteArray = new byte[size.intValue()];
     System.arraycopy(initByteArray, 0, byteArray, 0, size.intValue());
   }
@@ -69,26 +71,27 @@ public class ArraySortBenchmark extends Benchmark {
     intArray = new int[size.intValue()];
     System.arraycopy(initIntArray, 0, intArray, 0, size.intValue());
   }
-  
-  public void beginObjectArray( Integer size ) {
+
+  public void beginObjectArray(Integer size) {
     objectArray = new TestObject[size.intValue()];
     System.arraycopy(initObjectArray, 0, objectArray, 0, size.intValue());
   }
-  
+
   public void beginSubarray(Integer size) {
     byteArray = new byte[size.intValue()];
     System.arraycopy(initByteArray, 0, byteArray, 0, size.intValue());
   }
-  
+
   // Required for JUnit
   public void testByteArray() {
   }
 
   /**
-   * Sorts <code>size</code> byte entries
+   * Sorts <code>size</code> byte entries.
+   * 
    * @gwt.benchmark.param size -limit = sizeRange
    */
-  public void testByteArray( Integer size ) {
+  public void testByteArray(Integer size) {
     Arrays.sort(byteArray);
   }
 
@@ -97,31 +100,34 @@ public class ArraySortBenchmark extends Benchmark {
   }
 
   /**
-   * Sorts <code>size</code> int entries
+   * Sorts <code>size</code> int entries.
+   * 
    * @gwt.benchmark.param size -limit = sizeRange
    */
-  public void testIntArray( Integer size ) {
+  public void testIntArray(Integer size) {
     Arrays.sort(intArray);
   }
 
   // Required for JUnit
   public void testObjectArray() {
   }
-  
+
   /**
-   * Sorts <code>size</code> object entries
+   * Sorts <code>size</code> object entries.
+   * 
    * @gwt.benchmark.param size -limit = sizeRange
    */
-  public void testObjectArray( Integer size ) {
+  public void testObjectArray(Integer size) {
     Arrays.sort(objectArray);
   }
 
   // Required for JUnit
   public void testSubarray() {
   }
-  
+
   /**
-   * Sorts <code>size</code> byte entries as a subarray
+   * Sorts <code>size</code> byte entries as a subarray.
+   * 
    * @gwt.benchmark.param size -limit = sizeRange
    */
   public void testSubarray(Integer size) {
@@ -132,21 +138,21 @@ public class ArraySortBenchmark extends Benchmark {
   protected void setUp() throws Exception {
     /*
      * Since the RNG available in web mode cannot accept a seed for reproducible
-     * reports we use a simple pseudorandom sequence here.  Its only purpose is
+     * reports we use a simple pseudorandom sequence here. Its only purpose is
      * to reasonably shuffle the data.
      */
     super.setUp();
     initByteArray = new byte[MAX_ARRAY_SIZE + SUBARRAY_SKIP];
     for (int i = 0; i < MAX_ARRAY_SIZE + SUBARRAY_SKIP; i++) {
-      initByteArray[i] =  (byte) (i * 31 + 17);
+      initByteArray[i] = (byte) (i * 31 + 17);
     }
     initIntArray = new int[MAX_ARRAY_SIZE];
     for (int i = 0; i < MAX_ARRAY_SIZE; i++) {
-      initIntArray[i] =  (int) (i * 3151017 + 17);
+      initIntArray[i] = i * 3151017 + 17;
     }
     initObjectArray = new TestObject[MAX_ARRAY_SIZE + SUBARRAY_SKIP];
     for (int i = 0; i < MAX_ARRAY_SIZE + SUBARRAY_SKIP; i++) {
-      initObjectArray[i] =  new TestObject((i * 31 + 17) % 500, i);
+      initObjectArray[i] = new TestObject((i * 31 + 17) % 500, i);
     }
   }
 

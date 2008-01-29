@@ -38,7 +38,7 @@ public class ReplaceRebinds {
       JMethod method = x.getTarget();
       if (method == program.getRebindCreateMethod()) {
         assert (x.getArgs().size() == 1);
-        JExpression arg = (JExpression) x.getArgs().get(0);
+        JExpression arg = x.getArgs().get(0);
         assert (arg instanceof JClassLiteral);
         JClassLiteral classLiteral = (JClassLiteral) arg;
         JClassType classType = program.rebind(classLiteral.getRefType());
@@ -49,7 +49,7 @@ public class ReplaceRebinds {
          */
         JMethod noArgCtor = null;
         for (int i = 0; i < classType.methods.size(); ++i) {
-          JMethod ctor = (JMethod) classType.methods.get(i);
+          JMethod ctor = classType.methods.get(i);
           if (ctor.getName().equals(classType.getShortName())) {
             if (ctor.params.size() == 0) {
               noArgCtor = ctor;

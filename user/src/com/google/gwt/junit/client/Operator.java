@@ -1,6 +1,6 @@
 /*
- * Copyright 2007 Google Inc.
- *  
+ * Copyright 2008 Google Inc.
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
@@ -24,12 +24,12 @@ public final class Operator {
   /**
    * The standard multiplication operator.
    */
-  public static Operator MULTIPLY = new Operator( "*" );
+  public static Operator MULTIPLY = new Operator("*");
 
   /**
    * The standard addition operator.
    */
-  public static Operator ADD = new Operator( "+" );
+  public static Operator ADD = new Operator("+");
 
   private String value;
 
@@ -39,7 +39,7 @@ public final class Operator {
 
   /**
    * Returns the textual representation of the <code>Operator</code>.
-   *
+   * 
    * @return a non-null {@link String}
    */
   @Override

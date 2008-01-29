@@ -85,7 +85,7 @@ public class MethodCallTightener {
       outer : for (type = (JClassType) instanceType; type != null
           && type != enclosingType; type = type.extnds) {
         for (int i = 0; i < type.methods.size(); ++i) {
-          JMethod methodIt = (JMethod) type.methods.get(i);
+          JMethod methodIt = type.methods.get(i);
           if (JProgram.methodsDoMatch(method, methodIt)) {
             foundMethod = methodIt;
             break outer;

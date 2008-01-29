@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ package com.google.gwt.user.server.rpc;
 /**
  * The GWT RPC class throws UnexpectedException when a service method, being
  * invoked by GWT RPC, throws a checked exception that is not in the service
- * method's signature.  Such exceptions are "unexpected" and the specific
+ * method's signature. Such exceptions are "unexpected" and the specific
  * exception will be the cause of the UnexpectedException.
  */
 public class UnexpectedException extends RuntimeException {
@@ -28,7 +28,7 @@ public class UnexpectedException extends RuntimeException {
    * @param message the detail message
    * @param cause the cause of this {@link UnexpectedException}
    */
-  public UnexpectedException (String message, Throwable cause) {
+  public UnexpectedException(String message, Throwable cause) {
     super(message, cause);
   }
 }

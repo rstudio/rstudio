@@ -413,8 +413,8 @@ public class ModuleDef implements PublicOracle {
 
       TreeLogger subBranch = null;
       if (branch.isLoggable(TreeLogger.DEBUG)) {
-        subBranch = branch
-            .branch(TreeLogger.DEBUG, "Adding compilation units...", null);
+        subBranch = branch.branch(TreeLogger.DEBUG,
+            "Adding compilation units...", null);
       }
 
       for (int i = 0; i < currentCups.length; i++) {
@@ -445,8 +445,8 @@ public class ModuleDef implements PublicOracle {
       Util.logMissingTypeErrorWithHints(logger, "java.lang.Object");
       seedTypesMissing = true;
     } else {
-      TreeLogger branch = logger
-          .branch(TreeLogger.TRACE, "Finding entry point classes", null);
+      TreeLogger branch = logger.branch(TreeLogger.TRACE,
+          "Finding entry point classes", null);
       String[] typeNames = getEntryPointTypeNames();
       for (int i = 0; i < typeNames.length; i++) {
         String typeName = typeNames[i];

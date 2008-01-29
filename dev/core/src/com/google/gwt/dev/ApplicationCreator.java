@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,14 +16,14 @@
 package com.google.gwt.dev;
 
 /**
- * Legacy ApplicationCreator that will let users know where the new class can be found. 
+ * Legacy ApplicationCreator that will let users know where the new class can be
+ * found.
  */
 public final class ApplicationCreator {
 
   public static void main(String[] args) {
     System.err.println("This application has moved!");
-    System.err
-      .println("Please run com.google.gwt.user.tools.ApplicationCreator in gwt-user.jar");
+    System.err.println("Please run com.google.gwt.user.tools.ApplicationCreator in gwt-user.jar");
     System.exit(1);
   }
 

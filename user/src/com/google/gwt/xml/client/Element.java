@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,7 +39,7 @@ public interface Element extends Node {
    * @param name the name of the attribute to get the value of
    * @return the value of the attribute specified by <code>name</code>
    */
-  public String getAttribute(String name);
+  String getAttribute(String name);
 
   /**
    * This method retrieves the attribute node which has a name of
@@ -50,7 +50,7 @@ public interface Element extends Node {
    * @return the attribute node of this <code>Element</code>which has a name
    *         of <code>name</code>
    */
-  public Attr getAttributeNode(String name);
+  Attr getAttributeNode(String name);
 
   /**
    * This method retrieves the elements by tag name which has a name of
@@ -60,14 +60,14 @@ public interface Element extends Node {
    * @return the elements by tag name of this <code>Element</code> which has a
    *         name of <code>name</code>
    */
-  public NodeList getElementsByTagName(String name);
+  NodeList getElementsByTagName(String name);
 
   /**
    * This method retrieves the tag name.
    * 
    * @return the tag name of this <code>Element</code>
    */
-  public String getTagName();
+  String getTagName();
 
   /**
    * This method determines whether this <code>Element</code> has an attribute
@@ -77,14 +77,14 @@ public interface Element extends Node {
    * @return <code>true</code> if this <code>Element</code> has an attribute
    *         that name.
    */
-  public boolean hasAttribute(String name);
+  boolean hasAttribute(String name);
 
   /**
    * This method removes the attribute which has the specified name.
    * 
    * @param name the name of the attribute to remove
    */
-  public void removeAttribute(String name);
+  void removeAttribute(String name);
 
   /**
    * This method sets the attribute specified by <code>name</code> to
@@ -93,6 +93,6 @@ public interface Element extends Node {
    * @param name the name of the attribute to set
    * @param value the new value this attribute is to have
    */
-  public void setAttribute(String name, String value);
+  void setAttribute(String name, String value);
 
 }

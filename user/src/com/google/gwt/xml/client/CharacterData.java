@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,7 +32,7 @@ public interface CharacterData extends Node {
    * 
    * @param appendedData the data to be appended to the end
    */
-  public void appendData(String appendedData);
+  void appendData(String appendedData);
 
   /**
    * This method deletes data, starting at <code>offset</code>, and deleting
@@ -41,21 +41,21 @@ public interface CharacterData extends Node {
    * @param offset how far from the beginning to start deleting
    * @param count how many characters to delete
    */
-  public void deleteData(int offset, int count);
+  void deleteData(int offset, int count);
 
   /**
    * This method retrieves the data.
    * 
    * @return the data of this <code>CharacterData</code>
    */
-  public String getData();
+  String getData();
 
   /**
    * This method retrieves the length of the data.
    * 
    * @return the length of the data contained in this <code>CharacterData</code>
    */
-  public int getLength();
+  int getLength();
 
   /**
    * This method inserts data at the specified offset.
@@ -63,7 +63,7 @@ public interface CharacterData extends Node {
    * @param offset how far from the beginning to start inserting
    * @param insertedData the data to be inserted
    */
-  public void insertData(int offset, String insertedData);
+  void insertData(int offset, String insertedData);
 
   /**
    * This method replaces the substring of data indicated by <code>offset</code>
@@ -74,14 +74,14 @@ public interface CharacterData extends Node {
    * @param count how many characters to delete before inserting
    *          <code>replacementData</code>
    */
-  public void replaceData(int offset, int count, String replacementData);
+  void replaceData(int offset, int count, String replacementData);
 
   /**
    * This method sets the data to <code>data</code>.
    * 
    * @param data the new data
    */
-  public void setData(String data);
+  void setData(String data);
 
   /**
    * This method gets a substring of the character data.
@@ -90,6 +90,6 @@ public interface CharacterData extends Node {
    * @param count how many characters to return
    * @return the specified substring
    */
-  public String substringData(int offset, int count);
+  String substringData(int offset, int count);
 
 }

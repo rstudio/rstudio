@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,27 +44,27 @@ public interface HasHorizontalAlignment {
   /**
    * Specifies that the widget's contents should be aligned in the center.
    */
-  public static final HorizontalAlignmentConstant ALIGN_CENTER = new HorizontalAlignmentConstant(
-    "center");
+  HorizontalAlignmentConstant ALIGN_CENTER = new HorizontalAlignmentConstant(
+      "center");
 
   /**
    * Specifies that the widget's contents should be aligned to the left.
    */
-  public static final HorizontalAlignmentConstant ALIGN_LEFT = new HorizontalAlignmentConstant(
-    "left");
+  HorizontalAlignmentConstant ALIGN_LEFT = new HorizontalAlignmentConstant(
+      "left");
 
   /**
    * Specifies that the widget's contents should be aligned to the right.
    */
-  public static final HorizontalAlignmentConstant ALIGN_RIGHT = new HorizontalAlignmentConstant(
-    "right");
+  HorizontalAlignmentConstant ALIGN_RIGHT = new HorizontalAlignmentConstant(
+      "right");
 
   /**
    * Gets the horizontal alignment.
    * 
    * @return the current horizontal alignment.
    */
-  public HorizontalAlignmentConstant getHorizontalAlignment();
+  HorizontalAlignmentConstant getHorizontalAlignment();
 
   /**
    * Sets the horizontal alignment.
@@ -74,5 +74,5 @@ public interface HasHorizontalAlignment {
    *          {@link HasHorizontalAlignment#ALIGN_CENTER}, or
    *          {@link HasHorizontalAlignment#ALIGN_RIGHT}).
    */
-  public void setHorizontalAlignment(HorizontalAlignmentConstant align);
+  void setHorizontalAlignment(HorizontalAlignmentConstant align);
 }

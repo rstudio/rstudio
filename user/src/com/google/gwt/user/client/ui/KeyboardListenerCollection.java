@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,9 +35,9 @@ public class KeyboardListenerCollection extends ArrayList<KeyboardListener> {
    */
   public static int getKeyboardModifiers(Event event) {
     return (DOM.eventGetShiftKey(event) ? KeyboardListener.MODIFIER_SHIFT : 0)
-      | (DOM.eventGetMetaKey(event) ? KeyboardListener.MODIFIER_META : 0)
-      | (DOM.eventGetCtrlKey(event) ? KeyboardListener.MODIFIER_CTRL : 0)
-      | (DOM.eventGetAltKey(event) ? KeyboardListener.MODIFIER_ALT : 0);
+        | (DOM.eventGetMetaKey(event) ? KeyboardListener.MODIFIER_META : 0)
+        | (DOM.eventGetCtrlKey(event) ? KeyboardListener.MODIFIER_CTRL : 0)
+        | (DOM.eventGetAltKey(event) ? KeyboardListener.MODIFIER_ALT : 0);
   }
 
   /**
@@ -52,15 +52,15 @@ public class KeyboardListenerCollection extends ArrayList<KeyboardListener> {
 
     switch (DOM.eventGetType(event)) {
       case Event.ONKEYDOWN:
-        fireKeyDown(sender, (char)DOM.eventGetKeyCode(event), modifiers);
+        fireKeyDown(sender, (char) DOM.eventGetKeyCode(event), modifiers);
         break;
 
       case Event.ONKEYUP:
-        fireKeyUp(sender, (char)DOM.eventGetKeyCode(event), modifiers);
+        fireKeyUp(sender, (char) DOM.eventGetKeyCode(event), modifiers);
         break;
 
       case Event.ONKEYPRESS:
-        fireKeyPress(sender, (char)DOM.eventGetKeyCode(event), modifiers);
+        fireKeyPress(sender, (char) DOM.eventGetKeyCode(event), modifiers);
         break;
     }
   }

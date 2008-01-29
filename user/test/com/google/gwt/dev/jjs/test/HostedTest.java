@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -409,7 +409,7 @@ public class HostedTest extends GWTTestCase {
    * works, and that returning a primitive does not.
    */
   public void testObjectReturns() {
-    String str = (String)getStringAsObject();
+    String str = (String) getStringAsObject();
     assertEquals(str, "test");
     try {
       getIntAsObject();
@@ -561,7 +561,7 @@ public class HostedTest extends GWTTestCase {
   }-*/;
 
   /*-{ try to mess with compiler }-*/
-  private native void jsniL()/*-{}-*/ ;
+  private native void jsniL()/*-{}-*/;
   
   // test that JS can pass a series of arguments to a varargs function
   private native String[] varargsFromJS1() /*-{

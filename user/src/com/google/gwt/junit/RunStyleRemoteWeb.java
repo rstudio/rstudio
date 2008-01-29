@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -59,7 +59,7 @@ class RunStyleRemoteWeb extends RunStyle {
   public RunStyleRemoteWeb(JUnitShell shell, BrowserManager[] browserManagers) {
     this.shell = shell;
     this.browserManagers = browserManagers;
-    this.remoteTokens = new int[ browserManagers.length ];
+    this.remoteTokens = new int[browserManagers.length];
   }
 
   @Override
@@ -79,13 +79,13 @@ class RunStyleRemoteWeb extends RunStyle {
           + moduleName;
 
       try {
-        for ( int i = 0; i < remoteTokens.length; ++i ) {
-          int remoteToken = remoteTokens[ i ];
-          BrowserManager mgr = browserManagers[ i ];
-          if ( remoteToken != 0 ) {
+        for (int i = 0; i < remoteTokens.length; ++i) {
+          int remoteToken = remoteTokens[i];
+          BrowserManager mgr = browserManagers[i];
+          if (remoteToken != 0) {
             mgr.killBrowser(remoteToken);
           }
-          remoteTokens[ i ] = mgr.launchNewBrowser(url, INITIAL_KEEPALIVE_MS);
+          remoteTokens[i] = mgr.launchNewBrowser(url, INITIAL_KEEPALIVE_MS);
         }
       } catch (Exception e) {
         shell.getTopLogger().log(TreeLogger.ERROR,
@@ -99,15 +99,15 @@ class RunStyleRemoteWeb extends RunStyle {
 
   @Override
   public boolean wasInterrupted() {
-    for ( int i = 0; i < remoteTokens.length; ++i ) {
-      int remoteToken = remoteTokens[ i ];
-      BrowserManager mgr = browserManagers[ i ];
+    for (int i = 0; i < remoteTokens.length; ++i) {
+      int remoteToken = remoteTokens[i];
+      BrowserManager mgr = browserManagers[i];
       if (remoteToken > 0) {
         try {
           mgr.keepAlive(remoteToken, PING_KEEPALIVE_MS);
         } catch (Exception e) {
           // TODO(tobyr): We're failing on the first exception, rather than
-          //  collecting them, but that's probably OK for now.
+          // collecting them, but that's probably OK for now.
           shell.getTopLogger().log(TreeLogger.WARN,
               "Unexpected exception keeping remote browser alive", e);
           return true;

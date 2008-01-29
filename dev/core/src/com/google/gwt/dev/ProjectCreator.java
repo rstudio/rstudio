@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,15 +17,14 @@ package com.google.gwt.dev;
 
 /**
  * The executable class for ProjectCreator has been moved to
- * <code>com.google.gwt.junit.tools.ProjectCreator</code>. This executable class
- * issues a reminder to users of the new location.
+ * <code>com.google.gwt.junit.tools.ProjectCreator</code>. This executable
+ * class issues a reminder to users of the new location.
  */
 public final class ProjectCreator {
 
   public static void main(String[] args) {
     System.err.println("This application has moved!");
-    System.err
-      .println("Please run com.google.gwt.user.tools.ProjectCreator in gwt-user.jar");
+    System.err.println("Please run com.google.gwt.user.tools.ProjectCreator in gwt-user.jar");
     System.exit(1);
   }
 

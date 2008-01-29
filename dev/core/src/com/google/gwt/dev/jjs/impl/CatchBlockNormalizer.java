@@ -49,18 +49,20 @@ public class CatchBlockNormalizer {
   private class CollapseCatchBlocks extends JModVisitor {
 
     // @Override
+    @Override
     public void endVisit(JMethodBody x, Context ctx) {
       clearLocals();
       currentMethodBody = null;
     }
 
     // @Override
+    @Override
     public void endVisit(JTryStatement x, Context ctx) {
       if (x.getCatchBlocks().isEmpty()) {
         return;
       }
 
-      SourceInfo catchInfo = ((JBlock) x.getCatchBlocks().get(0)).getSourceInfo();
+      SourceInfo catchInfo = x.getCatchBlocks().get(0).getSourceInfo();
 
       JLocal exObj = popTempLocal();
       JLocalRef exRef = new JLocalRef(program, catchInfo, exObj);
@@ -82,8 +84,8 @@ public class CatchBlockNormalizer {
       // rethrow the current exception if no one caught it
       JStatement cur = new JThrowStatement(program, null, exRef);
       for (int i = x.getCatchBlocks().size() - 1; i >= 0; --i) {
-        JBlock block = (JBlock) x.getCatchBlocks().get(i);
-        JLocalRef arg = (JLocalRef) x.getCatchArgs().get(i);
+        JBlock block = x.getCatchBlocks().get(i);
+        JLocalRef arg = x.getCatchArgs().get(i);
         catchInfo = block.getSourceInfo();
         JReferenceType argType = (JReferenceType) arg.getType();
         // if ($e instanceof ArgType) { userVar = $e; <user code> }
@@ -105,6 +107,7 @@ public class CatchBlockNormalizer {
     }
 
     // @Override
+    @Override
     public boolean visit(JMethodBody x, Context ctx) {
       currentMethodBody = x;
       clearLocals();
@@ -112,6 +115,7 @@ public class CatchBlockNormalizer {
     }
 
     // @Override
+    @Override
     public boolean visit(JTryStatement x, Context ctx) {
       if (!x.getCatchBlocks().isEmpty()) {
         pushTempLocal();
@@ -127,7 +131,7 @@ public class CatchBlockNormalizer {
   private JMethodBody currentMethodBody;
   private int localIndex;
   private final JProgram program;
-  private final List/* <JLocal> */tempLocals = new ArrayList/* <JLocal> */();
+  private final List<JLocal> tempLocals = new ArrayList<JLocal>();
 
   private CatchBlockNormalizer(JProgram program) {
     this.program = program;
@@ -144,7 +148,7 @@ public class CatchBlockNormalizer {
   }
 
   private JLocal popTempLocal() {
-    return (JLocal) tempLocals.get(--localIndex);
+    return tempLocals.get(--localIndex);
   }
 
   private void pushTempLocal() {

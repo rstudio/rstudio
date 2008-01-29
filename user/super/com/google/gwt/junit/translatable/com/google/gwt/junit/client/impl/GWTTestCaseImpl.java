@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@ package com.google.gwt.junit.client.impl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.junit.client.Benchmark;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.TestResults;
 import com.google.gwt.junit.client.TimeoutException;
@@ -257,7 +258,7 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
       int len = checkPoints.size();
       String[] result = new String[len];
       for (int i = 0; i < len; ++i) {
-        result[i] = (String) checkPoints.get(i);
+        result[i] = checkPoints.get(i);
       }
       return result;
     }
@@ -320,10 +321,10 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
     //               instanceof test
     //
     // If this is not a benchmark, we have to create a fake trial run
-    if ( ! (outer instanceof com.google.gwt.junit.client.Benchmark) ) {
+    if (!(outer instanceof Benchmark)) {
       Trial trial = new Trial();
       long testDurationMillis = System.currentTimeMillis() - testBeginMillis;
-      trial.setRunTimeMillis( testDurationMillis );
+      trial.setRunTimeMillis(testDurationMillis);
 
       if (ex != null) {
         ExceptionWrapper ew = new ExceptionWrapper(ex);
@@ -332,10 +333,10 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
             ew.message += "\n" + checkPoints.get(i);
           }
         }
-        trial.setExceptionWrapper( ew );
+        trial.setExceptionWrapper(ew);
       }
 
-      trials.add( trial );
+      trials.add(trial);
     } else {
       // If this was a benchmark, we need to handle exceptions specially
       // If an exception occurred, it happened without the trial being recorded
@@ -350,16 +351,17 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
           }
         }
         Trial trial = new Trial();
-        trial.setExceptionWrapper( ew );
-        trials.add( trial );
+        trial.setExceptionWrapper(ew);
+        trials.add(trial);
       }
     }
 
-    results.setSourceRef( getDocumentLocation() );
+    results.setSourceRef(getDocumentLocation());
     testIsFinished = true;
     resetAsyncState();
     String testName = outer.getTestName();
-    junitHost.reportResultsAndGetNextMethod(testName, results, junitHostListener);
+    junitHost.reportResultsAndGetNextMethod(testName, results,
+        junitHostListener);
   }
 
   /**

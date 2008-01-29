@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -73,7 +73,7 @@ public abstract class GWTTestCase extends TestCase {
       impl.delayTestFinish(timeoutMillis);
     } else {
       throw new UnsupportedOperationException(
-        "This test case does not support asynchronous mode." );
+          "This test case does not support asynchronous mode.");
     }
   }
 
@@ -82,7 +82,7 @@ public abstract class GWTTestCase extends TestCase {
       impl.finishTest();
     } else {
       throw new UnsupportedOperationException(
-        "This test case does not support asynchronous mode." );
+          "This test case does not support asynchronous mode.");
     }
   }
 
@@ -91,14 +91,15 @@ public abstract class GWTTestCase extends TestCase {
   }
 
   /**
-   * Returns true if this test case supports asynchronous mode. By default,
-   * this is set to true. Originally introduced for Benchmarks which
-   * don't currently support asynchronous mode.
-   *
-   * <p>Note that overriders of this method may report different answers for
-   * the same test case during the same run, so it is not safe to cache
-   * the results.</p>
-   *
+   * Returns true if this test case supports asynchronous mode. By default, this
+   * is set to true. Originally introduced for Benchmarks which don't currently
+   * support asynchronous mode.
+   * 
+   * <p>
+   * Note that overriders of this method may report different answers for the
+   * same test case during the same run, so it is not safe to cache the results.
+   * </p>
+   * 
    */
   protected boolean supportsAsync() {
     return true;

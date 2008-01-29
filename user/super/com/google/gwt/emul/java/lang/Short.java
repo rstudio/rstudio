@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,8 +47,8 @@ public final class Short extends Number implements Comparable<Short> {
     return (short) __parseAndValidateLong(s, radix, MIN_VALUE, MAX_VALUE);
   }
 
-  public static short reverseBytes (short s) {
-    return (short)(((s & 0xff) << 8) | ((s & 0xff00) >> 8));
+  public static short reverseBytes(short s) {
+    return (short) (((s & 0xff) << 8) | ((s & 0xff00) >> 8));
   }
 
   public static String toString(short b) {

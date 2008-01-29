@@ -22,12 +22,15 @@ import java.util.List;
  * Performs basic recording/logging of performance metrics for internal
  * development purposes.
  * 
- * <p>This class differs from {@link
- * com.google.gwt.core.ext.TreeLogger TreeLogger} by providing an interface more
- * suitable for metrics-oriented logging.</p>
+ * <p>
+ * This class differs from {@link com.google.gwt.core.ext.TreeLogger TreeLogger}
+ * by providing an interface more suitable for metrics-oriented logging.
+ * </p>
  * 
- * <p>Performance logging can be enabled by setting the system property,
- * {@code gwt.perflog=true}.</p>
+ * <p>
+ * Performance logging can be enabled by setting the system property,
+ * {@code gwt.perflog=true}.
+ * </p>
  * 
  */
 public class PerfLogger {
@@ -63,8 +66,7 @@ public class PerfLogger {
   /**
    * Flag for enabling performance logging.
    */
-  private static boolean enabled = Boolean
-      .parseBoolean(System.getProperty("gwt.perflog"));
+  private static boolean enabled = Boolean.parseBoolean(System.getProperty("gwt.perflog"));
 
   private static ThreadLocal<Timing> currentTiming = new ThreadLocal<Timing>() {
     protected Timing initialValue() {
@@ -97,7 +99,7 @@ public class PerfLogger {
 
   /**
    * Logs a message without explicitly including timer information.
-   *
+   * 
    * @param message a not <code>null</code> message
    */
   public static void log(String message) {
@@ -140,7 +142,7 @@ public class PerfLogger {
       msg.append(t.message);
       if (!t.messageOnly) {
         msg.append(" ");
-        msg.append((double) (t.totalTimeNanos / 1000000.0));
+        msg.append(t.totalTimeNanos / 1000000.0);
         msg.append("ms");
       }
       System.out.println(msg);
