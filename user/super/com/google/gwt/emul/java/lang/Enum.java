@@ -27,6 +27,33 @@ import java.io.Serializable;
 public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
     Serializable {
 
+  public static <T extends Enum<T>> T valueOf(Class<T> enumType, String name) {
+
+    // Have to explicitly test for null, otherwise we won't get 
+    // NullPointerExceptions in web mode
+    if (enumType == null || name == null) {
+      throw new NullPointerException("enumType and name must not be null.");
+    }
+
+    // TODO(scottb) Work some compiler magic to improve this from a linear
+    // search to a map lookup.
+    T[] constants = enumType.getEnumConstants();
+
+    if (constants == null) {
+      throw new IllegalArgumentException(
+          enumType.getName() + " is not an enum.");
+    }
+
+    for (T constant : constants) {
+      if (constant.name().equals(name)) {
+        return constant;
+      }
+    }
+
+    throw new IllegalArgumentException(enumType.getName()
+        + " does not have an enum constant named, " + name + ".");
+  }
+
   protected static <T extends Enum<T>> T valueOf(JavaScriptObject map,
       String name) {
     T result = Enum.<T> valueOf0(map, "_" + name);

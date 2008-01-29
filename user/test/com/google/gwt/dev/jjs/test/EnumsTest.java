@@ -197,6 +197,40 @@ public class EnumsTest extends GWTTestCase {
       fail("Subclassing.valueOf(\"D\") -- expected IllegalArgumentException");
     } catch (IllegalArgumentException e) {
     }
+    
+    enumValuesTest(Basic.class);
+    enumValuesTest(Complex.class);
+    enumValuesTest(Subclassing.class);
+    
+    try {
+      Enum.valueOf(Basic.class, "foo");
+      fail("Passed an invalid enum constant name to Enum.valueOf; expected "
+          + "IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+    }
+    
+    try {
+      Class fakeEnumClass = String.class;
+      Enum.valueOf(fakeEnumClass, "foo");
+      fail("Passed a non enum class to Enum.valueOf; expected " 
+              + "IllegalArgumentException");
+    } catch (IllegalArgumentException e) {       
+    }
+     
+    try {
+      Class<Basic> nullEnumClass = null;
+      Enum.valueOf(nullEnumClass, "foo");
+      fail("Passed a null enum class to Enum.valueOf; expected "
+          + "NullPointerException");
+    } catch (NullPointerException e) {
+    }
+      
+    try {
+      Enum.valueOf(Basic.class, null);
+      fail("Passed a null enum constant to Enum.valueOf; expected "
+          + "NullPointerException");
+    } catch (NullPointerException e) {
+    }
   }
 
   public void testValues() {
@@ -217,5 +251,12 @@ public class EnumsTest extends GWTTestCase {
     assertEquals(Subclassing.A, subs[0]);
     assertEquals(Subclassing.B, subs[1]);
     assertEquals(Subclassing.C, subs[2]);
+  }
+  
+  private <T extends Enum<T>> void enumValuesTest(Class<T> enumClass) {
+    T[] constants = enumClass.getEnumConstants();
+    for (T constant : constants) {
+      assertEquals(constant, Enum.valueOf(enumClass, constant.name()));
+    }
   }
 }
