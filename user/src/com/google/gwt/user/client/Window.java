@@ -231,7 +231,7 @@ public class Window {
    * @param enable <code>false</code> to disable window scrolling
    */
   public static native void enableScrolling(boolean enable) /*-{
-    $doc.body.style.overflow = enable ? 'auto' : 'hidden';
+    $doc.body.style.overflow = $doc.documentElement.style.overflow = enable ? '' : 'hidden';
   }-*/;
 
   /**
