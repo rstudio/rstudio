@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,6 +50,7 @@ import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.AllocationExpression;
+import org.eclipse.jdt.internal.compiler.ast.AnnotationMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Argument;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.ConstructorDeclaration;
@@ -151,6 +152,12 @@ public class BuildTypeMap {
 
     public TypeDeclaration[] getTypeDeclarataions() {
       return typeDecls.toArray(new TypeDeclaration[typeDecls.size()]);
+    }
+
+    @Override
+    public boolean visit(AnnotationMethodDeclaration methodDeclaration,
+        ClassScope scope) {
+      return visit((MethodDeclaration) methodDeclaration, scope);
     }
 
     @Override
@@ -511,10 +518,7 @@ public class BuildTypeMap {
       currentSeparatorPositions = compResult.lineSeparatorPositions;
       currentFileName = String.valueOf(compResult.fileName);
       SourceTypeBinding binding = typeDeclaration.binding;
-      if (binding.isAnnotationType()) {
-        // Ignore these.
-        return false;
-      }
+
       if (binding.constantPoolName() == null) {
         /*
          * Weird case: if JDT determines that this local class is totally
@@ -819,7 +823,7 @@ public class BuildTypeMap {
         if (binding.isClass()) {
           newType = program.createClass(info, name, binding.isAbstract(),
               binding.isFinal());
-        } else if (binding.isInterface()) {
+        } else if (binding.isInterface() || binding.isAnnotationType()) {
           newType = program.createInterface(info, name);
         } else if (binding.isEnum()) {
           if (binding.isAnonymousType()) {
@@ -828,9 +832,6 @@ public class BuildTypeMap {
           } else {
             newType = program.createEnum(info, name);
           }
-        } else if (binding.isAnnotationType()) {
-          // TODO
-          return false;
         } else {
           assert (false);
           return false;

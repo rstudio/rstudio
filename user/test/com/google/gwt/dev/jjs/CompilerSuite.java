@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs;
 
+import com.google.gwt.dev.jjs.test.AnnotationsTest;
 import com.google.gwt.dev.jjs.test.AutoboxTest;
 import com.google.gwt.dev.jjs.test.BlankInterfaceTest;
 import com.google.gwt.dev.jjs.test.ClassCastTest;
@@ -47,6 +48,7 @@ public class CompilerSuite {
     TestSuite suite = new TestSuite("Test for com.google.gwt.dev.jjs");
 
     // $JUnit-BEGIN$
+    suite.addTestSuite(AnnotationsTest.class);
     suite.addTestSuite(AutoboxTest.class);
     suite.addTestSuite(ClassCastTest.class);
     suite.addTestSuite(ClassObjectTest.class);
