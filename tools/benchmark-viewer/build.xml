@@ -94,7 +94,7 @@
 
 	<target name="remoteweb-test" description="Run a remoteweb test at the given host and path">
 		<echo message="Performing remote browser testing at rmi://${gwt.remote.browser}" />
-		<gwt.junit test.args="-port ${gwt.junit.port} -out www -web -remoteweb rmi://${gwt.remote.browser}" test.out="${junit.out}/${gwt.remote.browser}" test.cases="default.web.tests" />
+		<gwt.junit test.args="-out www -web -remoteweb rmi://${gwt.remote.browser}" test.out="${junit.out}/${gwt.remote.browser}" test.cases="default.web.tests" />
 	</target>
 
 	<target name="test" depends="compile, compile.tests" description="Run hosted-mode, web-mode and remoteweb tests for this project.">
@@ -105,9 +105,9 @@
 			is executing
 		-->
 		<parallel threadcount="1">
-			<gwt.junit test.args="-port ${gwt.junit.port}" test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="default.hosted.tests" />
+			<gwt.junit test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="default.hosted.tests" />
 
-			<gwt.junit test.args="-port ${gwt.junit.port} -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode" test.cases="default.web.tests" />
+			<gwt.junit test.args="-out www -web" test.out="${junit.out}/${build.host.platform}-web-mode" test.cases="default.web.tests" />
 
 			<!--
 				Run remote browser testing for the comma delimited list of remote browsers
