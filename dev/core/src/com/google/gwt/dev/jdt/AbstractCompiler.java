@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.PerfLogger;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.ThreadLocalTreeLoggerProxy;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -40,6 +41,7 @@ import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblemFactory;
 
+import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -336,6 +338,7 @@ public abstract class AbstractCompiler {
       // Didn't find it in the cache, so let's compile from source.
       // Strip off the inner types, if any
       //
+      String className = qname;
       int pos = qname.indexOf('$');
       if (pos >= 0) {
         qname = qname.substring(0, pos);
@@ -351,6 +354,23 @@ public abstract class AbstractCompiler {
           nameEnvironmentAnswerForTypeName.put(qname, out);
           return out;
         } else {
+          ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+          if (isBinaryType(contextClassLoader, className)) {
+            URL resourceURL = contextClassLoader.getResource(className.replace('.', '/') + ".class");
+            if (resourceURL != null) {
+              byte[] classBytes = Util.readURLAsBytes(resourceURL);
+              ClassFileReader cfr;
+              try {
+                cfr = new ClassFileReader(classBytes , null);
+                NameEnvironmentAnswer out = new NameEnvironmentAnswer(cfr, null);
+                nameEnvironmentAnswerForTypeName.put(qname, out);
+                return out;
+              } catch (ClassFormatException e) {
+                // Ignored.
+              }
+            }
+          }
+          
           logger.log(TreeLogger.SPAM, "Not a known type", null);
           return null;
         }
@@ -380,6 +400,20 @@ public abstract class AbstractCompiler {
       } else {
         return false;
       }
+    }
+    
+    private boolean isBinaryType(ClassLoader classLoader, String typeName) {
+      try {
+        Class.forName(typeName, false, classLoader);
+        return true;
+      } catch (ClassNotFoundException e) {
+        // Ignored.
+      } catch (LinkageError e) {
+        // Ignored.
+      }
+      
+      // Assume that it is not a binary type.
+      return false;
     }
   }
 

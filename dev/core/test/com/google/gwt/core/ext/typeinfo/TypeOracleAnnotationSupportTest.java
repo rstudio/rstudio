@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package com.google.gwt.core.ext.typeinfo;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.test.AnnotatedClass;
+import com.google.gwt.core.ext.typeinfo.test.ClassAnnotatedWithBinaryOnlyAnnotation;
 import com.google.gwt.core.ext.typeinfo.test.ClassLiteralReferenceAnnotation;
 import com.google.gwt.core.ext.typeinfo.test.TestAnnotation;
 import com.google.gwt.dev.cfg.ModuleDef;
@@ -64,7 +65,7 @@ public class TypeOracleAnnotationSupportTest extends TestCase {
     assertEquals(realAnnotation.longValue(), testAnnotation.longValue());
 
     // Tests default value of array type.
-    assertEquals(realAnnotation.intArrayValue().length, 
+    assertEquals(realAnnotation.intArrayValue().length,
         testAnnotation.intArrayValue().length);
 
     // Tests default value which is a field reference.
@@ -95,8 +96,9 @@ public class TypeOracleAnnotationSupportTest extends TestCase {
     validateAnnotation(annotatedClass, "Class", "Foo", realAnnotation);
 
     ClassLiteralReferenceAnnotation classReferenceAnnotation = annotatedClass.getAnnotation(ClassLiteralReferenceAnnotation.class);
-    assertEquals(ClassLiteralReferenceAnnotation.Foo.class, classReferenceAnnotation.value());
-    
+    assertEquals(ClassLiteralReferenceAnnotation.Foo.class,
+        classReferenceAnnotation.value());
+
     assertEquals(2, annotatedClass.getAnnotations().length);
   }
 
@@ -177,5 +179,16 @@ public class TypeOracleAnnotationSupportTest extends TestCase {
     TestAnnotation realAnnotation = (TestAnnotation) paramAnnotations[0][0];
 
     validateAnnotation(parameter, "Parameter", "Not assigned", realAnnotation);
+  }
+
+  /**
+   * Tests translatable classes that are annotated with annotations for which we
+   * have no source.
+   */
+  public void testBinaryOnlyAnnotation() throws NotFoundException {
+    // It is an error if we fail to get the type.
+    JClassType classType = typeOracle.getType(ClassAnnotatedWithBinaryOnlyAnnotation.class.getCanonicalName());
+
+    assertNull(classType.getAnnotation(BinaryOnlyAnnotation.class));
   }
 }
