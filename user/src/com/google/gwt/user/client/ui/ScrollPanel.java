@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -98,6 +98,35 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents {
     if (scrollListeners != null) {
       scrollListeners.remove(listener);
     }
+  }
+
+  /**
+   * Scroll to the bottom of this panel.
+   */
+  public void scrollToBottom() {
+    setScrollPosition(DOM.getElementPropertyInt(getElement(), "scrollHeight"));
+  }
+
+  /**
+   * Scroll to the far left of this panel.
+   */
+  public void scrollToLeft() {
+    setHorizontalScrollPosition(0);
+  }
+
+  /**
+   * Scroll to the far right of this panel.
+   */
+  public void scrollToRight() {
+    setHorizontalScrollPosition(DOM.getElementPropertyInt(getElement(),
+        "scrollWidth"));
+  }
+
+  /**
+   * Scroll to the top of this panel.
+   */
+  public void scrollToTop() {
+    setScrollPosition(0);
   }
 
   /**
