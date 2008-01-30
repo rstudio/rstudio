@@ -10,8 +10,6 @@
 	<property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
 
 	<property name="USER_PKGS" value="com.google.gwt.core.client;com.google.gwt.core.ext;com.google.gwt.core.ext.typeinfo;com.google.gwt.i18n.client;com.google.gwt.json.client;com.google.gwt.junit.client;com.google.gwt.user.client;com.google.gwt.user.client.rpc;com.google.gwt.user.client.ui;com.google.gwt.user.server.rpc;com.google.gwt.xml.client;com.google.gwt.http.client;com.google.gwt.junit.viewer.client" />
-	<property name="LANG_PKGS" value="java.lang;java.util;java.io" />
-	<property name="DOC_PKGS" value="com.google.gwt.doc" />
 
 	<!--
 		*** Note that if the USER_SOURCE_PATH paths are updated,
@@ -29,17 +27,7 @@
 		<pathelement location="${gwt.user.jar}" />
 		<pathelement location="${gwt.dev.jar}" />
 		<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-                <pathelement location="${gwt.tools.lib}/jfreechart/jfreechart-1.0.3.jar" />
-	</path>
-
-	<!--
-		*** Note that if the DOC_SOURCE_PATH paths are updated,
-		the fileset dependencies in the outofdate tags in the
-		doc target must be updated as well.
-	-->
-	<path id="DOC_SOURCE_PATH">
-		<pathelement location="./src" />
-		<path refid="USER_SOURCE_PATH" />
+		<pathelement location="${gwt.tools.lib}/jfreechart/jfreechart-1.0.3.jar" />
 	</path>
 
 	<path id="DOC_PATH">
@@ -48,178 +36,6 @@
 		<path path="${java.tools.path}" />
 		<path refid="USER_SOURCE_PATH" />
 	</path>
-
-	<target name="doc">
-		<outofdate>
-			<sourcefiles>
-				<fileset dir="./src">
-          <include name="**/*.java" />
-				</fileset>
-				<fileset dir="${gwt.root}/user/src">
-					<include name="**/*.java" />
-				</fileset>
-				<fileset dir="${gwt.root}/user/javadoc">
-					<include name="**/*.java" />
-				</fileset>
-				<fileset dir="${gwt.root}/user/super">
-					<include name="**/*.java" />
-				</fileset>
-				<fileset dir="${gwt.root}/dev/core/src">
-					<include name="**/*.java" />
-				</fileset>
-			</sourcefiles>
-			<targetfiles>
-				<!--
-					only checks one output file, will not
-					rebuild other files if this one is up
-					to date
-				-->
-				<pathelement path="${project.build}/gwt-doc.doc.xml" />
-			</targetfiles>
-			<sequential>
-				<java classpathref="DOC_PATH" classname="com.google.doctool.DocTool" fork="yes" failonerror="true">
-					<arg value="doc" />
-					<arg value="gwt-doc" />
-					<arg value="-out" />
-					<arg value="${project.build}" />
-					<arg value="-classpath" />
-					<arg pathref="USER_CLASS_PATH" />
-					<arg value="-sourcepath" />
-					<arg pathref="DOC_SOURCE_PATH" />
-					<arg value="-packages" />
-					<arg value="${DOC_PKGS}" />
-				</java>
-			</sequential>
-		</outofdate>
-	</target>
-
-	<target name="user">
-		<outofdate>
-			<sourcefiles>
-				<fileset file="./src/gwt-user.html" />
-				<fileset dir="${gwt.root}/user/src">
-					<include name="**/*.java" />
-				</fileset>
-				<fileset dir="${gwt.root}/user/javadoc">
-					<include name="**/*.java" />
-				</fileset>
-				<fileset dir="${gwt.root}/user/super">
-					<include name="**/*.java" />
-				</fileset>
-				<fileset dir="${gwt.root}/dev/core/src">
-					<include name="**/*.java" />
-				</fileset>
-			</sourcefiles>
-			<targetfiles>
-				<!--
-					only checks one output file, will not rebuild other files
-					if this one is up to date
-				-->
-				<pathelement path="${project.build}/gwt-user.java.xml" />
-			</targetfiles>
-			<sequential>
-				<move file="${gwt.root}/user/super/com/google/gwt/junit/translatable/com/google/gwt/junit/client/GWTTestCase.java" tofile="${gwt.root}/user/super/com/google/gwt/junit/translatable/com/google/gwt/junit/client/GWTTestCase.java_" failonerror="false" />
-				<java classpathref="DOC_PATH" classname="com.google.doctool.DocTool" fork="yes" failonerror="true">
-					<arg value="java" />
-					<arg value="gwt-user" />
-					<arg value="-out" />
-					<arg value="${project.build}" />
-					<arg value="-overview" />
-					<arg value="./src/gwt-user.html" />
-					<arg value="-classpath" />
-					<arg pathref="USER_CLASS_PATH" />
-					<arg value="-sourcepath" />
-					<arg pathref="USER_SOURCE_PATH" />
-					<arg value="-packages" />
-					<arg value="${USER_PKGS}" />
-				</java>
-				<move file="${gwt.root}/user/super/com/google/gwt/junit/translatable/com/google/gwt/junit/client/GWTTestCase.java_" tofile="${gwt.root}/user/super/com/google/gwt/junit/translatable/com/google/gwt/junit/client/GWTTestCase.java" failonerror="false" />
-			</sequential>
-		</outofdate>
-	</target>
-
-	<target name="lang">
-		<outofdate>
-			<sourcefiles>
-				<fileset file="./src/gwt-lang.html" />
-				<fileset dir="${gwt.root}/user/super/com/google/gwt/emul">
-					<include name="**/*.java" />
-				</fileset>
-			</sourcefiles>
-			<targetfiles>
-				<!--
-					only checks one output file, will not rebuild other files
-					if this one is up to date
-				-->
-				<pathelement path="${project.build}/gwt-lang.java.xml" />
-			</targetfiles>
-			<sequential>
-				<java classpathref="DOC_PATH" classname="com.google.doctool.DocTool" fork="yes" failonerror="true">
-					<arg value="java" />
-					<arg value="gwt-lang" />
-					<arg value="-out" />
-					<arg value="${project.build}" />
-					<arg value="-overview" />
-					<arg value="./src/gwt-lang.html" />
-					<arg value="-classpath" />
-					<arg pathref="USER_CLASS_PATH" />
-					<arg value="-sourcepath" />
-					<arg path="${gwt.root}/user/super/com/google/gwt/emul" />
-					<arg value="-packages" />
-					<arg value="${LANG_PKGS}" />
-				</java>
-			</sequential>
-		</outofdate>
-	</target>
-
-	<target name="html" depends="doc,user,lang">
-		<outofdate>
-			<sourcefiles>
-				<fileset dir="${project.build}">
-					<include name="gwt-*.xml" />
-				</fileset>
-			</sourcefiles>
-			<targetfiles>
-				<!--
-					only checks one output file, will not rebuild other
-				 	files if this one is up to date
-				-->
-				<pathelement path="${project.build}/topics.xml" />
-			</targetfiles>
-			<sequential>
-				<java classpathref="DOC_PATH" classname="com.google.doctool.DocTool" fork="yes" failonerror="true">
-					<arg value="-html" />
-					<arg value="Google Web Toolkit" />
-					<arg value="gwt-doc" />
-					<arg value="gwt-user" />
-					<arg value="gwt-lang" />
-					<arg value="-out" />
-					<arg value="${project.build}" />
-					<arg value="-imagepath" />
-					<arg path="./src" />
-				</java>
-				<delete file="${project.build}/html/topics.htmls" />
-				<mkdir dir="${project.build}/css" />
-				<copy todir="${project.build}/css">
-					<fileset dir="src" includes="*.css" />
-				</copy>
-				
-				<!-- Manually copy handwritten HTML and apply the version/build number -->
-				<copy todir="${project.build}/html">
-					<fileset dir="src" includes="gettingstarted.html"/>
-					<filterset>
-						<filter token="GWT_VERSION" value="${gwt.version}" />
-					</filterset>
-				</copy>
-
-				<!-- Manually copy any other static resources (e.g. images) needed by handwritten HTML -->
-				<copy todir="${project.build}/html">
-					<fileset dir="src" includes="kitchensink-*.jpg"/>
-					<fileset dir="src" includes="myapplication-*.jpg"/>
-				</copy>
-			</sequential>
-		</outofdate>
-	</target>
 
 	<target name="javadoc">
 		<outofdate>
@@ -268,5 +84,5 @@
 		</outofdate>
 	</target>
 
-	<target name="build" depends="html, javadoc" />
+	<target name="build" depends="javadoc" />
 </project>
