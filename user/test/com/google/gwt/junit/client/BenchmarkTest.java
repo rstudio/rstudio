@@ -23,8 +23,7 @@ import com.google.gwt.junit.client.annotations.Teardown;
 import com.google.gwt.junit.client.annotations.IterationTimeLimit;
 
 /**
- * Basic Benchmark testing. 
- *
+ * Basic Benchmark testing.
  */
 public class BenchmarkTest extends Benchmark {
 
@@ -34,27 +33,27 @@ public class BenchmarkTest extends Benchmark {
   protected enum TestEnum {
     A, B, C;
   }
-   
-  final String stringField = "foo";
 
   final IntRange intRange = new IntRange(0, 20, Operator.ADD, 5);
 
   final IntRange intRange2 = new IntRange(10, 1000, Operator.MULTIPLY, 10);
 
-  final IntRange veryLargeRange = new IntRange(0, Integer.MAX_VALUE,
-      Operator.ADD, 1);
+  long startTime;
 
   String stateString = null;
 
-  long startTime;
-    
+  final String stringField = "foo";
+
+  final IntRange veryLargeRange = new IntRange(0, Integer.MAX_VALUE,
+      Operator.ADD, 1);
+
   public String getModuleName() {
     return "com.google.gwt.junit.JUnit";
   }
-  
-  public void testEnumRange() {    
+
+  public void testEnumRange() {
   }
-  
+
   /**
    * Tests that we receive the enums in a range.
    * 
@@ -62,7 +61,8 @@ public class BenchmarkTest extends Benchmark {
    */
   @Setup("setupEnum")
   @Teardown("teardownEnum")
-  public void testEnumRange(@RangeEnum(TestEnum.class) TestEnum enumValue) {
+  public void testEnumRange(@RangeEnum(TestEnum.class)
+  TestEnum enumValue) {
     assertNotNull(enumValue);
   }
 
@@ -73,8 +73,8 @@ public class BenchmarkTest extends Benchmark {
   public void testNoParameters() {
     assertEquals("foo", stringField);
   }
-  
-  public void testOneParameterField() {    
+
+  public void testOneParameterField() {
   }
 
   /**
@@ -82,12 +82,13 @@ public class BenchmarkTest extends Benchmark {
    * 
    * @param value
    */
-  public void testOneParameterField(@RangeField("intRange") Integer value) {
+  public void testOneParameterField(@RangeField("intRange")
+  Integer value) {
     assertTrue(value >= 0 && value <= 100 && value % 5 == 0);
   }
 
   /**
-   * Tests {@link Setup} and {@link Teardown}. 
+   * Tests {@link Setup} and {@link Teardown}.
    * 
    */
   @Setup("setup")
@@ -96,8 +97,8 @@ public class BenchmarkTest extends Benchmark {
     assertEquals("setup", stateString);
     stateString = "running";
   }
-  
-  public void testTimeLimit() {    
+
+  public void testTimeLimit() {
   }
 
   /**
@@ -106,33 +107,35 @@ public class BenchmarkTest extends Benchmark {
    * @param numIterations
    */
   @IterationTimeLimit(1L)
-  public void testTimeLimit(@RangeField("veryLargeRange") Integer numIterations) {
+  public void testTimeLimit(@RangeField("veryLargeRange")
+  Integer numIterations) {
 
     somethingExpensive();
-    
-    // Make sure we hit the time limit, instead of running through all 
+
+    // Make sure we hit the time limit, instead of running through all
     // iterations.
-    assertTrue( numIterations < Integer.MAX_VALUE );
+    assertTrue(numIterations < Integer.MAX_VALUE);
   }
-  
-  public void testTwoParameterField() {    
+
+  public void testTwoParameterField() {
   }
 
   /**
    * Tests that a multiple argument function works correctly.
-   *
+   * 
    */
-  public void testTwoParameterField(@RangeField("intRange") Integer intOne, 
-      @RangeField("intRange2") Integer intTwo) {
+  public void testTwoParameterField(@RangeField("intRange")
+  Integer intOne, @RangeField("intRange2")
+  Integer intTwo) {
     assertTrue(intOne >= 0 && intOne <= 100 && intOne % 5 == 0);
     assertTrue(intTwo >= 10 && intTwo <= 1000 && intTwo % 10 == 0);
   }
-  
+
   protected void setup() {
     assertNull(stateString);
     stateString = "setup";
   }
-  
+
   protected void teardown() {
     assertNotNull(stateString);
     assertTrue(stateString.equals("running") || stateString.equals("setup"));
@@ -140,13 +143,12 @@ public class BenchmarkTest extends Benchmark {
   }
 
   /**
-   * Do something that is relatively expensive both in hosted mode 
-   * and web mode. 
+   * Do something that is relatively expensive both in hosted mode and web mode.
    */
   private native void somethingExpensive() /*-{
     var deadField = 0;
     for (var i = 0; i < 10000; ++i) {
       deadField += Math.pow(deadField, i);
     }
-  }-*/;  
+  }-*/;
 }
