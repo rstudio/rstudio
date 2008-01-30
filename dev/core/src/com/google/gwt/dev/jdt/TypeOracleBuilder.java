@@ -1543,7 +1543,6 @@ public class TypeOracleBuilder {
           JClassType upperBound = (JClassType) resolveType(logger,
               wcBinding.erasure());
           bounds = new JUpperBound(new JClassType[] {upperBound});
-          assert (bounds.getFirstBound().getQualifiedSourceName().equals("java.lang.Object"));
         }
           break;
         default:
