@@ -11,19 +11,15 @@
 		<mkdir dir="${gwt.build.lib}" />
 		<gwt.jar>
 			<fileset dir="${gwt.user.bin}">
-				<exclude name="com/google/gwt/i18n/rebind/**" />
-				<exclude name="com/google/gwt/i18n/tools/**" />
+				<exclude name="**/rebind/**" />
+				<exclude name="**/tools/**" />
 				<exclude name="com/google/gwt/json/**" />
 				<exclude name="com/google/gwt/junit/*" />
 				<exclude name="com/google/gwt/junit/benchmarks/**" />
 				<exclude name="com/google/gwt/junit/client/Benchmark.*" />
 				<exclude name="com/google/gwt/junit/client/GWTTestCase.*" />
-				<exclude name="com/google/gwt/junit/rebind/**" />
 				<exclude name="com/google/gwt/junit/remote/**" />
 				<exclude name="com/google/gwt/junit/server/**" />
-				<exclude name="com/google/gwt/junit/tools/**" />
-				<exclude name="com/google/gwt/user/rebind/**" />
-				<exclude name="com/google/gwt/user/tools/**" />
 			</fileset>
 		</gwt.jar>
 	</target>

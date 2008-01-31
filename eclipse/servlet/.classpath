@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry excluding="com/google/gwt/i18n/rebind/|com/google/gwt/i18n/tools/|com/google/gwt/junit/*.java|com/google/gwt/junit/benchmarks/|com/google/gwt/junit/client/Benchmark.java|com/google/gwt/junit/client/GWTTestCase.java|com/google/gwt/junit/rebind/|com/google/gwt/junit/remote/|com/google/gwt/junit/server/|com/google/gwt/junit/tools/|com/google/gwt/user/rebind/|com/google/gwt/user/tools/" kind="src" path="core/src"/>
+	<classpathentry excluding="**/rebind/|**/tools/|com/google/gwt/json/|com/google/gwt/junit/*.java|com/google/gwt/junit/benchmarks/|com/google/gwt/junit/client/Benchmark.java|com/google/gwt/junit/client/GWTTestCase.java|com/google/gwt/junit/remote/|com/google/gwt/junit/server/" kind="src" path="core/src"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-3.8.1.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-3.8.1-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/servlet-api-2.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
