@@ -37,19 +37,6 @@ class DOMImplMozilla extends DOMImplStandard {
   }-*/;
 
   @Override
-  public native int eventGetButton(Event evt) /*-{
-    // Mozilla and IE disagree on what the button codes for buttons should be.
-    // Translating to match IE standard.
-    var button = evt.button;
-    if(button == 0) {
-      return 1;
-    } else if (button == 1) {
-      return 4;
-    }
-    return button || -1;
- }-*/;
-
-  @Override
   public native int eventGetMouseWheelVelocityY(Event evt) /*-{
     return evt.detail || -1;
   }-*/;

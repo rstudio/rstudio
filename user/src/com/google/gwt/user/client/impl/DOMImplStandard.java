@@ -39,6 +39,19 @@ abstract class DOMImplStandard extends DOMImpl {
   }-*/;
 
   @Override
+  public native int eventGetButton(Event evt) /*-{
+    // Standard browsers and IE disagree on what the button codes for buttons
+    // should be.  Translating to match IE standard.
+    var button = evt.which;
+    if(button == 2) {
+      return 4;
+    } else if (button == 3) {
+      return 2;
+    }
+    return button || -1;
+  }-*/;
+
+  @Override
   public native Element eventGetFromElement(Event evt) /*-{
     // Standard browsers use relatedTarget rather than fromElement.
     return evt.relatedTarget ? evt.relatedTarget : null;

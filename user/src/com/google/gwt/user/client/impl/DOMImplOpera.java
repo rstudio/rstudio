@@ -24,18 +24,6 @@ import com.google.gwt.user.client.Event;
 public class DOMImplOpera extends DOMImplStandard {
 
   @Override
-  public native int eventGetButton(Event evt) /*-{
-    // Opera and IE disagree on what the button codes for left button should be.
-    // Translating to match IE standard.
-    var button = evt.button;
-    if(button == 0){
-      return 1;
-    } else {
-      return button || -1;
-    }
-  }-*/;
-
-  @Override
   public native int eventGetMouseWheelVelocityY(Event evt) /*-{
     return evt.detail * 4 || -1;
   }-*/;
