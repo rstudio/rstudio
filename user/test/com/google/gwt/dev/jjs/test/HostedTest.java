@@ -64,28 +64,28 @@ public class HostedTest extends GWTTestCase {
       return 42;
     }
   }
-  
+
   private static class TestCovariantChild extends TestCovariantSuper {
     @Override
     public native String foo(String val) /*-{
       return val;
     }-*/;
   }
-  
+
   private static class TestCovariantSuper {
     public native Object foo(String val) /*-{
       return val;
     }-*/;
   }
-  
+
   private static enum TestEnum {
     VAL1, VAL2, VAL3
   }
-  
+
   static String sFoo(String s) {
     return s + "foo";
   }
-  
+
   private native static JavaScriptObject getBoxedBooleanAsObject(boolean v) /*-{
     return new Boolean(v);
   }-*/;
@@ -93,11 +93,11 @@ public class HostedTest extends GWTTestCase {
   private native static JavaScriptObject getBoxedNumberAsObject(double v) /*-{
     return new Number(v);
   }-*/;
-  
+
   private native static JavaScriptObject getBoxedStringAsObject(String v) /*-{
     return new String(v);
   }-*/;
-  
+
   private native static String getBoxedStringAsString(String v) /*-{
     return new String(v);
   }-*/;
@@ -195,10 +195,9 @@ public class HostedTest extends GWTTestCase {
   }
 
   /*
-   * Test that returning JavaScript boxed primitives works as expected.
-   * Note that Boolean and Number cannot be supported properly in web
-   * mode, so we do not support it in hosted mode and therefore do not
-   * test it here.
+   * Test that returning JavaScript boxed primitives works as expected. Note
+   * that Boolean and Number cannot be supported properly in web mode, so we do
+   * not support it in hosted mode and therefore do not test it here.
    */
   public void testAutoBoxing() {
     JavaScriptObject bvo = getBoxedBooleanAsObject(true);
@@ -239,16 +238,11 @@ public class HostedTest extends GWTTestCase {
     String val2 = child.foo("bar");
     assertEquals("bar", val2);
   }
-  
+
   public void testEmbeddedNullsInStrings() {
     String s = "Pre\u0000Post";
     assertEquals(s.length(), getStringLength(s));
     assertEquals(s + "me", getString(s));
-  }
-  
-  @Override
-  public boolean catchExceptions() {
-    return false;
   }
 
   public void testEnum() {
@@ -259,7 +253,7 @@ public class HostedTest extends GWTTestCase {
     String name = enumName(val);
     assertEquals(TestEnum.VAL2.name(), name);
   }
-  
+
   public void testFloat() {
     storeFloat(Float.MIN_VALUE);
     float f = getFloat();
@@ -306,7 +300,7 @@ public class HostedTest extends GWTTestCase {
     assertTrue(list2 instanceof TestGenericList);
     assertEquals(42, list2.size());
     assertEquals(list2, list2.get(0));
-    String[] array = new String[] { "foo", "bar" };
+    String[] array = new String[] {"foo", "bar"};
     String[] ret = genericArray(array);
     assertEquals(2, ret.length);
     assertEquals("bar", ret[1]);
@@ -314,8 +308,8 @@ public class HostedTest extends GWTTestCase {
   }
 
   /**
-   * Tests that we are able to use binary and source level names when referencing
-   * a Java identifier from JSNI.
+   * Tests that we are able to use binary and source level names when
+   * referencing a Java identifier from JSNI.
    */
   public void testJavaMemberRefResolution() {
     A.B b = new A.B();
@@ -337,11 +331,10 @@ public class HostedTest extends GWTTestCase {
     jsniK();
     jsniL();
   }
-  
+
   /**
-   * Tests that using the JavaScript toString method results in a call to 
-   * the java.lang.Object::toString() method.
-   *
+   * Tests that using the JavaScript toString method results in a call to the
+   * java.lang.Object::toString() method.
    */
   public void testJSNIToStringResolution() {
     class Foo {
@@ -350,12 +343,12 @@ public class HostedTest extends GWTTestCase {
         return "FOO";
       }
     }
-    
+
     assertEquals("FOO", callJSNIToString(new Foo()));
   }
 
   public void testLocalJsni() {
-    
+
     class Foo {
       native String a() /*-{
         return "blah";
@@ -369,12 +362,12 @@ public class HostedTest extends GWTTestCase {
         return a();
       }
     }
-    
+
     Foo f = new Foo();
     assertEquals(f.a(), "blah");
     assertEquals(f.b(), "blah");
     assertEquals(f.c(), "blah");
-    
+
     Foo fo = new Foo() {
       @Override
       native String a() /*-{
@@ -391,7 +384,7 @@ public class HostedTest extends GWTTestCase {
         return this.@com.google.gwt.dev.jjs.test.HostedTest$1::a()();
       }-*/;
     };
-    
+
     assertEquals(fo.a(), "oblah");
     assertEquals(fo.b(), "oblah");
     assertEquals(fo.c(), "oblah");
@@ -420,7 +413,7 @@ public class HostedTest extends GWTTestCase {
       // expected exception
     }
   }
-  
+
   public void testVarargs() {
     String[] strs = varargsHelper("foo", "bar");
     assertEquals(2, strs.length);
@@ -429,7 +422,7 @@ public class HostedTest extends GWTTestCase {
     // strs = varargsFromJS1();
     // assertEquals(2, strs.length);
     // assertEquals("bar", strs[1]);
-    strs = varargsFromJS2(strs);    
+    strs = varargsFromJS2(strs);
     assertEquals(2, strs.length);
     assertEquals("bar", strs[1]);
   }
@@ -437,7 +430,7 @@ public class HostedTest extends GWTTestCase {
   String foo(String s) {
     return s + "foo";
   }
-  
+
   private native int byteAsInt(byte b) /*-{
     return b;
   }-*/;
@@ -495,7 +488,8 @@ public class HostedTest extends GWTTestCase {
     return key;
   }-*/;
 
-  @SuppressWarnings("unused") // called by JSNI
+  @SuppressWarnings("unused")
+  // called by JSNI
   private <T> T[] genericPassthrough(T[] array) {
     return array;
   }
@@ -505,7 +499,7 @@ public class HostedTest extends GWTTestCase {
     return val;
   }-*/;
 
-  private native <T,U extends T> T genericSubtype(U val) /*-{
+  private native <T, U extends T> T genericSubtype(U val) /*-{
     return val;
   }-*/;
 
@@ -537,13 +531,13 @@ public class HostedTest extends GWTTestCase {
    * comment.
    */
   private native void jsniE()/*-{}-*/;
-  
+
   /** comment. */
   private native void jsniF()/*-{}-*/;
 
   /** comment */private native void jsniG()/*-{}-*/;
 
-  /* 
+  /*
    * comment
    */
   private native void jsniH()/*-{}-*/;
@@ -562,7 +556,7 @@ public class HostedTest extends GWTTestCase {
 
   /*-{ try to mess with compiler }-*/
   private native void jsniL()/*-{}-*/;
-  
+
   // test that JS can pass a series of arguments to a varargs function
   private native String[] varargsFromJS1() /*-{
     return this.@com.google.gwt.dev.jjs.test.HostedTest::varargsPassthrough([Ljava/lang/String;)("foo", "bar");
@@ -577,7 +571,8 @@ public class HostedTest extends GWTTestCase {
     return args;
   }-*/;
 
-  @SuppressWarnings("unused") // called from JSNI
+  @SuppressWarnings("unused")
+  // called from JSNI
   private String[] varargsPassthrough(String... args) {
     return args;
   }
