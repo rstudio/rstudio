@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -182,40 +182,60 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public boolean invokeNativeBoolean(String name, Object jthis,
       Class<?>[] types, Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    Boolean value = JsValueGlue.get(result, Boolean.class,
-        "invokeNativeBoolean(" + name + ")");
+    String msgPrefix = "invokeNativeBoolean(" + name + ")";
+    Boolean value = JsValueGlue.get(result, Boolean.class, msgPrefix);
+    if (value == null) {
+      throw new HostedModeException(msgPrefix
+          + ": return value null received, expected a boolean");
+    }
     return value.booleanValue();
   }
 
   public byte invokeNativeByte(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    Byte value = JsValueGlue.get(result, Byte.class, "invokeNativeByte("
-        + name + ")");
+    String msgPrefix = "invokeNativeByte(" + name + ")";
+    Byte value = JsValueGlue.get(result, Byte.class, msgPrefix);
+    if (value == null) {
+      throw new HostedModeException(msgPrefix
+          + ": return value null received, expected a byte");
+    }
     return value.byteValue();
   }
 
   public char invokeNativeChar(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    Character value = JsValueGlue.get(result, Character.class,
-        "invokeNativeCharacter(" + name + ")");
+    String msgPrefix = "invokeNativeCharacter(" + name + ")";
+    Character value = JsValueGlue.get(result, Character.class, msgPrefix);
+    if (value == null) {
+      throw new HostedModeException(msgPrefix
+          + ": return value null received, expected a char");
+    }
     return value.charValue();
   }
 
   public double invokeNativeDouble(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    Double value = JsValueGlue.get(result, Double.class,
-        "invokeNativeDouble(" + name + ")");
+    String msgPrefix = "invokeNativeDouble(" + name + ")";
+    Double value = JsValueGlue.get(result, Double.class, msgPrefix);
+    if (value == null) {
+      throw new HostedModeException(msgPrefix
+          + ": return value null received, expected a double");
+    }
     return value.doubleValue();
   }
 
   public float invokeNativeFloat(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    Float value = JsValueGlue.get(result, Float.class,
-        "invokeNativeFloat(" + name + ")");
+    String msgPrefix = "invokeNativeFloat(" + name + ")";
+    Float value = JsValueGlue.get(result, Float.class, msgPrefix);
+    if (value == null) {
+      throw new HostedModeException(msgPrefix
+          + ": return value null received, expected a float");
+    }
     return value.floatValue();
   }
 
@@ -230,16 +250,24 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public int invokeNativeInt(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    Integer value = JsValueGlue.get(result, Integer.class,
-        "invokeNativeInteger(" + name + ")");
+    String msgPrefix = "invokeNativeInteger(" + name + ")";
+    Integer value = JsValueGlue.get(result, Integer.class, msgPrefix);
+    if (value == null) {
+      throw new HostedModeException(msgPrefix
+          + ": return value null received, expected an int");
+    }
     return value.intValue();
   }
 
   public long invokeNativeLong(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    Long value = JsValueGlue.get(result, Long.class, "invokeNativeLong("
-        + name + ")");
+    String msgPrefix = "invokeNativeLong(" + name + ")";
+    Long value = JsValueGlue.get(result, Long.class, msgPrefix);
+    if (value == null) {
+      throw new HostedModeException(msgPrefix
+          + ": return value null received, expected a long");
+    }
     return value.longValue();
   }
 
@@ -253,16 +281,20 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public short invokeNativeShort(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    Short value = JsValueGlue.get(result, Short.class,
-        "invokeNativeShort(" + name + ")");
+    String msgPrefix = "invokeNativeShort(" + name + ")";
+    Short value = JsValueGlue.get(result, Short.class, msgPrefix);
+    if (value == null) {
+      throw new HostedModeException(msgPrefix
+          + ": return value null received, expected a short");
+    }
     return value.shortValue();
   }
 
   public String invokeNativeString(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    return JsValueGlue.get(result, String.class, "invokeNativeString("
-        + name + ")");
+    return JsValueGlue.get(result, String.class, "invokeNativeString(" + name
+        + ")");
   }
 
   public void invokeNativeVoid(String name, Object jthis, Class<?>[] types,
