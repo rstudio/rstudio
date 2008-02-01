@@ -20,9 +20,8 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Documented;
 
 /**
- * Specifies an Enum containing the entire range of values for a parameter
- * to a {@link com.google.gwt.junit.client.Benchmark} method.
- * 
+ * Specifies an Enum containing the entire range of values for a parameter to a
+ * {@link com.google.gwt.junit.client.Benchmark} method.
  */
 @Target(ElementType.PARAMETER)
 @Documented
@@ -32,7 +31,7 @@ public @interface RangeEnum {
    * An <code>Enum</code> that contains the range of values that will be
    * supplied to the test method.
    * 
-   * @return For example, {@code MyEnum.class}
+   * @return for example, {@code MyEnum.class}
    */
   Class<? extends Enum<?>> value();
 }

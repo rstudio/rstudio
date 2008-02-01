@@ -21,15 +21,16 @@ import java.lang.annotation.Documented;
 
 /**
  * Specifies a setup method that will be executed before the annotated
- * {@link com.google.gwt.junit.client.Benchmark} test method. Setup methods are automatically executed
- * by the benchmarking framework before their matching test methods. Setup
- * measurements are excluded from final benchmark reports.
+ * {@link com.google.gwt.junit.client.Benchmark} test method. Setup methods are
+ * automatically executed by the benchmarking framework before their matching
+ * test methods. Setup measurements are excluded from final benchmark reports.
  * 
- * <p>For example, you might annotate a {@code Benchmark} method named
- * <code>testInserts</code> with <code>@Setup("setupTestInserts")</code> to
- * ensure <code>setupTestInserts</code> is always executed before
+ * <p>
+ * For example, you might annotate a {@code Benchmark} method named
+ * <code>testInserts</code> with {@code @Setup("setupTestInserts")} to ensure
+ * <code>setupTestInserts</code>is always executed before
  * <code>testInserts</code>.
- * 
+ * </p>
  */
 @Target(ElementType.METHOD)
 @Documented
@@ -38,7 +39,7 @@ public @interface Setup {
   /**
    * The name of the method to execute before the annotated test method.
    * 
-   * @return For example, "setupTestInserts".
+   * @return for example, "setupTestInserts"
    */
-  public String value();
+  String value();
 }

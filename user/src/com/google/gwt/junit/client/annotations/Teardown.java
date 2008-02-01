@@ -15,21 +15,23 @@
  */
 package com.google.gwt.junit.client.annotations;
 
-import java.lang.annotation.Target;
-import java.lang.annotation.ElementType;
 import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
 
 /**
  * Specifies a teardown method that will be executed after the annotated
- * {@link com.google.gwt.junit.client.Benchmark} test method. Teardown methods are automatically executed
- * by the benchmarking framework after their matching test methods. Teardown
- * measurements are excluded from final benchmark reports.
+ * {@link com.google.gwt.junit.client.Benchmark} test method. Teardown methods
+ * are automatically executed by the benchmarking framework after their matching
+ * test methods. Teardown measurements are excluded from final benchmark
+ * reports.
  * 
- * <p>For example, you might annotate a {@code Benchmark} method named
- * <code>testInserts</code> with <code>@Teardown("endTestInserts")</code> to
- * ensure <code>endTestInserts</code> is always executed after
+ * <p>
+ * For example, you might annotate a {@code Benchmark} method named
+ * <code>testInserts</code> with {@code @Teardown("endTestInserts")} to ensure
+ * <code>endTestInserts</code> is always executed after
  * <code>testInserts</code>.
- * 
+ * </p>
  */
 @Target(ElementType.METHOD)
 @Documented
@@ -38,7 +40,7 @@ public @interface Teardown {
   /**
    * The name of the method to execute after the annotated test method.
    * 
-   * @return For example, "endTestInserts".
+   * @return for example, "endTestInserts"
    */
-  public String value();
+  String value();
 }

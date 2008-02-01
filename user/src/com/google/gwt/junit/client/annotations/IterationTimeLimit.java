@@ -21,19 +21,18 @@ import java.lang.annotation.Documented;
 
 /**
  * Specifies a custom time limit for iterations on the decorated
- * {@link com.google.gwt.junit.client.Benchmark Benchmark} method. Methods 
- * that aren't explicitly decorated with an IterationTimeLimit, receive the 
- * default value.
- * 
+ * {@link com.google.gwt.junit.client.Benchmark Benchmark} method. Methods that
+ * aren't explicitly decorated with an IterationTimeLimit, receive the default
+ * value.
  */
 @Target(ElementType.METHOD)
 @Documented
 public @interface IterationTimeLimit {
 
   /**
-   * The maximum amount of time, in milliseconds, an iteration is persued before
-   * skipping to the next set of values in the {@code Range}. A value of 0 means
-   * that all values in the {@code Range} will be exhaustively tested.
+   * The maximum amount of time, in milliseconds, an iteration is pursued before
+   * skipping to the next set of values in the {@code Range}. A value of 0
+   * means that all values in the {@code Range} will be exhaustively tested.
    * 
    * @return a maximum duration in milliseconds >= 0
    */
