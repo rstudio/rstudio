@@ -59,7 +59,7 @@ public class DialogBoxTest extends PopupTest {
     assertEquals("text", dialogBox.getHTML());
     dialogBox.setHTML("<b>text</b>");
     assertEquals("text", dialogBox.getText());
-    assertEquals("<b>text</b>", dialogBox.getHTML());
+    assertTrue(dialogBox.getHTML().equalsIgnoreCase("<b>text</b>"));
 
     // Set the caption as caption
     dialogBox.setCaptionText("<b>text</b>");

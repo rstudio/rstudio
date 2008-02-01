@@ -19,6 +19,7 @@ import com.google.gwt.user.client.ui.AbsolutePanelTest;
 import com.google.gwt.user.client.ui.CheckBoxTest;
 import com.google.gwt.user.client.ui.CustomButtonTest;
 import com.google.gwt.user.client.ui.DOMTest;
+import com.google.gwt.user.client.ui.DialogBoxTest;
 import com.google.gwt.user.client.ui.DisclosurePanelTest;
 import com.google.gwt.user.client.ui.DockPanelTest;
 import com.google.gwt.user.client.ui.FastStringMapTest;
@@ -64,6 +65,7 @@ public class UISuite {
     suite.addTestSuite(AbsolutePanelTest.class);
     suite.addTestSuite(CheckBoxTest.class);
     suite.addTestSuite(CustomButtonTest.class);
+    suite.addTestSuite(DialogBoxTest.class);
     suite.addTestSuite(DisclosurePanelTest.class);
     suite.addTestSuite(DockPanelTest.class);
     suite.addTestSuite(DOMTest.class);
