@@ -156,13 +156,13 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    */
   public ListBox(boolean isMultipleSelect) {
     super(DOM.createSelect(isMultipleSelect));
-    sinkEvents(Event.ONCHANGE);
     setStyleName("gwt-ListBox");
   }
 
   public void addChangeListener(ChangeListener listener) {
     if (changeListeners == null) {
       changeListeners = new ChangeListenerCollection();
+      sinkEvents(Event.ONCHANGE);
     }
     changeListeners.add(listener);
   }

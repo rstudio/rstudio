@@ -24,7 +24,7 @@ import com.google.gwt.user.client.ui.impl.FocusImpl;
  * Abstract base class for most widgets that can receive keyboard focus.
  */
 public abstract class FocusWidget extends Widget implements SourcesClickEvents,
-    SourcesFocusEvents, HasFocus {
+    SourcesFocusEvents, HasFocus, SourcesKeyboardEvents {
 
   private static final FocusImpl impl = FocusImpl.getFocusImplForWidget();
 
@@ -60,6 +60,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
   public void addClickListener(ClickListener listener) {
     if (clickListeners == null) {
       clickListeners = new ClickListenerCollection();
+      sinkEvents(Event.ONCLICK);
     }
     clickListeners.add(listener);
   }
@@ -67,6 +68,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
   public void addFocusListener(FocusListener listener) {
     if (focusListeners == null) {
       focusListeners = new FocusListenerCollection();
+      sinkEvents(Event.FOCUSEVENTS );
     }
     focusListeners.add(listener);
   }
@@ -74,6 +76,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
   public void addKeyboardListener(KeyboardListener listener) {
     if (keyboardListeners == null) {
       keyboardListeners = new KeyboardListenerCollection();
+      sinkEvents(Event.KEYEVENTS);
     }
     keyboardListeners.add(listener);
   }
@@ -161,11 +164,6 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
     impl.setTabIndex(getElement(), index);
   }
 
-  @Override
-  protected void setElement(Element elem) {
-    super.setElement(elem);
-    sinkEvents(Event.ONCLICK | Event.FOCUSEVENTS | Event.KEYEVENTS);
-  }
 
   /**
    * Fire all current {@link ClickListener}.

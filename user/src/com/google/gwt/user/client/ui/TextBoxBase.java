@@ -24,8 +24,8 @@ import com.google.gwt.user.client.ui.impl.TextBoxImpl;
 /**
  * Abstract base class for all text entry widgets.
  */
-public class TextBoxBase extends FocusWidget implements SourcesKeyboardEvents,
-    SourcesChangeEvents, SourcesClickEvents, HasText, HasName {
+public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
+    HasText, HasName {
 
   /**
    * Text alignment constant, used in
@@ -70,9 +70,7 @@ public class TextBoxBase extends FocusWidget implements SourcesKeyboardEvents,
   private static TextBoxImpl impl = GWT.create(TextBoxImpl.class);
 
   private ChangeListenerCollection changeListeners;
-  private ClickListenerCollection clickListeners;
   private Event currentEvent;
-  private KeyboardListenerCollection keyboardListeners;
 
   /**
    * Creates a text box that wraps the given browser element handle. This is
@@ -82,30 +80,14 @@ public class TextBoxBase extends FocusWidget implements SourcesKeyboardEvents,
    */
   protected TextBoxBase(Element elem) {
     super(elem);
-    sinkEvents(Event.ONCHANGE);
   }
 
   public void addChangeListener(ChangeListener listener) {
     if (changeListeners == null) {
       changeListeners = new ChangeListenerCollection();
+      sinkEvents(Event.ONCHANGE);
     }
     changeListeners.add(listener);
-  }
-
-  @Override
-  public void addClickListener(ClickListener listener) {
-    if (clickListeners == null) {
-      clickListeners = new ClickListenerCollection();
-    }
-    clickListeners.add(listener);
-  }
-
-  @Override
-  public void addKeyboardListener(KeyboardListener listener) {
-    if (keyboardListeners == null) {
-      keyboardListeners = new KeyboardListenerCollection();
-    }
-    keyboardListeners.add(listener);
   }
 
   /**
@@ -168,47 +150,29 @@ public class TextBoxBase extends FocusWidget implements SourcesKeyboardEvents,
 
   @Override
   public void onBrowserEvent(Event event) {
-    // Call the superclass' implementation first (because FocusWidget fires
-    // some events itself).
-    super.onBrowserEvent(event);
-
     int type = DOM.eventGetType(event);
-    if ((keyboardListeners != null) && (type & Event.KEYEVENTS) != 0) {
+    if ((type & Event.KEYEVENTS) != 0) {
       // Fire the keyboard event. Hang on to the current event object so that
       // cancelKey() and setKey() can be implemented.
       currentEvent = event;
-      keyboardListeners.fireKeyboardEvent(this, event);
+      // Call the superclass' onBrowserEvent as that includes the key event
+      // handlers.
+      super.onBrowserEvent(event);
       currentEvent = null;
-    } else if (type == Event.ONCLICK) {
-      // Fire the click event.
-      if (clickListeners != null) {
-        clickListeners.fireClick(this);
-      }
     } else if (type == Event.ONCHANGE) {
       // Fire the change event.
       if (changeListeners != null) {
         changeListeners.fireChange(this);
       }
+    } else {
+      // Handles Focus and Click events.
+      super.onBrowserEvent(event);
     }
   }
 
   public void removeChangeListener(ChangeListener listener) {
     if (changeListeners != null) {
       changeListeners.remove(listener);
-    }
-  }
-
-  @Override
-  public void removeClickListener(ClickListener listener) {
-    if (clickListeners != null) {
-      clickListeners.remove(listener);
-    }
-  }
-
-  @Override
-  public void removeKeyboardListener(KeyboardListener listener) {
-    if (keyboardListeners != null) {
-      keyboardListeners.remove(listener);
     }
   }
 

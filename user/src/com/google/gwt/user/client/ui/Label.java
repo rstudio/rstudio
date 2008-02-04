@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
 /**
@@ -45,8 +46,16 @@ public class Label extends Widget implements SourcesClickEvents,
    */
   public Label() {
     setElement(DOM.createDiv());
-    sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONMOUSEWHEEL);
     setStyleName("gwt-Label");
+  }
+
+  /**
+   * This constructor is used to let the HTML constructors avoid work.
+   * 
+   * @param element element
+   */
+  Label(Element element) {
+    setElement(element);
   }
 
   /**
@@ -73,6 +82,7 @@ public class Label extends Widget implements SourcesClickEvents,
   public void addClickListener(ClickListener listener) {
     if (clickListeners == null) {
       clickListeners = new ClickListenerCollection();
+      sinkEvents(Event.ONCLICK);
     }
     clickListeners.add(listener);
   }
@@ -80,6 +90,7 @@ public class Label extends Widget implements SourcesClickEvents,
   public void addMouseListener(MouseListener listener) {
     if (mouseListeners == null) {
       mouseListeners = new MouseListenerCollection();
+      sinkEvents(Event.MOUSEEVENTS);
     }
     mouseListeners.add(listener);
   }
@@ -87,6 +98,7 @@ public class Label extends Widget implements SourcesClickEvents,
   public void addMouseWheelListener(MouseWheelListener listener) {
     if (mouseWheelListeners == null) {
       mouseWheelListeners = new MouseWheelListenerCollection();
+      sinkEvents(Event.ONMOUSEWHEEL);
     }
     mouseWheelListeners.add(listener);
   }

@@ -769,7 +769,6 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     bodyElem = DOM.createTBody();
     DOM.appendChild(tableElem, bodyElem);
     setElement(tableElem);
-    sinkEvents(Event.ONCLICK);
   }
 
   /**
@@ -780,6 +779,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
   public void addTableListener(TableListener listener) {
     if (tableListeners == null) {
       tableListeners = new TableListenerCollection();
+      sinkEvents(Event.ONCLICK);
     }
     tableListeners.add(listener);
   }

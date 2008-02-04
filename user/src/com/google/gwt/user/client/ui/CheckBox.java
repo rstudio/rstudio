@@ -76,9 +76,6 @@ public class CheckBox extends ButtonBase implements HasName {
     inputElem = elem;
     labelElem = DOM.createLabel();
 
-    // Hook events to input widget rather than the check box element.
-    DOM.sinkEvents(inputElem, DOM.getEventsSunk(this.getElement()));
-    DOM.sinkEvents(this.getElement(), 0);
     DOM.appendChild(getElement(), inputElem);
     DOM.appendChild(getElement(), labelElem);
 
@@ -174,6 +171,13 @@ public class CheckBox extends ButtonBase implements HasName {
     DOM.setInnerText(labelElem, text);
   }
 
+  // Unlike other widgets the CheckBox sinks on its input element, not its
+  // wrapper element.
+  @Override
+  public void sinkEvents(int eventBitsToAdd) {
+    DOM.sinkEvents(inputElem, eventBitsToAdd | DOM.getEventsSunk(inputElem));
+  }
+
   /**
    * This method is called when a widget is attached to the browser's document.
    * onAttach needs special handling for the CheckBox case. Must still call
@@ -198,27 +202,26 @@ public class CheckBox extends ButtonBase implements HasName {
     DOM.setEventListener(inputElem, null);
     setChecked(isChecked());
   }
-  
+
   /**
    * Replace the current input element with a new one.
    * 
    * @param elem the new input element
    */
   protected void replaceInputElement(Element elem) {
+ 
     // Collect information we need to set
     int tabIndex = getTabIndex();
     boolean checked = isChecked();
     boolean enabled = isEnabled();
-    String uid = DOM.getElementProperty(inputElem, "id"); 
+    String uid = DOM.getElementProperty(inputElem, "id");
     String accessKey = DOM.getElementProperty(inputElem, "accessKey");
-    
+    int sunkEvents = DOM.getEventsSunk(inputElem);
+
     // Clear out the old input element
-    setChecked(false);
-    DOM.setElementProperty(inputElem, "id", "");
-    DOM.setElementProperty(inputElem, "accessKey", "");
     DOM.setEventListener(inputElem, null);
-    
-    // Quickly do the physical replace
+    DOM.setEventListener(inputElem, null);
+   
     DOM.removeChild(getElement(), inputElem);
     DOM.insertChild(getElement(), elem, 0);
 
@@ -228,6 +231,7 @@ public class CheckBox extends ButtonBase implements HasName {
     inputElem = elem;
 
     // Setup the new element
+    DOM.sinkEvents(inputElem, sunkEvents);
     DOM.setElementProperty(inputElem, "id", uid);
     if (accessKey != "") {
       DOM.setElementProperty(inputElem, "accessKey", accessKey);

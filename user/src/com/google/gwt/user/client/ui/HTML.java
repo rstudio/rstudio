@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
 
 /**
  * A widget that can contain arbitrary HTML.
@@ -34,7 +33,8 @@ import com.google.gwt.user.client.Event;
  * </ul>
  * 
  * <p>
- * <h3>Example</h3> {@example com.google.gwt.examples.HTMLExample}
+ * <h3>Example</h3>
+ * {@example com.google.gwt.examples.HTMLExample}
  * </p>
  */
 public class HTML extends Label implements HasHTML {
@@ -43,8 +43,7 @@ public class HTML extends Label implements HasHTML {
    * Creates an empty HTML widget.
    */
   public HTML() {
-    setElement(DOM.createDiv());
-    sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS);
+    super(DOM.createDiv());
     setStyleName("gwt-HTML");
   }
 
