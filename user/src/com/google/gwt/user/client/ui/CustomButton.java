@@ -96,8 +96,7 @@ import com.google.gwt.user.client.Event;
  * </p>
  * 
  */
-public abstract class CustomButton extends ButtonBase implements
-    SourcesKeyboardEvents {
+public abstract class CustomButton extends ButtonBase {
   /**
    * Represents a button's face. Each face is associated with its own style
    * modifier and, optionally, its own contents html, text, or image.
