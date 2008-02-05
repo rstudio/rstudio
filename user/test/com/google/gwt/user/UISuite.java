@@ -46,6 +46,7 @@ import com.google.gwt.user.client.ui.StackPanelTest;
 import com.google.gwt.user.client.ui.TabBarTest;
 import com.google.gwt.user.client.ui.TabPanelTest;
 import com.google.gwt.user.client.ui.TextAreaTest;
+import com.google.gwt.user.client.ui.TitledPanelTest;
 import com.google.gwt.user.client.ui.TreeTest;
 import com.google.gwt.user.client.ui.UIObjectTest;
 import com.google.gwt.user.client.ui.VerticalPanelTest;
@@ -96,6 +97,7 @@ public class UISuite {
     suite.addTestSuite(TabBarTest.class);
     suite.addTestSuite(TabPanelTest.class);
     suite.addTestSuite(TextAreaTest.class);
+    suite.addTestSuite(TitledPanelTest.class);
     suite.addTestSuite(TreeTest.class);
     suite.addTestSuite(UIObjectTest.class);
     suite.addTestSuite(VerticalPanelTest.class);
