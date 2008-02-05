@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -151,5 +151,18 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents {
 
   public void setText(String text) {
     DOM.setInnerText(anchorElem, text);
+  }
+
+  /**
+   * @see UIObject#onEnsureDebugId(String)
+   * 
+   * <ul>
+   * <li>-wrapper => the div around the link</li>
+   * </ul>
+   */
+  @Override
+  protected void onEnsureDebugId(String baseID) {
+    ensureDebugId(anchorElem, "", baseID);
+    ensureDebugId(getElement(), baseID, "wrapper");
   }
 }

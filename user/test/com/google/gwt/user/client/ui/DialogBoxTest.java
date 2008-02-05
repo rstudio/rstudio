@@ -15,6 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.DeferredCommand;
+
 /**
  * Unit test for {@link DialogBox}.
  */
@@ -22,7 +26,7 @@ public class DialogBoxTest extends PopupTest {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.DebugTest";
   }
 
   /**
@@ -66,5 +70,30 @@ public class DialogBoxTest extends PopupTest {
     assertEquals("<b>text</b>", dialogBox.getText());
     dialogBox.setCaptionHTML("<b>text</b>");
     assertEquals("text", dialogBox.getText());
+  }
+
+  public void testDebugId() {
+    DialogBox dBox = new DialogBox();
+    dBox.ensureDebugId("myDialogBox");
+    dBox.setText("test caption");
+    Label content = new Label("content");
+    dBox.setWidget(content);
+    dBox.show();
+
+    // Check the body ids
+    UIObjectTest.assertDebugId("myDialogBox", dBox.getElement());
+    UIObjectTest.assertDebugId("myDialogBox-content",
+        DOM.getParent(content.getElement()));
+
+    // Check the header IDs
+    DeferredCommand.addCommand(new Command() {
+      public void execute() {
+        String prefix = UIObject.DEBUG_ID_PREFIX;
+        UIObjectTest.assertDebugIdContents("myDialogBox-caption",
+            "test caption");
+        finishTest();
+      }
+    });
+    delayTestFinish(250);
   }
 }

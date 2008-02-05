@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,9 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.DeferredCommand;
 
 /**
  * Tests <code>ListBox</code>. Needs many, many more tests.
@@ -28,8 +31,9 @@ public class StackPanelTest extends GWTTestCase {
     }
   }
 
+  @Override
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.DebugTest";
   }
 
   public String curContents(StackPanel p) {
@@ -47,6 +51,37 @@ public class StackPanelTest extends GWTTestCase {
 
   public void testAttachDetachOrder() {
     HasWidgetsTester.testAll(new StackPanel(), new Adder());
+  }
+
+  public void testDebugId() {
+    StackPanel p = new StackPanel();
+    Label a = new Label("a");
+    Label b = new Label("b");
+    Label c = new Label("c");
+    p.add(a, "header a");
+    p.add(b, "header b");
+    p.add(c, "header c");
+    RootPanel.get().add(p);
+
+    p.ensureDebugId("myStack");
+    
+    // Check the body ids
+    UIObjectTest.assertDebugId("myStack", p.getElement());
+    UIObjectTest.assertDebugId("myStack-content0", DOM.getParent(a.getElement()));
+    UIObjectTest.assertDebugId("myStack-content1", DOM.getParent(b.getElement()));
+    UIObjectTest.assertDebugId("myStack-content2", DOM.getParent(c.getElement()));
+    
+    // Check the header IDs
+    DeferredCommand.addCommand(new Command() {
+      public void execute() {
+        String prefix = UIObject.DEBUG_ID_PREFIX;
+        UIObjectTest.assertDebugIdContents("myStack-text0", "header a");
+        UIObjectTest.assertDebugIdContents("myStack-text1", "header b");
+        UIObjectTest.assertDebugIdContents("myStack-text2", "header c");
+        finishTest();
+      }
+    });
+    delayTestFinish(250);
   }
 
   /**

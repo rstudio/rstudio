@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,14 +16,17 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 
 /**
  * Tests the CheckBox Widget.
  */
 public class CheckBoxTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.DebugTest";
   }
 
   /**
@@ -52,5 +55,20 @@ public class CheckBoxTest extends GWTTestCase {
     assertEquals(cb.getTabIndex(), 2);
     cb.setName("my name");
     assertEquals(cb.getName(), "my name");
+  }
+
+  public void testDebugId() {
+    CheckBox check = new CheckBox("myLabel");
+    check.ensureDebugId("myCheck");
+    RootPanel.get().add(check);
+    
+    UIObjectTest.assertDebugId("myCheck", check.getElement());
+    DeferredCommand.addCommand(new Command() {
+      public void execute() {
+        UIObjectTest.assertDebugIdContents("myCheck-label", "myLabel");
+        finishTest();
+      }
+    });
+    delayTestFinish(250);
   }
 }

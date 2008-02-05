@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -158,7 +158,7 @@ abstract class SplitPanel extends Panel {
    * Convenience method to set the left offset of an element.
    * 
    * @param elem the element
-   * @param height a CSS length value for left
+   * @param left a CSS length value for left
    */
   static final void setLeft(Element elem, String left) {
     DOM.setStyleAttribute(elem, "left", left);
@@ -168,7 +168,7 @@ abstract class SplitPanel extends Panel {
    * Convenience method to set the right offset of an element.
    * 
    * @param elem the element
-   * @param height a CSS length value for right
+   * @param right a CSS length value for right
    */
   static final void setRight(Element elem, String right) {
     DOM.setStyleAttribute(elem, "right", right);
@@ -178,7 +178,7 @@ abstract class SplitPanel extends Panel {
    * Convenience method to set the top offset of an element.
    * 
    * @param elem the element
-   * @param height a CSS length value for top
+   * @param top a CSS length value for top
    */
   static final void setTop(Element elem, String top) {
     DOM.setStyleAttribute(elem, "top", top);
@@ -188,7 +188,7 @@ abstract class SplitPanel extends Panel {
    * Convenience method to set the width of an element.
    * 
    * @param elem the element
-   * @param height a CSS length value for the width
+   * @param width a CSS length value for the width
    */
   static final void setWidth(Element elem, String width) {
     DOM.setStyleAttribute(elem, "width", width);
@@ -329,6 +329,19 @@ abstract class SplitPanel extends Panel {
    */
   protected Widget getWidget(int index) {
     return widgets[index];
+  }
+
+  /**
+   * @see UIObject#onEnsureDebugId(String)
+   * 
+   * <ul>
+   * <li>-splitter => the container containing the splitter element</li>
+   * </ul>
+   */
+  @Override
+  protected void onEnsureDebugId(String baseID) {
+    super.onEnsureDebugId(baseID);
+    ensureDebugId(splitElem, baseID, "splitter");
   }
 
   /**

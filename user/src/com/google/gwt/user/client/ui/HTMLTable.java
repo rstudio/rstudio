@@ -1294,6 +1294,27 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
   }
 
   /**
+   * @see UIObject#onEnsureDebugId(String)
+   * 
+   * <ul>
+   * <li>-(row)#-(cell)# => the cell at the given row and cell index</li>
+   * </ul>
+   */
+  @Override
+  protected void onEnsureDebugId(String baseID) {
+    super.onEnsureDebugId(baseID);
+    
+    int rowCount = getRowCount();
+    for (int row = 0; row < rowCount; row++) {
+      int cellCount = getCellCount(row);
+      for (int cell = 0; cell < cellCount; cell++) {
+        Element cellElem = cellFormatter.getRawElement(row, cell);
+        ensureDebugId(cellElem, baseID, row + "-" + cell);
+      }
+    }
+  }
+
+  /**
    * Subclasses must implement this method. It allows them to decide what to do
    * just before a cell is accessed. If the cell already exists, this method
    * must do nothing. Otherwise, a subclass must either ensure that the cell

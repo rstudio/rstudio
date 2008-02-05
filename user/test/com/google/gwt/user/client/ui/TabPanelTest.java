@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.DOM;
 
 import java.util.Iterator;
 
@@ -30,14 +31,49 @@ public class TabPanelTest extends GWTTestCase {
     }
   }
 
+  @Override
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.DebugTest";
   }
 
   public void testAttachDetachOrder() {
     HasWidgetsTester.testAll(new TabPanel(), new Adder());
   }
-  
+
+  public void testDebugId() {
+    TabPanel panel = new TabPanel();
+    Label content0 = new Label("content0");
+    Label tab0 = new Label("tab0");
+    panel.add(content0, tab0);
+    Label content1 = new Label("content1");
+    Label tab1 = new Label("tab1");
+    panel.add(content1, tab1);
+    Label content2 = new Label("content2");
+    Label tab2 = new Label("tab2");
+    panel.add(content2, tab2);
+
+    // Set the Debug ID
+    panel.ensureDebugId("myPanel");
+    UIObjectTest.assertDebugId("myPanel", panel.getElement());
+    UIObjectTest.assertDebugId("myPanel-bar", panel.getTabBar().getElement());
+    UIObjectTest.assertDebugId("myPanel-bottom",
+        panel.getDeckPanel().getElement());
+
+    // Check the tabs
+    UIObjectTest.assertDebugId("myPanel-bar-tab0",
+        DOM.getParent(tab0.getElement()));
+    UIObjectTest.assertDebugId("myPanel-bar-tab-wrapper0",
+        DOM.getParent(DOM.getParent(tab0.getElement())));
+    UIObjectTest.assertDebugId("myPanel-bar-tab1",
+        DOM.getParent(tab1.getElement()));
+    UIObjectTest.assertDebugId("myPanel-bar-tab-wrapper1",
+        DOM.getParent(DOM.getParent(tab1.getElement())));
+    UIObjectTest.assertDebugId("myPanel-bar-tab2",
+        DOM.getParent(tab2.getElement()));
+    UIObjectTest.assertDebugId("myPanel-bar-tab-wrapper2",
+        DOM.getParent(DOM.getParent(tab2.getElement())));
+  }
+
   public void testInsertMultipleTimes() {
     TabPanel p = new TabPanel();
 
@@ -45,14 +81,14 @@ public class TabPanelTest extends GWTTestCase {
     p.add(tb, "Title");
     p.add(tb, "Title");
     p.add(tb, "Title3");
-    
+
     assertEquals(1, p.getWidgetCount());
     assertEquals(0, p.getWidgetIndex(tb));
-    Iterator i = p.iterator();
+    Iterator<Widget> i = p.iterator();
     assertTrue(i.hasNext());
     assertTrue(tb.equals(i.next()));
     assertFalse(i.hasNext());
-    
+
     Label l = new Label();
     p.add(l, "Title");
     p.add(l, "Title");
@@ -60,12 +96,12 @@ public class TabPanelTest extends GWTTestCase {
     assertEquals(2, p.getWidgetCount());
     assertEquals(0, p.getWidgetIndex(tb));
     assertEquals(1, p.getWidgetIndex(l));
-    
+
     p.insert(l, "Title", 0);
     assertEquals(2, p.getWidgetCount());
     assertEquals(0, p.getWidgetIndex(l));
     assertEquals(1, p.getWidgetIndex(tb));
-    
+
     p.insert(l, "Title", 1);
     assertEquals(2, p.getWidgetCount());
     assertEquals(0, p.getWidgetIndex(l));
@@ -119,7 +155,7 @@ public class TabPanelTest extends GWTTestCase {
     p.add(baz, "baz");
 
     // Iterate over the entire set and make sure it stops correctly.
-    Iterator it = p.iterator();
+    Iterator<Widget> it = p.iterator();
     assertTrue(it.hasNext());
     assertTrue(it.next() == foo);
     assertTrue(it.hasNext());
@@ -167,14 +203,14 @@ public class TabPanelTest extends GWTTestCase {
   public void testUnmodifiableDeckPanelSubclasses() {
     TabPanel p = new TabPanel();
     DeckPanel d = p.getDeckPanel();
-    
+
     try {
       d.add(new Label("No"));
       fail("Internal DeckPanel should not allow add() method");
     } catch (UnsupportedOperationException e) {
       // Expected behavior
     }
-    
+
     try {
       d.insert(new Label("No"), 0);
       fail("Internal DeckPanel should not allow insert() method");
@@ -193,7 +229,7 @@ public class TabPanelTest extends GWTTestCase {
   public void testUnmodifiableTabBarSubclasses() {
     TabPanel p = new TabPanel();
     TabBar b = p.getTabBar();
-    
+
     try {
       b.addTab("no");
       fail("Internal TabBar should not allow addTab() method");
@@ -207,7 +243,7 @@ public class TabPanelTest extends GWTTestCase {
     } catch (UnsupportedOperationException e) {
       // Expected behavior
     }
-    
+
     try {
       b.addTab(new Label("no"));
       fail("Internal TabBar should not allow addTab() method");
@@ -221,21 +257,21 @@ public class TabPanelTest extends GWTTestCase {
     } catch (UnsupportedOperationException e) {
       // Expected behavior
     }
-    
+
     try {
       b.insertTab("no", true, 0);
       fail("Internal TabBar should not allow insertTab() method");
     } catch (UnsupportedOperationException e) {
       // Expected behavior
     }
-    
+
     try {
       b.insertTab(new Label("no"), 0);
       fail("Internal TabBar should not allow insertTab() method");
     } catch (UnsupportedOperationException e) {
       // Expected behavior
     }
-                                
+
     try {
       b.removeTab(0);
       fail("Internal TabBar should not allow removeTab() method");

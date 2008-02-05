@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
 /**
@@ -287,6 +288,26 @@ public class TabBar extends Composite implements SourcesTabEvents,
       tabListeners.fireTabSelected(this, index);
     }
     return true;
+  }
+
+  /**
+   * @see UIObject#onEnsureDebugId(String)
+   * 
+   * <ul>
+   * <li>-tab# => The element containing the contents of the tab</li>
+   * <li>-tab-wrapper# => The cell containing the tab at the index</li>
+   * </ul>
+   */
+  @Override
+  protected void onEnsureDebugId(String baseID) {
+    super.onEnsureDebugId(baseID);
+
+    int numTabs = getTabCount();
+    for (int i = 0; i < numTabs; i++) {
+      Element widgetElem = panel.getWidget(i + 1).getElement();
+      ensureDebugId(widgetElem, baseID, "tab" + i);
+      ensureDebugId(DOM.getParent(widgetElem), baseID, "tab-wrapper" + i);
+    } 
   }
 
   private void checkInsertBeforeTabIndex(int beforeIndex) {

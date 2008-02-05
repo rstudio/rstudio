@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -79,6 +79,10 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
     public native void setValue(Element select, int index, String value) /*-{
       select.options[index].value = value;
     }-*/;
+
+    protected native Element getItemElement(Element select, int index) /*-{
+      return select.options[index];
+    }-*/;
   }
 
   /**
@@ -134,6 +138,11 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
     @Override
     public native void setValue(Element select, int index, String value) /*-{
       select.children[index].value = value;
+    }-*/;
+
+    @Override
+    protected native Element getItemElement(Element select, int index) /*-{
+      return select.children[index];
     }-*/;
   }
 
@@ -423,6 +432,25 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    */
   public void setVisibleItemCount(int visibleItems) {
     DOM.setElementPropertyInt(getElement(), "size", visibleItems);
+  }
+
+  /**
+   * @see UIObject#onEnsureDebugId(String)
+   * 
+   * <ul>
+   * <li>-item# => the option at the specified index</li>
+   * </ul>
+   */
+  @Override
+  protected void onEnsureDebugId(String baseID) {
+    super.onEnsureDebugId(baseID);
+
+    // Set the id of each option
+    Element selectElem = getElement();
+    int numItems = getItemCount();
+    for (int i = 0; i < numItems; i++) {
+      ensureDebugId(impl.getItemElement(selectElem, i), baseID, "item" + i);
+    }
   }
 
   private void checkIndex(int index) {

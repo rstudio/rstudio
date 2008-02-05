@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ import java.util.List;
 public class MenuBarTest extends GWTTestCase {
   @Override
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.DebugTest";
   }
 
   /**
@@ -89,5 +90,47 @@ public class MenuBarTest extends GWTTestCase {
     assertNull(separator1.getParentMenu());
     assertNull(separator2.getParentMenu());
     assertNull(separator3.getParentMenu());
+  }
+
+  public void testDebugId() {
+    Command emptyCommand = new Command() {
+      public void execute() {
+      }
+    };
+
+    // Create a sub menu
+    MenuBar subMenu = new MenuBar(true);
+    subMenu.addItem("sub0", emptyCommand);
+    subMenu.addItem("sub1", emptyCommand);
+    subMenu.addItem("sub2", emptyCommand);
+
+    // Create a menu bar
+    MenuBar bar = new MenuBar(false);
+    bar.setAutoOpen(true);
+    bar.addItem("top0", emptyCommand);
+    bar.addItem("top1", emptyCommand);
+    MenuItem top2 = bar.addItem("top2", subMenu);
+    RootPanel.get().add(bar);
+    
+    // Open the item with a submenu
+    bar.itemOver(top2);
+
+    // Set the Debug Id
+    bar.ensureDebugId("myMenu");
+    UIObjectTest.assertDebugId("myMenu", bar.getElement());
+
+    DeferredCommand.addCommand(new Command() {
+      public void execute() {
+        UIObjectTest.assertDebugIdContents("myMenu-item0", "top0");
+        UIObjectTest.assertDebugIdContents("myMenu-item1", "top1");
+        UIObjectTest.assertDebugIdContents("myMenu-item2", "top2");
+
+        UIObjectTest.assertDebugIdContents("myMenu-item2-item0", "sub0");
+        UIObjectTest.assertDebugIdContents("myMenu-item2-item1", "sub1");
+        UIObjectTest.assertDebugIdContents("myMenu-item2-item2", "sub2");
+        finishTest();
+      }
+    });
+    delayTestFinish(250);
   }
 }

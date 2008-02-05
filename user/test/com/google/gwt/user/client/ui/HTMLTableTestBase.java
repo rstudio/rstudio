@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
 import com.google.gwt.user.client.ui.HTMLTable.RowFormatter;
 
@@ -43,7 +44,7 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
   /**
    * Easy way to test what should be in a list.
    */
-  protected static void assertEquals(Object[] array, List target) {
+  protected static void assertEquals(Object[] array, List<?> target) {
     if (target.size() != array.length) {
       fail(target + " should be the same length as" + array);
     }
@@ -52,8 +53,9 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
     }
   }
 
+  @Override
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.DebugTest";
   }
 
   public abstract HTMLTable getTable(int row, int column);
@@ -72,6 +74,26 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
     fail("should have throw an index out of bounds");
   }
 
+  public void testDebugId() {
+    HTMLTable table = getTable(4, 3);
+    for (int row = 0; row < 4; row++) {
+      for (int cell = 0; cell < 3; cell++) {
+        table.setHTML(row, cell, row + ":" + cell);
+      }
+    }
+
+    // Check the Debug IDs
+    table.ensureDebugId("myTable");
+    UIObjectTest.assertDebugId("myTable", table.getElement());
+    CellFormatter formatter = table.getCellFormatter();
+    for (int row = 0; row < 4; row++) {
+      for (int cell = 0; cell < 3; cell++) {
+        Element cellElem = formatter.getElement(row, cell); 
+        UIObjectTest.assertDebugId("myTable-" + row + "-" + cell, cellElem);
+      }
+    }
+  }
+
   public void testDoubleSet() {
     HTMLTable t = getTable(4, 4);
     t.setWidget(0, 0, new Label());
@@ -85,30 +107,30 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
     HTMLTable t = getTable(5, 5);
     Label l = new Label("hello");
     t.setWidget(0, 0, l);
-    Iterator iter = t.iterator();
+    Iterator<Widget> iter = t.iterator();
     assertEquals(l, iter.next());
     iter.remove();
-    Iterator iter2 = t.iterator();
+    Iterator<Widget> iter2 = t.iterator();
     assertFalse(iter2.hasNext());
 
     // Check put after remove.
     Widget w = new Label("bo");
     t.setWidget(0, 0, w);
-    Iterator iter3 = t.iterator();
+    Iterator<Widget> iter3 = t.iterator();
     assertEquals(w, iter3.next());
     assertFalse(iter3.hasNext());
 
     // Check swapping widgets.
     Widget w2 = new Label("ba");
     t.setWidget(0, 0, w2);
-    Iterator iter4 = t.iterator();
+    Iterator<Widget> iter4 = t.iterator();
     assertEquals(w2, iter4.next());
     assertFalse(iter4.hasNext());
 
     // Check put after put.
     Widget w3 = new Label("be");
     t.setWidget(1, 1, w3);
-    Iterator iter5 = t.iterator();
+    Iterator<Widget> iter5 = t.iterator();
     assertEquals(w2, iter5.next());
     assertEquals(w3, iter5.next());
     assertFalse(iter5.hasNext());

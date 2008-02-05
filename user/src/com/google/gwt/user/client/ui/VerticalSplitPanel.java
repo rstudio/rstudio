@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -324,6 +324,22 @@ public final class VerticalSplitPanel extends SplitPanel {
    */
   public final void setTopWidget(Widget w) {
     setWidget(TOP, w);
+  }
+
+  /**
+   * @see UIObject#onEnsureDebugId(String)
+   * 
+   * <ul>
+   * <li>-splitter => the container containing the splitter element</li>
+   * <li>-top => the container above the splitter</li>
+   * <li>-bottom => the container below the splitter</li>
+   * </ul>
+   */
+  @Override
+  protected void onEnsureDebugId(String baseID) {
+    super.onEnsureDebugId(baseID);
+    ensureDebugId(getElement(TOP), baseID, "top");
+    ensureDebugId(getElement(BOTTOM), baseID, "bottom");
   }
 
   @Override

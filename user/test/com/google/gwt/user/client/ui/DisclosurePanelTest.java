@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,8 +26,9 @@ public class DisclosurePanelTest extends GWTTestCase {
 
   private static final int CLOSE = 1;
 
+  @Override
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.DebugTest";
   }
 
   /**
@@ -46,6 +47,19 @@ public class DisclosurePanelTest extends GWTTestCase {
 
   public void testAttachDetachOrder() {
     HasWidgetsTester.testAll(new DisclosurePanel());
+  }
+
+  public void testDebugId() {
+    Label header = new Label("header");
+    Label content = new Label("content");
+    DisclosurePanel panel = new DisclosurePanel(header);
+    panel.setContent(content);
+    panel.ensureDebugId("myPanel");
+
+    // Check the body ids
+    UIObjectTest.assertDebugId("myPanel", panel.getElement());
+    UIObjectTest.assertDebugId("myPanel-header",
+        DOM.getParent(header.getElement()));
   }
 
   /**

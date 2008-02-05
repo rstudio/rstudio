@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,14 +16,17 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
 
 /**
  * Tests {@link ListBox}. Needs many, many more tests.
  */
 public class ListBoxTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.DebugTest";
   }
 
   public void testClear() {
@@ -33,6 +36,29 @@ public class ListBoxTest extends GWTTestCase {
     lb.addItem("c");
     lb.clear();
     assertEquals(0, lb.getItemCount());
+  }
+
+  public void testDebugId() {
+    ListBox list = new ListBox();
+    list.addItem("option0", "value0");
+    list.addItem("option1", "value1");
+    list.addItem("option2", "value2");
+    list.addItem("option3", "value3");
+    RootPanel.get().add(list);
+
+    list.ensureDebugId("myList");
+    UIObjectTest.assertDebugId("myList", list.getElement());
+
+    DeferredCommand.addCommand(new Command() {
+      public void execute() {
+        UIObjectTest.assertDebugIdContents("myList-item0", "option0");   
+        UIObjectTest.assertDebugIdContents("myList-item1", "option1");   
+        UIObjectTest.assertDebugIdContents("myList-item2", "option2");   
+        UIObjectTest.assertDebugIdContents("myList-item3", "option3");
+        finishTest();
+      }
+    });
+    delayTestFinish(250);
   }
 
   public void testInsert() {

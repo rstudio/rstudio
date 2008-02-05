@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,6 +37,7 @@ public class DockPanelTest extends GWTTestCase {
       super(text);
     }
 
+    @Override
     protected void onLoad() {
       // Crawl up the DOM, looking for the body.
       Element curElem = getElement();
@@ -50,8 +51,9 @@ public class DockPanelTest extends GWTTestCase {
     }
   }
 
+  @Override
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.DebugTest";
   }
 
   public void testAddRemove() {
@@ -113,5 +115,49 @@ public class DockPanelTest extends GWTTestCase {
 
   public void testAttachDetachOrder() {
     HasWidgetsTester.testAll(new DockPanel(), new Adder());
+  }
+
+  public void testDebugId() {
+    DockPanel dock = new DockPanel();
+    Label north1 = new Label("n1");
+    dock.add(north1, DockPanel.NORTH);
+    Label north2 = new Label("n2");
+    dock.add(north2, DockPanel.NORTH);
+    Label south1 = new Label("s1");
+    dock.add(south1, DockPanel.SOUTH);
+    Label south2 = new Label("s2");
+    dock.add(south2, DockPanel.SOUTH);
+    Label east1 = new Label("e1");
+    dock.add(east1, DockPanel.EAST);
+    Label east2 = new Label("e2");
+    dock.add(east2, DockPanel.EAST);
+    Label west1 = new Label("w1");
+    dock.add(west1, DockPanel.WEST);
+    Label west2 = new Label("w2");
+    dock.add(west2, DockPanel.WEST);
+    Label center = new Label("c");
+    dock.add(center, DockPanel.CENTER);
+    dock.ensureDebugId("myDock");
+
+    // Check the body ids
+    UIObjectTest.assertDebugId("myDock", dock.getElement());
+    UIObjectTest.assertDebugId("myDock-north1",
+        DOM.getParent(north1.getElement()));
+    UIObjectTest.assertDebugId("myDock-north2",
+        DOM.getParent(north2.getElement()));
+    UIObjectTest.assertDebugId("myDock-south1",
+        DOM.getParent(south1.getElement()));
+    UIObjectTest.assertDebugId("myDock-south2",
+        DOM.getParent(south2.getElement()));
+    UIObjectTest.assertDebugId("myDock-east1",
+        DOM.getParent(east1.getElement()));
+    UIObjectTest.assertDebugId("myDock-east2",
+        DOM.getParent(east2.getElement()));
+    UIObjectTest.assertDebugId("myDock-west1",
+        DOM.getParent(west1.getElement()));
+    UIObjectTest.assertDebugId("myDock-west2",
+        DOM.getParent(west2.getElement()));
+    UIObjectTest.assertDebugId("myDock-center",
+        DOM.getParent(center.getElement()));
   }
 }

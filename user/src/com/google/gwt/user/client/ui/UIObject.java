@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
@@ -81,11 +82,34 @@ import com.google.gwt.user.client.Element;
  * </p>
  */
 public abstract class UIObject {
+  /**
+   * The implementation of the set debug id method, which does nothing by
+   * default.
+   */
+  public static class DebugIdImpl {
+    public void ensureDebugId(UIObject uiObject, String id) {
+    }
+  }
+
+  /**
+   * The implementation of the setDebugId method, which sets the id of the
+   * {@link Element}s in this {@link UIObject}.
+   */
+  public static class DebugIdImplEnabled extends DebugIdImpl {
+    @Override
+    public void ensureDebugId(UIObject uiObject, String id) {
+      uiObject.onEnsureDebugId(id);
+    }
+  }
+
+  public static final String DEBUG_ID_PREFIX = "gwt-debug-";
 
   private static final String EMPTY_STYLENAME_MSG = "Style names cannot be empty";
 
   private static final String NULL_HANDLE_MSG = "Null widget handle. If you "
       + "are creating a composite, ensure that initWidget() has been called.";
+
+  private static DebugIdImpl debugIdImpl = GWT.create(DebugIdImpl.class);
 
   public static native boolean isVisible(Element elem) /*-{
     return (elem.style.display != 'none');
@@ -94,6 +118,24 @@ public abstract class UIObject {
   public static native void setVisible(Element elem, boolean visible) /*-{
     elem.style.display = visible ? '' : 'none';
   }-*/;
+
+  /**
+   * Set the debug id of a specific element. The id will be appended to the end
+   * of the base debug id, with a dash separator. The base debug id is the ID of
+   * the main element in this UIObject.
+   * 
+   * @param elem the element
+   * @param baseID the base ID used by the main element
+   * @param id the id to append to the base debug id
+   */
+  protected static void ensureDebugId(Element elem, String baseID, String id) {
+    assert baseID != null;
+    String curID = DOM.getElementProperty(elem, "id");
+    if (curID.length() == 0 || curID.startsWith(DEBUG_ID_PREFIX)) {
+      baseID = (baseID.length() > 0) ? baseID + "-" : "";
+      DOM.setElementProperty(elem, "id", DEBUG_ID_PREFIX + baseID + id);
+    }
+  }
 
   /**
    * Gets all of the element's style names, as a space-separated list.
@@ -353,6 +395,29 @@ public abstract class UIObject {
    */
   public void addStyleName(String style) {
     setStyleName(getStyleElement(), style, true);
+  }
+
+  /**
+   * Ensure that the main {@link Element} for this {@link UIObject} has an ID
+   * property set, which allows it to integrate with third-party libraries and
+   * test tools. Complex {@link Widget}s will also set the IDs of their
+   * important sub-elements.
+   * 
+   * If the main element already has an ID, this method will NOT override it.
+   * The debugID is only used when no other ID is present on the {@link Element}.
+   * 
+   * The ID that you specify will be prefixed by the static string
+   * {@link #DEBUG_ID_PREFIX}.
+   * 
+   * This method will be compiled out and will have no effect unless you inherit
+   * the DebugID module in your gwt.xml file by adding the following line:
+   * 
+   * <inherits name="com.google.gwt.user.DebugID"/>
+   * 
+   * @param id the ID to set on the main element
+   */
+  public final void ensureDebugId(String id) {
+    debugIdImpl.ensureDebugId(this, id);
   }
 
   /**
@@ -622,6 +687,30 @@ public abstract class UIObject {
    */
   protected Element getStyleElement() {
     return element;
+  }
+
+  /**
+   * Called when the user sets the id using the {@link #ensureDebugId(String)}
+   * method. Subclasses of {@link UIObject} can override this method to add IDs
+   * to their sub elements.  If a subclass does override this method, it should
+   * list the IDs (relative to the base ID), that will be applied to each sub
+   * {@link Element} with a short description.  For example:
+   * <ul>
+   * <li>-mysubelement => Applies to my sub element</li>
+   * </ul> 
+   * 
+   * Subclasses should make a super call to this method to ensure that the ID of
+   * the main element is set.
+   * 
+   * This method will not be called unless you inherit the DebugID module in
+   * your gwt.xml file by adding the following line:
+   * 
+   * <inherits name="com.google.gwt.user.DebugID"/>
+   * 
+   * @param baseID the base ID used by the main element
+   */
+  protected void onEnsureDebugId(String baseID) {
+    ensureDebugId(getElement(), "", baseID);
   }
 
   /**

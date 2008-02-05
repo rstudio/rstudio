@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,20 +17,58 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 
 /**
  * Tests UIObject. Currently, focuses on style name behaviors.
  */
 public class UIObjectTest extends GWTTestCase {
-
   static class MyObject extends UIObject {
+    public Element subElement;
+
     MyObject() {
       setElement(DOM.createDiv());
+      subElement = DOM.createDiv();
+    }
+
+    @Override
+    protected void onEnsureDebugId(String baseID) {
+      super.onEnsureDebugId(baseID);
+      ensureDebugId(subElement, baseID, "subElem");
     }
   }
 
+  /**
+   * Verify that an element has the specified debug id.
+   * 
+   * @param debugID the debug ID
+   * @param elem the {@link Element} that should have the id
+   */
+  public static void assertDebugId(String debugID, Element elem) {
+    debugID = UIObject.DEBUG_ID_PREFIX + debugID;
+    assertEquals(debugID, DOM.getElementProperty(elem, "id"));
+  }
+
+  /**
+   * Verify that the contents of an element match the expected contents. This
+   * method is useful to test debug IDs of private, inaccessible members of a
+   * Widget. Note that this method requires that the Widget is added to the
+   * {@link RootPanel} and should be called from a
+   * {@link com.google.gwt.user.client.DeferredCommand} to give the browser
+   * enough time to register the ID.
+   * 
+   * @param debugID the debug ID of the element
+   * @param contents the contents expected in the inner HTML
+   */
+  public static void assertDebugIdContents(String debugID, String contents) {
+    debugID = UIObject.DEBUG_ID_PREFIX + debugID;
+    Element elem = DOM.getElementById(debugID);
+    assertEquals(contents, DOM.getInnerHTML(elem));
+  }
+
+  @Override
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.DebugTest";
   }
 
   public void testAccidentalPrimary() {
@@ -72,6 +110,30 @@ public class UIObjectTest extends GWTTestCase {
     }
 
     assertEquals("primary", o.getStylePrimaryName());
+  }
+
+  public void testDebugId() {
+    // Test basic set
+    MyObject o = new MyObject();
+    Element oElem = o.getElement();
+    o.ensureDebugId("test1");
+    assertDebugId("test1", oElem);
+    assertDebugId("test1-subElem", o.subElement);
+
+    // Test override with new ID
+    o.ensureDebugId("test2");
+    assertDebugId("test2", oElem);
+    assertDebugId("test2-subElem", o.subElement);
+
+    // Test setting actual id
+    DOM.setElementProperty(oElem, "id", "mytest");
+    assertEquals("mytest", DOM.getElementProperty(oElem, "id"));
+    assertDebugId("test2-subElem", o.subElement);
+
+    // Test overriding with debug ID fails if ID present
+    o.ensureDebugId("test3");
+    assertEquals("mytest", DOM.getElementProperty(oElem, "id"));
+    assertDebugId("test3-subElem", o.subElement);
   }
 
   public void testNormal() {

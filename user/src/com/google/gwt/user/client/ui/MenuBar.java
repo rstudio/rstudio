@@ -342,6 +342,19 @@ public class MenuBar extends Widget implements PopupListener {
     super.onDetach();
   }
 
+  /**
+   * @see UIObject#onEnsureDebugId(String)
+   * 
+   * <ul>
+   * <li>-item# => the {@link MenuItem} at the specified index</li>
+   * </ul>
+   */
+  @Override
+  protected void onEnsureDebugId(String baseID) {
+    super.onEnsureDebugId(baseID);
+    setMenuItemDebugIds(baseID);
+  }
+
   /*
    * Closes all parent menu popups.
    */
@@ -481,6 +494,19 @@ public class MenuBar extends Widget implements PopupListener {
     }
 
     selectedItem = item;
+  }
+
+  /**
+   * Set the IDs of the menu items.
+   * 
+   * @param baseID the base ID
+   */
+  void setMenuItemDebugIds(String baseID) {
+    int itemCount = 0;
+    for (MenuItem item : items) {
+      item.ensureDebugId(baseID + "-item" + itemCount);
+      itemCount++;
+    }
   }
 
   /**

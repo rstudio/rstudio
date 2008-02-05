@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,8 +32,9 @@ public class TreeTest extends GWTTestCase {
     }
   }
 
+  @Override
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.DebugTest";
   }
 
   public void testAttachDetachOrder() {
@@ -64,6 +65,35 @@ public class TreeTest extends GWTTestCase {
     assertEquals(0, t.getChildWidgets().size());
   }
 
+  public void testDebugId() {
+    Tree tree = new Tree();
+    TreeItem top0 = tree.addItem("top0");
+    TreeItem top1 = tree.addItem("top1");
+    TreeItem top2 = tree.addItem("top2");
+    TreeItem top3 = tree.addItem("top3");
+    TreeItem bottom0 = top3.addItem("bottom0");
+    TreeItem bottom1 = top3.addItem("bottom1");
+    TreeItem bottom2 = top3.addItem("bottom2");
+
+    // Check tree items deep
+    tree.ensureDebugId("myTree");
+    UIObjectTest.assertDebugId("myTree", tree.getElement());
+    UIObjectTest.assertDebugId("myTree-root-child0", top0.getElement());
+    UIObjectTest.assertDebugId("myTree-root-child1", top1.getElement());
+    UIObjectTest.assertDebugId("myTree-root-child2", top2.getElement());
+    UIObjectTest.assertDebugId("myTree-root-child3", top3.getElement());
+    UIObjectTest.assertDebugId("myTree-root-child3-child0",
+        bottom0.getElement());
+    UIObjectTest.assertDebugId("myTree-root-child3-child1",
+        bottom1.getElement());
+    UIObjectTest.assertDebugId("myTree-root-child3-child2",
+        bottom2.getElement());
+    
+    // Check tree item sub elements
+    UIObjectTest.assertDebugId("myTree-root-child0-content", top0.getContentElem());
+    UIObjectTest.assertDebugId("myTree-root-child0-image", top0.getImageElement());
+  }
+
   public void testInsertSameItemRepeatedly() {
     Tree t = new Tree();
     TreeItem ti = new TreeItem();
@@ -80,13 +110,13 @@ public class TreeTest extends GWTTestCase {
 
   public void testIterator() {
     Tree tree = new Tree();
-    Iterator iter = tree.treeItemIterator();
+    Iterator<TreeItem> iter = tree.treeItemIterator();
     assertFalse(iter.hasNext());
     TreeItem a = tree.addItem("a");
     TreeItem b = tree.addItem("b");
     TreeItem c = tree.addItem("c");
 
-    Iterator iter2 = tree.treeItemIterator();
+    Iterator<TreeItem> iter2 = tree.treeItemIterator();
     assertEquals(a, iter2.next());
     assertEquals(b, iter2.next());
     assertEquals(c, iter2.next());
@@ -96,7 +126,7 @@ public class TreeTest extends GWTTestCase {
     TreeItem a_a_a = a_a.addItem("a_a_a");
     TreeItem a_a_b = a_a.addItem("a_a_b");
 
-    Iterator iter3 = tree.treeItemIterator();
+    Iterator<TreeItem> iter3 = tree.treeItemIterator();
     assertEquals(a, iter3.next());
     assertEquals(a_a, iter3.next());
     assertEquals(a_a_a, iter3.next());
@@ -127,13 +157,13 @@ public class TreeTest extends GWTTestCase {
     assertEquals(item, t.getSelectedItem());
     item.remove();
     assertNull(t.getSelectedItem());
-    Iterator iter = t.treeItemIterator();
+    Iterator<TreeItem> iter = t.treeItemIterator();
     assertTrue(iter.hasNext());
     iter.next();
     assertFalse(iter.hasNext());
     t.removeItem(itemb);
     assertNull(t.getSelectedItem());
-    Iterator iter2 = t.treeItemIterator();
+    Iterator<TreeItem> iter2 = t.treeItemIterator();
     assertFalse(iter2.hasNext());
   }
 

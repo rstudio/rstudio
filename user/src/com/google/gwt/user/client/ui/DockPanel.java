@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,9 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * A panel that lays its child widgets out "docked" at its outer edges, and
@@ -84,6 +86,27 @@ public class DockPanel extends CellPanel implements HasAlignment {
    * Specifies that a widget be added at the west edge of the dock.
    */
   public static final DockLayoutConstant WEST = new DockLayoutConstant();
+
+  /**
+   * Generate a debug ID for the {@link Widget} given the direction and number
+   * of occurrences of the direction.
+   * 
+   * @param direction the direction of the widget
+   * @param count the number of widgets in that direction
+   */
+  private static String generateDebugId(DockLayoutConstant direction, int count) {
+    if (direction == NORTH) {
+      return "north" + count;
+    } else if (direction == SOUTH) {
+      return "south" + count;
+    } else if (direction == WEST) {
+      return "west" + count;
+    } else if (direction == EAST) {
+      return "east" + count;
+    } else {
+      return "center";
+    }
+  }
 
   private HorizontalAlignmentConstant horzAlign = ALIGN_LEFT;
   private VerticalAlignmentConstant vertAlign = ALIGN_TOP;
@@ -231,6 +254,49 @@ public class DockPanel extends CellPanel implements HasAlignment {
    */
   public void setVerticalAlignment(VerticalAlignmentConstant align) {
     vertAlign = align;
+  }
+
+  /**
+   * @see UIObject#onEnsureDebugId(String)
+   * 
+   * {@link DockPanel}s support adding more than one cell in a direction, so an
+   * integer will be appended to the end of the debug id. For example, the first
+   * north cell is labeled "north1", the second is "north2", and the third is
+   * "north3".
+   * 
+   * This widget recreates its structure every time a {@link Widget} is added,
+   * so you must call this method after adding new {@link Widget}s or all debug
+   * IDs will be lost.
+   * 
+   * <ul>
+   * <li>-center => the center cell</li>
+   * <li>-north# => the northern cell</li>
+   * <li>-south# => the southern cell</li>
+   * <li>-east# => the eastern cell</li>
+   * <li>-west# => the western cell</li>
+   * </ul>
+   */
+  @Override
+  protected void onEnsureDebugId(String baseID) {
+    super.onEnsureDebugId(baseID);
+
+    Map<DockLayoutConstant, Integer> dirCount = new HashMap<DockLayoutConstant, Integer>();
+    Iterator<Widget> it = getChildren().iterator();
+    while (it.hasNext()) {
+      Widget child = it.next();
+      DockLayoutConstant dir = ((LayoutData) child.getLayoutData()).direction;
+
+      // Get a debug id
+      Integer count = dirCount.get(dir);
+      if (count == null) {
+        count = new Integer(1);
+      }
+      String debugID = generateDebugId(dir, count.intValue());
+      ensureDebugId(DOM.getParent(child.getElement()), baseID, debugID);
+
+      // Increment the count
+      dirCount.put(dir, count.intValue() + 1);
+    }
   }
 
   /**

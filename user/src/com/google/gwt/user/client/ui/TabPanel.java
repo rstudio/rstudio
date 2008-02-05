@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -132,7 +132,7 @@ public class TabPanel extends Composite implements TabListener,
       tabBar.insertTabProtected(tabWidget, beforeIndex);
       super.insert(w, beforeIndex);
     }
-  };
+  }
 
   /**
    * This extension of TabPanel overrides the public mutator methods to prevent
@@ -368,5 +368,22 @@ public class TabPanel extends Composite implements TabListener,
    */
   public void selectTab(int index) {
     tabBar.selectTab(index);
+  }
+
+  /**
+   * @see UIObject#onEnsureDebugId(String)
+   * 
+   * <ul>
+   * <li>-bar => The tab bar</li>
+   * <li>-bar-tab# => The element containing the contents of the tab itself</li>
+   * <li>-bar-tab#-wrapper => The cell containing the tab at the index</li>
+   * <li>-bottom => The panel beneath the tab bar</li>
+   * </ul>
+   */
+  @Override
+  protected void onEnsureDebugId(String baseID) {
+    super.onEnsureDebugId(baseID);
+    tabBar.ensureDebugId(baseID + "-bar");
+    deck.ensureDebugId(baseID + "-bottom");
   }
 }

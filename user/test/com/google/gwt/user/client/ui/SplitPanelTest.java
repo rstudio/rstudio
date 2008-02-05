@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,8 +30,9 @@ public class SplitPanelTest extends GWTTestCase {
     return label;
   }
 
+  @Override
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.DebugTest";
   }
 
   public void testHorizontalAttachDetachOrder() {
@@ -78,6 +79,28 @@ public class SplitPanelTest extends GWTTestCase {
     // Ensure we ended up at the right size.
     assertEquals(100, panel.getOffsetWidth());
     assertEquals(100, panel.getOffsetHeight());
+  }
+
+  public void testDebugId() {
+    VerticalSplitPanel vSplit = new VerticalSplitPanel();
+    vSplit.ensureDebugId("vsplit");
+    Label top = new Label("top");
+    vSplit.setTopWidget(top);
+    Label bottom = new Label("bottom");
+    vSplit.setBottomWidget(bottom);
+    UIObjectTest.assertDebugId("vsplit", vSplit.getElement());
+    UIObjectTest.assertDebugId("vsplit-top", DOM.getParent(top.getElement()));
+    UIObjectTest.assertDebugId("vsplit-bottom", DOM.getParent(bottom.getElement()));
+    
+    HorizontalSplitPanel hSplit = new HorizontalSplitPanel();
+    hSplit.ensureDebugId("hsplit");
+    Label left = new Label("left");
+    hSplit.setLeftWidget(left);
+    Label right = new Label("right");
+    hSplit.setRightWidget(right);
+    UIObjectTest.assertDebugId("hsplit", hSplit.getElement());
+    UIObjectTest.assertDebugId("hsplit-left", DOM.getParent(left.getElement()));
+    UIObjectTest.assertDebugId("hsplit-right", DOM.getParent(right.getElement()));
   }
 
   public void testVerticalAttachDetachOrder() {

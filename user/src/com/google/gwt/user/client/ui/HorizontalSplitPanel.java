@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -318,6 +318,22 @@ public final class HorizontalSplitPanel extends SplitPanel {
     final Element leftElem = getElement(LEFT);
     setWidth(leftElem, pos);
     impl.setSplitPosition(getOffsetWidth(leftElem));
+  }
+
+  /**
+   * @see UIObject#onEnsureDebugId(String)
+   * 
+   * <ul>
+   * <li>-splitter => the container containing the splitter element</li>
+   * <li>-right => the container on the right side of the splitter</li>
+   * <li>-left => the container on the left side of the splitter</li>
+   * </ul>
+   */
+  @Override
+  protected void onEnsureDebugId(String baseID) {
+    super.onEnsureDebugId(baseID);
+    ensureDebugId(getElement(LEFT), baseID, "left");
+    ensureDebugId(getElement(RIGHT), baseID, "right");
   }
 
   @Override

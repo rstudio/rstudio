@@ -212,4 +212,19 @@ public class DialogBox extends PopupPanel implements HasHTML, HasText,
 
     child = w;
   }
+
+  /**
+   * @see UIObject#onEnsureDebugId(String)
+   * 
+   * <ul>
+   * <li>-caption => text at the top of the {@link DialogBox}</li>
+   * <li>-content => the table cell around the content</li>
+   * </ul>
+   */
+  @Override
+  protected void onEnsureDebugId(String baseID) {
+    super.onEnsureDebugId(baseID);
+    caption.ensureDebugId(baseID + "-caption");
+    ensureDebugId(panel.getCellFormatter().getElement(1, 0), baseID, "content");
+  }
 }

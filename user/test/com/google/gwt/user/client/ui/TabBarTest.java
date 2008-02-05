@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.DOM;
 
 /**
  * TODO: document me.
@@ -25,8 +26,31 @@ public class TabBarTest extends GWTTestCase {
   int selected;
   int beforeSelection;
 
+  @Override
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.DebugTest";
+  }
+
+  public void testDebugId() {
+    TabBar bar = new TabBar();
+    Label tab0 = new Label("My Tab 0");
+    bar.addTab(tab0);
+    Label tab1 = new Label("My Tab 1");
+    bar.addTab(tab1);
+    Label tab2 = new Label("My Tab 2");
+    bar.addTab(tab2);
+
+    bar.ensureDebugId("myBar");
+    UIObjectTest.assertDebugId("myBar", bar.getElement());
+    UIObjectTest.assertDebugId("myBar-tab0", DOM.getParent(tab0.getElement()));
+    UIObjectTest.assertDebugId("myBar-tab-wrapper0",
+        DOM.getParent(DOM.getParent(tab0.getElement())));
+    UIObjectTest.assertDebugId("myBar-tab1", DOM.getParent(tab1.getElement()));
+    UIObjectTest.assertDebugId("myBar-tab-wrapper1",
+        DOM.getParent(DOM.getParent(tab1.getElement())));
+    UIObjectTest.assertDebugId("myBar-tab2", DOM.getParent(tab2.getElement()));
+    UIObjectTest.assertDebugId("myBar-tab-wrapper2",
+        DOM.getParent(DOM.getParent(tab2.getElement())));
   }
 
   public void testSelect() {

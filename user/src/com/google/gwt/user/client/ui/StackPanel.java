@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -223,6 +223,27 @@ public class StackPanel extends ComplexPanel {
 
     visibleStack = index;
     setStackVisible(visibleStack, true);
+  }
+
+  /**
+   * @see UIObject#onEnsureDebugId(String)
+   * 
+   * <ul>
+   * <li>-text# => The element around the header at the specified index</li>
+   * <li>-content# => The element around the body at the specified index</li>
+   * </ul>
+   */
+  @Override
+  protected void onEnsureDebugId(String baseID) {
+    super.onEnsureDebugId(baseID);
+
+    int numHeaders = DOM.getChildCount(body) / 2;
+    for (int i = 0; i < numHeaders; i++) {
+      Element headerElem = DOM.getFirstChild(DOM.getChild(body, 2 * i));
+      Element bodyElem = DOM.getFirstChild(DOM.getChild(body, 2 * i + 1));
+      ensureDebugId(headerElem, baseID, "text" + i);
+      ensureDebugId(bodyElem, baseID, "content" + i);
+    }
   }
 
   private int findDividerIndex(Element elem) {

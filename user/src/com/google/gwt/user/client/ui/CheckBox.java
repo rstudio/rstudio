@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -176,6 +176,19 @@ public class CheckBox extends ButtonBase implements HasName {
   @Override
   public void sinkEvents(int eventBitsToAdd) {
     DOM.sinkEvents(inputElem, eventBitsToAdd | DOM.getEventsSunk(inputElem));
+  }
+
+  /**
+   * @see UIObject#onEnsureDebugId(String)
+   * 
+   * <ul>
+   * <li>-label => label next to checkbox</li>
+   * </ul>
+   */
+  @Override
+  protected void onEnsureDebugId(String baseID) {
+    super.onEnsureDebugId(baseID);
+    ensureDebugId(labelElem, baseID, "label");
   }
 
   /**

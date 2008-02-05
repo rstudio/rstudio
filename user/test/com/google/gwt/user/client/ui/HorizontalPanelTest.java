@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.DOM;
 
 import java.util.Iterator;
 
@@ -24,12 +25,29 @@ import java.util.Iterator;
  */
 public class HorizontalPanelTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.DebugTest";
   }
 
   public void testAttachDetachOrder() {
     HasWidgetsTester.testAll(new HorizontalPanel());
+  }
+
+  public void testDebugId() {
+    HorizontalPanel p = new HorizontalPanel();
+    Label a = new Label("a");
+    Label b = new Label("b");
+    Label c = new Label("c");
+    p.add(a);
+    p.add(b);
+    p.add(c);
+
+    p.ensureDebugId("myPanel");
+    UIObjectTest.assertDebugId("myPanel", p.getElement());
+    UIObjectTest.assertDebugId("myPanel-0", DOM.getParent(a.getElement()));
+    UIObjectTest.assertDebugId("myPanel-1", DOM.getParent(b.getElement()));
+    UIObjectTest.assertDebugId("myPanel-2", DOM.getParent(c.getElement()));
   }
 
   public void testInsertMultipleTimes() {
@@ -42,7 +60,7 @@ public class HorizontalPanelTest extends GWTTestCase {
 
     assertEquals(1, p.getWidgetCount());
     assertEquals(0, p.getWidgetIndex(tb));
-    Iterator i = p.iterator();
+    Iterator<Widget> i = p.iterator();
     assertTrue(i.hasNext());
     assertTrue(tb.equals(i.next()));
     assertFalse(i.hasNext());

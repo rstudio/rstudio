@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -409,6 +409,28 @@ public class TreeItem extends UIObject implements HasHTML {
       return (HasFocus) w;
     } else {
       return null;
+    }
+  }
+
+  /**
+   * @see UIObject#onEnsureDebugId(String)
+   *
+   * <ul>
+   * <li>-image => The status image</li>
+   * <li>-content => The text or {@link Widget} next to the image</li>
+   * <li>-child# => The child at the specified index</li>
+   * </ul>
+   */
+  @Override
+  protected void onEnsureDebugId(String baseID) {
+    super.onEnsureDebugId(baseID);
+    statusImage.ensureDebugId(baseID + "-image");
+    ensureDebugId(contentElem, baseID, "content");
+
+    int childCount = 0;
+    for (TreeItem child : children) {
+      child.ensureDebugId(baseID + "-child" + childCount);
+      childCount++;
     }
   }
 

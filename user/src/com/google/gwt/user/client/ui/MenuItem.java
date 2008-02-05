@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -148,6 +148,20 @@ public class MenuItem extends UIObject implements HasHTML {
 
   public void setText(String text) {
     DOM.setInnerText(getElement(), text);
+  }
+
+  /**
+   * @see UIObject#onEnsureDebugId(String)
+   * 
+   * Also sets the Debug IDs of {@link MenuItem}s in the submenu of this
+   * {@link MenuItem}, if one exists.
+   */
+  @Override
+  protected void onEnsureDebugId(String baseID) {
+    super.onEnsureDebugId(baseID);
+    if (subMenu != null) {
+      subMenu.setMenuItemDebugIds(baseID);
+    }
   }
 
   void setParentMenu(MenuBar parentMenu) {
