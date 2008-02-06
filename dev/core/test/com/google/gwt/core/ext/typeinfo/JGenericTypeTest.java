@@ -184,9 +184,54 @@ public class JGenericTypeTest extends TestCase {
 
     JClassType[] bounds = bound.getBounds();
     assertEquals(1, bounds.length);
-    assertEquals(moduleContext.getOracle().getJavaLangObject(), bounds[0]);
+    assertEquals(moduleContext.getOracle().getType(Serializable.class.getName()), 
+        bounds[0]);
+  }
+  
+  /**
+   * Test method for {@link
+   * com.google.gwt.core.ext.typeinfo.JGenericType#isAssignableFrom(JClassType)}.
+   * 
+   * @throws NotFoundException
+   */
+  public void testIsAssignableFrom() throws NotFoundException {
+    JGenericType genericType = getTestType();
+    
+    // Check that the generic type's superclass is assignable from the generic type
+    assertTrue(genericType.getSuperclass().isAssignableFrom(genericType));
+    
+    // Check that each implemented interface is assignable from the generic type
+    JClassType[] implementedInterfaces = genericType.getImplementedInterfaces();
+    for (JClassType implementedInterface : implementedInterfaces) {
+      assertTrue(implementedInterface.isAssignableFrom(genericType));
+      assertTrue(implementedInterface.isAssignableFrom(genericType.getRawType()));
+    }
+  }
+  
+  /**
+   * Test method for {@link
+   * com.google.gwt.core.ext.typeinfo.JGenericType#isAssignableTo(JClassType)}.
+   * 
+   * @throws NotFoundException
+   */
+  public void testIsAssignableTo() throws NotFoundException {
+    JGenericType genericType = getTestType();
+    
+    // Check that generic type is assignable to its superclass
+    assertTrue(genericType.isAssignableTo(genericType.getSuperclass()));
+    
+    // Check that the generic class is assignable to any implemented interface
+    JClassType[] implementedInterfaces = genericType.getImplementedInterfaces();
+    for (JClassType implementedInterface : implementedInterfaces) {
+      assertTrue(genericType.isAssignableTo(implementedInterface));
+      
+      if (implementedInterface.isParameterized() != null) {
+        assertTrue(genericType.isAssignableTo(implementedInterface.isParameterized().getRawType()));
+      }
+    }
   }
 
+  
   /**
    * Returns the generic version of {@link GenericClass}.
    */

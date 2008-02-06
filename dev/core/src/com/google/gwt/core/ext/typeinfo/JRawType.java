@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Represents a raw type; that is a generic type with no type arguments.
  */
-public class JRawType extends JDelegatingClassType {
+public class JRawType extends JMaybeParameterizedType {
   private static final Substitution ERASURE_SUBSTITUTION = new Substitution() {
     public JType getSubstitution(JType type) {
       return type.getErasedType();
@@ -61,13 +61,6 @@ public class JRawType extends JDelegatingClassType {
   @Override
   public JClassType findNestedType(String typeName) {
     return members.findNestedType(typeName);
-  }
-
-  @Override
-  public JGenericType getBaseType() {
-    JGenericType genericType = super.getBaseType().isGenericType();
-    assert (genericType != null);
-    return genericType;
   }
 
   @Override
@@ -178,20 +171,6 @@ public class JRawType extends JDelegatingClassType {
     }
 
     return baseSuper.getErasedType();
-  }
-
-  @Override
-  public boolean isAssignableFrom(JClassType otherType) {
-    otherType = maybeGetGenericBaseType(otherType);
-    
-    return getBaseType().isAssignableFrom(otherType);
-  }
-
-  @Override
-  public boolean isAssignableTo(JClassType otherType) {
-    otherType = maybeGetGenericBaseType(otherType);
-    
-    return getBaseType().isAssignableTo(otherType);
   }
 
   @Override

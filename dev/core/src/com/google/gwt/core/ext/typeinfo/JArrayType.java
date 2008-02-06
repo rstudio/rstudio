@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -298,45 +298,6 @@ public class JArrayType extends JClassType {
   @Override
   public JArrayType isArray() {
     return this;
-  }
-
-  @Override
-  public boolean isAssignableFrom(JClassType possibleSubtype) {
-    if (this == possibleSubtype) {
-      // type is assignable to itself
-      return true;
-    }
-
-    JArrayType possibleSubtypeArray = possibleSubtype.isArray();
-    if (possibleSubtypeArray == null) {
-      // possible subtype must be an array to be assignable
-      return false;
-    }
-
-    JType thisComponentType = getComponentType();
-    JType otherComponentType = possibleSubtypeArray.getComponentType();
-
-    if (thisComponentType.isPrimitive() != null
-        || otherComponentType.isPrimitive() != null) {
-      /*
-       * Since this was not equal to the possible subtype, we know that either
-       * the dimensions are off or the component types are off
-       */
-      return false;
-    }
-
-    assert (thisComponentType instanceof JClassType);
-    assert (otherComponentType instanceof JClassType);
-
-    JClassType thisComponentClassType = (JClassType) thisComponentType;
-    JClassType otherComponentClassType = (JClassType) otherComponentType;
-
-    return thisComponentClassType.isAssignableFrom(otherComponentClassType);
-  }
-
-  @Override
-  public boolean isAssignableTo(JClassType possibleSupertype) {
-    return possibleSupertype.isAssignableFrom(this);
   }
 
   @Override

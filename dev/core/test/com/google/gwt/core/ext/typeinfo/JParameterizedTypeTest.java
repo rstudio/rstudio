@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.test.Base;
 import com.google.gwt.core.ext.typeinfo.test.Derived;
+import com.google.gwt.core.ext.typeinfo.test.ExtendsRawGenericClass;
 import com.google.gwt.core.ext.typeinfo.test.GenericClass;
 import com.google.gwt.core.ext.typeinfo.test.MyCustomList;
 import com.google.gwt.core.ext.typeinfo.test.MyIntegerList;
@@ -32,6 +33,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Vector;
 
 /**
  * Test for {@link JParameterizedType}.
@@ -228,33 +230,43 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     TypeOracle oracle = moduleContext.getOracle();
     JGenericType genericList = (JGenericType) oracle.getType(List.class.getName());
 
+    // ?
     JWildcardType unboundWildcard = oracle.getWildcardType(new JUpperBound(
         oracle.getJavaLangObject()));
+    
+    // ? extends Number
     JWildcardType numUpperBoundWildcard = oracle.getWildcardType(new JUpperBound(
         oracle.getType(Number.class.getName())));
 
-    // List<?> should be assignable from List<? extends Number>
+    // List<?>
     JParameterizedType unboundList = oracle.getParameterizedType(genericList,
         new JClassType[] {unboundWildcard});
-    JParameterizedType numUpperBoundList = oracle.getParameterizedType(
+    
+    // List<? extends Number>
+    JParameterizedType listOfExtendsNumber = oracle.getParameterizedType(
         genericList, new JClassType[] {numUpperBoundWildcard});
-    assertTrue(unboundList.isAssignableFrom(numUpperBoundList));
-    assertFalse(unboundList.isAssignableTo(numUpperBoundList));
+    
+    // List<?> should be assignable from List<? extends Number>
+    assertTrue(unboundList.isAssignableFrom(listOfExtendsNumber));
+    assertFalse(unboundList.isAssignableTo(listOfExtendsNumber));
 
-    assertFalse(numUpperBoundList.isAssignableFrom(unboundList));
-    assertTrue(numUpperBoundList.isAssignableTo(unboundList));
+    assertFalse(listOfExtendsNumber.isAssignableFrom(unboundList));
+    assertTrue(listOfExtendsNumber.isAssignableTo(unboundList));
 
-    // List<? extends Number> should be assignable from List<? extends Integer>
+    // ? extends Integer
     JWildcardType intUpperBoundWildcard = oracle.getWildcardType(new JUpperBound(
         integerType));
 
-    JParameterizedType intUpperBoundList = oracle.getParameterizedType(
+    // List<? extends Integer>
+    JParameterizedType listOfExtendsInteger = oracle.getParameterizedType(
         genericList, new JClassType[] {intUpperBoundWildcard});
-    assertTrue(numUpperBoundList.isAssignableFrom(intUpperBoundList));
-    assertFalse(numUpperBoundList.isAssignableTo(intUpperBoundList));
 
-    assertFalse(intUpperBoundList.isAssignableFrom(numUpperBoundList));
-    assertTrue(intUpperBoundList.isAssignableTo(numUpperBoundList));
+    // List<? extends Number> should be assignable from List<? extends Integer>
+    assertTrue(listOfExtendsNumber.isAssignableFrom(listOfExtendsInteger));
+    assertFalse(listOfExtendsNumber.isAssignableTo(listOfExtendsInteger));
+
+    assertFalse(listOfExtendsInteger.isAssignableFrom(listOfExtendsNumber));
+    assertTrue(listOfExtendsInteger.isAssignableTo(listOfExtendsNumber));
 
     // List<? super Integer> should be assignable from List<? super Number>
     JWildcardType numLowerBoundWildcard = oracle.getWildcardType(new JLowerBound(
@@ -262,15 +274,83 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     JWildcardType intLowerBoundWildcard = oracle.getWildcardType(new JLowerBound(
         integerType));
 
-    JParameterizedType numLowerBoundList = oracle.getParameterizedType(
+    // List<? super Number>
+    JParameterizedType listOfSuperNumber = oracle.getParameterizedType(
         genericList, new JClassType[] {numLowerBoundWildcard});
-    JParameterizedType intLowerBoundList = oracle.getParameterizedType(
+    
+    // List<? super Interger>
+    JParameterizedType listOfSuperInteger = oracle.getParameterizedType(
         genericList, new JClassType[] {intLowerBoundWildcard});
 
-    assertTrue(intLowerBoundList.isAssignableFrom(numLowerBoundList));
-    assertFalse(intLowerBoundList.isAssignableTo(numLowerBoundList));
-    assertFalse(numLowerBoundList.isAssignableFrom(intLowerBoundList));
-    assertTrue(numLowerBoundList.isAssignableTo(intLowerBoundList));
+    assertTrue(listOfSuperInteger.isAssignableFrom(listOfSuperNumber));
+    assertFalse(listOfSuperInteger.isAssignableTo(listOfSuperNumber));
+    assertFalse(listOfSuperNumber.isAssignableFrom(listOfSuperInteger));
+    assertTrue(listOfSuperNumber.isAssignableTo(listOfSuperInteger));
+
+    JParameterizedType listOfObject = oracle.getParameterizedType(genericList,
+        new JClassType[] {oracle.getJavaLangObject()});
+
+    JClassType stringType = oracle.getType(String.class.getName());
+    JParameterizedType listOfString = oracle.getParameterizedType(genericList,
+        new JClassType[] {stringType});
+
+    // List<Object> is not assignable from List<String>
+    assertFalse(listOfObject.isAssignableFrom(listOfString));
+
+    // List<String> is not assignable from List<Object>
+    assertFalse(listOfString.isAssignableFrom(listOfObject));
+
+    // List<List<String>> is not assignable from List<Vector<String>>
+    JParameterizedType listOfListOfString = oracle.getParameterizedType(
+        genericList, new JClassType[] {listOfString});
+    
+    JGenericType genericVector = oracle.getType(Vector.class.getName()).isGenericType();
+    JParameterizedType vectorOfString = oracle.getParameterizedType(genericVector, new JClassType[] {stringType});
+    JParameterizedType listOfVectorOfString = oracle.getParameterizedType(genericList, new JClassType[] {vectorOfString});
+    
+    assertFalse(listOfListOfString.isAssignableFrom(listOfVectorOfString));
+    assertFalse(listOfVectorOfString.isAssignableFrom(listOfListOfString));
+    
+    // List<List> is not assignable from List<List<String>>
+    JClassType listOfRawList = oracle.getParameterizedType(genericList, new JClassType[] {genericList.getRawType()});
+    assertFalse(listOfRawList.isAssignableFrom(listOfListOfString));
+    assertFalse(listOfListOfString.isAssignableFrom(listOfRawList));
+    
+    JGenericType genericClass = oracle.getType(GenericClass.class.getName()).isGenericType();
+    JParameterizedType parameterizedGenericClass = oracle.getParameterizedType(genericClass, new JClassType[] {stringType});
+    JClassType extendsRawGenericClass = oracle.getType(ExtendsRawGenericClass.class.getName());
+
+    // GenericClass<String> is assignable from ExtendsRawGenericClass 
+    assertTrue(parameterizedGenericClass.isAssignableFrom(extendsRawGenericClass));
+    
+    // ExtendsRawGenericClass is not assignable from GenericClass<String>
+    assertFalse(extendsRawGenericClass.isAssignableFrom(parameterizedGenericClass));
+
+    // List<List<? extends Number>>
+    JClassType listOfListOfExtendsNumber = oracle.getParameterizedType(genericList, new JClassType[] {listOfExtendsNumber});
+
+    // List<List<? extends Integer>>
+    JClassType listOfListOfExtendsInteger = oracle.getParameterizedType(genericList, new JClassType[] {listOfExtendsInteger});
+  
+    assertFalse(listOfListOfExtendsNumber.isAssignableFrom(listOfListOfExtendsInteger));
+    
+    // List<Integer>
+    JClassType listOfInteger = oracle.getParameterizedType(genericList, new JClassType[] {integerType});
+    
+    // List<? extends Number> is assignable from List<Integer>
+    assertTrue(listOfExtendsNumber.isAssignableFrom(listOfInteger));
+    assertFalse(listOfExtendsNumber.isAssignableFrom(listOfObject));
+    
+    // List<? super Number> is not assignable from List<Integer>
+    assertFalse(listOfSuperNumber.isAssignableFrom(listOfInteger));
+    
+    // List<? super Number> is assignable from List<Object>
+    assertTrue(listOfSuperNumber.isAssignableFrom(listOfObject));
+  }
+
+  @Override
+  public void testIsAssignableTo() throws NotFoundException {
+    // This is covered as part of testIsAssignableFrom
   }
 
   public void testOverridableMethods_Base() throws NotFoundException {
@@ -395,10 +475,5 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     }
 
     assertTrue(expectedMethods.isEmpty());
-  }
-
-  @Override
-  public void testIsAssignableTo() throws NotFoundException {
-    // This is covered as part of testIsAssignableFrom
   }
 }

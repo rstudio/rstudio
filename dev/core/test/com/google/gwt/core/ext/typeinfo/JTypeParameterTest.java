@@ -23,11 +23,25 @@ import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Set;
 
 /**
  * Tests for {@link JTypeParameter}.
  */
 public class JTypeParameterTest extends JDelegatingClassTypeTestBase {
+  private static JClassType findParameterizationOf(JClassType classType,
+      JGenericType genericType) {
+    Set<JClassType> supertypes = JClassType.getFlattenedSuperTypeHierarchy(classType);
+    for (JClassType supertype : supertypes) {
+      JMaybeParameterizedType maybeParameterizedType = supertype.isMaybeParameterizedType();
+      if (maybeParameterizedType != null && maybeParameterizedType.getBaseType() == genericType) {
+        return supertype;
+      }
+    }
+
+    return null;
+  }
+
   private final boolean logToConsole = false;
   private final ModuleContext moduleContext = new ModuleContext(logToConsole
       ? new PrintWriterTreeLogger() : TreeLogger.NULL,
@@ -80,13 +94,13 @@ public class JTypeParameterTest extends JDelegatingClassTypeTestBase {
   }
 
   /*
-   * Checks that all non-local subtypes of the type parameter,
-   * T extends Serializable & Comparable<T> are actually assignable to 
-   * Serializable and the properly parameterized version of Comparable<T>.
+   * Checks that all non-local subtypes of the type parameter, T extends
+   * Serializable & Comparable<T> are actually assignable to Serializable and
+   * the properly parameterized version of Comparable<T>.
    */
   @Override
   public void testGetSubtypes() throws NotFoundException {
-    
+
     TypeOracle oracle = moduleContext.getOracle();
     JClassType testType = oracle.getType(MyCustomList.class.getName());
     JGenericType genericType = testType.isGenericType();
@@ -96,29 +110,48 @@ public class JTypeParameterTest extends JDelegatingClassTypeTestBase {
     JClassType serializableType = oracle.getType(Serializable.class.getCanonicalName());
     JGenericType comparableType = (JGenericType) oracle.getType(Comparable.class.getCanonicalName());
     JClassType[] computedSubtypes = typeParameter.getSubtypes();
-    
+
     for (JClassType computedSubtype : computedSubtypes) {
-      JParameterizedType parameterizedComparableType = oracle.getParameterizedType(
-          comparableType, new JClassType[] {computedSubtype});
       if (computedSubtype.isLocalType()) {
         // Ignore local types.
         continue;
       }
+      // Find the parameterized version of the Comparable interface.
+      JClassType comparableIntf = findParameterizationOf(computedSubtype,
+          comparableType);
+
       assertTrue(computedSubtype.isAssignableTo(serializableType));
-      assertTrue(computedSubtype.isAssignableTo(parameterizedComparableType));
+      assertTrue(computedSubtype.isAssignableTo(comparableIntf));
     }
   }
 
   @Override
   public void testIsAssignableFrom() throws NotFoundException {
     JTypeParameter testType = getTestType();
-    assertTrue(testType.isAssignableFrom(moduleContext.getOracle().getJavaLangObject()));
+    assertTrue(testType.isAssignableFrom(moduleContext.getOracle().getType(
+        Serializable.class.getName())));
+
+    // Check that the type parameter is assignable from each subtype
+    JClassType[] subtypes = testType.getSubtypes();
+    for (JClassType subtype : subtypes) {
+      assertTrue(testType.isAssignableFrom(subtype));
+    }
   }
 
   @Override
   public void testIsAssignableTo() throws NotFoundException {
     JTypeParameter testType = getTestType();
     assertTrue(testType.isAssignableTo(moduleContext.getOracle().getJavaLangObject()));
+
+    // Check that each bound is assignable to this type parameter.
+    JClassType[] typeBounds = testType.getBounds().getBounds();
+    for (JClassType typeBound : typeBounds) {
+      // Test that the type parameter is assignable to the type bound.
+      assertTrue(testType.isAssignableTo(typeBound));
+
+      // Test that the type parameter is assignable from the type bound.
+      assertTrue(typeBound.isAssignableFrom(testType));
+    }
   }
 
   @Override

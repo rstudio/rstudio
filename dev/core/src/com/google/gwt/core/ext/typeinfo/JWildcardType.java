@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,6 +41,17 @@ public class JWildcardType extends JDelegatingClassType implements HasBounds {
   }
 
   @Override
+  public JClassType getErasedType() {
+    if (bounds.isLowerBound() != null) {
+      // ? super T erases to Object
+      return getOracle().getJavaLangObject();
+    }
+    
+    // ? extends T erases to T
+    return getFirstBound();
+  }
+
+  @Override
   public JField getField(String name) {
     return getBaseType().getField(name);
   }
@@ -74,30 +85,27 @@ public class JWildcardType extends JDelegatingClassType implements HasBounds {
   public String getSimpleSourceName() {
     return "?" + bounds.getSimpleSourceName();
   }
-
+  
   @Override
   public JClassType[] getSubtypes() {
+    // We are not sure what the correct behavior should be for lower bound
+    // wildcards.  ? super Number contains ? super T for all T extends Number,
+    // but it also includes T for Number extends T.  For example, Object is a 
+    // subtype.
     return bounds.getSubtypes();
   }
-
+  
   @Override
-  public boolean isAssignableFrom(JClassType otherType) {
-    if (otherType == this) {
-      return true;
+  public JClassType getSuperclass() {
+    if (bounds.isLowerBound() != null) {
+      // The only safe superclass for a ? super T is Object.
+      return getOracle().getJavaLangObject();
     }
     
-    return getBounds().isAssignableFrom(otherType);
+    // The superclass of an upper bound is the upper bound.
+    return getFirstBound();
   }
-
-  @Override
-  public boolean isAssignableTo(JClassType otherType) {
-    if (otherType == this) {
-      return true;
-    }
-    
-    return getBounds().isAssignableTo(otherType);
-  }
-
+  
   @Override
   public JGenericType isGenericType() {
     return null;

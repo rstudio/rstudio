@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Type representing a Java class or interface type.
+ * Type representing a Java class or interface type that a user would declare.
  */
 public class JRealClassType extends JClassType {
 
@@ -322,51 +322,6 @@ public class JRealClassType extends JClassType {
   public JArrayType isArray() {
     // intentional null
     return null;
-  }
-
-  @Override
-  public boolean isAssignableFrom(JClassType otherType) {
-    if (otherType == this) {
-      return true;
-    }
-        
-    if (allSubtypes.contains(otherType)) {
-      // JGenericTypes should appear in the allSubtypes hierarchy - do nothing
-      return true;
-    } else if (this == getOracle().getJavaLangObject()) {
-      // This case handles the odd "every interface is an Object"
-      // but doesn't actually have Object as a superclass.
-      //
-      return true;
-    } else {
-      if (otherType.isTypeParameter() != null) {
-        return otherType.isAssignableTo(this);
-      }
-      
-      if (otherType.isWildcard() != null) {
-        return otherType.isAssignableTo(this);
-      }
-
-      if (otherType.isGenericType() != null) {
-        return otherType.isAssignableTo(this);
-      }
-      
-      if (otherType.isRawType() != null) {
-        return otherType.isAssignableTo(this);
-      }
-      
-      if (otherType.isParameterized() != null) {
-        return otherType.isAssignableTo(this);
-      }
-
-      // At this point we should only have JArrayTypes or JRealClassTypes from
-      // which we are not assignable.
-      return false;
-    }
-  }
-
-  public boolean isAssignableTo(JClassType possibleSupertype) {
-    return possibleSupertype.isAssignableFrom(this);
   }
 
   @Override

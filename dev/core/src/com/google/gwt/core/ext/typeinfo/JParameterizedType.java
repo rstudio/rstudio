@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,41 +25,7 @@ import java.util.Set;
 /**
  * Represents a parameterized type in a declaration.
  */
-public class JParameterizedType extends JDelegatingClassType {
-  private static boolean areTypeArgsAssignableFrom(JClassType[] myTypeArgs,
-      JClassType[] otherTypeArgs) {
-    assert (myTypeArgs.length <= otherTypeArgs.length);
-
-    for (int i = 0; i < myTypeArgs.length; ++i) {
-      JClassType myTypeArg = myTypeArgs[i];
-      JClassType otherTypeArg = otherTypeArgs[i];
-
-      if (myTypeArg.isTypeParameter() != null) {
-        /*
-         * If my type argument is a type parameter consider it's erased form.  This
-         * avoids recursion sickness in the case where my type argument is of the
-         * form:
-         * 
-         * T extends Serializable & Comparable<T>
-         * 
-         * and otherTypeArg is something like Long, Short, etc.
-         */
-        return myTypeArg.getErasedType().isAssignableFrom(otherTypeArg);
-      }
-      
-      if (myTypeArg.isWildcard() == null) {
-        // myTypeArg needs to be a wildcard or we cannot be assignable.
-        return false;
-      }
-
-      if (!myTypeArg.isAssignableFrom(otherTypeArg)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
+public class JParameterizedType extends JMaybeParameterizedType {
   /**
    * Create a parameterized type along with any necessary enclosing
    * parameterized types. Enclosing parameterized types are necessary when the
@@ -97,77 +63,6 @@ public class JParameterizedType extends JDelegatingClassType {
     JParameterizedType parameterizedType = oracle.getParameterizedType(
         baseType, enclosingType, newTypeArgs);
     return parameterizedType;
-  }
-
-  /**
-   * Returns <code>true</code> if the rhsType can be assigned to the lhsType.
-   */
-  private static boolean isAssignable(JClassType lhsType, JClassType rhsType) {
-    if (lhsType == rhsType) {
-      return true;
-    }
-
-    Set<JClassType> rhsSupertypes = getFlattenedSuperTypeHierarchy(rhsType);
-    if (rhsSupertypes.contains(lhsType)) {
-      // Done, appears explicitly in the supertype hierarchy.
-      return true;
-    }
-
-    /*
-     * Get the generic base type for the lhsType if there is one.
-     */
-    JGenericType lhsBaseType = null;
-    if (lhsType.isParameterized() != null) {
-      lhsBaseType = lhsType.isParameterized().getBaseType();
-    } else if (lhsType.isRawType() != null) {
-      lhsBaseType = lhsType.isRawType().getBaseType();
-    }
-    
-    /*
-     * Check the supertype hierarchy to see if we can find a parameterization
-     * or a raw type that would satisfy the assignment. 
-     */
-    for (JClassType rhsSupertype : rhsSupertypes) {
-      if (rhsSupertype.isGenericType() != null) {
-        /*
-         * A generic type will be treated as its raw type for assignment
-         * purposes.
-         */
-        rhsSupertype = rhsSupertype.isGenericType().getRawType();
-      }
-
-      JParameterizedType rhsParameterized = rhsSupertype.isParameterized();
-      if (rhsParameterized != null) {
-        if (rhsParameterized.getBaseType() == lhsBaseType) {
-          /*
-           * This supertype and the lhsType have the same base type, but they
-           * have different parameterizations so we test them.  
-           */
-          assert (rhsParameterized != lhsType);
-
-          if (lhsType.isRawType() != null) {
-            // The lhsType is raw so we do not need to check the parameterization.
-            return true;
-          } else {
-            assert (lhsType.isParameterized() != null);
-            
-            return areTypeArgsAssignableFrom(
-                lhsType.isParameterized().getTypeArgs(),
-                rhsParameterized.getTypeArgs());
-          }
-        }
-      } else if (rhsSupertype.isRawType() != null) {
-        if (rhsSupertype.isRawType().getBaseType() == lhsBaseType) {
-          /*
-           * The raw supertype has the same base type as the lhsType so the
-           * assignment is okay.
-           */
-          return true;
-        }
-      }
-    }
-
-    return false;
   }
 
   private final JClassType enclosingType;
@@ -226,11 +121,6 @@ public class JParameterizedType extends JDelegatingClassType {
   @Override
   public JClassType findNestedType(String typeName) {
     return members.findNestedType(typeName);
-  }
-
-  @Override
-  public JGenericType getBaseType() {
-    return (JGenericType) super.getBaseType();
   }
 
   @Override
@@ -421,16 +311,6 @@ public class JParameterizedType extends JDelegatingClassType {
 
   public JClassType[] getTypeArgs() {
     return typeArgs.toArray(TypeOracle.NO_JCLASSES);
-  }
-
-  @Override
-  public boolean isAssignableFrom(JClassType otherType) {
-    return isAssignable(this, otherType);
-  }
-
-  @Override
-  public boolean isAssignableTo(JClassType otherType) {
-    return isAssignable(otherType, this);
   }
 
   @Override

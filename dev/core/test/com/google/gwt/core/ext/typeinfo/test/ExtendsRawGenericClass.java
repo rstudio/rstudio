@@ -15,21 +15,9 @@
  */
 package com.google.gwt.core.ext.typeinfo.test;
 
-import java.io.Serializable;
-
 /**
- * Test a generic class that extends a generic class.
+ * Class used to test assignment between a parameterized type and a subclass
+ * of the raw version.
  */
-public class GenericSubclass<U extends Serializable> extends GenericClass<U> {
-  GenericClass<Integer> child;
-
-  public GenericSubclass(U t) {
-    super(t);
-  }
-
-  // TODO: This triggers a name clash problem with JDT 3.1 but not with JDT
-  // 3.3.0 or with javac 1.5.06.
-  // public void setT(Object t) {
-  // // this should override GenericClass<U>.setT(T t);
-  // }
+public class ExtendsRawGenericClass extends GenericClass {
 }

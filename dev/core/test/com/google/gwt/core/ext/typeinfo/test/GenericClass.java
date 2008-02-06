@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,7 @@ import java.util.List;
  * definition of GenericClass is as follows: class GenericClass<T extends
  * Serializable & Comparable<T>> implements Comparable<T> { ... }
  */
-public class GenericClass<T> implements Comparable<T> {
+public class GenericClass<T extends Serializable> implements Comparable<T>, Serializable {
   /**
    * Non-static, generic inner class.
    * 
@@ -64,8 +64,6 @@ public class GenericClass<T> implements Comparable<T> {
    * line 1228.
    */
 //  GenericClass.NonGenericInnerClass rawNonGenericInnerClassField;
-
-  GenericClass<Integer>.Foo.Bar wtf;
 
   Class rawClazzField;
 

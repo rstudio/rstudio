@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -55,6 +56,20 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
   @Override
   public void testGetEnclosingType() {
     // Wildcard do not have nested types...
+  }
+
+  @Override
+  public void testGetErasedType() throws NotFoundException {
+    TypeOracle oracle = moduleContext.getOracle();
+    JClassType numberType = oracle.getType(Number.class.getCanonicalName());
+    
+    // Tests that ? extends Number erases to number.
+    JWildcardType upperBoundWildcard = oracle.getWildcardType(new JUpperBound(numberType));
+    assertEquals(numberType, upperBoundWildcard.getErasedType());
+    
+    // Tests that ? super Number erases to Object
+    JWildcardType lowerBoundWildcard = oracle.getWildcardType(new JLowerBound(numberType));
+    assertEquals(oracle.getJavaLangObject(), lowerBoundWildcard.getErasedType());
   }
 
   public void testGetMethods() throws NotFoundException {
@@ -112,8 +127,46 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
   }
 
   @Override
-  public void testIsAssignableFrom() {
+  public void testIsAssignableFrom() throws NotFoundException {
     // Covered by the different testIsAssignableFrom*() variants below.
+    TypeOracle oracle = moduleContext.getOracle();
+    
+    
+    JClassType integerType = oracle.getType(Integer.class.getName());
+    JClassType numberType = oracle.getType(Number.class.getName());
+
+    // ? extends Number
+    JClassType extendsNumber = oracle.getWildcardType(new JUpperBound(numberType));
+    
+    // ? extends Integer
+    JClassType extendsInteger = oracle.getWildcardType(new JUpperBound(integerType));
+    
+    // Integer is not assignable from ? extends Number
+    assertFalse(integerType.isAssignableFrom(extendsNumber));
+    
+    // Integer is assignable from ? extends Integer
+    assertTrue(integerType.isAssignableFrom(extendsInteger));
+    
+    // Number is assignable from ? extends Integer
+    assertTrue(numberType.isAssignableFrom(extendsInteger));
+    
+    // ? super Integer
+    JClassType superInteger = oracle.getWildcardType(new JLowerBound(integerType));
+    
+    // Integer is assignable from ? super Integer
+    assertFalse(integerType.isAssignableFrom(superInteger));
+
+    // ? super Integer is assignable from Number
+    assertTrue(superInteger.isAssignableFrom(numberType));
+
+    JClassType superNumber = oracle.getWildcardType(new JLowerBound(numberType));
+    
+    // ? super Number is assignable from Integer
+    assertTrue(superNumber.isAssignableFrom(integerType));
+    
+    // ? super Number is assignable from Character
+    JClassType characterType = oracle.getType(Character.class.getName());
+    assertTrue(superNumber.isAssignableFrom(characterType));
   }
 
   /**
@@ -137,8 +190,7 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
   }
 
   /**
-   * Tests that <? extends Number> is assignable from <? extends Integer> and
-   * that the reverse is not <code>true</code>.
+   * Tests that <? extends Object> is assignable to and from <? super Object>.
    */
   public void testIsAssignableFrom_Extends_Object_From_Super_Object() {
     TypeOracle oracle = moduleContext.getOracle();
@@ -147,16 +199,21 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     JLowerBound lowerBound = new JLowerBound(javaLangObject);
     JUpperBound upperBound = new JUpperBound(javaLangObject);
 
+    // ? super Object
     JWildcardType lowerWildcard = oracle.getWildcardType(lowerBound);
+    
+    // ? extends Object
     JWildcardType upperWildcard = oracle.getWildcardType(upperBound);
 
+    // ? extends Object assignable from ? super Object
     assertTrue(upperWildcard.isAssignableFrom(lowerWildcard));
-    assertFalse(lowerWildcard.isAssignableFrom(upperWildcard));
+    
+    // ? super Object assignable from ? extends Object
+    assertTrue(lowerWildcard.isAssignableFrom(upperWildcard));
   }
 
   /**
-   * Tests that <? super Integer> is assignable from <? super Number> and that
-   * the reverse is not <code>true</code>.
+   * Tests that <? super Integer> is assignable to and from <? super Number>.
    */
   public void testIsAssignableFrom_Super_Integer_From_Super_Number()
       throws NotFoundException {
@@ -170,15 +227,14 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     JWildcardType numberWildcard = oracle.getWildcardType(numberBound);
     JWildcardType integerWildcard = oracle.getWildcardType(integerBound);
 
-    assertFalse(numberWildcard.isAssignableFrom(integerWildcard));
+    assertTrue(numberWildcard.isAssignableFrom(integerWildcard));
     assertTrue(numberWildcard.isAssignableTo(integerWildcard));
     assertTrue(integerWildcard.isAssignableFrom(numberWildcard));
-    assertFalse(integerWildcard.isAssignableTo(numberWildcard));
+    assertTrue(integerWildcard.isAssignableTo(numberWildcard));
   }
 
   /**
-   * Tests that <? super Number> is assignable to <? super Integer> and that the
-   * reverse is not <code>true</code>.
+   * Tests that <? super Number> is assignable to and from <? super Integer>.
    */
   public void testIsAssignableFrom_Super_Number_To_Super_Integer()
       throws NotFoundException {
@@ -193,7 +249,7 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     JWildcardType integerWildcard = oracle.getWildcardType(integerBound);
 
     assertTrue(numberWildcard.isAssignableTo(integerWildcard));
-    assertFalse(integerWildcard.isAssignableTo(numberWildcard));
+    assertTrue(integerWildcard.isAssignableTo(numberWildcard));
   }
 
   @Override
@@ -222,8 +278,7 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
   }
 
   /**
-   * Tests that <? super Number> is assignable to <? super Integer> and that
-   * the reverse is not <code>true</code>.
+   * Tests that <? super Number> is assignable to and from <? super Integer>.
    */
   public void testIsAssignableTo_Super_Number_To_Super_Integer()
       throws NotFoundException {
@@ -237,7 +292,7 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     JWildcardType numberWildcard = oracle.getWildcardType(numberBound);
     JWildcardType integerWildcard = oracle.getWildcardType(integerBound);
 
-    assertFalse(integerWildcard.isAssignableTo(numberWildcard));
+    assertTrue(integerWildcard.isAssignableTo(numberWildcard));
     assertTrue(numberWildcard.isAssignableTo(integerWildcard));
   }
 

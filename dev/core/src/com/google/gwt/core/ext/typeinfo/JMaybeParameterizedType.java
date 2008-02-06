@@ -13,23 +13,26 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.core.ext.typeinfo.test;
-
-import java.io.Serializable;
+package com.google.gwt.core.ext.typeinfo;
 
 /**
- * Test a generic class that extends a generic class.
+ * Super class for parameterized types or raw types.
  */
-public class GenericSubclass<U extends Serializable> extends GenericClass<U> {
-  GenericClass<Integer> child;
+abstract class JMaybeParameterizedType extends JDelegatingClassType {
 
-  public GenericSubclass(U t) {
-    super(t);
+  public JMaybeParameterizedType() {
+    super();
   }
 
-  // TODO: This triggers a name clash problem with JDT 3.1 but not with JDT
-  // 3.3.0 or with javac 1.5.06.
-  // public void setT(Object t) {
-  // // this should override GenericClass<U>.setT(T t);
-  // }
+  @Override
+  public JGenericType getBaseType() {
+    JGenericType genericType = super.getBaseType().isGenericType();
+    assert (genericType != null);
+    return genericType;
+  }
+
+  @Override
+  protected JMaybeParameterizedType isMaybeParameterizedType() {
+    return this;
+  }
 }

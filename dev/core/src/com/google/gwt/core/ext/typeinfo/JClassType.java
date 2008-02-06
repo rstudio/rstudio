@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Type representing a Java class or interface type.
+ * Type used to represent any non-primitive type.
  */
 public abstract class JClassType extends JType implements HasAnnotations,
     HasMetaData {
@@ -40,17 +40,268 @@ public abstract class JClassType extends JType implements HasAnnotations,
   }
 
   /**
-   * Returns the {@link JGenericType} base type if the otherType is raw or
-   * parameterized type.
+   * Returns <code>true</code> if the rhs array type can be assigned to the
+   * lhs array type.
    */
-  protected static JClassType maybeGetGenericBaseType(JClassType otherType) {
-    if (otherType.isParameterized() != null) {
-      return otherType.isParameterized().getBaseType();
-    } else if (otherType.isRawType() != null) {
-      return otherType.isRawType().getGenericType();
+  private static boolean areArraysAssignable(JArrayType lhsType,
+      JArrayType rhsType) {
+    // areClassTypesAssignable should prevent us from getting here if the types
+    // are referentially equal.
+    assert (lhsType != rhsType);
+
+    JType lhsComponentType = lhsType.getComponentType();
+    JType rhsComponentType = rhsType.getComponentType();
+
+    if (lhsComponentType.isPrimitive() != null
+        || rhsComponentType.isPrimitive() != null) {
+      /*
+       * Arrays are referentially stable so there will only be one int[] no
+       * matter how many times it is referenced in the code. So, if either
+       * component type is a primitive then we know that we are not assignable.
+       */
+      return false;
     }
-     
-    return otherType;
+
+    assert (lhsComponentType instanceof JClassType);
+    assert (rhsComponentType instanceof JClassType);
+
+    JClassType thisComponentClass = (JClassType) lhsComponentType;
+    JClassType subtypeComponentClass = (JClassType) rhsComponentType;
+
+    return areClassTypesAssignable(thisComponentClass, subtypeComponentClass);
+  }
+
+  /**
+   * Returns <code>true</code> if the rhsType can be assigned to the lhsType.
+   */
+  private static boolean areClassTypesAssignable(JClassType lhsType,
+      JClassType rhsType) {
+    // The supertypes of rhs will include rhs.
+    Set<JClassType> rhsSupertypes = getFlattenedSuperTypeHierarchy(rhsType);
+    for (JClassType rhsSupertype : rhsSupertypes) {
+      if (areClassTypesAssignableNoSupers(lhsType, rhsSupertype)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Returns <code>true</code> if the lhs and rhs are assignable without
+   * consideration of the supertypes of the rhs.
+   * 
+   * @param lhsType
+   * @param rhsType
+   * @return
+   */
+  private static boolean areClassTypesAssignableNoSupers(JClassType lhsType,
+      JClassType rhsType) {
+    if (lhsType == rhsType) {
+      // Done, these are the same types.
+      return true;
+    }
+
+    if (lhsType == lhsType.getOracle().getJavaLangObject()) {
+      // Done, any type can be assigned to object.
+      return true;
+    }
+
+    /*
+     * Get the generic base type, if there is one, for the lhs type and convert
+     * it to a raw type if it is generic.
+     */
+    if (lhsType.isGenericType() != null) {
+      lhsType = lhsType.isGenericType().getRawType();
+    }
+    
+    if (rhsType.isGenericType() != null) {
+      // Treat the generic rhs type as a raw type.
+      rhsType = rhsType.isGenericType().getRawType();
+    }
+
+    // Check for JTypeParameters.
+    JTypeParameter lhsTypeParam = lhsType.isTypeParameter();
+    JTypeParameter rhsTypeParam = rhsType.isTypeParameter();
+    if (lhsTypeParam != null) {
+      JBound bounds = lhsTypeParam.getBounds();
+      JClassType[] lhsTypeBounds = bounds.getBounds();
+      for (JClassType lhsTypeBound : lhsTypeBounds) {
+        if (!areClassTypesAssignable(lhsTypeBound, rhsType)) {
+          // Done, the rhsType was not assignable to one of the bounds.
+          return false;
+        }
+      }
+
+      // Done, the rhsType was assignable to all of the bounds.
+      return true;
+    } else if (rhsTypeParam != null) {
+      JClassType[] possibleSubtypeBounds = rhsTypeParam.getBounds().getBounds();
+      for (JClassType possibleSubtypeBound : possibleSubtypeBounds) {
+        if (areClassTypesAssignable(lhsType, possibleSubtypeBound)) {
+          // Done, at least one bound is assignable to this type.
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    /*
+     * Check for JWildcards. We have not examined this part in great detail
+     * since there should not be top level wildcard types.
+     */
+    JWildcardType lhsWildcard = lhsType.isWildcard();
+    JWildcardType rhsWildcard = rhsType.isWildcard();
+    if (lhsWildcard != null && rhsWildcard != null) {
+      // Both types are wildcards.
+      return areWildcardsAssignable(lhsWildcard, rhsWildcard);
+    } else if (lhsWildcard != null) {
+      // The lhs type is a wildcard but the rhs is not.
+      // ? extends T, U OR ? super T, U
+      JBound lhsBound = lhsWildcard.getBounds();
+      if (lhsBound.isUpperBound() != null) {
+        return areClassTypesAssignable(lhsBound.getFirstBound(), rhsType);
+      } else {
+        // ? super T will reach object no matter what the rhs type is
+        return true;
+      }
+    } 
+
+    // Check for JArrayTypes.
+    JArrayType lhsArray = lhsType.isArray();
+    JArrayType rhsArray = rhsType.isArray();
+    if (lhsArray != null) {
+      if (rhsArray == null) {
+        return false;
+      } else {
+        return areArraysAssignable(lhsArray, rhsArray);
+      }
+    } else if (rhsArray != null) {
+      // Safe although perhaps not necessary
+      return false;
+    }
+
+    // Check for JParameterizedTypes and JRawTypes.
+    JMaybeParameterizedType lhsMaybeParameterized = lhsType.isMaybeParameterizedType();
+    JMaybeParameterizedType rhsMaybeParameterized = rhsType.isMaybeParameterizedType();
+    if (lhsMaybeParameterized != null && rhsMaybeParameterized != null) {
+      if (lhsMaybeParameterized.getBaseType() == rhsMaybeParameterized.getBaseType()) {
+        if (lhsMaybeParameterized.isRawType() != null
+            || rhsMaybeParameterized.isRawType() != null) {
+          /*
+           * Any raw type can be assigned to or from any parameterization of its
+           * generic type.
+           */
+          return true;
+        }
+
+        assert (lhsMaybeParameterized.isRawType() == null && 
+            rhsMaybeParameterized.isRawType() == null);
+        JParameterizedType lhsParameterized = lhsMaybeParameterized.isParameterized();
+        JParameterizedType rhsParameterized = rhsMaybeParameterized.isParameterized();
+        assert (lhsParameterized != null && rhsParameterized != null);
+
+        return areTypeArgumentsAssignable(lhsParameterized,
+            rhsParameterized);
+      }
+    }
+
+    // Default to not being assignable.
+    return false;
+  }
+
+  /**
+   * Returns <code>true</code> if the type arguments of the rhs parameterized
+   * type are assignable to the type arguments of the lhs parameterized type.
+   */
+  private static boolean areTypeArgumentsAssignable(JParameterizedType lhsType,
+      JParameterizedType rhsType) {
+    // areClassTypesAssignable should prevent us from getting here if the types
+    // are referentially equal.
+    assert (lhsType != rhsType);
+    assert (lhsType.getBaseType() == rhsType.getBaseType());
+
+    JClassType[] lhsTypeArgs = lhsType.getTypeArgs();
+    JClassType[] rhsTypeArgs = rhsType.getTypeArgs();
+    JGenericType lhsBaseType = lhsType.getBaseType();
+
+    // Compare at least as many formal type parameters as are declared on the
+    // generic base type. gwt.typeArgs could cause more types to be included.
+
+    JTypeParameter[] lhsTypeParams = lhsBaseType.getTypeParameters();
+    for (int i = 0; i < lhsTypeParams.length; ++i) {
+      if (!doesTypeArgumentContain(lhsTypeArgs[i], rhsTypeArgs[i])) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Returns <code>true</code> if the rhsWildcard can be assigned to the
+   * lhsWildcard.  This method does not consider supertypes of either
+   * lhs or rhs.
+   */
+  private static boolean areWildcardsAssignable(JWildcardType lhsWildcard,
+      JWildcardType rhsWildcard) {
+    // areClassTypesAssignable should prevent us from getting here if the types
+    // are referentially equal.
+    assert (lhsWildcard != rhsWildcard);
+    assert (lhsWildcard != null && rhsWildcard != null);
+
+    JBound lhsBound = lhsWildcard.getBounds();
+    JBound rhsBound = rhsWildcard.getBounds();
+
+    if (lhsBound.isUpperBound() != null && rhsBound.isUpperBound() != null) {
+      // lhsType: ? extends T, rhsType: ? extends U
+      return areClassTypesAssignable(lhsBound.getFirstBound(),
+          rhsBound.getFirstBound());
+    } else if (lhsBound.isLowerBound() != null
+        && rhsBound.isLowerBound() != null) {
+      // lhsType: ? super T, rhsType ? super U
+      return areClassTypesAssignable(rhsBound.getFirstBound(),
+          lhsBound.getFirstBound());
+    }
+
+    return false;
+  }
+
+  /**
+   * A restricted version of areClassTypesAssignable that is used for comparing 
+   * the type arguments of parameterized types, where the lhsTypeArg is the
+   * container.
+   */
+  private static boolean doesTypeArgumentContain(JClassType lhsTypeArg,
+      JClassType rhsTypeArg) {
+    if (lhsTypeArg == rhsTypeArg) {
+      return true;
+    }
+
+    // Check for wildcard types
+    JWildcardType lhsWildcard = lhsTypeArg.isWildcard();
+    JWildcardType rhsWildcard = rhsTypeArg.isWildcard();
+
+    if (lhsWildcard != null) {
+      if (rhsWildcard != null) {
+        return areWildcardsAssignable(lhsWildcard, rhsWildcard);
+      } else {
+        // LHS is a wildcard but the RHS is not.
+        JBound lhsBound = lhsWildcard.getBounds();
+        if (lhsBound.isLowerBound() == null) {
+          return areClassTypesAssignable(lhsBound.getFirstBound(), rhsTypeArg);
+        } else {
+          return areClassTypesAssignable(rhsTypeArg, lhsBound.getFirstBound());
+        }
+      }
+    }
+    
+    /*
+     * At this point the arguments are not the same and they are not wildcards
+     * so, they cannot be assignable, Eh.
+     */
+    return false;
   }
 
   private static void getFlattenedSuperTypeHierarchyRecursive(JClassType type,
@@ -72,7 +323,7 @@ public abstract class JClassType extends JType implements HasAnnotations,
       getFlattenedSuperTypeHierarchyRecursive(intf, typesSeen);
     }
   }
-  
+
   public abstract void addImplementedInterface(JClassType intf);
 
   public abstract void addMetaData(String tagName, String[] values);
@@ -171,9 +422,13 @@ public abstract class JClassType extends JType implements HasAnnotations,
   public abstract boolean isAnnotationPresent(
       Class<? extends Annotation> annotationClass);
 
-  public abstract boolean isAssignableFrom(JClassType possibleSubtype);
+  public boolean isAssignableFrom(JClassType possibleSubtype) {
+    return areClassTypesAssignable(this, possibleSubtype);
+  }
 
-  public abstract boolean isAssignableTo(JClassType possibleSupertype);
+  public boolean isAssignableTo(JClassType possibleSupertype) {
+    return areClassTypesAssignable(possibleSupertype, this);
+  }
 
   /**
    * Determines if the class can be constructed using a simple <code>new</code>
@@ -242,6 +497,10 @@ public abstract class JClassType extends JType implements HasAnnotations,
    */
   protected abstract void getOverridableMethodsOnSuperinterfacesAndMaybeThisInterface(
       Map<String, JMethod> methodsBySignature);
+
+  protected JMaybeParameterizedType isMaybeParameterizedType() {
+    return null;
+  }
 
   protected final String makeCompoundName(JClassType type) {
     if (type.getEnclosingType() == null) {

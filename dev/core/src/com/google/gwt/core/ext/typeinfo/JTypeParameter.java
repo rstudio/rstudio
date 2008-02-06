@@ -118,24 +118,6 @@ public class JTypeParameter extends JDelegatingClassType implements HasBounds {
   }
 
   @Override
-  public boolean isAssignableFrom(JClassType otherType) {
-    if (otherType == this) {
-      return true;
-    }
-    
-    return getBounds().isAssignableFrom(otherType);
-  }
-
-  @Override
-  public boolean isAssignableTo(JClassType otherType) {
-    if (otherType == this) {
-      return true;
-    }
-    
-    return getBounds().isAssignableTo(otherType);
-  }
-  
-  @Override
   public JGenericType isGenericType() {
     return null;
   }
