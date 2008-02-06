@@ -199,9 +199,11 @@ public class TypeTightener {
 
     @Override
     public void endVisit(JClassType x, Context ctx) {
-      for (JClassType cur = x; cur != null; cur = cur.extnds) {
-        addImplementor(cur, x);
-        addInterfacesImplementorRecursive(cur, x);
+      if (program.typeOracle.isInstantiatedType(x)) {
+        for (JClassType cur = x; cur != null; cur = cur.extnds) {
+          addImplementor(cur, x);
+          addInterfacesImplementorRecursive(cur, x);
+        }
       }
     }
 
@@ -223,8 +225,10 @@ public class TypeTightener {
 
     @Override
     public void endVisit(JMethod x, Context ctx) {
-      for (JMethod method : program.typeOracle.getAllOverrides(x)) {
-        addOverrider(method, x);
+      if (program.typeOracle.isInstantiatedType(x.getEnclosingType())) {
+        for (JMethod method : program.typeOracle.getAllOverrides(x)) {
+          addOverrider(method, x);
+        }
       }
       currentMethod = null;
     }
@@ -493,20 +497,6 @@ public class TypeTightener {
      */
     @Override
     public void endVisit(JMethod x, Context ctx) {
-      JClassType concreteType = getSingleConcreteType(x.getType());
-      if (concreteType != null) {
-        x.setType(concreteType);
-        myDidChange = true;
-      }
-
-      /*
-       * The only information that we can infer about native methods is if they
-       * are declared to return a leaf type.
-       */
-      if (x.isNative()) {
-        return;
-      }
-
       if (!(x.getType() instanceof JReferenceType)) {
         return;
       }
@@ -520,6 +510,20 @@ public class TypeTightener {
       if (!program.typeOracle.isInstantiatedType(refType)) {
         x.setType(typeNull);
         myDidChange = true;
+        return;
+      }
+
+      JClassType concreteType = getSingleConcreteType(x.getType());
+      if (concreteType != null) {
+        x.setType(concreteType);
+        myDidChange = true;
+      }
+
+      /*
+       * The only information that we can infer about native methods is if they
+       * are declared to return a leaf type.
+       */
+      if (x.isNative()) {
         return;
       }
 
@@ -614,7 +618,10 @@ public class TypeTightener {
       if (type instanceof JReferenceType) {
         JReferenceType refType = (JReferenceType) type;
         if (refType.isAbstract()) {
-          return getSingleConcrete((JReferenceType) type, implementors);
+          JClassType singleConcrete = getSingleConcrete((JReferenceType) type,
+              implementors);
+          assert (singleConcrete == null || program.typeOracle.isInstantiatedType(singleConcrete));
+          return singleConcrete;
         }
       }
       return null;
@@ -633,17 +640,17 @@ public class TypeTightener {
         return;
       }
 
-      // tighten based on leaf types
-      JClassType leafType = getSingleConcreteType(refType);
-      if (leafType != null) {
-        x.setType(leafType);
+      // tighten based on non-instantiability
+      if (!program.typeOracle.isInstantiatedType(refType)) {
+        x.setType(typeNull);
         myDidChange = true;
         return;
       }
 
-      // tighten based on non-instantiability
-      if (!program.typeOracle.isInstantiatedType(refType)) {
-        x.setType(typeNull);
+      // tighten based on leaf types
+      JClassType leafType = getSingleConcreteType(refType);
+      if (leafType != null) {
+        x.setType(leafType);
         myDidChange = true;
         return;
       }

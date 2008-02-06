@@ -132,7 +132,7 @@ public class MakeCallsStatic {
       JType returnType = x.getType();
       SourceInfo sourceInfo = x.getSourceInfo();
       int myIndexInClass = enclosingType.methods.indexOf(x);
-      assert (myIndexInClass >= 0);
+      assert (myIndexInClass > 0);
 
       // Create the new static method
       String newName = "$" + x.getName();
@@ -235,6 +235,8 @@ public class MakeCallsStatic {
         // Special case: we don't make calls to this method static.
         return;
       }
+
+      assert (method.getEnclosingType().methods.indexOf(method) > 0);
 
       // Let's do it!
       toBeMadeStatic.add(method);

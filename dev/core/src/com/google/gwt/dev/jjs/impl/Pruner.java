@@ -207,14 +207,11 @@ public class Pruner {
 
     @Override
     public boolean visit(JClassType type, Context ctx) {
-
       assert (referencedTypes.contains(type));
-      boolean isInstantiated = program.typeOracle.isInstantiatedType(type);
 
       for (Iterator<JField> it = type.fields.iterator(); it.hasNext();) {
         JField field = it.next();
-        if (!referencedNonTypes.contains(field)
-            || pruneViaNoninstantiability(isInstantiated, field)) {
+        if (!referencedNonTypes.contains(field)) {
           it.remove();
           didChange = true;
         }
@@ -222,8 +219,7 @@ public class Pruner {
 
       for (Iterator<JMethod> it = type.methods.iterator(); it.hasNext();) {
         JMethod method = it.next();
-        if (!methodIsReferenced(method)
-            || pruneViaNoninstantiability(isInstantiated, method)) {
+        if (!methodIsReferenced(method)) {
           it.remove();
           didChange = true;
         } else {
