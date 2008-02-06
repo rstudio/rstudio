@@ -501,12 +501,13 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   * 
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-popup => The popup that appears with suggestions</li>
-   * <li>-items-item# => The suggested item at the specified index</li>
-   * </ul> 
+   * <li>-popup = The popup that appears with suggestions.</li>
+   * <li>-items-item# = The suggested item at the specified index.</li>
+   * </ul>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

@@ -123,11 +123,12 @@ public class VerticalPanel extends CellPanel implements HasAlignment {
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   *
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-# => the cell at the given index</li>
+   * <li>-# = the cell at the given index.</li>
    * </ul>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

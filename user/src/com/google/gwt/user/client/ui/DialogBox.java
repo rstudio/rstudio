@@ -214,12 +214,13 @@ public class DialogBox extends PopupPanel implements HasHTML, HasText,
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   * 
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-caption => text at the top of the {@link DialogBox}</li>
-   * <li>-content => the table cell around the content</li>
+   * <li>-caption = text at the top of the {@link DialogBox}.</li>
+   * <li>-content = the table cell around the content.</li>
    * </ul>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

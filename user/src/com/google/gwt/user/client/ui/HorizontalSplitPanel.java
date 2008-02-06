@@ -321,13 +321,14 @@ public final class HorizontalSplitPanel extends SplitPanel {
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   * 
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-splitter => the container containing the splitter element</li>
-   * <li>-right => the container on the right side of the splitter</li>
-   * <li>-left => the container on the left side of the splitter</li>
+   * <li>-splitter = the container containing the splitter element.</li>
+   * <li>-right = the container on the right side of the splitter.</li>
+   * <li>-left = the container on the left side of the splitter.</li>
    * </ul>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

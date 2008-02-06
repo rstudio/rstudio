@@ -371,14 +371,15 @@ public class TabPanel extends Composite implements TabListener,
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   * 
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-bar => The tab bar</li>
-   * <li>-bar-tab# => The element containing the contents of the tab itself</li>
-   * <li>-bar-tab#-wrapper => The cell containing the tab at the index</li>
-   * <li>-bottom => The panel beneath the tab bar</li>
+   * <li>-bar = The tab bar.</li>
+   * <li>-bar-tab# = The element containing the content of the tab itself.</li>
+   * <li>-bar-tab#-wrapper = The cell containing the tab at the index.</li>
+   * <li>-bottom = The panel beneath the tab bar.</li>
    * </ul>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

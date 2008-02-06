@@ -343,11 +343,12 @@ public class MenuBar extends Widget implements PopupListener {
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   * 
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-item# => the {@link MenuItem} at the specified index</li>
+   * <li>-item# = the {@link MenuItem} at the specified index.</li>
    * </ul>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

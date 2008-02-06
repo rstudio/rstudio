@@ -327,13 +327,14 @@ public final class VerticalSplitPanel extends SplitPanel {
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   * 
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-splitter => the container containing the splitter element</li>
-   * <li>-top => the container above the splitter</li>
-   * <li>-bottom => the container below the splitter</li>
+   * <li>-splitter = the container containing the splitter element.</li>
+   * <li>-top = the container above the splitter.</li>
+   * <li>-bottom = the container below the splitter.</li>
    * </ul>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

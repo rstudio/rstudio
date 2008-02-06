@@ -412,7 +412,8 @@ public abstract class UIObject {
    * This method will be compiled out and will have no effect unless you inherit
    * the DebugID module in your gwt.xml file by adding the following line:
    * 
-   * <inherits name="com.google.gwt.user.DebugID"/>
+   * <pre class="code">
+   * &lt;inherits name="com.google.gwt.user.DebugID"/&gt;</pre>
    * 
    * @param id the ID to set on the main element
    */
@@ -696,7 +697,7 @@ public abstract class UIObject {
    * list the IDs (relative to the base ID), that will be applied to each sub
    * {@link Element} with a short description.  For example:
    * <ul>
-   * <li>-mysubelement => Applies to my sub element</li>
+   * <li>-mysubelement = Applies to my sub element.</li>
    * </ul> 
    * 
    * Subclasses should make a super call to this method to ensure that the ID of
@@ -705,7 +706,8 @@ public abstract class UIObject {
    * This method will not be called unless you inherit the DebugID module in
    * your gwt.xml file by adding the following line:
    * 
-   * <inherits name="com.google.gwt.user.DebugID"/>
+   * <pre class="code">
+   * &lt;inherits name="com.google.gwt.user.DebugID"/&gt;</pre>
    * 
    * @param baseID the base ID used by the main element
    */

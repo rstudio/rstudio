@@ -179,11 +179,12 @@ public class CheckBox extends ButtonBase implements HasName {
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   * 
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-label => label next to checkbox</li>
+   * <li>-label = label next to checkbox.</li>
    * </ul>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

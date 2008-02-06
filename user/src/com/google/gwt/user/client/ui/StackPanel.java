@@ -226,12 +226,13 @@ public class StackPanel extends ComplexPanel {
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   * 
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-text# => The element around the header at the specified index</li>
-   * <li>-content# => The element around the body at the specified index</li>
+   * <li>-text# = The element around the header at the specified index.</li>
+   * <li>-content# = The element around the body at the specified index.</li>
    * </ul>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

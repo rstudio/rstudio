@@ -151,10 +151,10 @@ public class MenuItem extends UIObject implements HasHTML {
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
+   * Also sets the Debug IDs of MenuItems in the submenu of this
+   * {@link MenuItem} if a submenu exists.
    * 
-   * Also sets the Debug IDs of {@link MenuItem}s in the submenu of this
-   * {@link MenuItem}, if one exists.
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

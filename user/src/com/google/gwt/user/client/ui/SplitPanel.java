@@ -332,11 +332,12 @@ abstract class SplitPanel extends Panel {
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   * 
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-splitter => the container containing the splitter element</li>
+   * <li>-splitter = the container containing the splitter element.</li>
    * </ul>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

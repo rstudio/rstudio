@@ -413,13 +413,14 @@ public class TreeItem extends UIObject implements HasHTML {
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   *
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-image => The status image</li>
-   * <li>-content => The text or {@link Widget} next to the image</li>
-   * <li>-child# => The child at the specified index</li>
+   * <li>-image = The status image.</li>
+   * <li>-content = The text or {@link Widget} next to the image.</li>
+   * <li>-child# = The child at the specified index.</li>
    * </ul>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

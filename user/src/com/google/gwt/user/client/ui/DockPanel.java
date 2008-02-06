@@ -257,24 +257,27 @@ public class DockPanel extends CellPanel implements HasAlignment {
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   * 
-   * {@link DockPanel}s support adding more than one cell in a direction, so an
+   * {@link DockPanel} supports adding more than one cell in a direction, so an
    * integer will be appended to the end of the debug id. For example, the first
    * north cell is labeled "north1", the second is "north2", and the third is
    * "north3".
    * 
    * This widget recreates its structure every time a {@link Widget} is added,
-   * so you must call this method after adding new {@link Widget}s or all debug
+   * so you must call this method after adding a new {@link Widget} or all debug
    * IDs will be lost.
    * 
+   * <p>
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-center => the center cell</li>
-   * <li>-north# => the northern cell</li>
-   * <li>-south# => the southern cell</li>
-   * <li>-east# => the eastern cell</li>
-   * <li>-west# => the western cell</li>
+   * <li>-center = the center cell.</li>
+   * <li>-north# = the northern cell.</li>
+   * <li>-south# = the southern cell.</li>
+   * <li>-east# = the eastern cell.</li>
+   * <li>-west# = the western cell.</li>
    * </ul>
+   * </p>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

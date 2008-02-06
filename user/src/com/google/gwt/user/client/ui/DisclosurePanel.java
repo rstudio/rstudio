@@ -394,11 +394,12 @@ public final class DisclosurePanel extends Composite implements
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   * 
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-header => the clickable header</li>
+   * <li>-header = the clickable header.</li>
    * </ul>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

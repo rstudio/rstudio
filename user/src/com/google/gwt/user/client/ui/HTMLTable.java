@@ -1294,11 +1294,12 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   * 
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-(row)#-(cell)# => the cell at the given row and cell index</li>
+   * <li>-(row)#-(cell)# = the cell at the given row and cell index.</li>
    * </ul>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

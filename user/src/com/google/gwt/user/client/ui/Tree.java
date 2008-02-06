@@ -649,11 +649,12 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   *
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-root => The root {@link TreeItem}</li>
+   * <li>-root = The root {@link TreeItem}.</li>
    * </ul>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

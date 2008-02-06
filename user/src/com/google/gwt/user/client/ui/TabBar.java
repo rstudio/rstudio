@@ -291,12 +291,13 @@ public class TabBar extends Composite implements SourcesTabEvents,
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   * 
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-tab# => The element containing the contents of the tab</li>
-   * <li>-tab-wrapper# => The cell containing the tab at the index</li>
+   * <li>-tab# = The element containing the contents of the tab.</li>
+   * <li>-tab-wrapper# = The cell containing the tab at the index.</li>
    * </ul>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

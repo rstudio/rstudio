@@ -154,11 +154,12 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents {
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   * 
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-wrapper => the div around the link</li>
+   * <li>-wrapper = the div around the link.</li>
    * </ul>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {

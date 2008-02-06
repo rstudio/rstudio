@@ -435,11 +435,12 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
-   * @see UIObject#onEnsureDebugId(String)
-   * 
+   * <b>Affected Elements:</b>
    * <ul>
-   * <li>-item# => the option at the specified index</li>
+   * <li>-item# = the option at the specified index.</li>
    * </ul>
+   * 
+   * @see UIObject#onEnsureDebugId(String)
    */
   @Override
   protected void onEnsureDebugId(String baseID) {
