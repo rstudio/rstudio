@@ -56,6 +56,7 @@ import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
@@ -601,6 +602,12 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
       }
     }
 
+    return false;
+  }
+
+  @Override
+  public boolean visit(JMethodBody x, Context ctx) {
+    visitCollectionWithCommas(x.locals.iterator());
     return false;
   }
 
