@@ -13,30 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.i18n.client.impl;
+package com.google.gwt.i18n.client;
+
+import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Implementation detail of LocaleInfo -- not a public API and subject to
- * change.
- * 
- * Generated interface for locale information.  The default implementation
- * returns null, which is used if the i18n module is not imported.
- * 
- * @see com.google.gwt.i18n.client.LocaleInfo
+ * Test that LocaleInfo works properly if i18n isn't imported.
  */
-public class LocaleInfoImpl {
+public class LocaleInfo_none_Test extends GWTTestCase {
 
-  /**
-   * @return an array of available locale names
-   */
-  public String[] getAvailableLocaleNames() {
-    return null;
+  public String getModuleName() {
+    return "com.google.gwt.i18n.I18NTest_none";
   }
 
-  /**
-   * @return the current locale name, such as "default, "en_US", etc.
-   */
-  public String getLocaleName() {
-    return null;
+  public void testLocaleInfo() {
+    LocaleInfo localeInfo = LocaleInfo.getCurrentLocale();
+    assertFalse(localeInfo.isRTL());
+    assertNull(localeInfo.getLocaleName());
+    assertNull(LocaleInfo.getAvailableLocaleNames());
   }
 }

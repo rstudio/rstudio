@@ -56,12 +56,14 @@ public class LocaleInfoGenerator extends Generator {
     TypeOracle typeOracle = context.getTypeOracle();
     // Get the current locale and interface type.
     PropertyOracle propertyOracle = context.getPropertyOracle();
-    String locale;
+    String locale = null;
+    String[] localeValues = null;
     try {
       locale = propertyOracle.getPropertyValue(logger, PROP_LOCALE);
+      localeValues = propertyOracle.getPropertyValueSet(logger, PROP_LOCALE);
     } catch (BadPropertyValueException e) {
-      logger.log(TreeLogger.ERROR, "Could not parse specified locale", e);
-      throw new UnableToCompleteException();
+      logger.log(TreeLogger.TRACE, "LocaleInfo used without I18N module, using defaults", e);
+      return LocaleInfoImpl.class.getName();
     }
 
     JClassType targetClass;
@@ -83,27 +85,18 @@ public class LocaleInfoGenerator extends Generator {
     if (pw != null) {
       ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
           packageName, className);
-      factory.addImplementedInterface(targetClass.getQualifiedSourceName());
+      factory.setSuperclass(targetClass.getQualifiedSourceName());
       SourceWriter writer = factory.createSourceWriter(context, pw);
-      writer.println("private static final String[] availableLocales = new String[] {");
-      try {
-        for (String propval : propertyOracle.getPropertyValueSet(logger,
-            PROP_LOCALE)) {
-          writer.println("  \"" + propval.replaceAll("\"", "\\\"") + "\",");
-        }
-      } catch (BadPropertyValueException e) {
-        logger.log(TreeLogger.ERROR,
-            "No locale property defined -- did you inherit the I18N module?", e);
-        throw new UnableToCompleteException();
-      }
-      writer.println("};");
-      writer.println();
       writer.println("public String getLocaleName() {");
       writer.println("  return \"" + locale + "\";");
       writer.println("}");
       writer.println();
       writer.println("public String[] getAvailableLocaleNames() {");
-      writer.println("  return availableLocales;");
+      writer.println("  return new String[] {");
+      for (String propval : localeValues) {
+        writer.println("    \"" + propval.replaceAll("\"", "\\\"") + "\",");
+      }
+      writer.println("  };");
       writer.println("}");
       writer.commit(logger);
     }
