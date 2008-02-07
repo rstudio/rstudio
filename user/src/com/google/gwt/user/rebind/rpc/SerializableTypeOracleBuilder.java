@@ -1011,7 +1011,7 @@ public class SerializableTypeOracleBuilder {
         }
       } else if (classType.isRawType() != null) {
         TreeLogger rawTypeLogger = logger.branch(
-            TreeLogger.INFO,
+            TreeLogger.DEBUG,
             "Type '"
                 + classType.getQualifiedSourceName()
                 + "' should be parameterized to help the compiler produce the smallest code size possible for your module.",
