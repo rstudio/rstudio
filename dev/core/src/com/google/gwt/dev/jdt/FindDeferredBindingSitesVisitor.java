@@ -77,8 +77,6 @@ public class FindDeferredBindingSitesVisitor extends ASTVisitor {
   }
 
   public void endVisit(MessageSend messageSend, BlockScope scope) {
-    final ProblemReporter problemReporter = scope.problemReporter();
-
     if (messageSend.binding == null) {
       // Some sort of problem.
       //
