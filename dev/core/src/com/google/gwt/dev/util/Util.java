@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -558,9 +558,7 @@ public final class Util {
     try {
       fileInputStream = new FileInputStream(file);
       int length = (int) file.length();
-      byte[] data = new byte[length];
-      fileInputStream.read(data);
-      return data;
+      return readBytesFromInputStream(fileInputStream, length);
     } catch (IOException e) {
       return null;
     } finally {
@@ -569,48 +567,20 @@ public final class Util {
   }
 
   public static char[] readFileAsChars(File file) {
-    if (!file.exists()) {
-      return null;
+    String string = readFileAsString(file);
+    if (string != null) {
+      return string.toCharArray();
     }
-    Reader fileReader = null;
-    try {
-      fileReader = new InputStreamReader(new FileInputStream(file),
-          DEFAULT_ENCODING);
-      int length = (int) file.length();
-      if (length < 0) {
-        return null;
-      }
-      char[] fileContents = new char[length];
-      int charsRead = fileReader.read(fileContents);
-      if (charsRead < fileContents.length) {
-        /*
-         * Calling functions expect returned char[] to be fully populated. This
-         * happens because some UTF-8 chars take more than one byte to
-         * represent.
-         */
-        char[] trimmed = new char[charsRead];
-        System.arraycopy(fileContents, 0, trimmed, 0, charsRead);
-        fileContents = trimmed;
-      }
-      return fileContents;
-    } catch (IOException e) {
-      return null;
-    } finally {
-      Utility.close(fileReader);
-    }
+    return null;
   }
 
   public static String readFileAsString(File file) {
-    try {
-      URL toURL = file.toURI().toURL();
-      char[] buf = readURLAsChars(toURL);
-      if (buf == null) {
-        return null;
-      }
-      return String.valueOf(buf);
-    } catch (MalformedURLException e) {
-      return null;
+    byte[] bytes = readFileAsBytes(file);
+    if (bytes != null) {
+      return toString(bytes, DEFAULT_ENCODING);
     }
+
+    return null;
   }
 
   /**
@@ -649,9 +619,8 @@ public final class Util {
       if (contentLength < 0) {
         return null;
       }
-      byte[] data = new byte[contentLength];
-      input.read(data);
-      return data;
+
+      return readBytesFromInputStream(input, contentLength);
     } catch (IOException e) {
       return null;
     } finally {
@@ -664,34 +633,12 @@ public final class Util {
    */
   public static char[] readURLAsChars(URL url) {
     // ENH: add a weak cache that has an additional check against the file date
-    InputStreamReader reader = null;
-    try {
-      URLConnection connection = url.openConnection();
-      connection.setUseCaches(false);
-      reader = new InputStreamReader(connection.getInputStream(),
-          DEFAULT_ENCODING);
-      int contentLength = connection.getContentLength();
-      if (contentLength < 0) {
-        return null;
-      }
-      char[] fileContents = new char[contentLength];
-      int charsRead = reader.read(fileContents);
-      if (charsRead < fileContents.length) {
-        /*
-         * Calling functions expect returned char[] to be fully populated. This
-         * happens because some UTF-8 chars take more than one byte to
-         * represent.
-         */
-        char[] trimmed = new char[charsRead];
-        System.arraycopy(fileContents, 0, trimmed, 0, charsRead);
-        fileContents = trimmed;
-      }
-      return fileContents;
-    } catch (IOException e) {
-      return null;
-    } finally {
-      Utility.close(reader);
+    byte[] bytes = readURLAsBytes(url);
+    if (bytes != null) {
+      return toString(bytes, DEFAULT_ENCODING).toCharArray();
     }
+
+    return null;
   }
 
   /**
@@ -998,6 +945,57 @@ public final class Util {
       Utility.close(stream);
     }
     return true;
+  }
+
+  /**
+   * Reads the specified number of bytes from the {@link InputStream}.
+   * 
+   * @param byteLength number of bytes to read
+   * @return byte array containing the bytes read or <code>null</code> if
+   *         there is an {@link IOException} or if the requested number of bytes 
+   *         can not be read from the {@link InputStream}
+   */
+  private static byte[] readBytesFromInputStream(InputStream input,
+      int byteLength) {
+
+    try {
+      byte[] bytes = new byte[byteLength];
+      int byteOffset = 0;
+      while (byteOffset < byteLength) {
+        int bytesReadCount = input.read(bytes, byteOffset, byteLength
+            - byteOffset);
+        if (bytesReadCount == -1) {
+          return null;
+        }
+
+        byteOffset += bytesReadCount;
+      }
+
+      return bytes;
+    } catch (IOException e) {
+      // Ignored.
+    }
+
+    return null;
+  }
+
+  /**
+   * Creates a string from the bytes using the specified character set name.
+   * 
+   * @param bytes bytes to convert
+   * @param charsetName the name of the character set to use
+   * 
+   * @return String for the given bytes and character set or <code>null</code>
+   *         if the character set is not supported
+   */
+  private static String toString(byte[] bytes, String charsetName) {
+    try {
+      return new String(bytes, charsetName);
+    } catch (UnsupportedEncodingException e) {
+      // Ignored.
+    }
+
+    return null;
   }
 
   private static void writeAttribute(PrintWriter w, Attr attr, int depth)
