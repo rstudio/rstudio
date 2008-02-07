@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,16 +33,6 @@ import java.lang.annotation.Target;
     ElementType.TYPE})
 public @interface TestAnnotation {
   /**
-   * Default value for the annotation.
-   */
-  String value();
-
-  /**
-   * Tests element default values that are themselves annotations.
-   */
-  NestedAnnotation nestedAnnotation() default @NestedAnnotation("Not assigned");
-
-  /**
    * Used to test initialization using conditional statements.
    */
   boolean useMinLong = true;
@@ -51,11 +41,21 @@ public @interface TestAnnotation {
    * Used to test initialization using SingleNameReferences.
    */
   String defaultStringValue = "Hello There";
+
+  /**
+   * Tests that implicit array initializers are handled correctly.
+   */
+  Class<?>[] arrayWithImplicitArrayInitializer() default Object.class;
+
+  /**
+   * Tests default value initialization of class literals. 
+   */
+  Class<?> classLiteral() default Object.class;
   
   /**
-   * Tests default values using conditional statements.
+   * Tests that an empty array initializer is handled correctly.
    */
-  long longValue() default useMinLong ? Long.MIN_VALUE : Long.MAX_VALUE;
+  int[] emptyArray() default {};
 
   /**
    * Tests array default values.
@@ -63,13 +63,23 @@ public @interface TestAnnotation {
   int[] intArrayValue() default {1,2,3};
 
   /**
+   * Tests default values using conditional statements.
+   */
+  long longValue() default useMinLong ? Long.MIN_VALUE : Long.MAX_VALUE;
+  
+  /**
+   * Tests element default values that are themselves annotations.
+   */
+  NestedAnnotation nestedAnnotation() default @NestedAnnotation("Not assigned");
+  
+  /**
    * Tests default value initialization via a QualifiedNameReference.
    */
   String stringValue() default TestAnnotation.defaultStringValue;
-  
+
   /**
-   * Tests default value initialization of class literals. 
+   * Default value for the annotation.
    */
-  Class<?> classLiteral() default Object.class;
+  String value();
 }
 

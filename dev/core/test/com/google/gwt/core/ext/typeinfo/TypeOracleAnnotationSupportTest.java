@@ -20,6 +20,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.test.AnnotatedClass;
 import com.google.gwt.core.ext.typeinfo.test.ClassAnnotatedWithBinaryOnlyAnnotation;
 import com.google.gwt.core.ext.typeinfo.test.ClassLiteralReferenceAnnotation;
+import com.google.gwt.core.ext.typeinfo.test.PrimitiveValuesAnnotation;
+import com.google.gwt.core.ext.typeinfo.test.PrimitivesAnnotatedClass;
 import com.google.gwt.core.ext.typeinfo.test.TestAnnotation;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
@@ -73,6 +75,17 @@ public class TypeOracleAnnotationSupportTest extends TestCase {
 
     // Tests default value that is a class literal.
     assertEquals(realAnnotation.classLiteral(), testAnnotation.classLiteral());
+
+    // Tests implicit array initializers
+    Class<?>[] expectedArrayValue = realAnnotation.arrayWithImplicitArrayInitializer();
+    Class<?>[] actualArrayValue = testAnnotation.arrayWithImplicitArrayInitializer();
+    assertTrue(expectedArrayValue.length > 0);
+    assertEquals(expectedArrayValue.length, actualArrayValue.length);
+    assertEquals(expectedArrayValue[0], actualArrayValue[0]);
+
+    // Tests that empty array initializers are also handled correctly.
+    assertEquals(realAnnotation.emptyArray().length,
+        testAnnotation.emptyArray().length);
   }
 
   private final TreeLogger logger = TreeLogger.NULL;
@@ -190,5 +203,38 @@ public class TypeOracleAnnotationSupportTest extends TestCase {
     JClassType classType = typeOracle.getType(ClassAnnotatedWithBinaryOnlyAnnotation.class.getCanonicalName());
 
     assertNull(classType.getAnnotation(BinaryOnlyAnnotation.class));
+  }
+
+  /**
+   * Ensures that we properly handle primitive value attributes on annotations.
+   * (Special-cased, because of how JDT handles char/numeric literals)
+   */
+  public void testPrimitiveValuesAnnotations() throws NotFoundException {
+    JClassType primitivesAnnotatedClass = typeOracle.getType(PrimitivesAnnotatedClass.class.getName());
+    PrimitiveValuesAnnotation annotation = primitivesAnnotatedClass.getAnnotation(PrimitiveValuesAnnotation.class);
+
+    boolean bool = annotation.bool();
+    assertTrue(bool);
+
+    byte b = annotation.b();
+    assertTrue(b > 0);
+
+    char c = annotation.c();
+    assertTrue(c > 0);
+
+    double d = annotation.d();
+    assertTrue(d > 0);
+
+    float f = annotation.f();
+    assertTrue(f > 0);
+
+    int i = annotation.i();
+    assertTrue(i > 0);
+
+    long l = annotation.l();
+    assertTrue(l > 0);
+
+    short s = annotation.s();
+    assertTrue(s > 0);
   }
 }

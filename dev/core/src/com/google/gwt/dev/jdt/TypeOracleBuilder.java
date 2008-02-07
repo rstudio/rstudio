@@ -44,8 +44,8 @@ import com.google.gwt.core.ext.typeinfo.JUpperBound;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jdt.CacheManager.Mapper;
 import com.google.gwt.dev.util.Empty;
-import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.PerfLogger;
+import com.google.gwt.dev.util.Util;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.core.compiler.IProblem;
@@ -60,21 +60,13 @@ import org.eclipse.jdt.internal.compiler.ast.ArrayInitializer;
 import org.eclipse.jdt.internal.compiler.ast.ClassLiteralAccess;
 import org.eclipse.jdt.internal.compiler.ast.Clinit;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.ConditionalExpression;
 import org.eclipse.jdt.internal.compiler.ast.Expression;
-import org.eclipse.jdt.internal.compiler.ast.FalseLiteral;
 import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Initializer;
 import org.eclipse.jdt.internal.compiler.ast.Javadoc;
-import org.eclipse.jdt.internal.compiler.ast.MagicLiteral;
 import org.eclipse.jdt.internal.compiler.ast.MemberValuePair;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.NameReference;
-import org.eclipse.jdt.internal.compiler.ast.NullLiteral;
-import org.eclipse.jdt.internal.compiler.ast.NumberLiteral;
-import org.eclipse.jdt.internal.compiler.ast.SingleMemberAnnotation;
-import org.eclipse.jdt.internal.compiler.ast.StringLiteral;
-import org.eclipse.jdt.internal.compiler.ast.TrueLiteral;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeParameter;
 import org.eclipse.jdt.internal.compiler.ast.TypeReference;
@@ -104,7 +96,6 @@ import java.io.CharArrayReader;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -299,13 +290,6 @@ public class TypeOracleBuilder {
     } else {
       return String.valueOf(jmethod.binding.selector);
     }
-  }
-
-  /**
-   * Returns the number associated with a JDT numeric literal.
-   */
-  private static Object getNumericLiteralValue(NumberLiteral expression) {
-    return getConstantValue(expression.constant);
   }
 
   private static boolean isAnnotation(TypeDeclaration typeDecl) {
@@ -660,32 +644,21 @@ public class TypeOracleBuilder {
 
       // Value
       Expression expressionValue = mvp.value;
-      Object value = evaluateConstantExpression(logger, expressionValue);
-      if (value == null) {
+      TypeBinding expectedElementValueType = mvp.binding.returnType;
+      Object elementValue = getAnnotationElementValue(logger,
+          expectedElementValueType, expressionValue);
+      if (elementValue == null) {
         return null;
       }
 
-      try {
-        Method method = clazz.getMethod(identifier, new Class[0]);
-        Class<?> expectedClass = method.getReturnType();
-        Class<? extends Object> actualClass = value.getClass();
-        if (expectedClass.isArray() && !actualClass.isArray()) {
-          /*
-           * JSL3 Section 9.7 single element annotations can skip the curly
-           * braces; means we do not get an array
-           */
-          assert (expression instanceof SingleMemberAnnotation);
-          Object array = Array.newInstance(expectedClass.getComponentType(), 1);
-          Array.set(array, 0, value);
-          value = array;
-        }
-      } catch (SecurityException e) {
-        return null;
-      } catch (NoSuchMethodException e) {
-        return null;
-      }
+      /*
+       * If the expected value is supposed to be an array then the element value
+       * had better be an array.
+       */
+      assert (expectedElementValueType.isArrayType() == false || expectedElementValueType.isArrayType()
+          && elementValue.getClass().isArray());
 
-      identifierToValue.put(identifier, value);
+      identifierToValue.put(identifier, elementValue);
     }
 
     // Create the Annotation proxy
@@ -696,43 +669,6 @@ public class TypeOracleBuilder {
 
     return AnnotationProxyFactory.create(clazz, annotationType,
         identifierToValue);
-  }
-
-  private Object createArrayConstant(TreeLogger logger,
-      ArrayInitializer arrayInitializer) {
-    Class<?> leafComponentClass = getClassLiteral(logger,
-        arrayInitializer.binding.leafComponentType);
-    if (leafComponentClass == null) {
-      return null;
-    }
-
-    int[] dimensions = new int[arrayInitializer.binding.dimensions];
-
-    Expression[] initExpressions = arrayInitializer.expressions;
-    if (initExpressions != null) {
-      dimensions[0] = initExpressions.length;
-    }
-
-    Object array = Array.newInstance(leafComponentClass, dimensions);
-    boolean failed = false;
-    if (initExpressions != null) {
-      for (int i = 0; i < initExpressions.length; ++i) {
-        Expression arrayInitExp = initExpressions[i];
-        Object value = evaluateConstantExpression(logger, arrayInitExp);
-        if (value != null) {
-          Array.set(array, i, value);
-        } else {
-          failed = true;
-          break;
-        }
-      }
-    }
-
-    if (!failed) {
-      return array;
-    }
-
-    return null;
   }
 
   private JUpperBound createTypeParameterBounds(TreeLogger logger,
@@ -813,69 +749,136 @@ public class TypeOracleBuilder {
     return jtypeParamArray;
   }
 
-  private Object evaluateConstantExpression(TreeLogger logger,
-      Expression expression) {
-    if (expression instanceof MagicLiteral) {
-      if (expression instanceof FalseLiteral) {
-        return Boolean.FALSE;
-      } else if (expression instanceof NullLiteral) {
-        // null is not a valid annotation value; JLS Third Ed. Section 9.7
-      } else if (expression instanceof TrueLiteral) {
-        return Boolean.TRUE;
-      }
-    } else if (expression instanceof NumberLiteral) {
-      Object value = getNumericLiteralValue((NumberLiteral) expression);
-      if (value != null) {
-        return value;
-      }
-    } else if (expression instanceof StringLiteral) {
-      StringLiteral stringLiteral = (StringLiteral) expression;
-      return stringLiteral.constant.stringValue();
-    } else if (expression instanceof ClassLiteralAccess) {
-      ClassLiteralAccess classLiteral = (ClassLiteralAccess) expression;
-      Class<?> clazz = getClassLiteral(logger, classLiteral.targetType);
-      if (clazz != null) {
-        return clazz;
-      }
-    } else if (expression instanceof ArrayInitializer) {
-      Object value = createArrayConstant(logger, (ArrayInitializer) expression);
-      if (value != null) {
-        return value;
-      }
-    } else if (expression instanceof NameReference) {
+  /**
+   * Returns an annotation element value as defined in JLS 3.0 section 9.7.
+   * 
+   * @param logger
+   * @param expectedElementValueType the expected element value type
+   * @param elementValueExpression the expression that defines the element value
+   * 
+   * @return annotation element value as defined in JLS 3.0 section 9.7
+   */
+  private Object getAnnotationElementValue(TreeLogger logger,
+      TypeBinding expectedElementValueType, Expression elementValueExpression) {
+
+    Object elementValue = null;
+
+    if (elementValueExpression.constant != null
+        && elementValueExpression.constant != Constant.NotAConstant) {
       /*
-       * This name reference can only be to something that is a constant value,
-       * or an enumerated type since annotation values must be constants.
+       * Rely on JDT's computed constant value to deal with an
+       * AnnotationElementValue expression whose resolved type is a primitive or
+       * a string.
        */
-      NameReference nameRef = (NameReference) expression;
+      Constant constant = elementValueExpression.constant;
+      int expectedTypeId = expectedElementValueType.id;
 
-      if (nameRef.constant != Constant.NotAConstant) {
-        return getConstantValue(nameRef.constant);
-      } else {
-        Class clazz = getClassLiteral(logger, nameRef.actualReceiverType);
-        if (clazz.isEnum()) {
-          String enumName = String.valueOf(nameRef.fieldBinding().name);
-          return Enum.valueOf(clazz, enumName);
-        } else {
-          /*
-           * If this is not an enumeration, then fall through to failure case
-           * below.
-           */
-        }
-      }
-    } else if (expression instanceof Annotation) {
-      Object annotationInstance = createAnnotationInstance(logger, expression);
-      if (annotationInstance != null) {
-        return annotationInstance;
-      }
-    } else if (expression instanceof ConditionalExpression) {
-      ConditionalExpression condExpression = (ConditionalExpression) expression;
-      assert (condExpression.constant != Constant.NotAConstant);
+      if (expectedElementValueType.isArrayType()) {
+        /*
+         * This can happen when an element value is an array with a single
+         * element. In this case JLS 3.0 section 9.7 allows for the
+         * ArrayInitializer expression to be implicit. Since, element values can
+         * only be single dimensional arrays, we take the leaf type of the
+         * expected array type as our resultant element value type.
+         */
+        assert (!elementValueExpression.resolvedType.isArrayType() && expectedElementValueType.dimensions() == 1);
 
-      return getConstantValue(condExpression.constant);
+        expectedTypeId = expectedElementValueType.leafComponentType().id;
+      }
+
+      if (elementValueExpression.resolvedType.id != expectedTypeId) {
+        /*
+         * Narrowing and widening conversions are handled by the following
+         * Constant.castTo call. JDT wants the upper four bits of this mask to
+         * be the target type id and the lower four bits to be the source type
+         * id. See Constant.castTo for more details.
+         */
+        constant = constant.castTo((expectedTypeId << 4)
+            + elementValueExpression.resolvedType.id);
+      }
+
+      elementValue = getConstantValue(constant);
+    } else if (elementValueExpression instanceof ClassLiteralAccess) {
+      ClassLiteralAccess classLiteral = (ClassLiteralAccess) elementValueExpression;
+      elementValue = getClassLiteral(logger, classLiteral.targetType);
+    } else if (elementValueExpression instanceof ArrayInitializer) {
+      elementValue = getAnnotationElementValueArray(logger,
+          (ArrayInitializer) elementValueExpression);
+    } else if (elementValueExpression instanceof NameReference) {
+      /*
+       * Any primitive types, conditionals, strings, arrays and name references
+       * to constant fields will have all been handled by the constant
+       * expression block above. This name reference can only be for an
+       * enumerated type.
+       */
+      NameReference nameRef = (NameReference) elementValueExpression;
+
+      assert (nameRef.constant == null || nameRef.constant == Constant.NotAConstant);
+      assert (nameRef.actualReceiverType.isEnum());
+
+      Class<?> clazz = getClassLiteral(logger, nameRef.actualReceiverType);
+      Class<? extends Enum> enumClass = clazz.asSubclass(Enum.class);
+
+      String enumName = String.valueOf(nameRef.fieldBinding().name);
+      elementValue = Enum.valueOf(enumClass, enumName);
+    } else if (elementValueExpression instanceof Annotation) {
+      elementValue = createAnnotationInstance(logger, elementValueExpression);
+    } else {
+      assert (false);
+      return null;
     }
 
-    assert (false);
+    assert (elementValue != null);
+
+    if (expectedElementValueType.isArrayType()
+        && !elementValue.getClass().isArray()) {
+      /*
+       * Handle single element arrays where no explicit array initializer was
+       * given.
+       */
+      Object array = Array.newInstance(elementValue.getClass(), 1);
+      Array.set(array, 0, elementValue);
+      elementValue = array;
+    }
+
+    return elementValue;
+  }
+
+  /**
+   * Returns an annotation element value array. These arrays can only have a
+   * single dimension.
+   */
+  private Object getAnnotationElementValueArray(TreeLogger logger,
+      ArrayInitializer arrayInitializer) {
+    assert (arrayInitializer.binding.dimensions == 1);
+
+    Class<?> leafComponentClass = getClassLiteral(logger,
+        arrayInitializer.binding.leafComponentType);
+    if (leafComponentClass == null) {
+      return null;
+    }
+
+    Expression[] initExpressions = arrayInitializer.expressions;
+    int arrayLength = initExpressions != null ? initExpressions.length : 0;
+
+    Object array = Array.newInstance(leafComponentClass, arrayLength);
+    boolean failed = false;
+    for (int i = 0; i < arrayLength; ++i) {
+      Expression arrayInitExp = initExpressions[i];
+      Object value = getAnnotationElementValue(logger,
+          arrayInitializer.binding.leafComponentType, arrayInitExp);
+      if (value != null) {
+        Array.set(array, i, value);
+      } else {
+        failed = true;
+        break;
+      }
+    }
+
+    if (!failed) {
+      return array;
+    }
+
     return null;
   }
 
@@ -1209,7 +1212,8 @@ public class TypeOracleBuilder {
         AnnotationMethodDeclaration annotationMethod = (AnnotationMethodDeclaration) jmethod;
         Object defaultValue = null;
         if (annotationMethod.defaultValue != null) {
-          defaultValue = evaluateConstantExpression(logger,
+          defaultValue = getAnnotationElementValue(logger,
+              annotationMethod.returnType.resolvedType,
               annotationMethod.defaultValue);
         }
         method = new JAnnotationMethod(enclosingType, name, declStart, declEnd,

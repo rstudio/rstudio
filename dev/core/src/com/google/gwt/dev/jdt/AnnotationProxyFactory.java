@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,6 +39,40 @@ class AnnotationProxyFactory {
    */
   private static class AnnotationProxyInvocationHandler implements
       InvocationHandler {
+    /**
+     * Returns <code>true</code> if the expected return type is assignable from 
+     * the actual return type or if the expected return type is a primitive and
+     * the actual return type is the corresponding wrapper type.
+     */
+    private static boolean isValidReturnType(Class<?> expectedReturnType,
+        Class<? extends Object> actualReturnType) {
+      if (expectedReturnType.isAssignableFrom(actualReturnType)) {
+        return true;
+      }
+
+      if (expectedReturnType.isPrimitive()) {
+        if (expectedReturnType == boolean.class) {
+          return actualReturnType == Boolean.class;
+        } else if (expectedReturnType == byte.class) {
+          return actualReturnType == Byte.class;
+        } else if (expectedReturnType == char.class) {
+          return actualReturnType == Character.class;
+        } else if (expectedReturnType == double.class) {
+          return actualReturnType == Double.class;
+        } else if (expectedReturnType == float.class) {
+          return actualReturnType == Float.class;
+        } else if (expectedReturnType == int.class) {
+          return actualReturnType == Integer.class;
+        } else if (expectedReturnType == long.class) {
+          return actualReturnType == Long.class;
+        } else if (expectedReturnType == short.class) {
+          return actualReturnType == Short.class;
+        }
+      }
+      
+      return false;
+    }
+
     /**
      * The resolved class of this annotation.
      */
@@ -183,24 +217,28 @@ class AnnotationProxyFactory {
 
       String name = method.getName();
 
-      // See if the value was explicitly declared
-      Object value = identifierToValue.get(name);
+      Object value = null;
+      if (identifierToValue.containsKey(name)) {
+        // The value was explicitly provided
+        value = identifierToValue.get(name);
+        assert (value != null);
+      } else {
+        JMethod jMethod = annotationType.findMethod(name, new JType[0]);
+        if (jMethod != null) {
+          // The value will be the default value.
+          JAnnotationMethod annotationMethod = jMethod.isAnnotationMethod();
+          assert (annotationMethod != null);
+          value = annotationMethod.getDefaultValue();
+          assert (value != null);
+        } else if (method.getDeclaringClass() == Annotation.class
+            && "annotationType".equals(method.getName())) {
+          value = annotationClass;
+        }
+      }
+      
       if (value != null) {
-        assert (method.getReturnType().isAssignableFrom(value.getClass()));
+        assert (isValidReturnType(method.getReturnType(), value.getClass()));
         return value;
-      }
-
-      // Try to find a method on the interface.
-      JMethod jMethod = annotationType.findMethod(name, new JType[0]);
-      if (jMethod != null) {
-        JAnnotationMethod annotationMethod = jMethod.isAnnotationMethod();
-        assert (annotationMethod != null);
-        return annotationMethod.getDefaultValue();
-      }
-
-      if (method.getDeclaringClass() == Annotation.class
-          && "annotationType".equals(method.getName())) {
-        return annotationClass;
       }
 
       /*
