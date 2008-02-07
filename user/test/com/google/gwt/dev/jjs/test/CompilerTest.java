@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,12 @@ import junit.framework.Assert;
  * TODO: doc me
  */
 public class CompilerTest extends GWTTestCase {
+
+  public static class Foo {
+    public int bar(int i) {
+      return 0;
+    }
+  }
 
   private abstract static class Apple implements Fruit {
   }
@@ -732,6 +738,12 @@ public class CompilerTest extends GWTTestCase {
         i = 3;
     }
     assertEquals(3, i);
+  }
+
+  public void testSwitchStatementEmpty() {
+    Foo foo = new Foo();
+    switch (foo.bar(0)) {
+    }
   }
 
   public void testSwitchStatementFallthroughs() {

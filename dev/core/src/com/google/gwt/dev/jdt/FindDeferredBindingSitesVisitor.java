@@ -26,7 +26,6 @@ import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.Scope;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.problem.ProblemHandler;
-import org.eclipse.jdt.internal.compiler.problem.ProblemReporter;
 import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
 
 import java.util.Map;
