@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -119,27 +119,5 @@ class DOMImplSafari extends DOMImplStandard {
     } else{
       select.insertBefore(newOption, select.children[index]);
     }
-  }-*/;
-
-  /**
-   * Gets the height of the browser window's client area excluding the
-   * scroll bar.
-   * 
-   * @return the window's client height
-   */
-  @Override
-  public native int windowGetClientHeight() /*-{
-    return $wnd.innerHeight;
-  }-*/;
-
-  /**
-   * Gets the width of the browser window's client area excluding the
-   * vertical scroll bar.
-   * 
-   * @return the window's client width
-   */
-  @Override
-  public native int windowGetClientWidth() /*-{
-    return $wnd.innerWidth;
   }-*/;
 }

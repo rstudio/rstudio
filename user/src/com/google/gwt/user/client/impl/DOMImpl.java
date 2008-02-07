@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -392,22 +392,6 @@ public abstract class DOMImpl {
   public native String toString(Element elem) /*-{
     return elem.outerHTML;
   }-*/;
-
-  /**
-   * Gets the height of the browser window's client area excluding the scroll
-   * bar.
-   * 
-   * @return the window's client height
-   */
-  public abstract int windowGetClientHeight();
-
-  /**
-   * Gets the width of the browser window's client area excluding the vertical
-   * scroll bar.
-   * 
-   * @return the window's client width
-   */
-  public abstract int windowGetClientWidth();
 
   /**
    * Initializes the event dispatch system.

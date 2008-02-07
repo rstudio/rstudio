@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -129,28 +129,6 @@ class DOMImplMozilla extends DOMImplStandard {
     outer = tempDiv.innerHTML;
     temp.innerHTML = "";
     return outer;
-  }-*/;
-
-  @Override
-  public native int windowGetClientHeight() /*-{
-    // Standards mode: 
-    //    doc.body.clientHeight --> client height with scrollbars.
-    //    doc.documentElement.clientHeight --> client height without scrollbars.
-    // Quirks mode:
-    //    doc.body.clientHeight --> client height without scrollbars.
-    //    doc.documentElement.clientHeight --> document height.
-    // So, must switch value on compatMode.
-    return ($doc.compatMode == 'BackCompat')?
-      $doc.body.clientHeight:
-      $doc.documentElement.clientHeight;
-  }-*/;
-
-  @Override
-  public native int windowGetClientWidth() /*-{
-    // See comment for windowGetClientHeight. 
-    return ($doc.compatMode == 'BackCompat')?
-      $doc.body.clientWidth:
-      $doc.documentElement.clientWidth;
   }-*/;
 
   @Override

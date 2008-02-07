@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import com.google.gwt.user.client.Element;
  * https://bugzilla.mozilla.org/show_bug.cgi?id=330619
  */
 public class DOMImplMozillaOld extends DOMImplMozilla {
-  
   @Override
   public native int getAbsoluteLeft(Element elem) /*-{
     var style = $doc.defaultView.getComputedStyle(elem, null);
@@ -42,8 +41,8 @@ public class DOMImplMozillaOld extends DOMImplMozilla {
       parent = parent.parentNode;
     }
 
-    // Must cover both Standard and Quirks mode.
-    return left + $doc.body.scrollLeft + $doc.documentElement.scrollLeft;  
+    return left +
+      @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft;
   }-*/;
 
   @Override
@@ -62,7 +61,7 @@ public class DOMImplMozillaOld extends DOMImplMozilla {
       parent = parent.parentNode;
     }
 
-    // Must cover both Standard and Quirks mode.
-    return top + $doc.body.scrollTop + $doc.documentElement.scrollTop;
+    return top +
+      @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop;
   }-*/;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -1179,23 +1179,19 @@ public class DOM {
   }
 
   /**
-   * Gets the height of the browser window's client area excluding the scroll
-   * bar.
-   * 
-   * @return the window's client height
+   * @deprecated  As of GWT 1.5, replaced by {@link Window#getClientHeight()}
    */
+  @Deprecated
   public static int windowGetClientHeight() {
-    return impl.windowGetClientHeight();
+    return Window.getClientHeight();
   }
 
   /**
-   * Gets the width of the browser window's client area excluding the vertical
-   * scroll bar.
-   * 
-   * @return the window's client width
+   * @deprecated  As of GWT 1.5, replaced by {@link Window#getClientWidth()}
    */
+  @Deprecated
   public static int windowGetClientWidth() {
-    return impl.windowGetClientWidth();
+    return Window.getClientWidth();
   }
 
   /**

@@ -20,7 +20,9 @@
 <module>
    <inherits name="com.google.gwt.core.Core"/>
    <inherits name="com.google.gwt.user.RemoteService"/>
+   <inherits name="com.google.gwt.user.DocumentRoot" />
    <inherits name="com.google.gwt.user.DOM"/>
+   <inherits name="com.google.gwt.user.Window" />
    <inherits name="com.google.gwt.user.HTTPRequest"/>
    <inherits name="com.google.gwt.user.History"/>
    <inherits name="com.google.gwt.user.Popup"/>

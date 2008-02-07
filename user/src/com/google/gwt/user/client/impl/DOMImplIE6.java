@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,18 +25,6 @@ import com.google.gwt.user.client.Event;
 class DOMImplIE6 extends DOMImpl {
 
   private static Element currentEventTarget;
-
-  private static native int getBodyClientLeft() /*-{
-    // Standard mode uses $doc.documentElement.clientLeft
-    // Quirks mode uses $doc.body.clientLeft
-    return $doc.documentElement.clientLeft || $doc.body.clientLeft;
-  }-*/;
-
-  private static native int getBodyClientTop() /*-{
-    // Standards mode uses $doc.documentElement.clientTop
-    // Quirks mode uses $doc.body.clientTop
-    return $doc.documentElement.clientTop || $doc.body.clientTop;
-  }-*/;
 
   @Override
   public native boolean compare(Element elem1, Element elem2) /*-{
@@ -68,13 +56,13 @@ class DOMImplIE6 extends DOMImpl {
   @Override
   public native int eventGetClientX(Event evt) /*-{
     return evt.clientX -
-        @com.google.gwt.user.client.impl.DOMImplIE6::getBodyClientLeft()();
+        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientLeft;
   }-*/;
 
   @Override
   public native int eventGetClientY(Event evt) /*-{
     return evt.clientY -
-        @com.google.gwt.user.client.impl.DOMImplIE6::getBodyClientTop()();
+        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientTop;
   }-*/;
 
   @Override
@@ -115,19 +103,17 @@ class DOMImplIE6 extends DOMImpl {
 
   @Override
   public native int getAbsoluteLeft(Element elem) /*-{
-    // Standard mode || Quirks mode.
-    var scrollLeft = $doc.documentElement.scrollLeft || $doc.body.scrollLeft;
-    return (elem.getBoundingClientRect().left + scrollLeft)
-        - @com.google.gwt.user.client.impl.DOMImplIE6::getBodyClientLeft()();
+    return elem.getBoundingClientRect().left
+        + @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft
+        - @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientLeft;
   }-*/;
 
   @Override
   public native int getAbsoluteTop(Element elem) /*-{
-    // Standard mode || Quirks mode.
-    var scrollTop = $doc.documentElement.scrollTop || $doc.body.scrollTop;
-    return (elem.getBoundingClientRect().top + scrollTop)
-        - @com.google.gwt.user.client.impl.DOMImplIE6::getBodyClientTop()();
-   }-*/;
+    return elem.getBoundingClientRect().top
+        + @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop
+        - @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientTop;
+  }-*/;
 
   @Override
   public native Element getChild(Element elem, int index) /*-{
@@ -300,18 +286,6 @@ class DOMImplIE6 extends DOMImpl {
     maybeInitializeEventSystem();
     sinkEventsImpl(elem, bits);
   }
-
-  @Override
-  public native int windowGetClientHeight() /*-{
-    // IE standard mode || IE quirks mode.
-    return $doc.documentElement.clientHeight || $doc.body.clientHeight; 
-  }-*/;
-
-  @Override
-  public native int windowGetClientWidth() /*-{
-    // IE standard mode || IE quirks mode.
-    return $doc.documentElement.clientWidth || $doc.body.clientWidth;
-  }-*/;
 
   private native void releaseCaptureImpl(Element elem) /*-{
     elem.releaseCapture();

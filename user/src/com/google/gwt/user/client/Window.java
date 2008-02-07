@@ -18,6 +18,7 @@ package com.google.gwt.user.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.impl.WindowImpl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -172,6 +173,7 @@ public class Window {
   }
 
   private static boolean handlersAreInitialized;
+  private static final WindowImpl impl = GWT.create(WindowImpl.class);
 
   private static ArrayList<WindowCloseListener> closingListeners;
   private static ArrayList<WindowResizeListener> resizeListeners;
@@ -230,9 +232,9 @@ public class Window {
    * 
    * @param enable <code>false</code> to disable window scrolling
    */
-  public static native void enableScrolling(boolean enable) /*-{
-    $doc.body.style.overflow = $doc.documentElement.style.overflow = enable ? '' : 'hidden';
-  }-*/;
+  public static void enableScrolling(boolean enable) {
+    impl.enableScrolling(enable);
+  }
 
   /**
    * Gets the height of the browser window's client area excluding the scroll
@@ -241,7 +243,7 @@ public class Window {
    * @return the window's client height
    */
   public static int getClientHeight() {
-    return DOM.windowGetClientHeight();
+    return impl.getClientHeight();
   }
 
   /**
@@ -251,7 +253,7 @@ public class Window {
    * @return the window's client width
    */
   public static int getClientWidth() {
-    return DOM.windowGetClientWidth();
+    return impl.getClientWidth();
   }
 
   /**
@@ -259,20 +261,18 @@ public class Window {
    * 
    * @return window's scroll left
    */
-  public static native int getScrollLeft() /*-{
-    // Standard mode || Quirks mode.  
-    return $doc.documentElement.scrollLeft || $doc.body.scrollLeft
-  }-*/;
+  public static int getScrollLeft() {
+    return impl.getScrollLeft();
+  }
 
   /**
    * Get the window's scroll top.
    * 
    * @return the window's scroll top
    */
-  public static native int getScrollTop() /*-{
-    // Standard mode || Quirks mode. 
-    return $doc.documentElement.scrollTop || $doc.body.scrollTop;
-  }-*/;
+  public static int getScrollTop() {
+    return impl.getScrollTop();
+  }
 
   /**
    * Gets the browser window's current title.
