@@ -524,7 +524,10 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
   @Override
   public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
-    accept(x.getQualifier());
+    JsExpression qualifier = x.getQualifier();
+//    _parenPush(x, qualifier, false);
+    accept(qualifier);
+//    _parenPop(x, qualifier, false);
 
     _lparen();
     boolean sep = false;

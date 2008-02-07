@@ -51,6 +51,10 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
     doTest("(new (new (a(({a : 'b', c : 'd'}),[1,2,3,x,y,z]))())())()");
   }
 
+  public void testConditionalInvocation() throws Exception {
+    doTest("(flag?f:g)()");
+  }
+
   public void testConstructionInvocation() throws Exception {
     doTest("(new a())()");
   }
@@ -117,7 +121,7 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
   private List<JsStatement> parse(List<JsStatement> expected, boolean compact)
       throws Exception {
     TextOutput text = new DefaultTextOutput(compact);
-    JsVisitor generator = new JsToStringGenerationVisitor(text);
+    JsVisitor generator = new JsSourceGenerationVisitor(text);
     generator.acceptList(expected);
     return parser.parse(new JsProgram().getScope(), new StringReader(
         text.toString()), 0);
