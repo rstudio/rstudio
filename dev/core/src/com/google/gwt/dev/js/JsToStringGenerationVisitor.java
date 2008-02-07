@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -301,12 +301,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
   @Override
   public boolean visit(JsDecimalLiteral x, JsContext<JsExpression> ctx) {
-    String s = x.getValue();
-    // TODO: optimize this to only the cases that need it
-    if (s.startsWith("-")) {
-      _space();
-    }
-    p.print(s);
+    p.print(x.getValue());
     return false;
   }
 
@@ -510,15 +505,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
   @Override
   public boolean visit(JsIntegralLiteral x, JsContext<JsExpression> ctx) {
-    String s = x.getValue().toString();
-    boolean needParens = s.startsWith("-");
-    if (needParens) {
-      _lparen();
-    }
-    p.print(s);
-    if (needParens) {
-      _rparen();
-    }
+    p.print(x.getValue().toString());
     return false;
   }
 
@@ -823,17 +810,30 @@ public class JsToStringGenerationVisitor extends JsVisitor {
       accept(stmt);
       if (needSemi) {
         /*
-         * Special treatment of function decls: function decls always set
-         * needSemi back to true. But if they are the only item in a statement
-         * (i.e. not part of an assignment operation), just give them a newline
-         * instead of a semi since it makes obfuscated code so much "nicer"
-         * (sic).
+         * Special treatment of function decls: If they are the only item in a
+         * statement (i.e. not part of an assignment operation), just give them
+         * a newline instead of a semi.
          */
-        if (stmt instanceof JsExprStmt
-            && ((JsExprStmt) stmt).getExpression() instanceof JsFunction) {
-          _newline();
+        boolean functionStmt = stmt instanceof JsExprStmt
+            && ((JsExprStmt) stmt).getExpression() instanceof JsFunction;
+        /*
+         * Special treatment of the last statement in a block: only a few
+         * statements at the end of a block require semicolons.
+         */
+        boolean lastStatement = !iter.hasNext() && needBraces
+            && !JsRequiresSemiVisitor.exec(stmt);
+        if (functionStmt) {
+          if (lastStatement) {
+            _newlineOpt();
+          } else {
+            _newline();
+          }
         } else {
-          _semi();
+          if (lastStatement) {
+            _semiOpt();
+          } else {
+            _semi();
+          }
           _newlineOpt();
         }
       }
@@ -1070,6 +1070,10 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     p.print(';');
   }
 
+  private void _semiOpt() {
+    p.printOpt(';');
+  }
+
   private boolean _sepCommaOptSpace(boolean sep) {
     if (sep) {
       p.print(',');
@@ -1095,6 +1099,16 @@ public class JsToStringGenerationVisitor extends JsVisitor {
       return (op == JsBinaryOperator.SUB || op == JsUnaryOperator.NEG)
           && (op2 == JsUnaryOperator.DEC || op2 == JsUnaryOperator.NEG)
           || (op == JsBinaryOperator.ADD && op2 == JsUnaryOperator.INC);
+    }
+    if (arg instanceof JsIntegralLiteral) {
+      JsIntegralLiteral literal = (JsIntegralLiteral) arg;
+      return (op == JsBinaryOperator.SUB || op == JsUnaryOperator.NEG)
+          && (literal.getValue().signum() == -1);
+    }
+    if (arg instanceof JsDecimalLiteral) {
+      JsDecimalLiteral literal = (JsDecimalLiteral) arg;
+      return (op == JsBinaryOperator.SUB || op == JsUnaryOperator.NEG)
+          && (literal.getValue().startsWith("-"));
     }
     return false;
   }

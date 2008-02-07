@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -66,6 +66,13 @@ public class JsToStringGenerationVisitorConcisenessTest extends TestCase {
     assertEquals("var x={1:'b'}", parse("var x = {1 : 'b'}"));
     assertEquals("var x={$a_:'b'}", parse("var x = {'$a_' : 'b'}"));
     assertEquals("var x={1.2:'b'}", parse("var x = {1.2 : 'b'}"));
+  }
+
+  public void testLastStatement() throws Exception {
+    assertEquals("function(){x++;i++}", parse("function() {x++;i++;}"));
+    assertEquals("function(){do{}while(x)}",
+        parse("function() {do{} while(x);}"));
+    assertEquals("function(){if(b){}}", parse("function() {if(b){}}"));
   }
 
   private String parse(String js) throws Exception {

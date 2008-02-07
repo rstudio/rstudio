@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -106,6 +106,14 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
   public void testUnaryOperations() throws Exception {
     // spaces or parentheses are necessary to separate negation and decrement
     doTest("var x = -(-(--y))");
+  }
+
+  public void testEmptyStatements() throws Exception {
+    doTest("function f() {if (x);}");
+    doTest("function f() {while (x);}");
+    doTest("function f() {label:;}");
+    doTest("function f() {for (i=0;i<n;i++);}");
+    doTest("function f() {for (var x in s);}");
   }
 
   private void doTest(String js) throws Exception {
