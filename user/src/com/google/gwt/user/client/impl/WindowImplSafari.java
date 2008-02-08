@@ -20,6 +20,17 @@ package com.google.gwt.user.client.impl;
  */
 public class WindowImplSafari extends WindowImpl {
   @Override
+  public native int getClientHeight() /*-{
+    // Safari 2 and Safari 3 disagree on the clientHeight value.
+    // $wnd.devicePixelRatio is only defined in Safari 3.
+    // documentRoot.clientWidth works in both Safari 2 and 3, so we do not need
+    // an override for the width.
+    return $wnd.devicePixelRatio ?
+        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientHeight :
+        $wnd.innerHeight;
+  }-*/;
+
+  @Override
   public native int getScrollLeft() /*-{
     return $doc.body.scrollLeft;
   }-*/;
