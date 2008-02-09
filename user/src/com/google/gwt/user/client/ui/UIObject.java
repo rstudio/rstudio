@@ -413,7 +413,7 @@ public abstract class UIObject {
    * the DebugID module in your gwt.xml file by adding the following line:
    * 
    * <pre class="code">
-   * &lt;inherits name="com.google.gwt.user.DebugID"/&gt;</pre>
+   * &lt;inherits name="com.google.gwt.user.Debug"/&gt;</pre>
    * 
    * @param id the ID to set on the main element
    */
@@ -707,7 +707,7 @@ public abstract class UIObject {
    * your gwt.xml file by adding the following line:
    * 
    * <pre class="code">
-   * &lt;inherits name="com.google.gwt.user.DebugID"/&gt;</pre>
+   * &lt;inherits name="com.google.gwt.user.Debug"/&gt;</pre>
    * 
    * @param baseID the base ID used by the main element
    */
