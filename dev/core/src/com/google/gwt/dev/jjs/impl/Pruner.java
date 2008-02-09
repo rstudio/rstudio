@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.ast.CanBeStatic;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JArrayType;
@@ -206,11 +207,14 @@ public class Pruner {
 
     @Override
     public boolean visit(JClassType type, Context ctx) {
+
       assert (referencedTypes.contains(type));
+      boolean isInstantiated = program.typeOracle.isInstantiatedType(type);
 
       for (Iterator<JField> it = type.fields.iterator(); it.hasNext();) {
         JField field = it.next();
-        if (!referencedNonTypes.contains(field)) {
+        if (!referencedNonTypes.contains(field)
+            || pruneViaNoninstantiability(isInstantiated, field)) {
           it.remove();
           didChange = true;
         }
@@ -218,7 +222,8 @@ public class Pruner {
 
       for (Iterator<JMethod> it = type.methods.iterator(); it.hasNext();) {
         JMethod method = it.next();
-        if (!methodIsReferenced(method)) {
+        if (!methodIsReferenced(method)
+            || pruneViaNoninstantiability(isInstantiated, method)) {
           it.remove();
           didChange = true;
         } else {
@@ -365,6 +370,11 @@ public class Pruner {
         }
       }
       return false;
+    }
+
+    private boolean pruneViaNoninstantiability(boolean isInstantiated,
+        CanBeStatic it) {
+      return (!isInstantiated && !it.isStatic());
     }
   }
 
