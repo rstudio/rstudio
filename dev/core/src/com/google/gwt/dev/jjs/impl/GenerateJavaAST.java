@@ -108,6 +108,7 @@ import org.eclipse.jdt.internal.compiler.ast.BreakStatement;
 import org.eclipse.jdt.internal.compiler.ast.CaseStatement;
 import org.eclipse.jdt.internal.compiler.ast.CastExpression;
 import org.eclipse.jdt.internal.compiler.ast.ClassLiteralAccess;
+import org.eclipse.jdt.internal.compiler.ast.CombinedBinaryExpression;
 import org.eclipse.jdt.internal.compiler.ast.CompoundAssignment;
 import org.eclipse.jdt.internal.compiler.ast.ConditionalExpression;
 import org.eclipse.jdt.internal.compiler.ast.ConstructorDeclaration;
@@ -172,8 +173,8 @@ import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 import org.eclipse.jdt.internal.compiler.lookup.VariableBinding;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
-import org.eclipse.jdt.internal.compiler.problem.ProblemHandler;
 import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
+import org.eclipse.jdt.internal.compiler.util.Util;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -404,7 +405,7 @@ public class GenerateJavaAST {
     private MethodScope currentMethodScope;
 
     private int[] currentSeparatorPositions;
-    
+
     private boolean enableAsserts;
 
     private final JsProgram jsProgram;
@@ -539,13 +540,12 @@ public class GenerateJavaAST {
 
         // Implement Class.desiredAssertionStatus
         if (currentClass == program.getTypeJavaLangClass()) {
-          JMethod method =
-              program.getIndexedMethod("Class.desiredAssertionStatus");
+          JMethod method = program.getIndexedMethod("Class.desiredAssertionStatus");
           assert method != null;
           JMethodBody body = (JMethodBody) method.getBody();
           List<JStatement> statements = body.getStatements();
 
-          // There must always be at least 1 statement, because the method 
+          // There must always be at least 1 statement, because the method
           // has a non-void return type.
           assert statements.size() > 0;
 
@@ -1054,6 +1054,10 @@ public class GenerateJavaAST {
       JType type = (JType) typeMap.get(x.resolvedType);
       SourceInfo info = makeSourceInfo(x);
       return processBinaryOperation(info, op, type, x.left, x.right);
+    }
+
+    JExpression processExpression(CombinedBinaryExpression x) {
+      return processExpression((BinaryExpression) x);
     }
 
     JExpression processExpression(CastExpression x) {
@@ -1617,8 +1621,9 @@ public class GenerateJavaAST {
     JStatement processStatement(CaseStatement x) {
       SourceInfo info = makeSourceInfo(x);
       JExpression expression = dispProcessExpression(x.constantExpression);
-      if (x.isEnumConstant) {
+      if (expression != null && x.constantExpression.resolvedType.isEnum()) {
         // TODO: propagate enum information?
+        assert (expression instanceof JFieldRef);
         JFieldRef fieldRef = (JFieldRef) expression;
         JEnumField field = (JEnumField) fieldRef.getField();
         return new JCaseStatement(program, info,
@@ -1913,16 +1918,15 @@ public class GenerateJavaAST {
 
       // We have to find and pass through any synthetics our supertype needs
       ReferenceBinding superClass = x.binding.declaringClass;
-      if (superClass instanceof NestedTypeBinding && !superClass.isStatic()) {
-        NestedTypeBinding myBinding = (NestedTypeBinding) currentClassScope.referenceType().binding;
-        NestedTypeBinding superBinding = (NestedTypeBinding) superClass;
+      if (superClass.isNestedType() && !superClass.isStatic()) {
+        ReferenceBinding myBinding = currentClassScope.referenceType().binding;
+        ReferenceBinding superBinding = superClass;
 
         // enclosing types
-        if (superBinding.enclosingInstances != null) {
+        if (superBinding.syntheticEnclosingInstanceTypes() != null) {
           JExpression qualifier = dispProcessExpression(x.qualification);
-          for (int j = 0; j < superBinding.enclosingInstances.length; ++j) {
-            SyntheticArgumentBinding arg = superBinding.enclosingInstances[j];
-            JClassType classType = (JClassType) typeMap.get(arg.type);
+          for (ReferenceBinding arg : superBinding.syntheticEnclosingInstanceTypes()) {
+            JClassType classType = (JClassType) typeMap.get(arg);
             if (qualifier == null) {
               /*
                * Got to be one of my params; it would be illegal to use a this
@@ -1934,7 +1938,8 @@ public class GenerateJavaAST {
                */
               List<JExpression> workList = new ArrayList<JExpression>();
               Iterator<JParameter> paramIt = getSyntheticsIterator(currentMethod);
-              for (int i = 0; i < myBinding.enclosingInstances.length; ++i) {
+              for (@SuppressWarnings("unused")
+              ReferenceBinding b : myBinding.syntheticEnclosingInstanceTypes()) {
                 workList.add(createVariableRef(info, paramIt.next()));
               }
               call.getArgs().add(createThisRef(classType, workList));
@@ -1945,9 +1950,8 @@ public class GenerateJavaAST {
         }
 
         // outer locals
-        if (superBinding.outerLocalVariables != null) {
-          for (int j = 0; j < superBinding.outerLocalVariables.length; ++j) {
-            SyntheticArgumentBinding arg = superBinding.outerLocalVariables[j];
+        if (superBinding.syntheticOuterLocalVariables() != null) {
+          for (SyntheticArgumentBinding arg : superBinding.syntheticOuterLocalVariables()) {
             // Got to be one of my params
             JType varType = (JType) typeMap.get(arg.type);
             String varName = String.valueOf(arg.name);
@@ -2339,8 +2343,8 @@ public class GenerateJavaAST {
     }
 
     private SourceInfo makeSourceInfo(Statement x) {
-      int startLine = ProblemHandler.searchLineNumber(
-          currentSeparatorPositions, x.sourceStart);
+      int startLine = Util.getLineNumber(x.sourceStart,
+          currentSeparatorPositions, 0, currentSeparatorPositions.length - 1);
       return new SourceInfo(x.sourceStart, x.sourceEnd, startLine,
           currentFileName);
     }
@@ -2636,10 +2640,14 @@ public class GenerateJavaAST {
   public static void reportJsniError(SourceInfo info,
       AbstractMethodDeclaration methodDeclaration, String message) {
     CompilationResult compResult = methodDeclaration.compilationResult();
+    // recalculate startColumn, because SourceInfo does not hold it
+    int startColumn = Util.searchColumnNumber(
+        compResult.getLineSeparatorPositions(), info.getStartLine(),
+        info.getStartPos());
     DefaultProblem problem = new DefaultProblem(
-        info.getFileName().toCharArray(), message, IProblem.Unclassified, null,
-        ProblemSeverities.Error, info.getStartPos(), info.getEndPos(),
-        info.getStartLine());
+        info.getFileName().toCharArray(), message,
+        IProblem.ExternalProblemNotFixable, null, ProblemSeverities.Error,
+        info.getStartPos(), info.getEndPos(), info.getStartLine(), startColumn);
     compResult.record(problem, methodDeclaration);
   }
 

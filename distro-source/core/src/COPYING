@@ -1,6 +1,6 @@
            GOOGLE WEB TOOLKIT LICENSE INFORMATION
 
-August 28, 2007
+February 8, 2008
 
 The Google Web Toolkit software and sample code developed by Google is 
 licensed under the Apache License, v. 2.0. Other software included in this 
@@ -204,7 +204,7 @@ e.g. "gwt-dev-linux.jar".
   License: Eclipse Public License v. 1.0 
     http://www.eclipse.org/legal/epl-v10.html
   Source code availability:
-    http://archive.eclipse.org/eclipse/downloads/drops/R-3.1.1-200509290840/download.php?dropFile=eclipse-JDT-SDK-3.1.1.zip
+    http://archive.eclipse.org/eclipse/downloads/drops/R-3.3.1-200709211145/download.php?dropFile=eclipse-JDT-SDK-3.3.1.zip
 
 * Eclipse Standard Widget Toolkit (SWT)
   License: Eclipse Public License v. 1.0

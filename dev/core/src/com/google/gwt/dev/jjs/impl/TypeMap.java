@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 import org.eclipse.jdt.internal.compiler.lookup.ArrayBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BaseTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
+import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 import org.eclipse.jdt.internal.compiler.lookup.ParameterizedFieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ParameterizedMethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding;
@@ -105,33 +106,33 @@ public class TypeMap {
       BaseTypeBinding baseTypeBinding = (BaseTypeBinding) binding;
       // see org.eclipse.jdt.internal.compiler.lookup.TypeIds constants
       switch (baseTypeBinding.id) {
-        case BaseTypeBinding.T_undefined:
+        case TypeIds.T_undefined:
           return null;
-        case BaseTypeBinding.T_JavaLangObject:
+        case TypeIds.T_JavaLangObject:
           // here for consistency, should already be cached
           return program.getTypeJavaLangObject();
-        case BaseTypeBinding.T_char:
+        case TypeIds.T_char:
           return program.getTypePrimitiveChar();
-        case BaseTypeBinding.T_byte:
+        case TypeIds.T_byte:
           return program.getTypePrimitiveByte();
-        case BaseTypeBinding.T_short:
+        case TypeIds.T_short:
           return program.getTypePrimitiveShort();
-        case BaseTypeBinding.T_boolean:
+        case TypeIds.T_boolean:
           return program.getTypePrimitiveBoolean();
-        case BaseTypeBinding.T_void:
+        case TypeIds.T_void:
           return program.getTypeVoid();
-        case BaseTypeBinding.T_long:
+        case TypeIds.T_long:
           return program.getTypePrimitiveLong();
-        case BaseTypeBinding.T_double:
+        case TypeIds.T_double:
           return program.getTypePrimitiveDouble();
-        case BaseTypeBinding.T_float:
+        case TypeIds.T_float:
           return program.getTypePrimitiveFloat();
-        case BaseTypeBinding.T_int:
+        case TypeIds.T_int:
           return program.getTypePrimitiveInt();
-        case BaseTypeBinding.T_JavaLangString:
+        case TypeIds.T_JavaLangString:
           // here for consistency, should already be cached
           return program.getTypeJavaLangString();
-        case BaseTypeBinding.T_null:
+        case TypeIds.T_null:
           return program.getTypeNull();
         default:
           return null;

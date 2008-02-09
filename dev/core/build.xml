@@ -25,7 +25,7 @@
 		<gwt.jar destfile="${alldeps.jar}">
 			<zipfileset src="${gwt.tools.lib}/apache/tapestry-util-text-4.0.2.jar" />
 			<zipfileset src="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
-			<zipfileset src="${gwt.tools.lib}/eclipse/jdt-3.1.1.jar" />
+			<zipfileset src="${gwt.tools.lib}/eclipse/jdt-3.3.1.jar" />
 			<zipfileset src="${gwt.tools.lib}/tomcat/ant-launcher-1.6.5.jar" />
 			<zipfileset src="${gwt.tools.lib}/tomcat/catalina-1.0.jar" />
 			<zipfileset src="${gwt.tools.lib}/tomcat/catalina-optional-1.0.jar" />
@@ -132,7 +132,7 @@
 			</classpath>
 		</taskdef>
 	
-		<echo message="Writing test results to @{test.reports} for @{test.cases}" />
+		<echo message="Writing test results to @{junit.out}/reports for @{test.cases}" />
 		<mkdir dir="${junit.out}/reports" />
 	
 		<echo message="${javac.out} ${javac.junit.out}" />

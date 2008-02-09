@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,8 +25,8 @@ import org.eclipse.jdt.internal.compiler.ast.MessageSend;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.Scope;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
-import org.eclipse.jdt.internal.compiler.problem.ProblemHandler;
 import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
+import org.eclipse.jdt.internal.compiler.util.Util;
 
 import java.util.Map;
 
@@ -61,11 +61,14 @@ public class FindDeferredBindingSitesVisitor extends ASTVisitor {
     MessageSend messageSend = site.messageSend;
     Scope scope = site.scope;
     CompilationResult compResult = scope.compilationUnitScope().referenceContext().compilationResult();
-    int startLine = ProblemHandler.searchLineNumber(
-        compResult.lineSeparatorPositions, messageSend.sourceStart());
+    int[] lineEnds = compResult.getLineSeparatorPositions();
+    int startLine = Util.getLineNumber(messageSend.sourceStart(), lineEnds, 0,
+        lineEnds.length - 1);
+    int startColumn = Util.searchColumnNumber(lineEnds, startLine,
+        messageSend.sourceStart());
     DefaultProblem problem = new DefaultProblem(compResult.fileName, message,
-        IProblem.Unclassified, null, ProblemSeverities.Error,
-        messageSend.sourceStart, messageSend.sourceEnd, startLine);
+        IProblem.ExternalProblemNotFixable, null, ProblemSeverities.Error,
+        messageSend.sourceStart, messageSend.sourceEnd, startLine, startColumn);
     compResult.record(problem, scope.referenceContext());
   }
 
@@ -97,7 +100,7 @@ public class FindDeferredBindingSitesVisitor extends ASTVisitor {
     }
 
     DeferredBindingSite site = new DeferredBindingSite(messageSend, scope);
-    
+
     Expression[] args = messageSend.arguments;
     if (args.length != 1) {
       reportRebindProblem(site, "GWT.create() should take exactly one argument");
@@ -106,7 +109,8 @@ public class FindDeferredBindingSitesVisitor extends ASTVisitor {
 
     Expression arg = args[0];
     if (!(arg instanceof ClassLiteralAccess)) {
-      reportRebindProblem(site, "Only class literals may be used as arguments to GWT.create()");
+      reportRebindProblem(site,
+          "Only class literals may be used as arguments to GWT.create()");
       return;
     }
 

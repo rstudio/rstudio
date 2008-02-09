@@ -72,7 +72,6 @@ import org.eclipse.jdt.internal.compiler.ast.TypeParameter;
 import org.eclipse.jdt.internal.compiler.ast.TypeReference;
 import org.eclipse.jdt.internal.compiler.ast.Wildcard;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
-import org.eclipse.jdt.internal.compiler.env.IGenericType;
 import org.eclipse.jdt.internal.compiler.impl.Constant;
 import org.eclipse.jdt.internal.compiler.lookup.ArrayBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BaseTypeBinding;
@@ -293,7 +292,7 @@ public class TypeOracleBuilder {
   }
 
   private static boolean isAnnotation(TypeDeclaration typeDecl) {
-    if (typeDecl.kind() == IGenericType.ANNOTATION_TYPE_DECL) {
+    if (TypeDeclaration.kind(typeDecl.modifiers) == TypeDeclaration.ANNOTATION_TYPE_DECL) {
       return true;
     } else {
       return false;
@@ -964,7 +963,7 @@ public class TypeOracleBuilder {
   }
 
   private boolean isInterface(TypeDeclaration typeDecl) {
-    if (typeDecl.kind() == IGenericType.INTERFACE_DECL) {
+    if (TypeDeclaration.kind(typeDecl.modifiers) == TypeDeclaration.INTERFACE_DECL) {
       return true;
     } else {
       return false;
@@ -1492,7 +1491,7 @@ public class TypeOracleBuilder {
        * NOTE: In the case where a generic type has a nested, non-static,
        * non-generic type. The type for the binding will not be a generic type.
        */
-      JType resolveType = resolveType(logger, ptBinding.type);
+      JType resolveType = resolveType(logger, ptBinding.genericType());
       if (resolveType == null) {
         failed = true;
       }

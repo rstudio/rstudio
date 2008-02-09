@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -143,7 +143,7 @@ public class WebModeCompilerFrontEnd extends AstCompiler {
           }
           // Look for a noArg ctor.
           MethodBinding noArgCtor = type.getExactMethod("<init>".toCharArray(),
-              TypeBinding.NoParameters, cud.scope);
+              TypeBinding.NO_PARAMETERS, cud.scope);
 
           if (noArgCtor == null) {
             FindDeferredBindingSitesVisitor.reportRebindProblem(site,

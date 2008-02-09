@@ -60,7 +60,6 @@ import org.eclipse.jdt.internal.compiler.ast.LocalDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Statement;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
-import org.eclipse.jdt.internal.compiler.env.IGenericType;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
@@ -75,7 +74,7 @@ import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SyntheticMethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
-import org.eclipse.jdt.internal.compiler.problem.ProblemHandler;
+import org.eclipse.jdt.internal.compiler.util.Util;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -117,8 +116,8 @@ public class BuildTypeMap {
       CompilationResult compResult = methodDecl.compilationResult;
       int[] indexes = compResult.lineSeparatorPositions;
       String fileName = String.valueOf(compResult.fileName);
-      int startLine = ProblemHandler.searchLineNumber(indexes,
-          methodDecl.sourceStart);
+      int startLine = Util.getLineNumber(methodDecl.sourceStart, indexes, 0,
+          indexes.length - 1);
       return new SourceInfo(methodDecl.sourceStart, methodDecl.bodyEnd,
           startLine, fileName);
     }
@@ -476,8 +475,8 @@ public class BuildTypeMap {
     }
 
     private SourceInfo makeSourceInfo(Statement stmt) {
-      int startLine = ProblemHandler.searchLineNumber(
-          currentSeparatorPositions, stmt.sourceStart);
+      int startLine = Util.getLineNumber(stmt.sourceStart,
+          currentSeparatorPositions, 0, currentSeparatorPositions.length - 1);
       return new SourceInfo(stmt.sourceStart, stmt.sourceEnd, startLine,
           currentFileName);
     }
@@ -592,7 +591,7 @@ public class BuildTypeMap {
 
     private void processEnumType(SourceTypeBinding binding, JEnumType type) {
       // Visit the synthetic values() and valueOf() methods.
-      for (MethodBinding methodBinding : binding.methods) {
+      for (MethodBinding methodBinding : binding.methods()) {
         if (methodBinding instanceof SyntheticMethodBinding) {
           JMethod newMethod = processMethodBinding(methodBinding, type, null);
           TypeBinding[] parameters = methodBinding.parameters;
@@ -751,8 +750,8 @@ public class BuildTypeMap {
       CompilationResult compResult = typeDecl.compilationResult;
       int[] indexes = compResult.lineSeparatorPositions;
       String fileName = String.valueOf(compResult.fileName);
-      int startLine = ProblemHandler.searchLineNumber(indexes,
-          typeDecl.sourceStart);
+      int startLine = Util.getLineNumber(typeDecl.sourceStart, indexes, 0,
+          indexes.length - 1);
       return new SourceInfo(typeDecl.sourceStart, typeDecl.bodyEnd, startLine,
           fileName);
     }
@@ -780,7 +779,7 @@ public class BuildTypeMap {
 
     @Override
     public boolean visit(TypeDeclaration localTypeDeclaration, BlockScope scope) {
-      assert (localTypeDeclaration.kind() != IGenericType.INTERFACE_DECL);
+      assert (TypeDeclaration.kind(localTypeDeclaration.modifiers) != TypeDeclaration.INTERFACE_DECL);
       return process(localTypeDeclaration);
     }
 
