@@ -10,6 +10,7 @@
 	<property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
 
 	<property name="USER_PKGS" value="com.google.gwt.core.client;com.google.gwt.core.ext;com.google.gwt.core.ext.typeinfo;com.google.gwt.i18n.client;com.google.gwt.json.client;com.google.gwt.junit.client;com.google.gwt.user.client;com.google.gwt.user.client.rpc;com.google.gwt.user.client.ui;com.google.gwt.user.server.rpc;com.google.gwt.xml.client;com.google.gwt.http.client;com.google.gwt.junit.viewer.client" />
+	<property name="LANG_PKGS" value="java.lang;java.lang.annotation;java.util;java.io" />
 
 	<!--
 		*** Note that if the USER_SOURCE_PATH paths are updated,
@@ -84,5 +85,33 @@
 		</outofdate>
 	</target>
 
-	<target name="build" depends="javadoc" />
+	<target name="wiki-lang">
+		<outofdate>
+			<sourcefiles>
+				<fileset file="./src/RefJreHeader.wiki" />
+				<fileset dir="${gwt.root}/user/super/com/google/gwt/emul">
+					<include name="**/*.java" />
+				</fileset>
+			</sourcefiles>
+			<targetfiles>
+				<pathelement path="${project.build}/wiki/RefJreEmulation.wiki" />
+			</targetfiles>
+			<sequential>
+				<java classpathref="DOC_PATH" classname="com.google.doctool.JreDocTool" fork="yes" failonerror="true">
+					<arg value="-out" />
+					<arg value="${project.build}/wiki/RefJreEmulation.wiki" />
+					<arg value="-header" />
+					<arg value="./src/RefJreHeader.wiki" />
+					<arg value="-classpath" />
+					<arg pathref="USER_CLASS_PATH" />
+					<arg value="-sourcepath" />
+					<arg path="${gwt.root}/user/super/com/google/gwt/emul" />
+					<arg value="-packages" />
+					<arg value="${LANG_PKGS}" />
+				</java>
+			</sequential>
+		</outofdate>
+	</target>
+
+	<target name="build" depends="javadoc, wiki-lang" />
 </project>
