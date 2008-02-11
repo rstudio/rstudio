@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.ModuleDef;
-import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.Rules;
 import com.google.gwt.dev.jdt.ByteCodeCompiler;
 import com.google.gwt.dev.jdt.RebindOracle;
@@ -138,9 +137,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
       compiler = byteCodeCompilersByModule.get(module);
       if (compiler == null) {
         compiler = new ByteCodeCompiler(srcOracle, module.getCacheManager());
-        if (ModuleDefLoader.getEnableCachingModules()) {
-          byteCodeCompilersByModule.put(module, compiler);
-        }
+        byteCodeCompilersByModule.put(module, compiler);
       }
     }
     return compiler;

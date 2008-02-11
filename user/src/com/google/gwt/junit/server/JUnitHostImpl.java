@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,10 +45,6 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
    */
   private static final int TIME_TO_WAIT_FOR_TESTNAME = 300000;
 
-  // DEBUG timeout
-  // TODO(tobyr) Make this configurable
-  // private static final int TIME_TO_WAIT_FOR_TESTNAME = 500000;
-
   /**
    * A hook into GWTUnitTestShell, the underlying unit test process.
    */
@@ -80,13 +76,11 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
     fld.set(obj, value);
   }
 
-  public String getFirstMethod(String testClassName) {
-    return getHost().getNextTestName(getClientId(), testClassName,
-        TIME_TO_WAIT_FOR_TESTNAME);
+  public TestInfo getFirstMethod(String moduleName) {
+    return getHost().getNextTestInfo(getClientId(), moduleName, TIME_TO_WAIT_FOR_TESTNAME);
   }
 
-  public String reportResultsAndGetNextMethod(String testClassName,
-      TestResults results) {
+  public TestInfo reportResultsAndGetNextMethod(String moduleName, TestResults results) {
     JUnitMessageQueue host = getHost();
     HttpServletRequest request = getThreadLocalRequest();
     String agent = request.getHeader("User-Agent");
@@ -98,9 +92,8 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
       ExceptionWrapper ew = trial.getExceptionWrapper();
       trial.setException(deserialize(ew));
     }
-    host.reportResults(testClassName, results);
-    return host.getNextTestName(getClientId(), testClassName,
-        TIME_TO_WAIT_FOR_TESTNAME);
+    host.reportResults(moduleName, results);
+    return host.getNextTestInfo(getClientId(), moduleName, TIME_TO_WAIT_FOR_TESTNAME);
   }
 
   /**

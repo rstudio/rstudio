@@ -31,6 +31,7 @@ import com.google.gwt.junit.client.Benchmark;
 import com.google.gwt.junit.client.TestResults;
 import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.Trial;
+import com.google.gwt.junit.client.impl.GWTRunner;
 import com.google.gwt.junit.remote.BrowserManager;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
@@ -125,11 +126,6 @@ public class JUnitShell extends GWTShell {
    * by the TestRunner will use the single unitTestShell.
    */
   private static JUnitShell unitTestShell;
-
-  static {
-    ModuleDefLoader.forceInherit("com.google.gwt.junit.JUnit");
-    ModuleDefLoader.setEnableCachingModules(true);
-  }
 
   /**
    * Called by {@link com.google.gwt.junit.server.JUnitHostImpl} to get an
@@ -240,11 +236,6 @@ public class JUnitShell extends GWTShell {
    * started the test.
    */
   private long testBeginTimeout;
-
-  /**
-   * Class name of the current/last test case to run.
-   */
-  private String testCaseClassName;
 
   /**
    * Enforce the singleton pattern. The call to {@link GWTShell}'s ctor forces
@@ -358,28 +349,6 @@ public class JUnitShell extends GWTShell {
   }
 
   /**
-   * Overrides the default module loading behavior. Clears any existing entry
-   * points and adds an entry point for the class being tested. This test class
-   * is then rebound to a generated subclass.
-   */
-  @Override
-  protected ModuleDef doLoadModule(TreeLogger logger, String moduleName)
-      throws UnableToCompleteException {
-
-    // We don't refresh modules while running unit tests
-    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName,
-        false);
-
-    // Tweak the module for JUnit support
-    //
-    if (moduleName.equals(currentModuleName)) {
-      module.clearEntryPoints();
-      module.addEntryPointTypeName(testCaseClassName);
-    }
-    return module;
-  }
-
-  /**
    * Never check for updates in JUnit mode.
    */
   @Override
@@ -420,7 +389,7 @@ public class JUnitShell extends GWTShell {
               + TEST_BEGIN_TIMEOUT_MILLIS + "ms.");
     }
 
-    if (messageQueue.hasResult(testCaseClassName)) {
+    if (messageQueue.hasResult(currentModuleName)) {
       return false;
     }
 
@@ -448,19 +417,37 @@ public class JUnitShell extends GWTShell {
   private void runTestImpl(String moduleName, TestCase testCase,
       TestResult testResult) throws UnableToCompleteException {
 
-    String newTestCaseClassName = testCase.getClass().getName();
-    boolean sameTest = newTestCaseClassName.equals(testCaseClassName);
+    String syntheticModuleName = moduleName + ".JUnit";
+    boolean sameTest = syntheticModuleName.equals(currentModuleName);
     if (sameTest && lastLaunchFailed) {
       throw new UnableToCompleteException();
     }
+    currentModuleName = syntheticModuleName;
 
-    messageQueue.setNextTestName(newTestCaseClassName, testCase.getName());
+    if (!sameTest) {
+      /*
+       * Synthesize a synthetic module that derives from the user-specified
+       * module but also includes JUnit support.
+       */
+      ModuleDef synthetic = ModuleDefLoader.createSyntheticModule(
+          getTopLogger(), currentModuleName, new String[] {
+              moduleName, "com.google.gwt.junit.JUnit"}, true);
+      // Replace any user entry points with our test runner.
+      synthetic.clearEntryPoints();
+      synthetic.addEntryPointTypeName(GWTRunner.class.getName());
+      // Squirrel away the name of the active module for GWTRunnerGenerator
+      Property moduleNameProp = synthetic.getProperties().create(
+          "junit.moduleName");
+      moduleNameProp.addKnownValue(moduleName);
+      moduleNameProp.setActiveValue(moduleName);
+    }
+
+    lastLaunchFailed = false;
+    messageQueue.setNextTestName(currentModuleName,
+        testCase.getClass().getName(), testCase.getName());
 
     try {
-      lastLaunchFailed = false;
-      testCaseClassName = newTestCaseClassName;
-      currentModuleName = moduleName;
-      runStyle.maybeLaunchModule(moduleName, !sameTest);
+      runStyle.maybeLaunchModule(currentModuleName, !sameTest);
     } catch (UnableToCompleteException e) {
       lastLaunchFailed = true;
       testResult.addError(testCase, e);
@@ -479,7 +466,7 @@ public class JUnitShell extends GWTShell {
       return;
     }
 
-    List<TestResults> results = messageQueue.getResults(testCaseClassName);
+    List<TestResults> results = messageQueue.getResults(currentModuleName);
 
     if (results == null) {
       return;

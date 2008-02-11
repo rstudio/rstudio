@@ -21,17 +21,17 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
-import java.util.Map;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class generates a stub class for classes that derive from GWTTestCase.
@@ -43,8 +43,6 @@ public class JUnitTestCaseStubGenerator extends Generator {
   interface MethodFilter {
     boolean accept(JMethod method);
   }
-
-  private static final String GWT_TESTCASE_CLASS_NAME = "com.google.gwt.junit.client.GWTTestCase";
 
   /**
    * Returns the method names for the set of methods that are strictly JUnit
@@ -61,17 +59,16 @@ public class JUnitTestCaseStubGenerator extends Generator {
   }
 
   /**
-   * Like JClassType.getMethod( String name ), except:
+   * Like JClassType.getMethod(String name) except:
    * 
    * <li>it accepts a filter</li>
-   * <li>it searches the inheritance hierarchy (includes subclasses)</li>
+   * <li>it searches the inheritance hierarchy (includes superclasses)</li>
    * 
-   * For methods which are overriden, only the most derived implementations are
+   * For methods which are overridden, only the most derived implementations are
    * included.
    * 
-   * @param type The type to search. Must not be null
-   * @return Map<String.List<JMethod>> The set of matching methods. Will not
-   *         be null.
+   * @param type the type to search (non-null)
+   * @return the set of matching methods (non-null)
    */
   static Map<String, List<JMethod>> getAllMethods(JClassType type,
       MethodFilter filter) {
@@ -153,11 +150,10 @@ public class JUnitTestCaseStubGenerator extends Generator {
     return true;
   }
 
-  TreeLogger logger;
-  String packageName;
-  String qualifiedStubClassName;
-  String simpleStubClassName;
-  String typeName;
+  protected TreeLogger logger;
+  private String packageName;
+  private String qualifiedStubClassName;
+  private String simpleStubClassName;
 
   private JClassType requestedClass;
   private SourceWriter sourceWriter;
@@ -180,22 +176,49 @@ public class JUnitTestCaseStubGenerator extends Generator {
     return qualifiedStubClassName;
   }
 
-  public JClassType getRequestedClass() {
+  protected JClassType getRequestedClass() {
     return requestedClass;
   }
 
-  public SourceWriter getSourceWriter() {
+  protected SourceWriter getSourceWriter() {
     return sourceWriter;
   }
 
-  public TypeOracle getTypeOracle() {
+  protected TypeOracle getTypeOracle() {
     return typeOracle;
   }
 
-  boolean init(TreeLogger logger, GeneratorContext context, String typeName)
-      throws UnableToCompleteException {
+  @SuppressWarnings("unused")
+  protected void writeSource() throws UnableToCompleteException {
+    String[] testMethods = getTestMethodNames(requestedClass);
+    writeDoRunTestMethod(testMethods, sourceWriter);
+  }
 
-    this.typeName = typeName;
+  /**
+   * Gets the name of the native stub class.
+   */
+  private String getSimpleStubClassName(JClassType baseClass) {
+    return "__" + baseClass.getSimpleSourceName() + "_unitTestImpl";
+  }
+
+  private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx,
+      String packageName, String className, String superclassName) {
+
+    PrintWriter printWriter = ctx.tryCreate(logger, packageName, className);
+    if (printWriter == null) {
+      return null;
+    }
+
+    ClassSourceFileComposerFactory composerFactory = new ClassSourceFileComposerFactory(
+        packageName, className);
+
+    composerFactory.setSuperclass(superclassName);
+
+    return composerFactory.createSourceWriter(ctx, printWriter);
+  }
+
+  private boolean init(TreeLogger logger, GeneratorContext context,
+      String typeName) throws UnableToCompleteException {
     this.logger = logger;
     typeOracle = context.getTypeOracle();
     assert typeOracle != null;
@@ -224,37 +247,6 @@ public class JUnitTestCaseStubGenerator extends Generator {
     return sourceWriter != null;
   }
 
-  @SuppressWarnings("unused")
-  void writeSource() throws UnableToCompleteException {
-    String[] testMethods = getTestMethodNames(requestedClass);
-    writeGetNewTestCase(simpleStubClassName, sourceWriter);
-    writeDoRunTestMethod(testMethods, sourceWriter);
-    writeGetTestName(typeName, sourceWriter);
-  }
-
-  /**
-   * Gets the name of the native stub class.
-   */
-  private String getSimpleStubClassName(JClassType baseClass) {
-    return "__" + baseClass.getSimpleSourceName() + "_unitTestImpl";
-  }
-
-  private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx,
-      String packageName, String className, String superclassName) {
-
-    PrintWriter printWriter = ctx.tryCreate(logger, packageName, className);
-    if (printWriter == null) {
-      return null;
-    }
-
-    ClassSourceFileComposerFactory composerFactory = new ClassSourceFileComposerFactory(
-        packageName, className);
-
-    composerFactory.setSuperclass(superclassName);
-
-    return composerFactory.createSourceWriter(ctx, printWriter);
-  }
-
   private void writeDoRunTestMethod(String[] testMethodNames, SourceWriter sw) {
     sw.println();
     sw.println("protected final void doRunTest(String name) throws Throwable {");
@@ -274,30 +266,4 @@ public class JUnitTestCaseStubGenerator extends Generator {
     sw.println("}"); // finish doRunTest();
   }
 
-  /**
-   * Create the appMain method that is the main entry point for the GWT
-   * application.
-   */
-  private void writeGetNewTestCase(String stubClassName, SourceWriter sw) {
-    sw.println();
-    sw.println("public final " + GWT_TESTCASE_CLASS_NAME
-        + " getNewTestCase() {");
-    sw.indent();
-    sw.println("return new " + stubClassName + "();");
-    sw.outdent();
-    sw.println("}"); // finish getNewTestCase();
-  }
-
-  /**
-   * Create the appMain method that is the main entry point for the GWT
-   * application.
-   */
-  private void writeGetTestName(String testClassName, SourceWriter sw) {
-    sw.println();
-    sw.println("public final String getTestName() {");
-    sw.indent();
-    sw.println("return \"" + testClassName + "\";");
-    sw.outdent();
-    sw.println("}"); // finish getNewTestCase();
-  }
 }

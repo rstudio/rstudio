@@ -21,7 +21,7 @@ import junit.framework.TestCase;
 
 /**
  * This class is the translatable version of {@link GWTTestCase}. It uses RPC
- * to communicate test progress back to the GWT environemnt, where the real test
+ * to communicate test progress back to the GWT environment, where the real test
  * test is running.
  */
 public abstract class GWTTestCase extends TestCase {
@@ -30,7 +30,7 @@ public abstract class GWTTestCase extends TestCase {
    * A reference to my implementation class. All substantive methods simply
    * delegate to the implementation class, to make debugging easier.
    */
-  public final GWTTestCaseImpl impl = new GWTTestCaseImpl(this);
+  public GWTTestCaseImpl impl;
 
   public final void addCheckpoint(String msg) {
     impl.addCheckpoint(msg);
@@ -50,24 +50,6 @@ public abstract class GWTTestCase extends TestCase {
 
   public abstract String getModuleName();
 
-  /**
-   * Do not override this method, the generated class will override it for you.
-   */
-  public GWTTestCase getNewTestCase() {
-    return null;
-  }
-
-  /**
-   * Do not override this method, the generated class will override it for you.
-   */
-  public String getTestName() {
-    return null;
-  }
-
-  public final void onModuleLoad() {
-    impl.onModuleLoad();
-  }
-
   protected final void delayTestFinish(int timeoutMillis) {
     if (supportsAsync()) {
       impl.delayTestFinish(timeoutMillis);
@@ -86,20 +68,15 @@ public abstract class GWTTestCase extends TestCase {
     }
   }
 
-  protected final TestResults getTestResults() {
-    return impl.getTestResults();
-  }
-
   /**
    * Returns true if this test case supports asynchronous mode. By default, this
    * is set to true. Originally introduced for Benchmarks which don't currently
    * support asynchronous mode.
    * 
    * <p>
-   * Note that overriders of this method may report different answers for the
+   * Note that an overrider of this method may report different answers for the
    * same test case during the same run, so it is not safe to cache the results.
    * </p>
-   * 
    */
   protected boolean supportsAsync() {
     return true;

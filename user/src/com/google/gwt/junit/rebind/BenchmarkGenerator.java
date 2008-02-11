@@ -18,30 +18,30 @@ package com.google.gwt.junit.rebind;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
-import com.google.gwt.core.ext.typeinfo.JField;
-import com.google.gwt.junit.JUnitShell;
-import com.google.gwt.junit.client.annotations.IterationTimeLimit;
-import com.google.gwt.junit.client.annotations.Setup;
-import com.google.gwt.junit.client.annotations.Teardown;
-import com.google.gwt.junit.client.annotations.RangeField;
-import com.google.gwt.junit.client.annotations.RangeEnum;
-import com.google.gwt.junit.client.Benchmark;
 import com.google.gwt.dev.generator.ast.ForLoop;
 import com.google.gwt.dev.generator.ast.MethodCall;
 import com.google.gwt.dev.generator.ast.Statement;
 import com.google.gwt.dev.generator.ast.Statements;
 import com.google.gwt.dev.generator.ast.StatementsList;
+import com.google.gwt.junit.JUnitShell;
+import com.google.gwt.junit.client.Benchmark;
+import com.google.gwt.junit.client.annotations.IterationTimeLimit;
+import com.google.gwt.junit.client.annotations.RangeEnum;
+import com.google.gwt.junit.client.annotations.RangeField;
+import com.google.gwt.junit.client.annotations.Setup;
+import com.google.gwt.junit.client.annotations.Teardown;
 import com.google.gwt.user.rebind.SourceWriter;
 
-import java.util.Map;
-import java.util.List;
-import java.util.Set;
-import java.util.HashMap;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Implements a generator for Benchmark classes. Benchmarks require additional
@@ -241,8 +241,7 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
    *         wrapped <code>stmts</code>
    */
   private Statements benchmark(Statements stmts, String timeMillisName,
-      long bound, Statements recordCode, Statements breakCode)
-      throws UnableToCompleteException {
+      long bound, Statements recordCode, Statements breakCode) {
     Statements benchmarkCode = new StatementsList();
     List<Statements> benchStatements = benchmarkCode.getStatements();
 
@@ -324,11 +323,16 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
    * entering async mode in their Benchmark, even though we're using it
    * internally.
    * 
+   * <p>
    * Generates the code for the "supportsAsync" functionality in the
    * translatable version of GWTTestCase. This includes:
-   *  - the supportsAsync flag - the supportsAsync method - the
-   * privateDelayTestFinish method - the privateFinishTest method
-   * 
+   * <ul>
+   * <li>the supportsAsync flag</li>
+   * <li>the supportsAsync method</li>
+   * <li>the privateDelayTestFinish method</li>
+   * <li>the privateFinishTest method</li>
+   * </ul>
+   * </p>
    */
   private void generateAsyncCode() {
     SourceWriter writer = getSourceWriter();
@@ -584,7 +588,7 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
           new Statement(new MethodCall(method.getName(), paramNames)));
 
       StringBuffer recordResultsCode = new StringBuffer(
-          "com.google.gwt.junit.client.TestResults results = getTestResults();\n"
+          "com.google.gwt.junit.client.TestResults results = impl.getTestResults();\n"
               + "com.google.gwt.junit.client.Trial trial = new com.google.gwt.junit.client.Trial();\n"
               + "trial.setRunTimeMillis( "
               + testTimingName
@@ -659,7 +663,7 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
       Statements testBench = genBenchTarget(beginMethod, endMethod,
           Collections.<String> emptyList(), testStatements);
 
-      String recordResultsCode = "com.google.gwt.junit.client.TestResults results = getTestResults();\n"
+      String recordResultsCode = "com.google.gwt.junit.client.TestResults results = impl.getTestResults();\n"
           + "com.google.gwt.junit.client.Trial trial = new com.google.gwt.junit.client.Trial();\n"
           + "trial.setRunTimeMillis( "
           + testTimingName

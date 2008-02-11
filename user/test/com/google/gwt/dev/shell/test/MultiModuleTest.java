@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -169,6 +169,7 @@ public class MultiModuleTest extends GWTTestCase {
     String url = getURL();
     Map params = getURLParams(url);
     params.put("frame", "top");
+    params.put("gwt.junit.testclassname", MultiModuleTest.class.getName());
     params.put("gwt.junit.testfuncname", "testInnerModules");
     
     // open a new frame containing the module that drives the actual test
@@ -350,21 +351,21 @@ public class MultiModuleTest extends GWTTestCase {
    * @param depth nesting depth of this module, 0 = top level
    */
   private native void markLoaded(int depth) /*-{
-      var frame = $wnd;
-      while (depth-- > 0) {
-        frame = frame.parent;
-      }
-      if (!--frame.__count_to_be_loaded) {
-        frame.__done_loading();
-      }
-    }-*/;
+    var frame = $wnd;
+    while (depth-- > 0) {
+      frame = frame.parent;
+    }
+    if (!--frame.__count_to_be_loaded) {
+      frame.__done_loading();
+    }
+  }-*/;
 
   /**
    * Notify our parent frame that the test is complete.
    */
   private native void notifyParent() /*-{
-      $wnd.parent.__test_complete();
-    }-*/;
+    $wnd.parent.__test_complete();
+  }-*/;
 
   /**
    * Replace the specified frame with its alternate version.

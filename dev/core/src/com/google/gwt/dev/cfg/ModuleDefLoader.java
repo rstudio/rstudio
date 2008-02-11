@@ -28,44 +28,62 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * The top-level API for loading module XML.
  */
-public class ModuleDefLoader {
-
-  // Should always be true. If it is false complete type oracle analysis and
-  // bytecode cache reload will occur on each reload.
-  private static boolean enableCachingModules = true;
-  private static final Set forceInherits = new HashSet();
-  private static final Map loadedModules = new HashMap();
+public final class ModuleDefLoader {
 
   /**
-   * Forces all modules loaded via subsequent calls to
-   * {@link #loadFromClassPath(TreeLogger, String)} to automatically inherit the
-   * specified module. If this method is called multiple times, the order of
-   * inclusion is unspecified.
-   * 
-   * @param moduleName The module all subsequently loaded modules should inherit
-   *          from.
+   * Interface to provide a load strategy to the load process.
    */
-  public static void forceInherit(String moduleName) {
-    forceInherits.add(moduleName);
+  private interface LoadStrategy {
+    /**
+     * Perform loading on the specified module.
+     * 
+     * @param logger logs the process
+     * @param moduleName the name of the process
+     * @param moduleDef a module
+     * @throws UnableToCompleteException
+     */
+    void load(TreeLogger logger, String moduleName, ModuleDef moduleDef)
+        throws UnableToCompleteException;
+  }
+
+  private static final Map<String, ModuleDef> loadedModules = new HashMap<String, ModuleDef>();
+
+  /**
+   * Creates a module in memory that is not associated with a
+   * <code>.gwt.xml</code> file on disk.
+   * 
+   * @param logger logs the process
+   * @param moduleName the synthetic module to create
+   * @param inherits a set of modules to inherit from
+   * @param refresh whether to refresh the module
+   * @return the loaded module
+   * @throws UnableToCompleteException
+   */
+  public static ModuleDef createSyntheticModule(TreeLogger logger,
+      String moduleName, String[] inherits, boolean refresh)
+      throws UnableToCompleteException {
+    ModuleDef moduleDef = tryGetLoadedModule(logger, moduleName, refresh);
+    if (moduleDef != null) {
+      return moduleDef;
+    }
+    ModuleDefLoader loader = new ModuleDefLoader(inherits);
+    return loader.doLoadModule(logger, moduleName);
   }
 
   /**
-   * Gets whether module caching is enabled.
+   * Loads a new module from the class path.
    * 
-   * @return <code>true</code> if module cachine is enabled, otherwise
-   *         <code>false</code>.
+   * @param logger logs the process
+   * @param moduleName the module to load
+   * @return the loaded module
+   * @throws UnableToCompleteException
    */
-  public static boolean getEnableCachingModules() {
-    return enableCachingModules;
-  }
-
   public static ModuleDef loadFromClassPath(TreeLogger logger, String moduleName)
       throws UnableToCompleteException {
     return loadFromClassPath(logger, moduleName, true);
@@ -74,45 +92,69 @@ public class ModuleDefLoader {
   /**
    * Loads a new module from the class path.
    * 
-   * @param logger Logs the process.
-   * @param moduleName The module to load.
-   * @return The loaded module.
+   * @param logger logs the process
+   * @param moduleName the module to load
+   * @param refresh whether to refresh the module
+   * @return the loaded module
    * @throws UnableToCompleteException
    */
   public static ModuleDef loadFromClassPath(TreeLogger logger,
       String moduleName, boolean refresh) throws UnableToCompleteException {
-    ModuleDef moduleDef = (ModuleDef) loadedModules.get(moduleName);
+    ModuleDef moduleDef = tryGetLoadedModule(logger, moduleName, refresh);
+    if (moduleDef != null) {
+      return moduleDef;
+    }
+    ModuleDefLoader loader = new ModuleDefLoader();
+    return loader.doLoadModule(logger, moduleName);
+  }
+
+  private static ModuleDef tryGetLoadedModule(TreeLogger logger,
+      String moduleName, boolean refresh) throws UnableToCompleteException {
+    ModuleDef moduleDef = loadedModules.get(moduleName);
     if (moduleDef == null || moduleDef.isGwtXmlFileStale()) {
-      moduleDef = new ModuleDefLoader().load(logger, moduleName);
-      if (enableCachingModules) {
-        loadedModules.put(moduleName, moduleDef);
-      }
-    } else {
-      if (refresh) {
-        moduleDef.refresh(logger);
-      }
+      return null;
+    } else if (refresh) {
+      moduleDef.refresh(logger);
     }
     return moduleDef;
   }
 
-  /**
-   * Enables or disables caching loaded modules for subsequent requests.
-   * 
-   * @param enableCachingModules If <code>true</code> subsequent calls to
-   *          {@link #loadFromClassPath(TreeLogger, String)} will cause the
-   *          resulting module to be cached. If <code>false</code> such
-   *          modules will not be cached.
-   */
-  public static void setEnableCachingModules(boolean enableCachingModules) {
-    ModuleDefLoader.enableCachingModules = enableCachingModules;
-  }
-
-  private final Set alreadyLoadedModules = new HashSet();
+  private final Set<String> alreadyLoadedModules = new HashSet<String>();
 
   private final ClassLoader classLoader;
 
+  private final LoadStrategy strategy;
+
+  /**
+   * Constructs a {@link ModuleDefLoader} that loads from the class path.
+   */
   private ModuleDefLoader() {
     this.classLoader = Thread.currentThread().getContextClassLoader();
+    this.strategy = new LoadStrategy() {
+      public void load(TreeLogger logger, String moduleName, ModuleDef moduleDef)
+          throws UnableToCompleteException {
+        nestedLoad(logger, moduleName, moduleDef);
+      }
+    };
+  }
+
+  /**
+   * Constructs a {@link ModuleDefLoader} that loads a synthetic module.
+   * 
+   * @param inherits a set of modules to inherit from
+   */
+  private ModuleDefLoader(final String[] inherits) {
+    this.classLoader = Thread.currentThread().getContextClassLoader();
+    this.strategy = new LoadStrategy() {
+      public void load(TreeLogger logger, String moduleName, ModuleDef moduleDef)
+          throws UnableToCompleteException {
+        for (String inherit : inherits) {
+          TreeLogger branch = logger.branch(TreeLogger.TRACE,
+              "Loading inherited module '" + inherit + "'", null);
+          nestedLoad(branch, inherit, moduleDef);
+        }
+      }
+    };
   }
 
   /**
@@ -186,15 +228,14 @@ public class ModuleDefLoader {
   }
 
   /**
-   * 
    * This method loads a module.
    * 
    * @param logger used to log the loading process
    * @param moduleName the name of the module
    * @return the module returned -- cannot be null
-   * @throws UnableToCompleteException if module loading failed.
+   * @throws UnableToCompleteException if module loading failed
    */
-  private ModuleDef load(TreeLogger logger, String moduleName)
+  private ModuleDef doLoadModule(TreeLogger logger, String moduleName)
       throws UnableToCompleteException {
     logger = logger.branch(TreeLogger.TRACE, "Loading module '" + moduleName
         + "'", null);
@@ -206,18 +247,12 @@ public class ModuleDefLoader {
     }
 
     ModuleDef moduleDef = new ModuleDef(moduleName);
-    for (Iterator it = forceInherits.iterator(); it.hasNext();) {
-      String forceInherit = (String) it.next();
-      TreeLogger branch = logger.branch(TreeLogger.TRACE,
-          "Loading forceably inherited module '" + forceInherit + "'", null);
-      nestedLoad(branch, forceInherit, moduleDef);
-    }
-    nestedLoad(logger, moduleName, moduleDef);
+    strategy.load(logger, moduleName, moduleDef);
 
     // Do any final setup.
     //
     moduleDef.normalize(logger);
-
+    loadedModules.put(moduleName, moduleDef);
     return moduleDef;
   }
 }

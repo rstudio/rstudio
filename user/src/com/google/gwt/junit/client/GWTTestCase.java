@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -175,17 +175,6 @@ public abstract class GWTTestCase extends TestCase {
    */
   protected final void finishTest() {
     // implemented in the translatable version of this class
-  }
-
-  /**
-   * Returns the overall test results for this unit test.
-   *
-   * These TestResults are more comprehensive than JUnit's default test results,
-   * and are automatically collected by GWT's testing infrastructure.
-   */
-  protected final TestResults getTestResults() {
-    // implemented in the translatable version of this class
-    return null;
   }
 
   /**

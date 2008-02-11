@@ -93,12 +93,6 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    */
   private static final boolean SUPPRESS_LOGGER_OUTPUT = true;
 
-  static {
-    ModuleDefLoader.setEnableCachingModules(true);
-    // Not required for an isolated module that doesn't ref GWTTestCase.
-    ModuleDefLoader.forceInherit("com.google.gwt.junit.JUnit");
-  }
-
   private static TypeInfo[] getActualTypeInfo(SerializableTypeOracle sto) {
     JType[] types = sto.getSerializableTypes();
     TypeInfo[] actual = new TypeInfo[types.length];
@@ -168,8 +162,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       ((AbstractTreeLogger) logger).setMaxDetail(TreeLogger.INFO);
     }
 
-    moduleDef = ModuleDefLoader.loadFromClassPath(logger,
-        "com.google.gwt.user.rebind.rpc.testcases.RebindRPCTestCases");
+    moduleDef = ModuleDefLoader.createSyntheticModule(logger,
+        "com.google.gwt.user.rebind.rpc.testcases.RebindRPCTestCases.JUnit",
+        new String[] {
+            "com.google.gwt.user.rebind.rpc.testcases.RebindRPCTestCases",
+            "com.google.gwt.junit.JUnit"}, true);
     typeOracle = moduleDef.getTypeOracle(logger);
   }
 

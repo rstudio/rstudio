@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,30 +15,58 @@
  */
 package com.google.gwt.junit.client.impl;
 
+import com.google.gwt.user.client.rpc.IsSerializable;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.junit.client.TestResults;
 
 /**
- * An interface for {@link com.google.gwt.junit.client.GWTTestCase} to communicate with the test process
- * through RPC.
+ * An interface for {@link com.google.gwt.junit.client.GWTTestCase} to
+ * communicate with the test process through RPC.
  */
 public interface JUnitHost extends RemoteService {
 
   /**
+   * Returned from the server to tell the system what test to run next.
+   */
+  public static class TestInfo implements IsSerializable {
+    private String testClass;
+    private String testMethod;
+
+    public TestInfo(String testClass, String testMethod) {
+      this.testClass = testClass;
+      this.testMethod = testMethod;
+    }
+
+    /**
+     * Constructor for serialization.
+     */
+    TestInfo() {
+    }
+
+    public String getTestClass() {
+      return testClass;
+    }
+
+    public String getTestMethod() {
+      return testMethod;
+    }
+  }
+
+  /**
    * Gets the name of next method to run.
    * 
-   * @param testClassName The class name of the calling test case.
-   * @return the name of the next method to run.
+   * @param moduleName the module name of this client
+   * @return the next test to run
    */
-  String getFirstMethod(String testClassName);
+  TestInfo getFirstMethod(String moduleName);
 
   /**
    * Reports results for the last method run and gets the name of next method to
    * run.
    * 
-   * @param testClassName The class name of the calling test case.
+   * @param moduleName the module name of this client
    * @param results The results of executing the test
-   * @return the name of the next method to run.
+   * @return the next test to run
    */
-  String reportResultsAndGetNextMethod(String testClassName, TestResults results);
+  TestInfo reportResultsAndGetNextMethod(String moduleName, TestResults results);
 }

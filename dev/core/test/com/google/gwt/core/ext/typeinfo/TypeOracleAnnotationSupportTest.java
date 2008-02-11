@@ -39,9 +39,6 @@ import java.lang.reflect.Method;
  * Array annotations Enum annotations String from field annotations
  */
 public class TypeOracleAnnotationSupportTest extends TestCase {
-  static {
-    ModuleDefLoader.setEnableCachingModules(true);
-  }
 
   private static void validateAnnotation(HasAnnotations annotatedElement,
       String testAnnotationValue, String nestedAnnotationValue,

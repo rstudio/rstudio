@@ -1,5 +1,5 @@
 <!--                                                                        -->
-<!-- Copyright 2007 Google Inc.                                             -->
+<!-- Copyright 2008 Google Inc.                                             -->
 <!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
 <!-- may not use this file except in compliance with the License. You may   -->
 <!-- may obtain a copy of the License at                                    -->
@@ -22,6 +22,10 @@
   <super-source path="translatable"/>
 
   <source path="client"/>
+
+  <generate-with class="com.google.gwt.junit.rebind.GWTRunnerGenerator">
+    <when-type-is class="com.google.gwt.junit.client.impl.GWTRunner"/>
+  </generate-with>
 
   <generate-with class="com.google.gwt.junit.rebind.JUnitTestCaseStubGenerator">
     <when-type-assignable class="com.google.gwt.junit.client.GWTTestCase"/>

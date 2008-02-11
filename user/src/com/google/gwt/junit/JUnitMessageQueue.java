@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 package com.google.gwt.junit;
 
 import com.google.gwt.junit.client.TestResults;
+import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,7 +46,7 @@ public class JUnitMessageQueue {
    * Key = client-id (e.g. agent+host) Value = the index of the current
    * requested test
    */
-  private Map<String,Integer> clientTestRequests = new HashMap<String,Integer>();
+  private Map<String, Integer> clientTestRequests = new HashMap<String, Integer>();
 
   /**
    * The index of the current test being executed.
@@ -67,6 +68,11 @@ public class JUnitMessageQueue {
    * The lock used to synchronize access around testResults.
    */
   private Object resultsLock = new Object();
+
+  /**
+   * The name of the module to execute.
+   */
+  private String testModule;
 
   /**
    * The name of the test class to execute.
@@ -92,7 +98,7 @@ public class JUnitMessageQueue {
   }
 
   /**
-   * Only instantiatable within this package.
+   * Only instantiable within this package.
    * 
    * @param numClients The number of parallel clients being served by this
    *          queue.
@@ -104,17 +110,17 @@ public class JUnitMessageQueue {
   /**
    * Called by the servlet to query for for the next method to test.
    * 
-   * @param testClassName The name of the test class.
-   * @param timeout How long to wait for an answer.
-   * @return The next test to run, or <code>null</code> if
+   * @param moduleName the name of the executing module
+   * @param timeout how long to wait for an answer
+   * @return the next test to run, or <code>null</code> if
    *         <code>timeout</code> is exceeded or the next test does not match
-   *         <code>testClassName</code>.
+   *         <code>testClassName</code>
    */
-  public String getNextTestName(String clientId, String testClassName,
+  public TestInfo getNextTestInfo(String clientId, String moduleName,
       long timeout) {
     synchronized (readTestLock) {
       long stopTime = System.currentTimeMillis() + timeout;
-      while (!testIsAvailableFor(clientId, testClassName)) {
+      while (!testIsAvailableFor(clientId, moduleName)) {
         long timeToWait = stopTime - System.currentTimeMillis();
         if (timeToWait < 1) {
           return null;
@@ -127,25 +133,25 @@ public class JUnitMessageQueue {
         }
       }
 
-      if (!testClassName.equals(testClass)) {
+      if (!moduleName.equals(testModule)) {
         // it's an old client that is now done
         return null;
       }
 
       bumpClientTestRequest(clientId);
-      return testMethod;
+      return new TestInfo(testClass, testMethod);
     }
   }
 
   /**
    * Called by the servlet to report the results of the last test to run.
    * 
-   * @param testClassName The name of the test class.
-   * @param results The result of running the test.
+   * @param moduleName the name of the test module
+   * @param results the result of running the test
    */
-  public void reportResults(String testClassName, TestResults results) {
+  public void reportResults(String moduleName, TestResults results) {
     synchronized (resultsLock) {
-      if (!testClassName.equals(testClass)) {
+      if (!moduleName.equals(testModule)) {
         // an old client is trying to report results, do nothing
         return;
       }
@@ -156,25 +162,25 @@ public class JUnitMessageQueue {
   /**
    * Fetches the results of a completed test.
    * 
-   * @param testClassName The name of the test class.
+   * @param moduleName the name of the test module
    * @return An getException thrown from a failed test, or <code>null</code>
    *         if the test completed without error.
    */
-  List<TestResults> getResults(String testClassName) {
-    assert (testClassName.equals(testClass));
+  List<TestResults> getResults(String moduleName) {
+    assert (moduleName.equals(testModule));
     return testResults;
   }
 
   /**
    * Called by the shell to see if the currently-running test has completed.
    * 
-   * @param testClassName The name of the test class.
+   * @param moduleName the name of the test module
    * @return If the test has completed, <code>true</code>, otherwise
    *         <code>false</code>.
    */
-  boolean hasResult(String testClassName) {
+  boolean hasResult(String moduleName) {
     synchronized (resultsLock) {
-      assert (testClassName.equals(testClass));
+      assert (moduleName.equals(testModule));
       return testResults.size() == numClients;
     }
   }
@@ -207,10 +213,11 @@ public class JUnitMessageQueue {
    * @param testClassName The name of the test class.
    * @param testName The name of the method to run.
    */
-  void setNextTestName(String testClassName, String testName) {
+  void setNextTestName(String testModule, String testClass, String testMethod) {
     synchronized (readTestLock) {
-      testClass = testClassName;
-      testMethod = testName;
+      this.testModule = testModule;
+      this.testClass = testClass;
+      this.testMethod = testMethod;
       ++currentTestIndex;
       testResults = new ArrayList<TestResults>(numClients);
       readTestLock.notifyAll();
@@ -234,8 +241,8 @@ public class JUnitMessageQueue {
   }
 
   // This method requires that readTestLock is being held for the duration.
-  private boolean testIsAvailableFor(String clientId, String testClassName) {
-    if (!testClassName.equals(testClass)) {
+  private boolean testIsAvailableFor(String clientId, String moduleName) {
+    if (!moduleName.equals(testModule)) {
       // the "null" test is always available for an old client
       return true;
     }
