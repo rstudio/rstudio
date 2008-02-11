@@ -110,4 +110,9 @@ public class MethodAdaptor {
   public boolean needsThis() {
     return needsThis;
   }
+
+  @Override
+  public final String toString() {
+    return (method != null) ? method.toString() : constructor.toString();
+  }
 }
