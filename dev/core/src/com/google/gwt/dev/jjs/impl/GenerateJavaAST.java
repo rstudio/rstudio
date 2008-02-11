@@ -1235,6 +1235,7 @@ public class GenerateJavaAST {
       }
     }
 
+    @SuppressWarnings("unused")
     JExpression processExpression(NullLiteral x) {
       return program.getLiteralNull();
     }
@@ -1647,6 +1648,7 @@ public class GenerateJavaAST {
       return stmt;
     }
 
+    @SuppressWarnings("unused")
     JStatement processStatement(EmptyStatement x) {
       return null;
     }
@@ -1877,6 +1879,7 @@ public class GenerateJavaAST {
           finallyBlock);
     }
 
+    @SuppressWarnings("unused")
     JStatement processStatement(TypeDeclaration x) {
       // do nothing -- the local class is treated at the program level
       return null;
@@ -1908,6 +1911,7 @@ public class GenerateJavaAST {
       return jstatements;
     }
 
+    @SuppressWarnings("unused")
     JMethodCall processSuperConstructorCall(ExplicitConstructorCall x) {
       SourceInfo info = makeSourceInfo(x);
       JMethod ctor = (JMethod) typeMap.get(x.binding);
@@ -1938,8 +1942,7 @@ public class GenerateJavaAST {
                */
               List<JExpression> workList = new ArrayList<JExpression>();
               Iterator<JParameter> paramIt = getSyntheticsIterator(currentMethod);
-              for (@SuppressWarnings("unused")
-              ReferenceBinding b : myBinding.syntheticEnclosingInstanceTypes()) {
+              for (ReferenceBinding b : myBinding.syntheticEnclosingInstanceTypes()) {
                 workList.add(createVariableRef(info, paramIt.next()));
               }
               call.getArgs().add(createThisRef(classType, workList));
@@ -2651,6 +2654,7 @@ public class GenerateJavaAST {
     compResult.record(problem, methodDeclaration);
   }
 
+  @SuppressWarnings("unused")
   public static SourceInfo translateInfo(JsSourceInfo info) {
     // TODO implement this
     return null;
