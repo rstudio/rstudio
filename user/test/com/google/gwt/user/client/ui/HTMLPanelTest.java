@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.DOM;
 
 /**
  * Tests the HTMLPanel widget.
@@ -30,6 +31,21 @@ public class HTMLPanelTest extends GWTTestCase {
 
   public String getModuleName() {
     return "com.google.gwt.user.User";
+  }
+
+  /**
+   * Tests {@link HTMLPanel#add(Widget, String)}.
+   */
+  public void testAddToElementWithId() {
+    Label labelA = new Label("A"), labelB = new Label("B");
+    HTMLPanel p = new HTMLPanel("<div id=\"a\"></div><div id=\"b\"></div>");
+    p.add(labelA, "a");
+    p.add(labelB, "b");
+    // Ensure that both Label's have the correct parent.
+    assertEquals("a", DOM.getElementAttribute(
+        DOM.getParent(labelA.getElement()), "id"));
+    assertEquals("b", DOM.getElementAttribute(
+        DOM.getParent(labelB.getElement()), "id"));
   }
 
   public void testAttachDetachOrder() {

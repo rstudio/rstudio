@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,6 +39,8 @@ public class HTMLPanel extends ComplexPanel {
     return "HTMLPanel_" + (++sUid);
   }
 
+  private Element hiddenDiv;
+
   /**
    * Creates an HTML panel with the specified HTML contents. Any element within
    * this HTML that has a specified id can contain a child widget.
@@ -58,7 +60,9 @@ public class HTMLPanel extends ComplexPanel {
    * @param id the id of the element within which it will be contained
    */
   public void add(Widget widget, String id) {
-    Element elem = getElementById(getElement(), id);
+    final Element elem = (isAttached()) ? DOM.getElementById(id)
+        : attachToDomAndGetElement(id);
+
     if (elem == null) {
       throw new NoSuchElementException(id);
     }
@@ -66,26 +70,36 @@ public class HTMLPanel extends ComplexPanel {
     super.add(widget, elem);
   }
 
-  /*
-   * Implements getElementById() downward from the given element. We need to do
-   * this because {@link #add(Widget, String)} must often be called before the
-   * panel is attached to the DOM, so {@link Dom#getElementById} won't yet work.
+  @Override
+  protected void onLoad() {
+    if (hiddenDiv != null) {
+      // This widget's element has already been moved, just need to remove the
+      // hidden DIV.
+      DOM.removeChild(RootPanel.getBodyElement(), hiddenDiv);
+      hiddenDiv = null;
+    }
+    super.onLoad();
+  }
+
+  /**
+   * Performs a {@link DOM#getElementById(String)} after attaching the widget's
+   * element into a hidden DIV in the document's body. Attachment is necessary
+   * to be able to use the native getElementById. The hidden DIV will remain
+   * attached to the DOM until the Widget itself is fully attached.
+   * 
+   * @param id the id whose associated element is to be retrieved
+   * @return the associated element, or <code>null</code> if none is found
    */
-  private Element getElementById(Element elem, String id) {
-    String elemId = DOM.getElementProperty(elem, "id");
-    if ((elemId != null) && elemId.equals(id)) {
-      return elem;
+  private Element attachToDomAndGetElement(String id) {
+    // If the hidden DIV has not been created, create it.
+    if (hiddenDiv == null) {
+      hiddenDiv = DOM.createDiv();
+      UIObject.setVisible(hiddenDiv, false);
+      DOM.appendChild(hiddenDiv, getElement());
+      DOM.appendChild(RootPanel.getBodyElement(), hiddenDiv);
     }
 
-    Element child = DOM.getFirstChild(elem);
-    while (child != null) {
-      Element ret = getElementById(child, id);
-      if (ret != null) {
-        return ret;
-      }
-      child = DOM.getNextSibling(child);
-    }
-
-    return null;
+    // Now that we're attached to the DOM, we can use getElementById.
+    return DOM.getElementById(id);
   }
 }
