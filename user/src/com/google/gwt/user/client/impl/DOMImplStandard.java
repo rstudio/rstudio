@@ -169,16 +169,7 @@ abstract class DOMImplStandard extends DOMImpl {
 
   @Override
   public native boolean isOrHasChild(Element parent, Element child) /*-{
-    while (child) {
-      if (parent == child) {
-        return true;
-      }
-      child = child.parentNode;
-      if (child && (child.nodeType != 1)) {
-        child = null;
-      }
-    }
-    return false;
+    return parent.contains(child);  
   }-*/;
 
   @Override

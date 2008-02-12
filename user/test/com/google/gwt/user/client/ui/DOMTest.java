@@ -167,10 +167,18 @@ public class DOMTest extends GWTTestCase {
   public void testIsOrHasChild() {
     Element div = DOM.createDiv();
     Element childDiv = DOM.createDiv();
+    
     assertFalse(DOM.isOrHasChild(div, childDiv));
+    assertTrue(DOM.isOrHasChild(div, div));
+    
     DOM.appendChild(div, childDiv);
     assertTrue(DOM.isOrHasChild(div, childDiv));
     assertFalse(DOM.isOrHasChild(childDiv, div));
+    
+    DOM.appendChild(RootPanel.getBodyElement(), div);
+    assertTrue(DOM.isOrHasChild(div, childDiv));
+    assertTrue(DOM.isOrHasChild(div, div));
+    assertFalse(DOM.isOrHasChild(childDiv, div));    
   }
 
   /**

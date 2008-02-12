@@ -244,12 +244,9 @@ class DOMImplIE6 extends DOMImpl {
 
   @Override
   public native boolean isOrHasChild(Element parent, Element child) /*-{
-    while (child) {
-      if (parent.uniqueID == child.uniqueID)
-        return true;
-      child = child.parentElement;
-    }
-    return false;
+    // An extra equality check is required due to the fact that
+    // elem.contains(elem) is false if elem is not attached to the DOM.
+    return (parent.uniqueID == child.uniqueID) || parent.contains(child);  
   }-*/;
 
   @Override

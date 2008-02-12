@@ -120,4 +120,18 @@ class DOMImplSafari extends DOMImplStandard {
       select.insertBefore(newOption, select.children[index]);
     }
   }-*/;
+  
+  @Override
+  public native boolean isOrHasChild(Element parent, Element child) /*-{
+    while (child) {
+      if (parent == child) {
+        return true;
+      }
+      child = child.parentNode;
+      if (child && (child.nodeType != 1)) {
+        child = null;
+      }
+    }
+    return false;
+  }-*/; 
 }

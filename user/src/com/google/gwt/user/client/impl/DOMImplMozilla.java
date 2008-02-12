@@ -80,25 +80,9 @@ class DOMImplMozilla extends DOMImplStandard {
 
   @Override
   public native boolean isOrHasChild(Element parent, Element child) /*-{
-    while (child) {
-      if (parent.isSameNode(child)) {
-        return true;
-      }
-
-      try {
-        child = child.parentNode;
-      } catch(e) {
-        // Give up on 'Permission denied to get property
-        // HTMLDivElement.parentNode'
-        // See https://bugzilla.mozilla.org/show_bug.cgi?id=208427
-        return false;
-      }
-
-      if (child && (child.nodeType != 1)) {
-        child = null;
-      }
-    }
-    return false;
+    // For more information about compareDocumentPosition, see:
+    // http://www.quirksmode.org/blog/archives/2006/01/contains_for_mo.html
+    return parent.isSameNode(child) || !!(parent.compareDocumentPosition(child) & 16);  
   }-*/;
 
   @Override
