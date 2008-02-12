@@ -29,7 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 public class RequestBuilderTestServlet extends HttpServlet {
 
   private static String getPathInfoBase() {
-    return "/com.google.gwt.http.RequestBuilderTest/testRequestBuilder/";
+    return "/com.google.gwt.http.RequestBuilderTest.JUnit/testRequestBuilder/";
   }
 
   @Override
