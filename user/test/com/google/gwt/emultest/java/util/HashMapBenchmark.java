@@ -192,7 +192,7 @@ public class HashMapBenchmark extends Benchmark {
     testHashMapStringAdds(size);
   }
 
-  protected void initMap() {
-    map = new HashMap<Object, Object>();
+  protected void initMap(Integer size) {
+    map = new HashMap<Object, Object>(size);
   }
 }
