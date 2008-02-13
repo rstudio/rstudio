@@ -697,24 +697,28 @@ public class TypeOracleBuilder {
 
     List<JClassType> bounds = new ArrayList<JClassType>();
     JClassType jfirstBound = (JClassType) resolveType(logger, firstBound);
-
     if (jfirstBound == null) {
       return null;
     }
 
-    if (jfirstBound.isClass() != null) {
-      bounds.add(jfirstBound);
-    }
+    bounds.add(jfirstBound);
 
     ReferenceBinding[] superInterfaces = tvBinding.superInterfaces();
     for (ReferenceBinding superInterface : superInterfaces) {
-      JClassType jsuperInterface = (JClassType) resolveType(logger,
-          superInterface);
-
-      if (jsuperInterface == null || jsuperInterface.isInterface() == null) {
-        return null;
+      if (superInterface != firstBound) {
+        JClassType jsuperInterface = (JClassType) resolveType(logger,
+            superInterface);
+        if (jsuperInterface == null) {
+          return null;
+        }
+        bounds.add(jsuperInterface);
+      } else {
+        /*
+         * If the first bound was an interface JDT will still include it in the
+         * set of superinterfaces.  So, we ignore it since we have already added
+         * it to the bounds.
+         */
       }
-      bounds.add(jsuperInterface);
     }
 
     return new JUpperBound(bounds.toArray(NO_JCLASSES));
