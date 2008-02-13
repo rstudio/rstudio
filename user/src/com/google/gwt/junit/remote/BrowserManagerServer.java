@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,22 +15,25 @@
  */
 package com.google.gwt.junit.remote;
 
+import com.google.gwt.junit.remote.BrowserManagerProcess.ProcessExitCb;
+
 import java.io.IOException;
-import java.rmi.Naming;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.Queue;
+import java.util.StringTokenizer;
 import java.util.Timer;
-import java.util.TimerTask;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Manages instances of a web browser as child processes. This class is
  * experimental and unsupported. An instance of this class can create browser
  * windows using one specific shell-level command. It performs process
- * managagement (babysitting) on behalf of a remote client. This can be useful
+ * management (baby sitting) on behalf of a remote client. This can be useful
  * for running a GWTTestCase on a browser that cannot be run on the native
  * platform. For example, a GWTTestCase test running on Linux could use a remote
  * call to a Windows machine to test with Internet Explorer.
@@ -41,18 +44,21 @@ import java.util.TimerTask;
  * </p>
  * 
  * <p>
- * This system has been tested on Internet Explorer 6. Firefox does not work in
- * the general case; if an existing Firefox process is already running, new
+ * This system has been tested on Internet Explorer 6 & 7. Firefox does not work
+ * in the general case; if an existing Firefox process is already running, new
  * processes simply delegate to the existing process and terminate, which breaks
- * the model. Safari on MacOS requires very special treatment given Safari's
- * poor command line support, but that is beyond the scope of this
- * documentation.
+ * the model. A shell script that sets MOZNOREMOTE=1 and cleans up
+ * locks/sessions is needed. Safari on MacOS requires very special treatment
+ * given Safari's poor command line support, but that is beyond the scope of
+ * this documentation.
  * </p>
  * 
  * <p>
  * TODO(scottb): We technically need a watchdog thread to slurp up stdout and
  * stderr from the child processes, or they might block. However, most browsers
- * never write to stdout and stderr, so this is low priority.
+ * never write to stdout and stderr, so this is low priority. (There is now a
+ * thread that is spawned for each task to wait for an exit value - this might
+ * be adapted for that purpose one day.)
  * </p>
  * 
  * see http://bugs.sun.com/bugdatabase/view_bug.do;:YfiG?bug_id=4062587
@@ -66,186 +72,84 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
    */
 
   /**
-   * Manages one web browser child process. This class contains a TimerTask
-   * which tries to kill the managed process.
-   * 
-   * Invariants:
-   * <ul>
-   * <li> If process is alive, this manager is in <code>processByToken</code>.
-   * </li>
-   * <li> If process is dead, this manager <i>might</i> be in
-   * <code>processByToken</code>. It will be observed to be dead next time
-   * {@link #keepAlive(long)} or {@link #doKill()} are called. </li>
-   * <li> Calling {@link #keepAlive(long)} and {@link #doKill()} require the
-   * lock on <code>processByToken</code> to be held, so they cannot be called
-   * at the same time. </li>
-   * </ul>
+   * Entry in the launchCommandQueue to use when tasks are serialized.
    */
-  private final class ProcessManager {
+  private class LaunchCommand {
+    long keepAliveMsecs;
+    int token;
+    String url;
 
-    /**
-     * Kills the child process when fired, unless it is no longer the active
-     * {@link ProcessManager#killTask} in its outer ProcessManager.
-     */
-    private final class KillTask extends TimerTask {
-      /*
-       * @see java.lang.Runnable#run()
-       */
-      @Override
-      public void run() {
-        synchronized (processByToken) {
-          /*
-           * CORNER CASE: Verify we're still the active KillTask, because it's
-           * possible we were bumped out by a keepAlive call after our execution
-           * started but before we could grab the lock on processByToken.
-           */
-          if (killTask == this) {
-            doKill();
-          }
-        }
-      }
+    LaunchCommand(int tokenIn) {
+      this(tokenIn, null, 0);
     }
 
-    /**
-     * The key associated with <code>process</code> in
-     * <code>processByToken</code>.
-     */
-    private Integer key;
-
-    /**
-     * If non-null, the active TimerTask which will kill <code>process</code>
-     * when it fires.
-     */
-    private KillTask killTask;
-
-    /**
-     * The managed child process.
-     */
-    private final Process process;
-
-    /**
-     * Constructs a new ProcessManager for the specified process, and adds
-     * itself to <code>processByToken</code> using the supplied key. You must
-     * hold the lock on <code>processByToken</code> to call this method.
-     * 
-     * @param key the key to be used when adding the new object to
-     *          <code>processByToken</code>
-     * @param process the process being managed
-     * @param initKeepAliveMs the initial time to wait before killing
-     *          <code>process</code>
-     */
-    ProcessManager(Integer key, Process process, long initKeepAliveMs) {
-      this.process = process;
-      this.key = key;
-      schedule(initKeepAliveMs);
-      processByToken.put(key, this);
+    LaunchCommand(int tokenIn, String urlIn, long keepAliveMsecsIn) {
+      token = tokenIn;
+      url = urlIn;
+      keepAliveMsecs = keepAliveMsecsIn;
     }
 
-    /**
-     * Kills the managed process. You must hold the lock on
-     * <code>processByToken</code> to call this method.
-     */
-    public void doKill() {
-      ProcessManager removed = processByToken.remove(key);
-      assert (removed == this);
-      process.destroy();
-      schedule(0);
-    }
-
-    /**
-     * Keeps the underlying process alive for <code>keepAliveMs</code>
-     * starting now. If the managed process is already dead, cleanup is
-     * performed and the method return false. You must hold the lock on
-     * <code>processByToken</code> to call this method.
-     * 
-     * @param keepAliveMs the time to wait before killing the underlying process
-     * @return <code>true</code> if the process was successfully kept alive,
-     *         <code>false</code> if the process is already dead.
-     */
-    public boolean keepAlive(long keepAliveMs) {
-      try {
-        /*
-         * See if the managed process is still alive. WEIRD: The only way to
-         * check the process's liveness appears to be asking for its exit status
-         * and seeing whether it throws an IllegalThreadStateException.
-         */
-        process.exitValue();
-      } catch (IllegalThreadStateException e) {
-        // The process is still alive.
-        schedule(keepAliveMs);
+    @Override
+    public boolean equals(Object obj) {
+      if (obj instanceof LaunchCommand && ((LaunchCommand) obj).token == token) {
         return true;
       }
-
-      // The process is dead already; perform cleanup.
-      doKill();
       return false;
     }
 
-    /**
-     * Cancels any existing kill task and optionally schedules a new one to run
-     * <code>keepAliveMs</code> from now. You must hold the lock on
-     * <code>processByToken</code> to call this method.
-     * 
-     * @param keepAliveMs if > 0, schedules a new kill task to run in
-     *          keepAliveMs milliseconds; if <= 0, a new kill task is not
-     *          scheduled.
-     */
-    private void schedule(long keepAliveMs) {
-      if (killTask != null) {
-        killTask.cancel();
-        killTask = null;
-      }
-      if (keepAliveMs > 0) {
-        killTask = new KillTask();
-        timer.schedule(killTask, keepAliveMs);
-      }
+    @Override
+    public int hashCode() {
+      return token;
     }
   }
+
+  private static final Logger logger = Logger.getLogger(BrowserManagerServer.class.getName());
 
   /**
    * Starts up and registers one or more browser servers. Command-line entry
    * point.
    */
   public static void main(String[] args) throws Exception {
-    if (args.length == 0) {
-      System.err.println(""
-          + "Manages local browser windows for a remote client using RMI.\n"
-          + "\n"
-          + "Pass in an even number of args, at least 2. The first argument\n"
-          + "is a short registration name, and the second argument is the\n"
-          + "executable to run when that name is used; for example,\n" + "\n"
-          + "\tie6 \"C:\\Program Files\\Internet Explorer\\IEXPLORE.EXE\"\n"
-          + "\n"
-          + "would register Internet Explorer to \"rmi://localhost/ie6\".\n"
-          + "The third and fourth arguments make another pair, and so on.\n");
-      System.exit(1);
-    }
 
-    if (args.length < 2) {
-      throw new IllegalArgumentException("Need at least 2 arguments");
-    }
-
-    if (args.length % 2 != 0) {
-      throw new IllegalArgumentException("Need an even number of arguments");
-    }
-
-    // Create an RMI registry so we don't need an external process.
-    // Uses the default RMI port.
-    // TODO(scottb): allow user to override the port via command line option.
-    LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
-    System.out.println("RMI registry ready.");
-
-    for (int i = 0; i < args.length; i += 2) {
-      BrowserManagerServer bms = new BrowserManagerServer(args[i + 1]);
-      Naming.rebind(args[i], bms);
-      System.out.println(args[i] + " started and awaiting connections");
+    // Startup logic has been delegated to BrowserManagerServerLauncher
+    // class to facilitate use of the ToolBase class for
+    // argument handling.
+    BrowserManagerServerLauncher serverMain = new BrowserManagerServerLauncher();
+    if (serverMain.doProcessArgs(args)) {
+      serverMain.run();
     }
   }
+
+  /**
+   * Receives an event when a child process exits.
+   */
+  private final ProcessExitCb childExitCallback = new ProcessExitCb() {
+    /**
+     * Called back from BrowserManagerProcess in a DIFFERENT THREAD than the
+     * main thread.
+     * 
+     * @param token token value of browser that exited.
+     * @param exitValue exit status of the browser.
+     */
+    public void childExited(int token, int exitValue) {
+      synchronized (processByToken) {
+        processByToken.remove(token);
+        // Start up any commands that were delayed.
+        launchDelayedCommand();
+      }
+    }
+  };
 
   /**
    * The shell command to launch when a new browser is requested.
    */
   private final String launchCmd;
+
+  /**
+   * A queue of delayed commands. This is used if the serialized option is
+   * turned on.
+   */
+  private Queue<LaunchCommand> launchCommandQueue = new LinkedList<LaunchCommand>();
 
   /**
    * The next token that will be returned from
@@ -258,27 +162,40 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
    * serves as a lock that must be held before any state-changing operations on
    * this class may be performed.
    */
-  private final Map<Integer, ProcessManager> processByToken =
-      new HashMap<Integer, ProcessManager>();
+  private final Map<Integer, BrowserManagerProcess> processByToken = new HashMap<Integer, BrowserManagerProcess>();
+
+  /**
+   * Flag that is set if the serialized option is turned on.
+   */
+  private final boolean serializeFlag;
 
   /**
    * A single shared Timer used by all instances of
-   * {@link ProcessManager.KillTask}.
+   * {@link BrowserManagerProcess}.
    */
   private final Timer timer = new Timer();
 
   /**
-   * Constructs a manager for a particular shell command.
+   * Constructs a manager for a particular shell command. The specified launch
+   * command should be a path to a browser's executable, suitable for passing to
+   * {@link Runtime#exec(java.lang.String)}. It may also include newline
+   * delimited arguments to pass to that executable. The invoked process must
+   * accept a URL as the final command line argument.
    * 
-   * @param launchCmd the path to a browser's executable, suitable for passing
-   *          to {@link Runtime#exec(java.lang.String)}. The invoked process
-   *          must accept a URL as a command line argument.
+   * @param launchCmd a command to launch a browser executable
+   * @param serializeFlag if <code>true</code>, serialize instance of browser
+   *          processes to only run one at a time
    */
-  public BrowserManagerServer(String launchCmd) throws RemoteException {
+  BrowserManagerServer(String launchCmd, boolean serializeFlag)
+      throws RemoteException {
+    // TODO: It would be nice to test to see if this file exists, but
+    // currently this mechanism allows you to pass in command line arguments
+    // and it will be a pain to accommodate this.
     this.launchCmd = launchCmd;
+    this.serializeFlag = serializeFlag;
   }
 
-  /*
+  /**
    * @see BrowserManager#keepAlive(int, long)
    */
   public void keepAlive(int token, long keepAliveMs) {
@@ -292,56 +209,166 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
       if (token < 0 || token >= nextToken) {
         throw new IllegalArgumentException();
       }
-      ProcessManager process = processByToken.get(token);
+      BrowserManagerProcess process = processByToken.get(token);
       if (process != null) {
         if (process.keepAlive(keepAliveMs)) {
           // The process was successfully kept alive.
           return;
-        } else {
-          // The process is already dead. Fall through to failure.
         }
+      } else if (launchCommandQueue.contains(new LaunchCommand(token))) {
+        // Nothing to do, the command hasn't started yet.
+        return;
       }
+
+      // The process is already dead. Fall through to failure.
     }
 
     throw new IllegalStateException("Process " + token + " already dead");
   }
 
-  /*
+  /**
    * @see BrowserManager#killBrowser(int)
    */
   public void killBrowser(int token) {
+
     synchronized (processByToken) {
       // Is the token one we've issued?
       if (token < 0 || token >= nextToken) {
         throw new IllegalArgumentException();
       }
-      ProcessManager process = processByToken.get(token);
+      BrowserManagerProcess process = processByToken.get(token);
       if (process != null) {
+        logger.fine("Killing browser. token=" + token);
         process.doKill();
+      } else if (launchCommandQueue.contains(new LaunchCommand(token))) {
+        launchCommandQueue.remove(new LaunchCommand(token));
+        logger.info(token + " removed from delayed launch queue.");
+      } else {
+        logger.fine("No action taken. Browser not active for token " + token
+            + ".");
       }
     }
   }
 
-  /*
+  /**
    * @see BrowserManager#launchNewBrowser(java.lang.String, long)
    */
   public int launchNewBrowser(String url, long keepAliveMs) {
-
+    logger.info("Launching browser for url: " + url + " keepAliveMs: "
+        + keepAliveMs);
     if (url == null || keepAliveMs <= 0) {
       throw new IllegalArgumentException();
     }
 
     try {
-      Process child = Runtime.getRuntime().exec(new String[] {launchCmd, url});
       synchronized (processByToken) {
         int myToken = nextToken++;
         // Adds self to processByToken.
-        new ProcessManager(myToken, child, keepAliveMs);
+
+        if (serializeFlag && !processByToken.isEmpty()) {
+          // Queue up a launch request if one is already running.
+          launchCommandQueue.add(new LaunchCommand(myToken, url, keepAliveMs));
+          logger.info("Queuing up request token: " + myToken + " for url: "
+              + url + ".  Another launch command is active.");
+        } else {
+          execChild(myToken, url, keepAliveMs);
+        }
         return myToken;
       }
     } catch (IOException e) {
+      logger.log(Level.SEVERE, "Error launching browser" + launchCmd
+          + "' for '" + url + "'", e);
       throw new RuntimeException("Error launching browser '" + launchCmd
           + "' for '" + url + "'", e);
+    }
+  }
+
+  /**
+   * This method is mainly in place for writing assertions in the unit test.
+   * 
+   * @return number of tasks waiting to run if serialized option is enabled
+   */
+  int numQueued() {
+    synchronized (processByToken) {
+      return launchCommandQueue.size();
+    }
+  }
+
+  /**
+   * This method is mainly in place for writing assertions in the unit test.
+   * 
+   * @return number of launch commands running that have not yet exited.
+   */
+  int numRunning() {
+    synchronized (processByToken) {
+      return processByToken.size();
+    }
+  }
+
+  /**
+   * Actually create a process and run a browser.
+   * 
+   * (Assumes that code is already synchronized by processBytoken)
+   * 
+   * @param token token value of browser that exited.
+   * @param url command line arguments to pass to the browser
+   * @param keepAliveMs inital keep alive interval in milliseconds
+   */
+  private void execChild(int token, String url, long keepAliveMs)
+      throws IOException {
+    // Tokenize the launchCmd by carriage returns (used for unit testing).
+    StringTokenizer st = new StringTokenizer(launchCmd, "\n");
+    int userTokens = st.countTokens();
+    String[] cmdarray = new String[userTokens + 1];
+    for (int i = 0; st.hasMoreTokens(); i++) {
+      cmdarray[i] = st.nextToken();
+    }
+    // Append the user-specified URL.
+    cmdarray[userTokens] = url;
+
+    // Start the task.
+    Process child = Runtime.getRuntime().exec(cmdarray);
+
+    BrowserManagerProcess bmp = new BrowserManagerProcess(childExitCallback,
+        timer, token, child, keepAliveMs);
+    processByToken.put(token, bmp);
+  }
+
+  /**
+   * If serialization is enabled on the server, kicks off the next queued
+   * command on the delayed command queue.
+   * 
+   * (Assumes that code is already synchronized by processBytoken)
+   */
+  private void launchDelayedCommand() {
+
+    if (!serializeFlag || !processByToken.isEmpty()) {
+      // No need to launch if serialization is off or
+      // something is already running
+      return;
+    }
+
+    // Loop through the commands until we can launch one
+    // successfully.
+    while (!launchCommandQueue.isEmpty()) {
+      LaunchCommand lc = launchCommandQueue.remove();
+
+      try {
+        execChild(lc.token, lc.url, lc.keepAliveMsecs);
+        // No exception? Great!
+        logger.info("Started delayed browser " + lc.token);
+        return;
+
+      } catch (IOException e) {
+
+        logger.log(Level.SEVERE, "Error launching browser" + launchCmd
+            + "' for '" + lc.url + "'", e);
+
+        throw new RuntimeException("Error launching browser '" + launchCmd
+            + "' for '" + lc.url + "'", e);
+      }
+
+      // If an exception occurred, keep pulling cmds off the queue.
     }
   }
 }

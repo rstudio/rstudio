@@ -70,6 +70,10 @@ public abstract class ToolBase {
   //
   private final List orderedArgHandlers = new ArrayList();
 
+  protected String getDescription() {
+    return null;
+  }
+
   protected void printHelp() {
     System.err.println(About.GWT_VERSION);
 
@@ -139,6 +143,11 @@ public abstract class ToolBase {
     }
 
     System.err.println();
+    String description = getDescription();
+    if (description != null) {
+      System.err.println(description);
+      System.err.println();
+    }
 
     System.err.println("where ");
 
