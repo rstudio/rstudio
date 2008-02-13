@@ -16,15 +16,14 @@
 package com.google.gwt.junit.benchmarks;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.typeinfo.HasAnnotations;
 import com.google.gwt.core.ext.typeinfo.HasMetaData;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.core.ext.typeinfo.HasAnnotations;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.junit.client.TestResults;
 import com.google.gwt.junit.client.Trial;
-import com.google.gwt.junit.client.Benchmark;
 import com.google.gwt.junit.rebind.BenchmarkGenerator;
 import com.google.gwt.util.tools.Utility;
 
@@ -156,11 +155,12 @@ public class BenchmarkReport {
     /**
      * Returns the source code for the method of the given name.
      * 
+     * @param logger to log the process
      * @param method a not <code>null</code> method
      * @return <code>null</code> if the source code for the method can not be
      *         located
      */
-    public String getMethod(JMethod method) {
+    public String getMethod(TreeLogger logger, JMethod method) {
       JClassType clazz = method.getEnclosingType();
 
       if (!classSources.containsKey(clazz)) {
@@ -314,10 +314,6 @@ public class BenchmarkReport {
     return resultString.equals("") ? null : resultString;
   }
 
-  private TreeLogger deprecationBranch;
-
-  private TreeLogger logger;
-
   private Parser parser = new Parser();
 
   private Map<String, CategoryImpl> testCategories = new HashMap<String, CategoryImpl>();
@@ -328,27 +324,26 @@ public class BenchmarkReport {
 
   private TypeOracle typeOracle;
 
-  public BenchmarkReport(TreeLogger logger) {
-    this.logger = logger;
-    deprecationBranch = logger.branch(TreeLogger.INFO,
-        "Scanning Benchmarks for deprecated annotations; "
-            + "Please see " + Benchmark.class.getName()
-            + " for more information.", null);
+  public BenchmarkReport() {
   }
 
   /**
    * Adds the Benchmark to the report. All of the metadata about the benchmark
    * (category, name, description, etc...) is recorded from the TypeOracle.
    * 
+   * @param logger to log the process
+   * @param deprecationBranch to log usages of old-style metadata
    * @param benchmarkClass The benchmark class to record. Must not be
-   * <code>null</code>.
+   *          <code>null</code>.
    * @param typeOracle The <code>TypeOracle</code> for the compilation session
-   * must not be <code>null</code>.
+   *          must not be <code>null</code>.
    */
-  public void addBenchmark(JClassType benchmarkClass, TypeOracle typeOracle) {
+  public void addBenchmark(TreeLogger logger, TreeLogger deprecationBranch,
+      JClassType benchmarkClass, TypeOracle typeOracle) {
 
     this.typeOracle = typeOracle;
-    String categoryType = getBenchmarkCategory(benchmarkClass);
+    String categoryType = getBenchmarkCategory(deprecationBranch,
+        benchmarkClass);
 
     Map<String, JMethod> zeroArgMethods = BenchmarkGenerator.getNotOverloadedTestMethods(benchmarkClass);
     Map<String, JMethod> parameterizedMethods = BenchmarkGenerator.getParameterizedTestMethods(
@@ -367,13 +362,15 @@ public class BenchmarkReport {
     // Add all of the benchmark methods
     for (JMethod method : testMethods) {
       String methodName = method.getName();
-      String methodCategoryType = getBenchmarkCategory(method);
+      String methodCategoryType = getBenchmarkCategory(deprecationBranch,
+          method);
       if (methodCategoryType == null) {
         methodCategoryType = categoryType;
       }
-      CategoryImpl methodCategory = getCategory(methodCategoryType);
+      CategoryImpl methodCategory = getCategory(deprecationBranch,
+          methodCategoryType);
 
-      String methodSource = parser.getMethod(method);
+      String methodSource = parser.getMethod(logger, method);
       StringBuffer sourceBuffer = (methodSource == null) ? null
           : new StringBuffer(methodSource);
       StringBuffer summary = new StringBuffer();
@@ -445,28 +442,29 @@ public class BenchmarkReport {
   }
 
   private <T extends HasMetaData & HasAnnotations> String getBenchmarkCategory(
-      T element) {
+      TreeLogger deprecationBranch, T element) {
     String category = getSimpleMetaData(element, GWT_BENCHMARK_CATEGORY);
     if (category != null) {
-      deprecationBranch.log(TreeLogger.WARN, GWT_BENCHMARK_CATEGORY + " has " 
+      deprecationBranch.log(TreeLogger.WARN, GWT_BENCHMARK_CATEGORY + " has "
           + "been deprecated with no replacement.", null);
     }
     return category;
   }
 
-  private CategoryImpl getCategory(String name) {
+  private CategoryImpl getCategory(TreeLogger deprecationBranch, String name) {
     CategoryImpl c = testCategories.get(name);
 
     if (c != null) {
       return c;
     }
 
-    c = getCategoryMetaData(name); 
+    c = getCategoryMetaData(deprecationBranch, name);
     testCategories.put(name, c);
     return c;
   }
 
-  private CategoryImpl getCategoryMetaData(String typeName) {
+  private CategoryImpl getCategoryMetaData(TreeLogger deprecationBranch,
+      String typeName) {
     if (typeName == null) {
       return new CategoryImpl(null, "", "");
     }
@@ -482,16 +480,16 @@ public class BenchmarkReport {
         GWT_BENCHMARK_DESCRIPTION);
 
     if (categoryName != null || categoryDescription != null) {
-      deprecationBranch.log(TreeLogger.WARN, GWT_BENCHMARK_NAME + " and " + 
-          GWT_BENCHMARK_DESCRIPTION + " have been deprecated with no " 
+      deprecationBranch.log(TreeLogger.WARN, GWT_BENCHMARK_NAME + " and "
+          + GWT_BENCHMARK_DESCRIPTION + " have been deprecated with no "
           + "replacement", null);
     }
 
     categoryName = categoryName == null ? "" : categoryName;
-    categoryDescription = categoryDescription == null ? "" : categoryDescription;
-    
-    return new CategoryImpl(typeName, categoryName,
-        categoryDescription);
+    categoryDescription = categoryDescription == null ? ""
+        : categoryDescription;
+
+    return new CategoryImpl(typeName, categoryName, categoryDescription);
   }
 
   /**

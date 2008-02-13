@@ -185,7 +185,7 @@ public class JUnitShell extends GWTShell {
         throw new RuntimeException("Shell failed to start");
       }
 
-      shell.report = new BenchmarkReport(shell.getTopLogger());
+      shell.report = new BenchmarkReport();
       unitTestShell = shell;
 
       Runtime.getRuntime().addShutdownHook(new Thread(shell.new Shutdown()));

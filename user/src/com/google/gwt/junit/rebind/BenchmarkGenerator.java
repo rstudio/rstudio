@@ -229,7 +229,8 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
     implementZeroArgTestMethods();
     implementParameterizedTestMethods();
     generateAsyncCode();
-    JUnitShell.getReport().addBenchmark(getRequestedClass(), getTypeOracle());
+    JUnitShell.getReport().addBenchmark(logger, deprecationBranch,
+        getRequestedClass(), getTypeOracle());
   }
 
   /**
