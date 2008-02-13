@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,20 +34,6 @@ public interface HasAnnotations {
    *         element or <code>null</code> if it is not
    */
   <T extends Annotation> T getAnnotation(Class<T> annotationClass);
-
-  /**
-   * Returns all annotations that are declared or inherited by this element.
-   * 
-   * @return annotations that are declared or inherited by this element
-   */
-  Annotation[] getAnnotations();
-
-  /**
-   * Returns annotations that are declared on this element.
-   * 
-   * @return annotations that are declared on this element
-   */
-  Annotation[] getDeclaredAnnotations();
 
   /**
    * Returns <code>true</code> if this item has an annotation of the specified

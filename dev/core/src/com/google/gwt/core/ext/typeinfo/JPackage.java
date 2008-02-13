@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,14 +52,6 @@ public class JPackage implements HasAnnotations {
     return annotations.getAnnotation(annotationClass);
   }
 
-  public Annotation[] getAnnotations() {
-    return annotations.getAnnotations();
-  }
-
-  public Annotation[] getDeclaredAnnotations() {
-    return annotations.getDeclaredAnnotations();
-  }
-
   public String getName() {
     return name;
   }
@@ -102,6 +94,20 @@ public class JPackage implements HasAnnotations {
     } else {
       return found;
     }
+  }
+
+  /**
+   * NOTE: This method is for testing purposes only.
+   */
+  Annotation[] getAnnotations() {
+    return annotations.getAnnotations();
+  }
+
+  /**
+   * NOTE: This method is for testing purposes only.
+   */
+  Annotation[] getDeclaredAnnotations() {
+    return annotations.getDeclaredAnnotations();
   }
 
   void remove(JClassType type) {

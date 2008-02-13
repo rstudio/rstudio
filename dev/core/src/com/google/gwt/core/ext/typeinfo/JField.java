@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -69,14 +69,6 @@ public class JField implements HasAnnotations, HasMetaData {
 
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     return annotations.getAnnotation(annotationClass);
-  }
-
-  public Annotation[] getAnnotations() {
-    return annotations.getAnnotations();
-  }
-
-  public Annotation[] getDeclaredAnnotations() {
-    return annotations.getDeclaredAnnotations();
   }
 
   public JClassType getEnclosingType() {
@@ -161,5 +153,19 @@ public class JField implements HasAnnotations, HasMetaData {
     sb.append(" ");
     sb.append(getName());
     return sb.toString();
+  }
+
+  /**
+   * NOTE: This method is for testing purposes only.
+   */
+  Annotation[] getAnnotations() {
+    return annotations.getAnnotations();
+  }
+
+  /**
+   * NOTE: This method is for testing purposes only.
+   */
+  Annotation[] getDeclaredAnnotations() {
+    return annotations.getDeclaredAnnotations();
   }
 }

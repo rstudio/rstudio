@@ -114,7 +114,7 @@ public abstract class JClassType extends JType implements HasAnnotations,
     if (lhsType.isGenericType() != null) {
       lhsType = lhsType.isGenericType().getRawType();
     }
-    
+
     if (rhsType.isGenericType() != null) {
       // Treat the generic rhs type as a raw type.
       rhsType = rhsType.isGenericType().getRawType();
@@ -166,7 +166,7 @@ public abstract class JClassType extends JType implements HasAnnotations,
         // ? super T will reach object no matter what the rhs type is
         return true;
       }
-    } 
+    }
 
     // Check for JArrayTypes.
     JArrayType lhsArray = lhsType.isArray();
@@ -196,14 +196,12 @@ public abstract class JClassType extends JType implements HasAnnotations,
           return true;
         }
 
-        assert (lhsMaybeParameterized.isRawType() == null && 
-            rhsMaybeParameterized.isRawType() == null);
+        assert (lhsMaybeParameterized.isRawType() == null && rhsMaybeParameterized.isRawType() == null);
         JParameterizedType lhsParameterized = lhsMaybeParameterized.isParameterized();
         JParameterizedType rhsParameterized = rhsMaybeParameterized.isParameterized();
         assert (lhsParameterized != null && rhsParameterized != null);
 
-        return areTypeArgumentsAssignable(lhsParameterized,
-            rhsParameterized);
+        return areTypeArgumentsAssignable(lhsParameterized, rhsParameterized);
       }
     }
 
@@ -241,8 +239,7 @@ public abstract class JClassType extends JType implements HasAnnotations,
 
   /**
    * Returns <code>true</code> if the rhsWildcard can be assigned to the
-   * lhsWildcard.  This method does not consider supertypes of either
-   * lhs or rhs.
+   * lhsWildcard. This method does not consider supertypes of either lhs or rhs.
    */
   private static boolean areWildcardsAssignable(JWildcardType lhsWildcard,
       JWildcardType rhsWildcard) {
@@ -269,7 +266,7 @@ public abstract class JClassType extends JType implements HasAnnotations,
   }
 
   /**
-   * A restricted version of areClassTypesAssignable that is used for comparing 
+   * A restricted version of areClassTypesAssignable that is used for comparing
    * the type arguments of parameterized types, where the lhsTypeArg is the
    * container.
    */
@@ -296,7 +293,7 @@ public abstract class JClassType extends JType implements HasAnnotations,
         }
       }
     }
-    
+
     /*
      * At this point the arguments are not the same and they are not wildcards
      * so, they cannot be assignable, Eh.
@@ -341,8 +338,6 @@ public abstract class JClassType extends JType implements HasAnnotations,
   public abstract <T extends Annotation> T getAnnotation(
       Class<T> annotationClass);
 
-  public abstract Annotation[] getAnnotations();
-
   public abstract int getBodyEnd();
 
   public abstract int getBodyStart();
@@ -353,8 +348,6 @@ public abstract class JClassType extends JType implements HasAnnotations,
       throws NotFoundException;
 
   public abstract JConstructor[] getConstructors();
-
-  public abstract Annotation[] getDeclaredAnnotations();
 
   public abstract JClassType getEnclosingType();
 
@@ -527,6 +520,20 @@ public abstract class JClassType extends JType implements HasAnnotations,
   abstract void addNestedType(JClassType type);
 
   abstract JClassType findNestedTypeImpl(String[] typeName, int index);
+
+  /**
+   * Returns all of the annotations declared or inherited by this instance. 
+   * 
+   * NOTE: This method is for testing purposes only.
+   */
+  abstract Annotation[] getAnnotations();
+
+  /**
+   * Returns all of the annotations declared on this instance. 
+   * 
+   * NOTE: This method is for testing purposes only.
+   */
+  abstract Annotation[] getDeclaredAnnotations();
 
   @Override
   abstract JClassType getSubstitutedType(JParameterizedType parameterizedType);

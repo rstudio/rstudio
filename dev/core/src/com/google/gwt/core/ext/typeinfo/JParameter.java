@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -65,14 +65,6 @@ public class JParameter implements HasAnnotations, HasMetaData {
     return annotations.getAnnotation(annotationClass);
   }
 
-  public Annotation[] getAnnotations() {
-    return annotations.getAnnotations();
-  }
-
-  public Annotation[] getDeclaredAnnotations() {
-    return annotations.getDeclaredAnnotations();
-  }
-
   public JAbstractMethod getEnclosingMethod() {
     return enclosingMethod;
   }
@@ -103,6 +95,20 @@ public class JParameter implements HasAnnotations, HasMetaData {
     sb.append(" ");
     sb.append(getName());
     return sb.toString();
+  }
+
+  /**
+   * NOTE: This method is for testing purposes only.
+   */
+  Annotation[] getAnnotations() {
+    return annotations.getAnnotations();
+  }
+
+  /**
+   * NOTE: This method is for testing purposes only.
+   */
+  Annotation[] getDeclaredAnnotations() {
+    return annotations.getDeclaredAnnotations();
   }
 
   // Called when parameter types are found to be parameterized

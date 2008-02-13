@@ -50,6 +50,18 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
 
   private final List<JTypeParameter> typeParams = new ArrayList<JTypeParameter>();
 
+  JAbstractMethod(JAbstractMethod srcMethod) {
+    this.annotations = new Annotations(srcMethod.annotations);
+    this.bodyEnd = srcMethod.bodyEnd;
+    this.bodyStart = srcMethod.bodyStart;
+    this.declEnd = srcMethod.declEnd;
+    this.declStart = srcMethod.declStart;
+    this.isVarArgs = srcMethod.isVarArgs;
+    MetaData.copy(this, srcMethod.metaData);
+    this.modifierBits = srcMethod.modifierBits;
+    this.name = srcMethod.name;
+  }
+
   // Only the builder can construct
   JAbstractMethod(String name, int declStart, int declEnd, int bodyStart,
       int bodyEnd,
@@ -68,18 +80,6 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
         addTypeParameter(jtypeParameter);            
       }
     }
-  }
-
-  JAbstractMethod(JAbstractMethod srcMethod) {
-    this.annotations = new Annotations(srcMethod.annotations);
-    this.bodyEnd = srcMethod.bodyEnd;
-    this.bodyStart = srcMethod.bodyStart;
-    this.declEnd = srcMethod.declEnd;
-    this.declStart = srcMethod.declStart;
-    this.isVarArgs = srcMethod.isVarArgs;
-    MetaData.copy(this, srcMethod.metaData);
-    this.modifierBits = srcMethod.modifierBits;
-    this.name = srcMethod.name;
   }
 
   public void addMetaData(String tagName, String[] values) {
@@ -107,20 +107,12 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
     return annotations.getAnnotation(annotationClass);
   }
 
-  public Annotation[] getAnnotations() {
-    return annotations.getAnnotations();
-  }
-
   public int getBodyEnd() {
     return bodyEnd;
   }
 
   public int getBodyStart() {
     return bodyStart;
-  }
-
-  public Annotation[] getDeclaredAnnotations() {
-    return annotations.getDeclaredAnnotations();
   }
 
   public int getDeclEnd() {
@@ -256,6 +248,20 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
 
   void addParameter(JParameter param) {
     params.add(param);
+  }
+
+  /**
+   * NOTE: This method is for testing purposes only.
+   */
+  Annotation[] getAnnotations() {
+    return annotations.getAnnotations();
+  }
+
+  /**
+   * NOTE: This method is for testing purposes only.
+   */
+  Annotation[] getDeclaredAnnotations() {
+    return annotations.getDeclaredAnnotations();
   }
 
   boolean hasParamTypes(JType[] paramTypes) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,7 +39,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
     assertEquals(preSubMethod.getModifierBits(),
         postSubMethod.getModifierBits());
 
-    validateAnnotations(preSubMethod, postSubMethod);
+    validateAnnotations(preSubMethod.getAnnotations(),
+        postSubMethod.getAnnotations());
 
     validateMetaData(preSubMethod, postSubMethod);
 
@@ -52,7 +53,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
       JParameter preSubParam = preSubParams[j];
       JParameter postSubParam = postSubParams[j];
 
-      validateAnnotations(preSubParam, postSubParam);
+      validateAnnotations(preSubParam.getAnnotations(),
+          postSubParam.getAnnotations());
       validateMetaData(preSubParam, postSubParam);
 
       assertEquals(substitution.getSubstitution(preSubParam.getType()),
@@ -60,9 +62,9 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
     }
   }
 
-  protected static void validateAnnotations(HasAnnotations ha1,
-      HasAnnotations ha2) {
-    assertArraysEqual(ha1.getAnnotations(), ha2.getAnnotations());
+  protected static void validateAnnotations(Annotation[] expected,
+      Annotation[] actual) {
+    assertArraysEqual(expected, actual);
   }
 
   protected static void validateConstructorSubstitutions(
@@ -78,10 +80,9 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
     }
   }
 
-  protected static void validateDeclaredAnnotations(HasAnnotations ha1,
-      HasAnnotations ha2) {
-    assertArraysEqual(ha1.getDeclaredAnnotations(),
-        ha2.getDeclaredAnnotations());
+  protected static void validateDeclaredAnnotations(Annotation[] expected,
+      Annotation[] actual) {
+    assertArraysEqual(expected, actual);
   }
 
   protected static void validateEquals(TypeOracle oracle,
@@ -276,11 +277,12 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
     if (preSubstitution.isGenericType() == null) {
       return;
     }
-    
+
     assertEquals(preSubstitution.getModifierBits(),
         postSubstituion.getModifierBits());
 
-    validateAnnotations(preSubstitution, postSubstituion);
+    validateAnnotations(preSubstitution.getAnnotations(),
+        postSubstituion.getAnnotations());
 
     validateMetaData(preSubstitution, postSubstituion);
 
@@ -368,7 +370,7 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
     JDelegatingClassType testType = getTestType();
     JClassType baseType = testType.getBaseType();
 
-    validateAnnotations(baseType, testType);
+    validateAnnotations(baseType.getAnnotations(), testType.getAnnotations());
   }
 
   /**
@@ -420,7 +422,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
     JDelegatingClassType testType = getTestType();
     JClassType baseType = testType.getBaseType();
 
-    validateDeclaredAnnotations(baseType, testType);
+    validateDeclaredAnnotations(baseType.getDeclaredAnnotations(),
+        testType.getDeclaredAnnotations());
   }
 
   /**

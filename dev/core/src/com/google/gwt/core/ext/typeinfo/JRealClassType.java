@@ -154,10 +154,6 @@ public class JRealClassType extends JClassType {
     return annotations.getAnnotation(annotationClass);
   }
 
-  public Annotation[] getAnnotations() {
-    return annotations.getAnnotations();
-  }
-
   public int getBodyEnd() {
     return bodyEnd;
   }
@@ -179,10 +175,6 @@ public class JRealClassType extends JClassType {
   @Override
   public JConstructor[] getConstructors() {
     return members.getConstructors();
-  }
-
-  public Annotation[] getDeclaredAnnotations() {
-    return annotations.getDeclaredAnnotations();
   }
 
   public JClassType getEnclosingType() {
@@ -534,6 +526,20 @@ public class JRealClassType extends JClassType {
 
       intf.removeSubtype(me);
     }
+  }
+
+  /**
+   * NOTE: This method is for testing purposes only.
+   */
+  Annotation[] getAnnotations() {
+    return annotations.getAnnotations();
+  }
+
+  /**
+   * NOTE: This method is for testing purposes only.
+   */
+  Annotation[] getDeclaredAnnotations() {
+    return annotations.getDeclaredAnnotations();
   }
 
   @Override
