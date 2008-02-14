@@ -182,7 +182,7 @@ public class MethodCallTest extends GWTTestCase {
   }
 
   public void testRecursion() {
-    assertEquals(20100, recursiveSum(200));
+    assertEquals(210, recursiveSum(20));
   }
 
   /**
