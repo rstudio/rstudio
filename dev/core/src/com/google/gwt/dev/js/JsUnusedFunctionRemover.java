@@ -69,13 +69,6 @@ public class JsUnusedFunctionRemover {
       }
 
       JsFunction f = (JsFunction) x.getExpression();
-
-      if (!f.isFromJava()) {
-        // This function didn't come from Java source, so we'll assume it's
-        // magic and ignore it.
-        return;
-      }
-
       JsName name = f.getName();
 
       if (toRemove.containsKey(name)) {
@@ -84,6 +77,11 @@ public class JsUnusedFunctionRemover {
         if (name.getIdent().equals("$clinit")) {
           throw new InternalCompilerException("Tried to remove clinit "
               + name.getStaticRef().toSource());
+        }
+
+        if (!name.isObfuscatable()) {
+          // This is intended to be used externally (e.g. gwtOnLoad)
+          return;
         }
 
         // Remove the statement
@@ -96,8 +94,7 @@ public class JsUnusedFunctionRemover {
     return (new JsUnusedFunctionRemover(program)).execImpl();
   }
 
-  private final Map<JsName, JsFunction> toRemove =
-      new HashMap<JsName, JsFunction>();
+  private final Map<JsName, JsFunction> toRemove = new HashMap<JsName, JsFunction>();
   private final JsProgram program;
 
   public JsUnusedFunctionRemover(JsProgram program) {

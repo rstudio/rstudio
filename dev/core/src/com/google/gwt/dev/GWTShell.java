@@ -267,9 +267,12 @@ public class GWTShell extends ToolBase {
 
         // Create a sandbox for the module.
         //
+        File moduleDir = new File(outDir, moduleName);
+        File shellDir = new File(moduleDir, GWT_SHELL_PATH);
+
         TypeOracle typeOracle = moduleDef.getTypeOracle(logger);
         ShellModuleSpaceHost host = doCreateShellModuleSpaceHost(logger,
-            typeOracle, moduleDef, genDir, outDir);
+            typeOracle, moduleDef, genDir, shellDir);
         return host;
       } finally {
         Cursor normalCursor = display.getSystemCursor(SWT.CURSOR_ARROW);
@@ -305,6 +308,8 @@ public class GWTShell extends ToolBase {
       return moduleDef;
     }
   }
+
+  public static final String GWT_SHELL_PATH = ".gwt-shell";
 
   private static Image[] icons;
 
@@ -661,9 +666,9 @@ public class GWTShell extends ToolBase {
    */
   protected ShellModuleSpaceHost doCreateShellModuleSpaceHost(
       TreeLogger logger, TypeOracle typeOracle, ModuleDef moduleDef,
-      File genDir, File outDir) {
+      File genDir, File shellDir) {
     return new ShellModuleSpaceHost(logger, typeOracle, moduleDef, genDir,
-        outDir, saveJsni);
+        shellDir, saveJsni);
   }
 
   /**

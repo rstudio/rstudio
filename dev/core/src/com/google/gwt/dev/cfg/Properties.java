@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * A typed map of deferred binding properties.
  */
-public class Properties {
+public class Properties implements Iterable<Property> {
 
   private final Map<String, Property> map = new HashMap<String, Property>();
 

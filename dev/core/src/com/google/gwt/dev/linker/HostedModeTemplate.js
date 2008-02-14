@@ -322,7 +322,6 @@ function __MODULE_FUNC__() {
       // intentionally silent on property failure
       return;
     }
-    strongName += '.cache.html';
   }
 
   var onBodyDoneTimerId;

@@ -46,7 +46,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
   private final ModuleDef module;
 
-  private final File outDir;
+  private final File shellDir;
 
   private RebindOracle rebindOracle;
 
@@ -59,7 +59,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
    * @param saveJsni
    */
   public ShellModuleSpaceHost(TreeLogger logger, TypeOracle typeOracle,
-      ModuleDef module, File genDir, File outDir, boolean saveJsni) {
+      ModuleDef module, File genDir, File shellDir, boolean saveJsni) {
     this.logger = logger;
     this.typeOracle = typeOracle;
     this.module = module;
@@ -68,7 +68,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
     // Combine the user's output dir with the module name to get the
     // module-specific output dir.
-    this.outDir = new File(outDir, module.getName());
+    this.shellDir = shellDir;
   }
 
   public CompilingClassLoader getClassLoader() {
@@ -109,7 +109,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     //
     Rules rules = module.getRules();
     rebindOracle = new StandardRebindOracle(typeOracle, propOracle, module,
-        rules, genDir, outDir, module.getCacheManager());
+        rules, genDir, shellDir, module.getCacheManager());
 
     // Create a completely isolated class loader which owns all classes
     // associated with a particular module. This effectively builds a

@@ -37,13 +37,13 @@ import javax.servlet.ServletException;
 class HostedModeServletContextProxy implements ServletContext {
   private final ServletContext context;
   private final ModuleDef moduleDef;
-  private final File outputDir;
+  private final File shellDir;
 
   HostedModeServletContextProxy(ServletContext context, ModuleDef moduleDef,
-      File outputDir) {
+      File shellDir) {
     this.context = context;
     this.moduleDef = moduleDef;
-    this.outputDir = outputDir;
+    this.shellDir = shellDir;
   }
 
   /**
@@ -153,12 +153,14 @@ class HostedModeServletContextProxy implements ServletContext {
       // This path is in a different context; just return null
       return null;
     }
-    
+
+    String partialPath = path.substring(moduleContext.length());
+
     // Try to get the resource from the application's public path
-    URL url = moduleDef.findPublicFile(path.substring(moduleContext.length()));
+    URL url = moduleDef.findPublicFile(partialPath);
     if (url == null) {
-      // Otherwise try the path but rooted in the output directory
-      File requestedFile = new File(outputDir, path.substring(1));
+      // Otherwise try the path but rooted in the shell's output directory
+      File requestedFile = new File(shellDir, partialPath);
       if (requestedFile.exists()) {
         url = requestedFile.toURI().toURL();
       }

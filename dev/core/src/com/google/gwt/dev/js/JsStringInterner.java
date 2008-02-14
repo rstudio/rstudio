@@ -16,6 +16,7 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
+import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsModVisitor;
@@ -31,6 +32,7 @@ import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
 import java.util.Comparator;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
@@ -48,27 +50,27 @@ public class JsStringInterner {
    */
   private static class StringVisitor extends JsModVisitor {
     /**
+     * A counter used for assigning ids to Strings. Even though it's unlikely
+     * that someone would actually have two billion strings in their
+     * application, it doesn't hurt to think ahead.
+     */
+    private long lastId = 0;
+
+    /**
      * Records the scope in which the interned identifiers should be unique.
      */
-    final JsScope scope;
+    private final JsScope scope;
 
     /**
      * This is a TreeMap to ensure consistent iteration order, based on the
      * lexicographical ordering of the string constant.
      */
-    final Map<JsStringLiteral, JsName> toCreate =
-        new TreeMap<JsStringLiteral, JsName>(new Comparator<JsStringLiteral>() {
+    private final SortedMap<JsStringLiteral, JsName> toCreate = new TreeMap<JsStringLiteral, JsName>(
+        new Comparator<JsStringLiteral>() {
           public int compare(JsStringLiteral o1, JsStringLiteral o2) {
             return o1.getValue().compareTo(o2.getValue());
           }
         });
-
-    /**
-     * A counter used for assigning ids to Strings. Even though it's unlikely
-     * that someone would actually have two billion strings in their
-     * application, it doesn't hurt to think ahead.
-     */
-    long lastId = 0;
 
     /**
      * Constructor.
@@ -146,9 +148,17 @@ public class JsStringInterner {
 
   public static final String PREFIX = "$intern_";
 
-  public static boolean exec(JsProgram program) {
-    StringVisitor v = new StringVisitor(program.getScope());
-    v.accept(program);
+  /**
+   * Intern String literals that occur within a JsBlock. The symbol declarations
+   * will be added as the first statement in the block.
+   * 
+   * @param block the block to visit
+   * @param scope the JsScope in which to reserve the new identifiers
+   * @return <code>true</code> if any changes were made to the block
+   */
+  public static boolean exec(JsBlock block, JsScope scope) {
+    StringVisitor v = new StringVisitor(scope);
+    v.accept(block);
 
     if (v.toCreate.size() > 0) {
       // Create the pool of variable names.
@@ -158,10 +168,23 @@ public class JsStringInterner {
         var.setInitExpr(entry.getKey());
         vars.add(var);
       }
-      program.getGlobalBlock().getStatements().add(0, vars);
+      block.getStatements().add(0, vars);
     }
 
     return v.didChange();
+  }
+
+  /**
+   * Apply interning of String literals to a JsProgram. The symbol names for the
+   * interned strings will be defined within the program's top scope and the
+   * symbol declarations will be added as the first statement in the program's
+   * global block.
+   * 
+   * @param program the JsProgram
+   * @return <code>true</code> if any changes were made to the program
+   */
+  public static boolean exec(JsProgram program) {
+    return exec(program.getGlobalBlock(), program.getScope());
   }
 
   /**

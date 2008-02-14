@@ -17,10 +17,13 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.GWTShell;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.jjs.JJSOptions;
+import com.google.gwt.dev.linker.HostedModeLinker;
+import com.google.gwt.dev.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.util.HttpHeaders;
-import com.google.gwt.dev.util.SelectionScriptGenerator;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.ServletContextTreeLogger;
 
@@ -278,15 +281,13 @@ public class GWTShellServlet extends HttpServlet {
     // If the request is of the form ".../moduleName.nocache.js" or
     // ".../moduleName-xs.nocache.js" then generate the selection script for
     // them.
-    boolean nocacheHtml = partialPath.equals(moduleName + ".nocache.js");
-    boolean nocacheScript = !nocacheHtml
-        && partialPath.equals(moduleName + "-xs.nocache.js");
-    if (nocacheHtml || nocacheScript) {
+    boolean generateScript = partialPath.equals(moduleName + ".nocache.js");
+    if (generateScript) {
       // If the '?compiled' request property is specified, don't auto-generate.
       if (request.getParameter("compiled") == null) {
         // Generate the .js file.
         try {
-          String js = genSelectionScript(logger, moduleName, nocacheScript);
+          String js = genSelectionScript(logger, moduleName);
           setResponseCacheHeaders(response, 0); // do not cache selection script
           response.setStatus(HttpServletResponse.SC_OK);
           response.setContentType("text/javascript");
@@ -393,10 +394,11 @@ public class GWTShellServlet extends HttpServlet {
       ModuleDef moduleDef = getModuleDef(logger, moduleName);
       foundResource = moduleDef.findPublicFile(partialPath);
 
+      File moduleDir = new File(getOutputDir(), moduleName);
       if (foundResource == null) {
-        // Look in the place where we write compiled output.
-        File moduleDir = new File(getOutputDir(), moduleName);
-        File requestedFile = new File(moduleDir, partialPath);
+        // Look for generated files
+        File shellDir = new File(moduleDir, GWTShell.GWT_SHELL_PATH);
+        File requestedFile = new File(shellDir, partialPath);
         if (requestedFile.exists()) {
           try {
             foundResource = requestedFile.toURI().toURL();
@@ -404,14 +406,32 @@ public class GWTShellServlet extends HttpServlet {
             // ignore since it was speculative anyway
           }
         }
+      }
 
-        if (foundResource == null) {
-          msg = "Resource not found: " + partialPath + "\n"
-              + "(Could a file be missing from the public path or a <servlet> "
-              + "tag misconfigured in module " + moduleName + ".gwt.xml ?)";
-          logger.log(TreeLogger.WARN, msg, null);
-          throw new UnableToCompleteException();
+      /*
+       * If the user is coming from compiled web-mode, check the linker output
+       * directory for the real bootstrap file. We'll default to using the
+       * output directory of the first linker defined in the <set-linker> tab.
+       */
+      if (foundResource == null) {
+        File linkerDir = new File(moduleDir,
+            moduleDef.getActiveLinkerNames()[0]);
+        File requestedFile = new File(linkerDir, partialPath);
+        if (requestedFile.exists()) {
+          try {
+            foundResource = requestedFile.toURI().toURL();
+          } catch (MalformedURLException e) {
+            // ignore since it was speculative anyway
+          }
         }
+      }
+
+      if (foundResource == null) {
+        msg = "Resource not found: " + partialPath + "\n"
+            + "(Could a file be missing from the public path or a <servlet> "
+            + "tag misconfigured in module " + moduleName + ".gwt.xml ?)";
+        logger.log(TreeLogger.WARN, msg, null);
+        throw new UnableToCompleteException();
       }
     } catch (UnableToCompleteException e) {
       sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND,
@@ -493,16 +513,20 @@ public class GWTShellServlet extends HttpServlet {
    * mode version, since this servlet doesn't know strong names, since by
    * definition of "hosted mode" JavaScript hasn't been compiled at this point.
    */
-  private String genSelectionScript(TreeLogger logger, String moduleName,
-      boolean asScript) throws UnableToCompleteException {
-    String msg = asScript ? "Generating a script selection script for module "
-        : "Generating an html selection script for module ";
+  private String genSelectionScript(TreeLogger logger, String moduleName)
+      throws UnableToCompleteException {
+    String msg = "Generating a script selection script for module ";
     msg += moduleName;
     logger.log(TreeLogger.TRACE, msg, null);
 
     ModuleDef moduleDef = getModuleDef(logger, moduleName);
-    SelectionScriptGenerator gen = new SelectionScriptGenerator(moduleDef);
-    return gen.generateSelectionScript(false, asScript);
+    File moduleDir = new File(getOutputDir(), moduleDef.getName());
+
+    StandardLinkerContext context = new StandardLinkerContext(logger,
+        moduleDef, moduleDir, null, new JJSOptions());
+    HostedModeLinker linker = new HostedModeLinker();
+    context.invokeLinker(logger, GWTShell.GWT_SHELL_PATH, linker);
+    return linker.generateSelectionScript(logger, context);
   }
 
   /**
@@ -891,8 +915,11 @@ public class GWTShellServlet extends HttpServlet {
         // RemoteServiceServlets to load public and generated resources via
         // ServeletContext.getResourceAsStream()
         //
+        File moduleDir = new File(getOutputDir(), moduleDef.getName());
+        File shellDir = new File(moduleDir, GWTShell.GWT_SHELL_PATH);
+
         ServletContext context = new HostedModeServletContextProxy(
-            getServletContext(), moduleDef, getOutputDir());
+            getServletContext(), moduleDef, shellDir);
         ServletConfig config = new HostedModeServletConfigProxy(
             getServletConfig(), context);
 

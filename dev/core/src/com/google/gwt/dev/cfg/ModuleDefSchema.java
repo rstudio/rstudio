@@ -46,6 +46,10 @@ import java.util.Set;
 public class ModuleDefSchema extends Schema {
   private final class BodySchema extends Schema {
 
+    protected final String __define_linker_1_name = null;
+
+    protected final String __define_linker_2_class = null;
+
     protected final String __define_property_1_name = null;
 
     protected final String __define_property_2_values = null;
@@ -80,6 +84,8 @@ public class ModuleDefSchema extends Schema {
 
     protected final String __servlet_2_class = null;
 
+    protected final String __set_linker_1_name = null;
+
     protected final String __set_property_1_name = null;
 
     protected final String __set_property_2_value = null;
@@ -107,6 +113,18 @@ public class ModuleDefSchema extends Schema {
     protected final String __super_source_5_casesensitive = "true";
 
     private Schema fChild;
+
+    protected Schema __define_linker_begin(String name, String className)
+        throws UnableToCompleteException {
+      if (!Util.isValidJavaIdent(name)) {
+        logger.log(TreeLogger.ERROR, "Linker names must be valid identifiers",
+            null);
+        throw new UnableToCompleteException();
+      }
+
+      moduleDef.addLinker(name, className);
+      return null;
+    }
 
     protected Schema __define_property_begin(PropertyName name,
         PropertyValue[] values) throws UnableToCompleteException {
@@ -258,6 +276,11 @@ public class ModuleDefSchema extends Schema {
       // Map the path within this module.
       moduleDef.mapServlet(path, servletClass);
 
+      return null;
+    }
+
+    protected Schema __set_linker_begin(String name) {
+      moduleDef.setActiveLinkerNames(name.split(","));
       return null;
     }
 

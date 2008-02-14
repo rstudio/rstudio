@@ -54,8 +54,13 @@ import java.net.URLConnection;
 import java.net.URLDecoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.jar.JarEntry;
 
 /**
@@ -302,6 +307,19 @@ public final class Util {
   }
 
   /**
+   * Returns a String as a byte-array using the default encoding for the
+   * compiler.
+   */
+  public static byte[] getBytes(String s) {
+    try {
+      return s.getBytes(DEFAULT_ENCODING);
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(
+          "The JVM does not support the compiler's default encoding.", e);
+    }
+  }
+
+  /**
    * @param cls A class whose name you want.
    * @return The base name for the specified class.
    */
@@ -403,6 +421,22 @@ public final class Util {
     return true;
   }
 
+  // /**
+  // * Reads the file as an array of strings.
+  // */
+  // public static String[] readURLAsStrings(URL url) {
+  // ArrayList lines = new ArrayList();
+  // String contents = readURLAsString(url);
+  // if (contents != null) {
+  // StringReader sr = new StringReader(contents);
+  // BufferedReader br = new BufferedReader(sr);
+  // String line;
+  // while (null != (line = readNextLine(br)))
+  // lines.add(line);
+  // }
+  // return (String[]) lines.toArray(new String[lines.size()]);
+  // }
+
   public static void logMissingTypeErrorWithHints(TreeLogger logger,
       String missingType) {
     logger = logger.branch(TreeLogger.ERROR, "Unable to find type '"
@@ -439,22 +473,6 @@ public final class Util {
       Messages.HINT_CHECK_INHERIT_USER.log(logger, null);
     }
   }
-
-  // /**
-  // * Reads the file as an array of strings.
-  // */
-  // public static String[] readURLAsStrings(URL url) {
-  // ArrayList lines = new ArrayList();
-  // String contents = readURLAsString(url);
-  // if (contents != null) {
-  // StringReader sr = new StringReader(contents);
-  // BufferedReader br = new BufferedReader(sr);
-  // String line;
-  // while (null != (line = readNextLine(br)))
-  // lines.add(line);
-  // }
-  // return (String[]) lines.toArray(new String[lines.size()]);
-  // }
 
   /**
    * Attempts to make a path relative to a particular directory.
@@ -667,6 +685,38 @@ public final class Util {
       }
     }
     file.delete();
+  }
+
+  /**
+   * Recursively lists a directory, returning the partial paths of the child
+   * files.
+   * 
+   * @param parent the directory to start from
+   * @param includeDirs whether or not to include directories in the results
+   * @return all partial paths descending from the parent file
+   */
+  public static SortedSet<String> recursiveListPartialPaths(File parent,
+      boolean includeDirs) {
+    assert parent != null;
+    TreeSet<String> toReturn = new TreeSet<String>();
+    int start = parent.getAbsolutePath().length() + 1;
+
+    List<File> q = new LinkedList<File>();
+    q.add(parent);
+
+    while (!q.isEmpty()) {
+      File f = q.remove(0);
+
+      if (f.isDirectory()) {
+        if (includeDirs) {
+          toReturn.add(f.getAbsolutePath().substring(start));
+        }
+        q.addAll(Arrays.asList(f.listFiles()));
+      } else {
+        toReturn.add(f.getAbsolutePath().substring(start));
+      }
+    }
+    return toReturn;
   }
 
   public static File removeExtension(File file) {

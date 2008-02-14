@@ -68,7 +68,7 @@ public class PublicTagTest extends TestCase {
     String moduleName = PublicTagTest.class.getName();
 
     // Find our module output directory and delete it
-    File moduleDir = new File(curDir, "www/" + moduleName);
+    File moduleDir = new File(curDir, "www/" + moduleName + "/std");
     if (moduleDir.exists()) {
       Util.recursiveDelete(moduleDir, false);
     }

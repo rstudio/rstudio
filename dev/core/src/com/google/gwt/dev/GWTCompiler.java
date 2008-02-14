@@ -21,9 +21,6 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.cfg.Compilation;
-import com.google.gwt.dev.cfg.CompilationSchema;
-import com.google.gwt.dev.cfg.Compilations;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.Properties;
@@ -38,9 +35,11 @@ import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.jjs.JsOutputOption;
+import com.google.gwt.dev.linker.Linker;
+import com.google.gwt.dev.linker.SelectionProperty;
+import com.google.gwt.dev.linker.impl.StandardCompilationResult;
+import com.google.gwt.dev.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.shell.StandardRebindOracle;
-import com.google.gwt.dev.util.DefaultTextOutput;
-import com.google.gwt.dev.util.SelectionScriptGenerator;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
@@ -49,24 +48,14 @@ import com.google.gwt.dev.util.arg.ArgHandlerTreeLoggerFlag;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.DetachedTreeLoggerWindow;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-import com.google.gwt.dev.util.xml.ReflectiveParser;
 import com.google.gwt.util.tools.ArgHandlerDisableAggressiveOptimization;
 import com.google.gwt.util.tools.ArgHandlerEnableAssertions;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerOutDir;
 import com.google.gwt.util.tools.ToolBase;
-import com.google.gwt.util.tools.Utility;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FilenameFilter;
-import java.io.UnsupportedEncodingException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,10 +63,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * The main executable entry point for the GWT Java to JavaScript compiler.
@@ -136,10 +121,9 @@ public class GWTCompiler extends ToolBase {
 
     private final Map<String, String> cache = new HashMap<String, String>();
 
-    private Compilation compilation;
-
     public CompilationRebindOracle() {
-      super(typeOracle, propOracle, module, rules, genDir, outDir, cacheManager);
+      super(typeOracle, propOracle, module, rules, genDir,
+          generatorResourcesDir, cacheManager);
     }
 
     /**
@@ -163,13 +147,13 @@ public class GWTCompiler extends ToolBase {
         logger.log(TreeLogger.DEBUG, msg, null);
       }
 
-      if (compilation != null && compilation.recordDecision(in, out)) {
+      if (recordDecision(in, out)) {
         List<JClassType> genTypes = generatedTypesByResultTypeName.get(out);
         if (genTypes != null) {
           for (JClassType genType : genTypes) {
             String sourceHash = genType.getTypeHash();
             String genTypeName = genType.getQualifiedSourceName();
-            compilation.recordGeneratedTypeHash(genTypeName, sourceHash);
+            recordGeneratedTypeHash(genTypeName, sourceHash);
           }
         }
       }
@@ -177,8 +161,11 @@ public class GWTCompiler extends ToolBase {
       return out;
     }
 
-    public void recordInto(Compilation compilation) {
-      this.compilation = compilation;
+    protected boolean recordDecision(String in, String out) {
+      return false;
+    }
+
+    protected void recordGeneratedTypeHash(String typeName, String sourceHash) {
     }
   }
 
@@ -186,7 +173,8 @@ public class GWTCompiler extends ToolBase {
       RebindPermutationOracle {
 
     private final StandardRebindOracle rebindOracle = new StandardRebindOracle(
-        typeOracle, propOracle, module, rules, genDir, outDir, cacheManager) {
+        typeOracle, propOracle, module, rules, genDir, generatorResourcesDir,
+        cacheManager) {
 
       /**
        * Record generated types.
@@ -229,7 +217,8 @@ public class GWTCompiler extends ToolBase {
     }
   }
 
-  private static final String EXT_CACHE_XML = ".cache.xml";
+  private static final String GENERATOR_DIR = ".gwt-compiler"
+      + File.separatorChar + "generated";
 
   public static void main(String[] args) {
     /*
@@ -262,7 +251,7 @@ public class GWTCompiler extends ToolBase {
 
   private final CacheManager cacheManager;
 
-  private Compilations compilations = new Compilations();
+  private File generatorResourcesDir;
 
   private String[] declEntryPts;
 
@@ -293,6 +282,8 @@ public class GWTCompiler extends ToolBase {
   private Rules rules;
 
   private StandardSourceOracle sourceOracle;
+
+  private String[] targets;
 
   private TypeOracle typeOracle;
 
@@ -361,10 +352,17 @@ public class GWTCompiler extends ToolBase {
     // Tweak the output directory so that output lives under the module name.
     outDir = new File(outDir, module.getName());
 
+    // Clean out the generated resources directory and/or create it
+    generatorResourcesDir = new File(outDir, GENERATOR_DIR);
+    Util.recursiveDelete(generatorResourcesDir, true);
+    generatorResourcesDir.mkdirs();
+
     rules = module.getRules();
     typeOracle = module.getTypeOracle(logger);
     sourceOracle = new StandardSourceOracle(typeOracle);
     if (jjsOptions.isValidateOnly()) {
+      logger.log(TreeLogger.INFO, "Validating compilation " + module.getName(),
+          null);
       // Pretend that every single compilation unit is an entry point.
       CompilationUnitProvider[] compilationUnits = module.getCompilationUnits();
       declEntryPts = new String[compilationUnits.length];
@@ -373,6 +371,7 @@ public class GWTCompiler extends ToolBase {
         declEntryPts[i] = makeTypeName(cup);
       }
     } else {
+      logger.log(TreeLogger.INFO, "Compiling module " + module.getName(), null);
       // Use the real entry points.
       declEntryPts = module.getEntryPointTypeNames();
     }
@@ -385,31 +384,72 @@ public class GWTCompiler extends ToolBase {
         jjsOptions);
 
     if (!jjsOptions.isValidateOnly()) {
-      /*
-       * See what permutations already exist on disk and are up to date. Skip
-       * this for validation mode since we want to recompile everything.
-       */
-      initCompilations(logger);
+      if (targets != null) {
+        // Make sure all targets specified on the command-line exist
+        boolean badTarget = false;
+        for (String target : targets) {
+          if (module.getLinker(target) == null) {
+            logger.log(TreeLogger.ERROR, "Unknown target " + target, null);
+            badTarget = true;
+          }
+        }
+        if (badTarget) {
+          throw new UnableToCompleteException();
+        }
+      } else {
+        // Otherwise, make sure at least one linker is set in the ModuleDef
+        targets = module.getActiveLinkerNames();
+        if (targets == null || targets.length == 0) {
+          logger.log(TreeLogger.ERROR,
+              "At least one Linker must be specified in the "
+                  + "module or on the command line", null);
+          throw new UnableToCompleteException();
+        }
+      }
     }
 
-    // Compile for every permutation of properties.
-    //
-    SelectionScriptGenerator selGen = compilePermutations(logger);
+    StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
+        module, outDir, generatorResourcesDir, jjsOptions);
+    compilePermutations(logger, linkerContext);
 
     if (jjsOptions.isValidateOnly()) {
       logger.log(TreeLogger.INFO, "Validation succeeded", null);
       return;
     }
 
-    // Generate a selection script to pick the right permutation.
-    //
-    writeSelectionScripts(logger, selGen);
-
-    // Copy all public files into the output directory.
-    //
-    copyPublicFiles(logger);
-
     logger.log(TreeLogger.INFO, "Compilation succeeded", null);
+
+    // Use the LinkerContext to invoke the Linkers
+    for (String linkerName : targets) {
+      Linker l = module.getLinker(linkerName);
+      linkerContext.invokeLinker(logger, linkerName, l);
+    }
+
+    // TODO Remove this transitional code.
+    // http://code.google.com/p/google-web-toolkit/issues/detail?id=2080
+    // We'll copy the output of the 0th Linker into the root of the output
+    // directory to give people a grace period to change their deployment
+    if (targets.length == 1 && !Boolean.getBoolean("gwt.linker.disableCopy")) {
+      File linkerDir = new File(outDir, targets[0]);
+      logger.log(TreeLogger.WARN,
+          "Creating transitional copy of linker output " + linkerDir.getPath()
+              + " into output directory.  Change your deployment to use "
+              + "the Linker's output directory and add "
+              + "-Dgwt.linker.disableCopy=true to your JVM flags to disable "
+              + "this copy.", null);
+
+      for (String path : Util.recursiveListPartialPaths(linkerDir, false)) {
+        File toCopy = new File(linkerDir, path);
+        if (path.equals(targets[0])) {
+          logger.log(TreeLogger.ERROR,
+              "Cannot make duplication of linker output "
+                  + "due to conflicting file name " + path, null);
+          throw new UnableToCompleteException();
+        }
+        File dest = new File(outDir, path);
+        Util.copy(logger, toCopy, dest);
+      }
+    }
   }
 
   public File getGenDir() {
@@ -464,6 +504,10 @@ public class GWTCompiler extends ToolBase {
     jjsOptions.setOutput(JsOutputOption.PRETTY);
   }
 
+  public void setTargets(String[] targets) {
+    this.targets = targets;
+  }
+
   /**
    * Ensure the module has at least one entry point (except in validation mode).
    */
@@ -475,246 +519,37 @@ public class GWTCompiler extends ToolBase {
     }
   }
 
-  private SelectionScriptGenerator compilePermutations(TreeLogger logger)
-      throws UnableToCompleteException {
-    if (jjsOptions.isValidateOnly()) {
-      logger = logger.branch(TreeLogger.INFO, "Validating compilation", null);
-    } else {
-      logger = logger.branch(TreeLogger.INFO, "Compiling into " + outDir, null);
-    }
+  private void compilePermutations(TreeLogger logger,
+      StandardLinkerContext linkerContext) throws UnableToCompleteException {
+    logger = logger.branch(TreeLogger.DEBUG, "Compiling permutations", null);
     Property[] orderedProps = perms.getOrderedProperties();
-    SelectionScriptGenerator selGen = new SelectionScriptGenerator(module,
-        orderedProps);
     int permNumber = 1;
     for (Iterator<String[]> iter = perms.iterator(); iter.hasNext(); ++permNumber) {
 
       String[] orderedPropValues = iter.next();
-      String strongName = realizePermutation(logger, orderedProps,
-          orderedPropValues, permNumber);
-      if (!jjsOptions.isValidateOnly()) {
-        selGen.recordSelection(orderedPropValues, strongName);
-      }
-    }
-    return selGen;
-  }
+      String js = realizePermutation(logger, orderedProps, orderedPropValues,
+          permNumber);
 
-  private void copyPublicFiles(TreeLogger logger)
-      throws UnableToCompleteException {
-    TreeLogger branch = null;
-    boolean anyCopied = false;
-    String[] files = module.getAllPublicFiles();
-    for (int i = 0; i < files.length; ++i) {
-      URL from = module.findPublicFile(files[i]);
-      File to = new File(outDir, files[i]);
-      boolean copied = Util.copy(logger, from, to);
-      if (copied) {
-        if (!anyCopied) {
-          branch = logger.branch(TreeLogger.INFO,
-              "Copying all files found on public path", null);
-          if (!logger.isLoggable(TreeLogger.TRACE)) {
-            branch = null;
-          }
-          anyCopied = true;
-        }
-
-        if (branch != null) {
-          branch.log(TreeLogger.TRACE, to.getAbsolutePath(), null);
-        }
-      }
-    }
-  }
-
-  private String getHtmlPrefix() {
-    DefaultTextOutput out = new DefaultTextOutput(
-        jjsOptions.getOutput().shouldMinimize());
-    out.print("<html>");
-    out.newlineOpt();
-
-    // Setup the well-known variables.
-    //
-    out.print("<head><script>");
-    out.newlineOpt();
-    out.print("var $gwt_version = \"" + About.GWT_VERSION_NUM + "\";");
-    out.newlineOpt();
-    out.print("var $wnd = parent;");
-    out.newlineOpt();
-    out.print("var $doc = $wnd.document;");
-    out.newlineOpt();
-    out.print("var $moduleName, $moduleBase;");
-    out.newlineOpt();
-    out.print("</script></head>");
-    out.newlineOpt();
-    out.print("<body>");
-    out.newlineOpt();
-
-    // Begin a script block inside the body. It's commented out so that the
-    // browser won't mistake strings containing "<script>" for actual script.
-    out.print("<script><!--");
-    out.newline();
-    return out.toString();
-  }
-
-  private String getHtmlSuffix() {
-    DefaultTextOutput out = new DefaultTextOutput(
-        jjsOptions.getOutput().shouldMinimize());
-    String moduleFunction = module.getName().replace('.', '_');
-
-    // Generate the call to tell the bootstrap code that we're ready to go.
-    out.newlineOpt();
-    out.print("if ($wnd." + moduleFunction + ") $wnd." + moduleFunction
-        + ".onScriptLoad();");
-    out.newline();
-    out.print("--></script></body></html>");
-    out.newlineOpt();
-
-    return out.toString();
-  }
-
-  private String getJsPrefix() {
-    DefaultTextOutput out = new DefaultTextOutput(
-        jjsOptions.getOutput().shouldMinimize());
-
-    out.print("(function(){");
-    out.newlineOpt();
-
-    // Setup the well-known variables.
-    //
-    out.print("var $gwt_version = \"" + About.GWT_VERSION_NUM + "\";");
-    out.newlineOpt();
-    out.print("var $wnd = window;");
-    out.newlineOpt();
-    out.print("var $doc = $wnd.document;");
-    out.newlineOpt();
-    out.print("var $moduleName, $moduleBase;");
-    out.newlineOpt();
-
-    return out.toString();
-  }
-
-  private String getJsSuffix() {
-    DefaultTextOutput out = new DefaultTextOutput(
-        jjsOptions.getOutput().shouldMinimize());
-    String moduleFunction = module.getName().replace('.', '_');
-
-    // Generate the call to tell the bootstrap code that we're ready to go.
-    out.newlineOpt();
-    out.print("if (" + moduleFunction + ") {");
-    out.newlineOpt();
-    out.print("  var __gwt_initHandlers = " + moduleFunction
-        + ".__gwt_initHandlers;");
-    out.print("  " + moduleFunction + ".onScriptLoad(gwtOnLoad);");
-    out.newlineOpt();
-    out.print("}");
-    out.newlineOpt();
-    out.print("})();");
-    out.newlineOpt();
-
-    return out.toString();
-  }
-
-  /**
-   * This has to run after JJS exists which means that all rebind perms have
-   * happened and thus the type oracle knows about everything.
-   */
-  private void initCompilations(TreeLogger logger)
-      throws UnableToCompleteException {
-    File[] cacheXmls = outDir.listFiles(new FilenameFilter() {
-      public boolean accept(File dir, String name) {
-        return name.endsWith(EXT_CACHE_XML);
-      }
-    });
-
-    if (cacheXmls == null) {
-      return;
-    }
-
-    long newestCup = jjs.getLastModifiedTimeOfNewestCompilationUnit();
-    for (int i = 0; i < cacheXmls.length; i++) {
-      File cacheXml = cacheXmls[i];
-      String fn = cacheXml.getName();
-      String strongName = fn.substring(0, fn.length() - EXT_CACHE_XML.length());
-
-      // Make sure the cached script is not out of date.
-      //
-      long cacheXmlLastMod = cacheXml.lastModified();
-      if (cacheXmlLastMod < newestCup) {
-        // It is out of date; no need to even parse the XML.
-        //
-        String msg = "Compilation '" + fn
-            + "' is out of date and will be removed";
-        logger.log(TreeLogger.TRACE, msg, null);
-        Util.deleteFilesStartingWith(outDir, strongName);
+      // This is the case in validateOnly mode, which doesn't produce output
+      if (js == null) {
         continue;
       }
 
-      // It is up-to-date, so we at least can load it.
-      // We still need to verify that the source for generated types hasn't
-      // changed.
-      //
-      TreeLogger branch = logger.branch(TreeLogger.DEBUG,
-          "Loading cached compilation: " + cacheXml, null);
-      Compilation c = new Compilation();
-      c.setStrongName(strongName);
-      CompilationSchema schema = new CompilationSchema(c);
-      FileReader r = null;
-      Throwable caught = null;
-      try {
-        r = new FileReader(cacheXml);
-        ReflectiveParser.parse(logger, schema, r);
-      } catch (FileNotFoundException e) {
-        caught = e;
-      } catch (UnableToCompleteException e) {
-        caught = e;
-      } finally {
-        Utility.close(r);
-      }
+      StandardCompilationResult compilation = linkerContext.getCompilation(
+          logger, js);
 
-      if (caught != null) {
-        String msg = "Unable to load the cached file";
-        branch.log(TreeLogger.WARN, msg, caught);
-        continue;
-      }
-
-      // Check that the hash code of the generated sources for this compilation
-      // matches the current generated source for the same type.
-      //
-      boolean isBadCompilation = false;
-      String[] genTypes = c.getGeneratedTypeNames();
-      for (int j = 0; j < genTypes.length; j++) {
-        String genTypeName = genTypes[j];
-        String cachedHash = c.getTypeHash(genTypeName);
-        JClassType genType = typeOracle.findType(genTypeName);
-        if (genType == null) {
-          // This cache entry refers to a type that no longer seems to exist.
-          // Remove it.
-          //
-          String msg = "Compilation '" + fn + "' refers to generated type '"
-              + genTypeName
-              + "' which no longer exists; cache entry will be removed";
-          branch.log(TreeLogger.TRACE, msg, null);
-          Util.deleteFilesStartingWith(outDir, strongName);
-          isBadCompilation = true;
-          break;
+      Map<SelectionProperty, String> unboundProperties = new HashMap<SelectionProperty, String>();
+      for (int i = 0; i < orderedProps.length; i++) {
+        SelectionProperty key = linkerContext.getProperty(orderedProps[i].getName());
+        if (key.tryGetValue() != null) {
+          // The view of the Permutation doesn't include properties with defined
+          // values.
+          continue;
         }
-
-        String currentHash = genType.getTypeHash();
-
-        if (!cachedHash.equals(currentHash)) {
-          String msg = "Compilation '"
-              + fn
-              + "' was compiled with a different version of generated source for '"
-              + genTypeName + "'; cache entry will be removed";
-          branch.log(TreeLogger.TRACE, msg, null);
-          Util.deleteFilesStartingWith(outDir, strongName);
-          isBadCompilation = true;
-          break;
-        }
+        unboundProperties.put(key, orderedPropValues[i]);
       }
 
-      if (!isBadCompilation) {
-        // Okay -- this compilation should be a cache candidate.
-        compilations.add(c);
-      }
+      compilation.addSelectionPermutation(unboundProperties);
     }
   }
 
@@ -757,45 +592,9 @@ public class GWTCompiler extends ToolBase {
     //
     propOracle.setPropertyValues(currentProps, currentValues);
 
-    // Check to see if we already have this compilation.
-    // This will have the effect of filling the rebind oracle's cache.
-    //
-    String[] entryPts = module.getEntryPointTypeNames();
-    Compilation cached = compilations.find(logger, rebindOracle, entryPts);
-    if (cached != null) {
-      msg = "Matches existing compilation " + cached.getStrongName();
-      logger.log(TreeLogger.TRACE, msg, null);
-      return cached.getStrongName();
-    }
-
-    // Now attach a compilation into which we can record the particular inputs
-    // and outputs used by this compile process.
-    //
-    Compilation compilation = new Compilation();
-    rebindOracle.recordInto(compilation);
-
     // Create JavaScript.
     //
-    String js = jjs.compile(logger, rebindOracle);
-    if (jjsOptions.isValidateOnly()) {
-      // We're done, there's no actual script to write.
-      assert (js == null);
-      return null;
-    }
-
-    // Create a wrapper and an unambiguous name for the file.
-    //
-    String strongName = writeHtmlAndJsWithStrongName(logger, js);
-
-    // Write out a cache control file that correlates to this script.
-    //
-    compilation.setStrongName(strongName);
-    writeCacheFile(logger, compilation);
-
-    // Add this compilation to the list of known compilations.
-    //
-    compilations.add(compilation);
-    return compilation.getStrongName();
+    return jjs.compile(logger, rebindOracle);
   }
 
   /**
@@ -882,124 +681,6 @@ public class GWTCompiler extends ToolBase {
       if (isInterrupted) {
         Thread.currentThread().interrupt();
       }
-    }
-  }
-
-  private void writeCacheFile(TreeLogger logger, Compilation compilation)
-      throws UnableToCompleteException {
-    // Create and write the cache file.
-    // The format matches the one read in consumeCacheEntry().
-    //
-    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-    DocumentBuilder db;
-    try {
-      db = dbf.newDocumentBuilder();
-    } catch (ParserConfigurationException e) {
-      logger.log(TreeLogger.ERROR, "Unable to construct cache entry XML", e);
-      throw new UnableToCompleteException();
-    }
-    Document doc = db.newDocument();
-
-    // <cache-entry ...>
-    Element docElem = doc.createElement("cache-entry");
-    doc.appendChild(docElem);
-
-    // <generated-type-hash ...>
-    String[] genTypeNames = compilation.getGeneratedTypeNames();
-    for (int i = 0; i < genTypeNames.length; i++) {
-      String genTypeName = genTypeNames[i];
-      String hash = compilation.getTypeHash(genTypeName);
-      Element childElem = doc.createElement("generated-type-hash");
-      docElem.appendChild(childElem);
-      childElem.setAttribute("class", genTypeName);
-      childElem.setAttribute("hash", hash);
-    }
-
-    // deferred binding decisions
-    String[] inputs = compilation.getRebindInputs();
-    for (int i = 0, n = inputs.length; i < n; ++i) {
-      String in = inputs[i];
-      String out = compilation.getRebindOutput(in);
-
-      // <rebind-decision ...>
-      Element childElem = doc.createElement("rebind-decision");
-      docElem.appendChild(childElem);
-      childElem.setAttribute("in", in);
-      childElem.setAttribute("out", out);
-    }
-
-    // Persist it.
-    //
-    String strongName = compilation.getStrongName();
-    File cacheFile = new File(outDir, strongName + EXT_CACHE_XML);
-    byte[] bytes = Util.toXmlUtf8(doc);
-    Util.writeBytesToFile(logger, cacheFile, bytes);
-
-    String msg = "Compilation metadata written to "
-        + cacheFile.getAbsolutePath();
-    logger.log(TreeLogger.TRACE, msg, null);
-  }
-
-  /**
-   * Writes the script to 1) an HTML file containing the script and 2) a
-   * JavaScript file containing the script. Contenst are encoded as UTF-8, and
-   * the filenames will be an MD5 hash of the script contents.
-   * 
-   * @return the base part of the strong name, which can be used to create other
-   *         files with different extensions
-   */
-  private String writeHtmlAndJsWithStrongName(TreeLogger logger, String js)
-      throws UnableToCompleteException {
-    try {
-      byte[] scriptBytes = js.getBytes("UTF-8");
-      String strongName = Util.computeStrongName(scriptBytes);
-      {
-        byte[] prefix = getHtmlPrefix().getBytes("UTF-8");
-        byte[] suffix = getHtmlSuffix().getBytes("UTF-8");
-        File outFile = new File(outDir, strongName + ".cache.html");
-        Util.writeBytesToFile(logger, outFile, new byte[][] {
-            prefix, scriptBytes, suffix});
-        String msg = "Compilation written to " + outFile.getAbsolutePath();
-        logger.log(TreeLogger.TRACE, msg, null);
-      }
-      {
-        byte[] prefix = getJsPrefix().getBytes("UTF-8");
-        byte[] suffix = getJsSuffix().getBytes("UTF-8");
-        File outFile = new File(outDir, strongName + ".cache.js");
-        Util.writeBytesToFile(logger, outFile, new byte[][] {
-            prefix, scriptBytes, suffix});
-        String msg = "Compilation written to " + outFile.getAbsolutePath();
-        logger.log(TreeLogger.TRACE, msg, null);
-      }
-      return strongName;
-    } catch (UnsupportedEncodingException e) {
-      logger.log(TreeLogger.ERROR, "Unable to encode compiled script as UTF-8",
-          e);
-      throw new UnableToCompleteException();
-    }
-  }
-
-  private void writeSelectionScripts(TreeLogger logger,
-      SelectionScriptGenerator selGen) {
-    {
-      String html = selGen.generateSelectionScript(
-          jjsOptions.getOutput().shouldMinimize(), false);
-      String fn = module.getName() + ".nocache.js";
-      File selectionFile = new File(outDir, fn);
-      Util.writeStringAsFile(selectionFile, html);
-      String msg = "Compilation selection script written to "
-          + selectionFile.getAbsolutePath();
-      logger.log(TreeLogger.TRACE, msg, null);
-    }
-    {
-      String html = selGen.generateSelectionScript(
-          jjsOptions.getOutput().shouldMinimize(), true);
-      String fn = module.getName() + "-xs.nocache.js";
-      File selectionFile = new File(outDir, fn);
-      Util.writeStringAsFile(selectionFile, html);
-      String msg = "Compilation selection script written to "
-          + selectionFile.getAbsolutePath();
-      logger.log(TreeLogger.TRACE, msg, null);
     }
   }
 }

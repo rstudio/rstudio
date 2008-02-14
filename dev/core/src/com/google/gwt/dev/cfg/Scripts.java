@@ -21,9 +21,9 @@ import java.util.LinkedList;
 /**
  * Manages a list of {@link com.google.gwt.dev.cfg.Script} objects.
  */
-public class Scripts {
+public class Scripts implements Iterable<Script> {
 
-  private final LinkedList list = new LinkedList();
+  private final LinkedList<Script> list = new LinkedList<Script>();
 
   /**
    * Append a {@link com.google.gwt.dev.cfg.Script} object.
@@ -41,7 +41,7 @@ public class Scripts {
   /**
    * An iterator over {@link Script} objects.
    */
-  public Iterator iterator() {
+  public Iterator<Script> iterator() {
     return list.iterator();
   }
 }

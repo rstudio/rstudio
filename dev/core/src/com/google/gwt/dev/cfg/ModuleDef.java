@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jdt.CacheManager;
 import com.google.gwt.dev.jdt.TypeOracleBuilder;
 import com.google.gwt.dev.jdt.URLCompilationUnitProvider;
+import com.google.gwt.dev.linker.Linker;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.FileOracle;
 import com.google.gwt.dev.util.FileOracleFactory;
@@ -75,6 +76,8 @@ public class ModuleDef implements PublicOracle {
     return true;
   }
 
+  private String[] activeLinkerNames = new String[0];
+
   private final ArrayList<URLCompilationUnitProvider> allCups = new ArrayList<URLCompilationUnitProvider>();
 
   private final Set<String> alreadySeenFiles = new HashSet<String>();
@@ -93,6 +96,10 @@ public class ModuleDef implements PublicOracle {
   private FileOracle lazySourceOracle;
 
   private TypeOracle lazyTypeOracle;
+
+  private final Map<String, Linker> linkersByName = new HashMap<String, Linker>();
+
+  private final Map<String, String> linkerTypesByName = new HashMap<String, String>();
 
   private final long moduleDefCreationTime = System.currentTimeMillis();
 
@@ -122,6 +129,10 @@ public class ModuleDef implements PublicOracle {
 
   public void addGwtXmlFile(File xmlFile) {
     gwtXmlFiles.add(xmlFile);
+  }
+
+  public void addLinker(String name, String className) {
+    linkerTypesByName.put(name, className);
   }
 
   public synchronized void addPublicPackage(String publicPackage,
@@ -215,6 +226,10 @@ public class ModuleDef implements PublicOracle {
     return null;
   }
 
+  public String[] getActiveLinkerNames() {
+    return activeLinkerNames;
+  }
+
   public String[] getAllPublicFiles() {
     return lazyPublicOracle.getAllFiles();
   }
@@ -234,6 +249,10 @@ public class ModuleDef implements PublicOracle {
 
   public synchronized String getFunctionName() {
     return name.replace('.', '_');
+  }
+
+  public Linker getLinker(String name) {
+    return linkersByName.get(name);
   }
 
   public synchronized String getName() {
@@ -314,6 +333,10 @@ public class ModuleDef implements PublicOracle {
     PerfLogger.end();
   }
 
+  public void setActiveLinkerNames(String... names) {
+    activeLinkerNames = names;
+  }
+
   /**
    * Returns the URL for a source file if it is found; <code>false</code>
    * otherwise.
@@ -334,7 +357,8 @@ public class ModuleDef implements PublicOracle {
    * 
    * @param logger Logs the activity.
    */
-  synchronized void normalize(TreeLogger logger) {
+  synchronized void normalize(TreeLogger logger)
+      throws UnableToCompleteException {
     PerfLogger.start("ModuleDef.normalize");
 
     // Normalize property providers.
@@ -394,6 +418,46 @@ public class ModuleDef implements PublicOracle {
     //
     branch = Messages.PUBLIC_PATH_LOCATIONS.branch(logger, null);
     lazyPublicOracle = publicPathEntries.create(branch);
+
+    /*
+     * Validate all linkers before we go off and compile something. badLinker is
+     * checked at the end of the method so we can maximize the number of Linkers
+     * to report errors about before exiting.
+     * 
+     * It is not legal to have zero linkers defined
+     */
+    boolean badLinker = false;
+    for (Map.Entry<String, String> entry : linkerTypesByName.entrySet()) {
+      try {
+        Class<?> clazz = Class.forName(entry.getValue());
+        Class<? extends Linker> linkerClazz = clazz.asSubclass(Linker.class);
+        linkersByName.put(entry.getKey(), linkerClazz.newInstance());
+      } catch (ClassCastException e) {
+        logger.log(TreeLogger.ERROR, "Not actually a Linker", e);
+        badLinker = true;
+      } catch (ClassNotFoundException e) {
+        logger.log(TreeLogger.ERROR, "Unable to find Linker", e);
+        badLinker = true;
+      } catch (InstantiationException e) {
+        logger.log(TreeLogger.ERROR, "Unable to create Linker", e);
+        badLinker = true;
+      } catch (IllegalAccessException e) {
+        logger.log(TreeLogger.ERROR,
+            "Linker does not have a public constructor", e);
+        badLinker = true;
+      }
+    }
+
+    for (String linkerName : activeLinkerNames) {
+      if (!linkersByName.containsKey(linkerName)) {
+        logger.log(TreeLogger.ERROR, "Unknown linker name " + linkerName, null);
+        badLinker = true;
+      }
+    }
+
+    if (badLinker) {
+      throw new UnableToCompleteException();
+    }
 
     PerfLogger.end();
   }

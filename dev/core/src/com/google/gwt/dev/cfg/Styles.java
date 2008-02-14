@@ -21,9 +21,9 @@ import java.util.LinkedList;
 /**
  * Manages a list of stylesheet urls.
  */
-public class Styles {
+public class Styles implements Iterable<String> {
 
-  private final LinkedList list = new LinkedList();
+  private final LinkedList<String> list = new LinkedList<String>();
 
   /**
    * Append a script.
@@ -41,7 +41,7 @@ public class Styles {
   /**
    * An iterator over stylesheet urls (each one is a String).
    */
-  public Iterator iterator() {
+  public Iterator<String> iterator() {
     return list.iterator();
   }
 }
