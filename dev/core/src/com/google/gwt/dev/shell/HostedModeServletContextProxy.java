@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.shell;
 
+import com.google.gwt.dev.GWTShell;
 import com.google.gwt.dev.cfg.ModuleDef;
 
 import java.io.File;
@@ -37,13 +38,13 @@ import javax.servlet.ServletException;
 class HostedModeServletContextProxy implements ServletContext {
   private final ServletContext context;
   private final ModuleDef moduleDef;
-  private final File shellDir;
+  private final File moduleDir;
 
   HostedModeServletContextProxy(ServletContext context, ModuleDef moduleDef,
-      File shellDir) {
+      File moduleDir) {
     this.context = context;
     this.moduleDef = moduleDef;
-    this.shellDir = shellDir;
+    this.moduleDir = moduleDir;
   }
 
   /**
@@ -160,9 +161,27 @@ class HostedModeServletContextProxy implements ServletContext {
     URL url = moduleDef.findPublicFile(partialPath);
     if (url == null) {
       // Otherwise try the path but rooted in the shell's output directory
+      File shellDir = new File(moduleDir, GWTShell.GWT_SHELL_PATH);
       File requestedFile = new File(shellDir, partialPath);
       if (requestedFile.exists()) {
         url = requestedFile.toURI().toURL();
+      }
+    }
+
+    /*
+     * If the user is coming from compiled web-mode, check the linker output
+     * directory for the file. We'll default to using the output directory of
+     * the first linker defined in the <set-linker> tab.
+     */
+    if (url == null) {
+      File linkerDir = new File(moduleDir, moduleDef.getActiveLinkerNames()[0]);
+      File requestedFile = new File(linkerDir, partialPath);
+      if (requestedFile.exists()) {
+        try {
+          url = requestedFile.toURI().toURL();
+        } catch (MalformedURLException e) {
+          // ignore since it was speculative anyway
+        }
       }
     }
 

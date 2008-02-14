@@ -916,10 +916,9 @@ public class GWTShellServlet extends HttpServlet {
         // ServeletContext.getResourceAsStream()
         //
         File moduleDir = new File(getOutputDir(), moduleDef.getName());
-        File shellDir = new File(moduleDir, GWTShell.GWT_SHELL_PATH);
 
         ServletContext context = new HostedModeServletContextProxy(
-            getServletContext(), moduleDef, shellDir);
+            getServletContext(), moduleDef, moduleDir);
         ServletConfig config = new HostedModeServletConfigProxy(
             getServletConfig(), context);
 
