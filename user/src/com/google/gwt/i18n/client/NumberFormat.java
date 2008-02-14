@@ -300,6 +300,10 @@ import java.util.Map;
  * The first subpattern is for positive numbers. The second (optional)
  * subpattern is for negative numbers.
  * </p>
+ * 
+ *  <h3>Example</h3> {@example com.google.gwt.examples.NumberFormatExample}
+ *
+ * 
  */
 public class NumberFormat {
 

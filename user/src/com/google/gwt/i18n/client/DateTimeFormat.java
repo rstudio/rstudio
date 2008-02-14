@@ -300,6 +300,9 @@ import java.util.Date;
  * <code>GMT:hhmm</code>, <code>GMT:+hhmm</code>, and
  * <code>GMT:-hhmm</code>.
  * </p>
+ * 
+ * <h3>Example</h3> {@example com.google.gwt.examples.DateTimeFormatExample}
+ *
  */
 public class DateTimeFormat {
   /**
