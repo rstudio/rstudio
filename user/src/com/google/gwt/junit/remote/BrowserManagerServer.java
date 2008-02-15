@@ -238,14 +238,13 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
       }
       BrowserManagerProcess process = processByToken.get(token);
       if (process != null) {
-        logger.fine("Killing browser. token=" + token);
-        process.doKill();
+        logger.info("Client kill for active browser: " + token);
+        process.killBrowser();
       } else if (launchCommandQueue.contains(new LaunchCommand(token))) {
         launchCommandQueue.remove(new LaunchCommand(token));
-        logger.info(token + " removed from delayed launch queue.");
+        logger.info("Client kill for waiting browser: " + token);
       } else {
-        logger.fine("No action taken. Browser not active for token " + token
-            + ".");
+        logger.info("Client kill for inactive browser: " + token);
       }
     }
   }
@@ -276,7 +275,7 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
         return myToken;
       }
     } catch (IOException e) {
-      logger.log(Level.SEVERE, "Error launching browser" + launchCmd
+      logger.log(Level.SEVERE, "Error launching browser '" + launchCmd
           + "' for '" + url + "'", e);
       throw new RuntimeException("Error launching browser '" + launchCmd
           + "' for '" + url + "'", e);
@@ -341,7 +340,6 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
    * (Assumes that code is already synchronized by processBytoken)
    */
   private void launchDelayedCommand() {
-
     if (!serializeFlag || !processByToken.isEmpty()) {
       // No need to launch if serialization is off or
       // something is already running
@@ -352,22 +350,18 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
     // successfully.
     while (!launchCommandQueue.isEmpty()) {
       LaunchCommand lc = launchCommandQueue.remove();
-
       try {
         execChild(lc.token, lc.url, lc.keepAliveMsecs);
         // No exception? Great!
-        logger.info("Started delayed browser " + lc.token);
+        logger.info("Started delayed browser: " + lc.token);
         return;
 
       } catch (IOException e) {
-
-        logger.log(Level.SEVERE, "Error launching browser" + launchCmd
+        logger.log(Level.SEVERE, "Error launching browser '" + launchCmd
             + "' for '" + lc.url + "'", e);
-
         throw new RuntimeException("Error launching browser '" + launchCmd
             + "' for '" + lc.url + "'", e);
       }
-
       // If an exception occurred, keep pulling cmds off the queue.
     }
   }

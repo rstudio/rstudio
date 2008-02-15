@@ -47,20 +47,21 @@ class BrowserManagerProcess {
 
   /**
    * Kills the child process when fired, unless it is no longer the active
-   * {@link BrowserManagerProcess#killTask} in its outer ProcessManager.
+   * {@link BrowserManagerProcess#killTask}.
    */
   private final class KillTask extends TimerTask {
     @Override
     public void run() {
       synchronized (BrowserManagerProcess.this) {
         /*
-         * CORNER CASE: Verify we're still the active KillTask, because it's
-         * possible we were bumped out by a keepAlive call after our execution
-         * started but before we could grab the lock.
+         * Verify we're still the active KillTask! If we're not the active
+         * killTask, it means we've been rescheduled and a newer kill timer is
+         * active.
          */
-        if (killTask == this) {
-          logger.info("Timeout expired for task: " + token);
-          doKill();
+        if (killTask == this && !deadOrDying) {
+          logger.info("Timeout expired for: " + token);
+          process.destroy();
+          deadOrDying = true;
         }
       }
     }
@@ -69,24 +70,22 @@ class BrowserManagerProcess {
   private static final Logger logger = Logger.getLogger(BrowserManagerProcess.class.getName());
 
   /**
-   * Exit callback when the process exits.
+   * Compute elapsed time.
+   * 
+   * @param startTime the time the process started
+   * @return returns a string representing the number of seconds elapsed since
+   *         the process started.
    */
-  private final ProcessExitCb cb;
+  private static String getElapsed(long intervalMs) {
+    NumberFormat nf = NumberFormat.getNumberInstance();
+    nf.setMaximumFractionDigits(3);
+    return nf.format(intervalMs / 1000.0);
+  }
 
   /**
-   * Set to 'true' when the process exits.
+   * Set to 'true' when the process exits or starts being killed.
    */
-  private boolean exited = false;
-
-  /**
-   * Set to the exitValue() of the process when it actually exits.
-   */
-  private int exitValue = -1;
-
-  /**
-   * The key associated with <code>process</code>.
-   */
-  private final int token;
+  private boolean deadOrDying = false;
 
   /**
    * If non-null, the active TimerTask which will kill <code>process</code>
@@ -100,14 +99,14 @@ class BrowserManagerProcess {
   private final Process process;
 
   /**
-   * Time the exec'ed child actually started.
-   */
-  private final long startTime;
-
-  /**
    * Timer instance passed in from BrowserManagerServer.
    */
   private final Timer timer;
+
+  /**
+   * The key associated with <code>process</code>.
+   */
+  private final int token;
 
   /**
    * Constructs a new ProcessManager for the specified process.
@@ -118,30 +117,26 @@ class BrowserManagerProcess {
    * @param initKeepAliveMs the initial time to wait before killing
    *          <code>process</code>
    */
-  BrowserManagerProcess(ProcessExitCb cb, Timer timer, final int token,
-      final Process process, long initKeepAliveMs) {
-    this.cb = cb;
-    this.timer = timer;
+  public BrowserManagerProcess(final ProcessExitCb cb, Timer timer,
+      final int token, final Process process, long initKeepAliveMs) {
     this.process = process;
+    this.timer = timer;
     this.token = token;
-    schedule(initKeepAliveMs);
-    startTime = System.currentTimeMillis();
 
+    final long startTime = System.currentTimeMillis();
     Thread cleanupThread = new Thread() {
       @Override
       public void run() {
-        try {
-          exitValue = process.waitFor();
-          if (cleanupBrowser() != 0) {
-            logger.warning("Browser " + token + "exited with bad status: "
-                + exitValue);
-          } else {
-            logger.info("Browser " + token + " process exited normally. "
-                + getElapsed() + " milliseconds.");
+        while (true) {
+          try {
+            int exitValue = process.waitFor();
+            doCleanup(cb, exitValue, token, System.currentTimeMillis()
+                - startTime);
+            return;
+          } catch (InterruptedException e) {
+            logger.log(Level.WARNING,
+                "Interrupted waiting for process exit of: " + token, e);
           }
-        } catch (InterruptedException e) {
-          logger.log(Level.WARNING, "Couldn't wait for process exit. token: "
-              + token, e);
         }
       }
     };
@@ -149,45 +144,7 @@ class BrowserManagerProcess {
     cleanupThread.setDaemon(true);
     cleanupThread.setName("Browser-" + token + "-Wait");
     cleanupThread.start();
-  }
-
-  /**
-   * Kills the managed process.
-   * 
-   * @return the exit value of the task.
-   */
-  public int doKill() {
-
-    boolean doCleanup = false;
-    synchronized (this) {
-      if (!exited) {
-        logger.info("Killing browser process for " + this.token);
-        process.destroy();
-
-        // Wait for the process to exit.
-        try {
-          exitValue = process.waitFor();
-          doCleanup = true;
-        } catch (InterruptedException ie) {
-          logger.severe("Interrupted waiting for browser " + token
-              + " exit during kill.");
-        }
-      }
-    }
-
-    // Run cleanupBrowser() outside the critical section.
-    if (doCleanup) {
-      if (cleanupBrowser() != 0) {
-        logger.warning("Kill Browser " + token + "exited with bad status: "
-            + exitValue);
-
-      } else {
-        logger.info("Kill Browser " + token + " process exited normally. "
-            + getElapsed() + " milliseconds.");
-      }
-    }
-
-    return exitValue;
+    keepAlive(initKeepAliveMs);
   }
 
   /**
@@ -199,88 +156,47 @@ class BrowserManagerProcess {
    * @return <code>true</code> if the process was successfully kept alive,
    *         <code>false</code> if the process is already dead.
    */
-  public boolean keepAlive(long keepAliveMs) {
-    synchronized (this) {
-      try {
-        /*
-         * See if the managed process is still alive. WEIRD: The only way to
-         * check the process's liveness appears to be asking for its exit status
-         * and seeing whether it throws an IllegalThreadStateException.
-         */
-        process.exitValue();
-      } catch (IllegalThreadStateException e) {
-        // The process is still alive.
-        schedule(keepAliveMs);
-        return true;
-      }
+  public synchronized boolean keepAlive(long keepAliveMs) {
+    assert (keepAliveMs > 0);
+    if (!deadOrDying) {
+      killTask = new KillTask();
+      timer.schedule(killTask, keepAliveMs);
+      return true;
     }
-
-    // The process is dead already; perform cleanup.
-    cleanupBrowser();
     return false;
   }
 
   /**
-   * Routine that informs the BrowserManagerServer of the exit status once and
-   * only once.
-   * 
-   * This should be called WITHOUT the lock on BrowserManagerProcess.this being
-   * held.
-   * 
-   * @return The exit value returned by the process when it exited.
+   * Kills the underlying browser process.
    */
-  private int cleanupBrowser() {
-    boolean doCb = false;
+  public synchronized void killBrowser() {
+    if (!deadOrDying) {
+      process.destroy();
+      deadOrDying = true;
+    }
+  }
+
+  /**
+   * Cleans up when the underlying process terminates. The lock must not be held
+   * when calling this method or deadlock could result.
+   * 
+   * @param cb the callback to fire
+   * @param exitValue the exit value of the process
+   * @param token the id of this browser instance
+   * @param startTime the time the process started
+   */
+  private void doCleanup(ProcessExitCb cb, int exitValue, int token,
+      long intervalMs) {
     synchronized (this) {
-      if (!exited) {
-        exited = true;
-        exitValue = process.exitValue();
-        // Stop the timer for this thread.
-        schedule(0);
-        doCb = true;
-      }
+      deadOrDying = true;
     }
-
-    /*
-     * Callback must occur without holding my own lock. This is because the
-     * callee will try to acquire the lock on
-     * BrowserManagerServer.processByToken. If another thread already has that
-     * lock and is tries to lock me at the same time, a deadlock would ensure.
-     */
-    if (doCb) {
-      cb.childExited(token, exitValue);
+    if (exitValue != 0) {
+      logger.warning("Browser: " + token + " exited with bad status: "
+          + exitValue);
+    } else {
+      logger.info("Browser: " + token + " process exited normally after "
+          + getElapsed(intervalMs) + "s");
     }
-
-    return exitValue;
-  }
-
-  /**
-   * Compute elapsed time.
-   * 
-   * @return returns a string representing the number of seconds elapsed since
-   *         the process started.
-   */
-  private synchronized String getElapsed() {
-    NumberFormat nf = NumberFormat.getNumberInstance();
-    nf.setMaximumFractionDigits(3);
-    return nf.format((System.currentTimeMillis() - startTime) / 1000.0);
-  }
-
-  /**
-   * Cancels any existing kill task and optionally schedules a new one to run
-   * <code>keepAliveMs</code> from now.
-   * 
-   * @param keepAliveMs if > 0, schedules a new kill task to run in keepAliveMs
-   *          milliseconds; if <= 0, a new kill task is not scheduled.
-   */
-  private void schedule(long keepAliveMs) {
-    if (killTask != null) {
-      killTask.cancel();
-      killTask = null;
-    }
-    if (keepAliveMs > 0) {
-      killTask = new KillTask();
-      timer.schedule(killTask, keepAliveMs);
-    }
+    cb.childExited(token, exitValue);
   }
 }
