@@ -36,6 +36,12 @@ public class LocaleInfo_ar_Test extends GWTTestCase {
     assertArrayEquals(new String[] {"ar", "default"}, locales);
   }
 
+  public void testNativeDisplayNames() {
+    // verify ar is known
+    String displayName = LocaleInfo.getLocaleNativeDisplayName("ar");
+    assertEquals("العربية", displayName);
+  }
+  
   public void testRTL() {
     boolean isRTL = LocaleInfo.getCurrentLocale().isRTL();
     assertTrue(isRTL);

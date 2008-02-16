@@ -36,6 +36,16 @@ public class LocaleInfoTest extends GWTTestCase {
     assertArrayEquals(new String[] {
         "default", "piglatin", "piglatin_UK", "piglatin_UK_win"}, locales);
   }
+
+  public void testNativeDisplayNames() {
+    // en isn't in the property set for this module so should return null
+    String displayName = LocaleInfo.getLocaleNativeDisplayName("en");
+    assertNull(displayName);
+    
+    // verify piglatin is known
+    displayName = LocaleInfo.getLocaleNativeDisplayName("piglatin");
+    assertEquals("Igpay Atinlay", displayName);
+  }
   
   public void testRTL() {
     boolean isRTL = LocaleInfo.getCurrentLocale().isRTL();

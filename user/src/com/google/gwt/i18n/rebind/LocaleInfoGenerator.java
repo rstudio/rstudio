@@ -28,7 +28,12 @@ import com.google.gwt.i18n.client.impl.LocaleInfoImpl;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
+import org.apache.tapestry.util.text.LocalizedProperties;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 
 /**
  * Generator used to generate an implementation of the LocaleInfoImpl class,
@@ -36,6 +41,19 @@ import java.io.PrintWriter;
  */
 public class LocaleInfoGenerator extends Generator {
 
+  /**
+   * Properties file containing machine-generated locale display names, in
+   * their native locales (if possible).
+   */
+  private static final String GENERATED_LOCALE_NATIVE_DISPLAY_NAMES =
+      "com/google/gwt/i18n/client/cldr/LocaleNativeDisplayNames-generated.properties";
+  /**
+   * Properties file containing hand-made overrides of locale display names,
+   * in their native locales (if possible).
+   */
+  private static final String OVERRIDE_LOCALE_NATIVE_DISPLAY_NAMES =
+      "com/google/gwt/i18n/client/cldr/LocaleNativeDisplayNames-override.properties";
+  
   /**
    * The token representing the locale property controlling Localization.
    */
@@ -80,16 +98,16 @@ public class LocaleInfoGenerator extends Generator {
     if (!locale.equals("default")) {
       className += locale;
     }
+    String qualName = packageName + "." + className;
     
     PrintWriter pw = context.tryCreate(logger, packageName, className);
     if (pw != null) {
       ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
           packageName, className);
       factory.setSuperclass(targetClass.getQualifiedSourceName());
+      factory.addImport("com.google.gwt.core.client.JavaScriptObject");
       SourceWriter writer = factory.createSourceWriter(context, pw);
-      writer.println("public String getLocaleName() {");
-      writer.println("  return \"" + locale + "\";");
-      writer.println("}");
+      writer.println("private JavaScriptObject nativeDisplayNames;");
       writer.println();
       writer.println("public String[] getAvailableLocaleNames() {");
       writer.println("  return new String[] {");
@@ -98,6 +116,62 @@ public class LocaleInfoGenerator extends Generator {
       }
       writer.println("  };");
       writer.println("}");
+      writer.println();
+      writer.println("public String getLocaleName() {");
+      writer.println("  return \"" + locale + "\";");
+      writer.println("}");
+      writer.println();
+      writer.println("public native String getLocaleNativeDisplayName(String localeName) /*-{");
+      writer.println("  this.@" + qualName + "::ensureNativeDisplayNames()();");
+      writer.println("  return this.@" + qualName + "::nativeDisplayNames[localeName] || null;");
+      writer.println("}-*/;");
+      writer.println();
+      writer.println("private native void ensureNativeDisplayNames() /*-{");
+      writer.println("  if (this.@" + qualName + "::nativeDisplayNames != null) {");
+      writer.println("    return;");
+      writer.println("  }");
+      writer.println("  this.@" + qualName + "::nativeDisplayNames = {");
+      LocalizedProperties displayNames = new LocalizedProperties();
+      LocalizedProperties displayNamesOverride = new LocalizedProperties();
+      ClassLoader classLoader = getClass().getClassLoader();
+      try {
+        InputStream str = classLoader.getResourceAsStream(GENERATED_LOCALE_NATIVE_DISPLAY_NAMES);
+        if (str != null) {
+          displayNames.load(str, "UTF-8");
+        }
+        str = classLoader.getResourceAsStream(OVERRIDE_LOCALE_NATIVE_DISPLAY_NAMES);
+        if (str != null) {
+          displayNamesOverride.load(str, "UTF-8");
+        }
+      } catch (UnsupportedEncodingException e) {
+        // UTF-8 should always be defined
+        logger.log(TreeLogger.ERROR, "UTF-8 encoding is not defined", e);
+        throw new UnableToCompleteException();
+      } catch (IOException e) {
+        logger.log(TreeLogger.ERROR, "Exception reading locale display names", e);
+        throw new UnableToCompleteException();
+      }
+      boolean needComma = false;
+      for (String propval : localeValues) {
+        String displayName = displayNamesOverride.getProperty(propval);
+        if (displayName == null) {
+          displayName = displayNames.getProperty(propval);
+        }
+        if (displayName != null && displayName.length() != 0) {
+          propval.replace("\"", "\\\"");
+          displayName.replace("\"", "\\\"");
+          if (needComma) {
+            writer.println(",");
+          }
+          writer.print("    \"" + propval + "\": \"" + displayName + "\"");
+          needComma = true;
+        }
+      }
+      if (needComma) {
+        writer.println();
+      }
+      writer.println("  };");
+      writer.println("}-*/;");
       writer.commit(logger);
     }
     return packageName + "." + className;

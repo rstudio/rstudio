@@ -66,6 +66,25 @@ public class LocaleInfo {
     return instance;
   }
 
+  /**
+   * Return the display name of the requested locale in its native locale, if
+   * possible. If no native localization is available, the English name will
+   * be returned, or as a last resort just the locale name will be returned.  If
+   * the locale name is unknown (including an user overrides) or is not a valid
+   * locale property value, null is returned.
+   * 
+   * If the I18N module has not been imported, this will always return null.
+   * 
+   * @param localeName the name of the locale to lookup.
+   * @return the name of the locale in its native locale
+   */
+  public static String getLocaleNativeDisplayName(String localeName) {
+    /*
+     * See the comment from getAvailableLocaleNames() above.
+     */
+    return instance.infoImpl.getLocaleNativeDisplayName(localeName);
+  }
+  
   private final LocaleInfoImpl infoImpl;
   
   private final CldrImpl cldrImpl;

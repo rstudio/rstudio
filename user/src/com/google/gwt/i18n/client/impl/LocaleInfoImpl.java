@@ -39,4 +39,17 @@ public class LocaleInfoImpl {
   public String getLocaleName() {
     return null;
   }
+  
+  /**
+   * Return the display name of the requested locale in its native locale, if
+   * possible. If no native localization is available, the English name will
+   * be returned, or as a last resort just the locale name will be returned.  If
+   * the locale name is unknown (including an user overrides), null is returned.
+   * 
+   * @param localeName the name of the locale to lookup.
+   * @return the name of the locale in its native locale
+   */
+  public String getLocaleNativeDisplayName(String localeName) {
+    return null;
+  }
 }
