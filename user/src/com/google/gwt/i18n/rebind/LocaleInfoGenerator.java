@@ -47,6 +47,14 @@ public class LocaleInfoGenerator extends Generator {
    */
   private static final String GENERATED_LOCALE_NATIVE_DISPLAY_NAMES =
       "com/google/gwt/i18n/client/cldr/LocaleNativeDisplayNames-generated.properties";
+  
+  /**
+   * Properties file containing hand-made corrections to the machine-generated
+   * locale display names above.
+   */
+  private static final String MANUAL_LOCALE_NATIVE_DISPLAY_NAMES =
+      "com/google/gwt/i18n/client/cldr/LocaleNativeDisplayNames-manual.properties";
+
   /**
    * Properties file containing hand-made overrides of locale display names,
    * in their native locales (if possible).
@@ -132,12 +140,17 @@ public class LocaleInfoGenerator extends Generator {
       writer.println("  }");
       writer.println("  this.@" + qualName + "::nativeDisplayNames = {");
       LocalizedProperties displayNames = new LocalizedProperties();
+      LocalizedProperties displayNamesManual = new LocalizedProperties();
       LocalizedProperties displayNamesOverride = new LocalizedProperties();
       ClassLoader classLoader = getClass().getClassLoader();
       try {
         InputStream str = classLoader.getResourceAsStream(GENERATED_LOCALE_NATIVE_DISPLAY_NAMES);
         if (str != null) {
           displayNames.load(str, "UTF-8");
+        }
+        str = classLoader.getResourceAsStream(MANUAL_LOCALE_NATIVE_DISPLAY_NAMES);
+        if (str != null) {
+          displayNamesManual.load(str, "UTF-8");
         }
         str = classLoader.getResourceAsStream(OVERRIDE_LOCALE_NATIVE_DISPLAY_NAMES);
         if (str != null) {
@@ -154,6 +167,9 @@ public class LocaleInfoGenerator extends Generator {
       boolean needComma = false;
       for (String propval : localeValues) {
         String displayName = displayNamesOverride.getProperty(propval);
+        if (displayName == null) {
+          displayName = displayNamesManual.getProperty(propval);
+        }
         if (displayName == null) {
           displayName = displayNames.getProperty(propval);
         }
