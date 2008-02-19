@@ -34,7 +34,7 @@ import com.google.gwt.user.client.DOM;
  * <h3>Example</h3> {@example com.google.gwt.examples.TextBoxExample}
  * </p>
  */
-public class PasswordTextBox extends TextBoxBase {
+public class PasswordTextBox extends TextBox {
 
   /**
    * Creates an empty password text box.
