@@ -48,8 +48,20 @@ class DOMImplMozilla extends DOMImplStandard {
     // here due to a change in getBoxObjectFor which causes inconsistencies
     // on whether the calculations are inside or outside of the element's
     // border.
-    return $doc.getBoxObjectFor(elem).screenX
-        - $doc.getBoxObjectFor($doc.documentElement).screenX;
+    try {
+      return $doc.getBoxObjectFor(elem).screenX
+          - $doc.getBoxObjectFor($doc.documentElement).screenX;
+    } catch (e) {
+      // This works around a bug in the FF3 betas. The bug
+      // should be fixed before they release, so this can
+      // be removed at a later date.
+      // https://bugzilla.mozilla.org/show_bug.cgi?id=409111
+      // DOMException.WRONG_DOCUMENT_ERR == 4
+      if (e.code == 4) {
+        return 0;
+      }
+      throw e;
+    }
   }-*/;
 
   @Override
@@ -59,8 +71,20 @@ class DOMImplMozilla extends DOMImplStandard {
     // here due to a change in getBoxObjectFor which causes inconsistencies
     // on whether the calculations are inside or outside of the element's
     // border.
-    return $doc.getBoxObjectFor(elem).screenY
-        - $doc.getBoxObjectFor($doc.documentElement).screenY;
+    try {
+      return $doc.getBoxObjectFor(elem).screenY
+          - $doc.getBoxObjectFor($doc.documentElement).screenY;
+    } catch (e) {
+      // This works around a bug in the FF3 betas. The bug
+      // should be fixed before they release, so this can
+      // be removed at a later date.
+      // https://bugzilla.mozilla.org/show_bug.cgi?id=409111
+      // DOMException.WRONG_DOCUMENT_ERR == 4
+      if (e.code == 4) {
+        return 0;
+      }
+      throw e;
+    }
   }-*/;
 
   @Override
