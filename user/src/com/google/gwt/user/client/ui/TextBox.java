@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 
 /**
  * A standard single-line text box.
@@ -43,6 +44,14 @@ public class TextBox extends TextBoxBase {
   public TextBox() {
     super(DOM.createInputText());
     setStyleName("gwt-TextBox");
+  }
+  
+  /**
+   * Protected constructor for use by subclasses.
+   * @param element element
+   */
+  TextBox(Element element) {
+    super(element); 
   }
 
   /**
