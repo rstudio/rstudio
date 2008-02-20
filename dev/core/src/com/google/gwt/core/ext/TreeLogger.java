@@ -15,7 +15,6 @@
  */
 package com.google.gwt.core.ext;
 
-
 /**
  * An interface used to log messages in deferred binding generators.
  */
