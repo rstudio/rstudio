@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -84,7 +84,7 @@ public class MouseListenerCollection extends ArrayList<MouseListener> {
         // Only fire the mouseEnter event if it's coming from outside this
         // widget.
         Element from = DOM.eventGetFromElement(event);
-        if (!DOM.isOrHasChild(senderElem, from)) {
+        if (from == null || !DOM.isOrHasChild(senderElem, from)) {
           fireMouseEnter(sender);
         }
         break;
@@ -92,7 +92,7 @@ public class MouseListenerCollection extends ArrayList<MouseListener> {
         // Only fire the mouseLeave event if it's actually leaving this
         // widget.
         Element to = DOM.eventGetToElement(event);
-        if (!DOM.isOrHasChild(senderElem, to)) {
+        if (to == null || !DOM.isOrHasChild(senderElem, to)) {
           fireMouseLeave(sender);
         }
         break;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -543,8 +543,9 @@ public abstract class CustomButton extends ButtonBase {
         }
         break;
       case Event.ONMOUSEOUT:
+        Element to = DOM.eventGetToElement(event);
         if (DOM.isOrHasChild(getElement(), DOM.eventGetTarget(event)) &&
-            !DOM.isOrHasChild(getElement(), DOM.eventGetToElement(event))) {
+            (to == null || !DOM.isOrHasChild(getElement(), to))) {
           if (isCapturing) {
             onClickCancel();
           }
