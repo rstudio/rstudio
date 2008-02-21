@@ -32,8 +32,6 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
 
   private static ThreadLocal<Throwable> sCaughtJavaExceptionObject = new ThreadLocal<Throwable>();
 
-  private static ThreadLocal<Throwable> sLastThrownJavaException = new ThreadLocal<Throwable>();
-
   private static ThreadLocal<Throwable> sThrownJavaExceptionObject = new ThreadLocal<Throwable>();
 
   /**
@@ -42,12 +40,6 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   private static ThreadLocal<TreeLogger> threadLocalLogger = new ThreadLocal<TreeLogger>();
 
   public static void setThrownJavaException(Throwable t) {
-    Throwable was = sLastThrownJavaException.get();
-    if (was != t) {
-      // avoid logging the same exception twice
-      getLogger().log(TreeLogger.WARN, "Exception thrown into JavaScript", t);
-      sLastThrownJavaException.set(t);
-    }
     sThrownJavaExceptionObject.set(t);
   }
 
@@ -137,9 +129,6 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     // Tell the user-space JavaScript host object that we're done
     //
     clearJavaScriptHost();
-
-    // Clear out the exception field, it may be holding a user-space object
-    sLastThrownJavaException.set(null);
 
     // Clear out the class loader's cache
     host.getClassLoader().clear();
@@ -400,6 +389,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     }
   }
 
+  @SuppressWarnings("unchecked")
   public Object rebindAndCreate(String requestedClassName)
       throws UnableToCompleteException {
     Throwable caught = null;
@@ -514,6 +504,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     throw thrown;
   }
 
+  @SuppressWarnings("unused")
   protected boolean isExceptionSame(Throwable original, int number,
       String name, String message) {
     // For most platforms, the null exception means we threw it.

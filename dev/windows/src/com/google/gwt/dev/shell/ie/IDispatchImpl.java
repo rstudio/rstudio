@@ -261,6 +261,7 @@ abstract class IDispatchImpl extends COMObject {
   }
 
   // CHECKSTYLE_OFF
+  @SuppressWarnings("unused")
   private final int GetIDsOfNames(int riid, int rgszNames, int cNames,
       int lcid, int rgDispId) {
 
@@ -288,6 +289,7 @@ abstract class IDispatchImpl extends COMObject {
     return COM.S_OK;
   }
 
+  @SuppressWarnings("unused")
   private int Invoke(int dispIdMember, int riid, int lcid, int dwFlags,
       int pDispParams, int pVarResult, int pExcepInfo, int pArgErr) {
 

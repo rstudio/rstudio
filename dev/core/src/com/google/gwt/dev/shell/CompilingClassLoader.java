@@ -242,6 +242,9 @@ public final class CompilingClassLoader extends ClassLoader {
     this.compiler = compiler;
     this.typeOracle = typeOracle;
 
+    // Assertions are always on in hosted mode.
+    setDefaultAssertionStatus(true);
+
     // SPECIAL MAGIC: Prevents the compile process from ever trying to compile
     // these guys from source, which is what we want, since they are special and
     // neither of them would compile correctly from source.

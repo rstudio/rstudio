@@ -194,6 +194,12 @@ public class HostedTest extends GWTTestCase {
     assertEquals(Integer.MIN_VALUE, passThroughInt(Integer.MIN_VALUE));
   }
 
+  public void testAssertionsAlwaysOn() {
+    if (!GWT.isScript()) {
+      assertTrue(HostedTest.class.desiredAssertionStatus());
+    }
+  }
+  
   /*
    * Test that returning JavaScript boxed primitives works as expected. Note
    * that Boolean and Number cannot be supported properly in web mode, so we do
@@ -558,9 +564,12 @@ public class HostedTest extends GWTTestCase {
   private native void jsniL()/*-{}-*/;
 
   // test that JS can pass a series of arguments to a varargs function
-  private native String[] varargsFromJS1() /*-{
-    return this.@com.google.gwt.dev.jjs.test.HostedTest::varargsPassthrough([Ljava/lang/String;)("foo", "bar");
-  }-*/;
+  // TODO: not sure if we want to support this
+  // private native String[] varargsFromJS1() /*-{
+  // return
+  // this.@com.google.gwt.dev.jjs.test.HostedTest::varargsPassthrough([Ljava/lang/String;)("foo",
+  // "bar");
+  // }-*/;
 
   // test that JS can pass a Java-created array to a varargs function
   private native String[] varargsFromJS2(String[] arr) /*-{

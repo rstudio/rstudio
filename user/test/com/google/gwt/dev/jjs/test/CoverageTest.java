@@ -22,6 +22,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  * possible in the Java to JavaScript compiler. This test is not at all intended
  * to execute correctly.
  */
+@SuppressWarnings("hiding")
 public class CoverageTest extends CoverageBase {
 
   /**
@@ -70,6 +71,7 @@ public class CoverageTest extends CoverageBase {
       };
 
       class NamedLocal extends Inner {
+        @SuppressWarnings("unused")
         public void foo() {
           CoverageTest.this.getNext();
           Inner.this.bar();
@@ -80,6 +82,7 @@ public class CoverageTest extends CoverageBase {
         // JDT bug? This works in 5.0 but not in 1.4
         // TODO: will javac compile it?
         class NamedLocalSub extends NamedLocal {
+          @SuppressWarnings("unused")
           public void foo() {
             Inner.this.bar();
             NamedLocal.this.foo();
@@ -151,8 +154,7 @@ public class CoverageTest extends CoverageBase {
     private void testAssertStatement() {
       // AssertStatement
 
-      // Only test asserts if they're enabled
-      if (! CoverageTest.class.desiredAssertionStatus()) {
+      if (!CoverageTest.class.desiredAssertionStatus()) {
         return;
       }
 
@@ -270,18 +272,28 @@ public class CoverageTest extends CoverageBase {
         ++x;
         inner : while (z) {
           ++i;
-          if (i == 1)
+          if (i == 1) {
             continue;
-          if (i == 2)
+          }
+          if (i == 2) {
+            continue inner;
+          }
+          if (i == 3) {
             continue outer;
-          if (i == 3)
+          }
+          if (i == 4) {
             break;
-          if (i == 4)
+          }
+          if (i == 5) {
+            break inner;
+          }
+          if (i == 6) {
             break outer;
+          }
         }
       }
-      assertEquals(4, i);
-      assertEquals(3, x);
+      assertEquals(6, i);
+      assertEquals(4, x);
     }
 
     private void testCaseSwitchStatement() {
@@ -302,6 +314,7 @@ public class CoverageTest extends CoverageBase {
       assertEquals(15, i);
     }
 
+    @SuppressWarnings("cast")
     private void testCastExpression() {
       // CastExpression
       o = (Super) o;
@@ -361,9 +374,9 @@ public class CoverageTest extends CoverageBase {
       // DoStatement
       i = 3;
       z = false;
-      do
+      do {
         i += j;
-      while (z);
+      } while (z);
       assertEquals(5, i);
     }
 
@@ -392,8 +405,9 @@ public class CoverageTest extends CoverageBase {
     private void testForStatement() {
       // ForStatement
       i = 0;
-      for (int q = 0, v = 4; q < v; ++q)
+      for (int q = 0, v = 4; q < v; ++q) {
         i += q;
+      }
       assertEquals(6, i);
       for (i = 0; i < 4; ++i) {
       }
@@ -403,16 +417,19 @@ public class CoverageTest extends CoverageBase {
     private void testIfStatement() {
       // IfStatement
       z = false;
-      if (z)
+      if (z) {
         fail();
-      if (z)
+      }
+      if (z) {
         fail();
-      else
+      } else {
         assertFalse(z);
-      if (!z)
+      }
+      if (!z) {
         assertFalse(z);
-      else
+      } else {
         fail();
+      }
     }
 
     private void testInstanceOfExpression() {
@@ -484,7 +501,6 @@ public class CoverageTest extends CoverageBase {
 
     private void testQualifiedNameReference() {
       // QualifiedNameReference
-      // TODO: fields????
       CoverageTest m = new CoverageTest();
       ia = new int[2];
       assertEquals("1", 2, ia.length);
@@ -561,8 +577,9 @@ public class CoverageTest extends CoverageBase {
     private void testReturnStatement() {
       // ReturnStatement
       assertEquals("foo", doReturnFoo());
-      if (true)
+      if (true) {
         return;
+      }
       fail();
     }
 
@@ -613,9 +630,6 @@ public class CoverageTest extends CoverageBase {
     private void testWhileStatement() {
       // WhileStatement
       z = false;
-      while (z)
-        fail();
-
       while (z) {
         fail();
       }
@@ -735,8 +749,9 @@ public class CoverageTest extends CoverageBase {
   }
 
   private static String doReturnFoo() {
-    if (true)
+    if (true) {
       return "foo";
+    }
     fail();
     return "bar";
   }
