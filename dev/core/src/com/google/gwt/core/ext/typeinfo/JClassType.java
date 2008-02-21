@@ -415,11 +415,41 @@ public abstract class JClassType extends JType implements HasAnnotations,
   public abstract boolean isAnnotationPresent(
       Class<? extends Annotation> annotationClass);
 
+  /**
+   * Returns <code>true</code> if this {@link JClassType} is assignable from
+   * the specified {@link JClassType} parameter.
+   * 
+   * @param possibleSubtype possible subtype of this {@link JClassType}
+   * @return <code>true</code> if this {@link JClassType} is assignable from
+   *         the specified {@link JClassType} parameter
+   * 
+   * @throws NullPointerException if <code>possibleSubtype</code> is
+   *           <code>null</code>
+   */
   public boolean isAssignableFrom(JClassType possibleSubtype) {
+    if (possibleSubtype == null) {
+      throw new NullPointerException("possibleSubtype");
+    }
+
     return areClassTypesAssignable(this, possibleSubtype);
   }
 
+  /**
+   * Returns <code>true</code> if this {@link JClassType} is assignable to the
+   * specified {@link JClassType} parameter.
+   * 
+   * @param possibleSupertype possible supertype of this {@link JClassType}
+   * @return <code>true</code> if this {@link JClassType} is assignable to the
+   *         specified {@link JClassType} parameter
+   * 
+   * @throws NullPointerException if <code>possibleSupertype</code> is
+   *           <code>null</code>
+   */
   public boolean isAssignableTo(JClassType possibleSupertype) {
+    if (possibleSupertype == null) {
+      throw new NullPointerException("possibleSupertype");
+    }
+
     return areClassTypesAssignable(possibleSupertype, this);
   }
 
@@ -522,14 +552,14 @@ public abstract class JClassType extends JType implements HasAnnotations,
   abstract JClassType findNestedTypeImpl(String[] typeName, int index);
 
   /**
-   * Returns all of the annotations declared or inherited by this instance. 
+   * Returns all of the annotations declared or inherited by this instance.
    * 
    * NOTE: This method is for testing purposes only.
    */
   abstract Annotation[] getAnnotations();
 
   /**
-   * Returns all of the annotations declared on this instance. 
+   * Returns all of the annotations declared on this instance.
    * 
    * NOTE: This method is for testing purposes only.
    */
