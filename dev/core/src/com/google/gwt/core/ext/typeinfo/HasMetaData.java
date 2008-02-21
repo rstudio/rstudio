@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,8 @@
  * whether a doc comment was used or (in the future) a concrete instantiation of
  * a generic type was used. The same idea could be useful for to exposing
  * attributes as metadata.
+ * 
+ * This API has been deprecated in favor of proper Java annotations.
  */
 package com.google.gwt.core.ext.typeinfo;
 
@@ -55,16 +57,33 @@ package com.google.gwt.core.ext.typeinfo;
 public interface HasMetaData {
   /**
    * Adds additional metadata.
+   * 
+   * @deprecated Javadoc comment metadata has been deprecated in favor of proper
+   *             Java annotations. The only way to add a Java annotation is via
+   *             the source code.
    */
+  @Deprecated
   void addMetaData(String tagName, String[] values);
 
   /**
    * Gets each list of metadata for the specified tag name.
+   * 
+   * @deprecated Javadoc comment metadata has been deprecated in favor of proper
+   *             Java annotations. See
+   *             {@link HasAnnotations#getAnnotation(Class)} for equivalent
+   *             functionality.
    */
+  @Deprecated
   String[][] getMetaData(String tagName);
 
   /**
    * Gets the name of available metadata tags.
+   * 
+   * @deprecated Javadoc comment metadata has been deprecated in favor of proper
+   *             Java annotations. The {@link HasAnnotations} interface does not
+   *             support a mechanism to enumerate all of the annotations on a
+   *             member; the type of the desired annotation must be known.
    */
+  @Deprecated
   String[] getMetaDataTags();
 }
