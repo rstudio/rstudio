@@ -147,10 +147,6 @@ public abstract class SuggestOracle {
    * {@link com.google.gwt.user.client.ui.SuggestOracle} response.
    */
   public static class Response implements IsSerializable {
-
-    /**
-     * @gwt.typeArgs <com.google.gwt.user.client.ui.SuggestOracle.Suggestion>
-     */
     private Collection<? extends Suggestion> suggestions;
 
     /**
