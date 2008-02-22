@@ -31,6 +31,7 @@ import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * A smattering of useful file functions.
@@ -62,7 +63,6 @@ public final class Utility {
       if (os != null) {
         os.close();
       }
-      
     } catch (IOException e) {
     }
   }
@@ -125,7 +125,7 @@ public final class Utility {
     if (!file.exists() || file.isDirectory()) {
       throw new IOException(file.getPath() + " : could not create normal file.");
     }
-    
+
     if (ignore) {
       System.out.println(file + " already exists; skipping");
       return null;
@@ -133,10 +133,10 @@ public final class Utility {
 
     if (!overwrite) {
       throw new IOException(
-        file.getPath()
-          + " : already exists; please remove it or use the -overwrite or -ignore option.");
+          file.getPath()
+              + " : already exists; please remove it or use the -overwrite or -ignore option.");
     }
-    
+
     System.out.println("Overwriting existing file " + file);
     return file;
   }
@@ -175,7 +175,7 @@ public final class Utility {
     if (create && !alreadyExisted) {
       System.out.println("Created directory " + dir);
     }
-    
+
     return dir;
   }
 
@@ -195,14 +195,14 @@ public final class Utility {
    * 
    * @param partialPath the partial path to the resource from this class's class
    *          file
-   * @return the contents of the file, or <code>null</code> if the file could
-   *         not be found
-   * @throws IOException
+   * @return the contents of the file
+   * @throws IOException if the file could not be found or an error occurred
+   *           while reading it
    */
   public static String getFileFromClassPath(String partialPath)
       throws IOException {
     InputStream in = Utility.class.getClassLoader().getResourceAsStream(
-      partialPath);
+        partialPath);
     try {
       if (in == null) {
         throw new FileNotFoundException(partialPath);
@@ -255,14 +255,14 @@ public final class Utility {
   }
 
   public static void writeTemplateFile(File file, String contents,
-      Map replacements) throws IOException {
+      Map<String, String> replacements) throws IOException {
 
     String replacedContents = contents;
-    Set entries = replacements.entrySet();
-    for (Iterator iter = entries.iterator(); iter.hasNext();) {
-      Map.Entry entry = (Map.Entry) iter.next();
-      String replaceThis = (String) entry.getKey();
-      String withThis = (String) entry.getValue();
+    Set<Entry<String, String>> entries = replacements.entrySet();
+    for (Iterator<Entry<String, String>> iter = entries.iterator(); iter.hasNext();) {
+      Entry<String, String> entry = iter.next();
+      String replaceThis = entry.getKey();
+      String withThis = entry.getValue();
       withThis = withThis.replaceAll("\\\\", "\\\\\\\\");
       withThis = withThis.replaceAll("\\$", "\\\\\\$");
       replacedContents = replacedContents.replaceAll(replaceThis, withThis);
@@ -278,17 +278,17 @@ public final class Utility {
       String override = System.getProperty("gwt.devjar");
       if (override == null) {
         String partialPath = Utility.class.getName().replace('.', '/').concat(
-          ".class");
+            ".class");
         URL url = Utility.class.getClassLoader().getResource(partialPath);
         if (url != null && "jar".equals(url.getProtocol())) {
           String path = url.toString();
           String jarPath = path.substring(path.indexOf("file:"),
-            path.lastIndexOf('!'));
+              path.lastIndexOf('!'));
           File devJarFile = new File(URI.create(jarPath));
           if (!devJarFile.isFile()) {
             throw new IOException("Could not find jar file; "
-              + devJarFile.getCanonicalPath()
-              + " does not appear to be a valid file");
+                + devJarFile.getCanonicalPath()
+                + " does not appear to be a valid file");
           }
           sDevJarName = devJarFile.getName();
 
@@ -296,15 +296,15 @@ public final class Utility {
           File installDirFile = new File(URI.create(dirPath));
           if (!installDirFile.isDirectory()) {
             throw new IOException("Could not find installation directory; "
-              + installDirFile.getCanonicalPath()
-              + " does not appear to be a valid directory");
+                + installDirFile.getCanonicalPath()
+                + " does not appear to be a valid directory");
           }
-          
+
           sInstallPath = installDirFile.getCanonicalPath().replace(
-            File.separatorChar, '/');
+              File.separatorChar, '/');
         } else {
           throw new IOException(
-            "Cannot determine installation directory; apparently not running from a jar");
+              "Cannot determine installation directory; apparently not running from a jar");
         }
       } else {
         override = override.replace('\\', '/');
@@ -319,7 +319,7 @@ public final class Utility {
       }
     } catch (IOException e) {
       throw new RuntimeException(
-        "Installation problem detected, please reinstall GWT", e);
+          "Installation problem detected, please reinstall GWT", e);
     }
   }
 
