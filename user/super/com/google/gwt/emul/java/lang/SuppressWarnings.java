@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/SuppressWarnings.html">[Sun
  * docs]</a>
  */
-@Target( {
+@Target({
     ElementType.TYPE, ElementType.FIELD, ElementType.METHOD,
     ElementType.PARAMETER, ElementType.CONSTRUCTOR, ElementType.LOCAL_VARIABLE})
 @Retention(RetentionPolicy.SOURCE)

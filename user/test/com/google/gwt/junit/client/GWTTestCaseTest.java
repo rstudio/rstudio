@@ -222,10 +222,11 @@ public class GWTTestCaseTest extends GWTTestCase {
       }
     }
 
-    if (!exWasThrown)
+    if (!exWasThrown) {
       fail("No exception was thrown");
-    else
+    } else {
       fail("Unexpected exception during assertFalse(String, boolean) testing");
+    }
   }
 
   /**

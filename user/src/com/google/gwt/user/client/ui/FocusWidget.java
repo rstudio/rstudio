@@ -68,7 +68,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
   public void addFocusListener(FocusListener listener) {
     if (focusListeners == null) {
       focusListeners = new FocusListenerCollection();
-      sinkEvents(Event.FOCUSEVENTS );
+      sinkEvents(Event.FOCUSEVENTS);
     }
     focusListeners.add(listener);
   }
@@ -163,7 +163,6 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
   public void setTabIndex(int index) {
     impl.setTabIndex(getElement(), index);
   }
-
 
   /**
    * Fire all current {@link ClickListener}.
