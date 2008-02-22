@@ -39,16 +39,16 @@ import javax.servlet.http.HttpServletRequest;
 public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
 
   /**
+   * A hook into GWTUnitTestShell, the underlying unit test process.
+   */
+  private static JUnitMessageQueue sHost = null;
+
+  /**
    * A maximum timeout to wait for the test system to respond with the next
    * test. Practically speaking, the test system should respond nearly instantly
    * if there are further tests to run.
    */
   private static final int TIME_TO_WAIT_FOR_TESTNAME = 300000;
-
-  /**
-   * A hook into GWTUnitTestShell, the underlying unit test process.
-   */
-  private static JUnitMessageQueue sHost = null;
 
   /**
    * Tries to grab the GWTUnitTestShell sHost environment to communicate with
@@ -77,10 +77,12 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
   }
 
   public TestInfo getFirstMethod(String moduleName) {
-    return getHost().getNextTestInfo(getClientId(), moduleName, TIME_TO_WAIT_FOR_TESTNAME);
+    return getHost().getNextTestInfo(getClientId(), moduleName,
+        TIME_TO_WAIT_FOR_TESTNAME);
   }
 
-  public TestInfo reportResultsAndGetNextMethod(String moduleName, TestResults results) {
+  public TestInfo reportResultsAndGetNextMethod(String moduleName,
+      TestResults results) {
     JUnitMessageQueue host = getHost();
     HttpServletRequest request = getThreadLocalRequest();
     String agent = request.getHeader("User-Agent");
@@ -93,7 +95,8 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
       trial.setException(deserialize(ew));
     }
     host.reportResults(moduleName, results);
-    return host.getNextTestInfo(getClientId(), moduleName, TIME_TO_WAIT_FOR_TESTNAME);
+    return host.getNextTestInfo(getClientId(), moduleName,
+        TIME_TO_WAIT_FOR_TESTNAME);
   }
 
   /**
