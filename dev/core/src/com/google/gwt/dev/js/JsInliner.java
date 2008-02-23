@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -60,8 +60,8 @@ import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -77,14 +77,64 @@ import java.util.Stack;
 public class JsInliner {
 
   /**
+   * Determines if the evaluation of a JsNode may be affected by side effects.
+   */
+  private static class AffectedBySideEffectsVisitor extends JsVisitor {
+    private boolean affectedBySideEffects;
+    private final JsProgram program;
+    private final JsScope safeScope;
+
+    public AffectedBySideEffectsVisitor(JsProgram program, JsScope safeScope) {
+      this.program = program;
+      this.safeScope = safeScope;
+    }
+
+    public boolean affectedBySideEffects() {
+      return affectedBySideEffects;
+    }
+
+    @Override
+    public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+      /*
+       * We could make this more accurate by analyzing the function that's being
+       * executed, but we'll bank on subsequent passes inlining simple function
+       * invocations.
+       */
+      affectedBySideEffects = true;
+    }
+
+    @Override
+    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+      if (x.getQualifier() == null && x.getName() != null) {
+        // Special case the undefined literal.
+        if (x.getName() == program.getUndefinedLiteral().getName()) {
+          return;
+        }
+        // Locals in a safe scope are unaffected.
+        if (x.getName().getEnclosing() == safeScope) {
+          return;
+        }
+      }
+
+      /*
+       * We can make this more accurate if we had single-assignment information
+       * (e.g. static final fields).
+       */
+      affectedBySideEffects = true;
+    }
+  }
+
+  /**
    * Make comma binary operations left-nested since commas are naturally
    * left-associative. We will define the comma-normal form such that a comma
-   * expression should never have a comma expression as its RHS. This has a nice
-   * side-effect of minimizing the number of generated parentheses.
+   * expression should never have a comma expression as its RHS and contains no
+   * side-effect-free expressions save for the outer, right-hand expression.
+   * This form has a nice side-effect of minimizing the number of generated
+   * parentheses.
    * 
    * <pre>
    * (X, b) is unchanged
-   * (X, (b, c) becomes ((X, b), c)
+   * (X, (b, c) becomes ((X, b), c); b is guaranteed to have a side-effect
    * (X, ((b, c), d)) becomes (((X, b), c), d)
    * </pre>
    */
@@ -110,6 +160,17 @@ public class JsInliner {
 
       JsBinaryOperation toUpdate = isComma(x.getArg2());
       if (toUpdate == null) {
+        /*
+         * We have a JsBinaryOperation that's structurally normal: (X, a). Now
+         * it may be the case that the inner expression X is a comma expression
+         * (Y, b). If b creates no side-effects, we can remove it, leaving (Y,
+         * a) as the expression.
+         */
+        JsBinaryOperation inner = isComma(x.getArg1());
+        if (inner != null && !hasSideEffects(inner.getArg2())) {
+          x.setArg1(inner.getArg1());
+          didChange = true;
+        }
         return;
       }
 
@@ -471,8 +532,9 @@ public class JsInliner {
   }
 
   /**
-   * Determines if a list of names is guaranteed to be evaluated in a particular
-   * order.
+   * Determines that a list of names is guaranteed to be evaluated in a
+   * particular order. Also ensures that all names are evaluated before any
+   * invocations occur.
    */
   private static class EvaluationOrderVisitor extends JsVisitor {
     private boolean maintainsOrder = true;
@@ -636,7 +698,7 @@ public class JsInliner {
       JsExpression e = x.getExpression();
 
       // We will occasionally create JsExprStmts that have no side-effects.
-      if (ctx.canRemove() && !hasSideEffects(x)) {
+      if (ctx.canRemove() && !hasSideEffects(x.getExpression())) {
         ctx.removeMe();
         return;
       }
@@ -789,7 +851,7 @@ public class JsInliner {
       }
 
       // Confirm that the expression conforms to the desired heuristics
-      if (!isInlinable(functionStack.peek(), x, f, op)) {
+      if (!isInlinable(program, functionStack.peek(), x, f, op)) {
         return;
       }
 
@@ -880,6 +942,23 @@ public class JsInliner {
       if (original != null) {
         ctx.replaceMe(original);
       }
+    }
+  }
+
+  /**
+   * Detects function declarations.
+   */
+  private static class NestedFunctionVisitor extends JsVisitor {
+
+    private boolean containsNestedFunctions = false;
+
+    public boolean containsNestedFunctions() {
+      return containsNestedFunctions;
+    }
+
+    @Override
+    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
+      containsNestedFunctions = true;
     }
   }
 
@@ -1203,15 +1282,6 @@ public class JsInliner {
   }
 
   /**
-   * A List of expression types that are known to never be affected by
-   * side-effects. Used by {@link #alwaysFlexible(JsExpression)}.
-   */
-  private static final List<Class<?>> ALWAYS_FLEXIBLE = Arrays.asList(new Class<?>[] {
-      JsBooleanLiteral.class, JsDecimalLiteral.class, JsIntegralLiteral.class,
-      JsNullLiteral.class, JsRegExp.class, JsStringLiteral.class,
-      JsThisRef.class});
-
-  /**
    * When attempting to inline an invocation, this constant determines the
    * maximum allowable ratio of potential inlined complexity to initial
    * complexity. This acts as a brake on very large expansions from bloating the
@@ -1242,21 +1312,42 @@ public class JsInliner {
   }
 
   /**
-   * Indicates if an expression can be repeated multiple times in a delegation
-   * removal without side-effects.
+   * Determine whether or not a list of AST nodes are affected by side effects.
+   * The context parameter provides a scope in which local (and therefore
+   * immutable) variables are defined.
    */
-  private static boolean alwaysFlexible(JsExpression e) {
-    if (e instanceof JsNameRef) {
-      return false;
-    } else {
-      return ALWAYS_FLEXIBLE.contains(e.getClass());
+  private static <T extends JsVisitable<T>> boolean affectedBySideEffects(
+      JsProgram program, List<T> list, JsFunction context) {
+    /*
+     * If the caller contains no nested functions, none of its locals can
+     * possibly be affected by side effects.
+     */
+    JsScope safeScope = null;
+    if (context != null && !containsNestedFunctions(context)) {
+      safeScope = context.getScope();
     }
+    AffectedBySideEffectsVisitor v = new AffectedBySideEffectsVisitor(program,
+        safeScope);
+    v.acceptList(list);
+    return v.affectedBySideEffects();
   }
 
+  /**
+   * Generate an exisimated measure of the syntactic complexity of a JsNode.
+   */
   private static int complexity(JsNode<?> toEstimate) {
     ComplexityEstimator e = new ComplexityEstimator();
     e.accept(toEstimate);
     return e.getComplexity();
+  }
+
+  /**
+   * Examine a JsFunction to determine if it contains nested functions.
+   */
+  private static boolean containsNestedFunctions(JsFunction func) {
+    NestedFunctionVisitor v = new NestedFunctionVisitor();
+    v.accept(func.getBody());
+    return v.containsNestedFunctions();
   }
 
   /**
@@ -1300,10 +1391,8 @@ public class JsInliner {
   /**
    * Determine whether or not an AST node has side effects.
    */
-  private static boolean hasSideEffects(JsVisitable<?> e) {
-    SideEffectsVisitor v = new SideEffectsVisitor();
-    v.accept(e);
-    return v.hasSideEffects();
+  private static <T extends JsVisitable<T>> boolean hasSideEffects(T e) {
+    return hasSideEffects(Collections.singletonList(e));
   }
 
   /**
@@ -1352,9 +1441,12 @@ public class JsInliner {
    * Given an expression, determine if it it is a JsNameRef that refers to a
    * statically-defined JsFunction.
    */
+  // Javac 1.6.0_01 barfs on if staticRef is a JsNode<?>
+  @SuppressWarnings("unchecked")
   private static JsFunction isFunction(JsExpression e) {
     if (e instanceof JsNameRef) {
       JsNameRef ref = (JsNameRef) e;
+
       JsNode staticRef = ref.getName().getStaticRef();
       if (staticRef instanceof JsFunction) {
         return (JsFunction) staticRef;
@@ -1367,7 +1459,7 @@ public class JsInliner {
   /**
    * Determine if a statement can be inlined into a call site.
    */
-  private static boolean isInlinable(JsFunction caller,
+  private static boolean isInlinable(JsProgram program, JsFunction caller,
       JsInvocation invocation, JsFunction callee, JsNode<?> toInline) {
     List<JsExpression> arguments = invocation.getArguments();
 
@@ -1418,7 +1510,7 @@ public class JsInliner {
      * effects. This will determine how aggressively the parameters may be
      * reordered.
      */
-    if (hasSideEffects(arguments)) {
+    if (isVolatile(program, arguments, caller)) {
       /*
        * Determine the order in which the parameters must be evaluated. This
        * will vary between call sites, based on whether or not the invocation's
@@ -1429,22 +1521,24 @@ public class JsInliner {
         JsExpression e = arguments.get(i);
         JsParameter p = callee.getParameters().get(i);
 
-        if (!alwaysFlexible(e)) {
+        if (isVolatile(program, e, callee)) {
           requiredOrder.add(p.getName());
         }
       }
+
+      // This would indicate that isVolatile changed its output between
+      // the if statement and the loop.
+      assert requiredOrder.size() > 0;
 
       /*
        * Verify that the non-reorderable arguments are evaluated in the right
        * order.
        */
-      if (requiredOrder.size() > 0) {
-        EvaluationOrderVisitor orderVisitor = new EvaluationOrderVisitor(
-            requiredOrder);
-        orderVisitor.accept(toInline);
-        if (!orderVisitor.maintainsOrder()) {
-          return false;
-        }
+      EvaluationOrderVisitor orderVisitor = new EvaluationOrderVisitor(
+          requiredOrder);
+      orderVisitor.accept(toInline);
+      if (!orderVisitor.maintainsOrder()) {
+        return false;
       }
     }
 
@@ -1466,6 +1560,27 @@ public class JsInliner {
    */
   private static boolean isReturnStatement(JsStatement statement) {
     return statement instanceof JsReturn;
+  }
+
+  /**
+   * Indicates if an expression would create side effects or possibly be
+   * affected by side effects when evaluated within a particular function
+   * context.
+   */
+  private static boolean isVolatile(JsProgram program, JsExpression e,
+      JsFunction context) {
+    return isVolatile(program, Collections.singletonList(e), context);
+  }
+
+  /**
+   * Indicates if a list of expressions would create side effects or possibly be
+   * affected by side effects when evaluated within a particular function
+   * context.
+   */
+  private static <T extends JsVisitable<T>> boolean isVolatile(
+      JsProgram program, List<T> list, JsFunction context) {
+    return hasSideEffects(list)
+        || affectedBySideEffects(program, list, context);
   }
 
   /**

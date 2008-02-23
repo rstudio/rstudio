@@ -25,6 +25,16 @@ public class MethodCallTest extends GWTTestCase {
   private static final class MyException extends RuntimeException {
   }
 
+  private static Object field;
+
+  private static void clobberFieldNoInline() {
+    try {
+      field = null;
+    } catch (Throwable e) {
+      e.toString();
+    }
+  }
+
   private static int manyArgs(int i0, int i1, int i2, int i3, int i4, int i5,
       int i6, int i7, int i8, int i9, int i10, int i11, int i12, int i13,
       int i14, int i15, int i16, int i17, int i18, int i19, int i20, int i21,
@@ -84,6 +94,26 @@ public class MethodCallTest extends GWTTestCase {
         + i227 + i228 + i229 + i230 + i231 + i232 + i233 + i234 + i235 + i236
         + i237 + i238 + i239 + i240 + i241 + i242 + i243 + i244 + i245 + i246
         + i247 + i248 + i249 + i250 + i251 + i252 + i253 + i254;
+  }
+
+  /**
+   * If this gets inlined into {@link #testShouldNotInline()}, the value of
+   * <code>o</code> will be seen to be cleared. This is because the parameter
+   * <code>o</code> will have been replaced by a direct reference to
+   * {@link #field}. Both the Java and JS inliners must not inline this.
+   */
+  private static void shouldNotInline(Object o) {
+    field = null;
+    o.toString();
+  }
+
+  /**
+   * Same as {@link #shouldNotInline(Object)}, except the field clobber is done
+   * indirectly in a non-inlinable method.
+   */
+  private static void shouldNotInline2(Object o) {
+    clobberFieldNoInline();
+    o.toString();
   }
 
   private int value;
@@ -152,6 +182,15 @@ public class MethodCallTest extends GWTTestCase {
     assertEquals(21, result);
   }
 
+  /**
+   * Ensure that local variable assigned in invocation arguments are evaluated
+   * in the correct order.
+   */
+  public void testLocalAssignmentInArgs() {
+    int local = 0;
+    assertEquals(5, addMultReverseOrder(local, local = 1, local));
+  }
+
   public void testManyArgs() {
     assertEquals(32385, manyArgs(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
         14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
@@ -183,6 +222,24 @@ public class MethodCallTest extends GWTTestCase {
 
   public void testRecursion() {
     assertEquals(210, recursiveSum(20));
+  }
+
+  /**
+   * Tests that {@link #shouldNotInline(Object)} does not get inlined. Inlining
+   * would cause a read of {@link #field} after its value has been clobbered.
+   */
+  public void testShouldNotInline() {
+    field = new Object();
+    shouldNotInline(field);
+  }
+
+  /**
+   * Tests that {@link #shouldNotInline2(Object)} does not get inlined. Inlining
+   * would cause a read of {@link #field} after its value has been clobbered.
+   */
+  public void testShouldNotInline2() {
+    field = new Object();
+    shouldNotInline2(field);
   }
 
   /**
@@ -304,6 +361,10 @@ public class MethodCallTest extends GWTTestCase {
 
   private int addCorrectOrder(int i, int j) {
     return i + j;
+  }
+
+  private int addMultReverseOrder(int a, int b, int c) {
+    return c * 4 + b + a;
   }
 
   private int addReverseOrder(int i, int j) {

@@ -50,6 +50,7 @@ public class CompilerSuite {
     // $JUnit-BEGIN$
     suite.addTestSuite(AnnotationsTest.class);
     suite.addTestSuite(AutoboxTest.class);
+    suite.addTestSuite(BlankInterfaceTest.class);
     suite.addTestSuite(ClassCastTest.class);
     suite.addTestSuite(ClassObjectTest.class);
     suite.addTestSuite(CompilerTest.class);
@@ -66,7 +67,6 @@ public class CompilerSuite {
     suite.addTestSuite(MethodInterfaceTest.class);
     suite.addTestSuite(MiscellaneousTest.class);
     suite.addTestSuite(NativeLongTest.class);
-    suite.addTestSuite(BlankInterfaceTest.class);
     suite.addTestSuite(VarargsTest.class);
     // $JUnit-END$
 
