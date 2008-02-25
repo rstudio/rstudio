@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,10 +30,14 @@ class HistoryImplStandard extends HistoryImpl {
       $wnd.__gwt_historyToken = hash.substring(1);
 
     // Create the timer that checks the browser's url hash every 1/4 s.
+    var historyImpl = this;
     $wnd.__checkHistory = function() {
       var token = '', hash = $wnd.location.hash;
-      if (hash.length > 0)
-        token = hash.substring(1);
+      if (hash.length > 0) {
+        // Not all browsers decode location.hash the same way, so the
+        // implementation needs an opportunity to handle decoding.
+        token = historyImpl.@com.google.gwt.user.client.impl.HistoryImplStandard::decode(Ljava/lang/String;)(hash.substring(1));
+      }
 
       if (token != $wnd.__gwt_historyToken) {
         $wnd.__gwt_historyToken = token;
@@ -56,4 +60,8 @@ class HistoryImplStandard extends HistoryImpl {
     }
     $wnd.location.hash = encodeURIComponent(historyToken);
   }-*/;
+
+  protected String decode(String historyToken) {
+    return historyToken;
+  }
 }

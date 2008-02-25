@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,9 @@ package com.google.gwt.user.client.impl;
 /**
  * Safari implementation of
  * {@link com.google.gwt.user.client.impl.HistoryImplStandard}.
+ * 
+ * This implementation works on both Safari 2 and 3, by detecting the version
+ * and reverting to a stub implementation for Safari 2.
  */
 class HistoryImplSafari extends HistoryImplStandard {
 
@@ -63,13 +66,26 @@ class HistoryImplSafari extends HistoryImplStandard {
     super.newItem(historyToken);
   }
 
+  protected native String decode(String historyToken) /*-{
+    try {
+      // Unlike most other browsers, Safari does not unescape location.hash.
+      return decodeURIComponent(historyToken);
+    } catch (e) {
+      // This is very unlikely to be malformed, since it comes directly from
+      // location.hash.
+      return "";
+    }
+  }-*/;
+
   private native void initImpl() /*-{
     $wnd.__gwt_historyToken = '';
 
     // Get the initial token from the url's hash component.
     var hash = $wnd.location.hash;
-    if (hash.length > 0)
-      $wnd.__gwt_historyToken = decodeURIComponent(hash.substring(1));
+    if (hash.length > 0) {
+      $wnd.__gwt_historyToken =
+        this.@com.google.gwt.user.client.impl.HistoryImplStandard::decode(Ljava/lang/String;)(hash.substring(1));
+    }
 
     @com.google.gwt.user.client.impl.HistoryImpl::onHistoryChanged(Ljava/lang/String;)($wnd.__gwt_historyToken);
   }-*/;
