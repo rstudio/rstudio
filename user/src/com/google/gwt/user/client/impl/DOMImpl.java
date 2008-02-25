@@ -296,22 +296,17 @@ public abstract class DOMImpl {
 
     var cur = elem.parentNode;
     while (cur && (cur.nodeType == 1)) {
-      // body tags are implicitly scrollable
-      if ((cur.style.overflow == 'auto') || (cur.style.overflow == 'scroll') ||
-          (cur.tagName == 'BODY')) {
-      
-        if (left < cur.scrollLeft) {
-          cur.scrollLeft = left;
-        }
-        if (left + width > cur.scrollLeft + cur.clientWidth) {
-          cur.scrollLeft = (left + width) - cur.clientWidth;
-        }
-        if (top < cur.scrollTop) {
-          cur.scrollTop = top;
-        }
-        if (top + height > cur.scrollTop + cur.clientHeight) {
-          cur.scrollTop = (top + height) - cur.clientHeight;
-        }
+      if (left < cur.scrollLeft) {
+        cur.scrollLeft = left;
+      }
+      if (left + width > cur.scrollLeft + cur.clientWidth) {
+        cur.scrollLeft = (left + width) - cur.clientWidth;
+      }
+      if (top < cur.scrollTop) {
+        cur.scrollTop = top;
+      }
+      if (top + height > cur.scrollTop + cur.clientHeight) {
+        cur.scrollTop = (top + height) - cur.clientHeight;
       }
 
       var offsetLeft = cur.offsetLeft, offsetTop = cur.offsetTop;
