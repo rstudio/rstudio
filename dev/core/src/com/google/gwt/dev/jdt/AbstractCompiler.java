@@ -82,9 +82,9 @@ public abstract class AbstractCompiler {
     private long jdtProcessNanos;
 
     public CompilerImpl(INameEnvironment environment,
-        IErrorHandlingPolicy policy, Map<String, String> settings,
+        IErrorHandlingPolicy policy, CompilerOptions compilerOptions,
         ICompilerRequestor requestor, IProblemFactory problemFactory) {
-      super(environment, policy, settings, requestor, problemFactory);
+      super(environment, policy, compilerOptions, requestor, problemFactory);
     }
 
     @Override
@@ -355,12 +355,14 @@ public abstract class AbstractCompiler {
         } else {
           ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
           if (isBinaryType(contextClassLoader, className)) {
-            URL resourceURL = contextClassLoader.getResource(className.replace('.', '/') + ".class");
+            URL resourceURL = contextClassLoader.getResource(className.replace(
+                '.', '/')
+                + ".class");
             if (resourceURL != null) {
               byte[] classBytes = Util.readURLAsBytes(resourceURL);
               ClassFileReader cfr;
               try {
-                cfr = new ClassFileReader(classBytes , null);
+                cfr = new ClassFileReader(classBytes, null);
                 NameEnvironmentAnswer out = new NameEnvironmentAnswer(cfr, null);
                 nameEnvironmentAnswerForTypeName.put(qname, out);
                 return out;
@@ -369,7 +371,7 @@ public abstract class AbstractCompiler {
               }
             }
           }
-          
+
           logger.log(TreeLogger.SPAM, "Not a known type", null);
           return null;
         }
@@ -400,7 +402,7 @@ public abstract class AbstractCompiler {
         return false;
       }
     }
-    
+
     private boolean isBinaryType(ClassLoader classLoader, String typeName) {
       try {
         Class.forName(typeName, false, classLoader);
@@ -410,7 +412,7 @@ public abstract class AbstractCompiler {
       } catch (LinkageError e) {
         // Ignored.
       }
-      
+
       // Assume that it is not a binary type.
       return false;
     }
@@ -472,7 +474,8 @@ public abstract class AbstractCompiler {
     settings.put(CompilerOptions.OPTION_DocCommentSupport,
         CompilerOptions.ENABLED);
 
-    compiler = new CompilerImpl(env, pol, settings, req, probFact);
+    compiler = new CompilerImpl(env, pol, new CompilerOptions(settings), req,
+        probFact);
   }
 
   public CachePolicy getCachePolicy() {
