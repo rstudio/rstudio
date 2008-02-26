@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,11 +40,8 @@ public interface CollectionsTestService extends RemoteService {
     }
   }
 
-  /**
-   * @gwt.typeArgs value <com.google.gwt.user.client.rpc.IsSerializable>
-   * @gwt.typeArgs <com.google.gwt.user.client.rpc.IsSerializable>
-   */
-  ArrayList echo(ArrayList value) throws CollectionsTestServiceException;
+  ArrayList<IsSerializable> echo(ArrayList<IsSerializable> value)
+      throws CollectionsTestServiceException;
 
   boolean[] echo(boolean[] value) throws CollectionsTestServiceException;
 
@@ -68,19 +65,11 @@ public interface CollectionsTestService extends RemoteService {
 
   Float[] echo(Float[] value) throws CollectionsTestServiceException;
 
-  /**
-   * @gwt.typeArgs value <java.lang.String,
-   *               com.google.gwt.user.client.rpc.IsSerializable>
-   * @gwt.typeArgs <java.lang.String,
-   *               com.google.gwt.user.client.rpc.IsSerializable>
-   */
-  HashMap echo(HashMap value) throws CollectionsTestServiceException;
+  HashMap<String, IsSerializable> echo(HashMap<String, IsSerializable> value)
+      throws CollectionsTestServiceException;
 
-  /**
-   * @gwt.typeArgs value <com.google.gwt.user.client.rpc.IsSerializable>
-   * @gwt.typeArgs <com.google.gwt.user.client.rpc.IsSerializable>
-   */
-  HashSet echo(HashSet value) throws CollectionsTestServiceException;
+  HashSet<IsSerializable> echo(HashSet<IsSerializable> value)
+      throws CollectionsTestServiceException;
 
   int[] echo(int[] value) throws CollectionsTestServiceException;
 
@@ -98,18 +87,8 @@ public interface CollectionsTestService extends RemoteService {
 
   String[][] echo(String[][] value) throws CollectionsTestServiceException;
 
-  /**
-   * @gwt.typeArgs value <com.google.gwt.user.client.rpc.IsSerializable>
-   * @gwt.typeArgs <com.google.gwt.user.client.rpc.IsSerializable>
-   */
-  Vector echo(Vector value) throws CollectionsTestServiceException;
+  Vector<IsSerializable> echo(Vector<IsSerializable> value)
+      throws CollectionsTestServiceException;
 
-  /**
-   * This method is used to test that trying to return Arrays.asList will result
-   * in an InvocationException on the client.
-   * 
-   * @gwt.typeArgs value <java.lang.Byte>
-   * @gwt.typeArgs <java.lang.Byte>
-   */
-  List getArraysAsList(List value);
+  List<IsSerializable> getArraysAsList(List<IsSerializable> value);
 }

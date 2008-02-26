@@ -26,51 +26,56 @@ import java.util.Vector;
  * TODO: document me.
  */
 public interface CollectionsTestServiceAsync {
-  void echo(ArrayList value, AsyncCallback callback);
+  void echo(ArrayList<IsSerializable> value,
+      AsyncCallback<ArrayList<IsSerializable>> callback);
 
-  void echo(boolean[] value, AsyncCallback callback);
+  void echo(boolean[] value, AsyncCallback<boolean[]> callback);
 
-  void echo(Boolean[] value, AsyncCallback callback);
+  void echo(Boolean[] value, AsyncCallback<Boolean[]> callback);
 
-  void echo(byte[] value, AsyncCallback callback);
+  void echo(byte[] value, AsyncCallback<byte[]> callback);
 
-  void echo(Byte[] value, AsyncCallback callback);
+  void echo(Byte[] value, AsyncCallback<Byte[]> callback);
 
-  void echo(char[] value, AsyncCallback callback);
+  void echo(char[] value, AsyncCallback<char[]> callback);
 
-  void echo(Character[] value, AsyncCallback callback);
+  void echo(Character[] value, AsyncCallback<Character[]> callback);
 
-  void echo(Date[] date, AsyncCallback callback);
+  void echo(Date[] date, AsyncCallback<Date[]> callback);
 
-  void echo(double[] value, AsyncCallback callback);
+  void echo(double[] value, AsyncCallback<double[]> callback);
 
-  void echo(Double[] value, AsyncCallback callback);
+  void echo(Double[] value, AsyncCallback<Double[]> callback);
 
-  void echo(float[] value, AsyncCallback callback);
+  void echo(float[] value, AsyncCallback<float[]> callback);
 
-  void echo(Float[] value, AsyncCallback callback);
+  void echo(Float[] value, AsyncCallback<Float[]> callback);
 
-  void echo(HashMap value, AsyncCallback callback);
+  void echo(HashMap<String, IsSerializable> value,
+      AsyncCallback<HashMap<String, IsSerializable>> callback);
 
-  void echo(HashSet value, AsyncCallback callback);
+  void echo(HashSet<IsSerializable> value,
+      AsyncCallback<HashSet<IsSerializable>> callback);
 
-  void echo(int[] value, AsyncCallback callback);
+  void echo(int[] value, AsyncCallback<int[]> callback);
 
-  void echo(Integer[] value, AsyncCallback callback);
+  void echo(Integer[] value, AsyncCallback<Integer[]> callback);
 
-  void echo(long[] value, AsyncCallback callback);
+  void echo(long[] value, AsyncCallback<long[]> callback);
 
-  void echo(Long[] value, AsyncCallback callback);
+  void echo(Long[] value, AsyncCallback<Long[]> callback);
 
-  void echo(short[] value, AsyncCallback callback);
+  void echo(short[] value, AsyncCallback<short[]> callback);
 
-  void echo(Short[] value, AsyncCallback callback);
+  void echo(Short[] value, AsyncCallback<Short[]> callback);
 
-  void echo(String[] value, AsyncCallback callback);
+  void echo(String[] value, AsyncCallback<String[]> callback);
 
-  void echo(String[][] value, AsyncCallback callback);
+  void echo(String[][] value, AsyncCallback<String[][]> callback);
 
-  void echo(Vector value, AsyncCallback callback);
+  void echo(Vector<IsSerializable> value,
+      AsyncCallback<Vector<IsSerializable>> callback);
 
-  void getArraysAsList(List value, AsyncCallback callback);
+  void getArraysAsList(List<IsSerializable> value,
+      AsyncCallback<List<IsSerializable>> callback);
 }
