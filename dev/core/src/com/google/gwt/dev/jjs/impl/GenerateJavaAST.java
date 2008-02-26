@@ -321,8 +321,8 @@ public class GenerateJavaAST {
         }
 
         // Normal: create a jsniRef.
-        JsniFieldRef fieldRef = new JsniFieldRef(program, info, field,
-            currentClass);
+        JsniFieldRef fieldRef = new JsniFieldRef(program, info,
+            nameRef.getIdent(), field, currentClass);
         nativeMethodBody.jsniFieldRefs.add(fieldRef);
       }
 
@@ -338,7 +338,8 @@ public class GenerateJavaAST {
                   + method.getName());
         }
 
-        JsniMethodRef methodRef = new JsniMethodRef(program, info, method);
+        JsniMethodRef methodRef = new JsniMethodRef(program, info,
+            nameRef.getIdent(), method);
         nativeMethodBody.jsniMethodRefs.add(methodRef);
       }
 

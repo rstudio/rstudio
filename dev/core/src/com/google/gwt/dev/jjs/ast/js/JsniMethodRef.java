@@ -29,10 +29,18 @@ import com.google.gwt.dev.jjs.ast.JVisitor;
  */
 public class JsniMethodRef extends JMethodCall {
 
-  public JsniMethodRef(JProgram program, SourceInfo info, JMethod method) {
+  private final String ident;
+
+  public JsniMethodRef(JProgram program, SourceInfo info, String ident,
+      JMethod method) {
     // Just use a null literal as the qualifier on a non-static method
     super(program, info, method.isStatic() ? null : program.getLiteralNull(),
         method);
+    this.ident = ident;
+  }
+
+  public String getIdent() {
+    return ident;
   }
 
   @Override

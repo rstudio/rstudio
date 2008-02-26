@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.CanBeStatic;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
@@ -112,16 +113,6 @@ public class Pruner {
       }
     }
 
-    @Override
-    public void endVisit(JMethod x, Context ctx) {
-      JType type = x.getType();
-      if (type instanceof JReferenceType) {
-        if (!program.typeOracle.isInstantiatedType((JReferenceType) type)) {
-          x.setType(program.getTypeNull());
-        }
-      }
-    }
-
     public void endVisit(JLocalDeclarationStatement x, Context ctx) {
       // The variable may have been pruned.
       if (!referencedNonTypes.contains(x.getLocalRef().getTarget())) {
@@ -137,6 +128,16 @@ public class Pruner {
             // Replace with empty block.
             ctx.replaceMe(new JBlock(program, x.getSourceInfo()));
           }
+        }
+      }
+    }
+
+    @Override
+    public void endVisit(JMethod x, Context ctx) {
+      JType type = x.getType();
+      if (type instanceof JReferenceType) {
+        if (!program.typeOracle.isInstantiatedType((JReferenceType) type)) {
+          x.setType(program.getTypeNull());
         }
       }
     }
@@ -189,6 +190,38 @@ public class Pruner {
 
         ctx.replaceMe(newCall);
       }
+    }
+
+    @Override
+    public void endVisit(JsniFieldRef x, Context ctx) {
+      if (isUninstantiable(x.getField())) {
+        String ident = x.getIdent();
+        JField nullField = program.getNullField();
+        program.jsniMap.put(ident, nullField);
+        JsniFieldRef nullFieldRef = new JsniFieldRef(program,
+            x.getSourceInfo(), ident, nullField, x.getEnclosingType());
+        ctx.replaceMe(nullFieldRef);
+      }
+    }
+
+    @Override
+    public void endVisit(JsniMethodRef x, Context ctx) {
+      // Redirect JSNI refs to uninstantiable types to the null method.
+      if (isUninstantiable(x.getTarget())) {
+        String ident = x.getIdent();
+        JMethod nullMethod = program.getNullMethod();
+        program.jsniMap.put(ident, nullMethod);
+        JsniMethodRef nullMethodRef = new JsniMethodRef(program,
+            x.getSourceInfo(), ident, nullMethod);
+        ctx.replaceMe(nullMethodRef);
+      }
+    }
+
+    private <T extends HasEnclosingType & CanBeStatic> boolean isUninstantiable(
+        T node) {
+      JReferenceType enclosingType = node.getEnclosingType();
+      return !node.isStatic() && enclosingType != null
+          && !program.typeOracle.isInstantiatedType(enclosingType);
     }
   }
 
@@ -831,10 +864,10 @@ public class Pruner {
     return new Pruner(program, noSpecialTypes).execImpl();
   }
 
+  private final Map<JMethod, ArrayList<JParameter>> methodToOriginalParamsMap = new HashMap<JMethod, ArrayList<JParameter>>();
   private final JProgram program;
   private final Set<JNode> referencedNonTypes = new HashSet<JNode>();
   private final Set<JReferenceType> referencedTypes = new HashSet<JReferenceType>();
-  private final Map<JMethod, ArrayList<JParameter>> methodToOriginalParamsMap = new HashMap<JMethod, ArrayList<JParameter>>();
   private final boolean saveCodeGenTypes;
   private JMethod stringValueOfChar = null;
 

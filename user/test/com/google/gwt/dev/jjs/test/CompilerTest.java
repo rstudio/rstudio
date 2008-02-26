@@ -137,7 +137,7 @@ public class CompilerTest extends GWTTestCase {
   private static int sideEffectChecker;
 
   private static native void accessUninstantiableField(UninstantiableType u) /*-{
-    u.@com.google.gwt.dev.jjs.test.CompilerTest$UninstantiableType::field;
+    u.@com.google.gwt.dev.jjs.test.CompilerTest$UninstantiableType::field.toString();
   }-*/;
 
   private static native void accessUninstantiableMethod(UninstantiableType u) /*-{

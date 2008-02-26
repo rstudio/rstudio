@@ -28,10 +28,17 @@ import com.google.gwt.dev.jjs.ast.JVisitor;
  */
 public class JsniFieldRef extends JFieldRef {
 
-  public JsniFieldRef(JProgram program, SourceInfo info, JField field,
-      JReferenceType enclosingType) {
+  private final String ident;
+
+  public JsniFieldRef(JProgram program, SourceInfo info, String ident,
+      JField field, JReferenceType enclosingType) {
     super(program, info, field.isStatic() ? null : program.getLiteralNull(),
         field, enclosingType);
+    this.ident = ident;
+  }
+
+  public String getIdent() {
+    return ident;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
