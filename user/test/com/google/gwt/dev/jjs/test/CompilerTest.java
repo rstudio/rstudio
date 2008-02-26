@@ -137,11 +137,11 @@ public class CompilerTest extends GWTTestCase {
   private static int sideEffectChecker;
 
   private static native void accessUninstantiableField(UninstantiableType u) /*-{
-    u.@com.google.gwt.dev.jjs.test.CompilerTest$Uninstantiable::field;
+    u.@com.google.gwt.dev.jjs.test.CompilerTest$UninstantiableType::field;
   }-*/;
 
   private static native void accessUninstantiableMethod(UninstantiableType u) /*-{
-    u.@com.google.gwt.dev.jjs.test.CompilerTest$Uninstantiable::returnNull()();
+    u.@com.google.gwt.dev.jjs.test.CompilerTest$UninstantiableType::returnNull()();
   }-*/;
 
   private static String barShouldInline() {
