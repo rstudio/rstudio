@@ -158,12 +158,7 @@ public abstract class AbstractCompiler {
         final String msg = "Need additional type '" + typeName + "'";
         logger.log(TreeLogger.SPAM, msg, null);
 
-        // This causes the compiler to find the additional type, possibly
-        // winding its back to ask for the compilation unit from the source
-        // oracle.
-        //
-        char[][] chars = CharOperation.splitOn('.', typeName.toCharArray());
-        lookupEnvironment.getType(chars);
+        resolvePossiblyNestedType(typeName);
       }
 
       typeNames = doFindAdditionalTypesUsingRebinds(logger, cud);
@@ -341,6 +336,10 @@ public abstract class AbstractCompiler {
       int pos = qname.indexOf('$');
       if (pos >= 0) {
         qname = qname.substring(0, pos);
+        // Recheck the cache for the outer type.
+        if (nameEnvironmentAnswerForTypeName.containsKey(qname)) {
+          return (nameEnvironmentAnswerForTypeName.get(qname));
+        }
       }
       CompilationUnitProvider cup;
       try {
