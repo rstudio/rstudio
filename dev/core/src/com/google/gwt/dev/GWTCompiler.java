@@ -424,32 +424,6 @@ public class GWTCompiler extends ToolBase {
       Linker l = module.getLinker(linkerName);
       linkerContext.invokeLinker(logger, linkerName, l);
     }
-
-    // TODO Remove this transitional code.
-    // http://code.google.com/p/google-web-toolkit/issues/detail?id=2080
-    // We'll copy the output of the 0th Linker into the root of the output
-    // directory to give people a grace period to change their deployment
-    if (targets.length == 1 && !Boolean.getBoolean("gwt.linker.disableCopy")) {
-      File linkerDir = new File(outDir, targets[0]);
-      logger.log(TreeLogger.WARN,
-          "Creating transitional copy of linker output " + linkerDir.getPath()
-              + " into output directory.  Change your deployment to use "
-              + "the Linker's output directory and add "
-              + "-Dgwt.linker.disableCopy=true to your JVM flags to disable "
-              + "this copy.", null);
-
-      for (String path : Util.recursiveListPartialPaths(linkerDir, false)) {
-        File toCopy = new File(linkerDir, path);
-        if (path.equals(targets[0])) {
-          logger.log(TreeLogger.ERROR,
-              "Cannot make duplication of linker output "
-                  + "due to conflicting file name " + path, null);
-          throw new UnableToCompleteException();
-        }
-        File dest = new File(outDir, path);
-        Util.copy(logger, toCopy, dest);
-      }
-    }
   }
 
   public File getGenDir() {
