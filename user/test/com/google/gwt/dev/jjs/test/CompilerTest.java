@@ -20,18 +20,11 @@ import com.google.gwt.junit.client.GWTTestCase;
 
 import junit.framework.Assert;
 
-// CHECKSTYLE_OFF
-
 /**
- * TODO: doc me
+ * Miscellaneous tests of the Java to JavaScript compiler.
  */
+@SuppressWarnings("unused")
 public class CompilerTest extends GWTTestCase {
-
-  public static class Foo {
-    public int bar(int i) {
-      return 0;
-    }
-  }
 
   private abstract static class Apple implements Fruit {
   }
@@ -143,16 +136,22 @@ public class CompilerTest extends GWTTestCase {
 
   private static int sideEffectChecker;
 
+  private static native void accessUninstantiableField(UninstantiableType u) /*-{
+    u.@com.google.gwt.dev.jjs.test.CompilerTest$Uninstantiable::field;
+  }-*/;
+
+  private static native void accessUninstantiableMethod(UninstantiableType u) /*-{
+    u.@com.google.gwt.dev.jjs.test.CompilerTest$Uninstantiable::returnNull()();
+  }-*/;
+
   private static String barShouldInline() {
     return "bar";
   }
 
   private static void foo(String string) {
-    Object o = string;
   }
 
   private static void foo(Throwable throwable) {
-    Object o = throwable;
   }
 
   private static native String jsniReadSideEffectCauser5() /*-{
@@ -391,6 +390,8 @@ public class CompilerTest extends GWTTestCase {
     }
   }-*/;
 
+  // CHECKSTYLE_OFF
+
   public void testEmptyStatements() {
     boolean b = false;
 
@@ -416,6 +417,8 @@ public class CompilerTest extends GWTTestCase {
     else
       ;
   }
+
+  // CHECKSTYLE_ON
 
   public native void testEmptyStatementsNative() /*-{
     var b = false;
@@ -483,7 +486,7 @@ public class CompilerTest extends GWTTestCase {
   }
 
   /**
-   * Issue #615: Internal Compiler Error
+   * Issue #615: Internal Compiler Error.
    */
   public void testImplicitNull() {
     boolean b;
@@ -672,10 +675,11 @@ public class CompilerTest extends GWTTestCase {
 
       Foo(int i) {
         this.i = i;
-        if (i == 0)
+        if (i == 0) {
           return;
-        else if (i == 1)
+        } else if (i == 1) {
           return;
+        }
         return;
       }
     }
@@ -710,7 +714,8 @@ public class CompilerTest extends GWTTestCase {
   public void testSwitchStatement() {
     switch (0) {
       case 0:
-        int test; // used to cause an ICE
+        // Once caused an ICE.
+        int test;
         break;
     }
   }
@@ -741,8 +746,7 @@ public class CompilerTest extends GWTTestCase {
   }
 
   public void testSwitchStatementEmpty() {
-    Foo foo = new Foo();
-    switch (foo.bar(0)) {
+    switch (0) {
     }
   }
 
@@ -829,6 +833,22 @@ public class CompilerTest extends GWTTestCase {
     int x, y = -7;
     x = +y;
     assertEquals(-7, x);
+  }
+
+  public void testUninstantiableNativeAccess() {
+    UninstantiableType u = null;
+
+    try {
+      accessUninstantiableField(u);
+      fail("Expected JavaScriptException");
+    } catch (JavaScriptException expected) {
+    }
+
+    try {
+      accessUninstantiableMethod(u);
+      fail("Expected JavaScriptException");
+    } catch (JavaScriptException expected) {
+    }
   }
 
   private boolean returnFalse() {
