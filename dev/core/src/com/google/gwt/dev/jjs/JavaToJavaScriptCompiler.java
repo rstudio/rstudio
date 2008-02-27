@@ -57,6 +57,7 @@ import com.google.gwt.dev.js.JsPrettyNamer;
 import com.google.gwt.dev.js.JsSourceGenerationVisitor;
 import com.google.gwt.dev.js.JsStringInterner;
 import com.google.gwt.dev.js.JsSymbolResolver;
+import com.google.gwt.dev.js.JsIEBlockSizeVisitor;
 import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.ast.JsProgram;
@@ -421,6 +422,10 @@ public class JavaToJavaScriptCompiler {
         default:
           throw new InternalCompilerException("Unknown output mode");
       }
+
+      // (12) Work around an IE7 bug
+      // http://code.google.com/p/google-web-toolkit/issues/detail?id=1440
+      JsIEBlockSizeVisitor.exec(jsProgram);
 
       DefaultTextOutput out = new DefaultTextOutput(
           options.getOutput().shouldMinimize());
