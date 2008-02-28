@@ -104,7 +104,10 @@ class JSORestrictionsChecker {
           errorOn(meth, ERR_INSTANCE_METHOD_NONFINAL);
         }
 
-        if (meth.binding != null && meth.binding.isOverriding()) {
+        // Should not have to check isStatic() here, but isOverriding() appears
+        // to be set for static methods.
+        if (!meth.isStatic()
+            && (meth.binding != null && meth.binding.isOverriding())) {
           errorOn(meth, ERR_OVERRIDDEN_METHOD);
         }
       }
