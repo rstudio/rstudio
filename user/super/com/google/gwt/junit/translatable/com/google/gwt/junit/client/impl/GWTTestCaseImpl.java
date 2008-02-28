@@ -188,7 +188,7 @@ public abstract class GWTTestCaseImpl extends TestCase {
   }
 
   protected boolean supportsAsync() {
-    return false;
+    return true;
   }
   
   // CHECKSTYLE_OFF
