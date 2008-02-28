@@ -185,6 +185,12 @@ public class GWTShellServlet extends HttpServlet {
       // if we can map the request to a module's servlet.
       RequestParts parts = new RequestParts(request);
 
+      if ("favicon.ico".equalsIgnoreCase(parts.moduleName)) {
+        sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND,
+            "Icon not available");
+        return;
+      }
+
       // See if the request references a module we know.
       moduleDef = getModuleDef(logger, parts.moduleName);
       if (moduleDef != null) {
@@ -303,12 +309,6 @@ public class GWTShellServlet extends HttpServlet {
   private void doGetModule(HttpServletRequest request,
       HttpServletResponse response, TreeLogger logger, RequestParts parts)
       throws IOException {
-
-    if ("favicon.ico".equalsIgnoreCase(parts.moduleName)) {
-      sendErrorResponse(response, HttpServletResponse.SC_NOT_FOUND,
-          "Icon not available");
-      return;
-    }
 
     // Generate a generic empty host page.
     //
