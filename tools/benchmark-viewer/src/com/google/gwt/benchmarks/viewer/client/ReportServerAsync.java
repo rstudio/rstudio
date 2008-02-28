@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,9 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.viewer.client;
+package com.google.gwt.benchmarks.viewer.client;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+
+import java.util.List;
 
 /**
  * The asynchronous interface for ReportServer.
@@ -24,7 +26,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
  */
 public interface ReportServerAsync {
 
-  public void getReport(String reportId, AsyncCallback callback);
+  public void getReport(String reportId, AsyncCallback<Report> callback);
 
-  public void getReportSummaries(AsyncCallback callback);
+  public void getReportSummaries(AsyncCallback<List<ReportSummary>> callback);
 }

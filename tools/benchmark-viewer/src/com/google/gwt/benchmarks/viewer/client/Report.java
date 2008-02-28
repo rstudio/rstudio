@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.viewer.client;
+package com.google.gwt.benchmarks.viewer.client;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
@@ -25,21 +25,19 @@ import java.util.List;
  */
 public class Report implements IsSerializable {
 
-  /**
-   * @gwt.typeArgs <com.google.gwt.junit.viewer.client.Category>
-   */
-  private List/* <Category> */categories;
+  private List<Category> categories;
 
   private Date date;
 
-  private String dateString; // Temporary addition until we get better date
+  // Temporary addition until we get better date
+  private String dateString;
 
   // formatting in GWT
   private String gwtVersion;
 
   private String id;
 
-  public List/* <Category> */getCategories() {
+  public List<Category> getCategories() {
     return categories;
   }
 
@@ -64,15 +62,15 @@ public class Report implements IsSerializable {
     boolean testsPassed = true;
 
     for (int i = 0; i < categories.size(); ++i) {
-      Category c = (Category) categories.get(i);
-      List benchmarks = c.getBenchmarks();
+      Category c = categories.get(i);
+      List<Benchmark> benchmarks = c.getBenchmarks();
       numTests += benchmarks.size();
     }
 
     return new ReportSummary(id, date, dateString, numTests, testsPassed);
   }
 
-  public void setCategories(List categories) {
+  public void setCategories(List<Category> categories) {
     this.categories = categories;
   }
 

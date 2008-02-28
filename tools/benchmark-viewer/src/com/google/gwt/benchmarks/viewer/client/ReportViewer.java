@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.viewer.client;
+package com.google.gwt.benchmarks.viewer.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
@@ -60,7 +60,7 @@ import java.util.Map;
  * 
  * You can configure the location where ReportServer reads the benchmark reports
  * from by setting the system property named in
- * {@link com.google.gwt.junit.client.Benchmark#REPORT_PATH}.
+ * {@link com.google.gwt.benchmarks.client.Benchmark#REPORT_PATH}.
  */
 public class ReportViewer implements EntryPoint {
 
@@ -75,20 +75,20 @@ public class ReportViewer implements EntryPoint {
 
   private class SummariesTableListener implements TableListener {
 
-    private FlexTable summariesTable;
+    private final FlexTable mySummariesTable;
 
     SummariesTableListener(FlexTable summariesTable) {
-      this.summariesTable = summariesTable;
+      this.mySummariesTable = summariesTable;
     }
 
     public void onCellClicked(SourcesTableEvents sender, int row, int col) {
       if (currentSelectedRow != -1) {
-        summariesTable.getRowFormatter().removeStyleName(currentSelectedRow,
+        mySummariesTable.getRowFormatter().removeStyleName(currentSelectedRow,
             "viewer-SelectedRow");
       }
       currentSelectedRow = row;
-      summariesTable.getRowFormatter().addStyleName(row, "viewer-SelectedRow");
-      ReportSummary summary = (ReportSummary) summaries.get(row - 1);
+      mySummariesTable.getRowFormatter().addStyleName(row, "viewer-SelectedRow");
+      ReportSummary summary = summaries.get(row - 1);
       getReportDetails(summary.getId());
     }
   }
@@ -109,7 +109,7 @@ public class ReportViewer implements EntryPoint {
 
   HTML statusLabel;
 
-  List/* <ReportSummary> */summaries;
+  List<ReportSummary> summaries;
 
   VerticalPanel summariesPanel;
 
@@ -128,23 +128,21 @@ public class ReportViewer implements EntryPoint {
     target.setServiceEntryPoint(GWT.getModuleBaseURL() + "test_reports");
     reportServer = (ReportServerAsync) target;
 
-    reportServer.getReportSummaries(new AsyncCallback() {
+    reportServer.getReportSummaries(new AsyncCallback<List<ReportSummary>>() {
       public void onFailure(Throwable caught) {
         String msg = "<p>" + caught.toString() + "</p>"
             + "<p>Is your path to the reports correct?</p>";
         statusLabel.setHTML(msg);
       }
 
-      public void onSuccess(Object result) {
-        summaries = (List/* <ReportSummary> */) result;
+      public void onSuccess(List<ReportSummary> result) {
+        summaries = result;
         if (summaries != null) {
           if (summaries.size() == 0) {
             statusLabel.setText("There are no benchmark reports available in this folder.");
           }
-          Collections.sort(summaries, new Comparator() {
-            public int compare(Object o1, Object o2) {
-              ReportSummary r1 = (ReportSummary) o1;
-              ReportSummary r2 = (ReportSummary) o2;
+          Collections.sort(summaries, new Comparator<ReportSummary>() {
+            public int compare(ReportSummary r1, ReportSummary r2) {
               return r2.getDate().compareTo(r1.getDate()); // most recent first
             }
           });
@@ -178,16 +176,14 @@ public class ReportViewer implements EntryPoint {
     // topTable.setWidget( 0, 0, tempReportTable );
     int currentRow = 1;
 
-    Collections.sort(report.getCategories(), new Comparator() {
-      public int compare(Object o1, Object o2) {
-        Category c1 = (Category) o1;
-        Category c2 = (Category) o2;
+    Collections.sort(report.getCategories(), new Comparator<Category>() {
+      public int compare(Category c1, Category c2) {
         return c1.getName().compareTo(c2.getName());
       }
     }); // Should be done once in the RPC
 
     for (int i = 0; i < report.getCategories().size(); ++i) {
-      Category c = (Category) report.getCategories().get(i);
+      Category c = report.getCategories().get(i);
 
       if (!c.getName().equals("")) {
         FlexTable categoryTable = new FlexTable();
@@ -204,16 +200,14 @@ public class ReportViewer implements EntryPoint {
         topTable.setWidget(currentRow++, 0, categoryTable);
       }
 
-      Collections.sort(c.getBenchmarks(), new Comparator() {
-        public int compare(Object o1, Object o2) {
-          Benchmark b1 = (Benchmark) o1;
-          Benchmark b2 = (Benchmark) o2;
+      Collections.sort(c.getBenchmarks(), new Comparator<Benchmark>() {
+        public int compare(Benchmark b1, Benchmark b2) {
           return b1.getName().compareTo(b2.getName());
         }
       }); // Should be done once in the RPC
 
       for (int j = 0; j < c.getBenchmarks().size(); ++j) {
-        Benchmark benchmark = (Benchmark) c.getBenchmarks().get(j);
+        Benchmark benchmark = c.getBenchmarks().get(j);
 
         FlexTable benchmarkTable = new FlexTable();
         benchmarkTable.setBorderWidth(0);
@@ -258,19 +252,26 @@ public class ReportViewer implements EntryPoint {
         FlexTable.FlexCellFormatter resultsFormatter = resultsTable.getFlexCellFormatter();
         topTable.setWidget(currentRow++, 0, resultsTable);
 
-        Collections.sort(benchmark.getResults(), new Comparator() {
-          public int compare(Object o1, Object o2) {
-            Result r1 = (Result) o1;
-            Result r2 = (Result) o2;
+        Collections.sort(benchmark.getResults(), new Comparator<Result>() {
+          public int compare(Result r1, Result r2) {
             return r1.getAgent().compareTo(r2.getAgent());
           }
         }); // Should be done once in the RPC
 
-        final List trialsTables = new ArrayList();
+        final List<FlexTable> trialsTables = new ArrayList<FlexTable>();
 
-        Result sampleResult = (Result) benchmark.getResults().get(0);
-        Trial sampleTrial = (Trial) sampleResult.getTrials().get(0);
-        int numVariables = sampleTrial.getVariables().size();
+        int numVariables = 0;
+        List<String> variableNames = null;
+        if (benchmark.getResults().size() > 0) {
+          Result sampleResult = benchmark.getResults().get(0);
+          if (sampleResult.getTrials().size() > 0) {
+            Trial sampleTrial = sampleResult.getTrials().get(0);
+            numVariables = sampleTrial.getVariables().size();
+            Map<String, String> variables = sampleTrial.getVariables();
+            variableNames = new ArrayList<String>(variables.keySet());
+            Collections.sort(variableNames);
+          }
+        }
         final MutableBool isVisible = new MutableBool(numVariables > 2);
         String buttonName = isVisible.value ? "Hide Data" : "Show Data";
 
@@ -278,7 +279,7 @@ public class ReportViewer implements EntryPoint {
           public void onClick(Widget sender) {
             isVisible.value = !isVisible.value;
             for (int i = 0; i < trialsTables.size(); ++i) {
-              Widget w = (Widget) trialsTables.get(i);
+              Widget w = trialsTables.get(i);
               w.setVisible(isVisible.value);
             }
             String name = isVisible.value ? "Hide Data" : "Show Data";
@@ -287,8 +288,7 @@ public class ReportViewer implements EntryPoint {
         });
 
         for (int k = 0; k < benchmark.getResults().size(); ++k) {
-          Result result = (Result) benchmark.getResults().get(k);
-          List trials = result.getTrials();
+          Result result = benchmark.getResults().get(k);
 
           // Currently only support graphs for results of 2 variables or less
           if (numVariables <= 2) {
@@ -335,15 +335,9 @@ public class ReportViewer implements EntryPoint {
 
           resultsTable.setWidget(2, k, trialsTable);
 
-          int numTrials = trials.size();
-
-          Map variables = sampleTrial.getVariables();
-          List variableNames = new ArrayList(variables.keySet());
-          Collections.sort(variableNames);
-
           // Write out the variable column headers
           for (int varIndex = 0; varIndex < numVariables; ++varIndex) {
-            String varName = (String) variableNames.get(varIndex);
+            String varName = variableNames.get(varIndex);
             trialsTable.setHTML(0, varIndex, varName);
           }
 
@@ -351,24 +345,23 @@ public class ReportViewer implements EntryPoint {
           trialsTable.setHTML(0, numVariables, "Timing (ms)");
 
           // Write out all the trial data
-          for (int l = 0; l < numTrials; ++l) {
-            Trial trial = (Trial) trials.get(l);
-
+          int l = 0;
+          for (Trial trial : result.getTrials()) {
             // Write the variable values
             for (int varIndex = 0; varIndex < numVariables; ++varIndex) {
-              String varName = (String) variableNames.get(varIndex);
-              String varValue = (String) trial.getVariables().get(varName);
+              String varName = variableNames.get(varIndex);
+              String varValue = trial.getVariables().get(varName);
               trialsTable.setHTML(l + 1, varIndex, varValue);
             }
 
             // Write out the timing data
-            String data = null;
-            if (trial.getException() != null) {
-              data = trial.getException();
-            } else {
-              data = trial.getRunTimeMillis() + "";
-            }
+            String data = trial.getRunTimeMillis() + "";
             trialsTable.setHTML(l + 1, numVariables, data);
+            ++l;
+          }
+          
+          if (result.getException() != null) {
+            trialsTable.setHTML(l + 1, numVariables, result.getException());
           }
         }
       }
@@ -396,7 +389,7 @@ public class ReportViewer implements EntryPoint {
     }
 
     for (int i = 0; i < summaries.size(); ++i) {
-      ReportSummary summary = (ReportSummary) summaries.get(i);
+      ReportSummary summary = summaries.get(i);
       int index = i + 1;
       tempSummariesTable.setHTML(index, 0, "<a href=\"javascript:void(0)\">"
           + summary.getId() + "</a>");
@@ -445,13 +438,13 @@ public class ReportViewer implements EntryPoint {
    */
   private void getReportDetails(String id) {
     statusLabel.setText("Retrieving the report...");
-    reportServer.getReport(id, new AsyncCallback() {
+    reportServer.getReport(id, new AsyncCallback<Report>() {
       public void onFailure(Throwable caught) {
         statusLabel.setText(caught.toString());
       }
 
-      public void onSuccess(Object result) {
-        report = (Report) result;
+      public void onSuccess(Report result) {
+        report = result;
         statusLabel.setText("Finished fetching report details.");
         displayReport();
       }

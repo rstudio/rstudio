@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.viewer.server;
+package com.google.gwt.benchmarks.viewer.server;
 
-import com.google.gwt.junit.client.Benchmark;
-import com.google.gwt.junit.viewer.client.Report;
-import com.google.gwt.junit.viewer.client.ReportSummary;
+import com.google.gwt.benchmarks.client.Benchmark;
+import com.google.gwt.benchmarks.viewer.client.Report;
+import com.google.gwt.benchmarks.viewer.client.ReportSummary;
 
 import org.w3c.dom.Document;
 
@@ -59,9 +59,9 @@ public class ReportDatabase {
   }
 
   private static class ReportEntry {
-    private ReportSummary summary;
-    private Report report;
     private long lastModified;
+    private Report report;
+    private ReportSummary summary;
 
     public ReportEntry(Report report, ReportSummary summary, long lastModified) {
       this.report = report;
@@ -80,12 +80,12 @@ public class ReportDatabase {
     }
   }
 
+  private static ReportDatabase database = new ReportDatabase();
+
   /**
    * The amount of time to go between report updates.
    */
   private static final int UPDATE_DURATION_MILLIS = 30000;
-
-  private static ReportDatabase database = new ReportDatabase();
 
   public static ReportDatabase getInstance() {
     return database;
@@ -96,14 +96,24 @@ public class ReportDatabase {
   }
 
   /**
-   * A list of all reports by id.
-   */
-  private Map/* <String,ReportEntry> */reports = new HashMap/* <String,ReportEntry> */();
-
-  /**
    * The last time we updated our reports.
    */
   private long lastUpdateMillis = -1L;
+
+  /**
+   * The path to read benchmark reports from.
+   */
+  private final String reportPath;
+
+  /**
+   * A list of all reports by id.
+   */
+  private Map<String, ReportEntry> reports = new HashMap<String, ReportEntry>();
+
+  /**
+   * Lock for reports.
+   */
+  private Object reportsLock = new Object();
 
   /**
    * Lock for updating from file system. (Guarantees a single update while not
@@ -115,16 +125,6 @@ public class ReportDatabase {
    * Are we currently undergoing updating?
    */
   private boolean updating = false;
-
-  /**
-   * Lock for reports.
-   */
-  private Object reportsLock = new Object();
-
-  /**
-   * The path to read benchmark reports from.
-   */
-  private final String reportPath;
 
   private ReportDatabase() throws BadPathException {
     String path = System.getProperty(Benchmark.REPORT_PATH);
@@ -140,12 +140,12 @@ public class ReportDatabase {
 
   public Report getReport(String reportId) {
     synchronized (reportsLock) {
-      ReportEntry entry = (ReportEntry) reports.get(reportId);
+      ReportEntry entry = reports.get(reportId);
       return entry == null ? null : entry.report;
     }
   }
 
-  public List/* <ReportSummary> */getReportSummaries() {
+  public List<ReportSummary> getReportSummaries() {
 
     /**
      * There are probably ways to make this faster, but I've taken basic
@@ -171,10 +171,9 @@ public class ReportDatabase {
     }
 
     synchronized (reportsLock) {
-      List/* <ReportSummary> */summaries = new ArrayList/* <ReportSummary> */(
+      List<ReportSummary> summaries = new ArrayList<ReportSummary>(
           reports.size());
-      for (Iterator it = reports.values().iterator(); it.hasNext();) {
-        ReportEntry entry = (ReportEntry) it.next();
+      for (ReportEntry entry : reports.values()) {
         summaries.add(entry.summary);
       }
       return summaries;
@@ -191,8 +190,8 @@ public class ReportDatabase {
       }
     });
 
-    Map filesToUpdate = new HashMap();
-    Map filesById = new HashMap();
+    Map<String, ReportEntry> filesToUpdate = new HashMap<String, ReportEntry>();
+    Map<String, ReportFile> filesById = new HashMap<String, ReportFile>();
     for (int i = 0; i < files.length; ++i) {
       File f = files[i];
       filesById.put(getReportId(f), new ReportFile(f));
@@ -207,16 +206,15 @@ public class ReportDatabase {
       for (int i = 0; i < files.length; ++i) {
         File file = files[i];
         String reportId = getReportId(file);
-        ReportEntry entry = (ReportEntry) reports.get(reportId);
+        ReportEntry entry = reports.get(reportId);
         if (entry == null || entry.lastModified < file.lastModified()) {
           filesToUpdate.put(reportId, null);
         }
       }
 
       // Remove reports which no longer exist
-      for (Iterator it = reports.keySet().iterator(); it.hasNext();) {
-        String id = (String) it.next();
-        if (filesById.get(id) == null) {
+      for (Iterator<String> it = reports.keySet().iterator(); it.hasNext();) {
+        if (filesById.get(it.next()) == null) {
           it.remove();
         }
       }
@@ -228,9 +226,8 @@ public class ReportDatabase {
       factory.setIgnoringComments(true);
       DocumentBuilder builder = factory.newDocumentBuilder();
 
-      for (Iterator it = filesToUpdate.keySet().iterator(); it.hasNext();) {
-        String id = (String) it.next();
-        ReportFile reportFile = (ReportFile) filesById.get(id);
+      for (String id : filesToUpdate.keySet()) {
+        ReportFile reportFile = filesById.get(id);
         String filePath = reportFile.file.getAbsolutePath();
         Document doc = builder.parse(filePath);
         Report report = ReportXml.fromXml(doc.getDocumentElement());
@@ -242,8 +239,7 @@ public class ReportDatabase {
 
       // Update the reports
       synchronized (reportsLock) {
-        for (Iterator it = filesToUpdate.keySet().iterator(); it.hasNext();) {
-          String id = (String) it.next();
+        for (String id : filesToUpdate.keySet()) {
           reports.put(id, filesToUpdate.get(id));
         }
       }

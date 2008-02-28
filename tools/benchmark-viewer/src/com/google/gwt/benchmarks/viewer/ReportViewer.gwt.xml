@@ -20,10 +20,10 @@
 
   <source path="client"/>
 
-  <entry-point class="com.google.gwt.junit.viewer.client.ReportViewer"/>
+  <entry-point class="com.google.gwt.benchmarks.viewer.client.ReportViewer"/>
 
-  <servlet path='/test_reports' class='com.google.gwt.junit.viewer.server.ReportServerImpl'/>
-  <servlet path='/test_images' class='com.google.gwt.junit.viewer.server.ReportImageServer'/>
+  <servlet path='/test_reports' class='com.google.gwt.benchmarks.viewer.server.ReportServerImpl'/>
+  <servlet path='/test_images' class='com.google.gwt.benchmarks.viewer.server.ReportImageServer'/>
 
   <stylesheet src="ReportViewer.css"/>
 </module>

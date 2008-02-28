@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,28 +13,29 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.viewer.client;
+package com.google.gwt.benchmarks.viewer.client;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.util.List;
 
 /**
- * A data object for Category.
+ * A data object for Benchmark.
  */
-public class Category implements IsSerializable {
+public class Benchmark implements IsSerializable {
 
-  /**
-   * @gwt.typeArgs <com.google.gwt.junit.viewer.client.Benchmark>
-   */
-  private List benchmarks;
+  private String className;
 
   private String description;
 
   private String name;
 
-  public List getBenchmarks() {
-    return benchmarks;
+  private List<Result> results;
+
+  private String sourceCode;
+
+  public String getClassName() {
+    return className;
   }
 
   public String getDescription() {
@@ -45,8 +46,16 @@ public class Category implements IsSerializable {
     return name;
   }
 
-  public void setBenchmarks(List benchmarks) {
-    this.benchmarks = benchmarks;
+  public List<Result> getResults() {
+    return results;
+  }
+
+  public String getSourceCode() {
+    return sourceCode;
+  }
+
+  public void setClassName(String className) {
+    this.className = className;
   }
 
   public void setDescription(String description) {
@@ -55,5 +64,13 @@ public class Category implements IsSerializable {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public void setResults(List<Result> results) {
+    this.results = results;
+  }
+
+  public void setSourceCode(String sourceCode) {
+    this.sourceCode = sourceCode;
   }
 }

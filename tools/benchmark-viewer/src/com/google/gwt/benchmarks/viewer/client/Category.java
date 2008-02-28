@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,50 +13,44 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.viewer.client;
+package com.google.gwt.benchmarks.viewer.client;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.util.List;
 
 /**
- * A data object for Benchmark results.
+ * A data object for Category.
  */
-public class Result implements IsSerializable {
+public class Category implements IsSerializable {
 
-  private String agent;
+  private List<Benchmark> benchmarks;
 
-  private String host;
+  private String description;
 
-  /**
-   * @gwt.typeArgs <com.google.gwt.junit.viewer.client.Trial>
-   */
-  private List trials;
+  private String name;
 
-  public Result() {
+  public List<Benchmark> getBenchmarks() {
+    return benchmarks;
   }
 
-  public String getAgent() {
-    return agent;
+  public String getDescription() {
+    return description;
   }
 
-  public String getHost() {
-    return host;
+  public String getName() {
+    return name;
   }
 
-  public List getTrials() {
-    return trials;
+  public void setBenchmarks(List<Benchmark> benchmarks) {
+    this.benchmarks = benchmarks;
   }
 
-  public void setAgent(String agent) {
-    this.agent = agent;
+  public void setDescription(String description) {
+    this.description = description;
   }
 
-  public void setHost(String host) {
-    this.host = host;
-  }
-
-  public void setTrials(List trials) {
-    this.trials = trials;
+  public void setName(String name) {
+    this.name = name;
   }
 }

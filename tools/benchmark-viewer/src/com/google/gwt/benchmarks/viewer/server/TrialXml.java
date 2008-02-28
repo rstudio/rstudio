@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,19 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.viewer.server;
+package com.google.gwt.benchmarks.viewer.server;
 
-import com.google.gwt.junit.viewer.client.Trial;
+import com.google.gwt.benchmarks.viewer.client.Trial;
 
 import org.w3c.dom.Element;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Hydrates a benchmark Trial from an XML Element.
- * 
  */
 class TrialXml {
 
@@ -38,17 +36,11 @@ class TrialXml {
       trial.setRunTimeMillis(Double.parseDouble(timing));
     }
 
-    Element exception = ReportXml.getElementChild(element, "exception");
-    if (exception != null) {
-      trial.setException(ReportXml.getText(exception));
-    }
+    List<Element> elements = ReportXml.getElementChildren(element, "variable");
 
-    List elements = ReportXml.getElementChildren(element, "variable");
+    Map<String, String> variables = trial.getVariables();
 
-    Map variables = trial.getVariables();
-
-    for (Iterator it = elements.iterator(); it.hasNext();) {
-      Element e = (Element) it.next();
+    for (Element e : elements) {
       String name = e.getAttribute("name");
       String value = e.getAttribute("value");
       variables.put(name, value);

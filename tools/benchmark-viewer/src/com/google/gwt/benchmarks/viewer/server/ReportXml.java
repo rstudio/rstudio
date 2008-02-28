@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,9 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.viewer.server;
+package com.google.gwt.benchmarks.viewer.server;
 
-import com.google.gwt.junit.viewer.client.Report;
+import com.google.gwt.benchmarks.viewer.client.Category;
+import com.google.gwt.benchmarks.viewer.client.Report;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -54,10 +55,10 @@ class ReportXml {
 
     report.setGwtVersion(element.getAttribute("gwt_version"));
 
-    List/* <Element> */children = getElementChildren(element, "category");
-    report.setCategories(new ArrayList/* <Category> */(children.size()));
+    List<Element> children = getElementChildren(element, "category");
+    report.setCategories(new ArrayList<Category>(children.size()));
     for (int i = 0; i < children.size(); ++i) {
-      report.getCategories().add(CategoryXml.fromXml((Element) children.get(i)));
+      report.getCategories().add(CategoryXml.fromXml(children.get(i)));
     }
 
     return report;
@@ -68,10 +69,10 @@ class ReportXml {
     return children.getLength() == 0 ? null : (Element) children.item(0);
   }
 
-  static List/* <Element> */getElementChildren(Element e, String name) {
+  static List<Element> getElementChildren(Element e, String name) {
     NodeList children = e.getElementsByTagName(name);
     int numElements = children.getLength();
-    List/* <Element> */elements = new ArrayList/* <Element> */(numElements);
+    List<Element> elements = new ArrayList<Element>(numElements);
     for (int i = 0; i < children.getLength(); ++i) {
       Node n = children.item(i);
       elements.add((Element) n);

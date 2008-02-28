@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,9 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.viewer.server;
+package com.google.gwt.benchmarks.viewer.server;
 
-import com.google.gwt.junit.viewer.client.Category;
+import com.google.gwt.benchmarks.viewer.client.Benchmark;
+import com.google.gwt.benchmarks.viewer.client.Category;
 
 import org.w3c.dom.Element;
 
@@ -32,12 +33,10 @@ class CategoryXml {
     category.setName(element.getAttribute("name"));
     category.setDescription(element.getAttribute("description"));
 
-    List/* <Element> */children = ReportXml.getElementChildren(element,
-        "benchmark");
-    category.setBenchmarks(new ArrayList/* <Benchmark> */(children.size()));
+    List<Element> children = ReportXml.getElementChildren(element, "benchmark");
+    category.setBenchmarks(new ArrayList<Benchmark>(children.size()));
     for (int i = 0; i < children.size(); ++i) {
-      category.getBenchmarks().add(
-          BenchmarkXml.fromXml((Element) children.get(i)));
+      category.getBenchmarks().add(BenchmarkXml.fromXml(children.get(i)));
     }
 
     return category;

@@ -15,8 +15,8 @@
 	<import file="${gwt.root}/common.ant.xml" />
 
         <property name="tools.build" value="${gwt.build.out}/${project.tail}" />
-        <property name="tools.module" value="com.google.gwt.junit.viewer.ReportViewer" />
-        <property name="tools.module.path" value="com/google/gwt/junit/viewer/public" />
+        <property name="tools.module" value="com.google.gwt.benchmarks.viewer.ReportViewer" />
+        <property name="tools.module.path" value="com/google/gwt/benchmarks/viewer/public" />
 
 	<!--
 		Default hosted mode test cases

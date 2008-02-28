@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,48 +13,46 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.viewer.server;
+package com.google.gwt.benchmarks.viewer.server;
 
-import com.google.gwt.junit.viewer.client.Benchmark;
-import com.google.gwt.junit.viewer.client.BrowserInfo;
-import com.google.gwt.junit.viewer.client.Category;
-import com.google.gwt.junit.viewer.client.Report;
-import com.google.gwt.junit.viewer.client.Result;
-import com.google.gwt.junit.viewer.client.Trial;
+import com.google.gwt.benchmarks.viewer.client.Benchmark;
+import com.google.gwt.benchmarks.viewer.client.BrowserInfo;
+import com.google.gwt.benchmarks.viewer.client.Category;
+import com.google.gwt.benchmarks.viewer.client.Report;
+import com.google.gwt.benchmarks.viewer.client.Result;
+import com.google.gwt.benchmarks.viewer.client.Trial;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.ValueAxis;
-import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.encoders.EncoderUtil;
 import org.jfree.chart.encoders.ImageFormat;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.DefaultDrawingSupplier;
+import org.jfree.chart.plot.DrawingSupplier;
+import org.jfree.chart.plot.Plot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.plot.Plot;
-import org.jfree.chart.plot.DrawingSupplier;
-import org.jfree.chart.plot.DefaultDrawingSupplier;
-import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.xy.XYDataItem;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
-import java.awt.image.BufferedImage;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.GradientPaint;
-import java.awt.BasicStroke;
-import java.awt.Shape;
 import java.awt.Polygon;
-import java.awt.geom.Rectangle2D;
+import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
-import java.io.ByteArrayInputStream;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -93,30 +91,23 @@ public class ReportImageServer extends HttpServlet {
 
   private static final String charset = "UTF-8";
 
-  private static void copy(InputStream in, OutputStream out) throws IOException {
-    byte[] buf = new byte[512];
-
-    while (true) {
-      int bytesRead = in.read(buf);
-      if (bytesRead == -1) {
-        break;
-      }
-      out.write(buf, 0, bytesRead);
-    }
-  }
-
+  @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       handleRequest(request, response);
     } catch (Exception e) {
-      logException("An error occured while trying to create the chart.", e,
-          response);
+      if (e.getClass().getName().endsWith("ClientAbortException")) {
+        // No big deal, the client browser terminated a download.
+      } else {
+        logException("An error occured while trying to create the chart.", e,
+            response);
+      }
       return;
     }
   }
 
   private JFreeChart createChart(String testName, Result result, String title,
-      List comparativeResults) {
+      List<Result> comparativeResults) {
 
     // Find the maximum values across both axes for all of the results
     // (this chart's own results, plus all comparative results).
@@ -127,20 +118,20 @@ public class ReportImageServer extends HttpServlet {
 
     double maxTime = 0;
 
-    for (int i = 0; i < comparativeResults.size(); ++i) {
-      Result r = (Result) comparativeResults.get(i);
-      List resultTrials = r.getTrials();
-
-      for (int j = 0; j < resultTrials.size(); ++j) {
-        Trial t = (Trial) resultTrials.get(j);
+    for (Result r : comparativeResults) {
+      for (Trial t : r.getTrials()) {
         maxTime = Math.max(maxTime, t.getRunTimeMillis());
       }
     }
 
     // Determine the number of variables in this benchmark method
-    List trials = result.getTrials();
-    Trial firstTrial = (Trial) trials.get(0);
-    int numVariables = firstTrial.getVariables().size();
+    List<Trial> trials = result.getTrials();
+    Trial firstTrial = new Trial();
+    int numVariables = 0;
+    if (trials.size() > 0) {
+      firstTrial = trials.get(0);
+      numVariables = firstTrial.getVariables().size();
+    }
 
     // Display the trial data.
     //
@@ -154,52 +145,47 @@ public class ReportImageServer extends HttpServlet {
     String domainVariable = null;
     String seriesVariable = null;
 
-    Map/* <String,Set<String>> */variableValues = null;
+    Map<String, Set<String>> variableValues = null;
 
     if (numVariables == 1) {
-      domainVariable = (String) firstTrial.getVariables().keySet().iterator().next();
+      domainVariable = firstTrial.getVariables().keySet().iterator().next();
     } else {
       // TODO(tobyr): Do something smarter, like allow the user to specify which
       // variables are domain and series, along with the variables which are
       // held constant.
 
-      variableValues = new HashMap();
+      variableValues = new HashMap<String, Set<String>>();
 
       for (int i = 0; i < trials.size(); ++i) {
-        Trial trial = (Trial) trials.get(i);
-        Map variables = trial.getVariables();
+        Trial trial = trials.get(i);
+        Map<String, String> variables = trial.getVariables();
 
-        for (Iterator it = variables.entrySet().iterator(); it.hasNext();) {
-          Map.Entry entry = (Map.Entry) it.next();
-          String variable = (String) entry.getKey();
-          String value = (String) entry.getValue();
-          Set set = (Set) variableValues.get(variable);
+        for (Map.Entry<String, String> entry : variables.entrySet()) {
+          String variable = entry.getKey();
+          Set<String> set = variableValues.get(variable);
           if (set == null) {
-            set = new TreeSet();
+            set = new TreeSet<String>();
             variableValues.put(variable, set);
           }
-          set.add(value);
+          set.add(entry.getValue());
         }
       }
 
-      TreeMap numValuesMap = new TreeMap();
+      TreeMap<Integer, List<String>> numValuesMap = new TreeMap<Integer, List<String>>();
 
-      for (Iterator it = variableValues.entrySet().iterator(); it.hasNext();) {
-        Map.Entry entry = (Map.Entry) it.next();
-        String variable = (String) entry.getKey();
-        Set values = (Set) entry.getValue();
-        Integer numValues = new Integer(values.size());
-        List variables = (List) numValuesMap.get(numValues);
+      for (Map.Entry<String, Set<String>> entry : variableValues.entrySet()) {
+        Integer numValues = new Integer(entry.getValue().size());
+        List<String> variables = numValuesMap.get(numValues);
         if (variables == null) {
-          variables = new ArrayList();
+          variables = new ArrayList<String>();
           numValuesMap.put(numValues, variables);
         }
-        variables.add(variable);
+        variables.add(entry.getKey());
       }
 
       if (numValuesMap.values().size() > 0) {
-        domainVariable = (String) ((List) numValuesMap.get(numValuesMap.lastKey())).get(0);
-        seriesVariable = (String) ((List) numValuesMap.get(numValuesMap.firstKey())).get(0);
+        domainVariable = numValuesMap.get(numValuesMap.lastKey()).get(0);
+        seriesVariable = numValuesMap.get(numValuesMap.firstKey()).get(0);
       }
     }
 
@@ -208,10 +194,8 @@ public class ReportImageServer extends HttpServlet {
     if (numVariables == 0) {
       // Show a bar graph, with a single centered simple bar
       // 0 variables means there is only 1 trial
-      Trial trial = (Trial) trials.iterator().next();
-
       DefaultCategoryDataset data = new DefaultCategoryDataset();
-      data.addValue(trial.getRunTimeMillis(), "result", "result");
+      data.addValue(firstTrial.getRunTimeMillis(), "result", "result");
 
       JFreeChart chart = ChartFactory.createBarChart(title, testName,
           valueTitle, data, PlotOrientation.VERTICAL, false, false, false);
@@ -229,13 +213,9 @@ public class ReportImageServer extends HttpServlet {
 
       XYSeries series = new XYSeries(domainVariable);
 
-      for (Iterator it = trials.iterator(); it.hasNext();) {
-        Trial trial = (Trial) it.next();
-        if (trial.getException() != null) {
-          continue;
-        }
+      for (Trial trial : trials) {
         double time = trial.getRunTimeMillis();
-        String domainValue = (String) trial.getVariables().get(domainVariable);
+        String domainValue = trial.getVariables().get(domainVariable);
         series.add(Double.parseDouble(domainValue), time);
       }
 
@@ -252,22 +232,16 @@ public class ReportImageServer extends HttpServlet {
       // Show a line graph with two series
       XYSeriesCollection data = new XYSeriesCollection();
 
-      Set seriesValues = (Set) variableValues.get(seriesVariable);
+      Set<String> seriesValues = variableValues.get(seriesVariable);
 
-      for (Iterator it = seriesValues.iterator(); it.hasNext();) {
-        String seriesValue = (String) it.next();
+      for (String seriesValue : seriesValues) {
         XYSeries series = new XYSeries(seriesValue);
 
-        for (Iterator trialsIt = trials.iterator(); trialsIt.hasNext();) {
-          Trial trial = (Trial) trialsIt.next();
-          if (trial.getException() != null) {
-            continue;
-          }
-          Map variables = trial.getVariables();
+        for (Trial trial : trials) {
+          Map<String, String> variables = trial.getVariables();
           if (variables.get(seriesVariable).equals(seriesValue)) {
             double time = trial.getRunTimeMillis();
-            String domainValue = (String) trial.getVariables().get(
-                domainVariable);
+            String domainValue = trial.getVariables().get(domainVariable);
             series.add(Double.parseDouble(domainValue), time);
           }
         }
@@ -329,9 +303,8 @@ public class ReportImageServer extends HttpServlet {
      */
   }
 
-  private Benchmark getBenchmarkByName(List benchmarks, String name) {
-    for (Iterator it = benchmarks.iterator(); it.hasNext();) {
-      Benchmark benchmark = (Benchmark) it.next();
+  private Benchmark getBenchmarkByName(List<Benchmark> benchmarks, String name) {
+    for (Benchmark benchmark : benchmarks) {
       if (benchmark.getName().equals(name)) {
         return benchmark;
       }
@@ -339,9 +312,9 @@ public class ReportImageServer extends HttpServlet {
     return null;
   }
 
-  private Category getCategoryByName(List categories, String categoryName) {
-    for (Iterator catIt = categories.iterator(); catIt.hasNext();) {
-      Category category = (Category) catIt.next();
+  private Category getCategoryByName(List<Category> categories,
+      String categoryName) {
+    for (Category category : categories) {
       if (category.getName().equals(categoryName)) {
         return category;
       }
@@ -377,27 +350,26 @@ public class ReportImageServer extends HttpServlet {
             circle, square, triangle, diamond, ellipse});
   }
 
-  private double getMaxValue(List results, String variable) {
+  private double getMaxValue(List<Result> results, String variable) {
     double value = 0.0;
 
     for (int i = 0; i < results.size(); ++i) {
-      Result r = (Result) results.get(i);
-      List resultTrials = r.getTrials();
+      Result r = results.get(i);
+      List<Trial> resultTrials = r.getTrials();
 
       for (int j = 0; j < resultTrials.size(); ++j) {
-        Trial t = (Trial) resultTrials.get(j);
-        Map variables = t.getVariables();
-        value = Math.max(value,
-            Double.parseDouble((String) variables.get(variable)));
+        Trial t = resultTrials.get(j);
+        Map<String, String> variables = t.getVariables();
+        value = Math.max(value, Double.parseDouble(variables.get(variable)));
       }
     }
 
     return value;
   }
 
-  private Result getResultsByAgent(List results, String agent) {
-    for (Iterator it = results.iterator(); it.hasNext();) {
-      Result result = (Result) it.next();
+  private Result getResultsByAgent(List<Result> results, String agent) {
+    for (Object element : results) {
+      Result result = (Result) element;
       if (result.getAgent().equals(agent)) {
         return result;
       }
@@ -420,11 +392,11 @@ public class ReportImageServer extends HttpServlet {
 
     ReportDatabase db = ReportDatabase.getInstance();
     Report report = db.getReport(reportName);
-    List categories = report.getCategories();
+    List<Category> categories = report.getCategories();
     Category category = getCategoryByName(categories, categoryName);
-    List benchmarks = category.getBenchmarks();
+    List<Benchmark> benchmarks = category.getBenchmarks();
     Benchmark benchmark = getBenchmarkByName(benchmarks, testName);
-    List results = benchmark.getResults();
+    List<Result> results = benchmark.getResults();
     Result result = getResultsByAgent(results, agent);
 
     String title = BrowserInfo.getBrowser(agent);
@@ -462,10 +434,14 @@ public class ReportImageServer extends HttpServlet {
     BufferedImage img = chart.createBufferedImage(graphWidth, 240);
     byte[] image = EncoderUtil.encode(img, ImageFormat.PNG);
 
+    // The images have unique URLs; might as well set them to never expire.
+    response.setHeader("Cache-Control", "max-age=0");
+    response.setHeader("Expires", "Fri, 2 Jan 1970 00:00:00 GMT");
     response.setContentType("image/png");
+    response.setContentLength(image.length);
 
     OutputStream output = response.getOutputStream();
-    copy(new ByteArrayInputStream(image), output);
+    output.write(image);
   }
 
   private void logException(String msg, Exception e,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.viewer.client;
+package com.google.gwt.benchmarks.viewer.client;
 
 /**
  * Provides information about a browser (vendor,version,operating system,etc...)
@@ -39,6 +39,7 @@ public class BrowserInfo {
    * @return A pretty-printed version of the browser including the a) vendor b)
    *         version c) and operating system
    */
+  @SuppressWarnings("unused")
   public static String getBrowser(String userAgent) {
 
     userAgent = userAgent.toLowerCase();

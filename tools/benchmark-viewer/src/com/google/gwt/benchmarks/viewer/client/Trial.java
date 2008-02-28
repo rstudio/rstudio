@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.viewer.client;
+package com.google.gwt.benchmarks.viewer.client;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
@@ -25,22 +25,9 @@ import java.util.Map;
  */
 public class Trial implements IsSerializable {
 
-  String exception;
+  private double runTimeMillis;
 
-  double runTimeMillis;
-
-  /**
-   * @gwt.typeArgs <java.lang.String,java.lang.String>
-   */
-  Map/* <String,String> */variables;
-
-  public Trial() {
-    this.variables = new HashMap();
-  }
-
-  public String getException() {
-    return exception;
-  }
+  private Map<String, String> variables = new HashMap<String, String>();
 
   public double getRunTimeMillis() {
     return runTimeMillis;
@@ -50,12 +37,8 @@ public class Trial implements IsSerializable {
    * Returns the names and values of the variables used in the test. If there
    * were no variables, the map is empty.
    */
-  public Map getVariables() {
+  public Map<String, String> getVariables() {
     return variables;
-  }
-
-  public void setException(String exception) {
-    this.exception = exception;
   }
 
   public void setRunTimeMillis(double runTimeMillis) {

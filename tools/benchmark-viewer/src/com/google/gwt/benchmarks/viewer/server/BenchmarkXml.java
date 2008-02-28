@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,9 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.viewer.server;
+package com.google.gwt.benchmarks.viewer.server;
 
-import com.google.gwt.junit.viewer.client.Benchmark;
+import com.google.gwt.benchmarks.viewer.client.Benchmark;
+import com.google.gwt.benchmarks.viewer.client.Result;
 
 import org.w3c.dom.Element;
 
@@ -34,10 +35,10 @@ class BenchmarkXml {
     benchmark.setName(element.getAttribute("name"));
     benchmark.setDescription(element.getAttribute("description"));
 
-    List children = ReportXml.getElementChildren(element, "result");
-    benchmark.setResults(new ArrayList/* <Result> */(children.size()));
+    List<Element> children = ReportXml.getElementChildren(element, "result");
+    benchmark.setResults(new ArrayList<Result>(children.size()));
     for (int i = 0; i < children.size(); ++i) {
-      benchmark.getResults().add(ResultXml.fromXml((Element) children.get(i)));
+      benchmark.getResults().add(ResultXml.fromXml(children.get(i)));
     }
 
     Element code = ReportXml.getElementChild(element, "source_code");
