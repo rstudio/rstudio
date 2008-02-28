@@ -413,7 +413,7 @@ public class TypeSerializerCreator {
       srcWriter.indent();
       srcWriter.println("var signature = @" + serializerTypeName
           + "::signatureMap[typeName];");
-      srcWriter.println("return (signature == null) ? typeName : signature;");
+      srcWriter.println("return signature || null;");
       srcWriter.outdent();
       srcWriter.println("}-*/;");
     }
