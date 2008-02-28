@@ -17,6 +17,7 @@ the License.
 <head>
 <meta name='gwt:onLoadErrorFn' content='junitOnLoadErrorFn'>
 <meta name='gwt:onPropertyErrorFn' content='junitOnPropertyErrorFn'>
+<base href="__MODULE_BASE__">
 </head>
 <body>
 <script language='javascript'>
@@ -26,7 +27,6 @@ function junitOnLoadErrorFn(moduleName) {
 }
 
 function junitOnPropertyErrorFn(propName, allowedValues, badValue) {
-  alert(propName);
   var msg = 'While attempting to load the module, property "' + propName;
   if (badValue != null) {
     msg += '" was set to the unexpected value "' + badValue + '"';

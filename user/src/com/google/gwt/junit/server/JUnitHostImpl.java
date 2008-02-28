@@ -107,6 +107,7 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
       response.setContentType("text/html");
       PrintWriter writer = response.getWriter();
       String htmlSrc = Utility.getFileFromClassPath("com/google/gwt/junit/junit.html");
+      htmlSrc = htmlSrc.replace("__MODULE_BASE__", prefix + "/");
       htmlSrc = htmlSrc.replace("__MODULE_NAME__", prefix + "/" + moduleName);
       writer.write(htmlSrc);
       return;
