@@ -49,6 +49,6 @@ abstract class RunStyle {
    * @return a URL suffix that should be loaded
    */
   protected String getUrlSuffix(String moduleName) {
-    return moduleName + "/junithost/junit.html";
+    return moduleName + "/junit.html";
   }
 }

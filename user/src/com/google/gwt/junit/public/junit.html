@@ -17,10 +17,10 @@ the License.
 <head>
 <meta name='gwt:onLoadErrorFn' content='junitOnLoadErrorFn'>
 <meta name='gwt:onPropertyErrorFn' content='junitOnPropertyErrorFn'>
-<base href="__MODULE_BASE__">
 </head>
 <body>
 <script language='javascript'>
+<!--
 function junitOnLoadErrorFn(moduleName) {
   junitError('Failed to load module "' + moduleName +
     '".\nPlease see the log for details.');
@@ -38,13 +38,23 @@ function junitOnPropertyErrorFn(propName, allowedValues, badValue) {
 }
 
 function junitError(msg) {
-  var xmlHttpRequest = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Msxml2.XMLHTTP");
+  var xmlHttpRequest = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
   xmlHttpRequest.open('POST', 'loadError', true);
   xmlHttpRequest.setRequestHeader('Content-Type', 'text/plain; charset=utf-8');
   xmlHttpRequest.send(msg);
 }
+
+function loadSelectionScript() {
+  var moduleName = document.location.href;
+  var pos = moduleName.lastIndexOf('/');
+  moduleName = moduleName.substr(0, pos);
+  pos = moduleName.lastIndexOf('/');
+  moduleName = moduleName.substr(pos + 1);
+  document.write("<script language='javascript' src='" + moduleName + ".nocache.js'></script>");
+}
+loadSelectionScript();
+-->
 </script>
-<script language='javascript' src='__MODULE_NAME__.nocache.js'></script>
 <iframe src="javascript:''" id='__gwt_historyFrame' style='position:absolute;width:0;height:0;border:0'></iframe>
 </body>
 </html>

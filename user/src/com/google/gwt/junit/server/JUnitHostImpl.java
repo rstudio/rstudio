@@ -25,10 +25,8 @@ import com.google.gwt.junit.client.impl.StackTraceWrapper;
 import com.google.gwt.user.client.rpc.InvocationException;
 import com.google.gwt.user.server.rpc.RPCServletUtils;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
-import com.google.gwt.util.tools.Utility;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 
@@ -98,30 +96,11 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
   }
 
   @Override
-  protected void doGet(HttpServletRequest request, HttpServletResponse response)
-      throws ServletException, IOException {
-    String requestURI = request.getRequestURI();
-    if (requestURI.endsWith("/junithost/junit.html")) {
-      String prefix = getPrefix(requestURI);
-      String moduleName = getModuleName(prefix);
-      response.setContentType("text/html");
-      PrintWriter writer = response.getWriter();
-      String htmlSrc = Utility.getFileFromClassPath("com/google/gwt/junit/junit.html");
-      htmlSrc = htmlSrc.replace("__MODULE_BASE__", prefix + "/");
-      htmlSrc = htmlSrc.replace("__MODULE_NAME__", prefix + "/" + moduleName);
-      writer.write(htmlSrc);
-      return;
-    }
-    response.setContentType("text/plain");
-    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-  }
-
-  @Override
   protected void service(HttpServletRequest request,
       HttpServletResponse response) throws ServletException, IOException {
     String requestURI = request.getRequestURI();
     if (requestURI.endsWith("/junithost/loadError")) {
-      String moduleName = getModuleName(getPrefix(requestURI));
+      String moduleName = getModuleName(requestURI);
       String requestPayload = RPCServletUtils.readContentAsUtf8(request);
       JUnitResult result = new JUnitResult();
       initResult(request, result);
@@ -248,16 +227,12 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
     return machine + " / " + agent;
   }
 
-  private String getModuleName(String prefix) {
-    int pos = prefix.lastIndexOf('/');
-    String moduleName = prefix.substring(pos + 1);
-    return moduleName;
-  }
-
-  private String getPrefix(String requestURI) {
+  private String getModuleName(String requestURI) {
     int pos = requestURI.indexOf("/junithost");
     String prefix = requestURI.substring(0, pos);
-    return prefix;
+    pos = prefix.lastIndexOf('/');
+    String moduleName = prefix.substring(pos + 1);
+    return moduleName;
   }
 
   private void initResult(HttpServletRequest request, JUnitResult result) {
