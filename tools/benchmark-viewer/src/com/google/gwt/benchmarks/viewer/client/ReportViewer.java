@@ -20,6 +20,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.HistoryListener;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.ui.Button;
@@ -30,6 +32,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -62,7 +65,7 @@ import java.util.Map;
  * from by setting the system property named in
  * {@link com.google.gwt.benchmarks.client.Benchmark#REPORT_PATH}.
  */
-public class ReportViewer implements EntryPoint {
+public class ReportViewer implements EntryPoint, HistoryListener {
 
   private static class MutableBool {
 
@@ -75,21 +78,12 @@ public class ReportViewer implements EntryPoint {
 
   private class SummariesTableListener implements TableListener {
 
-    private final FlexTable mySummariesTable;
-
-    SummariesTableListener(FlexTable summariesTable) {
-      this.mySummariesTable = summariesTable;
-    }
-
     public void onCellClicked(SourcesTableEvents sender, int row, int col) {
-      if (currentSelectedRow != -1) {
-        mySummariesTable.getRowFormatter().removeStyleName(currentSelectedRow,
-            "viewer-SelectedRow");
-      }
-      currentSelectedRow = row;
-      mySummariesTable.getRowFormatter().addStyleName(row, "viewer-SelectedRow");
       ReportSummary summary = summaries.get(row - 1);
-      getReportDetails(summary.getId());
+      String token = summary.getId();
+      // Short circuit the history loop.
+      selectReport(row, token);
+      History.newItem(token);
     }
   }
 
@@ -117,10 +111,24 @@ public class ReportViewer implements EntryPoint {
 
   CellPanel topPanel;
 
-  private int currentSelectedRow = -1;
+  private int currentSelectedRow = 0;
+
+  private String currentToken = "";
+
+  public void onHistoryChanged(String token) {
+    assert (summaries != null);
+    int row = 1;
+    for (ReportSummary summary : summaries) {
+      if (summary.getId().equals(token)) {
+        selectReport(row, token);
+        return;
+      }
+      ++row;
+    }
+    selectReport(0, token);
+  }
 
   public void onModuleLoad() {
-
     init();
 
     // Asynchronously load the summaries
@@ -147,13 +155,40 @@ public class ReportViewer implements EntryPoint {
             }
           });
           displaySummaries();
+
+          // If there's an initial URL, browse to it.
+          onHistoryChanged(History.getToken());
+          History.addHistoryListener(ReportViewer.this);
         }
       }
     });
   }
 
-  private FlexTable createReportTable() {
+  protected void selectReport(int row, String token) {
+    if (row == currentSelectedRow && token.equals(currentToken)) {
+      return;
+    }
+    if (currentSelectedRow != -1) {
+      summariesTable.getRowFormatter().removeStyleName(currentSelectedRow,
+          "viewer-SelectedRow");
+    }
+    currentToken = token;
+    currentSelectedRow = row;
 
+    if (row < 1) {
+      clearReport();
+    } else {
+      fetchReport(row, token);
+    }
+  }
+
+  private void clearReport() {
+    statusLabel.setText("Select a report.");
+    detailsLabel.setHTML("<h3>Report Details</h3>");
+    reportPanel.remove(reportTable);
+  }
+
+  private FlexTable createReportTable() {
     FlexTable topTable = new FlexTable();
 
     FlexTable tempReportTable = new FlexTable();
@@ -359,7 +394,7 @@ public class ReportViewer implements EntryPoint {
             trialsTable.setHTML(l + 1, numVariables, data);
             ++l;
           }
-          
+
           if (result.getException() != null) {
             trialsTable.setHTML(l + 1, numVariables, result.getException());
           }
@@ -371,7 +406,6 @@ public class ReportViewer implements EntryPoint {
   }
 
   private FlexTable createSummariesTable() {
-
     FlexTable tempSummariesTable = new FlexTable();
     tempSummariesTable.addStyleName("viewer-List");
     tempSummariesTable.setCellPadding(5);
@@ -391,16 +425,14 @@ public class ReportViewer implements EntryPoint {
     for (int i = 0; i < summaries.size(); ++i) {
       ReportSummary summary = summaries.get(i);
       int index = i + 1;
-      tempSummariesTable.setHTML(index, 0, "<a href=\"javascript:void(0)\">"
-          + summary.getId() + "</a>");
+      tempSummariesTable.setWidget(index, 0, new Hyperlink(summary.getId(),
+          summary.getId()));
       tempSummariesTable.setWidget(index, 1, new Label(summary.getDateString()));
       tempSummariesTable.setWidget(index, 2, new Label(
           String.valueOf(summary.getNumTests())));
     }
 
-    tempSummariesTable.addTableListener(new SummariesTableListener(
-        tempSummariesTable));
-
+    tempSummariesTable.addTableListener(new SummariesTableListener());
     return tempSummariesTable;
   }
 
@@ -425,20 +457,10 @@ public class ReportViewer implements EntryPoint {
     return URL.encodeComponent(str);
   }
 
-  private String getImageUrl(String report, String category, String testClass,
-      String testMethod, String agent) {
-    return imageServer + encode(report) + "/" + encode(category) + "/"
-        + encode(testClass) + "/" + encode(testMethod) + "/" + encode(agent);
-  }
-
-  /**
-   * Loads report details asynchronously for a given report.
-   * 
-   * @param id the non-null id of the report
-   */
-  private void getReportDetails(String id) {
+  private void fetchReport(int row, String token) {
+    summariesTable.getRowFormatter().addStyleName(row, "viewer-SelectedRow");
     statusLabel.setText("Retrieving the report...");
-    reportServer.getReport(id, new AsyncCallback<Report>() {
+    reportServer.getReport(token, new AsyncCallback<Report>() {
       public void onFailure(Throwable caught) {
         statusLabel.setText(caught.toString());
       }
@@ -451,6 +473,12 @@ public class ReportViewer implements EntryPoint {
     });
   }
 
+  private String getImageUrl(String report, String category, String testClass,
+      String testMethod, String agent) {
+    return imageServer + encode(report) + "/" + encode(category) + "/"
+        + encode(testClass) + "/" + encode(testMethod) + "/" + encode(agent);
+  }
+
   private void init() {
     topPanel = new VerticalPanel();
 
@@ -460,7 +488,7 @@ public class ReportViewer implements EntryPoint {
     summariesPanel.add(summariesTable);
 
     reportPanel = new VerticalPanel();
-    detailsLabel = new HTML("<h3>Report Details</h3>");
+    detailsLabel = new HTML();
     reportPanel.add(detailsLabel);
     reportTable = createReportTable();
     // reportPanel.add( reportTable );
@@ -475,7 +503,9 @@ public class ReportViewer implements EntryPoint {
 
     root.add(topPanel);
 
-    statusLabel = new HTML("Select a report.");
+    statusLabel = new HTML();
     root.add(statusLabel);
+
+    selectReport(0, "");
   }
 }
