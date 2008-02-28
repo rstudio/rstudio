@@ -111,9 +111,9 @@ public class ReportViewer implements EntryPoint, HistoryListener {
 
   CellPanel topPanel;
 
-  private int currentSelectedRow = 0;
+  private int currentSelectedRow;
 
-  private String currentToken = "";
+  private String currentToken;
 
   public void onHistoryChanged(String token) {
     assert (summaries != null);
