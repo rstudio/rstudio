@@ -29,7 +29,7 @@ import com.google.gwt.user.client.rpc.ServiceDefTarget;
  * are reported back through {@link #junitHost}, and the next method to run is
  * returned. This process repeats until the next method to run is null.
  */
-abstract class GWTRunner implements EntryPoint {
+public abstract class GWTRunner implements EntryPoint {
 
   /**
    * The RPC callback object for {@link GWTRunner#junitHost}. When
@@ -141,13 +141,7 @@ abstract class GWTRunner implements EntryPoint {
     }
   }
 
-  /**
-   * Implemented by the generated subclass. Creates an instance of the specified
-   * test class by fully qualified name.
-   */
-  protected abstract GWTTestCase createNewTestCase(String testClass);
-
-  void reportResultsAndGetNextMethod(JUnitResult result) {
+  public void reportResultsAndGetNextMethod(JUnitResult result) {
     if (serverless) {
       // That's it, we're done
       return;
@@ -155,6 +149,12 @@ abstract class GWTRunner implements EntryPoint {
     junitHost.reportResultsAndGetNextMethod(GWT.getModuleName(), result,
         junitHostListener);
   }
+
+  /**
+   * Implemented by the generated subclass. Creates an instance of the specified
+   * test class by fully qualified name.
+   */
+  protected abstract GWTTestCase createNewTestCase(String testClass);
 
   private TestInfo checkForQueryParamTestToRun() {
     String query = getQuery();
@@ -168,7 +168,7 @@ abstract class GWTRunner implements EntryPoint {
 
   private void runTest(TestInfo testToRun) {
     // Dynamically create a new test case.
-    GWTTestCaseImpl testCase = createNewTestCase(testToRun.getTestClass());
+    GWTTestCase testCase = createNewTestCase(testToRun.getTestClass());
     if (testCase == null) {
       RuntimeException ex = new RuntimeException(testToRun
           + ": could not instantiate the requested class");

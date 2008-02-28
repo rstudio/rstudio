@@ -15,11 +15,32 @@
  */
 package com.google.gwt.benchmarks.client;
 
-import com.google.gwt.benchmarks.client.impl.BenchmarkImpl;
+import com.google.gwt.benchmarks.client.impl.BenchmarkResults;
+import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * This class is the translatable version of {@link Benchmark}; it is an empty
- * shell to make debugging easier.
+ * The translatable implementation of {@link Benchmark}.
  */
-public abstract class Benchmark extends BenchmarkImpl {
+public abstract class Benchmark extends GWTTestCase {
+
+  private static native String getDocumentLocation() /*-{
+    return $doc.location.toString();
+  }-*/;
+
+  /**
+   * Collective test results.
+   */
+  private BenchmarkResults results;
+
+  // CHECKSTYLE_OFF
+  @Override
+  protected BenchmarkResults __getOrCreateTestResult() {
+    if (results == null) {
+      results = new BenchmarkResults();
+      results.setSourceRef(getDocumentLocation());
+    }
+    return results;
+  }
+  // CHECKSTYLE_ON
+
 }
