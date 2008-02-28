@@ -450,7 +450,7 @@ public class JUnitShell extends GWTShell {
       runStyle.maybeLaunchModule(currentModuleName, !sameTest);
     } catch (UnableToCompleteException e) {
       lastLaunchFailed = true;
-      testResult.addError(testCase, e);
+      testResult.addError(testCase, new JUnitFatalLaunchException(e));
       return;
     }
 
@@ -498,6 +498,9 @@ public class JUnitShell extends GWTShell {
         testResult.addFailure(testCase, (AssertionFailedError) exception);
       } else if (exception != null) {
         // A real failure
+        if (exception instanceof JUnitFatalLaunchException) {
+          lastLaunchFailed = true;
+        }
         testResult.addError(testCase, exception);
       }
 

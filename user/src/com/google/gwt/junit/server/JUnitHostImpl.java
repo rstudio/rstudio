@@ -15,21 +15,28 @@
  */
 package com.google.gwt.junit.server;
 
+import com.google.gwt.junit.JUnitFatalLaunchException;
 import com.google.gwt.junit.JUnitMessageQueue;
 import com.google.gwt.junit.JUnitShell;
+import com.google.gwt.junit.client.TestResults;
+import com.google.gwt.junit.client.Trial;
 import com.google.gwt.junit.client.impl.ExceptionWrapper;
 import com.google.gwt.junit.client.impl.JUnitHost;
 import com.google.gwt.junit.client.impl.StackTraceWrapper;
-import com.google.gwt.junit.client.TestResults;
-import com.google.gwt.junit.client.Trial;
 import com.google.gwt.user.client.rpc.InvocationException;
+import com.google.gwt.user.server.rpc.RPCServletUtils;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+import com.google.gwt.util.tools.Utility;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.List;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * An RPC servlet that serves as a proxy to JUnitTestShell. Enables
@@ -97,6 +104,41 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
     host.reportResults(moduleName, results);
     return host.getNextTestInfo(getClientId(), moduleName,
         TIME_TO_WAIT_FOR_TESTNAME);
+  }
+
+  @Override
+  protected void doGet(HttpServletRequest request, HttpServletResponse response)
+      throws ServletException, IOException {
+    String requestURI = request.getRequestURI();
+    if (requestURI.endsWith("/junithost/junit.html")) {
+      String prefix = getPrefix(requestURI);
+      String moduleName = getModuleName(prefix);
+      response.setContentType("text/html");
+      PrintWriter writer = response.getWriter();
+      String htmlSrc = Utility.getFileFromClassPath("com/google/gwt/junit/junit.html");
+      htmlSrc = htmlSrc.replace("__MODULE_NAME__", prefix + "/" + moduleName);
+      writer.write(htmlSrc);
+      return;
+    }
+    response.setContentType("text/plain");
+    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+  }
+
+  @Override
+  protected void service(HttpServletRequest request,
+      HttpServletResponse response) throws ServletException, IOException {
+    String requestURI = request.getRequestURI();
+    if (requestURI.endsWith("/junithost/loadError")) {
+      String moduleName = getModuleName(getPrefix(requestURI));
+      String requestPayload = RPCServletUtils.readContentAsUtf8(request);
+      TestResults results = new TestResults();
+      Trial trial = new Trial();
+      trial.setException(new JUnitFatalLaunchException(requestPayload));
+      results.getTrials().add(trial);
+      getHost().reportResults(moduleName, results);
+    } else {
+      super.service(request, response);
+    }
   }
 
   /**
@@ -213,5 +255,17 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
     String agent = request.getHeader("User-Agent");
     String machine = request.getRemoteHost();
     return machine + " / " + agent;
+  }
+
+  private String getModuleName(String prefix) {
+    int pos = prefix.lastIndexOf('/');
+    String moduleName = prefix.substring(pos + 1);
+    return moduleName;
+  }
+
+  private String getPrefix(String requestURI) {
+    int pos = requestURI.indexOf("/junithost");
+    String prefix = requestURI.substring(0, pos);
+    return prefix;
   }
 }

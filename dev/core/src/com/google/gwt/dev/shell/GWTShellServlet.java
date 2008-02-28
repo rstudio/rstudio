@@ -186,11 +186,7 @@ public class GWTShellServlet extends HttpServlet {
       RequestParts parts = new RequestParts(request);
 
       // See if the request references a module we know.
-      // Note that we do *not* actually try to load the module here, because
-      // we're only looking for servlet invocations, which can only happen
-      // when we have *already* loaded the destination module to serve up the
-      // client code in the first place.
-      moduleDef = loadedModulesByName.get(parts.moduleName);
+      moduleDef = getModuleDef(logger, parts.moduleName);
       if (moduleDef != null) {
         // Okay, we know this module. Do we know this servlet path?
         // It is right to prepend the slash because (1) ModuleDefSchema requires
@@ -339,7 +335,7 @@ public class GWTShellServlet extends HttpServlet {
     writer.println(".nocache.js'></script>");
 
     // Create a property for each query param.
-    Map<String, String[]> params = request.getParameterMap();
+    Map<String, String[]> params = getParameterMap(request);
     for (Map.Entry<String, String[]> entry : params.entrySet()) {
       String[] values = entry.getValue();
       if (values.length > 0) {
@@ -606,6 +602,11 @@ public class GWTShellServlet extends HttpServlet {
       assert (outDir != null);
     }
     return outDir;
+  }
+
+  @SuppressWarnings("unchecked")
+  private Map<String, String[]> getParameterMap(HttpServletRequest request) {
+    return request.getParameterMap();
   }
 
   private String guessMimeType(String fullPath) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ abstract class RunStyle {
   /**
    * Possibly launches a browser window to run the specified module.
    * 
-   * @param moduleName The module to run.
+   * @param moduleName the module to run
    * @param forceLaunch If <code>true</code>, forces a new browser window to
    *          be launched (because <code>testCaseClassName</code> changed)
    * @throws UnableToCompleteException
@@ -40,5 +40,15 @@ abstract class RunStyle {
    */
   public boolean wasInterrupted() {
     return false;
+  }
+
+  /**
+   * Gets the suffix of the URL to load.
+   * 
+   * @param moduleName the module to run
+   * @return a URL suffix that should be loaded
+   */
+  protected String getUrlSuffix(String moduleName) {
+    return moduleName + "/junithost/junit.html";
   }
 }

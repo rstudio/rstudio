@@ -76,7 +76,7 @@ class RunStyleRemoteWeb extends RunStyle {
         throw new RuntimeException("Unable to determine my ip address", e);
       }
       String url = "http://" + localhost + ":" + shell.getPort() + "/"
-          + moduleName;
+          + getUrlSuffix(moduleName);
 
       try {
         for (int i = 0; i < remoteTokens.length; ++i) {
