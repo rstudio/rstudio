@@ -18,6 +18,7 @@ package com.google.gwt.junit.client;
 
 import com.google.gwt.benchmarks.client.Benchmark;
 import com.google.gwt.benchmarks.client.IntRange;
+import com.google.gwt.benchmarks.client.IterationTimeLimit;
 import com.google.gwt.benchmarks.client.Operator;
 import com.google.gwt.benchmarks.client.RangeEnum;
 import com.google.gwt.benchmarks.client.RangeField;
@@ -49,8 +50,49 @@ public class BenchmarkTest extends Benchmark {
   final IntRange veryLargeRange = new IntRange(0, Integer.MAX_VALUE,
       Operator.ADD, 1);
 
+  public void disabledTestTimeLimit() {
+  }
+
+  /**
+   * Tests {@link @IterationTimeLimit}.
+   * 
+   * <p>
+   * TODO(tobyr) Disabled, because it can hang some browsers (Safari at least)
+   * TimeLimits work in general (as evidenced by working benchmarks), but
+   * there's something peculiar about this test causing problems.
+   * </p>
+   * 
+   * @param numIterations
+   */
+  @IterationTimeLimit(1L)
+  public void disabledTestTimeLimit(@RangeField("veryLargeRange")
+  Integer numIterations) {
+
+    somethingExpensive();
+
+    // Make sure we hit the time limit, instead of running through all
+    // iterations.
+    assertTrue(numIterations < Integer.MAX_VALUE);
+  }
+
   public String getModuleName() {
     return "com.google.gwt.junit.JUnit";
+  }
+
+  public void disableTestAutoboxing() {
+  }
+
+  /**
+   * Tests that autoboxing works correctly.
+   * 
+   * <p>
+   * TODO(tobyr): this causes the generated code to not compile; should probably
+   * be a warning or error if autoboxing args isn't supported.
+   * </p>
+   */
+  public void disableTestAutoboxing(@SuppressWarnings("unused")
+  @RangeField("intRange")
+  int value) {
   }
 
   public void testEnumRange() {
@@ -100,27 +142,14 @@ public class BenchmarkTest extends Benchmark {
     stateString = "running";
   }
 
-  public void testTimeLimit() {
-  }
-
   /**
-   * Tests {@link @IterationTimeLimit}.
-   * 
-   * @param numIterations
+   * Tests that this method without a corresponding zero-arg method won't break
+   * the compile.
    */
-// TODO(tobyr) Disabled, because it can hang some browsers (Safari at least)
-// TimeLimits work in general (as evidenced by working benchmarks), but there's 
-// something peculiar about this test causing problems.
-//  @IterationTimeLimit(1L)
-//  public void testTimeLimit(@RangeField("veryLargeRange")
-//  Integer numIterations) {
-//
-//    somethingExpensive();
-//
-//    // Make sure we hit the time limit, instead of running through all
-//    // iterations.
-//    assertTrue(numIterations < Integer.MAX_VALUE);
-//  }
+  public void testStrayMethodCompiles(@SuppressWarnings("unused")
+  @RangeField("intRange")
+  int value) {
+  }
 
   public void testTwoParameterField() {
   }

@@ -101,8 +101,11 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
     Map<String, JMethod> notOverloadedMethods = new HashMap<String, JMethod>();
     for (Map.Entry<String, List<JMethod>> entry : methods.entrySet()) {
       List<JMethod> methodOverloads = entry.getValue();
-      if (methodOverloads.size() <= 1) {
-        notOverloadedMethods.put(entry.getKey(), methodOverloads.get(0));
+      if (methodOverloads.size() == 1) {
+        JMethod overload = methodOverloads.get(0);
+        if (overload.getParameters().length == 0) {
+          notOverloadedMethods.put(entry.getKey(), overload);
+        }
       }
     }
 

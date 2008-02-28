@@ -18,7 +18,6 @@ package com.google.gwt.emultest.java.util;
 import com.google.gwt.benchmarks.client.Benchmark;
 import com.google.gwt.benchmarks.client.IntRange;
 import com.google.gwt.benchmarks.client.Operator;
-import com.google.gwt.benchmarks.client.Range;
 import com.google.gwt.benchmarks.client.RangeField;
 import com.google.gwt.benchmarks.client.Setup;
 
@@ -29,10 +28,10 @@ import java.util.HashMap;
  */
 public class HashMapBenchmark extends Benchmark {
 
-  protected Range baseRange = new IntRange(32, Integer.MAX_VALUE,
+  protected IntRange baseRange = new IntRange(32, Integer.MAX_VALUE,
       Operator.MULTIPLY, 2);
 
-  protected Range containsRange = new IntRange(10, 200, Operator.ADD, 20);
+  protected IntRange containsRange = new IntRange(10, 200, Operator.ADD, 20);
 
   private HashMap<Object, Object> map;
 

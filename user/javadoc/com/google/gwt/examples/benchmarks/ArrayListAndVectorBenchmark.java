@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package com.google.gwt.examples.benchmarks;
 import com.google.gwt.benchmarks.client.Benchmark;
 import com.google.gwt.benchmarks.client.IntRange;
 import com.google.gwt.benchmarks.client.Operator;
-import com.google.gwt.benchmarks.client.Range;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,13 +45,13 @@ public class ArrayListAndVectorBenchmark extends Benchmark {
     public static final Position NONE = new Position("no location specified");
     public static final Position VARIED = new Position("in varied locations");
 
-    public static final Range positions = new Range() {
+    public static final Iterable positions = new Iterable() {
       public Iterator iterator() {
         return Arrays.asList(new Position[] {BEGIN, END, NONE, VARIED}).iterator();
       }
     };
 
-    public static final Range positions2 = new Range() {
+    public static final Iterable positions2 = new Iterable() {
       public Iterator iterator() {
         return Arrays.asList(new Position[] {BEGIN, END, VARIED}).iterator();
       }

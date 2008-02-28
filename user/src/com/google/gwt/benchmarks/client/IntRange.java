@@ -20,7 +20,7 @@ package com.google.gwt.benchmarks.client;
  * benchmarks to supply a range of values over an integral parameter, such as
  * size or length.
  */
-public class IntRange implements Range<Integer> {
+public class IntRange implements Iterable<Integer> {
 
   /**
    * Implementation of the Iterator.
