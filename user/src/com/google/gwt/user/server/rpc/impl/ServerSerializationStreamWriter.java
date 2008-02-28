@@ -606,11 +606,6 @@ public final class ServerSerializationStreamWriter extends
       } catch (IllegalAccessException e) {
         throw new SerializationException(e);
       }
-
-      if (needsAccessOverride) {
-        // Restore the access restrictions
-        declField.setAccessible(isAccessible);
-      }
     }
 
     Class<?> superClass = instanceClass.getSuperclass();

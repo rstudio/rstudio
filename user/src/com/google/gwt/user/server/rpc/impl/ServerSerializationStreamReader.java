@@ -444,11 +444,6 @@ public final class ServerSerializationStreamReader extends
       }
 
       declField.set(instance, value);
-
-      if (needsAccessOverride) {
-        // Restore access restrictions
-        declField.setAccessible(isAccessible);
-      }
     }
 
     Class<?> superClass = instanceClass.getSuperclass();
