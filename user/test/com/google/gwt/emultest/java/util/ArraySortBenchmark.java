@@ -15,9 +15,9 @@
  */
 package com.google.gwt.emultest.java.util;
 
-import com.google.gwt.junit.client.Benchmark;
-import com.google.gwt.junit.client.IntRange;
-import com.google.gwt.junit.client.Operator;
+import com.google.gwt.benchmarks.client.Benchmark;
+import com.google.gwt.benchmarks.client.IntRange;
+import com.google.gwt.benchmarks.client.Operator;
 
 import java.util.Arrays;
 

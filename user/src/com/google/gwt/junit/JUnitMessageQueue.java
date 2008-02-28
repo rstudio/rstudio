@@ -15,7 +15,7 @@
  */
 package com.google.gwt.junit;
 
-import com.google.gwt.junit.client.TestResults;
+import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 
 import java.util.ArrayList;
@@ -65,7 +65,7 @@ public class JUnitMessageQueue {
   private Object readTestLock = new Object();
 
   /**
-   * The lock used to synchronize access around testResults.
+   * The lock used to synchronize access around testResult.
    */
   private Object resultsLock = new Object();
 
@@ -87,7 +87,7 @@ public class JUnitMessageQueue {
   /**
    * The results for the current test method.
    */
-  private List<TestResults> testResults = new ArrayList<TestResults>();
+  private List<JUnitResult> testResult = new ArrayList<JUnitResult>();
 
   /**
    * Creates a message queue with one client.
@@ -149,13 +149,13 @@ public class JUnitMessageQueue {
    * @param moduleName the name of the test module
    * @param results the result of running the test
    */
-  public void reportResults(String moduleName, TestResults results) {
+  public void reportResults(String moduleName, JUnitResult results) {
     synchronized (resultsLock) {
       if (!moduleName.equals(testModule)) {
         // an old client is trying to report results, do nothing
         return;
       }
-      testResults.add(results);
+      testResult.add(results);
     }
   }
 
@@ -166,9 +166,9 @@ public class JUnitMessageQueue {
    * @return An getException thrown from a failed test, or <code>null</code>
    *         if the test completed without error.
    */
-  List<TestResults> getResults(String moduleName) {
+  List<JUnitResult> getResults(String moduleName) {
     assert (moduleName.equals(testModule));
-    return testResults;
+    return testResult;
   }
 
   /**
@@ -181,7 +181,7 @@ public class JUnitMessageQueue {
   boolean hasResult(String moduleName) {
     synchronized (resultsLock) {
       assert (moduleName.equals(testModule));
-      return testResults.size() == numClients;
+      return testResult.size() == numClients;
     }
   }
 
@@ -219,7 +219,7 @@ public class JUnitMessageQueue {
       this.testClass = testClass;
       this.testMethod = testMethod;
       ++currentTestIndex;
-      testResults = new ArrayList<TestResults>(numClients);
+      testResult = new ArrayList<JUnitResult>(numClients);
       readTestLock.notifyAll();
     }
   }

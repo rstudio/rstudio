@@ -17,7 +17,6 @@ package com.google.gwt.junit.client.impl;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 import com.google.gwt.user.client.rpc.RemoteService;
-import com.google.gwt.junit.client.TestResults;
 
 /**
  * An interface for {@link com.google.gwt.junit.client.GWTTestCase} to
@@ -50,6 +49,11 @@ public interface JUnitHost extends RemoteService {
     public String getTestMethod() {
       return testMethod;
     }
+    
+    @Override
+    public String toString() {
+      return testClass + "." + testMethod;
+    }
   }
 
   /**
@@ -65,8 +69,8 @@ public interface JUnitHost extends RemoteService {
    * run.
    * 
    * @param moduleName the module name of this client
-   * @param results The results of executing the test
+   * @param result the results of executing the test
    * @return the next test to run
    */
-  TestInfo reportResultsAndGetNextMethod(String moduleName, TestResults results);
+  TestInfo reportResultsAndGetNextMethod(String moduleName, JUnitResult result);
 }

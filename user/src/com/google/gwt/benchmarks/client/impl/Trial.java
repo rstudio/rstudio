@@ -13,13 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.client;
+package com.google.gwt.benchmarks.client.impl;
 
-import com.google.gwt.junit.client.impl.ExceptionWrapper;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The result of a single trial-run of a single benchmark method. Each Trial
@@ -32,41 +31,9 @@ import java.util.HashMap;
  */
 public class Trial implements IsSerializable {
 
-  // Deserialized from exceptionWrapper on the server-side
-  private transient Throwable exception;
-
-  private ExceptionWrapper exceptionWrapper;
-
   private double runTimeMillis;
 
-  private Map<String, String> variables;
-
-  public Trial() {
-    this.variables = new HashMap<String, String>();
-  }
-
-  /**
-   * Creates a new Trial.
-   * 
-   * @param runTimeMillis The amount of time spent executing the test
-   * @param exceptionWrapper The wrapped getException thrown by the the last
-   *          test, or <code>null</code> if the last test completed
-   *          successfully.
-   */
-  public Trial(Map<String, String> variables, double runTimeMillis,
-      ExceptionWrapper exceptionWrapper) {
-    this.variables = variables;
-    this.runTimeMillis = runTimeMillis;
-    this.exceptionWrapper = exceptionWrapper;
-  }
-
-  public Throwable getException() {
-    return exception;
-  }
-
-  public ExceptionWrapper getExceptionWrapper() {
-    return exceptionWrapper;
-  }
+  private Map<String, String> variables = new HashMap<String, String>();
 
   public double getRunTimeMillis() {
     return runTimeMillis;
@@ -80,21 +47,12 @@ public class Trial implements IsSerializable {
     return variables;
   }
 
-  public void setException(Throwable exception) {
-    this.exception = exception;
-  }
-
-  public void setExceptionWrapper(ExceptionWrapper exceptionWrapper) {
-    this.exceptionWrapper = exceptionWrapper;
-  }
-
   public void setRunTimeMillis(double runTimeMillis) {
     this.runTimeMillis = runTimeMillis;
   }
 
   @Override
   public String toString() {
-    return "variables: " + variables + ", exceptionWrapper: "
-        + exceptionWrapper + ", runTimeMillis: " + runTimeMillis;
+    return "variables: " + variables + ", runTimeMillis: " + runTimeMillis;
   }
 }

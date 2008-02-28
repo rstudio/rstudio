@@ -15,7 +15,6 @@
  */
 package com.google.gwt.junit.client.impl;
 
-import com.google.gwt.junit.client.TestResults;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
@@ -28,8 +27,8 @@ public interface JUnitHostAsync {
    * Gets the name of next method to run.
    * 
    * @param moduleName the module name of this client
-   * @param callBack The object that will receive the name of the next method to
-   *          run.
+   * @param callBack the object that will receive the name of the next method to
+   *          run
    */
   void getFirstMethod(String moduleName, AsyncCallback<TestInfo> callBack);
 
@@ -38,10 +37,10 @@ public interface JUnitHostAsync {
    * run.
    * 
    * @param moduleName the module name of this client
-   * @param results The results of the test.
-   * @param callBack The object that will receive the name of the next method to
-   *          run.
+   * @param result the result of the test
+   * @param callBack the object that will receive the name of the next method to
+   *          run
    */
-  void reportResultsAndGetNextMethod(String moduleName, TestResults results,
+  void reportResultsAndGetNextMethod(String moduleName, JUnitResult result,
       AsyncCallback<TestInfo> callBack);
 }

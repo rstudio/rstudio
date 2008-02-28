@@ -13,28 +13,33 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.client.annotations;
+package com.google.gwt.benchmarks.client;
 
 import java.lang.annotation.Target;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Documented;
 
 /**
- * Specifies a custom time limit for iterations on the decorated
- * {@link com.google.gwt.junit.client.Benchmark Benchmark} method. Methods that
- * aren't explicitly decorated with an IterationTimeLimit, receive the default
- * value.
+ * Specifies a setup method that will be executed before the annotated
+ * {@link Benchmark} test method. Setup methods are automatically executed by
+ * the benchmarking framework before their matching test methods. Setup
+ * measurements are excluded from final benchmark reports.
+ * 
+ * <p>
+ * For example, you might annotate a {@code Benchmark} method named
+ * <code>testInserts</code> with {@code @Setup("setupTestInserts")} to ensure
+ * <code>setupTestInserts</code>is always executed before
+ * <code>testInserts</code>.
+ * </p>
  */
 @Target(ElementType.METHOD)
 @Documented
-public @interface IterationTimeLimit {
+public @interface Setup {
 
   /**
-   * The maximum amount of time, in milliseconds, an iteration is pursued before
-   * skipping to the next set of values in the {@code Range}. A value of 0
-   * means that all values in the {@code Range} will be exhaustively tested.
+   * The name of the method to execute before the annotated test method.
    * 
-   * @return a maximum duration in milliseconds >= 0
+   * @return for example, "setupTestInserts"
    */
-  long value() default 1000;
+  String value();
 }

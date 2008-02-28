@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.client;
+package com.google.gwt.benchmarks.client;
 
 /**
- * A mathematical operator used in {@link com.google.gwt.junit.client.Range}s
- * to indicate the stepping function.
+ * A mathematical operator used in {@link Range}s to indicate the stepping
+ * function.
  */
 public final class Operator {
 

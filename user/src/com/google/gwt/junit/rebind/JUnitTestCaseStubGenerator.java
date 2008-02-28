@@ -40,22 +40,11 @@ import java.util.Map;
  */
 public class JUnitTestCaseStubGenerator extends Generator {
 
-  interface MethodFilter {
-    boolean accept(JMethod method);
-  }
-
   /**
-   * Returns the method names for the set of methods that are strictly JUnit
-   * test methods (have no arguments).
-   * 
-   * @param requestedClass
+   * An interface for filtering out methods.
    */
-  public static String[] getTestMethodNames(JClassType requestedClass) {
-    return getAllMethods(requestedClass, new MethodFilter() {
-      public boolean accept(JMethod method) {
-        return isJUnitTestMethod(method, false);
-      }
-    }).keySet().toArray(new String[] {});
+  protected interface MethodFilter {
+    boolean accept(JMethod method);
   }
 
   /**
@@ -70,7 +59,7 @@ public class JUnitTestCaseStubGenerator extends Generator {
    * @param type the type to search (non-null)
    * @return the set of matching methods (non-null)
    */
-  static Map<String, List<JMethod>> getAllMethods(JClassType type,
+  protected static Map<String, List<JMethod>> getAllMethods(JClassType type,
       MethodFilter filter) {
     Map<String, List<JMethod>> methods = new HashMap<String, List<JMethod>>();
     JClassType cls = type;
@@ -119,7 +108,7 @@ public class JUnitTestCaseStubGenerator extends Generator {
    * access. The method may be static. You must choose to include or exclude
    * methods which have arguments.
    */
-  static boolean isJUnitTestMethod(JMethod method, boolean acceptArgs) {
+  protected static boolean isJUnitTestMethod(JMethod method, boolean acceptArgs) {
     if (!method.getName().startsWith("test")) {
       return false;
     }
@@ -150,12 +139,25 @@ public class JUnitTestCaseStubGenerator extends Generator {
     return true;
   }
 
+  /**
+   * Returns the method names for the set of methods that are strictly JUnit
+   * test methods (have no arguments).
+   * 
+   * @param requestedClass
+   */
+  private static String[] getTestMethodNames(JClassType requestedClass) {
+    return getAllMethods(requestedClass, new MethodFilter() {
+      public boolean accept(JMethod method) {
+        return isJUnitTestMethod(method, false);
+      }
+    }).keySet().toArray(new String[] {});
+  }
+
   protected TreeLogger logger;
   private String packageName;
   private String qualifiedStubClassName;
-  private String simpleStubClassName;
-
   private JClassType requestedClass;
+  private String simpleStubClassName;
   private SourceWriter sourceWriter;
   private TypeOracle typeOracle;
 

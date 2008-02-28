@@ -13,7 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.client;
+package com.google.gwt.benchmarks.client;
+
+import com.google.gwt.benchmarks.BenchmarkShell;
+import com.google.gwt.junit.client.GWTTestCase;
 
 /**
  * A type of {@link com.google.gwt.junit.client.GWTTestCase} which specifically
@@ -32,9 +35,8 @@ package com.google.gwt.junit.client;
  * GWT supports test methods that have parameters. GWT will execute each
  * benchmark method multiple times in order to exhaustively test all the
  * possible combinations of parameter values. All of your test method parameters
- * must be annotated with a {@code Range} annotation such as
- * {@link com.google.gwt.junit.client.annotations.RangeField RangeField} or
- * {@link com.google.gwt.junit.client.annotations.RangeEnum RangeEnum}.
+ * must be annotated with a {@code Range} annotation such as {@link RangeField}
+ * or {@link RangeEnum}.
  * 
  * For example,
  * 
@@ -51,17 +53,14 @@ package com.google.gwt.junit.client;
  * <li>GWT automatically removes jitter from your benchmark methods by running
  * them for a minimum period of time (150ms).</li>
  * 
- * <li>GWT supports
- * {@link com.google.gwt.junit.client.annotations.IterationTimeLimit time
- * limits} on the maximum duration of each permutation of a benchmark method.
- * With this feature, you can supply very high upper bounds on your ranges (such
- * as Integer.MAX_VALUE), which future-proofs your benchmarks against faster
- * hardware. </li>
+ * <li>GWT supports {@link IterationTimeLimit time limits} on the maximum
+ * duration of each permutation of a benchmark method. With this feature, you
+ * can supply very high upper bounds on your ranges (such as Integer.MAX_VALUE),
+ * which future-proofs your benchmarks against faster hardware. </li>
  * 
- * <li>GWT supports {@link com.google.gwt.junit.client.annotations.Setup Setup}
- * and {@link com.google.gwt.junit.client.annotations.Teardown Teardown} methods
- * which separate test overhead from the actual work being benchmarked. The
- * timings of these lifecycle methods are excluded from test results. </li>
+ * <li>GWT supports {@link Setup} and {@link Teardown} methods which separate
+ * test overhead from the actual work being benchmarked. The timings of these
+ * lifecycle methods are excluded from test results. </li>
  * </ul>
  * 
  * <h2>Notes</h2>
@@ -101,4 +100,21 @@ public abstract class Benchmark extends GWTTestCase {
    * working directory.
    */
   public static final String REPORT_PATH = "com.google.gwt.junit.reportPath";
+
+  /**
+   * Runs the test via the {@link com.google.gwt.benchmarks.BenchmarkShell}
+   * environment. Do not override or call this method.
+   */
+  @Override
+  protected final void runTest() throws Throwable {
+    BenchmarkShell.runTest(getModuleName(), this, testResult);
+  }
+
+  /**
+   * Benchmarks do not support asynchronous mode.
+   */
+  protected final boolean supportsAsync() {
+    return false;
+  }
+
 }

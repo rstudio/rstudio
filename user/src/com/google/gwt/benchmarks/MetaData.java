@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.benchmarks;
+package com.google.gwt.benchmarks;
 
 /**
  * The benchmark metadata for a single benchmark method.

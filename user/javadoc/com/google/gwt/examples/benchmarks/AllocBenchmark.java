@@ -15,7 +15,7 @@
  */
 package com.google.gwt.examples.benchmarks;
 
-import com.google.gwt.junit.client.Benchmark;
+import com.google.gwt.benchmarks.client.Benchmark;
 
 /**
  * Provides profile statistics on allocation times for different kinds of

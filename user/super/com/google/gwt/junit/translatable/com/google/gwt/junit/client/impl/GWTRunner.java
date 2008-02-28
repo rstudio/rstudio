@@ -18,7 +18,6 @@ package com.google.gwt.junit.client.impl;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.junit.client.TestResults;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
@@ -148,12 +147,12 @@ abstract class GWTRunner implements EntryPoint {
    */
   protected abstract GWTTestCase createNewTestCase(String testClass);
 
-  void reportResultsAndGetNextMethod(TestResults results) {
+  void reportResultsAndGetNextMethod(JUnitResult result) {
     if (serverless) {
       // That's it, we're done
       return;
     }
-    junitHost.reportResultsAndGetNextMethod(GWT.getModuleName(), results,
+    junitHost.reportResultsAndGetNextMethod(GWT.getModuleName(), result,
         junitHostListener);
   }
 
@@ -169,12 +168,17 @@ abstract class GWTRunner implements EntryPoint {
 
   private void runTest(TestInfo testToRun) {
     // Dynamically create a new test case.
-    GWTTestCase testCase = createNewTestCase(testToRun.getTestClass());
-    if (testCase != null) {
-      testCase.setName(testToRun.getTestMethod());
+    GWTTestCaseImpl testCase = createNewTestCase(testToRun.getTestClass());
+    if (testCase == null) {
+      RuntimeException ex = new RuntimeException(testToRun
+          + ": could not instantiate the requested class");
+      JUnitResult result = new JUnitResult();
+      result.setExceptionWrapper(new ExceptionWrapper(ex));
+      reportResultsAndGetNextMethod(result);
     }
-    GWTTestCaseImpl impl = new GWTTestCaseImpl(testCase);
-    impl.runTest();
+
+    testCase.setName(testToRun.getTestMethod());
+    testCase.__doRunTest();
   }
 
 }

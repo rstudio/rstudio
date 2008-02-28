@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2007 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,19 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.client;
+package com.google.gwt.benchmarks.client;
+
+import java.util.Iterator;
 
 /**
- * A range of values for a Benchmark parameter.
+ * A base class useful for implementing Iterators for Ranges.
  *
- * A Range produces an Iterator that contains all of the values that a Benchmark
- * parameter should be tested over.
- *
- * Range is unlikely to provide any extra semantics above what you would get
- * with java.util.Iterable, but it was introduced before GWT's JDK 1.5 support.
- *
- * @param <T> the type that this range contains
- * 
+ * @param <T> the type that the Range contains
  */
-public interface Range<T> extends Iterable<T> {
+public abstract class RangeIterator<T> implements Iterator<T> {
+  public void remove() {
+    throw new UnsupportedOperationException();
+  }
 }

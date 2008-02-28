@@ -26,12 +26,9 @@ import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-import com.google.gwt.junit.benchmarks.BenchmarkReport;
-import com.google.gwt.junit.client.Benchmark;
-import com.google.gwt.junit.client.TestResults;
 import com.google.gwt.junit.client.TimeoutException;
-import com.google.gwt.junit.client.Trial;
 import com.google.gwt.junit.client.impl.GWTRunner;
+import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.junit.remote.BrowserManager;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
@@ -40,10 +37,8 @@ import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 
-import java.io.File;
 import java.rmi.Naming;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -80,27 +75,26 @@ import java.util.regex.Pattern;
 public class JUnitShell extends GWTShell {
 
   /**
-   * Executes shutdown logic for JUnitShell
-   * 
-   * Sadly, there's no simple way to know when all unit tests have finished
-   * executing. So this class is registered as a VM shutdown hook so that work
-   * can be done at the end of testing - for example, writing out the reports.
+   * A strategy for running the test.
    */
-  private class Shutdown implements Runnable {
+  public interface Strategy {
+    String getModuleInherit();
 
-    public void run() {
-      try {
-        String reportPath = System.getProperty(Benchmark.REPORT_PATH);
-        if (reportPath == null || reportPath.trim().equals("")) {
-          reportPath = System.getProperty("user.dir");
-        }
-        report.generate(reportPath + File.separator + "report-"
-            + new Date().getTime() + ".xml");
-      } catch (Exception e) {
-        // It really doesn't matter how we got here.
-        // Regardless of the failure, the VM is shutting down.
-        e.printStackTrace();
-      }
+    String getSyntheticModuleExtension();
+
+    void processResult(TestCase testCase, JUnitResult result);
+  }
+
+  private static class JUnitStrategy implements Strategy {
+    public String getModuleInherit() {
+      return "com.google.gwt.junit.JUnit";
+    }
+
+    public String getSyntheticModuleExtension() {
+      return "JUnit";
+    }
+
+    public void processResult(TestCase testCase, JUnitResult result) {
     }
   }
 
@@ -143,27 +137,20 @@ public class JUnitShell extends GWTShell {
   }
 
   /**
-   * Called by {@link com.google.gwt.junit.rebind.JUnitTestCaseStubGenerator} to
-   * add test meta data to the test report.
-   * 
-   * @return The {@link BenchmarkReport} that belongs to the singleton {@link
-   *         JUnitShell}, or <code>null</code> if no such singleton exists.
-   */
-  public static BenchmarkReport getReport() {
-    if (unitTestShell == null) {
-      return null;
-    }
-    return unitTestShell.report;
-  }
-
-  /**
    * Entry point for {@link com.google.gwt.junit.client.GWTTestCase}. Gets or
    * creates the singleton {@link JUnitShell} and invokes its {@link
    * #runTestImpl(String, TestCase, TestResult)}.
    */
   public static void runTest(String moduleName, TestCase testCase,
       TestResult testResult) throws UnableToCompleteException {
-    getUnitTestShell().runTestImpl(moduleName, testCase, testResult);
+    getUnitTestShell().runTestImpl(moduleName, testCase, testResult,
+        new JUnitStrategy());
+  }
+
+  public static void runTest(String moduleName, TestCase testCase,
+      TestResult testResult, Strategy strategy)
+      throws UnableToCompleteException {
+    getUnitTestShell().runTestImpl(moduleName, testCase, testResult, strategy);
   }
 
   /**
@@ -184,11 +171,7 @@ public class JUnitShell extends GWTShell {
       if (!shell.startUp()) {
         throw new RuntimeException("Shell failed to start");
       }
-
-      shell.report = new BenchmarkReport();
       unitTestShell = shell;
-
-      Runtime.getRuntime().addShutdownHook(new Thread(shell.new Shutdown()));
     }
 
     return unitTestShell;
@@ -220,11 +203,6 @@ public class JUnitShell extends GWTShell {
    * 1.
    */
   private int numClients = 1;
-
-  /**
-   * The result of benchmark runs.
-   */
-  private BenchmarkReport report;
 
   /**
    * What type of test we're running; Local hosted, local web, or remote web.
@@ -415,9 +393,11 @@ public class JUnitShell extends GWTShell {
    * Runs a particular test case.
    */
   private void runTestImpl(String moduleName, TestCase testCase,
-      TestResult testResult) throws UnableToCompleteException {
+      TestResult testResult, Strategy strategy)
+      throws UnableToCompleteException {
 
-    String syntheticModuleName = moduleName + ".JUnit";
+    String syntheticModuleName = moduleName + "."
+        + strategy.getSyntheticModuleExtension();
     boolean sameTest = syntheticModuleName.equals(currentModuleName);
     if (sameTest && lastLaunchFailed) {
       throw new UnableToCompleteException();
@@ -431,7 +411,7 @@ public class JUnitShell extends GWTShell {
        */
       ModuleDef synthetic = ModuleDefLoader.createSyntheticModule(
           getTopLogger(), currentModuleName, new String[] {
-              moduleName, "com.google.gwt.junit.JUnit"}, true);
+              moduleName, strategy.getModuleInherit()}, true);
       // Replace any user entry points with our test runner.
       synthetic.clearEntryPoints();
       synthetic.addEntryPointTypeName(GWTRunner.class.getName());
@@ -466,7 +446,7 @@ public class JUnitShell extends GWTShell {
       return;
     }
 
-    List<TestResults> results = messageQueue.getResults(currentModuleName);
+    List<JUnitResult> results = messageQueue.getResults(currentModuleName);
 
     if (results == null) {
       return;
@@ -474,9 +454,8 @@ public class JUnitShell extends GWTShell {
 
     boolean parallelTesting = numClients > 1;
 
-    for (TestResults result : results) {
-      Trial firstTrial = result.getTrials().get(0);
-      Throwable exception = firstTrial.getException();
+    for (JUnitResult result : results) {
+      Throwable exception = result.getException();
 
       // In the case that we're running multiple clients at once, we need to
       // let the user know the browser in which the failure happened
@@ -504,9 +483,7 @@ public class JUnitShell extends GWTShell {
         testResult.addError(testCase, exception);
       }
 
-      if (testCase instanceof Benchmark) {
-        report.addBenchmarkResults(testCase, result);
-      }
+      strategy.processResult(testCase, result);
     }
   }
 

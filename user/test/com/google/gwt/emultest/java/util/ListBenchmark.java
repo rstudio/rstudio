@@ -15,15 +15,15 @@
  */
 package com.google.gwt.emultest.java.util;
 
-import com.google.gwt.junit.client.IntRange;
-import com.google.gwt.junit.client.Benchmark;
-import com.google.gwt.junit.client.Operator;
-import com.google.gwt.junit.client.annotations.RangeField;
-import com.google.gwt.junit.client.annotations.RangeEnum;
-import com.google.gwt.junit.client.annotations.Setup;
+import com.google.gwt.benchmarks.client.Benchmark;
+import com.google.gwt.benchmarks.client.IntRange;
+import com.google.gwt.benchmarks.client.Operator;
+import com.google.gwt.benchmarks.client.RangeEnum;
+import com.google.gwt.benchmarks.client.RangeField;
+import com.google.gwt.benchmarks.client.Setup;
 
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Benchmarks common operations on {@link List Lists}. This test covers

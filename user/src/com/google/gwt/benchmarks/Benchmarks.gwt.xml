@@ -17,22 +17,14 @@
 <!-- Do not inherit this module directly.  Running GWTTestCase under JUnit  -->
 <!-- will inherit this module automatically.                                -->
 <module>
-  <inherits name="com.google.gwt.user.User"/>
+  <inherits name="com.google.gwt.junit.JUnit"/>
 
   <super-source path="translatable"/>
 
   <source path="client"/>
 
-  <generate-with class="com.google.gwt.junit.rebind.GWTRunnerGenerator">
-    <when-type-is class="com.google.gwt.junit.client.impl.GWTRunner"/>
+  <generate-with class="com.google.gwt.benchmarks.rebind.BenchmarkGenerator">
+    <when-type-assignable class="com.google.gwt.benchmarks.client.Benchmark"/>
   </generate-with>
-
-  <generate-with class="com.google.gwt.junit.rebind.JUnitTestCaseStubGenerator">
-    <when-type-assignable class="com.google.gwt.junit.client.GWTTestCase"/>
-  </generate-with>
-
-  <servlet path='/junithost' class='com.google.gwt.junit.server.JUnitHostImpl'/>
-
-  <inherits name="com.google.gwt.benchmarks.Benchmarks"/>
 
 </module>

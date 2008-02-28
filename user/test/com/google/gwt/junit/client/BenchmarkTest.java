@@ -16,10 +16,13 @@
 
 package com.google.gwt.junit.client;
 
-import com.google.gwt.junit.client.annotations.RangeField;
-import com.google.gwt.junit.client.annotations.RangeEnum;
-import com.google.gwt.junit.client.annotations.Setup;
-import com.google.gwt.junit.client.annotations.Teardown;
+import com.google.gwt.benchmarks.client.Benchmark;
+import com.google.gwt.benchmarks.client.IntRange;
+import com.google.gwt.benchmarks.client.Operator;
+import com.google.gwt.benchmarks.client.RangeEnum;
+import com.google.gwt.benchmarks.client.RangeField;
+import com.google.gwt.benchmarks.client.Setup;
+import com.google.gwt.benchmarks.client.Teardown;
 
 /**
  * Basic Benchmark testing.

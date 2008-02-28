@@ -13,25 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.client.annotations;
-
-import java.lang.annotation.Target;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Documented;
+package com.google.gwt.benchmarks.client;
 
 /**
- * Specifies an Enum containing the entire range of values for a parameter to a
- * {@link com.google.gwt.junit.client.Benchmark} method.
+ * A range of values for a Benchmark parameter.
+ * 
+ * A Range produces an Iterator that contains all of the values that a Benchmark
+ * parameter should be tested over.
+ * 
+ * @param <T> the type that this range contains
+ * @deprecated This class was introduced before JDK 1.5 support. Just use
+ *             {@link Iterable}.
  */
-@Target(ElementType.PARAMETER)
-@Documented
-public @interface RangeEnum {
-
-  /**
-   * An <code>Enum</code> that contains the range of values that will be
-   * supplied to the test method.
-   * 
-   * @return for example, {@code MyEnum.class}
-   */
-  Class<? extends Enum<?>> value();
+public interface Range<T> extends Iterable<T> {
 }

@@ -13,8 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.rebind;
+package com.google.gwt.benchmarks.rebind;
 
+import com.google.gwt.benchmarks.BenchmarkShell;
+import com.google.gwt.benchmarks.client.Benchmark;
+import com.google.gwt.benchmarks.client.IterationTimeLimit;
+import com.google.gwt.benchmarks.client.RangeEnum;
+import com.google.gwt.benchmarks.client.RangeField;
+import com.google.gwt.benchmarks.client.Setup;
+import com.google.gwt.benchmarks.client.Teardown;
+import com.google.gwt.benchmarks.client.impl.BenchmarkResults;
+import com.google.gwt.benchmarks.client.impl.IterableAdapter;
+import com.google.gwt.benchmarks.client.impl.PermutationIterator;
+import com.google.gwt.benchmarks.client.impl.Trial;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -26,13 +37,9 @@ import com.google.gwt.dev.generator.ast.MethodCall;
 import com.google.gwt.dev.generator.ast.Statement;
 import com.google.gwt.dev.generator.ast.Statements;
 import com.google.gwt.dev.generator.ast.StatementsList;
-import com.google.gwt.junit.JUnitShell;
-import com.google.gwt.junit.client.Benchmark;
-import com.google.gwt.junit.client.annotations.IterationTimeLimit;
-import com.google.gwt.junit.client.annotations.RangeEnum;
-import com.google.gwt.junit.client.annotations.RangeField;
-import com.google.gwt.junit.client.annotations.Setup;
-import com.google.gwt.junit.client.annotations.Teardown;
+import com.google.gwt.junit.rebind.JUnitTestCaseStubGenerator;
+import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.IncrementalCommand;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.lang.reflect.Method;
@@ -50,13 +57,18 @@ import java.util.Set;
 public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
 
   private static class MutableLong {
-
     long value;
   }
 
   private static final String BEGIN_PREFIX = "begin";
 
+  private static final String BENCHMARK_CLASS = Benchmark.class.getName();
+
   private static final String BENCHMARK_PARAM_META = "gwt.benchmark.param";
+
+  private static final String BENCHMARK_RESULTS_CLASS = BenchmarkResults.class.getName();
+
+  private static long defaultTimeout = -1;
 
   private static final String EMPTY_FUNC = "__emptyFunc";
 
@@ -64,7 +76,11 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
 
   private static final String ESCAPE_LOOP = "__escapeLoop";
 
-  private static long defaultTimeout = -1;
+  private static final String ITERABLE_ADAPTER_CLASS = IterableAdapter.class.getName();
+
+  private static final String PERMUTATION_ITERATOR_CLASS = PermutationIterator.class.getName();
+
+  private static final String TRIAL_CLASS = Trial.class.getName();
 
   /**
    * Returns all the zero-argument JUnit test methods that do not have
@@ -118,8 +134,8 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
 
       if (methods.size() > 2) {
         String msg = requestedClass + "." + name
-            + " has more than one overloaded version.\n"
-            + "It will not be included in the test case execution.";
+            + " has more than one overloaded version"
+            + "; it will not be included in the test case execution";
         logger.log(TreeLogger.WARN, msg, null);
         continue;
       }
@@ -134,8 +150,8 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
            * test to make the benchmarks run correctly (JUnit artifact).
            */
           String msg = requestedClass + "." + name
-              + " does not have a zero-argument overload.\n"
-              + "It will not be included in the test case execution.";
+              + " does not have a zero-argument overload"
+              + "; it will not be included in the test case execution";
           logger.log(TreeLogger.WARN, msg, null);
         }
         // Only a zero-argument version, we don't need to process it.
@@ -161,8 +177,8 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
 
       if (noArgMethod == null) {
         String msg = requestedClass + "." + name
-            + " does not have a zero-argument overload.\n"
-            + "It will not be included in the test case execution.";
+            + " does not have a zero-argument overload"
+            + "; it will not be included in the test case execution";
         logger.log(TreeLogger.WARN, msg, null);
         continue;
       }
@@ -222,14 +238,14 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
     super.writeSource();
 
     deprecationBranch = logger.branch(TreeLogger.TRACE,
-        "Scanning Benchmarks for deprecated annotations; " + "Please see "
-            + Benchmark.class.getName() + " for more information.", null);
+        "Scanning Benchmarks for deprecated annotations; please see "
+            + BENCHMARK_CLASS + " for more information", null);
 
     generateEmptyFunc(getSourceWriter());
     implementZeroArgTestMethods();
     implementParameterizedTestMethods();
     generateAsyncCode();
-    JUnitShell.getReport().addBenchmark(logger, deprecationBranch,
+    BenchmarkShell.getReport().addBenchmark(logger, deprecationBranch,
         getRequestedClass(), getTypeOracle());
   }
 
@@ -372,7 +388,7 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
    * making it a JSNI call. This works as of 1.3 RC 2, but smarter versions of
    * the compiler may be able to inline JSNI.
    * 
-   * Things actually get pretty squirrely in general when benchmarking function
+   * Things actually get pretty squirrelly in general when benchmarking function
    * call overhead, because, depending upon the benchmark, the compiler may
    * inline the benchmark into our benchmark loop, negating the cost we thought
    * we were measuring.
@@ -380,7 +396,7 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
    * The best way to deal with this is for users to write micro-benchmarks such
    * that the micro-benchmark does significantly more work than a function call.
    * For example, if micro-benchmarking a function call, perform the function
-   * call 100K times within the microbenchmark itself.
+   * call 100K times within the micro-benchmark itself.
    */
   private void generateEmptyFunc(SourceWriter writer) {
     writer.println("private native void " + EMPTY_FUNC + "() /*-{");
@@ -474,8 +490,8 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
 
     deprecationBranch.log(TreeLogger.WARN, "Deprecated use of "
         + BENCHMARK_PARAM_META + " at " + method.getEnclosingType() + " in "
-        + method + "; Please use the new Benchmark JDK 1.5 annotations in "
-        + "com.google.gwt.junit.client.annotations.", null);
+        + method + "; please use the new Benchmark JDK 1.5 annotations in "
+        + "com.google.gwt.benchmark.client", null);
 
     Map<String, String> params = new HashMap<String, String>();
 
@@ -500,8 +516,7 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
               + cls
               + "."
               + method.getName()
-              + "\n"
-              + "Only the last parameter of a method can be marked with the -limit flag.";
+              + ": only the last parameter of a method can be marked with the -limit flag";
           logger.log(TreeLogger.ERROR, msg, null);
           throw new UnableToCompleteException();
         }
@@ -552,7 +567,7 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
 
       for (int i = 0; i < paramNames.size(); ++i) {
         String paramName = paramNames.get(i);
-        sw.print("com.google.gwt.junit.client.impl.IterableAdapter.toIterable("
+        sw.print(ITERABLE_ADAPTER_CLASS + ".toIterable("
             + metaDataByParams.get(paramName) + ")");
         if (i != paramNames.size() - 1) {
           sw.print(",");
@@ -562,12 +577,15 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
         sw.print(" ");
       }
 
-      sw.println("final com.google.gwt.junit.client.impl.PermutationIterator permutationIt = new com.google.gwt.junit.client.impl.PermutationIterator(iterables);\n"
-          + "com.google.gwt.user.client.DeferredCommand.addCommand( new com.google.gwt.user.client.IncrementalCommand() {\n"
+      sw.println("final " + PERMUTATION_ITERATOR_CLASS
+          + " permutationIt = new " + PERMUTATION_ITERATOR_CLASS
+          + "(iterables);\n" + DeferredCommand.class.getName()
+          + ".addCommand( new " + IncrementalCommand.class.getName() + "() {\n"
           + "  public boolean execute() {\n"
           + "    privateDelayTestFinish( 10000 );\n"
-          + "    if ( permutationIt.hasNext() ) {\n"
-          + "      com.google.gwt.junit.client.impl.PermutationIterator.Permutation permutation = permutationIt.next();\n");
+          + "    if ( permutationIt.hasNext() ) {\n" + "      "
+          + PERMUTATION_ITERATOR_CLASS
+          + ".Permutation permutation = permutationIt.next();\n");
 
       for (int i = 0; i < methodParams.length; ++i) {
         JParameter methodParam = methodParams[i];
@@ -589,8 +607,12 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
           new Statement(new MethodCall(method.getName(), paramNames)));
 
       StringBuffer recordResultsCode = new StringBuffer(
-          "com.google.gwt.junit.client.TestResults results = impl.getTestResults();\n"
-              + "com.google.gwt.junit.client.Trial trial = new com.google.gwt.junit.client.Trial();\n"
+          BENCHMARK_RESULTS_CLASS
+              + " results = __getOrCreateTestResult();\n"
+              + TRIAL_CLASS
+              + " trial = new "
+              + TRIAL_CLASS
+              + "();\n"
               + "trial.setRunTimeMillis( "
               + testTimingName
               + " - "
@@ -664,11 +686,10 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
       Statements testBench = genBenchTarget(beginMethod, endMethod,
           Collections.<String> emptyList(), testStatements);
 
-      String recordResultsCode = "com.google.gwt.junit.client.TestResults results = impl.getTestResults();\n"
-          + "com.google.gwt.junit.client.Trial trial = new com.google.gwt.junit.client.Trial();\n"
-          + "trial.setRunTimeMillis( "
-          + testTimingName
-          + " - "
+      String recordResultsCode = BENCHMARK_RESULTS_CLASS
+          + " results = __getOrCreateTestResult();\n" + TRIAL_CLASS
+          + " trial = new " + TRIAL_CLASS + "();\n"
+          + "trial.setRunTimeMillis( " + testTimingName + " - "
           + setupTimingName + " );\n" + "results.getTrials().add( trial )";
 
       Statements breakCode = new Statement("  break " + ESCAPE_LOOP);

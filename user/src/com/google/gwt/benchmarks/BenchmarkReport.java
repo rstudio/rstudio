@@ -13,8 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.benchmarks;
+package com.google.gwt.benchmarks;
 
+import com.google.gwt.benchmarks.client.impl.BenchmarkResults;
+import com.google.gwt.benchmarks.client.impl.Trial;
+import com.google.gwt.benchmarks.rebind.BenchmarkGenerator;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.HasAnnotations;
 import com.google.gwt.core.ext.typeinfo.HasMetaData;
@@ -22,9 +25,6 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.junit.client.TestResults;
-import com.google.gwt.junit.client.Trial;
-import com.google.gwt.junit.rebind.BenchmarkGenerator;
 import com.google.gwt.util.tools.Utility;
 
 import junit.framework.TestCase;
@@ -65,11 +65,11 @@ public class BenchmarkReport {
 
     private MetaData metaData;
 
-    private List<TestResults> results;
+    private List<BenchmarkResults> results;
 
     private TestCase test;
 
-    BenchmarkXml(TestCase test, List<TestResults> results) {
+    BenchmarkXml(TestCase test, List<BenchmarkResults> results) {
       this.test = test;
       this.results = results;
       Map<String, MetaData> methodMetaData = testMetaData.get(test.getClass().toString());
@@ -91,17 +91,25 @@ public class BenchmarkReport {
 
       // TODO(tobyr): create target_code element
 
-      for (TestResults result : results) {
+      for (BenchmarkResults result : results) {
         benchmark.appendChild(toElement(doc, result));
       }
 
       return benchmark;
     }
 
-    private Element toElement(Document doc, TestResults result) {
+    private Element toElement(Document doc, BenchmarkResults result) {
       Element resultElement = doc.createElement("result");
       resultElement.setAttribute("host", result.getHost());
       resultElement.setAttribute("agent", result.getAgent());
+
+      Throwable exception = result.getException();
+
+      if (exception != null) {
+        Element exceptionElement = doc.createElement("exception");
+        exceptionElement.appendChild(doc.createTextNode(exception.toString()));
+        resultElement.appendChild(exceptionElement);
+      }
 
       List<Trial> trials = result.getTrials();
 
@@ -129,14 +137,6 @@ public class BenchmarkReport {
 
       trialElement.setAttribute("timing",
           String.valueOf(trial.getRunTimeMillis()));
-
-      Throwable exception = trial.getException();
-
-      if (exception != null) {
-        Element exceptionElement = doc.createElement("exception");
-        exceptionElement.appendChild(doc.createTextNode(exception.toString()));
-        trialElement.appendChild(exceptionElement);
-      }
 
       return trialElement;
     }
@@ -225,9 +225,9 @@ public class BenchmarkReport {
 
       // Add each test result into the report.
       // Add the category for the test result, if necessary.
-      for (Map.Entry<TestCase, List<TestResults>> entry : testResults.entrySet()) {
+      for (Map.Entry<TestCase, List<BenchmarkResults>> entry : testResults.entrySet()) {
         TestCase test = entry.getKey();
-        List<TestResults> results = entry.getValue();
+        List<BenchmarkResults> results = entry.getValue();
         BenchmarkXml xml = new BenchmarkXml(test, results);
         Element categoryElement = getCategoryElement(doc, report,
             xml.metaData.getCategory().getClassName());
@@ -320,7 +320,7 @@ public class BenchmarkReport {
 
   private Map<String, Map<String, MetaData>> testMetaData = new HashMap<String, Map<String, MetaData>>();
 
-  private Map<TestCase, List<TestResults>> testResults = new HashMap<TestCase, List<TestResults>>();
+  private Map<TestCase, List<BenchmarkResults>> testResults = new HashMap<TestCase, List<BenchmarkResults>>();
 
   private TypeOracle typeOracle;
 
@@ -384,10 +384,10 @@ public class BenchmarkReport {
     }
   }
 
-  public void addBenchmarkResults(TestCase test, TestResults results) {
-    List<TestResults> currentResults = testResults.get(test);
+  public void addBenchmarkResults(TestCase test, BenchmarkResults results) {
+    List<BenchmarkResults> currentResults = testResults.get(test);
     if (currentResults == null) {
-      currentResults = new ArrayList<TestResults>();
+      currentResults = new ArrayList<BenchmarkResults>();
       testResults.put(test, currentResults);
     }
     currentResults.add(results);

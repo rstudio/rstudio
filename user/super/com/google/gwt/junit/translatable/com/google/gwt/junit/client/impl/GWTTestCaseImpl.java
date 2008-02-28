@@ -17,12 +17,10 @@ package com.google.gwt.junit.client.impl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
-import com.google.gwt.junit.client.Benchmark;
-import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.junit.client.TestResults;
 import com.google.gwt.junit.client.TimeoutException;
-import com.google.gwt.junit.client.Trial;
 import com.google.gwt.user.client.Timer;
+
+import junit.framework.TestCase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,11 +32,7 @@ import java.util.List;
  * to debug the translatable {@link GWTTestCase} confuses the debugger, which
  * tends to use the non-translatable version.
  */
-public class GWTTestCaseImpl implements UncaughtExceptionHandler {
-
-  private static native String getDocumentLocation() /*-{
-    return $doc.location.toString();
-  }-*/;
+public abstract class GWTTestCaseImpl extends TestCase {
 
   /**
    * A watchdog class for use with asynchronous mode. On construction,
@@ -80,19 +74,9 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
   private boolean mainTestHasRun = false;
 
   /**
-   * Collective test results.
+   * Test result.
    */
-  private TestResults results = new TestResults();
-
-  /**
-   * The time the test began execution.
-   */
-  private long testBeginMillis;
-
-  /**
-   * My paired {@link GWTTestCase}.
-   */
-  private final GWTTestCase testCase;
+  private JUnitResult result;
 
   /**
    * Tracks whether this test is completely done.
@@ -104,19 +88,21 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
    */
   private KillTimer timer;
 
-  /**
-   * Constructs a new GWTTestCaseImpl that is paired one-to-one with a
-   * {@link GWTTestCase}.
-   * 
-   * @param outer The paired (enclosing) GWTTestCase.
-   */
-  public GWTTestCaseImpl(GWTTestCase testCase) {
-    this.testCase = testCase;
-    if (testCase != null) {
-      // Initialize the back reference from the test case to myself.
-      testCase.impl = this;
+  private final UncaughtExceptionHandler uncaughtHandler = new UncaughtExceptionHandler() {
+    /**
+     * An uncaught exception escaped to the browser; what we should do depends
+     * on what state we're in.
+     */
+    public void onUncaughtException(Throwable ex) {
+      if (mainTestHasRun && timer != null) {
+        // Asynchronous mode; uncaught exceptions cause an immediate failure.
+        assert (!testIsFinished);
+        reportResultsAndRunNextMethod(ex);
+      } else {
+        // just ignore it
+      }
     }
-  }
+  };
 
   /**
    * Implementation of {@link GWTTestCase#addCheckpoint(String)}.
@@ -128,45 +114,12 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
     checkPoints.add(msg);
   }
 
+  public boolean catchExceptions() {
+    return true;
+  }
+
   public void clearCheckpoints() {
     checkPoints = null;
-  }
-
-  /**
-   * Implementation of {@link GWTTestCase#delayTestFinish(int)}.
-   */
-  public void delayTestFinish(int timeoutMillis) {
-    if (timer != null) {
-      // Cancel the pending timer
-      timer.cancel();
-    }
-
-    // Set a new timer for the specified new timeout
-    timer = new KillTimer(timeoutMillis);
-  }
-
-  /**
-   * Implementation of {@link GWTTestCase#finishTest()}.
-   */
-  public void finishTest() {
-    if (testIsFinished) {
-      // This test is totally done already, just ignore the call.
-      return;
-    }
-
-    if (timer == null) {
-      throw new IllegalStateException(
-          "This test is not in asynchronous mode; call delayTestFinish() first");
-    }
-
-    if (mainTestHasRun) {
-      // This is a correct, successful async finish.
-      reportResultsAndRunNextMethod(null);
-    } else {
-      // The user tried to finish the test before the main body returned!
-      // Just let the test continue running normally.
-      resetAsyncState();
-    }
   }
 
   public String[] getCheckpoints() {
@@ -174,52 +127,82 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
       return new String[0];
     } else {
       int len = checkPoints.size();
-      String[] result = new String[len];
+      String[] retval = new String[len];
       for (int i = 0; i < len; ++i) {
-        result[i] = checkPoints.get(i);
+        retval[i] = checkPoints.get(i);
       }
-      return result;
+      return retval;
     }
   }
 
-  public TestResults getTestResults() {
-    return results;
-  }
+  public abstract String getModuleName();
 
-  /**
-   * An uncaught exception escaped to the browser; what we should do depends on
-   * what state we're in.
-   */
-  public void onUncaughtException(Throwable ex) {
-    if (mainTestHasRun && timer != null) {
-      // Asynchronous mode; uncaught exceptions cause an immediate failure.
-      assert (!testIsFinished);
-      reportResultsAndRunNextMethod(ex);
+  // CHECKSTYLE_OFF
+  protected JUnitResult __getOrCreateTestResult() {
+    if (result == null) {
+      result = new JUnitResult();
+    }
+    return result;
+  }
+  // CHECKSTYLE_ON
+
+  protected final void delayTestFinish(int timeoutMillis) {
+    if (supportsAsync()) {
+      if (timer != null) {
+        // Cancel the pending timer
+        timer.cancel();
+      }
+
+      // Set a new timer for the specified new timeout
+      timer = new KillTimer(timeoutMillis);
     } else {
-      // just ignore it
+      throw new UnsupportedOperationException(
+          "This test case does not support asynchronous mode.");
     }
   }
 
+  protected final void finishTest() {
+    if (supportsAsync()) {
+      if (testIsFinished) {
+        // This test is totally done already, just ignore the call.
+        return;
+      }
+
+      if (timer == null) {
+        throw new IllegalStateException(
+            "This test is not in asynchronous mode; call delayTestFinish() first");
+      }
+
+      if (mainTestHasRun) {
+        // This is a correct, successful async finish.
+        reportResultsAndRunNextMethod(null);
+      } else {
+        // The user tried to finish the test before the main body returned!
+        // Just let the test continue running normally.
+        resetAsyncState();
+      }
+    } else {
+      throw new UnsupportedOperationException(
+          "This test case does not support asynchronous mode.");
+    }
+  }
+
+  protected boolean supportsAsync() {
+    return false;
+  }
+  
+  // CHECKSTYLE_OFF
   /**
    * Actually run the user's test. Called from {@link GWTRunner}.
    */
-  void runTest() {
+  void __doRunTest() {
     Throwable caught = null;
-
-    testBeginMillis = System.currentTimeMillis();
-    results = new TestResults();
-
-    if (testCase == null) {
-      reportResultsAndRunNextMethod(new RuntimeException(
-          "Could not instantiate the requested class"));
-      return;
-    }
 
     if (shouldCatchExceptions()) {
       // Make sure no exceptions escape
-      GWT.setUncaughtExceptionHandler(this);
+      GWT.setUncaughtExceptionHandler(uncaughtHandler);
       try {
-        testCase.runBare();
+        runBare();
       } catch (Throwable e) {
         caught = e;
       }
@@ -243,6 +226,7 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
       reportResultsAndRunNextMethod(null);
     }
   }
+  // CHECKSTYLE_ON
 
   /**
    * Cleans up any outstanding state, reports ex to the remote runner, and kicks
@@ -251,55 +235,20 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
    * @param ex The results of this test.
    */
   private void reportResultsAndRunNextMethod(Throwable ex) {
-    List<Trial> trials = results.getTrials();
-
-    /*
-     * TODO(tobyr) - Consider making this logic polymorphic which will remove
-     * instanceof test. But testCase might be null.
-     * 
-     * If this is not a benchmark, we have to create a fake trial run
-     */
-    if (!(testCase instanceof Benchmark)) {
-      Trial trial = new Trial();
-      long testDurationMillis = System.currentTimeMillis() - testBeginMillis;
-      trial.setRunTimeMillis(testDurationMillis);
-
-      if (ex != null) {
-        ExceptionWrapper ew = new ExceptionWrapper(ex);
-        if (checkPoints != null) {
-          for (int i = 0, c = checkPoints.size(); i < c; ++i) {
-            ew.message += "\n" + checkPoints.get(i);
-          }
+    JUnitResult myResult = __getOrCreateTestResult();
+    if (ex != null) {
+      ExceptionWrapper ew = new ExceptionWrapper(ex);
+      if (checkPoints != null) {
+        for (int i = 0, c = checkPoints.size(); i < c; ++i) {
+          ew.message += "\n" + checkPoints.get(i);
         }
-        trial.setExceptionWrapper(ew);
       }
-
-      trials.add(trial);
-    } else {
-      /*
-       * If this was a benchmark, we need to handle exceptions specially. If an
-       * exception occurred, it happened without the trial being recorded. We,
-       * unfortunately, don't know the trial parameters at this point. We should
-       * consider putting the exception handling code directly into the
-       * generated Benchmark subclasses.
-       */
-      if (ex != null) {
-        ExceptionWrapper ew = new ExceptionWrapper(ex);
-        if (checkPoints != null) {
-          for (int i = 0, c = checkPoints.size(); i < c; ++i) {
-            ew.message += "\n" + checkPoints.get(i);
-          }
-        }
-        Trial trial = new Trial();
-        trial.setExceptionWrapper(ew);
-        trials.add(trial);
-      }
+      myResult.setExceptionWrapper(ew);
     }
 
-    results.setSourceRef(getDocumentLocation());
     testIsFinished = true;
     resetAsyncState();
-    GWTRunner.get().reportResultsAndGetNextMethod(results);
+    GWTRunner.get().reportResultsAndGetNextMethod(myResult);
   }
 
   /**
@@ -318,8 +267,7 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
    * this method serves as a hack to avoid "throws" clause problems.
    */
   private native void runBareTestCaseAvoidingExceptionDecl() /*-{
-    this.@com.google.gwt.junit.client.impl.GWTTestCaseImpl::testCase
-        .@junit.framework.TestCase::runBare()();
+    this.@junit.framework.TestCase::runBare()();
   }-*/;
 
   /**
@@ -332,7 +280,7 @@ public class GWTTestCaseImpl implements UncaughtExceptionHandler {
    */
   private boolean shouldCatchExceptions() {
     try {
-      return testCase.catchExceptions();
+      return catchExceptions();
     } catch (Throwable e) {
       return true;
     }

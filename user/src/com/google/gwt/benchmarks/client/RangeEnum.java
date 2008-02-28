@@ -13,29 +13,25 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.junit.client.annotations;
+package com.google.gwt.benchmarks.client;
 
 import java.lang.annotation.Target;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Documented;
 
 /**
- * Specifies a field containing the entire range of values for a parameter to a
- * {@link com.google.gwt.junit.client.Benchmark} method. The field must belong
- * to the same class being decorated by this annotation. The field must be
- * either an Iterable, Enum, or array whose type matches the parameter being
- * annotated.
- * 
- * @see RangeEnum
+ * Specifies an Enum containing the entire range of values for a parameter to a
+ * {@link Benchmark} method.
  */
 @Target(ElementType.PARAMETER)
 @Documented
-public @interface RangeField {
+public @interface RangeEnum {
 
   /**
-   * The name of the field that this range refers to.
+   * An <code>Enum</code> that contains the range of values that will be
+   * supplied to the test method.
    * 
-   * @return for example, {@code myCommonRange}
+   * @return for example, {@code MyEnum.class}
    */
-  String value();
+  Class<? extends Enum<?>> value();
 }

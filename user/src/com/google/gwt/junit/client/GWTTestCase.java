@@ -39,12 +39,12 @@ public abstract class GWTTestCase extends TestCase {
   /*
    * Object that collects the results of this test case execution.
    */
-  private TestResult testResult = null;
+  protected TestResult testResult = null;
 
   /**
    * Add a checkpoint message to the current test. If this test fails, all
-   * checkpoint messages will be appended to the getException description. This can
-   * be useful in web mode for determining how far test execution progressed
+   * checkpoint messages will be appended to the getException description. This
+   * can be useful in web mode for determining how far test execution progressed
    * before a failure occurs.
    * 
    * @param msg the checkpoint message to add
@@ -142,9 +142,8 @@ public abstract class GWTTestCase extends TestCase {
    * @param timeoutMillis how long to wait before the current test will time out
    * @tip Subsequent calls to this method reset the timeout.
    * @see #finishTest()
-   *
-   * @throws UnsupportedOperationException if this test case is a
-   *         {@link Benchmark}
+   * 
+   * @throws UnsupportedOperationException if {@link #supportsAsync()} is false
    */
   protected final void delayTestFinish(int timeoutMillis) {
     // implemented in the translatable version of this class
@@ -167,10 +166,9 @@ public abstract class GWTTestCase extends TestCase {
    * {@example com.google.gwt.examples.AsyncJUnitExample#testTimer()}
    * </p>
    * 
-   * @throws IllegalStateException if this test is not in asynchronous mode.
-   * @throws UnsupportedOperationException if this test case is a
-   *         {@link Benchmark}
-   *
+   * @throws IllegalStateException if this test is not in asynchronous mode
+   * @throws UnsupportedOperationException if {@link #supportsAsync()} is false
+   * 
    * @see #delayTestFinish(int)
    */
   protected final void finishTest() {
@@ -178,10 +176,20 @@ public abstract class GWTTestCase extends TestCase {
   }
 
   /**
-   * Runs the test via the {@link JUnitShell} environment.
+   * Runs the test via the {@link JUnitShell} environment. Do not override or
+   * call this method.
    */
   @Override
-  protected final void runTest() throws Throwable {
+  protected void runTest() throws Throwable {
     JUnitShell.runTest(getModuleName(), this, testResult);
   }
+
+  /**
+   * Returns true if this test case supports asynchronous mode. By default, this
+   * is set to true.
+   */
+  protected boolean supportsAsync() {
+    return true;
+  }
+
 }
