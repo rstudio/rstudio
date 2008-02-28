@@ -49,12 +49,12 @@ class SwtOleGlue {
   /**
    * Converts an array of variants to their equivalent java objects.
    */
-  public static Object[] convertVariantsToObjects(Class<?>[] argTypes,
-      Variant[] varArgs, String msgPrefix) {
+  public static Object[] convertVariantsToObjects(CompilingClassLoader cl,
+      Class<?>[] argTypes, Variant[] varArgs, String msgPrefix) {
     Object[] javaArgs = new Object[Math.min(varArgs.length, argTypes.length)];
     for (int i = 0; i < javaArgs.length; i++) {
       try {
-        Object javaArg = JsValueGlue.get(new JsValueIE6(varArgs[i]),
+        Object javaArg = JsValueGlue.get(new JsValueIE6(varArgs[i]), cl,
             argTypes[i], msgPrefix);
         javaArgs[i] = javaArg;
       } catch (IllegalArgumentException e) {
@@ -169,11 +169,11 @@ class SwtOleGlue {
   /**
    * Convert a Java string to a COM BSTR.
    * 
-   * Wrapper for the OS' SysAllocStringLen(), since SysAllocString() is not
-   * safe for embedded nulls.
+   * Wrapper for the OS' SysAllocStringLen(), since SysAllocString() is not safe
+   * for embedded nulls.
    */
   public static int sysAllocString(String s) {
     return COM.SysAllocStringLen(s.toCharArray(), s.length());
   }
- 
+
 }

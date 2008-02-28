@@ -94,10 +94,6 @@ public class HostedTest extends GWTTestCase {
     return new Number(v);
   }-*/;
 
-  private native static JavaScriptObject getBoxedStringAsObject(String v) /*-{
-    return new String(v);
-  }-*/;
-
   private native static String getBoxedStringAsString(String v) /*-{
     return new String(v);
   }-*/;
@@ -210,8 +206,6 @@ public class HostedTest extends GWTTestCase {
     assertEquals(getJSOAsString(bvo), "true");
     JavaScriptObject nvo = getBoxedNumberAsObject(42);
     assertEquals(getJSOAsString(nvo), "42");
-    JavaScriptObject svo = getBoxedStringAsObject("test");
-    assertEquals(getJSOAsString(svo), "test");
     String sv = getBoxedStringAsString("test");
     assertEquals(sv, "test");
   }

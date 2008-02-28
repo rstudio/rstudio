@@ -32,14 +32,21 @@ public class JClassLiteral extends JLiteral {
     return fullName.substring(0, pos + 1);
   }
 
-  private static String getTypeName(JType type) {
+  private static String getTypeName(JProgram program, JType type) {
     String typeName;
     if (type instanceof JArrayType) {
       typeName = type.getJsniSignatureName().replace('/', '.');
+      // Mangle the class name to match hosted mode.
+      if (program.isJavaScriptObject(((JArrayType) type).getLeafType())) {
+        typeName = typeName.replace(";", "$;");
+      }
     } else {
       typeName = type.getName();
+      // Mangle the class name to match hosted mode.
+      if (program.isJavaScriptObject(type)) {
+        typeName += '$';
+      }
     }
-
     return typeName;
   }
 
@@ -53,7 +60,7 @@ public class JClassLiteral extends JLiteral {
     super(program);
     refType = type;
 
-    String typeName = getTypeName(type);
+    String typeName = getTypeName(program, type);
 
     JMethod method = program.getIndexedMethod(type.getClassLiteralFactoryMethod());
     assert method != null;

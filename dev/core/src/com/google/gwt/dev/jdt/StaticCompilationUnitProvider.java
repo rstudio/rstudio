@@ -50,7 +50,8 @@ public class StaticCompilationUnitProvider implements CompilationUnitProvider {
    * Creates a stable name for this compilation unit.
    */
   public final String getLocation() {
-    return "transient source for " + packageName + "." + simpleTypeName;
+    String prefix = (packageName.length() > 0) ? packageName + "." : "";
+    return "transient source for " + prefix + simpleTypeName;
   }
 
   public String getMainTypeName() {

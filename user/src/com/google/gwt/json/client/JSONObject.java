@@ -48,7 +48,7 @@ public class JSONObject extends JSONValue {
     frontStore[String(key)] = jsonValue;
   }-*/;
 
-  private static native JavaScriptObject removeBack(JavaScriptObject backStore, String key) /*-{
+  private static native Object removeBack(JavaScriptObject backStore, String key) /*-{
     key = String(key);
     var result = backStore[key];
     delete backStore[key];
@@ -104,8 +104,12 @@ public class JSONObject extends JSONValue {
     }
     JSONValue result = getFront(frontStore, key);
     if (result == null && containsBack(backStore, key)) {
-      JavaScriptObject jso = removeBack(backStore, key);
-      result = JSONParser.buildValue(jso);
+      Object o = removeBack(backStore, key);
+      if (o instanceof String) {
+        result = new JSONString((String) o);
+      } else {
+        result = JSONParser.buildValue((JavaScriptObject) o);
+      }
       putFront(frontStore, key, result);
     }
     return result;

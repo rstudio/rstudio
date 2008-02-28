@@ -167,34 +167,4 @@ public final class Event extends JavaScriptObject {
    */
   protected Event() {
   }
-
-  /*
-   * (non-Javadoc)
-   *
-   * @see java.lang.Object#equals(java.lang.Object)
-   */
-  @Override
-  public boolean equals(Object other) {
-    return super.equals(other);
-  }
-
-  /*
-   * (non-Javadoc)
-   *
-   * @see java.lang.Object#hashCode()
-   */
-  @Override
-  public int hashCode() {
-    return super.hashCode();
-  }
-
-  /*
-   * (non-Javadoc)
-   *
-   * @see java.lang.Object#toString()
-   */
-  @Override
-  public String toString() {
-    return DOM.eventToString(this);
-  }
 }

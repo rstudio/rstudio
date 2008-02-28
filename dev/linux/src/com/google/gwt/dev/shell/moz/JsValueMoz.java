@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -156,6 +156,8 @@ public class JsValueMoz extends JsValue {
 
   protected static native double _getNumber(int jsRootedValue);
 
+  protected static native int _getObjectPointer(int jsRootedValue);
+
   protected static native String _getString(int jsRootedValue);
 
   protected static native String _getTypeString(int jsRootedValue);
@@ -288,6 +290,11 @@ public class JsValueMoz extends JsValue {
   @Override
   public int getInt() {
     return _getInt(jsRootedValue);
+  }
+
+  @Override
+  public int getJavaScriptObjectPointer() {
+    return _getObjectPointer(jsRootedValue);
   }
 
   /**
@@ -433,8 +440,6 @@ public class JsValueMoz extends JsValue {
    * (non-Javadoc)
    * 
    * @see com.google.gwt.dev.shell.JsValue#setByte(byte)
-   * 
-   * TODO(jat): remove this method
    */
   @Override
   public void setByte(byte val) {
@@ -445,8 +450,6 @@ public class JsValueMoz extends JsValue {
    * (non-Javadoc)
    * 
    * @see com.google.gwt.dev.shell.JsValue#setChar(char)
-   * 
-   * TODO(jat): remove this method
    */
   @Override
   public void setChar(char val) {
@@ -487,8 +490,6 @@ public class JsValueMoz extends JsValue {
    * (non-Javadoc)
    * 
    * @see com.google.gwt.dev.shell.JsValue#setShort(short)
-   * 
-   * TODO(jat): remove this method
    */
   @Override
   public void setShort(short val) {
@@ -543,7 +544,7 @@ public class JsValueMoz extends JsValue {
    *      java.lang.Object)
    */
   @Override
-  public void setWrappedJavaObject(CompilingClassLoader cl, Object val) {
+  public <T> void setWrappedJavaObject(CompilingClassLoader cl, T val) {
     if (val == null) {
       setNull();
       return;

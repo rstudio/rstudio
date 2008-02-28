@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -147,7 +147,16 @@ public class JTypeOracle {
 
       JClassType cType = (JClassType) type;
       if (qType instanceof JClassType) {
-        return isSuperClass(cType, (JClassType) qType);
+        JClassType qcType = (JClassType) qType;
+        if (isSuperClass(cType, qcType)) {
+          return true;
+        }
+        // All JavaScriptObject types can be freely cast to each other.
+        JClassType jsoType = program.getJavaScriptObject();
+        if (jsoType != null) {
+          return isSameOrSuper(cType, jsoType)
+              && isSameOrSuper(qcType, jsoType);
+        }
       } else if (qType instanceof JInterfaceType) {
         return implementsInterface(cType, (JInterfaceType) qType);
       }
@@ -485,6 +494,10 @@ public class JTypeOracle {
       map.put(key, map2);
     }
     return map2;
+  }
+
+  private boolean isSameOrSuper(JClassType type, JClassType qType) {
+    return (type == qType || isSuperClass(type, qType));
   }
 
   /**

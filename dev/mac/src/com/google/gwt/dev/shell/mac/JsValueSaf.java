@@ -35,8 +35,8 @@ import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchObject;
 public class JsValueSaf extends JsValue {
 
   private static class JsCleanupSaf implements JsCleanup {
-    private final int jsval;
     private final Throwable creationStackTrace;
+    private final int jsval;
 
     /**
      * Create a cleanup object which takes care of cleaning up the underlying JS
@@ -59,15 +59,15 @@ public class JsValueSaf extends JsValue {
     }
   }
 
-  /* 
-   * Underlying JSValue* as an integer.
-   */
-  private int jsval;
-  
   /*
    * Stores a stack trace of the creation site for debugging.
    */
   private Throwable creationStackTrace;
+
+  /*
+   * Underlying JSValue* as an integer.
+   */
+  private int jsval;
 
   /**
    * Create a Java wrapper around an undefined JSValue.
@@ -95,7 +95,16 @@ public class JsValueSaf extends JsValue {
   public int getInt() {
     int curExecState = LowLevelSaf.getExecState();
     return LowLevelSaf.coerceToInt(curExecState, jsval);
- }
+  }
+
+  @Override
+  public int getJavaScriptObjectPointer() {
+    if (isJavaScriptObject()) {
+      return jsval;
+    } else {
+      return 0;
+    }
+  }
 
   public int getJsValue() {
     return jsval;
@@ -195,8 +204,8 @@ public class JsValueSaf extends JsValue {
   }
 
   /**
-   * Set a new value.  Unlock the previous value, but do *not* lock the new
-   * value (see class comment).
+   * Set a new value. Unlock the previous value, but do *not* lock the new value
+   * (see class comment).
    * 
    * @param jsval the new value to set
    */
@@ -204,7 +213,7 @@ public class JsValueSaf extends JsValue {
     LowLevelSaf.gcUnlock(this.jsval, creationStackTrace);
     init(jsval);
   }
-  
+
   @Override
   public void setNull() {
     setJsVal(LowLevelSaf.jsNull());
@@ -227,10 +236,10 @@ public class JsValueSaf extends JsValue {
 
   @Override
   public void setValue(JsValue other) {
-    int jsvalOther = ((JsValueSaf)other).jsval;
+    int jsvalOther = ((JsValueSaf) other).jsval;
     /*
-     * Add another lock to this jsval, since both the other object and this
-     * one will eventually release it.
+     * Add another lock to this jsval, since both the other object and this one
+     * will eventually release it.
      */
     LowLevelSaf.gcLock(jsvalOther);
     setJsVal(jsvalOther);
@@ -243,7 +252,7 @@ public class JsValueSaf extends JsValue {
       setNull();
       return;
     } else if (val instanceof DispatchObject) {
-      dispObj = (DispatchObject)val;
+      dispObj = (DispatchObject) val;
     } else {
       dispObj = new WebKitDispatchAdapter(cl, val);
     }
@@ -257,11 +266,12 @@ public class JsValueSaf extends JsValue {
 
   /**
    * Initialization helper method.
+   * 
    * @param jsval underlying JSValue*
    */
   private void init(int jsval) {
     this.jsval = jsval;
-    
+
     // only create and fill in the stack trace if we are debugging
     if (LowLevelSaf.debugObjectCreation) {
       this.creationStackTrace = new Throwable();

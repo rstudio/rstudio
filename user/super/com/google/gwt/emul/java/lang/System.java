@@ -98,7 +98,7 @@ public final class System {
   }-*/;
 
   public static native int identityHashCode(Object o) /*-{
-    return @com.google.gwt.core.client.Impl::getHashCode(Ljava/lang/Object;)(o);
+    return (o == null) ? 0 : @com.google.gwt.core.client.Impl::getHashCode(Ljava/lang/Object;)(o);
   }-*/;
 
   public static native void setErr(PrintStream err) /*-{

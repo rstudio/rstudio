@@ -381,6 +381,24 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1getNumber
 }
 
 /**
+ * Class:     com_google_gwt_dev_shell_moz_JsValueMoz
+ * Method:    _getObjectPointer()
+ * Signature: (I)I
+ */
+extern "C" JNIEXPORT jint JNICALL
+Java_com_google_gwt_dev_shell_moz_JsValueMoz__1getObjectPointer
+  (JNIEnv* jniEnv, jclass, jint jsRootedValueInt)
+{
+  JsRootedValue* jsRootedValue = reinterpret_cast<JsRootedValue*>
+      (jsRootedValueInt);
+  Tracer tracer("JsValueMoz._getObjectPointer", jsRootedValue);
+  JSObject* ptr = jsRootedValue->getObject();
+  int val = reinterpret_cast<int>(ptr);
+  tracer.log("value=%d", val);
+  return val;
+}
+
+/**
  * Return a Javascript string as a Java string.
  * 
  * Class:     com_google_gwt_dev_shell_moz_JsValueMoz
@@ -454,12 +472,11 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1getWrappedJavaObject
   JsRootedValue* jsRootedValue = reinterpret_cast<JsRootedValue*>
       (jsRootedValueInt);
   Tracer tracer("JsValueMoz._getWrappedJavaObject", jsRootedValue);
-  jsval val = jsRootedValue->getValue();
-  if(!JSVAL_IS_OBJECT(val)) {
+  JSObject* jsObject = jsRootedValue->getObject();
+  if(!jsObject) {
     tracer.throwHostedModeException(jniEnv, "Javascript value not an object");
     return 0;
   }
-  JSObject* jsObject = JSVAL_TO_OBJECT(val);
   JSContext* cx = JsRootedValue::currentContext();
   if(!JS_InstanceOf(cx, jsObject, &gwt_nativewrapper_class, 0)) {
     tracer.throwHostedModeException(jniEnv,

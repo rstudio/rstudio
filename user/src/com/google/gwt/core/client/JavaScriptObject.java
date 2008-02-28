@@ -51,52 +51,54 @@ public class JavaScriptObject {
     return {};
   }-*/;
 
-  private static native boolean equalsImpl(JavaScriptObject o,
-      JavaScriptObject other) /*-{
-    return o === other;
-  }-*/;
-
-  private static native String toStringImpl(JavaScriptObject o) /*-{
-    if (o.toString)
-      return o.toString();
-    return "[object]";
-  }-*/;
-
   /**
-   * The underlying JavaScript object. This is used internally and should never
-   * be accessed by client code.
-   */
-  protected Object hostedModeReference;
-
-  /**
-   * Not directly instantiable.  Subclasses should also define a protected
-   * no-arg constructor to prevent client code from directly instantiating
-   * the class.
+   * Not directly instantiable. All subclasses must also define a protected,
+   * empty, no-arg constructor.
    */
   protected JavaScriptObject() {
   }
 
-  @Override
-  public boolean equals(Object other) {
-    if (!(other instanceof JavaScriptObject)) {
-      return false;
-    }
-    return equalsImpl(this, (JavaScriptObject) other);
-  }
-
-  @Override
-  public int hashCode() {
-    return Impl.getHashCode(this);
+  /**
+   * A helper method to enable cross-casting from any {@link JavaScriptObject}
+   * type to any other {@link JavaScriptObject} type.
+   * 
+   * @param <T> the target type
+   * @return this object as a different type
+   */
+  @SuppressWarnings("unchecked")
+  public final <T extends JavaScriptObject> T cast() {
+    return (T) this;
   }
   
+  /**
+   * Returns <code>true</code> if the objects are JavaScript identical
+   * (triple-equals).
+   */
   @Override
-  public String toString() {
-    /*
-     * Hosted mode will marshal an explicit argument from a JavaScriptObject
-     * back to its underlying object, but it won't currently do that for the
-     * implicit "this" arg. For now, can't implement instance methods on JSO
-     * directly as natives, so use a delegator.
-     */
-    return toStringImpl(this);
+  public final boolean equals(Object other) {
+    return super.equals(other);
   }
+
+  /**
+   * Uses a monotonically increasing counter to assign a hash code to the
+   * underlying JavaScript object. Do not call this method on non-modifiable
+   * JavaScript objects.
+   * 
+   * TODO: if the underlying object defines a 'hashCode' method maybe use that?
+   * 
+   * @return the hash code of the object
+   */
+  @Override
+  public final int hashCode() {
+    return Impl.getHashCode(this);
+  }
+
+  /**
+   * Returns the results of calling <code>toString</code> in JavaScript on the
+   * object, if the object implements toString; otherwise returns "[JavaScriptObject]".
+   */
+  @Override
+  public final native String toString() /*-{
+    return this.toString ? this.toString() : "[JavaScriptObject]";
+  }-*/;
 }

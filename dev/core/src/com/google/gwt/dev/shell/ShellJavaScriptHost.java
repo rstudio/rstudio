@@ -75,12 +75,6 @@ public interface ShellJavaScriptHost {
       Object[] args) throws Throwable;
 
   /**
-   * Invoke a native JavaScript function that returns a handle value.
-   */
-  Object invokeNativeHandle(String name, Object jthis, Class<?> returnType,
-      Class<?>[] types, Object[] args) throws Throwable;
-
-  /**
    * Invoke a native JavaScript function that returns an integer value.
    */
   int invokeNativeInt(String name, Object jthis, Class<?>[] types, Object[] args)
@@ -102,12 +96,6 @@ public interface ShellJavaScriptHost {
    * Invoke a native JavaScript function that returns a short value.
    */
   short invokeNativeShort(String name, Object jthis, Class<?>[] types,
-      Object[] args) throws Throwable;
-
-  /**
-   * Invoke a native JavaScript function that returns a string value.
-   */
-  String invokeNativeString(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable;
 
   /**

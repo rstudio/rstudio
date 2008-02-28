@@ -58,7 +58,12 @@ public class JSONArray extends JSONValue {
     }
     JSONValue wrapped = null;
     if (rawTest(index)) {
-      wrapped = JSONParser.buildValue(rawGet(index));
+      Object o = rawGet(index);
+      if (o instanceof String) {
+        wrapped = new JSONString((String) o);
+      } else {
+        wrapped = JSONParser.buildValue((JavaScriptObject) o);
+      }
       rawSet(index, null);
     }
     wrappedSet(index, wrapped);
@@ -122,16 +127,16 @@ public class JSONArray extends JSONValue {
     return [];
   }-*/;
 
-  private native JavaScriptObject rawGet(int index) /*-{
+  private native Object rawGet(int index) /*-{
     var x = this.@com.google.gwt.json.client.JSONArray::javascriptArray[index];
-    if (typeof x == 'number' || typeof x == 'string' || typeof x == 'array' || typeof x == 'boolean') {
+    if (typeof x == 'number' || typeof x == 'array' || typeof x == 'boolean') {
       x = (Object(x));
     }
     return x;
   }-*/;
 
-  private native void rawSet(int index, JavaScriptObject jsObject) /*-{
-    this.@com.google.gwt.json.client.JSONArray::javascriptArray[index] = jsObject; 
+  private native void rawSet(int index, Object value) /*-{
+    this.@com.google.gwt.json.client.JSONArray::javascriptArray[index] = value;
   }-*/;
 
   private native boolean rawTest(int index) /*-{

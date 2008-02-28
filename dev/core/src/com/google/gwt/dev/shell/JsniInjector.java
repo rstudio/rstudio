@@ -23,7 +23,6 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jdt.CompilationUnitProviderWithAlternateSource;
 import com.google.gwt.dev.js.ast.JsBlock;
@@ -43,37 +42,6 @@ import java.util.Map;
  * source.
  */
 public class JsniInjector {
-
-  /**
-   * A consolidated way to get all expected types and succeed or fail
-   * atomically.
-   */
-  private class CoreTypes {
-    static final String CLS_JSOBJECT = "JavaScriptObject";
-    static final String CLS_STRING = "String";
-    static final String PKG_JSOBJECT = "com.google.gwt.core.client";
-    static final String PKG_STRING = "java.lang";
-
-    public final JClassType javaLangString;
-
-    public final JClassType javaScriptObject;
-
-    public CoreTypes(TreeLogger logger) throws UnableToCompleteException {
-      javaScriptObject = getCoreType(logger, PKG_JSOBJECT, CLS_JSOBJECT);
-      javaLangString = getCoreType(logger, PKG_STRING, CLS_STRING);
-    }
-
-    private JClassType getCoreType(TreeLogger logger, String pkg, String cls)
-        throws UnableToCompleteException {
-      try {
-        return oracle.getType(pkg, cls);
-      } catch (NotFoundException e) {
-        String msg = "Unable to find core type '" + pkg + "." + cls + "'";
-        logger.log(TreeLogger.ERROR, msg, e);
-        throw new UnableToCompleteException();
-      }
-    }
-  }
 
   /**
    * A chunk of replacement text and where to put it.
@@ -104,8 +72,6 @@ public class JsniInjector {
     }
   }
 
-  private CoreTypes coreTypes;
-
   private final TypeOracle oracle;
 
   private final Map<JMethod, JsBlock> parsedJsByMethod = new IdentityHashMap<JMethod, JsBlock>();
@@ -120,11 +86,6 @@ public class JsniInjector {
 
     logger = logger.branch(TreeLogger.SPAM,
         "Checking for JavaScript native methods", null);
-
-    // Make sure the core types exist.
-    if (coreTypes == null) {
-      coreTypes = new CoreTypes(logger);
-    }
 
     // Analyze the source and build a list of changes.
     char[] source = cup.getSource();
@@ -252,14 +213,8 @@ public class JsniInjector {
     // Write the Java call to the property invoke method, adding
     // downcasts where necessary.
     JType returnType = method.getReturnType();
-    boolean isJavaScriptObject = isJavaScriptObject(returnType);
-    JPrimitiveType primType;
-    if (isJavaScriptObject) {
-      // Add a downcast from Handle to the originally-declared type.
-      String returnTypeName = returnType.getParameterizedQualifiedSourceName();
-      sb.append("return (" + returnTypeName + ")" + Jsni.JAVASCRIPTHOST_NAME
-          + ".invokeNativeHandle");
-    } else if (null != (primType = returnType.isPrimitive())) {
+    JPrimitiveType primType = returnType.isPrimitive();
+    if (primType != null) {
       // Primitives have special overloads.
       char[] primTypeSuffix = primType.getSimpleSourceName().toCharArray();
       primTypeSuffix[0] = Character.toUpperCase(primTypeSuffix[0]);
@@ -270,10 +225,6 @@ public class JsniInjector {
       sb.append(Jsni.JAVASCRIPTHOST_NAME);
       sb.append(".");
       sb.append(invokeMethodName);
-    } else if (returnType == coreTypes.javaLangString) {
-      sb.append("return ");
-      sb.append(Jsni.JAVASCRIPTHOST_NAME);
-      sb.append(".invokeNativeString");
     } else {
       // Some reference type.
       // We need to add a downcast to the originally-declared type.
@@ -295,13 +246,6 @@ public class JsniInjector {
       sb.append("\", this, ");
     }
 
-    if (isJavaScriptObject) {
-      // Handle-oriented calls also need the return type as an argument.
-      String returnTypeName = returnType.getErasedType().getQualifiedSourceName();
-      sb.append(returnTypeName);
-      sb.append(".class, ");
-    }
-
     // Build an array of classes that tells the invoker how to adapt the
     // incoming arguments for calling into JavaScript.
     sb.append(Jsni.buildTypeList(method));
@@ -315,6 +259,8 @@ public class JsniInjector {
     // Catch exceptions; rethrow if the exception is RTE or declared.
     sb.append("} catch (java.lang.Throwable __gwt_exception) {" + nl);
     sb.append("if (__gwt_exception instanceof java.lang.RuntimeException) throw (java.lang.RuntimeException) __gwt_exception;"
+        + nl);
+    sb.append("if (__gwt_exception instanceof java.lang.Error) throw (java.lang.Error) __gwt_exception;"
         + nl);
     JType[] throwTypes = method.getThrows();
     for (int i = 0; i < throwTypes.length; ++i) {
@@ -355,19 +301,6 @@ public class JsniInjector {
     return sb.toString();
   }
 
-  private boolean isJavaScriptObject(JType type) {
-    JClassType classType = type.isClass();
-    if (classType == null) {
-      return false;
-    }
-
-    if (classType.isAssignableTo(coreTypes.javaScriptObject)) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
   private void rewriteCompilationUnit(TreeLogger logger, char[] source,
       List<Replacement> changes, CompilationUnitProvider cup, boolean pretty)
       throws UnableToCompleteException {
@@ -376,7 +309,9 @@ public class JsniInjector {
     JClassType[] types = oracle.getTypesInCompilationUnit(cup);
     for (int i = 0; i < types.length; i++) {
       JClassType type = types[i];
-      rewriteType(logger, source, changes, type, pretty);
+      if (!type.getQualifiedSourceName().startsWith("java.")) {
+        rewriteType(logger, source, changes, type, pretty);
+      }
     }
   }
 

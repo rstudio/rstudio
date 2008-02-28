@@ -92,7 +92,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
       try {
         // Invoke the property provider function in JavaScript.
         //
-        value = space.invokeNativeString("__gwt_getProperty", null,
+        value = (String) space.invokeNativeObject("__gwt_getProperty", null,
             new Class[] {String.class}, new Object[] {prop.getName()});
       } catch (Throwable e) {
         // Treat as an unknown value.

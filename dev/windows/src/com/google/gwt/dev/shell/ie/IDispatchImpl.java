@@ -116,7 +116,7 @@ abstract class IDispatchImpl extends COMObject {
       Variant[] params, MethodAdaptor method) throws InstantiationException,
       InvocationTargetException, HResultException {
     // TODO: make sure we have enough args! It's okay if there are too many.
-    Object[] javaParams = SwtOleGlue.convertVariantsToObjects(
+    Object[] javaParams = SwtOleGlue.convertVariantsToObjects(cl,
         method.getParameterTypes(), params, "Calling method '"
             + method.getName() + "'");
 
@@ -149,14 +149,7 @@ abstract class IDispatchImpl extends COMObject {
       }
     }
 
-    // Convert it to a variant (if the return type is void, return
-    // a VT_EMPTY variant -- 'undefined' in JavaScript).
-    //
-    Class<?> returnType = method.getReturnType();
-    if (returnType.equals(Void.TYPE)) {
-      return new Variant();
-    }
-    return SwtOleGlue.convertObjectToVariant(cl, returnType, result);
+    return SwtOleGlue.convertObjectToVariant(cl, method.getReturnType(), result);
   }
 
   protected int refCount;

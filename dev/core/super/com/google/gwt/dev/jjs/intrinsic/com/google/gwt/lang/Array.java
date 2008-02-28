@@ -121,9 +121,13 @@ public final class Array {
    * Performs an array assignment, checking for valid index and type.
    */
   public static Object setCheck(Array array, int index, Object value) {
-    if (value != null && array.queryId != 0
-        && !Cast.instanceOf(value, array.queryId)) {
-      throw new ArrayStoreException();
+    if (value != null) {
+      if (array.queryId > 0 && !Cast.canCastUnsafe(value.typeId, array.queryId)) {
+        throw new ArrayStoreException();
+      }
+      if (array.queryId < 0 && Cast.isJavaObject(value)) {
+        throw new ArrayStoreException();
+      }
     }
     return set(array, index, value);
   }

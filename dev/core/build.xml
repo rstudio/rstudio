@@ -26,6 +26,8 @@
 			<zipfileset src="${gwt.tools.lib}/apache/tapestry-util-text-4.0.2.jar" />
 			<zipfileset src="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
 			<zipfileset src="${gwt.tools.lib}/eclipse/jdt-3.3.1.jar" />
+			<zipfileset src="${gwt.tools.lib}/objectweb/asm-3.1.jar" />
+			<zipfileset src="${gwt.tools.lib}/objectweb/asm-commons-3.1.jar" />
 			<zipfileset src="${gwt.tools.lib}/tomcat/ant-launcher-1.6.5.jar" />
 			<zipfileset src="${gwt.tools.lib}/tomcat/catalina-1.0.jar" />
 			<zipfileset src="${gwt.tools.lib}/tomcat/catalina-optional-1.0.jar" />

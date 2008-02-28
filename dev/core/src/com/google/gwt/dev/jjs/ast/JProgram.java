@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -434,15 +434,30 @@ public class JProgram extends JNode {
   }
 
   public JField getIndexedField(String string) {
-    return indexedFields.get(string);
+    JField field = indexedFields.get(string);
+    if (field == null) {
+      throw new InternalCompilerException("Unable to locate index field: "
+          + string);
+    }
+    return field;
   }
 
   public JMethod getIndexedMethod(String string) {
-    return indexedMethods.get(string);
+    JMethod method = indexedMethods.get(string);
+    if (method == null) {
+      throw new InternalCompilerException("Unable to locate index method: "
+          + string);
+    }
+    return method;
   }
 
   public JReferenceType getIndexedType(String string) {
-    return indexedTypes.get(string);
+    JReferenceType type = indexedTypes.get(string);
+    if (type == null) {
+      throw new InternalCompilerException("Unable to locate index type: "
+          + string);
+    }
+    return type;
   }
 
   public JClassType getJavaScriptObject() {
@@ -667,7 +682,7 @@ public class JProgram extends JNode {
   }
 
   public boolean isJavaScriptObject(JType type) {
-    if (type instanceof JClassType) {
+    if (type instanceof JClassType && typeSpecialJavaScriptObject != null) {
       return typeOracle.canTriviallyCast((JClassType) type,
           typeSpecialJavaScriptObject);
     }

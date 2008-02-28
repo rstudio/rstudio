@@ -50,14 +50,12 @@ import java.util.Set;
  * of itself, but it opens the door to other optimizations. The basic idea is
  * that you look for calls to instance methods that are not actually
  * polymorphic. In other words, the target method is (effectively) final, not
- * overriden anywhere in the compilation. We rewrite the single instance method
+ * overridden anywhere in the compilation. We rewrite the single instance method
  * as a static method that contains the implementation plus an instance method
  * that delegates to the static method. Then we update any call sites to call
  * the static method instead. This opens the door to further optimizations,
  * reduces use of the long "this" keyword in the resulting JavaScript, and in
  * most cases the polymorphic version can be pruned later.
- * 
- * TODO(later): make this work on JSNI methods!
  */
 public class MakeCallsStatic {
 
@@ -67,7 +65,7 @@ public class MakeCallsStatic {
    * it. Sometimes the instance method can be pruned later since we update all
    * non-polymorphic call sites.
    */
-  private class CreateStaticImplsVisitor extends JVisitor {
+  static class CreateStaticImplsVisitor extends JVisitor {
 
     /**
      * When code is moved from an instance method to a static method, all
@@ -112,15 +110,15 @@ public class MakeCallsStatic {
       @Override
       public void endVisit(JParameterRef x, Context ctx) {
         JParameter param = varMap.get(x.getTarget());
-        JParameterRef paramRef = new JParameterRef(program, x.getSourceInfo(),
-            param);
+        JParameterRef paramRef = new JParameterRef(x.getProgram(),
+            x.getSourceInfo(), param);
         ctx.replaceMe(paramRef);
       }
 
       @Override
       public void endVisit(JThisRef x, Context ctx) {
-        JParameterRef paramRef = new JParameterRef(program, x.getSourceInfo(),
-            thisParam);
+        JParameterRef paramRef = new JParameterRef(x.getProgram(),
+            x.getSourceInfo(), thisParam);
         ctx.replaceMe(paramRef);
       }
     }
@@ -141,6 +139,7 @@ public class MakeCallsStatic {
        * Don't use the JProgram helper because it auto-adds the new method to
        * its enclosing class.
        */
+      JProgram program = x.getProgram();
       JMethod newMethod = new JMethod(program, sourceInfo, newName,
           enclosingType, returnType, false, true, true, x.isPrivate());
 
@@ -266,17 +265,7 @@ public class MakeCallsStatic {
         return;
       }
 
-      // Update the call site
-      JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(), null,
-          newMethod);
-
-      // The qualifier becomes the first arg
-      newCall.getArgs().add(x.getInstance());
-      // Copy the rest of the args
-      for (int i = 0; i < x.getArgs().size(); ++i) {
-        newCall.getArgs().add(x.getArgs().get(i));
-      }
-      ctx.replaceMe(newCall);
+      ctx.replaceMe(makeStaticCall(x, newMethod));
     }
   }
 
@@ -284,7 +273,18 @@ public class MakeCallsStatic {
     return new MakeCallsStatic(program).execImpl();
   }
 
-  public Set<JMethod> toBeMadeStatic = new HashSet<JMethod>();
+  static JMethodCall makeStaticCall(JMethodCall x, JMethod newMethod) {
+    // Update the call site
+    JMethodCall newCall = new JMethodCall(x.getProgram(), x.getSourceInfo(),
+        null, newMethod);
+
+    // The qualifier becomes the first arg
+    newCall.getArgs().add(x.getInstance());
+    newCall.getArgs().addAll(x.getArgs());
+    return newCall;
+  }
+
+  protected Set<JMethod> toBeMadeStatic = new HashSet<JMethod>();
 
   private final JProgram program;
 

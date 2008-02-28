@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,8 +15,6 @@
  */
 package com.google.gwt.lang;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
 // CHECKSTYLE_NAMING_OFF: Uses legacy conventions of underscore prefixes.
 
 /**
@@ -28,27 +26,57 @@ final class Cast {
   // magic magic magic
   protected static Object typeIdArray;
 
-  protected static native boolean canCast(int srcId, int dstId) /*-{
-    // Force to boolean.
-    return !!(srcId && @com.google.gwt.lang.Cast::typeIdArray[srcId][dstId]);
+  static native boolean canCast(int srcId, int dstId) /*-{
+    return srcId && !!@com.google.gwt.lang.Cast::typeIdArray[srcId][dstId];
+  }-*/;
+
+  /**
+   * Danger: value not coerced to boolean; use the result only in a boolean
+   * context.
+   */
+  static native boolean canCastUnsafe(int srcId, int dstId) /*-{
+    return srcId && @com.google.gwt.lang.Cast::typeIdArray[srcId][dstId];
   }-*/;
 
   static native String charToString(char x) /*-{
     return String.fromCharCode(x);
   }-*/;
 
-  static native Object dynamicCast(Object src, int dstId) /*-{
-    if (src != null)
-      @com.google.gwt.lang.Cast::canCast(II)(src.@java.lang.Object::typeId,dstId)
-      || @com.google.gwt.lang.Cast::throwClassCastException()();
-
+  static Object dynamicCast(Object src, int dstId) {
+    if (src != null && !canCastUnsafe(src.typeId, dstId)) {
+      throw new ClassCastException();
+    }
     return src;
-  }-*/;
+  }
 
-  static native boolean instanceOf(Object src, int dstId) /*-{
-    return (src != null) &&
-        @com.google.gwt.lang.Cast::canCast(II)(src.@java.lang.Object::typeId,dstId);
-  }-*/;
+  /**
+   * Allow a cast to JSO only if there's no type ID.
+   */
+  static Object dynamicCastJso(Object src) {
+    if (src != null && isJavaObject(src)) {
+      throw new ClassCastException();
+    }
+    return src;
+  }
+
+  static boolean instanceOf(Object src, int dstId) {
+    return (src != null) && canCast(src.typeId, dstId);
+  }
+
+  /**
+   * Instance of JSO only if there's no type ID.
+   */
+  static boolean instanceOfJso(Object src) {
+    return (src != null) && isJavaScriptObject(src);
+  }
+
+  static boolean isJavaObject(Object src) {
+    return src.typeMarker == getNullMethod() || src.typeId == 2;
+  }
+
+  static boolean isJavaScriptObject(Object src) {
+    return src.typeMarker != getNullMethod() && src.typeId != 2;
+  }
 
   /**
    * See JLS 5.1.3.
@@ -120,14 +148,6 @@ final class Cast {
   }
 
   /**
-   * Unconditionally throw a {@link ClassCastException}. Called from {#link
-   * {@link #dynamicCast(Object, int)}.
-   */
-  static Object throwClassCastException() throws ClassCastException {
-    throw new ClassCastException();
-  }
-
-  /**
    * Check a statically false cast, which can succeed if the argument is null.
    * Called by compiler-generated code based on static type information.
    */
@@ -139,26 +159,8 @@ final class Cast {
     return o;
   }
 
-  static native JavaScriptObject wrapJSO(JavaScriptObject jso, Object seed) /*-{
-    _ = seed.prototype;
-
-    // WEIRD: The inequality below represents the fact that superclasses always
-    // have typeId < any subclass typeId.  This code lets us wrap the same JSO 
-    // "tighter" but never "looser". This would break if the compiler did not
-    // ensure that superclass ids are less than subclass ids.
-    //
-    // Note also that the inequality is false (and thus allows wrapping) if
-    // jso's typeId is undefined, because (undefined < positive int).
-
-    if (jso && !(jso.@java.lang.Object::typeId >= _.@java.lang.Object::typeId)) {
-      for (var i in _) {
-        // don't clobber toString
-        if (i != 'toString' ) {
-          jso[i] = _[i];
-        }
-      }
-    }
-    return jso;
+  private static native Object getNullMethod() /*-{
+    return @null::nullMethod();
   }-*/;
 
 }

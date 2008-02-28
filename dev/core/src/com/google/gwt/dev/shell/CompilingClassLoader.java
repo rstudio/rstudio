@@ -18,21 +18,34 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jdt.ByteCodeCompiler;
 import com.google.gwt.dev.jdt.CacheManager;
+import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter;
+import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodMapper;
 import com.google.gwt.util.tools.Utility;
+
+import org.apache.commons.collections.map.ReferenceMap;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
+ * An isolated {@link ClassLoader} for running all user code. All user files are
+ * compiled from source code byte a {@link ByteCodeCompiler}. After
+ * compilation, some byte code rewriting is performed to support
+ * <code>JavaScriptObject</code> and its subtypes.
  * 
- * TODO : we should refactor this class to move the getClassInfoByDispId,
+ * TODO: we should refactor this class to move the getClassInfoByDispId,
  * getDispId, getMethodDispatch and putMethodDispatch into a separate entity
  * since they really do not interact with the CompilingClassLoader
  * functionality.
@@ -85,9 +98,6 @@ public final class CompilingClassLoader extends ClassLoader {
     public synchronized int getDispId(String jsniMemberRef) {
       /*
        * Map JS toString() onto the Java toString() method.
-       * 
-       * TODO : is it true that tostring is valid in JavaScript? JavaScript is
-       * case sensitive.
        */
       if (jsniMemberRef.equals("toString")) {
         jsniMemberRef = "@java.lang.Object::toString()";
@@ -111,6 +121,13 @@ public final class CompilingClassLoader extends ClassLoader {
       if (dispClassInfo != null) {
         String memberName = jsniMemberRef.substring(endClassName + 2);
         int memberId = dispClassInfo.getMemberId(memberName);
+
+        if (memberId < 0) {
+          logger.log(TreeLogger.WARN, "Member '" + memberName
+              + "' in JSNI reference '" + jsniMemberRef
+              + "' could not be found; expect subsequent failures",
+              new NoSuchFieldError(memberName));
+        }
 
         return synthesizeDispId(dispClassInfo.getClassId(), memberId);
       }
@@ -195,6 +212,11 @@ public final class CompilingClassLoader extends ClassLoader {
         return null;
       }
 
+      // Map JSO type references to the appropriate impl class.
+      if (classRewriter.isJsoIntf(cls.getName())) {
+        cls = getClassFromBinaryName(cls.getName() + "$");
+      }
+
       /*
        * we need to create a new DispatchClassInfo since we have never seen this
        * class before under any source or binary class name
@@ -225,6 +247,84 @@ public final class CompilingClassLoader extends ClassLoader {
     }
   }
 
+  private class MyMethodDeclarationMapper implements InstanceMethodMapper {
+
+    private final Map<String, Set<JClassType>> signatureToDeclaringClasses = new HashMap<String, Set<JClassType>>();
+
+    public MyMethodDeclarationMapper(Set<JClassType> jsoTypes,
+        JClassType javaLangObject) {
+      // Populate the map.
+      for (JClassType type : jsoTypes) {
+        for (JMethod method : type.getMethods()) {
+          if (!method.isStatic()) {
+            String signature = createSignature(method);
+            Set<JClassType> declaringClasses = signatureToDeclaringClasses.get(signature);
+            if (declaringClasses == null) {
+              declaringClasses = new HashSet<JClassType>();
+              signatureToDeclaringClasses.put(signature, declaringClasses);
+            }
+            declaringClasses.add(type);
+          }
+        }
+      }
+      // Object clobbers everything.
+      for (JMethod method : javaLangObject.getMethods()) {
+        if (!method.isStatic()) {
+          String signature = createSignature(method);
+          Set<JClassType> declaringClasses = new HashSet<JClassType>();
+          signatureToDeclaringClasses.put(signature, declaringClasses);
+          declaringClasses.add(javaLangObject);
+        }
+      }
+    }
+
+    public String findDeclaringClass(String desc, String signature) {
+      // Lookup the method.
+      Set<JClassType> declaringClasses = signatureToDeclaringClasses.get(signature);
+      if (declaringClasses.size() == 1) {
+        // Shortcut: if there's only one answer, it must be right.
+        return createDescriptor(declaringClasses.iterator().next());
+      }
+      // Must check for assignability.
+      String sourceName = desc.replace('/', '.');
+      sourceName = sourceName.replace('$', '.');
+      JClassType declaredType = typeOracle.findType(sourceName);
+
+      // Check if I declare this directly.
+      if (declaringClasses.contains(declaredType)) {
+        return desc;
+      }
+
+      // Check to see what type I am assignable to.
+      for (JClassType possibleSupertype : declaringClasses) {
+        if (declaredType.isAssignableTo(possibleSupertype)) {
+          return createDescriptor(possibleSupertype);
+        }
+      }
+      throw new IllegalArgumentException("Could not resolve signature '"
+          + signature + "' from class '" + desc + "'");
+    }
+
+    private String createDescriptor(JClassType type) {
+      String jniSignature = type.getJNISignature();
+      return jniSignature.substring(1, jniSignature.length() - 1);
+    }
+
+    private String createSignature(JMethod method) {
+      StringBuffer sb = new StringBuffer(method.getName());
+      sb.append('(');
+      for (JParameter param : method.getParameters()) {
+        sb.append(param.getType().getJNISignature());
+      }
+      sb.append(')');
+      sb.append(method.getReturnType().getJNISignature());
+      String signature = sb.toString();
+      return signature;
+    }
+  }
+
+  private final HostedModeClassRewriter classRewriter;
+
   private final ByteCodeCompiler compiler;
 
   private final DispatchClassInfoOracle dispClassInfoOracle = new DispatchClassInfoOracle();
@@ -234,6 +334,9 @@ public final class CompilingClassLoader extends ClassLoader {
   private final Map<MethodAdaptor, Object> methodToDispatch = new HashMap<MethodAdaptor, Object>();
 
   private final TypeOracle typeOracle;
+
+  private final ReferenceMap weakJsoCache = new ReferenceMap(ReferenceMap.HARD,
+      ReferenceMap.WEAK);
 
   public CompilingClassLoader(TreeLogger logger, ByteCodeCompiler compiler,
       TypeOracle typeOracle) throws UnableToCompleteException {
@@ -276,6 +379,41 @@ public final class CompilingClassLoader extends ClassLoader {
       }
     }
     compiler.removeStaleByteCode(logger);
+
+    // Create a class rewriter based on all the subtypes of the JSO class.
+    JClassType jsoType = typeOracle.findType(JsValueGlue.JSO_CLASS);
+    if (jsoType != null) {
+
+      // Create a set of binary names.
+      Set<JClassType> jsoTypes = new HashSet<JClassType>();
+      JClassType[] jsoSubtypes = jsoType.getSubtypes();
+      Collections.addAll(jsoTypes, jsoSubtypes);
+      jsoTypes.add(jsoType);
+
+      Set<String> jsoTypeNames = new HashSet<String>();
+      for (JClassType type : jsoTypes) {
+        jsoTypeNames.add(getBinaryName(type));
+      }
+
+      MyMethodDeclarationMapper mapper = new MyMethodDeclarationMapper(
+          jsoTypes, typeOracle.getJavaLangObject());
+      classRewriter = new HostedModeClassRewriter(jsoTypeNames, mapper);
+    } else {
+      // If we couldn't find the JSO class, we don't need to do any rewrites.
+      classRewriter = null;
+    }
+  }
+
+  /**
+   * Retrieves the mapped JSO for a given unique id, provided the id was
+   * previously cached and the JSO has not been garbage collected.
+   * 
+   * @param uniqueId the previously stored unique id
+   * @return the mapped JSO, or <code>null</code> if the id was not previously
+   *         mapped or if the JSO has been garbage collected
+   */
+  public Object getCachedJso(int uniqueId) {
+    return weakJsoCache.get(uniqueId);
   }
 
   /**
@@ -303,6 +441,17 @@ public final class CompilingClassLoader extends ClassLoader {
     synchronized (methodToDispatch) {
       return methodToDispatch.get(method);
     }
+  }
+
+  /**
+   * Weakly caches a given JSO by unique id. A cached JSO can be looked up by
+   * unique id until it is garbage collected.
+   * 
+   * @param uniqueId a unique id associated with the JSO
+   * @param jso the value to cache
+   */
+  public void putCachedJso(int uniqueId, Object jso) {
+    weakJsoCache.put(uniqueId, jso);
   }
 
   public void putMethodDispatch(MethodAdaptor method, Object methodDispatch) {
@@ -334,10 +483,17 @@ public final class CompilingClassLoader extends ClassLoader {
     }
 
     // Get the bytes, compiling if necessary.
-    // Define the class from bytes.
-    //
+    byte[] classBytes;
     try {
-      byte[] classBytes = compiler.getClassBytes(logger, className);
+      // A JSO impl class needs the class bytes for the original class.
+      String lookupClassName = className;
+      if (classRewriter != null && classRewriter.isJsoImpl(className)) {
+        lookupClassName = className.substring(0, className.length() - 1);
+      }
+      classBytes = compiler.getClassBytes(logger, lookupClassName);
+      if (classRewriter != null) {
+        classBytes = classRewriter.rewrite(className, classBytes);
+      }
       return defineClass(className, classBytes, 0, classBytes.length);
     } catch (UnableToCompleteException e) {
       throw new ClassNotFoundException(className);
@@ -345,11 +501,18 @@ public final class CompilingClassLoader extends ClassLoader {
   }
 
   void clear() {
+    weakJsoCache.clear();
     dispClassInfoOracle.clear();
 
     synchronized (methodToDispatch) {
       methodToDispatch.clear();
     }
+  }
+
+  private String getBinaryName(JClassType type) {
+    String name = type.getPackage().getName() + '.';
+    name += type.getName().replace('.', '$');
+    return name;
   }
 
   private byte[] getClassBytesFromStream(InputStream is) throws IOException {

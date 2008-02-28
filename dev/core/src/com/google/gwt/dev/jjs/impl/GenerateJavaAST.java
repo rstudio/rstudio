@@ -237,20 +237,29 @@ public class GenerateJavaAST {
         String[] parts = ident.substring(1).split("::");
         assert (parts.length == 2);
         String className = parts[0];
-        JReferenceType type = program.getFromTypeMap(className);
-        if (type == null) {
-          reportJsniError(info, methodDecl,
-              "Unresolvable native reference to type '" + className + "'");
-          return null;
+        JReferenceType type = null;
+        if (!className.equals("null")) {
+          type = program.getFromTypeMap(className);
+          if (type == null) {
+            reportJsniError(info, methodDecl,
+                "Unresolvable native reference to type '" + className + "'");
+            return null;
+          }
         }
         String rhs = parts[1];
         int parenPos = rhs.indexOf('(');
         if (parenPos < 0) {
           // look for a field
-          for (int i = 0; i < type.fields.size(); ++i) {
-            JField field = type.fields.get(i);
-            if (field.getName().equals(rhs)) {
-              return field;
+          if (type == null) {
+            if (rhs.equals("nullField")) {
+              return program.getNullField();
+            }
+          } else {
+            for (int i = 0; i < type.fields.size(); ++i) {
+              JField field = type.fields.get(i);
+              if (field.getName().equals(rhs)) {
+                return field;
+              }
             }
           }
 
@@ -259,18 +268,24 @@ public class GenerateJavaAST {
                   + className + "'");
         } else {
           // look for a method
-          String methodName = rhs.substring(0, parenPos);
           String almostMatches = null;
-          for (int i = 0; i < type.methods.size(); ++i) {
-            JMethod method = type.methods.get(i);
-            if (method.getName().equals(methodName)) {
-              String jsniSig = getJsniSig(method);
-              if (jsniSig.equals(rhs)) {
-                return method;
-              } else if (almostMatches == null) {
-                almostMatches = "'" + jsniSig + "'";
-              } else {
-                almostMatches += ", '" + jsniSig + "'";
+          String methodName = rhs.substring(0, parenPos);
+          if (type == null) {
+            if (rhs.equals("nullMethod()")) {
+              return program.getNullMethod();
+            }
+          } else {
+            for (int i = 0; i < type.methods.size(); ++i) {
+              JMethod method = type.methods.get(i);
+              if (method.getName().equals(methodName)) {
+                String jsniSig = getJsniSig(method);
+                if (jsniSig.equals(rhs)) {
+                  return method;
+                } else if (almostMatches == null) {
+                  almostMatches = "'" + jsniSig + "'";
+                } else {
+                  almostMatches += ", '" + jsniSig + "'";
+                }
               }
             }
           }
@@ -291,14 +306,16 @@ public class GenerateJavaAST {
 
       private void processField(JsNameRef nameRef, SourceInfo info,
           JField field, JsContext<JsExpression> ctx) {
-        if (field.isStatic() && nameRef.getQualifier() != null) {
-          reportJsniError(info, methodDecl,
-              "Cannot make a qualified reference to the static field "
-                  + field.getName());
-        } else if (!field.isStatic() && nameRef.getQualifier() == null) {
-          reportJsniError(info, methodDecl,
-              "Cannot make an unqualified reference to the instance field "
-                  + field.getName());
+        if (field.getEnclosingType() != null) {
+          if (field.isStatic() && nameRef.getQualifier() != null) {
+            reportJsniError(info, methodDecl,
+                "Cannot make a qualified reference to the static field "
+                    + field.getName());
+          } else if (!field.isStatic() && nameRef.getQualifier() == null) {
+            reportJsniError(info, methodDecl,
+                "Cannot make an unqualified reference to the instance field "
+                    + field.getName());
+          }
         }
 
         /*
@@ -328,14 +345,16 @@ public class GenerateJavaAST {
 
       private void processMethod(JsNameRef nameRef, SourceInfo info,
           JMethod method) {
-        if (method.isStatic() && nameRef.getQualifier() != null) {
-          reportJsniError(info, methodDecl,
-              "Cannot make a qualified reference to the static method "
-                  + method.getName());
-        } else if (!method.isStatic() && nameRef.getQualifier() == null) {
-          reportJsniError(info, methodDecl,
-              "Cannot make an unqualified reference to the instance method "
-                  + method.getName());
+        if (method.getEnclosingType() != null) {
+          if (method.isStatic() && nameRef.getQualifier() != null) {
+            reportJsniError(info, methodDecl,
+                "Cannot make a qualified reference to the static method "
+                    + method.getName());
+          } else if (!method.isStatic() && nameRef.getQualifier() == null) {
+            reportJsniError(info, methodDecl,
+                "Cannot make an unqualified reference to the instance method "
+                    + method.getName());
+          }
         }
 
         JsniMethodRef methodRef = new JsniMethodRef(program, info,
@@ -531,12 +550,17 @@ public class GenerateJavaAST {
           JMethod method = currentClass.methods.get(2);
           assert ("getClass".equals(method.getName()));
 
-          tryFindUpRefs(method);
-
-          JMethodBody body = (JMethodBody) method.getBody();
-          JClassLiteral classLit = program.getLiteralClass(currentClass);
-          body.getStatements().add(
-              new JReturnStatement(program, null, classLit));
+          if (program.isJavaScriptObject(currentClass)
+              && currentClass != program.getJavaScriptObject()) {
+            // Just use JavaScriptObject's implementation for all subclasses.
+            currentClass.methods.remove(2);
+          } else {
+            tryFindUpRefs(method);
+            JMethodBody body = (JMethodBody) method.getBody();
+            JClassLiteral classLit = program.getLiteralClass(currentClass);
+            body.getStatements().add(
+                new JReturnStatement(program, null, classLit));
+          }
         }
 
         // Implement Class.desiredAssertionStatus

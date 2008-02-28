@@ -61,9 +61,6 @@ class WebKitDispatchAdapter implements DispatchObject {
     this.classLoader = cl;
   }
 
-  /* (non-Javadoc)
-   * @see com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchObject#getField(java.lang.String)
-   */
   public int getField(String name) {
     int dispId = classLoader.getDispId(name);
     if (dispId < 0) {
@@ -87,16 +84,10 @@ class WebKitDispatchAdapter implements DispatchObject {
     }
   }
 
-  /* (non-Javadoc)
-   * @see com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchObject#getTarget()
-   */
   public Object getTarget() {
     return javaDispatch.getTarget();
   }
 
-  /* (non-Javadoc)
-   * @see com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchObject#setField(java.lang.String, int)
-   */
   public void setField(String name, int value) {
     JsValue jsValue = new JsValueSaf(value);
     int dispId = classLoader.getDispId(name);
@@ -108,7 +99,8 @@ class WebKitDispatchAdapter implements DispatchObject {
       throw new RuntimeException("Cannot reassign method " + name);
     }
     Field field = javaDispatch.getField(dispId);
-    Object val = JsValueGlue.get(jsValue, field.getType(), "setField");
+    Object val = JsValueGlue.get(jsValue, classLoader, field.getType(),
+        "setField");
     javaDispatch.setFieldValue(dispId, val);
   }
 

@@ -68,7 +68,7 @@ public class FindDeferredBindingSitesVisitor extends ASTVisitor {
         messageSend.sourceStart());
     DefaultProblem problem = new DefaultProblem(compResult.fileName, message,
         IProblem.ExternalProblemNotFixable, null, ProblemSeverities.Error,
-        messageSend.sourceStart, messageSend.sourceEnd, startLine, startColumn);
+        messageSend.sourceStart(), messageSend.sourceEnd(), startLine, startColumn);
     compResult.record(problem, scope.referenceContext());
   }
 

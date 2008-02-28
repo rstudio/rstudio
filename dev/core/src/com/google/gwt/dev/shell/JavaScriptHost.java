@@ -82,14 +82,6 @@ public class JavaScriptHost {
   }
 
   /**
-   * Invoke a native JavaScript function that returns a handle value.
-   */
-  public static Object invokeNativeHandle(String name, Object jthis,
-      Class<?> returnType, Class<?>[] types, Object[] args) throws Throwable {
-    return sHost.invokeNativeHandle(name, jthis, returnType, types, args);
-  }
-
-  /**
    * Invoke a native JavaScript function that returns an integer value.
    */
   public static int invokeNativeInt(String name, Object jthis,
@@ -119,14 +111,6 @@ public class JavaScriptHost {
   public static short invokeNativeShort(String name, Object jthis,
       Class<?>[] types, Object[] args) throws Throwable {
     return sHost.invokeNativeShort(name, jthis, types, args);
-  }
-
-  /**
-   * Invoke a native JavaScript function that returns a string value.
-   */
-  public static String invokeNativeString(String name, Object jthis,
-      Class<?>[] types, Object[] args) throws Throwable {
-    return sHost.invokeNativeString(name, jthis, types, args);
   }
 
   /**

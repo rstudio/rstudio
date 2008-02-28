@@ -1,0 +1,233 @@
+/*
+ * Copyright 2008 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package com.google.gwt.dev.jdt;
+
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.jdt.StaticCompilationUnitProvider;
+import com.google.gwt.dev.jdt.TypeOracleBuilder;
+
+import junit.framework.TestCase;
+
+public class JSORestrictionsTest extends TestCase {
+
+  public void testInstanceField() throws UnableToCompleteException {
+    StringBuffer buggyCode = new StringBuffer();
+    buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
+    buggyCode.append("public class Buggy extends JavaScriptObject {\n");
+    buggyCode.append("  protected Buggy() { }\n");
+    buggyCode.append("  int myStsate = 3;\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode, "Line 4:  "
+        + JSORestrictionsChecker.ERR_INSTANCE_FIELD);
+  }
+
+  public void testMultiArgConstructor() throws UnableToCompleteException {
+    StringBuffer buggyCode = new StringBuffer();
+    buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
+    buggyCode.append("public final class Buggy extends JavaScriptObject {\n");
+    buggyCode.append("  protected Buggy(int howBuggy) { }\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode, "Line 3:  "
+        + JSORestrictionsChecker.ERR_CONSTRUCTOR_WITH_PARAMETERS);
+  }
+
+  public void testNew() throws UnableToCompleteException {
+    StringBuffer buggyCode = new StringBuffer();
+    buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
+    buggyCode.append("public class Buggy {\n");
+    buggyCode.append("  public static class MyJSO extends JavaScriptObject { \n");
+    buggyCode.append("    protected MyJSO() { }\n");
+    buggyCode.append("  }\n");
+    buggyCode.append("  MyJSO makeOne() { return new MyJSO(); }\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode, "Line 6:  "
+        + JSORestrictionsChecker.ERR_NEW_JSO);
+  }
+
+  public void testNoConstructor() throws UnableToCompleteException {
+    StringBuffer buggyCode = new StringBuffer();
+    buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
+    buggyCode.append("public class Buggy extends JavaScriptObject {\n");
+    buggyCode.append("}\n");
+
+    // The public constructor is implicit.
+    shouldGenerateError(buggyCode, "Line 2:  "
+        + JSORestrictionsChecker.ERR_NONPROTECTED_CONSTRUCTOR);
+  }
+
+  public void testNoInterfaces() throws UnableToCompleteException {
+    StringBuffer buggyCode = new StringBuffer();
+    buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
+    buggyCode.append("public class Buggy {\n");
+    buggyCode.append("  static interface Squeaks {\n");
+    buggyCode.append("    public void squeak();\n");
+    buggyCode.append("  }\n");
+    buggyCode.append("  static class Squeaker extends JavaScriptObject implements Squeaks {\n");
+    buggyCode.append("    public final void squeak() { }\n");
+    buggyCode.append("    protected Squeaker() { }\n");
+    buggyCode.append("  }\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode, "Line 6:  "
+        + JSORestrictionsChecker.errInterfaceWithMethods("Buggy.Squeaks"));
+  }
+
+  public void testNonEmptyConstructor() throws UnableToCompleteException {
+    StringBuffer buggyCode = new StringBuffer();
+    buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
+    buggyCode.append("public class Buggy extends JavaScriptObject {\n");
+    buggyCode.append("  protected Buggy() { while(true) { } }\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode, "Line 3:  "
+        + JSORestrictionsChecker.ERR_NONEMPTY_CONSTRUCTOR);
+  }
+
+  public void testNonFinalMethod() throws UnableToCompleteException {
+    StringBuffer buggyCode = new StringBuffer();
+    buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
+    buggyCode.append("public class Buggy extends JavaScriptObject {\n");
+    buggyCode.append("  int nonfinal() { return 10; }\n");
+    buggyCode.append("  protected Buggy() { }\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode, "Line 3:  "
+        + JSORestrictionsChecker.ERR_INSTANCE_METHOD_NONFINAL);
+  }
+
+  public void testNonProtectedConstructor() throws UnableToCompleteException {
+    StringBuffer buggyCode = new StringBuffer();
+    buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
+    buggyCode.append("public class Buggy extends JavaScriptObject {\n");
+    buggyCode.append("  Buggy() { }\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode, "Line 3:  "
+        + JSORestrictionsChecker.ERR_NONPROTECTED_CONSTRUCTOR);
+  }
+
+  public void testNonStaticInner() throws UnableToCompleteException {
+    StringBuffer buggyCode = new StringBuffer();
+    buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
+    buggyCode.append("public class Buggy {\n");
+    buggyCode.append("  public class MyJSO extends JavaScriptObject {\n");
+    buggyCode.append("    protected MyJSO() { }\n");
+    buggyCode.append("  }\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode, "Line 3:  "
+        + JSORestrictionsChecker.ERR_IS_NONSTATIC_NESTED);
+  }
+
+  public void testNoOverride() throws UnableToCompleteException {
+    StringBuffer buggyCode = new StringBuffer();
+    buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
+    buggyCode.append("public class Buggy extends JavaScriptObject {\n");
+    buggyCode.append("  protected Buggy() { }\n");
+    buggyCode.append("  public final Object clone() { return this; }\n");
+    buggyCode.append("}\n");
+
+    shouldGenerateError(buggyCode, "Line 4:  "
+        + JSORestrictionsChecker.ERR_OVERRIDDEN_METHOD);
+  }
+
+  private void addStandardCups(TypeOracleBuilder builder)
+      throws UnableToCompleteException {
+    StringBuffer code = new StringBuffer();
+    code.append("package java.lang;\n");
+    code.append("public class Object {\n");
+    code.append("  public String toString() { return \"Object\"; }\n");
+    code.append("  public Object clone() { return this; } ");
+    code.append("}\n");
+
+    StaticCompilationUnitProvider objectCup = new StaticCompilationUnitProvider(
+        "java.lang", "Object", code.toString().toCharArray());
+
+    code.setLength(0);
+    code.append("package java.lang;\n");
+    code.append("public final class String {\n");
+    code.append("  public int length() { return 0; }\n");
+    code.append("}\n");
+
+    StaticCompilationUnitProvider stringCup = new StaticCompilationUnitProvider(
+        "java.lang", "String", code.toString().toCharArray());
+
+    code.setLength(0);
+    code.append("package java.lang;\n");
+    code.append("public interface Serializable { }\n");
+
+    StaticCompilationUnitProvider serializableCup = new StaticCompilationUnitProvider(
+        "java.lang", "Serializable", code.toString().toCharArray());
+
+    code.setLength(0);
+    code.append("package com.google.gwt.core.client;\n");
+    code.append("public class JavaScriptObject {\n");
+    code.append("  protected JavaScriptObject() { }\n");
+    code.append("}\n");
+
+    StaticCompilationUnitProvider jsoCup = new StaticCompilationUnitProvider(
+        "com.google.gwt.core.client", "JavaScriptObject",
+        code.toString().toCharArray());
+
+    builder.addCompilationUnit(objectCup);
+    builder.addCompilationUnit(stringCup);
+    builder.addCompilationUnit(serializableCup);
+    builder.addCompilationUnit(jsoCup);
+  }
+
+  /**
+   * Test that when compiling buggyCode, the TypeOracleBuilder emits
+   * expectedError somewhere in its output. The code should define a class named
+   * Buggy.
+   */
+  private void shouldGenerateError(CharSequence buggyCode,
+      final String expectedError) throws UnableToCompleteException {
+    TypeOracleBuilder builder = new TypeOracleBuilder();
+    addStandardCups(builder);
+
+    StaticCompilationUnitProvider buggyCup = new StaticCompilationUnitProvider(
+        "", "Buggy", buggyCode.toString().toCharArray());
+    builder.addCompilationUnit(buggyCup);
+
+    final boolean[] gotExpectedError = new boolean[1];
+
+    TreeLogger testLogger = new TreeLogger() {
+      public TreeLogger branch(Type type, String msg, Throwable caught) {
+        return this;
+      }
+
+      public boolean isLoggable(Type type) {
+        return type == ERROR;
+      }
+
+      public void log(Type type, String msg, Throwable caught) {
+        if (type == ERROR && msg.startsWith("Line ")) {
+          assertEquals(null, caught);
+          assertEquals(expectedError, msg);
+          gotExpectedError[0] = true;
+        }
+      }
+    };
+
+    builder.build(testLogger);
+    assertTrue("Failed to get expected error: '" + expectedError + "'",
+        gotExpectedError[0]);
+  }
+}

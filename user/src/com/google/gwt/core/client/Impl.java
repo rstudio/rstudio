@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,19 +23,8 @@ final class Impl {
     return ++sNextHashId;
   }
 
-  /*
-   * We need a separate overload for JavaScriptObject, so that the hosted mode
-   * JSNI invocation system will know to unwrap the Java object back to its
-   * underlying JavaScript object.
-   */
-  static native int getHashCode(JavaScriptObject o) /*-{
-    return (o == null) ? 0 : 
-     (o.$H ? o.$H : (o.$H = @com.google.gwt.core.client.Impl::getNextHashId()()));
-  }-*/;
-
   static native int getHashCode(Object o) /*-{
-    return (o == null) ? 0 : 
-     (o.$H ? o.$H : (o.$H = @com.google.gwt.core.client.Impl::getNextHashId()()));
+    return o.$H || (o.$H = @com.google.gwt.core.client.Impl::getNextHashId()());
   }-*/;
 
   static native String getHostPageBaseURL() /*-{

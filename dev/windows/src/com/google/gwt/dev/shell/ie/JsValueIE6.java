@@ -26,7 +26,6 @@ import org.eclipse.swt.internal.ole.win32.GUID;
 import org.eclipse.swt.internal.ole.win32.IDispatch;
 import org.eclipse.swt.internal.ole.win32.IUnknown;
 import org.eclipse.swt.internal.win32.OS;
-import org.eclipse.swt.ole.win32.OleAutomation;
 import org.eclipse.swt.ole.win32.Variant;
 
 /**
@@ -42,7 +41,9 @@ public class JsValueIE6 extends JsValue {
     }
 
     public void doCleanup() {
-      variant.dispose();
+      if (variant != null) {
+        variant.dispose();
+      }
     }
   }
 
@@ -63,6 +64,52 @@ public class JsValueIE6 extends JsValue {
       }
     }
     return variant;
+  }
+
+  /**
+   * Copied with modification from OleAutomation.getIDsOfNames(). The reason we
+   * don't use that method directly is that querying for typeInfo that occurs in
+   * the OleAutomation(IDispatch) constructor will cause a VM crash on some
+   * kinds of JavaScript objects, such as the window.alert function. So we do it
+   * by hand.
+   */
+  private static int[] oleAutomationGetIdsOfNames(IDispatch dispatch) {
+    String[] names = new String[] {"valueOf"};
+    int[] ids = new int[names.length];
+    int result = dispatch.GetIDsOfNames(new GUID(), names, names.length,
+        COM.LOCALE_USER_DEFAULT, ids);
+    if (result != COM.S_OK) {
+      return null;
+    }
+    return ids;
+  }
+
+  /**
+   * Copied with modification from OleAutomation.invoke(). The reason we don't
+   * use that method directly is that querying for typeInfo that occurs in the
+   * OleAutomation(IDispatch) constructor will cause a VM crash on some kinds of
+   * JavaScript objects, such as the window.alert function. So we do it by hand.
+   */
+  private static Variant oleAutomationInvoke(IDispatch dispatch, int dispId) {
+    int pVarResultAddress = 0;
+    try {
+      pVarResultAddress = OS.GlobalAlloc(OS.GMEM_FIXED | OS.GMEM_ZEROINIT,
+          Variant.sizeof);
+      int[] pArgErr = new int[1];
+      int hr = dispatch.Invoke(dispId, new GUID(), COM.LOCALE_USER_DEFAULT,
+          COM.DISPATCH_METHOD, new DISPPARAMS(), pVarResultAddress,
+          new EXCEPINFO(), pArgErr);
+
+      if (hr >= COM.S_OK) {
+        return Variant.win32_new(pVarResultAddress);
+      }
+    } finally {
+      if (pVarResultAddress != 0) {
+        COM.VariantClear(pVarResultAddress);
+        OS.GlobalFree(pVarResultAddress);
+      }
+    }
+    return null;
   }
 
   // a null variant means the JsValue is undefined (void)
@@ -102,6 +149,15 @@ public class JsValueIE6 extends JsValue {
   @Override
   public int getInt() {
     return variant.getInt();
+  }
+
+  @Override
+  public int getJavaScriptObjectPointer() {
+    if (isJavaScriptObject()) {
+      return variant.getDispatch().getAddress();
+    } else {
+      return 0;
+    }
   }
 
   /*
@@ -276,25 +332,22 @@ public class JsValueIE6 extends JsValue {
     if (variant.getType() != COM.VT_DISPATCH) {
       return false;
     }
-    OleAutomation auto = null;
+
+    // see if it has a valueOf method
+    IDispatch dispatch = variant.getDispatch();
+    int[] ids = oleAutomationGetIdsOfNames(dispatch);
+    if (ids == null) {
+      return false;
+    }
     Variant result = null;
     try {
-      auto = new OleAutomation(variant.getDispatch());
-      // see if it has a valueOf method
-      int[] ids = auto.getIDsOfNames(new String[] {"valueOf"});
-      if (ids == null) {
-        return false;
-      }
-      result = auto.invoke(ids[0]);
+      result = oleAutomationInvoke(dispatch, ids[0]);
       /*
        * If the return type of the valueOf method is string, we assume it is a
        * String wrapper object.
        */
       return result.getType() == COM.VT_BSTR;
     } finally {
-      if (auto != null) {
-        auto.dispose();
-      }
       if (result != null) {
         result.dispose();
       }
@@ -466,43 +519,25 @@ public class JsValueIE6 extends JsValue {
     variant = val;
   }
 
-  private <T> T tryToUnwrapWrappedJavaObject() {
-    /*
-     * This implementation copied from OleAutomation.invoke(). We used to have a
-     * varArg.getAutomation().invoke() implementation, but it turns out the
-     * querying for typeInfo that occurs in the OleAutomation(IDispatch)
-     * constructor will cause a VM crash on some kinds of JavaScript objects,
-     * such as the window.alert function. So we do it by hand.
-     */
-    IDispatch dispatch = variant.getDispatch();
-    Variant result = new Variant();
-    int pVarResultAddress = 0;
+  private Object tryToUnwrapWrappedJavaObject() {
     int globalRef = 0;
+    Variant result = null;
     try {
-      pVarResultAddress = OS.GlobalAlloc(OS.GMEM_FIXED | OS.GMEM_ZEROINIT,
-          Variant.sizeof);
-      int[] pArgErr = new int[1];
-      int hr = dispatch.Invoke(IDispatchProxy.DISPID_MAGIC_GETGLOBALREF,
-          new GUID(), COM.LOCALE_USER_DEFAULT, COM.DISPATCH_METHOD,
-          new DISPPARAMS(), pVarResultAddress, new EXCEPINFO(), pArgErr);
-
-      if (hr >= COM.S_OK) {
-        result = Variant.win32_new(pVarResultAddress);
+      result = oleAutomationInvoke(variant.getDispatch(),
+          IDispatchProxy.DISPID_MAGIC_GETGLOBALREF);
+      if (result != null) {
         globalRef = result.getInt();
-      }
-      if (globalRef != 0) {
-        // This is really a Java object being passed back via an IDispatchProxy.
-        IDispatchProxy proxy = (IDispatchProxy) LowLevel.objFromGlobalRefInt(globalRef);
-        return (T) proxy.getTarget();
+        if (globalRef != 0) {
+          // This is really a Java object being passed back via an
+          // IDispatchProxy.
+          IDispatchProxy proxy = (IDispatchProxy) LowLevel.objFromGlobalRefInt(globalRef);
+          return proxy.getTarget();
+        }
       }
       return null;
     } finally {
       if (result != null) {
         result.dispose();
-      }
-      if (pVarResultAddress != 0) {
-        COM.VariantClear(pVarResultAddress);
-        OS.GlobalFree(pVarResultAddress);
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -105,6 +105,17 @@ public abstract class JsValue {
   public abstract int getInt();
 
   /**
+   * Returns a unique value corresponding to the underlying JavaScript object.
+   * In general, two different JsValues will return the same value IFF the
+   * underlying JavaScript objects are identical (===).
+   * 
+   * @return a unique number corresponding to the underlying object, or
+   *         <code>0</code> if {@link #isJavaScriptObject()} is
+   *         <code>false</code>
+   */
+  public abstract int getJavaScriptObjectPointer();
+
+  /**
    * Get the value of the object as a double. May attempt to convert the value
    * to a double if it is not a double.
    * 
@@ -113,9 +124,9 @@ public abstract class JsValue {
   public abstract double getNumber();
 
   /**
-   * Get the value of the object as a string. Tries very hard to return a
-   * reasonable value for any underyling type, but this should only be used for
-   * human consumption as the exact format is not reliable across platforms.
+   * Get the value of the object as a string. Will coerce the underlying type to
+   * a string, but stable cross-platform behavior is only guaranteed when
+   * {@link #isString()} is <code>true</code>.
    * 
    * @return the value of the underlying object as a string
    */
@@ -245,17 +256,6 @@ public abstract class JsValue {
    */
   public abstract void setValue(JsValue other);
 
-  /**
-   * Wrap a Java method as a JavaScript function pointer.
-   * 
-   * @param string the name of the method
-   * @param dispMethod the DispatchMethod object describing the method tow wrap
-   */
-  // TODO(jat): platform-independent version of this?
-  // The problem is that each platform has different conventions for passing
-  // JavaScript values back into a Java method.
-  // public abstract void setWrappedFunction(String string,
-  // DispatchMethod dispMethod);
   /**
    * Set the JS object to the supplied object, which will be wrapped in a
    * platform-dependent JavaScript class.

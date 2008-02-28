@@ -110,7 +110,8 @@ class GeckoDispatchAdapter implements DispatchObject {
       throw new RuntimeException("Cannot reassign method " + name);
     }
     Field field = javaDispatch.getField(dispId);
-    Object val = JsValueGlue.get(jsValue, field.getType(), "setField");
+    Object val = JsValueGlue.get(jsValue, classLoader, field.getType(),
+        "setField");
     javaDispatch.setFieldValue(dispId, val);
   }
 }

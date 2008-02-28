@@ -177,6 +177,8 @@ public abstract class AbstractCompiler {
         resolvePossiblyNestedType(typeName);
       }
 
+      JSORestrictionsChecker.check(cud);
+
       // Optionally remember this cud.
       //
       if (cuds != null) {

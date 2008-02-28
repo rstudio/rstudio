@@ -59,11 +59,12 @@ class MethodDispatch implements DispatchMethod {
       }
       Object jthis = null;
       if (method.needsThis()) {
-        jthis = JsValueGlue.get(jsthis, method.getDeclaringClass(),
-            "invoke this");
+        jthis = JsValueGlue.get(jsthis, classLoader,
+            method.getDeclaringClass(), "invoke this");
       }
       for (int i = 0; i < argc; ++i) {
-        args[i] = JsValueGlue.get(jsargs[i], paramTypes[i], "invoke args");
+        args[i] = JsValueGlue.get(jsargs[i], classLoader, paramTypes[i],
+            "invoke args");
       }
       try {
         Object result;

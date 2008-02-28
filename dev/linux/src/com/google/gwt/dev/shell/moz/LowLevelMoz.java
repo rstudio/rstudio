@@ -114,7 +114,7 @@ public class LowLevelMoz {
    * @param methodName the method name on jsthis to call
    * @param jsthis A wrapped java object as a JsRootedValue pointer
    * @param jsargs the arguments to pass to the method as JsRootedValue pointers
-   * 
+   * @param retval the jsvalue to write the result into
    * @throws RuntimeException if the invoke fails
    */
   public static void invoke(int scriptObject, String methodName, int jsthis,

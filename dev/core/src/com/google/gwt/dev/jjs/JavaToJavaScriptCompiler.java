@@ -41,7 +41,8 @@ import com.google.gwt.dev.jjs.impl.CompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
-import com.google.gwt.dev.jjs.impl.JavaScriptObjectCaster;
+import com.google.gwt.dev.jjs.impl.JavaScriptObjectNormalizer;
+import com.google.gwt.dev.jjs.impl.JsoDevirtualizer;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic;
 import com.google.gwt.dev.jjs.impl.MethodAndClassFinalizer;
 import com.google.gwt.dev.jjs.impl.MethodCallTightener;
@@ -293,7 +294,6 @@ public class JavaToJavaScriptCompiler {
           goldenCuds, jsProgram);
 
       // BuildTypeMap can uncover syntactic JSNI errors; report & abort
-      // 
       checkForErrors(logger, true);
 
       // Compute all super type/sub type info
@@ -307,11 +307,10 @@ public class JavaToJavaScriptCompiler {
           options.isEnableAssertions());
 
       // GenerateJavaAST can uncover semantic JSNI errors; report & abort
-      // 
       checkForErrors(logger, true);
 
       /*
-       * TODO: if we defer this until later, we could maybe use the results of
+       * TODO: If we defer this until later, we could maybe use the results of
        * the assertions to enable more optimizations.
        */
       if (options.isEnableAssertions()) {
@@ -331,8 +330,10 @@ public class JavaToJavaScriptCompiler {
       }
 
       // Rebind each entry point.
-      //
       findEntryPoints(logger, rebindOracle, declEntryPoints, jprogram);
+
+      // Replace references to JSO subtypes with JSO itself.
+      JavaScriptObjectNormalizer.exec(jprogram);
 
       // (4) Optimize the normalized Java AST
       boolean didChange;
@@ -373,9 +374,9 @@ public class JavaToJavaScriptCompiler {
       // (5) "Normalize" the high-level Java tree into a lower-level tree more
       // suited for JavaScript code generation. Don't go reordering these
       // willy-nilly because there are some subtle interdependencies.
+      JsoDevirtualizer.exec(jprogram);
       CatchBlockNormalizer.exec(jprogram);
       CompoundAssignmentNormalizer.exec(jprogram);
-      JavaScriptObjectCaster.exec(jprogram);
       CastNormalizer.exec(jprogram);
       ArrayNormalizer.exec(jprogram);
 

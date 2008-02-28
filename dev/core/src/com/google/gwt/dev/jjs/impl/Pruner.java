@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JBlock;
+import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -619,11 +620,26 @@ public class Pruner {
     }
 
     @Override
+    public boolean visit(JCastOperation x, Context ctx) {
+      // Rescue any JavaScriptObject type that is the target of a cast.
+      JType targetType = x.getCastType();
+      if (program.isJavaScriptObject(targetType)) {
+        rescue((JReferenceType) targetType, true, true);
+      }
+      return true;
+    }
+
+    @Override
     public boolean visit(JMethodCall call, Context ctx) {
       JMethod target = call.getTarget();
-      // JLS 12.4.1: references to static methods rescue the enclosing class
-      if (target.isStatic()) {
-        rescue(target.getEnclosingType(), true, false);
+      JReferenceType enclosingType = target.getEnclosingType();
+      if (program.isJavaScriptObject(enclosingType)) {
+        // Calls to JavaScriptObject types rescue those types.
+        boolean instance = !target.isStatic() || program.isStaticImpl(target);
+        rescue(enclosingType, true, instance);
+      } else if (target.isStatic()) {
+        // JLS 12.4.1: references to static methods rescue the enclosing class
+        rescue(enclosingType, true, false);
       }
       rescue(target);
       return true;
@@ -716,20 +732,17 @@ public class Pruner {
     /**
      * Subclasses of JavaScriptObject are never instantiated directly. They are
      * created "magically" when a JSNI method passes a reference to an existing
-     * JS object into Java code. The point at which a subclass of JSO is passed
-     * into Java code constitutes "instantiation". We must identify these points
-     * and trigger a rescue and instantiation of that particular JSO subclass.
+     * JS object into Java code. If any point in the program can pass a value
+     * from JS into Java which could potentially be cast to JavaScriptObject, we
+     * must rescue JavaScriptObject.
      * 
      * @param type The type of the value passing from Java to JavaScript.
      * @see com.google.gwt.core.client.JavaScriptObject
      */
     private void maybeRescueJavaScriptObjectPassingIntoJava(JType type) {
-      if (type instanceof JReferenceType) {
-        JReferenceType refType = (JReferenceType) type;
-        if (program.typeOracle.canTriviallyCast(refType,
-            program.getJavaScriptObject())) {
-          rescue(refType, true, true);
-        }
+      if (program.isJavaScriptObject(type)
+          || type == program.getTypeJavaLangObject()) {
+        rescue((JReferenceType) type, true, true);
       }
     }
 

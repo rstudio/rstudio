@@ -170,7 +170,7 @@ class IDispatchProxy extends IDispatchImpl {
                 field.getType(), javaDispatch.getFieldValue(dispId));
           } else if ((flags & (COM.DISPATCH_PROPERTYPUT | COM.DISPATCH_PROPERTYPUTREF)) != 0) {
             javaDispatch.setFieldValue(dispId, JsValueGlue.get(new JsValueIE6(
-                params[0]), field.getType(), "Setting field '"
+                params[0]), classLoader, field.getType(), "Setting field '"
                 + field.getName() + "'"));
             return new Variant();
           }

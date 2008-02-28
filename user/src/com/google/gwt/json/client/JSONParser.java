@@ -46,8 +46,12 @@ public class JSONParser {
       throw new IllegalArgumentException("empty argument");
     }
     try {
-      JavaScriptObject jsonObject = evaluate(jsonString);
-      return buildValue(jsonObject);
+      Object object = evaluate(jsonString);
+      if (object instanceof String) {
+        return new JSONString((String) object);
+      } else {
+        return buildValue((JavaScriptObject) object);
+      }
     } catch (JavaScriptException ex) {
       throw new JSONException(ex);
     }
@@ -72,10 +76,6 @@ public class JSONParser {
 
     if (isBoolean(jsValue)) {
       return JSONBoolean.getInstance(asBoolean(jsValue));
-    }
-
-    if (isString(jsValue)) {
-      return new JSONString(asString(jsValue));
     }
 
     if (isDouble(jsValue)) {
@@ -117,23 +117,12 @@ public class JSONParser {
   }-*/;
 
   /**
-   * Returns the Javascript String as a Java String. This method assumes that
-   * {@link #isString(JavaScriptObject)} returned <code>true</code>.
-   * 
-   * @param jsValue JavaScript object to convert
-   * @return the String represented by the jsValue
+   * This method converts the json string into either a String or a a by simply
+   * evaluating the string in JavaScript.
    */
-  private static native String asString(JavaScriptObject jsValue) /*-{
-    return jsValue;
-  }-*/;
-
-  /*
-   * This method converts the json string into a JavaScriptObject inside of JSNI
-   * method by simply evaluating the string in JavaScript.
-   */
-  private static native JavaScriptObject evaluate(String jsonString) /*-{
+  private static native Object evaluate(String jsonString) /*-{
     var x = eval('(' + jsonString + ')');
-    if (typeof x == 'number' || typeof x == 'string' || typeof x == 'array' || typeof x == 'boolean') {
+    if (typeof x == 'number' || typeof x == 'array' || typeof x == 'boolean') {
       x = (Object(x));
     }
     return x;
@@ -193,17 +182,6 @@ public class JSONParser {
    */
   private static native boolean isObject(JavaScriptObject jsValue) /*-{
     return jsValue instanceof Object;
-  }-*/;
-
-  /**
-   * Returns <code>true</code> if the {@link JavaScriptObject} is a JavaScript
-   * String.
-   * 
-   * @param jsValue JavaScript object to test
-   * @return <code>true</code> if jsValue is a JavaScript String
-   */
-  private static native boolean isString(JavaScriptObject jsValue) /*-{
-    return jsValue instanceof String;
   }-*/;
 
   /**

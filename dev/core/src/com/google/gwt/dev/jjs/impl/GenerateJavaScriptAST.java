@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -507,7 +507,7 @@ public class GenerateJavaScriptAST {
         }
       }
 
-      if (typeOracle.isInstantiatedType(x)) {
+      if (typeOracle.isInstantiatedType(x) && !program.isJavaScriptObject(x)) {
         generateClassSetup(x, globalStmts);
       }
 
@@ -1211,6 +1211,8 @@ public class GenerateJavaScriptAST {
       if (x == program.getTypeJavaLangObject()) {
         // special: setup a "toString" alias for java.lang.Object.toString()
         generateToStringAlias(x, globalStmts);
+        // special: setup the identifying typeMarker field
+        generateTypeMarker(x, globalStmts);
       }
 
       generateTypeId(x, globalStmts);
@@ -1374,6 +1376,19 @@ public class GenerateJavaScriptAST {
         JsExpression asg = createAssignment(fieldRef, typeIdLit);
         globalStmts.add(new JsExprStmt(asg));
       }
+    }
+
+    private void generateTypeMarker(JClassType x, List<JsStatement> globalStmts) {
+      JField typeMarkerField = program.getIndexedField("Object.typeMarker");
+      JsName typeMarkerName = names.get(typeMarkerField);
+      if (typeMarkerName == null) {
+        // Was pruned; this compilation must have no JSO instanceof tests.
+        return;
+      }
+      JsNameRef fieldRef = typeMarkerName.makeRef();
+      fieldRef.setQualifier(globalTemp.makeRef());
+      JsExpression asg = createAssignment(fieldRef, nullMethodName.makeRef());
+      globalStmts.add(new JsExprStmt(asg));
     }
 
     private JsExpression generateTypeTable() {
@@ -1664,6 +1679,7 @@ public class GenerateJavaScriptAST {
 
     // Object fields
     specialObfuscatedIdents.put("typeId", "tI");
+    specialObfuscatedIdents.put("typeMarker", "tM");
 
     // String polymorphic
     specialObfuscatedIdents.put("charAt", "cA");

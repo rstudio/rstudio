@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,7 +36,6 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JVisitor;
-import com.google.gwt.dev.jjs.ast.js.JClassSeed;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
 import com.google.gwt.dev.jjs.ast.js.JsonObject.JsonPropInit;
 
@@ -110,6 +109,12 @@ public class CastNormalizer {
 
       // pass our info to JProgram
       program.initTypeInfo(classes, jsonObjects);
+
+      // JSO's maker queryId is -1 (used for array stores).
+      JClassType jsoType = program.getJavaScriptObject();
+      if (jsoType != null) {
+        queryIds.put(jsoType, -1);
+      }
       program.recordQueryIds(queryIds);
     }
 
@@ -194,7 +199,8 @@ public class CastNormalizer {
        */
       computeSourceClass(type.extnds);
 
-      if (!program.typeOracle.isInstantiatedType(type)) {
+      if (!program.typeOracle.isInstantiatedType(type)
+          || program.isJavaScriptObject(type)) {
         return;
       }
 
@@ -221,13 +227,8 @@ public class CastNormalizer {
         }
       }
 
-      /*
-       * Weird: JavaScriptObjects MUST have a typeId, the implementation of
-       * Cast.wrapJSO depends on it. Object must also have a typeId, to force
-       * String to have an id of 2.
-       */
-      if (yesSet == null && !program.isJavaScriptObject(type)
-          && (type != program.getTypeJavaLangObject())) {
+      // Object a typeId, to force String to have an id of 2.
+      if (yesSet == null && type != program.getTypeJavaLangObject()) {
         return; // won't satisfy anything
       }
 
@@ -235,8 +236,7 @@ public class CastNormalizer {
       JReferenceType[] yesArray = new JReferenceType[nextQueryId];
       if (yesSet != null) {
         for (JReferenceType yesType : yesSet) {
-          Integer boxedInt = queryIds.get(yesType);
-          yesArray[boxedInt.intValue()] = yesType;
+          yesArray[queryIds.get(yesType)] = yesType;
         }
       }
 
@@ -268,6 +268,11 @@ public class CastNormalizer {
           }
         }
 
+        // If the target type is a JavaScriptObject, don't record an id.
+        if (program.isJavaScriptObject(targetType)) {
+          return;
+        }
+
         recordCastInternal((JReferenceType) targetType, rhsType);
       }
     }
@@ -277,7 +282,7 @@ public class CastNormalizer {
       JReferenceType toType = targetType;
       Set<JReferenceType> querySet = queriedTypes.get(toType);
       if (querySet == null) {
-        queryIds.put(toType, new Integer(nextQueryId++));
+        queryIds.put(toType, nextQueryId++);
         querySet = new HashSet<JReferenceType>();
         queriedTypes.put(toType, querySet);
       }
@@ -385,39 +390,22 @@ public class CastNormalizer {
       } else if (toType instanceof JReferenceType) {
         JExpression curExpr = x.getExpr();
         JReferenceType refType = (JReferenceType) toType;
-        JType argType = x.getExpr().getType();
-        if (program.isJavaScriptObject(argType)) {
-          /*
-           * A JSO-derived class that is about to be cast must be "wrapped"
-           * first. Since a JSO was never constructed, it may not have an
-           * accessible prototype. Instead we copy fields from the seed
-           * function's prototype directly onto the target object as expandos.
-           * See com.google.gwt.lang.Cast.wrapJSO().
-           */
-          JMethod wrap = program.getIndexedMethod("Cast.wrapJSO");
-          // override the type of the called method with the JSO's type
-          JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
-              wrap, argType);
-          JClassSeed seed = program.getLiteralClassSeed((JClassType) argType);
-          call.getArgs().add(curExpr);
-          call.getArgs().add(seed);
-          curExpr = call;
-        }
-        if (argType instanceof JClassType
-            && program.typeOracle.canTriviallyCast((JClassType) argType,
-                refType)) {
-          // TODO(???): why is this only for JClassType?
+        JReferenceType argType = (JReferenceType) x.getExpr().getType();
+        if (program.typeOracle.canTriviallyCast(argType, refType)) {
           // just remove the cast
           replaceExpr = curExpr;
         } else {
-          JMethod method = program.getIndexedMethod("Cast.dynamicCast");
+          boolean isJsoCast = program.isJavaScriptObject(toType);
+          JMethod method = program.getIndexedMethod(isJsoCast
+              ? "Cast.dynamicCastJso" : "Cast.dynamicCast");
           // override the type of the called method with the target cast type
           JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
               method, toType);
-          Integer boxedInt = queryIds.get(refType);
-          JIntLiteral qId = program.getLiteralInt(boxedInt.intValue());
           call.getArgs().add(curExpr);
-          call.getArgs().add(qId);
+          if (!isJsoCast) {
+            JIntLiteral qId = program.getLiteralInt(queryIds.get(refType));
+            call.getArgs().add(qId);
+          }
           replaceExpr = call;
         }
       } else {
@@ -482,10 +470,9 @@ public class CastNormalizer {
 
     @Override
     public void endVisit(JInstanceOf x, Context ctx) {
-      JType argType = x.getExpr().getType();
-      if (argType instanceof JClassType
-          && program.typeOracle.canTriviallyCast((JClassType) argType,
-              x.getTestType())) {
+      JReferenceType argType = (JReferenceType) x.getExpr().getType();
+      JReferenceType toType = x.getTestType();
+      if (program.typeOracle.canTriviallyCast(argType, toType)) {
         // trivially true if non-null; replace with a null test
         JNullLiteral nullLit = program.getLiteralNull();
         JBinaryOperation eq = new JBinaryOperation(program, x.getSourceInfo(),
@@ -493,13 +480,16 @@ public class CastNormalizer {
             x.getExpr(), nullLit);
         ctx.replaceMe(eq);
       } else {
-        JMethod method = program.getIndexedMethod("Cast.instanceOf");
+        boolean isJsoCast = program.isJavaScriptObject(toType);
+        JMethod method = program.getIndexedMethod(isJsoCast
+            ? "Cast.instanceOfJso" : "Cast.instanceOf");
         JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
             method);
-        Integer boxedInt = queryIds.get(x.getTestType());
-        JIntLiteral qId = program.getLiteralInt(boxedInt.intValue());
         call.getArgs().add(x.getExpr());
-        call.getArgs().add(qId);
+        if (!isJsoCast) {
+          JIntLiteral qId = program.getLiteralInt(queryIds.get(toType));
+          call.getArgs().add(qId);
+        }
         ctx.replaceMe(call);
       }
     }

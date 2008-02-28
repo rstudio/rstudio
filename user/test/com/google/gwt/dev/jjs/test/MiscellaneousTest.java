@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.JavaScriptException;
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -42,12 +41,6 @@ public class MiscellaneousTest extends GWTTestCase {
   static class PolyB implements IBar {
     public String toString() {
       return "B";
-    }
-  }
-
-  private static class Foo extends JavaScriptObject {
-    public String toString() {
-      return "Foo";
     }
   }
 
@@ -91,14 +84,6 @@ public class MiscellaneousTest extends GWTTestCase {
 
   private static native void clinitFromNative() /*-{
     @com.google.gwt.dev.jjs.test.MiscellaneousTest$HasClinit::i = 5;
-  }-*/;
-
-  private static native Foo getFoo() /*-{
-    return {};
-  }-*/;
-
-  private static native JavaScriptObject getJso() /*-{
-    return {toString:function(){return 'jso';}}; 
   }-*/;
 
   private static native void throwNativeException() /*-{
@@ -214,6 +199,7 @@ public class MiscellaneousTest extends GWTTestCase {
     b[2] = null;
   }
 
+  @SuppressWarnings("cast")
   public void testCasts() {
     Object o = noOptimizeFalse() ? (Object) new PolyA() : (Object) new PolyB();
     assertTrue(o instanceof I);
@@ -279,50 +265,6 @@ public class MiscellaneousTest extends GWTTestCase {
       assertTrue(hitOuter);
     }
     assertEquals(5, i);
-  }
-
-  public void testJso() {
-    Foo foo = getFoo();
-    assertEquals("Foo", foo.toString());
-    JavaScriptObject jso = foo;
-    assertEquals("Foo", jso.toString());
-    Object y = noOptimizeFalse() ? new Object() : foo;
-    assertEquals("Foo", y.toString());
-    jso = getJso();
-    assertEquals("jso", jso.toString());
-  }
-
-  public void testJsoArrayInit() {
-    Object[] jsos = {getJso(), ""};
-    JavaScriptObject jso = (JavaScriptObject) jsos[0];
-  }
-
-  public void testJsoArrayStore() {
-    // Verify that a JSO stored into an array was correctly wrapped
-    String[] strings = {""};
-    JavaScriptObject[] jsos = {getJso()};
-    Object[] objArray = noOptimizeFalse() ? (Object[]) strings : jsos;
-    JavaScriptObject jso = (JavaScriptObject) objArray[0];
-
-    // Verify that ArrayStoreExceptions are generated in the correct cases
-    try {
-      JavaScriptObject[] typeTightenedFooArray = new Foo[3];
-      typeTightenedFooArray[0] = getJso();
-      fail();
-    } catch (ArrayStoreException e) {
-    }
-
-    try {
-      JavaScriptObject[] fooArray = noOptimizeFalse() ? new JavaScriptObject[3]
-          : new Foo[3];
-      fooArray[0] = getJso();
-      fail();
-    } catch (ArrayStoreException e) {
-    }
-
-    JavaScriptObject[] jsoArray = noOptimizeFalse() ? new Foo[3]
-        : new JavaScriptObject[3];
-    jsoArray[0] = getJso();
   }
 
   public void testString() {

@@ -172,7 +172,8 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       Class<?>[] types, Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     String msgPrefix = "invokeNativeBoolean(" + name + ")";
-    Boolean value = JsValueGlue.get(result, Boolean.class, msgPrefix);
+    Boolean value = JsValueGlue.get(result, getIsolatedClassLoader(),
+        boolean.class, msgPrefix);
     if (value == null) {
       throw new HostedModeException(msgPrefix
           + ": return value null received, expected a boolean");
@@ -184,7 +185,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     String msgPrefix = "invokeNativeByte(" + name + ")";
-    Byte value = JsValueGlue.get(result, Byte.class, msgPrefix);
+    Byte value = JsValueGlue.get(result, null, Byte.TYPE, msgPrefix);
     if (value == null) {
       throw new HostedModeException(msgPrefix
           + ": return value null received, expected a byte");
@@ -196,7 +197,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     String msgPrefix = "invokeNativeCharacter(" + name + ")";
-    Character value = JsValueGlue.get(result, Character.class, msgPrefix);
+    Character value = JsValueGlue.get(result, null, Character.TYPE, msgPrefix);
     if (value == null) {
       throw new HostedModeException(msgPrefix
           + ": return value null received, expected a char");
@@ -208,7 +209,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     String msgPrefix = "invokeNativeDouble(" + name + ")";
-    Double value = JsValueGlue.get(result, Double.class, msgPrefix);
+    Double value = JsValueGlue.get(result, null, Double.TYPE, msgPrefix);
     if (value == null) {
       throw new HostedModeException(msgPrefix
           + ": return value null received, expected a double");
@@ -220,7 +221,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     String msgPrefix = "invokeNativeFloat(" + name + ")";
-    Float value = JsValueGlue.get(result, Float.class, msgPrefix);
+    Float value = JsValueGlue.get(result, null, Float.TYPE, msgPrefix);
     if (value == null) {
       throw new HostedModeException(msgPrefix
           + ": return value null received, expected a float");
@@ -228,19 +229,11 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     return value.floatValue();
   }
 
-  public Object invokeNativeHandle(String name, Object jthis,
-      Class<?> returnType, Class<?>[] types, Object[] args) throws Throwable {
-
-    JsValue result = invokeNative(name, jthis, types, args);
-    return JsValueGlue.get(result, returnType, "invokeNativeHandle(" + name
-        + ")");
-  }
-
   public int invokeNativeInt(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     String msgPrefix = "invokeNativeInteger(" + name + ")";
-    Integer value = JsValueGlue.get(result, Integer.class, msgPrefix);
+    Integer value = JsValueGlue.get(result, null, Integer.TYPE, msgPrefix);
     if (value == null) {
       throw new HostedModeException(msgPrefix
           + ": return value null received, expected an int");
@@ -252,7 +245,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     String msgPrefix = "invokeNativeLong(" + name + ")";
-    Long value = JsValueGlue.get(result, Long.class, msgPrefix);
+    Long value = JsValueGlue.get(result, null, Long.TYPE, msgPrefix);
     if (value == null) {
       throw new HostedModeException(msgPrefix
           + ": return value null received, expected a long");
@@ -263,27 +256,20 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public Object invokeNativeObject(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    return JsValueGlue.get(result, Object.class, "invokeNativeObject(" + name
-        + ")");
+    return JsValueGlue.get(result, getIsolatedClassLoader(), Object.class,
+        "invokeNativeObject(" + name + ")");
   }
 
   public short invokeNativeShort(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     String msgPrefix = "invokeNativeShort(" + name + ")";
-    Short value = JsValueGlue.get(result, Short.class, msgPrefix);
+    Short value = JsValueGlue.get(result, null, Short.TYPE, msgPrefix);
     if (value == null) {
       throw new HostedModeException(msgPrefix
           + ": return value null received, expected a short");
     }
     return value.shortValue();
-  }
-
-  public String invokeNativeString(String name, Object jthis, Class<?>[] types,
-      Object[] args) throws Throwable {
-    JsValue result = invokeNative(name, jthis, types, args);
-    return JsValueGlue.get(result, String.class, "invokeNativeString(" + name
-        + ")");
   }
 
   public void invokeNativeVoid(String name, Object jthis, Class<?>[] types,
@@ -390,7 +376,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   @SuppressWarnings("unchecked")
-  public Object rebindAndCreate(String requestedClassName)
+  public <T> T rebindAndCreate(String requestedClassName)
       throws UnableToCompleteException {
     Throwable caught = null;
     String msg = null;
@@ -407,7 +393,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       } else {
         Constructor<?> ctor = resolvedClass.getDeclaredConstructor();
         ctor.setAccessible(true);
-        return ctor.newInstance();
+        return (T) ctor.newInstance();
       }
     } catch (ClassNotFoundException e) {
       msg = "Could not load deferred binding result type '" + resultName + "'";

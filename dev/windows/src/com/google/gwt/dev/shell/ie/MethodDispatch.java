@@ -134,7 +134,7 @@ class MethodDispatch extends IDispatchImpl {
            * methods). If method is static, it can be null.
            */
           Object jthis = JsValueGlue.get(new JsValueIE6(params[0]),
-              method.getDeclaringClass(), "this");
+              classLoader, method.getDeclaringClass(), "this");
           Variant[] otherParams = new Variant[params.length - 1];
           System.arraycopy(params, 1, otherParams, 0, otherParams.length);
           return callMethod(classLoader, jthis, otherParams, method);

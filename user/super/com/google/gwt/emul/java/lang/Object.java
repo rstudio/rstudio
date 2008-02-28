@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,11 +27,18 @@ public class Object {
    * 
    * @skip
    */
-  protected transient int typeId;
+  public transient int typeId;
 
-  public native boolean equals(Object other) /*-{
-    return this === other;
-  }-*/;
+  /**
+   * magic magic magic.
+   * 
+   * @skip
+   */
+  public transient Object typeMarker;
+
+  public boolean equals(Object other) {
+    return this == other;
+  }
 
   /*
    * Magic; unlike the real JDT, we don't spec this method as final.  The
@@ -42,9 +49,9 @@ public class Object {
     return Object.class;
   }
 
-  public int hashCode() {
-    return System.identityHashCode(this);
-  }
+  public native int hashCode() /*-{
+    return @com.google.gwt.core.client.Impl::getHashCode(Ljava/lang/Object;)(this);
+  }-*/;
 
   public String toString() {
     return getClass().getName() + '@' + Integer.toHexString(hashCode());
