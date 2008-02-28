@@ -354,12 +354,17 @@ public abstract class AbstractCompiler {
           nameEnvironmentAnswerForTypeName.put(qname, out);
           return out;
         } else {
-          ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-          if (isBinaryType(contextClassLoader, className)) {
-            URL resourceURL = contextClassLoader.getResource(className.replace(
-                '.', '/')
-                + ".class");
-            if (resourceURL != null) {
+          ClassLoader classLoader = getClassLoader();
+          URL resourceURL = classLoader.getResource(className.replace('.', '/')
+              + ".class");
+          if (resourceURL != null) {
+            /*
+             * We know that there is a .class file that matches the name that we
+             * are looking for. However, at least on OSX, this lookup is case
+             * insensitive so we need to use Class.forName to effectively verify
+             * the case.
+             */
+            if (isBinaryType(classLoader, className)) {
               byte[] classBytes = Util.readURLAsBytes(resourceURL);
               ClassFileReader cfr;
               try {
@@ -394,7 +399,8 @@ public abstract class AbstractCompiler {
       String packageName = String.valueOf(pathChars);
       if (knownPackages.contains(packageName)) {
         return true;
-      } else if (sourceOracle.isPackage(packageName)) {
+      } else if (sourceOracle.isPackage(packageName)
+          || isPackage(getClassLoader(), packageName)) {
         // Grow our own list to spare calls into the host.
         //
         rememberPackage(packageName);
@@ -402,6 +408,10 @@ public abstract class AbstractCompiler {
       } else {
         return false;
       }
+    }
+
+    private ClassLoader getClassLoader() {
+      return Thread.currentThread().getContextClassLoader();
     }
 
     private boolean isBinaryType(ClassLoader classLoader, String typeName) {
@@ -416,6 +426,11 @@ public abstract class AbstractCompiler {
 
       // Assume that it is not a binary type.
       return false;
+    }
+
+    private boolean isPackage(ClassLoader classLoader, String packageName) {
+      String packageAsPath = packageName.replace('.', '/');
+      return classLoader.getResource(packageAsPath) != null;
     }
   }
 
