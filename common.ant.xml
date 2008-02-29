@@ -92,7 +92,7 @@
 	<!-- JUnit support -->
 	<property name="gwt.dev.staging.jar" location="${gwt.build.staging}/gwt-${build.host.platform}-${gwt.version}/gwt-dev-${build.host.platform}.jar" />
 	<property name="gwt.junit.port" value="8888" />
-	<property name="gwt.junit.testcase.includes" value="**/*Test.class"/>
+	<property name="gwt.junit.testcase.includes" value="**/*Suite.class"/>
 	
 	<!--
 		Comma delimited list of host and path components on which to run remote browser testing.
@@ -144,9 +144,9 @@
 			<mkdir dir="@{test.reports}" />
 
 			<echo message="${javac.out} ${javac.junit.out}" />
-			<junit dir="@{test.out}" fork="yes" printsummary="yes" haltonfailure="true">
+			<junit dir="@{test.out}" fork="yes" printsummary="yes" failureproperty="junit.failure" >
 				<jvmarg line="${junit.platform.args}" />
-				<jvmarg line="-Xmx256m" />
+				<jvmarg line="-Xmx512m" />
 				<sysproperty key="gwt.args" value="@{test.args}" />
 				<sysproperty key="gwt.devjar" value="${gwt.dev.staging.jar}" />
 				<sysproperty key="java.awt.headless" value="true" />
@@ -168,6 +168,7 @@
 					<fileset refid="@{test.cases}" />
 				</batchtest>
 			</junit>
+			<fail message="One or more junit tests failed" if="junit.failure" />
 		</sequential>
 	</macrodef>
 

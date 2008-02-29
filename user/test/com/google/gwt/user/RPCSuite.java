@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user;
 
+import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.user.client.rpc.CollectionsTest;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTest;
 import com.google.gwt.user.client.rpc.EnumsTest;
@@ -29,14 +30,14 @@ import com.google.gwt.user.server.rpc.impl.LegacySerializationPolicyTest;
 import com.google.gwt.user.server.rpc.impl.StandardSerializationPolicyTest;
 
 import junit.framework.Test;
-import junit.framework.TestSuite;
 
 /**
  * A collection of TestCases for the RPC system.
  */
 public class RPCSuite {
   public static Test suite() {
-    TestSuite suite = new TestSuite("Test for com.google.gwt.user.client.rpc");
+    GWTTestSuite suite = new GWTTestSuite(
+        "Test for com.google.gwt.user.client.rpc");
 
     suite.addTestSuite(SerializableTypeOracleBuilderTest.class);
     suite.addTestSuite(RPCTest.class);

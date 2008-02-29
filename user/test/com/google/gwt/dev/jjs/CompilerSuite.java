@@ -36,9 +36,9 @@ import com.google.gwt.dev.jjs.test.MethodInterfaceTest;
 import com.google.gwt.dev.jjs.test.MiscellaneousTest;
 import com.google.gwt.dev.jjs.test.NativeLongTest;
 import com.google.gwt.dev.jjs.test.VarargsTest;
+import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
-import junit.framework.TestSuite;
 
 /**
  * The complete compiler suite.
@@ -46,7 +46,7 @@ import junit.framework.TestSuite;
 public class CompilerSuite {
 
   public static Test suite() {
-    TestSuite suite = new TestSuite("Test for com.google.gwt.dev.jjs");
+    GWTTestSuite suite = new GWTTestSuite("Test for com.google.gwt.dev.jjs");
 
     // $JUnit-BEGIN$
     suite.addTestSuite(AnnotationsTest.class);

@@ -34,7 +34,15 @@
 		<gwt.ant dir="simplexml" />
 	</target>
 
-	<target name="-do" depends="dynatable, hello, i18n, json, kitchensink, mail, simplexml" description="Run all subprojects" />
+	<target name="-do" description="Run all subprojects" >
+		<antcall target="dynatable" />
+		<antcall target="hello" />
+		<antcall target="i18n" />
+		<antcall target="json" />
+		<antcall target="kitchensink" />
+		<antcall target="mail" />
+		<antcall target="simplexml" />
+	</target>
 
 	<target name="build" description="Builds GWT">
 		<antcall target="-do">

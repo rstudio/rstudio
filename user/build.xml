@@ -1,106 +1,20 @@
 <project name="user" default="build" basedir=".">
 	<property name="gwt.root" location=".." />
 	<property name="project.tail" value="user" />
+	<property name="test.args" value="" />
 	<import file="${gwt.root}/common.ant.xml" />
 
 	<!--
 		Default hosted mode test cases
 	-->
 	<fileset id="default.hosted.tests" dir="${javac.junit.out}" 
-			 includes="${gwt.junit.testcase.includes}">
-		<!--
-			Requires manual testing, because it generates intentional failures.
-		-->
-		<exclude name="com/google/gwt/junit/client/ParallelRemoteTest.class" />
-
-		<!--
-			Causes a security dialog to popup and subsequently blocks testing
-		-->
-		<exclude name="com/google/gwt/user/client/ui/FormPanelTest.class" />
-
-		<!--
-			Need to confirm with JGW if this should still be disabled
-		-->
-		<exclude name="com/google/gwt/user/client/ui/HistoryTest.class" />
-
-		<!--
-			Safari regression:
-				Testcase: testPositioning took 7.514 sec
-				FAILED
-					expected=225 actual=207
-					junit.framework.AssertionFailedError:  expected=225 actual=207
-		-->
-		<exclude name="com/google/gwt/user/client/ui/AbsolutePanelTest.class" />
-	</fileset>
+			 includes="${gwt.junit.testcase.includes}" />
 
 	<!--
 		Default web mode test cases
 	-->
 	<fileset id="default.web.tests" dir="${javac.junit.out}"
- 		 	 includes="${gwt.junit.testcase.includes}">
-		<!--
-			Requires manual testing, because it generates intentional failures.
-		-->
-		<exclude name="com/google/gwt/junit/client/ParallelRemoteTest.class" />
-		
-		<!--
-			Causes a security dialog to popup and subsequently blocks testing
-		-->
-		<exclude name="com/google/gwt/user/client/ui/FormPanelTest.class" />
-
-		<!--
-			Need to confirm with JGW if this should still be disabled
-		-->
-		<exclude name="com/google/gwt/user/client/ui/HistoryTest.class" />
-
-		<!--
-			Safari Failures:
-				Testcase: testFunctionCaching took 0.112 sec
-			        Caused an ERROR
-					JavaScript RangeError exception: Maximum call stack size exceeded.
-					com.google.gwt.core.client.JavaScriptException: JavaScript RangeError exception: Maximum call stack size exceeded.
-			
-			Linux Web Mode Failures:
-				Testcase: testFunctionCaching took 1.004 sec
-			        Caused an ERROR
-					JavaScript InternalError exception: too much recursion
-					com.google.gwt.core.client.JavaScriptException: JavaScript InternalError exception: too much recursion
-		-->
-		<exclude name="com/google/gwt/dev/jjs/test/HostedTest.class" />
-
-		<!--
-			Safari Failures:
-				Testcase: testRecursion took 1.003 sec
-			        Caused an ERROR
-					JavaScript RangeError exception: Maximum call stack size exceeded.
-					com.google.gwt.core.client.JavaScriptException: JavaScript RangeError exception: Maximum call stack size exceeded.
-		-->
-		<exclude name="com/google/gwt/dev/jjs/test/MethodCallTest.class" />
-
-		<!--
-			Safari Failures:
-				Testcase: testJso took 1.005 sec
-				        Caused an ERROR
-				JavaScript RangeError exception: Maximum call stack size exceeded.
-				com.google.gwt.core.client.JavaScriptException: JavaScript RangeError exception: Maximum call stack size exceeded.
-		-->
-		<exclude name="com/google/gwt/dev/jjs/test/MiscellaneousTest.class" />
-
-		<!--
-			Safari regression:
-				Testcase: testPositioning took 7.514 sec
-					FAILED
-				expected=225 actual=207
-				junit.framework.AssertionFailedError:  expected=225 actual=207
-		-->
-		<exclude name="com/google/gwt/user/client/ui/AbsolutePanelTest.class" />
-
-		<!--
-			No compiler support yet; waiting on Class.getEnumConstants()
-		-->
-		<exclude name="com/google/gwt/emultest/java/util/EnumMapTest.class" />
-		<exclude name="com/google/gwt/emultest/java/util/EnumSetTest.class" />
-	</fileset>
+ 		 	 includes="${gwt.junit.testcase.includes}" />
 
 	<!-- Platform shouldn't matter here, just picking one -->
 	<property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
@@ -153,15 +67,15 @@
 
 	<target name="remoteweb-test" description="Run a remoteweb test at the given host and path">
 		<echo message="Performing remote browser testing at rmi://${gwt.remote.browser}" />
-		<gwt.junit test.args="-out www -web -remoteweb rmi://${gwt.remote.browser}" test.out="${junit.out}/${gwt.remote.browser}" test.cases="default.web.tests" />
+		<gwt.junit test.args="${test.args} -out www -web -remoteweb rmi://${gwt.remote.browser}" test.out="${junit.out}/${gwt.remote.browser}" test.cases="default.web.tests" />
 	</target>
 
 	<target name="test.hosted" depends="compile, compile.tests" description="Run only hosted-mode tests for this project.">
-		<gwt.junit test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="default.hosted.tests" />
+		<gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="default.hosted.tests" />
 	</target>
 
 	<target name="test.web" depends="compile, compile.tests" description="Run only web-mode tests for this project.">
-		<gwt.junit test.args="-out www -web" test.out="${junit.out}/${build.host.platform}-web-mode" test.cases="default.web.tests" />
+		<gwt.junit test.args="${test.args} -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode" test.cases="default.web.tests" />
 	</target>
 
 	<target name="test" depends="compile, compile.tests" description="Run hosted-mode, web-mode and remoteweb tests for this project.">
@@ -171,7 +85,8 @@
 			Run hosted and web mode tests for the platform on which this build
 			is executing
 		-->
-		<parallel threadcount="1">
+		<limit failonerror="true" hours="1">
+		<parallel threadsPerProcessor="1">
 			<antcall target="test.hosted"/>
 
 			<antcall target="test.web"/>
@@ -181,6 +96,7 @@
 			-->
 			<foreach list="${gwt.remote.browsers}" delimiter="," parallel="true" maxThreads="1" target="remoteweb-test" param="gwt.remote.browser" />
 		</parallel>
+		</limit>
 	</target>
 
 	<target name="clean" description="Cleans this project's intermediate and output files">

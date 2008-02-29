@@ -64,7 +64,7 @@
 	<target name="build" depends="compile, gwtc" description="Build and package this project">
 		<mkdir dir="${gwt.build.lib}" />
                 <copy todir="${tools.build}/www-new/${tools.module.path}" flatten="true" >
-                  <fileset dir="${tools.build}/www/${tools.module}" />
+                  <fileset dir="${tools.build}/www/${tools.module}/std" />
                 </copy>
                     
 		<gwt.jar>
@@ -85,11 +85,23 @@
 
 	<target name="gwtc" description="Compile to JavaScript">
 	  	<mkdir dir="${tools.build}/www" />
-		<java dir="${tools.build}" classname="com.google.gwt.dev.GWTCompiler" classpath="src:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
-			<arg value="-out" />
-			<arg file="${tools.build}/www" />
-			<arg value="${tools.module}" />
-		</java>
+		<outofdate>
+			<sourcefiles>
+				<fileset dir="src" />
+				<fileset file="${gwt.user.jar}" />
+				<fileset file="${gwt.dev.jar}" />
+			</sourcefiles>
+			<targetfiles>
+				<fileset dir="${tools.build}/www" />
+			</targetfiles>
+			<sequential>
+				<java dir="${tools.build}" classname="com.google.gwt.dev.GWTCompiler" classpath="src:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
+					<arg value="-out" />
+					<arg file="${tools.build}/www" />
+					<arg value="${tools.module}" />
+				</java>
+			</sequential>
+		</outofdate>
 	</target>
 
 	<target name="remoteweb-test" description="Run a remoteweb test at the given host and path">

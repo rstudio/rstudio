@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,29 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.http;
+package test;
 
-import com.google.gwt.http.client.RequestBuilderTest;
-import com.google.gwt.http.client.RequestTest;
-import com.google.gwt.http.client.ResponseTest;
-import com.google.gwt.http.client.URLTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
 
 /**
- * TODO: document me.
+ * Tests servlet mappings.
  */
-public class HTTPSuite {
+public class ServletMappingSuite {
   public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite(
-        "Test for suite for the com.google.gwt.http module");
-
-    suite.addTestSuite(URLTest.class);
-    suite.addTestSuite(RequestBuilderTest.class);
-    suite.addTestSuite(RequestTest.class);
-    suite.addTestSuite(ResponseTest.class);
-
+    GWTTestSuite suite = new GWTTestSuite();
+    
+    suite.addTestSuite(ServletMappingTest.class);
+    
     return suite;
   }
 }

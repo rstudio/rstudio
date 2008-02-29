@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,10 @@
  */
 package com.google.gwt.user;
 
+import com.google.gwt.junit.tools.GWTTestSuite;
+import com.google.gwt.user.client.CommandExecutorTest;
+import com.google.gwt.user.client.CookieTest;
+import com.google.gwt.user.client.WindowTest;
 import com.google.gwt.user.client.ui.AbsolutePanelTest;
 import com.google.gwt.user.client.ui.CheckBoxTest;
 import com.google.gwt.user.client.ui.CustomButtonTest;
@@ -42,6 +46,7 @@ import com.google.gwt.user.client.ui.PanelTest;
 import com.google.gwt.user.client.ui.PopupTest;
 import com.google.gwt.user.client.ui.PrefixTreeTest;
 import com.google.gwt.user.client.ui.RadioButtonTest;
+import com.google.gwt.user.client.ui.RichTextAreaTest;
 import com.google.gwt.user.client.ui.ScrollPanelTest;
 import com.google.gwt.user.client.ui.SplitPanelTest;
 import com.google.gwt.user.client.ui.StackPanelTest;
@@ -54,20 +59,25 @@ import com.google.gwt.user.client.ui.UIObjectTest;
 import com.google.gwt.user.client.ui.VerticalPanelTest;
 import com.google.gwt.user.client.ui.WidgetCollectionTest;
 import com.google.gwt.user.client.ui.WidgetIteratorsTest;
+import com.google.gwt.user.client.ui.WidgetOnLoadTest;
+import com.google.gwt.user.client.ui.impl.ClippedImagePrototypeTest;
+import com.google.gwt.xml.client.XMLTest;
 
 import junit.framework.Test;
-import junit.framework.TestSuite;
 
 /**
  * TODO: document me.
  */
 public class UISuite {
   public static Test suite() {
-    TestSuite suite = new TestSuite(
+    GWTTestSuite suite = new GWTTestSuite(
         "Test for suite for the com.google.gwt.ui module");
 
     suite.addTestSuite(AbsolutePanelTest.class);
     suite.addTestSuite(CheckBoxTest.class);
+    suite.addTestSuite(ClippedImagePrototypeTest.class);
+    suite.addTestSuite(CommandExecutorTest.class);
+    suite.addTestSuite(CookieTest.class);
     suite.addTestSuite(CustomButtonTest.class);
     suite.addTestSuite(DecoratorPanelTest.class);
     suite.addTestSuite(DelegatingKeyboardListenerCollectionTest.class);
@@ -95,6 +105,7 @@ public class UISuite {
     suite.addTestSuite(PopupTest.class);
     suite.addTestSuite(PrefixTreeTest.class);
     suite.addTestSuite(RadioButtonTest.class);
+    suite.addTestSuite(RichTextAreaTest.class);
     suite.addTestSuite(ScrollPanelTest.class);
     suite.addTestSuite(SplitPanelTest.class);
     suite.addTestSuite(StackPanelTest.class);
@@ -107,6 +118,9 @@ public class UISuite {
     suite.addTestSuite(VerticalPanelTest.class);
     suite.addTestSuite(WidgetCollectionTest.class);
     suite.addTestSuite(WidgetIteratorsTest.class);
+    suite.addTestSuite(WidgetOnLoadTest.class);
+    suite.addTestSuite(WindowTest.class);
+    suite.addTestSuite(XMLTest.class);
 
     return suite;
   }

@@ -37,9 +37,9 @@ import com.google.gwt.emultest.java.util.EnumSetTest;
 import com.google.gwt.emultest.java.util.HashMapTest;
 import com.google.gwt.emultest.java.util.HashSetTest;
 import com.google.gwt.emultest.java.util.StackTest;
+import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
-import junit.framework.TestSuite;
 
 /**
  * TODO: document me.
@@ -48,7 +48,7 @@ public class EmulSuite {
 
   /** Note: due to compiler error, only can use one Test Case at a time. */
   public static Test suite() {
-    TestSuite suite = new TestSuite("Tests for com.google.gwt.emul.java");
+    GWTTestSuite suite = new GWTTestSuite("Tests for com.google.gwt.emul.java");
 
     // $JUnit-BEGIN$
     suite.addTestSuite(BooleanTest.class);
