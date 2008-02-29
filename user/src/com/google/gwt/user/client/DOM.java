@@ -66,6 +66,16 @@ public class DOM {
   }
 
   /**
+   * Clones an element.
+   * 
+   * @param elem the element to be cloned
+   * @param deep should children be cloned as well?
+   */
+  public static Element clone(Element elem, boolean deep) {
+    return impl.clone(elem, deep);
+  }
+
+  /**
    * Compares two elements for equality (note that reference equality is not
    * sufficient to determine equality among elements on most browsers).
    * 

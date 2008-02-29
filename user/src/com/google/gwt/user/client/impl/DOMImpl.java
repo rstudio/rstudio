@@ -30,6 +30,10 @@ public abstract class DOMImpl {
     parent.appendChild(child);
   }-*/;
 
+  public native Element clone(Element elem, boolean deep) /*-{
+    return elem.cloneNode(deep);
+  }-*/;
+
   public abstract boolean compare(Element elem1, Element elem2);
 
   public native Element createElement(String tag) /*-{
