@@ -22,7 +22,7 @@ package com.google.gwt.user.client.impl;
 public class WindowImpl {
   public native void enableScrolling(boolean enable) /*-{
    @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.style.overflow =
-       enable ? "auto" : "hidden";
+       enable ? "" : "hidden";
   }-*/;
 
   public native int getClientHeight() /*-{
