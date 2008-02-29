@@ -48,7 +48,7 @@ public class JWildcardType extends JDelegatingClassType implements HasBounds {
     }
     
     // ? extends T erases to T
-    return getFirstBound();
+    return getFirstBound().getErasedType();
   }
 
   @Override
