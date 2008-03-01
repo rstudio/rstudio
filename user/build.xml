@@ -65,9 +65,10 @@
 		</gwt.checkstyle>
 	</target>
 
-	<target name="remoteweb-test" description="Run a remoteweb test at the given host and path">
-		<echo message="Performing remote browser testing at rmi://${gwt.remote.browser}" />
-		<gwt.junit test.args="${test.args} -out www -web -remoteweb rmi://${gwt.remote.browser}" test.out="${junit.out}/${gwt.remote.browser}" test.cases="default.web.tests" />
+	<target name="remoteweb-test" description="Run a remoteweb test at the given host and path" if="gwt.remote.browsers">
+		<propertyregex property="gwt.remote.browsers" input="rmi://${gwt.remote.browsers}" regexp="," replace=",rmi://" global="true" />
+		<echo message="Performing remote browser testing at ${gwt.remote.browsers}" />
+		<gwt.junit test.args="${test.args} -out www -web -remoteweb ${gwt.remote.browsers}" test.out="${junit.out}/remoteweb" test.cases="default.web.tests" />
 	</target>
 
 	<target name="test.hosted" depends="compile, compile.tests" description="Run only hosted-mode tests for this project.">
@@ -87,14 +88,10 @@
 		-->
 		<limit failonerror="true" hours="1">
 		<parallel threadsPerProcessor="1">
+			<!-- remoteweb-test is a no-op unless gwt.remote.browsers is defined -->
+			<antcall target="remoteweb-test"/>
 			<antcall target="test.hosted"/>
-
 			<antcall target="test.web"/>
-
-			<!--
-				Run remote browser testing for the comma delimited list of remote browsers
-			-->
-			<foreach list="${gwt.remote.browsers}" delimiter="," parallel="true" maxThreads="1" target="remoteweb-test" param="gwt.remote.browser" />
 		</parallel>
 		</limit>
 	</target>

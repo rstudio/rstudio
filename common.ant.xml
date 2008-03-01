@@ -94,11 +94,6 @@
 	<property name="gwt.junit.port" value="8888" />
 	<property name="gwt.junit.testcase.includes" value="**/*Suite.class"/>
 	
-	<!--
-		Comma delimited list of host and path components on which to run remote browser testing.
-	-->
-	<property name="gwt.remote.browsers" value="" />
-
 
 	<!-- Pulls in tasks defined in ant-contrib, i.e. foreach -->
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
