@@ -59,7 +59,7 @@ public class JsoTest extends GWTTestCase {
 
     protected Foo() {
     }
-    
+
     public final native String getFoo() /*-{
       return this.foo;
     }-*/;
@@ -262,6 +262,11 @@ public class JsoTest extends GWTTestCase {
       fail("Expected ArrayStoreException");
     } catch (ArrayStoreException expected) {
     }
+
+    objArray = new Object[1];
+    objArray[0] = makeJSO();
+    objArray[0] = makeFoo();
+    objArray[0] = makeBar();
   }
 
   public void testBasic() {

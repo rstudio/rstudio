@@ -48,10 +48,25 @@ import java.util.Set;
 
 /**
  * Replace cast and instanceof operations with calls to the Cast class. Depends
- * on {@link com.google.gwt.dev.jjs.impl.CatchBlockNormalizer},
- * {@link com.google.gwt.dev.jjs.impl.CompoundAssignmentNormalizer}, and
- * {@link com.google.gwt.dev.jjs.impl.JavaScriptObjectCaster} having already
- * run.
+ * on {@link CatchBlockNormalizer}, {@link CompoundAssignmentNormalizer}, and
+ * {@link JsoDevirtualizer} having already run.
+ * 
+ * <p>
+ * Object and String always get a typeId of 1 and 2, respectively. 0 is reserved
+ * as the typeId for any classes that can never be instance type of a successful
+ * dynamic cast.
+ * </p>
+ * <p>
+ * Object and String always get a queryId of 0 and 1, respectively. The 0
+ * queryId always means "always succeeds". In practice, we never generate an
+ * explicit cast with a queryId of 0; it is only used for array store checking,
+ * where the 0 queryId means that anything can be stored into an Object[].
+ * </p>
+ * <p>
+ * JavaScriptObject and subclasses have no typeId at all. JavaScriptObject has a
+ * queryId of -1, which again is only used for array store checking, to ensure
+ * that a non-JSO is not stored into a JavaScriptObject[].
+ * </p>
  */
 public class CastNormalizer {
 
@@ -59,7 +74,7 @@ public class CastNormalizer {
 
     Set<JClassType> alreadyRan = new HashSet<JClassType>();
     private Map<JReferenceType, Set<JReferenceType>> queriedTypes = new IdentityHashMap<JReferenceType, Set<JReferenceType>>();
-    private int nextQueryId = 1; // 0 is reserved
+    private int nextQueryId = 0;
     private final List<JArrayType> instantiatedArrayTypes = new ArrayList<JArrayType>();
     private List<JClassType> classes = new ArrayList<JClassType>();
     private List<JsonObject> jsonObjects = new ArrayList<JsonObject>();
@@ -71,6 +86,10 @@ public class CastNormalizer {
           instantiatedArrayTypes.add(arrayType);
         }
       }
+
+      // Reserve query id 0 for java.lang.Object (for array stores on JSOs).
+      recordCastInternal(program.getTypeJavaLangObject(),
+          program.getTypeJavaLangObject());
 
       // Reserve query id 1 for java.lang.String to facilitate the mashup case.
       // Multiple GWT modules need to modify String's prototype the same way.
@@ -227,12 +246,7 @@ public class CastNormalizer {
         }
       }
 
-      // Object a typeId, to force String to have an id of 2.
-      if (yesSet == null && type != program.getTypeJavaLangObject()) {
-        return; // won't satisfy anything
-      }
-
-      // use an array to sort my yes set
+      // Use a sparse array to sort my yes set.
       JReferenceType[] yesArray = new JReferenceType[nextQueryId];
       if (yesSet != null) {
         for (JReferenceType yesType : yesSet) {
@@ -240,15 +254,26 @@ public class CastNormalizer {
         }
       }
 
-      // create a sparse lookup object
+      // Create a sparse lookup object.
       JsonObject jsonObject = new JsonObject(program);
-      for (int i = 0; i < nextQueryId; ++i) {
+      // Start at 1; 0 is Object and always true.
+      for (int i = 1; i < nextQueryId; ++i) {
         if (yesArray[i] != null) {
           JIntLiteral labelExpr = program.getLiteralInt(i);
           JIntLiteral valueExpr = program.getLiteralInt(1);
           jsonObject.propInits.add(new JsonPropInit(program, labelExpr,
               valueExpr));
         }
+      }
+
+      /*
+       * Don't add an entry for empty answer sets, except for Object and String
+       * which require typeIds.
+       */
+      if (jsonObject.propInits.isEmpty()
+          && type != program.getTypeJavaLangObject()
+          && type != program.getTypeJavaLangString()) {
+        return;
       }
 
       // add an entry for me
