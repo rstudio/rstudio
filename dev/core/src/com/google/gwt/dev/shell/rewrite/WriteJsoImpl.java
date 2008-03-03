@@ -15,13 +15,13 @@
  */
 package com.google.gwt.dev.shell.rewrite;
 
+import com.google.gwt.dev.asm.ClassAdapter;
+import com.google.gwt.dev.asm.ClassVisitor;
+import com.google.gwt.dev.asm.FieldVisitor;
+import com.google.gwt.dev.asm.MethodVisitor;
+import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodMapper;
 
-import org.objectweb.asm.ClassAdapter;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
 
 import java.util.ArrayList;
 import java.util.Set;

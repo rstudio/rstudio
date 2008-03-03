@@ -15,11 +15,11 @@
  */
 package com.google.gwt.dev.shell.rewrite;
 
+import com.google.gwt.dev.asm.ClassReader;
+import com.google.gwt.dev.asm.ClassVisitor;
+import com.google.gwt.dev.asm.ClassWriter;
 import com.google.gwt.dev.shell.JsValueGlue;
 
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
 
 import java.util.Collections;
 import java.util.HashSet;

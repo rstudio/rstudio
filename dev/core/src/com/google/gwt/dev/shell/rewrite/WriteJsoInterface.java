@@ -15,13 +15,13 @@
  */
 package com.google.gwt.dev.shell.rewrite;
 
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.Attribute;
-import org.objectweb.asm.ClassAdapter;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
+import com.google.gwt.dev.asm.AnnotationVisitor;
+import com.google.gwt.dev.asm.Attribute;
+import com.google.gwt.dev.asm.ClassAdapter;
+import com.google.gwt.dev.asm.ClassVisitor;
+import com.google.gwt.dev.asm.FieldVisitor;
+import com.google.gwt.dev.asm.MethodVisitor;
+import com.google.gwt.dev.asm.Opcodes;
 
 /**
  * Writes an empty interface to stand in for a JSO type.

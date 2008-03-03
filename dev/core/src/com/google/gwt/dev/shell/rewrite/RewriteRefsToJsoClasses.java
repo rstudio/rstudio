@@ -15,14 +15,13 @@
  */
 package com.google.gwt.dev.shell.rewrite;
 
+import com.google.gwt.dev.asm.ClassAdapter;
+import com.google.gwt.dev.asm.ClassVisitor;
+import com.google.gwt.dev.asm.MethodAdapter;
+import com.google.gwt.dev.asm.MethodVisitor;
+import com.google.gwt.dev.asm.Opcodes;
+import com.google.gwt.dev.asm.commons.Remapper;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodMapper;
-
-import org.objectweb.asm.ClassAdapter;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodAdapter;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.commons.Remapper;
 
 import java.util.Set;
 
