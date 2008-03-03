@@ -37,8 +37,5 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/tomcat-http11-1.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/tomcat-jk2-2.1.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/tomcat-util-5.1.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/xercesImpl.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/xml-apis.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/xerces/xerces-2_9_1/serializer.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
