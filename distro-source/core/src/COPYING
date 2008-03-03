@@ -1,6 +1,6 @@
            GOOGLE WEB TOOLKIT LICENSE INFORMATION
 
-February 8, 2008
+March 3, 2008
 
 The Google Web Toolkit software and sample code developed by Google is 
 licensed under the Apache License, v. 2.0. Other software included in this 
@@ -197,7 +197,7 @@ e.g. "gwt-dev-linux.jar".
   License: Creative Commons Attribution 1.0
     http://creativecommons.org/licenses/by/1.0/
   Source code availability:
-    http://google-web-toolkit.googlecode.com/svn/trunk/tools/benchmark-viewer/src/com/google/gwt/junit/viewer/client/BrowserInfo.java
+    http://google-web-toolkit.googlecode.com/svn/trunk/tools/benchmark-viewer/src/com/google/gwt/benchmarks/viewer/client/BrowserInfo.java
     (transliterated into Java source)
 
 * Eclipse Java Development Tools (JDT)
