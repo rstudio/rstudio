@@ -185,9 +185,8 @@ public class JSONObject extends JSONValue {
       var subObj = 
         (this.@com.google.gwt.json.client.JSONObject::frontStore[key]).
           @com.google.gwt.json.client.JSONValue::toString()();
-      out.push("\"");
-      out.push(key);
-      out.push("\":");
+      out.push(@com.google.gwt.json.client.JSONString::escapeValue(Ljava/lang/String;)(key));
+      out.push(":");
       out.push(subObj);
     }
     out.push("}")

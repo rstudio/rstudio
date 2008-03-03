@@ -29,6 +29,13 @@ public class JSONString extends JSONValue {
     return (lookedUp == null) ? c : lookedUp;
   }-*/;
 
+  static native String escapeValue(String toEscape) /*-{
+    var s = toEscape.replace(/[\x00-\x1F"\\]/g, function(x) {
+      return @com.google.gwt.json.client.JSONString::escapeChar(Ljava/lang/String;)(x);
+    });
+    return "\"" + s + "\"";
+  }-*/;
+
   private static native JavaScriptObject initEscapeTable() /*-{
     var out = [
       "\\u0000", "\\u0001", "\\u0002", "\\u0003", "\\u0004", "\\u0005",
@@ -80,11 +87,4 @@ public class JSONString extends JSONValue {
   public String toString() {
     return escapeValue(value);
   }
-
-  private native String escapeValue(String toEscape) /*-{
-    var s = toEscape.replace(/[\x00-\x1F"\\]/g, function(x) {
-      return @com.google.gwt.json.client.JSONString::escapeChar(Ljava/lang/String;)(x);
-    });
-    return "\"" + s + "\"";
-  }-*/;
 }

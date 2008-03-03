@@ -17,8 +17,10 @@ package com.google.gwt.json.client;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
+import java.util.Set;
+
 /**
- * TODO: document me.
+ * Test case for JSONValue and friends.
  */
 public class JSONTest extends GWTTestCase {
   static final String menuTest = "{\"menu\": {\n" + "  \"id\": \"file\",\n"
@@ -42,6 +44,54 @@ public class JSONTest extends GWTTestCase {
       + "        \"style\": \"bold\",        \"name\": \"text1\",        \"hOffset\": 250,        \"vOffset\": 100,        \"alignment\": \"center\",\n"
       + "        \"onMouseUp\": \"sun1.opacity = (sun1.opacity / 100) * 90;\"\n"
       + "    }\n" + "}}    \n" + "";
+
+  private static void assertJSONArrayEquals(JSONArray expected, JSONArray actual) {
+    assertEquals(expected.size(), actual.size());
+    for (int i = 0; i < expected.size(); ++i) {
+      assertJSONValueEquals(expected.get(i), actual.get(i));
+    }
+  }
+
+  private static void assertJSONObjectEquals(JSONObject expected,
+      JSONObject actual) {
+    Set<String> actKeys = actual.keySet();
+    for (String key : expected.keySet()) {
+      actKeys.remove(key);
+      assertTrue(actual.containsKey(key));
+      JSONValue expValue = expected.get(key);
+      JSONValue actValue = actual.get(key);
+      assertJSONValueEquals(expValue, actValue);
+    }
+    assertEquals(0, actKeys.size());
+  }
+
+  private static void assertJSONValueEquals(JSONValue expected, JSONValue actual) {
+    if (expected.isArray() != null) {
+      JSONArray expArray = expected.isArray();
+      JSONArray actArray = actual.isArray();
+      assertJSONArrayEquals(expArray, actArray);
+    } else if (expected.isBoolean() != null) {
+      JSONBoolean expBool = expected.isBoolean();
+      JSONBoolean actBool = actual.isBoolean();
+      assertEquals(expBool.booleanValue(), actBool.booleanValue());
+    } else if (expected.isNull() != null) {
+      assertNotNull(actual.isNull());
+    } else if (expected.isNumber() != null) {
+      JSONNumber expNum = expected.isNumber();
+      JSONNumber actNum = actual.isNumber();
+      assertEquals(expNum.getValue(), actNum.getValue());
+    } else if (expected.isObject() != null) {
+      JSONObject expObj = expected.isObject();
+      JSONObject actObj = actual.isObject();
+      assertJSONObjectEquals(expObj, actObj);
+    } else if (expected.isString() != null) {
+      JSONString expStr = expected.isString();
+      JSONString actStr = actual.isString();
+      assertEquals(expStr.stringValue(), actStr.stringValue());
+    } else {
+      fail("Unknown JSONValue " + expected);
+    }
+  }
 
   /**
    * Returns the module name for GWT unit test running.
@@ -294,6 +344,19 @@ public class JSONTest extends GWTTestCase {
             "hello"));
   }
 
+  public void testRoundTripEscaping() {
+    JSONObject obj = new JSONObject();
+    obj.put("a", new JSONNumber(42));
+    obj.put("\\", new JSONNumber(43));
+    obj.put("\"", new JSONNumber(44));
+
+    String toString = obj.toString();
+    assertEquals("{\"a\":42.0, \"\\\\\":43.0, \"\\\"\":44.0}", toString.trim());
+    JSONValue parseResponse = JSONParser.parse(toString);
+    JSONObject obj2 = parseResponse.isObject();
+    assertJSONObjectEquals(obj, obj2);
+  }
+
   public void testSimpleNested() {
     JSONObject j1 = new JSONObject();
     j1.put("test1", new JSONString(""));
@@ -332,10 +395,13 @@ public class JSONTest extends GWTTestCase {
     JSONObject object = JSONParser.parse("{\"a\":\"b\",\"null\":\"foo\"}").isObject();
     assertNotNull(object);
 
-    assertEquals("b", object.get(stringAsPrimitive("a")).isString().stringValue());
+    assertEquals("b",
+        object.get(stringAsPrimitive("a")).isString().stringValue());
     assertEquals("b", object.get(stringAsObject("a")).isString().stringValue());
-    assertEquals("foo", object.get(stringAsPrimitive("null")).isString().stringValue());
-    assertEquals("foo", object.get(stringAsObject("null")).isString().stringValue());
+    assertEquals("foo",
+        object.get(stringAsPrimitive("null")).isString().stringValue());
+    assertEquals("foo",
+        object.get(stringAsObject("null")).isString().stringValue());
     assertNull(object.get(null));
   }
 
