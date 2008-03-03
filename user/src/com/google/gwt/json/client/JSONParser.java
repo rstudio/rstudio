@@ -117,8 +117,8 @@ public class JSONParser {
   }-*/;
 
   /**
-   * This method converts the json string into either a String or a a by simply
-   * evaluating the string in JavaScript.
+   * This method converts the json string into either a String or a
+   * JavaScriptObject by simply evaluating the string in JavaScript.
    */
   private static native Object evaluate(String jsonString) /*-{
     var x = eval('(' + jsonString + ')');
