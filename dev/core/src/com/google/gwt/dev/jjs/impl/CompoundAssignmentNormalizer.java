@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,6 @@ import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
-import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JThisRef;
@@ -72,7 +71,6 @@ public class CompoundAssignmentNormalizer {
         JExpression newLhs = replacer.accept(x.getLhs());
         localIndex = pushUsedLocals;
 
-        JNullLiteral litNull = program.getLiteralNull();
         JBinaryOperation operation = new JBinaryOperation(program,
             x.getSourceInfo(), newLhs.getType(), JBinaryOperator.DIV, newLhs,
             x.getRhs());
@@ -184,7 +182,7 @@ public class CompoundAssignmentNormalizer {
   private JMethodBody currentMethodBody;
   private int localIndex;
   private final JProgram program;
-  private final List/* <JLocal> */tempLocals = new ArrayList/* <JLocal> */();
+  private final List<JLocal> tempLocals = new ArrayList<JLocal>();
 
   private CompoundAssignmentNormalizer(JProgram program) {
     this.program = program;
@@ -202,7 +200,7 @@ public class CompoundAssignmentNormalizer {
 
   private JLocal getTempLocal() {
     if (localIndex < tempLocals.size()) {
-      return (JLocal) tempLocals.get(localIndex++);
+      return tempLocals.get(localIndex++);
     }
     JLocal newTemp = program.createLocal(null,
         ("$t" + localIndex++).toCharArray(), program.getTypeVoid(), false,
