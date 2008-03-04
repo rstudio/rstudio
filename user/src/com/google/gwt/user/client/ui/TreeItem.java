@@ -24,6 +24,10 @@ import java.util.List;
 /**
  * An item that can be contained within a
  * {@link com.google.gwt.user.client.ui.Tree}.
+ *
+ * Each tree item is assigned a unique DOM id in order to support ARIA. See
+ * {@link com.google.gwt.user.client.ui.Accessibility} for more information.
+ *
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.TreeExample}
@@ -79,6 +83,9 @@ public class TreeItem extends UIObject implements HasHTML {
     DOM.setStyleAttribute(getElement(), "whiteSpace", "nowrap");
     DOM.setStyleAttribute(childSpanElem, "whiteSpace", "nowrap");
     setStyleName(contentElem, "gwt-TreeItem", true);
+
+    Accessibility.setRole(contentElem, Accessibility.ROLE_TREEITEM);
+    DOM.setElementAttribute(contentElem, "id", DOM.createUniqueId());
   }
 
   /**
@@ -115,10 +122,9 @@ public class TreeItem extends UIObject implements HasHTML {
 
   /**
    * Adds another item as a child to this one.
-   * 
+   *
    * @param item the item to be added
    */
-
   public void addItem(TreeItem item) {
     // Detach item from existing parent.
     if ((item.getParentItem() != null) || (item.getTree() != null)) {
@@ -394,6 +400,13 @@ public class TreeItem extends UIObject implements HasHTML {
       if (tree != null) {
         tree.adopt(widget, this);
       }
+
+      // Set tabIndex on the widget to -1, so that it doesn't mess up the tab
+      // order of the entire tree
+
+      if (Tree.shouldTreeDelegateFocusToElement(widget.getElement())) {
+        DOM.setElementAttribute(widget.getElement(), "tabIndex", "-1");
+      }
     }
   }
 
@@ -458,7 +471,7 @@ public class TreeItem extends UIObject implements HasHTML {
   Element getImageElement() {
     return statusImage.getElement();
   }
- 
+
   void setParentItem(TreeItem parent) {
     this.parent = parent;
   }

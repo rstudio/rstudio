@@ -57,7 +57,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   private static class ImagesFromImageBase implements TreeImages {
 
     /**
-     * A convience image prototype that implements
+     * A convenience image prototype that implements
      * {@link AbstractImagePrototype#applyTo(Image)} for a specified image name.
      */
     private class Prototype extends AbstractImagePrototype {
@@ -109,6 +109,16 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
       return baseUrl;
     }
   }
+
+  static native boolean shouldTreeDelegateFocusToElement(Element elem) /*-{
+     var name = elem.nodeName;
+     return ((name == "SELECT") ||
+         (name == "INPUT")  ||
+         (name == "TEXTAREA") ||
+         (name == "OPTION") ||
+         (name == "BUTTON") ||
+         (name == "LABEL"));
+   }-*/;
 
   /**
    * Map of TreeItem.widget -> TreeItem.
@@ -191,6 +201,10 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     };
     root.setTree(this);
     setStyleName("gwt-Tree");
+    
+    // Add a11y role "tree"
+    Accessibility.setRole(getElement(), Accessibility.ROLE_TREE);
+    Accessibility.setRole(focusable, Accessibility.ROLE_TREEITEM);
   }
 
   /**
@@ -365,7 +379,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         // to be sunk on individual items' open/close images. This leads to an
         // extra event reaching the Tree, which we will ignore here.
         if (DOM.eventGetCurrentTarget(event).equals(getElement())) {
-          elementClicked(root, DOM.eventGetTarget(event));
+          elementClicked(DOM.eventGetTarget(event));
         }
         break;
       }
@@ -399,7 +413,6 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
       }
 
       case Event.ONFOCUS:
-        // If we already have focus, ignore the focus event.
         if (focusListeners != null) {
           focusListeners.fireFocusEvent(this, event);
         }
@@ -713,7 +726,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     chain.add(hElem);
   }
 
-  private boolean elementClicked(TreeItem root, Element hElem) {
+  private boolean elementClicked(Element hElem) {
     ArrayList<Element> chain = new ArrayList<Element>();
     collectElementChain(chain, getElement(), hElem);
 
@@ -759,19 +772,17 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   /**
-   * Move the tree focus to the specified selected item.
-   * 
-   * @param selection
+   * Move the tree focus to the currently selected item.
    */
-  private void moveFocus(TreeItem selection) {
-    HasFocus focusableWidget = selection.getFocusableWidget();
+  private void moveFocus() {
+    HasFocus focusableWidget = curSelection.getFocusableWidget();
     if (focusableWidget != null) {
       focusableWidget.setFocus(true);
       DOM.scrollIntoView(((Widget) focusableWidget).getElement());
     } else {
       // Get the location and size of the given item's content element relative
       // to the tree.
-      Element selectedElem = selection.getContentElem();
+      Element selectedElem = curSelection.getContentElem();
       int containerLeft = getAbsoluteLeft();
       int containerTop = getAbsoluteTop();
 
@@ -790,9 +801,12 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
       // Scroll it into view.
       DOM.scrollIntoView(focusable);
 
+      // Update ARIA attributes to reflect the information from the newly-selected item.
+      updateAriaAttributes();
+      
       // Ensure Focus is set, as focus may have been previously delegated by
       // tree.
-      FocusPanel.impl.focus(focusable);
+      setFocus(true);
     }
   }
 
@@ -853,7 +867,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     curSelection = item;
 
     if (moveFocus && curSelection != null) {
-      moveFocus(curSelection);
+      moveFocus();
 
       // Select the item and fire the selection event.
       curSelection.setSelected(true);
@@ -863,13 +877,67 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     }
   }
 
-  private native boolean shouldTreeDelegateFocusToElement(Element elem) /*-{
-    var name = elem.nodeName;
-    return ((name == "SELECT") ||
-        (name == "INPUT")  ||
-        (name == "TEXTAREA") ||
-        (name == "OPTION") ||
-        (name == "BUTTON") ||
-        (name == "LABEL"));
-  }-*/;
+  private void updateAriaAttributes() {
+
+    Element curSelectionContentElem = curSelection.getContentElem();
+
+    // Set the 'aria-level' state. To do this, we need to compute the level of the
+    // currently selected item.
+
+    // We initialize itemLevel to -1 because the level value is zero-based.
+    // Note that the root node is not a part of the TreeItem hierachy, and we
+    // do not consider the root node to have a designated level. The level of
+    // the root's children is level 0, its children's children is level 1, etc.
+
+    int curSelectionLevel = -1;
+    TreeItem tempItem = curSelection;
+
+    while (tempItem != null) {
+      tempItem = tempItem.getParentItem();
+      ++curSelectionLevel;
+    }
+
+    Accessibility.setState(curSelectionContentElem, Accessibility.STATE_LEVEL,
+        String.valueOf(curSelectionLevel + 1));
+
+    // Set the 'aria-setsize' and 'aria-posinset' states. To do this, we need to
+    // compute the the number of siblings that the currently selected item has, and
+    // the item's position among its siblings.
+
+    TreeItem curSelectionParent = curSelection.getParentItem();
+    if (curSelectionParent == null) {
+      curSelectionParent = root;
+    }
+
+    Accessibility.setState(curSelectionContentElem, Accessibility.STATE_SETSIZE,
+        String.valueOf(curSelectionParent.getChildCount()));
+
+    int curSelectionIndex = curSelectionParent.getChildIndex(curSelection);
+
+    Accessibility.setState(curSelectionContentElem, Accessibility.STATE_POSINSET,
+        String.valueOf(curSelectionIndex + 1));
+
+    // Set the 'aria-expanded' state. This depends on the state of the currently selected item.
+    // If the item has no children, we remove the 'aria-expanded' state.
+
+    if (curSelection.getChildCount() == 0) {
+      Accessibility.removeState(curSelectionContentElem, Accessibility.STATE_EXPANDED);
+    } else {
+      if (curSelection.getState()) {
+        Accessibility.setState(curSelectionContentElem, Accessibility.STATE_EXPANDED, "true");
+      } else {
+        Accessibility.setState(curSelectionContentElem, Accessibility.STATE_EXPANDED, "false");
+      }
+    }
+
+    // Make sure that 'aria-selected' is true.
+
+    Accessibility.setState(curSelectionContentElem, Accessibility.STATE_SELECTED, "true");
+
+    // Update the 'aria-activedescendant' state for the focusable element to match the id
+    // of the currently selected item
+
+    Accessibility.setState(focusable, Accessibility.STATE_ACTIVEDESCENDANT,
+        DOM.getElementAttribute(curSelectionContentElem, "id"));
+  }
 }

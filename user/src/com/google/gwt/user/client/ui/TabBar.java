@@ -43,7 +43,7 @@ import com.google.gwt.user.client.Event;
  * </p>
  */
 public class TabBar extends Composite implements SourcesTabEvents,
-    ClickListener {
+    ClickListener, KeyboardListener {
 
   /**
    * <code>ClickDecoratorPanel</code> decorates any widget with the minimal
@@ -52,20 +52,34 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * single observer is needed.
    */
   private static final class ClickDecoratorPanel extends SimplePanel {
-    ClickListener delegate;
+    ClickListener clickDelegate;
+    KeyboardListener keyDelegate;
 
-    ClickDecoratorPanel(Widget child, ClickListener delegate) {
-      this.delegate = delegate;
+    ClickDecoratorPanel(Widget child, ClickListener cDelegate,
+        KeyboardListener kDelegate) {
+
+      // The panel needs to be able to get keyboard focus for tab navigation
+      super(FocusPanel.impl.createFocusable());
+
+      this.clickDelegate = cDelegate;
+      this.keyDelegate = kDelegate;
       setWidget(child);
-      sinkEvents(Event.ONCLICK);
+      sinkEvents(Event.ONCLICK | Event.ONKEYDOWN);
     }
 
     @Override
     public void onBrowserEvent(Event event) {
       // No need for call to super.
       switch (DOM.eventGetType(event)) {
+
         case Event.ONCLICK:
-          delegate.onClick(this);
+          clickDelegate.onClick(this);
+          break;
+
+        case Event.ONKEYDOWN:
+          keyDelegate.onKeyDown(this, ((char) DOM.eventGetKeyCode(event)),
+              KeyboardListenerCollection.getKeyboardModifiers(event));
+          break;
       }
     }
   }
@@ -82,6 +96,9 @@ public class TabBar extends Composite implements SourcesTabEvents,
     initWidget(panel);
     sinkEvents(Event.ONCLICK);
     setStyleName("gwt-TabBar");
+
+    // Add a11y role "tablist"
+    Accessibility.setRole(panel.getElement(), Accessibility.ROLE_TABLIST);
 
     panel.setVerticalAlignment(HasVerticalAlignment.ALIGN_BOTTOM);
 
@@ -192,12 +209,8 @@ public class TabBar extends Composite implements SourcesTabEvents,
       item = new Label(text);
     }
 
-    item.setWordWrap(false);
-    item.addClickListener(this);
-    item.setStyleName(STYLENAME_DEFAULT);
-    panel.insert(item, beforeIndex + 1);
-    setStyleName(DOM.getParent(item.getElement()), STYLENAME_DEFAULT
-        + "-wrapper", true);
+    item.setWordWrap(false);    
+    insertTabImpl(item, beforeIndex);
   }
 
   /**
@@ -218,21 +231,23 @@ public class TabBar extends Composite implements SourcesTabEvents,
    */
   public void insertTab(Widget widget, int beforeIndex) {
     checkInsertBeforeTabIndex(beforeIndex);
-
-    ClickDecoratorPanel decWidget = new ClickDecoratorPanel(widget, this);
-    decWidget.addStyleName(STYLENAME_DEFAULT);
-    panel.insert(decWidget, beforeIndex + 1);
-    setStyleName(DOM.getParent(decWidget.getElement()), STYLENAME_DEFAULT
-        + "-wrapper", true);
+    insertTabImpl(widget, beforeIndex);  
   }
 
   public void onClick(Widget sender) {
-    for (int i = 1; i < panel.getWidgetCount() - 1; ++i) {
-      if (panel.getWidget(i) == sender) {
-        selectTab(i - 1);
-        return;
-      }
+    selectTabByTabWidget(sender);
+  }
+
+  public void onKeyDown(Widget sender, char keyCode, int modifiers) {
+    if (keyCode == KeyboardListener.KEY_ENTER) {
+      selectTabByTabWidget(sender);
     }
+  }
+
+  public void onKeyPress(Widget sender, char keyCode, int modifiers) {
+  }
+
+  public void onKeyUp(Widget sender, char keyCode, int modifiers) {
   }
 
   /**
@@ -323,6 +338,38 @@ public class TabBar extends Composite implements SourcesTabEvents,
     }
   }
 
+  private void insertTabImpl(Widget widget, int beforeIndex) {
+    ClickDecoratorPanel decWidget = new ClickDecoratorPanel(widget, this, this);
+    decWidget.addStyleName(STYLENAME_DEFAULT);
+    // Add a11y role "tab"
+    Accessibility.setRole(decWidget.getElement(), Accessibility.ROLE_TAB);
+
+    panel.insert(decWidget, beforeIndex + 1);
+    setStyleName(DOM.getParent(decWidget.getElement()), STYLENAME_DEFAULT
+        + "-wrapper", true);
+  }
+
+  /**
+   * Selects the tab corresponding to the widget for the tab. To be clear
+   * the widget for the tab is not the widget INSIDE of the tab; it is the
+   * widget used to represent the tab itself.
+   *
+   * @param tabWidget The widget for the tab to be selected
+   * @return true if the tab corresponding to the widget for the tab could located and selected,
+   *         false otherwise
+   */
+  private boolean selectTabByTabWidget(Widget tabWidget) {
+    int numTabs = panel.getWidgetCount() - 1;
+
+    for (int i = 1; i < numTabs; ++i) {
+      if (panel.getWidget(i) == tabWidget) {
+        return selectTab(i - 1);
+      }
+    }
+
+    return false;
+  }
+   
   private void setSelectionStyle(Widget item, boolean selected) {
     if (item != null) {
       if (selected) {
