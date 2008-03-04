@@ -60,8 +60,7 @@ final class Accessibility {
   public static final String STATE_LEVEL = "aria-level";
   public static final String STATE_HASPOPUP = "aria-haspopup";
 
-  private static AccessibilityImpl impl = (AccessibilityImpl) GWT
-      .create(AccessibilityImpl.class);
+  private static AccessibilityImpl impl = (AccessibilityImpl) GWT.create(AccessibilityImpl.class);
 
   /**
    * Requests the string value of the role with the specified namespace.
