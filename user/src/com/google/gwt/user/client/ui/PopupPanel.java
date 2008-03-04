@@ -198,7 +198,9 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   public boolean onEventPreview(Event event) {
     Element target = DOM.eventGetTarget(event);
-    boolean eventTargetsPopup = DOM.isOrHasChild(getElement(), target);
+
+    boolean eventTargetsPopup = (target != null)
+        && DOM.isOrHasChild(getElement(), target);
 
     int type = DOM.eventGetType(event);
     switch (type) {
