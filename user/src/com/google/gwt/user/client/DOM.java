@@ -443,8 +443,8 @@ public class DOM {
   }
 
   /**
-   * Gets the element from which the mouse pointer was moved (only valid for
-   * {@link Event#ONMOUSEOVER}).
+   * Gets the element from which the mouse pointer was moved (valid for
+   * {@link Event#ONMOUSEOVER} and {@link Event#ONMOUSEOUT}).
    * 
    * @param evt the event to be tested
    * @return the element from which the mouse pointer was moved
@@ -551,7 +551,7 @@ public class DOM {
 
   /**
    * Gets the element to which the mouse pointer was moved (only valid for
-   * {@link Event#ONMOUSEOUT}).
+   * {@link Event#ONMOUSEOUT} and {@link Event#ONMOUSEOVER}).
    * 
    * @param evt the event to be tested
    * @return the element to which the mouse pointer was moved
