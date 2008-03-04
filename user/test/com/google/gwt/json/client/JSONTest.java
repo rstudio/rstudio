@@ -347,11 +347,11 @@ public class JSONTest extends GWTTestCase {
   public void testRoundTripEscaping() {
     JSONObject obj = new JSONObject();
     obj.put("a", new JSONNumber(42));
-    obj.put("\\", new JSONNumber(43));
+    obj.put("\\", new JSONNumber(43.5));
     obj.put("\"", new JSONNumber(44));
 
     String toString = obj.toString();
-    assertEquals("{\"a\":42.0, \"\\\\\":43.0, \"\\\"\":44.0}", toString.trim());
+    assertEquals("{\"a\":42, \"\\\\\":43.5, \"\\\"\":44}", toString.trim());
     JSONValue parseResponse = JSONParser.parse(toString);
     JSONObject obj2 = parseResponse.isObject();
     assertJSONObjectEquals(obj, obj2);
