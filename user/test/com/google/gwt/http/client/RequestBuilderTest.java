@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -84,7 +84,7 @@ public class RequestBuilderTest extends GWTTestCase {
       builder.sendRequest(null, new RequestCallback() {
         public void onError(Request request, Throwable exception) {
           // should never get here
-          fail("HTTPRequest timed out");
+          fail(exception.getMessage());
         }
 
         public void onResponseReceived(Request request, Response response) {
@@ -127,7 +127,7 @@ public class RequestBuilderTest extends GWTTestCase {
         getTestBaseURL() + "sendRequest_GET");
     builder.sendRequest(null, new RequestCallback() {
       public void onError(Request request, Throwable exception) {
-        fail();
+        fail(exception.getMessage());
       }
 
       public void onResponseReceived(Request request, Response response) {
@@ -149,7 +149,7 @@ public class RequestBuilderTest extends GWTTestCase {
     builder.setHeader("Content-Type", "application/x-www-form-urlencoded");
     builder.sendRequest("method=test+request", new RequestCallback() {
       public void onError(Request request, Throwable exception) {
-        fail("HTTPRequest timed out");
+        fail(exception.getMessage());
       }
 
       public void onResponseReceived(Request request, Response response) {
@@ -229,7 +229,7 @@ public class RequestBuilderTest extends GWTTestCase {
 
     builder.sendRequest(null, new RequestCallback() {
       public void onError(Request request, Throwable exception) {
-        fail("HTTPRequest timed out");
+        fail(exception.getMessage());
       }
 
       public void onResponseReceived(Request request, Response response) {
@@ -258,7 +258,7 @@ public class RequestBuilderTest extends GWTTestCase {
     builder.setTimeoutMillis(10000);
     builder.sendRequest(null, new RequestCallback() {
       public void onError(Request request, Throwable exception) {
-        fail("Test timed out");
+        fail(exception.getMessage());
       }
 
       public void onResponseReceived(Request request, Response response) {

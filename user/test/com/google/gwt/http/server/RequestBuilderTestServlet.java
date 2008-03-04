@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -87,7 +87,18 @@ public class RequestBuilderTestServlet extends HttpServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     String parameter = request.getParameter("method");
     if ("test request".equals(parameter)) {
-      response.setStatus(HttpServletResponse.SC_OK);
+      try {
+        /*
+         * On Safari 2.0.4, if the HTTP response does not include any response
+         * text the status message will be undefined. So, we make sure that the
+         * post returns some data. See
+         * http://bugs.webkit.org/show_bug.cgi?id=3810.
+         */
+        response.getWriter().println("Hello");
+        response.setStatus(HttpServletResponse.SC_OK);
+      } catch (IOException e) {
+        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+      }
     } else {
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
     }
