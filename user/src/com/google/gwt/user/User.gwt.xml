@@ -35,5 +35,4 @@
    <inherits name="com.google.gwt.user.SplitPanel"/>
    <inherits name="com.google.gwt.user.ListBox" />
    <inherits name="com.google.gwt.user.TitledPanel" />
-   <inherits name="com.google.gwt.user.Accessibility"/>
 </module>

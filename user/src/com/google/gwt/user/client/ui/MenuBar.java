@@ -97,15 +97,11 @@ public class MenuBar extends Widget implements PopupListener {
 
     this.vertical = vertical;
 
-    Element outer = FocusPanel.impl.createFocusable();
+    Element outer = DOM.createDiv();
     DOM.appendChild(outer, table);
     setElement(outer);
 
-    Accessibility.setRole(getElement(), Accessibility.ROLE_MENUBAR);
-
-    sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT
-        | Event.ONFOCUS |  Event.ONKEYDOWN);
-
+    sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT);
     setStyleName("gwt-MenuBar");
     if (vertical) {
       addStyleDependentName("vertical");
@@ -243,7 +239,6 @@ public class MenuBar extends Widget implements PopupListener {
     MenuItem item = findItem(DOM.eventGetTarget(event));
     switch (DOM.eventGetType(event)) {
       case Event.ONCLICK: {
-        FocusPanel.impl.focus(getElement());  
         // Fire an item's command when the user clicks on it.
         if (item != null) {
           doItemAction(item, true);
@@ -264,40 +259,7 @@ public class MenuBar extends Widget implements PopupListener {
         }
         break;
       }
-
-      case Event.ONFOCUS: {
-        selectFirstItemIfNoneSelected();
-        break;
-      }
-
-      case Event.ONKEYDOWN: {
-        int keyCode = DOM.eventGetKeyCode(event);
-        switch (keyCode) {
-          case KeyboardListener.KEY_LEFT:
-            moveLeft();
-            break;
-          case KeyboardListener.KEY_RIGHT:
-            moveRight();
-            break;
-          case KeyboardListener.KEY_UP:
-            moveUp();
-            break;
-          case KeyboardListener.KEY_DOWN:
-            moveDown();
-            break;
-          case KeyboardListener.KEY_ESCAPE:
-            closeAllParents();
-            break;
-          case KeyboardListener.KEY_ENTER:
-            if (!selectFirstItemIfNoneSelected()) {
-              doItemAction(selectedItem, true);
-            }
-            break;
-        } // end switch(keyCode)
-
-        break;
-      } // end case Event.ONKEYDOWN
-    } // end switch (DOM.eventGetType(event))
+    }
   }
 
   public void onPopupClosed(PopupPanel sender, boolean autoClosed) {
@@ -399,8 +361,14 @@ public class MenuBar extends Widget implements PopupListener {
    */
   void closeAllParents() {
     MenuBar curMenu = this;
-    while (curMenu.parentMenu != null) {
+    while (curMenu != null) {
       curMenu.close();
+
+      if ((curMenu.parentMenu == null) && (curMenu.selectedItem != null)) {
+        curMenu.selectedItem.setSelectionStyle(false);
+        curMenu.selectedItem = null;
+      }
+
       curMenu = curMenu.parentMenu;
     }
   }
@@ -427,7 +395,7 @@ public class MenuBar extends Widget implements PopupListener {
     }
 
     // If the item has no popup, optionally fire its command.
-    if ((item != null) && (item.getSubMenu() == null)) {
+    if (item.getSubMenu() == null) {
       if (fireCommand) {
         // Close this menu and all of its parents.
         closeAllParents();
@@ -444,10 +412,6 @@ public class MenuBar extends Widget implements PopupListener {
     // Ensure that the item is selected.
     selectItem(item);
 
-    if (item == null) {
-      return;
-    }
-    
     // Create a new popup for this item, and position it next to
     // the item (below if this is a horizontal menu bar, to the
     // right if it's a vertical bar).
@@ -493,7 +457,6 @@ public class MenuBar extends Widget implements PopupListener {
     // Show the popup, ensuring that the menubar's event preview remains on top
     // of the popup's.
     popup.show();
-    shownChildMenu.focus();
   }
 
   void itemOver(MenuItem item) {
@@ -529,9 +492,6 @@ public class MenuBar extends Widget implements PopupListener {
 
     if (item != null) {
       item.setSelectionStyle(true);
-
-      Accessibility.setState(getElement(), Accessibility.STATE_ACTIVEDESCENDANT,
-          DOM.getElementAttribute(item.getElement(), "id"));
     }
 
     selectedItem = item;
@@ -577,16 +537,14 @@ public class MenuBar extends Widget implements PopupListener {
   }
 
   private MenuItem findItem(Element hItem) {
-    for (MenuItem item : items) {
+    for (int i = 0; i < items.size(); ++i) {
+      MenuItem item = items.get(i);
       if (DOM.isOrHasChild(item.getElement(), hItem)) {
         return item;
       }
     }
-    return null;
-  }
 
-  private void focus() {
-    FocusPanel.impl.focus(getElement());
+    return null;
   }
 
   private Element getItemContainerElement() {
@@ -594,76 +552,6 @@ public class MenuBar extends Widget implements PopupListener {
       return body;
     } else {
       return DOM.getChild(body, 0);
-    }
-  }
-
-  private void moveDown() {
-    if (selectFirstItemIfNoneSelected()) {
-      return;
-    }
-
-    if (vertical) {
-      selectNextItem();
-    } else {
-      if (selectedItem.getSubMenu() != null) {
-        doItemAction(selectedItem, false);
-      } else if (parentMenu != null) {
-        if (parentMenu.vertical) {
-          parentMenu.selectNextItem();
-        } else {
-          parentMenu.moveDown();
-        }
-      }
-    }
-  }
-
-  private void moveLeft() {
-    if (selectFirstItemIfNoneSelected()) {
-      return;
-    }
-
-    if (!vertical) {
-      selectPrevItem();
-    } else {
-      if ((parentMenu != null) && (!parentMenu.vertical)) {
-        parentMenu.selectPrevItem();
-      } else {
-        close();
-      }
-    }
-  }
-
-  private void moveRight() {
-    if (selectFirstItemIfNoneSelected()) {
-      return;
-    }
-
-    if (!vertical) {
-      selectNextItem();
-    } else {
-      if ((shownChildMenu == null) && (selectedItem.getSubMenu() != null)) {
-        doItemAction(selectedItem, false);
-      } else if (parentMenu != null) {
-        if (!parentMenu.vertical) {
-          parentMenu.selectNextItem();
-        } else {
-          parentMenu.moveRight();
-        }
-      }
-    }
-  }
-
-  private void moveUp() {
-    if (selectFirstItemIfNoneSelected()) {
-      return;
-    }
-
-    if ((shownChildMenu == null) && vertical) {
-      selectPrevItem();
-    } else if ((parentMenu != null) && parentMenu.vertical) {
-      parentMenu.selectPrevItem();
-    } else {
-      close();
     }
   }
 
@@ -675,7 +563,6 @@ public class MenuBar extends Widget implements PopupListener {
     if (shownChildMenu != null) {
       shownChildMenu.onHide();
       popup.hide();
-      focus();
     }
   }
 
@@ -706,70 +593,5 @@ public class MenuBar extends Widget implements PopupListener {
     DOM.removeChild(container, DOM.getChild(container, idx));
     allItems.remove(idx);
     return true;
-  }
-
-  /**
-   * Selects the first item in the menu if no items are currently selected. This method
-   * assumes that the menu has at least 1 item.
-   *
-   * @return true if no item was previously selected and the first item in the list was selected,
-   *         false otherwise
-   */
-  private boolean selectFirstItemIfNoneSelected() {
-    if (selectedItem == null) {
-      MenuItem nextItem = items.get(0);
-      selectItem(nextItem);
-      return true;
-    }
-
-    return false;
-  }
-
-  private void selectNextItem() {
-    if (selectedItem == null) {
-      return;
-    }
-
-    int index = items.indexOf(selectedItem);
-    // We know that selectedItem is set to an item that is contained in the items collection.
-    // Therefore, we know that index can never be -1.
-    assert (index != -1);
-
-    MenuItem itemToBeSelected;
-
-    if (index < items.size() - 1) {
-      itemToBeSelected = items.get(index + 1);
-    } else { // we're at the end, loop around to the start
-      itemToBeSelected = items.get(0);
-    }
-
-    selectItem(itemToBeSelected);
-    if (shownChildMenu != null) {
-      doItemAction(itemToBeSelected, false);
-    }
-  }
-
-  private void selectPrevItem() {
-    if (selectedItem == null) {
-      return;
-    }
-
-    int index = items.indexOf(selectedItem);
-    // We know that selectedItem is set to an item that is contained in the items collection.
-    // Therefore, we know that index can never be -1.
-    assert (index != -1);
-
-    MenuItem itemToBeSelected;
-    if (index > 0) {
-      itemToBeSelected = items.get(index - 1);
-
-    } else { // we're at the start, loop around to the end
-      itemToBeSelected = items.get(items.size() - 1);
-    }
-    
-    selectItem(itemToBeSelected);
-    if (shownChildMenu != null) {
-      doItemAction(itemToBeSelected, false);
-    }
   }
 }

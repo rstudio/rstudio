@@ -35,6 +35,7 @@ import com.google.gwt.user.client.Element;
  * </p>
  */
 public class CheckBox extends ButtonBase implements HasName {
+  private static int uniqueId;
   private Element inputElem, labelElem;
 
   /**
@@ -78,16 +79,9 @@ public class CheckBox extends ButtonBase implements HasName {
     DOM.appendChild(getElement(), inputElem);
     DOM.appendChild(getElement(), labelElem);
 
-    String uid = DOM.createUniqueId();
+    String uid = "check" + (++uniqueId);
     DOM.setElementProperty(inputElem, "id", uid);
     DOM.setElementProperty(labelElem, "htmlFor", uid);
-
-    // Accessibility: setting tab index to be 0 by default, ensuring element
-    // appears in tab sequence. FocusWidget's setElement method already
-    // calls setTabIndex, which is overridden below. However, at the time
-    // that this call is made, inputElem has not been created. So, we have
-    // to call setTabIndex again, once inputElem has been created. 
-    setTabIndex(0);
   }
 
   @Override
@@ -169,13 +163,7 @@ public class CheckBox extends ButtonBase implements HasName {
 
   @Override
   public void setTabIndex(int index) {
-    // Need to guard against call to setTabIndex before inputElem is initialized.
-    // This happens because FocusWidget's (a superclass of CheckBox) setElement method
-    // calls setTabIndex before inputElem is initialized. See CheckBox's protected
-    // constructor for more information.
-    if (inputElem != null) {
-      getFocusImpl().setTabIndex(inputElem, index);
-    }
+    getFocusImpl().setTabIndex(inputElem, index);
   }
 
   @Override
@@ -259,7 +247,7 @@ public class CheckBox extends ButtonBase implements HasName {
     // Setup the new element
     DOM.sinkEvents(inputElem, sunkEvents);
     DOM.setElementProperty(inputElem, "id", uid);
-    if (!accessKey.equals("")) {
+    if (accessKey != "") {
       DOM.setElementProperty(inputElem, "accessKey", accessKey);
     }
     setTabIndex(tabIndex);

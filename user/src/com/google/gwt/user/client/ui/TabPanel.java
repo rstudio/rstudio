@@ -193,8 +193,6 @@ public class TabPanel extends Composite implements TabListener,
     initWidget(panel);
     setStyleName("gwt-TabPanel");
     deck.setStyleName("gwt-TabPanelBottom");
-    // Add a11y role "tabpanel"
-    Accessibility.setRole(deck.getElement(), Accessibility.ROLE_TABPANEL);
   }
 
   public void add(Widget w) {

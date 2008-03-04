@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -162,18 +162,6 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
 
   public void setTabIndex(int index) {
     impl.setTabIndex(getElement(), index);
-  }
-
-  @Override
-  protected void setElement(Element elem) {
-    super.setElement(elem);
-
-    // Accessibility: setting tab index to be 0 by default, ensuring element
-    // appears in tab sequence. Note that this call will not interfere with
-    // any calls made to FocusWidget.setTabIndex(int) by user code, because
-    // FocusWidget.setTabIndex(int) cannot be called until setElement(elem)
-    // has been called.
-    setTabIndex(0);
   }
 
   /**

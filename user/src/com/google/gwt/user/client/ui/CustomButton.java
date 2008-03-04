@@ -411,9 +411,6 @@ public abstract class CustomButton extends ButtonBase {
     sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.FOCUSEVENTS);
     setUpFace(createFace(null, "up", UP));
     setStyleName(STYLENAME_DEFAULT);
-
-    // Add a11y role "button"
-    Accessibility.setRole(getElement(), Accessibility.ROLE_BUTTON);
   }
 
   /**

@@ -23,9 +23,6 @@ import com.google.gwt.user.client.DOM;
  * {@link com.google.gwt.user.client.ui.MenuBar}. Menu items can either fire a
  * {@link com.google.gwt.user.client.Command} when they are clicked, or open a
  * cascading sub-menu.
- *
- * Each menu item is assigned a unique DOM id in order to support ARIA. See
- * {@link com.google.gwt.user.client.ui.Accessibility} for more information.
  */
 public class MenuItem extends UIObject implements HasHTML {
 
@@ -90,10 +87,6 @@ public class MenuItem extends UIObject implements HasHTML {
       setText(text);
     }
     setStyleName("gwt-MenuItem");
-
-    DOM.setElementAttribute(getElement(), "id", DOM.createUniqueId());
-    // Add a11y role "menuitem"
-    Accessibility.setRole(getElement(), Accessibility.ROLE_MENUITEM);
   }
 
   /**
@@ -151,13 +144,6 @@ public class MenuItem extends UIObject implements HasHTML {
    */
   public void setSubMenu(MenuBar subMenu) {
     this.subMenu = subMenu;
-
-    // Change tab index from 0 to -1, because only the root menu is supposed to
-    // be in the tab order
-    FocusPanel.impl.setTabIndex(subMenu.getElement(), -1);
-
-    // Update a11y role "haspopup"
-    Accessibility.setState(this.getElement(), Accessibility.STATE_HASPOPUP, "true");
   }
 
   public void setText(String text) {
