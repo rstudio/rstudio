@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,19 +26,21 @@ import com.google.gwt.core.client.JavaScriptObject;
  */
 public class JSONParser {
 
+  static final JavaScriptObject typeMap = initTypeMap();
+
   /**
-   * Given a jsonString, returns the JSONObject representation. For efficiency,
-   * parsing occurs lazily as the structure is requested.
+   * Evaluates a trusted JSON string and returns its JSONValue representation.
+   * CAUTION! For efficiency, this method is implemented using the JavaScript
+   * <code>eval()</code> function, which can execute arbitrary script. DO NOT
+   * pass an untrusted string into this method.
    * 
-   * @param jsonString
-   * @return a JSONObject that has been built by parsing the JSON string
+   * @param jsonString a JSON object to parse
+   * @return a JSONValue that has been built by parsing the JSON string
    * @throws NullPointerException if <code>jsonString</code> is
    *           <code>null</code>
    * @throws IllegalArgumentException if <code>jsonString</code> is empty
    */
   public static JSONValue parse(String jsonString) {
-    // Create a JavaScriptObject from the JSON string.
-    //
     if (jsonString == null) {
       throw new NullPointerException();
     }
@@ -46,142 +48,96 @@ public class JSONParser {
       throw new IllegalArgumentException("empty argument");
     }
     try {
-      Object object = evaluate(jsonString);
-      if (object instanceof String) {
-        return new JSONString((String) object);
-      } else {
-        return buildValue((JavaScriptObject) object);
-      }
+      return evaluate(jsonString);
     } catch (JavaScriptException ex) {
       throw new JSONException(ex);
     }
   }
 
-  /**
-   * Returns the {@link JSONValue} for a given {@link JavaScriptObject}.  
-   * 
-   * @param jsValue {@link JavaScriptObject} to build a {@link JSONValue} for, 
-   *     this object cannot be a primitive JavaScript type
-   * @return a {@link JSONValue} instance for the {@link JavaScriptObject}
-   */
-  static JSONValue buildValue(JavaScriptObject jsValue) throws JSONException {
-    
-    if (isNull(jsValue)) {
-      return JSONNull.getInstance();
-    }
-
-    if (isArray(jsValue)) {
-      return new JSONArray(jsValue);
-    }
-
-    if (isBoolean(jsValue)) {
-      return JSONBoolean.getInstance(asBoolean(jsValue));
-    }
-
-    if (isDouble(jsValue)) {
-      return new JSONNumber(asDouble(jsValue));
-    }
-
-    if (isObject(jsValue)) {
-      return new JSONObject(jsValue);
-    }
-
-    /*
-     * In practice we should never reach this point.  If we do, we cannot make 
-     * any assumptions about the jsValue.
-     */
-    throw new JSONException("Unknown JavaScriptObject type");
+  static void throwUnknownTypeException(String typeString) {
+    throw new JSONException("Unexpected typeof result '" + typeString
+        + "'; please report this bug to the GWT team");
   }
 
   /**
-   * Returns the boolean represented by the jsValue. This method
-   * assumes that {@link #isBoolean(JavaScriptObject)} returned
-   * <code>true</code>.
-   * 
-   * @param jsValue JavaScript object to convert
-   * @return the boolean represented by the jsValue
+   * Called from {@link #initTypeMap()}.
    */
-  private static native boolean asBoolean(JavaScriptObject jsValue) /*-{
-    return jsValue.valueOf();
-  }-*/;
+  @SuppressWarnings("unused")
+  private static JSONValue createBoolean(boolean v) {
+    return JSONBoolean.getInstance(v);
+  }
 
   /**
-   * Returns the double represented by jsValue. This method assumes that
-   * {@link #isDouble(JavaScriptObject)} returned <code>true</code>.
-   * 
-   * @param jsValue JavaScript object to convert
-   * @return the double represented by the jsValue
+   * Called from {@link #initTypeMap()}.
    */
-  private static native double asDouble(JavaScriptObject jsValue) /*-{
-    return jsValue.valueOf();
-  }-*/;
+  @SuppressWarnings("unused")
+  private static JSONValue createNumber(double v) {
+    return new JSONNumber(v);
+  }
 
   /**
-   * This method converts the json string into either a String or a
-   * JavaScriptObject by simply evaluating the string in JavaScript.
+   * Called from {@link #initTypeMap()}. If we get here, <code>o</code> is
+   * either <code>null</code> (not <code>undefined</code>) or a JavaScript
+   * object.
    */
-  private static native Object evaluate(String jsonString) /*-{
-    var x = eval('(' + jsonString + ')');
-    if (typeof x == 'number' || typeof x == 'array' || typeof x == 'boolean') {
-      x = (Object(x));
+  @SuppressWarnings("unused")
+  private static native JSONValue createObject(Object o) /*-{
+    if (!o) {
+      return @com.google.gwt.json.client.JSONNull::getInstance()();
     }
-    return x;
+    var v = o.valueOf ? o.valueOf() : o;
+    if (v !== o) {
+      // It was a primitive wrapper, unwrap it and try again.
+      var func = @com.google.gwt.json.client.JSONParser::typeMap[typeof v];
+      return func ? func(v) : @com.google.gwt.json.client.JSONParser::throwUnknownTypeException(Ljava/lang/String;)(typeof v);
+    } else if (o instanceof Array || o instanceof $wnd.Array) {
+      // Looks like an Array; wrap as JSONArray.
+      // NOTE: this test can fail for objects coming from a different window,
+      // but we know of no reliable tests to determine if something is an Array
+      // in all cases.
+      return @com.google.gwt.json.client.JSONArray::new(Lcom/google/gwt/core/client/JavaScriptObject;)(o);
+    } else {
+      // This is a basic JavaScript object; wrap as JSONObject.
+      // Subobjects will be created on demand.
+      return @com.google.gwt.json.client.JSONObject::new(Lcom/google/gwt/core/client/JavaScriptObject;)(o);
+    }
   }-*/;
 
   /**
-   * Returns <code>true</code> if the {@link JavaScriptObject} is a wrapped
-   * JavaScript Array.
-   * 
-   * @param jsValue JavaScript object to test
-   * @return <code>true</code> if jsValue is a wrapped JavaScript Array
+   * Called from {@link #initTypeMap()}.
    */
-  private static native boolean isArray(JavaScriptObject jsValue) /*-{
-    return jsValue instanceof Array; 
-  }-*/;
+  @SuppressWarnings("unused")
+  private static JSONValue createString(String v) {
+    return new JSONString(v);
+  }
 
   /**
-   * Returns <code>true</code> if the {@link JavaScriptObject} is a wrapped
-   * JavaScript Boolean.
-   * 
-   * @param jsValue JavaScript object to test
-   * @return <code>true</code> if jsValue is a wrapped JavaScript Boolean
+   * Called from {@link #initTypeMap()}. This method returns a
+   * <code>null</code> pointer, representing JavaScript <code>undefined</code>.
    */
-  private static native boolean isBoolean(JavaScriptObject jsValue) /*-{
-    return jsValue instanceof Boolean; 
-  }-*/;
+  @SuppressWarnings("unused")
+  private static JSONValue createUndefined() {
+    return null;
+  }
 
   /**
-   * Returns <code>true</code> if the {@link JavaScriptObject} is a wrapped
-   * JavaScript Double.
-   * 
-   * @param jsValue JavaScript object to test
-   * @return <code>true</code> if jsValue is a wrapped JavaScript Double
+   * This method converts <code>jsonString</code> into a JSONValue.
    */
-  private static native boolean isDouble(JavaScriptObject jsValue) /*-{
-    return jsValue instanceof Number;
+  private static native JSONValue evaluate(String jsonString) /*-{
+    var v = eval('(' + jsonString + ')');
+    var func = @com.google.gwt.json.client.JSONParser::typeMap[typeof v];
+    return func ? func(v) : @com.google.gwt.json.client.JSONParser::throwUnknownTypeException(Ljava/lang/String;)(typeof v);
   }-*/;
 
-  /**
-   * Returns <code>true</code> if the {@link JavaScriptObject} is <code>null</code>
-   * or <code>undefined</code>.
-   * 
-   * @param jsValue JavaScript object to test
-   * @return <code>true</code> if jsValue is <code>null</code> or
-   *         <code>undefined</code>
-   */
-  private static native boolean isNull(JavaScriptObject jsValue) /*-{
-    return jsValue == null;
-  }-*/;
-
-  /**
-   * Returns <code>true</code> if the {@link JavaScriptObject} is a JavaScript
-   * Object.
-   * 
-   * @param jsValue JavaScript object to test
-   * @return <code>true</code> if jsValue is a JavaScript Object
-   */
-  private static native boolean isObject(JavaScriptObject jsValue) /*-{
-    return jsValue instanceof Object;
+  private static native JavaScriptObject initTypeMap() /*-{
+    return {
+      "boolean": @com.google.gwt.json.client.JSONParser::createBoolean(Z),
+      "number": @com.google.gwt.json.client.JSONParser::createNumber(D),
+      "string": @com.google.gwt.json.client.JSONParser::createString(Ljava/lang/String;),
+      "object": @com.google.gwt.json.client.JSONParser::createObject(Ljava/lang/Object;),
+      "function": @com.google.gwt.json.client.JSONParser::createObject(Ljava/lang/Object;),
+      "undefined": @com.google.gwt.json.client.JSONParser::createUndefined(),
+    }
   }-*/;
 
   /**

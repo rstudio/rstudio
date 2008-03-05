@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.json.client;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 /**
  * The superclass of all JSON value types.
  * 
@@ -25,6 +27,12 @@ package com.google.gwt.json.client;
  * @see com.google.gwt.json.client.JSONString
  */
 public abstract class JSONValue {
+  /**
+   * Not subclassable outside this package.
+   */
+  JSONValue() {
+  }
+
   /**
    * Returns a non-null reference if this JSONValue is really a JSONArray.
    * 
@@ -90,5 +98,11 @@ public abstract class JSONValue {
    * JSON strings that can be sent from the client to a server.
    */
   @Override
-  public abstract String toString() throws JSONException;
+  public abstract String toString();
+
+  /**
+   * Internal. Returns a JS func that can unwrap this value.  Used from native
+   * code.
+   */
+  abstract JavaScriptObject getUnwrapper();
 }

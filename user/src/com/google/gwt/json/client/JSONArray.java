@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,17 +21,22 @@ import com.google.gwt.core.client.JavaScriptObject;
  * Represents an array of {@link com.google.gwt.json.client.JSONValue} objects.
  */
 public class JSONArray extends JSONValue {
+  
+  /**
+   * Called from {@link #getUnwrapper()}. 
+   */
+  @SuppressWarnings("unused")
+  private static JavaScriptObject unwrap(JSONArray value) {
+    return value.jsArray;
+  }
 
-  final JavaScriptObject javascriptArray;
-
-  final JavaScriptObject wrappedArray;
+  private final JavaScriptObject jsArray;
 
   /**
    * Creates an empty JSONArray.
    */
   public JSONArray() {
-    javascriptArray = createArray();
-    wrappedArray = createArray();
+    jsArray = JavaScriptObject.createArray();
   }
 
   /**
@@ -41,8 +46,19 @@ public class JSONArray extends JSONValue {
    * @param arr a JavaScript array
    */
   public JSONArray(JavaScriptObject arr) {
-    javascriptArray = arr;
-    wrappedArray = createArray();
+    jsArray = arr;
+  }
+
+  /**
+   * Returns <code>true</code> if <code>other</code> is a {@link JSONArray}
+   * wrapping the same underlying object.
+   */
+  @Override
+  public boolean equals(Object other) {
+    if (!(other instanceof JSONArray)) {
+      return false;
+    }
+    return jsArray.equals(((JSONArray) other).jsArray);
   }
 
   /**
@@ -52,22 +68,22 @@ public class JSONArray extends JSONValue {
    * @return the value at this index, or <code>null</code> if this index is
    *         empty
    */
-  public JSONValue get(int index) throws JSONException {
-    if (wrappedTest(index)) {
-      return wrappedGet(index);
-    }
-    JSONValue wrapped = null;
-    if (rawTest(index)) {
-      Object o = rawGet(index);
-      if (o instanceof String) {
-        wrapped = new JSONString((String) o);
-      } else {
-        wrapped = JSONParser.buildValue((JavaScriptObject) o);
-      }
-      rawSet(index, null);
-    }
-    wrappedSet(index, wrapped);
-    return wrapped;
+  public native JSONValue get(int index) /*-{
+    var v = this.@com.google.gwt.json.client.JSONArray::jsArray[index];
+    var func = @com.google.gwt.json.client.JSONParser::typeMap[typeof v];
+    return func ? func(v) : @com.google.gwt.json.client.JSONParser::throwUnknownTypeException(Ljava/lang/String;)(typeof v);
+  }-*/;
+
+  /**
+   * Returns the underlying JavaScript array that this object wraps.
+   */
+  public JavaScriptObject getJavaScriptObject() {
+    return jsArray;
+  }
+
+  @Override
+  public int hashCode() {
+    return jsArray.hashCode();
   }
 
   /**
@@ -82,15 +98,14 @@ public class JSONArray extends JSONValue {
    * Sets the specified index to the given value.
    * 
    * @param index the index to set
-   * @param jsonValue the value to set
+   * @param value the value to set
    * @return the previous value at this index, or <code>null</code> if this
    *         index was empty
    */
-  public JSONValue set(int index, JSONValue jsonValue) {
-    JSONValue out = get(index);
-    wrappedSet(index, jsonValue);
-    rawSet(index, null);
-    return out;
+  public JSONValue set(int index, JSONValue value) {
+    JSONValue previous = get(index);
+    set0(index, value);
+    return previous;
   }
 
   /**
@@ -99,7 +114,7 @@ public class JSONArray extends JSONValue {
    * @return size of this array
    */
   public native int size() /*-{
-    return this.@com.google.gwt.json.client.JSONArray::javascriptArray.length;
+    return this.@com.google.gwt.json.client.JSONArray::jsArray.length;
   }-*/;
 
   /**
@@ -108,52 +123,31 @@ public class JSONArray extends JSONValue {
    * large.
    */
   @Override
-  public String toString() throws JSONException {
+  public String toString() {
     StringBuffer sb = new StringBuffer();
     sb.append("[");
     for (int i = 0, c = size(); i < c; i++) {
-      JSONValue value = get(i);
-      sb.append(value.toString());
-
-      if (i < c - 1) {
+      if (i > 0) {
         sb.append(",");
       }
+      sb.append(get(i));
     }
     sb.append("]");
     return sb.toString();
   }
 
-  private native JavaScriptObject createArray() /*-{
-    return [];
+  @Override
+  native JavaScriptObject getUnwrapper() /*-{
+    return @com.google.gwt.json.client.JSONArray::unwrap(Lcom/google/gwt/json/client/JSONArray;);
   }-*/;
 
-  private native Object rawGet(int index) /*-{
-    var x = this.@com.google.gwt.json.client.JSONArray::javascriptArray[index];
-    if (typeof x == 'number' || typeof x == 'array' || typeof x == 'boolean') {
-      x = (Object(x));
+  private native void set0(int index, JSONValue value) /*-{
+    if (value === null) {
+      value = undefined;
+    } else {
+      var func = value.@com.google.gwt.json.client.JSONValue::getUnwrapper()();
+      value = func(value);
     }
-    return x;
-  }-*/;
-
-  private native void rawSet(int index, Object value) /*-{
-    this.@com.google.gwt.json.client.JSONArray::javascriptArray[index] = value;
-  }-*/;
-
-  private native boolean rawTest(int index) /*-{
-    var x = this.@com.google.gwt.json.client.JSONArray::javascriptArray[index];
-    return x !== undefined;
-  }-*/;
-
-  private native JSONValue wrappedGet(int index) /*-{
-    return this.@com.google.gwt.json.client.JSONArray::wrappedArray[index];
-  }-*/;
-
-  private native void wrappedSet(int index, JSONValue jsonValue) /*-{
-    this.@com.google.gwt.json.client.JSONArray::wrappedArray[index] = jsonValue;
-  }-*/;
-
-  private native boolean wrappedTest(int index) /*-{
-    var x = this.@com.google.gwt.json.client.JSONArray::wrappedArray[index];
-    return x !== undefined;
+    this.@com.google.gwt.json.client.JSONArray::jsArray[index] = value;
   }-*/;
 }

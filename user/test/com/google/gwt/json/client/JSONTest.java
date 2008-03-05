@@ -79,7 +79,7 @@ public class JSONTest extends GWTTestCase {
     } else if (expected.isNumber() != null) {
       JSONNumber expNum = expected.isNumber();
       JSONNumber actNum = actual.isNumber();
-      assertEquals(expNum.getValue(), actNum.getValue());
+      assertEquals(expNum.doubleValue(), actNum.doubleValue());
     } else if (expected.isObject() != null) {
       JSONObject expObj = expected.isObject();
       JSONObject actObj = actual.isObject();
@@ -146,7 +146,7 @@ public class JSONTest extends GWTTestCase {
     assertEquals("Array size must be 10", 10, array.size());
     for (int i = 0; i < 10; i++) {
       assertEquals("Array value at " + i + " must be " + i,
-          array.get(i).isNumber().getValue(), i, 0.001);
+          array.get(i).isNumber().doubleValue(), i, 0.001);
     }
   }
 
@@ -161,6 +161,45 @@ public class JSONTest extends GWTTestCase {
     JSONValue falseVal = JSONParser.parse("false");
     assertEquals(falseVal, falseVal.isBoolean());
     assertFalse(falseVal.isBoolean().booleanValue());
+  }
+
+  public void testEquals() {
+    JSONArray array = JSONParser.parse("[]").isArray();
+    assertEquals(array, new JSONArray(array.getJavaScriptObject()));
+
+    assertEquals(JSONBoolean.getInstance(false), JSONBoolean.getInstance(false));
+    assertEquals(JSONBoolean.getInstance(true), JSONBoolean.getInstance(true));
+
+    assertEquals(JSONNull.getInstance(), JSONNull.getInstance());
+
+    assertEquals(new JSONNumber(3.1), new JSONNumber(3.1));
+
+    JSONObject object = JSONParser.parse("{}").isObject();
+    assertEquals(object, new JSONObject(object.getJavaScriptObject()));
+
+    assertEquals(new JSONString("foo"), new JSONString("foo"));
+  }
+  
+  public void testHashCode() {
+    JSONArray array = JSONParser.parse("[]").isArray();
+    assertHashCodeEquals(array, new JSONArray(array.getJavaScriptObject()));
+
+    assertHashCodeEquals(JSONBoolean.getInstance(false), JSONBoolean.getInstance(false));
+    assertHashCodeEquals(JSONBoolean.getInstance(true), JSONBoolean.getInstance(true));
+
+    assertHashCodeEquals(JSONNull.getInstance(), JSONNull.getInstance());
+
+    assertHashCodeEquals(new JSONNumber(3.1), new JSONNumber(3.1));
+
+    JSONObject object = JSONParser.parse("{}").isObject();
+    assertHashCodeEquals(object, new JSONObject(object.getJavaScriptObject()));
+
+    assertHashCodeEquals(new JSONString("foo"), new JSONString("foo"));
+  }
+
+  private void assertHashCodeEquals(Object expected, Object actual) {
+    assertEquals("hashCodes are not equal", expected.hashCode(),
+        actual.hashCode());
   }
 
   // Null characters do not work in hosted mode
@@ -258,17 +297,17 @@ public class JSONTest extends GWTTestCase {
 
   public void testNumberBasics() {
     JSONNumber n0 = new JSONNumber(1000);
-    assertEquals(1000, n0.getValue(), .000001);
+    assertEquals(1000, n0.doubleValue(), .000001);
     assertTrue(n0.isNumber() == n0);
     assertNull(n0.isObject());
 
     JSONNumber n1 = new JSONNumber(Integer.MAX_VALUE);
-    assertEquals(Integer.MAX_VALUE, n1.getValue(), .00001);
+    assertEquals(Integer.MAX_VALUE, n1.doubleValue(), .00001);
     assertTrue(n1.isNumber() == n1);
     assertNull(n1.isObject());
 
     JSONNumber n2 = new JSONNumber(Integer.MIN_VALUE);
-    assertEquals(Integer.MIN_VALUE, n2.getValue(), .00001);
+    assertEquals(Integer.MIN_VALUE, n2.doubleValue(), .00001);
     assertTrue(n2.isNumber() == n2);
     assertNull(n2.isObject());
   }
@@ -296,7 +335,7 @@ public class JSONTest extends GWTTestCase {
     assertEquals("Object size must be 10", 10, objIn.keySet().size());
     for (int i = 0; i < 10; i++) {
       assertEquals("Object value at 'Object " + i + "' must be " + i,
-          objIn.get("Object " + i).isNumber().getValue(), i, 0.001);
+          objIn.get("Object " + i).isNumber().doubleValue(), i, 0.001);
     }
   }
 
@@ -327,7 +366,7 @@ public class JSONTest extends GWTTestCase {
     assertEquals("\"null\" should be null JSONValue", JSONNull.getInstance(),
         JSONParser.parse("null"));
     assertEquals("5 should be JSONNumber 5", 5d,
-        JSONParser.parse("5").isNumber().getValue(), 0.001);
+        JSONParser.parse("5").isNumber().doubleValue(), 0.001);
     assertEquals("\"null\" should be null JSONValue", JSONNull.getInstance(),
         JSONParser.parse("null"));
     JSONValue somethingHello = JSONParser.parse("[{\"something\":\"hello\"}]");
@@ -402,7 +441,34 @@ public class JSONTest extends GWTTestCase {
         object.get(stringAsPrimitive("null")).isString().stringValue());
     assertEquals("foo",
         object.get(stringAsObject("null")).isString().stringValue());
-    assertNull(object.get(null));
+
+    try {
+      assertNull(object.get(null));
+      fail("Expected NullPointerException");
+    } catch (NullPointerException expected) {
+    }
+  }
+
+  public void testUndefined() {
+    JSONObject o = JSONParser.parse("{foo:'foo',bar:null}").isObject();
+    assertEquals(new JSONString("foo"), o.get("foo"));
+    assertEquals(JSONNull.getInstance(), o.get("bar"));
+    assertNull(o.get("baz"));
+
+    o.put("foo", JSONNull.getInstance());
+    assertEquals(JSONNull.getInstance(), o.get("foo"));
+    o.put("foo", null);
+    assertNull(o.get("foo"));
+
+    JSONArray array = JSONParser.parse("['foo',null]").isArray();
+    assertEquals(new JSONString("foo"), array.get(0));
+    assertEquals(JSONNull.getInstance(), array.get(1));
+    assertNull(array.get(2));
+
+    array.set(0, JSONNull.getInstance());
+    assertEquals(JSONNull.getInstance(), array.get(0));
+    array.set(0, null);
+    assertNull(array.get(0));
   }
 
   public void testWidget() {

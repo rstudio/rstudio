@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,6 +14,8 @@
  * the License.
  */
 package com.google.gwt.json.client;
+
+import com.google.gwt.core.client.JavaScriptObject;
 
 /**
  * Represents a JSON boolean value.
@@ -38,6 +40,14 @@ public class JSONBoolean extends JSONValue {
     } else {
       return FALSE;
     }
+  }
+
+  /**
+   * Called from {@link #getUnwrapper()}. 
+   */
+  @SuppressWarnings("unused")
+  private static boolean unwrap(JSONBoolean value) {
+    return value.value;
   }
 
   private final boolean value;
@@ -72,4 +82,9 @@ public class JSONBoolean extends JSONValue {
   public String toString() {
     return Boolean.toString(value);
   }
+
+  @Override
+  native JavaScriptObject getUnwrapper() /*-{
+    return @com.google.gwt.json.client.JSONBoolean::unwrap(Lcom/google/gwt/json/client/JSONBoolean;);
+  }-*/;
 }

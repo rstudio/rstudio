@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,6 +49,14 @@ public class JSONString extends JSONValue {
     return out;
   }-*/;
 
+  /**
+   * Called from {@link #getUnwrapper()}. 
+   */
+  @SuppressWarnings("unused")
+  private static String unwrap(JSONString value) {
+    return value.value;
+  }
+
   private String value;
 
   /**
@@ -62,6 +70,20 @@ public class JSONString extends JSONValue {
       throw new NullPointerException();
     }
     this.value = value;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (!(other instanceof JSONString)) {
+      return false;
+    }
+    return value.equals(((JSONString) other).value);
+  }
+
+  @Override
+  public int hashCode() {
+    // Just use the underlying String's hashCode.
+    return value.hashCode();
   }
 
   /**
@@ -87,4 +109,9 @@ public class JSONString extends JSONValue {
   public String toString() {
     return escapeValue(value);
   }
+
+  @Override
+  native JavaScriptObject getUnwrapper() /*-{
+    return @com.google.gwt.json.client.JSONString::unwrap(Lcom/google/gwt/json/client/JSONString;);
+  }-*/;
 }

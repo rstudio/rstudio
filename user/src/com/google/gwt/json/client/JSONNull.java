@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.json.client;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 /**
  * Represents the JSON <code>null</code> value.
  */
@@ -27,6 +29,14 @@ public class JSONNull extends JSONValue {
    */
   public static JSONNull getInstance() {
     return instance;
+  }
+
+  /**
+   * Called from {@link #getUnwrapper()}. 
+   */
+  @SuppressWarnings("unused")
+  private static JavaScriptObject unwrap() {
+    return null;
   }
 
   /**
@@ -50,5 +60,9 @@ public class JSONNull extends JSONValue {
   public String toString() {
     return "null";
   }
+
+  native JavaScriptObject getUnwrapper() /*-{
+    return @com.google.gwt.json.client.JSONNull::unwrap();
+  }-*/;
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,20 @@
  */
 package com.google.gwt.json.client;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 /**
  * Represents a JSON number. Numbers are represented by <code>double</code>s.
  */
 public class JSONNumber extends JSONValue {
+
+  /**
+   * Called from {@link #getUnwrapper()}. 
+   */
+  @SuppressWarnings("unused")
+  private static double unwrap(JSONNumber value) {
+    return value.value;
+  }
 
   private double value;
 
@@ -30,10 +40,34 @@ public class JSONNumber extends JSONValue {
   }
 
   /**
-   * Gets the double value that this JSONNumber represents.
+   * Gets the double value this JSONNumber represents.
    */
+  public double doubleValue() {
+    return value;
+  }
+
+  @Override
+  public boolean equals(Object other) {
+    if (!(other instanceof JSONNumber)) {
+      return false;
+    }
+    return value == ((JSONNumber) other).value;
+  }
+
+  /**
+   * Gets the double value this JSONNumber represents.
+   * 
+   * @deprecated use {@link #doubleValue()}
+   */
+  @Deprecated
   public double getValue() {
     return value;
+  }
+
+  @Override
+  public int hashCode() {
+    // Just use the underlying double's hashCode.
+    return Double.valueOf(value).hashCode();
   }
 
   /**
@@ -51,5 +85,10 @@ public class JSONNumber extends JSONValue {
   public native String toString() /*-{
     // Use JavaScript conversion so that integral values print as integers.
     return this.@com.google.gwt.json.client.JSONNumber::value + "";
+  }-*/;
+
+  @Override
+  native JavaScriptObject getUnwrapper() /*-{
+    return @com.google.gwt.json.client.JSONNumber::unwrap(Lcom/google/gwt/json/client/JSONNumber;);
   }-*/;
 }
