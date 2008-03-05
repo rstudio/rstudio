@@ -225,12 +225,6 @@ public final class JsValueGlue {
       CompilingClassLoader classLoader) {
     Throwable caught;
     try {
-      // checkThread();
-      if (!value.isJavaScriptObject()) {
-        throw new RuntimeException(
-            "Only Object type JavaScript objects can be made into JavaScriptObject");
-      }
-
       // See if there's already a wrapper object (assures identity comparison).
       Object jso = classLoader.getCachedJso(value.getJavaScriptObjectPointer());
       if (jso != null) {
