@@ -157,7 +157,7 @@ public class DOMTest extends GWTTestCase {
     DOM.insertChild(parent, div, Integer.MAX_VALUE);
     Element child = DOM.getChild(RootPanel.get().getElement(),
         DOM.getChildCount(parent) - 1);
-    assertEquals(div, child);
+    assertTrue(DOM.compare(div, child));
   }
 
   /**

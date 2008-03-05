@@ -66,8 +66,8 @@ public class DecoratorPanelTest extends GWTTestCase {
     }
 
     // Check the container element
-    assertEquals(DOM.getFirstChild(panel.getCellElement(2, 1)),
-        panel.getContainerElement());
+    assertTrue(DOM.compare(DOM.getFirstChild(panel.getCellElement(2, 1)),
+        panel.getContainerElement()));
   }
 
   /**
@@ -87,7 +87,7 @@ public class DecoratorPanelTest extends GWTTestCase {
     }
 
     // Check the container element
-    assertEquals(DOM.getFirstChild(panel.getCellElement(1, 1)),
-        panel.getContainerElement());
+    assertTrue(DOM.compare(DOM.getFirstChild(panel.getCellElement(1, 1)),
+        panel.getContainerElement()));
   }
 }
