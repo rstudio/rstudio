@@ -85,20 +85,10 @@ class SwtOleGlue {
    * Extracts a string from an (OLECHAR*) type.
    */
   public static String extractStringFromOleCharPtr(int pOleChar) {
-    // TODO: double-check the encoding (is it UTF-16?, what)
-    int size = COM.SysStringByteLen(pOleChar);
-    if (size > 8192) {
-      size = 8192;
-    }
-    char[] buffer = new char[(size + 1) / 2];
-    OS.MoveMemory(buffer, pOleChar, size);
-
-    String s = new String(buffer);
-    if (s.indexOf('\0') != -1) {
-      return s.substring(0, s.indexOf('\0'));
-    } else {
-      return s;
-    }
+    int length = OS.wcslen(pOleChar);
+    char[] buffer = new char[length];
+    OS.MoveMemory(buffer, pOleChar, length);
+    return String.valueOf(buffer);
   }
 
   /**
