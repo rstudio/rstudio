@@ -28,6 +28,16 @@ public class RequestBuilderTest extends GWTTestCase {
     return GWT.getModuleBaseURL() + "testRequestBuilder/";
   }
 
+  /**
+   * HACK: Part of a work around for Safari 2.0.4's failure to throw an
+   * exception when an XmlHttpRequest that violates the same origin policy is
+   * made.
+   */
+  private static native boolean isSafari() /*-{
+    var ua = navigator.userAgent.toLowerCase();
+    return ua.indexOf("webkit") != -1; 
+  }-*/;
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.http.RequestBuilderTest";
@@ -90,7 +100,22 @@ public class RequestBuilderTest extends GWTTestCase {
           // should never get here
         }
       });
-      fail("Expected RequestPermissionException");
+
+      if (isSafari()) {
+        /*
+         * HACK: Safari 2.0.4 will not throw an exception for XHR's that violate
+         * the same-origin policy. It appears to silently ignore them so we do
+         * not fail this test if we are on Safari and the
+         * RequestPermissionException is not thrown. Even though Safari 3.0.4
+         * does throw an exception in this case, we exclude it anyway.
+         */
+      } else {
+        /*
+         * All other supported browsers throw an exception for XHR's that
+         * violate the same-origin policy; fail the test if we get here.
+         */
+        fail("Expected RequestPermissionException");
+      }
     } catch (IllegalArgumentException ex) {
       // purposely ignored
     } catch (RequestPermissionException ex) {
