@@ -131,7 +131,7 @@ public class Mail implements EntryPoint, WindowResizeListener {
     if (shortcutHeight < 1) {
       shortcutHeight = 1;
     }
-    shortcuts.setHeight("" + shortcutHeight);
+    shortcuts.setHeight(shortcutHeight + "px");
 
     // Give the mail detail widget a chance to resize itself as well.
     mailDetail.adjustSize(width, height);

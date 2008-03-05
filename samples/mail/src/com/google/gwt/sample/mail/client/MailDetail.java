@@ -76,7 +76,7 @@ public class MailDetail extends Composite {
       scrollHeight = 1;
     }
 
-    scroller.setSize("" + scrollWidth, "" + scrollHeight);
+    scroller.setPixelSize(scrollWidth, scrollHeight);
   }
 
   public void setItem(MailItem item) {
