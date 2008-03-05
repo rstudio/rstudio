@@ -87,7 +87,7 @@ class SwtOleGlue {
   public static String extractStringFromOleCharPtr(int pOleChar) {
     int length = OS.wcslen(pOleChar);
     char[] buffer = new char[length];
-    OS.MoveMemory(buffer, pOleChar, length);
+    OS.MoveMemory(buffer, pOleChar, length * 2);
     return String.valueOf(buffer);
   }
 
