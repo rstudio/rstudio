@@ -19,6 +19,7 @@ GWT_ROOT = ../../
 OBJDIR  := $(GWT_ROOT)build/out/jni/win32/
 OUTDIR  := $(GWT_ROOT)build/jni/win32/
 OUT     := $(OUTDIR)gwt-ll.dll
+STAGING := $(GWT_ROOT)build/staging/gwt-windows-0.0.0/
 
 ##
 # Tools
@@ -67,6 +68,10 @@ LDFLAGS  := -s -Wl,--kill-at $(LDFLAGS)
 ##
 all: $(OUT)
 
+# install into prebuilt directory
+install: $(OUT)
+	cp $(OUT) prebuilt/
+
 ##
 # Include the dependency rules
 ##
@@ -93,6 +98,13 @@ $(OUT): $(OBJS) $(OBJDIR)libwininet.a
 	@[ -d $(OUTDIR) ] || mkdir -p $(OUTDIR)
 	$(LD) -shared $(LDFLAGS) $(LIBPATH) -o $@ $^ $(LIBS)
 	$(STRIP) --strip-unneeded $@
+
+##
+# copy to staging area for hosted-mode development
+##
+staging: $(OUT)
+	@[ -d $(STAGING) ] || mkdir -p $(STAGING)
+	cp $(OUT) $(STAGING)
 
 ##
 # Clean rule

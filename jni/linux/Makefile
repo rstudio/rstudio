@@ -25,6 +25,7 @@ GWT_ROOT = ../../
 OBJDIR  := $(GWT_ROOT)build/out/jni/linux/
 OUTDIR  := $(GWT_ROOT)build/jni/linux/
 OUT     := $(OUTDIR)libgwt-ll.so
+STAGING := $(GWT_ROOT)build/staging/gwt-linux-0.0.0/
 
 ##
 # The location to get .class files from for javah
@@ -142,7 +143,8 @@ $(OUT): $(OBJS) $(MOZLIB)/libxpcomglue_s.a
 # copy to staging area for hosted-mode development
 ##
 staging: $(OUT)
-	cp $(OUT) ../../build/staging/gwt-linux-0.0.0
+	@[ -d $(STAGING) ] || mkdir -p $(STAGING)
+	cp $(OUT) $(STAGING)
 
 ##
 # Clean rule
