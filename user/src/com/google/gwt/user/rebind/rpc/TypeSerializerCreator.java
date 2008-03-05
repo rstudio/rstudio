@@ -276,7 +276,7 @@ public class TypeSerializerCreator {
           String serializerName = serializationOracle.getFieldSerializerName(type);
           {
             // First the initialization method
-            srcWriter.print("function(x){ return @");
+            srcWriter.print("@");
             if (needsCreateMethod(type)) {
               srcWriter.print(serializationOracle.getTypeSerializerQualifiedName(getServiceInterface()));
               srcWriter.print("::");
@@ -285,31 +285,28 @@ public class TypeSerializerCreator {
               srcWriter.print(serializerName);
               srcWriter.print("::instantiate");
             }
-            srcWriter.println("(L"
+            srcWriter.print("(L"
                 + SerializationStreamReader.class.getName().replace('.', '/')
-                + ";)(x);},");
+                + ";)");
+            srcWriter.println(",");
           }
 
           String jsniSignature = type.getJNISignature();
 
           {
             // Now the deserialization method
-            srcWriter.print("function(x,y){");
             srcWriter.print("@" + serializerName);
             srcWriter.print("::deserialize(L"
                 + SerializationStreamReader.class.getName().replace('.', '/')
                 + ";" + jsniSignature + ")");
-            srcWriter.print("(x,y);}");
             srcWriter.println(",");
           }
           {
             // Now the serialization method
-            srcWriter.print("function(x,y){");
             srcWriter.print("@" + serializerName);
             srcWriter.print("::serialize(L"
                 + SerializationStreamWriter.class.getName().replace('.', '/')
                 + ";" + jsniSignature + ")");
-            srcWriter.print("(x,y);}");
             srcWriter.println();
           }
           srcWriter.outdent();
