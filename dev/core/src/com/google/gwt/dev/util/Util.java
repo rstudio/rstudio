@@ -1003,7 +1003,7 @@ public final class Util {
    * @param byteLength number of bytes to read
    * @return byte array containing the bytes read or <code>null</code> if
    *         there is an {@link IOException} or if the requested number of bytes 
-   *         can not be read from the {@link InputStream}
+   *         cannot be read from the {@link InputStream}
    */
   private static byte[] readBytesFromInputStream(InputStream input,
       int byteLength) {

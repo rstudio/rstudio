@@ -49,7 +49,7 @@ final class StringValidator {
     throwIfNull(name, value);
 
     if (0 == value.trim().length()) {
-      throw new IllegalArgumentException(name + " can not be empty");
+      throw new IllegalArgumentException(name + " cannot be empty");
     }
   }
 
@@ -63,7 +63,7 @@ final class StringValidator {
    */
   public static void throwIfNull(String name, String value) {
     if (null == value) {
-      throw new NullPointerException(name + " can not be null");
+      throw new NullPointerException(name + " cannot be null");
     }
   }
 

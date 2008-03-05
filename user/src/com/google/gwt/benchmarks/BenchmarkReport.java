@@ -157,7 +157,7 @@ public class BenchmarkReport {
      * 
      * @param logger to log the process
      * @param method a not <code>null</code> method
-     * @return <code>null</code> if the source code for the method can not be
+     * @return <code>null</code> if the source code for the method cannot be
      *         located
      */
     public String getMethod(TreeLogger logger, JMethod method) {

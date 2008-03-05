@@ -51,7 +51,7 @@ public class DeferredCommand {
    */
   public static void addCommand(Command cmd) {
     if (cmd == null) {
-      throw new NullPointerException("cmd can not be null");
+      throw new NullPointerException("cmd cannot be null");
     }
 
     commandExecutor.submit(cmd);
@@ -69,7 +69,7 @@ public class DeferredCommand {
    */
   public static void addCommand(IncrementalCommand cmd) {
     if (cmd == null) {
-      throw new NullPointerException("cmd can not be null");
+      throw new NullPointerException("cmd cannot be null");
     }
 
     commandExecutor.submit(cmd);

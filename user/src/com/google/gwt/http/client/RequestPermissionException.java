@@ -38,7 +38,7 @@ public class RequestPermissionException extends RequestException {
   /**
    * Constructs an instance of this class for the given URL.
    * 
-   * @param url the URL which can not be accessed
+   * @param url the URL which cannot be accessed
    */
   public RequestPermissionException(String url) {
     super("The URL " + url
@@ -48,7 +48,7 @@ public class RequestPermissionException extends RequestException {
   }
 
   /**
-   * Returns the URL which we can not access.
+   * Returns the URL which we cannot access.
    * 
    * @return the URL which we cannot access.
    */
