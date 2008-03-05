@@ -414,6 +414,12 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
       }
 
       case Event.ONKEYDOWN:
+        // Issue 1890: Do not block history navigation via alt+left/right
+        if (DOM.eventGetAltKey(event) || DOM.eventGetMetaKey(event)) {
+          super.onBrowserEvent(event);
+          return;
+        }
+
         // If nothing's selected, select the first item.
         if (curSelection == null) {
           if (root.getChildCount() > 0) {
