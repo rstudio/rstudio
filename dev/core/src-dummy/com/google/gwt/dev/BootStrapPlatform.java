@@ -22,15 +22,15 @@ package com.google.gwt.dev;
  */
 public class BootStrapPlatform {
 
-  public static void go() {
+  public static void applyPlatformHacks() {
     // nothing to do
+  }
+
+  public static void init() {
+    // nothing to do.
   }
 
   public static void maybeInitializeAWT() {
     // nothing to do
-  }
-  
-  public static void setSystemProperties() {
-    // nothing to do.
   }
 }

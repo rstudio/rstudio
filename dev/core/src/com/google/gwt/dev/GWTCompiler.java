@@ -580,7 +580,7 @@ public class GWTCompiler extends ToolBase {
    */
   private boolean run() {
     // Set any platform specific system properties.
-    BootStrapPlatform.setSystemProperties();
+    BootStrapPlatform.applyPlatformHacks();
 
     if (useGuiLogger) {
       // Initialize a tree logger window.

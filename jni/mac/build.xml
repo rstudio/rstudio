@@ -3,11 +3,21 @@
 	<property name="project.tail" value="jni/mac" />
 	<import file="${gwt.root}/common.ant.xml" />
 
-	<target name="build" description="Builds a JNI lib">
-		<mkdir dir="${project.jni}" />
+	<target name="build" depends="build_10.4, build_10.5">
+        </target>
+
+	<target name="build_10.4" description="Builds a JNI lib">
+		<mkdir dir="${project.jni}_10.4" />
 		<!-- TODO: Actually build this from source! -->
-		<copy todir="${project.jni}">
-			<fileset dir="prebuilt" />
+		<copy todir="${project.jni}_10.4">
+			<fileset dir="10.4/prebuilt" />
+		</copy>
+	</target>
+	<target name="build_10.5" description="Builds a JNI lib">
+		<mkdir dir="${project.jni}_10.5" />
+		<!-- TODO: Actually build this from source! -->
+		<copy todir="${project.jni}_10.5">
+			<fileset dir="10.5/prebuilt" />
 		</copy>
 	</target>
 

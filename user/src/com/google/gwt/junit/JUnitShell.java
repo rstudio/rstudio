@@ -159,7 +159,8 @@ public class JUnitShell extends GWTShell {
    */
   private static JUnitShell getUnitTestShell() {
     if (unitTestShell == null) {
-      BootStrapPlatform.go();
+      BootStrapPlatform.init();
+      BootStrapPlatform.applyPlatformHacks();
       JUnitShell shell = new JUnitShell();
       String[] args = shell.synthesizeArgs();
       if (!shell.processArgs(args)) {

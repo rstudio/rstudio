@@ -1,42 +1,69 @@
 <project name="dist-mac" default="build" basedir=".">
+	<!-- TODO: Either split this into top-level mac-10.4 and mac-10.5 targets
+		or merge these back together with OOPHM. -->
+        <!-- distro doesn't use the top-level common.ant.xml, nor properties
+             defined there. -->
 	<property name="dist.platform" value="mac" />
-	<import file="../common.ant.xml" />
-	<property name="project.dist" location="${gwt.build.dist}/${project.distname}.tar.gz" />
+	<condition property="dist.platform.detail" value="mac_10.5" else="mac_10.4">
+		<contains string="${os.version}" substring="10.5." />
+	</condition>
 
-	<target name="build" depends="filter" description="Packages the distro">
+	<property name="project.distname_10.4" value="gwt-mac_10.4-${gwt.version}" />
+	<property name="project.distname_10.5" value="gwt-mac_10.5-${gwt.version}" />
+
+	<import file="../common.ant.xml" />
+	<condition property="webkitrev" value="525-10.5" else="418.9">
+		<equals arg1="mac_10.5" arg2="${build.host.platform.detail}" />
+	</condition>
+	<property name="project_10_4.dist" location="${gwt.build.dist}/gwt-mac_10.4-${gwt.version}.tar.gz" />
+	<property name="project_10_5.dist" location="${gwt.build.dist}/gwt-mac_10.5-${gwt.version}.tar.gz" />
+
+
+	<target name="build" depends="filter, build_10.4, build_10.5" 
+		description="Packages the distro">
+	</target> 
+
+	<target name="build_10.4" depends="filter" 
+	        description="Packages the MacOS 10.4 distro">
 		<!-- TODO: figure out how to share most of this across platforms -->
 		<mkdir dir="${gwt.build.dist}" />
-		<gwt.tgz.cat destfile="${project.dist}">
+		<gwt.tgz.cat destfile="${project_10_4.dist}">
 			<!-- jars -->
-			<tarfileset file="${gwt.build.lib}/gwt-dev-${dist.platform}.jar" prefix="${project.distname}" />
-			<tarfileset file="${gwt.build.lib}/gwt-user.jar" prefix="${project.distname}" />
-			<tarfileset file="${gwt.build.lib}/gwt-servlet.jar" prefix="${project.distname}" />
-                        <tarfileset file="${gwt.build.lib}/gwt-benchmark-viewer.jar" prefix="${project.distname}" />
+			<tarfileset file="${gwt.build.lib}/gwt-dev-${build.host.platform}.jar" prefix="${project.distname_10.4}" />
+			<tarfileset file="${gwt.build.lib}/gwt-user.jar" prefix="${project.distname_10.4}" />
+			<tarfileset file="${gwt.build.lib}/gwt-servlet.jar" prefix="${project.distname_10.4}" />
+                        <tarfileset file="${gwt.build.lib}/gwt-benchmark-viewer.jar" prefix="${project.distname_10.4}" />
 
 			<!-- jni libs-->
-			<tarfileset dir="${gwt.build.jni}/${dist.platform}" prefix="${project.distname}" />
-			<tarfileset dir="${gwt.tools.lib}/eclipse" prefix="${project.distname}">
+			<tarfileset dir="${gwt.build.jni}/mac_10.4" prefix="${project.distname_10.4}" />
+			<tarfileset dir="${gwt.tools.lib}/eclipse" prefix="${project.distname_10.4}">
 				<include name="libswt-*carbon-3235.jnilib" />
 				<!-- User our modified version instead of this stock version -->
 				<exclude name="libswt-webkit-carbon-3235.jnilib" />
 			</tarfileset>
 
 			<!-- raw files -->
-			<tarfileset dir="${project.build}" prefix="${project.distname}" mode="755">
+			<tarfileset dir="${project.build}" prefix="${project.distname_10.4}" mode="755">
 				<patternset refid="chmod.executables" />
 			</tarfileset>
-			<tarfileset dir="${project.build}" prefix="${project.distname}">
+			<tarfileset dir="${project.build}" prefix="${project.distname_10.4}">
 				<patternset refid="chmod.not.executables" />
 			</tarfileset>
-			<tarfileset dir="src" prefix="${project.distname}" mode="755">
+			<tarfileset dir="src" prefix="${project.distname_10.4}" mode="755">
 				<patternset refid="chmod.executables" />
 			</tarfileset>
-			<tarfileset dir="src" prefix="${project.distname}">
+			<tarfileset dir="10.4" prefix="${project.distname_10.4}" mode="755">
+				<patternset refid="chmod.executables" />
+			</tarfileset>
+			<tarfileset dir="src" prefix="${project.distname_10.4}">
+				<patternset refid="chmod.not.executables" />
+			</tarfileset>
+			<tarfileset dir="10.4" prefix="${project.distname_10.4}">
 				<patternset refid="chmod.not.executables" />
 			</tarfileset>
 
 			<!-- doc -->
-			<tarfileset dir="${gwt.build.out}" prefix="${project.distname}">
+			<tarfileset dir="${gwt.build.out}" prefix="${project.distname_10.4}">
 				<include name="doc" />
 				<include name="doc/html/**" />
 				<include name="doc/css/**" />
@@ -44,19 +71,19 @@
 			</tarfileset>
 
 			<!-- samples -->
-			<tarfileset dir="${gwt.build.out}" prefix="${project.distname}">
+			<tarfileset dir="${gwt.build.out}" prefix="${project.distname_10.4}">
 				<include name="samples" />
 				<include name="samples/*" />
 				<include name="samples/*/src/**" />
 				<include name="samples/*/bin/**" />
 				<include name="samples/*/www/**" />
 			</tarfileset>
-			<tarfileset dir="${gwt.build.out}/samples-scripts/${dist.platform}" mode="755" prefix="${project.distname}/samples">
+			<tarfileset dir="${gwt.build.out}/samples-scripts/${dist.platform}" mode="755" prefix="${project.distname_10.4}/samples">
 				<include name="*/*-compile" />
 				<include name="*/*-shell" />
 			</tarfileset>
 
-			<includetar src="${gwt.tools.redist}/webkit/WebKit-418.9.tar.gz" compression="gzip" prefix="${project.distname}" />
+			<includetar src="${gwt.tools.redist}/webkit/WebKit-${webkitrev}.tar.gz" compression="gzip" prefix="${project.distname_10.4}" />
 		</gwt.tgz.cat>
 
 		<if>
@@ -69,7 +96,88 @@
 				<mkdir dir="${gwt.build.staging}" />
 				<exec executable="tar">
 					<arg value="-xpzf" />
-					<arg file="${project.dist}" />
+					<arg file="${project_10_4.dist}" />
+					<arg value="-C" />
+					<arg file="${gwt.build.staging}" />
+				</exec>
+			</then>
+		</if>
+	</target>
+
+	<target name="build_10.5" depends="filter" 
+	        description="Packages the MacOS 10.5 distro">
+		<!-- TODO: figure out how to share most of this across platforms -->
+		<mkdir dir="${gwt.build.dist}" />
+		<gwt.tgz.cat destfile="${project_10_5.dist}">
+			<!-- jars -->
+			<tarfileset file="${gwt.build.lib}/gwt-dev-${build.host.platform}.jar" prefix="${project.distname_10.5}" />
+			<tarfileset file="${gwt.build.lib}/gwt-user.jar" prefix="${project.distname_10.5}" />
+			<tarfileset file="${gwt.build.lib}/gwt-servlet.jar" prefix="${project.distname_10.5}" />
+                        <tarfileset file="${gwt.build.lib}/gwt-benchmark-viewer.jar" prefix="${project.distname_10.5}" />
+
+			<!-- jni libs-->
+			<tarfileset dir="${gwt.build.jni}/mac_10.5" prefix="${project.distname_10.5}" />
+			<tarfileset dir="${gwt.tools.lib}/eclipse" prefix="${project.distname_10.5}">
+				<include name="libswt-*carbon-3235.jnilib" />
+				<!-- User our modified version instead of this stock version -->
+				<exclude name="libswt-webkit-carbon-3235.jnilib" />
+			</tarfileset>
+
+			<!-- raw files -->
+			<tarfileset dir="${project.build}" prefix="${project.distname_10.5}" mode="755">
+				<patternset refid="chmod.executables" />
+			</tarfileset>
+			<tarfileset dir="${project.build}" prefix="${project.distname_10.5}">
+				<patternset refid="chmod.not.executables" />
+			</tarfileset>
+			<tarfileset dir="src" prefix="${project.distname_10.5}" mode="755">
+				<patternset refid="chmod.executables" />
+			</tarfileset>
+			<tarfileset dir="10.4" prefix="${project.distname_10.5}" mode="755">
+				<patternset refid="chmod.executables" />
+			</tarfileset>
+			<tarfileset dir="src" prefix="${project.distname_10.5}">
+				<patternset refid="chmod.not.executables" />
+			</tarfileset>
+			<tarfileset dir="10.4" prefix="${project.distname_10.5}">
+				<patternset refid="chmod.not.executables" />
+			</tarfileset>
+
+			<!-- doc -->
+			<tarfileset dir="${gwt.build.out}" prefix="${project.distname_10.5}">
+				<include name="doc" />
+				<include name="doc/html/**" />
+				<include name="doc/css/**" />
+				<include name="doc/javadoc/**" />
+			</tarfileset>
+
+			<!-- samples -->
+			<tarfileset dir="${gwt.build.out}" prefix="${project.distname_10.5}">
+				<include name="samples" />
+				<include name="samples/*" />
+				<include name="samples/*/src/**" />
+				<include name="samples/*/bin/**" />
+				<include name="samples/*/www/**" />
+			</tarfileset>
+			<tarfileset dir="${gwt.build.out}/samples-scripts/${dist.platform}" mode="755" prefix="${project.distname_10.5}/samples">
+				<include name="*/*-compile" />
+				<include name="*/*-shell" />
+			</tarfileset>
+
+			<includetar src="${gwt.tools.redist}/webkit/WebKit-${webkitrev}.tar.gz" compression="gzip" prefix="${project.distname_10.5}" />
+		</gwt.tgz.cat>
+
+		<if>
+			<isset property="build.host.ismac" />
+			<then>
+				<!--
+					Untar distro into the staging directory.  Must use GNU tar
+					to handle permissions and symlinks correctly.
+				-->
+				<mkdir dir="${gwt.build.staging}" />
+				<exec executable="tar">
+					<arg value="-xpzf" />
+					<arg file="${project_10_5.dist}" />
 					<arg value="-C" />
 					<arg file="${gwt.build.staging}" />
 				</exec>

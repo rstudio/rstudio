@@ -22,13 +22,17 @@ import com.google.gwt.dev.shell.moz.MozillaInstall;
  */
 public class BootStrapPlatform {
 
+  public static void applyPlatformHacks() {
+    // nothing to do
+  }
+
   /**
    * Find a usable Mozilla installation and load it. Fail immediately, logging
    * to stderr and exiting with a failure code, if we are unable to find or load
    * it. If successful, store the loaded path in the property swt.mozilla.path
    * so SWT's Browser object can use it.
    */
-  public static void go() {
+  public static void init() {
     MozillaInstall mozInstall = MozillaInstall.find();
     if (mozInstall == null) {
       System.err.println("** Unable to find a usable Mozilla install **");
@@ -48,10 +52,6 @@ public class BootStrapPlatform {
   }
 
   public static void maybeInitializeAWT() {
-    // nothing to do
-  }
-
-  public static void setSystemProperties() {
     // nothing to do
   }
 }

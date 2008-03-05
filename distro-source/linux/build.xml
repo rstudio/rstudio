@@ -1,5 +1,6 @@
 <project name="dist-linux" default="build" basedir=".">
 	<property name="dist.platform" value="linux" />
+	<property name="dist.platform.detail" value="linux" />
 	<import file="../common.ant.xml" />
 	<property name="project.dist" location="${gwt.build.dist}/${project.distname}.tar.gz" />
 

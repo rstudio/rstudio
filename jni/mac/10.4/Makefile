@@ -15,7 +15,7 @@
 ##
 # Try a GWT_TOOLS default if it isn't set
 ##
-GWT_TOOLS ?= ../../../tools
+GWT_TOOLS ?= ../../../../tools
 
 ##
 # External WebKit products.
@@ -99,8 +99,8 @@ Frameworks: $(WEBKIT_REDIST)
 ##
 # Rule for gwt-ll objects.
 ##
-gwt-ll.o: ../core/gwt-ll.cpp
-	$(CC) -c -o gwt-ll.o $(CFLAGS) ../core/gwt-ll.cpp
+gwt-ll.o: ../../core/gwt-ll.cpp
+	$(CC) -c -o gwt-ll.o $(CFLAGS) ../../core/gwt-ll.cpp
 
 gwt-args.o: gwt-args.cpp
 	$(CC) -c -o gwt-args.o $(CFLAGS) gwt-args.cpp

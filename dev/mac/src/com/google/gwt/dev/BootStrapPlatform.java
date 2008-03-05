@@ -17,6 +17,7 @@ package com.google.gwt.dev;
 
 import com.google.gwt.dev.shell.mac.LowLevelSaf;
 
+import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
 
 /**
@@ -24,23 +25,24 @@ import java.awt.Toolkit;
  */
 public class BootStrapPlatform {
 
-  public static void go() {
-    // Ensure we were started with -XstartOnFirstThread
+  public static void applyPlatformHacks() {
+    setSystemProperties();
+    fixContextClassLoaderOnMainThread();
+  }
+
+  public static void init() {
     LowLevelSaf.init();
-    String[] args = LowLevelSaf.getProcessArgs();
-    for (int i = 0; i < args.length; ++i) {
-      if (args[i].equalsIgnoreCase("-xstartonfirstthread")) {
-        return;
-      }
+    // Ensure we were started with -XstartOnFirstThread
+    if (!hasStartOnFirstThreadFlag(LowLevelSaf.getProcessArgs())) {
+      System.err.println("Invalid launch configuration: -XstartOnFirstThread not specified.");
+      System.err.println();
+      System.err.println("On Mac OS X, GWT requires that the Java virtual machine be invoked with the");
+      System.err.println("-XstartOnFirstThread VM argument.");
+      System.err.println();
+      System.err.println("Example:");
+      System.err.println("  java -XstartOnFirstThread -cp gwt-dev-mac.jar com.google.gwt.dev.GWTShell");
+      System.exit(-1);
     }
-    System.err.println("Invalid launch configuration: -XstartOnFirstThread not specified.");
-    System.err.println();
-    System.err.println("On Mac OS X, GWT requires that the Java virtual machine be invoked with the");
-    System.err.println("-XstartOnFirstThread VM argument.");
-    System.err.println();
-    System.err.println("Example:");
-    System.err.println("  java -XstartOnFirstThread -cp gwt-dev-mac.jar com.google.gwt.dev.GWTShell");
-    System.exit(-1);
   }
 
   /**
@@ -65,14 +67,38 @@ public class BootStrapPlatform {
    * <p>
    * NOTE: In GUI applications, {@link #setSystemProperties()} and
    * {@link #maybeInitializeAWT()} will both be called during the bootstrap
-   * process. Command line applications (like 
-   * @{link com.google.gwt.dev.GWTCompiler}) avoid eagerly initializing AWT
-   * and only call {@link #setSystemProperties()} allowing AWT to be
-   * initialized on demand.
-   * </p>
+   * process. Command line applications (like
+   * 
+   * @{link com.google.gwt.dev.GWTCompiler}) avoid eagerly initializing AWT and
+   *        only call {@link #setSystemProperties()} allowing AWT to be
+   *        initialized on demand.
+   *        </p>
    */
   public static void maybeInitializeAWT() {
+    GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
     Toolkit.getDefaultToolkit();
+  }
+
+  /**
+   * This works around apple radr:5569300. When -XstartOnFirstThread is passed
+   * as a jvm argument, the main thread returns null for
+   * {@link Thread#getContextClassLoader()}.
+   */
+  private static void fixContextClassLoaderOnMainThread() {
+    final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    if (classLoader == null) {
+      Thread.currentThread().setContextClassLoader(
+          BootStrapPlatform.class.getClassLoader());
+    }
+  }
+
+  private static boolean hasStartOnFirstThreadFlag(String[] args) {
+    for (int i = 0; i < args.length; ++i) {
+      if (args[i].equalsIgnoreCase("-xstartonfirstthread")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -82,13 +108,14 @@ public class BootStrapPlatform {
    * <p>
    * NOTE: In GUI applications, {@link #setSystemProperties()} and
    * {@link #maybeInitializeAWT()} will both be called during the bootstrap
-   * process. Command line applications (like 
-   * @{link com.google.gwt.dev.GWTCompiler}) avoid eagerly initializing AWT
-   * and only call {@link #setSystemProperties()} allowing AWT to be
-   * initialized on demand.
-   * </p>
+   * process. Command line applications (like
+   * 
+   * @{link com.google.gwt.dev.GWTCompiler}) avoid eagerly initializing AWT and
+   *        only call {@link #setSystemProperties()} allowing AWT to be
+   *        initialized on demand.
+   *        </p>
    */
-  public static void setSystemProperties() {
+  private static void setSystemProperties() {
     // Disable CocoaComponent compatibility mode.
     System.setProperty("com.apple.eawt.CocoaComponent.CompatibilityMode",
         "false");

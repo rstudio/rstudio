@@ -1,4 +1,4 @@
-/*
+/* 
  * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -13,22 +13,32 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev;
+#ifndef FUNC_WRAPPER_H
+#define FUNC_WRAPPER_H
 
-/**
- * Placeholder platform bootstrap class.
+#include "FunctionObject.h"
+#include <jni.h>
+
+/*
+ * Wraps Java methods (MethodDispatch)
  */
-public class BootStrapPlatform {
+class FuncWrapper : public FunctionObject {
+public:
+  // funcObj MUST be a global ref
+  FuncWrapper(const KJS::UString& name, jobject funcObj);
+  virtual ~FuncWrapper();
+  jobject getFuncObj();
 
-  public static void applyPlatformHacks() {
-    // nothing to do
-  }
-  
-  public static void init() {
-    // nothing to do
-  }
+public:
+  virtual KJS::JSValue *callAsFunction(KJS::ExecState*, KJS::JSObject*,
+      const KJS::List&);
 
-  public static void maybeInitializeAWT() {
-    // nothing to do
-  }
+private:
+  jobject funcObj;
+};
+
+inline jobject FuncWrapper::getFuncObj() {
+  return funcObj;
 }
+
+#endif

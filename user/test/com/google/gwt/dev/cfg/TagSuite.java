@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.dev.BootStrapPlatform;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -24,6 +25,15 @@ import junit.framework.Test;
  */
 public class TagSuite {
 
+  static {
+    /*
+     * Required for OS X Leopard. This call ensures we have a valid context
+     * ClassLoader. Many of the tests test low-level RPC mechanisms and rely on
+     * a ClassLoader to resolve classes and resources.
+     */
+    BootStrapPlatform.applyPlatformHacks();
+  }
+  
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite(
         "Tests for public, source, and super-source tags");
