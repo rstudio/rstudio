@@ -84,14 +84,13 @@ public class RequestBuilderTest extends GWTTestCase {
       builder.sendRequest(null, new RequestCallback() {
         public void onError(Request request, Throwable exception) {
           // should never get here
-          fail(exception.getMessage());
         }
 
         public void onResponseReceived(Request request, Response response) {
           // should never get here
-          fail();
         }
       });
+      fail("Expected RequestPermissionException");
     } catch (IllegalArgumentException ex) {
       // purposely ignored
     } catch (RequestPermissionException ex) {
