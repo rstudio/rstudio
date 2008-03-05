@@ -155,7 +155,7 @@ class IDispatchProxy extends IDispatchImpl {
           } else if (flags == COM.DISPATCH_PROPERTYGET) {
             // The function is being accessed as a property.
             IDispatchImpl dispMethod = (IDispatchImpl) classLoader.getMethodDispatch(method);
-            if (dispMethod == null) {
+            if (dispMethod == null || dispMethod.refCount < 1) {
               dispMethod = new MethodDispatch(classLoader, method);
               classLoader.putMethodDispatch(method, dispMethod);
             }
