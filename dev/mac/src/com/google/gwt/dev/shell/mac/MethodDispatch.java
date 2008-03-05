@@ -51,11 +51,9 @@ class MethodDispatch implements DispatchMethod {
       Class<?>[] paramTypes = method.getParameterTypes();
       int argc = paramTypes.length;
       Object args[] = new Object[argc];
+      // too many arguments are ok: the extra will be silently ignored      
       if (jsargs.length < argc) {
         throw new RuntimeException("Not enough arguments to " + method);
-      }
-      if (jsargs.length > argc) {
-        throw new RuntimeException("Too many arguments to " + method);
       }
       Object jthis = null;
       if (method.needsThis()) {
