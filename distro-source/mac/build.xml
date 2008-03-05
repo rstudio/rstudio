@@ -4,6 +4,7 @@
         <!-- distro doesn't use the top-level common.ant.xml, nor properties
              defined there. -->
 	<property name="dist.platform" value="mac" />
+	<import file="../common.ant.xml" />
 	<condition property="dist.platform.detail" value="mac_10.5" else="mac_10.4">
 		<contains string="${os.version}" substring="10.5." />
 	</condition>
@@ -11,7 +12,6 @@
 	<property name="project.distname_10.4" value="gwt-mac_10.4-${gwt.version}" />
 	<property name="project.distname_10.5" value="gwt-mac_10.5-${gwt.version}" />
 
-	<import file="../common.ant.xml" />
 	<condition property="webkitrev" value="525-10.5" else="418.9">
 		<equals arg1="mac_10.5" arg2="${build.host.platform.detail}" />
 	</condition>
@@ -83,7 +83,7 @@
 				<include name="*/*-shell" />
 			</tarfileset>
 
-			<includetar src="${gwt.tools.redist}/webkit/WebKit-${webkitrev}.tar.gz" compression="gzip" prefix="${project.distname_10.4}" />
+			<includetar src="${gwt.tools.redist}/webkit/WebKit-418.9.tar.gz" compression="gzip" prefix="${project.distname_10.4}" />
 		</gwt.tgz.cat>
 
 		<if>
@@ -164,7 +164,7 @@
 				<include name="*/*-shell" />
 			</tarfileset>
 
-			<includetar src="${gwt.tools.redist}/webkit/WebKit-${webkitrev}.tar.gz" compression="gzip" prefix="${project.distname_10.5}" />
+			<includetar src="${gwt.tools.redist}/webkit/WebKit-525-10.5.tar.gz" compression="gzip" prefix="${project.distname_10.5}" />
 		</gwt.tgz.cat>
 
 		<if>
