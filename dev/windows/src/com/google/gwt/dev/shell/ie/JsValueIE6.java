@@ -154,7 +154,13 @@ public class JsValueIE6 extends JsValue {
   @Override
   public int getJavaScriptObjectPointer() {
     if (isJavaScriptObject()) {
-      return variant.getDispatch().getAddress();
+      // The canonical pointer is obtained by QI'ing for IUnknown.
+      int[] ppvObject = new int[1];
+      variant.getDispatch().QueryInterface(COM.IIDIUnknown, ppvObject);
+      int pvObject = ppvObject[0];
+      // Release the returned pointer.
+      COM.VtblCall(2, pvObject);
+      return pvObject;
     } else {
       return 0;
     }
