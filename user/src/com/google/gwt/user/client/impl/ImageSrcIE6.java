@@ -184,10 +184,9 @@ class ImageSrcIE6 {
    * Removes a child image from its pending parent.
    */
   private static native void removeChild(Element parent, Element child) /*-{
-    var uniqueID = child.uniqueID;
     var kids = parent.__kids;
     for (var i = 0, c = kids.length; i < c; ++i) {
-      if (kids[i].uniqueID == uniqueID) {
+      if (kids[i] === child) {
         kids.splice(i, 1);
         child.__pendingSrc = null;
         return;

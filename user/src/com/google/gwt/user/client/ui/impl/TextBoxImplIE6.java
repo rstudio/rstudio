@@ -27,7 +27,7 @@ public class TextBoxImplIE6 extends TextBoxImpl {
   public native int getCursorPos(Element elem) /*-{
     try {
       var tr = elem.document.selection.createRange();
-      if (tr.parentElement().uniqueID != elem.uniqueID)
+      if (tr.parentElement() !== elem)
         return -1;
       return -tr.move("character", -65535);
     }
@@ -40,7 +40,7 @@ public class TextBoxImplIE6 extends TextBoxImpl {
   public native int getSelectionLength(Element elem) /*-{
     try {
       var tr = elem.document.selection.createRange();
-      if (tr.parentElement().uniqueID != elem.uniqueID)
+      if (tr.parentElement() !== elem)
         return 0;
       return tr.text.length;
     }

@@ -24,16 +24,11 @@ import com.google.gwt.user.client.Event;
  */
 class DOMImplIE6 extends DOMImpl {
 
+  /**
+   * Referenced from JavaScript.
+   */
+  @SuppressWarnings("unused")
   private static Element currentEventTarget;
-
-  @Override
-  public native boolean compare(Element elem1, Element elem2) /*-{
-    if (!elem1 && !elem2)
-      return true;
-    else if (!elem1 || !elem2)
-      return false;
-    return (elem1.uniqueID == elem2.uniqueID);
-  }-*/;
 
   @Override
   public native Element createInputRadioElement(String name) /*-{
@@ -130,8 +125,9 @@ class DOMImplIE6 extends DOMImpl {
   public native int getChildIndex(Element parent, Element child) /*-{
     var count = parent.children.length;
     for (var i = 0; i < count; ++i) {
-      if (child.uniqueID == parent.children[i].uniqueID)
+      if (child === parent.children[i]) {
         return i;
+      }
     }
     return -1;
   }-*/;
@@ -246,7 +242,7 @@ class DOMImplIE6 extends DOMImpl {
   public native boolean isOrHasChild(Element parent, Element child) /*-{
     // An extra equality check is required due to the fact that
     // elem.contains(elem) is false if elem is not attached to the DOM.
-    return (parent.uniqueID == child.uniqueID) || parent.contains(child);  
+    return (parent === child) || parent.contains(child);
   }-*/;
 
   @Override

@@ -19,22 +19,9 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
 /**
- * Mozilla implementation of StandardBrowser. The main difference between
- * Mozilla and others is that element comparison must be done using isSameNode()
- * (== comparison doesn't always give you the right answer, probably because of
- * its JavaScript wrappers for xpcom dom nodes).
+ * Mozilla implementation of StandardBrowser.
  */
 class DOMImplMozilla extends DOMImplStandard {
-
-  @Override
-  public native boolean compare(Element elem1, Element elem2) /*-{
-    if (!elem1 && !elem2) {
-      return true;
-    } else if (!elem1 || !elem2) {
-      return false;
-    }
-    return (elem1.isSameNode(elem2));
-  }-*/;
 
   @Override
   public native int eventGetMouseWheelVelocityY(Event evt) /*-{
@@ -88,32 +75,11 @@ class DOMImplMozilla extends DOMImplStandard {
   }-*/;
 
   @Override
-  public native int getChildIndex(Element parent, Element toFind) /*-{
-    var count = 0, child = parent.firstChild;
-    while (child) {
-      if (child.isSameNode(toFind)) {
-        return count;
-      }
-      if (child.nodeType == 1) {
-        ++count;
-      }
-      child = child.nextSibling;
-    }
-    return -1;
-  }-*/;
-
-  @Override
   public native boolean isOrHasChild(Element parent, Element child) /*-{
     // For more information about compareDocumentPosition, see:
     // http://www.quirksmode.org/blog/archives/2006/01/contains_for_mo.html
-    return parent.isSameNode(child) || !!(parent.compareDocumentPosition(child) & 16);  
+    return (parent === child) || !!(parent.compareDocumentPosition(child) & 16);  
   }-*/;
-
-  @Override
-  public void releaseCapture(Element elem) {
-    maybeInitializeEventSystem();
-    releaseCaptureImpl(elem);
-  }
 
   @Override
   public void sinkEvents(Element elem, int bits) {
@@ -170,11 +136,5 @@ class DOMImplMozilla extends DOMImplStandard {
 
     $wnd.addEventListener('DOMMouseScroll', $wnd.__dispatchCapturedMouseEvent,
       true);
-  }-*/;
-
-  private native void releaseCaptureImpl(Element elem) /*-{
-    if (elem.isSameNode($wnd.__captureElem)) {
-      $wnd.__captureElem = null;
-    }
   }-*/;
 }

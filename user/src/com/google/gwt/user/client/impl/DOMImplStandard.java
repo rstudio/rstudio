@@ -26,11 +26,6 @@ import com.google.gwt.user.client.Event;
 abstract class DOMImplStandard extends DOMImpl {
 
   @Override
-  public native boolean compare(Element elem1, Element elem2) /*-{
-    return (elem1 == elem2);
-  }-*/;
-
-  @Override
   public native Element createInputRadioElement(String name) /*-{
     var elem = $doc.createElement("INPUT");
     elem.type = 'radio';
@@ -115,13 +110,14 @@ abstract class DOMImplStandard extends DOMImpl {
   public native int getChildIndex(Element parent, Element toFind) /*-{
     var count = 0, child = parent.firstChild;
     while (child) {
-      if (child == toFind)
+      if (child === toFind) {
         return count;
-      if (child.nodeType == 1)
+      }
+      if (child.nodeType == 1) {
         ++count;
+      }
       child = child.nextSibling;
     }
-
     return -1;
   }-*/;
 
@@ -245,8 +241,9 @@ abstract class DOMImplStandard extends DOMImpl {
   }-*/;
 
   private native void releaseCaptureImpl(Element elem) /*-{
-    if (elem == $wnd.__captureElem)
+    if (elem === $wnd.__captureElem) {
       $wnd.__captureElem = null;
+    }
   }-*/;
 
   private native void setCaptureImpl(Element elem) /*-{

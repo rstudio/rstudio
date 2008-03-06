@@ -16,7 +16,6 @@
 package com.google.gwt.xml.client.impl;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.user.client.DOM;
 
 /**
  * This class is the base class for all DOM object wrappers.
@@ -38,14 +37,8 @@ class DOMItem {
    */
   @Override
   public boolean equals(final Object o) {
-    /*
-     * This method uses the DOM equals method because it happens to work
-     * perfectly for all the browsers we support, and that method is different
-     * for each browser.
-     */
     if (o instanceof DOMItem) {
-      return DOM.compare(castToElement(this.getJsObject()),
-          castToElement(((DOMItem) o).getJsObject()));
+      return this.getJsObject() == ((DOMItem) o).getJsObject();
     }
     return false;
   }
@@ -53,9 +46,4 @@ class DOMItem {
   JavaScriptObject getJsObject() {
     return jsObject;
   }
-
-  private native com.google.gwt.user.client.Element castToElement(
-      JavaScriptObject toBeCast) /*-{
-    return toBeCast;
-  }-*/;
 }

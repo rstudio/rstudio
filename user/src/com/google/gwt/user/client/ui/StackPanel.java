@@ -248,7 +248,7 @@ public class StackPanel extends ComplexPanel {
   }
 
   private int findDividerIndex(Element elem) {
-    while ((elem != null) && !DOM.compare(elem, getElement())) {
+    while (elem != getElement()) {
       String expando = DOM.getElementProperty(elem, "__index");
       if (expando != null) {
         // Make sure it belongs to me!

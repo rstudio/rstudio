@@ -76,16 +76,16 @@ public class DOM {
   }
 
   /**
-   * Compares two elements for equality (note that reference equality is not
-   * sufficient to determine equality among elements on most browsers).
+   * Compares two elements for equality.  Note that this method is now deprecated
+   * because reference identity accurately reports equality.
    * 
    * @param elem1 the first element to be compared
    * @param elem2 the second element to be compared
    * @return <code>true</code> if they are in fact the same element
-   * @see #isOrHasChild(Element, Element)
+   * @deprecated Use identity comparison.
    */
   public static boolean compare(Element elem1, Element elem2) {
-    return impl.compare(elem1, elem2);
+    return elem1 == elem2;
   }
 
   /**
@@ -931,7 +931,7 @@ public class DOM {
    * @see #setCapture(Element)
    */
   public static void releaseCapture(Element elem) {
-    if ((sCaptureElem != null) && compare(elem, sCaptureElem)) {
+    if ((sCaptureElem != null) && elem == sCaptureElem) {
       sCaptureElem = null;
     }
     impl.releaseCapture(elem);

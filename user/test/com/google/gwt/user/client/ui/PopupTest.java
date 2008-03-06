@@ -90,7 +90,6 @@ public class PopupTest extends GWTTestCase {
     TestablePopupPanel p2 = new TestablePopupPanel();
     assertTrue(p1.getContainerElement() != null);
     assertTrue(p2.getContainerElement() != null);
-    assertFalse(
-        DOM.compare(p1.getContainerElement(), p2.getContainerElement()));
+    assertFalse(p1.getContainerElement() == p2.getContainerElement());
   }
 }

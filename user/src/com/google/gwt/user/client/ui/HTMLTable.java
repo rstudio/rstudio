@@ -1207,12 +1207,12 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
         // it.
         Element tr = DOM.getParent(td);
         Element body = DOM.getParent(tr);
-        if (DOM.compare(body, bodyElem)) {
+        if (body == bodyElem) {
           return td;
         }
       }
       // If we run into this table's body, we're out of options.
-      if (DOM.compare(td, bodyElem)) {
+      if (td == bodyElem) {
         return null;
       }
     }

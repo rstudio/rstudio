@@ -43,7 +43,7 @@ public class DockPanelTest extends GWTTestCase {
       Element curElem = getElement();
       Element body = RootPanel.getBodyElement();
       while (curElem != null) {
-        if (DOM.compare(curElem, body)) {
+        if (curElem == body) {
           attachedWhenLoaded = true;
         }
         curElem = DOM.getParent(curElem);

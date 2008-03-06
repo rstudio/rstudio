@@ -34,8 +34,6 @@ public abstract class DOMImpl {
     return elem.cloneNode(deep);
   }-*/;
 
-  public abstract boolean compare(Element elem1, Element elem2);
-
   public native Element createElement(String tag) /*-{
     return $doc.createElement(tag);
   }-*/;

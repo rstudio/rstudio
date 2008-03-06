@@ -364,7 +364,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         // Currently, the way we're using image bundles causes extraneous events
         // to be sunk on individual items' open/close images. This leads to an
         // extra event reaching the Tree, which we will ignore here.
-        if (DOM.compare(DOM.eventGetCurrentTarget(event), getElement())) {
+        if (DOM.eventGetCurrentTarget(event) == getElement()) {
           elementClicked(root, DOM.eventGetTarget(event));
         }
         break;
@@ -711,7 +711,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    * Collects parents going up the element tree, terminated at the tree root.
    */
   private void collectElementChain(ArrayList<Element> chain, Element hRoot, Element hElem) {
-    if ((hElem == null) || DOM.compare(hElem, hRoot)) {
+    if ((hElem == null) || (hElem == hRoot)) {
       return;
     }
 
@@ -752,7 +752,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     Element hCurElem = chain.get(idx);
     for (int i = 0, n = root.getChildCount(); i < n; ++i) {
       TreeItem child = root.getChild(i);
-      if (DOM.compare(child.getElement(), hCurElem)) {
+      if (child.getElement() == hCurElem) {
         TreeItem retItem = findItemByChain(chain, idx + 1, root.getChild(i));
         if (retItem == null) {
           return child;
