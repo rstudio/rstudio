@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,10 +18,13 @@ package com.google.gwt.user.client.rpc;
 /**
  * Superclass for exceptions thrown from RPC methods (those appearing in
  * interfaces derived from {@link RemoteService}).
+ * 
+ * @deprecated As of GWT 1.5, {@link Exception} implements
+ *             {@link java.io.Serializable Serializable} and can be used in place
+ *             of this class.
  */
+@Deprecated
 public class SerializableException extends Exception implements IsSerializable {
-
-  private String msg;
 
   /**
    * The default constructor. This constructor is used implicitly during
@@ -35,7 +38,7 @@ public class SerializableException extends Exception implements IsSerializable {
    * constructor is most often called by subclass constructors.
    */
   public SerializableException(String msg) {
-    this.msg = msg;
+    super(msg);
   }
 
   /**
@@ -46,11 +49,6 @@ public class SerializableException extends Exception implements IsSerializable {
   @Override
   public Throwable getCause() {
     return null;
-  }
-
-  @Override
-  public String getMessage() {
-    return msg;
   }
 
   /**

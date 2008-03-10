@@ -194,7 +194,10 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
         new TypeInfo(CovariantArrays.C.class.getName() + "[]", true),
         new TypeInfo(CovariantArrays.D.class.getName() + "[]", true),
         new TypeInfo(CovariantArrays.D.class.getName(), true),
-        new TypeInfo(String.class.getName(), true)};
+        new TypeInfo(Exception.class.getName(), false),
+        new TypeInfo(RuntimeException.class.getName(), false),
+        new TypeInfo(String.class.getName(), true),
+        new TypeInfo(Throwable.class.getName(), false)};
     validateSTO(sto, expected);
   }
 
@@ -259,7 +262,10 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
             true),
         new TypeInfo(
             makeSourceName(NotAllSubtypesAreSerializable.D.class.getName()),
-            true), new TypeInfo(String.class.getName(), true)};
+            true), new TypeInfo(Exception.class.getName(), false),
+        new TypeInfo(RuntimeException.class.getName(), false),
+        new TypeInfo(String.class.getName(), true),
+        new TypeInfo(Throwable.class.getName(), false)};
     validateSTO(sto, expected);
   }
 

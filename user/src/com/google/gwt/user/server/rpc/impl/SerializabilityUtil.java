@@ -103,18 +103,10 @@ class SerializabilityUtil {
       ArrayList<Field> fieldList = new ArrayList<Field>();
       Field[] fields = clazz.getDeclaredFields();
       for (Field field : fields) {
-        assert (field != null);
-
-        int fieldModifiers = field.getModifiers();
-        if (Modifier.isStatic(fieldModifiers)
-            || Modifier.isTransient(fieldModifiers)
-            || Modifier.isFinal(fieldModifiers)) {
-          continue;
+        if (fieldQualifiesForSerialization(field)) {
+          fieldList.add(field);
         }
-
-        fieldList.add(field);
       }
-
       serializableFields = fieldList.toArray(new Field[fieldList.size()]);
 
       // sort the fields by name
@@ -234,6 +226,25 @@ class SerializabilityUtil {
     return false;
   }
 
+  private static boolean fieldQualifiesForSerialization(Field field) {
+    if (Throwable.class == field.getDeclaringClass()) {
+      /**
+       * Only serialize Throwable's detailMessage field; all others are ignored.
+       * 
+       * NOTE: Changing the set of fields that we serialize for Throwable will
+       * necessitate a change to our JRE emulation's version of Throwable.
+       */
+      if ("detailMessage".equals(field.getName())) {
+        assert (isNotStaticTransientOrFinal(field));
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return isNotStaticTransientOrFinal(field);
+    }
+  }
+
   private static void generateSerializationSignature(Class<?> instanceType,
       CRC32 crc) throws UnsupportedEncodingException {
     crc.update(getSerializedTypeName(instanceType).getBytes(DEFAULT_ENCODING));
@@ -291,6 +302,16 @@ class SerializabilityUtil {
     } catch (ClassNotFoundException e) {
       return null;
     }
+  }
+
+  private static boolean isNotStaticTransientOrFinal(Field field) {
+    /*
+     * Only serialize fields that are not static, transient and final.
+     */
+    int fieldModifiers = field.getModifiers();
+    return !Modifier.isStatic(fieldModifiers)
+        && !Modifier.isTransient(fieldModifiers)
+        && !Modifier.isFinal(fieldModifiers);
   }
 
   private static void putCachedCRCForClass(Class<?> instanceType, String crc32) {
