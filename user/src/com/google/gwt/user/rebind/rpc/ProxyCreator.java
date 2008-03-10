@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,10 +28,11 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.generator.NameFactory;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 import com.google.gwt.user.client.rpc.SerializationException;
-import com.google.gwt.user.client.rpc.impl.RemoteServiceProxy;
 import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader;
 import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter;
+import com.google.gwt.user.client.rpc.impl.RemoteServiceProxy;
 import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
@@ -96,6 +97,12 @@ class ProxyCreator {
       throws UnableToCompleteException {
     TypeOracle typeOracle = context.getTypeOracle();
 
+    TreeLogger javadocAnnotationDeprecationBranch = logger.branch(
+        TreeLogger.TRACE,
+        "Scanning this RemoteService for deprecated annotations; "
+            + "Please see " + RemoteServiceRelativePath.class.getName()
+            + " for more information.", null);
+
     JClassType serviceAsync = typeOracle.findType(serviceIntf.getQualifiedSourceName()
         + "Async");
     if (serviceAsync == null) {
@@ -138,7 +145,7 @@ class ProxyCreator {
 
     generateProxyFields(srcWriter, sto, serializationPolicyStrongName);
 
-    generateProxyContructor(srcWriter);
+    generateProxyContructor(javadocAnnotationDeprecationBranch, srcWriter);
 
     generateProxyMethods(srcWriter, sto, syncMethToAsyncMethMap);
 
@@ -152,12 +159,14 @@ class ProxyCreator {
    * using the default address for the
    * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService}.
    */
-  private void generateProxyContructor(SourceWriter srcWriter) {
+  private void generateProxyContructor(
+      TreeLogger javadocAnnotationDeprecationBranch, SourceWriter srcWriter) {
     srcWriter.println("public " + getProxySimpleName() + "() {");
     srcWriter.indent();
     srcWriter.println("super(GWT.getModuleBaseURL(),");
     srcWriter.indent();
-    srcWriter.println(getDefaultServiceDefName() + ",");
+    srcWriter.println(getRemoteServiceRelativePath(javadocAnnotationDeprecationBranch)
+        + ", ");
     srcWriter.println("SERIALIZATION_POLICY, ");
     srcWriter.println("SERIALIZER);");
     srcWriter.outdent();
@@ -265,7 +274,7 @@ class ProxyCreator {
           + "\");");
     }
 
-    // Encode all of the arguments to the asynchronous method, but exclude the 
+    // Encode all of the arguments to the asynchronous method, but exclude the
     // last argument which is the callback instance.
     //
     for (int i = 0; i < asyncParams.length - 1; ++i) {
@@ -315,15 +324,6 @@ class ProxyCreator {
     }
   }
 
-  private String getDefaultServiceDefName() {
-    String[][] metaData = serviceIntf.getMetaData(ENTRY_POINT_TAG);
-    if (metaData.length == 0) {
-      return null;
-    }
-
-    return serviceIntf.getMetaData(ENTRY_POINT_TAG)[0][0];
-  }
-
   private String getProxyQualifiedName() {
     String[] name = Shared.synthesizeTopLevelClassName(serviceIntf,
         PROXY_SUFFIX);
@@ -334,6 +334,24 @@ class ProxyCreator {
     String[] name = Shared.synthesizeTopLevelClassName(serviceIntf,
         PROXY_SUFFIX);
     return name[1];
+  }
+
+  private String getRemoteServiceRelativePath(
+      TreeLogger javadocAnnotationDeprecationBranch) {
+    String[][] metaData = serviceIntf.getMetaData(ENTRY_POINT_TAG);
+    if (metaData.length != 0) {
+      javadocAnnotationDeprecationBranch.log(TreeLogger.WARN,
+          "Deprecated use of " + ENTRY_POINT_TAG + "; Please use "
+              + RemoteServiceRelativePath.class.getName() + " instead", null);
+      return metaData[0][0];
+    } else {
+      RemoteServiceRelativePath moduleRelativeURL = serviceIntf.getAnnotation(RemoteServiceRelativePath.class);
+      if (moduleRelativeURL != null) {
+        return "\"" + moduleRelativeURL.value() + "\"";
+      }
+    }
+    
+    return null;
   }
 
   private ResponseReader getResponseReaderFor(JType returnType) {

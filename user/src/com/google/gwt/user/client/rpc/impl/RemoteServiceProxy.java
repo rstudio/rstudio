@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -94,10 +94,19 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
    */
   private final Serializer serializer;
 
-  protected RemoteServiceProxy(String moduleBaseURL, String remoteServiceURL,
-      String serializationPolicyName, Serializer serializer) {
+  protected RemoteServiceProxy(String moduleBaseURL,
+      String remoteServiceRelativePath, String serializationPolicyName,
+      Serializer serializer) {
     this.moduleBaseURL = moduleBaseURL;
-    this.remoteServiceURL = remoteServiceURL;
+    if (remoteServiceRelativePath != null) {
+      /*
+       * If the module relative URL is not null we set the remote service URL to
+       * be the module base URL plus the module relative remote service URL.
+       * Otherwise an explicit call to
+       * ServiceDefTarget.setServiceEntryPoint(String) is required.
+       */
+      this.remoteServiceURL = moduleBaseURL + remoteServiceRelativePath;
+    }
     this.serializer = serializer;
     this.serializationPolicyName = serializationPolicyName;
   }
