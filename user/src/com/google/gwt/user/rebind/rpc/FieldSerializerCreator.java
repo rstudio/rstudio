@@ -32,20 +32,10 @@ import com.google.gwt.user.rebind.SourceWriter;
 import java.io.PrintWriter;
 
 /**
- * <p>
- * This class creates field serializers for a particular class. If the class has
- * a custom serializer then that class is used rather than creating one.
- * 
- * <p>
- * Generated field serializers are emitted into the same package as the class
- * that they serialize.
- * 
- * <p>
- * Fields are considered serializable if:
- * <ul>
- * <li>Field is not static
- * <li>Field is not transient
- * </ul>
+ * Creates a field serializer for a class that implements
+ * {@link com.google.gwt.user.client.rpc.IsSerializable IsSerializable} or
+ * {@link java.io.Serializable Serializable}. The field serializer is emitted
+ * into the same package as the class that it serializes.
  * 
  * TODO(mmendez): Need to make the generated field serializers final
  * TODO(mmendez): Would be nice to be able to have imports, rather than using
@@ -96,7 +86,7 @@ public class FieldSerializerCreator {
 
     writeDeserializeMethod();
 
-    writeInstatiateMethod();
+    maybeWriteInstatiateMethod();
 
     writeSerializeMethod();
 
@@ -142,6 +132,58 @@ public class FieldSerializerCreator {
     return composerFactory.createSourceWriter(ctx, printWriter);
   }
 
+  private void maybeWriteInstatiateMethod() {
+    if (serializableClass.isEnum() == null
+        && (serializableClass.isAbstract() || !serializableClass.isDefaultInstantiable())) {
+      /*
+       * Field serializers are shared by all of the RemoteService proxies in a
+       * compilation. Therefore, we have to generate an instantiate method even
+       * if the type is not instantiable relative to the RemoteService which
+       * caused this field serializer to be created. If the type is not
+       * instantiable relative to any of the RemoteService proxies, dead code
+       * optimizations will cause the method to be removed from the compiled
+       * output.
+       * 
+       * Enumerated types require an instantiate method even if they are
+       * abstract. You will have an abstract enum in cases where the enum type
+       * is sub-classed. Non-default instantiable classes cannot have
+       * instantiate methods.
+       */
+      return;
+    }
+
+    JArrayType isArray = serializableClass.isArray();
+    JEnumType isEnum = serializableClass.isEnum();
+    boolean isNative = (isArray == null) && (isEnum == null);
+
+    sourceWriter.print("public static" + (isNative ? " native " : " "));
+    String qualifiedSourceName = serializableClass.getQualifiedSourceName();
+    sourceWriter.print(qualifiedSourceName);
+    sourceWriter.print(" instantiate(");
+    sourceWriter.print(SerializationStreamReader.class.getName());
+    sourceWriter.println(" streamReader) throws "
+        + SerializationException.class.getName() + (isNative ? "/*-{" : "{"));
+    sourceWriter.indent();
+
+    if (isArray != null) {
+      sourceWriter.println("int rank = streamReader.readInt();");
+      sourceWriter.println("return "
+          + createArrayInstantiationExpression(isArray) + ";");
+    } else if (isEnum != null) {
+      sourceWriter.println("int ordinal = streamReader.readInt();");
+      sourceWriter.println(qualifiedSourceName + "[] values = "
+          + qualifiedSourceName + ".values();");
+      sourceWriter.println("assert (ordinal >= 0 && ordinal < values.length);");
+      sourceWriter.println("return values[ordinal];");
+    } else {
+      sourceWriter.println("return @" + qualifiedSourceName + "::new()();");
+    }
+
+    sourceWriter.outdent();
+    sourceWriter.println(isNative ? "}-*/;" : "}");
+    sourceWriter.println();
+  }
+
   /**
    * Returns true if we will need a get/set method pair for a field.
    * 
@@ -162,7 +204,7 @@ public class FieldSerializerCreator {
   private void writeArrayDeserializationStatements(JArrayType isArray) {
     JType componentType = isArray.getComponentType();
     String readMethodName = Shared.getStreamReadMethodNameFor(componentType);
-    
+
     if ("readObject".equals(readMethodName)) {
       // Optimize and use the default object custom serializer...
       sourceWriter.println(Object_Array_CustomFieldSerializer.class.getName()
@@ -365,55 +407,6 @@ public class FieldSerializerCreator {
 
     sourceWriter.outdent();
     sourceWriter.println("}-*/;");
-    sourceWriter.println();
-  }
-
-  private void writeInstatiateMethod() {
-    if (serializableClass.isAbstract() && serializableClass.isEnum() == null) {
-      /*
-       * Field serializers are shared by all of the RemoteService proxies in a
-       * compilation. Therefore, we have to generate an instantiate method even
-       * if the type is not instantiable relative to the RemoteService which
-       * caused this field serializer to be created. If the type is not
-       * instantiable relative to any of the RemoteService proxies, dead code
-       * optimizations will cause the method to be removed from the compiled
-       * output.
-       * 
-       * Enumerated types require an instantiate method even if they are 
-       * abstract.  You will have an abstract enum in cases where the enum type
-       * is sub-classed.
-       */
-      return;
-    }
-    JArrayType isArray = serializableClass.isArray();
-    JEnumType isEnum = serializableClass.isEnum();
-    boolean isNative = (isArray == null) && (isEnum == null);
-
-    sourceWriter.print("public static" + (isNative ? " native " : " "));
-    String qualifiedSourceName = serializableClass.getQualifiedSourceName();
-    sourceWriter.print(qualifiedSourceName);
-    sourceWriter.print(" instantiate(");
-    sourceWriter.print(SerializationStreamReader.class.getName());
-    sourceWriter.println(" streamReader) throws "
-        + SerializationException.class.getName() + (isNative ? "/*-{" : "{"));
-    sourceWriter.indent();
-
-    if (isArray != null) {
-      sourceWriter.println("int rank = streamReader.readInt();");
-      sourceWriter.println("return "
-          + createArrayInstantiationExpression(isArray) + ";");
-    } else if (isEnum != null) {
-      sourceWriter.println("int ordinal = streamReader.readInt();");
-      sourceWriter.println(qualifiedSourceName + "[] values = "
-          + qualifiedSourceName + ".values();");
-      sourceWriter.println("assert (ordinal >= 0 && ordinal < values.length);");
-      sourceWriter.println("return values[ordinal];");
-    } else {
-      sourceWriter.println("return @" + qualifiedSourceName + "::new()();");
-    }
-
-    sourceWriter.outdent();
-    sourceWriter.println(isNative ? "}-*/;" : "}");
     sourceWriter.println();
   }
 
