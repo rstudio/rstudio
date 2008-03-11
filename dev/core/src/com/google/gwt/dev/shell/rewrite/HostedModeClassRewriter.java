@@ -20,7 +20,6 @@ import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.ClassWriter;
 import com.google.gwt.dev.shell.JsValueGlue;
 
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;

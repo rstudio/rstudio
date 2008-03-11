@@ -22,7 +22,6 @@ import com.google.gwt.dev.asm.MethodVisitor;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodMapper;
 
-
 import java.util.ArrayList;
 import java.util.Set;
 
