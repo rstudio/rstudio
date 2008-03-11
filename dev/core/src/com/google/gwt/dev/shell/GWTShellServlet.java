@@ -423,9 +423,14 @@ public class GWTShellServlet extends HttpServlet {
       }
 
       if (foundResource == null) {
-        msg = "Resource not found: " + partialPath + "\n"
-            + "(Could a file be missing from the public path or a <servlet> "
-            + "tag misconfigured in module " + moduleName + ".gwt.xml ?)";
+        if ("gwt.js".equals(partialPath)) {
+          msg = "Loading the old 'gwt.js' bootstrap script is no longer supported; please load '"
+              + moduleName + ".nocache.js' directly";
+        } else {
+          msg = "Resource not found: " + partialPath + "; "
+              + "(could a file be missing from the public path or a <servlet> "
+              + "tag misconfigured in module " + moduleName + ".gwt.xml ?)";
+        }
         logger.log(TreeLogger.WARN, msg, null);
         throw new UnableToCompleteException();
       }

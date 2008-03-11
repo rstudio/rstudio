@@ -24,7 +24,7 @@ import com.google.gwt.dev.shell.BrowserWidget;
 class RunStyleLocalWeb extends RunStyleLocalHosted {
 
   /**
-   * This query parameter forces gwt.js to run web mode.
+   * This query parameter forces web mode in a hosted browser.
    */
   private static final String PROP_GWT_HYBRID_MODE = "gwt.hybrid";
 
