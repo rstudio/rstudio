@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Timer;
 
 /**
  * Tests core functionality of {@link DisclosurePanel}.
@@ -36,13 +37,25 @@ public class DisclosurePanelTest extends GWTTestCase {
    * appropriately.
    */
   public void testCoreFunctionality() {
-    DisclosurePanel panel = createTestPanel();
-    assertTrue(DOM.getStyleAttribute(panel.getContent().getElement(), "display").equalsIgnoreCase(
+    final DisclosurePanel panel = createTestPanel();
+    assertTrue(DOM.getStyleAttribute(
+        DOM.getParent(panel.getContent().getElement()), "display").equalsIgnoreCase(
         "none"));
 
     panel.setOpen(true);
-    assertTrue(DOM.getStyleAttribute(panel.getContent().getElement(), "display").trim().equals(
-        ""));
+    
+    // Allow the animation time to finish
+    Timer t = new Timer() {
+      @Override
+      public void run() {
+        assertTrue(DOM.getStyleAttribute(
+            DOM.getParent(panel.getContent().getElement()), "display").trim().equals(
+            ""));
+        finishTest();
+      }
+    };
+    t.schedule(450);
+    delayTestFinish(500);
   }
 
   public void testAttachDetachOrder() {

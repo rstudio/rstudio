@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,13 +28,27 @@ public class PopupTest extends GWTTestCase {
    * Expose otherwise private or protected methods.
    */
   private class TestablePopupPanel extends PopupPanel {
+    @Override
     public Element getContainerElement() {
       return super.getContainerElement();
     }
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
+  }
+
+  /**
+   * Test the basic accessors.
+   */
+  public void testAccessors() {
+    PopupPanel popup = new PopupPanel();
+    
+    // Animation enabled
+    assertTrue(popup.isAnimationEnabled());
+    popup.setAnimationEnabled(false);
+    assertFalse(popup.isAnimationEnabled());
   }
 
   public void testPopup() {
@@ -42,6 +56,7 @@ public class PopupTest extends GWTTestCase {
     Window.setMargin("0px");
 
     PopupPanel popup = new PopupPanel();
+    popup.setAnimationEnabled(false);
     Label lbl = new Label("foo");
 
     // Make sure that setting the popup's size & position works _before_
@@ -51,8 +66,10 @@ public class PopupTest extends GWTTestCase {
     popup.setWidget(lbl);
     popup.show();
 
-    assertEquals(384, popup.getOffsetWidth());
-    assertEquals(128, popup.getOffsetHeight());
+    // DecoratorPanel adds width and height because it wraps the content in a
+    // 3x3 table.
+    assertTrue(popup.getOffsetWidth() >= 384);
+    assertTrue(popup.getOffsetHeight() >= 128);
     assertEquals(128, popup.getPopupLeft());
     assertEquals(64, popup.getPopupTop());
 
@@ -69,8 +86,10 @@ public class PopupTest extends GWTTestCase {
     popup.setSize("", "");
     popup.setPopupPosition(16, 16);
 
-    assertEquals(lbl.getOffsetWidth(), popup.getOffsetWidth());
-    assertEquals(lbl.getOffsetHeight(), popup.getOffsetHeight());
+    // DecoratorPanel adds width and height because it wraps the content in a
+    // 3x3 table.
+    assertTrue(popup.getOffsetWidth() >= lbl.getOffsetWidth());
+    assertTrue(popup.getOffsetWidth() >= lbl.getOffsetHeight());
     assertEquals(16, popup.getAbsoluteLeft());
     assertEquals(16, popup.getAbsoluteTop());
 

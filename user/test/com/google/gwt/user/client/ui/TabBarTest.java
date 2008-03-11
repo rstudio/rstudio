@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 
 /**
  * TODO: document me.
@@ -43,14 +44,14 @@ public class TabBarTest extends GWTTestCase {
     bar.ensureDebugId("myBar");
     UIObjectTest.assertDebugId("myBar", bar.getElement());
     UIObjectTest.assertDebugId("myBar-tab0", DOM.getParent(tab0.getElement()));
-    UIObjectTest.assertDebugId("myBar-tab-wrapper0",
-        DOM.getParent(DOM.getParent(tab0.getElement())));
+    UIObjectTest.assertDebugId("myBar-tab-wrapper0", getGrandParent(
+        tab0.getElement(), 6));
     UIObjectTest.assertDebugId("myBar-tab1", DOM.getParent(tab1.getElement()));
-    UIObjectTest.assertDebugId("myBar-tab-wrapper1",
-        DOM.getParent(DOM.getParent(tab1.getElement())));
+    UIObjectTest.assertDebugId("myBar-tab-wrapper1", getGrandParent(
+        tab1.getElement(), 6));
     UIObjectTest.assertDebugId("myBar-tab2", DOM.getParent(tab2.getElement()));
-    UIObjectTest.assertDebugId("myBar-tab-wrapper2",
-        DOM.getParent(DOM.getParent(tab2.getElement())));
+    UIObjectTest.assertDebugId("myBar-tab-wrapper2", getGrandParent(
+        tab2.getElement(), 6));
   }
 
   public void testSelect() {
@@ -105,5 +106,20 @@ public class TabBarTest extends GWTTestCase {
     assertTrue("<b>bar</b>".equalsIgnoreCase(bar.getTabHTML(1)));
     bar.removeTab(1);
     assertEquals("baz", bar.getTabHTML(1));
+  }
+
+  /**
+   * Get a specific grand parent of the Element.
+   * 
+   * @param elem the element
+   * @param level the level above the element
+   * @return the grand parent
+   */
+  private Element getGrandParent(Element elem, int level) {
+    Element grandParent = elem;
+    for (int i = 0; i < level; i++) {
+      grandParent = DOM.getParent(grandParent);
+    }
+    return grandParent;
   }
 }

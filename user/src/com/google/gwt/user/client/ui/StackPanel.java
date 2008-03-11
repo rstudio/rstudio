@@ -15,9 +15,11 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.animation.WidgetAnimation;
 
 /**
  * A panel that stacks its children vertically, displaying only one at a time,
@@ -38,9 +40,143 @@ import com.google.gwt.user.client.Event;
  * {@example com.google.gwt.examples.StackPanelExample}
  * </p>
  */
-public class StackPanel extends ComplexPanel {
+public class StackPanel extends ComplexPanel implements HasAnimation {
+  /**
+   * An {@link WidgetAnimation} used to switch between the visible stack.
+   */
+  public static class StackAnimation extends WidgetAnimation {
+    /**
+     * The {@link StackPanel} being affected.
+     */
+    private StackPanel curPanel = null;
+
+    /**
+     * The index of the stack that is being hidden.
+     */
+    private int oldIndex = -1;
+
+    /**
+     * The index of the stack that is being displayed.
+     */
+    private int newIndex = -1;
+
+    /**
+     * The container that is being displayed.
+     */
+    private Element newTD = null;
+
+    @Override
+    public void onCancel() {
+      onComplete();
+    }
+
+    @Override
+    public void onComplete() {
+      if (curPanel != null) {
+        curPanel.setStackContentVisible(oldIndex, false);
+        curPanel.setStackContentVisible(newIndex, true);
+        clearOpacity(newTD);
+        curPanel = null;
+      }
+    }
+
+    @Override
+    public void onInstantaneousRun() {
+      curPanel.setStackContentVisible(oldIndex, false);
+      curPanel.setStackContentVisible(newIndex, true);
+      curPanel = null;
+    }
+
+    @Override
+    public void onStart() {
+      onUpdate(0.0);
+      curPanel.setStackContentVisible(oldIndex, false);
+      curPanel.setStackContentVisible(newIndex, true);
+    }
+
+    @Override
+    public void onUpdate(double progress) {
+      setOpacity(newTD, progress);
+    }
+
+    /**
+     * Open or close the content.
+     * 
+     * @param panel the panel being affected
+     * @param oldIndex the index being closed
+     * @param newIndex the index being opened
+     */
+    public void showStack(StackPanel panel, int oldIndex, int newIndex) {
+      // Immediately complete previous open
+      cancel();
+
+      // Do not animate if there is no stack currently visible
+      if (oldIndex < 0) {
+        panel.setStackContentVisible(newIndex, true);
+        return;
+      }
+
+      // Get all of the affected Elements
+      curPanel = panel;
+      this.oldIndex = oldIndex;
+      this.newIndex = newIndex;
+      newTD = DOM.getFirstChild(DOM.getChild(curPanel.body, (2 * newIndex) + 1));
+
+      // Run the animation
+      if (panel.isAnimationEnabled) {
+        run(250);
+      } else {
+        onInstantaneousRun();
+      }
+    }
+
+    /**
+     * Clear the opacity of an {@link Element}.
+     * 
+     * @param elem the {@link Element}
+     */
+    protected void clearOpacity(Element elem) {
+      DOM.setStyleAttribute(elem, "opacity", "");
+    }
+
+    /**
+     * Set the opacity of an {@link Element}.
+     * 
+     * @param elem the {@link Element}
+     * @param opacity the opacity between 0.0 and 1.0, inclusively
+     */
+    protected void setOpacity(Element elem, double opacity) {
+      DOM.setStyleAttribute(elem, "opacity", opacity + "");
+    }
+  }
+
+  /**
+   * IE version of {@link StackAnimation} that sets opacity using filters.
+   */
+  public static class StackAnimationIE extends StackAnimation {
+    @Override
+    protected void clearOpacity(Element elem) {
+      DOM.setStyleAttribute(elem, "filter", "");
+    }
+
+    @Override
+    protected void setOpacity(Element elem, double opacity) {
+      int opac = (int) (100 * opacity);
+      DOM.setStyleAttribute(elem, "filter", "alpha(opacity=" + opac + ")");
+    }
+  }
+
+  private static final String DEFAULT_STYLENAME = "gwt-StackPanel";
+  private static final String DEFAULT_ITEM_STYLENAME = DEFAULT_STYLENAME
+      + "Item";
+
+  /**
+   * The {@link WidgetAnimation} used to switch stacks.
+   */
+  private static StackAnimation stackAnimation;
 
   private Element body;
+  private boolean isAnimationEnabled = true;
   private int visibleStack = -1;
 
   /**
@@ -56,7 +192,7 @@ public class StackPanel extends ComplexPanel {
     DOM.setElementPropertyInt(table, "cellPadding", 0);
 
     DOM.sinkEvents(table, Event.ONCLICK);
-    setStyleName("gwt-StackPanel");
+    setStyleName(DEFAULT_STYLENAME);
   }
 
   /**
@@ -114,6 +250,7 @@ public class StackPanel extends ComplexPanel {
     Element trh = DOM.createTR();
     Element tdh = DOM.createTD();
     DOM.appendChild(trh, tdh);
+    DOM.appendChild(tdh, createHeaderElem());
 
     // body
     Element trb = DOM.createTR();
@@ -129,12 +266,12 @@ public class StackPanel extends ComplexPanel {
     DOM.insertChild(body, trh, effectiveIndex);
 
     // header styling
-    setStyleName(tdh, "gwt-StackPanelItem", true);
+    setStyleName(tdh, DEFAULT_ITEM_STYLENAME, true);
     DOM.setElementPropertyInt(tdh, "__owner", hashCode());
     DOM.setElementProperty(tdh, "height", "1px");
 
     // body styling
-    setStyleName(tdb, "gwt-StackPanelContent", true);
+    setStyleName(tdb, DEFAULT_STYLENAME + "Content", true);
     DOM.setElementProperty(tdb, "height", "100%");
     DOM.setElementProperty(tdb, "vAlign", "top");
 
@@ -149,11 +286,20 @@ public class StackPanel extends ComplexPanel {
     if (visibleStack == -1) {
       showStack(0);
     } else {
-      setStackVisible(beforeIndex, false);
+      setStackVisible(beforeIndex, false, true);
       if (visibleStack >= beforeIndex) {
         ++visibleStack;
       }
+      // Reshow the stack to apply style names
+      setStackVisible(visibleStack, true, true);
     }
+  }
+
+  /**
+   * @see HasAnimation#isAnimationEnabled()
+   */
+  public boolean isAnimationEnabled() {
+    return isAnimationEnabled;
   }
 
   @Override
@@ -178,6 +324,13 @@ public class StackPanel extends ComplexPanel {
   }
 
   /**
+   * @see HasAnimation#setAnimationEnabled(boolean)
+   */
+  public void setAnimationEnabled(boolean enable) {
+    isAnimationEnabled = enable;
+  }
+
+  /**
    * Sets the text associated with a child by its index.
    * 
    * @param index the index of the child whose text is to be set
@@ -199,7 +352,10 @@ public class StackPanel extends ComplexPanel {
       return;
     }
 
-    Element td = DOM.getChild(DOM.getChild(body, index * 2), 0);
+    Element tdWrapper = DOM.getChild(DOM.getChild(body, index * 2), 0);
+    Element tbody = DOM.getFirstChild(DOM.getFirstChild(tdWrapper));
+    Element tr = DOM.getChild(tbody, 1);
+    Element td = DOM.getChild(tr, 1);
     if (asHTML) {
       DOM.setInnerHTML(td, text);
     } else {
@@ -213,22 +369,28 @@ public class StackPanel extends ComplexPanel {
    * @param index the index of the child to be shown
    */
   public void showStack(int index) {
-    if ((index >= getWidgetCount()) || (index == visibleStack)) {
+    if ((index >= getWidgetCount()) || (index < 0) || (index == visibleStack)) {
       return;
     }
 
+    int oldIndex = visibleStack;
     if (visibleStack >= 0) {
-      setStackVisible(visibleStack, false);
+      setStackVisible(visibleStack, false, false);
     }
 
     visibleStack = index;
-    setStackVisible(visibleStack, true);
+    setStackVisible(visibleStack, true, false);
+    if (stackAnimation == null) {
+      stackAnimation = GWT.create(StackAnimation.class);
+    }
+    stackAnimation.showStack(this, oldIndex, index);
   }
 
   /**
    * <b>Affected Elements:</b>
    * <ul>
    * <li>-text# = The element around the header at the specified index.</li>
+   * <li>-text-wrapper# = The element around the header at the specified index.</li>
    * <li>-content# = The element around the body at the specified index.</li>
    * </ul>
    * 
@@ -242,9 +404,38 @@ public class StackPanel extends ComplexPanel {
     for (int i = 0; i < numHeaders; i++) {
       Element headerElem = DOM.getFirstChild(DOM.getChild(body, 2 * i));
       Element bodyElem = DOM.getFirstChild(DOM.getChild(body, 2 * i + 1));
-      ensureDebugId(headerElem, baseID, "text" + i);
+      ensureDebugId(headerElem, baseID, "text-wrapper" + i);
       ensureDebugId(bodyElem, baseID, "content" + i);
+
+      // Set the ID on the inner most container of the stack item
+      Element table = DOM.getFirstChild(headerElem);
+      Element tbody = DOM.getFirstChild(DOM.getFirstChild(headerElem));
+      Element tr = DOM.getChild(tbody, 1);
+      Element td = DOM.getChild(tr, 1);
+      ensureDebugId(td, baseID, "text" + i);
     }
+  }
+
+  /**
+   * @return a header element
+   */
+  private Element createHeaderElem() {
+    // Create the table
+    Element table = DOM.createTable();
+    Element tbody = DOM.createTBody();
+    DOM.appendChild(table, tbody);
+    DOM.setStyleAttribute(table, "width", "100%");
+    DOM.setElementPropertyInt(table, "cellSpacing", 0);
+    DOM.setElementPropertyInt(table, "cellPadding", 0);
+
+    // Add the top row
+    DOM.appendChild(tbody, DecoratorPanel.createTR("top"));
+
+    // Add the middle row
+    DOM.appendChild(tbody, DecoratorPanel.createTR("middle"));
+
+    // Return the table
+    return table;
   }
 
   private int findDividerIndex(Element elem) {
@@ -285,12 +476,18 @@ public class StackPanel extends ComplexPanel {
       }
 
       // Update indices of all elements to the right.
-      updateIndicesFrom(rowIndex);
+      updateIndicesFrom(index);
     }
     return removed;
   }
 
-  private void setStackVisible(int index, boolean visible) {
+  private void setStackContentVisible(int index, boolean visible) {
+    Element tr = DOM.getChild(body, (index * 2) + 1);
+    UIObject.setVisible(tr, visible);
+    getWidget(index).setVisible(visible);
+  }
+
+  private void setStackVisible(int index, boolean visible, boolean render) {
     // Get the first table row containing the widget's selector item.
     Element tr = DOM.getChild(body, (index * 2));
     if (tr == null) {
@@ -299,12 +496,20 @@ public class StackPanel extends ComplexPanel {
 
     // Style the stack selector item.
     Element td = DOM.getFirstChild(tr);
-    setStyleName(td, "gwt-StackPanelItem-selected", visible);
+    setStyleName(td, DEFAULT_ITEM_STYLENAME + "-selected", visible);
 
     // Show/hide the contained widget.
-    tr = DOM.getChild(body, (index * 2) + 1);
-    UIObject.setVisible(tr, visible);
-    getWidget(index).setVisible(visible);
+    if (render) {
+      setStackContentVisible(index, visible);
+    }
+
+    // Set the style of the next header
+    Element trNext = DOM.getChild(body, ((index + 1) * 2));
+    if (trNext != null) {
+      Element tdNext = DOM.getFirstChild(trNext);
+      Element divNext = DOM.getFirstChild(tdNext);
+      setStyleName(tdNext, DEFAULT_ITEM_STYLENAME + "-below-selected", visible);
+    }
   }
 
   private void updateIndicesFrom(int beforeIndex) {
@@ -312,6 +517,13 @@ public class StackPanel extends ComplexPanel {
       Element childTR = DOM.getChild(body, i * 2);
       Element childTD = DOM.getFirstChild(childTR);
       DOM.setElementPropertyInt(childTD, "__index", i);
+
+      // Update the special style on the first element
+      if (beforeIndex == 0) {
+        setStyleName(childTD, DEFAULT_ITEM_STYLENAME + "-first", true);
+      } else {
+        setStyleName(childTD, DEFAULT_ITEM_STYLENAME + "-first", false);
+      }
     }
   }
 

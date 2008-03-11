@@ -106,6 +106,7 @@ public class MenuBarTest extends GWTTestCase {
 
     // Create a menu bar
     MenuBar bar = new MenuBar(false);
+    bar.setAnimationEnabled(false);
     bar.setAutoOpen(true);
     bar.addItem("top0", emptyCommand);
     bar.addItem("top1", emptyCommand);

@@ -375,7 +375,7 @@ public class TabPanel extends Composite implements TabListener,
    * <ul>
    * <li>-bar = The tab bar.</li>
    * <li>-bar-tab# = The element containing the content of the tab itself.</li>
-   * <li>-bar-tab#-wrapper = The cell containing the tab at the index.</li>
+   * <li>-bar-tab-wrapper# = The cell containing the tab at the index.</li>
    * <li>-bottom = The panel beneath the tab bar.</li>
    * </ul>
    * 

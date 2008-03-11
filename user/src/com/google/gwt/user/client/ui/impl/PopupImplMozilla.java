@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,8 +16,8 @@
 package com.google.gwt.user.client.ui.impl;
 
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 
 /**
@@ -96,5 +96,12 @@ public class PopupImplMozilla extends PopupImpl {
   @Override
   public Element getContainerElement(Element outerElem) {
     return isMac ? DOM.getFirstChild(outerElem) : outerElem;
+  }
+
+  @Override
+  public void setClip(Element popup, String rect) {
+    super.setClip(popup, rect);
+    DOM.setStyleAttribute(popup, "display", "none");
+    DOM.setStyleAttribute(popup, "display", "");
   }
 }

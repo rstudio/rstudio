@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.animation.WidgetAnimation;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -46,7 +47,85 @@ import java.util.Iterator;
  * </p>
  */
 public final class DisclosurePanel extends Composite implements
-    FiresDisclosureEvents, HasWidgets {
+    FiresDisclosureEvents, HasWidgets, HasAnimation {
+  /**
+   * An {@link WidgetAnimation} used to open the content.
+   */
+  private static class ContentAnimation extends WidgetAnimation {
+    /**
+     * Whether the item is being opened or closed.
+     */
+    private boolean opening;
+
+    /**
+     * The {@link DisclosurePanel} being affected.
+     */
+    private DisclosurePanel curPanel;
+
+    @Override
+    public void onCancel() {
+      onComplete();
+    }
+
+    @Override
+    public void onComplete() {
+      if (!opening) {
+        curPanel.contentWrapper.setVisible(false);
+      }
+      DOM.setStyleAttribute(curPanel.contentWrapper.getElement(), "height",
+          "auto");
+      curPanel = null;
+    }
+
+    @Override
+    public void onInstantaneousRun() {
+      curPanel.contentWrapper.setVisible(opening);
+      curPanel = null;
+    }
+
+    @Override
+    public void onStart() {
+      onUpdate(0.0);
+      if (opening) {
+        curPanel.contentWrapper.setVisible(true);
+      }
+    }
+
+    @Override
+    public void onUpdate(double progress) {
+      int scrollHeight = DOM.getElementPropertyInt(
+          curPanel.contentWrapper.getElement(), "scrollHeight");
+      int height = (int) (progress * scrollHeight);
+      if (!opening) {
+        height = scrollHeight - height;
+      }
+      DOM.setStyleAttribute(curPanel.contentWrapper.getElement(), "height",
+          height + "px");
+      DOM.setStyleAttribute(curPanel.contentWrapper.getElement(), "width",
+          "auto");
+    }
+
+    /**
+     * Open or close the content.
+     * 
+     * @param panel the panel to open or close
+     * @param animate true to animate, false to open instantly
+     */
+    public void setOpen(DisclosurePanel panel, boolean animate) {
+      // Immediately complete previous open
+      cancel();
+
+      // Open the new item
+      curPanel = panel;
+      opening = panel.isOpen;
+
+      if (animate) {
+        run(350);
+      } else {
+        onInstantaneousRun();
+      }
+    }
+  }
 
   /**
    * Used to wrap widgets in the header to provide click support. Effectively
@@ -67,7 +146,7 @@ public final class DisclosurePanel extends Composite implements
     }
 
     @Override
-    public final void onBrowserEvent(Event event) {
+    public void onBrowserEvent(Event event) {
       // no need to call super.
       switch (DOM.eventGetType(event)) {
         case Event.ONCLICK:
@@ -89,16 +168,16 @@ public final class DisclosurePanel extends Composite implements
      * for the label.
      */
     private final Element labelTD;
-    
+
     private final Image iconImage;
     private final DisclosurePanelImages images;
-    
+
     private DefaultHeader(DisclosurePanelImages images, String text) {
       this.images = images;
 
       iconImage = isOpen ? images.disclosurePanelOpen().createImage()
           : images.disclosurePanelClosed().createImage();
-      
+
       // I do not need any Widgets here, just a DOM structure.
       Element root = DOM.createTable();
       Element tbody = DOM.createTBody();
@@ -162,6 +241,11 @@ public final class DisclosurePanel extends Composite implements
 
   private static final String STYLENAME_CONTENT = "content";
 
+  /**
+   * The {@link WidgetAnimation} used to open and close the content.
+   */
+  private static ContentAnimation contentAnimation;
+
   private static DisclosurePanelImages createDefaultImages() {
     return GWT.create(DisclosurePanelImages.class);
   }
@@ -174,6 +258,11 @@ public final class DisclosurePanel extends Composite implements
   private final VerticalPanel mainPanel = new VerticalPanel();
 
   /**
+   * The wrapper around the content widget.
+   */
+  private final SimplePanel contentWrapper = new SimplePanel();
+
+  /**
    * holds the header widget.
    */
   private final ClickableHeader header = new ClickableHeader();
@@ -183,6 +272,8 @@ public final class DisclosurePanel extends Composite implements
    */
   private Widget content;
 
+  private boolean isAnimationEnabled = true;
+
   private boolean isOpen = false;
 
   /**
@@ -190,7 +281,7 @@ public final class DisclosurePanel extends Composite implements
    * initialized).
    */
   private ArrayList<DisclosureHandler> handlers;
-  
+
   /**
    * Creates an empty DisclosurePanel that is initially closed.
    */
@@ -243,7 +334,7 @@ public final class DisclosurePanel extends Composite implements
   public DisclosurePanel(Widget header) {
     this(header, false);
   }
-  
+
   /**
    * Creates a DisclosurePanel using a widget as the header and an initial
    * open/close state.
@@ -271,7 +362,7 @@ public final class DisclosurePanel extends Composite implements
    * 
    * @param handler the handler to be added (should not be null)
    */
-  public final void addEventHandler(DisclosureHandler handler) {
+  public void addEventHandler(DisclosureHandler handler) {
     if (handlers == null) {
       handlers = new ArrayList<DisclosureHandler>();
     }
@@ -287,7 +378,7 @@ public final class DisclosurePanel extends Composite implements
    * 
    * @return the panel's current content widget
    */
-  public final Widget getContent() {
+  public Widget getContent() {
     return content;
   }
 
@@ -296,7 +387,7 @@ public final class DisclosurePanel extends Composite implements
    * 
    * @return the widget currently being used as a header
    */
-  public final Widget getHeader() {
+  public Widget getHeader() {
     return header.getWidget();
   }
 
@@ -307,9 +398,16 @@ public final class DisclosurePanel extends Composite implements
    * @return a reference to the header widget if it implements {@link HasText},
    *         <code>null</code> otherwise
    */
-  public final HasText getHeaderTextAccessor() {
+  public HasText getHeaderTextAccessor() {
     Widget widget = header.getWidget();
     return (widget instanceof HasText) ? (HasText) widget : null;
+  }
+
+  /**
+   * @see HasAnimation#isAnimationEnabled()
+   */
+  public boolean isAnimationEnabled() {
+    return isAnimationEnabled;
   }
 
   /**
@@ -317,7 +415,7 @@ public final class DisclosurePanel extends Composite implements
    * 
    * @return <code>true</code> if panel is in open state
    */
-  public final boolean isOpen() {
+  public boolean isOpen() {
     return isOpen;
   }
 
@@ -339,11 +437,18 @@ public final class DisclosurePanel extends Composite implements
    * 
    * @param handler the handler to be removed
    */
-  public final void removeEventHandler(DisclosureHandler handler) {
+  public void removeEventHandler(DisclosureHandler handler) {
     if (handlers == null) {
       return;
     }
     handlers.remove(handler);
+  }
+
+  /**
+   * @see HasAnimation#setAnimationEnabled(boolean)
+   */
+  public void setAnimationEnabled(boolean enable) {
+    isAnimationEnabled = enable;
   }
 
   /**
@@ -352,21 +457,21 @@ public final class DisclosurePanel extends Composite implements
    * 
    * @param content the widget to be used as the content panel
    */
-  public final void setContent(Widget content) {
+  public void setContent(Widget content) {
     final Widget currentContent = this.content;
 
     // Remove existing content widget.
     if (currentContent != null) {
-      mainPanel.remove(currentContent);
+      contentWrapper.setWidget(null);
       currentContent.removeStyleName(STYLENAME_CONTENT);
     }
 
     // Add new content widget if != null.
     this.content = content;
     if (content != null) {
-      mainPanel.add(content);
+      contentWrapper.setWidget(content);
       content.addStyleName(STYLENAME_CONTENT);
-      setContentDisplay();
+      setContentDisplay(false);
     }
   }
 
@@ -375,7 +480,7 @@ public final class DisclosurePanel extends Composite implements
    * 
    * @param headerWidget the widget to be used as the header
    */
-  public final void setHeader(Widget headerWidget) {
+  public void setHeader(Widget headerWidget) {
     header.setWidget(headerWidget);
   }
 
@@ -385,10 +490,10 @@ public final class DisclosurePanel extends Composite implements
    * @param isOpen <code>true</code> to open the panel, <code>false</code>
    *          to close
    */
-  public final void setOpen(boolean isOpen) {
+  public void setOpen(boolean isOpen) {
     if (this.isOpen != isOpen) {
       this.isOpen = isOpen;
-      setContentDisplay();
+      setContentDisplay(true);
       fireEvent();
     }
   }
@@ -425,12 +530,15 @@ public final class DisclosurePanel extends Composite implements
   private void init(boolean isOpen) {
     initWidget(mainPanel);
     mainPanel.add(header);
+    mainPanel.add(contentWrapper);
+    DOM.setStyleAttribute(contentWrapper.getElement(), "padding", "0px");
+    DOM.setStyleAttribute(contentWrapper.getElement(), "overflow", "hidden");
     this.isOpen = isOpen;
     setStyleName(STYLENAME_DEFAULT);
-    setContentDisplay();
+    setContentDisplay(false);
   }
 
-  private void setContentDisplay() {
+  private void setContentDisplay(boolean animate) {
     if (isOpen) {
       removeStyleDependentName(STYLENAME_SUFFIX_CLOSED);
       addStyleDependentName(STYLENAME_SUFFIX_OPEN);
@@ -440,7 +548,10 @@ public final class DisclosurePanel extends Composite implements
     }
 
     if (content != null) {
-      content.setVisible(isOpen);
+      if (contentAnimation == null) {
+        contentAnimation = new ContentAnimation();
+      }
+      contentAnimation.setOpen(this, animate && isAnimationEnabled);
     }
   }
 }

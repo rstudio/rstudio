@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.PopupPanel.AnimationType;
 import com.google.gwt.user.client.ui.SuggestOracle.Callback;
 import com.google.gwt.user.client.ui.SuggestOracle.Request;
 import com.google.gwt.user.client.ui.SuggestOracle.Response;
@@ -86,7 +87,7 @@ import java.util.List;
  * @see TextBoxBase
  */
 public final class SuggestBox extends Composite implements HasText, HasFocus,
-    SourcesClickEvents, SourcesFocusEvents, SourcesChangeEvents,
+    HasAnimation, SourcesClickEvents, SourcesFocusEvents, SourcesChangeEvents,
     SourcesKeyboardEvents, FiresSuggestionEvents {
 
   /**
@@ -340,6 +341,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
     // suggestionMenu is suggestionPopup's widget
     suggestionMenu = new SuggestionMenu(true);
     suggestionPopup = new SuggestionPopup();
+    suggestionPopup.setAnimationType(AnimationType.ONE_WAY_CORNER);
     
     addKeyboardSupport();
     setOracle(oracle);
@@ -352,7 +354,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
    *
    * @param listener the listener interface to add
    */
-  public final void addChangeListener(ChangeListener listener) {
+  public void addChangeListener(ChangeListener listener) {
     if (changeListeners == null) {
       changeListeners = new DelegatingChangeListenerCollection(this, box);
     }
@@ -365,14 +367,14 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
    *
    * @param listener the listener interface to add
    */
-  public final void addClickListener(ClickListener listener) {
+  public void addClickListener(ClickListener listener) {
     if (clickListeners == null) {
       clickListeners = new DelegatingClickListenerCollection(this, box);
     }
     clickListeners.add(listener);
   }
 
-  public final void addEventHandler(SuggestionHandler handler) {
+  public void addEventHandler(SuggestionHandler handler) {
     if (suggestionHandlers == null) {
       suggestionHandlers = new ArrayList<SuggestionHandler>();
     }
@@ -385,7 +387,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
    *
    * @param listener the listener interface to add
    */
-  public final void addFocusListener(FocusListener listener) {
+  public void addFocusListener(FocusListener listener) {
     if (focusListeners == null) {
       focusListeners = new DelegatingFocusListenerCollection(this, box);
     }
@@ -398,7 +400,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
    *
    * @param listener the listener interface to add
    */
-  public final void addKeyboardListener(KeyboardListener listener) {
+  public void addKeyboardListener(KeyboardListener listener) {
     if (keyboardListeners == null) {
       keyboardListeners = new DelegatingKeyboardListenerCollection(this, box);
     }
@@ -412,7 +414,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
    * 
    * @return the limit for the number of suggestions
    */
-  public final int getLimit() {
+  public int getLimit() {
     return limit;
   }
 
@@ -421,54 +423,62 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
    * 
    * @return the {@link SuggestOracle}
    */
-  public final SuggestOracle getSuggestOracle() {
+  public SuggestOracle getSuggestOracle() {
     return oracle;
   }
 
-  public final int getTabIndex() {
+  public int getTabIndex() {
     return box.getTabIndex();
   }
 
-  public final String getText() {
+  public String getText() {
     return box.getText();
   }
 
-  public final void removeChangeListener(ChangeListener listener) {
+  public boolean isAnimationEnabled() {
+    return suggestionPopup.isAnimationEnabled();
+  }
+
+  public void removeChangeListener(ChangeListener listener) {
     if (changeListeners != null) {
       changeListeners.remove(listener);
     }
   }
 
-  public final void removeClickListener(ClickListener listener) {
+  public void removeClickListener(ClickListener listener) {
     if (clickListeners != null) {
       clickListeners.remove(listener);
     }
   }
 
-  public final void removeEventHandler(SuggestionHandler handler) {
+  public void removeEventHandler(SuggestionHandler handler) {
     if (suggestionHandlers == null) {
       return;
     }
     suggestionHandlers.remove(handler);
   }
 
-  public final void removeFocusListener(FocusListener listener) {
+  public void removeFocusListener(FocusListener listener) {
     if (focusListeners != null) {
       focusListeners.remove(listener);
     }
   }
 
-  public final void removeKeyboardListener(KeyboardListener listener) {
+  public void removeKeyboardListener(KeyboardListener listener) {
     if (keyboardListeners != null) {
       keyboardListeners.remove(listener);
     }
   }
 
-  public final void setAccessKey(char key) {
+  public void setAccessKey(char key) {
     box.setAccessKey(key);
   }
 
-  public final void setFocus(boolean focused) {
+  public void setAnimationEnabled(boolean enable) {
+    suggestionPopup.setAnimationEnabled(enable);
+  }
+
+  public void setFocus(boolean focused) {
     box.setFocus(focused);
   }
 
@@ -478,7 +488,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
    * 
    * @param limit the limit to the number of suggestions provided
    */
-  public final void setLimit(int limit) {
+  public void setLimit(int limit) {
     this.limit = limit;
   }
 
@@ -488,15 +498,15 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
    * @param style the new primary style name
    * @see UIObject#setStyleName(String)
    */
-  public final void setPopupStyleName(String style) {
+  public void setPopupStyleName(String style) {
     suggestionPopup.setStyleName(style);
   }
   
-  public final void setTabIndex(int index) {
+  public void setTabIndex(int index) {
     box.setTabIndex(index);
   }
 
-  public final void setText(String text) {
+  public void setText(String text) {
     box.setText(text);
   }
 

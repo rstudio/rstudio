@@ -144,6 +144,9 @@ public class MenuItem extends UIObject implements HasHTML {
    */
   public void setSubMenu(MenuBar subMenu) {
     this.subMenu = subMenu;
+    if (this.parentMenu != null) {
+      this.parentMenu.updateSubmenuIcon(this);
+    }
   }
 
   public void setText(String text) {

@@ -74,6 +74,7 @@ public class DialogBoxTest extends PopupTest {
 
   public void testDebugId() {
     DialogBox dBox = new DialogBox();
+    dBox.setAnimationEnabled(false);
     dBox.ensureDebugId("myDialogBox");
     dBox.setText("test caption");
     Label content = new Label("content");

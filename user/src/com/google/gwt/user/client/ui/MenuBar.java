@@ -15,11 +15,13 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.PopupPanel.AnimationType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +54,18 @@ import java.util.List;
  * {@example com.google.gwt.examples.MenuBarExample}
  * </p>
  */
-public class MenuBar extends Widget implements PopupListener {
+public class MenuBar extends Widget implements PopupListener, HasAnimation {
+  /**
+   * An {@link ImageBundle} that provides images for {@link MenuBar}.
+   */
+  public interface MenuBarImages extends ImageBundle {
+    /**
+     * An image indicating a {@link MenuItem} has an associated submenu.
+     * 
+     * @return a prototype of this image
+     */
+    AbstractImagePrototype menuBarSubMenuIcon();
+  }
 
   /**
    * List of all {@link MenuItem}s and {@link MenuItemSeparator}s.
@@ -65,6 +78,9 @@ public class MenuBar extends Widget implements PopupListener {
   private ArrayList<MenuItem> items = new ArrayList<MenuItem>();
 
   private Element body;
+
+  private MenuBarImages images = null;
+  private boolean isAnimationEnabled = true;
   private MenuBar parentMenu;
   private PopupPanel popup;
   private MenuItem selectedItem;
@@ -122,6 +138,7 @@ public class MenuBar extends Widget implements PopupListener {
     item.setSelectionStyle(false);
     items.add(item);
     allItems.add(item);
+    updateSubmenuIcon(item);
     return item;
   }
 
@@ -193,6 +210,9 @@ public class MenuBar extends Widget implements PopupListener {
    * @return the {@link MenuItemSeparator} object
    */
   public MenuItemSeparator addSeparator(MenuItemSeparator separator) {
+    if (vertical) {
+      setItemColSpan(separator, 2);
+    }
     addItemElement(separator.getElement());
     separator.setParentMenu(this);
     allItems.add(separator);
@@ -210,6 +230,7 @@ public class MenuBar extends Widget implements PopupListener {
 
     // Set the parent of all items to null
     for (UIObject item : allItems) {
+      setItemColSpan(item, 1);
       if (item instanceof MenuItemSeparator) {
         ((MenuItemSeparator) item).setParentMenu(null);
       } else {
@@ -230,6 +251,13 @@ public class MenuBar extends Widget implements PopupListener {
    */
   public boolean getAutoOpen() {
     return autoOpen;
+  }
+
+  /**
+   * @see HasAnimation#isAnimationEnabled()
+   */
+  public boolean isAnimationEnabled() {
+    return isAnimationEnabled;
   }
 
   @Override
@@ -282,6 +310,7 @@ public class MenuBar extends Widget implements PopupListener {
    */
   public void removeItem(MenuItem item) {
     if (removeItemElement(item)) {
+      setItemColSpan(item, 1);
       items.remove(item);
       item.setParentMenu(null);
     }
@@ -296,6 +325,13 @@ public class MenuBar extends Widget implements PopupListener {
     if (removeItemElement(separator)) {
       separator.setParentMenu(null);
     }
+  }
+
+  /**
+   * @see HasAnimation#setAnimationEnabled(boolean)
+   */
+  public void setAnimationEnabled(boolean enable) {
+    isAnimationEnabled = enable;
   }
 
   /**
@@ -440,6 +476,8 @@ public class MenuBar extends Widget implements PopupListener {
         return super.onEventPreview(event);
       }
     };
+    popup.setAnimationType(AnimationType.ONE_WAY_CORNER);
+    popup.setStyleName("gwt-MenuBarPopup");
     popup.addPopupListener(this);
 
     if (vertical) {
@@ -453,6 +491,15 @@ public class MenuBar extends Widget implements PopupListener {
 
     shownChildMenu = item.getSubMenu();
     item.getSubMenu().parentMenu = this;
+
+    // If any parent MenuBar has animations disabled, then do not animate
+    MenuBar parent = parentMenu;
+    boolean animate = isAnimationEnabled;
+    while (animate && parent != null) {
+      animate = parent.isAnimationEnabled();
+      parent = parent.parentMenu;
+    }
+    popup.setAnimationEnabled(animate);
 
     // Show the popup, ensuring that the menubar's event preview remains on top
     // of the popup's.
@@ -488,10 +535,27 @@ public class MenuBar extends Widget implements PopupListener {
 
     if (selectedItem != null) {
       selectedItem.setSelectionStyle(false);
+      // Set the style of the submenu indicator
+      if (vertical) {
+        Element tr = DOM.getParent(selectedItem.getElement());
+        if (DOM.getChildCount(tr) == 2) {
+          Element td = DOM.getChild(tr, 1);
+          setStyleName(td, "subMenuIcon-selected", false);
+        }
+      }
     }
 
     if (item != null) {
       item.setSelectionStyle(true);
+
+      // Set the style of the submenu indicator
+      if (vertical) {
+        Element tr = DOM.getParent(item.getElement());
+        if (DOM.getChildCount(tr) == 2) {
+          Element td = DOM.getChild(tr, 1);
+          setStyleName(td, "subMenuIcon-selected", true);
+        }
+      }
     }
 
     selectedItem = item;
@@ -507,6 +571,47 @@ public class MenuBar extends Widget implements PopupListener {
     for (MenuItem item : items) {
       item.ensureDebugId(baseID + "-item" + itemCount);
       itemCount++;
+    }
+  }
+
+  /**
+   * Show or hide the icon used for items with a submenu.
+   * 
+   * @param item the item with or without a submenu
+   */
+  void updateSubmenuIcon(MenuItem item) {
+    // The submenu icon only applies to vertical menus
+    if (!vertical) {
+      return;
+    }
+
+    // Get the index of the MenuItem
+    int idx = allItems.indexOf(item);
+    if (idx == -1) {
+      return;
+    }
+
+    Element container = getItemContainerElement();
+    Element tr = DOM.getChild(container, idx);
+    int tdCount = DOM.getChildCount(tr);
+    MenuBar submenu = item.getSubMenu();
+    if (submenu == null) {
+      // Remove the submenu indicator
+      if (tdCount == 2) {
+        DOM.removeChild(tr, DOM.getChild(tr, 1));
+      }
+      setItemColSpan(item, 2);
+    } else if (tdCount == 1) {
+      // Show the submenu indicator
+      if (images == null) {
+        images = GWT.create(MenuBarImages.class);
+      }
+      setItemColSpan(item, 1);
+      Element td = DOM.createTD();
+      DOM.setElementProperty(td, "vAlign", "middle");
+      DOM.setInnerHTML(td, images.menuBarSubMenuIcon().getHTML());
+      setStyleName(td, "subMenuIcon");
+      DOM.appendChild(tr, td);
     }
   }
 
@@ -593,5 +698,15 @@ public class MenuBar extends Widget implements PopupListener {
     DOM.removeChild(container, DOM.getChild(container, idx));
     allItems.remove(idx);
     return true;
+  }
+
+  /**
+   * Set the colspan of a {@link MenuItem} or {@link MenuItemSeparator}.
+   * 
+   * @param item the {@link MenuItem} or {@link MenuItemSeparator}
+   * @param colspan the colspan
+   */
+  private void setItemColSpan(UIObject item, int colspan) {
+    DOM.setElementPropertyInt(item.getElement(), "colSpan", colspan);
   }
 }

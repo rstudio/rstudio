@@ -19,6 +19,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.Element;
 
 /**
  * Tests <code>ListBox</code>. Needs many, many more tests.
@@ -54,7 +55,7 @@ public class StackPanelTest extends GWTTestCase {
   }
 
   public void testDebugId() {
-    StackPanel p = new StackPanel();
+    final StackPanel p = new StackPanel();
     Label a = new Label("a");
     Label b = new Label("b");
     Label c = new Label("c");
@@ -64,13 +65,16 @@ public class StackPanelTest extends GWTTestCase {
     RootPanel.get().add(p);
 
     p.ensureDebugId("myStack");
-    
+
     // Check the body ids
     UIObjectTest.assertDebugId("myStack", p.getElement());
-    UIObjectTest.assertDebugId("myStack-content0", DOM.getParent(a.getElement()));
-    UIObjectTest.assertDebugId("myStack-content1", DOM.getParent(b.getElement()));
-    UIObjectTest.assertDebugId("myStack-content2", DOM.getParent(c.getElement()));
-    
+    UIObjectTest.assertDebugId("myStack-content0",
+        DOM.getParent(a.getElement()));
+    UIObjectTest.assertDebugId("myStack-content1",
+        DOM.getParent(b.getElement()));
+    UIObjectTest.assertDebugId("myStack-content2",
+        DOM.getParent(c.getElement()));
+
     // Check the header IDs
     DeferredCommand.addCommand(new Command() {
       public void execute() {
@@ -78,6 +82,17 @@ public class StackPanelTest extends GWTTestCase {
         UIObjectTest.assertDebugIdContents("myStack-text0", "header a");
         UIObjectTest.assertDebugIdContents("myStack-text1", "header b");
         UIObjectTest.assertDebugIdContents("myStack-text2", "header c");
+
+        Element td0 = DOM.getElementById("gwt-debug-myStack-text-wrapper0");
+        Element td1 = DOM.getElementById("gwt-debug-myStack-text-wrapper1");
+        Element td2 = DOM.getElementById("gwt-debug-myStack-text-wrapper2");
+        assertEquals(p.getElement(),
+            DOM.getParent(DOM.getParent(DOM.getParent(td0))));
+        assertEquals(p.getElement(),
+            DOM.getParent(DOM.getParent(DOM.getParent(td1))));
+        assertEquals(p.getElement(),
+            DOM.getParent(DOM.getParent(DOM.getParent(td2))));
+
         finishTest();
       }
     });
@@ -102,7 +117,7 @@ public class StackPanelTest extends GWTTestCase {
     p.showStack(2);
     assertEquals(2, p.getSelectedIndex());
     p.showStack(-1);
-    assertEquals(-1, p.getSelectedIndex());
+    assertEquals(2, p.getSelectedIndex());
   }
 
   /**

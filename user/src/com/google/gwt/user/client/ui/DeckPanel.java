@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.animation.WidgetAnimation;
 
 /**
  * A panel that displays all of its child widgets in a 'deck', where only one
@@ -30,7 +31,161 @@ import com.google.gwt.user.client.Element;
  * cleared.
  * </p>
  */
-public class DeckPanel extends ComplexPanel {
+public class DeckPanel extends ComplexPanel implements HasAnimation {
+  /**
+   * An {@link WidgetAnimation} used to slide in the new content.
+   */
+  private static class SlideAnimation extends WidgetAnimation {
+    /**
+     * The {@link Element} holding the {@link Widget} with a lower index.
+     */
+    private Element container1 = null;
+
+    /**
+     * The {@link Element} holding the {@link Widget} with a higher index.
+     */
+    private Element container2 = null;
+
+    /**
+     * A boolean indicating whether container1 is growing or shrinking.
+     */
+    private boolean growing = false;
+
+    /**
+     * The fixed height of a {@link TabPanel} in pixels. If the {@link TabPanel}
+     * does not have a fixed height, this will be set to -1.
+     */
+    private int fixedHeight = -1;
+
+    @Override
+    public void onCancel() {
+      onComplete();
+    }
+
+    @Override
+    public void onComplete() {
+      if (growing) {
+        onUpdate(1.0);
+        DOM.setStyleAttribute(container1, "height", "100%");
+        UIObject.setVisible(container1, true);
+        UIObject.setVisible(container2, false);
+        DOM.setStyleAttribute(container2, "height", "100%");
+      } else {
+        UIObject.setVisible(container1, false);
+        DOM.setStyleAttribute(container1, "height", "100%");
+        DOM.setStyleAttribute(container2, "height", "100%");
+        UIObject.setVisible(container2, true);
+      }
+      container1 = null;
+      container2 = null;
+    }
+
+    @Override
+    public void onInstantaneousRun() {
+      UIObject.setVisible(container1, growing);
+      UIObject.setVisible(container2, !growing);
+      container1 = null;
+      container2 = null;
+    }
+
+    @Override
+    public void onStart() {
+      onUpdate(0.0);
+      UIObject.setVisible(container1, true);
+      UIObject.setVisible(container2, true);
+    }
+
+    @Override
+    public void onUpdate(double progress) {
+      if (!growing) {
+        progress = 1.0 - progress;
+      }
+
+      // Container1 expands (shrinks) to its target height
+      int height1;
+      int height2;
+      if (fixedHeight == -1) {
+        height1 = (int) (progress * DOM.getElementPropertyInt(container1,
+            "scrollHeight"));
+        height2 = (int) ((1.0 - progress) * DOM.getElementPropertyInt(
+            container2, "scrollHeight"));
+      } else {
+        height1 = (int) (progress * fixedHeight);
+        height2 = fixedHeight - height1;
+      }
+      DOM.setStyleAttribute(container1, "height", height1 + "px");
+      DOM.setStyleAttribute(container2, "height", height2 + "px");
+    }
+
+    /**
+     * Switch to a new {@link Widget}.
+     * 
+     * @param oldWidget the {@link Widget} to hide
+     * @param newWidget the {@link Widget} to show
+     * @param animate true to animate, false to switch instantly
+     */
+    public void showWidget(Widget oldWidget, Widget newWidget, boolean animate) {
+      // Immediately complete previous animation
+      cancel();
+
+      // Get the container and index of the new widget
+      Element newContainer = getContainer(newWidget);
+      int newIndex = DOM.getChildIndex(DOM.getParent(newContainer),
+          newContainer);
+
+      // If we aren't showing anything, don't bother with the animation
+      if (oldWidget == null) {
+        UIObject.setVisible(newContainer, true);
+        return;
+      }
+
+      // Get the container and index of the old widget
+      Element oldContainer = getContainer(oldWidget);
+      int oldIndex = DOM.getChildIndex(DOM.getParent(oldContainer),
+          oldContainer);
+
+      // Figure out whether to grow or shrink the container
+      if (newIndex > oldIndex) {
+        container1 = oldContainer;
+        container2 = newContainer;
+        growing = false;
+      } else {
+        container1 = newContainer;
+        container2 = oldContainer;
+        growing = true;
+      }
+
+      // Figure out if we are in a fixed height situation
+      fixedHeight = DOM.getElementPropertyInt(oldContainer, "offsetHeight");
+      if (fixedHeight == oldWidget.getOffsetHeight()) {
+        fixedHeight = -1;
+      }
+
+      // Start the animation
+      if (animate) {
+        run(350);
+      } else {
+        onInstantaneousRun();
+      }
+    }
+  }
+
+  /**
+   * The {@link WidgetAnimation} used to slide in the new {@link Widget}.
+   */
+  private static SlideAnimation slideAnimation;
+
+  /**
+   * The the container {@link Element} around a {@link Widget}.
+   * 
+   * @param w the {@link Widget}
+   * @return the container {@link Element}
+   */
+  private static Element getContainer(Widget w) {
+    return DOM.getParent(w.getElement());
+  }
+
+  private boolean isAnimationEnabled = false;
 
   private Widget visibleWidget;
 
@@ -48,8 +203,10 @@ public class DeckPanel extends ComplexPanel {
    */
   @Override
   public void add(Widget w) {
-    super.add(w, getElement());
-    initChildWidget(w);
+    Element container = DOM.createDiv();
+    DOM.appendChild(getElement(), container);
+    super.add(w, container);
+    initWidgetContainer(w);
   }
 
   /**
@@ -70,21 +227,37 @@ public class DeckPanel extends ComplexPanel {
    *           range
    */
   public void insert(Widget w, int beforeIndex) {
-    super.insert(w, getElement(), beforeIndex, true);
-    initChildWidget(w);
+    Element container = DOM.createDiv();
+    DOM.insertChild(getElement(), container, beforeIndex);
+    super.insert(w, container, beforeIndex, true);
+    initWidgetContainer(w);
+  }
+
+  /**
+   * @see HasAnimation#isAnimationEnabled()
+   */
+  public boolean isAnimationEnabled() {
+    return isAnimationEnabled;
   }
 
   @Override
   public boolean remove(Widget w) {
+    Element container = getContainer(w);
     boolean removed = super.remove(w);
     if (removed) {
-      resetChildWidget(w);
-
+      DOM.removeChild(getElement(), container);
       if (visibleWidget == w) {
         visibleWidget = null;
       }
     }
     return removed;
+  }
+
+  /**
+   * @see HasAnimation#setAnimationEnabled(boolean)
+   */
+  public void setAnimationEnabled(boolean enable) {
+    isAnimationEnabled = enable;
   }
 
   /**
@@ -95,32 +268,28 @@ public class DeckPanel extends ComplexPanel {
    */
   public void showWidget(int index) {
     checkIndexBoundsForAccess(index);
-
-    if (visibleWidget != null) {
-      visibleWidget.setVisible(false);
-    }
+    Widget oldWidget = visibleWidget;
     visibleWidget = getWidget(index);
-    visibleWidget.setVisible(true);
+
+    if (visibleWidget != oldWidget) {
+      if (slideAnimation == null) {
+        slideAnimation = new SlideAnimation();
+      }
+      slideAnimation.showWidget(oldWidget, visibleWidget, isAnimationEnabled
+          && isAttached());
+    }
   }
 
   /**
    * Make the widget invisible, and set its width and height to full.
    */
-  private void initChildWidget(Widget w) {
-    Element child = w.getElement();
-    DOM.setStyleAttribute(child, "width", "100%");
-    DOM.setStyleAttribute(child, "height", "100%");
-    w.setVisible(false);
-  }
-
-  /**
-   * Make the widget visible, and clear the widget's width and height
-   * attributes. This is done so that any changes to the visibility, height, or
-   * width of the widget that were done by the panel are undone.
-   */
-  private void resetChildWidget(Widget w) {
-    DOM.setStyleAttribute(w.getElement(), "width", "");
-    DOM.setStyleAttribute(w.getElement(), "height", "");
-    w.setVisible(true);
+  private void initWidgetContainer(Widget w) {
+    Element container = getContainer(w);
+    DOM.setStyleAttribute(container, "width", "100%");
+    DOM.setStyleAttribute(container, "height", "100%");
+    DOM.setStyleAttribute(container, "overflow", "hidden");
+    DOM.setStyleAttribute(container, "padding", "0px");
+    DOM.setStyleAttribute(container, "margin", "0px");
+    UIObject.setVisible(container, false);
   }
 }

@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
 /**
@@ -44,17 +43,23 @@ import com.google.gwt.user.client.Event;
  */
 public class TabBar extends Composite implements SourcesTabEvents,
     ClickListener {
-
   /**
    * <code>ClickDecoratorPanel</code> decorates any widget with the minimal
    * amount of machinery to receive clicks for delegation to the parent.
    * {@link SourcesClickEvents} is not implemented due to the fact that only a
    * single observer is needed.
    */
-  private static final class ClickDecoratorPanel extends SimplePanel {
+  private static final class ClickDecoratorPanel extends DecoratorPanel {
+    /**
+     * The styles applied to the {@link DecoratorPanel}.  We only need to six
+     * box the tabs because we only expect to have rounded corners on the top.
+     */
+    private static String[] ROW_STYLES = {"top", "middle"};
+
     ClickListener delegate;
 
     ClickDecoratorPanel(Widget child, ClickListener delegate) {
+      super(ROW_STYLES, 1);
       this.delegate = delegate;
       setWidget(child);
       sinkEvents(Event.ONCLICK);
@@ -164,14 +169,15 @@ public class TabBar extends Composite implements SourcesTabEvents,
     if (index >= getTabCount()) {
       return null;
     }
-    Widget widget = panel.getWidget(index + 1);
+    ClickDecoratorPanel decPanel = (ClickDecoratorPanel) panel.getWidget(index + 1);
+    Widget widget = decPanel.getWidget();
     if (widget instanceof HTML) {
       return ((HTML) widget).getHTML();
     } else if (widget instanceof Label) {
       return ((Label) widget).getText();
     } else {
       // This will be a ClickDecorator holding a user-supplied widget.
-      return DOM.getInnerHTML(widget.getElement());
+      return DOM.getInnerHTML(decPanel.getContainerElement());
     }
   }
 
@@ -193,11 +199,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
     }
 
     item.setWordWrap(false);
-    item.addClickListener(this);
-    item.setStyleName(STYLENAME_DEFAULT);
-    panel.insert(item, beforeIndex + 1);
-    setStyleName(DOM.getParent(item.getElement()), STYLENAME_DEFAULT
-        + "-wrapper", true);
+    insertTabWidget(item, beforeIndex);
   }
 
   /**
@@ -217,13 +219,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * @param beforeIndex the index before which this tab will be inserted.
    */
   public void insertTab(Widget widget, int beforeIndex) {
-    checkInsertBeforeTabIndex(beforeIndex);
-
-    ClickDecoratorPanel decWidget = new ClickDecoratorPanel(widget, this);
-    decWidget.addStyleName(STYLENAME_DEFAULT);
-    panel.insert(decWidget, beforeIndex + 1);
-    setStyleName(DOM.getParent(decWidget.getElement()), STYLENAME_DEFAULT
-        + "-wrapper", true);
+    insertTabWidget(widget, beforeIndex);
   }
 
   public void onClick(Widget sender) {
@@ -291,6 +287,23 @@ public class TabBar extends Composite implements SourcesTabEvents,
   }
 
   /**
+   * Inserts a new tab at the specified index.
+   * 
+   * @param widget widget to be used in the new tab.
+   * @param beforeIndex the index before which this tab will be inserted.
+   */
+  protected void insertTabWidget(Widget widget, int beforeIndex) {
+    checkInsertBeforeTabIndex(beforeIndex);
+
+    ClickDecoratorPanel decWidget = new ClickDecoratorPanel(widget, this);
+    decWidget.setStyleName(STYLENAME_DEFAULT);
+    panel.insert(decWidget, beforeIndex + 1);
+    
+    setStyleName(DOM.getParent(decWidget.getElement()),
+        STYLENAME_DEFAULT + "-wrapper", true);
+  }
+
+  /**
    * <b>Affected Elements:</b>
    * <ul>
    * <li>-tab# = The element containing the contents of the tab.</li>
@@ -305,10 +318,11 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
     int numTabs = getTabCount();
     for (int i = 0; i < numTabs; i++) {
-      Element widgetElem = panel.getWidget(i + 1).getElement();
-      ensureDebugId(widgetElem, baseID, "tab" + i);
-      ensureDebugId(DOM.getParent(widgetElem), baseID, "tab-wrapper" + i);
-    } 
+      DecoratorPanel decPanel = (DecoratorPanel) panel.getWidget(i + 1);
+      ensureDebugId(decPanel.getContainerElement(), baseID, "tab" + i);
+      ensureDebugId(DOM.getParent(decPanel.getElement()), baseID, "tab-wrapper"
+          + i);
+    }
   }
 
   private void checkInsertBeforeTabIndex(int beforeIndex) {

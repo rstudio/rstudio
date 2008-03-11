@@ -21,6 +21,7 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventPreview;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.animation.WidgetAnimation;
 import com.google.gwt.user.client.ui.impl.PopupImpl;
 
 /**
@@ -38,9 +39,157 @@ import com.google.gwt.user.client.ui.impl.PopupImpl;
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.PopupPanelExample}
  * </p>
+ * <h3>CSS Style Rules</h3>
+ * <ul class='css'>
+ * <li>.gwt-PopupPanel { the outside of the popup }</li>
+ * <li>.gwt-PopupPanel .content { the wrapper around the content }</li>
+ * </ul>
+ * <p>
+ * The styles that apply to {@link DecoratorPanel} also apply to PopupPanel.
+ * </p>
  */
-public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
-    EventPreview {
+public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
+    EventPreview, HasAnimation {
+  /**
+   * The type of animation to use when opening the popup.
+   * 
+   * <ul>
+   * <li>CENTER - Expand from the center of the popup</li>
+   * <li>ONE_WAY_CORNER - Expand from the top left corner, do not animate
+   * hiding</li>
+   * </ul>
+   */
+  public static enum AnimationType {
+    CENTER, ONE_WAY_CORNER
+  }
+
+  /**
+   * An {@link WidgetAnimation} used to enlarge the popup into view.
+   */
+  private static class ResizeAnimation extends WidgetAnimation {
+    /**
+     * The offset height and width of the current {@link PopupPanel}.
+     */
+    private int offsetHeight, offsetWidth = -1;
+
+    /**
+     * The {@link PopupPanel} being affected.
+     */
+    private PopupPanel curPanel = null;
+
+    @Override
+    public void onCancel() {
+      onComplete();
+    }
+
+    @Override
+    public void onComplete() {
+      if (!curPanel.showing) {
+        RootPanel.get().remove(curPanel);
+        impl.onHide(curPanel.getElement());
+      }
+      impl.setClip(curPanel.getElement(), "rect(auto, auto, auto, auto)");
+      curPanel = null;
+    }
+
+    @Override
+    public void onInstantaneousRun() {
+      if (curPanel.showing) {
+        // Set the position attribute, and then attach to the DOM. Otherwise,
+        // the PopupPanel will appear to 'jump' from its static/relative
+        // position to its absolute position (issue #1231).
+        DOM.setStyleAttribute(curPanel.getElement(), "position", "absolute");
+        if (curPanel.topPosition != -1) {
+          curPanel.setPopupPosition(curPanel.leftPosition, curPanel.topPosition);
+        }
+        RootPanel.get().add(curPanel);
+        impl.onShow(curPanel.getElement());
+      } else {
+        RootPanel.get().remove(curPanel);
+        impl.onHide(curPanel.getElement());
+      }
+      curPanel = null;
+    }
+
+    @Override
+    public void onStart() {
+      // Attach to the page
+      if (curPanel.showing) {
+        // Set the position attribute, and then attach to the DOM. Otherwise,
+        // the PopupPanel will appear to 'jump' from its static/relative
+        // position to its absolute position (issue #1231).
+        DOM.setStyleAttribute(curPanel.getElement(), "position", "absolute");
+        if (curPanel.topPosition != -1) {
+          curPanel.setPopupPosition(curPanel.leftPosition, curPanel.topPosition);
+        }
+        impl.setClip(curPanel.getElement(), getRectString(0, 0, 0, 0));
+        RootPanel.get().add(curPanel);
+        impl.onShow(curPanel.getElement());
+      }
+      offsetHeight = curPanel.getOffsetHeight();
+      offsetWidth = curPanel.getOffsetWidth();
+      onUpdate(0.0);
+    }
+
+    @Override
+    public void onUpdate(double progress) {
+      if (!curPanel.showing) {
+        progress = 1.0 - progress;
+      }
+
+      // Determine the clipping size
+      int top = 0;
+      int left = 0;
+      int right = 0;
+      int bottom = 0;
+      int height = (int) (progress * offsetHeight);
+      int width = (int) (progress * offsetWidth);
+      if (curPanel.animType == AnimationType.CENTER) {
+        top = (offsetHeight - height) / 2;
+        left = (offsetWidth - width) / 2;
+      }
+      right = left + width;
+      bottom = top + height;
+
+      // Set the rect clipping
+      impl.setClip(curPanel.getElement(), getRectString(top, right, bottom,
+          left));
+    }
+
+    /**
+     * Open or close the content. This method always called immediately after
+     * the PopupPanel showing state has changed, so we base the animation on the
+     * current state.
+     * 
+     * @param panel the panel to open or close
+     */
+    public void setOpen(final PopupPanel panel) {
+      // Immediately complete previous open/close animation
+      cancel();
+
+      // Determine if we need to animate
+      boolean animate = panel.isAnimationEnabled;
+      if (panel.animType == AnimationType.ONE_WAY_CORNER && !panel.showing) {
+        animate = false;
+      }
+
+      // Open the new item
+      curPanel = panel;
+      if (animate) {
+        run(200);
+      } else {
+        onInstantaneousRun();
+      }
+    }
+
+    /**
+     * @return a rect string
+     */
+    private String getRectString(int top, int right, int bottom, int left) {
+      return "rect(" + top + "px, " + right + "px, " + bottom + "px, " + left
+          + "px)";
+    }
+  }
 
   /**
    * A callback that is used to set the position of a {@link PopupPanel} right
@@ -61,7 +210,24 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     void setPosition(int offsetWidth, int offsetHeight);
   }
 
+  /**
+   * The default style name.
+   */
+  private static final String DEFAULT_STYLENAME = "gwt-PopupPanel";
+
   private static final PopupImpl impl = GWT.create(PopupImpl.class);
+
+  /**
+   * The {@link ResizeAnimation} used to open and close the {@link PopupPanel}s.
+   */
+  private static ResizeAnimation resizeAnimation;
+
+  /**
+   * If true, animate the opening of this popup from the center. If false,
+   * animate it open from top to bottom, and do not animate closing. Use false
+   * to animate menus.
+   */
+  private AnimationType animType = AnimationType.CENTER;
 
   private boolean autoHide, modal, showing;
 
@@ -69,6 +235,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   private String desiredHeight;
 
   private String desiredWidth;
+
+  private boolean isAnimationEnabled = true;
 
   // the left style attribute in pixels
   private int leftPosition = -1;
@@ -83,12 +251,16 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * is shown.
    */
   public PopupPanel() {
-    super(impl.createElement());
+    super();
+    DOM.appendChild(super.getContainerElement(), impl.createElement());
 
     // Default position of popup should be in the upper-left corner of the
     // window. By setting a default position, the popup will not appear in
     // an undefined location if it is shown before its position is set.
     setPopupPosition(0, 0);
+    setStyleName(DEFAULT_STYLENAME);
+    setStyleName(getContainerElement(), "content");
+    DOM.setStyleAttribute(getElement(), "overflow", "hidden");
   }
 
   /**
@@ -128,9 +300,11 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    */
   public void center() {
     boolean initiallyShowing = showing;
-
+    boolean initiallyAnimated = isAnimationEnabled;
+    
     if (!initiallyShowing) {
       setVisible(false);
+      setAnimationEnabled(false);
       show();
     }
 
@@ -139,7 +313,10 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     setPopupPosition(Window.getScrollLeft() + left, Window.getScrollTop() + top);
 
     if (!initiallyShowing) {
+      hide();
       setVisible(true);
+      setAnimationEnabled(initiallyAnimated);
+      show();
     }
   }
 
@@ -194,6 +371,13 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    */
   public void hide() {
     hide(false);
+  }
+
+  /**
+   * @see HasAnimation#isAnimationEnabled()
+   */
+  public boolean isAnimationEnabled() {
+    return isAnimationEnabled;
   }
 
   public boolean onEventPreview(Event event) {
@@ -299,10 +483,17 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
+   * @see HasAnimation#setAnimationEnabled(boolean)
+   */
+  public void setAnimationEnabled(boolean enable) {
+    isAnimationEnabled = enable;
+  }
+
+  /**
    * Sets the height of the panel's child widget. If the panel's child widget
    * has not been set, the height passed in will be cached and used to set the
    * height immediately after the child widget is set.
-   *
+   * 
    * <p>
    * Note that subclasses may have a different behavior. A subclass may decide
    * not to change the height of the child widget. It may instead decide to
@@ -410,7 +601,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * Sets the width of the panel's child widget. If the panel's child widget has
    * not been set, the width passed in will be cached and used to set the width
    * immediately after the child widget is set.
-   *
+   * 
    * <p>
    * Note that subclasses may have a different behavior. A subclass may decide
    * not to change the width of the child widget. It may instead decide to
@@ -440,26 +631,15 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     showing = true;
     DOM.addEventPreview(this);
 
-    // Set the position attribute, and then attach to the DOM. Otherwise,
-    // the PopupPanel will appear to 'jump' from its static/relative position
-    // to its absolute position (issue #1231).
-    DOM.setStyleAttribute(getElement(), "position", "absolute");
-    if (topPosition != -1) {
-      setPopupPosition(leftPosition, topPosition);
+    if (resizeAnimation == null) {
+      resizeAnimation = new ResizeAnimation();
     }
-    RootPanel.get().add(this);
-
-    impl.onShow(getElement());
+    resizeAnimation.setOpen(this);
   }
 
   @Override
   protected Element getContainerElement() {
-    return impl.getContainerElement(getElement());
-  }
-
-  @Override
-  protected Element getStyleElement() {
-    return impl.getContainerElement(getElement());
+    return impl.getContainerElement(DOM.getFirstChild(super.getContainerElement()));
   }
 
   /**
@@ -471,6 +651,15 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   protected void onDetach() {
     DOM.removeEventPreview(this);
     super.onDetach();
+  }
+
+  /**
+   * Enable or disable animation of the {@link PopupPanel}.
+   * 
+   * @param type the type of animation to use
+   */
+  protected void setAnimationType(AnimationType type) {
+    animType = type;
   }
 
   /**
@@ -490,8 +679,13 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     }
     showing = false;
 
-    RootPanel.get().remove(this);
-    impl.onHide(getElement());
+    // Hide the popup
+    if (resizeAnimation == null) {
+      resizeAnimation = new ResizeAnimation();
+    }
+    resizeAnimation.setOpen(this);
+
+    // Fire the event listeners
     if (popupListeners != null) {
       popupListeners.firePopupClosed(this, autoClosed);
     }

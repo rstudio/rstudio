@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.animation.WidgetAnimation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,91 @@ import java.util.List;
  * </p>
  */
 public class TreeItem extends UIObject implements HasHTML {
+  /**
+   * An {@link WidgetAnimation} used to open the child elements. If a
+   * {@link TreeItem} is in the process of opening, it will immediately be
+   * opened and the new {@link TreeItem} will use this animation.
+   */
+  private static class TreeItemAnimation extends WidgetAnimation {
+    /**
+     * The {@link TreeItem} currently being affected.
+     */
+    private TreeItem curItem = null;
+
+    /**
+     * Whether the item is being opened or closed.
+     */
+    private boolean opening = true;
+
+    @Override
+    public void onCancel() {
+      onComplete();
+    }
+
+    @Override
+    public void onComplete() {
+      if (curItem != null) {
+        if (opening) {
+          UIObject.setVisible(curItem.childSpanElem, true);
+          onUpdate(1.0);
+          DOM.setStyleAttribute(curItem.childSpanElem, "height", "auto");
+        } else {
+          UIObject.setVisible(curItem.childSpanElem, false);
+        }
+        curItem = null;
+      }
+    }
+
+    @Override
+    public void onInstantaneousRun() {
+      UIObject.setVisible(curItem.childSpanElem, opening);
+      curItem = null;
+    }
+
+    @Override
+    public void onStart() {
+      onUpdate(0.0);
+      if (opening) {
+        UIObject.setVisible(curItem.childSpanElem, true);
+      }
+    }
+
+    @Override
+    public void onUpdate(double progress) {
+      int scrollHeight = DOM.getElementPropertyInt(curItem.childSpanElem,
+          "scrollHeight");
+      int height = (int) (progress * scrollHeight);
+      if (!opening) {
+        height = scrollHeight - height;
+      }
+      DOM.setStyleAttribute(curItem.childSpanElem, "height", height + "px");
+    }
+
+    /**
+     * Open the specified {@link TreeItem}.
+     * 
+     * @param item the {@link TreeItem} to open
+     * @param animate true to animate, false to open instantly
+     */
+    public void setItemState(TreeItem item, boolean animate) {
+      // Immediately complete previous open
+      cancel();
+
+      // Open the new item
+      curItem = item;
+      opening = item.open;
+      if (animate) {
+        run(350);
+      } else {
+        onInstantaneousRun();
+      }
+    }
+  }
+
+  /**
+   * The static animation used to open {@link TreeItem}s.
+   */
+  private static TreeItemAnimation itemAnimation;
 
   private ArrayList<TreeItem> children = new ArrayList<TreeItem>();
   private Element itemTable, contentElem, childSpanElem;
@@ -48,17 +134,17 @@ public class TreeItem extends UIObject implements HasHTML {
     setElement(DOM.createDiv());
     itemTable = DOM.createTable();
     contentElem = DOM.createSpan();
-    childSpanElem = DOM.createSpan();
+    childSpanElem = DOM.createDiv();
 
     // Uses the following Element hierarchy:
     // <div (handle)>
-    //  <table (itemElem)>
-    //   <tr>
-    //    <td><img (imgElem)/></td>
-    //    <td><span (contents)/></td>
-    //   </tr>
-    //  </table>
-    //  <span (childSpanElem)> children </span>
+    // <table (itemElem)>
+    // <tr>
+    // <td><img (imgElem)/></td>
+    // <td><span (contents)/></td>
+    // </tr>
+    // </table>
+    // <div (childSpanElem)> children </div>
     // </div>
 
     Element tbody = DOM.createTBody(), tr = DOM.createTR();
@@ -78,6 +164,7 @@ public class TreeItem extends UIObject implements HasHTML {
     DOM.setStyleAttribute(contentElem, "display", "inline");
     DOM.setStyleAttribute(getElement(), "whiteSpace", "nowrap");
     DOM.setStyleAttribute(childSpanElem, "whiteSpace", "nowrap");
+    DOM.setStyleAttribute(childSpanElem, "overflow", "hidden");
     setStyleName(contentElem, "gwt-TreeItem", true);
   }
 
@@ -137,7 +224,7 @@ public class TreeItem extends UIObject implements HasHTML {
     item.setTree(tree);
 
     if (children.size() == 1) {
-      updateState();
+      updateState(false);
     }
   }
 
@@ -288,7 +375,7 @@ public class TreeItem extends UIObject implements HasHTML {
     children.remove(item);
 
     if (children.size() == 0) {
-      updateState();
+      updateState(false);
     }
   }
 
@@ -341,8 +428,11 @@ public class TreeItem extends UIObject implements HasHTML {
       return;
     }
 
-    this.open = open;
-    updateState();
+    // Only do the physical update if it changes
+    if (this.open != open) {
+      this.open = open;
+      updateState(true);
+    }
 
     if (fireEvents && tree != null) {
       tree.fireStateChanged(this);
@@ -458,7 +548,7 @@ public class TreeItem extends UIObject implements HasHTML {
   Element getImageElement() {
     return statusImage.getElement();
   }
- 
+
   void setParentItem(TreeItem parent) {
     this.parent = parent;
   }
@@ -484,7 +574,7 @@ public class TreeItem extends UIObject implements HasHTML {
     for (int i = 0, n = children.size(); i < n; ++i) {
       children.get(i).setTree(newTree);
     }
-    updateState();
+    updateState(false);
 
     if (newTree != null) {
       if (widget != null) {
@@ -494,7 +584,7 @@ public class TreeItem extends UIObject implements HasHTML {
     }
   }
 
-  void updateState() {
+  void updateState(boolean animate) {
     // If the tree hasn't been set, there is no visual state to update.
     if (tree == null) {
       return;
@@ -510,17 +600,25 @@ public class TreeItem extends UIObject implements HasHTML {
 
     // We must use 'display' rather than 'visibility' here,
     // or the children will always take up space.
+    if (itemAnimation == null) {
+      itemAnimation = new TreeItemAnimation();
+    }
+    if (animate && (tree != null) && (tree.isAttached())) {
+      itemAnimation.setItemState(this, tree.isAnimationEnabled());
+    } else {
+      itemAnimation.setItemState(this, false);
+    }
+
+    // Change the status image
     if (open) {
-      UIObject.setVisible(childSpanElem, true);
       images.treeOpen().applyTo(statusImage);
     } else {
-      UIObject.setVisible(childSpanElem, false);
       images.treeClosed().applyTo(statusImage);
     }
   }
 
   void updateStateRecursive() {
-    updateState();
+    updateState(false);
     for (int i = 0, n = children.size(); i < n; ++i) {
       children.get(i).updateStateRecursive();
     }

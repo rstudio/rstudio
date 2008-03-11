@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
 /**
@@ -30,7 +31,11 @@ import com.google.gwt.user.client.Event;
  * <ul class='css'>
  * <li>.gwt-DialogBox { the outside of the dialog }</li>
  * <li>.gwt-DialogBox .Caption { the caption }</li>
+ * <li>.gwt-DialogBox .content { the content }</li>
  * </ul>
+ * <p>
+ * The styles that apply to {@link DecoratorPanel} also apply to DialogBox.
+ * </p>
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.DialogBoxExample}
@@ -38,12 +43,14 @@ import com.google.gwt.user.client.Event;
  */
 public class DialogBox extends PopupPanel implements HasHTML, HasText,
     MouseListener {
-
+  /**
+   * The default style name.
+   */
+  private static final String DEFAULT_STYLENAME = "gwt-DialogBox";
+  
   private HTML caption = new HTML();
-  private Widget child;
   private boolean dragging;
   private int dragStartX, dragStartY;
-  private FlexTable panel = new FlexTable();
 
   /**
    * Creates an empty dialog box. It should not be shown until its child widget
@@ -77,20 +84,17 @@ public class DialogBox extends PopupPanel implements HasHTML, HasText,
    */
   public DialogBox(boolean autoHide, boolean modal) {
     super(autoHide, modal);
-    panel.setWidget(0, 0, caption);
-    panel.setHeight("100%");
-    panel.setBorderWidth(0);
-    panel.setCellPadding(0);
-    panel.setCellSpacing(0);
-    panel.getCellFormatter().setHeight(1, 0, "100%");
-    panel.getCellFormatter().setWidth(1, 0, "100%");
-    panel.getCellFormatter().setAlignment(1, 0,
-        HasHorizontalAlignment.ALIGN_CENTER, HasVerticalAlignment.ALIGN_MIDDLE);
-    super.setWidget(panel);
 
-    setStyleName("gwt-DialogBox");
+    // Add the caption to the top row of the decorator panel.  We need to
+    // logically adopt the caption so we can catch mouse events. 
+    Element td = getCellElement(0, 1);
+    DOM.appendChild(td, caption.getElement());
+    adopt(caption);
     caption.setStyleName("Caption");
     caption.addMouseListener(this);
+
+    // Set the style name
+    setStyleName(DEFAULT_STYLENAME);
   }
 
   public String getHTML() {
@@ -99,11 +103,6 @@ public class DialogBox extends PopupPanel implements HasHTML, HasText,
 
   public String getText() {
     return caption.getText();
-  }
-
-  @Override
-  public Widget getWidget() {
-    return child;
   }
 
   @Override
@@ -144,16 +143,6 @@ public class DialogBox extends PopupPanel implements HasHTML, HasText,
   public void onMouseUp(Widget sender, int x, int y) {
     dragging = false;
     DOM.releaseCapture(caption.getElement());
-  }
-
-  @Override
-  public boolean remove(Widget w) {
-    if (child != w) {
-      return false;
-    }
-
-    panel.remove(w);
-    return true;
   }
 
   /**
@@ -197,27 +186,31 @@ public class DialogBox extends PopupPanel implements HasHTML, HasText,
   public void setText(String text) {
     caption.setText(text);
   }
+  
+  @Override
+  protected void doAttachChildren() {
+    super.doAttachChildren();
+    
+    // See comment in doDetachChildren for an explanation of this call
+    caption.onAttach();
+  }
 
   @Override
-  public void setWidget(Widget w) {
-    // If there is already a widget, remove it.
-    if (child != null) {
-      panel.remove(child);
-    }
-
-    // Add the widget to the center of the cell.
-    if (w != null) {
-      panel.setWidget(1, 0, w);
-    }
-
-    child = w;
+  protected void doDetachChildren() {
+    super.doDetachChildren();
+    
+    // We need to detach the caption specifically because it is not part of the
+    // iterator of Widgets that the {@link SimplePanel} super class returns.
+    // This is similar to a {@link ComplexPanel}, but we do not want to expose
+    // the caption widget, as its just an internal implementation.
+    caption.onDetach();
   }
 
   /**
    * <b>Affected Elements:</b>
    * <ul>
    * <li>-caption = text at the top of the {@link DialogBox}.</li>
-   * <li>-content = the table cell around the content.</li>
+   * <li>-content = the container around the content.</li>
    * </ul>
    * 
    * @see UIObject#onEnsureDebugId(String)
@@ -226,6 +219,6 @@ public class DialogBox extends PopupPanel implements HasHTML, HasText,
   protected void onEnsureDebugId(String baseID) {
     super.onEnsureDebugId(baseID);
     caption.ensureDebugId(baseID + "-caption");
-    ensureDebugId(panel.getCellFormatter().getElement(1, 0), baseID, "content");
+    ensureDebugId(getContainerElement(), baseID, "content");
   }
 }

@@ -45,7 +45,7 @@ import java.util.Map;
  * </p>
  */
 public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
-    HasFocus {
+    HasFocus, HasAnimation {
 
   /**
    * Provides images to support the the deprecated case where a url prefix is
@@ -118,6 +118,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   private final Element focusable;
   private FocusListenerCollection focusListeners;
   private TreeImages images;
+  private boolean isAnimationEnabled = true;
   private KeyboardListenerCollection keyboardListeners;
   private TreeListenerCollection listeners;
   private MouseListenerCollection mouseListeners = null;
@@ -335,6 +336,13 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return FocusPanel.impl.getTabIndex(focusable);
   }
 
+  /**
+   * @see HasAnimation#isAnimationEnabled()
+   */
+  public boolean isAnimationEnabled() {
+    return isAnimationEnabled;
+  }
+
   public Iterator<Widget> iterator() {
     final Widget[] widgets = new Widget[childWidgets.size()];
     childWidgets.keySet().toArray(widgets);
@@ -450,7 +458,11 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
               break;
             }
             case KeyboardListener.KEY_LEFT: {
-              if (curSelection.getState()) {
+              TreeItem topClosedParent = getTopClosedParent(curSelection);
+              if (topClosedParent != null) {
+                // Select the first visible parent if curSelection is hidden
+                setSelectedItem(topClosedParent);
+              } else if (curSelection.getState()) {
                 curSelection.setState(false);
               } else {
                 TreeItem parent = curSelection.getParentItem();
@@ -462,7 +474,11 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
               break;
             }
             case KeyboardListener.KEY_RIGHT: {
-              if (!curSelection.getState()) {
+              TreeItem topClosedParent = getTopClosedParent(curSelection);
+              if (topClosedParent != null) {
+                // Select the first visible parent if curSelection is hidden
+                setSelectedItem(topClosedParent);
+              } else if (!curSelection.getState()) {
                 curSelection.setState(true);
               } else if (curSelection.getChildCount() > 0) {
                 setSelectedItem(curSelection.getChild(0));
@@ -552,6 +568,13 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   public void setAccessKey(char key) {
     FocusPanel.impl.setAccessKey(focusable, key);
+  }
+
+  /**
+   * @see HasAnimation#setAnimationEnabled(boolean)
+   */
+  public void setAnimationEnabled(boolean enable) {
+    isAnimationEnabled = enable;
   }
 
   public void setFocus(boolean focus) {
@@ -765,6 +788,25 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   /**
+   * Get the top parent above this {@link TreeItem} that is in closed state.  In
+   * other words, get the parent that is guaranteed to be visible.
+   * 
+   * @param item
+   * @return the closed parent, or null if all parents are opened
+   */
+  private TreeItem getTopClosedParent(TreeItem item) {
+    TreeItem topClosedParent = null;
+    TreeItem parent = item.getParentItem();
+    while (parent != null && parent != root) {
+      if (!parent.getState()) {
+        topClosedParent = parent;
+      }
+      parent = parent.getParentItem();
+    }
+    return topClosedParent;
+  }
+  
+  /**
    * Move the tree focus to the specified selected item.
    * 
    * @param selection
@@ -786,6 +828,13 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
       int width = DOM.getElementPropertyInt(selectedElem, "offsetWidth");
       int height = DOM.getElementPropertyInt(selectedElem, "offsetHeight");
 
+      // If the item is not visible, quite here
+      if (width == 0 || height == 0) {
+        DOM.setIntStyleAttribute(focusable, "left", 0);
+        DOM.setIntStyleAttribute(focusable, "top", 0);
+        return;
+      }
+      
       // Set the focusable element's position and size to exactly underlap the
       // item's content element.
       DOM.setIntStyleAttribute(focusable, "left", left);
@@ -810,6 +859,13 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
       return;
     }
 
+    // Find a parent that is visible
+    TreeItem topClosedParent = getTopClosedParent(sel);
+    if (topClosedParent != null) {
+      moveSelectionDown(topClosedParent, false);
+      return;
+    }
+    
     TreeItem parent = sel.getParentItem();
     if (parent == null) {
       parent = root;
@@ -831,6 +887,13 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    * Moves the selected item up one.
    */
   private void moveSelectionUp(TreeItem sel) {
+    // Find a parent that is visible
+    TreeItem topClosedParent = getTopClosedParent(sel);
+    if (topClosedParent != null) {
+      onSelection(topClosedParent, true, true);
+      return;
+    }
+    
     TreeItem parent = sel.getParentItem();
     if (parent == null) {
       parent = root;
