@@ -29,7 +29,6 @@ import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.GWTRunner;
 import com.google.gwt.junit.client.impl.JUnitResult;
-import com.google.gwt.junit.remote.BrowserManager;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
 
@@ -37,7 +36,6 @@ import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 
-import java.rmi.Naming;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -139,7 +137,7 @@ public class JUnitShell extends GWTShell {
   /**
    * Entry point for {@link com.google.gwt.junit.client.GWTTestCase}. Gets or
    * creates the singleton {@link JUnitShell} and invokes its {@link
-   * #runTestImpl(String, TestCase, TestResult)}.
+   * #runTestImpl(String, TestCase, TestResult, Strategy)}.
    */
   public static void runTest(String moduleName, TestCase testCase,
       TestResult testResult) throws UnableToCompleteException {
@@ -267,21 +265,10 @@ public class JUnitShell extends GWTShell {
 
       @Override
       public boolean setString(String str) {
-        try {
-          String[] urls = str.split(",");
-          numClients = urls.length;
-          BrowserManager[] browserManagers = new BrowserManager[numClients];
-          for (int i = 0; i < numClients; ++i) {
-            browserManagers[i] = (BrowserManager) Naming.lookup(urls[i]);
-          }
-          runStyle = new RunStyleRemoteWeb(JUnitShell.this, browserManagers);
-        } catch (Exception e) {
-          System.err.println("Error connecting to browser manager at " + str);
-          e.printStackTrace();
-          System.exit(1);
-          return false;
-        }
-        return true;
+        String[] urls = str.split(",");
+        numClients = urls.length;
+        runStyle = RunStyleRemoteWeb.create(JUnitShell.this, urls);
+        return runStyle != null;
       }
     });
 
