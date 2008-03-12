@@ -76,6 +76,11 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
      * The {@link PopupPanel} being affected.
      */
     private PopupPanel curPanel = null;
+    
+    /**
+     * A boolean indicating whether we are showing or hiding the popup.
+     */
+    private boolean showing = false;
 
     @Override
     public void onCancel() {
@@ -84,7 +89,7 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
 
     @Override
     public void onComplete() {
-      if (!curPanel.showing) {
+      if (!showing) {
         RootPanel.get().remove(curPanel);
         impl.onHide(curPanel.getElement());
       }
@@ -94,7 +99,7 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
 
     @Override
     public void onInstantaneousRun() {
-      if (curPanel.showing) {
+      if (showing) {
         // Set the position attribute, and then attach to the DOM. Otherwise,
         // the PopupPanel will appear to 'jump' from its static/relative
         // position to its absolute position (issue #1231).
@@ -114,7 +119,7 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
     @Override
     public void onStart() {
       // Attach to the page
-      if (curPanel.showing) {
+      if (showing) {
         // Set the position attribute, and then attach to the DOM. Otherwise,
         // the PopupPanel will appear to 'jump' from its static/relative
         // position to its absolute position (issue #1231).
@@ -133,7 +138,7 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
 
     @Override
     public void onUpdate(double progress) {
-      if (!curPanel.showing) {
+      if (!showing) {
         progress = 1.0 - progress;
       }
 
@@ -174,6 +179,7 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
       }
 
       // Open the new item
+      showing = panel.showing;
       curPanel = panel;
       if (animate) {
         run(200);
