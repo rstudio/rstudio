@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,10 +18,9 @@ package com.google.gwt.emultest.java.lang;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * This class tests StringBuffer.
+ * This class tests classes StringBuffer and StringBuilder.
  */
 public class StringBufferTest extends GWTTestCase {
-
   /**
    * This method gets the module name.
    * 
@@ -66,6 +65,23 @@ public class StringBufferTest extends GWTTestCase {
     x = new StringBuffer();
     x.append((String) null);
     assertEquals("null", x.toString());
+    x = new StringBuffer();
+    x.append((CharSequence) "abc");
+    assertEquals("abc", x.toString());
+    x = new StringBuffer();
+    x.append((CharSequence) "abcde", 2, 3);
+    assertEquals("c", x.toString());
+  }
+
+  /**
+   * Check that capacity methods are present, even though
+   * they do nothing.
+   */
+  public void testCapacity() {
+    StringBuffer buf = new StringBuffer();
+    buf.ensureCapacity(100);
+    assertTrue(buf.capacity() >= 0);
+    buf.trimToSize();
   }
 
   /**
@@ -82,6 +98,7 @@ public class StringBufferTest extends GWTTestCase {
     String constant = "abcdef";
     assertEquals(new StringBuffer(constant).toString(), constant);
     assertEquals(new StringBuffer().toString(), "");
+    assertEquals(new StringBuffer((CharSequence) constant).toString(), constant);
   }
 
   /**
@@ -149,6 +166,12 @@ public class StringBufferTest extends GWTTestCase {
     x = new StringBuffer("!");
     x.insert(1, C.CHAR_ARRAY_VALUE, 1, 4);
     assertEquals("!" + C.CHAR_ARRAY_STRING.substring(1, 5), x.toString());
+    x = new StringBuffer("01234");
+    x.insert(2, (CharSequence) "abcde");
+    assertEquals("01abcde234", x.toString());
+    x = new StringBuffer("01234");
+    x.insert(2, (CharSequence) "abcde", 2, 4);
+    assertEquals("01cd234", x.toString());
     x = new StringBuffer("!");
     x.insert(1, C.FALSE_VALUE);
     assertEquals("!" + C.FALSE_STRING, x.toString());
@@ -272,7 +295,195 @@ public class StringBufferTest extends GWTTestCase {
   }
 
   /**
-   * This method tests <code>ubstring</code>.
+   * A smoke test that StringBuilder's methods are available and basically work.
+   * The implementation is currently shared with StringBuffer, so all the tricky
+   * test cases are not repeated.
+   */
+  public void testStringBuilder() {
+    StringBuilder bld = new StringBuilder();
+    bld = new StringBuilder(100);
+    bld = new StringBuilder("abc");
+    assertEquals("abc", bld.toString());
+
+    bld = new StringBuilder((CharSequence) "abc");
+    assertEquals("abc", bld.toString());
+
+    bld = new StringBuilder();
+    bld.append(true);
+    assertEquals("true", bld.toString());
+
+    bld = new StringBuilder();
+    bld.append('a');
+    assertEquals("a", bld.toString());
+
+    bld = new StringBuilder();
+    char[] abcde = {'a', 'b', 'c', 'd', 'e'};
+    bld.append(abcde);
+    assertEquals("abcde", bld.toString());
+
+    bld = new StringBuilder();
+    bld.append(abcde, 1, 3);
+    assertEquals("bcd", bld.toString());
+
+    bld = new StringBuilder();
+    bld.append((CharSequence) "abcde");
+    assertEquals("abcde", bld.toString());
+
+    bld = new StringBuilder();
+    bld.append((CharSequence) "abcde", 2, 4);
+    assertEquals("cd", bld.toString());
+
+    bld = new StringBuilder();
+    bld.append(1.0);
+    assertEquals("1.0", bld.toString());
+
+    bld = new StringBuilder();
+    bld.append(1.0F);
+    assertEquals("1.0", bld.toString());
+
+    bld = new StringBuilder();
+    bld.append(5);
+    assertEquals("5", bld.toString());
+
+    bld = new StringBuilder();
+    bld.append(5L);
+    assertEquals("5", bld.toString());
+
+    bld = new StringBuilder();
+    bld.append(new Object() {
+      public String toString() {
+        return "obj";
+      }
+    });
+    assertEquals("obj", bld.toString());
+
+    bld = new StringBuilder();
+    bld.append("abc");
+    assertEquals("abc", bld.toString());
+
+    bld = new StringBuilder();
+    bld.append(new StringBuffer("abc"));
+    assertEquals("abc", bld.toString());
+
+    bld = new StringBuilder();
+    bld.append("abcde");
+    assertEquals('c', bld.charAt(2));
+
+    bld = new StringBuilder();
+    bld.append("abcde");
+    bld.delete(1, 2);
+    assertEquals("acde", bld.toString());
+
+    bld = new StringBuilder();
+    bld.append("abcde");
+    bld.deleteCharAt(2);
+    assertEquals("abde", bld.toString());
+
+    // check that capacity methods are present
+    bld = new StringBuilder();
+    assertTrue(bld.capacity() >= 0);
+    bld.ensureCapacity(100);
+    bld.trimToSize();
+
+    bld = new StringBuilder();
+    bld.append("abcde");
+    char[] chars = {'0', '0', '0', '0', '0'};
+    bld.getChars(2, 4, chars, 2);
+    assertEquals('0', chars[0]);
+    assertEquals('0', chars[1]);
+    assertEquals('c', chars[2]);
+    assertEquals('d', chars[3]);
+    assertEquals('0', chars[4]);
+
+    bld = new StringBuilder("01234");
+    assertEquals(2, bld.indexOf("23"));
+
+    bld = new StringBuilder();
+    bld.append("0123401234");
+    assertEquals(5, bld.indexOf("0123", 1));
+
+    bld = new StringBuilder("01234");
+    bld.insert(2, true);
+    assertEquals("01true234", bld.toString());
+
+    bld = new StringBuilder("01234");
+    bld.insert(2, 'X');
+    assertEquals("01X234", bld.toString());
+
+    bld = new StringBuilder("01234");
+    char[] chars2 = {'a', 'b', 'c', 'd', 'e'};
+    bld.insert(2, chars2, 3, 2);
+    assertEquals("01de234", bld.toString());
+
+    bld = new StringBuilder("01234");
+    bld.insert(2, (CharSequence) "abcde");
+    assertEquals("01abcde234", bld.toString());
+
+    bld = new StringBuilder("01234");
+    bld.insert(2, (CharSequence) "abcde", 2, 4);
+    assertEquals("01cd234", bld.toString());
+
+    bld = new StringBuilder("01234");
+    bld.insert(2, 1.0);
+    assertEquals("011.0234", bld.toString());
+
+    bld = new StringBuilder("01234");
+    bld.insert(2, 1.0F);
+    assertEquals("011.0234", bld.toString());
+
+    bld = new StringBuilder("01234");
+    bld.insert(2, 99);
+    assertEquals("0199234", bld.toString());
+
+    bld = new StringBuilder("01234");
+    bld.insert(2, 99L);
+    assertEquals("0199234", bld.toString());
+
+    bld = new StringBuilder("01234");
+    bld.insert(2, new Object() {
+      public String toString() {
+        return "obj";
+      }
+    });
+    assertEquals("01obj234", bld.toString());
+
+    bld = new StringBuilder("01234");
+    bld.insert(2, "XX");
+    assertEquals("01XX234", bld.toString());
+
+    bld = new StringBuilder("0123401234");
+    assertEquals(5, bld.lastIndexOf("0123"));
+
+    bld = new StringBuilder("0123401234");
+    assertEquals(0, bld.lastIndexOf("0123", 4));
+
+    bld = new StringBuilder("01234");
+    assertEquals(5, bld.length());
+
+    bld = new StringBuilder("01234");
+    bld.replace(2, 3, "XYZ");
+    assertEquals("01XYZ34", bld.toString());
+
+    bld = new StringBuilder("01234");
+    bld.setCharAt(2, 'X');
+    assertEquals("01X34", bld.toString());
+
+    bld = new StringBuilder("01234");
+    bld.setLength(2);
+    assertEquals("01", bld.toString());
+
+    bld = new StringBuilder("01234");
+    assertEquals("23", bld.subSequence(2, 4));
+
+    bld = new StringBuilder("01234");
+    assertEquals("234", bld.substring(2));
+
+    bld = new StringBuilder("01234");
+    assertEquals("23", bld.substring(2, 4));
+  }
+
+  /**
+   * This method tests <code>substring</code>.
    */
   public void testSubstring() {
     StringBuffer haystack = new StringBuffer("abcdefghi");
