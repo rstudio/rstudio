@@ -84,6 +84,11 @@ public abstract class Animation {
       anim.duration = duration;
       anim.startTime = startTime;
 
+      // Start synchronously if start time has passed
+      if (anim.update((new Date()).getTime())) {
+        return;
+      }
+
       // Add to the list of animations
       if (animations == null) {
         animations = new ArrayList<Animation>();

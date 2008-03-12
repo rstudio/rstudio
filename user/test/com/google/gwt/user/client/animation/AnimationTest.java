@@ -67,62 +67,6 @@ public class AnimationTest extends GWTTestCase {
   }
 
   /**
-   * Test general functionality.
-   */
-  public void testRun() {
-    final TestAnimation animNow = new TestAnimation();
-    final TestAnimation animPast = new TestAnimation();
-    final TestAnimation animFuture = new TestAnimation();
-
-    // Run animations
-    long curTime = (new Date()).getTime();
-    animNow.run(300);
-    animPast.run(300, curTime - 150);
-    animFuture.run(300, curTime + 150);
-
-    // Check progress
-    new Timer() {
-      @Override
-      public void run() {
-        assertTrue(animNow.started);
-        assertFalse(animNow.completed);
-        assertTrue(animNow.curProgress > 0.0 && animNow.curProgress <= 2.0);
-
-        assertTrue(animPast.started);
-        assertFalse(animPast.completed);
-        assertTrue(animPast.curProgress > 0.0 && animPast.curProgress <= 1.0);
-
-        assertFalse(animFuture.started);
-        assertFalse(animFuture.completed);
-        assertEquals(-1.0, animFuture.curProgress);
-      }
-    }.schedule(50);
-
-    // Check progress
-    new Timer() {
-      @Override
-      public void run() {
-        assertTrue(animNow.started);
-        assertTrue(animNow.completed);
-        assertTrue(animNow.curProgress > 0.0 && animNow.curProgress <= 1.0);
-
-        assertTrue(animPast.started);
-        assertTrue(animPast.completed);
-        assertTrue(animPast.curProgress > 0.0 && animPast.curProgress <= 1.0);
-
-        assertTrue(animFuture.started);
-        assertFalse(animFuture.completed);
-        assertTrue(animFuture.curProgress > 0.0
-            && animFuture.curProgress <= 1.0);
-        finishTest();
-      }
-    }.schedule(350);
-
-    // Wait for the test to finish
-    delayTestFinish(500);
-  }
-
-  /**
    * Test canceling an {@link Animation} before it starts.
    */
   public void testCancelBeforeStarted() {
@@ -230,5 +174,102 @@ public class AnimationTest extends GWTTestCase {
 
     // Wait for test to finish
     delayTestFinish(200);
+  }
+
+  /**
+   * Test that an animation runs synchronously if its duration is 0.
+   */
+  public void testNoDelay() {
+    final TestAnimation animNow = new TestAnimation();
+    final TestAnimation animPast = new TestAnimation();
+    final TestAnimation animFuture = new TestAnimation();
+  
+    // Run animations
+    long curTime = (new Date()).getTime();
+    animNow.run(0);
+    animPast.run(0, curTime - 150);
+    animFuture.run(0, curTime + 150);
+    
+    // Test synchronous start
+    assertTrue(animNow.started);
+    assertTrue(animNow.completed);
+    assertEquals(-1.0, animNow.curProgress);
+  
+    assertTrue(animPast.started);
+    assertTrue(animPast.completed);
+    assertEquals(-1.0, animFuture.curProgress);
+  
+    assertFalse(animFuture.started);
+    assertFalse(animFuture.completed);
+    assertEquals(-1.0, animFuture.curProgress);
+  }
+
+  /**
+   * Test general functionality.
+   */
+  public void testRun() {
+    final TestAnimation animNow = new TestAnimation();
+    final TestAnimation animPast = new TestAnimation();
+    final TestAnimation animFuture = new TestAnimation();
+  
+    // Run animations
+    long curTime = (new Date()).getTime();
+    animNow.run(300);
+    animPast.run(300, curTime - 150);
+    animFuture.run(300, curTime + 150);
+  
+    // Test synchronous start
+    assertTrue(animNow.started);
+    assertFalse(animNow.completed);
+    assertTrue(animNow.curProgress >= 0.0 && animNow.curProgress <= 2.0);
+
+    assertTrue(animPast.started);
+    assertFalse(animPast.completed);
+    assertTrue(animPast.curProgress > 0.0 && animPast.curProgress <= 1.0);
+
+    assertFalse(animFuture.started);
+    assertFalse(animFuture.completed);
+    assertEquals(-1.0, animFuture.curProgress);
+    
+    // Check progress
+    new Timer() {
+      @Override
+      public void run() {
+        assertTrue(animNow.started);
+        assertFalse(animNow.completed);
+        assertTrue(animNow.curProgress > 0.0 && animNow.curProgress <= 2.0);
+  
+        assertTrue(animPast.started);
+        assertFalse(animPast.completed);
+        assertTrue(animPast.curProgress > 0.0 && animPast.curProgress <= 1.0);
+  
+        assertFalse(animFuture.started);
+        assertFalse(animFuture.completed);
+        assertEquals(-1.0, animFuture.curProgress);
+      }
+    }.schedule(50);
+  
+    // Check progress
+    new Timer() {
+      @Override
+      public void run() {
+        assertTrue(animNow.started);
+        assertTrue(animNow.completed);
+        assertTrue(animNow.curProgress > 0.0 && animNow.curProgress <= 1.0);
+  
+        assertTrue(animPast.started);
+        assertTrue(animPast.completed);
+        assertTrue(animPast.curProgress > 0.0 && animPast.curProgress <= 1.0);
+  
+        assertTrue(animFuture.started);
+        assertFalse(animFuture.completed);
+        assertTrue(animFuture.curProgress > 0.0
+            && animFuture.curProgress <= 1.0);
+        finishTest();
+      }
+    }.schedule(350);
+  
+    // Wait for the test to finish
+    delayTestFinish(500);
   }
 }
