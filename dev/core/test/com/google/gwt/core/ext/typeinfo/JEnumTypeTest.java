@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,10 +53,15 @@ public class JEnumTypeTest extends TestCase {
     JEnumConstant[] enumConstants = enumType.getEnumConstants();
     assertEquals(3, enumConstants.length);
 
-    for (JEnumConstant enumConstant : enumConstants) {
-      assertEquals(
-          Integer.parseInt(enumConstant.getName().substring(3)),
-          enumConstant.getOrdinal());
+    for (int i = 0; i < enumConstants.length; ++i) {
+      JEnumConstant enumConstant = enumConstants[i];
+      // Check the ordinal
+      assertEquals(i, enumConstant.getOrdinal());
+
+      // Check that the name matches what reflection expects at the current
+      // ordinal.
+      assertEquals(MyEnum.class.getEnumConstants()[i].name(),
+          enumConstant.getName());
     }
   }
 

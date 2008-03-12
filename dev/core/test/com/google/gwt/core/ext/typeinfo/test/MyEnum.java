@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,18 +18,16 @@ package com.google.gwt.core.ext.typeinfo.test;
 /**
  * Enumerated type used in the
  * {@link com.google.gwt.core.ext.typeinfo.JEnumTypeTest}.
- * 
- * NOTE: do not reorder the enumerated values
  */
 public enum MyEnum {
-  @Deprecated
-  VAL0(-1) {
+  
+  VAL2(-3) {
     @Override
     public int getId() {
       return instanceField;
     }
   },
-  
+
   VAL1(-2) {
     @Override
     public int getId() {
@@ -37,7 +35,8 @@ public enum MyEnum {
     }
   },
 
-  VAL2(-3) {
+  @Deprecated
+  VAL0(-1) {
     @Override
     public int getId() {
       return instanceField;
