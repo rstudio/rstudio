@@ -55,14 +55,15 @@ import com.google.gwt.dev.js.ast.JsSwitchMember;
 import com.google.gwt.dev.js.ast.JsThisRef;
 import com.google.gwt.dev.js.ast.JsThrow;
 import com.google.gwt.dev.js.ast.JsUnaryOperation;
+import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
+import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -155,6 +156,12 @@ public class JsInliner {
     @Override
     public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
       if (isComma(x) == null) {
+        return;
+      }
+
+      // If (X, a) and X has no side effects, replace with a
+      if (!hasSideEffects(x.getArg1())) {
+        ctx.replaceMe(x.getArg2());
         return;
       }
 
@@ -675,6 +682,7 @@ public class JsInliner {
   private static class InliningVisitor extends JsModVisitor {
     private final Set<JsFunction> blacklist = new HashSet<JsFunction>();
     private final Stack<JsFunction> functionStack = new Stack<JsFunction>();
+    private final Stack<List<JsName>> newLocalVariableStack = new Stack<List<JsName>>();
     private final JsProgram program;
 
     public InliningVisitor(JsProgram program) {
@@ -775,10 +783,40 @@ public class JsInliner {
       if (!functionStack.pop().equals(x)) {
         throw new InternalCompilerException("Unexpected function popped");
       }
+
+      List<JsName> newLocalVariables = newLocalVariableStack.pop();
+
+      // Nothing to do
+      if (newLocalVariables.isEmpty()) {
+        return;
+      }
+
+      List<JsStatement> statements = x.getBody().getStatements();
+
+      // The body can't be empty if we have local variables to create
+      assert !statements.isEmpty();
+
+      // Find or create the JsVars as the first statement
+      JsVars vars;
+      if (statements.get(0) instanceof JsVars) {
+        vars = (JsVars) statements.get(0);
+      } else {
+        vars = new JsVars();
+        statements.add(0, vars);
+      }
+
+      // Add all variables
+      for (JsName name : newLocalVariables) {
+        vars.add(new JsVar(name));
+      }
     }
 
     @Override
     public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+      if (functionStack.isEmpty()) {
+        return;
+      }
+
       /*
        * We only want to look at invocations of things that we statically know
        * to be functions. Otherwise, we can't know what statements the
@@ -796,7 +834,9 @@ public class JsInliner {
         return;
       }
 
-      List<JsStatement> statements = f.getBody().getStatements();
+      List<JsName> localVariableNames = new ArrayList<JsName>();
+      List<JsStatement> statements = new ArrayList<JsStatement>(
+          f.getBody().getStatements());
       List<JsExpression> hoisted = new ArrayList<JsExpression>(
           statements.size());
 
@@ -810,7 +850,8 @@ public class JsInliner {
          * distinct objects, it would not be possible to substitute different
          * JsNameRefs at different call sites.
          */
-        JsExpression h = hoistedExpression(statement);
+        JsExpression h = hoistedExpression(program, statement,
+            localVariableNames);
         if (h == null) {
           return;
         }
@@ -857,6 +898,25 @@ public class JsInliner {
 
       // Perform the name replacement
       NameRefReplacerVisitor v = new NameRefReplacerVisitor(x, f);
+      for (ListIterator<JsName> nameIterator = localVariableNames.listIterator(); nameIterator.hasNext();) {
+        JsName name = nameIterator.next();
+
+        /*
+         * Find an unused identifier in the caller's scope. It's possible that
+         * the same function has been inlined in multiple places within the
+         * function so we'll use a counter for disambiguation.
+         */
+        String ident;
+        int count = 0;
+        JsScope scope = functionStack.peek().getScope();
+        do {
+          ident = f.getName() + "_" + name.getIdent() + "_" + count++;
+        } while (scope.findExistingName(ident) != null);
+
+        JsName newName = scope.declareName(ident, name.getShortIdent());
+        v.setReplacementName(name, newName);
+        nameIterator.set(newName);
+      }
       op = v.accept(op);
 
       // Normalize any nested comma expressions that we may have generated.
@@ -872,6 +932,9 @@ public class JsInliner {
         return;
       }
 
+      // We've committed to the inlining, ensure the vars are created
+      newLocalVariableStack.peek().addAll(localVariableNames);
+
       /*
        * See if any further inlining can be performed in the current context. By
        * attempting to maximize the level of inlining now, we can reduce the
@@ -885,6 +948,7 @@ public class JsInliner {
     @Override
     public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
       functionStack.push(x);
+      newLocalVariableStack.push(new ArrayList<JsName>());
       return true;
     }
   }
@@ -897,7 +961,12 @@ public class JsInliner {
      * Set up a map of parameter names back to the expressions that will be
      * passed in from the outer call site.
      */
-    final Map<JsName, JsExpression> paramsToArgsMap = new HashMap<JsName, JsExpression>();
+    final Map<JsName, JsExpression> paramsToArgsMap = new IdentityHashMap<JsName, JsExpression>();
+
+    /**
+     * Set up a map to record name replacements to perform.
+     */
+    final Map<JsName, JsName> nameReplacements = new IdentityHashMap<JsName, JsName>();
 
     /**
      * Constructor.
@@ -933,14 +1002,44 @@ public class JsInliner {
         return;
       }
 
-      /*
-       * TODO if we ever allow mutable JsExpression types to be considered
-       * always flexible, then it would be necessary to clone the expression.
-       */
-      JsExpression original = paramsToArgsMap.get(x.getName());
+      JsExpression replacement = tryGetReplacementExpression(x.getName());
 
-      if (original != null) {
-        ctx.replaceMe(original);
+      if (replacement != null) {
+        ctx.replaceMe(replacement);
+      }
+    }
+
+    /**
+     * Set a replacement JsName for all references to a JsName.
+     * 
+     * @param name the name to replace
+     * @param newName the new name that should be used in place of references to
+     *          <code>name</code>
+     * @return the previous JsName the name would have been replaced with or
+     *         <code>null</code> if one was not previously set
+     */
+    public JsName setReplacementName(JsName name, JsName newName) {
+      return nameReplacements.put(name, newName);
+    }
+
+    /**
+     * Determine the replacement expression to use in place of a reference to a
+     * given name. Returns <code>null</code> if no replacement has been set
+     * for the name.
+     */
+    private JsExpression tryGetReplacementExpression(JsName name) {
+      if (paramsToArgsMap.containsKey(name)) {
+        /*
+         * TODO if we ever allow mutable JsExpression types to be considered
+         * always flexible, then it would be necessary to clone the expression.
+         */
+        return paramsToArgsMap.get(name);
+
+      } else if (nameReplacements.containsKey(name)) {
+        return nameReplacements.get(name).makeRef();
+
+      } else {
+        return null;
       }
     }
   }
@@ -1271,6 +1370,9 @@ public class JsInliner {
       } else if (callerName != null && callerName.equals(calleeName)) {
         // The names are known to us and are the same
 
+      } else if (calleeName.getEnclosing().equals(calleeScope)) {
+        // It's a local variable in the callee
+
       } else {
         stable = false;
       }
@@ -1389,13 +1491,6 @@ public class JsInliner {
   }
 
   /**
-   * Determine whether or not an AST node has side effects.
-   */
-  private static <T extends JsVisitable<T>> boolean hasSideEffects(T e) {
-    return hasSideEffects(Collections.singletonList(e));
-  }
-
-  /**
    * Determine whether or not a list of AST nodes have side effects.
    */
   private static <T extends JsVisitable<T>> boolean hasSideEffects(List<T> list) {
@@ -1405,23 +1500,70 @@ public class JsInliner {
   }
 
   /**
+   * Determine whether or not an AST node has side effects.
+   */
+  private static <T extends JsVisitable<T>> boolean hasSideEffects(T e) {
+    return hasSideEffects(Collections.singletonList(e));
+  }
+
+  /**
    * Given a delegated JsStatement, construct an expression to hoist into the
    * outer caller. This does not perform any name replacement, but simply
    * constructs a mutable copy of the expression that can be manipulated
    * at-will.
+   * 
+   * @param program the enclosing JsProgram
+   * @param statement the statement from which to extract the expressions
+   * @param localVariableNames accumulates any local varables declared by
+   *          <code>statement</code>
+   * @return a JsExpression representing all expressions that would have been
+   *         evaluated by the statement
    */
-  private static JsExpression hoistedExpression(JsStatement statement) {
+  private static JsExpression hoistedExpression(JsProgram program,
+      JsStatement statement, List<JsName> localVariableNames) {
     JsExpression expression;
     if (statement instanceof JsExprStmt) {
+      // Extract the expression
       JsExprStmt exprStmt = (JsExprStmt) statement;
       expression = exprStmt.getExpression();
+
     } else if (statement instanceof JsReturn) {
+      // Extract the return value
       JsReturn ret = (JsReturn) statement;
       expression = ret.getExpr();
+
+    } else if (statement instanceof JsVars) {
+      // Create a comma expression for variable initializers
+      JsVars vars = (JsVars) statement;
+
+      // Rely on comma expression cleanup to remove this later.
+      expression = program.getNullLiteral();
+
+      for (JsVar var : vars) {
+        // Record the locally-defined variable
+        localVariableNames.add(var.getName());
+
+        // Extract the initialization expression
+        JsExpression init = var.getInitExpr();
+        if (init != null) {
+          JsBinaryOperation assignment = new JsBinaryOperation(
+              JsBinaryOperator.ASG);
+          assignment.setArg1(var.getName().makeRef());
+          assignment.setArg2(init);
+
+          // Multiple initializers go into a comma expression
+          JsBinaryOperation comma = new JsBinaryOperation(
+              JsBinaryOperator.COMMA);
+          comma.setArg1(expression);
+          comma.setArg2(assignment);
+          expression = comma;
+        }
+      }
     } else {
       return null;
     }
 
+    assert expression != null;
     return JsHoister.hoist(expression);
   }
 
