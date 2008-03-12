@@ -24,32 +24,33 @@ package java.lang;
  */
 public class StringBuilder implements CharSequence {
 
-  private static native String setLength(String[] stringArray, int length) /*-{
-    stringArray.length = length;
-  }-*/;
-
   private static native String join(String[] stringArray) /*-{
     return stringArray.join('');
   }-*/;
 
-  private String[] stringArray = new String[0];
+  private static native String setLength(String[] stringArray, int length) /*-{
+    stringArray.length = length;
+  }-*/;
 
   private int arrayLen = 0;
+
+  private String[] stringArray = new String[0];
 
   private int stringLength = 0;
 
   public StringBuilder() {
   }
 
+  public StringBuilder(CharSequence s) {
+    this(s.toString());
+  }
+
   /**
    * This implementation does not track capacity; using this constructor is
    * functionally equivalent to using the zero-argument constructor.
    */
-  public StringBuilder(int ignoredLength) {
-  }
-
-  public StringBuilder(CharSequence s) {
-    this(s.toString());
+  @SuppressWarnings("unused")
+  public StringBuilder(int ignoredCapacity) {
   }
 
   public StringBuilder(String s) {
@@ -126,8 +127,12 @@ public class StringBuilder implements CharSequence {
     return append(String.valueOf(x));
   }
 
+  /**
+   * This implementation does not track capacity; always returns
+   * {@link Integer#MAX_VALUE}.
+   */
   public int capacity() {
-    return length() * 2 + 1000;
+    return Integer.MAX_VALUE;
   }
 
   public char charAt(int index) {
@@ -142,7 +147,12 @@ public class StringBuilder implements CharSequence {
     return delete(start, start + 1);
   }
 
-  public void ensureCapacity(int ignored) {
+  /**
+   * This implementation does not track capacity; calling this method has no
+   * effect.
+   */
+  @SuppressWarnings("unused")
+  public void ensureCapacity(int ignoredCapacity) {
   }
 
   public void getChars(int srcStart, int srcEnd, char[] dst, int dstStart) {

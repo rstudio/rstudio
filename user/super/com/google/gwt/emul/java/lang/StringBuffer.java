@@ -26,11 +26,16 @@ public class StringBuffer implements CharSequence {
   public StringBuffer() {
   }
 
-  public StringBuffer(int ignoredLength) {
-  }
-
   public StringBuffer(CharSequence s) {
     this(s.toString());
+  }
+
+  /**
+   * This implementation does not track capacity; using this constructor is
+   * functionally equivalent to using the zero-argument constructor.
+   */
+  @SuppressWarnings("unused")
+  public StringBuffer(int ignoredCapacity) {
   }
 
   public StringBuffer(String s) {
@@ -102,6 +107,10 @@ public class StringBuffer implements CharSequence {
     return this;
   }
 
+  /**
+   * This implementation does not track capacity; always returns
+   * {@link Integer#MAX_VALUE}.
+   */
   public int capacity() {
     return builder.capacity();
   }
@@ -120,7 +129,12 @@ public class StringBuffer implements CharSequence {
     return this;
   }
 
-  public void ensureCapacity(int ignored) {
+  /**
+   * This implementation does not track capacity; calling this method has no
+   * effect.
+   */
+  public void ensureCapacity(int ignoredCapacity) {
+    builder.ensureCapacity(ignoredCapacity);
   }
 
   public void getChars(int srcStart, int srcEnd, char[] dst, int dstStart) {
