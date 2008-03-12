@@ -1,0 +1,134 @@
+<pre>  /**
+   * The constants used in this Content Widget.
+   */
+  public static interface CwConstants extends Constants,
+      ContentWidget.CwConstants {
+    String[] cwStackPanelContacts();
+
+    String cwStackPanelContactsHeader();
+
+    String cwStackPanelDescription();
+
+    String[] cwStackPanelFilters();
+
+    String cwStackPanelFiltersHeader();
+
+    String[] cwStackPanelMailFolders();
+
+    String cwStackPanelMailHeader();
+
+    String cwStackPanelName();
+  }
+
+  /**
+   * Specifies the images that will be bundled for this example.
+   * 
+   * We will override the leaf image used in the tree. Instead of using a blank
+   * 16x16 image, we will use a blank 1x1 image so it does not take up any
+   * space. Each TreeItem will use its own custom image.
+   */
+  public interface Images extends TreeImages {
+    AbstractImagePrototype contactsgroup();
+
+    AbstractImagePrototype drafts();
+
+    AbstractImagePrototype filtersgroup();
+
+    AbstractImagePrototype inbox();
+
+    AbstractImagePrototype mailgroup();
+
+    AbstractImagePrototype sent();
+
+    AbstractImagePrototype templates();
+
+    AbstractImagePrototype trash();
+
+    /**
+     * Use noimage.png, which is a blank 1x1 image.
+     * 
+     * @gwt.resource noimage.png
+     */
+    AbstractImagePrototype treeLeaf();
+  }
+
+  /**
+   * An instance of the constants.
+   */
+  private CwConstants constants;
+
+  /**
+   * Initialize this example.
+   */
+  @Override
+  public Widget onInitialize() {
+    // Get the images
+    Images images = (Images) GWT.create(Images.class);
+
+    // Create a new stack panel
+    StackPanel stackPanel = new StackPanel();
+    stackPanel.setWidth("200px");
+
+    // Add links to Mail folders
+    Tree mailPanel = new Tree(images);
+    TreeItem mailPanelRoot = mailPanel.addItem("foo@example.com");
+    String[] mailFolders = constants.cwStackPanelMailFolders();
+    mailPanelRoot.addItem(images.inbox().getHTML() + " " + mailFolders[0]);
+    mailPanelRoot.addItem(images.drafts().getHTML() + " " + mailFolders[1]);
+    mailPanelRoot.addItem(images.templates().getHTML() + " " + mailFolders[2]);
+    mailPanelRoot.addItem(images.sent().getHTML() + " " + mailFolders[3]);
+    mailPanelRoot.addItem(images.trash().getHTML() + " " + mailFolders[4]);
+    mailPanelRoot.setState(true);
+    String mailHeader = getHeaderString(constants.cwStackPanelMailHeader(),
+        images.mailgroup());
+    stackPanel.add(mailPanel, mailHeader, true);
+
+    // Add a list of filters
+    VerticalPanel filtersPanel = new VerticalPanel();
+    filtersPanel.setSpacing(4);
+    for (String filter : constants.cwStackPanelFilters()) {
+      filtersPanel.add(new CheckBox(filter));
+    }
+    String filtersHeader = getHeaderString(
+        constants.cwStackPanelFiltersHeader(), images.filtersgroup());
+    stackPanel.add(filtersPanel, filtersHeader, true);
+
+    // Add links to each contact
+    VerticalPanel contactsPanel = new VerticalPanel();
+    contactsPanel.setSpacing(4);
+    for (String contact : constants.cwStackPanelContacts()) {
+      contactsPanel.add(new HTML("&lt;a href=\"javascript:void;\"&gt;" + contact
+          + "&lt;/a&gt;"));
+    }
+    String contactsHeader = getHeaderString(
+        constants.cwStackPanelContactsHeader(), images.contactsgroup());
+    stackPanel.add(contactsPanel, contactsHeader, true);
+
+    // Return the stack panel
+    stackPanel.ensureDebugId("cwStackPanel");
+    return stackPanel;
+  }
+
+  /**
+   * Get a string representation of the header that includes an image and some
+   * text.
+   * 
+   * @param text the header text
+   * @param image the {@link AbstractImagePrototype} to add next to the header
+   * @return the header as a string
+   */
+  private String getHeaderString(String text, AbstractImagePrototype image) {
+    // Add the image and text to a horizontal panel
+    HorizontalPanel hPanel = new HorizontalPanel();
+    hPanel.setSpacing(0);
+    hPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+    hPanel.add(image.createImage());
+    HTML headerText = new HTML(text);
+    headerText.setStyleName("cw-StackPanelHeader");
+    hPanel.add(headerText);
+
+    // Return the HTML string for the panel
+    return hPanel.toString();
+  }
+
+</pre>

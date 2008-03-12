@@ -1,0 +1,43 @@
+<pre>  /**
+   * The constants used in this Content Widget.
+   */
+  public static interface CwConstants extends Constants,
+      ContentWidget.CwConstants {
+    String cwSuggestBoxDescription();
+
+    String cwSuggestBoxLabel();
+
+    String cwSuggestBoxName();
+
+    String[] cwSuggestBoxWords();
+  }
+
+  /**
+   * An instance of the constants.
+   */
+  private CwConstants constants;
+
+  /**
+   * Initialize this example.
+   */
+  @Override
+  public Widget onInitialize() {
+    // Define the oracle that finds suggestions
+    MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
+    String[] words = constants.cwSuggestBoxWords();
+    for (int i = 0; i &lt; words.length; ++i) {
+      oracle.add(words[i]);
+    }
+
+    // Create the suggest box
+    final SuggestBox suggestBox = new SuggestBox(oracle);
+    suggestBox.ensureDebugId("cwSuggestBox");
+    VerticalPanel suggestPanel = new VerticalPanel();
+    suggestPanel.add(new HTML(constants.cwSuggestBoxLabel()));
+    suggestPanel.add(suggestBox);
+
+    // Return the panel
+    return suggestPanel;
+  }
+
+</pre>

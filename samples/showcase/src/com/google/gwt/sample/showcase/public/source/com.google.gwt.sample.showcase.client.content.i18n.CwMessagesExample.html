@@ -1,0 +1,135 @@
+<pre>  /**
+   * The constants used in this Content Widget.
+   */
+  public static interface CwConstants extends Constants,
+      ContentWidget.CwConstants {
+    String cwMessagesExampleArg0Label();
+
+    String cwMessagesExampleArg1Label();
+
+    String cwMessagesExampleArg2Label();
+
+    String cwMessagesExampleDescription();
+
+    String cwMessagesExampleFormattedLabel();
+
+    String cwMessagesExampleLinkText();
+
+    String cwMessagesExampleName();
+
+    String cwMessagesExampleTemplateLabel();
+  }
+
+  /**
+   * The {@link TextBox} where the user enters argument 0.
+   */
+  private TextBox arg0Box = null;
+
+  /**
+   * The {@link TextBox} where the user enters argument 1.
+   */
+  private TextBox arg1Box = null;
+
+  /**
+   * The {@link TextBox} where the user enters argument 2.
+   */
+  private TextBox arg2Box = null;
+
+  /**
+   * An instance of the constants.
+   */
+  private CwConstants constants;
+
+  /**
+   * The error messages used in this example.
+   */
+  private ErrorMessages errorMessages = null;
+
+  /**
+   * The {@link HTML} used to display the message.
+   */
+  private HTML formattedMessage = null;
+
+  /**
+   * Initialize this example.
+   */
+  @Override
+  public Widget onInitialize() {
+    // Create the internationalized error messages
+    errorMessages = GWT.create(ErrorMessages.class);
+
+    // Use a FlexTable to layout the content
+    FlexTable layout = new FlexTable();
+    FlexCellFormatter formatter = layout.getFlexCellFormatter();
+    layout.setCellSpacing(5);
+
+    // Add a link to the source code of the Interface
+    HTML link = new HTML(" &lt;a href=\"javascript:void(0);\"&gt;ErrorMessages&lt;/a&gt;");
+    link.addClickListener(new ClickListener() {
+      public void onClick(Widget sender) {
+        selectTab(2);
+      }
+    });
+    HorizontalPanel linkPanel = new HorizontalPanel();
+    linkPanel.setSpacing(3);
+    linkPanel.add(new HTML(constants.cwMessagesExampleLinkText()));
+    linkPanel.add(link);
+    layout.setWidget(0, 0, linkPanel);
+    formatter.setColSpan(0, 0, 2);
+
+    // Show the template for reference
+    String template = errorMessages.permissionDenied("{0}", "{1}", "{2}");
+    layout.setHTML(1, 0, constants.cwMessagesExampleTemplateLabel());
+    layout.setHTML(1, 1, template);
+
+    // Add argument 0
+    arg0Box = new TextBox();
+    arg0Box.setText("amelie");
+    layout.setHTML(2, 0, constants.cwMessagesExampleArg0Label());
+    layout.setWidget(2, 1, arg0Box);
+
+    // Add argument 1
+    arg1Box = new TextBox();
+    arg1Box.setText("guest");
+    layout.setHTML(3, 0, constants.cwMessagesExampleArg1Label());
+    layout.setWidget(3, 1, arg1Box);
+
+    // Add argument 2
+    arg2Box = new TextBox();
+    arg2Box.setText("/secure/blueprints.xml");
+    layout.setHTML(4, 0, constants.cwMessagesExampleArg2Label());
+    layout.setWidget(4, 1, arg2Box);
+
+    // Add the formatted message
+    formattedMessage = new HTML();
+    layout.setHTML(5, 0, constants.cwMessagesExampleFormattedLabel());
+    layout.setWidget(5, 1, formattedMessage);
+    formatter.setVerticalAlignment(5, 0, HasVerticalAlignment.ALIGN_TOP);
+
+    // Add listeners to all of the argument boxes
+    KeyboardListenerAdapter keyListener = new KeyboardListenerAdapter() {
+      @Override
+      public void onKeyUp(Widget sender, char keyCode, int modifiers) {
+        updateMessage();
+      }
+    };
+    arg0Box.addKeyboardListener(keyListener);
+    arg1Box.addKeyboardListener(keyListener);
+    arg2Box.addKeyboardListener(keyListener);
+
+    // Return the layout Widget
+    updateMessage();
+    return layout;
+  }
+
+  /**
+   * Update the formatted message.
+   */
+  private void updateMessage() {
+    String arg0 = arg0Box.getText().trim();
+    String arg1 = arg1Box.getText().trim();
+    String arg2 = arg2Box.getText().trim();
+    formattedMessage.setText(errorMessages.permissionDenied(arg0, arg1, arg2));
+  }
+
+</pre>

@@ -1,0 +1,5 @@
+<project name="showcase" default="build" basedir=".">
+	<property name="sample.root" value="showcase" />
+	<property name="sample.module" value="Showcase" />
+	<import file="../common.ant.xml" />
+</project>

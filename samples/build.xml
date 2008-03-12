@@ -30,6 +30,10 @@
 		<gwt.ant dir="mail" />
 	</target>
 
+	<target name="showcase" description="Build showcase">
+		<gwt.ant dir="showcase" />
+	</target>
+
 	<target name="simplexml" description="Build simplexml">
 		<gwt.ant dir="simplexml" />
 	</target>
@@ -41,6 +45,7 @@
 		<antcall target="json" />
 		<antcall target="kitchensink" />
 		<antcall target="mail" />
+		<antcall target="showcase" />
 		<antcall target="simplexml" />
 	</target>
 

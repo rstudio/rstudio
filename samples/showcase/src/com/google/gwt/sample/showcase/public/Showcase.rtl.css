@@ -1,0 +1,164 @@
+/**
+ * Applied to the main layout of the page.
+ */
+.Application-title {
+	top: 6px;
+	right: 10px;
+}
+.Application-title td {
+  padding: 0px 10px 0px 0px;
+}
+.Application-title h1 {
+  color: #67A7E3;
+  margin: 0px;
+  padding: 0px;
+  line-height: 1.3em;
+}
+.Application-title h2 {
+  color: #888;
+  margin: 0px;
+  padding: 0px;
+}
+.Application-links {
+  top: 6px;
+  left: 10px;
+}
+.Application-menu-title {
+  padding: 3px 4px 3px 0px;
+	background: #e3e8f3 url(images/bg_headergradient.png) repeat-x;
+  font-weight: bold;
+  border: 1px solid #BBBBBB;
+  white-space: nowrap;
+  overflow: hidden;
+  right: 14px;
+  width: 250px;
+}
+.Application-menu-wrapper {
+  padding: 2px 4px 0px 0px;
+  background: white;
+  border-right: 1px solid #BBBBBB;
+  border-left: 1px solid #BBBBBB;
+  right: 14px;
+  width: 250px;
+}
+.Application-content-title {
+  background: #e3e8f3 url(images/bg_headergradient.png) repeat-x;
+  font-weight: bold;
+	border: 1px solid #BBBBBB;
+  border-left: 0px;
+  right: 284px;
+  left: 1px;
+}
+.Application-content-wrapper {
+  padding: 2px 0px 0px 0px;
+  background: white;
+  border-right: 1px solid #BBBBBB;
+  right: 284px;
+  left: 1px;
+}
+
+/**
+ * Applied to widgets in the content area.
+ */
+.sc-ContentWidgetTabBar .gwt-TabBarItem {
+  cursor: pointer;
+  cursor: hand;
+  margin-right: 10px;
+  border-collapse: collapse;
+}
+.sc-ContentWidgetTabBar .gwt-TabBarItem .gwt-Label {
+  padding: 1px 0px;
+	color: #888888;
+}
+.sc-ContentWidgetTabBar .gwt-TabBarItem-selected .gwt-Label {
+  color: black;
+}
+.sc-ContentWidgetTabPanelBottom {
+  border: 0px;
+  border-top: 20px solid white;
+  border-bottom: 5px solid white;
+  padding: 0px;
+}
+.sc-ContentWidget .sc-ContentWidgetContents {
+	padding: 0px 20px;
+}
+.sc-ContentWidgetName {
+	font-size: 1.5em;
+	font-weight: bold;
+	padding-bottom: 15px;
+}
+.sc-ContentWidgetDescription {
+	padding-bottom: 15px;
+	border-bottom: 1px solid #7aa5d6;
+  margin-bottom: 15px;
+}
+.sc-ContentWidget pre {
+	border: 1px solid #888;
+	background: #eeeeee;
+	margin: 0px 20px;
+	padding: 10px;
+	font-size: medium;
+}
+
+/**
+ * Applied to specific components in Content Widgets.
+ */
+.cw-BasicPopup-thumb {
+  cursor: pointer;
+  cursor: hand;
+}
+
+.cw-DialogBox {
+  opacity: 0.8;
+  filter: alpha(opacity=80);
+}
+
+.cw-DictionaryExample-headerRow td {
+  color: #7aa5d6;
+  text-decoration: underline;
+  font-weight: bold;
+  padding-right: 20px;
+}
+.cw-DictionaryExample-dataRow td {
+  padding-right: 20px;
+}
+
+.cw-DockPanel td {
+  border: 1px solid #BBBBBB;
+  padding: 3px;
+}
+
+.cw-FlexTable td {
+  border: 1px solid #BBBBBB;
+  padding: 3px;
+}
+
+.cw-FlexTable-buttonPanel td {
+  border: 0px;
+}
+
+.cw-FlowPanel-checkBox {
+  margin-left: 20px;
+}
+
+.cw-RedText {
+  color: red;
+}
+
+.cw-RichText {
+  border: 1px solid #BBBBBB;
+  border-spacing: 0px;
+}
+
+.cw-StackPanelHeader {
+	padding-right: 7px;
+  font-weight: bold;
+  font-size: 1.4em;
+}
+
+/**
+ * Make all buttons the same size.
+ */
+.gwt-Button {
+  width: 10em;
+}

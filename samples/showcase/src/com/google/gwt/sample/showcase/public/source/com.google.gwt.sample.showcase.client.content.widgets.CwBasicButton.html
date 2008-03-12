@@ -1,0 +1,51 @@
+<pre>  /**
+   * The constants used in this Content Widget.
+   */
+  public static interface CwConstants extends Constants,
+      ContentWidget.CwConstants {
+    String cwBasicButtonClickMessage();
+
+    String cwBasicButtonDescription();
+
+    String cwBasicButtonDisabled();
+
+    String cwBasicButtonName();
+
+    String cwBasicButtonNormal();
+  }
+
+  /**
+   * An instance of the constants.
+   */
+  private CwConstants constants;
+
+  /**
+   * Initialize this example.
+   */
+  @Override
+  public Widget onInitialize() {
+    // Create a panel to align the widgets
+    HorizontalPanel hPanel = new HorizontalPanel();
+    hPanel.setSpacing(10);
+
+    // Add a normal button
+    Button normalButton = new Button(constants.cwBasicButtonNormal(),
+        new ClickListener() {
+          public void onClick(Widget sender) {
+            Window.alert(constants.cwBasicButtonClickMessage());
+          }
+        });
+    normalButton.ensureDebugId("cwBasicButton-normal");
+    hPanel.add(normalButton);
+
+    // Add a disabled button
+    Button disabledButton = new Button(constants.cwBasicButtonDisabled());
+    disabledButton.ensureDebugId("cwBasicButton-disabled");
+    disabledButton.setEnabled(false);
+    hPanel.add(disabledButton);
+
+    // Return the panel
+    return hPanel;
+  }
+
+</pre>

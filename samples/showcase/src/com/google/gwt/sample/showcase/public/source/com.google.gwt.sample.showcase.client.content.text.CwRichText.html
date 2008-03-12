@@ -1,0 +1,37 @@
+<pre>  /**
+   * The constants used in this Content Widget.
+   */
+  public static interface CwConstants extends Constants,
+      ContentWidget.CwConstants {
+    String cwRichTextDescription();
+
+    String cwRichTextName();
+  }
+
+  /**
+   * An instance of the constants.
+   */
+  private CwConstants constants;
+
+  /**
+   * Initialize this example.
+   */
+  @Override
+  public Widget onInitialize() {
+    // Create the text area and toolbar
+    RichTextArea area = new RichTextArea();
+    area.ensureDebugId("cwRichText-area");
+    area.setSize("100%", "14em");
+    RichTextToolbar toolbar = new RichTextToolbar(area);
+    toolbar.ensureDebugId("cwRichText-toolbar");
+    toolbar.setWidth("100%");
+
+    // Add the components to a panel
+    Grid grid = new Grid(2, 1);
+    grid.setStyleName("cw-RichText");
+    grid.setWidget(0, 0, toolbar);
+    grid.setWidget(1, 0, area);
+    return grid;
+  }
+
+</pre>

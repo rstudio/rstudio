@@ -1,0 +1,2 @@
+cwDecoratorPanelName
+cwDecoratorPanelDescription

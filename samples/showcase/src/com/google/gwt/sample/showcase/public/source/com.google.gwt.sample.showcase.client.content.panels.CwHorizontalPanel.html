@@ -1,0 +1,37 @@
+<pre>  /**
+   * The constants used in this Content Widget.
+   */
+  public static interface CwConstants extends Constants,
+      ContentWidget.CwConstants {
+    String cwHorizontalPanelButton();
+
+    String cwHorizontalPanelDescription();
+
+    String cwHorizontalPanelName();
+  }
+
+  /**
+   * An instance of the constants.
+   */
+  private CwConstants constants;
+
+  /**
+   * Initialize this example.
+   */
+  @Override
+  public Widget onInitialize() {
+    // Create a Horizontal Panel
+    HorizontalPanel hPanel = new HorizontalPanel();
+    hPanel.setSpacing(5);
+
+    // Add some content to the panel
+    for (int i = 1; i &lt; 5; i++) {
+      hPanel.add(new Button(constants.cwHorizontalPanelButton() + " " + i));
+    }
+
+    // Return the content
+    hPanel.ensureDebugId("cwHorizontalPanel");
+    return hPanel;
+  }
+
+</pre>

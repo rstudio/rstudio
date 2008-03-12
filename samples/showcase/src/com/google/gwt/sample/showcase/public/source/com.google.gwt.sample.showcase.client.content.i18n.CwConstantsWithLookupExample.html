@@ -1,0 +1,107 @@
+<pre>  /**
+   * The constants used in this Content Widget.
+   */
+  public static interface CwConstants extends Constants,
+      ContentWidget.CwConstants {
+    String cwConstantsWithLookupExampleDescription();
+
+    String cwConstantsWithLookupExampleLinkText();
+
+    String cwConstantsWithLookupExampleMethodName();
+
+    String cwConstantsWithLookupExampleName();
+
+    String cwConstantsWithLookupExampleNoInput();
+
+    String cwConstantsWithLookupExampleNoMatches();
+
+    String cwConstantsWithLookupExampleResults();
+  }
+
+  /**
+   * A {@link TextBox} where the user can select a color to lookup.
+   */
+  private TextBox colorBox = null;
+
+  /**
+   * A {@link TextBox} where the results of the lookup are displayed.
+   */
+  private TextBox colorResultsBox = null;
+
+  /**
+   * An instance of the constants.
+   */
+  private CwConstants constants;
+
+  /**
+   * Initialize this example.
+   */
+  @Override
+  public Widget onInitialize() {
+    // Create the internationalized constants
+    colorConstants = GWT.create(ColorConstants.class);
+
+    // Use a FlexTable to layout the content
+    FlexTable layout = new FlexTable();
+    FlexCellFormatter formatter = layout.getFlexCellFormatter();
+    layout.setCellSpacing(5);
+
+    // Add a link to the source code of the Interface
+    HTML link = new HTML(" &lt;a href=\"javascript:void(0);\"&gt;ColorConstants&lt;/a&gt;");
+    link.addClickListener(new ClickListener() {
+      public void onClick(Widget sender) {
+        selectTab(2);
+      }
+    });
+    HorizontalPanel linkPanel = new HorizontalPanel();
+    linkPanel.setSpacing(3);
+    linkPanel.add(new HTML(constants.cwConstantsWithLookupExampleLinkText()));
+    linkPanel.add(link);
+    layout.setWidget(0, 0, linkPanel);
+    formatter.setColSpan(0, 0, 2);
+
+    // Add a field so the user can type a color
+    colorBox = new TextBox();
+    colorBox.setText("red");
+    colorBox.setWidth("17em");
+    layout.setHTML(1, 0, constants.cwConstantsWithLookupExampleMethodName());
+    layout.setWidget(1, 1, colorBox);
+
+    // Show the last name
+    colorResultsBox = new TextBox();
+    colorResultsBox.setEnabled(false);
+    colorResultsBox.setWidth("17em");
+    layout.setHTML(2, 0, constants.cwConstantsWithLookupExampleResults());
+    layout.setWidget(2, 1, colorResultsBox);
+
+    // Add a listener to update the color as the user types a lookup value
+    colorBox.addKeyboardListener(new KeyboardListenerAdapter() {
+      @Override
+      public void onKeyUp(Widget sender, char keyCode, int modifiers) {
+        updateColor();
+      }
+    });
+
+    // Return the layout Widget
+    updateColor();
+    return layout;
+  }
+
+  /**
+   * Lookup the color based on the value the user entered.
+   */
+  private void updateColor() {
+    String key = colorBox.getText().trim();
+    if (key.equals("")) {
+      colorResultsBox.setText(constants.cwConstantsWithLookupExampleNoInput());
+    } else {
+      try {
+        String color = colorConstants.getString(key);
+        colorResultsBox.setText(color);
+      } catch (MissingResourceException e) {
+        colorResultsBox.setText(constants.cwConstantsWithLookupExampleNoMatches());
+      }
+    }
+  }
+
+</pre>
