@@ -130,11 +130,8 @@ public abstract class UIObject {
    */
   protected static void ensureDebugId(Element elem, String baseID, String id) {
     assert baseID != null;
-    String curID = DOM.getElementProperty(elem, "id");
-    if (curID.length() == 0 || curID.startsWith(DEBUG_ID_PREFIX)) {
-      baseID = (baseID.length() > 0) ? baseID + "-" : "";
-      DOM.setElementProperty(elem, "id", DEBUG_ID_PREFIX + baseID + id);
-    }
+    baseID = (baseID.length() > 0) ? baseID + "-" : "";
+    DOM.setElementProperty(elem, "id", DEBUG_ID_PREFIX + baseID + id);
   }
 
   /**
@@ -403,8 +400,7 @@ public abstract class UIObject {
    * test tools. Complex {@link Widget}s will also set the IDs of their
    * important sub-elements.
    * 
-   * If the main element already has an ID, this method will NOT override it.
-   * The debugID is only used when no other ID is present on the {@link Element}.
+   * If the main element already has an ID, this method WILL override it.
    * 
    * The ID that you specify will be prefixed by the static string
    * {@link #DEBUG_ID_PREFIX}.

@@ -26,8 +26,6 @@ import java.util.NoSuchElementException;
  */
 public class HTMLPanel extends ComplexPanel {
 
-  private static int sUid;
-
   /**
    * A helper method for creating unique IDs for elements within dynamically-
    * generated HTML. This is important because no two elements in a document
@@ -36,7 +34,7 @@ public class HTMLPanel extends ComplexPanel {
    * @return a new unique identifier
    */
   public static String createUniqueId() {
-    return "HTMLPanel_" + (++sUid);
+    return DOM.createUniqueId();
   }
 
   private Element hiddenDiv;

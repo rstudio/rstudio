@@ -61,17 +61,17 @@ public class TabPanelTest extends GWTTestCase {
 
     // Check the tabs
     UIObjectTest.assertDebugId("myPanel-bar-tab0",
-        DOM.getParent(tab0.getElement()));
+        TabBarTest.getGrandParent(tab0.getElement(), 2));
     UIObjectTest.assertDebugId("myPanel-bar-tab-wrapper0",
-        DOM.getParent(tab0.getParent().getElement()));
+        DOM.getParent(tab0.getParent().getParent().getElement()));
     UIObjectTest.assertDebugId("myPanel-bar-tab1",
-        DOM.getParent(tab1.getElement()));
+        TabBarTest.getGrandParent(tab1.getElement(), 2));
     UIObjectTest.assertDebugId("myPanel-bar-tab-wrapper1",
-        DOM.getParent(tab1.getParent().getElement()));
+        DOM.getParent(tab1.getParent().getParent().getElement()));
     UIObjectTest.assertDebugId("myPanel-bar-tab2",
-        DOM.getParent(tab2.getElement()));
+        TabBarTest.getGrandParent(tab2.getElement(), 2));
     UIObjectTest.assertDebugId("myPanel-bar-tab-wrapper2",
-        DOM.getParent(tab2.getParent().getElement()));
+        DOM.getParent(tab2.getParent().getParent().getElement()));
   }
 
   public void testInsertMultipleTimes() {

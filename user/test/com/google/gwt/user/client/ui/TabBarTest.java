@@ -24,6 +24,21 @@ import com.google.gwt.user.client.Element;
  */
 public class TabBarTest extends GWTTestCase {
 
+  /**
+   * Get a specific grand parent of the Element.
+   *
+   * @param elem the element
+   * @param level the level above the element
+   * @return the grand parent
+   */
+  static Element getGrandParent(Element elem, int level) {
+    Element grandParent = elem;
+    for (int i = 0; i < level; i++) {
+      grandParent = DOM.getParent(grandParent);
+    }
+    return grandParent;
+  }
+  
   int selected;
   int beforeSelection;
 
@@ -43,15 +58,15 @@ public class TabBarTest extends GWTTestCase {
 
     bar.ensureDebugId("myBar");
     UIObjectTest.assertDebugId("myBar", bar.getElement());
-    UIObjectTest.assertDebugId("myBar-tab0", DOM.getParent(tab0.getElement()));
+    UIObjectTest.assertDebugId("myBar-tab0", getGrandParent(tab0.getElement(), 2));
     UIObjectTest.assertDebugId("myBar-tab-wrapper0", getGrandParent(
-        tab0.getElement(), 6));
-    UIObjectTest.assertDebugId("myBar-tab1", DOM.getParent(tab1.getElement()));
+        tab0.getElement(), 7));
+    UIObjectTest.assertDebugId("myBar-tab1", getGrandParent(tab1.getElement(), 2));
     UIObjectTest.assertDebugId("myBar-tab-wrapper1", getGrandParent(
-        tab1.getElement(), 6));
-    UIObjectTest.assertDebugId("myBar-tab2", DOM.getParent(tab2.getElement()));
+        tab1.getElement(), 7));
+    UIObjectTest.assertDebugId("myBar-tab2", getGrandParent(tab2.getElement(), 2));
     UIObjectTest.assertDebugId("myBar-tab-wrapper2", getGrandParent(
-        tab2.getElement(), 6));
+        tab2.getElement(), 7));
   }
 
   public void testSelect() {
@@ -106,20 +121,5 @@ public class TabBarTest extends GWTTestCase {
     assertTrue("<b>bar</b>".equalsIgnoreCase(bar.getTabHTML(1)));
     bar.removeTab(1);
     assertEquals("baz", bar.getTabHTML(1));
-  }
-
-  /**
-   * Get a specific grand parent of the Element.
-   * 
-   * @param elem the element
-   * @param level the level above the element
-   * @return the grand parent
-   */
-  private Element getGrandParent(Element elem, int level) {
-    Element grandParent = elem;
-    for (int i = 0; i < level; i++) {
-      grandParent = DOM.getParent(grandParent);
-    }
-    return grandParent;
   }
 }

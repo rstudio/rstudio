@@ -130,9 +130,10 @@ public class UIObjectTest extends GWTTestCase {
     assertEquals("mytest", DOM.getElementProperty(oElem, "id"));
     assertDebugId("test2-subElem", o.subElement);
 
-    // Test overriding with debug ID fails if ID present
-    o.ensureDebugId("test3");
+    // Test overriding with debug ID succeeds if ID present
     assertEquals("mytest", DOM.getElementProperty(oElem, "id"));
+    o.ensureDebugId("test3");
+    assertDebugId("test3", oElem);
     assertDebugId("test3-subElem", o.subElement);
   }
 

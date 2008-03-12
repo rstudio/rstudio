@@ -33,6 +33,8 @@ public class DOM {
   private static Event currentEvent = null;
   private static final DOMImpl impl = GWT.create(DOMImpl.class);
   private static Element sCaptureElem;
+  // Used to generate unique DOM ids.
+  private static int nextDOMId = 0;
 
   // <BrowserEventPreview>
   private static ArrayList<EventPreview> sEventPreviewStack;
@@ -355,6 +357,15 @@ public class DOM {
    */
   public static Element createTR() {
     return impl.createElement("tr");
+  }
+
+  /**
+   * Generates a unique DOM id. The id is of the form "gwt-id-<unique integer>".
+   *
+   * @return a unique DOM id
+   */
+  public static String createUniqueId() {
+    return "gwt-id-" + nextDOMId++;
   }
 
   /**
