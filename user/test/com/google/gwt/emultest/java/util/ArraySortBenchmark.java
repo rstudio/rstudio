@@ -18,6 +18,8 @@ package com.google.gwt.emultest.java.util;
 import com.google.gwt.benchmarks.client.Benchmark;
 import com.google.gwt.benchmarks.client.IntRange;
 import com.google.gwt.benchmarks.client.Operator;
+import com.google.gwt.benchmarks.client.RangeField;
+import com.google.gwt.benchmarks.client.Setup;
 
 import java.util.Arrays;
 
@@ -29,12 +31,9 @@ public class ArraySortBenchmark extends Benchmark {
   private static class TestObject implements Comparable<TestObject> {
 
     private int value;
-    @SuppressWarnings("unused")
-    private int index;
-
-    public TestObject(int value, int index) {
+    
+    public TestObject(int value) {
       this.value = value;
-      this.index = index;
     }
 
     public int compareTo(TestObject o) {
@@ -58,10 +57,6 @@ public class ArraySortBenchmark extends Benchmark {
   final IntRange sizeRange = new IntRange(128, MAX_ARRAY_SIZE, Operator.ADD,
       256);
 
-  public String getModuleName() {
-    return "com.google.gwt.emultest.EmulSuite";
-  }
-
   public void beginByteArray(Integer size) {
     byteArray = new byte[size.intValue()];
     System.arraycopy(initByteArray, 0, byteArray, 0, size.intValue());
@@ -82,16 +77,19 @@ public class ArraySortBenchmark extends Benchmark {
     System.arraycopy(initByteArray, 0, byteArray, 0, size.intValue());
   }
 
+  public String getModuleName() {
+    return "com.google.gwt.emultest.EmulSuite";
+  }
+
   // Required for JUnit
   public void testByteArray() {
   }
 
   /**
    * Sorts <code>size</code> byte entries.
-   * 
-   * @gwt.benchmark.param size -limit = sizeRange
    */
-  public void testByteArray(Integer size) {
+  @Setup("beginByteArray")
+  public void testByteArray(@RangeField("sizeRange") Integer size) {
     Arrays.sort(byteArray);
   }
 
@@ -101,10 +99,9 @@ public class ArraySortBenchmark extends Benchmark {
 
   /**
    * Sorts <code>size</code> int entries.
-   * 
-   * @gwt.benchmark.param size -limit = sizeRange
    */
-  public void testIntArray(Integer size) {
+  @Setup("beginIntArray")
+  public void testIntArray(@RangeField("sizeRange") Integer size) {
     Arrays.sort(intArray);
   }
 
@@ -114,10 +111,9 @@ public class ArraySortBenchmark extends Benchmark {
 
   /**
    * Sorts <code>size</code> object entries.
-   * 
-   * @gwt.benchmark.param size -limit = sizeRange
    */
-  public void testObjectArray(Integer size) {
+  @Setup("beginObjectArray")
+  public void testObjectArray(@RangeField("sizeRange") Integer size) {
     Arrays.sort(objectArray);
   }
 
@@ -127,10 +123,9 @@ public class ArraySortBenchmark extends Benchmark {
 
   /**
    * Sorts <code>size</code> byte entries as a subarray.
-   * 
-   * @gwt.benchmark.param size -limit = sizeRange
    */
-  public void testSubarray(Integer size) {
+  @Setup("beginSubarray")
+  public void testSubarray(@RangeField("sizeRange") Integer size) {
     Arrays.sort(byteArray, SUBARRAY_SKIP, size);
   }
 
@@ -152,8 +147,7 @@ public class ArraySortBenchmark extends Benchmark {
     }
     initObjectArray = new TestObject[MAX_ARRAY_SIZE + SUBARRAY_SKIP];
     for (int i = 0; i < MAX_ARRAY_SIZE + SUBARRAY_SKIP; i++) {
-      initObjectArray[i] = new TestObject((i * 31 + 17) % 500, i);
+      initObjectArray[i] = new TestObject((i * 31 + 17) % 500);
     }
   }
-
 }
