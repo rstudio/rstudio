@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,8 @@ import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
+import com.google.gwt.dev.linker.Linker;
+import com.google.gwt.dev.linker.LinkerContextShim;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.xml.AttributeConverter;
@@ -33,6 +35,7 @@ import com.google.gwt.dev.util.xml.Schema;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -55,6 +58,8 @@ public class ModuleDefSchema extends Schema {
     protected final String __define_property_2_values = null;
 
     protected final String __entry_point_1_class = null;
+
+    protected final String __extend_linker_context_1_class = null;
 
     protected final String __extend_property_1_name = null;
 
@@ -114,15 +119,9 @@ public class ModuleDefSchema extends Schema {
 
     private Schema fChild;
 
-    protected Schema __define_linker_begin(String name, String className)
+    protected Schema __define_linker_begin(LinkerName name, Linker linker)
         throws UnableToCompleteException {
-      if (!Util.isValidJavaIdent(name)) {
-        logger.log(TreeLogger.ERROR, "Linker names must be valid identifiers",
-            null);
-        throw new UnableToCompleteException();
-      }
-
-      moduleDef.addLinker(name, className);
+      moduleDef.addLinker(name.name, linker);
       return null;
     }
 
@@ -147,6 +146,18 @@ public class ModuleDefSchema extends Schema {
     protected Schema __entry_point_begin(String className) {
       moduleDef.addEntryPointTypeName(className);
       return null;
+    }
+
+    protected Schema __extend_linker_context_begin(Class<?> clazz)
+        throws UnableToCompleteException {
+      try {
+        moduleDef.addLinkerContextShim(clazz.asSubclass(LinkerContextShim.class));
+        return null;
+      } catch (ClassCastException e) {
+        Messages.INVALID_CLASS_DERIVATION.log(logger, clazz,
+            LinkerContextShim.class, null);
+        throw new UnableToCompleteException();
+      }
     }
 
     protected Schema __extend_property_begin(Property property,
@@ -279,8 +290,12 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
-    protected Schema __set_linker_begin(String name) {
-      moduleDef.setActiveLinkerNames(name.split(","));
+    protected Schema __set_linker_begin(LinkerName[] names) {
+      String[] asString = new String[names.length];
+      for (int i = 0; i < names.length; i++) {
+        asString[i] = names[i].name;
+      }
+      moduleDef.setActiveLinkerNames(asString);
       return null;
     }
 
@@ -451,6 +466,23 @@ public class ModuleDefSchema extends Schema {
     }
   }
 
+  /**
+   * Processes attributes of java.lang.Class type.
+   */
+  private final class ClassAttrCvt extends AttributeConverter {
+    @Override
+    public Object convertToArg(Schema schema, int line, String elem,
+        String attr, String value) throws UnableToCompleteException {
+      try {
+        ClassLoader cl = Thread.currentThread().getContextClassLoader();
+        return cl.loadClass(value);
+      } catch (ClassNotFoundException e) {
+        Messages.UNABLE_TO_LOAD_CLASS.log(logger, value, e);
+        throw new UnableToCompleteException();
+      }
+    }
+  }
+
   private final class ConditionSchema extends Schema {
 
     protected final String __when_property_is_1_name = null;
@@ -543,15 +575,66 @@ public class ModuleDefSchema extends Schema {
     }
   }
 
+  private static class LinkerName {
+    public final String name;
+
+    public LinkerName(String name) {
+      this.name = name;
+    }
+  }
+
+  /**
+   * Converts a string into a linker name, validating it in the process.
+   */
+  private final class LinkerNameArrayAttrCvt extends AttributeConverter {
+
+    public Object convertToArg(Schema schema, int line, String elem,
+        String attr, String value) throws UnableToCompleteException {
+      String[] tokens = value.split(",");
+      List<LinkerName> toReturn = new ArrayList<LinkerName>(tokens.length);
+
+      for (String token : tokens) {
+        token = token.trim();
+        if (moduleDef.getLinker(token) == null) {
+          Messages.LINKER_NAME_INVALID.log(logger, token, null);
+          throw new UnableToCompleteException();
+        }
+
+        toReturn.add(new LinkerName(token));
+      }
+
+      // It is a valid list of names.
+      return toReturn.toArray(new LinkerName[tokens.length]);
+    }
+  }
+
+  /**
+   * Converts a string into a linker name, validating it in the process.
+   */
+  private final class LinkerNameAttrCvt extends AttributeConverter {
+
+    public Object convertToArg(Schema schema, int line, String elem,
+        String attr, String value) throws UnableToCompleteException {
+      // Ensure the value is a valid Java identifier
+      if (!Util.isValidJavaIdent(value)) {
+        Messages.LINKER_NAME_INVALID.log(logger, value, null);
+        throw new UnableToCompleteException();
+      }
+
+      // It is a valid name.
+      return new LinkerName(value);
+    }
+  }
+
   /**
    * Creates singleton instances of objects based on an attribute containing a
    * class name.
    */
-  private final class ObjAttrCvt extends AttributeConverter {
+  private final class ObjAttrCvt<T> extends AttributeConverter {
 
-    private final Class fReqdSuperclass;
+    private final Class<T> fReqdSuperclass;
 
-    public ObjAttrCvt(Class reqdSuperclass) {
+    public ObjAttrCvt(Class<T> reqdSuperclass) {
       fReqdSuperclass = reqdSuperclass;
     }
 
@@ -565,23 +648,21 @@ public class ModuleDefSchema extends Schema {
         return found;
       }
 
+      Class<?> foundClass = null;
       try {
         // Load the class.
         //
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        Class clazz = cl.loadClass(attrValue);
+        foundClass = cl.loadClass(attrValue);
+        Class<? extends T> clazz = foundClass.asSubclass(fReqdSuperclass);
 
-        // Make sure it's compatible.
-        //
-        if (!fReqdSuperclass.isAssignableFrom(clazz)) {
-          Messages.INVALID_CLASS_DERIVATION.log(logger, clazz, fReqdSuperclass,
-              null);
-          throw new UnableToCompleteException();
-        }
-
-        Object object = clazz.newInstance();
+        T object = clazz.newInstance();
         singletonsByName.put(attrValue, object);
         return object;
+      } catch (ClassCastException e) {
+        Messages.INVALID_CLASS_DERIVATION.log(logger, foundClass,
+            fReqdSuperclass, null);
+        throw new UnableToCompleteException();
       } catch (ClassNotFoundException e) {
         Messages.UNABLE_TO_LOAD_CLASS.log(logger, attrValue, e);
         throw new UnableToCompleteException();
@@ -747,7 +828,7 @@ public class ModuleDefSchema extends Schema {
     }
   }
 
-  private static final Map singletonsByName = new HashMap();
+  private static final Map<String, Object> singletonsByName = new HashMap<String, Object>();
 
   private static void addPrefix(String[] strings, String prefix) {
     for (int i = 0; i < strings.length; ++i) {
@@ -765,13 +846,19 @@ public class ModuleDefSchema extends Schema {
 
   private final BodySchema bodySchema;
 
+  private final ClassAttrCvt classAttrCvt = new ClassAttrCvt();
+
   private boolean foundAnyPublic;
 
   private boolean foundExplicitSourceOrSuperSource;
-
-  private final ObjAttrCvt genAttrCvt = new ObjAttrCvt(Generator.class);
+  private final ObjAttrCvt<Generator> genAttrCvt = new ObjAttrCvt<Generator>(
+      Generator.class);
   private final JsParser jsParser = new JsParser();
   private final JsProgram jsPgm = new JsProgram();
+  private final ObjAttrCvt<Linker> linkerAttrCvt = new ObjAttrCvt<Linker>(
+      Linker.class);
+  private final LinkerNameArrayAttrCvt linkerNameArrayAttrCvt = new LinkerNameArrayAttrCvt();
+  private final LinkerNameAttrCvt linkerNameAttrCvt = new LinkerNameAttrCvt();
   private final ModuleDefLoader loader;
   private final TreeLogger logger;
   private final ModuleDef moduleDef;
@@ -797,6 +884,10 @@ public class ModuleDefSchema extends Schema {
     registerAttributeConverter(PropertyValue.class, propValueAttrCvt);
     registerAttributeConverter(PropertyValue[].class, propValueArrayAttrCvt);
     registerAttributeConverter(Generator.class, genAttrCvt);
+    registerAttributeConverter(Linker.class, linkerAttrCvt);
+    registerAttributeConverter(LinkerName.class, linkerNameAttrCvt);
+    registerAttributeConverter(LinkerName[].class, linkerNameArrayAttrCvt);
+    registerAttributeConverter(Class.class, classAttrCvt);
   }
 
   protected Schema __module_begin() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,9 @@ class Messages {
 
   public static final Message2ClassClass INVALID_CLASS_DERIVATION = new Message2ClassClass(
       TreeLogger.ERROR, "Class '$0' must derive from '$1'");
+
+  public static final Message1String LINKER_NAME_INVALID = new Message1String(
+      TreeLogger.ERROR, "Invalid linker name '$0'");
 
   public static final Message1String PROPERTY_NAME_INVALID = new Message1String(
       TreeLogger.ERROR, "Invalid property name '$0'");

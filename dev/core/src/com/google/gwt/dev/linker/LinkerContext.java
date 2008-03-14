@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
 import java.io.OutputStream;
+import java.util.Comparator;
 import java.util.SortedSet;
 
 /**
@@ -29,6 +30,60 @@ import java.util.SortedSet;
  * implementation detail.
  */
 public interface LinkerContext {
+  /**
+   * Orders CompilationResults by string comparison of their JavaScript.
+   */
+  Comparator<CompilationResult> COMPILATION_RESULT_COMPARATOR = new Comparator<CompilationResult>() {
+    public int compare(CompilationResult o1, CompilationResult o2) {
+      return o1.getJavaScript().compareTo(o2.getJavaScript());
+    }
+  };
+
+  /**
+   * Orders GeneratedResources by string comparison of their partial paths.
+   */
+  Comparator<GeneratedResource> GENERATED_RESOURCE_COMPARATOR = new Comparator<GeneratedResource>() {
+    public int compare(GeneratedResource o1, GeneratedResource o2) {
+      return o1.getPartialPath().compareTo(o2.getPartialPath());
+    }
+  };
+
+  /**
+   * Orders PublicResources by string comparison of their partial paths.
+   */
+  Comparator<PublicResource> PUBLIC_RESOURCE_COMPARATOR = new Comparator<PublicResource>() {
+    public int compare(PublicResource o1, PublicResource o2) {
+      return o1.getPartialPath().compareTo(o2.getPartialPath());
+    }
+  };
+
+  /**
+   * Orders ModuleScriptResources by string comparison of their src attributes.
+   */
+  Comparator<ModuleScriptResource> SCRIPT_RESOURCE_COMPARATOR = new Comparator<ModuleScriptResource>() {
+    public int compare(ModuleScriptResource o1, ModuleScriptResource o2) {
+      return o1.getSrc().compareTo(o2.getSrc());
+    }
+  };
+
+  /**
+   * Orders SelectionProperties by string comparison of their names.
+   */
+  Comparator<SelectionProperty> SELECTION_PROPERTY_COMPARATOR = new Comparator<SelectionProperty>() {
+    public int compare(SelectionProperty o1, SelectionProperty o2) {
+      return o1.getName().compareTo(o2.getName());
+    }
+  };
+
+  /**
+   * Orders ModuleStyleResources by string comparison of their src attributes.
+   */
+  Comparator<ModuleStylesheetResource> STYLE_RESOURCE_COMPARATOR = new Comparator<ModuleStylesheetResource>() {
+    public int compare(ModuleStylesheetResource o1, ModuleStylesheetResource o2) {
+      return o1.getSrc().compareTo(o2.getSrc());
+    }
+  };
+
   /**
    * Finalizes the OutputStream for a given artifact. This method must be called
    * in order to actually place the artifact into the output directory. If the

@@ -42,6 +42,7 @@ import com.google.gwt.dev.linker.CompilationResult;
 import com.google.gwt.dev.linker.GeneratedResource;
 import com.google.gwt.dev.linker.Linker;
 import com.google.gwt.dev.linker.LinkerContext;
+import com.google.gwt.dev.linker.LinkerContextShim;
 import com.google.gwt.dev.linker.ModuleScriptResource;
 import com.google.gwt.dev.linker.ModuleStylesheetResource;
 import com.google.gwt.dev.linker.PublicResource;
@@ -55,12 +56,15 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -91,60 +95,6 @@ public class StandardLinkerContext implements LinkerContext {
     }
   }
 
-  /**
-   * Orders CompilationResults by string comparison of their JavaScript.
-   */
-  public static final Comparator<CompilationResult> COMPILATION_RESULT_COMPARATOR = new Comparator<CompilationResult>() {
-    public int compare(CompilationResult o1, CompilationResult o2) {
-      return o1.getJavaScript().compareTo(o2.getJavaScript());
-    }
-  };
-
-  /**
-   * Orders GeneratedResources by string comparison of their partial paths.
-   */
-  public static final Comparator<GeneratedResource> GENERATED_RESOURCE_COMPARATOR = new Comparator<GeneratedResource>() {
-    public int compare(GeneratedResource o1, GeneratedResource o2) {
-      return o1.getPartialPath().compareTo(o2.getPartialPath());
-    }
-  };
-
-  /**
-   * Orders PublicResources by string comparison of their partial paths.
-   */
-  public static final Comparator<PublicResource> PUBLIC_RESOURCE_COMPARATOR = new Comparator<PublicResource>() {
-    public int compare(PublicResource o1, PublicResource o2) {
-      return o1.getPartialPath().compareTo(o2.getPartialPath());
-    }
-  };
-
-  /**
-   * Orders ModuleScriptResources by string comparison of their src attributes.
-   */
-  public static final Comparator<ModuleScriptResource> SCRIPT_RESOURCE_COMPARATOR = new Comparator<ModuleScriptResource>() {
-    public int compare(ModuleScriptResource o1, ModuleScriptResource o2) {
-      return o1.getSrc().compareTo(o2.getSrc());
-    }
-  };
-
-  /**
-   * Orders SelectionProperties by string comparison of their names.
-   */
-  public static final Comparator<SelectionProperty> SELECTION_PROPERTY_COMPARATOR = new Comparator<SelectionProperty>() {
-    public int compare(SelectionProperty o1, SelectionProperty o2) {
-      return o1.getName().compareTo(o2.getName());
-    }
-  };
-
-  /**
-   * Orders ModuleStyleResources by string comparison of their src attributes.
-   */
-  public static final Comparator<ModuleStylesheetResource> STYLE_RESOURCE_COMPARATOR = new Comparator<ModuleStylesheetResource>() {
-    public int compare(ModuleStylesheetResource o1, ModuleStylesheetResource o2) {
-      return o1.getSrc().compareTo(o2.getSrc());
-    }
-  };
-
   private final File compilationsDir;
   private final SortedSet<GeneratedResource> generatedResources;
   private final Map<String, GeneratedResource> generatedResourcesByName = new HashMap<String, GeneratedResource>();
@@ -173,10 +123,12 @@ public class StandardLinkerContext implements LinkerContext {
   private final Map<String, PublicResource> publicResourcesByName = new HashMap<String, PublicResource>();
   private final Map<String, StandardCompilationResult> resultsByStrongName = new HashMap<String, StandardCompilationResult>();
   private final SortedSet<ModuleScriptResource> scriptResources;
+  private final List<Class<? extends LinkerContextShim>> shimClasses;
   private final SortedSet<ModuleStylesheetResource> stylesheetResources;
 
   public StandardLinkerContext(TreeLogger logger, ModuleDef module,
-      File outDir, File generatorDir, JJSOptions jjsOptions) {
+      File outDir, File generatorDir, JJSOptions jjsOptions)
+      throws UnableToCompleteException {
     logger = logger.branch(TreeLogger.DEBUG,
         "Constructing StandardLinkerContext", null);
 
@@ -184,6 +136,8 @@ public class StandardLinkerContext implements LinkerContext {
     this.moduleFunctionName = module.getFunctionName();
     this.moduleName = module.getName();
     this.moduleOutDir = outDir;
+    this.shimClasses = new ArrayList<Class<? extends LinkerContextShim>>(
+        module.getLinkerContextShims());
 
     if (moduleOutDir != null) {
       compilationsDir = new File(moduleOutDir, ".gwt-compiler/compilations");
@@ -372,7 +326,46 @@ public class StandardLinkerContext implements LinkerContext {
       logger = logger.branch(TreeLogger.INFO, "Linking compilation with "
           + linker.getDescription() + " Linker into " + linkerOutDir.getPath(),
           null);
-      linker.link(logger, this);
+
+      // Instantiate per-Linker instances of the LinkerContextShims
+      LinkerContext shimParent = this;
+      for (Class<? extends LinkerContextShim> clazz : shimClasses) {
+        TreeLogger shimLogger = logger.branch(TreeLogger.DEBUG,
+            "Constructing LinkerContextShim " + clazz.getName(), null);
+        try {
+          Constructor<? extends LinkerContextShim> constructor = clazz.getConstructor(
+              TreeLogger.class, LinkerContext.class);
+          shimParent = constructor.newInstance(shimLogger, shimParent);
+        } catch (InstantiationException e) {
+          shimLogger.log(TreeLogger.ERROR,
+              "Unable to create LinkerContextShim", e);
+          throw new UnableToCompleteException();
+        } catch (InvocationTargetException e) {
+          shimLogger.log(TreeLogger.ERROR,
+              "Unable to create LinkerContextShim", e);
+          throw new UnableToCompleteException();
+        } catch (NoSuchMethodException e) {
+          shimLogger.log(TreeLogger.ERROR,
+              "LinkerContextShim subtypes must implement a two-argument "
+                  + "constructor accepting a TreeLogger and a LinkerContext", e);
+          throw new UnableToCompleteException();
+        } catch (IllegalAccessException e) {
+          shimLogger.log(TreeLogger.ERROR,
+              "Unable to create LinkerContextShim", e);
+          throw new UnableToCompleteException();
+        }
+      }
+
+      linker.link(logger, shimParent);
+
+      // Unwind the LinkerContextShim stack
+      while (shimParent != this) {
+        LinkerContextShim shim = (LinkerContextShim) shimParent;
+        shim.commit(logger.branch(TreeLogger.DEBUG,
+            "Committing LinkerContextShim " + shim.getClass().getName(), null));
+        shimParent = shim.getParent();
+      }
+
     } finally {
       reset();
     }

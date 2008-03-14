@@ -17,6 +17,7 @@ package com.google.gwt.module;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.module.client.DoubleScriptInjectionTest;
+import com.google.gwt.module.client.NoDeployTest;
 import com.google.gwt.module.client.SingleScriptInjectionTest;
 
 import junit.framework.Test;
@@ -27,10 +28,11 @@ import junit.framework.Test;
 public class ModuleSuite {
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite();
-    
+
     suite.addTestSuite(SingleScriptInjectionTest.class);
     suite.addTestSuite(DoubleScriptInjectionTest.class);
-    
+    suite.addTestSuite(NoDeployTest.class);
+
     return suite;
   }
 }

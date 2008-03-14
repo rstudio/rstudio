@@ -23,11 +23,12 @@ import com.google.gwt.dev.jdt.CacheManager;
 import com.google.gwt.dev.jdt.TypeOracleBuilder;
 import com.google.gwt.dev.jdt.URLCompilationUnitProvider;
 import com.google.gwt.dev.linker.Linker;
+import com.google.gwt.dev.linker.LinkerContextShim;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.FileOracle;
 import com.google.gwt.dev.util.FileOracleFactory;
-import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.PerfLogger;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.FileOracleFactory.FileFilter;
 
 import org.apache.tools.ant.types.ZipScanner;
@@ -97,9 +98,9 @@ public class ModuleDef implements PublicOracle {
 
   private TypeOracle lazyTypeOracle;
 
-  private final Map<String, Linker> linkersByName = new HashMap<String, Linker>();
+  private final List<Class<? extends LinkerContextShim>> linkerContextShimTypes = new ArrayList<Class<? extends LinkerContextShim>>();
 
-  private final Map<String, String> linkerTypesByName = new HashMap<String, String>();
+  private final Map<String, Linker> linkersByName = new HashMap<String, Linker>();
 
   private final long moduleDefCreationTime = System.currentTimeMillis();
 
@@ -131,8 +132,19 @@ public class ModuleDef implements PublicOracle {
     gwtXmlFiles.add(xmlFile);
   }
 
-  public void addLinker(String name, String className) {
-    linkerTypesByName.put(name, className);
+  public void addLinker(String name, Linker linker) {
+    linkersByName.put(name, linker);
+  }
+
+  public void addLinkerContextShim(Class<? extends LinkerContextShim> clazz) {
+    /*
+     * It's possible a shim may be registered more than once, so this check is
+     * used to de-duplicate the final list, which will reflect the order of the
+     * first appearance of any LinkerContextShim type.
+     */
+    if (!linkerContextShimTypes.contains(clazz)) {
+      linkerContextShimTypes.add(clazz);
+    }
   }
 
   public synchronized void addPublicPackage(String publicPackage,
@@ -253,6 +265,10 @@ public class ModuleDef implements PublicOracle {
 
   public Linker getLinker(String name) {
     return linkersByName.get(name);
+  }
+
+  public List<Class<? extends LinkerContextShim>> getLinkerContextShims() {
+    return linkerContextShimTypes;
   }
 
   public synchronized String getName() {
@@ -419,43 +435,21 @@ public class ModuleDef implements PublicOracle {
     branch = Messages.PUBLIC_PATH_LOCATIONS.branch(logger, null);
     lazyPublicOracle = publicPathEntries.create(branch);
 
-    /*
-     * Validate all linkers before we go off and compile something. badLinker is
-     * checked at the end of the method so we can maximize the number of Linkers
-     * to report errors about before exiting.
-     * 
-     * It is not legal to have zero linkers defined
-     */
-    boolean badLinker = false;
-    for (Map.Entry<String, String> entry : linkerTypesByName.entrySet()) {
-      try {
-        Class<?> clazz = Class.forName(entry.getValue());
-        Class<? extends Linker> linkerClazz = clazz.asSubclass(Linker.class);
-        linkersByName.put(entry.getKey(), linkerClazz.newInstance());
-      } catch (ClassCastException e) {
-        logger.log(TreeLogger.ERROR, "Not actually a Linker", e);
-        badLinker = true;
-      } catch (ClassNotFoundException e) {
-        logger.log(TreeLogger.ERROR, "Unable to find Linker", e);
-        badLinker = true;
-      } catch (InstantiationException e) {
-        logger.log(TreeLogger.ERROR, "Unable to create Linker", e);
-        badLinker = true;
-      } catch (IllegalAccessException e) {
-        logger.log(TreeLogger.ERROR,
-            "Linker does not have a public constructor", e);
-        badLinker = true;
-      }
-    }
-
+    boolean fail = false;
     for (String linkerName : activeLinkerNames) {
       if (!linkersByName.containsKey(linkerName)) {
         logger.log(TreeLogger.ERROR, "Unknown linker name " + linkerName, null);
-        badLinker = true;
+        fail = true;
       }
     }
 
-    if (badLinker) {
+    if (linkersByName.size() == 0 || activeLinkerNames.length == 0) {
+      logger.log(TreeLogger.ERROR, "At least one Linker must be defind and "
+          + "at least one Linker must be active.", null);
+      fail = true;
+    }
+
+    if (fail) {
       throw new UnableToCompleteException();
     }
 
