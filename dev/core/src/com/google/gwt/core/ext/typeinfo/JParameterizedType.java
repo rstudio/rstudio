@@ -51,10 +51,8 @@ public class JParameterizedType extends JMaybeParameterizedType {
     for (int i = 0; i < newTypeArgs.length; ++i) {
       JClassType newTypeArg = substitutionMap.get(typeParameters[i]);
       if (newTypeArg == null) {
-        JBound typeParamBounds = typeParameters[i].getBounds();
-        JUpperBound newTypeArgBounds = new JUpperBound(
-            typeParamBounds.getFirstBound());
-        newTypeArg = oracle.getWildcardType(newTypeArgBounds);
+        newTypeArg = oracle.getWildcardType(true,
+            typeParameters[i].getFirstBound());
       }
 
       newTypeArgs[i] = newTypeArg;

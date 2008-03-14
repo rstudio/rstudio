@@ -124,8 +124,7 @@ public abstract class JClassType extends JType implements HasAnnotations,
     JTypeParameter lhsTypeParam = lhsType.isTypeParameter();
     JTypeParameter rhsTypeParam = rhsType.isTypeParameter();
     if (lhsTypeParam != null) {
-      JBound bounds = lhsTypeParam.getBounds();
-      JClassType[] lhsTypeBounds = bounds.getBounds();
+      JClassType[] lhsTypeBounds = lhsTypeParam.getBounds();
       for (JClassType lhsTypeBound : lhsTypeBounds) {
         if (!areClassTypesAssignable(lhsTypeBound, rhsType)) {
           // Done, the rhsType was not assignable to one of the bounds.
@@ -136,7 +135,7 @@ public abstract class JClassType extends JType implements HasAnnotations,
       // Done, the rhsType was assignable to all of the bounds.
       return true;
     } else if (rhsTypeParam != null) {
-      JClassType[] possibleSubtypeBounds = rhsTypeParam.getBounds().getBounds();
+      JClassType[] possibleSubtypeBounds = rhsTypeParam.getBounds();
       for (JClassType possibleSubtypeBound : possibleSubtypeBounds) {
         if (areClassTypesAssignable(lhsType, possibleSubtypeBound)) {
           // Done, at least one bound is assignable to this type.
@@ -159,12 +158,12 @@ public abstract class JClassType extends JType implements HasAnnotations,
     } else if (lhsWildcard != null) {
       // The lhs type is a wildcard but the rhs is not.
       // ? extends T, U OR ? super T, U
-      JBound lhsBound = lhsWildcard.getBounds();
-      if (lhsBound.isUpperBound() != null) {
-        return areClassTypesAssignable(lhsBound.getFirstBound(), rhsType);
-      } else {
+      JClassType[] lowerBounds = lhsWildcard.getLowerBounds();
+      if (lowerBounds.length > 0) {
         // ? super T will reach object no matter what the rhs type is
         return true;
+      } else {
+        return areClassTypesAssignable(lhsWildcard.getFirstBound(), rhsType);
       }
     }
 
@@ -248,18 +247,18 @@ public abstract class JClassType extends JType implements HasAnnotations,
     assert (lhsWildcard != rhsWildcard);
     assert (lhsWildcard != null && rhsWildcard != null);
 
-    JBound lhsBound = lhsWildcard.getBounds();
-    JBound rhsBound = rhsWildcard.getBounds();
-
-    if (lhsBound.isUpperBound() != null && rhsBound.isUpperBound() != null) {
-      // lhsType: ? extends T, rhsType: ? extends U
-      return areClassTypesAssignable(lhsBound.getFirstBound(),
-          rhsBound.getFirstBound());
-    } else if (lhsBound.isLowerBound() != null
-        && rhsBound.isLowerBound() != null) {
+    if (lhsWildcard.getLowerBounds().length > 0
+        && rhsWildcard.getLowerBounds().length > 0) {
       // lhsType: ? super T, rhsType ? super U
-      return areClassTypesAssignable(rhsBound.getFirstBound(),
-          lhsBound.getFirstBound());
+      return areClassTypesAssignable(rhsWildcard.getFirstBound(),
+          lhsWildcard.getFirstBound());
+    } else if (lhsWildcard.getUpperBounds().length > 0
+        && lhsWildcard.getLowerBounds().length == 0
+        && rhsWildcard.getUpperBounds().length > 0
+        && rhsWildcard.getLowerBounds().length == 0) {
+      // lhsType: ? extends T, rhsType: ? extends U
+      return areClassTypesAssignable(lhsWildcard.getFirstBound(),
+          rhsWildcard.getFirstBound());
     }
 
     return false;
@@ -285,11 +284,12 @@ public abstract class JClassType extends JType implements HasAnnotations,
         return areWildcardsAssignable(lhsWildcard, rhsWildcard);
       } else {
         // LHS is a wildcard but the RHS is not.
-        JBound lhsBound = lhsWildcard.getBounds();
-        if (lhsBound.isLowerBound() == null) {
-          return areClassTypesAssignable(lhsBound.getFirstBound(), rhsTypeArg);
+        if (lhsWildcard.getLowerBounds().length > 0) {
+          return areClassTypesAssignable(rhsTypeArg,
+              lhsWildcard.getFirstBound());
         } else {
-          return areClassTypesAssignable(rhsTypeArg, lhsBound.getFirstBound());
+          return areClassTypesAssignable(lhsWildcard.getFirstBound(),
+              rhsTypeArg);
         }
       }
     }

@@ -467,8 +467,9 @@ public class TypeOracle {
     }
   }
 
-  public JWildcardType getWildcardType(JBound bounds) {
-    JWildcardType wildcardType = new JWildcardType(bounds);
+  public JWildcardType getWildcardType(boolean isUpperBound,
+      JClassType typeBound) {
+    JWildcardType wildcardType = new JWildcardType(isUpperBound, typeBound);
     String sig = wildcardType.getQualifiedSourceName();
     List<JWildcardType> candidates = wildcardTypes.get(sig);
     if (candidates == null) {
@@ -476,7 +477,7 @@ public class TypeOracle {
       wildcardTypes.put(sig, candidates);
     } else {
       for (JWildcardType candidate : candidates) {
-        if (candidate.hasBounds(bounds)) {
+        if (candidate.boundsMatch(wildcardType)) {
           return candidate;
         }
       }
@@ -583,7 +584,7 @@ public class TypeOracle {
 
   /**
    * Note, this method is called reflectively from the
-   * {@link CacheManager#invalidateOnRefresh(TypeOracle)}.
+   * {@link com.google.gwt.dev.jdt.CacheManager#invalidateOnRefresh(TypeOracle)}.
    * 
    * @param cup compilation unit whose types will be invalidated
    */
@@ -721,7 +722,7 @@ public class TypeOracle {
             + " for field " + field.getName() + "; Please use "
             + resultingType.getParameterizedQualifiedSourceName()
             + " as the field's type", null);
-        
+
         field.setType(resultingType);
       } catch (UnableToCompleteException e) {
         // Continue; the problem will have been logged.

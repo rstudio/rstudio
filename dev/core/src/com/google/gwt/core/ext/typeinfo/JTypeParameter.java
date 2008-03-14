@@ -21,8 +21,8 @@ import java.util.List;
 /**
  * Represents one of the type parameters in a generic type.
  */
-public class JTypeParameter extends JDelegatingClassType implements HasBounds {
-  private JBound bounds;
+public class JTypeParameter extends JDelegatingClassType {
+  private JClassType[] bounds;
   private final int ordinal;
   private final String typeName;
 
@@ -41,7 +41,7 @@ public class JTypeParameter extends JDelegatingClassType implements HasBounds {
     return getBaseType().findMethod(name, paramTypes);
   }
 
-  public JBound getBounds() {
+  public JClassType[] getBounds() {
     return bounds;
   }
 
@@ -88,32 +88,33 @@ public class JTypeParameter extends JDelegatingClassType implements HasBounds {
 
   @Override
   public String getQualifiedSourceName() {
-    return typeName + bounds.getQualifiedSourceName();
+    return toString(false);
   }
 
   @Override
   public String getSimpleSourceName() {
-    return typeName + bounds.getSimpleSourceName();
+    return toString(true);
   }
-  
-  @Override 
+
+  @Override
   public JClassType[] getSubtypes() {
     JClassType[] subtypes = super.getSubtypes();
     List<JClassType> intersectionTypes = new ArrayList<JClassType>();
-    
-    if (getFirstBound().isInterface() == null && isAssignableFrom(getFirstBound())) {
+
+    if (getFirstBound().isInterface() == null
+        && isAssignableFrom(getFirstBound())) {
       // Include the first bound as a subtype if it is not an interface and it
       // is assignable to all of our bounds.
       intersectionTypes.add(getFirstBound());
     }
-    
+
     for (JClassType subtype : subtypes) {
       if (isAssignableFrom(subtype)) {
         intersectionTypes.add(subtype);
       }
     }
-    
-    // Only types that intersect with all our bounds make it here. 
+
+    // Only types that intersect with all our bounds make it here.
     return intersectionTypes.toArray(TypeOracle.NO_JCLASSES);
   }
 
@@ -142,9 +143,9 @@ public class JTypeParameter extends JDelegatingClassType implements HasBounds {
     return null;
   }
 
-  public void setBounds(JBound bounds) {
+  public void setBounds(JClassType[] bounds) {
     this.bounds = bounds;
-    super.setBaseType(bounds.getFirstBound());
+    super.setBaseType(bounds[0]);
   }
 
   @Override
@@ -163,5 +164,26 @@ public class JTypeParameter extends JDelegatingClassType implements HasBounds {
   @Override
   JClassType getSubstitutedType(JParameterizedType parameterizedType) {
     return parameterizedType.getTypeParameterSubstitution(this);
+  }
+
+  private String toString(boolean simpleName) {
+    StringBuffer sb = new StringBuffer();
+    sb.append(typeName);
+    sb.append(" extends ");
+    for (int i = 0; i < bounds.length; ++i) {
+      if (i != 0) {
+        sb.append(" & ");
+      }
+
+      String boundName;
+      if (simpleName) {
+        boundName = bounds[i].getSimpleSourceName();
+      } else {
+        boundName = bounds[i].getParameterizedQualifiedSourceName();
+      }
+      sb.append(boundName);
+    }
+
+    return sb.toString();
   }
 }

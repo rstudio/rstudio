@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
-import com.google.gwt.core.ext.typeinfo.JBound;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
@@ -1064,9 +1063,9 @@ public class SerializableTypeOracleBuilder {
 
   private boolean checkWildcardInstantiable(TreeLogger logger,
       JWildcardType wildcard, TypeInfoComputed tic, boolean isSpeculative) {
-    JBound bounds = wildcard.getBounds();
+    
     boolean success;
-    if (bounds.isLowerBound() != null) {
+    if (wildcard.getLowerBounds().length > 0) {
       // Fail since ? super T for any T implies object also
       markAsUninstantiableAndLog(logger, isSpeculative,
           "In order to produce smaller client-side code, 'Object' is not allowed; '"
@@ -1074,7 +1073,7 @@ public class SerializableTypeOracleBuilder {
 
       success = false;
     } else {
-      JClassType firstBound = bounds.getFirstBound();
+      JClassType firstBound = wildcard.getFirstBound();
       success = checkTypeInstantiable(logger, firstBound, isSpeculative);
     }
 

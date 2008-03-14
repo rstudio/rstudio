@@ -24,14 +24,12 @@ import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
 import com.google.gwt.core.ext.typeinfo.JAnnotationMethod;
 import com.google.gwt.core.ext.typeinfo.JAnnotationType;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
-import com.google.gwt.core.ext.typeinfo.JBound;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JConstructor;
 import com.google.gwt.core.ext.typeinfo.JEnumConstant;
 import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JGenericType;
-import com.google.gwt.core.ext.typeinfo.JLowerBound;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JParameter;
@@ -40,7 +38,6 @@ import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.JTypeParameter;
-import com.google.gwt.core.ext.typeinfo.JUpperBound;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jdt.CacheManager.Mapper;
 import com.google.gwt.dev.util.Empty;
@@ -670,7 +667,7 @@ public class TypeOracleBuilder {
         identifierToValue);
   }
 
-  private JUpperBound createTypeParameterBounds(TreeLogger logger,
+  private JClassType[] createTypeParameterBounds(TreeLogger logger,
       TypeVariableBinding tvBinding) {
     TypeBinding firstBound = tvBinding.firstBound;
     if (firstBound == null) {
@@ -689,7 +686,7 @@ public class TypeOracleBuilder {
           tvBinding.superclass);
 
       if (Object.class.getName().equals(jupperBound.getQualifiedSourceName())) {
-        return new JUpperBound(jupperBound);
+        return new JClassType[] {jupperBound};
       } else {
         return null;
       }
@@ -715,13 +712,13 @@ public class TypeOracleBuilder {
       } else {
         /*
          * If the first bound was an interface JDT will still include it in the
-         * set of superinterfaces.  So, we ignore it since we have already added
+         * set of superinterfaces. So, we ignore it since we have already added
          * it to the bounds.
          */
       }
     }
 
-    return new JUpperBound(bounds.toArray(NO_JCLASSES));
+    return bounds.toArray(NO_JCLASSES);
   }
 
   /**
@@ -1089,8 +1086,8 @@ public class TypeOracleBuilder {
 
   private boolean resolveBoundForTypeParameter(TreeLogger logger,
       HasTypeParameters genericElement, TypeParameter typeParameter, int ordinal) {
-    JBound jbounds = createTypeParameterBounds(logger, typeParameter.binding);
-
+    JClassType[] jbounds = createTypeParameterBounds(logger,
+        typeParameter.binding);
     if (jbounds == null) {
       return false;
     }
@@ -1530,26 +1527,25 @@ public class TypeOracleBuilder {
 
       assert (wcBinding.otherBounds == null);
 
-      JBound bounds;
+      boolean isUpperBound;
+      JClassType typeBound;
+
       switch (wcBinding.boundKind) {
         case Wildcard.EXTENDS: {
           assert (wcBinding.bound != null);
-          JClassType upperBound = (JClassType) resolveType(logger,
-              wcBinding.bound);
-          bounds = new JUpperBound(new JClassType[] {upperBound});
+          isUpperBound = true;
+          typeBound = (JClassType) resolveType(logger, wcBinding.bound);
         }
           break;
         case Wildcard.SUPER: {
           assert (wcBinding.bound != null);
-          JClassType lowerBound = (JClassType) resolveType(logger,
-              wcBinding.bound);
-          bounds = new JLowerBound(new JClassType[] {lowerBound});
+          isUpperBound = false;
+          typeBound = (JClassType) resolveType(logger, wcBinding.bound);
         }
           break;
         case Wildcard.UNBOUND: {
-          JClassType upperBound = (JClassType) resolveType(logger,
-              wcBinding.erasure());
-          bounds = new JUpperBound(new JClassType[] {upperBound});
+          isUpperBound = true;
+          typeBound = (JClassType) resolveType(logger, wcBinding.erasure());
         }
           break;
         default:
@@ -1557,7 +1553,7 @@ public class TypeOracleBuilder {
           return null;
       }
 
-      return oracle.getWildcardType(bounds);
+      return oracle.getWildcardType(isUpperBound, typeBound);
     }
 
     // Log other cases we know about that don't make sense.

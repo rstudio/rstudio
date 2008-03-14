@@ -77,10 +77,7 @@ public class JGenericTypeTest extends TestCase {
 
     // Check the bound of the first type parameter. It should be a single
     // upper bound.
-
-    JBound genericTypeBound = typeParameter.getBounds();
-    assertNotNull(genericTypeBound.isUpperBound());
-    JClassType [] genericTypeBounds = genericTypeBound.getBounds();
+    JClassType [] genericTypeBounds = typeParameter.getBounds();
     assertEquals(1, genericTypeBounds.length);
 
     // Check to see that the upper bound is a parameterized type.
@@ -116,10 +113,7 @@ public class JGenericTypeTest extends TestCase {
 
     // Check the bound of the type parameter. It should have a single upper
     // bound.
-
-    JBound typeArgBound = typeArgTypeParameter.getBounds();
-    assertNotNull(typeArgBound.isUpperBound());
-    JClassType [] typeArgBounds = typeArgBound.getBounds();
+    JClassType [] typeArgBounds = typeArgTypeParameter.getBounds();
     assertEquals(1, typeArgBounds.length);
 
     // Verify that the bound type is actually a reference to java.io.Serializable.
@@ -179,10 +173,7 @@ public class JGenericTypeTest extends TestCase {
     JTypeParameter typeParameter = typeParameters[0];
     assertEquals("T", typeParameter.getName());
 
-    JBound bound = typeParameter.getBounds();
-    assertNotNull(bound.isUpperBound());
-
-    JClassType[] bounds = bound.getBounds();
+    JClassType[] bounds = typeParameter.getBounds();
     assertEquals(1, bounds.length);
     assertEquals(moduleContext.getOracle().getType(Serializable.class.getName()), 
         bounds[0]);

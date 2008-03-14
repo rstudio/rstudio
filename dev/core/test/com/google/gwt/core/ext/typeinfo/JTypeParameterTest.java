@@ -144,7 +144,7 @@ public class JTypeParameterTest extends JDelegatingClassTypeTestBase {
     assertTrue(testType.isAssignableTo(moduleContext.getOracle().getJavaLangObject()));
 
     // Check that each bound is assignable to this type parameter.
-    JClassType[] typeBounds = testType.getBounds().getBounds();
+    JClassType[] typeBounds = testType.getBounds();
     for (JClassType typeBound : typeBounds) {
       // Test that the type parameter is assignable to the type bound.
       assertTrue(testType.isAssignableTo(typeBound));
