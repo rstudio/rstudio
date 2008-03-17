@@ -92,9 +92,8 @@ public class CwStackPanel extends ContentWidget {
 
     /**
      * Use noimage.png, which is a blank 1x1 image.
-     * 
-     * @gwt.resource noimage.png
      */
+    @Resource("noimage.png")
     AbstractImagePrototype treeLeaf();
   }
 

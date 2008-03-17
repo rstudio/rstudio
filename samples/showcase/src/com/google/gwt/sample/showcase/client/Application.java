@@ -63,9 +63,9 @@ public class Application extends Composite implements WindowResizeListener {
     /**
      * An image indicating a leaf.
      * 
-     * @gwt.resource noimage.png
      * @return a prototype of this image
      */
+    @Resource("noimage.png")
     AbstractImagePrototype treeLeaf();
   }
 

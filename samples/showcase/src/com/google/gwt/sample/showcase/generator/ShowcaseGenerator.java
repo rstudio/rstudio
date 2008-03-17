@@ -114,7 +114,6 @@ public class ShowcaseGenerator {
     // Get a full list of properties from the default file
     List<String> propNames = new ArrayList<String>();
     String filename = SRC_PROP + "ShowcaseConstants.properties";
-    StringBuffer fileContentsBuf = new StringBuffer();
     BufferedReader br = null;
     try {
       br = new BufferedReader(new FileReader(filename));
