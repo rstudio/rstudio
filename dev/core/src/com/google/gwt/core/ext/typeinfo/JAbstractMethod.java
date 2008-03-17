@@ -240,8 +240,7 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
       } else {
         needComma = true;
       }
-      sb.append(typeParam.getName());
-      sb.append(typeParam.getBounds().toString());
+      sb.append(typeParam.getQualifiedSourceName());
     }
     sb.append(">");
   }
