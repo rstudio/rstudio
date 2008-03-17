@@ -21,7 +21,6 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.i18n.rebind.util.AbstractResource;
 import com.google.gwt.user.rebind.SourceWriter;
 
 /**
@@ -29,6 +28,7 @@ import com.google.gwt.user.rebind.SourceWriter;
  * standard <code>AbstractGeneratorClassCreator</code>.
  */
 class MessagesImplCreator extends AbstractLocalizableImplCreator {
+  
   /**
    * Constructor for <code>ConstantsImplCreator</code>.
    * 
@@ -37,12 +37,13 @@ class MessagesImplCreator extends AbstractLocalizableImplCreator {
    * @param messageBindings resource bundle used to generate the class
    * @param oracle types
    * @param logger logger to print errors
+   * @param deprecatedLogger logger for deprecated metadata warnings
    * @throws UnableToCompleteException
    */
-  public MessagesImplCreator(TreeLogger logger, SourceWriter writer,
+  public MessagesImplCreator(TreeLogger logger, TreeLogger deprecatedLogger, SourceWriter writer,
       JClassType localizableClass, AbstractResource messageBindings,
       TypeOracle oracle) throws UnableToCompleteException {
-    super(writer, localizableClass, messageBindings);
+    super(logger, deprecatedLogger, writer, localizableClass, messageBindings, false);
     try {
       JClassType stringClass = oracle.getType(String.class.getName());
       register(stringClass, new MessagesMethodCreator(this));
@@ -77,9 +78,9 @@ class MessagesImplCreator extends AbstractLocalizableImplCreator {
    * @throws UnableToCompleteException
    */
   @Override
-  protected void emitMethodBody(TreeLogger logger, JMethod m)
+  protected void emitMethodBody(TreeLogger logger, JMethod m, String locale)
       throws UnableToCompleteException {
     checkMessagesMethod(logger, m);
-    delegateToCreator(logger, m);
+    delegateToCreator(logger, m, locale);
   }
 }

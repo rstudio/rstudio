@@ -27,7 +27,7 @@ import com.google.gwt.i18n.client.NumberFormat_en_Test;
 import com.google.gwt.i18n.client.NumberFormat_fr_Test;
 import com.google.gwt.i18n.client.NumberParse_en_Test;
 import com.google.gwt.i18n.client.NumberParse_fr_Test;
-import com.google.gwt.i18n.rebind.util.AbstractResourceTest;
+import com.google.gwt.i18n.rebind.AbstractResourceTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;

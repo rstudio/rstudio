@@ -45,7 +45,7 @@ class LookupMethodCreator extends AbstractMethodCreator {
 
   @Override
   public void createMethodFor(TreeLogger logger, JMethod targetMethod,
-      String value) {
+      String key, AbstractResource resource, String locale) {
     createMethodFor(targetMethod);
   }
 

@@ -23,7 +23,6 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
-import com.google.gwt.i18n.rebind.util.AbstractResource;
 import com.google.gwt.user.rebind.AbstractMethodCreator;
 import com.google.gwt.user.rebind.SourceWriter;
 
@@ -36,10 +35,23 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
   private final Map<String, AbstractMethodCreator> namesToMethodCreators =
     new HashMap<String, AbstractMethodCreator>();
 
-  ConstantsWithLookupImplCreator(TreeLogger logger, SourceWriter writer,
+  /**
+   * Constructor for <code>ConstantsWithLookupImplCreator</code>.
+   * 
+   * @param logger logger to print errors
+   * @param deprecatedLogger logger to use for deprecated warnings
+   * @param writer <code>Writer</code> to print to
+   * @param localizableClass class/interface to conform to
+   * @param messageBindings resource bundle used to generate the class
+   * @param oracle types
+   * @throws UnableToCompleteException
+   */
+  ConstantsWithLookupImplCreator(TreeLogger logger,
+      TreeLogger deprecatedLogger, SourceWriter writer,
       JClassType localizableClass, AbstractResource messageBindings,
       TypeOracle oracle) throws UnableToCompleteException {
-    super(logger, writer, localizableClass, messageBindings, oracle);
+    super(logger, deprecatedLogger, writer, localizableClass, messageBindings,
+        oracle);
     try {
 
       // Boolean
@@ -139,19 +151,19 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
    * arg0...argN.
    */
   @Override
-  protected void emitMethodBody(TreeLogger logger, JMethod method)
+  protected void emitMethodBody(TreeLogger logger, JMethod method, String locale)
       throws UnableToCompleteException {
     checkMethod(logger, method);
     if (method.getParameters().length == 1) {
       String name = method.getName();
       AbstractMethodCreator c = namesToMethodCreators.get(name);
       if (c != null) {
-        c.createMethodFor(logger, method, null);
+        c.createMethodFor(logger, method, name, null, locale);
         return;
       }
     }
     // fall through
-    super.emitMethodBody(logger, method);
+    super.emitMethodBody(logger, method, locale);
   }
 
   /**

@@ -16,6 +16,7 @@
 package com.google.gwt.i18n.rebind;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 
@@ -60,7 +61,8 @@ class ConstantsStringArrayMethodCreator extends
   }
 
   @Override
-  public void createMethodFor(TreeLogger logger, JMethod method, String template) {
+  public void createMethodFor(TreeLogger logger, JMethod method, String key,
+      AbstractResource resource, String locale) throws UnableToCompleteException {
     String methodName = method.getName();
     // Make sure cache exists.
     enableCache();
@@ -68,6 +70,7 @@ class ConstantsStringArrayMethodCreator extends
     println("String args[] = (String[]) cache.get(" + wrap(methodName) + ");");
     // If not found, create String[].
     print("if (args == null){\n  String [] writer= {");
+    String template = resource.getRequiredStringExt(logger, key, null);
     String[] args = split(template);
     for (int i = 0; i < args.length; i++) {
       if (i != 0) {

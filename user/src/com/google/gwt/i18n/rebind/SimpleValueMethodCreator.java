@@ -88,7 +88,8 @@ class SimpleValueMethodCreator extends AbstractLocalizableMethodCreator {
 
   @Override
   public void createMethodFor(TreeLogger logger, JMethod targetMethod,
-      String value) throws UnableToCompleteException {
+      String key, AbstractResource resource, String locale) throws UnableToCompleteException {
+    String value = resource.getRequiredStringExt(logger, key, null);
     try {
       String translatedValue = valueCreator.getValue(value);
       println("return " + translatedValue + ";");

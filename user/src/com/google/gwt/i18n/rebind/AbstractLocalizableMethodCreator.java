@@ -15,7 +15,6 @@
  */
 package com.google.gwt.i18n.rebind;
 
-import com.google.gwt.i18n.rebind.util.AbstractResource;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 import com.google.gwt.user.rebind.AbstractMethodCreator;
 

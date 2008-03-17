@@ -15,6 +15,12 @@
  */
 package com.google.gwt.i18n.client;
 
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
  * A tag interface that facilitates locale-sensitive, compile-time binding of
  * constant values supplied from properties files. Using
@@ -31,8 +37,12 @@ package com.google.gwt.i18n.client;
  * <h3>Extending <code>Constants</code></h3>
  * To use <code>Constants</code>, begin by defining an interface that extends
  * it. Each interface method is referred to as a <i>constant accessor</i>, and
- * the name of each constant accessor is assumed to match the name of a property
- * defined in a properties file. For example,
+ * its corresponding localized value is loaded based on the key for that method.
+ * The default key is simply the unqualified name of the method, but can be specified
+ * directly with an {@code @Key} annotation or a different generation method using
+ * {@code @GenerateKeys}.  Also, the default value can be specified in an annotation
+ * rather than a default properties file (and some key generators may require the value
+ * to be given in the source file via annotations). For example,
  * 
  * {@example com.google.gwt.examples.i18n.NumberFormatConstants}
  * 
@@ -50,8 +60,14 @@ package com.google.gwt.i18n.client;
  * </p>
  * 
  * <p>
+ * Here is the same example using annotations to store the default values:
+ * 
+ * {@example com.google.gwt.examples.i18n.NumberFormatConstantsAnnot}
+ * </p>
+ *
+ * <p>
  * It is also possible to change the property name bound to a constant accessor
- * using the <code>gwt.key</code> doc comment. For example,
+ * using the {@code @Key} annotation. For example,
  * {@example com.google.gwt.examples.i18n.NumberFormatConstantsWithAltKey}
  * 
  * would match the names of the following properties:
@@ -70,38 +86,45 @@ package com.google.gwt.i18n.client;
  * <tr>
  * <th><nobr>If the return type is...&#160;&#160;&#160;</nobr></th>
  * <th>The property value is interpreted as...</th>
+ * <th>Annotation to use for default value</th>
  * </tr>
  * 
  * <tr>
  * <td><code>String</code></td>
  * <td>A plain string value</td>
+ * <td>{@code @DefaultStringValue}</td>
  * </tr>
  * 
  * <tr>
  * <td><code>String[]</code></td>
  * <td>A comma-separated array of strings; use '<code>\\,</code>' to escape
  * commas</td>
+ * <td>{@code @DefaultStringArrayValue}</td>
  * </tr>
  * 
  * <tr>
  * <td><code>int</code></td>
  * <td>An <code>int</code> value, checked during compilation</td>
+ * <td>{@code @DefaultIntValue}</td>
  * </tr>
  * 
  * <tr>
  * <td><code>float</code></td>
  * <td>A <code>float</code> value, checked during compilation</td>
+ * <td>{@code @DefaultFloatValue}</td>
  * </tr>
  * 
  * <tr>
  * <td><code>double</code></td>
  * <td>A <code>double</code> value, checked during compilation</td>
+ * <td>{@code @DefaultDoubleValue}</td>
  * </tr>
  * 
  * <tr>
  * <td><code>boolean</code></td>
  * <td>A <code>boolean</code> value ("true" or "false"), checked during
  * compilation</td>
+ * <td>{@code @DefaultBooleanValue}</td>
  * </tr>
  * 
  * <tr>
@@ -109,11 +132,14 @@ package com.google.gwt.i18n.client;
  * <td>A comma-separated list of property names, each of which is a key into a
  * generated map; the value mapped to given key is the value of the property
  * having named by that key</td>
+ * <td>{@code @DefaultStringMapValue}</td>
  * </tr>
  * 
  * </table>
  * 
+ * <p>
  * As an example of a <code>Map</code>, for the following property file:
+ * </p>
  * 
  * <pre>
  * a = X
@@ -122,10 +148,19 @@ package com.google.gwt.i18n.client;
  * someMap = a, b, c
  * </pre>
  * 
+ * <p>
  * the constant accessor <code>someMap()</code> would return a
  * <code>Map</code> that maps <code>"a"</code> onto <code>"X"</code>,
  * <code>"b"</code> onto <code>"Y"</code>, and <code>"c"</code> onto
  * <code>"Z"</code>.
+ * </p>
+ * 
+ * <p>The benefit of using annotations, aside from not having to switch to
+ * a different file to enter the default values, is that you can make use
+ * of compile-time constants and not worrying about quoting commas.  For example:
+ * 
+ * {@example com.google.gwt.examples.i18n.AnnotConstants}
+ * </p>
  * 
  * <h3>Binding to Properties Files</h3>
  * If an interface <code>org.example.foo.Intf</code> extends
@@ -172,7 +207,9 @@ package com.google.gwt.i18n.client;
  * 
  * </table> where <code>x</code> and <code>Y</code> are language and locale
  * codes, as described in the documentation for
- * {@link com.google.gwt.i18n.client.Localizable}.
+ * {@link com.google.gwt.i18n.client.Localizable}.  Note that default values
+ * supplied in the source file in annotations take precedence over those in
+ * the default properties file, if it is also present.
  * 
  * <p>
  * Note that the matching algorithm is applied independently for each constant
@@ -194,5 +231,101 @@ package com.google.gwt.i18n.client;
  * it since an implementation is generated automatically when message interfaces
  * are created using {@link com.google.gwt.core.client.GWT#create(Class)}.
  */
-public interface Constants extends Localizable {
+public interface Constants extends LocalizableResource {
+  /**
+   * Default boolean value to be used if no translation is found (and also used as the
+   * source for translation).  No quoting (other than normal Java string quoting)
+   * is done.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
+  @Documented
+  public @interface DefaultBooleanValue {
+    boolean value();
+  }
+
+  /**
+   * Default double value to be used if no translation is found (and also used as the
+   * source for translation).  No quoting (other than normal Java string quoting)
+   * is done.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
+  @Documented
+  public @interface DefaultDoubleValue {
+    double value();
+  }
+
+  /**
+   * Default float value to be used if no translation is found (and also used as the
+   * source for translation).  No quoting (other than normal Java string quoting)
+   * is done.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
+  @Documented
+  public @interface DefaultFloatValue {
+    float value();
+  }
+
+  /**
+   * Default integer value to be used if no translation is found (and also used as the
+   * source for translation).  No quoting (other than normal Java string quoting)
+   * is done.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
+  @Documented
+  public @interface DefaultIntValue {
+    int value();
+  }
+
+  /**
+   * Default string array value to be used if no translation is found (and also
+   * used as the source for translation). No quoting (other than normal Java
+   * string quoting) is done.
+   * 
+   * Note that in the corresponding properties/etc file, commas are used to separate
+   * elements of the array unless they are preceded with a backslash.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
+  @Documented
+  public @interface DefaultStringArrayValue {
+    String[] value();
+  }
+
+  /**
+   * Default string map value to be used if no translation is found (and also
+   * used as the source for translation). No quoting (other than normal Java
+   * string quoting) is done.  The strings for the map are supplied in key/value
+   * pairs.
+   * 
+   * Note that in the corresponding properties/etc file, new keys can be supplied
+   * with the name of the method (or its corresponding key) listing the set of keys
+   * for the map separated by commas (commas can be part of the keys by preceding
+   * them with a backslash).  In either case, further entries have keys matching
+   * the key in this map.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
+  @Documented
+  public @interface DefaultStringMapValue {
+    /**
+     * Must be key-value pairs.
+     */
+    String[] value();
+  }
+
+  /**
+   * Default string value to be used if no translation is found (and also used as the
+   * source for translation).  No quoting (other than normal Java string quoting)
+   * is done.
+   */
+  @Retention(RetentionPolicy.RUNTIME)
+  @Target(ElementType.METHOD)
+  @Documented
+  public @interface DefaultStringValue {
+    String value();
+  }
 }

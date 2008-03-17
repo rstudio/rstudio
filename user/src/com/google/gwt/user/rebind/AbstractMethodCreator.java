@@ -18,6 +18,7 @@ package com.google.gwt.user.rebind;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.i18n.rebind.AbstractResource;
 
 /**
  * Creates method factories depending upon the method type. Includes the core
@@ -25,6 +26,7 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
  * the package space.
  */
 public abstract class AbstractMethodCreator extends AbstractSourceCreator {
+  
   /**
    * AbstractGeneratorClassCreator associated with the method currently in
    * process.
@@ -43,13 +45,13 @@ public abstract class AbstractMethodCreator extends AbstractSourceCreator {
   /**
    * Generate the method body for the target method.
    * 
-   * @param logger
+   * @param logger TreeLogger for logging
    * @param targetMethod Method
-   * @param value Arbitrary value
+   * @param resource base resource to use for lookup
    * @throws UnableToCompleteException
    */
   public abstract void createMethodFor(TreeLogger logger, JMethod targetMethod,
-      String value) throws UnableToCompleteException;
+      String key, AbstractResource resource, String locale) throws UnableToCompleteException;
 
   /**
    * Prints to the current <code>AbstractGeneratorClassCreator</code>.

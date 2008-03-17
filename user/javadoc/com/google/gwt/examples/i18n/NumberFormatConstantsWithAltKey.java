@@ -5,14 +5,14 @@ import com.google.gwt.i18n.client.Constants;
 
 public interface NumberFormatConstantsWithAltKey extends Constants {
   /**
-   * @gwt.key fmt.sep.decimal
    * @return the localized decimal separator
    */
+  @Key("fmt.sep.decimal")
   String decimalSeparator();
 
   /**
-   * @gwt.key fmt.sep.thousands
    * @return the localized thousands separator
    */
+  @Key("fmt.sep.thousands")
   String thousandsSeparator();
 }

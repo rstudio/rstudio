@@ -27,7 +27,6 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.i18n.client.ConstantsWithLookup;
 import com.google.gwt.i18n.client.Messages;
-import com.google.gwt.i18n.rebind.util.ResourceFactory;
 
 /**
  * Generator used to bind classes extending the <code>Localizable</code> and
@@ -39,11 +38,12 @@ public class LocalizableGenerator extends Generator {
    */
   public static final String GWT_KEY = "gwt.key";
 
-  static final String CONSTANTS_NAME = Constants.class.getName();
+  public static final String CONSTANTS_NAME = Constants.class.getName();
 
-  static final String CONSTANTS_WITH_LOOKUP_NAME = ConstantsWithLookup.class.getName();
+  public static final String CONSTANTS_WITH_LOOKUP_NAME = ConstantsWithLookup.class.getName();
 
-  static final String MESSAGES_NAME = Messages.class.getName();
+  public static final String MESSAGES_NAME = Messages.class.getName();
+  
   private static long lastReloadCount = -1;
   /**
    * The token representing the locale property controlling Localization.
@@ -107,9 +107,12 @@ public class LocalizableGenerator extends Generator {
       throw new UnableToCompleteException();
     }
 
+    TreeLogger deprecatedLogger = logger.branch(TreeLogger.TRACE,
+        "Checking for deprecated metadata", null);
+    
     // Link current locale and interface type to correct implementation class.
     String generatedClass = AbstractLocalizableImplCreator.generateConstantOrMessageClass(
-        logger, context, locale, targetClass);
+        logger, deprecatedLogger , context, locale, targetClass);
     if (generatedClass != null) {
       return generatedClass;
     }

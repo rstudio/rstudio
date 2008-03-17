@@ -16,7 +16,7 @@
 package com.google.gwt.i18n.client;
 
 /**
- * TODO: document me.
+ * Further test of combining and extending Localizable interfaces.
  */
 public interface ColorsAndShapesAndConcepts extends ColorsAndShapes {
   /**

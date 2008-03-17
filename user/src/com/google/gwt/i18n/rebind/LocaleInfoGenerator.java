@@ -46,21 +46,21 @@ public class LocaleInfoGenerator extends Generator {
    * their native locales (if possible).
    */
   private static final String GENERATED_LOCALE_NATIVE_DISPLAY_NAMES =
-      "com/google/gwt/i18n/client/cldr/LocaleNativeDisplayNames-generated.properties";
+      "com/google/gwt/i18n/client/impl/cldr/LocaleNativeDisplayNames-generated.properties";
   
   /**
    * Properties file containing hand-made corrections to the machine-generated
    * locale display names above.
    */
   private static final String MANUAL_LOCALE_NATIVE_DISPLAY_NAMES =
-      "com/google/gwt/i18n/client/cldr/LocaleNativeDisplayNames-manual.properties";
+      "com/google/gwt/i18n/client/impl/cldr/LocaleNativeDisplayNames-manual.properties";
 
   /**
    * Properties file containing hand-made overrides of locale display names,
    * in their native locales (if possible).
    */
   private static final String OVERRIDE_LOCALE_NATIVE_DISPLAY_NAMES =
-      "com/google/gwt/i18n/client/cldr/LocaleNativeDisplayNames-override.properties";
+      "com/google/gwt/i18n/client/impl/cldr/LocaleNativeDisplayNames-override.properties";
   
   /**
    * The token representing the locale property controlling Localization.

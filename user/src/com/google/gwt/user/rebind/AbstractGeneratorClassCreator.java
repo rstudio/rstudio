@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,10 +21,13 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.i18n.rebind.AbstractResource;
+import com.google.gwt.i18n.rebind.AbstractResource.MissingResourceException;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Abstract functionality needed to create classes needed to supply generators.
@@ -102,18 +105,39 @@ public abstract class AbstractGeneratorClassCreator extends
    * Emits the new class.
    * 
    * @param logger
+   * @param locale 
    * @throws UnableToCompleteException
    */
-  public void emitClass(TreeLogger logger) throws UnableToCompleteException {
+  public void emitClass(TreeLogger logger, String locale) throws UnableToCompleteException {
     logger = branch(logger, branchMessage());
     classPrologue();
-    emitMethods(logger, targetClass);
+    emitMethods(logger, targetClass, locale);
     classEpilog();
     getWriter().println("}");
   }
 
   public JClassType getTarget() {
     return targetClass;
+  }
+
+  public UnableToCompleteException logMissingResource(TreeLogger logger, String during,
+      MissingResourceException e) {
+    String msg = "No resource found for key '" + e.getKey() + "'";
+    if (during != null) {
+      msg += " while " + during;
+    }
+    logger.log(TreeLogger.ERROR, msg, e);
+    TreeLogger searchedBranch = logger.branch(TreeLogger.WARN, "Searched the following resources:",
+        null);
+    for (AbstractResource resource : e.getSearchedResources()) {
+      TreeLogger resBranch = searchedBranch.branch(TreeLogger.WARN, resource.toString(), null);
+      Set<String> keys = resource.keySet();
+      TreeLogger keyBranch = resBranch.branch(TreeLogger.INFO, "List of keys found", null);
+      for (String key : keys) {
+        keyBranch.log(TreeLogger.INFO, key, null);
+      }
+    }
+    return new UnableToCompleteException();
   }
 
   /**
@@ -151,11 +175,12 @@ public abstract class AbstractGeneratorClassCreator extends
   /**
    * Emit method body, arguments are arg1...argN.
    * 
-   * @param logger TODO
+   * @param logger TreeLogger for logging
    * @param method method to generate
+   * @param locale locale for this generation
    * @throws UnableToCompleteException
    */
-  protected abstract void emitMethodBody(TreeLogger logger, JMethod method)
+  protected abstract void emitMethodBody(TreeLogger logger, JMethod method, String locale)
       throws UnableToCompleteException;
 
   /**
@@ -199,11 +224,11 @@ public abstract class AbstractGeneratorClassCreator extends
     return writer;
   }
 
-  private void emitMethods(TreeLogger logger, JClassType cur)
+  private void emitMethods(TreeLogger logger, JClassType cur, String locale)
       throws UnableToCompleteException {
     JMethod[] x = getAllInterfaceMethods(cur);
     for (int i = 0; i < x.length; i++) {
-      genMethod(logger, x[i]);
+      genMethod(logger, x[i], locale);
       getWriter().println();
     }
   }
@@ -212,9 +237,10 @@ public abstract class AbstractGeneratorClassCreator extends
    * Generates a method declaration for the given method.
    * 
    * @param method method to generate
+   * @param locale 
    * @throws UnableToCompleteException
    */
-  private void genMethod(TreeLogger logger, JMethod method)
+  private void genMethod(TreeLogger logger, JMethod method, String locale)
       throws UnableToCompleteException {
     String name = method.getName();
     String returnType = method.getReturnType().getQualifiedSourceName();
@@ -233,7 +259,11 @@ public abstract class AbstractGeneratorClassCreator extends
     String methodName = method.getName();
     TreeLogger branch = branch(logger, "Generating method body for "
         + methodName + "()");
-    emitMethodBody(branch, method);
+    try {
+      emitMethodBody(branch, method, locale);
+    } catch (MissingResourceException e) {
+      throw logMissingResource(branch, null, e);
+    }
     getWriter().outdent();
     getWriter().println("}");
   }

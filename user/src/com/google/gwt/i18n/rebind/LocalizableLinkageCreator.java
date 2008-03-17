@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.user.rebind.AbstractSourceCreator;
-import com.google.gwt.i18n.rebind.util.ResourceFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +27,8 @@ import java.util.Map;
  * Links classes with their localized counterparts.
  */
 class LocalizableLinkageCreator extends AbstractSourceCreator {
-  private static Map<String, JClassType> findDerivedClasses(TreeLogger logger,
+  
+  static Map<String, JClassType> findDerivedClasses(TreeLogger logger,
       JClassType baseClass) throws UnableToCompleteException {
     // Construct valid set of candidates for this type.
     Map<String, JClassType> matchingClasses = new HashMap<String, JClassType>();
@@ -74,7 +74,7 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
               throw error(logger, dopClass.getQualifiedSourceName() + " and "
                   + subType.getQualifiedSourceName()
                   + " are both potential matches to " + baseClass
-                  + " in locale" + localeSubString);
+                  + " in locale " + localeSubString);
             }
             matchingClasses.put(localeSubString, subType);
           }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,9 +18,9 @@ package com.google.gwt.i18n.rebind;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.i18n.client.impl.ConstantMap;
+import com.google.gwt.i18n.rebind.AbstractResource.MissingResourceException;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
-
-import java.util.MissingResourceException;
 
 /**
  * Creator for methods of the form Map getX() .
@@ -43,15 +43,15 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
    * @throws UnableToCompleteException
    */
   @Override
-  public void createMethodFor(TreeLogger logger, JMethod method,
-      final String value) throws UnableToCompleteException {
+  public void createMethodFor(TreeLogger logger, JMethod method, String key,
+      AbstractResource resource, String locale) throws UnableToCompleteException {
     String methodName = method.getName();
-
     if (method.getParameters().length > 0) {
       error(
           logger,
           methodName
-              + " cannot have parameters; extend Messages instead if you need to create parameterized messages");
+              + " cannot have parameters; extend Messages instead if you need to create "
+              + "parameterized messages");
     }
     // make sure cache exists
     enableCache();
@@ -61,18 +61,24 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
     // if not found create Map
     println("if (args == null){");
     indent();
-    println("args = new com.google.gwt.i18n.client.impl.ConstantMap();");
+    println("args = new " + ConstantMap.class.getCanonicalName() + "();");
+    String value;
+    try {
+      value = resource.getRequiredStringExt(logger, key, null);
+    } catch (MissingResourceException e) {
+      e.setDuring("getting key list");
+      throw e;
+    }
     String[] args = ConstantsStringArrayMethodCreator.split(value);
 
     for (int i = 0; i < args.length; i++) {
       try {
-        String key = args[i];
+        key = args[i];
         String keyValue = getResources().getString(key);
         println("args.put(" + wrap(key) + ", " + wrap(keyValue) + ");");
       } catch (MissingResourceException e) {
-        String msg = "While implementing map for " + method.getName()
-            + "(), could not find key '" + args[i] + "'";
-        throw error(logger, msg);
+        e.setDuring("implementing map");
+        throw e;
       }
     }
     println("cache.put(" + wrap(methodName) + ", args);");

@@ -35,11 +35,11 @@ import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.Set;
-import java.util.Map.Entry;
 
 /**
  * Tests Internationalization. Assumes locale is set to piglatin_UK
@@ -106,6 +106,70 @@ public class I18NTest extends GWTTestCase {
     assertEquals("Extend Protected Inner", extendProtectedInner);
   }
 
+  public void testAnnotatedConstants() {
+    TestAnnotatedConstants c = GWT.create(TestAnnotatedConstants.class);
+    assertEquals(14, c.fourteen());
+    assertFalse(c.isFalse());
+    assertTrue(c.isTrue());
+    assertArrayEquals(new String[] {"String array with one string"}, c.singleString());
+    assertArrayEquals(new String[] {"One", "Two", "Three,Comma"}, c.threeStrings());
+    assertEquals("Properties value #s need quoting!", c.propertiesQuoting());
+    Map<String,String> stringMap = c.stringMap();
+    assertTrue(stringMap.containsKey("key1"));
+    assertTrue(stringMap.containsKey("key2"));
+    assertEquals("value1", stringMap.get("key1"));
+    assertEquals("value2", stringMap.get("key2"));
+    assertEquals(2, stringMap.size());
+    stringMap = c.rawMap();
+    assertTrue(stringMap.containsKey("key1"));
+    assertTrue(stringMap.containsKey("key2"));
+    assertEquals("value1", stringMap.get("key1"));
+    assertEquals("value2", stringMap.get("key2"));
+    assertEquals(2, stringMap.size());
+    assertEquals("Test me", c.testMe());
+    assertEquals(13.7f, c.thirteenPointSeven());
+    assertEquals(3.14, c.threePointOneFour());
+    assertEquals("Once more, with meaning", c.withMeaning());
+  }
+  
+  public void testAnnotatedConstantsGenMD5() {
+    TestAnnotatedConstantsGenMD5 c = GWT.create(TestAnnotatedConstantsGenMD5.class);
+    assertEquals(14, c.fourteen());
+    assertFalse(c.isFalse());
+    assertTrue(c.isTrue());
+    assertArrayEquals(new String[] {"String array with one string"}, c.singleString());
+    assertArrayEquals(new String[] {"One", "Two"}, c.twoStrings());
+    Map<String,String> stringMap = c.stringMap();
+    assertTrue(stringMap.containsKey("key1"));
+    assertTrue(stringMap.containsKey("key2"));
+    assertEquals("value1", stringMap.get("key1"));
+    assertEquals("value2", stringMap.get("key2"));
+    assertEquals(2, stringMap.size());
+    assertEquals("Test me", c.testMe());
+    assertEquals(13.7f, c.thirteenPointSeven());
+    assertEquals(3.14, c.threePointOneFour());
+    assertEquals("Once more, with meaning", c.withMeaning());
+  }
+  
+  public void testAnnotatedMessages() {
+    TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
+    assertEquals("Estay emay", m.basicText());
+    assertEquals("Oncay oremay, ithway eaningmay", m.withMeaning());
+    assertEquals("PL: One argument: one", m.oneArgument("one"));
+    assertEquals("PL: One argument (where am I?), which is optional",
+        m.optionalArgument("where am I?"));
+    assertEquals("Two arguments, second and first, inverted",
+        m.invertedArguments("first", "second")); // from default locale
+    assertEquals("PL: Don't tell me I can't {quote things in braces}", m.quotedText());
+    assertEquals("PL: This {0} would be an argument if not quoted", m.quotedArg());
+    assertEquals("PL: Total is $11,305.01", m.currencyFormat(11305.01));
+    assertEquals("PL: Default number format is 1,017.1", m.defaultNumberFormat(1017.1));
+    assertEquals("PL: It is 12:01 PM on Saturday, December 1, 2007",
+        m.getTimeDate(new Date(107, 11, 1, 12, 1, 2)));
+    assertEquals("PL: 13 widgets", m.pluralWidgetsOther(13));
+    assertEquals("Too many widgets to count (150) in pig-latin", m.pluralWidgetsOther(150));
+  }
+  
   public void testBindings() {
     TestBinding b = (TestBinding) GWT.create(TestBinding.class);
     assertEquals("default", b.a());
@@ -161,7 +225,7 @@ public class I18NTest extends GWTTestCase {
   public void testConstantMapABCD() {
     TestConstants types = (TestConstants) GWT.create(TestConstants.class);
 
-    Map map = types.mapABCD();
+    Map<String, String> map = types.mapABCD();
     assertEquals(4, map.size());
     assertEquals("valueA", map.get("keyA"));
     assertEquals("valueB", map.get("keyB"));
@@ -170,16 +234,16 @@ public class I18NTest extends GWTTestCase {
 
     assertNull(map.get("bogus"));
 
-    Set keys = map.keySet();
-    Iterator keyIter = keys.iterator();
+    Set<String> keys = map.keySet();
+    Iterator<String> keyIter = keys.iterator();
     assertEquals("keyA", keyIter.next());
     assertEquals("keyB", keyIter.next());
     assertEquals("keyC", keyIter.next());
     assertEquals("keyD", keyIter.next());
     assertFalse(keyIter.hasNext());
 
-    Collection values = map.values();
-    Iterator valueIter = values.iterator();
+    Collection<String> values = map.values();
+    Iterator<String> valueIter = values.iterator();
     assertEquals("valueA", valueIter.next());
     assertEquals("valueB", valueIter.next());
     assertEquals("valueC", valueIter.next());
@@ -220,15 +284,15 @@ public class I18NTest extends GWTTestCase {
 
     ConstantMap map = (ConstantMap) types.mapBACD();
 
-    Set keys = map.keySet();
-    Iterator keyIter = keys.iterator();
+    Set<String> keys = map.keySet();
+    Iterator<String> keyIter = keys.iterator();
     assertEquals("keyB", keyIter.next());
     assertEquals("keyA", keyIter.next());
     assertEquals("keyC", keyIter.next());
     assertEquals("keyD", keyIter.next());
 
-    Collection values = map.values();
-    Iterator valueIter = values.iterator();
+    Collection<String> values = map.values();
+    Iterator<String> valueIter = values.iterator();
     assertEquals("valueB", valueIter.next());
     assertEquals("valueA", valueIter.next());
     assertEquals("valueC", valueIter.next());
@@ -245,14 +309,14 @@ public class I18NTest extends GWTTestCase {
 
     assertEquals(1, map.size());
 
-    Set keys = map.keySet();
+    Set<String> keys = map.keySet();
     assertEquals(1, keys.size());
-    Iterator keyIter = keys.iterator();
+    Iterator<String> keyIter = keys.iterator();
     assertEquals("keyB", keyIter.next());
 
-    Collection values = map.values();
+    Collection<String> values = map.values();
     assertEquals(1, values.size());
-    Iterator valueIter = values.iterator();
+    Iterator<String> valueIter = values.iterator();
     assertEquals("valueB", valueIter.next());
   }
 
@@ -264,15 +328,15 @@ public class I18NTest extends GWTTestCase {
 
     ConstantMap map = (ConstantMap) types.mapDCBA();
 
-    Set keys = map.keySet();
-    Iterator keyIter = keys.iterator();
+    Set<String> keys = map.keySet();
+    Iterator<String> keyIter = keys.iterator();
     assertEquals("keyD", keyIter.next());
     assertEquals("keyC", keyIter.next());
     assertEquals("keyB", keyIter.next());
     assertEquals("keyA", keyIter.next());
 
-    Collection values = map.values();
-    Iterator valueIter = values.iterator();
+    Collection<String> values = map.values();
+    Iterator<String> valueIter = values.iterator();
     assertEquals("valueD", valueIter.next());
     assertEquals("valueC", valueIter.next());
     assertEquals("valueB", valueIter.next());
@@ -289,32 +353,32 @@ public class I18NTest extends GWTTestCase {
 
     assertEquals(3, map.size());
 
-    Set keys = map.keySet();
+    Set<String> keys = map.keySet();
     assertEquals(3, keys.size());
-    Iterator keyIter = keys.iterator();
+    Iterator<String> keyIter = keys.iterator();
     assertEquals("keyX", keyIter.next());
     assertEquals("keyY", keyIter.next());
     assertEquals("keyZ", keyIter.next());
 
-    Collection values = map.values();
+    Collection<String> values = map.values();
     assertEquals(3, values.size());
-    Iterator valueIter = values.iterator();
+    Iterator<String> valueIter = values.iterator();
     assertEquals("valueZ", valueIter.next());
     assertEquals("valueZ", valueIter.next());
     assertEquals("valueZ", valueIter.next());
 
-    Set entries = map.entrySet();
+    Set<Map.Entry<String, String>> entries = map.entrySet();
     assertEquals(3, entries.size());
-    Iterator entryIter = entries.iterator();
-    Map.Entry entry;
+    Iterator<Map.Entry<String, String>> entryIter = entries.iterator();
+    Map.Entry<String, String> entry;
 
-    entry = (Entry) entryIter.next();
+    entry = entryIter.next();
     assertEquals("keyX", entry.getKey());
     assertEquals("valueZ", entry.getValue());
-    entry = (Entry) entryIter.next();
+    entry = entryIter.next();
     assertEquals("keyY", entry.getKey());
     assertEquals("valueZ", entry.getValue());
-    entry = (Entry) entryIter.next();
+    entry = entryIter.next();
     assertEquals("keyZ", entry.getKey());
     assertEquals("valueZ", entry.getValue());
   }
@@ -412,14 +476,14 @@ public class I18NTest extends GWTTestCase {
     assertEquals("3 {2},{2},{2}, one {0}, two {1} {1}",
         d.get("formattedMessage"));
     assertEquals("4", d.get("d"));
-    Set s = d.keySet();
+    Set<String> s = d.keySet();
     assertTrue(s.contains("a"));
     assertTrue(s.contains("b"));
     assertFalse(s.contains("c"));
-    Collection s2 = d.values();
+    Collection<String> s2 = d.values();
     assertTrue(s2.contains("A"));
     assertTrue(s2.contains("B"));
-    Iterator iter = s2.iterator();
+    Iterator<String> iter = s2.iterator();
     assertEquals("3 {2},{2},{2}, one {0}, two {1} {1}", iter.next());
     assertEquals(4, s2.size());
     Dictionary empty = Dictionary.getDictionary("emptyDic");
@@ -471,8 +535,8 @@ public class I18NTest extends GWTTestCase {
   public void testTypedMessages() {
     TestTypedMessages typed = (TestTypedMessages) GWT.create(TestTypedMessages.class);
     String expected = "int(0) float(1.2), long(0), boolean(true), Object([], char(a), byte(127), short(-32768);";
-    assertEquals(expected, typed.testAllTypes(0, (float) 1.2, 0, true,
-        new ArrayList(), 'a', Byte.MAX_VALUE, Short.MIN_VALUE));
+    assertEquals(expected, typed.testAllTypes(0, (float) 1.2, 0, true, new ArrayList<String>(),
+        'a', Byte.MAX_VALUE, Short.MIN_VALUE));
     String lotsOfInts = typed.testLotsOfInts(1, 2, 3, 4);
     assertEquals("1, 2,3,4 ", lotsOfInts);
     String oneFloat = typed.simpleMessageTest((float) 2.3);
@@ -482,8 +546,8 @@ public class I18NTest extends GWTTestCase {
     String testSomeObjectTypes = typed.testSomeObjectTypes(new I18NTest(),
         new StringBuffer("hello"), new Integer("34"), null);
     assertEquals(
-        "this(null(com.google.gwt.i18n.client.I18NTest)), StringBuffer(hello), Integer(34), null(null);",
-        testSomeObjectTypes);
+        "this(null(com.google.gwt.i18n.client.I18NTest)), StringBuffer(hello), Integer(34), "
+        + "null(null);", testSomeObjectTypes);
   }
 
   private void assertArrayEquals(String[] shouldBe, String[] test) {
@@ -494,12 +558,12 @@ public class I18NTest extends GWTTestCase {
   }
 
   private native void createDummyDictionaries() /*-{
-   $wnd.testDic = new Object();
-   $wnd.testDic.formattedMessage = "3 {2},{2},{2}, one {0}, two {1} {1}";
-   $wnd.testDic.a="A";
-   $wnd.testDic.b="B";
-   $wnd.testDic.d=4;
-   $wnd.emptyDic = new Object();
-   $wnd.malformedDic = 4;
-   }-*/;
+    $wnd.testDic = new Object();
+    $wnd.testDic.formattedMessage = "3 {2},{2},{2}, one {0}, two {1} {1}";
+    $wnd.testDic.a="A";
+    $wnd.testDic.b="B";
+    $wnd.testDic.d=4;
+    $wnd.emptyDic = new Object();
+    $wnd.malformedDic = 4;
+  }-*/;
 }

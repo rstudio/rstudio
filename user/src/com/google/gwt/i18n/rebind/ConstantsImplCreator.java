@@ -23,7 +23,6 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
-import com.google.gwt.i18n.rebind.util.AbstractResource;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.util.Map;
@@ -42,16 +41,17 @@ class ConstantsImplCreator extends AbstractLocalizableImplCreator {
    * Constructor for <code>ConstantsImplCreator</code>.
    * 
    * @param logger logger to print errors
+   * @param deprecatedLogger logger to use for deprecated warnings
    * @param writer <code>Writer</code> to print to
    * @param localizableClass class/interface to conform to
    * @param messageBindings resource bundle used to generate the class
    * @param oracle types
    * @throws UnableToCompleteException
    */
-  public ConstantsImplCreator(TreeLogger logger, SourceWriter writer,
+  public ConstantsImplCreator(TreeLogger logger, TreeLogger deprecatedLogger, SourceWriter writer,
       JClassType localizableClass, AbstractResource messageBindings,
       TypeOracle oracle) throws UnableToCompleteException {
-    super(writer, localizableClass, messageBindings);
+    super(logger, deprecatedLogger, writer, localizableClass, messageBindings, true);
     try {
       JClassType stringClass = oracle.getType(String.class.getName());
       JClassType mapClass = oracle.getType(Map.class.getName());
@@ -93,10 +93,10 @@ class ConstantsImplCreator extends AbstractLocalizableImplCreator {
    * arg0...argN.
    */
   @Override
-  protected void emitMethodBody(TreeLogger logger, JMethod method)
+  protected void emitMethodBody(TreeLogger logger, JMethod method, String locale)
       throws UnableToCompleteException {
     checkConstantMethod(logger, method);
-    delegateToCreator(logger, method);
+    delegateToCreator(logger, method, locale);
   }
 
   boolean isNeedCache() {

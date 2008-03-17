@@ -19,7 +19,8 @@ import com.google.gwt.i18n.client.gen.Colors;
 import com.google.gwt.i18n.client.gen.Shapes;
 
 /**
- * TODO: document me.
+ * Test interface which combines two other Localizable interfaces as well as
+ * adding new ones.
  */
 public interface ColorsAndShapes extends Colors, Shapes {
   String[] myFavorites();

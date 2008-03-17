@@ -20,7 +20,7 @@ import com.google.gwt.i18n.client.impl.CldrImpl;
 import com.google.gwt.i18n.client.impl.LocaleInfoImpl;
 
 /**
- * Provides access to the currently-running locale and the list of available
+ * Provides access to the currently-active locale and the list of available
  * locales.
  */
 public class LocaleInfo {
@@ -35,7 +35,7 @@ public class LocaleInfo {
       (CldrImpl) GWT.create(CldrImpl.class));
 
   /**
-   * @return an array of available locales
+   * @return an array of available locale names
    */
   public static String[] getAvailableLocaleNames() {
     /*
@@ -53,16 +53,15 @@ public class LocaleInfo {
   }
   
   /**
-   * @return a LocaleInfo instance for the current locale.
-   * 
-   * In the future, we could make additional static methods which returned
-   * a LocaleInfo instance for a specific locale (from the set of those
-   * the app was compiled with), accessed via a method like:
-   * <pre>
-   *   public static LocaleInfo getLocale(String localeName)
-   * </pre>
+   * @return a LocaleInfo instance for the current locale
    */
   public static LocaleInfo getCurrentLocale() {
+    /*
+     * In the future, we could make additional static methods which returned a
+     * LocaleInfo instance for a specific locale (from the set of those the app
+     * was compiled with), accessed via a method like:
+     *    public static LocaleInfo getLocale(String localeName)
+     */
     return instance;
   }
 
@@ -110,14 +109,14 @@ public class LocaleInfo {
   }
 
   /**
-   * @return the name of this locale, such as "default, "en_US", etc.
+   * @return the name of this locale, such as "default, "en_US", etc
    */
   public String getLocaleName() {
     return infoImpl.getLocaleName();
   }
   
   /**
-   * @return true if this locale is right-to-left instead of left-to-right.
+   * @return true if this locale is right-to-left instead of left-to-right
    */
   public boolean isRTL() {
     return cldrImpl.isRTL();

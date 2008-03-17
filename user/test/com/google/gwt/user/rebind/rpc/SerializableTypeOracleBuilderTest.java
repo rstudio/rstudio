@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.rebind.rpc;
 
+import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -83,8 +84,9 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       return "";
     }
 
-    public String[] getPropertyValueSet(TreeLogger logger, String propertyName) {
-      return new String[] {};
+    public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
+        throws BadPropertyValueException {
+      return new String[] { "" };
     }
   }
 

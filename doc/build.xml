@@ -9,7 +9,8 @@
 	<!-- Platform shouldn't matter here, just picking one -->
 	<property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
 
-	<property name="USER_PKGS" value="com.google.gwt.core.client;com.google.gwt.core.ext;com.google.gwt.core.ext.typeinfo;com.google.gwt.i18n.client;com.google.gwt.json.client;com.google.gwt.junit.client;com.google.gwt.benchmarks.client;com.google.gwt.user.client;com.google.gwt.user.client.rpc;com.google.gwt.user.client.ui;com.google.gwt.user.server.rpc;com.google.gwt.xml.client;com.google.gwt.http.client" />
+	<property name="USER_PKGS"
+          value="com.google.gwt.core.client;com.google.gwt.core.ext;com.google.gwt.core.ext.typeinfo;com.google.gwt.i18n.client;com.google.gwt.i18n.rebind.format;com.google.gwt.i18n.rebind.keygen;com.google.gwt.json.client;com.google.gwt.junit.client;com.google.gwt.user.client;com.google.gwt.user.client.rpc;com.google.gwt.user.client.ui;com.google.gwt.user.server.rpc;com.google.gwt.xml.client;com.google.gwt.http.client;com.google.gwt.junit.viewer.client" />
 	<property name="LANG_PKGS" value="java.lang;java.lang.annotation;java.util;java.io" />
 
 	<!--
