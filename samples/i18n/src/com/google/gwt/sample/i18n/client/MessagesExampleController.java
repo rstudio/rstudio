@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class MessagesExampleController {
   private static final ErrorMessages ERRORS = GWT.create(ErrorMessages.class);
+  private static final PluralMessages PLURALS = GWT.create(PluralMessages.class);
 
   public final TextBox txtArg1 = new TextBox();
   public final TextBox txtArg2 = new TextBox();
@@ -33,9 +34,13 @@ public class MessagesExampleController {
   public final Label lblFormattedMessage = new Label();
   public final Label lblMessageTemplate = new Label();
 
+  public final TextBox pluralCount = new TextBox();
+  public final Label lblPluralMessage = new Label();
+
   private String prevArg1;
   private String prevArg2;
   private String prevArg3;
+  private String prevCount;
   private final MessagesExampleConstants constants;
 
   public MessagesExampleController(MessagesExampleConstants constants) {
@@ -53,10 +58,13 @@ public class MessagesExampleController {
     txtArg1.addKeyboardListener(listener);
     txtArg2.addKeyboardListener(listener);
     txtArg3.addKeyboardListener(listener);
+    pluralCount.addKeyboardListener(listener);
 
     txtArg1.setText("amelie");
     txtArg2.setText("guest");
     txtArg3.setText("/secure/blueprints.xml");
+
+    pluralCount.setText("13");
 
     maybeRefreshFormattedMessage();
   }
@@ -70,20 +78,30 @@ public class MessagesExampleController {
     String arg2 = txtArg2.getText().trim();
     String arg3 = txtArg3.getText().trim();
 
-    if (arg1.equals(prevArg1)) {
-      if (arg2.equals(prevArg2)) {
-        if (arg3.equals(prevArg3)) {
-          // Nothing has changed.
-          return;
-        }
-      }
+    // Check if the permission denied message should be regenerated.
+    if (!arg1.equals(prevArg1)
+      || !arg2.equals(prevArg2)
+      || !arg3.equals(prevArg3)) {
+      prevArg1 = arg1;
+      prevArg2 = arg2;
+      prevArg3 = arg3;
+
+      String formattedMessage = ERRORS.permissionDenied(arg1, arg2, arg3);
+      lblFormattedMessage.setText(formattedMessage);
     }
 
-    prevArg1 = arg1;
-    prevArg2 = arg2;
-    prevArg3 = arg3;
+    String count = pluralCount.getText().trim();
 
-    String formattedMessage = ERRORS.permissionDenied(arg1, arg2, arg3);
-    lblFormattedMessage.setText(formattedMessage);
+    // Check if the plurals message should be regenerated.
+    if (!count.equals(prevCount) && count.trim().length() > 0) {
+      prevCount = count;
+
+      try {
+        String formattedMessage = PLURALS.treeCount(Integer.valueOf(count));
+        lblPluralMessage.setText(formattedMessage);
+      } catch (NumberFormatException e) {
+        // Ignore bogus numbers
+      }
+    }
   }
 }

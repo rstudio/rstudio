@@ -33,6 +33,7 @@
 <!-- The following commented-out <meta> element is an alternate way to specify the locale to use -->
 <!-- if the locale is not present in the URL query string.-->
 <!-- <meta name='gwt:property' content='locale=fr'>-->
+<meta name="gwt:property" content="locale=en">
 
 <link rel="stylesheet" type="text/css" href="I18N.css">
 
@@ -172,8 +173,36 @@ public interface ErrorMessages extends Messages {
         </tr>
         
         <tr>
-          <th class="col1" id="messagesFormattedOutputCaption"></th >
+          <th class="col1" id="messagesFormattedOutputCaption"></th>
           <td class="col2" id="messagesFormattedOutputText"></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="plurals example">
+      <h3>Plural Forms</h3>
+      <p>
+        The <code>Messages</code> interface also provides support for plural forms, choosing the
+        correct form based on the count.  In the example below, note that the English plural forms
+        are included in the source file via annotations.
+      </p>
+      <pre class="code">
+@DefaultLocale("en_US")
+public interface MyMessages extends Messages {
+  @DefaultMessage("You have {0} trees.")
+  @PluralText({"one", "You have one tree."})
+  String treeCount(@PluralCount int count);
+}
+      </pre>
+      <table>
+        <tr>
+          <th class="col1" id="pluralsArg1Caption"></th>
+          <td class="col2" id="pluralsArg1Text"></td>
+        </tr>
+        
+        <tr>
+          <th class="col1" id="pluralsFormattedOutputCaption"></th>
+          <td class="col2" id="pluralsFormattedOutputText"></td>
         </tr>
       </table>
     </div>

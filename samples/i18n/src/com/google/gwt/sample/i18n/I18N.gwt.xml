@@ -16,5 +16,5 @@
 	<inherits name="com.google.gwt.user.User" />
     <inherits name="com.google.gwt.i18n.I18N"/>
 	<entry-point class="com.google.gwt.sample.i18n.client.I18N" />
-	<extend-property name="locale" values="fr" />
+	<extend-property name="locale" values="en,fr" />
 </module>

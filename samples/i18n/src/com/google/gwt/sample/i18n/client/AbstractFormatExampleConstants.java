@@ -22,13 +22,18 @@ import com.google.gwt.i18n.client.Constants;
  */
 public interface AbstractFormatExampleConstants extends Constants {
 
+  @DefaultStringValue("Unable to parse input")
   String failedToParseInput();
 
+  @DefaultStringValue("Formatted value")
   String formattedOutput();
 
+  @DefaultStringValue("Value to format")
   String inputValue();
 
+  @DefaultStringValue("Invalid pattern")
   String invalidPattern();
 
+  @DefaultStringValue("Pattern")
   String pattern();
 }

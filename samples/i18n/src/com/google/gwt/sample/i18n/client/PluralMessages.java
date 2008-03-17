@@ -15,25 +15,16 @@
  */
 package com.google.gwt.sample.i18n.client;
 
-import com.google.gwt.i18n.client.Constants;
-
-import java.util.Map;
+import com.google.gwt.i18n.client.Messages;
+import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
 
 /**
- * Internationalized constants used to demonstrate {@link Constants}.
+ * Internationalized messages used by {@link MessagesExampleController}.
+ * Used to demonstrate plural forms support.
  */
-public interface ConstantsExampleConstants extends Constants {
-
-  @DefaultStringMapValue({"black", "Black", "blue", "Blue", "green", "Green", "grey", "Grey",
-      "lightGrey", "Light Grey", "red", "Red", "white", "White", "yellow", "Yellow"})
-  Map<String, String> colorMap();
-
-  @DefaultStringValue("Favorite color")
-  String favoriteColor();
-
-  @DefaultStringValue("First Name")
-  String firstName();
-
-  @DefaultStringValue("Last Name")
-  String lastName();
+@DefaultLocale("en_US")
+public interface PluralMessages extends Messages {
+  @DefaultMessage("You have {0} trees.")
+  @PluralText({"one", "You have one tree."})
+  String treeCount(@PluralCount int count);
 }

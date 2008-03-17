@@ -166,6 +166,10 @@ public class I18N implements EntryPoint {
     bindElement("messagesArg3Text", controller.txtArg3);
     bindElement("messagesFormattedOutputCaption", constants.formattedMessage());
     bindElement("messagesFormattedOutputText", controller.lblFormattedMessage);
+    bindElement("pluralsArg1Caption", constants.arg1());
+    bindElement("pluralsArg1Text", controller.pluralCount);
+    bindElement("pluralsFormattedOutputCaption", constants.formattedMessage());
+    bindElement("pluralsFormattedOutputText", controller.lblPluralMessage);
   }
 
   private void initNumberFormatExample(NumberFormatExampleController controller) {

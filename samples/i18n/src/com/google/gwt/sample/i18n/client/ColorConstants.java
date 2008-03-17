@@ -24,20 +24,27 @@ import com.google.gwt.i18n.client.ConstantsWithLookup;
  */
 public interface ColorConstants extends ConstantsWithLookup {
 
+  @DefaultStringValue("Black")
   String black();
 
+  @DefaultStringValue("Blue")
   String blue();
 
+  @DefaultStringValue("Green")
   String green();
 
+  @DefaultStringValue("Grey")
   String grey();
 
+  @DefaultStringValue("Light Grey")
   String lightGrey();
 
+  @DefaultStringValue("Red")
   String red();
 
+  @DefaultStringValue("White")
   String white();
 
+  @DefaultStringValue("Yellow")
   String yellow();
-
 }

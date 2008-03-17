@@ -23,6 +23,7 @@ import java.util.Map;
 public interface NumberFormatExampleConstants extends
     AbstractFormatExampleConstants {
 
+  @DefaultStringMapValue({"decimal", "Decimal", "currency", "Currency", "scientific", "Scientific",
+      "percent", "Percent", "custom", "Custom" })
   Map<String, String> numberFormatPatterns();
-
 }

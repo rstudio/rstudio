@@ -21,6 +21,7 @@ import com.google.gwt.i18n.client.Messages;
  * Internationalized messages used by {@link MessagesExampleController}.
  */
 public interface ErrorMessages extends Messages {
+  @DefaultMessage("User ''{0}'' has security clearance ''{1}'' and cannot access ''{2}''")
   String permissionDenied(String username, String securityClearance,
       String inaccessibleResource);
 }

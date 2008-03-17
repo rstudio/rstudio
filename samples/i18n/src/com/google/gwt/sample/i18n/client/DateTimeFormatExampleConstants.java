@@ -22,5 +22,10 @@ import java.util.Map;
  */
 public interface DateTimeFormatExampleConstants extends
     AbstractFormatExampleConstants {
+  @DefaultStringMapValue({"fullDateTime", "Full Date/Time", "longDateTime", "Long Date/Time",
+      "mediumDateTime", "Medium Date/Time", "shortDateTime", "Short Date/Time", "fullDate",
+      "Full Date", "longDate", "Long Date", "mediumDate", "Medium Date", "shortDate", "Short Date",
+      "fullTime", "Full Time", "longTime", "Long Time", "mediumTime", "Medium Time", "shortTime",
+      "Short Time", "custom", "Custom"})
   Map<String, String> dateTimeFormatPatterns();
 }
