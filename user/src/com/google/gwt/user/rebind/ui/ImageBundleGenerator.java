@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,17 +19,20 @@ import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.user.client.ui.ImageBundle;
+import com.google.gwt.user.client.ui.ImageBundle.Resource;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Generates an implementation of a user-defined interface <code>T</code> that
@@ -45,6 +48,64 @@ import java.util.Map;
  */
 public class ImageBundleGenerator extends Generator {
 
+  /**
+   * Simple wrapper around JMethod that allows for unit test mocking.
+   */
+  /* private */interface JMethodOracle {
+
+    Resource getAnnotation(Class<Resource> clazz);
+
+    String[][] getMetaData(String metadataTag);
+
+    String getName();
+
+    String getPackageName();
+  }
+  
+  /**
+   * Indirection around the act of looking up a resource that allows for unit
+   * test mocking.
+   */
+  /* private */interface ResourceLocator {
+    /**
+     * 
+     * @param resName the resource name in a format that could be passed to
+     *            <code>ClassLoader.getResource()</code>
+     * @return <code>true</code> if the resource is present
+     */
+    boolean isResourcePresent(String resName);
+  }
+
+  private class JMethodOracleImpl implements JMethodOracle {
+    private final JMethod delegate;
+
+    public JMethodOracleImpl(JMethod delegate) {
+      this.delegate = delegate;
+    }
+
+    public Resource getAnnotation(Class<Resource> clazz) {
+      return delegate.getAnnotation(clazz);
+    }
+
+    public String[][] getMetaData(String metadataTag) {
+      return delegate.getMetaData(metadataTag);
+    }
+
+    public String getName() {
+      return delegate.getName();
+    }
+
+    public String getPackageName() {
+      return delegate.getEnclosingType().getPackage().getName();
+    }
+  }
+
+  /* private */static final String MSG_NO_FILE_BASED_ON_METHOD_NAME = "No matching image resource was found; any of the following filenames would have matched had they been present:";
+
+  /* private */static final String MSG_JAVADOC_FORM_DEPRECATED = "Use of @gwt.resource in javadoc is deprecated; use the annotation ImageBundle.@Resource instead";
+
+  /* private */static final String MSG_MULTIPLE_ANNOTATIONS = "You are using both the @Resource annotation and the deprecated @gwt.resource in javadoc; @Resource will be used, and @gwt.resource will be ignored";
+
   private static final String ABSTRACTIMAGEPROTOTYPE_QNAME = "com.google.gwt.user.client.ui.AbstractImagePrototype";
 
   private static final String CLIPPEDIMAGEPROTOTYPE_QNAME = "com.google.gwt.user.client.ui.impl.ClippedImagePrototype";
@@ -57,26 +118,71 @@ public class ImageBundleGenerator extends Generator {
 
   private static final String METADATA_TAG = "gwt.resource";
 
+  /* private */static String msgCannotFindImageFromMetaData(String imgResName) {
+    return "Unable to find image resource '" + imgResName + "'";
+  }
+
+  private final ResourceLocator resLocator;
+
+  /**
+   * Default constructor for image bundle. Locates resources using this class's
+   * own class loader.
+   */
   public ImageBundleGenerator() {
+    this(new ResourceLocator() {
+      public boolean isResourcePresent(String resName) {
+        URL url = getClass().getClassLoader().getResource(resName);
+        return url != null;
+      }
+    });
+  }
+
+  /**
+   * Default access so that it can be accessed by unit tests.
+   */
+  /* private */ImageBundleGenerator(ResourceLocator resourceLocator) {
+    assert (resourceLocator != null);
+    this.resLocator = resourceLocator;
   }
 
   @Override
-  public String generate(TreeLogger logger, GeneratorContext context,
-      String typeName) throws UnableToCompleteException {
+  public String generate(TreeLogger logger, GeneratorContext context, String typeName)
+      throws UnableToCompleteException {
 
     TypeOracle typeOracle = context.getTypeOracle();
 
     // Get metadata describing the user's class.
     JClassType userType = getValidUserType(logger, typeName, typeOracle);
 
-    // Get the methods that correspond to constituent images.
-    JMethod[] imgMethods = getValidImageMethods(logger, userType);
-
     // Write the new class.
-    String resultName = generateImpl(logger, context, userType, imgMethods);
+    JMethod[] imgMethods = userType.getOverridableMethods();
+    String resultName = generateImplClass(logger, context, userType, imgMethods);
 
     // Return the complete name of the generated class.
     return resultName;
+  }
+
+  /**
+   * Gets the resource name of the image associated with the specified image
+   * bundle method in a form that can be passed to
+   * <code>ClassLoader.getResource()</code>.
+   * 
+   * @param logger the main logger
+   * @param method the image bundle method whose image name is being sought
+   * @return a resource name that is suitable to be passed into
+   *         <code>ClassLoader.getResource()</code>; never returns
+   *         <code>null</code>
+   * @throws UnableToCompleteException thrown if a resource was specified but
+   *             could not be found on the classpath
+   */
+  /* private */String getImageResourceName(TreeLogger logger, JMethodOracle method)
+      throws UnableToCompleteException {
+    String imgName = tryGetImageNameFromMetaData(logger, method);
+    if (imgName != null) {
+      return imgName;
+    } else {
+      return getImageNameFromMethodName(logger, method);
+    }
   }
 
   private String computeSubclassName(JClassType userType) {
@@ -84,11 +190,19 @@ public class ImageBundleGenerator extends Generator {
     return baseName + "_generatedBundle";
   }
 
-  private void generateImageMethod(TreeLogger logger,
-      ImageBundleBuilder compositeImage, SourceWriter sw, JMethod method)
-      throws UnableToCompleteException {
+  private int countLines(char[] source, int declStartIndex) {
+    int lineNum = 1;
+    for (int i = 0; i < declStartIndex; ++i) {
+      if (source[i] == '\n') {
+        ++lineNum;
+      }
+    }
+    return lineNum;
+  }
 
-    String imageName = getImageUrlFromMetaDataOrMethodName(logger, method);
+  private void generateImageMethod(TreeLogger logger, ImageBundleBuilder compositeImage,
+      SourceWriter sw, JMethod method, String imgResName) throws UnableToCompleteException {
+
     String decl = method.getReadableDeclaration(false, true, true, true, true);
 
     {
@@ -98,7 +212,7 @@ public class ImageBundleGenerator extends Generator {
       // create a new instance every time this method is called, since
       // ClippedImagePrototype is immutable
 
-      ImageBundleBuilder.ImageRect imageRect = compositeImage.getMapping(imageName);
+      ImageBundleBuilder.ImageRect imageRect = compositeImage.getMapping(imgResName);
       String singletonName = method.getName() + "_SINGLETON";
 
       sw.print("private static final ClippedImagePrototype ");
@@ -127,16 +241,30 @@ public class ImageBundleGenerator extends Generator {
     }
   }
 
-  private String generateImpl(TreeLogger logger, GeneratorContext context,
-      JClassType userType, JMethod[] imageMethods)
-      throws UnableToCompleteException {
+  /**
+   * Generates the image bundle implementation class, checking each method for
+   * validity as it is encountered.
+   */
+  private String generateImplClass(TreeLogger logger, GeneratorContext context,
+      JClassType userType, JMethod[] imageMethods) throws UnableToCompleteException {
+    // Lookup the type info for AbstractImagePrototype so that we can check for
+    // the proper return type
+    // on image bundle methods.
+    final JClassType abstractImagePrototype;
+    try {
+      abstractImagePrototype = userType.getOracle().getType(ABSTRACTIMAGEPROTOTYPE_QNAME);
+    } catch (NotFoundException e) {
+      logger.log(TreeLogger.ERROR, "GWT " + ABSTRACTIMAGEPROTOTYPE_QNAME
+          + " class is not available", e);
+      throw new UnableToCompleteException();
+    }
+
     // Compute the package and class names of the generated class.
     String pkgName = userType.getPackage().getName();
     String subName = computeSubclassName(userType);
 
     // Begin writing the generated source.
-    ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(
-        pkgName, subName);
+    ClassSourceFileComposerFactory f = new ClassSourceFileComposerFactory(pkgName, subName);
     f.addImport(ABSTRACTIMAGEPROTOTYPE_QNAME);
     f.addImport(CLIPPEDIMAGEPROTOTYPE_QNAME);
     f.addImport(GWT_QNAME);
@@ -149,10 +277,34 @@ public class ImageBundleGenerator extends Generator {
       // Build a compound image from each individual image.
       ImageBundleBuilder bulder = new ImageBundleBuilder();
 
+      // Store the computed image names so that we don't have to lookup them up
+      // again.
+      List<String> imageResNames = new ArrayList<String>();
+
       for (JMethod method : imageMethods) {
-        String imageUrl = getImageUrlFromMetaDataOrMethodName(logger, method);
-        assert (imageUrl != null);
-        bulder.assimilate(logger, imageUrl);
+        CompilationUnitProvider unit = method.getEnclosingType().getCompilationUnit();
+        String sourceFile = unit.getLocation();
+        int lineNum = countLines(unit.getSource(), method.getDeclStart());
+        String branchMsg = "Analyzing method '" + method.getName() + "' beginning on line "
+            + lineNum + " of " + sourceFile;
+        TreeLogger branch = logger.branch(TreeLogger.DEBUG, branchMsg, null);
+
+        // Verify that this method is valid on an image bundle.
+        if (method.getReturnType() != abstractImagePrototype) {
+          branch.log(TreeLogger.ERROR, "Return type must be " + ABSTRACTIMAGEPROTOTYPE_QNAME, null);
+          throw new UnableToCompleteException();
+        }
+
+        if (method.getParameters().length > 0) {
+          branch.log(TreeLogger.ERROR, "Method must have zero parameters", null);
+          throw new UnableToCompleteException();
+        }
+
+        // Find the associated imaged resource.
+        String imageResName = getImageResourceName(branch, new JMethodOracleImpl(method));
+        assert (imageResName != null);
+        imageResNames.add(imageResName);
+        bulder.assimilate(logger, imageResName);
       }
 
       // Write the compound image into the output directory.
@@ -166,8 +318,9 @@ public class ImageBundleGenerator extends Generator {
       sw.println("\";");
 
       // Generate an implementation of each method.
+      int imageResNameIndex = 0;
       for (JMethod method : imageMethods) {
-        generateImageMethod(logger, bulder, sw, method);
+        generateImageMethod(logger, bulder, sw, method, imageResNames.get(imageResNameIndex++));
       }
 
       // Finish.
@@ -177,146 +330,49 @@ public class ImageBundleGenerator extends Generator {
     return f.getCreatedClassName();
   }
 
-  // Assume this is only called for valid methods.
-  private String getImageUrlFromMetaDataOrMethodName(TreeLogger logger,
-      JMethod method) throws UnableToCompleteException {
-
-    String[][] md = method.getMetaData(METADATA_TAG);
-
-    if (md.length == 1) {
-      // Metadata is available, so get the image url from the metadata
-      int lastTagIndex = md.length - 1;
-      int lastValueIndex = md[lastTagIndex].length - 1;
-      String imageNameFromMetaData = md[lastTagIndex][lastValueIndex];
-
-      // Make sure the name is either absolute or package-relative.
-      if (imageNameFromMetaData.indexOf("/") == -1) {
-        String pkgName = method.getEnclosingType().getPackage().getName();
-        // This construction handles the default package correctly, too.
-        imageNameFromMetaData = pkgName.replace('.', '/') + "/"
-            + imageNameFromMetaData;
-      }
-
-      // Make sure that the resource exists on the classpath. In the future,
-      // this code will have to be changed if images are loaded from the
-      // source path or public path.
-      URL imageResourceURL = getClass().getClassLoader().getResource(
-          imageNameFromMetaData);
-      if (imageResourceURL == null) {
-        logger.log(
-            TreeLogger.ERROR,
-            "Resource "
-                + imageNameFromMetaData
-                + " not found on classpath (is the name specified as Class.getResource() would expect?)",
-            null);
-        throw new UnableToCompleteException();
-      }
-
-      return imageNameFromMetaData;
-    }
-
-    String imageNameFromMethod = null;
-    String packageAndMethodName = method.getEnclosingType().getPackage().getName().replace(
-        '.', '/')
-        + '/' + method.getName();
-    // There is no metadata available, so the image url will be generated from
-    // the method name with an image file extension.
-    for (int i = 0; i < IMAGE_FILE_EXTENSIONS.length; i++) {
-      String possibleImageName = packageAndMethodName + '.'
-          + IMAGE_FILE_EXTENSIONS[i];
-      // Check to see if the resource exists on the classpath for each possible
-      // image file extension. This code will have to be changed if images are
-      // loaded from the source path or the public path.
-      URL imageResourceURL = getClass().getClassLoader().getResource(
-          possibleImageName);
-      if (imageResourceURL != null) {
-        imageNameFromMethod = possibleImageName;
-        break;
-      }
-    }
-
-    if (imageNameFromMethod == null) {
-
-      StringBuffer errorStringBuf = new StringBuffer();
-      for (int i = 0; i < IMAGE_FILE_EXTENSIONS.length; i++) {
-
-        errorStringBuf.append(IMAGE_FILE_EXTENSIONS[i]);
-
-        if (i != IMAGE_FILE_EXTENSIONS.length - 1) {
-          errorStringBuf.append(", ");
-        }
-      }
-
-      logger.log(
-          TreeLogger.ERROR,
-          "Resource "
-              + packageAndMethodName
-              + ".("
-              + errorStringBuf.toString()
-              + ") not found on classpath (is the name specified as Class.getResource() would expect?)",
-          null);
-      throw new UnableToCompleteException();
-    }
-
-    return imageNameFromMethod;
-  }
-
-  private JMethod[] getValidImageMethods(TreeLogger logger, JClassType userType)
+  /**
+   * Attempts to get the image name from the name of the method itself by
+   * speculatively appending various image-like file extensions in a prioritized
+   * order. The first image found, if any, is used.
+   * 
+   * @param logger if no matching image resource is found, an explanatory
+   *            message will be logged
+   * @param method the method whose name is being examined for matching image
+   *            resources
+   * @return a resource name that is suitable to be passed into
+   *         <code>ClassLoader.getResource()</code>; never returns
+   *         <code>null</code>
+   * @throws UnableToCompleteException thrown when no image can be found based
+   *             on the method name
+   */
+  private String getImageNameFromMethodName(TreeLogger logger, JMethodOracle method)
       throws UnableToCompleteException {
-
-    logger = logger.branch(TreeLogger.TRACE, "Analyzing methods on "
-        + userType.getQualifiedSourceName(), null);
-
-    final JClassType imageClass;
-    try {
-      imageClass = userType.getOracle().getType(ABSTRACTIMAGEPROTOTYPE_QNAME);
-    } catch (NotFoundException e) {
-      logger.log(TreeLogger.ERROR, "GWT " + ABSTRACTIMAGEPROTOTYPE_QNAME
-          + "class is not available", e);
-      throw new UnableToCompleteException();
+    String pkgName = method.getPackageName();
+    String pkgPrefix = pkgName.replace('.', '/');
+    if (pkgPrefix.length() > 0) {
+      pkgPrefix += "/";
+    }
+    String methodName = method.getName();
+    String pkgAndMethodName = pkgPrefix + methodName;
+    List<String> testImgNames = new ArrayList<String>();
+    for (int i = 0; i < IMAGE_FILE_EXTENSIONS.length; i++) {
+      String testImgName = pkgAndMethodName + '.' + IMAGE_FILE_EXTENSIONS[i];
+      if (resLocator.isResourcePresent(testImgName)) {
+        return testImgName;
+      }
+      testImgNames.add(testImgName);
     }
 
-    Map<JMethod, String> rejectedMethodsAndWhy = new HashMap<JMethod, String>();
-    JMethod[] leafMethods = userType.getOverridableMethods();
-    for (JMethod method : leafMethods) {
-      if (method.getReturnType() != imageClass) {
-        rejectedMethodsAndWhy.put(method, "Return type must be "
-            + ABSTRACTIMAGEPROTOTYPE_QNAME);
-        continue;
-      }
-
-      if (method.getParameters().length > 0) {
-        rejectedMethodsAndWhy.put(method, "Method cannot take parameters");
-        continue;
-      }
-
-      String[][] md = method.getMetaData(METADATA_TAG);
-      if ((md.length > 1) || (md.length == 1 && md[0].length != 1)) {
-        rejectedMethodsAndWhy.put(
-            method,
-            "Expecting either no metadata tags, or one metadata tag of the form '@gwt.resource <resource-name>'");
-      }
+    TreeLogger branch = logger.branch(TreeLogger.ERROR, MSG_NO_FILE_BASED_ON_METHOD_NAME, null);
+    for (String testImgName : testImgNames) {
+      branch.log(TreeLogger.ERROR, testImgName, null);
     }
 
-    // Make sure there aren't any invalid methods.
-    if (!rejectedMethodsAndWhy.isEmpty()) {
-      logger = logger.branch(TreeLogger.ERROR,
-          "The following methods are invalid on an image bundle:", null);
-      for (Map.Entry<JMethod, String> entry : rejectedMethodsAndWhy.entrySet()) {
-        JMethod badMethod = entry.getKey();
-        String reason = entry.getValue();
-        TreeLogger branch = logger.branch(TreeLogger.ERROR,
-            badMethod.getReadableDeclaration(), null);
-        branch.log(TreeLogger.ERROR, reason, null);
-      }
-      throw new UnableToCompleteException();
-    }
-
-    return leafMethods;
+    throw new UnableToCompleteException();
   }
 
-  private JClassType getValidUserType(TreeLogger logger, String typeName,
-      TypeOracle typeOracle) throws UnableToCompleteException {
+  private JClassType getValidUserType(TreeLogger logger, String typeName, TypeOracle typeOracle)
+      throws UnableToCompleteException {
     try {
       // Get the type that the user is introducing.
       JClassType userType = typeOracle.getType(typeName);
@@ -326,16 +382,15 @@ public class ImageBundleGenerator extends Generator {
 
       // Ensure it's an interface.
       if (userType.isInterface() == null) {
-        logger.log(TreeLogger.ERROR, userType.getQualifiedSourceName()
-            + " must be an interface", null);
+        logger.log(TreeLogger.ERROR, userType.getQualifiedSourceName() + " must be an interface",
+            null);
         throw new UnableToCompleteException();
       }
 
       // Ensure proper derivation.
       if (!userType.isAssignableTo(magicType)) {
-        logger.log(TreeLogger.ERROR, userType.getQualifiedSourceName()
-            + " must be assignable to " + magicType.getQualifiedSourceName(),
-            null);
+        logger.log(TreeLogger.ERROR, userType.getQualifiedSourceName() + " must be assignable to "
+            + magicType.getQualifiedSourceName(), null);
         throw new UnableToCompleteException();
       }
 
@@ -345,6 +400,100 @@ public class ImageBundleGenerator extends Generator {
       logger.log(TreeLogger.ERROR, "Unable to find required type(s)", e);
       throw new UnableToCompleteException();
     }
+  }
+
+  /**
+   * Attempts to get the image name (verbatim) from an annotation.
+   * 
+   * @return the string specified in in the {@link ImageBundle.Resource}
+   *         annotation, or <code>null</code>
+   */
+  private String tryGetImageNameFromAnnotation(JMethodOracle method) {
+    ImageBundle.Resource imgResAnn = method.getAnnotation(ImageBundle.Resource.class);
+    String imgName = null;
+    if (imgResAnn != null) {
+      imgName = imgResAnn.value();
+    }
+    return imgName;
+  }
+
+  /**
+   * Attempts to get the image name (verbatim) from old-school javadoc metadata.
+   * 
+   * @return the string specified in "resource" javadoc metdata tag; never
+   *         returns <code>null</code>
+   */
+  private String tryGetImageNameFromJavaDoc(JMethodOracle method) {
+    String imgName = null;
+    String[][] md = method.getMetaData(METADATA_TAG);
+    if (md.length == 1) {
+      int lastTagIndex = md.length - 1;
+      int lastValueIndex = md[lastTagIndex].length - 1;
+      imgName = md[lastTagIndex][lastValueIndex];
+    }
+    return imgName;
+  }
+
+  /**
+   * Attempts to get the image name from either an annotation or from pre-1.5
+   * javadoc metadata, logging warnings to educate the user about deprecation
+   * and behaviors in the face of conflicting metadata (for example, if both
+   * forms of metadata are present).
+   * 
+   * @param logger if metadata is found but the specified resource isn't
+   *            available, a warning is logged
+   * @param method the image bundle method whose associated image resource is
+   *            being sought
+   * @return a resource name that is suitable to be passed into
+   *         <code>ClassLoader.getResource()</code>, or <code>null</code>
+   *         if metadata wasn't provided
+   * @throws UnableToCompleteException thrown when metadata is provided but the
+   *             resource cannot be found
+   */
+  private String tryGetImageNameFromMetaData(TreeLogger logger, JMethodOracle method)
+      throws UnableToCompleteException {
+    String imgFileName = null;
+    String imgNameAnn = tryGetImageNameFromAnnotation(method);
+    String imgNameJavaDoc = tryGetImageNameFromJavaDoc(method);
+    if (imgNameJavaDoc != null) {
+      if (imgNameAnn == null) {
+        // There is JavaDoc metadata but no annotation.
+        imgFileName = imgNameJavaDoc;
+        logger.log(TreeLogger.WARN, MSG_JAVADOC_FORM_DEPRECATED, null);
+      } else {
+        // There is both JavaDoc metadata and an annotation.
+        logger.log(TreeLogger.WARN, MSG_MULTIPLE_ANNOTATIONS, null);
+        imgFileName = imgNameAnn;
+      }
+    } else if (imgNameAnn != null) {
+      // There is only an annotation.
+      imgFileName = imgNameAnn;
+    }
+    assert (imgFileName == null || (imgNameAnn != null || imgNameJavaDoc != null));
+
+    if (imgFileName == null) {
+      // Exit early because neither an annotation nor javadoc was found.
+      return null;
+    }
+
+    // If the name has no slashes (that is, it isn't a fully-qualified resource
+    // name), then prepend the enclosing package name automatically, being
+    // careful about the default package.
+    if (imgFileName.indexOf("/") == -1) {
+      String pkgName = method.getPackageName();
+      if (!"".equals(pkgName)) {
+        imgFileName = pkgName.replace('.', '/') + "/" + imgFileName;
+      }
+    }
+
+    if (!resLocator.isResourcePresent(imgFileName)) {
+      // Not found.
+      logger.log(TreeLogger.ERROR, msgCannotFindImageFromMetaData(imgFileName), null);
+      throw new UnableToCompleteException();
+    }
+
+    // Success.
+    return imgFileName;
   }
 
 }

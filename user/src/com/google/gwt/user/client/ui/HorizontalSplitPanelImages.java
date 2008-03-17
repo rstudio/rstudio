@@ -23,8 +23,7 @@ public interface HorizontalSplitPanelImages extends ImageBundle {
 
   /**
    * An image representing the drag thumb.
-   * 
-   * @gwt.resource splitPanelThumb.png
    */
+  @Resource("splitPanelThumb.png")
   AbstractImagePrototype horizontalSplitPanelThumb();
 }

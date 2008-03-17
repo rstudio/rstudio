@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.ImageBundle.Resource;
 
 /**
  * A component that displays a list of contacts.
@@ -33,12 +34,10 @@ import com.google.gwt.user.client.ui.Widget;
 public class Contacts extends Composite {
 
   /**
-   * An image bundle for this widget and an example of the use of @gwt.resource.
+   * An image bundle for this widget and an example of the use of @Resource.
    */
   public interface Images extends ImageBundle {
-    /**
-     * @gwt.resource default_photo.jpg
-     */
+    @Resource("default_photo.jpg")
     AbstractImagePrototype defaultPhoto();
   }
 

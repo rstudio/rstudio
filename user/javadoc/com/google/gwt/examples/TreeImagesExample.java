@@ -15,14 +15,10 @@ public class TreeImagesExample implements EntryPoint {
    */
   interface MyTreeImages extends TreeImages {
     
-    /**
-     * @gwt.resource downArrow.png
-     */
+    @Resource("downArrow.png")
     AbstractImagePrototype treeOpen();
     
-    /** 
-     * @gwt.resource rightArrow.png
-     */
+    @Resource("rightArrow.png")
     AbstractImagePrototype treeClosed();
   }
   

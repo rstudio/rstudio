@@ -61,6 +61,7 @@ import com.google.gwt.user.client.ui.WidgetCollectionTest;
 import com.google.gwt.user.client.ui.WidgetIteratorsTest;
 import com.google.gwt.user.client.ui.WidgetOnLoadTest;
 import com.google.gwt.user.client.ui.impl.ClippedImagePrototypeTest;
+import com.google.gwt.user.rebind.ui.ImageBundleGeneratorTest;
 import com.google.gwt.xml.client.XMLTest;
 
 import junit.framework.Test;
@@ -96,6 +97,7 @@ public class UISuite {
     suite.addTestSuite(HorizontalPanelTest.class);
     suite.addTestSuite(HTMLPanelTest.class);
     suite.addTestSuite(HyperlinkTest.class);
+    suite.addTestSuite(ImageBundleGeneratorTest.class);
     suite.addTestSuite(ImageTest.class);
     suite.addTestSuite(LinearPanelTest.class);
     suite.addTestSuite(ListBoxTest.class);
