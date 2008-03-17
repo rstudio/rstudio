@@ -807,7 +807,7 @@ public class SerializableTypeOracleBuilder {
             logger,
             isSpeculative,
             type.getParameterizedQualifiedSourceName()
-                + " is a local type, it will be excluded from the set of serializable types",
+                + " is a local type; it will be excluded from the set of serializable types",
             tic);
         return false;
       }
@@ -817,7 +817,7 @@ public class SerializableTypeOracleBuilder {
             logger,
             isSpeculative,
             type.getParameterizedQualifiedSourceName()
-                + " is nested but not static, it will be excluded from the set of serializable types",
+                + " is nested but not static; it will be excluded from the set of serializable types",
             tic);
         return false;
       }
@@ -1013,7 +1013,7 @@ public class SerializableTypeOracleBuilder {
             TreeLogger.DEBUG,
             "Type '"
                 + classType.getQualifiedSourceName()
-                + "' should be parameterized to help the compiler produce the smallest code size possible for your module.",
+                + "' should be parameterized to help the compiler produce the smallest code size possible for your module",
             null);
 
         if (classType.isAssignableTo(collectionClass)
@@ -1069,7 +1069,7 @@ public class SerializableTypeOracleBuilder {
       // Fail since ? super T for any T implies object also
       markAsUninstantiableAndLog(logger, isSpeculative,
           "In order to produce smaller client-side code, 'Object' is not allowed; '"
-              + wildcard.getQualifiedSourceName() + "' includes Object.", tic);
+              + wildcard.getQualifiedSourceName() + "' includes Object", tic);
 
       success = false;
     } else {

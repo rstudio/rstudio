@@ -669,7 +669,7 @@ public class TypeOracle {
         TreeLogger.DEBUG,
         "Scanning source for uses of the deprecated "
             + TAG_TYPEARGS
-            + " javadoc annotation; Please use Java parameterized types instead",
+            + " javadoc annotation; please use Java parameterized types instead",
         null);
     consumeTypeArgMetaData(logger, getTypes());
   }
