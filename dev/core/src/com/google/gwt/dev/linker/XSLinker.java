@@ -53,6 +53,11 @@ public class XSLinker extends SelectionScriptLinker {
     out.newlineOpt();
     out.print("var $moduleName, $moduleBase;");
     out.newlineOpt();
+    out.print("var $stats = $wnd.__gwtstatsEvent ? function(a,b,c,d){$wnd.__gwtstatsEvent(a,b,c,d)} : null;");
+    out.newlineOpt();
+    out.print("$stats && $stats('" + context.getModuleName()
+        + "', 'startup', 'moduleEvalStart', {millis:(new Date()).getTime()});");
+    out.newlineOpt();
 
     return out.toString();
   }
@@ -62,6 +67,9 @@ public class XSLinker extends SelectionScriptLinker {
       throws UnableToCompleteException {
     DefaultTextOutput out = new DefaultTextOutput(true);
 
+    out.newlineOpt();
+    out.print("$stats && $stats('" + context.getModuleName()
+        + "', 'startup', 'moduleEvalEnd', {millis:(new Date()).getTime()});");
     // Generate the call to tell the bootstrap code that we're ready to go.
     out.newlineOpt();
     out.print("if (" + context.getModuleFunctionName() + ") {");

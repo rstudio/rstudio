@@ -46,7 +46,7 @@ public class JProgram extends JNode {
   private static final Set<String> CODEGEN_TYPES_SET = new HashSet<String>(
       Arrays.asList(new String[] {
           "com.google.gwt.lang.Array", "com.google.gwt.lang.Cast",
-          "com.google.gwt.lang.Exceptions",}));
+          "com.google.gwt.lang.Exceptions", "com.google.gwt.lang.Stats"}));
 
   private static final Set<String> INDEX_TYPES_SET = new HashSet<String>(
       Arrays.asList(new String[] {

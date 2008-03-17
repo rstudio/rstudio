@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,8 @@ function __MODULE_FUNC__() {
   var $wnd = window
   ,$doc = document
   ,external = $wnd.external
-  
+  ,$stats = $wnd.__gwtstatsEvent ? function(a,b,c,d) {$wnd.__gwtstatsEvent(a,b,c,d)} : null
+
   // These variables gate calling gwtOnLoad; all must be true to start
   ,gwtOnLoad, bodyDone
 
@@ -46,7 +47,10 @@ function __MODULE_FUNC__() {
   
   ; // end of global vars
 
-  // ------------------ TRUE GLOBALS ------------------
+  // Record startup timing information
+  $stats && $stats('__MODULE_NAME__', 'startup', 'selectionStart', {millis:(new Date()).getTime()});
+  
+  // ------------------ TRUE GLOBALS ------------------  
 
   // Maps to synchronize the loading of styles and scripts; resources are loaded
   // only once, even when multiple modules depend on them.  This API must not
@@ -77,6 +81,8 @@ function __MODULE_FUNC__() {
         external.gwtOnLoad($wnd, $wnd.$moduleName);
       } else {
         gwtOnLoad(onLoadErrorFunc, '__MODULE_NAME__', base);
+        // Record when the module was started
+        $stats && $stats('__MODULE_NAME__', 'startup', 'selectionDone', {millis:(new Date()).getTime()});
       }
     }
   }
@@ -314,6 +320,7 @@ function __MODULE_FUNC__() {
   // Module dependencies, such as scripts and css
 // __MODULE_DEPS_END__
   $doc.write('<script src="' + base + strongName + '"></script>');
+  $stats && $stats('__MODULE_NAME__', 'startup', 'moduleRequested', {millis:(new Date()).getTime()});
 }
 
 // Called from compiled code to hook the window's resize & load events (the

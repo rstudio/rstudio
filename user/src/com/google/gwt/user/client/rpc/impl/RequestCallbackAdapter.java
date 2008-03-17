@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -136,6 +136,16 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
   private final AsyncCallback<T> callback;
 
   /**
+   * Used for stats recording.
+   */
+  private final String methodName;
+  
+  /**
+   * Used for stats recording.
+   */
+  private final long requestId;
+
+  /**
    * Instance which will read the expected return type out of the
    * {@link SerializationStreamReader}.
    */
@@ -148,13 +158,16 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
   private final SerializationStreamFactory streamFactory;
 
   public RequestCallbackAdapter(SerializationStreamFactory streamFactory,
-      AsyncCallback<T> callback, ResponseReader responseReader) {
+      String methodName, long requestId, AsyncCallback<T> callback,
+      ResponseReader responseReader) {
     assert (streamFactory != null);
     assert (callback != null);
     assert (responseReader != null);
 
     this.streamFactory = streamFactory;
     this.callback = callback;
+    this.methodName = methodName;
+    this.requestId = requestId;
     this.responseReader = responseReader;
   }
 
@@ -162,12 +175,17 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
     callback.onFailure(exception);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings(value = {"unchecked", "unused"})
   public void onResponseReceived(Request request, Response response) {
     T result = null;
     Throwable caught = null;
     try {
       String encodedResponse = response.getText();
+
+      boolean toss = RemoteServiceProxy.isStatsAvailable()
+          && RemoteServiceProxy.stats(methodName + ":responseReceived",
+              RemoteServiceProxy.bytesStat(methodName, requestId,
+                  encodedResponse.length()));
 
       if (RemoteServiceProxy.isReturnValue(encodedResponse)) {
         result = (T) responseReader.read(streamFactory.createStreamReader(encodedResponse));
@@ -180,12 +198,22 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
       caught = new IncompatibleRemoteServiceException();
     } catch (Throwable e) {
       caught = e;
+    } finally {
+      boolean toss = RemoteServiceProxy.isStatsAvailable()
+          && RemoteServiceProxy.stats(methodName + ":responseDeserialized",
+              RemoteServiceProxy.timeStat(methodName, requestId));
     }
 
-    if (caught == null) {
-      callback.onSuccess(result);
-    } else {
-      callback.onFailure(caught);
+    try {
+      if (caught == null) {
+        callback.onSuccess(result);
+      } else {
+        callback.onFailure(caught);
+      }
+    } finally {
+      boolean toss = RemoteServiceProxy.isStatsAvailable()
+          && RemoteServiceProxy.stats(methodName + ":responseCallbackDone",
+              RemoteServiceProxy.timeStat(methodName, requestId));
     }
   }
 }

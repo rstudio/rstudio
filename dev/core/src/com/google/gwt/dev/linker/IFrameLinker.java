@@ -73,6 +73,8 @@ public class IFrameLinker extends SelectionScriptLinker {
     out.newlineOpt();
     out.print("var $moduleName, $moduleBase;");
     out.newlineOpt();
+    out.print("var $stats = $wnd.__gwtstatsEvent ? function(a,b,c,d) {$wnd.__gwtstatsEvent(a,b,c,d)} : null;");
+    out.newlineOpt();
     out.print("</script></head>");
     out.newlineOpt();
     out.print("<body>");
@@ -81,6 +83,9 @@ public class IFrameLinker extends SelectionScriptLinker {
     // Begin a script block inside the body. It's commented out so that the
     // browser won't mistake strings containing "<script>" for actual script.
     out.print("<script><!--");
+    out.newline();
+    out.print("$stats && $stats('" + context.getModuleName()
+        + "', 'startup', 'moduleEvalStart', {millis:(new Date()).getTime()});");
     out.newline();
     return out.toString();
   }
@@ -91,6 +96,8 @@ public class IFrameLinker extends SelectionScriptLinker {
 
     // Generate the call to tell the bootstrap code that we're ready to go.
     out.newlineOpt();
+    out.print("$stats && $stats('" + context.getModuleName()
+        + "', 'startup', 'moduleEvalEnd', {millis:(new Date()).getTime()});");
     out.print("if ($wnd." + context.getModuleFunctionName() + ") $wnd."
         + context.getModuleFunctionName() + ".onScriptLoad();");
     out.newline();

@@ -23,14 +23,19 @@ import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
 import com.google.gwt.dev.jjs.InternalCompilerException.NodeInfo;
+import com.google.gwt.dev.jjs.ast.JBinaryOperation;
+import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JLocal;
+import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
+import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.impl.ArrayNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionNormalizer;
 import com.google.gwt.dev.jjs.impl.AssertionRemover;
@@ -87,6 +92,10 @@ public class JavaToJavaScriptCompiler {
     JMethod bootStrapMethod = program.createMethod(null, "init".toCharArray(),
         null, program.getTypeVoid(), false, true, true, false, false);
     bootStrapMethod.freezeParamTypes();
+
+    JMethodBody body = (JMethodBody) bootStrapMethod.getBody();
+    JLocal tossLocal = program.createLocal(null, "statsToss".toCharArray(),
+        program.getTypePrimitiveBoolean(), false, body);
 
     for (int i = 0; i < mainClassNames.length; ++i) {
       String mainClassName = mainClassNames[i];
@@ -172,7 +181,9 @@ public class JavaToJavaScriptCompiler {
       // qualifier will be null if onModuleLoad is static
       JMethodCall onModuleLoadCall = new JMethodCall(program, null, qualifier,
           mainMethod);
-      JMethodBody body = (JMethodBody) bootStrapMethod.getBody();
+
+      body.getStatements().add(
+          makeStatsAssignment(program, mainClassName, tossLocal));
       body.getStatements().add(onModuleLoadCall.makeStatement());
     }
     program.addEntryMethod(bootStrapMethod);
@@ -198,6 +209,48 @@ public class JavaToJavaScriptCompiler {
       }
     }
     return null;
+  }
+
+  /**
+   * Create a variable assignment to invoke a call to the statistics collector.
+   */
+  /*
+   * tossLocal = Stats.isStatsAvailable() && Stats.stats(GWT.getModuleName(),
+   * "startup", "onModuleLoadStart:<className>", Stats.makeTimeStat());
+   */
+  private static JStatement makeStatsAssignment(JProgram program,
+      String mainClassName, JLocal tossLocal) {
+
+    // Trim to the unqualified name for brevity
+    if (mainClassName.contains(".")) {
+      mainClassName = mainClassName.substring(mainClassName.lastIndexOf('.') + 1);
+    }
+
+    JMethod isStatsAvailableMethod = program.getIndexedMethod("Stats.isStatsAvailable");
+    JMethod makeTimeStatMethod = program.getIndexedMethod("Stats.makeTimeStat");
+    JMethod moduleNameMethod = program.getIndexedMethod("Stats.getModuleName");
+    JMethod statsMethod = program.getIndexedMethod("Stats.stats");
+
+    JMethodCall availableCall = new JMethodCall(program, null, null,
+        isStatsAvailableMethod);
+    JMethodCall makeTimeStatCall = new JMethodCall(program, null, null,
+        makeTimeStatMethod);
+    JMethodCall moduleNameCall = new JMethodCall(program, null, null,
+        moduleNameMethod);
+    JMethodCall statsCall = new JMethodCall(program, null, null, statsMethod);
+
+    statsCall.getArgs().add(moduleNameCall);
+    statsCall.getArgs().add(program.getLiteralString("startup"));
+    statsCall.getArgs().add(
+        program.getLiteralString("onModuleLoadStart:" + mainClassName));
+    statsCall.getArgs().add(makeTimeStatCall);
+
+    JBinaryOperation amp = new JBinaryOperation(program, null,
+        program.getTypePrimitiveBoolean(), JBinaryOperator.AND, availableCall,
+        statsCall);
+
+    return program.createAssignmentStmt(null, new JLocalRef(program, null,
+        tossLocal), amp);
   }
 
   private final String[] declEntryPoints;
@@ -237,6 +290,7 @@ public class JavaToJavaScriptCompiler {
       allEntryPoints.add("com.google.gwt.lang.Array");
       allEntryPoints.add("com.google.gwt.lang.Cast");
       allEntryPoints.add("com.google.gwt.lang.Exceptions");
+      allEntryPoints.add("com.google.gwt.lang.Stats");
       allEntryPoints.add("java.lang.Object");
       allEntryPoints.add("java.lang.String");
       allEntryPoints.add("java.lang.Iterable");

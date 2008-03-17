@@ -21,6 +21,7 @@ function __MODULE_FUNC__() {
   var $wnd = window
   ,$doc = document
   ,external = $wnd.external
+  ,$stats = $wnd.__gwtstatsEvent ? function(a,b,c,d) {$wnd.__gwtstatsEvent(a,b,c,d)} : null
 
   // These variables gate calling gwtOnLoad; all must be true to start
   ,scriptsDone, loadDone, bodyDone
@@ -45,6 +46,9 @@ function __MODULE_FUNC__() {
   ,onLoadErrorFunc, propertyErrorFunc
 
   ; // end of global vars
+
+  // Record startup timing information
+  $stats && $stats('__MODULE_NAME__', 'startup', 'selectionStart', {millis:(new Date()).getTime()});
 
   // ------------------ TRUE GLOBALS ------------------
 
@@ -85,6 +89,9 @@ function __MODULE_FUNC__() {
       // remove this whole function from the global namespace to allow GC
       __MODULE_FUNC__ = null;
       frameWnd.gwtOnLoad(onLoadErrorFunc, '__MODULE_NAME__', base);
+
+      // Record when the module was started
+      $stats && $stats('__MODULE_NAME__', 'startup', 'selectionDone', {millis:(new Date()).getTime()});
     }
   }
 
@@ -260,6 +267,7 @@ function __MODULE_FUNC__() {
   __MODULE_FUNC__.onInjectionDone = function() {
     // Mark this module's script injection done and (possibly) start the module.
     scriptsDone = true;
+    $stats && $stats('__MODULE_NAME__', 'startup', 'moduleRequested', {millis:(new Date()).getTime()});
     maybeStartModule();
   }
 

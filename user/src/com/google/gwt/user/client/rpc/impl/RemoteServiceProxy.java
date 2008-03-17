@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.rpc.impl;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestException;
@@ -33,6 +34,50 @@ import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader
  */
 public abstract class RemoteServiceProxy implements SerializationStreamFactory,
     ServiceDefTarget {
+  /**
+   * A global id to track any given request.
+   */
+  private static long requestId;
+
+  public static native JavaScriptObject bytesStat(String method, long count,
+      long bytes) /*-{
+    var stat = @com.google.gwt.user.client.rpc.impl.RemoteServiceProxy::timeStat(Ljava/lang/String;J)(method, count);
+    stat.bytes = bytes;
+    return stat;
+  }-*/;
+
+  /**
+   * Indicates if RPC statistics should be gathered.
+   */
+  public static native boolean isStatsAvailable() /*-{
+    return !!$stats;
+  }-*/;
+
+  /**
+   * Always use this as {@link #isStatsAvailable()} &amp;&amp;
+   * {@link #stats(String, String, long)}.
+   */
+  public static native boolean stats(String invocation, JavaScriptObject data) /*-{
+    return $stats(@com.google.gwt.core.client.GWT::getModuleName()(), 'rpc',
+      invocation, data);
+  }-*/;
+
+  public static native JavaScriptObject timeStat(String method, long count) /*-{
+    return {
+      id: count,
+      method: method,
+      millis: @java.lang.System::currentTimeMillis()()
+    };
+  }-*/;
+
+  protected static long getNextRequestId() {
+    return requestId++;
+  }
+
+  protected static long getRequestId() {
+    return requestId;
+  }
+
   /**
    * Return <code>true</code> if the encoded response contains a value
    * returned by the method invocation.
@@ -175,15 +220,17 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
    * 
    * @return a {@link Request} object that can be used to track the request
    */
+  @SuppressWarnings("unused")
   protected <T> Request doInvoke(ResponseReader responseReader,
-      String requestData, AsyncCallback<T> callback) {
+      String methodName, long invocationCount, String requestData,
+      AsyncCallback<T> callback) {
 
     if (getServiceEntryPoint() == null) {
       throw new NoServiceEntryPointSpecifiedException();
     }
 
     RequestCallbackAdapter<T> responseHandler = new RequestCallbackAdapter<T>(
-        this, callback, responseReader);
+        this, methodName, invocationCount, callback, responseReader);
     RequestBuilder rb = new RequestBuilder(RequestBuilder.POST,
         getServiceEntryPoint());
     try {
@@ -193,8 +240,11 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
           "Unable to initiate the asynchronous service invocation -- check the network connection",
           ex);
       callback.onFailure(iex);
+    } finally {
+      boolean toss = isStatsAvailable()
+          && stats(methodName + ":" + invocationCount + ":requestSent",
+              bytesStat(methodName, invocationCount, requestData.length()));
     }
-
     return null;
   }
 }
