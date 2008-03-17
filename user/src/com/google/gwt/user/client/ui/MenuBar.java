@@ -227,6 +227,9 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
    * Removes all menu items from this menu bar.
    */
   public void clearItems() {
+    // Deselect the current item
+    selectItem(null);
+
     Element container = getItemContainerElement();
     while (DOM.getChildCount(container) > 0) {
       DOM.removeChild(container, DOM.getChild(container, 0));
@@ -347,6 +350,11 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
    * @param item the item to be removed
    */
   public void removeItem(MenuItem item) {
+    // Unselect if the item is currently selected
+    if (selectedItem == item) {
+      selectItem(null);
+    }
+
     if (removeItemElement(item)) {
       setItemColSpan(item, 1);
       items.remove(item);

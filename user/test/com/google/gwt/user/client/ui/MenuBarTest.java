@@ -134,4 +134,44 @@ public class MenuBarTest extends GWTTestCase {
     });
     delayTestFinish(250);
   }
+
+  /**
+   * Test that the selected item points to the correct item.
+   */
+  public void testSelectedItem() {
+    // Create a menu bar
+    MenuBar bar = new MenuBar(true);
+
+    // Create a blank command
+    Command blankCommand = new Command() {
+      public void execute() {
+      }
+    };
+
+    // Add some items
+    MenuItem item0 = bar.addItem("item0", blankCommand);
+    MenuItem item1 = bar.addItem("item1", blankCommand);
+    MenuItem item2 = bar.addItem("item2", blankCommand);
+    MenuItem item3 = bar.addItem("item3", blankCommand);
+    MenuItem item4 = bar.addItem("item4", blankCommand);
+
+    // Test setting the selected item
+    assertNull(bar.getSelectedItem());
+    bar.selectItem(item1);
+    assertEquals(item1, bar.getSelectedItem());
+
+    // Test removing the selected item
+    bar.removeItem(item1);
+    assertNull(bar.getSelectedItem());
+
+    // Test removing an item that is not selected
+    bar.selectItem(item3);
+    assertEquals(item3, bar.getSelectedItem());
+    bar.removeItem(item2);
+    assertEquals(item3, bar.getSelectedItem());
+
+    // Test clearing all items
+    bar.clearItems();
+    assertNull(bar.getSelectedItem());
+  }
 }
