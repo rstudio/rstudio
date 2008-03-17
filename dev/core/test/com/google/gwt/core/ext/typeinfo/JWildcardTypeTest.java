@@ -17,6 +17,7 @@ package com.google.gwt.core.ext.typeinfo;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.core.ext.typeinfo.test.CA;
 import com.google.gwt.core.ext.typeinfo.test.CB;
 import com.google.gwt.core.ext.typeinfo.test.CC;
@@ -63,11 +64,13 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     JClassType numberType = oracle.getType(Number.class.getCanonicalName());
 
     // Tests that ? extends Number erases to number.
-    JWildcardType upperBoundWildcard = oracle.getWildcardType(true, numberType);
+    JWildcardType upperBoundWildcard = oracle.getWildcardType(
+        BoundType.EXTENDS, numberType);
     assertEquals(numberType, upperBoundWildcard.getErasedType());
 
     // Tests that ? super Number erases to Object
-    JWildcardType lowerBoundWildcard = oracle.getWildcardType(false, numberType);
+    JWildcardType lowerBoundWildcard = oracle.getWildcardType(BoundType.SUPER,
+        numberType);
     assertEquals(oracle.getJavaLangObject(), lowerBoundWildcard.getErasedType());
   }
 
@@ -90,6 +93,32 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     // No overridable methods
   }
 
+  /**
+   * Tests that {@link JWildcardType#getParameterizedQualifiedSourceName()}
+   * returns the expected value. We test this because JSNI code depends on it.
+   * 
+   * @throws NotFoundException
+   */
+  public void testGetParameterizedQualifiedSourceName()
+      throws NotFoundException {
+    TypeOracle oracle = moduleContext.getOracle();
+    JClassType numberType = oracle.getType(Number.class.getName());
+
+    JWildcardType numberUpperBound = oracle.getWildcardType(BoundType.EXTENDS,
+        numberType);
+    assertEquals("? extends " + Number.class.getCanonicalName(),
+        numberUpperBound.getParameterizedQualifiedSourceName());
+
+    JWildcardType numberLowerBound = oracle.getWildcardType(BoundType.SUPER,
+        numberType);
+    assertEquals("? super " + Number.class.getCanonicalName(),
+        numberLowerBound.getParameterizedQualifiedSourceName());
+
+    JWildcardType unboundWildcard = oracle.getWildcardType(BoundType.UNBOUND,
+        oracle.getJavaLangObject());
+    assertEquals("?", unboundWildcard.getParameterizedQualifiedSourceName());
+  }
+
   @Override
   public void testGetSubtypes() {
     // Tested by testGetSubtypes_LowerBound() and testGetSubtypes_UpperBound()
@@ -98,7 +127,7 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
   public void testGetSubtypes_LowerBound() throws NotFoundException {
     TypeOracle oracle = moduleContext.getOracle();
     // <? super Number>
-    JWildcardType lowerBoundWildcard = oracle.getWildcardType(false,
+    JWildcardType lowerBoundWildcard = oracle.getWildcardType(BoundType.SUPER,
         oracle.getType(Number.class.getName()));
     JClassType[] subtypes = lowerBoundWildcard.getSubtypes();
     assertEquals(0, subtypes.length);
@@ -108,8 +137,8 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
   public void testGetSubtypes_UpperBound() throws NotFoundException {
     TypeOracle oracle = moduleContext.getOracle();
     // <? extends CA>
-    JWildcardType upperBoundWildcard = oracle.getWildcardType(true,
-        oracle.getType(CA.class.getName()));
+    JWildcardType upperBoundWildcard = oracle.getWildcardType(
+        BoundType.EXTENDS, oracle.getType(CA.class.getName()));
 
     JClassType[] expected = new JClassType[] {
         oracle.getType(CB.class.getName()), oracle.getType(CC.class.getName())};
@@ -134,10 +163,12 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     JClassType numberType = oracle.getType(Number.class.getName());
 
     // ? extends Number
-    JClassType extendsNumber = oracle.getWildcardType(true, numberType);
+    JClassType extendsNumber = oracle.getWildcardType(BoundType.EXTENDS,
+        numberType);
 
     // ? extends Integer
-    JClassType extendsInteger = oracle.getWildcardType(true, integerType);
+    JClassType extendsInteger = oracle.getWildcardType(BoundType.EXTENDS,
+        integerType);
 
     // Integer is not assignable from ? extends Number
     assertFalse(integerType.isAssignableFrom(extendsNumber));
@@ -149,7 +180,8 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     assertTrue(numberType.isAssignableFrom(extendsInteger));
 
     // ? super Integer
-    JClassType superInteger = oracle.getWildcardType(false, integerType);
+    JClassType superInteger = oracle.getWildcardType(BoundType.SUPER,
+        integerType);
 
     // Integer is assignable from ? super Integer
     assertFalse(integerType.isAssignableFrom(superInteger));
@@ -157,7 +189,7 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     // ? super Integer is assignable from Number
     assertTrue(superInteger.isAssignableFrom(numberType));
 
-    JClassType superNumber = oracle.getWildcardType(false, numberType);
+    JClassType superNumber = oracle.getWildcardType(BoundType.SUPER, numberType);
 
     // ? super Number is assignable from Integer
     assertTrue(superNumber.isAssignableFrom(integerType));
@@ -177,8 +209,10 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     JClassType numberType = oracle.getType(Number.class.getName());
     JClassType integerType = oracle.getType(Integer.class.getName());
 
-    JWildcardType numberWildcard = oracle.getWildcardType(true, numberType);
-    JWildcardType integerWildcard = oracle.getWildcardType(true, integerType);
+    JWildcardType numberWildcard = oracle.getWildcardType(BoundType.EXTENDS,
+        numberType);
+    JWildcardType integerWildcard = oracle.getWildcardType(BoundType.EXTENDS,
+        integerType);
 
     assertTrue(numberWildcard.isAssignableFrom(integerWildcard));
     assertFalse(integerWildcard.isAssignableFrom(numberWildcard));
@@ -193,10 +227,12 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     JClassType javaLangObject = oracle.getJavaLangObject();
 
     // ? super Object
-    JWildcardType lowerWildcard = oracle.getWildcardType(false, javaLangObject);
+    JWildcardType lowerWildcard = oracle.getWildcardType(BoundType.SUPER,
+        javaLangObject);
 
     // ? extends Object
-    JWildcardType upperWildcard = oracle.getWildcardType(true, javaLangObject);
+    JWildcardType upperWildcard = oracle.getWildcardType(BoundType.EXTENDS,
+        javaLangObject);
 
     // ? extends Object assignable from ? super Object
     assertTrue(upperWildcard.isAssignableFrom(lowerWildcard));
@@ -214,8 +250,10 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     JClassType numberType = oracle.getType(Number.class.getName());
     JClassType integerType = oracle.getType(Integer.class.getName());
 
-    JWildcardType numberWildcard = oracle.getWildcardType(false, numberType);
-    JWildcardType integerWildcard = oracle.getWildcardType(false, integerType);
+    JWildcardType numberWildcard = oracle.getWildcardType(BoundType.SUPER,
+        numberType);
+    JWildcardType integerWildcard = oracle.getWildcardType(BoundType.SUPER,
+        integerType);
 
     assertTrue(numberWildcard.isAssignableFrom(integerWildcard));
     assertTrue(numberWildcard.isAssignableTo(integerWildcard));
@@ -232,8 +270,10 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     JClassType numberType = oracle.getType(Number.class.getName());
     JClassType integerType = oracle.getType(Integer.class.getName());
 
-    JWildcardType numberWildcard = oracle.getWildcardType(false, numberType);
-    JWildcardType integerWildcard = oracle.getWildcardType(false, integerType);
+    JWildcardType numberWildcard = oracle.getWildcardType(BoundType.SUPER,
+        numberType);
+    JWildcardType integerWildcard = oracle.getWildcardType(BoundType.SUPER,
+        integerType);
 
     assertTrue(numberWildcard.isAssignableTo(integerWildcard));
     assertTrue(integerWildcard.isAssignableTo(numberWildcard));
@@ -254,8 +294,10 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     JClassType numberType = oracle.getType(Number.class.getName());
     JClassType integerType = oracle.getType(Integer.class.getName());
 
-    JWildcardType numberWildcard = oracle.getWildcardType(true, numberType);
-    JWildcardType integerWildcard = oracle.getWildcardType(true, integerType);
+    JWildcardType numberWildcard = oracle.getWildcardType(BoundType.EXTENDS,
+        numberType);
+    JWildcardType integerWildcard = oracle.getWildcardType(BoundType.EXTENDS,
+        integerType);
 
     assertTrue(integerWildcard.isAssignableTo(numberWildcard));
     assertFalse(numberWildcard.isAssignableTo(integerWildcard));
@@ -270,8 +312,10 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
     JClassType numberType = oracle.getType(Number.class.getName());
     JClassType integerType = oracle.getType(Integer.class.getName());
 
-    JWildcardType numberWildcard = oracle.getWildcardType(false, numberType);
-    JWildcardType integerWildcard = oracle.getWildcardType(false, integerType);
+    JWildcardType numberWildcard = oracle.getWildcardType(BoundType.SUPER,
+        numberType);
+    JWildcardType integerWildcard = oracle.getWildcardType(BoundType.SUPER,
+        integerType);
 
     assertTrue(integerWildcard.isAssignableTo(numberWildcard));
     assertTrue(numberWildcard.isAssignableTo(integerWildcard));
@@ -289,6 +333,7 @@ public class JWildcardTypeTest extends JDelegatingClassTypeTestBase {
   @Override
   protected JWildcardType getTestType() throws NotFoundException {
     TypeOracle oracle = moduleContext.getOracle();
-    return oracle.getWildcardType(true, oracle.getType(Number.class.getName()));
+    return oracle.getWildcardType(BoundType.EXTENDS,
+        oracle.getType(Number.class.getName()));
   }
 }

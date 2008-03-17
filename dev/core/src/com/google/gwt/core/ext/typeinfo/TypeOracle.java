@@ -467,9 +467,9 @@ public class TypeOracle {
     }
   }
 
-  public JWildcardType getWildcardType(boolean isUpperBound,
+  public JWildcardType getWildcardType(JWildcardType.BoundType boundType,
       JClassType typeBound) {
-    JWildcardType wildcardType = new JWildcardType(isUpperBound, typeBound);
+    JWildcardType wildcardType = new JWildcardType(boundType, typeBound);
     String sig = wildcardType.getQualifiedSourceName();
     List<JWildcardType> candidates = wildcardTypes.get(sig);
     if (candidates == null) {

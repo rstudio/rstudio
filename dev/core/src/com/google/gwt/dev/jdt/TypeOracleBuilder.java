@@ -39,6 +39,7 @@ import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.dev.jdt.CacheManager.Mapper;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.PerfLogger;
@@ -1527,24 +1528,24 @@ public class TypeOracleBuilder {
 
       assert (wcBinding.otherBounds == null);
 
-      boolean isUpperBound;
+      BoundType boundType;
       JClassType typeBound;
 
       switch (wcBinding.boundKind) {
         case Wildcard.EXTENDS: {
           assert (wcBinding.bound != null);
-          isUpperBound = true;
+          boundType = BoundType.EXTENDS;
           typeBound = (JClassType) resolveType(logger, wcBinding.bound);
         }
           break;
         case Wildcard.SUPER: {
           assert (wcBinding.bound != null);
-          isUpperBound = false;
+          boundType = BoundType.SUPER;
           typeBound = (JClassType) resolveType(logger, wcBinding.bound);
         }
           break;
         case Wildcard.UNBOUND: {
-          isUpperBound = true;
+          boundType = BoundType.UNBOUND;
           typeBound = (JClassType) resolveType(logger, wcBinding.erasure());
         }
           break;
@@ -1553,7 +1554,7 @@ public class TypeOracleBuilder {
           return null;
       }
 
-      return oracle.getWildcardType(isUpperBound, typeBound);
+      return oracle.getWildcardType(boundType, typeBound);
     }
 
     // Log other cases we know about that don't make sense.

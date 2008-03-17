@@ -17,6 +17,7 @@ package com.google.gwt.core.ext.typeinfo;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.core.ext.typeinfo.test.Base;
 import com.google.gwt.core.ext.typeinfo.test.Derived;
 import com.google.gwt.core.ext.typeinfo.test.ExtendsRawGenericClass;
@@ -89,7 +90,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
   public void testGenericClass_LowerBoundWildcard() throws NotFoundException {
     TypeOracle oracle = moduleContext.getOracle();
     JGenericType genericType = getGenericTestType();
-    JWildcardType lowerBoundWildcard = oracle.getWildcardType(false,
+    JWildcardType lowerBoundWildcard = oracle.getWildcardType(BoundType.SUPER,
         integerType);
 
     JClassType type = oracle.getParameterizedType(genericType,
@@ -103,8 +104,8 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
   public void testGenericClass_UnboundWildcard() throws NotFoundException {
     TypeOracle oracle = moduleContext.getOracle();
     JGenericType genericType = getGenericTestType();
-    JWildcardType upperBoundWildcard = oracle.getWildcardType(true,
-        oracle.getJavaLangObject());
+    JWildcardType upperBoundWildcard = oracle.getWildcardType(
+        BoundType.EXTENDS, oracle.getJavaLangObject());
 
     JClassType type = oracle.getParameterizedType(genericType,
         new JClassType[] {upperBoundWildcard});
@@ -117,7 +118,8 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
   public void testGenericClass_UpperBoundWildcard() throws NotFoundException {
     TypeOracle oracle = moduleContext.getOracle();
     JGenericType genericType = getGenericTestType();
-    JWildcardType upperBoundWildcard = oracle.getWildcardType(true, integerType);
+    JWildcardType upperBoundWildcard = oracle.getWildcardType(
+        BoundType.EXTENDS, integerType);
 
     JClassType type = oracle.getParameterizedType(genericType,
         new JClassType[] {upperBoundWildcard});
@@ -205,7 +207,7 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     JGenericType myCustomListType = oracle.getType(MyCustomList.class.getName()).isGenericType();
     JParameterizedType parameterizedMyCustomList = oracle.getParameterizedType(
         myCustomListType, new JClassType[] {
-            oracle.getWildcardType(true,
+            oracle.getWildcardType(BoundType.EXTENDS,
                 oracle.getType(Serializable.class.getName())), integerType});
     JClassType[] expected = {
         oracle.getType(MyIntegerList.class.getName()),
@@ -230,12 +232,12 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     JGenericType genericList = (JGenericType) oracle.getType(List.class.getName());
 
     // ?
-    JWildcardType unboundWildcard = oracle.getWildcardType(true,
+    JWildcardType unboundWildcard = oracle.getWildcardType(BoundType.EXTENDS,
         oracle.getJavaLangObject());
 
     // ? extends Number
-    JWildcardType numUpperBoundWildcard = oracle.getWildcardType(true,
-        oracle.getType(Number.class.getName()));
+    JWildcardType numUpperBoundWildcard = oracle.getWildcardType(
+        BoundType.EXTENDS, oracle.getType(Number.class.getName()));
 
     // List<?>
     JParameterizedType unboundList = oracle.getParameterizedType(genericList,
@@ -253,8 +255,8 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     assertTrue(listOfExtendsNumber.isAssignableTo(unboundList));
 
     // ? extends Integer
-    JWildcardType intUpperBoundWildcard = oracle.getWildcardType(true,
-        integerType);
+    JWildcardType intUpperBoundWildcard = oracle.getWildcardType(
+        BoundType.EXTENDS, integerType);
 
     // List<? extends Integer>
     JParameterizedType listOfExtendsInteger = oracle.getParameterizedType(
@@ -268,10 +270,10 @@ public class JParameterizedTypeTest extends JDelegatingClassTypeTestBase {
     assertTrue(listOfExtendsInteger.isAssignableTo(listOfExtendsNumber));
 
     // List<? super Integer> should be assignable from List<? super Number>
-    JWildcardType numLowerBoundWildcard = oracle.getWildcardType(false,
-        oracle.getType(Number.class.getName()));
-    JWildcardType intLowerBoundWildcard = oracle.getWildcardType(false,
-        integerType);
+    JWildcardType numLowerBoundWildcard = oracle.getWildcardType(
+        BoundType.SUPER, oracle.getType(Number.class.getName()));
+    JWildcardType intLowerBoundWildcard = oracle.getWildcardType(
+        BoundType.SUPER, integerType);
 
     // List<? super Number>
     JParameterizedType listOfSuperNumber = oracle.getParameterizedType(

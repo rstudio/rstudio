@@ -15,6 +15,8 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
@@ -51,7 +53,7 @@ public class JParameterizedType extends JMaybeParameterizedType {
     for (int i = 0; i < newTypeArgs.length; ++i) {
       JClassType newTypeArg = substitutionMap.get(typeParameters[i]);
       if (newTypeArg == null) {
-        newTypeArg = oracle.getWildcardType(true,
+        newTypeArg = oracle.getWildcardType(BoundType.EXTENDS,
             typeParameters[i].getFirstBound());
       }
 

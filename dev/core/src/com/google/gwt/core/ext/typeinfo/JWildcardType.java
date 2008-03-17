@@ -19,13 +19,32 @@ package com.google.gwt.core.ext.typeinfo;
  * Represents a wildcard type argument to a parameterized type.
  */
 public class JWildcardType extends JDelegatingClassType {
-  private boolean isUpperBound;
+  /**
+   * Type of wildcard bound.
+   */
+  public enum BoundType {
+    /**
+     * Used when the declaration explicitly used ? extends Type.
+     */
+    EXTENDS,
+
+    /**
+     * Used when the declaration explicitly used ? super Type.
+     */
+    SUPER,
+
+    /**
+     * Used when the declaration did not specify a bound.
+     */
+    UNBOUND
+  }
 
   private JClassType[] lazyLowerBounds;
   private JClassType[] lazyUpperBounds;
+  private final BoundType boundType;
 
-  public JWildcardType(boolean isUpperBound, JClassType typeBound) {
-    this.isUpperBound = isUpperBound;
+  public JWildcardType(BoundType boundType, JClassType typeBound) {
+    this.boundType = boundType;
     super.setBaseType(typeBound);
   }
 
@@ -41,7 +60,7 @@ public class JWildcardType extends JDelegatingClassType {
 
   @Override
   public JClassType getErasedType() {
-    if (isUpperBound) {
+    if (isUpperBound()) {
       // ? extends T erases to T
       return getFirstBound().getErasedType();
     }
@@ -72,7 +91,7 @@ public class JWildcardType extends JDelegatingClassType {
    */
   public JClassType[] getLowerBounds() {
     if (lazyLowerBounds == null) {
-      if (isUpperBound) {
+      if (isUpperBound()) {
         lazyLowerBounds = TypeOracle.NO_JCLASSES;
       } else {
         lazyLowerBounds = new JClassType[] {getFirstBound()};
@@ -104,7 +123,7 @@ public class JWildcardType extends JDelegatingClassType {
 
   @Override
   public JClassType[] getSubtypes() {
-    if (isUpperBound) {
+    if (isUpperBound()) {
       return getFirstBound().getSubtypes();
     }
 
@@ -117,7 +136,7 @@ public class JWildcardType extends JDelegatingClassType {
 
   @Override
   public JClassType getSuperclass() {
-    if (isUpperBound) {
+    if (isUpperBound()) {
       // The superclass of an upper bound is the upper bound.
       return getFirstBound();
     }
@@ -134,7 +153,7 @@ public class JWildcardType extends JDelegatingClassType {
    */
   public JClassType[] getUpperBounds() {
     if (lazyUpperBounds == null) {
-      if (isUpperBound) {
+      if (isUpperBound()) {
         lazyUpperBounds = new JClassType[] {getFirstBound()};
       } else {
         // Object is the default upper bound.
@@ -174,22 +193,35 @@ public class JWildcardType extends JDelegatingClassType {
    *         requested
    */
   boolean boundsMatch(JWildcardType otherWildcard) {
-    return isUpperBound == otherWildcard.isUpperBound
+    return isUpperBound() == otherWildcard.isUpperBound()
         && getFirstBound() == otherWildcard.getFirstBound();
   }
 
   @Override
   JClassType getSubstitutedType(JParameterizedType parameterizedType) {
-    return getOracle().getWildcardType(isUpperBound,
+    return getOracle().getWildcardType(boundType,
         getFirstBound().getSubstitutedType(parameterizedType));
   }
 
+  private boolean isUnbound() {
+    return boundType == BoundType.UNBOUND;
+  }
+
+  private boolean isUpperBound() {
+    return boundType != BoundType.SUPER;
+  }
+
   private String toString(boolean simpleName) {
-    String str = "?" + (isUpperBound ? " super " : " extends ");
-    if (simpleName) {
-      return str + getFirstBound().getSimpleSourceName();
+    String str = "?";
+    if (isUnbound()) {
+      return str;
     } else {
-      return str + getFirstBound().getParameterizedQualifiedSourceName();
+      str += (isUpperBound() ? " extends " : " super ");
+      if (simpleName) {
+        return str + getFirstBound().getSimpleSourceName();
+      } else {
+        return str + getFirstBound().getParameterizedQualifiedSourceName();
+      }
     }
   }
 }
