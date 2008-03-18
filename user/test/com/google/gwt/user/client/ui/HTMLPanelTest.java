@@ -48,8 +48,54 @@ public class HTMLPanelTest extends GWTTestCase {
         DOM.getParent(labelB.getElement()), "id"));
   }
 
+  /**
+   * This is meant to catch an issue created by a faulty optimization. To
+   * optimize add() when the HTMLPanel is unattached, we would originally
+   * move its element to a hidden div so that getElementById() would work.
+   * Unfortunately, we didn't move it back to its original parent, causing
+   * a problem in the case described in this test.
+   */
+  public void testAddPartiallyAttached() {
+    SimplePanel sp = new SimplePanel();
+    HTMLPanel p = new HTMLPanel("<div id='foo'></div>");
+
+    // Add the HTMLPanel to another panel before adding the button.
+    sp.add(p);
+
+    // Add a button the HTMLPanel, causing the panel's element to be attached
+    // to the DOM.
+    p.add(new Button("foo"), "foo");
+
+    // If all goes well, the HTMLPanel's element should still be properly
+    // connected to the SimplePanel's element.
+    assertTrue(DOM.isOrHasChild(sp.getElement(), p.getElement()));
+  }
+
   public void testAttachDetachOrder() {
     HTMLPanel p = new HTMLPanel("<div id='w00t'></div>");
     HasWidgetsTester.testAll(p, new Adder());
+  }
+
+  /**
+   * Ensures that attachToDomAndGetElement() puts the HTMLPanel back exactly
+   * where it was in the DOM originally.
+   */
+  public void testAttachDoesntMangleChildOrder() {
+    FlowPanel fp = new FlowPanel();
+
+    Button ba = new Button("before");
+    Button bb = new Button("after");
+
+    HTMLPanel hp = new HTMLPanel("<div id='foo'></div>");
+
+    fp.add(ba);
+    fp.add(hp);
+    fp.add(bb);
+
+    hp.add(new Button("foo"), "foo");
+
+    assertTrue(DOM.isOrHasChild(fp.getElement(), hp.getElement()));
+    assertTrue(DOM.getNextSibling(ba.getElement()) == hp.getElement());
+    assertTrue(DOM.getNextSibling(hp.getElement()) == bb.getElement());
   }
 }

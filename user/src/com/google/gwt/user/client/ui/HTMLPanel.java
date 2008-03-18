@@ -80,10 +80,10 @@ public class HTMLPanel extends ComplexPanel {
   }
 
   /**
-   * Performs a {@link DOM#getElementById(String)} after attaching the widget's
+   * Performs a {@link DOM#getElementById(String)} after attaching the panel's
    * element into a hidden DIV in the document's body. Attachment is necessary
-   * to be able to use the native getElementById. The hidden DIV will remain
-   * attached to the DOM until the Widget itself is fully attached.
+   * to be able to use the native getElementById. The panel's element will be
+   * re-attached to its original parent (if any) after the method returns.
    * 
    * @param id the id whose associated element is to be retrieved
    * @return the associated element, or <code>null</code> if none is found
@@ -93,11 +93,25 @@ public class HTMLPanel extends ComplexPanel {
     if (hiddenDiv == null) {
       hiddenDiv = DOM.createDiv();
       UIObject.setVisible(hiddenDiv, false);
-      DOM.appendChild(hiddenDiv, getElement());
       DOM.appendChild(RootPanel.getBodyElement(), hiddenDiv);
     }
 
+    // Hang on to the panel's original parent and sibling elements so that it
+    // can be replaced.
+    Element origParent = DOM.getParent(getElement());
+    Element origSibling = DOM.getNextSibling(getElement());
+
+    // Attach the panel's element to the hidden div.
+    DOM.appendChild(hiddenDiv, getElement());
+
     // Now that we're attached to the DOM, we can use getElementById.
-    return DOM.getElementById(id);
+    Element child = DOM.getElementById(id);
+
+    // Put the panel's element back where it was.
+    if (origParent != null) {
+      DOM.insertBefore(origParent, getElement(), origSibling);
+    }
+
+    return child;
   }
 }
