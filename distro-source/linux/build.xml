@@ -2,12 +2,12 @@
 	<property name="dist.platform" value="linux" />
 	<property name="dist.platform.detail" value="linux" />
 	<import file="../common.ant.xml" />
-	<property name="project.dist" location="${gwt.build.dist}/${project.distname}.tar.gz" />
+	<property name="project.dist" location="${gwt.build.dist}/${project.distname}.tar.bz2" />
 
 	<target name="build" depends="filter" description="Packages the distro">
 		<!-- TODO: figure out how to share most of this across platforms -->
 		<mkdir dir="${gwt.build.dist}" />
-		<gwt.tgz.cat destfile="${project.dist}">
+		<gwt.tgz.cat destfile="${project.dist}" compression="bzip2">
 			<!-- jars -->
 			<tarfileset file="${gwt.build.lib}/gwt-dev-${dist.platform}.jar" prefix="${project.distname}" />
 			<tarfileset file="${gwt.build.lib}/gwt-user.jar" prefix="${project.distname}" />
@@ -69,7 +69,7 @@
 				-->
 				<mkdir dir="${gwt.build.staging}" />
 				<exec executable="tar">
-					<arg value="-xpzf" />
+					<arg value="-xpjf" />
 					<arg file="${project.dist}" />
 					<arg value="-C" />
 					<arg file="${gwt.build.staging}" />

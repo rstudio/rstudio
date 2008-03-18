@@ -186,10 +186,11 @@
 
 	<macrodef name="gwt.tgz.cat">
 		<attribute name="destfile" />
+		<attribute name="compression" default="gzip" />
 		<element name="tar.elements" implicit="true" optional="true" />
 		<sequential>
 			<taskdef name="tar.cat" classname="com.google.gwt.ant.taskdefs.TarCat" classpath="${gwt.build.lib}/ant-gwt.jar" />
-			<tar.cat destfile="@{destfile}" compression="gzip" longfile="gnu">
+			<tar.cat destfile="@{destfile}" compression="@{compression}" longfile="gnu">
 				<tar.elements />
 			</tar.cat>
 		</sequential>
