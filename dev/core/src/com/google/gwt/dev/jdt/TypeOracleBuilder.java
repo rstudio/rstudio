@@ -101,6 +101,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 /**
@@ -526,7 +527,7 @@ public class TypeOracleBuilder {
 
     // Build a list that makes it easy to remove problems.
     //
-    final Map<String, CompilationUnitDeclaration> cudsByFileName = new HashMap<String, CompilationUnitDeclaration>();
+    final Map<String, CompilationUnitDeclaration> cudsByFileName = new TreeMap<String, CompilationUnitDeclaration>();
     for (int i = 0; i < cuds.length; i++) {
       CompilationUnitDeclaration cud = cuds[i];
       char[] location = cud.getFileName();
@@ -1041,6 +1042,12 @@ public class TypeOracleBuilder {
           isLocalType, className, declStart, declEnd, bodyStart, bodyEnd,
           jclassIsIntf);
     }
+
+    /*
+     * Add modifiers since these are needed for
+     * TypeOracle.getParameterizedType's error checking code.
+     */
+    jrealClassType.addModifierBits(Shared.bindingToModifierBits(binding));
 
     cacheManager.setTypeForBinding(binding, jrealClassType);
   }
@@ -1598,9 +1605,10 @@ public class TypeOracleBuilder {
       return false;
     }
 
-    // Add modifiers.
-    //
-    jtype.addModifierBits(Shared.bindingToModifierBits(clazz.binding));
+    /*
+     * Modifiers were added during processType since getParameterizedType
+     * depends on them being set.
+     */
 
     // Try to resolve annotations, ignore any that fail.
     Map<Class<? extends java.lang.annotation.Annotation>, java.lang.annotation.Annotation> declaredAnnotations = newAnnotationMap();

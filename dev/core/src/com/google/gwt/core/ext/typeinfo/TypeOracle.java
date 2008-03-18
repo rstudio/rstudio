@@ -339,8 +339,16 @@ public class TypeOracle {
       if (genericType.getEnclosingType().isGenericType() != null
           && enclosingType.isParameterized() == null
           && enclosingType.isRawType() == null) {
-        throw new IllegalArgumentException(
-            "enclosingType needs to be a parameterized type or a raw type");
+        /*
+         * If the generic type is a non-static member type enclosed by a generic
+         * type then the enclosing type for this parameterized type should be
+         * raw or parameterized.
+         */
+        throw new IllegalArgumentException("Generic type '"
+            + genericType.getParameterizedQualifiedSourceName()
+            + "' is a non-static member type, but the enclosing type '"
+            + enclosingType.getQualifiedSourceName() 
+            + "' is not a parameterized or raw type");
       }
     }
 

@@ -44,13 +44,13 @@ public class TypeOracleBuilderTest extends TestCase {
     private final String[] typeNames;
 
     /**
-     * Creates a new {@code TestCup} with several types. The first type in 
+     * Creates a new {@code TestCup} with several types. The first type in
      * {@code typeNames} is considered to be the main type.
-     *
+     * 
      * @param packageName the package for the types in this {@code TestCup}
-     * @param typeNames the types for this {@code TestCup}. Must have
-     * at least one type. The first type is considered to be the main type
-     * for this {@code TestCup}. 
+     * @param typeNames the types for this {@code TestCup}. Must have at least
+     *          one type. The first type is considered to be the main type for
+     *          this {@code TestCup}.
      */
     public TestCup(String packageName, String... typeNames) {
       this.packageName = packageName;
@@ -84,6 +84,7 @@ public class TypeOracleBuilderTest extends TestCase {
     public String[] getTypeNames() {
       return typeNames;
     }
+
     public boolean isTransient() {
       return true;
     }
@@ -243,6 +244,51 @@ public class TypeOracleBuilderTest extends TestCase {
       StringBuffer sb = new StringBuffer();
       sb.append("package test;\n");
       sb.append("public class DefaultClass extends Object { }\n");
+      return sb.toString().toCharArray();
+    }
+  };
+
+  protected TestCup CU_ReferencesParameterizedTypeBeforeItsGenericFormHasBeenProcessed = new TestCup(
+      "parameterized.type.build.dependency", "Class0") {
+    @Override
+    public void check(JClassType type) throws NotFoundException {
+    }
+
+    public char[] getSource() throws UnableToCompleteException {
+      StringBuilder sb = new StringBuilder();
+      sb.append("package parameterized.type.build.dependency;\n");
+      sb.append("public class Class0 implements Class2.Inner<Object> {\n");
+      sb.append("}\n");
+      return sb.toString().toCharArray();
+    }
+  };
+
+  protected TestCup CU_DeclaresInnerGenericType = new TestCup(
+      "parameterized.type.build.dependency", "Class1") {
+    @Override
+    public void check(JClassType type) throws NotFoundException {
+    }
+
+    public char[] getSource() throws UnableToCompleteException {
+      StringBuilder sb = new StringBuilder();
+      sb.append("package parameterized.type.build.dependency;\n");
+      sb.append("public class Class1<T> {\n");
+      sb.append("  public interface Inner<T> {}\n");
+      sb.append("}\n");
+      return sb.toString().toCharArray();
+    }
+  };
+
+  protected TestCup CU_ExtendsParameterizedType = new TestCup(
+      "parameterized.type.build.dependency", "Class2") {
+    @Override
+    public void check(JClassType type) throws NotFoundException {
+    }
+
+    public char[] getSource() throws UnableToCompleteException {
+      StringBuilder sb = new StringBuilder();
+      sb.append("package parameterized.type.build.dependency;\n");
+      sb.append("public class Class2 extends Class1<Object> {}\n");
       return sb.toString().toCharArray();
     }
   };
@@ -557,8 +603,7 @@ public class TypeOracleBuilderTest extends TestCase {
     }
   };
 
-  protected TestCup CU_OuterInner = new TestCup("test", "Outer",
-      "Outer.Inner") {
+  protected TestCup CU_OuterInner = new TestCup("test", "Outer", "Outer.Inner") {
 
     public void check(JClassType type) {
       final String name = type.getSimpleSourceName();
@@ -726,6 +771,27 @@ public class TypeOracleBuilderTest extends TestCase {
     JClassType[] types = tio.getTypes();
     assertEquals(3, types.length);
     checkTypes(types);
+  }
+
+  /**
+   * Tests that we can build nested parameterized types even if that happens
+   * while the type oracle is being built. This test assumes that
+   * CU_ReferencesParameterizedTypeBeforeItsGenericFormHasBeenProcessed will
+   * cause a parameterized form of CU_DeclaresInnerGenericType to be created
+   * before the type oracle has had a chance to resolve
+   * CU_DeclaresInnerGenericType.
+   */
+  public void testParameterizedTypeBuildDependencies()
+      throws UnableToCompleteException, NotFoundException {
+    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
+
+    tiob.addCompilationUnit(CU_ReferencesParameterizedTypeBeforeItsGenericFormHasBeenProcessed);
+    tiob.addCompilationUnit(CU_ExtendsParameterizedType);
+    tiob.addCompilationUnit(CU_DeclaresInnerGenericType);
+    tiob.addCompilationUnit(CU_Object);
+
+    TypeOracle tio = tiob.build(createTreeLogger());
+    assertNull(tio.findType("test.parameterizedtype.build.dependencies.Class2"));
   }
 
   public void testSyntaxErrors() throws TypeOracleException,
