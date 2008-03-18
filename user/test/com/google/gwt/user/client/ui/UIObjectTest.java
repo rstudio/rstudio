@@ -199,6 +199,43 @@ public class UIObjectTest extends GWTTestCase {
     assertFalse(containsClass(o, "i-awt-heart"));
   }
 
+  public void testMissingElementAssertion() {
+    try {
+      Widget w = new Widget() {
+      };
+
+      w.getElement();
+      fail("Expected assertion failure");
+    } catch (AssertionError e) {
+      assertEquals(UIObject.MISSING_ELEMENT_ERROR, e.getMessage());
+    }
+
+    try {
+      Composite c = new Composite() {
+      };
+
+      c.getElement();
+      fail("Expected assertion failure");
+    } catch (AssertionError e) {
+      assertEquals(UIObject.MISSING_ELEMENT_ERROR, e.getMessage());
+    }
+  }
+
+  public void testSetElementTwiceFails() {
+    UIObject o = new UIObject() {
+      {
+        setElement(DOM.createDiv());
+      }
+    };
+
+    try {
+      o.setElement(DOM.createSpan());
+      fail("Expected assertion failure");
+    } catch (AssertionError e) {
+      assertEquals(UIObject.SETELEMENT_TWICE_ERROR, e.getMessage());
+    }
+  }
+
   private void assertPrimaryStyleNameEquals(UIObject o, String className) {
     String attr = DOM.getElementProperty(o.getElement(), "className");
     assertTrue(attr.indexOf(className) == 0);

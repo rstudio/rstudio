@@ -69,7 +69,7 @@ public class NamedFrame extends Frame {
     DOM.setInnerHTML(div, "<iframe name='" + name + "'>");
 
     Element iframe = DOM.getFirstChild(div);
-    setElement(iframe);
+    replaceElement(iframe);
   }
 
   /**

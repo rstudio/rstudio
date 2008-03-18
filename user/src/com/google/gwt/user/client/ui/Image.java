@@ -99,7 +99,7 @@ public class Image extends Widget implements SourcesClickEvents,
   private static class UnclippedState extends State {
 
     UnclippedState(Image image) {
-      image.setElement(DOM.createImg());
+      image.replaceElement(DOM.createImg());
       image.sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONLOAD
           | Event.ONERROR | Event.ONMOUSEWHEEL);
     }
@@ -179,7 +179,7 @@ public class Image extends Widget implements SourcesClickEvents,
       this.width = width;
       this.height = height;
       this.url = url;
-      image.setElement(impl.createStructure(url, left, top, width, height));
+      image.replaceElement(impl.createStructure(url, left, top, width, height));
       image.sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONMOUSEWHEEL);
       fireSyntheticLoadEvent(image);
     }

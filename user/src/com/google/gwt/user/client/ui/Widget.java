@@ -164,18 +164,8 @@ public class Widget extends UIObject implements EventListener {
   protected void onUnload() {
   }
 
-  /**
-   * Sets this object's browser element. Widget subclasses must call this method
-   * before attempting to call any other methods.
-   * 
-   * If a browser element has already been attached, then it is replaced with
-   * the new element. The old event listeners are removed from the old browser
-   * element, and the event listeners are set up on the new browser element.
-   * 
-   * @param elem the object's new element
-   */
   @Override
-  protected void setElement(Element elem) {
+  void replaceElement(Element elem) {
     if (isAttached()) {
       // Remove old event listener to avoid leaking. onDetach will not do this
       // for us, because it is only called when the widget itself is detached
@@ -183,7 +173,7 @@ public class Widget extends UIObject implements EventListener {
       DOM.setEventListener(getElement(), null);
     }
 
-    super.setElement(elem);
+    super.replaceElement(elem);
     if (isAttached()) {
       // Hook the event listener back up on the new element. onAttach will not
       // do this for us, because it is only called when the widget itself is

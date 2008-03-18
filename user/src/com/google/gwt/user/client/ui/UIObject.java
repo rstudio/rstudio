@@ -82,6 +82,13 @@ import com.google.gwt.user.client.Element;
  * </p>
  */
 public abstract class UIObject {
+
+  static final String SETELEMENT_TWICE_ERROR = "Element may only be set once";
+
+  static final String MISSING_ELEMENT_ERROR = "This UIObject's element is not set; "
+    + "you may be missing a call to either Composite.initWidget() or "
+    + "UIObject.setElement()";
+
   /**
    * The implementation of the set debug id method, which does nothing by
    * default.
@@ -440,9 +447,15 @@ public abstract class UIObject {
   /**
    * Gets a handle to the object's underlying DOM element.
    * 
+   * This method should not be overridden. It is non-final solely to support
+   * legacy code that depends upon overriding it. If it is overridden, the
+   * subclass implementation must not return a different element than was
+   * previously set using {@link #setElement(Element)}.
+   * 
    * @return the object's browser element
    */
   public Element getElement() {
+    assert (element != null) : MISSING_ELEMENT_ERROR;
     return element;
   }
 
@@ -453,7 +466,7 @@ public abstract class UIObject {
    * @return the object's offset height
    */
   public int getOffsetHeight() {
-    return DOM.getElementPropertyInt(element, "offsetHeight");
+    return DOM.getElementPropertyInt(getElement(), "offsetHeight");
   }
 
   /**
@@ -463,7 +476,7 @@ public abstract class UIObject {
    * @return the object's offset width
    */
   public int getOffsetWidth() {
-    return DOM.getElementPropertyInt(element, "offsetWidth");
+    return DOM.getElementPropertyInt(getElement(), "offsetWidth");
   }
 
   /**
@@ -497,7 +510,7 @@ public abstract class UIObject {
    * @return the object's title
    */
   public String getTitle() {
-    return DOM.getElementProperty(element, "title");
+    return DOM.getElementProperty(getElement(), "title");
   }
 
   /**
@@ -506,7 +519,7 @@ public abstract class UIObject {
    * @return <code>true</code> if the object is visible
    */
   public boolean isVisible() {
-    return isVisible(element);
+    return isVisible(getElement());
   }
 
   /**
@@ -543,7 +556,7 @@ public abstract class UIObject {
     // This exists to deal with an inconsistency in IE's implementation where
     // it won't accept negative numbers in length measurements
     assert extractLengthValue(height.trim().toLowerCase()) >= 0 : "CSS heights should not be negative";
-    DOM.setStyleAttribute(element, "height", height);
+    DOM.setStyleAttribute(getElement(), "height", height);
   }
 
   /**
@@ -605,9 +618,9 @@ public abstract class UIObject {
    */
   public void setTitle(String title) {
     if (title == null || title.length() == 0) {
-      DOM.removeElementAttribute(element, "title");
+      DOM.removeElementAttribute(getElement(), "title");
     } else {
-      DOM.setElementAttribute(element, "title", title);
+      DOM.setElementAttribute(getElement(), "title", title);
     }
   }
 
@@ -618,7 +631,7 @@ public abstract class UIObject {
    *          to hide it
    */
   public void setVisible(boolean visible) {
-    setVisible(element, visible);
+    setVisible(getElement(), visible);
   }
 
   /**
@@ -631,7 +644,7 @@ public abstract class UIObject {
     // This exists to deal with an inconsistency in IE's implementation where
     // it won't accept negative numbers in length measurements
     assert extractLengthValue(width.trim().toLowerCase()) >= 0 : "CSS widths should not be negative";
-    DOM.setStyleAttribute(element, "width", width);
+    DOM.setStyleAttribute(getElement(), "width", width);
   }
 
   /**
@@ -656,10 +669,10 @@ public abstract class UIObject {
    */
   @Override
   public String toString() {
-    if (element == null) {
+    if (getElement() == null) {
       return "(null handle)";
     }
-    return DOM.toString(element);
+    return DOM.toString(getElement());
   }
 
   /**
@@ -683,7 +696,7 @@ public abstract class UIObject {
    * @return the element to which style names will be applied
    */
   protected Element getStyleElement() {
-    return element;
+    return getElement();
   }
 
   /**
@@ -713,18 +726,28 @@ public abstract class UIObject {
 
   /**
    * Sets this object's browser element. UIObject subclasses must call this
-   * method before attempting to call any other methods.
+   * method before attempting to call any other methods, and it may only be
+   * called once.
    * 
-   * If the browser element has already been set, then the current element's
-   * position is located in the DOM and removed. The new element is added into
-   * the previous element's position.
+   * @param elem the object's element
+   */
+  protected void setElement(Element elem) {
+    assert (element == null) : SETELEMENT_TWICE_ERROR;
+    this.element = elem;
+  }
+
+  /**
+   * Replaces this object's browser element.
+   * 
+   * This method exists only to support a specific use-case in Image, and
+   * should not be used by other classes.
    * 
    * @param elem the object's new element
    */
-  protected void setElement(Element elem) {
-    if (this.element != null) {
+  void replaceElement(Element elem) {
+    if (element != null) {
       // replace this.element in its parent with elem.
-      replaceNode(this.element, elem);
+      replaceNode(element, elem);
     }
 
     this.element = elem;

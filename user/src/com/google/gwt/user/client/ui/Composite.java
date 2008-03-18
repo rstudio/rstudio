@@ -15,7 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
 
 /**
  * A type of widget that can wrap another widget, hiding the wrapped widget's
@@ -35,18 +36,6 @@ import com.google.gwt.user.client.Element;
 public abstract class Composite extends Widget {
 
   private Widget widget;
-
-  /**
-   * This override checks to ensure {@link #initWidget(Widget)} has been called.
-   */
-  @Override
-  public Element getElement() {
-    if (widget == null) {
-      throw new IllegalStateException("initWidget() was never called in "
-          + this.getClass().getName());
-    }
-    return super.getElement();
-  }
 
   @Override
   public boolean isAttached() {
@@ -95,8 +84,23 @@ public abstract class Composite extends Widget {
   }
 
   @Override
+  public void onBrowserEvent(Event event) {
+    // Delegate events to the widget.
+    widget.onBrowserEvent(event);
+  }
+
+  @Override
   protected void onAttach() {
+    // Call the widget's onAttach() first.
     widget.onAttach();
+
+    // Clobber the widget's call to setEventListener(), causing all events to
+    // be routed to this composite, which will delegate back to the widget by
+    // default (note: it's not necessary to clear this in onDetach(), because
+    // the widget's onDetach will do so).
+    DOM.setEventListener(getElement(), this);
+
+    // Call onLoad() directly, because we're not calling super.onAttach().
     onLoad();
   }
 

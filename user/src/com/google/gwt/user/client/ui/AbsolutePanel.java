@@ -51,7 +51,17 @@ public class AbsolutePanel extends ComplexPanel {
    * Creates an empty absolute panel.
    */
   public AbsolutePanel() {
-    setElement(DOM.createDiv());
+    this(DOM.createDiv());
+  }
+
+  /**
+   * Creates an AbsolutePanel with the given element. This is package-protected
+   * so that it can be used by {@link RootPanel}.
+   * 
+   * @param elem the element to be used for this panel
+   */
+  AbsolutePanel(Element elem) {
+    setElement(elem);
 
     // Setting the panel's position style to 'relative' causes it to be treated
     // as a new positioning context for its children.

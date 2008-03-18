@@ -57,10 +57,11 @@ public class RootPanel extends AbsolutePanel {
    */
   public static RootPanel get(String id) {
     // See if this RootPanel is already created.
-    RootPanel gwt = rootPanels.get(id);
-    if (gwt != null) {
-      return gwt;
+    RootPanel rp = rootPanels.get(id);
+    if (rp != null) {
+      return rp;
     }
+
     // Find the element that this RootPanel will wrap.
     Element elem = null;
     if (id != null) {
@@ -74,8 +75,12 @@ public class RootPanel extends AbsolutePanel {
     }
 
     // Create the panel and put it in the map.
-    rootPanels.put(id, gwt = new RootPanel(elem));
-    return gwt;
+    if (elem == null) {
+      // 'null' means use document's body element.
+      elem = getBodyElement();
+    }
+    rootPanels.put(id, rp = new RootPanel(elem));
+    return rp;
   }
 
   /**
@@ -108,12 +113,7 @@ public class RootPanel extends AbsolutePanel {
   }
 
   private RootPanel(Element elem) {
-    if (elem == null) {
-      // 'null' means use document's body element.
-      elem = getBodyElement();
-    }
-
-    setElement(elem);
+    super(elem);
     onAttach();
   }
 }
