@@ -139,7 +139,7 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
    * Used for stats recording.
    */
   private final String methodName;
-  
+
   /**
    * Used for stats recording.
    */
@@ -183,9 +183,9 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
       String encodedResponse = response.getText();
 
       boolean toss = RemoteServiceProxy.isStatsAvailable()
-          && RemoteServiceProxy.stats(methodName + ":responseReceived",
-              RemoteServiceProxy.bytesStat(methodName, requestId,
-                  encodedResponse.length()));
+          && RemoteServiceProxy.stats(methodName + ":" + requestId
+              + ":responseReceived", RemoteServiceProxy.bytesStat(methodName,
+              requestId, encodedResponse.length()));
 
       if (RemoteServiceProxy.isReturnValue(encodedResponse)) {
         result = (T) responseReader.read(streamFactory.createStreamReader(encodedResponse));
@@ -200,8 +200,9 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
       caught = e;
     } finally {
       boolean toss = RemoteServiceProxy.isStatsAvailable()
-          && RemoteServiceProxy.stats(methodName + ":responseDeserialized",
-              RemoteServiceProxy.timeStat(methodName, requestId));
+          && RemoteServiceProxy.stats(methodName + ":" + requestId
+              + ":responseDeserialized", RemoteServiceProxy.timeStat(
+              methodName, requestId));
     }
 
     try {
@@ -212,8 +213,9 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
       }
     } finally {
       boolean toss = RemoteServiceProxy.isStatsAvailable()
-          && RemoteServiceProxy.stats(methodName + ":responseCallbackDone",
-              RemoteServiceProxy.timeStat(methodName, requestId));
+          && RemoteServiceProxy.stats(methodName + ":" + requestId
+              + ":responseCallbackDone", RemoteServiceProxy.timeStat(
+              methodName, requestId));
     }
   }
 }

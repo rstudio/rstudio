@@ -16,7 +16,6 @@
 package com.google.gwt.lang;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 
 /**
  * Provides access to the statistics collector function as an intrinsic for use

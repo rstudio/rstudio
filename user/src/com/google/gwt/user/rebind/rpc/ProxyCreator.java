@@ -248,8 +248,8 @@ class ProxyCreator {
     String statsMethodExpr = getProxySimpleName() + "." + syncMethod.getName()
         + ":\" + getRequestId() + \"";
     w.println("boolean toss = isStatsAvailable() && stats(\"" + statsMethodExpr
-        + ":requestStart\", timeStat(\"" + statsMethodExpr
-        + "\", getRequestId()));");
+        + ":requestStart\", timeStat(\"" + getProxySimpleName() + "."
+        + syncMethod.getName() + "\", getRequestId()));");
 
     w.print(ClientSerializationStreamWriter.class.getSimpleName());
     w.print(" ");
@@ -313,13 +313,15 @@ class ProxyCreator {
 
     w.println("boolean toss2 = isStatsAvailable() && stats(\""
         + statsMethodExpr + ":requestSerialized\", timeStat(\""
-        + statsMethodExpr + "\", getRequestId()));");
+        + getProxySimpleName() + "." + syncMethod.getName()
+        + "\", getRequestId()));");
 
     // Call the doInvoke method to actually send the request.
     w.print("doInvoke(");
     JType returnType = syncMethod.getReturnType();
     w.print("ResponseReader." + getResponseReaderFor(returnType).name());
-    w.print(", \"" + statsMethodExpr + "\", getRequestId(), payload, ");
+    w.print(", \"" + getProxySimpleName() + "." + syncMethod.getName()
+        + "\", getRequestId(), payload, ");
     w.println(callbackName + ");");
     w.outdent();
     w.println("}");
