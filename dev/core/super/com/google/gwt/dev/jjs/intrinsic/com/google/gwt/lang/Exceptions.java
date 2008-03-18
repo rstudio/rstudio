@@ -26,8 +26,7 @@ final class Exceptions {
     if (e instanceof Throwable) {
       return e;
     }
-    return new JavaScriptException(javaScriptExceptionName(e),
-        javaScriptExceptionDescription(e));
+    return new JavaScriptException(e);
   }
 
   static boolean throwAssertionError() {
@@ -66,23 +65,5 @@ final class Exceptions {
   static boolean throwAssertionError_Object(Object message) {
     throw new AssertionError(message);
   }
-
   // CHECKSTYLE_ON
-
-  /**
-   * Returns the description of an unexpected JavaScript exception (not a normal
-   * Java one).
-   */
-  private static native String javaScriptExceptionDescription(Object e) /*-{
-    return e.message;
-  }-*/;
-
-  /**
-   * Returns the name of an unexpected JavaScript exception (not a normal Java
-   * one).
-   */
-  private static native String javaScriptExceptionName(Object e) /*-{
-    return e.name;
-  }-*/;
-
 }

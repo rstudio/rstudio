@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -155,8 +155,8 @@ public class JsniInjector {
           + "  __static[\\\"@"
           + Jsni.JAVASCRIPTHOST_NAME
           + "::exceptionCaught"
-          + "(ILjava/lang/String;Ljava/lang/String;)\\\"]"
-          + "((e && e.number) || 0, (e && e.name) || null , (e && e.message) || null);\\n"
+          + "(Ljava/lang/Object;)\\\"]"
+          + "(e == null ? null : e);\\n"
           + "}\\n";
 
       /*

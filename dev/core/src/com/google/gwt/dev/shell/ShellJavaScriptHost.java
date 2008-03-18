@@ -42,7 +42,7 @@ public interface ShellJavaScriptHost {
   /**
    * Call this when a JavaScript exception is caught.
    */
-  void exceptionCaught(int number, String name, String description);
+  void exceptionCaught(Object exception);
 
   /**
    * Invoke a native JavaScript function that returns a boolean value.

@@ -44,15 +44,13 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   protected static RuntimeException createJavaScriptException(ClassLoader cl,
-      String name, String desc) {
+      Object exception) {
     Exception caught;
     try {
       Class<?> javaScriptExceptionClass = Class.forName(
           "com.google.gwt.core.client.JavaScriptException", true, cl);
-      Class<?> string = String.class;
-      Constructor<?> ctor = javaScriptExceptionClass.getDeclaredConstructor(new Class<?>[] {
-          string, string});
-      return (RuntimeException) ctor.newInstance(new Object[] {name, desc});
+      Constructor<?> ctor = javaScriptExceptionClass.getDeclaredConstructor(Object.class);
+      return (RuntimeException) ctor.newInstance(new Object[] {exception});
     } catch (InstantiationException e) {
       caught = e;
     } catch (IllegalAccessException e) {
@@ -134,20 +132,19 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     host.getClassLoader().clear();
   }
 
-  public void exceptionCaught(int number, String name, String message) {
+  public void exceptionCaught(Object exception) {
+    Throwable caught;
     Throwable thrown = sThrownJavaExceptionObject.get();
-
-    if (thrown != null) {
-      // See if the caught exception was thrown by us
-      if (isExceptionSame(thrown, number, name, message)) {
-        sCaughtJavaExceptionObject.set(thrown);
-        sThrownJavaExceptionObject.set(null);
-        return;
-      }
+    if (thrown != null && isExceptionSame(thrown, exception)) {
+      // The caught exception was thrown by us.
+      caught = thrown;
+      sThrownJavaExceptionObject.set(null);
+    } else if (exception instanceof Throwable) {
+      caught = (Throwable) exception;
+    } else {
+      caught = createJavaScriptException(getIsolatedClassLoader(), exception);
     }
-
-    sCaughtJavaExceptionObject.set(createJavaScriptException(
-        getIsolatedClassLoader(), name, message));
+    sCaughtJavaExceptionObject.set(caught);
   }
 
   /**
@@ -490,12 +487,11 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     throw thrown;
   }
 
-  @SuppressWarnings("unused")
-  protected boolean isExceptionSame(Throwable original, int number,
-      String name, String message) {
+  protected boolean isExceptionSame(@SuppressWarnings("unused")
+  Throwable original, Object exception) {
     // For most platforms, the null exception means we threw it.
     // IE overrides this.
-    return (name == null && message == null);
+    return exception == null;
   }
 
   protected String rebind(String sourceName) throws UnableToCompleteException {

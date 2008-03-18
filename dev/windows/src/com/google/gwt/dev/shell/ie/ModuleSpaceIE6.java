@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,9 @@ import com.google.gwt.dev.shell.ie.IDispatchImpl.HResultException;
 import org.eclipse.swt.internal.ole.win32.IDispatch;
 import org.eclipse.swt.ole.win32.OleAutomation;
 import org.eclipse.swt.ole.win32.Variant;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * An implementation of {@link com.google.gwt.dev.shell.ModuleSpace} for
@@ -73,13 +76,6 @@ public class ModuleSpaceIE6 extends ModuleSpace {
       }
     }
   }
-
-  // CHECKSTYLE_OFF
-  private static int CODE(int hresult) {
-    return hresult & 0xFFFF;
-  }
-
-  // CHECKSTYLE_ON
 
   private final OleAutomation window;
 
@@ -177,12 +173,35 @@ public class ModuleSpaceIE6 extends ModuleSpace {
     return new IDispatchProxy(getIsolatedClassLoader());
   }
 
+  /**
+   * On IE6, we currently have no way of throwing arbitrary exception objects
+   * into JavaScript. What we throw in exception cases is an exception not under
+   * our exact control, so the best we can do is match descriptions to indicate
+   * a match. In practice this works well.
+   */
   @Override
-  protected boolean isExceptionSame(Throwable original, int number,
-      String name, String message) {
-    HResultException hre = new HResultException(original);
-    return CODE(hre.getHResult()) == CODE(number)
-        && hre.getMessage().equals(message);
+  protected boolean isExceptionSame(Throwable original, Object exception) {
+    Throwable caught;
+    try {
+      HResultException hre = new HResultException(original);
+      RuntimeException jse = createJavaScriptException(
+          getIsolatedClassLoader(), exception);
+      Method method = jse.getClass().getMethod("getDescription");
+      String description = (String) method.invoke(jse);
+      return hre.getMessage().equals(description);
+    } catch (SecurityException e) {
+      caught = e;
+    } catch (NoSuchMethodException e) {
+      caught = e;
+    } catch (IllegalArgumentException e) {
+      caught = e;
+    } catch (IllegalAccessException e) {
+      caught = e;
+    } catch (InvocationTargetException e) {
+      caught = e;
+    }
+    throw new RuntimeException(
+        "Failed to invoke JavaScriptException.getDescription()", caught);
   }
 
   private Variant execute(String code) {
