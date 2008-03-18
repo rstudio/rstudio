@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.JGenericType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
@@ -32,6 +33,7 @@ import com.google.gwt.user.rebind.rpc.testcases.client.AbstractSerializableTypes
 import com.google.gwt.user.rebind.rpc.testcases.client.CovariantArrays;
 import com.google.gwt.user.rebind.rpc.testcases.client.ManualSerialization;
 import com.google.gwt.user.rebind.rpc.testcases.client.MissingGwtTypeArgs;
+import com.google.gwt.user.rebind.rpc.testcases.client.ClassWithTypeParameterThatErasesToObject;
 import com.google.gwt.user.rebind.rpc.testcases.client.NoSerializableTypes;
 import com.google.gwt.user.rebind.rpc.testcases.client.NotAllSubtypesAreSerializable;
 import com.google.gwt.user.rebind.rpc.testcases.client.ObjectArrayInMethodSignature;
@@ -170,6 +172,30 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
             "com.google.gwt.user.rebind.rpc.testcases.RebindRPCTestCases",
             "com.google.gwt.junit.JUnit"}, true);
     typeOracle = moduleDef.getTypeOracle(logger);
+  }
+
+  /**
+   * Tests that both the generic and raw forms of type that has a type parameter
+   * that erases to object are not serializable.
+   * 
+   * @throws NotFoundException
+   */
+  public void testClassWithTypeParameterThatErasesToObject()
+      throws NotFoundException, UnableToCompleteException {
+    JGenericType genericType = typeOracle.getType(
+        ClassWithTypeParameterThatErasesToObject.class.getName().replace('$',
+            '.')).isGenericType();
+
+    // The generic form of the type should not be serializable.
+    SerializableTypeOracleBuilder genericStob = new SerializableTypeOracleBuilder(
+        logger, typeOracle);
+    assertFalse(genericStob.checkTypeInstantiable(logger, genericType, false));
+
+    // The raw form of the type should not be serializable.
+    SerializableTypeOracleBuilder rawStob = new SerializableTypeOracleBuilder(
+        logger, typeOracle);
+    assertFalse(rawStob.checkTypeInstantiable(logger, genericType.getRawType(),
+        false));
   }
 
   /**
