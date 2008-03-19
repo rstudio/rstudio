@@ -322,9 +322,19 @@ public final class String implements Comparable<String>, CharSequence,
   }-*/;
 
   public native String replace(char from, char to) /*-{
-    var code = @java.lang.Integer::toHexString(I)(from);
-    code = "0000".substring(code.length) + code;
-    return this.replace(RegExp("\\u" + code, "g"), String.fromCharCode(to));
+    // We previously used \\uXXXX, but Safari 2 doesn't match them properly in RegExp
+    // See http://bugs.webkit.org/show_bug.cgi?id=8043
+    //     http://bugs.webkit.org/show_bug.cgi?id=6257
+    //     http://bugs.webkit.org/show_bug.cgi?id=7253
+    var regex;
+    if (from < 256) {
+      regex = @java.lang.Integer::toHexString(I)(from);
+      regex = '\\x' + "00".substring(regex.length) + regex;
+    } else {
+      // this works because characters above 255 can't be regex special chars
+      regex = String.fromCharCode(from);
+    }
+    return this.replace(RegExp(regex, "g"), String.fromCharCode(to));
   }-*/;
 
   /**
