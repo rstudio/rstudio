@@ -130,6 +130,13 @@ public final class String implements Comparable<String>, CharSequence,
     return replaceStr;
   }
 
+  static native String __valueOf(char x[], int start, int end) /*-{
+    // Trick: fromCharCode is a vararg method, so we can use apply() to pass the
+    // entire input in one shot.
+    x = x.slice(start, end);
+    return String.fromCharCode.apply(null, x);
+  }-*/;
+
   /**
    * @skip
    */
@@ -161,13 +168,6 @@ public final class String implements Comparable<String>, CharSequence,
   private static native boolean __equals(String me, Object other) /*-{
     // Coerce me to a primitive string to force string comparison
     return String(me) == other;
-  }-*/;
-
-  private static native String __valueOf(char x[], int start, int end) /*-{
-    // Trick: fromCharCode is a vararg method, so we can use apply() to pass the
-    // entire input in one shot.
-    x = x.slice(start, end);
-    return String.fromCharCode.apply(null, x);
   }-*/;
 
   // CHECKSTYLE_ON
