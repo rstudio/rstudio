@@ -184,9 +184,10 @@ public class StandardLinkerContext implements LinkerContext {
     if (generatorDir != null) {
       for (String path : Util.recursiveListPartialPaths(generatorDir, false)) {
         try {
-          GeneratedResource resource = new StandardGeneratedResource(path,
-              (new File(generatorDir, path)).toURL());
-          generatedResourcesByName.put(path, resource);
+          String partialPath = path.replace(File.separatorChar, '/');
+          GeneratedResource resource = new StandardGeneratedResource(
+              partialPath, (new File(generatorDir, path)).toURL());
+          generatedResourcesByName.put(partialPath, resource);
           genResources.add(resource);
           logger.log(TreeLogger.SPAM, "Added generated resource " + resource,
               null);
