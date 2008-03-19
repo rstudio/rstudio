@@ -218,7 +218,7 @@ public final class Array {
    * Explicitly initialize all fields to JS false values; see comment in
    * wrapArray(Array, Array).
    */
-  public int length = 0;
+  public volatile int length = 0;
   protected Class arrayClass = null;
   protected int queryId = 0;
 

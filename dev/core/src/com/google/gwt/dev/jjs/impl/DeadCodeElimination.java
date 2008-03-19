@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,23 +23,28 @@ import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JBreakStatement;
 import com.google.gwt.dev.jjs.ast.JCaseStatement;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
+import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
+import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
+import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JForStatement;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
-import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
+import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNode;
+import com.google.gwt.dev.jjs.ast.JParameterRef;
+import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
@@ -50,6 +55,7 @@ import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JValueLiteral;
+import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
@@ -73,10 +79,17 @@ public class DeadCodeElimination {
    */
   public class DeadCodeVisitor extends JModVisitor {
 
+    private JClassType currentClass;
+
     /**
-     * An expression whose result does not matter.
+     * Expressions whose result does not matter.
      */
-    private JExpression ignoringExpressionOutput;
+    private Set<JExpression> ignoringExpressionOutput = new HashSet<JExpression>();
+
+    /**
+     * Expressions being used as lvalues.
+     */
+    private Set<JExpression> lvalues = new HashSet<JExpression>();
 
     private Set<JBlock> switchBlocks = new HashSet<JBlock>();
 
@@ -88,72 +101,37 @@ public class DeadCodeElimination {
       JBinaryOperator op = x.getOp();
       JExpression lhs = x.getLhs();
       JExpression rhs = x.getRhs();
-      if (op == JBinaryOperator.AND) {
-        // simplify short circuit AND expressions
-        if (lhs instanceof JBooleanLiteral) {
-          // eg: if (false && isWhatever()) -> if (false)
-          // eg: if (true && isWhatever()) -> if (isWhatever())
-          JBooleanLiteral booleanLiteral = (JBooleanLiteral) lhs;
-          if (booleanLiteral.getValue()) {
-            ctx.replaceMe(rhs);
-          } else {
-            ctx.replaceMe(lhs);
+      switch (op) {
+        case AND:
+          shortCircuitAnd(lhs, rhs, ctx);
+          break;
+        case OR:
+          shortCircuitOr(lhs, rhs, ctx);
+          break;
+        case EQ:
+          // simplify: null == null -> true
+          if (lhs.getType() == program.getTypeNull()
+              && rhs.getType() == program.getTypeNull() && !x.hasSideEffects()) {
+            ctx.replaceMe(program.getLiteralBoolean(true));
           }
-
-        } else if (rhs instanceof JBooleanLiteral) {
-          // eg: if (isWhatever() && true) -> if (isWhatever())
-          // eg: if (isWhatever() && false) -> if (false), unless side effects
-          JBooleanLiteral booleanLiteral = (JBooleanLiteral) rhs;
-          if (booleanLiteral.getValue()) {
-            ctx.replaceMe(lhs);
-          } else if (!lhs.hasSideEffects()) {
-            ctx.replaceMe(rhs);
+          break;
+        case NEQ:
+          // simplify: null != null -> false
+          if (lhs.getType() == program.getTypeNull()
+              && rhs.getType() == program.getTypeNull() && !x.hasSideEffects()) {
+            ctx.replaceMe(program.getLiteralBoolean(false));
           }
-        }
-
-      } else if (op == JBinaryOperator.OR) {
-        // simplify short circuit OR expressions
-        if (lhs instanceof JBooleanLiteral) {
-          // eg: if (true || isWhatever()) -> if (true)
-          // eg: if (false || isWhatever()) -> if (isWhatever())
-          JBooleanLiteral booleanLiteral = (JBooleanLiteral) lhs;
-          if (booleanLiteral.getValue()) {
-            ctx.replaceMe(lhs);
-          } else {
-            ctx.replaceMe(rhs);
+          break;
+        case ADD:
+          if (x.getType() == program.getTypeJavaLangString()) {
+            evalConcat(ctx, lhs, rhs);
           }
-
-        } else if (rhs instanceof JBooleanLiteral) {
-          // eg: if (isWhatever() || false) -> if (isWhatever())
-          // eg: if (isWhatever() && true) -> if (true), unless side effects
-          JBooleanLiteral booleanLiteral = (JBooleanLiteral) rhs;
-          if (!booleanLiteral.getValue()) {
-            ctx.replaceMe(lhs);
-          } else if (!lhs.hasSideEffects()) {
-            ctx.replaceMe(rhs);
+          break;
+        default:
+          if (op.isAssignment()) {
+            lvalues.remove(lhs);
           }
-        }
-      } else if (op == JBinaryOperator.EQ) {
-        // simplify: null == null -> true
-        if (lhs.getType() == program.getTypeNull()
-            && rhs.getType() == program.getTypeNull()) {
-          ctx.replaceMe(program.getLiteralBoolean(true));
-        }
-      } else if (op == JBinaryOperator.NEQ) {
-        // simplify: null != null -> false
-        if (lhs.getType() == program.getTypeNull()
-            && rhs.getType() == program.getTypeNull()) {
-          ctx.replaceMe(program.getLiteralBoolean(false));
-        }
-      } else if (op == JBinaryOperator.ADD
-          && x.getType() == program.getTypeJavaLangString()) {
-        // try to statically evaluate concatentation
-        if (lhs instanceof JValueLiteral && rhs instanceof JValueLiteral) {
-          Object lhsObj = ((JValueLiteral) lhs).getValueObj();
-          Object rhsObj = ((JValueLiteral) rhs).getValueObj();
-          ctx.replaceMe(program.getLiteralString(String.valueOf(lhsObj)
-              + String.valueOf(rhsObj)));
-        }
+          break;
       }
     }
 
@@ -205,6 +183,11 @@ public class DeadCodeElimination {
     }
 
     @Override
+    public void endVisit(JClassType x, Context ctx) {
+      currentClass = null;
+    }
+
+    @Override
     public void endVisit(JConditional x, Context ctx) {
       JExpression condExpr = x.getIfTest();
       JExpression thenExpr = x.getThenExpr();
@@ -252,6 +235,11 @@ public class DeadCodeElimination {
       }
     }
 
+    @Override
+    public void endVisit(JDeclarationStatement x, Context ctx) {
+      lvalues.remove(x.getVariableRef());
+    }
+
     /**
      * Convert do { } while (false); into a block.
      */
@@ -275,9 +263,42 @@ public class DeadCodeElimination {
 
     @Override
     public void endVisit(JExpressionStatement x, Context ctx) {
+      ignoringExpressionOutput.remove(x.getExpr());
       if (!x.getExpr().hasSideEffects()) {
         removeMe(x, ctx);
       }
+    }
+
+    @Override
+    public void endVisit(JFieldRef x, Context ctx) {
+      JLiteral literal = tryGetConstant(x);
+      if (literal == null && !ignoringExpressionOutput.contains(x)) {
+        return;
+      }
+      /*
+       * At this point, either we have a constant replacement, or our value is
+       * irrelevant. We can inline the constant, if any, but we might also need
+       * to evaluate an instance and run a clinit.
+       */
+      // We can inline the constant, but we might also need to evaluate an
+      // instance and run a clinit.
+      JMultiExpression multi = new JMultiExpression(program, x.getSourceInfo());
+
+      JExpression instance = x.getInstance();
+      if (instance != null) {
+        multi.exprs.add(instance);
+      }
+
+      JMethodCall clinit = maybeCreateClinitCall(x);
+      if (clinit != null) {
+        multi.exprs.add(clinit);
+      }
+
+      if (literal != null) {
+        multi.exprs.add(literal);
+      }
+
+      ctx.replaceMe(accept(multi));
     }
 
     /**
@@ -324,6 +345,15 @@ public class DeadCodeElimination {
       }
     }
 
+    @Override
+    public void endVisit(JLocalRef x, Context ctx) {
+      JLiteral literal = tryGetConstant(x);
+      if (literal != null) {
+        assert (!x.hasSideEffects());
+        ctx.replaceMe(literal);
+      }
+    }
+
     /**
      * Resolve method calls that can be computed statically.
      */
@@ -346,6 +376,12 @@ public class DeadCodeElimination {
      */
     @Override
     public void endVisit(JMultiExpression x, Context ctx) {
+      List<JExpression> exprs = x.exprs;
+      if (exprs.size() > 1) {
+        List<JExpression> nonFinalChildren = exprs.subList(0, exprs.size() - 1);
+        ignoringExpressionOutput.removeAll(nonFinalChildren);
+      }
+
       /*
        * If we're ignoring the output of this expression, we don't need to
        * maintain the final multi value.
@@ -365,26 +401,34 @@ public class DeadCodeElimination {
           i--;
           continue;
         }
-
-        if (expr instanceof JFieldRef) {
-          JFieldRef fieldRef = (JFieldRef) expr;
-          JExpression instance = fieldRef.getInstance();
-          if (instance == null || !instance.hasSideEffects()) {
-            // If the instance doesn't have side-effects, but the field ref
-            // does, it's because a clinit() needs to happen.
-            JMethod clinit = fieldRef.getField().getEnclosingType().methods.get(0);
-            assert (clinit.getName().equals("$clinit"));
-
-            // Replace the field ref with a direct call to the clinit.
-            JMethodCall methodCall = new JMethodCall(program,
-                expr.getSourceInfo(), instance, clinit);
-            x.exprs.set(i, methodCall);
-          }
-        }
       }
 
       if (x.exprs.size() == 1) {
         ctx.replaceMe(x.exprs.get(0));
+      }
+    }
+
+    @Override
+    public void endVisit(JParameterRef x, Context ctx) {
+      JLiteral literal = tryGetConstant(x);
+      if (literal != null) {
+        assert (!x.hasSideEffects());
+        ctx.replaceMe(literal);
+      }
+    }
+
+    /**
+     * Replace post-inc/dec with pre-inc/dec if the result doesn't matter.
+     */
+    @Override
+    public void endVisit(JPostfixOperation x, Context ctx) {
+      if (x.getOp().isModifying()) {
+        lvalues.remove(x.getArg());
+      }
+      if (x == ignoringExpressionOutput) {
+        JPrefixOperation newOp = new JPrefixOperation(program,
+            x.getSourceInfo(), x.getOp(), x.getArg());
+        ctx.replaceMe(newOp);
       }
     }
 
@@ -393,6 +437,9 @@ public class DeadCodeElimination {
      */
     @Override
     public void endVisit(JPrefixOperation x, Context ctx) {
+      if (x.getOp().isModifying()) {
+        lvalues.remove(x.getArg());
+      }
       if (x.getOp() == JUnaryOperator.NOT) {
         JExpression arg = x.getArg();
         if (arg instanceof JBooleanLiteral) {
@@ -516,8 +563,54 @@ public class DeadCodeElimination {
     }
 
     @Override
+    public boolean visit(JBinaryOperation x, Context ctx) {
+      if (x.getOp().isAssignment()) {
+        lvalues.add(x.getLhs());
+      }
+      return true;
+    }
+
+    @Override
+    public boolean visit(JClassType x, Context ctx) {
+      currentClass = x;
+      return true;
+    }
+
+    @Override
+    public boolean visit(JDeclarationStatement x, Context ctx) {
+      lvalues.add(x.getVariableRef());
+      return true;
+    }
+
+    @Override
     public boolean visit(JExpressionStatement x, Context ctx) {
-      ignoringExpressionOutput = x.getExpr();
+      ignoringExpressionOutput.add(x.getExpr());
+      return true;
+    }
+
+    @Override
+    public boolean visit(JMultiExpression x, Context ctx) {
+      List<JExpression> exprs = x.exprs;
+      if (exprs.size() > 1) {
+        List<JExpression> nonFinalChildren = exprs.subList(0, exprs.size() - 1);
+        ignoringExpressionOutput.addAll(nonFinalChildren);
+      }
+      return true;
+    }
+
+    @Override
+    public boolean visit(JPostfixOperation x, Context ctx) {
+      if (x.getOp().isModifying()) {
+        lvalues.add(x.getArg());
+      }
+      return true;
+    }
+
+    @Override
+    public boolean visit(JPrefixOperation x, Context ctx) {
+      if (x.getOp().isModifying()) {
+        lvalues.add(x.getArg());
+      }
       return true;
     }
 
@@ -533,11 +626,23 @@ public class DeadCodeElimination {
      */
     private boolean canPromoteBlock(JBlock block) {
       for (JStatement nestedStmt : block.statements) {
-        if (nestedStmt instanceof JLocalDeclarationStatement) {
-          return false;
+        if (nestedStmt instanceof JDeclarationStatement) {
+          JDeclarationStatement decl = (JDeclarationStatement) nestedStmt;
+          if (decl.getVariableRef() instanceof JLocalRef) {
+            return false;
+          }
         }
       }
       return true;
+    }
+
+    private void evalConcat(Context ctx, JExpression lhs, JExpression rhs) {
+      if (lhs instanceof JValueLiteral && rhs instanceof JValueLiteral) {
+        Object lhsObj = ((JValueLiteral) lhs).getValueObj();
+        Object rhsObj = ((JValueLiteral) rhs).getValueObj();
+        ctx.replaceMe(program.getLiteralString(String.valueOf(lhsObj)
+            + String.valueOf(rhsObj)));
+      }
     }
 
     private boolean hasNoDefaultCase(JSwitchStatement x) {
@@ -589,8 +694,24 @@ public class DeadCodeElimination {
       return typeClassMap.get(type);
     }
 
+    private JMethodCall maybeCreateClinitCall(JFieldRef x) {
+      JMethodCall call;
+      JField field = x.getField();
+      if (field.isStatic()
+          && !field.isCompileTimeConstant()
+          && program.typeOracle.checkClinit(currentClass,
+              field.getEnclosingType())) {
+        JMethod clinit = field.getEnclosingType().methods.get(0);
+        assert (program.isClinit(clinit));
+        call = new JMethodCall(program, x.getSourceInfo(), null, clinit);
+      } else {
+        call = null;
+      }
+      return call;
+    }
+
     private int numRemovableExpressions(JMultiExpression x) {
-      if (x == ignoringExpressionOutput) {
+      if (ignoringExpressionOutput.contains(x)) {
         // All expressions can be removed.
         return x.exprs.size();
       } else {
@@ -663,6 +784,73 @@ public class DeadCodeElimination {
     }
 
     /**
+     * Simplify short circuit AND expressions.
+     * 
+     * <pre>
+     * if (true || isWhatever()) -> if (true)
+     * if (false || isWhatever()) -> if (isWhatever())
+     * 
+     * if (isWhatever() && true) -> if (isWhatever())
+     * if (isWhatever() && false) -> if (false), unless side effects
+     * </pre>
+     */
+    private void shortCircuitAnd(JExpression lhs, JExpression rhs, Context ctx) {
+      if (lhs instanceof JBooleanLiteral) {
+        JBooleanLiteral booleanLiteral = (JBooleanLiteral) lhs;
+        if (booleanLiteral.getValue()) {
+          ctx.replaceMe(rhs);
+        } else {
+          ctx.replaceMe(lhs);
+        }
+
+      } else if (rhs instanceof JBooleanLiteral) {
+        JBooleanLiteral booleanLiteral = (JBooleanLiteral) rhs;
+        if (booleanLiteral.getValue()) {
+          ctx.replaceMe(lhs);
+        } else if (!lhs.hasSideEffects()) {
+          ctx.replaceMe(rhs);
+        }
+      }
+    }
+
+    /**
+     * Simplify short circuit OR expressions.
+     * 
+     * <pre>
+     * if (true || isWhatever()) -> if (true)
+     * if (false || isWhatever()) -> if (isWhatever())
+     * 
+     * if (isWhatever() || false) -> if (isWhatever())
+     * if (isWhatever() && true) -> if (true), unless side effects
+     * </pre>
+     */
+    private void shortCircuitOr(JExpression lhs, JExpression rhs, Context ctx) {
+      if (lhs instanceof JBooleanLiteral) {
+        JBooleanLiteral booleanLiteral = (JBooleanLiteral) lhs;
+        if (booleanLiteral.getValue()) {
+          ctx.replaceMe(lhs);
+        } else {
+          ctx.replaceMe(rhs);
+        }
+
+      } else if (rhs instanceof JBooleanLiteral) {
+        JBooleanLiteral booleanLiteral = (JBooleanLiteral) rhs;
+        if (!booleanLiteral.getValue()) {
+          ctx.replaceMe(lhs);
+        } else if (!lhs.hasSideEffects()) {
+          ctx.replaceMe(rhs);
+        }
+      }
+    }
+
+    private JLiteral tryGetConstant(JVariableRef x) {
+      if (!lvalues.contains(x)) {
+        return x.getTarget().getConstInitializer();
+      }
+      return null;
+    }
+
+    /**
      * Replace String methods having literal args with the static result.
      */
     private void tryOptimizeStringCall(JMethodCall x, Context ctx,
@@ -671,12 +859,12 @@ public class DeadCodeElimination {
       if (method.getType() == program.getTypeVoid()) {
         return;
       }
-      
+
       if (method.getOriginalParamTypes().size() != method.params.size()) {
         // One or more parameters were pruned, abort.
         return;
       }
-      
+
       if (method.getName().endsWith("hashCode")) {
         // This cannot be computed at compile time because our implementation
         // differs from the JRE.

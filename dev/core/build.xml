@@ -94,6 +94,7 @@
 		<antcall target="-filter.src" />
 
 		<mkdir dir="${javac.out}" />
+		<gwt.javac srcdir="super" excludes="com/google/gwt/dev/jjs/intrinsic/"/>
 		<gwt.javac srcdir="${src.filtered}" />
 		<gwt.javac srcdir="src" excludes="${filter.pattern}">
 			<classpath>

@@ -25,12 +25,12 @@ import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
 import com.google.gwt.dev.jjs.ast.js.JsonObject.JsonPropInit;
 
-import java.util.Iterator;
 import java.util.List;
 
 /**
  * A visitor for iterating through an AST.
  */
+@SuppressWarnings({"unused", "unchecked"})
 public class JVisitor {
 
   protected static final Context UNMODIFIABLE_CONTEXT = new Context() {
@@ -133,6 +133,9 @@ public class JVisitor {
   public void endVisit(JContinueStatement x, Context ctx) {
   }
 
+  public void endVisit(JDeclarationStatement x, Context ctx) {
+  }
+
   public void endVisit(JDoStatement x, Context ctx) {
   }
 
@@ -173,9 +176,6 @@ public class JVisitor {
   }
 
   public void endVisit(JLocal x, Context ctx) {
-  }
-
-  public void endVisit(JLocalDeclarationStatement x, Context ctx) {
   }
 
   public void endVisit(JLocalRef x, Context ctx) {
@@ -329,6 +329,10 @@ public class JVisitor {
     return true;
   }
 
+  public boolean visit(JDeclarationStatement x, Context ctx) {
+    return true;
+  }
+
   public boolean visit(JDoStatement x, Context ctx) {
     return true;
   }
@@ -382,10 +386,6 @@ public class JVisitor {
   }
 
   public boolean visit(JLocal x, Context ctx) {
-    return true;
-  }
-
-  public boolean visit(JLocalDeclarationStatement x, Context ctx) {
     return true;
   }
 
@@ -511,14 +511,14 @@ public class JVisitor {
   }
 
   protected void doAccept(List list) {
-    for (Iterator it = list.iterator(); it.hasNext();) {
-      doTraverse((JNode) it.next(), UNMODIFIABLE_CONTEXT);
+    for (Object node : list) {
+      doTraverse((JNode) node, UNMODIFIABLE_CONTEXT);
     }
   }
 
   protected void doAcceptWithInsertRemove(List list) {
-    for (Iterator it = list.iterator(); it.hasNext();) {
-      doTraverse((JNode) it.next(), UNMODIFIABLE_CONTEXT);
+    for (Object node : list) {
+      doTraverse((JNode) node, UNMODIFIABLE_CONTEXT);
     }
   }
 

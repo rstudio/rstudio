@@ -201,9 +201,9 @@ public final class Math {
     }
   };
 
-  public static native long round(double x) /*-{
-    return Math.round(x);
-  }-*/;
+  public static long round(double x) {
+    return (long) round0(x);
+  }
 
   public static native int round(float x) /*-{
     return Math.round(x);
@@ -276,6 +276,10 @@ public final class Math {
   public static double toRadians(double x) {
     return x * PI_OVER_180;
   }
+
+  private static native double round0(double x) /*-{
+    return Math.round(x);
+  }-*/;
 
   /* NYI: Java 1.5 includes this, but JS doesn't give us the ingredients.
   public static double ulp (double x) {

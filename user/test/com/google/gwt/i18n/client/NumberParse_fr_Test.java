@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,13 +40,13 @@ public class NumberParse_fr_Test extends GWTTestCase {
     Number value;
 
     value = numberParse("0.0000", "123,4579");
-    assertTrue(value.doubleValue() == 123.4579);
+    assertEquals(123.4579, value.doubleValue(), 0.0);
 
     value = numberParse("0.0000", "+123,4579");
-    assertTrue(value.doubleValue() == 123.4579);
+    assertEquals(123.4579, value.doubleValue(), 0.0);
 
     value = numberParse("0.0000", "-123,4579");
-    assertTrue(value.doubleValue() == -123.4579);
+    assertEquals(-123.4579, value.doubleValue(), 0.0);
   }
 
   public void testExponentParse() {
@@ -54,19 +54,19 @@ public class NumberParse_fr_Test extends GWTTestCase {
     Number value;
 
     value = numberParse("#E0", "1,234E3");
-    assertTrue(value.doubleValue() == 1.234E+3);
+    assertEquals(1.234E+3, value.doubleValue(), 0.0);
 
     value = numberParse("0.###E0", "1,234E3");
-    assertTrue(value.doubleValue() == 1.234E+3);
+    assertEquals(1.234E+3, value.doubleValue(), 0.0);
 
     value = numberParse("#E0", "1,2345E4");
-    assertTrue(value.doubleValue() == 12345.0);
+    assertEquals(12345.0, value.doubleValue(), 0.0);
 
     value = numberParse("0E0", "1,2345E4");
-    assertTrue(value.doubleValue() == 12345.0);
+    assertEquals(12345.0, value.doubleValue(), 0.0);
 
     value = numberParse("0E0", "1,2345E+4");
-    assertTrue(value.doubleValue() == 12345.0);
+    assertEquals(12345.0, value.doubleValue(), 0.0);
   }
 
   public void testGroupingParse() {
@@ -74,12 +74,12 @@ public class NumberParse_fr_Test extends GWTTestCase {
     Number value;
 
     value = numberParse("#,###", "1\u00a0234\u00a0567\u00a0890");
-    assertTrue(value.doubleValue() == 1234567890);
+    assertEquals(1234567890, value.doubleValue(), 0.0);
     value = numberParse("#,####", "12\u00a03456\u00a07890");
-    assertTrue(value.doubleValue() == 1234567890);
+    assertEquals(1234567890, value.doubleValue(), 0.0);
 
     value = numberParse("#", "1234567890");
-    assertTrue(value.doubleValue() == 1234567890);
+    assertEquals(1234567890, value.doubleValue(), 0.0);
   }
 
   public void testInfinityParse() {
@@ -87,10 +87,10 @@ public class NumberParse_fr_Test extends GWTTestCase {
     Number value;
 
     value = numberParse("0.0;(0.0)", "\u221E");
-    assertTrue(value.doubleValue() == Double.POSITIVE_INFINITY);
+    assertEquals(Double.POSITIVE_INFINITY, value.doubleValue(), 0.0);
 
     value = numberParse("0.0;(0.0)", "(\u221E)");
-    assertTrue(value.doubleValue() == Double.NEGATIVE_INFINITY);
+    assertEquals(Double.NEGATIVE_INFINITY, value.doubleValue(), 0.0);
   }
 
   public void testPrecentParse() {
@@ -98,16 +98,16 @@ public class NumberParse_fr_Test extends GWTTestCase {
     Number value;
 
     value = numberParse("0.0;(0.0)", "123,4579%");
-    assertTrue(value.doubleValue() == (123.4579 / 100));
+    assertEquals((123.4579 / 100), value.doubleValue(), 0.0);
 
     value = numberParse("0.0;(0.0)", "(%123,4579)");
-    assertTrue(value.doubleValue() == (-123.4579 / 100));
+    assertEquals((-123.4579 / 100), value.doubleValue(), 0.0);
 
     value = numberParse("0.0;(0.0)", "123,4579\u2030");
-    assertTrue(value.doubleValue() == (123.4579 / 1000));
+    assertEquals((123.4579 / 1000), value.doubleValue(), 0.0);
 
     value = numberParse("0.0;(0.0)", "(\u2030123,4579)");
-    assertTrue(value.doubleValue() == (-123.4579 / 1000));
+    assertEquals((-123.4579 / 1000), value.doubleValue(), 0.0);
   }
 
   public void testPrefixParse() {
@@ -115,10 +115,10 @@ public class NumberParse_fr_Test extends GWTTestCase {
     Number value;
 
     value = numberParse("0.0;(0.0)", "123,4579");
-    assertTrue(value.doubleValue() == 123.4579);
+    assertEquals(123.4579, value.doubleValue(), 0.0);
 
     value = numberParse("0.0;(0.0)", "(123,4579)");
-    assertTrue(value.doubleValue() == -123.4579);
+    assertEquals(-123.4579, value.doubleValue(), 0.0);
   }
 
 }

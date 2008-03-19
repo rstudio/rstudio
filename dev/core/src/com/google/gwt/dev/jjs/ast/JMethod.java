@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,8 +25,8 @@ import java.util.List;
  * A Java method implementation.
  */
 public final class JMethod extends JNode implements HasEnclosingType, HasName,
-    HasType, HasSettableType, CanBeAbstract, CanBeFinal, CanBeSetFinal,
-    CanBeNative, CanBeStatic {
+    HasSettableType, CanBeAbstract, CanBeSetFinal, CanBeNative,
+    CanBeStatic {
 
   /**
    * References to any methods which this method overrides. This should be an
@@ -35,10 +35,8 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
    */
   public final List<JMethod> overrides = new ArrayList<JMethod>();
 
-  public final ArrayList<JParameter> params =
-    new ArrayList<JParameter>();
-  public final ArrayList<JClassType> thrownExceptions =
-    new ArrayList<JClassType>();
+  public final ArrayList<JParameter> params = new ArrayList<JParameter>();
+  public final ArrayList<JClassType> thrownExceptions = new ArrayList<JClassType>();
   private JAbstractMethodBody body = null;
   private final JReferenceType enclosingType;
   private final boolean isAbstract;
@@ -131,8 +129,8 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     body.setMethod(this);
   }
 
-  public void setFinal(boolean b) {
-    isFinal = b;
+  public void setFinal() {
+    isFinal = true;
   }
 
   public void setType(JType newType) {

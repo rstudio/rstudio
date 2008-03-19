@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
@@ -452,6 +453,15 @@ public class MethodInliner {
       CloneExpressionVisitor cloner = new CloneExpressionVisitor(program);
       JExpression arg = methodCall.getArgs().get(paramIndex);
       JExpression clone = cloner.cloneExpression(arg);
+
+      /*
+       * Insert an implicit cast if the types differ; it might get optimized out
+       * later, but in some cases it will force correct math evaluation.
+       */
+      if (clone.getType() != x.getType()) {
+        clone = new JCastOperation(program, clone.getSourceInfo(), x.getType(),
+            clone);
+      }
       ctx.replaceMe(clone);
     }
   }

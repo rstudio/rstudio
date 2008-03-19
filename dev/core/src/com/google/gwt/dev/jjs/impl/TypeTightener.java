@@ -28,7 +28,7 @@ import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
-import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
+import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
@@ -208,19 +208,20 @@ public class TypeTightener {
     }
 
     @Override
-    public void endVisit(JField x, Context ctx) {
-      if (x.constInitializer != null) {
-        addAssignment(x, x.constInitializer);
+    public void endVisit(JDeclarationStatement x, Context ctx) {
+      JExpression initializer = x.getInitializer();
+      if (initializer != null) {
+        addAssignment(x.getVariableRef().getTarget(), initializer);
       }
-      currentMethod = null;
     }
 
     @Override
-    public void endVisit(JLocalDeclarationStatement x, Context ctx) {
-      JExpression initializer = x.getInitializer();
-      if (initializer != null) {
-        addAssignment(x.getLocalRef().getTarget(), initializer);
+    public void endVisit(JField x, Context ctx) {
+      if (x.getConstInitializer() != null) {
+        // TODO: do I still need this?
+        addAssignment(x, x.getConstInitializer());
       }
+      currentMethod = null;
     }
 
     @Override

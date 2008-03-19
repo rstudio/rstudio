@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,18 +44,18 @@ import java.util.TreeSet;
  */
 public class JProgram extends JNode {
 
-  private static final Set<String> CODEGEN_TYPES_SET = new HashSet<String>(
+  public static final Set<String> CODEGEN_TYPES_SET = new LinkedHashSet<String>(
       Arrays.asList(new String[] {
           "com.google.gwt.lang.Array", "com.google.gwt.lang.Cast",
-          "com.google.gwt.lang.Exceptions", "com.google.gwt.lang.Stats"}));
+          "com.google.gwt.lang.Exceptions", "com.google.gwt.lang.LongLib",
+          "com.google.gwt.lang.Stats",}));
 
   private static final Set<String> INDEX_TYPES_SET = new HashSet<String>(
       Arrays.asList(new String[] {
           "java.lang.Object", "java.lang.String", "java.lang.Class",
           "java.lang.CharSequence", "java.lang.Comparable", "java.lang.Enum",
           "java.lang.Iterable", "java.util.Iterator",
-          "com.google.gwt.core.client.JavaScriptObject",
-          "com.google.gwt.lang.Array"}));
+          "com.google.gwt.core.client.JavaScriptObject"}));
 
   private static final int IS_ARRAY = 2;
 
@@ -305,22 +306,14 @@ public class JProgram extends JNode {
 
   public JField createField(SourceInfo info, char[] name,
       JReferenceType enclosingType, JType type, boolean isStatic,
-      boolean isFinal, boolean hasInitializer) {
+      boolean isFinal, boolean isCompileTimeConstant) {
     assert (name != null);
     assert (enclosingType != null);
     assert (type != null);
 
-    /*
-     * MAGIC: filled in during code gen, don't bother synthesizing dummy
-     * initializations.
-     */
-    if (enclosingType == typeJavaLangObject) {
-      hasInitializer = true;
-    }
-
     String sname = String.valueOf(name);
     JField x = new JField(this, info, sname, enclosingType, type, isStatic,
-        isFinal, hasInitializer);
+        isFinal, isCompileTimeConstant);
 
     if (indexedTypes.containsValue(enclosingType)) {
       indexedFields.put(enclosingType.getShortName() + '.' + sname, x);
@@ -540,7 +533,7 @@ public class JProgram extends JNode {
   public JField getNullField() {
     if (nullField == null) {
       nullField = new JField(this, null, "nullField", null, typeNull, false,
-          true, true);
+          true, false);
     }
     return nullField;
   }
@@ -678,7 +671,12 @@ public class JProgram extends JNode {
 
   public boolean isClinit(JMethod method) {
     JReferenceType enclosingType = method.getEnclosingType();
-    return (enclosingType != null) && (method == enclosingType.methods.get(0));
+    if ((enclosingType != null) && (method == enclosingType.methods.get(0))) {
+      assert (method.getName().equals("$clinit"));
+      return true;
+    } else {
+      return false;
+    }
   }
 
   public boolean isJavaScriptObject(JType type) {

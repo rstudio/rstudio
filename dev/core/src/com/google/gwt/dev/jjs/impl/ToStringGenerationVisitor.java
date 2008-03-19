@@ -52,7 +52,7 @@ import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLabel;
 import com.google.gwt.dev.jjs.ast.JLabeledStatement;
 import com.google.gwt.dev.jjs.ast.JLocal;
-import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
+import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -383,7 +383,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   public boolean visit(JField x, Context ctx) {
     // Due to our wacky construction model, only constant fields may be final
     // when generating source
-    if (x.constInitializer != null) {
+    if (x.getConstInitializer() != null) {
       printFinalFlag(x);
     } else {
       printMemberFinalFlag(x);
@@ -552,11 +552,11 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   @Override
-  public boolean visit(JLocalDeclarationStatement x, Context ctx) {
+  public boolean visit(JDeclarationStatement x, Context ctx) {
     if (!suppressType) {
-      accept(x.getLocalRef().getTarget());
+      accept(x.getVariableRef().getTarget());
     } else {
-      accept(x.getLocalRef());
+      accept(x.getVariableRef());
     }
     JExpression initializer = x.getInitializer();
     if (initializer != null) {
@@ -607,8 +607,12 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
 
   @Override
   public boolean visit(JMethodBody x, Context ctx) {
-    visitCollectionWithCommas(x.locals.iterator());
-    return false;
+    if (shouldPrintMethodBody()) {
+      return true;
+    } else {
+      visitCollectionWithCommas(x.locals.iterator());
+      return false;
+    }
   }
 
   @Override

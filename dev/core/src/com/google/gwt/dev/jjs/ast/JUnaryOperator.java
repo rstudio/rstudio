@@ -18,13 +18,9 @@ package com.google.gwt.dev.jjs.ast;
 /**
  * An enumeration of the available unary operators.
  */
-public class JUnaryOperator {
+public enum JUnaryOperator {
 
-  public static final JUnaryOperator INC = new JUnaryOperator("++");
-  public static final JUnaryOperator DEC = new JUnaryOperator("--");
-  public static final JUnaryOperator NEG = new JUnaryOperator("-");
-  public static final JUnaryOperator NOT = new JUnaryOperator("!");
-  public static final JUnaryOperator BIT_NOT = new JUnaryOperator("~");
+  INC("++"), DEC("--"), NEG("-"), NOT("!"), BIT_NOT("~");
 
   private final char[] symbol;
 

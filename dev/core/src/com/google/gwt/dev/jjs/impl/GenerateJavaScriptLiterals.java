@@ -25,8 +25,10 @@ import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVisitable;
+import com.google.gwt.lang.LongLib;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -38,6 +40,10 @@ import java.util.Stack;
  * Translates Java literals into JavaScript literals.
  */
 public class GenerateJavaScriptLiterals extends JVisitor {
+
+  static {
+    LongLib.RUN_IN_JVM = true;
+  }
 
   private final JsProgram program;
   private final Stack<JsVisitable<?>> nodeStack = new Stack<JsVisitable<?>>();
@@ -72,8 +78,14 @@ public class GenerateJavaScriptLiterals extends JVisitor {
   }
 
   @Override
-  public final void endVisit(JLongLiteral x, Context ctx) {
-    push(program.getIntegralLiteral(BigInteger.valueOf(x.getValue())));
+  public void endVisit(JLongLiteral x, Context ctx) {
+    JsArrayLiteral arrayLit = new JsArrayLiteral();
+    double[] doubleArray = LongLib.typeChange(x.getValue());
+    arrayLit.getExpressions().add(
+        program.getDecimalLiteral(String.valueOf(doubleArray[0])));
+    arrayLit.getExpressions().add(
+        program.getDecimalLiteral(String.valueOf(doubleArray[1])));
+    push(arrayLit);
   }
 
   @Override
@@ -86,14 +98,17 @@ public class GenerateJavaScriptLiterals extends JVisitor {
     push(program.getStringLiteral(x.getValue()));
   }
 
+  @SuppressWarnings("unchecked")
   public final <T extends JsVisitable> T peek() {
     return (T) nodeStack.peek();
   }
 
+  @SuppressWarnings("unchecked")
   protected final <T extends JsVisitable> T pop() {
     return (T) nodeStack.pop();
   }
 
+  @SuppressWarnings("unchecked")
   protected final <T extends JsVisitable> List<T> popList(int count) {
     List<T> list = new ArrayList<T>();
     while (count > 0) {
@@ -107,6 +122,7 @@ public class GenerateJavaScriptLiterals extends JVisitor {
     return list;
   }
 
+  @SuppressWarnings("unchecked")
   protected final <T extends JsVisitable> void popList(List<T> collection,
       int count) {
     List<T> list = new ArrayList<T>();
@@ -121,6 +137,7 @@ public class GenerateJavaScriptLiterals extends JVisitor {
     collection.addAll(list);
   }
 
+  @SuppressWarnings("unchecked")
   protected final <T extends JsVisitable> void push(T node) {
     nodeStack.push(node);
   }

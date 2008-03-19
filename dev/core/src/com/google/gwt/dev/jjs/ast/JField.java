@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,33 +18,49 @@ package com.google.gwt.dev.jjs.ast;
 import com.google.gwt.dev.jjs.SourceInfo;
 
 /**
- * Java field definition. 
+ * Java field definition.
  */
-public class JField extends JVariable implements CanBeStatic, HasEnclosingType {
+public class JField extends JVariable implements CanBeStatic, HasEnclosingType,
+    CanHaveInitializer {
 
-  private JReferenceType enclosingType;
-  public JLiteral constInitializer;
+  private final JReferenceType enclosingType;
+  private final boolean isCompileTimeConstant;
   private final boolean isStatic;
-  private final boolean hasInitializer;
+  private boolean isVolatile;
 
   JField(JProgram program, SourceInfo info, String name,
-      JReferenceType enclosingType, JType type, boolean isStatic, boolean isFinal, boolean hasInitializer) {
+      JReferenceType enclosingType, JType type, boolean isStatic,
+      boolean isFinal, boolean isCompileTimeConstant) {
     super(program, info, name, type, isFinal);
     this.enclosingType = enclosingType;
     this.isStatic = isStatic;
-    this.hasInitializer  = hasInitializer;
+    this.isCompileTimeConstant = isCompileTimeConstant;
+    assert (isFinal || !isCompileTimeConstant);
   }
 
   public JReferenceType getEnclosingType() {
     return enclosingType;
   }
 
-  public boolean hasInitializer() {
-    return hasInitializer;
+  public boolean isCompileTimeConstant() {
+    return isCompileTimeConstant;
+  }
+
+  @Override
+  public boolean isFinal() {
+    return !isVolatile && super.isFinal();
   }
 
   public boolean isStatic() {
     return isStatic;
+  }
+
+  public void setInitializer(JExpression initializer) {
+    this.initializer = initializer;
+  }
+
+  public void setVolatile() {
+    isVolatile = true;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

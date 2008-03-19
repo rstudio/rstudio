@@ -52,7 +52,7 @@ import com.google.gwt.dev.jjs.ast.JLabel;
 import com.google.gwt.dev.jjs.ast.JLabeledStatement;
 import com.google.gwt.dev.jjs.ast.JLiteral;
 import com.google.gwt.dev.jjs.ast.JLocal;
-import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
+import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -322,8 +322,8 @@ public class GenerateJavaAST {
          * We must replace any compile-time constants with the constant value of
          * the field.
          */
-        JLiteral initializer = field.constInitializer;
-        if (field.isStatic() && field.isFinal() && initializer != null) {
+        if (field.isCompileTimeConstant()) {
+          JLiteral initializer = field.getConstInitializer();
           JType type = initializer.getType();
           if (type instanceof JPrimitiveType
               || type == program.getTypeJavaLangString()) {
@@ -1081,10 +1081,6 @@ public class GenerateJavaAST {
       return processBinaryOperation(info, op, type, x.left, x.right);
     }
 
-    JExpression processExpression(CombinedBinaryExpression x) {
-      return processExpression((BinaryExpression) x);
-    }
-
     JExpression processExpression(CastExpression x) {
       SourceInfo info = makeSourceInfo(x);
       JType type = (JType) typeMap.get(x.resolvedType);
@@ -1096,6 +1092,10 @@ public class GenerateJavaAST {
     JExpression processExpression(ClassLiteralAccess x) {
       JType type = (JType) typeMap.get(x.targetType);
       return program.getLiteralClass(type);
+    }
+
+    JExpression processExpression(CombinedBinaryExpression x) {
+      return processExpression((BinaryExpression) x);
     }
 
     JExpression processExpression(CompoundAssignment x) {
@@ -1542,15 +1542,13 @@ public class GenerateJavaAST {
           assert (initializer instanceof JMethodCall);
         }
 
-        if (initializer instanceof JLiteral) {
-          field.constInitializer = (JLiteral) initializer;
-        } else if (initializer != null) {
+        if (initializer != null) {
           SourceInfo info = makeSourceInfo(declaration);
-          JStatement assignStmt = program.createAssignmentStmt(info,
+          JStatement decl = new JDeclarationStatement(program, info,
               createVariableRef(info, field), initializer);
 
           // will either be init or clinit
-          currentMethodBody.getStatements().add(assignStmt);
+          currentMethodBody.getStatements().add(decl);
         }
       } catch (Throwable e) {
         throw translateException(field, e);
@@ -1693,7 +1691,7 @@ public class GenerateJavaAST {
       JLocal elementVar = (JLocal) typeMap.get(x.elementVariable.binding);
       String elementVarName = elementVar.getName();
 
-      JLocalDeclarationStatement elementDecl = (JLocalDeclarationStatement) processStatement(x.elementVariable);
+      JDeclarationStatement elementDecl = (JDeclarationStatement) processStatement(x.elementVariable);
       assert (elementDecl.initializer == null);
 
       JForStatement result;
@@ -1716,14 +1714,14 @@ public class GenerateJavaAST {
 
         List<JStatement> initializers = new ArrayList<JStatement>(3);
         // T[] i$array = arr
-        initializers.add(createLocalDeclaration(info, arrayVar,
+        initializers.add(createDeclaration(info, arrayVar,
             dispProcessExpression(x.collection)));
         // int i$index = 0
-        initializers.add(createLocalDeclaration(info, indexVar,
+        initializers.add(createDeclaration(info, indexVar,
             program.getLiteralInt(0)));
         // int i$max = i$array.length
-        initializers.add(createLocalDeclaration(info, maxVar, new JFieldRef(
-            program, info, createVariableRef(info, arrayVar),
+        initializers.add(createDeclaration(info, maxVar, new JFieldRef(program,
+            info, createVariableRef(info, arrayVar),
             program.getIndexedField("Array.length"), currentClass)));
 
         // i$index < i$max
@@ -1759,9 +1757,9 @@ public class GenerateJavaAST {
 
         List<JStatement> initializers = new ArrayList<JStatement>(1);
         // Iterator<T> i$iterator = collection.iterator()
-        initializers.add(createLocalDeclaration(info, iteratorVar,
-            new JMethodCall(program, info, dispProcessExpression(x.collection),
-                program.getIndexedMethod("Iterable.iterator"))));
+        initializers.add(createDeclaration(info, iteratorVar, new JMethodCall(
+            program, info, dispProcessExpression(x.collection),
+            program.getIndexedMethod("Iterable.iterator"))));
 
         // i$iterator.hasNext()
         JExpression condition = new JMethodCall(program, info,
@@ -1837,8 +1835,7 @@ public class GenerateJavaAST {
       JLocal local = (JLocal) typeMap.get(x.binding);
       JLocalRef localRef = new JLocalRef(program, info, local);
       JExpression initializer = dispProcessExpression(x.initialization);
-      return new JLocalDeclarationStatement(program, info, localRef,
-          initializer);
+      return new JDeclarationStatement(program, info, localRef, initializer);
     }
 
     JStatement processStatement(ReturnStatement x) {
@@ -2154,6 +2151,12 @@ public class GenerateJavaAST {
       return box(toBox, wrapperType);
     }
 
+    private JDeclarationStatement createDeclaration(SourceInfo info,
+        JLocal local, JExpression value) {
+      return new JDeclarationStatement(program, info, new JLocalRef(program,
+          info, local), value);
+    }
+
     private JField createEnumValueMap(JEnumType type) {
       JsonObject map = new JsonObject(program);
       for (JEnumField field : type.enumList) {
@@ -2163,7 +2166,7 @@ public class GenerateJavaAST {
         map.propInits.add(new JsonObject.JsonPropInit(program, key, value));
       }
       JField mapField = program.createField(null, "enum$map".toCharArray(),
-          type, map.getType(), true, true, true);
+          type, map.getType(), true, true, false);
 
       // Initialize in clinit.
       JMethodBody clinitBody = (JMethodBody) type.methods.get(0).getBody();
@@ -2171,12 +2174,6 @@ public class GenerateJavaAST {
           createVariableRef(null, mapField), map);
       clinitBody.getStatements().add(assignment);
       return mapField;
-    }
-
-    private JLocalDeclarationStatement createLocalDeclaration(SourceInfo info,
-        JLocal arrayVar, JExpression value) {
-      return new JLocalDeclarationStatement(program, info, new JLocalRef(
-          program, info, arrayVar), value);
     }
 
     /**

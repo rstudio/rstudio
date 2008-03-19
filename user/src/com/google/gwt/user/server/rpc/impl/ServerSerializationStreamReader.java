@@ -337,7 +337,7 @@ public final class ServerSerializationStreamReader extends
   }
 
   public long readLong() {
-    return Long.parseLong(extract());
+    return Long.parseLong(extract(), 16);
   }
 
   public short readShort() {

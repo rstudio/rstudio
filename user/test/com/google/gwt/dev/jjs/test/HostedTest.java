@@ -148,6 +148,10 @@ public class HostedTest extends GWTTestCase {
     return val;
   }-*/;
 
+  private static native long passThroughLong(long val) /*-{
+    return val;
+  }-*/;
+
   private static native String sFooCall(String s) /*-{
     var func = @com.google.gwt.dev.jjs.test.HostedTest::sFoo(Ljava/lang/String;);
     return func.call(null, s);
@@ -393,8 +397,7 @@ public class HostedTest extends GWTTestCase {
   public void testLongMarshalling() {
     // a big number that cannot accurately be represented as a double
     long l = 1234567890123456789L;
-    double d = l;
-    assertTrue(isEq(l, d));
+    assertEquals(l, passThroughLong(l));
   }
 
   /*
@@ -509,10 +512,6 @@ public class HostedTest extends GWTTestCase {
 
   private native JavaScriptObject getFooFunc() /*-{
     return this.@com.google.gwt.dev.jjs.test.HostedTest::foo(Ljava/lang/String;);
-  }-*/;
-
-  private native boolean isEq(long l, double d) /*-{
-    return l == d;
   }-*/;
 
   private native void jsniA()/*-{}-*/;

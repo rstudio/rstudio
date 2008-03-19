@@ -24,11 +24,16 @@ public final class Short extends Number implements Comparable<Short> {
   public static final short MAX_VALUE = (short) 0x7fff;
   public static final int SIZE = 16;
 
-  // Box values according to JLS - between -128 and 127
-  private static Short[] boxedValues = new Short[256];
+  /**
+   * Use nested class to avoid clinit on outer.
+   */
+  private static class BoxedValues {
+    // Box values according to JLS - between -128 and 127
+    private static Short[] boxedValues = new Short[256];
+  }
 
   public static Short decode(String s) throws NumberFormatException {
-    return new Short((short) __decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
+    return new Short((short) __decodeAndValidateInt(s, MIN_VALUE, MAX_VALUE));
   }
 
   /**
@@ -44,7 +49,7 @@ public final class Short extends Number implements Comparable<Short> {
 
   public static short parseShort(String s, int radix)
       throws NumberFormatException {
-    return (short) __parseAndValidateLong(s, radix, MIN_VALUE, MAX_VALUE);
+    return (short) __parseAndValidateInt(s, radix, MIN_VALUE, MAX_VALUE);
   }
 
   public static short reverseBytes(short s) {
@@ -58,10 +63,11 @@ public final class Short extends Number implements Comparable<Short> {
   public static Short valueOf(short s) {
     if (s > -129 && s < 128) {
       int rebase = s + 128;
-      if (boxedValues[rebase] == null) {
-        boxedValues[rebase] = new Short(s);
+      Short result = BoxedValues.boxedValues[rebase];
+      if (result == null) {
+        result = BoxedValues.boxedValues[rebase] = new Short(s);
       }
-      return boxedValues[rebase];
+      return result;
     }
     return new Short(s);
   }

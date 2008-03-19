@@ -3,6 +3,7 @@
 	<classpathentry kind="src" path="core/src"/>
 	<classpathentry kind="src" path="core/test"/>
 	<classpathentry kind="src" path="windows/src"/>
+	<classpathentry excluding="com/google/gwt/dev/jjs/intrinsic/" kind="src" path="core/super"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/org.eclipse.swt.win32-win32-3.2.1.jar" sourcepath="/GWT_TOOLS/lib/eclipse/org.eclipse.swt.win32-win32-3.2.1.src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/ant-1.6.5.jar" sourcepath="/GWT_TOOLS/lib/apache/ant-1.6.5-src.zip"/>

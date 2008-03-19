@@ -29,6 +29,7 @@ import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
@@ -60,6 +61,7 @@ import org.eclipse.jdt.internal.compiler.ast.LocalDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Statement;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
+import org.eclipse.jdt.internal.compiler.impl.Constant;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
@@ -273,7 +275,7 @@ public class BuildTypeMap {
             && ((AllocationExpression) initialization).enumConstant != null) {
           createEnumField(info, b, enclosingType);
         } else {
-          createField(info, b, enclosingType, initialization != null);
+          createField(info, b, enclosingType);
         }
         return true;
       } catch (Throwable e) {
@@ -342,10 +344,19 @@ public class BuildTypeMap {
     }
 
     private JField createField(SourceInfo info, FieldBinding binding,
-        JReferenceType enclosingType, boolean hasInitializer) {
+        JReferenceType enclosingType) {
       JType type = (JType) typeMap.get(binding.type);
+
+      boolean isCompileTimeConstant = binding.isStatic() && (binding.isFinal())
+          && (binding.constant() != Constant.NotAConstant)
+          && (binding.type.isBaseType());
+      assert (type instanceof JPrimitiveType || !isCompileTimeConstant);
+
       JField field = program.createField(info, binding.name, enclosingType,
-          type, binding.isStatic(), binding.isFinal(), hasInitializer);
+          type, binding.isStatic(), binding.isFinal(), isCompileTimeConstant);
+      if (binding.isVolatile()) {
+        field.setVolatile();
+      }
       typeMap.put(binding, field);
       return field;
     }
@@ -354,7 +365,7 @@ public class BuildTypeMap {
         JReferenceType enclosingType) {
       JType type = (JType) typeMap.get(binding.type);
       JField field = program.createField(null, binding.name, enclosingType,
-          type, false, true, true);
+          type, false, true, false);
       if (binding.matchingField != null) {
         typeMap.put(binding.matchingField, field);
       }

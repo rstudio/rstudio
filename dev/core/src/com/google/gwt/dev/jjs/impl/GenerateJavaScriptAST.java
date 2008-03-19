@@ -46,8 +46,9 @@ import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLabel;
 import com.google.gwt.dev.jjs.ast.JLabeledStatement;
 import com.google.gwt.dev.jjs.ast.JLocal;
-import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
+import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
+import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
@@ -68,6 +69,7 @@ import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
+import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.jjs.ast.js.JClassSeed;
@@ -135,6 +137,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
+import java.util.Map.Entry;
 
 /**
  * Creates a JavaScript AST from a <code>JProgram</code> node.
@@ -361,13 +364,13 @@ public class GenerateJavaScriptAST {
 
     private final Set<JClassType> alreadyRan = new HashSet<JClassType>();
 
+    private Map<JClassType, JsFunction> clinitMap = new HashMap<JClassType, JsFunction>();
+
     private JMethod currentMethod = null;
 
     private final JsName globalTemp = topScope.declareName("_");
 
     private final JsName prototype = objectScope.declareName("prototype");
-
-    private Map<JClassType, JsFunction> clinitMap = new HashMap<JClassType, JsFunction>();
 
     {
       globalTemp.setObfuscatable(false);
@@ -477,6 +480,7 @@ public class GenerateJavaScriptAST {
       push(names.get(x.getRefType()).makeRef());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void endVisit(JClassType x, Context ctx) {
       if (alreadyRan.contains(x)) {
@@ -547,6 +551,34 @@ public class GenerateJavaScriptAST {
     }
 
     @Override
+    public void endVisit(JDeclarationStatement x, Context ctx) {
+      if (x.getInitializer() == null) {
+        pop(); // variableRef
+        /*
+         * Declaration statements can only appear in blocks, so it's okay to
+         * push null instead of an empty statement
+         */
+        push(null);
+        return;
+      }
+
+      JsExpression initializer = (JsExpression) pop(); // initializer
+      JsNameRef localRef = (JsNameRef) pop(); // localRef
+
+      JVariable target = x.getVariableRef().getTarget();
+      if (target instanceof JField && target.getConstInitializer() != null) {
+        // Will initialize at top scope; no need to double-initialize.
+        push(null);
+        return;
+      }
+
+      JsBinaryOperation binOp = new JsBinaryOperation(JsBinaryOperator.ASG,
+          localRef, initializer);
+
+      push(binOp.makeStmt());
+    }
+
+    @Override
     public void endVisit(JDoStatement x, Context ctx) {
       JsDoWhile stmt = new JsDoWhile();
       if (x.getBody() != null) {
@@ -567,13 +599,14 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JField x, Context ctx) {
       // if we need an initial value, create an assignment
-      if (x.constInitializer != null) {
+      if (x.getConstInitializer() != null) {
         // setup the constant value
-        accept(x.constInitializer);
+        accept(x.getConstInitializer());
       } else if (x == program.getIndexedField("Cast.typeIdArray")) {
         // magic: setup the type id table
         push(generateTypeTable());
-      } else if (!x.hasInitializer()) {
+      } else if (!x.hasInitializer()
+          && x.getEnclosingType() != program.getTypeJavaLangObject()) {
         // setup a default value
         accept(x.getType().getDefaultValue());
       } else {
@@ -739,30 +772,27 @@ public class GenerateJavaScriptAST {
     }
 
     @Override
-    public void endVisit(JLocalDeclarationStatement x, Context ctx) {
-
-      if (x.getInitializer() == null) {
-        pop(); // localRef
-        /*
-         * local decls can only appear in blocks, so it's okay to push null
-         * instead of an empty statement
-         */
-        push(null);
-        return;
-      }
-
-      JsExpression initializer = (JsExpression) pop(); // initializer
-      JsNameRef localRef = (JsNameRef) pop(); // localRef
-
-      JsBinaryOperation binOp = new JsBinaryOperation(JsBinaryOperator.ASG,
-          localRef, initializer);
-
-      push(binOp.makeStmt());
+    public void endVisit(JLocalRef x, Context ctx) {
+      push(names.get(x.getTarget()).makeRef());
     }
 
     @Override
-    public void endVisit(JLocalRef x, Context ctx) {
-      push(names.get(x.getTarget()).makeRef());
+    public void endVisit(JLongLiteral x, Context ctx) {
+      super.endVisit(x, ctx);
+      JsExpression longLiteralAllocation = pop();
+
+      // My seed function name
+      String nameString = Long.toString(x.getValue(), 16);
+      if (nameString.charAt(0) == '-') {
+        nameString = "N" + nameString.substring(1);
+      } else {
+        nameString = "P" + nameString;
+      }
+      nameString += "_longLit";
+      JsName longLit = topScope.declareName(nameString);
+      longLits.put(x.getValue(), longLit);
+      longObjects.put(longLit, longLiteralAllocation);
+      push(longLit.makeRef());
     }
 
     @Override
@@ -946,6 +976,12 @@ public class GenerateJavaScriptAST {
       JsVars vars = new JsVars();
       vars.add(new JsVar(globalTemp));
       globalStmts.add(0, vars);
+      
+      /*
+       * Long lits must got at the top, they can serve as constant field
+       * initializers.
+       */
+      generateLongLiterals(vars);
 
       // Generate class objects.
       vars = new JsVars();
@@ -1141,7 +1177,7 @@ public class GenerateJavaScriptAST {
             assert (curStatements != null);
             JsStatement newStmt = (JsStatement) pop(); // stmt
             if (newStmt != null) {
-              // Empty JLocalDeclarationStatement produces a null
+              // Empty JDeclarationStatement produces a null
               curStatements.add(newStmt);
             }
           }
@@ -1168,8 +1204,7 @@ public class GenerateJavaScriptAST {
 
     private void generateClassLiterals(JsVars vars) {
       Set<JType> alreadyGenerated = new HashSet<JType>();
-      for (Object element : classLits.keySet()) {
-        JType type = (JType) element;
+      for (JType type : classLits.keySet()) {
         generateClassLiteralsRecursive(alreadyGenerated, type, vars);
       }
     }
@@ -1212,7 +1247,7 @@ public class GenerateJavaScriptAST {
         // special: setup a "toString" alias for java.lang.Object.toString()
         generateToStringAlias(x, globalStmts);
         // special: setup the identifying typeMarker field
-        generateTypeMarker(x, globalStmts);
+        generateTypeMarker(globalStmts);
       }
 
       generateTypeId(x, globalStmts);
@@ -1283,6 +1318,16 @@ public class GenerateJavaScriptAST {
       catchBlock.getStatements().add(errCall.makeStmt());
       errCall.setQualifier(errFn.makeRef());
       errCall.getArguments().add(modName.makeRef());
+    }
+
+    private void generateLongLiterals(JsVars vars) {
+      for (Entry<Long, JsName> entry : longLits.entrySet()) {
+        JsName jsName = entry.getValue();
+        JsExpression longObjectAlloc = longObjects.get(jsName);
+        JsVar var = new JsVar(jsName);
+        var.setInitExpr(longObjectAlloc);
+        vars.add(var);
+      }
     }
 
     private void generateNullFunc(List<JsStatement> globalStatements) {
@@ -1378,7 +1423,7 @@ public class GenerateJavaScriptAST {
       }
     }
 
-    private void generateTypeMarker(JClassType x, List<JsStatement> globalStmts) {
+    private void generateTypeMarker(List<JsStatement> globalStmts) {
       JField typeMarkerField = program.getIndexedField("Object.typeMarker");
       JsName typeMarkerName = names.get(typeMarkerField);
       if (typeMarkerName == null) {
@@ -1605,7 +1650,6 @@ public class GenerateJavaScriptAST {
    * clinit).
    */
   private Set<JMethod> crossClassTargets = new HashSet<JMethod>();
-
   /**
    * Contains JsNames for all interface methods. A special scope is needed so
    * that independent classes will obfuscate their interface implementation
@@ -1614,6 +1658,13 @@ public class GenerateJavaScriptAST {
   private final JsScope interfaceScope;
 
   private final JsProgram jsProgram;
+
+  /**
+   * Sorted to avoid nondeterministic iteration.
+   */
+  private final Map<Long, JsName> longLits = new TreeMap<Long, JsName>();
+
+  private final Map<JsName, JsExpression> longObjects = new IdentityHashMap<JsName, JsExpression>();
   private final Map<JAbstractMethodBody, JsFunction> methodBodyMap = new IdentityHashMap<JAbstractMethodBody, JsFunction>();
   private final Map<HasName, JsName> names = new IdentityHashMap<HasName, JsName>();
   private JsName nullMethodName;
@@ -1623,7 +1674,9 @@ public class GenerateJavaScriptAST {
    * and toString. All other class scopes have this scope as an ultimate parent.
    */
   private final JsScope objectScope;
+  private final JsOutputOption output;
   private final Map<JMethod, JsName> polymorphicNames = new IdentityHashMap<JMethod, JsName>();
+
   private final JProgram program;
 
   /**
@@ -1646,9 +1699,7 @@ public class GenerateJavaScriptAST {
    * Contains JsNames for all globals, such as static fields and methods.
    */
   private final JsScope topScope;
-
   private final JTypeOracle typeOracle;
-  private final JsOutputOption output;
 
   private GenerateJavaScriptAST(JProgram program, JsProgram jsProgram,
       JsOutputOption output) {

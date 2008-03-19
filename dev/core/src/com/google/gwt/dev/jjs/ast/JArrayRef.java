@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -56,7 +56,9 @@ public class JArrayRef extends JExpression {
   }
 
   public boolean hasSideEffects() {
-    return instance.hasSideEffects() || indexExpr.hasSideEffects();
+    // TODO: make the last test better when we have null tracking.
+    return instance.hasSideEffects() || indexExpr.hasSideEffects()
+        || instance.getType() == program.getTypeNull();
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

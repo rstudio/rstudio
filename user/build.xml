@@ -38,7 +38,7 @@
 
 	<target name="compile.tests" description="Compiles the test code for this project">
 		<mkdir dir="${javac.junit.out}" />
-		<gwt.javac srcdir="test" destdir="${javac.junit.out}">
+		<gwt.javac srcdir="test" excludes="com/google/gwt/langtest/**" destdir="${javac.junit.out}">
 			<classpath>
 				<pathelement location="${javac.out}" />
 				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />

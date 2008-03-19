@@ -19,25 +19,46 @@ package java.lang;
  * Wraps a primitive <code>long</code> as an object.
  */
 public final class Long extends Number implements Comparable<Long> {
-  public static final long MIN_VALUE = 0x8000000000000000L;
-  public static final long MAX_VALUE = 0x7fffffffffffffffL;
-  public static final int SIZE = 64;
+  /**
+   * Use nested class to avoid clinit on outer.
+   */
+  static class BoxedValues {
+    // Box values according to JLS - between -128 and 127
+    static Long[] boxedValues = new Long[256];
+  }
 
-  // Box values according to JLS - between -128 and 127
-  private static Long[] boxedValues = new Long[256];
+  static class HexLookup {
+    /**
+     * Super fast char->digit conversion.
+     */
+    static int[] hexLookup = new int[0];
 
-  public static int bitCount(long i) {
-    int cnt = 0;
-    for (long q = MIN_VALUE; q > 0; q = q >> 1) {
-      if ((q & i) != 0) {
-        cnt++;
+    static {
+      for (char c = '0'; c <= '9'; ++c) {
+        hexLookup[c] = c - '0';
+      }
+      for (char c = 'A'; c <= 'F'; ++c) {
+        hexLookup[c] = c - 'A' + 10;
+      }
+      for (char c = 'a'; c <= 'f'; ++c) {
+        hexLookup[c] = c - 'a' + 10;
       }
     }
-    return cnt;
+  }
+
+  public static final long MAX_VALUE = 0x7fffffffffffffffL;
+  public static final long MIN_VALUE = 0x8000000000000000L;
+  public static final int SIZE = 64;
+
+  public static int bitCount(long i) {
+    int high = (int) (i >> 32);
+    int low = (int) i;
+    return Integer.bitCount(high) + Integer.bitCount(low);
   }
 
   public static Long decode(String s) throws NumberFormatException {
-    return new Long(__decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
+    __Decode decode = __decodeNumberString(s);
+    return new Long(parseLong(decode.payload, decode.radix));
   }
 
   /**
@@ -48,50 +69,33 @@ public final class Long extends Number implements Comparable<Long> {
   }
 
   public static long highestOneBit(long i) {
-    if (i < 0) {
-      return MIN_VALUE;
+    int high = (int) (i >> 32);
+    if (high != 0) {
+      return ((long) Integer.highestOneBit(high)) << 32;
     } else {
-      long rtn;
-      for (rtn = 0x4000000000000000L; (rtn >> 1) > i; rtn = rtn >> 1) {
-        // loop down until smaller
-      }
-      return rtn;
+      return Integer.highestOneBit((int) i);
     }
   }
 
   public static long lowestOneBit(long i) {
-    if (i == 0) {
-      return SIZE;
-    } else {
-      long r = 1;
-      while ((r & i) != 0) {
-        r = r << 1;
-      }
-      return r;
-    }
+    return i & -i;
   }
 
   public static int numberOfLeadingZeros(long i) {
-    if (i < 0) {
-      return 0;
-    } else if (i == 0) {
-      return SIZE;
+    int high = (int) (i >> 32);
+    if (high != 0) {
+      return Integer.numberOfLeadingZeros(high);
     } else {
-      return SIZE - 1 - (int) Math.floor(Math.log(i) / Math.log(2.0d));
+      return Integer.numberOfLeadingZeros((int) i) + 32;
     }
   }
 
   public static int numberOfTrailingZeros(long i) {
-    if (i < 0) {
-      return 0;
-    } else if (i == 0) {
-      return SIZE;
+    int low = (int) i;
+    if (low != 0) {
+      return Integer.numberOfTrailingZeros(low);
     } else {
-      int rtn = 0;
-      for (int r = 1; (r & i) != 0; r = r * 2) {
-        rtn++;
-      }
-      return rtn;
+      return Integer.numberOfTrailingZeros((int) (i >> 32)) + 32;
     }
   }
 
@@ -99,30 +103,66 @@ public final class Long extends Number implements Comparable<Long> {
     return parseLong(s, 10);
   }
 
-  public static long parseLong(String s, int radix)
+  public static long parseLong(String orig, int intRadix)
       throws NumberFormatException {
-    return __parseAndValidateLong(s, radix, MIN_VALUE, MAX_VALUE);
+    if (orig == null) {
+      throw new NumberFormatException("null");
+    }
+    if (intRadix < Character.MIN_RADIX || intRadix > Character.MAX_RADIX) {
+      throw new NumberFormatException("radix " + intRadix + " out of range");
+    }
+
+    boolean neg = false;
+    String s;
+    if (orig.charAt(0) == '-') {
+      neg = true;
+      s = orig.substring(1);
+    } else {
+      s = orig;
+    }
+
+    long result = 0;
+    if (intRadix == 16) {
+      result = parseHex(s);
+    } else {
+      // Cache a converted version for performance (pure long ops are faster).
+      long radix = intRadix;
+      for (int i = 0, len = s.length(); i < len; ++i) {
+        if (result < 0) {
+          throw NumberFormatException.forInputString(s);
+        }
+        result *= radix;
+        char c = s.charAt(i);
+        int value = Character.digit(c, intRadix);
+        if (value < 0) {
+          throw NumberFormatException.forInputString(s);
+        }
+        result += value;
+      }
+    }
+
+    if (result < 0 && result != MIN_VALUE) {
+      throw NumberFormatException.forInputString(s);
+    }
+    if (neg) {
+      return -result;
+    } else {
+      return result;
+    }
   }
 
   public static long reverse(long i) {
-    long acc = 0;
-    long front = MIN_VALUE;
-    int back = 1;
-    int swing = SIZE - 1;
-    while (swing > 15) {
-      acc = acc | ((i & front) >> swing) | ((i & back) << swing);
-      swing--;
-      front = front >> 1;
-      back = back << 1;
-    }
-    return acc;
+    int high = (int) (i >>> 32);
+    int low = (int) i;
+    return ((long) Integer.reverse(low) << 32)
+        | (Integer.reverse(high) & 0xffffffffL);
   }
 
   public static long reverseBytes(long i) {
-    return ((i & 0xffL) << 56) | ((i & 0xff00L) << 40)
-        | ((i & 0xff0000L) << 24) | ((i & 0xff000000L) << 8)
-        | ((i & 0xff00000000L) >> 8) | ((i & 0xff0000000000L) >> 24)
-        | ((i & 0xff000000000000L) >> 40) | ((i & 0xff00000000000000L) >> 56);
+    int high = (int) (i >>> 32);
+    int low = (int) i;
+    return ((long) Integer.reverseBytes(low) << 32)
+        | (Integer.reverseBytes(high) & 0xffffffffL);
   }
 
   public static long rotateLeft(long i, int distance) {
@@ -133,10 +173,17 @@ public final class Long extends Number implements Comparable<Long> {
   }
 
   public static long rotateRight(long i, int distance) {
+    long ui = i & MAX_VALUE; // avoid sign extension
+    long carry = (i < 0) ? 0x4000000000000000L : 0; // MIN_VALUE rightshifted 1
     while (distance-- > 0) {
-      i = ((i & 1) == 0 ? 0 : 0x80000000) | i >> 1;
+      long nextcarry = ui & 1;
+      ui = carry | (ui >> 1);
+      carry = (nextcarry == 0) ? 0 : 0x4000000000000000L;
     }
-    return i;
+    if (carry != 0) {
+      ui = ui | MIN_VALUE;
+    }
+    return ui;
   }
 
   public static int signum(long i) {
@@ -149,43 +196,54 @@ public final class Long extends Number implements Comparable<Long> {
     }
   }
 
-  public static String toBinaryString(long x) {
-    if (x == 0) {
-      return "0";
-    }
-    String binStr = "";
-    while (x != 0) {
-      int bit = (int) x & 0x1;
-      binStr = __hexDigits[bit] + binStr;
-      x = x >>> 1;
-    }
-    return binStr;
+  public static String toBinaryString(long value) {
+    return toPowerOfTwoString(value, 1);
   }
 
-  public static String toHexString(long x) {
-    if (x == 0) {
-      return "0";
-    }
-    String hexStr = "";
-    while (x != 0) {
-      int nibble = (int) x & 0xF;
-      hexStr = __hexDigits[nibble] + hexStr;
-      x = x >>> 4;
-    }
-    return hexStr;
+  public static String toHexString(long value) {
+    return toPowerOfTwoString(value, 4);
   }
 
-  public static String toString(long b) {
-    return String.valueOf(b);
+  public static String toString(long value) {
+    return String.valueOf(value);
+  }
+
+  public static String toString(long value, int intRadix) {
+    if (intRadix == 10 || intRadix < Character.MIN_RADIX
+        || intRadix > Character.MAX_RADIX) {
+      return String.valueOf(value);
+    }
+
+    final int bufSize = 65;
+    char[] buf = new char[bufSize];
+    int pos = bufSize - 1;
+    // Cache a converted version for performance (pure long ops are faster).
+    long radix = intRadix;
+    if (value >= 0) {
+      while (value >= radix) {
+        buf[pos--] = __Digits.digits[(int) (value % radix)];
+        value /= radix;
+      }
+      buf[pos] = __Digits.digits[(int) value];
+    } else {
+      while (value <= -radix) {
+        buf[pos--] = __Digits.digits[(int) -(value % radix)];
+        value /= radix;
+      }
+      buf[pos--] = __Digits.digits[(int) -value];
+      buf[pos] = '-';
+    }
+    return String.__valueOf(buf, pos, bufSize);
   }
 
   public static Long valueOf(long i) {
     if (i > -129 && i < 128) {
       int rebase = (int) i + 128;
-      if (boxedValues[rebase] == null) {
-        boxedValues[rebase] = new Long(i);
+      Long result = BoxedValues.boxedValues[rebase];
+      if (result == null) {
+        result = BoxedValues.boxedValues[rebase] = new Long(i);
       }
-      return boxedValues[rebase];
+      return result;
     }
     return new Long(i);
   }
@@ -196,6 +254,49 @@ public final class Long extends Number implements Comparable<Long> {
 
   public static Long valueOf(String s, int radix) throws NumberFormatException {
     return new Long(Long.parseLong(s, radix));
+  }
+
+  private static native int hexDigit(char c, String s) /*-{
+    var val = @java.lang.Long.HexLookup::hexLookup[c];
+    if (val == null) {
+      throw @java.lang.NumberFormatException::forInputString(Ljava/lang/String;)(s);
+    }
+    return val;
+  }-*/;
+
+  private static long parseHex(String s) {
+    // TODO: make faster using int math!
+    int len = s.length();
+    if (len > 16) {
+      throw NumberFormatException.forInputString(s);
+    }
+    long result = 0;
+    for (int i = 0; i < len; ++i) {
+      result <<= 4;
+      result += hexDigit(s.charAt(i), s);
+    }
+    return result;
+  }
+
+  private static String toPowerOfTwoString(long value, int shift) {
+    // TODO: make faster using int math!
+    final int bufSize = 64 / shift;
+    long bitMask = (1 << shift) - 1;
+    char[] buf = new char[bufSize];
+    int pos = bufSize - 1;
+    if (value >= 0) {
+      while (value > bitMask) {
+        buf[pos--] = __Digits.digits[(int) (value & bitMask)];
+        value >>= shift;
+      }
+    } else {
+      while (pos > 0) {
+        buf[pos--] = __Digits.digits[(int) (value & bitMask)];
+        value >>= shift;
+      }
+    }
+    buf[pos] = __Digits.digits[(int) (value & bitMask)];
+    return String.__valueOf(buf, pos, bufSize);
   }
 
   private final transient long value;

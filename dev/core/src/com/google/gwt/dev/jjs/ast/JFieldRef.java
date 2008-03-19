@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -61,7 +61,7 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
   public boolean hasSideEffects() {
     // A cross-class reference to a static, non constant field forces clinit
     if (field.isStatic()
-        && (!field.isFinal() || field.constInitializer == null)) {
+        && (!field.isFinal() || !field.isCompileTimeConstant())) {
       if (program.typeOracle.checkClinit(enclosingType,
           field.getEnclosingType())) {
         // Therefore, we have side effects

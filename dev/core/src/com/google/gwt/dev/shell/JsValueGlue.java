@@ -106,23 +106,12 @@ public final class JsValueGlue {
         return (T) Integer.valueOf(getIntRange(value, Integer.MIN_VALUE,
             Integer.MAX_VALUE, "int", msgPrefix));
       } else if (type == Long.TYPE) {
-        if (!value.isNumber()) {
+        if (!value.isWrappedJavaObject()) {
           throw new HostedModeException(msgPrefix + ": JS value of type "
-              + value.getTypeString() + ", expected long");
+              + value.getTypeString() + ", expected Java long");
         }
-        double doubleVal = value.getNumber();
-        if (doubleVal < Long.MIN_VALUE || doubleVal > Long.MAX_VALUE) {
-          throw new HostedModeException(msgPrefix + ": JS double value "
-              + doubleVal + " out of range for a long");
-        }
-        // TODO(jat): can this actually detect loss of precision?
-        long longVal = (long) doubleVal;
-        if (doubleVal != longVal) {
-          // TODO(jat): should this be an error or exception?
-          ModuleSpace.getLogger().log(TreeLogger.WARN,
-              msgPrefix + ": Loss of precision converting double to long", null);
-        }
-        return (T) Long.valueOf(longVal);
+        JavaLong javaLong = (JavaLong) value.getWrappedJavaObject();
+        return (T) Long.valueOf(javaLong.longValue());
       } else if (type == Short.TYPE) {
         return (T) Short.valueOf((short) getIntRange(value, Short.MIN_VALUE,
             Short.MAX_VALUE, "short", msgPrefix));
@@ -172,13 +161,7 @@ public final class JsValueGlue {
         value.setInt(((Integer) obj).intValue());
       } else if (type == Long.TYPE) {
         long longVal = ((Long) obj).longValue();
-        double doubleVal = longVal;
-        if ((long) doubleVal != longVal) {
-          // TODO(jat): should this be an error or exception?
-          ModuleSpace.getLogger().log(TreeLogger.WARN,
-              "Loss of precision converting long to double", null);
-        }
-        value.setDouble(doubleVal);
+        value.setWrappedJavaObject(cl, new JavaLong(longVal));
       } else if (type == Short.TYPE) {
         value.setInt(((Short) obj).shortValue());
       } else if (type == Void.TYPE) {

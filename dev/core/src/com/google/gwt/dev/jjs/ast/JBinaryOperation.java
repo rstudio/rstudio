@@ -49,11 +49,8 @@ public class JBinaryOperation extends JExpression implements HasSettableType {
   }
 
   public JType getType() {
-    if (op == JBinaryOperator.ASG) {
-      // Use rhs because (generality lhs >= generality rhs)
-      return getRhs().getType();
-    } else if (isAssignment()) {
-      // Use lhs because this is really a write-then-read
+    if (isAssignment()) {
+      // Use the type of the lhs
       return getLhs().getType();
     } else {
       // Most binary operators never change type

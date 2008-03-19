@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -84,18 +84,18 @@ public final class System {
       nativeArraycopy(src, srcOfs, dest, destOfs, len);
     }
   }
-  
-  public static native long currentTimeMillis() /*-{
-    return (new Date()).getTime();
-  }-*/;
+
+  public static long currentTimeMillis() {
+    return (long) currentTimeMillis0();
+  };
 
   /**
    * Has no effect; just here for source compatibility.
    * 
    * @skip
    */
-  public static native void gc() /*-{
-  }-*/;
+  public static void gc() {
+  };
 
   public static native int identityHashCode(Object o) /*-{
     return (o == null) ? 0 : @com.google.gwt.core.client.Impl::getHashCode(Ljava/lang/Object;)(o);
@@ -107,6 +107,10 @@ public final class System {
 
   public static native void setOut(PrintStream out) /*-{
     @java.lang.System::out = out;
+  }-*/;
+
+  private static native double currentTimeMillis0() /*-{
+    return (new Date()).getTime();
   }-*/;
 
   /**

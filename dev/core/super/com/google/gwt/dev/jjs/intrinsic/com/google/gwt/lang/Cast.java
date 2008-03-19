@@ -81,28 +81,28 @@ final class Cast {
   /**
    * See JLS 5.1.3.
    */
-  static native byte narrow_byte(Object x) /*-{
+  static native byte narrow_byte(double x) /*-{
     return x << 24 >> 24;
   }-*/;
 
   /**
    * See JLS 5.1.3.
    */
-  static native char narrow_char(Object x) /*-{
+  static native char narrow_char(double x) /*-{
     return x & 0xFFFF;
   }-*/;
 
   /**
    * See JLS 5.1.3.
    */
-  static native int narrow_int(Object x) /*-{
+  static native int narrow_int(double x) /*-{
     return ~~x;
   }-*/;
 
   /**
    * See JLS 5.1.3.
    */
-  static native short narrow_short(Object x) /*-{
+  static native short narrow_short(double x) /*-{
     return x << 16 >> 16;
   }-*/;
 
@@ -110,7 +110,7 @@ final class Cast {
    * See JLS 5.1.3 for why we do a two-step cast. First we round to int, then
    * narrow to byte.
    */
-  static byte round_byte(Object x) {
+  static byte round_byte(double x) {
     return narrow_byte(round_int(x));
   }
 
@@ -118,32 +118,23 @@ final class Cast {
    * See JLS 5.1.3 for why we do a two-step cast. First we round to int, then
    * narrow to char.
    */
-  static char round_char(Object x) {
+  static char round_char(double x) {
     return narrow_char(round_int(x));
   }
 
   /**
    * See JLS 5.1.3.
    */
-  static native int round_int(Object x) /*-{
+  static native int round_int(double x) /*-{
     // TODO: reference java.lang.Integer::MAX_VALUE when we get clinits fixed
     return ~~Math.max(Math.min(x, 2147483647), -2147483648);
-  }-*/;
-
-  /**
-   * See JLS 5.1.3.
-   */
-  static native long round_long(Object x) /*-{
-    // TODO: reference java.lang.Long::MAX_VALUE when we get clinits fixed
-    x = Math.max(Math.min(x, 9223372036854775807), -9223372036854775808);
-    return (x >= 0) ? Math.floor(x) : Math.ceil(x);
   }-*/;
 
   /**
    * See JLS 5.1.3 for why we do a two-step cast. First we rount to int, then
    * narrow to short.
    */
-  static short round_short(Object x) {
+  static short round_short(double x) {
     return narrow_short(round_int(x));
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,9 +20,10 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * Base class for any storage location.
  */
-public abstract class JVariable extends JNode implements CanBeFinal, HasName,
-    HasType, HasSettableType {
+public abstract class JVariable extends JNode implements CanBeSetFinal,
+    CanHaveInitializer, HasName, HasSettableType {
 
+  protected JExpression initializer = null;
   private boolean isFinal;
   private final String name;
   private JType type;
@@ -35,6 +36,13 @@ public abstract class JVariable extends JNode implements CanBeFinal, HasName,
     this.isFinal = isFinal;
   }
 
+  public JLiteral getConstInitializer() {
+    if (isFinal() && initializer instanceof JLiteral) {
+      return (JLiteral) initializer;
+    }
+    return null;
+  }
+
   public String getName() {
     return name;
   }
@@ -43,8 +51,16 @@ public abstract class JVariable extends JNode implements CanBeFinal, HasName,
     return type;
   }
 
+  public boolean hasInitializer() {
+    return initializer != null;
+  }
+
   public boolean isFinal() {
     return isFinal;
+  }
+
+  public void setFinal() {
+    isFinal = true;
   }
 
   public void setType(JType newType) {

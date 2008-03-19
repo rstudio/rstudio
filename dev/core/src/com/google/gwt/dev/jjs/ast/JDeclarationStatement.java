@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,29 +20,31 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * Java initialized local variable statement.
  */
-public class JLocalDeclarationStatement extends JStatement {
+public class JDeclarationStatement extends JStatement {
 
   public JExpression initializer;
-  private JLocalRef localRef;
+  private JVariableRef variableRef;
 
-  public JLocalDeclarationStatement(JProgram program, SourceInfo info,
-      JLocalRef localRef, JExpression intializer) {
+  public JDeclarationStatement(JProgram program, SourceInfo info,
+      JVariableRef variableRef, JExpression intializer) {
     super(program, info);
-    this.localRef = localRef;
+    this.variableRef = variableRef;
     this.initializer = intializer;
+    CanHaveInitializer variable = variableRef.getTarget();
+    variable.setInitializer(intializer);
   }
 
   public JExpression getInitializer() {
     return initializer;
   }
 
-  public JLocalRef getLocalRef() {
-    return localRef;
+  public JVariableRef getVariableRef() {
+    return variableRef;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
-      localRef = (JLocalRef) visitor.accept(localRef);
+      variableRef = (JVariableRef) visitor.accept(variableRef);
       if (initializer != null) {
         initializer = visitor.accept(initializer);
       }

@@ -22,15 +22,14 @@ import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
-import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
-import com.google.gwt.dev.jjs.ast.JLocalDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
@@ -114,22 +113,30 @@ public class Pruner {
       }
     }
 
-    public void endVisit(JLocalDeclarationStatement x, Context ctx) {
+    public void endVisit(JDeclarationStatement x, Context ctx) {
       // The variable may have been pruned.
-      if (!referencedNonTypes.contains(x.getLocalRef().getTarget())) {
-        // If there is an initializer, just replace with that.
-        if (x.getInitializer() != null) {
-          ctx.replaceMe(x.getInitializer().makeStatement());
-        } else {
-          // No initializer, prune this entirely.
-          if (ctx.canRemove()) {
-            // Just remove it if we can.
-            ctx.removeMe();
-          } else {
-            // Replace with empty block.
-            ctx.replaceMe(new JBlock(program, x.getSourceInfo()));
+      if (!referencedNonTypes.contains(x.getVariableRef().getTarget())) {
+        // Replace with a multi, which may wind up empty.
+        JMultiExpression multi = new JMultiExpression(program,
+            x.getSourceInfo());
+
+        // If the lhs is a field ref, evaluate it first.
+        JVariableRef variableRef = x.getVariableRef();
+        if (variableRef instanceof JFieldRef) {
+          JFieldRef fieldRef = (JFieldRef) variableRef;
+          JExpression instance = fieldRef.getInstance();
+          if (instance != null) {
+            multi.exprs.add(instance);
           }
         }
+
+        // If there is an initializer, evaluate it second.
+        JExpression initializer = x.getInitializer();
+        if (initializer != null) {
+          multi.exprs.add(initializer);
+        }
+
+        ctx.replaceMe(multi.makeStatement());
       }
     }
 
@@ -574,13 +581,23 @@ public class Pruner {
       return false;
     }
 
-    public boolean visit(JLocalDeclarationStatement x, Context ctx) {
+    public boolean visit(JDeclarationStatement x, Context ctx) {
       /*
        * A declaration by itself doesn't rescue a local (even if it has an
        * initializer). Writes don't count, only reads.
        */
       if (x.getInitializer() != null) {
         accept(x.getInitializer());
+      }
+
+      // If the lhs is a field ref, we have to visit its qualifier.
+      JVariableRef variableRef = x.getVariableRef();
+      if (variableRef instanceof JFieldRef) {
+        JFieldRef fieldRef = (JFieldRef) variableRef;
+        JExpression instance = fieldRef.getInstance();
+        if (instance != null) {
+          accept(instance);
+        }
       }
       return false;
     }

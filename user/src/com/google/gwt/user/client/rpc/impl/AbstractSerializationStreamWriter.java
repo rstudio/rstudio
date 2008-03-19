@@ -54,9 +54,10 @@ public abstract class AbstractSerializationStreamWriter extends
     append(String.valueOf(fieldValue));
   }
 
-  public void writeLong(long fieldValue) {
-    append(String.valueOf(fieldValue));
-  }
+  /**
+   * Asymmetric implementation; see subclasses.
+   */
+  public abstract void writeLong(long value) throws SerializationException;
 
   public void writeObject(Object instance) throws SerializationException {
     if (instance == null) {

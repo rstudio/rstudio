@@ -89,9 +89,9 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
   public boolean visit(JField x, Context ctx) {
     super.visit(x, ctx);
 
-    if (x.constInitializer != null) {
+    if (x.getConstInitializer() != null) {
       print(" = ");
-      accept(x.constInitializer);
+      accept(x.getConstInitializer());
     }
     semi();
     return false;

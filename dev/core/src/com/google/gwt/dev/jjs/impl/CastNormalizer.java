@@ -48,8 +48,8 @@ import java.util.Set;
 
 /**
  * Replace cast and instanceof operations with calls to the Cast class. Depends
- * on {@link CatchBlockNormalizer}, {@link CompoundAssignmentNormalizer}, and
- * {@link JsoDevirtualizer} having already run.
+ * on {@link CatchBlockNormalizer}, {@link CompoundAssignmentNormalizer},
+ * {@link JsoDevirtualizer}, and {@link LongCastNormalizer} having already run.
  * 
  * <p>
  * Object and String always get a typeId of 1 and 2, respectively. 0 is reserved
@@ -316,12 +316,11 @@ public class CastNormalizer {
   }
 
   /**
-   * Explicitly convert any char-typed expressions within a concat operation
-   * into strings.
+   * Explicitly convert any char or long type expressions within a concat
+   * operation into strings because normal JavaScript conversion does not work
+   * correctly.
    */
   private class ConcatVisitor extends JModVisitor {
-
-    private JMethod stringValueOfChar = null;
 
     @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
@@ -330,8 +329,8 @@ public class CastNormalizer {
       }
 
       if (x.getOp() == JBinaryOperator.ADD) {
-        JExpression newLhs = convertCharString(x.getLhs());
-        JExpression newRhs = convertCharString(x.getRhs());
+        JExpression newLhs = convertString(x.getLhs());
+        JExpression newRhs = convertString(x.getRhs());
         if (newLhs != x.getLhs() || newRhs != x.getRhs()) {
           JBinaryOperation newExpr = new JBinaryOperation(program,
               x.getSourceInfo(), program.getTypeJavaLangString(),
@@ -339,7 +338,7 @@ public class CastNormalizer {
           ctx.replaceMe(newExpr);
         }
       } else if (x.getOp() == JBinaryOperator.ASG_ADD) {
-        JExpression newRhs = convertCharString(x.getRhs());
+        JExpression newRhs = convertString(x.getRhs());
         if (newRhs != x.getRhs()) {
           JBinaryOperation newExpr = new JBinaryOperation(program,
               x.getSourceInfo(), program.getTypeJavaLangString(),
@@ -349,16 +348,18 @@ public class CastNormalizer {
       }
     }
 
-    private JExpression convertCharString(JExpression expr) {
+    private JExpression convertString(JExpression expr) {
       JPrimitiveType charType = program.getTypePrimitiveChar();
       if (expr.getType() == charType) {
-        // Replace the character with a call to Cast.charToString()
-        if (stringValueOfChar == null) {
-          stringValueOfChar = program.getIndexedMethod("Cast.charToString");
-          assert (stringValueOfChar != null);
-        }
+        // Replace with Cast.charToString(c)
         JMethodCall call = new JMethodCall(program, expr.getSourceInfo(), null,
-            stringValueOfChar);
+            program.getIndexedMethod("Cast.charToString"));
+        call.getArgs().add(expr);
+        return call;
+      } else if (expr.getType() == program.getTypePrimitiveLong()) {
+        // Replace with LongLib.toString(l)
+        JMethodCall call = new JMethodCall(program, expr.getSourceInfo(), null,
+            program.getIndexedMethod("LongLib.toString"));
         call.getArgs().add(expr);
         return call;
       }
@@ -396,6 +397,7 @@ public class CastNormalizer {
     public void endVisit(JCastOperation x, Context ctx) {
       JExpression replaceExpr;
       JType toType = x.getCastType();
+      JExpression expr = x.getExpr();
       if (toType instanceof JNullType) {
         /*
          * Magic: a null type cast means the user tried a cast that couldn't
@@ -410,12 +412,12 @@ public class CastNormalizer {
          */
         JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
             method, program.getTypeNull());
-        call.getArgs().add(x.getExpr());
+        call.getArgs().add(expr);
         replaceExpr = call;
       } else if (toType instanceof JReferenceType) {
-        JExpression curExpr = x.getExpr();
+        JExpression curExpr = expr;
         JReferenceType refType = (JReferenceType) toType;
-        JReferenceType argType = (JReferenceType) x.getExpr().getType();
+        JReferenceType argType = (JReferenceType) expr.getType();
         if (program.typeOracle.canTriviallyCast(argType, refType)) {
           // just remove the cast
           replaceExpr = curExpr;
@@ -439,7 +441,6 @@ public class CastNormalizer {
          * call a narrowing conversion function. EXCEPTION: we currently have no
          * way to narrow double to float, so don't bother.
          */
-        boolean narrow = false, round = false;
         JPrimitiveType tByte = program.getTypePrimitiveByte();
         JPrimitiveType tChar = program.getTypePrimitiveChar();
         JPrimitiveType tShort = program.getTypePrimitiveShort();
@@ -447,47 +448,70 @@ public class CastNormalizer {
         JPrimitiveType tLong = program.getTypePrimitiveLong();
         JPrimitiveType tFloat = program.getTypePrimitiveFloat();
         JPrimitiveType tDouble = program.getTypePrimitiveDouble();
-        JType fromType = x.getExpr().getType();
-        if (tByte == fromType) {
-          if (tChar == toType) {
-            narrow = true;
-          }
-        } else if (tShort == fromType) {
-          if (tByte == toType || tChar == toType) {
-            narrow = true;
-          }
-        } else if (tChar == fromType) {
-          if (tByte == toType || tShort == toType) {
-            narrow = true;
-          }
-        } else if (tInt == fromType) {
+        JType fromType = expr.getType();
+
+        String methodName = null;
+
+        if (tLong == fromType && tLong != toType) {
           if (tByte == toType || tShort == toType || tChar == toType) {
-            narrow = true;
-          }
-        } else if (tLong == fromType) {
-          if (tByte == toType || tShort == toType || tChar == toType
-              || tInt == toType) {
-            narrow = true;
-          }
-        } else if (tFloat == fromType || tDouble == fromType) {
-          if (tByte == toType || tShort == toType || tChar == toType
-              || tInt == toType || tLong == toType) {
-            round = true;
+            /*
+             * We need a double call here, one to convert long->int, and another
+             * one to narrow. Construct the inner call here and fall through to
+             * do the narrowing conversion.
+             */
+            JMethod castMethod = program.getIndexedMethod("LongLib.toInt");
+            JMethodCall call = new JMethodCall(program, x.getSourceInfo(),
+                null, castMethod);
+            call.getArgs().add(expr);
+            expr = call;
+            fromType = tInt;
+          } else if (tInt == toType) {
+            methodName = "LongLib.toInt";
+          } else if (tFloat == toType || tDouble == toType) {
+            methodName = "LongLib.toDouble";
           }
         }
 
-        if (narrow || round) {
-          // Replace the expression with a call to the narrow or round method
-          String methodName = "Cast." + (narrow ? "narrow_" : "round_")
-              + toType.getName();
+        if (toType == tLong && fromType != tLong) {
+          // Longs get special treatment.
+          if (tByte == fromType || tShort == fromType || tChar == fromType
+              || tInt == fromType) {
+            methodName = "LongLib.fromInt";
+          } else if (tFloat == fromType || tDouble == fromType) {
+            methodName = "LongLib.fromDouble";
+          }
+        } else if (tByte == fromType) {
+          if (tChar == toType) {
+            methodName = "Cast.narrow_" + toType.getName();
+          }
+        } else if (tShort == fromType) {
+          if (tByte == toType || tChar == toType) {
+            methodName = "Cast.narrow_" + toType.getName();
+          }
+        } else if (tChar == fromType) {
+          if (tByte == toType || tShort == toType) {
+            methodName = "Cast.narrow_" + toType.getName();
+          }
+        } else if (tInt == fromType) {
+          if (tByte == toType || tShort == toType || tChar == toType) {
+            methodName = "Cast.narrow_" + toType.getName();
+          }
+        } else if (tFloat == fromType || tDouble == fromType) {
+          if (tByte == toType || tShort == toType || tChar == toType
+              || tInt == toType) {
+            methodName = "Cast.round_" + toType.getName();
+          }
+        }
+
+        if (methodName != null) {
           JMethod castMethod = program.getIndexedMethod(methodName);
           JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
-              castMethod);
-          call.getArgs().add(x.getExpr());
+              castMethod, toType);
+          call.getArgs().add(expr);
           replaceExpr = call;
         } else {
           // Just remove the cast
-          replaceExpr = x.getExpr();
+          replaceExpr = expr;
         }
       }
       ctx.replaceMe(replaceExpr);

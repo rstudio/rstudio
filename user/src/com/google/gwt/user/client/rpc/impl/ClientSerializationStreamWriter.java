@@ -115,6 +115,10 @@ public final class ClientSerializationStreamWriter extends
     return buffer.toString();
   }
 
+  public void writeLong(long fieldValue) {
+    append(Long.toString(fieldValue, 16));
+  }
+
   @Override
   protected int addString(String string) {
     if (string == null) {

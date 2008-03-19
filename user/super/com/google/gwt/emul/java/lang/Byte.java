@@ -24,11 +24,16 @@ public final class Byte extends Number implements Comparable<Byte> {
   public static final byte MAX_VALUE = (byte) 0x7F;
   public static final int SIZE = 8;
 
-  // Box all values according to JLS
-  private static Byte[] boxedValues = new Byte[256];
+  /**
+   * Use nested class to avoid clinit on outer.
+   */
+  private static class BoxedValues {
+    // Box all values according to JLS
+    private static Byte[] boxedValues = new Byte[256];
+  }
 
   public static Byte decode(String s) throws NumberFormatException {
-    return new Byte((byte) __decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
+    return new Byte((byte) __decodeAndValidateInt(s, MIN_VALUE, MAX_VALUE));
   }
 
   /**
@@ -47,7 +52,7 @@ public final class Byte extends Number implements Comparable<Byte> {
 
   public static byte parseByte(String s, int radix)
       throws NumberFormatException {
-    return (byte) __parseAndValidateLong(s, radix, MIN_VALUE, MAX_VALUE);
+    return (byte) __parseAndValidateInt(s, radix, MIN_VALUE, MAX_VALUE);
   }
 
   public static String toString(byte b) {
@@ -56,10 +61,11 @@ public final class Byte extends Number implements Comparable<Byte> {
 
   public static Byte valueOf(byte b) {
     int rebase = b + 128;
-    if (boxedValues[rebase] == null) {
-      boxedValues[rebase] = new Byte(b);
+    Byte result = BoxedValues.boxedValues[rebase];
+    if (result == null) {
+      result = BoxedValues.boxedValues[rebase] = new Byte(b);
     }
-    return boxedValues[rebase];
+    return result;
   }
 
   public static Byte valueOf(String s) throws NumberFormatException {

@@ -23,6 +23,7 @@ import java.util.List;
 /**
  * A visitor for iterating through and modifying an AST.
  */
+@SuppressWarnings("unchecked")
 public class JModVisitor extends JVisitor {
 
   private interface ContextFactory {
@@ -89,13 +90,6 @@ public class JModVisitor extends JVisitor {
       checkState();
       checkReplacement((JNode) list.get(index), node);
       list.set(index, node);
-      didChange = replaced = true;
-    }
-
-    protected void doReplace(Class targetClass, JNode x) {
-      checkState();
-      checkReplacement((JNode) list.get(index), x);
-      list.set(index, x);
       didChange = replaced = true;
     }
 

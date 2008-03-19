@@ -28,8 +28,13 @@ public final class Character implements Comparable<Character>, Serializable {
   public static final char MIN_VALUE = '\u0000';
   public static final char MAX_VALUE = '\uFFFF';
 
-  // Box values according to JLS - from \u0000 to \u007f
-  private static Character[] boxedValues = new Character[128];
+  /**
+   * Use nested class to avoid clinit on outer.
+   */
+  private static class BoxedValues {
+    // Box values according to JLS - from \u0000 to \u007f
+    private static Character[] boxedValues = new Character[128];
+  }
 
   public static int digit(char c, int radix) {
     if (radix < MIN_RADIX || radix > MAX_RADIX) {
@@ -129,10 +134,11 @@ public final class Character implements Comparable<Character>, Serializable {
 
   public static Character valueOf(char c) {
     if (c < 128) {
-      if (boxedValues[c] == null) {
-        boxedValues[c] = new Character(c);
+      Character result = BoxedValues.boxedValues[c];
+      if (result == null) {
+        result = BoxedValues.boxedValues[c] = new Character(c);
       }
-      return boxedValues[c];
+      return result;
     }
     return new Character(c);
   }

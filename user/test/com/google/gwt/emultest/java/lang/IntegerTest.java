@@ -142,7 +142,7 @@ public class IntegerTest extends GWTTestCase {
     assertEquals(Integer.MIN_VALUE, Integer.highestOneBit(-1));
     assertEquals(Integer.MIN_VALUE, Integer.highestOneBit(-256));
     assertEquals(1, Integer.highestOneBit(1));
-    assertEquals(0x80, Integer.highestOneBit(0x80));
+    assertEquals(0x80, Integer.highestOneBit(0x88));
     assertEquals(0x40000000, Integer.highestOneBit(Integer.MAX_VALUE));
   }
 
@@ -151,7 +151,7 @@ public class IntegerTest extends GWTTestCase {
     assertEquals(1, Integer.lowestOneBit(-1));
     assertEquals(0x100, Integer.lowestOneBit(-256));
     assertEquals(1, Integer.lowestOneBit(1));
-    assertEquals(0x80, Integer.lowestOneBit(0x80));
+    assertEquals(0x80, Integer.lowestOneBit(0x880));
     assertEquals(0x80000000, Integer.lowestOneBit(Integer.MIN_VALUE));
   }
 
@@ -181,6 +181,11 @@ public class IntegerTest extends GWTTestCase {
     assertEquals(Integer.MIN_VALUE, Integer.reverse(1));
     assertEquals(1, Integer.reverse(Integer.MIN_VALUE));
     assertEquals(0xaaaaaaaa, Integer.reverse(0x55555555));
+    assertEquals(0xaaaa0000, Integer.reverse(0x00005555));
+    assertEquals(0xaa00aa00, Integer.reverse(0x00550055));
+    assertEquals(0x55555555, Integer.reverse(0xaaaaaaaa));
+    assertEquals(0x00005555, Integer.reverse(0xaaaa0000));
+    assertEquals(0x00550055, Integer.reverse(0xaa00aa00));
   }
 
   public void testReverseBytes() {
@@ -222,7 +227,8 @@ public class IntegerTest extends GWTTestCase {
   }
 
   public void testToHexString() {
-    // TODO: not implemented in our JRE
+    assertEquals("12345", Integer.toHexString(0x12345));
+    assertEquals("fff12345", Integer.toHexString(0xFFF12345));
   }
 
   public void testToString() {

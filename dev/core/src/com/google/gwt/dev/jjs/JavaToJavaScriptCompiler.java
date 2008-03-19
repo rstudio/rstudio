@@ -48,8 +48,10 @@ import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
 import com.google.gwt.dev.jjs.impl.JavaScriptObjectNormalizer;
 import com.google.gwt.dev.jjs.impl.JsoDevirtualizer;
+import com.google.gwt.dev.jjs.impl.LongCastNormalizer;
+import com.google.gwt.dev.jjs.impl.LongEmulationNormalizer;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic;
-import com.google.gwt.dev.jjs.impl.MethodAndClassFinalizer;
+import com.google.gwt.dev.jjs.impl.Finalizer;
 import com.google.gwt.dev.jjs.impl.MethodCallTightener;
 import com.google.gwt.dev.jjs.impl.MethodInliner;
 import com.google.gwt.dev.jjs.impl.Pruner;
@@ -287,9 +289,7 @@ public class JavaToJavaScriptCompiler {
         String[] all = rpo.getAllPossibleRebindAnswers(logger, element);
         Util.addAll(allEntryPoints, all);
       }
-      allEntryPoints.add("com.google.gwt.lang.Array");
-      allEntryPoints.add("com.google.gwt.lang.Cast");
-      allEntryPoints.add("com.google.gwt.lang.Exceptions");
+      allEntryPoints.addAll(JProgram.CODEGEN_TYPES_SET);
       allEntryPoints.add("com.google.gwt.lang.Stats");
       allEntryPoints.add("java.lang.Object");
       allEntryPoints.add("java.lang.String");
@@ -399,7 +399,7 @@ public class JavaToJavaScriptCompiler {
         // Remove unreferenced types, fields, methods, [params, locals]
         didChange = Pruner.exec(jprogram, true) || didChange;
         // finalize locals, params, fields, methods, classes
-        didChange = MethodAndClassFinalizer.exec(jprogram) || didChange;
+        didChange = Finalizer.exec(jprogram) || didChange;
         // rewrite non-polymorphic calls as static calls; update all call sites
         didChange = MakeCallsStatic.exec(jprogram) || didChange;
 
@@ -428,9 +428,11 @@ public class JavaToJavaScriptCompiler {
       // (5) "Normalize" the high-level Java tree into a lower-level tree more
       // suited for JavaScript code generation. Don't go reordering these
       // willy-nilly because there are some subtle interdependencies.
+      LongCastNormalizer.exec(jprogram);
       JsoDevirtualizer.exec(jprogram);
       CatchBlockNormalizer.exec(jprogram);
       CompoundAssignmentNormalizer.exec(jprogram);
+      LongEmulationNormalizer.exec(jprogram);
       CastNormalizer.exec(jprogram);
       ArrayNormalizer.exec(jprogram);
 

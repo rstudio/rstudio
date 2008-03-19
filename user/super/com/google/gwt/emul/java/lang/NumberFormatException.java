@@ -22,11 +22,14 @@ package java.lang;
  */
 public class NumberFormatException extends IllegalArgumentException {
 
+  static NumberFormatException forInputString(String s) {
+    return new NumberFormatException("For input string: \"" + s + "\"");
+  }
+
   public NumberFormatException() {
   }
 
   public NumberFormatException(String message) {
     super(message);
   }
-
 }

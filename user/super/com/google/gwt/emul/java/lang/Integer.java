@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,12 +20,30 @@ package java.lang;
  */
 public final class Integer extends Number implements Comparable<Integer> {
 
-  public static final int MIN_VALUE = 0x80000000;
   public static final int MAX_VALUE = 0x7fffffff;
+  public static final int MIN_VALUE = 0x80000000;
   public static final int SIZE = 32;
 
-  // Box values according to JLS - between -128 and 127
-  private static Integer[] boxedValues = new Integer[256];
+  /**
+   * Use nested class to avoid clinit on outer.
+   */
+  private static class BoxedValues {
+    // Box values according to JLS - between -128 and 127
+    private static Integer[] boxedValues = new Integer[256];
+  }
+
+  /**
+   * Use nested class to avoid clinit on outer.
+   */
+  private static class ReverseNibbles {
+    /**
+     * A fast-lookup of the reversed bits of all the nibbles 0-15. Used to
+     * implement {@link #reverse(int)}.
+     */
+    private static int[] reverseNibbles = {
+        0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6, 0xe, 0x1, 0x9, 0x5, 0xd, 0x3, 0xb,
+        0x7, 0xf};
+  }
 
   public static int bitCount(int x) {
     // Courtesy the University of Kentucky
@@ -39,7 +57,7 @@ public final class Integer extends Number implements Comparable<Integer> {
   }
 
   public static Integer decode(String s) throws NumberFormatException {
-    return new Integer((int) __decodeAndValidateLong(s, MIN_VALUE, MAX_VALUE));
+    return new Integer((int) __decodeAndValidateInt(s, MIN_VALUE, MAX_VALUE));
   }
 
   /**
@@ -58,25 +76,15 @@ public final class Integer extends Number implements Comparable<Integer> {
       return 0;
     } else {
       int rtn;
-      for (rtn = 0x40000000; (rtn & i) == 0; rtn = rtn >> 1) {
-        // loop down until smaller
+      for (rtn = 0x40000000; (rtn & i) == 0; rtn >>= 1) {
+        // loop down until matched
       }
       return rtn;
     }
   }
 
   public static int lowestOneBit(int i) {
-    if (i == 0) {
-      return 0;
-    } else if (i == Integer.MIN_VALUE) {
-      return 0x80000000;
-    } else {
-      int r = 1;
-      while ((r & i) == 0) {
-        r = r * 2;
-      }
-      return r;
-    }
+    return i & -i;
   }
 
   public static int numberOfLeadingZeros(int i) {
@@ -91,10 +99,10 @@ public final class Integer extends Number implements Comparable<Integer> {
 
   public static int numberOfTrailingZeros(int i) {
     if (i == 0) {
-      return 32;
+      return SIZE;
     } else {
       int rtn = 0;
-      for (int r = 1; (r & i) == 0; r = r * 2) {
+      for (int r = 1; (r & i) == 0; r <<= 1) {
         rtn++;
       }
       return rtn;
@@ -106,25 +114,15 @@ public final class Integer extends Number implements Comparable<Integer> {
   }
 
   public static int parseInt(String s, int radix) throws NumberFormatException {
-    return (int) __parseAndValidateLong(s, radix, MIN_VALUE, MAX_VALUE);
+    return __parseAndValidateInt(s, radix, MIN_VALUE, MAX_VALUE);
   }
 
   public static int reverse(int i) {
-    int ui = i & 0x7fffffff; // avoid sign extension
-    int acc = 0;  
-    int front = 0x80000000;
-    int back = 1;
-    int swing = 31;
-    while (swing > 0) {
-      acc = acc | ((ui & front) >> swing) | ((ui & back) << swing);
-      swing -= 2;
-      front = front >> 1;
-      back = back << 1;
-    }
-    if (i < 0) {
-      acc = acc | 0x1; // restore the real value of 0x80000000
-    }
-    return acc;
+    int[] nibbles = ReverseNibbles.reverseNibbles;
+    return (nibbles[i >>> 28]) | (nibbles[(i >> 24) & 0xf] << 4)
+        | (nibbles[(i >> 20) & 0xf] << 8) | (nibbles[(i >> 16) & 0xf] << 12)
+        | (nibbles[(i >> 12) & 0xf] << 16) | (nibbles[(i >> 8) & 0xf] << 20)
+        | (nibbles[(i >> 4) & 0xf] << 24) | (nibbles[i & 0xf] << 28);
   }
 
   public static int reverseBytes(int i) {
@@ -140,15 +138,15 @@ public final class Integer extends Number implements Comparable<Integer> {
   }
 
   public static int rotateRight(int i, int distance) {
-    int ui = i & 0x7fffffff; // avoid sign extension
-    int carry = (i < 0) ? 0x40000000 : 0; // 0x80000000 rightshifted 1
+    int ui = i & MAX_VALUE; // avoid sign extension
+    int carry = (i < 0) ? 0x40000000 : 0; // MIN_VALUE rightshifted 1
     while (distance-- > 0) {
       int nextcarry = ui & 1;
       ui = carry | (ui >> 1);
       carry = (nextcarry == 0) ? 0 : 0x40000000;
     }
     if (carry != 0) {
-      ui = ui | 0x80000000;
+      ui = ui | MIN_VALUE;
     }
     return ui;
   }
@@ -163,25 +161,51 @@ public final class Integer extends Number implements Comparable<Integer> {
     }
   }
 
-  public static String toBinaryString(int x) {
-    return Long.toBinaryString(x);
+  public static String toBinaryString(int value) {
+    return toPowerOfTwoString(value, 1);
   }
 
-  public static String toHexString(int x) {
-    return Long.toHexString(x);
+  public static String toHexString(int value) {
+    return toPowerOfTwoString(value, 4);
   }
 
-  public static String toString(int b) {
-    return String.valueOf(b);
+  public static String toString(int value) {
+    return String.valueOf(value);
+  }
+
+  public static String toString(int value, int radix) {
+    if (radix == 10 || radix < Character.MIN_RADIX || radix > Character.MAX_RADIX) {
+      return String.valueOf(value);
+    }
+
+    final int bufSize = 33;
+    char[] buf = new char[bufSize];
+    int pos = bufSize - 1;
+    if (value >= 0) {
+      while (value >= radix) {
+        buf[pos--] = __Digits.digits[value % radix];
+        value /= radix;
+      }
+      buf[pos] = __Digits.digits[value];
+    } else {
+      while (value <= -radix) {
+        buf[pos--] = __Digits.digits[-(value % radix)];
+        value /= radix;
+      }
+      buf[pos--] = __Digits.digits[-value];
+      buf[pos] = '-';
+    }
+    return String.__valueOf(buf, pos, bufSize);
   }
 
   public static Integer valueOf(int i) {
     if (i > -129 && i < 128) {
       int rebase = i + 128;
-      if (boxedValues[rebase] == null) {
-        boxedValues[rebase] = new Integer(i);
+      Integer result = BoxedValues.boxedValues[rebase];
+      if (result == null) {
+        result = BoxedValues.boxedValues[rebase] = new Integer(i);
       }
-      return boxedValues[rebase];
+      return result;
     }
     return new Integer(i);
   }
@@ -193,6 +217,26 @@ public final class Integer extends Number implements Comparable<Integer> {
   public static Integer valueOf(String s, int radix)
       throws NumberFormatException {
     return new Integer(Integer.parseInt(s, radix));
+  }
+
+  private static String toPowerOfTwoString(int value, int shift) {
+    final int bufSize = 32 / shift;
+    int bitMask = (1 << shift) - 1;
+    char[] buf = new char[bufSize];
+    int pos = bufSize - 1;
+    if (value >= 0) {
+      while (value > bitMask) {
+        buf[pos--] = __Digits.digits[value & bitMask];
+        value >>= shift;
+      }
+    } else {
+      while (pos > 0) {
+        buf[pos--] = __Digits.digits[value & bitMask];
+        value >>= shift;
+      }
+    }
+    buf[pos] = __Digits.digits[value & bitMask];
+    return String.__valueOf(buf, pos, bufSize);
   }
 
   private final transient int value;

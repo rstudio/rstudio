@@ -1,12 +1,12 @@
 /*
- * Copyright 2007 Google Inc.
- *
+ * Copyright 2008 Google Inc.
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -20,23 +20,25 @@ import com.google.gwt.junit.client.GWTTestCase;
 import java.util.Date;
 
 /**
- * Tests for GWT's emulation of the JRE Date class. 
+ * Tests for GWT's emulation of the JRE Date class.
  */
+@SuppressWarnings("deprecation")
 public class DateTest extends GWTTestCase {
   public static final String CURRENT = "CURRENT";
-  public static final String TO_STRING_PATTERN =
-      "\\w{3} \\w{3} \\d{2} \\d{2}:\\d{2}:\\d{2}( .+)? \\d{4}";
+  public static final String TO_STRING_PATTERN = "\\w{3} \\w{3} \\d{2} \\d{2}:\\d{2}:\\d{2}( .+)? \\d{4}";
   public static final long DAY_MILLISECONDS_SHIFT = 27;
   public static final String FUTURE = "FUTURE";
   public static final String PAST = "PAST";
   public static final long SECOND_MILLISECONDS_SHIFT = 10;
 
-  /** Sets module name so that javascript compiler can operate */
+  /**
+   * Sets module name so that javascript compiler can operate.
+   */
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
-  /** Testing for public boolean java.util.Date.after(java.util.Date)* */
+  /** Testing for public boolean java.util.Date.after(java.util.Date). */
   public void testAfter() {
 
     // /////////////////////////////
@@ -63,7 +65,7 @@ public class DateTest extends GWTTestCase {
     assertTrue(a2);
   }
 
-  /** Testing for public boolean java.util.Date.before(java.util.Date)* */
+  /** Testing for public boolean java.util.Date.before(java.util.Date). */
   public void testBefore() {
 
     // /////////////////////////////
@@ -90,7 +92,7 @@ public class DateTest extends GWTTestCase {
     assertFalse(a2);
   }
 
-  /** Testing for public java.lang.Object java.util.Date.clone()* */
+  /** Testing for public java.lang.Object java.util.Date.clone(). */
   public void testClone() {
 
     // /////////////////////////////
@@ -117,7 +119,7 @@ public class DateTest extends GWTTestCase {
     assertEquals(a2, accum2);
   }
 
-  /** Testing for public int java.util.Date.compareTo(java.util.Date)* */
+  /** Testing for public int java.util.Date.compareTo(java.util.Date). */
   public void testCompareTo() {
 
     // /////////////////////////////
@@ -143,7 +145,7 @@ public class DateTest extends GWTTestCase {
     assertEquals(a2, -1);
   }
 
-  /** Testing for public int java.util.Date.getDate()* */
+  /** Testing for public int java.util.Date.getDate(). */
   public void testGetDate() {
 
     // /////////////////////////////
@@ -160,7 +162,7 @@ public class DateTest extends GWTTestCase {
     assertEquals(29, a2);
   }
 
-  /** Testing for public int java.util.Date.getDay()* */
+  /** Testing for public int java.util.Date.getDay(). */
   public void testGetDay() {
 
     // /////////////////////////////
@@ -182,15 +184,13 @@ public class DateTest extends GWTTestCase {
     int a2 = accum2.getDay();
   }
 
-  /**
-   * Testing for public int java.util.Date.getHours()
-   */
+  /** Testing for public int java.util.Date.getHours(). */
   public void testGetHours() {
     // Cannot be done because each time zone will give a different
     // answer
   }
 
-  /** Testing for public int java.util.Date.getMinutes()* */
+  /** Testing for public int java.util.Date.getMinutes(). */
   public void testGetMinutes() {
 
     // /////////////////////////////
@@ -207,7 +207,7 @@ public class DateTest extends GWTTestCase {
     assertEquals(a2, 4);
   }
 
-  /** Testing for public int java.util.Date.getMonth()* */
+  /** Testing for public int java.util.Date.getMonth(). */
   public void testGetMonth() {
 
     // /////////////////////////////
@@ -225,7 +225,7 @@ public class DateTest extends GWTTestCase {
     assertEquals(11, a2);
   }
 
-  /** Testing for public int java.util.Date.getSeconds()* */
+  /** Testing for public int java.util.Date.getSeconds(). */
   public void testGetSeconds() {
 
     // /////////////////////////////
@@ -243,7 +243,7 @@ public class DateTest extends GWTTestCase {
     assertEquals(5, a2);
   }
 
-  /** Testing for public long java.util.Date.getTime()* */
+  /** Testing for public long java.util.Date.getTime(). */
   public void testGetTime() {
 
     // /////////////////////////////
@@ -261,7 +261,7 @@ public class DateTest extends GWTTestCase {
     assertEquals(1293678245000L, a2);
   }
 
-  /** Testing for public int java.util.Date.getTimezoneOffset()* */
+  /** Testing for public int java.util.Date.getTimezoneOffset(). */
   public void testGetTimezoneOffset() {
 
     // /////////////////////////////
@@ -283,7 +283,7 @@ public class DateTest extends GWTTestCase {
     int a2 = accum2.getTimezoneOffset();
   }
 
-  /** Testing for public int java.util.Date.getYear()* */
+  /** Testing for public int java.util.Date.getYear(). */
   public void testGetYear() {
 
     // /////////////////////////////
@@ -301,7 +301,7 @@ public class DateTest extends GWTTestCase {
     assertEquals(110, a2);
   }
 
-  /** Testing for public static long java.util.Date.parse(java.lang.String)* */
+  /** Testing for public static long java.util.Date.parse(java.lang.String). */
   public void testParse() {
 
     // /////////////////////////////
@@ -328,7 +328,7 @@ public class DateTest extends GWTTestCase {
     assertEquals(1293678245000L, a2);
   }
 
-  /** Testing for public void java.util.Date.setDate(int)* */
+  /** Testing for public void java.util.Date.setDate(int). */
   public void testSetDate() {
     // We only go through dates from 0-28 here. There are some months that do
     // not
@@ -357,7 +357,7 @@ public class DateTest extends GWTTestCase {
     assertEquals(dateWithThirtyDays.getDate(), newDayNum - numDaysInOldMonth);
   }
 
-  /** Testing for public void java.util.Date.setHours(int)* */
+  /** Testing for public void java.util.Date.setHours(int). */
   public void testSetHours() {
     for (int i = 0; i < 24; i++) {
       Date accum0 = create();
@@ -366,7 +366,7 @@ public class DateTest extends GWTTestCase {
     }
   }
 
-  /** Testing for public void java.util.Date.setMinutes(int)* */
+  /** Testing for public void java.util.Date.setMinutes(int). */
   public void testSetMinutes() {
     for (int i = 0; i < 24; i++) {
       Date accum0 = create();
@@ -375,7 +375,7 @@ public class DateTest extends GWTTestCase {
     }
   }
 
-  /** Testing for public void java.util.Date.setMonth(int)* */
+  /** Testing for public void java.util.Date.setMonth(int). */
   public void testSetMonth() {
     for (int i = 0; i < 12; i++) {
       // We want to use a fixed date here. If we use the current date, the
@@ -393,7 +393,7 @@ public class DateTest extends GWTTestCase {
    * We want to test to see that if we are currently in a month with 31 days and
    * we set the month to one which has less than 31 days, that the month
    * returned by the date class will be one higher than the month that we
-   * originally set (according to the spec of java.util.date)
+   * originally set (according to the spec of java.util.date).
    */
   public void testSetInvalidMonthForDate() {
     int dayNum = 31;
@@ -405,7 +405,7 @@ public class DateTest extends GWTTestCase {
     assertEquals(dateWithThirtyOneDays.getDate(), dayNum - numDaysInNewMonth);
   }
 
-  /** Testing for public void java.util.Date.setSeconds(int)* */
+  /** Testing for public void java.util.Date.setSeconds(int). */
   public void testSetSeconds() {
     for (int i = 0; i < 24; i++) {
       Date accum0 = create();
@@ -414,7 +414,7 @@ public class DateTest extends GWTTestCase {
     }
   }
 
-  /** Testing for public void java.util.Date.setTime(long)* */
+  /** Testing for public void java.util.Date.setTime(long). */
   public void testSetTime() {
     long[] values = new long[] {-100000000000L, -100L, 0, 100L, 1000000000L};
     for (int i = 0; i < values.length; i++) {
@@ -424,7 +424,7 @@ public class DateTest extends GWTTestCase {
     }
   }
 
-  /** Testing for public void java.util.Date.setYear(int)* */
+  /** Testing for public void java.util.Date.setYear(int). */
   public void testSetYear() {
     for (int i = 1880; i < 2050; i++) {
       // We want to use a fixed date here. If we use the current date, the
@@ -455,7 +455,7 @@ public class DateTest extends GWTTestCase {
 
   /**
    * We want to test to see that if the date is Feb 29th (in a leap year) and we
-   * set the year to another leap year, that the month and day will be retained
+   * set the year to another leap year, that the month and day will be retained.
    */
   public void testSetValidLeapYearForDate() {
     int dayNum = 29;
@@ -469,7 +469,7 @@ public class DateTest extends GWTTestCase {
     assertEquals(leapYearDate.getDate(), dayNum);
   }
 
-  /** Testing for public java.lang.String java.util.Date.toGMTString()* */
+  /** Testing for public java.lang.String java.util.Date.toGMTString(). */
   public void testToGMTString() {
 
     // /////////////////////////////
@@ -487,7 +487,7 @@ public class DateTest extends GWTTestCase {
     assertEquals("30 Dec 2010 03:04:05 GMT", a2);
   }
 
-  /** Testing for public java.lang.String java.util.Date.toLocaleString()* */
+  /** Testing for public java.lang.String java.util.Date.toLocaleString(). */
   public void testToLocaleString() {
 
     // /////////////////////////////
@@ -504,7 +504,7 @@ public class DateTest extends GWTTestCase {
     assertTrue(a2.indexOf("2010") != -1);
   }
 
-  /** Date docs specify an exact format for toString() */
+  /** Date docs specify an exact format for toString(). */
   public void testToString() {
     // /////////////////////////////
     // Past
@@ -513,8 +513,8 @@ public class DateTest extends GWTTestCase {
     String s = d.toString();
 
     assertTrue("Bad format " + s, s.matches(TO_STRING_PATTERN));
-    assertEquals("Parsing returned unequal dates from " + s,
-        d, new Date(Date.parse(s)));
+    assertEquals("Parsing returned unequal dates from " + s, d, new Date(
+        Date.parse(s)));
 
     // /////////////////////////////
     // Future
@@ -523,11 +523,11 @@ public class DateTest extends GWTTestCase {
     s = d.toString();
 
     assertTrue("Bad format " + s, s.matches(TO_STRING_PATTERN));
-    assertEquals("Parsing returned unequal dates from " + s,
-        d, new Date(Date.parse(s)));
+    assertEquals("Parsing returned unequal dates from " + s, d, new Date(
+        Date.parse(s)));
   }
 
-  /** Testing for public static long java.util.Date.UTC(int,int,int,int,int,int)* */
+  /** Testing for public static long java.util.Date.UTC(int,int,int,int,int,int). */
   public void testUTC() {
 
     // /////////////////////////////

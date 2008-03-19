@@ -147,7 +147,7 @@ public class Cookies {
   }-*/;
 
   private static native void setCookieImpl(String name, String value,
-      long expires, String domain, String path, boolean secure) /*-{
+      double expires, String domain, String path, boolean secure) /*-{
     var c = encodeURIComponent(name) + '=' + encodeURIComponent(value);
     if ( expires )
       c += ';expires=' + (new Date(expires)).toGMTString();

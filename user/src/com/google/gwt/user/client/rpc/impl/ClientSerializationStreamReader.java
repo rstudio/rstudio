@@ -76,9 +76,13 @@ public final class ClientSerializationStreamReader extends
     return this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::results[--this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::index];
   }-*/;
 
-  public native long readLong() /*-{
-    return this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::results[--this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::index];
-  }-*/;
+  public long readLong() {
+    /*
+     * Sent as a string; if we tried to marshal as a number the JSON eval would
+     * lose precision. We use hex due to specially optimized code paths in Long.
+     */
+    return Long.parseLong(readString(), 16);
+  }
 
   public native short readShort() /*-{
     return this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::results[--this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::index];

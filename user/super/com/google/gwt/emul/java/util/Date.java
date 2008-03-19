@@ -36,15 +36,8 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
   };
 
-  // CHECKSTYLE_OFF: The underscore prefix is an old convention that could be
-  // easily replaced.
-  public static native long __parse(String s) /*-{
-    var d = Date.parse(s);
-    return isNaN(d) ? -1 : d;
-  }-*/;
-
   public static long parse(String s) {
-    long d = __parse(s);
+    long d = (long) parse0(s);
     if (d != -1) {
       return d;
     } else {
@@ -53,10 +46,11 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
   }
 
   // CHECKSTYLE_OFF: Matching the spec.
-  public static native long UTC(int year, int month, int date, int hrs,
-      int min, int sec) /*-{
-    return Date.UTC(year + 1900, month, date, hrs, min, sec);
-  }-*/;
+  public static long UTC(int year, int month, int date, int hrs,
+      int min, int sec) {
+    return (long) utc0(year, month, date, hrs, min, sec);
+  }
+  // CHECKSTYLE_ON
 
   /**
    *  Return the names for the days of the week as specified by the Date
@@ -88,6 +82,16 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
       return String.valueOf(number);
     }
   }
+
+  private static native double parse0(String s) /*-{
+    var d = Date.parse(s);
+    return isNaN(d) ? -1 : d;
+  }-*/;
+
+  private static native double utc0(int year, int month, int date, int hrs,
+      int min, int sec) /*-{
+    return Date.UTC(year + 1900, month, date, hrs, min, sec);
+  }-*/;
 
   public Date() {
     init();
@@ -166,9 +170,9 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
     return this.jsdate.getSeconds();
   }-*/;
 
-  public native long getTime() /*-{
-    return this.jsdate.getTime();
-  }-*/;
+  public long getTime() {
+    return (long) getTime0();
+  }
 
   public native int getTimezoneOffset() /*-{
     return this.jsdate.getTimezoneOffset();
@@ -199,17 +203,13 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
     this.jsdate.setMonth(month);
   }-*/;
 
-  // CHECKSTYLE_ON
-
   public native void setSeconds(int seconds) /*-{
     this.jsdate.setSeconds(seconds);
-  }-*/;;
-
-  public native void setTime(long time) /*-{
-    this.jsdate.setTime(time);
   }-*/;
 
-  // CHECKSTYLE_ON
+  public void setTime(long time) {
+    setTime0(time);
+  }
 
   public native void setYear(int year) /*-{
     this.jsdate.setFullYear(year + 1900);
@@ -259,8 +259,16 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
         + " " + d.getFullYear();
   }-*/;
 
+  private native double getTime0() /*-{
+    return this.jsdate.getTime();
+  }-*/;
+
   private native void init() /*-{
     this.jsdate = new Date();
+  }-*/;
+
+  private native void init(double date) /*-{
+    this.jsdate = new Date(date);
   }-*/;
 
   private native void init(int year, int month, int date, int hrs, int min,
@@ -270,7 +278,7 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
     this.jsdate.setHours(hrs, min, sec, 0);
   }-*/;
 
-  private native void init(long date) /*-{
-    this.jsdate = new Date(date);
+  private native void setTime0(double time) /*-{
+    this.jsdate.setTime(time);
   }-*/;
 }

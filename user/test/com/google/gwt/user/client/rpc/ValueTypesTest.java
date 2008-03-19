@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,8 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class ValueTypesTest extends GWTTestCase {
   private static final int TEST_DELAY = 5000;
+
+  private ValueTypesTestServiceAsync primitiveTypeTestService;
 
   public String getModuleName() {
     return "com.google.gwt.user.RPCSuite";
@@ -217,8 +219,7 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   /**
-   * Validate that NaNs (not-a-number, such as 0/0) propagate
-   * properly via RPC.
+   * Validate that NaNs (not-a-number, such as 0/0) propagate properly via RPC.
    */
   public void testDouble_NaN() {
     delayTestFinish(TEST_DELAY);
@@ -331,8 +332,7 @@ public class ValueTypesTest extends GWTTestCase {
   }
 
   /**
-   * Validate that NaNs (not-a-number, such as 0/0) propagate
-   * properly via RPC.
+   * Validate that NaNs (not-a-number, such as 0/0) propagate properly via RPC.
    */
   public void testFloat_NaN() {
     delayTestFinish(TEST_DELAY);
@@ -444,7 +444,7 @@ public class ValueTypesTest extends GWTTestCase {
     });
   }
 
-  public void disabledTestLong() {
+  public void testLong() {
     delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
     service.echo(Long.MAX_VALUE / 2, new AsyncCallback() {
@@ -456,16 +456,13 @@ public class ValueTypesTest extends GWTTestCase {
       public void onSuccess(Object result) {
         assertNotNull(result);
         long expected = Long.MAX_VALUE / 2;
-        // TODO: resolve off-by-one problem (probably just a side effect of
-        // loss of precision).
-        // ++expected;
         assertEquals(expected, ((Long) result).longValue());
         finishTest();
       }
     });
   }
 
-  public void disabledTestLong_MAX_VALUE() {
+  public void testLong_MAX_VALUE() {
     delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
     service.echo_MAX_VALUE(Long.MAX_VALUE, new AsyncCallback() {
@@ -482,7 +479,7 @@ public class ValueTypesTest extends GWTTestCase {
     });
   }
 
-  public void disabledTestLong_MIN_VALUE() {
+  public void testLong_MIN_VALUE() {
     delayTestFinish(TEST_DELAY);
     ValueTypesTestServiceAsync service = getServiceAsync();
     service.echo_MIN_VALUE(Long.MIN_VALUE, new AsyncCallback() {
@@ -558,6 +555,4 @@ public class ValueTypesTest extends GWTTestCase {
     }
     return primitiveTypeTestService;
   }
-
-  private ValueTypesTestServiceAsync primitiveTypeTestService;
 }
