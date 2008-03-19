@@ -199,6 +199,10 @@ public class StringTest extends GWTTestCase {
       char from = (char) (to + 5);
       assertEquals(toS(to), toS(from).replace(from, to));
     }
+    // issue 1480
+    assertEquals("example xd", "example xd".replace('\r', ' ').replace('\n', ' '));
+    assertEquals("dog food", "dog\u0120food".replace('\u0120', ' '));
+    assertEquals("ABABAB", "\u1111B\u1111B\u1111B".replace('\u1111', 'A'));
   }
 
   public void testReplaceAll() {

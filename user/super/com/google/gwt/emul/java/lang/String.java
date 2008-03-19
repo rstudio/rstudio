@@ -322,8 +322,9 @@ public final class String implements Comparable<String>, CharSequence,
   }-*/;
 
   public native String replace(char from, char to) /*-{
-    var code = @java.lang.Long::toHexString(J)(from);
-    return this.replace(RegExp("\\x" + code, "g"), String.fromCharCode(to));
+    var code = @java.lang.Integer::toHexString(I)(from);
+    code = "0000".substring(code.length) + code;
+    return this.replace(RegExp("\\u" + code, "g"), String.fromCharCode(to));
   }-*/;
 
   /**
