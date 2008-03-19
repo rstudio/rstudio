@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -164,6 +164,16 @@ public class Widget extends UIObject implements EventListener {
   protected void onUnload() {
   }
 
+  /**
+   * Gets the panel-defined layout data associated with this widget.
+   * 
+   * @return the widget's layout data
+   * @see #setLayoutData
+   */
+  Object getLayoutData() {
+    return layoutData;
+  }
+
   @Override
   void replaceElement(Element elem) {
     if (isAttached()) {
@@ -180,16 +190,6 @@ public class Widget extends UIObject implements EventListener {
       // attached to the document.
       DOM.setEventListener(elem, this);
     }
-  }
-
-  /**
-   * Gets the panel-defined layout data associated with this widget.
-   * 
-   * @return the widget's layout data
-   * @see #setLayoutData
-   */
-  Object getLayoutData() {
-    return layoutData;
   }
 
   /**

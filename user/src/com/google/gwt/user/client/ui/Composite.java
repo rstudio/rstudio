@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,6 +45,12 @@ public abstract class Composite extends Widget {
     return false;
   }
 
+  @Override
+  public void onBrowserEvent(Event event) {
+    // Delegate events to the widget.
+    widget.onBrowserEvent(event);
+  }
+
   /**
    * Provides subclasses access to the topmost widget that defines this
    * composite.
@@ -81,12 +87,6 @@ public abstract class Composite extends Widget {
 
     // Adopt.
     widget.setParent(this);
-  }
-
-  @Override
-  public void onBrowserEvent(Event event) {
-    // Delegate events to the widget.
-    widget.onBrowserEvent(event);
   }
 
   @Override

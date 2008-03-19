@@ -83,17 +83,13 @@ import com.google.gwt.user.client.Element;
  */
 public abstract class UIObject {
 
-  static final String SETELEMENT_TWICE_ERROR = "Element may only be set once";
-
-  static final String MISSING_ELEMENT_ERROR = "This UIObject's element is not set; "
-    + "you may be missing a call to either Composite.initWidget() or "
-    + "UIObject.setElement()";
-
   /**
    * The implementation of the set debug id method, which does nothing by
    * default.
    */
   public static class DebugIdImpl {
+    @SuppressWarnings("unused")
+    // parameters
     public void ensureDebugId(UIObject uiObject, String id) {
     }
   }
@@ -111,12 +107,18 @@ public abstract class UIObject {
 
   public static final String DEBUG_ID_PREFIX = "gwt-debug-";
 
+  static final String MISSING_ELEMENT_ERROR = "This UIObject's element is not set; "
+      + "you may be missing a call to either Composite.initWidget() or "
+      + "UIObject.setElement()";
+
+  static final String SETELEMENT_TWICE_ERROR = "Element may only be set once";
+
+  private static DebugIdImpl debugIdImpl = GWT.create(DebugIdImpl.class);
+
   private static final String EMPTY_STYLENAME_MSG = "Style names cannot be empty";
 
   private static final String NULL_HANDLE_MSG = "Null widget handle. If you "
       + "are creating a composite, ensure that initWidget() has been called.";
-
-  private static DebugIdImpl debugIdImpl = GWT.create(DebugIdImpl.class);
 
   public static native boolean isVisible(Element elem) /*-{
     return (elem.style.display != 'none');
@@ -702,12 +704,12 @@ public abstract class UIObject {
   /**
    * Called when the user sets the id using the {@link #ensureDebugId(String)}
    * method. Subclasses of {@link UIObject} can override this method to add IDs
-   * to their sub elements.  If a subclass does override this method, it should
+   * to their sub elements. If a subclass does override this method, it should
    * list the IDs (relative to the base ID), that will be applied to each sub
-   * {@link Element} with a short description.  For example:
+   * {@link Element} with a short description. For example:
    * <ul>
    * <li>-mysubelement = Applies to my sub element.</li>
-   * </ul> 
+   * </ul>
    * 
    * Subclasses should make a super call to this method to ensure that the ID of
    * the main element is set.
@@ -739,8 +741,8 @@ public abstract class UIObject {
   /**
    * Replaces this object's browser element.
    * 
-   * This method exists only to support a specific use-case in Image, and
-   * should not be used by other classes.
+   * This method exists only to support a specific use-case in Image, and should
+   * not be used by other classes.
    * 
    * @param elem the object's new element
    */
