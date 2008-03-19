@@ -205,7 +205,9 @@ public class UIObjectTest extends GWTTestCase {
       };
 
       w.getElement();
-      fail("Expected assertion failure");
+      if (UIObjectTest.class.desiredAssertionStatus()) {
+        fail("Expected assertion failure");
+      }
     } catch (AssertionError e) {
       assertEquals(UIObject.MISSING_ELEMENT_ERROR, e.getMessage());
     }
@@ -215,7 +217,9 @@ public class UIObjectTest extends GWTTestCase {
       };
 
       c.getElement();
-      fail("Expected assertion failure");
+      if (UIObjectTest.class.desiredAssertionStatus()) {
+        fail("Expected assertion failure");
+      }
     } catch (AssertionError e) {
       assertEquals(UIObject.MISSING_ELEMENT_ERROR, e.getMessage());
     }
@@ -230,7 +234,9 @@ public class UIObjectTest extends GWTTestCase {
 
     try {
       o.setElement(DOM.createSpan());
-      fail("Expected assertion failure");
+      if (UIObjectTest.class.desiredAssertionStatus()) {
+        fail("Expected assertion failure");
+      }
     } catch (AssertionError e) {
       assertEquals(UIObject.SETELEMENT_TWICE_ERROR, e.getMessage());
     }
