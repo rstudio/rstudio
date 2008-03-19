@@ -36,7 +36,7 @@ final class Stats {
   }-*/;
 
   static native JavaScriptObject makeTimeStat() /*-{
-    return {millis : @java.lang.System::currentTimeMillis()()};
+    return {millis : (new Date()).getTime()};
   }-*/;
 
   static native boolean stats(String moduleName, String system, String event,

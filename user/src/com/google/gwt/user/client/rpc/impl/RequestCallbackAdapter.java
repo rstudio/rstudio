@@ -143,7 +143,7 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
   /**
    * Used for stats recording.
    */
-  private final long requestId;
+  private final int requestId;
 
   /**
    * Instance which will read the expected return type out of the
@@ -158,7 +158,7 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
   private final SerializationStreamFactory streamFactory;
 
   public RequestCallbackAdapter(SerializationStreamFactory streamFactory,
-      String methodName, long requestId, AsyncCallback<T> callback,
+      String methodName, int requestId, AsyncCallback<T> callback,
       ResponseReader responseReader) {
     assert (streamFactory != null);
     assert (callback != null);

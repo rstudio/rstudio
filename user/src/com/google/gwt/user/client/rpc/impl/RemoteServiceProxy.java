@@ -37,11 +37,11 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
   /**
    * A global id to track any given request.
    */
-  private static long requestId;
+  private static int requestId;
 
-  public static native JavaScriptObject bytesStat(String method, long count,
-      long bytes) /*-{
-    var stat = @com.google.gwt.user.client.rpc.impl.RemoteServiceProxy::timeStat(Ljava/lang/String;J)(method, count);
+  public static native JavaScriptObject bytesStat(String method, int count,
+      int bytes) /*-{
+    var stat = @com.google.gwt.user.client.rpc.impl.RemoteServiceProxy::timeStat(Ljava/lang/String;I)(method, count);
     stat.bytes = bytes;
     return stat;
   }-*/;
@@ -55,26 +55,26 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
 
   /**
    * Always use this as {@link #isStatsAvailable()} &amp;&amp;
-   * {@link #stats(String, String, long)}.
+   * {@link #stats(String, String, int)}.
    */
   public static native boolean stats(String invocation, JavaScriptObject data) /*-{
     return $stats(@com.google.gwt.core.client.GWT::getModuleName()(), 'rpc',
       invocation, data);
   }-*/;
 
-  public static native JavaScriptObject timeStat(String method, long count) /*-{
+  public static native JavaScriptObject timeStat(String method, int count) /*-{
     return {
       id: count,
       method: method,
-      millis: @java.lang.System::currentTimeMillis()()
+      millis: (new Date()).getTime()
     };
   }-*/;
 
-  protected static long getNextRequestId() {
+  protected static int getNextRequestId() {
     return requestId++;
   }
 
-  protected static long getRequestId() {
+  protected static int getRequestId() {
     return requestId;
   }
 
@@ -222,7 +222,7 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
    */
   @SuppressWarnings("unused")
   protected <T> Request doInvoke(ResponseReader responseReader,
-      String methodName, long invocationCount, String requestData,
+      String methodName, int invocationCount, String requestData,
       AsyncCallback<T> callback) {
 
     if (getServiceEntryPoint() == null) {
