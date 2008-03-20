@@ -1,12 +1,12 @@
 /*
- * Copyright 2007 Google Inc.
- *
+ * Copyright 2008 Google Inc.
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -22,37 +22,37 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class AutoboxTest extends GWTTestCase {
 
-  private boolean unboxedBoolean = true;
-
-  private byte unboxedByte = (byte) 0xAB;
-
-  private char unboxedChar = 'c';
-
-  private short unboxedShort = 6550;
-
-  private int unboxedInt = 20000000;
-
-  private long unboxedLong = 1231231231231L;
-
-  private float unboxedFloat = 1.2F;
-
-  private double unboxedDouble = 1.2323;
-
   private Boolean boxedBoolean = Boolean.TRUE;
 
   private Byte boxedByte = new Byte((byte) 0xAB);
 
   private Character boxedChar = new Character('c');
 
-  private Short boxedShort = new Short((short) 6550);
+  private Double boxedDouble = new Double(1.2323);
+
+  private Float boxedFloat = new Float(1.2F);
 
   private Integer boxedInt = new Integer(20000000);
 
   private Long boxedLong = new Long(1231231231231L);
 
-  private Float boxedFloat = new Float(1.2F);
+  private Short boxedShort = new Short((short) 6550);
 
-  private Double boxedDouble = new Double(1.2323);
+  private boolean unboxedBoolean = true;
+
+  private byte unboxedByte = (byte) 0xAB;
+
+  private char unboxedChar = 'c';
+
+  private double unboxedDouble = 1.2323;
+
+  private float unboxedFloat = 1.2F;
+
+  private int unboxedInt = 20000000;
+
+  private long unboxedLong = 1231231231231L;
+
+  private short unboxedShort = 6550;
 
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
@@ -97,12 +97,12 @@ public class AutoboxTest extends GWTTestCase {
     assertTrue(unbox(unboxedDouble) == unboxedDouble);
   }
 
-  /* TODO: Determine whether we fully support the JLS spec in regards to
-   * caching of autoboxed values.
-   *
-  public void testCaching() {
-  }
-  */
+  /*
+   * TODO: Determine whether we fully support the JLS spec in regards to caching
+   * of autoboxed values.
+   * 
+   * public void testCaching() { }
+   */
 
   public void testUnboxing() {
     boolean boolean_ = boxedBoolean;
@@ -155,8 +155,12 @@ public class AutoboxTest extends GWTTestCase {
     return c;
   }
 
-  private Short box(short s) {
-    return s;
+  private Double box(double d) {
+    return d;
+  }
+
+  private Float box(float f) {
+    return f;
   }
 
   private Integer box(int i) {
@@ -167,12 +171,8 @@ public class AutoboxTest extends GWTTestCase {
     return l;
   }
 
-  private Float box(float f) {
-    return f;
-  }
-
-  private Double box(double d) {
-    return d;
+  private Short box(short s) {
+    return s;
   }
 
   private boolean unbox(Boolean b) {
@@ -187,8 +187,12 @@ public class AutoboxTest extends GWTTestCase {
     return c;
   }
 
-  private short unbox(Short s) {
-    return s;
+  private double unbox(Double d) {
+    return d;
+  }
+
+  private float unbox(Float f) {
+    return f;
   }
 
   private int unbox(Integer i) {
@@ -199,11 +203,7 @@ public class AutoboxTest extends GWTTestCase {
     return l;
   }
 
-  private float unbox(Float f) {
-    return f;
-  }
-
-  private double unbox(Double d) {
-    return d;
+  private short unbox(Short s) {
+    return s;
   }
 }
