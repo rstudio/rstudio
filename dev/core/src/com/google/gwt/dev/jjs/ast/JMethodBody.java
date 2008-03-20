@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,16 +25,20 @@ import java.util.List;
  */
 public class JMethodBody extends JAbstractMethodBody {
 
-  public final ArrayList <JLocal>locals = new ArrayList<JLocal>();
-  private JBlock body;
+  public final ArrayList<JLocal> locals = new ArrayList<JLocal>();
+  private JBlock block;
 
   public JMethodBody(JProgram program, SourceInfo info) {
     super(program, info);
-    body = new JBlock(program, info);
+    block = new JBlock(program, info);
+  }
+
+  public JBlock getBlock() {
+    return block;
   }
 
   public List<JStatement> getStatements() {
-    return body.statements;
+    return block.statements;
   }
 
   @Override
@@ -45,7 +49,7 @@ public class JMethodBody extends JAbstractMethodBody {
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       visitor.accept(locals);
-      body = (JBlock) visitor.accept(body);
+      block = (JBlock) visitor.accept(block);
     }
     visitor.endVisit(this, ctx);
   }

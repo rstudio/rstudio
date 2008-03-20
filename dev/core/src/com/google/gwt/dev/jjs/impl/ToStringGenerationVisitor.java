@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -608,7 +608,8 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JMethodBody x, Context ctx) {
     if (shouldPrintMethodBody()) {
-      return true;
+      accept(x.getBlock());
+      return false;
     } else {
       visitCollectionWithCommas(x.locals.iterator());
       return false;
