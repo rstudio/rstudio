@@ -47,6 +47,14 @@ public class EnhancedForLoopTest extends GWTTestCase {
     }
     assertTrue(out.equals(items));
 
+    // Tests auto-unboxing.
+    List<Long> itemsL = Arrays.asList(1L, 2L, 3L, 4L, 5L);
+    List<Long> outL = new ArrayList<Long>();
+    for (long l : items) {
+      outL.add(l);
+    }
+    assertTrue(outL.equals(itemsL));
+
     int[] unboxedItems = new int[] {1, 2, 3, 4, 5};
     out.clear();
 
@@ -54,6 +62,7 @@ public class EnhancedForLoopTest extends GWTTestCase {
       out.add(i);
     }
 
+    // Tests auto-boxing.
     for (int i = 0; i < 5; ++i) {
       assertTrue(out.get(i).intValue() == unboxedItems[i]);
     }

@@ -97,12 +97,17 @@ public class AutoboxTest extends GWTTestCase {
     assertTrue(unbox(unboxedDouble) == unboxedDouble);
   }
 
-  /*
-   * TODO: Determine whether we fully support the JLS spec in regards to caching
-   * of autoboxed values.
-   * 
-   * public void testCaching() { }
+  /**
+   * Verify that .valueOf() methods return identical references for types within
+   * certain ranges.
    */
+  public void testCaching() {
+    assertSame((byte) 3, (byte) 3);
+    assertSame('A', 'A');
+    assertSame((short) 120, (short) 120);
+    assertSame(-13, -13);
+    assertSame(7L, 7L);
+  }
 
   public void testUnboxing() {
     boolean boolean_ = boxedBoolean;
@@ -141,6 +146,52 @@ public class AutoboxTest extends GWTTestCase {
     assertTrue(box(boxedLong).longValue() == unboxedLong);
     assertTrue(box(boxedFloat).floatValue() == unboxedFloat);
     assertTrue(box(boxedDouble).doubleValue() == unboxedDouble);
+  }
+
+  public void testUnboxingDifferentType() {
+    {
+      short short_ = boxedByte;
+      assertTrue(short_ == boxedByte.byteValue());
+      int int_ = boxedByte;
+      assertTrue(int_ == boxedByte.byteValue());
+      long long_ = boxedByte;
+      assertTrue(long_ == boxedByte.byteValue());
+      float float_ = boxedByte;
+      assertTrue(float_ == boxedByte.byteValue());
+      double double_ = boxedByte;
+      assertTrue(double_ == boxedByte.byteValue());
+    }
+
+    {
+      int int_ = boxedShort;
+      assertTrue(int_ == boxedShort.shortValue());
+      long long_ = boxedShort;
+      assertTrue(long_ == boxedShort.shortValue());
+      float float_ = boxedShort;
+      assertTrue(float_ == boxedShort.shortValue());
+      double double_ = boxedShort;
+      assertTrue(double_ == boxedShort.shortValue());
+    }
+
+    {
+      int int_ = boxedChar;
+      assertTrue(int_ == boxedChar.charValue());
+      long long_ = boxedChar;
+      assertTrue(long_ == boxedChar.charValue());
+      float float_ = boxedChar;
+      assertTrue(float_ == boxedChar.charValue());
+      double double_ = boxedChar;
+      assertTrue(double_ == boxedChar.charValue());
+    }
+
+    {
+      long long_ = boxedInt;
+      assertTrue(long_ == boxedInt.intValue());
+      float float_ = boxedInt;
+      assertTrue(float_ == boxedInt.intValue());
+      double double_ = boxedInt;
+      assertTrue(double_ == boxedInt.intValue());
+    }
   }
 
   private Boolean box(boolean b) {

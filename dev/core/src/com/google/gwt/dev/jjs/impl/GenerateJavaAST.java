@@ -176,6 +176,7 @@ import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
 import org.eclipse.jdt.internal.compiler.util.Util;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -1193,13 +1194,7 @@ public class GenerateJavaAST {
       JExpression fieldRef = new JFieldRef(program, info, instance, field,
           currentClass);
 
-      if (type != field.getType()) {
-        // Must be a generic; insert a cast operation.
-        JReferenceType toType = (JReferenceType) type;
-        return new JCastOperation(program, info, toType, fieldRef);
-      } else {
-        return fieldRef;
-      }
+      return maybeCast(type, fieldRef);
     }
 
     JExpression processExpression(InstanceOfExpression x) {
@@ -1247,13 +1242,7 @@ public class GenerateJavaAST {
       // The arguments come first...
       addCallArgs(x.arguments, call, x.binding);
 
-      if (type != method.getType()) {
-        // Must be a generic; insert a cast operation.
-        JReferenceType toType = (JReferenceType) type;
-        return new JCastOperation(program, info, toType, call);
-      } else {
-        return call;
-      }
+      return maybeCast(type, call);
     }
 
     @SuppressWarnings("unused")
@@ -1763,17 +1752,26 @@ public class GenerateJavaAST {
             program.getIndexedMethod("Iterator.hasNext"));
 
         // T elementVar = (T) i$iterator.next();
-        JMethodCall nextCall = new JMethodCall(program, info,
+        elementDecl.initializer = new JMethodCall(program, info,
             createVariableRef(info, iteratorVar),
             program.getIndexedMethod("Iterator.next"));
 
-        JType elementType = elementDecl.getVariableRef().getType();
-        if (elementType != nextCall.getType()) {
-          // Must be a generic; insert a cast operation.
-          elementDecl.initializer = new JCastOperation(program, info,
-              elementType, nextCall);
-        } else {
-          elementDecl.initializer = nextCall;
+        // Perform any implicit reference type casts (due to generics).
+        // Note this occurs before potential unboxing.
+        if (elementVar.getType() != program.getTypeJavaLangObject()) {
+          TypeBinding collectionType;
+          try {
+            Field privateField = ForeachStatement.class.getDeclaredField("collectionElementType");
+            privateField.setAccessible(true);
+            collectionType = (TypeBinding) privateField.get(x);
+          } catch (Exception e) {
+            throw new InternalCompilerException(elementDecl,
+                "Failed to retreive collectionElementType through reflection",
+                e);
+          }
+          JType toType = (JType) typeMap.get(collectionType);
+          assert (toType instanceof JReferenceType);
+          elementDecl.initializer = maybeCast(toType, elementDecl.initializer);
         }
 
         body.statements.add(0, elementDecl);
@@ -1782,14 +1780,14 @@ public class GenerateJavaAST {
             Collections.<JExpressionStatement> emptyList(), body);
       }
 
-      // May need to box or unbox the assignment.
+      // May need to box or unbox the element assignment.
       if (x.elementVariableImplicitWidening != -1) {
         if ((x.elementVariableImplicitWidening & TypeIds.BOXING) != 0) {
           elementDecl.initializer = box(elementDecl.initializer,
-              (JClassType) elementVar.getType());
+              (JPrimitiveType) elementDecl.initializer.getType());
         } else if ((x.elementVariableImplicitWidening & TypeIds.UNBOXING) != 0) {
           elementDecl.initializer = unbox(elementDecl.initializer,
-              (JPrimitiveType) elementVar.getType());
+              (JClassType) elementDecl.initializer.getType());
         }
       }
       return result;
@@ -2106,12 +2104,14 @@ public class GenerateJavaAST {
       }
     }
 
-    private JExpression box(JExpression toBox, JClassType wrapperType) {
-      JPrimitiveType primitiveType = getPrimitiveTypeForWrapperType(wrapperType);
-      if (primitiveType == null) {
-        throw new InternalCompilerException(toBox,
-            "Failed to find primitive type for wrapper type '"
-                + wrapperType.getName() + "'", null);
+    private JExpression box(JExpression toBox, JPrimitiveType primitiveType) {
+      // Find the wrapper type for this primitive type.
+      String wrapperTypeName = primitiveType.getWrapperTypeName();
+      JClassType wrapperType = (JClassType) program.getFromTypeMap(wrapperTypeName);
+      if (wrapperType == null) {
+        throw new InternalCompilerException(toBox, "Cannot find wrapper type '"
+            + wrapperTypeName + "' associated with primitive type '"
+            + primitiveType.getName() + "'", null);
       }
 
       // Find the correct valueOf() method.
@@ -2143,18 +2143,6 @@ public class GenerateJavaAST {
           valueOfMethod);
       call.getArgs().add(toBox);
       return call;
-    }
-
-    private JExpression box(JExpression toBox, JPrimitiveType primitiveType) {
-      // Find the wrapper type for this primitive type.
-      String wrapperTypeName = primitiveType.getWrapperTypeName();
-      JClassType wrapperType = (JClassType) program.getFromTypeMap(wrapperTypeName);
-      if (wrapperType == null) {
-        throw new InternalCompilerException(toBox, "Cannot find wrapper type '"
-            + wrapperTypeName + "' associated with primitive type '"
-            + primitiveType.getName() + "'", null);
-      }
-      return box(toBox, wrapperType);
     }
 
     private JDeclarationStatement createDeclaration(SourceInfo info,
@@ -2378,6 +2366,17 @@ public class GenerateJavaAST {
           currentSeparatorPositions, 0, currentSeparatorPositions.length - 1);
       return new SourceInfo(x.sourceStart, x.sourceEnd, startLine,
           currentFileName);
+    }
+
+    private JExpression maybeCast(JType expected, JExpression expression) {
+      if (expected != expression.getType()) {
+        // Must be a generic; insert a cast operation.
+        JReferenceType toType = (JReferenceType) expected;
+        return new JCastOperation(program, expression.getSourceInfo(), toType,
+            expression);
+      } else {
+        return expression;
+      }
     }
 
     /**
@@ -2613,18 +2612,6 @@ public class GenerateJavaAST {
       JMethodCall unboxCall = new JMethodCall(program, toUnbox.getSourceInfo(),
           toUnbox, valueMethod);
       return unboxCall;
-    }
-
-    private JExpression unbox(JExpression toUnbox, JPrimitiveType primitiveType) {
-      String wrapperTypeName = primitiveType.getWrapperTypeName();
-      JClassType wrapperType = (JClassType) program.getFromTypeMap(wrapperTypeName);
-      if (wrapperType == null) {
-        throw new InternalCompilerException(toUnbox,
-            "Cannot find wrapper type '" + wrapperTypeName
-                + "' associated with primitive type '"
-                + primitiveType.getName() + "'", null);
-      }
-      return unbox(toUnbox, wrapperType);
     }
 
     private void writeEnumValueOfMethod(JEnumType type, JField mapField) {
