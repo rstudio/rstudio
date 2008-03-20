@@ -20,13 +20,20 @@ import com.google.gwt.dev.jjs.SourceInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A Java method implementation.
  */
 public final class JMethod extends JNode implements HasEnclosingType, HasName,
-    HasSettableType, CanBeAbstract, CanBeSetFinal, CanBeNative,
-    CanBeStatic {
+    HasSettableType, CanBeAbstract, CanBeSetFinal, CanBeNative, CanBeStatic {
+
+  private static void trace(String title, String code) {
+    System.out.println("---------------------------");
+    System.out.println(title + ":");
+    System.out.println("---------------------------");
+    System.out.println(code);
+  }
 
   /**
    * References to any methods which this method overrides. This should be an
@@ -46,6 +53,8 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
   private final String name;
   private ArrayList<JType> originalParamTypes;
   private JType returnType;
+  private boolean trace = false;
+  private boolean traceFirst = true;
 
   /**
    * These are only supposed to be constructed by JProgram.
@@ -71,6 +80,22 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     for (int i = 0; i < params.size(); ++i) {
       JParameter param = params.get(i);
       originalParamTypes.add(param.getType());
+    }
+
+    // Determine if we should trace this method.
+    if (enclosingType != null) {
+      String jsniSig = JProgram.getJsniSig(this);
+      Set<String> set = JProgram.traceMethods.get(enclosingType.getName());
+      if (set != null && (set.contains(name) || set.contains(jsniSig))) {
+        trace = true;
+      }
+      // Try the short name.
+      if (!trace && enclosingType != null) {
+        set = JProgram.traceMethods.get(enclosingType.getShortName());
+        if (set != null && (set.contains(name) || set.contains(jsniSig))) {
+          trace = true;
+        }
+      }
     }
   }
 
@@ -138,6 +163,14 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
+    String before = null;
+    if (trace && visitor instanceof JModVisitor) {
+      before = this.toSource();
+      if (traceFirst) {
+        traceFirst = false;
+        trace("Initial", before);
+      }
+    }
     if (visitor.visit(this, ctx)) {
       visitor.accept(params);
       if (body != null) {
@@ -145,6 +178,16 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
       }
     }
     visitor.endVisit(this, ctx);
+    if (trace && visitor instanceof JModVisitor) {
+      String after = this.toSource();
+      if (!after.equals(before)) {
+        String title = visitor.getClass().getSimpleName();
+        trace(title, after);
+      }
+    }
   }
 
+  void copyTraceStatusFrom(JMethod x) {
+    this.trace = x.trace;
+  }
 }

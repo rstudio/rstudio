@@ -278,7 +278,7 @@ public class GenerateJavaAST {
             for (int i = 0; i < type.methods.size(); ++i) {
               JMethod method = type.methods.get(i);
               if (method.getName().equals(methodName)) {
-                String jsniSig = getJsniSig(method);
+                String jsniSig = JProgram.getJsniSig(method);
                 if (jsniSig.equals(rhs)) {
                   return method;
                 } else if (almostMatches == null) {
@@ -385,18 +385,6 @@ public class GenerateJavaAST {
               "JSNI reference to something other than a field or method?", null);
         }
       }
-    }
-
-    private static String getJsniSig(JMethod method) {
-      StringBuffer sb = new StringBuffer();
-      sb.append(method.getName());
-      sb.append("(");
-      for (int i = 0; i < method.getOriginalParamTypes().size(); ++i) {
-        JType type = method.getOriginalParamTypes().get(i);
-        sb.append(type.getJsniSignatureName());
-      }
-      sb.append(")");
-      return sb.toString();
     }
 
     private static InternalCompilerException translateException(JNode node,
@@ -1190,6 +1178,7 @@ public class GenerateJavaAST {
     JExpression processExpression(FieldReference x) {
       SourceInfo info = makeSourceInfo(x);
       FieldBinding fieldBinding = x.binding;
+      JType type = (JType) typeMap.get(x.resolvedType);
       JField field;
       if (fieldBinding.declaringClass == null) {
         // probably array.length
@@ -1203,7 +1192,14 @@ public class GenerateJavaAST {
       JExpression instance = dispProcessExpression(x.receiver);
       JExpression fieldRef = new JFieldRef(program, info, instance, field,
           currentClass);
-      return fieldRef;
+
+      if (type != field.getType()) {
+        // Must be a generic; insert a cast operation.
+        JReferenceType toType = (JReferenceType) type;
+        return new JCastOperation(program, info, toType, fieldRef);
+      } else {
+        return fieldRef;
+      }
     }
 
     JExpression processExpression(InstanceOfExpression x) {
@@ -1753,7 +1749,7 @@ public class GenerateJavaAST {
          * </pre>
          */
         JLocal iteratorVar = createSyntheticLocal(info, elementVarName
-            + "$iterator", (JType) typeMap.get(x.collection.resolvedType));
+            + "$iterator", program.getIndexedType("Iterator"));
 
         List<JStatement> initializers = new ArrayList<JStatement>(1);
         // Iterator<T> i$iterator = collection.iterator()
@@ -1766,10 +1762,20 @@ public class GenerateJavaAST {
             createVariableRef(info, iteratorVar),
             program.getIndexedMethod("Iterator.hasNext"));
 
-        // T elementVar = i$array[i$index];
-        elementDecl.initializer = new JMethodCall(program, info,
+        // T elementVar = (T) i$iterator.next();
+        JMethodCall nextCall = new JMethodCall(program, info,
             createVariableRef(info, iteratorVar),
             program.getIndexedMethod("Iterator.next"));
+
+        JType elementType = elementDecl.getVariableRef().getType();
+        if (elementType != nextCall.getType()) {
+          // Must be a generic; insert a cast operation.
+          elementDecl.initializer = new JCastOperation(program, info,
+              elementType, nextCall);
+        } else {
+          elementDecl.initializer = nextCall;
+        }
+
         body.statements.add(0, elementDecl);
 
         result = new JForStatement(program, info, initializers, condition,

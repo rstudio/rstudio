@@ -50,6 +50,8 @@ public class JProgram extends JNode {
           "com.google.gwt.lang.Exceptions", "com.google.gwt.lang.LongLib",
           "com.google.gwt.lang.Stats",}));
 
+  static final Map<String, Set<String>> traceMethods = new HashMap<String, Set<String>>();
+
   private static final Set<String> INDEX_TYPES_SET = new HashSet<String>(
       Arrays.asList(new String[] {
           "java.lang.Object", "java.lang.String", "java.lang.Class",
@@ -67,6 +69,43 @@ public class JProgram extends JNode {
 
   static {
     INDEX_TYPES_SET.addAll(CODEGEN_TYPES_SET);
+
+    /*
+     * The format to trace methods is a colon-separated list of
+     * "className.methodName", such as "Hello.onModuleLoad:Foo.bar". You can
+     * fully-qualify a class to disambiguate classes, and you can also append
+     * the JSNI signature of the method to disambiguate overloads, ala
+     * "Foo.bar(IZ)".
+     */
+    String toTrace = System.getProperty("gwt.jjs.traceMethods");
+    if (toTrace != null) {
+      String[] split = toTrace.split(":");
+      for (String str : split) {
+        int pos = str.lastIndexOf('.');
+        if (pos > 0) {
+          String className = str.substring(0, pos);
+          String methodName = str.substring(pos + 1);
+          Set<String> set = traceMethods.get(className);
+          if (set == null) {
+            set = new HashSet<String>();
+            traceMethods.put(className, set);
+          }
+          set.add(methodName);
+        }
+      }
+    }
+  }
+
+  public static String getJsniSig(JMethod method) {
+    StringBuffer sb = new StringBuffer();
+    sb.append(method.getName());
+    sb.append("(");
+    for (int i = 0; i < method.getOriginalParamTypes().size(); ++i) {
+      JType type = method.getOriginalParamTypes().get(i);
+      sb.append(type.getJsniSignatureName());
+    }
+    sb.append(")");
+    return sb.toString();
   }
 
   public static boolean methodsDoMatch(JMethod method1, JMethod method2) {
@@ -701,6 +740,7 @@ public class JProgram extends JNode {
   public void putStaticImpl(JMethod method, JMethod staticImpl) {
     instanceToStaticMap.put(method, staticImpl);
     staticToInstanceMap.put(staticImpl, method);
+    staticImpl.copyTraceStatusFrom(method);
   }
 
   public JClassType rebind(JType type) {
