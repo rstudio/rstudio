@@ -82,7 +82,17 @@ public class DeadCodeElimination {
     private JClassType currentClass;
 
     /**
-     * Expressions whose result does not matter.
+     * Expressions whose result does not matter. A parent node should add any
+     * children whose result does not matter to this set during the parent's
+     * <code>visit()</code> method. It should then remove those children
+     * during its own <code>endVisit()</code>.
+     * 
+     * TODO: there's a latent bug here: some immutable nodes (such as literals)
+     * can be multiply referenced in the AST. In theory, one reference to that
+     * node could be put into this set while another reference actually contains
+     * a result that is needed. In practice this is okay at the moment since the
+     * existing uses of <code>ignoringExpressionOutput</code> are with mutable
+     * nodes.
      */
     private Set<JExpression> ignoringExpressionOutput = new HashSet<JExpression>();
 
@@ -378,6 +388,7 @@ public class DeadCodeElimination {
     public void endVisit(JMultiExpression x, Context ctx) {
       List<JExpression> exprs = x.exprs;
       if (exprs.size() > 1) {
+        // Remove the non-final children we previously added.
         List<JExpression> nonFinalChildren = exprs.subList(0, exprs.size() - 1);
         ignoringExpressionOutput.removeAll(nonFinalChildren);
       }
@@ -425,7 +436,7 @@ public class DeadCodeElimination {
       if (x.getOp().isModifying()) {
         lvalues.remove(x.getArg());
       }
-      if (x == ignoringExpressionOutput) {
+      if (ignoringExpressionOutput.contains(x)) {
         JPrefixOperation newOp = new JPrefixOperation(program,
             x.getSourceInfo(), x.getOp(), x.getArg());
         ctx.replaceMe(newOp);

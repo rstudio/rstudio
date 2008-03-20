@@ -149,7 +149,7 @@ public class LongEmulationNormalizer {
         case AND:
         case OR:
           throw new InternalCompilerException(
-              "AND and OR sould not have long operands");
+              "AND and OR should not have long operands");
 
         case ASG:
           // Nothing to do.
@@ -183,7 +183,7 @@ public class LongEmulationNormalizer {
           return "neg";
         case NOT:
           throw new InternalCompilerException(
-              "NOT sould not have a long operand");
+              "NOT should not have a long operand");
         case BIT_NOT:
           return "not";
         default:
