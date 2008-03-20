@@ -52,6 +52,11 @@ public class AbsolutePanel extends ComplexPanel {
    */
   public AbsolutePanel() {
     this(DOM.createDiv());
+    
+    // Setting the panel's position style to 'relative' causes it to be treated
+    // as a new positioning context for its children.
+    DOM.setStyleAttribute(getElement(), "position", "relative");
+    DOM.setStyleAttribute(getElement(), "overflow", "hidden");
   }
 
   /**
@@ -62,11 +67,6 @@ public class AbsolutePanel extends ComplexPanel {
    */
   AbsolutePanel(Element elem) {
     setElement(elem);
-
-    // Setting the panel's position style to 'relative' causes it to be treated
-    // as a new positioning context for its children.
-    DOM.setStyleAttribute(getElement(), "position", "relative");
-    DOM.setStyleAttribute(getElement(), "overflow", "hidden");
   }
 
   /**

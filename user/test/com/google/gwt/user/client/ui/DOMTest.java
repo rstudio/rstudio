@@ -21,7 +21,6 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
 
 /**
  * Tests standard DOM operations in the {@link DOM} class.
@@ -69,10 +68,6 @@ public class DOMTest extends GWTTestCase {
    * {@link DOM#getAbsoluteTop(Element)}.
    */
   public void testGetAbsolutePosition() {
-    // Since this test depends upon absolute positioning, clear the outer margin
-    // to ensure that the numbers are predictable.
-    Window.setMargin("0px");
-
     final int border = 8;
     final int margin = 9;
     final int padding = 10;
@@ -108,10 +103,6 @@ public class DOMTest extends GWTTestCase {
    * 
    */
   public void testGetAbsolutePositionWhenScrolled() {
-    // Since this test depends upon absolute positioning, clear the outer margin
-    // to ensure that the numbers are predictable.
-    Window.setMargin("0px");
-
     final Element outer = DOM.createDiv();
     final Element inner = DOM.createDiv();
 
