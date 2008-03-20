@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,8 +24,10 @@ import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchMethod;
 import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchObject;
 
 import org.eclipse.swt.browser.Browser;
-import org.eclipse.swt.browser.WebKit;
 import org.eclipse.swt.widgets.Shell;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Represents an individual browser window and all of its controls.
@@ -33,15 +35,17 @@ import org.eclipse.swt.widgets.Shell;
 public class BrowserWidgetSaf extends BrowserWidget {
   private class ExternalObject implements DispatchObject {
 
-    public int getField(String name) {
+    public int getField(int jsContext, String name) {
       if ("gwtonload".equalsIgnoreCase(name)) {
-        return LowLevelSaf.wrapFunction("gwtOnload", new GwtOnLoad());
+        return LowLevelSaf.wrapDispatchMethod(jsContext, "gwtOnload",
+            new GwtOnLoad());
       }
-      return 0;
+      // Native code eats the same ref it gave us.
+      return LowLevelSaf.getJsUndefined(jsContext);
     }
 
     public Object getTarget() {
-      return null;
+      return this;
     }
 
     public boolean gwtOnLoad(int scriptObject, String moduleName) {
@@ -57,8 +61,16 @@ public class BrowserWidgetSaf extends BrowserWidget {
         Integer key = new Integer(scriptObject);
         ModuleSpaceHost msh = getHost().createModuleSpaceHost(
             BrowserWidgetSaf.this, moduleName);
+
+        /*
+         * The global context for each window object is recorded during the
+         * windowScriptObjectAvailable event. Now that we know which window
+         * belongs to this module, we can resolve the correct global context.
+         */
+        final int globalContext = globalContexts.get(scriptObject).intValue();
+
         ModuleSpace moduleSpace = new ModuleSpaceSaf(msh, scriptObject,
-            moduleName, key);
+            globalContext, moduleName, key);
         attachModuleSpace(moduleSpace);
         return true;
       } catch (Throwable e) {
@@ -72,7 +84,14 @@ public class BrowserWidgetSaf extends BrowserWidget {
       }
     }
 
-    public void setField(String name, int value) {
+    public void setField(int jsContext, String name, int value) {
+      try {
+        // TODO (knorton): This should produce an error. The SetProperty
+        // callback on the native side should be changed to pass an exception
+        // array.
+      } finally {
+        LowLevelSaf.gcUnprotect(jsContext, value);
+      }
     }
 
     /**
@@ -88,17 +107,18 @@ public class BrowserWidgetSaf extends BrowserWidget {
       doUnload(key);
     }
   }
+
   private static final class GwtOnLoad implements DispatchMethod {
 
-    public int invoke(int execState, int jsthis, int[] jsargs) {
-      int jsFalse = LowLevelSaf.convertBoolean(false);
-      LowLevelSaf.pushExecState(execState);
+    public int invoke(int jsContext, int jsthis, int[] jsargs, int[] exception) {
+      int jsFalse = LowLevelSaf.toJsBoolean(jsContext, false);
+      LowLevelSaf.pushJsContext(jsContext);
       try {
-        if (!LowLevelSaf.isWrappedDispatch(jsthis)) {
+        if (!LowLevelSaf.isDispatchObject(jsContext, jsthis)) {
           return jsFalse;
         }
 
-        Object thisObj = LowLevelSaf.unwrapDispatch(jsthis);
+        Object thisObj = LowLevelSaf.unwrapDispatchObject(jsContext, jsthis);
         if (!(thisObj instanceof ExternalObject)) {
           return jsFalse;
         }
@@ -107,22 +127,27 @@ public class BrowserWidgetSaf extends BrowserWidget {
           return jsFalse;
         }
 
-        if (!LowLevelSaf.isObject(jsargs[0])) {
+        if (!LowLevelSaf.isJsObject(jsContext, jsargs[0])) {
           return jsFalse;
         }
-        if (!LowLevelSaf.isNull(jsargs[1])
-            && !LowLevelSaf.isString(jsargs[1])) {
+        if (!LowLevelSaf.isJsNull(jsContext, jsargs[1])
+            && !LowLevelSaf.isJsString(jsContext, jsargs[1])) {
           return jsFalse;
         }
-        String moduleName = LowLevelSaf.coerceToString(execState, jsargs[1]);
+        String moduleName = LowLevelSaf.toString(jsContext, jsargs[1]);
 
         boolean result = ((ExternalObject) thisObj).gwtOnLoad(jsargs[0],
             moduleName);
-        return LowLevelSaf.convertBoolean(result);
+        // Native code eats the same ref it gave us.
+        return LowLevelSaf.toJsBoolean(jsContext, result);
       } catch (Throwable e) {
         return jsFalse;
       } finally {
-        LowLevelSaf.popExecState(execState);
+        for (int jsarg : jsargs) {
+          LowLevelSaf.gcUnprotect(jsContext, jsarg);
+        }
+        LowLevelSaf.gcUnprotect(jsContext, jsthis);
+        LowLevelSaf.popJsContext(jsContext);
       }
     }
   }
@@ -133,26 +158,41 @@ public class BrowserWidgetSaf extends BrowserWidget {
     LowLevelSaf.init();
   }
 
+  private final Map<Integer, Integer> globalContexts = new HashMap<Integer, Integer>();
+
   public BrowserWidgetSaf(Shell shell, BrowserWidgetHost host) {
     super(shell, host);
 
     Browser.setWebInspectorEnabled(true);
-    browser.setUserAgentApplicationName("Safari 419.3");
     browser.addWindowScriptObjectListener(new Browser.WindowScriptObjectListener() {
 
       public void windowScriptObjectAvailable(int windowScriptObject) {
-        int sel = WebKit.sel_registerName("_imp");
-        int windowObject = WebKit.objc_msgSend(windowScriptObject, sel);
+        /*
+         * When GwtOnLoad fires we may not be able to get to the JSGlobalContext
+         * that corresponds to our module frame (since the call to GwtOnLoad
+         * could originate in the main page. So as each frame fires a
+         * windowScriptObjectAvailable event, we must store all window,
+         * globalContext pairs in a HashMap so we can later look up the global
+         * context by window object when GwtOnLoad is called.
+         */
+        int jsGlobalContext = browser.getGlobalContextForWindowObject(windowScriptObject);
+        int jsGlobalObject = LowLevelSaf.getGlobalJsObject(jsGlobalContext);
+        LowLevelSaf.pushJsContext(jsGlobalContext);
+
         try {
-          LowLevelSaf.jsLock();
-          final int globalExec = LowLevelSaf.getGlobalExecState(windowObject);
-          int external = LowLevelSaf.wrapDispatch(new ExternalObject());
-          LowLevelSaf.executeScript(globalExec,
+          globalContexts.put(Integer.valueOf(jsGlobalObject),
+              Integer.valueOf(jsGlobalContext));
+
+          int external = LowLevelSaf.wrapDispatchObject(jsGlobalContext,
+              new ExternalObject());
+          LowLevelSaf.executeScript(jsGlobalContext,
               "function __defineExternal(x) {" + "  window.external = x;" + "}");
-          LowLevelSaf.invoke(globalExec, windowObject, "__defineExternal",
-              windowObject, new int[] {external});
+          int ignoredResult = LowLevelSaf.invoke(jsGlobalContext,
+              jsGlobalObject, "__defineExternal", jsGlobalObject,
+              new int[] {external});
+          LowLevelSaf.gcUnprotect(jsGlobalContext, ignoredResult);
         } finally {
-          LowLevelSaf.jsUnlock();
+          LowLevelSaf.popJsContext(jsGlobalContext);
         }
       }
 

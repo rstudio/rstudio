@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,9 @@ import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchObject;
  */
 public class ModuleSpaceSaf extends ModuleSpace {
 
-  private final int window;
+  private final int globalObject;
+
+  private final int globalContext;
 
   /**
    * Constructs a browser interface for use with a global window object.
@@ -36,13 +38,15 @@ public class ModuleSpaceSaf extends ModuleSpace {
    * @param key unique key for this instance of the module
    */
   public ModuleSpaceSaf(ModuleSpaceHost host, int scriptGlobalObject,
-      String moduleName, Object key) {
+      int scriptGlobalContext, String moduleName, Object key) {
     super(host, moduleName, key);
 
     // Hang on to the global execution state.
     //
-    this.window = scriptGlobalObject;
-    LowLevelSaf.gcLock(scriptGlobalObject);
+    this.globalObject = scriptGlobalObject;
+    this.globalContext = scriptGlobalContext;
+    LowLevelSaf.gcProtect(LowLevelSaf.getCurrentJsContext(), scriptGlobalObject);
+    LowLevelSaf.retainJsGlobalContext(scriptGlobalContext);
   }
 
   public void createNative(String file, int line, String jsniSignature,
@@ -51,13 +55,13 @@ public class ModuleSpaceSaf extends ModuleSpace {
     // a new top-level function.
     //
     String newScript = createNativeMethodInjector(jsniSignature, paramNames, js);
-    LowLevelSaf.executeScriptWithInfo(LowLevelSaf.getGlobalExecState(window),
-        newScript, file, line);
+    LowLevelSaf.executeScriptWithInfo(globalContext, newScript, file, line);
   }
 
   @Override
   public void dispose() {
-    LowLevelSaf.gcUnlock(window, null);
+    LowLevelSaf.gcUnprotect(LowLevelSaf.getCurrentJsContext(), globalObject);
+    LowLevelSaf.releaseJsGlobalContext(globalContext);
     super.dispose();
   }
 
@@ -81,15 +85,19 @@ public class ModuleSpaceSaf extends ModuleSpace {
     int jsthis = jsValueThis.getJsValue();
 
     int argc = args.length;
-    int argv[] = new int[argc];
+    int[] argv = new int[argc];
+    // GC protect passed arguments on the Java stack for call duration.
+    JsValueSaf[] jsValueArgs = new JsValueSaf[argc]; 
     for (int i = 0; i < argc; ++i) {
-      JsValueSaf jsValue = new JsValueSaf();
+      JsValueSaf jsValue = jsValueArgs[i] = new JsValueSaf();
       JsValueGlue.set(jsValue, isolatedClassLoader, types[i], args[i]);
       argv[i] = jsValue.getJsValue();
     }
 
-    int curExecState = LowLevelSaf.getExecState();
-    int result = LowLevelSaf.invoke(curExecState, window, name, jsthis, argv);
+    final int curJsContext = LowLevelSaf.getCurrentJsContext();
+
+    int result = LowLevelSaf.invoke(curJsContext, globalObject, name, jsthis,
+        argv);
     return new JsValueSaf(result);
   }
 
@@ -100,7 +108,7 @@ public class ModuleSpaceSaf extends ModuleSpace {
 
   protected int wrapObjectAsJSObject(Object o) {
     if (o == null) {
-      return LowLevelSaf.jsNull();
+      return LowLevelSaf.getJsNull(LowLevelSaf.getCurrentJsContext());
     }
 
     DispatchObject dispObj;
@@ -109,6 +117,7 @@ public class ModuleSpaceSaf extends ModuleSpace {
     } else {
       dispObj = new WebKitDispatchAdapter(getIsolatedClassLoader(), o);
     }
-    return LowLevelSaf.wrapDispatch(dispObj);
+    return LowLevelSaf.wrapDispatchObject(LowLevelSaf.getCurrentJsContext(),
+        dispObj);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,6 @@ import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchObject;
 public class JsValueSaf extends JsValue {
 
   private static class JsCleanupSaf implements JsCleanup {
-    private final Throwable creationStackTrace;
     private final int jsval;
 
     /**
@@ -44,9 +43,8 @@ public class JsValueSaf extends JsValue {
      * 
      * @param jsval JSValue pointer as an integer
      */
-    public JsCleanupSaf(int jsval, Throwable creationStackTrace) {
+    public JsCleanupSaf(int jsval) {
       this.jsval = jsval;
-      this.creationStackTrace = creationStackTrace;
     }
 
     /*
@@ -55,14 +53,9 @@ public class JsValueSaf extends JsValue {
      * @see com.google.gwt.dev.shell.JsValue.JsCleanup#doCleanup()
      */
     public void doCleanup() {
-      LowLevelSaf.gcUnlock(jsval, creationStackTrace);
+      LowLevelSaf.gcUnprotect(LowLevelSaf.getCurrentJsContext(), jsval);
     }
   }
-
-  /*
-   * Stores a stack trace of the creation site for debugging.
-   */
-  private Throwable creationStackTrace;
 
   /*
    * Underlying JSValue* as an integer.
@@ -73,7 +66,7 @@ public class JsValueSaf extends JsValue {
    * Create a Java wrapper around an undefined JSValue.
    */
   public JsValueSaf() {
-    init(LowLevelSaf.jsUndefined());
+    init(LowLevelSaf.getJsUndefined(LowLevelSaf.getCurrentJsContext()));
   }
 
   /**
@@ -87,14 +80,14 @@ public class JsValueSaf extends JsValue {
 
   @Override
   public boolean getBoolean() {
-    int curExecState = LowLevelSaf.getExecState();
-    return LowLevelSaf.coerceToBoolean(curExecState, jsval);
+    int curJsContext = LowLevelSaf.getCurrentJsContext();
+    return LowLevelSaf.toBoolean(curJsContext, jsval);
   }
 
   @Override
   public int getInt() {
-    int curExecState = LowLevelSaf.getExecState();
-    return LowLevelSaf.coerceToInt(curExecState, jsval);
+    int currentJsContext = LowLevelSaf.getCurrentJsContext();
+    return LowLevelSaf.toInt(currentJsContext, jsval);
   }
 
   @Override
@@ -112,30 +105,31 @@ public class JsValueSaf extends JsValue {
 
   @Override
   public double getNumber() {
-    int curExecState = LowLevelSaf.getExecState();
-    return LowLevelSaf.coerceToDouble(curExecState, jsval);
+    int currentJsContext = LowLevelSaf.getCurrentJsContext();
+    return LowLevelSaf.toDouble(currentJsContext, jsval);
   }
 
   @Override
   public String getString() {
-    int curExecState = LowLevelSaf.getExecState();
-    return LowLevelSaf.coerceToString(curExecState, jsval);
+    final int currentJsContext = LowLevelSaf.getCurrentJsContext();
+    return LowLevelSaf.toString(currentJsContext, jsval);
   }
 
   @Override
   public String getTypeString() {
-    return LowLevelSaf.getTypeString(jsval);
+    return LowLevelSaf.getTypeString(LowLevelSaf.getCurrentJsContext(), jsval);
   }
 
   @Override
   public Object getWrappedJavaObject() {
-    DispatchObject obj = LowLevelSaf.unwrapDispatch(jsval);
+    DispatchObject obj = LowLevelSaf.unwrapDispatchObject(
+        LowLevelSaf.getCurrentJsContext(), jsval);
     return obj.getTarget();
   }
 
   @Override
   public boolean isBoolean() {
-    return LowLevelSaf.isBoolean(jsval);
+    return LowLevelSaf.isJsBoolean(LowLevelSaf.getCurrentJsContext(), jsval);
   }
 
   @Override
@@ -146,61 +140,60 @@ public class JsValueSaf extends JsValue {
 
   @Override
   public boolean isJavaScriptObject() {
-    return LowLevelSaf.isObject(jsval) && !LowLevelSaf.isWrappedDispatch(jsval);
+    final int currentJsContext = LowLevelSaf.getCurrentJsContext();
+    return LowLevelSaf.isJsObject(currentJsContext, jsval)
+        && !LowLevelSaf.isDispatchObject(currentJsContext, jsval);
   }
 
   @Override
   public boolean isNull() {
-    return LowLevelSaf.isNull(jsval);
+    return LowLevelSaf.isJsNull(LowLevelSaf.getCurrentJsContext(), jsval);
   }
 
   @Override
   public boolean isNumber() {
-    return LowLevelSaf.isNumber(jsval);
-  }
-
-  public boolean isObject() {
-    return LowLevelSaf.isObject(jsval);
+    return LowLevelSaf.isJsNumber(LowLevelSaf.getCurrentJsContext(), jsval);
   }
 
   @Override
   public boolean isString() {
-    return LowLevelSaf.isString(jsval);
+    return LowLevelSaf.isJsString(LowLevelSaf.getCurrentJsContext(), jsval);
   }
 
   @Override
   public boolean isUndefined() {
-    return LowLevelSaf.isUndefined(jsval);
+    return LowLevelSaf.isJsUndefined(LowLevelSaf.getCurrentJsContext(), jsval);
   }
 
   @Override
   public boolean isWrappedJavaObject() {
-    return LowLevelSaf.isWrappedDispatch(jsval);
+    return LowLevelSaf.isDispatchObject(LowLevelSaf.getCurrentJsContext(),
+        jsval);
   }
 
   @Override
   public void setBoolean(boolean val) {
-    setJsVal(LowLevelSaf.convertBoolean(val));
+    setJsVal(LowLevelSaf.toJsBoolean(LowLevelSaf.getCurrentJsContext(), val));
   }
 
   @Override
   public void setByte(byte val) {
-    setJsVal(LowLevelSaf.convertDouble(val));
+    setJsVal(LowLevelSaf.toJsNumber(LowLevelSaf.getCurrentJsContext(), val));
   }
 
   @Override
   public void setChar(char val) {
-    setJsVal(LowLevelSaf.convertDouble(val));
+    setJsVal(LowLevelSaf.toJsNumber(LowLevelSaf.getCurrentJsContext(), val));
   }
 
   @Override
   public void setDouble(double val) {
-    setJsVal(LowLevelSaf.convertDouble(val));
+    setJsVal(LowLevelSaf.toJsNumber(LowLevelSaf.getCurrentJsContext(), val));
   }
 
   @Override
   public void setInt(int val) {
-    setJsVal(LowLevelSaf.convertDouble(val));
+    setJsVal(LowLevelSaf.toJsNumber(LowLevelSaf.getCurrentJsContext(), val));
   }
 
   /**
@@ -210,28 +203,28 @@ public class JsValueSaf extends JsValue {
    * @param jsval the new value to set
    */
   public void setJsVal(int jsval) {
-    LowLevelSaf.gcUnlock(this.jsval, creationStackTrace);
+    LowLevelSaf.gcUnprotect(LowLevelSaf.getCurrentJsContext(), this.jsval);
     init(jsval);
   }
 
   @Override
   public void setNull() {
-    setJsVal(LowLevelSaf.jsNull());
+    setJsVal(LowLevelSaf.getJsNull(LowLevelSaf.getCurrentJsContext()));
   }
 
   @Override
   public void setShort(short val) {
-    setJsVal(LowLevelSaf.convertDouble(val));
+    setJsVal(LowLevelSaf.toJsNumber(LowLevelSaf.getCurrentJsContext(), val));
   }
 
   @Override
   public void setString(String val) {
-    setJsVal(LowLevelSaf.convertString(val));
+    setJsVal(LowLevelSaf.toJsString(LowLevelSaf.getCurrentJsContext(), val));
   }
 
   @Override
   public void setUndefined() {
-    setJsVal(LowLevelSaf.jsUndefined());
+    setJsVal(LowLevelSaf.getJsUndefined(LowLevelSaf.getCurrentJsContext()));
   }
 
   @Override
@@ -241,7 +234,7 @@ public class JsValueSaf extends JsValue {
      * Add another lock to this jsval, since both the other object and this one
      * will eventually release it.
      */
-    LowLevelSaf.gcLock(jsvalOther);
+    LowLevelSaf.gcProtect(LowLevelSaf.getCurrentJsContext(), jsvalOther);
     setJsVal(jsvalOther);
   }
 
@@ -256,12 +249,13 @@ public class JsValueSaf extends JsValue {
     } else {
       dispObj = new WebKitDispatchAdapter(cl, val);
     }
-    setJsVal(LowLevelSaf.wrapDispatch(dispObj));
+    setJsVal(LowLevelSaf.wrapDispatchObject(LowLevelSaf.getCurrentJsContext(),
+        dispObj));
   }
 
   @Override
   protected JsCleanup createCleanupObject() {
-    return new JsCleanupSaf(jsval, creationStackTrace);
+    return new JsCleanupSaf(jsval);
   }
 
   /**
@@ -272,12 +266,14 @@ public class JsValueSaf extends JsValue {
   private void init(int jsval) {
     this.jsval = jsval;
 
-    // only create and fill in the stack trace if we are debugging
-    if (LowLevelSaf.debugObjectCreation) {
-      this.creationStackTrace = new Throwable();
-      this.creationStackTrace.fillInStackTrace();
-    } else {
-      this.creationStackTrace = null;
+    // If protection checking is enabled, we check to see if the value we are
+    // accepting is protected as it should be.
+    if (LowLevelSaf.isJsValueProtectionCheckingEnabled()
+        && !LowLevelSaf.isGcProtected(jsval)) {
+      throw new RuntimeException("Cannot accepted unprotected JSValue ("
+          + Integer.toHexString(jsval) + ", "
+          + LowLevelSaf.getTypeString(LowLevelSaf.getCurrentJsContext(), jsval)
+          + ")");
     }
   }
 

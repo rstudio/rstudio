@@ -74,19 +74,7 @@
 		</and>
 	</condition>
 	<condition property="build.host.platform" value="mac">
-            <isset property="build.host.ismac" />
-	</condition>
-	<condition property="build.host.platform.detail" value="mac_10.5">
-		<and>
-			<isset property="build.host.ismac" />
-			<contains string="${os.version}" substring="10.5." />
-		</and>
-	</condition>
-	<condition property="build.host.platform.detail" value="mac_10.4">
-		<and>
-			<isset property="build.host.ismac" />
-			<contains string="${os.version}" substring="10.4." />
-		</and>
+		<isset property="build.host.ismac" />
 	</condition>
 
 	<condition property="build.host.iswindows">
@@ -97,17 +85,12 @@
 	</condition>
 	<fail unless="build.host.platform" message="Building on ${os.name} is not supported" />
 
-	<!-- for OS's that don't need to set a detail revision 
-             (i.e. as of 3mar08, all but MacOS) -->
-	<property name="build.host.platform.detail" 
-	          value="${build.host.platform}" />
-
 	<condition property="junit.platform.args" value="-XstartOnFirstThread" else="">
 		<isset property="build.host.ismac" />
 	</condition>
 
 	<!-- JUnit support -->
-	<property name="gwt.dev.staging.jar" location="${gwt.build.staging}/gwt-${build.host.platform.detail}-${gwt.version}/gwt-dev-${build.host.platform}.jar" />
+	<property name="gwt.dev.staging.jar" location="${gwt.build.staging}/gwt-${build.host.platform}-${gwt.version}/gwt-dev-${build.host.platform}.jar" />
 	<property name="gwt.junit.port" value="8888" />
 	<property name="gwt.junit.testcase.includes" value="**/*Suite.class"/>
 	

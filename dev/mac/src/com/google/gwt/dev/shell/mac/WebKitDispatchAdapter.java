@@ -61,26 +61,35 @@ class WebKitDispatchAdapter implements DispatchObject {
     this.classLoader = cl;
   }
 
-  public int getField(String name) {
-    int dispId = classLoader.getDispId(name);
-    if (dispId < 0) {
-      return LowLevelSaf.jsUndefined();
-    }
-    if (javaDispatch.isField(dispId)) {
-      Field field = javaDispatch.getField(dispId);
-      JsValueSaf jsValue = new JsValueSaf();
-      JsValueGlue.set(jsValue, classLoader, field.getType(),
-          javaDispatch.getFieldValue(dispId));
-      int jsval = jsValue.getJsValue();
-      return jsval;
-    } else {
-      MethodAdaptor method = javaDispatch.getMethod(dispId);
-      DispatchMethod dispMethod = (DispatchMethod) classLoader.getMethodDispatch(method);
-      if (dispMethod == null) {
-        dispMethod = new MethodDispatch(classLoader, method);
-        classLoader.putMethodDispatch(method, dispMethod);
+  public int getField(int jsContext, String name) {
+    LowLevelSaf.pushJsContext(jsContext);
+    try {
+      int dispId = classLoader.getDispId(name);
+      if (dispId < 0) {
+        return LowLevelSaf.getJsUndefined(jsContext);
       }
-      return LowLevelSaf.wrapFunction(method.toString(), dispMethod);
+      if (javaDispatch.isField(dispId)) {
+        Field field = javaDispatch.getField(dispId);
+        JsValueSaf jsValue = new JsValueSaf();
+        JsValueGlue.set(jsValue, classLoader, field.getType(),
+            javaDispatch.getFieldValue(dispId));
+        int jsval = jsValue.getJsValue();
+        // Native code will eat an extra ref.
+        LowLevelSaf.gcProtect(jsContext, jsval);
+        return jsval;
+      } else {
+        MethodAdaptor method = javaDispatch.getMethod(dispId);
+        DispatchMethod dispMethod = (DispatchMethod) classLoader.getMethodDispatch(method);
+        if (dispMethod == null) {
+          dispMethod = new MethodDispatch(classLoader, method);
+          classLoader.putMethodDispatch(method, dispMethod);
+        }
+        // Native code eats the same ref it gave us.
+        return LowLevelSaf.wrapDispatchMethod(jsContext, method.toString(),
+            dispMethod);
+      }
+    } finally {
+      LowLevelSaf.popJsContext(jsContext);
     }
   }
 
@@ -88,20 +97,25 @@ class WebKitDispatchAdapter implements DispatchObject {
     return javaDispatch.getTarget();
   }
 
-  public void setField(String name, int value) {
-    JsValue jsValue = new JsValueSaf(value);
-    int dispId = classLoader.getDispId(name);
-    if (dispId < 0) {
-      // TODO: expandos?
-      throw new RuntimeException("No such field " + name);
+  public void setField(int jsContext, String name, int value) {
+    LowLevelSaf.pushJsContext(jsContext);
+    try {
+      JsValue jsValue = new JsValueSaf(value);
+      int dispId = classLoader.getDispId(name);
+      if (dispId < 0) {
+        // TODO (knorton): We could allow expandos, but should we?
+        throw new RuntimeException("No such field " + name);
+      }
+      if (javaDispatch.isMethod(dispId)) {
+        throw new RuntimeException("Cannot reassign method " + name);
+      }
+      Field field = javaDispatch.getField(dispId);
+      Object val = JsValueGlue.get(jsValue, classLoader, field.getType(),
+          "setField");
+      javaDispatch.setFieldValue(dispId, val);
+    } finally {
+      LowLevelSaf.popJsContext(jsContext);
     }
-    if (javaDispatch.isMethod(dispId)) {
-      throw new RuntimeException("Cannot reassign method " + name);
-    }
-    Field field = javaDispatch.getField(dispId);
-    Object val = JsValueGlue.get(jsValue, classLoader, field.getType(),
-        "setField");
-    javaDispatch.setFieldValue(dispId, val);
   }
 
   @Override

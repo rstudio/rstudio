@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,525 +16,341 @@
 package com.google.gwt.dev.shell.mac;
 
 import com.google.gwt.dev.shell.LowLevel;
-import com.google.gwt.util.tools.Utility;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Stack;
 
 /**
- * Various low-level helper methods for dealing with Safari.
+ * Implements all native / low-level functions for Mac/Safari hosted mode.
  * 
- * The basic rule is that any JSValue passed to Java code from native code will
- * always be GC-protected in the native code and Java will always unprotect it
- * when the value is finalized. It should always be stored in a JsValue object
- * immediately to make sure it is cleaned up properly when it is no longer
- * needed. This approach is required to avoid a race condition where the value
- * is allocated in JNI code but could be garbage collected before Java takes
- * ownership of the value. Java values passed into JavaScript store a GlobalRef
- * of a WebKitDispatchAdapter or MethodDispatch objects, which are freed when
- * the JS value is finalized.
+ * TODO (knorton): Consider changing the APIs to not have to take a jsContext;
+ * instead the context could always be pulled from top-of-stack in the wrapper
+ * functions and passed into the native functions.
  */
 public class LowLevelSaf {
-  /**
-   * Flag to enable tracking of object creation sites. Package-protected to
-   * allow JsValueSaf to use it as well.
-   */
-  static final boolean debugObjectCreation = false;
 
   /**
-   * Provides interface for methods to be exposed on JavaScript side.
+   * Interface by which the native code interacts with a Java Method.
    */
   public interface DispatchMethod {
-    int invoke(int execState, int jsthis, int[] jsargs);
+    int invoke(int jsContext, int jsthis, int[] jsargs, int[] exception);
   }
 
   /**
-   * Provides interface for objects to be exposed on JavaScript side.
+   * Interface by which the native code interacts with a Java Object.
+   * 
+   * TODO (knorton): Add additional argument for an exception array (like in
+   * {@link DispatchMethod#invoke(int, int, int[], int[])}). An example of
+   * where this would be immediately helpful is in {@link BrowserWidgetSaf}.
    */
   public interface DispatchObject {
-    int getField(String name);
+    int getField(int jsContext, String name);
 
     Object getTarget();
 
-    void setField(String name, int value);
+    void setField(int jsContext, String name, int value);
   }
 
-  private static boolean sInitialized = false;
+  private static boolean jsValueProtectionCheckingEnabled;
 
-  private static ThreadLocal<Stack<Integer>> stateStack = new ThreadLocal<Stack<Integer>>();
+  private static boolean initialized = false;
 
-  public static boolean coerceToBoolean(int execState, int jsval) {
+  private static final ThreadLocal<Stack<Integer>> jsContextStack = new ThreadLocal<Stack<Integer>>();
+
+  public static int executeScript(int jsContext, String script) {
+    final int[] rval = new int[1];
+    if (!executeScriptWithInfoImpl(jsContext, script, null, 0, rval)) {
+      throw new RuntimeException("Failed to execute script: " + script);
+    }
+    return rval[0];
+  }
+
+  public static int executeScriptWithInfo(int jsContext, String script,
+      String url, int line) {
+    final int[] rval = new int[1];
+    if (!executeScriptWithInfoImpl(jsContext, script, url, line, rval)) {
+      throw new RuntimeException(url + "(" + line
+          + "): Failed to execute script: " + script);
+    }
+    return rval[0];
+  }
+
+  public static native void gcProtect(int jsContext, int jsValue);
+
+  public static native void gcUnprotect(int jsContext, int jsValue);
+
+  public static native int getArgc();
+
+  public static native String getArgv(int ix);
+
+  public static int getCurrentJsContext() {
+    Stack<Integer> stack = jsContextStack.get();
+    if (stack == null) {
+      throw new RuntimeException("No JSContext stack on this thread.");
+    }
+    return stack.peek().intValue();
+  }
+
+  public static int getGlobalJsObject(int jsContext) {
+    final int rval[] = new int[1];
+    if (!getGlobalJsObjectImpl(jsContext, rval)) {
+      throw new RuntimeException("Unable to get JavaScript global object.");
+    }
+    return rval[0];
+  }
+
+  public static native int getJsNull(int jsContext);
+
+  public static native int getJsUndefined(int jsContext);
+
+  public static String[] getProcessArgs() {
+    int argc = getArgc();
+    String[] result = new String[argc];
+    for (int i = 0; i < argc; ++i) {
+      result[i] = getArgv(i);
+    }
+    return result;
+  }
+
+  public static native String getTypeString(int jsContext, int jsValue);
+
+  public static synchronized void init() {
+    if (initialized) {
+      return;
+    }
+
+    LowLevel.init();
+    if (!initImpl(DispatchObject.class, DispatchMethod.class)) {
+      throw new RuntimeException("Unable to initialize LowLevelSaf");
+    }
+
+    jsValueProtectionCheckingEnabled = isJsValueProtectionCheckingEnabledImpl();
+
+    initialized = true;
+  }
+
+  public static int invoke(int jsContext, int jsScriptObject,
+      String methodName, int thisObj, int[] args) {
+
+    final int[] rval = new int[1];
+    if (!invokeImpl(jsContext, jsScriptObject, methodName, thisObj, args,
+        args.length, rval)) {
+      throw new RuntimeException("Failed to invoke native method: "
+          + methodName + " with " + args.length + " arguments.");
+    }
+    return rval[0];
+  }
+
+  public static boolean isDispatchObject(int jsContext, int jsValue) {
+    final boolean[] rval = new boolean[1];
+    if (!isDispatchObjectImpl(jsContext, jsValue, rval)) {
+      throw new RuntimeException("Failed isDispatchObject.");
+    }
+    return rval[0];
+  }
+
+  public static native boolean isJsBoolean(int jsContext, int jsValue);
+
+  public static native boolean isJsNull(int jsContext, int jsValue);
+
+  public static native boolean isJsNumber(int jsContext, int jsValue);
+
+  public static native boolean isJsObject(int jsContext, int jsValue);
+
+  public static boolean isJsString(int jsContext, int jsValue) {
+    final boolean rval[] = new boolean[1];
+    if (!isJsStringImpl(jsContext, jsValue, rval)) {
+      throw new RuntimeException("Failed isJsString.");
+    }
+    return rval[0];
+  }
+
+  public static native boolean isJsUndefined(int jsContext, int jsValue);
+
+  public static void popJsContext(int expectedJsContext) {
+    final Stack<Integer> stack = jsContextStack.get();
+    if (stack == null) {
+      throw new RuntimeException("No JSContext stack on this thread.");
+    }
+    if (stack.pop().intValue() != expectedJsContext) {
+      throw new RuntimeException(
+          "Popping JSContext returned an unxpected value.");
+    }
+  }
+
+  public static void pushJsContext(int jsContext) {
+    Stack<Integer> stack = jsContextStack.get();
+    if (stack == null) {
+      stack = new Stack<Integer>();
+      jsContextStack.set(stack);
+    }
+    stack.push(Integer.valueOf(jsContext));
+  }
+
+  public static native void releaseJsGlobalContext(int jsContext);
+
+  public static native void retainJsGlobalContext(int jsContext);
+
+  public static boolean toBoolean(int jsContext, int jsValue) {
     boolean[] rval = new boolean[1];
-    if (!_coerceToBoolean(execState, jsval, rval)) {
+    if (!toBooleanImpl(jsContext, jsValue, rval)) {
       throw new RuntimeException("Failed to coerce to boolean value.");
     }
     return rval[0];
   }
 
-  public static byte coerceToByte(int execState, int jsval) {
-    double[] rval = new double[1];
-    if (!_coerceToDouble(execState, jsval, rval)) {
-      throw new RuntimeException("Failed to coerce to byte value");
-    }
-    return (byte) rval[0];
+  public static byte toByte(int jsContext, int jsValue) {
+    return (byte) toNumber(jsContext, jsValue, "byte");
   }
 
-  public static char coerceToChar(int execState, int jsval) {
-    double[] rval = new double[1];
-    if (!_coerceToDouble(execState, jsval, rval)) {
-      throw new RuntimeException("Failed to coerce to char value");
-    }
-    return (char) rval[0];
+  public static char toChar(int jsContext, int jsValue) {
+    return (char) toNumber(jsContext, jsValue, "char");
   }
 
-  public static double coerceToDouble(int execState, int jsval) {
-    double[] rval = new double[1];
-    if (!_coerceToDouble(execState, jsval, rval)) {
-      throw new RuntimeException("Failed to coerce to double value");
+  public static double toDouble(int jsContext, int jsValue) {
+    return toNumber(jsContext, jsValue, "double");
+  }
+
+  public static float toFloat(int jsContext, int jsValue) {
+    return (float) toNumber(jsContext, jsValue, "float");
+  }
+
+  public static int toInt(int jsContext, int jsValue) {
+    return (int) toNumber(jsContext, jsValue, "int");
+  }
+
+  public static int toJsBoolean(int jsContext, boolean value) {
+    final int[] rval = new int[1];
+    if (!toJsBooleanImpl(jsContext, value, rval)) {
+      throw new RuntimeException("Failed to convert Boolean value: "
+          + String.valueOf(value));
     }
     return rval[0];
   }
 
-  public static float coerceToFloat(int execState, int jsval) {
-    double[] rval = new double[1];
-    if (!_coerceToDouble(execState, jsval, rval)) {
-      throw new RuntimeException("Failed to coerce to double value");
+  public static int toJsNumber(int jsContext, double value) {
+    final int[] rval = new int[1];
+    if (!toJsNumberImpl(jsContext, value, rval)) {
+      throw new RuntimeException("Failed to convert Double value: "
+          + String.valueOf(value));
     }
-    return (float) rval[0];
+    return rval[0];
   }
 
-  public static int coerceToInt(int execState, int jsval) {
-    double[] rval = new double[1];
-    if (!_coerceToDouble(execState, jsval, rval)) {
-      throw new RuntimeException("Failed to coerce to int value");
+  public static int toJsString(int jsContext, String value) {
+    final int[] rval = new int[1];
+    if (!toJsStringImpl(jsContext, value, rval)) {
+      throw new RuntimeException("Failed to convert String value: "
+          + String.valueOf(value));
     }
-    return (int) rval[0];
+    return rval[0];
   }
 
-  public static long coerceToLong(int execState, int jsval) {
-    double[] rval = new double[1];
-    if (!_coerceToDouble(execState, jsval, rval)) {
-      throw new RuntimeException("Failed to coerce to long value");
-    }
-    return (long) rval[0];
+  public static long toLong(int jsContext, int jsValue) {
+    return (long) toNumber(jsContext, jsValue, "long");
   }
 
-  public static short coerceToShort(int execState, int jsval) {
-    double[] rval = new double[1];
-    if (!_coerceToDouble(execState, jsval, rval)) {
-      throw new RuntimeException("Failed to coerce to short value");
-    }
-    return (short) rval[0];
+  public static short toShort(int jsContext, int jsValue) {
+    return (short) toNumber(jsContext, jsValue, "short");
   }
 
-  public static String coerceToString(int execState, int jsval) {
-    String[] rval = new String[1];
-    if (!_coerceToString(execState, jsval, rval)) {
+  public static String toString(int jsContext, int jsValue) {
+    final String[] rval = new String[1];
+    if (!toStringImpl(jsContext, jsValue, rval)) {
       throw new RuntimeException("Failed to coerce to String value");
     }
     return rval[0];
   }
 
-  public static int convertBoolean(boolean v) {
-    int[] rval = new int[1];
-    if (!_convertBoolean(v, rval)) {
-      throw new RuntimeException("Failed to convert Boolean value: "
-          + String.valueOf(v));
+  public static DispatchObject unwrapDispatchObject(int jsContext, int jsValue) {
+    final DispatchObject[] rval = new DispatchObject[1];
+    if (!unwrapDispatchObjectImpl(jsContext, jsValue, rval)) {
+      throw new RuntimeException("Failed to unwrap DispatchObject.");
     }
     return rval[0];
   }
 
-  public static int convertDouble(double v) {
-    int[] rval = new int[1];
-    if (!_convertDouble(v, rval)) {
-      throw new RuntimeException("Failed to convert Double value: "
-          + String.valueOf(v));
+  public static int wrapDispatchMethod(int jsContext, String name,
+      DispatchMethod dispatch) {
+    final int[] rval = new int[1];
+    if (!wrapDispatchMethodImpl(jsContext, name, dispatch, rval)) {
+      throw new RuntimeException("Failed to wrap DispatchMethod.");
     }
     return rval[0];
   }
 
-  public static int convertString(String v) {
-    int[] rval = new int[1];
-    if (!_convertString(v, rval)) {
-      throw new RuntimeException("Failed to convert String value: "
-          + String.valueOf(v));
+  public static int wrapDispatchObject(int jsContext, DispatchObject dispatcher) {
+    final int[] rval = new int[1];
+    if (!wrapDispatchObjectImpl(jsContext, dispatcher, rval)) {
+      throw new RuntimeException("Failed to wrap DispatchObject.");
     }
     return rval[0];
   }
 
+  static native boolean isGcProtected(int jsValue);
+
   /**
-   * Executes JavaScript code.
+   * Enables checking of JSValueRef protect/unprotect calls to ensure calls are
+   * properly matched. See ENABLE_JSVALUE_PROTECTION_CHECKING in trace.h to
+   * enable this feature.
    * 
-   * @param execState An opaque handle to the script frame window
-   * @param code The JavaScript code to execute
+   * @return whether JSValue protection checking is enabled
    */
-  public static void executeScript(int execState, String code) {
-    if (!_executeScript(execState, code)) {
-      throw new RuntimeException("Failed to execute script: " + code);
-    }
+  static boolean isJsValueProtectionCheckingEnabled() {
+    return jsValueProtectionCheckingEnabled;
   }
 
-  /**
-   * Executes JavaScript code, retaining file and line information.
-   * 
-   * @param execState An opaque handle to the script frame window
-   * @param code The JavaScript code to execute
-   * @param file A file name associated with the code
-   * @param line A line number associated with the code.
-   */
-  public static void executeScriptWithInfo(int execState, String code,
-      String file, int line) {
-    if (!_executeScriptWithInfo(execState, code, file, line)) {
-      throw new RuntimeException(file + "(" + line
-          + "): Failed to execute script: " + code);
-    }
-  }
+  private static native boolean executeScriptWithInfoImpl(int jsContext,
+      String script, String url, int line, int[] rval);
 
-  public static void gcLock(int jsval) {
-    _gcLock(jsval);
-  }
+  private static native boolean getGlobalJsObjectImpl(int jsContext, int[] rval);
 
-  public static void gcUnlock(int jsval, Throwable creationStackTrace) {
-    String str = null;
-    if (debugObjectCreation) {
-      if (creationStackTrace == null) {
-        creationStackTrace = new Throwable();
-        creationStackTrace.fillInStackTrace();
-      }
-      StringWriter sWriter = new StringWriter();
-      PrintWriter pWriter = new PrintWriter(sWriter);
-      creationStackTrace.printStackTrace(pWriter);
-      str = sWriter.toString();
-      // remove the header line, keep the first 5 lines of the stack trace
-      int begin = str.indexOf("\n") + 1;
-      int nextNL = begin - 1;
-      // loop precondition: nextNL points to a newline or 0 if there is none
-      for (int i = 0; i < 5; ++i) {
-        nextNL = str.indexOf("\n", nextNL + 1);
-        if (nextNL < 0) {
-          break;
-        }
-      }
-      // loop postcondition: nextNL points to the fifth newline or is -1
-      //   if there are not 5 newlines
-      if (nextNL < 0) {
-        str = str.substring(begin);
-      } else {
-        str = str.substring(begin, nextNL);
-      }
-    }
-    _gcUnlock(jsval, str);
-  }
+  private static native boolean initImpl(
+      Class<DispatchObject> dispatchObjectClass,
+      Class<DispatchMethod> dispatchMethodClass);
 
-  public static int getExecState() {
-    Stack<Integer> stack = stateStack.get();
-    if (stack == null) {
-      throw new RuntimeException("No thread local execState stack!");
-    }
-    Integer top = stack.peek();
-    return top.intValue();
-  }
+  private static native boolean invokeImpl(int jsContext, int jsScriptObject,
+      String methodName, int thisObj, int[] args, int argsLength, int[] rval);
 
-  public static int getGlobalExecState(int scriptObject) {
-    int[] rval = new int[1];
-    if (!_getGlobalExecState(scriptObject, rval)) {
-      throw new RuntimeException("Failed to getGlobalExecState.");
-    }
-    return rval[0];
-  }
+  private static native boolean isDispatchObjectImpl(int jsContext,
+      int jsValue, boolean[] rval);
 
-  public static String[] getProcessArgs() {
-    int argc = _getArgc();
-    String[] result = new String[argc];
-    for (int i = 0; i < argc; ++i) {
-      result[i] = _getArgv(i);
-    }
-    return result;
-  }
-
-  public static native String getTypeString(int jsval);
-
-  public static synchronized void init() {
-    // Force LowLevel initialization to load gwt-ll
-    LowLevel.init();
-    String libName = "gwt-webkit";
-    if (!sInitialized) {
-      try {
-        String installPath = Utility.getInstallPath();
-        try {
-          // try to make absolute
-          installPath = new File(installPath).getCanonicalPath();
-        } catch (IOException e) {
-          // ignore problems, failures will occur when the libs try to load
-        }
-
-        System.load(installPath + '/' + System.mapLibraryName(libName));
-        if (!_initNative(DispatchObject.class, DispatchMethod.class)) {
-          throw new RuntimeException("Unable to initialize " + libName);
-        }
-      } catch (UnsatisfiedLinkError e) {
-        StringBuffer sb = new StringBuffer();
-        sb.append("Unable to load required native library '" + libName + "'");
-        sb.append("\n\tYour GWT installation may be corrupt");
-        System.err.println(sb.toString());
-        throw new UnsatisfiedLinkError(sb.toString());
-      }
-      sInitialized = true;
-    }
-  }
-
-  /**
-   * Invokes a method implemented in JavaScript.
-   * 
-   * @param execState an opaque handle to the script frame window
-   * @param methodName the method name on jsthis to call
-   * @param jsthis a wrapped java object as a jsval
-   * @param jsargs the arguments to pass to the method
-   * @return the result of the invocation
-   */
-  public static int invoke(int execState, int scriptObject, String methodName,
-      int jsthis, int[] jsargs) {
-    int[] rval = new int[1];
-    if (!_invoke(execState, scriptObject, methodName, jsthis, jsargs.length,
-        jsargs, rval)) {
-      throw new RuntimeException("Failed to invoke native method: "
-          + methodName + " with " + jsargs.length + " arguments.");
-    }
-    return rval[0];
-  }
-
-  /**
-   * @param jsval the js value in question
-   * @return <code>true</code> if the value is a boolean value
-   */
-  public static native boolean isBoolean(int jsval);
-
-  /**
-   * @param jsval the js value in question
-   * @return <code>true</code> if the value is the null value
-   */
-  public static native boolean isNull(int jsval);
-
-  /**
-   * @param jsval the js value in question
-   * @return <code>true</code> if the value is a boolean value
-   */
-  public static native boolean isNumber(int jsval);
-
-  /**
-   * Is the jsval a JSObject?
-   * 
-   * @param jsval the value
-   * @return true if jsval is a JSObject
-   */
-  public static boolean isObject(int jsval) {
-    return _isObject(jsval);
-  }
-
-  /**
-   * Is the jsval a string primitive?
-   * 
-   * @param jsval the value
-   * @return true if the jsval is a string primitive
-   */
-  public static boolean isString(int jsval) {
-    return _isString(jsval);
-  }
-
-  /**
-   * @param jsval the js value in question
-   * @return <code>true</code> if the value is the undefined value
-   */
-  public static native boolean isUndefined(int jsval);
-
-  /**
-   * Is the jsval JSObject a wrapped DispatchObject?
-   * 
-   * @param jsval the value
-   * @return true if the JSObject is a wrapped DispatchObject
-   */
-  public static boolean isWrappedDispatch(int jsval) {
-    boolean[] rval = new boolean[1];
-    if (!_isWrappedDispatch(jsval, rval)) {
-      throw new RuntimeException("Failed isWrappedDispatch.");
-    }
-    return rval[0];
-  }
-
-  /**
-   * Locks the JavaScript interpreter into this thread; prevents the garbage
-   * collector from running. DON'T CALL THIS THREAD WITHOUT PUTTING A CALL TO
-   * JSUNLOCK INSIDE OF A FINALLY BLOCK OR YOU WILL LOCK THE BROWSER.
-   */
-  public static void jsLock() {
-    _jsLock();
-  }
-
-  /**
-   * @return the null value
-   */
-  public static native int jsNull();
-
-  /**
-   * @return the undefined value
-   */
-  public static native int jsUndefined();
-
-  /**
-   * Unlocks the JavaScript interpreter. Call this method from a finally block
-   * whenever you call jsLock.
-   */
-  public static void jsUnlock() {
-    _jsUnlock();
-  }
-
-  public static void popExecState(int execState) {
-    Stack<Integer> stack = stateStack.get();
-    if (stack == null) {
-      throw new RuntimeException("No thread local execState stack!");
-    }
-    Integer old = stack.pop();
-    if (old.intValue() != execState) {
-      throw new RuntimeException("The wrong execState was popped.");
-    }
-  }
-
-  public static void pushExecState(int execState) {
-    Stack<Integer> stack = stateStack.get();
-    if (stack == null) {
-      stack = new Stack<Integer>();
-      stateStack.set(stack);
-    }
-    stack.push(new Integer(execState));
-  }
-
-  /**
-   * Call this to raise an exception in JavaScript before returning control.
-   * 
-   * @param execState An opaque handle to the script frame window
-   */
-  public static void raiseJavaScriptException(int execState, int jsval) {
-    if (!_raiseJavaScriptException(execState, jsval)) {
-      throw new RuntimeException(
-          "Failed to raise Java Exception into JavaScript.");
-    }
-  }
-
-  /**
-   * Unwraps a wrapped DispatchObject.
-   * 
-   * @param jsval a value previously returned from wrapDispatch
-   * @return the original DispatchObject
-   */
-  public static DispatchObject unwrapDispatch(int jsval) {
-    DispatchObject[] rval = new DispatchObject[1];
-    if (!_unwrapDispatch(jsval, rval)) {
-      throw new RuntimeException("Failed to unwrapDispatch.");
-    }
-    return rval[0];
-  }
-
-  /**
-   * @param dispObj the DispatchObject to wrap
-   * @return the wrapped object as a jsval JSObject
-   */
-  public static int wrapDispatch(DispatchObject dispObj) {
-    int[] rval = new int[1];
-    if (!_wrapDispatch(dispObj, rval)) {
-      throw new RuntimeException("Failed to wrapDispatch.");
-    }
-    return rval[0];
-  }
-
-  /**
-   * @param name method name.
-   * @param dispMeth the DispatchMethod to wrap
-   * @return the wrapped method as a jsval JSObject
-   */
-  public static int wrapFunction(String name, DispatchMethod dispMeth) {
-    int[] rval = new int[1];
-    if (!_wrapFunction(name, dispMeth, rval)) {
-      throw new RuntimeException("Failed to wrapFunction.");
-    }
-    return rval[0];
-  }
-
-  /**
-   * Called from native code to do tracing.
-   * 
-   * @param s the string to trace
-   */
-  protected static void trace(String s) {
-    System.out.println(s);
-    System.out.flush();
-  }
-
-  // CHECKSTYLE_NAMING_OFF
-  private static native boolean _coerceToBoolean(int execState, int jsval,
+  private static native boolean isJsStringImpl(int jsContext, int jsValue,
       boolean[] rval);
 
-  private static native boolean _coerceToDouble(int execState, int jsval,
+  private static native boolean isJsValueProtectionCheckingEnabledImpl();
+
+  private static native boolean toBooleanImpl(int jsContext, int jsValue,
+      boolean[] rval);
+
+  private static native boolean toDoubleImpl(int jsContext, int jsValue,
       double[] rval);
 
-  private static native boolean _coerceToString(int execState, int jsval,
-      String[] rval);
+  private static native boolean toJsBooleanImpl(int jsContext, boolean value,
+      int[] rval);
 
-  private static native boolean _convertBoolean(boolean v, int[] rval);
+  private static native boolean toJsNumberImpl(int jsContext, double value,
+      int[] rval);
 
-  private static native boolean _convertDouble(double v, int[] rval);
+  private static native boolean toJsStringImpl(int jsContext, String value,
+      int[] rval);
 
-  private static native boolean _convertString(String v, int[] rval);
-
-  private static native boolean _executeScript(int execState, String code);
-
-  private static native boolean _executeScriptWithInfo(int execState,
-      String newScript, String file, int line);
-
-  private static native void _gcLock(int jsval);
-
-  private static native void _gcUnlock(int jsval, String trace);
-
-  private static native int _getArgc();
-
-  private static native String _getArgv(int i);
-
-  private static native boolean _getGlobalExecState(int scriptObject, int[] rval);
-
-  private static native boolean _initNative(Class<DispatchObject> dispObjClass,
-      Class<DispatchMethod> dispMethClass);
-
-  private static native boolean _invoke(int execState, int scriptObject,
-      String methodName, int jsthis, int jsargCount, int[] jsargs, int[] rval);
-
-  private static native boolean _isObject(int jsval);
-
-  private static native boolean _isString(int jsval);
-
-  private static native boolean _isWrappedDispatch(int jsval, boolean[] rval);
-
-  private static native void _jsLock();
-
-  private static native void _jsUnlock();
-
-  private static native boolean _raiseJavaScriptException(int execState,
-      int jsval);
-
-  private static native boolean _unwrapDispatch(int jsval, DispatchObject[] rval);
-
-  private static native boolean _wrapDispatch(DispatchObject dispObj, int[] rval);
-
-  private static native boolean _wrapFunction(String name,
-      DispatchMethod dispMeth, int[] rval);
-
-  // CHECKSTYLE_NAMING_OFF
-
-  /**
-   * Not instantiable.
-   */
-  private LowLevelSaf() {
+  private static double toNumber(int jsContext, int jsValue, String typeName) {
+    double[] rval = new double[1];
+    if (!toDoubleImpl(jsContext, jsValue, rval)) {
+      throw new RuntimeException("Failed to coerce to " + typeName + " value");
+    }
+    return rval[0];
   }
 
+  private static native boolean toStringImpl(int jsContext, int jsValue,
+      String[] rval);
+
+  private static native boolean unwrapDispatchObjectImpl(int jsContext,
+      int jsValue, DispatchObject[] rval);
+
+  private static native boolean wrapDispatchMethodImpl(int jsContext,
+      String name, DispatchMethod dispatch, int[] rval);
+
+  private static native boolean wrapDispatchObjectImpl(int jsContext,
+      DispatchObject obj, int[] rval);
 }

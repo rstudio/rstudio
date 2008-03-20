@@ -39,8 +39,9 @@ class MethodDispatch implements DispatchMethod {
     this.method = method;
   }
 
-  public int invoke(int execState, int jsthisInt, int[] jsargsInt) {
-    LowLevelSaf.pushExecState(execState);
+  public int invoke(int jsContext, int jsthisInt, int[] jsargsInt,
+      int[] exception) {
+    LowLevelSaf.pushJsContext(jsContext);
     JsValue jsthis = new JsValueSaf(jsthisInt);
     JsValue jsargs[] = new JsValue[jsargsInt.length];
     for (int i = 0; i < jsargsInt.length; ++i) {
@@ -51,7 +52,7 @@ class MethodDispatch implements DispatchMethod {
       Class<?>[] paramTypes = method.getParameterTypes();
       int argc = paramTypes.length;
       Object args[] = new Object[argc];
-      // too many arguments are ok: the extra will be silently ignored      
+      // too many arguments are ok: the extra will be silently ignored
       if (jsargs.length < argc) {
         throw new RuntimeException("Not enough arguments to " + method);
       }
@@ -75,23 +76,30 @@ class MethodDispatch implements DispatchMethod {
         }
         JsValueGlue.set(returnValue, classLoader, method.getReturnType(),
             result);
-        return returnValue.getJsValue();
+        int jsResult = returnValue.getJsValue();
+        // Native code will eat an extra ref.
+        LowLevelSaf.gcProtect(jsContext, jsResult);
+        return jsResult;
       } catch (InstantiationException e) {
         // If we get here, it means an exception is being thrown from
         // Java back into JavaScript
         ModuleSpace.setThrownJavaException(e.getCause());
-        LowLevelSaf.raiseJavaScriptException(execState, LowLevelSaf.jsNull());
-        return LowLevelSaf.jsUndefined();
+        // Native code eats the same ref it gave us.
+        exception[0] = LowLevelSaf.getJsNull(jsContext);
+        // Native code eats the same ref it gave us.
+        return LowLevelSaf.getJsUndefined(jsContext);
       } catch (InvocationTargetException e) {
         // If we get here, it means an exception is being thrown from
         // Java back into JavaScript
         Throwable t = e.getTargetException();
         ModuleSpace.setThrownJavaException(t);
-        LowLevelSaf.raiseJavaScriptException(execState, LowLevelSaf.jsNull());
-        return LowLevelSaf.jsUndefined();
+        // Native code eats the same ref it gave us.
+        exception[0] = LowLevelSaf.getJsNull(jsContext);
+        // Native code eats the same ref it gave us.
+        return LowLevelSaf.getJsUndefined(jsContext);
       }
     } finally {
-      LowLevelSaf.popExecState(execState);
+      LowLevelSaf.popJsContext(jsContext);
     }
   }
 }

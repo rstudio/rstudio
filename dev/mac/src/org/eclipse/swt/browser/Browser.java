@@ -1896,27 +1896,54 @@ public static void setWebInspectorEnabled(boolean isEnabled) {
 	}
 }
 
-public void setUserAgentApplicationName(String userAgent) {
-	char[] chars = userAgent.toCharArray();
-	int webView = WebKit.HIWebViewGetWebView(webViewHandle);
-	if (webView == 0) return;
-	int sel = WebKit.sel_registerName("setApplicationNameForUserAgent:");
-	if (sel == 0) return;
-	int userAgentStr = OS.CFStringCreateWithCharacters(0, chars, chars.length);
-	if (userAgentStr == 0) return;
-	try {
-		WebKit.objc_msgSend(webView, sel, userAgentStr);
-	} finally {
-		OS.CFRelease(userAgentStr);
-	}
-}
-
 public void setNeedsDisplay(boolean value) {
 	int webView = WebKit.HIWebViewGetWebView(webViewHandle);
 	if (webView == 0) return;
 	int sel = WebKit.sel_registerName("setNeedsDisplay:");
 	if (sel == 0) return;
 	WebKit.objc_msgSend(webView, sel, (value)?1:0);
+}
+
+private static int getGlobalContextForWindowObject(int frame,
+    int windowObject, int childFramesSel, int countSel, int windowObjectSel,
+    int objectAtIndexSel) {
+  int frameWindowObject = WebKit.objc_msgSend(frame, windowObjectSel);
+  if (frameWindowObject == 0) return 0;
+  if (frameWindowObject == windowObject) return frame;
+
+  int childFrames = WebKit.objc_msgSend(frame, childFramesSel);
+  int count = WebKit.objc_msgSend(childFrames, countSel);
+  for (int i = 0; i < count; ++i) {
+    int child = WebKit.objc_msgSend(childFrames, objectAtIndexSel, i);
+    if (child == 0) continue;
+    int foundFrame = getGlobalContextForWindowObject(child, windowObject,
+        childFramesSel, countSel, windowObjectSel, objectAtIndexSel);
+    if (foundFrame != 0)  return foundFrame;
+  }
+  return 0;
+}
+
+// Finds a JSGlobalContextRef by searching the WebFrame tree for
+// a particular WebScriptObject (objective-c wrapper around the
+// global object).
+public int getGlobalContextForWindowObject(int windowObject) {
+  int childFramesSel = WebKit.sel_registerName("childFrames");
+  int countSel = WebKit.sel_registerName("count");
+  int windowObjectSel = WebKit.sel_registerName("windowObject");
+  int objectAtIndexSel = WebKit.sel_registerName("objectAtIndex:");
+  int mainFrameSel = WebKit.sel_registerName("mainFrame");
+  int globalContextSel = WebKit.sel_registerName("globalContext");
+  if (childFramesSel == 0 || countSel == 0 || windowObjectSel == 0
+      || objectAtIndexSel == 0 || mainFrameSel == 0 || globalContextSel == 0)
+    return 0;
+  int webViewRef = WebKit.HIWebViewGetWebView(webViewHandle);
+  if (webViewRef == 0) return 0;
+  int mainFrame = WebKit.objc_msgSend(webViewRef, mainFrameSel);
+  if (mainFrame == 0) return 0;
+  int frame = getGlobalContextForWindowObject(mainFrame, windowObject, childFramesSel,
+      countSel, windowObjectSel, objectAtIndexSel);
+  if (frame == 0) return 0;
+  return WebKit.objc_msgSend(frame, globalContextSel);
 }
 
 WindowScriptObjectListener[] windowScriptObjectListeners = new WindowScriptObjectListener[0];

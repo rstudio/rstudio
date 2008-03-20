@@ -1,6 +1,5 @@
 <project name="dist-windows" default="build" basedir=".">
 	<property name="dist.platform" value="windows" />
-	<property name="dist.platform.detail" value="windows" />
 	<import file="../common.ant.xml" />
 	<property name="project.dist" location="${gwt.build.dist}/${project.distname}.zip" />
 
