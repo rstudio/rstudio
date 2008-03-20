@@ -44,7 +44,7 @@
 			<sequential>
 				<mkdir dir="${sample.build}/www" />
 				<java dir="${sample.build}" classname="com.google.gwt.dev.GWTCompiler" classpath="src:${sample.build}/bin:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
-					<jvmarg value="-Xmx128M"/>
+					<jvmarg value="-Xmx256M"/>
 					<arg value="-out" />
 					<arg file="${sample.build}/www" />
 					<arg value="com.google.gwt.sample.${sample.package}.${sample.module}" />
