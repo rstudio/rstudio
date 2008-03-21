@@ -2,26 +2,26 @@
 	<!-- Inherit the core Web Toolkit stuff. -->
 	<inherits name="com.google.gwt.core.Core"/>
 	<inherits name='com.google.gwt.user.User'/>
-  <inherits name="com.google.gwt.i18n.I18N"/>
+	<inherits name="com.google.gwt.i18n.I18N"/>
 
-  <!-- Enable Animations -->
-  <set-property name="gwt.enableAnimations" value="true"/> 
-  <set-property name="gwt.enableWidgetAnimations" value="true"/> 
+	<!-- Enable Animations -->
+	<set-property name="gwt.enableAnimations" value="true"/> 
+	<set-property name="gwt.enableWidgetAnimations" value="true"/> 
 
 	<!-- Enable debug ID. -->
-  <inherits name="com.google.gwt.user.Debug"/>
-  <set-property name="gwt.enableDebugId" value="true"/> 
+	<inherits name="com.google.gwt.user.Debug"/>
+	<set-property name="gwt.enableDebugId" value="true"/> 
 
 	<!-- Specify the app entry point class. -->
 	<entry-point class='com.google.gwt.sample.showcase.client.Showcase'/>
 
-  <!-- Internationalization support. -->
-  <extend-property name="locale" values="en"/>
-  <extend-property name="locale" values="ar"/>
-  <extend-property name="locale" values="fr"/>
-  <extend-property name="locale" values="zh"/>
+	<!-- Internationalization support. -->
+	<extend-property name="locale" values="en"/>
+	<extend-property name="locale" values="ar"/>
+	<extend-property name="locale" values="fr"/>
+	<extend-property name="locale" values="zh"/>
 
-  <!-- Include style sheets. -->
-  <stylesheet src="GWT-default.css"/>
-  <stylesheet src="Showcase.css"/>
+	<!-- Include style sheets. -->
+	<stylesheet src="GWT-default.css"/>
+	<stylesheet src="Showcase.css"/>
 </module>
