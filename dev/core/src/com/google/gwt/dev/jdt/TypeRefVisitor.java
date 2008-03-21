@@ -19,6 +19,7 @@ import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.ast.ArrayQualifiedTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.ArrayTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.MessageSend;
 import org.eclipse.jdt.internal.compiler.ast.ParameterizedQualifiedTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.ParameterizedSingleTypeReference;
@@ -26,6 +27,7 @@ import org.eclipse.jdt.internal.compiler.ast.QualifiedTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.SingleTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.Wildcard;
 import org.eclipse.jdt.internal.compiler.lookup.ArrayBinding;
+import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
@@ -40,79 +42,84 @@ public abstract class TypeRefVisitor extends ASTVisitor {
 
   @Override
   public void endVisit(ArrayQualifiedTypeReference x, BlockScope scope) {
-    maybeDispatch(scope, x.resolvedType);
+    maybeDispatch(scope, x, x.resolvedType);
   }
 
   @Override
   public void endVisit(ArrayQualifiedTypeReference x, ClassScope scope) {
-    maybeDispatch(scope, x.resolvedType);
+    maybeDispatch(scope, x, x.resolvedType);
   }
 
   @Override
   public void endVisit(ArrayTypeReference x, BlockScope scope) {
-    maybeDispatch(scope, x.resolvedType);
+    maybeDispatch(scope, x, x.resolvedType);
   }
 
   @Override
   public void endVisit(ArrayTypeReference x, ClassScope scope) {
-    maybeDispatch(scope, x.resolvedType);
+    maybeDispatch(scope, x, x.resolvedType);
   }
 
   @Override
   public void endVisit(MessageSend messageSend, BlockScope scope) {
     if (messageSend.binding.isStatic()) {
-      maybeDispatch(scope, messageSend.actualReceiverType);
+      maybeDispatch(scope, messageSend, messageSend.actualReceiverType);
     }
   }
 
   @Override
   public void endVisit(ParameterizedQualifiedTypeReference x, BlockScope scope) {
-    maybeDispatch(scope, x.resolvedType);
+    maybeDispatch(scope, x, x.resolvedType);
   }
 
   @Override
   public void endVisit(ParameterizedQualifiedTypeReference x, ClassScope scope) {
-    maybeDispatch(scope, x.resolvedType);
+    maybeDispatch(scope, x, x.resolvedType);
   }
 
   @Override
   public void endVisit(ParameterizedSingleTypeReference x, BlockScope scope) {
-    maybeDispatch(scope, x.resolvedType);
+    maybeDispatch(scope, x, x.resolvedType);
   }
 
   @Override
   public void endVisit(ParameterizedSingleTypeReference x, ClassScope scope) {
-    maybeDispatch(scope, x.resolvedType);
+    maybeDispatch(scope, x, x.resolvedType);
   }
 
   @Override
   public void endVisit(QualifiedTypeReference x, BlockScope scope) {
-    maybeDispatch(scope, x.resolvedType);
+    maybeDispatch(scope, x, x.resolvedType);
   }
 
   @Override
   public void endVisit(QualifiedTypeReference x, ClassScope scope) {
-    maybeDispatch(scope, x.resolvedType);
+    maybeDispatch(scope, x, x.resolvedType);
   }
 
   @Override
   public void endVisit(SingleTypeReference x, BlockScope scope) {
-    maybeDispatch(scope, x.resolvedType);
+    maybeDispatch(scope, x, x.resolvedType);
   }
 
   @Override
   public void endVisit(SingleTypeReference x, ClassScope scope) {
-    maybeDispatch(scope, x.resolvedType);
+    maybeDispatch(scope, x, x.resolvedType);
   }
 
   @Override
   public void endVisit(Wildcard x, BlockScope scope) {
-    maybeDispatch(scope, x.resolvedType);
+    maybeDispatch(scope, x, x.resolvedType);
   }
 
   @Override
   public void endVisit(Wildcard x, ClassScope scope) {
-    maybeDispatch(scope, x.resolvedType);
+    maybeDispatch(scope, x, x.resolvedType);
+  }
+
+  @SuppressWarnings("unused")
+  protected void onBinaryTypeRef(BinaryTypeBinding referencedType,
+      CompilationUnitDeclaration unitOfReferrer, Expression expression) {
   }
 
   protected abstract void onTypeRef(SourceTypeBinding referencedType,
@@ -128,13 +135,19 @@ public abstract class TypeRefVisitor extends ASTVisitor {
     return (CompilationUnitScope) scope;
   }
 
-  private void maybeDispatch(Scope referencedFrom, TypeBinding binding) {
+  private void maybeDispatch(Scope referencedFrom, Expression expression,
+      TypeBinding binding) {
     if (binding instanceof SourceTypeBinding) {
       SourceTypeBinding type = (SourceTypeBinding) binding;
       CompilationUnitScope from = findUnitScope(referencedFrom);
       onTypeRef(type, from.referenceContext);
     } else if (binding instanceof ArrayBinding) {
-      maybeDispatch(referencedFrom, ((ArrayBinding) binding).leafComponentType);
+      maybeDispatch(referencedFrom, expression,
+          ((ArrayBinding) binding).leafComponentType);
+    } else if (binding instanceof BinaryTypeBinding) {
+      CompilationUnitScope from = findUnitScope(referencedFrom);
+      onBinaryTypeRef((BinaryTypeBinding) binding, from.referenceContext,
+          expression);
     } else {
       // We don't care about other cases.
     }

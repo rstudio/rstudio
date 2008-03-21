@@ -179,6 +179,8 @@ public abstract class AbstractCompiler {
 
       JSORestrictionsChecker.check(cud);
 
+      BinaryTypeReferenceRestrictionsChecker.check(cud);
+
       // Optionally remember this cud.
       //
       if (cuds != null) {
