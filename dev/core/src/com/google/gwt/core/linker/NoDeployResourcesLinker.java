@@ -18,15 +18,11 @@ package com.google.gwt.core.linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.linker.ArtifactSet;
-import com.google.gwt.dev.linker.EmittedArtifact;
 import com.google.gwt.dev.linker.GeneratedResource;
 import com.google.gwt.dev.linker.Linker;
 import com.google.gwt.dev.linker.LinkerContext;
 import com.google.gwt.dev.linker.LinkerOrder;
-import com.google.gwt.dev.linker.PublicResource;
 import com.google.gwt.dev.linker.LinkerOrder.Order;
-
-import java.util.SortedSet;
 
 /**
  * This class prevents generated resources whose partial path begins with
@@ -47,8 +43,6 @@ public class NoDeployResourcesLinker extends Linker {
 
     ArtifactSet toReturn = new ArtifactSet(artifacts);
 
-    SortedSet<EmittedArtifact> search = toReturn.find(PublicResource.class);
-    
     for (GeneratedResource artifact : toReturn.find(GeneratedResource.class)) {
       if (artifact.getPartialPath().startsWith(PREFIX)) {
         toReturn.remove(artifact);
