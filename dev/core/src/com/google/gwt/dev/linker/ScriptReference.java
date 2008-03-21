@@ -18,10 +18,39 @@ package com.google.gwt.dev.linker;
 /**
  * An external script file referenced in the module manifest.
  */
-public interface ModuleScriptResource extends ModuleResource {
+public abstract class ScriptReference extends Artifact<ScriptReference> {
+  private final String src;
+
+  protected ScriptReference(Class<? extends Linker> linkerType, String src) {
+    super(linkerType);
+    this.src = src;
+  }
+
   /**
    * The <code>src</code> attribute of the resource. This string is returned
    * raw and may be a partial path or a URL.
    */
-  String getSrc();
+  public final String getSrc() {
+    return src;
+  }
+
+  @Override
+  public final int hashCode() {
+    return getSrc().hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "<script src='" + getSrc() + "'>";
+  }
+
+  @Override
+  protected final int compareToComparableArtifact(ScriptReference o) {
+    return getSrc().compareTo(o.getSrc());
+  }
+
+  @Override
+  protected final Class<ScriptReference> getComparableArtifactType() {
+    return ScriptReference.class;
+  }
 }

@@ -13,11 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.linker;
+package com.google.gwt.core.linker;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.About;
+import com.google.gwt.dev.linker.ArtifactSet;
+import com.google.gwt.dev.linker.LinkerContext;
+import com.google.gwt.dev.linker.LinkerOrder;
+import com.google.gwt.dev.linker.LinkerOrder.Order;
+import com.google.gwt.dev.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.Utility;
@@ -28,31 +33,35 @@ import java.io.IOException;
  * Implements the canonical GWT bootstrap sequence that loads the GWT module in
  * a separate iframe.
  */
+@LinkerOrder(Order.PRIMARY)
 public class IFrameLinker extends SelectionScriptLinker {
-
-  @Override
-  protected String getCompilationExtension(TreeLogger logger,
-      LinkerContext context) {
-    return ".cache.html";
-  }
 
   public String getDescription() {
     return "Standard";
   }
 
   @Override
-  protected void doEmitArtifacts(TreeLogger logger, LinkerContext context)
-      throws UnableToCompleteException {
-    super.doEmitArtifacts(logger, context);
+  public ArtifactSet link(TreeLogger logger, LinkerContext context,
+      ArtifactSet artifacts) throws UnableToCompleteException {
+    ArtifactSet toReturn = super.link(logger, context, artifacts);
 
     try {
       // Add hosted mode iframe contents
-      String hostedHtml = Utility.getFileFromClassPath("com/google/gwt/dev/linker/hosted.html");
-      doEmit(logger, context, Util.getBytes(hostedHtml), "hosted.html");
+      // TODO move hosted.html into gwt-user if HostedModeLinker goes away
+      String hostedHtml = Utility.getFileFromClassPath("com/google/gwt/dev/linker/impl/hosted.html");
+      toReturn.add(emitBytes(logger, Util.getBytes(hostedHtml), "hosted.html"));
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to copy support resource", e);
       throw new UnableToCompleteException();
     }
+
+    return toReturn;
+  }
+
+  @Override
+  protected String getCompilationExtension(TreeLogger logger,
+      LinkerContext context) {
+    return ".cache.html";
   }
 
   @Override
@@ -110,7 +119,7 @@ public class IFrameLinker extends SelectionScriptLinker {
   @Override
   protected String getSelectionScriptTemplate(TreeLogger logger,
       LinkerContext context) {
-    return "com/google/gwt/dev/linker/IFrameTemplate.js";
+    return "com/google/gwt/core/linker/IFrameTemplate.js";
   }
 
 }

@@ -18,10 +18,39 @@ package com.google.gwt.dev.linker;
 /**
  * An external stylesheet referenced in the module manifest.
  */
-public interface ModuleStylesheetResource extends ModuleResource {
+public abstract class StylesheetReference extends Artifact<StylesheetReference> {
+  private final String src;
+
+  protected StylesheetReference(Class<? extends Linker> linkerType, String src) {
+    super(linkerType);
+    this.src = src;
+  }
+
   /**
    * The <code>src</code> attribute of the resource. This string is returned
    * raw and may be a partial path or a URL.
    */
-  String getSrc();
+  public final String getSrc() {
+    return src;
+  }
+
+  @Override
+  public final int hashCode() {
+    return getSrc().hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "<style src='" + getSrc() + "'>";
+  }
+
+  @Override
+  protected final int compareToComparableArtifact(StylesheetReference o) {
+    return getSrc().compareTo(o.getSrc());
+  }
+
+  @Override
+  protected Class<StylesheetReference> getComparableArtifactType() {
+    return StylesheetReference.class;
+  }
 }

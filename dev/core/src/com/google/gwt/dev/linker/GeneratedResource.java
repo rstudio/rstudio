@@ -18,6 +18,9 @@ package com.google.gwt.dev.linker;
 /**
  * A resource generated during the compilation process by a Generator.
  */
-public interface GeneratedResource extends ModuleResource {
-  String getPartialPath();
+public abstract class GeneratedResource extends EmittedArtifact {
+  protected GeneratedResource(Class<? extends Linker> linkerType,
+      String partialPath) {
+    super(linkerType, partialPath);
+  }
 }

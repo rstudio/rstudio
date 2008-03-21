@@ -18,6 +18,9 @@ package com.google.gwt.dev.linker;
 /**
  * A resource in the module's public path.
  */
-public interface PublicResource extends ModuleResource {
-  String getPartialPath();
+public abstract class PublicResource extends EmittedArtifact {
+  protected PublicResource(Class<? extends Linker> linkerType,
+      String partialPath) {
+    super(linkerType, partialPath);
+  }
 }

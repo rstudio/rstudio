@@ -13,16 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.linker;
+package com.google.gwt.core.linker;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.About;
+import com.google.gwt.dev.linker.LinkerContext;
+import com.google.gwt.dev.linker.LinkerOrder;
+import com.google.gwt.dev.linker.LinkerOrder.Order;
+import com.google.gwt.dev.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.util.DefaultTextOutput;
 
 /**
  * Generates a cross-site compatible bootstrap sequence.
  */
+@LinkerOrder(Order.PRIMARY)
 public class XSLinker extends SelectionScriptLinker {
 
   public String getDescription() {
@@ -90,6 +95,6 @@ public class XSLinker extends SelectionScriptLinker {
   @Override
   protected String getSelectionScriptTemplate(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException {
-    return "com/google/gwt/dev/linker/XSTemplate.js";
+    return "com/google/gwt/core/linker/XSTemplate.js";
   }
 }

@@ -66,7 +66,7 @@ public class NoDeployTest extends GWTTestCase {
 
   public void testNoDeploy() throws RequestException {
     if (!GWT.isScript()) {
-      // LinkerContextShims aren't used in hosted-mode
+      // Linkers aren't used in hosted-mode
       return;
     }
 

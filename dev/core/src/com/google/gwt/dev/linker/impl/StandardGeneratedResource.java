@@ -15,21 +15,33 @@
  */
 package com.google.gwt.dev.linker.impl;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.linker.GeneratedResource;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 
 /**
  * The standard implementation of {@link GeneratedResource}.
  */
-public class StandardGeneratedResource extends StandardModuleResource implements
-    GeneratedResource {
+public class StandardGeneratedResource extends GeneratedResource {
+  private final URL url;
 
   public StandardGeneratedResource(String partialPath, URL url) {
-    super(partialPath, url);
+    super(StandardLinkerContext.class, partialPath);
+    this.url = url;
   }
 
-  public String getPartialPath() {
-    return getId();
+  @Override
+  public InputStream getContents(TreeLogger logger)
+      throws UnableToCompleteException {
+    try {
+      return url.openStream();
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Unable to open file", e);
+      throw new UnableToCompleteException();
+    }
   }
 }

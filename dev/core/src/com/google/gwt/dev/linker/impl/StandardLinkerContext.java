@@ -17,6 +17,7 @@ package com.google.gwt.dev.linker.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.GWTCompiler;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.cfg.Script;
@@ -38,43 +39,39 @@ import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
-import com.google.gwt.dev.linker.CompilationResult;
+import com.google.gwt.dev.linker.ArtifactSet;
+import com.google.gwt.dev.linker.EmittedArtifact;
 import com.google.gwt.dev.linker.GeneratedResource;
 import com.google.gwt.dev.linker.Linker;
 import com.google.gwt.dev.linker.LinkerContext;
-import com.google.gwt.dev.linker.LinkerContextShim;
-import com.google.gwt.dev.linker.ModuleScriptResource;
-import com.google.gwt.dev.linker.ModuleStylesheetResource;
+import com.google.gwt.dev.linker.LinkerOrder;
 import com.google.gwt.dev.linker.PublicResource;
 import com.google.gwt.dev.linker.SelectionProperty;
+import com.google.gwt.dev.linker.LinkerOrder.Order;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Util;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedSet;
+import java.util.Stack;
 import java.util.TreeSet;
 
 /**
  * An implementation of {@link LinkerContext} that is initialized from a
  * {@link ModuleDef}.
  */
-public class StandardLinkerContext implements LinkerContext {
+public class StandardLinkerContext extends Linker implements LinkerContext {
 
   /**
    * Applies the {@link JsStringInterner} optimization to each top-level
@@ -95,18 +92,16 @@ public class StandardLinkerContext implements LinkerContext {
     }
   }
 
-  private final File compilationsDir;
-  private final SortedSet<GeneratedResource> generatedResources;
-  private final Map<String, GeneratedResource> generatedResourcesByName = new HashMap<String, GeneratedResource>();
-  private final JJSOptions jjsOptions;
+  static final Comparator<SelectionProperty> SELECTION_PROPERTY_COMPARATOR = new Comparator<SelectionProperty>() {
+    public int compare(SelectionProperty o1, SelectionProperty o2) {
+      return o1.getName().compareTo(o2.getName());
+    }
+  };
 
-  /**
-   * This determines where a call to {@link #commit(TreeLogger, OutputStream)}
-   * will write to. It's intended to be updated by
-   * {@link #invokeLinker(TreeLogger, String, Linker)} so that each Linker will
-   * write into a different output directory.
-   */
-  private File linkerOutDir;
+  private final ArtifactSet artifacts = new ArtifactSet();
+  private final File compilationsDir;
+  private final JJSOptions jjsOptions;
+  private final List<Class<? extends Linker>> linkerClasses;
   private final String moduleFunctionName;
   private final String moduleName;
 
@@ -115,32 +110,28 @@ public class StandardLinkerContext implements LinkerContext {
    * compilation.
    */
   private final File moduleOutDir;
-  private final Set<String> openPaths = new HashSet<String>();
-  private final Map<ByteArrayOutputStream, File> outs = new IdentityHashMap<ByteArrayOutputStream, File>();
   private final SortedSet<SelectionProperty> properties;
   private final Map<String, StandardSelectionProperty> propertiesByName = new HashMap<String, StandardSelectionProperty>();
-  private final SortedSet<PublicResource> publicResources;
-  private final Map<String, PublicResource> publicResourcesByName = new HashMap<String, PublicResource>();
   private final Map<String, StandardCompilationResult> resultsByStrongName = new HashMap<String, StandardCompilationResult>();
-  private final SortedSet<ModuleScriptResource> scriptResources;
-  private final List<Class<? extends LinkerContextShim>> shimClasses;
-  private final SortedSet<ModuleStylesheetResource> stylesheetResources;
 
   public StandardLinkerContext(TreeLogger logger, ModuleDef module,
-      File outDir, File generatorDir, JJSOptions jjsOptions)
-      throws UnableToCompleteException {
+      File moduleOutDir, File generatorDir, JJSOptions jjsOptions) {
     logger = logger.branch(TreeLogger.DEBUG,
         "Constructing StandardLinkerContext", null);
 
     this.jjsOptions = jjsOptions;
     this.moduleFunctionName = module.getFunctionName();
     this.moduleName = module.getName();
-    this.moduleOutDir = outDir;
-    this.shimClasses = new ArrayList<Class<? extends LinkerContextShim>>(
-        module.getLinkerContextShims());
+    this.moduleOutDir = moduleOutDir;
+    this.linkerClasses = new ArrayList<Class<? extends Linker>>(
+        module.getActiveLinkers());
+    linkerClasses.add(module.getActivePrimaryLinker());
 
     if (moduleOutDir != null) {
-      compilationsDir = new File(moduleOutDir, ".gwt-compiler/compilations");
+      compilationsDir = new File(moduleOutDir.getParentFile(),
+          GWTCompiler.GWT_COMPILER_DIR + File.separator + moduleName
+              + File.separator + "compilations");
+
       Util.recursiveDelete(compilationsDir, true);
       compilationsDir.mkdirs();
       logger.log(TreeLogger.SPAM, "compilationsDir: "
@@ -161,34 +152,25 @@ public class StandardLinkerContext implements LinkerContext {
     }
     properties = Collections.unmodifiableSortedSet(mutableProperties);
 
-    SortedSet<ModuleScriptResource> scripts = new TreeSet<ModuleScriptResource>(
-        SCRIPT_RESOURCE_COMPARATOR);
     for (Script script : module.getScripts()) {
-      scripts.add(new StandardScriptResource(script.getSrc(),
+      artifacts.add(new StandardScriptReference(script.getSrc(),
           module.findPublicFile(script.getSrc())));
       logger.log(TreeLogger.SPAM, "Added script " + script.getSrc(), null);
     }
-    scriptResources = Collections.unmodifiableSortedSet(scripts);
 
-    SortedSet<ModuleStylesheetResource> styles = new TreeSet<ModuleStylesheetResource>(
-        STYLE_RESOURCE_COMPARATOR);
     for (String style : module.getStyles()) {
-      styles.add(new StandardStylesheetResource(style,
+      artifacts.add(new StandardStylesheetReference(style,
           module.findPublicFile(style)));
       logger.log(TreeLogger.SPAM, "Added style " + style, null);
     }
-    stylesheetResources = Collections.unmodifiableSortedSet(styles);
 
-    SortedSet<GeneratedResource> genResources = new TreeSet<GeneratedResource>(
-        GENERATED_RESOURCE_COMPARATOR);
     if (generatorDir != null) {
       for (String path : Util.recursiveListPartialPaths(generatorDir, false)) {
+        String partialPath = path.replace(File.separatorChar, '/');
         try {
-          String partialPath = path.replace(File.separatorChar, '/');
           GeneratedResource resource = new StandardGeneratedResource(
               partialPath, (new File(generatorDir, path)).toURL());
-          generatedResourcesByName.put(partialPath, resource);
-          genResources.add(resource);
+          artifacts.add(resource);
           logger.log(TreeLogger.SPAM, "Added generated resource " + resource,
               null);
         } catch (MalformedURLException e) {
@@ -198,53 +180,18 @@ public class StandardLinkerContext implements LinkerContext {
         }
       }
     }
-    generatedResources = Collections.unmodifiableSortedSet(genResources);
 
-    SortedSet<PublicResource> pubResources = new TreeSet<PublicResource>(
-        PUBLIC_RESOURCE_COMPARATOR);
     for (String path : module.getAllPublicFiles()) {
-      PublicResource resource = new StandardPublicResource(path,
+      String partialPath = path.replace(File.separatorChar, '/');
+      PublicResource resource = new StandardPublicResource(partialPath,
           module.findPublicFile(path));
-      publicResourcesByName.put(path, resource);
-      pubResources.add(resource);
+      artifacts.add(resource);
       logger.log(TreeLogger.SPAM, "Added public resource " + resource, null);
     }
-    publicResources = Collections.unmodifiableSortedSet(pubResources);
   }
 
-  public void commit(TreeLogger logger, OutputStream toCommit)
-      throws UnableToCompleteException {
-    logger = logger.branch(TreeLogger.DEBUG,
-        "Attempting to commit OutputStream", null);
-
-    if (!outs.containsKey(toCommit)) {
-      logger.log(TreeLogger.ERROR,
-          "OutputStream was foreign to this LinkerContext", null);
-      throw new UnableToCompleteException();
-    }
-
-    File f = outs.get(toCommit);
-    if (f == null) {
-      logger.log(TreeLogger.ERROR,
-          "The OutputStream has already been committed", null);
-      throw new UnableToCompleteException();
-    }
-
-    /*
-     * Record that we will no longer accept this OutputStream as opposed to
-     * removing it, which would erroneously indicate that it was a foreign
-     * OutputStream.
-     */
-    ByteArrayOutputStream original = (ByteArrayOutputStream) toCommit;
-    outs.put(original, null);
-
-    try {
-      Util.writeBytesToFile(logger, f, original.toByteArray());
-    } finally {
-      // Dump the byte buffer;
-      original.reset();
-    }
-    logger.log(TreeLogger.DEBUG, "Successfully committed " + f.getPath(), null);
+  public ArtifactSet getArtifacts() {
+    return artifacts;
   }
 
   public StandardCompilationResult getCompilation(TreeLogger logger, String js)
@@ -255,19 +202,14 @@ public class StandardLinkerContext implements LinkerContext {
     if (result == null) {
       result = new StandardCompilationResult(logger, js, compilationsDir);
       resultsByStrongName.put(result.getStrongName(), result);
+      artifacts.add(result);
     }
     return result;
   }
 
-  public SortedSet<CompilationResult> getCompilations() {
-    SortedSet<CompilationResult> toReturn = new TreeSet<CompilationResult>(
-        COMPILATION_RESULT_COMPARATOR);
-    toReturn.addAll(resultsByStrongName.values());
-    return Collections.unmodifiableSortedSet(toReturn);
-  }
-
-  public SortedSet<GeneratedResource> getGeneratedResources() {
-    return generatedResources;
+  @Override
+  public String getDescription() {
+    return "Root Linker";
   }
 
   public String getModuleFunctionName() {
@@ -278,14 +220,6 @@ public class StandardLinkerContext implements LinkerContext {
     return moduleName;
   }
 
-  public SortedSet<ModuleScriptResource> getModuleScripts() {
-    return scriptResources;
-  }
-
-  public SortedSet<ModuleStylesheetResource> getModuleStylesheets() {
-    return stylesheetResources;
-  }
-
   public SortedSet<SelectionProperty> getProperties() {
     return properties;
   }
@@ -294,82 +228,25 @@ public class StandardLinkerContext implements LinkerContext {
     return propertiesByName.get(name);
   }
 
-  public SortedSet<PublicResource> getPublicResources() {
-    return publicResources;
-  }
+  @Override
+  public ArtifactSet link(TreeLogger logger, LinkerContext context,
+      ArtifactSet artifacts) throws UnableToCompleteException {
 
-  /**
-   * Run a linker in an isolated out directory.
-   */
-  public void invokeLinker(TreeLogger logger, String target, Linker linker)
-      throws UnableToCompleteException {
-    try {
-      // Assign the directory the Linker will work in.
-      linkerOutDir = new File(moduleOutDir, target);
-      if (!moduleOutDir.equals(linkerOutDir.getParentFile())) {
-        // This should never actually happen, since the target must be
-        // a valid Java identifier
-        logger.log(TreeLogger.ERROR,
-            "Trying to create linker dir in wrong place", null);
-        throw new UnableToCompleteException();
-      }
+    logger = logger.branch(TreeLogger.INFO, "Linking compilation into "
+        + moduleOutDir.getPath(), null);
 
-      // We nuke the contents of the directory
-      Util.recursiveDelete(linkerOutDir, true);
-      linkerOutDir.mkdirs();
+    artifacts = invokeLinkerStack(logger);
 
-      if (!linkerOutDir.canWrite()) {
-        logger.log(TreeLogger.ERROR, "Unable create linker dir"
-            + linkerOutDir.getPath(), null);
-        throw new UnableToCompleteException();
-      }
+    for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
+      TreeLogger artifactLogger = logger.branch(TreeLogger.SPAM,
+          "Emitting resource " + artifact.getPartialPath(), null);
 
-      logger = logger.branch(TreeLogger.INFO, "Linking compilation with "
-          + linker.getDescription() + " Linker into " + linkerOutDir.getPath(),
-          null);
-
-      // Instantiate per-Linker instances of the LinkerContextShims
-      LinkerContext shimParent = this;
-      for (Class<? extends LinkerContextShim> clazz : shimClasses) {
-        TreeLogger shimLogger = logger.branch(TreeLogger.DEBUG,
-            "Constructing LinkerContextShim " + clazz.getName(), null);
-        try {
-          Constructor<? extends LinkerContextShim> constructor = clazz.getConstructor(
-              TreeLogger.class, LinkerContext.class);
-          shimParent = constructor.newInstance(shimLogger, shimParent);
-        } catch (InstantiationException e) {
-          shimLogger.log(TreeLogger.ERROR,
-              "Unable to create LinkerContextShim", e);
-          throw new UnableToCompleteException();
-        } catch (InvocationTargetException e) {
-          shimLogger.log(TreeLogger.ERROR,
-              "Unable to create LinkerContextShim", e);
-          throw new UnableToCompleteException();
-        } catch (NoSuchMethodException e) {
-          shimLogger.log(TreeLogger.ERROR,
-              "LinkerContextShim subtypes must implement a two-argument "
-                  + "constructor accepting a TreeLogger and a LinkerContext", e);
-          throw new UnableToCompleteException();
-        } catch (IllegalAccessException e) {
-          shimLogger.log(TreeLogger.ERROR,
-              "Unable to create LinkerContextShim", e);
-          throw new UnableToCompleteException();
-        }
-      }
-
-      linker.link(logger, shimParent);
-
-      // Unwind the LinkerContextShim stack
-      while (shimParent != this) {
-        LinkerContextShim shim = (LinkerContextShim) shimParent;
-        shim.commit(logger.branch(TreeLogger.DEBUG,
-            "Committing LinkerContextShim " + shim.getClass().getName(), null));
-        shimParent = shim.getParent();
-      }
-
-    } finally {
-      reset();
+      File outFile = new File(moduleOutDir, artifact.getPartialPath());
+      assert !outFile.exists() : "Attempted to overwrite " + outFile.getPath();
+      Util.copy(logger, artifact.getContents(artifactLogger), outFile);
     }
+
+    return artifacts;
   }
 
   public String optimizeJavaScript(TreeLogger logger, String program)
@@ -428,36 +305,69 @@ public class StandardLinkerContext implements LinkerContext {
     return out.toString();
   }
 
-  public OutputStream tryCreateArtifact(TreeLogger logger, String partialPath) {
-    File f = new File(linkerOutDir, partialPath);
-    if (f.exists() || openPaths.contains(partialPath)) {
-      logger.branch(TreeLogger.DEBUG, "Refusing to create artifact "
-          + partialPath + " because it already exists or is already open.",
-          null);
-      return null;
+  /**
+   * Run the linker stack.
+   */
+  private ArtifactSet invokeLinkerStack(TreeLogger logger)
+      throws UnableToCompleteException {
+    ArtifactSet workingArtifacts = new ArtifactSet(artifacts);
+    Stack<Linker> linkerStack = new Stack<Linker>();
+
+    EnumSet<Order> phasePre = EnumSet.of(Order.PRE, Order.PRIMARY);
+    EnumSet<Order> phasePost = EnumSet.of(Order.POST);
+
+    // Instantiate instances of the Linkers
+    for (Class<? extends Linker> clazz : linkerClasses) {
+      Linker linker;
+
+      // Create an instance of the Linker
+      try {
+        linker = clazz.newInstance();
+        linkerStack.push(linker);
+      } catch (InstantiationException e) {
+        logger.log(TreeLogger.ERROR, "Unable to create LinkerContextShim", e);
+        throw new UnableToCompleteException();
+      } catch (IllegalAccessException e) {
+        logger.log(TreeLogger.ERROR, "Unable to create LinkerContextShim", e);
+        throw new UnableToCompleteException();
+      }
+
+      // Detemine if we need to invoke the Linker in the current link phase
+      Order order = clazz.getAnnotation(LinkerOrder.class).value();
+      if (!phasePre.contains(order)) {
+        continue;
+      }
+
+      // The primary Linker is guaranteed to be last in the order
+      if (order == Order.PRIMARY) {
+        assert linkerClasses.get(linkerClasses.size() - 1).equals(clazz);
+      }
+
+      TreeLogger linkerLogger = logger.branch(TreeLogger.INFO,
+          "Invoking Linker " + linker.getDescription(), null);
+
+      workingArtifacts.freeze();
+      workingArtifacts = linker.link(linkerLogger, this, workingArtifacts);
     }
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    outs.put(out, f);
-    openPaths.add(partialPath);
-    return out;
-  }
+    // Pop the primary linker off of the stack
+    linkerStack.pop();
 
-  public GeneratedResource tryGetGeneratedResource(TreeLogger logger,
-      String name) {
-    return generatedResourcesByName.get(name);
-  }
+    // Unwind the stack
+    while (!linkerStack.isEmpty()) {
+      Linker linker = linkerStack.pop();
+      Class<? extends Linker> linkerType = linker.getClass();
 
-  public PublicResource tryGetPublicResource(TreeLogger logger, String name) {
-    return publicResourcesByName.get(name);
-  }
+      // See if the Linker should be run in the current phase
+      Order order = linkerType.getAnnotation(LinkerOrder.class).value();
+      if (phasePost.contains(order)) {
+        workingArtifacts.freeze();
+        workingArtifacts = linker.link(logger.branch(TreeLogger.INFO,
+            "Invoking Linker " + linker.getDescription(), null), this,
+            workingArtifacts);
+      }
+    }
 
-  /**
-   * Reset the context.
-   */
-  private void reset() {
-    linkerOutDir = null;
-    openPaths.clear();
-    outs.clear();
+    return workingArtifacts;
   }
 }

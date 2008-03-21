@@ -35,7 +35,6 @@ import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.jjs.JsOutputOption;
-import com.google.gwt.dev.linker.Linker;
 import com.google.gwt.dev.linker.SelectionProperty;
 import com.google.gwt.dev.linker.impl.StandardCompilationResult;
 import com.google.gwt.dev.linker.impl.StandardLinkerContext;
@@ -161,11 +160,15 @@ public class GWTCompiler extends ToolBase {
       return out;
     }
 
+    @SuppressWarnings("unused")
     protected boolean recordDecision(String in, String out) {
+      // TODO(bobv): consider caching compilations again?
       return false;
     }
 
+    @SuppressWarnings("unused")
     protected void recordGeneratedTypeHash(String typeName, String sourceHash) {
+      // TODO(bobv): consider caching compilations again?
     }
   }
 
@@ -217,8 +220,8 @@ public class GWTCompiler extends ToolBase {
     }
   }
 
-  private static final String GENERATOR_DIR = ".gwt-compiler"
-      + File.separatorChar + "generated";
+  public static final String GWT_COMPILER_DIR = ".gwt-tmp" + File.separatorChar
+      + "compiler";
 
   public static void main(String[] args) {
     /*
@@ -282,8 +285,6 @@ public class GWTCompiler extends ToolBase {
   private Rules rules;
 
   private StandardSourceOracle sourceOracle;
-
-  private String[] targets;
 
   private TypeOracle typeOracle;
 
@@ -349,11 +350,17 @@ public class GWTCompiler extends ToolBase {
     // Set up all the initial state.
     checkModule(logger);
 
+    // Place generated resources inside the out dir as a sibling to the module
+    generatorResourcesDir = new File(outDir, GWT_COMPILER_DIR + File.separator
+        + moduleDef.getName() + File.separator + "generated");
+
     // Tweak the output directory so that output lives under the module name.
     outDir = new File(outDir, module.getName());
 
-    // Clean out the generated resources directory and/or create it
-    generatorResourcesDir = new File(outDir, GENERATOR_DIR);
+    // Clean the outDir.
+    Util.recursiveDelete(outDir, true);
+
+    // Clean out the generated resources directory and/or create it.
     Util.recursiveDelete(generatorResourcesDir, true);
     generatorResourcesDir.mkdirs();
 
@@ -383,31 +390,6 @@ public class GWTCompiler extends ToolBase {
     jjs = new JavaToJavaScriptCompiler(logger, frontEnd, declEntryPts,
         jjsOptions);
 
-    if (!jjsOptions.isValidateOnly()) {
-      if (targets != null) {
-        // Make sure all targets specified on the command-line exist
-        boolean badTarget = false;
-        for (String target : targets) {
-          if (module.getLinker(target) == null) {
-            logger.log(TreeLogger.ERROR, "Unknown target " + target, null);
-            badTarget = true;
-          }
-        }
-        if (badTarget) {
-          throw new UnableToCompleteException();
-        }
-      } else {
-        // Otherwise, make sure at least one linker is set in the ModuleDef
-        targets = module.getActiveLinkerNames();
-        if (targets == null || targets.length == 0) {
-          logger.log(TreeLogger.ERROR,
-              "At least one Linker must be specified in the "
-                  + "module or on the command line", null);
-          throw new UnableToCompleteException();
-        }
-      }
-    }
-
     StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
         module, outDir, generatorResourcesDir, jjsOptions);
     compilePermutations(logger, linkerContext);
@@ -419,11 +401,7 @@ public class GWTCompiler extends ToolBase {
 
     logger.log(TreeLogger.INFO, "Compilation succeeded", null);
 
-    // Use the LinkerContext to invoke the Linkers
-    for (String linkerName : targets) {
-      Linker l = module.getLinker(linkerName);
-      linkerContext.invokeLinker(logger, linkerName, l);
-    }
+    linkerContext.link(logger, linkerContext, null);
   }
 
   public File getGenDir() {
@@ -476,10 +454,6 @@ public class GWTCompiler extends ToolBase {
 
   public void setStylePretty() {
     jjsOptions.setOutput(JsOutputOption.PRETTY);
-  }
-
-  public void setTargets(String[] targets) {
-    this.targets = targets;
   }
 
   /**

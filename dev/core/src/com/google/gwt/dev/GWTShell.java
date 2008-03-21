@@ -267,8 +267,8 @@ public class GWTShell extends ToolBase {
 
         // Create a sandbox for the module.
         //
-        File moduleDir = new File(outDir, moduleName);
-        File shellDir = new File(moduleDir, GWT_SHELL_PATH);
+        File shellDir = new File(outDir, GWT_SHELL_PATH + File.separator
+            + moduleName);
 
         TypeOracle typeOracle = moduleDef.getTypeOracle(logger);
         ShellModuleSpaceHost host = doCreateShellModuleSpaceHost(logger,
@@ -309,7 +309,8 @@ public class GWTShell extends ToolBase {
     }
   }
 
-  public static final String GWT_SHELL_PATH = ".gwt-shell";
+  public static final String GWT_SHELL_PATH = ".gwt-tmp" + File.separator
+      + "shell";
 
   private static Image[] icons;
 

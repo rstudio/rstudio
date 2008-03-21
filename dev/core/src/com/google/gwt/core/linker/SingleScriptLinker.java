@@ -13,11 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.linker;
+package com.google.gwt.core.linker;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.About;
+import com.google.gwt.dev.linker.ArtifactSet;
+import com.google.gwt.dev.linker.CompilationResult;
+import com.google.gwt.dev.linker.EmittedArtifact;
+import com.google.gwt.dev.linker.LinkerContext;
+import com.google.gwt.dev.linker.LinkerOrder;
+import com.google.gwt.dev.linker.LinkerOrder.Order;
+import com.google.gwt.dev.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Util;
 
@@ -26,44 +33,15 @@ import com.google.gwt.dev.util.Util;
  * this Linker requires that the module has exactly one distinct compilation
  * result.
  */
+@LinkerOrder(Order.PRIMARY)
 public class SingleScriptLinker extends SelectionScriptLinker {
   public String getDescription() {
     return "Single Script";
   }
 
-  /**
-   * Guard against more than one CompilationResult and delegate to super-class.
-   */
   @Override
-  protected void doEmitArtifacts(TreeLogger logger, LinkerContext context)
-      throws UnableToCompleteException {
-    if (context.getCompilations().size() != 1) {
-      logger = logger.branch(TreeLogger.ERROR,
-          "The module must have exactly one distinct"
-              + " permutation when using the " + getDescription() + " Linker.",
-          null);
-
-      int count = 0;
-      for (CompilationResult result : context.getCompilations()) {
-        logger.log(TreeLogger.INFO, "Permutation " + ++count + ": "
-            + result.toString(), null);
-      }
-
-      throw new UnableToCompleteException();
-    }
-    super.doEmitArtifacts(logger, context);
-  }
-
-  /**
-   * Emits the single compilation wrapped in an anonymous function block.
-   */
-  @Override
-  protected void doEmitCompilation(TreeLogger logger, LinkerContext context,
-      CompilationResult result) throws UnableToCompleteException {
-  }
-
-  @Override
-  protected void emitSelectionScript(TreeLogger logger, LinkerContext context)
+  protected EmittedArtifact emitSelectionScript(TreeLogger logger,
+      LinkerContext context, ArtifactSet artifacts)
       throws UnableToCompleteException {
 
     DefaultTextOutput out = new DefaultTextOutput(true);
@@ -71,7 +49,7 @@ public class SingleScriptLinker extends SelectionScriptLinker {
     // Emit the selection script in a function closure.
     out.print("(function () {");
     out.newlineOpt();
-    String bootstrap = generateSelectionScript(logger, context);
+    String bootstrap = generateSelectionScript(logger, context, artifacts);
     bootstrap = context.optimizeJavaScript(logger, bootstrap);
     out.print(bootstrap);
     out.print("})();");
@@ -89,7 +67,19 @@ public class SingleScriptLinker extends SelectionScriptLinker {
     out.print("var $moduleName, $moduleBase;");
     out.newlineOpt();
 
-    CompilationResult result = context.getCompilations().first();
+    CompilationResult result = null;
+    for (CompilationResult artifact : artifacts.find(CompilationResult.class)) {
+      if (result == null) {
+        result = artifact;
+      } else {
+        logger = logger.branch(TreeLogger.ERROR,
+            "The module must have exactly one distinct"
+                + " permutation when using the " + getDescription()
+                + " Linker.", null);
+        throw new UnableToCompleteException();
+      }
+    }
+
     out.print(result.getJavaScript());
 
     // Add a callback to the selection script
@@ -107,7 +97,7 @@ public class SingleScriptLinker extends SelectionScriptLinker {
     out.newlineOpt();
 
     byte[] selectionScriptBytes = Util.getBytes(out.toString());
-    doEmit(logger, context, selectionScriptBytes, context.getModuleName()
+    return emitBytes(logger, selectionScriptBytes, context.getModuleName()
         + ".nocache.js");
   }
 
@@ -144,6 +134,6 @@ public class SingleScriptLinker extends SelectionScriptLinker {
   @Override
   protected String getSelectionScriptTemplate(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException {
-    return "com/google/gwt/dev/linker/SSOTemplate.js";
+    return "com/google/gwt/core/linker/SingleScriptTemplate.js";
   }
 }

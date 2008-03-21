@@ -13,24 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.linker;
+package com.google.gwt.dev.linker.impl;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.linker.StylesheetReference;
 
-import java.io.InputStream;
+import java.net.URL;
 
 /**
- * Provides access to resources used by the module.
+ * The standard implementation of {@link StylesheetReference}.
  */
-public interface ModuleResource {
+public class StandardStylesheetReference extends StylesheetReference {
+
   /**
-   * Provides access to the contents of the resource if it is statically
-   * available.
-   * 
-   * @return An InputStream accessing the contents of the resource or
-   *         <code>null</code> if the resource is not available at link time.
+   * Might use <code>url</code>someday.
    */
-  InputStream tryGetResourceAsStream(TreeLogger logger)
-      throws UnableToCompleteException;
+  @SuppressWarnings("unused")
+  public StandardStylesheetReference(String src, URL url) {
+    super(StandardLinkerContext.class, src);
+  }
 }

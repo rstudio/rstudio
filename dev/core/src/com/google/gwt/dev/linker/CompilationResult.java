@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.linker;
 
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.SortedSet;
 
@@ -22,12 +23,17 @@ import java.util.SortedSet;
  * Represents a unique compilation of the module. Multiple permutations may
  * result in identical JavaScript.
  */
-public interface CompilationResult {
+public abstract class CompilationResult extends Artifact<CompilationResult> {
+
+  protected CompilationResult(Class<? extends Linker> linkerType) {
+    super(linkerType);
+  }
+
   /**
    * Returns the JavaScript compilation. The exact form and function of the
    * JavaScript should be considered opaque.
    */
-  String getJavaScript();
+  public abstract String getJavaScript();
 
   /**
    * Provides values for {@link SelectionProperty} instances that are not
@@ -35,5 +41,37 @@ public interface CompilationResult {
    * multiple mappings, one for each permutation that resulted in the
    * compilation.
    */
-  SortedSet<SortedMap<SelectionProperty, String>> getPropertyMap();
+  public abstract SortedSet<SortedMap<SelectionProperty, String>> getPropertyMap();
+
+  @Override
+  public final int hashCode() {
+    return getJavaScript().hashCode();
+  }
+
+  @Override
+  public String toString() {
+    StringBuffer b = new StringBuffer();
+    b.append("{");
+    for (SortedMap<SelectionProperty, String> map : getPropertyMap()) {
+      b.append(" {");
+      for (Map.Entry<SelectionProperty, String> entry : map.entrySet()) {
+        b.append(" ").append(entry.getKey().getName()).append(":").append(
+            entry.getValue());
+      }
+      b.append(" }");
+    }
+    b.append(" }");
+
+    return b.toString();
+  }
+
+  @Override
+  protected final int compareToComparableArtifact(CompilationResult o) {
+    return getJavaScript().compareTo(o.getJavaScript());
+  }
+
+  @Override
+  protected final Class<CompilationResult> getComparableArtifactType() {
+    return CompilationResult.class;
+  }
 }

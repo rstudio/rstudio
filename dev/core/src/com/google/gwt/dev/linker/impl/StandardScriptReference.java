@@ -15,25 +15,20 @@
  */
 package com.google.gwt.dev.linker.impl;
 
-import com.google.gwt.dev.linker.ModuleStylesheetResource;
+import com.google.gwt.dev.linker.ScriptReference;
 
 import java.net.URL;
 
 /**
- * The standard implementation of {@link ModuleStylesheetResource}.
+ * The standard implementation of {@link ScriptReference}.
  */
-public class StandardStylesheetResource extends StandardModuleResource
-    implements ModuleStylesheetResource {
+public class StandardScriptReference extends ScriptReference {
 
-  public StandardStylesheetResource(String src) {
-    this(src, null);
-  }
-
-  public StandardStylesheetResource(String src, URL url) {
-    super(src, url);
-  }
-
-  public String getSrc() {
-    return getId();
+  /**
+   * Might use <code>url</code>someday.
+   */
+  @SuppressWarnings("unused")
+  public StandardScriptReference(String src, URL url) {
+    super(StandardLinkerContext.class, src);
   }
 }

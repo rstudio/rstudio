@@ -19,126 +19,80 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.Util;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 /**
  * Provides basic functions common to all Linker implementations.
  */
 public abstract class AbstractLinker extends Linker {
-
   /**
-   * Delegates to {@link #doEmitArtifacts(TreeLogger, LinkerContext)}.
+   * Internal type to wrap a byte array.
    */
-  public final void link(TreeLogger logger, LinkerContext context)
-      throws UnableToCompleteException {
-    doEmitArtifacts(logger, context);
+  private static class SyntheticArtifact extends EmittedArtifact {
+    private final byte[] data;
+
+    public SyntheticArtifact(Class<? extends Linker> linkerType,
+        String partialPath, byte[] data) {
+      super(linkerType, partialPath);
+      this.data = data;
+    }
+
+    @Override
+    public InputStream getContents(TreeLogger logger)
+        throws UnableToCompleteException {
+      return new ByteArrayInputStream(data);
+    }
   }
 
   /**
-   * Emit a byte array into the output. Linkers that require knowledge of all
-   * resources emitted may override this function to spy on the output.
+   * A helper method to create an artifact from an array of bytes.
    * 
-   * @param logger a logger
-   * @param context the LinkerContext
-   * @param what the bytes to emit
-   * @param where the partial path within the output directory
+   * @param logger a TreeLogger
+   * @param what the data to emit
+   * @param partialPath the partial path of the resource
+   * @return an artifact that contains the given data
    * @throws UnableToCompleteException
    */
-  protected void doEmit(TreeLogger logger, LinkerContext context, byte[] what,
-      String where) throws UnableToCompleteException {
-    OutputStream out = context.tryCreateArtifact(logger, where);
-    if (out != null) {
-      try {
-        out.write(what);
-        context.commit(logger, out);
-      } catch (IOException e) {
-        logger.log(TreeLogger.ERROR, "Unable to emit artifact", e);
-        throw new UnableToCompleteException();
-      }
-    }
+  @SuppressWarnings("unused")
+  protected final EmittedArtifact emitBytes(TreeLogger logger, byte[] what,
+      String partialPath) throws UnableToCompleteException {
+    return new SyntheticArtifact(getClass(), partialPath, what);
   }
 
   /**
-   * The default implementation will emit all compilations, public resources,
-   * and generated resources by calling the relevant functions defined in the
-   * linker interface.
-   */
-  protected void doEmitArtifacts(TreeLogger logger, LinkerContext context)
-      throws UnableToCompleteException {
-    for (CompilationResult result : context.getCompilations()) {
-      doEmitCompilation(logger, context, result);
-    }
-
-    // Copy the public resources
-    for (PublicResource resource : context.getPublicResources()) {
-      doEmitPublicResource(logger, context, resource);
-    }
-
-    // Copy the generated resources
-    for (GeneratedResource resource : context.getGeneratedResources()) {
-      doEmitGeneratedResource(logger, context, resource);
-    }
-  }
-
-  /**
-   * Linkers must implement this function to emit compilations.
+   * A helper method to create an artifact to emit the contents of an
+   * InputStream.
    * 
-   * @param logger
-   * @param context
-   * @param result
-   * @throws UnableToCompleteException
+   * @param logger a TreeLogger
+   * @param what the source InputStream
+   * @param partialPath the partial path of the emitted resource
+   * @return an artifact that contains the contents of the InputStream
    */
-  protected abstract void doEmitCompilation(TreeLogger logger,
-      LinkerContext context, CompilationResult result)
-      throws UnableToCompleteException;
-
-  protected void doEmitGeneratedResource(TreeLogger logger,
-      LinkerContext context, GeneratedResource resource)
-      throws UnableToCompleteException {
-    emitInputStream(logger, context, resource.tryGetResourceAsStream(logger),
-        resource.getPartialPath());
-  }
-
-  protected void doEmitPublicResource(TreeLogger logger, LinkerContext context,
-      PublicResource resource) throws UnableToCompleteException {
-    emitInputStream(logger, context, resource.tryGetResourceAsStream(logger),
-        resource.getPartialPath());
-  }
-
-  /**
-   * Helper method that emits the contents of an InputStream into the output.
-   * This delegates to
-   * {@link #doEmit(TreeLogger, LinkerContext, byte[], String)}.
-   * 
-   * @param logger a logger
-   * @param context the LinkerContext
-   * @param what the stream to emit
-   * @param where the partial path within the output directory
-   * @throws UnableToCompleteException
-   */
-  protected final void emitInputStream(TreeLogger logger,
-      LinkerContext context, InputStream what, String where)
-      throws UnableToCompleteException {
+  protected final EmittedArtifact emitInputStream(TreeLogger logger,
+      InputStream what, String partialPath) throws UnableToCompleteException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     Util.copy(logger, what, out);
-    doEmit(logger, context, out.toByteArray(), where);
+    return new SyntheticArtifact(getClass(), partialPath, out.toByteArray());
   }
 
   /**
-   * A helper method to emit a byte array into the output, using an
-   * automatically-computed strong path. This function delegates to
-   * {@link #doEmit(TreeLogger, LinkerContext, byte[], String)}.
+   * A helper method to create an artifact from an array of bytes with a strong
+   * name.
    * 
-   * @return the partial path of the emitted resource.
+   * @param logger a TreeLogger
+   * @param what the data to emit
+   * @param prefix a non-null string to prepend to the hash to determine the
+   *          Artifact's partial path
+   * @param suffix a non-null string to append to the hash to determine the
+   *          Artifact's partial path
+   * @return an artifact that contains the given data
    */
-  protected final String emitWithStrongName(TreeLogger logger,
-      LinkerContext context, byte[] what, String prefix, String suffix)
+  protected final EmittedArtifact emitWithStrongName(TreeLogger logger,
+      byte[] what, String prefix, String suffix)
       throws UnableToCompleteException {
     String strongName = prefix + Util.computeStrongName(what) + suffix;
-    doEmit(logger, context, what, strongName);
-    return strongName;
+    return emitBytes(logger, what, strongName);
   }
 }

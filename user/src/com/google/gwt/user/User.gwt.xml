@@ -39,4 +39,7 @@
    <inherits name="com.google.gwt.user.TitledPanel" />
    <inherits name="com.google.gwt.user.Window" />
    <inherits name="com.google.gwt.user.Accessibility"/>
+
+   <define-linker name="noDeploy" class="com.google.gwt.core.linker.NoDeployResourcesLinker" />
+   <add-linker name="noDeploy" />
 </module>

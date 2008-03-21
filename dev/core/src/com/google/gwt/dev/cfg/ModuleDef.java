@@ -23,7 +23,8 @@ import com.google.gwt.dev.jdt.CacheManager;
 import com.google.gwt.dev.jdt.TypeOracleBuilder;
 import com.google.gwt.dev.jdt.URLCompilationUnitProvider;
 import com.google.gwt.dev.linker.Linker;
-import com.google.gwt.dev.linker.LinkerContextShim;
+import com.google.gwt.dev.linker.LinkerOrder;
+import com.google.gwt.dev.linker.LinkerOrder.Order;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.FileOracle;
 import com.google.gwt.dev.util.FileOracleFactory;
@@ -41,6 +42,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -77,7 +79,9 @@ public class ModuleDef implements PublicOracle {
     return true;
   }
 
-  private String[] activeLinkerNames = new String[0];
+  private final Set<Class<? extends Linker>> activeLinkers = new LinkedHashSet<Class<? extends Linker>>();
+
+  private Class<? extends Linker> activePrimaryLinker;
 
   private final ArrayList<URLCompilationUnitProvider> allCups = new ArrayList<URLCompilationUnitProvider>();
 
@@ -98,13 +102,17 @@ public class ModuleDef implements PublicOracle {
 
   private TypeOracle lazyTypeOracle;
 
-  private final List<Class<? extends LinkerContextShim>> linkerContextShimTypes = new ArrayList<Class<? extends LinkerContextShim>>();
-
-  private final Map<String, Linker> linkersByName = new HashMap<String, Linker>();
+  private final Map<String, Class<? extends Linker>> linkersTypesByName = new HashMap<String, Class<? extends Linker>>();
 
   private final long moduleDefCreationTime = System.currentTimeMillis();
 
   private final String name;
+
+  /**
+   * Must use a separate field to track override, because setNameOverride() will
+   * get called every time a module is inherited, but only the last one matters.
+   */
+  private String nameOverride;
 
   private final Properties properties = new Properties();
 
@@ -132,18 +140,15 @@ public class ModuleDef implements PublicOracle {
     gwtXmlFiles.add(xmlFile);
   }
 
-  public void addLinker(String name, Linker linker) {
-    linkersByName.put(name, linker);
-  }
+  public void addLinker(String name) {
+    Class<? extends Linker> clazz = getLinker(name);
+    assert clazz != null;
 
-  public void addLinkerContextShim(Class<? extends LinkerContextShim> clazz) {
-    /*
-     * It's possible a shim may be registered more than once, so this check is
-     * used to de-duplicate the final list, which will reflect the order of the
-     * first appearance of any LinkerContextShim type.
-     */
-    if (!linkerContextShimTypes.contains(clazz)) {
-      linkerContextShimTypes.add(clazz);
+    LinkerOrder order = clazz.getAnnotation(LinkerOrder.class);
+    if (order.value() == Order.PRIMARY) {
+      activePrimaryLinker = clazz;
+    } else {
+      activeLinkers.add(clazz);
     }
   }
 
@@ -213,6 +218,10 @@ public class ModuleDef implements PublicOracle {
     entryPointTypeNames.clear();
   }
 
+  public void defineLinker(String name, Class<? extends Linker> linker) {
+    linkersTypesByName.put(name, linker);
+  }
+
   public synchronized URL findPublicFile(String partialPath) {
     return lazyPublicOracle.find(partialPath);
   }
@@ -238,8 +247,12 @@ public class ModuleDef implements PublicOracle {
     return null;
   }
 
-  public String[] getActiveLinkerNames() {
-    return activeLinkerNames;
+  public Set<Class<? extends Linker>> getActiveLinkers() {
+    return activeLinkers;
+  }
+
+  public Class<? extends Linker> getActivePrimaryLinker() {
+    return activePrimaryLinker;
   }
 
   public String[] getAllPublicFiles() {
@@ -260,19 +273,15 @@ public class ModuleDef implements PublicOracle {
   }
 
   public synchronized String getFunctionName() {
-    return name.replace('.', '_');
+    return getName().replace('.', '_');
   }
 
-  public Linker getLinker(String name) {
-    return linkersByName.get(name);
-  }
-
-  public List<Class<? extends LinkerContextShim>> getLinkerContextShims() {
-    return linkerContextShimTypes;
+  public Class<? extends Linker> getLinker(String name) {
+    return linkersTypesByName.get(name);
   }
 
   public synchronized String getName() {
-    return name;
+    return nameOverride != null ? nameOverride : name;
   }
 
   /**
@@ -349,8 +358,12 @@ public class ModuleDef implements PublicOracle {
     PerfLogger.end();
   }
 
-  public void setActiveLinkerNames(String... names) {
-    activeLinkerNames = names;
+  /**
+   * Override the module's apparent name. Setting this value to
+   * <code>null<code> will disable the name override.
+   */
+  public void setNameOverride(String nameOverride) {
+    this.nameOverride = nameOverride;
   }
 
   /**
@@ -373,8 +386,7 @@ public class ModuleDef implements PublicOracle {
    * 
    * @param logger Logs the activity.
    */
-  synchronized void normalize(TreeLogger logger)
-      throws UnableToCompleteException {
+  synchronized void normalize(TreeLogger logger) {
     PerfLogger.start("ModuleDef.normalize");
 
     // Normalize property providers.
@@ -435,24 +447,6 @@ public class ModuleDef implements PublicOracle {
     branch = Messages.PUBLIC_PATH_LOCATIONS.branch(logger, null);
     lazyPublicOracle = publicPathEntries.create(branch);
 
-    boolean fail = false;
-    for (String linkerName : activeLinkerNames) {
-      if (!linkersByName.containsKey(linkerName)) {
-        logger.log(TreeLogger.ERROR, "Unknown linker name " + linkerName, null);
-        fail = true;
-      }
-    }
-
-    if (linkersByName.size() == 0 || activeLinkerNames.length == 0) {
-      logger.log(TreeLogger.ERROR, "At least one Linker must be defind and "
-          + "at least one Linker must be active.", null);
-      fail = true;
-    }
-
-    if (fail) {
-      throw new UnableToCompleteException();
-    }
-
     PerfLogger.end();
   }
 
@@ -462,7 +456,7 @@ public class ModuleDef implements PublicOracle {
     TypeOracle newTypeOracle = null;
 
     try {
-      String msg = "Analyzing source in module '" + name + "'";
+      String msg = "Analyzing source in module '" + getName() + "'";
       TreeLogger branch = logger.branch(TreeLogger.TRACE, msg, null);
       long before = System.currentTimeMillis();
       TypeOracleBuilder builder = new TypeOracleBuilder(getCacheManager());

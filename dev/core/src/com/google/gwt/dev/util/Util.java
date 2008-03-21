@@ -31,6 +31,7 @@ import org.w3c.dom.Text;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -94,6 +95,7 @@ public final class Util {
     return t;
   }
 
+  @SuppressWarnings("unchecked")
   public static <T> T[] append(T[] xs, T x) {
     int n = xs.length;
     T[] t = (T[]) Array.newInstance(xs.getClass().getComponentType(), n + 1);
@@ -102,6 +104,7 @@ public final class Util {
     return t;
   }
 
+  @SuppressWarnings("unchecked")
   public static <T> T[] append(T[] appendToThis, T[] these) {
     if (appendToThis == null) {
       throw new NullPointerException("attempt to append to a null array");
@@ -671,20 +674,39 @@ public final class Util {
    *          directory
    */
   public static void recursiveDelete(File file, boolean childrenOnly) {
+    recursiveDelete(file, childrenOnly, null);
+  }
+
+  /**
+   * Selectively deletes a file or recursively deletes a directory.
+   * 
+   * @param file the file to delete, or if this is a directory, the directory
+   *          that serves as the root of a recursive deletion
+   * @param childrenOnly if <code>true</code>, only the children of a
+   *          directory are recursively deleted but the specified directory
+   *          itself is spared; if <code>false</code>, the specified
+   *          directory is also deleted; ignored if <code>file</code> is not a
+   *          directory
+   * @param filter only files matching this filter will be deleted
+   */
+  public static void recursiveDelete(File file, boolean childrenOnly,
+      FileFilter filter) {
     if (file.isDirectory()) {
       File[] children = file.listFiles();
       if (children != null) {
         for (int i = 0; i < children.length; i++) {
-          recursiveDelete(children[i], false);
+          recursiveDelete(children[i], false, filter);
         }
       }
       if (childrenOnly) {
         // Do not delete the specified directory itself.
-        //
         return;
       }
     }
-    file.delete();
+
+    if (filter == null || filter.accept(file)) {
+      file.delete();
+    }
   }
 
   /**
@@ -728,6 +750,7 @@ public final class Util {
     return new File(file.getParentFile(), name);
   }
 
+  @SuppressWarnings("unchecked")
   public static <T> T[] removeNulls(T[] a) {
     int n = a.length;
     for (int i = 0; i < a.length; i++) {
@@ -767,6 +790,7 @@ public final class Util {
    * Class<? super T> is used to allow creation of generic types, such as
    * Map.Entry<K,V> since we can only pass in Map.Entry.class.
    */
+  @SuppressWarnings("unchecked")
   public static <T> T[] toArray(Class<? super T> componentType,
       Collection<? extends T> coll) {
     int n = coll.size();
@@ -778,6 +802,7 @@ public final class Util {
    * Like {@link #toArray(Class, Collection)}, but the option of having the
    * array reversed.
    */
+  @SuppressWarnings("unchecked")
   public static <T> T[] toArrayReversed(Class<? super T> componentType,
       Collection<? extends T> coll) {
     int n = coll.size();
@@ -1002,7 +1027,7 @@ public final class Util {
    * 
    * @param byteLength number of bytes to read
    * @return byte array containing the bytes read or <code>null</code> if
-   *         there is an {@link IOException} or if the requested number of bytes 
+   *         there is an {@link IOException} or if the requested number of bytes
    *         cannot be read from the {@link InputStream}
    */
   private static byte[] readBytesFromInputStream(InputStream input,

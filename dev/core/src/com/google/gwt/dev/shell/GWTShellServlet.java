@@ -21,7 +21,9 @@ import com.google.gwt.dev.GWTShell;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.jjs.JJSOptions;
-import com.google.gwt.dev.linker.HostedModeLinker;
+import com.google.gwt.dev.linker.ArtifactSet;
+import com.google.gwt.dev.linker.EmittedArtifact;
+import com.google.gwt.dev.linker.impl.HostedModeLinker;
 import com.google.gwt.dev.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.util.HttpHeaders;
 import com.google.gwt.dev.util.Util;
@@ -390,10 +392,10 @@ public class GWTShellServlet extends HttpServlet {
       ModuleDef moduleDef = getModuleDef(logger, moduleName);
       foundResource = moduleDef.findPublicFile(partialPath);
 
-      File moduleDir = new File(getOutputDir(), moduleName);
       if (foundResource == null) {
         // Look for generated files
-        File shellDir = new File(moduleDir, GWTShell.GWT_SHELL_PATH);
+        File shellDir = new File(getOutputDir(), GWTShell.GWT_SHELL_PATH
+            + File.separator + moduleName);
         File requestedFile = new File(shellDir, partialPath);
         if (requestedFile.exists()) {
           try {
@@ -410,9 +412,8 @@ public class GWTShellServlet extends HttpServlet {
        * output directory of the first linker defined in the <set-linker> tab.
        */
       if (foundResource == null) {
-        File linkerDir = new File(moduleDir,
-            moduleDef.getActiveLinkerNames()[0]);
-        File requestedFile = new File(linkerDir, partialPath);
+        File moduleDir = new File(getOutputDir(), moduleName);
+        File requestedFile = new File(moduleDir, partialPath);
         if (requestedFile.exists()) {
           try {
             foundResource = requestedFile.toURI().toURL();
@@ -521,13 +522,21 @@ public class GWTShellServlet extends HttpServlet {
     logger.log(TreeLogger.TRACE, msg, null);
 
     ModuleDef moduleDef = getModuleDef(logger, moduleName);
-    File moduleDir = new File(getOutputDir(), moduleDef.getName());
+    File linkerDir = new File(getOutputDir(), GWTShell.GWT_SHELL_PATH
+        + File.separator + moduleName);
 
     StandardLinkerContext context = new StandardLinkerContext(logger,
-        moduleDef, moduleDir, null, new JJSOptions());
+        moduleDef, null, null, new JJSOptions());
     HostedModeLinker linker = new HostedModeLinker();
-    context.invokeLinker(logger, GWTShell.GWT_SHELL_PATH, linker);
-    return linker.generateSelectionScript(logger, context);
+
+    ArtifactSet artifacts = linker.link(logger, context, new ArtifactSet());
+    for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
+      File out = new File(linkerDir, artifact.getPartialPath());
+      Util.copy(logger, artifact.getContents(logger), out);
+    }
+
+    return linker.generateSelectionScript(logger, context,
+        context.getArtifacts());
   }
 
   /**
@@ -921,10 +930,8 @@ public class GWTShellServlet extends HttpServlet {
         // RemoteServiceServlets to load public and generated resources via
         // ServeletContext.getResourceAsStream()
         //
-        File moduleDir = new File(getOutputDir(), moduleDef.getName());
-
         ServletContext context = new HostedModeServletContextProxy(
-            getServletContext(), moduleDef, moduleDir);
+            getServletContext(), moduleDef, getOutputDir());
         ServletConfig config = new HostedModeServletConfigProxy(
             getServletConfig(), context);
 

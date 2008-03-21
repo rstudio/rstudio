@@ -38,13 +38,13 @@ import javax.servlet.ServletException;
 class HostedModeServletContextProxy implements ServletContext {
   private final ServletContext context;
   private final ModuleDef moduleDef;
-  private final File moduleDir;
+  private final File outDir;
 
   HostedModeServletContextProxy(ServletContext context, ModuleDef moduleDef,
-      File moduleDir) {
+      File outDir) {
     this.context = context;
     this.moduleDef = moduleDef;
-    this.moduleDir = moduleDir;
+    this.outDir = outDir;
   }
 
   /**
@@ -161,7 +161,8 @@ class HostedModeServletContextProxy implements ServletContext {
     URL url = moduleDef.findPublicFile(partialPath);
     if (url == null) {
       // Otherwise try the path but rooted in the shell's output directory
-      File shellDir = new File(moduleDir, GWTShell.GWT_SHELL_PATH);
+      File shellDir = new File(outDir, GWTShell.GWT_SHELL_PATH + File.separator
+          + moduleDef.getName());
       File requestedFile = new File(shellDir, partialPath);
       if (requestedFile.exists()) {
         url = requestedFile.toURI().toURL();
@@ -174,8 +175,8 @@ class HostedModeServletContextProxy implements ServletContext {
      * the first linker defined in the <set-linker> tab.
      */
     if (url == null) {
-      File linkerDir = new File(moduleDir, moduleDef.getActiveLinkerNames()[0]);
-      File requestedFile = new File(linkerDir, partialPath);
+      File requestedFile = new File(new File(outDir, moduleDef.getName()),
+          partialPath);
       if (requestedFile.exists()) {
         try {
           url = requestedFile.toURI().toURL();

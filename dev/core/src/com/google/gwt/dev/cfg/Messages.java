@@ -31,6 +31,9 @@ class Messages {
   public static final Message1String LINKER_NAME_INVALID = new Message1String(
       TreeLogger.ERROR, "Invalid linker name '$0'");
 
+  public static final Message1String NAME_INVALID = new Message1String(
+      TreeLogger.ERROR, "Invalid name '$0'");
+
   public static final Message1String PROPERTY_NAME_INVALID = new Message1String(
       TreeLogger.ERROR, "Invalid property name '$0'");
 

@@ -19,9 +19,10 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
 /**
- * Defines a linker for the GWT compiler. One or more Linkers will be invoked
- * after the Java to JavaScript compilation process and are responsible for
- * assembly of the final output from the compiler.
+ * Defines a linker for the GWT compiler. Each Linker must be annotated with a
+ * {@link LinkerOrder} annotation to determine the relative ordering of the
+ * Linkers. Exact order of Linker execution will be determined by the order of
+ * <code>add-linker</code> tags in the module configuration.
  */
 public abstract class Linker {
   /**
@@ -30,14 +31,15 @@ public abstract class Linker {
   public abstract String getDescription();
 
   /**
-   * Invoke the Linker. The implementation of this method should rely only on
-   * the provided LinkerContext in order to manipulate the environment.
+   * Invoke the Linker.
    * 
    * @param logger the TreeLogger to record to
    * @param context provides access to the Linker's environment
+   * @param artifacts an unmodifiable view of the artifacts to link
+   * @return the artifacts that should be propagated through the linker chain
    * @throws UnableToCompleteException if compilation violates assumptions made
    *           by the Linker or for errors encountered by the Linker
    */
-  public abstract void link(TreeLogger logger, LinkerContext context)
-      throws UnableToCompleteException;
+  public abstract ArtifactSet link(TreeLogger logger, LinkerContext context,
+      ArtifactSet artifacts) throws UnableToCompleteException;
 }

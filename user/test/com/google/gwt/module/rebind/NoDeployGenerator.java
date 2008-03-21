@@ -19,7 +19,7 @@ import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.linker.NoDeployResourcesShim;
+import com.google.gwt.core.linker.NoDeployResourcesLinker;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.module.client.NoDeployTest;
 
@@ -37,7 +37,8 @@ public class NoDeployGenerator extends Generator {
 
     try {
       createFile(logger, context, "deploy/exists.txt");
-      createFile(logger, context, NoDeployResourcesShim.PREFIX + "inGenerated.txt");
+      createFile(logger, context, NoDeployResourcesLinker.PREFIX
+          + "inGenerated.txt");
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to create test file", e);
       throw new UnableToCompleteException();

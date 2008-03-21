@@ -35,7 +35,7 @@ import java.util.TreeSet;
 /**
  * The standard implementation of {@link CompilationResult}.
  */
-public class StandardCompilationResult implements CompilationResult {
+public class StandardCompilationResult extends CompilationResult {
 
   /**
    * Smaller maps come before larger maps, then we compare the concatenation of
@@ -74,6 +74,7 @@ public class StandardCompilationResult implements CompilationResult {
 
   public StandardCompilationResult(TreeLogger logger, String js, File cacheDir)
       throws UnableToCompleteException {
+    super(StandardLinkerContext.class);
     this.js = new SoftReference<String>(js);
 
     byte[] bytes = Util.getBytes(js);
@@ -109,22 +110,5 @@ public class StandardCompilationResult implements CompilationResult {
 
   public String getStrongName() {
     return strongName;
-  }
-
-  @Override
-  public String toString() {
-    StringBuffer b = new StringBuffer();
-    b.append("{");
-    for (SortedMap<SelectionProperty, String> map : propertyValues) {
-      b.append(" {");
-      for (Map.Entry<SelectionProperty, String> entry : map.entrySet()) {
-        b.append(" ").append(entry.getKey().getName()).append(":").append(
-            entry.getValue());
-      }
-      b.append(" }");
-    }
-    b.append(" }");
-
-    return b.toString();
   }
 }

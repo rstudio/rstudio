@@ -13,10 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.linker;
+package com.google.gwt.dev.linker.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.linker.AbstractLinker;
+import com.google.gwt.dev.linker.ArtifactSet;
+import com.google.gwt.dev.linker.CompilationResult;
+import com.google.gwt.dev.linker.EmittedArtifact;
+import com.google.gwt.dev.linker.LinkerContext;
+import com.google.gwt.dev.linker.ScriptReference;
+import com.google.gwt.dev.linker.SelectionProperty;
+import com.google.gwt.dev.linker.StylesheetReference;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.Utility;
 
@@ -26,13 +34,19 @@ import java.net.URL;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.SortedSet;
 
 /**
  * A base class for Linkers that use an external script to boostrap the GWT
  * module. This implementation injects JavaScript snippits into a JS program
  * defined in an external file.
  */
-abstract class SelectionScriptLinker extends AbstractLinker {
+public abstract class SelectionScriptLinker extends AbstractLinker {
+  /**
+   * TODO(bobv): Move this class into c.g.g.core.linker when HostedModeLinker
+   * goes away?
+   */
+
   /**
    * Determines whether or not the URL is relative.
    * 
@@ -73,32 +87,39 @@ abstract class SelectionScriptLinker extends AbstractLinker {
   private final Map<CompilationResult, String> compilationPartialPaths = new IdentityHashMap<CompilationResult, String>();
 
   @Override
-  protected void doEmitArtifacts(TreeLogger logger, LinkerContext context)
-      throws UnableToCompleteException {
-    super.doEmitArtifacts(logger, context);
+  public ArtifactSet link(TreeLogger logger, LinkerContext context,
+      ArtifactSet artifacts) throws UnableToCompleteException {
+    ArtifactSet toReturn = new ArtifactSet(artifacts);
 
-    emitSelectionScript(logger, context);
+    for (CompilationResult compilation : toReturn.find(CompilationResult.class)) {
+      toReturn.add(doEmitCompilation(logger, context, compilation));
+    }
+
+    toReturn.add(emitSelectionScript(logger, context, artifacts));
+    return toReturn;
   }
 
-  @Override
-  protected void doEmitCompilation(TreeLogger logger, LinkerContext context,
-      CompilationResult result) throws UnableToCompleteException {
+  protected EmittedArtifact doEmitCompilation(TreeLogger logger,
+      LinkerContext context, CompilationResult result)
+      throws UnableToCompleteException {
     StringBuffer b = new StringBuffer();
     b.append(getModulePrefix(logger, context));
     b.append(result.getJavaScript());
     b.append(getModuleSuffix(logger, context));
-    String partialPath = emitWithStrongName(logger, context,
+    EmittedArtifact toReturn = emitWithStrongName(logger,
         Util.getBytes(b.toString()), "", getCompilationExtension(logger,
             context));
-    compilationPartialPaths.put(result, partialPath);
+    compilationPartialPaths.put(result, toReturn.getPartialPath());
+    return toReturn;
   }
 
-  protected void emitSelectionScript(TreeLogger logger, LinkerContext context)
+  protected EmittedArtifact emitSelectionScript(TreeLogger logger,
+      LinkerContext context, ArtifactSet artifacts)
       throws UnableToCompleteException {
-    String selectionScript = generateSelectionScript(logger, context);
+    String selectionScript = generateSelectionScript(logger, context, artifacts);
     byte[] selectionScriptBytes = Util.getBytes(context.optimizeJavaScript(
         logger, selectionScript));
-    doEmit(logger, context, selectionScriptBytes, context.getModuleName()
+    return emitBytes(logger, selectionScriptBytes, context.getModuleName()
         + ".nocache.js");
   }
 
@@ -147,7 +168,9 @@ abstract class SelectionScriptLinker extends AbstractLinker {
   }
 
   protected String generateSelectionScript(TreeLogger logger,
-      LinkerContext context) throws UnableToCompleteException {
+      LinkerContext context, ArtifactSet artifacts)
+      throws UnableToCompleteException {
+
     StringBuffer selectionScript;
     try {
       selectionScript = new StringBuffer(
@@ -168,13 +191,13 @@ abstract class SelectionScriptLinker extends AbstractLinker {
     // Add external dependencies
     startPos = selectionScript.indexOf("// __MODULE_DEPS_END__");
     if (startPos != -1) {
-      for (ModuleStylesheetResource resource : context.getModuleStylesheets()) {
+      for (StylesheetReference resource : artifacts.find(StylesheetReference.class)) {
         String text = generateStylesheetInjector(resource.getSrc());
         selectionScript.insert(startPos, text);
         startPos += text.length();
       }
 
-      for (ModuleScriptResource resource : context.getModuleScripts()) {
+      for (ScriptReference resource : artifacts.find(ScriptReference.class)) {
         String text = generateScriptInjector(resource.getSrc());
         selectionScript.insert(startPos, text);
         startPos += text.length();
@@ -192,23 +215,24 @@ abstract class SelectionScriptLinker extends AbstractLinker {
     }
 
     // Possibly add permutations
+    SortedSet<CompilationResult> compilations = artifacts.find(CompilationResult.class);
     startPos = selectionScript.indexOf("// __PERMUTATIONS_END__");
     if (startPos != -1) {
       StringBuffer text = new StringBuffer();
-      if (context.getCompilations().size() == 0) {
+      if (compilations.size() == 0) {
         // We'll see this when running in Hosted Mode. The way the selection
         // templates are structured is such that this line won't be executed
         text.append("strongName = null;");
 
-      } else if (context.getCompilations().size() == 1) {
+      } else if (compilations.size() == 1) {
         // Just one distinct compilation; no need to evaluate properties
-        Iterator<CompilationResult> iter = context.getCompilations().iterator();
+        Iterator<CompilationResult> iter = compilations.iterator();
         CompilationResult result = iter.next();
         text.append("strongName = '" + compilationPartialPaths.get(result)
             + "';");
 
       } else {
-        for (CompilationResult r : context.getCompilations()) {
+        for (CompilationResult r : compilations) {
           for (Map<SelectionProperty, String> propertyMap : r.getPropertyMap()) {
             // unflatten([v1, v2, v3], 'strongName');
             text.append("unflattenKeylistIntoAnswers([");

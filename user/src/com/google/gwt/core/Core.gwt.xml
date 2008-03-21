@@ -18,13 +18,11 @@
 <!-- Every module should directly or indirectly inherit this module.        -->
 <!--                                                                        -->
 <module>
-   <inherits name="com.google.gwt.dev.jjs.intrinsic.Intrinsic"/>
-   <inherits name="com.google.gwt.emul.Emulation"/>
-   <define-linker name="std" class="com.google.gwt.dev.linker.IFrameLinker" />
-   <define-linker name="sso" class="com.google.gwt.dev.linker.SingleScriptLinker" />
-   <define-linker name="xs" class="com.google.gwt.dev.linker.XSLinker" />
-   <set-linker name="std" />
-   
-   <!-- Filters generated resources in the no-deploy/ directory -->
-   <extend-linker-context class="com.google.gwt.dev.linker.NoDeployResourcesShim" />
+  <inherits name="com.google.gwt.dev.jjs.intrinsic.Intrinsic" />
+  <inherits name="com.google.gwt.emul.Emulation" />
+  <define-linker name="std" class="com.google.gwt.core.linker.IFrameLinker" />
+  <define-linker name="xs" class="com.google.gwt.core.linker.XSLinker" />
+  <define-linker name="sso" class="com.google.gwt.core.linker.SingleScriptLinker" />
+  
+  <add-linker name="std" />
 </module>

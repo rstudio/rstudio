@@ -26,7 +26,7 @@ import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.linker.Linker;
-import com.google.gwt.dev.linker.LinkerContextShim;
+import com.google.gwt.dev.linker.LinkerOrder;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.xml.AttributeConverter;
@@ -35,7 +35,6 @@ import com.google.gwt.dev.util.xml.Schema;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,6 +48,8 @@ import java.util.Set;
 public class ModuleDefSchema extends Schema {
   private final class BodySchema extends Schema {
 
+    protected final String __add_linker_1_name = null;
+
     protected final String __define_linker_1_name = null;
 
     protected final String __define_linker_2_class = null;
@@ -58,8 +59,6 @@ public class ModuleDefSchema extends Schema {
     protected final String __define_property_2_values = null;
 
     protected final String __entry_point_1_class = null;
-
-    protected final String __extend_linker_context_1_class = null;
 
     protected final String __extend_property_1_name = null;
 
@@ -89,8 +88,6 @@ public class ModuleDefSchema extends Schema {
 
     protected final String __servlet_2_class = null;
 
-    protected final String __set_linker_1_name = null;
-
     protected final String __set_property_1_name = null;
 
     protected final String __set_property_2_value = null;
@@ -119,9 +116,29 @@ public class ModuleDefSchema extends Schema {
 
     private Schema fChild;
 
-    protected Schema __define_linker_begin(LinkerName name, Linker linker)
+    protected Schema __add_linker_begin(LinkerName name)
         throws UnableToCompleteException {
-      moduleDef.addLinker(name.name, linker);
+      if (moduleDef.getLinker(name.name) == null) {
+        Messages.LINKER_NAME_INVALID.log(logger, name.name, null);
+        throw new UnableToCompleteException();
+      }
+      moduleDef.addLinker(name.name);
+      return null;
+    }
+
+    protected Schema __define_linker_begin(LinkerName name,
+        Class<? extends Linker> linker) throws UnableToCompleteException {
+      if (!Linker.class.isAssignableFrom(linker)) {
+        logger.log(TreeLogger.ERROR, "A linker must extend "
+            + Linker.class.getName(), null);
+        throw new UnableToCompleteException();
+      }
+      if (linker.getAnnotation(LinkerOrder.class) == null) {
+        logger.log(TreeLogger.ERROR, "Linkers must be annotated with the "
+            + LinkerOrder.class.getName() + " annotation", null);
+        throw new UnableToCompleteException();
+      }
+      moduleDef.defineLinker(name.name, linker);
       return null;
     }
 
@@ -146,18 +163,6 @@ public class ModuleDefSchema extends Schema {
     protected Schema __entry_point_begin(String className) {
       moduleDef.addEntryPointTypeName(className);
       return null;
-    }
-
-    protected Schema __extend_linker_context_begin(Class<?> clazz)
-        throws UnableToCompleteException {
-      try {
-        moduleDef.addLinkerContextShim(clazz.asSubclass(LinkerContextShim.class));
-        return null;
-      } catch (ClassCastException e) {
-        Messages.INVALID_CLASS_DERIVATION.log(logger, clazz,
-            LinkerContextShim.class, null);
-        throw new UnableToCompleteException();
-      }
     }
 
     protected Schema __extend_property_begin(Property property,
@@ -287,15 +292,6 @@ public class ModuleDefSchema extends Schema {
       // Map the path within this module.
       moduleDef.mapServlet(path, servletClass);
 
-      return null;
-    }
-
-    protected Schema __set_linker_begin(LinkerName[] names) {
-      String[] asString = new String[names.length];
-      for (int i = 0; i < names.length; i++) {
-        asString[i] = names[i].name;
-      }
-      moduleDef.setActiveLinkerNames(asString);
       return null;
     }
 
@@ -586,31 +582,6 @@ public class ModuleDefSchema extends Schema {
   /**
    * Converts a string into a linker name, validating it in the process.
    */
-  private final class LinkerNameArrayAttrCvt extends AttributeConverter {
-
-    public Object convertToArg(Schema schema, int line, String elem,
-        String attr, String value) throws UnableToCompleteException {
-      String[] tokens = value.split(",");
-      List<LinkerName> toReturn = new ArrayList<LinkerName>(tokens.length);
-
-      for (String token : tokens) {
-        token = token.trim();
-        if (moduleDef.getLinker(token) == null) {
-          Messages.LINKER_NAME_INVALID.log(logger, token, null);
-          throw new UnableToCompleteException();
-        }
-
-        toReturn.add(new LinkerName(token));
-      }
-
-      // It is a valid list of names.
-      return toReturn.toArray(new LinkerName[tokens.length]);
-    }
-  }
-
-  /**
-   * Converts a string into a linker name, validating it in the process.
-   */
   private final class LinkerNameAttrCvt extends AttributeConverter {
 
     public Object convertToArg(Schema schema, int line, String elem,
@@ -623,6 +594,46 @@ public class ModuleDefSchema extends Schema {
 
       // It is a valid name.
       return new LinkerName(value);
+    }
+  }
+
+  /**
+   * A dotted Java identifier or null. Zero-length names are represented as
+   * null.
+   */
+  private static class NullableName {
+    public final String token;
+
+    public NullableName(String token) {
+      this.token = token;
+    }
+  }
+
+  /**
+   * Converts a string into a nullable name, validating it in the process.
+   */
+  private final class NullableNameAttrCvt extends AttributeConverter {
+
+    public Object convertToArg(Schema schema, int line, String elem,
+        String attr, String value) throws UnableToCompleteException {
+      if (value == null || value.length() == 0) {
+        return new NullableName(null);
+      }
+
+      // Ensure each part of the name is valid.
+      //
+      String[] tokens = (value + ". ").split("\\.");
+      for (int i = 0; i < tokens.length - 1; i++) {
+        String token = tokens[i];
+        if (!Util.isValidJavaIdent(token)) {
+          Messages.NAME_INVALID.log(logger, value, null);
+          throw new UnableToCompleteException();
+        }
+      }
+
+      // It is a valid name.
+      //
+      return new NullableName(value);
     }
   }
 
@@ -844,26 +855,25 @@ public class ModuleDefSchema extends Schema {
     return "yes".equalsIgnoreCase(s) || "true".equalsIgnoreCase(s);
   }
 
+  protected final String __module_1_renameto = "";
+
   private final BodySchema bodySchema;
 
   private final ClassAttrCvt classAttrCvt = new ClassAttrCvt();
 
   private boolean foundAnyPublic;
-
   private boolean foundExplicitSourceOrSuperSource;
   private final ObjAttrCvt<Generator> genAttrCvt = new ObjAttrCvt<Generator>(
       Generator.class);
   private final JsParser jsParser = new JsParser();
   private final JsProgram jsPgm = new JsProgram();
-  private final ObjAttrCvt<Linker> linkerAttrCvt = new ObjAttrCvt<Linker>(
-      Linker.class);
-  private final LinkerNameArrayAttrCvt linkerNameArrayAttrCvt = new LinkerNameArrayAttrCvt();
   private final LinkerNameAttrCvt linkerNameAttrCvt = new LinkerNameAttrCvt();
   private final ModuleDefLoader loader;
   private final TreeLogger logger;
   private final ModuleDef moduleDef;
   private final String modulePackageAsPath;
   private final URL moduleURL;
+  private final NullableNameAttrCvt nullableNameAttrCvt = new NullableNameAttrCvt();
   private final PropertyAttrCvt propAttrCvt = new PropertyAttrCvt();
   private final PropertyNameAttrCvt propNameAttrCvt = new PropertyNameAttrCvt();
   private final PropertyValueArrayAttrCvt propValueArrayAttrCvt = new PropertyValueArrayAttrCvt();
@@ -884,17 +894,16 @@ public class ModuleDefSchema extends Schema {
     registerAttributeConverter(PropertyValue.class, propValueAttrCvt);
     registerAttributeConverter(PropertyValue[].class, propValueArrayAttrCvt);
     registerAttributeConverter(Generator.class, genAttrCvt);
-    registerAttributeConverter(Linker.class, linkerAttrCvt);
     registerAttributeConverter(LinkerName.class, linkerNameAttrCvt);
-    registerAttributeConverter(LinkerName[].class, linkerNameArrayAttrCvt);
+    registerAttributeConverter(NullableName.class, nullableNameAttrCvt);
     registerAttributeConverter(Class.class, classAttrCvt);
   }
 
-  protected Schema __module_begin() {
+  protected Schema __module_begin(NullableName renameTo) {
     return bodySchema;
   }
 
-  protected void __module_end() {
+  protected void __module_end(NullableName renameTo) {
     // Maybe infer source and public.
     //
     if (!foundExplicitSourceOrSuperSource) {
@@ -906,6 +915,9 @@ public class ModuleDefSchema extends Schema {
       bodySchema.addPublicPackage(modulePackageAsPath, "public", Empty.STRINGS,
           Empty.STRINGS, true, true);
     }
+
+    // We do this in __module_end so this value is never inherited
+    moduleDef.setNameOverride(renameTo.token);
   }
 
   /**
