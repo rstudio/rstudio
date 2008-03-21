@@ -82,14 +82,79 @@ public final class String implements Comparable<String>, CharSequence,
     }
   };
 
-  /**
-   * Accesses need to be prefixed with ':' to prevent conflict with built-in
-   * JavaScript properties.
-   * 
-   * @skip
-   */
-  static JavaScriptObject hashCache;
+  static final class HashCache {
+    /**
+     * Pulled this number out of thin air.
+     */
+    static final int MAX_CACHE = 256;
+    /**
+     * The "old" cache; it will be dumped when front is full.
+     */
+    static JavaScriptObject back = JavaScriptObject.createObject();
+    /**
+     * The "new" cache; it will become back when it becomes full.
+     */
+    static JavaScriptObject front = JavaScriptObject.createObject();
+    /**
+     * Tracks the number of entries in front.
+     */
+    static int count = 0;
 
+    public static native int getHashCode(String str) /*-{
+      // Accesses must to be prefixed with ':' to prevent conflict with built-in
+      // JavaScript properties.
+      var key = ':' + str;
+
+      // Check the front store.
+      var result = @java.lang.String.HashCache::front[key];
+      if (result != null) {
+        return result;
+      }
+
+      // Check the back store.
+      result = @java.lang.String.HashCache::back[key];
+      if (result == null) {
+        // Compute the value.
+        result = @java.lang.String.HashCache::compute(Ljava/lang/String;)(str);
+      }
+      // Increment can trigger the swap/flush; call after checking back but
+      // before writing to front.
+      @java.lang.String.HashCache::increment()();
+      return @java.lang.String.HashCache::front[key] = result;
+    }-*/;
+    
+    static int compute(String str) {
+      /*
+       * In our hash code calculation, only 32 characters will actually affect
+       * the final value, so there's no need to sample more than 32 characters.
+       * To get a better hash code, we'd like to evenly distribute these
+       * characters throughout the string. That means that for lengths between 0
+       * and 63 (inclusive), we increment by 1. For 64-95, 2; 96-127, 3; and so
+       * on. The complicated formula below computes just that. The "| 0"
+       * operation is a fast way to coerce the division result to an integer.
+       */
+      int n = str.length();
+      int inc = (n < 64) ? 1 : (n / 32);
+      int hashCode = 0;
+      for (int i = 0; i < n; i += inc) {
+        hashCode <<= 1;
+        hashCode += str.charAt(i);
+      }
+      // force to 32-bits
+      hashCode |= 0;
+      return hashCode;
+    }
+
+    static void increment() {
+      if (count == MAX_CACHE) {
+        back = front;
+        front = JavaScriptObject.createObject();
+        count = 0;
+      }
+      ++count;
+    }
+  }
+  
   public static String valueOf(boolean x) {
     return "" + x;
   };
@@ -395,36 +460,9 @@ public final class String implements Comparable<String>, CharSequence,
   }
 
   @Override
-  public native int hashCode() /*-{
-    var hashCache = @java.lang.String::hashCache;
-    if (!hashCache) {
-      hashCache = @java.lang.String::hashCache = {};
-    }
-  
-    // Prefix needed to prevent conflict with built-in JavaScript properties.
-    var key  = ':' + this;
-    var hashCode = hashCache[key];
-    // Must check null/undefined because 0 is a legal hashCode
-    if (hashCode == null) {
-      hashCode = 0;
-      var n = this.length;
-      // In our hash code calculation, only 32 characters will actually affect
-      // the final value, so there's no need to sample more than 32 characters.
-      // To get a better hash code, we'd like to evenly distribute these
-      // characters throughout the string.  That means that for lengths between
-      // 0 and 63 (inclusive), we increment by 1.  For 64-95, 2; 96-127, 3; and
-      // so on.  The complicated formula below computes just that.  The "| 0"
-      // operation is a fast way to coerce the division result to an integer.
-      var inc = (n < 64) ? 1 : ((n / 32) | 0);
-      for (var i = 0; i < n; i += inc) {
-        hashCode <<= 1;
-        hashCode += this.charCodeAt(i);
-      }
-      hashCode |= 0; // force to 32-bits
-      hashCache[key] = hashCode
-    }
-    return hashCode;
-  }-*/;
+  public int hashCode() {
+    return HashCache.getHashCode(this);
+  }
 
   public int indexOf(int codePoint) {
     return indexOf(fromCodePoint(codePoint));
