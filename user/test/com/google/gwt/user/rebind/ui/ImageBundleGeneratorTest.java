@@ -18,13 +18,19 @@ package com.google.gwt.user.rebind.ui;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.user.client.ui.ImageBundle.Resource;
+import com.google.gwt.user.rebind.ui.ImageBundleBuilder.HasRect;
 import com.google.gwt.user.rebind.ui.ImageBundleGenerator.JMethodOracle;
 
 import junit.framework.TestCase;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Unit tests for {@link ImageBundleGenerator}. Note that, at present, only a
@@ -33,6 +39,146 @@ import java.util.List;
  * phrasing of error and warning log messages.
  */
 public class ImageBundleGeneratorTest extends TestCase {
+
+  private static class MockRect implements HasRect {
+    private final String name;
+    private final int width, height;
+    private int left, top;
+    private boolean hasBeenPositioned;
+
+    MockRect(String name, int width, int height) {
+      this.name = name;
+      this.width = width;
+      this.height = height;
+    }
+
+    public int getHeight() {
+      return height;
+    }
+
+    public int getLeft() {
+      return left;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public int getTop() {
+      return top;
+    }
+
+    public int getWidth() {
+      return width;
+    }
+
+    public boolean hasBeenPositioned() {
+      return hasBeenPositioned;
+    }
+
+    public void setPosition(int left, int top) {
+      this.left = left;
+      this.top = top;
+      hasBeenPositioned = true;
+    }
+
+    @Override
+    public String toString() {
+      return "{" + left + ", " + top + ", " + width + ", " + height + "}";
+    }
+
+    void assertPosition(int left, int top) {
+      assertTrue(hasBeenPositioned);
+      assertEquals(left, this.left);
+      assertEquals(top, this.top);
+    }
+
+    MockRect duplicate() {
+      final MockRect mr = new MockRect(name, width, height);
+      mr.hasBeenPositioned = hasBeenPositioned;
+      mr.left = left;
+      mr.top = top;
+      return mr;
+    }
+  }
+
+  /**
+   * Ensures that two collections of MockRects are arranged identically.
+   * 
+   * @param a first collection
+   * @param b second collection
+   */
+  private static void assertSameArrangement(Collection<MockRect> a,
+      Collection<MockRect> b) {
+    final Map<String, MockRect> index = new HashMap<String, MockRect>();
+    for (MockRect r : a) {
+      index.put(r.getName(), r);
+    }
+
+    for (MockRect rb : b) {
+      final MockRect ra = index.get(rb.getName());
+      rb.assertPosition(ra.getLeft(), ra.getTop());
+    }
+  }
+
+  @Resource("dunebuggy.gif")
+  public void duneBuggyInDefaultPackage() {
+  }
+
+  @Resource("a/b/c/dunebuggy.gif")
+  public void duneBuggyInNonDefaultPackage() {
+  }
+
+  @Resource("io.jpg")
+  public void ioInSamePackage() {
+  }
+
+  /**
+   * Validates that presenting the images in different orders does not affect
+   * the arrangement.
+   */
+  public void testArrangementIsDeterministic() {
+
+    List<MockRect> orderA = Arrays.asList(new MockRect("a", 50, 100),
+        new MockRect("b", 50, 100), new MockRect("c", 100, 50), new MockRect(
+            "d", 50, 50), new MockRect("e", 50, 50));
+    List<MockRect> orderB = new ArrayList<MockRect>();
+    for (int i = orderA.size() - 1; i <= 0; --i) {
+      orderB.add(orderA.get(i));
+    }
+
+    ImageBundleBuilder.arrangeImages(orderA);
+    ImageBundleBuilder.arrangeImages(orderB);
+
+    assertSameArrangement(orderA, orderB);
+  }
+
+  /**
+   * Ensures that the basic image packing algorithm is arranging images as
+   * expected.
+   */
+  public void testBasicImageArrangement() {
+    // Expected in 2nd column, 2nd in 2nd row.
+    final MockRect ra = new MockRect("a", 20, 30);
+    // Expected to be 1st column.
+    final MockRect rb = new MockRect("b", 10, 100);
+    // Expected in 2nd column, 1st in 2nd row.
+    final MockRect rc = new MockRect("c", 20, 40);
+    // Expected in 2nd column, it is the 1st row.
+    final MockRect rd = new MockRect("d", 100, 60);
+    // Expected in 2nd column, 3rd in 2nd row.
+    final MockRect re = new MockRect("e", 10, 30);
+
+    final Collection<MockRect> rects = new ArrayList<MockRect>();
+    Collections.addAll(rects, ra, rb, rc, rd, re);
+    ImageBundleBuilder.arrangeImages(rects);
+
+    ra.assertPosition(30, 60);
+    rb.assertPosition(0, 0);
+    rc.assertPosition(10, 60);
+    rd.assertPosition(10, 0);
+    re.assertPosition(50, 60);
+  }
 
   /**
    * This method is to remind the reader that ClassLoader.getResource() doesn't
@@ -57,18 +203,21 @@ public class ImageBundleGeneratorTest extends TestCase {
 
   /**
    * Tests that a message is logged and an exception is thrown when a resource
-   * isn't found after being sought based on the method name.
+   * isn't found after being sought based on the ImageBundle.Resource
+   * annotation.
    */
-  public void testResourceNotFoundGivenNoMetaData() {
+  @Resource("notfound.png")
+  public void testResourceNotFoundGivenAnnotation() {
     UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
-    b.expectError(ImageBundleGenerator.MSG_NO_FILE_BASED_ON_METHOD_NAME, null);
-    b.expectError("test/nonexistentImg.png", null);
-    b.expectError("test/nonexistentImg.gif", null);
-    b.expectError("test/nonexistentImg.jpg", null);
+    b.expectError(
+        ImageBundleGenerator.msgCannotFindImageFromMetaData("from/metadata/notfound.png"),
+        null);
     UnitTestTreeLogger logger = b.createLogger();
 
     try {
-      getImageName(logger, new String[0], "nonexistentImg", "test", new String[0][], null);
+      getImageName(logger, new String[0], "nonexistentImg", "from.metadata",
+          new String[0][],
+          getResourceAnnotation("testResourceNotFoundGivenAnnotation"));
       fail("Should have thrown");
     } catch (UnableToCompleteException e) {
     }
@@ -84,7 +233,8 @@ public class ImageBundleGeneratorTest extends TestCase {
     UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
     b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
     b.expectError(
-        ImageBundleGenerator.msgCannotFindImageFromMetaData("from/metadata/notfound.png"), null);
+        ImageBundleGenerator.msgCannotFindImageFromMetaData("from/metadata/notfound.png"),
+        null);
     UnitTestTreeLogger logger = b.createLogger();
 
     try {
@@ -98,42 +248,31 @@ public class ImageBundleGeneratorTest extends TestCase {
 
   /**
    * Tests that a message is logged and an exception is thrown when a resource
-   * isn't found after being sought based on the ImageBundle.Resource
-   * annotation.
+   * isn't found after being sought based on the method name.
    */
-  @Resource("notfound.png")
-  public void testResourceNotFoundGivenAnnotation() {
+  public void testResourceNotFoundGivenNoMetaData() {
     UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
-    b.expectError(
-        ImageBundleGenerator.msgCannotFindImageFromMetaData("from/metadata/notfound.png"), null);
+    b.expectError(ImageBundleGenerator.MSG_NO_FILE_BASED_ON_METHOD_NAME, null);
+    b.expectError("test/nonexistentImg.png", null);
+    b.expectError("test/nonexistentImg.gif", null);
+    b.expectError("test/nonexistentImg.jpg", null);
     UnitTestTreeLogger logger = b.createLogger();
 
     try {
-      getImageName(logger, new String[0], "nonexistentImg", "from.metadata", new String[0][],
-          getResourceAnnotation("testResourceNotFoundGivenAnnotation"));
+      getImageName(logger, new String[0], "nonexistentImg", "test",
+          new String[0][], null);
       fail("Should have thrown");
     } catch (UnableToCompleteException e) {
     }
     logger.assertCorrectLogEntries();
   }
 
-  @Resource("dunebuggy.gif")
-  public void duneBuggyInDefaultPackage() {
-  }
-
-  @Resource("a/b/c/dunebuggy.gif")
-  public void duneBuggyInNonDefaultPackage() {
-  }
-
-  @Resource("io.jpg")
-  public void ioInSamePackage() {
-  }
-
   /**
    * Tests that resources can be found in a variety of ways from an image bundle
    * residing in the default package.
    */
-  public void testResourcesFoundFromImageBundleInDefaultPackage() throws UnableToCompleteException {
+  public void testResourcesFoundFromImageBundleInDefaultPackage()
+      throws UnableToCompleteException {
     UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
     // Due to [2] below
     b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
@@ -143,37 +282,46 @@ public class ImageBundleGeneratorTest extends TestCase {
 
     {
       // [1] Find an image in the default package using the method name.
-      String imgName = getImageName(logger, new String[] {"cabbage.jpg", "lettuce.jpg",},
-          "cabbage", "", new String[0][], null);
+      String imgName = getImageName(logger, new String[] {
+          "cabbage.jpg", "lettuce.jpg",}, "cabbage", "", new String[0][], null);
       assertEquals("cabbage.jpg", imgName);
     }
 
     {
       // [2] Find an image in the default package using javadoc.
-      String imgName = getImageName(logger, new String[] {"car.png", "dunebuggy.gif",},
-          "vehicleImage", "", new String[][] {{"dunebuggy.gif"}}, null);
-      assertEquals("dunebuggy.gif", imgName);
-    }
-
-    {
-      // [3] Find an image in the default package using an annotation.
-      String imgName = getImageName(logger, new String[] {"car.png", "dunebuggy.gif",},
-          "vehicleImage", "", new String[0][], getResourceAnnotation("duneBuggyInDefaultPackage"));
-      assertEquals("dunebuggy.gif", imgName);
-    }
-
-    {
-      // [4] Find an image in a non-default package using javadoc.
       String imgName = getImageName(logger, new String[] {
-          "car.png", "dunebuggy.gif", "a/b/c/dunebuggy.gif",}, "vehicleImage", "",
-          new String[][] {{"a/b/c/dunebuggy.gif"}}, null);
+          "car.png", "dunebuggy.gif",}, "vehicleImage", "",
+          new String[][] {{"dunebuggy.gif"}}, null);
+      assertEquals("dunebuggy.gif", imgName);
+    }
+
+    {
+      // [3] Find an image in
+      // the default package
+      // using an annotation.
+      String imgName = getImageName(logger, new String[] {
+          "car.png", "dunebuggy.gif",}, "vehicleImage", "", new String[0][],
+          getResourceAnnotation("duneBuggyInDefaultPackage"));
+      assertEquals("dunebuggy.gif", imgName);
+    }
+
+    {
+      // [4] Find an image in a
+      // non-default package using
+      // javadoc.
+      String imgName = getImageName(logger, new String[] {
+          "car.png", "dunebuggy.gif", "a/b/c/dunebuggy.gif",}, "vehicleImage",
+          "", new String[][] {{"a/b/c/dunebuggy.gif"}}, null);
       assertEquals("a/b/c/dunebuggy.gif", imgName);
     }
 
     {
-      // [5] Find an image in a non-default package using an annotation.
+      // [5] Find an image in a
+      // non-default package using an
+      // annotation.
       String imgName = getImageName(logger, new String[] {
-          "car.png", "dunebuggy.gif", "a/b/c/dunebuggy.gif",}, "vehicleImage", "", new String[0][],
+          "car.png", "dunebuggy.gif", "a/b/c/dunebuggy.gif",}, "vehicleImage",
+          "", new String[0][],
           getResourceAnnotation("duneBuggyInNonDefaultPackage"));
       assertEquals("a/b/c/dunebuggy.gif", imgName);
     }
@@ -196,41 +344,65 @@ public class ImageBundleGeneratorTest extends TestCase {
 
     {
       // [1] Find an image in the same package using the method name.
-      String imgName = getImageName(logger, new String[] {"x/y/z/europa.png", "x/y/z/io.jpg",},
-          "io", "x.y.z", new String[0][], null);
+      String imgName = getImageName(logger, new String[] {
+          "x/y/z/europa.png", "x/y/z/io.jpg",}, "io", "x.y.z", new String[0][],
+          null);
       assertEquals("x/y/z/io.jpg", imgName);
     }
 
     {
       // [2] Find an image in the same package using javadoc.
-      String imgName = getImageName(logger, new String[] {"x/y/z/europa.png", "x/y/z/io.jpg",},
-          "moonImage", "x.y.z", new String[][] {{"io.jpg"}}, null);
+      String imgName = getImageName(logger, new String[] {
+          "x/y/z/europa.png", "x/y/z/io.jpg",}, "moonImage", "x.y.z",
+          new String[][] {{"io.jpg"}}, null);
       assertEquals("x/y/z/io.jpg", imgName);
     }
 
     {
       // [3] Find an image in the same package using an annotation.
-      String imgName = getImageName(logger, new String[] {"x/y/z/europa.png", "x/y/z/io.jpg",},
-          "moonImage", "x.y.z", new String[0][], getResourceAnnotation("ioInSamePackage"));
+      String imgName = getImageName(logger, new String[] {
+          "x/y/z/europa.png", "x/y/z/io.jpg",}, "moonImage", "x.y.z",
+          new String[0][], getResourceAnnotation("ioInSamePackage"));
       assertEquals("x/y/z/io.jpg", imgName);
     }
 
     {
       // [4] Find an image in a non-default package using javadoc.
       String imgName = getImageName(logger, new String[] {
-          "car.png", "dunebuggy.gif", "a/b/c/dunebuggy.gif",}, "vehicleImage", "x.y.z",
-          new String[][] {{"a/b/c/dunebuggy.gif"}}, null);
+          "car.png", "dunebuggy.gif", "a/b/c/dunebuggy.gif",}, "vehicleImage",
+          "x.y.z", new String[][] {{"a/b/c/dunebuggy.gif"}}, null);
       assertEquals("a/b/c/dunebuggy.gif", imgName);
     }
 
     {
       // [5] Find an image in a non-default package using an annotation.
       String imgName = getImageName(logger, new String[] {
-          "car.png", "dunebuggy.gif", "a/b/c/dunebuggy.gif",}, "vehicleImage", "x.y.z",
-          new String[0][], getResourceAnnotation("duneBuggyInNonDefaultPackage"));
+          "car.png", "dunebuggy.gif", "a/b/c/dunebuggy.gif",}, "vehicleImage",
+          "x.y.z", new String[0][],
+          getResourceAnnotation("duneBuggyInNonDefaultPackage"));
       assertEquals("a/b/c/dunebuggy.gif", imgName);
     }
 
+    logger.assertCorrectLogEntries();
+  }
+
+  /**
+   * Tests that a warning is logged if both the old "gwt.resource" javadoc
+   * construct is used and a resource annotation is used.
+   */
+  @Resource("Horse Shoes.jpg")
+  public void testWarnOnUseOfAnnotationAndLegacyJavaDoc()
+      throws UnableToCompleteException {
+    UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
+    b.expectWarn(ImageBundleGenerator.MSG_MULTIPLE_ANNOTATIONS, null);
+    UnitTestTreeLogger logger = b.createLogger();
+
+    Resource resAnn = getResourceAnnotation("testWarnOnUseOfAnnotationAndLegacyJavaDoc");
+    String imgName = getImageName(logger, new String[] {
+        "test/flypaper.gif", "test/horse shoes.jpg", "test/Horse Shoes.jpg"},
+        "horseshoes", "test", new String[][] {{"Horse Shoes.jpg"}}, resAnn);
+
+    assertEquals("test/Horse Shoes.jpg", imgName);
     logger.assertCorrectLogEntries();
   }
 
@@ -244,64 +416,16 @@ public class ImageBundleGeneratorTest extends TestCase {
     UnitTestTreeLogger logger = b.createLogger();
 
     String imgName = getImageName(logger, new String[] {
-        "test/flypaper.gif", "test/horse shoes.jpg", "test/Horse Shoes.jpg"}, "horseshoes", "test",
-        new String[][] {{"Horse Shoes.jpg"}}, null);
+        "test/flypaper.gif", "test/horse shoes.jpg", "test/Horse Shoes.jpg"},
+        "horseshoes", "test", new String[][] {{"Horse Shoes.jpg"}}, null);
 
     assertEquals("test/Horse Shoes.jpg", imgName);
     logger.assertCorrectLogEntries();
   }
 
-  /**
-   * Tests that a warning is logged if both the old "gwt.resource" javadoc
-   * construct is used and a resource annotation is used.
-   */
-  @Resource("Horse Shoes.jpg")
-  public void testWarnOnUseOfAnnotationAndLegacyJavaDoc() throws UnableToCompleteException {
-    UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
-    b.expectWarn(ImageBundleGenerator.MSG_MULTIPLE_ANNOTATIONS, null);
-    UnitTestTreeLogger logger = b.createLogger();
-
-    Resource resAnn = getResourceAnnotation("testWarnOnUseOfAnnotationAndLegacyJavaDoc");
-    String imgName = getImageName(logger, new String[] {
-        "test/flypaper.gif", "test/horse shoes.jpg", "test/Horse Shoes.jpg"}, "horseshoes", "test",
-        new String[][] {{"Horse Shoes.jpg"}}, resAnn);
-
-    assertEquals("test/Horse Shoes.jpg", imgName);
-    logger.assertCorrectLogEntries();
-  }
-
-  private Resource getResourceAnnotation(String methodName) {
-    Throwable caught = null;
-    try {
-      Resource res = getClass().getMethod(methodName, new Class[0]).getAnnotation(Resource.class);
-      assertNotNull(res);
-      return res;
-    } catch (SecurityException e) {
-      caught = e;
-    } catch (NoSuchMethodException e) {
-      caught = e;
-    }
-    fail("Unable to get @Resource annotation from method '" + methodName
-        + "' during test due to exception: " + caught.getMessage());
-    return null;
-  }
-
-  private String getImageName(UnitTestTreeLogger logger, final String[] pretendResources,
-      String methodName, String pkgName, String[][] resMetadata, final Resource resAnn)
-      throws UnableToCompleteException {
-    ImageBundleGenerator ibg = new ImageBundleGenerator(new ImageBundleGenerator.ResourceLocator() {
-      private final List<String> resList = Arrays.asList(pretendResources);
-
-      public boolean isResourcePresent(String resName) {
-        return resList.contains(resName);
-      }
-    });
-    JMethodOracle methodOracle = createJMethodOracle(methodName, pkgName, resMetadata, resAnn);
-    return ibg.getImageResourceName(logger, methodOracle);
-  }
-
-  private JMethodOracle createJMethodOracle(final String methodName, final String packageName,
-      final String[][] resourceMetadata, final Resource resourceAnnotation) {
+  private JMethodOracle createJMethodOracle(final String methodName,
+      final String packageName, final String[][] resourceMetadata,
+      final Resource resourceAnnotation) {
     return new JMethodOracle() {
       public Resource getAnnotation(Class<Resource> clazz) {
         return resourceAnnotation;
@@ -319,5 +443,39 @@ public class ImageBundleGeneratorTest extends TestCase {
         return packageName;
       }
     };
+  }
+
+  private String getImageName(UnitTestTreeLogger logger,
+      final String[] pretendResources, String methodName, String pkgName,
+      String[][] resMetadata, final Resource resAnn)
+      throws UnableToCompleteException {
+    ImageBundleGenerator ibg = new ImageBundleGenerator(
+        new ImageBundleGenerator.ResourceLocator() {
+          private final List<String> resList = Arrays.asList(pretendResources);
+
+          public boolean isResourcePresent(String resName) {
+            return resList.contains(resName);
+          }
+        });
+    JMethodOracle methodOracle = createJMethodOracle(methodName, pkgName,
+        resMetadata, resAnn);
+    return ibg.getImageResourceName(logger, methodOracle);
+  }
+
+  private Resource getResourceAnnotation(String methodName) {
+    Throwable caught = null;
+    try {
+      Resource res = getClass().getMethod(methodName, new Class[0]).getAnnotation(
+          Resource.class);
+      assertNotNull(res);
+      return res;
+    } catch (SecurityException e) {
+      caught = e;
+    } catch (NoSuchMethodException e) {
+      caught = e;
+    }
+    fail("Unable to get @Resource annotation from method '" + methodName
+        + "' during test due to exception: " + caught.getMessage());
+    return null;
   }
 }

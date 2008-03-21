@@ -218,11 +218,13 @@ public class ImageBundleGenerator extends Generator {
       sw.print("private static final ClippedImagePrototype ");
       sw.print(singletonName);
       sw.print(" = new ClippedImagePrototype(IMAGE_BUNDLE_URL, ");
-      sw.print(Integer.toString(imageRect.left));
-      sw.print(", 0, ");
-      sw.print(Integer.toString(imageRect.width));
+      sw.print(Integer.toString(imageRect.getLeft()));
       sw.print(", ");
-      sw.print(Integer.toString(imageRect.height));
+      sw.print(Integer.toString(imageRect.getTop()));
+      sw.print(", ");
+      sw.print(Integer.toString(imageRect.getWidth()));
+      sw.print(", ");
+      sw.print(Integer.toString(imageRect.getHeight()));
       sw.println(");");
 
       sw.print(decl);
