@@ -326,15 +326,15 @@ public class StringTest extends GWTTestCase {
     assertEquals("dog food", dogFood.replace('\u0120', ' '));
     String testStr = String.valueOf(new char[] {'\u1111', 'B', '\u1111', 'B', '\u1111', 'B'});
     assertEquals("ABABAB", testStr.replace('\u1111', 'A'));
-//    assertEquals("foobar", hideFromCompiler("bazbar").replace("baz", "foo"));
-//    assertEquals("$0bar", hideFromCompiler("foobar").replace("foo", "$0"));
-//    assertEquals("+1", hideFromCompiler("*[)1").replace("*[)", "+"));
   }
 
   public void testReplaceAll() {
     String regex = hideFromCompiler("*[").replaceAll("([/\\\\\\.\\*\\+\\?\\|\\(\\)\\[\\]\\{\\}])",
         "\\\\$1");
     assertEquals("\\*\\[", regex);
+    String replacement = hideFromCompiler("\\").replaceAll("\\\\", "\\\\\\\\").replaceAll("\\$",
+        "\\\\$");
+    assertEquals("\\\\", replacement);
     assertEquals("+1", hideFromCompiler("*[1").replaceAll(regex, "+"));
     String x1 = String.valueOf(new char[] {'x', 'x', 'x', 'a', 'b', 'c', 'x', 'x', 'd', 'e', 'x',
     'f'});
@@ -374,6 +374,14 @@ public class StringTest extends GWTTestCase {
         "boo", "and", "foo"});
   }
 
+  public void testReplaceString() {
+    assertEquals("foobar", hideFromCompiler("bazbar").replace("baz", "foo"));
+    assertEquals("$0bar", hideFromCompiler("foobar").replace("foo", "$0"));
+    assertEquals("$1bar", hideFromCompiler("foobar").replace("foo", "$1"));
+    assertEquals("\\$1bar", hideFromCompiler("foobar").replace("foo", "\\$1"));
+    assertEquals("\\1", hideFromCompiler("*[)1").replace("*[)", "\\"));
+  }
+  
   public void testStartsWith() {
     String haystack = "abcdefghi";
     assertTrue(haystack.startsWith("abc"));

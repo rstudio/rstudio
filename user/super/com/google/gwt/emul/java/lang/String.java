@@ -555,12 +555,15 @@ public final class String implements Comparable<String>, CharSequence,
   }-*/;
 
   // TODO(jat): fails on Safari 2 -- to be fixed for 1.5RC1
-//  public String replace(CharSequence from, CharSequence to) {
-//    // Escape regex special characters from literal replacement string.
-//    String regex = from.toString().replaceAll("([/\\\\\\.\\*\\+\\?\\|\\(\\)\\[\\]\\{\\}])",
-//        "\\\\$1");
-//    return replaceAll(regex, to.toString());
-//  }
+  public String replace(CharSequence from, CharSequence to) {
+    // Escape regex special characters from literal replacement string.
+    String regex = from.toString().replaceAll("([/\\\\\\.\\*\\+\\?\\|\\(\\)\\[\\]\\{\\}])",
+        "\\\\$1");
+    // Escape $ since it is for match backrefs and \ since it is used to escape $.
+    String replacement = to.toString().replaceAll("\\\\", "\\\\\\\\").replaceAll("\\$",
+        "\\\\$");
+    return replaceAll(regex, replacement);
+  }
   
   /**
    * Regular expressions vary from the standard implementation. The
