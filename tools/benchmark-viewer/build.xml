@@ -64,7 +64,7 @@
 	<target name="build" depends="compile, gwtc" description="Build and package this project">
 		<mkdir dir="${gwt.build.lib}" />
                 <copy todir="${tools.build}/www-new/${tools.module.path}" flatten="true" >
-                  <fileset dir="${tools.build}/www/${tools.module}/std" />
+                  <fileset dir="${tools.build}/www/${tools.module}" />
                 </copy>
                     
 		<gwt.jar>
