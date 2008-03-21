@@ -230,7 +230,12 @@ public class JsStaticEval {
         }
         JsBlock block = new JsBlock();
         block.getStatements().add(expr.makeStmt());
-        block.getStatements().add(onlyStmtToExecute);
+
+        if (onlyStmtToExecute != null) {
+          // We'll see this if the expression is always false and no else
+          block.getStatements().add(onlyStmtToExecute);
+        }
+
         ctx.replaceMe(block);
       } else if (isEmpty(thenStmt) && isEmpty(elseStmt)) {
         ctx.replaceMe(expr.makeStmt());
