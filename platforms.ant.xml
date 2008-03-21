@@ -35,7 +35,7 @@
 		</antcall>
 	</target>
 
-	<target name="test" depends="build" description="Test each platform">
+	<target name="test" description="Test each platform">
 		<antcall target="-do">
 			<param name="target" value="test" />
 		</antcall>

@@ -61,7 +61,7 @@
 		</antcall>
 	</target>
 
-	<target name="test" depends="build" description="Test GWT">
+	<target name="test" description="Test GWT">
 		<antcall target="-do">
 			<param name="target" value="test" />
 		</antcall>
