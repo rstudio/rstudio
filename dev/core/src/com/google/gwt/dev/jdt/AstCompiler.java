@@ -117,4 +117,10 @@ public class AstCompiler extends AbstractCompiler {
     cachedResults.removeAll(changedFiles);
     invalidateUnitsInFiles(changedFiles, typeNames);
   }
+
+  @Override
+  protected void doCompilationUnitDeclarationValidation(
+      CompilationUnitDeclaration cud) {
+    BinaryTypeReferenceRestrictionsChecker.check(cud);
+  }
 }

@@ -26,9 +26,7 @@ import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.LocalDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.MarkerAnnotation;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
-import org.eclipse.jdt.internal.compiler.ast.NormalAnnotation;
 import org.eclipse.jdt.internal.compiler.ast.SingleMemberAnnotation;
 import org.eclipse.jdt.internal.compiler.ast.SingleTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.Statement;
@@ -173,6 +171,7 @@ public class BinaryTypeReferenceRestrictionsCheckerTest extends TestCase {
 
     TypeDeclaration typeDeclaration = new TypeDeclaration(compilationResult);
     typeDeclaration.scope = new ClassScope(cud.scope, null);
+    typeDeclaration.staticInitializerScope = new MethodScope(typeDeclaration.scope, null, false);
     cud.types = new TypeDeclaration[] {typeDeclaration};
 
     BinaryTypeBinding binaryTypeBinding = new BinaryTypeBinding(null,
@@ -189,8 +188,9 @@ public class BinaryTypeReferenceRestrictionsCheckerTest extends TestCase {
     localDeclaration.type = createMockBinaryTypeReference(binaryTypeBinding);
     methodDeclaration.statements = new Statement[] {localDeclaration};
 
-    Annotation annotation = new MarkerAnnotation(
+    SingleMemberAnnotation annotation = new SingleMemberAnnotation(
         createMockBinaryTypeReference(binaryTypeBinding), 0);
+    annotation.memberValue = annotation.type;
     typeDeclaration.annotations = new Annotation[] {annotation};
 
     typeDeclaration.methods = new AbstractMethodDeclaration[] {methodDeclaration};
@@ -216,19 +216,6 @@ public class BinaryTypeReferenceRestrictionsCheckerTest extends TestCase {
     String expectedMessage = "No source code is available for type MyClass; did you forget to inherit a required module?";
     String actualMessage = BinaryTypeReferenceRestrictionsChecker.formatBinaryTypeRefErrorMessage("MyClass");
     assertEquals(expectedMessage, actualMessage);
-  }
-
-  public void testIsValidBinaryTypeUsage() {
-    TypeReference typeReference = createMockBinaryTypeReference(null);
-
-    assertTrue(BinaryTypeReferenceRestrictionsChecker.isValidBinaryTypeUsage(new MarkerAnnotation(
-        typeReference, 0)));
-    assertTrue(BinaryTypeReferenceRestrictionsChecker.isValidBinaryTypeUsage(new SingleMemberAnnotation(
-        typeReference, 0)));
-    assertTrue(BinaryTypeReferenceRestrictionsChecker.isValidBinaryTypeUsage(new NormalAnnotation(
-        typeReference, 0)));
-    assertFalse(BinaryTypeReferenceRestrictionsChecker.isValidBinaryTypeUsage(new Wildcard(
-        Wildcard.UNBOUND)));
   }
 
   public void testRecordError() {

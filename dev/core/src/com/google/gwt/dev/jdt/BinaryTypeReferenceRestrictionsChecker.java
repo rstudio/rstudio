@@ -18,10 +18,13 @@ package com.google.gwt.dev.jdt;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
-import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Expression;
+import org.eclipse.jdt.internal.compiler.ast.MarkerAnnotation;
+import org.eclipse.jdt.internal.compiler.ast.NormalAnnotation;
+import org.eclipse.jdt.internal.compiler.ast.SingleMemberAnnotation;
 import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
@@ -61,7 +64,8 @@ class BinaryTypeReferenceRestrictionsChecker {
 
   /**
    * Visits a {@link CompilationUnitDeclaration} and records all expressions
-   * which use a {@link BinaryTypeBinding}.
+   * which use a {@link BinaryTypeBinding} that are not part of an annotation
+   * context.
    */
   static class BinaryTypeReferenceVisitor extends TypeRefVisitor {
     private final List<BinaryTypeReferenceSite> binaryTypeReferenceSites;
@@ -72,12 +76,28 @@ class BinaryTypeReferenceRestrictionsChecker {
     }
 
     @Override
+    public boolean visit(MarkerAnnotation annotation, BlockScope scope) {
+      // Ignore annotations
+      return false;
+    }
+
+    @Override
+    public boolean visit(NormalAnnotation annotation, BlockScope scope) {
+      // Ignore annotations
+      return false;
+    }
+
+    @Override
+    public boolean visit(SingleMemberAnnotation annotation, BlockScope scope) {
+      // Ignore annotations
+      return false;
+    }
+
+    @Override
     protected void onBinaryTypeRef(BinaryTypeBinding binding,
         CompilationUnitDeclaration unitOfReferrer, Expression expression) {
-      if (!isValidBinaryTypeUsage(expression)) {
-        binaryTypeReferenceSites.add(new BinaryTypeReferenceSite(expression,
-            binding));
-      }
+      binaryTypeReferenceSites.add(new BinaryTypeReferenceSite(expression,
+          binding));
     }
 
     @Override
@@ -89,9 +109,9 @@ class BinaryTypeReferenceRestrictionsChecker {
 
   /**
    * Scans a {@link CompilationUnitDeclaration} for expressions that use
-   * {@link BinaryTypeBinding}s outside the context of an annotation.  For 
-   * each unique use of a given {@link BinaryTypeBinding}, a error is reported
-   * against the {@link CompilationUnitDeclaration}.
+   * {@link BinaryTypeBinding}s outside the context of an annotation. An error
+   * is reported against the {@link CompilationUnitDeclaration} for the first
+   * instance of each unique {@link BinaryTypeBinding}.
    */
   public static void check(CompilationUnitDeclaration cud) {
     List<BinaryTypeReferenceSite> binaryTypeReferenceSites = findInvalidBinaryTypeReferenceSites(cud);
@@ -123,14 +143,6 @@ class BinaryTypeReferenceRestrictionsChecker {
   static String formatBinaryTypeRefErrorMessage(String qualifiedTypeName) {
     return "No source code is available for type " + qualifiedTypeName
         + "; did you forget to inherit a required module?";
-  }
-
-  /**
-   * Returns <code>true</code> if a {@link BinaryTypeBinding} can be used from
-   * this particular {@link ASTNode} type.
-   */
-  static boolean isValidBinaryTypeUsage(Expression expression) {
-    return expression instanceof Annotation;
   }
 
   static void recordError(CompilationUnitDeclaration cud, ASTNode node,

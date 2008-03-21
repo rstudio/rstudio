@@ -179,7 +179,7 @@ public abstract class AbstractCompiler {
 
       JSORestrictionsChecker.check(cud);
 
-      BinaryTypeReferenceRestrictionsChecker.check(cud);
+      doCompilationUnitDeclarationValidation(cud);
 
       // Optionally remember this cud.
       //
@@ -537,6 +537,12 @@ public abstract class AbstractCompiler {
   }
 
   protected void doAcceptResult(CompilationResult result) {
+    // Do nothing by default.
+    //
+  }
+
+  protected void doCompilationUnitDeclarationValidation(
+      CompilationUnitDeclaration cud) {
     // Do nothing by default.
     //
   }
