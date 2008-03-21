@@ -47,7 +47,7 @@ public abstract class AbstractSerializationStreamWriter extends
   }
 
   public void writeFloat(float fieldValue) {
-    append(String.valueOf(fieldValue));
+    writeDouble(fieldValue);
   }
 
   public void writeInt(int fieldValue) {

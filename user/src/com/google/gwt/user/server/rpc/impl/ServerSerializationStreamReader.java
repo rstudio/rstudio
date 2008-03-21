@@ -329,7 +329,7 @@ public final class ServerSerializationStreamReader extends
   }
 
   public float readFloat() {
-    return Float.parseFloat(extract());
+    return (float) Double.parseDouble(extract());
   }
 
   public int readInt() {
