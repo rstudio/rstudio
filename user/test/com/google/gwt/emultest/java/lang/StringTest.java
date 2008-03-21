@@ -20,43 +20,114 @@ import com.google.gwt.junit.client.GWTTestCase;
 /**
  * TODO: COMPILER OPTIMIZATIONS HAVE MADE THIS TEST NOT ACTUALLY TEST ANYTHING!
  * NEED A VERSION THAT DOESN'T USE STATICALLY DETERMINABLE STRINGS!
+ * 
+ * See individual method TODOs for ones that still need work -- the ones without
+ * comments are already protected against optimization.
  */
 public class StringTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
+  /*
+   * TODO: needs rewriting to avoid compiler optimizations.
+   */
   public void testCharAt() {
     assertEquals("abc".charAt(1), 'b');
   }
 
+  public void testCodePoint() {
+    String testPlain = hideFromCompiler("CAT");
+    String testUnicode = hideFromCompiler("C\uD801\uDF00T");
+    assertEquals("CAT", new String(new int[] { 'C', 'A', 'T' }, 0, 3));
+    assertEquals("C\uD801\uDF00T", new String(new int[] { 'C', 67328, 'T' }, 0, 3));
+    assertEquals("\uD801\uDF00", new String(new int[] { 'C', 67328, 'T' }, 1, 1));
+    assertEquals(65, testPlain.codePointAt(1));
+    assertEquals("codePointAt fails on surrogate pair", 67328, testUnicode.codePointAt(1));
+    assertEquals(65, testPlain.codePointBefore(2));
+    assertEquals("codePointBefore fails on surrogate pair", 67328, testUnicode.codePointBefore(3));
+    assertEquals("codePointCount(plain): ", 3, testPlain.codePointCount(0, 3));
+    assertEquals("codePointCount(unicode): ", 3, testUnicode.codePointCount(0, 4));
+    assertEquals(1, testPlain.codePointCount(1, 2));
+    assertEquals(1, testUnicode.codePointCount(1, 2));
+    assertEquals(2, testUnicode.codePointCount(2, 4));
+    assertEquals(1, testUnicode.offsetByCodePoints(0, 1));
+    assertEquals("offsetByCodePoints(1,1): ", 3, testUnicode.offsetByCodePoints(1, 1));
+    assertEquals("offsetByCodePoints(2,1): ", 3, testUnicode.offsetByCodePoints(2, 1));
+    assertEquals(4, testUnicode.offsetByCodePoints(3, 1));
+    assertEquals(1, testUnicode.offsetByCodePoints(2, -1));
+    assertEquals(1, testUnicode.offsetByCodePoints(3, -1));
+    assertEquals("offsetByCodePoints(4.-1): ", 3, testUnicode.offsetByCodePoints(4, -1));
+    assertEquals(0, testUnicode.offsetByCodePoints(3, -2));
+    /*
+     * The next line contains a Unicode character outside the base multilingual
+     * plane -- it may not show properly depending on your fonts, etc.  The
+     * character is the Gothic letter Faihu, or U+10346.  We use it to verify
+     * that multi-char UTF16 characters are handled properly.
+     * 
+     * In Windows 2000, registry changes are required to support non-BMP characters
+     * (or surrogates in general) -- surrogates are not supported before Win2k and
+     * they are enabled by default in WinXP and later.
+     * 
+     * [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\LanguagePack]
+     *     SURROGATE=(REG_DWORD)0x00000002
+     *     
+     * [HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\International\Scripts\42]
+     *     IEFixedFontName=[Surrogate Font Face Name]
+     *     IEPropFontName=[Surrogate Font Face Name] 
+     */
+    String nonBmpChar = hideFromCompiler("𐍆");
+    assertEquals("\uD800\uDF46", nonBmpChar);
+    assertEquals(0x10346, nonBmpChar.codePointAt(0));
+    assertEquals(2, nonBmpChar.length());
+    assertEquals(1, nonBmpChar.codePointCount(0, 2));
+  }
+
   public void testConcat() {
-    assertEquals("abcdef", "abc" + "def");
-    assertEquals("abcdef", "abc".concat("def"));
-    assertEquals("".concat(""), "");
-    char c = 'd';
-    String s = "abc";
-    assertEquals("abcd", "abc" + 'd');
-    assertEquals("abcd", "abc" + c);
+    String abc = String.valueOf(new char[] {'a', 'b', 'c'});
+    String def = String.valueOf(new char[] {'d', 'e', 'f'});
+    String empty = String.valueOf(new char[] {});
+    assertEquals("abcdef", abc + def);
+    assertEquals("abcdef", abc.concat(def));
+    assertEquals("", empty.concat(empty));
+    char c = def.charAt(0);
+    String s = abc;
+    assertEquals("abcd", abc + 'd');
+    assertEquals("abcd", abc + c);
     assertEquals("abcd", s + 'd');
     assertEquals("abcd", s + c);
     s += c;
     assertEquals("abcd", s);
   }
-
+  
   public void testConstructor() {
     char[] chars = {'a', 'b', 'c', 'd', 'e', 'f'};
-    String constant = "abcdef";
-    String shortString = "cde";
-    assertEquals(new String(constant), constant);
-    assertEquals(new String(chars), constant);
-    assertEquals(new String(chars, 2, 3), shortString);
-    assertEquals(new String(""), "");
-    assertEquals(new String(new String(new String(new String("")))), "");
-    assertEquals(new String(new char[] {}), "");
+    String constant = String.valueOf(new char[] {'a', 'b', 'c', 'd', 'e', 'f'});
+    String shortString = String.valueOf(new char[] {'c', 'd', 'e'});
+    assertEquals(constant, new String(hideFromCompiler(constant)));
+    assertEquals(constant, new String(chars), constant);
+    assertEquals(shortString, new String(chars, 2, 3), shortString);
+    assertEquals("", new String(hideFromCompiler("")));
+    assertEquals("", new String(new String(new String(new String(hideFromCompiler(""))))));
+    assertEquals("", new String(new char[] {}));
+    StringBuffer buf = new StringBuffer();
+    buf.append('c');
+    buf.append('a');
+    buf.append('t');
+    assertEquals("cat", new String(buf));
+    StringBuilder sb = new StringBuilder();
+    sb.append('c');
+    sb.append('a');
+    sb.append('t');
+    assertEquals("cat", new String(sb));
   }
 
+  /*
+   * TODO: needs rewriting to avoid compiler optimizations.
+   *     (StringBuffer tests are ok)
+   */
   public void testContains() {
     // at the beginning
     assertTrue("abcdef".contains("ab"));
@@ -82,6 +153,9 @@ public class StringTest extends GWTTestCase {
     assertFalse("c", haystack.endsWith(haystack + "j"));
   }
 
+  /*
+   * TODO: needs rewriting to avoid compiler optimizations.
+   */
   public void testEquals() {
     assertFalse("ABC".equals("abc"));
     assertFalse("abc".equals("ABC"));
@@ -93,6 +167,9 @@ public class StringTest extends GWTTestCase {
     assertFalse("".equals(null));
   }
 
+  /*
+   * TODO: needs rewriting to avoid compiler optimizations.
+   */
   public void testEqualsIgnoreCase() {
     assertTrue("ABC".equalsIgnoreCase("abc"));
     assertTrue("abc".equalsIgnoreCase("ABC"));
@@ -149,28 +226,44 @@ public class StringTest extends GWTTestCase {
     assertEquals(haystack.indexOf(""), 0);
   }
 
+  public void testIntern() {
+    String s1 = String.valueOf(new char[] {'a', 'b', 'c', 'd', 'e', 'f'});
+    String s2 = String.valueOf(new char[] {'a', 'b', 'c', 'd', 'e', 'f'});
+    assertTrue("strings not equal", s1.equals(s2));
+    assertSame("interns are not the same reference", s1.intern(), s2.intern());
+  }
+
   public void testLastIndexOf() {
     String x = "abcdeabcdef";
     assertEquals(9, x.lastIndexOf("e"));
     assertEquals(10, x.lastIndexOf("f"));
     assertEquals(-1, x.lastIndexOf("f", 1));
   }
-
+  
   public void testLength() {
-    assertEquals(3, "abc".length());
+    String abc = String.valueOf(new char[] {'a', 'b', 'c'});
+    assertEquals(3, abc.length());
     String str = "x";
     for (int i = 0; i < 16; i++) {
       str = str + str;
     }
     assertEquals(1 << 16, str.length());
+    String cat = String.valueOf(new char[] {'C', '\uD801', '\uDF00', 'T'});
+    assertEquals(4, cat.length());
   }
 
+  /*
+   * TODO: needs rewriting to avoid compiler optimizations.
+   */
   public void testLowerCase() {
     assertEquals("abc", "AbC".toLowerCase());
     assertEquals("abc", "abc".toLowerCase());
     assertEquals("", "".toLowerCase());
   }
 
+  /*
+   * TODO: needs rewriting to avoid compiler optimizations.
+   */
   public void testMatch() {
     assertFalse("1f", "abbbbcd".matches("b*"));
     assertFalse("2f", "abbbbcd".matches("b+"));
@@ -182,15 +275,41 @@ public class StringTest extends GWTTestCase {
     assertFalse("8f", "abbbbcd".matches("a.*e"));
   }
 
+  /*
+   * TODO: needs rewriting to avoid compiler optimizations.
+   */
   public void testNull() {
     assertNull(returnNull());
     String a = returnNull() + returnNull();
     assertEquals("nullnull", a);
   }
 
+  public void testRegionMatches() {
+    String test = String.valueOf(new char[] {'a', 'b', 'c', 'd', 'e', 'f'});
+    assertTrue(test.regionMatches(1, "bcd", 0, 3));
+    assertTrue(test.regionMatches(1, "bcdx", 0, 3));
+    assertFalse(test.regionMatches(1, "bcdx", 0, 4));
+    assertFalse(test.regionMatches(1, "bcdx", 1, 3));
+    assertTrue(test.regionMatches(true, 0, "XAbCd", 1, 4));
+    assertTrue(test.regionMatches(true, 1, "BcD", 0, 3));
+    assertTrue(test.regionMatches(true, 1, "bCdx", 0, 3));
+    assertFalse(test.regionMatches(true, 1, "bCdx", 0, 4));
+    assertFalse(test.regionMatches(true, 1, "bCdx", 1, 3));
+    assertTrue(test.regionMatches(true, 0, "xaBcd", 1, 4));
+    test = test.toUpperCase();
+    assertTrue(test.regionMatches(true, 0, "XAbCd", 1, 4));
+    assertTrue(test.regionMatches(true, 1, "BcD", 0, 3));
+    assertTrue(test.regionMatches(true, 1, "bCdx", 0, 3));
+    assertFalse(test.regionMatches(true, 1, "bCdx", 0, 4));
+    assertFalse(test.regionMatches(true, 1, "bCdx", 1, 3));
+    assertTrue(test.regionMatches(true, 0, "xaBcd", 1, 4));
+  }
+
   public void testReplace() {
-    assertEquals("axax".replace('x', 'a'), "aaaa");
-    assertEquals("aaaa".replace('x', 'a'), "aaaa");
+    String axax = String.valueOf(new char[] {'a', 'x', 'a', 'x'});
+    String aaaa = String.valueOf(new char[] {'a', 'a', 'a', 'a'});
+    assertEquals("aaaa", axax.replace('x', 'a'));
+    assertEquals("aaaa", aaaa.replace('x', 'a'));
     for (char from = 32; from < 250; ++from) {
       char to = (char) (from + 5);
       assertEquals(toS(to), toS(from).replace(from, to));
@@ -200,19 +319,37 @@ public class StringTest extends GWTTestCase {
       assertEquals(toS(to), toS(from).replace(from, to));
     }
     // issue 1480
-    assertEquals("example xd", "example xd".replace('\r', ' ').replace('\n', ' '));
-    assertEquals("dog food", "dog\u0120food".replace('\u0120', ' '));
-    assertEquals("ABABAB", "\u1111B\u1111B\u1111B".replace('\u1111', 'A'));
+    String exampleXd
+        = String.valueOf(new char[] {'e', 'x', 'a', 'm', 'p', 'l', 'e', ' ', 'x', 'd'});
+    assertEquals("example xd", exampleXd.replace('\r', ' ').replace('\n', ' '));
+    String dogFood = String.valueOf(new char[] {'d', 'o', 'g', '\u0120', 'f', 'o', 'o', 'd'});
+    assertEquals("dog food", dogFood.replace('\u0120', ' '));
+    String testStr = String.valueOf(new char[] {'\u1111', 'B', '\u1111', 'B', '\u1111', 'B'});
+    assertEquals("ABABAB", testStr.replace('\u1111', 'A'));
+    assertEquals("foobar", hideFromCompiler("bazbar").replace("baz", "foo"));
+    assertEquals("$0bar", hideFromCompiler("foobar").replace("foo", "$0"));
+    assertEquals("+1", hideFromCompiler("*[)1").replace("*[)", "+"));
   }
 
   public void testReplaceAll() {
-    assertEquals("abcdef", "xxxxabcxxdexf".replaceAll("x*", ""));
-    assertEquals("1\\1abc123\\123de1234\\1234f", "1abc123de1234f".replaceAll(
+    String regex = hideFromCompiler("*[").replaceAll("([/\\\\\\.\\*\\+\\?\\|\\(\\)\\[\\]\\{\\}])",
+        "\\\\$1");
+    assertEquals("\\*\\[", regex);
+    assertEquals("+1", hideFromCompiler("*[1").replaceAll(regex, "+"));
+    String x1 = String.valueOf(new char[] {'x', 'x', 'x', 'a', 'b', 'c', 'x', 'x', 'd', 'e', 'x',
+    'f'});
+    assertEquals("abcdef", x1.replaceAll("x*", ""));
+    String x2 = String.valueOf(new char[] {'1', 'a', 'b', 'c', '1', '2', '3', 'd', 'e', '1', '2',
+        '3', '4', 'f'});
+    assertEquals("1\\1abc123\\123de1234\\1234f", x2.replaceAll(
         "([1234]+)", "$1\\\\$1"));
-    assertEquals("\n  \n", "x  x".replaceAll("x", "\n"));
-    assertEquals("x  x", "\n  \n".replaceAll("\\\n", "x"));
-    assertEquals("x\"\\", "x".replaceAll("x", "\\x\\\"\\\\"));
-    assertEquals("$$x$", "x".replaceAll("(x)", "\\$\\$$1\\$"));
+    String x3 = String.valueOf(new char[] {'x', ' ', ' ', 'x'});
+    assertEquals("\n  \n", x3.replaceAll("x", "\n"));
+    String x4 = String.valueOf(new char[] {'\n', ' ', ' ', '\n'});
+    assertEquals("x  x", x4.replaceAll("\\\n", "x"));
+    String x5 = String.valueOf(new char[] {'x'});
+    assertEquals("x\"\\", x5.replaceAll("x", "\\x\\\"\\\\"));
+    assertEquals("$$x$", x5.replaceAll("(x)", "\\$\\$$1\\$"));
   }
 
   public void testSplit() {
@@ -245,6 +382,9 @@ public class StringTest extends GWTTestCase {
     assertFalse(haystack.startsWith(haystack + "j"));
   }
 
+  /*
+   * TODO: needs rewriting to avoid compiler optimizations.
+   */
   public void testSubstring() {
     String haystack = "abcdefghi";
     assertEquals("cd", haystack.substring(2, 4));
@@ -260,6 +400,9 @@ public class StringTest extends GWTTestCase {
     }
   }
 
+  /*
+   * TODO: needs rewriting to avoid compiler optimizations.
+   */
   public void testTrim() {
     trimRightAssertEquals("abc", "   \t abc \n  ");
     trimRightAssertEquals("abc", "abc".trim());
@@ -272,12 +415,18 @@ public class StringTest extends GWTTestCase {
     trimRightAssertEquals("", "   \t ".trim());
   }
 
+  /*
+   * TODO: needs rewriting to avoid compiler optimizations.
+   */
   public void testUpperCase() {
     assertEquals("abc", "AbC".toLowerCase());
     assertEquals("abc", "abc".toLowerCase());
     assertEquals("", "".toLowerCase());
   }
 
+  /*
+   * TODO: needs rewriting to avoid compiler optimizations.
+   */
   public void testValueOf() {
     assertTrue(String.valueOf(C.FLOAT_VALUE).startsWith(C.FLOAT_STRING));
     assertEquals(C.INT_STRING, String.valueOf(C.INT_VALUE));
@@ -293,6 +442,8 @@ public class StringTest extends GWTTestCase {
 
   /**
    * Helper method for testTrim to avoid compiler optimizations.
+   * 
+   * TODO: insufficient, compiler now inlines.
    */
   public void trimRightAssertEquals(String left, String right) {
     assertEquals(left, right.trim());
@@ -300,6 +451,8 @@ public class StringTest extends GWTTestCase {
 
   /**
    * Helper method for testTrim to avoid compiler optimizations.
+   * 
+   * TODO: insufficient, compiler now inlines.
    */
   public void trimRightAssertSame(String left, String right) {
     assertSame(left, right.trim());

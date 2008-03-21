@@ -25,12 +25,62 @@ package java.lang;
 import com.google.gwt.core.client.JavaScriptObject;
 
 import java.io.Serializable;
+import java.util.Comparator;
 
 /**
  * Intrinsic string class.
+ * 
+ * TODO(jat): consider whether we want to support the following methods;
+ * 
+ * <ul>
+ * <li>deprecated methods dealing with bytes (I assume not since I can't see much use for them)
+ *   <ul>
+ *    <li>String(byte[] ascii, int hibyte)
+ *    <li>String(byte[] ascii, int hibyte, int offset, int count)
+ *    <li>getBytes(int srcBegin, int srcEnd, byte[] dst, int dstBegin)
+ *   </ul>
+ * <li>methods which in JS will essentially do nothing or be the same as other methods
+ *   <ul>
+ *    <li>copyValueOf(char[] data)
+ *    <li>copyValueOf(char[] data, int offset, int count)
+ *   </ul>
+ * <li>methods added in Java 1.6 (the issue is how will it impact users building against Java 1.5)
+ *   <ul>
+ *    <li>isEmpty()
+ *   </ul>
+ * <li>other methods which are not straightforward in JS
+ *   <ul>
+ *    <li>format(String format, Object... args)
+ *   </ul>
+ * </ul>
+ *  
+ * Also, in general, we need to improve our support of non-ASCII characters.  The problem is
+ * that correct support requires large tables, and we don't want to make users who aren't going
+ * to use that pay for it.  There are two ways to do that:
+ * <ol>
+ *    <li>construct the tables in such a way that if the corresponding method is not called the
+ *       table will be elided from the output.
+ *    <li>provide a deferred binding target selecting the level of compatibility required.  Those
+ *       that only need ASCII (or perhaps a different relatively small subset such as Latin1-5)
+ *       will not pay for large tables, even if they do call toLowercase(), for example.
+ * </ol>
+ *       
+ * Also, if we ever add multi-locale support, there are a number of other methods such as
+ * toLowercase(Locale) we will want to consider supporting.  This is probably rare, but there
+ * will be some apps (such as a translation tool) which cannot be written without this support.
+ * 
+ * Another category of incomplete support is that we currently just use the JS regex support,
+ * which is not exactly the same as Java.  We should support Java syntax by mapping it into
+ * equivalent JS patterns, or emulating them.
  */
-public final class String implements Comparable<String>, CharSequence, 
+public final class String implements Comparable<String>, CharSequence,
     Serializable {
+
+  public static final Comparator<String> CASE_INSENSITIVE_ORDER = new Comparator<String>() {
+    public int compare(String a, String b) {
+      return a.compareToIgnoreCase(b);
+    }
+  };
 
   /**
    * Accesses need to be prefixed with ':' to prevent conflict with built-in
@@ -63,7 +113,7 @@ public final class String implements Comparable<String>, CharSequence,
   public static String valueOf(double x) {
     return "" + x;
   }
-  
+
   public static String valueOf(float x) {
     return "" + x;
   }
@@ -161,6 +211,32 @@ public final class String implements Comparable<String>, CharSequence,
   /**
    * @skip
    */
+  static String _String(int[] codePoints, int offset, int count) {
+    char[] chars = new char[count * 2];
+    int charIdx = 0;
+    while (count-- > 0) {
+      charIdx += Character.toChars(codePoints[offset++], chars, charIdx);
+    }
+    return valueOf(chars, 0, charIdx);
+  }
+
+  /**
+   * @skip
+   */
+  static String _String(StringBuffer sb) {
+    return valueOf(sb);
+  }
+
+  /**
+   * @skip
+   */
+  static String _String(StringBuilder sb) {
+    return valueOf(sb);
+  }
+
+  /**
+   * @skip
+   */
   static String _String(String other) {
     return other;
   }
@@ -171,6 +247,52 @@ public final class String implements Comparable<String>, CharSequence,
   }-*/;
 
   // CHECKSTYLE_ON
+
+  private static native int compareTo(String thisStr, String otherStr) /*-{
+    // Coerce to a primitive string to force string comparison
+    thisStr = String(thisStr);
+    if (thisStr == otherStr) {
+      return 0;
+    }
+    return thisStr < otherStr ? -1 : 1;
+  }-*/;
+
+  private static native String fromCharCode(char ch) /*-{
+    return String.fromCharCode(ch);
+  }-*/;
+  
+  private static String fromCodePoint(int codePoint) {
+    if (codePoint >= Character.MIN_SUPPLEMENTARY_CODE_POINT) {
+      char hiSurrogate = Character.getHighSurrogate(codePoint);
+      char loSurrogate = Character.getLowSurrogate(codePoint);
+      return String.fromCharCode(hiSurrogate)
+          + String.fromCharCode(loSurrogate);
+    } else {
+      return String.fromCharCode((char) codePoint);
+    }
+  }
+
+  private static native boolean regionMatches(String thisStr, boolean ignoreCase, int toffset,
+      String other, int ooffset, int len) /*-{
+    if (toffset < 0 || ooffset < 0 || len <= 0) {
+      return false;
+    }
+
+    if (toffset + len > thisStr.length || ooffset + len > other.length) {
+      return false;
+    }
+
+    var left = thisStr.substr(toffset, len);
+    var right = other.substr(ooffset, len);
+
+    if (ignoreCase) {
+      left = left.toLowerCase();
+      right = right.toLowerCase();
+    }
+
+    return left == right;
+  }-*/;
+
 
   public String() {
     // magic delegation to _String
@@ -187,30 +309,48 @@ public final class String implements Comparable<String>, CharSequence,
     _String(value, offset, count);
   }
 
+  public String(int codePoints[], int offset, int count) {
+    // magic delegation to _String
+    _String(codePoints, offset, count);
+  }
+
   public String(String other) {
     // magic delegation to _String
     _String(other);
+  }
+
+  public String(StringBuffer sb) {
+    // magic delegation to _String
+    _String(sb);
+  }
+
+  public String(StringBuilder sb) {
+    // magic delegation to _String
+    _String(sb);
   }
 
   public native char charAt(int index) /*-{ 
     return this.charCodeAt(index);
   }-*/;
 
+  public int codePointAt(int index) {
+    return Character.codePointAt(this, index, length());
+  }
+
+  public int codePointBefore(int index) {
+    return Character.codePointBefore(this, index, 0);
+  }
+
+  public int codePointCount(int beginIndex, int endIndex) {
+    return Character.codePointCount(this, beginIndex, endIndex);
+  }
+
   public int compareTo(String other) {
-    if (__equals(this, other)) {
-      return 0;
-    }
-    int thisLength = this.length();
-    int otherLength = other.length();
-    int length = Math.min(thisLength, otherLength);
-    for (int i = 0; i < length; i++) {
-      char thisChar = this.charAt(i);
-      char otherChar = other.charAt(i);
-      if (thisChar != otherChar) {
-        return thisChar - otherChar;
-      }
-    }
-    return thisLength - otherLength;
+    return compareTo(this, other);
+  }
+
+  public int compareToIgnoreCase(String other) {
+    return compareTo(toLowerCase(), other.toLowerCase());
   }
 
   public native String concat(String str) /*-{
@@ -219,6 +359,14 @@ public final class String implements Comparable<String>, CharSequence,
 
   public boolean contains(CharSequence s) {
     return indexOf(s.toString()) != -1;
+  }
+
+  public boolean contentEquals(CharSequence cs) {
+    return equals(cs.toString());
+  }
+
+  public boolean contentEquals(StringBuffer sb) {
+    return equals(sb.toString());
   }
 
   public native boolean endsWith(String suffix) /*-{
@@ -239,6 +387,12 @@ public final class String implements Comparable<String>, CharSequence,
       return false;
     return (this == other) || (this.toLowerCase() == other.toLowerCase());
   }-*/;
+
+  public void getChars(int srcBegin, int srcEnd, char[] dst, int dstBegin) {
+    for (int srcIdx = srcBegin; srcIdx < srcEnd; ++srcIdx) {
+      dst[dstBegin++] = charAt(srcIdx);
+    }
+  }
 
   @Override
   public native int hashCode() /*-{
@@ -272,13 +426,13 @@ public final class String implements Comparable<String>, CharSequence,
     return hashCode;
   }-*/;
 
-  public native int indexOf(int ch) /*-{
-    return this.indexOf(String.fromCharCode(ch));
-  }-*/;
+  public int indexOf(int codePoint) {
+    return indexOf(fromCodePoint(codePoint));
+  }
 
-  public native int indexOf(int ch, int startIndex) /*-{
-    return this.indexOf(String.fromCharCode(ch), startIndex);
-  }-*/;
+  public int indexOf(int codePoint, int startIndex) {
+    return this.indexOf(String.fromCodePoint(codePoint), startIndex);
+  }
 
   public native int indexOf(String str) /*-{
     return this.indexOf(str);
@@ -288,13 +442,17 @@ public final class String implements Comparable<String>, CharSequence,
     return this.indexOf(str, startIndex);
   }-*/;
 
-  public native int lastIndexOf(int ch) /*-{
-    return this.lastIndexOf(String.fromCharCode(ch));
+  public native String intern() /*-{
+    return String(this);
   }-*/;
 
-  public native int lastIndexOf(int ch, int startIndex) /*-{
-    return this.lastIndexOf(String.fromCharCode(ch), startIndex);
-  }-*/;
+  public int lastIndexOf(int codePoint) {
+    return lastIndexOf(fromCodePoint(codePoint));
+  }
+
+  public int lastIndexOf(int codePoint, int startIndex) {
+    return lastIndexOf(fromCodePoint(codePoint), startIndex);
+  }
 
   public native int lastIndexOf(String str) /*-{
     return this.lastIndexOf(str);
@@ -313,6 +471,8 @@ public final class String implements Comparable<String>, CharSequence,
    * <code>regex</code> parameter is interpreted by JavaScript as a JavaScript
    * regular expression. For consistency, use only the subset of regular
    * expression syntax common to both Java and JavaScript.
+   * 
+   * TODO(jat): properly handle Java regex syntax
    */
   public native boolean matches(String regex) /*-{
     var matchObj = new RegExp(regex).exec(this);
@@ -320,6 +480,25 @@ public final class String implements Comparable<String>, CharSequence,
     // matchObj[0] is the entire matched string
     return (matchObj == null) ? false : (this == matchObj[0]);
   }-*/;
+
+  public int offsetByCodePoints(int index, int codePointOffset) {
+    return Character.offsetByCodePoints(this, index, codePointOffset);
+  }
+
+  public boolean regionMatches(boolean ignoreCase, int toffset, String other,
+      int ooffset, int len) {
+    if (other == null) {
+      throw new NullPointerException();
+    }
+    return regionMatches(this, ignoreCase, toffset, other, ooffset, len);
+  }
+
+  public boolean regionMatches(int toffset, String other, int ooffset, int len) {
+    if (other == null) {
+      throw new NullPointerException();
+    }
+    return regionMatches(this, false, toffset, other, ooffset, len);
+  }
 
   public native String replace(char from, char to) /*-{
     // We previously used \\uXXXX, but Safari 2 doesn't match them properly in RegExp
@@ -337,11 +516,20 @@ public final class String implements Comparable<String>, CharSequence,
     return this.replace(RegExp(regex, "g"), String.fromCharCode(to));
   }-*/;
 
+  public String replace(CharSequence from, CharSequence to) {
+    // Escape regex special characters from literal replacement string.
+    String regex = from.toString().replaceAll("([/\\\\\\.\\*\\+\\?\\|\\(\\)\\[\\]\\{\\}])",
+        "\\\\$1");
+    return replaceAll(regex, to.toString());
+  }
+  
   /**
    * Regular expressions vary from the standard implementation. The
    * <code>regex</code> parameter is interpreted by JavaScript as a JavaScript
    * regular expression. For consistency, use only the subset of regular
    * expression syntax common to both Java and JavaScript.
+   * 
+   * TODO(jat): properly handle Java regex syntax
    */
   public native String replaceAll(String regex, String replace) /*-{
     replace = @java.lang.String::__translateReplaceString(Ljava/lang/String;)(replace);
@@ -353,6 +541,8 @@ public final class String implements Comparable<String>, CharSequence,
    * <code>regex</code> parameter is interpreted by JavaScript as a JavaScript
    * regular expression. For consistency, use only the subset of regular
    * expression syntax common to both Java and JavaScript.
+   * 
+   * TODO(jat): properly handle Java regex syntax
    */
   public native String replaceFirst(String regex, String replace) /*-{
     replace = @java.lang.String::__translateReplaceString(Ljava/lang/String;)(replace);
@@ -374,6 +564,8 @@ public final class String implements Comparable<String>, CharSequence,
    * <code>regex</code> parameter is interpreted by JavaScript as a JavaScript
    * regular expression. For consistency, use only the subset of regular
    * expression syntax common to both Java and JavaScript.
+   * 
+   * TODO(jat): properly handle Java regex syntax
    */
   public native String[] split(String regex, int maxMatch) /*-{
     // The compiled regular expression created from the string
@@ -449,15 +641,13 @@ public final class String implements Comparable<String>, CharSequence,
   }-*/;
 
   public native String substring(int beginIndex, int endIndex) /*-{
-    return this.substr(beginIndex, endIndex-beginIndex);
+    return this.substr(beginIndex, endIndex - beginIndex);
   }-*/;
 
   public char[] toCharArray() {
     int n = this.length();
     char[] charArr = new char[n];
-    for (int i = 0; i < n; ++i) {
-      charArr[i] = this.charAt(i);
-    }
+    getChars(0, n, charArr, 0);
     return charArr;
   }
 
