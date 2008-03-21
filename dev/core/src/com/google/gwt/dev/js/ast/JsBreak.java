@@ -38,4 +38,8 @@ public final class JsBreak extends JsStatement {
     v.visit(this, ctx);
     v.endVisit(this, ctx);
   }
+
+  public boolean unconditionalControlBreak() {
+    return true;
+  }
 }

@@ -44,6 +44,7 @@ import com.google.gwt.dev.jjs.impl.CastNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.CompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
+import com.google.gwt.dev.jjs.impl.Finalizer;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
 import com.google.gwt.dev.jjs.impl.JavaScriptObjectNormalizer;
@@ -51,21 +52,21 @@ import com.google.gwt.dev.jjs.impl.JsoDevirtualizer;
 import com.google.gwt.dev.jjs.impl.LongCastNormalizer;
 import com.google.gwt.dev.jjs.impl.LongEmulationNormalizer;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic;
-import com.google.gwt.dev.jjs.impl.Finalizer;
 import com.google.gwt.dev.jjs.impl.MethodCallTightener;
 import com.google.gwt.dev.jjs.impl.MethodInliner;
 import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.ReplaceRebinds;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
+import com.google.gwt.dev.js.JsIEBlockSizeVisitor;
 import com.google.gwt.dev.js.JsInliner;
 import com.google.gwt.dev.js.JsNormalizer;
 import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsPrettyNamer;
 import com.google.gwt.dev.js.JsSourceGenerationVisitor;
+import com.google.gwt.dev.js.JsStaticEval;
 import com.google.gwt.dev.js.JsStringInterner;
 import com.google.gwt.dev.js.JsSymbolResolver;
-import com.google.gwt.dev.js.JsIEBlockSizeVisitor;
 import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.ast.JsProgram;
@@ -454,6 +455,8 @@ public class JavaToJavaScriptCompiler {
       if (options.isAggressivelyOptimize()) {
         do {
           didChange = false;
+          // Remove unused functions, possible
+          didChange = JsStaticEval.exec(jsProgram) || didChange;
           // Inline JavaScript function invocations
           didChange = options.isAggressivelyOptimize()
               && JsInliner.exec(jsProgram) || didChange;

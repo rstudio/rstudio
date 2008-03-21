@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,14 +18,25 @@ package com.google.gwt.dev.js.ast;
 /**
  * A JavaScript null literal.
  */
-public final class JsNullLiteral extends JsExpression {
+public final class JsNullLiteral extends JsValueLiteral {
 
   // Should only be instantiated in JsProgram
   JsNullLiteral() {
   }
-  
-  @Override
-  public boolean isLeaf() {
+
+  public boolean isBooleanFalse() {
+    return true;
+  }
+
+  public boolean isBooleanTrue() {
+    return false;
+  }
+
+  public boolean isDefinitelyNotNull() {
+    return false;
+  }
+
+  public boolean isDefinitelyNull() {
     return true;
   }
 

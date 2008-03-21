@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,16 +18,32 @@ package com.google.gwt.dev.js.ast;
 /**
  * A JavaScript <code>this</code> reference.
  */
-public final class JsThisRef extends JsExpression {
+public final class JsThisRef extends JsValueLiteral {
 
   public JsThisRef() {
   }
 
-  @Override
-  public boolean isLeaf() {
+  public boolean isBooleanFalse() {
+    return false;
+  }
+
+  public boolean isBooleanTrue() {
     return true;
   }
-  
+
+  public boolean isDefinitelyNotNull() {
+    /*
+     * You'd think that you could get a null this via function.call/apply, but
+     * in fact you can't: they just make this be the window object instead. So
+     * it really can't ever be null.
+     */
+    return true;
+  }
+
+  public boolean isDefinitelyNull() {
+    return false;
+  }
+
   public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
     v.visit(this, ctx);
     v.endVisit(this, ctx);

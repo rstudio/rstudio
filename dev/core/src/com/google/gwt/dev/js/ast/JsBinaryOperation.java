@@ -49,6 +49,50 @@ public final class JsBinaryOperation extends JsExpression {
     return op;
   }
 
+  @Override
+  public boolean hasSideEffects() {
+    return op.isAssignment() || arg1.hasSideEffects() || arg2.hasSideEffects();
+  }
+
+  @Override
+  public boolean isDefinitelyNotNull() {
+    // Precarious coding, but none of these can have null results.
+    if (op.getPrecedence() > 5) {
+      return true;
+    }
+    if (op == JsBinaryOperator.OR) {
+      if (arg1 instanceof CanBooleanEval) {
+        if (((CanBooleanEval) arg1).isBooleanTrue()) {
+          assert arg1.isDefinitelyNotNull();
+          return true;
+        }
+      }
+    }
+    // AND and OR can return nulls
+    if (op.isAssignment()) {
+      if (op == JsBinaryOperator.ASG) {
+        return arg2.isDefinitelyNotNull();
+      } else {
+        // All other ASG's are math ops.
+        return true;
+      }
+    }
+
+    if (op == JsBinaryOperator.COMMA) {
+      return arg2.isDefinitelyNotNull();
+    }
+
+    return false;
+  }
+
+  @Override
+  public boolean isDefinitelyNull() {
+    if (op == JsBinaryOperator.AND) {
+      return arg1.isDefinitelyNull();
+    }
+    return false;
+  }
+
   public void setArg1(JsExpression arg1) {
     this.arg1 = arg1;
   }

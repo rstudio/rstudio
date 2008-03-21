@@ -66,7 +66,7 @@ public final class JsBinaryOperator extends JsOperator {
 
   // Precendence 3 is for the condition operator.
 
-  // These assignment operators are right-associatve.
+  // These assignment operators are right-associative.
   public static final JsBinaryOperator ASG = create("=", 2, INFIX);
   public static final JsBinaryOperator ASG_ADD = create("+=", 2, INFIX);
   public static final JsBinaryOperator ASG_SUB = create("-=", 2, INFIX);

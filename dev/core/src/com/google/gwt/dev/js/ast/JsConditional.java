@@ -20,11 +20,11 @@ package com.google.gwt.dev.js.ast;
  */
 public final class JsConditional extends JsExpression {
 
+  private JsExpression elseExpr;
+
   private JsExpression testExpr;
 
   private JsExpression thenExpr;
-
-  private JsExpression elseExpr;
 
   public JsConditional() {
   }
@@ -46,6 +46,20 @@ public final class JsConditional extends JsExpression {
 
   public JsExpression getThenExpression() {
     return thenExpr;
+  }
+
+  @Override
+  public boolean hasSideEffects() {
+    return testExpr.hasSideEffects() || thenExpr.hasSideEffects()
+        || elseExpr.hasSideEffects();
+  }
+
+  public boolean isDefinitelyNotNull() {
+    return thenExpr.isDefinitelyNotNull() && elseExpr.isDefinitelyNotNull();
+  }
+
+  public boolean isDefinitelyNull() {
+    return thenExpr.isDefinitelyNull() && elseExpr.isDefinitelyNull();
   }
 
   public void setElseExpression(JsExpression elseExpr) {

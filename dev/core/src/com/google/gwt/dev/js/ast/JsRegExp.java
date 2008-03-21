@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ package com.google.gwt.dev.js.ast;
 /**
  * A JavaScript regular expression.
  */
-public class JsRegExp extends JsExpression {
+public final class JsRegExp extends JsValueLiteral {
 
   private String flags;
 
@@ -33,6 +33,22 @@ public class JsRegExp extends JsExpression {
 
   public String getPattern() {
     return pattern;
+  }
+
+  public boolean isBooleanFalse() {
+    return false;
+  }
+
+  public boolean isBooleanTrue() {
+    return true;
+  }
+
+  public boolean isDefinitelyNotNull() {
+    return true;
+  }
+
+  public boolean isDefinitelyNull() {
+    return false;
   }
 
   public void setFlags(String suffix) {

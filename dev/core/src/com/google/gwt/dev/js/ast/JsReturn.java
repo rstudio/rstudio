@@ -45,4 +45,8 @@ public final class JsReturn extends JsStatement {
     }
     v.endVisit(this, ctx);
   }
+
+  public boolean unconditionalControlBreak() {
+    return true;
+  }
 }

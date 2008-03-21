@@ -18,7 +18,7 @@ package com.google.gwt.dev.js.ast;
 /**
  * Represents a JavaScript literal boolean expression.
  */
-public final class JsBooleanLiteral extends JsExpression {
+public final class JsBooleanLiteral extends JsValueLiteral {
 
   private final boolean value;
 
@@ -31,9 +31,20 @@ public final class JsBooleanLiteral extends JsExpression {
     return value;
   }
 
-  @Override
-  public boolean isLeaf() {
+  public boolean isBooleanFalse() {
+    return value == false;
+  }
+
+  public boolean isBooleanTrue() {
+    return value == true;
+  }
+
+  public boolean isDefinitelyNotNull() {
     return true;
+  }
+
+  public boolean isDefinitelyNull() {
+    return false;
   }
 
   public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {

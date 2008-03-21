@@ -25,7 +25,7 @@ import com.google.gwt.dev.js.ast.JsBooleanLiteral;
 import com.google.gwt.dev.js.ast.JsCase;
 import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsDecimalLiteral;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsDefault;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
@@ -33,7 +33,6 @@ import com.google.gwt.dev.js.ast.JsFor;
 import com.google.gwt.dev.js.ast.JsForIn;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsIf;
-import com.google.gwt.dev.js.ast.JsIntegralLiteral;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
@@ -53,10 +52,8 @@ import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsSwitchMember;
 import com.google.gwt.dev.js.ast.JsThisRef;
-import com.google.gwt.dev.js.ast.JsThrow;
 import com.google.gwt.dev.js.ast.JsUnaryOperation;
 import com.google.gwt.dev.js.ast.JsVars;
-import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
@@ -74,6 +71,9 @@ import java.util.Stack;
 
 /**
  * Perform inlining optimizations on the JavaScript AST.
+ * 
+ * TODO(bobv): remove anything that's duplicating work with {@link JsStaticEval};
+ * migrate other stuff to that class perhaps.
  */
 public class JsInliner {
 
@@ -160,7 +160,7 @@ public class JsInliner {
       }
 
       // If (X, a) and X has no side effects, replace with a
-      if (!hasSideEffects(x.getArg1())) {
+      if (!x.getArg1().hasSideEffects()) {
         ctx.replaceMe(x.getArg2());
         return;
       }
@@ -174,7 +174,7 @@ public class JsInliner {
          * a) as the expression.
          */
         JsBinaryOperation inner = isComma(x.getArg1());
-        if (inner != null && !hasSideEffects(inner.getArg2())) {
+        if (inner != null && !inner.getArg2().hasSideEffects()) {
           x.setArg1(inner.getArg1());
           didChange = true;
         }
@@ -239,17 +239,7 @@ public class JsInliner {
     }
 
     @Override
-    public void endVisit(JsDecimalLiteral x, JsContext<JsExpression> ctx) {
-      complexity++;
-    }
-
-    @Override
     public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
-      complexity++;
-    }
-
-    @Override
-    public void endVisit(JsIntegralLiteral x, JsContext<JsExpression> ctx) {
       complexity++;
     }
 
@@ -270,6 +260,11 @@ public class JsInliner {
 
     @Override
     public void endVisit(JsNullLiteral x, JsContext<JsExpression> ctx) {
+      complexity++;
+    }
+
+    @Override
+    public void endVisit(JsNumberLiteral x, JsContext<JsExpression> ctx) {
       complexity++;
     }
 
@@ -706,7 +701,7 @@ public class JsInliner {
       JsExpression e = x.getExpression();
 
       // We will occasionally create JsExprStmts that have no side-effects.
-      if (ctx.canRemove() && !hasSideEffects(x.getExpression())) {
+      if (ctx.canRemove() && !x.getExpression().hasSideEffects()) {
         ctx.removeMe();
         return;
       }
@@ -729,7 +724,7 @@ public class JsInliner {
          * We can ignore intermediate expressions as long as they have no
          * side-effects.
          */
-        if (hasSideEffects(op.getArg2())) {
+        if (op.getArg2().hasSideEffects()) {
           statements.add(0, new JsExprStmt(op.getArg2()));
         }
 
@@ -741,7 +736,7 @@ public class JsInliner {
        * it may be possible to ignore the final expressions as long as it has no
        * side-effects.
        */
-      if (hasSideEffects(e)) {
+      if (e.hasSideEffects()) {
         statements.add(0, new JsExprStmt(e));
       }
 
@@ -958,15 +953,15 @@ public class JsInliner {
    */
   private static class NameRefReplacerVisitor extends JsModVisitor {
     /**
+     * Set up a map to record name replacements to perform.
+     */
+    final Map<JsName, JsName> nameReplacements = new IdentityHashMap<JsName, JsName>();
+
+    /**
      * Set up a map of parameter names back to the expressions that will be
      * passed in from the outer call site.
      */
     final Map<JsName, JsExpression> paramsToArgsMap = new IdentityHashMap<JsName, JsExpression>();
-
-    /**
-     * Set up a map to record name replacements to perform.
-     */
-    final Map<JsName, JsName> nameReplacements = new IdentityHashMap<JsName, JsName>();
 
     /**
      * Constructor.
@@ -1266,68 +1261,6 @@ public class JsInliner {
   }
 
   /**
-   * Examine a node to determine if it might produce side effects.
-   */
-  private static class SideEffectsVisitor extends JsVisitor {
-    private boolean hasSideEffects;
-
-    @Override
-    public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
-      hasSideEffects |= (x.getOperator().isAssignment());
-    }
-
-    @Override
-    public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
-      /*
-       * Declaring a named function implicitly has an assignment side-effect.
-       */
-      hasSideEffects |= x.getName() != null;
-    }
-
-    @Override
-    public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
-      /*
-       * We don't actually need to drill-down into other functions to see if
-       * they do or do not have side-effects. The simple, side-effect free
-       * function invocations will naturally be inlined in subsequent
-       * iterations.
-       */
-      hasSideEffects = true;
-    }
-
-    @Override
-    public void endVisit(JsNew x, JsContext<JsExpression> ctx) {
-      /*
-       * The typical use of the new keyword in JavaScript generated by GWT is to
-       * create a prototypical object, and then pass it into a Java-derived
-       * constructor. Given that the majority of the uses of new would not
-       * benefit from inlining, it's not worth the extra complexity of worrying
-       * about yet another set of special cases.
-       */
-      hasSideEffects = true;
-    }
-
-    @Override
-    public void endVisit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
-      hasSideEffects |= x.getOperator().isModifying();
-    }
-
-    @Override
-    public void endVisit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
-      hasSideEffects |= x.getOperator().isModifying();
-    }
-
-    @Override
-    public void endVisit(JsThrow x, JsContext<JsStatement> ctx) {
-      hasSideEffects = true;
-    }
-
-    public boolean hasSideEffects() {
-      return hasSideEffects;
-    }
-  }
-
-  /**
    * This ensures that changing the scope of an expression from its enclosing
    * function into the scope of the call site will not cause unqualified
    * identifiers to resolve to different values.
@@ -1418,8 +1351,8 @@ public class JsInliner {
    * The context parameter provides a scope in which local (and therefore
    * immutable) variables are defined.
    */
-  private static <T extends JsVisitable<T>> boolean affectedBySideEffects(
-      JsProgram program, List<T> list, JsFunction context) {
+  private static boolean affectedBySideEffects(JsProgram program,
+      List<JsExpression> list, JsFunction context) {
     /*
      * If the caller contains no nested functions, none of its locals can
      * possibly be affected by side effects.
@@ -1435,7 +1368,7 @@ public class JsInliner {
   }
 
   /**
-   * Generate an exisimated measure of the syntactic complexity of a JsNode.
+   * Generate an estimated measure of the syntactic complexity of a JsNode.
    */
   private static int complexity(JsNode<?> toEstimate) {
     ComplexityEstimator e = new ComplexityEstimator();
@@ -1493,17 +1426,13 @@ public class JsInliner {
   /**
    * Determine whether or not a list of AST nodes have side effects.
    */
-  private static <T extends JsVisitable<T>> boolean hasSideEffects(List<T> list) {
-    SideEffectsVisitor v = new SideEffectsVisitor();
-    v.acceptList(list);
-    return v.hasSideEffects();
-  }
-
-  /**
-   * Determine whether or not an AST node has side effects.
-   */
-  private static <T extends JsVisitable<T>> boolean hasSideEffects(T e) {
-    return hasSideEffects(Collections.singletonList(e));
+  private static boolean hasSideEffects(List<JsExpression> list) {
+    for (JsExpression expr : list) {
+      if (expr.hasSideEffects()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -1719,8 +1648,8 @@ public class JsInliner {
    * affected by side effects when evaluated within a particular function
    * context.
    */
-  private static <T extends JsVisitable<T>> boolean isVolatile(
-      JsProgram program, List<T> list, JsFunction context) {
+  private static boolean isVolatile(JsProgram program, List<JsExpression> list,
+      JsFunction context) {
     return hasSideEffects(list)
         || affectedBySideEffects(program, list, context);
   }

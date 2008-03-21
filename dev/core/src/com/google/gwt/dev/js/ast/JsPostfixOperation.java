@@ -29,6 +29,16 @@ public final class JsPostfixOperation extends JsUnaryOperation {
   }
 
   @Override
+  public boolean isDefinitelyNotNull() {
+    return true;
+  }
+
+  @Override
+  public boolean isDefinitelyNull() {
+    return false;
+  }
+
+  @Override
   public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
     if (v.visit(this, ctx)) {
       super.traverse(v, ctx);

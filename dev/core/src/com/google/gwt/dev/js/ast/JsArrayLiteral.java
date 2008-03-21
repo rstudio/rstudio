@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Represents a JavaScript expression for array literals.
  */
-public final class JsArrayLiteral extends JsExpression {
+public final class JsArrayLiteral extends JsLiteral {
 
   private final List<JsExpression> exprs = new ArrayList<JsExpression>();
 
@@ -30,6 +30,32 @@ public final class JsArrayLiteral extends JsExpression {
 
   public List<JsExpression> getExpressions() {
     return exprs;
+  }
+
+  @Override
+  public boolean hasSideEffects() {
+    for (JsExpression expr : exprs) {
+      if (expr.hasSideEffects()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean isBooleanFalse() {
+    return false;
+  }
+
+  public boolean isBooleanTrue() {
+    return true;
+  }
+
+  public boolean isDefinitelyNotNull() {
+    return true;
+  }
+
+  public boolean isDefinitelyNull() {
+    return false;
   }
 
   public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {

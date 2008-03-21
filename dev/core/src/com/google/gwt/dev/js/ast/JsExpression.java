@@ -19,6 +19,22 @@ package com.google.gwt.dev.js.ast;
  * An abstract base class for all JavaScript expressions.
  */
 public abstract class JsExpression extends JsNode<JsExpression> {
+
+  /**
+   * Determines whether the expression can cause side effects.
+   */
+  public abstract boolean hasSideEffects();
+
+  /**
+   * True if the target expression is definitely not null.
+   */
+  public abstract boolean isDefinitelyNotNull();
+
+  /**
+   * True if the target expression is definitely null.
+   */
+  public abstract boolean isDefinitelyNull();
+
   /**
    * Determines whether or not this expression is a leaf, such as a
    * {@link JsNameRef}, {@link JsBooleanLiteral}, and so on. Leaf expressions
@@ -27,7 +43,6 @@ public abstract class JsExpression extends JsNode<JsExpression> {
   public boolean isLeaf() {
     // Conservatively say that it isn't a leaf.
     // Individual subclasses can speak for themselves if they are a leaf.
-    //
     return false;
   }
 

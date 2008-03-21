@@ -27,7 +27,7 @@ import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsContinue;
 import com.google.gwt.dev.js.ast.JsDebugger;
-import com.google.gwt.dev.js.ast.JsDecimalLiteral;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsDefault;
 import com.google.gwt.dev.js.ast.JsDoWhile;
 import com.google.gwt.dev.js.ast.JsEmpty;
@@ -37,7 +37,6 @@ import com.google.gwt.dev.js.ast.JsFor;
 import com.google.gwt.dev.js.ast.JsForIn;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsIf;
-import com.google.gwt.dev.js.ast.JsIntegralLiteral;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsLabel;
 import com.google.gwt.dev.js.ast.JsNameRef;
@@ -161,12 +160,6 @@ class JsPrecedenceVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsDecimalLiteral x, JsContext<JsExpression> ctx) {
-    answer = 17; // primary
-    return false;
-  }
-
-  @Override
   public boolean visit(JsDefault x, JsContext<JsSwitchMember> ctx) {
     throw new RuntimeException("Only expressions have precedence.");
   }
@@ -208,12 +201,6 @@ class JsPrecedenceVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsIntegralLiteral x, JsContext<JsExpression> ctx) {
-    answer = 17; // primary
-    return false;
-  }
-
-  @Override
   public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
     answer = 16;
     return false;
@@ -242,6 +229,12 @@ class JsPrecedenceVisitor extends JsVisitor {
 
   @Override
   public boolean visit(JsNullLiteral x, JsContext<JsExpression> ctx) {
+    answer = 17; // primary
+    return false;
+  }
+
+  @Override
+  public boolean visit(JsNumberLiteral x, JsContext<JsExpression> ctx) {
     answer = 17; // primary
     return false;
   }

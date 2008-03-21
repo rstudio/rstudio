@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.js.ast;
 
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,17 +25,15 @@ public final class JsProgram extends JsNode<JsProgram> {
 
   private final JsStatement debuggerStmt = new JsDebugger();
 
-  private final Map<String, JsDecimalLiteral> decimalLiteralMap = new HashMap<String, JsDecimalLiteral>();
-
   private final JsEmpty emptyStmt = new JsEmpty();
 
   private final JsBooleanLiteral falseLiteral = new JsBooleanLiteral(false);
 
   private final JsGlobalBlock globalBlock;
 
-  private final Map<BigInteger, JsIntegralLiteral> integralLiteralMap = new HashMap<BigInteger, JsIntegralLiteral>();
-
   private final JsNullLiteral nullLiteral = new JsNullLiteral();
+
+  private final Map<Double, JsNumberLiteral> numberLiteralMap = new HashMap<Double, JsNumberLiteral>();
 
   private final JsScope objectScope;
 
@@ -68,15 +65,6 @@ public final class JsProgram extends JsNode<JsProgram> {
     return debuggerStmt;
   }
 
-  public JsDecimalLiteral getDecimalLiteral(String value) {
-    JsDecimalLiteral lit = decimalLiteralMap.get(value);
-    if (lit == null) {
-      lit = new JsDecimalLiteral(value);
-      decimalLiteralMap.put(value, lit);
-    }
-    return lit;
-  }
-
   public JsEmpty getEmptyStmt() {
     return emptyStmt;
   }
@@ -92,17 +80,17 @@ public final class JsProgram extends JsNode<JsProgram> {
     return globalBlock;
   }
 
-  public JsIntegralLiteral getIntegralLiteral(BigInteger value) {
-    JsIntegralLiteral lit = integralLiteralMap.get(value);
-    if (lit == null) {
-      lit = new JsIntegralLiteral(value);
-      integralLiteralMap.put(value, lit);
-    }
-    return lit;
-  }
-
   public JsNullLiteral getNullLiteral() {
     return nullLiteral;
+  }
+
+  public JsNumberLiteral getNumberLiteral(double value) {
+    JsNumberLiteral lit = numberLiteralMap.get(value);
+    if (lit == null) {
+      lit = new JsNumberLiteral(value);
+      numberLiteralMap.put(value, lit);
+    }
+    return lit;
   }
 
   public JsScope getObjectScope() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,31 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
-import java.math.BigInteger;
-
 /**
- * A integral literal.
+ * A JavaScript string literal expression.
  */
-public class JsIntegralLiteral extends JsExpression {
-
-  private final BigInteger value;
-
-  // Should be interned in JsProgram
-  JsIntegralLiteral(BigInteger value) {
-    this.value = value;
-  }
-
-  public BigInteger getValue() {
-    return value;
-  }
-
-  @Override
-  public boolean isLeaf() {
-    return true;
-  }
-
-  public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
-    v.visit(this, ctx);
-    v.endVisit(this, ctx);
-  }
+public abstract class JsLiteral extends JsExpression implements CanBooleanEval {
 }

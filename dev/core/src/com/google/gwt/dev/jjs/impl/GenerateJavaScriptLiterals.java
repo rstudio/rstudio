@@ -30,7 +30,6 @@ import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.lang.LongLib;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -59,32 +58,30 @@ public class GenerateJavaScriptLiterals extends JVisitor {
 
   @Override
   public final void endVisit(JCharLiteral x, Context ctx) {
-    push(program.getIntegralLiteral(BigInteger.valueOf(x.getValue())));
+    push(program.getNumberLiteral(x.getValue()));
   }
 
   @Override
   public final void endVisit(JDoubleLiteral x, Context ctx) {
-    push(program.getDecimalLiteral(String.valueOf(x.getValue())));
+    push(program.getNumberLiteral(x.getValue()));
   }
 
   @Override
   public final void endVisit(JFloatLiteral x, Context ctx) {
-    push(program.getDecimalLiteral(String.valueOf(x.getValue())));
+    push(program.getNumberLiteral(x.getValue()));
   }
 
   @Override
   public final void endVisit(JIntLiteral x, Context ctx) {
-    push(program.getIntegralLiteral(BigInteger.valueOf(x.getValue())));
+    push(program.getNumberLiteral(x.getValue()));
   }
 
   @Override
   public void endVisit(JLongLiteral x, Context ctx) {
     JsArrayLiteral arrayLit = new JsArrayLiteral();
     double[] doubleArray = LongLib.typeChange(x.getValue());
-    arrayLit.getExpressions().add(
-        program.getDecimalLiteral(String.valueOf(doubleArray[0])));
-    arrayLit.getExpressions().add(
-        program.getDecimalLiteral(String.valueOf(doubleArray[1])));
+    arrayLit.getExpressions().add(program.getNumberLiteral(doubleArray[0]));
+    arrayLit.getExpressions().add(program.getNumberLiteral(doubleArray[1]));
     push(arrayLit);
   }
 

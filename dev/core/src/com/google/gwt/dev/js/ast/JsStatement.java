@@ -19,4 +19,12 @@ package com.google.gwt.dev.js.ast;
  * Abstract base class for JavaScript statement objects.
  */
 public abstract class JsStatement extends JsNode<JsStatement> {
+
+  /**
+   * Returns true if this statement definitely causes an abrupt change in flow
+   * control.
+   */
+  public boolean unconditionalControlBreak() {
+    return false;
+  }
 }

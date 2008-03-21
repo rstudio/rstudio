@@ -22,10 +22,9 @@ import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBooleanLiteral;
 import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsDecimalLiteral;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
-import com.google.gwt.dev.js.ast.JsIntegralLiteral;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
@@ -44,8 +43,8 @@ import java.util.Stack;
 
 /**
  * A utility class to clone JsExpression AST members for use by
- * {@link JsInliner}. <b>Not all expressions are necessarily
- * implemented</b>, only those that are safe to hoist into outer call sites.
+ * {@link JsInliner}. <b>Not all expressions are necessarily implemented</b>,
+ * only those that are safe to hoist into outer call sites.
  */
 final class JsHoister {
   /**
@@ -99,11 +98,6 @@ final class JsHoister {
       stack.push(toReturn);
     }
 
-    @Override
-    public void endVisit(JsDecimalLiteral x, JsContext<JsExpression> ctx) {
-      stack.push(x);
-    }
-
     /**
      * The only functions that would get be visited are those being used as
      * first-class objects.
@@ -114,11 +108,6 @@ final class JsHoister {
       // we don't run out of elements on the stack.
       successful = false;
       stack.push(null);
-    }
-
-    @Override
-    public void endVisit(JsIntegralLiteral x, JsContext<JsExpression> ctx) {
-      stack.push(x);
     }
 
     /**
@@ -165,6 +154,11 @@ final class JsHoister {
 
     @Override
     public void endVisit(JsNullLiteral x, JsContext<JsExpression> ctx) {
+      stack.push(x);
+    }
+
+    @Override
+    public void endVisit(JsNumberLiteral x, JsContext<JsExpression> ctx) {
       stack.push(x);
     }
 

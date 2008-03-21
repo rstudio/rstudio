@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,6 +36,23 @@ public final class JsNew extends JsExpression implements HasArguments {
 
   public JsExpression getConstructorExpression() {
     return ctorExpr;
+  }
+
+  @Override
+  public boolean hasSideEffects() {
+    return true;
+  }
+
+  @Override
+  public boolean isDefinitelyNotNull() {
+    // Sadly, in JS it can be!
+    // TODO: analysis could probably determine most instances cannot be null.
+    return false;
+  }
+
+  @Override
+  public boolean isDefinitelyNull() {
+    return false;
   }
 
   public void setConstructorExpression(JsExpression ctorExpr) {

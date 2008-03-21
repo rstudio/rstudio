@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,35 +16,17 @@
 package com.google.gwt.dev.js.ast;
 
 /**
- * A JavaScript <code>throw</code> statement.
+ * A JavaScript string literal expression.
  */
-public class JsThrow extends JsStatement {
+public abstract class JsValueLiteral extends JsLiteral {
 
-  private JsExpression expr;
-
-  public JsThrow() {
+  @Override
+  public final boolean hasSideEffects() {
+    return false;
   }
 
-  public JsThrow(JsExpression expr) {
-    this.expr = expr;
-  }
-
-  public JsExpression getExpr() {
-    return expr;
-  }
-
-  public void setExpr(JsExpression expr) {
-    this.expr = expr;
-  }
-
-  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
-    if (v.visit(this, ctx)) {
-      expr = v.accept(expr);
-    }
-    v.endVisit(this, ctx);
-  }
-
-  public boolean unconditionalControlBreak() {
+  @Override
+  public final boolean isLeaf() {
     return true;
   }
 }

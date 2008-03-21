@@ -66,13 +66,20 @@ public class FloatTest extends GWTTestCase {
   }
 
   public void testParse() {
-    assertTrue(0 == Float.parseFloat("0"));
-    assertTrue(-1.5 == Float.parseFloat("-1.5"));
-    assertTrue(3.0 == Float.parseFloat("3."));
-    assertTrue(0.5 == Float.parseFloat(".5"));
-    assertTrue("Can't parse MAX_VALUE",
-        Float.MAX_VALUE == Float.parseFloat(String.valueOf(Float.MAX_VALUE)));
-    assertTrue("Can't parse MIN_VALUE",
-        Float.MIN_VALUE == Float.parseFloat(String.valueOf(Float.MIN_VALUE)));
+    /*
+     * Note: we must use appropriate deltas for a somewhat subtle reason.
+     * Parsing a string like "1.4e-45" in JS will return the closest DOUBLE
+     * rather than the closest float. The value of the parse will not be the
+     * same as the value of the same string literal interpreted as a float in
+     * Java.
+     */
+    assertEquals(0f, Float.parseFloat("0"), 0.0);
+    assertEquals(-1.5f, Float.parseFloat("-1.5"), 0.0);
+    assertEquals(3.0f, Float.parseFloat("3."), 0.0);
+    assertEquals(0.5f, Float.parseFloat(".5"), 0.0);
+    assertEquals("Can't parse MAX_VALUE", Float.MAX_VALUE,
+        Float.parseFloat(String.valueOf(Float.MAX_VALUE)), 1e31);
+    assertEquals("Can't parse MIN_VALUE", Float.MIN_VALUE,
+        Float.parseFloat(String.valueOf(Float.MIN_VALUE)), Float.MIN_VALUE);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,35 +16,11 @@
 package com.google.gwt.dev.js.ast;
 
 /**
- * A JavaScript <code>throw</code> statement.
+ * An interface that describes the boolean evaluation of an expression.
  */
-public class JsThrow extends JsStatement {
+public interface CanBooleanEval {
 
-  private JsExpression expr;
+  boolean isBooleanFalse();
 
-  public JsThrow() {
-  }
-
-  public JsThrow(JsExpression expr) {
-    this.expr = expr;
-  }
-
-  public JsExpression getExpr() {
-    return expr;
-  }
-
-  public void setExpr(JsExpression expr) {
-    this.expr = expr;
-  }
-
-  public void traverse(JsVisitor v, JsContext<JsStatement> ctx) {
-    if (v.visit(this, ctx)) {
-      expr = v.accept(expr);
-    }
-    v.endVisit(this, ctx);
-  }
-
-  public boolean unconditionalControlBreak() {
-    return true;
-  }
+  boolean isBooleanTrue();
 }

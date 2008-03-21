@@ -41,6 +41,11 @@ public abstract class JsUnaryOperation extends JsExpression {
     return op;
   }
 
+  @Override
+  public final boolean hasSideEffects() {
+    return op.isModifying() || arg.hasSideEffects();
+  }
+
   public void setArg(JsExpression arg) {
     this.arg = arg;
   }
@@ -48,4 +53,5 @@ public abstract class JsUnaryOperation extends JsExpression {
   public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
     arg = v.accept(arg);
   }
+
 }

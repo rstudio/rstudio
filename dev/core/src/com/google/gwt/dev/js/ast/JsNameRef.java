@@ -18,7 +18,8 @@ package com.google.gwt.dev.js.ast;
 /**
  * Represents a JavaScript expression that references a name.
  */
-public final class JsNameRef extends JsExpression implements HasName {
+public final class JsNameRef extends JsExpression implements CanBooleanEval,
+    HasName {
 
   private String ident;
   private JsName name;
@@ -46,6 +47,40 @@ public final class JsNameRef extends JsExpression implements HasName {
 
   public String getShortIdent() {
     return (name == null) ? ident : name.getShortIdent();
+  }
+
+  @Override
+  public boolean hasSideEffects() {
+    if (qualifier == null) {
+      return false;
+    }
+    if (!qualifier.isDefinitelyNotNull()) {
+      // Could trigger NPE.
+      return true;
+    }
+    return qualifier.hasSideEffects();
+  }
+
+  public boolean isBooleanFalse() {
+    return isDefinitelyNull();
+  }
+
+  public boolean isBooleanTrue() {
+    return false;
+  }
+
+  @Override
+  public boolean isDefinitelyNotNull() {
+    // TODO: look for single-assignment of stuff from Java?
+    return false;
+  }
+
+  @Override
+  public boolean isDefinitelyNull() {
+    if (name != null) {
+      return (name.getEnclosing().getProgram().getUndefinedLiteral().getName() == name);
+    }
+    return false;
   }
 
   @Override

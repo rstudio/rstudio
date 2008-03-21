@@ -76,6 +76,9 @@ public class DeadCodeElimination {
 
   /**
    * Eliminates dead or unreachable code when possible.
+   * 
+   * TODO: leverage ignoring expression output more to remove intermediary
+   * operations in favor of pure side effects.
    */
   public class DeadCodeVisitor extends JModVisitor {
 
@@ -798,8 +801,8 @@ public class DeadCodeElimination {
      * Simplify short circuit AND expressions.
      * 
      * <pre>
-     * if (true || isWhatever()) -> if (true)
-     * if (false || isWhatever()) -> if (isWhatever())
+     * if (true && isWhatever()) -> if (isWhatever())
+     * if (false && isWhatever()) -> if (false)
      * 
      * if (isWhatever() && true) -> if (isWhatever())
      * if (isWhatever() && false) -> if (false), unless side effects
@@ -832,7 +835,7 @@ public class DeadCodeElimination {
      * if (false || isWhatever()) -> if (isWhatever())
      * 
      * if (isWhatever() || false) -> if (isWhatever())
-     * if (isWhatever() && true) -> if (true), unless side effects
+     * if (isWhatever() || true) -> if (true), unless side effects
      * </pre>
      */
     private void shortCircuitOr(JExpression lhs, JExpression rhs, Context ctx) {

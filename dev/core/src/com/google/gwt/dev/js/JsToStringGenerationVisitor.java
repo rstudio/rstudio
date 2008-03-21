@@ -29,7 +29,7 @@ import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsContinue;
 import com.google.gwt.dev.js.ast.JsDebugger;
-import com.google.gwt.dev.js.ast.JsDecimalLiteral;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsDefault;
 import com.google.gwt.dev.js.ast.JsDoWhile;
 import com.google.gwt.dev.js.ast.JsEmpty;
@@ -39,7 +39,6 @@ import com.google.gwt.dev.js.ast.JsFor;
 import com.google.gwt.dev.js.ast.JsForIn;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsIf;
-import com.google.gwt.dev.js.ast.JsIntegralLiteral;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsLabel;
 import com.google.gwt.dev.js.ast.JsName;
@@ -300,12 +299,6 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsDecimalLiteral x, JsContext<JsExpression> ctx) {
-    p.print(x.getValue());
-    return false;
-  }
-
-  @Override
   public boolean visit(JsDefault x, JsContext<JsSwitchMember> ctx) {
     _default();
     _colon();
@@ -504,12 +497,6 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsIntegralLiteral x, JsContext<JsExpression> ctx) {
-    p.print(x.getValue().toString());
-    return false;
-  }
-
-  @Override
   public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
     JsExpression qualifier = x.getQualifier();
     _parenPush(x, qualifier, false);
@@ -583,6 +570,18 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   @Override
   public boolean visit(JsNullLiteral x, JsContext<JsExpression> ctx) {
     _null();
+    return false;
+  }
+
+  @Override
+  public boolean visit(JsNumberLiteral x, JsContext<JsExpression> ctx) {
+    double dvalue = x.getValue();
+    long lvalue = (long) dvalue;
+    if (lvalue == dvalue) {
+      p.print(Long.toString(lvalue));
+    } else {
+      p.print(Double.toString(dvalue));
+    }
     return false;
   }
 
@@ -1100,15 +1099,10 @@ public class JsToStringGenerationVisitor extends JsVisitor {
           && (op2 == JsUnaryOperator.DEC || op2 == JsUnaryOperator.NEG)
           || (op == JsBinaryOperator.ADD && op2 == JsUnaryOperator.INC);
     }
-    if (arg instanceof JsIntegralLiteral) {
-      JsIntegralLiteral literal = (JsIntegralLiteral) arg;
+    if (arg instanceof JsNumberLiteral) {
+      JsNumberLiteral literal = (JsNumberLiteral) arg;
       return (op == JsBinaryOperator.SUB || op == JsUnaryOperator.NEG)
-          && (literal.getValue().signum() == -1);
-    }
-    if (arg instanceof JsDecimalLiteral) {
-      JsDecimalLiteral literal = (JsDecimalLiteral) arg;
-      return (op == JsBinaryOperator.SUB || op == JsUnaryOperator.NEG)
-          && (literal.getValue().startsWith("-"));
+          && (literal.getValue() < 0);
     }
     return false;
   }

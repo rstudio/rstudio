@@ -40,6 +40,21 @@ public final class JsArrayAccess extends JsExpression {
     return indexExpr;
   }
 
+  @Override
+  public boolean hasSideEffects() {
+    return arrayExpr.hasSideEffects() || indexExpr.hasSideEffects();
+  }
+
+  @Override
+  public boolean isDefinitelyNotNull() {
+    return false;
+  }
+
+  @Override
+  public boolean isDefinitelyNull() {
+    return false;
+  }
+
   public void setArrayExpr(JsExpression arrayExpr) {
     this.arrayExpr = arrayExpr;
   }

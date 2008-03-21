@@ -28,6 +28,10 @@ public class LongLibJreTest extends TestCase {
 
   private LongLibTestBase impl = new LongLibTestBase();
 
+  public void testAAAA() {
+    assertEquals(1.4e-45f, 1.401298464324817E-45, 0.0);
+  }
+  
   public void testAdditive() {
     impl.testAdditive();
   }

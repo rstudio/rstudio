@@ -28,7 +28,7 @@ import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsContinue;
 import com.google.gwt.dev.js.ast.JsDebugger;
-import com.google.gwt.dev.js.ast.JsDecimalLiteral;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsDefault;
 import com.google.gwt.dev.js.ast.JsDoWhile;
 import com.google.gwt.dev.js.ast.JsEmpty;
@@ -38,7 +38,6 @@ import com.google.gwt.dev.js.ast.JsFor;
 import com.google.gwt.dev.js.ast.JsForIn;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsIf;
-import com.google.gwt.dev.js.ast.JsIntegralLiteral;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsLabel;
 import com.google.gwt.dev.js.ast.JsName;
@@ -186,13 +185,6 @@ public class ComparingVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsDecimalLiteral x, JsContext<JsExpression> ctx) {
-    Assert.assertTrue(other instanceof JsDecimalLiteral);
-    Assert.assertEquals(((JsDecimalLiteral) other).getValue(), x.getValue());
-    return false;
-  }
-
-  @Override
   public boolean visit(JsDefault x, JsContext<JsSwitchMember> ctx) {
     Assert.assertTrue(other instanceof JsDefault);
     return false;
@@ -247,13 +239,6 @@ public class ComparingVisitor extends JsVisitor {
   }
 
   @Override
-  public boolean visit(JsIntegralLiteral x, JsContext<JsExpression> ctx) {
-    Assert.assertTrue(other instanceof JsIntegralLiteral);
-    Assert.assertEquals(((JsIntegralLiteral) other).getValue(), x.getValue());
-    return false;
-  }
-
-  @Override
   public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
     Assert.assertTrue(other instanceof JsInvocation);
     return false;
@@ -283,6 +268,13 @@ public class ComparingVisitor extends JsVisitor {
   @Override
   public boolean visit(JsNullLiteral x, JsContext<JsExpression> ctx) {
     Assert.assertTrue(other instanceof JsNullLiteral);
+    return false;
+  }
+
+  @Override
+  public boolean visit(JsNumberLiteral x, JsContext<JsExpression> ctx) {
+    Assert.assertTrue(other instanceof JsNumberLiteral);
+    Assert.assertEquals(((JsNumberLiteral) other).getValue(), x.getValue());
     return false;
   }
 

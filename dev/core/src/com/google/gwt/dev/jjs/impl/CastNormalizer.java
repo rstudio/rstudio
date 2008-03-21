@@ -21,6 +21,7 @@ import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
+import com.google.gwt.dev.jjs.ast.JCharLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
@@ -351,11 +352,16 @@ public class CastNormalizer {
     private JExpression convertString(JExpression expr) {
       JPrimitiveType charType = program.getTypePrimitiveChar();
       if (expr.getType() == charType) {
-        // Replace with Cast.charToString(c)
-        JMethodCall call = new JMethodCall(program, expr.getSourceInfo(), null,
-            program.getIndexedMethod("Cast.charToString"));
-        call.getArgs().add(expr);
-        return call;
+        if (expr instanceof JCharLiteral) {
+          JCharLiteral charLit = (JCharLiteral) expr;
+          return program.getLiteralString(new char[] {charLit.getValue()});
+        } else {
+          // Replace with Cast.charToString(c)
+          JMethodCall call = new JMethodCall(program, expr.getSourceInfo(),
+              null, program.getIndexedMethod("Cast.charToString"));
+          call.getArgs().add(expr);
+          return call;
+        }
       } else if (expr.getType() == program.getTypePrimitiveLong()) {
         // Replace with LongLib.toString(l)
         JMethodCall call = new JMethodCall(program, expr.getSourceInfo(), null,

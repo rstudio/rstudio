@@ -35,6 +35,7 @@ import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
+import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -46,7 +47,6 @@ import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLabel;
 import com.google.gwt.dev.jjs.ast.JLabeledStatement;
 import com.google.gwt.dev.jjs.ast.JLocal;
-import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -90,6 +90,7 @@ import com.google.gwt.dev.js.ast.JsCatch;
 import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsContinue;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsDefault;
 import com.google.gwt.dev.js.ast.JsDoWhile;
 import com.google.gwt.dev.js.ast.JsExprStmt;
@@ -97,7 +98,6 @@ import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFor;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsIf;
-import com.google.gwt.dev.js.ast.JsIntegralLiteral;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsLabel;
 import com.google.gwt.dev.js.ast.JsModVisitor;
@@ -125,7 +125,6 @@ import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsWhile;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1417,7 +1416,7 @@ public class GenerateJavaScriptAST {
         }
         JsNameRef fieldRef = typeIdName.makeRef();
         fieldRef.setQualifier(globalTemp.makeRef());
-        JsIntegralLiteral typeIdLit = jsProgram.getIntegralLiteral(BigInteger.valueOf(typeId));
+        JsNumberLiteral typeIdLit = jsProgram.getNumberLiteral(typeId);
         JsExpression asg = createAssignment(fieldRef, typeIdLit);
         globalStmts.add(new JsExprStmt(asg));
       }

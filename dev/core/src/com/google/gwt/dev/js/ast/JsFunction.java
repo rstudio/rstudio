@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Represents a JavaScript function expression.
  */
-public class JsFunction extends JsExpression implements HasName {
+public final class JsFunction extends JsLiteral implements HasName {
 
   protected JsBlock body;
   protected final List<JsParameter> params = new ArrayList<JsParameter>();
@@ -84,6 +84,28 @@ public class JsFunction extends JsExpression implements HasName {
 
   public JsScope getScope() {
     return scope;
+  }
+
+  @Override
+  public boolean hasSideEffects() {
+    // If there's a name, the name is assigned to.
+    return name != null;
+  }
+
+  public boolean isBooleanFalse() {
+    return false;
+  }
+
+  public boolean isBooleanTrue() {
+    return true;
+  }
+
+  public boolean isDefinitelyNotNull() {
+    return true;
+  }
+
+  public boolean isDefinitelyNull() {
+    return false;
   }
 
   public boolean isFromJava() {

@@ -105,9 +105,6 @@ public class JsVisitor {
   public void endVisit(JsDebugger x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsDecimalLiteral x, JsContext<JsExpression> ctx) {
-  }
-
   public void endVisit(JsDefault x, JsContext<JsSwitchMember> ctx) {
   }
 
@@ -132,9 +129,6 @@ public class JsVisitor {
   public void endVisit(JsIf x, JsContext<JsStatement> ctx) {
   }
 
-  public void endVisit(JsIntegralLiteral x, JsContext<JsExpression> ctx) {
-  }
-
   public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
   }
 
@@ -148,6 +142,9 @@ public class JsVisitor {
   }
 
   public void endVisit(JsNullLiteral x, JsContext<JsExpression> ctx) {
+  }
+
+  public void endVisit(JsNumberLiteral x, JsContext<JsExpression> ctx) {
   }
 
   public void endVisit(JsObjectLiteral x, JsContext<JsExpression> ctx) {
@@ -243,10 +240,6 @@ public class JsVisitor {
     return true;
   }
 
-  public boolean visit(JsDecimalLiteral x, JsContext<JsExpression> ctx) {
-    return true;
-  }
-
   public boolean visit(JsDefault x, JsContext<JsSwitchMember> ctx) {
     return true;
   }
@@ -279,10 +272,6 @@ public class JsVisitor {
     return true;
   }
 
-  public boolean visit(JsIntegralLiteral x, JsContext<JsExpression> ctx) {
-    return true;
-  }
-
   public boolean visit(JsInvocation x, JsContext<JsExpression> ctx) {
     return true;
   }
@@ -300,6 +289,10 @@ public class JsVisitor {
   }
 
   public boolean visit(JsNullLiteral x, JsContext<JsExpression> ctx) {
+    return true;
+  }
+
+  public boolean visit(JsNumberLiteral x, JsContext<JsExpression> ctx) {
     return true;
   }
 

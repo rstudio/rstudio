@@ -40,6 +40,10 @@ public class JsPropertyInitializer extends JsNode<JsPropertyInitializer> {
     return valueExpr;
   }
 
+  public boolean hasSideEffects() {
+    return labelExpr.hasSideEffects() || valueExpr.hasSideEffects();
+  }
+
   public void setLabelExpr(JsExpression labelExpr) {
     this.labelExpr = labelExpr;
   }

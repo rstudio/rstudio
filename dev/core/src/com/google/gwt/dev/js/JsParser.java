@@ -67,7 +67,6 @@ import com.google.gwt.dev.js.rhino.TokenStream;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -790,13 +789,7 @@ public class JsParser {
   }
 
   private JsExpression mapNumber(Node numberNode) {
-    double x = numberNode.getDouble();
-    long j = (long) x;
-    if (x == j) {
-      return program.getIntegralLiteral(BigInteger.valueOf(j));
-    } else {
-      return program.getDecimalLiteral(String.valueOf(x));
-    }
+    return program.getNumberLiteral(numberNode.getDouble());
   }
 
   private JsExpression mapObjectLit(Node objLitNode) throws JsParserException {
