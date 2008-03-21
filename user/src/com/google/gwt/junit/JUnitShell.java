@@ -184,7 +184,7 @@ public class JUnitShell extends GWTShell {
   /**
    * Name of the module containing the current/last module to run.
    */
-  private String currentModuleName;
+  private ModuleDef currentModule;
 
   /**
    * If true, the last attempt to launch failed.
@@ -355,7 +355,7 @@ public class JUnitShell extends GWTShell {
               + TEST_BEGIN_TIMEOUT_MILLIS + "ms.");
     }
 
-    if (messageQueue.hasResult(currentModuleName)) {
+    if (messageQueue.hasResult(currentModule.getName())) {
       return false;
     }
 
@@ -386,36 +386,36 @@ public class JUnitShell extends GWTShell {
 
     String syntheticModuleName = moduleName + "."
         + strategy.getSyntheticModuleExtension();
-    boolean sameTest = syntheticModuleName.equals(currentModuleName);
+    boolean sameTest = (currentModule != null)
+        && syntheticModuleName.equals(currentModule.getName());
     if (sameTest && lastLaunchFailed) {
       throw new UnableToCompleteException();
     }
-    currentModuleName = syntheticModuleName;
 
     if (!sameTest) {
       /*
        * Synthesize a synthetic module that derives from the user-specified
        * module but also includes JUnit support.
        */
-      ModuleDef synthetic = ModuleDefLoader.createSyntheticModule(
-          getTopLogger(), currentModuleName, new String[] {
+      currentModule = ModuleDefLoader.createSyntheticModule(getTopLogger(),
+          syntheticModuleName, new String[] {
               moduleName, strategy.getModuleInherit()}, true);
       // Replace any user entry points with our test runner.
-      synthetic.clearEntryPoints();
-      synthetic.addEntryPointTypeName(GWTRunner.class.getName());
+      currentModule.clearEntryPoints();
+      currentModule.addEntryPointTypeName(GWTRunner.class.getName());
       // Squirrel away the name of the active module for GWTRunnerGenerator
-      Property moduleNameProp = synthetic.getProperties().create(
+      Property moduleNameProp = currentModule.getProperties().create(
           "junit.moduleName");
       moduleNameProp.addKnownValue(moduleName);
       moduleNameProp.setActiveValue(moduleName);
     }
 
     lastLaunchFailed = false;
-    messageQueue.setNextTestName(currentModuleName,
+    messageQueue.setNextTestName(currentModule.getName(),
         testCase.getClass().getName(), testCase.getName());
 
     try {
-      runStyle.maybeLaunchModule(currentModuleName, !sameTest);
+      runStyle.maybeLaunchModule(currentModule.getName(), !sameTest);
     } catch (UnableToCompleteException e) {
       lastLaunchFailed = true;
       testResult.addError(testCase, new JUnitFatalLaunchException(e));
@@ -434,7 +434,7 @@ public class JUnitShell extends GWTShell {
       return;
     }
 
-    List<JUnitResult> results = messageQueue.getResults(currentModuleName);
+    List<JUnitResult> results = messageQueue.getResults(currentModule.getName());
 
     if (results == null) {
       return;

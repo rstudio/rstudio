@@ -80,7 +80,14 @@ public final class ModuleDefLoader {
       return moduleDef;
     }
     ModuleDefLoader loader = new ModuleDefLoader(inherits);
-    return loader.doLoadModule(logger, moduleName);
+    ModuleDef module = loader.doLoadModule(logger, moduleName);
+    /*
+     * Must reset name override on synthetic modules. Otherwise they'll be
+     * incorrectly affected by the last inherits tag, because they have no XML
+     * which would reset the name at the end of parse.
+     */
+    module.setNameOverride(null);
+    return module;
   }
 
   /**
