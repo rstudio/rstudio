@@ -29,6 +29,8 @@ import com.google.gwt.dev.util.HttpHeaders;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.ServletContextTreeLogger;
 
+import org.apache.commons.collections.map.ReferenceMap;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -86,13 +88,38 @@ public class GWTShellServlet extends HttpServlet {
 
   private static final String XHTML_MIME_TYPE = "application/xhtml+xml";
 
-  private final Map<String, ModuleDef> loadedModulesByName = new HashMap<String, ModuleDef>();
+  /**
+   * Must keep only weak references to ModuleDefs else we permanently pin them.
+   */
+  @SuppressWarnings("unchecked")
+  private final Map<String, ModuleDef> loadedModulesByName = new ReferenceMap(
+      ReferenceMap.HARD, ReferenceMap.WEAK);
 
-  private final Map<String, HttpServlet> loadedServletsByModuleAndClassName = new HashMap<String, HttpServlet>();
+  /**
+   * Used to quickly lookup servlets by name, but does not pin them; servlets
+   * are pinned by their module in {@link #loadedServletsPinnedByModule}.
+   */
+  @SuppressWarnings("unchecked")
+  private final Map<String, HttpServlet> loadedServletsByModuleAndClassName = new ReferenceMap(
+      ReferenceMap.HARD, ReferenceMap.WEAK);
+
+  /**
+   * The lifetime of the module pins the lifetime of the associated servlet;
+   * this is because the loaded servlet has a weak backRef to its live module
+   * through its context. When the module dies, the servlet needs to die also.
+   */
+  @SuppressWarnings("unchecked")
+  private final Map<ModuleDef, HttpServlet> loadedServletsPinnedByModule = new ReferenceMap(
+      ReferenceMap.WEAK, ReferenceMap.HARD, true);
 
   private final Map<String, String> mimeTypes = new HashMap<String, String>();
 
-  private final Map<String, ModuleDef> modulesByServletPath = new HashMap<String, ModuleDef>();
+  /**
+   * Only for backwards compatibility. Shouldn't we remove this now?
+   */
+  @SuppressWarnings("unchecked")
+  private final Map<String, ModuleDef> modulesByServletPath = new ReferenceMap(
+      ReferenceMap.HARD, ReferenceMap.WEAK);
 
   private int nextRequestId;
 
@@ -594,13 +621,7 @@ public class GWTShellServlet extends HttpServlet {
         // getModuleBaseURL().
         String[] servletPaths = moduleDef.getServletPaths();
         for (int i = 0; i < servletPaths.length; i++) {
-          ModuleDef oldDef = modulesByServletPath.put(servletPaths[i],
-              moduleDef);
-          if (oldDef != null) {
-            logger.log(TreeLogger.WARN, "Undefined behavior: Servlet path "
-                + servletPaths[i] + " conflicts in modules "
-                + moduleDef.getName() + " and " + oldDef.getName(), null);
-          }
+          modulesByServletPath.put(servletPaths[i], moduleDef);
         }
         // END BACKWARD COMPATIBILITY
       }
@@ -938,6 +959,7 @@ public class GWTShellServlet extends HttpServlet {
         servlet.init(config);
 
         loadedServletsByModuleAndClassName.put(moduleAndClassName, servlet);
+        loadedServletsPinnedByModule.put(moduleDef, servlet);
         return servlet;
       } catch (ClassNotFoundException e) {
         caught = e;

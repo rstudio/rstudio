@@ -24,8 +24,9 @@ import com.google.gwt.dev.jdt.ByteCodeCompiler;
 import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.jdt.SourceOracle;
 
+import org.apache.commons.collections.map.ReferenceMap;
+
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -34,7 +35,9 @@ import java.util.Map;
  */
 public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
-  private static Map<ModuleDef, ByteCodeCompiler> byteCodeCompilersByModule = new HashMap<ModuleDef, ByteCodeCompiler>();
+  @SuppressWarnings("unchecked")
+  private static Map<ModuleDef, ByteCodeCompiler> byteCodeCompilersByModule = new ReferenceMap(
+      ReferenceMap.WEAK, ReferenceMap.HARD, true);
 
   protected final File genDir;
 
@@ -46,11 +49,11 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
   private final ModuleDef module;
 
-  private final File shellDir;
-
   private RebindOracle rebindOracle;
 
   private final boolean saveJsni;
+
+  private final File shellDir;
 
   private ModuleSpace space;
 

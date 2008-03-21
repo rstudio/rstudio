@@ -335,8 +335,9 @@ public final class CompilingClassLoader extends ClassLoader {
 
   private final TypeOracle typeOracle;
 
-  private final ReferenceMap weakJsoCache = new ReferenceMap(ReferenceMap.HARD,
-      ReferenceMap.WEAK);
+  @SuppressWarnings("unchecked")
+  private final Map<Integer, Object> weakJsoCache = new ReferenceMap(
+      ReferenceMap.HARD, ReferenceMap.WEAK);
 
   public CompilingClassLoader(TreeLogger logger, ByteCodeCompiler compiler,
       TypeOracle typeOracle) throws UnableToCompleteException {

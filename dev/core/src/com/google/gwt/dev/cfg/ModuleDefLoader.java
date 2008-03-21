@@ -21,12 +21,13 @@ import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.xml.ReflectiveParser;
 import com.google.gwt.util.tools.Utility;
 
+import org.apache.commons.collections.map.ReferenceMap;
+
 import java.io.File;
 import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -52,7 +53,13 @@ public final class ModuleDefLoader {
         throws UnableToCompleteException;
   }
 
-  private static final Map<String, ModuleDef> loadedModules = new HashMap<String, ModuleDef>();
+  /**
+   * Keep soft references to loaded modules so the VM can gc them when memory is
+   * tight.
+   */
+  @SuppressWarnings("unchecked")
+  private static final Map<String, ModuleDef> loadedModules = new ReferenceMap(
+      ReferenceMap.HARD, ReferenceMap.SOFT);
 
   /**
    * Creates a module in memory that is not associated with a

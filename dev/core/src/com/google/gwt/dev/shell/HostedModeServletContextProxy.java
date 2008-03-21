@@ -21,6 +21,7 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Enumeration;
@@ -37,13 +38,16 @@ import javax.servlet.ServletException;
  */
 class HostedModeServletContextProxy implements ServletContext {
   private final ServletContext context;
-  private final ModuleDef moduleDef;
+  /**
+   * Avoid pinning my moduleDef.
+   */
+  private final WeakReference<ModuleDef> moduleDefRef;
   private final File outDir;
 
   HostedModeServletContextProxy(ServletContext context, ModuleDef moduleDef,
       File outDir) {
     this.context = context;
-    this.moduleDef = moduleDef;
+    this.moduleDefRef = new WeakReference<ModuleDef>(moduleDef);
     this.outDir = outDir;
   }
 
@@ -149,6 +153,11 @@ class HostedModeServletContextProxy implements ServletContext {
    * @see javax.servlet.ServletContext#getResource(java.lang.String)
    */
   public URL getResource(String path) throws MalformedURLException {
+    ModuleDef moduleDef = moduleDefRef.get();
+    if (moduleDef == null) {
+      return context.getResource(path);
+    }
+
     String moduleContext = "/" + moduleDef.getName() + "/";
     if (!path.startsWith(moduleContext)) {
       // This path is in a different context; just return null
