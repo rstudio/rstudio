@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.linker.impl;
+package com.google.gwt.core.ext.linker.impl;
 
+import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.linker.ArtifactSet;
-import com.google.gwt.dev.linker.LinkerContext;
+import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.Utility;
 
@@ -49,7 +49,7 @@ public final class HostedModeLinker extends SelectionScriptLinker {
 
     try {
       // Add hosted mode iframe contents
-      String hostedHtml = Utility.getFileFromClassPath("com/google/gwt/dev/linker/impl/hosted.html");
+      String hostedHtml = Utility.getFileFromClassPath("com/google/gwt/core/ext/linker/impl/hosted.html");
       toReturn.add(emitBytes(logger, Util.getBytes(hostedHtml), "hosted.html"));
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to copy support resource", e);
@@ -80,7 +80,7 @@ public final class HostedModeLinker extends SelectionScriptLinker {
   @Override
   protected String getSelectionScriptTemplate(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException {
-    return "com/google/gwt/dev/linker/HostedModeTemplate.js";
+    return "com/google/gwt/core/ext/linker/impl/HostedModeTemplate.js";
   }
 
   private <T> T unsupported(TreeLogger logger) throws UnableToCompleteException {

@@ -13,8 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.linker;
+package com.google.gwt.core.ext.linker;
 
+import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.Util;
@@ -36,6 +37,7 @@ public abstract class AbstractLinker extends Linker {
     public SyntheticArtifact(Class<? extends Linker> linkerType,
         String partialPath, byte[] data) {
       super(linkerType, partialPath);
+      assert data != null;
       this.data = data;
     }
 
@@ -75,6 +77,19 @@ public abstract class AbstractLinker extends Linker {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     Util.copy(logger, what, out);
     return new SyntheticArtifact(getClass(), partialPath, out.toByteArray());
+  }
+
+  /**
+   * A helper method to create an artifact to emit a String.
+   * 
+   * @param logger a TreeLogger
+   * @param what the contents of the Artifact to emit
+   * @param partialPath the partial path of the emitted resource
+   * @return an artifact that contains the contents of the given String
+   */
+  protected final EmittedArtifact emitString(TreeLogger logger,
+      String what, String partialPath) throws UnableToCompleteException {
+    return emitBytes(logger, Util.getBytes(what), partialPath);
   }
 
   /**

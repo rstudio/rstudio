@@ -16,7 +16,11 @@
 <!-- The module root element -->
 <!ELEMENT module (inherits | source | public | super-source | entry-point | 
   stylesheet | script | servlet | replace-with | generate-with |
-  define-property | extend-property | set-property | property-provider)*>
+  define-property | extend-property | set-property | property-provider |
+  define-linker | add-linker)*>
+<!ATTLIST module
+	rename-to CDATA #IMPLIED
+>
 <!-- Inherit the contents of another module -->
 <!ELEMENT inherits EMPTY>
 <!ATTLIST inherits
@@ -81,16 +85,16 @@
 	class CDATA #REQUIRED
 >
 
-<!-- Sets the default linker to use in the absence of a -target flag -->
-<!ELEMENT set-linker EMPTY>
+<!-- Adds a Linker to the compilation process -->
+<!ELEMENT add-linker EMPTY>
 <!-- A comma-separated list of linker names -->
-<!ATTLIST default-linker
+<!ATTLIST add-linker
   name CDATA #REQUIRED
 >
 
 <!-- Defines a Linker type to package compiler output -->
-<!ELEMENT linker EMPTY>
-<!ATTLIST linker
+<!ELEMENT define-linker EMPTY>
+<!ATTLIST define-linker
   class CDATA #REQUIRED
   name CDATA #REQUIRED
 >

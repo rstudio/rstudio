@@ -160,8 +160,12 @@ class HostedModeServletContextProxy implements ServletContext {
 
     String moduleContext = "/" + moduleDef.getName() + "/";
     if (!path.startsWith(moduleContext)) {
-      // This path is in a different context; just return null
+      // Check for a renamed module
+      moduleContext = "/" + moduleDef.getCanonicalName() + "/";
+      if (!path.startsWith(moduleContext)) {
+        // This path is in a different context; just return null
       return null;
+      }
     }
 
     String partialPath = path.substring(moduleContext.length());

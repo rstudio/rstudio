@@ -13,7 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.linker;
+package com.google.gwt.core.ext.linker;
+
+import com.google.gwt.core.ext.Linker;
 
 /**
  * A resource generated during the compilation process by a Generator.

@@ -13,15 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.linker;
+package com.google.gwt.core.ext.linker;
 
+import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
 import java.io.InputStream;
 
 /**
- * An artifact that intended to be emitted into the output.
+ * An artifact that will be emitted into the output. All EmittedArtifacts
+ * contained in the {@link ArtifactSet} at the end of the Linking process will
+ * be emitted by the compiler into the module's output directory. This type may
+ * be extended by Linker providers to provide alternative implementations of
+ * {@link #getContents(TreeLogger)}.
  */
 public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
 
@@ -29,6 +34,7 @@ public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
 
   protected EmittedArtifact(Class<? extends Linker> linker, String partialPath) {
     super(linker);
+    assert partialPath != null;
     this.partialPath = partialPath;
   }
 

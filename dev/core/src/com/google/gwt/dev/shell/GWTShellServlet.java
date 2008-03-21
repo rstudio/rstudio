@@ -17,14 +17,14 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.EmittedArtifact;
+import com.google.gwt.core.ext.linker.impl.HostedModeLinker;
+import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.GWTShell;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.jjs.JJSOptions;
-import com.google.gwt.dev.linker.ArtifactSet;
-import com.google.gwt.dev.linker.EmittedArtifact;
-import com.google.gwt.dev.linker.impl.HostedModeLinker;
-import com.google.gwt.dev.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.util.HttpHeaders;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.ServletContextTreeLogger;
@@ -173,6 +173,10 @@ public class GWTShellServlet extends HttpServlet {
 
     String partialPath = parts.partialPath;
     String moduleName = parts.moduleName;
+
+    // If the module is renamed, substitute the renamed module name
+    ModuleDef moduleDef = loadedModulesByName.get(moduleName);
+    moduleName = moduleDef.getName();
 
     if (partialPath == null) {
       // Redir back to the same URL but ending with a slash.
@@ -549,9 +553,9 @@ public class GWTShellServlet extends HttpServlet {
     logger.log(TreeLogger.TRACE, msg, null);
 
     ModuleDef moduleDef = getModuleDef(logger, moduleName);
+
     File linkerDir = new File(getOutputDir(), GWTShell.GWT_SHELL_PATH
         + File.separator + moduleName);
-
     StandardLinkerContext context = new StandardLinkerContext(logger,
         moduleDef, null, null, new JJSOptions());
     HostedModeLinker linker = new HostedModeLinker();
@@ -612,6 +616,7 @@ public class GWTShellServlet extends HttpServlet {
       if (moduleDef == null) {
         moduleDef = ModuleDefLoader.loadFromClassPath(logger, moduleName, false);
         loadedModulesByName.put(moduleName, moduleDef);
+        loadedModulesByName.put(moduleDef.getName(), moduleDef);
 
         // BEGIN BACKWARD COMPATIBILITY
         // The following map of servlet path to module is included only

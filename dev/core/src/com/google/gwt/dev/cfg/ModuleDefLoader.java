@@ -266,7 +266,12 @@ public final class ModuleDefLoader {
     // Do any final setup.
     //
     moduleDef.normalize(logger);
+    
+    // Add the "physical" module name: com.google.Module
     loadedModules.put(moduleName, moduleDef);
+    
+    // Add the module's effective name: some.other.Module
+    loadedModules.put(moduleDef.getName(), moduleDef);
     return moduleDef;
   }
 }

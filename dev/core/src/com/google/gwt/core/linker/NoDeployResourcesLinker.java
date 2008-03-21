@@ -15,14 +15,14 @@
  */
 package com.google.gwt.core.linker;
 
+import com.google.gwt.core.ext.Linker;
+import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.linker.ArtifactSet;
-import com.google.gwt.dev.linker.GeneratedResource;
-import com.google.gwt.dev.linker.Linker;
-import com.google.gwt.dev.linker.LinkerContext;
-import com.google.gwt.dev.linker.LinkerOrder;
-import com.google.gwt.dev.linker.LinkerOrder.Order;
+import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.GeneratedResource;
+import com.google.gwt.core.ext.linker.LinkerOrder;
+import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 
 /**
  * This class prevents generated resources whose partial path begins with

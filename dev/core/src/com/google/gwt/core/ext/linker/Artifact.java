@@ -13,7 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.linker;
+package com.google.gwt.core.ext.linker;
+
+import com.google.gwt.core.ext.Linker;
 
 /**
  * A base type for all artifacts relating to the link process. In order to
@@ -28,7 +30,13 @@ public abstract class Artifact<C extends Artifact<C>> implements
     Comparable<Artifact<?>> {
   private final Class<? extends Linker> linker;
 
+  /**
+   * Constructor.
+   * 
+   * @param linker the type of Linker that instantiated the Artifact.
+   */
   protected Artifact(Class<? extends Linker> linker) {
+    assert linker != null;
     this.linker = linker;
   }
 
@@ -41,6 +49,9 @@ public abstract class Artifact<C extends Artifact<C>> implements
     }
   }
 
+  /**
+   * Delegates to {@link #compareTo(Artifact)}.
+   */
   @Override
   public final boolean equals(Object obj) {
     if (obj instanceof Artifact) {
@@ -50,6 +61,9 @@ public abstract class Artifact<C extends Artifact<C>> implements
     }
   }
 
+  /**
+   * Returns the Linker that created the Artifact.
+   */
   public final Class<? extends Linker> getLinker() {
     return linker;
   }

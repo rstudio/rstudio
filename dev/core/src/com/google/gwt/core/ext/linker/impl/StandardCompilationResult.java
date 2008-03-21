@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.linker.impl;
+package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.linker.CompilationResult;
-import com.google.gwt.dev.linker.SelectionProperty;
+import com.google.gwt.core.ext.linker.CompilationResult;
+import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.dev.util.Util;
 
 import java.io.File;

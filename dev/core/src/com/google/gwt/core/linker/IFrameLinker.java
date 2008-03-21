@@ -15,14 +15,14 @@
  */
 package com.google.gwt.core.linker;
 
+import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.LinkerOrder;
+import com.google.gwt.core.ext.linker.LinkerOrder.Order;
+import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
-import com.google.gwt.dev.linker.ArtifactSet;
-import com.google.gwt.dev.linker.LinkerContext;
-import com.google.gwt.dev.linker.LinkerOrder;
-import com.google.gwt.dev.linker.LinkerOrder.Order;
-import com.google.gwt.dev.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.Utility;
@@ -47,8 +47,8 @@ public class IFrameLinker extends SelectionScriptLinker {
 
     try {
       // Add hosted mode iframe contents
-      // TODO move hosted.html into gwt-user if HostedModeLinker goes away
-      String hostedHtml = Utility.getFileFromClassPath("com/google/gwt/dev/linker/impl/hosted.html");
+      // TODO move this into own impl package if HostedModeLinker goes away
+      String hostedHtml = Utility.getFileFromClassPath("com/google/gwt/core/ext/linker/impl/hosted.html");
       toReturn.add(emitBytes(logger, Util.getBytes(hostedHtml), "hosted.html"));
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to copy support resource", e);

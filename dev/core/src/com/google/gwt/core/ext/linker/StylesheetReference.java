@@ -13,15 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.linker;
+package com.google.gwt.core.ext.linker;
+
+import com.google.gwt.core.ext.Linker;
 
 /**
- * An external script file referenced in the module manifest.
+ * An external stylesheet referenced in the module manifest.
  */
-public abstract class ScriptReference extends Artifact<ScriptReference> {
+public abstract class StylesheetReference extends Artifact<StylesheetReference> {
   private final String src;
 
-  protected ScriptReference(Class<? extends Linker> linkerType, String src) {
+  protected StylesheetReference(Class<? extends Linker> linkerType, String src) {
     super(linkerType);
     this.src = src;
   }
@@ -41,16 +43,16 @@ public abstract class ScriptReference extends Artifact<ScriptReference> {
 
   @Override
   public String toString() {
-    return "<script src='" + getSrc() + "'>";
+    return "<style src='" + getSrc() + "'>";
   }
 
   @Override
-  protected final int compareToComparableArtifact(ScriptReference o) {
+  protected final int compareToComparableArtifact(StylesheetReference o) {
     return getSrc().compareTo(o.getSrc());
   }
 
   @Override
-  protected final Class<ScriptReference> getComparableArtifactType() {
-    return ScriptReference.class;
+  protected Class<StylesheetReference> getComparableArtifactType() {
+    return StylesheetReference.class;
   }
 }

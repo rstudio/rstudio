@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.linker.impl;
+package com.google.gwt.core.ext.linker.impl;
 
+import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.dev.cfg.Property;
-import com.google.gwt.dev.linker.SelectionProperty;
 
 import java.util.Arrays;
 import java.util.Collections;

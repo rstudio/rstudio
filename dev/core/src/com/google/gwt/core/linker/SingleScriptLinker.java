@@ -15,16 +15,16 @@
  */
 package com.google.gwt.core.linker;
 
+import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.CompilationResult;
+import com.google.gwt.core.ext.linker.EmittedArtifact;
+import com.google.gwt.core.ext.linker.LinkerOrder;
+import com.google.gwt.core.ext.linker.LinkerOrder.Order;
+import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
-import com.google.gwt.dev.linker.ArtifactSet;
-import com.google.gwt.dev.linker.CompilationResult;
-import com.google.gwt.dev.linker.EmittedArtifact;
-import com.google.gwt.dev.linker.LinkerContext;
-import com.google.gwt.dev.linker.LinkerOrder;
-import com.google.gwt.dev.linker.LinkerOrder.Order;
-import com.google.gwt.dev.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Util;
 

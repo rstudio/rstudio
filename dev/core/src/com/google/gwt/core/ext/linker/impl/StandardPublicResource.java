@@ -13,23 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.linker.impl;
+package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.linker.GeneratedResource;
+import com.google.gwt.core.ext.linker.PublicResource;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
 /**
- * The standard implementation of {@link GeneratedResource}.
+ * The standard implementation of {@link PublicResource}.
  */
-public class StandardGeneratedResource extends GeneratedResource {
+public class StandardPublicResource extends PublicResource {
   private final URL url;
 
-  public StandardGeneratedResource(String partialPath, URL url) {
+  public StandardPublicResource(String partialPath, URL url) {
     super(StandardLinkerContext.class, partialPath);
     this.url = url;
   }

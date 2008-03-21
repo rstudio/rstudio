@@ -16,8 +16,10 @@
 package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.Generator;
+import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
 import com.google.gwt.dev.js.JsParserException.SourceDetail;
@@ -25,8 +27,6 @@ import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
-import com.google.gwt.dev.linker.Linker;
-import com.google.gwt.dev.linker.LinkerOrder;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.xml.AttributeConverter;
@@ -855,7 +855,7 @@ public class ModuleDefSchema extends Schema {
     return "yes".equalsIgnoreCase(s) || "true".equalsIgnoreCase(s);
   }
 
-  protected final String __module_1_renameto = "";
+  protected final String __module_1_rename_to = "";
 
   private final BodySchema bodySchema;
 

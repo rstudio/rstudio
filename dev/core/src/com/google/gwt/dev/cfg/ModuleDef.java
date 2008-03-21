@@ -15,16 +15,16 @@
  */
 package com.google.gwt.dev.cfg;
 
+import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.LinkerOrder;
+import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jdt.CacheManager;
 import com.google.gwt.dev.jdt.TypeOracleBuilder;
 import com.google.gwt.dev.jdt.URLCompilationUnitProvider;
-import com.google.gwt.dev.linker.Linker;
-import com.google.gwt.dev.linker.LinkerOrder;
-import com.google.gwt.dev.linker.LinkerOrder.Order;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.FileOracle;
 import com.google.gwt.dev.util.FileOracleFactory;
@@ -282,6 +282,14 @@ public class ModuleDef implements PublicOracle {
 
   public synchronized String getName() {
     return nameOverride != null ? nameOverride : name;
+  }
+
+  /**
+   * Returns the physical name for the module by which it can be found in the
+   * classpath.
+   */
+  public String getCanonicalName() {
+    return name;
   }
 
   /**
