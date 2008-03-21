@@ -238,7 +238,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     artifacts = invokeLinkerStack(logger);
 
     for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
-      TreeLogger artifactLogger = logger.branch(TreeLogger.SPAM,
+      TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
           "Emitting resource " + artifact.getPartialPath(), null);
 
       File outFile = new File(moduleOutDir, artifact.getPartialPath());
@@ -343,7 +343,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
         assert linkerClasses.get(linkerClasses.size() - 1).equals(clazz);
       }
 
-      TreeLogger linkerLogger = logger.branch(TreeLogger.INFO,
+      TreeLogger linkerLogger = logger.branch(TreeLogger.TRACE,
           "Invoking Linker " + linker.getDescription(), null);
 
       workingArtifacts.freeze();
@@ -362,7 +362,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       Order order = linkerType.getAnnotation(LinkerOrder.class).value();
       if (phasePost.contains(order)) {
         workingArtifacts.freeze();
-        workingArtifacts = linker.link(logger.branch(TreeLogger.INFO,
+        workingArtifacts = linker.link(logger.branch(TreeLogger.TRACE,
             "Invoking Linker " + linker.getDescription(), null), this,
             workingArtifacts);
       }
