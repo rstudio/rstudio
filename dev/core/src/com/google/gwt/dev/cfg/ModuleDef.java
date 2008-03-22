@@ -263,6 +263,14 @@ public class ModuleDef implements PublicOracle {
     return cacheManager;
   }
 
+  /**
+   * Returns the physical name for the module by which it can be found in the
+   * classpath.
+   */
+  public String getCanonicalName() {
+    return name;
+  }
+
   public synchronized CompilationUnitProvider[] getCompilationUnits() {
     return cups;
   }
@@ -282,14 +290,6 @@ public class ModuleDef implements PublicOracle {
 
   public synchronized String getName() {
     return nameOverride != null ? nameOverride : name;
-  }
-
-  /**
-   * Returns the physical name for the module by which it can be found in the
-   * classpath.
-   */
-  public String getCanonicalName() {
-    return name;
   }
 
   /**
