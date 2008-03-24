@@ -74,7 +74,7 @@ public final class JavaScriptException extends RuntimeException {
     if (e instanceof JavaScriptObject) {
       return getProperties0((JavaScriptObject) e);
     } else {
-      return null;
+      return "";
     }
   }
 
