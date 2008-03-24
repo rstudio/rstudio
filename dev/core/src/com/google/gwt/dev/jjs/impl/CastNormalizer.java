@@ -374,8 +374,7 @@ public class CastNormalizer {
   }
 
   /**
-   * Explicitly cast all integral divide operations to trigger replacements with
-   * narrowing calls in the next pass.
+   * Handle integral divide operations which may have floating point results.
    */
   private class DivVisitor extends JModVisitor {
 
@@ -385,10 +384,18 @@ public class CastNormalizer {
       if (x.getOp() == JBinaryOperator.DIV
           && type != program.getTypePrimitiveFloat()
           && type != program.getTypePrimitiveDouble()) {
+        /*
+         * If the numerator was already in range, we can assume the output is
+         * also in range. Therefore, we don't need to do the full conversion,
+         * but rather a narrowing int conversion instead.
+         */
+        String methodName = "Cast.narrow_" + type.getName();
+        JMethod castMethod = program.getIndexedMethod(methodName);
+        JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
+            castMethod, type);
         x.setType(program.getTypePrimitiveDouble());
-        JCastOperation cast = new JCastOperation(program, x.getSourceInfo(),
-            type, x);
-        ctx.replaceMe(cast);
+        call.getArgs().add(x);
+        ctx.replaceMe(call);
       }
     }
   }
