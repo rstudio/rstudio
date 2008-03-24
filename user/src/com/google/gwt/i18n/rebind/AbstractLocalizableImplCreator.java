@@ -134,7 +134,7 @@ abstract class AbstractLocalizableImplCreator extends
     Generate generate = targetClass.getAnnotation(Generate.class);
     if (generate != null) {
       try {
-        String path = "no-deploy" + File.pathSeparator + generate.fileName();
+        String path = "no-deploy" + File.separatorChar + generate.fileName();
         if (Generate.DEFAULT.equals(path)) {
           path = targetClass.getPackage().getName() + "."
           + targetClass.getName().replace('.', '_');
