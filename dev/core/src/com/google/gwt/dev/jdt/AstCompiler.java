@@ -115,7 +115,7 @@ public class AstCompiler extends AbstractCompiler {
   public void invalidateChangedFiles(Set<String> changedFiles,
       Set<String> typeNames) {
     cachedResults.removeAll(changedFiles);
-    invalidateUnitsInFiles(changedFiles, typeNames);
+    invalidateUnitsInFiles(typeNames);
   }
 
   @Override

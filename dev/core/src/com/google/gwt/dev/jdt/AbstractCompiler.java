@@ -18,6 +18,7 @@ package com.google.gwt.dev.jdt;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
+import com.google.gwt.dev.util.CharArrayComparator;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
@@ -42,11 +43,13 @@ import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblemFactory;
 
 import java.net.URL;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * A facade around the JDT compiler to manage on-demand compilation, caching
@@ -436,6 +439,30 @@ public abstract class AbstractCompiler {
     }
   }
 
+  private static final Comparator<CompilationUnitDeclaration> CUD_COMPARATOR = new Comparator<CompilationUnitDeclaration>() {
+
+    public int compare(CompilationUnitDeclaration cud1,
+        CompilationUnitDeclaration cud2) {
+      ICompilationUnit cu1 = cud1.compilationResult().getCompilationUnit();
+      ICompilationUnit cu2 = cud2.compilationResult().getCompilationUnit();
+      char[][] package1 = cu1.getPackageName();
+      char[][] package2 = cu2.getPackageName();
+      for (int i = 0, c = Math.min(package1.length, package2.length); i < c; ++i) {
+        int result = CharArrayComparator.INSTANCE.compare(package1[i],
+            package2[i]);
+        if (result != 0) {
+          return result;
+        }
+      }
+      int result = package2.length - package1.length;
+      if (result != 0) {
+        return result;
+      }
+      return CharArrayComparator.INSTANCE.compare(cu1.getMainTypeName(),
+          cu2.getMainTypeName());
+    }
+  };
+
   private static final CachePolicy DEFAULT_POLICY = new CachePolicy() {
     public boolean shouldProcess(CompilationUnitDeclaration cud) {
       return true;
@@ -500,8 +527,7 @@ public abstract class AbstractCompiler {
     return cachePolicy;
   }
 
-  public void invalidateUnitsInFiles(Set<String> fileNames,
-      Set<String> typeNames) {
+  public final void invalidateUnitsInFiles(Set<String> typeNames) {
     // StandardSourceOracle has its own cache that needs to be cleared
     // out. Short of modifying the interface SourceOracle to have an
     // invalidateCups, this check is needed.
@@ -526,7 +552,8 @@ public abstract class AbstractCompiler {
     //
     TreeLogger oldLogger = threadLogger.push(logger);
     try {
-      Set<CompilationUnitDeclaration> cuds = new HashSet<CompilationUnitDeclaration>();
+      Set<CompilationUnitDeclaration> cuds = new TreeSet<CompilationUnitDeclaration>(
+          CUD_COMPARATOR);
       compiler.compile(units, cuds);
       int size = cuds.size();
       CompilationUnitDeclaration[] cudArray = new CompilationUnitDeclaration[size];
@@ -536,22 +563,30 @@ public abstract class AbstractCompiler {
     }
   }
 
+  @SuppressWarnings("unused")
+  // overrider may use unused parameter
   protected void doAcceptResult(CompilationResult result) {
     // Do nothing by default.
     //
   }
 
+  @SuppressWarnings("unused")
+  // overrider may use unused parameter
   protected void doCompilationUnitDeclarationValidation(
       CompilationUnitDeclaration cud) {
     // Do nothing by default.
     //
   }
 
+  @SuppressWarnings("unused")
+  // overrider may use unused parameter
   protected String[] doFindAdditionalTypesUsingJsni(TreeLogger logger,
       CompilationUnitDeclaration cud) {
     return Empty.STRINGS;
   }
 
+  @SuppressWarnings("unused")
+  // overrider may use unused parameter
   protected String[] doFindAdditionalTypesUsingRebinds(TreeLogger logger,
       CompilationUnitDeclaration cud) {
     return Empty.STRINGS;
@@ -562,6 +597,8 @@ public abstract class AbstractCompiler {
    * type. By default we compile everything from source, so we never have it
    * unless a subclass overrides this method.
    */
+  @SuppressWarnings("unused")
+  // overrider may use unused parameter
   protected ByteCode doGetByteCodeFromCache(TreeLogger logger,
       String binaryTypeName) {
     return null;

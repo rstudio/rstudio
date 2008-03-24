@@ -388,10 +388,13 @@ public class CacheManager {
       Set<Entry<String, Object>> out = new HashSet<Entry<String, Object>>() {
         @Override
         public boolean remove(Object o) {
-          Entry<String, Object> entry = (Entry<String, Object>) o;
-          boolean removed = (DiskCache.this.remove(entry.getKey())) != null;
-          super.remove(o);
-          return removed;
+          if (o instanceof Entry) {
+            Entry<?, ?> entry = (Entry<?, ?>) o;
+            boolean removed = (DiskCache.this.remove(entry.getKey())) != null;
+            super.remove(o);
+            return removed;
+          }
+          return false;
         }
       };
       out.addAll(cache.entrySet());
@@ -997,7 +1000,7 @@ public class CacheManager {
         }
       }
     }
-    compiler.invalidateUnitsInFiles(changedFiles, invalidTypes);
+    compiler.invalidateUnitsInFiles(invalidTypes);
     changedFiles.clear();
   }
 
