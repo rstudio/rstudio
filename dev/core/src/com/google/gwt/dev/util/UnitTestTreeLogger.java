@@ -36,12 +36,13 @@ public class UnitTestTreeLogger implements TreeLogger {
   public static class Builder {
 
     private final List<LogEntry> expected = new ArrayList<LogEntry>();
+    private EnumSet<Type> loggableTypes = EnumSet.allOf(TreeLogger.Type.class);
 
     public Builder() {
     }
 
     public UnitTestTreeLogger createLogger() {
-      return new UnitTestTreeLogger(expected);
+      return new UnitTestTreeLogger(expected, loggableTypes);
     }
 
     public void expect(TreeLogger.Type type, String msg, Throwable caught) {
@@ -71,37 +72,40 @@ public class UnitTestTreeLogger implements TreeLogger {
     public void expectWarn(String msg, Throwable caught) {
       expect(TreeLogger.WARN, msg, caught);
     }
+
+    /**
+     * Sets the loggable types based on an explicit set.
+     */
+    public void setLoggableTypes(EnumSet<TreeLogger.Type> loggableTypes) {
+      this.loggableTypes = loggableTypes;
+    }
+
+    /**
+     * Sets the loggable types based on a lowest log level.
+     */
+    public void setLowestLogLevel(TreeLogger.Type lowestLogLevel) {
+      loggableTypes.clear();
+      for (Type type : TreeLogger.Type.values()) {
+        if (!type.isLowerPriorityThan(lowestLogLevel)) {
+          loggableTypes.add(type);
+        }
+      }
+    }
   }
 
   /**
    * Represents a log event to check for.
    */
   private static class LogEntry {
-    private final Type type;
-    private final String msg;
     private final Throwable caught;
+    private final String msg;
+    private final Type type;
 
     public LogEntry(TreeLogger.Type type, String msg, Throwable caught) {
       assert (type != null);
-      assert (msg != null);
       this.type = type;
       this.msg = msg;
       this.caught = caught;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj instanceof LogEntry) {
-        LogEntry other = (LogEntry) obj;
-        if (getType().equals(other.getType())) {
-          if (getMessage().equals(other.getMessage())) {
-            if (caught == null ? other.getCaught() == null : caught.equals(other.getCaught())) {
-              return true;
-            }
-          }
-        }
-      }
-      return false;
     }
 
     public Throwable getCaught() {
@@ -117,36 +121,51 @@ public class UnitTestTreeLogger implements TreeLogger {
     }
 
     @Override
-    public int hashCode() {
-      return getMessage().hashCode();
-    }
-
-    @Override
     public String toString() {
+      StringBuilder sb = new StringBuilder();
+      sb.append(type.getLabel());
+      sb.append(": ");
+      sb.append(getMessage());
       Throwable t = getCaught();
-      String caughtStr = (t != null ? ": " + t.getClass().getName() : "");
-      return type.getLabel() + ": " + getMessage() + caughtStr;
+      if (t != null) {
+        sb.append("; ");
+        sb.append(t);
+      }
+      return sb.toString();
     }
+  }
+
+  private static String createLog(List<LogEntry> entries) {
+    StringBuilder sb = new StringBuilder();
+    for (LogEntry entry : entries) {
+      sb.append(entry.toString());
+      sb.append('\n');
+    }
+    return sb.toString();
   }
 
   private final List<LogEntry> actualEntries = new ArrayList<LogEntry>();
   private final List<LogEntry> expectedEntries = new ArrayList<LogEntry>();
-  private final EnumSet<TreeLogger.Type> loggableTypes = EnumSet.noneOf(TreeLogger.Type.class);
+  private final EnumSet<TreeLogger.Type> loggableTypes;
 
-  public UnitTestTreeLogger(List<LogEntry> expectedEntries) {
+  public UnitTestTreeLogger(List<LogEntry> expectedEntries,
+      EnumSet<TreeLogger.Type> loggableTypes) {
     this.expectedEntries.addAll(expectedEntries);
+    this.loggableTypes = loggableTypes;
 
-    // Infer the set of types that are loggable.
+    // Sanity check that all expected entries are actually loggable.
     for (LogEntry entry : expectedEntries) {
-      loggableTypes.add(entry.getType());
+      Type type = entry.getType();
+      Assert.assertTrue("Cannot expect an entry of a non-loggable type!",
+          isLoggable(type));
+      loggableTypes.add(type);
     }
   }
 
   public void assertCorrectLogEntries() {
-    LogEntry expectedEntry = expectedEntries.isEmpty() ? null : expectedEntries.get(0);
-    if (expectedEntry != null) {
-      Assert.fail("Never received log entry: " + expectedEntry);
-    }
+    String expected = createLog(expectedEntries);
+    String actual = createLog(actualEntries);
+    Assert.assertEquals("Logs do not match", expected, actual);
   }
 
   public TreeLogger branch(Type type, String msg, Throwable caught) {
@@ -159,15 +178,10 @@ public class UnitTestTreeLogger implements TreeLogger {
   }
 
   public void log(Type type, String msg, Throwable caught) {
+    if (!isLoggable(type)) {
+      return;
+    }
     LogEntry actualEntry = new LogEntry(type, msg, caught);
     actualEntries.add(actualEntry);
-
-    if (expectedEntries.isEmpty()) {
-      Assert.fail("Unexpected trailing log entry: " + actualEntry);
-    } else {
-      LogEntry expectedEntry = expectedEntries.get(0);
-      Assert.assertEquals(expectedEntry, actualEntry);
-      expectedEntries.remove(0);
-    }
   }
 }
