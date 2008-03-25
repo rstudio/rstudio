@@ -15,9 +15,6 @@
  */
 package com.google.gwt.dev.jdt;
 
-import org.eclipse.jdt.core.compiler.IProblem;
-import org.eclipse.jdt.internal.compiler.CompilationResult;
-import org.eclipse.jdt.internal.compiler.ast.ASTNode;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.MarkerAnnotation;
@@ -26,9 +23,6 @@ import org.eclipse.jdt.internal.compiler.ast.SingleMemberAnnotation;
 import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
-import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
-import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
-import org.eclipse.jdt.internal.compiler.util.Util;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -127,7 +121,7 @@ class BinaryTypeReferenceRestrictionsChecker {
       String qualifiedTypeName = binaryTypeBinding.debugName();
       String error = formatBinaryTypeRefErrorMessage(qualifiedTypeName);
 
-      recordError(cud, binaryTypeReferenceSite.getExpression(), error);
+      Shared.recordError(binaryTypeReferenceSite.getExpression(), cud, error);
     }
   }
 
@@ -143,20 +137,6 @@ class BinaryTypeReferenceRestrictionsChecker {
   static String formatBinaryTypeRefErrorMessage(String qualifiedTypeName) {
     return "No source code is available for type " + qualifiedTypeName
         + "; did you forget to inherit a required module?";
-  }
-
-  static void recordError(CompilationUnitDeclaration cud, ASTNode node,
-      String error) {
-    CompilationResult compResult = cud.compilationResult();
-    int[] lineEnds = compResult.getLineSeparatorPositions();
-    int startLine = Util.getLineNumber(node.sourceStart(), lineEnds, 0,
-        lineEnds.length - 1);
-    int startColumn = Util.searchColumnNumber(lineEnds, startLine,
-        node.sourceStart());
-    DefaultProblem problem = new DefaultProblem(compResult.fileName, error,
-        IProblem.ExternalProblemNotFixable, null, ProblemSeverities.Error,
-        node.sourceStart(), node.sourceEnd(), startLine, startColumn);
-    compResult.record(problem, cud);
   }
 
   private BinaryTypeReferenceRestrictionsChecker() {

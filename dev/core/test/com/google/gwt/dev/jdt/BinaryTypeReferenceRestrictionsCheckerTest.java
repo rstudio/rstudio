@@ -19,7 +19,6 @@ import com.google.gwt.dev.jdt.BinaryTypeReferenceRestrictionsChecker.BinaryTypeR
 
 import junit.framework.TestCase;
 
-import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Annotation;
@@ -32,7 +31,6 @@ import org.eclipse.jdt.internal.compiler.ast.SingleTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.Statement;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeReference;
-import org.eclipse.jdt.internal.compiler.ast.Wildcard;
 import org.eclipse.jdt.internal.compiler.env.IBinaryAnnotation;
 import org.eclipse.jdt.internal.compiler.env.IBinaryField;
 import org.eclipse.jdt.internal.compiler.env.IBinaryMethod;
@@ -216,25 +214,5 @@ public class BinaryTypeReferenceRestrictionsCheckerTest extends TestCase {
     String expectedMessage = "No source code is available for type MyClass; did you forget to inherit a required module?";
     String actualMessage = BinaryTypeReferenceRestrictionsChecker.formatBinaryTypeRefErrorMessage("MyClass");
     assertEquals(expectedMessage, actualMessage);
-  }
-
-  public void testRecordError() {
-    String fileName = "TestCompilationUnit.java";
-    String errorMessage = "Unit has errors";
-    CompilationResult compilationResult = new CompilationResult(
-        fileName.toCharArray(), 0, 0, 0);
-    CompilationUnitDeclaration cud = new CompilationUnitDeclaration(null,
-        compilationResult, 0);
-
-    // Pick an Expression subtype to pass in
-    BinaryTypeReferenceRestrictionsChecker.recordError(cud, new Wildcard(
-        Wildcard.EXTENDS), errorMessage);
-
-    CategorizedProblem[] errors = compilationResult.getErrors();
-    assertEquals(1, errors.length);
-    CategorizedProblem problem = errors[0];
-    assertTrue(problem.isError());
-    assertEquals(1, problem.getSourceLineNumber());
-    assertEquals(errorMessage, problem.getMessage());
   }
 }
