@@ -17,8 +17,7 @@ package com.google.gwt.dev.jdt;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.jdt.StaticCompilationUnitProvider;
-import com.google.gwt.dev.jdt.TypeOracleBuilder;
+import com.google.gwt.dev.util.UnitTestTreeLogger;
 
 import junit.framework.TestCase;
 
@@ -148,50 +147,6 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.ERR_OVERRIDDEN_METHOD);
   }
 
-  private void addStandardCups(TypeOracleBuilder builder)
-      throws UnableToCompleteException {
-    StringBuffer code = new StringBuffer();
-    code.append("package java.lang;\n");
-    code.append("public class Object {\n");
-    code.append("  public String toString() { return \"Object\"; }\n");
-    code.append("  public Object clone() { return this; } ");
-    code.append("}\n");
-
-    StaticCompilationUnitProvider objectCup = new StaticCompilationUnitProvider(
-        "java.lang", "Object", code.toString().toCharArray());
-
-    code.setLength(0);
-    code.append("package java.lang;\n");
-    code.append("public final class String {\n");
-    code.append("  public int length() { return 0; }\n");
-    code.append("}\n");
-
-    StaticCompilationUnitProvider stringCup = new StaticCompilationUnitProvider(
-        "java.lang", "String", code.toString().toCharArray());
-
-    code.setLength(0);
-    code.append("package java.lang;\n");
-    code.append("public interface Serializable { }\n");
-
-    StaticCompilationUnitProvider serializableCup = new StaticCompilationUnitProvider(
-        "java.lang", "Serializable", code.toString().toCharArray());
-
-    code.setLength(0);
-    code.append("package com.google.gwt.core.client;\n");
-    code.append("public class JavaScriptObject {\n");
-    code.append("  protected JavaScriptObject() { }\n");
-    code.append("}\n");
-
-    StaticCompilationUnitProvider jsoCup = new StaticCompilationUnitProvider(
-        "com.google.gwt.core.client", "JavaScriptObject",
-        code.toString().toCharArray());
-
-    builder.addCompilationUnit(objectCup);
-    builder.addCompilationUnit(stringCup);
-    builder.addCompilationUnit(serializableCup);
-    builder.addCompilationUnit(jsoCup);
-  }
-
   /**
    * Test that when compiling buggyCode, the TypeOracleBuilder emits
    * expectedError somewhere in its output. The code should define a class named
@@ -199,35 +154,14 @@ public class JSORestrictionsTest extends TestCase {
    */
   private void shouldGenerateError(CharSequence buggyCode,
       final String expectedError) throws UnableToCompleteException {
-    TypeOracleBuilder builder = new TypeOracleBuilder();
-    addStandardCups(builder);
-
-    StaticCompilationUnitProvider buggyCup = new StaticCompilationUnitProvider(
-        "", "Buggy", buggyCode.toString().toCharArray());
-    builder.addCompilationUnit(buggyCup);
-
-    final boolean[] gotExpectedError = new boolean[1];
-
-    TreeLogger testLogger = new TreeLogger() {
-      public TreeLogger branch(Type type, String msg, Throwable caught) {
-        return this;
-      }
-
-      public boolean isLoggable(Type type) {
-        return type == ERROR;
-      }
-
-      public void log(Type type, String msg, Throwable caught) {
-        if (type == ERROR && msg.startsWith("Line ")) {
-          assertEquals(null, caught);
-          assertEquals(expectedError, msg);
-          gotExpectedError[0] = true;
-        }
-      }
-    };
-
-    builder.build(testLogger);
-    assertTrue("Failed to get expected error: '" + expectedError + "'",
-        gotExpectedError[0]);
+    UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
+    builder.setLowestLogLevel(TreeLogger.ERROR);
+    builder.expectError("Errors in \'transient source for Buggy\'", null);
+    builder.expectError(expectedError, null);
+    builder.expectError(
+        "Compilation problem due to \'transient source for Buggy\'", null);
+    UnitTestTreeLogger logger = builder.createLogger();
+    TypeOracleTestingUtils.buildTypeOracleForCode("Buggy", buggyCode, logger);
+    logger.assertCorrectLogEntries();
   }
 }

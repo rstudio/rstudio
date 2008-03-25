@@ -541,37 +541,35 @@ public final class Util {
   /**
    * Give the developer a chance to see the in-memory source that failed.
    */
-  public static String maybeDumpSource(TreeLogger logger, String location,
-      char[] source, String optionalTypeName) {
+  public static void maybeDumpSource(TreeLogger logger, String location,
+      char[] source, String typeName) {
 
     if (isCompilationUnitOnDisk(location)) {
       // Don't write another copy.
-      //
-      return null;
+      return;
+    }
+
+    TreeLogger branch = logger.branch(TreeLogger.ERROR,
+        "Compilation problem due to '" + location + "'", null);
+    if (!branch.isLoggable(TreeLogger.INFO)) {
+      // Don't bother dumping source if they can't see the related message.
+      return;
     }
 
     File tmpSrc;
     Throwable caught = null;
     try {
-      String prefix = "gen";
-      if (optionalTypeName != null) {
-        prefix = optionalTypeName;
-      }
-      tmpSrc = File.createTempFile(prefix, ".java");
+      tmpSrc = File.createTempFile(typeName, ".java");
       writeCharsAsFile(logger, tmpSrc, source);
       String dumpPath = tmpSrc.getAbsolutePath();
-      logger.log(TreeLogger.ERROR, "Compilation problem due to '" + location
-          + "'; see snapshot " + dumpPath, null);
-      return dumpPath;
+      branch.log(TreeLogger.INFO, "See snapshot: " + dumpPath, null);
+      return;
     } catch (IOException e) {
       caught = e;
     } catch (UnableToCompleteException e) {
       caught = e;
     }
-    logger.log(TreeLogger.ERROR,
-        "Compilation problem due to in-memory source '" + location
-            + "', but unable to dump to disk", caught);
-    return null;
+    branch.log(TreeLogger.INFO, "Unable to dump source to disk", caught);
   }
 
   public static byte[] readFileAsBytes(File file) {

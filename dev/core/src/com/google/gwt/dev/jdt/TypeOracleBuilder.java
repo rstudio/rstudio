@@ -420,7 +420,8 @@ public class TypeOracleBuilder {
 
         String fileName = CharOperation.charToString(cud.getFileName());
         char[] source = cud.compilationResult.compilationUnit.getContents();
-        Util.maybeDumpSource(logger, fileName, source, null);
+        Util.maybeDumpSource(logger, fileName, source,
+            String.valueOf(cud.getMainTypeName()));
         logger.log(TreeLogger.TRACE, "Removing problematic compilation unit '"
             + fileName + "'", null);
       }
