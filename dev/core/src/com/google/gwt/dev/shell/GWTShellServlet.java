@@ -96,20 +96,12 @@ public class GWTShellServlet extends HttpServlet {
       ReferenceMap.HARD, ReferenceMap.WEAK);
 
   /**
-   * Used to quickly lookup servlets by name, but does not pin them; servlets
-   * are pinned by their module in {@link #loadedServletsPinnedByModule}.
-   */
-  @SuppressWarnings("unchecked")
-  private final Map<String, HttpServlet> loadedServletsByModuleAndClassName = new ReferenceMap(
-      ReferenceMap.HARD, ReferenceMap.WEAK);
-
-  /**
    * The lifetime of the module pins the lifetime of the associated servlet;
    * this is because the loaded servlet has a weak backRef to its live module
    * through its context. When the module dies, the servlet needs to die also.
    */
   @SuppressWarnings("unchecked")
-  private final Map<ModuleDef, HttpServlet> loadedServletsPinnedByModule = new ReferenceMap(
+  private final Map<ModuleDef, Map<String, HttpServlet>> loadedServletsByModuleAndClassName = new ReferenceMap(
       ReferenceMap.WEAK, ReferenceMap.HARD, true);
 
   private final Map<String, String> mimeTypes = new HashMap<String, String>();
@@ -926,9 +918,19 @@ public class GWTShellServlet extends HttpServlet {
 
   private HttpServlet tryGetOrLoadServlet(TreeLogger logger,
       ModuleDef moduleDef, String className) {
+
+    // Maps className to live servlet for this module.
+    Map<String, HttpServlet> moduleServlets;
     synchronized (loadedServletsByModuleAndClassName) {
-      String moduleAndClassName = moduleDef.getName() + "/" + className;
-      HttpServlet servlet = loadedServletsByModuleAndClassName.get(moduleAndClassName);
+      moduleServlets = loadedServletsByModuleAndClassName.get(moduleDef);
+      if (moduleServlets == null) {
+        moduleServlets = new HashMap<String, HttpServlet>();
+        loadedServletsByModuleAndClassName.put(moduleDef, moduleServlets);
+      }
+    }
+
+    synchronized (moduleServlets) {
+      HttpServlet servlet = moduleServlets.get(className);
       if (servlet != null) {
         // Found it.
         //
@@ -963,8 +965,7 @@ public class GWTShellServlet extends HttpServlet {
 
         servlet.init(config);
 
-        loadedServletsByModuleAndClassName.put(moduleAndClassName, servlet);
-        loadedServletsPinnedByModule.put(moduleDef, servlet);
+        moduleServlets.put(className, servlet);
         return servlet;
       } catch (ClassNotFoundException e) {
         caught = e;

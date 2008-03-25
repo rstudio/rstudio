@@ -154,9 +154,10 @@ class HostedModeServletContextProxy implements ServletContext {
    */
   public URL getResource(String path) throws MalformedURLException {
     ModuleDef moduleDef = moduleDefRef.get();
-    if (moduleDef == null) {
-      return context.getResource(path);
-    }
+    assert (moduleDef != null) : "GWTShellServlet should have guaranteed that a"
+        + " live servlet will never process a request for a dead module; if you"
+        + " are using this servlet outside the context of processing a call,"
+        + " then don't do that";
 
     String moduleContext = "/" + moduleDef.getName() + "/";
     if (!path.startsWith(moduleContext)) {
@@ -164,7 +165,7 @@ class HostedModeServletContextProxy implements ServletContext {
       moduleContext = "/" + moduleDef.getCanonicalName() + "/";
       if (!path.startsWith(moduleContext)) {
         // This path is in a different context; just return null
-      return null;
+        return null;
       }
     }
 
