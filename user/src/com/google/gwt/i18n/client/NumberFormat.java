@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -543,7 +543,7 @@ public class NumberFormat {
    * @throws NumberFormatException if the entire text could not be converted
    *           into a number
    */
-  public double parse(String text) {
+  public double parse(String text) throws NumberFormatException {
     int[] pos = {0};
     double result = parse(text, pos);
     if (pos[0] == 0 || pos[0] != text.length()) {
@@ -569,8 +569,9 @@ public class NumberFormat {
    * @param inOutPos position to pass in and get back
    * @return a double value representing the parsed number, or <code>0.0</code>
    *         if the parse fails
+   * @throws NumberFormatException if the text segment could not be converted into a number
    */
-  public double parse(String text, int[] inOutPos) {
+  public double parse(String text, int[] inOutPos) throws NumberFormatException {
     int start = inOutPos[0];
     boolean gotPositive, gotNegative;
     double ret = 0.0;
@@ -805,14 +806,11 @@ public class NumberFormat {
         break;
       }
     }
-    
-    try {
-      ret = Double.parseDouble(normalizedText.toString());
-      ret = ret / scale;
-      return ret;
-    } catch (NumberFormatException e) {
-      return 0.0;
-    }
+
+    // parseDouble could throw NumberFormatException, let it do it.
+    ret = Double.parseDouble(normalizedText.toString());
+    ret = ret / scale;
+    return ret;
   }
 
   /**
