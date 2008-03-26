@@ -90,6 +90,7 @@ import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsSourceInfo;
+import com.google.gwt.dev.util.JsniRef;
 
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
@@ -235,9 +236,14 @@ public class GenerateJavaAST {
       }
 
       private HasEnclosingType parseJsniRef(SourceInfo info, String ident) {
-        String[] parts = ident.substring(1).split("::");
-        assert (parts.length == 2);
-        String className = parts[0];
+        JsniRef parsed = JsniRef.parse(ident);
+        if (parsed == null) {
+          reportJsniError(info, methodDecl,
+              "Badly formatted native reference '" + ident + "'");
+          return null;
+        }
+
+        String className = parsed.className();
         JReferenceType type = null;
         if (!className.equals("null")) {
           type = program.getFromTypeMap(className);
@@ -247,45 +253,47 @@ public class GenerateJavaAST {
             return null;
           }
         }
-        String rhs = parts[1];
-        int parenPos = rhs.indexOf('(');
-        if (parenPos < 0) {
+
+        if (!parsed.isMethod()) {
           // look for a field
+          String fieldName = parsed.memberName();
           if (type == null) {
-            if (rhs.equals("nullField")) {
+            if (fieldName.equals("nullField")) {
               return program.getNullField();
             }
           } else {
             for (int i = 0; i < type.fields.size(); ++i) {
               JField field = type.fields.get(i);
-              if (field.getName().equals(rhs)) {
+              if (field.getName().equals(fieldName)) {
                 return field;
               }
             }
           }
 
           reportJsniError(info, methodDecl,
-              "Unresolvable native reference to field '" + rhs + "' in type '"
-                  + className + "'");
+              "Unresolvable native reference to field '" + fieldName
+                  + "' in type '" + className + "'");
+          return null;
         } else {
           // look for a method
           String almostMatches = null;
-          String methodName = rhs.substring(0, parenPos);
+          String methodName = parsed.memberName();
+          String jsniSig = methodName + "(" + parsed.paramTypesString() + ")";
           if (type == null) {
-            if (rhs.equals("nullMethod()")) {
+            if (jsniSig.equals("nullMethod()")) {
               return program.getNullMethod();
             }
           } else {
             for (int i = 0; i < type.methods.size(); ++i) {
               JMethod method = type.methods.get(i);
               if (method.getName().equals(methodName)) {
-                String jsniSig = JProgram.getJsniSig(method);
-                if (jsniSig.equals(rhs)) {
+                String sig = JProgram.getJsniSig(method);
+                if (sig.equals(jsniSig)) {
                   return method;
                 } else if (almostMatches == null) {
-                  almostMatches = "'" + jsniSig + "'";
+                  almostMatches = "'" + sig + "'";
                 } else {
-                  almostMatches += ", '" + jsniSig + "'";
+                  almostMatches += ", '" + sig + "'";
                 }
               }
             }
@@ -295,14 +303,15 @@ public class GenerateJavaAST {
             reportJsniError(info, methodDecl,
                 "Unresolvable native reference to method '" + methodName
                     + "' in type '" + className + "'");
+            return null;
           } else {
             reportJsniError(info, methodDecl,
                 "Unresolvable native reference to method '" + methodName
                     + "' in type '" + className + "' (did you mean "
                     + almostMatches + "?)");
+            return null;
           }
         }
-        return null;
       }
 
       private void processField(JsNameRef nameRef, SourceInfo info,

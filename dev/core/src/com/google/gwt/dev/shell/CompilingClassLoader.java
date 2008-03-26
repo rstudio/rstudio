@@ -25,6 +25,7 @@ import com.google.gwt.dev.jdt.ByteCodeCompiler;
 import com.google.gwt.dev.jdt.CacheManager;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodMapper;
+import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.util.tools.Utility;
 
 import org.apache.commons.collections.map.ReferenceMap;
@@ -103,25 +104,20 @@ public final class CompilingClassLoader extends ClassLoader {
         jsniMemberRef = "@java.lang.Object::toString()";
       }
 
-      // References are of the form "@class::field" or
-      // "@class::method(typesigs)".
-      int endClassName = jsniMemberRef.indexOf("::");
-      if (endClassName == -1 || jsniMemberRef.length() < 1
-          || jsniMemberRef.charAt(0) != '@') {
+      JsniRef parsed = JsniRef.parse(jsniMemberRef);
+      if (parsed == null) {
         logger.log(TreeLogger.WARN, "Malformed JSNI reference '"
             + jsniMemberRef + "'; expect subsequent failures",
             new NoSuchFieldError(jsniMemberRef));
         return -1;
       }
 
-      String className = jsniMemberRef.substring(1, endClassName);
-
       // Do the lookup by class name.
+      String className = parsed.className();
       DispatchClassInfo dispClassInfo = getClassInfoFromClassName(className);
       if (dispClassInfo != null) {
-        String memberName = jsniMemberRef.substring(endClassName + 2);
+        String memberName = parsed.memberName();
         int memberId = dispClassInfo.getMemberId(memberName);
-
         if (memberId < 0) {
           logger.log(TreeLogger.WARN, "Member '" + memberName
               + "' in JSNI reference '" + jsniMemberRef
