@@ -49,9 +49,14 @@ public class LongEmulationNormalizer {
 
     @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
+      // Concats are handled by CastNormalizer.ConcatVisitor.
+      if (x.getType() == program.getTypeJavaLangString()) {
+        return;
+      }
       JType lhsType = x.getLhs().getType();
       JType rhsType = x.getRhs().getType();
       if (lhsType != longType) {
+        assert (rhsType != longType);
         return;
       }
 
