@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor.DeferredBindingSite;
 import com.google.gwt.dev.util.Empty;
+import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.Util;
 
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
@@ -27,9 +28,7 @@ import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,15 +69,32 @@ public class WebModeCompilerFrontEnd extends AstCompiler {
     return rebindPermOracle;
   }
 
+  @Override
+  protected void doCompilationUnitDeclarationValidation(
+      CompilationUnitDeclaration cud, TreeLogger logger) {
+    /*
+     * Anything that makes it here was already checked by AstCompiler while
+     * building TypeOracle; no need to rerun checks.
+     */
+  }
+
   /**
    * Pull in types referenced only via JSNI.
    */
   protected String[] doFindAdditionalTypesUsingJsni(TreeLogger logger,
       CompilationUnitDeclaration cud) {
-    Set dependentTypeNames = new HashSet();
-    FindJsniRefVisitor v = new FindJsniRefVisitor(dependentTypeNames);
+    FindJsniRefVisitor v = new FindJsniRefVisitor();
     cud.traverse(v, cud.scope);
-    return (String[]) dependentTypeNames.toArray(Empty.STRINGS);
+    Set<String> jsniRefs = v.getJsniRefs();
+    Set<String> dependentTypeNames = new HashSet<String>();
+    for (String jsniRef : jsniRefs) {
+      JsniRef parsed = JsniRef.parse(jsniRef);
+      if (parsed != null) {
+        // If we fail to parse, don't add a class reference.
+        dependentTypeNames.add(parsed.className());
+      }
+    }
+    return dependentTypeNames.toArray(Empty.STRINGS);
   }
 
   /**
@@ -86,20 +102,18 @@ public class WebModeCompilerFrontEnd extends AstCompiler {
    */
   protected String[] doFindAdditionalTypesUsingRebinds(TreeLogger logger,
       CompilationUnitDeclaration cud) {
-    Set dependentTypeNames = new HashSet();
+    Set<String> dependentTypeNames = new HashSet<String>();
 
     // Find all the deferred binding request types.
     //
-    Map requestedTypes = new HashMap();
-    FindDeferredBindingSitesVisitor v = new FindDeferredBindingSitesVisitor(
-        requestedTypes);
+    FindDeferredBindingSitesVisitor v = new FindDeferredBindingSitesVisitor();
     cud.traverse(v, cud.scope);
+    Map<String, DeferredBindingSite> requestedTypes = v.getSites();
 
     // For each, ask the host for every possible deferred binding answer.
     //
-    for (Iterator iter = requestedTypes.keySet().iterator(); iter.hasNext();) {
-      String reqType = (String) iter.next();
-      DeferredBindingSite site = (DeferredBindingSite) requestedTypes.get(reqType);
+    for (String reqType : requestedTypes.keySet()) {
+      DeferredBindingSite site = requestedTypes.get(reqType);
 
       try {
         String[] resultTypes = rebindPermOracle.getAllPossibleRebindAnswers(
@@ -159,6 +173,6 @@ public class WebModeCompilerFrontEnd extends AstCompiler {
             "Failed to resolve '" + reqType + "' via deferred binding");
       }
     }
-    return (String[]) dependentTypeNames.toArray(Empty.STRINGS);
+    return dependentTypeNames.toArray(Empty.STRINGS);
   }
 }

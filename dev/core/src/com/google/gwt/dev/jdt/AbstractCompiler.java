@@ -180,9 +180,7 @@ public abstract class AbstractCompiler {
         resolvePossiblyNestedType(typeName);
       }
 
-      JSORestrictionsChecker.check(cud);
-
-      doCompilationUnitDeclarationValidation(cud);
+      doCompilationUnitDeclarationValidation(cud, logger);
 
       // Optionally remember this cud.
       //
@@ -573,9 +571,8 @@ public abstract class AbstractCompiler {
   @SuppressWarnings("unused")
   // overrider may use unused parameter
   protected void doCompilationUnitDeclarationValidation(
-      CompilationUnitDeclaration cud) {
+      CompilationUnitDeclaration cud, TreeLogger logger) {
     // Do nothing by default.
-    //
   }
 
   @SuppressWarnings("unused")

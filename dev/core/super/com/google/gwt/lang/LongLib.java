@@ -679,6 +679,7 @@ public class LongLib {
   /**
    * Web mode implementation; the long is already the right object.
    */
+  @SuppressWarnings("restriction")
   private static native double[] typeChange0(long value) /*-{
     return value;
   }-*/;

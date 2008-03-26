@@ -16,18 +16,16 @@
 package com.google.gwt.dev.jdt;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
-import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.ClassLiteralAccess;
+import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.MessageSend;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.Scope;
-import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
-import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
-import org.eclipse.jdt.internal.compiler.util.Util;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -60,23 +58,12 @@ public class FindDeferredBindingSitesVisitor extends ASTVisitor {
       String message) {
     MessageSend messageSend = site.messageSend;
     Scope scope = site.scope;
-    CompilationResult compResult = scope.compilationUnitScope().referenceContext().compilationResult();
-    int[] lineEnds = compResult.getLineSeparatorPositions();
-    int startLine = Util.getLineNumber(messageSend.sourceStart(), lineEnds, 0,
-        lineEnds.length - 1);
-    int startColumn = Util.searchColumnNumber(lineEnds, startLine,
-        messageSend.sourceStart());
-    DefaultProblem problem = new DefaultProblem(compResult.fileName, message,
-        IProblem.ExternalProblemNotFixable, null, ProblemSeverities.Error,
-        messageSend.sourceStart(), messageSend.sourceEnd(), startLine, startColumn);
-    compResult.record(problem, scope.referenceContext());
+    // Safe since CUS.referenceContext is set in its constructor.
+    CompilationUnitDeclaration cud = scope.compilationUnitScope().referenceContext;
+    Shared.recordError(messageSend, cud, message);
   }
 
-  private final Map results;
-
-  public FindDeferredBindingSitesVisitor(Map requestedTypes) {
-    this.results = requestedTypes;
-  }
+  private final Map<String, DeferredBindingSite> results = new HashMap<String, DeferredBindingSite>();
 
   public void endVisit(MessageSend messageSend, BlockScope scope) {
     if (messageSend.binding == null) {
@@ -119,5 +106,9 @@ public class FindDeferredBindingSitesVisitor extends ASTVisitor {
     if (!results.containsKey(typeName)) {
       results.put(typeName, site);
     }
+  }
+
+  public Map<String, DeferredBindingSite> getSites() {
+    return Collections.unmodifiableMap(results);
   }
 }

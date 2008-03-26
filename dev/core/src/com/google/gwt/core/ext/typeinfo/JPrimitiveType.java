@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,16 +22,23 @@ import java.util.Map;
  * Represents a primitive type in a declaration.
  */
 public class JPrimitiveType extends JType {
-
-  public static final JPrimitiveType BOOLEAN = create("boolean", "Z");
-  public static final JPrimitiveType BYTE = create("byte", "B");
-  public static final JPrimitiveType CHAR = create("char", "C");
-  public static final JPrimitiveType DOUBLE = create("double", "D");
-  public static final JPrimitiveType FLOAT = create("float", "F");
-  public static final JPrimitiveType INT = create("int", "I");
-  public static final JPrimitiveType LONG = create("long", "J");
-  public static final JPrimitiveType SHORT = create("short", "S");
-  public static final JPrimitiveType VOID = create("void", "V");
+  public static final JPrimitiveType BOOLEAN = create("boolean",
+      JniConstants.DESC_BOOLEAN);
+  public static final JPrimitiveType BYTE = create("byte",
+      JniConstants.DESC_BYTE);
+  public static final JPrimitiveType CHAR = create("char",
+      JniConstants.DESC_CHAR);
+  public static final JPrimitiveType DOUBLE = create("double",
+      JniConstants.DESC_DOUBLE);
+  public static final JPrimitiveType FLOAT = create("float",
+      JniConstants.DESC_FLOAT);
+  public static final JPrimitiveType INT = create("int", JniConstants.DESC_INT);
+  public static final JPrimitiveType LONG = create("long",
+      JniConstants.DESC_LONG);
+  public static final JPrimitiveType SHORT = create("short",
+      JniConstants.DESC_SHORT);
+  public static final JPrimitiveType VOID = create("void",
+      JniConstants.DESC_VOID);
 
   private static Map<String, JPrimitiveType> map;
 
@@ -39,8 +46,8 @@ public class JPrimitiveType extends JType {
     return getMap().get(typeName);
   }
 
-  private static JPrimitiveType create(String name, String jni) {
-    JPrimitiveType type = new JPrimitiveType(name, jni);
+  private static JPrimitiveType create(String name, char jni) {
+    JPrimitiveType type = new JPrimitiveType(name, String.valueOf(jni));
     Object existing = getMap().put(name, type);
     assert (existing == null);
     return type;
@@ -132,6 +139,11 @@ public class JPrimitiveType extends JType {
     return null;
   }
 
+  @Override
+  public String toString() {
+    return name;
+  }
+  
   @Override
   JPrimitiveType getSubstitutedType(JParameterizedType parameterizedType) {
     return this;

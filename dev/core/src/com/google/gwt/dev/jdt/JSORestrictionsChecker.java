@@ -18,9 +18,7 @@ package com.google.gwt.dev.jdt;
 import com.google.gwt.dev.shell.JsValueGlue;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
-import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
 import org.eclipse.jdt.internal.compiler.ast.AllocationExpression;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
@@ -36,9 +34,6 @@ import org.eclipse.jdt.internal.compiler.lookup.MethodScope;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.Scope;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
-import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
-import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
-import org.eclipse.jdt.internal.compiler.util.Util;
 
 /**
  * Check a compilation unit for violations of
@@ -203,16 +198,7 @@ class JSORestrictionsChecker {
   }
 
   private void errorOn(ASTNode node, String error) {
-    CompilationResult compResult = cud.compilationResult();
-    int[] lineEnds = compResult.getLineSeparatorPositions();
-    int startLine = Util.getLineNumber(node.sourceStart(), lineEnds, 0,
-        lineEnds.length - 1);
-    int startColumn = Util.searchColumnNumber(lineEnds, startLine,
-        node.sourceStart());
-    DefaultProblem problem = new DefaultProblem(compResult.fileName, error,
-        IProblem.ExternalProblemNotFixable, null, ProblemSeverities.Error,
-        node.sourceStart(), node.sourceEnd(), startLine, startColumn);
-    compResult.record(problem, cud);
+    Shared.recordError(node, cud, error);
   }
 
   private boolean isForJSOSubclass(Scope scope) {

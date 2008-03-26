@@ -148,6 +148,7 @@ public class HostedTest extends GWTTestCase {
     return val;
   }-*/;
 
+  @SuppressWarnings("restriction")
   private static native long passThroughLong(long val) /*-{
     return val;
   }-*/;

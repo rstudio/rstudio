@@ -120,7 +120,8 @@ public class AstCompiler extends AbstractCompiler {
 
   @Override
   protected void doCompilationUnitDeclarationValidation(
-      CompilationUnitDeclaration cud) {
+      CompilationUnitDeclaration cud, TreeLogger logger) {
+    JSORestrictionsChecker.check(cud);
     BinaryTypeReferenceRestrictionsChecker.check(cud);
   }
 }
