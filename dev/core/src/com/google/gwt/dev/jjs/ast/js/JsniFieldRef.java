@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,16 +29,22 @@ import com.google.gwt.dev.jjs.ast.JVisitor;
 public class JsniFieldRef extends JFieldRef {
 
   private final String ident;
+  private boolean isLvalue;
 
   public JsniFieldRef(JProgram program, SourceInfo info, String ident,
-      JField field, JReferenceType enclosingType) {
+      JField field, JReferenceType enclosingType, boolean isLvalue) {
     super(program, info, field.isStatic() ? null : program.getLiteralNull(),
         field, enclosingType);
     this.ident = ident;
+    this.isLvalue = isLvalue;
   }
 
   public String getIdent() {
     return ident;
+  }
+
+  public boolean isLvalue() {
+    return isLvalue;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

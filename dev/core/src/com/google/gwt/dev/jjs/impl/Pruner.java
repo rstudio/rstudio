@@ -207,7 +207,8 @@ public class Pruner {
         JField nullField = program.getNullField();
         program.jsniMap.put(ident, nullField);
         JsniFieldRef nullFieldRef = new JsniFieldRef(program,
-            x.getSourceInfo(), ident, nullField, x.getEnclosingType());
+            x.getSourceInfo(), ident, nullField, x.getEnclosingType(),
+            x.isLvalue());
         ctx.replaceMe(nullFieldRef);
       }
     }
@@ -703,11 +704,10 @@ public class Pruner {
       /*
        * SPECIAL: this could be an assignment that passes a value from
        * JavaScript into Java.
-       * 
-       * TODO(later): technically we only need to do this if the field is being
-       * assigned to.
        */
-      maybeRescueJavaScriptObjectPassingIntoJava(x.getField().getType());
+      if (x.isLvalue()) {
+        maybeRescueJavaScriptObjectPassingIntoJava(x.getField().getType());
+      }
       // JsniFieldRef rescues as JFieldRef
       return visit((JFieldRef) x, ctx);
     }

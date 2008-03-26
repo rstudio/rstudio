@@ -258,9 +258,11 @@ public class TypeTightener {
 
     @Override
     public void endVisit(JsniFieldRef x, Context ctx) {
-      // If this happens in JSNI, we can't make any type-tightening assumptions
-      // Fake an assignment-to-self to prevent tightening
-      addAssignment(x.getTarget(), x);
+      if (x.isLvalue()) {
+        // If this happens in JSNI, we can't make any type-tightening
+        // assumptions. Fake an assignment-to-self to prevent tightening.
+        addAssignment(x.getTarget(), x);
+      }
     }
 
     @Override

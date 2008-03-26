@@ -2589,6 +2589,12 @@ public class GenerateJavaAST {
          * the field.
          */
         if (field.isCompileTimeConstant()) {
+          if (ctx.isLvalue()) {
+            reportJsniError(info, methodDecl,
+                "Cannot change the value of compile-time constant "
+                    + field.getName());
+          }
+
           JLiteral initializer = field.getConstInitializer();
           JType type = initializer.getType();
           if (type instanceof JPrimitiveType
@@ -2605,12 +2611,12 @@ public class GenerateJavaAST {
 
         // Normal: create a jsniRef.
         JsniFieldRef fieldRef = new JsniFieldRef(program, info,
-            nameRef.getIdent(), field, currentClass);
+            nameRef.getIdent(), field, currentClass, ctx.isLvalue());
         nativeMethodBody.jsniFieldRefs.add(fieldRef);
       }
 
       private void processMethod(JsNameRef nameRef, SourceInfo info,
-          JMethod method) {
+          JMethod method, JsContext<JsExpression> ctx) {
         if (method.getEnclosingType() != null) {
           if (method.isStatic() && nameRef.getQualifier() != null) {
             reportJsniError(info, methodDecl,
@@ -2621,6 +2627,10 @@ public class GenerateJavaAST {
                 "Cannot make an unqualified reference to the instance method "
                     + method.getName());
           }
+        }
+        if (ctx.isLvalue()) {
+          reportJsniError(info, methodDecl, "Cannot reassign the Java method "
+              + method.getName());
         }
 
         JsniMethodRef methodRef = new JsniMethodRef(program, info,
@@ -2645,7 +2655,7 @@ public class GenerateJavaAST {
         if (node instanceof JField) {
           processField(nameRef, info, (JField) node, ctx);
         } else if (node instanceof JMethod) {
-          processMethod(nameRef, info, (JMethod) node);
+          processMethod(nameRef, info, (JMethod) node, ctx);
         } else {
           throw new InternalCompilerException((HasSourceInfo) node,
               "JSNI reference to something other than a field or method?", null);

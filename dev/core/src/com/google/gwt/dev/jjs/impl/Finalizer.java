@@ -159,7 +159,9 @@ public class Finalizer {
 
     @Override
     public void endVisit(JsniFieldRef x, Context ctx) {
-      recordAssignment(x);
+      if (x.isLvalue()) {
+        recordAssignment(x);
+      }
     }
 
     private void recordAssignment(JExpression lhs) {
