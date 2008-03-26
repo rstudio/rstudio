@@ -91,7 +91,7 @@ public class JParameter implements HasAnnotations, HasMetaData {
 
   public String toString() {
     StringBuffer sb = new StringBuffer();
-    sb.append(type.getQualifiedSourceName());
+    sb.append(type.getParameterizedQualifiedSourceName());
     sb.append(" ");
     sb.append(getName());
     return sb.toString();

@@ -115,8 +115,15 @@ class RemoteServiceAsyncValidator {
         sb.append(", ");
       }
 
+      JType returnType = method.getReturnType();
       sb.append(AsyncCallback.class.getName());
-      sb.append(" arg");
+      sb.append("<");
+      if (returnType instanceof JPrimitiveType) {
+        sb.append(((JPrimitiveType) returnType).getQualifiedBoxedSourceName());
+      } else {
+        sb.append(returnType.getParameterizedQualifiedSourceName());
+      }
+      sb.append("> arg");
       sb.append(Integer.toString(params.length + 1));
       sb.append(");\n");
     }
