@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.http.client.Request;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -33,6 +34,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class RemoteServiceServletTest extends GWTTestCase {
   private static final int TEST_DELAY = Integer.MAX_VALUE;
+  private Request req;
 
   private static RemoteServiceServletTestServiceAsync getAsyncService() {
     RemoteServiceServletTestServiceAsync service = (RemoteServiceServletTestServiceAsync) GWT.create(RemoteServiceServletTestService.class);
@@ -52,15 +54,17 @@ public class RemoteServiceServletTest extends GWTTestCase {
 
     delayTestFinish(TEST_DELAY);
 
-    service.test(new AsyncCallback() {
+    req = service.test(new AsyncCallback<Object>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
       public void onSuccess(Object result) {
+        assertTrue(!req.isPending());
         finishTest();
       }
     });
+    assertTrue(req.isPending());
   }
 }

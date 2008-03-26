@@ -305,16 +305,16 @@ class ProxyCreator {
     }
 
     w.println();
-    if (asyncReturnType != JPrimitiveType.VOID) {
-      w.print("return ");
-    }
-
     w.println("String payload = " + streamWriterName + ".toString();");
 
     w.println("boolean toss2 = isStatsAvailable() && stats(\""
         + statsMethodExpr + ":requestSerialized\", timeStat(\""
         + getProxySimpleName() + "." + syncMethod.getName()
         + "\", getRequestId()));");
+
+    if (asyncReturnType != JPrimitiveType.VOID) {
+      w.print("return ");
+    }
 
     // Call the doInvoke method to actually send the request.
     w.print("doInvoke(");
