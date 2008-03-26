@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,6 +28,37 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class JsVisitor {
 
+  protected static final JsContext<JsExpression> LVALUE_CONTEXT = new JsContext<JsExpression>() {
+
+    public boolean canInsert() {
+      return false;
+    }
+
+    public boolean canRemove() {
+      return false;
+    }
+
+    public void insertAfter(JsExpression node) {
+      throw new UnsupportedOperationException();
+    }
+
+    public void insertBefore(JsExpression node) {
+      throw new UnsupportedOperationException();
+    }
+
+    public boolean isLvalue() {
+      return true;
+    }
+
+    public void removeMe() {
+      throw new UnsupportedOperationException();
+    }
+
+    public void replaceMe(JsExpression node) {
+      throw new UnsupportedOperationException();
+    }
+  };
+
   protected static final JsContext UNMODIFIABLE_CONTEXT = new JsContext() {
 
     public boolean canInsert() {
@@ -46,6 +77,10 @@ public class JsVisitor {
       throw new UnsupportedOperationException();
     }
 
+    public boolean isLvalue() {
+      return false;
+    }
+
     public void removeMe() {
       throw new UnsupportedOperationException();
     }
@@ -61,6 +96,10 @@ public class JsVisitor {
 
   public final <T extends JsVisitable<T>> void acceptList(List<T> collection) {
     doAcceptList(collection);
+  }
+
+  public JsExpression acceptLvalue(JsExpression expr) {
+    return doAcceptLvalue(expr);
   }
 
   public final <T extends JsVisitable<T>> void acceptWithInsertRemove(
@@ -370,6 +409,11 @@ public class JsVisitor {
     for (Iterator<T> it = collection.iterator(); it.hasNext();) {
       doTraverse(it.next(), (JsContext<T>) UNMODIFIABLE_CONTEXT);
     }
+  }
+
+  protected JsExpression doAcceptLvalue(JsExpression expr) {
+    doTraverse(expr, LVALUE_CONTEXT);
+    return expr;
   }
 
   protected <T extends JsVisitable<T>> void doAcceptWithInsertRemove(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -51,7 +51,15 @@ public abstract class JsUnaryOperation extends JsExpression {
   }
 
   public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
-    arg = v.accept(arg);
+    if (op.isModifying()) {
+      /*
+       * The delete operator is practically like an assignment of undefined, so
+       * for practical purposes we're treating it as an lvalue.
+       */
+      arg = v.acceptLvalue(arg);
+    } else {
+      arg = v.accept(arg);
+    }
   }
 
 }

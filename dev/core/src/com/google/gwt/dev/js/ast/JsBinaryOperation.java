@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -103,7 +103,11 @@ public final class JsBinaryOperation extends JsExpression {
 
   public void traverse(JsVisitor v, JsContext<JsExpression> ctx) {
     if (v.visit(this, ctx)) {
-      arg1 = v.accept(arg1);
+      if (op.isAssignment()) {
+        arg1 = v.acceptLvalue(arg1);
+      } else {
+        arg1 = v.accept(arg1);
+      }
       arg2 = v.accept(arg2);
     }
     v.endVisit(this, ctx);

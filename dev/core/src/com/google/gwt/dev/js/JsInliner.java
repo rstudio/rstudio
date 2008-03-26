@@ -25,7 +25,6 @@ import com.google.gwt.dev.js.ast.JsBooleanLiteral;
 import com.google.gwt.dev.js.ast.JsCase;
 import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsDefault;
 import com.google.gwt.dev.js.ast.JsExprStmt;
 import com.google.gwt.dev.js.ast.JsExpression;
@@ -40,6 +39,7 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
@@ -52,7 +52,6 @@ import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsSwitchMember;
 import com.google.gwt.dev.js.ast.JsThisRef;
-import com.google.gwt.dev.js.ast.JsUnaryOperation;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
@@ -1068,57 +1067,21 @@ public class JsInliner {
       this.parameterNames = parameterNames;
     }
 
-    /**
-     * Disallow inlining if the left-hand side of an assignment is a parameter.
-     */
     @Override
-    public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
-      JsBinaryOperator op = x.getOperator();
-
-      // Don't allow assignments to the left-hand side.
-      if (op.isAssignment() && isParameter(x.getArg1())) {
+    public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+      if (ctx.isLvalue() && isParameter(x)) {
         lvalue = true;
       }
     }
-
-    /**
-     * Delegates to {@link #checkUnaryOperation(JsUnaryOperation)}.
-     */
-    @Override
-    public void endVisit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
-      checkUnaryOperation(x);
-    }
-
-    /**
-     * Delegates to {@link #checkUnaryOperation(JsUnaryOperation)}.
-     */
-    @Override
-    public void endVisit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
-      checkUnaryOperation(x);
-    }
-
+    
     public boolean parameterAsLValue() {
       return lvalue;
     }
 
     /**
-     * Disallow modification of parameters via unary operations.
-     */
-    private void checkUnaryOperation(JsUnaryOperation x) {
-      if (x.getOperator().isModifying() && isParameter(x.getArg())) {
-        lvalue = true;
-      }
-    }
-
-    /**
      * Determine if a JsExpression is a JsNameRef that refers to a parameter.
      */
-    private boolean isParameter(JsExpression e) {
-      if (!(e instanceof JsNameRef)) {
-        return false;
-      }
-
-      JsNameRef ref = (JsNameRef) e;
+    private boolean isParameter(JsNameRef ref) {
       if (ref.getQualifier() != null) {
         return false;
       }

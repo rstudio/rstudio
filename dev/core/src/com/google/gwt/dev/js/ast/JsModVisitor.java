@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,6 +50,10 @@ public class JsModVisitor extends JsVisitor {
       didChange = true;
     }
 
+    public boolean isLvalue() {
+      return false;
+    }
+
     public void removeMe() {
       checkState();
       collection.remove(index--);
@@ -85,6 +89,13 @@ public class JsModVisitor extends JsVisitor {
     }
   }
 
+  private class LvalueContext extends NodeContext<JsExpression> {
+    @Override
+    public boolean isLvalue() {
+      return true;
+    }
+  }
+
   private class NodeContext<T extends JsVisitable<T>> implements JsContext<T> {
     private T node;
     private boolean replaced;
@@ -103,6 +114,10 @@ public class JsModVisitor extends JsVisitor {
 
     public void insertBefore(T node) {
       throw new UnsupportedOperationException();
+    }
+
+    public boolean isLvalue() {
+      return false;
     }
 
     public void removeMe() {
@@ -154,6 +169,10 @@ public class JsModVisitor extends JsVisitor {
     for (int i = 0, c = collection.size(); i < c; ++i) {
       collection.set(i, new NodeContext<T>().traverse(collection.get(i)));
     }
+  }
+
+  protected JsExpression doAcceptLvalue(JsExpression expr) {
+    return new LvalueContext().traverse(expr);
   }
 
   @Override
