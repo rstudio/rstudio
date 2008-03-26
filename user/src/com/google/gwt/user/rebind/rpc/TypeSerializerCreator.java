@@ -242,6 +242,7 @@ public class TypeSerializerCreator {
   }
 
   private void writeCreateMethodMapMethod() {
+    srcWriter.println("@SuppressWarnings(\"restriction\")");
     srcWriter.println("private static native JavaScriptObject createMethodMap() /*-" + '{');
     {
       srcWriter.indent();

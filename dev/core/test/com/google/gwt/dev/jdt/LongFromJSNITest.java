@@ -34,8 +34,10 @@ public class LongFromJSNITest extends TestCase {
     code.append("  $wnd.alert(\"x is: \"+this.@Buggy::x); }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(code, 3,
-        "Field x has type long, which cannot be processed in JSNI code");
+    shouldGenerateWarning(
+        code,
+        3,
+        "Referencing field 'Buggy.x': 'long' is an opaque, non-numeric value in JS code");
   }
 
   public void testLongArray() throws UnableToCompleteException {
@@ -46,8 +48,10 @@ public class LongFromJSNITest extends TestCase {
     code.append("    $wnd.alert(this.@Buggy::m()()); }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(code, 3,
-        "Method m returns type long[], which cannot be processed in JSNI code");
+    shouldGenerateWarning(
+        code,
+        3,
+        "Referencing method \'Buggy.m\': return type \'long[]\' is an opaque, non-numeric value in JS code");
   }
 
   public void testLongParameter() throws UnableToCompleteException {
@@ -56,7 +60,8 @@ public class LongFromJSNITest extends TestCase {
     code.append("  native void jsniMeth(long x) /*-{ return; }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(code, 2, "JSNI method with a parameter of type long");
+    shouldGenerateWarning(code, 2,
+        "Parameter 'x': 'long' is an opaque, non-numeric value in JS code");
   }
 
   public void testLongReturn() throws UnableToCompleteException {
@@ -65,7 +70,8 @@ public class LongFromJSNITest extends TestCase {
     code.append("  native long jsniMeth() /*-{ return 0; }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(code, 2, "JSNI method with return type of long");
+    shouldGenerateWarning(code, 2,
+        "Return value of type 'long' is an opaque, non-numeric value in JS code");
   }
 
   public void testMethodArgument() throws UnableToCompleteException {
@@ -75,8 +81,10 @@ public class LongFromJSNITest extends TestCase {
     code.append("  native void jsniMeth() /*-{ this.@Buggy::print(J)(0); }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(code, 3,
-        "Passing a long into Java from JSNI (method print)");
+    shouldGenerateWarning(
+        code,
+        3,
+        "Referencing method \'Buggy.print\': parameter \'x\': \'long\' is an opaque, non-numeric value in JS code");
   }
 
   public void testMethodReturn() throws UnableToCompleteException {
@@ -87,8 +95,10 @@ public class LongFromJSNITest extends TestCase {
     code.append("    $wnd.alert(this.@Buggy::m()()); }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(code, 3,
-        "Method m returns type long, which cannot be processed in JSNI code");
+    shouldGenerateWarning(
+        code,
+        3,
+        "Referencing method 'Buggy.m': return type 'long' is an opaque, non-numeric value in JS code");
   }
 
   public void testOverloadedMethodWithNoWarning()
@@ -114,8 +124,10 @@ public class LongFromJSNITest extends TestCase {
     code.append("    $wnd.alert(this.@Buggy::m(I)(10)); }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(code, 4,
-        "Method m returns type long, which cannot be processed in JSNI code");
+    shouldGenerateWarning(
+        code,
+        4,
+        "Referencing method 'Buggy.m': return type 'long' is an opaque, non-numeric value in JS code");
   }
 
   public void testSuppressWarnings() throws UnableToCompleteException {

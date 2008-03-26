@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 /**
  * A parsed Java reference from within a JSNI method.
  */
-public class JsniRef {
+public final class JsniRef {
 
   /**
    * A regex pattern for a Java reference in JSNI code. Its groups are:
@@ -126,10 +126,7 @@ public class JsniRef {
 
   @Override
   public boolean equals(Object obj) {
-    if (obj instanceof JsniRef) {
-      return toString().equals(obj.toString());
-    }
-    return false;
+    return (obj instanceof JsniRef) && toString().equals(obj.toString());
   }
 
   @Override
@@ -137,12 +134,24 @@ public class JsniRef {
     return toString().hashCode();
   }
 
-  public final boolean isMethod() {
-    return paramTypesString() != null;
+  public boolean isField() {
+    return paramTypesString == null;
+  }
+
+  public boolean isMethod() {
+    return paramTypesString != null;
   }
 
   public String memberName() {
     return memberName;
+  }
+
+  public String memberSignature() {
+    String ret = memberName;
+    if (isMethod()) {
+      ret += "(" + paramTypesString + ")";
+    }
+    return ret;
   }
 
   /**
@@ -159,10 +168,6 @@ public class JsniRef {
 
   @Override
   public String toString() {
-    String ret = "@" + className + "::" + memberName;
-    if (isMethod()) {
-      ret += "(" + paramTypesString + ")";
-    }
-    return ret;
+    return "@" + className + "::" + memberSignature();
   }
 }

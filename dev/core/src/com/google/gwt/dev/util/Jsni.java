@@ -282,12 +282,17 @@ public class Jsni {
    * determine whether one method overrides another).
    */
   public static String getJsniSignature(JMethod method) {
-    String name = method.getName();
-    String className = method.getEnclosingType().getQualifiedSourceName();
+    return method.getEnclosingType().getQualifiedSourceName() + "::"
+        + getMemberSignature(method);
+  }
 
+  /**
+   * Gets a unique name for this method and its signature (this is used to
+   * determine whether one method overrides another).
+   */
+  public static String getMemberSignature(JMethod method) {
+    String name = method.getName();
     StringBuffer sb = new StringBuffer();
-    sb.append(className);
-    sb.append("::");
     sb.append(name);
     sb.append("(");
     JParameter[] params = method.getParameters();
@@ -297,8 +302,8 @@ public class Jsni {
       sb.append(typeSig);
     }
     sb.append(")");
-    String fullName = sb.toString();
-    return fullName;
+    String result = sb.toString();
+    return result;
   }
 
   /**

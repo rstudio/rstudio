@@ -27,14 +27,18 @@ public class JsniRefTest extends TestCase {
       JsniRef ref = JsniRef.parse("@some.package.SomeClass::someField");
       assertEquals("some.package.SomeClass", ref.className());
       assertEquals("someField", ref.memberName());
+      assertEquals("someField", ref.memberSignature());
       assertFalse(ref.isMethod());
+      assertTrue(ref.isField());
     }
 
     {
       JsniRef ref = JsniRef.parse("@some.package.SomeClass::someMeth()");
       assertEquals("some.package.SomeClass", ref.className());
       assertEquals("someMeth", ref.memberName());
+      assertEquals("someMeth()", ref.memberSignature());
       assertTrue(ref.isMethod());
+      assertFalse(ref.isField());
       assertEquals(0, ref.paramTypes().length);
     }
 
@@ -44,6 +48,8 @@ public class JsniRefTest extends TestCase {
           + "[[ZBCDFIJLjava/lang/String;S)");
       assertEquals("some.package.SomeClass", ref.className());
       assertEquals("someMeth", ref.memberName());
+      assertEquals("someMeth([[ZBCDFIJLjava/lang/String;S)",
+          ref.memberSignature());
       assertTrue(ref.isMethod());
       assertEquals(9, ref.paramTypes().length);
       assertEquals("[[Z", ref.paramTypes()[0]);
@@ -62,7 +68,9 @@ public class JsniRefTest extends TestCase {
       JsniRef ref = JsniRef.parse("some.package.SomeClass::someField");
       assertEquals("some.package.SomeClass", ref.className());
       assertEquals("someField", ref.memberName());
+      assertEquals("someField", ref.memberSignature());
       assertFalse(ref.isMethod());
+      assertTrue(ref.isField());
     }
   }
 

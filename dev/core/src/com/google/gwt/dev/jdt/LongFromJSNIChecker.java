@@ -19,9 +19,9 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.core.ext.typeinfo.JniConstants;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.util.Jsni;
@@ -61,41 +61,78 @@ public class LongFromJSNIChecker {
     @Override
     public void endVisit(MethodDeclaration meth, ClassScope scope) {
       if (meth.isNative() && !suppressingWarnings(meth, scope)) {
-        // check return type
-        final TypeReference returnType = meth.returnType;
-        if (containsLong(returnType, scope)) {
-          warn(meth, "JSNI method with return type of " + returnType);
-        }
+        checkDecl(meth, scope);
+        checkRefs(meth, scope);
+      }
+    }
 
-        // check parameter types
-        if (meth.arguments != null) {
-          for (Argument arg : meth.arguments) {
-            if (containsLong(arg.type, scope)) {
-              warn(arg, "JSNI method with a parameter of type " + arg.type);
-            }
+    private void checkDecl(MethodDeclaration meth, ClassScope scope) {
+      TypeReference returnType = meth.returnType;
+      if (containsLong(returnType, scope)) {
+        warn(meth, "Return value of type '" + returnType
+            + "' is an opaque, non-numeric value in JS code");
+      }
+
+      if (meth.arguments != null) {
+        for (Argument arg : meth.arguments) {
+          if (containsLong(arg.type, scope)) {
+            warn(arg, "Parameter '" + String.valueOf(arg.name) + "': '"
+                + arg.type + "' is an opaque, non-numeric value in JS code");
           }
         }
+      }
+    }
 
-        // check JSNI references
-        FindJsniRefVisitor jsniRefsVisitor = new FindJsniRefVisitor();
-        meth.traverse(jsniRefsVisitor, scope);
-        Set<String> jsniRefs = jsniRefsVisitor.getJsniRefs();
+    private void checkFieldRef(MethodDeclaration meth, JsniRef jsniRef) {
+      assert jsniRef.isField();
+      JField target = getField(jsniRef);
+      if (target == null) {
+        return;
+      }
+      if (containsLong(target.getType())) {
+        warn(meth, "Referencing field '"
+            + target.getEnclosingType().getSimpleSourceName() + "."
+            + target.getName() + "': '" + target.getType()
+            + "' is an opaque, non-numeric value in JS code");
+      }
+    }
 
-        for (String jsniRefString : jsniRefs) {
-          JsniRef jsniRef = JsniRef.parse(jsniRefString);
-          if (hasLongParam(jsniRef)) {
-            warn(meth, "Passing a long into Java from JSNI (method "
-                + jsniRef.memberName() + ")");
-          }
-          JType jsniRefType = getType(jsniRef);
-          if (containsLong(jsniRefType)) {
-            if (jsniRef.isMethod()) {
-              warn(meth, "Method " + jsniRef.memberName() + " returns type "
-                  + jsniRefType + ", which cannot be processed in JSNI code");
-            } else {
-              warn(meth, "Field " + jsniRef.memberName() + " has type "
-                  + jsniRefType + ", which cannot be processed in JSNI code");
-            }
+    private void checkMethodRef(MethodDeclaration meth, JsniRef jsniRef) {
+      assert jsniRef.isMethod();
+      JMethod target = getMethod(jsniRef);
+      if (target == null) {
+        return;
+      }
+      if (containsLong(target.getReturnType())) {
+        warn(meth, "Referencing method '"
+            + target.getEnclosingType().getSimpleSourceName() + "."
+            + target.getName() + "': return type '" + target.getReturnType()
+            + "' is an opaque, non-numeric value in JS code");
+      }
+
+      for (JParameter param : target.getParameters()) {
+        if (containsLong(param.getType())) {
+          warn(meth, "Referencing method '"
+              + target.getEnclosingType().getSimpleSourceName() + "."
+              + target.getName() + "': parameter '" + param.getName() + "': '"
+              + param.getType()
+              + "' is an opaque, non-numeric value in JS code");
+        }
+      }
+    }
+
+    private void checkRefs(MethodDeclaration meth, ClassScope scope) {
+      FindJsniRefVisitor jsniRefsVisitor = new FindJsniRefVisitor();
+      meth.traverse(jsniRefsVisitor, scope);
+      Set<String> jsniRefs = jsniRefsVisitor.getJsniRefs();
+
+      for (String jsniRefString : jsniRefs) {
+        JsniRef jsniRef = JsniRef.parse(jsniRefString);
+        if (jsniRef != null) {
+          if (jsniRef.isMethod()) {
+            checkMethodRef(meth, jsniRef);
+          } else {
+            checkFieldRef(meth, jsniRef);
           }
         }
       }
@@ -135,50 +172,56 @@ public class LongFromJSNIChecker {
       return returnType != null && containsLong(returnType.resolveType(scope));
     }
 
+    private JClassType findType(JsniRef jsniRef) {
+      // Use source name.
+      String className = jsniRef.className();
+      className = className.replace('$', '.');
+      JClassType type = typeOracle.findType(className);
+      return type;
+    }
+
     /**
      * Returns either the type returned if this reference is "read". For a
      * field, returns the field's type. For a method, returns the method's
      * return type. If the reference cannot be resolved, returns null.
      */
-    private JType getType(JsniRef jsniRef) {
-      JClassType type = typeOracle.findType(jsniRef.className());
+    private JField getField(JsniRef jsniRef) {
+      assert jsniRef.isField();
+      JClassType type = findType(jsniRef);
       if (type == null) {
         return null;
       }
 
-      if (jsniRef.isMethod()) {
-        for (JMethod method : type.getMethods()) {
-          if (paramTypesMatch(method, jsniRef)) {
-            return method.getReturnType();
-          }
-        }
-        // no method matched
-        return null;
-      } else {
-        JField field = type.getField(jsniRef.memberName());
-        if (field != null) {
-          return field.getType();
-        }
-        // field not found
-        return null;
+      JField field = type.getField(jsniRef.memberName());
+      if (field != null) {
+        return field;
       }
+      return null;
     }
 
-    private boolean hasLongParam(JsniRef jsniRef) {
-      if (!jsniRef.isMethod()) {
-        return false;
+    /**
+     * Returns either the type returned if this reference is "read". For a
+     * field, returns the field's type. For a method, returns the method's
+     * return type. If the reference cannot be resolved, returns null.
+     */
+    private JMethod getMethod(JsniRef jsniRef) {
+      assert jsniRef.isMethod();
+      JClassType type = findType(jsniRef);
+      if (type == null) {
+        return null;
       }
-      for (String type : jsniRef.paramTypes()) {
-        if (type.charAt(type.length() - 1) == JniConstants.DESC_LONG) {
-          return true;
+
+      for (JMethod method : type.getMethods()) {
+        if (paramTypesMatch(method, jsniRef)) {
+          return method;
         }
       }
-      return false;
+      return null;
     }
 
     private boolean paramTypesMatch(JMethod method, JsniRef jsniRef) {
-      JsniRef methodJsni = JsniRef.parse(Jsni.getJsniSignature(method));
-      return methodJsni.equals(jsniRef);
+      String methodSig = Jsni.getMemberSignature(method);
+      return methodSig.equals(jsniRef.memberSignature());
     }
 
     private boolean suppressingWarnings(MethodDeclaration meth, ClassScope scope) {

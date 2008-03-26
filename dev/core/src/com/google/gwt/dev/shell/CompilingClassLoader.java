@@ -116,7 +116,7 @@ public final class CompilingClassLoader extends ClassLoader {
       String className = parsed.className();
       DispatchClassInfo dispClassInfo = getClassInfoFromClassName(className);
       if (dispClassInfo != null) {
-        String memberName = parsed.memberName();
+        String memberName = parsed.memberSignature();
         int memberId = dispClassInfo.getMemberId(memberName);
         if (memberId < 0) {
           logger.log(TreeLogger.WARN, "Member '" + memberName
